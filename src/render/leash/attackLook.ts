@@ -20,7 +20,8 @@ import { Instances, VERT, FRAG, PIXEL_DOT_MAX } from "./glyphs";
 
 type RGB = [number, number, number];
 /** How an attack is dressed: its element, its creature's level, and (a party animal's) its neon, which tints the element's grey. */
-export interface Dress { el: string; level: number; tint?: RGB | null }
+/** look: a body's look tag (config/attack-look.json looks: an acorn, a feather...), its core drawn as that thing. */
+export interface Dress { el: string; level: number; tint?: RGB | null; look?: string }
 
 const PPM = 16; // art pixels a metre (the atlas's)
 let K = 2; // whole art pixels an atlas pixel draws (config scale)
@@ -89,6 +90,13 @@ export class AttackLook {
     if (!r) { const c = this.cells[name] ?? this.cells.px, N = this.size; r = [c[0] / N, c[1] / N, (c[0] + c[2]) / N, (c[1] + c[3]) / N]; this.uvs.set(name, r); }
     return r;
   }
+  private flips = new Map<string, number[]>();
+  /** A cell's rect mirrored left to right (a look flying left). */
+  private flipped(name: string, uv: number[]): number[] {
+    let r = this.flips.get(name);
+    if (!r) this.flips.set(name, (r = [uv[2], uv[1], uv[0], uv[3]]));
+    return r;
+  }
   private px(name: string): number { return (this.cells[name] ?? this.cells.px)[2]; }
   private el(d: Dress): SpellElement { return this.cfg.elements[d.el] ?? this.cfg.elements[this.cfg.default]; }
   /** Its four colours, dark to hot, 0 to 1 (a party animal's: its neon over the grey steps). */
@@ -113,8 +121,17 @@ export class AttackLook {
   core(d: Dress, x: number, y: number, z: number, vx: number, vy: number, vz: number, time: number, seed: number): void {
     const P = this.colours(d), legend = d.level >= 3, pw = spellPower(d.level), f = Math.floor(time * 12 + seed) % 4, t = this.tinted(d);
     this.glow.add(x, y, z, 1.5 * pw, this.uv("dot"), P[1][0], P[1][1], P[1][2], 0.5);
-    this.put(this.solid(d) ? this.paint : this.glow, this.name(d, `core.${legend ? "l" : "a"}.${f}`), x, y, z, 1, 1, t);
-    if (this.solid(d)) this.put(this.glow, this.name(d, `core.${legend ? "l" : "a"}.${f}`), x, y, z, 1, 0.35, t);
+    const L = d.look ? this.cfg.looks[d.look] : undefined;
+    if (L) {
+      // its look's own core (painted: a thing, not light), its own colours or its element's (a party animal's: its neon), facing its way
+      const cell = `look.${d.look}.${L.palette && !d.tint ? "c" : "g"}.core.${legend ? "l" : "a"}.${f}`, R = SPRITE_UNIFORMS.uRight.value, left = vx * R.x + vz * R.z < 0;
+      const tint: RGB = L.palette && !d.tint ? [1, 1, 1] : d.tint ? t : [Math.min(1, P[2][0] * 1.1), Math.min(1, P[2][1] * 1.1), Math.min(1, P[2][2] * 1.1)];
+      const uv = this.uv(cell), px = (this.px(cell) * K) / PPM;
+      this.paint.add(x, y, z, px, left ? this.flipped(cell, uv) : uv, tint[0], tint[1], tint[2], 1);
+    } else {
+      this.put(this.solid(d) ? this.paint : this.glow, this.name(d, `core.${legend ? "l" : "a"}.${f}`), x, y, z, 1, 1, t);
+      if (this.solid(d)) this.put(this.glow, this.name(d, `core.${legend ? "l" : "a"}.${f}`), x, y, z, 1, 0.35, t);
+    }
     this.trail(d, x, y, z, vx, vy, vz, time, seed);
   }
 

@@ -12,10 +12,10 @@ import type { LeashView } from "../leash";
 type RGB = { r: number; g: number; b: number };
 const dresses = new Map<string, Dress>();
 /** An attack's dress: its element tag (else its caster's species'), its caster's level, a party animal's neon. */
-function dressOf(species: string, tag: string, level: number, tint: RGB | null): Dress {
-  const key = `${species}|${tag}|${level}|${tint ? `${tint.r},${tint.g},${tint.b}` : ""}`;
+function dressOf(species: string, tag: string, level: number, tint: RGB | null, look = ""): Dress {
+  const key = `${species}|${tag}|${level}|${look}|${tint ? `${tint.r},${tint.g},${tint.b}` : ""}`;
   let d = dresses.get(key);
-  if (!d) dresses.set(key, (d = { el: elementOf(species, undefined, undefined, tag || undefined), level, tint: tint ? [tint.r, tint.g, tint.b] : null }));
+  if (!d) dresses.set(key, (d = { el: elementOf(species, undefined, undefined, tag || undefined), level, tint: tint ? [tint.r, tint.g, tint.b] : null, ...(look ? { look } : {}) }));
   return d;
 }
 
@@ -29,7 +29,7 @@ export function drawSpells(lv: LeashView, g: Game, time: number, up: boolean, cl
   const S: SpellState | undefined = g.combat.spells;
   if (!S) return;
   const L = lv.look, creature = (id: number | undefined) => (id !== undefined ? g.creatures[id] : undefined);
-  const dress = (species: string, tag: string, side: string, source: number) => { const c = creature(source); return dressOf(species, tag, c?.level ?? 2, huntsWitch(side as State) ? null : neon(species)); };
+  const dress = (species: string, tag: string, side: string, source: number, look = "") => { const c = creature(source); return dressOf(species, tag, c?.level ?? 2, huntsWitch(side as State) ? null : neon(species), look); };
   // the casters' tells: the danger frame's ring and "!" at a wild one's feet, from its tell's start
   for (const [id, T] of S.tells) {
     const c = creature(id);
@@ -47,7 +47,7 @@ export function drawSpells(lv: LeashView, g: Game, time: number, up: boolean, cl
   // bodies in flight (bolts, runners, lures, lobs), and mines and seeds lying in wait
   for (const b of S.bodies) {
     if (!b.alive || !close(b.x, b.z, 150)) continue;
-    const d = dress(b.species, b.element, b.side, b.source);
+    const d = dress(b.species, b.element, b.side, b.source, b.look);
     if (b.kind === "mine" || b.kind === "seed") { L.core(d, b.x, 0.25, b.z, 0, 0, 0, time, b.id); continue; }
     if (b.kind === "lob" && b.lob) { const T = Math.max(0.01, b.lob.lands - b.lob.at); L.core(d, b.x, Math.max(0.3, b.y), b.z, (b.lob.tx - b.lob.fx) / T, 0, (b.lob.tz - b.lob.fz) / T, time, b.id); continue; }
     L.core(d, b.x, b.kind === "runner" ? 0.35 : Math.max(0.6, b.y || 1), b.z, b.hx * b.v, 0, b.hz * b.v, time, b.id);
