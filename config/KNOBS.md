@@ -2412,11 +2412,12 @@ trunks.lightReach (Ed, 2026-10-13: "the light that soundsystems and runestones p
 
 ### `attacks`
 
-The composable attacks (docs/plans/attack-grammar.md, src/rules/attacks/): reactionFloor, the least warning (s) any attack and each child it makes gives from its first telegraph to its first harm (Ed, 2026-10-27: 0.45 s, "we can tune in balancing"); one under it is lengthened to it, silently in the game, said so in the Fight Arena.
+The composable attacks (docs/plans/attack-grammar.md, src/rules/attacks/): reactionFloor, the least warning (s) any attack and each child it makes gives from its first telegraph to its first harm (Ed, 2026-10-27: 0.45 s, "we can tune in balancing"); one under it is lengthened to it, silently in the game, said so in the Fight Arena. species (Ed, 2026-10-27: "go ahead and merge them"): every species fights with its own attack in the grammar (config/species-attacks.json, by biome and island phase), its kind's own moves and its pack's turns as before; false (?attacks=old) the old ones.
 
 | knob | type | range |
 |---|---|---|
 | `attacks.reactionFloor` | number | 0 to … |
+| `attacks.species` | boolean |  |
 
 ### `gpu`, `mist`
 
