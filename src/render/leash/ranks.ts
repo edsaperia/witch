@@ -96,3 +96,25 @@ export function drawEmbers(batch: Instances, dot: number[], pts: [number, number
     else batch.add(x + p[0] * size + drift, y - p[1] * size + life * rise, z + 0.05, s, dot, cr, cg, cb, a);
   }
 }
+
+/** The rank on an area's rune stone (Ed, 2026-10-27: "Runestone sigils adopt the new colour scheme; they are the colour of the
+ *  highest level animal in their area"), by its cell's key ("cx,cy"): the highest level among the animals that live there now (a
+ *  legend's, asleep or awake, while it's home), or EMPTY_STONE with none. Only the area's own: not hers (leashed, carried or left at
+ *  a sigil), nor any gone, fleeing, travelling or off dancing at the party; so it changes as they grow, are recruited away, come
+ *  home or leave. */
+export const EMPTY_STONE = 4;
+type Resident = Pick<Creature, "cell" | "level" | "leashed"> & Partial<Pick<Creature, "gone" | "fleeUntil" | "travelling" | "dancing" | "partyLegend">>;
+export function areaTopRanks(creatures: readonly Resident[], out = new Map<string, number>()): Map<string, number> {
+  out.clear();
+  for (const c of creatures) {
+    if (c.gone || c.leashed || c.fleeUntil !== undefined || c.travelling || c.dancing || c.partyLegend) continue;
+    const k = c.cell[0] + "," + c.cell[1], r = rankOf(c);
+    if ((out.get(k) ?? -1) < r) out.set(k, r);
+  }
+  return out;
+}
+export const stoneRank = (top: Map<string, number>, cell: readonly [number, number]): number => top.get(cell[0] + "," + cell[1]) ?? EMPTY_STONE;
+/** An empty area's stone: its rune unlit, the dark of a cold stone's carving (its 4th: none of the white a lit rune's brightest
+ *  pixels take, render/islandArt.ts recolour); its light, beam and motes a little cold moonlight (EMPTY_STONE_LIGHT of a lit one's). */
+export const EMPTY_STONE_RGB = [70, 72, 86, 0];
+export const EMPTY_STONE_LIGHT = 0.3;
