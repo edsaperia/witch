@@ -55,25 +55,25 @@ describe("the quality ladder", () => {
     // (down from the far edge's dither to the squeeze, over the density and the blend: wanted from the next load, not in effect now)
     let s = run(newLadder(at("farDither")), 25, LADDER_KNOBS.settle + LADDER_KNOBS.downAfter);
     expect(s.rung).toBe(at("squeeze"));
-    expect(pending(s)).toEqual({ adds: [at("density90"), at("blend40")], drops: [] });
+    expect(pending(s)).toEqual({ adds: [at("density90")], drops: [] }); // (the blend's not built: passed over)
     // (loaded there, as at the next load: in effect, and nothing pending)
     s = { ...newLadder(at("still")), loaded: at("still") };
-    expect(inEffect(s, at("density90")) && inEffect(s, at("blend40"))).toBe(true);
+    expect(inEffect(s, at("density90"))).toBe(true);
     expect(inEffect(s, at("density80"))).toBe(false);
     expect(pending(s)).toEqual({ adds: [], drops: [] });
     // (climbing back over them: dropped from the next load, but in effect till then)
     for (let k = 0; k < 3; k++) s = run(s, 8, LADDER_KNOBS.settle + LADDER_KNOBS.upAfter + 1); // (still, the squeeze, the far edge)
     expect(s.rung).toBeLessThan(at("density90"));
-    expect(pending(s).drops).toEqual([at("density90"), at("blend40")]);
+    expect(pending(s).drops).toEqual([at("density90")]);
     expect(inEffect(s, at("density90"))).toBe(true);
   });
 
   it("makes a night with the load rungs in effect at its rung", () => {
     expect(loadEffects(0)).toEqual({ density: 1, blend: null, px: null });
     expect(loadEffects(at("density90"))).toEqual({ density: 0.9, blend: null, px: null });
-    expect(loadEffects(at("still"))).toEqual({ density: 0.9, blend: 40, px: null });
-    expect(loadEffects(at("density80"))).toEqual({ density: 0.8, blend: 40, px: null }); // (×0.8 in all, not 0.9 × 0.8)
-    expect(loadEffects(at("px4"))).toEqual({ density: 0.8, blend: 40, px: 4 });
+    expect(loadEffects(at("still"))).toEqual({ density: 0.9, blend: null, px: null }); // (the blend's not built)
+    expect(loadEffects(at("density80"))).toEqual({ density: 0.8, blend: null, px: null }); // (×0.8 in all, not 0.9 × 0.8)
+    expect(loadEffects(at("px4"))).toEqual({ density: 0.8, blend: null, px: 4 });
   });
 
   it("does nothing pinned or off; off is full quality", () => {

@@ -21,7 +21,7 @@ export const RUNGS: readonly Rung[] = [
   { id: "full", label: "full quality", when: "live", built: true },
   { id: "farDither", label: "the forest's far edge dithered, not faded", when: "live", built: true },
   { id: "density90", label: "trees ×0.9", when: "load", built: true },
-  { id: "blend40", label: "area borders blend over 40 m", when: "load", built: true },
+  { id: "blend40", label: "area borders blend over 40 m", when: "load", built: false }, // (measured on one load, 2026-10-27: nothing either way, so passed over)
   { id: "squeeze", label: "tall trees squeezed", when: "live", built: true },
   { id: "still", label: "leaves still, no trunk shadows", when: "live", built: true },
   { id: "hardCut", label: "the cut-away's crowns solid", when: "live", built: true },
