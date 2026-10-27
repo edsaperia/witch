@@ -38,6 +38,10 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 // passed outright, so they came off; boost-worst and pops still fail here for their known reasons.)
 const KNOWN = {
   "boost-worst": { issue: 310, why: "absolute CPU budget on the cloud's shared, slower CPU" },
+  // (2026-10-27, Alpha's full run on v5076, Ed's call: not fixed now, the later clean-up and speed pass: at full boost, ~200 m/s, the
+  // scenery rebuild takes 35-135 ms in single frames: done whole under 30 fps, and due again before its slices finish above it)
+  "boost-p99": { issue: 1325, why: "the scenery rebuild at full boost: 35-135 ms frames, p99 59 ms (#1325)" },
+  "speed-build": { issue: 1325, why: "the forest's building at full treetop speed: p99 19.7 ms over 122 frames (#1325)" },
   "pops": { issue: 311, why: "1-2 s software-rendered frames starve the scenery budget" },
   "vanish": { issue: 1090, why: "Ed's window sizes take tens of seconds a frame in the software renderer: they fly only on a real GPU (SMOKE_GPU=1)" },
 };
@@ -451,6 +455,10 @@ async function main() {
   // black on black) in the lit frame.
   await run("trunks", { width: 960, height: 540 }, async page => {
     await page.keyboard.press("Enter");
+    // The forest in first: with the art drawn before the start (run's wait), the island counts as ready while she's still in the
+    // house, so the forest fades in behind it over treehouse.house.dark.reveal (20 s) of her clock (#1252, Ed 2026-10-26); moved
+    // and measured straight away, with still frames, it was black (0% trunks: the full smoke, 2026-10-27).
+    await page.waitForFunction(() => window.witch.game.islandReady && window.witch.view.post.behind >= 1, null, { timeout: 900000, polling: 500 });
     // She stands a minute in wild woods for these: kept from being knocked out (the bluebell glade's shots were the
     // knockout's black iris and her treehouse: 2026-10-07).
     await page.evaluate(() => { window.trunkKeepAlive = setInterval(() => { const g = window.witch.game, W = g.witches[0]; if (!W.ko) W.health.hp = g.tuning.witchHealth.hits; }, 100); });
