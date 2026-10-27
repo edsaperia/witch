@@ -84,6 +84,20 @@ export function rampTo(c: BeatClock, atBeat: number, bpm: number, beats: number)
   c.segs.push({ time, beat: atBeat, bpm: from, bpmTo: bpm, dur });
 }
 
+/** The music ran `lost` seconds on past game time `time` (a stall on the page's thread: the game's clock cut a long frame
+ *  short, MAX_STEP, while the music drawn ahead played on: platform/audio/musicAhead.ts): the beat moved on to where the
+ *  music is, so from `time` on the beat at game time t is the one heard then (the audio clock the music's master; docs/notes/
+ *  music.md "Music ahead"). Before `time`, as it was; the tempo changes to come as many seconds sooner. Only forward. */
+export function shiftBeat(c: BeatClock, time: number, lost: number): void {
+  if (!(lost > 0)) return;
+  const at = time + lost, beat = beatAt(c, at), bpm = bpmAt(c, at), s = segAtTime(c, at), left = Math.max(0, s.time + s.dur - at), to = left > 0 ? s.bpmTo : bpm;
+  const before = c.segs.filter(x => x.time < time), after = c.segs.filter(x => x.time > at).map(x => ({ ...x, time: x.time - lost }));
+  // the segment cut at `time` ends there, its ramp as far as it had got
+  const last = before[before.length - 1];
+  if (last && last.time + last.dur > time) { const k = (time - last.time) / Math.max(1e-9, last.dur); last.bpmTo = last.bpm + (last.bpmTo - last.bpm) * k; last.dur = time - last.time; }
+  c.segs = [...before, { time, beat, bpm, bpmTo: to, dur: left }, ...after];
+}
+
 /** The tempo for a wave: its step of the music's arc (beat.tempos), the last one holding on. */
 export function waveTempo(t: Pick<Tuning, "beat">, wave: number): number {
   const T = t.beat.tempos;

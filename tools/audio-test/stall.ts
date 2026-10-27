@@ -38,7 +38,7 @@ const SLOW = [32, 44], SLOW_RATE = 0.1, SLOW_EASE = 0.5;
 const WIN_MS = 50, GAP_MS = 100, DROP_DB = 12, REF_S = 3;
 
 interface Gap { at: number; ms: number }
-interface StallResult { at: number; slowed: boolean; heldMs: number; longestGapMs: number; gaps: Gap[]; levelDb: number; deepestDropDb: number; resyncs: number; late: number; engineGapMs: number; gameBehindMs: number }
+interface StallResult { at: number; slowed: boolean; heldMs: number; longestGapMs: number; gaps: Gap[]; levelDb: number; deepestDropDb: number; resyncs: number; late: number; engineGapMs: number; gameBehindMs: number; beatOffMs: number; beatShifts: number }
 interface ModeResult { mode: string; stalls: StallResult[]; levelBySecond?: number[]; levelBeforeSlowDb?: number; levelAfterSlowDb?: number; elsewhereLongestGapMs: number; recordedS: number; ahead?: Record<string, number>; error?: string }
 
 const log = (s: string) => { $("status").textContent = s; };
@@ -82,20 +82,20 @@ async function run(mode: string, recordings: Record<string, AudioBuffer> | null)
     const recAt = await started;
     // game time as the game keeps it: a frame's time, never more than the rules' MAX_STEP (the rest lost)
     const clock = newBeatClock(STYLE.bpm), page0 = performance.now(), audio0 = ctx.currentTime;
-    let game = 0, last = performance.now();
+    let game = 0, last = performance.now(), shifts = 0;
     const rateAt = (s: number) => { const a = Math.max(0, Math.min(1, (s - SLOW[0]) / SLOW_EASE)), b = Math.max(0, Math.min(1, (SLOW[1] - s) / SLOW_EASE)); return 1 - (1 - SLOW_RATE) * Math.min(a, b); };
-    const frame = () => { const now = performance.now(), rate = rateAt((now - page0) / 1000); game += Math.min((now - last) / 1000, MAX_STEP) * rate; last = now; music.update(MIX, CUE, game, clock, true, M, rate, 0, 0); };
+    const frame = () => { const now = performance.now(), rate = rateAt((now - page0) / 1000); game += Math.min((now - last) / 1000, MAX_STEP) * rate; last = now; if (music.keepBeat(game, clock)) shifts++; music.update(MIX, CUE, game, clock, true, M, rate, 0, 0); };
     const tick = setInterval(frame, 16);
     frame();
     for (const at of STALLS) {
       await sleep(Math.max(0, page0 + at * 1000 - performance.now()));
       log(`${mode}: holding the page's thread ${STALL_MS / 1000} s at ${at} s`);
-      const s0 = { ...music.stats }, h0 = performance.now();
+      const s0 = { ...music.stats }, sh0 = shifts, h0 = performance.now();
       while (performance.now() - h0 < STALL_MS) { /* the hitch */ }
       const held = performance.now() - h0;
       await sleep(2500); // (its aftermath: the music catching up, or not)
-      const s1 = music.stats, behind = (ctx.currentTime - audio0) - game;
-      out.stalls.push({ at: r1((h0 - recAt) / 1000), slowed: at > SLOW[0] && at < SLOW[1], heldMs: Math.round(held), longestGapMs: 0, gaps: [], levelDb: 0, deepestDropDb: 0, resyncs: s1.resyncs - s0.resyncs, late: s1.late - s0.late, engineGapMs: Math.round((s1.gap - s0.gap) * 1000), gameBehindMs: Math.round(behind * 1000) });
+      const s1 = music.stats, behind = (ctx.currentTime - audio0) - game, off = music.engine?.anchored ? music.engine.musicTime() - game : 0;
+      out.stalls.push({ at: r1((h0 - recAt) / 1000), slowed: at > SLOW[0] && at < SLOW[1], heldMs: Math.round(held), longestGapMs: 0, gaps: [], levelDb: 0, deepestDropDb: 0, resyncs: s1.resyncs - s0.resyncs, late: s1.late - s0.late, engineGapMs: Math.round((s1.gap - s0.gap) * 1000), gameBehindMs: Math.round(behind * 1000), beatOffMs: Math.round(off * 1000), beatShifts: shifts - sh0 });
       log(`${mode}: running on`);
     }
     await sleep(Math.max(0, page0 + RUN_S * 1000 - performance.now()));
@@ -129,8 +129,8 @@ async function run(mode: string, recordings: Record<string, AudioBuffer> | null)
 function show(r: ModeResult): void {
   const box = document.createElement("section");
   box.className = "card";
-  const rows = r.stalls.map((s, i) => `<tr class="${s.longestGapMs >= GAP_MS || s.engineGapMs > 0 || s.resyncs ? "bad" : "ok"}"><td>${s.at} s${i === 0 ? " (cold)" : ""}${s.slowed ? " (slowed)" : ""}</td><td>${s.heldMs}</td><td>${s.longestGapMs || "none"}</td><td>${s.deepestDropDb}</td><td>${s.resyncs}</td><td>${s.late}</td><td>${r.mode === "live" ? s.engineGapMs : "–"}</td><td>${s.gameBehindMs}</td></tr>`).join("");
-  box.innerHTML = `<h2>${r.mode}</h2>${r.error ? `<p>failed: ${r.error.split("\n")[0]}</p>` : ""}<div class="scroll"><table><thead><tr><th>stall at</th><th>held ms</th><th>longest drop-out ms</th><th>deepest drop dB</th><th>re-anchors</th><th>late steps</th><th>notes missing ms (the live engine's count)</th><th>game behind audio ms</th></tr></thead><tbody>${rows}</tbody></table></div>${r.ahead ? `<p>Drawn ahead: ${r.ahead.rendered} bars rendered, ${r.ahead.late} late, ${r.ahead.dropped} dropped (the music changed), ${Math.round(r.ahead.renderMs / Math.max(1, r.ahead.rendered))} ms a bar to render.</p>` : ""}<p>Coming back from the slowed world: its level ${r.levelBeforeSlowDb} dB before, ${r.levelAfterSlowDb} dB after. Drop-outs elsewhere (the music's own rests and breaks): ${r.elsewhereLongestGapMs || "none"} ms at most (${r.recordedS} s recorded).</p>`;
+  const rows = r.stalls.map((s, i) => `<tr class="${s.longestGapMs >= GAP_MS || s.engineGapMs > 0 || s.resyncs ? "bad" : "ok"}"><td>${s.at} s${i === 0 ? " (cold)" : ""}${s.slowed ? " (slowed)" : ""}</td><td>${s.heldMs}</td><td>${s.longestGapMs || "none"}</td><td>${s.deepestDropDb}</td><td>${s.resyncs}</td><td>${s.late}</td><td>${r.mode === "live" ? s.engineGapMs : "–"}</td><td>${s.gameBehindMs}</td><td>${s.beatOffMs}${s.beatShifts ? ` (moved on ${s.beatShifts}×)` : ""}</td></tr>`).join("");
+  box.innerHTML = `<h2>${r.mode}</h2>${r.error ? `<p>failed: ${r.error.split("\n")[0]}</p>` : ""}<div class="scroll"><table><thead><tr><th>stall at</th><th>held ms</th><th>longest drop-out ms</th><th>deepest drop dB</th><th>re-anchors</th><th>late steps</th><th>notes missing ms (the live engine's count)</th><th>game behind audio ms</th><th>the game's beat off the music's ms</th></tr></thead><tbody>${rows}</tbody></table></div>${r.ahead ? `<p>Drawn ahead: ${r.ahead.rendered} bars rendered, ${r.ahead.late} late, ${r.ahead.dropped} dropped (the music changed), ${Math.round(r.ahead.renderMs / Math.max(1, r.ahead.rendered))} ms a bar to render.</p>` : ""}<p>Coming back from the slowed world: its level ${r.levelBeforeSlowDb} dB before, ${r.levelAfterSlowDb} dB after. Drop-outs elsewhere (the music's own rests and breaks): ${r.elsewhereLongestGapMs || "none"} ms at most (${r.recordedS} s recorded).</p>`;
   $("runs").append(box);
 }
 
@@ -138,7 +138,7 @@ function summary(rs: ModeResult[]): string {
   return rs.map(r => {
     if (r.error) return `${r.mode}: failed (${r.error.split("\n")[0]}).`;
     const full = r.stalls.filter(s => !s.slowed), worst = Math.max(0, ...full.map(s => s.longestGapMs)), re = full.reduce((a, s) => a + s.resyncs, 0), slowRe = r.stalls.filter(s => s.slowed).reduce((a, s) => a + s.resyncs, 0);
-    return `${r.mode}: through ${full.length} stalls of ${STALL_MS / 1000} s at full speed (the first cold), the longest drop-out (${DROP_DB} dB under its level) ${worst || "none"}${worst ? " ms" : ""} (its own rests elsewhere ${r.elsewhereLongestGapMs || "none"}${r.elsewhereLongestGapMs ? " ms" : ""}), ${re} re-anchors; one in the slowed world: ${slowRe} re-anchors, the music back to ${r.levelAfterSlowDb} dB after it (${r.levelBeforeSlowDb} dB before); game time ended ${r.stalls.at(-1)?.gameBehindMs ?? 0} ms behind the audio clock.`;
+    return `${r.mode}: through ${full.length} stalls of ${STALL_MS / 1000} s at full speed (the first cold), the longest drop-out (${DROP_DB} dB under its level) ${worst || "none"}${worst ? " ms" : ""} (its own rests elsewhere ${r.elsewhereLongestGapMs || "none"}${r.elsewhereLongestGapMs ? " ms" : ""}), ${re} re-anchors; one in the slowed world: ${slowRe} re-anchors, the music back to ${r.levelAfterSlowDb} dB after it (${r.levelBeforeSlowDb} dB before); game time ended ${r.stalls.at(-1)?.gameBehindMs ?? 0} ms behind the audio clock, the game's beat ${r.stalls.at(-1)?.beatOffMs ?? 0} ms off the music's (moved on ${r.stalls.reduce((a, s) => a + s.beatShifts, 0)} times).`;
   }).join("\n");
 }
 

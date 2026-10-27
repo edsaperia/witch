@@ -133,6 +133,9 @@ export class MusicEngine {
   audioAt(g: number): number { return this.a0 + (g - this.g0) / this.rate - this.leadNow; }
   /** Its timeline's anchor: the audio time music time 0 is at (the lead left out: that eases on its own). */
   get anchorAt(): number { return this.a0 - this.g0 / this.rate; }
+  /** The game's beat moved on by `lost` seconds to where the music is (rules/beat.ts shiftBeat): its timeline the same on the
+   *  audio clock, in the game's new reckoning. */
+  shiftTime(lost: number): void { if (Number.isFinite(this.g0)) this.g0 -= lost; }
   /** Whether its timeline is anchored (it's been played since its last jump). */
   get anchored(): boolean { return Number.isFinite(this.g0); }
   private wasPlaying = false;

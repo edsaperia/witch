@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { beatAt, beatTime, blockLineAfter, bpmAt, newBeatClock, rampTo, timeAt, waveArrived, waveTempo } from "./beat";
+import { beatAt, beatTime, blockLineAfter, bpmAt, newBeatClock, rampTo, shiftBeat, timeAt, waveArrived, waveTempo } from "./beat";
 import { TUNING, type Tuning } from "./tuning";
 
 const tuning = (tempos: number[]): Tuning => ({ ...TUNING, beat: { bpm: 120, tempos, blockBars: 4, rampBars: 8 } });
@@ -61,4 +61,21 @@ describe("beat clock", () => {
     expect(blockLineAfter(208.5, 4)).toBe(208);
     expect(blockLineAfter(209.5, 4)).toBe(224);
   });
+
+  it("moves on by a stall's lost time: from then the beat is the music's, before it as it was, mid-ramp or not", () => {
+    for (const [time, lost] of [[10, 1.5], [33, 1.5], [31, 3], [40, 0.4]] as const) {
+      const c = newBeatClock(120);
+      rampTo(c, 64, 140, 32); // (from 32 s, about 13.7 s of ramp)
+      rampTo(c, 160, 150, 16);
+      const old = structuredClone(c);
+      shiftBeat(c, time, lost);
+      for (const t of [0, time / 2, time - 0.01]) expect(beatAt(c, t)).toBeCloseTo(beatAt(old, t), 6);
+      for (const t of [time, time + 0.3, time + 5, time + 20, time + 80]) { expect(beatAt(c, t)).toBeCloseTo(beatAt(old, t + lost), 6); expect(bpmAt(c, t)).toBeCloseTo(bpmAt(old, t + lost), 6); }
+      for (const b of [beatAt(c, time) + 1, 200, 300]) expect(timeAt(c, b)).toBeCloseTo(timeAt(old, b) - lost, 6);
+    }
+    const c = newBeatClock(120), was = structuredClone(c);
+    shiftBeat(c, 5, 0); shiftBeat(c, 5, -1);
+    expect(c).toEqual(was);
+  });
 });
+

@@ -5,11 +5,14 @@
 // (rules/musicPlan.ts), on the game's beat; a recorded track (music.src) can stand in for it.
 import { muffled, type MusicMix } from "../../rules/music";
 import type { Tuning } from "../../rules/tuning";
-import type { BeatClock } from "../../rules/beat";
+import { shiftBeat, type BeatClock } from "../../rules/beat";
 import type { MusicCue } from "../../rules/musicPlan";
 import type { MusicStyle } from "../../rules/musicScore";
 import { MusicEngine } from "./musicEngine";
 import { MusicAhead } from "./musicAhead";
+
+/** The least lost time (s) the game's beat is moved on by (Music.keepBeat): under it, a frame's jitter. */
+const SHIFT_MIN = 0.04;
 
 /** The notes' pitch with the music running at `rate` (a tape slowing: rate^pitch, never under floor). */
 const smooth01 = (x: number) => { const t = Math.max(0, Math.min(1, x)); return t * t * (3 - 2 * t); };
@@ -106,6 +109,17 @@ export class Music {
     // (drawn ahead only at full speed, the voice a recording, no lab: the slowed world, the tape stopping and the rest live)
     if (this.ahead && this.engine) { const S = this.engine.style, kind = S.form ? S.patches[S.form.sung.patch]?.kind : undefined; this.ahead.update(cue, clock, on, this.aheadAllowed && rate >= 0.999 && stop === 0 && kind !== "fof" && kind !== "tract"); }
     this.engine?.update(cue, gameTime, clock, on, 0.6, rate, stop > 0 ? Math.max(M?.over?.floor ?? 0.15, rate) : tapePitch(rate, M?.slow)); // (stopping: the pitch falls all the way with it)
+  }
+
+  /** The audio clock the master (docs/notes/music.md "Music ahead"): while the music's drawn ahead, a stall the game's clock cut
+   *  short (MAX_STEP) while the music played on moves the game's beat on to the music's (rules/beat.ts shiftBeat) and the
+   *  music's timeline with it, nothing heard moved, so what's on the beat stays on what's heard. Each frame before update();
+   *  returns the seconds moved on (0 under SHIFT_MIN, a frame's jitter). */
+  keepBeat(gameTime: number, clock: BeatClock): number {
+    const E = this.engine, lost = this.ahead?.drawing && E?.anchored ? E.musicTime() - gameTime : 0;
+    if (!(lost > SHIFT_MIN && lost < 30)) return 0;
+    shiftBeat(clock, gameTime, lost); E!.shiftTime(lost); this.ahead!.shiftTime(lost);
+    return lost;
   }
 
   /** Sound shed to spare the audio thread (shed.ts): the engine's own (unison, tails, reverb, delay). */
