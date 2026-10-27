@@ -21,12 +21,12 @@ export interface Lobe { x: number; y: number; z: number; r: number; thin: number
 export interface Limb { kind: "trunk" | "root" | "great" | "house" | "branch" | "fork" | "top"; knots: Knot[] }
 /** A string of lights (Ed: "strewn with colourful string lights"): a swag under a limb, a string draped from clump to clump, a tail
  *  hanging down off a limb, a spiral wound round one or the ring round the Terrace's gap, as spans hung between points (`sag` m at the
- *  middle); or a garland looped round a clump, part way or all round, tilted, wavering (garlandPoint). Each its own bulb spacing
- *  (`space`, times the clearings' bulbSpacing; Ed, 2026-10-27: "String lights on the treehouse seem to all have the same shape"), and
- *  each switches on running along from its start (its first span's `a`, or the garland's angle `o`). */
+ *  middle); or a garland looped round a clump, part way or all round, tilted, wavering (garlandPoint). Each hung its own way
+ *  (Ed, 2026-10-27: "String lights on the treehouse seem to all have the same shape"), the bulbs the same spacing on all ("The same
+ *  bulb spacing"), and each switches on running along from its start (its first span's `a`, or the garland's angle `o`). */
 export type CrownString =
-  | { kind: "swag" | "drape" | "ring" | "tail" | "spiral"; spans: { a: V3; b: V3; sag: number }[]; space?: number }
-  | { kind: "garland"; x: number; y: number; z: number; r: number; el: number; o: number; /** how far round (1 all the way) */ arc?: number; /** its tilt (radians) and the bearing it dips toward */ tilt?: number; tiltAt?: number; /** its waver: how far (radians) and how many times round */ wob?: number; freq?: number; space?: number };
+  | { kind: "swag" | "drape" | "ring" | "tail" | "spiral" | "wrap"; spans: { a: V3; b: V3; sag: number }[] }
+  | { kind: "garland"; x: number; y: number; z: number; r: number; el: number; o: number; /** how far round (1 all the way) */ arc?: number; /** its tilt (radians) and the bearing it dips toward */ tilt?: number; tiltAt?: number; /** its waver: how far (radians) and how many times round */ wob?: number; freq?: number };
 
 /** A point `u` (0 to 1) of the way along a garland, from its start angle `o` round its arc. */
 export function garlandPoint(s: Extract<CrownString, { kind: "garland" }>, u: number): V3 {
@@ -50,7 +50,10 @@ export interface HouseOutline {
  *  whole over the Terrace as over every room (Ed, 2026-10-26: "I'd like to try the treehouse canopy not being cut-through while she's
  *  in treehouse mode - this will make it easier for her to land in the treehouse successfully, as the area is bigger"; the tuning's
  *  treehouse.house.crown.gap, a switch on the pause page). */
-export interface CrownInput { outline: HouseOutline; floor: number; seed: number; open?: { x: number; z: number; r: number }[]; gap?: boolean }
+export interface CrownInput { outline: HouseOutline; floor: number; seed: number; open?: { x: number; z: number; r: number }[]; gap?: boolean;
+  /** its lights wound round it (Ed, 2026-10-27: "Maybe think of the lights wrapped around the crown in a spiral (if seen top down)"):
+   *  this many long strands spiralling out over its top from its middle, in place of the drapes and garlands; 0, as before */
+  wrap?: number }
 
 export interface Crown {
   lobes: Lobe[]; limbs: Limb[]; strings: CrownString[];
@@ -67,6 +70,8 @@ export interface Crown {
   gap: boolean;
   /** The floor's height over the ground (m). */
   floor: number;
+  /** its lights wound round it in this many strands (CrownInput.wrap), or 0 */
+  wrap?: number;
 }
 
 /** How the north-facing camera looks down at the Terrace from outside (degrees: the treetops' angleIn to angleOut and the landing): a
@@ -152,7 +157,7 @@ function bounds(O: HouseOutline) {
 }
 
 /** The great oak's crown for a house. The same house and seed always grow the same crown. */
-export function makeCrown({ outline: O, floor, seed, open = [], gap = true }: CrownInput): Crown {
+export function makeCrown({ outline: O, floor, seed, open = [], gap = true, wrap = 0 }: CrownInput): Crown {
   const R = rng(seed * 7919 + 4111), U = (a: number, b: number) => a + (b - a) * R();
   const T = O.rooms.find(r => r.id === "terrace") ?? { x: 0, z: 0, r: 10, outline: [] as [number, number][] }, terrace = [{ x: T.x, z: T.z, r: T.r }], terraceOutline = T.outline;
   const ta = ((O.takeoff.from + O.takeoff.to) / 2) * DEG, takeoff: [number, number] = [Math.cos(ta), Math.sin(ta)], notchFrom: [number, number] = [O.takeoff.x, O.takeoff.z];
@@ -248,8 +253,8 @@ export function makeCrown({ outline: O, floor, seed, open = [], gap = true }: Cr
   // ---- the string lights, each hung its own way (Ed, 2026-10-27: "String lights on the treehouse seem to all have the same shape"):
   // swags under the limbs, their sag and steps each their own, some with tails hanging down; a few spirals wound round the big limbs;
   // strings draped from clump to clump, near and short or long across a gap; garlands round clumps, part way or all round, tilted and
-  // wavering; a ring round the Terrace's gap. Each its own bulb spacing.
-  const H = (i: number, k: number) => hash2(i, k, seed), space = (i: number, k: number) => 0.75 + 0.6 * H(i, k);
+  // wavering; a ring round the Terrace's gap. The bulbs the same spacing on every one (Ed: "The same bulb spacing").
+  const H = (i: number, k: number) => hash2(i, k, seed);
   limbs.forEach((l, li) => {
     if (l.kind === "root" || l.kind === "trunk" || l.knots[0][3] < 0.7) return;
     const step = 6 + 5 * H(li, 21), sag = 0.6 + 1.8 * H(li, 22), pts: V3[] = []; let acc = 0;
@@ -261,10 +266,10 @@ export function makeCrown({ outline: O, floor, seed, open = [], gap = true }: Cr
     // (a share of the limbs' swags only part way along, so not every limb's lit end to end)
     const from = H(li, 23) < 0.35 ? Math.floor(pts.length * 0.4 * H(li, 24)) : 0, to = H(li, 25) < 0.35 ? Math.ceil(pts.length * (0.6 + 0.4 * H(li, 26))) : pts.length;
     const run = pts.slice(from, to);
-    if (run.length > 1) strings.push({ kind: "swag", spans: run.slice(1).map((b, i) => ({ a: run[i], b, sag: sag * (0.8 + 0.4 * H(li * 31 + i, 27)) })), space: space(li, 28) });
+    if (run.length > 1) strings.push({ kind: "swag", spans: run.slice(1).map((b, i) => ({ a: run[i], b, sag: sag * (0.8 + 0.4 * H(li * 31 + i, 27)) })) });
     // tails: a strand let hang off a point of the swag, 2 to 7 m, swinging a little out
     for (let t = 0; t < run.length; t++) if (H(li * 53 + t, 29) < 0.12) { const p = run[t], L = 2 + 5 * H(li * 53 + t, 30), ang = H(li * 53 + t, 31) * Math.PI * 2;
-      strings.push({ kind: "tail", spans: [{ a: p, b: [p[0] + Math.cos(ang) * 0.8, p[1] - L, p[2] + Math.sin(ang) * 0.8], sag: 0.15 }], space: space(li * 53 + t, 32) }); }
+      strings.push({ kind: "tail", spans: [{ a: p, b: [p[0] + Math.cos(ang) * 0.8, p[1] - L, p[2] + Math.sin(ang) * 0.8], sag: 0.15 }] }); }
     // spirals: wound round a big limb, a turn every 3 to 6 m, 1.1 to 1.3 of its radius out
     if ((l.kind === "great" || l.kind === "branch" || l.kind === "top") && H(li, 33) < 0.3) {
       const pitch = 3 + 3 * H(li, 34), out = 1.1 + 0.2 * H(li, 35), ph = H(li, 36) * Math.PI * 2, sp: V3[] = [];
@@ -276,11 +281,29 @@ export function makeCrown({ outline: O, floor, seed, open = [], gap = true }: Cr
         sp.push([x + ax[0] * c + up[0] * si, y + ax[1] * c + up[1] * si, z + ax[2] * c + up[2] * si]);
       });
       const k0 = Math.floor(sp.length * 0.5 * H(li, 37)), seg = sp.slice(k0, k0 + Math.max(8, Math.floor(sp.length * (0.3 + 0.4 * H(li, 38)))));
-      if (seg.length > 1) strings.push({ kind: "spiral", spans: seg.slice(1).map((b, i) => ({ a: seg[i], b, sag: 0 })), space: space(li, 39) });
+      if (seg.length > 1) strings.push({ kind: "spiral", spans: seg.slice(1).map((b, i) => ({ a: seg[i], b, sag: 0 })) });
     }
   });
   const tops = lobes.filter(q => q.r >= 7.5 * K && q.y > dome.base - 4), seen = new Set<string>();
-  tops.forEach((a, ai) => {
+  if (wrap > 0) {
+    // wound round it: `wrap` strands spiralling out from its middle over its top (an Archimedean spiral on the plan, squashed to the
+    // dome's ellipse, a turn every PITCH m), each lying over the lobes there, a little sag between; broken where no lobe's under it
+    // (each piece its own string, lit along from the middle out)
+    const PITCH = 14 * K, step = 1.5, top = (x: number, z: number) => { let y = -Infinity;
+      for (const l of lobes) { const d = Math.hypot(l.x - x, l.z - z); if (d < l.r * 0.9) y = Math.max(y, l.y + l.r * 0.6 * Math.sqrt(1 - (d / l.r) ** 2)); }
+      return y; };
+    const R0 = Math.max(dome.rx, dome.rz), sx = dome.rx / R0, sz = dome.rz / R0;
+    for (let k = 0; k < wrap; k++) {
+      let piece: V3[] = [], th = (k / wrap) * Math.PI * 2 + H(k, 51) * 0.6, r = 4;
+      const done = () => { if (piece.length > 3) strings.push({ kind: "wrap", spans: piece.slice(1).map((b, i) => ({ a: piece[i], b, sag: 0.25 })) }); piece = []; };
+      while (r < R0 * 1.02) {
+        const x = dome.cx + Math.cos(th) * r * sx, z = dome.cz + Math.sin(th) * r * sz, y = top(x, z);
+        if (y > -Infinity) piece.push([x, y + 0.3, z]); else done();
+        th += step / Math.max(r, 2); r = 4 + (PITCH * (th - (k / wrap) * Math.PI * 2)) / (Math.PI * 2);
+      }
+      done();
+    }
+  } else tops.forEach((a, ai) => {
     // (most to the nearest clump past 12 m; now and then a long one across a gap, to a clump 30 to 55 m off)
     const long = H(ai, 41) < 0.18, near = long ? 30 * K : 12 * K, far = long ? 55 * K : 34 * K;
     let best: Lobe | null = null, bd = Infinity;
@@ -289,12 +312,12 @@ export function makeCrown({ outline: O, floor, seed, open = [], gap = true }: Cr
     const key = [lobes.indexOf(a), lobes.indexOf(best)].sort().join();
     if (seen.has(key)) return; seen.add(key);
     const dx = (best.x - a.x) / bd, dz = (best.z - a.z) / bd, ha = 0.5 + 0.5 * H(ai, 42), hb = 0.5 + 0.5 * H(ai, 43);
-    strings.push({ kind: "drape", spans: [{ a: [a.x + dx * a.r * 0.55, a.y + a.r * ha, a.z + dz * a.r * 0.55], b: [best.x - dx * best.r * 0.55, best.y + best.r * hb, best.z - dz * best.r * 0.55], sag: (long ? 2.5 : 0.8) + (long ? 3 : 2) * H(ai, 44) }], space: space(ai, 45) });
+    strings.push({ kind: "drape", spans: [{ a: [a.x + dx * a.r * 0.55, a.y + a.r * ha, a.z + dz * a.r * 0.55], b: [best.x - dx * best.r * 0.55, best.y + best.r * hb, best.z - dz * best.r * 0.55], sag: (long ? 2.5 : 0.8) + (long ? 3 : 2) * H(ai, 44) }] });
   });
-  for (const a of tops) if (hash2(a.seed, 3, seed) < 0.45) {
+  if (!wrap) for (const a of tops) if (hash2(a.seed, 3, seed) < 0.45) {
     const h = (k: number) => hash2(a.seed, k, seed);
     strings.push({ kind: "garland", x: a.x, y: a.y, z: a.z, r: a.r * (0.9 + 0.2 * h(8)), el: 0.1 + 0.6 * h(5), o: h(7) * Math.PI * 2,
-      arc: h(9) < 0.4 ? 1 : 0.35 + 0.5 * h(10), tilt: 0.35 * h(11), tiltAt: h(12) * Math.PI * 2, wob: 0.04 + 0.22 * h(13), freq: 2 + Math.floor(4 * h(14)), space: 0.75 + 0.6 * h(15) });
+      arc: h(9) < 0.4 ? 1 : 0.35 + 0.5 * h(10), tilt: 0.35 * h(11), tiltAt: h(12) * Math.PI * 2, wob: 0.04 + 0.22 * h(13), freq: 2 + Math.floor(4 * h(14)) });
   }
   if (gap) { const o = terrace[0], rr = o.r + 9, pts: V3[] = [];
     for (let i = 0; i <= 12; i++) { const a = (i / 12) * Math.PI * 2, y = 14 + 3 * Math.sin(a * 3); let d = rr; // (out past every line of sight down to the gap)
@@ -305,7 +328,7 @@ export function makeCrown({ outline: O, floor, seed, open = [], gap = true }: Cr
   // (no string across the gap either: a span whose wire would hang on a line of sight to the Terrace is left out)
   for (const s of strings) if (s.kind !== "garland") s.spans = s.spans.filter(p => spanClear(shape, p));
   const kept = strings.filter(s => s.kind === "garland" || s.spans.length);
-  return { lobes, limbs, strings: kept, dome, terrace, terraceOutline, notchFrom, takeoff, open, gap, floor };
+  return { lobes, limbs, strings: kept, dome, terrace, terraceOutline, notchFrom, takeoff, open, gap, floor, wrap };
 }
 
 /** A bulb of the crown's lights: where (on the plan, y over the floor), its colour's place in the palette, how far along its string
@@ -320,9 +343,9 @@ export const stringHung = (si: number, density: number, seed = 0): boolean => de
 export function crownBulbs(c: Crown, spacing: number, seed = 0, density = 1): Bulb[] {
   const out: Bulb[] = [];
   c.strings.forEach((s, si) => {
-    if (!stringHung(si, density, seed)) return;
+    if (s.kind !== "wrap" && !stringHung(si, density, seed)) return; // (the strands wound round it are always hung: how many is its own knob)
     const o = Math.floor(hash2(si, 11, seed) * 6), push = (x: number, y: number, z: number, i: number, u: number) => out.push({ x, y, z, colour: (i + o) % 6, u, string: si, phase: hash2(si * 977 + i, 13, seed) });
-    const gap = spacing * (s.space ?? 1);
+    const gap = spacing;
     if (s.kind === "garland") {
       const arc = s.arc ?? 1, whole = arc >= 1, n = Math.max(whole ? 6 : 3, Math.round((2 * Math.PI * s.r * Math.cos(s.el) * arc) / gap));
       for (let i = 0; i < n; i++) { const u = whole ? i / n : i / (n - 1), p = garlandPoint(s, u); push(p[0], p[1], p[2], i, u); }

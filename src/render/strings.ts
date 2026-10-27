@@ -214,11 +214,11 @@ export class StringLightsView {
   /** The lines of one area, and when each bulb switches on (as the party's front passes it). */
   private build(lines: StringLine[], on: (x: number, z: number) => number, centre: { x: number; z: number }, seed: number, cell: readonly [number, number]): THREE.Group {
     const L = this.game.tuning.stringLights, h = L.height, own = L.mode === "areaNeon" ? new THREE.Color(`rgb(${(NEON as Record<string, number[]>)[areaNeons(this.game.map, cell as [number, number])[0]].join(",")})`) : null, bulbs: number[] = [], cols: number[] = [], data: number[] = [], wire: number[] = [], sway: number[] = [];
-    // (each line hung its own way, from its seed: its two ends at their own heights, its own sag and bulb spacing, and now and then a
+    // (each line hung its own way, from its seed: its two ends at their own heights, its own sag, and now and then a
     // strand let hang off its end; Ed, 2026-10-27, of the crown's: "String lights on the treehouse seem to all have the same shape")
     const rnd = (sd: number, k: number) => { const x = Math.sin(sd * 12.9898 + k * 78.233) * 43758.5453; return x - Math.floor(x); };
     lines.forEach((l, li) => {
-      const ha = h + (rnd(l.seed, 1) - 0.5) * 2.4, hb = h + (rnd(l.seed, 2) - 0.5) * 2.4, sag = L.sag * (0.5 + 1.2 * rnd(l.seed, 3)), gap = L.bulbSpacing * (0.75 + 0.6 * rnd(l.seed, 4));
+      const ha = h + (rnd(l.seed, 1) - 0.5) * 2.4, hb = h + (rnd(l.seed, 2) - 0.5) * 2.4, sag = L.sag * (0.5 + 1.2 * rnd(l.seed, 3)), gap = L.bulbSpacing;
       const len = Math.hypot(l.bx - l.ax, l.bz - l.az), n = Math.max(2, Math.round(len / gap));
       const at = (t: number): [number, number, number] => [l.ax + (l.bx - l.ax) * t, ha + (hb - ha) * t - sag * 4 * t * (1 - t) * (len / 8), l.az + (l.bz - l.az) * t];
       for (let i = 0; i <= 16; i++) { // the wire, as segments of the sag

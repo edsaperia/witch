@@ -93,7 +93,6 @@ describe("the great oak's crown", () => {
     const spread = (v: number[]) => Math.max(...v) - Math.min(...v);
     const spans = c.strings.flatMap(s => (s.kind === "swag" || s.kind === "drape" ? s.spans : []));
     expect(spread(spans.map(p => p.sag))).toBeGreaterThan(1.5); // (their sag)
-    expect(spread(c.strings.map(s => s.space ?? 1))).toBeGreaterThan(0.4); // (their bulbs' spacing)
     const g = c.strings.filter(s => s.kind === "garland");
     expect(g.some(s => (s.arc ?? 1) < 1) && g.some(s => (s.arc ?? 1) >= 1)).toBe(true); // (part way round and all the way)
     expect(spread(g.map(s => s.tilt ?? 0))).toBeGreaterThan(0.15);

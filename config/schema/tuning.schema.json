@@ -1406,6 +1406,10 @@
                 "warm": {
                   "type": "number",
                   "minimum": 0
+                },
+                "wrap": {
+                  "type": "number",
+                  "minimum": 0
                 }
               },
               "required": [
@@ -1414,7 +1418,8 @@
                 "cutFade",
                 "whole",
                 "lights",
-                "warm"
+                "warm",
+                "wrap"
               ],
               "additionalProperties": false
             },

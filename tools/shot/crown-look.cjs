@@ -3,6 +3,8 @@
 // with the crown's knobs set live (the tuning's treehouse.house.crown lights and warm; stringLights.more for the party areas).
 //   lights-<1|0.5|0.25>-<view>.png   the crown's strings of lights at today's density, half and a quarter (the Terrace, on approach)
 //   look-<before|after>-<view>.png   the house's warm light up into the crown, off and on (a room, the Terrace, on approach in flight)
+//   wrap-<0|1|2>-<view>.png          the crown's lights as they are and wound round it in one or two strands (Ed's spiral; from above,
+//                                    on approach, the Terrace: ONLY=wrap)
 //   AS=<name>: <name>-<view>.png     the three views as the build's own tuning has them (ONLY=as; a build of the base branch and one
 //                                    of a change, for before and after frames: DIST=)
 //   party-<1|2>-dancefloor.png       the party areas' runs of lights as tuned and twice as many (on foot under the home area's first run)
@@ -38,12 +40,14 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
     await page.evaluate(() => { window.witch.game.islandReady = true; const d = window.witch.tuning.treehouse.house.dark; if (d) d.reveal = 0.5; });
     const step = (n, c = {}) => page.evaluate(([n, c]) => { const w = window.witch; for (let i = 0; i < n; i++) w.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...c }, 1 / 60, i === n - 1 || i % 6 === 5); }, [n, c]);
     const settle = async () => { for (let round = 0, calm = 0; calm < 2 && round < 60; round++) { await step(10); if ((await page.evaluate(() => window.witch.view.assets.pending)) === 0) calm++; else { calm = 0; await page.waitForTimeout(1500); } } await step(30); };
-    const knobs = k => page.evaluate(k => { const t = window.witch.tuning, C = t.treehouse.house.crown; for (const n of ["lights", "warm"]) if (k[n] !== undefined) C[n] = k[n]; if (k.more !== undefined && t.stringLights.more !== k.more) { t.stringLights.more = k.more; window.witch.view.strings.clear(); } }, k);
+    const knobs = k => page.evaluate(k => { const t = window.witch.tuning, C = t.treehouse.house.crown; for (const n of ["lights", "warm", "wrap"]) if (k[n] !== undefined) C[n] = k[n]; if (k.more !== undefined && t.stringLights.more !== k.more) { t.stringLights.more = k.more; window.witch.view.strings.clear(); } }, k);
     const map = await page.evaluate(() => { const m = window.witch.game.map; return { th: m.treehouse, df: m.dancefloor }; });
     // the views: a room (the shot's own placing), the Terrace, on approach in flight (south of the oak in the treetops, coming in)
     const VIEWS = {
       room: () => page.evaluate(id => window.witch.shot(`room:${id}`), ROOM),
       terrace: () => page.evaluate(() => window.witch.shot("room:terrace")),
+      // (from above: in the treetops over the oak's middle, looking down on its crown)
+      above: () => page.evaluate(() => { const g = window.witch.game, T = g.map.treehouse, b = g.witches[0].body; g.witches[0].body = { ...b, x: T.x - 10, z: T.z - 5, vx: 0, vz: 0, mode: "treetop", lift: 1, perch: false, seated: false }; }),
       approach: () => page.evaluate(() => { const g = window.witch.game, T = g.map.treehouse, b = g.witches[0].body; g.witches[0].body = { ...b, x: T.x + 6, z: T.z + 46, vx: 0, vz: 0, mode: "treetop", lift: 1, perch: false, seated: false }; }),
       // (the party area's runs of lights hang under its trees' crowns, only specks from the treetops: on foot a little south of the
       // middle of its first run's lines, as the game hung them)
@@ -54,6 +58,8 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
     const shot = async name => { await settle(); await page.screenshot({ path: path.join(out, name + ".png"), timeout: 300000 }); log(name); };
     log("map", JSON.stringify(map), ROOM);
     if (AS) for (const v of ["room", "terrace", "approach"]) { await VIEWS[v](); await shot(`${AS}-${v}`); }
+    // (the lights wound round the crown in strands, Ed's spiral, against its strings as they are: wrap 0, 1 and 2)
+    if (ONLY.has("wrap")) for (const v of ["above", "approach", "terrace"]) { await VIEWS[v](); for (const n of [0, 1, 2]) { await knobs({ wrap: n }); await shot(`wrap-${n}-${v}`); } }
     if (ONLY.has("lights")) for (const v of ["terrace", "approach"]) { await VIEWS[v](); for (const d of [1, 0.5, 0.25]) { await knobs({ lights: d, warm: 0 }); await shot(`lights-${d}-${v}`); } }
     if (ONLY.has("look")) for (const v of ["room", "terrace", "approach"]) { await VIEWS[v](); for (const [n, k] of [["before", { lights: 1, warm: 0 }], ["after", { lights: 1, warm: WARM }]]) { await knobs(k); await shot(`look-${n}-${v}`); } }
     if (ONLY.has("party")) log("party areas", JSON.stringify(await page.evaluate(() => { const g = window.witch.game, S = window.witch.view.strings; return { areas: [...g.party.areas.keys()], built: [...(S.built?.entries() ?? [])].map(([k, v]) => [k, v.lines?.length]) }; })));
