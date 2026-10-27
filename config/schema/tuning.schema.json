@@ -10501,7 +10501,7 @@
             "areas": {
               "type": "object",
               "properties": {
-                "bog": {
+                "tundra-bog": {
                   "type": "object",
                   "properties": {
                     "hazeHue": {
@@ -11005,7 +11005,7 @@
                   ],
                   "additionalProperties": false
                 },
-                "garden": {
+                "snowy-taiga": {
                   "type": "object",
                   "properties": {
                     "hazeHue": {
@@ -11066,7 +11066,7 @@
                 }
               },
               "required": [
-                "bog",
+                "tundra-bog",
                 "wetland",
                 "beaver-pond",
                 "mangrove-channel",
@@ -11084,7 +11084,7 @@
                 "old-pinewood",
                 "jungle-understory",
                 "honeysuckle-tangle",
-                "garden",
+                "snowy-taiga",
                 "berry-thicket",
                 "home"
               ],

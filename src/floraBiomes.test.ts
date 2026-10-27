@@ -18,7 +18,7 @@ const BIOME_TREES: Record<string, string[]> = {
 };
 
 // The 17 areas moved out to the biomes on 2026-10-23, being re-themed by their own builder: checked once that lands.
-const RETHEMING = new Set(["garden", "bog", "rocky-slope", "deadwood", "tangly-forest", "ravine", "log-pile", "moor", "thorn-scrub", "eyrie",
+const RETHEMING = new Set(["rocky-slope", "deadwood", "tangly-forest", "ravine", "log-pile", "moor", "thorn-scrub", "eyrie",
   "meadow", "berry-thicket", "stone-shrine"]);
 
 const graded = AREAS.map(A => ({ A, k: KINDS_TABLE[(A as { creature?: string }).creature ?? ""], F: (AREA_FLORA as unknown as Record<string, { species: [string, number][] }>)[A.id] }))
