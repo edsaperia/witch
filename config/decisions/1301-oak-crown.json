@@ -1,0 +1,36 @@
+{
+  "pr": 1301,
+  "group": "Oak crown",
+  "decisions": [
+    {
+      "id": "crownLights",
+      "pr": 1301,
+      "group": "Oak crown",
+      "label": "Crown's string lights (share hung)",
+      "note": "How many of the great oak's strings of lights are hung, whole strings kept by a hash, so each that stays looks as it was (Ed, 2026-10-27, on the mock previews/ed/crown-look/: \"lights at half\"). 0.5 as Ed chose; 1 every string, as before. The crown's grown again as it's moved.",
+      "control": { "type": "slider", "min": 0, "max": 1, "step": 0.05 },
+      "default": 0.5,
+      "apply": { "knob": "treehouse.house.crown.lights" }
+    },
+    {
+      "id": "crownWarm",
+      "pr": 1301,
+      "group": "Oak crown",
+      "label": "House's warm light up into the crown",
+      "note": "The house's warm light spilling up onto the crown's lobes and limbs over its open rooms, their undersides the most, in flat steps (Ed, 2026-10-27, on the mock: \"warm light only\"; it ties the crown to the rooms under it). 1 as Ed chose from the mock; 0 none, as before; up to 3 for more.",
+      "control": { "type": "slider", "min": 0, "max": 3, "step": 0.1 },
+      "default": 1,
+      "apply": { "knob": "treehouse.house.crown.warm" }
+    },
+    {
+      "id": "partyLightsMore",
+      "pr": 1301,
+      "group": "Oak crown",
+      "label": "Party areas' string lights (times as many)",
+      "note": "Times as many runs of string lights in each partified area, their spread apart shrunk to fit (Ed, 2026-10-27: \"the party-area slider\"; maybe more in regular party areas). 1 as today. Every lit area's lights are hung again as it's moved.",
+      "control": { "type": "slider", "min": 1, "max": 4, "step": 0.25 },
+      "default": 1,
+      "apply": { "knob": "stringLights.more" }
+    }
+  ]
+}

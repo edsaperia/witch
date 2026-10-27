@@ -1398,13 +1398,23 @@
                 },
                 "whole": {
                   "type": "boolean"
+                },
+                "lights": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "warm": {
+                  "type": "number",
+                  "minimum": 0
                 }
               },
               "required": [
                 "on",
                 "seed",
                 "cutFade",
-                "whole"
+                "whole",
+                "lights",
+                "warm"
               ],
               "additionalProperties": false
             },
@@ -7882,6 +7892,10 @@
         "chaseSpeed": {
           "type": "number",
           "minimum": 0
+        },
+        "more": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -7899,7 +7913,8 @@
         "palette",
         "mode",
         "twinkle",
-        "chaseSpeed"
+        "chaseSpeed",
+        "more"
       ],
       "additionalProperties": false
     },

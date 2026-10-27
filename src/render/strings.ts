@@ -199,6 +199,8 @@ export class StringLightsView {
   /** The crown's lights (setCrown), and how long each string takes to light from its start to its end (s). */
   private crown: { view: CrownView; bulbs: THREE.Points; wire: THREE.LineSegments } | null = null;
   private static readonly CROWN_RUN = 3;
+  /** The party areas' runs (stringLights.more) the lights were hung with. */
+  private more: number | null = null;
 
   constructor(private scene: THREE.Scene, private game: Game) {
     const L = game.tuning.stringLights;
@@ -274,6 +276,8 @@ export class StringLightsView {
     const g = this.game, L = g.tuning.stringLights;
     this.updateCrown();
     if (!L.on) return;
+    // (the party areas' slider moved on the pause page: every area's lights hung again, a couple a frame)
+    if ((L.more ?? 1) !== this.more) { if (this.more !== null) this.clear(); this.more = L.more ?? 1; }
     // From the treetops the bulbs hang under the canopy: let them glimmer through it as specks.
     this.bulbMat.depthTest = g.witch.lift < 0.5;
     let builds = 0;

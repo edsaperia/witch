@@ -1,19 +1,20 @@
 // The great oak's crown's look, a mock for Ed (the coordinator, 2026-10-27, from Ed's feedback: "the string lights are too dense on
 // the treehouse", "the whole crown is mud ... doesn't feel integrated with the house interior"): from the built game, the same views
-// with the crown's knobs set live (the tuning's treehouse.house.crown lights, warm and rim; stringLights.more for the party areas).
+// with the crown's knobs set live (the tuning's treehouse.house.crown lights and warm; stringLights.more for the party areas).
 //   lights-<1|0.5|0.25>-<view>.png   the crown's strings of lights at today's density, half and a quarter (the Terrace, on approach)
-//   look-<before|after>-<view>.png   the house's warm light up into the crown and the moon on the great limbs' edges, off and on
-//                                    (a room, the Terrace, on approach in flight)
+//   look-<before|after>-<view>.png   the house's warm light up into the crown, off and on (a room, the Terrace, on approach in flight)
+//   AS=<name>: <name>-<view>.png     the three views as the build's own tuning has them (ONLY=as; a build of the base branch and one
+//                                    of a change, for before and after frames: DIST=)
 //   party-<1|2>-dancefloor.png       the party areas' runs of lights as tuned and twice as many (on foot under the home area's first run)
 // then times drawn frames before and after the look at each view (cost.json: relative only, the cloud's software renderer).
-//   npm run build && node tools/shot/crown-look.cjs [out dir]   (SEED=160271, SIZE=1900x1240, ROOM=parlour, WARM=1, RIM=1,
+//   npm run build && node tools/shot/crown-look.cjs [out dir]   (SEED=160271, SIZE=1900x1240, ROOM=parlour, WARM=1, AS=,
 //   FRAMES=4 timed a variant, ROUNDS=3 of each (the median), ONLY=lights,look,party,cost, DIST=dist)
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist"));
 const SEED = process.env.SEED || "160271", [W, H] = (process.env.SIZE || "1900x1240").split("x").map(Number), ROOM = process.env.ROOM || "parlour";
-const WARM = Number(process.env.WARM ?? 1), RIM = Number(process.env.RIM ?? 1), FRAMES = Number(process.env.FRAMES ?? 4), ROUNDS = Number(process.env.ROUNDS ?? 3);
-const ONLY = new Set((process.env.ONLY || "lights,look,party,cost").split(","));
+const WARM = Number(process.env.WARM ?? 1), AS = process.env.AS || "", FRAMES = Number(process.env.FRAMES ?? 4), ROUNDS = Number(process.env.ROUNDS ?? 3);
+const ONLY = new Set((process.env.ONLY || (process.env.AS ? "as" : "lights,look,party,cost")).split(","));
 const out = path.resolve(process.argv[2] || path.join(__dirname, "../../previews/shot/crown-look"));
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".woff2": "font/woff2", ".ogg": "audio/ogg" };
 const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000).toFixed(0)} s]`, ...a);
@@ -37,7 +38,7 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
     await page.evaluate(() => { window.witch.game.islandReady = true; const d = window.witch.tuning.treehouse.house.dark; if (d) d.reveal = 0.5; });
     const step = (n, c = {}) => page.evaluate(([n, c]) => { const w = window.witch; for (let i = 0; i < n; i++) w.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...c }, 1 / 60, i === n - 1 || i % 6 === 5); }, [n, c]);
     const settle = async () => { for (let round = 0, calm = 0; calm < 2 && round < 60; round++) { await step(10); if ((await page.evaluate(() => window.witch.view.assets.pending)) === 0) calm++; else { calm = 0; await page.waitForTimeout(1500); } } await step(30); };
-    const knobs = k => page.evaluate(k => { const t = window.witch.tuning, C = t.treehouse.house.crown; for (const n of ["lights", "warm", "rim"]) if (k[n] !== undefined) C[n] = k[n]; if (k.more !== undefined && t.stringLights.more !== k.more) { t.stringLights.more = k.more; window.witch.view.strings.clear(); } }, k);
+    const knobs = k => page.evaluate(k => { const t = window.witch.tuning, C = t.treehouse.house.crown; for (const n of ["lights", "warm"]) if (k[n] !== undefined) C[n] = k[n]; if (k.more !== undefined && t.stringLights.more !== k.more) { t.stringLights.more = k.more; window.witch.view.strings.clear(); } }, k);
     const map = await page.evaluate(() => { const m = window.witch.game.map; return { th: m.treehouse, df: m.dancefloor }; });
     // the views: a room (the shot's own placing), the Terrace, on approach in flight (south of the oak in the treetops, coming in)
     const VIEWS = {
@@ -52,25 +53,26 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
     };
     const shot = async name => { await settle(); await page.screenshot({ path: path.join(out, name + ".png"), timeout: 300000 }); log(name); };
     log("map", JSON.stringify(map), ROOM);
-    if (ONLY.has("lights")) for (const v of ["terrace", "approach"]) { await VIEWS[v](); for (const d of [1, 0.5, 0.25]) { await knobs({ lights: d, warm: 0, rim: 0 }); await shot(`lights-${d}-${v}`); } }
-    if (ONLY.has("look")) for (const v of ["room", "terrace", "approach"]) { await VIEWS[v](); for (const [n, k] of [["before", { lights: 1, warm: 0, rim: 0 }], ["after", { lights: 1, warm: WARM, rim: RIM }]]) { await knobs(k); await shot(`look-${n}-${v}`); } }
+    if (AS) for (const v of ["room", "terrace", "approach"]) { await VIEWS[v](); await shot(`${AS}-${v}`); }
+    if (ONLY.has("lights")) for (const v of ["terrace", "approach"]) { await VIEWS[v](); for (const d of [1, 0.5, 0.25]) { await knobs({ lights: d, warm: 0 }); await shot(`lights-${d}-${v}`); } }
+    if (ONLY.has("look")) for (const v of ["room", "terrace", "approach"]) { await VIEWS[v](); for (const [n, k] of [["before", { lights: 1, warm: 0 }], ["after", { lights: 1, warm: WARM }]]) { await knobs(k); await shot(`look-${n}-${v}`); } }
     if (ONLY.has("party")) log("party areas", JSON.stringify(await page.evaluate(() => { const g = window.witch.game, S = window.witch.view.strings; return { areas: [...g.party.areas.keys()], built: [...(S.built?.entries() ?? [])].map(([k, v]) => [k, v.lines?.length]) }; })));
-    if (ONLY.has("party")) { await VIEWS.dancefloor(); for (const m of [1, 2]) { await knobs({ lights: 1, warm: 0, rim: 0, more: m }); await shot(`party-${m}-dancefloor`); } await knobs({ more: 1 }); }
+    if (ONLY.has("party")) { await VIEWS.dancefloor(); for (const m of [1, 2]) { await knobs({ lights: 1, warm: 0, more: m }); await shot(`party-${m}-dancefloor`); } await knobs({ more: 1 }); }
     if (ONLY.has("cost")) {
       // drawn frames, the look off and on in turn at each view (ABAB, so a drift over the run falls on both)
       const cost = {};
       // (each frame timed on its own: now and then one comes back in a few milliseconds, not really drawn, and is left out)
       const timed = () => page.evaluate(n => { const w = window.witch, t = []; for (let i = 0; i < n; i++) { const a = performance.now(); w.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 60, true); t.push(performance.now() - a); } return t; }, FRAMES);
       for (const v of ["room", "terrace", "approach"]) {
-        await VIEWS[v](); await knobs({ lights: 1, warm: 0, rim: 0 }); await settle();
+        await VIEWS[v](); await knobs({ lights: 1, warm: 0 }); await settle();
         const r = { before: [], after: [] };
-        for (let i = 0; i < ROUNDS; i++) for (const [n, k] of [["before", { warm: 0, rim: 0 }], ["after", { warm: WARM, rim: RIM }]]) { await knobs(k); await timed(); r[n].push(...(await timed()).filter(ms => ms > 100)); }
+        for (let i = 0; i < ROUNDS; i++) for (const [n, k] of [["before", { warm: 0 }], ["after", { warm: WARM }]]) { await knobs(k); await timed(); r[n].push(...(await timed()).filter(ms => ms > 100)); }
         // (the median of the rounds: now and then a round's frames come back far quicker than any other, a frame not really drawn)
         const mid = a => [...a].sort((x, y) => x - y)[Math.floor(a.length / 2)];
         cost[v] = { before: +mid(r.before).toFixed(1), after: +mid(r.after).toFixed(1), change: +((mid(r.after) / mid(r.before) - 1) * 100).toFixed(1), rounds: r };
         log("cost", v, JSON.stringify(cost[v]));
       }
-      fs.writeFileSync(path.join(out, "cost.json"), JSON.stringify({ size: `${W}x${H}`, frames: FRAMES, warm: WARM, rim: RIM, ms: cost }, null, 2));
+      fs.writeFileSync(path.join(out, "cost.json"), JSON.stringify({ size: `${W}x${H}`, frames: FRAMES, warm: WARM, ms: cost }, null, 2));
     }
   } finally { await browser.close(); server.close(); }
   console.log(errors.length ? "errors: " + errors.slice(0, 3).join(" | ") : "no page errors");
