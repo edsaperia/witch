@@ -525,7 +525,11 @@ label.check input { accent-color: var(--accent); }
     return dt <= 0 ? s.bpm : dt < s.dur ? s.bpm + (s.bpmTo - s.bpm) * dt / s.dur : s.bpmTo;
   }
   function timeAt(c, beat) {
-    const s = segAtBeat(c, beat), db2 = beat - s.beat;
+    const s = segAtBeat(c, beat), next = c.segs[c.segs.indexOf(s) + 1];
+    return next ? Math.min(next.time, segTime(s, beat)) : segTime(s, beat);
+  }
+  function segTime(s, beat) {
+    const db2 = beat - s.beat;
     if (db2 <= 0) return s.time + db2 * 60 / s.bpm;
     const rb = rampBeats(s);
     if (s.dur > 0 && db2 < rb) {
@@ -19190,7 +19194,7 @@ registerProcessor("witch-fof", WitchFof);
       s.loop = length > 1.5;
       if (this.notePitch !== 1) s.playbackRate.value = this.notePitch;
       const at2 = t + (this.stems ? this.phaseAt : 0);
-      s.start(t, at2 * 7.31 % 1 * 0.5);
+      s.start(t, (at2 * 7.31 % 1 + 1) % 1 * 0.5);
       s.stop(t + length);
       return s;
     }
