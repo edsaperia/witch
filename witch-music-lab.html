@@ -19932,6 +19932,10 @@ registerProcessor("witch-fof", WitchFof);
       if (B.state === "dropped" || this.bars.get(B.bar) !== B) return;
       const E2 = this.engine, c = this.ctx, now = c.currentTime, at2 = E2.audioAt(B.g);
       this.stats.rendered++;
+      if (!Number.isFinite(at2)) {
+        B.state = "dropped";
+        return;
+      }
       if (at2 < now) this.stats.late++;
       if (at2 + B.dur < now) {
         B.state = "dropped";
