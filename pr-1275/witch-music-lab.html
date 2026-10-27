@@ -5550,7 +5550,7 @@ label.check input { accent-color: var(--accent); }
       "tangly-forest": { treeDensity: 1, groundCover: { density: 0.6, kinds: ["blades", "fern"] } },
       "wispy-forest": { treeDensity: 1, groundCover: { density: 0.5, kinds: ["blades", "moss"] } },
       "hazel-forest": { treeDensity: 1, groundCover: { density: 0.5, kinds: ["fern", "clover"] } },
-      garden: { treeDensity: 0.75, groundCover: { density: 0.6, kinds: ["clover", "blades"] } },
+      "snowy-taiga": { treeDensity: 0.85, groundCover: { density: 0.5, kinds: ["moss", "blades"] } },
       "twiggy-forest": { treeDensity: 1, groundCover: { density: 0.4, kinds: ["moss", "blades"] } },
       ancient: { treeDensity: 0.9, groundCover: { density: 0.6, kinds: ["moss", "fern"] } },
       "jungle-understory": { treeDensity: 0.9, groundCover: { density: 0.6, kinds: ["moss", "fern"] } },
@@ -5561,7 +5561,7 @@ label.check input { accent-color: var(--accent); }
       wetland: { treeDensity: 0.75, groundCover: { density: 0.8, kinds: ["reeds", "moss"] } },
       "mangrove-channel": { treeDensity: 0.8, groundCover: { density: 0.7, kinds: ["reeds", "moss"] } },
       "rocky-slope": { treeDensity: 0.75, groundCover: { density: 0.25, kinds: ["moss", "blades"] } },
-      bog: { treeDensity: 0.7, groundCover: { density: 0.7, kinds: ["reeds", "moss"] } },
+      "tundra-bog": { treeDensity: 0.7, groundCover: { density: 0.7, kinds: ["reeds", "moss"] } },
       deadwood: { treeDensity: 0.8, groundCover: { density: 0.25, kinds: ["moss"] } },
       "jungle-cave": { treeDensity: 0.75, groundCover: { density: 0.2, kinds: ["moss", "fern"] } },
       grassland: { treeDensity: 0.55, groundCover: { density: 1, kinds: ["blades", "clover"] } },
@@ -7666,11 +7666,12 @@ label.check input { accent-color: var(--accent); }
     "twiggy-forest": ["charcoal-hut", "a charcoal burner's hut of sticks, its mound smouldering", 1],
     "ancient": ["root-arch", "a great arch of roots over mossy stones", 1.1],
     "jungle-understory": ["turf-hut", "a log cabin with a turf roof", 1.15],
+    "snowy-taiga": ["turf-hut", "a trapper's log cabin with a turf roof", 1.15],
     "alder-forest": ["heron-rookery", "an alder holding herons' stick nests", 1],
     "meadow": ["sundial", "a moonlit sundial on a stone dais in a ring of flowers", 1.2],
     "berry-thicket": ["bear-den", "a bear's den in a bramble mound", 1.1],
     "wetland": ["stilt-hut", "a fisher's hut on stilts over a pool", 1.1],
-    "bog": ["bog-shrine", "a carved post shrine to the bog, will-o'-wisps over the pool", 1.1],
+    "tundra-bog": ["bog-shrine", "a carved post shrine to the bog, will-o'-wisps over the pool", 1.1],
     "deadwood": ["raven-tree", "a dead tree where the ravens gather", 1],
     "grassland": ["barrow", "a barrow with a stone doorway", 1],
     "heath": ["cairn", "a tall cairn with an old beacon basket", 1.4],
@@ -11981,17 +11982,11 @@ label.check input { accent-color: var(--accent); }
   // art/areas/bluebell-glade/flora.js
   var AREA_FLORA_BLUEBELL_GLADE = { species: [["beech", 0.5], ["holly", 0.2], ["cherry", 0.15], ["whitebeam", 0.15]], palette: { sat: 1.1, val: 1.1 } };
 
-  // art/areas/bog/flora.js
-  var AREA_FLORA_BOG = { species: [["birch", 0.5, { dark: true }], ["pine", 0.3], ["aspen", 0.2]], palette: { sat: 0.75, val: 0.85 } };
-
   // art/areas/deadwood/flora.js
   var AREA_FLORA_DEADWOOD = { species: [["broad", 0.5, { bare: true }], ["elm", 0.25, { bare: true }], ["aspen", 0.25, { bare: true }]], palette: { sat: 0.7, val: 0.8 } };
 
   // art/areas/fern-forest/flora.js
   var AREA_FLORA_FERN_FOREST = { species: [["birch", 0.45, { variant: "mossy" }], ["oak", 0.25], ["rowan", 0.2], ["aspen", 0.1]], palette: { sat: 1, val: 1.05 } };
-
-  // art/areas/garden/flora.js
-  var AREA_FLORA_GARDEN = { species: [["willow", 0.4], ["cherry", 0.3], ["crabApple", 0.15], ["vinewood", 0.15]], palette: { sat: 1.15, val: 1.05 } };
 
   // art/areas/grassland/flora.js
   var AREA_FLORA_GRASSLAND = { species: [["flat", 0.3], ["hawthorn", 0.25], ["crabApple", 0.2], ["weepingBirch", 0.15], ["whitebeam", 0.1]], palette: { sat: 1, val: 1.1 } };
@@ -12038,6 +12033,9 @@ label.check input { accent-color: var(--accent); }
   // art/areas/rocky-slope/flora.js
   var AREA_FLORA_ROCKY_SLOPE = { species: [["rowan", 0.4], ["pine", 0.3], ["whitebeam", 0.3]], palette: { sat: 0.8, val: 1 } };
 
+  // art/areas/snowy-taiga/flora.js
+  var AREA_FLORA_SNOWY_TAIGA = { species: [["fir", 0.35], ["pine", 0.2], ["larch", 0.1], ["rowan", 0.2], ["aspen", 0.15]], palette: { sat: 0.8, val: 0.9 } };
+
   // art/areas/stone-shrine/flora.js
   var AREA_FLORA_STONE_SHRINE = { species: [["yew", 0.6], ["holly", 0.25], ["hawthorn", 0.15]], palette: { sat: 0.9, val: 0.9 } };
 
@@ -12046,6 +12044,9 @@ label.check input { accent-color: var(--accent); }
 
   // art/areas/thorn-scrub/flora.js
   var AREA_FLORA_THORN_SCRUB = { species: [["acacia", 0.35], ["hawthorn", 0.35], ["juniper", 0.3]], palette: { sat: 0.7, val: 0.8 } };
+
+  // art/areas/tundra-bog/flora.js
+  var AREA_FLORA_TUNDRA_BOG = { species: [["birch", 0.4, { dark: true }], ["larch", 0.2], ["juniper", 0.1], ["aspen", 0.2], ["willow", 0.1]], palette: { sat: 0.75, val: 0.88 } };
 
   // art/areas/twiggy-forest/flora.js
   var AREA_FLORA_TWIGGY_FOREST = { species: [["ash", 0.5], ["elm", 0.25], ["aspen", 0.25]], palette: { sat: 0.9, val: 1.05 } };
@@ -12058,7 +12059,7 @@ label.check input { accent-color: var(--accent); }
 
   // art/areas/index.js
   var AREA_FOLDER_RECIPES = [FEN, MANGROVE_HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, CACTUS_FLATS, RED_CANYON, BAMBOO_JUNGLE, TEMPLE_JUNGLE, RIVER_JUNGLE, ROOKERY, MOONPOOL, DRAGON_SCRUB, SNOWFIELD, CRAGS, ICEFALL, MISTWOOD, TROLLWOOD, CINDER_SLOPES, DROWNED_WOOD, DESERT_RUIN, STEP_PYRAMID];
-  var AREA_FOLDER_FLORA = { "alder-forest": AREA_FLORA_ALDER_FOREST, ancient: AREA_FLORA_ANCIENT, "beaver-pond": AREA_FLORA_BEAVER_POND, "berry-thicket": AREA_FLORA_BERRY_THICKET, "bluebell-glade": AREA_FLORA_BLUEBELL_GLADE, bog: AREA_FLORA_BOG, deadwood: AREA_FLORA_DEADWOOD, "fern-forest": AREA_FLORA_FERN_FOREST, garden: AREA_FLORA_GARDEN, grassland: AREA_FLORA_GRASSLAND, "hazel-forest": AREA_FLORA_HAZEL_FOREST, heath: AREA_FLORA_HEATH, "honeysuckle-tangle": AREA_FLORA_HONEYSUCKLE_TANGLE, "jungle-cave": AREA_FLORA_JUNGLE_CAVE, "jungle-understory": AREA_FLORA_JUNGLE_UNDERSTORY, "log-pile": AREA_FLORA_LOG_PILE, "mangrove-channel": AREA_FLORA_MANGROVE_CHANNEL, meadow: AREA_FLORA_MEADOW, moor: AREA_FLORA_MOOR, "muddy-forest": AREA_FLORA_MUDDY_FOREST, "old-oaks": AREA_FLORA_OLD_OAKS, "old-pinewood": AREA_FLORA_OLD_PINEWOOD, ravine: AREA_FLORA_RAVINE, "rocky-slope": AREA_FLORA_ROCKY_SLOPE, "stone-shrine": AREA_FLORA_STONE_SHRINE, "tangly-forest": AREA_FLORA_TANGLY_FOREST, "thorn-scrub": AREA_FLORA_THORN_SCRUB, "twiggy-forest": AREA_FLORA_TWIGGY_FOREST, wetland: AREA_FLORA_WETLAND, "wispy-forest": AREA_FLORA_WISPY_FOREST };
+  var AREA_FOLDER_FLORA = { "alder-forest": AREA_FLORA_ALDER_FOREST, ancient: AREA_FLORA_ANCIENT, "beaver-pond": AREA_FLORA_BEAVER_POND, "berry-thicket": AREA_FLORA_BERRY_THICKET, "bluebell-glade": AREA_FLORA_BLUEBELL_GLADE, deadwood: AREA_FLORA_DEADWOOD, "fern-forest": AREA_FLORA_FERN_FOREST, grassland: AREA_FLORA_GRASSLAND, "hazel-forest": AREA_FLORA_HAZEL_FOREST, heath: AREA_FLORA_HEATH, "honeysuckle-tangle": AREA_FLORA_HONEYSUCKLE_TANGLE, "jungle-cave": AREA_FLORA_JUNGLE_CAVE, "jungle-understory": AREA_FLORA_JUNGLE_UNDERSTORY, "log-pile": AREA_FLORA_LOG_PILE, "mangrove-channel": AREA_FLORA_MANGROVE_CHANNEL, meadow: AREA_FLORA_MEADOW, moor: AREA_FLORA_MOOR, "muddy-forest": AREA_FLORA_MUDDY_FOREST, "old-oaks": AREA_FLORA_OLD_OAKS, "old-pinewood": AREA_FLORA_OLD_PINEWOOD, ravine: AREA_FLORA_RAVINE, "rocky-slope": AREA_FLORA_ROCKY_SLOPE, "snowy-taiga": AREA_FLORA_SNOWY_TAIGA, "stone-shrine": AREA_FLORA_STONE_SHRINE, "tangly-forest": AREA_FLORA_TANGLY_FOREST, "thorn-scrub": AREA_FLORA_THORN_SCRUB, "tundra-bog": AREA_FLORA_TUNDRA_BOG, "twiggy-forest": AREA_FLORA_TWIGGY_FOREST, wetland: AREA_FLORA_WETLAND, "wispy-forest": AREA_FLORA_WISPY_FOREST };
   var AREA_FOLDER_KINDS = [
     { "kind": "hedgehog", "slot": 0, "phase": 0, "bearing": 170, "dir": "S", "biome": "temperate" },
     { "kind": "squirrel", "slot": 1, "phase": 0, "bearing": 285, "dir": "WNW", "biome": "temperate" },
@@ -12577,18 +12578,19 @@ label.check input { accent-color: var(--accent); }
       small: [P("mound", { brown: true }), P("shrub", { flower: [200, 30, 60] })],
       big: [tree("hazel", { gnarl: 1, scale: 0.95 }), tree("oak", { minor: true, scale: 0.9 })]
     },
+    // (the garden till the roster moved the wolf to the cold, Ed 2026-10-23/25; ring 3, so semi-temperate: a boreal edge with light
+    // snow, firs, pines and larches from the cold's list among rowans and aspens, a needle floor and juniper scrub; the formal garden's
+    // walls, flower beds and pavilion gone with it, Ed 2026-10-26)
     {
-      id: "garden",
-      name: "Garden",
+      id: "snowy-taiga",
+      name: "Snowy taiga",
       creature: "wolf",
       by: "Ed",
-      leaf: 0.3,
-      floor: ["lawn", 0.27, 0.5, 0.5],
-      text: { floor: "uniform grass", wall: "ornate stone wall", small: "manicured flower beds", big: "willows", set: "a stone pavilion" },
-      wall: [P("wall")],
-      small: [P("flowerbed")],
-      big: [tree("willow")],
-      set: P("pavilion")
+      leaf: 0.32,
+      floor: ["needles", 0.2, 0.3, 0.45],
+      text: { floor: "pine needles under light snow", small: "juniper scrub", big: "firs and pines, larches, rowans and aspens" },
+      small: [tree("juniper", { scale: 0.45 })],
+      big: [tree("fir", { scale: 1.1 }), tree("rowan", { minor: true, scale: 0.85 })]
     },
     {
       id: "twiggy-forest",
@@ -12714,17 +12716,19 @@ label.check input { accent-color: var(--accent); }
       big: [tree("rowan", { scale: 1.1 }), tree("pine", { minor: true })],
       set: P("outcrop")
     },
+    // (the bog till the roster moved the elk to the cold, Ed 2026-10-23/25; ring 3, so semi-temperate: a tundra bog of sedge and cotton
+    // grass on pale moss, dwarf birches and larches from the cold's list among aspens and willows)
     {
-      id: "bog",
-      name: "Bog",
+      id: "tundra-bog",
+      name: "Tundra bog",
       creature: "elk",
       by: "draft",
-      leaf: 0.38,
-      floor: ["moss", 0.18, 0.55, 0.4],
-      text: { floor: "sphagnum moss", wall: "bog pools", small: "cotton grass", big: "spruce" },
+      leaf: 0.34,
+      floor: ["moss", 0.16, 0.4, 0.46],
+      text: { floor: "pale sphagnum and lichen", wall: "bog pools", small: "cotton grass and sedge", big: "dwarf birches and larches" },
       wall: [P("water", { bog: true })],
-      small: [P("reeds", { cotton: true })],
-      big: [tree("birch", { variant: "stunted", scale: 0.8, dark: true }), tree("pine", { minor: true, scale: 0.7 })]
+      small: [P("reeds", { cotton: true }), P("grass", { h: 0.8 })],
+      big: [tree("birch", { variant: "stunted", scale: 0.75, dark: true }), tree("larch", { minor: true, scale: 0.75 })]
     },
     {
       id: "deadwood",
@@ -12874,7 +12878,7 @@ label.check input { accent-color: var(--accent); }
     moor: { ponds: true },
     wetland: { ponds: true, wet: true },
     "mangrove-channel": { ponds: true, wet: true, pathKinds: ["bridges"] },
-    bog: { ponds: true, wet: true },
+    "tundra-bog": { ponds: true, wet: true },
     "beaver-pond": { ponds: true, wet: true },
     ravine: { steep: true, pathKinds: ["stairs"] },
     "rocky-slope": { steep: true, pathKinds: ["stairs"] },
@@ -13020,18 +13024,17 @@ label.check input { accent-color: var(--accent); }
       [0.3, [0.4, 0.3, 0.3, 0, 0]],
       "Crooked hazels grown in loose fairy rings on short grass, lumpy little mounds in the middle of each."
     ),
-    "garden": LAY(
-      "rows",
-      0.45,
-      0,
-      [3, [6, 10]],
-      [0.1, 0.8, 0.1, 0],
-      0.6,
+    "snowy-taiga": LAY(
+      "stands",
+      0.7,
+      0.55,
+      [2, [8, 12]],
+      [0.15, 0.65, 0.175, 0.025],
+      0.4,
       NO_LEAN,
-      ["paths", "pools"],
-      [0.4, [0.7, 0, 0, 0.2, 0.1]],
-      "A lost formal garden: willows in avenues along straight paths, lawns and flower beds, a pavilion at the heart.",
-      { along: "paths" }
+      ["mounds", "hollows"],
+      [0.35, [0.3, 0.3, 0.2, 0.1, 0.1]],
+      "Firs and pines in close stands under light snow, larches, rowans and aspens at their edges, juniper scrub between; cold, quiet and watched."
     ),
     "twiggy-forest": LAY(
       "scatter",
@@ -13154,7 +13157,7 @@ label.check input { accent-color: var(--accent); }
       [0.5, [0.3, 0.7, 0, 0, 0]],
       "Scree and boulders with pines clinging in clumps, everything leaning slightly uphill."
     ),
-    "bog": LAY(
+    "tundra-bog": LAY(
       "stands",
       0.25,
       0.85,
@@ -13164,7 +13167,7 @@ label.check input { accent-color: var(--accent); }
       NO_LEAN,
       ["pools", "mounds"],
       [0.35, [0.2, 0, 0, 0.5, 0.3]],
-      "Sphagnum and bog pools, stunted spruce in tight dark stands, cotton grass pale between them."
+      "Pale sphagnum and bog pools, dwarf birches and larches in low dark stands, sedge and cotton grass pale between them; open, wet and wide."
     ),
     "deadwood": LAY(
       "scatter",
@@ -13302,7 +13305,7 @@ label.check input { accent-color: var(--accent); }
     )
   };
   Object.assign(AREA_LAYOUTS, RECIPE_LAYOUTS);
-  var HANG = { "wispy-forest": 0.9, "tangly-forest": 0.7, "muddy-forest": 0.55, "ancient": 0.7, "old-oaks": 0.5, "alder-forest": 0.6, "wetland": 0.7, "bog": 0.8, "deadwood": 0.45, "honeysuckle-tangle": 0.6, "beaver-pond": 0.5, "mangrove-channel": 0.4 };
+  var HANG = { "wispy-forest": 0.9, "tangly-forest": 0.7, "muddy-forest": 0.55, "ancient": 0.7, "old-oaks": 0.5, "alder-forest": 0.6, "wetland": 0.7, "tundra-bog": 0.8, "deadwood": 0.45, "honeysuckle-tangle": 0.6, "beaver-pond": 0.5, "mangrove-channel": 0.4 };
   for (const [id, h] of Object.entries(HANG)) if (AREA_LAYOUTS[id]) AREA_LAYOUTS[id].hang = h;
   for (const a of AREAS) a.layout = AREA_LAYOUTS[a.id];
   var fireCol = { [M.ACCENT]: [150, 145, 140], [M.BODY2]: [95, 92, 100], [M.TRUNK]: [110, 70, 40], [M.BARKD]: [60, 38, 24], [M.MAGIC]: [255, 130, 40], [M.MAGIC2]: [255, 228, 120], [M.NOSE]: [30, 24, 26] };
@@ -16547,7 +16550,7 @@ label.check input { accent-color: var(--accent); }
       ["fungi-glow", 1.5, 0.2],
       ["camp-chair", -1.5, -0.4, "left"]
     ] },
-    "allotment-feral": { desc: "an allotment gone feral: a shed with its door hanging, beds bolted to seed, a bean wigwam, a compost bay, a scarecrow", suits: ["garden", "honeysuckle-tangle", "meadow"], pieces: [
+    "allotment-feral": { desc: "an allotment gone feral: a shed with its door hanging, beds bolted to seed, a bean wigwam, a compost bay, a scarecrow", suits: ["honeysuckle-tangle", "meadow"], pieces: [
       ["garden-shed", -1.7, -1.7],
       ["raised-bed", 0.6, -0.9],
       ["raised-bed", 0.8, 0.6, "left"],
@@ -16588,7 +16591,7 @@ label.check input { accent-color: var(--accent); }
       ["bin-bags", 0.6, 0.9],
       ["tyre-pile", 2.3, 0.7]
     ] },
-    "apiary": { desc: "an abandoned apiary: hives askew, one roof slid off, a bench and a water butt", suits: ["meadow", "heath", "honeysuckle-tangle", "garden"], pieces: [
+    "apiary": { desc: "an abandoned apiary: hives askew, one roof slid off, a bench and a water butt", suits: ["meadow", "heath", "honeysuckle-tangle"], pieces: [
       ["beehive", -1.1, -0.5],
       ["beehive", 0.2, -0.9, "left"],
       ["beehive", 1.3, -0.2],
@@ -16683,7 +16686,7 @@ label.check input { accent-color: var(--accent); }
       ["grave-cross", 2.6, -2.2],
       ["headstone-sunk", -0.8, -2.4]
     ] },
-    "baroque-church": { desc: "a baroque church with its dome cracked open, its fallen lantern in the grass, a stone angel and rubble before its facade", suits: ["garden", "old-oaks", "ancient"], pieces: [
+    "baroque-church": { desc: "a baroque church with its dome cracked open, its fallen lantern in the grass, a stone angel and rubble before its facade", suits: ["old-oaks", "ancient"], pieces: [
       ["@baroque-church", 0, 0],
       ["stone-angel", -2.6, 2.6, "left"],
       ["rubble", 2.4, 2.8],
@@ -16711,7 +16714,7 @@ label.check input { accent-color: var(--accent); }
       ["decor:standing-rock", -3.2, -1],
       ["decor:pair", 3, 1.8, "left"]
     ] },
-    "greek-temple": { desc: "a Greek temple on its stepped base, a peristyle of columns half fallen, drums in the grass, a headless statue", suits: ["meadow", "grassland", "garden", "heath"], pieces: [
+    "greek-temple": { desc: "a Greek temple on its stepped base, a peristyle of columns half fallen, drums in the grass, a headless statue", suits: ["meadow", "grassland", "heath"], pieces: [
       ["@greek-temple", 0, 0],
       ["column-drums", 1.6, 2.9],
       ["statue-headless", -3.4, 2.3],
@@ -16726,7 +16729,7 @@ label.check input { accent-color: var(--accent); }
       ["rubble", 2.6, 1.7],
       ["rubble", -0.4, 1.2, "left"]
     ] },
-    "classical-ruins": { desc: "classical ruins: a row of columns, some fallen in drums, a pediment fragment, a cracked mosaic floor, a headless statue, a broken arch and fallen drums", suits: ["meadow", "garden", "grassland", "ancient"], pieces: [
+    "classical-ruins": { desc: "classical ruins: a row of columns, some fallen in drums, a pediment fragment, a cracked mosaic floor, a headless statue, a broken arch and fallen drums", suits: ["meadow", "grassland", "ancient"], pieces: [
       ["mosaic-floor", 0, 0],
       ["column", -2.2, -2.3],
       ["column", -0.8, -2.4],
@@ -16740,7 +16743,7 @@ label.check input { accent-color: var(--accent); }
     ] }
     // (the toppled statue head gone: Ed, 2026-10-11)
   };
-  var TEMPLE_SUITS = ["meadow", "garden", "grassland", "ancient", "heath", "desert-ruin"];
+  var TEMPLE_SUITS = ["meadow", "grassland", "ancient", "heath", "desert-ruin"];
   var RUIN_SUITS = [...TEMPLE_SUITS, "moor", "rocky-slope", "stone-shrine", "bluebell-glade", "hazel-forest", "old-oaks", "fern-forest", "deadwood", "ravine", "mangrove-channel", "jungle-cave", "wispy-forest"];
   var TEMPLE_EXTRAS = ["column-drums", "pediment-fragment", "statue-headless", "column-broken", "column"];
   for (const id of CLASSICAL_PLAN_IDS) for (let k = 0; k < CLASSICAL_VARIANTS; k++) {
@@ -17544,7 +17547,7 @@ label.check input { accent-color: var(--accent); }
     },
     glowPower: 0.95,
     _light: `The lighting's mood (Ed, 2026-10-06: "make it a spooky dark forest with a party in it"; render/mood.ts): mood spooky lays this grade over the Art Lab's night light, plain is the light as it was (?light=plain or ?light=spooky to compare). spooky: ambientHue and ambient (times the tuning's ambient): the shadows' colour and brightness, a deep blue-green; moonHue, moonSat and moon (times tone.moon): a colder moon, a little stronger, so it rims what it lights; hazeHue, hazeSat and haze (its brightness, 0 to 1): the fog the forest fades into, violet; hazeNear and hazeFar: where the fog starts and is whole (metres from the witch; nearer than haze.near and haze.far, which still set how far scenery is drawn); mist: the low ground mist's strength (instead of mist.strength); glowHue and glowSat: the witch's glow, warmer, so the party's lights are the warm ones in the wood; grade, gradeDesat, gradePivot, gradeHue and gradeSat: a grade over the finished picture, draining the dark and middle tones' colour (gradeDesat of it) toward a cold tint (hue and saturation), by grade (0 off: Ed's tuned value from the pause page, 2026-10-26, v4522, and so the areas' grade tints with it), fading out up to gradePivot brightness, so the bright warm lights keep their colour; partyWarm, partyReach and partyStrength: the soundsystems' light, warm amber, pink and gold (one per variant, instead of their crystal cyan, violet and amber), wider and stronger; decorLights, decorReach and decorStrength: the party decor's lights (lanterns, campfires), how many an area lights (instead of partyObjects.lightsPerArea) and how far and strong, so each party is pools of warm light with dark between; areas: each area type's own fog (hazeHue, hazeSat, haze), grade tint (gradeHue, gradeSat) and mist over the above, by area id ("home" for home): misty teal over the bogs and water, violet-grey in the dead and ancient woods, blue-violet in the bluebells, pale mist on the open moor, darker in the rocky places, near-black green under the pines, rosy in the honeysuckle and gardens, home a little less cold; areaEase: how fast the mood eases from one area's to the next (a second); rimHue, rimSat and rim: a moonlight rim on the characters (the witch and every creature, baked or rigged), a light edge one art pixel wide on the side away from the moon in the night sky's blue-violet, at rim strength (0 off), so they read against the dark (the art director, round 1), only where the sprite is three pixels thick or more and never on the live rig's leg discs (Ed, 2026-10-06: "Animal legs have outlines on them; they'd look better without"); witchGlow: how much of her own glow lights the witch herself (0: none, as before), so she stands in her pool of light. Round 2 (the art director): moonUp, the moon's fill on whatever faces up (canopy tops, open ground) as a share of the moon, so the dark middle distance still reads (0 none); leyRgb and leyBright, the ley line in the HUD's amber at half its brightness, a guide rather than a light (leave leyRgb out for each area's own colour); berryHalo and berryGlow, a berry's halo's size and strength as shares of the old 2.8 m soft disc, so a berry reads as a crisp dot with a small glow. Round 3: moonUpHue and moonUpSat, the moon fill's own hue and saturation (green-cyan and pale, so the woods are blue-green with violet only in the shadows; left out, the moon's); styledRim and styledGlow: with ?style=bold or ref, the rim's strength and her own glow on her, in place of rim and witchGlow (the styles bake dark tones with flat normals, so she needs more to stand out in her own pool). witchLift and styledLift: her pool's light thrown back up onto her, added rather than multiplied, so even dark tones lift (0 in the default style; styledLift with bold or ref, where she otherwise vanishes in her own pool). moonUpWrap: the share of that fill every face gets whatever its normal (0: by its normal alone), so a crown's regular bumps don't light up as a lattice of dots. Round 4: decorWarm, how far the party decor's point lights go from their neon to the party's amber (an area's neon pieces lit its ground lime; the neon stays on the bulbs, the pool stays warm).`,
-    light: { mood: "spooky", spooky: { ambientHue: 0.52, ambient: 0.8, moonHue: 0.6, moonSat: 0.4, moon: 1.1, hazeHue: 0.74, hazeSat: 0.55, haze: 0.12, hazeNear: 60, hazeFar: 200, mist: 0.22, glowHue: 0.08, glowSat: 0.55, grade: 0, gradeDesat: 0.5, gradePivot: 0.6, gradeHue: 0.62, gradeSat: 0.55, partyWarm: [[1, 0.62, 0.28], [1, 0.42, 0.62], [1, 0.82, 0.4]], partyReach: 1.35, partyStrength: 1.3, decorLights: 6, decorReach: 1.8, decorStrength: 1.3, decorWarm: 0.8, rimHue: 0.66, rimSat: 0.4, rim: 0.32, witchGlow: 0.35, moonUp: 1.3, moonUpHue: 0.5, moonUpSat: 0.12, moonUpWrap: 0.5, styledRim: 0.55, styledGlow: 0.6, styledLift: 0.55, leyRgb: "#e8b46a", leyBright: 0.5, berryHalo: 0.4, berryGlow: 0.6, areaEase: 0.5, areas: { bog: { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, wetland: { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, "beaver-pond": { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, "mangrove-channel": { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, deadwood: { hazeHue: 0.78, hazeSat: 0.35, haze: 0.1, gradeHue: 0.72, gradeSat: 0.45 }, ancient: { hazeHue: 0.78, hazeSat: 0.35, haze: 0.1, gradeHue: 0.72, gradeSat: 0.45 }, "log-pile": { hazeHue: 0.78, hazeSat: 0.35, haze: 0.1, gradeHue: 0.72, gradeSat: 0.45 }, "bluebell-glade": { hazeHue: 0.68, gradeHue: 0.68, mist: 0.26 }, "wispy-forest": { hazeHue: 0.68, gradeHue: 0.68, mist: 0.26 }, moor: { hazeHue: 0.62, hazeSat: 0.3, haze: 0.14, mist: 0.3 }, heath: { hazeHue: 0.62, hazeSat: 0.3, haze: 0.14, mist: 0.3 }, grassland: { hazeHue: 0.62, hazeSat: 0.3, haze: 0.14, mist: 0.3 }, "jungle-cave": { haze: 0.07, gradeHue: 0.6, gradeSat: 0.35 }, ravine: { haze: 0.07, gradeHue: 0.6, gradeSat: 0.35 }, "rocky-slope": { haze: 0.07, gradeHue: 0.6, gradeSat: 0.35 }, "old-pinewood": { hazeHue: 0.5, hazeSat: 0.5, haze: 0.08, gradeHue: 0.52 }, "jungle-understory": { hazeHue: 0.36, hazeSat: 0.5, haze: 0.08, gradeHue: 0.38 }, "honeysuckle-tangle": { hazeHue: 0.88, hazeSat: 0.4 }, garden: { hazeHue: 0.88, hazeSat: 0.4 }, "berry-thicket": { hazeHue: 0.88, hazeSat: 0.4 }, home: { gradeHue: 0.66, gradeSat: 0.35, mist: 0.15 } } } },
+    light: { mood: "spooky", spooky: { ambientHue: 0.52, ambient: 0.8, moonHue: 0.6, moonSat: 0.4, moon: 1.1, hazeHue: 0.74, hazeSat: 0.55, haze: 0.12, hazeNear: 60, hazeFar: 200, mist: 0.22, glowHue: 0.08, glowSat: 0.55, grade: 0, gradeDesat: 0.5, gradePivot: 0.6, gradeHue: 0.62, gradeSat: 0.55, partyWarm: [[1, 0.62, 0.28], [1, 0.42, 0.62], [1, 0.82, 0.4]], partyReach: 1.35, partyStrength: 1.3, decorLights: 6, decorReach: 1.8, decorStrength: 1.3, decorWarm: 0.8, rimHue: 0.66, rimSat: 0.4, rim: 0.32, witchGlow: 0.35, moonUp: 1.3, moonUpHue: 0.5, moonUpSat: 0.12, moonUpWrap: 0.5, styledRim: 0.55, styledGlow: 0.6, styledLift: 0.55, leyRgb: "#e8b46a", leyBright: 0.5, berryHalo: 0.4, berryGlow: 0.6, areaEase: 0.5, areas: { "tundra-bog": { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, wetland: { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, "beaver-pond": { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, "mangrove-channel": { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, deadwood: { hazeHue: 0.78, hazeSat: 0.35, haze: 0.1, gradeHue: 0.72, gradeSat: 0.45 }, ancient: { hazeHue: 0.78, hazeSat: 0.35, haze: 0.1, gradeHue: 0.72, gradeSat: 0.45 }, "log-pile": { hazeHue: 0.78, hazeSat: 0.35, haze: 0.1, gradeHue: 0.72, gradeSat: 0.45 }, "bluebell-glade": { hazeHue: 0.68, gradeHue: 0.68, mist: 0.26 }, "wispy-forest": { hazeHue: 0.68, gradeHue: 0.68, mist: 0.26 }, moor: { hazeHue: 0.62, hazeSat: 0.3, haze: 0.14, mist: 0.3 }, heath: { hazeHue: 0.62, hazeSat: 0.3, haze: 0.14, mist: 0.3 }, grassland: { hazeHue: 0.62, hazeSat: 0.3, haze: 0.14, mist: 0.3 }, "jungle-cave": { haze: 0.07, gradeHue: 0.6, gradeSat: 0.35 }, ravine: { haze: 0.07, gradeHue: 0.6, gradeSat: 0.35 }, "rocky-slope": { haze: 0.07, gradeHue: 0.6, gradeSat: 0.35 }, "old-pinewood": { hazeHue: 0.5, hazeSat: 0.5, haze: 0.08, gradeHue: 0.52 }, "jungle-understory": { hazeHue: 0.36, hazeSat: 0.5, haze: 0.08, gradeHue: 0.38 }, "honeysuckle-tangle": { hazeHue: 0.88, hazeSat: 0.4 }, "snowy-taiga": { hazeHue: 0.58, hazeSat: 0.3 }, "berry-thicket": { hazeHue: 0.88, hazeSat: 0.4 }, home: { gradeHue: 0.66, gradeSat: 0.35, mist: 0.15 } } } },
     lightSources: { spacing: 10, campfire: 0.03, magicStone: 0, pond: 5e-3, wetPond: 0.03 },
     haze: { near: 150, far: 360 },
     _post: `bloom: a gentle glow round bright things (strength 0 or on false turns it off; threshold: how bright a pixel must be to glow). tiltShift: blurs the top and bottom of the screen so the forest looks like a miniature. strength: the blur at the screen's edges, in pixels; band: the height of the sharp band (0-1 of the screen); centre: where it sits (0 top, 0.5 middle, 1 bottom); treetop: the strength and band over the treetops (Ed, v160: a stronger miniature look there), blended in as she rises (both halved and their sharp bands widened, Ed 2026-10-06: "reduce the intensity of the tilt-shift effect"); ?tilt=<strength>,<band> tries treetop values live; It blurs at the low resolution, before the pixels are scaled up; ?tilt=off turns it off. The night sky over the bend is blurred with the rest, the tilt-shift the last thing done to the finished, bent picture (Ed, round 12: "the tilt shift isn't blurring the sky - the tilt shift effect has to be applied after the bend shader rather than before"). tiltShift.skyBlur: the share of the blur the night sky takes (Ed, 2026-10-06: "lessen the tilt-shift effect until you can see the stars", then "the stars don't have to be crisp, just perceptible"): 1 blurs it as the ground, 0 leaves its stars sharp; a slider in the decisions panel, with the treetops' strength.`,
