@@ -587,8 +587,9 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       // Committed (dodge.a): at her, down the line it locked as it wound up (above), lunging dodge.a.lunge times as far.
       const aimX = f.aimX, aimZ = f.aimZ, reach = (A.lunge ?? 0) * (DA && f.target.kind === "witch" ? DA.lunge : 1);
       // (with momentum, Ed 2026-10-27: its run-in may have left it short, so the committed lunge goes right to where the wind-up aimed,
-      // up to twice its usual length: a strike that starts stays reliable)
-      const ax = aimX - c.x, az = aimZ - c.z, ad = Math.hypot(ax, az), short = mo ? 0 : A.range * 0.5, far = mo ? Math.max(reach, Math.min(reach * 2, ad)) : reach, L = c.dug !== undefined && time < c.dug ? 0 : Math.min(far, Math.max(0, ad - short)); // (dug in: no lunge)
+      // up to a quarter again its usual length: a strike that starts stays reliable; at twice, a skilled bot backing away from a fight
+      // was knocked out early in 3 seeds of 12, at a quarter 2, with no momentum none)
+      const ax = aimX - c.x, az = aimZ - c.z, ad = Math.hypot(ax, az), short = mo ? 0 : A.range * 0.5, far = mo ? Math.max(reach, Math.min(reach * 1.25, ad)) : reach, L = c.dug !== undefined && time < c.dug ? 0 : Math.min(far, Math.max(0, ad - short)); // (dug in: no lunge)
       if (ad > 0.01 && L > 0.05) f.lunge = { dx: ax / ad, dz: az / ad, left: L, v: Math.hypot(c.vx ?? 0, c.vz ?? 0) };
       else if (Math.hypot(p.x - c.x, p.z - c.z) <= A.range * widthOf(f.target) + p.r) land(w, s, c, f.target, dmg, A, c.x, c.z);
     }

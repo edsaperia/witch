@@ -205,8 +205,10 @@ describe("pack combat, step 2's specials (2026-10-23: knockback, pull, decoy)", 
       const W = g.witches[0];
       for (const e of fresh(g)) if (e.kind === "packSpecial" && g.creatures[e.id!]?.charge) rams++;
       for (const c of g.creatures) if (c?.packThrow) armed.add(c.id);
-      // (only a knock new this step: a throw spent inside her hit's grace throws nothing, and the knock still on her is an older blow's)
-      const fresh1 = !!W.knock && W.knock.at !== lastAt && W.knock.at >= g.herTime - STEP * 1.5;
+      // (only a knock new this step, and from one blow: a throw spent inside her hit's grace throws nothing, and the knock on her is
+      // another blow's, an older one or another ram's charge landing the same step)
+      const blows = fresh(g).filter(e => e.kind === "witchHit").length;
+      const fresh1 = blows === 1 && !!W.knock && W.knock.at !== lastAt && W.knock.at >= g.herTime - STEP * 1.5;
       for (const id of [...armed]) if (!g.creatures[id].packThrow) { armed.delete(id); if (fresh1) thrown.push(Math.hypot(W.knock!.kx, W.knock!.kz) / g.tuning.witch.knock.ease); }
       lastAt = W.knock?.at ?? -Infinity;
     });
