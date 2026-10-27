@@ -4,6 +4,7 @@ export const CREATURE_CHEETAH = {
   movement: {
     speed: 26,
     accel: 120,
+    momentum: { k: 3.5 },
     fight: [{ kind: "arrive", w: 1 }, { kind: "strafe", w: 0.4, swap: 1 }, { kind: "separation", w: 0.6, radius: 8 }],
     move: { kind: "charge", cooldown: 4, from: 8, to: 40, speed: 42, time: 1.1, windup: 0.4, accel: 120, brake: 80 },
     tactics: [{ kind: "flank", w: 2 }]

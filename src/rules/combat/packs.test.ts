@@ -198,11 +198,15 @@ describe("pack combat, step 2's specials (2026-10-23: knockback, pull, decoy)", 
     const want = (PACKS.specials.knockback.throw ?? 10) * FIGHT.scale, thrown: number[] = [];
     let rams = 0;
     const armed = new Set<number>();
+    let lastAt = -Infinity;
     arena("pack-ram", 60, g => {
       const W = g.witches[0];
       for (const e of fresh(g)) if (e.kind === "packSpecial" && g.creatures[e.id!]?.charge) rams++;
       for (const c of g.creatures) if (c?.packThrow) armed.add(c.id);
-      for (const id of [...armed]) if (!g.creatures[id].packThrow) { armed.delete(id); if (W.knock && W.knock.at >= g.herTime - STEP * 1.5) thrown.push(Math.hypot(W.knock.kx, W.knock.kz) / g.tuning.witch.knock.ease); }
+      // (only a knock new this step: a throw spent inside her hit's grace throws nothing, and the knock still on her is an older blow's)
+      const fresh1 = !!W.knock && W.knock.at !== lastAt && W.knock.at >= g.herTime - STEP * 1.5;
+      for (const id of [...armed]) if (!g.creatures[id].packThrow) { armed.delete(id); if (fresh1) thrown.push(Math.hypot(W.knock!.kx, W.knock!.kz) / g.tuning.witch.knock.ease); }
+      lastAt = W.knock?.at ?? -Infinity;
     });
     expect(rams).toBeGreaterThan(0);
     expect(thrown.length).toBeGreaterThan(0);
