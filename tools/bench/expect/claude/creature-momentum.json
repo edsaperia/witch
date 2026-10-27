@@ -1,0 +1,5 @@
+{
+  "reason": "Creature momentum (Ed, 2026-10-27): creatures chasing the witch turn no faster than a limit falling with speed, steer for where she was a moment ago (0.15 to 0.4 s) and lead her only with telegraphed attacks; the combat state keeps a short trail of her places.",
+  "rules": { "*": "any fight at the witch: the chasers' places, velocities and when they strike differ, and so what follows" },
+  "frames": { "*": "a scene with creatures chasing her (the wave fight): they stand elsewhere" }
+}
