@@ -16,7 +16,7 @@ import { runJob, type ArtJob, type ArtResult, type AtlasPixels, type MakeCanvas 
 import type { StoneSpec } from "./islandArt";
 import { awaitOr, runSync, type Steps } from "./slices";
 import type { Style } from "./style";
-import { EMPTY_STONE_RGB, rankKnobs, ranksOn } from "./leash/ranks";
+import { EMPTY_STONE_RGB, rankKnobs, ranksOn, STONE_WHITE } from "./leash/ranks";
 
 /** Frames per species: dormant, then the awake levels (brighter and brighter). */
 export const MARKER_LEVELS = 4;
@@ -62,7 +62,7 @@ export class MarkerArt {
     const levels = [R.dormant.glow, ...Array.from({ length: MARKER_LEVELS - 1 }, (_, i) => R.awake.glow[0] + ((R.awake.glow[1] - R.awake.glow[0]) * i) / (MARKER_LEVELS - 2))];
     // Rank sigils on (render/leash/ranks.ts): each stone baked in the four ranks' colours and unlit (EMPTY_STONE), the view picking
     // by its area's top rank; else once, in its sigil's colour.
-    const ranked = ranksOn(t), colours = ranked ? [...rankKnobs(t).colours, EMPTY_STONE_RGB] : [[0, 0, 0]];
+    const ranked = ranksOn(t), colours = ranked ? [...rankKnobs(t).colours.map(c => [c[0], c[1], c[2], STONE_WHITE]), EMPTY_STONE_RGB] : [[0, 0, 0]];
     for (const [cx, cy] of map.cells) {
       const sp = AREA_TYPES[map.typeOf(cx, cy)].creature, v = runestoneOf(map, cx, cy, t), key = v ? `${sp}|${v.form}|${v.flip ? 1 : 0}` : sp;
       stoneOf.set(`${cx},${cy}`, key);

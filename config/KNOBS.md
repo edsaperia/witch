@@ -914,6 +914,7 @@ grounded (Ed, 2026-10-18: "One adult stops you taking off. Three young do.", the
 | `leash.ranks.embers.rise` | array of number |  |
 | `leash.ranks.embers.stack` | number | 0 to … |
 | `leash.ranks.dotsPerRow` | number | 0 to … |
+| `leash.ranks.stoneGlow` | number | 0 to … |
 
 ### `bond`
 

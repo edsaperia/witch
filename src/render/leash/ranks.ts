@@ -24,13 +24,15 @@ export interface RankKnobs {
   embers: { count: number[]; size: number[]; rise: number[]; stack: number };
   /** A youth's dots in her stack: at most this many a row (two rows). */
   dotsPerRow: number;
+  /** A rune stone's rune, its glow (Ed, 2026-10-27: "Make runestone sigils glow brighter"): its baked colour times this, hue kept. */
+  stoneGlow: number;
 }
 
 export const RANKS_DEFAULT: RankKnobs = {
   on: false, hex: 6, glyph: 5,
   colours: [[40, 225, 215], [150, 90, 255], [255, 70, 70], [255, 226, 60]],
   embers: { count: [3, 5, 8, 12], size: [0.22, 0.26, 0.3, 0.36], rise: [1.6, 2.1, 2.8, 3.6], stack: 0.4 },
-  dotsPerRow: 4,
+  dotsPerRow: 4, stoneGlow: 2.4,
 };
 
 export const rankKnobs = (t: Tuning): RankKnobs => ({ ...RANKS_DEFAULT, ...(t.leash.ranks ?? {}) });
@@ -117,4 +119,6 @@ export const stoneRank = (top: Map<string, number>, cell: readonly [number, numb
 /** An empty area's stone: its rune unlit, the dark of a cold stone's carving (its 4th: none of the white a lit rune's brightest
  *  pixels take, render/islandArt.ts recolour); its light, beam and motes a little cold moonlight (EMPTY_STONE_LIGHT of a lit one's). */
 export const EMPTY_STONE_RGB = [70, 72, 86, 0];
+/** A lit rank stone's rune: its brightest pixels only this share toward white, so its rank's colour holds (a species' neon, 1). */
+export const STONE_WHITE = 0.3;
 export const EMPTY_STONE_LIGHT = 0.3;

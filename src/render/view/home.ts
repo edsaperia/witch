@@ -63,6 +63,7 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
     const C = [...rankKnobs(t).colours, [70, 80, 110]]; // (an empty one's light: cold moonlight, dim: EMPTY_STONE_LIGHT)
     C.forEach((c, i) => (RANK_RGB[i] ??= new THREE.Vector3()).set(c[0] / 255, c[1] / 255, c[2] / 255));
   }
+  v.island.markerGlow.value = ranked ? rankKnobs(t).stoneGlow : 1; // (live: the pause page's Rune stone glow)
   const variant = (cell: readonly [number, number]) => ranked ? stoneRank(TOP, cell) : 0;
   const stoneCol = (cell: readonly [number, number]): THREE.Vector3 => ranked ? RANK_RGB[variant(cell)] : v.markerArt.colour.get(AREA_TYPES[g.map.typeOf(cell[0], cell[1])].creature)!;
   const col = (cell: readonly [number, number]) => { const c = stoneCol(cell); return c ? [c.x, c.y, c.z] : [0.8, 0.7, 1]; };

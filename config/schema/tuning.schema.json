@@ -3989,6 +3989,10 @@
             "dotsPerRow": {
               "type": "number",
               "minimum": 0
+            },
+            "stoneGlow": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -3997,7 +4001,8 @@
             "glyph",
             "colours",
             "embers",
-            "dotsPerRow"
+            "dotsPerRow",
+            "stoneGlow"
           ],
           "additionalProperties": false
         }
