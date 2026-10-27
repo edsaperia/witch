@@ -54,15 +54,17 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
     log("map", JSON.stringify(map), ROOM);
     if (ONLY.has("lights")) for (const v of ["terrace", "approach"]) { await VIEWS[v](); for (const d of [1, 0.5, 0.25]) { await knobs({ lights: d, warm: 0, rim: 0 }); await shot(`lights-${d}-${v}`); } }
     if (ONLY.has("look")) for (const v of ["room", "terrace", "approach"]) { await VIEWS[v](); for (const [n, k] of [["before", { lights: 1, warm: 0, rim: 0 }], ["after", { lights: 1, warm: WARM, rim: RIM }]]) { await knobs(k); await shot(`look-${n}-${v}`); } }
+    if (ONLY.has("party")) log("party areas", JSON.stringify(await page.evaluate(() => { const g = window.witch.game, S = window.witch.view.strings; return { areas: [...g.party.areas.keys()], built: [...(S.built?.entries() ?? [])].map(([k, v]) => [k, v.lines?.length]) }; })));
     if (ONLY.has("party")) { await VIEWS.dancefloor(); for (const m of [1, 2]) { await knobs({ lights: 1, warm: 0, rim: 0, more: m }); await shot(`party-${m}-dancefloor`); } await knobs({ more: 1 }); }
     if (ONLY.has("cost")) {
       // drawn frames, the look off and on in turn at each view (ABAB, so a drift over the run falls on both)
       const cost = {};
-      const timed = () => page.evaluate(n => { const w = window.witch, a = performance.now(); for (let i = 0; i < n; i++) w.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 60, true); return (performance.now() - a) / n; }, FRAMES);
+      // (each frame timed on its own: now and then one comes back in a few milliseconds, not really drawn, and is left out)
+      const timed = () => page.evaluate(n => { const w = window.witch, t = []; for (let i = 0; i < n; i++) { const a = performance.now(); w.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 60, true); t.push(performance.now() - a); } return t; }, FRAMES);
       for (const v of ["room", "terrace", "approach"]) {
         await VIEWS[v](); await knobs({ lights: 1, warm: 0, rim: 0 }); await settle();
         const r = { before: [], after: [] };
-        for (let i = 0; i < ROUNDS; i++) for (const [n, k] of [["before", { warm: 0, rim: 0 }], ["after", { warm: WARM, rim: RIM }]]) { await knobs(k); await timed(); r[n].push(await timed()); }
+        for (let i = 0; i < ROUNDS; i++) for (const [n, k] of [["before", { warm: 0, rim: 0 }], ["after", { warm: WARM, rim: RIM }]]) { await knobs(k); await timed(); r[n].push(...(await timed()).filter(ms => ms > 100)); }
         // (the median of the rounds: now and then a round's frames come back far quicker than any other, a frame not really drawn)
         const mid = a => [...a].sort((x, y) => x - y)[Math.floor(a.length / 2)];
         cost[v] = { before: +mid(r.before).toFixed(1), after: +mid(r.after).toFixed(1), change: +((mid(r.after) / mid(r.before) - 1) * 100).toFixed(1), rounds: r };
