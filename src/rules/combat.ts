@@ -485,9 +485,12 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       // it off waiting for its place); a volley keeps its line and its beat throughout. Hit and run is the pack's lull.)
       const tactic = pd && pk && (pk.tactic === "volley" || (!(pd.move === "melee" && packGate(pd) && free(f.target)) && (pk.tactic === "surround" || pk.tactic === "pincer" || pk.tactic === "flank"))) ? pk : null;
       // (Momentum: just chasing her, it makes for where she was mo.delay seconds ago, leading that by mo.chaseLead seconds of how she
-      // was going then; and turns no faster than its limit.)
-      const herAt = mo && f.target.kind === "witch" ? chaseAt(s, f.target.id, time, mo) ?? p : p;
-      const may = steer(c, heavy ? heavyOf(c, P) : P, { px: herAt.x, pz: herAt.z, pr: p.r, want, range: A0.range, fire: A.range, speed: cutoff ? Math.max(run * burst, DC!.sprint * FIGHT.speed) : run * burst, time, dt, pack: pd ? tactic : pk, neighbours: grid.near(c.x, c.z, 12 * S), threats: s.shots, side: sideOf(c), ready: time >= f.readyAt, beat: 60 / t.beat.bpm, heading, lights, cutoff, arriveAt: DA && A.delivery === "melee" && f.target.kind === "witch" && !ownFrom ? A.range + p.r : undefined, momentum: mo });
+      // was going then; and turns no faster than its limit. A pack's tell and combo are its telegraphed attack (it glows first, and
+      // its lunger goes in like a plain fight's wind-up surge): its members go by where she is, as they like, as before, unless
+      // creatureMomentum.strikes.)
+      const chase = pd && (pd.phase === "tell" || pd.phase === "combo") && !t.creatureMomentum?.strikes ? null : mo;
+      const herAt = chase && f.target.kind === "witch" ? chaseAt(s, f.target.id, time, chase) ?? p : p;
+      const may = steer(c, heavy ? heavyOf(c, P) : P, { px: herAt.x, pz: herAt.z, pr: p.r, want, range: A0.range, fire: A.range, speed: cutoff ? Math.max(run * burst, DC!.sprint * FIGHT.speed) : run * burst, time, dt, pack: pd ? tactic : pk, neighbours: grid.near(c.x, c.z, 12 * S), threats: s.shots, side: sideOf(c), ready: time >= f.readyAt, beat: 60 / t.beat.bpm, heading, lights, cutoff, arriveAt: DA && A.delivery === "melee" && f.target.kind === "witch" && !ownFrom ? A.range + p.r : undefined, momentum: chase, now: herAt === p ? undefined : p });
       if (may && time >= f.readyAt && strikeNow(pd, f.target)) {
         if (pd) markStrike(pd, c);
         f.windupUntil = time + windupOf(A, f.target); f.aimX = p.x; f.aimZ = p.z; // (it glides to a stop as it winds up: below)
@@ -518,13 +521,13 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     }
     if (DA && A.delivery === "melee" && f.target.kind === "witch" && d > A.range + p.r && !(c.dug !== undefined && time < c.dug)) { // (not dug in: rooted)
       const surge = c.level === LEGEND ? speed : heavy ? Math.max(own * FIGHT.speed * slow, Math.hypot(c.vx ?? 0, c.vz ?? 0)) : Math.max(speed, sprint * FIGHT.speed * DA.surge * slow); // (a heavy carries on at the speed it has built up)
-      // (with momentum, its body runs for where it saw her mo.delay ago, turning no faster than its limit; its aim, above, leads her)
-      const q = mo ? chaseAt(s, f.target.id, time, mo) ?? p : p, qd = Math.hypot(q.x - c.x, q.z - c.z) || 1e-6;
-      const step = Math.min(d - A.range - p.r, surge * dt), ux = (q.x - c.x) / qd, uz = (q.z - c.z) / qd;
-      let [nx, nz] = [ux * surge, uz * surge];
-      if (mo) { [nx, nz] = limitTurn(c.vx ?? 0, c.vz ?? 0, nx, nz, mo, dt, FIGHT.momentum); const nv = Math.hypot(nx, nz) || 1; [nx, nz] = [(nx / nv) * surge, (nz / nv) * surge]; } // (momentum: its surge turns no faster than its limit)
-      const k = surge > 1e-6 ? step / surge : 0, sx = nx * k, sz = nz * k;
-      c.x += sx; c.z += sz; c.vx = nx; c.vz = nz; c.moving = true; c.walk += dt * 8; c.facing = nx >= 0 ? 1 : -1;
+      // (with creatureMomentum.strikes, its surge in has momentum too: for where she was, turning no faster than its limit; its aim,
+      // above, still leads her)
+      const ms = t.creatureMomentum?.strikes ? mo : null, q = ms ? chaseAt(s, f.target.id, time, ms) ?? p : p, qd = Math.hypot(q.x - c.x, q.z - c.z) || 1e-6;
+      const step = Math.min(d - A.range - p.r, surge * dt);
+      let ux = (q.x - c.x) / qd, uz = (q.z - c.z) / qd;
+      if (ms && Math.hypot(c.vx ?? 0, c.vz ?? 0) > 0.5) { const [lx, lz] = limitTurn(c.vx ?? 0, c.vz ?? 0, ux * surge, uz * surge, ms, dt, FIGHT.momentum), l = Math.hypot(lx, lz) || 1; ux = lx / l; uz = lz / l; }
+      c.x += ux * step; c.z += uz * step; c.vx = ux * surge; c.vz = uz * surge; c.moving = true; c.walk += dt * 8; c.facing = ux >= 0 ? 1 : -1;
     } else { const vx = c.vx ?? 0, vz = c.vz ?? 0, v = Math.hypot(vx, vz);
       if (v > 0.05) { const nv = Math.max(0, v - ((40 * FIGHT.speed) / FIGHT.momentum) * dt); c.vx = (vx / v) * nv; c.vz = (vz / v) * nv; c.x += c.vx * dt; c.z += c.vz * dt; } else { c.vx = 0; c.vz = 0; }
       c.moving = v > 1; }

@@ -4081,6 +4081,9 @@
         "on": {
           "type": "boolean"
         },
+        "strikes": {
+          "type": "boolean"
+        },
         "turn": {
           "type": "number",
           "minimum": 0
@@ -4180,6 +4183,7 @@
       },
       "required": [
         "on",
+        "strikes",
         "turn",
         "delay",
         "chaseLead",

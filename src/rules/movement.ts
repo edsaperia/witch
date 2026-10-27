@@ -130,12 +130,16 @@ export interface SteerContext {
   arriveAt?: number;
   /** Its momentum chasing her (rules/momentum.ts): its heading turns no faster than its limit. */
   momentum?: import("./momentum").Resolved | null;
+  /** Where the target really is, when it steers for somewhere else (where she was: momentum); its strike goes by this. */
+  now?: { x: number; z: number };
 }
 
 /** Steer a fighting creature by its profile for one step. Returns whether it may start an attack now. */
 export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
   const dx = x.px - c.x, dz = x.pz - c.z, d = Math.hypot(dx, dz) || 1e-6, ux = dx / d, uz = dz / d, S = FIGHT.scale;
-  let vx = 0, vz = 0, may = d <= Math.max(x.want + 1.5 * S, (x.fire ?? x.range) * 0.95); // (a shooter may strike from anywhere in its range)
+  // (whether it may strike goes by where she is, even when it steers for where she was: momentum, rules/momentum.ts)
+  const dNow = x.now ? Math.hypot(x.now.x - c.x, x.now.z - c.z) : d;
+  let vx = 0, vz = 0, may = dNow <= Math.max(x.want + 1.5 * S, (x.fire ?? x.range) * 0.95); // (a shooter may strike from anywhere in its range)
   const add = (ax: number, az: number, w: number) => { vx += ax * w; vz += az * w; };
   const pack = x.pack, n = pack ? pack.members.length : 1, i = pack ? Math.max(0, pack.members.indexOf(c)) : 0;
   // The slot its pack's tactic gives it (if any), and whether the tactic lets it strike now.

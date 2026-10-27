@@ -119,7 +119,7 @@ function pick(g: Game, species: string, dx: number, dz: number): Creature {
 describe("in a fight", () => {
   /** A wolf (packs off: its own steering) runs at her from 40 m off; 20 m short (before or as it winds up, not lunging) she sidesteps
    *  9 m: how far its heading has swung a fifth of a second on (degrees), and how close it gets to her after. */
-  function sidestep(t: Tuning) {
+  function sidestep(t: Tuning, winding = false) {
     const g = quiet(withTuning({ ...t, combat: { ...t.combat, packs: { on: false } } })), wolf = pick(g, "wolf", 40, 0);
     let stepped = false, swung = 0, met = Infinity;
     for (let i = 0; i < 6 * 60; i++) {
@@ -127,7 +127,7 @@ describe("in a fight", () => {
       const w = g.witch; // (her body is a new object each step)
       const d = Math.hypot(wolf.x - w.x, wolf.z - w.z);
       if (stepped) met = Math.min(met, d);
-      if (!stepped && wolf.fight?.target?.kind === "witch" && !wolf.fight.lunge && d < 20 && Math.hypot(wolf.vx ?? 0, wolf.vz ?? 0) > 5) {
+      if (!stepped && wolf.fight?.target?.kind === "witch" && !wolf.fight.lunge && (winding ? wolf.fight.windupUntil > 0 : d < 20) && Math.hypot(wolf.vx ?? 0, wolf.vz ?? 0) > 5) {
         stepped = true; g.witch = { ...g.witch, z: g.witch.z + 9 };
         const a0 = Math.atan2(wolf.vz!, wolf.vx!);
         for (let k = 0; k < 12; k++) stepGame(g, idle, STEP);
@@ -142,5 +142,12 @@ describe("in a fight", () => {
     expect(on.stepped && off.stepped).toBe(true);
     expect(on.swung).toBeLessThan(off.swung / 2); // (it hasn't seen her go yet, and it can't swing round at a run)
     expect(on.met).toBeLessThan(4);
+  });
+  it("its wind-up's surge in tracks her as before, unless strikes: then it has momentum too", () => {
+    const strikes = withTuning({ creatureMomentum: { ...M, strikes: true } });
+    const plain = sidestep(TUNING, true), off = sidestep(OFF, true), on = sidestep(strikes, true);
+    expect(plain.stepped && off.stepped && on.stepped).toBe(true);
+    expect(plain.swung).toBeCloseTo(off.swung, 6); // (telegraphed: as it was)
+    expect(on.swung).toBeLessThan(off.swung / 2);
   });
 });
