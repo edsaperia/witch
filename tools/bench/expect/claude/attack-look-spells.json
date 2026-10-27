@@ -1,5 +1,4 @@
 {
-  "reason": "the attack look (Ed, 2026-10-27): attacks drawn in their creature's element and every wild warning in the shared danger frame, replacing the red dots, lines and rings, and the attack grammar's spells drawn too (this branch carries Hotel's attack grammar, #1306 to #1314, and its declared changes)",
-  "frames": { "*": "wherever a fight shows: its shots, beams, landings and warnings in the new look" },
-  "rules": { "*": "the attack grammar's engine (Hotel's #1310 to #1314), as declared on those PRs" }
+  "reason": "the attack look draws the attack grammar's spells (bodies, zones, beams, telegraphs, tells, events) in their elements and the danger frame; the rules unchanged",
+  "frames": { "*": "wherever a grammar attack shows: its bodies, zones, beams and warnings drawn" }
 }
