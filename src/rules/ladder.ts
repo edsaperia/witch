@@ -19,16 +19,23 @@ export interface Rung {
 /** Ed's order (the coordinator, 2026-10-27, his answer "a"). Index 0 is full quality. */
 export const RUNGS: readonly Rung[] = [
   { id: "full", label: "full quality", when: "live", built: true },
-  { id: "farDither", label: "the forest's far edge dithered, not faded", when: "live", built: false },
-  { id: "density90", label: "trees ×0.9", when: "load", built: false },
-  { id: "blend40", label: "area borders blend over 40 m", when: "load", built: false },
+  { id: "farDither", label: "the forest's far edge dithered, not faded", when: "live", built: true },
+  { id: "density90", label: "trees ×0.9", when: "load", built: true },
+  { id: "blend40", label: "area borders blend over 40 m", when: "load", built: false }, // (measured on one load, 2026-10-27: nothing either way, so passed over)
   { id: "squeeze", label: "tall trees squeezed", when: "live", built: true },
   { id: "still", label: "leaves still, no trunk shadows", when: "live", built: true },
-  { id: "hardCut", label: "the cut-away's crowns solid", when: "live", built: false },
-  { id: "density80", label: "trees ×0.8", when: "load", built: false },
+  { id: "hardCut", label: "the cut-away's crowns solid", when: "live", built: true },
+  { id: "density80", label: "trees ×0.8", when: "load", built: true },
   { id: "cap30", label: "a steady 30 fps", when: "live", built: true },
-  { id: "px4", label: "chunkier pixels (px 4)", when: "load", built: false },
+  { id: "px4", label: "chunkier pixels (px 4)", when: "load", built: true },
 ];
+
+/** What the load rungs in effect at `rung` make a night with: the forest's density times `density`, the area blend's band at most
+ *  `blend` metres (its width), the art pixel `px`; null where none applies. */
+export function loadEffects(rung: number): { density: number; blend: number | null; px: number | null } {
+  const on = (id: string) => { const i = RUNGS.findIndex(r => r.id === id); return RUNGS[i].built && i <= rung; };
+  return { density: on("density80") ? 0.8 : on("density90") ? 0.9 : 1, blend: on("blend40") ? 40 : null, px: on("px4") ? 4 : null };
+}
 
 export interface LadderKnobs {
   /** Over this share of the budget, a window counts as slow; under `under`, as roomy. */
@@ -87,10 +94,12 @@ export function pending(s: LadderState): { adds: number[]; drops: number[] } {
   return { adds, drops };
 }
 
-/** The next rung down that changes something now (a built live rung), or -1. The load rungs it passes over are wanted from the
- *  next load (pending). */
+/** The next rung down that changes something now (a built live rung); past the last live one, the last built load rung (px 4,
+ *  Ed's last resort: nothing changes now, it's wanted from the next load); or -1. The load rungs it passes over are wanted from
+ *  the next load (pending). */
 function nextDown(s: LadderState): number {
   for (let i = s.rung + 1; i < RUNGS.length; i++) if (RUNGS[i].built && RUNGS[i].when === "live") return i;
+  for (let i = RUNGS.length - 1; i > s.rung; i--) if (RUNGS[i].built) return i;
   return -1;
 }
 /** Up past the nearest live rung in effect (to the rung just above it), or -1 when none is: the load rungs it passes back over

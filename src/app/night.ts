@@ -12,6 +12,7 @@ import type { MusicStyle } from "../rules/musicScore";
 import { PlaytestLog } from "../platform/playtestLog";
 import type { Freeze } from "../platform/freeze";
 import type { View } from "../render/view";
+import { applyLoadRungs } from "./ladder";
 import { tuningFromLink } from "./linkParams";
 import { applySavedSettings, carryKnobs } from "./settings";
 import { linkKnobs } from "./sail";
@@ -128,7 +129,9 @@ export async function startNight(page: Page, spec: NightSpec): Promise<Night> {
   const { tuning, musicStyle, musicCue, world, WORLD_DEFAULT } = tuningFromLink(params);
   // The settings this browser remembers (the volumes, the waves' speed: app/settings.ts), on to their knobs before the game and
   // the sound are made; a knob the link's ?set= gives keeps the link's (a repro link), and ?pulse= is over the waves' (app/gameParams.ts).
-  applySavedSettings(tuning, undefined, new Set((params.get("set") ?? "").split(";").map(p => p.split("=")[0]).filter(Boolean)));
+  const linkSets = new Set((params.get("set") ?? "").split(";").map(p => p.split("=")[0]).filter(Boolean));
+  applySavedSettings(tuning, undefined, linkSets);
+  applyLoadRungs(tuning, linkSets); // (the quality ladder's load rungs: app/ladder.ts)
   // A night after another on this page: every pause-page slider as it was set (Ed's decision 5: the game's knobs too), on purpose,
   // but for those this night's link sets itself.
   if (old) carryKnobs(old.tuning, tuning, DECISION_LIST, linkKnobs(params, DECISION_LIST));
