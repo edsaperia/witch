@@ -1,0 +1,605 @@
+{
+ "seed": "428455",
+ "query": "world=1268398697",
+ "x": 2381,
+ "z": 2740,
+ "mode": "ground",
+ "size": "2321x1343",
+ "rows": [
+  {
+   "id": "base",
+   "what": "as the game is (scenery radius held at 110 m, where Ed's sits)",
+   "gpu": 14022.6,
+   "gpuAll": [
+    14082,
+    13880,
+    14023
+   ],
+   "cpu": 12.5,
+   "calls": 84,
+   "at": [
+    2381,
+    2740,
+    "ground",
+    false
+   ]
+  },
+  {
+   "id": "noscenery",
+   "what": "no scenery at all (radius 1 m): the scenery's whole share",
+   "gpu": 5016.5,
+   "gpuAll": [
+    5369,
+    4789,
+    5016
+   ],
+   "cpu": 5.6,
+   "calls": 84,
+   "at": [
+    2381,
+    2740,
+    "ground",
+    false
+   ]
+  },
+  {
+   "id": "r60",
+   "what": "scenery to 60 m (the far share is base minus this)",
+   "gpu": 14920.5,
+   "gpuAll": [
+    15037,
+    14914,
+    14921
+   ],
+   "cpu": 7.9,
+   "calls": 85,
+   "at": [
+    2381,
+    2740,
+    "ground",
+    false
+   ]
+  },
+  {
+   "id": "r90",
+   "what": "rung 5: scenery to 90 m",
+   "gpu": 14363.4,
+   "gpuAll": [
+    14540,
+    14199,
+    14363
+   ],
+   "cpu": 7.2,
+   "calls": 85,
+   "at": [
+    2381,
+    2740,
+    "ground",
+    false
+   ]
+  },
+  {
+   "id": "r75",
+   "what": "rung 5: scenery to 75 m",
+   "gpu": 14761.5,
+   "gpuAll": [
+    14638,
+    14963,
+    14762
+   ],
+   "cpu": 4.3,
+   "calls": 85,
+   "at": [
+    2381,
+    2740,
+    "ground",
+    false
+   ]
+  },
+  {
+   "id": "canopy110",
+   "what": "far treetops only to 110 m (canopyReach 360 -> 110)",
+   "gpu": 13838.3,
+   "gpuAll": [
+    13838,
+    13858,
+    13690
+   ],
+   "cpu": 4.1,
+   "calls": 85,
+   "at": [
+    2381,
+    2740,
+    "ground",
+    false
+   ]
+  },
+  {
+   "id": "base",
+   "what": "as the game is (scenery radius held at 110 m, where Ed's sits)",
+   "gpu": 13859.5,
+   "gpuAll": [
+    13860,
+    13786,
+    14027
+   ],
+   "cpu": 4.7,
+   "calls": 85,
+   "at": [
+    2381,
+    2740,
+    "ground",
+    false
+   ]
+  },
+  {
+   "id": "thin50",
+   "what": "rung 3: half the small things (bushes, undergrowth, rocks, decor) past 60 m left out (study build only)",
+   "gpu": 14031.1,
+   "gpuAll": [
+    14031,
+    14106,
+    13872
+   ],
+   "cpu": 7.1,
+   "calls": 86,
+   "at": [
+    2381,
+    2740,
+    "ground",
+    false
+   ]
+  },
+  {
+   "id": "cap20",
+   "what": "rung 4: the tall trees squeezed harder (treeCap.keep 0.35 -> 0.2)",
+   "gpu": 12932.8,
+   "gpuAll": [
+    12933,
+    12646,
+    12939
+   ],
+   "cpu": 5.2,
+   "calls": 86,
+   "at": [
+    2381,
+    2740,
+    "ground",
+    false
+   ]
+  },
+  {
+   "id": "nocreatures",
+   "what": "no creatures or witch drawn",
+   "gpu": 14029.8,
+   "gpuAll": [
+    14001,
+    14030,
+    14092
+   ],
+   "cpu": 5.7,
+   "calls": 83,
+   "at": [
+    2381,
+    2740,
+    "ground",
+    false
+   ]
+  },
+  {
+   "id": "cast",
+   "what": "no cast-shadow map (#857's coloured shadows on what they land on)",
+   "gpu": 13869.9,
+   "gpuAll": [
+    13870,
+    13731,
+    14208
+   ],
+   "cpu": 6.3,
+   "calls": 80,
+   "at": [
+    2381,
+    2740,
+    "ground",
+    false
+   ]
+  },
+  {
+   "id": "tint0",
+   "what": "shadows black, not tinted (shadows.tint 0)",
+   "gpu": 14109.2,
+   "gpuAll": [
+    14023,
+    14158,
+    14109
+   ],
+   "cpu": 4.8,
+   "calls": 86,
+   "at": [
+    2381,
+    2740,
+    "ground",
+    false
+   ]
+  },
+  {
+   "id": "base",
+   "what": "as the game is (scenery radius held at 110 m, where Ed's sits)",
+   "gpu": 13895.4,
+   "gpuAll": [
+    13895,
+    14196,
+    13891
+   ],
+   "cpu": 4.1,
+   "calls": 86,
+   "at": [
+    2381,
+    2740,
+    "ground",
+    false
+   ]
+  },
+  {
+   "id": "scenshadow",
+   "what": "no scenery shadows (#759: trunks.scenery off)",
+   "gpu": 13932.6,
+   "gpuAll": [
+    13885,
+    14106,
+    13933
+   ],
+   "cpu": 6.5,
+   "calls": 86,
+   "at": [
+    2381,
+    2740,
+    "ground",
+    false
+   ]
+  },
+  {
+   "id": "trunks",
+   "what": "no trunk shadows at all",
+   "gpu": 13459.7,
+   "gpuAll": [
+    14089,
+    13460,
+    13415
+   ],
+   "cpu": 4.9,
+   "calls": 68,
+   "at": [
+    2381,
+    2740,
+    "ground",
+    false
+   ]
+  },
+  {
+   "id": "hard",
+   "what": "trunk shadows hard (one tap, not five)",
+   "gpu": 14484.1,
+   "gpuAll": [
+    14484,
+    14558,
+    14233
+   ],
+   "cpu": 5.3,
+   "calls": 86,
+   "at": [
+    2382,
+    2738,
+    "ground",
+    false
+   ]
+  },
+  {
+   "id": "blobs",
+   "what": "no blob shadows",
+   "gpu": 14170.3,
+   "gpuAll": [
+    14170,
+    14150,
+    14429
+   ],
+   "cpu": 4.1,
+   "calls": 86,
+   "at": [
+    2382,
+    2738,
+    "ground",
+    false
+   ]
+  },
+  {
+   "id": "cover",
+   "what": "no ground cover (grass, flowers)",
+   "gpu": 14159.1,
+   "gpuAll": [
+    14159,
+    14223,
+    14119
+   ],
+   "cpu": 5.2,
+   "calls": 85,
+   "at": [
+    2382,
+    2738,
+    "ground",
+    false
+   ]
+  },
+  {
+   "id": "base",
+   "what": "as the game is (scenery radius held at 110 m, where Ed's sits)",
+   "gpu": 14307.2,
+   "gpuAll": [
+    14388,
+    14072,
+    14307
+   ],
+   "cpu": 4.4,
+   "calls": 86,
+   "at": [
+    2382,
+    2738,
+    "ground",
+    false
+   ]
+  },
+  {
+   "id": "lights0",
+   "what": "no point lights in the pixel shaders",
+   "gpu": 13682.5,
+   "gpuAll": [
+    13583,
+    13682,
+    13829
+   ],
+   "cpu": 5.7,
+   "calls": 86,
+   "at": [
+    2382,
+    2738,
+    "ground",
+    false
+   ]
+  },
+  {
+   "id": "dither",
+   "what": "trunk tops' fade not dithered (trunkFade.dither off)",
+   "gpu": 14135.4,
+   "gpuAll": [
+    14013,
+    14143,
+    14135
+   ],
+   "cpu": 5,
+   "calls": 87,
+   "at": [
+    2382,
+    2738,
+    "ground",
+    false
+   ]
+  },
+  {
+   "id": "nofade",
+   "what": "no see-through pass (the trees' second draw)",
+   "gpu": 10592.2,
+   "gpuAll": [
+    10696,
+    10377,
+    10592
+   ],
+   "cpu": 5.3,
+   "calls": 85,
+   "at": [
+    2382,
+    2740,
+    "ground",
+    false
+   ]
+  },
+  {
+   "id": "nosee",
+   "what": "none of the three extra tree passes (see-through, depth, front)",
+   "gpu": 4809.6,
+   "gpuAll": [
+    4733,
+    4810,
+    4931
+   ],
+   "cpu": 6.6,
+   "calls": 75,
+   "at": [
+    2382,
+    2740,
+    "ground",
+    false
+   ]
+  },
+  {
+   "id": "cullC",
+   "what": "the extra passes without the scenery-edge rule (far trees in the radius's fading band no longer drawn 3 more times; they'd need a dither)",
+   "gpu": 14462.2,
+   "gpuAll": [
+    14462,
+    14763,
+    14153
+   ],
+   "cpu": 5.6,
+   "calls": 86,
+   "at": [
+    2384,
+    2740,
+    "ground",
+    false
+   ]
+  },
+  {
+   "id": "base",
+   "what": "as the game is (scenery radius held at 110 m, where Ed's sits)",
+   "gpu": 14320.9,
+   "gpuAll": [
+    14321,
+    14368,
+    13858
+   ],
+   "cpu": 9,
+   "calls": 86,
+   "at": [
+    2384,
+    2740,
+    "ground",
+    false
+   ]
+  },
+  {
+   "id": "cullB",
+   "what": "the extra passes without the hole's band rule",
+   "gpu": 9050.1,
+   "gpuAll": [
+    9050,
+    9050,
+    9122
+   ],
+   "cpu": 4,
+   "calls": 86,
+   "at": [
+    2384,
+    2740,
+    "ground",
+    false
+   ]
+  },
+  {
+   "id": "cullA",
+   "what": "the extra passes without her circle's rule",
+   "gpu": 12168.9,
+   "gpuAll": [
+    12098,
+    12169,
+    12226
+   ],
+   "cpu": 4.1,
+   "calls": 86,
+   "at": [
+    2384,
+    2740,
+    "ground",
+    false
+   ]
+  },
+  {
+   "id": "tilt",
+   "what": "no tilt-shift",
+   "gpu": 14211.5,
+   "gpuAll": [
+    14211,
+    15099,
+    13949
+   ],
+   "cpu": 4.7,
+   "calls": 84,
+   "at": [
+    2384,
+    2740,
+    "ground",
+    false
+   ]
+  },
+  {
+   "id": "bloom",
+   "what": "no bloom",
+   "gpu": 14161.7,
+   "gpuAll": [
+    14179,
+    14162,
+    13948
+   ],
+   "cpu": 4.5,
+   "calls": 82,
+   "at": [
+    2384,
+    2740,
+    "ground",
+    false
+   ]
+  },
+  {
+   "id": "mist",
+   "what": "no mist",
+   "gpu": 14404.8,
+   "gpuAll": [
+    14405,
+    14246,
+    14638
+   ],
+   "cpu": 5.2,
+   "calls": 86,
+   "at": [
+    2384,
+    2740,
+    "ground",
+    false
+   ]
+  },
+  {
+   "id": "base",
+   "what": "as the game is (scenery radius held at 110 m, where Ed's sits)",
+   "gpu": 14295.4,
+   "gpuAll": [
+    14282,
+    14370,
+    14295
+   ],
+   "cpu": 4.4,
+   "calls": 86,
+   "at": [
+    2384,
+    2740,
+    "ground",
+    false
+   ]
+  },
+  {
+   "id": "nosway",
+   "what": "no pixel wind",
+   "gpu": 13711.5,
+   "gpuAll": [
+    13964,
+    13711,
+    13590
+   ],
+   "cpu": 5.2,
+   "calls": 86,
+   "at": [
+    2384,
+    2740,
+    "ground",
+    false
+   ]
+  },
+  {
+   "id": "base",
+   "what": "as the game is (scenery radius held at 110 m, where Ed's sits)",
+   "gpu": 14337.6,
+   "gpuAll": [
+    14338,
+    14113,
+    14585
+   ],
+   "cpu": 6.8,
+   "calls": 86,
+   "at": [
+    2384,
+    2740,
+    "ground",
+    false
+   ]
+  }
+ ],
+ "errors": []
+}
