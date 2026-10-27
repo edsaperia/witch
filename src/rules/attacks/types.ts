@@ -109,7 +109,13 @@ export interface AttackSpec {
   /** A force field round it (a zone, or a moving body: a legend's whirlwind): within r, pushing (m/s; negative pulls) whoever `who`
    *  says: "all" (every creature and her), "others" (every creature), "foes" (only its foes: a friendly legend's pushes the wild away). */
   force?: { r?: number; push: number; who?: "all" | "others" | "foes" };
-  pack?: { chain?: { n: number; range: number }; relay?: { n: number }; amplify?: { r: number; per: number; max: number }; tether?: { time: number; width: number }; triangulate?: { delay: number; r: number } };
+  /** Pack interplay (its caster's packmates: its own kind on its own side, near):
+   *  chain: on a hit it jumps to the next foe within `range`, `n` times, each jump shown (chainNext) `hop` s before it goes;
+   *  relay: it flies to a packmate first, held there `hop` s and re-aimed at its target, through `n` of them;
+   *  amplify: passing within `r` of a packmate it grows by `per` (its size and damage), to `max` times;
+   *  tether: a beam strung between its caster and the nearest packmate for `time` s, `width` wide, hurting whoever crosses it;
+   *  triangulate: its caster and the two nearest packmates within `r` mark the corners, and the ground between them erupts after `delay`. */
+  pack?: { chain?: { n: number; range: number; hop?: number }; relay?: { n: number; hop?: number }; amplify?: { r: number; per: number; max: number }; tether?: { time: number; width: number }; triangulate?: { delay: number; r: number } };
 }
 
 /** The attacks file: each by name (keys starting "_" are notes). */

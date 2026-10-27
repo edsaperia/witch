@@ -102,6 +102,14 @@ export function spellWorld(w: CombatWorld, s: CombatState, grid: Grid, seed: num
       if (kind === "witch") return w.witches.find(v => v.id === id) ?? null;
       return s.sounds.get(id as string) ?? null;
     },
+    packmates(source, x, z, r) {
+      // (its own kind on its own side, awake and able to fight, nearest first)
+      const c = w.creatures[source];
+      if (!c) return [];
+      const side = sideOf(c), mates: Creature[] = [];
+      for (const o of grid.near(x, z, r)) if (o.id !== source && o.species === c.species && targetable(o) && !w.asleep(o) && sideOf(o) === side && Math.hypot(o.x - x, o.z - z) <= r) mates.push(o);
+      return mates.sort((p, q) => Math.hypot(p.x - x, p.z - z) - Math.hypot(q.x - x, q.z - z) || p.id - q.id);
+    },
     stillCasting(source, cast) { const c = w.creatures[source]; return !!c && !c.gone && !(c.stunUntil !== undefined && w.time < c.stunUntil) && c.fight?.spellCast === cast && !!c.fight.target; },
     beat: 60 / w.t.beat.bpm,
   };
