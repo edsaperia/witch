@@ -35,11 +35,14 @@ describe("the bot", () => {
 
   it("the skilled bot leaves her seat, flies off and invites; it says what it's doing", () => {
     const g = fresh(), home = { x: g.witch.x, z: g.witch.z };
-    const { said } = play(g, "skilled", 150);
-    expect(g.witch.seated).toBeFalsy();
-    expect(Math.hypot(g.witch.x - home.x, g.witch.z - home.z)).toBeGreaterThan(30);
+    const { said, track } = play(g, "skilled", 150);
+    // (left her seat and got well away: at some point, not necessarily at the end, as a knockout puts her back in her seat; with
+    // creature momentum, 2026-10-27, this seed's bot is knocked out at about 144 s)
+    const far = Math.max(...track.map(p => { const [x, z] = p.split(",").map(Number); return Math.hypot(x - home.x, z - home.z); }));
+    expect(far).toBeGreaterThan(30);
     expect([...said].some(s => /^(flying to|inviting) the /.test(s))).toBe(true);
-    expect(g.leash.stack.length + g.leash.placed.length).toBeGreaterThan(0); // (leashed: their runes picked up)
+    // (leashed: their runes picked up; or, knocked out lately, let go happy where they stood till she fetches them: rules/knockout.ts letGoHappy)
+    expect(g.leash.stack.length + g.leash.placed.length + g.creatures.filter(c => c.dropped && !c.gone).length).toBeGreaterThan(0);
   });
 
   // (seeds 11 and 33: the two ways it stood idle with a full leash and never finished the night, 2026-10-26: on 11 its home guards

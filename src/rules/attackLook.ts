@@ -1,0 +1,102 @@
+// The attack look's data (config/attack-look.json; the gallery mock, previews/ed/spell-gallery): which element dresses a creature's
+// spells, how big its level draws them, and the danger frame every wild spell wears. No drawing here: art/attackLook.js bakes the
+// elements' parts, render/leash/attackLook.ts draws them.
+import raw from "../../config/attack-look.json";
+import { KINDS_TABLE } from "./kinds";
+
+export const CORES = ["orb", "shard", "droplet", "crescent", "spark", "rock", "void", "petal"] as const;
+/** The looks' own cores (a body's look tag: an acorn, a pinecone...), drawn in place of its element's. */
+export const LOOK_CORES = ["acorn", "pinecone", "log", "pebble", "can", "leaf", "spike", "feather", "icicle", "roll"] as const;
+export const TRAILS = ["embers", "sparkles", "drips", "wisps", "sparks", "dust", "smoke", "petals"] as const;
+export const IMPACTS = ["burst", "shatter", "splash", "ring", "crackle", "rubble", "poof", "blossom"] as const;
+export const BITS = ["flame", "shard", "droplet", "wisp", "fork", "chunk", "puff", "petal"] as const;
+export const MARKS = ["scorch", "rime", "puddle", "halo", "char", "cracks", "pool", "flowers"] as const;
+export const BEAMS = ["flame", "crystal", "drip", "ripple", "fork", "stone", "smoke", "petal"] as const;
+export const MOTIFS = ["chains", "stars", "shockwave", "spiral"] as const;
+
+export interface SpellElement {
+  /** dark, mid, bright, hot ("#rrggbb") */
+  palette: string[];
+  accent?: string;
+  core: (typeof CORES)[number]; trail: (typeof TRAILS)[number]; impact: (typeof IMPACTS)[number]; bits: (typeof BITS)[number];
+  mark: (typeof MARKS)[number]; beam: (typeof BEAMS)[number]; area: (typeof MARKS)[number];
+  /** its core and bits painted, not glowing (earth's rock, shadow's dark) */
+  solid?: boolean;
+}
+export interface SpellsConfig {
+  elements: Record<string, SpellElement>;
+  effects: Record<string, (typeof MOTIFS)[number]>;
+  /** whole art pixels a pixel of the atlas draws (2) */
+  scale: number;
+  power: Record<string, number>;
+  particles: { trail: number; impact: number };
+  danger: { warn: string; edge: string; dash: number; gap: number; march: number; flash: number; hatch: number };
+  default: string;
+  /** other names for elements (the attack grammar's body.element tags: stone, light, spore, web, water, sound) */
+  aliases: Record<string, string>;
+  /** a species' element that wins over its attack's own tag */
+  overrides?: Record<string, string>;
+  /** a body's look tag: its own core (LOOK_CORES), in its own palette (none: its element's colour) */
+  looks: Record<string, { core: (typeof LOOK_CORES)[number]; palette?: string[] }>;
+  byBiome: Record<string, string>;
+  bySpecies: Record<string, string>;
+}
+
+export const ATTACK_LOOK = raw as unknown as SpellsConfig;
+export const ELEMENTS: string[] = Object.keys(ATTACK_LOOK.elements);
+
+/** An element tag (an attack's body.element) as one of the elements, through the aliases; undefined if it names none. */
+export function elementNamed(tag: string | undefined, cfg: SpellsConfig = ATTACK_LOOK): string | undefined {
+  if (!tag) return undefined;
+  const t = cfg.elements[tag] ? tag : cfg.aliases[tag];
+  return t && cfg.elements[t] ? t : undefined;
+}
+
+/** A creature's element: its override if it has one, else an attack's own tag if it has one (tag), else the species' own (bySpecies), else its kind's biome's,
+ *  else the default. */
+export function elementOf(species: string, cfg: SpellsConfig = ATTACK_LOOK, kinds: Record<string, { biome?: string }> = KINDS_TABLE, tag?: string): string {
+  const over = cfg.overrides?.[species];
+  if (over && cfg.elements[over]) return over;
+  const tagged = elementNamed(tag, cfg);
+  if (tagged) return tagged;
+  const own = cfg.bySpecies[species];
+  if (own && cfg.elements[own]) return own;
+  const biome = kinds[species]?.biome, by = biome ? cfg.byBiome[biome] : undefined;
+  return by && cfg.elements[by] ? by : cfg.default;
+}
+
+/** How big a level draws its spells (1 young, 2 adult, 3 legend; a baby's, if it ever casts, as a young's). */
+export const spellPower = (level: number, cfg: SpellsConfig = ATTACK_LOOK): number => cfg.power[String(Math.max(1, Math.min(3, level)))] ?? 1;
+
+/** "#rrggbb" to 0..1 channels. */
+export function rgbOf(hex: string): [number, number, number] {
+  const n = parseInt(hex.slice(1), 16);
+  return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
+}
+
+/** What's wrong with a spells config (none: []): every element whole, its parts known, its palette four colours; every motif
+ *  known; the default, byBiome and bySpecies naming elements that exist. */
+export function spellsProblems(cfg: SpellsConfig, species: readonly string[], biomes: readonly string[]): string[] {
+  const bad: string[] = [], hex = (s: unknown) => typeof s === "string" && /^#[0-9a-f]{6}$/i.test(s);
+  const parts: [keyof SpellElement, readonly string[]][] = [["core", CORES], ["trail", TRAILS], ["impact", IMPACTS], ["bits", BITS], ["mark", MARKS], ["beam", BEAMS], ["area", MARKS]];
+  for (const [id, e] of Object.entries(cfg.elements)) {
+    if (!Array.isArray(e.palette) || e.palette.length !== 4 || !e.palette.every(hex)) bad.push(`${id}: its palette isn't four "#rrggbb" colours`);
+    if (e.accent !== undefined && !hex(e.accent)) bad.push(`${id}: its accent isn't a "#rrggbb" colour`);
+    for (const [k, known] of parts) if (!known.includes(e[k] as string)) bad.push(`${id}: no ${k} called ${String(e[k])}`);
+  }
+  for (const [mod, m] of Object.entries(cfg.effects)) if (!MOTIFS.includes(m)) bad.push(`effect ${mod}: no motif called ${m}`);
+  if (!Number.isInteger(cfg.scale) || cfg.scale < 1) bad.push("scale: a whole number, 1 or more");
+  for (const lv of ["1", "2", "3"]) if (!(cfg.power[lv] > 0)) bad.push(`power: level ${lv} missing`);
+  if (!cfg.elements[cfg.default]) bad.push(`default: no element ${cfg.default}`);
+  for (const [sp, e] of Object.entries(cfg.overrides ?? {})) { if (!cfg.elements[e]) bad.push(`overrides ${sp}: no element ${e}`); if (!species.includes(sp)) bad.push(`overrides: no species called ${sp}`); }
+  for (const [a, e] of Object.entries(cfg.aliases ?? {})) if (!cfg.elements[e]) bad.push(`aliases ${a}: no element ${e}`);
+  for (const [l, L] of Object.entries(cfg.looks ?? {})) {
+    if (!LOOK_CORES.includes(L.core)) bad.push(`look ${l}: no core called ${L.core}`);
+    if (L.palette !== undefined && (!Array.isArray(L.palette) || L.palette.length !== 4 || !L.palette.every(hex))) bad.push(`look ${l}: its palette isn't four "#rrggbb" colours`);
+  }
+  for (const [b, e] of Object.entries(cfg.byBiome)) { if (!cfg.elements[e]) bad.push(`byBiome ${b}: no element ${e}`); if (!biomes.includes(b)) bad.push(`byBiome: no biome called ${b}`); }
+  for (const [s, e] of Object.entries(cfg.bySpecies)) { if (!cfg.elements[e]) bad.push(`bySpecies ${s}: no element ${e}`); if (!species.includes(s)) bad.push(`bySpecies: no species called ${s}`); }
+  const d = cfg.danger;
+  if (!hex(d.warn) || !hex(d.edge) || !(d.dash > 0) || !(d.gap > 0) || !(d.flash >= 0) || !(d.hatch >= 0 && d.hatch <= 1)) bad.push("danger: a value missing or out of range");
+  return bad;
+}

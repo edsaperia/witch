@@ -1,0 +1,4 @@
+{
+  "reason": "a sprite whose drawn foot reaches past 5 m either side of its base (the jungle cave's kapoks and strangler figs, any big tree, prop or set piece with a wide foot) stands on the lowest ground across all of it, not just the middle 10 m, so on a slope it sits a little lower and its foot's ends no longer float; the rules are untouched",
+  "frames": { "*": "where a wide-footed sprite stands on a slope it is drawn a little lower, its foot's ends on the ground" }
+}

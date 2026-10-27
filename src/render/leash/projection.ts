@@ -13,7 +13,7 @@ export function drawProjection(lv: LeashView, time: number, dot: number[]): void
   const g = lv.game, s = g.leash, t = g.tuning, w = g.witch;
   const P = t.sigilProjection, up = w.lift * w.lift * (3 - 2 * w.lift);
   if (up > 0.01) for (const p of s.placed) {
-    const c = g.creatures[p.id], col = lv.colours.get(c.species)!, top = t.treetopHeight - 4 + P.height;
+    const c = g.creatures[p.id], col = lv.colOf(c), top = t.treetopHeight - 4 + P.height;
     const pulse = 0.85 + 0.15 * Math.sin(time * 1.3 + p.id);
     const sg = lv.sigilOf(c);
     lv.flat.add(p.x, top, p.z, (3 + c.level * 0.8) * P.size * sg.scale, sg.uv, col.r, col.g, col.b, P.opacity * up * pulse);
@@ -41,7 +41,7 @@ export function drawProjection(lv: LeashView, time: number, dot: number[]): void
     near.sort((a, b) => a.d - b.d);
     const top = t.treetopHeight - 4 + P.height;
     for (let i = 0; i < Math.min(near.length, C.max); i++) {
-      const { c, d } = near[i], col = lv.colours.get(c.species) ?? (lv.slotOf(c.species, 0), lv.colours.get(c.species)!), sg = lv.sigilOf(c);
+      const { c, d } = near[i], col = lv.colOf(c), sg = lv.sigilOf(c);
       const edge = Math.min(1, Math.max(0, (C.range - d) / (C.range * C.fade))), a = C.opacity * up * edge * (c.leashed ? 1 : C.happy) * (0.88 + 0.12 * Math.sin(time * 1.3 + c.id));
       const z = c.leashed ? c.z : c.z + runeOffset(c, t); // (a happy one's over its rune, south of it: rules/runeOffset.ts)
       if (a > 0.01) lv.flat.add(c.x, top + 0.2 * Math.sin(time * 0.9 + c.id), z, (3 + c.level * 0.8) * C.size * sg.scale, sg.uv, col.r, col.g, col.b, a);

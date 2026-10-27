@@ -107,7 +107,7 @@ export class Sound {
     const fresh = !this.audio;
     this.audio ??= this.context(); void this.audio.resume();
     const t1 = performance.now();
-    if (!this.music && tuning.music.on) { this.music = new Music(this.audio, tuning.music.volume * this.level, this.playing, this.seed, tuning.music.src); this.voices(); }
+    if (!this.music && tuning.music.on) { this.music = new Music(this.audio, tuning.music.volume * this.level, this.playing, this.seed, tuning.music.src, musicAhead()); this.voices(); }
     const t2 = performance.now();
     this.ensureSfx();
     const t3 = performance.now(), ms = (x: number) => Math.round(x);
@@ -145,13 +145,13 @@ export class Sound {
         playtest().audio(what);
         console.warn(`audio watchdog: ${what}`);
         if (!this.audio) return;
-        if ((what === "music-silent" || what === "music-nonfinite") && this.music) { this.music.dispose(); this.music = new Music(this.audio, this.tuning.music.volume * this.level, this.playing, this.seed, this.tuning.music.src); this.voices(); }
+        if ((what === "music-silent" || what === "music-nonfinite") && this.music) { this.music.dispose(); this.music = new Music(this.audio, this.tuning.music.volume * this.level, this.playing, this.seed, this.tuning.music.src, musicAhead()); this.voices(); }
         if (what === "sfx-nonfinite" && this.sfx) { this.sfx.dispose(); this.sfx = null; this.sfxCues = null; this.ensureSfx(); }
       },
     );
     setInterval(() => { try { watchdog.check(); } catch { /* never let the watchdog itself stop anything */ } }, 1000);
     const r2 = (x: number) => Math.round(x * 100) / 100;
-    playtest().audioState = () => ({ state: this.audio?.state ?? "none", volume: this.music ? r2((this.music.output as GainNode).gain.value) : 0, distort: r2(this.lastMix?.distort ?? 0), distance: Math.round(Math.min(9999, this.lastMix?.distance ?? 9999)), mends: watchdog.mends.length, shed: this.valve.level, ...(this.music ? { gap: r2(this.music.stats.gap), resyncs: this.music.stats.resyncs, late: this.music.stats.late, ahead: r2(this.music.stats.ahead ?? 0) } : {}) });
+    playtest().audioState = () => ({ state: this.audio?.state ?? "none", volume: this.music ? r2((this.music.output as GainNode).gain.value) : 0, distort: r2(this.lastMix?.distort ?? 0), distance: Math.round(Math.min(9999, this.lastMix?.distance ?? 9999)), mends: watchdog.mends.length, shed: this.valve.level, ...(this.music ? { gap: r2(this.music.stats.gap), resyncs: this.music.stats.resyncs, late: this.music.stats.late, ahead: r2(this.music.stats.ahead ?? 0) } : {}), ...(this.music?.ahead ? { drawn: this.music.ahead.drawing, bars: this.music.ahead.stats.rendered, barsLate: this.music.ahead.stats.late, barsDropped: this.music.ahead.stats.dropped, beatShifts: this.beatShifts, beatShifted: r2(this.beatShifted) } : {}) }); // (drawn ahead: the bars, docs/notes/music.md "Music ahead")
   }
 
   private live: () => boolean = () => false;
@@ -174,6 +174,9 @@ export class Sound {
   }
   private bumped = false;
   private startRuns = 0;
+  /** Times the game's beat was moved on to the music's, and by how many seconds in all (the playtest log's). */
+  private beatShifts = 0;
+  private beatShifted = 0;
   /** This frame's audio work by part (ms), for the stall log's slow audio frames (main.ts). */
   parts: Record<string, number> = {};
 
@@ -191,13 +194,16 @@ export class Sound {
     // object while nothing changes there)
     const night0 = nightStyle(this.style, game.musicSet), night = this.lab ? this.lab.styled(night0, game.musicSet) : night0;
     if (night !== this.night) { this.night = night; this.music?.engine?.setStyle(night); }
-    if (this.music) this.music.shed = this.valve.level; // (the watchdog's rebuilt music too)
+    if (this.music) { this.music.shed = this.valve.level; this.music.aheadAllowed = !this.lab; } // (the watchdog's rebuilt music too; the lab's levels are the live engine's)
     if (this.music?.engine && this.audio) this.music.engine.lead = (this.audio.baseLatency ?? 0) + ((this.audio as AudioContext & { outputLatency?: number }).outputLatency ?? 0); // (the notes sent early by the context's latency: heard on the beat shown)
     if (this.sfx) this.sfx.shed = this.valve.level;
     const t1 = performance.now();
     // (the Music Lab's jump on the cue; its bedroom preview on its own clock, the mix whole, with no night playing)
     const labCue = this.lab ? this.lab.cued(cue) : cue, pv = this.lab?.previewTime(performance.now() / 1000) ?? null;
     const mix = pv ? { ...this.lastMix, volume: 1, cutoff: 16000, distort: 0 } : this.lastMix;
+    // (the audio clock the master: a stall's lost time moves the game's beat on to the music's, docs/notes/music.md "Music ahead")
+    const lost = !pv && !game.clock.paused ? this.music?.keepBeat(game.clock.time, game.beat) ?? 0 : 0;
+    if (lost) { this.beatShifts++; this.beatShifted += lost; }
     this.music?.update(mix, labCue, pv ? pv.time : game.clock.time, pv ? pv.clock : game.beat, pv ? true : !game.clock.paused, this.tuning.music, pv ? 1 : game.timeScale ?? 1, pv ? 0 : partyOverEase(game, OVER_DEBUG), pv || !game.witch.perch ? 0 : slowAmount(game.timeScale ?? 1, slowest(this.tuning))); // (the world slowed in a legend's circle or the treehouse: the music with it, and muffled there)
     if (this.lab && this.music?.engine && this.audio) this.lab.frame(this.music.engine, this.audio);
     const t2 = performance.now();
@@ -218,6 +224,9 @@ export class Sound {
 /** What the effects' kit is given before its own sfx.volume: the music's built volume (0.5), as the kit was built with before
  *  the sliders (sfxKit.ts setVolume: this times the tuning's sfx.volume on its bus). */
 const SFX_BASE = 0.5;
+
+/** The music drawn ahead (platform/audio/musicAhead.ts; Ed, 2026-10-27: the default, `?music=live` the old way). */
+function musicAhead(): boolean { try { return new URLSearchParams(location.search).get("music") !== "live"; } catch { return true; } }
 
 /** `?audio=lite|full` for one load (shed.ts). */
 function audioParam(): string | null { try { return new URLSearchParams(location.search).get("audio"); } catch { return null; } }

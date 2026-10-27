@@ -1,0 +1,4 @@
+{
+  "reason": "the attack look's species picks: every species' attack in its element (twelve now: water, sand, wood and wind added) and its look's own projectile (an acorn, a pinecone, a log, a pebble, a feather...); the rules unchanged",
+  "frames": { "*": "wherever a species' attack shows: its projectiles, hits and ground in its element and look" }
+}

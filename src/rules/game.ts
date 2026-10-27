@@ -323,7 +323,7 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
   if (c.zoom) P.zoom = c.zoom;
   if (g.clock.paused || !(realDt > 0)) return;
   // This frame's combat and knockout events (several steps' worth, or none), for the view.
-  g.combat.events = []; g.koEvents = []; g.questEvents = []; g.waveEvents = []; g.leashEvents = [];
+  g.combat.events = []; if (g.combat.spells) g.combat.spells.events.length = 0; g.koEvents = []; g.questEvents = []; g.waveEvents = []; g.leashEvents = [];
   for (const w of g.witches) w.invites.events = [];
   if (g.wake) g.wake.events = [];
   g.acc = Math.min(g.acc + Math.min(realDt, MAX_STEP), MAX_STEP + STEP);
@@ -822,6 +822,10 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     },
     slowWitch: (id, until, mult) => { const w = g.witches[id]; if (w) { w.slowUntil = Math.max(w.slowUntil ?? 0, until); w.slowMult = Math.min(mult, w.slowUntil > until ? w.slowMult ?? 1 : 1); } },
     hitWitch: (id, at, blow) => hitWitch(g, id, at, t, blow),
+    // (an attack in the grammar's effects on her, without a hit: a blink dodges them, as a blow; rules/attacks/combatWorld.ts)
+    throwWitch: (id, x, z, metres) => { const W = g.witches[id], at = g.herTime; if (!W || W.ko || dashing(W.dash, at) || g.partyOver) return; knockWitch((W.knock ??= newKnock()), W.body, { x, z, knockback: 0, rams: false, metres }, at, t); },
+    stunWitch: (id, until) => { const W = g.witches[id]; if (!W || W.ko || dashing(W.dash, g.herTime) || g.partyOver) return; const k = (W.knock ??= newKnock()); k.stunUntil = Math.max(k.stunUntil, g.herTime + (until - g.clock.time)); },
+    nudgeWitch: (id, dx, dz) => { const W = g.witches[id]; if (!W || W.ko || dashing(W.dash, g.herTime) || g.partyOver || W.body.mode !== "ground") return; W.body = { ...W.body, x: W.body.x + dx, z: W.body.z + dz }; },
     loseParty: id => {
       for (const w of g.witches) { w.leash.stack = w.leash.stack.filter(i => i !== id); w.leash.placed = w.leash.placed.filter(p => p.id !== id); }
       g.creatures[id].leashed = false;

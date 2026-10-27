@@ -2,7 +2,7 @@
 // so a whole set of sprites draws as one instanced batch.
 import * as THREE from "three";
 import { groundOf, packPixels, type AtlasPixels, type Baked, type Frame, type FrameGround } from "./artBuild";
-import { PALETTE_SIZE, planeBytes } from "./palette";
+import { indexPlane, PALETTE_SIZE, planeBytes } from "./palette";
 import { gpuKind, type GpuKind } from "./gpuLedger";
 
 export type { Baked, Frame, FrameGround };
@@ -44,6 +44,12 @@ function paletteTexture(pal: Uint8Array): THREE.DataTexture {
 /** The palette bound for a plane that has none (RGBA): never read (uIndexed 0), one for every atlas. */
 let noPalette: THREE.DataTexture | null = null;
 const none = (): THREE.DataTexture => (noPalette ??= paletteTexture(new Uint8Array(PALETTE_SIZE * 4)));
+/** One plane alone (outside a sprite atlas: the attack look's), indexed where it can be: its texture (R8 or RGBA, nearest), its
+ *  palette (or the shared stand-in, never read) and whether it's indexed; the palette let go with it. */
+export function indexedTexture(rgba: Uint8Array, w: number, h: number, kind: GpuKind): { tex: THREE.DataTexture; pal: THREE.DataTexture; indexed: boolean } {
+  const ix = indexPlane(rgba), [tex, pal] = plane(ix?.idx ?? rgba, ix?.pal ?? null, w, h, kind);
+  return { tex, pal, indexed: !!ix };
+}
 
 /** A plane's texture and its palette (or the shared stand-in); the palette let go with its plane. */
 function plane(data: Uint8Array, pal: Uint8Array | null | undefined, w: number, h: number, kind: GpuKind): [THREE.DataTexture, THREE.DataTexture] {

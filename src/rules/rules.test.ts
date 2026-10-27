@@ -958,7 +958,7 @@ describe("inviting and leashing", () => {
     const all = fresh(), s = newLeash(), { c, w } = inviteOne(all, s, 0);
     const to = { x: w.x + 60, z: w.z + 20 };
     stepLeash(s, all, { sigil: true }, to, true, 50, 0.1, TUNING);
-    const L = TUNING.leash.length, rest = { x: to.x, z: to.z - runeOffset(c, TUNING, 1) }; // (parked, it rests north of its sigil, by its size)
+    const p = s.placed.find(q => q.id === c.id)!, L = TUNING.leash.length, rest = { x: p.x, z: p.z - runeOffset(c, TUNING, 1) }; // (parked, it rests north of its sigil, by its size; the sigil where it snapped on the hex grid)
     let arrived = -1, px = c.x, pz = c.z, outside = 0;
     for (let i = 0; i < 1200; i++) {
       stepLeash(s, all, none, { x: 0, z: 0 }, true, 50 + i * 0.1, 0.1, TUNING);

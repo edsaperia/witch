@@ -20,6 +20,7 @@ import { runeOffset } from "./runeOffset";
 import { AREA_TYPES } from "./map";
 import { cellKey } from "./party";
 import { hexSpot, stackBottom, toBottom } from "./leash";
+import { groundedBy } from "./leashWeight";
 import { hasRune, runeNear, stateOf } from "./creatureStates";
 import { creatureValue, sideValue } from "./power";
 import type { Controls, Game } from "./game";
@@ -420,7 +421,9 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
       // (a quest or relic trip that has brought her this low is given up: it costs more than it gives; another later)
       if (qjob) { qjob = null; questAgain = time + 60; }
       if (rjob?.phase === "pick") { rjob = null; relicAgain = time + 60; }
-      if (b.mode === "ground" && healing) toggle = true;
+      // (her leash too heavy to fly with, rules/leashWeight.ts: she puts them down where she stands, one at a time, till she can rise;
+      // they wait there to be gathered, as after a knockout. Pressing rise held down by them she only stood in the fight: 2026-10-27)
+      if (b.mode === "ground" && healing) { if (groundedBy(w.leash.stack, g.creatures, t).grounded) { bot.doing = "lightening her leash to rise"; putDown(); } else toggle = true; }
     } else if (o.calm && careful && (calm = calmJob())) {
       // The champion calming a legend: one of its kind from her stack, put down in its area (cycled to the bottom first,
       // a press of the cycle button a step, as a player would).
