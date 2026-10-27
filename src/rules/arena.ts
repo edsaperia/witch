@@ -12,6 +12,8 @@ import type { Game } from "./game";
 import { witchHeight } from "./witch";
 import { PACKS } from "./combat/packs";
 import { profileOf } from "./movement";
+import { ATTACK_LIB, parseAttack } from "./attacks/index";
+import { newSpells } from "./attacks/engine";
 
 export interface ArenaGroup { species: string; count: number; level: Level; /** (wild) besieging home's soundsystem */ siege?: boolean }
 
@@ -96,4 +98,25 @@ export function setupArena(g: Game, spec: string, opts: { wildOnly?: boolean } =
   g.witch = { ...g.witch, x: cx, z: cz + Math.min(17 * S, Math.max(6, room - 3)), mode: "ground", lift: 0, seated: false, vx: 0, vz: 0 };
   g.camera = newCamera(t, g.witch.x, witchHeight(g.witch, t), g.witch.z);
   g.introFocus = undefined;
+}
+
+/** The Fight Arena's attack (?attack=<name|JSON>; the composable grammar, rules/attacks/): every wild creature the arena put down uses
+ *  it in place of its own, a name from config/attacks.json or an attack given as JSON (its base and children from the library; held
+ *  to the reaction floor). What was wrong or changed comes back as lines; [] when it's set as given. Nothing set if it can't be read. */
+export function arenaAttack(g: Game, input: string): string[] {
+  const lib = { ...ATTACK_LIB, ...(g.combat.attackLib ?? {}) }, named = input.trim();
+  let name = named;
+  const notes: string[] = [];
+  if (!lib[named]) {
+    const p = parseAttack(named, lib);
+    if (!p.attack) return p.errors;
+    notes.push(...p.warnings);
+    name = "arena";
+    lib.arena = p.attack;
+  }
+  g.combat.attackLib = lib;
+  g.combat.spells ??= newSpells(g.seed);
+  const wild = new Set((g.arena?.ids ?? []).filter(id => !g.creatures[id].leashed && g.creatures[id].state !== "happy"));
+  for (const id of wild) g.creatures[id].spell = name;
+  return notes;
 }

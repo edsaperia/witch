@@ -133,7 +133,7 @@ Plus:
 - `hit.blink`: a dash's blink passes through it (true by default)
 - `hit.friendly`: it can hit other animals; off by default, the fun of luring
 
-`body.element` (fire, frost, venom, web, stone, light, shadow, spore, water, sound) and `body.look` are tags for the look layer only:
+`body.element` (the look's eight, agreed with Lima: fire, frost, venom, moonlight, storm, earth, shadow, bloom; an untagged attack takes its species' element) and `body.look` are tags for the look layer only:
 the rules never read them.
 
 ## Telegraphing (first-class)
@@ -155,7 +155,7 @@ Every attack and every child declares a `telegraph`, or inherits its body's defa
 | `none` | nothing (allowed only if the composer finds another tell covers it) | melee inside another tell |
 
 Each telegraph is state, not just an event: `{ id, kind, shape, start, fire, until, attack, source, side, follows? }`, where `shape` is
-plain geometry (a point, a segment with width, a disc, a ring, a cone) and `follows` names a moving body or creature it is attached
+plain geometry (a point, a segment from x, z to x2, z2 with width, a path of points, a disc, a ring with `inner`, a cone with heading, angle and r) and `follows` names a moving body or creature it is attached
 to. `s.telegraphs` holds the live ones. A `telegraph` event at `start` and a `fire` event at `fire` let the audio hook a cue. Lima's danger
 frame draws every kind from that alone.
 
