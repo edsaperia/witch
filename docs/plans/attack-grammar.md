@@ -83,7 +83,7 @@ three terms).
 - `land` (a lob or a runner arriving)
 - `timer` (`[{ "at": 1.5, ... }]`: after it's emitted)
 
-A child is `{ "attack": "<name>" | { inline }, "at": "self" | "hit" | "caster", "aim": ..., "damage": factor, "inherit": ["element",
+A child is released at once unless it winds up itself (`cast.windup` defaults to 0 for a child, 0.6 for a cast). A child is `{ "attack": "<name>" | { inline }, "at": "self" | "hit" | "caster", "aim": ..., "damage": factor, "inherit": ["element",
 "side"] }`. Depth is capped (3) and so is a cast's total of children (64). The shapes Ed named fall out of these:
 - **Delayed explosion:** `life.stick` with an `on.timer` area.
 - **Split:** `on.expire` a ring or fan.
@@ -106,7 +106,7 @@ A child is `{ "attack": "<name>" | { inline }, "at": "self" | "hit" | "caster", 
 - `pulse` (`[on, off]` s)
 - `strike` (a short, fast one: duration ≤ 0.2)
 
-**G. area**: a `shape`, all centred on a spot (caster, target, a child's place):
+**G. area**: a `shape`, all centred on a spot (`at`: caster, target, a child's place; `quake` for the ground shaking, a legend's slam):
 - `disc` (`r`)
 - `ring` (`r`, `width`: the nova's line)
 - `donut` (`inner`, `r`: safe in the middle)
