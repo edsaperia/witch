@@ -26,6 +26,8 @@ export const AREA_RENAMES = {
   "cave-mouth": "jungle-cave",
   stream: "mangrove-channel",
   heronry: "mangrove-heronry",
+  garden: "snowy-taiga",
+  bog: "tundra-bog",
 };
 
 /** Today's id for an area id, old or new (a rename of a rename followed to its end). */

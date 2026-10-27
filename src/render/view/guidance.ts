@@ -5,7 +5,8 @@ import type { View } from "../view";
 import { HAT_INK } from "../view";
 import type { Pin, PinTarget } from "../pins";
 import type { Guide, GuideKind } from "../../rules/guidance";
-import { EMOJI_PX, HAT, NOTES } from "../indicator";
+import { EMOJI_PX, HAT, MAP, NOTES } from "../indicator";
+export { MAP };
 import { pixelSprite } from "../bubbles";
 
 const INK = new THREE.Vector3(1, 0.94, 0.82);
@@ -53,21 +54,6 @@ export const BED = [
   "#.............#",
   "#.............#",
   "#.............#",
-  "...............",
-];
-/** A folded map: the map table. */
-export const MAP = [
-  "...............",
-  "####...####...#",
-  "#..####...####.",
-  "#.+..#..+.#..#.",
-  "#.++.#.+++#..#.",
-  "#..+.#..+.#.+#.",
-  "#....#....#.++.",
-  "#.+..#....#..#.",
-  "#.++.#..+.#..#.",
-  "####.####.####.",
-  "....####...####",
   "...............",
 ];
 

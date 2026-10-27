@@ -58,7 +58,7 @@ import { StationPanel, type WorkshopCtx } from "./ui/stationPanel";
 import { ZooOverlay, domZooHost, zooUrl } from "./app/zooOverlay";
 import { leaveZoo } from "./app/zooExit";
 import { TelescopeView, integratedGpu } from "./app/telescope";
-import { loadSave, nightOver, sailNight, storeSave, worldSeed } from "./app/chartSave";
+import { loadSave, nightOver, sailNight, storeSave, unvisited, worldSeed } from "./app/chartSave";
 import { readZooCoasts } from "./app/zooCoasts";
 import { atGuide, guidanceOf, guideShows, seeGuide, GUIDANCE_HOOKS } from "./rules/guidance";
 import { addNew, dropNew, loadGuide, storeGuide } from "./app/guideSave";
@@ -410,13 +410,13 @@ function lendFind(kind: FindKindId, id: string): void {
 /** Her guidance (rules/guidance.ts): what's kept of it on this browser (app/guideSave.ts), her pin, and the islands found (the
  *  chart's save, read a second at most). */
 const guide = loadGuide(), guidePin = new GuidePin(view);
-let chartFound: { at: number; found: string[] } = { at: -Infinity, found: [] };
+let chartFound: { at: number; unvisited: string[] } = { at: -Infinity, unvisited: [] };
 /** Her guidance pin this frame (rules/guidance.ts): what's next, over it, while she's in the treehouse and not at it. */
 function stepGuide(now: number): void {
   const { game } = N();
   if (seeGuide(game, 0, guide)) storeGuide(guide);
-  if (now - chartFound.at > 1000) chartFound = { at: now, found: loadSave().found };
-  const G = guidanceOf(game, 0, guide, chartFound.found);
+  if (now - chartFound.at > 1000) chartFound = { at: now, unvisited: unvisited(loadSave(), N().tuning.map?.island ?? "home") }; // (where she is counts as been to: app/chartSave.ts unvisited)
+  const G = guidanceOf(game, 0, guide, chartFound.unvisited);
   guidePin.update(G, !!G && guideShows(game, 0, G) && !atGuide(game, 0, G) && !creator.open && !chartOpen() && !sailing);
 }
 /** The loan settled as she sleeps (the bed, a sail; Ed, 2026-10-24): the night won, kept for good (its kind's own save, and what she
@@ -965,6 +965,12 @@ let sailFail = false;
 view.onUse = down => { if (down) input.touch.sigil = true; input.touch.sigilHeld = down; }; // (a tap on a use prompt: the touch sigil button's press)
 const usedAt = (g: Game): string | null => (bot ? null : g.leashEvents.find(e => e.kind === "house" && e.obj && e.obj !== "slept")?.obj ?? null);
 const stillControls = <T extends object>(c: T): T => Object.fromEntries(Object.entries(c).map(([k, v]) => [k, typeof v === "boolean" ? false : typeof v === "number" ? 0 : v])) as T;
+/** The station panels' closes, the last few (window.witch.stationShuts): why, her clock, and whether paused. */
+const stationShuts: { why: string; at: number; frozen: boolean; station: string | null }[] = [];
+function shutStation(why: string): void {
+  stationShuts.push({ why, at: Math.round(performance.now()), frozen: freeze.frozen, station: stations.station }); if (stationShuts.length > 8) stationShuts.shift();
+  stations.close();
+}
 function frame(now: number): void {
   requestAnimationFrame(frame);
   if (loop.manual) return;
@@ -989,7 +995,7 @@ function frame(now: number): void {
   // button (E, the pad's □, a tap on touch) closes it, as it opened it: that press is the close and nothing else, even when the thing
   // open closed itself on it a moment before (the chart and the instruments take E themselves), so it never opens it again.
   const raw = input.read(), openNow = chartOpen() || telescope.on || !!studio.at || !!stations.station, shutTap = !freeze.frozen && !!(raw.sigil || raw.place) && (openNow || openPrev); // (E is `place`; the pad's □ and a tap `sigil`; never under the pause)
-  if (shutTap) { if (stations.station) stations.close(); if (studio.at) studio.leave(); if (chartAt && chartOpen()) { chartAt = null; closeChart(); } } // (the telescope: its own step, below)
+  if (shutTap) { if (stations.station) shutStation("E"); if (studio.at) studio.leave(); if (chartAt && chartOpen()) { chartAt = null; closeChart(); } } // (the telescope: its own step, below)
   const human = openNow || shutTap ? stillControls(raw) : raw;
   if (telescope.on) { if (telescope.night !== game || game.witches[0].ko || chartOpen() || !tuning.telescope) telescope.close(); else telescope.step({ ...raw, sigil: !!(raw.sigil || raw.place) }, dt, tuning.telescope); } // (E or □ leaves it)
   view.telescope = tuning.telescope ? telescope.look(tuning.telescope) : null;
@@ -1040,9 +1046,9 @@ function frame(now: number): void {
   // off it, out (not over her room open full screen, the chart, or a bot's game). E again or the pad's □ slides it out (Esc pauses over it, platform/freeze.ts) (Ed: "I think E should also close, and we can have spacebar to select"; the frame's start), she standing still at it; Space chooses in it (ui/stationPanel.ts).
   const station = bot || creator.open || charting ? null : stationOf(game, stations.station), shelves = station ? shelvesAt(station.id) : null;
   stations.setLoaned(loan?.id ?? null); // (its card sparkles: ui/stationPanel.ts)
-  if (stations.station && station?.id !== stations.station) stations.close(); // (she's somehow off it: a knockout, a new night; E closes it above)
+  if (stations.station && station?.id !== stations.station) shutStation(`off it (${station?.id ?? "none"}${charting ? ", charting" : ""}${creator.open ? ", creator" : ""})`); // (she's somehow off it: a knockout, a new night; E closes it above)
   if (station && shelves && station.id !== stations.station && usedAt(game) === station.id) { const g = (page.look() ?? creator.genome()) as Record<string, unknown>; stations.open(station.id, shelves, g as never, owned ??= loadOwned(g), game.wake && firstEver && !game.wake.yesterday && station.id === "dressingTable" ? "First night · pick your look here, and at the wardrobe, cloak pegs and shoe rack" : "", shelves.some(q => q.slot || q.board) ? workshopNow() : null); }
-  else if (!shelves && stations.station) stations.close();
+  else if (!shelves && stations.station) shutStation("no shelves");
   stations.update(performance.now() / 1000);
   // The telescope: E at it looks (useHouse); E or □ shuts it (its own step; Esc pauses over it); and should she somehow be off it, it shuts.
   const scope = bot || creator.open || sailing || charting ? null : stationOf(game, telescope.on ? scopeAt : null, tuning, ["telescope"]);
@@ -1072,7 +1078,6 @@ function frame(now: number): void {
   if (!bot) stepGuide(now);
   // The tables (the map table's sea chart): E at one brings its chart up, as the stations' panels (Ed's playtest, 2026-10-26).
   const table = bot || creator.open || sailing || F.ready === false ? null : tableOf(game, chartAt);
-  if (!bot && game.leashEvents.some(e => e.kind === "chart")) { guide.chartSeen = loadSave().found; storeGuide(guide); chartFound.at = -Infinity; } // (the islands found, seen: her guidance's map-table pin goes)
   if (table && table.use.kind === "chart" && !chartOpen() && game.leashEvents.some(e => e.kind === "chart")) chartOverNight(table.id);
   // The night's end (Ed, 2026-10-26: "Remove the end cards"): no card, won or lost; the guidance pins lead her home (rules/guidance.ts).
   // The night won (rules/win.ts): the islands its woken legends showed recorded on the sea chart (app/chartSave.ts), once, as its
@@ -1179,6 +1184,9 @@ installHooks({ night: N, view, sound, meter, shake, frameStats, loadTimes, loop 
 // window.witch.wakeUp(yesterday): a wake-up in her bed as the game starts one (rules/wakeUp.ts startWake), with or without a night
 // played before it (the shots of the first morning's hat on the hats' floor, and of last night's pile).
 (window as unknown as { witch: Record<string, unknown> }).witch.wakeUp = (yesterday: boolean): boolean => { const { game } = N(); return wakeInBedroom(game) && startWake(game, game.herTime, { yesterday }); };
+// window.witch.stationShuts: the station panels' last closes, why, when, and whether paused (the pause check's broom bay, closed
+// under the pause on the slow runner now and then: tools/smoke/pause-on-top.cjs prints them when a row fails).
+(window as unknown as { witch: Record<string, unknown> }).witch.stationShuts = stationShuts;
 (window as unknown as { witch: Record<string, unknown> }).witch.guide = { save: guide, pin: () => guidePin.state, hooks: GUIDANCE_HOOKS, step: () => stepGuide(performance.now()) };
 (window as unknown as { witch: Record<string, unknown> }).witch.dream = (v: string, kind: FindKindId, id: string): boolean => {
   if (!FIND_KINDS.some(q => q.id === kind && q.items.includes(id))) return false;

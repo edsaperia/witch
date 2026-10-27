@@ -1,9 +1,9 @@
 // The dark behind the treehouse's enclosed rooms (Ed, 2026-10-23; render/view.ts behindHouse, render/post.ts Post.behind), shot from
-// the built game (DIST, default dist/) at 1600x900: she's stood in rooms (ROOMS, default bedroom,study,kitchen) and on the Terrace,
+// the built game (DIST, default dist/) at 1600x900: she's stood in rooms (ROOMS, default bedroom,parlour,kitchen) and on the Terrace,
 // each shot as the game draws it (`<room>.png`) and with the dark off (`<room>-off.png`, tuning treehouse.house.dark.on false), and
 // each one's frames timed both ways (12 frames, the GPU finished each: timings.json); then the reveal as she steps from the kitchen's
 // branch onto the Terrace (reveal-<ms>.png, every 0.1 s of her clock) and back (hide-<ms>.png).
-//   npm run build && node tools/house/dark-shots.cjs <out dir> [seed]     (ROOMS=a,b or none, TIME=0 no timings, SETTLE=frames, REVEAL=0)
+//   npm run build && node tools/house/dark-shots.cjs <out dir> [seed]     (ROOMS=a,b or none, TIME=0 no timings, SETTLE=frames, REVEAL=0, SIZE=WxH)
 // (the cloud's software renderer takes 1 to 8 s a frame here: a whole run is about an hour)
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
@@ -11,7 +11,7 @@ const [outDir = "previews/dark", seed = "123"] = process.argv.slice(2);
 const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist"));
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".woff2": "font/woff2", ".ogg": "audio/ogg", ".webp": "image/webp" };
 const H = require("../../config/house/load.mjs").loadHouse();
-const ROOMS = (process.env.ROOMS ?? "bedroom,study,kitchen").split(",").filter(Boolean), TIME = process.env.TIME !== "0", SETTLE = Number(process.env.SETTLE || 60), REVEAL = process.env.REVEAL !== "0";
+const ROOMS = (process.env.ROOMS ?? "bedroom,parlour,kitchen").split(",").filter(Boolean), TIME = process.env.TIME !== "0", SETTLE = Number(process.env.SETTLE || 60), REVEAL = process.env.REVEAL !== "0";
 const A = ((H.turn || 0) * Math.PI) / 180, plan = (x, z) => [x * Math.cos(A) + z * Math.sin(A), -x * Math.sin(A) + z * Math.cos(A)];
 const mid = id => { const r = H.rooms.find(q => q.id === id); return plan((r.x0 + r.x1) / 2, (r.z0 + r.z1) / 2); };
 (async () => {
@@ -21,7 +21,7 @@ const mid = id => { const r = H.rooms.find(q => q.id === id); return plan((r.x0 
   const browser = await playwright.chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
   const errors = [], timings = {};
   try {
-    const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
+    const [W, H] = (process.env.SIZE || "1600x900").split("x").map(Number), page = await browser.newPage({ viewport: { width: W, height: H } }); // (SIZE=1900x1240: Ed's window)
     page.on("pageerror", e => errors.push(e.message));
     await page.goto(`http://127.0.0.1:${server.address().port}/?seed=${seed}&creator=0&wave=off`);
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000, polling: 1000 });

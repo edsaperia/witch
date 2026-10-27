@@ -22,6 +22,8 @@
    "areas": [
     "rookery",
     "snowfield",
+    "snowy-taiga",
+    "tundra-bog",
     "packice"
    ]
   },
@@ -62,7 +64,6 @@
     "twiggy-forest",
     "bluebell-glade",
     "old-oaks",
-    "garden",
     "wispy-forest",
     "ancient"
    ]
@@ -85,8 +86,7 @@
    "areas": [
     "fen",
     "wetland",
-    "beaver-pond",
-    "bog"
+    "beaver-pond"
    ]
   },
   {
