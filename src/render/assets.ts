@@ -5,6 +5,7 @@
 import * as Art from "../../art/generator.js";
 import { atlasBytes, atlasFromPixels, placeholderAtlas, type Atlas } from "./atlas";
 import { channelAt } from "./palette";
+import type { GpuKind } from "./gpuLedger";
 import { witchSprites, type SoundsystemGenArt, type TreehouseArt, type WitchArt } from "./homeArt";
 import { creatureFrame, walkGait, runJob, type ArtJob, type ArtResult, type BeachArt, type BeachEdgeArt, type LakeShoreArt, type DecorPiece, type PartyWitchArt, type PartyArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
@@ -41,6 +42,9 @@ export function prewarmArtWorkers(): void {
 
 /** The sets drawn from one island (its map's trees under its seed, its treehouse, its soundsystems): let go when another island
  *  takes the page (reseat). The rest are by species or the page's own, right on any island. */
+/** An art set's row in the GPU ledger (render/gpuLedger.ts), by its job's kind. */
+const LEDGER_KINDS: Record<string, GpuKind> = { type: "trees", creature: "creatures", sleep: "creatures", nap: "creatures", glide: "creatures", woken: "creatures", face: "creatures", party: "creatures", rig: "creatures", witch: "witch", hat: "witch", partyWitch: "witch", treehouse: "house" };
+const ledgerKind = (k: string): GpuKind => LEDGER_KINDS[k] ?? "props";
 const ISLAND_KINDS = new Set<string>(["type", "treehouse", "soundsystem"]);
 /** A job, or a waiting job's key ("kind:id..."), of the island's own. */
 export const islandBound = (j: ArtJob | string): boolean => ISLAND_KINDS.has(typeof j === "string" ? j.slice(0, j.indexOf(":")) : j.kind);
@@ -298,7 +302,7 @@ export class AssetLibrary {
       this.queue.unshift(r.job);
       return;
     }
-    const atlas = atlasFromPixels(r.result.px);
+    const atlas = atlasFromPixels(r.result.px, ledgerKind(r.job.kind));
     this.timings.push({ set: this.key(r.job), ms: r.ms ?? 0, at: performance.now(), cached: !!r.cached });
     if (r.job.kind === "witch") {
       // (her hat-off frames only for the look she has now: a job for a look she's since changed from, at a station where she's drawn
@@ -468,6 +472,15 @@ export class AssetLibrary {
       if (old === undefined) break;
       const v = this.rigs.get(old)!; v.atlas.albedo.dispose(); v.atlas.normal.dispose(); this.rigs.delete(old);
     }
+  }
+  /** The rig pages held, for the GPU budget (view/gpuBudget.ts). */
+  rigPages(): { key: string; used: number; atlas: Atlas }[] { return [...this.rigs].map(([key, v]) => ({ key, used: v.used, atlas: v.atlas })); }
+  /** A rig page let go (the GPU budget): asked for again, from the art cache, when a creature wants it. */
+  dropRig(key: string): void { const v = this.rigs.get(key); if (v) { v.atlas.albedo.dispose(); v.atlas.normal.dispose(); this.rigs.delete(key); } }
+  /** The creature sets drawn on `atlas` let go (the GPU budget, once no batch draws them): asked for again when a creature wears one. */
+  forgetCreatureAtlas(atlas: Atlas): void {
+    for (const [k, a] of this.creatures) if (a.atlas === atlas) this.creatures.delete(k);
+    atlas.albedo.dispose(); atlas.normal.dispose();
   }
   /** The rig pages held and their size in bytes (albedo and normal, as stored: render/atlas.ts atlasBytes), for the debug overlay. */
   rigStats(): { pages: number; bytes: number } {
@@ -672,7 +685,7 @@ export class AssetLibrary {
   track(key: string, p: Promise<unknown>): void { this.inFlight.add(key); p.then(() => this.inFlight.delete(key), () => this.inFlight.delete(key)); }
   /** Area type `t`'s art held (drawn, or kept and read back). */
   hasType(t: number): boolean { return this.types.has(t); }
-  /** Let area type `t`'s art go (the zoo's far islands: View.keepTypesUnder): its atlas off the GPU (its pixels went once uploaded,
+  /** Let area type `t`'s art go (the GPU budget: view/gpuBudget.ts): its atlas off the GPU (its pixels went once uploaded,
    *  render/atlas.ts), asked for again when its trees are next listed: from the art cache, kept in this browser (render/artCache.ts). */
   forgetType(t: number): void {
     const a = this.types.get(t);

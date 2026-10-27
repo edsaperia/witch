@@ -3,6 +3,7 @@
 import * as THREE from "three";
 import { groundOf, packPixels, type AtlasPixels, type Baked, type Frame, type FrameGround } from "./artBuild";
 import { PALETTE_SIZE, planeBytes } from "./palette";
+import { gpuKind, type GpuKind } from "./gpuLedger";
 
 export type { Baked, Frame, FrameGround };
 export { groundOf };
@@ -45,16 +46,17 @@ let noPalette: THREE.DataTexture | null = null;
 const none = (): THREE.DataTexture => (noPalette ??= paletteTexture(new Uint8Array(PALETTE_SIZE * 4)));
 
 /** A plane's texture and its palette (or the shared stand-in); the palette let go with its plane. */
-function plane(data: Uint8Array, pal: Uint8Array | null | undefined, w: number, h: number): [THREE.DataTexture, THREE.DataTexture] {
-  const t = texture(data, w, h, !!pal);
+function plane(data: Uint8Array, pal: Uint8Array | null | undefined, w: number, h: number, kind: GpuKind): [THREE.DataTexture, THREE.DataTexture] {
+  const t = gpuKind(texture(data, w, h, !!pal), kind);
   if (!pal) return [t, none()];
-  const p = paletteTexture(pal);
+  const p = gpuKind(paletteTexture(pal), kind);
   t.addEventListener("dispose", () => p.dispose());
   return [t, p];
 }
 
-export function atlasFromPixels(p: AtlasPixels): Atlas {
-  const [albedo, albedoPal] = plane(p.albedo, p.albedoPal, p.width, p.height), [normal, normalPal] = plane(p.normal, p.normalPal, p.width, p.height);
+/** `kind`: the GPU ledger's row for its pages (render/gpuLedger.ts). */
+export function atlasFromPixels(p: AtlasPixels, kind: GpuKind = "props"): Atlas {
+  const [albedo, albedoPal] = plane(p.albedo, p.albedoPal, p.width, p.height, kind), [normal, normalPal] = plane(p.normal, p.normalPal, p.width, p.height, kind);
   return { albedo, normal, albedoPal, normalPal, indexed: new THREE.Vector2(p.albedoPal ? 1 : 0, p.normalPal ? 1 : 0), frames: p.frames };
 }
 

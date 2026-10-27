@@ -193,8 +193,8 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
   let feeding: { x: number; z: number; until: number; phase?: "drop" | "wait" | "collect"; ids?: number[] } | null = null, feedAgain = 0, healing = false;
   let target: Target | null = null, pickAt = -1, landWave = -1, lastWave = 0, seenWave = 0, lastWoken: Cell | null = null, steps = 0;
   const parkedAt = new Set<string>();
-  // (her stack as it was before a knockout, and so the ones it let go happy: Ed, 2026-10-26; she gathers their runes again)
-  let carried: number[] = [], letGo = new Set<number>();
+  // (her stack as it was before a knockout, and so the ones it let go happy where they stood: Ed, 2026-10-26; she fetches them again by their runes)
+  let carried: number[] = [], letGo = new Set<number>(), fetching = -1, fetchSince = 0;
   let holding = null as string | null; // (the soundsystem the champion's holding)
   const seen = new Map<number, { x: number; z: number; at: number }>(); // (where she last saw each target: the champion leads moving ones)
   const bot: Bot = { kind, doing: "", done: { quests: [], relics: [] }, decide };
@@ -341,7 +341,7 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
       }
       return best;
     }
-    let calm = null as ReturnType<typeof calmJob>, cycle = false, straggler = null as Creature | null;
+    let calm = null as ReturnType<typeof calmJob>, cycle = false, straggler = null as Creature | null, back = null as Creature | null;
     let front = null as ReturnType<typeof siegeFront>, stray = null as ReturnType<typeof strandedGuard>;
     let mx = 0, mz = 0, toggle = false, fire = false, aimX = 0, aimZ = 0, dash = false, sigil = false, place = false;
     // Putting one down: the button picks up a sigil of hers she's standing on before it puts one down (rules/leash.ts), so a
@@ -354,16 +354,28 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
       if (nd > 0.01) { mx = (b.x - near.x) / nd; mz = (b.z - near.z) / nd; } else { mx = 1; mz = 0; }
     };
     /** Toward (x, z): over the treetops when far, landing there if `land`; true once on the ground within `within` m. */
-    const NEAR = 45, FAR = 60;
+    const NEAR = 45, FAR = 60, deckHere = deckOf(g.map, t);
     const goTo = (x: number, z: number, land: boolean, within = 45) => {
       const dx = x - b.x, dz = z - b.z, d = Math.hypot(dx, dz) || 1;
       // (Rising only past FAR on foot, landing within NEAR: between the two she walks, so she never hops up and down at the line.)
       if (d > (b.mode === "ground" ? FAR : NEAR)) { if (b.mode === "ground") toggle = true; mx = dx / d; mz = dz / d; return false; }
-      if (land && b.mode === "treetop") { toggle = true; return false; }
+      if (land && b.mode === "treetop") { if (deckHere && landsOn(deckHere, b.x, b.z)) { mx = dx / d; mz = dz / d; } else toggle = true; return false; } // (over the treehouse deck she'd land on it, which the bots don't: on toward it till she's past the deck)
       if (b.mode === "ground" && d > Math.min(6, within * 0.6)) { mx = dx / d; mz = dz / d; }
       return b.mode === "ground" && d <= within; // (within: how near counts as there; a clearing's sigil, a few metres)
     };
     const there = (x: number, z: number) => Math.hypot(x - b.x, z - b.z) <= (b.mode === "treetop" ? NEAR : FAR);
+    /** The nearest of those a knockout let go whose rune is ready (rules/knockout.ts letGoHappy), or null; any leashed again or
+     *  gone are forgotten. */
+    const letGoRune = (): Creature | null => {
+      let best: Creature | null = null, bd = Infinity;
+      for (const id of letGo) {
+        const c = g.creatures[id];
+        if (!c || c.leashed || c.gone || !c.dropped) { letGo.delete(id); continue; }
+        if (!hasRune(c, time)) continue;
+        const e = Math.hypot(c.x - b.x, c.z + runeOffset(c, t) - b.z); if (e < bd) { bd = e; best = c; }
+      }
+      return best;
+    };
     /** Picking a parked sigil of hers back up: onto it, then the button, only when it would pick one up (rules/leash.ts: on
      *  the hex grid the cell she stands in decides, and a free one puts one down instead; a knockout parks hers off the grid). */
     const pickUp = (p: { x: number; z: number }) => {
@@ -377,26 +389,25 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
     if (w.ko) bot.doing = "knocked out";
     else if (g.party.spellAt === null) bot.doing = "casting the party spell";
     else if (kind === "idle") bot.doing = "waiting at home";
+    else if (kind !== "hover" && !(careful && (healing || w.health.hp <= K.healAt)) && (back = letGoRune())) {
+      // Back from a knockout: the ones it let go happy idle where they were dropped (rules/knockout.ts letGoHappy), each with
+      // its rune at its feet; she fetches them first, nearest first, picking each rune up (E) as she would a new friend's.
+      bot.doing = `gathering her posse (${letGo.size} to fetch)`;
+      if (back.id !== fetching) { fetching = back.id; fetchSince = time; }
+      else if (time - fetchSince > 60) { letGo.delete(back.id); fetching = -1; } // (one she can't get back, too heavy to carry or out of reach: left be)
+      const rx = back.x, rz = back.z + runeOffset(back, t), rd = Math.hypot(rx - b.x, rz - b.z); // (its rune lies south of it)
+      if (goTo(rx, rz, true, t.leash.pickRadius)) { if (rd > t.leash.pickRadius * 0.6) { mx = (rx - b.x) / rd; mz = (rz - b.z) / rd; } else if (step % 10 === 0) place = true; }
+    }
     else if (kind !== "hover" && (straggler = winTarget(g)) && !(careful && (healing || w.health.hp <= K.healAt))) {
       // The win's stragglers (rules/win.ts, #675): nothing moves on while an enraged animal lives, and only her posse can
       // knock one down; she takes them to the one the pointer shows, landing by it and keeping out of its reach.
       const S = straggler, d = Math.hypot(S.x - b.x, S.z - b.z);
-      // (her parked ones first, if she's carrying few, and the ones a knockout let go happy, by their runes)
-      let pk = null as { x: number; z: number } | null, pd = Infinity, rn = null as Creature | null;
+      // (her parked ones first, if she's carrying few: those she put down herself)
+      let pk = null as { x: number; z: number } | null, pd = Infinity;
       if (w.leash.stack.length < 4) for (const p of w.leash.placed) { const e = Math.hypot(p.x - b.x, p.z - b.z); if (e < pd) { pd = e; pk = p; } }
-      if (w.leash.stack.length < 4) for (const id of letGo) {
-        const c = g.creatures[id];
-        if (!c || c.leashed || c.gone) { letGo.delete(id); continue; }
-        if (!hasRune(c, time)) continue;
-        const e = Math.hypot(c.x - b.x, c.z + runeOffset(c, t) - b.z); if (e < pd) { pd = e; pk = null; rn = c; }
-      }
-      if (rn) {
-        bot.doing = "gathering her posse for the last ones";
-        const rx = rn.x, rz = rn.z + runeOffset(rn, t), rd = Math.hypot(rx - b.x, rz - b.z); // (its rune lies south of it)
-        if (goTo(rx, rz, true, t.leash.pickRadius)) { if (rd > t.leash.pickRadius * 0.6) { mx = (rx - b.x) / rd; mz = (rz - b.z) / rd; } else if (step % 10 === 0) place = true; }
-      } else if (pk) { bot.doing = "gathering her posse for the last ones"; pickUp(pk); }
+      if (pk) { bot.doing = "gathering her posse for the last ones"; pickUp(pk); }
       else bot.doing = there(S.x, S.z) ? `seeing off ${article(S.species)}` : `flying to the last ${plural(S.species)}`;
-      if (!pk && !rn && goTo(S.x, S.z, true, 12)) {
+      if (!pk && goTo(S.x, S.z, true, 12)) {
         if (d < K.kite) { mx = (b.x - S.x) / (d || 1); mz = (b.z - S.z) / (d || 1); dash = careful && d < K.dashAt; }
         else if (d > 12) { mx = (S.x - b.x) / d; mz = (S.z - b.z) / d; }
       }

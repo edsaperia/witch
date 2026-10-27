@@ -739,11 +739,12 @@ async function main() {
       return { besiegers: besiegers.length, hit, fell, ended, marched, over: !!g.partyOver, fighting, awake, asleep: live.filter(c => c.asleep).length };
     });
     if (r.error) { check(false, `a siege: ${r.error}`); return; }
-    await page.waitForFunction(() => document.getElementById("over").classList.contains("on"), null, { timeout: 120000 }).catch(() => {});
-    const screen = await page.evaluate(() => document.getElementById("over").classList.contains("on"));
+    // (no card since Ed's 2026-10-26 "Remove the end cards": the guidance pin's 💤 leads her to bed, rules/guidance.ts)
+    await page.waitForFunction(() => window.witch.guide.pin().key.startsWith("bed:"), null, { timeout: 120000 }).catch(() => {});
+    const screen = await page.evaluate(() => window.witch.guide.pin().key.startsWith("bed:") && !document.getElementById("over"));
     await shot(page, "80-siege-over.png");
     check(r.besiegers > 0 && r.hit && r.fell && r.ended && r.marched, `a woken area's creatures besiege its soundsystem, bring it down, end its party and march on to the dancefloor (${JSON.stringify(r)})`);
-    check(r.over && screen, `when home's speakers have fallen the party's over and its card shows (${r.over}, ${screen})`);
+    check(r.over && screen, `when home's speakers have fallen the party's over and the 💤 pin leads her to bed, no card (${r.over}, ${screen})`);
     check(r.fighting === 0 && r.awake === 0 && r.asleep > 0, `the afterparty: nothing fights, everyone's asleep or walking home to bed (${JSON.stringify({ fighting: r.fighting, awake: r.awake, asleep: r.asleep })})`);
   });
 
@@ -829,7 +830,7 @@ async function main() {
       const g = window.witch.game, m = g.map, d = m.dancefloor;
       let best = null;
       for (const [x, y] of m.cells) {
-        if (window.witch.areaTypeId(m.typeOf(x, y)) !== "cave-mouth") continue;
+        if (window.witch.areaTypeId(m.typeOf(x, y)) !== "jungle-cave") continue;
         const s = m.siteOf(x, y), k = Math.hypot(s.x - d.x, s.z - d.z);
         if (!best || k < best.k) best = { x, y, k, s };
       }

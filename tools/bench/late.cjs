@@ -15,6 +15,8 @@
 //   PROFILE=1: the CPU profiler over the timed frames; <out>/late-profile.json gives the page's own JS by self time, the
 //   functions and the files (three.js's walk, sort and uniform set-up, the view's own parts), GL calls apart.
 const http = require("http");
+const { pageKey } = require("./comparable.cjs"); // (the result's comparability key: tools/bench/comparable.cjs)
+let KEY = null;
 const fs = require("fs");
 const path = require("path");
 let playwright;
@@ -77,6 +79,7 @@ const sum = (o, k) => o.reduce((a, x) => a + (x[k] ?? 0), 0);
   if (cdp) { await cdp.send("HeapProfiler.enable"); await cdp.send("HeapProfiler.startSampling", { samplingInterval: 32768 }); }
   await page.goto(`http://127.0.0.1:${port}/?seed=${seed}&creator=0`);
   await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000 });
+  KEY ??= await pageKey(page, { scene: `wave ${wave}`, spot: `late.cjs over the treetops at ${process.env.AT || "300,200"} from the dancefloor` });
   await page.evaluate(() => { window.witch.manual = true; });
   await page.keyboard.press("Enter");
   console.error(`ready and started in ${((Date.now() - t0) / 1000).toFixed(0)} s`);
@@ -174,6 +177,6 @@ const sum = (o, k) => o.reduce((a, x) => a + (x[k] ?? 0), 0);
       uploadsBy: Object.entries(timed.gl.by ?? {}).sort((a, b) => b[1] - a[1]).slice(0, 15).map(([k, v]) => [k, Math.round(v / rows.length)]),
     };
   }
-  fs.writeFileSync(path.join(out, "late.json"), JSON.stringify({ report, rows }, null, 1));
+  fs.writeFileSync(path.join(out, "late.json"), JSON.stringify({ key: KEY, report, rows }, null, 1));
   console.log(JSON.stringify(report, null, 1));
 })().catch(e => { console.error(e); process.exit(1); });

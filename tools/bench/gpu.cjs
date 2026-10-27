@@ -8,6 +8,8 @@
 // triangles. The knobs are the tuning's, set live (the view reads them each frame), so the game's build is what's measured.
 //   node tools/bench/gpu.cjs [out dir]   DIST=dist QUERY=island=fox SEED=569166 X=2204 Z=2253 ZOOM=3 WAVES=9 SIZE=2000x1326 FRAMES=90 WARM=10 ONLY=base,cast
 const http = require("http"), fs = require("fs"), path = require("path");
+const { pageKey } = require("./comparable.cjs"); // (the result's comparability key: tools/bench/comparable.cjs)
+let KEY = null;
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const env = (k, d) => (process.env[k] === undefined ? d : process.env[k]);
 const root = path.resolve(__dirname, "../..", env("DIST", "dist")), out = path.resolve(process.argv[2] || path.join(__dirname, "../../previews/gpu"));
@@ -64,6 +66,7 @@ const VARIANTS = [
   const t0 = Date.now(), lap = what => console.log(`[${((Date.now() - t0) / 1000).toFixed(1)} s] ${what}`);
   await page.goto(`http://127.0.0.1:${port}/?seed=${SEED}&creator=0&spell=auto${process.env.QUERY ? "&" + process.env.QUERY : ""}`);
   await page.waitForFunction(() => window.witch?.ready, null, { timeout: 180000 });
+  KEY ??= await pageKey(page, { spot: `gpu.cjs at ${X},${Z} zoom ${ZOOM}` });
   lap("ready");
   // Off the decks (Space takes her up; a second press brings her down), to the spot on foot, at the zoom, the waves brought on.
   // (a frame here can take seconds under the software renderer: each key waited for by what it does, not by the clock)
@@ -159,7 +162,7 @@ const VARIANTS = [
   if (errors.length) lines.push("", `page errors: ${errors.length}`, ...errors.slice(0, 5).map(e => "  " + e));
   console.log("\n" + lines.join("\n"));
   fs.writeFileSync(path.join(out, "gpu.md"), lines.join("\n") + "\n");
-  fs.writeFileSync(path.join(out, "gpu.json"), JSON.stringify({ where, rows, errors }, null, 1));
+  fs.writeFileSync(path.join(out, "gpu.json"), JSON.stringify({ key: KEY, where, rows, errors }, null, 1));
   await page.screenshot({ path: path.join(out, "spot.png") });
   await browser.close(); server.close();
   if (shaderErrors.length) process.exit(2);

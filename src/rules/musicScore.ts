@@ -218,7 +218,7 @@ export interface MusicStyle {
   /** The section the home speakers' boot plays, and the one while she's knocked out. */
   intro: string;
   knockout: string;
-  /** The section an island's victory plays (the prototype builder's "victory" cue: the lap, the win, the "Night won" card). */
+  /** The section an island's victory plays (the prototype builder's "victory" cue: the lap and the win). */
   victory?: string;
   /** The drum fill in the last bar before a new section: its part, pattern, and parts muted in the bar's last beat. */
   fill: { part: string; pattern: string; mute: string[] };

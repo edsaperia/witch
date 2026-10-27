@@ -7,6 +7,7 @@
 // middle. `?furniture=0` draws the boxes as before, to compare.
 import { broomsLeft, KIT_BROOMS } from "../rules/kit";
 import * as THREE from "three";
+import { gpuKind } from "./gpuLedger";
 import { FURNITURE_IDS } from "../../art/furniture.js";
 import type { Game } from "../rules/game";
 import type { Style } from "./style";
@@ -29,7 +30,7 @@ export const litCanvas = (d: Drawn, room: string, st: Style, dim = 1, id = "", o
 function pageCanvas(w: number, h: number): HTMLCanvasElement { const c = document.createElement("canvas"); c.width = w; c.height = h; c.getContext("2d", { willReadFrequently: true }); return c; }
 /** A canvas as the house's texture: an art pixel a texel, its colours as they are. */
 export function pixelTexture(c: HTMLCanvasElement): THREE.CanvasTexture {
-  const tex = new THREE.CanvasTexture(c);
+  const tex = gpuKind(new THREE.CanvasTexture(c), "house");
   tex.magFilter = tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.colorSpace = THREE.NoColorSpace; tex.flipY = false;
   return tex;
 }
@@ -48,7 +49,7 @@ export function drawnTop(px: ArrayLike<number>, w: number, h: number): { x: numb
 }
 /** A piece's pixels (render/housePieces.ts, from the art workers) as the house's texture: an art pixel a texel, its colours as they are. */
 export function pieceArt(p: PiecePixels): FurnitureArt {
-  const tex = new THREE.DataTexture(p.px, p.w, p.h, THREE.RGBAFormat);
+  const tex = gpuKind(new THREE.DataTexture(p.px, p.w, p.h, THREE.RGBAFormat), "house");
   tex.magFilter = tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.colorSpace = THREE.NoColorSpace; tex.flipY = false; tex.needsUpdate = true;
   return { tex, w: p.w, h: p.h, ox: p.ox, oy: p.oy, marks: p.marks, top: drawnTop(p.px, p.w, p.h) };
 }

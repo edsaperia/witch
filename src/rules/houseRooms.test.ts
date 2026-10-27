@@ -212,7 +212,7 @@ describe("the oak's rooms", () => {
     expect(slept).toBe(1);
   });
 
-  it("the party's over: she still flies onto the Terrace, and the bed still sleeps (the over card points her there: Ed, 2026-10-21)", () => {
+  it("the party's over: she still flies onto the Terrace, and the bed still sleeps (the afterparty's 💤 pin leads her there)", () => {
     const g = newGame(123, TUNING), W = g.witches[0], d = deck(g), a = (HOUSE_ROOMS.terrace.takeoff.angle * Math.PI) / 180;
     g.clock.paused = false;
     for (let i = 0; i < 0.3 / STEP; i++) stepGame(g, { ...idle, moveZ: -1 }, STEP); // (off her seat)

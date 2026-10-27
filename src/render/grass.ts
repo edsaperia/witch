@@ -148,7 +148,7 @@ export class GrassView {
     const cap = t.groundCover.cap;
     this.maxBlocks = Math.floor(cap / BLOCK);
     this.kinds = made.kinds; this.rushes = made.rushes;
-    this.atlas = atlasFromPixels(made.pixels);
+    this.atlas = atlasFromPixels(made.pixels, "ground");
     const img = this.atlas.albedo.image as { width: number; height: number }; this.atlasW = img.width; this.atlasH = img.height;
     this.geo = new THREE.InstancedBufferGeometry();
     const quad = new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0);
@@ -215,7 +215,7 @@ export class GrassView {
   setArt(made: TuftArt): void {
     const old = this.atlas;
     this.kinds = made.kinds; this.rushes = made.rushes;
-    this.atlas = atlasFromPixels(made.pixels);
+    this.atlas = atlasFromPixels(made.pixels, "ground");
     const img = this.atlas.albedo.image as { width: number; height: number }; this.atlasW = img.width; this.atlasH = img.height;
     const u = this.mat.uniforms;
     setAtlasUniforms(u, this.atlas, "uTufts", "uTuftN"); (u.uTuftSize.value as THREE.Vector2).set(this.atlasW, this.atlasH);

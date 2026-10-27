@@ -27,17 +27,17 @@ const SMALL = {
     ["bus-shelter", 0, 0], ["bus-stop-sign", 1.9, .6], ["bench", -2.4, .8], ["lamppost-lit", -1.9, -.4], ["bin-bags", 2.5, -.7], ["litter-bin", 1.3, 1.3]] },
   "picnic-gone-wild": { desc: "a picnic left behind and gone wild: a rotting table, the blanket with mushrooms through it, a hamper, a clump of glowing fungi", suits: ["bluebell-glade", "old-oaks", "log-pile", "meadow"], pieces: [
     ["picnic-table", 0, -.7], ["picnic-blanket", .5, .9], ["hamper", -1.2, .8], ["fungi-glow", 1.5, .2], ["camp-chair", -1.5, -.4, "left"]] },
-  "allotment-feral": { desc: "an allotment gone feral: a shed with its door hanging, beds bolted to seed, a bean wigwam, a compost bay, a scarecrow", suits: ["garden", "honeysuckle-tangle", "meadow"], pieces: [
+  "allotment-feral": { desc: "an allotment gone feral: a shed with its door hanging, beds bolted to seed, a bean wigwam, a compost bay, a scarecrow", suits: ["honeysuckle-tangle", "meadow"], pieces: [
     ["garden-shed", -1.7, -1.7], ["raised-bed", .6, -.9], ["raised-bed", .8, .6, "left"], ["bean-wigwam", 2.5, -.6], ["compost-heap", -1.9, 1.0], ["watering-can", -.4, 1.9], ["scarecrow", 2.7, 1.5]] },
-  "lay-by": { desc: "a lay-by: a car still parked, a snack trailer shuttered, a litter bin, a picnic table, cones and a sign", suits: ["grassland", "twiggy-forest", "norway", "wispy-forest"], pieces: [
+  "lay-by": { desc: "a lay-by: a car still parked, a snack trailer shuttered, a litter bin, a picnic table, cones and a sign", suits: ["grassland", "twiggy-forest", "wispy-forest"], pieces: [
     ["car-parked", 0, 0], ["snack-van", -3.3, -1.4], ["litter-bin", 2.2, -.9], ["picnic-table", 2.7, 1.0], ["relic:cones", -1.3, 1.7], ["sign-round", -3.0, 1.4]] },
   "festival-remnants": { desc: "festival remnants: tent frames with rags of fabric, faded bunting, a cold fire pit, crates, a camp chair, glow sticks still glowing", suits: ["meadow", "heath", "grassland", "bluebell-glade"], pieces: [
     ["bunting", 0, -2.3], ["tent-frame", -1.6, -.7], ["tent-frame", .9, -1.3, "left"], ["fire-pit", .4, .6], ["crates", -1.9, 1.2], ["camp-chair", 1.7, .1, "left"], ["glow-sticks", 1.2, 1.5]] },
-  "woodcutters-clearing": { desc: "a woodcutter's clearing: a woodpile, a chopping block with the axe left in it, a sawhorse, sawn stumps, a barrow", suits: ["log-pile", "old-oaks", "alder-forest", "norway", "old-pinewood"], pieces: [
+  "woodcutters-clearing": { desc: "a woodcutter's clearing: a woodpile, a chopping block with the axe left in it, a sawhorse, sawn stumps, a barrow", suits: ["log-pile", "old-oaks", "alder-forest", "old-pinewood"], pieces: [
     ["log-pile", -1.4, -1.1], ["chopping-block", .4, .2], ["sawhorse", 1.9, -.9], ["stumps", -.9, 1.4], ["stumps", 2.1, 1.2, "left"], ["wheelbarrow", -2.5, .5]] },
   "fly-tip": { desc: "a fly-tip in the bracken: a sofa, a washing machine, a mattress, bin bags, a pile of tyres", suits: ["fern-forest", "muddy-forest", "tangly-forest", "berry-thicket"], pieces: [
     ["relic:sofa", 0, -.6], ["relic:washing-machine", 1.7, -.7], ["mattress", -1.5, .6], ["bin-bags", .6, .9], ["tyre-pile", 2.3, .7]] },
-  "apiary": { desc: "an abandoned apiary: hives askew, one roof slid off, a bench and a water butt", suits: ["meadow", "heath", "honeysuckle-tangle", "garden"], pieces: [
+  "apiary": { desc: "an abandoned apiary: hives askew, one roof slid off, a bench and a water butt", suits: ["meadow", "heath", "honeysuckle-tangle"], pieces: [
     ["beehive", -1.1, -.5], ["beehive", .2, -.9, "left"], ["beehive", 1.3, -.2], ["bench", -.4, 1.2], ["water-butt", 2.2, 1.0]] },
   "hay-bales": { desc: "bales left in a field: round bales, one gone black, a slumping stack of square ones", suits: ["meadow", "grassland", "heath", "moor"], pieces: [
     ["hay-round", -1.3, 0], ["hay-round-side", .2, -.9], ["hay-round", 1.5, .2, "left"], ["hay-stack", -.2, 1.3], ["hay-round-mouldy", 2.6, -1.1], ["hay-square-mouldy", 1.6, 1.6]] },
@@ -58,19 +58,19 @@ const LARGE = {
     ["lychgate", 0, 4.4], ["mausoleum", -3.4, -3.4], ["yew", 3.6, -3.2], ["stone-angel", .2, -.7], ["obelisk", 2.6, 1.0],
     ...rows("headstone", -3.6, 3.6, .9, [-1.9, .5, 2.4], (x, z) => (Math.abs(x - .2) < .9 && Math.abs(z + .7) < 1.5) || (Math.abs(x - 2.6) < .6 && Math.abs(z - 1.0) < .8) || (x < -2.3 && z > 1.5), GRAVES),
     ["iron-railing", -3.4, 1.4], ["iron-railing", -3.4, 3.3], ["grave-lantern", -1.7, .7], ["grave-lantern", 1.0, 2.6]] },
-  "car-park": { desc: "a car park lost in the trees: cracked tarmac and faded bays, cars where they were left (one with a tree through it), a ticket machine, a snapped barrier, lampposts, trolleys", suits: ["grassland", "twiggy-forest", "norway", "wispy-forest"], pieces: [
+  "car-park": { desc: "a car park lost in the trees: cracked tarmac and faded bays, cars where they were left (one with a tree through it), a ticket machine, a snapped barrier, lampposts, trolleys", suits: ["grassland", "twiggy-forest", "wispy-forest"], pieces: [
     ["carpark-tarmac", 0, 0], ["car-parked", -2.7, -1.8], ["car-parked", 1.7, 1.9, "left"], ["car-bonnet-up", 3.6, -1.8], ["relic:van-tree", -1.0, 2.0],
     ["ticket-machine", 5.0, .3], ["barrier", -6.2, .4], ["lamppost", -4.8, -3.1], ["lamppost", 4.6, -3.2, "left"], ["relic:trolley-tipped", .6, -1.3], ["relic:trolley-nest", 4.4, 2.5]] },
   "scrap-yard": { desc: "a scrap yard: stacks of crushed cars, tyre piles, a grab crane with its arm still up, oil drums, a chain-link fence torn open, a corrugated shack", suits: ["muddy-forest", "deadwood", "rocky-slope", "tangly-forest"], pieces: [
     ["crushed-cars", -2.8, -2.1], ["crushed-cars", -1.0, -2.8, "left"], ["grab-crane", 1.4, -1.6], ["shack", 3.8, -.4], ["tyre-pile", -3.2, .8], ["tyre-pile", 2.2, 1.8, "left"],
     ["oil-drums", .2, .9], ["relic:car-on-side", -1.0, 2.1], ["relic:court-fence", -3.0, 3.6], ["relic:court-fence", .2, 3.7, "left"]] },
-  "stave-church": { desc: "a ruined wooden stave church in a clearing, its nave open to the sky and its spire still up, a few sunken graves round it", suits: ["norway", "old-pinewood", "fern-forest", "rocky-slope"], pieces: [
+  "stave-church": { desc: "a ruined wooden stave church in a clearing, its nave open to the sky and its spire still up, a few sunken graves round it", suits: ["old-pinewood", "fern-forest", "rocky-slope"], pieces: [
     ["@stave-church", 0, 0], ["headstone-sunk", -2.8, 1.8], ["grave-cross", -2.0, 2.6, "left"], ["headstone-lean", 2.9, 2.0], ["yew", 3.8, -2.6]] },
   "parish-church": { desc: "a roofless stone parish church with its square tower, a churchyard of leaning stones, a yew by the gate", suits: ["old-oaks", "bluebell-glade", "meadow", "ancient"], pieces: [
     ["@parish-church", 0, 0], ["yew", 3.6, 2.4], ...rows("headstone", -2.6, 1.6, 1.05, [2.6], () => false, GRAVES), ["grave-cross", 2.6, -2.2], ["headstone-sunk", -.8, -2.4]] },
-  "baroque-church": { desc: "a baroque church with its dome cracked open, its fallen lantern in the grass, a stone angel and rubble before its facade", suits: ["garden", "old-oaks", "ancient"], pieces: [
+  "baroque-church": { desc: "a baroque church with its dome cracked open, its fallen lantern in the grass, a stone angel and rubble before its facade", suits: ["old-oaks", "ancient"], pieces: [
     ["@baroque-church", 0, 0], ["stone-angel", -2.6, 2.6, "left"], ["rubble", 2.4, 2.8], ["column-broken", 3.3, .6]] },
-  "coptic-basilica": { desc: "a domed Coptic basilica, one dome fallen in, its bell tower standing, rubble round it", suits: ["rocky-slope", "heath", "grassland", "cave-mouth"], pieces: [
+  "coptic-basilica": { desc: "a domed Coptic basilica, one dome fallen in, its bell tower standing, rubble round it", suits: ["rocky-slope", "heath", "grassland"], pieces: [
     ["@coptic-basilica", 0, 0], ["rubble", -1.0, 2.4], ["rubble", 3.4, 1.6, "left"], ["decor:split", -3.4, 1.8]] },
   "pagoda-temple": { desc: "a tiered wooden temple on its plinth, its top tier leaning and its spire fallen, mossed rocks round it", suits: ["bluebell-glade", "fern-forest", "ravine", "mangrove-channel"], pieces: [
     ["pagoda-temple", 0, 0], ["decor:pair", -2.8, 1.6], ["decor:rock", 2.9, -1.4], ["rubble", -2.4, -1.8, "left"]] },
@@ -78,18 +78,18 @@ const LARGE = {
     ["step-pyramid", 0, 0], ["rubble", 3.6, 2.0], ["decor:standing-rock", -3.8, 1.4, "left"]] },
   "stupa": { desc: "a stupa on its terraces with a tree rooted in its dome, its spire's rings fallen at its foot, standing stones near", suits: ["heath", "moor", "rocky-slope", "grassland"], pieces: [
     ["stupa", 0, 0], ["decor:standing-rock", -3.2, -1.0], ["decor:pair", 3.0, 1.8, "left"]] },
-  "greek-temple": { desc: "a Greek temple on its stepped base, a peristyle of columns half fallen, drums in the grass, a headless statue", suits: ["meadow", "grassland", "garden", "heath"], pieces: [
+  "greek-temple": { desc: "a Greek temple on its stepped base, a peristyle of columns half fallen, drums in the grass, a headless statue", suits: ["meadow", "grassland", "heath"], pieces: [
     ["@greek-temple", 0, 0], ["column-drums", 1.6, 2.9], ["statue-headless", -3.4, 2.3], ["pediment-fragment", 3.8, -1.6, "left"]] },
-  "castle-ruins": { desc: "castle ruins: curtain walls (one breached), a round tower open to the sky, a gatehouse with its portcullis fallen, steps to nowhere, rubble", suits: ["rocky-slope", "moor", "norway", "deadwood", "cave-mouth"], pieces: [
+  "castle-ruins": { desc: "castle ruins: curtain walls (one breached), a round tower open to the sky, a gatehouse with its portcullis fallen, steps to nowhere, rubble", suits: ["rocky-slope", "moor", "deadwood"], pieces: [
     ["curtain-wall", -4.2, -1.2], ["round-tower", -1.7, -2.6], ["gatehouse", 1.6, -2.3], ["curtain-wall-breach", 4.7, -1.4, "left"], ["steps-to-nowhere", -3.4, 2.0], ["rubble", 2.6, 1.7], ["rubble", -.4, 1.2, "left"]] },
-  "classical-ruins": { desc: "classical ruins: a row of columns, some fallen in drums, a pediment fragment, a cracked mosaic floor, a headless statue, a broken arch and fallen drums", suits: ["meadow", "garden", "grassland", "ancient"], pieces: [
+  "classical-ruins": { desc: "classical ruins: a row of columns, some fallen in drums, a pediment fragment, a cracked mosaic floor, a headless statue, a broken arch and fallen drums", suits: ["meadow", "grassland", "ancient"], pieces: [
     ["mosaic-floor", 0, 0], ["column", -2.2, -2.3], ["column", -.8, -2.4], ["column-broken", .6, -2.3], ["column", 2.0, -2.4], ["column-drums", 1.8, 2.4], ["pediment-fragment", -2.8, 2.1],
     ["statue-headless", 3.2, -.6], ["arch-ruin", -4.4, -.6], ["column-drums", 4.0, 1.6, "left"]] }, // (the toppled statue head gone: Ed, 2026-10-11)
 };
 // The classical ruins from a seed (art/landmarks.js CLASSICAL_PLANS; Ed, 2026-10-11: more variations, some smaller): each plan's
 // seeded variants as scenes, a few fallen pieces round the large ones (picked by the seed), the small ones alone; the large ones ("temple-<plan>~<k>") join
 // the featured pool (tuning scenes.featured, "temple-*"), the small ones ("ruin-<plan>~<k>") scatter as scenes in many more area types.
-const TEMPLE_SUITS = ["meadow", "garden", "grassland", "ancient", "heath", "desert-ruin"], RUIN_SUITS = [...TEMPLE_SUITS, "moor", "rocky-slope", "stone-shrine", "bluebell-glade", "hazel-forest", "old-oaks", "fern-forest", "deadwood", "ravine", "mangrove-channel", "cave-mouth", "wispy-forest"];
+const TEMPLE_SUITS = ["meadow", "grassland", "ancient", "heath", "desert-ruin"], RUIN_SUITS = [...TEMPLE_SUITS, "moor", "rocky-slope", "stone-shrine", "bluebell-glade", "hazel-forest", "old-oaks", "fern-forest", "deadwood", "ravine", "mangrove-channel", "jungle-cave", "wispy-forest"];
 const TEMPLE_EXTRAS = ["column-drums", "pediment-fragment", "statue-headless", "column-broken", "column"];
 for (const id of CLASSICAL_PLAN_IDS) for (let k = 0; k < CLASSICAL_VARIANTS; k++) {
   const d = LANDMARK_BY_ID[`${id}~${k}`], big = d.planSize === "large", h = (i, j = 0) => ((Math.sin((i + 1) * 127.1 + (j + 1) * 311.7 + k * 74.7 + id.length * 19.3) * 43758.5453) % 1 + 1) % 1;

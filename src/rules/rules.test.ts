@@ -599,7 +599,7 @@ describe("light sources", () => {
     for (const l of all) expect(Math.hypot(l.x - d.x, l.z - d.z)).toBeGreaterThan(d.radius + TUNING.dancefloor.clearing);
   });
   it("put more ponds in the wet areas", () => {
-    const wet = new Set(["wetland", "mangrove-channel", "bog", "beaver-pond", "moor"]);
+    const wet = new Set(["wetland", "mangrove-channel", "tundra-bog", "beaver-pond", "moor"]);
     const ponds = all.filter(l => l.kind === "pond"), inWet = ponds.filter(l => wet.has(AREA_TYPES[map.areaAt(l.x, l.z).type].id)).length;
     expect(inWet / ponds.length).toBeGreaterThan(0.35); // (5 of the 30 kinds: about a sixth by chance)
   });
@@ -1285,7 +1285,7 @@ describe("finds, each at most once per map (Ed, v160)", () => {
   }, 60000);
   it("stairs stand only by ravines, rocky slopes, cave mouths and stone shrines", () => {
     for (const m of maps) for (const p of m.paths.pieces.filter(p => p.id.startsWith("stairs")))
-      expect(["ravine", "rocky-slope", "cave-mouth", "stone-shrine"]).toContain(AREA_TYPES[m.areaAt(p.x, p.z).type].id);
+      expect(["ravine", "rocky-slope", "jungle-cave", "stone-shrine"]).toContain(AREA_TYPES[m.areaAt(p.x, p.z).type].id);
   });
   it("give each set piece to one area only, which has room for it", () => {
     for (const m of maps) {
@@ -1517,9 +1517,9 @@ describe("ground cover (Ed, v171)", () => {
       expect(LOOKS[f.type].groundCover.kinds).toContain(TUFT_KINDS[f.kind]); // (its look: home's meadow has its own)
     }
   });
-  it("is thick where the area says (grassland) and thin where it doesn't (cave mouth), and none at density 0", () => {
+  it("is thick where the area says (grassland) and thin where it doesn't (the jungle cave), and none at density 0", () => {
     const per = (id: string) => { let n = 0, area = 0; for (let y = 0; y < map.n; y++) for (let x = 0; x < map.n; x++) { if (AREA_TYPES[map.typeOf(x, y)].id !== id) continue; const s = map.siteOf(x, y); const l = around(s.x + 30, s.z + 30, 8).filter(f => map.areaAt(f.x, f.z).type === map.typeOf(x, y)); n += l.length; area++; if (area >= 3) break; } return n / Math.max(1, area); };
-    expect(per("grassland")).toBeGreaterThan(per("cave-mouth") * 2);
+    expect(per("grassland")).toBeGreaterThan(per("jungle-cave") * 2);
     expect(tuftsInCell(map, 140, 150, G.cell, G.spacing, 0)).toEqual([]);
   });
 });
@@ -1612,19 +1612,6 @@ describe("wall objects as features", () => {
   const W = TUNING.walls;
   // Areas of a type that own ground (a cell whose site lies in another area has none).
   const cellsOf = (id: string) => { const out: [number, number][] = []; for (let y = 0; y < map.n; y++) for (let x = 0; x < map.n; x++) { if (AREA_TYPES[map.typeOf(x, y)].id !== id) continue; const s = map.siteOf(x, y), c = map.areaAt(s.x, s.z).cell; if (c[0] === x && c[1] === y && isInside(map.bounds, s.x, s.z, (TUNING.beach?.on ? TUNING.beach.width : 0) + map.areaSize * 0.6)) out.push([x, y]); } return out; }; // (not the areas the beach cuts into)
-  it("lay garden walls as joined runs (no isolated stubs), with flower beds along them, a few runs per garden", () => {
-    const cells = cellsOf("garden");
-    expect(cells.length).toBeGreaterThan(0);
-    let pieces = 0, joined = 0, beds = 0;
-    for (const [cx, cy] of cells) {
-      const f = wallFeatures(map, cx, cy);
-      expect(f.walls.length).toBeLessThanOrEqual(W.runs[1] * W.runLength[1]);
-      for (const p of f.walls) { pieces++; if (f.walls.some(q => q !== p && Math.hypot(q.x - p.x, q.z - p.z) < 3.2)) joined++; }
-      beds += f.beds.length;
-    }
-    expect(joined / pieces).toBeGreaterThan(0.85);
-    expect(beds).toBeGreaterThan(0);
-  });
   it("set the shrine's henge stones in circles, not an even field", () => {
     let stones = 0, inRing = 0;
     for (const [cx, cy] of cellsOf("stone-shrine")) {
@@ -1637,7 +1624,7 @@ describe("wall objects as features", () => {
     expect(inRing / stones).toBeGreaterThan(0.8);
   });
   it("are the same every time and keep off paths and the reserved spots", () => {
-    for (const [cx, cy] of [...cellsOf("garden"), ...cellsOf("stone-shrine"), ...cellsOf("wetland")].slice(0, 8)) {
+    for (const [cx, cy] of [...cellsOf("thorn-scrub"), ...cellsOf("stone-shrine"), ...cellsOf("wetland")].slice(0, 8)) {
       const f = wallFeatures(map, cx, cy);
       expect(wallFeatures(map, cx, cy)).toEqual(f);
       for (const p of f.walls) { expect(map.paths.at(p.x, p.z)).toBeNull(); expect(map.reserved(p.x, p.z, 1.5)).toBe(false); }

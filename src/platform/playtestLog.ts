@@ -6,6 +6,7 @@
 import { powerReport } from "../rules/power";
 import type { Game } from "../rules/game";
 import type { Stall } from "./stallLog";
+import type { CompareKey } from "../app/compareKey";
 
 /** A measured silence (outputMeter.ts): game time, how long (s), where she was, the mix's intended volume and the master's
  *  gain, the context's state and clock, the level it came back at (dBFS), and the nearest stall (its page time's distance, s, and its length, ms). */
@@ -41,10 +42,16 @@ export interface PlaytestSample {
   view?: { x: number; z: number; mode: string; area: string; zoom: number; timeScale: number; pressed?: boolean };
   /** The repro link at this sample (app/repro.ts): the world as it was and her place, for a builder to open. */
   link?: string;
+  /** What the GPU holds (render/gpuLedger.ts): MB in all and by kind, the budget (MB), the art sets let go so far and GL's
+   *  out-of-memory errors (render/view/gpuBudget.ts). */
+  gpu?: { mb: number; budget: number; kinds: Record<string, number>; evicted: number; ooms: number };
+  /** Her mode as a scene (ground, treetops, house, zoo: app/compareKey.ts sceneMode), so the log's medians go by scene
+   *  (tools/bench/comparable.cjs segments: island, wave and mode). */
+  scene?: string;
   audio?: { state: string; volume: number; distort: number; distance: number; mends: number; /** The safety valve's step (platform/audio/shed.ts: 0 all the sound, up to 3). */ shed?: number; /** The music's continuity so far (musicEngine.stats; Ed, round 16: "Music is still starting and stopping"): seconds left unscheduled, re-anchorings, sixteenths held for a stall, and how far ahead it schedules now. */ gap?: number; resyncs?: number; late?: number; ahead?: number; /** The audio clock against the page's (outputMeter.ts ClockWatch; Ed, 2026-10-07: "the music is still cutting out"): one-second windows slow and fast, the drift (ms, negative: audio behind) by the context's clock and by what the device played, under-runs the browser counted, and the verdict in words. */ clock?: { slow: number; fast: number; drift: number; played: number | null; underruns: number | null; underrunMs: number | null; verdict: string } };
 }
 
-export interface PlaytestRun { seed: number; build: string; started: string; /** ?timing=1: the transition's steps, wall ms from the first, and the long tasks (app/timing.ts). */ timing?: unknown; /** The machine (app/repro.ts machineLines): GPU, WebGL, browser, OS, screen, canvas. */ machine?: string[]; /** Every setting changed from the build's (tuning path: value), as last sampled. */ changed?: Record<string, unknown>; /** The overlay's "copy debug info" text as the log was saved. */ debug?: string; /** The waves' pace: the ley pulse's speed (m/s, 0 off) since 2026-10-09; seconds between waves before. */ interval: number; samples: PlaytestSample[]; /** The fight's scale and speed whenever they were set (Ed's live knobs). */ fight?: { t: number; scale: number; speed: number; momentum?: number }[]; /** Area size (metres), treetop speed (m/s) and the map's areas a side whenever they were set (Ed, 2026-10-05). */ world?: { t: number; areaSize: number; treetopSpeed: number; mapAreas: number }[]; /** The audio watchdog's mends (round 13: the music stopping): what, at what game time. */ audio?: { t: number; what: string }[]; /** The last frames of 100 ms or more (platform/stallLog.ts), with what they spent it on. */ stalls?: Stall[]; /** The measured output silent while the music should be heard (platform/audio/outputMeter.ts), over 0.3 s each. */ silences?: OutputSilence[]; /** The mic check's episodes (?micCheck=1): dropouts after the game, and the mic hearing what the output didn't send. */ mic?: MicLogged[]; /** A sail in place that went wrong (app/sail.ts: the page loaded anew instead), what was thrown. */ sails?: { t: number; what: string }[] }
+export interface PlaytestRun { seed: number; build: string; started: string; /** What this run was, where, on what and with what (app/compareKey.ts; Ed, 2026-10-26: "only compare like with like"), as last sampled: tools/playtest/compare.mjs refuses two runs whose keys differ in more than what's tested. */ key?: CompareKey; /** ?timing=1: the transition's steps, wall ms from the first, and the long tasks (app/timing.ts). */ timing?: unknown; /** The machine (app/repro.ts machineLines): GPU, WebGL, browser, OS, screen, canvas. */ machine?: string[]; /** Every setting changed from the build's (tuning path: value), as last sampled. */ changed?: Record<string, unknown>; /** The overlay's "copy debug info" text as the log was saved. */ debug?: string; /** The waves' pace: the ley pulse's speed (m/s, 0 off) since 2026-10-09; seconds between waves before. */ interval: number; samples: PlaytestSample[]; /** The fight's scale and speed whenever they were set (Ed's live knobs). */ fight?: { t: number; scale: number; speed: number; momentum?: number }[]; /** Area size (metres), treetop speed (m/s) and the map's areas a side whenever they were set (Ed, 2026-10-05). */ world?: { t: number; areaSize: number; treetopSpeed: number; mapAreas: number }[]; /** The audio watchdog's mends (round 13: the music stopping): what, at what game time. */ audio?: { t: number; what: string }[]; /** The last frames of 100 ms or more (platform/stallLog.ts), with what they spent it on. */ stalls?: Stall[]; /** The measured output silent while the music should be heard (platform/audio/outputMeter.ts), over 0.3 s each. */ silences?: OutputSilence[]; /** The mic check's episodes (?micCheck=1): dropouts after the game, and the mic hearing what the output didn't send. */ mic?: MicLogged[]; /** A sail in place that went wrong (app/sail.ts: the page loaded anew instead), what was thrown. */ sails?: { t: number; what: string }[]; /** The GPU's own trouble (render/view/gpuBudget.ts): an out-of-memory error, the GL context lost, the night reloaded after it. */ gpu?: { t: number; what: string; mb?: number }[] }
 
 const KEY = "witch.playtest", KEEP = 8, EVERY = 10;
 const round = (x: number) => Math.round(x * 10) / 10;
@@ -60,8 +67,13 @@ export class PlaytestLog {
   audioState?: () => PlaytestSample["audio"]; // (nothing before the first 10 s: a page opened and never played keeps no run)
   /** The frames' stats (main.ts sets it: the overlay's own numbers). */
   frameState?: () => PlaytestSample["frames"];
+  /** What the GPU holds, for each sample (main.ts sets it: render/view/gpuBudget.ts gpuSample). */
+  gpuState?: () => PlaytestSample["gpu"];
   /** Where she is and how it's seen, for each sample (main.ts sets it). */
   viewState?: () => PlaytestSample["view"]; // (nothing before the first 10 s: a page opened and never played keeps no run)
+  /** The run's comparability key, and her mode as a scene, for each sample (main.ts sets them: app/compareKey.ts). */
+  keyState?: () => CompareKey;
+  sceneState?: () => string;
   /** What a builder needs to reproduce what she saw (app/repro.ts): the repro link, the machine and the settings changed. */
   debugInfo?: () => { link: string; machine: string[]; changed: Record<string, unknown> };
   /** All of the debug info as text (the overlay's "copy debug info"), kept with the run when the log is saved (L). */
@@ -84,8 +96,11 @@ export class PlaytestLog {
       hits: g.witches[0].health.hp,
       audio: this.audioState?.(),
       frames: this.frameState?.(),
+      gpu: this.gpuState?.(),
       view: (v => (v && pressed ? { ...v, pressed: true } : v))(this.viewState?.()),
+      scene: this.sceneState?.(),
     });
+    try { const k = this.keyState?.(); if (k) this.run.key = k; } catch { /* the log goes on without it */ }
     const D = this.debugInfo?.();
     if (D) { this.run.machine = D.machine; this.run.changed = D.changed; this.run.samples[this.run.samples.length - 1].link = D.link; } // (each sample's link: where she was then)
     this.save();
@@ -116,6 +131,13 @@ export class PlaytestLog {
   audio(what: string): void {
     const a = (this.run.audio ??= []);
     if (a.length < 200) a.push({ t: Math.round(this.game.clock.time * 10) / 10, what });
+    this.save();
+  }
+  /** The GPU's own trouble (an out-of-memory error, the context lost: render/view/gpuBudget.ts, main.ts): noted, with the game
+   *  time and what was held then, and saved at once (a lost context reloads the night). */
+  gpuEvent(what: string, mb?: number): void {
+    const a = (this.run.gpu ??= []);
+    if (a.length < 50) a.push({ t: Math.round(this.game.clock.time * 10) / 10, what, ...(mb !== undefined ? { mb } : {}) });
     this.save();
   }
   /** A sail in place went wrong (app/sail.ts) and the page loads anew: what was thrown, kept before it goes. */
