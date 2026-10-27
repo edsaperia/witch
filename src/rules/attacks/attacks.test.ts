@@ -2,12 +2,13 @@
 // back to exactly the records combat.json holds (so nothing plays differently), the schema file up to date, the parser's checks and
 // errors, the canonical writer, and the reaction floor: every attack's first warning at least REACTION_FLOOR before its first harm.
 import { describe, expect, it } from "vitest";
-import combat from "../../../config/combat.json";
+import fs from "fs";
 import schemaFile from "../../../config/schema/attacks.schema.json";
 import { ATTACK_FILE_SCHEMA, ATTACK_LIB, REACTION_FLOOR, compileLegacy, fromLegacy, merge, parseAttack, readability, serialiseAttack, withBase, type AttackSpec } from "./index";
 import type { Attack } from "../combat/data";
 
-const OLD = combat.attacks as Record<string, Attack>;
+// (read from the file: the imported object gains the packs' own records at run time, rules/combat/packs.ts)
+const OLD = JSON.parse(fs.readFileSync("config/combat.json", "utf8")).attacks as Record<string, Attack>;
 
 describe("the attack grammar's format", () => {
   it("writes every attack the game runs, compiling back to exactly combat.json's record (run node tools/attacks/compile.mjs after editing)", () => {
