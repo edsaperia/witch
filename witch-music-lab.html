@@ -18197,8 +18197,8 @@ label.check input { accent-color: var(--accent); }
       force: obj({ r: num(0, "m"), push: { type: "number", minimum: -100, maximum: 100, unit: "m/s" }, who: oneOf(["all", "others", "foes"]) }, ["push"]),
       on: obj({ hit: children, expire: children, bounce: children, land: children, timer: children }),
       pack: obj({
-        chain: obj({ n: int(1, 16), range: num(0, "m") }, ["n", "range"]),
-        relay: obj({ n: int(1, 16) }, ["n"]),
+        chain: obj({ n: int(1, 16), range: num(0, "m"), hop: num(0, "s") }, ["n", "range"]),
+        relay: obj({ n: int(1, 16), hop: num(0, "s") }, ["n"]),
         amplify: obj({ r: num(0, "m"), per: num(0), max: num(1) }, ["r", "per", "max"]),
         tether: obj({ time: num(0, "s"), width: num(0, "m") }, ["time", "width"]),
         triangulate: obj({ delay: num(0, "s"), r: num(0, "m") }, ["delay", "r"])
