@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { FIGHTERS, nextSeed, packSpec, rollPack, TellWatch } from "./fightArena";
+import { FIGHTERS, nextSeed, packSpec, rollAttack, rollPack, TellWatch } from "./fightArena";
+import { ATTACK_LIB, check, parseAttack, readability, REACTION_FLOOR, serialiseAttack } from "./attacks";
 import { parseArena, setupArena } from "./arena";
 import { LEGEND } from "./creatures";
 import { attackOf } from "./combat/data";
@@ -85,3 +86,27 @@ describe("the Fight Arena's telegraph timings", () => {
   });
 });
 
+
+describe("the Fight Arena's random attack (the arena's own till the grammar's composer lands)", () => {
+  it("rolls the same attack from the same seed, always one the grammar takes, fair once parsed (the floor lifted and said), and varied", () => {
+    const kinds = new Set<string>(), shapes = new Set<string>();
+    let lifted = 0, children = 0;
+    for (let s = 1; s <= 300; s++) {
+      const a = rollAttack(s);
+      expect(rollAttack(s)).toEqual(a);
+      expect(check(a, ATTACK_LIB), `seed ${s}`).toEqual([]);
+      const p = parseAttack(a, ATTACK_LIB);
+      expect(p.errors, `seed ${s}`).toEqual([]);
+      expect(readability(p.attack!, ATTACK_LIB).warning).toBeGreaterThanOrEqual(REACTION_FLOOR - 1e-9);
+      if (p.warnings.length) lifted++;
+      if (a.on) children++;
+      kinds.add(a.body!.kind!); shapes.add(JSON.stringify(Object.keys(a).sort()));
+      // (copied and pasted back: the same)
+      expect(parseAttack(serialiseAttack(a), ATTACK_LIB).attack).toEqual(p.attack);
+    }
+    expect(kinds.size).toBe(8); // (every top-level body: bolt, lob, runner, beam, area, mine, lure, melee; zones come as children)
+    expect(shapes.size).toBeGreaterThan(12); // (the modules each sets: 19 kinds of set in 300 rolls)
+    expect(children).toBeGreaterThan(30);
+    expect(lifted).toBeGreaterThan(0); // (some rolled under the floor, and parseAttack said so)
+  });
+});

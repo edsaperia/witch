@@ -4,7 +4,9 @@
 // speed (slow motion, pause, a frame at a time: fightDt, main.ts), the telegraphs' timings over the fight (fightFrame, each drawn
 // frame), and the library of attacks (app/attackLibrary.ts).
 import { setupArena, parseArena } from "../rules/arena";
-import { nextSeed, packSpec, REACTION_FLOOR, rollPack, TellWatch } from "../rules/fightArena";
+import { nextSeed, packSpec, REACTION_FLOOR, rollAttack, rollPack, TellWatch } from "../rules/fightArena";
+import { ATTACK_LIB, attackSchema, parseAttack, readability, serialiseAttack, type AttackSpec } from "../rules/attacks";
+import type { Schema } from "../ui/schemaForm";
 import { attackOf } from "../rules/combat/data";
 import type { Level } from "../rules/creatures";
 import { STEP, type Game } from "../rules/game";
@@ -25,14 +27,26 @@ let panel: FightPanel | null = null, night: Game | null = null;
 const watch = new TellWatch(), library = new AttackLibrary();
 let timings = true;
 
+/** The attack editor's form (ui/schemaForm.ts): the grammar's schema (rules/attacks/schema.ts), a child's attack a name from the
+ *  library or an attack given inline (the same schema again, by reference: the form goes as deep as it's opened). */
+let FORM: Schema | null = null;
+export function formSchema(): Schema {
+  if (FORM) return FORM;
+  const attack = structuredClone(attackSchema()) as Schema, names = Object.keys(ATTACK_LIB).sort();
+  const child: Schema = { oneOf: [{ title: "by name", type: "string", enum: names }, { title: "inline", $ref: "#/$defs/attack" }] };
+  for (const ev of Object.values(attack.properties?.on?.properties ?? {})) if (ev.items?.properties) ev.items.properties.attack = child;
+  return (FORM = { $defs: { attack }, $ref: "#/$defs/attack" });
+}
+
 /** A seed for a new fight (the pause page's button). */
 export const newFightSeed = (): number => 1 + Math.floor(Math.random() * 999_999);
 
 /** The link of a fight (this page's, with ?fight= and ?pack= set). */
-export function fightLink(seed: number, spec?: string): string {
+export function fightLink(seed: number, spec?: string, attack?: AttackSpec | null): string {
   const u = new URL(location.href);
   u.searchParams.set("fight", String(seed));
   if (spec) u.searchParams.set("pack", spec); else u.searchParams.delete("pack");
+  if (attack) u.searchParams.set("attack", serialiseAttack(attack)); else u.searchParams.delete("attack"); // (the grammar's ?attack=: docs/plans/attack-grammar.md)
   u.searchParams.delete("arena");
   if (!u.searchParams.has("creator")) u.searchParams.set("creator", "0"); // (straight into the fight: no spell to cast)
   return u.toString();
@@ -44,13 +58,15 @@ export function startFight(game: Game, params: URLSearchParams): () => void {
   if (!(seed > 0)) seed = newFightSeed();
   const asked = params.get("pack");
   let spec = asked && parseArena(asked).length ? packSpec(parseArena(asked)) : packSpec(rollPack(seed));
-  let attack: unknown = null;
+  // the attack being tried (as written: its base and floor laid on by parseAttack each time), from the link's ?attack= if it reads
+  let attack: AttackSpec | null = null, rolls = 0;
+  { const a = params.get("attack"); if (a && parseAttack(a, ATTACK_LIB).attack) attack = JSON.parse(a) as AttackSpec; }
   night = game;
   const put = () => {
     setupArena(game, spec, { wildOnly: true });
     game.party.paused = true;
     watch.reset();
-    try { history.replaceState(history.state, "", fightLink(seed, spec)); } catch { /* (a sandboxed page) */ }
+    try { history.replaceState(history.state, "", fightLink(seed, spec, attack)); } catch { /* (a sandboxed page) */ }
     panel?.draw();
   };
   put();
@@ -63,16 +79,28 @@ export function startFight(game: Game, params: URLSearchParams): () => void {
     step: () => { if (fightSpeed.value === 0) fightSpeed.steps++; },
     get timings() { return timings; }, set timings(v: boolean) { timings = v; if (!v) panel?.tells.replaceChildren(); },
     shortest: () => ({ lead: watch.shortest, of: watch.shortestOf, count: watch.count, floor: REACTION_FLOOR }),
-    link: () => fightLink(seed, spec),
-    attacks: () => parseArena(spec).map(g => { const a = attackOf(g.species, g.level as Level); return { species: g.species, level: g.level, name: a?.name ?? "none", attack: a?.attack ?? {} }; }),
-    // (the composable attacks, docs/plans/attack-grammar.md, aren't in yet: the attack is kept, for the library, and the pack fights
-    // with its own; their schema, parser and composer come in here when they land)
-    attackSchema: () => null,
+    link: () => fightLink(seed, spec, attack),
+    attacks: () => parseArena(spec).map(g => { const a = attackOf(g.species, g.level as Level); return { species: g.species, level: g.level, name: a?.name ?? "none", attack: (a && ATTACK_LIB[a.name]) ?? a?.attack ?? {} }; }), // (in the grammar where it's there)
+    // (the composable attacks, rules/attacks: read, checked, held to the reaction floor and written out by the grammar's own code; the
+    // pack fights with its own attacks till the grammar's engine is in, docs/plans/attack-grammar.md step 2)
+    attackSchema: () => formSchema(),
     get attack() { return attack; },
-    setAttack: (a: unknown) => { attack = a; return { errors: [], warnings: a == null ? [] : ["the composable attacks aren't in the game yet: kept for the library; the pack fights with its own"] }; },
+    attackNote: "The pack fights with its own attacks till the grammar's engine is in (its next step): an attack set here is checked, kept in the link and the library, ready for it.",
+    setAttack: (a: unknown) => {
+      if (a == null) { attack = null; put(); return { errors: [], warnings: [] }; }
+      const p = parseAttack(a, ATTACK_LIB);
+      if (!p.attack) return { errors: p.errors, warnings: [] };
+      attack = (typeof a === "string" ? JSON.parse(a) : a) as AttackSpec;
+      const r = readability(p.attack, ATTACK_LIB);
+      put();
+      return { errors: [], warnings: p.warnings.map(w => `the composer ${w.endsWith("lengthened") ? "lengthened a warning" : "says"}: ${w}`), notes: [Number.isFinite(r.warning) ? `its shortest warning ${r.warning.toFixed(2)} s (${r.where}), the floor ${REACTION_FLOOR} s` : "nothing in it harms"] };
+    },
+    attackJson: () => attack ? serialiseAttack(attack, 1) : "",
+    randomAttack: () => rollAttack(nextSeed(seed + 7919 * ++rolls)),
+    editOwn: (i: number) => { const g = parseArena(spec)[i], a = g && attackOf(g.species, g.level as Level); if (a && ATTACK_LIB[a.name]) attack = structuredClone(ATTACK_LIB[a.name]) as AttackSpec; },
     library: () => library.list(),
     save: (name: string) => library.save({ name, attack, seed, pack: spec }),
-    load: (name: string) => { const s = library.get(name); if (!s) return; attack = s.attack; if (s.seed) seed = s.seed; if (s.pack && parseArena(s.pack).length) spec = s.pack; put(); },
+    load: (name: string) => { const s = library.get(name); if (!s) return; attack = (s.attack ?? null) as AttackSpec | null; if (s.seed) seed = s.seed; if (s.pack && parseArena(s.pack).length) spec = s.pack; put(); },
     remove: (name: string) => library.remove(name),
     toggleFav: (name: string) => { library.toggleFav(name); },
     exportJson: (name?: string) => library.exportJson(name),
