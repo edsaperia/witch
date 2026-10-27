@@ -13,8 +13,11 @@ const C = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const saved = { leash: STATES.leash, delay: STATES.pickupDelay };
 afterEach(() => { STATES.leash = saved.leash; STATES.pickupDelay = saved.delay; });
 
+/** The old 4 m hex grid (?sigils=old; the rank sigils' default is 6 m, leash.ranks.hex): these tests place her and her sigils by it. */
+const OLD_GRID = { ...TUNING, leash: { ...TUNING.leash, hex: { ...TUNING.leash.hex!, size: 4 } } };
+
 function game(): Game {
-  const g = newGame(123, TUNING);
+  const g = newGame(123, OLD_GRID);
   g.clock.paused = false;
   g.party.spellAt = undefined;
   return g;

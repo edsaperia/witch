@@ -20,8 +20,8 @@ const press = (s: LeashState, all: Creature[], x: number, z: number, barred?: (x
   stepLeash(s, all, { sigil: true, talk: false, barred }, { x, z }, true, 1, 1 / 60, TUNING, () => true);
 
 describe("hex sigils (leash.hex)", () => {
-  it("are on: 4 m between neighbouring cells, today's leash.spacing", () => {
-    expect(H.size).toBe(4);
+  it("are on: 6 m between neighbouring cells with the rank sigils (leash.ranks.hex; 4 before them, ?sigils=old)", () => {
+    expect(H.size).toBe(TUNING.leash.ranks?.hex ?? 6);
     expect(H.size).toBeGreaterThanOrEqual(TUNING.leash.spacing);
   });
 
