@@ -6,7 +6,8 @@
 import { childSpec, type Library } from "./parse";
 import type { AttackSpec, BodyKind, Child, TelegraphKind } from "./types";
 
-/** The least warning a harm may have (s): a dash's blink must be able to answer it. DECISION FOR ED. */
+/** The least warning a harm may have (s): a dash's blink must be able to answer it (Ed, 2026-10-27: 0.45 s, "we can tune in balancing";
+ *  the game's is the tuning's attacks.reactionFloor). */
 export const REACTION_FLOOR = 0.45;
 /** An attack's own windup when it says none: a cast's, and a child's (a child released at once unless it winds up itself). */
 export const WINDUP = 0.6;
@@ -15,7 +16,7 @@ export const WINDUP = 0.6;
 export const TELEGRAPH_OF: Record<BodyKind, TelegraphKind> = {
   melee: "flash", bolt: "lane", lob: "landing", runner: "lane", beam: "beamLine", area: "ring", zone: "ring", mine: "arming", seed: "arming", lure: "lane",
 };
-export const telegraphKind = (a: AttackSpec): TelegraphKind => a.telegraph?.kind ?? TELEGRAPH_OF[a.body?.kind ?? "bolt"];
+export const telegraphKind = (a: AttackSpec): TelegraphKind => a.telegraph?.kind ?? (a.pack?.tether ? "tetherLine" : TELEGRAPH_OF[a.body?.kind ?? "bolt"]);
 
 /** Does it harm (any damage, or an effect)? */
 const harms = (a: AttackSpec) => (a.hit?.damage ?? 1) > 0 || !!(a.hit?.effect && Object.keys(a.hit.effect).length);
@@ -26,7 +27,8 @@ const harms = (a: AttackSpec) => (a.hit?.damage ?? 1) > 0 || !!(a.hit?.effect &&
 export function ownWarning(a: AttackSpec, child: boolean): number {
   const windup = a.cast?.windup ?? (child ? 0 : WINDUP), lead = Math.min(windup, a.telegraph?.lead ?? windup);
   const kind = a.body?.kind ?? "bolt";
-  const more = kind === "lob" ? (a.body?.flight ?? 1.2) : kind === "beam" ? (a.beam?.charge ?? 0) : kind === "mine" || kind === "seed" ? (a.body?.arm ?? 0) : kind === "area" ? (a.area?.delay ?? 0) : 0;
+  if (kind === "area" && a.area?.rain) return a.telegraph?.lead ?? 0.9; // (each raindrop shows its own landing, that long before it falls)
+  const more = kind === "lob" ? (a.body?.flight ?? 1.2) : kind === "beam" ? (a.beam?.charge ?? (a.pack?.tether ? REACTION_FLOOR : 0)) : a.pack?.triangulate ? a.pack.triangulate.delay : kind === "mine" || kind === "seed" ? (a.body?.arm ?? 0) : 0;
   return telegraphKind(a) === "none" ? more : lead + more;
 }
 
@@ -38,8 +40,10 @@ export function readability(a: AttackSpec, lib: Library, child = false, where = 
   if (depth >= 4) return best;
   for (const ev of EVENTS) (a.on?.[ev] as (Child & { at?: number })[] | undefined)?.forEach((c, i) => {
     const r = readability(childSpec(c, lib), lib, true, `${where === "(attack)" ? "" : where + "."}on.${ev}[${i}]`, depth + 1);
-    // (a timer's child shows its countdown from when its parent was released: its own warning plus the wait)
-    const w = ev === "timer" ? r.warning + (c.at ?? 0) : r.warning;
+    // (a timer's child shows its countdown from when its parent was released: its own warning plus the wait; a seed's sprouting and a
+    // mine's blast are warned of by its arming from when it was laid)
+    const armed = (ev === "land" && a.body?.kind === "seed") || (ev === "hit" && a.body?.kind === "mine") ? (a.body?.arm ?? 0) : 0;
+    const w = ev === "timer" ? r.warning + (c.at ?? 0) : r.warning + armed;
     if (w < best.warning) best = { warning: w, where: r.where };
   });
   return best;
@@ -62,7 +66,7 @@ export function liftToFloor(a: AttackSpec, lib: Library, floor = REACTION_FLOOR,
     const list = a.on[ev] as (Child & { at?: number })[] | undefined;
     if (!list) continue;
     (on as Record<string, Child[]>)[ev] = list.map(c => {
-      const spec = childSpec(c, lib), give = ev === "timer" ? (c.at ?? 0) : 0; // (a timer's wait counts toward its warning)
+      const spec = childSpec(c, lib), give = ev === "timer" ? (c.at ?? 0) : (ev === "land" && a.body?.kind === "seed") || (ev === "hit" && a.body?.kind === "mine") ? (a.body?.arm ?? 0) : 0; // (a timer's wait, a seed's or mine's arming, count toward its warning)
       const lifted = liftToFloor(spec, lib, Math.max(0, floor - give), true, depth + 1);
       return lifted === spec ? c : { ...c, attack: lifted };
     });

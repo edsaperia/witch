@@ -62,11 +62,11 @@ export function stringsFor(map: ForestMap, forest: Forest, cell: Cell): StringLi
     return path;
   };
 
-  const runs = L.runsPerArea[0] + Math.floor(r() * (L.runsPerArea[1] - L.runsPerArea[0] + 1));
+  const more = L.more ?? 1, runs = Math.round((L.runsPerArea[0] + Math.floor(r() * (L.runsPerArea[1] - L.runsPerArea[0] + 1))) * more), spread = L.spread / Math.sqrt(Math.max(1, more));
   const branches: { from: Plant; heading: [number, number] }[] = [];
   for (const start of trees) {
     if (starts.length >= runs) break;
-    if (ends.has(start) || starts.some(q => Math.hypot(q.x - start.x, q.z - start.z) < L.spread)) continue;
+    if (ends.has(start) || starts.some(q => Math.hypot(q.x - start.x, q.z - start.z) < spread)) continue;
     starts.push(start);
     const spans = L.spansPerRun[0] + Math.floor(r() * (L.spansPerRun[1] - L.spansPerRun[0] + 1));
     const path = run(start, null, spans);

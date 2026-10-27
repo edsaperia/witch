@@ -1,0 +1,102 @@
+{
+  "pr": 1303,
+  "group": "Creature momentum",
+  "decisions": [
+    {
+      "id": "momentumOn",
+      "pr": 1303,
+      "group": "Creature momentum",
+      "label": "Creature momentum",
+      "note": "Creatures chasing her turn no faster than their limit, react to where she was a moment ago and lead her only with telegraphed attacks (Ed, 2026-10-27: \"less worth dodging because animals can turn towards her instantly\"). Off: as before. Each species' own numbers are its class's (heavy, normal, light) or its folder's; these sliders scale them all.",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "creatureMomentum.on"
+      }
+    },
+    {
+      "id": "momentumStrikes",
+      "pr": 1303,
+      "group": "Creature momentum",
+      "label": "Momentum in strikes",
+      "note": "Off as built: momentum shapes the chase, a pack's approach and its lull; telegraphed run-ins (a wind-up's surge in, a pack's tell and combo) track her as before, so a lunge that starts still reaches her (Ed's v3893). On: those have momentum too (creatureMomentum.strikes), the stronger answer to \"they turn towards her instantly\", most of their run-in being their wind-up; lunges then fall short more often.",
+      "control": {
+        "type": "toggle"
+      },
+      "default": false,
+      "apply": {
+        "knob": "creatureMomentum.strikes"
+      }
+    },
+    {
+      "id": "momentumTurn",
+      "pr": 1303,
+      "group": "Creature momentum",
+      "label": "Turn rate ×",
+      "note": "Times every species' turn limit (creatureMomentum.turn; 1 as built: heavy 220°/s, normal 420, light 650, falling as turn / (1 + speed / k)). Lower: wider arcs, more overshoot on a sidestep; higher: they cut back sooner.",
+      "control": {
+        "type": "slider",
+        "min": 0.2,
+        "max": 4,
+        "step": 0.05
+      },
+      "default": 1,
+      "apply": {
+        "knob": "creatureMomentum.turn"
+      }
+    },
+    {
+      "id": "momentumDelay",
+      "pr": 1303,
+      "group": "Creature momentum",
+      "label": "Reaction delay ×",
+      "note": "Times every species' reaction delay (creatureMomentum.delay; 1 as built: heavy 0.4 s, normal 0.25, light 0.15): it chases where she was that long ago, so a sidestep or blink fools it for that long. 0: it sees her at once.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 3,
+        "step": 0.05
+      },
+      "default": 1,
+      "apply": {
+        "knob": "creatureMomentum.delay"
+      }
+    },
+    {
+      "id": "momentumChaseLead",
+      "pr": 1303,
+      "group": "Creature momentum",
+      "label": "Chase lead +s",
+      "note": "Seconds of her velocity every species leads her by when just chasing, added to its own (creatureMomentum.chaseLead; 0 as built: no prediction, only the wolf leads a little, 0.15 s). Ed: prediction mostly for telegraphed attacks.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 0,
+      "apply": {
+        "knob": "creatureMomentum.chaseLead"
+      }
+    },
+    {
+      "id": "momentumStrikeLead",
+      "pr": 1303,
+      "group": "Creature momentum",
+      "label": "Telegraphed lead ×",
+      "note": "Times the lead telegraphed attacks take on her (creatureMomentum.strikeLead; 1 as built, as they were): a melee wind-up's tracking, a charge's lane, a leap, a swoop's dive, shots and lobs. 0: they aim where she is.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 2,
+        "step": 0.05
+      },
+      "default": 1,
+      "apply": {
+        "knob": "creatureMomentum.strikeLead"
+      }
+    }
+  ]
+}

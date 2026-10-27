@@ -91,12 +91,20 @@ A child is released at once unless it winds up itself (`cast.windup` defaults to
 - **Pierce:** `life.pierce` n.
 - **Linger:** a `zone` child: a puddle, fire, frost or web, with `r`, `time`, an effect and a `tick`.
 
-**E. pack**: a pack's attack names one of these on top of its own.
-- `chain` (it jumps to the next target in `range`, `n` times)
-- `relay` (it flies to a packmate, which re-aims it at her)
-- `amplify` (passing within `r` of a packmate it grows by `per`, to `max`)
-- `tether` (a beam strung between two members for `time`, hurting whoever crosses it)
-- `triangulate` (three members mark spots and the area between them erupts after `delay`)
+**E. pack**: a pack's attack names one of these on top of its own. A packmate is the caster's own kind on its own side, awake, near
+(`SpellWorld.packmates`); with none near, an attack that needs them fizzles (its `fizzle` event) and shows nothing, so it never harms
+unwarned.
+- `chain` (on a foe hit it jumps to the nearest foe in `range` not hit yet, `n` times; each jump held `hop` s, the floor by default,
+  with a `chainNext` segment from the one hit to the next)
+- `relay` (it flies to its nearest packmate, then the next nearest to that, `n` of them; held `hop` s at each with its next leg shown as
+  a `lane`, then at its target)
+- `amplify` (passing within `r` of each packmate it grows by `per`, its radius and damage, to `max`; an `amplify` event each time)
+- `tether` (a beam strung from the caster to its nearest packmate within `cast.range` for `time`, `width` wide, charging the floor
+  first unless `beam.charge` says otherwise; it follows both, and snaps when either goes; the `tetherLine` telegraph's far end follows
+  the packmate: `follows.end`)
+- `triangulate` (the caster and its two nearest packmates within `r` mark a triangle, shown from the cast as a `polygon` telegraph
+  with `points`, and the ground inside it erupts `delay` after the release (a `zone` body lingers there instead); the corners are
+  where the three stand at the release)
 
 **F. beam**: `length`, `width`, `duration`, `tick`, plus any of:
 - `sweep` (deg/s across)
@@ -131,7 +139,8 @@ Plus:
 - `body.radius` / size
 - `cast.cooldown`, `cast.casts` before `cast.rest`
 - `hit.blink`: a dash's blink passes through it (true by default)
-- `hit.friendly`: it can hit other animals; off by default, the fun of luring
+- `hit.allies`: what it does to other animals (Ed, 2026-10-27: "not much friendly fire but sometimes friendly 'effects' like stun, knockback, slow"): `damage`, its share (none by default), and `effects`, which of its effects spill onto them (none by default). This is what makes luring and positioning matter
+- `force` (any zone or moving body): a push (or, negative, a pull) on whoever's within `r`, `who` all, others (every creature) or foes: a legend's whirlwind
 
 `body.element` (the look's eight, agreed with Lima: fire, frost, venom, moonlight, storm, earth, shadow, bloom; an untagged attack takes its species' element) and `body.look` are tags for the look layer only:
 the rules never read them.
@@ -230,13 +239,15 @@ All of it is pure and headless (`src/rules/attacks/`), so Juliet's page and the 
    - unit tests per module and the composed example (a curving bolt splitting into a ring of homing bolts that each leave a puddle);
    - only new-format-only attacks use it, through the arena's `?arena=` and a new `?attack=<name|json>` override.
 3. **Beams, areas, traps**: the F, G and H blocks, with tests.
-4. **Pack interplay** (E): chain, relay, amplify, tether and triangulate, in `combat/packs.ts`'s turns, with tests.
+4. **Pack interplay** (E): chain, relay, amplify, tether and triangulate, in the engine (`SpellWorld.packmates`), with tests.
 5. **Library and numbers**:
    - about 30 example attacks using the new blocks;
    - a proposal of which species get which (not wired until Ed says so);
    - the readability test over all of them;
    - the perf measured at the caps.
 6. **Optional:** the 27 on the new engine, if the bench proves it identical.
+
+Step 5 as built (Ed, 2026-10-27: species defaults by biome and island phase, made the default): `docs/plans/attack-species.md` maps every species to its attack.
 
 Each step is its own PR into claude/prototype, with a REPORT, frames from the arena where there's something to see, and a FINAL.
 

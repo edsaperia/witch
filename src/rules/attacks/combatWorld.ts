@@ -9,6 +9,7 @@ import { land } from "../combat/hits";
 import { sideOf, targetable, type Grid } from "../combat/targeting";
 import { strengthOf } from "../combat/data";
 import { withBase, type Library } from "./parse";
+import { speciesAttack } from "./species";
 import { type Hittable, type SpellWorld } from "./engine";
 import type { AttackSpec, Effect } from "./types";
 
@@ -17,7 +18,10 @@ import type { AttackSpec, Effect } from "./types";
 export function asFightAttack(a: AttackSpec): Attack {
   const kind = a.body?.kind ?? "bolt";
   const delivery: Delivery = kind === "melee" ? "melee" : kind === "lob" || kind === "mine" || kind === "seed" ? "lob" : kind === "beam" ? "beam" : kind === "area" || kind === "zone" ? (a.area?.at === "target" ? "lob" : "pulse") : "shot";
-  return { delivery, range: a.cast?.range ?? 20, windup: a.cast?.windup ?? 0.6, cooldown: a.cast?.cooldown ?? 2, modifier: "none", radius: a.area?.r ?? a.body?.radius, speed: a.speed?.v };
+  const out: Attack = { delivery, range: a.cast?.range ?? (kind === "melee" ? 2 : 20), windup: a.cast?.windup ?? 0.6, cooldown: a.cast?.cooldown ?? 2, modifier: "none", radius: a.area?.r ?? a.body?.radius, speed: a.speed?.v };
+  // (a melee one is the fight's own lunge, landing as a blow does: its knockback or slow as the blow's modifier, the rest after it)
+  if (kind === "melee") { out.lunge = a.body?.lunge ?? 12; Object.assign(out, blowOf(a.hit?.effect, "melee")); out.range = a.cast?.range ?? 2; out.windup = a.cast?.windup ?? 0.6; out.cooldown = a.cast?.cooldown ?? 2; }
+  return out;
 }
 
 /** A creature's attack in the grammar, if it has one: its name, the flat record for its movement, the damage of a cast (the level's
@@ -30,6 +34,27 @@ export function spellAttack(c: Creature, lib: Library, data: CombatData): { name
   return { name: c.spell, attack, damage: data.levels.dps[c.level as Level] * strengthOf(c.species, c.level as Level, data) * attack.cooldown, spec };
 }
 
+/** A species' own attack in the grammar (rules/attacks/species.ts), unless the tuning's attacks.species is off (?attacks=old): as
+ *  spellAttack's, named "species:<kind>". */
+export function speciesSpell(c: Creature, data: CombatData, floor?: number): { name: string; attack: Attack; damage: number; spec: AttackSpec } | null {
+  const spec = speciesAttack(c.species, c.level, floor);
+  if (!spec) return null;
+  const attack = asFightAttack(spec);
+  return { name: `species:${c.species}`, attack, damage: data.levels.dps[c.level as Level] * strengthOf(c.species, c.level as Level, data) * attack.cooldown, spec };
+}
+
+/** A melee attack's blow landed (the fight's lunge): the rest of its effect (a stun, a root, a pull, a burn) on what it hit. */
+export function meleeExtras(w: CombatWorld, s: CombatState, tg: Target, spec: AttackSpec, fx: number, fz: number): void {
+  const e = spec.hit?.effect, t = hittableOf(w, s, tg);
+  if (!e || !t) return;
+  const { knockback: _k, slow: _s, ...rest } = e;
+  if (Object.keys(rest).length) effects(w, s, t, rest, null, fx, fz);
+}
+
+/** How a body's hit counts against the fight's counters (a flier dodging melee, armour turning shots, lobs and beams, a swarm
+ *  taking area hits double). */
+const deliveryOf = (body: string | undefined): Delivery => body === "melee" ? "melee" : body === "area" || body === "zone" ? "pulse" : body === "lob" || body === "mine" || body === "seed" ? "lob" : body === "beam" ? "beam" : "shot";
+
 /** The flat record a hit lands with (rules/combat/hits.ts reads its delivery for counters, and its modifier). Stun, pull, root and
  *  burn aren't landed yet (the plan's step 3). */
 function blowOf(effect: Effect | undefined, delivery: Delivery): Attack {
@@ -37,6 +62,29 @@ function blowOf(effect: Effect | undefined, delivery: Delivery): Attack {
   if (effect?.knockback !== undefined) { A.modifier = "knockback"; A.knockback = effect.knockback; }
   else if (effect?.slow) { A.modifier = "slow"; A.slowMult = effect.slow.mult; A.slowTime = effect.slow.time; }
   return A;
+}
+
+/** An effect's parts on what it touched, all but `done` (the one its blow landed already): a creature knocked, slowed, stunned (rooted
+ *  too, for now: DECISION FOR ED), pulled toward (fx, fz); her thrown, slowed, staggered, rooted (all but stopped) or pulled, none of it
+ *  costing her a hit. */
+function effects(w: CombatWorld, s: CombatState, t: Hittable, e: Effect, done: keyof Effect | null, fx: number, fz: number): void {
+  const time = w.time, dx = t.x - fx, dz = t.z - fz, d = Math.hypot(dx, dz) || 1;
+  if (t.kind === "creature") {
+    const o = w.creatures[t.id as number];
+    if (!o || o.gone) return;
+    if (e.knockback !== undefined && done !== "knockback" && !o.boss) { o.kx = (dx / d) * e.knockback * 6; o.kz = (dz / d) * e.knockback * 6; }
+    if (e.pull !== undefined && !o.boss) { const m = Math.min(e.pull, d - 1); o.kx = (-dx / d) * m * 6; o.kz = (-dz / d) * m * 6; }
+    if (e.slow && done !== "slow") o.slowUntil = Math.max(o.slowUntil ?? 0, time + e.slow.time);
+    const still = Math.max(e.stun ?? 0, e.root ?? 0);
+    if (still > 0 && !o.boss) { o.stunUntil = Math.max(o.stunUntil ?? 0, time + still); if (e.stun && o.fight) o.fight.windupUntil = 0; s.events.push({ kind: "stunned", x: o.x, z: o.z, at: time, id: o.id }); }
+  } else if (t.kind === "witch") {
+    const id = t.id as number;
+    if (e.knockback !== undefined && done !== "knockback") w.throwWitch?.(id, fx, fz, e.knockback);
+    if (e.pull !== undefined) w.packWorld?.pull?.(id, fx, fz, e.pull);
+    if (e.slow && done !== "slow") w.slowWitch?.(id, time + e.slow.time, e.slow.mult);
+    if (e.stun) w.stunWitch?.(id, time + e.stun);
+    if (e.root) w.slowWitch?.(id, time + e.root, 0.05);
+  }
 }
 
 /** The engine's world, as the fight sees it this step. */
@@ -51,23 +99,43 @@ export function spellWorld(w: CombatWorld, s: CombatState, grid: Grid, seed: num
       for (const [key, h] of s.sounds) if (h.hp > 0 && Math.hypot(h.x - x, h.z - z) <= r + h.radius) out.push({ kind: "sound", id: key, x: h.x, z: h.z, r: h.radius, side: "sound" });
       return out;
     },
-    hostile(side, t, friendly, species, caster) {
+    hostile(side, t, species, caster) {
       if (t.kind === "witch") return huntsWitch(side as never);
       if (t.kind === "sound") return side === "enraged";
       if (t.id === caster) return false;
-      return friendly || (foes(t.side as never, side as never) && t.species !== species);
+      return foes(t.side as never, side as never) && t.species !== species;
     },
-    harm(t, damage, effect, fx, fz, source, attack) {
+    harm(t, damage, effect, fx, fz, source, attack, body) {
       const from = w.creatures[source] ?? null, tg: Target = t.kind === "creature" ? { kind: "creature", id: t.id as number } : t.kind === "witch" ? { kind: "witch", id: t.id as number } : { kind: "sound", key: t.id as string };
-      const own = attackNamed(attack, data) as Attack | undefined; // (a named attack today's runtime knows lands as itself; any other by its effect)
-      land(w, s, from, tg, damage, own ?? blowOf(effect, "shot"), fx, fz);
+      // (a blow lands as any does, a named attack today's runtime knows as itself, any other by its knockback or slow; whatever else its
+      // effect does (and all of it, on a touch with no damage: a slowing puddle on her doesn't cost her a hit) after it)
+      let done: keyof Effect | null = null;
+      if (damage > 0) {
+        const own = attackNamed(attack, data) as Attack | undefined, blow = own ?? blowOf(effect, deliveryOf(body));
+        land(w, s, from, tg, damage, blow, fx, fz);
+        done = blow.modifier === "knockback" ? "knockback" : blow.modifier === "slow" ? "slow" : null;
+      }
+      if (effect) effects(w, s, t, effect, done, fx, fz);
+    },
+    force(t, fx, fz, push, dt) {
+      const dx = t.x - fx, dz = t.z - fz, d = Math.hypot(dx, dz) || 1, step = push * dt, k = push < 0 ? Math.max(step, -(d - 0.5)) / d : step / d; // (a pull stops short of its middle)
+      if (t.kind === "creature") { const c = w.creatures[t.id as number]; if (c && !c.gone && !c.boss) { c.x += dx * k; c.z += dz * k; } }
+      else if (t.kind === "witch") w.nudgeWitch?.(t.id as number, dx * k, dz * k);
     },
     where(kind, id) {
       if (kind === "creature") { const c = w.creatures[id as number]; return c && !c.gone ? c : null; }
       if (kind === "witch") return w.witches.find(v => v.id === id) ?? null;
       return s.sounds.get(id as string) ?? null;
     },
-    stillCasting(source, cast) { const c = w.creatures[source]; return !!c && !c.gone && !(c.stunUntil !== undefined && w.time < c.stunUntil) && c.fight?.spellCast === cast && !!c.fight.target; },
+    packmates(source, x, z, r) {
+      // (its own kind on its own side, awake and able to fight, nearest first)
+      const c = w.creatures[source];
+      if (!c) return [];
+      const side = sideOf(c), mates: Creature[] = [];
+      for (const o of grid.near(x, z, r)) if (o.id !== source && o.species === c.species && targetable(o) && !w.asleep(o) && sideOf(o) === side && Math.hypot(o.x - x, o.z - z) <= r) mates.push(o);
+      return mates.sort((p, q) => Math.hypot(p.x - x, p.z - z) - Math.hypot(q.x - x, q.z - z) || p.id - q.id);
+    },
+    stillCasting(source, cast) { const c = w.creatures[source]; return !!c && !c.gone && !(c.stunUntil !== undefined && w.time < c.stunUntil) && c.fight?.spellCast === cast && !!c.fight.target && !c.charge && !c.leap && !c.burrow && !(c.swoop && (c.swoop.phase === "tele" || c.swoop.phase === "dive")); }, // (off on its own move instead: dropped)
     beat: 60 / w.t.beat.bpm,
   };
 }
