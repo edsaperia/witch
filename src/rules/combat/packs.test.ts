@@ -92,8 +92,10 @@ describe("pack combat in play (the switch on)", () => {
     });
     console.log("ORDERS", JSON.stringify(order));
     expect(order.length).toBeGreaterThanOrEqual(3);
+    // (the lunger first; with creature momentum, 2026-10-27, a lunger coming round from afar may not get in within two gaps, and then
+    // its shots go first, the combo's own fallback: so most combos, not every one)
+    expect(order.slice(0, 4).filter(o => o[0] === "melee").length).toBeGreaterThanOrEqual(3);
     for (const o of order.slice(0, 3)) {
-      expect(o[0]).toBe("melee"); // (the lunger first)
       const sp = o.indexOf("special"); // (when its special's ready: it has a cooldown)
       if (sp >= 0) expect(o.indexOf("ranged")).toBeLessThan(sp); // (the shots before the special)
     }
@@ -203,8 +205,10 @@ describe("pack combat, step 2's specials (2026-10-23: knockback, pull, decoy)", 
       const W = g.witches[0];
       for (const e of fresh(g)) if (e.kind === "packSpecial" && g.creatures[e.id!]?.charge) rams++;
       for (const c of g.creatures) if (c?.packThrow) armed.add(c.id);
-      // (only a knock new this step: a throw spent inside her hit's grace throws nothing, and the knock still on her is an older blow's)
-      const fresh1 = !!W.knock && W.knock.at !== lastAt && W.knock.at >= g.herTime - STEP * 1.5;
+      // (only a knock new this step, and from one blow: a throw spent inside her hit's grace throws nothing, and the knock on her is
+      // another blow's, an older one or another ram's charge landing the same step)
+      const blows = fresh(g).filter(e => e.kind === "witchHit").length;
+      const fresh1 = blows === 1 && !!W.knock && W.knock.at !== lastAt && W.knock.at >= g.herTime - STEP * 1.5;
       for (const id of [...armed]) if (!g.creatures[id].packThrow) { armed.delete(id); if (fresh1) thrown.push(Math.hypot(W.knock!.kx, W.knock!.kz) / g.tuning.witch.knock.ease); }
       lastAt = W.knock?.at ?? -Infinity;
     });
@@ -285,7 +289,7 @@ describe("pack combat, mind control (the owl, the unicorn; 2026-10-23)", () => {
   }, 120000);
   it("with none of hers near, its glow turns her aim instead", () => {
     let riddled = false;
-    arena("pack-unicorn", 60, g => { const v = g.witches[0]; if (v.confused && g.clock.time < v.confused.until) riddled = true; });
+    arena("pack-unicorn", 90, g => { const v = g.witches[0]; if (v.confused && g.clock.time < v.confused.until) riddled = true; }); // (90 s: with creature momentum, 2026-10-27, the first glow at her comes at about 63 s)
     expect(riddled).toBe(true);
   }, 120000);
 });
@@ -540,6 +544,6 @@ describe("kinds keep their own moves in a pack (Ed, 2026-10-20)", () => {
       }
     });
     expect(t).toBeGreaterThan(5);
-    expect((turn / t) * (180 / Math.PI)).toBeGreaterThan(30); // (degrees a second round her: about 45 to 55, 12 to 22 before, straight in from where they came)
+    expect((turn / t) * (180 / Math.PI)).toBeGreaterThan(25); // (degrees a second round her: about 45 to 55, 12 to 22 before, straight in from where they came; about 30 with creature momentum, 2026-10-27: they can't whip round her at a run)
   }, 60000);
 });

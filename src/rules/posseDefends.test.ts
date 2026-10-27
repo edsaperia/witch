@@ -95,8 +95,12 @@ describe("her posse defends her", () => {
     const { g, attackers, posse } = scene(["badger"], ["wolf"]); // (a badger: one her wolf can catch; a charging boar's rarely hit)
     const [badger] = attackers, [wolf] = posse, TT = g.tuning.combat.taunt!;
     badger.hunting = 0; // (after her and nothing else: rules/hunt.ts)
+    // (after her but not striking: with creature momentum, 2026-10-27, a badger striking at her lunges right to its wind-up's aim, too
+    // quick for her wolf to catch; the taunt needs only that it's after her)
+    const hold = () => { if (badger.fight) { badger.fight.readyAt = 1e9; badger.fight.windupUntil = 0; } };
     let at = -1, held = true, until = 0;
     run(g, 6, () => {
+      if (at < 0) hold();
       if (at < 0 && badger.taunt) { at = g.clock.time; until = badger.taunt.until; }
       if (at >= 0 && badger.taunt && g.clock.time > at + 0.1 && g.clock.time < until - 0.05 && !badger.fight?.lunge && on(badger) !== null && on(badger) !== wolf.id) held = false;
     });

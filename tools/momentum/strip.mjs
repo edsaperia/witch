@@ -1,21 +1,21 @@
 // Creature momentum, seen from above (Ed, 2026-10-27; rules/momentum.ts): each species runs at her from 40 m off; 16 m short,
 // before it winds up, she blinks 9 m to the side; its path over the next 2 s with the momentum on (orange) and off (grey), and
 // her two places. Headless (the rules through Vite), drawn as SVG and shot to a PNG in Chromium.
-//   node tools/momentum/strip.mjs [out.png] [--species wolf,boar,fox,cat] [--seed 77] [--strikes] (momentum in its strikes too)
+//   node tools/momentum/strip.mjs [out.png] [--species wolf,boar,fox,cat] [--seed 77]
 let pw; try { pw = await import("playwright"); } catch { pw = await import("/opt/node22/lib/node_modules/playwright/index.js"); }
 const { chromium } = pw.default ?? pw;
 import fs from "node:fs";
 import { openRules, arg, list } from "../balance/lib.mjs";
 
 const OUT = process.argv[2] && !process.argv[2].startsWith("--") ? process.argv[2] : "previews/momentum-strip.png";
-const SPECIES = list(arg("species", "wolf,boar,fox,cat")), SEED = +arg("seed", 77), STRIKES = process.argv.includes("--strikes");
+const SPECIES = list(arg("species", "wolf,boar,fox,cat")), SEED = +arg("seed", 77);
 const { load, close } = await openRules();
 const { TUNING, withTuning } = await load("/src/rules/tuning.ts");
 const { newGame, stepGame, STEP } = await load("/src/rules/game.ts");
 const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 
 function run(species, on) {
-  const t = withTuning({ creatureMomentum: { ...TUNING.creatureMomentum, on, strikes: STRIKES }, combat: { ...TUNING.combat, packs: { on: false } } });
+  const t = withTuning({ creatureMomentum: { ...TUNING.creatureMomentum, on }, combat: { ...TUNING.combat, packs: { on: false } } });
   const g = newGame(SEED, t);
   g.clock.paused = false;
   const d = g.map.dancefloor;
@@ -51,7 +51,7 @@ for (const sp of SPECIES) {
 }
 const cols = 2, rows = Math.ceil(panels.length / cols), svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${cols * W + (cols - 1) * 8}" height="${rows * H + (rows - 1) * 8 + 52}">
 <defs><clipPath id="clip"><rect width="${W}" height="${H}"/></clipPath></defs><rect width="100%" height="100%" fill="#0b0c12"/>${panels.map((p, i) => `<g transform="translate(${(i % cols) * (W + 8)},${Math.floor(i / cols) * (H + 8)})">${p}</g>`).join("")}
-<text x="10" y="${rows * (H + 8) + 16}" fill="#ccc" font-family="monospace" font-size="13">Each runs in from the right; 20 m short she steps 9 m down (pink ring to dot).</text><text x="10" y="${rows * (H + 8) + 36}" fill="#ccc" font-family="monospace" font-size="13">Orange: momentum on${STRIKES ? " + strikes" : ""} (dot every 0.1 s). Grey: off. Charges keep their lane.</text></svg>`;
+<text x="10" y="${rows * (H + 8) + 16}" fill="#ccc" font-family="monospace" font-size="13">Each runs in from the right; 20 m short she steps 9 m down (pink ring to dot).</text><text x="10" y="${rows * (H + 8) + 36}" fill="#ccc" font-family="monospace" font-size="13">Orange: momentum on (dot every 0.1 s). Grey: off. Charges keep their lane.</text></svg>`;
 await close();
 const b = await chromium.launch(), p = await b.newPage();
 await p.setContent(`<body style="margin:0">${svg}</body>`);
