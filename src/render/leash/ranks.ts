@@ -1,5 +1,6 @@
 // Rank sigils (Ed, 2026-10-27, after mocks 3 to 9: "I think larger sigils is good. I think embers are good. I think colours-for-rank
-// is good; it's more important in rapid gameplay to be able to tell ranks apart than creatures"; tuning leash.ranks, ?sigils=new):
+// is good; it's more important in rapid gameplay to be able to tell ranks apart than creatures"; tuning leash.ranks; the default since Ed, 2026-10-27:
+// "go ahead and push all the new sigil work"; ?sigils=old the old look):
 // every leash sigil (her stack, placed sigils, happy runes, the ghost, the treetop projection, the bond) is the bare glyph in its
 // rank's colour (baby turquoise, youth purple, adult red, legend yellow: no ring, no disc), embers rising off its strokes (more,
 // bigger, brighter and higher each rank; a legend's white-hot), and a youth in her stack has two rows of round dots off to the
@@ -14,7 +15,7 @@ import type { Instances } from "./glyphs";
 
 export interface RankKnobs {
   on: boolean;
-  /** The leash hex grid's size (m) while on (leash.hex.size: ?sigils=new sets it). */
+  /** The leash hex grid's size (m) while on (leash.hex.size; ?sigils=old puts it back to OLD_HEX). */
   hex: number;
   /** A placed sigil's glyph, across (m). */
   glyph: number;
@@ -29,11 +30,14 @@ export interface RankKnobs {
 }
 
 export const RANKS_DEFAULT: RankKnobs = {
-  on: false, hex: 6, glyph: 5,
+  on: true, hex: 6, glyph: 5,
   colours: [[40, 225, 215], [150, 90, 255], [255, 70, 70], [255, 226, 60]],
   embers: { count: [3, 5, 8, 12], size: [0.22, 0.26, 0.3, 0.36], rise: [1.6, 2.1, 2.8, 3.6], stack: 0.4 },
   dotsPerRow: 4, stoneGlow: 2.4,
 };
+
+/** The leash hex grid's size (m) before the rank sigils (4: leash.spacing's density), as ?sigils=old brings it back. */
+export const OLD_HEX = 4;
 
 export const rankKnobs = (t: Tuning): RankKnobs => ({ ...RANKS_DEFAULT, ...(t.leash.ranks ?? {}) });
 export const ranksOn = (t: Tuning): boolean => !!t.leash.ranks?.on;

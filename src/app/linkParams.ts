@@ -1,6 +1,7 @@
 // The link's switches (?px=, ?tilt=, ?music=, ?hills=, ?shape=, ...): the tuning for this load, made from the tuning file
 // and the page's query parameters (and the world's knobs kept on this browser). Called once, before the game is made.
 import { TUNING } from "../rules/tuning";
+import { OLD_HEX } from "../render/leash/ranks";
 import { playableIsland } from "../rules/rosters";
 import { loadSave, worldSeed } from "./chartSave";
 import { zooCoastsHeld } from "./zooCoasts";
@@ -218,11 +219,12 @@ export function tuningFromLink(params: URLSearchParams) {
   // The prop generator's props (Ed's props decision; the hand-made ones retired with their ?props=hand, 2026-10-07): fingerposts
   // where footpaths come into a clearing (placed with the map, so set before it is made).
   tuning.paths = { ...tuning.paths, fingerposts: true };
-  // ?sigils=new (Ed, 2026-10-27; render/leash/ranks.ts): rank sigils, every leash sigil its bare glyph in its rank's colour with
-  // embers, and the leash hex grid at leash.ranks.hex metres (6), to feel the spacing before it's the default; ?sigils=old off.
+  // Rank sigils (render/leash/ranks.ts; the default since Ed, 2026-10-27: "go ahead and push all the new sigil work"): every leash
+  // sigil its bare glyph in its rank's colour with embers, the rune stones in their areas' top ranks', and the leash hex grid at
+  // leash.ranks.hex metres (6). ?sigils=old brings back the old sigils and their 4 m grid (OLD_HEX); ?sigils=new, the default.
   { const v = params.get("sigils"), R = tuning.leash.ranks;
     if (R && (v === "new" || v === "old")) tuning.leash = { ...tuning.leash, ranks: { ...R, on: v === "new" } };
-    if (tuning.leash.ranks?.on && tuning.leash.hex) tuning.leash = { ...tuning.leash, hex: { ...tuning.leash.hex, size: tuning.leash.ranks.hex } }; }
+    if (R && tuning.leash.hex) tuning.leash = { ...tuning.leash, hex: { ...tuning.leash.hex, size: tuning.leash.ranks!.on ? R.hex : OLD_HEX } }; }
   applyKnobParams(tuning, params); // (Ed's decisions panel: its knobs' choices kept in the URL as d_<id>)
   // The sea chart's save (app/chartSave.ts): the islands she's found, so the night's legends favour the others (rules/rosters.ts).
   // and the campaign's world seed (every island's shape), unless ?world= names one for this load
