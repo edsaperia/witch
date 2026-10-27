@@ -303,7 +303,9 @@ export class StringLightsView {
       pos.push(b.x, b.y, b.z); cols.push(c.r, c.g, c.b); data.push(b.phase, b.string * 40 + b.u * 60, b.u * StringLightsView.CROWN_RUN, 4 * b.u * (1 - b.u));
     }
     // (the wires: each span's sag in eight pieces, each garland round its clump)
-    for (const s of view.crown.strings) {
+    const hung = new Set(view.bulbs.map(b => b.string));
+    for (const [si, s] of view.crown.strings.entries()) {
+      if (!hung.has(si)) continue;
       if (s.kind === "garland") { const n = 24, at = (i: number) => { const th = s.o + (i / n) * Math.PI * 2, w = s.el + 0.12 * Math.sin(th * 3); return [s.x + s.r * Math.cos(w) * Math.cos(th), s.y + s.r * Math.sin(w), s.z + s.r * Math.cos(w) * Math.sin(th)]; }; for (let i = 0; i < n; i++) wire.push(...at(i), ...at(i + 1)); continue; }
       for (const p of s.spans) { const at = (u: number) => [p.a[0] + (p.b[0] - p.a[0]) * u, p.a[1] + (p.b[1] - p.a[1]) * u - p.sag * 4 * u * (1 - u), p.a[2] + (p.b[2] - p.a[2]) * u]; for (let i = 0; i < 8; i++) wire.push(...at(i / 8), ...at((i + 1) / 8)); }
     }

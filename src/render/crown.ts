@@ -39,6 +39,16 @@ export const SHARED_GLSL = /* glsl */ `
 uniform vec3 uMapO, uMapX, uMapY, uMapZ;
 uniform float uBendOn;
 vec3 mapPlan(vec3 p) { return uMapO + p.x * uMapX + p.y * uMapY + p.z * uMapZ; }
+// The house's warm light spilling up into the crown (treehouse.house.crown.warm): a glow round each room's middle a little over
+// its floor, on the plan, reaching about the room's size and a lobe's height up
+uniform vec4 uWarmSrc[16]; // plan x, y over the floor, plan z, reach (m)
+uniform float uWarmN, uWarmK;
+float warmAt(vec3 p) {
+  if (uWarmK <= 0.0) return 0.0;
+  float w = 0.0;
+  for (int i = 0; i < 16; i++) { if (float(i) >= uWarmN) break; vec3 d = p - uWarmSrc[i].xyz; w += exp(-dot(d, d) / (uWarmSrc[i].w * uWarmSrc[i].w)); }
+  return uWarmK * min(1.2, w);
+}
 `;
 export const CLEAR_GLSL = /* glsl */ `
 uniform float uIndoor; // laid over the floors: no haze nor slowed time's grey (the floors' own colours aren't graded)
@@ -110,6 +120,7 @@ varying vec3 vWorld;
 varying vec2 vFloor;
 varying float vDepth;
 varying vec3 vLight; // the light on it (its lamps, the moon's fill, her glow), once a vertex: the pixels add only the moon's shading
+varying float vWarm; // the house's light from below (its undersides the most)
 uniform vec3 uBack;
 ${SHARED_GLSL}
 ${HEIGHT_VERT_GLSL}
@@ -119,6 +130,7 @@ void main() {
   vLight = nightLight(normalize(uBack + uUp * 0.5 + (corner.x * uRight + corner.y * uUp) * 0.6), c + (corner.x * uRight + corner.y * uUp) * iLobe.w);
   vWorld = c + (corner.x * uRight + corner.y * uUp) * iLobe.w;
   vUv = corner; vData = iData;
+  vWarm = warmAt(iLobe.xyz + vec3(0.0, corner.y * iLobe.w * 0.5, 0.0)) * (0.65 - 0.35 * corner.y);
   // the floor's plan point under this pixel (indoors: the house's plane, its right the plan's east and its up the plan's north)
   vec3 q = p - uMapO;
   vFloor = vec2(dot(q, uRight) / max(1e-4, dot(uMapX, uRight)), dot(q, uUp) / min(-1e-4, dot(uMapZ, uUp)));
@@ -135,6 +147,7 @@ varying vec3 vWorld;
 varying vec2 vFloor;
 varying float vDepth;
 varying vec3 vLight;
+varying float vWarm;
 uniform vec3 uBack, uRight, uUp;
 ${LIGHT_GLSL}
 ${CLEAR_GLSL}
@@ -157,12 +170,17 @@ void main() {
   float t = clamp(floor(y * 7.0 + (speck - 0.5) * 1.6), 0.0, 4.0);
   vec3 tint = L / max(y, 1e-3);
   vec3 c = leafTone(t) * mix(vec3(1.0), clamp(tint, 0.0, 2.0), 0.12) * (0.85 + 0.4 * min(1.0, y * 2.0));
+  // the house's warm light from below, in flat quarter steps (the art's pixels), its undersides and their edges the most
+  if (vWarm > 0.0) { float w = vWarm * (0.75 + 0.5 * max(0.0, -u.y)), q = clamp(floor(w * 4.0 + (speck - 0.5) * 1.4), 0.0, 4.0) / 4.0;
+    c = mix(c, c * vec3(1.9, 1.25, 0.7) + vec3(0.17, 0.085, 0.02), q); }
   gl_FragColor = vec4(crownHaze(c, vWorld), keep);
 }`;
 
 const BARK_VERT = /* glsl */ `
 attribute vec3 aNormal; // on the plan
 attribute vec2 aBark; // metres along the limb, angle round it (0 to 1)
+attribute float aRad; // the limb's radius there (m)
+varying float vWarm, vRad;
 varying vec3 vWorld, vN;
 varying vec2 vBark;
 varying vec2 vFloor;
@@ -177,6 +195,7 @@ void main() {
   vWorld = p; vBark = aBark;
   vN = normalize(aNormal.x * normalize(uMapX) + aNormal.y * normalize(uMapY) + aNormal.z * normalize(uMapZ));
   vLight = nightLight(vN, p); // (once a vertex)
+  vWarm = warmAt(position) * (0.55 + 0.6 * max(0.0, -aNormal.y)); vRad = aRad;
   vec3 q = p - uMapO;
   vFloor = vec2(dot(q, uRight) / max(1e-4, dot(uMapX, uRight)), dot(q, uUp) / min(-1e-4, dot(uMapZ, uUp)));
   vec4 mv = viewMatrix * vec4(uBendOn > 0.5 ? bendW(p) : p, 1.0);
@@ -190,6 +209,9 @@ varying vec2 vBark;
 varying vec2 vFloor;
 varying float vDepth;
 varying vec3 vLight;
+varying float vWarm, vRad;
+uniform vec3 uBack;
+uniform float uRimK; // moonlit edges on the great limbs (treehouse.house.crown.rim)
 ${LIGHT_GLSL}
 ${CLEAR_GLSL}
 void main() {
@@ -204,12 +226,18 @@ void main() {
   vec3 c = t < 0.5 ? vec3(0.094, 0.078, 0.078) : t < 1.5 ? vec3(0.157, 0.129, 0.118) : t < 2.5 ? vec3(0.227, 0.188, 0.165) : vec3(0.314, 0.267, 0.220);
   if (fur < 0.3) c = vec3(0.094, 0.078, 0.078);
   if (N.y > 0.35 && vnoise2(vBark * vec2(0.35, 4.0)) > 0.55) c = vnoise2(gl_FragCoord.xy * 0.7) < 0.5 ? vec3(0.133, 0.196, 0.118) : vec3(0.204, 0.282, 0.157); // moss on its top
-  gl_FragColor = vec4(crownHaze(c * (0.85 + 0.3 * min(1.0, y * 2.0)), vWorld), keep);
+  c *= 0.85 + 0.3 * min(1.0, y * 2.0);
+  // the house's warm light from below, in flat steps (its undersides over the rooms the most)
+  if (vWarm > 0.0) { float q = clamp(floor(vWarm * 4.0 + (fur - 0.5) * 1.2), 0.0, 4.0) / 4.0; c = mix(c, c * vec3(2.0, 1.3, 0.7) + vec3(0.19, 0.095, 0.02), q); }
+  // the moon catching the great limbs' edges: a hard line of cool light along their silhouettes on its side
+  if (uRimK > 0.0) { float edge = 1.0 - abs(dot(N, normalize(uBack))), m = dot(N, uMoonDir) + 0.25 * N.y, big = smoothstep(0.7, 2.2, vRad);
+    if (edge > 0.6 && m > 0.12 && fur > 0.22) c = mix(c, vec3(0.42, 0.47, 0.56) * (0.8 + 0.4 * fur), uRimK * big * (edge > 0.78 ? 1.0 : 0.55)); }
+  gl_FragColor = vec4(crownHaze(c, vWorld), keep);
 }`;
 
 /** The bark's tubes: a Catmull-Rom through each limb's knots, rings of `sides` round it about a third of its radius apart. */
 function barkGeometry(c: Crown): THREE.BufferGeometry {
-  const pos: number[] = [], nrm: number[] = [], bark: number[] = [], idx: number[] = [];
+  const pos: number[] = [], nrm: number[] = [], bark: number[] = [], rad: number[] = [], idx: number[] = [];
   for (const l of c.limbs) {
     const k: Knot[] = [l.knots[0], ...l.knots, l.knots[l.knots.length - 1]], sides = l.knots[0][3] > 2.5 ? 8 : l.knots[0][3] > 0.8 ? 6 : 4;
     const ring: { p: number[]; t: number[]; r: number; s: number }[] = [];
@@ -234,7 +262,7 @@ function barkGeometry(c: Crown): THREE.BufferGeometry {
       const up = [T[1] * ax[2] - T[2] * ax[1], T[2] * ax[0] - T[0] * ax[2], T[0] * ax[1] - T[1] * ax[0]];
       for (let j = 0; j < sides; j++) {
         const a = (j / sides) * Math.PI * 2, cs = Math.cos(a), sn = Math.sin(a), n = [ax[0] * cs + up[0] * sn, ax[1] * cs + up[1] * sn, ax[2] * cs + up[2] * sn];
-        pos.push(R.p[0] + n[0] * R.r, R.p[1] + n[1] * R.r, R.p[2] + n[2] * R.r); nrm.push(n[0], n[1], n[2]); bark.push(R.s, j / sides);
+        pos.push(R.p[0] + n[0] * R.r, R.p[1] + n[1] * R.r, R.p[2] + n[2] * R.r); nrm.push(n[0], n[1], n[2]); bark.push(R.s, j / sides); rad.push(R.r);
       }
     }
     for (let i = 0; i < ring.length - 1; i++) for (let j = 0; j < sides; j++) {
@@ -246,6 +274,7 @@ function barkGeometry(c: Crown): THREE.BufferGeometry {
   g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
   g.setAttribute("aNormal", new THREE.Float32BufferAttribute(nrm, 3));
   g.setAttribute("aBark", new THREE.Float32BufferAttribute(bark, 2));
+  g.setAttribute("aRad", new THREE.Float32BufferAttribute(rad, 1));
   g.setIndex(idx);
   return g;
 }
@@ -289,7 +318,7 @@ export class CrownView {
   /** The bulbs of its lights (rules/crown.ts crownBulbs), for render/strings.ts and the far landmark. */
   readonly bulbs: Bulb[];
 
-  constructor(readonly crown: Crown, spacing: number, private readonly outline: HouseOutline) {
+  constructor(readonly crown: Crown, spacing: number, private readonly outline: HouseOutline, readonly lights = 1) {
     const { cx, cz, rx, rz } = crown.dome;
     this.uniforms = {
       ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS,
@@ -299,14 +328,19 @@ export class CrownView {
       uNoise: { value: noiseTexture() },
       uBehind: { value: 0 }, uClear: { value: this.masks[0].tex }, uClearB: { value: this.masks[1].tex }, uClearW: { value: new THREE.Vector2() }, uClearBox: { value: new THREE.Vector4(cx - rx, cz - rz, 1 / (2 * rx), 1 / (2 * rz)) }, uClearOn: { value: 0 },
       uHerHole: { value: new THREE.Vector4() },
+      uWarmSrc: { value: Array.from({ length: 16 }, () => new THREE.Vector4()) }, uWarmN: { value: 0 }, uWarmK: { value: 0 }, uRimK: { value: 0 },
     };
+    // (the warm light's sources: each open room's middle, 1.5 m over its floor, reaching its size and the crown's height over it)
+    const rooms = outline.rooms.filter(r => !r.locked).slice(0, 16);
+    rooms.forEach((r, i) => (this.uniforms.uWarmSrc.value as THREE.Vector4[])[i].set(r.x, 1.5, r.z, (r.r ?? 6) + 8));
+    this.uniforms.uWarmN.value = rooms.length;
     const lobeMat = new THREE.ShaderMaterial({ vertexShader: LOBE_VERT, fragmentShader: LOBE_FRAG, uniforms: this.uniforms });
     const barkMat = new THREE.ShaderMaterial({ vertexShader: BARK_VERT, fragmentShader: BARK_FRAG, uniforms: this.uniforms });
     this.lobes = new THREE.Mesh(lobeGeometry(crown), lobeMat);
     this.bark = new THREE.Mesh(barkGeometry(crown), barkMat);
     for (const m of [this.lobes, this.bark]) { m.frustumCulled = false; m.name = "crown"; }
     this.meshes = [this.bark, this.lobes];
-    this.bulbs = crownBulbs(crown, spacing);
+    this.bulbs = crownBulbs(crown, spacing, 0, lights);
   }
 
   /** How many triangles and lobes it draws (for ?perf and the report). */

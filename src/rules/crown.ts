@@ -276,10 +276,15 @@ export function makeCrown({ outline: O, floor, seed, open = [], gap = true }: Cr
  *  (0 its start to 1 its end: it switches on and off in that order), its string and its own phase (its twinkle). */
 export interface Bulb { x: number; y: number; z: number; colour: number; u: number; string: number; phase: number }
 
-/** Every bulb of the crown's strings, `spacing` metres apart along them (the clearings' stringLights.bulbSpacing). */
-export function crownBulbs(c: Crown, spacing: number, seed = 0): Bulb[] {
+/** Is the crown's `si`th string hung, with `density` of them kept (0 to 1: whole strings, by a hash, so thinning keeps each one's look)? */
+export const stringHung = (si: number, density: number, seed = 0): boolean => density >= 1 || hash2(si, 17, seed) < density;
+
+/** Every bulb of the crown's strings, `spacing` metres apart along them (the clearings' stringLights.bulbSpacing), `density` of the
+ *  strings hung (stringHung). */
+export function crownBulbs(c: Crown, spacing: number, seed = 0, density = 1): Bulb[] {
   const out: Bulb[] = [];
   c.strings.forEach((s, si) => {
+    if (!stringHung(si, density, seed)) return;
     const o = Math.floor(hash2(si, 11, seed) * 6), push = (x: number, y: number, z: number, i: number, u: number) => out.push({ x, y, z, colour: (i + o) % 6, u, string: si, phase: hash2(si * 977 + i, 13, seed) });
     if (s.kind === "garland") {
       const n = Math.max(6, Math.round((2 * Math.PI * s.r * Math.cos(s.el)) / spacing));
