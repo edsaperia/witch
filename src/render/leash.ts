@@ -31,7 +31,7 @@ import { letterAt, lobHeight, type HerOffset } from "./invites";
 
 import { LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS } from "./height";
-import { AMBER, ROSE, JOIN_PALETTE, PIXEL_DOT_MAX, SLOT, SLOTS, SQ, DISC, writeOn, LEGEND_LEVEL, LEGEND_ROW, Instances, VERT, FRAG, legendarySigil } from "./leash/glyphs";
+import { AMBER, ROSE, JOIN_PALETTE, PIXEL_DOT_MAX, SLOT, SLOTS, SQ, DISC, writeOn, LEGEND_LEVEL, LEGEND_ROW, Instances, VERT, FRAG, legendarySigil, maskOf } from "./leash/glyphs";
 import { drawCombat } from "./leash/combat";
 import { AttackLook } from "./leash/attackLook";
 import { BLOOD_PULL, BloodPool, bloodKnobs } from "./leash/blood";
@@ -42,11 +42,13 @@ import { drawBond, drawStack, drawStrain, stackKey } from "./leash/stack";
 import { drawProjection } from "./leash/projection";
 import { RUNE_SCALE, runeOffset, sigilSize } from "../rules/runeOffset";
 import { relicsOut } from "../rules/partyOver";
+import { drawEmbers, glyphPoints, rankColour, rankKnobs, rankOf, ranksOn, youthDots } from "./leash/ranks";
 export { BUBBLE_PX, bubblePx } from "./leash/bubbles";
 export { legendarySigil } from "./leash/glyphs";
 
 /** Seconds a legend's charge ruts take to fade. */
 const RUTS = 12;
+const WHITE_COL = new THREE.Color(1, 1, 1);
 /** How far from her (m) happy creatures' runes are drawn. */
 const RUNE_VIEW = 70;
 /** The party legend's giant hat's stripes (the Easter egg): the party neons, in pairs of rows. */
@@ -70,6 +72,11 @@ export class LeashView {
   nextSlot = 1; // the next free atlas slot
   legendSlots = 0; // legendary blocks taken
   colours = new Map<string, THREE.Color>();
+  /** Rank sigils (render/leash/ranks.ts): each bare glyph's pixels (its embers start there) and its shade's slot, by its rect; the
+   *  ranks' colours. */
+  readonly glyphPts = new Map<string, [number, number][]>();
+  private readonly shades = new Map<string, number[]>();
+  private rankCols: THREE.Color[] | null = null;
   /** The sigils' halos this frame, times today's (the tuning's leash.sigilHalo; Ed's pick B: none). */
   haloGain = 1;
   /** Under every sigil lying on the ground (Ed, 2026-10-12, Bravo's o3): its dark backing disc, then its glyph opaque in its full neon,
@@ -82,6 +89,8 @@ export class LeashView {
   /** The stack above her hat drawn over the scenery (no depth test, after the see-through pass: Ed, 2026-10-15, "never obscured by scenery"), and a near-black disc behind each of its sigils. */
   stackGlyphs: Instances;
   stackBack: Instances;
+  /** Her stack's meshes, each with its coverage material: kept sharp through the tilt-shift (Post.sharp). */
+  readonly stackMask: { mesh: THREE.Mesh; mask: THREE.Material }[];
   flat: Instances;
   /** The placed sigils, and the happy creatures' runes (Ed, 2026-10-12), again where scenery or grass hides them (Ed, 2026-10-11: "Placed animal sigils should show through scenery"): only where
    *  something nearer is drawn and it is scenery or ground cover (their stencil marks), never the witch, at leash.placedThrough. */
@@ -180,6 +189,8 @@ export class LeashView {
     this.over = new Instances(mat(0, false)); this.over.mesh.renderOrder = 11.4; // (over everything, so after the see-through passes too: at 3, the trees in her hole, drawn at 10.9 and 11, covered it there and nowhere else, #1091)
     this.stackGlyphs = new Instances(mat(0, false)); this.stackGlyphs.mesh.renderOrder = 11.5; // (after the see-through pass at 11, before her silhouette at 12)
     this.stackBack = new Instances(mat(0, false, true)); this.stackBack.mesh.renderOrder = 11.45;
+    // (both again as coverage, the tilt-shift's sharp mask: render/post.ts Post.sharp)
+    this.stackMask = [this.stackBack, this.stackGlyphs].map(b => ({ mesh: b.mesh, mask: maskOf(b.mesh.material as THREE.ShaderMaterial) }));
     const thr = mat(1);
     Object.assign(thr, { depthFunc: THREE.GreaterDepth, stencilWrite: true, stencilRef: 0, stencilFuncMask: 3, stencilFunc: THREE.NotEqualStencilFunc, stencilFail: THREE.KeepStencilOp, stencilZFail: THREE.KeepStencilOp, stencilZPass: THREE.KeepStencilOp });
     this.through = new Instances(thr); this.through.mesh.renderOrder = 13; // (scenery marks 1, grass 2: sprites.ts, grass.ts; she clears it)
@@ -206,6 +217,7 @@ export class LeashView {
     this.bodyY = 0.8; this.hatTop = 1.6; this.feetY = 0; this.frameH = 0;
     this.deckBonus = 0; this.circleFade = 0; this.circleAt = 0; this.circleLast = null;
     this.zooPlates?.dispose(); this.zooPlates = undefined;
+    this.rankCols = null;
   }
 
   /** A sigil lying on the ground (placed, a happy creature's rune, the ghost, a relic's): Bravo's o3, which Ed took (2026-10-12: "a
@@ -218,7 +230,9 @@ export class LeashView {
     if (B && B.dark > 0) {
       const reach = this.extent.get(`${uv[0]},${uv[1]}`) ?? 1;
       const shown = Math.min(1, a * (B.ink ?? 1)); // (less see-through than the glow it was: Ed, "sigils less transparent")
-      this.backing.add(x, y, z, size * reach * B.size, this.uv(DISC), 0.02, 0.02, 0.035, B.dark * shown, draw);
+      const shade = this.shades.get(`${uv[0]},${uv[1]}`); // (a rank sigil's: its own shape, no disc)
+      if (shade) this.backing.add(x, y, z, size, shade, 0.02, 0.02, 0.035, B.dark * shown, draw);
+      else this.backing.add(x, y, z, size * reach * B.size, this.uv(DISC), 0.02, 0.02, 0.035, B.dark * shown, draw);
       this.ink.add(x, y, z, size, uv, Math.min(1, r), Math.min(1, g), Math.min(1, b), shown, draw);
     }
     this.flat.add(x, y, z, size, uv, r, g, b, a, draw);
@@ -333,6 +347,29 @@ export class LeashView {
         this.standing.add(c.x + Math.cos(a) * sp * k, 0.8 + up * k - 4 * k * k, c.z + Math.sin(a) * sp * k, 0.35, dot, col[0], col[1], col[2], 1 - k);
       }
     }
+  }
+
+  /** Rank sigils' growing up on the ground (render/leash/ranks.ts; Ed, 2026-10-27: "dots slide into the glyph, white flare, settles
+   *  red"): a placed creature evolving (rules/berries.ts: from its last berry to the next bar line) has its youth's dots ringing its
+   *  glyph and sliding in, the glyph whitening; as it becomes its new rank, a white flare settling to the rank's colour. Returns the
+   *  glyph's colour this frame. */
+  private readonly rankFlare = new THREE.Color();
+  rankMoment(c: Creature, x: number, z: number, size: number, col: THREE.Color, time: number, dot: number[]): THREE.Color {
+    const g = this.game, ev = g.berries.evolving.get(c.id), done = this.evolved.get(c.id);
+    if (ev) {
+      const k = Math.min(1, Math.max(0, (time - ev.since) / Math.max(0.1, ev.at - ev.since))), n = Math.max(2, youthDots({ level: 1, species: c.species }, 0, g.tuning).n);
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2 + k * 2.5, r = size * 0.62 * (1 - k * k);
+        this.standing.add(x + Math.cos(a) * r, 0.4 + 0.3 * k, z + Math.sin(a) * r * 0.7, 0.32, dot, col.r + (1 - col.r) * k, col.g + (1 - col.g) * k, col.b + (1 - col.b) * k, 1);
+      }
+      return this.rankFlare.copy(col).lerp(WHITE_COL, k * 0.8);
+    }
+    if (done !== undefined) {
+      const d = time - done;
+      if (d < 0.3) this.standing.add(x, 0.6, z, size * 0.7, dot, 0.8, 0.8, 0.8, 0.6 * (1 - d / 0.3), 1, true); // (a brief white flare: under the bloom's blow-out)
+      return this.rankFlare.copy(WHITE_COL).lerp(col, Math.min(1, d / 0.8));
+    }
+    return col;
   }
 
   /** A legend in its circle, read at a glance (Ed's round 14 playtest: "Legends in the circle are not very distinct"): asleep,
@@ -457,9 +494,54 @@ export class LeashView {
     return [x / N, 1 - y / N, (x + SLOT * span) / N, 1 - (y + SLOT * span) / N];
   }
 
+  /** A rank sigil's glyph (render/leash/ranks.ts): the species' bare glyph (no ring, no dots, any rank), white in the atlas, and in
+   *  the next slot its shade, the glyph's own shape grown two pixels all round (the dark under it on the ground and in the stack,
+   *  not a disc); its pixels kept for the embers. */
+  bareSlot(species: string): number {
+    const key = `${species}:bare`, had = this.slots.get(key);
+    if (had !== undefined) return had;
+    const s = this.nextSlot++, sh = this.nextSlot++;
+    this.slots.set(key, s);
+    const g = this.canvas.getContext("2d", { willReadFrequently: true })!, at = (k: number) => [(k % SLOTS) * SLOT, Math.floor(k / SLOTS) * SLOT];
+    const [ox, oy] = at(s), [sx, sy] = at(sh);
+    g.clearRect(ox, oy, SLOT, SLOT); g.clearRect(sx, sy, SLOT, SLOT);
+    drawSigil(g, species, { x: ox + 3, y: oy + 3, size: SLOT - 6, level: null, colour: [255, 255, 255], glow: false });
+    const img = g.getImageData(ox, oy, SLOT, SLOT);
+    for (let i = 3; i < img.data.length; i += 4) img.data[i] = img.data[i] > 90 ? 255 : 0;
+    g.putImageData(img, ox, oy);
+    const shade = g.createImageData(SLOT, SLOT), on = (x: number, y: number) => x >= 0 && y >= 0 && x < SLOT && y < SLOT && img.data[(y * SLOT + x) * 4 + 3] > 0;
+    for (let y = 0; y < SLOT; y++) for (let x = 0; x < SLOT; x++) {
+      let near = false;
+      for (let dy = -2; dy <= 2 && !near; dy++) for (let dx = -2; dx <= 2 && !near; dx++) if (dx * dx + dy * dy <= 5 && on(x + dx, y + dy)) near = true;
+      if (near) { const i = (y * SLOT + x) * 4; shade.data[i] = shade.data[i + 1] = shade.data[i + 2] = 255; shade.data[i + 3] = 255; }
+    }
+    g.putImageData(shade, sx, sy);
+    const uv = this.uv(s);
+    this.extent.set(`${uv[0]},${uv[1]}`, 1);
+    this.shades.set(`${uv[0]},${uv[1]}`, this.uv(sh));
+    this.glyphPts.set(`${uv[0]},${uv[1]}`, glyphPoints(img.data, SLOT));
+    if (!this.colours.has(species)) { const c = sigilColour(species); this.colours.set(species, new THREE.Color(c[0] / 255, c[1] / 255, c[2] / 255)); }
+    this.tex.needsUpdate = true;
+    return s;
+  }
+
+  /** A rank sigil's shade (its glyph's own shape, grown: bareSlot) by its glyph's rect; null for any other glyph. */
+  shadeOf(uv: number[]): number[] | null { return this.shades.get(`${uv[0]},${uv[1]}`) ?? null; }
+
+  /** A leash sigil's colour: with rank sigils on, its rank's (render/leash/ranks.ts: baby turquoise, youth purple, adult red, legend
+   *  yellow), else its species' neon. */
+  colOf(c: Creature): THREE.Color {
+    if (ranksOn(this.game.tuning)) {
+      if (!this.rankCols) this.rankCols = [0, 1, 2, 3].map(r => { const [cr, cg, cb] = rankColour(this.game.tuning, r); return new THREE.Color(cr, cg, cb); });
+      return this.rankCols[rankOf(c)];
+    }
+    return (this.slotOf(c.species, c.level), this.colours.get(c.species)!);
+  }
+
   /** A creature's sigil in the stack and on the ground: a legend's is its legendary sigil (Ed, 2026-10-06: "huge, twice as
    *  wide and more detailed", a magic circle with the animal in the centre), LEGEND_SCALE times a legend's (`scale`). */
   sigilOf(c: Creature): { uv: number[]; scale: number } {
+    if (ranksOn(this.game.tuning)) return { uv: this.uv(this.bareSlot(c.species)), scale: 1 }; // (rank sigils: the bare glyph, any rank)
     if (legendarySigil(c)) return { uv: this.uv(this.slotOf(c.species, LEGEND_LEVEL, true), 2), scale: LEGEND_SCALE };
     return { uv: this.uv(this.slotOf(c.species, c.level)), scale: 1 };
   }
@@ -499,7 +581,7 @@ export class LeashView {
       // the new bottom sigil of the stack flares (drawn with the stack).
       const sc = (e.kind === "placed" || e.kind === "picked") && e.id !== undefined ? g.creatures[e.id] : undefined;
       if (sc) {
-        const col = (this.slotOf(sc.species, sc.level), this.colours.get(sc.species)!), R = 3 + sc.level * 0.8;
+        const col = this.colOf(sc), R = 3 + sc.level * 0.8;
         if (e.kind === "placed") this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.6, r: 0.62, g: 0.4, b: 0.2, seed: 0, size: R * 0.8, n: 20, dot: 0.8 }); // (a deep amber: its dots overlap and add up, and it mustn't reach white)
         this.fx.push({ kind: "motes", x: e.x, y: 0.2, z: e.z, at: time, life: e.kind === "placed" ? 0.9 : 0.7, r: col.r, g: col.g, b: col.b, seed: e.at * 53 + e.id!, size: e.kind === "placed" ? R * 0.35 : R * 0.25, tx: e.kind === "placed" ? 3 : 4.5 });
       }
@@ -542,12 +624,17 @@ export class LeashView {
     // Placed sigils, written on the ground, a little brighter than they were so they read in the
     // grass (Ed, v233; the grass is trampled clear round them, grass.ts).
     const seeThrough = t.leash.placedThrough ?? 0;
+    const ranks = ranksOn(t), RK = rankKnobs(t);
     for (const p of s.placed) {
-      const c = g.creatures[p.id], sg = this.sigilOf(c), col = this.colours.get(c.species)!;
-      const pulse = 1.05 + 0.25 * Math.sin(time * 2 + p.id);
+      const c = g.creatures[p.id], sg = this.sigilOf(c);
+      let col = this.colOf(c);
+      const pulse = ranks ? 0.8 + 0.1 * Math.sin(time * 2 + p.id) : 1.05 + 0.25 * Math.sin(time * 2 + p.id); // (a rank sigil's colour kept: brightened, its purple went pink, toward an adult's red)
       const drawn = writeOn(g.herTime, p.at); // (on her clock, as its stamp is: Bravo's dark-circle diagnosis, 2026-10-12)
-      this.groundSigil(p.x, 0.02, p.z, (3 + c.level * 0.8) * sg.scale, sg.uv, col.r * pulse, col.g * pulse, col.b * pulse, 1, drawn);
-      if (seeThrough > 0) this.through.add(p.x, 0.02, p.z, (3 + c.level * 0.8) * sg.scale, sg.uv, col.r * pulse, col.g * pulse, col.b * pulse, seeThrough, drawn);
+      const size = ranks ? RK.glyph : (3 + c.level * 0.8) * sg.scale;
+      if (ranks) col = this.rankMoment(c, p.x, p.z, size, col, time, dot);
+      this.groundSigil(p.x, 0.02, p.z, size, sg.uv, col.r * pulse, col.g * pulse, col.b * pulse, 1, drawn);
+      if (seeThrough > 0) this.through.add(p.x, 0.02, p.z, size, sg.uv, col.r * pulse, col.g * pulse, col.b * pulse, seeThrough, drawn);
+      if (ranks && drawn >= 1) drawEmbers(this.standing, dot, this.glyphPts.get(`${sg.uv[0]},${sg.uv[1]}`) ?? [], p.x, 0.02, p.z, size, true, rankOf(c), [col.r, col.g, col.b], time, p.id, RK.embers);
       if (halo > 0) this.flat.add(p.x, 0.01, p.z, 5.5, dot, col.r, col.g, col.b, 0.38 * halo);
     }
 
@@ -557,7 +644,7 @@ export class LeashView {
     for (const c of g.creatures) {
       if (Math.abs(c.x - w.x) > RUNE_VIEW || Math.abs(c.z - w.z) > RUNE_VIEW || !hasRune(c)) continue;
       const since = time - (c.happyAt ?? -Infinity), k = Math.min(1, Math.max(0, since / 0.45)), ready = hasRune(c, time);
-      const slot = this.slotOf(c.species, c.level), col = this.colours.get(c.species)!, hop = since < 0.45 ? Math.sin(k * Math.PI) * 1.4 : 0, grow = k < 1 ? 0.4 + 0.75 * k - 0.15 * Math.sin(k * Math.PI) : 1;
+      const slot = ranks ? this.bareSlot(c.species) : this.slotOf(c.species, c.level), col = this.colOf(c), hop = since < 0.45 ? Math.sin(k * Math.PI) * 1.4 : 0, grow = k < 1 ? 0.4 + 0.75 * k - 0.15 * Math.sin(k * Math.PI) : 1;
       const a = ready ? 0.62 + 0.12 * Math.sin(time * 2 + c.id) : 0.3, rz = c.z + runeOffset(c, t), size = sigilSize(c.level, RUNE_SCALE) * grow;
       this.groundSigil(c.x, 0.03 + hop, rz, size, this.uv(slot), col.r * 0.8, col.g * 0.8, col.b * 0.8, a, k);
       if (seeThrough > 0) this.through.add(c.x, 0.03 + hop, rz, size, this.uv(slot), col.r * 0.8, col.g * 0.8, col.b * 0.8, a * seeThrough, k); // (through scenery as a placed sigil is: Ed, 2026-10-12)
@@ -594,9 +681,9 @@ export class LeashView {
       const col = (this.slotOf("relic", 0), this.colours.get("relic")!); // (a flask's at the bottom: its ghost, Ed 2026-10-08: "it's what you put down when you press e")
       this.groundSigil(w.x, 0, w.z, 3.4, this.uv(this.slotOf("relic", 0)), col.r, col.g, col.b, 0.22);
     } else if (w.mode === "ground" && stackBottom(s)?.kind === "creature" && !blocked(s, w.x, w.z, t) && !s.placed.some(p => Math.hypot(p.x - w.x, p.z - w.z) <= L.pickRadius) && !runeNear(g.creatures, w.x, w.z, L.runeRadius, time, undefined, k => runeOffset(k, t)) && !relicsOut(g).some(r => r.state === "lying" && Math.hypot(r.sx - w.x, r.sz - w.z) <= L.runeRadius)) { // (on a relic's sigil the button picks the relic up)
-      const c = g.creatures[s.stack[s.stack.length - 1]], col = this.colours.get(c.species)!;
+      const c = g.creatures[s.stack[s.stack.length - 1]], col = this.colOf(c);
       const sg = this.sigilOf(c);
-      this.groundSigil(w.x, 0, w.z, (3 + c.level * 0.8) * sg.scale, sg.uv, col.r, col.g, col.b, 0.22);
+      this.groundSigil(w.x, 0, w.z, ranks ? RK.glyph : (3 + c.level * 0.8) * sg.scale, sg.uv, col.r, col.g, col.b, 0.22);
     }
 
     // Relics (#87): where one lies, its bottle stands among the scenery in its mound (render/view/scenery.ts, Ed 2026-10-09:
