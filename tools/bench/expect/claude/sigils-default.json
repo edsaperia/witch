@@ -1,0 +1,5 @@
+{
+  "reason": "the rank sigils are the default (Ed, 2026-10-27: \"go ahead and push all the new sigil work\"): every leash sigil is its bare glyph in its rank's colour with embers, the rune stones glow in their areas' top ranks' colours, and the leash hex grid is 6 m (was 4), so the bot's and the game's placed sigils sit on the wider grid",
+  "frames": { "*": "leash sigils, their light and the rune stones drawn in the rank colours; her stack kept out of the tilt-shift" },
+  "rules": { "*": "placed sigils snap to the 6 m hex grid (leash.hex.size 6, was 4), so where the bot puts them down and what follows from it differ" }
+}

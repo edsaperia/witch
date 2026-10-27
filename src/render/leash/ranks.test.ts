@@ -37,7 +37,8 @@ describe("rank sigils", () => {
     expect(p[2] > p[1] && p[0] > p[1]).toBe(true); // purple: blue and red over green
     expect(r[0] > 0.9 && r[1] < 0.4).toBe(true); // red
     expect(y[0] > 0.9 && y[1] > 0.8 && y[2] < 0.4).toBe(true); // yellow
-    expect(TUNING.leash.ranks?.on ?? RANKS_DEFAULT.on).toBe(false); // (off until Ed has played it: ?sigils=new)
+    expect(TUNING.leash.ranks?.on ?? RANKS_DEFAULT.on).toBe(true); // (the default since Ed, 2026-10-27; ?sigils=old off)
+    expect(TUNING.leash.hex?.size).toBe(RANKS_DEFAULT.hex); // (their 6 m hex grid with them)
   });
   it("a rune stone takes its area's top rank among those home, not hers; unlit with nobody home", () => {
     const at = (cell: [number, number], level: 0 | 1 | 2 | 3, more = {}) => ({ cell, level, leashed: false, ...more });
