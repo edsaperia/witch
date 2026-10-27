@@ -27,6 +27,8 @@ export type PathTerm =
   | { orbit: { r: number; time: number } }
   | { runner: true };
 
+/** The side effects a hit can have (each spilling onto other animals only where `hit.allies.effects` names it). */
+export type EffectName = "slow" | "stun" | "knockback" | "pull" | "root" | "burn";
 /** What a hit does besides its damage (any together). */
 export interface Effect { slow?: { mult: number; time: number }; stun?: number; knockback?: number; pull?: number; root?: number; burn?: { dps: number; time: number } }
 
@@ -97,12 +99,16 @@ export interface AttackSpec {
     /** Its share of the level's damage budget (1: the cooldown's worth). */
     damage?: number;
     effect?: Effect;
-    /** It can hit other animals too. */
-    friendly?: boolean;
+    /** What it does to animals it isn't aimed at (its own side, other kinds: Ed, 2026-10-27, "not much friendly fire but sometimes
+     *  friendly 'effects' like stun, knockback, slow"): its damage's share (0 or absent: none) and which of its effects spill onto them. */
+    allies?: { damage?: number; effects?: EffectName[] };
     /** A dash's blink passes through it. */
     blink?: boolean;
   };
   on?: { hit?: Child[]; expire?: Child[]; bounce?: Child[]; land?: Child[]; timer?: TimerChild[] };
+  /** A force field round it (a zone, or a moving body: a legend's whirlwind): within r, pushing (m/s; negative pulls) whoever `who`
+   *  says: "all" (every creature and her), "others" (every creature), "foes" (only its foes: a friendly legend's pushes the wild away). */
+  force?: { r?: number; push: number; who?: "all" | "others" | "foes" };
   pack?: { chain?: { n: number; range: number }; relay?: { n: number }; amplify?: { r: number; per: number; max: number }; tether?: { time: number; width: number }; triangulate?: { delay: number; r: number } };
 }
 

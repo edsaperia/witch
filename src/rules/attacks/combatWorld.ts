@@ -39,6 +39,29 @@ function blowOf(effect: Effect | undefined, delivery: Delivery): Attack {
   return A;
 }
 
+/** An effect's parts on what it touched, all but `done` (the one its blow landed already): a creature knocked, slowed, stunned (rooted
+ *  too, for now: DECISION FOR ED), pulled toward (fx, fz); her thrown, slowed, staggered, rooted (all but stopped) or pulled, none of it
+ *  costing her a hit. */
+function effects(w: CombatWorld, s: CombatState, t: Hittable, e: Effect, done: keyof Effect | null, fx: number, fz: number): void {
+  const time = w.time, dx = t.x - fx, dz = t.z - fz, d = Math.hypot(dx, dz) || 1;
+  if (t.kind === "creature") {
+    const o = w.creatures[t.id as number];
+    if (!o || o.gone) return;
+    if (e.knockback !== undefined && done !== "knockback" && !o.boss) { o.kx = (dx / d) * e.knockback * 6; o.kz = (dz / d) * e.knockback * 6; }
+    if (e.pull !== undefined && !o.boss) { const m = Math.min(e.pull, d - 1); o.kx = (-dx / d) * m * 6; o.kz = (-dz / d) * m * 6; }
+    if (e.slow && done !== "slow") o.slowUntil = Math.max(o.slowUntil ?? 0, time + e.slow.time);
+    const still = Math.max(e.stun ?? 0, e.root ?? 0);
+    if (still > 0 && !o.boss) { o.stunUntil = Math.max(o.stunUntil ?? 0, time + still); if (e.stun && o.fight) o.fight.windupUntil = 0; s.events.push({ kind: "stunned", x: o.x, z: o.z, at: time, id: o.id }); }
+  } else if (t.kind === "witch") {
+    const id = t.id as number;
+    if (e.knockback !== undefined && done !== "knockback") w.throwWitch?.(id, fx, fz, e.knockback);
+    if (e.pull !== undefined) w.packWorld?.pull?.(id, fx, fz, e.pull);
+    if (e.slow && done !== "slow") w.slowWitch?.(id, time + e.slow.time, e.slow.mult);
+    if (e.stun) w.stunWitch?.(id, time + e.stun);
+    if (e.root) w.slowWitch?.(id, time + e.root, 0.05);
+  }
+}
+
 /** The engine's world, as the fight sees it this step. */
 export function spellWorld(w: CombatWorld, s: CombatState, grid: Grid, seed: number, data: CombatData): SpellWorld {
   const out: Hittable[] = [];
@@ -51,16 +74,28 @@ export function spellWorld(w: CombatWorld, s: CombatState, grid: Grid, seed: num
       for (const [key, h] of s.sounds) if (h.hp > 0 && Math.hypot(h.x - x, h.z - z) <= r + h.radius) out.push({ kind: "sound", id: key, x: h.x, z: h.z, r: h.radius, side: "sound" });
       return out;
     },
-    hostile(side, t, friendly, species, caster) {
+    hostile(side, t, species, caster) {
       if (t.kind === "witch") return huntsWitch(side as never);
       if (t.kind === "sound") return side === "enraged";
       if (t.id === caster) return false;
-      return friendly || (foes(t.side as never, side as never) && t.species !== species);
+      return foes(t.side as never, side as never) && t.species !== species;
     },
     harm(t, damage, effect, fx, fz, source, attack) {
       const from = w.creatures[source] ?? null, tg: Target = t.kind === "creature" ? { kind: "creature", id: t.id as number } : t.kind === "witch" ? { kind: "witch", id: t.id as number } : { kind: "sound", key: t.id as string };
-      const own = attackNamed(attack, data) as Attack | undefined; // (a named attack today's runtime knows lands as itself; any other by its effect)
-      land(w, s, from, tg, damage, own ?? blowOf(effect, "shot"), fx, fz);
+      // (a blow lands as any does, a named attack today's runtime knows as itself, any other by its knockback or slow; whatever else its
+      // effect does (and all of it, on a touch with no damage: a slowing puddle on her doesn't cost her a hit) after it)
+      let done: keyof Effect | null = null;
+      if (damage > 0) {
+        const own = attackNamed(attack, data) as Attack | undefined, blow = own ?? blowOf(effect, "shot");
+        land(w, s, from, tg, damage, blow, fx, fz);
+        done = blow.modifier === "knockback" ? "knockback" : blow.modifier === "slow" ? "slow" : null;
+      }
+      if (effect) effects(w, s, t, effect, done, fx, fz);
+    },
+    force(t, fx, fz, push, dt) {
+      const dx = t.x - fx, dz = t.z - fz, d = Math.hypot(dx, dz) || 1, step = push * dt, k = push < 0 ? Math.max(step, -(d - 0.5)) / d : step / d; // (a pull stops short of its middle)
+      if (t.kind === "creature") { const c = w.creatures[t.id as number]; if (c && !c.gone && !c.boss) { c.x += dx * k; c.z += dz * k; } }
+      else if (t.kind === "witch") w.nudgeWitch?.(t.id as number, dx * k, dz * k);
     },
     where(kind, id) {
       if (kind === "creature") { const c = w.creatures[id as number]; return c && !c.gone ? c : null; }

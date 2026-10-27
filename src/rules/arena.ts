@@ -108,7 +108,7 @@ export function arenaAttack(g: Game, input: string): string[] {
   let name = named;
   const notes: string[] = [];
   if (!lib[named]) {
-    const p = parseAttack(named, lib);
+    const p = parseAttack(named, lib, { floor: g.tuning.attacks?.reactionFloor });
     if (!p.attack) return p.errors;
     notes.push(...p.warnings);
     name = "arena";

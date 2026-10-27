@@ -280,4 +280,9 @@ export interface CombatWorld {
   packWorld?: import("./packs").PackWorld;
   /** A witch is slowed (a snail's slime, a flash): her speed times mult until then. */
   slowWitch?: (id: number, until: number, mult: number) => void;
+  /** An attack in the grammar's effects on her without a hit (rules/attacks/combatWorld.ts): thrown this far from (x, z), staggered
+   *  till then, moved by a force field this step. */
+  throwWitch?: (id: number, x: number, z: number, metres: number) => void;
+  stunWitch?: (id: number, until: number) => void;
+  nudgeWitch?: (id: number, dx: number, dz: number) => void;
 }

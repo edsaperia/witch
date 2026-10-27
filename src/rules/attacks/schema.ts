@@ -9,6 +9,7 @@ export const AIMS = ["target", "lead", "dodge", "ahead", "caster", "random", "sp
 export const SPEED_PROFILES = ["constant", "slow", "accel", "decel", "stopGo"] as const;
 export const AREA_SHAPES = ["disc", "ring", "donut", "cone", "safeCircle", "cross", "line", "grid"] as const;
 export const TELEGRAPH_KINDS = ["flash", "lane", "landing", "ring", "cone", "beamLine", "countdown", "arming", "chainNext", "tetherLine", "lockOn", "none"] as const;
+export const EFFECT_NAMES = ["slow", "stun", "knockback", "pull", "root", "burn"] as const;
 export const TELL_POSES = ["none", "rear", "crouch", "coil", "spread", "glow", "stamp"] as const;
 /** How deep children may nest (a child's child's child), and how many one cast may make in all. */
 export const MAX_DEPTH = 3;
@@ -57,7 +58,8 @@ export function attackSchema(): Schema {
     beam: obj({ length: num(0, "m"), width: num(0, "m"), duration: num(0, "s"), tick: num(0.01, "s"), sweep: num(0, "°/s"), track: num(0, "°/s"), spin: angle(), charge: num(0, "s"), pulse: { type: "array", items: num(0, "s"), minItems: 2, maxItems: 2 }, strike: { type: "boolean" } }),
     area: obj({ quake: { type: "boolean" }, shape: oneOf(AREA_SHAPES), r: num(0, "m"), inner: num(0, "m"), width: num(0, "m"), angle: num(0, "°", 360), to: num(0, "m"), time: num(0, "s"), grow: num(0, "m/s"), waves: int(1, 16), gap: num(0, "s"), n: int(1, 64), spacing: num(0, "m"), delay: num(0, "s"), rain: obj({ n: int(1, 64), r: num(0, "m"), time: num(0, "s") }, ["n", "r", "time"]), at: oneOf(["caster", "target", "spot"]) }),
     zone: obj({ r: num(0, "m"), time: num(0, "s"), tick: num(0.01, "s") }),
-    hit: obj({ damage: num(0), effect: EFFECT, friendly: { type: "boolean" }, blink: { type: "boolean" } }),
+    hit: obj({ damage: num(0), effect: EFFECT, allies: obj({ damage: num(0, undefined, 1), effects: { type: "array", items: oneOf(EFFECT_NAMES), maxItems: 6 } }), blink: { type: "boolean" } }),
+    force: obj({ r: num(0, "m"), push: { type: "number", minimum: -100, maximum: 100, unit: "m/s" }, who: oneOf(["all", "others", "foes"]) }, ["push"]),
     on: obj({ hit: children, expire: children, bounce: children, land: children, timer: children }),
     pack: obj({
       chain: obj({ n: int(1, 16), range: num(0, "m") }, ["n", "range"]), relay: obj({ n: int(1, 16) }, ["n"]),
