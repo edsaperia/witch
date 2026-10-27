@@ -34,7 +34,7 @@ export interface PlaytestSample {
   /** The frames of the last two seconds (platform/frameStats.ts; Ed's overlay, 2026-10-13: "gpu 21.4 ms median", so a log shows
    *  where a slow frame's time goes): their length and the page's own work (ms, median and p95), the GPU's own time where the
    *  browser can time it, the share over 20 ms, and what was drawn (draw calls, trees, bushes, creatures, the mode and zoom). */
-  frames?: { ms: number; p95: number; cpu: number; cpu95: number; gpu: number | null; gpu95: number | null; over20: number; draws: number; trees: number; bushes: number; creatures: number; mode: string; zoom: number };
+  frames?: { ms: number; p95: number; cpu: number; cpu95: number; gpu: number | null; gpu95: number | null; over20: number; draws: number; trees: number; bushes: number; creatures: number; mode: string; zoom: number; /** the quality ladder's rung and mode (app/ladder.ts) */ rung?: number; ladder?: string };
   /** The sound (round 13: the music stopping): the context's state, the music's volume now, the damage heard, metres to the music. */
   /** Where she was and how it was seen (Ed's circle bug, 2026-10-13: the log couldn't say where a picture went wrong): her place,
    *  mode and area, the camera's zoom step, the world's time scale (under 1 in a sleeping legend's circle, where the world beyond

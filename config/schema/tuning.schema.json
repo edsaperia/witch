@@ -1398,13 +1398,28 @@
                 },
                 "whole": {
                   "type": "boolean"
+                },
+                "lights": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "warm": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "wrap": {
+                  "type": "number",
+                  "minimum": 0
                 }
               },
               "required": [
                 "on",
                 "seed",
                 "cutFade",
-                "whole"
+                "whole",
+                "lights",
+                "warm",
+                "wrap"
               ],
               "additionalProperties": false
             },
@@ -4154,6 +4169,123 @@
         "momentum",
         "charge",
         "leap"
+      ],
+      "additionalProperties": false
+    },
+    "creatureMomentum": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "strikes": {
+          "type": "boolean"
+        },
+        "turn": {
+          "type": "number",
+          "minimum": 0
+        },
+        "delay": {
+          "type": "number",
+          "minimum": 0
+        },
+        "chaseLead": {
+          "type": "number",
+          "minimum": 0
+        },
+        "strikeLead": {
+          "type": "number",
+          "minimum": 0
+        },
+        "classes": {
+          "type": "object",
+          "properties": {
+            "heavy": {
+              "type": "object",
+              "properties": {
+                "turn": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "k": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "delay": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "turn",
+                "k",
+                "delay"
+              ],
+              "additionalProperties": false
+            },
+            "normal": {
+              "type": "object",
+              "properties": {
+                "turn": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "k": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "delay": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "turn",
+                "k",
+                "delay"
+              ],
+              "additionalProperties": false
+            },
+            "light": {
+              "type": "object",
+              "properties": {
+                "turn": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "k": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "delay": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "turn",
+                "k",
+                "delay"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "heavy",
+            "normal",
+            "light"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "on",
+        "strikes",
+        "turn",
+        "delay",
+        "chaseLead",
+        "strikeLead",
+        "classes"
       ],
       "additionalProperties": false
     },
@@ -7964,6 +8096,10 @@
         "chaseSpeed": {
           "type": "number",
           "minimum": 0
+        },
+        "more": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -7981,7 +8117,8 @@
         "palette",
         "mode",
         "twinkle",
-        "chaseSpeed"
+        "chaseSpeed",
+        "more"
       ],
       "additionalProperties": false
     },
@@ -11409,6 +11546,19 @@
       ],
       "additionalProperties": false
     },
+    "attacks": {
+      "type": "object",
+      "properties": {
+        "reactionFloor": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "reactionFloor"
+      ],
+      "additionalProperties": false
+    },
     "gpu": {
       "type": "object",
       "properties": {
@@ -11977,6 +12127,7 @@
     "leash",
     "bond",
     "fight",
+    "creatureMomentum",
     "attackFx",
     "combat",
     "notice",
@@ -12056,6 +12207,7 @@
     "lightSources",
     "haze",
     "shadows",
+    "attacks",
     "gpu",
     "mist",
     "loadingMist",
