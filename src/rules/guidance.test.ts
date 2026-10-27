@@ -24,7 +24,7 @@ function up(later = false): Game {
   return g;
 }
 const standAt = (g: Game, id: string) => { const o = HOUSE_ROOMS.objects.find(q => q.id === id)!, p = objectFront(o, g.map.treehouse, 0.6); g.witches[0].body = { ...g.witches[0].body, x: p.x, z: p.z, vx: 0, vz: 0 }; };
-const of = (g: Game, s: GuideSave = emptyGuide(), found: string[] = []) => guidanceOf(g, 0, s, found);
+const of = (g: Game, s: GuideSave = emptyGuide(), unvisited: string[] = []) => guidanceOf(g, 0, s, unvisited);
 
 describe("guidance pins", () => {
   it("none while she's still in bed", () => {
@@ -80,8 +80,8 @@ describe("guidance pins", () => {
     expect(guidanceOf(g, 0, emptyGuide(), [])?.kind).toBe("decks");
   });
 
-  it("something new, newest first, till she's been to it; then the map table for an island she hasn't seen, till she has", () => {
-    const g = up(true), s: GuideSave = { unseen: [{ kind: "part", id: "p", at: "broomBay" }, { kind: "hat", id: "h", at: "hats" }], chartSeen: ["tiger"] };
+  it("something new, newest first, till she's been to it; never the map table during the night, new islands or not (Ed, 2026-10-26: \"You don't see it all night\")", () => {
+    const g = up(true), s: GuideSave = { unseen: [{ kind: "part", id: "p", at: "broomBay" }, { kind: "hat", id: "h", at: "hats" }] };
     expect(of(g, s, ["tiger", "lion"])).toEqual({ kind: "hat", target: { object: "hats" } });
     standAt(g, "lathe");
     expect(seeGuide(g, 0, s)).toBe(false);
@@ -90,9 +90,7 @@ describe("guidance pins", () => {
     expect(of(g, s, ["tiger", "lion"])).toEqual({ kind: "part", target: { object: "broomBay" } });
     standAt(g, "broomBay"); seeGuide(g, 0, s);
     expect(s.unseen).toEqual([]);
-    expect(of(g, s, ["tiger", "lion"])).toEqual({ kind: "chart", target: { object: "mapTable" } });
-    s.chartSeen = ["tiger", "lion"];
-    expect(of(g, s, ["tiger", "lion"])?.kind).toBe("decks");
+    expect(of(g, s, ["tiger", "lion"])?.kind).toBe("decks"); // (islands she hasn't been to: still the decks, not the map table)
   });
 
   it("the decks' pin goes with the party spell cast", () => {
@@ -101,39 +99,46 @@ describe("guidance pins", () => {
     expect(of(g)).toBeNull();
   });
 
-  it("after a lost night, the bed, wherever she is, over everything else", () => {
+  // (the islands found she can sail to and hasn't been to: app/chartSave.ts unvisited)
+  const after = (g: Game, unvisited: string[], s: GuideSave = emptyGuide()) => guidanceOf(g, 0, s, unvisited);
+  const MAP = { kind: "chart", target: { object: "mapTable" } }, BED = { kind: "bed", target: { object: "bed" } };
+
+  it("after a lost night: the bed, wherever she is, over everything else, unless there's an island she hasn't been to (Ed, 2026-10-26)", () => {
     const g = up();
     g.party.spellAt = 1;
     g.partyOver = { at: 100, ease: 0 } as Game["partyOver"];
     // (from the moment it's over, no card since Ed's "Remove the end cards", 2026-10-26: the pin alone leads her home)
-    expect(of(g)).toEqual({ kind: "bed", target: { object: "bed" } });
+    expect(of(g)).toEqual(BED);
     g.partyOver = { at: 100, ease: 1 } as Game["partyOver"];
-    const G = of(g, { unseen: [{ kind: "hat", id: "h", at: "hats" }], chartSeen: [] }, ["lion"]);
-    expect(G).toEqual({ kind: "bed", target: { object: "bed" } });
+    const s: GuideSave = { unseen: [{ kind: "hat", id: "h", at: "hats" }] };
+    expect(after(g, [], s)).toEqual(BED);
+    // "No 💤 if there are new islands, just 🧭 towards islands the player can go to and hasn't visited yet"
+    expect(after(g, ["lion"], s)).toEqual(MAP);
     g.witches[0].body = { ...g.witches[0].body, perch: null as never };
-    expect(guideShows(g, 0, G!)).toBe(true);
+    expect(guideShows(g, 0, after(g, [], s)!)).toBe(true);
+    expect(guideShows(g, 0, after(g, ["lion"], s)!)).toBe(true); // (the 🧭 too, from anywhere: leading her home)
   });
 
-  it("after a won night, once its finale's over: the map table for an island found tonight not yet seen on the chart, then the bed; shown from anywhere, leading her home (Ed, 2026-10-26)", () => {
+  it("after a won night, once its finale's settled: the map table while there's an island she hasn't been to, even after the chart's opened; then the bed; shown from anywhere (Ed, 2026-10-26)", () => {
     const g = up(true), W = g.witches[0];
     g.party.spellAt = 1;
     const win = (found: string[], settled: boolean) => { g.win = { phase: "won", settled, found, lost: [] } as unknown as Game["win"]; };
     win(["lion"], false);
-    expect(of(g)).toBeNull(); // (the finale still on: nothing yet)
+    expect(after(g, ["lion"])).toBeNull(); // (the finale still on: nothing yet)
     win(["lion"], true);
-    const s: GuideSave = { unseen: [{ kind: "hat", id: "h", at: "hats" }], chartSeen: ["tiger"] };
-    expect(of(g, s)).toEqual({ kind: "chart", target: { object: "mapTable" } }); // (over anything new in the house)
-    s.chartSeen = ["tiger", "lion"];
-    expect(of(g, s)).toEqual({ kind: "bed", target: { object: "bed" } });
+    const s: GuideSave = { unseen: [{ kind: "hat", id: "h", at: "hats" }] };
+    expect(after(g, ["lion"], s)).toEqual(MAP); // (over anything new in the house; opening the chart doesn't send it away: only going there)
+    expect(after(g, ["tiger"], s)).toEqual(MAP); // (an island found on an earlier night she still hasn't been to counts as much)
+    expect(after(g, [], s)).toEqual(BED); // (nowhere new to sail: to bed)
     win([], true);
-    expect(of(g)).toEqual({ kind: "bed", target: { object: "bed" } }); // (no island found tonight: to bed)
+    expect(after(g, [])).toEqual(BED);
     // (out in the world, off the treehouse: still shown, pointing her home)
     W.body = { ...W.body, perch: null as never };
     win(["lion"], true);
-    expect(guideShows(g, 0, of(g)!)).toBe(true);
+    expect(guideShows(g, 0, after(g, ["lion"])!)).toBe(true);
     // (a new night: none of it)
     g.win = null;
-    expect(of(g)).toBeNull();
+    expect(after(g, ["lion"])).toBeNull();
   });
 
   it("shows only in the treehouse, and hides at its target", () => {

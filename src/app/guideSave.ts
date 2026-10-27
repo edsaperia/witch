@@ -1,5 +1,5 @@
 // What guidance keeps on this browser (localStorage witch.guide; rules/guidance.ts): the new things in the treehouse she hasn't
-// been to yet, and the islands found she has seen on the sea chart. Storage blocked: this run only.
+// been to yet. Storage blocked: this run only. (A save from before 2026-10-26 also has chartSeen, the islands seen on the chart: unread.)
 import { emptyGuide, type GuideSave, type NewThing } from "../rules/guidance";
 
 export const GUIDE_KEY = "witch.guide";
@@ -14,7 +14,6 @@ export function loadGuide(storage?: Store | null): GuideSave {
     const ok = (n: NewThing) => n && KINDS.includes(n.kind) && typeof n.id === "string" && typeof n.at === "string";
     return {
       unseen: (Array.isArray(o.unseen) ? o.unseen : []).filter(ok).map(n => ({ kind: n.kind, id: n.id, at: n.at })),
-      chartSeen: Array.isArray(o.chartSeen) ? o.chartSeen.filter((x): x is string => typeof x === "string") : [],
     };
   } catch { return emptyGuide(); }
 }
