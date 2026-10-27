@@ -148,7 +148,7 @@ const NEUTRAL = {
   warn: [4, c => { c.disc(1.5, 1.5, 2.1, INK, 235); c.put(1, 1, WHITE); c.put(2, 1, WHITE); c.put(1, 2, WHITE); c.put(2, 2, WHITE); }],
   pip: [5, c => { c.disc(2, 2, 2.4, INK, 235); c.disc(2, 2, 1.2, WHITE); }],
   pipOff: [5, c => { c.disc(2, 2, 2.4, INK, 200); c.ring(2, 2, 1.4, [120, 120, 130], 200); }],
-  tick: [5, c => { for (let y = 0; y < 11; y++) for (let x = 0; x < 5; x++) if ((x > 0 && x < 4 && (y < 7 || y > 8)) || x === 0 || x === 4 || y === 0 || y === 10 || y === 7 || y === 8) c.put(x, y, INK, 235); for (let y = 1; y < 7; y++) { c.put(2, y, WHITE); if (y < 6) { c.put(1, y, WHITE); c.put(3, y, WHITE); } } c.put(2, 9, WHITE); c.put(1, 9, WHITE); c.put(3, 9, WHITE); }, 11],
+  tick: [11, c => { const o = 3; for (let y = 0; y < 11; y++) for (let x = 0; x < 5; x++) c.put(o + x, y, INK, 235); for (let y = 1; y < 7; y++) { c.put(o + 2, y, WHITE); if (y < 6) { c.put(o + 1, y, WHITE); c.put(o + 3, y, WHITE); } } for (let x = 1; x < 4; x++) c.put(o + x, 9, WHITE); }],
   chev: [7, c => { for (let k = 0; k < 4; k++) { c.put(3 + k - 3, 3 - k, WHITE); c.put(3 + k - 3, 3 + k, WHITE); } c.outline(INK, 230); }],
   hatch: [16, c => { for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) if ((x + y) % 6 < 2) c.put(x, y, INK, 255); else c.put(x, y, INK, 90); }],
 };
@@ -163,7 +163,7 @@ for (let f = 0; f < 4; f++) NEUTRAL["spiral" + f] = [11, c => { for (let k = 0; 
 /** Every cell to bake: [name, width, height, draw(cell)]. */
 export function atlasCells(cfg) {
   const out = [["dot", 32, 32, c => { for (let y = 0; y < 32; y++) for (let x = 0; x < 32; x++) { const r = Math.hypot(x - 15.5, y - 15.5) / 16; if (r < 1) c.put(x, y, WHITE, Math.round(255 * (1 - r) ** 2)); } }], ["px", 4, 4, c => { for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) c.put(x, y, WHITE); }]];
-  for (const [id, [w, draw, h]] of Object.entries(NEUTRAL)) out.push([id, w, h ?? w, draw]);
+  for (const [id, [w, draw]] of Object.entries(NEUTRAL)) out.push([id, w, w, draw]);
   for (const [id, e] of Object.entries(cfg.elements)) for (const v of ["c", "g"]) {
     const P = v === "c" ? e.palette.map(hex) : GREY, A = e.accent ? (v === "c" ? hex(e.accent) : GREY_ACCENT) : null, n = `${id}.${v}.`;
     for (let f = 0; f < PARTS.cores; f++) { out.push([`${n}core.a.${f}`, PARTS.coreA, PARTS.coreA, c => drawCore(c, e.core, P, A, f, 1)]); out.push([`${n}core.l.${f}`, PARTS.coreL, PARTS.coreL, c => drawCore(c, e.core, P, A, f, 1.6)]); }
