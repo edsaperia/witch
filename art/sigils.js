@@ -320,22 +320,52 @@ export function sigilStrokes(id) {
 // size): the frame (rings, band, rays: drawn first, in the first 15% of the draw-on), then the
 // sigil, scaled into the middle. w: each stroke's width in mark units. level null: the bare sigil.
 const markCache = new Map();
-export function sigilMark(id, level = 0, legendary = false, tier = 2, { dots = true } = {}) { // dots: false, a young one's dotted circle left out (the game draws it as its berry dial: render/leash.ts)
+// A young creature's berry dial (Ed, 2026-10-27: "Always the real number of berries - for higher numbers, there can be a double ring
+// ... something modular that fills up to the right number. The completed design becomes the adult sigil."): its ring in n pieces, 8 a
+// ring at most (a second ring inside for more), each a berry it has eaten. style: arc (the ring in segments, joined it's the adult's
+// ring), tick (radial ticks, all of them the adult's toothed bezel) or bead (beads, strung on a thread they're the adult's chain).
+// show: "lit" the glyph and the pieces eaten, "empty" the pieces still to eat but the pulsing one, "one" that one (one berry short:
+// the last), "done" every piece joined (the adult's frame).
+export const DIAL_STYLES = ["arc", "tick", "bead"];
+export function dialPieces({ n, style = "arc", R = .44, ring = SIGIL_STROKE * .55 }) {
+  const rings = n > 8 ? 2 : 1, per = [Math.ceil(n / rings), n - Math.ceil(n / rings)], out = [], w = ring * 1.9;
+  for (let j = 0; j < rings; j++) {
+    const r = R - j * .075, m = per[j], span = 360 / m;
+    for (let i = 0; i < m; i++) {
+      const c = -90 + (i + .5 + (j && style !== "arc" ? .5 : 0)) * span, rad = c * Math.PI / 180, cx = .5 + r * Math.cos(rad), cy = .5 + r * Math.sin(rad);
+      if (style === "tick") out.push([{ ...polyline({ l: [[.5 + (r - .05) * Math.cos(rad), .5 + (r - .05) * Math.sin(rad)], [.5 + (r + .04) * Math.cos(rad), .5 + (r + .04) * Math.sin(rad)]] }), w, part: "ring" }]);
+      else if (style === "bead") out.push([{ dot: true, pts: [[cx, cy]], len: .05, r: m > 6 ? .048 : .056, w, part: "ring" }]);
+      else { const gap = m > 6 ? 16 : 13; out.push([{ ...polyline({ a: [.5, .5, r, -90 + i * span + gap / 2, -90 + (i + 1) * span - gap / 2] }), w, part: "ring" }]); }
+    }
+  }
+  const join = []; // what joins them when every piece is in: the adult's frame
+  for (let j = 0; j < rings; j++) { const r = R - j * .075; join.push({ ...polyline({ a: [.5, .5, r, -90, 270] }), w: style === "arc" ? w : ring * .7, part: "ring" }); }
+  return { pieces: out, join };
+}
+export function sigilMark(id, level = 0, legendary = false, tier = 2, { dots = true, dial = null } = {}) { // dots: false, a young one's dotted circle left out; dial: { n, filled, style, show } its berry dial instead (render/leash.ts)
   if (legendary) return legendMark(id, tier);
-  const key = id + ":" + level + (dots ? "" : ":nodots"); if (markCache.has(key)) return markCache.get(key);
+  const key = id + ":" + level + (dots ? "" : ":nodots") + (dial ? `:dial:${dial.n}:${dial.filled}:${dial.style}:${dial.show}` : ""); if (markCache.has(key)) return markCache.get(key);
   const F = level === null ? null : sigilFrame(level), k = !F ? 1 : F.rings >= 2 ? .6 : F.rings || F.dots ? .66 : .8, o = (1 - k) / 2;
   const thick = F ? F.core : 1, ring = SIGIL_STROKE * .55 * ((F?.level ?? 0) < 3 ? 1 : Math.min(1.6, .8 + .25 * F.level)), frame = []; // an adult's ring at the normal line weight; the legend's heavier
   if (F) {
     const R = .44, circle = r => polyline({ a: [.5, .5, r, 90, 450] }); // from the front, round
     for (let i = 0; i < F.rings; i++) frame.push({ ...circle(R - i * .06), w: ring, part: "ring" });
     // a young creature's dotted circle: round dots spaced well apart, so they stay distinct on the ground and small in the stack
-    for (let i = 0; i < (dots ? F.dots : 0); i++) { const a = (90 + i * 360 / F.dots) * Math.PI / 180; frame.push({ dot: true, pts: [[.5 + R * Math.cos(a), .5 + R * Math.sin(a)]], len: .05, r: .042, w: ring, part: "ring" }); }
+    if (dial) { // (in place of the dots, or of an adult's ring: its dial's pieces, the ones `show` asks for)
+      frame.length = 0;
+      const D = dialPieces({ n: dial.n, style: dial.style, R, ring }), lastOne = dial.filled === dial.n - 1;
+      D.pieces.forEach((p, i) => { const eaten = i < dial.filled, one = lastOne && i === dial.n - 1;
+        if (dial.show === "done" || (dial.show === "lit" && eaten) || (dial.show === "empty" && !eaten && !one) || (dial.show === "one" && one)) frame.push(...p.map(q => ({ ...q }))); });
+      if (dial.show === "done") frame.push(...D.join);
+    }
+    for (let i = 0; i < (dots && !dial ? F.dots : 0); i++) { const a = (90 + i * 360 / F.dots) * Math.PI / 180; frame.push({ dot: true, pts: [[.5 + R * Math.cos(a), .5 + R * Math.sin(a)]], len: .05, r: .042, w: ring, part: "ring" }); }
     if (F.band && F.rings >= 2) for (let i = 0; i < 16; i++) { const a = (90 + i * 22.5) * Math.PI / 180, r0 = R - .06 + .014, r1 = R - .014; frame.push({ ...polyline({ l: [[.5 + r0 * Math.cos(a), .5 + r0 * Math.sin(a)], [.5 + r1 * Math.cos(a), .5 + r1 * Math.sin(a)]] }), w: ring * .8, part: "band" }); }
     for (let i = 0; i < F.rays; i++) { const a = (90 + i * 360 / F.rays) * Math.PI / 180, r0 = R + .02, r1 = .5 - ring / 2; frame.push({ ...polyline({ l: [[.5 + r0 * Math.cos(a), .5 + r0 * Math.sin(a)], [.5 + r1 * Math.cos(a), .5 + r1 * Math.sin(a)]] }), w: ring * 1.3, part: "ray" }); }
   }
   const gk = Math.min(1.25, thick); // the glyph thickens a little with level, never enough to clog (the rings carry the rest)
   const sig = sigilStrokes(id).map(s => ({ dot: s.dot, len: s.len * k, pts: s.pts.map(([x, y]) => [o + x * k, o + y * k]), w: s.w * k * gk, r: SIGIL_DOT * k * gk, part: "sigil" }));
-  const out = { level, frame: F, k, aspect: 1, strokes: [...timeline(frame, 0, frame.length ? .15 : 0), ...timeline(sig, frame.length ? .15 : 0, 1)] };
+  const glyph = !dial || dial.show === "lit" || dial.show === "done"; // (the empty pieces and the pulsing one are drawn alone, over it)
+  const out = { level, frame: F, k, aspect: 1, strokes: [...timeline(frame, 0, frame.length ? .15 : 0), ...(glyph ? timeline(sig, frame.length ? .15 : 0, 1) : [])] };
   markCache.set(key, out);
   return out;
 }
@@ -379,9 +409,9 @@ export function sigilSVG(id, { size = 64, level = null, colour = sigilColour(id)
 }
 // Draws a sigil on a canvas, neon: the mark box maps to (x, y, size, size) (a legendary one's to LEGEND_SCALE times that). Transform the
 // context first to lay it on a plane. level: null (default) the bare sigil, or a creature level.
-export function drawSigil(ctx, id, { x = 0, y = 0, size = 64, level = null, colour = sigilColour(id), progress = 1, glow = true, legendary = false, dots = true } = {}) {
+export function drawSigil(ctx, id, { x = 0, y = 0, size = 64, level = null, colour = sigilColour(id), progress = 1, glow = true, legendary = false, dots = true, dial = null } = {}) {
   if (legendary) size *= LEGEND_SCALE;
-  const M = sigilMark(id, level, legendary, legendTier(size), { dots }), halo = M.frame ? M.frame.halo : .7;
+  const M = sigilMark(id, level, legendary, legendTier(size), { dots, dial }), halo = M.frame ? M.frame.halo : .7;
   ctx.save(); ctx.translate(x, y); ctx.scale(size, size); ctx.lineCap = "round"; ctx.lineJoin = "round";
   const pass = (col, wk, alpha, blur) => {
     ctx.globalAlpha = alpha; ctx.strokeStyle = ctx.fillStyle = rgb(col); ctx.shadowColor = rgb(colour); ctx.shadowBlur = blur;

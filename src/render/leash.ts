@@ -42,6 +42,9 @@ import { RUNE_SCALE, runeOffset, sigilSize } from "../rules/runeOffset";
 import { relicsOut } from "../rules/partyOver";
 export { BUBBLE_PX, bubblePx } from "./leash/bubbles";
 export { legendarySigil } from "./leash/glyphs";
+/** The berry dial's style (mock: ?dial=arc|tick|bead) and how much bigger a sigil with one is drawn, so its pieces count at play zoom. */
+const DIAL_PARAMS = typeof location !== "undefined" ? new URLSearchParams(location.search) : new URLSearchParams();
+const DIAL_STYLE = DIAL_PARAMS.get("dial") ?? "arc", DIAL_SCALE = +(DIAL_PARAMS.get("dialScale") ?? 1.25);
 
 /** Seconds a legend's charge ruts take to fade. */
 const RUTS = 12;
@@ -230,29 +233,30 @@ export class LeashView {
    *  eaten (berries.fed) filled in its neon, the rest empty rings; one berry short, the last one pulses (set it down at a sigil: Foxtrot's
    *  last-berry rule). Standing (the stack, x and y round it) or on the ground (x and z). False if it isn't a youth's (its sigil is drawn
    *  whole). */
+  /** A youth's or an adult's berry dial (art/sigils.js dialPieces), or null: n the berries a youth needs to grow up (toEvolve), filled
+   *  how many it has eaten (berries.fed; an adult's all of them, its finished design). style: the link's ?dial= (arc, tick, bead). */
+  dialOf(c: Creature): { n: number; filled: number; style: string } | null {
+    if ((c.level !== 1 && c.level !== 2) || legendarySigil(c)) return null;
+    const n = Math.ceil(toEvolve(1, this.game.tuning, c.species));
+    if (!Number.isFinite(n) || n < 1) return null;
+    return { n, filled: c.level === 2 ? n : Math.min(n, this.game.berries.fed.get(c.id) ?? 0), style: DIAL_STYLE };
+  }
+  /** Over a youth's sigil (sigilOf draws its glyph and the pieces it has eaten): the pieces still to eat, dim, and one berry short the
+   *  last one pulsing (Foxtrot's last berry, eaten at a sigil she puts down). On the ground written as glyphs are (backing and ink), so
+   *  the empty pieces read on lit grass. */
   dial(batch: Instances, x: number, y: number, z: number, size: number, c: Creature, col: { r: number; g: number; b: number }, a: number, time: number, ground: boolean, draw = 1): boolean {
-    if (c.level !== 1 || legendarySigil(c)) return false;
-    const need = Math.ceil(toEvolve(1, this.game.tuning, c.species));
-    if (!Number.isFinite(need) || need < 1) return false;
-    const fed = Math.min(need, this.game.berries.fed.get(c.id) ?? 0), R = size * 0.5, d = size * (ground ? 0.2 : 0.24), last = fed === need - 1;
-    // (big round dots just outside the glyph, so a stacked sigil's few pixels still count them; eaten bright, the rest dim. On the
-    // ground each is written as the glyph is, groundSigil's dark backing and ink under its light, so it reads on lit grass.)
-    const put = (px: number, py: number, pz: number, sz: number, uv: number[], r: number, g: number, b: number, al: number) =>
-      ground ? this.groundSigil(px, py, pz, sz, uv, r, g, b, al, draw) : batch.add(px, py, pz, sz, uv, r, g, b, al, draw);
-    for (let i = 0; i < need; i++) {
-      const ang = Math.PI / 2 - (i / need) * Math.PI * 2, dx = Math.cos(ang) * R, dy = Math.sin(ang) * R;
-      const px = x + dx, py = ground ? y : y + dy, pz = ground ? z - dy : z;
-      if (i < fed) put(px, py, pz, d, this.uv(DISC), col.r, col.g, col.b, a);
-      else if (last && i === need - 1) { const p = 0.5 + 0.5 * Math.sin(time * 4); put(px, py, pz, d * (1 + 0.3 * p), this.uv(DISC), col.r, col.g, col.b, a * (0.3 + 0.7 * p)); (ground ? this.flat : batch).add(px, py, pz, d * 2.4, this.uv(0), col.r, col.g, col.b, a * 0.45 * p, draw); }
-      else put(px, py, pz, d * 0.8, this.uv(DISC), col.r * 0.6, col.g * 0.6, col.b * 0.6, a * 0.35);
-    }
+    const D = this.dialOf(c);
+    if (!D || c.level !== 1) return false;
+    const put = (uv: number[], k: number, al: number, sz = size) => ground ? this.groundSigil(x, y, z, sz, uv, col.r * k, col.g * k, col.b * k, al, draw) : batch.add(x, y, z, sz, uv, col.r * k, col.g * k, col.b * k, al, draw);
+    if (D.filled < D.n) put(this.uv(this.slotOf(c.species, 1, false, { ...D, show: "empty" })), 0.45, a * 0.9);
+    if (D.filled === D.n - 1) { const p = 0.5 + 0.5 * Math.sin(time * 4); put(this.uv(this.slotOf(c.species, 1, false, { ...D, show: "one" })), 0.6 + 0.4 * p, a * (0.35 + 0.65 * p)); }
     return true;
   }
 
   /** A species' sigil at a level (it grows more ornate with level), white in the atlas, tinted
    *  by its neon colour when drawn. */
-  slotOf(species: string, level = 0, legendary = false): number {
-    const key = `${species}:${legendary ? "legendary" : level}`;
+  slotOf(species: string, level = 0, legendary = false, dial: { n: number; filled: number; style: string; show: string } | null = null): number {
+    const key = `${species}:${legendary ? "legendary" : level}` + (dial ? `:${dial.style}:${dial.n}:${dial.filled}:${dial.show}` : "");
     let s = this.slots.get(key);
     if (s !== undefined) return s;
     // a legendary one: a block of 2 × 2 slots from LEGEND_ROW down (8 a row pair), its top left slot
@@ -260,7 +264,7 @@ export class LeashView {
     this.slots.set(key, s);
     const g = this.canvas.getContext("2d", { willReadFrequently: true })!, ox = (s % SLOTS) * SLOT, oy = Math.floor(s / SLOTS) * SLOT, W = legendary ? SLOT * 2 : SLOT;
     g.clearRect(ox, oy, W, W);
-    drawSigil(g, species, { x: ox + 1, y: oy + 1, size: (W - 2) / (legendary ? LEGEND_SCALE : 1), level: level as unknown as null, colour: [255, 255, 255], glow: false, legendary, dots: !(level === 1 && !legendary) }); // (a youth's dots: its berry dial, drawn live, dial())
+    drawSigil(g, species, { x: ox + 1, y: oy + 1, size: (W - 2) / (legendary ? LEGEND_SCALE : 1), level: level as unknown as null, colour: [255, 255, 255], glow: false, legendary, dial: dial as unknown as null }); // (a youth's and an adult's berry dial: dial)
     // Crisp: no soft edges, so it reads as pixel art.
     const img = g.getImageData(ox, oy, W, W);
     let reach = 0;
@@ -486,6 +490,8 @@ export class LeashView {
    *  wide and more detailed", a magic circle with the animal in the centre), LEGEND_SCALE times a legend's (`scale`). */
   sigilOf(c: Creature): { uv: number[]; scale: number } {
     if (legendarySigil(c)) return { uv: this.uv(this.slotOf(c.species, LEGEND_LEVEL, true), 2), scale: LEGEND_SCALE };
+    const D = this.dialOf(c);
+    if (D) return { uv: this.uv(this.slotOf(c.species, c.level, false, { ...D, show: c.level === 2 ? "done" : "lit" })), scale: DIAL_SCALE };
     return { uv: this.uv(this.slotOf(c.species, c.level)), scale: 1 };
   }
 
@@ -582,9 +588,9 @@ export class LeashView {
     for (const c of g.creatures) {
       if (Math.abs(c.x - w.x) > RUNE_VIEW || Math.abs(c.z - w.z) > RUNE_VIEW || !hasRune(c)) continue;
       const since = time - (c.happyAt ?? -Infinity), k = Math.min(1, Math.max(0, since / 0.45)), ready = hasRune(c, time);
-      const slot = this.slotOf(c.species, c.level), col = this.colours.get(c.species)!, hop = since < 0.45 ? Math.sin(k * Math.PI) * 1.4 : 0, grow = k < 1 ? 0.4 + 0.75 * k - 0.15 * Math.sin(k * Math.PI) : 1;
+      const sgr = this.sigilOf(c), slot = this.slotOf(c.species, c.level), col = this.colours.get(c.species)!, hop = since < 0.45 ? Math.sin(k * Math.PI) * 1.4 : 0, grow = k < 1 ? 0.4 + 0.75 * k - 0.15 * Math.sin(k * Math.PI) : 1;
       const a = ready ? 0.62 + 0.12 * Math.sin(time * 2 + c.id) : 0.3, rz = c.z + runeOffset(c, t), size = sigilSize(c.level, RUNE_SCALE) * grow;
-      this.groundSigil(c.x, 0.03 + hop, rz, size, this.uv(slot), col.r * 0.8, col.g * 0.8, col.b * 0.8, a, k);
+      this.groundSigil(c.x, 0.03 + hop, rz, size, sgr.uv, col.r * 0.8, col.g * 0.8, col.b * 0.8, a, k);
       this.dial(this.flat, c.x, 0.031 + hop, rz, size, c, { r: col.r * 0.8, g: col.g * 0.8, b: col.b * 0.8 }, a, time, true, k);
       if (seeThrough > 0) this.through.add(c.x, 0.03 + hop, rz, size, this.uv(slot), col.r * 0.8, col.g * 0.8, col.b * 0.8, a * seeThrough, k); // (through scenery as a placed sigil is: Ed, 2026-10-12)
       if (ready && halo > 0) this.flat.add(c.x, 0.015, rz, 4.2, dot, col.r, col.g, col.b, 0.18 * halo);
