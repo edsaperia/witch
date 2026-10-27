@@ -136,6 +136,8 @@ export class MusicEngine {
   /** The game's beat moved on by `lost` seconds to where the music is (rules/beat.ts shiftBeat): its timeline the same on the
    *  audio clock, in the game's new reckoning. */
   shiftTime(lost: number): void { if (Number.isFinite(this.g0)) this.g0 -= lost; }
+  /** Called as its timeline starts afresh (newTimeline: the next night), before it does: the player drawing it ahead's. */
+  onNewTimeline?: () => void;
   /** Whether its timeline is anchored (it's been played since its last jump). */
   get anchored(): boolean { return Number.isFinite(this.g0); }
   private wasPlaying = false;
@@ -429,6 +431,7 @@ export class MusicEngine {
    *  is anchored afresh at its first frame (not eased back from 6 s ahead), its knockdowns counted from none and the gate open.
    *  What belongs to the page (the stats, the lead, a stall's look-ahead, the shed level, the channels) stays. */
   newTimeline(): void {
+    this.onNewTimeline?.(); // (the bars drawn ahead for the old night let go, those still rendering too: musicAhead.ts)
     this.reset();
     this.g0 = NaN; this.a0 = 0; this.rate = 1;
     this.heardTo = -1; this.lastNow = -1;

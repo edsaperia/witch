@@ -53,7 +53,11 @@ export class MusicAhead {
   private next = 0;
   private anchor = NaN;
 
-  constructor(private engine: MusicEngine, private ctx: AudioContext) {}
+  constructor(private engine: MusicEngine, private ctx: AudioContext) {
+    // (the next night, the sail's or the bed's: its timeline anchored afresh, the old night's bars, queued or still rendering, let
+    // go at once, not at the next frame: a sail plays none till it lands, and a bar arriving meanwhile had no time to start at)
+    engine.onNewTimeline = () => this.stopAll();
+  }
 
   /** Whether it's drawing ahead now. */
   get drawing(): boolean { return this.on; }
@@ -157,6 +161,7 @@ export class MusicAhead {
     this.stats.renderMs += performance.now() - B.asked;
     if (B.state === "dropped" || this.bars.get(B.bar) !== B) return;
     const E = this.engine, c = this.ctx, now = c.currentTime, at = E.audioAt(B.g);
+    if (!Number.isFinite(at)) { B.state = "dropped"; return; } // (no timeline to place it on: never started at NaN)
     this.stats.rendered++;
     if (at < now) this.stats.late++;
     if (at + B.dur < now) { B.state = "dropped"; return; } // (the whole bar past: the hitch was longer than the queue)
@@ -190,7 +195,8 @@ export class MusicAhead {
     }
     if (!Number.isFinite(first)) return;
     for (const [b, B] of this.bars) if (B.state === "dropped") this.bars.delete(b);
-    E.cancelBusFrom(E.audioAt(timeAt(clock, first * 4)) + 1e-4);
+    const cut = E.audioAt(timeAt(clock, first * 4));
+    if (Number.isFinite(cut)) E.cancelBusFrom(cut + 1e-4);
     this.next = first;
   }
 
@@ -202,6 +208,7 @@ export class MusicAhead {
     let b = Math.ceil(this.barAt(E.musicTime(now), clock));
     while (E.audioAt(timeAt(clock, b * 4)) < now + E.stats.ahead + 0.05) b++;
     const to = E.audioAt(timeAt(clock, b * 4));
+    if (!Number.isFinite(to)) { this.stopAll(now); return; } // (no timeline: everything let go)
     for (const B of this.bars.values()) if (B.bar >= b && B.state !== "dropped") { B.state = "dropped"; try { B.src?.stop(); } catch { /* not started */ } }
     for (const [k, B] of this.bars) if (B.state === "dropped") this.bars.delete(k);
     E.cancelBusFrom(to + 1e-4);
