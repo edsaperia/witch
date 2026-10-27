@@ -1061,6 +1061,11 @@
                 "type": "number",
                 "minimum": 0,
                 "unit": "m"
+              },
+              "hop": {
+                "type": "number",
+                "minimum": 0,
+                "unit": "s"
               }
             },
             "required": [
@@ -1076,6 +1081,11 @@
                 "type": "number",
                 "minimum": 1,
                 "maximum": 16
+              },
+              "hop": {
+                "type": "number",
+                "minimum": 0,
+                "unit": "s"
               }
             },
             "required": [

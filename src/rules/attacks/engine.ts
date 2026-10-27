@@ -3,13 +3,14 @@
 // terms at their speed profile, hitting, piercing, bouncing, sticking, and raising events (hit, expire, bounce, land, timer) that spawn
 // child attacks (capped by depth and by the cast's count); areas striking once (and in patterns, waves and rain), zones lingering and
 // ticking (a safe circle shrinking), beams charging, sweeping, tracking, spinning and pulsing, mines arming, seeds sprouting, lures
-// pulling her in, force fields pushing whoever's near. Its foes take its damage and effects; other animals only the share and the
+// pulling her in, force fields pushing whoever's near; and the pack's interplay (step 4: a bolt chaining from foe to foe, relayed through
+// packmates, amplified passing them; a beam tethered between two of them; the ground between three erupting). Its foes take its damage and effects; other animals only the share and the
 // effects `hit.allies` names (Ed, 2026-10-27); she's hurt at most once by a zone or a beam. All of it plain state in fixed
 // pools (nothing allocated a step but a child's first use), seeded (a hash of the seed, the cast and the child: never Math.random),
 // and read by the look layer and the audio as it is: bodies, zones and telegraphs with their tags, and events. The world it acts
 // on is a small port (SpellWorld), so it runs headless in tests and in combat.ts alike.
 import { childSpec, type Library } from "./parse";
-import { telegraphKind } from "./timeline";
+import { REACTION_FLOOR, telegraphKind } from "./timeline";
 import type { Aim, AttackSpec, Child, Effect, TelegraphKind, TellPose } from "./types";
 
 // ---- the world it acts on ----
@@ -37,6 +38,9 @@ export interface SpellWorld {
   force?(target: Hittable, fx: number, fz: number, push: number, dt: number): void;
   /** Whether a caster is still winding up this cast (not stunned, gone or off its target): a cast it isn't is dropped at its release. */
   stillCasting?(source: number, cast: number): boolean;
+  /** A caster's packmates (its own kind on its own side, awake, not itself) within r of (x, z), nearest first; absent: none (attack.pack
+   *  does nothing). */
+  packmates?(source: number, x: number, z: number, r: number): readonly { id: number; x: number; z: number }[];
 }
 
 // ---- its state ----
@@ -63,13 +67,17 @@ export interface Body {
   leg: number; paused: boolean;
   /** a mine or a seed: when it arms or sprouts, whether it has, and when it's spent if nothing sets it off */
   armAt: number; armed: boolean; until: number;
+  /** the pack (attack.pack): chain hops left; packmates still to relay through (the next first); held (at a packmate or a chain's hop)
+   *  till then; how much it has grown (amplify) and by whom */
+  chain: number; relay: number[]; holdUntil: number; amp: number; ampBy: number[];
   /** the look layer's tags */
   element: string; look: string;
 }
 export interface Zone {
   id: number; alive: boolean; attack: AttackSpec; name: string;
-  /** safe: all of r but its shrinking safe circle (inner, from `inner` to `to` over `shrink` s) */
-  shape: "disc" | "ring" | "donut" | "cone" | "safe"; to: number; shrink: number; x: number; z: number; r: number; inner: number; width: number; angle: number; heading: number;
+  /** safe: all of r but its shrinking safe circle (inner, from `inner` to `to` over `shrink` s); polygon: inside `points` (a triangulation's
+   *  corners, [x0, z0, x1, z1, ...]; x, z its middle and r its farthest corner) */
+  shape: "disc" | "ring" | "donut" | "cone" | "safe" | "polygon"; points?: number[]; to: number; shrink: number; x: number; z: number; r: number; inner: number; width: number; angle: number; heading: number;
   from: number; until: number; tick: number; nextTick: number; grow: number;
   damage: number; effect: Effect | undefined; side: string; source: number; species: string; depth: number; cast: number;
   /** a one-off strike (an area) rather than a lingering zone; what an expanding ring has hit already */
@@ -87,6 +95,8 @@ export interface Beam {
   hits: (number | string)[]; telegraph: number;
   /** its angle at its last tick: a turning beam hits whatever it swept over since (its wedge), not just where it points */
   tickAngle: number;
+  /** a tether's other end: the packmate it's strung to (its length and angle follow the two) */
+  to?: number;
   element: string; look: string;
 }
 /** A burn on a creature: its damage a second till then, its next tick. */
@@ -94,15 +104,15 @@ interface Burn { alive: boolean; target: Hittable; dps: number; until: number; n
 /** A warning, as plain geometry and timing (the look layer's danger frame draws it; the audio cues on its events). */
 export interface Telegraph {
   id: number; alive: boolean; kind: TelegraphKind; attack: string; side: string; source: number; cast: number;
-  shape: { type: "point" | "segment" | "path" | "disc" | "ring" | "cone"; x: number; z: number; x2?: number; z2?: number; r?: number; inner?: number; width?: number; angle?: number; heading?: number; points?: number[] };
+  shape: { type: "point" | "segment" | "path" | "disc" | "ring" | "cone" | "polygon"; x: number; z: number; x2?: number; z2?: number; r?: number; inner?: number; width?: number; angle?: number; heading?: number; points?: number[] };
   start: number; fire: number; until: number;
-  /** what it moves with: a body, or a creature */
-  follows?: { body?: number; creature?: number };
+  /** what it moves with: a body, or a creature; and what a segment's far end moves with (a tether's packmate) */
+  follows?: { body?: number; creature?: number; end?: number };
 }
 /** Something waiting to happen: a release after a windup, a burst's next shot, a timer's child. */
-interface Pending { at: number; attack: AttackSpec; name: string; x: number; z: number; heading: number; aim: Hittable | null; side: string; species: string; source: number; damage: number; depth: number; cast: number; index: number; fromBody?: number; patternIndex?: number; /** a turret's casts still to come */ left?: number; /** where its target stood as it was cast (an area there lands where it was telegraphed) */ aimAt?: { x: number; z: number }; /** placed where it is (a pattern's cell, a raindrop): not moved to its caster */ placed?: boolean }
+interface Pending { at: number; attack: AttackSpec; name: string; x: number; z: number; heading: number; aim: Hittable | null; side: string; species: string; source: number; damage: number; depth: number; cast: number; index: number; fromBody?: number; patternIndex?: number; /** a turret's casts still to come */ left?: number; /** where its target stood as it was cast (an area there lands where it was telegraphed) */ aimAt?: { x: number; z: number }; /** placed where it is (a pattern's cell, a raindrop): not moved to its caster */ placed?: boolean; /** a triangulation's corners */ points?: number[] }
 
-export type SpellEventKind = "cast" | "release" | "emit" | "hit" | "expire" | "bounce" | "land" | "timer" | "split" | "zone" | "beam" | "armed" | "sprung" | "sprout" | "telegraph" | "fire" | "capped";
+export type SpellEventKind = "cast" | "release" | "emit" | "hit" | "expire" | "bounce" | "land" | "timer" | "split" | "zone" | "beam" | "armed" | "sprung" | "sprout" | "telegraph" | "fire" | "capped" | "chain" | "relay" | "amplify" | "fizzle";
 export interface SpellEvent { kind: SpellEventKind; at: number; x: number; z: number; attack: string; source: number; body?: number; zone?: number; beam?: number; telegraph?: number; element?: string; /** a hit on an animal it wasn't aimed at (hit.allies) */ ally?: boolean }
 
 export interface SpellState {
@@ -273,8 +283,20 @@ function showTelegraphs(S: SpellState, W: SpellWorld, spec: AttackSpec, name: st
     return;
   }
   if (B === "area" && A0.rain) return; // (each raindrop shows its own landing as it's dropped)
+  if (spec.pack?.triangulate) {
+    // (the ground between it and its two nearest packmates, as they stand now: where it will erupt)
+    const pts = corners(W, spec, source, x, z);
+    if (pts) telegraph(S, { ...base, kind: spec.telegraph?.kind ?? "ring", fire: fire + spec.pack.triangulate.delay, until: fire + spec.pack.triangulate.delay, shape: { type: "polygon", x: (pts[0] + pts[2] + pts[4]) / 3, z: (pts[1] + pts[3] + pts[5]) / 3, points: pts } });
+    return;
+  }
   switch (kind) {
     case "flash": telegraph(S, { ...base, shape: { type: "point", x, z }, until: fire, follows: { creature: source } }); return;
+    case "tetherLine": {
+      // (strung to the nearest packmate: none near, nothing shown, and nothing comes of it)
+      const m = W.packmates?.(source, x, z, spec.cast?.range ?? 20)[0];
+      if (m) telegraph(S, { ...base, fire: fire + (spec.beam?.charge ?? REACTION_FLOOR), until: fire + (spec.beam?.charge ?? REACTION_FLOOR) + (spec.pack?.tether?.time ?? 1), shape: { type: "segment", x, z, x2: m.x, z2: m.z, width: spec.pack?.tether?.width ?? 1 }, follows: { creature: source, end: m.id } });
+      return;
+    }
     case "beamLine": {
       const Bm = spec.beam ?? {}, len = Bm.length ?? spec.cast?.range ?? 20, live = fire + (Bm.charge ?? 0), sweep = (Bm.sweep ?? 0) * (Bm.duration ?? 0.8), a0 = heading - (sweep * RAD) / 2;
       telegraph(S, { ...base, fire: live, until: live + (Bm.duration ?? 0.8), shape: { type: "segment", x, z, x2: x + Math.cos(a0) * len, z2: z + Math.sin(a0) * len, width: Bm.width ?? 1, heading: a0 }, follows: { creature: source } });
@@ -296,7 +318,9 @@ function showTelegraphs(S: SpellState, W: SpellWorld, spec: AttackSpec, name: st
       if (isPlaced(B)) { const px = at ? at.x : x, pz = at ? at.z : z; telegraph(S, { ...base, kind: "landing", shape: { type: "disc", x: px, z: pz, r: spec.body?.kind === "mine" ? spec.body?.trigger ?? 2 : spec.body?.radius ?? 1 }, until: fire }); return; } // (where it will be laid; its arming shows once it's down)
       if (!isBody(B)) { telegraph(S, { ...base, shape: { type: "point", x, z }, until: fire }); return; }
       // (one lane a heading the pattern releases at once, up to 16; a curving or swaying body's lane is the path it will fly, unaimed)
-      const dirs = patternOf(spec, heading).slice(0, 16), bent = (spec.path ?? []).some(t => "curve" in t || "wave" in t || "spiral" in t || "orbit" in t || "boomerang" in t);
+      // (relayed: its first leg toward its nearest packmate)
+      const mate = spec.pack?.relay ? W.packmates?.(source, x, z, range)[0] : undefined, h0 = mate ? Math.atan2(mate.z - z, mate.x - x) : heading;
+      const dirs = patternOf(spec, h0).slice(0, 16), bent = (spec.path ?? []).some(t => "curve" in t || "wave" in t || "spiral" in t || "orbit" in t || "boomerang" in t);
       for (const d of dirs) {
         if (bent) telegraph(S, { ...base, shape: { type: "path", x: x + d.dx, z: z + d.dz, width, points: predictPath(spec, x + d.dx, z + d.dz, d.heading, source, W) }, until: fire + d.delay });
         else telegraph(S, { ...base, shape: { type: "segment", x: x + d.dx, z: z + d.dz, x2: x + d.dx + Math.cos(d.heading) * range, z2: z + d.dz + Math.sin(d.heading) * range, width }, until: fire + d.delay });
@@ -331,7 +355,7 @@ export function speedAt(a: AttackSpec, t: number): number {
 
 function makeBody(a: AttackSpec, name: string, x: number, z: number, heading: number, target: Hittable | null, side: string, species: string, source: number, damage: number, depth: number, castId: number, time: number): Body {
   const kind = (a.body?.kind ?? "bolt") as Body["kind"];
-  return { id: 0, alive: true, attack: a, name, kind, x, z, y: 0, hx: Math.cos(heading), hz: Math.sin(heading), v: speedAt(a, 0), sx: x, sz: z, ox: x, oz: z, born: time, source, side, species, travelled: 0, damage, radius: a.body?.radius ?? 0.6, depth, cast: castId, target, locked: false, pierced: 0, bounced: 0, hits: [], lob: null, stuck: null, leg: 0, paused: false, armAt: time + (a.body?.arm ?? 0), armed: false, until: time + (a.life?.time ?? 15), element: a.body?.element ?? "", look: a.body?.look ?? "" };
+  return { id: 0, alive: true, attack: a, name, kind, x, z, y: 0, hx: Math.cos(heading), hz: Math.sin(heading), v: speedAt(a, 0), sx: x, sz: z, ox: x, oz: z, born: time, source, side, species, travelled: 0, damage, radius: a.body?.radius ?? 0.6, depth, cast: castId, target, locked: false, pierced: 0, bounced: 0, hits: [], lob: null, stuck: null, leg: 0, paused: false, armAt: time + (a.body?.arm ?? 0), armed: false, until: time + (a.life?.time ?? 15), chain: a.pack?.chain?.n ?? 0, relay: [], holdUntil: 0, amp: 1, ampBy: [], element: a.body?.element ?? "", look: a.body?.look ?? "" };
 }
 
 /** A pending release: its pattern's bodies, or its area struck, or its zone laid. */
@@ -376,8 +400,18 @@ function emitOne(S: SpellState, W: SpellWorld, lib: Library, a: AttackSpec, p: P
     if (made > CAPS.children) { S.capped++; return; }
     S.made.set(p.cast, made);
   }
-  if (B === "beam") { emitBeam(S, W, a, p, x, z, heading, time); return; }
-  if (isBody(B)) {
+  if (B === "beam" || a.pack?.tether) { emitBeam(S, W, a, p, x, z, heading, time); return; }
+  if (a.pack?.triangulate && !p.points) {
+    // (its corners where it and its two nearest packmates stand at the release; the ground between them erupts after its delay; none
+    // shown at the cast (no packmates then), nothing comes of it: never a harm unwarned)
+    const pts = corners(W, a, p.source, x, z), shown = S.telegraphs.find(t => t.alive && t.cast === p.cast && t.attack === p.name && t.shape.type === "polygon");
+    if (!pts || !shown) { S.events.push({ kind: "fizzle", at: time, x, z, attack: p.name, source: p.source }); return; }
+    const spec: AttackSpec = { ...a, body: { ...a.body, kind: B === "zone" ? "zone" : "area" } };
+    shown.shape.points = pts; shown.shape.x = (pts[0] + pts[2] + pts[4]) / 3; shown.shape.z = (pts[1] + pts[3] + pts[5]) / 3; // (where they stand now)
+    queue(S, { ...p, attack: spec, at: p.at + a.pack.triangulate.delay, placed: true, points: pts, patternIndex: undefined, left: 0, fromBody: undefined });
+    return;
+  }
+  if (isBody(B) && !p.points) {
     const i = slot(S.bodies, CAPS.bodies);
     if (i < 0) { S.capped++; S.events.push({ kind: "capped", at: time, x, z, attack: p.name, source: p.source }); return; }
     // (a mine or a seed is laid where it's aimed: at her (as she stood when it was cast), else its pattern's place)
@@ -392,6 +426,16 @@ function emitOne(S: SpellState, W: SpellWorld, lib: Library, a: AttackSpec, p: P
     }
     S.bodies[i] = b; S.stats.bodies[p.depth]++;
     if ((a.path ?? []).some(t => "home" in t) && p.aim) b.target = p.aim;
+    // (relayed: by way of its nearest packmates in turn, each the nearest to the last, before it goes for its target)
+    if (a.pack?.relay && W.packmates) {
+      let fx = x, fz = z;
+      for (let k = 0; k < a.pack.relay.n; k++) {
+        const m = W.packmates(p.source, fx, fz, lifeRange(a)).find(q => !b.relay.includes(q.id));
+        if (!m) break;
+        b.relay.push(m.id); fx = m.x; fz = m.z;
+      }
+      if (b.relay.length) steer(b, W, b.relay[0]);
+    }
     for (const t of a.on?.timer ?? []) child(S, W, lib, b, t, time + t.at, "timer");
     return;
   }
@@ -420,7 +464,7 @@ function emitOne(S: SpellState, W: SpellWorld, lib: Library, a: AttackSpec, p: P
   }
   const i = slot(S.zones, CAPS.zones);
   if (i < 0) { S.capped++; return; }
-  const once = B === "area" && A.shape !== "safeCircle", Zr = a.zone ?? {}, safe = A.shape === "safeCircle";
+  const once = B === "area" && A.shape !== "safeCircle", Zr = a.zone ?? {}, safe = A.shape === "safeCircle", poly = p.points;
   const zone: Zone = {
     id: S.next++, alive: true, attack: a, name: p.name, shape: safe ? "safe" : (A.shape === "ring" || A.shape === "donut" || A.shape === "cone" ? A.shape : "disc"), x: zx, z: zz,
     r: A.r ?? Zr.r ?? (safe ? 12 : 4), inner: A.inner ?? (safe ? (A.r ?? 12) * 0.6 : A.shape === "ring" ? Math.max(0, (A.r ?? 4) - (A.width ?? 1.5)) : 0), to: A.to ?? 0, shrink: A.time ?? 4,
@@ -430,8 +474,13 @@ function emitOne(S: SpellState, W: SpellWorld, lib: Library, a: AttackSpec, p: P
     once, hit: [], element: a.body?.element ?? "", look: a.body?.look ?? "",
   };
   if (zone.grow) { zone.r = 0.5; } // (an expanding ring starts small and grows to its radius)
+  if (poly) {
+    zone.shape = "polygon"; zone.points = poly; zone.grow = 0;
+    zone.x = (poly[0] + poly[2] + poly[4]) / 3; zone.z = (poly[1] + poly[3] + poly[5]) / 3;
+    zone.r = Math.max(Math.hypot(poly[0] - zone.x, poly[1] - zone.z), Math.hypot(poly[2] - zone.x, poly[3] - zone.z), Math.hypot(poly[4] - zone.x, poly[5] - zone.z));
+  }
   S.zones[i] = zone; S.stats.zones[p.depth]++;
-  S.events.push({ kind: "zone", at: time, x: zx, z: zz, attack: p.name, source: p.source, zone: zone.id, element: zone.element });
+  S.events.push({ kind: "zone", at: time, x: zone.x, z: zone.z, attack: p.name, source: p.source, zone: zone.id, element: zone.element });
 }
 
 /** An event's child: made from where it happened (or its caster), aimed as it says, its windup shown as its own telegraph. */
@@ -457,10 +506,15 @@ function child(S: SpellState, W: SpellWorld, lib: Library, b: { x: number; z: nu
 function emitBeam(S: SpellState, W: SpellWorld, a: AttackSpec, p: Pending, x: number, z: number, heading: number, time: number): void {
   const i = slot(S.beams, CAPS.beams);
   if (i < 0) { S.capped++; return; }
-  const Bm = a.beam ?? {}, dur = Bm.strike ? Math.min(Bm.duration ?? 0.15, 0.2) : Bm.duration ?? 0.8, tick = Bm.strike ? dur : Bm.tick ?? 0.2, ticks = Math.max(1, Math.round(dur / tick));
-  const charge = Bm.charge ?? 0, sweep = (Bm.sweep ?? 0) * dur;
+  // (a tether: to the packmate its telegraph was strung to, if it's still there)
+  const T = a.pack?.tether, shown = T ? S.telegraphs.find(t => t.alive && t.cast === p.cast && t.attack === p.name && t.kind === "tetherLine" && t.follows?.end !== undefined) : undefined;
+  const mate = shown ? W.where("creature", shown.follows!.end!) : null;
+  if (T && !mate) { S.events.push({ kind: "fizzle", at: time, x, z, attack: p.name, source: p.source }); return; } // (no packmate near to string it to)
+  const Bm = a.beam ?? {}, dur = T ? T.time : Bm.strike ? Math.min(Bm.duration ?? 0.15, 0.2) : Bm.duration ?? 0.8, tick = Bm.strike ? dur : Bm.tick ?? 0.2, ticks = Math.max(1, Math.round(dur / tick));
+  const charge = Bm.charge ?? (T ? REACTION_FLOOR : 0), sweep = T ? 0 : (Bm.sweep ?? 0) * dur;
+  if (mate) heading = Math.atan2(mate.z - z, mate.x - x);
   const b: Beam = {
-    id: S.next++, alive: true, attack: a, name: p.name, x, z, angle: heading - (sweep * RAD) / 2, length: Bm.length ?? a.cast?.range ?? 20, width: Bm.width ?? 1,
+    id: S.next++, alive: true, attack: a, name: p.name, x, z, angle: heading - (sweep * RAD) / 2, length: mate ? Math.hypot(mate.x - x, mate.z - z) : Bm.length ?? a.cast?.range ?? 20, width: T ? T.width : Bm.width ?? 1, ...(mate ? { to: shown!.follows!.end } : {}),
     from: time, liveAt: time + charge, until: time + charge + dur, tick, nextTick: time + charge, phase: charge > 0 ? "charging" : "live",
     damage: (p.damage * (a.hit?.damage ?? 1)) / ticks, side: p.side, source: p.source, species: p.species, depth: p.depth, cast: p.cast, target: p.aim, hits: [], telegraph: 0, tickAngle: heading - (sweep * RAD) / 2,
     element: a.body?.element ?? "", look: a.body?.look ?? "",
@@ -472,9 +526,15 @@ function emitBeam(S: SpellState, W: SpellWorld, a: AttackSpec, p: Pending, x: nu
 
 function stepBeam(S: SpellState, W: SpellWorld, b: Beam, time: number, dt: number): void {
   const Bm = b.attack.beam ?? {};
-  const c = b.depth === 0 ? W.where("creature", b.source) : null;
-  if (b.depth === 0 && !c) { b.alive = false; return; } // (its caster gone: so is its beam)
+  const c = b.depth === 0 || b.to !== undefined ? W.where("creature", b.source) : null;
+  if ((b.depth === 0 || b.to !== undefined) && !c) { b.alive = false; return; } // (its caster gone: so is its beam)
   if (c) { b.x = c.x; b.z = c.z; }
+  if (b.to !== undefined) {
+    // (a tether: from its caster to its packmate as both move; either gone, it snaps)
+    const m = W.where("creature", b.to);
+    if (!m) { b.alive = false; S.events.push({ kind: "expire", at: time, x: b.x, z: b.z, attack: b.name, source: b.source, beam: b.id }); return; }
+    b.angle = Math.atan2(m.z - b.z, m.x - b.x); b.length = Math.hypot(m.x - b.x, m.z - b.z);
+  }
   if (time >= b.until) { b.alive = false; S.events.push({ kind: "expire", at: time, x: b.x, z: b.z, attack: b.name, source: b.source, beam: b.id }); return; }
   if (time >= b.liveAt) {
     if (Bm.spin) b.angle += Bm.spin * RAD * dt;
@@ -488,7 +548,7 @@ function stepBeam(S: SpellState, W: SpellWorld, b: Beam, time: number, dt: numbe
   b.phase = time < b.liveAt ? "charging" : P && (time - b.liveAt) % (P[0] + P[1]) >= P[0] ? "off" : "live";
   const ex = Math.cos(b.angle), ez = Math.sin(b.angle);
   // (its warning line lies along it as it turns)
-  for (const t of S.telegraphs) if (t.alive && t.kind === "beamLine" && t.cast === b.cast && t.attack === b.name) { t.shape.x = b.x; t.shape.z = b.z; t.shape.x2 = b.x + ex * b.length; t.shape.z2 = b.z + ez * b.length; t.shape.heading = b.angle; }
+  for (const t of S.telegraphs) if (t.alive && (t.kind === "beamLine" || t.kind === "tetherLine") && t.cast === b.cast && t.attack === b.name) { t.shape.x = b.x; t.shape.z = b.z; t.shape.x2 = b.x + ex * b.length; t.shape.z2 = b.z + ez * b.length; t.shape.heading = b.angle; }
   if (b.phase !== "live" || time < b.nextTick) { if (b.phase !== "live") b.tickAngle = b.angle; return; }
   b.nextTick += b.tick;
   // (along its line now, or anywhere in the wedge it turned through since its last tick)
@@ -563,7 +623,9 @@ export function stepSpells(S: SpellState, W: SpellWorld, lib: Library, time: num
   for (const t of S.telegraphs) if (t.alive && time >= t.until) { t.alive = false; S.events.push({ kind: "fire", at: time, x: t.shape.x, z: t.shape.z, attack: t.attack, source: t.source, telegraph: t.id }); }
   for (const t of S.telegraphs) if (t.alive && t.follows) {
     const at = t.follows.body !== undefined ? S.bodies.find(b => b.id === t.follows!.body && b.alive) : t.follows.creature !== undefined ? W.where("creature", t.follows.creature) : null;
-    if (at) { const dx = at.x - t.shape.x, dz = at.z - t.shape.z; t.shape.x = at.x; t.shape.z = at.z; if (t.shape.x2 !== undefined) { t.shape.x2 += dx; t.shape.z2! += dz; } }
+    const end = t.follows.end !== undefined ? W.where("creature", t.follows.end) : null;
+    if (at) { const dx = at.x - t.shape.x, dz = at.z - t.shape.z; t.shape.x = at.x; t.shape.z = at.z; if (t.shape.x2 !== undefined && !end) { t.shape.x2 += dx; t.shape.z2! += dz; } }
+    if (end) { t.shape.x2 = end.x; t.shape.z2 = end.z; }
   }
 }
 
@@ -603,7 +665,10 @@ function stepBody(S: SpellState, W: SpellWorld, lib: Library, b: Body, time: num
     return;
   }
   if (b.kind === "mine" || b.kind === "seed") { stepPlaced(S, W, lib, b, time); return; }
+  if (time < b.holdUntil) return; // (held at a packmate, or between a chain's hops)
+  if (b.relay.length && !relayed(S, W, b, time)) return;
   moveBody(b, a, age, dt, W);
+  if (a.pack?.amplify && b.amp < a.pack.amplify.max && W.packmates) amplify(S, W, b, time);
   // (a lure draws her in while she's within its reach; a body with a force field pushes whoever's round it)
   if (b.kind === "lure" && W.force) for (const t of W.near(b.x, b.z, a.body?.reach ?? 8)) if (t.kind === "witch" && W.hostile(b.side, t, b.species, b.source) && Math.hypot(t.x - b.x, t.z - b.z) <= (a.body?.reach ?? 8)) W.force(t, b.x, b.z, -(a.body?.pull ?? 4), dt);
   if (a.force) pushAround(W, a, b.x, b.z, b.radius * 4, b.side, b.species, b.source, dt);
@@ -625,12 +690,77 @@ function stepBody(S: SpellState, W: SpellWorld, lib: Library, b: Body, time: num
     if (!strike(S, W, a, t, b.damage * (H.damage ?? 1), b.x - b.hx, b.z - b.hz, b.side, b.species, b.source, b.name, time, undefined, { body: b.id })) continue;
     b.hits.push(t.id);
     for (const c of a.on?.hit ?? []) child(S, W, lib, b, c, time, "hit", { x: t.x, z: t.z });
+    if (b.chain > 0 && W.hostile(b.side, t, b.species, b.source) && chainOn(S, W, b, t, time)) return;
     if (a.life?.stick) { b.stuck = { kind: t.kind, id: t.id, dx: b.x - t.x, dz: b.z - t.z }; return; }
     if (b.pierced < Math.min(a.life?.pierce ?? 0, CAPS.pierces)) { b.pierced++; continue; }
     b.alive = false;
     return;
   }
   if (b.travelled >= lifeRange(a) || age >= lifeTime(a, b.v)) end(S, W, lib, b, time, "expire");
+}
+
+// ---- the pack ----
+
+/** A triangulation's corners: the caster and its two nearest packmates within r, or null with fewer. */
+function corners(W: SpellWorld, a: AttackSpec, source: number, x: number, z: number): number[] | null {
+  const m = W.packmates?.(source, x, z, a.pack?.triangulate?.r ?? 15) ?? [];
+  return m.length >= 2 ? [x, z, m[0].x, m[0].z, m[1].x, m[1].z] : null;
+}
+
+/** Aim a body at a creature (its heading and its spine's start: a fresh leg). */
+function steer(b: Body, W: SpellWorld, id: number | null, target?: Hittable | null): void {
+  const at = id !== null ? W.where("creature", id) : target ? W.where(target.kind, target.id) : null;
+  if (!at) return;
+  const d = Math.hypot(at.x - b.x, at.z - b.z) || 1;
+  b.hx = (at.x - b.x) / d; b.hz = (at.z - b.z) / d; b.sx = b.x; b.sz = b.z;
+}
+
+/** On its way through its relay: steered at the next packmate each step; reaching it, held there `hop` s (its lane to the next shown
+ *  that long), then on to the next or, the last done, its target. Whether it flies on this step. */
+function relayed(S: SpellState, W: SpellWorld, b: Body, time: number): boolean {
+  const id = b.relay[0], m = W.where("creature", id);
+  if (!m) { b.relay.shift(); steer(b, W, b.relay[0] ?? null, b.target); return true; } // (that packmate gone: on to the next)
+  if (Math.hypot(m.x - b.x, m.z - b.z) > Math.max(1.2, b.radius + 0.6)) { steer(b, W, id); return true; }
+  b.relay.shift();
+  const hop = b.attack.pack?.relay?.hop ?? REACTION_FLOOR;
+  b.x = m.x; b.z = m.z; b.holdUntil = time + hop; b.travelled = 0;
+  b.born = time + hop; // (its life and its speed profile from when it sets off again)
+  steer(b, W, b.relay[0] ?? null, b.target);
+  const next = b.relay.length ? W.where("creature", b.relay[0]) : b.target ? W.where(b.target.kind, b.target.id) : null;
+  S.events.push({ kind: "relay", at: time, x: b.x, z: b.z, attack: b.name, source: b.source, body: b.id, element: b.element });
+  const x2 = next ? next.x : b.x + b.hx * lifeRange(b.attack), z2 = next ? next.z : b.z + b.hz * lifeRange(b.attack);
+  telegraph(S, { kind: "lane", attack: b.name, side: b.side, source: b.source, cast: b.cast, start: time, fire: b.holdUntil, until: b.holdUntil, shape: { type: "segment", x: b.x, z: b.z, x2, z2, width: 2 * b.radius } });
+  return false;
+}
+
+/** Passing its packmates: each new one within r grows it by `per` (its radius and damage), to `max` times. */
+function amplify(S: SpellState, W: SpellWorld, b: Body, time: number): void {
+  const A = b.attack.pack!.amplify!;
+  for (const m of W.packmates!(b.source, b.x, b.z, A.r)) {
+    if (b.ampBy.includes(m.id) || b.amp >= A.max) continue;
+    const to = Math.min(A.max, b.amp + A.per), k = to / b.amp;
+    b.ampBy.push(m.id); b.amp = to; b.radius *= k; b.damage *= k;
+    S.events.push({ kind: "amplify", at: time, x: b.x, z: b.z, attack: b.name, source: b.source, body: b.id, element: b.element });
+  }
+}
+
+/** A chain's hop from what it hit to the next foe within range (not hit already): held there `hop` s with the jump shown (chainNext),
+ *  then flying at it. Whether it hopped (none near: it ends as it would have). */
+function chainOn(S: SpellState, W: SpellWorld, b: Body, from: Hittable, time: number): boolean {
+  const C = b.attack.pack!.chain!;
+  let next: Hittable | null = null, best = Infinity;
+  for (const t of W.near(from.x, from.z, C.range)) {
+    const d = Math.hypot(t.x - from.x, t.z - from.z);
+    if (d > C.range || d >= best || b.hits.includes(t.id) || t.kind === "sound" || !W.hostile(b.side, t, b.species, b.source)) continue;
+    next = { ...t }; best = d;
+  }
+  if (!next) return false;
+  const hop = C.hop ?? REACTION_FLOOR;
+  b.chain--; b.target = next; b.x = from.x; b.z = from.z; b.travelled = 0; b.holdUntil = time + hop; b.born = time + hop; b.pierced = 0;
+  steer(b, W, null, next);
+  S.events.push({ kind: "chain", at: time, x: from.x, z: from.z, attack: b.name, source: b.source, body: b.id, element: b.element });
+  telegraph(S, { kind: "chainNext", attack: b.name, side: b.side, source: b.source, cast: b.cast, start: time, fire: b.holdUntil, until: b.holdUntil, shape: { type: "segment", x: from.x, z: from.z, x2: next.x, z2: next.z, width: 2 * b.radius }, ...(next.kind === "creature" ? { follows: { end: next.id as number } } : {}) });
+  return true;
 }
 
 /** A mine (armed, set off by a foe in its trigger: its blast and its on-hit children) or a seed (sprouting into its on-land children). */
@@ -658,9 +788,22 @@ function inZone(z: Zone, x: number, zz: number, r: number, time = 0): boolean {
   const dx = x - z.x, dz = zz - z.z, d = Math.hypot(dx, dz);
   if (d > z.r + r) return false;
   if (z.shape === "safe") return d > safeR(z, time) - r; // (all of it but the safe circle)
+  if (z.shape === "polygon") return inPolygon(z.points!, x, zz, r);
   if ((z.shape === "ring" || z.shape === "donut") && d < z.inner - r) return false;
   if (z.shape === "cone") { let da = Math.atan2(dz, dx) - z.heading; da = ((da + Math.PI * 3) % (Math.PI * 2)) - Math.PI; if (Math.abs(da) > (z.angle * RAD) / 2 + r / Math.max(0.5, d)) return false; }
   return true;
+}
+
+/** Inside a polygon ([x0, z0, x1, z1, ...]), or within r of its edge. */
+function inPolygon(P: number[], x: number, z: number, r: number): boolean {
+  let inside = false, near = Infinity;
+  for (let i = 0, j = P.length - 2; i < P.length; j = i, i += 2) {
+    const xi = P[i], zi = P[i + 1], xj = P[j], zj = P[j + 1];
+    if ((zi > z) !== (zj > z) && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) inside = !inside;
+    const ex = xj - xi, ez = zj - zi, k = Math.max(0, Math.min(1, ((x - xi) * ex + (z - zi) * ez) / (ex * ex + ez * ez || 1)));
+    near = Math.min(near, Math.hypot(x - xi - ex * k, z - zi - ez * k));
+  }
+  return inside || near <= r;
 }
 
 function stepZone(S: SpellState, W: SpellWorld, z: Zone, time: number, dt: number): void {
