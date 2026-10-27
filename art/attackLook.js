@@ -17,7 +17,7 @@
 import { hash2 } from "./core.js";
 
 export const ATTACK_LOOK_PPM = 16;
-export const ATLAS_SIZE = 512;
+export const ATLAS_SIZE = 768;
 const GREY = [[92, 92, 92], [156, 156, 156], [218, 218, 218], [255, 255, 255]], GREY_ACCENT = [140, 140, 140];
 const WHITE = [255, 255, 255], INK = [16, 12, 20];
 /** Each part's cell size (art pixels) and how many shapes and frames it has. */
@@ -77,6 +77,43 @@ function drawCore(c, kind, P, A, f, s) {
   } else if (kind === "petal") {
     for (let k = 0; k < 5; k++) { const a = (k / 5) * Math.PI * 2 + f * 0.6; c.disc(x + Math.cos(a) * 2.2 * s, y + Math.sin(a) * 2.2 * s, 0.9 * s, P[1]); c.put(x + Math.cos(a) * 2.6 * s, y + Math.sin(a) * 2.6 * s, P[2]); }
     c.disc(x, y, 1 * s, P[3]); if (A) { c.put(x - 3.4 * s, y + 0.5, A); c.put(x - 2.8 * s, y + 1, A); }
+  }
+}
+
+/** A look's own core (a body's look tag), flying right, turning by its frame: an acorn, a pinecone, a log, a pebble, a can, a leaf,
+ *  a spike, a feather, an icicle, a rolling ball; s its size (1 an adult's, 1.6 a legend's). */
+function drawLookCore(c, kind, P, f, s) {
+  const x = c.w / 2 - 0.5, y = c.h / 2 - 0.5, t = (f / 4) * Math.PI * 2, ca = Math.cos(t), sa = Math.sin(t);
+  const rot = (u, v) => [x + u * ca - v * sa, y + u * sa + v * ca]; // (tumbling)
+  if (kind === "acorn") { // a nut under its cap and stalk, tumbling
+    for (let v = -2; v <= 2; v += 0.5) for (let u = -1.6; u <= 1.6; u += 0.5) { const q = (u * u) / 2.6 + ((v - 0.4) * (v - 0.4)) / 4.4; if (q <= 1) c.put(...rot(u * s, v * s), q > 0.6 ? P[1] : u < 0 ? P[3] : P[2]); }
+    for (let u = -2; u <= 2; u += 0.5) { c.put(...rot(u * s, -1.6 * s), P[0]); c.put(...rot(u * 0.8 * s, -2.1 * s), P[1]); }
+    c.put(...rot(0.3 * s, -2.8 * s), P[0]);
+  } else if (kind === "pinecone") { // scales in rows
+    for (let v = -3; v <= 3; v++) { const w = Math.max(0.5, 2 - Math.abs(v + 0.5) * 0.45) * s; for (let u = -w; u <= w; u += 0.5) c.put(...rot(u, v * s * 0.8), (Math.round(u * 2) + v) % 2 ? P[1] : v < 0 ? P[2] : P[0]); }
+    c.put(...rot(0, -3.4 * s), P[3]);
+  } else if (kind === "log") { // a log rolling end-on and along: bark, its rings at the end
+    for (let u = -4; u <= 4; u += 0.5) for (let v = -1.6; v <= 1.6; v += 0.5) c.put(x + u * s, y + v * s, Math.abs(v) > 1.1 ? P[0] : (Math.round(u + f) % 3 ? P[1] : P[0]));
+    c.disc(x + 4 * s, y, 1.7 * s, P[2]); c.ring(x + 4 * s, y, 1 * s, P[1]); c.put(x + 4 * s, y, P[3]); c.outline([16, 12, 20], 220);
+  } else if (kind === "pebble") { // a smooth stone, skimming: a glint turning round it
+    c.disc(x, y, 1.8 * s, P[1]); c.disc(x - 0.4, y - 0.4, 1.1 * s, P[2]); c.put(...rot(1.2 * s, -0.6 * s), P[3]); c.put(x + 0.8, y + 1.2 * s, P[0]); c.outline([16, 12, 20], 220);
+  } else if (kind === "can") { // a tin can, tumbling: its side, its rim
+    for (let u = -1.8; u <= 1.8; u += 0.5) for (let v = -2.4; v <= 2.4; v += 0.5) c.put(...rot(u * s, v * s), Math.abs(v) > 1.9 ? P[3] : Math.abs(u) > 1.3 ? P[0] : (Math.round(v * 2) % 3 ? P[1] : P[2]));
+    c.outline([16, 12, 20], 220);
+  } else if (kind === "leaf") { // a leaf, fluttering: its blade and midrib
+    for (let u = -3; u <= 3; u += 0.5) { const w = (1.6 - (u * u) / 6) * s * (f % 2 ? 0.7 : 1); for (let v = -w; v <= w; v += 0.5) c.put(...rot(u * s, v), v < 0 ? P[2] : P[1]); c.put(...rot(u * s, 0), P[3]); }
+    c.put(...rot(-3.6 * s, 0.3), P[0]);
+  } else if (kind === "spike") { // a spike or a beak, point first
+    const L = Math.round(4.5 * s); for (let k = -L; k <= L; k++) { const w = Math.max(0, Math.round(((L - k) / (2 * L)) * 2.2 * s)); for (let q = -w; q <= w; q++) c.put(x + k, y + q, q === -w ? P[3] : q === w ? P[0] : k > L / 2 ? P[2] : P[1]); }
+    c.put(x + L + 1, y, P[3]); if (f % 2) c.put(x + L, y - 1, P[3]);
+  } else if (kind === "feather") { // a feather gliding: its vane, its quill
+    for (let u = -4; u <= 4; u += 0.5) { const w = (1.8 - Math.abs(u + 0.5) * 0.35) * s; for (let v = -w; v <= w; v += 0.5) if ((Math.round(u * 2) + Math.round(v * 2)) % 3) c.put(x + u * s, y + v + (f % 2 ? 0.3 * Math.sin(u) : 0), v < 0 ? P[2] : P[1]); c.put(x + u * s, y, P[3]); }
+    c.put(x - 4.6 * s, y, P[0]);
+  } else if (kind === "icicle") { // a long shard of ice, point first, glinting
+    const L = Math.round(5 * s); for (let k = -L; k <= L; k++) { const w = Math.max(0, Math.round(((L - k) / (2 * L)) * 1.8 * s)); for (let q = -w; q <= w; q++) c.put(x + k, y + q, q === -w ? P[3] : k > 0 ? P[2] : P[1]); }
+    c.put(x + ((f * 3) % (2 * L)) - L, y - 1, P[3]);
+  } else if (kind === "roll") { // curled up, rolling: plates turning round
+    c.disc(x, y, 2.4 * s, P[1]); for (let k = 0; k < 4; k++) { const a = t + (k * Math.PI) / 2; c.line(x, y, x + Math.cos(a) * 2.4 * s, y + Math.sin(a) * 2.4 * s, P[0]); } c.ring(x, y, 2.4 * s, P[2], 255, 1); c.put(x - 1, y - 1.4 * s, P[3]); c.outline([16, 12, 20], 230);
   }
 }
 
@@ -172,6 +209,10 @@ export function atlasCells(cfg) {
     out.push([`${n}mark`, PARTS.mark, PARTS.mark, c => drawMark(c, e.mark, P, A, 0)]);
     for (let i = 0; i < PARTS.areas; i++) out.push([`${n}area.${i}`, PARTS.area, PARTS.area, c => drawMark(c, e.area, P, A, i + 1)]);
   }
+  for (const [id, L] of Object.entries(cfg.looks ?? {})) for (const v of L.palette ? ["c", "g"] : ["g"]) {
+    const P = v === "c" ? L.palette.map(hex) : GREY;
+    for (let f = 0; f < PARTS.cores; f++) { out.push([`look.${id}.${v}.core.a.${f}`, PARTS.coreA, PARTS.coreA, c => drawLookCore(c, L.core, P, f, 1)]); out.push([`look.${id}.${v}.core.l.${f}`, PARTS.coreL, PARTS.coreL, c => drawLookCore(c, L.core, P, f, 1.6)]); }
+  }
   return out;
 }
 
@@ -180,7 +221,9 @@ export function atlasCells(cfg) {
 export function attackLookAtlas(cfg, size = ATLAS_SIZE) {
   const rgba = new Uint8ClampedArray(size * size * 4), cells = /** @type {Record<string, number[]>} */ ({}), pad = 2;
   let x = 0, y = 0, row = 0;
-  for (const [name, w, h, draw] of atlasCells(cfg)) {
+  const all = atlasCells(cfg), [first, ...rest] = all; // (the soft dot first, in its corner; the rest tallest first, packing tighter)
+  rest.sort((a, b) => b[2] - a[2] || b[1] - a[1]);
+  for (const [name, w, h, draw] of [first, ...rest]) {
     if (x + w > size) { x = 0; y += row + pad; row = 0; }
     if (y + h > size) throw new Error(`attack look atlas: no room for ${name} in ${size}×${size}`);
     const c = new Cell(w, h); draw(c);

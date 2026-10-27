@@ -5,6 +5,8 @@ import raw from "../../config/attack-look.json";
 import { KINDS_TABLE } from "./kinds";
 
 export const CORES = ["orb", "shard", "droplet", "crescent", "spark", "rock", "void", "petal"] as const;
+/** The looks' own cores (a body's look tag: an acorn, a pinecone...), drawn in place of its element's. */
+export const LOOK_CORES = ["acorn", "pinecone", "log", "pebble", "can", "leaf", "spike", "feather", "icicle", "roll"] as const;
 export const TRAILS = ["embers", "sparkles", "drips", "wisps", "sparks", "dust", "smoke", "petals"] as const;
 export const IMPACTS = ["burst", "shatter", "splash", "ring", "crackle", "rubble", "poof", "blossom"] as const;
 export const BITS = ["flame", "shard", "droplet", "wisp", "fork", "chunk", "puff", "petal"] as const;
@@ -32,6 +34,10 @@ export interface SpellsConfig {
   default: string;
   /** other names for elements (the attack grammar's body.element tags: stone, light, spore, web, water, sound) */
   aliases: Record<string, string>;
+  /** a species' element that wins over its attack's own tag */
+  overrides?: Record<string, string>;
+  /** a body's look tag: its own core (LOOK_CORES), in its own palette (none: its element's colour) */
+  looks: Record<string, { core: (typeof LOOK_CORES)[number]; palette?: string[] }>;
   byBiome: Record<string, string>;
   bySpecies: Record<string, string>;
 }
@@ -46,9 +52,11 @@ export function elementNamed(tag: string | undefined, cfg: SpellsConfig = ATTACK
   return t && cfg.elements[t] ? t : undefined;
 }
 
-/** A creature's element: an attack's own tag if it has one (tag), else the species' own (bySpecies), else its kind's biome's,
+/** A creature's element: its override if it has one, else an attack's own tag if it has one (tag), else the species' own (bySpecies), else its kind's biome's,
  *  else the default. */
 export function elementOf(species: string, cfg: SpellsConfig = ATTACK_LOOK, kinds: Record<string, { biome?: string }> = KINDS_TABLE, tag?: string): string {
+  const over = cfg.overrides?.[species];
+  if (over && cfg.elements[over]) return over;
   const tagged = elementNamed(tag, cfg);
   if (tagged) return tagged;
   const own = cfg.bySpecies[species];
@@ -80,7 +88,12 @@ export function spellsProblems(cfg: SpellsConfig, species: readonly string[], bi
   if (!Number.isInteger(cfg.scale) || cfg.scale < 1) bad.push("scale: a whole number, 1 or more");
   for (const lv of ["1", "2", "3"]) if (!(cfg.power[lv] > 0)) bad.push(`power: level ${lv} missing`);
   if (!cfg.elements[cfg.default]) bad.push(`default: no element ${cfg.default}`);
+  for (const [sp, e] of Object.entries(cfg.overrides ?? {})) { if (!cfg.elements[e]) bad.push(`overrides ${sp}: no element ${e}`); if (!species.includes(sp)) bad.push(`overrides: no species called ${sp}`); }
   for (const [a, e] of Object.entries(cfg.aliases ?? {})) if (!cfg.elements[e]) bad.push(`aliases ${a}: no element ${e}`);
+  for (const [l, L] of Object.entries(cfg.looks ?? {})) {
+    if (!LOOK_CORES.includes(L.core)) bad.push(`look ${l}: no core called ${L.core}`);
+    if (L.palette !== undefined && (!Array.isArray(L.palette) || L.palette.length !== 4 || !L.palette.every(hex))) bad.push(`look ${l}: its palette isn't four "#rrggbb" colours`);
+  }
   for (const [b, e] of Object.entries(cfg.byBiome)) { if (!cfg.elements[e]) bad.push(`byBiome ${b}: no element ${e}`); if (!biomes.includes(b)) bad.push(`byBiome: no biome called ${b}`); }
   for (const [s, e] of Object.entries(cfg.bySpecies)) { if (!cfg.elements[e]) bad.push(`bySpecies ${s}: no element ${e}`); if (!species.includes(s)) bad.push(`bySpecies: no species called ${s}`); }
   const d = cfg.danger;
