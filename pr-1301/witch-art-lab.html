@@ -6185,6 +6185,7 @@ const CREATURE_BOAR = {
   movement: {
     speed: 14,
     accel: 25,
+    momentum: { turn: 160 },
     fight: [{ kind: "arrive", w: 1 }, { kind: "separation", w: 0.5, radius: 7 }],
     move: {
       kind: "charge",
@@ -6264,6 +6265,7 @@ const CREATURE_CHEETAH = {
   movement: {
     speed: 26,
     accel: 120,
+    momentum: { k: 3.5 },
     fight: [{ kind: "arrive", w: 1 }, { kind: "strafe", w: 0.4, swap: 1 }, { kind: "separation", w: 0.6, radius: 8 }],
     move: { kind: "charge", cooldown: 4, from: 8, to: 40, speed: 42, time: 1.1, windup: 0.4, accel: 120, brake: 80 },
     tactics: [{ kind: "flank", w: 2 }]
@@ -8353,6 +8355,7 @@ const CREATURE_WOLF = {
   movement: {
     speed: 17,
     accel: 70,
+    momentum: { delay: 0.2, chaseLead: 0.15 },
     fight: [
       { kind: "arrive", w: 1 },
       { kind: "slot", w: 1.2 },
