@@ -23,17 +23,19 @@ type RGB = [number, number, number];
 export interface Dress { el: string; level: number; tint?: RGB | null }
 
 const PPM = 16; // art pixels a metre (the atlas's)
+let K = 2; // whole art pixels an atlas pixel draws (config scale)
 const TAU = Math.PI * 2;
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 /** Who goes which way when an impact's bits fly: up (fire's tongues), out and falling (frost's shards, venom's drops, earth's
  *  rubble), rings (moonlight), forks (storm), in then out (shadow), drifting (bloom). */
 const FALLS: Record<string, number> = { burst: -3, shatter: 9, splash: 10, ring: -1.5, crackle: 0, rubble: 12, poof: -1, blossom: 1.2 };
 
-/** A telegraph's place, in plain geometry (the attack grammar's live telegraph's shape: docs/plans/attack-grammar.md): a point
- *  (x, z), a segment to (x2, z2) its width wide, a disc or ring r round (with inner, a donut's), a cone from (x, z) along heading
- *  (radians), angle wide (radians) and r long; y, how high over the ground a mark on someone goes (their top). */
-export interface TelegraphShape { x: number; z: number; x2?: number; z2?: number; r?: number; inner?: number; width?: number; angle?: number; heading?: number; y?: number }
-/** A live telegraph (s.telegraphs): its kind, its shape, when it began and when it fires; n, a countdown's pips. */
+/** A telegraph's place, in plain geometry: the attack grammar's live telegraph's shape (src/rules/attacks/engine.ts Telegraph): a
+ *  point (x, z), a segment from (x, z) to (ax, az) its width wide, a path (points: x, z pairs), a disc or ring r round (with inner,
+ *  a donut's), a cone from (x, z) along heading (radians), angle wide (degrees) and r long; y (the look's own), how high over the
+ *  ground a mark on someone goes (their top). */
+export interface TelegraphShape { type?: string; x: number; z: number; ax?: number; az?: number; r?: number; inner?: number; width?: number; angle?: number; heading?: number; points?: number[]; y?: number }
+/** A live telegraph (the grammar's s.telegraphs): its kind, its shape, when it began and when it fires; n, a countdown's pips. */
 export interface LiveTelegraph { kind: string; shape: TelegraphShape; start: number; fire: number; n?: number }
 
 interface LookFx { kind: "impact" | "mark" | "area"; d: Dress; x: number; y: number; z: number; at: number; life: number; seed: number; size: number }
@@ -56,6 +58,7 @@ export class AttackLook {
 
   constructor(scene: THREE.Scene, game: Game) {
     const A = attackLookAtlas(this.cfg);
+    K = this.cfg.scale;
     this.cells = A.cells; this.size = A.size;
     const tex = gpuKind(new THREE.DataTexture(A.rgba, A.size, A.size, THREE.RGBAFormat), "ui");
     tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.needsUpdate = true;
@@ -99,7 +102,7 @@ export class AttackLook {
   /** A cell drawn whole at its art pixels (times scale), standing or flat. */
   private put(L: Instances, cell: string, x: number, y: number, z: number, scale: number, a: number, rgb: RGB = [1, 1, 1]): void {
     if (a <= 0.01) return;
-    L.add(x, y, z, (this.px(cell) / PPM) * scale, this.uv(cell), rgb[0], rgb[1], rgb[2], Math.min(1, a));
+    L.add(x, y, z, ((this.px(cell) * K) / PPM) * scale, this.uv(cell), rgb[0], rgb[1], rgb[2], Math.min(1, a));
   }
   private tinted(d: Dress): RGB { return d.tint ? [d.tint[0] * 1.15, d.tint[1] * 1.15, d.tint[2] * 1.15] : [1, 1, 1]; }
   private solid(d: Dress): boolean { return !!this.el(d).solid; }
@@ -146,8 +149,8 @@ export class AttackLook {
     // its shock ring, on the ground, in its bright colour (two for the ring element, moonlight's)
     const rings = e.impact === "ring" ? 2 : 1;
     for (let r = 0; r < rings; r++) {
-      const R = (0.6 + k * 2.6 * (1 - r * 0.35)) * pw, m = Math.round(R * 14), a = (1 - k) * (r ? 0.6 : 0.95);
-      if (k < 0.7 || e.impact === "ring") for (let i = 0; i < m; i++) { const q = (i / m) * TAU; this.glowFlat.add(x + Math.cos(q) * R, 0, z + Math.sin(q) * R, 2 / PPM, this.uv("px"), P[2 + r][0], P[2 + r][1], P[2 + r][2], a); }
+      const R = (0.6 + k * 2.6 * (1 - r * 0.35)) * pw, m = Math.round((R * 14) / K), a = (1 - k) * (r ? 0.6 : 0.95);
+      if (k < 0.7 || e.impact === "ring") for (let i = 0; i < m; i++) { const q = (i / m) * TAU; this.glowFlat.add(x + Math.cos(q) * R, 0, z + Math.sin(q) * R, (2 * K) / PPM, this.uv("px"), P[2 + r][0], P[2 + r][1], P[2 + r][2], a); }
     }
     // the bits
     for (let i = 0; i < n; i++) {
@@ -178,9 +181,9 @@ export class AttackLook {
   beam(d: Dress, x0: number, z0: number, x1: number, z1: number, y: number, width: number, time: number, seed: number, fade = 1): void {
     const e = this.el(d), P = this.colours(d), t = this.tinted(d), solid = this.solid(d), pw = spellPower(d.level);
     const dx = x1 - x0, dz = z1 - z0, L = Math.hypot(dx, dz) || 1, ux = dx / L, uz = dz / L, fl = 0.8 + 0.2 * Math.sin(time * 37 + seed);
-    for (let s = 0.4; s < L; s += 0.6) this.glow.add(x0 + ux * s, y, z0 + uz * s, Math.max(0.7, width) * 1.1, this.uv("dot"), P[1][0], P[1][1], P[1][2], 0.4 * fl * fade);
-    for (let s = 0.3; s < L; s += 2 / PPM) this.glow.add(x0 + ux * s, y, z0 + uz * s, 2 / PPM, this.uv("px"), P[3][0], P[3][1], P[3][2], 0.95 * fade); // (its hot core)
-    const step = (this.px(this.name(d, "beam.0.0")) * 0.55) / PPM, scroll = (time * 6) % step, beam = e.beam, ft = Math.floor(time * 10);
+    for (let s = 0.4; s < L; s += 0.6) this.glow.add(x0 + ux * s, y, z0 + uz * s, Math.max(0.7, width) * 1.1, this.uv("dot"), P[1][0], P[1][1], P[1][2], 0.16 * fl * fade);
+    for (let s = 0.3; s < L; s += K / PPM) this.glow.add(x0 + ux * s, y, z0 + uz * s, K / PPM, this.uv("px"), P[3][0], P[3][1], P[3][2], 0.8 * fade); // (its hot core, an art pixel thin)
+    const step = (this.px(this.name(d, "beam.0.0")) * 0.55 * K) / PPM, scroll = (time * 6) % step, beam = e.beam, ft = Math.floor(time * 10);
     let j = 0;
     for (let s = 0.5 + scroll; s < L; s += step, j++) {
       const h = hash2(seed, j, 21), i = Math.floor(h * 3), f = (ft + j) % 2;
@@ -211,8 +214,8 @@ export class AttackLook {
       this.put(lit ? this.glowFlat : this.paintFlat, this.name(d, `area.${i % 2}`), x + Math.cos(a) * q, 0.02, z + Math.sin(a) * q, 1, fade * 0.85, t);
     }
     if (k < 0.75) {
-      const m2 = Math.round(front * 12);
-      for (let i = 0; i < m2; i++) { const q = (i / m2) * TAU; this.glowFlat.add(x + Math.cos(q) * front, 0, z + Math.sin(q) * front, 3 / PPM, this.uv("px"), P[2][0], P[2][1], P[2][2], 0.95 * (1 - k)); }
+      const m2 = Math.round((front * 12) / K);
+      for (let i = 0; i < m2; i++) { const q = (i / m2) * TAU; this.glowFlat.add(x + Math.cos(q) * front, 0, z + Math.sin(q) * front, (3 * K) / PPM, this.uv("px"), P[2][0], P[2][1], P[2][2], 0.95 * (1 - k)); }
       for (let i = 0; i < 14; i++) { const q = hash2(seed, i, 41) * TAU, up = hash2(seed, i, 43) * 1.4 * Math.sin(Math.min(1, k * 3) * Math.PI); this.put(this.solid(d) ? this.paint : this.glow, this.name(d, `bit.${i % 3}.${Math.floor(k * 10 + i) % 2}`), x + Math.cos(q) * front, 0.15 + up, z + Math.sin(q) * front, 1, 1 - k, t); }
     }
     this.glowFlat.add(x, 0, z, front * 2.2, this.uv("dot"), P[1][0], P[1][1], P[1][2], 0.35 * fade);
@@ -260,7 +263,7 @@ export class AttackLook {
   private blink(left: number, time: number): number { return left < this.cfg.danger.flash && Math.floor(time * 16) % 2 ? 0.35 : 1; }
   /** A dashed path of warn pixels along f(s), s 0 to L metres, its dashes marching (forward: along it). */
   private dashes(L: number, at: (s: number) => [number, number], time: number, a: number, up: boolean, scale = 1): void {
-    const D = this.cfg.danger, step = (2 * scale) / PPM, period = ((D.dash + D.gap) * 2 * scale) / PPM, on = (D.dash * 2 * scale) / PPM, march = ((time * D.march) / PPM) % period;
+    const D = this.cfg.danger, step = (2 * K * scale) / PPM, period = ((D.dash + D.gap) * 2 * K * scale) / PPM, on = (D.dash * 2 * K * scale) / PPM, march = ((time * D.march * K) / PPM) % period;
     for (let s = 0; s < L; s += step) { if ((s - march + period * 4) % period > on) continue; const [x, z] = at(s); this.put(this.dl(up), "warn", x, 0.03, z, scale, a); }
   }
   /** A ring: R metres round (x, z); fill 0 to 1 a second ring closing in from it (the time left), left seconds to go. */
@@ -268,7 +271,7 @@ export class AttackLook {
     const a = this.blink(left, time), sc = up ? 2.6 : 1, C = TAU * R;
     this.dashes(C, s => [x + Math.cos(s / R) * R, z + Math.sin(s / R) * R], time, a, up, sc);
     const r2 = R * (1 - clamp01(fill));
-    if (r2 > 0.3) { const C2 = TAU * r2, n = Math.round(C2 / ((3 * sc) / PPM)); for (let i = 0; i < n; i++) { const q = (i / n) * TAU; this.put(this.dl(up), "px", x + Math.cos(q) * r2, 0.03, z + Math.sin(q) * r2, sc * 0.5, 0.55 * a); } }
+    if (r2 > 0.3) { const C2 = TAU * r2, n = Math.round(C2 / ((3 * K * sc) / PPM)); for (let i = 0; i < n; i++) { const q = (i / n) * TAU; this.put(this.dl(up), "px", x + Math.cos(q) * r2, 0.03, z + Math.sin(q) * r2, sc * 0.5, 0.55 * a); } }
     if (left < this.cfg.danger.flash) this.put(up ? this.over : this.glow, `flash${Math.floor(time * 12) % 3}`, x, up ? 0.04 : 0.6, z, sc, 0.9);
   }
   /** A lane from (x0, z0) to (x1, z1), half its width each side: its two edges dashed and marching, chevrons filling it from the
@@ -284,7 +287,7 @@ export class AttackLook {
     const dx = x1 - x0, dz = z1 - z0, L = Math.hypot(dx, dz) || 1, ux = dx / L, uz = dz / L, a = this.blink(left, time), sc = up ? 2.6 : 1;
     if (k < 0.4) this.dashes(L, s => [x0 + ux * s, z0 + uz * s], time, a, up, sc);
     else if (k < 0.8) { const w = half * 0.5; for (const side of [-1, 0, 1]) this.dashes(L, s => [x0 + ux * s - uz * w * side, z0 + uz * s + ux * w * side], time, a, up, sc); }
-    else { const w = half * 0.7, step = (2 * sc) / PPM; for (let s = 0; s < L; s += step) for (let q = -w; q <= w; q += step) this.put(this.dl(up), Math.abs(q) > w - step ? "warn" : "px", x0 + ux * s - uz * q, 0.03, z0 + uz * s + ux * q, Math.abs(q) > w - step ? sc : sc * 0.5, a); }
+    else { const w = half * 0.7, step = (2 * K * sc) / PPM; for (let s = 0; s < L; s += step) for (let q = -w; q <= w; q += step) this.put(this.dl(up), Math.abs(q) > w - step ? "warn" : "px", x0 + ux * s - uz * q, 0.03, z0 + uz * s + ux * q, Math.abs(q) > w - step ? sc : sc * 0.5, a); }
   }
   /** A cone from (x, z) along angle, spread radians each side, out to R: its two sides and its arc dashed, its fill sweeping out. */
   cone(x: number, z: number, angle: number, spread: number, R: number, fill: number, left: number, time: number, up = false): void {
@@ -296,7 +299,7 @@ export class AttackLook {
   }
   /** A delayed blast's countdown: n pips over (x, y, z), the ones left lit. */
   pips(x: number, y: number, z: number, n: number, lit: number, up = false): void {
-    const R = SPRITE_UNIFORMS.uRight.value, sc = up ? 2.6 : 1, gap = (6 * sc) / PPM;
+    const R = SPRITE_UNIFORMS.uRight.value, sc = up ? 2.6 : 1, gap = (6 * K * sc) / PPM;
     for (let i = 0; i < n; i++) { const o = (i - (n - 1) / 2) * gap; this.put(up ? this.over : this.paint, i < lit ? "pip" : "pipOff", x + R.x * o, y, z + R.z * o, sc, 1); }
   }
   /** Brackets closing on someone (a lock-on, the next in a chain): four corners r metres out. */
@@ -312,13 +315,13 @@ export class AttackLook {
   }
   /** The ground outside a shrinking safe circle: dark hatch from R out to Rout. */
   hatch(x: number, z: number, R: number, Rout: number, up = false): void {
-    const tile = (16 * (up ? 2.6 : 1)) / PPM;
-    for (let gx = -Rout; gx <= Rout; gx += tile) for (let gz = -Rout; gz <= Rout; gz += tile) { const d = Math.hypot(gx, gz); if (d > R && d < Rout) this.put(this.dl(up), "hatch", x + gx, 0.025, z + gz, up ? 2.6 : 1, this.cfg.danger.hatch * 4); }
+    const tile = (16 * K * (up ? 2.6 : 1)) / PPM;
+    for (let gx = -Rout; gx <= Rout; gx += tile) for (let gz = -Rout; gz <= Rout; gz += tile) { const d = Math.hypot(gx, gz); if (d > R && d < Rout) this.put(this.dl(up), "hatch", x + gx, 0.025, z + gz, up ? 2.6 : 1, this.cfg.danger.hatch * 2); }
   }
   /** A mine arming: dim and dashed, a slow pulse, while it arms (k 0 to 1); armed, a solid ring at its trigger radius, pulsing
    *  fast. */
   arming(x: number, z: number, r: number, k: number, time: number, up = false): void {
-    const armed = k >= 1, sc = up ? 2.6 : 1, R = armed ? r * (1 + 0.04 * Math.sin(time * 18)) : r * (0.45 + 0.1 * Math.sin(time * 4)), n = Math.round((TAU * R) / ((2 * sc) / PPM));
+    const armed = k >= 1, sc = up ? 2.6 : 1, R = armed ? r * (1 + 0.04 * Math.sin(time * 18)) : r * (0.45 + 0.1 * Math.sin(time * 4)), n = Math.round((TAU * R) / ((2 * K * sc) / PPM));
     for (let i = 0; i < n; i++) { if (!armed && Math.floor(i / 3) % 2) continue; const q = (i / n) * TAU; this.put(this.dl(up), "warn", x + Math.cos(q) * R, 0.03, z + Math.sin(q) * R, sc, armed ? (Math.floor(time * 10) % 2 ? 1 : 0.7) : 0.55 + 0.45 * k); }
     this.put(up ? this.over : this.paint, "pip", x, 0.2, z, sc, armed ? 1 : 0.6);
   }
@@ -332,12 +335,12 @@ export class AttackLook {
   /** Any live telegraph, by its kind (the attack grammar's TelegraphKind), drawn from its shape alone. */
   telegraph(t: LiveTelegraph, time: number, up = false): void {
     const S = t.shape, k = clamp01((time - t.start) / Math.max(0.01, t.fire - t.start)), left = t.fire - time;
-    const seg = (): [number, number, number, number] => [S.x, S.z, S.x2 ?? S.x, S.z2 ?? S.z];
+    const seg = (): [number, number, number, number] => [S.x, S.z, S.ax ?? S.x, S.az ?? S.z];
     switch (t.kind) {
-      case "lane": { const [a, b, c, d] = seg(); this.lane(a, b, c, d, (S.width ?? 1) / 2, k, left, time, up); break; }
+      case "lane": if (S.points && S.points.length >= 4) { const P = S.points; for (let i = 0; i + 3 < P.length; i += 2) this.lane(P[i], P[i + 1], P[i + 2], P[i + 3], (S.width ?? 1) / 2, k, left, time, up); } else { const [a, b, c, d] = seg(); this.lane(a, b, c, d, (S.width ?? 1) / 2, k, left, time, up); } break;
       case "landing": this.ring(S.x, S.z, S.r ?? 2, k, left, time, up); break;
       case "ring": this.ring(S.x, S.z, S.r ?? 3, k, left, time, up); if (S.inner) this.ring(S.x, S.z, S.inner, 0, left, time, up); break;
-      case "cone": this.cone(S.x, S.z, S.heading ?? 0, (S.angle ?? Math.PI / 3) / 2, S.r ?? 6, k, left, time, up); break;
+      case "cone": this.cone(S.x, S.z, S.heading ?? 0, ((S.angle ?? 60) * Math.PI) / 360, S.r ?? 6, k, left, time, up); break;
       case "beamLine": { const [a, b, c, d] = seg(); this.beamLine(a, b, c, d, (S.width ?? 1) / 2, k, left, time, up); break; }
       case "countdown": { const n = t.n ?? 3; this.pips(S.x, (S.y ?? 1) + 0.6, S.z, n, Math.ceil(n * (1 - k))); if (S.r) this.ring(S.x, S.z, S.r, k, left, time, up); break; }
       case "arming": this.arming(S.x, S.z, S.r ?? 1.5, k, time, up); break;
@@ -345,14 +348,14 @@ export class AttackLook {
       case "tetherLine": { const [a, b, c, d] = seg(); this.tether(a, b, c, d, left, time, up); break; }
       case "lockOn": this.brackets(S.x, (S.y ?? 1.6) * 0.6, S.z, 1.1 - 0.5 * k, k > 0.8 || Math.floor(time * 10) % 3 ? 1 : 0.55, up); break;
       case "flash": this.tell(S.x, S.z, S.y ?? 1.4, S.r ?? 1.2, k, time, up); break;
-      case "safeCircle": this.hatch(S.x, S.z, S.r ?? 4, (S.r ?? 4) + 8, up); this.ring(S.x, S.z, S.r ?? 4, 0, left, time, up); break;
+      case "safeCircle": this.hatch(S.x, S.z, S.r ?? 4, (S.r ?? 4) + 2.5, up); this.ring(S.x, S.z, S.r ?? 4, 0, left, time, up); break;
       default: break; // ("none")
     }
   }
 
   /** The wind-up tell: a white ring at its feet tightening, and the "!" over its head as it's about to (k 0 to 1). */
   tell(x: number, z: number, top: number, r: number, k: number, time: number, up = false): void {
-    const R = r * (1.6 - 0.6 * k), sc = up ? 2.6 : 1, n = Math.round((TAU * R) / ((3 * sc) / PPM));
+    const R = r * (1.6 - 0.6 * k), sc = up ? 2.6 : 1, n = Math.round((TAU * R) / ((3 * K * sc) / PPM));
     for (let i = 0; i < n; i++) { const q = (i / n) * TAU + time; this.put(this.dl(up), i % 2 ? "warn" : "px", x + Math.cos(q) * R, 0.03, z + Math.sin(q) * R, i % 2 ? sc : sc * 0.5, 0.4 + 0.6 * k); }
     if (k > 0.55) this.put(up ? this.over : this.paint, "tick", x, top + 0.5 + (up ? 1 : 0), z, sc, k > 0.85 && Math.floor(time * 16) % 2 ? 0.5 : 1);
   }
@@ -365,7 +368,7 @@ export class AttackLook {
     if (which === "elements") {
       const T = 2.4, ph = time % T, loop = Math.floor(time / T);
       els.forEach((el, i) => {
-        const d: Dress = { el, level: i % 4 === 3 ? 3 : 2 }, cx = x + (i - 3.5) * 4.5;
+        const d: Dress = { el, level: i % 4 === 3 ? 3 : 2 }, cx = x + (i - 3.5) * 3.6;
         const fly = Math.min(1, ph / 0.8), bx = cx, bz = z - 9 + fly * 6;
         if (ph < 0.8) this.core(d, bx, 1, bz, 0, 0, 7.5, time, i * 13 + 1); else if (ph < 0.85 && !this.fx.some(f => f.seed === loop * 100 + i)) this.hit(d, bx, 1, bz, time, loop * 100 + i);
         this.beam(d, cx - 1.6, z, cx + 1.6, z + 1, 0.7, 1.6, time, i * 7 + 3);
@@ -377,11 +380,11 @@ export class AttackLook {
     const kinds = ["flash", "lane", "landing", "cone", "beamLine", "countdown", "arming", "chainNext", "tetherLine", "lockOn", "safeCircle", "ring"];
     const T = 3, start = Math.floor(time / T) * T, fire = start + T * 0.8, loop = Math.floor(time / T);
     kinds.forEach((kind, i) => {
-      const cx = x + ((i % 4) - 1.5) * 9, cz = z + (Math.floor(i / 4) - 1) * 9, sh: TelegraphShape = { x: cx - 3, z: cz, x2: cx + 3, z2: cz, r: 2, width: 1.4, heading: 0, angle: 1, y: 1.4, inner: 0 };
+      const cx = x + ((i % 4) - 1.5) * 7, cz = z + (Math.floor(i / 4) - 1) * 6, sh: TelegraphShape = { x: cx - 2.5, z: cz, ax: cx + 2.5, az: cz, r: 2, width: 1.4, heading: 0, angle: 60, y: 1.4, inner: 0 };
       if (kind === "landing" || kind === "arming" || kind === "lockOn" || kind === "flash" || kind === "countdown") { sh.x = cx; sh.r = kind === "landing" ? 2.2 : 1.6; }
-      if (kind === "safeCircle") { sh.x = cx; sh.r = 3.5 - 1.5 * clamp01((time - start) / (fire - start)); }
-      if (kind === "ring") { sh.x = cx; sh.r = 3.2; sh.inner = 1.2; }
-      if (kind === "cone") { sh.x = cx - 3; sh.r = 6; }
+      if (kind === "safeCircle") { sh.x = cx; sh.r = 2.6 - 1.2 * clamp01((time - start) / (fire - start)); }
+      if (kind === "ring") { sh.x = cx; sh.r = 2.4; sh.inner = 1; }
+      if (kind === "cone") { sh.x = cx - 2.5; sh.r = 5; }
       if (time < fire) this.telegraph({ kind, shape: sh, start, fire, n: 3 }, time);
       else if (!this.fx.some(f => f.seed === loop * 100 + i)) {
         const d = wild(i), hx = kind === "lane" || kind === "beamLine" || kind === "tetherLine" || kind === "chainNext" || kind === "cone" ? cx + 2 : cx;

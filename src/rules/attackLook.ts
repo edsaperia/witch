@@ -24,6 +24,8 @@ export interface SpellElement {
 export interface SpellsConfig {
   elements: Record<string, SpellElement>;
   effects: Record<string, (typeof MOTIFS)[number]>;
+  /** whole art pixels a pixel of the atlas draws (2) */
+  scale: number;
   power: Record<string, number>;
   particles: { trail: number; impact: number };
   danger: { warn: string; edge: string; dash: number; gap: number; march: number; flash: number; hatch: number };
@@ -75,6 +77,7 @@ export function spellsProblems(cfg: SpellsConfig, species: readonly string[], bi
     for (const [k, known] of parts) if (!known.includes(e[k] as string)) bad.push(`${id}: no ${k} called ${String(e[k])}`);
   }
   for (const [mod, m] of Object.entries(cfg.effects)) if (!MOTIFS.includes(m)) bad.push(`effect ${mod}: no motif called ${m}`);
+  if (!Number.isInteger(cfg.scale) || cfg.scale < 1) bad.push("scale: a whole number, 1 or more");
   for (const lv of ["1", "2", "3"]) if (!(cfg.power[lv] > 0)) bad.push(`power: level ${lv} missing`);
   if (!cfg.elements[cfg.default]) bad.push(`default: no element ${cfg.default}`);
   for (const [a, e] of Object.entries(cfg.aliases ?? {})) if (!cfg.elements[e]) bad.push(`aliases ${a}: no element ${e}`);
