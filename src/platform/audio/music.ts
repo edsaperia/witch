@@ -9,6 +9,7 @@ import type { BeatClock } from "../../rules/beat";
 import type { MusicCue } from "../../rules/musicPlan";
 import type { MusicStyle } from "../../rules/musicScore";
 import { MusicEngine } from "./musicEngine";
+import { MusicAhead } from "./musicAhead";
 
 /** The notes' pitch with the music running at `rate` (a tape slowing: rate^pitch, never under floor). */
 const smooth01 = (x: number) => { const t = Math.max(0, Math.min(1, x)); return t * t * (3 - 2 * t); };
@@ -37,8 +38,12 @@ export class Music {
   get circle(): number { return this.circleAt; }
   /** The generative track (none with a recorded one). */
   readonly engine: MusicEngine | null = null;
+  /** Its main notes drawn ahead (musicAhead.ts; docs/notes/music.md "Music ahead"): none live (`?music=live`), offline or recorded. */
+  readonly ahead: MusicAhead | null = null;
+  /** Whether it may draw ahead now (the pause page's Music Lab sets its levels on the live engine's parts: live while it's open). */
+  aheadAllowed = true;
 
-  constructor(private ctx: BaseAudioContext, public volume: number, style: MusicStyle, seed: number, src = "") {
+  constructor(private ctx: BaseAudioContext, public volume: number, style: MusicStyle, seed: number, src = "", drawAhead = false) {
     this.master = ctx.createGain(); this.master.gain.value = 0;
     this.wobble = ctx.createGain();
     this.filter = ctx.createBiquadFilter(); this.filter.type = "lowpass"; this.filter.frequency.value = 16000; this.filter.Q.value = 0.7;
@@ -58,7 +63,10 @@ export class Music {
       el.loop = true; el.crossOrigin = "anonymous";
       ctx.createMediaElementSource(el).connect(this.bus);
       void el.play().catch(() => { /* blocked until a press: the start screen is one */ });
-    } else this.engine = new MusicEngine(ctx, this.bus, style, seed, this.circleGain);
+    } else {
+      this.engine = new MusicEngine(ctx, this.bus, style, seed, this.circleGain);
+      if (drawAhead && ctx instanceof AudioContext && typeof OfflineAudioContext !== "undefined") this.ahead = new MusicAhead(this.engine, ctx);
+    }
   }
 
   /** Each frame: the mix to hear, the music's cue (waves, boot), the game's time and beat. `rate`: the game's time scale
@@ -95,6 +103,8 @@ export class Music {
     this.wobble.gain.setTargetAtTime(1 - mix.distort * 0.45 * (0.5 + 0.5 * Math.sin(now * 7.3 + Math.sin(now * 2.1) * 2)), now, 0.02);
     // Crackle: little bursts of noise.
     if (on && mix.distort > 0.05 && Math.random() < mix.distort * 0.15) this.crackle(now + Math.random() * 0.05, mix.distort);
+    // (drawn ahead only at full speed, the voice a recording, no lab: the slowed world, the tape stopping and the rest live)
+    if (this.ahead && this.engine) { const S = this.engine.style, kind = S.form ? S.patches[S.form.sung.patch]?.kind : undefined; this.ahead.update(cue, clock, on, this.aheadAllowed && rate >= 0.999 && stop === 0 && kind !== "fof" && kind !== "tract"); }
     this.engine?.update(cue, gameTime, clock, on, 0.6, rate, stop > 0 ? Math.max(M?.over?.floor ?? 0.15, rate) : tapePitch(rate, M?.slow)); // (stopping: the pitch falls all the way with it)
   }
 
@@ -121,7 +131,7 @@ export class Music {
   /** Not shut by a knockdown (the engine's gate: her silence till the new record, Ed 2026-10-09) and turned up. */
   get audible(): boolean { return this.master.gain.value > 0.02 && !this.engine?.gated; }
   /** Silenced for good and let go (the watchdog building afresh). */
-  dispose(): void { try { this.master.disconnect(); this.circleGain.disconnect(); } catch { /* gone */ } }
+  dispose(): void { this.ahead?.stopAll(); try { this.master.disconnect(); this.circleGain.disconnect(); } catch { /* gone */ } }
 
   /** Dip the music by `by` (0-1) for `seconds`: her "ouch!" heard over it. */
   duck(by: number, seconds: number): void { this.duckBy = Math.max(0, Math.min(1, by)); this.duckUntil = this.ctx.currentTime + seconds; }

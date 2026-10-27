@@ -107,7 +107,7 @@ export class Sound {
     const fresh = !this.audio;
     this.audio ??= this.context(); void this.audio.resume();
     const t1 = performance.now();
-    if (!this.music && tuning.music.on) { this.music = new Music(this.audio, tuning.music.volume * this.level, this.playing, this.seed, tuning.music.src); this.voices(); }
+    if (!this.music && tuning.music.on) { this.music = new Music(this.audio, tuning.music.volume * this.level, this.playing, this.seed, tuning.music.src, musicAhead()); this.voices(); }
     const t2 = performance.now();
     this.ensureSfx();
     const t3 = performance.now(), ms = (x: number) => Math.round(x);
@@ -145,7 +145,7 @@ export class Sound {
         playtest().audio(what);
         console.warn(`audio watchdog: ${what}`);
         if (!this.audio) return;
-        if ((what === "music-silent" || what === "music-nonfinite") && this.music) { this.music.dispose(); this.music = new Music(this.audio, this.tuning.music.volume * this.level, this.playing, this.seed, this.tuning.music.src); this.voices(); }
+        if ((what === "music-silent" || what === "music-nonfinite") && this.music) { this.music.dispose(); this.music = new Music(this.audio, this.tuning.music.volume * this.level, this.playing, this.seed, this.tuning.music.src, musicAhead()); this.voices(); }
         if (what === "sfx-nonfinite" && this.sfx) { this.sfx.dispose(); this.sfx = null; this.sfxCues = null; this.ensureSfx(); }
       },
     );
@@ -191,7 +191,7 @@ export class Sound {
     // object while nothing changes there)
     const night0 = nightStyle(this.style, game.musicSet), night = this.lab ? this.lab.styled(night0, game.musicSet) : night0;
     if (night !== this.night) { this.night = night; this.music?.engine?.setStyle(night); }
-    if (this.music) this.music.shed = this.valve.level; // (the watchdog's rebuilt music too)
+    if (this.music) { this.music.shed = this.valve.level; this.music.aheadAllowed = !this.lab; } // (the watchdog's rebuilt music too; the lab's levels are the live engine's)
     if (this.music?.engine && this.audio) this.music.engine.lead = (this.audio.baseLatency ?? 0) + ((this.audio as AudioContext & { outputLatency?: number }).outputLatency ?? 0); // (the notes sent early by the context's latency: heard on the beat shown)
     if (this.sfx) this.sfx.shed = this.valve.level;
     const t1 = performance.now();
@@ -218,6 +218,9 @@ export class Sound {
 /** What the effects' kit is given before its own sfx.volume: the music's built volume (0.5), as the kit was built with before
  *  the sliders (sfxKit.ts setVolume: this times the tuning's sfx.volume on its bus). */
 const SFX_BASE = 0.5;
+
+/** The music drawn ahead (platform/audio/musicAhead.ts; Ed, 2026-10-27: the default, `?music=live` the old way). */
+function musicAhead(): boolean { try { return new URLSearchParams(location.search).get("music") !== "live"; } catch { return true; } }
 
 /** `?audio=lite|full` for one load (shed.ts). */
 function audioParam(): string | null { try { return new URLSearchParams(location.search).get("audio"); } catch { return null; } }
