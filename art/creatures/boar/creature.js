@@ -4,6 +4,7 @@ export const CREATURE_BOAR = {
   movement: {
     speed: 14,
     accel: 25,
+    momentum: { turn: 160 },
     fight: [{ kind: "arrive", w: 1 }, { kind: "separation", w: 0.5, radius: 7 }],
     move: {
       kind: "charge",

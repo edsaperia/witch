@@ -7,6 +7,7 @@ import raw from "../../config/movement.json";
 import { sectionOf } from "./creatureConfig";
 import type { Creature } from "./creatures";
 import { hash2 } from "./random";
+import { limitTurn } from "./momentum";
 
 export type BehaviourKind = "arrive" | "keepRange" | "orbit" | "strafe" | "slot" | "separation" | "cohesion" | "wander" | "dodge" | "light";
 export interface Behaviour { kind: BehaviourKind; w: number; near?: number; far?: number; radius?: number; swap?: number }
@@ -27,6 +28,8 @@ export interface Profile {
   speed?: number;
   /** Its sprint closing in from afar (m/s; else combat.pursuitRun): slow kinds (a snail) don't sprint. */
   pursuit?: number;
+  /** Its own momentum chasing the witch, over its class's (rules/momentum.ts; tuning creatureMomentum). */
+  momentum?: Partial<import("./momentum").Momentum>;
   /** How quickly it changes velocity (m/s per second): heavy creatures turn slowly. */
   accel: number;
   fight: Behaviour[];
@@ -125,6 +128,8 @@ export interface SteerContext {
   fire?: number;
   /** Where "arrive" makes for, if not `want` (committed strikes, tuning dodge.a: right in on her, striking as it comes). */
   arriveAt?: number;
+  /** Its momentum chasing her (rules/momentum.ts): its heading turns no faster than its limit. */
+  momentum?: import("./momentum").Resolved | null;
 }
 
 /** Steer a fighting creature by its profile for one step. Returns whether it may start an attack now. */
@@ -221,7 +226,9 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
   // A behaviour asking for more than full speed is held to it; then ease toward it at its acceleration.
   const m = Math.hypot(vx, vz);
   if (m > 1) { vx /= m; vz /= m; }
-  const tx = vx * x.speed, tz = vz * x.speed, ax = tx - (c.vx ?? 0), az = tz - (c.vz ?? 0), am = Math.hypot(ax, az), step = (P.accel * x.dt * FIGHT.speed) / FIGHT.momentum;
+  let tx = vx * x.speed, tz = vz * x.speed;
+  if (x.momentum) [tx, tz] = limitTurn(c.vx ?? 0, c.vz ?? 0, tx, tz, x.momentum, x.dt, FIGHT.momentum); // (momentum: rules/momentum.ts)
+  const ax = tx - (c.vx ?? 0), az = tz - (c.vz ?? 0), am = Math.hypot(ax, az), step = (P.accel * x.dt * FIGHT.speed) / FIGHT.momentum;
   const k = am > step ? step / am : 1;
   c.vx = (c.vx ?? 0) + ax * k; c.vz = (c.vz ?? 0) + az * k;
   c.x += c.vx * x.dt; c.z += c.vz * x.dt;

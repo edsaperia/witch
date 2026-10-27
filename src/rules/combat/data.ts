@@ -183,6 +183,8 @@ export interface CombatState {
   mirages?: import("./packs").Mirage[];
   /** The raccoons' decoys (rules/combat/packs.ts): the one waving draws her 💌s in its way, till then. */
   decoys?: { id: number; until: number; r: number; side: string }[];
+  /** Each witch's places over the last moment (rules/momentum.ts: creatures chasing her steer for where she was). */
+  herTrail?: Map<number, { t: number; x: number; z: number }[]>;
 }
 export interface Trail { x: number; z: number; r: number; until: number; side: State; slow: number; from: number }
 
