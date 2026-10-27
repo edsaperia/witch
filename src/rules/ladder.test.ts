@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { inEffect, LADDER_KNOBS, newLadder, pending, RUNGS, setMode, stepLadder, type LadderState } from "./ladder";
+import { inEffect, LADDER_KNOBS, loadEffects, newLadder, pending, RUNGS, setMode, stepLadder, type LadderState } from "./ladder";
 
 const at = (id: string) => RUNGS.findIndex(r => r.id === id);
 /** `n` one-second windows at `ms` against a 16.7 ms budget. */
@@ -52,11 +52,28 @@ describe("the quality ladder", () => {
   });
 
   it("marks load rungs passed over as pending, and drops them when climbing back over", () => {
-    let s = run(newLadder(), 25, 5);
-    expect(pending(s).adds).toEqual([]); // (none built yet: nothing pending)
-    // (with the load rungs as if built, as at the next load)
+    // (down from the far edge's dither to the squeeze, over the density and the blend: wanted from the next load, not in effect now)
+    let s = run(newLadder(at("farDither")), 25, LADDER_KNOBS.settle + LADDER_KNOBS.downAfter);
+    expect(s.rung).toBe(at("squeeze"));
+    expect(pending(s)).toEqual({ adds: [at("density90"), at("blend40")], drops: [] });
+    // (loaded there, as at the next load: in effect, and nothing pending)
     s = { ...newLadder(at("still")), loaded: at("still") };
-    expect(RUNGS.filter((r, i) => r.when === "load" && r.built && inEffect(s, i))).toEqual(RUNGS.filter(r => r.when === "load" && r.built));
+    expect(inEffect(s, at("density90")) && inEffect(s, at("blend40"))).toBe(true);
+    expect(inEffect(s, at("density80"))).toBe(false);
+    expect(pending(s)).toEqual({ adds: [], drops: [] });
+    // (climbing back over them: dropped from the next load, but in effect till then)
+    for (let k = 0; k < 3; k++) s = run(s, 8, LADDER_KNOBS.settle + LADDER_KNOBS.upAfter + 1); // (still, the squeeze, the far edge)
+    expect(s.rung).toBeLessThan(at("density90"));
+    expect(pending(s).drops).toEqual([at("density90"), at("blend40")]);
+    expect(inEffect(s, at("density90"))).toBe(true);
+  });
+
+  it("makes a night with the load rungs in effect at its rung", () => {
+    expect(loadEffects(0)).toEqual({ density: 1, blend: null, px: null });
+    expect(loadEffects(at("density90"))).toEqual({ density: 0.9, blend: null, px: null });
+    expect(loadEffects(at("still"))).toEqual({ density: 0.9, blend: 40, px: null });
+    expect(loadEffects(at("density80"))).toEqual({ density: 0.8, blend: 40, px: null }); // (×0.8 in all, not 0.9 × 0.8)
+    expect(loadEffects(at("px4"))).toEqual({ density: 0.8, blend: 40, px: 4 });
   });
 
   it("does nothing pinned or off; off is full quality", () => {

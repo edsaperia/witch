@@ -20,15 +20,22 @@ export interface Rung {
 export const RUNGS: readonly Rung[] = [
   { id: "full", label: "full quality", when: "live", built: true },
   { id: "farDither", label: "the forest's far edge dithered, not faded", when: "live", built: true },
-  { id: "density90", label: "trees ×0.9", when: "load", built: false },
-  { id: "blend40", label: "area borders blend over 40 m", when: "load", built: false },
+  { id: "density90", label: "trees ×0.9", when: "load", built: true },
+  { id: "blend40", label: "area borders blend over 40 m", when: "load", built: true },
   { id: "squeeze", label: "tall trees squeezed", when: "live", built: true },
   { id: "still", label: "leaves still, no trunk shadows", when: "live", built: true },
   { id: "hardCut", label: "the cut-away's crowns solid", when: "live", built: true },
-  { id: "density80", label: "trees ×0.8", when: "load", built: false },
+  { id: "density80", label: "trees ×0.8", when: "load", built: true },
   { id: "cap30", label: "a steady 30 fps", when: "live", built: true },
-  { id: "px4", label: "chunkier pixels (px 4)", when: "load", built: false },
+  { id: "px4", label: "chunkier pixels (px 4)", when: "load", built: true },
 ];
+
+/** What the load rungs in effect at `rung` make a night with: the forest's density times `density`, the area blend's band at most
+ *  `blend` metres (its width), the art pixel `px`; null where none applies. */
+export function loadEffects(rung: number): { density: number; blend: number | null; px: number | null } {
+  const on = (id: string) => { const i = RUNGS.findIndex(r => r.id === id); return RUNGS[i].built && i <= rung; };
+  return { density: on("density80") ? 0.8 : on("density90") ? 0.9 : 1, blend: on("blend40") ? 40 : null, px: on("px4") ? 4 : null };
+}
 
 export interface LadderKnobs {
   /** Over this share of the budget, a window counts as slow; under `under`, as roomy. */
