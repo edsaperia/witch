@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { TUNING } from "../../rules/tuning";
 import { toEvolve } from "../../rules/berries";
-import { dotAt, rankColour, rankOf, shownDots, youthDots, RANKS_DEFAULT } from "./ranks";
+import { areaTopRanks, dotAt, EMPTY_STONE, rankColour, rankOf, shownDots, stoneRank, youthDots, RANKS_DEFAULT } from "./ranks";
 
 describe("rank sigils", () => {
   it("a youth's dots are its berries to adult less the last (eaten at a placed sigil), read from the rules", () => {
@@ -38,5 +38,17 @@ describe("rank sigils", () => {
     expect(r[0] > 0.9 && r[1] < 0.4).toBe(true); // red
     expect(y[0] > 0.9 && y[1] > 0.8 && y[2] < 0.4).toBe(true); // yellow
     expect(TUNING.leash.ranks?.on ?? RANKS_DEFAULT.on).toBe(false); // (off until Ed has played it: ?sigils=new)
+  });
+  it("a rune stone takes its area's top rank among those home, not hers; unlit with nobody home", () => {
+    const at = (cell: [number, number], level: 0 | 1 | 2 | 3, more = {}) => ({ cell, level, leashed: false, ...more });
+    const top = areaTopRanks([
+      at([0, 0], 0), at([0, 0], 1), at([0, 0], 3, { leashed: true }), // (her legend doesn't count)
+      at([1, 0], 2), at([1, 0], 3), // (a legend home: yellow)
+      at([2, 0], 2, { gone: true }), at([2, 0], 1, { fleeUntil: 5 }), at([2, 0], 2, { dancing: true }), at([2, 0], 2, { travelling: true }),
+    ]);
+    expect(stoneRank(top, [0, 0])).toBe(1);
+    expect(stoneRank(top, [1, 0])).toBe(3);
+    expect(stoneRank(top, [2, 0])).toBe(EMPTY_STONE); // (everyone gone, fled, dancing or travelling)
+    expect(stoneRank(top, [5, 5])).toBe(EMPTY_STONE);
   });
 });
