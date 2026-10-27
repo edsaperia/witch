@@ -1,0 +1,4 @@
+{
+  "reason": "Berries (Ed, 2026-10-27): a youth's cost to adult halved to 3 / 4 / 8 (cost.per 7.25) and half as many berry patches (bushesPerArea 10, perArea [5, 8]).",
+  "rules": { "berries": "fewer bushes and berries on the map, so the berry state differs from the first fingerprint" }
+}
