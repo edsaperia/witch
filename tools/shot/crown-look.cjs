@@ -7,12 +7,12 @@
 //   party-<1|2>-dancefloor.png       the party areas' runs of lights as tuned and twice as many (on foot under the home area's first run)
 // then times drawn frames before and after the look at each view (cost.json: relative only, the cloud's software renderer).
 //   npm run build && node tools/shot/crown-look.cjs [out dir]   (SEED=160271, SIZE=1900x1240, ROOM=parlour, WARM=1, RIM=1,
-//   FRAMES=4 timed a variant, ONLY=lights,look,party,cost, DIST=dist)
+//   FRAMES=4 timed a variant, ROUNDS=3 of each (the median), ONLY=lights,look,party,cost, DIST=dist)
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist"));
 const SEED = process.env.SEED || "160271", [W, H] = (process.env.SIZE || "1900x1240").split("x").map(Number), ROOM = process.env.ROOM || "parlour";
-const WARM = Number(process.env.WARM ?? 1), RIM = Number(process.env.RIM ?? 1), FRAMES = Number(process.env.FRAMES ?? 4);
+const WARM = Number(process.env.WARM ?? 1), RIM = Number(process.env.RIM ?? 1), FRAMES = Number(process.env.FRAMES ?? 4), ROUNDS = Number(process.env.ROUNDS ?? 3);
 const ONLY = new Set((process.env.ONLY || "lights,look,party,cost").split(","));
 const out = path.resolve(process.argv[2] || path.join(__dirname, "../../previews/shot/crown-look"));
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".woff2": "font/woff2", ".ogg": "audio/ogg" };
@@ -62,9 +62,10 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
       for (const v of ["room", "terrace", "approach"]) {
         await VIEWS[v](); await knobs({ lights: 1, warm: 0, rim: 0 }); await settle();
         const r = { before: [], after: [] };
-        for (let i = 0; i < 2; i++) for (const [n, k] of [["before", { warm: 0, rim: 0 }], ["after", { warm: WARM, rim: RIM }]]) { await knobs(k); await timed(); r[n].push(await timed()); }
-        const mean = a => a.reduce((x, y) => x + y, 0) / a.length;
-        cost[v] = { before: +mean(r.before).toFixed(1), after: +mean(r.after).toFixed(1), change: +((mean(r.after) / mean(r.before) - 1) * 100).toFixed(1) };
+        for (let i = 0; i < ROUNDS; i++) for (const [n, k] of [["before", { warm: 0, rim: 0 }], ["after", { warm: WARM, rim: RIM }]]) { await knobs(k); await timed(); r[n].push(await timed()); }
+        // (the median of the rounds: now and then a round's frames come back far quicker than any other, a frame not really drawn)
+        const mid = a => [...a].sort((x, y) => x - y)[Math.floor(a.length / 2)];
+        cost[v] = { before: +mid(r.before).toFixed(1), after: +mid(r.after).toFixed(1), change: +((mid(r.after) / mid(r.before) - 1) * 100).toFixed(1), rounds: r };
         log("cost", v, JSON.stringify(cost[v]));
       }
       fs.writeFileSync(path.join(out, "cost.json"), JSON.stringify({ size: `${W}x${H}`, frames: FRAMES, warm: WARM, rim: RIM, ms: cost }, null, 2));
