@@ -158,6 +158,7 @@ export class MusicAhead {
     if (B.state === "dropped" || this.bars.get(B.bar) !== B) return;
     const E = this.engine, c = this.ctx, now = c.currentTime, at = E.audioAt(B.g);
     this.stats.rendered++;
+    if (!Number.isFinite(at)) { B.state = "dropped"; return; } // (the timeline reset while it rendered, a new night: nowhere to put it)
     if (at < now) this.stats.late++;
     if (at + B.dur < now) { B.state = "dropped"; return; } // (the whole bar past: the hitch was longer than the queue)
     const bus = E.bus, sung = E.style.form?.sung.part, voiceIn = sung ? E.voiceIn(sung) : null;
