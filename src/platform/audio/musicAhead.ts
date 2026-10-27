@@ -94,6 +94,13 @@ export class MusicAhead {
     for (const [b, B] of this.bars) if (B.state !== "rendering" && E.audioAt(B.g + B.dur) + TAIL < now) this.bars.delete(b); // (heard and rung out)
   }
 
+  /** The game's beat moved on by `lost` seconds to where the music is (rules/beat.ts shiftBeat; the engine's shifted with it):
+   *  the bars queued the same on the audio clock, their music times in the game's new reckoning. */
+  shiftTime(lost: number): void {
+    for (const B of this.bars.values()) B.g -= lost;
+    if (this.on) this.anchor = this.engine.anchorAt;
+  }
+
   /** The bar holding music time `g` (fractional). */
   private barAt(g: number, clock: BeatClock): number {
     let lo = Math.floor(g / 4) - 64, hi = lo + 256; // (a bar's at least 0.5 s: 4 beats at 480 bpm)

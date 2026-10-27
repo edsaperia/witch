@@ -151,7 +151,7 @@ export class Sound {
     );
     setInterval(() => { try { watchdog.check(); } catch { /* never let the watchdog itself stop anything */ } }, 1000);
     const r2 = (x: number) => Math.round(x * 100) / 100;
-    playtest().audioState = () => ({ state: this.audio?.state ?? "none", volume: this.music ? r2((this.music.output as GainNode).gain.value) : 0, distort: r2(this.lastMix?.distort ?? 0), distance: Math.round(Math.min(9999, this.lastMix?.distance ?? 9999)), mends: watchdog.mends.length, shed: this.valve.level, ...(this.music ? { gap: r2(this.music.stats.gap), resyncs: this.music.stats.resyncs, late: this.music.stats.late, ahead: r2(this.music.stats.ahead ?? 0) } : {}), ...(this.music?.ahead ? { drawn: this.music.ahead.drawing, bars: this.music.ahead.stats.rendered, barsLate: this.music.ahead.stats.late, barsDropped: this.music.ahead.stats.dropped } : {}) }); // (drawn ahead: the bars, docs/notes/music.md "Music ahead")
+    playtest().audioState = () => ({ state: this.audio?.state ?? "none", volume: this.music ? r2((this.music.output as GainNode).gain.value) : 0, distort: r2(this.lastMix?.distort ?? 0), distance: Math.round(Math.min(9999, this.lastMix?.distance ?? 9999)), mends: watchdog.mends.length, shed: this.valve.level, ...(this.music ? { gap: r2(this.music.stats.gap), resyncs: this.music.stats.resyncs, late: this.music.stats.late, ahead: r2(this.music.stats.ahead ?? 0) } : {}), ...(this.music?.ahead ? { drawn: this.music.ahead.drawing, bars: this.music.ahead.stats.rendered, barsLate: this.music.ahead.stats.late, barsDropped: this.music.ahead.stats.dropped, beatShifts: this.beatShifts, beatShifted: r2(this.beatShifted) } : {}) }); // (drawn ahead: the bars, docs/notes/music.md "Music ahead")
   }
 
   private live: () => boolean = () => false;
@@ -174,6 +174,9 @@ export class Sound {
   }
   private bumped = false;
   private startRuns = 0;
+  /** Times the game's beat was moved on to the music's, and by how many seconds in all (the playtest log's). */
+  private beatShifts = 0;
+  private beatShifted = 0;
   /** This frame's audio work by part (ms), for the stall log's slow audio frames (main.ts). */
   parts: Record<string, number> = {};
 
@@ -198,6 +201,9 @@ export class Sound {
     // (the Music Lab's jump on the cue; its bedroom preview on its own clock, the mix whole, with no night playing)
     const labCue = this.lab ? this.lab.cued(cue) : cue, pv = this.lab?.previewTime(performance.now() / 1000) ?? null;
     const mix = pv ? { ...this.lastMix, volume: 1, cutoff: 16000, distort: 0 } : this.lastMix;
+    // (the audio clock the master: a stall's lost time moves the game's beat on to the music's, docs/notes/music.md "Music ahead")
+    const lost = !pv && !game.clock.paused ? this.music?.keepBeat(game.clock.time, game.beat) ?? 0 : 0;
+    if (lost) { this.beatShifts++; this.beatShifted += lost; }
     this.music?.update(mix, labCue, pv ? pv.time : game.clock.time, pv ? pv.clock : game.beat, pv ? true : !game.clock.paused, this.tuning.music, pv ? 1 : game.timeScale ?? 1, pv ? 0 : partyOverEase(game, OVER_DEBUG), pv || !game.witch.perch ? 0 : slowAmount(game.timeScale ?? 1, slowest(this.tuning))); // (the world slowed in a legend's circle or the treehouse: the music with it, and muffled there)
     if (this.lab && this.music?.engine && this.audio) this.lab.frame(this.music.engine, this.audio);
     const t2 = performance.now();
