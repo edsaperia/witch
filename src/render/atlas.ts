@@ -2,6 +2,7 @@
 // so a whole set of sprites draws as one instanced batch.
 import * as THREE from "three";
 import { groundOf, packPixels, type AtlasPixels, type Baked, type Frame, type FrameGround } from "./artBuild";
+import { gpuKind, type GpuKind } from "./gpuLedger";
 
 export type { Baked, Frame, FrameGround };
 export { groundOf };
@@ -27,8 +28,9 @@ function texture(data: Uint8Array, w: number, h: number): THREE.DataTexture {
   return t;
 }
 
-export function atlasFromPixels(p: AtlasPixels): Atlas {
-  return { albedo: texture(p.albedo, p.width, p.height), normal: texture(p.normal, p.width, p.height), frames: p.frames };
+/** `kind`: the GPU ledger's row for its pages (render/gpuLedger.ts). */
+export function atlasFromPixels(p: AtlasPixels, kind: GpuKind = "props"): Atlas {
+  return { albedo: gpuKind(texture(p.albedo, p.width, p.height), kind), normal: gpuKind(texture(p.normal, p.width, p.height), kind), frames: p.frames };
 }
 
 /** A stand-in until a set arrives from the art workers (fast start (b): the start's own art is drawn off the page): `n` frames,
