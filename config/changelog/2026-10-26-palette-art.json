@@ -1,5 +1,5 @@
 {
-  "version": 4998,
+  "version": 5068,
   "items": [
     "The art takes much less graphics memory: every sprite is stored as palette colours, drawn exactly as before"
   ]
