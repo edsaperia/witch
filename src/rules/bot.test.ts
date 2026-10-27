@@ -39,7 +39,8 @@ describe("the bot", () => {
     expect(g.witch.seated).toBeFalsy();
     expect(Math.hypot(g.witch.x - home.x, g.witch.z - home.z)).toBeGreaterThan(30);
     expect([...said].some(s => /^(flying to|inviting) the /.test(s))).toBe(true);
-    expect(g.leash.stack.length + g.leash.placed.length).toBeGreaterThan(0); // (leashed: their runes picked up)
+    // (leashed: their runes picked up; or, knocked out lately, let go happy where they stood till she fetches them: rules/knockout.ts letGoHappy)
+    expect(g.leash.stack.length + g.leash.placed.length + g.creatures.filter(c => c.dropped && !c.gone).length).toBeGreaterThan(0);
   });
 
   // (seeds 11 and 33: the two ways it stood idle with a full leash and never finished the night, 2026-10-26: on 11 its home guards

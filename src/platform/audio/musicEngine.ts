@@ -123,6 +123,22 @@ export class MusicEngine {
   private g0 = NaN;
   private a0 = 0;
   private rate = 1;
+  /** Drawn ahead (platform/audio/musicAhead.ts; docs/notes/music.md "Music ahead"): from `from` to `to` (audio time) the main
+   *  notes and their bus automation are the bars drawn ahead, this engine playing the hooks' parts alone (and a legend's
+   *  clearing layer, as ever); and while it's set, the timeline never eased or re-anchored to the game (the bars are fixed on
+   *  the audio clock: the audio clock is the music's), but after a pause, a new run or a jump in time. */
+  handoff = { from: Infinity, to: Infinity };
+  /** The music's own time now (game time as the music has it), and the audio time a music time is heard at (early by the lead). */
+  musicTime(now = this.ctx.currentTime): number { return this.g0 + (now - this.a0) * this.rate; }
+  audioAt(g: number): number { return this.a0 + (g - this.g0) / this.rate - this.leadNow; }
+  /** Its timeline's anchor: the audio time music time 0 is at (the lead left out: that eases on its own). */
+  get anchorAt(): number { return this.a0 - this.g0 / this.rate; }
+  /** The game's beat moved on by `lost` seconds to where the music is (rules/beat.ts shiftBeat): its timeline the same on the
+   *  audio clock, in the game's new reckoning. */
+  shiftTime(lost: number): void { if (Number.isFinite(this.g0)) this.g0 -= lost; }
+  /** Whether its timeline is anchored (it's been played since its last jump). */
+  get anchored(): boolean { return Number.isFinite(this.g0); }
+  private wasPlaying = false;
   /** Continuity, for the checks (tools/music-lab/flight.cjs) and the playtest log: times the timeline was re-anchored,
    *  sixteenths a stall made late (held and played, not dropped), audio seconds left with nothing scheduled between one
    *  sixteenth and the next, and how far ahead it schedules now (s). */
@@ -278,6 +294,8 @@ export class MusicEngine {
   }
   /** The recorded voices the sample patches sing (samples/voices: platform/audio/voiceSamples.ts loads them). */
   private recordings = new Map<string, AudioBuffer>();
+  /** The recordings it sings from (a renderer drawing ahead sings from the same). */
+  get recorded(): Record<string, AudioBuffer> { return Object.fromEntries(this.recordings); }
   setRecordings(recs: Record<string, AudioBuffer>): void { for (const [k, b] of Object.entries(recs)) this.recordings.set(k, b); }
   /** A whispering recording for the voice effects' vocoder (the CC0 whispers). */
   private whisperRec: AudioBuffer | null = null;
@@ -320,7 +338,8 @@ export class MusicEngine {
     for (const ch of this.channels.values()) if (ch.fx?.warm()) break; // (one piece of the effects' work put off, a frame)
     const now = this.ctx.currentTime, stepNow = beatAt(clock, gameTime) * 4;
     const want = Math.max(0, Math.min(MusicEngine.maxLead, this.lead)); this.leadNow += Math.max(-.002, Math.min(.002, want - this.leadNow)); const L = this.leadNow;
-    if (!playing) { this.nextStep = -1; this.cNext = -1; this.heardTo = -1; this.lastNow = -1; return; }
+    if (!playing) { this.nextStep = -1; this.cNext = -1; this.heardTo = -1; this.lastNow = -1; this.wasPlaying = false; return; }
+    const drawn = Number.isFinite(this.handoff.from), resumed = !this.wasPlaying; this.wasPlaying = true;
     // a knockdown just heard of: the record scratched (sfx), the music cut now, notes already scheduled with it
     const knocks = cue.knockdowns?.length ?? 0;
     if (knocks < this.knocksHeard) this.knocksHeard = knocks; // (a new run)
@@ -343,20 +362,22 @@ export class MusicEngine {
     ahead = Math.max(ahead, this.lagAhead);
     this.stats.ahead = ahead;
     const err = gameTime - (this.g0 + (now - this.a0) * rate), slew = MusicEngine.slew * Math.min(dtA, 0.05) * rate; // (a long frame no bigger a nudge than an ordinary one)
-    if (!Number.isFinite(err) || err > 0.25 * rate) { if (Number.isFinite(this.g0)) this.stats.resyncs++; this.g0 = gameTime; this.a0 = now; this.nextStep = -1; }
+    if (drawn && Number.isFinite(err) && !resumed && err > -30 && err < 2) { /* (drawn ahead: the timeline the audio clock's, held; only a jump in time or a fresh start re-anchors) */ }
+    else if (!Number.isFinite(err) || err > 0.25 * rate || (drawn && resumed)) { if (Number.isFinite(this.g0) && !(drawn && resumed)) this.stats.resyncs++; this.g0 = gameTime; this.a0 = now; this.nextStep = -1; }
     else if (err < -6 * rate) { this.g0 += err + 6 * rate; this.stats.resyncs++; } // (a game running far slower than its audio for long: the music waits, never more than 6 s ahead)
     else this.g0 += Math.max(-slew, Math.min(slew, err * 0.05));
     const audioAt = (g: number) => this.a0 + (g - this.g0) / rate - L; // (early by the lead: heard when it's shown)
-    if (this.nextStep < 0 || this.nextStep < stepNow - 1 || this.nextStep > stepNow + 64) {
-      this.nextStep = Math.ceil(stepNow);
+    const stepMusic = drawn ? beatAt(clock, this.musicTime(now)) * 4 : stepNow; // (drawn ahead: where the music is, not the game)
+    if (this.nextStep < 0 || this.nextStep < stepMusic - 1 || this.nextStep > stepMusic + 64) {
+      this.nextStep = Math.ceil(stepMusic);
       // (not what's already scheduled, unless time went back: a new run, a jump)
-      if (this.lastStep < stepNow + 64 && this.lastStep >= stepNow - 64) this.nextStep = Math.max(this.nextStep, this.lastStep + 1);
+      if (this.lastStep < stepMusic + 64 && this.lastStep >= stepMusic - 64) this.nextStep = Math.max(this.nextStep, this.lastStep + 1);
     }
     this.bpmNow = bpmAt(clock, gameTime) * rate;
     this.delay.delayTime.setTargetAtTime(Math.min(4, (this.style.mix.delayBeats * 60) / bpmAt(clock, gameTime) / rate), now, 0.05);
     // A frame longer than what was scheduled ahead: the next sixteenth is already late. Played now rather than
     // dropped: the music held for the hitch, then on from where it was (the slew takes it back into step).
-    if (this.heardTo >= 0 && this.nextStep >= 0) { const t = audioAt(timeAt(clock, this.nextStep / 4)); if (t < now) { this.a0 += now + 0.005 - t; this.stats.late++; } }
+    if (this.heardTo >= 0 && this.nextStep >= 0) { const t = audioAt(timeAt(clock, this.nextStep / 4)); if (t < now) { this.stats.late++; if (!drawn) this.a0 += now + 0.005 - t; } } // (drawn ahead: the bars are fixed, so the hooks' late steps go unplayed)
     for (;;) {
       const g = timeAt(clock, this.nextStep / 4), t = this.a0 + (g - this.g0) / rate - L;
       if (t >= now + ahead) break;
@@ -391,8 +412,14 @@ export class MusicEngine {
     for (let s = first; ; s++) {
       const g = timeAt(clock, s / 4);
       if (g >= from + seconds) break;
+      if (this.stems) this.bpmNow = bpmAt(clock, g); // (a renderer's: the tempo it's drawn at, as the live engine has it)
       this.step(cue, s, at + (g - from), 60 / bpmAt(clock, g) / 4);
     }
+  }
+
+  /** The bus's automation from `t` on let go (the bars drawn ahead from there dropped, to be drawn again). */
+  cancelBusFrom(t: number): void {
+    for (const p of [this.tone.frequency, this.duckBus.gain, this.gate.gain]) p.cancelScheduledValues(t);
   }
 
   /** Stop scheduling and forget the plans (a jump in the timeline). */
@@ -416,13 +443,14 @@ export class MusicEngine {
   private step(cue: MusicCue, step: number, t: number, sps: number): void {
     const S = this.style, B = S.blockBars, bar = Math.floor(step / 16), s = step - bar * 16;
     // knocked down: nothing till her new record starts, then the gate open on its first sixteenth
-    if (silentAt(cue, step / 16)) { if (!this.gated) { this.sink.gate(false, t); this.gated = true; } return; }
-    if (this.gated) { this.sink.gate(true, t); this.gated = false; }
+    const drawn = t >= this.handoff.from && t < this.handoff.to; // (drawn ahead: the main notes and their automation the bars')
+    if (silentAt(cue, step / 16)) { if (!this.gated) { if (!drawn) this.sink.gate(false, t); this.gated = true; } return; }
+    if (this.gated) { if (!drawn) this.sink.gate(true, t); this.gated = false; }
     const plan = this.conductor.plan(cue, bar);
     // in a block's last bar, the next block's plan (for the fill): fixed a bar early
     const next = bar % B === B - 1 ? this.conductor.plan(cue, bar + 1) : null;
     this.current = { plan, bar, step };
-    if (s === 0) {
+    if (s === 0 && !drawn) {
       // the section's low-pass over this bar
       const sec = resolveSection(S, plan.section), barIn = bar - plan.start;
       // (while the speakers boot, the low-pass opens with them rather than over the block)
@@ -431,7 +459,8 @@ export class MusicEngine {
       const f0 = sectionCutoff(sec, boot ? b0 : barIn / plan.bars), f1 = sectionCutoff(sec, boot ? b1 : (barIn + 1) / plan.bars);
       this.sink.tone(f0, f1, t, 16 * sps);
     }
-    const events = notesAt(S, plan, next, step, { ...this.formAt(cue, bar), siege: cue.siege, party: cue.party, legend: cue.legend, only: "main", build: cue.speakerBars !== undefined ? bootLayers(cue, bar) : undefined });
+    const all = notesAt(S, plan, next, step, { ...this.formAt(cue, bar), siege: cue.siege, party: cue.party, legend: cue.legend, only: "main", build: cue.speakerBars !== undefined ? bootLayers(cue, bar) : undefined });
+    const events = drawn ? all.filter(e => e.hook) : all; // (drawn ahead: the hooks' parts alone here, live)
     const swing = step % 2 === 1 ? S.swing * sps : 0;
     this.playAll(events, e => t + (e.straight ? 0 : swing) + e.offset * sps, sps);
   }
@@ -620,7 +649,7 @@ export class MusicEngine {
     s.loop = length > 1.5;
     if (this.notePitch !== 1) s.playbackRate.value = this.notePitch; // (the tape slowing: hats and snares drop too)
     const at = t + (this.stems ? this.phaseAt : 0); // (where in the noise: by the music's time, a renderer's the same as live's)
-    s.start(t, ((at * 7.31) % 1) * 0.5);
+    s.start(t, ((((at * 7.31) % 1) + 1) % 1) * 0.5); // (never a negative offset: a renderer's time against the first's can be)
     s.stop(t + length);
     return s;
   }
