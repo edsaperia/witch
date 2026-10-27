@@ -185,6 +185,8 @@ export interface CombatState {
   mirages?: import("./packs").Mirage[];
   /** The raccoons' decoys (rules/combat/packs.ts): the one waving draws her 💌s in its way, till then. */
   decoys?: { id: number; until: number; r: number; side: string }[];
+  /** Each witch's places over the last moment (rules/momentum.ts: creatures chasing her steer for where she was). */
+  herTrail?: Map<number, { t: number; x: number; z: number }[]>;
   /** The composable attacks in flight (rules/attacks/engine.ts), made at the first cast of one; and the library they're named from
    *  (config/attacks.json, with the Fight Arena's own: ?attack=). */
   spells?: import("../attacks/engine").SpellState;

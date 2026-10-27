@@ -4075,6 +4075,123 @@
       ],
       "additionalProperties": false
     },
+    "creatureMomentum": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "strikes": {
+          "type": "boolean"
+        },
+        "turn": {
+          "type": "number",
+          "minimum": 0
+        },
+        "delay": {
+          "type": "number",
+          "minimum": 0
+        },
+        "chaseLead": {
+          "type": "number",
+          "minimum": 0
+        },
+        "strikeLead": {
+          "type": "number",
+          "minimum": 0
+        },
+        "classes": {
+          "type": "object",
+          "properties": {
+            "heavy": {
+              "type": "object",
+              "properties": {
+                "turn": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "k": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "delay": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "turn",
+                "k",
+                "delay"
+              ],
+              "additionalProperties": false
+            },
+            "normal": {
+              "type": "object",
+              "properties": {
+                "turn": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "k": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "delay": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "turn",
+                "k",
+                "delay"
+              ],
+              "additionalProperties": false
+            },
+            "light": {
+              "type": "object",
+              "properties": {
+                "turn": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "k": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "delay": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "turn",
+                "k",
+                "delay"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "heavy",
+            "normal",
+            "light"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "on",
+        "strikes",
+        "turn",
+        "delay",
+        "chaseLead",
+        "strikeLead",
+        "classes"
+      ],
+      "additionalProperties": false
+    },
     "attackFx": {
       "type": "object",
       "properties": {
@@ -11904,6 +12021,7 @@
     "leash",
     "bond",
     "fight",
+    "creatureMomentum",
     "attackFx",
     "combat",
     "notice",
