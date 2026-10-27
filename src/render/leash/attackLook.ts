@@ -34,7 +34,7 @@ const FALLS: Record<string, number> = { burst: -3, shatter: 9, splash: 10, ring:
  *  point (x, z), a segment from (x, z) to (ax, az) its width wide, a path (points: x, z pairs), a disc or ring r round (with inner,
  *  a donut's), a cone from (x, z) along heading (radians), angle wide (degrees) and r long; y (the look's own), how high over the
  *  ground a mark on someone goes (their top). */
-export interface TelegraphShape { type?: string; x: number; z: number; ax?: number; az?: number; r?: number; inner?: number; width?: number; angle?: number; heading?: number; points?: number[]; y?: number }
+export interface TelegraphShape { type?: string; x: number; z: number; x2?: number; z2?: number; ax?: number; az?: number; r?: number; inner?: number; width?: number; angle?: number; heading?: number; points?: number[]; y?: number }
 /** A live telegraph (the grammar's s.telegraphs): its kind, its shape, when it began and when it fires; n, a countdown's pips. */
 export interface LiveTelegraph { kind: string; shape: TelegraphShape; start: number; fire: number; n?: number }
 
@@ -335,7 +335,8 @@ export class AttackLook {
   /** Any live telegraph, by its kind (the attack grammar's TelegraphKind), drawn from its shape alone. */
   telegraph(t: LiveTelegraph, time: number, up = false): void {
     const S = t.shape, k = clamp01((time - t.start) / Math.max(0.01, t.fire - t.start)), left = t.fire - time;
-    const seg = (): [number, number, number, number] => [S.x, S.z, S.ax ?? S.x, S.az ?? S.z];
+    const seg = (): [number, number, number, number] => [S.x, S.z, S.x2 ?? S.ax ?? S.x, S.z2 ?? S.az ?? S.z];
+    if (S.type === "polygon" && S.points && t.kind !== "none") { this.polygon(S.points, k, left, time, up); return; }
     switch (t.kind) {
       case "lane": if (S.points && S.points.length >= 4) { const P = S.points; for (let i = 0; i + 3 < P.length; i += 2) this.lane(P[i], P[i + 1], P[i + 2], P[i + 3], (S.width ?? 1) / 2, k, left, time, up); } else { const [a, b, c, d] = seg(); this.lane(a, b, c, d, (S.width ?? 1) / 2, k, left, time, up); } break;
       case "landing": this.ring(S.x, S.z, S.r ?? 2, k, left, time, up); break;
@@ -351,6 +352,31 @@ export class AttackLook {
       case "safeCircle": this.hatch(S.x, S.z, S.r ?? 4, (S.r ?? 4) + 2.5, up); this.ring(S.x, S.z, S.r ?? 4, 0, left, time, up); break;
       default: break; // ("none")
     }
+  }
+
+  /** A polygon's edges dashed (a triangulation's ground, points x, z pairs), a second outline closing on its middle (fill). */
+  polygon(P: number[], fill: number, left: number, time: number, up = false): void {
+    const n = P.length >> 1, a = this.blink(left, time), sc = up ? 2.6 : 1;
+    let cx = 0, cz = 0; for (let i = 0; i < n; i++) { cx += P[i * 2] / n; cz += P[i * 2 + 1] / n; }
+    for (let i = 0; i < n; i++) {
+      const x0 = P[i * 2], z0 = P[i * 2 + 1], x1 = P[((i + 1) % n) * 2], z1 = P[((i + 1) % n) * 2 + 1], L = Math.hypot(x1 - x0, z1 - z0) || 1, q = 1 - clamp01(fill);
+      this.dashes(L, s => [x0 + ((x1 - x0) * s) / L, z0 + ((z1 - z0) * s) / L], time, a, up, sc);
+      if (q > 0.05) { const m = Math.round((L * q) / ((3 * K * sc) / PPM)); for (let j = 0; j <= m; j++) { const u = j / Math.max(1, m); this.put(this.dl(up), "px", cx + (x0 + (x1 - x0) * u - cx) * q, 0.03, cz + (z0 + (z1 - z0) * u - cz) * q, sc * 0.5, 0.55 * a); } }
+    }
+    if (left < this.cfg.danger.flash) this.put(up ? this.over : this.glow, `flash${Math.floor(time * 12) % 3}`, cx, up ? 0.04 : 0.6, cz, sc, 0.9);
+  }
+  /** A lingering zone (a puddle, fire, frost, a web): its element's tiles over its shape, a slow shimmer of its light, fading in
+   *  and out; inside(x, z) says which of the tiles' places are in it (a ring's, a cone's, a polygon's shape). */
+  zone(d: Dress, x: number, z: number, r: number, k: number, seed: number, inside: (x: number, z: number) => boolean, time: number): void {
+    const P = this.colours(d), t = this.tinted(d), m = this.el(d).area, lit = m === "halo" || m === "rime" || m === "flowers", fade = Math.min(1, k * 6, (1 - k) * 4);
+    const n = Math.min(80, Math.round(r * r * 1.1) + 4);
+    for (let i = 0; i < n; i++) {
+      const q = Math.sqrt(hash2(seed, i, 31)) * r, a = hash2(seed, i, 37) * TAU, X = x + Math.cos(a) * q, Z = z + Math.sin(a) * q;
+      if (!inside(X, Z)) continue;
+      this.put(lit ? this.glowFlat : this.paintFlat, this.name(d, `area.${i % 2}`), X, 0.02, Z, 1, fade * 0.85, t);
+      if (i % 5 === 0) { const ph = (time * 0.7 + hash2(seed, i, 41)) % 1; this.put(this.solid(d) ? this.paint : this.glow, this.name(d, `bit.0.${Math.floor(time * 6 + i) % 2}`), X, 0.1 + ph * 0.8, Z, 1, fade * (1 - ph), t); }
+    }
+    this.glowFlat.add(x, 0, z, r * 2, this.uv("dot"), P[1][0], P[1][1], P[1][2], 0.18 * fade);
   }
 
   /** The wind-up tell: a white ring at its feet tightening, and the "!" over its head as it's about to (k 0 to 1). */
