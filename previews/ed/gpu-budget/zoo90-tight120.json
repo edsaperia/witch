@@ -1,0 +1,531 @@
+{
+ "seed": "123",
+ "island": "fox",
+ "secs": 90,
+ "draw": 4,
+ "zoo": {
+  "samples": [
+   {
+    "t": 0,
+    "x": 2100,
+    "z": 2100,
+    "mb": 75,
+    "budget": 512,
+    "trees": 0,
+    "creatures": 0,
+    "evicted": 0
+   },
+   {
+    "t": 5,
+    "x": 1738,
+    "z": 2160,
+    "mb": 250,
+    "budget": 512,
+    "trees": 126,
+    "creatures": 24,
+    "evicted": 0
+   },
+   {
+    "t": 10,
+    "x": 1335,
+    "z": 2227,
+    "mb": 266,
+    "budget": 512,
+    "trees": 137,
+    "creatures": 29,
+    "evicted": 0
+   },
+   {
+    "t": 15,
+    "x": 933,
+    "z": 2293,
+    "mb": 306,
+    "budget": 512,
+    "trees": 174,
+    "creatures": 31,
+    "evicted": 0
+   },
+   {
+    "t": 20,
+    "x": 1040,
+    "z": 2242,
+    "mb": 306,
+    "budget": 512,
+    "trees": 174,
+    "creatures": 31,
+    "evicted": 0
+   },
+   {
+    "t": 25,
+    "x": 1444,
+    "z": 2188,
+    "mb": 307,
+    "budget": 512,
+    "trees": 174,
+    "creatures": 31,
+    "evicted": 0
+   },
+   {
+    "t": 30,
+    "x": 1849,
+    "z": 2134,
+    "mb": 307,
+    "budget": 512,
+    "trees": 174,
+    "creatures": 31,
+    "evicted": 0
+   },
+   {
+    "t": 35,
+    "x": 2119,
+    "z": 1996,
+    "mb": 335,
+    "budget": 512,
+    "trees": 202,
+    "creatures": 31,
+    "evicted": 0
+   },
+   {
+    "t": 40,
+    "x": 2083,
+    "z": 1591,
+    "mb": 366,
+    "budget": 512,
+    "trees": 216,
+    "creatures": 48,
+    "evicted": 0
+   },
+   {
+    "t": 45,
+    "x": 2047,
+    "z": 1185,
+    "mb": 365,
+    "budget": 512,
+    "trees": 216,
+    "creatures": 48,
+    "evicted": 0
+   },
+   {
+    "t": 50,
+    "x": 1999,
+    "z": 799,
+    "mb": 365,
+    "budget": 512,
+    "trees": 216,
+    "creatures": 48,
+    "evicted": 0
+   },
+   {
+    "t": 55,
+    "x": 2006,
+    "z": 1134,
+    "mb": 365,
+    "budget": 512,
+    "trees": 216,
+    "creatures": 48,
+    "evicted": 0
+   },
+   {
+    "t": 60,
+    "x": 2046,
+    "z": 1540,
+    "mb": 365,
+    "budget": 512,
+    "trees": 216,
+    "creatures": 48,
+    "evicted": 0
+   },
+   {
+    "t": 65,
+    "x": 2085,
+    "z": 1946,
+    "mb": 365,
+    "budget": 512,
+    "trees": 216,
+    "creatures": 48,
+    "evicted": 0
+   },
+   {
+    "t": 70,
+    "x": 2297,
+    "z": 2111,
+    "mb": 386,
+    "budget": 512,
+    "trees": 227,
+    "creatures": 57,
+    "evicted": 0
+   },
+   {
+    "t": 75,
+    "x": 2704,
+    "z": 2074,
+    "mb": 452,
+    "budget": 512,
+    "trees": 285,
+    "creatures": 66,
+    "evicted": 0
+   },
+   {
+    "t": 80,
+    "x": 3110,
+    "z": 2038,
+    "mb": 481,
+    "budget": 512,
+    "trees": 303,
+    "creatures": 76,
+    "evicted": 0
+   },
+   {
+    "t": 85,
+    "x": 3342,
+    "z": 1978,
+    "mb": 480,
+    "budget": 512,
+    "trees": 303,
+    "creatures": 76,
+    "evicted": 0
+   }
+  ],
+  "peakMB": 481,
+  "pops": 0,
+  "popsSeen": [],
+  "let": [],
+  "keep": 3,
+  "start": {
+   "mb": 75,
+   "budget": 512,
+   "kinds": {
+    "ground": 13,
+    "witch": 4,
+    "props": 36,
+    "house": 7,
+    "ui": 1,
+    "other": 5,
+    "targets": 8,
+    "canvas": 1
+   },
+   "textures": 59,
+   "evicted": 0,
+   "ooms": 0,
+   "sets": {
+    "types": 30,
+    "tonight": 0,
+    "soundsystems": 2,
+    "creatures": 56,
+    "rigs": 0,
+    "queued": 161,
+    "pending": 162
+   }
+  },
+  "end": {
+   "mb": 481,
+   "budget": 512,
+   "kinds": {
+    "ground": 14,
+    "witch": 4,
+    "props": 61,
+    "house": 7,
+    "ui": 1,
+    "trees": 303,
+    "creatures": 76,
+    "other": 5,
+    "targets": 8,
+    "canvas": 1
+   },
+   "textures": 133,
+   "evicted": 0,
+   "ooms": 0,
+   "sets": {
+    "types": 30,
+    "tonight": 0,
+    "soundsystems": 2,
+    "creatures": 58,
+    "rigs": 2,
+    "queued": 325,
+    "pending": 328
+   }
+  },
+  "letInUse": 0
+ },
+ "tight": {
+  "samples": [
+   {
+    "t": 0,
+    "x": 3209,
+    "z": 2859,
+    "mb": 114,
+    "budget": 120,
+    "trees": 47,
+    "creatures": 0,
+    "evicted": 0
+   },
+   {
+    "t": 5,
+    "x": 3575,
+    "z": 2847,
+    "mb": 110,
+    "budget": 120,
+    "trees": 43,
+    "creatures": 0,
+    "evicted": 3
+   },
+   {
+    "t": 10,
+    "x": 3914,
+    "z": 2780,
+    "mb": 110,
+    "budget": 120,
+    "trees": 43,
+    "creatures": 0,
+    "evicted": 3
+   },
+   {
+    "t": 15,
+    "x": 3906,
+    "z": 2788,
+    "mb": 112,
+    "budget": 120,
+    "trees": 43,
+    "creatures": 0,
+    "evicted": 3
+   },
+   {
+    "t": 20,
+    "x": 3845,
+    "z": 2849,
+    "mb": 112,
+    "budget": 120,
+    "trees": 43,
+    "creatures": 0,
+    "evicted": 3
+   },
+   {
+    "t": 25,
+    "x": 3806,
+    "z": 2892,
+    "mb": 112,
+    "budget": 120,
+    "trees": 43,
+    "creatures": 0,
+    "evicted": 3
+   },
+   {
+    "t": 30,
+    "x": 3724,
+    "z": 2930,
+    "mb": 112,
+    "budget": 120,
+    "trees": 43,
+    "creatures": 0,
+    "evicted": 3
+   },
+   {
+    "t": 35,
+    "x": 3637,
+    "z": 2971,
+    "mb": 112,
+    "budget": 120,
+    "trees": 43,
+    "creatures": 0,
+    "evicted": 3
+   },
+   {
+    "t": 40,
+    "x": 3549,
+    "z": 3011,
+    "mb": 112,
+    "budget": 120,
+    "trees": 43,
+    "creatures": 0,
+    "evicted": 3
+   },
+   {
+    "t": 45,
+    "x": 3462,
+    "z": 3052,
+    "mb": 112,
+    "budget": 120,
+    "trees": 43,
+    "creatures": 0,
+    "evicted": 3
+   },
+   {
+    "t": 50,
+    "x": 3375,
+    "z": 3092,
+    "mb": 112,
+    "budget": 120,
+    "trees": 43,
+    "creatures": 0,
+    "evicted": 3
+   },
+   {
+    "t": 55,
+    "x": 3288,
+    "z": 3133,
+    "mb": 112,
+    "budget": 120,
+    "trees": 43,
+    "creatures": 0,
+    "evicted": 3
+   },
+   {
+    "t": 60,
+    "x": 3200,
+    "z": 3174,
+    "mb": 112,
+    "budget": 120,
+    "trees": 43,
+    "creatures": 0,
+    "evicted": 3
+   },
+   {
+    "t": 65,
+    "x": 3113,
+    "z": 3214,
+    "mb": 101,
+    "budget": 120,
+    "trees": 32,
+    "creatures": 0,
+    "evicted": 4
+   },
+   {
+    "t": 70,
+    "x": 3026,
+    "z": 3255,
+    "mb": 101,
+    "budget": 120,
+    "trees": 32,
+    "creatures": 0,
+    "evicted": 4
+   },
+   {
+    "t": 75,
+    "x": 2938,
+    "z": 3295,
+    "mb": 91,
+    "budget": 120,
+    "trees": 22,
+    "creatures": 0,
+    "evicted": 6
+   },
+   {
+    "t": 80,
+    "x": 2851,
+    "z": 3336,
+    "mb": 91,
+    "budget": 120,
+    "trees": 22,
+    "creatures": 0,
+    "evicted": 6
+   },
+   {
+    "t": 85,
+    "x": 2808,
+    "z": 3352,
+    "mb": 112,
+    "budget": 120,
+    "trees": 43,
+    "creatures": 0,
+    "evicted": 6
+   }
+  ],
+  "peakMB": 117,
+  "pops": 0,
+  "popsSeen": [],
+  "let": [
+   {
+    "at": 302411.89999999944,
+    "what": "trees 1",
+    "mb": 12.3,
+    "idle": 27.5
+   },
+   {
+    "at": 302411.89999999944,
+    "what": "trees 2",
+    "mb": 16.9,
+    "idle": 27.5
+   },
+   {
+    "at": 302411.89999999944,
+    "what": "trees 11",
+    "mb": 17.8,
+    "idle": 27.5
+   },
+   {
+    "at": 814872.8999999994,
+    "what": "trees 25",
+    "mb": 21.7,
+    "idle": 303.6
+   },
+   {
+    "at": 2344058.7,
+    "what": "trees 6",
+    "mb": 10.9,
+    "idle": 888.9
+   },
+   {
+    "at": 2344058.7,
+    "what": "trees 5",
+    "mb": 20.9,
+    "idle": 35
+   }
+  ],
+  "keep": 3,
+  "start": {
+   "mb": 114,
+   "budget": 120,
+   "kinds": {
+    "ground": 14,
+    "props": 12,
+    "house": 23,
+    "witch": 4,
+    "ui": 1,
+    "trees": 47,
+    "other": 3,
+    "targets": 8,
+    "canvas": 1
+   },
+   "textures": 127,
+   "evicted": 0,
+   "ooms": 0,
+   "sets": {
+    "types": 6,
+    "tonight": 0,
+    "soundsystems": 2,
+    "creatures": 0,
+    "rigs": 0,
+    "queued": 18,
+    "pending": 19
+   }
+  },
+  "end": {
+   "mb": 112,
+   "budget": 120,
+   "kinds": {
+    "ground": 14,
+    "props": 12,
+    "house": 23,
+    "witch": 6,
+    "ui": 1,
+    "trees": 43,
+    "other": 3,
+    "targets": 9,
+    "canvas": 1
+   },
+   "textures": 132,
+   "evicted": 6,
+   "ooms": 0,
+   "sets": {
+    "types": 4,
+    "tonight": 0,
+    "soundsystems": 2,
+    "creatures": 0,
+    "rigs": 0,
+    "queued": 25,
+    "pending": 28
+   }
+  },
+  "letInUse": 0
+ }
+}
