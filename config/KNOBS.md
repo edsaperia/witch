@@ -2374,6 +2374,14 @@ trunks.lightReach (Ed, 2026-10-13: "the light that soundsystems and runestones p
 | `shadows.trunks.sceneryTaper` | number | 0 to … |
 | `shadows.trunks.lightReach` | number | 0 to … |
 
+### `attacks`
+
+The composable attacks (docs/plans/attack-grammar.md, src/rules/attacks/): reactionFloor, the least warning (s) any attack and each child it makes gives from its first telegraph to its first harm (Ed, 2026-10-27: 0.45 s, "we can tune in balancing"); one under it is lengthened to it, silently in the game, said so in the Fight Arena.
+
+| knob | type | range |
+|---|---|---|
+| `attacks.reactionFloor` | number | 0 to … |
+
 ### `gpu`, `mist`
 
 The game-wide GPU memory budget (the coordinator's ask, Ed-approved 2026-10-26; render/gpuLedger.ts counts every texture and render buffer at the GL calls, render/view/gpuBudget.ts keeps it): mb MB for a window of refWidth x refHeight physical pixels, scaled by this window's (Google Maps' rule), never under floor nor over ceil. Every every seconds, over it, the art used longest ago (an area type's trees, a creature set, a rig page) is let go till it's under headroom of the budget, nothing used in the last keep seconds (what's on screen is used every frame); it comes back from the art cache when wanted. GL's out-of-memory error, read every errorEvery seconds (each read waits on the GPU), lowers the budget to headroom of what was held then.
