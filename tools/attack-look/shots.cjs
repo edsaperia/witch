@@ -4,6 +4,7 @@
 // frames every STEP seconds of game time from a loop's start, side by side into OUT (a png). ZOOM=n zooms in n steps (0, the play
 // zoom); LIT=1 puts her by the dancefloor's lights (lit ground), else the dark grass below it; QUERY adds to the page's query.
 //   DEMO=telegraphs FRAMES=6 STEP=0.5 OUT=/tmp/tel.png node tools/attack-look/shots.cjs
+// DEMO=none: no showcase, the page as QUERY sets it (QUERY='fight=7&attack=<json>': the Fight Arena with an attack of the grammar's).
 const http = require("http"), fs = require("fs"), path = require("path");
 let pw; try { pw = require("playwright"); } catch { pw = require("/opt/node22/lib/node_modules/playwright"); }
 const root = path.resolve(process.env.DIST || path.resolve(__dirname, "../../dist"));
@@ -14,7 +15,7 @@ const serve = () => new Promise(r => { const s = http.createServer((req, res) =>
   const server = await serve(), browser = await pw.chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
   const page = await browser.newPage({ viewport: { width: W, height: H } }), errors = [];
   page.on("pageerror", e => errors.push(e.message));
-  await page.goto(`http://127.0.0.1:${server.address().port}/?creator=0&seed=123&arena=moth*1@0&lookdemo=${DEMO}${process.env.QUERY ? `&${process.env.QUERY}` : ""}`);
+  await page.goto(`http://127.0.0.1:${server.address().port}/?creator=0&seed=123${DEMO === "none" ? "" : `&arena=moth*1@0&lookdemo=${DEMO}`}${process.env.QUERY ? `&${process.env.QUERY}` : ""}`);
   await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 300000, polling: 500 });
   await page.keyboard.press("Enter");
   await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 30000 });
