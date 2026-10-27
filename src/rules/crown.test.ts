@@ -88,6 +88,16 @@ describe("the great oak's crown", () => {
     for (const k of ["swag", "drape", "garland"] as const) expect(c.strings.some(s => s.kind === k), k).toBe(true);
   });
 
+  it("winds its lights round it in smooth strands when asked (Ed, 2026-10-27: \"The spiral with 2 strands, smoothed so it sags across the gaps\")", () => {
+    const w = makeCrown({ ...input(), wrap: 2 }), strands = w.strings.filter(s => s.kind === "wrap");
+    expect(strands.length).toBeGreaterThan(0);
+    expect(strands.length).toBeLessThan(16); // (a few long runs, not dozens of pieces)
+    expect(w.strings.some(s => s.kind === "drape" || s.kind === "garland")).toBe(false);
+    for (const s of strands) if (s.kind === "wrap") for (const p of s.spans) { // (never stepping straight up or down: gentle all along)
+      const run = Math.hypot(p.b[0] - p.a[0], p.b[2] - p.a[2]); expect(Math.abs(p.b[1] - p.a[1])).toBeLessThanOrEqual(0.55 * run);
+    }
+  });
+
   it("hangs each string its own way (Ed, 2026-10-27: \"String lights on the treehouse seem to all have the same shape\")", () => {
     for (const k of ["tail", "spiral"] as const) expect(c.strings.some(s => s.kind === k), k).toBe(true);
     const spread = (v: number[]) => Math.max(...v) - Math.min(...v);

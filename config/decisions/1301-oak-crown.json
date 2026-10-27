@@ -24,14 +24,14 @@
       "pr": 1301,
       "group": "Oak crown",
       "label": "Crown's lights wound round it (strands)",
-      "note": "The crown's lights wound round it in this many long strands, spiralling out over its top from its middle as seen from above, in place of its drapes and garlands (Ed, 2026-10-27: \"Maybe think of the lights wrapped around the crown in a spiral (if seen top down)\"). 0, its strings as they are; 2 hangs about as many bulbs as the strings at half. The strings under its limbs stay, at the lights' share. The crown's grown again as it's moved.",
+      "note": "The crown's lights wound round it in this many long strands, spiralling out over its top from its middle as seen from above, each resting on the lobes, its height smoothed along it and sagging across the gaps, in place of its drapes and garlands (Ed, 2026-10-27: \"Maybe think of the lights wrapped around the crown in a spiral (if seen top down)\"; on the mock: \"The spiral with 2 strands, smoothed so it sags across the gaps\"). 2 as Ed chose; 0, its drapes and garlands instead. The strings under its limbs stay, at the lights' share. The crown's grown again as it's moved.",
       "control": {
         "type": "slider",
         "min": 0,
         "max": 4,
         "step": 1
       },
-      "default": 0,
+      "default": 2,
       "apply": {
         "knob": "treehouse.house.crown.wrap"
       }

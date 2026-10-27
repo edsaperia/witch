@@ -287,21 +287,49 @@ export function makeCrown({ outline: O, floor, seed, open = [], gap = true, wrap
   const tops = lobes.filter(q => q.r >= 7.5 * K && q.y > dome.base - 4), seen = new Set<string>();
   if (wrap > 0) {
     // wound round it: `wrap` strands spiralling out from its middle over its top (an Archimedean spiral on the plan, squashed to the
-    // dome's ellipse, a turn every PITCH m), each lying over the lobes there, a little sag between; broken where no lobe's under it
-    // (each piece its own string, lit along from the middle out)
+    // dome's ellipse, a turn every PITCH m), each lying over the lobes there (each run its own string, lit along from the middle out)
     const PITCH = 14 * K, step = 1.5, top = (x: number, z: number) => { let y = -Infinity;
       for (const l of lobes) { const d = Math.hypot(l.x - x, l.z - z); if (d < l.r * 0.9) y = Math.max(y, l.y + l.r * 0.6 * Math.sqrt(1 - (d / l.r) ** 2)); }
       return y; };
     const R0 = Math.max(dome.rx, dome.rz), sx = dome.rx / R0, sz = dome.rz / R0;
+    // (Ed, 2026-10-27, of the mock: "The spiral with 2 strands, smoothed so it sags across the gaps": each strand one line along its
+    // path, resting on the lobes, its height smoothed along it so it never steps straight up or down, and sagging between them across
+    // a gap; broken only across an open stretch longer than GAP_MAX, where it would hang in the air)
+    const GAP_MAX = 26;
     for (let k = 0; k < wrap; k++) {
-      let piece: V3[] = [], th = (k / wrap) * Math.PI * 2 + H(k, 51) * 0.6, r = 4;
-      const done = () => { if (piece.length > 3) strings.push({ kind: "wrap", spans: piece.slice(1).map((b, i) => ({ a: piece[i], b, sag: 0.25 })) }); piece = []; };
-      while (r < R0 * 1.02) {
-        const x = dome.cx + Math.cos(th) * r * sx, z = dome.cz + Math.sin(th) * r * sz, y = top(x, z);
-        if (y > -Infinity) piece.push([x, y + 0.3, z]); else done();
-        th += step / Math.max(r, 2); r = 4 + (PITCH * (th - (k / wrap) * Math.PI * 2)) / (Math.PI * 2);
+      const P: { x: number; z: number; y: number }[] = [], th0 = (k / wrap) * Math.PI * 2 + H(k, 51) * 0.6;
+      for (let th = th0, r = 4; r < R0 * 1.02; ) {
+        const x = dome.cx + Math.cos(th) * r * sx, z = dome.cz + Math.sin(th) * r * sz;
+        P.push({ x, z, y: top(x, z) });
+        th += step / Math.max(r, 2); r = 4 + (PITCH * (th - th0)) / (Math.PI * 2);
       }
-      done();
+      // runs between open stretches too long to span
+      let a = 0;
+      while (a < P.length) {
+        while (a < P.length && P[a].y === -Infinity) a++;
+        let b = a, last = a;
+        while (b < P.length && (b - last) * step <= GAP_MAX) { if (P[b].y > -Infinity) last = b; b++; }
+        const run = P.slice(a, last + 1);
+        a = last + 1;
+        if (run.length < 4) continue;
+        // its gaps bridged: a straight line between the lobes either side, sagging by a share of the gap's length
+        const h = run.map(q => q.y);
+        for (let i = 0; i < h.length; ) {
+          if (h[i] > -Infinity) { i++; continue; }
+          const i0 = i - 1; let i1 = i; while (h[i1] === -Infinity) i1++;
+          const n = i1 - i0, sag = Math.min(3, 0.12 * n * step);
+          for (let t = i0 + 1; t < i1; t++) { const u = (t - i0) / n; h[t] = h[i0] + (h[i1] - h[i0]) * u - sag * 4 * u * (1 - u); }
+          i = i1;
+        }
+        // smoothed along it (a few passes of a short blur, about 6 m), then its slope kept gentle both ways
+        let y = h;
+        for (let pass = 0; pass < 4; pass++) y = y.map((v, i) => (y[Math.max(0, i - 1)] + 2 * v + y[Math.min(y.length - 1, i + 1)]) / 4);
+        const SLOPE = 0.5 * step;
+        for (let i = 1; i < y.length; i++) y[i] = Math.min(Math.max(y[i], y[i - 1] - SLOPE), y[i - 1] + SLOPE);
+        for (let i = y.length - 2; i >= 0; i--) y[i] = Math.min(Math.max(y[i], y[i + 1] - SLOPE), y[i + 1] + SLOPE);
+        const pts: V3[] = run.map((q, i) => [q.x, y[i] + 0.3, q.z]);
+        strings.push({ kind: "wrap", spans: pts.slice(1).map((b, i) => ({ a: pts[i], b, sag: 0 })) });
+      }
     }
   } else tops.forEach((a, ai) => {
     // (most to the nearest clump past 12 m; now and then a long one across a gap, to a clump 30 to 55 m off)
