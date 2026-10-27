@@ -1369,11 +1369,16 @@
                 "fade": {
                   "type": "number",
                   "minimum": 0
+                },
+                "reveal": {
+                  "type": "number",
+                  "minimum": 0
                 }
               },
               "required": [
                 "on",
-                "fade"
+                "fade",
+                "reveal"
               ],
               "additionalProperties": false
             },
@@ -2697,6 +2702,10 @@
         "bpmStep": {
           "type": "number",
           "minimum": 0
+        },
+        "dropRadius": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -2711,7 +2720,8 @@
         "rise",
         "respawn",
         "candleStep",
-        "bpmStep"
+        "bpmStep",
+        "dropRadius"
       ],
       "additionalProperties": false
     },
@@ -10496,7 +10506,7 @@
             "areas": {
               "type": "object",
               "properties": {
-                "bog": {
+                "tundra-bog": {
                   "type": "object",
                   "properties": {
                     "hazeHue": {
@@ -11000,7 +11010,7 @@
                   ],
                   "additionalProperties": false
                 },
-                "garden": {
+                "snowy-taiga": {
                   "type": "object",
                   "properties": {
                     "hazeHue": {
@@ -11061,7 +11071,7 @@
                 }
               },
               "required": [
-                "bog",
+                "tundra-bog",
                 "wetland",
                 "beaver-pond",
                 "mangrove-channel",
@@ -11079,7 +11089,7 @@
                 "old-pinewood",
                 "jungle-understory",
                 "honeysuckle-tangle",
-                "garden",
+                "snowy-taiga",
                 "berry-thicket",
                 "home"
               ],

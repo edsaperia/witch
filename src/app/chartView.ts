@@ -18,7 +18,8 @@ import { coastSpec, homeIsland, isPlaceholder, islandOf, KIND_NAMES, knownKinds,
 import { TUNING } from "../rules/tuning";
 import { islandSigil } from "../../art/sigils.js";
 import { CHART_PIXEL, releaseSeaChart, SeaChart, takeSeaChart, type ChartIsland, type FlightEnd, type FlyOptions } from "../render/chart/seaChart";
-import { loadSave, unlocked, type ChartSave } from "./chartSave";
+import { loadSave, unlocked, unvisited, type ChartSave } from "./chartSave";
+import { ChartPin } from "../render/chart/chartPin";
 import { islandAt } from "./chartLayout";
 import { stepTo } from "./chartNav";
 import type { OutlineAsk, OutlineDone } from "./chartOutlines.worker";
@@ -137,6 +138,12 @@ const HTML = `
 
 
 /** Mount the sea chart in `host` (which it fills: give it a size and a position). */
+/** The islands the chart's 🧭s point at, one each: the new ones (ChartIsland fresh), nearest `from` (the island she's on) first. */
+export function chartPinIslands(islands: readonly ChartIsland[], from: string): string[] {
+  const o = islands.find(i => i.id === from) ?? { x: 0, y: 0 };
+  return islands.filter(i => i.fresh).sort((a, b) => Math.hypot(a.x - o.x, a.y - o.y) - Math.hypot(b.x - o.x, b.y - o.y)).map(i => i.id);
+}
+
 export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView {
   const mode = opts.mode, mini = mode === "miniature", sailing = mode === "sail";
   if (!document.getElementById("chart-view-style")) { const st = document.createElement("style"); st.id = "chart-view-style"; st.textContent = STYLE; document.head.append(st); }
@@ -185,6 +192,9 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
 
   if (mini) chart.orbit = 0.12;
   let save = opts.save ?? loadSave(), islands: ChartIsland[] = [];
+  // A 🧭 over each island she's found and not been to (Ed, 2026-10-26: "you see one per unvisited island"; render/chart/chartPin.ts),
+  // till she's been there. Not on the map table's miniature.
+  const pins = new Map<string, ChartPin>();
   let sailAny = (() => { try { return localStorage.getItem(SAIL_ANY) === "1"; } catch { return false; } })();
   const worldNow = () => opts.world ?? save.world;
   /** The island she's on (in the world shown): choosing it takes her back to the night, not a new one. */
@@ -310,14 +320,17 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
 
   /** Every island, always: home and each found with its sigil, sailable; the rest bare land, the placeholders dimmest. */
   function build(): void {
-    const open = new Set(sailAny ? ["home", ...REAL_KINDS] : unlocked(save)), won = new Set(save.won), w = worldNow();
+    const open = new Set(sailAny ? ["home", ...REAL_KINDS] : unlocked(save)), won = new Set(save.won), w = worldNow(), fresh = new Set(unvisited(save, opts.here?.island));
     const one = (id: string, radii: ArrayLike<number>, sigil: string): ChartIsland => {
       const at = islandAt(id, w)!, unknown = isPlaceholder(id);
-      return { id, x: at.x, y: at.y, phase: islandPhase(id, w), radii, sail: open.has(id) && !unknown, unknown, won: won.has(id), sigil };
+      return { id, x: at.x, y: at.y, phase: islandPhase(id, w), radii, sail: open.has(id) && !unknown, unknown, won: won.has(id), fresh: open.has(id) && !unknown && fresh.has(id), sigil };
     };
     islands = [one("home", islandCoast(coastSpec(homeIsland(w, knownKinds(save.found))), TUNING.map?.coast).radii, islandSigil("home"))];
     for (const k of KIND_NAMES) islands.push(one(k, islandCoast(coastSpec(islandOf(k, w)!), TUNING.islands?.coast).radii, k));
     chart.set(islands, save.voyages);
+    for (const p of pins.values()) p.dispose();
+    pins.clear();
+    if (!mini) for (const id of chartPinIslands(islands, opts.here?.island ?? save.voyages.at(-1)?.to ?? "home")) pins.set(id, new ChartPin(root));
     waiting.clear(); ranked();
     outlines();
     const n = save.found.filter(k => !isPlaceholder(k)).length;
@@ -454,7 +467,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   return {
     canvas, chart,
     islands: () => islands,
-    update(dt, time) { if (!mini) pad(dt); holdFrame(); wrapOne(); chart.frame(dt, time); },
+    update(dt, time) { if (!mini) pad(dt); holdFrame(); wrapOne(); chart.frame(dt, time); const box = canvas.getBoundingClientRect(); for (const [id, p] of pins) p.update(!chart.flying && !left ? chart.screenTopOf(id) : null, box, time, id === chart.selected ? 0 : 1, dt); }, // (each 🧭 over its island's top, never on it; faded while its island's the one chosen)
     resize, choose,
     dispose() {
       disposed = true; waiting.clear();
@@ -462,6 +475,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
       if (poll) { clearInterval(poll); poll = null; }
       worker?.terminate(); worker = null;
       listening.abort();
+      for (const p of pins.values()) p.dispose();
       if (mini) chart.dispose(); else releaseSeaChart(chart); // (the full chart kept for the next opening)
       root.remove();
     },

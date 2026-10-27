@@ -23,9 +23,9 @@ export const AREA_NIGHTS: Record<string, NightKind> = {
   "fern-forest": "wood", "tangly-forest": "wood", "wispy-forest": "wood", "hazel-forest": "wood", "twiggy-forest": "wood",
   "alder-forest": "wood", "berry-thicket": "wood", deadwood: "wood", "log-pile": "wood", "honeysuckle-tangle": "wood", "misty-terraces": "pine", "mossy-dell": "wood", "bamboo-jungle": "wood",
   "old-oaks": "oaks", ancient: "oaks",
-  "muddy-forest": "wet", mistwood: "wet", wetland: "wet", bog: "wet", "beaver-pond": "wet", fen: "wet", "mangrove-heronry": "wet", "temple-jungle": "wet", "river-jungle": "stream", mangrove: "wet", "drowned-wood": "wet", "mangrove-pools": "wet", mudflat: "wet", "mossy-creek": "stream",
+  "muddy-forest": "wet", mistwood: "wet", wetland: "wet", "tundra-bog": "wet", "beaver-pond": "wet", fen: "wet", "mangrove-heronry": "wet", "temple-jungle": "wet", "river-jungle": "stream", mangrove: "wet", "drowned-wood": "wet", "mangrove-pools": "wet", mudflat: "wet", "mossy-creek": "stream",
   "mangrove-channel": "stream", ravine: "ravine", crags: "ravine", icefall: "ravine", trollwood: "pine",
-  meadow: "meadow", garden: "meadow", "moonpool-glade": "meadow", grassland: "meadow", "bluebell-glade": "meadow", heath: "meadow",
+  meadow: "meadow", "snowy-taiga": "pine", "moonpool-glade": "meadow", grassland: "meadow", "bluebell-glade": "meadow", heath: "meadow",
   "rocky-slope": "open", packice: "open", bushveld: "open", erg: "open", snowfield: "open", "cactus-flats": "open", "red-canyon": "open", warren: "open", "dragon-scrub": "open", "thorn-scrub": "open", rookery: "open", savanna: "meadow", plains: "meadow", moor: "stones", "stone-shrine": "stones", "jungle-cave": "cave", frostcave: "cave", eyrie: "stones", "scrub-wash": "open", "cinder-slopes": "open", "desert-ruin": "stones", "step-pyramid": "wet",
   home: "home",
 };

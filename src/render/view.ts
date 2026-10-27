@@ -7,7 +7,7 @@ import type { Creature } from "../rules/creatures";
 import { partyGearOf } from "./artBuild";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
-import { carrierOf, deckOf, indoorsAt } from "../rules/treehouse";
+import { carrierOf, deckOf } from "../rules/treehouse";
 import { HOUSE_LAYER } from "./post";
 import type { MapTable } from "./mapTable";
 import { islandArtSeed } from "./artCache";
@@ -378,13 +378,14 @@ export class View {
   clouds!: Clouds;
   /** Smoke rising from the fires (Ed, round 13). */
   private smoke!: Smoke;
-  /** The dark behind the house's enclosed rooms (Ed, 2026-10-23: "when you're inside the treehouse in an enclosed room (i.e. not
-   *  the terrace) the forest behind the tree should be black"; the tuning's treehouse.house.dark; render/post.ts Post.behind): in a
-   *  room or on a branch off the Terrace (rules/treehouse.ts indoorsAt), on foot, only the house's own meshes are drawn (its rooms, the Ent's
-   *  art with its crowns, her), over black; the scenery is still listed and its art still asked for, only not drawn. Stepping
-   *  onto the Terrace the forest comes back from the doorway she came through over dark.fade seconds, and goes again as she goes
-   *  back in; through the telescope it fades in over the same, the whole picture at once. Eased on her clock (g.herTime: full
-   *  speed in the house's slowed time, and the same on any machine). */
+  /** The dark behind the house till the forest has loaded (Ed, 2026-10-26: "When the forest has loaded, fade it in gradually behind
+   *  the whole treehouse"; it was dark behind the enclosed rooms always, Ed 2026-10-23; the tuning's treehouse.house.dark;
+   *  render/post.ts Post.behind): on foot in the house, any room or the Terrace, while the island isn't ready yet (g.islandReady:
+   *  its own art drawn, main.ts), only the house's own meshes are drawn (its rooms, the Ent's art with its crowns, her), over black;
+   *  the scenery is still listed and its art still asked for, only not drawn. As it's ready the forest fades in behind the whole
+   *  house, the whole picture at once, over dark.reveal seconds, and stays behind every room after. Leaving the house before
+   *  then (lifting off), it comes back from where she stands over dark.fade seconds; through the telescope, the whole picture over
+   *  the same. Eased on her clock (g.herTime: full speed in the house's slowed time, and the same on any machine). */
   /** No tilt-shift in the treehouse (Ed, 2026-10-26: "No tilt shift while you're in the treehouse"): on the house (its rooms,
    *  branches and Terrace, the stations' close-ups; her perch) the blur eases out over HOUSE_TILT_EASE seconds of her clock, and back
    *  in as she leaves; through the telescope it stays as it was (its own view of the island). Once a frame (render/view/witch.ts), its
@@ -397,15 +398,16 @@ export class View {
     this.tiltK = stepTiltShare(this.tiltK, want, dt, HOUSE_TILT_EASE);
     return tiltShareShown(this.tiltK);
   }
-  private dark = { k: 1, at: NaN, door: null as { x: number; z: number } | null, enclosed: false, uv: new THREE.Vector2() };
+  private dark = { k: 1, at: NaN, door: null as { x: number; z: number } | null, enclosed: false, reveal: false, uv: new THREE.Vector2() };
   private behindHouse(g: Game): void {
     const D = this.dark, T = g.tuning.treehouse.house?.dark, deck = deckOf(g.map, g.tuning), w = g.witch;
-    const enclosed = !!T?.on && !!deck?.house?.rooms && !!w.perch && w.mode === "ground" && indoorsAt(deck, w.x, w.z) && !this.telescope; // (on foot: rising out of a room, the forest comes back as she lifts off)
-    // (the doorway: where she crossed between a room's branch and the Terrace, either way; none for the telescope's fade)
-    if (enclosed !== D.enclosed) { D.door = this.telescope && !enclosed ? null : { x: w.x, z: w.z }; D.enclosed = enclosed; }
+    const inHouse = !!T?.on && !!deck?.house?.rooms && !!w.perch && w.mode === "ground" && !this.telescope; // (on foot: rising out of it, the forest comes back as she lifts off)
+    const enclosed = inHouse && !g.islandReady;
+    // (where it comes back from: the whole picture as the island's ready, or through the telescope; else where she left the house)
+    if (enclosed !== D.enclosed) { D.reveal = !enclosed && inHouse; D.door = (this.telescope || D.reveal) && !enclosed ? null : { x: w.x, z: w.z }; D.enclosed = enclosed; }
     const dt = Number.isFinite(D.at) ? Math.max(0, Math.min(0.1, g.herTime - D.at)) : 1e9;
     D.at = g.herTime;
-    const fade = Math.max(1e-3, T?.fade ?? 0.6);
+    const fade = Math.max(1e-3, (D.reveal && !enclosed ? T?.reveal : undefined) ?? T?.fade ?? 0.6);
     D.k = enclosed ? Math.max(0, D.k - dt / fade) : Math.min(1, D.k + dt / fade);
     if (!T?.on) D.k = 1;
     const P = this.post;
