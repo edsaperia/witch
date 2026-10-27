@@ -93,6 +93,10 @@ export function recordNight(save: ChartSave, island: string, result: { won: bool
   return next;
 }
 
+/** The islands found she can sail to and hasn't been to (Ed, 2026-10-26: "islands the player can go to and hasn't visited yet"):
+ *  found, real, no night played there, and not `here` (the island she's on: landed counts). Oldest found first. */
+export const unvisited = (save: ChartSave, here?: string | null): string[] => save.found.filter(k => !isPlaceholder(k) && !save.played.includes(k) && k !== here);
+
 /** The islands she can play: home and every one found. */
 export const unlocked = (save: ChartSave): string[] => ["home", ...save.found];
 

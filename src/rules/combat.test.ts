@@ -207,22 +207,40 @@ describe("knocked out (Ed, 2026-10-04)", () => {
     for (let i = 0; i < 30 && !a.leashed; i++) { stepGame(g, { ...idle, place: i % 2 === 0 }, STEP); a.x = a.homeX; a.z = a.homeZ; }
     expect(a.leashed).toBe(true);
     expect(g.leash.stack).toContain(a.id);
+    expect(a.dropped, "hers again: no longer tied to the spot").toBeUndefined();
   }, 120000);
 
-  it("sends one let go out of its own area back home to it once she's near, not standing where she went down (Ed, 2026-10-26)", () => {
+  it("keeps one let go idling near where it was dropped, dancing there in a party area, not walking home to its own area (Ed, 2026-10-26)", () => {
     const { g, a } = setUp(withTuning(t => { t.knockout.releaseEach = 0; })), W = g.witches[0];
-    // her leashed wolf is from an area some way off: its home's there, its anchor (from following her) here
+    // her leashed wolf is from an area some way off: its home's there, and she goes down here (home, partified from the start)
     const far = g.creatures.find(c => !c.gone && !c.leashed && Math.hypot(c.x - a.x, c.z - a.z) > 70 && Math.hypot(c.x - a.x, c.z - a.z) < 140 && (c.cell[0] !== g.map.cellSafe(a.x, a.z).cell[0] || c.cell[1] !== g.map.cellSafe(a.x, a.z).cell[1]))!;
-    Object.assign(a, { cell: far.cell, homeX: far.homeX, homeZ: far.homeZ, range: far.range, anchorX: a.x, anchorZ: a.z });
+    Object.assign(a, { cell: far.cell, homeX: far.homeX, homeZ: far.homeZ, range: far.range });
     const sameCell = (x: number, z: number) => { const k = g.map.cellSafe(x, z).cell; return k[0] === a.cell[0] && k[1] === a.cell[1]; };
-    expect(sameCell(a.x, a.z), "set up out of its area").toBe(false);
+    const at = { x: a.x, z: a.z }, R = g.tuning.knockout.dropRadius ?? 6;
     for (let i = 0; i < (10 + RESPAWN) / STEP && W.ko; i++) stepGame(g, idle, STEP);
     expect(stateOf(a)).toBe("happy");
-    expect(sameCell(a.anchorX, a.anchorZ), "its anchor in its own area").toBe(true);
-    // (creatures are stepped only near her, as ever: with her over it in the treetops, it sets off home)
+    expect(a.dropped, "dropped where it stood").toMatchObject({ x: at.x, z: at.z });
+    expect(a.dancing, "dancing: dropped in a party area").toBe(true);
+    // with her over it in the treetops (creatures are stepped only near her), a minute and a half: it stays by the spot
     g.witch = { ...g.witch, seated: false, perch: false, mode: "treetop", lift: 1, x: a.x, z: a.z };
-    for (let k = 0; k < 15 && !sameCell(a.x, a.z); k++) run(g, 10);
-    expect(sameCell(a.x, a.z), "walked home").toBe(true);
+    let farthest = 0;
+    for (let k = 0; k < 90; k++) { run(g, 1); farthest = Math.max(farthest, Math.hypot(a.x - at.x, a.z - at.z)); expect(sameCell(a.x, a.z), "not gone home").toBe(false); }
+    expect(farthest).toBeLessThan(R + 2);
+  }, 120000);
+
+  it("lets none she was carrying eat berries while it idles where it was dropped: happy animals don't eat (Ed, 2026-10-26); one she parked at a sigil still does", () => {
+    const { g, a, b, parked } = setUp(withTuning(t => { t.knockout.releaseEach = 0; })), W = g.witches[0], B = g.berries;
+    b.hp = 1; // (an adult eats only when hurt: this one would)
+    // berries on the bushes nearest each of them, right beside them
+    const near = [a, a, b, b, parked, parked];
+    let k = 0;
+    for (let i = 0; i < B.bushes.length && k < near.length; i++) if (B.onBush[i] >= 0) { const c = near[k++]; B.bushes[i] = { ...B.bushes[i], x: c.x + 1.5 + k * 0.3, z: c.z + 1 }; }
+    expect(k).toBe(near.length);
+    const ate = new Set<number>();
+    for (let i = 0; i < 40 / STEP; i++) { if (!W.ko) g.witch = { ...g.witch, seated: false, perch: false, mode: "treetop", lift: 1, x: a.x, z: a.z }; stepGame(g, idle, STEP); for (const e of g.berries.events) if (e.kind === "ate") ate.add(e.id); }
+    expect(stateOf(a)).toBe("happy");
+    expect(ate.has(a.id) || ate.has(b.id), "the ones let go ate nothing").toBe(false);
+    expect(ate.has(parked.id), "one parked at her sigil did (the deliberate way)").toBe(true);
   }, 120000);
 
   it("brings her back behind her decks, seated as at the start but at the game's zoom, near home or far off; her first move gets her up", () => {

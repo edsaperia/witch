@@ -41,7 +41,7 @@ export const FLOOR_LOOKS: Record<string, FloorLook> = {
   "tangly-forest": look("granite", "darkLeaves", "moss", 0.62),
   "wispy-forest": look("limestone", "leaves", "lichen", 0.5, false, 0.65),
   "hazel-forest": look("limestone", "leaves", "moss", 0.5),
-  "garden": look("limestone", "flowers", "lichen", 0.4, false, 0.35),
+  "snowy-taiga": look("granite", "needles", "lichen", 0.5, false, 0.5), // grey stone under needles and lichen (the garden's limestone and flowers till the roster)
   "twiggy-forest": look("granite", "leaves", "moss", 0.5),
   "ancient": look("granite", "darkLeaves", "moss", 0.72),
   "jungle-understory": look("limestone", "leaves", "moss", 0.65), // leaf litter and moss over pale stone (Norway's slate and needles till the roster)
@@ -55,7 +55,7 @@ export const FLOOR_LOOKS: Record<string, FloorLook> = {
   "trollwood": look("granite", "needles", "moss", 0.45),
   "icefall": look("granite", "pebbles", "lichen", 0.35),
   "crags": look("slate", "pebbles", "lichen", 0.4),
-  "bog": look("granite", "reeds", "moss", 0.75, true, 0.35),
+  "tundra-bog": look("granite", "reeds", "lichen", 0.7, true, 0.35), // wet stone, sedge and lichen (the bog's moss till the roster)
   "deadwood": look("buffSandstone", "darkLeaves", "lichen", 0.45, false, 0.6),
   "jungle-cave": look("limestone", "pebbles", "moss", 0.65), // the cave's mossy limestone (the cave mouth's slate till the roster)
   "grassland": look("limestone", "grass", "lichen", 0.5),
