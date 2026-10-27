@@ -6,14 +6,13 @@ const store = () => { const m = new Map<string, string>(); return { getItem: (k:
 describe("guidance's save", () => {
   it("keeps the new things (one an item, newest last) and the islands seen; drops a thing gone, and anything unreadable", () => {
     const s = store(), g = loadGuide(s);
-    expect(g).toEqual({ unseen: [], chartSeen: [] });
+    expect(g).toEqual({ unseen: [] });
     addNew(g, { kind: "hat", id: "a", at: "hats" }); addNew(g, { kind: "part", id: "b", at: "broomBay" }); addNew(g, { kind: "hat", id: "a", at: "hats" });
-    g.chartSeen = ["lion"];
     storeGuide(g, s);
-    expect(loadGuide(s)).toEqual({ unseen: [{ kind: "part", id: "b", at: "broomBay" }, { kind: "hat", id: "a", at: "hats" }], chartSeen: ["lion"] });
+    expect(loadGuide(s)).toEqual({ unseen: [{ kind: "part", id: "b", at: "broomBay" }, { kind: "hat", id: "a", at: "hats" }] });
     dropNew(g, "a");
     expect(g.unseen.map(n => n.id)).toEqual(["b"]);
-    s.m.set(GUIDE_KEY, "{oops"); expect(loadGuide(s)).toEqual({ unseen: [], chartSeen: [] });
-    s.m.set(GUIDE_KEY, JSON.stringify({ unseen: [{ kind: "boat", id: "x", at: "y" }, 3], chartSeen: [1, "elk"] })); expect(loadGuide(s)).toEqual({ unseen: [], chartSeen: ["elk"] });
+    s.m.set(GUIDE_KEY, "{oops"); expect(loadGuide(s)).toEqual({ unseen: [] });
+    s.m.set(GUIDE_KEY, JSON.stringify({ unseen: [{ kind: "boat", id: "x", at: "y" }, 3], chartSeen: [1, "elk"] })); expect(loadGuide(s)).toEqual({ unseen: [] }); // (an old save's chartSeen: unread)
   });
 });
