@@ -9,12 +9,12 @@
 // pop for their own reason, #311, so compare with a run without the budget) and every set let go with how long it had gone unused
 // (none under the tuning's gpu.keep: nothing let go was in use). Writes <out>/budget.json and a frame from each scene. Fails on a
 // page error.
-//   npm run build && node tools/gpu/budget.cjs [out dir]   DIST=dist SEED=123 ISLAND=fox ONLY=night,sail,zoo,tight SECS=120 DRAW=4 TIGHT=220
+//   npm run build && node tools/gpu/budget.cjs [out dir]   DIST=dist SEED=123 ISLAND=fox ONLY=night,sail,zoo,tight SECS=120 DRAW=4 TIGHT=220 WAIT=300
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const out = path.resolve(process.argv[2] || "previews/gpu-budget");
 const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist"));
-const SEED = process.env.SEED || "123", ISLAND = process.env.ISLAND || "fox", SECS = Number(process.env.SECS || 120), DRAW = Number(process.env.DRAW || 4), TIGHT = Number(process.env.TIGHT || 220);
+const SEED = process.env.SEED || "123", ISLAND = process.env.ISLAND || "fox", SECS = Number(process.env.SECS || 120), DRAW = Number(process.env.DRAW || 4), TIGHT = Number(process.env.TIGHT || 220), WAIT = Number(process.env.WAIT || 300);
 const ONLY = (process.env.ONLY || "night,sail,zoo,tight").split(",");
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".woff2": "font/woff2", ".ogg": "audio/ogg" };
 const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000).toFixed(0)} s]`, ...a);
@@ -57,7 +57,11 @@ const LOOP = reach => { const g = window.witch.game, f = g.map.dancefloor || { x
   await new Promise(r => server.listen(0, "127.0.0.1", r));
   const browser = await playwright.chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
   const errors = [], report = { seed: SEED, island: ISLAND, secs: SECS, draw: DRAW };
-  const ready = page => page.waitForFunction(() => window.witch && window.witch.ready && window.witch.view.assets.pending === 0, null, { timeout: 2400000, polling: 1000 });
+  // (ready, then the art in or WAIT s gone: the cloud's software renderer draws the whole island's art slowly, and the flight asks for more anyway)
+  const ready = async page => {
+    await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 2400000, polling: 1000 });
+    await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: WAIT * 1000, polling: 1000 }).catch(() => log("(art still coming after", WAIT, "s: on)"));
+  };
   const open = async (name, query) => {
     const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
     page.on("pageerror", e => errors.push(`${name}: ${e.message}`));
@@ -66,7 +70,17 @@ const LOOP = reach => { const g = window.witch.game, f = g.map.dancefloor || { x
     await page.evaluate(() => { const g = window.witch.game; g.clock.paused = false; window.witch.manual = true; g.witches[0].kit = { invites: true, broom: true }; if (g.party.spellAt === null) g.party.spellAt = -100; });
     return page;
   };
-  const shot = (page, name) => page.screenshot({ path: path.join(out, `${name}.png`), timeout: 300000 });
+  // (the frame as played, the start screen out of the way, then the pause page with its stamp's gpu line)
+  const shot = async (page, name) => {
+    await page.evaluate(() => { const s = document.getElementById("start"); if (s) s.style.display = "none"; window.witch.manual = false; });
+    await page.waitForTimeout(3000);
+    await page.screenshot({ path: path.join(out, `${name}.png`), timeout: 300000 });
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(4000);
+    await page.screenshot({ path: path.join(out, `${name}-paused.png`), timeout: 300000 });
+    await page.keyboard.press("Escape");
+    await page.evaluate(() => { window.witch.manual = true; });
+  };
   const run = async (page, name, pts, mode) => {
     const at = await page.evaluate(`(${LEDGER})()`);
     log(name, "at the start", JSON.stringify(at));
