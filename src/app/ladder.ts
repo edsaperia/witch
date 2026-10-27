@@ -69,7 +69,7 @@ export class QualityLadder {
     const sig = RUNGS.map((_, i) => (inEffect(this.state, i) ? 1 : 0)).join("");
     if (sig === this.applied) return;
     this.applied = sig;
-    t.scenery.edgeDither = on("farDither") || b.edge;
+    flag(t.scenery, "edgeDither", on("farDither") || b.edge);
     t.treeCap.keep = on("squeeze") ? Math.min(b.keep, SQUEEZE_KEEP) : b.keep;
     t.wind.on = on("still") ? false : b.wind;
     if (t.shadows.trunks) t.shadows.trunks.mode = on("still") ? "off" : b.trunks;
@@ -108,6 +108,12 @@ export class QualityLadder {
 /** The device's GPU by name, to remember its rung by (its renderer string; the browser's generic one where that's hidden). */
 export function gpuName(gl: WebGLRenderingContext | WebGL2RenderingContext): string {
   try { const d = gl.getExtension("WEBGL_debug_renderer_info"); return String(d ? gl.getParameter(d.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER)); } catch { return "unknown"; }
+}
+
+/** A switch the rungs add to the tuning, left out while off (as the night was built), so a night off the ladder reads the same in
+ *  the bench's knobs as before the rung was built. */
+function flag<T extends object>(o: T, k: keyof T, v: boolean): void {
+  if (v) (o as Record<keyof T, unknown>)[k] = true; else delete o[k];
 }
 
 function median(a: readonly number[]): number {
