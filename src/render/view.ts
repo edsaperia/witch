@@ -1673,7 +1673,7 @@ export class View {
       // this frame, her house's slide in it; Ed, 2026-10-26: "The witch should have a canopy circle cut around her in the treehouse")
       const cut = t.canopyCutout, hw = SPRITE_UNIFORMS.uWitch.value, CR = t.treehouse.house?.crown;
       const hole = { x: hw.x, y: hw.y, r: 0.5 * cut.screenFraction * (t.suspects.holeCut ? 1 : 0) * this.width, edge: cut.edge * this.width };
-      this.crown.uniforms.uWarmK.value = CR?.warm ?? 0; this.crown.uniforms.uRimK.value = CR?.rim ?? 0;
+      this.crown.uniforms.uWarmK.value = CR?.warm ?? 0; // (the house's warm light up into it, live from the pause page)
       this.crown.update(this.camera, W, plan, here, dt, hole, CR?.cutFade ?? 0, { x: w.x, y: groundHeight(w.x, w.z) + witchHeight(w, t), z: w.z }); // (her: the oak hidden when she's behind it)
       if (this.crownFar) { // (and over the horizon from far off: its picture baked the first frame there is one)
         this.crownFar.bake(this.renderer);

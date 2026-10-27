@@ -6,6 +6,7 @@
 import * as THREE from "three";
 import type { Game } from "../rules/game";
 import { stringsFor, type StringLine } from "../rules/strings";
+import { garlandPoint } from "../rules/crown";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { SPRITE_UNIFORMS } from "./sprites";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
@@ -211,17 +212,27 @@ export class StringLightsView {
   /** The lines of one area, and when each bulb switches on (as the party's front passes it). */
   private build(lines: StringLine[], on: (x: number, z: number) => number, centre: { x: number; z: number }, seed: number, cell: readonly [number, number]): THREE.Group {
     const L = this.game.tuning.stringLights, h = L.height, own = L.mode === "areaNeon" ? new THREE.Color(`rgb(${(NEON as Record<string, number[]>)[areaNeons(this.game.map, cell as [number, number])[0]].join(",")})`) : null, bulbs: number[] = [], cols: number[] = [], data: number[] = [], wire: number[] = [], sway: number[] = [];
+    // (each line hung its own way, from its seed: its two ends at their own heights, its own sag and bulb spacing, and now and then a
+    // strand let hang off its end; Ed, 2026-10-27, of the crown's: "String lights on the treehouse seem to all have the same shape")
+    const rnd = (sd: number, k: number) => { const x = Math.sin(sd * 12.9898 + k * 78.233) * 43758.5453; return x - Math.floor(x); };
     lines.forEach((l, li) => {
-      const len = Math.hypot(l.bx - l.ax, l.bz - l.az), n = Math.max(2, Math.round(len / L.bulbSpacing));
-      const at = (t: number): [number, number, number] => [l.ax + (l.bx - l.ax) * t, h - L.sag * 4 * t * (1 - t) * (len / 8), l.az + (l.bz - l.az) * t];
+      const ha = h + (rnd(l.seed, 1) - 0.5) * 2.4, hb = h + (rnd(l.seed, 2) - 0.5) * 2.4, sag = L.sag * (0.5 + 1.2 * rnd(l.seed, 3)), gap = L.bulbSpacing * (0.75 + 0.6 * rnd(l.seed, 4));
+      const len = Math.hypot(l.bx - l.ax, l.bz - l.az), n = Math.max(2, Math.round(len / gap));
+      const at = (t: number): [number, number, number] => [l.ax + (l.bx - l.ax) * t, ha + (hb - ha) * t - sag * 4 * t * (1 - t) * (len / 8), l.az + (l.bz - l.az) * t];
       for (let i = 0; i <= 16; i++) { // the wire, as segments of the sag
         const p0 = at(i / 16), p1 = at((i + 1) / 16);
         if (i < 16) { wire.push(...p0, ...p1); sway.push(li + i / 16, li + (i + 1) / 16); }
       }
-      for (let i = 1; i < n; i++) {
-        const t = i / n, p = at(t), c = own ? ((l.seed + i) % 3 === 2 ? own : this.palette[0]) : this.palette[(l.seed + i) % this.palette.length];
+      const bulb = (p: [number, number, number], i: number, t: number) => {
+        const c = own ? ((l.seed + i) % 3 === 2 ? own : this.palette[0]) : this.palette[(l.seed + i) % this.palette.length];
         bulbs.push(...p); cols.push(c.r, c.g, c.b);
         data.push(((l.seed * 13 + i * 7) % 100) / 100, li * 40 + i, on(p[0], p[2]) + i * 0.03, 4 * t * (1 - t));
+      };
+      for (let i = 1; i < n; i++) bulb(at(i / n), i, i / n);
+      if (rnd(l.seed, 5) < 0.2) { // (a tail: 1.5 to 4 m let hang off its far end)
+        const e = at(1), T = 1.5 + 2.5 * rnd(l.seed, 6), k = Math.max(2, Math.round(T / gap));
+        wire.push(...e, e[0], e[1] - T, e[2]); sway.push(li + 1, li + 1);
+        for (let j = 1; j <= k; j++) bulb([e[0], e[1] - (T * j) / k, e[2]], n + j, 0.5);
       }
     });
     const g = new THREE.Group();
@@ -306,7 +317,7 @@ export class StringLightsView {
     const hung = new Set(view.bulbs.map(b => b.string));
     for (const [si, s] of view.crown.strings.entries()) {
       if (!hung.has(si)) continue;
-      if (s.kind === "garland") { const n = 24, at = (i: number) => { const th = s.o + (i / n) * Math.PI * 2, w = s.el + 0.12 * Math.sin(th * 3); return [s.x + s.r * Math.cos(w) * Math.cos(th), s.y + s.r * Math.sin(w), s.z + s.r * Math.cos(w) * Math.sin(th)]; }; for (let i = 0; i < n; i++) wire.push(...at(i), ...at(i + 1)); continue; }
+      if (s.kind === "garland") { const n = Math.max(8, Math.round(24 * (s.arc ?? 1))); for (let i = 0; i < n; i++) wire.push(...garlandPoint(s, i / n), ...garlandPoint(s, (i + 1) / n)); continue; }
       for (const p of s.spans) { const at = (u: number) => [p.a[0] + (p.b[0] - p.a[0]) * u, p.a[1] + (p.b[1] - p.a[1]) * u - p.sag * 4 * u * (1 - u), p.a[2] + (p.b[2] - p.a[2]) * u]; for (let i = 0; i < 8; i++) wire.push(...at(i / 8), ...at((i + 1) / 8)); }
     }
     const U = view.uniforms, shared = { ...U, uWind: { value: this.game.tuning.canopyShadow.wind * 1.5 }, uRes: SPRITE_UNIFORMS.uRes };

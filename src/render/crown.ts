@@ -171,9 +171,8 @@ void main() {
 const BARK_VERT = /* glsl */ `
 attribute vec3 aNormal; // on the plan
 attribute vec2 aBark; // metres along the limb, angle round it (0 to 1)
-attribute float aRad; // the limb's radius there (m)
 attribute float aWarm; // the house's light there (warmAt)
-varying float vWarm, vRad;
+varying float vWarm;
 varying vec3 vWorld, vN;
 varying vec2 vBark;
 varying vec2 vFloor;
@@ -188,7 +187,7 @@ void main() {
   vWorld = p; vBark = aBark;
   vN = normalize(aNormal.x * normalize(uMapX) + aNormal.y * normalize(uMapY) + aNormal.z * normalize(uMapZ));
   vLight = nightLight(vN, p); // (once a vertex)
-  vWarm = uWarmK * aWarm * (0.1 + 0.9 * max(0.0, -aNormal.y)); vRad = aRad; // (its undersides: the light comes from below)
+  vWarm = uWarmK * aWarm * (0.1 + 0.9 * max(0.0, -aNormal.y)); // (its undersides: the light comes from below)
   vec3 q = p - uMapO;
   vFloor = vec2(dot(q, uRight) / max(1e-4, dot(uMapX, uRight)), dot(q, uUp) / min(-1e-4, dot(uMapZ, uUp)));
   vec4 mv = viewMatrix * vec4(uBendOn > 0.5 ? bendW(p) : p, 1.0);
@@ -202,9 +201,7 @@ varying vec2 vBark;
 varying vec2 vFloor;
 varying float vDepth;
 varying vec3 vLight;
-varying float vWarm, vRad;
-uniform vec3 uBack;
-uniform float uRimK; // moonlit edges on the great limbs (treehouse.house.crown.rim)
+varying float vWarm;
 ${LIGHT_GLSL}
 ${CLEAR_GLSL}
 void main() {
@@ -222,10 +219,6 @@ void main() {
   c *= 0.85 + 0.3 * min(1.0, y * 2.0);
   // the house's warm light from below, in flat steps (its undersides over the rooms the most)
   if (vWarm > 0.0) { float q = clamp(floor(vWarm * 4.0 + (fur - 0.5) * 1.2), 0.0, 4.0) / 4.0; c = mix(c, c * vec3(1.8, 1.2, 0.75) + vec3(0.12, 0.06, 0.015), q * 0.7); }
-  // the moon catching the great limbs' edges: a hard line of cool light along their silhouettes on its side
-  // (outside only: laid flat over the floors indoors, a tube has no silhouette to catch)
-  if (uRimK > 0.0 && uIndoor < 0.5) { float edge = 1.0 - abs(dot(N, normalize(uBack))), m = dot(N, uMoonDir), big = smoothstep(1.0, 2.5, vRad);
-    if (edge > 0.86 && m > 0.25 && N.y > 0.0 && fur > 0.3) c = mix(c, vec3(0.36, 0.40, 0.48), uRimK * big * 0.8); }
   gl_FragColor = vec4(crownHaze(c, vWorld), keep);
 }`;
 
@@ -239,7 +232,7 @@ export function warmAt(rooms: readonly { x: number; z: number; r?: number; locke
 
 /** The bark's tubes: a Catmull-Rom through each limb's knots, rings of `sides` round it about a third of its radius apart. */
 function barkGeometry(c: Crown, rooms: HouseOutline["rooms"]): THREE.BufferGeometry {
-  const pos: number[] = [], nrm: number[] = [], bark: number[] = [], rad: number[] = [], warm: number[] = [], idx: number[] = [];
+  const pos: number[] = [], nrm: number[] = [], bark: number[] = [], warm: number[] = [], idx: number[] = [];
   for (const l of c.limbs) {
     const k: Knot[] = [l.knots[0], ...l.knots, l.knots[l.knots.length - 1]], sides = l.knots[0][3] > 2.5 ? 8 : l.knots[0][3] > 0.8 ? 6 : 4;
     const ring: { p: number[]; t: number[]; r: number; s: number }[] = [];
@@ -264,7 +257,7 @@ function barkGeometry(c: Crown, rooms: HouseOutline["rooms"]): THREE.BufferGeome
       const up = [T[1] * ax[2] - T[2] * ax[1], T[2] * ax[0] - T[0] * ax[2], T[0] * ax[1] - T[1] * ax[0]];
       for (let j = 0; j < sides; j++) {
         const a = (j / sides) * Math.PI * 2, cs = Math.cos(a), sn = Math.sin(a), n = [ax[0] * cs + up[0] * sn, ax[1] * cs + up[1] * sn, ax[2] * cs + up[2] * sn];
-        pos.push(R.p[0] + n[0] * R.r, R.p[1] + n[1] * R.r, R.p[2] + n[2] * R.r); nrm.push(n[0], n[1], n[2]); bark.push(R.s, j / sides); rad.push(R.r); warm.push(warmAt(rooms, R.p[0] + n[0] * R.r, R.p[1] + n[1] * R.r, R.p[2] + n[2] * R.r));
+        pos.push(R.p[0] + n[0] * R.r, R.p[1] + n[1] * R.r, R.p[2] + n[2] * R.r); nrm.push(n[0], n[1], n[2]); bark.push(R.s, j / sides); warm.push(warmAt(rooms, R.p[0] + n[0] * R.r, R.p[1] + n[1] * R.r, R.p[2] + n[2] * R.r));
       }
     }
     for (let i = 0; i < ring.length - 1; i++) for (let j = 0; j < sides; j++) {
@@ -276,7 +269,6 @@ function barkGeometry(c: Crown, rooms: HouseOutline["rooms"]): THREE.BufferGeome
   g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
   g.setAttribute("aNormal", new THREE.Float32BufferAttribute(nrm, 3));
   g.setAttribute("aBark", new THREE.Float32BufferAttribute(bark, 2));
-  g.setAttribute("aRad", new THREE.Float32BufferAttribute(rad, 1));
   g.setAttribute("aWarm", new THREE.Float32BufferAttribute(warm, 1));
   g.setIndex(idx);
   return g;
@@ -333,7 +325,7 @@ export class CrownView {
       uNoise: { value: noiseTexture() },
       uBehind: { value: 0 }, uClear: { value: this.masks[0].tex }, uClearB: { value: this.masks[1].tex }, uClearW: { value: new THREE.Vector2() }, uClearBox: { value: new THREE.Vector4(cx - rx, cz - rz, 1 / (2 * rx), 1 / (2 * rz)) }, uClearOn: { value: 0 },
       uHerHole: { value: new THREE.Vector4() },
-      uWarmK: { value: 0 }, uRimK: { value: 0 },
+      uWarmK: { value: 0 },
     };
     const lobeMat = new THREE.ShaderMaterial({ vertexShader: LOBE_VERT, fragmentShader: LOBE_FRAG, uniforms: this.uniforms });
     const barkMat = new THREE.ShaderMaterial({ vertexShader: BARK_VERT, fragmentShader: BARK_FRAG, uniforms: this.uniforms });

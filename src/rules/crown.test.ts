@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { crownBulbs, GAP_MARGIN, limbSamples, makeCrown, notchDistance, notchWidth, polySigned, sightClearance, SIGHT_PITCHES, type HouseOutline } from "./crown";
+import { crownBulbs, GAP_MARGIN, garlandPoint, limbSamples, makeCrown, notchDistance, notchWidth, polySigned, sightClearance, SIGHT_PITCHES, type HouseOutline } from "./crown";
 import { TUNING } from "./tuning";
 import { HOUSE_ROOMS } from "./houseRooms";
 import OUTLINE from "../../config/house/outline.json";
@@ -86,6 +86,21 @@ describe("the great oak's crown", () => {
     for (const q of b) { expect(q.u).toBeGreaterThanOrEqual(0); expect(q.u).toBeLessThanOrEqual(1); }
     expect(c.strings.filter(s => s.kind === "ring").length).toBe(1);
     for (const k of ["swag", "drape", "garland"] as const) expect(c.strings.some(s => s.kind === k), k).toBe(true);
+  });
+
+  it("hangs each string its own way (Ed, 2026-10-27: \"String lights on the treehouse seem to all have the same shape\")", () => {
+    for (const k of ["tail", "spiral"] as const) expect(c.strings.some(s => s.kind === k), k).toBe(true);
+    const spread = (v: number[]) => Math.max(...v) - Math.min(...v);
+    const spans = c.strings.flatMap(s => (s.kind === "swag" || s.kind === "drape" ? s.spans : []));
+    expect(spread(spans.map(p => p.sag))).toBeGreaterThan(1.5); // (their sag)
+    expect(spread(c.strings.map(s => s.space ?? 1))).toBeGreaterThan(0.4); // (their bulbs' spacing)
+    const g = c.strings.filter(s => s.kind === "garland");
+    expect(g.some(s => (s.arc ?? 1) < 1) && g.some(s => (s.arc ?? 1) >= 1)).toBe(true); // (part way round and all the way)
+    expect(spread(g.map(s => s.tilt ?? 0))).toBeGreaterThan(0.15);
+    // and every bulb on a garland on its own curve: in order along it, the first at its start
+    const b = crownBulbs(c, 0.8), first = c.strings.findIndex(s => s.kind === "garland"), on = b.filter(q => q.string === first);
+    const p0 = garlandPoint(g[0], 0);
+    expect(Math.hypot(on[0].x - p0[0], on[0].y - p0[1], on[0].z - p0[2])).toBeLessThan(1e-6);
   });
 });
 
