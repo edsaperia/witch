@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FIGHTERS, nextSeed, packSpec, rollPack } from "./fightArena";
+import { FIGHTERS, nextSeed, packSpec, rollPack, TellWatch } from "./fightArena";
 import { parseArena, setupArena } from "./arena";
 import { LEGEND } from "./creatures";
 import { attackOf } from "./combat/data";
@@ -55,3 +55,33 @@ describe("the arena wild only (the Fight Arena): her alone against the pack", ()
     expect(struck).toBeGreaterThan(0);
   }, 60000);
 });
+
+describe("the Fight Arena's telegraph timings", () => {
+  it("sees each windup once, from when it began to when it lands, its lead the attack's windup", () => {
+    const g = newGame(5, TUNING);
+    g.clock.paused = false; g.party.paused = true;
+    setupArena(g, "wolf*3@2", { wildOnly: true });
+    const w = new TellWatch(), windup = attackOf("wolf", 2)!.attack.windup;
+    let live = 0;
+    for (let i = 0; i < 20 / STEP; i++) {
+      g.witches[0].health.hp = 1e6; stepGame(g, idle, i % 6 ? 0 : 6 * STEP); // (a frame of six steps at a time, as a slow machine's: each windup's start still its own step)
+      for (const t of w.update(g)) { live++; expect(t.fire).toBeGreaterThan(g.clock.time); expect(t.start).toBeLessThanOrEqual(g.clock.time); expect(t.species).toBe("wolf"); }
+    }
+    expect(w.count).toBeGreaterThan(0);
+    expect(live).toBeGreaterThan(w.count); // (each shown over several frames)
+    // the shortest seen: no longer than the attack's windup (a strike's is 0.7 of it, rules/combat.ts; pack moves may differ), and
+    // not cut short by the frames (each lead a whole number of steps of a real windup, not a frame's worth less)
+    expect(w.shortest).toBeGreaterThan(0.3 * windup);
+    expect(w.shortest).toBeLessThanOrEqual(windup + 1e-6);
+    w.reset();
+    expect([w.count, w.shortest]).toEqual([0, Infinity]);
+  }, 60000);
+
+  it("takes the composable attacks' telegraphs too, with their own start", () => {
+    const w = new TellWatch();
+    const g = { clock: { time: 10 }, creatures: [], arena: { spec: "", ids: [] }, combat: { telegraphs: [{ id: 3, start: 9.6, fire: 10.5, shape: { a: { x: 1, z: 2 }, b: { x: 5, z: 2 } } }, { id: 4, start: 9, fire: 9.5, shape: { x: 0, z: 0 } }] } };
+    expect(w.update(g as never)).toEqual([{ key: "t3", species: "telegraph", x: 1, z: 2, start: 9.6, fire: 10.5 }]);
+    expect(w.shortest).toBeCloseTo(0.9);
+  });
+});
+
