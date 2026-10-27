@@ -23,7 +23,7 @@ const serve = () => new Promise(r => { const s = http.createServer((req, res) =>
   for (let i = 0; i < +(process.env.ZOOM ?? 0); i++) await page.keyboard.press("KeyZ");
   await page.waitForTimeout(2500);
   await page.addStyleTag({ content: "body * { visibility: hidden !important } canvas { visibility: visible !important }" });
-  const T = DEMO === "elements" ? 2.4 : 3, t0 = await page.evaluate(T => { const t = window.witch.game.clock.time; return (Math.floor(t / T) + 1) * T; }, T), shots = [];
+  const T = DEMO === "elements" ? 2.4 : DEMO === "species" ? 1.6 : 3, t0 = await page.evaluate(T => { const t = window.witch.game.clock.time; return (Math.floor(t / T) + 1) * T; }, T), shots = [];
   for (let k = 0; k < FRAMES; k++) {
     await page.waitForFunction(t => window.witch.game.clock.time >= t, t0 + k * STEP + 0.02, { timeout: 120000, polling: 16 });
     shots.push((await page.screenshot()).toString("base64"));

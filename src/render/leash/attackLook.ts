@@ -9,7 +9,8 @@
 // each attack's id and time (hash2), so a shot or a replay draws the same.
 import * as THREE from "three";
 import { attackLookAtlas } from "../../../art/attackLook.js";
-import { ATTACK_LOOK, rgbOf, spellPower, type SpellElement } from "../../rules/attackLook";
+import { ATTACK_LOOK, elementOf, rgbOf, spellPower, type SpellElement } from "../../rules/attackLook";
+import { SPECIES_ATTACKS } from "../../rules/attacks/species";
 import { hash2 } from "../../rules/random";
 import type { Game } from "../../rules/game";
 import { LIGHT_UNIFORMS } from "../lighting";
@@ -40,6 +41,9 @@ export interface TelegraphShape { type?: string; x: number; z: number; x2?: numb
 export interface LiveTelegraph { kind: string; shape: TelegraphShape; start: number; fire: number; n?: number }
 
 interface LookFx { kind: "impact" | "mark" | "area"; d: Dress; x: number; y: number; z: number; at: number; life: number; seed: number; size: number }
+
+/** The species the showcase flies (?lookdemo=species): one of each look, and the new elements. */
+const DEMO_SPECIES = ["squirrel", "marten", "beaver", "otter", "raccoon", "owl", "raven", "polarbear", "heron", "scorpion", "stegosaurus", "armadillo", "redpanda", "beetle", "fennec", "griffin"];
 
 export class AttackLook {
   /** light, added (glows); standing and on the ground */
@@ -408,6 +412,18 @@ export class AttackLook {
    *  beam and quake, a column each. For judging the look without an attack in the rules that makes each one. */
   demo(which: string, x: number, z: number, time: number): void {
     const els = Object.keys(this.cfg.elements), wild = (i: number): Dress => ({ el: els[i % els.length], level: 2 });
+    if (which === "species") {
+      // sixteen species' attacks, each in its element and look, flying past and landing: a 4 × 4 grid round her
+      const T = 1.6, ph = time % T, loop = Math.floor(time / T);
+      DEMO_SPECIES.forEach((sp, i) => {
+        const A = SPECIES_ATTACKS[sp], tag = A?.body?.element, d: Dress = { el: elementOf(sp, undefined, undefined, tag), level: 2, ...(A?.body?.look && this.cfg.looks[A.body.look] ? { look: A.body.look } : {}) };
+        const cx = x + ((i % 4) - 1.5) * 5, cz = z + (Math.floor(i / 4) - 1.5) * 4, k = Math.min(1, ph / 1.1), bx = cx - 2 + k * 4;
+        if (ph < 1.1) this.core(d, bx, 0.9, cz, 4 / 1.1, 0, 0, time, i * 17 + 5);
+        else if (!this.fx.some(f => f.seed === loop * 100 + i)) this.hit(d, cx + 2, 0.9, cz, time, loop * 100 + i);
+      });
+      this.drawFx(time);
+      return;
+    }
     if (which === "elements") {
       const T = 2.4, ph = time % T, loop = Math.floor(time / T);
       els.forEach((el, i) => {
