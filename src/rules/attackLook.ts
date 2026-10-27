@@ -32,11 +32,11 @@ export interface SpellsConfig {
   bySpecies: Record<string, string>;
 }
 
-export const SPELLS = raw as unknown as SpellsConfig;
-export const ELEMENTS: string[] = Object.keys(SPELLS.elements);
+export const ATTACK_LOOK = raw as unknown as SpellsConfig;
+export const ELEMENTS: string[] = Object.keys(ATTACK_LOOK.elements);
 
 /** A creature's element: its own (bySpecies), else its kind's biome's, else the default. */
-export function elementOf(species: string, cfg: SpellsConfig = SPELLS, kinds: Record<string, { biome?: string }> = KINDS_TABLE): string {
+export function elementOf(species: string, cfg: SpellsConfig = ATTACK_LOOK, kinds: Record<string, { biome?: string }> = KINDS_TABLE): string {
   const own = cfg.bySpecies[species];
   if (own && cfg.elements[own]) return own;
   const biome = kinds[species]?.biome, by = biome ? cfg.byBiome[biome] : undefined;
@@ -44,7 +44,7 @@ export function elementOf(species: string, cfg: SpellsConfig = SPELLS, kinds: Re
 }
 
 /** How big a level draws its spells (1 young, 2 adult, 3 legend; a baby's, if it ever casts, as a young's). */
-export const spellPower = (level: number, cfg: SpellsConfig = SPELLS): number => cfg.power[String(Math.max(1, Math.min(3, level)))] ?? 1;
+export const spellPower = (level: number, cfg: SpellsConfig = ATTACK_LOOK): number => cfg.power[String(Math.max(1, Math.min(3, level)))] ?? 1;
 
 /** "#rrggbb" to 0..1 channels. */
 export function rgbOf(hex: string): [number, number, number] {

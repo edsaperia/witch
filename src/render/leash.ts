@@ -33,6 +33,7 @@ import { LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS } from "./height";
 import { AMBER, ROSE, JOIN_PALETTE, PIXEL_DOT_MAX, SLOT, SLOTS, SQ, DISC, writeOn, LEGEND_LEVEL, LEGEND_ROW, Instances, VERT, FRAG, legendarySigil } from "./leash/glyphs";
 import { drawCombat } from "./leash/combat";
+import { AttackLook } from "./leash/attackLook";
 import { BLOOD_PULL, BloodPool, bloodKnobs } from "./leash/blood";
 import { bubbles, drawCirclePanel, drawDreams, drawSnores } from "./leash/bubbles";
 import { ZooPlates } from "./zooPlates";
@@ -89,6 +90,8 @@ export class LeashView {
   over: Instances;
   /** Not glowing (Ed's art director, #193): an attack's dust and the bits it throws, blended over the ground like the creatures. */
   solid: Instances;
+  /** Attacks dressed in their elements, and the danger frame (leash/attackLook.ts). */
+  readonly look: AttackLook;
   /** Blood trails (leash/blood.ts): flat on the ground, blended, not glowing. */
   blood: Instances;
   private bloodPool: BloodPool | null = null;
@@ -185,6 +188,7 @@ export class LeashView {
     this.backing = new Instances(mat(1, true, true)); this.backing.mesh.renderOrder = 2.9;
     this.ink = new Instances(mat(1, true, true)); this.ink.mesh.renderOrder = 2.95;
     scene.add(this.standing.mesh, this.flat.mesh, this.through.mesh, this.over.mesh, this.solid.mesh, this.blood.mesh, this.backing.mesh, this.ink.mesh, this.stackBack.mesh, this.stackGlyphs.mesh);
+    this.look = new AttackLook(scene, game);
     const hex = game.tuning.berries.colour.replace("#", "");
     this.berryRgb = [0, 2, 4].map(i => parseInt(hex.slice(i, i + 2), 16) / 255) as [number, number, number];
   }
@@ -195,6 +199,7 @@ export class LeashView {
     this.game = game;
     this.seatAt = null; this.bloodPool = null;
     for (const m of [this.ruts, this.evolved, this.cycledAt, this.joined, this.stackY, this.lastSlots, this.travelling, this.routes, this.tops, this.halfW, this.heads, this.dreamStones]) m.clear();
+    this.look.reset();
     this.bursts = []; this.chain = []; this.fx = []; this.ringGlows = []; this.dreams = []; this.snoreNear = []; this.projected = [];
     this.lastTime = 0; this.tugAt = -9; this.load = newLoadView(); this.bristle = { x: 0, y: 0, z: 0, on: false };
     this.shakeAt = -Infinity; this.shakeAmp = 0; this.boingAt = -Infinity; this.partyOverEase = 0; this.lettersSeen = -Infinity;
@@ -463,6 +468,7 @@ export class LeashView {
   update(time: number, camera: THREE.Camera, width: number, height: number, hatTop: number, bodyY = hatTop * 0.5, feetY = 0, frameH = 0): void {
     this.bodyY = bodyY; this.hatTop = hatTop; this.feetY = feetY; this.frameH = frameH;
     const g = this.game, s = g.leash, t = g.tuning, w = g.witch, L = t.leash, dot = this.uv(0);
+    this.look.begin();
     this.standing.begin(); this.flat.begin(); this.through.begin(); this.over.begin(); this.solid.begin(); this.blood.begin(); this.backing.begin(); this.ink.begin(); this.stackBack.begin(); this.stackGlyphs.begin();
     // Every sigil's glyph (placed, happy runes, the ghost, a relic's, her stack, the treetop projection, one walking home) under the
     // bloom's threshold, and its halo (Ed's pick B, 2026-10-12: "it's their glow that makes them hard to see, not the pixellation").
@@ -623,6 +629,7 @@ export class LeashView {
 
     drawBond(this, time, slotPos, dot); // (the bond: render/leash/stack.ts)
     drawStrain(this, time, dot);
+    this.look.end();
     this.standing.end(); this.flat.end(); this.through.end(); this.over.end(); this.solid.end(); this.blood.end(); this.backing.end(); this.ink.end(); this.stackBack.end(); this.stackGlyphs.end();
     bubbles(this, time, camera, width, height);
     drawDreams(this, camera, width, height);
