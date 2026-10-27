@@ -18400,6 +18400,7 @@ registerProcessor("witch-fof", WitchFof);
   };
 
   // src/platform/audio/musicEngine.ts
+  var SHARED = /* @__PURE__ */ new Map();
   var VOWELS = {
     ah: [[800, 1], [1150, 0.6], [2900, 0.25]],
     oh: [[450, 1], [800, 0.5], [2830, 0.15]],
@@ -18409,10 +18410,11 @@ registerProcessor("witch-fof", WitchFof);
   };
   var METAL_RATIOS = [2, 3, 4.16, 5.43, 6.79, 8.21];
   var MusicEngine = class _MusicEngine {
-    constructor(ctx2, dest, style2, seed2 = 0, circleDest = dest) {
+    constructor(ctx2, dest, style2, seed2 = 0, circleDest = dest, sink) {
       this.ctx = ctx2;
       this.style = style2;
       this.seed = seed2;
+      this.stems = !!sink;
       this.conductor = new Conductor(style2);
       const c = ctx2;
       this.out = c.createGain();
@@ -18453,8 +18455,8 @@ registerProcessor("witch-fof", WitchFof);
       this.post = c.createWaveShaper();
       const curve = new Float32Array(4097);
       for (let i = 0; i < curve.length; i++) {
-        const x = i / 2048 - 1, a2 = Math.abs(x);
-        curve[i] = a2 <= 0.9 ? x : Math.sign(x) * (0.9 + 0.1 * Math.tanh((a2 - 0.9) / 0.1));
+        const x = i / 2048 - 1, a = Math.abs(x);
+        curve[i] = a <= 0.9 ? x : Math.sign(x) * (0.9 + 0.1 * Math.tanh((a - 0.9) / 0.1));
       }
       this.post.curve = curve;
       this.tone.connect(limit);
@@ -18475,24 +18477,30 @@ registerProcessor("witch-fof", WitchFof);
       this.circleVerb.connect(this.circleIn);
       this.circleIn.connect(circleLimit);
       circleLimit.connect(circleDest);
-      this.noise = noiseBuffer(c, 2, 22222);
-      this.metal = c.createBuffer(1, 2 * c.sampleRate, c.sampleRate);
-      const m = this.metal.getChannelData(0), phase = METAL_RATIOS.map((_, i) => i * 0.37);
-      for (let i = 0; i < m.length; i++) {
-        let v = 0;
-        for (let k = 0; k < METAL_RATIOS.length; k++) v += (40 * METAL_RATIOS[k] * i / c.sampleRate + phase[k]) % 1 < 0.5 ? 1 : -1;
-        m[i] = v / METAL_RATIOS.length;
+      let shared = SHARED.get(c.sampleRate);
+      if (!shared) {
+        const noise2 = noiseBuffer(c, 2, 22222), metal = c.createBuffer(1, 2 * c.sampleRate, c.sampleRate);
+        const m = metal.getChannelData(0), phase = METAL_RATIOS.map((_, i) => i * 0.37);
+        for (let i = 0; i < m.length; i++) {
+          let v = 0;
+          for (let k = 0; k < METAL_RATIOS.length; k++) v += (40 * METAL_RATIOS[k] * i / c.sampleRate + phase[k]) % 1 < 0.5 ? 1 : -1;
+          m[i] = v / METAL_RATIOS.length;
+        }
+        let peak = 0, a = 0, b = 0;
+        for (let i = 0; i < m.length; i++) {
+          const x = m[i], d1 = x - a;
+          a = x;
+          const d2 = d1 - b;
+          b = d1;
+          m[i] = d2;
+          peak = Math.max(peak, Math.abs(d2));
+        }
+        for (let i = 0; i < m.length; i++) m[i] /= peak || 1;
+        SHARED.set(c.sampleRate, shared = { noise: noise2, metal });
       }
-      let peak = 0, a = 0, b = 0;
-      for (let i = 0; i < m.length; i++) {
-        const x = m[i], d1 = x - a;
-        a = x;
-        const d2 = d1 - b;
-        b = d1;
-        m[i] = d2;
-        peak = Math.max(peak, Math.abs(d2));
-      }
-      for (let i = 0; i < m.length; i++) m[i] /= peak || 1;
+      this.noise = shared.noise;
+      this.metal = shared.metal;
+      this.sink = sink ?? this.bus;
       this.setStyle(style2);
       if (Object.values(style2.patches).some((p) => p.kind === "fof") && style2.form?.sung && style2.patches[style2.form.sung.patch]?.kind === "fof") void fofReady(ctx2);
     }
@@ -18582,6 +18590,30 @@ registerProcessor("witch-fof", WitchFof);
       }
       for (const ch of this.channels.values()) ch.fx?.shedTo(level);
     }
+    /** Where the notes go: its own buses (`bus`), or a renderer's stems. */
+    sink;
+    /** Rendering into another's stems (no buses of its own heard, no reverbs' impulses made). */
+    stems;
+    /** A renderer's: how far (s) its context's time 0 is past the first renderer's, so the parts' running wobbles and vibratos
+     *  (free oscillators) go on in phase from one bar's context to the next. */
+    phaseAt = 0;
+    /** A renderer's: what the bar before's renderer left in each part (a glide's last note, the sung phrase's vowel and end, its
+     *  chain by place), its times on this one's context; taken up as each part's channel is made. */
+    carried = /* @__PURE__ */ new Map();
+    /** A renderer following `prev` (the bar before's, its context `shift` seconds earlier): its parts' state and its gate carried on. */
+    carryFrom(prev, shift) {
+      const move = (st) => ({ ...st, lastEnd: st.lastEnd === void 0 ? void 0 : st.lastEnd - shift });
+      for (const [k, st] of prev.carried) this.carried.set(k, move(st));
+      for (const [k, ch] of prev.channels) this.carried.set(k, move({ lastFreq: ch.lastFreq, sung: ch.sung, lastEnd: ch.lastEnd, fxKind: ch.fxKind }));
+      this.gated = prev.gated;
+      this.phaseAt = prev.phaseAt + shift;
+    }
+    /** A free oscillator at `rate` Hz started at time 0, in phase with the first renderer's (a renderer's; live, as it starts). */
+    phased(o, rate) {
+      if (!this.stems || !this.phaseAt) return;
+      const ph = 2 * Math.PI * rate * this.phaseAt;
+      o.setPeriodicWave(this.ctx.createPeriodicWave(new Float32Array([0, Math.sin(ph)]), new Float32Array([0, Math.cos(ph)]), { disableNormalization: true }));
+    }
     /** A new or edited style: takes effect from the next block. */
     setStyle(style2) {
       this.style = style2;
@@ -18644,11 +18676,54 @@ registerProcessor("witch-fof", WitchFof);
       this.reverbIn.gain.value = m.reverb;
       this.delayIn.gain.value = lite ? 0 : m.delay;
       this.feedback.gain.value = lite ? 0 : Math.min(0.85, m.feedback);
-      if (time !== this.reverbTime) {
+      if (time !== this.reverbTime && !this.stems) {
         this.reverbTime = time;
         this.reverb.buffer = this.impulse(time);
         this.circleVerb.buffer = this.impulse(time * 1.6);
       }
+    }
+    /** Its own buses as a sink (live: the notes and their automation straight onto them); what a renderer's stems play into. */
+    get bus() {
+      return this.ownBus ??= {
+        duck: this.duckBus,
+        dry: this.dryBus,
+        reverb: this.reverbIn,
+        delay: this.delayIn,
+        voice: null,
+        tone: (f0, f1, t, dur) => {
+          this.tone.frequency.setValueAtTime(f0, t);
+          if (f1 !== f0) this.tone.frequency.exponentialRampToValueAtTime(f1, t + dur);
+        },
+        duckAt: (t, depth, sps) => {
+          const g = this.duckBus.gain;
+          g.setTargetAtTime(1 - depth, t, 4e-3);
+          g.setTargetAtTime(1, t + 0.03, sps * 0.7);
+        },
+        gate: (open, t) => {
+          if (open) {
+            this.gate.gain.cancelScheduledValues(t);
+            this.gate.gain.setValueAtTime(1, t);
+          } else this.gate.gain.setTargetAtTime(0, t, 0.03);
+        },
+        fxChain: (part, kind) => {
+          const ch = this.channels.get(part);
+          if (ch?.fx && ch.fxKind !== kind) {
+            ch.fxKind = kind;
+            ch.fx.set(this.fxChain(kind));
+          }
+        },
+        fxRelease: (part, t) => this.channels.get(part)?.fx?.release(t),
+        fxSwell: (part, rec, rate, t, swell, peak) => {
+          const fx = this.channels.get(part)?.fx;
+          if (fx) this.swellInto(fx, rec, rate, t, swell, peak);
+        }
+      };
+    }
+    ownBus = null;
+    /** The voice line's part's way in, its effects after (a renderer's voice stem plays into it). */
+    voiceIn(part) {
+      const p = this.style.patches[this.style.form?.sung.part === part ? this.style.form.sung.patch : ""] ?? null;
+      return p ? this.channel(part, p).in : null;
     }
     /** Each frame: schedule what's due in the next `ahead` seconds of audio time, at game time
      *  `gameTime` (seconds) on the beat clock `clock`. `playing` false: nothing new is scheduled. */
@@ -18794,14 +18869,13 @@ registerProcessor("witch-fof", WitchFof);
       const S = this.style, B = S.blockBars, bar2 = Math.floor(step2 / 16), s = step2 - bar2 * 16;
       if (silentAt(cue2, step2 / 16)) {
         if (!this.gated) {
-          this.gate.gain.setTargetAtTime(0, t, 0.03);
+          this.sink.gate(false, t);
           this.gated = true;
         }
         return;
       }
       if (this.gated) {
-        this.gate.gain.cancelScheduledValues(t);
-        this.gate.gain.setValueAtTime(1, t);
+        this.sink.gate(true, t);
         this.gated = false;
       }
       const plan = this.conductor.plan(cue2, bar2);
@@ -18812,8 +18886,7 @@ registerProcessor("witch-fof", WitchFof);
         const b0 = bootLayers(cue2, bar2), b1 = bootLayers(cue2, bar2 + 1);
         const boot = cue2.speakerBars !== void 0 && plan.section === S.intro;
         const f0 = sectionCutoff(sec, boot ? b0 : barIn / plan.bars), f1 = sectionCutoff(sec, boot ? b1 : (barIn + 1) / plan.bars);
-        this.tone.frequency.setValueAtTime(f0, t);
-        if (f1 !== f0) this.tone.frequency.exponentialRampToValueAtTime(f1, t + 16 * sps);
+        this.sink.tone(f0, f1, t, 16 * sps);
       }
       const events = notesAt(S, plan, next, step2, { ...this.formAt(cue2, bar2), siege: cue2.siege, party: cue2.party, legend: cue2.legend, only: "main", build: cue2.speakerBars !== void 0 ? bootLayers(cue2, bar2) : void 0 });
       const swing = step2 % 2 === 1 ? S.swing * sps : 0;
@@ -18830,7 +18903,13 @@ registerProcessor("witch-fof", WitchFof);
       if (!ch) {
         const c = this.ctx, g = c.createGain(), F = this.style.voiceFx;
         let out = g, fx;
-        if (!circle && fxOn(F) && (part === this.style.form?.sung.part || F.parts?.includes(part))) {
+        const voiced = !circle && fxOn(F) && (part === this.style.form?.sung.part || F.parts?.includes(part));
+        if (voiced && this.sink.voice) {
+          g.connect(this.sink.voice(part));
+          this.channels.set(key, ch = { in: g, lastFreq: 0, part, ...this.carried.get(key) });
+          return ch;
+        }
+        if (voiced) {
           fx = new VoiceFx(c, F, () => this.bpmNow, (F.duck ?? 0) > 0 ? this.duckBus : void 0);
           if (this.shedLevel) fx.shedTo(this.shedLevel);
           if (this.whisperRec) fx.whisper(this.whisperRec);
@@ -18851,20 +18930,20 @@ registerProcessor("witch-fof", WitchFof);
           out.connect(s);
           out = s;
         }
-        out.connect(circle ? this.circleIn : fx ? this.post : p.duck ? this.duckBus : this.dryBus);
+        out.connect(circle ? this.circleIn : fx ? this.post : p.duck ? this.sink.duck : this.sink.dry);
         if (p.reverb) {
           const r = c.createGain();
           r.gain.value = p.reverb;
           out.connect(r);
-          r.connect(circle ? this.circleVerbIn : this.reverbIn);
+          r.connect(circle ? this.circleVerbIn : this.sink.reverb);
         }
         if (p.delay && !circle) {
           const d = c.createGain();
           d.gain.value = p.delay;
           out.connect(d);
-          d.connect(this.delayIn);
+          d.connect(this.sink.delay);
         }
-        this.channels.set(key, ch = { in: g, lastFreq: 0, ...fx ? { fx } : {} });
+        this.channels.set(key, ch = { in: g, lastFreq: 0, part, ...this.carried.get(key), ...fx ? { fx } : {} });
       }
       return ch;
     }
@@ -18959,6 +19038,9 @@ registerProcessor("witch-fof", WitchFof);
       if (e.fx && ch.fx && ch.fxKind !== e.fx) {
         ch.fxKind = e.fx;
         ch.fx.set(this.fxChain(e.fx));
+      } else if (e.fx && this.stems && ch.fxKind !== e.fx) {
+        ch.fxKind = e.fx;
+        this.sink.fxChain?.(e.part, e.fx, t);
       }
       switch (p.kind) {
         case "kick":
@@ -18998,10 +19080,9 @@ registerProcessor("witch-fof", WitchFof);
       }
     }
     duck(t, vel, sps) {
-      const depth = this.style.mix.duck * Math.min(1, vel), g = this.duckBus.gain;
+      const depth = this.style.mix.duck * Math.min(1, vel);
       if (depth <= 0) return;
-      g.setTargetAtTime(1 - depth, t, 4e-3);
-      g.setTargetAtTime(1, t + 0.03, sps * 0.7);
+      this.sink.duckAt(t, depth, sps);
     }
     env(t, peak, attack, decay) {
       const g = this.ctx.createGain();
@@ -19054,7 +19135,8 @@ registerProcessor("witch-fof", WitchFof);
       s.buffer = metal ? this.metal : this.noise;
       s.loop = length > 1.5;
       if (this.notePitch !== 1) s.playbackRate.value = this.notePitch;
-      s.start(t, t * 7.31 % 1 * 0.5);
+      const at2 = t + (this.stems ? this.phaseAt : 0);
+      s.start(t, at2 * 7.31 % 1 * 0.5);
       s.stop(t + length);
       return s;
     }
@@ -19172,6 +19254,7 @@ registerProcessor("witch-fof", WitchFof);
             if (p.lfoWave) osc.type = p.lfoWave;
             osc.frequency.value = p.lfoRate;
             depth.gain.value = p.lfoDepth;
+            if (!p.lfoWave || p.lfoWave === "sine") this.phased(osc, p.lfoRate);
             osc.connect(depth);
             osc.start();
             ch.lfo = { osc, depth };
@@ -19375,6 +19458,21 @@ registerProcessor("witch-fof", WitchFof);
       const vs = p.vowels?.length ? p.vowels : ["ah"], vowel = vs[(ch.sung ?? 0) % vs.length];
       ch.tract.note(t, 69 + 12 * Math.log2(freq / 440), dur * 0.97, Math.min(1, peak), vowel);
     }
+    /** A recorded phrase's swell into its effects' reverbs (see sampled). */
+    swellInto(fx, rec, rate, t, swell, peak) {
+      const c = this.ctx;
+      if (!(fx.s.swells > 0 && t - swell >= c.currentTime)) return;
+      const sw = c.createBufferSource(), sg = c.createGain();
+      sw.buffer = rec;
+      sw.playbackRate.value = rate;
+      sw.loop = true;
+      sw.loopStart = Math.min(0.3, rec.duration / 4);
+      sw.loopEnd = Math.min(1.6, rec.duration);
+      sw.connect(sg).connect(fx.wetIn);
+      fx.swellEnvelope(sg, t, swell, peak);
+      sw.start(t - swell);
+      sw.stop(t + 0.05);
+    }
     /** A sung note from a recording (Ed, 2026-10-11: the game's singer, "Recorded + ethereal"): the recording retuned to it
      *  (its own length at most), through a presence lift; a phrase (after a rest of a beat or more) swelling in, the last one's
      *  end frozen, as the voice effects ask. Until the recording's loaded, the formant voice sings it. */
@@ -19395,22 +19493,15 @@ registerProcessor("witch-fof", WitchFof);
         ch.presence.gain.value = p.presence ?? 0;
         ch.presence.connect(ch.in);
       }
-      const fx = ch.fx, beat = 60 / Math.max(40, this.bpmNow);
-      if (fx && (ch.lastEnd === void 0 || t - ch.lastEnd > beat)) {
-        if (ch.lastEnd !== void 0) fx.release(ch.lastEnd);
-        const swell = Math.min(4 * beat, Math.max(beat, t - (ch.lastEnd ?? t - 4 * beat) - 0.1));
-        if (fx.s.swells > 0 && t - swell >= c.currentTime) {
-          const sw2 = c.createBufferSource(), sg = c.createGain();
-          sw2.buffer = rec;
-          sw2.playbackRate.value = rate;
-          sw2.loop = true;
-          sw2.loopStart = Math.min(0.3, rec.duration / 4);
-          sw2.loopEnd = Math.min(1.6, rec.duration);
-          sw2.connect(sg).connect(fx.wetIn);
-          fx.swellEnvelope(sg, t, swell, peak);
-          sw2.start(t - swell);
-          sw2.stop(t + 0.05);
+      const fx = ch.fx, beat = 60 / Math.max(40, this.bpmNow), onBus = !fx && this.stems && ch.part ? this.sink : null;
+      if ((fx || onBus) && (ch.lastEnd === void 0 || t - ch.lastEnd > beat)) {
+        if (ch.lastEnd !== void 0) {
+          if (fx) fx.release(ch.lastEnd);
+          else onBus.fxRelease?.(ch.part, ch.lastEnd);
         }
+        const swell = Math.min(4 * beat, Math.max(beat, t - (ch.lastEnd ?? t - 4 * beat) - 0.1));
+        if (fx) this.swellInto(fx, rec, rate, t, swell, peak);
+        else onBus.fxSwell?.(ch.part, rec, rate, t, swell, peak);
       }
       const phrase = ch.lastEnd === void 0 || t - ch.lastEnd > beat;
       ch.lastEnd = Math.max(ch.lastEnd ?? -Infinity, t + (held ? 0.5 : len));
@@ -19507,6 +19598,7 @@ registerProcessor("witch-fof", WitchFof);
       if (!ch.vib) {
         ch.vib = c.createOscillator();
         ch.vib.frequency.value = 5.2;
+        this.phased(ch.vib, 5.2);
         ch.vib.start();
         (ch.running ??= []).push(ch.vib);
       }
