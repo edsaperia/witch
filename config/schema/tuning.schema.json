@@ -1369,11 +1369,16 @@
                 "fade": {
                   "type": "number",
                   "minimum": 0
+                },
+                "reveal": {
+                  "type": "number",
+                  "minimum": 0
                 }
               },
               "required": [
                 "on",
-                "fade"
+                "fade",
+                "reveal"
               ],
               "additionalProperties": false
             },
