@@ -16,6 +16,7 @@ import { drawSlashes } from "./bubbles";
 import { PACKS, clouded, packKindOf, packMoveOf } from "../../rules/combat/packs";
 import { elementOf } from "../../rules/attackLook";
 import type { Dress } from "./attackLook";
+import { drawSpells } from "./attackSpells";
 
 /** The attack look (leash/attackLook.ts: attacks in their elements, the danger frame), or ?look=old: the red dots, lines and rings
  *  it replaced, for comparing. */
@@ -195,6 +196,7 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
   }
   // The attack look's hits, marks and areas in flight; and a shot gone (it hit, or flew its range out) where it last was, its hit.
   if (lookDemo) lv.look.demo(lookDemo, w.x, w.z + 2, time);
+  if (!lookDemo) drawSpells(lv, g, time, up, close, neon); // (the attack grammar's spells: Hotel's composable attacks)
   else if (lookOn) {
     lv.look.drawFx(time);
     const seen = lv.look.shots;
