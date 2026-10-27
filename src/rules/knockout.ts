@@ -4,12 +4,13 @@
 // stack comes down from the bottom up, one every releaseEach seconds, each animal turning happy
 // where it stands (Ed's playtest of v4821, 2026-10-26: "they should become happy instead of leashed to a point by a floor
 // sigil"; before, #87, each sigil was put down where its animal stood and they stayed hers, parked): its rune at its feet
-// to pick up again, it goes home to its own area and defends it as any happy one does. One timeline (Ed, 2026-10-07), the whole wait counted from her going down (knockout.respawn: short, longer for
+// to pick up again, it idles where it was dropped (not going home) and defends what's round it as any happy one does. One timeline (Ed, 2026-10-07), the whole wait counted from her going down (knockout.respawn: short, longer for
 // knockdowns close together, back to base after a cooldown): her hat floats to the ground (knockout.hatFloat, the screen
 // dimmed, a sad trumpet; if she had one to drop), she sparkles out and back in behind her decks, and scratches there for the
 // rest of the wait ("Every time she respawns she could do a bit of scratching to increase the respawn time"), her army
 // fighting on without her; then she can move. No drawing here.
-import type { ForestMap } from "./map";
+import { areaCellAt, type ForestMap } from "./map";
+import { cellKey } from "./party";
 import { anchorOf, LEGEND, wanderRange, type Creature } from "./creatures";
 import { letPartyLegendGo, type LeashState } from "./leash";
 import type { Tuning } from "./tuning";
@@ -106,21 +107,22 @@ export function knockOut(leash: LeashState, creatures: Creature[], time: number,
 
 /** Let a carried one go happy where it stands (Ed, 2026-10-26): off her stack, no sigil made; happy now, so its rune is at its
  *  feet once states' pickupDelay has passed (she leashes it again by picking that up), it fights only the enraged (never the
- *  wild), and it goes home to its own area (its cell: the anchor it had on her leash may be anywhere, so it's set to its
- *  area's again). Its hurt stays: an invite heals, a knockout doesn't. */
-export function letGoHappy(c: Creature, leash: LeashState, map: ForestMap, time: number): void {
+ *  wild). It idles near where it was dropped (Ed, later that day: "they should idle near where they were dropped, not walk back
+ *  to their area"; `dropped`, knockout.dropRadius metres round it), dancing if that's a party area, till she leashes it again
+ *  or the night ends. Its hurt stays: an invite heals, a knockout doesn't. */
+export function letGoHappy(c: Creature, leash: LeashState, map: ForestMap, time: number, partified: (key: string) => boolean = () => false): void {
   leash.stack = leash.stack.filter(id => id !== c.id);
-  const [ax, az] = anchorOf(map, c.cell, c.homeX, c.homeZ, c.range);
-  Object.assign(c, { leashed: false, state: "happy", happyAt: time, enraged: false, siege: undefined, fight: undefined, taunt: undefined, wanderTo: undefined, affection: undefined, dancing: false, anchorX: ax, anchorZ: az, tx: c.x, tz: c.z, rest: 0 });
+  const cell = areaCellAt(map, c.x, c.z) as [number, number], dancing = partified(cellKey(cell)), r = map.tuning.knockout.dropRadius ?? 6;
+  Object.assign(c, { leashed: false, state: "happy", happyAt: time, enraged: false, siege: undefined, fight: undefined, taunt: undefined, wanderTo: undefined, affection: undefined, dancing, dropped: { x: c.x, z: c.z, r, cell: [cell[0], cell[1]] }, anchorX: c.x, anchorZ: c.z, tx: c.x, tz: c.z, rest: 0, safeR: undefined });
 }
 
 /** One step of a knockout: her carried ones let go happy on time, then the teleport. Returns true once she's back. */
-export function stepKnockout(k: Knockout, body: WitchState, leash: LeashState, creatures: Creature[], map: ForestMap, time: number, _partified: (key: string) => boolean, events: KnockoutEvent[]): { body: WitchState; done: boolean } {
+export function stepKnockout(k: Knockout, body: WitchState, leash: LeashState, creatures: Creature[], map: ForestMap, time: number, partified: (key: string) => boolean, events: KnockoutEvent[]): { body: WitchState; done: boolean } {
   while (k.released < k.order.length && time >= k.times[k.released]) {
     const c = creatures[k.order[k.released++]];
     // (each carried one happy where it stands, Ed 2026-10-26: no sigil put down; a party legend dancing there as ever)
     if (c?.partyLegend && leash.stack.includes(c.id)) { leash.stack = leash.stack.filter(id => id !== c.id); letPartyLegendGo(c); events.push({ kind: "released", at: time, x: c.x, z: c.z, id: c.id }); }
-    else if (c && c.leashed && leash.stack.includes(c.id)) { letGoHappy(c, leash, map, time); events.push({ kind: "released", at: time, x: c.x, z: c.z, id: c.id }); }
+    else if (c && c.leashed && leash.stack.includes(c.id)) { letGoHappy(c, leash, map, time, partified); events.push({ kind: "released", at: time, x: c.x, z: c.z, id: c.id }); }
   }
   if (time >= k.teleportAt && !k.out) { k.out = true; events.push({ kind: "sparkleOut", at: time, x: body.x, z: body.z }); }
   const mid = (k.teleportAt + k.inAt) / 2;
