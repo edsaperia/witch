@@ -1,0 +1,469 @@
+// The composable attacks' engine (docs/plans/attack-grammar.md, step 2): what an attack in the grammar does once cast. Its telegraphs
+// shown from the windup's start (and the caster's tell), then at the release its pattern emitted: bodies flying their path terms at
+// their speed profile, hitting, piercing, bouncing, sticking, and raising events (hit, expire, bounce, land, timer) that spawn child
+// attacks (capped by depth and by the cast's count); areas striking once, zones lingering and ticking. All of it plain state in fixed
+// pools (nothing allocated a step but a child's first use), seeded (a hash of the seed, the cast and the child: never Math.random),
+// and read by the look layer and the audio as it is: bodies, zones and telegraphs with their tags, and events. The world it acts
+// on is a small port (SpellWorld), so it runs headless in tests and in combat.ts alike.
+import { childSpec, type Library } from "./parse";
+import { telegraphKind } from "./timeline";
+import type { Aim, AttackSpec, Child, Effect, TelegraphKind, TellPose } from "./types";
+
+// ---- the world it acts on ----
+
+/** Something an attack can hit. `side` decides foes (the world's own rule); `id` is the world's. */
+export interface Hittable { kind: "creature" | "witch" | "sound"; id: number | string; x: number; z: number; r: number; side: string; species?: string; vx?: number; vz?: number }
+
+export interface SpellWorld {
+  seed: number;
+  /** Everything that could be hit within r of (x, z) (the caller filters asleep, down, flying...). */
+  near(x: number, z: number, r: number): readonly Hittable[];
+  /** Whether a body of `side` may hurt this (foes; never the caster's own kind unless friendly fire). */
+  hostile(side: string, target: Hittable, friendly: boolean, casterSpecies: string, casterId: number): boolean;
+  /** A hit lands: its damage and effect, from (fx, fz). */
+  harm(target: Hittable, damage: number, effect: Effect | undefined, fx: number, fz: number, source: number, attack: string): void;
+  /** A creature's place now (a caster or a stuck body's host), or null when it's gone. */
+  where(kind: Hittable["kind"], id: number | string): { x: number; z: number; vx?: number; vz?: number } | null;
+  /** Ground a runner can't cross (water), or a wall a bolt bounces off; absent: none. */
+  blocked?(x: number, z: number): boolean;
+  /** Where her dodge would put her (aim "dodge"); absent: where she is. */
+  dodgeAim?(target: Hittable): { x: number; z: number } | null;
+  /** A beat's length (s), for volleys. */
+  beat?: number;
+  /** Whether a caster is still winding up this cast (not stunned, gone or off its target): a cast it isn't is dropped at its release. */
+  stillCasting?(source: number, cast: number): boolean;
+}
+
+// ---- its state ----
+
+export const CAPS = { bodies: 512, zones: 128, telegraphs: 256, pending: 512, depth: 3, children: 64, bounces: 8, pierces: 8 };
+
+export interface Body {
+  id: number; alive: boolean; attack: AttackSpec; name: string;
+  kind: "bolt" | "lob" | "runner";
+  x: number; z: number; y: number;
+  /** its heading (unit) and speed now, and its spine (the path before its wave's sway) */
+  hx: number; hz: number; v: number; sx: number; sz: number;
+  /** where and when it set off; its caster; how far it has gone */
+  ox: number; oz: number; born: number; source: number; side: string; species: string; travelled: number;
+  damage: number; radius: number; depth: number; cast: number;
+  /** what it's homing on, and whether it has locked on yet */
+  target: Hittable | null; locked: boolean;
+  pierced: number; bounced: number; hits: (number | string)[];
+  /** a lob's flight: from, to, its time */
+  lob: { fx: number; fz: number; tx: number; tz: number; at: number; lands: number } | null;
+  /** stuck to something (life.stick): what, and where on it */
+  stuck: { kind: Hittable["kind"]; id: number | string; dx: number; dz: number } | null;
+  /** stop-and-go: the leg it's on, and whether it's paused */
+  leg: number; paused: boolean;
+  /** the look layer's tags */
+  element: string; look: string;
+}
+export interface Zone {
+  id: number; alive: boolean; attack: AttackSpec; name: string;
+  shape: "disc" | "ring" | "donut" | "cone"; x: number; z: number; r: number; inner: number; width: number; angle: number; heading: number;
+  from: number; until: number; tick: number; nextTick: number; grow: number;
+  damage: number; effect: Effect | undefined; side: string; source: number; species: string; friendly: boolean; depth: number; cast: number;
+  /** a one-off strike (an area) rather than a lingering zone; what an expanding ring has hit already */
+  once: boolean; hit: (number | string)[];
+  element: string; look: string;
+}
+/** A warning, as plain geometry and timing (the look layer's danger frame draws it; the audio cues on its events). */
+export interface Telegraph {
+  id: number; alive: boolean; kind: TelegraphKind; attack: string; side: string; source: number; cast: number;
+  shape: { type: "point" | "segment" | "path" | "disc" | "ring" | "cone"; x: number; z: number; ax?: number; az?: number; r?: number; inner?: number; width?: number; angle?: number; heading?: number; points?: number[] };
+  start: number; fire: number; until: number;
+  /** what it moves with: a body, or a creature */
+  follows?: { body?: number; creature?: number };
+}
+/** Something waiting to happen: a release after a windup, a burst's next shot, a timer's child. */
+interface Pending { at: number; attack: AttackSpec; name: string; x: number; z: number; heading: number; aim: Hittable | null; side: string; species: string; source: number; damage: number; depth: number; cast: number; index: number; fromBody?: number; patternIndex?: number }
+
+export type SpellEventKind = "cast" | "release" | "emit" | "hit" | "expire" | "bounce" | "land" | "timer" | "split" | "zone" | "telegraph" | "fire" | "capped";
+export interface SpellEvent { kind: SpellEventKind; at: number; x: number; z: number; attack: string; source: number; body?: number; zone?: number; telegraph?: number; element?: string }
+
+export interface SpellState {
+  bodies: Body[]; zones: Zone[]; telegraphs: Telegraph[]; pending: Pending[];
+  /** each caster's tell while it winds up (its pose and glow, from and until) */
+  tells: Map<number, { pose: TellPose; glow: number; from: number; until: number; attack: string }>;
+  events: SpellEvent[]; next: number; casts: number;
+  /** what each cast's children have emitted so far (the cap: CAPS.children) */
+  made: Map<number, number>;
+  /** everything emitted since the start, by depth (bodies and zones), for the overlay and the tests */
+  stats: { bodies: number[]; zones: number[] };
+  /** things not made for a cap */
+  capped: number;
+  /** the step's time (for children made inside it), and the bodies that have shown their lock-on */
+  now: number; locks: Set<number>;
+  /** what every random choice is seeded from (the night's: the Fight Arena sets it) */
+  seed: number;
+}
+export const newSpells = (seed = 1): SpellState => ({ seed, bodies: [], zones: [], telegraphs: [], pending: [], tells: new Map(), events: [], next: 1, casts: 0, made: new Map(), stats: { bodies: [0, 0, 0, 0], zones: [0, 0, 0, 0] }, capped: 0, now: 0, locks: new Set() });
+
+// ---- seeded numbers ----
+
+/** A number in [0, 1) from the seed, the cast and an index: the same every run. */
+export function rnd(seed: number, cast: number, i: number): number {
+  let h = (seed ^ 0x9e3779b9) >>> 0;
+  h = Math.imul(h ^ (cast + 0x85ebca6b), 0xc2b2ae35) >>> 0;
+  h = Math.imul(h ^ (i * 0x27d4eb2f + 0x165667b1), 0x85ebca6b) >>> 0;
+  h ^= h >>> 15; h = Math.imul(h, 0x2c1b3c6d) >>> 0; h ^= h >>> 12;
+  return (h >>> 0) / 4294967296;
+}
+
+const RAD = Math.PI / 180;
+const isBody = (k: string | undefined) => k === undefined || k === "bolt" || k === "lob" || k === "runner";
+
+/** A free slot in a pool (a dead one reused, else a new one under the cap), or null. */
+function slot<T extends { alive: boolean }>(pool: T[], cap: number): number {
+  for (let i = 0; i < pool.length; i++) if (!pool[i].alive) return i;
+  return pool.length < cap ? pool.length : -1;
+}
+
+// ---- casting ----
+
+export interface Caster { id: number; x: number; z: number; side: string; species: string; /** its facing (radians), for aim "ahead" */ heading?: number }
+
+/** A cast begins: its telegraphs from now to `fireAt` (the windup's end), and the caster's tell; the release is scheduled at fireAt.
+ *  Returns the cast's id. `damage`: the cast's damage (the level's budget for its cooldown, as combat.ts works it out). */
+export function cast(S: SpellState, W: SpellWorld, spec: AttackSpec, name: string, c: Caster, target: Hittable | null, time: number, damage: number, fireAt = time + (spec.cast?.windup ?? 0.6)): number {
+  const id = ++S.casts, tell = spec.cast?.tell;
+  if (tell && (tell.pose ?? "none") !== "none") S.tells.set(c.id, { pose: tell.pose ?? "none", glow: tell.glow ?? 0, from: time, until: fireAt, attack: name });
+  S.events.push({ kind: "cast", at: time, x: c.x, z: c.z, attack: name, source: c.id });
+  const heading = aimHeading(spec.emit?.aim ?? "target", c.x, c.z, c.heading ?? 0, target, W, spec, id, 0);
+  showTelegraphs(S, W, spec, name, c.x, c.z, heading, target, c.side, c.id, id, time, fireAt);
+  queue(S, { at: fireAt, attack: spec, name, x: c.x, z: c.z, heading, aim: target, side: c.side, species: c.species, source: c.id, damage, depth: 0, cast: id, index: 0 });
+  return id;
+}
+
+/** A cast's release cancelled (the caster stunned, knocked down, gone): its pending release and its telegraphs dropped. */
+export function cancel(S: SpellState, castId: number): void {
+  S.pending = S.pending.filter(p => p.cast !== castId || p.depth > 0);
+  for (const t of S.telegraphs) if (t.alive && t.cast === castId && t.fire > 0) t.alive = false;
+}
+
+function queue(S: SpellState, p: Pending): void {
+  if (S.pending.length >= CAPS.pending) { S.capped++; return; }
+  S.pending.push(p);
+}
+
+/** Where to aim (a heading, radians) from (x, z). */
+function aimHeading(aim: Aim, x: number, z: number, facing: number, target: Hittable | null, W: SpellWorld, spec: AttackSpec, cast: number, i: number): number {
+  const at = target && W.where(target.kind, target.id);
+  switch (aim) {
+    case "random": return rnd(W.seed, cast, 1000 + i) * Math.PI * 2;
+    case "ahead": case "spot": return facing;
+    case "caster": return facing;
+    case "lead": if (at && target) { const v = spec.speed?.v ?? 28, d = Math.hypot(at.x - x, at.z - z), tt = d / Math.max(1, v); return Math.atan2(at.z + (at.vz ?? 0) * tt - z, at.x + (at.vx ?? 0) * tt - x); } break;
+    case "dodge": if (target) { const q = W.dodgeAim?.(target); if (q) return Math.atan2(q.z - z, q.x - x); } break;
+  }
+  return at ? Math.atan2(at.z - z, at.x - x) : facing;
+}
+
+/** The headings and offsets a pattern releases at once (a burst's and a spray's later ones are scheduled). */
+function patternOf(spec: AttackSpec, heading: number): { heading: number; dx: number; dz: number; delay: number }[] {
+  const E = spec.emit ?? {}, n = Math.max(1, E.n ?? 1), out: { heading: number; dx: number; dz: number; delay: number }[] = [];
+  switch (E.pattern ?? "single") {
+    case "fan": { const a = (E.angle ?? 45) * RAD; for (let k = 0; k < n; k++) out.push({ heading: heading + (n > 1 ? (k / (n - 1) - 0.5) * a : 0), dx: 0, dz: 0, delay: 0 }); break; }
+    case "ring": { const o = (E.offset ?? 0) * RAD; for (let k = 0; k < n; k++) out.push({ heading: heading + o + (k / n) * Math.PI * 2, dx: 0, dz: 0, delay: 0 }); break; }
+    case "burst": case "volley": for (let k = 0; k < n; k++) out.push({ heading, dx: 0, dz: 0, delay: k * (E.gap ?? 0.15) }); break;
+    case "spray": { const T = E.time ?? 1, rate = (E.rate ?? 180) * RAD; for (let k = 0; k < n; k++) { const t = n > 1 ? (k / (n - 1)) * T : 0; out.push({ heading: heading + rate * t, dx: 0, dz: 0, delay: t }); } break; }
+    case "wall": { const sp = E.spacing ?? 2, holes = new Set(E.holes ?? []), px = -Math.sin(heading), pz = Math.cos(heading); for (let k = 0; k < n; k++) if (!holes.has(k)) { const o = (k - (n - 1) / 2) * sp; out.push({ heading, dx: px * o, dz: pz * o, delay: 0 }); } break; }
+    default: out.push({ heading, dx: 0, dz: 0, delay: 0 });
+  }
+  return out;
+}
+
+// ---- telegraphs ----
+
+function telegraph(S: SpellState, t: Omit<Telegraph, "id" | "alive">): void {
+  const i = slot(S.telegraphs, CAPS.telegraphs);
+  if (i < 0) { S.capped++; return; }
+  const T: Telegraph = { ...t, id: S.next++, alive: true };
+  S.telegraphs[i] = T;
+  S.events.push({ kind: "telegraph", at: t.start, x: t.shape.x, z: t.shape.z, attack: t.attack, source: t.source, telegraph: T.id });
+}
+
+/** An attack's warnings, from `start` to its release at `fire`: each by its kind, as geometry. */
+function showTelegraphs(S: SpellState, W: SpellWorld, spec: AttackSpec, name: string, x: number, z: number, heading: number, target: Hittable | null, side: string, source: number, castId: number, start: number, fire: number): void {
+  const kind = telegraphKind(spec), lead = spec.telegraph?.lead, from = lead !== undefined ? Math.max(start, fire - lead) : start;
+  if (kind === "none") return;
+  const base = { kind, attack: name, side, source, cast: castId, start: from, fire };
+  const B = spec.body?.kind ?? "bolt", range = lifeRange(spec), width = 2 * (spec.body?.radius ?? 0.6), at = target && W.where(target.kind, target.id);
+  switch (kind) {
+    case "flash": telegraph(S, { ...base, shape: { type: "point", x, z }, until: fire, follows: { creature: source } }); return;
+    case "landing": {
+      const tx = at ? at.x : x + Math.cos(heading) * range, tz = at ? at.z : z + Math.sin(heading) * range, fl = spec.body?.flight ?? 1.2;
+      telegraph(S, { ...base, shape: { type: "disc", x: tx, z: tz, r: spec.body?.radius ?? 2 }, until: fire + fl, fire: fire + fl }); return;
+    }
+    case "ring": case "cone": {
+      const A = spec.area ?? {}, cx = (A.at ?? "caster") === "target" && at ? at.x : x, cz = (A.at ?? "caster") === "target" && at ? at.z : z;
+      telegraph(S, { ...base, shape: kind === "cone" ? { type: "cone", x: cx, z: cz, r: A.r ?? spec.zone?.r ?? 5, angle: A.angle ?? 60, heading } : { type: (A.shape ?? "disc") === "disc" ? "disc" : "ring", x: cx, z: cz, r: A.r ?? spec.zone?.r ?? 5, inner: A.inner, width: A.width }, until: fire, ...(cx === x && cz === z ? { follows: { creature: source } } : {}) });
+      return;
+    }
+    case "lane": default: {
+      if (!isBody(B)) { telegraph(S, { ...base, shape: { type: "point", x, z }, until: fire }); return; }
+      // (one lane a heading the pattern releases at once, up to 16; a curving or swaying body's lane is the path it will fly, unaimed)
+      const dirs = patternOf(spec, heading).slice(0, 16), bent = (spec.path ?? []).some(t => "curve" in t || "wave" in t || "spiral" in t || "orbit" in t || "boomerang" in t);
+      for (const d of dirs) {
+        if (bent) telegraph(S, { ...base, shape: { type: "path", x: x + d.dx, z: z + d.dz, width, points: predictPath(spec, x + d.dx, z + d.dz, d.heading, source, W) }, until: fire + d.delay });
+        else telegraph(S, { ...base, shape: { type: "segment", x: x + d.dx, z: z + d.dz, ax: x + d.dx + Math.cos(d.heading) * range, az: z + d.dz + Math.sin(d.heading) * range, width }, until: fire + d.delay });
+      }
+    }
+  }
+}
+
+/** The path a body would fly from (x, z) on `heading`, unhomed and unhindered: [x0, z0, x1, z1, ...] every 0.1 s, at most 40. */
+export function predictPath(spec: AttackSpec, x: number, z: number, heading: number, source: number, W: SpellWorld): number[] {
+  const b = makeBody(spec, "", x, z, heading, null, "", "", source, 0, 0, 0, 0);
+  const out = [x, z], life = lifeTime(spec, b.v);
+  for (let t = 0.1; t <= Math.min(life, 4) + 1e-9; t += 0.1) { moveBody(b, spec, t, 0.1, W, true); out.push(round2(b.x), round2(b.z)); if (b.travelled >= lifeRange(spec)) break; }
+  return out;
+}
+const round2 = (x: number) => Math.round(x * 100) / 100;
+
+// ---- releasing ----
+
+const lifeRange = (a: AttackSpec) => a.life?.range ?? (a.cast?.range ?? 20) * 1.3;
+const lifeTime = (a: AttackSpec, v: number) => a.life?.time ?? Math.min(12, lifeRange(a) / Math.max(1, v) + 0.5);
+
+/** A body's speed `t` s after it set off (its profile). */
+export function speedAt(a: AttackSpec, t: number): number {
+  const P = a.speed ?? {}, v = P.v ?? (P.profile === "slow" ? 6 : 28), to = P.to ?? 0, T = Math.max(0.001, P.time ?? 1);
+  switch (P.profile) {
+    case "accel": case "decel": return v + (to - v) * Math.min(1, t / T);
+    case "stopGo": { const go = P.go ?? 0.6, pause = P.pause ?? 0.4, legs = P.n ?? 3, k = Math.floor(t / (go + pause)); return k >= legs ? 0 : t - k * (go + pause) < go ? v : 0; }
+    default: return v;
+  }
+}
+
+function makeBody(a: AttackSpec, name: string, x: number, z: number, heading: number, target: Hittable | null, side: string, species: string, source: number, damage: number, depth: number, castId: number, time: number): Body {
+  const kind = (a.body?.kind ?? "bolt") as Body["kind"];
+  return { id: 0, alive: true, attack: a, name, kind, x, z, y: 0, hx: Math.cos(heading), hz: Math.sin(heading), v: speedAt(a, 0), sx: x, sz: z, ox: x, oz: z, born: time, source, side, species, travelled: 0, damage, radius: a.body?.radius ?? 0.6, depth, cast: castId, target, locked: false, pierced: 0, bounced: 0, hits: [], lob: null, stuck: null, leg: 0, paused: false, element: a.body?.element ?? "", look: a.body?.look ?? "" };
+}
+
+/** A pending release: its pattern's bodies, or its area struck, or its zone laid. */
+function release(S: SpellState, W: SpellWorld, lib: Library, p: Pending, time: number): void {
+  const a = p.attack, B = a.body?.kind ?? "bolt";
+  let x = p.x, z = p.z;
+  if (p.fromBody !== undefined) { const b = S.bodies.find(q => q.alive && q.id === p.fromBody) ?? S.bodies.find(q => q.id === p.fromBody); if (b) { x = b.x; z = b.z; } }
+  if (p.depth === 0) {
+    S.tells.delete(p.source);
+    if (W.stillCasting && !W.stillCasting(p.source, p.cast)) { cancel(S, p.cast); return; } // (interrupted: nothing released)
+    const c = W.where("creature", p.source); if (c) { x = c.x; z = c.z; }
+  }
+  S.events.push({ kind: p.depth === 0 ? "release" : "emit", at: time, x, z, attack: p.name, source: p.source, element: a.body?.element });
+  if (p.patternIndex !== undefined || !(a.emit && (a.emit.pattern === "burst" || a.emit.pattern === "spray" || a.emit.pattern === "volley"))) {
+    // (re-aimed as it goes, for a burst's later shots and a stop-and-go's legs; the first as aimed at the cast)
+    const heading = p.patternIndex ? aimHeading(a.emit?.aim ?? "target", x, z, p.heading, p.aim, W, a, p.cast, p.patternIndex) : p.heading;
+    const dirs = p.patternIndex !== undefined ? [{ heading: a.emit?.pattern === "spray" ? p.heading : heading, dx: 0, dz: 0, delay: 0 }] : patternOf(a, heading);
+    for (const d of dirs) emitOne(S, W, lib, a, p, x + d.dx, z + d.dz, d.heading, time, B);
+    return;
+  }
+  // (a burst, a spray or a volley: the first now, the rest scheduled, each its own heading)
+  const beat = a.emit?.pattern === "volley" ? (W.beat ?? 0.5) : 1;
+  patternOf(a, p.heading).forEach((d, k) => {
+    const at = p.at + d.delay * beat; // (from when it was due, not the step that found it due)
+    if (k === 0) emitOne(S, W, lib, a, p, x, z, d.heading, time, B);
+    else queue(S, { ...p, at, heading: d.heading, patternIndex: k, fromBody: undefined, x, z });
+  });
+}
+
+function emitOne(S: SpellState, W: SpellWorld, lib: Library, a: AttackSpec, p: Pending, x: number, z: number, heading: number, time: number, B: string): void {
+  if (p.depth > 0) {
+    const made = (S.made.get(p.cast) ?? 0) + 1;
+    if (made > CAPS.children) { S.capped++; return; }
+    S.made.set(p.cast, made);
+  }
+  if (isBody(B)) {
+    const i = slot(S.bodies, CAPS.bodies);
+    if (i < 0) { S.capped++; S.events.push({ kind: "capped", at: time, x, z, attack: p.name, source: p.source }); return; }
+    const b = makeBody(a, p.name, x, z, heading, p.aim, p.side, p.species, p.source, p.damage, p.depth, p.cast, time);
+    b.id = S.next++;
+    if (B === "lob") {
+      const at = p.aim && W.where(p.aim.kind, p.aim.id), range = lifeRange(a), fl = a.body?.flight ?? 1.2;
+      const tx = at && p.depth === 0 ? at.x : x + Math.cos(heading) * range * 0.75, tz = at && p.depth === 0 ? at.z : z + Math.sin(heading) * range * 0.75;
+      b.lob = { fx: x, fz: z, tx, tz, at: time, lands: time + fl };
+    }
+    S.bodies[i] = b; S.stats.bodies[p.depth]++;
+    if ((a.path ?? []).some(t => "home" in t) && p.aim) b.target = p.aim;
+    for (const t of a.on?.timer ?? []) child(S, W, lib, b, t, time + t.at, "timer");
+    return;
+  }
+  // (an area strikes once, at once; a zone lingers; at the caster, the target or the spot as it says)
+  const A = a.area ?? {}, at = (A.at ?? (p.depth === 0 ? "caster" : "spot")) === "target" && p.aim ? W.where(p.aim.kind, p.aim.id) : null;
+  const zx = at ? at.x : x, zz = at ? at.z : z, i = slot(S.zones, CAPS.zones);
+  if (i < 0) { S.capped++; return; }
+  const once = B === "area", Zr = a.zone ?? {};
+  const zone: Zone = {
+    id: S.next++, alive: true, attack: a, name: p.name, shape: (A.shape === "ring" || A.shape === "donut" || A.shape === "cone" ? A.shape : "disc"), x: zx, z: zz,
+    r: A.r ?? Zr.r ?? 4, inner: A.inner ?? (A.shape === "ring" ? Math.max(0, (A.r ?? 4) - (A.width ?? 1.5)) : 0), width: A.width ?? 1.5, angle: A.angle ?? 60, heading,
+    from: time, until: once ? time + (A.grow ? (A.r ?? 4) / A.grow : 0) : time + (Zr.time ?? 3), tick: Zr.tick ?? 0.5, nextTick: time, grow: A.grow ?? 0,
+    damage: p.damage * (a.hit?.damage ?? 1), effect: a.hit?.effect, side: p.side, source: p.source, species: p.species, friendly: !!a.hit?.friendly, depth: p.depth, cast: p.cast,
+    once, hit: [], element: a.body?.element ?? "", look: a.body?.look ?? "",
+  };
+  if (zone.grow) { zone.r = 0.5; } // (an expanding ring starts small and grows to its radius)
+  S.zones[i] = zone; S.stats.zones[p.depth]++;
+  S.events.push({ kind: "zone", at: time, x: zx, z: zz, attack: p.name, source: p.source, zone: zone.id, element: zone.element });
+}
+
+/** An event's child: made from where it happened (or its caster), aimed as it says, its windup shown as its own telegraph. */
+function child(S: SpellState, W: SpellWorld, lib: Library, b: { x: number; z: number; hx: number; hz: number; side: string; species: string; source: number; damage: number; depth: number; cast: number; target: Hittable | null; id?: number }, c: Child & { at?: number }, at: number, why: "hit" | "expire" | "bounce" | "land" | "timer", hitAt?: { x: number; z: number }): void {
+  if (b.depth + 1 > CAPS.depth) { S.capped++; return; }
+  if ((S.made.get(b.cast) ?? 0) >= CAPS.children) { S.capped++; return; }
+  const made = S.next++; // (its own index for the seed: the ids run the same every time)
+  const a = childSpec(c, lib), name = typeof c.attack === "string" ? c.attack : `${why}`;
+  const origin = c.from === "caster" ? W.where("creature", b.source) : c.from === "hit" && hitAt ? hitAt : null;
+  const x = origin ? origin.x : b.x, z = origin ? origin.z : b.z, facing = Math.atan2(b.hz, b.hx);
+  const heading = aimHeading(c.aim ?? a.emit?.aim ?? "spot", x, z, facing, b.target, W, a, b.cast, made);
+  const windup = a.cast?.windup ?? 0, damage = b.damage * (c.damage ?? 1);
+  const p: Pending = { at: at + windup, attack: a, name, x, z, heading, aim: b.target, side: b.side, species: b.species, source: b.source, damage, depth: b.depth + 1, cast: b.cast, index: made, ...(why === "timer" && b.id !== undefined ? { fromBody: b.id } : {}) };
+  // (its own warning: a timer's shows as a countdown on its body from now; any other's from when it's made, through its windup)
+  if (why === "timer") telegraph(S, { kind: a.telegraph?.kind ?? "countdown", attack: name, side: b.side, source: b.source, cast: b.cast, start: S.now, fire: at + windup, until: at + windup, shape: { type: "disc", x, z, r: a.area?.r ?? a.zone?.r ?? a.body?.radius ?? 2 }, ...(b.id !== undefined ? { follows: { body: b.id } } : {}) });
+  else showTelegraphs(S, W, a, name, x, z, heading, b.target, b.side, b.source, b.cast, at, at + windup);
+  if (windup <= 0 && why !== "timer") release(S, W, lib, p, at); else queue(S, p);
+}
+
+// ---- stepping ----
+
+/** Move a body one step: its speed by its profile, then each path term in turn; `dry` (predicting its path): no homing. */
+function moveBody(b: Body, a: AttackSpec, age: number, dt: number, W: SpellWorld, dry = false): void {
+  if (b.lob) return;
+  const P = a.speed ?? {};
+  b.v = speedAt(a, age);
+  // (stop and go: at each pause's end, aimed afresh at its target)
+  if (P.profile === "stopGo") { const leg = Math.floor(age / ((P.go ?? 0.6) + (P.pause ?? 0.4))); if (leg !== b.leg) { b.leg = leg; if (!dry && b.target) { const at = W.where(b.target.kind, b.target.id); if (at) { const d = Math.hypot(at.x - b.sx, at.z - b.sz) || 1; b.hx = (at.x - b.sx) / d; b.hz = (at.z - b.sz) / d; } } } }
+  let turn = 0, sway = 0, orbit: { r: number; time: number } | null = null, spiral: { rate: number; grow: number } | null = null, back = false;
+  for (const t of a.path ?? []) {
+    if ("curve" in t) turn += t.curve * RAD * dt;
+    else if ("wave" in t) sway += t.wave.amp * Math.sin(2 * Math.PI * t.wave.freq * age + (t.wave.phase ?? 0));
+    else if ("home" in t && !dry && b.target && age >= (t.home.after ?? 0)) {
+      const at = W.where(b.target.kind, b.target.id);
+      if (at) {
+        const dx = at.x - b.sx, dz = at.z - b.sz, d = Math.hypot(dx, dz);
+        if (d > (t.home.giveUp ?? 3)) { b.locked = true; const want = Math.atan2(dz, dx), now = Math.atan2(b.hz, b.hx); let da = ((want - now + Math.PI * 3) % (Math.PI * 2)) - Math.PI; const cap = t.home.turn * RAD * dt; da = Math.max(-cap, Math.min(cap, da)); turn += da; }
+      }
+    } else if ("boomerang" in t && b.travelled >= t.boomerang.out) back = true;
+    else if ("orbit" in t && age < t.orbit.time) orbit = t.orbit;
+    else if ("spiral" in t) spiral = t.spiral;
+  }
+  if (back) { const c = W.where("creature", b.source); if (c) { const dx = c.x - b.sx, dz = c.z - b.sz, d = Math.hypot(dx, dz) || 1; b.hx = dx / d; b.hz = dz / d; } }
+  if (turn) { const c = Math.cos(turn), s = Math.sin(turn), hx = b.hx * c - b.hz * s; b.hz = b.hx * s + b.hz * c; b.hx = hx; }
+  const step = b.v * dt;
+  if (orbit) {
+    // (round its caster at its speed, then off along the tangent)
+    const c = W.where("creature", b.source) ?? { x: b.ox, z: b.oz }, a0 = Math.atan2(b.oz - c.z, b.ox - c.x) || Math.atan2(b.hz, b.hx), th = a0 + (b.v / Math.max(0.5, orbit.r)) * age;
+    b.sx = c.x + Math.cos(th) * orbit.r; b.sz = c.z + Math.sin(th) * orbit.r; b.hx = -Math.sin(th); b.hz = Math.cos(th);
+  } else if (spiral) {
+    const r = spiral.grow * age + 0.5, th = Math.atan2(b.hz, b.hx) + spiral.rate * RAD * age;
+    b.sx = b.ox + Math.cos(th) * r; b.sz = b.oz + Math.sin(th) * r;
+  } else { b.sx += b.hx * step; b.sz += b.hz * step; }
+  b.travelled += step;
+  b.x = b.sx - b.hz * sway; b.z = b.sz + b.hx * sway;
+  for (const t of a.path ?? []) if ("arc" in t) { const k = Math.min(1, b.travelled / Math.max(1, lifeRange(a))); b.y = 4 * t.arc.height * k * (1 - k); }
+}
+
+/** Advance every attack in flight by dt to `time`: releases due, bodies moved and hitting, zones ticking, telegraphs over. */
+export function stepSpells(S: SpellState, W: SpellWorld, lib: Library, time: number, dt: number): void {
+  S.now = time;
+  // (what's due, in the order it was queued: a release may queue more, for later)
+  if (S.pending.length) {
+    const due = S.pending.filter(p => p.at <= time + 1e-9);
+    if (due.length) { S.pending = S.pending.filter(p => p.at > time + 1e-9); for (const p of due) release(S, W, lib, p, time); }
+  }
+  for (const b of S.bodies) if (b.alive) stepBody(S, W, lib, b, time, dt);
+  for (const z of S.zones) if (z.alive) stepZone(S, W, z, time, dt);
+  for (const t of S.telegraphs) if (t.alive && time >= t.until) { t.alive = false; S.events.push({ kind: "fire", at: time, x: t.shape.x, z: t.shape.z, attack: t.attack, source: t.source, telegraph: t.id }); }
+  for (const t of S.telegraphs) if (t.alive && t.follows) {
+    const at = t.follows.body !== undefined ? S.bodies.find(b => b.id === t.follows!.body && b.alive) : t.follows.creature !== undefined ? W.where("creature", t.follows.creature) : null;
+    if (at) { t.shape.x = at.x; t.shape.z = at.z; }
+  }
+}
+
+function end(S: SpellState, W: SpellWorld, lib: Library, b: Body, time: number, why: "expire" | "land"): void {
+  b.alive = false;
+  S.events.push({ kind: why, at: time, x: b.x, z: b.z, attack: b.name, source: b.source, body: b.id, element: b.element });
+  const list = why === "land" ? (b.attack.on?.land ?? []) : (b.attack.on?.expire ?? []);
+  if (list.length) S.events.push({ kind: "split", at: time, x: b.x, z: b.z, attack: b.name, source: b.source, body: b.id });
+  for (const c of list) child(S, W, lib, b, c, time, why);
+}
+
+function stepBody(S: SpellState, W: SpellWorld, lib: Library, b: Body, time: number, dt: number): void {
+  const a = b.attack, age = time - b.born, H = a.hit ?? {};
+  if (b.stuck) {
+    // (stuck fast: it rides on what it hit till its timers have gone off)
+    const at = W.where(b.stuck.kind, b.stuck.id);
+    if (at) { b.x = at.x + b.stuck.dx; b.z = at.z + b.stuck.dz; }
+    if (age > lifeTime(a, b.v) + Math.max(0, ...(a.on?.timer ?? []).map(t => t.at))) { b.alive = false; }
+    return;
+  }
+  if (b.lob) {
+    const L = b.lob, k = Math.min(1, (time - L.at) / Math.max(0.01, L.lands - L.at));
+    b.x = L.fx + (L.tx - L.fx) * k; b.z = L.fz + (L.tz - L.fz) * k; b.y = 4 * k * (1 - k) * Math.max(2, Math.hypot(L.tx - L.fx, L.tz - L.fz) * 0.25);
+    if (time < L.lands) return;
+    // (it lands: everything of the other side in its radius hit; a bounce sends it on, shorter, its way)
+    for (const t of W.near(b.x, b.z, b.radius + 2)) if (W.hostile(b.side, t, !!H.friendly, b.species, b.source) && Math.hypot(t.x - b.x, t.z - b.z) <= b.radius + t.r) W.harm(t, b.damage * (H.damage ?? 1), H.effect, b.x, b.z, b.source, b.name);
+    const bounce = a.life?.bounce;
+    if (bounce && b.bounced < Math.min(bounce.n, CAPS.bounces)) {
+      b.bounced++;
+      const keep = bounce.keep ?? 0.6, dx = (L.tx - L.fx) * keep, dz = (L.tz - L.fz) * keep, fl = (L.lands - L.at) * keep;
+      b.lob = { fx: L.tx, fz: L.tz, tx: L.tx + dx, tz: L.tz + dz, at: time, lands: time + Math.max(0.15, fl) };
+      S.events.push({ kind: "bounce", at: time, x: b.x, z: b.z, attack: b.name, source: b.source, body: b.id });
+      for (const c of a.on?.bounce ?? []) child(S, W, lib, b, c, time, "bounce");
+      return;
+    }
+    end(S, W, lib, b, time, "land");
+    return;
+  }
+  moveBody(b, a, age, dt, W);
+  if (b.locked && !S.locks.has(b.id)) {
+    S.locks.add(b.id);
+    if (b.target) telegraph(S, { kind: "lockOn", attack: b.name, side: b.side, source: b.source, cast: b.cast, start: time, fire: time, until: time + lifeTime(a, b.v), shape: { type: "point", x: b.target.x, z: b.target.z }, follows: b.target.kind === "creature" ? { creature: b.target.id as number } : undefined });
+  }
+  // (a runner can't cross water; a wall turns a bouncing bolt back, slower)
+  if (W.blocked?.(b.x, b.z)) {
+    const bounce = a.life?.bounce;
+    if (b.kind !== "runner" && bounce && b.bounced < Math.min(bounce.n, CAPS.bounces)) {
+      b.bounced++; b.hx = -b.hx; b.hz = -b.hz; b.sx += b.hx * b.v * dt * 2; b.sz += b.hz * b.v * dt * 2;
+      S.events.push({ kind: "bounce", at: time, x: b.x, z: b.z, attack: b.name, source: b.source, body: b.id });
+      for (const c of a.on?.bounce ?? []) child(S, W, lib, b, c, time, "bounce");
+    } else { end(S, W, lib, b, time, "expire"); return; }
+  }
+  if (b.y < 1.2) for (const t of W.near(b.x, b.z, b.radius + 2)) {
+    if (b.hits.includes(t.id) || !W.hostile(b.side, t, !!H.friendly, b.species, b.source) || Math.hypot(t.x - b.x, t.z - b.z) > b.radius + t.r) continue;
+    W.harm(t, b.damage * (H.damage ?? 1), H.effect, b.x - b.hx, b.z - b.hz, b.source, b.name);
+    b.hits.push(t.id);
+    S.events.push({ kind: "hit", at: time, x: b.x, z: b.z, attack: b.name, source: b.source, body: b.id, element: b.element });
+    for (const c of a.on?.hit ?? []) child(S, W, lib, b, c, time, "hit", { x: t.x, z: t.z });
+    if (a.life?.stick) { b.stuck = { kind: t.kind, id: t.id, dx: b.x - t.x, dz: b.z - t.z }; return; }
+    if (b.pierced < Math.min(a.life?.pierce ?? 0, CAPS.pierces)) { b.pierced++; continue; }
+    b.alive = false;
+    return;
+  }
+  if (b.travelled >= lifeRange(a) || age >= lifeTime(a, b.v)) end(S, W, lib, b, time, "expire");
+}
+
+function inZone(z: Zone, x: number, zz: number, r: number): boolean {
+  const dx = x - z.x, dz = zz - z.z, d = Math.hypot(dx, dz);
+  if (d > z.r + r) return false;
+  if ((z.shape === "ring" || z.shape === "donut") && d < z.inner - r) return false;
+  if (z.shape === "cone") { let da = Math.atan2(dz, dx) - z.heading; da = ((da + Math.PI * 3) % (Math.PI * 2)) - Math.PI; if (Math.abs(da) > (z.angle * RAD) / 2 + r / Math.max(0.5, d)) return false; }
+  return true;
+}
+
+function stepZone(S: SpellState, W: SpellWorld, z: Zone, time: number, dt: number): void {
+  if (z.grow) { z.r = Math.min(z.attack.area?.r ?? 4, z.r + z.grow * dt); if (z.shape === "ring") z.inner = Math.max(0, z.r - z.width); }
+  if (z.once) {
+    // (an area strikes everything in it once; an expanding ring whatever its edge passes over, once each)
+    for (const t of W.near(z.x, z.z, z.r + 2)) if (!z.hit.includes(t.id) && W.hostile(z.side, t, z.friendly, z.species, z.source) && inZone(z, t.x, t.z, t.r)) { z.hit.push(t.id); W.harm(t, z.damage, z.effect, z.x, z.z, z.source, z.name); S.events.push({ kind: "hit", at: time, x: t.x, z: t.z, attack: z.name, source: z.source, zone: z.id, element: z.element }); }
+    if (time >= z.until) z.alive = false;
+    return;
+  }
+  if (time >= z.until) { z.alive = false; S.events.push({ kind: "expire", at: time, x: z.x, z: z.z, attack: z.name, source: z.source, zone: z.id }); return; }
+  if (time < z.nextTick) return;
+  z.nextTick += z.tick;
+  // (a lingering zone: each tick, everything of the other side in it, its share of the damage a tick and its effect)
+  const ticks = Math.max(1, Math.round((z.until - z.from) / z.tick));
+  for (const t of W.near(z.x, z.z, z.r + 2)) if (W.hostile(z.side, t, z.friendly, z.species, z.source) && inZone(z, t.x, t.z, t.r)) W.harm(t, z.damage / ticks, z.effect, z.x, z.z, z.source, z.name);
+}
+

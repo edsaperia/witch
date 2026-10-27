@@ -17,6 +17,9 @@ import { type Attack, type CombatData, COMBAT, traitsOf, type CombatState, attac
 import { fighting, targetable, sideOf, truce, targetPos, headingOf, lightsNear, sheltered, gaveUp, valid, acquire, Grid, moveToward, nearestSound } from "./combat/targeting";
 import { contacted, touch, land, area, stepKnock, useData } from "./combat/hits";
 import { stepLegendAttack, stepLegend } from "./combat/legend";
+import { ATTACK_LIB } from "./attacks/index";
+import { cast as castSpell, newSpells, stepSpells } from "./attacks/engine";
+import { hittableOf, spellAttack, spellWorld } from "./attacks/combatWorld";
 import { PACKS, stepPacks, packsOn, packKindOf, packAttack, packGate, markStrike, dodgeAim, strikingNow, ownStrike, type Directive } from "./combat/packs";
 // (split into rules/combat/: data, targeting, hits, legend; everything public is still exported from here)
 /** A wild flyer that swoops (its profile's move; hostile: wild or enraged, never hers or happy). */
@@ -64,6 +67,9 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     if (sh.side === "enraged") for (const [key, h] of s.sounds) if (h.hp > 0 && Math.hypot(h.x - sh.x, h.z - sh.z) <= h.radius + sh.radius) { land(w, s, from ?? null, { kind: "sound", key }, sh.damage, a, sh.x, sh.z); return false; }
     return true;
   });
+
+  // Attacks in the grammar in flight (rules/attacks/engine.ts: a creature given one, the Fight Arena's ?attack=).
+  if (s.spells) stepSpells(s.spells, spellWorld(w, s, grid, s.spells.seed, data), s.attackLib ?? ATTACK_LIB, time, dt);
 
   // Beams burn along their line in ticks, sweeping after their target.
   s.beams = s.beams.filter(b => {
@@ -134,6 +140,13 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     // (a pack kind's own move too, its charge or its leap: in a pack it's a strike that takes a token, rules/combat/packs.ts)
     if (f.windupUntil > 0 || f.lunge || swoopStriking(o) || (PO && packKindOf(o.species) && strikingNow(o)) || time - (f.readyAt - cd) < DA.gap) striking.set(tg.id, (striking.get(tg.id) ?? 0) + 1); // (a swoop telegraphing, diving or at its bottom too: rules/movement.ts)
   }
+  /** An attack in the grammar starts its windup: its telegraphs and its cast with the engine, released at the windup's end (its own
+   *  windup, whatever shortens other shots'). */
+  const startSpell = (c: Creature, f: NonNullable<Creature["fight"]>, atk: { name: string; damage: number; spec: import("./attacks/types").AttackSpec }) => {
+    const S = (s.spells ??= newSpells());
+    f.windupUntil = time + (atk.spec.cast?.windup ?? 0.6);
+    f.spellCast = castSpell(S, spellWorld(w, s, grid, S.seed, data), atk.spec, atk.name, { id: c.id, x: c.x, z: c.z, side: sideOf(c), species: c.species, heading: Math.atan2(f.aimZ - c.z, f.aimX - c.x) }, hittableOf(w, s, f.target), time, atk.damage, f.windupUntil);
+  };
   /** May it start a strike at tg now (a token free; only her strikers are counted)? Takes the token if so. A pack member takes one as
    *  well as its pack's turn and pressure, its call too (Ed, 2026-10-20: the dodge's limit holds inside a pack; fights between
    *  creatures as before). */
@@ -209,9 +222,10 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     if (!fighting(c) || w.asleep(c) || (c.leashed && w.busy(c.id))) { c.fight = undefined; continue; }
     // Stunned (an armoured one knocked over): it does nothing for a moment.
     if (c.stunUntil !== undefined && time < c.stunUntil) { c.moving = false; c.vx = 0; c.vz = 0; continue; }
-    const pd = PK?.get(c.id);
+    const pd = c.spell === undefined ? PK?.get(c.id) : undefined; // (one given an attack in the grammar fights on its own: its pack's turns are the plan's step 4)
     if (c.packHide && PK) { c.moving = false; c.vx = 0; c.vz = 0; continue; } // (up the trees or underground: rules/combat/packs.ts)
-    const atk = (pd && packAttack(c.species, c.level, pd.move)) || attackOf(c.species, c.level, data); // (a pack member: its role's move)
+    const spell = c.spell !== undefined ? spellAttack(c, s.attackLib ?? ATTACK_LIB, data) : null; // (an attack in the grammar given it: rules/attacks/)
+    const atk = spell || (pd && packAttack(c.species, c.level, pd.move)) || attackOf(c.species, c.level, data); // (a pack member: its role's move)
     if (!atk) { c.fight = undefined; continue; } // babies don't attack
     const f = (c.fight ??= { target: null, readyAt: time + atk.attack.cooldown * 0.5 * (c.rand() + 0.5), windupUntil: 0, aimX: 0, aimZ: 0 });
     // A happy area legend guards its area like a parked party animal with a far bigger reach, round its home (Ed, 2026-10-04).
@@ -342,7 +356,8 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     }
     // A wild legend fights by its move set (Stage 5): long, telegraphed moves in a pattern, and a second phase.
     if (c.level === LEGEND && !c.leashed && !(f.target.kind === "sound" && d > 40 * S)) { stepLegend(w, s, c, f, p, d, legendSetOf(c.species), data, grid); continue; }
-    const P = profileOf(c.species), marching = (f.target.kind === "sound" || (!!c.siege && !c.leashed)) && d > 40 * S; // (a besieger far off marches)
+    // (one given an attack in the grammar keeps its kind's way of moving but not its special move: its attack is the grammar's)
+    const P0 = profileOf(c.species), P: typeof P0 = spell && P0?.move ? (({ move, ...rest }) => rest)(P0) as typeof P0 : P0, marching = (f.target.kind === "sound" || (!!c.siege && !c.leashed)) && d > 40 * S; // (a besieger far off marches)
     if (f.windupUntil === 0 && P && !marching) {
       // A movement profile (Stage 5): its signature move, then its behaviours and its pack's tactic.
       const run = speed;
@@ -483,6 +498,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         if (pd) markStrike(pd, c);
         f.windupUntil = time + windupOf(A, f.target); f.aimX = p.x; f.aimZ = p.z; // (it glides to a stop as it winds up: below)
         s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id });
+        if (spell) startSpell(c, f, spell);
       }
       continue;
     }
@@ -496,6 +512,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         if (pd) markStrike(pd, c);
         f.windupUntil = time + windupOf(A, f.target); f.aimX = p.x; f.aimZ = p.z;
         s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id });
+        if (spell) startSpell(c, f, spell);
       }
       continue;
     }
@@ -516,6 +533,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       c.moving = v > 1; }
     if (time < f.windupUntil) continue;
     f.windupUntil = 0; f.readyAt = time + A.cooldown;
+    if (spell) continue; // (released by the engine as its windup ends: rules/attacks/engine.ts)
     const dmg = atk.damage;
     if (A.delivery === "melee") {
       // The lunge (Ed's motion scale pass: 12 to 16 m, a dash-strike): down the line to where it aimed

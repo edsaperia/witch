@@ -2,7 +2,7 @@
 // (?buffs=), the quest demo (?quest=1), the party's over (?partyover=1), the debug arena (?arena=, J sets it up again) and
 // how fast the waves come (?pulse=, ?wave=off); the repro link's place and waves (app/repro.ts).
 import { LEGEND_BUFFS } from "../rules/buffs";
-import { setupArena } from "../rules/arena";
+import { setupArena, arenaAttack } from "../rules/arena";
 import { endParty } from "../rules/partyOver";
 import { newCamera } from "../rules/camera";
 import { setupQuestDemo } from "../rules/quest";
@@ -44,8 +44,10 @@ export function gameFromLink(game: Game, tuning: Tuning, params: URLSearchParams
   const arenaParam = params.get("arena");
   let undo = () => {};
   if (arenaParam) {
-    setupArena(game, arenaParam);
-    const again = (e: KeyboardEvent) => { if (e.code === "KeyJ" && !e.repeat) setupArena(game, arenaParam); };
+    // (?attack=<name|JSON>: the wild side uses that attack in the grammar, rules/attacks/; J sets both up again)
+    const attackParam = params.get("attack"), arm = () => { if (attackParam) for (const l of arenaAttack(game, attackParam)) console.warn(`arena attack: ${l}`); };
+    setupArena(game, arenaParam); arm();
+    const again = (e: KeyboardEvent) => { if (e.code === "KeyJ" && !e.repeat) { setupArena(game, arenaParam); arm(); } };
     window.addEventListener("keydown", again);
     undo = () => window.removeEventListener("keydown", again);
   }
