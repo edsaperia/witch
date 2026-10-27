@@ -8,6 +8,7 @@ import { levelValue } from "./power";
 import { TUNING, withTuning } from "./tuning";
 import { routeOf } from "./party";
 import { estimatedPower } from "./swarm";
+import { GENOMES } from "../../art/genome/species.js";
 const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 // Species strength, a number (Ed, 2026-10-05: "just a number that goes up and down"), and berry
@@ -67,18 +68,23 @@ describe("species strength (Ed, 2026-10-05: weaker ones more of them, stronger o
 });
 
 describe("berries to evolve, tied to strength (Ed, 2026-10-05: \"tie the cost to strength\")", () => {
-  it("costs 1 and 8 for a species of normal strength (a baby's one berry: Ed, 2026-10-11, berries.babyCost; the youth's 8 by the level gap of 2026-10-07), nothing past adult", () => {
-    expect([0, 1, 2].map(l => toEvolve(l as 0 | 1 | 2, TUNING))).toEqual([1, 8, Infinity]);
-    expect(toEvolve(0, withTuning({ berries: { ...TUNING.berries, babyCost: undefined } }))).toBe(3); // (by strength without the knob, as before)
-    expect(toEvolve(1, TUNING, "wolf")).toBe(8);
+  it("costs 1 and 4 for a species of normal strength (a baby's one berry: Ed, 2026-10-11, berries.babyCost; the youth's 4: Ed, 2026-10-27, 3 / 4 / 8 by strength), nothing past adult", () => {
+    expect([0, 1, 2].map(l => toEvolve(l as 0 | 1 | 2, TUNING))).toEqual([1, 4, Infinity]);
+    expect(toEvolve(0, withTuning({ berries: { ...TUNING.berries, babyCost: undefined } }))).toBe(2); // (by strength without the knob, as before: halved with the youth's, 2026-10-27)
+    expect(toEvolve(1, TUNING, "wolf")).toBe(4);
+  });
+
+  it("costs a youth 3, 4 or 8 berries to grow, for a light, normal or strong species, every species exactly one of them (Ed, 2026-10-27: \"6/8/16=>3/4/8\"; the youth's sigil shows a dot a berry, two rows of 4 at most)", () => {
+    const want = (s: number) => (s < 1 ? 3 : s > 1 ? 8 : 4);
+    for (const { id } of GENOMES) expect(toEvolve(1, TUNING, id), id).toBe(want(strengthOf(id)));
   });
 
   it("buys the same fighting value a berry for every species (at least one berry)", () => {
     giving("bear", 2); giving("bat", 0.3);
-    expect(toEvolve(1, TUNING, "bear")).toBe(16); // twice the value, twice the berries (8 for a normal one)
+    expect(toEvolve(1, TUNING, "bear")).toBe(8); // twice the value, twice the berries (4 for a normal one)
     expect(toEvolve(0, TUNING, "bear")).toBe(1); // (a baby: one berry, whatever its species: Ed, 2026-10-11)
     expect(toEvolve(0, TUNING, "bat")).toBe(1);
-    expect(toEvolve(1, TUNING, "bat")).toBe(2);
+    expect(toEvolve(1, TUNING, "bat")).toBe(1); // (at strength 0.3, the one-berry floor)
   });
 
   it("can count by power instead (cost.by \"power\", hp × dps): 1 and 6 at the level gap (the old 1 and 3)", () => {
