@@ -94,10 +94,12 @@ export function pending(s: LadderState): { adds: number[]; drops: number[] } {
   return { adds, drops };
 }
 
-/** The next rung down that changes something now (a built live rung), or -1. The load rungs it passes over are wanted from the
- *  next load (pending). */
+/** The next rung down that changes something now (a built live rung); past the last live one, the last built load rung (px 4,
+ *  Ed's last resort: nothing changes now, it's wanted from the next load); or -1. The load rungs it passes over are wanted from
+ *  the next load (pending). */
 function nextDown(s: LadderState): number {
   for (let i = s.rung + 1; i < RUNGS.length; i++) if (RUNGS[i].built && RUNGS[i].when === "live") return i;
+  for (let i = RUNGS.length - 1; i > s.rung; i--) if (RUNGS[i].built) return i;
   return -1;
 }
 /** Up past the nearest live rung in effect (to the rung just above it), or -1 when none is: the load rungs it passes back over

@@ -46,9 +46,11 @@ describe("the quality ladder", () => {
     expect(run(s, 5, 30).rung).toBe(r);
   });
 
-  it("goes to the bottom live rung and no further", () => {
+  it("goes to the bottom live rung, then wants px 4 from the next load, and no further", () => {
     const s = run(newLadder(), 60, 200);
-    expect(s.rung).toBe(at("cap30"));
+    expect(s.rung).toBe(at("px4"));
+    expect(inEffect(s, at("cap30"))).toBe(true);
+    expect(pending(s).adds).toEqual([at("density90"), at("density80"), at("px4")]);
   });
 
   it("marks load rungs passed over as pending, and drops them when climbing back over", () => {
