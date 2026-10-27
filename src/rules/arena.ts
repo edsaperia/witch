@@ -47,8 +47,9 @@ export const ARENA_PRESETS: Record<string, string> = {
 // combo-ing on three young wolves. One of each for every pack kind (PACKS.kinds: each creature.js's `pack`).
 for (const k of Object.keys(PACKS.kinds)) { ARENA_PRESETS[`pack-${k}`] = `${k}*1@0,${k}*3@1,${k}*2@2`; ARENA_PRESETS[`hers-${k}`] = `${k}*4@2,${k === "wolf" ? "fox" : "wolf"}*3@1`; } // (her wolves on wild foxes: a kind never fights its own)
 
-export function setupArena(g: Game, spec: string): void {
-  const groups = parseArena(ARENA_PRESETS[spec.trim().toLowerCase()] ?? spec), pack = spec.trim().toLowerCase().startsWith("pack-");
+/** `wildOnly` (the Fight Arena, rules/fightArena.ts): every group wild, side by side, coming for her alone; none of hers. */
+export function setupArena(g: Game, spec: string, opts: { wildOnly?: boolean } = {}): void {
+  const groups = parseArena(ARENA_PRESETS[spec.trim().toLowerCase()] ?? spec), pack = opts.wildOnly || spec.trim().toLowerCase().startsWith("pack-");
   if (!groups.length) return;
   const L = g.witches[0].leash;
   if (g.arena) {
@@ -70,7 +71,7 @@ export function setupArena(g: Game, spec: string): void {
   // Borrow creatures from far off (the map's edge holds plenty).
   const spare = g.creatures.filter(c => !c.gone && !c.leashed && !c.boss && Math.hypot(c.x - cx, c.z - cz) > 200).sort((a, b) => Math.hypot(b.x - cx, b.z - cz) - Math.hypot(a.x - cx, a.z - cz));
   groups.forEach((gr, side) => {
-    const party = side === 0, sx = (party ? -14 : 14) * S; // (within the wild's aggro of hers, at the fight's scale)
+    const party = side === 0 && !opts.wildOnly, sx = (party ? -14 : 14 + (opts.wildOnly ? side * 11 : 0)) * S; // (within the wild's aggro of hers, at the fight's scale; a wild-only pack's groups one behind another)
     for (let i = 0; i < gr.count; i++) {
       // A creature borrowed from far off.
       const c = spare.shift();
