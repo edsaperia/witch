@@ -94,8 +94,6 @@ export function* refreshSteps(v: View): Steps {
 }
 
 const SLICE_MS = 2.5, MAX_FRAMES = 4, ART_FRAMES = 120, SLICE_FPS = 30;
-/** The zoo's area types' tree atlases kept on the GPU (MB; View.keepTypesUnder): a typical zoo's dozen or so under it. */
-const ZOO_TYPES_MB = 320;
 
 /** The tallest trees' squeeze (treeCap) as one number, to see it change. */
 const treeCapKey = (t: View["game"]["tuning"]): number => t.treeCap.from * 1e3 + t.treeCap.keep;
@@ -349,7 +347,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tel
   dl.sort((a, b) => b.z - a.z); // nearest first, as the trees below
   if (decor) v.batchFor(v.decorBatches, dk, () => new SpriteBatch(decor.atlas, mpp, { scenery: true, fade: true }))?.set(dl);
   for (const [type, b] of v.typeBatches) if (!per.has(type)) b.set([]);
-  if (g.map.zoo?.layout) v.keepTypesUnder(new Set(per.keys()), ZOO_TYPES_MB); // (the zoo's dozens of islands: its far types' atlases let go, render/view.ts)
+  { const now = performance.now(); for (const t of per.keys()) v.typeUsed.set(t, now); } // (listed: kept by the GPU budget, view/gpuBudget.ts)
   if (t.shadows.trunks) { // (always set, so ?trunks or the pause page's switch can turn them on live; hidden while off: render/view.ts)
     for (const [type, b] of v.trunkShadowBatches) if (typeof type === "number" ? !trunks.has(type) : SCENERY_CASTS.has(type) && !casts.has(type)) b.set([]);
     for (const [type, list] of trunks) {
