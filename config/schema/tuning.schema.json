@@ -11843,6 +11843,9 @@
           "type": "number",
           "minimum": 0
         },
+        "stackSharp": {
+          "type": "boolean"
+        },
         "strength": {
           "type": "number",
           "minimum": 0
@@ -11877,6 +11880,7 @@
       "required": [
         "on",
         "skyBlur",
+        "stackSharp",
         "strength",
         "band",
         "centre",

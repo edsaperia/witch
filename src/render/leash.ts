@@ -31,7 +31,7 @@ import { letterAt, lobHeight, type HerOffset } from "./invites";
 
 import { LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS } from "./height";
-import { AMBER, ROSE, JOIN_PALETTE, PIXEL_DOT_MAX, SLOT, SLOTS, SQ, DISC, writeOn, LEGEND_LEVEL, LEGEND_ROW, Instances, VERT, FRAG, legendarySigil } from "./leash/glyphs";
+import { AMBER, ROSE, JOIN_PALETTE, PIXEL_DOT_MAX, SLOT, SLOTS, SQ, DISC, writeOn, LEGEND_LEVEL, LEGEND_ROW, Instances, VERT, FRAG, legendarySigil, maskOf } from "./leash/glyphs";
 import { drawCombat } from "./leash/combat";
 import { BLOOD_PULL, BloodPool, bloodKnobs } from "./leash/blood";
 import { bubbles, drawCirclePanel, drawDreams, drawSnores } from "./leash/bubbles";
@@ -88,6 +88,8 @@ export class LeashView {
   /** The stack above her hat drawn over the scenery (no depth test, after the see-through pass: Ed, 2026-10-15, "never obscured by scenery"), and a near-black disc behind each of its sigils. */
   stackGlyphs: Instances;
   stackBack: Instances;
+  /** Her stack's meshes, each with its coverage material: kept sharp through the tilt-shift (Post.sharp). */
+  readonly stackMask: { mesh: THREE.Mesh; mask: THREE.Material }[];
   flat: Instances;
   /** The placed sigils, and the happy creatures' runes (Ed, 2026-10-12), again where scenery or grass hides them (Ed, 2026-10-11: "Placed animal sigils should show through scenery"): only where
    *  something nearer is drawn and it is scenery or ground cover (their stencil marks), never the witch, at leash.placedThrough. */
@@ -184,6 +186,8 @@ export class LeashView {
     this.over = new Instances(mat(0, false)); this.over.mesh.renderOrder = 11.4; // (over everything, so after the see-through passes too: at 3, the trees in her hole, drawn at 10.9 and 11, covered it there and nowhere else, #1091)
     this.stackGlyphs = new Instances(mat(0, false)); this.stackGlyphs.mesh.renderOrder = 11.5; // (after the see-through pass at 11, before her silhouette at 12)
     this.stackBack = new Instances(mat(0, false, true)); this.stackBack.mesh.renderOrder = 11.45;
+    // (both again as coverage, the tilt-shift's sharp mask: render/post.ts Post.sharp)
+    this.stackMask = [this.stackBack, this.stackGlyphs].map(b => ({ mesh: b.mesh, mask: maskOf(b.mesh.material as THREE.ShaderMaterial) }));
     const thr = mat(1);
     Object.assign(thr, { depthFunc: THREE.GreaterDepth, stencilWrite: true, stencilRef: 0, stencilFuncMask: 3, stencilFunc: THREE.NotEqualStencilFunc, stencilFail: THREE.KeepStencilOp, stencilZFail: THREE.KeepStencilOp, stencilZPass: THREE.KeepStencilOp });
     this.through = new Instances(thr); this.through.mesh.renderOrder = 13; // (scenery marks 1, grass 2: sprites.ts, grass.ts; she clears it)

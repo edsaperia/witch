@@ -2494,6 +2494,7 @@ How strong the diagonal moonbeam bands are, times the style's Moonbeams knob: 0 
 | `bloom.threshold` | number | 0 to … |
 | `tiltShift.on` | boolean |  |
 | `tiltShift.skyBlur` | number | 0 to … |
+| `tiltShift.stackSharp` | boolean |  |
 | `tiltShift.strength` | number | 0 to … |
 | `tiltShift.band` | number | 0 to … |
 | `tiltShift.centre` | number | 0 to … |

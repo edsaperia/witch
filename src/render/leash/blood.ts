@@ -20,15 +20,13 @@ import * as THREE from "three";
 
 const AT = new THREE.Vector3();
 
-export interface BloodKnobs { on: boolean; style: "prints" | "prints+drops" | "drops"; colour: "red" | "neon"; fade: number; rate: number; cap: number; range: number; /** off red (rank sigils, render/leash/ranks.ts: red is an adult's now), BLOOD_ICHOR */ ichor?: boolean }
+export interface BloodKnobs { on: boolean; style: "prints" | "prints+drops" | "drops"; colour: "red" | "neon"; fade: number; rate: number; cap: number; range: number }
 export const BLOOD_DEFAULT: BloodKnobs = { on: true, style: "prints+drops", colour: "red", fade: 8, rate: 3, cap: 600, range: 60 };
 /** How far nearer the camera the marks are drawn, along their own ray (metres): about a grass tuft's depth, so the ground cover
  *  doesn't hide them (Ed, 2026-10-09: "draw over grass tufts"); still flat on the ground on screen and on the pixel grid. */
 export const BLOOD_PULL = 0.6;
 /** The dark red (linear, before the haze): deep enough to sit on the night ground, not black, not a bright red. */
 export const BLOOD_RED = [0.5, 0.02, 0.06];
-/** With rank sigils on (their adults red: Ed, 2026-10-27), a dark mossy ichor in its place, so a hurt creature's trail is never read as an adult's red. */
-export const BLOOD_ICHOR = [0.16, 0.3, 0.05];
 
 type Gait = "pairs" | "prints" | "track" | "drops";
 const GAITS: Record<string, Gait> = { quadruped: "pairs", squat: "prints", insectoid: "track", avian: "drops", flyer: "drops", serpent: "drops" };
@@ -69,7 +67,7 @@ export class BloodPool {
       if (c.hp === undefined || c.asleep) { tr.walked = 0; tr.drip = 0; continue; } // (whole: none)
       const h = Math.max(0, Math.min(1, 1 - c.hp / creatureMaxHp(c))); // how hurt, 0 to 1
       if (h <= 0 || moved > 6) continue; // (a teleport or a respawn isn't a walk)
-      const size = top(c), gait = GAIT.get(c.species) ?? "prints", rgb = K.colour === "neon" ? neonBlood(c.species) : K.ichor ? BLOOD_ICHOR : BLOOD_RED;
+      const size = top(c), gait = GAIT.get(c.species) ?? "prints", rgb = K.colour === "neon" ? neonBlood(c.species) : BLOOD_RED;
       const stride = Math.max(0.45, size * 0.7), side = Math.max(0.12, size * 0.16), big = size >= 2.6 ? 3 : 2;
       const ux = moved > 1e-4 ? dx / moved : 0, uz = moved > 1e-4 ? dz / moved : 0;
       const prints = gait !== "drops" && K.style !== "drops", drops = gait === "drops" || K.style !== "prints";
@@ -123,4 +121,4 @@ function neonBlood(species: string): number[] {
   return c;
 }
 
-export const bloodKnobs = (t: { blood?: Partial<BloodKnobs>; leash?: { ranks?: { on: boolean } } }): BloodKnobs => ({ ...BLOOD_DEFAULT, ...(t.blood ?? {}), ...(t.leash?.ranks?.on ? { ichor: true } : {}) });
+export const bloodKnobs = (t: { blood?: Partial<BloodKnobs> }): BloodKnobs => ({ ...BLOOD_DEFAULT, ...(t.blood ?? {}) });
