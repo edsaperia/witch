@@ -194,7 +194,7 @@ export function inviteCreature(s: LeashState, c: Creature, x: number, z: number,
   if (inConga(c)) return; // (the won night's line follows her, never on her leash: rules/creatureStates.ts inConga)
   c.leashed = true; c.state = "leashed"; c.affection = undefined; c.dazed = false; c.dazedUntil = undefined;
   c.rest = 0;
-  c.wanderTo = undefined; c.siege = undefined; c.fight = undefined;
+  c.wanderTo = undefined; c.siege = undefined; c.fight = undefined; c.dropped = undefined; // (one let go at a knockout: hers again)
   c.friendly = undefined; // (taking one from a friendly area weakens it: Ed's call)
   // Invited, it's whole again (Ed, 2026-10-04), with a heal pop if it was hurt.
   heal(c, time);

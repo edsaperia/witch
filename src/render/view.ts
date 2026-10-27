@@ -7,7 +7,7 @@ import type { Creature } from "../rules/creatures";
 import { partyGearOf } from "./artBuild";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
-import { carrierOf, deckOf, indoorsAt } from "../rules/treehouse";
+import { carrierOf, deckOf } from "../rules/treehouse";
 import { HOUSE_LAYER } from "./post";
 import type { MapTable } from "./mapTable";
 import { islandArtSeed } from "./artCache";
@@ -94,6 +94,8 @@ import { MAX_FIRES, TRUNK_SHADOW_UNIFORMS, type TrunkShadowBatch } from "./trunk
 import { CastShadowMap } from "./castShadows";
 import { newBudget, stepBudget, type SceneryBudget } from "../rules/budget";
 import { packAtlas } from "./atlas";
+import { GpuLedger } from "./gpuLedger";
+import { keepUnderBudget, newGpuState } from "./view/gpuBudget";
 import { berrySprite } from "./berries";
 import { leyDrawnTo, shaderPulse, type LeyLines } from "./leylines";
 import { routeSeen } from "../rules/hatSpells";
@@ -376,13 +378,14 @@ export class View {
   clouds!: Clouds;
   /** Smoke rising from the fires (Ed, round 13). */
   private smoke!: Smoke;
-  /** The dark behind the house's enclosed rooms (Ed, 2026-10-23: "when you're inside the treehouse in an enclosed room (i.e. not
-   *  the terrace) the forest behind the tree should be black"; the tuning's treehouse.house.dark; render/post.ts Post.behind): in a
-   *  room or on a branch off the Terrace (rules/treehouse.ts indoorsAt), on foot, only the house's own meshes are drawn (its rooms, the Ent's
-   *  art with its crowns, her), over black; the scenery is still listed and its art still asked for, only not drawn. Stepping
-   *  onto the Terrace the forest comes back from the doorway she came through over dark.fade seconds, and goes again as she goes
-   *  back in; through the telescope it fades in over the same, the whole picture at once. Eased on her clock (g.herTime: full
-   *  speed in the house's slowed time, and the same on any machine). */
+  /** The dark behind the house till the forest has loaded (Ed, 2026-10-26: "When the forest has loaded, fade it in gradually behind
+   *  the whole treehouse"; it was dark behind the enclosed rooms always, Ed 2026-10-23; the tuning's treehouse.house.dark;
+   *  render/post.ts Post.behind): on foot in the house, any room or the Terrace, while the island isn't ready yet (g.islandReady:
+   *  its own art drawn, main.ts), only the house's own meshes are drawn (its rooms, the Ent's art with its crowns, her), over black;
+   *  the scenery is still listed and its art still asked for, only not drawn. As it's ready the forest fades in behind the whole
+   *  house, the whole picture at once, over dark.reveal seconds, and stays behind every room after. Leaving the house before
+   *  then (lifting off), it comes back from where she stands over dark.fade seconds; through the telescope, the whole picture over
+   *  the same. Eased on her clock (g.herTime: full speed in the house's slowed time, and the same on any machine). */
   /** No tilt-shift in the treehouse (Ed, 2026-10-26: "No tilt shift while you're in the treehouse"): on the house (its rooms,
    *  branches and Terrace, the stations' close-ups; her perch) the blur eases out over HOUSE_TILT_EASE seconds of her clock, and back
    *  in as she leaves; through the telescope it stays as it was (its own view of the island). Once a frame (render/view/witch.ts), its
@@ -395,15 +398,16 @@ export class View {
     this.tiltK = stepTiltShare(this.tiltK, want, dt, HOUSE_TILT_EASE);
     return tiltShareShown(this.tiltK);
   }
-  private dark = { k: 1, at: NaN, door: null as { x: number; z: number } | null, enclosed: false, uv: new THREE.Vector2() };
+  private dark = { k: 1, at: NaN, door: null as { x: number; z: number } | null, enclosed: false, reveal: false, uv: new THREE.Vector2() };
   private behindHouse(g: Game): void {
     const D = this.dark, T = g.tuning.treehouse.house?.dark, deck = deckOf(g.map, g.tuning), w = g.witch;
-    const enclosed = !!T?.on && !!deck?.house?.rooms && !!w.perch && w.mode === "ground" && indoorsAt(deck, w.x, w.z) && !this.telescope; // (on foot: rising out of a room, the forest comes back as she lifts off)
-    // (the doorway: where she crossed between a room's branch and the Terrace, either way; none for the telescope's fade)
-    if (enclosed !== D.enclosed) { D.door = this.telescope && !enclosed ? null : { x: w.x, z: w.z }; D.enclosed = enclosed; }
+    const inHouse = !!T?.on && !!deck?.house?.rooms && !!w.perch && w.mode === "ground" && !this.telescope; // (on foot: rising out of it, the forest comes back as she lifts off)
+    const enclosed = inHouse && !g.islandReady;
+    // (where it comes back from: the whole picture as the island's ready, or through the telescope; else where she left the house)
+    if (enclosed !== D.enclosed) { D.reveal = !enclosed && inHouse; D.door = (this.telescope || D.reveal) && !enclosed ? null : { x: w.x, z: w.z }; D.enclosed = enclosed; }
     const dt = Number.isFinite(D.at) ? Math.max(0, Math.min(0.1, g.herTime - D.at)) : 1e9;
     D.at = g.herTime;
-    const fade = Math.max(1e-3, T?.fade ?? 0.6);
+    const fade = Math.max(1e-3, (D.reveal && !enclosed ? T?.reveal : undefined) ?? T?.fade ?? 0.6);
     D.k = enclosed ? Math.max(0, D.k - dt / fade) : Math.min(1, D.k + dt / fade);
     if (!T?.on) D.k = 1;
     const P = this.post;
@@ -650,7 +654,10 @@ export class View {
     // again from its pixels, which the atlases let go once uploaded (render/atlas.ts), so the art would come back black. The
     // page reloads instead (DECISION FOR ED: a run is lost either way; nothing handled it before, and the ground's own GPU-side
     // tiles wouldn't have come back either).
-    canvas.addEventListener("webglcontextrestored", () => { console.warn("view: the GL context was lost and restored: reloading"); location.reload(); });
+    // (main.ts reloads the night itself, from its repro link: the island, the wave and her place, and keeps it in the playtest log)
+    canvas.addEventListener("webglcontextrestored", () => { console.warn("view: the GL context was lost and restored: reloading"); (this.onContextRestored ?? (() => location.reload()))(); });
+    this.ledger = new GpuLedger(this.renderer.getContext(), () => canvas.width * canvas.height * 12); // (the canvas's back and front buffers and its depth: preserveDrawingBuffer)
+    canvas.addEventListener("webglcontextlost", () => { this.ledger.reset(); this.onGpuEvent?.("context lost"); });
     this.renderer.setPixelRatio(1);
     this.renderer.info.autoReset = false; // count every pass of a frame, reset in render()
     this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace; // colours are the art's own sRGB values, untouched
@@ -980,7 +987,7 @@ export class View {
       const s = m.siteOf(x, y); cells.push({ type: m.typeOf(x, y), x: s.x, z: s.z });
     }
     const A = this.ground.areaUniforms;
-    this.loadingMist = new LoadingMist(T, typeReaches(cells, m.treehouse, m.areaSize), m.treehouse, m.extent, A.uAreas, A.uExtent, this.post.scene.depthTexture, this.post.fxSize, A.slots);
+    this.loadingMist = new LoadingMist(T, typeReaches(cells, m.treehouse, m.areaSize), m.treehouse, m.extent, A.uniforms, this.post.scene.depthTexture, this.post.fxSize, A.slots);
     (this.post.fxScene ??= new THREE.Scene()).add(this.loadingMist.mesh);
   }
 
@@ -1215,28 +1222,31 @@ export class View {
     }
   }
 
-  /** Each area type's trees last listed (performance.now), for letting the zoo's go (keepTypesUnder). */
-  private typeUsed = new Map<number, number>();
-  /** The zoo (rules/zooMap.ts), dozens of islands each its own type: the area types' tree atlases on the GPU kept under `mb` (the
-   *  types listed now, `listed`, always kept), the longest unlisted let go first: their batches and their art (AssetLibrary.forgetType: asked
-   *  for again from the art cache if she comes back, fading in as any set does). Flown over every island they came to 887 MB (tools/zoo/perf.cjs,
-   *  2026-10-26); a typical zoo's few stay under it and nothing goes. */
-  keepTypesUnder(listed: ReadonlySet<number>, mb: number): void {
-    const now = performance.now(), bytes = (b: SpriteBatch) => { const a = b.atlas.albedo.image as { width?: number; height?: number } | null; return (a?.width ?? 0) * (a?.height ?? 0) * 4 * 2; };
-    for (const t of listed) this.typeUsed.set(t, now);
-    let total = 0;
-    for (const b of this.typeBatches.values()) total += bytes(b);
-    if (total <= mb * 1048576) return;
-    const idle = [...this.typeBatches.keys()].filter(t => !listed.has(t)).sort((a, b) => (this.typeUsed.get(a) ?? 0) - (this.typeUsed.get(b) ?? 0));
-    for (const t of idle) {
-      if (total <= mb * 1048576) break;
-      const b = this.typeBatches.get(t)!;
-      total -= bytes(b);
-      this.scene.remove(...b.meshes); b.release(); this.typeBatches.delete(t);
-      const sh = this.trunkShadowBatches.get(t);
-      if (sh) { this.scene.remove(...sh.meshes); sh.dispose(); this.trunkShadowBatches.delete(t); } // (its own buffers: the atlas is the type's)
-      this.assets.forgetType(t); // (its atlas off the GPU; asked for again, from the art cache, when she comes back)
-    }
+  /** Each area type's trees last listed (performance.now), and each creature batch last drawn: the GPU budget lets the longest
+   *  unused go first (view/gpuBudget.ts). */
+  typeUsed = new Map<number, number>();
+  creatureUsed = new Map<string, number>();
+  /** What the GPU holds (render/gpuLedger.ts), and the budget kept over it (view/gpuBudget.ts). */
+  readonly ledger: GpuLedger;
+  readonly gpu = newGpuState();
+  /** The GL context back after it was lost: the night is loaded anew (main.ts), the page reloaded if no one says how. */
+  onContextRestored?: () => void;
+  /** Told of the GPU's own trouble (an out-of-memory error, the context lost): main.ts keeps it in the playtest log. */
+  onGpuEvent?: (what: string) => void;
+  /** Area type `t`'s trees let go (the GPU budget): its batches and its art (AssetLibrary.forgetType: asked for again from the art
+   *  cache if she comes back, fading in as any set does). */
+  forgetType(t: number): void {
+    const b = this.typeBatches.get(t);
+    if (b) { this.scene.remove(...b.meshes); b.release(); this.typeBatches.delete(t); }
+    const sh = this.trunkShadowBatches.get(t);
+    if (sh) { this.scene.remove(...sh.meshes); sh.dispose(); this.trunkShadowBatches.delete(t); } // (its own buffers: the atlas is the type's)
+    this.typeUsed.delete(t);
+    this.assets.forgetType(t); // (its atlas off the GPU; asked for again, from the art cache, when she comes back)
+  }
+  /** Creature batches `keys`, all on `atlas`, let go (the GPU budget), and their art (asked for again when a creature wears it). */
+  forgetCreatures(keys: string[], atlas: SpriteBatch["atlas"]): void {
+    for (const k of keys) { const b = this.creatureBatches.get(k); if (b) { this.scene.remove(...b.meshes); b.release(); this.creatureBatches.delete(k); } this.creatureUsed.delete(k); }
+    this.assets.forgetCreatureAtlas(atlas);
   }
 
   batchFor<K>(map: Map<K, SpriteBatch>, key: K, atlas: () => SpriteBatch | undefined): SpriteBatch | undefined {
@@ -1713,6 +1723,7 @@ export class View {
     this.stats.dropped = dropped;
     this.stats.drawCalls = this.renderer.info.render.calls;
     this.stats.batches = this.typeBatches.size + this.creatureBatches.size;
+    keepUnderBudget(this, performance.now());
     this.stats.sceneryRadius = this.budget.radius; this.stats.fps = this.budget.fps;
     this.stats.scenery = this.stats.trees + this.stats.bushes;
     this.stats.gameplay = this.stats.creatures + this.propBatch.count + this.soundBatch.count + (this.partyView.gen?.count ?? 0);

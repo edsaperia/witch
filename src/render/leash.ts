@@ -15,6 +15,7 @@ import { ROUTE_SAMPLES, type RouteShape } from "./routeEase";
 import { moodOf } from "./mood";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
+import { gpuKind } from "./gpuLedger";
 import { drawSigil, sigilColour, LEGEND_SCALE } from "../../art/generator.js";
 import { dormant, type Game } from "../rules/game";
 import type { Creature } from "../rules/creatures";
@@ -164,7 +165,7 @@ export class LeashView {
         if (r > 1) continue;
         g.fillStyle = r <= 0.8 ? "rgba(255,255,255,1)" : "rgba(255,255,255,0.6)"; g.fillRect(ox + cx * 2, oy + cy * 2, 2, 2);
       } }
-    this.tex = new THREE.CanvasTexture(this.canvas);
+    this.tex = gpuKind(new THREE.CanvasTexture(this.canvas), "ui");
     this.tex.magFilter = THREE.NearestFilter; this.tex.minFilter = THREE.NearestFilter; this.tex.generateMipmaps = false;
     const mat = (flat: number, depthTest = true, solid = false, pull = 0) => new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG,

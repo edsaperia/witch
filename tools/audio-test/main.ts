@@ -61,28 +61,31 @@ interface RungResult {
   shed: number; shedSaid: string[];
   /** Sounds the effects' kit had going at most (its own count). */
   kitPeak: number;
-  glitch: boolean; why: string[];
+  /** Heard trouble (under-runs, the music re-anchoring or late), and the audio clock falling behind on its own (drift: no
+   *  under-run counted, which is not a glitch by itself: Ed's laptop's "+ the other reverbs" rung, 94 ms behind, 0 under-runs). */
+  glitch: boolean; why: string[]; drift: string | null;
 }
 interface RunResult {
   worklets: boolean; loaded: string[]; startMs: Record<string, number>; context: Record<string, unknown>;
-  rungs: RungResult[]; glitchAt: string | null; glitchVoices: number | null; error?: string;
+  rungs: RungResult[]; glitchAt: string | null; glitchVoices: number | null; driftAt: string | null; error?: string;
 }
 
 let stopAsked = false;
 const log = (s: string) => { $("status").textContent = s; };
 
-/** A rung's verdict: anything heard as a glitch. */
-function judge(r: RungResult): string[] {
+/** A rung's verdict: what's heard as a glitch (under-runs, the music re-anchoring or late), and the audio clock falling behind
+ *  apart (drift: a glitch only where the browser counts no under-runs at all, so it's the one sign there is). */
+function judge(r: RungResult, counted: boolean): { why: string[]; drift: string | null } {
   const why: string[] = [];
   if (r.underruns) why.push(`${r.underruns} under-runs (${r.underrunMs} ms)`);
   if (r.underrunRatio && r.underrunRatio > 0) why.push(`renderCapacity under-run ratio ${r2(r.underrunRatio)}`);
-  // (by the audio clock against the page's, as the game's safety valve reads it: the output timestamp's single readings jump
-  // by hundreds of ms with nothing lost, so it's kept in the JSON only)
-  const lost = -r.driftMs;
-  if (lost >= 50) why.push(`audio fell ${Math.round(lost)} ms behind`);
   if (r.late) why.push(`${r.late} music steps late`);
   if (r.resyncs) why.push(`${r.resyncs} re-anchors`);
-  return why;
+  // (by the audio clock against the page's, as the game's safety valve reads it: the output timestamp's single readings jump
+  // by hundreds of ms with nothing lost, so it's kept in the JSON only)
+  const lost = -r.driftMs, drift = lost >= 50 ? `audio ${Math.round(lost)} ms behind` : null;
+  if (drift && !counted) why.push(drift); // (no under-run counter in this browser: the clock is all there is to go by)
+  return { why, drift };
 }
 
 /** The creature voices: a spread of the species' calls (families where there are no species). */
@@ -100,7 +103,7 @@ async function run(worklets: boolean, recordings: Record<string, AudioBuffer> | 
   await ctx.resume();
   while (ctx.currentTime === 0 && performance.now() - t0 < 5000) await sleep(5);
   startMs.context = r1(performance.now() - t0);
-  const out: RunResult = { worklets, loaded: [], startMs, rungs: [], glitchAt: null, glitchVoices: null, context: {
+  const out: RunResult = { worklets, loaded: [], startMs, rungs: [], glitchAt: null, glitchVoices: null, driftAt: null, context: {
     latencyHint: hint, sampleRate: ctx.sampleRate, baseLatency: ctx.baseLatency, outputLatency: (ctx as AudioContext & { outputLatency?: number }).outputLatency ?? null,
     playbackStats: "playbackStats" in ctx, renderCapacity: "renderCapacity" in ctx, audioWorklet: !!ctx.audioWorklet,
   } };
@@ -202,11 +205,13 @@ async function run(worklets: boolean, recordings: Record<string, AudioBuffer> | 
         underrunRatio: capSeen.length ? r2(Math.max(...capSeen.map(c => c.underrunRatio))) : null,
         driftMs: Math.round(((b.ctx - a.ctx) - (b.page - a.page)) * 1000), outDriftMs: a.out && b.out ? Math.round(((b.out.ctx - a.out.ctx) - (b.out.page - a.out.page)) * 1000) : null,
         late: b.late - a.late, gapMs: Math.round((b.gap - a.gap) * 1000), resyncs: b.resyncs - a.resyncs, timerLateMs: Math.round(worstTick),
-        shed: valve.level, shedSaid: said, kitPeak: kit.budget.peak, glitch: false, why: [],
+        shed: valve.level, shedSaid: said, kitPeak: kit.budget.peak, glitch: false, why: [], drift: null,
       };
-      res.why = judge(res); res.glitch = res.why.length > 0;
+      const J = judge(res, "playbackStats" in ctx || "renderCapacity" in ctx);
+      res.why = J.why; res.drift = J.drift; res.glitch = res.why.length > 0;
       out.rungs.push(res); onRung(res, i);
       if (res.glitch && out.glitchAt === null) { out.glitchAt = R.name; out.glitchVoices = R.voices; }
+      if (res.drift && out.driftAt === null) out.driftAt = R.name;
     }
     void cap;
     clearInterval(tick); clearInterval(play);
@@ -274,7 +279,8 @@ async function machine(): Promise<Record<string, unknown>> {
 
 function rungRow(r: RungResult): string {
   const cell = (v: unknown) => `<td>${v === null || v === undefined ? "–" : v}</td>`;
-  return `<tr class="${r.glitch ? "bad" : "ok"}">${cell(r.rung)}${cell(r.underruns)}${cell(r.load === null ? null : `${r.load} / ${r.peakLoad}`)}${cell(r.driftMs)}${cell(r.late)}${cell(r.resyncs)}${cell(r.timerLateMs)}${cell(r.shed ? SHED_STEPS[r.shed] : "")}${cell(r.kitPeak)}${cell(r.glitch ? r.why.join("; ") : "clean")}</tr>`;
+  const verdict = r.glitch ? r.why.join("; ") : r.drift ? `drift only: ${r.drift}, no under-runs` : "clean";
+  return `<tr class="${r.glitch ? "bad" : r.drift ? "drift" : "ok"}">${cell(r.rung)}${cell(r.underruns)}${cell(r.load === null ? null : `${r.load} / ${r.peakLoad}`)}${cell(r.driftMs)}${cell(r.late)}${cell(r.resyncs)}${cell(r.timerLateMs)}${cell(r.shed ? SHED_STEPS[r.shed] : "")}${cell(r.kitPeak)}${cell(verdict)}</tr>`;
 }
 
 function table(id: string, title: string): HTMLTableSectionElement {
@@ -289,6 +295,7 @@ function summary(R: { a: RunResult; b: RunResult; bar: Awaited<ReturnType<typeof
   const at = (r: RunResult) => r.error ? `failed (${r.error.split("\n")[0]})` : r.glitchAt === null ? `none up to ${RUNGS[RUNGS.length - 1].voices} voices` : r.glitchVoices ? `${r.glitchVoices} voices` : `"${r.glitchAt}"`;
   const lines = [
     `Glitches start at ${at(R.a)} with worklets (${R.a.loaded.join(", ") || "none loaded"}), ${at(R.b)} without.`,
+    `The audio clock first fell behind (drift, counted apart) at ${R.a.driftAt ? `"${R.a.driftAt}"` : "no rung"} with worklets, ${R.b.driftAt ? `"${R.b.driftAt}"` : "no rung"} without.`,
     ...R.bar.map(b => `One bar of the ${b.section} (${b.barMs} ms) renders offline in ${b.renderMs} ms: ${b.times}× faster than real time.`),
     R.reverbs ? `The night's ${R.reverbs.count} reverbs cost ${R.reverbs.allMs} ms for 4 s of sound; one shared reverb ${R.reverbs.oneMs} ms (${R.reverbs.ratio}× cheaper).` : "Reverb cost: not measured.",
     `Audio start: the context running in ${R.startMs} ms; music built in ${R.a.startMs.music ?? "?"} ms${R.a.startMs.worklets !== undefined ? `; the worklets loaded in ${R.a.startMs.worklets} ms` : ""}.`,

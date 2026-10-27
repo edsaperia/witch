@@ -24,6 +24,8 @@ interface Channel {
   in: GainNode; lastFreq: number; lfo?: { osc: OscillatorNode; depth: GainNode };
   /** A drum's filters, which never move: one set a part, every hit's envelope into it (made when first wanted). */
   hitIn?: AudioNode;
+  /** The part it's the channel of. */
+  part?: string;
   /** A sung part's vibrato (5.2 Hz) and formant banks by vowel, shared by its notes. */
   vib?: OscillatorNode; banks?: Map<string, AudioNode>;
   /** What to stop when the style changes (the shared sources). */
@@ -39,6 +41,33 @@ interface Channel {
 
 /** Held synth notes (the Music Studio's keyboard): what letting go of them releases. */
 type Held = { gain: GainNode; filter: BiquadFilterNode | null; fBase: number; fRelease: number; release: number; sources: AudioScheduledSourceNode[] }[];
+
+/** Where the parts' notes go, and the bus's own automation (the section's low-pass over a bar, the kick's duck, the knockdown's
+ *  gate, the voice line's chain by place): the engine's own buses (live, as ever), or a renderer's stems (render/ahead: the
+ *  music drawn a bar at a time on an OfflineAudioContext, docs/notes/music.md "Music ahead"), the automation kept to be played
+ *  on the live buses as the bar is heard. */
+export interface MusicSink {
+  /** The parts the kick ducks, the rest, the reverb's send and the delay's (each a node on the notes' context). */
+  duck: AudioNode; dry: AudioNode; reverb: AudioNode; delay: AudioNode;
+  /** The voice line's part before its effects (its effects, high-pass, pan and sends are the bus's); null: the engine's own. */
+  voice: ((part: string) => AudioNode) | null;
+  /** The section's low-pass from `f0` to `f1` Hz over `dur` seconds from `t`. */
+  tone(f0: number, f1: number, t: number, dur: number): void;
+  /** The kick's duck at `t`, `depth` deep (0-1), easing back over the sixteenth `sps`. */
+  duckAt(t: number, depth: number, sps: number): void;
+  /** The knockdown's gate shut (fading) or open at `t`. */
+  gate(open: boolean, t: number): void;
+  /** The voice line's chain by place at `t` (Ed, 2026-10-14, "two chains by place"). */
+  fxChain?(part: string, kind: "pure" | "dark", t: number): void;
+  /** The voice effects' end of a phrase at `t` (the freeze: VoiceFx.release). */
+  fxRelease?(part: string, t: number): void;
+  /** A recorded phrase's swell (the recording `rec` at `rate`, rising over `swell` seconds into the effects' reverbs before its
+   *  first note at `t`, at `peak`): the effects', so played on the bus (it starts before the bar it leads into). */
+  fxSwell?(part: string, rec: AudioBuffer, rate: number, t: number, swell: number, peak: number): void;
+}
+
+/** The noise and the 808's metal, made once a sample rate (the same on every context: a renderer's a bar at a time too). */
+const SHARED = new Map<number, { noise: AudioBuffer; metal: AudioBuffer }>();
 
 /** Vowels for the synthesised voice: three formants each (Hz) and their levels. */
 const VOWELS: Record<string, [number, number][]> = {
@@ -131,7 +160,32 @@ export class MusicEngine {
     for (const ch of this.channels.values()) ch.fx?.shedTo(level);
   }
 
-  constructor(private ctx: BaseAudioContext, dest: AudioNode, public style: MusicStyle, public seed = 0, circleDest: AudioNode = dest) {
+  /** Where the notes go: its own buses (`bus`), or a renderer's stems. */
+  private sink: MusicSink;
+  /** Rendering into another's stems (no buses of its own heard, no reverbs' impulses made). */
+  private readonly stems: boolean;
+  /** A renderer's: how far (s) its context's time 0 is past the first renderer's, so the parts' running wobbles and vibratos
+   *  (free oscillators) go on in phase from one bar's context to the next. */
+  phaseAt = 0;
+  /** A renderer's: what the bar before's renderer left in each part (a glide's last note, the sung phrase's vowel and end, its
+   *  chain by place), its times on this one's context; taken up as each part's channel is made. */
+  private carried = new Map<string, Pick<Channel, "lastFreq" | "sung" | "lastEnd" | "fxKind">>();
+  /** A renderer following `prev` (the bar before's, its context `shift` seconds earlier): its parts' state and its gate carried on. */
+  carryFrom(prev: MusicEngine, shift: number): void {
+    const move = (st: Pick<Channel, "lastFreq" | "sung" | "lastEnd" | "fxKind">) => ({ ...st, lastEnd: st.lastEnd === undefined ? undefined : st.lastEnd - shift });
+    for (const [k, st] of prev.carried) this.carried.set(k, move(st));
+    for (const [k, ch] of prev.channels) this.carried.set(k, move({ lastFreq: ch.lastFreq, sung: ch.sung, lastEnd: ch.lastEnd, fxKind: ch.fxKind }));
+    this.gated = prev.gated; this.phaseAt = prev.phaseAt + shift;
+  }
+  /** A free oscillator at `rate` Hz started at time 0, in phase with the first renderer's (a renderer's; live, as it starts). */
+  private phased(o: OscillatorNode, rate: number): void {
+    if (!this.stems || !this.phaseAt) return;
+    const ph = 2 * Math.PI * rate * this.phaseAt;
+    o.setPeriodicWave(this.ctx.createPeriodicWave(new Float32Array([0, Math.sin(ph)]), new Float32Array([0, Math.cos(ph)]), { disableNormalization: true }));
+  }
+
+  constructor(private ctx: BaseAudioContext, dest: AudioNode, public style: MusicStyle, public seed = 0, circleDest: AudioNode = dest, sink?: MusicSink) {
+    this.stems = !!sink;
     this.conductor = new Conductor(style);
     const c = ctx;
     this.out = c.createGain();
@@ -162,18 +216,23 @@ export class MusicEngine {
     circleLimit.threshold.value = -10; circleLimit.knee.value = 6; circleLimit.ratio.value = 8; circleLimit.attack.value = 0.005; circleLimit.release.value = 0.3;
     this.circleVerbIn.connect(this.circleVerb); this.circleVerb.connect(this.circleIn);
     this.circleIn.connect(circleLimit); circleLimit.connect(circleDest);
-    this.noise = noiseBuffer(c, 2, 22222);
-    this.metal = c.createBuffer(1, 2 * c.sampleRate, c.sampleRate);
-    const m = this.metal.getChannelData(0), phase = METAL_RATIOS.map((_, i) => i * 0.37);
-    for (let i = 0; i < m.length; i++) {
-      let v = 0;
-      for (let k = 0; k < METAL_RATIOS.length; k++) v += ((40 * METAL_RATIOS[k] * i) / c.sampleRate + phase[k]) % 1 < 0.5 ? 1 : -1;
-      m[i] = v / METAL_RATIOS.length;
+    let shared = SHARED.get(c.sampleRate);
+    if (!shared) {
+      const noise = noiseBuffer(c, 2, 22222), metal = c.createBuffer(1, 2 * c.sampleRate, c.sampleRate);
+      const m = metal.getChannelData(0), phase = METAL_RATIOS.map((_, i) => i * 0.37);
+      for (let i = 0; i < m.length; i++) {
+        let v = 0;
+        for (let k = 0; k < METAL_RATIOS.length; k++) v += ((40 * METAL_RATIOS[k] * i) / c.sampleRate + phase[k]) % 1 < 0.5 ? 1 : -1;
+        m[i] = v / METAL_RATIOS.length;
+      }
+      // tilt it bright (twice differenced) and bring it to full scale: the 808 keeps only the top of these tones
+      let peak = 0, a = 0, b = 0;
+      for (let i = 0; i < m.length; i++) { const x = m[i], d1 = x - a; a = x; const d2 = d1 - b; b = d1; m[i] = d2; peak = Math.max(peak, Math.abs(d2)); }
+      for (let i = 0; i < m.length; i++) m[i] /= peak || 1;
+      SHARED.set(c.sampleRate, shared = { noise, metal });
     }
-    // tilt it bright (twice differenced) and bring it to full scale: the 808 keeps only the top of these tones
-    let peak = 0, a = 0, b = 0;
-    for (let i = 0; i < m.length; i++) { const x = m[i], d1 = x - a; a = x; const d2 = d1 - b; b = d1; m[i] = d2; peak = Math.max(peak, Math.abs(d2)); }
-    for (let i = 0; i < m.length; i++) m[i] /= peak || 1;
+    this.noise = shared.noise; this.metal = shared.metal;
+    this.sink = sink ?? this.bus;
     this.setStyle(style);
     if (Object.values(style.patches).some(p => p.kind === "fof") && style.form?.sung && style.patches[style.form.sung.patch]?.kind === "fof") void fofReady(ctx); // (the FOF voice loading ahead of its first note, when it sings)
   }
@@ -231,8 +290,24 @@ export class MusicEngine {
     this.reverbIn.gain.value = m.reverb;
     this.delayIn.gain.value = lite ? 0 : m.delay;
     this.feedback.gain.value = lite ? 0 : Math.min(0.85, m.feedback);
-    if (time !== this.reverbTime) { this.reverbTime = time; this.reverb.buffer = this.impulse(time); this.circleVerb.buffer = this.impulse(time * 1.6); }
+    if (time !== this.reverbTime && !this.stems) { this.reverbTime = time; this.reverb.buffer = this.impulse(time); this.circleVerb.buffer = this.impulse(time * 1.6); } // (a renderer's reverbs are the bus's)
   }
+
+  /** Its own buses as a sink (live: the notes and their automation straight onto them); what a renderer's stems play into. */
+  get bus(): MusicSink {
+    return this.ownBus ??= {
+      duck: this.duckBus, dry: this.dryBus, reverb: this.reverbIn, delay: this.delayIn, voice: null,
+      tone: (f0, f1, t, dur) => { this.tone.frequency.setValueAtTime(f0, t); if (f1 !== f0) this.tone.frequency.exponentialRampToValueAtTime(f1, t + dur); },
+      duckAt: (t, depth, sps) => { const g = this.duckBus.gain; g.setTargetAtTime(1 - depth, t, 0.004); g.setTargetAtTime(1, t + 0.03, sps * 0.7); },
+      gate: (open, t) => { if (open) { this.gate.gain.cancelScheduledValues(t); this.gate.gain.setValueAtTime(1, t); } else this.gate.gain.setTargetAtTime(0, t, 0.03); },
+      fxChain: (part, kind) => { const ch = this.channels.get(part); if (ch?.fx && ch.fxKind !== kind) { ch.fxKind = kind; ch.fx.set(this.fxChain(kind)); } },
+      fxRelease: (part, t) => this.channels.get(part)?.fx?.release(t),
+      fxSwell: (part, rec, rate, t, swell, peak) => { const fx = this.channels.get(part)?.fx; if (fx) this.swellInto(fx, rec, rate, t, swell, peak); },
+    };
+  }
+  private ownBus: MusicSink | null = null;
+  /** The voice line's part's way in, its effects after (a renderer's voice stem plays into it). */
+  voiceIn(part: string): AudioNode | null { const p = this.style.patches[this.style.form?.sung.part === part ? this.style.form.sung.patch : ""] ?? null; return p ? this.channel(part, p).in : null; }
 
   /** Each frame: schedule what's due in the next `ahead` seconds of audio time, at game time
    *  `gameTime` (seconds) on the beat clock `clock`. `playing` false: nothing new is scheduled. */
@@ -341,8 +416,8 @@ export class MusicEngine {
   private step(cue: MusicCue, step: number, t: number, sps: number): void {
     const S = this.style, B = S.blockBars, bar = Math.floor(step / 16), s = step - bar * 16;
     // knocked down: nothing till her new record starts, then the gate open on its first sixteenth
-    if (silentAt(cue, step / 16)) { if (!this.gated) { this.gate.gain.setTargetAtTime(0, t, 0.03); this.gated = true; } return; }
-    if (this.gated) { this.gate.gain.cancelScheduledValues(t); this.gate.gain.setValueAtTime(1, t); this.gated = false; }
+    if (silentAt(cue, step / 16)) { if (!this.gated) { this.sink.gate(false, t); this.gated = true; } return; }
+    if (this.gated) { this.sink.gate(true, t); this.gated = false; }
     const plan = this.conductor.plan(cue, bar);
     // in a block's last bar, the next block's plan (for the fill): fixed a bar early
     const next = bar % B === B - 1 ? this.conductor.plan(cue, bar + 1) : null;
@@ -354,8 +429,7 @@ export class MusicEngine {
       const b0 = bootLayers(cue, bar), b1 = bootLayers(cue, bar + 1);
       const boot = cue.speakerBars !== undefined && plan.section === S.intro;
       const f0 = sectionCutoff(sec, boot ? b0 : barIn / plan.bars), f1 = sectionCutoff(sec, boot ? b1 : (barIn + 1) / plan.bars);
-      this.tone.frequency.setValueAtTime(f0, t);
-      if (f1 !== f0) this.tone.frequency.exponentialRampToValueAtTime(f1, t + 16 * sps);
+      this.sink.tone(f0, f1, t, 16 * sps);
     }
     const events = notesAt(S, plan, next, step, { ...this.formAt(cue, bar), siege: cue.siege, party: cue.party, legend: cue.legend, only: "main", build: cue.speakerBars !== undefined ? bootLayers(cue, bar) : undefined });
     const swing = step % 2 === 1 ? S.swing * sps : 0;
@@ -375,7 +449,13 @@ export class MusicEngine {
       const c = this.ctx, g = c.createGain(), F = this.style.voiceFx;
       let out: AudioNode = g, fx: VoiceFx | undefined;
       // the voice line's ethereal effects (Ed, 2026-10-11), on the sung part and any listed
-      if (!circle && fxOn(F) && (part === this.style.form?.sung.part || F!.parts?.includes(part))) {
+      const voiced = !circle && fxOn(F) && (part === this.style.form?.sung.part || F!.parts?.includes(part));
+      if (voiced && this.sink.voice) { // (a renderer's: the voice line as it is, its effects and the rest the bus's)
+        g.connect(this.sink.voice(part));
+        this.channels.set(key, ch = { in: g, lastFreq: 0, part, ...this.carried.get(key) });
+        return ch;
+      }
+      if (voiced) {
         fx = new VoiceFx(c, F, () => this.bpmNow, (F!.duck ?? 0) > 0 ? this.duckBus : undefined);
         if (this.shedLevel) fx.shedTo(this.shedLevel);
         if (this.whisperRec) fx.whisper(this.whisperRec);
@@ -386,10 +466,10 @@ export class MusicEngine {
       // (a legend's clearing layer into its own bus and reverb, over the muffle; the voice line with its effects in after the
       // section's low-pass and the limiter, before the knockdown's gate, as the A/B Ed picked had it: Ed, 2026-10-11, "e Recorded
       // + ethereal"; the rest into the mix)
-      out.connect(circle ? this.circleIn : fx ? this.post : p.duck ? this.duckBus : this.dryBus);
-      if (p.reverb) { const r = c.createGain(); r.gain.value = p.reverb; out.connect(r); r.connect(circle ? this.circleVerbIn : this.reverbIn); }
-      if (p.delay && !circle) { const d = c.createGain(); d.gain.value = p.delay; out.connect(d); d.connect(this.delayIn); }
-      this.channels.set(key, ch = { in: g, lastFreq: 0, ...(fx ? { fx } : {}) });
+      out.connect(circle ? this.circleIn : fx ? this.post : p.duck ? this.sink.duck : this.sink.dry);
+      if (p.reverb) { const r = c.createGain(); r.gain.value = p.reverb; out.connect(r); r.connect(circle ? this.circleVerbIn : this.sink.reverb); }
+      if (p.delay && !circle) { const d = c.createGain(); d.gain.value = p.delay; out.connect(d); d.connect(this.sink.delay); }
+      this.channels.set(key, ch = { in: g, lastFreq: 0, part, ...this.carried.get(key), ...(fx ? { fx } : {}) });
     }
     return ch;
   }
@@ -469,6 +549,7 @@ export class MusicEngine {
     const ch = this.channel(e.part, p, e.layer === "circle"), peak = p.gain * e.vel;
     const pf = (this.notePitch = e.layer === "circle" ? 1 : this.pitch); // (the tape slowing: the circle's own layer never)
     if (e.fx && ch.fx && ch.fxKind !== e.fx) { ch.fxKind = e.fx; ch.fx.set(this.fxChain(e.fx)); } // (two chains by place: Ed, 2026-10-14)
+    else if (e.fx && this.stems && ch.fxKind !== e.fx) { ch.fxKind = e.fx; this.sink.fxChain?.(e.part, e.fx, t); } // (a renderer's: the bus's chain, as it's heard)
     switch (p.kind) {
       case "kick": this.kick(t, pf === 1 ? p : { ...p, pitch: (p.pitch ?? 150) * pf, pitchEnd: (p.pitchEnd ?? 45) * pf }, peak, ch.in); this.duck(t, e.vel, sps); break;
       case "noise": this.noiseHit(t, p, peak, ch); break;
@@ -485,10 +566,9 @@ export class MusicEngine {
   }
 
   private duck(t: number, vel: number, sps: number): void {
-    const depth = this.style.mix.duck * Math.min(1, vel), g = this.duckBus.gain;
+    const depth = this.style.mix.duck * Math.min(1, vel);
     if (depth <= 0) return;
-    g.setTargetAtTime(1 - depth, t, 0.004);
-    g.setTargetAtTime(1, t + 0.03, sps * 0.7);
+    this.sink.duckAt(t, depth, sps);
   }
 
   private env(t: number, peak: number, attack: number, decay: number): GainNode {
@@ -539,7 +619,8 @@ export class MusicEngine {
     s.buffer = metal ? this.metal : this.noise;
     s.loop = length > 1.5;
     if (this.notePitch !== 1) s.playbackRate.value = this.notePitch; // (the tape slowing: hats and snares drop too)
-    s.start(t, ((t * 7.31) % 1) * 0.5);
+    const at = t + (this.stems ? this.phaseAt : 0); // (where in the noise: by the music's time, a renderer's the same as live's)
+    s.start(t, ((at * 7.31) % 1) * 0.5);
     s.stop(t + length);
     return s;
   }
@@ -628,6 +709,7 @@ export class MusicEngine {
           const osc = c.createOscillator(), depth = c.createGain();
           if (p.lfoWave) osc.type = p.lfoWave;
           osc.frequency.value = p.lfoRate; depth.gain.value = p.lfoDepth;
+          if (!p.lfoWave || p.lfoWave === "sine") this.phased(osc, p.lfoRate);
           osc.connect(depth); osc.start(); ch.lfo = { osc, depth };
         }
         lfoOf = ch.lfo.depth; lfoOf.connect(f.frequency); wobbled = f;
@@ -773,6 +855,15 @@ export class MusicEngine {
     ch.tract.note(t, 69 + 12 * Math.log2(freq / 440), dur * 0.97, Math.min(1, peak), vowel);
   }
 
+  /** A recorded phrase's swell into its effects' reverbs (see sampled). */
+  private swellInto(fx: VoiceFx, rec: AudioBuffer, rate: number, t: number, swell: number, peak: number): void {
+    const c = this.ctx;
+    if (!(fx.s.swells > 0 && t - swell >= c.currentTime)) return;
+    const sw = c.createBufferSource(), sg = c.createGain();
+    sw.buffer = rec; sw.playbackRate.value = rate; sw.loop = true; sw.loopStart = Math.min(0.3, rec.duration / 4); sw.loopEnd = Math.min(1.6, rec.duration);
+    sw.connect(sg).connect(fx.wetIn); fx.swellEnvelope(sg, t, swell, peak); sw.start(t - swell); sw.stop(t + 0.05);
+  }
+
   /** A sung note from a recording (Ed, 2026-10-11: the game's singer, "Recorded + ethereal"): the recording retuned to it
    *  (its own length at most), through a presence lift; a phrase (after a rest of a beat or more) swelling in, the last one's
    *  end frozen, as the voice effects ask. Until the recording's loaded, the formant voice sings it. */
@@ -784,15 +875,11 @@ export class MusicEngine {
     const c = this.ctx, rate = freq / mtof(root), skip = Math.min(p.skip ?? 0, rec.duration / 2), len = held ? 3600 : Math.min(dur * 0.97, (rec.duration - skip - 0.05) / rate);
     if (len < 0.05) return;
     if (!ch.presence) { ch.presence = c.createBiquadFilter(); ch.presence.type = "peaking"; ch.presence.frequency.value = 3000; ch.presence.Q.value = 0.8; ch.presence.gain.value = p.presence ?? 0; ch.presence.connect(ch.in); }
-    const fx = ch.fx, beat = 60 / Math.max(40, this.bpmNow);
-    if (fx && (ch.lastEnd === undefined || t - ch.lastEnd > beat)) {
-      if (ch.lastEnd !== undefined) fx.release(ch.lastEnd);
+    const fx = ch.fx, beat = 60 / Math.max(40, this.bpmNow), onBus = !fx && this.stems && ch.part ? this.sink : null; // (a renderer's: its effects the bus's)
+    if ((fx || onBus) && (ch.lastEnd === undefined || t - ch.lastEnd > beat)) {
+      if (ch.lastEnd !== undefined) { if (fx) fx.release(ch.lastEnd); else onBus!.fxRelease?.(ch.part!, ch.lastEnd); }
       const swell = Math.min(4 * beat, Math.max(beat, t - (ch.lastEnd ?? t - 4 * beat) - 0.1));
-      if (fx.s.swells > 0 && t - swell >= c.currentTime) {
-        const sw = c.createBufferSource(), sg = c.createGain();
-        sw.buffer = rec; sw.playbackRate.value = rate; sw.loop = true; sw.loopStart = Math.min(0.3, rec.duration / 4); sw.loopEnd = Math.min(1.6, rec.duration);
-        sw.connect(sg).connect(fx.wetIn); fx.swellEnvelope(sg, t, swell, peak); sw.start(t - swell); sw.stop(t + 0.05);
-      }
+      if (fx) this.swellInto(fx, rec, rate, t, swell, peak); else onBus!.fxSwell?.(ch.part!, rec, rate, t, swell, peak);
     }
     const phrase = ch.lastEnd === undefined || t - ch.lastEnd > beat;
     ch.lastEnd = Math.max(ch.lastEnd ?? -Infinity, t + (held ? 0.5 : len));
@@ -861,7 +948,7 @@ export class MusicEngine {
       ch.banks!.set(vowel, into);
       return into;
     })();
-    if (!ch.vib) { ch.vib = c.createOscillator(); ch.vib.frequency.value = 5.2; ch.vib.start(); (ch.running ??= []).push(ch.vib); }
+    if (!ch.vib) { ch.vib = c.createOscillator(); ch.vib.frequency.value = 5.2; this.phased(ch.vib, 5.2); ch.vib.start(); (ch.running ??= []).push(ch.vib); }
     const g = c.createGain(), lvl = peak / Math.sqrt(U);
     g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(lvl, t + attack);
     if (end > t + attack) g.gain.setTargetAtTime(lvl * sustain, t + attack, decay / 3);

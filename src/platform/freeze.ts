@@ -44,6 +44,8 @@ export class Freeze {
    *  stamp's text goes to onStamp instead (the pause page's sliders show it at their foot: ui/decide.ts PauseSliders). */
   quiet = false;
   onStamp: (text: string) => void = () => {};
+  /** More lines for the stamp (main.ts: what the GPU holds, render/view/gpuBudget.ts gpuLine). */
+  extra: () => string[] = () => [];
 
   constructor(private game: Game, private seed: number, private readonly build: string) {
     const panel = { position: "fixed", zIndex: "6", background: "rgba(14,11,28,.72)", color: "#e8e2f4", font: "12px ui-monospace, Menlo, Consolas, monospace", borderRadius: "6px", pointerEvents: "none" };
@@ -110,6 +112,7 @@ export class Freeze {
       `at     ${w.x.toFixed(1)}, ${w.z.toFixed(1)} m   ${w.mode}`,
       `area   ${areaUnderWitch(g)}   cell ${a.cell[0]},${a.cell[1]}`,
       `camera zoom ${g.camera.zoomStep}`,
+      ...this.extra(),
     ].join("\n");
     if (this.quiet) { this.onStamp(lines); return; }
     if (this.stamp.firstChild?.nodeValue !== lines) { this.stamp.textContent = lines + "\n"; this.stamp.append(this.copy); }

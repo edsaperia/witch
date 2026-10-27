@@ -82,6 +82,10 @@ export const toEvolve = (level: Level, t: Tuning, species?: string): number => {
  *  (below adult), or hurt (a berry heals it to full, Ed 2026-10-04: so a hurt one wants one whatever its level). */
 export const canEat = (c: Creature, s: BerryState): boolean => c.leashed && !c.travelling && !s.evolving.has(c.id) && !c.fight?.target && (c.level < TOP_LEVEL || hurtNow(c));
 const hurtNow = (c: Creature) => c.hp !== undefined && c.hp < creatureMaxHp(c);
+/** Whether its next berry would make it an adult (Ed, 2026-10-27: adults are strong and heavy, she can't fly with one, so "a youth
+ *  eats up until it's one berry away from adult, and that last berry has to be manual"): following her, it leaves that berry,
+ *  hurt or not; only at a sigil she's put down does it eat it. */
+export const lastBerry = (c: Creature, s: BerryState, t: Tuning): boolean => c.level > 0 && c.level < TOP_LEVEL && (s.fed.get(c.id) ?? 0) + 1 >= toEvolve(c.level, t, c.species);
 
 /** The berry bushes and the berries on them, from the seed: in every area of the playable map,
  *  berries.bushesPerArea bushes at spots a bush may grow (in its own area, not on a path or in a
@@ -233,7 +237,7 @@ export function stepBerries(s: BerryState, creatures: Creature[], leashPointOf: 
   // Animals busy with a berry: give it up if pulled away or no longer a party animal; else walk to it and eat it.
   for (const [id, f] of s.feeding) {
     const c = creatures[id], b = s.berries[f.berry], p = s.bushes[b.bush], lp = leashPointOf(id);
-    if (!canEat(c, s) || !lp || b.gone || Math.hypot(p.x - lp.x, p.z - lp.z) > t.leash.length + B.detour * 2 || (sigilOf && c.level === 0 && !sigilOf(id))) { release(s, id); continue; } // left behind (or a baby taken up again)
+    if (!canEat(c, s) || !lp || b.gone || Math.hypot(p.x - lp.x, p.z - lp.z) > t.leash.length + B.detour * 2 || (sigilOf && (c.level === 0 || lastBerry(c, s, t)) && !sigilOf(id))) { release(s, id); continue; } // left behind (or a baby, or a youth one short of adult, taken up again)
     const dx = p.x - c.x, dz = p.z - c.z + 0.6, d = Math.hypot(dx, dz); // it stands just in front of the bush
     if (!f.eating) {
       if (d > 0.3) {
@@ -266,6 +270,8 @@ export function stepBerries(s: BerryState, creatures: Creature[], leashPointOf: 
     // A baby eats only at its placed sigil, a berry within berries.babyReach of it; following her, never (Ed, 2026-10-11).
     const sg = sigilOf && c.level === 0 ? sigilOf(c.id) : null;
     if (sigilOf && c.level === 0 && !sg) continue;
+    // A youth one berry short of adult eats that last one only at a sigil she's put down; following her, it leaves it (lastBerry).
+    if (sigilOf && lastBerry(c, s, t) && !sigilOf(c.id)) continue;
     const b = sg ? babyBerry(s, sg.x, sg.z, B.babyReach ?? 10) : berryFor(s, c.x, c.z, lp, t);
     if (!b) continue;
     const p = s.bushes[b.bush];

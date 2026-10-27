@@ -10,6 +10,7 @@
 // distance field of that floor, made when she changes room. Everywhere, the forest's own hole round her (render/sprites.ts: her
 // circle on the screen, uWitch and uOcc, its dithered way, uSeeDither) cuts it where it stands in front of her.
 import * as THREE from "three";
+import { gpuKind } from "./gpuLedger";
 import { crownBulbs, type Bulb, type Crown, type HouseOutline, type Knot } from "../rules/crown";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
@@ -25,7 +26,7 @@ function noiseTexture(): THREE.DataTexture {
   for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) v[j * N + i] = h(i, j);
   const data = new Uint8Array(N * N * 4);
   for (let k = 0; k < N * N; k++) data[k * 4] = data[k * 4 + 1] = data[k * 4 + 2] = Math.round(v[k] * 255), data[k * 4 + 3] = 255;
-  const t = new THREE.DataTexture(data, N, N, THREE.RGBAFormat);
+  const t = gpuKind(new THREE.DataTexture(data, N, N, THREE.RGBAFormat), "crown");
   t.wrapS = t.wrapT = THREE.RepeatWrapping; t.magFilter = THREE.LinearFilter; t.minFilter = THREE.LinearFilter; t.needsUpdate = true;
   return t;
 }
@@ -276,7 +277,7 @@ export class CrownView {
   readonly uniforms: Record<string, THREE.IUniform>;
   /** Two floors' masks: the room (or branch) she's in, clearing as it fades in, and the one she left, filling back in as it fades
    *  out (Ed, 2026-10-26: "Room canopy cuts should fade in rather than be instant"); each its key and how far it's cleared. */
-  private readonly masks = [0, 1].map(() => { const data = new Uint8Array(MASK * MASK), tex = new THREE.DataTexture(data, MASK, MASK, THREE.RedFormat, THREE.UnsignedByteType); tex.magFilter = THREE.LinearFilter; tex.minFilter = THREE.LinearFilter; tex.needsUpdate = true; return { data, tex, key: "", w: 0 }; });
+  private readonly masks = [0, 1].map(() => { const data = new Uint8Array(MASK * MASK), tex = gpuKind(new THREE.DataTexture(data, MASK, MASK, THREE.RedFormat, THREE.UnsignedByteType), "crown"); tex.magFilter = THREE.LinearFilter; tex.minFilter = THREE.LinearFilter; tex.needsUpdate = true; return { data, tex, key: "", w: 0 }; });
   /** Each floor's clearing (render/crownMask.ts: its distance field), by its key, once drawn; and those asked of the art workers. */
   private readonly fields = new Map<string, Uint8Array>();
   private readonly fieldsAsked = new Set<string>();

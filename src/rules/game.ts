@@ -608,6 +608,7 @@ function fixedStep(g: Game, controls: Controls): void {
   if (W.ko) {
     const wasMoved = W.ko.moved, r = stepKnockout(W.ko, W.body, W.leash, g.creatures, g.map, ht, k => g.party.areas.has(k), g.koEvents);
     W.body = r.body;
+    if (g.koEvents.some(e => e.kind === "released" && e.at === ht)) g.byArea = null; // (let go happy where they stand: indexed there now)
     // The cut to her decks (the "cut" event, render/koIris.ts): the camera's there at once, not gliding over the map.
     if (W.ko.moved && !wasMoved && W === g.witches[0]) g.camera = { ...g.camera, tx: W.body.x, ty: witchHeight(W.body, t), tz: W.body.z, vx: 0, vy: 0, vz: 0, ax: 0, az: 0 };
     if (r.done) { W.ko = null; W.health.hp = t.witchHealth.hits; W.health.repairAt = Infinity; }
@@ -727,7 +728,8 @@ function stepClear(g: Game): void {
 /** The wild creatures by the area they live in (its key). */
 function indexByArea(creatures: Creature[]): Map<string, Creature[]> {
   const m = new Map<string, Creature[]>();
-  for (const c of creatures) { const k = cellKey(c.cell); let l = m.get(k); if (!l) m.set(k, (l = [])); l.push(c); }
+  // (one let go at a knockout: in the area it was dropped in)
+  for (const c of creatures) { const k = cellKey(c.dropped?.cell ?? c.cell); let l = m.get(k); if (!l) m.set(k, (l = [])); l.push(c); }
   return m;
 }
 
@@ -768,7 +770,9 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     // Its wild babies turn happy at once (Ed, 2026-10-06), its legend's circle's too; then its happy ones (#87) come and
     // dance: round it, or at the area's party places (rules/partyGuests.ts).
     for (const c of g.creatures) if (!c.gone && !c.leashed && c.level === 0 && !c.fleeUntil && stateOf(c) === "wild" && c.cell[0] === a.cell[0] && c.cell[1] === a.cell[1]) befriend(c, time);
-    for (const c of g.creatures) if (!c.gone && !c.leashed && c.state === "happy" && c.cell[0] === a.cell[0] && c.cell[1] === a.cell[1]) joinParty(g, c, a.soundsystem, a.cell);
+    for (const c of g.creatures) if (!c.gone && !c.leashed && !c.dropped && c.state === "happy" && c.cell[0] === a.cell[0] && c.cell[1] === a.cell[1]) joinParty(g, c, a.soundsystem, a.cell);
+    // (one let go here at her knockout stays where it was dropped, dancing now: rules/knockout.ts letGoHappy)
+    for (const c of g.creatures) if (c.dropped && !c.gone && !c.leashed && cellKey(c.dropped.cell) === key) c.dancing = true;
   }
   // Only creatures with something to fight near them take part: wild ones in or next to the area
   // of a witch or a party animal (wild never fights wild, and only besiegers go for soundsystems;
@@ -888,8 +892,8 @@ export function loseSoundsystem(g: Game, key: string, x: number, z: number): voi
     key = "home"; x = g.map.dancefloor.x; z = g.map.dancefloor.z;
   } else {
     g.party.areas.delete(key); S.ruined.add(key); (g.party.ruined ??= new Set()).add(key);
-    // Its happy babies run off home, for good (Ed, 2026-10-06); leashed ones (and parked ones) stay hers.
-    for (const c of g.creatures) if (!c.gone && !c.leashed && c.level === 0 && c.state === "happy" && !c.fleeUntil && cellKey(c.cell) === key) {
+    // Its happy babies run off home, for good (Ed, 2026-10-06); leashed ones (and parked ones, and ones let go at a knockout) stay hers.
+    for (const c of g.creatures) if (!c.gone && !c.leashed && !c.dropped && c.level === 0 && c.state === "happy" && !c.fleeUntil && cellKey(c.cell) === key) {
       const out = mapExit(g.map, c.x, c.z);
       Object.assign(c, { fleeUntil: Infinity, fleeX: out.x, fleeZ: out.z, dancing: false, fight: undefined });
       S.events.push({ kind: "fled", x: c.x, z: c.z, at: time, id: c.id }); S.busy.add(c.id);
@@ -990,7 +994,7 @@ function stepLegends(g: Game, ids: number[], happyNearest: boolean): void {
   const placed = leashView(g.witches[0], g.creatures, g.map, g.tuning).placed; // (in the treehouse, her followers count as home's: rules/houseGuard.ts)
   stepLegendStates({
     creatures: g.creatures, map: g.map, time, dt: STEP, partified: k => g.party.areas.has(k), angryAfter: stomp?.on ? stomp.angryAfter : undefined, questsClosed: !!g.partyOver || !!g.map.zoo, // (nor in the zoo: its legends sleep for show, Ed 2026-10-26)
-    areaOf: c => { if (c.leashed) { const p = placed.find(q => q.id === c.id); return p ? cellKey(areaCellAt(g.map, p.x, p.z)) : ""; } return cellKey(c.cell); },
+    areaOf: c => { if (c.leashed) { const p = placed.find(q => q.id === c.id); return p ? cellKey(areaCellAt(g.map, p.x, p.z)) : ""; } if (c.dropped) return cellKey(c.dropped.cell); return cellKey(c.cell); }, // (let go at a knockout: where it was dropped, as a parked one's sigil)
   }, ids);
   // The stomp (Ed, 2026-10-06: "perhaps an angry legend simply stamps on the soundsystem in its area,
   // destroying immediately. The angry legend waking timer may have to be longer"): a legend turning
