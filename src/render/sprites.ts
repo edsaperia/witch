@@ -64,6 +64,8 @@ export const SPRITE_UNIFORMS = {
    *  app/ladder.ts; scenery.edgeDither). Its pixels drawn or not by a 4×4 ordered dither on the art's own pixels. */
   uEdgeDither: { value: 0 },
   uCircleKeep: { value: new THREE.Vector4(0, 0, 0, 0) },
+  /** Quads faded whole left out of the solid and front passes (1; 0 draws them there too, as before, to compare: ?wholecull=0). */
+  uWholeCull: { value: typeof location !== "undefined" && new URLSearchParams(location.search).get("wholecull") === "0" ? 0 : 1 },
   // The party's canopy uplight: the nearest partified areas (centre x, z, reach, fade-in) and their
   // colours; uUplight: strength, pulse, edge (m), the beat's phase (radians).
   uParty: { value: Array.from({ length: 16 }, () => new THREE.Vector4()) },
@@ -114,6 +116,7 @@ varying float vNear;
 uniform vec4 uCircleBox, uCircleFade;
 uniform vec4 uCircleKeep;
 uniform float uHasFade, uEdgeDither;
+uniform float uWholeCull;
 varying float vCircle; // how much of it shows, the place she stands in kept clear (1 all of it)
 uniform float uAbsolute; // its y is a world height, not a height over the ground
 uniform vec4 uLean; // the witch under a load (render/load.ts): sheared forward (m per m up), tilted nose-up (m per m across), her broom bowed (art pixels)
@@ -236,6 +239,15 @@ void main() {
     vCrownD = length(max(abs(off) - vec2(hw, hh) * 0.5, 0.0));
     // Whether it could hide her: over her sprite on screen and nearer the camera than her.
     vOverHer = abs(cc.x - uWitch.x) < hw + uWitch.z && abs(cc.y - uWitch.y) < hh + uWitch.w && uWitchDepth + (viewMatrix * vec4(base, 1.0)).z > 0.0 ? 1.0 : 0.0;
+  }
+  // A quad faded whole (every pixel of it half see-through: a crown in the hole's band, faded by its middle as uCutWhole has it; a
+  // place kept clear; a batch still appearing) has no pixel of the solid pass's or the front pass's (passOf: see, and not occlusion
+  // alone), so it's left out of both (the quality-ladder study, 2026-10-26: the solid pass shaded every such crown whole and threw
+  // it all away; 12 to 19% of the frame's GPU time on foot in a thick wood, the picture the same to the pixel). uWholeCull 0: as before.
+  if (uWholeCull > 0.5 && uHasFade > 0.5 && uSilhouette.a <= 0.0 && (uFadePass < 0.5 || uFadePass > 2.5)) {
+    bool whole = vCircle < 0.996 || (uIsScenery > 0.5 && uAppear < 0.996);
+    if (!whole && iFlags.y > 0.5 && uCutWhole >= 0.999) whole = max(smoothstep(vHole - uCutout.w, vHole + uCutout.w * uCutShape.y, vCrownD), uTopFade) < 0.996;
+    if (whole) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
   }
   // What the pixels could never show, left undrawn whole (the ground-mode GPU cost, the coordinator's ask from Ed's overlay,
   // 2026-10-13: the scenery's quads rasterised twice over, the see-through pass discarding nearly every pixel after its taps). Its

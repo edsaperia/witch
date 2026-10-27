@@ -68,11 +68,11 @@ describe("berries and evolving", () => {
     expect(s.berries.every(b => b.claimedBy === null)).toBe(true);
   });
 
-  it("evolves after 1 and 8 berries (a baby's one: Ed, 2026-10-11; the youth's by its strength gained, Ed 2026-10-05; doubled 2026-10-06; the level gap 2026-10-07), on a bar line, up to adult and no further (Ed, 2026-10-04); legends can't be invited", () => {
+  it("evolves after 1 and 4 berries (a baby's one: Ed, 2026-10-11; the youth's by its strength gained, Ed 2026-10-05; 3 / 4 / 8 by strength, Ed 2026-10-27), on a bar line, up to adult and no further (Ed, 2026-10-04); legends can't be invited", () => {
     const s = newBerries(map, t), [c, wild] = spawnCreatures(map), leash = newLeash();
     Object.assign(c, { leashed: true, level: 0 });
     leash.stack.push(c.id);
-    expect([0, 1, 2].map(l => toEvolve(l as Level, t))).toEqual([1, 8, Infinity]);
+    expect([0, 1, 2].map(l => toEvolve(l as Level, t))).toEqual([1, 4, Infinity]);
     let time = 0;
     for (const level of [0, 1] as Level[]) {
       expect(c.level).toBe(level);
