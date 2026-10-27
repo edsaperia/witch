@@ -30,6 +30,8 @@ export function speedFactor(species: string, level: Level, t: Tuning): number {
 }
 
 export interface Creature {
+  /** An attack in the grammar it uses instead of its own (config/attacks.json, by name: the Fight Arena's ?attack=; rules/attacks/). */
+  spell?: string;
   id: number;
   /** Its species id in the art module's bestiary: the area type's creature. */
   species: string;
@@ -264,7 +266,7 @@ export function makeCreature(map: ForestMap, cell: [number, number], level: Leve
     wanderTo: undefined, circle: undefined, dropped: undefined, healedAt: undefined, healedSmall: undefined, boss: undefined, legendState: undefined,
     stateAt: undefined, quest: undefined, friendly: undefined, asleep: undefined, napUntil: undefined, lulled: undefined,
     wakeUntil: undefined, safeX: undefined, safeZ: undefined, safeR: undefined, watchUntil: undefined, hunting: undefined, taunt: undefined, swoop: undefined, finale: undefined,
-    packGlow: undefined, packHide: undefined, packShell: undefined, packProwl: undefined, feintUntil: undefined, coverBy: undefined, packSync: undefined, packThrow: undefined, mind: undefined,
+    packGlow: undefined, packHide: undefined, packShell: undefined, packProwl: undefined, feintUntil: undefined, coverBy: undefined, packSync: undefined, packThrow: undefined, mind: undefined, spell: undefined,
   };
   if (level === LEGEND) { c.boss = true; c.legendState = "asleep"; c.stateAt = 0; }
   return c;
@@ -272,7 +274,7 @@ export function makeCreature(map: ForestMap, cell: [number, number], level: Leve
 
 /** Every optional field of a Creature, in the order makeCreature's literal lists them (one shape for all; creatures.test.ts checks the order). A field added to
  *  Creature and not here fails the typecheck (OptionalMissing). */
-export const CREATURE_OPTIONAL = ["lod", "hp", "hurtAt", "kx", "kz", "slowUntil", "stunUntil", "burrow", "leap", "fight", "fleeUntil", "retreat", "retreatFrom", "fleeX", "fleeZ", "vx", "vz", "run", "lairX", "lairZ", "homing", "charge", "dug", "travelling", "state", "happyAt", "partyLegend", "dazed", "dancing", "restlessness", "questOpen", "buffed", "aims", "dazedUntil", "affection", "affectionAt", "holdT", "holdAt", "route", "engagedUntil", "brace", "legend", "moveReadyAt", "sprung", "enraged", "asleepAt", "bed", "gone", "siege", "wanderTo", "circle", "dropped", "healedAt", "healedSmall", "boss", "legendState", "stateAt", "quest", "friendly", "asleep", "napUntil", "lulled", "wakeUntil", "safeX", "safeZ", "safeR", "watchUntil", "hunting", "taunt", "swoop", "finale", "packGlow", "packHide", "packShell", "packProwl", "feintUntil", "coverBy", "packSync", "packThrow", "mind"] as const satisfies readonly (keyof Creature)[];
+export const CREATURE_OPTIONAL = ["lod", "hp", "hurtAt", "kx", "kz", "slowUntil", "stunUntil", "burrow", "leap", "fight", "fleeUntil", "retreat", "retreatFrom", "fleeX", "fleeZ", "vx", "vz", "run", "lairX", "lairZ", "homing", "charge", "dug", "travelling", "state", "happyAt", "partyLegend", "dazed", "dancing", "restlessness", "questOpen", "buffed", "aims", "dazedUntil", "affection", "affectionAt", "holdT", "holdAt", "route", "engagedUntil", "brace", "legend", "moveReadyAt", "sprung", "enraged", "asleepAt", "bed", "gone", "siege", "wanderTo", "circle", "dropped", "healedAt", "healedSmall", "boss", "legendState", "stateAt", "quest", "friendly", "asleep", "napUntil", "lulled", "wakeUntil", "safeX", "safeZ", "safeR", "watchUntil", "hunting", "taunt", "swoop", "finale", "packGlow", "packHide", "packShell", "packProwl", "feintUntil", "coverBy", "packSync", "packThrow", "mind", "spell"] as const satisfies readonly (keyof Creature)[];
 type RequiredKeys = "id" | "species" | "cell" | "level" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ" | "x" | "z" | "tx" | "tz" | "rest" | "speed" | "facing" | "away" | "moving" | "walk" | "seen" | "leashed" | "rand";
 type OptionalMissing = Exclude<keyof Creature, RequiredKeys | (typeof CREATURE_OPTIONAL)[number]>;
 const _everyField: [OptionalMissing] extends [never] ? true : OptionalMissing = true;

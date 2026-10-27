@@ -1,0 +1,1158 @@
+{
+  "type": "object",
+  "additionalProperties": {
+    "type": "object",
+    "properties": {
+      "base": {
+        "type": "string"
+      },
+      "note": {
+        "type": "string"
+      },
+      "cast": {
+        "type": "object",
+        "properties": {
+          "range": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "m"
+          },
+          "windup": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "s"
+          },
+          "cooldown": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "s"
+          },
+          "casts": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 99
+          },
+          "rest": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "s"
+          },
+          "tell": {
+            "type": "object",
+            "properties": {
+              "pose": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "rear",
+                  "crouch",
+                  "coil",
+                  "spread",
+                  "glow",
+                  "stamp"
+                ]
+              },
+              "glow": {
+                "type": "number",
+                "minimum": 0,
+                "unit": "s"
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "telegraph": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "flash",
+              "lane",
+              "landing",
+              "ring",
+              "cone",
+              "beamLine",
+              "countdown",
+              "arming",
+              "chainNext",
+              "tetherLine",
+              "lockOn",
+              "none"
+            ]
+          },
+          "lead": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "s"
+          },
+          "size": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "m"
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "emit": {
+        "type": "object",
+        "properties": {
+          "pattern": {
+            "type": "string",
+            "enum": [
+              "single",
+              "burst",
+              "fan",
+              "ring",
+              "spray",
+              "wall",
+              "volley"
+            ]
+          },
+          "n": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 64
+          },
+          "gap": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "s"
+          },
+          "angle": {
+            "type": "number",
+            "minimum": -3600,
+            "maximum": 3600,
+            "unit": "°"
+          },
+          "rate": {
+            "type": "number",
+            "minimum": -3600,
+            "maximum": 3600,
+            "unit": "°"
+          },
+          "spacing": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "m"
+          },
+          "holes": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 63
+            },
+            "maxItems": 64
+          },
+          "time": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "s"
+          },
+          "offset": {
+            "type": "number",
+            "minimum": -3600,
+            "maximum": 3600,
+            "unit": "°"
+          },
+          "aim": {
+            "type": "string",
+            "enum": [
+              "target",
+              "lead",
+              "dodge",
+              "ahead",
+              "caster",
+              "random",
+              "spot"
+            ]
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "body": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "melee",
+              "bolt",
+              "lob",
+              "runner",
+              "beam",
+              "area",
+              "zone",
+              "mine",
+              "seed",
+              "lure"
+            ]
+          },
+          "radius": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "m"
+          },
+          "element": {
+            "type": "string"
+          },
+          "look": {
+            "type": "string"
+          },
+          "lunge": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "m"
+          },
+          "charge": {
+            "type": "object",
+            "properties": {
+              "speed": {
+                "type": "number",
+                "minimum": 0,
+                "unit": "m/s"
+              },
+              "time": {
+                "type": "number",
+                "minimum": 0,
+                "unit": "s"
+              }
+            },
+            "required": [
+              "speed",
+              "time"
+            ],
+            "additionalProperties": false
+          },
+          "flight": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "s"
+          },
+          "arm": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "s"
+          },
+          "trigger": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "m"
+          },
+          "pull": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "m/s"
+          },
+          "reach": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "m"
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "path": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "arc": {
+              "type": "object",
+              "properties": {
+                "height": {
+                  "type": "number",
+                  "minimum": 0,
+                  "unit": "m"
+                }
+              },
+              "required": [
+                "height"
+              ],
+              "additionalProperties": false
+            },
+            "curve": {
+              "type": "number",
+              "minimum": -3600,
+              "maximum": 3600,
+              "unit": "°"
+            },
+            "wave": {
+              "type": "object",
+              "properties": {
+                "amp": {
+                  "type": "number",
+                  "minimum": 0,
+                  "unit": "m"
+                },
+                "freq": {
+                  "type": "number",
+                  "minimum": 0,
+                  "unit": "Hz"
+                },
+                "phase": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "amp",
+                "freq"
+              ],
+              "additionalProperties": false
+            },
+            "spiral": {
+              "type": "object",
+              "properties": {
+                "rate": {
+                  "type": "number",
+                  "minimum": -3600,
+                  "maximum": 3600,
+                  "unit": "°"
+                },
+                "grow": {
+                  "type": "number",
+                  "minimum": -50,
+                  "unit": "m/s"
+                }
+              },
+              "required": [
+                "rate",
+                "grow"
+              ],
+              "additionalProperties": false
+            },
+            "home": {
+              "type": "object",
+              "properties": {
+                "turn": {
+                  "type": "number",
+                  "minimum": 0,
+                  "unit": "°/s"
+                },
+                "after": {
+                  "type": "number",
+                  "minimum": 0,
+                  "unit": "s"
+                },
+                "giveUp": {
+                  "type": "number",
+                  "minimum": 0,
+                  "unit": "m"
+                }
+              },
+              "required": [
+                "turn"
+              ],
+              "additionalProperties": false
+            },
+            "boomerang": {
+              "type": "object",
+              "properties": {
+                "out": {
+                  "type": "number",
+                  "minimum": 0,
+                  "unit": "m"
+                }
+              },
+              "required": [
+                "out"
+              ],
+              "additionalProperties": false
+            },
+            "orbit": {
+              "type": "object",
+              "properties": {
+                "r": {
+                  "type": "number",
+                  "minimum": 0,
+                  "unit": "m"
+                },
+                "time": {
+                  "type": "number",
+                  "minimum": 0,
+                  "unit": "s"
+                }
+              },
+              "required": [
+                "r",
+                "time"
+              ],
+              "additionalProperties": false
+            },
+            "runner": {
+              "type": "boolean"
+            }
+          }
+        },
+        "maxItems": 8
+      },
+      "speed": {
+        "type": "object",
+        "properties": {
+          "profile": {
+            "type": "string",
+            "enum": [
+              "constant",
+              "slow",
+              "accel",
+              "decel",
+              "stopGo"
+            ]
+          },
+          "v": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "m/s"
+          },
+          "to": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "m/s"
+          },
+          "time": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "s"
+          },
+          "go": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "s"
+          },
+          "pause": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "s"
+          },
+          "n": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 16
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "life": {
+        "type": "object",
+        "properties": {
+          "range": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "m"
+          },
+          "time": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "s"
+          },
+          "pierce": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 8
+          },
+          "bounce": {
+            "type": "object",
+            "properties": {
+              "n": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 8
+              },
+              "keep": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            },
+            "required": [
+              "n"
+            ],
+            "additionalProperties": false,
+            "nullable": true
+          },
+          "stick": {
+            "type": "boolean"
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "beam": {
+        "type": "object",
+        "properties": {
+          "length": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "m"
+          },
+          "width": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "m"
+          },
+          "duration": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "s"
+          },
+          "tick": {
+            "type": "number",
+            "minimum": 0.01,
+            "unit": "s"
+          },
+          "sweep": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "°/s"
+          },
+          "track": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "°/s"
+          },
+          "spin": {
+            "type": "number",
+            "minimum": -3600,
+            "maximum": 3600,
+            "unit": "°"
+          },
+          "charge": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "s"
+          },
+          "pulse": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "minimum": 0,
+              "unit": "s"
+            },
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "strike": {
+            "type": "boolean"
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "area": {
+        "type": "object",
+        "properties": {
+          "quake": {
+            "type": "boolean"
+          },
+          "shape": {
+            "type": "string",
+            "enum": [
+              "disc",
+              "ring",
+              "donut",
+              "cone",
+              "safeCircle",
+              "cross",
+              "line",
+              "grid"
+            ]
+          },
+          "r": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "m"
+          },
+          "inner": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "m"
+          },
+          "width": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "m"
+          },
+          "angle": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 360,
+            "unit": "°"
+          },
+          "to": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "m"
+          },
+          "time": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "s"
+          },
+          "grow": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "m/s"
+          },
+          "waves": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 16
+          },
+          "gap": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "s"
+          },
+          "n": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 64
+          },
+          "spacing": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "m"
+          },
+          "delay": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "s"
+          },
+          "rain": {
+            "type": "object",
+            "properties": {
+              "n": {
+                "type": "number",
+                "minimum": 1,
+                "maximum": 64
+              },
+              "r": {
+                "type": "number",
+                "minimum": 0,
+                "unit": "m"
+              },
+              "time": {
+                "type": "number",
+                "minimum": 0,
+                "unit": "s"
+              }
+            },
+            "required": [
+              "n",
+              "r",
+              "time"
+            ],
+            "additionalProperties": false
+          },
+          "at": {
+            "type": "string",
+            "enum": [
+              "caster",
+              "target",
+              "spot"
+            ]
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "zone": {
+        "type": "object",
+        "properties": {
+          "r": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "m"
+          },
+          "time": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "s"
+          },
+          "tick": {
+            "type": "number",
+            "minimum": 0.01,
+            "unit": "s"
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "hit": {
+        "type": "object",
+        "properties": {
+          "damage": {
+            "type": "number",
+            "minimum": 0
+          },
+          "effect": {
+            "type": "object",
+            "properties": {
+              "slow": {
+                "type": "object",
+                "properties": {
+                  "mult": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "time": {
+                    "type": "number",
+                    "minimum": 0,
+                    "unit": "s"
+                  }
+                },
+                "required": [
+                  "mult",
+                  "time"
+                ],
+                "additionalProperties": false
+              },
+              "stun": {
+                "type": "number",
+                "minimum": 0,
+                "unit": "s"
+              },
+              "knockback": {
+                "type": "number",
+                "minimum": 0,
+                "unit": "m"
+              },
+              "pull": {
+                "type": "number",
+                "minimum": 0,
+                "unit": "m/s"
+              },
+              "root": {
+                "type": "number",
+                "minimum": 0,
+                "unit": "s"
+              },
+              "burn": {
+                "type": "object",
+                "properties": {
+                  "dps": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "time": {
+                    "type": "number",
+                    "minimum": 0,
+                    "unit": "s"
+                  }
+                },
+                "required": [
+                  "dps",
+                  "time"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          },
+          "allies": {
+            "type": "object",
+            "properties": {
+              "damage": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "effects": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "slow",
+                    "stun",
+                    "knockback",
+                    "pull",
+                    "root",
+                    "burn"
+                  ]
+                },
+                "maxItems": 6
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          },
+          "blink": {
+            "type": "boolean"
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "force": {
+        "type": "object",
+        "properties": {
+          "r": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "m"
+          },
+          "push": {
+            "type": "number",
+            "minimum": -100,
+            "maximum": 100,
+            "unit": "m/s"
+          },
+          "who": {
+            "type": "string",
+            "enum": [
+              "all",
+              "others",
+              "foes"
+            ]
+          }
+        },
+        "required": [
+          "push"
+        ],
+        "additionalProperties": false
+      },
+      "on": {
+        "type": "object",
+        "properties": {
+          "hit": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "attack": {},
+                "from": {
+                  "type": "string",
+                  "enum": [
+                    "self",
+                    "hit",
+                    "caster"
+                  ]
+                },
+                "aim": {
+                  "type": "string",
+                  "enum": [
+                    "target",
+                    "lead",
+                    "dodge",
+                    "ahead",
+                    "caster",
+                    "random",
+                    "spot"
+                  ]
+                },
+                "damage": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "at": {
+                  "type": "number",
+                  "minimum": 0,
+                  "unit": "s"
+                }
+              },
+              "required": [
+                "attack"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 64
+          },
+          "expire": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "attack": {},
+                "from": {
+                  "type": "string",
+                  "enum": [
+                    "self",
+                    "hit",
+                    "caster"
+                  ]
+                },
+                "aim": {
+                  "type": "string",
+                  "enum": [
+                    "target",
+                    "lead",
+                    "dodge",
+                    "ahead",
+                    "caster",
+                    "random",
+                    "spot"
+                  ]
+                },
+                "damage": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "at": {
+                  "type": "number",
+                  "minimum": 0,
+                  "unit": "s"
+                }
+              },
+              "required": [
+                "attack"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 64
+          },
+          "bounce": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "attack": {},
+                "from": {
+                  "type": "string",
+                  "enum": [
+                    "self",
+                    "hit",
+                    "caster"
+                  ]
+                },
+                "aim": {
+                  "type": "string",
+                  "enum": [
+                    "target",
+                    "lead",
+                    "dodge",
+                    "ahead",
+                    "caster",
+                    "random",
+                    "spot"
+                  ]
+                },
+                "damage": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "at": {
+                  "type": "number",
+                  "minimum": 0,
+                  "unit": "s"
+                }
+              },
+              "required": [
+                "attack"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 64
+          },
+          "land": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "attack": {},
+                "from": {
+                  "type": "string",
+                  "enum": [
+                    "self",
+                    "hit",
+                    "caster"
+                  ]
+                },
+                "aim": {
+                  "type": "string",
+                  "enum": [
+                    "target",
+                    "lead",
+                    "dodge",
+                    "ahead",
+                    "caster",
+                    "random",
+                    "spot"
+                  ]
+                },
+                "damage": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "at": {
+                  "type": "number",
+                  "minimum": 0,
+                  "unit": "s"
+                }
+              },
+              "required": [
+                "attack"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 64
+          },
+          "timer": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "attack": {},
+                "from": {
+                  "type": "string",
+                  "enum": [
+                    "self",
+                    "hit",
+                    "caster"
+                  ]
+                },
+                "aim": {
+                  "type": "string",
+                  "enum": [
+                    "target",
+                    "lead",
+                    "dodge",
+                    "ahead",
+                    "caster",
+                    "random",
+                    "spot"
+                  ]
+                },
+                "damage": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "at": {
+                  "type": "number",
+                  "minimum": 0,
+                  "unit": "s"
+                }
+              },
+              "required": [
+                "attack"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 64
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "pack": {
+        "type": "object",
+        "properties": {
+          "chain": {
+            "type": "object",
+            "properties": {
+              "n": {
+                "type": "number",
+                "minimum": 1,
+                "maximum": 16
+              },
+              "range": {
+                "type": "number",
+                "minimum": 0,
+                "unit": "m"
+              }
+            },
+            "required": [
+              "n",
+              "range"
+            ],
+            "additionalProperties": false
+          },
+          "relay": {
+            "type": "object",
+            "properties": {
+              "n": {
+                "type": "number",
+                "minimum": 1,
+                "maximum": 16
+              }
+            },
+            "required": [
+              "n"
+            ],
+            "additionalProperties": false
+          },
+          "amplify": {
+            "type": "object",
+            "properties": {
+              "r": {
+                "type": "number",
+                "minimum": 0,
+                "unit": "m"
+              },
+              "per": {
+                "type": "number",
+                "minimum": 0
+              },
+              "max": {
+                "type": "number",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "r",
+              "per",
+              "max"
+            ],
+            "additionalProperties": false
+          },
+          "tether": {
+            "type": "object",
+            "properties": {
+              "time": {
+                "type": "number",
+                "minimum": 0,
+                "unit": "s"
+              },
+              "width": {
+                "type": "number",
+                "minimum": 0,
+                "unit": "m"
+              }
+            },
+            "required": [
+              "time",
+              "width"
+            ],
+            "additionalProperties": false
+          },
+          "triangulate": {
+            "type": "object",
+            "properties": {
+              "delay": {
+                "type": "number",
+                "minimum": 0,
+                "unit": "s"
+              },
+              "r": {
+                "type": "number",
+                "minimum": 0,
+                "unit": "m"
+              }
+            },
+            "required": [
+              "delay",
+              "r"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    "required": [],
+    "additionalProperties": false
+  }
+}
