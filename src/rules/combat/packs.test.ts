@@ -11,6 +11,8 @@ import { COMBAT } from "./data";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const ON = withTuning({ combat: { ...TUNING.combat, packs: { on: true } } });
+/** With the old attacks (?attacks=old): for the tests that pin a kind's old one (the hares' lunge, the bats' screech). */
+const ON_OLD = withTuning({ combat: { ...TUNING.combat, packs: { on: true } }, attacks: { reactionFloor: 0.45, species: false } });
 
 /** A pack of the kind against her (or hers against wild wolves), the switch on, her health held; then `secs` of play, `each` step. */
 function arena(spec: string, secs: number, each?: (g: Game) => void, t = ON): Game {
@@ -346,7 +348,7 @@ describe("pack combat, Phase 1's pieces", () => {
 // speed, turning now and then: its lunges land, its bolts hit, and it hurts her about as often as the plain fight does.
 describe("a pack against her walking away (Ed's playtest, v3893)", () => {
   function chase(packs: boolean) {
-    const g = newGame(123, withTuning({ combat: { ...TUNING.combat, packs: { on: packs } } }));
+    const g = newGame(123, withTuning({ combat: { ...TUNING.combat, packs: { on: packs } }, attacks: { reactionFloor: 0.45, species: false } })); // (the hares' lunges, as they were)
     g.clock.paused = false; g.party.paused = true;
     const h = g.creatures.filter(c => c.species === "hare" && c.level > 0 && !c.gone)[0];
     g.witch = { ...g.witch, seated: false, mode: "ground", lift: 0, x: h.x + 6, z: h.z };
@@ -517,7 +519,7 @@ describe("kinds keep their own moves in a pack (Ed, 2026-10-20)", () => {
 
   it("screeches: her bats in a pack strike with their screech, a pulse all round them", () => {
     let pulses = 0;
-    arena("hers-bat", 30, g => { pulses += fresh(g).filter(e => e.kind === "pulse" && g.creatures[e.id!]?.species === "bat").length; });
+    arena("hers-bat", 30, g => { pulses += fresh(g).filter(e => e.kind === "pulse" && g.creatures[e.id!]?.species === "bat").length; }, ON_OLD);
     expect(pulses).toBeGreaterThanOrEqual(2);
   }, 60000);
 

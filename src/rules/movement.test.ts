@@ -3,6 +3,8 @@ import { type Level } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { MOVEMENT } from "./movement";
 import { TUNING, withTuning } from "./tuning";
+/** The old attacks (config/combat.json), not each species' own in the grammar (?attacks=old): for the tests that pin one of them. */
+const OLD_ATTACKS = withTuning({ attacks: { reactionFloor: 0.45, species: false } });
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 /** A quiet game, the witch on the ground away from everything, too tough to knock out (to watch them move). */
@@ -88,7 +90,7 @@ describe("creature movement (Stage 5)", () => {
 
   it("has an owl's lob land where she was: standing still she's hit, stepping away she isn't (her owls' lob: wild ones swoop)", () => grounded("owl", () => {
     // (its own lob, outside a pack: in a pack since 2026-10-23 its shots are aimed where a dodge would go, rules/combat/packs.ts)
-    const g = quiet(withTuning({ combat: { ...TUNING.combat, packs: { on: false } } })), owl = pick(g, "owl", 1, 30, 0), W = g.witches[0], hp0 = W.health.hp;
+    const g = quiet(withTuning({ combat: { ...TUNING.combat, packs: { on: false } }, attacks: { reactionFloor: 0.45, species: false } })), owl = pick(g, "owl", 1, 30, 0), W = g.witches[0], hp0 = W.health.hp;
     run(g, 6);
     expect(W.health.hp).toBeLessThan(hp0);
     // Now step away each time a lob is in the air.
@@ -135,7 +137,7 @@ describe("creature movement (Stage 5)", () => {
   }, 60000);
 
   it("has a bat screech: a pulse all round it (her bats': wild ones swoop)", () => grounded("bat", () => {
-    const g = quiet(), bat = pick(g, "bat", 1, 10, 0);
+    const g = quiet(OLD_ATTACKS), bat = pick(g, "bat", 1, 10, 0);
     let pulsed = false;
     run(g, 6, () => { if (g.combat.events.some(e => e.id === bat.id && e.kind === "pulse")) pulsed = true; });
     expect(pulsed).toBe(true);

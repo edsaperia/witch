@@ -1,0 +1,4 @@
+{
+  "reason": "the attack look draws the attack grammar's spells (bodies, zones, beams, telegraphs, tells, events) in their elements and the danger frame; the rules unchanged",
+  "frames": { "*": "wherever a grammar attack shows: its bodies, zones, beams and warnings drawn" }
+}

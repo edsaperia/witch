@@ -59,6 +59,8 @@ export class IslandLayers {
   mapTable: MapTable | null = null;
   minimap!: Minimap;
   markerArt!: MarkerArt;
+  /** The stones' runes' glow (rank sigils: leash.ranks.stoneGlow, set each frame by render/view/home.ts; 1 otherwise). */
+  readonly markerGlow = { value: 1 };
   markerBatch!: SpriteBatch;
   /** The runestones' trunk shadows (render/view/home.ts), made as they're first cast. */
   markerShadows: TrunkShadowBatch | null = null;
@@ -146,7 +148,7 @@ export class IslandLayers {
     const stones = yield* MarkerArt.stones(style, game.tuning, game.map, job => this.src.assets.oneOff(job)); // (by an art worker, sliced)
     yield;
     this.markerArt = new MarkerArt(style, game.tuning, game.map, stones);
-    this.markerBatch = new SpriteBatch(this.markerArt.atlas, mpp, { solid: true }).name("markers");
+    this.markerBatch = new SpriteBatch(this.markerArt.atlas, mpp, { solid: true, glowGain: this.markerGlow }).name("markers");
     this.root.add(...this.markerBatch.meshes);
   }
 

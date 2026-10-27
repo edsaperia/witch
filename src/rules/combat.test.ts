@@ -72,7 +72,8 @@ describe("combat (Stage 4)", () => {
     park(g, mine);
     g.witch = { ...g.witch, mode: "treetop", lift: 1 }; // (on the ground she'd chat the boar into her party)
     // (in packs, each a pack of one: they fight in combos with lulls between, and the boar hurt fights on, alone; then its daze)
-    for (let i = 0; i < 60 / STEP && !wild.fleeUntil; i++) stepGame(g, idle, STEP);
+    // (90 s: each species' own attack, step 5, paces this one a little longer: the boar beaten, dazed, then off)
+    for (let i = 0; i < 90 / STEP && !wild.fleeUntil; i++) stepGame(g, idle, STEP);
     expect(mine.hp).toBeLessThan(maxHp(2)); // it was hit too
     expect(wild.fleeUntil).toBeTruthy(); // running for the map's edge (Ed: beaten creatures run off the map)
     const x0 = wild.x, z0 = wild.z; run(g, 3);

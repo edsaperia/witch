@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import { type Level } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { MOVEMENT } from "./movement";
-import { TUNING, type Tuning } from "./tuning";
+import { TUNING, withTuning, type Tuning } from "./tuning";
+/** The old attacks (config/combat.json), not each species' own in the grammar (?attacks=old): for the tests that pin one of them. */
+const OLD_ATTACKS = withTuning({ attacks: { reactionFloor: 0.45, species: false } });
 import { attackOf, guardOf } from "./combat";
 import { ARENA_PRESETS, setupArena } from "./arena";
 import type { Creature } from "./creatures";
@@ -106,7 +108,8 @@ describe("fight profiles for every species (Ed's species pass)", () => {
     const near = (light: boolean) => {
       const saved = MOVEMENT.profiles.moth.fight;
       if (!light) MOVEMENT.profiles.moth.fight = saved.filter(b => b.kind !== "light");
-      const g = quiet(), moths = [0, 1, 2].map(i => pick(g, "moth", 2, 10, i * 2)), glow = pick(g, "wolf", 2, 16, 20);
+      // (with the old attacks: a moth's own, the dust it throws, keeps it nearer her and the light's pull shows less, 1.2 m)
+      const g = quiet(77, OLD_ATTACKS), moths = [0, 1, 2].map(i => pick(g, "moth", 2, 10, i * 2)), glow = pick(g, "wolf", 2, 16, 20);
       glow.gone = true; g.combat.sounds.set("lamp", { hp: 1e6, max: 1e6, x: glow.x, z: glow.z, radius: 2 });
       let sum = 0, n = 0;
       run(g, 6, () => { if (g.clock.time > 2) for (const m of moths) { sum += Math.hypot(m.x - glow.x, m.z - glow.z); n++; } });

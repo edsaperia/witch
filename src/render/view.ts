@@ -795,6 +795,7 @@ export class View {
     this.strings = new StringLightsView(this.scene, game);
     this.strings.setCrown(this.crown); // (the crown's lights, made before the strings were)
     this.leashView = new LeashView(this.scene, game);
+    this.post.sharp = this.leashView.stackMask; // (her stack kept sharp through the tilt-shift: Ed, 2026-10-27)
     this.leashView.herOffset = this.herOffset;
     this.rig = rigOn() ? new RigView(this.scene, this.assets, this.mpp) : null; // the live rig (#79): on unless ?rig=0
     this.lasers = new Lasers(this.scene, game);

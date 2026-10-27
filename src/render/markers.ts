@@ -16,6 +16,7 @@ import { runJob, type ArtJob, type ArtResult, type AtlasPixels, type MakeCanvas 
 import type { StoneSpec } from "./islandArt";
 import { awaitOr, runSync, type Steps } from "./slices";
 import type { Style } from "./style";
+import { EMPTY_STONE_RGB, rankKnobs, ranksOn, STONE_WHITE } from "./leash/ranks";
 
 /** Frames per species: dormant, then the awake levels (brighter and brighter). */
 export const MARKER_LEVELS = 4;
@@ -40,6 +41,8 @@ export class MarkerArt {
   /** Each area's stone (by its cell's key, "cx,cy"): its baked stone's key. */
   private stoneOf: Map<string, string>;
   readonly colour = new Map<string, THREE.Vector3>();
+  /** Baked in the ranks' colours (rank sigils on: stoneJob), so frame takes a variant. */
+  readonly ranked: boolean;
   /** Per baked stone: how many art pixels the stone stands above its frame's bottom (to its topmost drawn row). */
   private heights: Map<string, number>;
   /** The scale the stones are baked at (runeMarkers.scale): drawn at runeMarkers.scale / this, so 1 (docs/STYLE.md §1). */
@@ -47,6 +50,7 @@ export class MarkerArt {
 
   constructor(style: Style, t: Tuning, map: ForestMap, made: MarkerStones = runSync(MarkerArt.stones(style, t, map))) {
     this.scale = t.runeMarkers.scale;
+    this.ranked = ranksOn(t);
     for (const a of AREA_TYPES) { const c = Art.sigilColour(a.creature) as number[]; this.colour.set(a.creature, new THREE.Vector3(c[0] / 255, c[1] / 255, c[2] / 255)); }
     this.index = made.index; this.stoneOf = made.stoneOf; this.heights = made.heights;
     this.atlas = atlasFromPixels(made.pixels);
@@ -56,14 +60,17 @@ export class MarkerArt {
   static stoneJob(style: Style, t: Tuning, map: ForestMap): { job: ArtJob; index: Map<string, number>; stoneOf: Map<string, string>; keys: string[] } {
     const R = t.runeMarkers, index = new Map<string, number>(), stoneOf = new Map<string, string>(), stones: StoneSpec[] = [], keys: string[] = [];
     const levels = [R.dormant.glow, ...Array.from({ length: MARKER_LEVELS - 1 }, (_, i) => R.awake.glow[0] + ((R.awake.glow[1] - R.awake.glow[0]) * i) / (MARKER_LEVELS - 2))];
+    // Rank sigils on (render/leash/ranks.ts): each stone baked in the four ranks' colours and unlit (EMPTY_STONE), the view picking
+    // by its area's top rank; else once, in its sigil's colour.
+    const ranked = ranksOn(t), colours = ranked ? [...rankKnobs(t).colours.map(c => [c[0], c[1], c[2], STONE_WHITE]), EMPTY_STONE_RGB] : [[0, 0, 0]];
     for (const [cx, cy] of map.cells) {
       const sp = AREA_TYPES[map.typeOf(cx, cy)].creature, v = runestoneOf(map, cx, cy, t), key = v ? `${sp}|${v.form}|${v.flip ? 1 : 0}` : sp;
       stoneOf.set(`${cx},${cy}`, key);
       if (index.has(key)) continue;
-      index.set(key, stones.length * levels.length); keys.push(key);
-      stones.push(v ? { sigil: sp, form: v.form, flip: v.flip } : { sigil: sp });
+      index.set(key, stones.length * levels.length * colours.length); keys.push(key);
+      stones.push({ sigil: sp, ...(v ? { form: v.form, flip: v.flip } : {}), ...(ranked ? { colours } : {}) });
     }
-    return { job: { kind: "stones", id: keys.join(";"), style, stones, levels, scale: R.scale }, index, stoneOf, keys };
+    return { job: { kind: "stones", id: keys.join(";") + (ranked ? "|ranks:" + colours.join(";") : ""), style, stones, levels, scale: R.scale }, index, stoneOf, keys };
   }
 
   /** The stones this map stands, drawn and packed: by an art worker, the page going on meanwhile (`art`, sliced: render/slices.ts,
@@ -77,8 +84,9 @@ export class MarkerArt {
   }
   /** Let go of the stones' atlas. */
   dispose(): void { this.atlas.albedo.dispose(); this.atlas.normal.dispose(); }
-  /** The frame for an area's stone (by its cell) at a level (0 dormant, 1.. awake). */
-  frame(cell: readonly [number, number], level: number): number { return (this.index.get(this.stoneOf.get(`${cell[0]},${cell[1]}`) ?? "") ?? 0) + Math.max(0, Math.min(MARKER_LEVELS - 1, level)); }
+  /** The frame for an area's stone (by its cell) at a level (0 dormant, 1.. awake), in its colour `variant` (rank sigils: its area's
+   *  top rank, or EMPTY_STONE; render/leash/ranks.ts) where baked so. */
+  frame(cell: readonly [number, number], level: number, variant = 0): number { return (this.index.get(this.stoneOf.get(`${cell[0]},${cell[1]}`) ?? "") ?? 0) + (this.ranked ? variant * MARKER_LEVELS : 0) + Math.max(0, Math.min(MARKER_LEVELS - 1, level)); }
   /** How many art pixels an area's stone stands (its frame's drawn rows). */
   height(cell: readonly [number, number]): number { return this.heights.get(this.stoneOf.get(`${cell[0]},${cell[1]}`) ?? "") ?? 0; }
 }

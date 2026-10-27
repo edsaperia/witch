@@ -1,0 +1,16 @@
+{
+  "pr": 1300,
+  "group": "Rune stones by rank",
+  "decisions": [
+    {
+      "id": "runeStoneGlow",
+      "pr": 1300,
+      "group": "Rune stones by rank",
+      "label": "Rune stone glow",
+      "note": "With the rank sigils (the default; not with ?sigils=old), how brightly a rune stone's rune glows in its area's top rank's colour (Ed, 2026-10-27: \"Make runestone sigils glow brighter\"): its baked colour times this, its hue kept (1 as baked, the old dull look; 2.4 as built). Live.",
+      "control": { "type": "slider", "min": 1, "max": 4, "step": 0.1 },
+      "default": 2.4,
+      "apply": { "knob": "leash.ranks.stoneGlow" }
+    }
+  ]
+}
