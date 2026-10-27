@@ -123,6 +123,8 @@ export interface Fight {
   lunge?: { dx: number; dz: number; left: number; /** its speed now */ v?: number };
   /** In a pack (rules/combat/packs.ts): the move its wind-up or lunge uses. */
   packMove?: "melee" | "ranged";
+  /** An attack in the grammar being wound up (rules/attacks/combatWorld.ts): the engine's cast, released at the windup's end. */
+  spellCast?: number;
 }
 
 /** A projectile in flight: dodgeable (it flies at a point, not after its target). */
@@ -183,6 +185,10 @@ export interface CombatState {
   mirages?: import("./packs").Mirage[];
   /** The raccoons' decoys (rules/combat/packs.ts): the one waving draws her 💌s in its way, till then. */
   decoys?: { id: number; until: number; r: number; side: string }[];
+  /** The composable attacks in flight (rules/attacks/engine.ts), made at the first cast of one; and the library they're named from
+   *  (config/attacks.json, with the Fight Arena's own: ?attack=). */
+  spells?: import("../attacks/engine").SpellState;
+  attackLib?: import("../attacks/parse").Library;
 }
 export interface Trail { x: number; z: number; r: number; until: number; side: State; slow: number; from: number }
 

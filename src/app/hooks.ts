@@ -3,7 +3,7 @@
 import type { FrameStats } from "../platform/frameStats";
 import type { QualityLadder } from "./ladder";
 import { Vector3 } from "three";
-import { setupArena } from "../rules/arena";
+import { arenaAttack, setupArena } from "../rules/arena";
 import { lastShot, takeShot } from "./shot";
 import { cellKey } from "../rules/party";
 import { areaUnderWitch, hitWitch, interpolated, joinParty, loseSoundsystem, STEP, stepGame, type Game } from "../rules/game";
@@ -43,6 +43,7 @@ export function installHooks({ night, view, sound, meter, shake, frameStats, lad
   const applyShake = () => shake.apply();
   (window as unknown as { witch: unknown }).witch = { get game() { return night().game; }, view, get tuning() { return night().tuning; }, frameStats, ladder, sound, slices: sliceLog, // (the sliced builds' longest steps: render/slices.ts, tools/view/build-budget.cjs)
     arena: (spec: string) => setupArena(night().game, spec), // (a debug hook: another arena without reloading)
+    arenaAttack: (input: string) => arenaAttack(night().game, input), // (the Fight Arena: its wild side uses this attack in the grammar, a name or JSON; what was wrong or changed comes back)
     /** A builder's quick shot (app/shot.ts): put her at another scene, and the last one's result (tools/shot/shot.cjs). */
     shot: (scene: string) => takeShot(night().game, scene), get lastShot() { return lastShot; },
     /** A debug hook (screenshots of the party's life): creature `id` joins its area's party, happy, at its spot (rules/partyGuests.ts); home's round the dancefloor. */

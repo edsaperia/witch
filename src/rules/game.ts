@@ -323,7 +323,7 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
   if (c.zoom) P.zoom = c.zoom;
   if (g.clock.paused || !(realDt > 0)) return;
   // This frame's combat and knockout events (several steps' worth, or none), for the view.
-  g.combat.events = []; g.koEvents = []; g.questEvents = []; g.waveEvents = []; g.leashEvents = [];
+  g.combat.events = []; if (g.combat.spells) g.combat.spells.events.length = 0; g.koEvents = []; g.questEvents = []; g.waveEvents = []; g.leashEvents = [];
   for (const w of g.witches) w.invites.events = [];
   if (g.wake) g.wake.events = [];
   g.acc = Math.min(g.acc + Math.min(realDt, MAX_STEP), MAX_STEP + STEP);
