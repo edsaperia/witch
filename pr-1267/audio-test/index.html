@@ -28,16 +28,19 @@ table { border-collapse: collapse; font: 13px var(--mono); min-width: 760px; wid
 th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
 th { color: var(--muted); font-weight: 600; }
 tr.bad td:last-child { color: var(--bad); }
+a { color: var(--accent); }
 tr.ok td:last-child { color: var(--good); }
+tr.drift td:last-child { color: #ffb35f; }
 #summary { white-space: pre-wrap; font: 15px/1.5 var(--mono); }
 textarea { width: 100%; min-height: 160px; font: 12px var(--mono); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 10px; }
 </style>
-  <script type="module" crossorigin src="./assets/index-C-Zqx20z.js"></script>
+  <script type="module" crossorigin src="./assets/main-BjdcJfyD.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/buffer-D97DRBos.js">
 </head>
 <body>
 <div class="wrap">
   <h1>🔊 Witch audio test</h1>
-  <p>About two minutes. The game's own music plays while the sound load climbs step by step (the other reverbs, then more and more sound effects and creature voices), twice: with the AudioWorklets loaded and with none. Then it times the music rendered offline and the reverbs. Keep this tab in front and close other tabs playing sound; it's loud in places, so turn the volume down a little. Nothing in the game changes.</p>
+  <p>About two minutes. The game's own music plays while the sound load climbs step by step (the other reverbs, then more and more sound effects and creature voices), twice: with the AudioWorklets loaded and with none. Then it times the music rendered offline and the reverbs. Keep this tab in front and close other tabs playing sound; it's loud in places, so turn the volume down a little. Nothing in the game changes. <a href="./stall.html">The music stall test →</a></p>
   <div class="row"><button id="go">Start the test</button><span id="status">ready</span></div>
   <div id="machine"></div>
   <div id="runs" class="wrap"></div>
