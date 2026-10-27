@@ -14,7 +14,7 @@ export const SQUEEZE_KEEP = 0.35;
 const KEY = "witch.ladder";
 
 /** What the rungs change in the tuning, from the values the night had (its own, or the pause page's since). */
-interface Base { keep: number; wind: boolean; trunks: string; edge: boolean }
+interface Base { keep: number; wind: boolean; trunks: string; edge: boolean; hard: boolean }
 
 export class QualityLadder {
   state: LadderState;
@@ -64,12 +64,13 @@ export class QualityLadder {
   /** The rungs in effect, set on the night's tuning; only when they change, so the pause page's own changes stand till then. */
   apply(t: Tuning): void {
     let b = this.bases.get(t);
-    if (!b) { b = { keep: t.treeCap.keep, wind: t.wind.on, trunks: t.shadows.trunks?.mode ?? "off", edge: !!t.scenery.edgeDither }; this.bases.set(t, b); this.applied = ""; }
+    if (!b) { b = { keep: t.treeCap.keep, wind: t.wind.on, trunks: t.shadows.trunks?.mode ?? "off", edge: !!t.scenery.edgeDither, hard: !!t.canopyCutout.hard }; this.bases.set(t, b); this.applied = ""; }
     const on = (id: string) => inEffect(this.state, RUNGS.findIndex(r => r.id === id));
     const sig = RUNGS.map((_, i) => (inEffect(this.state, i) ? 1 : 0)).join("");
     if (sig === this.applied) return;
     this.applied = sig;
     flag(t.scenery, "edgeDither", on("farDither") || b.edge);
+    flag(t.canopyCutout, "hard", on("hardCut") || b.hard);
     t.treeCap.keep = on("squeeze") ? Math.min(b.keep, SQUEEZE_KEEP) : b.keep;
     t.wind.on = on("still") ? false : b.wind;
     if (t.shadows.trunks) t.shadows.trunks.mode = on("still") ? "off" : b.trunks;

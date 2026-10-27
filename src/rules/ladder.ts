@@ -24,7 +24,7 @@ export const RUNGS: readonly Rung[] = [
   { id: "blend40", label: "area borders blend over 40 m", when: "load", built: false },
   { id: "squeeze", label: "tall trees squeezed", when: "live", built: true },
   { id: "still", label: "leaves still, no trunk shadows", when: "live", built: true },
-  { id: "hardCut", label: "the cut-away's crowns solid", when: "live", built: false },
+  { id: "hardCut", label: "the cut-away's crowns solid", when: "live", built: true },
   { id: "density80", label: "trees ×0.8", when: "load", built: false },
   { id: "cap30", label: "a steady 30 fps", when: "live", built: true },
   { id: "px4", label: "chunkier pixels (px 4)", when: "load", built: false },

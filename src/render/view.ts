@@ -23,6 +23,9 @@ import { speakerRadius } from "../rules/speakers";
 import { Hiz, HIZ_LAYER } from "./hiz";
 /** How near the treehouse (m, the camera) its occluders are built (render/hiz.ts). */
 const HIZ_NEAR = 120;
+/** Where the hard cut-away (the quality ladder) cuts on the hole's soft fade: crowns there drawn whole only once nearly whole, so the
+ *  hole reads as big as the soft one (at half, the band's dark undersides came in solid). */
+const HOLE_HARD_AT = 0.9;
 import { carvingMask, warmCarvings } from "./legendCarving";
 import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
@@ -1471,7 +1474,7 @@ export class View {
     }
     if (this.sceneryFixed !== null) this.budget.radius = Math.min(t.haze.far, Math.max(1, this.sceneryFixed));
     LIGHT_UNIFORMS.uScenery.value.set(this.budget.radius, Math.max(1, t.scenery.fade));
-    SPRITE_UNIFORMS.uEdgeDither.value = t.scenery.edgeDither ? 1 : 0; // (the quality ladder's dithered far edge: render/sprites.ts)
+    SPRITE_UNIFORMS.uEdgeDither.value = t.scenery.edgeDither ? 1 : 0; SPRITE_UNIFORMS.uHoleHard.value = t.canopyCutout.hard ? t.canopyCutout.hardAt ?? HOLE_HARD_AT : 0; // (the quality ladder's dithered far edge: render/sprites.ts)
     // In the air, the crowns' reach (render/view/scenery.ts), eased in and out over half a second or so (no far crowns popping as she lands).
     // Through the telescope (rules/telescope.ts), crowns out to the island's far side, and its own, further haze; back as it was after.
     const TL = this.telescope && t.telescope, haze = LIGHT_UNIFORMS.uHazeRange.value;

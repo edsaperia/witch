@@ -63,6 +63,9 @@ export const SPRITE_UNIFORMS = {
   /** The forest's far edge dithered in the solid pass, not faded in the see-through passes (1: the quality ladder's rung,
    *  app/ladder.ts; scenery.edgeDither). Its pixels drawn or not by a 4×4 ordered dither on the art's own pixels. */
   uEdgeDither: { value: 0 },
+  /** The cut-away round her with a hard edge: each crown in the hole's band cut or drawn whole, never half see-through (the
+   *  quality ladder's rung, app/ladder.ts; canopyCutout.hard): where on the soft fade it cuts (0 < it ≤ 1; 0 off, the fade as ever). */
+  uHoleHard: { value: 0 },
   uCircleKeep: { value: new THREE.Vector4(0, 0, 0, 0) },
   // The party's canopy uplight: the nearest partified areas (centre x, z, reach, fade-in) and their
   // colours; uUplight: strength, pulse, edge (m), the beat's phase (radians).
@@ -113,7 +116,7 @@ uniform float uNearCut;
 varying float vNear;
 uniform vec4 uCircleBox, uCircleFade;
 uniform vec4 uCircleKeep;
-uniform float uHasFade, uEdgeDither;
+uniform float uHasFade, uEdgeDither, uHoleHard;
 varying float vCircle; // how much of it shows, the place she stands in kept clear (1 all of it)
 uniform float uAbsolute; // its y is a world height, not a height over the ground
 uniform vec4 uLean; // the witch under a load (render/load.ts): sheared forward (m per m up), tilted nose-up (m per m across), her broom bowed (art pixels)
@@ -264,7 +267,7 @@ void main() {
       vec2 d = max(abs(uWitch.xy - cc) - halfPx, 0.0);
       if (dot(d, d) < R * R && mod(floor(dbg), 2.0) > 0.5) occ = true;
     }
-    if (abs(iFlags.y) > 0.001 && uTopFade < 0.996) {
+    if (abs(iFlags.y) > 0.001 && uTopFade < 0.996 && (uHoleHard <= 0.0 || uTopFade > 0.004)) { // (hard: no crown half see-through in the band, but while the crowns fade in or out as she rises or comes down)
       vec2 d = max(abs(uCutout.xy - cc) - halfPx, 0.0);
       if (mix(length(d) - wob, vCrownD, uCutWhole) < vHole + uCutout.w * uCutShape.y + 1.0 && mod(floor(dbg / 2.0), 2.0) > 0.5) part = true;
     }
@@ -329,7 +332,7 @@ uniform float uLegendFloor; // and the share of its own (mossed) look it never d
 uniform float uLegendAwake; // a dark-coated legend awake: the share of its own colour it never drops below at night (0 none; render/legendLight.ts)
 uniform vec4 uFindLook;
 uniform float uAreaAvg, uSeeDepth, uSeeSolid, uSeeShowA, uSeeDither, uSeeTwo;
-uniform float uEdgeDither;
+uniform float uEdgeDither, uHoleHard;
 uniform vec4 uSeeDbg;
 uniform float uSeeEarly;
 uniform vec2 uTrunkLook;   // trunks: light floor, rim
@@ -402,6 +405,7 @@ bool passOf() {
   float wob = (cutNoise(vWorld.xz * 0.11 + vWorld.y * 0.07) - 0.5) * uCutout.w * uCutShape.x;
   float cutD = uCutWhole >= 0.999 ? vCrownD : mix(screenDist(gl_FragCoord.xy, uCutout.xy) + wob, vCrownD, uCutWhole); // (by the crown whole: its middle alone, never 0 × an overflow)
   float hole = smoothstep(vHole - uCutout.w, vHole + uCutout.w * uCutShape.y, cutD);
+  if (uHoleHard > 0.0) hole = step(uHoleHard, hole); // (the quality ladder's hard cut-away: cut or whole)
   shown = 1.0;
   if (vFlags.y > 0.5) {
     shown = max(hole, uTopFade);
@@ -419,7 +423,7 @@ bool passOf() {
     float t = clamp((topY - vLocal.y) / band, 0.0, 1.0);
     float keep = max(t, crown);
     if (keep < 0.004) return false;
-    trunkA = keep * keep * (3.0 - 2.0 * keep);
+    trunkA = uHoleHard > 0.0 ? step(uHoleHard, keep) : keep * keep * (3.0 - 2.0 * keep); // (hard: the cut trunk's top there or not)
   }
   // Which pass draws it. Anything partly see-through (a crown fading in the hole, a trunk's top fading, scenery fading at the
   // budget's edge) goes in the see-through pass, after everything solid and writing no depth (Ed, 2026-10-06: "no tree
