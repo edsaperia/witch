@@ -313,6 +313,9 @@ export interface NoteEvent {
   part: string;
   /** "circle": a legend's clearing layer, played over the muffle rather than under it. */
   layer?: "circle";
+  /** A hook's (ctx.siege, ctx.party, ctx.legend): a part added by how near the game's goings-on are, played live while the rest
+   *  is drawn ahead (docs/notes/music.md "Music ahead"). */
+  hook?: "siege" | "party" | "legend";
   patch: string;
   /** Absolute sixteenth (step 0 is game time 0), and a fraction of a step after it (swing, rolls). */
   step: number;
@@ -628,16 +631,16 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
   const fillBar = ending === "fill";
   const muted = ending !== "none" && s >= 12 ? style.fill.mute : [];
   const onlyCircle = ctx.only === "circle";
-  const parts: [string, PartUse, number][] = onlyCircle ? [] : Object.entries(sec.parts).map(([k, u]) => [k, u, 1]);
-  if (onlyCircle) { /* (the layer alone) */ } else if (ctx.siege > 0.01) for (const [k, u] of Object.entries(style.siege)) parts.push([k, u, ctx.siege]);
-  if ((ctx.party ?? 0) > 0.01) for (const [k, u] of Object.entries(style.party ?? {})) if (!sec.parts[k]) parts.push([k, u, ctx.party!]);
-  if ((ctx.legend ?? 0) > 0.01) for (const [k, u] of Object.entries(style.legend ?? {})) if (!sec.parts[k]) parts.push([k, u, ctx.legend!]);
+  const parts: [string, PartUse, number, NoteEvent["hook"]?][] = onlyCircle ? [] : Object.entries(sec.parts).map(([k, u]) => [k, u, 1]);
+  if (onlyCircle) { /* (the layer alone) */ } else if (ctx.siege > 0.01) for (const [k, u] of Object.entries(style.siege)) parts.push([k, u, ctx.siege, "siege"]);
+  if ((ctx.party ?? 0) > 0.01) for (const [k, u] of Object.entries(style.party ?? {})) if (!sec.parts[k]) parts.push([k, u, ctx.party!, "party"]);
+  if ((ctx.legend ?? 0) > 0.01) for (const [k, u] of Object.entries(style.legend ?? {})) if (!sec.parts[k]) parts.push([k, u, ctx.legend!, "legend"]);
   // the boot's intro: nothing before the first speaker, then a layer a speaker (other sections build as they always did)
   const build = ctx.build ?? 1, building = ctx.build !== undefined && plan.section === style.intro;
   const circle = ctx.circle && ctx.circle.level > 0.01 && ctx.only !== "main" ? ctx.circle : null, layer = new Set<string>();
   if (circle) for (const [k, u] of circleParts(style, circle.species)) if (!sec.parts[k]) { parts.push([k, u, circle.level]); layer.add(k); }
   if (fillBar && !onlyCircle) parts.push([style.fill.part, { p: "__fill" }, 1]);
-  for (const [name, u0, scaleLevel] of parts) {
+  for (const [name, u0, scaleLevel, hook] of parts) {
     const def = style.parts[name];
     if (!def) continue;
     const u = use(u0);
@@ -661,7 +664,7 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
     if (ch === "?" && r >= a.energy) continue;
     const level = u.level * scaleLevel * (0.94 + 0.06 * r) * (building && !own ? 0.45 + 0.55 * build : 1); // (the boot's few speakers quieter, filling out to the twelfth)
     const patch = a.bass && def.role === "bass" && sec.parts[name] && !own && style.patches[a.bass] ? a.bass : def.patch; // (a night's set: the step's bass patch on the section's own bass parts)
-    const base = { part: name, patch, step: own && ctx.circleStep !== undefined ? ctx.circleStep : step, offset: 0, dur, ...(own ? { layer: "circle" as const } : {}) };
+    const base = { part: name, patch, step: own && ctx.circleStep !== undefined ? ctx.circleStep : step, offset: 0, dur, ...(own ? { layer: "circle" as const } : {}), ...(hook ? { hook } : {}) };
     if (def.role === "drum") {
       if (ch === "r") { out.push({ ...base, dur: 0.5, midi: null, vel: 0.6 * level }, { ...base, offset: 0.5, dur: 0.5, midi: null, vel: 0.75 * level }); continue; }
       out.push({ ...base, midi: null, vel: (VEL[ch] ?? 0.8) * level });
