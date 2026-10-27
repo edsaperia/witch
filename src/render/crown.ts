@@ -39,16 +39,7 @@ export const SHARED_GLSL = /* glsl */ `
 uniform vec3 uMapO, uMapX, uMapY, uMapZ;
 uniform float uBendOn;
 vec3 mapPlan(vec3 p) { return uMapO + p.x * uMapX + p.y * uMapY + p.z * uMapZ; }
-// The house's warm light spilling up into the crown (treehouse.house.crown.warm): a glow round each room's middle a little over
-// its floor, on the plan, reaching about the room's size and a lobe's height up
-uniform vec4 uWarmSrc[16]; // plan x, y over the floor, plan z, reach (m)
-uniform float uWarmN, uWarmK;
-float warmAt(vec3 p) {
-  if (uWarmK <= 0.0) return 0.0;
-  float w = 0.0;
-  for (int i = 0; i < 16; i++) { if (float(i) >= uWarmN) break; vec3 d = p - uWarmSrc[i].xyz; w += exp(-dot(d, d) / (uWarmSrc[i].w * uWarmSrc[i].w)); }
-  return uWarmK * min(1.2, w);
-}
+uniform float uWarmK; // the house's warm light up into the crown (treehouse.house.crown.warm), times each part's own (warmAt)
 `;
 export const CLEAR_GLSL = /* glsl */ `
 uniform float uIndoor; // laid over the floors: no haze nor slowed time's grey (the floors' own colours aren't graded)
@@ -112,6 +103,7 @@ const LOBE_VERT = /* glsl */ `
 attribute vec2 corner;
 attribute vec4 iLobe; // plan x, y over the floor, plan z, radius
 attribute vec2 iData; // thin, seed
+attribute float iWarm; // the house's light at its underside (warmAt)
 uniform vec3 uRight, uUp;
 uniform float uLobeK; // the lobes' size: 1 outside, smaller laid over the floors
 varying vec2 vUv;
@@ -130,7 +122,7 @@ void main() {
   vLight = nightLight(normalize(uBack + uUp * 0.5 + (corner.x * uRight + corner.y * uUp) * 0.6), c + (corner.x * uRight + corner.y * uUp) * iLobe.w);
   vWorld = c + (corner.x * uRight + corner.y * uUp) * iLobe.w;
   vUv = corner; vData = iData;
-  vWarm = warmAt(iLobe.xyz + vec3(0.0, corner.y * iLobe.w * 0.5, 0.0)) * (0.65 - 0.35 * corner.y);
+  vWarm = uWarmK * iWarm * (0.65 - 0.35 * corner.y);
   // the floor's plan point under this pixel (indoors: the house's plane, its right the plan's east and its up the plan's north)
   vec3 q = p - uMapO;
   vFloor = vec2(dot(q, uRight) / max(1e-4, dot(uMapX, uRight)), dot(q, uUp) / min(-1e-4, dot(uMapZ, uUp)));
@@ -180,6 +172,7 @@ const BARK_VERT = /* glsl */ `
 attribute vec3 aNormal; // on the plan
 attribute vec2 aBark; // metres along the limb, angle round it (0 to 1)
 attribute float aRad; // the limb's radius there (m)
+attribute float aWarm; // the house's light there (warmAt)
 varying float vWarm, vRad;
 varying vec3 vWorld, vN;
 varying vec2 vBark;
@@ -195,7 +188,7 @@ void main() {
   vWorld = p; vBark = aBark;
   vN = normalize(aNormal.x * normalize(uMapX) + aNormal.y * normalize(uMapY) + aNormal.z * normalize(uMapZ));
   vLight = nightLight(vN, p); // (once a vertex)
-  vWarm = warmAt(position) * (0.1 + 0.9 * max(0.0, -aNormal.y)); vRad = aRad; // (its undersides: the light comes from below)
+  vWarm = uWarmK * aWarm * (0.1 + 0.9 * max(0.0, -aNormal.y)); vRad = aRad; // (its undersides: the light comes from below)
   vec3 q = p - uMapO;
   vFloor = vec2(dot(q, uRight) / max(1e-4, dot(uMapX, uRight)), dot(q, uUp) / min(-1e-4, dot(uMapZ, uUp)));
   vec4 mv = viewMatrix * vec4(uBendOn > 0.5 ? bendW(p) : p, 1.0);
@@ -236,9 +229,17 @@ void main() {
   gl_FragColor = vec4(crownHaze(c, vWorld), keep);
 }`;
 
+/** The house's warm light at a point of the crown's plan (0 to 1.2): a glow round each open room's middle 1.5 m over its floor,
+ *  reaching its size and 3 m more; worked out once as the crown's made (its parts never move on the plan). */
+export function warmAt(rooms: readonly { x: number; z: number; r?: number; locked?: boolean }[], x: number, y: number, z: number): number {
+  let w = 0;
+  for (const r of rooms) { if (r.locked) continue; const R = (r.r ?? 6) + 3, d2 = (x - r.x) ** 2 + (y - 1.5) ** 2 + (z - r.z) ** 2; w += Math.exp(-d2 / (R * R)); }
+  return Math.min(1.2, w);
+}
+
 /** The bark's tubes: a Catmull-Rom through each limb's knots, rings of `sides` round it about a third of its radius apart. */
-function barkGeometry(c: Crown): THREE.BufferGeometry {
-  const pos: number[] = [], nrm: number[] = [], bark: number[] = [], rad: number[] = [], idx: number[] = [];
+function barkGeometry(c: Crown, rooms: HouseOutline["rooms"]): THREE.BufferGeometry {
+  const pos: number[] = [], nrm: number[] = [], bark: number[] = [], rad: number[] = [], warm: number[] = [], idx: number[] = [];
   for (const l of c.limbs) {
     const k: Knot[] = [l.knots[0], ...l.knots, l.knots[l.knots.length - 1]], sides = l.knots[0][3] > 2.5 ? 8 : l.knots[0][3] > 0.8 ? 6 : 4;
     const ring: { p: number[]; t: number[]; r: number; s: number }[] = [];
@@ -263,7 +264,7 @@ function barkGeometry(c: Crown): THREE.BufferGeometry {
       const up = [T[1] * ax[2] - T[2] * ax[1], T[2] * ax[0] - T[0] * ax[2], T[0] * ax[1] - T[1] * ax[0]];
       for (let j = 0; j < sides; j++) {
         const a = (j / sides) * Math.PI * 2, cs = Math.cos(a), sn = Math.sin(a), n = [ax[0] * cs + up[0] * sn, ax[1] * cs + up[1] * sn, ax[2] * cs + up[2] * sn];
-        pos.push(R.p[0] + n[0] * R.r, R.p[1] + n[1] * R.r, R.p[2] + n[2] * R.r); nrm.push(n[0], n[1], n[2]); bark.push(R.s, j / sides); rad.push(R.r);
+        pos.push(R.p[0] + n[0] * R.r, R.p[1] + n[1] * R.r, R.p[2] + n[2] * R.r); nrm.push(n[0], n[1], n[2]); bark.push(R.s, j / sides); rad.push(R.r); warm.push(warmAt(rooms, R.p[0] + n[0] * R.r, R.p[1] + n[1] * R.r, R.p[2] + n[2] * R.r));
       }
     }
     for (let i = 0; i < ring.length - 1; i++) for (let j = 0; j < sides; j++) {
@@ -276,21 +277,24 @@ function barkGeometry(c: Crown): THREE.BufferGeometry {
   g.setAttribute("aNormal", new THREE.Float32BufferAttribute(nrm, 3));
   g.setAttribute("aBark", new THREE.Float32BufferAttribute(bark, 2));
   g.setAttribute("aRad", new THREE.Float32BufferAttribute(rad, 1));
+  g.setAttribute("aWarm", new THREE.Float32BufferAttribute(warm, 1));
   g.setIndex(idx);
   return g;
 }
 
 /** The lobes: an octagon each (fewer empty pixels than a square reach the shader), one instance a lobe, far (north) first so the
  *  floors' layer is drawn far to near indoors. */
-function lobeGeometry(c: Crown): THREE.InstancedBufferGeometry {
+function lobeGeometry(c: Crown, rooms: HouseOutline["rooms"]): THREE.InstancedBufferGeometry {
   const g = new THREE.InstancedBufferGeometry(), cs: number[] = [0, 0], idx: number[] = [];
   for (let i = 0; i < 8; i++) { const a = ((i + 0.5) / 8) * Math.PI * 2, r = 1 / Math.cos(Math.PI / 8); cs.push(Math.cos(a) * r, Math.sin(a) * r); idx.push(0, i + 1, ((i + 1) % 8) + 1); }
   g.setAttribute("corner", new THREE.Float32BufferAttribute(cs, 2));
   g.setIndex(idx);
   const L = [...c.lobes].sort((a, b) => a.z - b.z || a.y - b.y), lobe = new Float32Array(L.length * 4), data = new Float32Array(L.length * 2);
-  L.forEach((l, i) => { lobe.set([l.x, l.y, l.z, l.r], i * 4); data.set([l.thin, (l.seed % 997) * 0.37], i * 2); });
+  const warm = new Float32Array(L.length);
+  L.forEach((l, i) => { lobe.set([l.x, l.y, l.z, l.r], i * 4); data.set([l.thin, (l.seed % 997) * 0.37], i * 2); warm[i] = warmAt(rooms, l.x, l.y - l.r * 0.5, l.z); });
   g.setAttribute("iLobe", new THREE.InstancedBufferAttribute(lobe, 4));
   g.setAttribute("iData", new THREE.InstancedBufferAttribute(data, 2));
+  g.setAttribute("iWarm", new THREE.InstancedBufferAttribute(warm, 1));
   g.instanceCount = L.length;
   return g;
 }
@@ -329,16 +333,12 @@ export class CrownView {
       uNoise: { value: noiseTexture() },
       uBehind: { value: 0 }, uClear: { value: this.masks[0].tex }, uClearB: { value: this.masks[1].tex }, uClearW: { value: new THREE.Vector2() }, uClearBox: { value: new THREE.Vector4(cx - rx, cz - rz, 1 / (2 * rx), 1 / (2 * rz)) }, uClearOn: { value: 0 },
       uHerHole: { value: new THREE.Vector4() },
-      uWarmSrc: { value: Array.from({ length: 16 }, () => new THREE.Vector4()) }, uWarmN: { value: 0 }, uWarmK: { value: 0 }, uRimK: { value: 0 },
+      uWarmK: { value: 0 }, uRimK: { value: 0 },
     };
-    // (the warm light's sources: each open room's middle, 1.5 m over its floor, reaching its size and the crown's height over it)
-    const rooms = outline.rooms.filter(r => !r.locked).slice(0, 16);
-    rooms.forEach((r, i) => (this.uniforms.uWarmSrc.value as THREE.Vector4[])[i].set(r.x, 1.5, r.z, (r.r ?? 6) + 3));
-    this.uniforms.uWarmN.value = rooms.length;
     const lobeMat = new THREE.ShaderMaterial({ vertexShader: LOBE_VERT, fragmentShader: LOBE_FRAG, uniforms: this.uniforms });
     const barkMat = new THREE.ShaderMaterial({ vertexShader: BARK_VERT, fragmentShader: BARK_FRAG, uniforms: this.uniforms });
-    this.lobes = new THREE.Mesh(lobeGeometry(crown), lobeMat);
-    this.bark = new THREE.Mesh(barkGeometry(crown), barkMat);
+    this.lobes = new THREE.Mesh(lobeGeometry(crown, outline.rooms), lobeMat);
+    this.bark = new THREE.Mesh(barkGeometry(crown, outline.rooms), barkMat);
     for (const m of [this.lobes, this.bark]) { m.frustumCulled = false; m.name = "crown"; }
     this.meshes = [this.bark, this.lobes];
     this.bulbs = crownBulbs(crown, spacing, 0, lights);
