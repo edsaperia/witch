@@ -1,0 +1,5 @@
+{
+  "reason": "each species fights with its own attack in the composable grammar by default (Ed, 2026-10-27: \"go ahead and merge them\"; docs/plans/attack-species.md): new bodies, zones and telegraphs in the fights, their hits and the fights' pacing; ?attacks=old for the old",
+  "frames": { "wave-fight": "the creatures' new attacks in the fight, and where they stand to throw them" },
+  "rules": { "*": "the fights play out differently: who hits whom, when, and where they stand; creatures' health, the witch's, the combat state and its spells" }
+}

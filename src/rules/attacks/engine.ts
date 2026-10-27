@@ -11,7 +11,7 @@
 // on is a small port (SpellWorld), so it runs headless in tests and in combat.ts alike.
 import { childSpec, type Library } from "./parse";
 import { REACTION_FLOOR, telegraphKind } from "./timeline";
-import type { Aim, AttackSpec, Child, Effect, TelegraphKind, TellPose } from "./types";
+import type { Aim, AttackSpec, BodyKind, Child, Effect, TelegraphKind, TellPose } from "./types";
 
 // ---- the world it acts on ----
 
@@ -25,7 +25,7 @@ export interface SpellWorld {
   /** Whether this is a foe of `side` (never the caster's own kind; anything else that isn't a foe is an ally, hit only as hit.allies says). */
   hostile(side: string, target: Hittable, casterSpecies: string, casterId: number): boolean;
   /** A hit lands: its damage and effect, from (fx, fz). */
-  harm(target: Hittable, damage: number, effect: Effect | undefined, fx: number, fz: number, source: number, attack: string): void;
+  harm(target: Hittable, damage: number, effect: Effect | undefined, fx: number, fz: number, source: number, attack: string, /** what landed it (for the fight's counters) */ body?: BodyKind): void;
   /** A creature's place now (a caster or a stuck body's host), or null when it's gone. */
   where(kind: Hittable["kind"], id: number | string): { x: number; z: number; vx?: number; vz?: number } | null;
   /** Ground a runner can't cross (water), or a wall a bolt bounces off; absent: none. */
@@ -243,7 +243,7 @@ function strike(S: SpellState, W: SpellWorld, a: AttackSpec, t: Hittable, damage
     const { burn: _b, ...rest } = effect; effect = Object.keys(rest).length ? rest : undefined;
   }
   if (dmg <= 0 && !effect) return foe; // (a foe touched all the same: a harmless sticky bolt still sticks)
-  W.harm(t, dmg, effect, fx, fz, source, name);
+  W.harm(t, dmg, effect, fx, fz, source, name, a.body?.kind ?? "bolt");
   S.events.push({ kind: "hit", at: time, x: t.x, z: t.z, attack: name, source, element: a.body?.element, ...ref, ...(ally ? { ally } : {}) });
   return true;
 }
@@ -400,6 +400,7 @@ function emitOne(S: SpellState, W: SpellWorld, lib: Library, a: AttackSpec, p: P
     if (made > CAPS.children) { S.capped++; return; }
     S.made.set(p.cast, made);
   }
+  if (B === "melee") return; // (the fight's own lunge lands it: rules/combat.ts)
   if (B === "beam" || a.pack?.tether) { emitBeam(S, W, a, p, x, z, heading, time); return; }
   if (a.pack?.triangulate && !p.points) {
     // (its corners where it and its two nearest packmates stand at the release; the ground between them erupts after its delay; none

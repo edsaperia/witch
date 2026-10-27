@@ -138,6 +138,8 @@ export function tuningFromLink(params: URLSearchParams) {
   if (params.get("ley") === "0") tuning.leyLines = { ...tuning.leyLines, on: false };
   if (params.get("trail") === "0") tuning.trail = { ...tuning.trail, on: false };
   if (params.get("knock") === "0") tuning.witch = { ...tuning.witch, knock: { ...tuning.witch.knock, on: false } };
+  // ?attacks=old: every species fights with its old attacks (config/combat.json), not its own in the grammar (rules/attacks/species.ts).
+  if (params.get("attacks") === "old") tuning.attacks = { reactionFloor: tuning.attacks?.reactionFloor ?? 0.45, species: false };
   // ?dodge=a,b,c: which of the dodge changes are on (Ed, 2026-10-08; tuning dodge: a committed strikes, b predictive aim,
   // c packs cutting off her retreat), the rest off; ?dodge=0 none of them.
   const dodgeParam = params.get("dodge");

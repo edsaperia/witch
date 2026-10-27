@@ -11333,10 +11333,14 @@
         "reactionFloor": {
           "type": "number",
           "minimum": 0
+        },
+        "species": {
+          "type": "boolean"
         }
       },
       "required": [
-        "reactionFloor"
+        "reactionFloor",
+        "species"
       ],
       "additionalProperties": false
     },
