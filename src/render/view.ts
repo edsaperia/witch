@@ -1663,6 +1663,7 @@ export class View {
     this.lightRings?.update(this.camera, w.x, witchHeight(w, t) + this.rideOff, w.z, canopyShown(w), time);
     const hatTop = drawWitch(this, time, ht, onTreehouse);
     this.houseRooms?.update(this, onTreehouse, ht);
+    if (this.crown && (this.crown.lights !== (t.treehouse.house?.crown?.lights ?? 1))) this.ensureCrown(this.game); // (its lights' density moved on the pause page: grown again)
     if (this.crown && deck) { // (the crown: in the world, or laid over the floors with her indoors: render/crown.ts)
       const W = this.crownWorld, a = ((HOUSE_ROOMS.turn ?? 0) * Math.PI) / 180, c = Math.cos(a), s = Math.sin(a);
       W.o.set(deck.x, groundHeight(deck.x, deck.z) + deck.h, deck.z); W.ex.set(c, 0, -s); W.ez.set(s, 0, c);
