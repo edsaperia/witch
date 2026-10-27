@@ -20,6 +20,8 @@ import type { Dress } from "./attackLook";
 /** The attack look (leash/attackLook.ts: attacks in their elements, the danger frame), or ?look=old: the red dots, lines and rings
  *  it replaced, for comparing. */
 export const lookOn = typeof location === "undefined" || new URLSearchParams(location.search).get("look") !== "old";
+/** ?lookdemo=telegraphs|elements: the attack look's showcase round her (leash/attackLook.ts demo). */
+const lookDemo = typeof location === "undefined" ? null : new URLSearchParams(location.search).get("lookdemo");
 const dresses = new Map<string, Dress>();
 /** How a creature's attacks are dressed: its element, its level, and on the party's side its neon. */
 function dressOf(species: string, level: number, tint: { r: number; g: number; b: number } | null): Dress {
@@ -192,7 +194,8 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
     }
   }
   // The attack look's hits, marks and areas in flight; and a shot gone (it hit, or flew its range out) where it last was, its hit.
-  if (lookOn) {
+  if (lookDemo) lv.look.demo(lookDemo, w.x, w.z + 2, time);
+  else if (lookOn) {
     lv.look.drawFx(time);
     const seen = lv.look.shots;
     for (const [id, s0] of seen) if (!g.combat.shots.some(sh => sh.id === id)) { seen.delete(id); if (close(s0.x, s0.z, 150)) lv.look.hit(s0.d, s0.x, 1, s0.z, time, id * 7 + 1); }

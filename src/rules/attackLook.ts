@@ -28,6 +28,8 @@ export interface SpellsConfig {
   particles: { trail: number; impact: number };
   danger: { warn: string; edge: string; dash: number; gap: number; march: number; flash: number; hatch: number };
   default: string;
+  /** other names for elements (the attack grammar's body.element tags: stone, light, spore, web, water, sound) */
+  aliases: Record<string, string>;
   byBiome: Record<string, string>;
   bySpecies: Record<string, string>;
 }
@@ -35,8 +37,18 @@ export interface SpellsConfig {
 export const ATTACK_LOOK = raw as unknown as SpellsConfig;
 export const ELEMENTS: string[] = Object.keys(ATTACK_LOOK.elements);
 
-/** A creature's element: its own (bySpecies), else its kind's biome's, else the default. */
-export function elementOf(species: string, cfg: SpellsConfig = ATTACK_LOOK, kinds: Record<string, { biome?: string }> = KINDS_TABLE): string {
+/** An element tag (an attack's body.element) as one of the elements, through the aliases; undefined if it names none. */
+export function elementNamed(tag: string | undefined, cfg: SpellsConfig = ATTACK_LOOK): string | undefined {
+  if (!tag) return undefined;
+  const t = cfg.elements[tag] ? tag : cfg.aliases[tag];
+  return t && cfg.elements[t] ? t : undefined;
+}
+
+/** A creature's element: an attack's own tag if it has one (tag), else the species' own (bySpecies), else its kind's biome's,
+ *  else the default. */
+export function elementOf(species: string, cfg: SpellsConfig = ATTACK_LOOK, kinds: Record<string, { biome?: string }> = KINDS_TABLE, tag?: string): string {
+  const tagged = elementNamed(tag, cfg);
+  if (tagged) return tagged;
   const own = cfg.bySpecies[species];
   if (own && cfg.elements[own]) return own;
   const biome = kinds[species]?.biome, by = biome ? cfg.byBiome[biome] : undefined;
@@ -65,6 +77,7 @@ export function spellsProblems(cfg: SpellsConfig, species: readonly string[], bi
   for (const [mod, m] of Object.entries(cfg.effects)) if (!MOTIFS.includes(m)) bad.push(`effect ${mod}: no motif called ${m}`);
   for (const lv of ["1", "2", "3"]) if (!(cfg.power[lv] > 0)) bad.push(`power: level ${lv} missing`);
   if (!cfg.elements[cfg.default]) bad.push(`default: no element ${cfg.default}`);
+  for (const [a, e] of Object.entries(cfg.aliases ?? {})) if (!cfg.elements[e]) bad.push(`aliases ${a}: no element ${e}`);
   for (const [b, e] of Object.entries(cfg.byBiome)) { if (!cfg.elements[e]) bad.push(`byBiome ${b}: no element ${e}`); if (!biomes.includes(b)) bad.push(`byBiome: no biome called ${b}`); }
   for (const [s, e] of Object.entries(cfg.bySpecies)) { if (!cfg.elements[e]) bad.push(`bySpecies ${s}: no element ${e}`); if (!species.includes(s)) bad.push(`bySpecies: no species called ${s}`); }
   const d = cfg.danger;

@@ -29,6 +29,13 @@ const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
  *  rubble), rings (moonlight), forks (storm), in then out (shadow), drifting (bloom). */
 const FALLS: Record<string, number> = { burst: -3, shatter: 9, splash: 10, ring: -1.5, crackle: 0, rubble: 12, poof: -1, blossom: 1.2 };
 
+/** A telegraph's place, in plain geometry (the attack grammar's live telegraph's shape: docs/plans/attack-grammar.md): a point
+ *  (x, z), a segment to (x2, z2) its width wide, a disc or ring r round (with inner, a donut's), a cone from (x, z) along heading
+ *  (radians), angle wide (radians) and r long; y, how high over the ground a mark on someone goes (their top). */
+export interface TelegraphShape { x: number; z: number; x2?: number; z2?: number; r?: number; inner?: number; width?: number; angle?: number; heading?: number; y?: number }
+/** A live telegraph (s.telegraphs): its kind, its shape, when it began and when it fires; n, a countdown's pips. */
+export interface LiveTelegraph { kind: string; shape: TelegraphShape; start: number; fire: number; n?: number }
+
 interface LookFx { kind: "impact" | "mark" | "area"; d: Dress; x: number; y: number; z: number; at: number; life: number; seed: number; size: number }
 
 export class AttackLook {
@@ -308,10 +315,79 @@ export class AttackLook {
     const tile = (16 * (up ? 2.6 : 1)) / PPM;
     for (let gx = -Rout; gx <= Rout; gx += tile) for (let gz = -Rout; gz <= Rout; gz += tile) { const d = Math.hypot(gx, gz); if (d > R && d < Rout) this.put(this.dl(up), "hatch", x + gx, 0.025, z + gz, up ? 2.6 : 1, this.cfg.danger.hatch * 4); }
   }
+  /** A mine arming: dim and dashed, a slow pulse, while it arms (k 0 to 1); armed, a solid ring at its trigger radius, pulsing
+   *  fast. */
+  arming(x: number, z: number, r: number, k: number, time: number, up = false): void {
+    const armed = k >= 1, sc = up ? 2.6 : 1, R = armed ? r * (1 + 0.04 * Math.sin(time * 18)) : r * (0.45 + 0.1 * Math.sin(time * 4)), n = Math.round((TAU * R) / ((2 * sc) / PPM));
+    for (let i = 0; i < n; i++) { if (!armed && Math.floor(i / 3) % 2) continue; const q = (i / n) * TAU; this.put(this.dl(up), "warn", x + Math.cos(q) * R, 0.03, z + Math.sin(q) * R, sc, armed ? (Math.floor(time * 10) % 2 ? 1 : 0.7) : 0.55 + 0.45 * k); }
+    this.put(up ? this.over : this.paint, "pip", x, 0.2, z, sc, armed ? 1 : 0.6);
+  }
+  /** The next in a chain: a dashed link from the one struck to the next, brackets closing on it (k 0 to 1). */
+  chainNext(x0: number, z0: number, x1: number, z1: number, top: number, k: number, time: number, up = false): void {
+    const dx = x1 - x0, dz = z1 - z0, L = Math.hypot(dx, dz) || 1;
+    this.dashes(L, s => [x0 + (dx * s) / L, z0 + (dz * s) / L], time, 1, up, up ? 2.6 : 1);
+    this.brackets(x1, top * 0.6, z1, 0.9 - 0.4 * k, 0.6 + 0.4 * k, up);
+  }
+
+  /** Any live telegraph, by its kind (the attack grammar's TelegraphKind), drawn from its shape alone. */
+  telegraph(t: LiveTelegraph, time: number, up = false): void {
+    const S = t.shape, k = clamp01((time - t.start) / Math.max(0.01, t.fire - t.start)), left = t.fire - time;
+    const seg = (): [number, number, number, number] => [S.x, S.z, S.x2 ?? S.x, S.z2 ?? S.z];
+    switch (t.kind) {
+      case "lane": { const [a, b, c, d] = seg(); this.lane(a, b, c, d, (S.width ?? 1) / 2, k, left, time, up); break; }
+      case "landing": this.ring(S.x, S.z, S.r ?? 2, k, left, time, up); break;
+      case "ring": this.ring(S.x, S.z, S.r ?? 3, k, left, time, up); if (S.inner) this.ring(S.x, S.z, S.inner, 0, left, time, up); break;
+      case "cone": this.cone(S.x, S.z, S.heading ?? 0, (S.angle ?? Math.PI / 3) / 2, S.r ?? 6, k, left, time, up); break;
+      case "beamLine": { const [a, b, c, d] = seg(); this.beamLine(a, b, c, d, (S.width ?? 1) / 2, k, left, time, up); break; }
+      case "countdown": { const n = t.n ?? 3; this.pips(S.x, (S.y ?? 1) + 0.6, S.z, n, Math.ceil(n * (1 - k))); if (S.r) this.ring(S.x, S.z, S.r, k, left, time, up); break; }
+      case "arming": this.arming(S.x, S.z, S.r ?? 1.5, k, time, up); break;
+      case "chainNext": { const [a, b, c, d] = seg(); this.chainNext(a, b, c, d, S.y ?? 1.4, k, time, up); break; }
+      case "tetherLine": { const [a, b, c, d] = seg(); this.tether(a, b, c, d, left, time, up); break; }
+      case "lockOn": this.brackets(S.x, (S.y ?? 1.6) * 0.6, S.z, 1.1 - 0.5 * k, k > 0.8 || Math.floor(time * 10) % 3 ? 1 : 0.55, up); break;
+      case "flash": this.tell(S.x, S.z, S.y ?? 1.4, S.r ?? 1.2, k, time, up); break;
+      case "safeCircle": this.hatch(S.x, S.z, S.r ?? 4, (S.r ?? 4) + 8, up); this.ring(S.x, S.z, S.r ?? 4, 0, left, time, up); break;
+      default: break; // ("none")
+    }
+  }
+
   /** The wind-up tell: a white ring at its feet tightening, and the "!" over its head as it's about to (k 0 to 1). */
   tell(x: number, z: number, top: number, r: number, k: number, time: number, up = false): void {
     const R = r * (1.6 - 0.6 * k), sc = up ? 2.6 : 1, n = Math.round((TAU * R) / ((3 * sc) / PPM));
     for (let i = 0; i < n; i++) { const q = (i / n) * TAU + time; this.put(this.dl(up), i % 2 ? "warn" : "px", x + Math.cos(q) * R, 0.03, z + Math.sin(q) * R, i % 2 ? sc : sc * 0.5, 0.4 + 0.6 * k); }
     if (k > 0.55) this.put(up ? this.over : this.paint, "tick", x, top + 0.5 + (up ? 1 : 0), z, sc, k > 0.85 && Math.floor(time * 16) % 2 ? 0.5 : 1);
+  }
+
+  /** A showcase round (x, z) (?lookdemo=telegraphs|elements: render/leash/combat.ts), looping every few seconds: every
+   *  telegraph kind from first warning to its hit, in a 4 × 3 grid, each in a different element; or every element's bolt, hit,
+   *  beam and quake, a column each. For judging the look without an attack in the rules that makes each one. */
+  demo(which: string, x: number, z: number, time: number): void {
+    const els = Object.keys(this.cfg.elements), wild = (i: number): Dress => ({ el: els[i % els.length], level: 2 });
+    if (which === "elements") {
+      const T = 2.4, ph = time % T, loop = Math.floor(time / T);
+      els.forEach((el, i) => {
+        const d: Dress = { el, level: i % 4 === 3 ? 3 : 2 }, cx = x + (i - 3.5) * 4.5;
+        const fly = Math.min(1, ph / 0.8), bx = cx, bz = z - 9 + fly * 6;
+        if (ph < 0.8) this.core(d, bx, 1, bz, 0, 0, 7.5, time, i * 13 + 1); else if (ph < 0.85 && !this.fx.some(f => f.seed === loop * 100 + i)) this.hit(d, bx, 1, bz, time, loop * 100 + i);
+        this.beam(d, cx - 1.6, z, cx + 1.6, z + 1, 0.7, 1.6, time, i * 7 + 3);
+        if (ph < 0.05 && !this.fx.some(f => f.seed === loop * 100 + 50 + i)) this.burst(d, cx, z + 7, 2.2, time, loop * 100 + 50 + i);
+      });
+      this.drawFx(time);
+      return;
+    }
+    const kinds = ["flash", "lane", "landing", "cone", "beamLine", "countdown", "arming", "chainNext", "tetherLine", "lockOn", "safeCircle", "ring"];
+    const T = 3, start = Math.floor(time / T) * T, fire = start + T * 0.8, loop = Math.floor(time / T);
+    kinds.forEach((kind, i) => {
+      const cx = x + ((i % 4) - 1.5) * 9, cz = z + (Math.floor(i / 4) - 1) * 9, sh: TelegraphShape = { x: cx - 3, z: cz, x2: cx + 3, z2: cz, r: 2, width: 1.4, heading: 0, angle: 1, y: 1.4, inner: 0 };
+      if (kind === "landing" || kind === "arming" || kind === "lockOn" || kind === "flash" || kind === "countdown") { sh.x = cx; sh.r = kind === "landing" ? 2.2 : 1.6; }
+      if (kind === "safeCircle") { sh.x = cx; sh.r = 3.5 - 1.5 * clamp01((time - start) / (fire - start)); }
+      if (kind === "ring") { sh.x = cx; sh.r = 3.2; sh.inner = 1.2; }
+      if (kind === "cone") { sh.x = cx - 3; sh.r = 6; }
+      if (time < fire) this.telegraph({ kind, shape: sh, start, fire, n: 3 }, time);
+      else if (!this.fx.some(f => f.seed === loop * 100 + i)) {
+        const d = wild(i), hx = kind === "lane" || kind === "beamLine" || kind === "tetherLine" || kind === "chainNext" || kind === "cone" ? cx + 2 : cx;
+        if (kind === "ring" || kind === "safeCircle") this.burst(d, cx, cz, 3, time, loop * 100 + i); else this.hit(d, hx, 0.8, cz, time, loop * 100 + i);
+      }
+    });
+    this.drawFx(time);
   }
 }

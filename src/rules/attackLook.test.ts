@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { attackOf } from "./combat";
-import { ELEMENTS, ATTACK_LOOK, elementOf, spellPower, spellsProblems } from "./attackLook";
+import { ELEMENTS, ATTACK_LOOK, elementNamed, elementOf, spellPower, spellsProblems } from "./attackLook";
 import { KINDS_TABLE } from "./kinds";
 import { SPECIES } from "../../art/creatures.js";
 
@@ -19,6 +19,11 @@ describe("the attack look's data (config/attack-look.json)", () => {
     const temperate = Object.keys(KINDS_TABLE).find(k => KINDS_TABLE[k].biome === "temperate" && !ATTACK_LOOK.bySpecies[k])!;
     expect(elementOf(temperate)).toBe(ATTACK_LOOK.byBiome.temperate);
     expect(elementOf("no-such-species")).toBe(ATTACK_LOOK.default);
+  });
+  it("reads the attack grammar's element tags, its own names through the aliases", () => {
+    expect(elementNamed("stone")).toBe("earth"); expect(elementNamed("fire")).toBe("fire"); expect(elementNamed("plasma")).toBeUndefined();
+    expect(elementOf("salamander", ATTACK_LOOK, KINDS_TABLE, "web")).toBe("venom");
+    expect(elementOf("salamander", ATTACK_LOOK, KINDS_TABLE, "plasma")).toBe("fire");
   });
   it("draws a legend's spells bigger than an adult's, an adult's than a young's", () => {
     expect(spellPower(3)).toBeGreaterThan(spellPower(2));
