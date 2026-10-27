@@ -304,7 +304,7 @@ async function main() {
     await shot(page, "40-dancefloor-ground.png");
     await page.keyboard.press("Space");
     await page.waitForFunction(() => window.witch.game.witch.lift > 0.3, null, { timeout: 240000, polling: 20 });
-    await page.screenshot({ path: path.join(out, "42-rising.png") }); // no settle: catch her mid-climb
+    await page.screenshot({ path: path.join(out, "42-rising.png"), timeout: 300000 }); // no settle: catch her mid-climb (and as long as shot() gives a frame: seconds a frame in the software renderer)
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 240000 });
     await sleep(1500);
     await shot(page, "41-dancefloor-treetop.png");
