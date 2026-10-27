@@ -20,7 +20,7 @@ export function sailWay(params: URLSearchParams, tuning: { sail?: { inPlace?: bo
 /** What a sailed night's link leaves behind (the plan's A1, URL): the chart's own hand-off (arrive=1: in place the flight's end is
  *  passed in memory) and the repro link's and the debug switches' places (wave, cleared, at, mode, zoom, set, found, bot, quest,
  *  arena, partyover), so the next island never starts where a debug link put the last. */
-export const SAIL_DROPS = ["arrive", "wave", "cleared", "at", "mode", "zoom", "set", "found", "bot", "quest", "arena", "partyover", "shot"] as const;
+export const SAIL_DROPS = ["arrive", "wave", "cleared", "at", "mode", "zoom", "set", "found", "bot", "quest", "arena", "fight", "pack", "partyover", "shot"] as const;
 
 /** The link of the night sailed to: ?island=X&seed=S[&world=W], then the page's other switches as they were (?quick, ?sail,
  *  ?debug...), without SAIL_DROPS. */
