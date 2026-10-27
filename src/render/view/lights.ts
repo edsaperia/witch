@@ -1,6 +1,8 @@
 // The lights (from render/view.ts, issue #122): campfires and magic stones lit each frame, and the
 // shader's light budget filled with the nearest.
 import { writeOn } from "../leash/glyphs";
+import { ranksOn } from "../leash/ranks";
+import type { Creature } from "../../rules/creatures";
 import { areaCellAt } from "../../rules/map";
 import * as THREE from "three";
 import { partyOff } from "../partyOver";
@@ -104,20 +106,21 @@ export function setLights(v: View, all: ForestLight[], x: number, z: number): vo
 export function sigilLights(v: View, time: number, hatY: number): ForestLight[] {
   const S = v.game.tuning.sigilSpill, g = v.game, out: ForestLight[] = [];
   if (!S || S.strength <= 0) return out;
-  const neon = (species: string): THREE.Vector3 | null => {
+  const neon = (species: string, cr?: Creature): THREE.Vector3 | null => {
+    if (cr && ranksOn(g.tuning)) { const col = v.leashView.colOf(cr), k = `rank:${cr.level}`; let r = spillRgb.get(k); if (!r) { r = new THREE.Vector3(col.r, col.g, col.b); spillRgb.set(k, r); } return r; } // (rank sigils: their rank's colour, render/leash/ranks.ts)
     let c = spillRgb.get(species);
     if (!c) { const col = v.leashView.colours.get(species); if (!col) return null; c = new THREE.Vector3(col.r, col.g, col.b); spillRgb.set(species, c); }
     return c;
   };
   for (const p of g.leash.placed) {
-    const c = g.creatures[p.id], rgb = c && neon(c.species);
+    const c = g.creatures[p.id], rgb = c && neon(c.species, c);
     if (!rgb) continue;
     const pulse = 1.05 + 0.25 * Math.sin(time * 2 + p.id); // (the rune's own pulse: leash.ts; its fade-in on her clock, as its stamp is, never below 0: Bravo's dark-circle diagnosis, 2026-10-12)
     out.push({ x: p.x, y: S.height, z: p.z, reach: S.reach * (1 + c.level * 0.15), rgb, strength: S.strength * writeOn(g.herTime, p.at) * pulse });
   }
   const s = g.leash.stack, w = g.witch;
   if (S.stack > 0 && s.length) {
-    const c = g.creatures[s[s.length - 1]], rgb = c && neon(c.species);
+    const c = g.creatures[s[s.length - 1]], rgb = c && neon(c.species, c);
     if (rgb) out.push({ x: w.x, y: hatY, z: w.z, reach: S.stackReach, rgb, strength: S.stack });
   }
   return out;

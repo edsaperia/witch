@@ -18,7 +18,7 @@ export interface PostTuning { light?: import("../rules/tuning").Tuning["light"];
   suspects: { effectsLayer: boolean; showBroken: boolean };
   bloom: { on: boolean; strength: number; threshold: number };
   tone: { black: number; gamma: number; ambient: number };
-  tiltShift: { on: boolean; /** The share of the blur the sky takes (Ed, 2026-10-06: "lessen the tilt-shift effect until you can see the stars", "the stars don't have to be crisp, just perceptible"); 1 as the ground. */ skyBlur?: number; strength: number; band: number; centre: number; /** Over the treetops (Ed, v160: stronger there), blended in by lift. */ treetop: { strength: number; band: number } };
+  tiltShift: { on: boolean; /** The share of the blur the sky takes (Ed, 2026-10-06: "lessen the tilt-shift effect until you can see the stars", "the stars don't have to be crisp, just perceptible"); 1 as the ground. */ skyBlur?: number; /** Her sigil stack kept out of it, sharp at any height (Ed, 2026-10-27: Post.sharp); default on. */ stackSharp?: boolean; strength: number; band: number; centre: number; /** Over the treetops (Ed, v160: stronger there), blended in by lift. */ treetop: { strength: number; band: number } };
 }
 
 const VERT = "varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }";
@@ -111,7 +111,7 @@ void main() {
 
 // One direction of the tilt-shift: the blur grows with distance from the sharp band.
 const TILT = /* glsl */ `
-uniform sampler2D uSrc, uDepth; uniform vec2 uTexel, uDir; uniform float uStrength, uBand, uCentre, uSkyBlur; varying vec2 vUv;
+uniform sampler2D uSrc, uDepth, uSharp; uniform vec2 uTexel, uDir; uniform float uStrength, uBand, uCentre, uSkyBlur, uSharpOn; varying vec2 vUv;
 void main() {
   // The sky over the bend (nothing drawn there: the far plane) is blurred with everything else, as
   // the last pass over the finished, bent image (Ed, round 12: "the tilt shift effect has to be applied
@@ -119,13 +119,17 @@ void main() {
   float d = max(0.0, abs(vUv.y - uCentre) - uBand * 0.5) / max(0.05, 0.5 - uBand * 0.5);
   // The sky (nothing drawn there: the far plane) takes only uSkyBlur of it, so its stars stay perceptible, softly.
   float r = uStrength * smoothstep(0.0, 1.0, d) * (texture2D(uDepth, vUv).r >= 0.99999 ? uSkyBlur : 1.0);
-  if (r < 0.35) { gl_FragColor = texture2D(uSrc, vUv); return; }
+  // Her sigil stack (Post.sharp's mask) is left as drawn, and kept out of the blur round it, as if drawn over the blurred picture.
+  bool sharp = uSharpOn > 0.5;
+  if (r < 0.35 || (sharp && texture2D(uSharp, vUv).a > 0.5)) { gl_FragColor = texture2D(uSrc, vUv); return; }
   vec3 c = vec3(0.0); float w = 0.0;
   for (int i = -6; i <= 6; i++) {
     float t = float(i) / 6.0, k = exp(-t * t * 2.0);
-    c += texture2D(uSrc, vUv + uDir * uTexel * t * r).rgb * k; w += k;
+    vec2 at = vUv + uDir * uTexel * t * r;
+    if (sharp && texture2D(uSharp, at).a > 0.5) continue;
+    c += texture2D(uSrc, at).rgb * k; w += k;
   }
-  gl_FragColor = vec4(c / w, 1.0);
+  gl_FragColor = w > 0.0 ? vec4(c / w, 1.0) : texture2D(uSrc, vUv);
 }`;
 
 function target(w: number, h: number, filter: THREE.MagnificationTextureFilter, depth = false): THREE.WebGLRenderTarget {
@@ -144,6 +148,11 @@ export class Post {
   // The smooth effects layer: mist as soft alpha, blurred, scaled up linearly.
   private fx = target(1, 1, THREE.LinearFilter);
   private fxB = target(1, 1, THREE.LinearFilter);
+  // The sharp mask: what's kept out of the tilt-shift (Post.sharp), its coverage at the scene's resolution.
+  private sharpMask = target(1, 1, THREE.NearestFilter);
+  /** Kept sharp through the tilt-shift (Ed, 2026-10-27: "stacks should not be affected by the tilt shift"): her sigil stack's meshes
+   *  (render/leash.ts stackMask), each drawn again with its coverage material into the mask, when the blur is on and it has any. */
+  sharp: { mesh: THREE.Mesh; mask: THREE.Material }[] = [];
   /** What goes into the smooth effects layer; null for none. */
   fxScene: THREE.Scene | null = null;
   private quad: THREE.Mesh;
@@ -167,7 +176,7 @@ export class Post {
       blur: m(BLUR, { uSrc: { value: null }, uStep: { value: new THREE.Vector2() } }),
       veil: Object.assign(m(VEIL, { uAt: { value: new THREE.Vector2(0.5, 0.5) }, uR: { value: 0 }, uSoft: { value: 0.15 }, uAspect: { value: 1 }, uAll: { value: 0 }, uK: { value: 0 } }), { transparent: true, blending: THREE.NormalBlending }),
       composite: m(COMPOSITE, { uScene: { value: null }, uBloom: { value: null }, uLow: { value: new THREE.Vector2() }, uBloomStrength: { value: 0 }, uKoDim: { value: 0 }, uBlack: { value: 0 }, uGamma: { value: 1 }, uFx: { value: null }, uFxOn: { value: 0 }, uBroken: { value: 0 }, uGrade: { value: new THREE.Vector4() }, uPool: { value: new THREE.Vector4() }, uIris: { value: new THREE.Vector4() }, uIris2: { value: new THREE.Vector4() }, uGradeTint: { value: new THREE.Vector3(1, 1, 1) } }),
-      tilt: m(TILT, { uSrc: { value: null }, uDepth: { value: null }, uTexel: { value: new THREE.Vector2() }, uDir: { value: new THREE.Vector2() }, uStrength: { value: 0 }, uBand: { value: 0.4 }, uCentre: { value: 0.5 }, uSkyBlur: { value: 1 } }),
+      tilt: m(TILT, { uSrc: { value: null }, uDepth: { value: null }, uTexel: { value: new THREE.Vector2() }, uDir: { value: new THREE.Vector2() }, uStrength: { value: 0 }, uBand: { value: 0.4 }, uCentre: { value: 0.5 }, uSkyBlur: { value: 1 }, uSharp: { value: null }, uSharpOn: { value: 0 } }),
     };
     this.quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.mats.composite);
     this.quad.frustumCulled = false;
@@ -207,6 +216,7 @@ export class Post {
     const bw = Math.max(1, Math.round(lowW / 2)), bh = Math.max(1, Math.round(lowH / 2));
     this.bright.setSize(bw, bh); this.bloomB.setSize(bw, bh);
     this.a.setSize(lowW, lowH); this.b.setSize(lowW, lowH);
+    this.sharpMask.setSize(lowW, lowH);
   }
 
   /** The forest behind the house's enclosed rooms (Ed, 2026-10-23: "when you're inside the treehouse in an enclosed room (i.e. not
@@ -309,16 +319,30 @@ export class Post {
     });
     if (!tilt) return;
     yield;
+    const sharpOn = this.drawSharp(camera);
     // The blur at the low resolution, before the browser scales the picture up.
     const w = this.a.width, h = this.a.height;
     const common = (u: Record<string, THREE.IUniform>) => {
       const T = t.tiltShift, k = Math.max(0, Math.min(1, this.lift)), k2 = k * k * (3 - 2 * k);
       u.uDepth.value = this.scene.depthTexture; u.uTexel.value.set(1 / w, 1 / h); u.uStrength.value = (T.strength + (T.treetop.strength - T.strength) * k2) * this.tilt; u.uBand.value = T.band + (T.treetop.band - T.band) * k2; u.uCentre.value = 1 - T.centre;
       u.uSkyBlur.value = T.skyBlur ?? 1;
+      u.uSharp.value = this.sharpMask.texture; u.uSharpOn.value = sharpOn ? 1 : 0;
     };
     this.pass("tilt", this.b, u => { common(u); u.uSrc.value = this.a.texture; u.uDir.value.set(1, 0); });
     yield;
     this.pass("tilt", out === this.b ? this.a : out, u => { common(u); u.uSrc.value = this.b.texture; u.uDir.value.set(0, 1); });
+  }
+
+  /** The sharp mask drawn (Post.sharp); false when there's nothing to keep sharp (no stack, or tiltShift.stackSharp off). */
+  private drawSharp(camera: THREE.Camera): boolean {
+    const live = this.tuning.tiltShift.stackSharp !== false ? this.sharp.filter(s => s.mesh.visible && ((s.mesh.geometry as THREE.InstancedBufferGeometry).instanceCount ?? 0) > 0) : [];
+    if (!live.length) return false;
+    const r = this.renderer, ac = r.autoClear, col = r.getClearColor(this.clear), alpha = r.getClearAlpha();
+    r.setRenderTarget(this.sharpMask); r.setClearColor(0x000000, 0); r.clear(true, false, false);
+    r.autoClear = false;
+    for (const s of live) { const m = s.mesh.material; s.mesh.material = s.mask; r.render(s.mesh, camera); s.mesh.material = m; } // (each mesh on its own: not the whole scene walked again)
+    r.autoClear = ac; r.setClearColor(col, alpha);
+    return true;
   }
 
   /** The grade's tint (a colour of luma 1), for the area moods to ease (render/mood.ts AreaMoods). */

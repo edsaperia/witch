@@ -308,7 +308,7 @@ async function main() {
     await shot(page, "40-dancefloor-ground.png");
     await page.keyboard.press("Space");
     await page.waitForFunction(() => window.witch.game.witch.lift > 0.3, null, { timeout: 240000, polling: 20 });
-    await page.screenshot({ path: path.join(out, "42-rising.png") }); // no settle: catch her mid-climb
+    await page.screenshot({ path: path.join(out, "42-rising.png"), timeout: 300000 }); // no settle: catch her mid-climb (and as long as shot() gives a frame: seconds a frame in the software renderer)
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 240000 });
     await sleep(1500);
     await shot(page, "41-dancefloor-treetop.png");
@@ -639,7 +639,10 @@ async function main() {
       const tick = now => { const L = window.speedLog; if (L.stop) return; L.forest.push(window.witch.view.stats.forestMs); if (L.last) L.frame.push(now - L.last); L.last = now; requestAnimationFrame(tick); };
       requestAnimationFrame(tick);
     });
-    const [s0, s1] = await hold(page, "ArrowUp", 12, 900000);
+    // South, away from the house: north from her decks she flies in over it and lands on it (rules/witch.ts flyOnto, 2026-10-14),
+    // 59 m on, and held there the 12 s took past the 900 s wait in the slowed house (2026-10-27). South she covers 882 m of fresh
+    // forest in the treetops (seeds 123 and 7).
+    const [s0, s1] = await hold(page, "ArrowDown", 12, 900000);
     const r = await page.evaluate(() => { const L = window.speedLog; L.stop = true; const q = (a, k) => { const b = [...a].sort((x, y) => x - y); return b.length ? b[Math.min(b.length - 1, Math.floor(k * (b.length - 1)))] : 0; }; return { n: L.forest.length, worst: q(L.forest, 1), p99: q(L.forest, 0.99), median: q(L.forest, 0.5), frameMedian: q(L.frame, 0.5), frameWorst: q(L.frame, 1), missing: window.witch.view.stats.forestMissing }; });
     const dist = Math.hypot(s1.x - s0.x, s1.z - s0.z), speed = dist / (s1.t - s0.t);
     results.push(`info speed: ${dist.toFixed(0)} m of fresh forest at ${speed.toFixed(1)} m/s; forest building per frame: median ${r.median.toFixed(1)} ms, p99 ${r.p99.toFixed(1)} ms, worst ${r.worst.toFixed(1)} ms over ${r.n} frames; frames here (software renderer): median ${r.frameMedian.toFixed(0)} ms, worst ${r.frameWorst.toFixed(0)} ms`);
@@ -766,16 +769,20 @@ async function main() {
       for (let i = 0; i < 240 && w.game.witch.mode !== "treetop"; i++) w.frame(C({}), dt, false);
       const cpu = f => f.step + f.render, hover = [], boost = [], x0 = w.game.witch.x, z0 = w.game.witch.z;
       for (let i = 0; i < 180; i++) { const f = w.frame(C({}), dt, false); if (i >= 60) hover.push(cpu(f)); if (i % 30 === 0) await yieldNow(); }
-      let top = 0;
-      for (let i = 0; i < 600; i++) { const f = w.frame(C({ moveZ: -1, spell: true }), dt, false); boost.push(cpu(f)); top = Math.max(top, Math.hypot(w.game.witch.vx, w.game.witch.vz)); if (i % 30 === 0) await yieldNow(); }
+      // South, away from the house: flown in over it from outside she lands on it (rules/witch.ts flyOnto, 2026-10-14), and north
+      // from her decks crosses it, so the boost was cut short at 131 m/s 0.45 s in and the rest measured in the slowed house
+      // (2026-10-27). South of home is open forest: 926 m at up to 197 m/s, still in the treetops, on seeds 123, 7 and 2024.
+      let top = 0, off = -1;
+      for (let i = 0; i < 600; i++) { const f = w.frame(C({ moveZ: 1, spell: true }), dt, false); boost.push(cpu(f)); top = Math.max(top, Math.hypot(w.game.witch.vx, w.game.witch.vz)); if (off < 0 && w.game.witch.mode !== "treetop") off = i / 60; if (i % 30 === 0) await yieldNow(); }
       w.manual = false;
       const q = (a, k) => { const b = [...a].sort((x, y) => x - y); return b[Math.min(b.length - 1, Math.floor(k * (b.length - 1)))]; };
-      return { hover: q(hover, 0.5), median: q(boost, 0.5), p99: q(boost, 0.99), worst: q(boost, 1), top, dist: Math.hypot(w.game.witch.x - x0, w.game.witch.z - z0) };
+      return { hover: q(hover, 0.5), median: q(boost, 0.5), p99: q(boost, 0.99), worst: q(boost, 1), top, off, dist: Math.hypot(w.game.witch.x - x0, w.game.witch.z - z0) };
     });
-    results.push(`info boost: ${r.dist.toFixed(0)} m north in 10 s at up to ${r.top.toFixed(0)} m/s; frame work hovering ${r.hover.toFixed(1)} ms (median), boosting median ${r.median.toFixed(1)} ms, p99 ${r.p99.toFixed(1)} ms, worst ${r.worst.toFixed(1)} ms`);
+    results.push(`info boost: ${r.dist.toFixed(0)} m south in 10 s at up to ${r.top.toFixed(0)} m/s; frame work hovering ${r.hover.toFixed(1)} ms (median), boosting median ${r.median.toFixed(1)} ms, p99 ${r.p99.toFixed(1)} ms, worst ${r.worst.toFixed(1)} ms`);
     // (full boost with the Speed broom's spell: treetopSpeed × boost × the spell's mult, 48 × 1.7 × 2.2 = 180 m/s as built; the plain broom,
     // the default since #695, tops out at 82, which is what this measured till the scene asked for ?broom=speed, 2026-10-14)
     const T = await page.evaluate(() => window.witch.game.tuning), full = T.treetopSpeed * (T.treetop?.boost ?? 1) * (T.spells?.speed?.mult ?? 1);
+    check(r.off < 0, `boosting over the treetops, she stays in the treetops the whole 10 s (${r.off < 0 ? "she does" : `she left them ${r.off.toFixed(2)} s in`})`);
     check(r.top > Math.max(100, full * 0.9), `boosting over the treetops with the Speed broom goes over 100 m/s and near its full ${full.toFixed(0)} (${r.top.toFixed(0)} m/s)`);
     check(r.p99 <= 22, `boosting over the treetops, 99% of frames' own work is within 22 ms (p99 ${r.p99.toFixed(1)} ms)`, "boost-p99");
     check(r.worst <= 40, `boosting over the treetops, no frame's own work takes over 40 ms (worst ${r.worst.toFixed(1)} ms)`, "boost-worst");
@@ -889,8 +896,8 @@ async function main() {
     });
     check(r.n > 50 && r.bad.length === 0, `nothing floats: every placed sprite's lowest drawn pixel is on the ground (${r.n} checked, worst ${r.worst.toFixed(1)} art px)${r.bad.length ? ": " + r.bad.join("; ") : ""}`);
     // The rolling ground: a sprite stands upright at the lowest ground under its foot (most of its width, up to 5 m either
-    // side of its base), so its uphill side is planted in the slope; where the ground at an end of
-    // its drawn foot is lower than that, the end floats. None may float past 1 art px.
+    // side of its base, or as far as its drawn foot reaches: Frame.foot, a kapok's buttresses), so its uphill side is planted
+    // in the slope; where the ground at an end of its drawn foot is lower than that, the end floats. None may float past 1 art px.
     const hr = await page.evaluate(() => {
       const v = window.witch.view, h = window.witch.groundHeight, R = window.witch.spriteRight(), out = { n: 0, worst: 0, bad: [], hilly: 0 };
       for (const [type, b] of [...v.typeBatches, ...v.creatureBatches, ...[...v.decorBatches].filter(([k]) => k !== "decals"), ["treehouse", v.treehouseBatch]]) { // (she hovers)
@@ -903,7 +910,7 @@ async function main() {
           for (let row = f.h - 1; row >= 0 && low < 0; row--) for (let x = 0; x < f.w; x++) if (D[((y0 + row) * W + x0 + x) * 4 + 3] >= 128) { if (low < 0) { low = row; left = x; } right = x; }
           if (low < 0) continue;
           const m = b.metresPerPixel * (it.scale ?? 1), c = ((left + right) / 2 - f.w / 2) * m * (it.flip ? -1 : 1), half = ((right - left) / 2 + 0.5) * m;
-          const cx = it.x + R.x * c, cz = it.z + R.z * c, fw = Math.min(f.w * m * 0.45, 5);
+          const cx = it.x + R.x * c, cz = it.z + R.z * c, fw = Math.max(Math.min(f.w * m * 0.45, 5), (f.foot ?? 0) * m); // (as render/sprites.ts stands it)
           const base = Math.min(...[-1, -0.5, 0, 0.5, 1].map(k => h(it.x + R.x * fw * k, it.z + R.z * fw * k)));
           const err = Math.max(0, ...[-half, half].map(s => base - h(cx + R.x * s, cz + R.z * s))) / b.metresPerPixel;
           out.n++; if (Math.abs(base) > 0.3) out.hilly++;

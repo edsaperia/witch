@@ -4,6 +4,7 @@ export const CREATURE_WOLF = {
   movement: {
     speed: 17,
     accel: 70,
+    momentum: { delay: 0.2, chaseLead: 0.15 },
     fight: [
       { kind: "arrive", w: 1 },
       { kind: "slot", w: 1.2 },

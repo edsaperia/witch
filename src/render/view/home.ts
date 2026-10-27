@@ -24,6 +24,7 @@ import { mark } from "./pops";
 import { ringStoneKey } from "../artBuild";
 import type { TrunkShadow } from "../trunkShadows";
 import type { RingSpeaker } from "../lasers";
+import { areaTopRanks, EMPTY_STONE, EMPTY_STONE_LIGHT, rankKnobs, stoneRank } from "../leash/ranks";
 
 /** The wave numbers' colour over areas the party has reached (spent). */
 const SPENT = new THREE.Vector3(0.7, 0.7, 0.8);
@@ -34,6 +35,8 @@ const SPARKLE_RGB = new THREE.Vector3(1, 0.75, 0.9);
 /** The markers' motes: one list, its records pooled (a record a mote a frame before, dozens a stone). */
 const MOTES: Mote[] = [], MOTE_POOL: Mote[] = [];
 let moteN = 0;
+// Rank sigils' stones (render/leash/ranks.ts areaTopRanks): each area's top rank this frame, and the colours by it (the ranks', unlit).
+const TOP = new Map<string, number>(), RANK_RGB: THREE.Vector3[] = [];
 function mote(x: number, y: number, z: number, colour: THREE.Vector3, alpha: number): void {
   let m = MOTE_POOL[moteN];
   if (!m) MOTE_POOL[moteN] = m = { x, y, z, colour, alpha };
@@ -52,9 +55,20 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   motes.length = 0; moteN = 0;
   const scale = R.scale / v.markerArt.scale; // (baked at its size: 1)
   const casts = !!t.shadows.trunks?.scenery, cast: TrunkShadow[] = [];
-  const col = (cell: readonly [number, number]) => { const c = v.markerArt.colour.get(AREA_TYPES[g.map.typeOf(cell[0], cell[1])].creature); return c ? [c.x, c.y, c.z] : [0.8, 0.7, 1]; };
+  // Rank sigils on (baked so: MarkerArt.ranked), each stone in its area's top rank's colour, or unlit with nobody home (Ed, 2026-10-27);
+  // else its species' neon.
+  const ranked = v.markerArt.ranked;
+  if (ranked) {
+    areaTopRanks(g.creatures, TOP);
+    const C = [...rankKnobs(t).colours, [70, 80, 110]]; // (an empty one's light: cold moonlight, dim: EMPTY_STONE_LIGHT)
+    C.forEach((c, i) => (RANK_RGB[i] ??= new THREE.Vector3()).set(c[0] / 255, c[1] / 255, c[2] / 255));
+  }
+  v.island.markerGlow.value = ranked ? rankKnobs(t).stoneGlow : 1; // (live: the pause page's Rune stone glow)
+  const variant = (cell: readonly [number, number]) => ranked ? stoneRank(TOP, cell) : 0;
+  const stoneCol = (cell: readonly [number, number]): THREE.Vector3 => ranked ? RANK_RGB[variant(cell)] : v.markerArt.colour.get(AREA_TYPES[g.map.typeOf(cell[0], cell[1])].creature)!;
+  const col = (cell: readonly [number, number]) => { const c = stoneCol(cell); return c ? [c.x, c.y, c.z] : [0.8, 0.7, 1]; };
   const stone = (x: number, z: number, cell: readonly [number, number], level: number, y = 0) => {
-    const frame = v.markerArt.atlas.frames[v.markerArt.frame(cell, level)];
+    const frame = v.markerArt.atlas.frames[v.markerArt.frame(cell, level, variant(cell))];
     if (!inView(v, x, z, frame.w * v.mpp * scale, frame.h * v.mpp * scale, 6)) return false;
     inst.push({ x, y, z, frame, flip: false, scale, fresh: mark(v, "marker", x, z, frame.h * v.mpp * scale) });
     // its shadow from her glow and the fires, as the scenery's (render/view/scenery.ts), shorter as it sinks
@@ -72,14 +86,14 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   for (const m of mc.list) {
     const d = Math.hypot(m.x - w.x, m.z - w.z);
     if (d > range) continue;
-    const species = AREA_TYPES[g.map.typeOf(m.cell[0], m.cell[1])].creature, col = v.markerArt.colour.get(species)!;
+    const col = stoneCol(m.cell), dim = ranked && variant(m.cell) === EMPTY_STONE ? EMPTY_STONE_LIGHT : 1;
     // Awake: brighter on the beat, more so as the countdown runs out; dormant: a steady glow.
     const level = m.awake ? 1 + Math.round(Math.min(1, beat * (0.4 + 0.6 * build)) * (MARKER_LEVELS - 2)) : 0;
     stone(m.x, m.z, m.cell, level);
     // The beam and laser rise from the top of the stone, not from inside it.
     const top = v.markerArt.height(m.cell) * v.mpp * scale;
     const A = R.awake, D = R.dormant;
-    const strength = m.awake ? (A.light + A.lightBuild * build) * (0.55 + 0.45 * beat) : D.light;
+    const strength = (m.awake ? (A.light + A.lightBuild * build) * (0.55 + 0.45 * beat) : D.light) * dim;
     // (the trees, props and scenery round it cast shadows from it, as from a campfire, thrown from the stone itself, not from its
     // light's spot in front of it, so the stone casts none of its own: render/trunkShadows.ts; Ed, 2026-10-13)
     if (d < R.lightRange) near.push({ d, l: { x: m.x, y: 0.5, z: m.z + 1.5, reach: m.awake ? A.reach : D.reach, rgb: col, strength, shadow: { x: m.x, y: 1.5, z: m.z, k: m.awake ? 1 : 0.7 } } });
@@ -94,10 +108,10 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
     if (!shown) continue;
     const { up, flare } = shown;
     if (flare > 0) near.push({ d: d - 1e3, l: { x: m.x, y: 3, z: m.z, reach: R.awake.reach * 1.5, rgb: col, strength: R.flare.light * flare, shadow: { x: m.x, y: 3, z: m.z, k: flare } } });
-    beacons.push({ x: m.x, z: m.z, colour: col, strength: (m.awake ? A.beam * (0.6 + 0.4 * beat) * (1 + build) : m.stage === "afterNext" ? A.beam * 0.6 : D.beam) * (1 + 2 * flare), base: top, height: R.beamHeight * grow * up });
-    if (m.awake) lasers.push({ x: m.x, z: m.z, colour: col, strength: R.laser.opacity * (0.55 + 0.45 * beat) * (0.7 + 0.6 * build), width: R.laser.width, height: R.laser.length * grow * up, base: top });
+    beacons.push({ x: m.x, z: m.z, colour: col, strength: dim * (m.awake ? A.beam * (0.6 + 0.4 * beat) * (1 + build) : m.stage === "afterNext" ? A.beam * 0.6 : D.beam) * (1 + 2 * flare), base: top, height: R.beamHeight * grow * up });
+    if (m.awake) lasers.push({ x: m.x, z: m.z, colour: col, strength: dim * R.laser.opacity * (0.55 + 0.45 * beat) * (0.7 + 0.6 * build), width: R.laser.width, height: R.laser.length * grow * up, base: top });
     if (m.awake) {
-      const n = Math.round(A.motes + A.moteBuild * build);
+      const n = Math.round((A.motes + A.moteBuild * build) * dim);
       for (let i = 0; i < n; i++) {
         const s = (m.cell[0] * 31 + m.cell[1] * 17 + i * 7.3) % 1 || 0.37 * (i + 1) % 1, rise = ((time * (0.25 + 0.15 * ((i * 0.618) % 1)) + i / n) % 1);
         const a = i * 2.399 + m.cell[0];
@@ -108,7 +122,7 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   // The stones the party has just reached: they flare and sink as the soundsystems arrive.
   for (const a of g.party.areas.values()) {
     if (!a.soundsystem || time - a.at > R.flare.time || time < a.at) continue;
-    const k = (time - a.at) / R.flare.time, species = AREA_TYPES[g.map.typeOf(a.cell[0], a.cell[1])].creature, col = v.markerArt.colour.get(species)!;
+    const k = (time - a.at) / R.flare.time, col = stoneCol(a.cell);
     const s0 = g.map.soundsystemSpot(a.cell[0], a.cell[1]);
     stone(s0.x, s0.z, a.cell, MARKER_LEVELS - 1, -k * k * 4 * scale);
     near.push({ d: 0, l: { x: s0.x, y: 2.5, z: s0.z, reach: R.awake.reach * 1.5, rgb: col, strength: R.flare.light * (1 - k), shadow: { x: s0.x, y: 2.5, z: s0.z, k: 1 - k } } });
@@ -293,9 +307,9 @@ const candlesSeen = new WeakMap<View, { n: number; red: number; until: number }>
 export function forgetCandles(v: View): void { candlesSeen.delete(v); }
 
 /** The ground a sprite `w` metres wide stands on at (x, z), as the sprites' shader finds it (render/sprites.ts: the lowest of five
- *  points across its foot, up to 5 m either side). */
-export function underFoot(x: number, z: number, w: number): number {
-  const R = SPRITE_UNIFORMS.uRight.value, fw = Math.min(w * 0.45, 5);
+ *  points across its foot, up to 5 m either side, or as far as its drawn foot reaches, `foot` metres). */
+export function underFoot(x: number, z: number, w: number, foot = 0): number {
+  const R = SPRITE_UNIFORMS.uRight.value, fw = Math.max(Math.min(w * 0.45, 5), foot);
   let m = groundHeight(x, z);
   for (const f of [-1, -0.5, 0.5, 1]) m = Math.min(m, groundHeight(x + R.x * fw * f, z + R.z * fw * f));
   return m;
@@ -307,7 +321,7 @@ export function entDeckDrawn(v: View): { x: number; y: number; z: number } | nul
   const T = v.assets.treehouse, it = v.treehouseBatch.items[0];
   if (!T.ent || !it) return null;
   const k = it.scale ?? 1, fr = it.frame, R = SPRITE_UNIFORMS.uRight.value, U = SPRITE_UNIFORMS.uUp.value;
-  const ox = (T.ent.deck.x - fr.w / 2) * v.mpp * k, oy = (fr.h - T.ent.deck.y) * v.mpp * k, g = underFoot(it.x, it.z, fr.w * v.mpp * k);
+  const ox = (T.ent.deck.x - fr.w / 2) * v.mpp * k, oy = (fr.h - T.ent.deck.y) * v.mpp * k, g = underFoot(it.x, it.z, fr.w * v.mpp * k, (fr.foot ?? 0) * v.mpp * k);
   return { x: it.x + R.x * ox + U.x * oy, y: it.y + g + R.y * ox + U.y * oy, z: it.z + R.z * ox + U.z * oy };
 }
 
@@ -336,7 +350,7 @@ export function placeTreehouse(v: View, angle: number, time: number): { x: numbe
     const a = put(D.x, D.y, D.z);
     // (slid, it's stood on the ground under where it's slid to (sprites.ts: the lowest ground under its foot): the ground it stood on
     // unslid kept, so it moves with the floors, which stand on the deck's ground)
-    if (sh) { const b = put(0, 0, 0); a.y -= underFoot(a.x, a.z, frame.w * mpp * a.k) - underFoot(b.x, b.z, frame.w * mpp * b.k); }
+    if (sh) { const b = put(0, 0, 0); a.y -= underFoot(a.x, a.z, frame.w * mpp * a.k, (frame.foot ?? 0) * mpp * a.k) - underFoot(b.x, b.z, frame.w * mpp * b.k, (frame.foot ?? 0) * mpp * b.k); }
     return { x: a.x, y: a.y, z: a.z, frame, flip: false, scale: a.k, ...o };
   };
   let deckAt: { x: number; y: number; z: number } | null = null;
@@ -345,7 +359,7 @@ export function placeTreehouse(v: View, angle: number, time: number): { x: numbe
     const ox = (T.ent.deck.x - f[0].w / 2) * mpp, oy = (f[0].h - T.ent.deck.y) * mpp;
     at = { x: deckAt.x - R0.x * ox - U.x * oy, y: deckAt.y - R0.y * ox - U.y * oy, z: deckAt.z - R0.z * ox - U.z * oy };
   }
-  const items: SpriteInstance[] = deckAt ? [ent(at, -ED.far, f[0]), ent(at, ED.near, f[1])] : [{ ...at, frame: f[0], flip: false }, { ...at, frame: f[1], flip: false, top: true }];
+  const items: SpriteInstance[] = deckAt ? [ent(at, -ED.far, f[0]), ent(at, ED.near, f[1])] : [{ ...at, frame: f[0], flip: false }, { ...at, frame: f[1], flip: false, top: true, foot: f[0].foot }];
   const terrace = new Set<SpriteInstance>(items); // (the Terrace's own art: the Ent's two halves, and below its DJ table)
   // The island's legend carrying the Ent (art/carrier.js; Ed, 2026-10-10): its back's top under the Ent's roots' foot (the base
   // anchor), its roots' foot planted T.carrier.sink pixels down in its fur, its feet on the ground (the art grows the Ent's trunk

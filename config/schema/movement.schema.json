@@ -237,6 +237,33 @@
             "type": "number",
             "minimum": 0
           },
+          "momentum": {
+            "type": "object",
+            "properties": {
+              "turn": {
+                "type": "number",
+                "minimum": 0
+              },
+              "k": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "delay": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1.5
+              },
+              "chaseLead": {
+                "type": "number",
+                "minimum": 0
+              },
+              "strikeLead": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "additionalProperties": false
+          },
           "glide": {
             "type": "object",
             "properties": {
