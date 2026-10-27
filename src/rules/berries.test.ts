@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeAll, afterAll } from "vitest";
 import { COMBAT } from "./combat";
-import { feed, newBerries, stepBerries, toEvolve, type BerryState, berryCounts } from "./berries";
+import { feed, lastBerry, newBerries, stepBerries, toEvolve, type BerryState, berryCounts } from "./berries";
 import { LEGEND, spawnCreatures, type Creature, type Level } from "./creatures";
 import { invitable, leashSpeed, newLeash } from "./leash";
 import { generateMap } from "./map";
@@ -92,6 +92,29 @@ describe("berries and evolving", () => {
     expect(c.leashed).toBe(true);
     Object.assign(wild, { leashed: false, level: LEGEND });
     expect(invitable(wild)).toBe(false);
+  });
+
+  it("following her, a youth eats the berries it passes up to one short of adult and leaves the rest; only at a sigil she's put down does it eat the last and grow (Ed, 2026-10-27); a baby following her eats none", () => {
+    const s = newBerries(map, t), [y, baby] = spawnCreatures(map), need = toEvolve(1, t);
+    // a patch of eight berries round one spot, the youth and the baby there, their leash points (her, following) there too
+    const at = s.bushes[s.berries[0].bush], spot = { x: at.x, z: at.z };
+    for (let i = 0; i < 8; i++) { const p = s.bushes[s.berries[i].bush]; p.x = spot.x + Math.cos(i) * 2; p.z = spot.z + Math.sin(i) * 2; }
+    Object.assign(y, { x: spot.x, z: spot.z + 1, leashed: true, level: 1, rest: 0 });
+    Object.assign(baby, { x: spot.x + 1, z: spot.z + 1, leashed: true, level: 0, rest: 0 });
+    s.fed.set(y.id, need - 4); // four short: three to eat on the move
+    let time = 0, sigil: { x: number; z: number } | null = null;
+    const step = (secs: number) => { for (let i = 0; i < secs * 20; i++) { time += 0.05; stepBerries(s, [y, baby], () => spot, time, 0.05, t, undefined, id => (id === y.id ? sigil : null)); expect(y.level, "never an adult on the move").toBe(1); } };
+    step(40);
+    expect(s.fed.get(y.id), "one short of adult").toBe(need - 1);
+    expect(lastBerry(y, s, t)).toBe(true);
+    expect(s.evolving.has(y.id)).toBe(false);
+    expect(s.feeding.has(y.id), "the berries it passes are left").toBe(false);
+    expect(baby.level, "a baby following her eats none").toBe(0);
+    expect(s.fed.get(baby.id) ?? 0).toBe(0);
+    // she puts its sigil down here: it eats the last berry and grows
+    sigil = spot;
+    for (let i = 0; i < 40 * 20 && y.level === 1; i++) { time += 0.05; stepBerries(s, [y], () => spot, time, 0.05, t, undefined, () => sigil); }
+    expect(y.level, "at her sigil it grows").toBe(2);
   });
 
   it("bushes grow in patches: each bush has others of its patch close by", () => {
