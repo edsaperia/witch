@@ -6,6 +6,7 @@
 import { arenaAttack, setupArena, parseArena } from "../rules/arena";
 import { nextSeed, packSpec, REACTION_FLOOR, rollPack, TellWatch } from "../rules/fightArena";
 import { ATTACK_LIB, attackSchema, parseAttack, readability, serialiseAttack, type AttackSpec } from "../rules/attacks";
+import { speciesAttack } from "../rules/attacks/species";
 import type { Schema } from "../ui/schemaForm";
 import { attackOf } from "../rules/combat/data";
 import type { Level } from "../rules/creatures";
@@ -72,6 +73,14 @@ export function startFight(game: Game, params: URLSearchParams): () => void {
     try { history.replaceState(history.state, "", fightLink(seed, spec, attack)); } catch { /* (a sandboxed page) */ }
     panel?.draw();
   };
+  /** A kind's own attack today: its species' in the grammar (rules/attacks/species.ts, the default; ?attacks=old the flat ones), else its
+   *  flat record (config/combat.json) in the grammar where config/attacks.json has it. */
+  const own = (species: string, level: number): { name: string; attack: object; grammar: boolean } => {
+    const sp = (game.tuning.attacks?.species ?? true) ? speciesAttack(species, level, game.tuning.attacks?.reactionFloor) : null;
+    if (sp) return { name: `species:${species}`, attack: sp, grammar: true };
+    const a = attackOf(species, level as Level), named = a && ATTACK_LIB[a.name];
+    return { name: a?.name ?? "none", attack: named ?? a?.attack ?? {}, grammar: !!named };
+  };
   const fightLinkNow = () => { try { history.replaceState(history.state, "", fightLink(seed, spec, attack)); } catch { /* (a sandboxed page) */ } };
   put();
   for (const l of armed) console.warn(`arena attack: ${l}`);
@@ -85,12 +94,12 @@ export function startFight(game: Game, params: URLSearchParams): () => void {
     get timings() { return timings; }, set timings(v: boolean) { timings = v; if (!v) panel?.tells.replaceChildren(); },
     shortest: () => ({ lead: watch.shortest, of: watch.shortestOf, count: watch.count, floor: REACTION_FLOOR }),
     link: () => fightLink(seed, spec, attack),
-    attacks: () => parseArena(spec).map(g => { const a = attackOf(g.species, g.level as Level); return { species: g.species, level: g.level, name: a?.name ?? "none", attack: (a && ATTACK_LIB[a.name]) ?? a?.attack ?? {} }; }), // (in the grammar where it's there)
+    attacks: () => parseArena(spec).map(g => { const o = own(g.species, g.level); return { species: g.species, level: g.level, name: o.name, attack: o.attack }; }),
     // (the composable attacks, rules/attacks: read, checked, held to the reaction floor and written out by the grammar's own code; the
     // pack fights with its own attacks till the grammar's engine is in, docs/plans/attack-grammar.md step 2)
     attackSchema: () => formSchema(),
     get attack() { return attack; },
-    attackNote: "The wild pack fights with this attack (the grammar's engine). Its bolts, zones and telegraphs aren't drawn yet (the look layer's next): ⏱ shows each telegraph's timing meanwhile.",
+    attackNote: "Set: the wild pack fights with this attack (the grammar's engine) in place of its own; Own: each kind's own again. ⏱ shows each telegraph's timing.",
     setAttack: (a: unknown) => {
       if (a == null) { attack = null; arm(); fightLinkNow(); return { errors: [], warnings: [] }; }
       const p = parseAttack(a, ATTACK_LIB);
@@ -101,7 +110,7 @@ export function startFight(game: Game, params: URLSearchParams): () => void {
       return { errors: [], warnings: armed.map(w => w.endsWith("lengthened") ? `the composer lengthened a warning: ${w}` : w), notes: [Number.isFinite(r.warning) ? `its shortest warning ${r.warning.toFixed(2)} s (${r.where}), the floor ${REACTION_FLOOR} s` : "nothing in it harms"] };
     },
     attackJson: () => attack ? serialiseAttack(attack, 1) : "",
-    editOwn: (i: number) => { const g = parseArena(spec)[i], a = g && attackOf(g.species, g.level as Level); if (a && ATTACK_LIB[a.name]) attack = structuredClone(ATTACK_LIB[a.name]) as AttackSpec; },
+    editOwn: (i: number) => { const g = parseArena(spec)[i], o = g && own(g.species, g.level); if (o && o.grammar) attack = structuredClone(o.attack) as AttackSpec; },
     library: () => library.list(),
     save: (name: string) => library.save({ name, attack, seed, pack: spec }),
     load: (name: string) => { const s = library.get(name); if (!s) return; attack = (s.attack ?? null) as AttackSpec | null; if (s.seed) seed = s.seed; if (s.pack && parseArena(s.pack).length) spec = s.pack; put(); },

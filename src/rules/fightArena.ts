@@ -69,14 +69,16 @@ export class TellWatch {
     // (when each began: its windup event this frame, at the step it happened; a frame can hold several steps)
     const began = new Map<number, number>();
     for (const e of (g.combat as { events?: { kind: string; at: number; id?: number }[] } | undefined)?.events ?? []) if (e.kind === "windup" && e.id !== undefined) began.set(e.id, e.at);
+    // (the grammar's own telegraphs, rules/attacks/engine.ts: live while alive, each with its start and when it fires, its shape's point;
+    // a creature fighting with one, its species' own or the arena's, shows those, not its windup as well)
+    const tg = (g.combat as { spells?: { telegraphs?: { id: number; alive: boolean; kind: string; attack: string; source: number; start: number; fire: number; shape: { x: number; z: number } }[] } } | undefined)?.spells?.telegraphs ?? [];
+    const casting = new Set<number>();
+    for (const k of tg) if (k.alive && k.fire > t) { casting.add(k.source); add(`t${k.id}`, `${k.attack} ${k.kind}`, k.shape.x, k.shape.z, k.fire, k.start); }
     for (const id of g.arena?.ids ?? []) {
       const c = g.creatures[id];
-      if (!c || c.gone || c.spell || !c.fight?.windupUntil || c.fight.windupUntil <= t) continue; // (one fighting with an attack in the grammar: its telegraphs, below)
+      if (!c || c.gone || c.spell || casting.has(id) || !c.fight?.windupUntil || c.fight.windupUntil <= t) continue;
       add(`w${id}`, c.species, c.x, c.z, c.fight.windupUntil, began.get(id));
     }
-    // (the grammar's own telegraphs, rules/attacks/engine.ts: live while alive, each with its start and when it fires, its shape's point)
-    const tg = (g.combat as { spells?: { telegraphs?: { id: number; alive: boolean; kind: string; attack: string; start: number; fire: number; shape: { x: number; z: number } }[] } } | undefined)?.spells?.telegraphs;
-    for (const k of tg ?? []) if (k.alive && k.fire > t) add(`t${k.id}`, `${k.attack} ${k.kind}`, k.shape.x, k.shape.z, k.fire, k.start);
     for (const [key, s] of this.seen) if (s.fire < t - 5) this.seen.delete(key);
     return out;
   }
