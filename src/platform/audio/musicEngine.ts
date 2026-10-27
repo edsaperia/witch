@@ -186,6 +186,16 @@ export class MusicEngine {
   /** A renderer's: what the bar before's renderer left in each part (a glide's last note, the sung phrase's vowel and end, its
    *  chain by place), its times on this one's context; taken up as each part's channel is made. */
   private carried = new Map<string, Pick<Channel, "lastFreq" | "sung" | "lastEnd" | "fxKind">>();
+  /** A renderer's: the notes it's drawn (each with its time and length on its context, 0.1 ms), for the bar cache. */
+  private drawn: unknown[] = [];
+  private gatedFrom = false;
+  /** A renderer's: what its bar sounds like, as far as it can be told without hearing it (the bar cache, musicAhead.ts): the
+   *  state it took up from the bar before (each part's glide, sung phrase and chain, the gate) and the notes it's drawn. Two
+   *  bars alike in this are alike by ear (their free-running wobbles and the noise aside, which run on from bar to bar). */
+  drawnKey(): string {
+    const st = [...this.carried].map(([k, c]) => [k, Math.round(c.lastFreq * 100), c.sung ?? null, c.lastEnd === undefined ? null : Math.round(c.lastEnd * 1e3), c.fxKind ?? null]);
+    return JSON.stringify([st, this.gatedFrom, this.drawn]);
+  }
   /** A renderer following `prev` (the bar before's, its context `shift` seconds earlier): its parts' state and its gate carried on. */
   carryFrom(prev: MusicEngine, shift: number): void {
     const move = (st: Pick<Channel, "lastFreq" | "sung" | "lastEnd" | "fxKind">) => ({ ...st, lastEnd: st.lastEnd === undefined ? undefined : st.lastEnd - shift });
@@ -409,6 +419,7 @@ export class MusicEngine {
   /** Schedule game time [from, from + seconds) to play from audio time `at` (offline rendering). */
   renderAhead(cue: MusicCue, from: number, seconds: number, clock: BeatClock, at = 0): void {
     const first = Math.ceil(beatAt(clock, from) * 4 - 1e-9);
+    if (this.stems && !this.drawn.length) this.gatedFrom = this.gated;
     for (let s = first; ; s++) {
       const g = timeAt(clock, s / 4);
       if (g >= from + seconds) break;
@@ -575,6 +586,7 @@ export class MusicEngine {
   private play(e: NoteEvent, t: number, dur: number, sps: number, chord: number[] = []): void {
     const p = this.style.patches[e.patch];
     if (!p || (this.solo && !this.solo.has(e.part))) return;
+    if (this.stems) { const { step: _, ...note } = e; this.drawn.push([note, Math.round(t * 1e4), Math.round(dur * 1e4), chord]); }
     const ch = this.channel(e.part, p, e.layer === "circle"), peak = p.gain * e.vel;
     const pf = (this.notePitch = e.layer === "circle" ? 1 : this.pitch); // (the tape slowing: the circle's own layer never)
     if (e.fx && ch.fx && ch.fxKind !== e.fx) { ch.fxKind = e.fx; ch.fx.set(this.fxChain(e.fx)); } // (two chains by place: Ed, 2026-10-14)

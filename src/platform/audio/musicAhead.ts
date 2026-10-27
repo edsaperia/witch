@@ -35,6 +35,35 @@ interface Bar {
   asked: number;
 }
 
+/** The bar cache: bars drawn before, by what they sound like (barKey), a bar the music repeats played again from it rather than
+ *  rendered; the least lately used let go past CACHE_BYTES in all. The page's (a rebuilt Music finds it full). */
+const CACHE_BYTES = 40 * 2 ** 20;
+const cache = new Map<string, AudioBuffer>();
+let cacheBytes = 0;
+const bytesOf = (b: AudioBuffer) => b.length * b.numberOfChannels * 4;
+function fromCache(k: string): AudioBuffer | undefined {
+  const b = cache.get(k);
+  if (b) { cache.delete(k); cache.set(k, b); } // (the most lately used last)
+  return b;
+}
+function toCache(k: string, b: AudioBuffer): void {
+  const n = bytesOf(b);
+  if (cache.has(k) || n > CACHE_BYTES) return;
+  cache.set(k, b); cacheBytes += n;
+  for (const [k0, b0] of cache) { if (cacheBytes <= CACHE_BYTES) break; cache.delete(k0); cacheBytes -= bytesOf(b0); }
+}
+/** A short hash of a long key (53 bits, cyrb53). */
+function hash(str: string): string {
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for (let i = 0; i < str.length; i++) { const ch = str.charCodeAt(i); h1 = Math.imul(h1 ^ ch, 2654435761); h2 = Math.imul(h2 ^ ch, 1597334677); }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36) + str.length.toString(36);
+}
+const recIds = new WeakMap<AudioBuffer, number>();
+let recNext = 0;
+const recId = (b: AudioBuffer) => { let id = recIds.get(b); if (id === undefined) recIds.set(b, id = ++recNext); return id; };
+
 /** What of a cue the bars drawn ahead hang on (the hooks' levels and a legend's clearing are live's). */
 const cueKey = (c: MusicCue): string => JSON.stringify({ ...c, siege: 0, party: 0, legend: 0, circle: undefined });
 const styleIds = new WeakMap<object, number>();
@@ -42,8 +71,9 @@ let styleNext = 0;
 
 export class MusicAhead {
   /** Bars drawn and how (the stall test and the playtest log read it): rendered, arrived too late to be heard whole, dropped
-   *  (the music changed), the time rendering took in all (ms), how far ahead the queue reaches now (s). */
-  readonly stats = { rendered: 0, late: 0, dropped: 0, renderMs: 0, queuedAhead: 0 };
+   *  (the music changed), the time rendering took in all (ms), how far ahead the queue reaches now (s), bars played from the
+   *  bar cache (not rendered) and the cache's size (MB). */
+  readonly stats = { rendered: 0, late: 0, dropped: 0, renderMs: 0, queuedAhead: 0, cached: 0, cacheMB: 0 };
   /** What of the cue changed, the last few times the bars were dropped (the playtest log's). */
   readonly changed: string[] = [];
   private lastCue: Record<string, unknown> = {};
@@ -149,15 +179,19 @@ export class MusicAhead {
     r.renderAhead({ ...cue, siege: 0, party: 0, legend: 0, circle: undefined }, g, dur, clock);
     const B: Bar = { bar: b, g, dur, renderer: r, sig: this.sigOf(cue, b), events, state: "rendering", asked: performance.now() };
     this.bars.set(b, B);
-    void oc.startRendering().then(buf => this.arrive(B, buf), () => { B.state = "dropped"; });
+    // (a bar drawn before, alike by ear: its notes and the state it took up, its bus automation, its length, the patches, the shed)
+    const key = hash(JSON.stringify([sr, this.styleId(), E.shed, Math.round(dur * 1e4), r.drawnKey(), events.map(e => Object.entries(e).map(([k, v]) => k === "rec" ? recId(v as AudioBuffer) : typeof v === "number" ? Math.round(v * 1e4) : v))]));
+    const hit = fromCache(key);
+    if (hit) { this.stats.cached++; queueMicrotask(() => this.arrive(B, hit, true)); return; }
+    void oc.startRendering().then(buf => { toCache(key, buf); this.stats.cacheMB = Math.round(cacheBytes / 2 ** 20); this.arrive(B, buf); }, () => { B.state = "dropped"; });
   }
 
   /** A bar rendered: queued on the audio clock through the live buses (if it's still wanted), its automation played on them. */
-  private arrive(B: Bar, buf: AudioBuffer): void {
-    this.stats.renderMs += performance.now() - B.asked;
+  private arrive(B: Bar, buf: AudioBuffer, cached = false): void {
+    if (!cached) this.stats.renderMs += performance.now() - B.asked;
     if (B.state === "dropped" || this.bars.get(B.bar) !== B) return;
     const E = this.engine, c = this.ctx, now = c.currentTime, at = E.audioAt(B.g);
-    this.stats.rendered++;
+    if (!cached) this.stats.rendered++;
     if (at < now) this.stats.late++;
     if (at + B.dur < now) { B.state = "dropped"; return; } // (the whole bar past: the hitch was longer than the queue)
     const bus = E.bus, sung = E.style.form?.sung.part, voiceIn = sung ? E.voiceIn(sung) : null;
