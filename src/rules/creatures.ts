@@ -173,6 +173,9 @@ export interface Creature {
    *  tries to stay within the circle"): it roams the circle's open floor and walks back in if it's out, dancing there
    *  once its area's party comes; leashed, it follows her (keepsToCircle). */
   circle?: { x: number; z: number; r: number; legendX: number; legendZ: number };
+  /** Let go happy at her knockout (Ed, 2026-10-26: "they should idle near where they were dropped, not walk back to their
+   *  area"; rules/knockout.ts letGoHappy): it idles within r metres of (x, z) in place of its own area, till she leashes it again. */
+  dropped?: { x: number; z: number; r: number; /** the area it was dropped in */ cell: [number, number] };
   /** When it was last healed (heal or healBy: a berry, invited, leashed, a happy legend mending...): the view's green "+"s. */
   healedAt?: number;
   /** That heal was a little of a slow mend (healBy), not to whole: the view pops one small "+". */
@@ -258,7 +261,7 @@ export function makeCreature(map: ForestMap, cell: [number, number], level: Leve
     dazedUntil: undefined, affection: undefined, affectionAt: undefined, holdT: undefined, holdAt: undefined,
     route: undefined, engagedUntil: undefined, brace: undefined, legend: undefined, moveReadyAt: undefined,
     sprung: undefined, enraged: undefined, asleepAt: undefined, bed: undefined, gone: undefined, siege: undefined,
-    wanderTo: undefined, circle: undefined, healedAt: undefined, healedSmall: undefined, boss: undefined, legendState: undefined,
+    wanderTo: undefined, circle: undefined, dropped: undefined, healedAt: undefined, healedSmall: undefined, boss: undefined, legendState: undefined,
     stateAt: undefined, quest: undefined, friendly: undefined, asleep: undefined, napUntil: undefined, lulled: undefined,
     wakeUntil: undefined, safeX: undefined, safeZ: undefined, safeR: undefined, watchUntil: undefined, hunting: undefined, taunt: undefined, swoop: undefined, finale: undefined,
     packGlow: undefined, packHide: undefined, packShell: undefined, packProwl: undefined, feintUntil: undefined, coverBy: undefined, packSync: undefined, packThrow: undefined, mind: undefined,
@@ -269,7 +272,7 @@ export function makeCreature(map: ForestMap, cell: [number, number], level: Leve
 
 /** Every optional field of a Creature, in the order makeCreature's literal lists them (one shape for all; creatures.test.ts checks the order). A field added to
  *  Creature and not here fails the typecheck (OptionalMissing). */
-export const CREATURE_OPTIONAL = ["lod", "hp", "hurtAt", "kx", "kz", "slowUntil", "stunUntil", "burrow", "leap", "fight", "fleeUntil", "retreat", "retreatFrom", "fleeX", "fleeZ", "vx", "vz", "run", "lairX", "lairZ", "homing", "charge", "dug", "travelling", "state", "happyAt", "partyLegend", "dazed", "dancing", "restlessness", "questOpen", "buffed", "aims", "dazedUntil", "affection", "affectionAt", "holdT", "holdAt", "route", "engagedUntil", "brace", "legend", "moveReadyAt", "sprung", "enraged", "asleepAt", "bed", "gone", "siege", "wanderTo", "circle", "healedAt", "healedSmall", "boss", "legendState", "stateAt", "quest", "friendly", "asleep", "napUntil", "lulled", "wakeUntil", "safeX", "safeZ", "safeR", "watchUntil", "hunting", "taunt", "swoop", "finale", "packGlow", "packHide", "packShell", "packProwl", "feintUntil", "coverBy", "packSync", "packThrow", "mind"] as const satisfies readonly (keyof Creature)[];
+export const CREATURE_OPTIONAL = ["lod", "hp", "hurtAt", "kx", "kz", "slowUntil", "stunUntil", "burrow", "leap", "fight", "fleeUntil", "retreat", "retreatFrom", "fleeX", "fleeZ", "vx", "vz", "run", "lairX", "lairZ", "homing", "charge", "dug", "travelling", "state", "happyAt", "partyLegend", "dazed", "dancing", "restlessness", "questOpen", "buffed", "aims", "dazedUntil", "affection", "affectionAt", "holdT", "holdAt", "route", "engagedUntil", "brace", "legend", "moveReadyAt", "sprung", "enraged", "asleepAt", "bed", "gone", "siege", "wanderTo", "circle", "dropped", "healedAt", "healedSmall", "boss", "legendState", "stateAt", "quest", "friendly", "asleep", "napUntil", "lulled", "wakeUntil", "safeX", "safeZ", "safeR", "watchUntil", "hunting", "taunt", "swoop", "finale", "packGlow", "packHide", "packShell", "packProwl", "feintUntil", "coverBy", "packSync", "packThrow", "mind"] as const satisfies readonly (keyof Creature)[];
 type RequiredKeys = "id" | "species" | "cell" | "level" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ" | "x" | "z" | "tx" | "tz" | "rest" | "speed" | "facing" | "away" | "moving" | "walk" | "seen" | "leashed" | "rand";
 type OptionalMissing = Exclude<keyof Creature, RequiredKeys | (typeof CREATURE_OPTIONAL)[number]>;
 const _everyField: [OptionalMissing] extends [never] ? true : OptionalMissing = true;
@@ -299,6 +302,7 @@ const inCell = (map: ForestMap, x: number, z: number, cell: [number, number]) =>
  *  last found to be surely inside (map.cellSafe), so a creature ambling about asks every metre
  *  or so, not every step (the area lookup was most of a frame's work with hundreds of them). */
 function inOwnArea(map: ForestMap, c: Creature, x: number, z: number): boolean {
+  if (c.dropped) return Math.hypot(x - c.dropped.x, z - c.dropped.z) <= c.dropped.r; // (let go at her knockout: where it was dropped is its ground)
   if (c.safeR !== undefined && Math.hypot(x - c.safeX!, z - c.safeZ!) < c.safeR) return true;
   const r = map.cellSafe(x, z);
   if (r.cell[0] !== c.cell[0] || r.cell[1] !== c.cell[1]) return false;
@@ -322,7 +326,7 @@ export function anchorOf(map: ForestMap, cell: [number, number], hx: number, hz:
  *  comes), but not while leashed (Ed, 2026-10-06: "if it is invited and becomes happy, it continues to stay in the
  *  circle as before"; "happy creatures don't follow you - only leashed creatures do"; "Happy Circle baby should stay
  *  in its circle, though it can dance there"). */
-export const keepsToCircle = (c: Partial<Pick<Creature, "circle" | "leashed" | "enraged">>) => !!c.circle && !c.leashed && !c.enraged;
+export const keepsToCircle = (c: Partial<Pick<Creature, "circle" | "leashed" | "enraged" | "dropped">>) => !!c.circle && !c.leashed && !c.enraged && !c.dropped;
 
 /** A spot on a clearing's open floor: its front (south) part, clear of the legend's lair at its top. */
 export function pointInCircle(k: NonNullable<Creature["circle"]>, r: () => number): [number, number] {
@@ -340,7 +344,12 @@ export function pointInCircle(k: NonNullable<Creature["circle"]>, r: () => numbe
 export const idlesAtStone = (c: Partial<Pick<Creature, "level" | "boss" | "friendly" | "leashed" | "state" | "enraged" | "circle">> & { dancing?: boolean }) =>
   (c.level ?? 0) > 0 && c.level !== LEGEND && !c.boss && !c.friendly && !c.leashed && !c.enraged && !c.dancing && !c.circle && c.state !== "happy";
 
-export function pointInArea(map: ForestMap, c: Pick<Creature, "cell" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ"> & Partial<Pick<Creature, "circle" | "leashed" | "state" | "enraged" | "level" | "boss" | "friendly">> & { dancing?: boolean; anywhere?: boolean }, r: () => number): [number, number] {
+export function pointInArea(map: ForestMap, c: Pick<Creature, "cell" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ"> & Partial<Pick<Creature, "circle" | "leashed" | "state" | "enraged" | "level" | "boss" | "friendly" | "dropped">> & { dancing?: boolean; anywhere?: boolean }, r: () => number): [number, number] {
+  if (c.dropped && !c.anywhere) { // (let go at her knockout: a spot near where it was dropped, never on a lake's water)
+    const D = c.dropped, shore = map.bounds.lakes ? lakeKnobs(map.tuning).shore : 0;
+    for (let i = 0; i < 12; i++) { const a = r() * Math.PI * 2, d = Math.sqrt(r()) * D.r, x = D.x + Math.cos(a) * d, z = D.z + Math.sin(a) * d; if (!onLake(map.bounds, x, z, shore)) return [x, z]; }
+    return [D.x, D.z];
+  }
   if (keepsToCircle(c)) return pointInCircle(c.circle!, r); // (the circle's baby, wild or happy)
   // A hostile one idles in a loose cluster round its area's runestone: anywhere in a disc of stoneIdle.radius metres round it
   // (evenly, so they spread), keeping stoneIdle.clear metres off the stone itself; the rest of the area as before.
@@ -481,7 +490,7 @@ export function stepCreaturesNear(all: Creature[], x: number, z: number, radius:
     // A napper up when it's time, when she's on the ground in its area, or when it may nap no longer (wherever it is).
     if (c.napUntil !== undefined && (time >= c.napUntil || !napper(c) || (!c.lulled && (!naps || !naps.wild(c) || naps.roused(c))))) wakeUp(c, time, naps?.wake ?? 0); // (a lulled one: only its own end, or a 💌)
     if (c.leashed || c.gone) continue;
-    const ax = Math.abs(c.homeX - x), az = Math.abs(c.homeZ - z);
+    const ax = Math.abs((c.dropped?.x ?? c.homeX) - x), az = Math.abs((c.dropped?.z ?? c.homeZ) - z); // (one let go at a knockout: by where it was dropped)
     if (ax > radius || az > radius) { if (counts) counts.frozen++; continue; }
     if (heldByCombat(c)) { c.seen = time; continue; } // fighting, fleeing, marching or walking home: moved by combat and knockout
     const full = inFull(c, Math.max(Math.abs(c.x - x), Math.abs(c.z - z)), lod.full, lod.band);

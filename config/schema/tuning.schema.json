@@ -2697,6 +2697,10 @@
         "bpmStep": {
           "type": "number",
           "minimum": 0
+        },
+        "dropRadius": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -2711,7 +2715,8 @@
         "rise",
         "respawn",
         "candleStep",
-        "bpmStep"
+        "bpmStep",
+        "dropRadius"
       ],
       "additionalProperties": false
     },

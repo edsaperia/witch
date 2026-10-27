@@ -178,7 +178,7 @@ export function stepPartyOver(g: Game, dt: number): void {
   for (const c of g.creatures) {
     if (c.gone) continue;
     if (c.asleep) { if (c.napUntil !== undefined) sleep(c, time); continue; }
-    if (!c.bed) { calm(c, time); if (c.leashed) c.leashed = false; const b = bedOf(g, c); c.bed = b; }
+    if (!c.bed) { calm(c, time); if (c.leashed) c.leashed = false; c.dropped = undefined; const b = bedOf(g, c); c.bed = b; }
     const b = c.bed!, dx = b.x - c.x, dz = b.z - c.z, d = Math.hypot(dx, dz), step = c.speed * g.tuning.partyOver.walk * dt;
     if (d <= Math.max(step, 0.05) || unseen(g, c.x, c.z)) { c.x = c.tx = b.x; c.z = c.tz = b.z; sleep(c, time); continue; }
     c.x += (dx / d) * step; c.z += (dz / d) * step; c.tx = b.x; c.tz = b.z;
