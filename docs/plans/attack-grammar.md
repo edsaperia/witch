@@ -131,7 +131,8 @@ Plus:
 - `body.radius` / size
 - `cast.cooldown`, `cast.casts` before `cast.rest`
 - `hit.blink`: a dash's blink passes through it (true by default)
-- `hit.friendly`: it can hit other animals; off by default, the fun of luring
+- `hit.allies`: what it does to other animals (Ed, 2026-10-27: "not much friendly fire but sometimes friendly 'effects' like stun, knockback, slow"): `damage`, its share (none by default), and `effects`, which of its effects spill onto them (none by default). This is what makes luring and positioning matter
+- `force` (any zone or moving body): a push (or, negative, a pull) on whoever's within `r`, `who` all, others (every creature) or foes: a legend's whirlwind
 
 `body.element` (the look's eight, agreed with Lima: fire, frost, venom, moonlight, storm, earth, shadow, bloom; an untagged attack takes its species' element) and `body.look` are tags for the look layer only:
 the rules never read them.

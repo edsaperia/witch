@@ -16,7 +16,7 @@ function world(targets: Hittable[] = [], seed = 7) {
   const W: SpellWorld = {
     seed,
     near: (x, z, r) => targets.filter(t => Math.hypot(t.x - x, t.z - z) <= r + 3),
-    hostile: (side, t, friendly) => friendly || t.side !== side,
+    hostile: (side, t) => t.side !== side,
     harm: (t, damage, effect) => { hits.push({ id: t.id, damage, effect, at: now }); },
     where: (kind, id) => (kind === "creature" && id === 1 ? caster : targets.find(t => t.kind === kind && t.id === id) ?? null),
   };
@@ -121,8 +121,13 @@ describe("the attacks' engine: patterns, children, zones", () => {
     expect(nova.hits.map(h => h.id)).toEqual(["a", "b"]);
     const donut = fire({ cast: { windup: 0 }, body: { kind: "area" }, area: { shape: "donut", r: 6, inner: 3 } }, [her(1, 0, "safe"), her(5, 0, "hit")], 1);
     expect(donut.hits.map(h => h.id)).toEqual(["hit"]);
-    const pud = fire({ cast: { windup: 0 }, body: { kind: "zone" }, zone: { r: 2, time: 2, tick: 0.5 }, hit: { damage: 1, effect: { slow: { mult: 0.5, time: 1 } } } }, [her(1, 0)], 3);
+    // (a creature takes a puddle's damage tick by tick; she's hurt once by it, its slow each tick)
+    const wolf = (x: number, z: number): Hittable => ({ kind: "creature", id: 9, x, z, r: 0.5, side: "party" });
+    const puddle: AttackSpec = { cast: { windup: 0 }, body: { kind: "zone" }, zone: { r: 2, time: 2, tick: 0.5 }, hit: { damage: 1, effect: { slow: { mult: 0.5, time: 1 } } } };
+    const pud = fire(puddle, [wolf(1, 0)], 3);
     expect(pud.hits.length).toBe(4); expect(pud.hits.reduce((s, h) => s + h.damage, 0)).toBeCloseTo(10); expect(pud.hits[0].effect?.slow?.mult).toBe(0.5);
+    const onHer = fire(puddle, [her(1, 0)], 3);
+    expect(onHer.hits.map(h => h.damage > 0)).toEqual([true, false, false, false]); expect(onHer.hits.every(h => h.effect?.slow)).toBe(true);
   });
 
   it("shows its telegraphs from the windup's start, with the caster's tell, and drops them if the cast is cancelled", () => {

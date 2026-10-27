@@ -762,14 +762,66 @@
             "required": [],
             "additionalProperties": false
           },
-          "friendly": {
-            "type": "boolean"
+          "allies": {
+            "type": "object",
+            "properties": {
+              "damage": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "effects": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "slow",
+                    "stun",
+                    "knockback",
+                    "pull",
+                    "root",
+                    "burn"
+                  ]
+                },
+                "maxItems": 6
+              }
+            },
+            "required": [],
+            "additionalProperties": false
           },
           "blink": {
             "type": "boolean"
           }
         },
         "required": [],
+        "additionalProperties": false
+      },
+      "force": {
+        "type": "object",
+        "properties": {
+          "r": {
+            "type": "number",
+            "minimum": 0,
+            "unit": "m"
+          },
+          "push": {
+            "type": "number",
+            "minimum": -100,
+            "maximum": 100,
+            "unit": "m/s"
+          },
+          "who": {
+            "type": "string",
+            "enum": [
+              "all",
+              "others",
+              "foes"
+            ]
+          }
+        },
+        "required": [
+          "push"
+        ],
         "additionalProperties": false
       },
       "on": {
