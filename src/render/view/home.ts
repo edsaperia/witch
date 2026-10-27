@@ -293,9 +293,9 @@ const candlesSeen = new WeakMap<View, { n: number; red: number; until: number }>
 export function forgetCandles(v: View): void { candlesSeen.delete(v); }
 
 /** The ground a sprite `w` metres wide stands on at (x, z), as the sprites' shader finds it (render/sprites.ts: the lowest of five
- *  points across its foot, up to 5 m either side). */
-export function underFoot(x: number, z: number, w: number): number {
-  const R = SPRITE_UNIFORMS.uRight.value, fw = Math.min(w * 0.45, 5);
+ *  points across its foot, up to 5 m either side, or as far as its drawn foot reaches, `foot` metres). */
+export function underFoot(x: number, z: number, w: number, foot = 0): number {
+  const R = SPRITE_UNIFORMS.uRight.value, fw = Math.max(Math.min(w * 0.45, 5), foot);
   let m = groundHeight(x, z);
   for (const f of [-1, -0.5, 0.5, 1]) m = Math.min(m, groundHeight(x + R.x * fw * f, z + R.z * fw * f));
   return m;
@@ -307,7 +307,7 @@ export function entDeckDrawn(v: View): { x: number; y: number; z: number } | nul
   const T = v.assets.treehouse, it = v.treehouseBatch.items[0];
   if (!T.ent || !it) return null;
   const k = it.scale ?? 1, fr = it.frame, R = SPRITE_UNIFORMS.uRight.value, U = SPRITE_UNIFORMS.uUp.value;
-  const ox = (T.ent.deck.x - fr.w / 2) * v.mpp * k, oy = (fr.h - T.ent.deck.y) * v.mpp * k, g = underFoot(it.x, it.z, fr.w * v.mpp * k);
+  const ox = (T.ent.deck.x - fr.w / 2) * v.mpp * k, oy = (fr.h - T.ent.deck.y) * v.mpp * k, g = underFoot(it.x, it.z, fr.w * v.mpp * k, (fr.foot ?? 0) * v.mpp * k);
   return { x: it.x + R.x * ox + U.x * oy, y: it.y + g + R.y * ox + U.y * oy, z: it.z + R.z * ox + U.z * oy };
 }
 
@@ -336,7 +336,7 @@ export function placeTreehouse(v: View, angle: number, time: number): { x: numbe
     const a = put(D.x, D.y, D.z);
     // (slid, it's stood on the ground under where it's slid to (sprites.ts: the lowest ground under its foot): the ground it stood on
     // unslid kept, so it moves with the floors, which stand on the deck's ground)
-    if (sh) { const b = put(0, 0, 0); a.y -= underFoot(a.x, a.z, frame.w * mpp * a.k) - underFoot(b.x, b.z, frame.w * mpp * b.k); }
+    if (sh) { const b = put(0, 0, 0); a.y -= underFoot(a.x, a.z, frame.w * mpp * a.k, (frame.foot ?? 0) * mpp * a.k) - underFoot(b.x, b.z, frame.w * mpp * b.k, (frame.foot ?? 0) * mpp * b.k); }
     return { x: a.x, y: a.y, z: a.z, frame, flip: false, scale: a.k, ...o };
   };
   let deckAt: { x: number; y: number; z: number } | null = null;
@@ -345,7 +345,7 @@ export function placeTreehouse(v: View, angle: number, time: number): { x: numbe
     const ox = (T.ent.deck.x - f[0].w / 2) * mpp, oy = (f[0].h - T.ent.deck.y) * mpp;
     at = { x: deckAt.x - R0.x * ox - U.x * oy, y: deckAt.y - R0.y * ox - U.y * oy, z: deckAt.z - R0.z * ox - U.z * oy };
   }
-  const items: SpriteInstance[] = deckAt ? [ent(at, -ED.far, f[0]), ent(at, ED.near, f[1])] : [{ ...at, frame: f[0], flip: false }, { ...at, frame: f[1], flip: false, top: true }];
+  const items: SpriteInstance[] = deckAt ? [ent(at, -ED.far, f[0]), ent(at, ED.near, f[1])] : [{ ...at, frame: f[0], flip: false }, { ...at, frame: f[1], flip: false, top: true, foot: f[0].foot }];
   const terrace = new Set<SpriteInstance>(items); // (the Terrace's own art: the Ent's two halves, and below its DJ table)
   // The island's legend carrying the Ent (art/carrier.js; Ed, 2026-10-10): its back's top under the Ent's roots' foot (the base
   // anchor), its roots' foot planted T.carrier.sink pixels down in its fur, its feet on the ground (the art grows the Ent's trunk

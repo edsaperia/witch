@@ -186,12 +186,12 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tel
     const fresh = mark(v, "tree", p.x, p.z, tall * scale);
     const at = stand(p.x, p.z, f[big.bot], mpp * scale);
     const jitter = leafJitterOf(p); // (its own leaf colour, both halves alike: Ed, 2026-10-16)
-    if (!near) { add(p.type, { ...at, frame: f[big.top!], flip: p.flip, top: true, fresh, scale, sway: 1, jitter }); nt++; if (sliceDone()) { yield; resume(); } continue; } // (past the scenery's radius, in the treetops: its crown alone)
+    if (!near) { add(p.type, { ...at, frame: f[big.top!], flip: p.flip, top: true, fresh, scale, sway: 1, jitter, foot: f[big.bot].foot }); nt++; if (sliceDone()) { yield; resume(); } continue; } // (past the scenery's radius, in the treetops: its crown alone)
     // A tree's two halves share one box and sway alike (from its foot), so crown and trunk stay together.
     const sway = big.top !== null ? 1 : 0;
     add(p.type, { ...at, frame: f[big.bot], flip: p.flip, fresh, scale, cut: big.top !== null ? art.cut.get(big.bot) : undefined, sway, jitter });
     if (big.top !== null || f[big.bot].h > f[big.bot].w * 1.5) { let l = trunks.get(p.type); if (!l) trunks.set(p.type, (l = [])); l.push({ x: p.x, z: p.z, w: f[big.bot].w * mpp * scale, h: f[big.bot].h * mpp * scale, frame: f[big.bot], flip: p.flip }); }
-    if (big.top !== null) add(p.type, { ...at, frame: f[big.top], flip: p.flip, top: true, fresh, scale, sway, jitter });
+    if (big.top !== null) add(p.type, { ...at, frame: f[big.top], flip: p.flip, top: true, fresh, scale, sway, jitter, foot: f[big.bot].foot });
     const w = whole.w * mpp, h = whole.h * mpp * (big.top === null ? 0.2 : 0.6);
     if (t.shadows.trees) shadows.push({ x: p.x + sx * h, z: p.z + sz * h, w: w * 0.8, d: w * 0.45, scenery: true });
     nt++;
@@ -220,7 +220,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tel
       const at = stand(x, z, frame, m);
       const sway = kind === "small" ? 1 : 0; // undergrowth sways; walls and set pieces stand still
       add(p.type, { ...at, frame, flip: p.flip, fresh, scale, sway });
-      if (piece.top !== null) add(p.type, { ...at, frame: f[piece.top], flip: p.flip, top: true, fresh, scale, sway });
+      if (piece.top !== null) add(p.type, { ...at, frame: f[piece.top], flip: p.flip, top: true, fresh, scale, sway, foot: f[piece.bot].foot });
       // Set pieces model their own ground: no blob under them (it read as a hard dark oval).
       // Its shadow lies under it, its front edge at its base (not centred on its bottom edge,
       // which leaves half of it in front, reading as a shadow below something hovering); one
@@ -251,7 +251,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tel
     if (!inView(v, d.x, d.z, whole.w * mpp, whole.h * mpp, margin, reach)) continue;
     const fresh = mark(v, "decor", d.x, d.z, whole.h * mpp), at = stand(d.x, d.z, frame, mpp);
     dl.push({ ...at, frame, flip: d.flip, fresh });
-    if (piece.top !== null) dl.push({ ...at, frame: f[piece.top], flip: d.flip, top: true, fresh });
+    if (piece.top !== null) dl.push({ ...at, frame: f[piece.top], flip: d.flip, top: true, fresh, foot: f[piece.bot].foot });
     cast("decor", d.x, d.z, frame, mpp, d.flip); // (a tall one's two halves share one box: each casts its own, together the whole)
     if (piece.top !== null) cast("decor", d.x, d.z, f[piece.top], mpp, d.flip);
     const sd = frame.w * mpp * 0.3; // its shadow under it, front edge at its base

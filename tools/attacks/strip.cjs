@@ -2,7 +2,9 @@
 // Chromium, an arena (ARENAS, comma-separated presets or specs: src/rules/arena.ts), the camera zoomed all the way in on
 // the ground; when a creature starts winding up a blow, FRAMES frames every STEP seconds of game time, cropped round it and
 // what it's after, into one row per arena: previews/attacks/<NAME>.png. BRIGHT=k brightens the picture (the night is dark
-// for judging shapes); TREETOP=1 flies up to the treetops first; PX=4 sets the art pixel (?px=). Run `npm run build` first.
+// for judging shapes); TREETOP=1 flies up to the treetops first; PX=4 sets the art pixel (?px=); QUERY adds to the page's query
+// (QUERY=look=old: the attack look's before); ZOOM=n zooms in n steps (8, all the way, by default; 0 the play zoom); WILD=1 follows
+// only a wild creature's blows. Run `npm run build` first.
 //   ARENAS=strike,charge,swipe NAME=after node tools/attacks/strip.cjs
 const http = require("http"), fs = require("fs"), path = require("path");
 let pw; try { pw = require("playwright"); } catch { pw = require("/opt/node22/lib/node_modules/playwright"); }
@@ -17,23 +19,23 @@ const serve = () => new Promise(r => { const s = http.createServer((req, res) =>
   for (const arena of ARENAS) {
     const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
     page.on("pageerror", e => errors.push(e.message));
-    await page.goto(`http://127.0.0.1:${server.address().port}/?creator=0&seed=123&rig=1${process.env.PX ? `&px=${process.env.PX}` : ""}&arena=${encodeURIComponent(arena)}`);
+    await page.goto(`http://127.0.0.1:${server.address().port}/?creator=0&seed=123&rig=1${process.env.PX ? `&px=${process.env.PX}` : ""}&arena=${encodeURIComponent(arena)}${process.env.QUERY ? `&${process.env.QUERY}` : ""}`);
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 300000, polling: 500 });
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 30000 });
     if (process.env.TREETOP) { await page.keyboard.press("KeyQ"); await page.waitForTimeout(3000); }
-    for (let i = 0; i < 8; i++) await page.keyboard.press("KeyZ"); // all the way in
+    for (let i = 0; i < +(process.env.ZOOM ?? 8); i++) await page.keyboard.press("KeyZ"); // all the way in (ZOOM: so many steps)
     await page.waitForTimeout(2500); // (the zoom eases in)
     await page.addStyleTag({ content: "body * { visibility: hidden !important } canvas { visibility: visible !important }" }); // the picture alone, no HUD
     if (process.env.BRIGHT) await page.addStyleTag({ content: `canvas { filter: brightness(${+process.env.BRIGHT}) }` });
     await page.waitForFunction(() => !window.witch.view.rig || window.witch.view.rig.stats.creatures > 0, null, { timeout: 120000, polling: 500 }).catch(() => {});
     // wait for a blow to start near the witch (not one already under way)
-    const id = await page.waitForFunction(() => {
+    const id = await page.waitForFunction(wild => {
       const g = window.witch.game, w = g.witch, t = g.clock.time;
       let best = null, bd = 30;
-      for (const c of g.creatures) { const f = c && c.fight; if (!f || !(f.windupUntil > t + 0.25) || !f.target) continue; const d = Math.hypot(c.x - w.x, c.z - w.z); if (d < bd) { bd = d; best = c.id; } }
+      for (const c of g.creatures) { const f = c && c.fight; if (!f || !(f.windupUntil > t + 0.25) || !f.target || (wild && c.leashed)) continue; const d = Math.hypot(c.x - w.x, c.z - w.z); if (d < bd) { bd = d; best = c.id; } }
       return best;
-    }, null, { timeout: 120000, polling: 30 }).then(h => h.jsonValue()).catch(() => null);
+    }, !!process.env.WILD, { timeout: 120000, polling: 30 }).then(h => h.jsonValue()).catch(() => null);
     if (id === null) { rows.push({ label: `${arena}: no blow seen`, frames: [] }); await page.close(); continue; }
     const t0 = await page.evaluate(() => window.witch.game.clock.time), frames = []; let at = null;
     for (let k = 0; k < FRAMES; k++) {

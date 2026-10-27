@@ -947,6 +947,28 @@ The fight's scale and speed (Ed's motion scale pass, 2026-10-04: "the animals do
 | `fight.leap.contact` | boolean |  |
 | `fight.leap.lead` | number | 0 to … |
 
+### `creatureMomentum`
+
+Creature momentum (Ed, 2026-10-27: "most animals don't have enough momentum and can turn too sharply, or alternatively track the witch too quickly and accurately ... less worth dodging"; "all these as options, which we can tweak later", "prediction is ok, but it should mostly be for telegraphed attacks", "each creature can have different amounts of each"; rules/momentum.ts), chasing the witch only (fights between creatures, legends and marchers as before; and its telegraphed attacks: a wind-up's surge in, and a pack's whole tell and combo, the momentum its approach and its lull, unless strikes: then those too, as Ed's complaint may mean, at the cost of lunges that started reaching her, Ed's v3893). turn: its heading swings at most turn / (1 + its speed / k) degrees a second (also divided by fight.momentum), slowing to turn tighter when she's far off its heading, so a fast one sidestepped overshoots in an arc; delay: it steers for where she was that many seconds ago (a short trail of her places), so a sidestep or blink fools it a moment; chaseLead: seconds of her velocity it leads her by when just chasing (0: none); strikeLead: times the lead its telegraphed attacks take (a melee wind-up's tracking, dodge.a.lead; a charge's lane, dodge.b.chargeLead; a leap, fight.leap.lead; a swoop's dive; shots and lobs, dodge.b.lead). classes: each class's values (heavy: dodge.a.heavy's species; light: those with the nimble or swarm trait; normal: everyone else), and a species may set its own in its folder (art/creatures/<id>/creature.js movement.momentum). The pause page's sliders (Creature momentum) are global: turn, delay and strikeLead multiply every species' values, chaseLead adds seconds to every species' own; on false: as before.
+
+| knob | type | range |
+|---|---|---|
+| `creatureMomentum.on` | boolean |  |
+| `creatureMomentum.strikes` | boolean |  |
+| `creatureMomentum.turn` | number | 0 to … |
+| `creatureMomentum.delay` | number | 0 to … |
+| `creatureMomentum.chaseLead` | number | 0 to … |
+| `creatureMomentum.strikeLead` | number | 0 to … |
+| `creatureMomentum.classes.heavy.turn` | number | 0 to … |
+| `creatureMomentum.classes.heavy.k` | number | 0 to … |
+| `creatureMomentum.classes.heavy.delay` | number | 0 to … |
+| `creatureMomentum.classes.normal.turn` | number | 0 to … |
+| `creatureMomentum.classes.normal.k` | number | 0 to … |
+| `creatureMomentum.classes.normal.delay` | number | 0 to … |
+| `creatureMomentum.classes.light.turn` | number | 0 to … |
+| `creatureMomentum.classes.light.k` | number | 0 to … |
+| `creatureMomentum.classes.light.delay` | number | 0 to … |
+
 ### `attackFx`, `combat`
 
 How attacks feel on screen (Ed, 2026-10-06: 'make creature attack visuals better'; render/attackFeel.ts), a party not a fight: windupSquash, how low and wide an attacker crouches as its wind-up nears the blow (at most windupMax seconds of it shown); lungeStretch, how far it stretches out in its lunge; squash, how flat a hit squashes the one it hits, springing back past its shape over squashSecs seconds; a knock-back thrown faster than tumbleKnock m/s tumbles: up tumbleHeight metres (at most 1.5 times that for the hardest) for tumbleSecs, over on its back from turnFrom to turnTo of the way (one slow beat, never a strobe), landing with a squash. Squash and stretch go in whole art pixels. legendFlash: how much bigger and longer a legend's blow flashes than anyone's (its flash 1 + 2 × legendFlash times; 0.5, twice: Ed's decisions panel, config/decisions.json).
@@ -2377,6 +2399,14 @@ trunks.lightReach (Ed, 2026-10-13: "the light that soundsystems and runestones p
 | `shadows.trunks.sceneryFoot` | number | 0 to … |
 | `shadows.trunks.sceneryTaper` | number | 0 to … |
 | `shadows.trunks.lightReach` | number | 0 to … |
+
+### `attacks`
+
+The composable attacks (docs/plans/attack-grammar.md, src/rules/attacks/): reactionFloor, the least warning (s) any attack and each child it makes gives from its first telegraph to its first harm (Ed, 2026-10-27: 0.45 s, "we can tune in balancing"); one under it is lengthened to it, silently in the game, said so in the Fight Arena.
+
+| knob | type | range |
+|---|---|---|
+| `attacks.reactionFloor` | number | 0 to … |
 
 ### `gpu`, `mist`
 
