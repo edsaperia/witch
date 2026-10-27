@@ -1,0 +1,7 @@
+{
+  "what": "frame time with the house's warm light and the moon's limb edges off and on (treehouse.house.crown.warm 1, rim 1), at 1900x1240 on the cloud's software renderer: relative only",
+  "room (parlour)": { "before_ms": 6154.5, "after_ms": 6152.1, "change": "0%" },
+  "terrace": { "before_ms": 3916.8, "after_ms": 4048.7, "change": "about +3% (noisy: frames there were either ~4 s or ~38 s with the look on or off; the ~4 s ones compared)" },
+  "approach": { "before_ms": 4823.3, "after_ms": 5025.6, "change": "about +4% (noisy the same way: frames 25 to 64 s left out)" },
+  "lights": "the crown's lights' density: no frame-time change worth measuring (fewer bulbs is only cheaper)"
+}
