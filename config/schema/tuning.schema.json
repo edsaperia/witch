@@ -11327,6 +11327,59 @@
       ],
       "additionalProperties": false
     },
+    "gpu": {
+      "type": "object",
+      "properties": {
+        "mb": {
+          "type": "number",
+          "minimum": 0
+        },
+        "refWidth": {
+          "type": "number",
+          "minimum": 0
+        },
+        "refHeight": {
+          "type": "number",
+          "minimum": 0
+        },
+        "floor": {
+          "type": "number",
+          "minimum": 0
+        },
+        "ceil": {
+          "type": "number",
+          "minimum": 0
+        },
+        "headroom": {
+          "type": "number",
+          "minimum": 0
+        },
+        "keep": {
+          "type": "number",
+          "minimum": 0
+        },
+        "every": {
+          "type": "number",
+          "minimum": 0
+        },
+        "errorEvery": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "mb",
+        "refWidth",
+        "refHeight",
+        "floor",
+        "ceil",
+        "headroom",
+        "keep",
+        "every",
+        "errorEvery"
+      ],
+      "additionalProperties": false
+    },
     "mist": {
       "type": "object",
       "properties": {
@@ -11917,6 +11970,7 @@
     "lightSources",
     "haze",
     "shadows",
+    "gpu",
     "mist",
     "loadingMist",
     "lightRings",
