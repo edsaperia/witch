@@ -89,8 +89,21 @@ void main() {
   // Written on: revealed clockwise from the top as vDraw goes 0 to 1.
   float ang = fract(atan(vP.x, vP.y) / 6.2831853 + 1.0);
   if (ang > vDraw || a < 0.02) discard;
+#ifdef MASK
+  gl_FragColor = vec4(a); return; // (its coverage alone, for the tilt-shift's sharp mask: maskOf)
+#endif
   gl_FragColor = uSolid > 0.5 ? vec4(haze(rgb, vWorld), a) : vec4(haze(rgb * a, vWorld), 1.0); // (solid: dust and bits, blended, not glowing)
 }`;
+
+/** The same quads' coverage (0 to 1, in every channel; the most of what's drawn there kept), for render/post.ts's sharp mask:
+ *  her sigil stack kept out of the tilt-shift (Ed, 2026-10-27: "stacks should not be affected by the tilt shift"). Its uniforms
+ *  are `m`'s own objects, so they follow it. */
+export function maskOf(m: THREE.ShaderMaterial): THREE.ShaderMaterial {
+  return new THREE.ShaderMaterial({
+    vertexShader: m.vertexShader, fragmentShader: m.fragmentShader, uniforms: m.uniforms, defines: { MASK: "" },
+    transparent: true, depthWrite: false, depthTest: false, blending: THREE.CustomBlending, blendEquation: THREE.MaxEquation, blendEquationAlpha: THREE.MaxEquation,
+  });
+}
 
 const INSTANCE_ATTRS = ["iPos", "iSize", "iUv", "iCol", "iDraw"];
 
