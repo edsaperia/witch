@@ -55,7 +55,7 @@ import { dreamsAfter, homeOf, hatWithoutLoan, lend, loanName, lookWithoutLoan, p
 import { DreamView, dreamArt, findCanvas } from "./render/dream";
 import { LoanIcon } from "./render/loanIcon";
 import { FindsPanel } from "./ui/findsPanel";
-import { fightLink, fightSpeed, newFightSeed } from "./app/fightArena";
+import { fightDt, fightFrame, fightLink, newFightSeed } from "./app/fightArena";
 import { StationPanel, type WorkshopCtx } from "./ui/stationPanel";
 import { ZooOverlay, domZooHost, zooUrl } from "./app/zooOverlay";
 import { leaveZoo } from "./app/zooExit";
@@ -1038,7 +1038,7 @@ function frame(now: number): void {
   if (c.debug) hud.setDebug(!hud.debugOn);
   view.debugReadouts = hud.debugOn;
   const step0 = performance.now();
-  stepGame(game, c, dt * (botTag?.speed ?? 1) * fightSpeed.value); // (the Fight Arena's slow motion and pause: app/fightArena.ts)
+  stepGame(game, c, fightDt(dt * (botTag?.speed ?? 1))); // (the Fight Arena's slow motion, pause and frame at a time: app/fightArena.ts)
   // ?debug=attack: every 10 s, a few seconds of blows on the two soundsystems farthest from her (never felling one), so the
   // 🔇 alarm (render/alarm.ts) shows whenever she's away from them.
   if (ATTACK_DEBUG && !game.clock.paused) { const tt = game.clock.time, ph = tt % 10; if (ph < 4 && Math.floor(tt * 2) !== F.attackTick) { F.attackTick = Math.floor(tt * 2); debugBlows(game.combat.sounds, game.combat.events, game.witch.x, game.witch.z, tt); } }
@@ -1152,6 +1152,7 @@ function frame(now: number): void {
   // Drawn between the last two fixed steps (game time: party transitions, sigils and waves are stamped in it).
   frameStats.beginGpu();
   interpolated(game, () => view.render(Math.max(0, game.clock.time - (1 - game.alpha) * STEP * game.timeScale))); // (the world's step is STEP x timeScale: rules/slowTime.ts)
+  fightFrame((x, y, z) => view.screenOf(x, y, z)); // (the Fight Arena's telegraph timings, if it's on)
   frameStats.endGpu();
   aimHud.update(game, game.herTime, input.cursor, input.lastAim, startEl.style.display === "none" && !bot);
   frameStats.work(performance.now() - work0);
