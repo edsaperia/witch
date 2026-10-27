@@ -65,6 +65,10 @@ const CASES = [
   await page.keyboard.press("Enter");
   await page.waitForFunction(() => window.witch.game.clock.time > 2, null, { timeout: 300000, polling: 500 });
   await timing("load and start", t0);
+  // The dark kept behind the house (render/view.ts behindHouse, islandReady's only reader): the forest drawn behind the rooms (#1252)
+  // made a software GL's frames at the stations and the telescope take seconds, about 12 s each on CI, the wardrobe's case 4 min
+  // there and the job past its 20 min; the pause page over them is what's checked here, not the forest (the coordinator, 2026-10-27).
+  await page.evaluate(() => Object.defineProperty(window.witch.game, "islandReady", { get: () => false, set() {}, configurable: true }));
   const put = ([x, z]) => page.evaluate(([x, z]) => { const g = window.witch.game, T = g.map.treehouse; g.witch = { ...g.witch, x: T.x + x, z: T.z + z, vx: 0, vz: 0, mode: "ground", lift: 0, perch: true, seated: false }; }, [x, z]);
   const away = () => page.evaluate(() => { const g = window.witch.game, T = g.map.treehouse; g.witch = { ...g.witch, x: T.x, z: T.z + 1, vx: 0, vz: 0 }; });
   const paused = () => page.evaluate(() => !!document.querySelector("#pause-sliders.open"));
