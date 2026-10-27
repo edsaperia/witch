@@ -14,8 +14,8 @@ describe("the quality ladder", () => {
 
   it("steps down after a few slow windows, past rungs not built and load rungs, to the next live rung", () => {
     // (settle 2 s, then 3 slow windows)
-    const s = run(newLadder(), 25, LADDER_KNOBS.settle + LADDER_KNOBS.downAfter);
-    expect(s.rung).toBe(at("squeeze"));
+    const s = run(newLadder(at("farDither")), 25, LADDER_KNOBS.settle + LADDER_KNOBS.downAfter);
+    expect(s.rung).toBe(at("squeeze")); // (from the far edge's dither, past density and the blend: load rungs)
     expect(inEffect(s, at("squeeze"))).toBe(true);
     // (the load rungs passed over are wanted from the next load, not in effect now)
     expect(inEffect(s, at("density90"))).toBe(false);
@@ -26,13 +26,16 @@ describe("the quality ladder", () => {
   });
 
   it("climbs back slowly when there's room, and only if the rung above fitted last time", () => {
-    let s = run(newLadder(), 25, 5); // down to squeeze
-    expect(s.rung).toBe(at("squeeze"));
-    s = run(s, 8, LADDER_KNOBS.settle + LADDER_KNOBS.upAfter - 1);
-    expect(s.rung).toBe(at("squeeze")); // (not yet)
+    let s = run(newLadder(at("squeeze")), 25, 5); // down to still
+    expect(s.rung).toBe(at("still"));
+    s = run(s, 8, LADDER_KNOBS.settle + LADDER_KNOBS.upAfter);
+    expect(s.rung).toBe(at("still")); // (not yet)
     s = run(s, 8, 1);
-    // (up past squeeze; full quality's cost was 25 ms, over the fit, so it stays wanting the load rungs above: nothing live left)
-    expect(s.rung).toBe(at("squeeze") - 1);
+    // (up past still; squeeze's cost was 25 ms, over the fit, so it isn't tried again: it stays)
+    expect(s.rung).toBe(at("still"));
+    s = { ...s, cost: s.cost.map(() => NaN) };
+    s = run(s, 8, LADDER_KNOBS.upAfter);
+    expect(s.rung).toBe(at("squeeze"));
   });
 
   it("stops climbing for the night after it keeps flipping", () => {

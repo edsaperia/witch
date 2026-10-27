@@ -1471,6 +1471,7 @@ export class View {
     }
     if (this.sceneryFixed !== null) this.budget.radius = Math.min(t.haze.far, Math.max(1, this.sceneryFixed));
     LIGHT_UNIFORMS.uScenery.value.set(this.budget.radius, Math.max(1, t.scenery.fade));
+    SPRITE_UNIFORMS.uEdgeDither.value = t.scenery.edgeDither ? 1 : 0; // (the quality ladder's dithered far edge: render/sprites.ts)
     // In the air, the crowns' reach (render/view/scenery.ts), eased in and out over half a second or so (no far crowns popping as she lands).
     // Through the telescope (rules/telescope.ts), crowns out to the island's far side, and its own, further haze; back as it was after.
     const TL = this.telescope && t.telescope, haze = LIGHT_UNIFORMS.uHazeRange.value;

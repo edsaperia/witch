@@ -60,6 +60,9 @@ export const SPRITE_UNIFORMS = {
   /** And what stands at its centre, never faded: anything standing within z metres of (x, y) on the ground (a relic, the trunk and a
    *  runestone are stood toward the camera by part of their height, nearer than the centre they mark); and nothing standing more than
    *  w metres from it fades (0: no limit), easing back over the last uCircleFade.w metres. */
+  /** The forest's far edge dithered in the solid pass, not faded in the see-through passes (1: the quality ladder's rung,
+   *  app/ladder.ts; scenery.edgeDither). Its pixels drawn or not by a 4×4 ordered dither on the art's own pixels. */
+  uEdgeDither: { value: 0 },
   uCircleKeep: { value: new THREE.Vector4(0, 0, 0, 0) },
   // The party's canopy uplight: the nearest partified areas (centre x, z, reach, fade-in) and their
   // colours; uUplight: strength, pulse, edge (m), the beat's phase (radians).
@@ -110,7 +113,7 @@ uniform float uNearCut;
 varying float vNear;
 uniform vec4 uCircleBox, uCircleFade;
 uniform vec4 uCircleKeep;
-uniform float uHasFade;
+uniform float uHasFade, uEdgeDither;
 varying float vCircle; // how much of it shows, the place she stands in kept clear (1 all of it)
 uniform float uAbsolute; // its y is a world height, not a height over the ground
 uniform vec4 uLean; // the witch under a load (render/load.ts): sheared forward (m per m up), tilted nose-up (m per m across), her broom bowed (art pixels)
@@ -265,7 +268,7 @@ void main() {
       vec2 d = max(abs(uCutout.xy - cc) - halfPx, 0.0);
       if (mix(length(d) - wob, vCrownD, uCutWhole) < vHole + uCutout.w * uCutShape.y + 1.0 && mod(floor(dbg / 2.0), 2.0) > 0.5) part = true;
     }
-    if (uIsScenery > 0.5) {
+    if (uIsScenery > 0.5 && uEdgeDither < 0.5) { // (dithered in the solid pass instead: not kept for these passes)
       float r = max(uScenery.x, iFlags.y > 0.5 ? uCanopyReach : 0.0);
       if (length(iPos.xz - uHazeCentre) + iSize.x * 0.5 + 2.0 > r - uScenery.y && mod(floor(dbg / 4.0), 2.0) > 0.5) part = true;
     }
@@ -326,6 +329,7 @@ uniform float uLegendFloor; // and the share of its own (mossed) look it never d
 uniform float uLegendAwake; // a dark-coated legend awake: the share of its own colour it never drops below at night (0 none; render/legendLight.ts)
 uniform vec4 uFindLook;
 uniform float uAreaAvg, uSeeDepth, uSeeSolid, uSeeShowA, uSeeDither, uSeeTwo;
+uniform float uEdgeDither;
 uniform vec4 uSeeDbg;
 uniform float uSeeEarly;
 uniform vec2 uTrunkLook;   // trunks: light floor, rim
@@ -422,7 +426,7 @@ bool passOf() {
   // trunks", "trees cut off at the top"): drawn in the opaque pass, nearest first for the early depth test, a half-faded
   // crown near the camera wrote its depth and hid every trunk and crown behind it, a teal carpet where the forest should be.
   // A batch with no see-through pass (uHasFade 0) keeps them in its one pass, as before.
-  float edgeK = (uIsScenery > 0.5 ? (vFlags.y > 0.5 ? canopyFade(vWorld) : sceneryFade(vWorld)) * uAppear : 1.0) * vCircle; // (a crown: out to the canopy's reach; and the place she stands in kept clear)
+  float edgeK = (uIsScenery > 0.5 ? (uEdgeDither > 0.5 ? 1.0 : vFlags.y > 0.5 ? canopyFade(vWorld) : sceneryFade(vWorld)) * uAppear : 1.0) * vCircle; // (dithered at the edge: not half faded there) // (a crown: out to the canopy's reach; and the place she stands in kept clear)
   bool part = shown * trunkA * edgeK < 0.996;
   bool seePart = part && (uHasFade > 0.5 || vOverHer > 0.5), see = occl > 0.001 || seePart;
   if (uSeeDither > 0.5) { see = seePart; if (uFadePass < 0.5 && occl > 0.001 && bayer(gl_FragCoord.xy) < occl * (1.0 - uOcc.x)) return false; } // (the circle hunt)
@@ -625,7 +629,8 @@ void main() {
   }
   // Scenery past the budget's radius fades out smoothly (alpha), from the far edge inward.
   if (uIsScenery > 0.5) {
-    float k = (vFlags.y > 0.5 ? canopyFade(vWorld) : sceneryFade(vWorld)) * uAppear; // and a set just drawn fades in (a crown: out to the canopy's reach)
+    float edge = vFlags.y > 0.5 ? canopyFade(vWorld) : sceneryFade(vWorld), k = edge * uAppear; // and a set just drawn fades in (a crown: out to the canopy's reach)
+    if (uEdgeDither > 0.5) { if (bayer(gl_FragCoord.xy) >= edge) discard; k = uAppear; } // (the quality ladder's dithered edge: each art pixel there or not)
     if (k < 0.004) discard;
     gl_FragColor.a *= k;
   }

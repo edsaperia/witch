@@ -19,7 +19,7 @@ export interface Rung {
 /** Ed's order (the coordinator, 2026-10-27, his answer "a"). Index 0 is full quality. */
 export const RUNGS: readonly Rung[] = [
   { id: "full", label: "full quality", when: "live", built: true },
-  { id: "farDither", label: "the forest's far edge dithered, not faded", when: "live", built: false },
+  { id: "farDither", label: "the forest's far edge dithered, not faded", when: "live", built: true },
   { id: "density90", label: "trees ×0.9", when: "load", built: false },
   { id: "blend40", label: "area borders blend over 40 m", when: "load", built: false },
   { id: "squeeze", label: "tall trees squeezed", when: "live", built: true },
