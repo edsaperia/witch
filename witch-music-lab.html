@@ -525,7 +525,11 @@ label.check input { accent-color: var(--accent); }
     return dt <= 0 ? s.bpm : dt < s.dur ? s.bpm + (s.bpmTo - s.bpm) * dt / s.dur : s.bpmTo;
   }
   function timeAt(c, beat) {
-    const s = segAtBeat(c, beat), db2 = beat - s.beat;
+    const s = segAtBeat(c, beat), next = c.segs[c.segs.indexOf(s) + 1];
+    return next ? Math.min(next.time, segTime(s, beat)) : segTime(s, beat);
+  }
+  function segTime(s, beat) {
+    const db2 = beat - s.beat;
     if (db2 <= 0) return s.time + db2 * 60 / s.bpm;
     const rb = rampBeats(s);
     if (s.dur > 0 && db2 < rb) {
@@ -546,6 +550,18 @@ label.check input { accent-color: var(--accent); }
     }
     const dur = beats > 0 && bpm !== from ? beats * 60 / ((from + bpm) / 2) : 0;
     c.segs.push({ time, beat: atBeat, bpm: from, bpmTo: bpm, dur });
+  }
+  function shiftBeat(c, time, lost2) {
+    if (!(lost2 > 0)) return;
+    const at2 = time + lost2, beat = beatAt(c, at2), bpm = bpmAt(c, at2), s = segAtTime(c, at2), left = Math.max(0, s.time + s.dur - at2), to = left > 0 ? s.bpmTo : bpm;
+    const before = c.segs.filter((x) => x.time < time), after = c.segs.filter((x) => x.time > at2).map((x) => ({ ...x, time: x.time - lost2 }));
+    const last = before[before.length - 1];
+    if (last && last.time + last.dur > time) {
+      const k = (time - last.time) / Math.max(1e-9, last.dur);
+      last.bpmTo = last.bpm + (last.bpmTo - last.bpm) * k;
+      last.dur = time - last.time;
+    }
+    c.segs = [...before, { time, beat, bpm, bpmTo: to, dur: left }, ...after];
   }
   function waveTempo(t, wave2) {
     const T = t.beat.tempos;
@@ -5018,12 +5034,12 @@ label.check input { accent-color: var(--accent); }
     const onlyCircle = ctx2.only === "circle";
     const parts = onlyCircle ? [] : Object.entries(sec.parts).map(([k, u]) => [k, u, 1]);
     if (onlyCircle) {
-    } else if (ctx2.siege > 0.01) for (const [k, u] of Object.entries(style2.siege)) parts.push([k, u, ctx2.siege]);
+    } else if (ctx2.siege > 0.01) for (const [k, u] of Object.entries(style2.siege)) parts.push([k, u, ctx2.siege, "siege"]);
     if ((ctx2.party ?? 0) > 0.01) {
-      for (const [k, u] of Object.entries(style2.party ?? {})) if (!sec.parts[k]) parts.push([k, u, ctx2.party]);
+      for (const [k, u] of Object.entries(style2.party ?? {})) if (!sec.parts[k]) parts.push([k, u, ctx2.party, "party"]);
     }
     if ((ctx2.legend ?? 0) > 0.01) {
-      for (const [k, u] of Object.entries(style2.legend ?? {})) if (!sec.parts[k]) parts.push([k, u, ctx2.legend]);
+      for (const [k, u] of Object.entries(style2.legend ?? {})) if (!sec.parts[k]) parts.push([k, u, ctx2.legend, "legend"]);
     }
     const build = ctx2.build ?? 1, building = ctx2.build !== void 0 && plan.section === style2.intro;
     const circle = ctx2.circle && ctx2.circle.level > 0.01 && ctx2.only !== "main" ? ctx2.circle : null, layer = /* @__PURE__ */ new Set();
@@ -5034,7 +5050,7 @@ label.check input { accent-color: var(--accent); }
       }
     }
     if (fillBar && !onlyCircle) parts.push([style2.fill.part, { p: "__fill" }, 1]);
-    for (const [name, u0, scaleLevel] of parts) {
+    for (const [name, u0, scaleLevel, hook] of parts) {
       const def = style2.parts[name];
       if (!def) continue;
       const u = use(u0);
@@ -5058,7 +5074,7 @@ label.check input { accent-color: var(--accent); }
       if (ch === "?" && r >= a.energy) continue;
       const level = u.level * scaleLevel * (0.94 + 0.06 * r) * (building && !own ? 0.45 + 0.55 * build : 1);
       const patch = a.bass && def.role === "bass" && sec.parts[name] && !own && style2.patches[a.bass] ? a.bass : def.patch;
-      const base = { part: name, patch, step: own && ctx2.circleStep !== void 0 ? ctx2.circleStep : step2, offset: 0, dur, ...own ? { layer: "circle" } : {} };
+      const base = { part: name, patch, step: own && ctx2.circleStep !== void 0 ? ctx2.circleStep : step2, offset: 0, dur, ...own ? { layer: "circle" } : {}, ...hook ? { hook } : {} };
       if (def.role === "drum") {
         if (ch === "r") {
           out.push({ ...base, dur: 0.5, midi: null, vel: 0.6 * level }, { ...base, offset: 0.5, dur: 0.5, midi: null, vel: 0.75 * level });
@@ -18550,6 +18566,32 @@ registerProcessor("witch-fof", WitchFof);
     g0 = NaN;
     a0 = 0;
     rate = 1;
+    /** Drawn ahead (platform/audio/musicAhead.ts; docs/notes/music.md "Music ahead"): from `from` to `to` (audio time) the main
+     *  notes and their bus automation are the bars drawn ahead, this engine playing the hooks' parts alone (and a legend's
+     *  clearing layer, as ever); and while it's set, the timeline never eased or re-anchored to the game (the bars are fixed on
+     *  the audio clock: the audio clock is the music's), but after a pause, a new run or a jump in time. */
+    handoff = { from: Infinity, to: Infinity };
+    /** The music's own time now (game time as the music has it), and the audio time a music time is heard at (early by the lead). */
+    musicTime(now = this.ctx.currentTime) {
+      return this.g0 + (now - this.a0) * this.rate;
+    }
+    audioAt(g) {
+      return this.a0 + (g - this.g0) / this.rate - this.leadNow;
+    }
+    /** Its timeline's anchor: the audio time music time 0 is at (the lead left out: that eases on its own). */
+    get anchorAt() {
+      return this.a0 - this.g0 / this.rate;
+    }
+    /** The game's beat moved on by `lost` seconds to where the music is (rules/beat.ts shiftBeat): its timeline the same on the
+     *  audio clock, in the game's new reckoning. */
+    shiftTime(lost2) {
+      if (Number.isFinite(this.g0)) this.g0 -= lost2;
+    }
+    /** Whether its timeline is anchored (it's been played since its last jump). */
+    get anchored() {
+      return Number.isFinite(this.g0);
+    }
+    wasPlaying = false;
     /** Continuity, for the checks (tools/music-lab/flight.cjs) and the playtest log: times the timeline was re-anchored,
      *  sixteenths a stall made late (held and played, not dropped), audio seconds left with nothing scheduled between one
      *  sixteenth and the next, and how far ahead it schedules now (s). */
@@ -18659,6 +18701,10 @@ registerProcessor("witch-fof", WitchFof);
     }
     /** The recorded voices the sample patches sing (samples/voices: platform/audio/voiceSamples.ts loads them). */
     recordings = /* @__PURE__ */ new Map();
+    /** The recordings it sings from (a renderer drawing ahead sings from the same). */
+    get recorded() {
+      return Object.fromEntries(this.recordings);
+    }
     setRecordings(recs) {
       for (const [k, b] of Object.entries(recs)) this.recordings.set(k, b);
     }
@@ -18744,8 +18790,11 @@ registerProcessor("witch-fof", WitchFof);
         this.cNext = -1;
         this.heardTo = -1;
         this.lastNow = -1;
+        this.wasPlaying = false;
         return;
       }
+      const drawn = Number.isFinite(this.handoff.from), resumed = !this.wasPlaying;
+      this.wasPlaying = true;
       const knocks = cue2.knockdowns?.length ?? 0;
       if (knocks < this.knocksHeard) this.knocksHeard = knocks;
       if (knocks > this.knocksHeard) {
@@ -18772,8 +18821,9 @@ registerProcessor("witch-fof", WitchFof);
       ahead = Math.max(ahead, this.lagAhead);
       this.stats.ahead = ahead;
       const err = gameTime - (this.g0 + (now - this.a0) * rate), slew = _MusicEngine.slew * Math.min(dtA, 0.05) * rate;
-      if (!Number.isFinite(err) || err > 0.25 * rate) {
-        if (Number.isFinite(this.g0)) this.stats.resyncs++;
+      if (drawn && Number.isFinite(err) && !resumed && err > -30 && err < 2) {
+      } else if (!Number.isFinite(err) || err > 0.25 * rate || drawn && resumed) {
+        if (Number.isFinite(this.g0) && !(drawn && resumed)) this.stats.resyncs++;
         this.g0 = gameTime;
         this.a0 = now;
         this.nextStep = -1;
@@ -18782,17 +18832,18 @@ registerProcessor("witch-fof", WitchFof);
         this.stats.resyncs++;
       } else this.g0 += Math.max(-slew, Math.min(slew, err * 0.05));
       const audioAt = (g) => this.a0 + (g - this.g0) / rate - L2;
-      if (this.nextStep < 0 || this.nextStep < stepNow - 1 || this.nextStep > stepNow + 64) {
-        this.nextStep = Math.ceil(stepNow);
-        if (this.lastStep < stepNow + 64 && this.lastStep >= stepNow - 64) this.nextStep = Math.max(this.nextStep, this.lastStep + 1);
+      const stepMusic = drawn ? beatAt(clock2, this.musicTime(now)) * 4 : stepNow;
+      if (this.nextStep < 0 || this.nextStep < stepMusic - 1 || this.nextStep > stepMusic + 64) {
+        this.nextStep = Math.ceil(stepMusic);
+        if (this.lastStep < stepMusic + 64 && this.lastStep >= stepMusic - 64) this.nextStep = Math.max(this.nextStep, this.lastStep + 1);
       }
       this.bpmNow = bpmAt(clock2, gameTime) * rate;
       this.delay.delayTime.setTargetAtTime(Math.min(4, this.style.mix.delayBeats * 60 / bpmAt(clock2, gameTime) / rate), now, 0.05);
       if (this.heardTo >= 0 && this.nextStep >= 0) {
         const t = audioAt(timeAt(clock2, this.nextStep / 4));
         if (t < now) {
-          this.a0 += now + 5e-3 - t;
           this.stats.late++;
+          if (!drawn) this.a0 += now + 5e-3 - t;
         }
       }
       for (; ; ) {
@@ -18838,8 +18889,13 @@ registerProcessor("witch-fof", WitchFof);
       for (let s = first; ; s++) {
         const g = timeAt(clock2, s / 4);
         if (g >= from + seconds) break;
+        if (this.stems) this.bpmNow = bpmAt(clock2, g);
         this.step(cue2, s, at2 + (g - from), 60 / bpmAt(clock2, g) / 4);
       }
+    }
+    /** The bus's automation from `t` on let go (the bars drawn ahead from there dropped, to be drawn again). */
+    cancelBusFrom(t) {
+      for (const p of [this.tone.frequency, this.duckBus.gain, this.gate.gain]) p.cancelScheduledValues(t);
     }
     /** Stop scheduling and forget the plans (a jump in the timeline). */
     reset() {
@@ -18869,28 +18925,30 @@ registerProcessor("witch-fof", WitchFof);
     /** One sixteenth: `t` its audio time, `sps` seconds a sixteenth lasts now. */
     step(cue2, step2, t, sps) {
       const S = this.style, B = S.blockBars, bar2 = Math.floor(step2 / 16), s = step2 - bar2 * 16;
+      const drawn = t >= this.handoff.from && t < this.handoff.to;
       if (silentAt(cue2, step2 / 16)) {
         if (!this.gated) {
-          this.sink.gate(false, t);
+          if (!drawn) this.sink.gate(false, t);
           this.gated = true;
         }
         return;
       }
       if (this.gated) {
-        this.sink.gate(true, t);
+        if (!drawn) this.sink.gate(true, t);
         this.gated = false;
       }
       const plan = this.conductor.plan(cue2, bar2);
       const next = bar2 % B === B - 1 ? this.conductor.plan(cue2, bar2 + 1) : null;
       this.current = { plan, bar: bar2, step: step2 };
-      if (s === 0) {
+      if (s === 0 && !drawn) {
         const sec = resolveSection(S, plan.section), barIn = bar2 - plan.start;
         const b0 = bootLayers(cue2, bar2), b1 = bootLayers(cue2, bar2 + 1);
         const boot = cue2.speakerBars !== void 0 && plan.section === S.intro;
         const f0 = sectionCutoff(sec, boot ? b0 : barIn / plan.bars), f1 = sectionCutoff(sec, boot ? b1 : (barIn + 1) / plan.bars);
         this.sink.tone(f0, f1, t, 16 * sps);
       }
-      const events = notesAt(S, plan, next, step2, { ...this.formAt(cue2, bar2), siege: cue2.siege, party: cue2.party, legend: cue2.legend, only: "main", build: cue2.speakerBars !== void 0 ? bootLayers(cue2, bar2) : void 0 });
+      const all = notesAt(S, plan, next, step2, { ...this.formAt(cue2, bar2), siege: cue2.siege, party: cue2.party, legend: cue2.legend, only: "main", build: cue2.speakerBars !== void 0 ? bootLayers(cue2, bar2) : void 0 });
+      const events = drawn ? all.filter((e) => e.hook) : all;
       const swing = step2 % 2 === 1 ? S.swing * sps : 0;
       this.playAll(events, (e) => t + (e.straight ? 0 : swing) + e.offset * sps, sps);
     }
@@ -19138,7 +19196,7 @@ registerProcessor("witch-fof", WitchFof);
       s.loop = length > 1.5;
       if (this.notePitch !== 1) s.playbackRate.value = this.notePitch;
       const at2 = t + (this.stems ? this.phaseAt : 0);
-      s.start(t, at2 * 7.31 % 1 * 0.5);
+      s.start(t, (at2 * 7.31 % 1 + 1) % 1 * 0.5);
       s.stop(t + length);
       return s;
     }
@@ -19718,7 +19776,261 @@ registerProcessor("witch-fof", WitchFof);
     }
   }
 
+  // src/platform/audio/musicAhead.ts
+  var AHEAD = 6;
+  var START = 2.5;
+  var TAIL = 2.5;
+  var RENDERING = 2;
+  var cueKey = (c) => JSON.stringify({ ...c, siege: 0, party: 0, legend: 0, circle: void 0 });
+  var styleIds = /* @__PURE__ */ new WeakMap();
+  var styleNext = 0;
+  var MusicAhead = class {
+    constructor(engine, ctx2) {
+      this.engine = engine;
+      this.ctx = ctx2;
+    }
+    engine;
+    ctx;
+    /** Bars drawn and how (the stall test and the playtest log read it): rendered, arrived too late to be heard whole, dropped
+     *  (the music changed), the time rendering took in all (ms), how far ahead the queue reaches now (s). */
+    stats = { rendered: 0, late: 0, dropped: 0, renderMs: 0, queuedAhead: 0 };
+    /** What of the cue changed, the last few times the bars were dropped (the playtest log's). */
+    changed = [];
+    lastCue = {};
+    bars = /* @__PURE__ */ new Map();
+    key = "";
+    on = false;
+    next = 0;
+    anchor = NaN;
+    /** Whether it's drawing ahead now. */
+    get drawing() {
+      return this.on;
+    }
+    /** Each frame, before the engine's: `allowed`, whether it may draw ahead now (the world at full speed, the voice a recording,
+     *  no lab), the queue filled to AHEAD seconds. */
+    update(cue2, clock2, playing2, allowed) {
+      const E2 = this.engine, now = this.ctx.currentTime;
+      if (!playing2 || !E2.anchored) {
+        this.stopAll(now);
+        return;
+      }
+      if (!allowed) {
+        this.handBack(now, clock2);
+        return;
+      }
+      const anchor = E2.anchorAt;
+      if (this.on && Math.abs(anchor - this.anchor) > 2e-3) this.stopAll(now);
+      this.anchor = anchor;
+      const k = `${cueKey(cue2)}|${this.styleId()}|${E2.seed}|${E2.shed}`;
+      if (this.on && k !== this.key) {
+        let first = Infinity;
+        for (const B of this.bars.values()) if (B.state !== "dropped" && E2.audioAt(B.g) > now + 0.05 && B.sig !== this.sigOf(cue2, B.bar)) first = Math.min(first, B.bar);
+        if (Number.isFinite(first)) {
+          const was = this.lastCue, why = Object.keys({ ...was, ...cue2 }).filter((f) => !["siege", "party", "legend", "circle"].includes(f) && JSON.stringify(was[f]) !== JSON.stringify(cue2[f]));
+          this.changed.push(why.join(",") || "style/seed/shed");
+          if (this.changed.length > 8) this.changed.shift();
+          this.dropFrom(now, clock2, first);
+        }
+      }
+      this.key = k;
+      this.lastCue = { ...cue2 };
+      if (!this.on) {
+        let b = Math.ceil(this.barAt(E2.musicTime(now), clock2));
+        while (E2.audioAt(timeAt(clock2, b * 4)) < now + START) b++;
+        E2.handoff = { from: Math.max(E2.audioAt(timeAt(clock2, b * 4)), Number.isFinite(E2.handoff.to) ? E2.handoff.to : -Infinity), to: Infinity };
+        this.next = b;
+        this.on = true;
+        this.bars.clear();
+      }
+      let rendering = 0;
+      for (const B of this.bars.values()) if (B.state === "rendering") rendering++;
+      while (rendering < RENDERING && E2.audioAt(timeAt(clock2, this.next * 4)) < now + AHEAD) {
+        this.render(this.next, cue2, clock2);
+        this.next++;
+        rendering++;
+      }
+      this.stats.queuedAhead = Math.max(0, E2.audioAt(timeAt(clock2, this.next * 4)) - now);
+      for (const [b, B] of this.bars) if (B.state !== "rendering" && E2.audioAt(B.g + B.dur) + TAIL < now) this.bars.delete(b);
+    }
+    /** The game's beat moved on by `lost` seconds to where the music is (rules/beat.ts shiftBeat; the engine's shifted with it):
+     *  the bars queued the same on the audio clock, their music times in the game's new reckoning. */
+    shiftTime(lost2) {
+      for (const B of this.bars.values()) B.g -= lost2;
+      if (this.on) this.anchor = this.engine.anchorAt;
+    }
+    /** The bar holding music time `g` (fractional). */
+    barAt(g, clock2) {
+      let lo = Math.floor(g / 4) - 64, hi = lo + 256;
+      while (timeAt(clock2, lo * 4) > g) lo -= 64;
+      while (timeAt(clock2, hi * 4) <= g) hi += 64;
+      while (hi - lo > 1) {
+        const m = lo + hi >> 1;
+        if (timeAt(clock2, m * 4) <= g) lo = m;
+        else hi = m;
+      }
+      return lo + (g - timeAt(clock2, lo * 4)) / Math.max(1e-6, timeAt(clock2, (lo + 1) * 4) - timeAt(clock2, lo * 4));
+    }
+    /** What bar `b`'s notes hang on in `cue`: its block's plan (and the next's, for a fill), the boot's layers over it, its form,
+     *  a knockdown over it; the style, seed and shed in the key already. */
+    sigOf(cue2, b) {
+      const S = this.engine.style, C2 = new Conductor(S);
+      return JSON.stringify([C2.plan(cue2, b), (b + 1) % S.blockBars === 0 ? C2.plan(cue2, b + 1) : null, bootLayers(cue2, b), bootLayers(cue2, b + 1), formClock(S, cue2, b), (cue2.knockdowns ?? []).filter((k) => k.at < b + 1 && Math.ceil(k.back - 1e-3) > b), cue2.victory !== void 0 && b >= cue2.victory - cue2.victory % S.blockBars, cue2.knockedOut]);
+    }
+    styleId() {
+      const s = this.engine.style;
+      let id = styleIds.get(s);
+      if (id === void 0) styleIds.set(s, id = ++styleNext);
+      return id;
+    }
+    /** Bar `b` drawn: its notes queued on a renderer (carrying on from the bar before's), rendered off the page's thread. */
+    render(b, cue2, clock2) {
+      const E2 = this.engine, sr = this.ctx.sampleRate, g = timeAt(clock2, b * 4), dur = timeAt(clock2, (b + 1) * 4) - g;
+      const oc = new OfflineAudioContext(9, Math.ceil(sr * (dur + TAIL)), sr), merge = oc.createChannelMerger(9);
+      merge.connect(oc.destination);
+      const pair2 = (i) => {
+        const n = oc.createGain(), sp = oc.createChannelSplitter(2);
+        n.channelCount = 2;
+        n.channelCountMode = "explicit";
+        n.connect(sp);
+        sp.connect(merge, 0, 2 * i);
+        sp.connect(merge, 1, 2 * i + 1);
+        return n;
+      };
+      const voice = oc.createGain();
+      voice.channelCount = 1;
+      voice.channelCountMode = "explicit";
+      voice.connect(merge, 0, 8);
+      const events = [];
+      const sink = {
+        duck: pair2(0),
+        dry: pair2(1),
+        reverb: pair2(2),
+        delay: pair2(3),
+        voice: () => voice,
+        tone: (f0, f1, t, d) => events.push({ kind: "tone", f0, f1, t, dur: d }),
+        duckAt: (t, depth, sps) => events.push({ kind: "duck", t, depth, sps }),
+        gate: (open, t) => events.push({ kind: "gate", open, t }),
+        fxChain: (part, fx, t) => events.push({ kind: "fx", part, fx, t }),
+        fxRelease: (part, t) => events.push({ kind: "release", part, t }),
+        fxSwell: (part, rec, rate, t, swell, peak) => events.push({ kind: "swell", part, rec, rate, t, swell, peak })
+      };
+      const r = new MusicEngine(oc, oc.destination, E2.style, E2.seed, oc.destination, sink);
+      r.setRecordings(E2.recorded);
+      r.shed = E2.shed;
+      const prev = this.bars.get(b - 1);
+      if (prev && prev.state !== "dropped") r.carryFrom(prev.renderer, g - prev.g);
+      r.renderAhead({ ...cue2, siege: 0, party: 0, legend: 0, circle: void 0 }, g, dur, clock2);
+      const B = { bar: b, g, dur, renderer: r, sig: this.sigOf(cue2, b), events, state: "rendering", asked: performance.now() };
+      this.bars.set(b, B);
+      void oc.startRendering().then((buf) => this.arrive(B, buf), () => {
+        B.state = "dropped";
+      });
+    }
+    /** A bar rendered: queued on the audio clock through the live buses (if it's still wanted), its automation played on them. */
+    arrive(B, buf) {
+      this.stats.renderMs += performance.now() - B.asked;
+      if (B.state === "dropped" || this.bars.get(B.bar) !== B) return;
+      const E2 = this.engine, c = this.ctx, now = c.currentTime, at2 = E2.audioAt(B.g);
+      this.stats.rendered++;
+      if (at2 < now) this.stats.late++;
+      if (at2 + B.dur < now) {
+        B.state = "dropped";
+        return;
+      }
+      const bus = E2.bus, sung = E2.style.form?.sung.part, voiceIn = sung ? E2.voiceIn(sung) : null;
+      const src = c.createBufferSource(), sp = c.createChannelSplitter(9), nodes = [sp];
+      src.buffer = buf;
+      src.connect(sp);
+      [bus.duck, bus.dry, bus.reverb, bus.delay].forEach((d, i) => {
+        const m = c.createChannelMerger(2);
+        sp.connect(m, 2 * i, 0);
+        sp.connect(m, 2 * i + 1, 1);
+        m.connect(d);
+        nodes.push(m);
+      });
+      if (voiceIn) sp.connect(voiceIn, 8);
+      src.onended = () => {
+        for (const n of nodes) try {
+          n.disconnect();
+        } catch {
+        }
+      };
+      if (at2 >= now) src.start(at2);
+      else src.start(now, now - at2);
+      for (const e of B.events) {
+        const t = at2 + e.t;
+        if (e.kind === "tone") bus.tone(e.f0, e.f1, t, e.dur);
+        else if (e.kind === "duck") {
+          if (t >= now) bus.duckAt(t, e.depth, e.sps);
+        } else if (e.kind === "gate") bus.gate(e.open, Math.max(now, t));
+        else if (e.kind === "fx") bus.fxChain?.(e.part, e.fx, t);
+        else if (e.kind === "release") bus.fxRelease?.(e.part, Math.max(now, t));
+        else bus.fxSwell?.(e.part, e.rec, e.rate, t, e.swell, e.peak);
+      }
+      B.src = src;
+      B.state = "queued";
+    }
+    /** The bars not yet heard (from `now`) dropped, to be drawn again from the first of them: the music they hang on changed. */
+    dropFrom(now, clock2, from = -Infinity) {
+      const E2 = this.engine;
+      let first = Infinity;
+      for (const B of this.bars.values()) {
+        if (B.state === "dropped" || B.bar < from || E2.audioAt(B.g) <= now + 0.05) continue;
+        first = Math.min(first, B.bar);
+        B.state = "dropped";
+        this.stats.dropped++;
+        try {
+          B.src?.stop();
+        } catch {
+        }
+      }
+      if (!Number.isFinite(first)) return;
+      for (const [b, B] of this.bars) if (B.state === "dropped") this.bars.delete(b);
+      E2.cancelBusFrom(E2.audioAt(timeAt(clock2, first * 4)) + 1e-4);
+      this.next = first;
+    }
+    /** Back to live from a bar line far enough in for the live engine's schedule (the world slowing, a lab opened): the bars
+     *  from there dropped, the engine playing everything from it. */
+    handBack(now, clock2) {
+      if (!this.on) return;
+      const E2 = this.engine;
+      let b = Math.ceil(this.barAt(E2.musicTime(now), clock2));
+      while (E2.audioAt(timeAt(clock2, b * 4)) < now + E2.stats.ahead + 0.05) b++;
+      const to = E2.audioAt(timeAt(clock2, b * 4));
+      for (const B of this.bars.values()) if (B.bar >= b && B.state !== "dropped") {
+        B.state = "dropped";
+        try {
+          B.src?.stop();
+        } catch {
+        }
+      }
+      for (const [k, B] of this.bars) if (B.state === "dropped") this.bars.delete(k);
+      E2.cancelBusFrom(to + 1e-4);
+      E2.handoff = { from: E2.handoff.from, to };
+      this.on = false;
+    }
+    /** Everything queued stopped (a pause, a jump in time, a new run): the engine plays everything as ever. */
+    stopAll(now = this.ctx.currentTime) {
+      if (!this.on && !this.bars.size) {
+        this.engine.handoff = { from: Infinity, to: Infinity };
+        return;
+      }
+      for (const B of this.bars.values()) {
+        B.state = "dropped";
+        try {
+          B.src?.stop(now + 0.3);
+        } catch {
+        }
+      }
+      this.bars.clear();
+      this.engine.cancelBusFrom(now);
+      this.engine.handoff = { from: Infinity, to: Infinity };
+      this.on = false;
+    }
+  };
+
   // src/platform/audio/music.ts
+  var SHIFT_MIN = 0.04;
   var smooth01 = (x) => {
     const t = Math.max(0, Math.min(1, x));
     return t * t * (3 - 2 * t);
@@ -19727,7 +20039,7 @@ registerProcessor("witch-fof", WitchFof);
     return !S?.on || rate >= 1 ? 1 : Math.max(S.floor, Math.pow(Math.max(1e-3, rate), S.pitch));
   }
   var Music = class {
-    constructor(ctx2, volume, style2, seed2, src = "") {
+    constructor(ctx2, volume, style2, seed2, src = "", drawAhead = false) {
       this.ctx = ctx2;
       this.volume = volume;
       this.master = ctx2.createGain();
@@ -19764,7 +20076,10 @@ registerProcessor("witch-fof", WitchFof);
         ctx2.createMediaElementSource(el).connect(this.bus);
         void el.play().catch(() => {
         });
-      } else this.engine = new MusicEngine(ctx2, this.bus, style2, seed2, this.circleGain);
+      } else {
+        this.engine = new MusicEngine(ctx2, this.bus, style2, seed2, this.circleGain);
+        if (drawAhead && typeof AudioContext !== "undefined" && typeof OfflineAudioContext !== "undefined" && ctx2 instanceof AudioContext) this.ahead = new MusicAhead(this.engine, ctx2);
+      }
     }
     ctx;
     volume;
@@ -19789,6 +20104,10 @@ registerProcessor("witch-fof", WitchFof);
     }
     /** The generative track (none with a recorded one). */
     engine = null;
+    /** Its main notes drawn ahead (musicAhead.ts; docs/notes/music.md "Music ahead"): none live (`?music=live`), offline or recorded. */
+    ahead = null;
+    /** Whether it may draw ahead now (the pause page's Music Lab sets its levels on the live engine's parts: live while it's open). */
+    aheadAllowed = true;
     /** Each frame: the mix to hear, the music's cue (waves, boot), the game's time and beat. `rate`: the game's time scale
      *  (game seconds a second: about a tenth in a legend's circle, Ed 2026-10-06), which the music follows, slowing like a tape;
      *  `over`: the party's-over ease (0 to 1), winding it down. */
@@ -19818,7 +20137,23 @@ registerProcessor("witch-fof", WitchFof);
       this.dry.gain.setTargetAtTime(1 - mix.distort * 0.6, now, k);
       this.wobble.gain.setTargetAtTime(1 - mix.distort * 0.45 * (0.5 + 0.5 * Math.sin(now * 7.3 + Math.sin(now * 2.1) * 2)), now, 0.02);
       if (on && mix.distort > 0.05 && Math.random() < mix.distort * 0.15) this.crackle(now + Math.random() * 0.05, mix.distort);
+      if (this.ahead && this.engine) {
+        const S = this.engine.style, kind = S.form ? S.patches[S.form.sung.patch]?.kind : void 0;
+        this.ahead.update(cue2, clock2, on, this.aheadAllowed && rate >= 0.999 && stop === 0 && kind !== "fof" && kind !== "tract");
+      }
       this.engine?.update(cue2, gameTime, clock2, on, 0.6, rate, stop > 0 ? Math.max(M2?.over?.floor ?? 0.15, rate) : tapePitch(rate, M2?.slow));
+    }
+    /** The audio clock the master (docs/notes/music.md "Music ahead"): while the music's drawn ahead, a stall the game's clock cut
+     *  short (MAX_STEP) while the music played on moves the game's beat on to the music's (rules/beat.ts shiftBeat) and the
+     *  music's timeline with it, nothing heard moved, so what's on the beat stays on what's heard. Each frame before update();
+     *  returns the seconds moved on (0 under SHIFT_MIN, a frame's jitter). */
+    keepBeat(gameTime, clock2) {
+      const E2 = this.engine, lost2 = this.ahead?.drawing && E2?.anchored ? E2.musicTime() - gameTime : 0;
+      if (!(lost2 > SHIFT_MIN && lost2 < 30)) return 0;
+      shiftBeat(clock2, gameTime, lost2);
+      E2.shiftTime(lost2);
+      this.ahead.shiftTime(lost2);
+      return lost2;
     }
     /** Sound shed to spare the audio thread (shed.ts): the engine's own (unison, tails, reverb, delay). */
     set shed(level) {
@@ -19855,6 +20190,7 @@ registerProcessor("witch-fof", WitchFof);
     }
     /** Silenced for good and let go (the watchdog building afresh). */
     dispose() {
+      this.ahead?.stopAll();
       try {
         this.master.disconnect();
         this.circleGain.disconnect();
