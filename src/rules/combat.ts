@@ -530,11 +530,10 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       // surround, the pincer, the flank), a shooter firing from its place, but the one whose lunge it is goes straight in (a slot held
       // it off waiting for its place); a volley keeps its line and its beat throughout. Hit and run is the pack's lull.)
       const tactic = pd && pk && (pk.tactic === "volley" || (!(pd.move === "melee" && packGate(pd) && free(f.target)) && (pk.tactic === "surround" || pk.tactic === "pincer" || pk.tactic === "flank"))) ? pk : null;
-      // (Momentum: just chasing her, it makes for where she was mo.delay seconds ago, leading that by mo.chaseLead seconds of how she
-      // was going then; and turns no faster than its limit. A pack's tell and combo are its telegraphed attack (it glows first, and
-      // its lunger goes in like a plain fight's wind-up surge): its members go by where she is, as they like, as before, unless
-      // creatureMomentum.strikes.)
-      const chase = pd && (pd.phase === "tell" || pd.phase === "combo") && !t.creatureMomentum?.strikes ? null : mo;
+      // (Momentum: chasing her and closing in to strike, a pack's tell and combo too, it makes for where she was mo.delay seconds
+      // ago, leading that by mo.chaseLead seconds of how she was going then, and turns no faster than its limit. Ed, 2026-10-27: on
+      // the run-in and the wind-up, never the committed lunge, which goes where the wind-up aimed.)
+      const chase = mo;
       const herAt = chase && f.target.kind === "witch" ? chaseAt(s, f.target.id, time, chase) ?? p : p;
       const may = steer(c, heavy ? heavyOf(c, P) : P, { px: herAt.x, pz: herAt.z, pr: p.r, want, range: A0.range, fire: A.range, speed: cutoff ? Math.max(run * burst, DC!.sprint * FIGHT.speed) : run * burst, time, dt, pack: pd ? tactic : pk, neighbours: grid.near(c.x, c.z, 12 * S), threats: s.shots, side: sideOf(c), ready: time >= f.readyAt, beat: 60 / t.beat.bpm, heading, lights, cutoff, arriveAt: DA && A.delivery === "melee" && f.target.kind === "witch" && !ownFrom ? A.range + p.r : undefined, momentum: chase, now: herAt === p ? undefined : p });
       if (may && time >= f.readyAt && strikeNow(pd, f.target)) {
@@ -564,18 +563,17 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     // It tracks her as it winds up, aiming where she'll be by the time its blow arrives (lead of it), until dodge.a.commit seconds
     // before it lets go: then its aim is locked, and a blink then (or during the lunge) gets her clear.
     if (DA && A.delivery === "melee" && f.target.kind === "witch" && time < f.windupUntil - DA.commit) {
-      const { vx, vz } = lead(f.target), ahead = DA.commit + Math.min(0.6, d / 50);
+      const { vx, vz } = lead(f.target), ahead = DA.commit + (mo ? Math.min(0.8, d / 35) : Math.min(0.6, d / 50)); // (with momentum it lets go further out, Ed 2026-10-27: led by its longer lunge's flight)
       f.aimX = p.x + vx * ahead * DA.lead; f.aimZ = p.z + vz * ahead * DA.lead;
     }
     if (DA && A.delivery === "melee" && f.target.kind === "witch" && d > A.range + p.r && !(c.dug !== undefined && time < c.dug)) { // (not dug in: rooted)
       const surge = c.level === LEGEND ? speed : heavy ? Math.max(own * FIGHT.speed * slow, Math.hypot(c.vx ?? 0, c.vz ?? 0)) : Math.max(speed, sprint * FIGHT.speed * DA.surge * slow); // (a heavy carries on at the speed it has built up)
-      // (with creatureMomentum.strikes, its surge in has momentum too: for where she was, turning no faster than its limit; its aim,
-      // above, still leads her)
-      const ms = t.creatureMomentum?.strikes ? mo : null, q = ms ? chaseAt(s, f.target.id, time, ms) ?? p : p, qd = Math.hypot(q.x - c.x, q.z - c.z) || 1e-6;
-      const step = Math.min(d - A.range - p.r, surge * dt);
-      let ux = (q.x - c.x) / qd, uz = (q.z - c.z) / qd;
-      if (ms && Math.hypot(c.vx ?? 0, c.vz ?? 0) > 0.5) { const [lx, lz] = limitTurn(c.vx ?? 0, c.vz ?? 0, ux * surge, uz * surge, ms, dt, FIGHT.momentum), l = Math.hypot(lx, lz) || 1; ux = lx / l; uz = lz / l; }
-      c.x += ux * step; c.z += uz * step; c.vx = ux * surge; c.vz = uz * surge; c.moving = true; c.walk += dt * 8; c.facing = ux >= 0 ? 1 : -1;
+      // (with momentum, its surge in too: for where she was, turning no faster than its limit; its aim, above, still leads her)
+      const ms = mo, q = ms ? chaseAt(s, f.target.id, time, ms) ?? p : p, qd = Math.hypot(q.x - c.x, q.z - c.z) || 1e-6;
+      let nx = ((q.x - c.x) / qd) * surge, nz = ((q.z - c.z) / qd) * surge;
+      if (ms && Math.hypot(c.vx ?? 0, c.vz ?? 0) > 0.5) [nx, nz] = limitTurn(c.vx ?? 0, c.vz ?? 0, nx, nz, ms, dt, FIGHT.momentum); // (slowing as it turns, as it does chasing)
+      const nv = Math.hypot(nx, nz), step = Math.min(d - A.range - p.r, nv * dt), ux = nv > 1e-6 ? nx / nv : 0, uz = nv > 1e-6 ? nz / nv : 0;
+      c.x += ux * step; c.z += uz * step; c.vx = nx; c.vz = nz; c.moving = true; c.walk += dt * 8; if (Math.abs(ux) > 1e-6) c.facing = ux >= 0 ? 1 : -1;
     } else { const vx = c.vx ?? 0, vz = c.vz ?? 0, v = Math.hypot(vx, vz);
       if (v > 0.05) { const nv = Math.max(0, v - ((40 * FIGHT.speed) / FIGHT.momentum) * dt); c.vx = (vx / v) * nv; c.vz = (vz / v) * nv; c.x += c.vx * dt; c.z += c.vz * dt; } else { c.vx = 0; c.vz = 0; }
       c.moving = v > 1; }
@@ -588,7 +586,10 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       // when it wound up, so stepping aside dodges it; the blow lands at its end (above).
       // Committed (dodge.a): at her, down the line it locked as it wound up (above), lunging dodge.a.lunge times as far.
       const aimX = f.aimX, aimZ = f.aimZ, reach = (A.lunge ?? 0) * (DA && f.target.kind === "witch" ? DA.lunge : 1);
-      const ax = aimX - c.x, az = aimZ - c.z, ad = Math.hypot(ax, az), L = c.dug !== undefined && time < c.dug ? 0 : Math.min(reach, Math.max(0, ad - A.range * 0.5)); // (dug in: no lunge)
+      // (with momentum, Ed 2026-10-27: its run-in may have left it short, so the committed lunge goes right to where the wind-up aimed,
+      // up to a quarter again its usual length: a strike that starts stays reliable; at twice, a skilled bot backing away from a fight
+      // was knocked out early in 3 seeds of 12, at a quarter 2, with no momentum none)
+      const ax = aimX - c.x, az = aimZ - c.z, ad = Math.hypot(ax, az), short = mo ? 0 : A.range * 0.5, far = mo ? Math.max(reach, Math.min(reach * 1.25, ad)) : reach, L = c.dug !== undefined && time < c.dug ? 0 : Math.min(far, Math.max(0, ad - short)); // (dug in: no lunge)
       if (ad > 0.01 && L > 0.05) f.lunge = { dx: ax / ad, dz: az / ad, left: L, v: Math.hypot(c.vx ?? 0, c.vz ?? 0) };
       else if (Math.hypot(p.x - c.x, p.z - c.z) <= A.range * widthOf(f.target) + p.r) land(w, s, c, f.target, dmg, A, c.x, c.z);
     }
