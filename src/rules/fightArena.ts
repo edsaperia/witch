@@ -37,8 +37,8 @@ export function rollPack(seed: number, kinds: readonly string[] = FIGHTERS): Are
 /** The seed after `seed` (the next roll's). */
 export const nextSeed = (seed: number): number => (Math.imul(seed ^ 0x9e3779b9, 2654435761) >>> 0) % 1_000_000;
 
-/** A telegraph on show (the Fight Arena's timings): who, where, when it began and when it lands. Today's are the windups (a fighting
- *  creature's `fight.windupUntil`); the composable attacks' own (`combat.telegraphs`, docs/plans/attack-grammar.md) join as they come. */
+/** A telegraph on show (the Fight Arena's timings): whose, where, when it began and when it lands. Today's are the windups (a fighting
+ *  creature's `fight.windupUntil`); the composable attacks' own are the grammar engine's (`combat.spells.telegraphs`). */
 export interface Tell { key: string; species: string; x: number; z: number; start: number; fire: number }
 
 /** The reaction floor the composer keeps to (docs/plans/attack-grammar.md, proposed 0.45 s): a telegraph shorter shows red. */
@@ -69,17 +69,15 @@ export class TellWatch {
     // (when each began: its windup event this frame, at the step it happened; a frame can hold several steps)
     const began = new Map<number, number>();
     for (const e of (g.combat as { events?: { kind: string; at: number; id?: number }[] } | undefined)?.events ?? []) if (e.kind === "windup" && e.id !== undefined) began.set(e.id, e.at);
+    // (the grammar's own telegraphs, rules/attacks/engine.ts: live while alive, each with its start and when it fires, its shape's point;
+    // a creature fighting with one, its species' own or the arena's, shows those, not its windup as well)
+    const tg = (g.combat as { spells?: { telegraphs?: { id: number; alive: boolean; kind: string; attack: string; source: number; start: number; fire: number; shape: { x: number; z: number } }[] } } | undefined)?.spells?.telegraphs ?? [];
+    const casting = new Set<number>();
+    for (const k of tg) if (k.alive && k.fire > t) { casting.add(k.source); add(`t${k.id}`, `${k.attack} ${k.kind}`, k.shape.x, k.shape.z, k.fire, k.start); }
     for (const id of g.arena?.ids ?? []) {
       const c = g.creatures[id];
-      if (!c || c.gone || !c.fight?.windupUntil || c.fight.windupUntil <= t) continue;
+      if (!c || c.gone || c.spell || casting.has(id) || !c.fight?.windupUntil || c.fight.windupUntil <= t) continue;
       add(`w${id}`, c.species, c.x, c.z, c.fight.windupUntil, began.get(id));
-    }
-    // (the composable attacks' telegraphs, when they're there: { id, start, fire, shape: a point { x, z } or a segment { a, b } })
-    const tg = (g.combat as { telegraphs?: { id: number; start: number; fire: number; shape?: { x?: number; z?: number; a?: { x: number; z: number } } }[] } | undefined)?.telegraphs;
-    for (const k of tg ?? []) {
-      if (!(k.fire > t)) continue;
-      const p = k.shape?.a ?? k.shape;
-      if (typeof p?.x === "number" && typeof p?.z === "number") add(`t${k.id}`, "telegraph", p.x, p.z, k.fire, k.start);
     }
     for (const [key, s] of this.seen) if (s.fire < t - 5) this.seen.delete(key);
     return out;

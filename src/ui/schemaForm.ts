@@ -9,6 +9,8 @@ export interface Schema {
   properties?: Record<string, Schema>; required?: string[]; additionalProperties?: boolean | Schema;
   items?: Schema; oneOf?: Schema[]; anyOf?: Schema[]; $ref?: string;
   definitions?: Record<string, Schema>; $defs?: Record<string, Schema>;
+  /** The game's own dialect (rules/schema.ts): a unit for the label, null allowed too, a list's length. */
+  unit?: string; nullable?: boolean; minItems?: number; maxItems?: number;
 }
 
 export type Path = (string | number)[];
@@ -26,8 +28,8 @@ export interface Field {
   options?: unknown[];
 }
 
-/** How deep the form goes (an attack's children are attacks): past it, a field's raw JSON. */
-export const MAX_DEPTH = 7;
+/** How deep the form goes (an attack's children are attacks, each about five levels: a child's child's child fits): past it, a field's raw JSON. Only what's set is opened, so it bounds a value's depth, not the schema's. */
+export const MAX_DEPTH = 16;
 
 /** A `$ref` ("#/definitions/x", "#/$defs/x" or any "#/a/b") looked up in the root schema; anything else as it is. */
 export function resolve(s: Schema, root: Schema): Schema {
@@ -156,7 +158,7 @@ export function renderForm(into: HTMLElement, schema: Schema, value: unknown, ch
   const root = schema, el = (tag: string, cls = "", text = "") => { const e = document.createElement(tag); if (cls) e.className = cls; if (text) e.textContent = text; return e; };
   const put = (path: Path, v: unknown) => changed(setAt(value, path, v));
   const draw = (f: Field, depth: number): HTMLElement => {
-    const row = el("div", `sf-row sf-${f.kind}`), label = el("label", "sf-key", f.key || "attack");
+    const row = el("div", `sf-row sf-${f.kind}`), label = el("label", "sf-key", `${f.key || "attack"}${f.schema.unit ? ` (${f.schema.unit})` : ""}`);
     if (f.schema.description) label.title = f.schema.description;
     const unset = f.value === undefined, def = f.schema.default !== undefined ? ` (${JSON.stringify(f.schema.default)})` : "";
     row.append(label);
