@@ -9,6 +9,7 @@
 // the object she's at, its name and E; a placeholder's line in a bubble a few seconds when she uses it; the bed's ring filling as
 // E is held (rules/houseRooms.ts stepBed).
 import * as THREE from "three";
+import { gpuKind } from "./gpuLedger";
 import type { View } from "./view";
 import { deckOf, type Deck } from "../rules/treehouse";
 import { fromPlan, toPlan, HOUSE_ROOMS, hatsOnFloor, hatSlots, objectAt, type HouseObject } from "../rules/houseRooms";
@@ -291,7 +292,7 @@ export class HouseRoomsView {
       if (!this.floorArt) {
         const A = (this.floorArt = this.floorCame!);
         for (const [mesh, px] of [[this.floor, A.rest], [this.terraceFloor, A.terrace]] as const) {
-          const tex = new THREE.DataTexture(px, A.w, A.h, THREE.RGBAFormat);
+          const tex = gpuKind(new THREE.DataTexture(px, A.w, A.h, THREE.RGBAFormat), "house");
           tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.flipY = false; tex.colorSpace = THREE.NoColorSpace; tex.needsUpdate = true; // (its colours as the quads' vertex colours are: as they are)
           (mesh.material as THREE.MeshBasicMaterial).map = tex; (mesh.material as THREE.MeshBasicMaterial).needsUpdate = true;
         }
@@ -403,7 +404,7 @@ export class HouseRoomsView {
         if (this.pile) { this.furniture.remove(this.pile.mesh); this.pile.mesh.geometry.dispose(); ((this.pile.mesh.material as THREE.MeshBasicMaterial).map)?.dispose(); (this.pile.mesh.material as THREE.Material).dispose(); this.pile = null; }
         const st = v.assets.style, mine = witchLookOf(st, this.outfit), sp = (Art.clothesPileSprite as (st: object, o: object) => { w: number; h: number } | null)(st, { look: mine.look, slots });
         if (sp) {
-          const b = (Art.bake as (sp: object, c: object, st: object, o: unknown) => { A: HTMLCanvasElement })(sp, mine.colours, st, (st as { cOutline?: unknown }).cOutline), tex = new THREE.CanvasTexture(b.A);
+          const b = (Art.bake as (sp: object, c: object, st: object, o: unknown) => { A: HTMLCanvasElement })(sp, mine.colours, st, (st as { cOutline?: unknown }).cOutline), tex = gpuKind(new THREE.CanvasTexture(b.A), "house");
           tex.magFilter = tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.colorSpace = THREE.NoColorSpace; tex.flipY = false;
           const geo = new THREE.BufferGeometry(), pos = new Float32Array(12);
           geo.setAttribute("position", new THREE.BufferAttribute(pos, 3)); geo.setAttribute("uv", new THREE.BufferAttribute(new Float32Array([0, 0, 1, 0, 1, 1, 0, 1]), 2)); geo.setIndex([0, 1, 2, 0, 2, 3]);

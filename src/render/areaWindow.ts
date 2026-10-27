@@ -9,6 +9,7 @@
 // changed the clearings' shade: the bench's wave-fight, 10% of its pixels by a level or two). The shader reads it through
 // AREA_GLSL's areaAt, which hands back the old four channels. No three.js scene here, only the texture: tested without a GPU.
 import * as THREE from "three";
+import { gpuKind } from "./gpuLedger";
 
 export const AREA_TILE = 32; // texels
 
@@ -80,7 +81,7 @@ export class AreaWindow {
     const n = s * AREA_TILE;
     this.tm = AREA_TILE / tpm;
     this.texture = new THREE.DataTexture(null, n, n, THREE.RGFormat, THREE.UnsignedByteType);
-    const t = this.texture;
+    const t = gpuKind(this.texture, "ground");
     t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.unpackAlignment = 1;
     t.needsUpdate = true; t.source.dataReady = false; // (made on the GPU only, never as one array here; WebGL starts it at zero)
     this.extent = new THREE.Vector4(map.minX, map.minZ, n / tpm, n / tpm);

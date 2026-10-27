@@ -75,6 +75,7 @@ import { setupDebugKeys } from "./app/keys";
 import { ScreenShake } from "./app/shake";
 import { playerPick as makePlayerPick } from "./app/playerPick";
 import { installHooks } from "./app/hooks";
+import { gpuLine, gpuSample } from "./render/view/gpuBudget";
 import { PerfHud } from "./app/perfHud";
 import { keepAtlasPixels } from "./render/atlas";
 import { installPixelUi } from "./ui/pixelUi";
@@ -750,6 +751,18 @@ meter.onSilence = e => {
   log.audioState = () => ({ ...(own?.() ?? { state: "none", volume: 0, distort: 0, distance: 0, mends: 0 }), clock: { slow: cw.slow, fast: cw.fast, drift: cw.drift, played: cw.outDrift, underruns: cw.underruns, underrunMs: cw.underrunMs, verdict: cw.verdict() } });
 }
 // each sample's frames too (Ed's overlay, 2026-10-13: a GPU-bound night; the L log shows which it was)
+// What the GPU holds (render/gpuLedger.ts, view/gpuBudget.ts): each sample's, the pause page's and the overlay's line, and its
+// trouble kept in the log. A lost GL context can't be mended in place (the atlases let their pixels go once uploaded, and the
+// ground's tiles live only on the GPU), so once it's back the night is loaded anew from the repro link: the island, the waves
+// brought on, her place and the zoom (DECISION FOR ED: the fights in between aren't replayed).
+N().playtest.gpuState = () => gpuSample(view);
+freeze.extra = () => [gpuLine(view)];
+view.onGpuEvent = what => N().playtest.gpuEvent(what, Math.round(view.ledger.total / 1048576));
+view.onContextRestored = () => {
+  N().playtest.gpuEvent("context restored: the night loaded again");
+  const link = repro.link();
+  location.replace(N().params.has("debug") ? link : link.replace(/&debug$/, ""));
+};
 N().playtest.frameState = () => {
   const r = frameStats.recent(), pct = (a: number[], p: number) => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y); return Math.round(s[Math.min(s.length - 1, Math.floor(p * s.length))] * 10) / 10; };
   const S = view.stats, { game } = N(), w = game.witch;
@@ -1152,6 +1165,7 @@ function overlayHead(): string[] {
     `trees  ${s.trees}  bushes ${s.bushes}  creatures ${s.creatures}`,
     `budget scenery to ${s.sceneryRadius.toFixed(0)} m (${s.scenery})  gameplay ${s.gameplay}  dropped ${s.dropped}`,
     `draws  ${s.drawCalls}  art queued ${s.pendingArt}  ground tiles ${s.pendingGround}`,
+    gpuLine(view),
     ...(game.lod ? [`sim    full ${game.lod.full}  coarse ${game.lod.coarse}  frozen ${game.lod.frozen}   marching full ${game.lod.marchFull}  coarse ${game.lod.marchCoarse}`] : []),
   ];
 }

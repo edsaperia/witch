@@ -94,6 +94,8 @@ import { MAX_FIRES, TRUNK_SHADOW_UNIFORMS, type TrunkShadowBatch } from "./trunk
 import { CastShadowMap } from "./castShadows";
 import { newBudget, stepBudget, type SceneryBudget } from "../rules/budget";
 import { packAtlas } from "./atlas";
+import { GpuLedger } from "./gpuLedger";
+import { keepUnderBudget, newGpuState } from "./view/gpuBudget";
 import { berrySprite } from "./berries";
 import { leyDrawnTo, shaderPulse, type LeyLines } from "./leylines";
 import { routeSeen } from "../rules/hatSpells";
@@ -650,7 +652,10 @@ export class View {
     // again from its pixels, which the atlases let go once uploaded (render/atlas.ts), so the art would come back black. The
     // page reloads instead (DECISION FOR ED: a run is lost either way; nothing handled it before, and the ground's own GPU-side
     // tiles wouldn't have come back either).
-    canvas.addEventListener("webglcontextrestored", () => { console.warn("view: the GL context was lost and restored: reloading"); location.reload(); });
+    // (main.ts reloads the night itself, from its repro link: the island, the wave and her place, and keeps it in the playtest log)
+    canvas.addEventListener("webglcontextrestored", () => { console.warn("view: the GL context was lost and restored: reloading"); (this.onContextRestored ?? (() => location.reload()))(); });
+    this.ledger = new GpuLedger(this.renderer.getContext(), () => canvas.width * canvas.height * 12); // (the canvas's back and front buffers and its depth: preserveDrawingBuffer)
+    canvas.addEventListener("webglcontextlost", () => { this.ledger.reset(); this.onGpuEvent?.("context lost"); });
     this.renderer.setPixelRatio(1);
     this.renderer.info.autoReset = false; // count every pass of a frame, reset in render()
     this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace; // colours are the art's own sRGB values, untouched
@@ -1215,28 +1220,31 @@ export class View {
     }
   }
 
-  /** Each area type's trees last listed (performance.now), for letting the zoo's go (keepTypesUnder). */
-  private typeUsed = new Map<number, number>();
-  /** The zoo (rules/zooMap.ts), dozens of islands each its own type: the area types' tree atlases on the GPU kept under `mb` (the
-   *  types listed now, `listed`, always kept), the longest unlisted let go first: their batches and their art (AssetLibrary.forgetType: asked
-   *  for again from the art cache if she comes back, fading in as any set does). Flown over every island they came to 887 MB (tools/zoo/perf.cjs,
-   *  2026-10-26); a typical zoo's few stay under it and nothing goes. */
-  keepTypesUnder(listed: ReadonlySet<number>, mb: number): void {
-    const now = performance.now(), bytes = (b: SpriteBatch) => { const a = b.atlas.albedo.image as { width?: number; height?: number } | null; return (a?.width ?? 0) * (a?.height ?? 0) * 4 * 2; };
-    for (const t of listed) this.typeUsed.set(t, now);
-    let total = 0;
-    for (const b of this.typeBatches.values()) total += bytes(b);
-    if (total <= mb * 1048576) return;
-    const idle = [...this.typeBatches.keys()].filter(t => !listed.has(t)).sort((a, b) => (this.typeUsed.get(a) ?? 0) - (this.typeUsed.get(b) ?? 0));
-    for (const t of idle) {
-      if (total <= mb * 1048576) break;
-      const b = this.typeBatches.get(t)!;
-      total -= bytes(b);
-      this.scene.remove(...b.meshes); b.release(); this.typeBatches.delete(t);
-      const sh = this.trunkShadowBatches.get(t);
-      if (sh) { this.scene.remove(...sh.meshes); sh.dispose(); this.trunkShadowBatches.delete(t); } // (its own buffers: the atlas is the type's)
-      this.assets.forgetType(t); // (its atlas off the GPU; asked for again, from the art cache, when she comes back)
-    }
+  /** Each area type's trees last listed (performance.now), and each creature batch last drawn: the GPU budget lets the longest
+   *  unused go first (view/gpuBudget.ts). */
+  typeUsed = new Map<number, number>();
+  creatureUsed = new Map<string, number>();
+  /** What the GPU holds (render/gpuLedger.ts), and the budget kept over it (view/gpuBudget.ts). */
+  readonly ledger: GpuLedger;
+  readonly gpu = newGpuState();
+  /** The GL context back after it was lost: the night is loaded anew (main.ts), the page reloaded if no one says how. */
+  onContextRestored?: () => void;
+  /** Told of the GPU's own trouble (an out-of-memory error, the context lost): main.ts keeps it in the playtest log. */
+  onGpuEvent?: (what: string) => void;
+  /** Area type `t`'s trees let go (the GPU budget): its batches and its art (AssetLibrary.forgetType: asked for again from the art
+   *  cache if she comes back, fading in as any set does). */
+  forgetType(t: number): void {
+    const b = this.typeBatches.get(t);
+    if (b) { this.scene.remove(...b.meshes); b.release(); this.typeBatches.delete(t); }
+    const sh = this.trunkShadowBatches.get(t);
+    if (sh) { this.scene.remove(...sh.meshes); sh.dispose(); this.trunkShadowBatches.delete(t); } // (its own buffers: the atlas is the type's)
+    this.typeUsed.delete(t);
+    this.assets.forgetType(t); // (its atlas off the GPU; asked for again, from the art cache, when she comes back)
+  }
+  /** Creature batches `keys`, all on `atlas`, let go (the GPU budget), and their art (asked for again when a creature wears it). */
+  forgetCreatures(keys: string[], atlas: SpriteBatch["atlas"]): void {
+    for (const k of keys) { const b = this.creatureBatches.get(k); if (b) { this.scene.remove(...b.meshes); b.release(); this.creatureBatches.delete(k); } this.creatureUsed.delete(k); }
+    this.assets.forgetCreatureAtlas(atlas);
   }
 
   batchFor<K>(map: Map<K, SpriteBatch>, key: K, atlas: () => SpriteBatch | undefined): SpriteBatch | undefined {
@@ -1713,6 +1721,7 @@ export class View {
     this.stats.dropped = dropped;
     this.stats.drawCalls = this.renderer.info.render.calls;
     this.stats.batches = this.typeBatches.size + this.creatureBatches.size;
+    keepUnderBudget(this, performance.now());
     this.stats.sceneryRadius = this.budget.radius; this.stats.fps = this.budget.fps;
     this.stats.scenery = this.stats.trees + this.stats.bushes;
     this.stats.gameplay = this.stats.creatures + this.propBatch.count + this.soundBatch.count + (this.partyView.gen?.count ?? 0);

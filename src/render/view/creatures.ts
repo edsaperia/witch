@@ -304,8 +304,10 @@ export function drawCreatures(v: View, time = 0): void {
   }
   v.rig?.end();
   v.creatureBatches.forEach(clearUnused);
+  const now = performance.now();
   per.forEach((list, s) => {
     if (!list.length) return;
+    v.creatureUsed.set(s, now); // (drawn: kept by the GPU budget, view/gpuBudget.ts)
     let b = v.creatureBatches.get(s);
     if (!b) {
       const k = legendKeys.has(s) ? s.slice(7) : s; // (a legend's batch: as its own key's, plus its look)

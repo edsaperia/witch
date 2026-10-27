@@ -2342,7 +2342,7 @@ The lighting's mood (Ed, 2026-10-06: "make it a spooky dark forest with a party 
 | `haze.near` | number | 0 to … |
 | `haze.far` | number | 0 to … |
 
-### `shadows`, `mist`
+### `shadows`
 
 trunks.lightReach (Ed, 2026-10-13: "the light that soundsystems and runestones produce" should make the trees cast shadows): how far a soundsystem's or a runestone's light throws the trees', props' and scenery's shadows, in metres (0: none), past its own glow's reach so the trees round its clearing catch it (its clearing: arena.radius 5, noise 0.05 and band 50 (Ed: "Try band at 50"), Ed 2026-10-13: "reduce the clearing size to 15m": the nearest trees about 15 m from it). trunks.foot, trunks.near, trunks.cover (Ed, 2026-10-12: "they should fade out at the bottom of the tree", "when you're close to the tree", for her glow's and the campfires' alike; and "The shadows should darken other foliage that they cast upon"): a trunk's shadow fades in from nothing over foot metres from its foot (0: none) and opens out from a third of its width over taper metres (0: none; Ed: roots and decorations "get wide at the base, that look strange when they're rotated"), fades to nothing as she comes within near metres of its trunk (0: never), and darkens the ground cover it falls on (grass, flowers, tufts) at cover times its strength (0: not at all). Ed's tuned values (2026-10-12): strength 0.75, long 2.5, glowReach 50, glowHeight 1.25, soft, core 0.8, across 1, and lights.campfire.reach 40. shadows: a small contact shadow under the witch, each bush, creature and prop; trees: a crown-sized shadow under every tree too, cast away from the moon (off: Ed, 2026-10-03). canopyShadow: a dappled shadow from the canopy overhead (height in metres), thinner in clearings, drifting with the wind. mist: a low drifting mist (height in metres above the ground). Each has on and strength. trunks.scenery, trunks.sceneryMin (Ed, 2026-10-12: "Scenery (temples etc) should also cast them", "Runestones and soundsystems should also cast shadows"): scenery casts the same shadows from her glow and the fires, untapered (its foot is its own width): set pieces, ruins, rocks and freak trees, modern and quest relics, the scenes' pieces (temples, castles, cemeteries...), the runestones and the soundsystems; pieces under sceneryMin metres tall cast none. tint (Ed, 2026-10-12: "Runestones and especially soundsystems are bright with coloured light; they should have shadows but they shouldn't be black. Can we have complementary colours in shadows cheaply?"; 2026-10-13: "colour all the shadows"): every shadow (scenery's, the trees' and palms', and the blobs under creatures, the witch, bushes and small things) at its darkest goes from black toward the complement of the light it lies in by tint (0: black): a campfire's orange throws blue-violet, plain moonlight a warm shade. cast (Ed, 2026-10-13: "shadows should darken the things that they land on ... it should be everything"): what stands in the trunks', palms' and scenery's shadows (creatures, the witch, bushes, props, scenery) is darkened and tinted by them where they fall on it, from a map of them drawn from above round her (render/castShadows.ts); off, only the ground and grass; castRes is that map's texels across (1024: 6.4 a metre over 160 m; 512 is a quarter of the texels to clear and draw each frame, for a weaker GPU). trunks.glowLight: a glowing caster's (a runestone, a soundsystem) toward a soft shade of its own colour by glowLight (0: as dark as any). trunks.sceneryFoot (Ed, 2026-10-12: "Runestones shadow should fade at the base"): scenery's shadow, cast from its middle, fades in from nothing over its own half-width and sceneryFoot metres past it (0: none). trunks.sceneryTaper (Ed, 2026-10-12: "What about tapering?"): scenery's shadow is pinched to a third at its foot and opens to full over its half-width and sceneryTaper times its width past it (a wide ruin over more ground than a narrow runestone; at most 0.6 of its shadow's length; 0: none).
 
@@ -2371,6 +2371,22 @@ trunks.lightReach (Ed, 2026-10-13: "the light that soundsystems and runestones p
 | `shadows.trunks.sceneryFoot` | number | 0 to … |
 | `shadows.trunks.sceneryTaper` | number | 0 to … |
 | `shadows.trunks.lightReach` | number | 0 to … |
+
+### `gpu`, `mist`
+
+The game-wide GPU memory budget (the coordinator's ask, Ed-approved 2026-10-26; render/gpuLedger.ts counts every texture and render buffer at the GL calls, render/view/gpuBudget.ts keeps it): mb MB for a window of refWidth x refHeight physical pixels, scaled by this window's (Google Maps' rule), never under floor nor over ceil. Every every seconds, over it, the art used longest ago (an area type's trees, a creature set, a rig page) is let go till it's under headroom of the budget, nothing used in the last keep seconds (what's on screen is used every frame); it comes back from the art cache when wanted. GL's out-of-memory error, read every errorEvery seconds (each read waits on the GPU), lowers the budget to headroom of what was held then.
+
+| knob | type | range |
+|---|---|---|
+| `gpu.mb` | number | 0 to … |
+| `gpu.refWidth` | number | 0 to … |
+| `gpu.refHeight` | number | 0 to … |
+| `gpu.floor` | number | 0 to … |
+| `gpu.ceil` | number | 0 to … |
+| `gpu.headroom` | number | 0 to … |
+| `gpu.keep` | number | 0 to … |
+| `gpu.every` | number | 0 to … |
+| `gpu.errorEvery` | number | 0 to … |
 | `mist.on` | boolean |  |
 | `mist.strength` | number | 0 to … |
 | `mist.height` | number | 0 to … |

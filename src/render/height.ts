@@ -14,6 +14,7 @@
 // camera's focus drops by curve x d^2, d its distance ahead along the camera's ground-forward axis,
 // so the forest falls away toward the top of the screen and the sky shows over it.
 import * as THREE from "three";
+import { gpuKind } from "./gpuLedger";
 import type { ForestMap } from "../rules/map";
 import type { Forest } from "../rules/forest";
 import { floorClearing } from "../rules/speakers";
@@ -198,7 +199,7 @@ export class HeightField {
     amplitude = H.on ? H.amplitude : 0;
     { const b = beachOf(map.bounds, map.tuning), B = map.tuning.beach; if (b && B) { const ease = Math.max(1, B.ease); let most = 0; for (const w of b.sand) most = Math.max(most, w); this.beach = { b, ease, hSand: B.sand, hSea: B.sea, inland: most + ease + 1 }; } }
     this.texture = new THREE.DataTexture(this.half, N, N, THREE.RedFormat, THREE.HalfFloatType);
-    const t = this.texture;
+    const t = gpuKind(this.texture, "ground");
     t.magFilter = t.minFilter = THREE.LinearFilter; t.wrapS = t.wrapT = THREE.RepeatWrapping;
     t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; t.needsUpdate = true;
     HEIGHT_UNIFORMS.uHeight.value = t;

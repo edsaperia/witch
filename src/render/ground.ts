@@ -5,6 +5,7 @@
 // Which area each spot belongs to comes from a data texture filled in small tiles near the
 // camera (working the partition out for the whole map at once takes seconds on a phone).
 import * as THREE from "three";
+import { gpuKind } from "./gpuLedger";
 import { BAYER_GLSL, VALUE_NOISE_GLSL } from "./shaders";
 import { CARVING_SIZE, carvingMask } from "./legendCarving";
 import { legendSigilStrokes } from "../../art/generator.js";
@@ -661,7 +662,7 @@ export class Ground {
     this.near = window(Math.min(NEAR_TPM, ((Math.floor(8192 / AREA_TILE) - 1) * AREA_TILE) / Math.max(1, w, d)), NEAR_TILES, NEAR_STEP);
     this.far = window(FAR_TPM, FAR_TILES, FAR_STEP);
     const nearest = (t: THREE.DataTexture) => { t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; t.needsUpdate = true; return t; };
-    this.floors = nearest(new THREE.DataTexture(new Uint8Array(64 * FLOOR_VARIANTS * FLOOR_COLS * 48 * FLOOR_ROWS * 4), 64 * FLOOR_VARIANTS * FLOOR_COLS, 48 * FLOOR_ROWS));
+    this.floors = gpuKind(nearest(new THREE.DataTexture(new Uint8Array(64 * FLOOR_VARIANTS * FLOOR_COLS * 48 * FLOOR_ROWS * 4), 64 * FLOOR_VARIANTS * FLOOR_COLS, 48 * FLOOR_ROWS)), "ground");
     const floors = Array.from({ length: TYPE_SLOTS }, (_, i) => new THREE.Vector3(...(LOOKS[i]?.floor ?? [0.25, 0.45, 0.4])));
     const disco = discoLooks(made);
     // The shader as two programs over one set of uniforms (the perf pass's fix C, 2026-10-23, tools/bench/ground.cjs: code a
@@ -795,7 +796,7 @@ export class Ground {
       this.landTex?.dispose();
       const N = L.cols * L.rows, data = new Uint16Array(N * 4), h = THREE.DataUtils.toHalfFloat;
       for (let k = 0; k < N; k++) { data[k * 4] = h(L.dist[k]); data[k * 4 + 1] = h(b.sand[k]); data[k * 4 + 2] = h(b.toCoast[k * 2]); data[k * 4 + 3] = h(b.toCoast[k * 2 + 1]); }
-      const t = this.landTex = new THREE.DataTexture(data, L.cols, L.rows, THREE.RGBAFormat, THREE.HalfFloatType);
+      const t = this.landTex = gpuKind(new THREE.DataTexture(data, L.cols, L.rows, THREE.RGBAFormat, THREE.HalfFloatType), "ground");
       t.magFilter = t.minFilter = THREE.LinearFilter; t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
       t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; t.needsUpdate = true;
     }
@@ -950,7 +951,7 @@ function lakeUniforms(map: ForestMap, share: number, koiSize: number): Record<st
   koiPonds(bounds, map.seed, share).filter(k => plain(k.x, k.z)).slice(0, 8).forEach((k, i) => koi.value[i].set(k.x, k.z, k.r, k.seed + k.count / 10));
   const N = L.cols * L.rows, data = new Uint16Array(N), h = THREE.DataUtils.toHalfFloat;
   for (let k = 0; k < N; k++) data[k] = h(Math.max(-60, Math.min(60, L.dist[k])));
-  const t = new THREE.DataTexture(data, L.cols, L.rows, THREE.RedFormat, THREE.HalfFloatType);
+  const t = gpuKind(new THREE.DataTexture(data, L.cols, L.rows, THREE.RedFormat, THREE.HalfFloatType), "ground");
   t.magFilter = t.minFilter = THREE.LinearFilter; t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
   t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; t.needsUpdate = true;
   return { uLake: { value: new THREE.Vector4(1, L.step / 2, 0, 0) }, uLakeBox: { value: new THREE.Vector4(L.x0, L.z0, 1 / (L.step * L.cols), 1 / (L.step * L.rows)) }, uLakes: { value: t }, uLakeLooks: { value: lakeLookTexture(K) }, uKoi: koi, uKoiSize: { value: koiSize } };
