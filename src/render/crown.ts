@@ -195,7 +195,7 @@ void main() {
   vWorld = p; vBark = aBark;
   vN = normalize(aNormal.x * normalize(uMapX) + aNormal.y * normalize(uMapY) + aNormal.z * normalize(uMapZ));
   vLight = nightLight(vN, p); // (once a vertex)
-  vWarm = warmAt(position) * (0.55 + 0.6 * max(0.0, -aNormal.y)); vRad = aRad;
+  vWarm = warmAt(position) * (0.1 + 0.9 * max(0.0, -aNormal.y)); vRad = aRad; // (its undersides: the light comes from below)
   vec3 q = p - uMapO;
   vFloor = vec2(dot(q, uRight) / max(1e-4, dot(uMapX, uRight)), dot(q, uUp) / min(-1e-4, dot(uMapZ, uUp)));
   vec4 mv = viewMatrix * vec4(uBendOn > 0.5 ? bendW(p) : p, 1.0);
@@ -228,10 +228,11 @@ void main() {
   if (N.y > 0.35 && vnoise2(vBark * vec2(0.35, 4.0)) > 0.55) c = vnoise2(gl_FragCoord.xy * 0.7) < 0.5 ? vec3(0.133, 0.196, 0.118) : vec3(0.204, 0.282, 0.157); // moss on its top
   c *= 0.85 + 0.3 * min(1.0, y * 2.0);
   // the house's warm light from below, in flat steps (its undersides over the rooms the most)
-  if (vWarm > 0.0) { float q = clamp(floor(vWarm * 4.0 + (fur - 0.5) * 1.2), 0.0, 4.0) / 4.0; c = mix(c, c * vec3(2.0, 1.3, 0.7) + vec3(0.19, 0.095, 0.02), q); }
+  if (vWarm > 0.0) { float q = clamp(floor(vWarm * 4.0 + (fur - 0.5) * 1.2), 0.0, 4.0) / 4.0; c = mix(c, c * vec3(1.8, 1.2, 0.75) + vec3(0.12, 0.06, 0.015), q * 0.7); }
   // the moon catching the great limbs' edges: a hard line of cool light along their silhouettes on its side
-  if (uRimK > 0.0) { float edge = 1.0 - abs(dot(N, normalize(uBack))), m = dot(N, uMoonDir) + 0.25 * N.y, big = smoothstep(0.7, 2.2, vRad);
-    if (edge > 0.6 && m > 0.12 && fur > 0.22) c = mix(c, vec3(0.42, 0.47, 0.56) * (0.8 + 0.4 * fur), uRimK * big * (edge > 0.78 ? 1.0 : 0.55)); }
+  // (outside only: laid flat over the floors indoors, a tube has no silhouette to catch)
+  if (uRimK > 0.0 && uIndoor < 0.5) { float edge = 1.0 - abs(dot(N, normalize(uBack))), m = dot(N, uMoonDir), big = smoothstep(1.0, 2.5, vRad);
+    if (edge > 0.86 && m > 0.25 && N.y > 0.0 && fur > 0.3) c = mix(c, vec3(0.36, 0.40, 0.48), uRimK * big * 0.8); }
   gl_FragColor = vec4(crownHaze(c, vWorld), keep);
 }`;
 
@@ -332,7 +333,7 @@ export class CrownView {
     };
     // (the warm light's sources: each open room's middle, 1.5 m over its floor, reaching its size and the crown's height over it)
     const rooms = outline.rooms.filter(r => !r.locked).slice(0, 16);
-    rooms.forEach((r, i) => (this.uniforms.uWarmSrc.value as THREE.Vector4[])[i].set(r.x, 1.5, r.z, (r.r ?? 6) + 8));
+    rooms.forEach((r, i) => (this.uniforms.uWarmSrc.value as THREE.Vector4[])[i].set(r.x, 1.5, r.z, (r.r ?? 6) + 3));
     this.uniforms.uWarmN.value = rooms.length;
     const lobeMat = new THREE.ShaderMaterial({ vertexShader: LOBE_VERT, fragmentShader: LOBE_FRAG, uniforms: this.uniforms });
     const barkMat = new THREE.ShaderMaterial({ vertexShader: BARK_VERT, fragmentShader: BARK_FRAG, uniforms: this.uniforms });
