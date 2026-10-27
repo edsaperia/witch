@@ -3,7 +3,7 @@
 // stretch of flight so the creatures' and the next areas' art comes in) and at the zoo with every island found, each left until
 // its art has settled. For each: every texture the scene's sprite materials bind (their albedo and normal planes and palettes:
 // uAlbedo, uNormal, uTufts, uTuftN and their *Pal), its size and bytes as stored (RGBA 4 a pixel, R8 1), split by kind; and every
-// texture upload the page made (texImage2D / texSubImage2D of 64 by 64 or more, timed on the page's thread: under the cloud's
+// texture upload the page made (texImage2D / texSubImage2D of 64 by 64 or more, timed on the page's thread with the GPU drained first (gl.finish): under the cloud's
 // software renderer the upload is a copy made there and then, so its time is real; a GPU's driver may defer it), with the median
 // and worst per atlas. Run it on two builds to compare (an older build's atlases are all RGBA).
 //   npm run build && node tools/bench/artmem.cjs [out.json]   DIST=dist SEED=123 ONLY=night,zoo FLY=600
@@ -23,6 +23,7 @@ function hookUploads() {
   for (const name of ["texImage2D", "texSubImage2D"]) {
     const was = P[name];
     P[name] = function (...a) {
+      this.finish(); // (the renderer's backlog drained first, so the time is the upload's own: in the cloud's software renderer it's otherwise waited on in whichever GL call comes next)
       const s = performance.now(), r = was.apply(this, a), ms = performance.now() - s;
       // (texImage2D(target, level, internal, w, h, border, format, type, data) / texSubImage2D(target, level, x, y, w, h, format, type, data))
       const w = name === "texImage2D" ? a[3] : a[4], h = name === "texImage2D" ? a[4] : a[5], format = name === "texImage2D" ? a[6] : a[6];
@@ -61,25 +62,28 @@ function serve() {
   const { server, port } = await serve();
   const browser = await playwright.chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
   const result = {};
-  const settle = async p => { for (let i = 0; i < 200; i++) { const n = await p.evaluate(() => window.witch.view.assets.queue.length + (window.witch.view.assets.workers.some(w => w.busy) ? 1 : 0)); if (!n) return; await p.waitForTimeout(3000); } };
+  const SETTLE = Number(env("SETTLE", 180)); // (seconds at most: the zoo's queue never quite empties, the art drawn ahead going on)
+  const settle = async (p, what) => { for (let i = 0; i * 3 < SETTLE; i++) { const n = await p.evaluate(() => window.witch.view.assets.queue.length + (window.witch.view.assets.workers.some(w => w.busy) ? 1 : 0)); if (!n) return log(what, "art settled"); await p.waitForTimeout(3000); } log(what, `art still coming after ${SETTLE} s: measured as it is`); };
   try {
     for (const scene of ONLY) {
       const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } }), p = await ctx.newPage(); // (a fresh context: nothing kept in the art cache)
       await p.addInitScript(hookUploads);
       p.on("pageerror", e => log("page error:", e.message));
+      log(scene, "loading");
       await p.goto(`http://127.0.0.1:${port}/?${scene === "zoo" ? "zoo&all&creator=0" : `creator=0&seed=${SEED}`}`);
       await p.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000, polling: 500 });
+      log(scene, "ready");
       await p.keyboard.press("Enter");
       await p.waitForTimeout(3000);
-      await settle(p);
+      await settle(p, scene);
       if (scene === "night" && FLY) { // (a stretch of flight north, so creatures and the next areas come in)
         await p.keyboard.down("KeyW"); await p.waitForTimeout(FLY * 1000 / 60); await p.keyboard.up("KeyW");
-        await settle(p);
+        await settle(p, scene + " after the flight");
       }
       await p.waitForTimeout(2000);
       const art = await p.evaluate(artTextures), up = await p.evaluate(() => window.__uploads);
       const big = up.filter(u => u.w * u.h >= 65536), ms = big.map(u => u.ms).sort((a, b) => a - b);
-      result[scene] = { art, uploads: { n: up.length, atlases: big.length, red: big.filter(u => u.red).length, medianMs: ms[Math.floor(ms.length / 2)] ?? 0, worstMs: ms[ms.length - 1] ?? 0, totalMs: ms.reduce((s, x) => s + x, 0), perMpx: big.reduce((s, u) => s + u.ms, 0) / Math.max(1, big.reduce((s, u) => s + u.w * u.h, 0) / 1e6) } };
+      result[scene] = { art, list: big, uploads: { n: up.length, atlases: big.length, red: big.filter(u => u.red).length, medianMs: ms[Math.floor(ms.length / 2)] ?? 0, worstMs: ms[ms.length - 1] ?? 0, totalMs: ms.reduce((s, x) => s + x, 0), perMpx: big.reduce((s, u) => s + u.ms, 0) / Math.max(1, big.reduce((s, u) => s + u.w * u.h, 0) / 1e6) } };
       log(scene, `art ${MB(art.total)} MB in ${art.n} textures (albedo ${MB(art.by.albedo?.bytes ?? 0)} MB, ${art.by.albedo?.indexed ?? 0}/${art.by.albedo?.n ?? 0} indexed; normal ${MB(art.by.normal?.bytes ?? 0)} MB, ${art.by.normal?.indexed ?? 0}/${art.by.normal?.n ?? 0} indexed; palettes ${MB(art.by.palette?.bytes ?? 0)} MB)`);
       log(scene, `uploads: ${big.length} atlases (${result[scene].uploads.red} R8), median ${result[scene].uploads.medianMs.toFixed(2)} ms, worst ${result[scene].uploads.worstMs.toFixed(1)} ms, ${result[scene].uploads.perMpx.toFixed(2)} ms a megapixel, ${result[scene].uploads.totalMs.toFixed(0)} ms in all`);
       await ctx.close();
