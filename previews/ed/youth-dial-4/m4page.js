@@ -79,3 +79,20 @@ function stackSprite(bar, id, n, st, hpx = 11) {
 }
 function trim(c) { const g = c.getContext("2d"), d = g.getImageData(0, 0, c.width, c.height).data; let mx = 0; for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) if (d[(y * c.width + x) * 4 + 3]) mx = Math.max(mx, x); const o = document.createElement("canvas"); o.width = mx + 1; o.height = c.height; o.getContext("2d").drawImage(c, 0, 0); return o; }
 window.M4 = { S, mix, css, drawFloor, crispFloor, stackSprite, FLOORS, BARS };
+// Both sides (Ed: "horizontal things by the side of the sigil stack can go both directions perhaps"): the berries alternate right,
+// left, right ... outward from the glyph, so the glyph stays centred over her head and the bar fills symmetrically. rows 2: each
+// side in two staggered rows (shorter). Returns { c, cx } (the glyph's centre column).
+function stackBoth(id, n, st, { rows = 1, hpx = 11 } = {}) {
+  const col = S.sigilColour(id), lit = st.ready ? mix(col, WHITE, .45) : col, dim = mix(PLATE, col, .42), f = st.fuse || 0;
+  const per = Math.ceil(n / 2), cols = rows === 2 ? Math.ceil(per / 2) : per, sideW = cols * 6 + (rows === 2 ? 3 : 0), W = 2 * (sideW + 2) + hpx + 4;
+  const c = document.createElement("canvas"); c.width = W; c.height = 15; const g = c.getContext("2d"), cy = 7, gx = sideW + 2;
+  const one = stackSprite("berry", id, n, { ...st, filled: 0 }, hpx); // the glyph (and the adult's ring) alone: drawn with no pieces
+  if (st.adult || f > .66) { const s = stackSprite("berry", id, n, st, hpx); g.drawImage(s, gx, 0); return { c, cx: gx + Math.floor((hpx + 4) / 2) }; }
+  g.drawImage(one, 0, 0, hpx + 2, 15, gx, 0, hpx + 2, 15);
+  const squeeze = f > .33 ? 1 - (f - .33) * 1.5 : 1, yTop = cy - (rows === 2 ? 6 : 3);
+  for (let i = 0; i < n; i++) { const right = i % 2 === 0, k = i >> 1, kc = rows === 2 ? k >> 1 : k, row = rows === 2 ? k & 1 : 0, off = Math.round((kc * 6 + row * 3) * squeeze);
+    const x = right ? gx + hpx + 3 + off : gx - 2 - 5 - off, y = yTop + row * 7, on = i < st.filled, colour = f ? mix(col, WHITE, .5 + f * .4) : on ? lit : dim, stemC = on ? mix(lit, [110, 190, 80], .5) : mix(dim, PLATE, .2);
+    BERRY.forEach((r, yy) => [...r].forEach((ch, xx) => { if (ch === ".") return; g.fillStyle = css(ch === "s" ? stemC : colour); g.fillRect(x + (right ? xx : 4 - xx), y + yy, 1, 1); })); }
+  return { c, cx: gx + Math.floor(hpx / 2) + 1 };
+}
+window.M4.stackBoth = stackBoth;

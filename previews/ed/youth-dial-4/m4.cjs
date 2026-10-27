@@ -24,6 +24,18 @@ const shots=await p.evaluate(async BG=>{const {S,drawFloor,crispFloor,stackSprit
    const [c,g]=canvas(960,540);g.drawImage(bg,0,0);g.drawImage(o,0,0,960,540);out[`stack-${bar}-playzoom.png`]=c.toDataURL();
    const [z,zg]=canvas(260*3,220*3);zg.drawImage(c,420,10,260,220,0,0,780,660);out[`stack-${bar}-zoomin.png`]=z.toDataURL()}
  }
+
+ for(const rows of [1,2]){const tag=rows===2?"berry-both2":"berry-both";const {stackBoth}=window.M4;
+  { const K=4;const [c,g]=canvas(1600,3*200+40);label(g,`stack bar "${tag}" (both sides${rows===2?", two rows a side":""}): 0 · half · ready · adult, then the fuse. Play-zoom art pixels ×${K}`,10,18);
+   TIERS.forEach(([id,n,t],ri)=>{const y=34+ri*200;label(g,t,10,y+10,12);
+    [{filled:0},{filled:Math.floor(n/2)},{filled:n,ready:true},{adult:true}].forEach((st,ci)=>{const {c:s}=stackBoth(id,n,st,{rows});g.drawImage(s,10+ci*400,y+20,s.width*K,s.height*K)});
+    [{filled:n,ready:true},{filled:n,fuse:.2},{filled:n,fuse:.55},{filled:n,fuse:.8},{adult:true}].forEach((st,ci)=>{const {c:s}=stackBoth(id,n,st,{rows});g.drawImage(s,10+ci*300,y+120,s.width*3,s.height*3)})});
+   out[`stack-${tag}-design.png`]=c.toDataURL()}
+  { const [o,og]=canvas(320,180,null);
+   [["snail",5,{filled:2}],["fox",7,{filled:7,ready:true}],["bear",15,{filled:8}],["fox",7,{adult:true}]].forEach(([id,n,st],i)=>{const {c:s,cx}=stackBoth(id,n,st,{rows});og.drawImage(s,159-cx,58-i*14-7)});
+   const [c,g]=canvas(960,540);g.drawImage(bg,0,0);g.drawImage(o,0,0,960,540);out[`stack-${tag}-playzoom.png`]=c.toDataURL();
+   const [z,zg]=canvas(300*3,220*3);zg.drawImage(c,330,10,300,220,0,0,900,660);out[`stack-${tag}-zoomin.png`]=z.toDataURL()}
+ }
  for(const style of ["chalk","wreath"]){
   { const PX=120,cw=PX+24;const [c,g]=canvas(4*cw+20,3*(PX+70)+40);label(g,`floor "${style}": the rank only (baby · youth · adult · legend), vector, and at play zoom ×3 underneath`,10,18);
    ["snail","fox","bear"].forEach((id,ri)=>{const y=32+ri*(PX+70);RANKS.forEach((nm,rank)=>{const x=10+rank*cw;g.save();g.translate(x+PX/2,y+PX/2);g.scale(PX/2*.82,PX/2*.82);drawFloor(g,style,id,rank);g.restore();
