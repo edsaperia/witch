@@ -5689,7 +5689,7 @@
         "knockBeats"
       ],
       "additionalProperties": false,
-      "description": "The music's clock (beats per minute): the lasers sweep to it and party animals dance to it."
+      "description": "The party's tempo in beats per minute, which the lasers sweep to and party animals dance to."
     },
     "leyLines": {
       "type": "object",
@@ -5700,12 +5700,12 @@
         "pulseSpeed": {
           "type": "number",
           "minimum": 0,
-          "description": "the pulse's speed along the route's own curves, metres a second, times the party's tempo (a knockdown's BPM speeds it); a wave lands as it reaches the next stone, so a wave's gap is its link's length over the speed; 0 holds the pulse where it is (no waves)."
+          "description": "How fast the pulse runs along the ley line, which sets how long each wave takes to arrive."
         },
         "reveal": {
           "type": "number",
           "minimum": 0,
-          "description": "from the end of home's boot the line grows out from the treehouse along the route at this many links a wave (this many times the pulse's speed), a soft glow at its tip, reaching this stone as the first wave lands and going on at that pace until the whole route is drawn (so no stone pops on at once; rules/leypulse.ts leyReachTimes gives when it reaches each, for the beacons); none at all while home boots up."
+          "description": "How fast the ley line grows out from the treehouse ahead of the waves, so no stone pops on at once."
         },
         "far": {
           "type": "array",
@@ -5720,7 +5720,7 @@
         },
         "advance": {
           "type": "string",
-          "description": "\"first\" moves it on when the next area's quest is done or its wave arrives, whichever comes first; \"wave\" only when its wave arrives."
+          "description": "Whether the ley line moves on to the next stone only when its wave arrives, or as soon as that area's quest is done."
         },
         "fade": {
           "type": "number",
@@ -5729,7 +5729,7 @@
         "brightness": {
           "type": "number",
           "minimum": 0,
-          "description": "how bright, a share of their first look, the glow through the crowns too."
+          "description": "How bright the ley line glows, each stretch shading from one area's colour to the next."
         },
         "width": {
           "type": "array",
@@ -5775,7 +5775,7 @@
             "avoid"
           ],
           "additionalProperties": false,
-          "description": "the first line leaves the treehouse's front round the ring of speakers, avoid metres outside it, on the first objective's side (clockwise on the screen and off to the right, the spiral starting east of home; the other way round for one west of it), then off the ring and looping round the same way out to the first objective; no link of the route passes over the dancefloor."
+          "description": "How the first stretch of ley line leaves the treehouse, curving round the ring of speakers rather than crossing the dancefloor."
         },
         "minRadius": {
           "type": "number",
@@ -5922,7 +5922,7 @@
         "generated"
       ],
       "additionalProperties": false,
-      "description": "Party objects: each partified area gets clusters [min, max] of the art's clusters, loose [min, max] loose pieces (litter, small lights, balloons; neon and balloon colours random per placement), set dressing at setChance, and at caughtChance an escaped balloon caught in a tree; hanging [min, max] lanterns, jars, fairy lights or mirror balls hung from branches in nearby crowns."
+      "description": "The party clutter that appears as an area is partified: litter, lights, balloons, lanterns in the trees and set dressing, and home's own."
     },
     "partyWitches": {
       "type": "object",
@@ -6082,7 +6082,7 @@
             "turn"
           ],
           "additionalProperties": false,
-          "description": "stargazing: beds from to to metres out past the speakers' ring, places side by side one behind another gap metres apart (lying along x, length metres long), each stagger metres along from the last, threes that share of beds (the rest pairs), apart metres between beds; a player keeping still within meet metres of one has the beach's turns with her (a chat, holding hands, a hug, lying side by side), turn seconds each."
+          "description": "Beds out past the speakers where party witches lie stargazing, which she can join."
         }
       },
       "required": [
@@ -6114,7 +6114,7 @@
         "gaze"
       ],
       "additionalProperties": false,
-      "description": "Party witches: one per playing soundsystem (not the dancefloor's), however many, flying in from its side (from flyFrom metres out, at flyHeight, over arriveTime seconds) to land within roam metres of the dancefloor's middle (each new spot at roam × u^centreBias from it: the mean roam / (1 + centreBias), so the floor stays busiest), clear of trees, the speakers and the treehouse, and off again if it stops."
+      "description": "Other witches who fly in to dance, drink, chat and swoop around the dancefloor, one per playing soundsystem."
     },
     "speakerLasers": {
       "type": "object",
@@ -6152,7 +6152,7 @@
         "opacity"
       ],
       "additionalProperties": false,
-      "description": "The dancefloor ring's lasers: a single beam from each playing speaker, at most tilt degrees off straight up and leaning outwards, swinging sweep degrees sideways, over sweepBeats beats, neighbours out of phase; length metres, at opacity (thinner-looking than the area soundsystems' fans)."
+      "description": "A single laser beam swinging up from each speaker in the dancefloor's ring."
     },
     "lasers": {
       "type": "object",
@@ -6235,7 +6235,7 @@
         "fadeFar"
       ],
       "additionalProperties": false,
-      "description": "Each playing soundsystem's laser show: bursts of blockBars bars, on about duty of the time (seeded per soundsystem), up to maxCount beams stepping on the bars, fanned over spread degrees (no beam tilting more than maxTilt from straight up), swinging sweep degrees once every sweepBeats beats (slow, like searchlights), opening and closing the fan every openBars bars, length metres tall, opacity 0-1, fading in over fadeIn and out over fadeOut seconds, and fading with distance from fadeNear to fadeFar metres."
+      "description": "Each playing soundsystem's laser show, its beams fanning and sweeping in time with the music."
     },
     "borders": {
       "type": "object",
@@ -6263,7 +6263,7 @@
         "twinkle": {
           "type": "number",
           "minimum": 0,
-          "description": "(0 a gentle breathing, 1 star-like: brief flashes and dips, now and then a spark out for a moment); each spark flickers between its own area's colour and the one across the edge (Ed, v183), swapRate times a second on its own phase, and swapBeat of them snap on the beat instead."
+          "description": "How the sparks along a partified area's border twinkle, flicker and swap colours with the area next door."
         },
         "swapRate": {
           "type": "number",
@@ -6313,14 +6313,14 @@
         "levelScale"
       ],
       "additionalProperties": false,
-      "description": "The talk's speech bubbles (Ed): an outline only, no fill."
+      "description": "The speech and thought bubbles: outline only, with pixel emoji, sized by the speaker's level."
     },
     "runeMarkers": {
       "type": "object",
       "properties": {
         "variants": {
           "type": "boolean",
-          "description": "each area's stone one of the art's 20 seeded forms, dealt like a shuffled deck so every form is used before any repeats (Ed, #716; rules/runestones.ts) (height, lean, worn top, chips, cracks, moss, the carving's place and wear, the stones and grass at its foot), mirrored at random, its sigil never mirror-written; off, every stone as before."
+          "description": "Each area's rune stone is one of twenty carved forms, all used before any repeats."
         },
         "laser": {
           "type": "object",
@@ -6463,7 +6463,7 @@
         "flare"
       ],
       "additionalProperties": false,
-      "description": "Spawn markers (Ed, v147): a rune stone on every spot where a soundsystem will come, scale times the old rune stone's size."
+      "description": "The rune stones marking where soundsystems will come, glowing, and pulsing on the beat when the next wave is coming to them."
     },
     "sfx": {
       "type": "object",
@@ -6590,7 +6590,7 @@
                 "swapGap"
               ],
               "additionalProperties": false,
-              "description": "an attack a burst of babble in the creature's own voice (pitch Hz for a normal-sized young, lower by level and size; maxVoices at once, the farthest giving way (only to one swapBy nearer, at most one every swapGap seconds: a crowd otherwise cut itself off many times a second), duck: how much the others quieten; syllables per burst; gap: a creature speaks at most every gap seconds; reply: a 💌 hit's answering syllable, its volume share)."
+              "description": "Creatures babble in their own voice when they attack, a few at a time."
             }
           },
           "required": [
@@ -6865,7 +6865,7 @@
             "range"
           ],
           "additionalProperties": false,
-          "description": "a runestone crackling into life as a speaker or soundsystem, heard within range metres: its static (crackle), a capacitor's whine, the mains buzz, the cone's thump and the clean tone it settles into, each the home ring's next step up the scale, the last a chord; at most one every gap seconds (volume)."
+          "description": "The crackle, whine and thump of a runestone turning into a speaker or soundsystem, each a step up the scale."
         },
         "lament": {
           "type": "object",
@@ -6914,7 +6914,7 @@
             "max"
           ],
           "additionalProperties": false,
-          "description": "a restless legend calling out sadly, its own call lowered (pitch) and slowed (slow) into the legends' space, heard within range metres from the way of its clearing and muffled with distance; a call about every every seconds, down to urgent as its restlessness runs out; at most max restless legends call, the nearest, at least gap seconds apart (volume)."
+          "description": "A restless legend's sad call, heard from the way of its clearing, more often as its restlessness runs out."
         },
         "shoes": {
           "type": "object",
@@ -7050,7 +7050,7 @@
             "fall"
           ],
           "additionalProperties": false,
-          "description": "the wild watch's warning, while a wild area's watchers stand looking at her before they attack: a low swell in the music's key (swell) opening up and throbbing faster as the watch runs, a gritty riser over it (riser) by the area's danger, a hit as they attack (hit); called off, it sags and falls away over fall seconds; times volume."
+          "description": "The wild watch's warning sound: a low swell and a riser while creatures stare at her, and a hit as they attack."
         },
         "sparkler": {
           "type": "object",
@@ -7143,7 +7143,7 @@
             "speed"
           ],
           "additionalProperties": false,
-          "description": "over a soundsystem when a wave reaches an area she'd already cleared (Hotel's waveCelebrate, art builder 2's shells): each shell's climb (whoosh, now and then whistling), its burst (boom, its echo into the night echo, its stars' crackle), heard within range metres and late by the distance over speed metres a second, and the party under it cheering as the finale bursts (cheer) within cheerRange; the shells are rules/fireworks.ts's, the ones drawn, times volume."
+          "description": "The fireworks' whoosh, boom and crackle, and the crowd's cheer at the finale."
         },
         "seaLife": {
           "type": "object",
@@ -7265,7 +7265,7 @@
             "respawn"
           ],
           "additionalProperties": false,
-          "description": "her decks while she stands behind them (the DJ witch): a stroke of the record on each half-beat of her scratch bars (scratch, its hiss under the stylus hiss, a stroke stroke seconds long) and her \"woo-hoo!\" when she throws a hand up (hype), and in her routine the tonearm's tick and the needle's drop (needle), times volume."
+          "description": "The sounds of her decks while she DJs: record scratches, her \"woo-hoo!\" and the needle dropping."
         },
         "spell": {
           "type": "object",
@@ -7609,7 +7609,7 @@
             "squeakEvery"
           ],
           "additionalProperties": false,
-          "description": "home's ambience (breeze, bees, birds, a bird's song about every birdEvery seconds; its picnic's far murmur, its cups clinking about every clinkEvery seconds (clinks), its balloons squeaking about every squeakEvery (balloons)), in home's circle (the map's homeRadius round the dancefloor) fading out over its last fade metres."
+          "description": "Home's ambience: breeze, bees, birdsong, a picnic's murmur, clinking cups and squeaking balloons."
         },
         "whale": {
           "type": "object",
@@ -7768,7 +7768,7 @@
             "cutAfter"
           ],
           "additionalProperties": false,
-          "description": "knocked down, a muted trumpet's \"wah-wah-wah-waaah\" as her hat drops, the music dipped by duck under it; knocked down with no hat to drop, its shorter \"wah-waaah\" if bare is 1 (0: none); and as she's whisked to her decks a backwards record scratch (rewind, times volume) cuts its last note off, never before that note has had cutAfter seconds."
+          "description": "The sad trumpet when she's knocked down, and the backwards record scratch as she's whisked back to her decks."
         },
         "night": {
           "type": "object",
@@ -7908,7 +7908,7 @@
         "buffer": {
           "type": "number",
           "minimum": 0,
-          "description": "the audio output's buffer to ask for, in seconds, 0 for the latency category below; a browser that under-runs 20 times in a load asks for twice as much next load, up to 0.24 s (platform/audio/buffer.ts); the music goes out early by the context's latency so it stays on the beat shown, only the sound effects come later."
+          "description": "How much audio the game buffers ahead, so the music stays on the beat without crackling."
         },
         "dropLayers": {
           "type": "number",
@@ -8076,7 +8076,7 @@
         "beach"
       ],
       "additionalProperties": false,
-      "description": "Music by proximity: one shared track, full and clear within nearDist metres of a playing soundsystem (or the dancefloor's ring, as loud as its speakers are on), fading to floor of the volume and muffled to a muffle Hz low-pass by farDist metres (clear: the cutoff close by), never gone; a damaged soundsystem nearby wobbles, crackles and drops out, by its damage times distort."
+      "description": "The music gets louder and clearer near a playing soundsystem and quieter and muffled far off, never silent."
     },
     "alarms": {
       "type": "object",
@@ -8123,7 +8123,7 @@
         "transform"
       ],
       "additionalProperties": false,
-      "description": "At the start the home speaker ring boots up: its pulse runs from the treehouse's front down to the ring and once round it at speed m/s, each stone turning into its speaker as it passes; only then does the first wave's pulse set off: time to find and invite your first creatures."
+      "description": "At the start the home ring of speakers boots up one stone at a time before the first wave sets off."
     },
     "party": {
       "type": "object",
@@ -8179,7 +8179,7 @@
             "edge"
           ],
           "additionalProperties": false,
-          "description": "crowns in partified areas catch a faint glow from below in the area's colour (strength at its brightest, pulse on the beat, fading over edge metres toward the border)."
+          "description": "Tree crowns in partified areas catch a faint glow from below in the area's colour, pulsing on the beat."
         },
         "startDelay": {
           "type": "number",
@@ -8283,7 +8283,7 @@
         "cap": {
           "type": "number",
           "minimum": 0,
-          "description": "marks at once (the oldest gives way)."
+          "description": "The most blood marks shown at once, the oldest giving way."
         },
         "range": {
           "type": "number",
@@ -8347,7 +8347,7 @@
         "ahead"
       ],
       "additionalProperties": false,
-      "description": "The generated soundsystems: each area's its own genome, dealt as one set a map (none alike)."
+      "description": "Each area's soundsystem is generated with its own look, bigger and taller the further from the dancefloor."
     },
     "stringLights": {
       "type": "object",
@@ -8447,7 +8447,7 @@
         "more"
       ],
       "additionalProperties": false,
-      "description": "Colourful string lights in every partified area, as long garlands: runsPerArea runs (a range), each spansPerRun spans (a range) from tree to tree, every next tree inside a forward cone of coneAngle degrees either side, so a run sweeps across rather than zig-zagging; runs start at least spread metres apart."
+      "description": "Colourful garlands of string lights strung tree to tree across every partified area."
     },
     "waveNumbers": {
       "type": "object",
@@ -8483,7 +8483,7 @@
         "pinRange"
       ],
       "additionalProperties": false,
-      "description": "Off; set on to true to bring them back."
+      "description": "Numbers over the rune stones showing which wave will wake each one (now switched off)."
     },
     "dancefloor": {
       "type": "object",
@@ -8637,7 +8637,7 @@
             "lowLevelShare"
           ],
           "additionalProperties": false,
-          "description": "the witch lights the tiles under her (in witchColour, from the neon) when below witchLift, with a ripple each beat lasting rippleTime seconds (a landing's twice as long), footsteps fading over trailTime, events (a wave arriving, a sigil placed) over eventTime, and at level 1 only lowLevelShare of the lit tiles show; through the boot the floor shows the island's sigil, written on stroke by stroke as the boot's pulse goes round the ring, in place of the moon, the sap rising up it every sapBars bars once written, until the first wave switches the floor on (on: false, the moon as before); a glowing magic circle (two hues 0-1, pulse per second, runeSpeed in turns per minute) lighting the ground round it (lightReach metres, lightStrength), a plaza of flagstones round the floor (paving: in rings from the rim out to beyond metres past the speakers' feet, course metres deep, stones about stone metres long, the outer edge breaking up over ragged metres with missing of its stones gone to grass, moss the share of mossy stones; the speakers stand on a course of darker stone); and a magic disco ball floating discoHeight metres up (discoSize metres across, spin turns per minute) throwing specks of light: specks is the share of the sphere that throws one, speckBrightness how bright, speckReach how far."
+          "description": "The dancefloor's glass tiles light up under her and on events, show the island's sigil during the boot, and glow brighter as more areas join the party."
         },
         "island": {
           "type": "object",
@@ -8728,7 +8728,7 @@
         "speckReach"
       ],
       "additionalProperties": false,
-      "description": "The dancefloor: motes: magic particles drifting up off the circle (count, how high they rise in metres, speed in m/s, column: the share of the circle they rise from); its radius in metres; a ring of speakers.count stone speakers (Ed, v160), the first at speakers.start degrees round from the camera side and the rest evenly spaced, speakers.radiusFactor times the radius out, each speakers.footprint metres round; a clear space of clearing metres beyond the speakers' feet (the treehouse stands outside that); the floor's glass tiles light up (Ed, v160): levels: how many areas must have the party for each level of intensity above 1 (up to 4, a full rave)."
+      "description": "The dancefloor at the island's heart: its size, its ring of stone speakers, the clearing round it and the magic motes rising off it."
     },
     "partyOver": {
       "type": "object",

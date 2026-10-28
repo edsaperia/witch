@@ -2068,6 +2068,8 @@ The party: the beat, waves, soundsystems, the dancefloor, its lights and objects
 
 ### `beat`
 
+The party's tempo in beats per minute, which the lasers sweep to and party animals dance to.
+
 The music's clock (beats per minute): the lasers sweep to it and party animals dance to it. Later the music itself drives it.
 
 | knob | type | range |
@@ -2088,18 +2090,23 @@ The glowing line on the ground that joins the runestones in the order the waves 
 The pause page's Waves slider sets it live, 0 to 6, remembered on this browser (config/decisions/953-waves.json, app/settings.ts); ?pulse=<m/s> or ?pulse=off sets it from a link, over the saved one. The ley lines [1][2][3]: a glowing line through every wave's runestone in the order the waves wake them, home first, the whole route the whole time (party.picker route keeps it from crossing itself): the sections ahead of the last stone reached each fade times as bright as the one before, the one just left behind behindBright times as bright as the next and each before it fade times that, none fainter than far[0] ahead or far[1] behind (as shares). Each wanders along the low ground between its stones, straying up to valley of its length (80 m at most) to follow the hills' valleys, and a shimmer flows along it toward the next stone at flow[0] m/s, flow[1] m apart. It stays on the ground in both modes (Ed): width metres across on the ground and over the treetops (wider there, with a faint glow through the crowns), height metres over the ground in each. Round 14 [4][5]: on the ground the line is pixels, a hard core core[0] metres each side of its middle (core[1] over the treetops) in whole art pixels, a half-bright rim core[2] (core[3]) round it, its brightness worked out per art pixel along it in flat quarter steps, the pulse's head and the growing tip stepped the same way; round it the smooth glow it casts, over width; from the treetops the glow through the crowns stays smooth. brightness 0.3 -> 0.4, width [2, 4.5] -> [3, 5.5]. ?ley=0 turns them off. Its whole length [6]: fade, behindBright and far all 1, so every section is as bright as the next; unbroken into and out of each stone; laid on the ground every 2 m so it never sinks into a crest; shown through the trees (never through a hill, the witch or a creature) at the same brightness; the current link as bright as the rest, the pulse only adding its head and arrival flash.
 Code: `config/decisions/953-waves.json`, `app/settings.ts`
 
-- **`leyLines.pulseSpeed`**: the pulse's speed along the route's own curves, metres a second [2], times the party's tempo (a knockdown's BPM speeds it); a wave lands as it reaches the next stone, so a wave's gap is its link's length over the speed; 0 holds the pulse where it is (no waves). The boot has its own speed (boot.speed).
+- **`leyLines.pulseSpeed`**: How fast the pulse runs along the ley line, which sets how long each wave takes to arrive.
   1. Ed, 2026-10-09: "Pure constant speed"
   2. Ed, 2026-10-18: "Default starting wave speed is 1m/s" (1; 4 before)
-- **`leyLines.reveal`**: from the end of home's boot the line grows out from the treehouse along the route at this many links a wave (this many times the pulse's speed), a soft glow at its tip, reaching this stone as the first wave lands and going on at that pace until the whole route is drawn (so no stone pops on at once; rules/leypulse.ts leyReachTimes gives when it reaches each, for the beacons); none at all while home boots up. The pulse itself (render/leylines.ts) runs along the link from the last stone reached by the wave countdown's share (rules/leypulse.ts, as the HUD's wave pointer), the stretch behind it brighter, the whole link brightening toward the wave. The boot (rules/bootRing.ts): the party spell sends the pulse from the treehouse round the home ring clockwise from the top, turning each stone into its speaker, the line drawn ahead of it at reveal times its pace. ?ley=0 turns them off.
+  the pulse's speed along the route's own curves, metres a second [2], times the party's tempo (a knockdown's BPM speeds it); a wave lands as it reaches the next stone, so a wave's gap is its link's length over the speed; 0 holds the pulse where it is (no waves). The boot has its own speed (boot.speed).
+- **`leyLines.reveal`**: How fast the ley line grows out from the treehouse ahead of the waves, so no stone pops on at once.
   1. Ed, 2026-10-06: "The pulse starts from the treehouse at the start of the first wave. before that, during boot up phase, there's no leyline ... Then the leyline appears, starting at the treehouse, moving three times (adjustable) the speed on the pulse (so it reaches runestone 3 by the time the first wave finishes)"
+  from the end of home's boot the line grows out from the treehouse along the route at this many links a wave (this many times the pulse's speed), a soft glow at its tip, reaching this stone as the first wave lands and going on at that pace until the whole route is drawn (so no stone pops on at once; rules/leypulse.ts leyReachTimes gives when it reaches each, for the beacons); none at all while home boots up. The pulse itself (render/leylines.ts) runs along the link from the last stone reached by the wave countdown's share (rules/leypulse.ts, as the HUD's wave pointer), the stretch behind it brighter, the whole link brightening toward the wave. The boot (rules/bootRing.ts): the party spell sends the pulse from the treehouse round the home ring clockwise from the top, turning each stone into its speaker, the line drawn ahead of it at reveal times its pace. ?ley=0 turns them off.
   Code: `rules/leypulse.ts`, `render/leylines.ts`, `rules/bootRing.ts`
-- **`leyLines.advance`**: "first" moves it on when the next area's quest is done or its wave arrives, whichever comes first; "wave" only when its wave arrives. "wave" (the default) keeps the line, its pulse and its front to the waves, a quest done leaving its stone where it is on the route; "first" moves the line on to a stone as soon as its quest is done, as before (the pulse jumping to it).
+- **`leyLines.advance`**: Whether the ley line moves on to the next stone only when its wave arrives, or as soon as that area's quest is done.
   1. Ed, 2026-10-08: "The pulse should never skip, it always travels along the route at the bpm speed. The line front also never skips, but travels along the route at three times the bpm speed"
-- **`leyLines.brightness`**: how bright, a share of their first look [1], the glow through the crowns too. Each fades from the colour of the area it starts in to that of the area it ends in (the colour partified areas and soundsystems use).
+  "first" moves it on when the next area's quest is done or its wave arrives, whichever comes first; "wave" only when its wave arrives. "wave" (the default) keeps the line, its pulse and its front to the waves, a quest done leaving its stone where it is on the route; "first" moves the line on to a stone as soon as its quest is done, as before (the pulse jumping to it).
+- **`leyLines.brightness`**: How bright the ley line glows, each stretch shading from one area's colour to the next.
   1. Ed, 2026-10-05: "about 30% as bright" (0.3)
-- **`leyLines.depart`**: the first line leaves the treehouse's front round the ring of speakers, avoid metres outside it, on the first objective's side (clockwise on the screen and off to the right, the spiral starting east of home; the other way round for one west of it), then off the ring and looping round the same way out to the first objective; no link of the route passes over the dancefloor.
+  how bright, a share of their first look [1], the glow through the crowns too. Each fades from the colour of the area it starts in to that of the area it ends in (the colour partified areas and soundsystems use).
+- **`leyLines.depart`**: How the first stretch of ley line leaves the treehouse, curving round the ring of speakers rather than crossing the dancefloor.
   1. Ed, 2026-10-06: "The leyline shouldn't cross the dancefloor. After going around the speaker circle it should go off to the right and loop around to whatever direction it needs to go" (it ran due south across the floor before)
+  the first line leaves the treehouse's front round the ring of speakers, avoid metres outside it, on the first objective's side (clockwise on the screen and off to the right, the spiral starting east of home; the other way round for one west of it), then off the ring and looping round the same way out to the first objective; no link of the route passes over the dancefloor.
 
 | knob | type | range |
 |---|---|---|
@@ -2121,10 +2128,11 @@ Code: `config/decisions/953-waves.json`, `app/settings.ts`
 
 ### `partyObjects`
 
-Party objects [1]: each partified area gets clusters [min, max] of the art's clusters, loose [min, max] loose pieces (litter, small lights, balloons; neon and balloon colours random per placement), set dressing at setChance, and at caughtChance an escaped balloon caught in a tree; hanging [min, max] lanterns, jars, fairy lights or mirror balls hung from branches in nearby crowns. They appear as the party arrives. Real point lights only from campfires and lanterns (lanternReach metres, warm), at most lightsPerArea an area; everything else glows without lighting. Home [2]: its meadow strewn all over with home.loose [min, max] pieces picked by class (home.weights: the home set, small lights, balloons, litter, furniture, set dressing; nothing that hangs, as home has no trees) at least home.gap metres apart, and home.clusters [min, max] clusters (the home ones, home-path and home-corner, among the rest), out to home.reach of an area past its circle, off the dancefloor's clearing, the paths, the treehouse and her seat; an arch piece over each path where it leaves the floor's clearing; at most home.lights real lights.
+The party clutter that appears as an area is partified: litter, lights, balloons, lanterns in the trees and set dressing, and home's own.
 
 1. Ed, 2026-10-04: art/party.js
 2. Ed, 2026-10-05: "It has party decorations instead of trees; ... scattered around the whole home area, excluding the dancefloor"
+Party objects [1]: each partified area gets clusters [min, max] of the art's clusters, loose [min, max] loose pieces (litter, small lights, balloons; neon and balloon colours random per placement), set dressing at setChance, and at caughtChance an escaped balloon caught in a tree; hanging [min, max] lanterns, jars, fairy lights or mirror balls hung from branches in nearby crowns. They appear as the party arrives. Real point lights only from campfires and lanterns (lanternReach metres, warm), at most lightsPerArea an area; everything else glows without lighting. Home [2]: its meadow strewn all over with home.loose [min, max] pieces picked by class (home.weights: the home set, small lights, balloons, litter, furniture, set dressing; nothing that hangs, as home has no trees) at least home.gap metres apart, and home.clusters [min, max] clusters (the home ones, home-path and home-corner, among the rest), out to home.reach of an area past its circle, off the dancefloor's clearing, the paths, the treehouse and her seat; an arch piece over each path where it leaves the floor's clearing; at most home.lights real lights.
 Code: `art/party.js`
 
 - **`partyObjects.exclude`**: pieces never placed, loose or in clusters [1].
@@ -2154,15 +2162,17 @@ Code: `art/party.js`
 
 ### `partyWitches`
 
-Party witches [1][2]: one per playing soundsystem (not the dancefloor's), however many, flying in from its side (from flyFrom metres out, at flyHeight, over arriveTime seconds) to land within roam metres of the dancefloor's middle (each new spot at roam × u^centreBias from it: the mean roam / (1 + centreBias), so the floor stays busiest), clear of trees, the speakers and the treehouse, and off again if it stops. Drinking, resting, chatting and holding hands happen only off the floor (on it she runs off first). A swoop (weight swoop; times treetopBoost while a player is over the treetops) rises to swoopHeight (the treetops) times a random swoopMin to swoopMax [3] and back down over swoopTime seconds. Only visual [4]: stepped only while a player is within simRange metres of the floor (simRangeTreetop over the treetops, so the swoops show from afar); out of range they stand as they were, and coming back each picks something new at once.
+Other witches who fly in to dance, drink, chat and swoop around the dancefloor, one per playing soundsystem.
 
 1. Ed, 2026-10-04
 2. 2026-10-06: "Party witches should wander within 40m of the centre of the dancefloor, but mildly prefer being closer to the centre. They don't drink, rest, chat, or hold hands on the dancefloor. They have a new move, \" … ", which is rising to treetop and coming down again. They do this more when you're in treetop mode (so you can see the party from afar). I think the number of party witches should be unlimited." (and: swoop\)
 3. Ed, 2026-10-06: "random heights, taller and shorter than normal treetop"
 4. Ed: "it only needs to be animated when you are near it"
+Party witches [1][2]: one per playing soundsystem (not the dancefloor's), however many, flying in from its side (from flyFrom metres out, at flyHeight, over arriveTime seconds) to land within roam metres of the dancefloor's middle (each new spot at roam × u^centreBias from it: the mean roam / (1 + centreBias), so the floor stays busiest), clear of trees, the speakers and the treehouse, and off again if it stops. Drinking, resting, chatting and holding hands happen only off the floor (on it she runs off first). A swoop (weight swoop; times treetopBoost while a player is over the treetops) rises to swoopHeight (the treetops) times a random swoopMin to swoopMax [3] and back down over swoopTime seconds. Only visual [4]: stepped only while a player is within simRange metres of the floor (simRangeTreetop over the treetops, so the swoops show from afar); out of range they stand as they were, and coming back each picks something new at once.
 
-- **`partyWitches.gaze`**: stargazing [1]: beds from to to metres out past the speakers' ring, places side by side one behind another gap metres apart (lying along x, length metres long), each stagger metres along from the last, threes that share of beds (the rest pairs), apart metres between beds; a player keeping still within meet metres of one has the beach's turns with her (a chat, holding hands, a hug, lying side by side), turn seconds each.
+- **`partyWitches.gaze`**: Beds out past the speakers where party witches lie stargazing, which she can join.
   1. Ed, 2026-10-11: "when a soundsystem is destroyed its party witch doesn't leave; she leaves the dancefloor and lies down to stargaze ... outside the speaker ring, in pairs and threes where possible. At the end of the night everyone lies there looking up. She can interact with them like the beach witches"
+  stargazing [1]: beds from to to metres out past the speakers' ring, places side by side one behind another gap metres apart (lying along x, length metres long), each stagger metres along from the last, threes that share of beds (the rest pairs), apart metres between beds; a player keeping still within meet metres of one has the beach's turns with her (a chat, holding hands, a hug, lying side by side), turn seconds each.
 
 | knob | type | range |
 |---|---|---|
@@ -2203,9 +2213,10 @@ Party witches [1][2]: one per playing soundsystem (not the dancefloor's), howeve
 
 ### `speakerLasers`
 
-The dancefloor ring's lasers [1]: a single beam from each playing speaker, at most tilt degrees off straight up and leaning outwards, swinging sweep degrees sideways, over sweepBeats beats, neighbours out of phase; length metres, at opacity (thinner-looking than the area soundsystems' fans). Damaged speakers flicker theirs; destroyed ones have none. 12 more beams on top of the lasers' own.
+A single laser beam swinging up from each speaker in the dancefloor's ring.
 
 1. Ed, 2026-10-04: none from the disco ball; one on top of each ring speaker
+The dancefloor ring's lasers [1]: a single beam from each playing speaker, at most tilt degrees off straight up and leaning outwards, swinging sweep degrees sideways, over sweepBeats beats, neighbours out of phase; length metres, at opacity (thinner-looking than the area soundsystems' fans). Damaged speakers flicker theirs; destroyed ones have none. 12 more beams on top of the lasers' own.
 
 | knob | type | range |
 |---|---|---|
@@ -2217,6 +2228,8 @@ The dancefloor ring's lasers [1]: a single beam from each playing speaker, at mo
 | `speakerLasers.opacity` | number | 0 to … |
 
 ### `lasers`
+
+Each playing soundsystem's laser show, its beams fanning and sweeping in time with the music.
 
 Each playing soundsystem's laser show: bursts of blockBars bars, on about duty of the time (seeded per soundsystem), up to maxCount beams stepping on the bars, fanned over spread degrees (no beam tilting more than maxTilt from straight up), swinging sweep degrees once every sweepBeats beats (slow, like searchlights), opening and closing the fan every openBars bars, length metres tall, opacity 0-1, fading in over fadeIn and out over fadeOut seconds, and fading with distance from fadeNear to fadeFar metres. Glow only: no light, nothing from the light budget.
 
@@ -2245,7 +2258,8 @@ A sparkling line round the partified region's outside edge, in each area's sigil
 - **`borders.on`**: off by default [1][2].
   1. Ed, 2026-10-13: the glowing dotted edges gone
   2. "Area edges" (the pause page's brings them back to compare)
-- **`borders.twinkle`**: (0 a gentle breathing, 1 star-like: brief flashes and dips, now and then a spark out for a moment); each spark flickers between its own area's colour and the one across the edge (Ed, v183), swapRate times a second on its own phase, and swapBeat of them snap on the beat instead. ?border=<twinkle>,<swapRate>,<swapBeat> tries values.
+- **`borders.twinkle`**: How the sparks along a partified area's border twinkle, flicker and swap colours with the area next door.
+  (0 a gentle breathing, 1 star-like: brief flashes and dips, now and then a spark out for a moment); each spark flickers between its own area's colour and the one across the edge (Ed, v183), swapRate times a second on its own phase, and swapBeat of them snap on the beat instead. ?border=<twinkle>,<swapRate>,<swapBeat> tries values.
 
 | knob | type | range |
 |---|---|---|
@@ -2260,9 +2274,10 @@ A sparkling line round the partified region's outside edge, in each area's sigil
 
 ### `bubbles`
 
-The talk's speech bubbles (Ed): an outline only, no fill. The emoji in them are pixel sprites emojiPixels across, each pixel scale times the game's pixel size on screen (the outline's colour and thickness are in index.html's .bubble). One bubble style for every speaker (render/bubbles.ts): the 💌 replies, the witches' chat, and the thought bubbles too [1]: a legend's dream, the night won's island dreams and the sleepers' 😴s, cloud and symbol together, by their creature's level.
+The speech and thought bubbles: outline only, with pixel emoji, sized by the speaker's level.
 
 1. Ed, 2026-10-12: "dream bubbles should also grow"
+The talk's speech bubbles (Ed): an outline only, no fill. The emoji in them are pixel sprites emojiPixels across, each pixel scale times the game's pixel size on screen (the outline's colour and thickness are in index.html's .bubble). One bubble style for every speaker (render/bubbles.ts): the 💌 replies, the witches' chat, and the thought bubbles too [1]: a legend's dream, the night won's island dreams and the sleepers' 😴s, cloud and symbol together, by their creature's level.
 Code: `render/bubbles.ts`
 
 - **`bubbles.levelScale`**: a creature's bubble, emoji and outline together, times this by its level (baby, young, adult, legend); the witch's stays at 1.
@@ -2276,12 +2291,14 @@ Code: `render/bubbles.ts`
 
 ### `runeMarkers`
 
-Spawn markers (Ed, v147): a rune stone on every spot where a soundsystem will come, scale times the old rune stone's size. Dormant (not the next wave): the rune glows steadily at dormant.glow (0-1), a modest light (light strength, reach metres) and a faint beacon above the canopy (beam opacity). Awake (the next wave comes here): the rune, its light and its motes pulse on the beat, from awake.glow[0] to [1], light strength plus lightBuild as the wave's countdown runs out, motes rising (motes per stone, plus moteBuild near the end), a stronger beam. When the party comes, the stone flares (flare.light) and sinks over flare.time seconds as its soundsystem arrives. An awake stone shows both [1]: a column of light above the canopy and a thin laser straight up like the disco ball's (laser opacity, width and length in metres; glow only, no light).
+The rune stones marking where soundsystems will come, glowing, and pulsing on the beat when the next wave is coming to them.
 
 1. Ed: "let's see both" (v149)
+Spawn markers (Ed, v147): a rune stone on every spot where a soundsystem will come, scale times the old rune stone's size. Dormant (not the next wave): the rune glows steadily at dormant.glow (0-1), a modest light (light strength, reach metres) and a faint beacon above the canopy (beam opacity). Awake (the next wave comes here): the rune, its light and its motes pulse on the beat, from awake.glow[0] to [1], light strength plus lightBuild as the wave's countdown runs out, motes rising (motes per stone, plus moteBuild near the end), a stronger beam. When the party comes, the stone flares (flare.light) and sinks over flare.time seconds as its soundsystem arrives. An awake stone shows both [1]: a column of light above the canopy and a thin laser straight up like the disco ball's (laser opacity, width and length in metres; glow only, no light).
 
-- **`runeMarkers.variants`**: each area's stone one of the art's 20 seeded forms, dealt like a shuffled deck so every form is used before any repeats (Ed, #716; rules/runestones.ts) (height, lean, worn top, chips, cracks, moss, the carving's place and wear, the stones and grass at its foot), mirrored at random, its sigil never mirror-written; off, every stone as before.
+- **`runeMarkers.variants`**: Each area's rune stone is one of twenty carved forms, all used before any repeats.
   1. Ed, 2026-10-12: "20 mild variations on runestones so that they don't all look identical. They can also be flipped"
+  each area's stone one of the art's 20 seeded forms, dealt like a shuffled deck so every form is used before any repeats (Ed, #716; rules/runestones.ts) (height, lean, worn top, chips, cracks, moss, the carving's place and wear, the stones and grass at its foot), mirrored at random, its sigil never mirror-written; off, every stone as before.
   Code: `rules/runestones.ts`
 - **`runeMarkers.beamHeight`**: the beacon's height (metres).
 - **`runeMarkers.lightRange`**: stones within this many metres light the scene.
@@ -2320,7 +2337,8 @@ The sound effects, all synthesised in the music's key [1]: volume over the music
 - **`sfx.voice`**: the babble [1].
   1. Ed, 2026-10-05: 💌s are her speech, attacks the animals'
 - **`sfx.voice.witch`**: each 💌 a syllable in her voice (pitch Hz, range: how far her phrases rise and fall, pace: a syllable's seconds, timbre: her formants over an adult's, phraseGap: a pause this long starts a new phrase).
-- **`sfx.voice.animals`**: an attack a burst of babble in the creature's own voice (pitch Hz for a normal-sized young, lower by level and size; maxVoices at once, the farthest giving way (only to one swapBy nearer, at most one every swapGap seconds: a crowd otherwise cut itself off many times a second), duck: how much the others quieten; syllables per burst; gap: a creature speaks at most every gap seconds; reply: a 💌 hit's answering syllable, its volume share).
+- **`sfx.voice.animals`**: Creatures babble in their own voice when they attack, a few at a time.
+  an attack a burst of babble in the creature's own voice (pitch Hz for a normal-sized young, lower by level and size; maxVoices at once, the farthest giving way (only to one swapBy nearer, at most one every swapGap seconds: a crowd otherwise cut itself off many times a second), duck: how much the others quieten; syllables per burst; gap: a creature speaks at most every gap seconds; reply: a 💌 hit's answering syllable, its volume share).
 - **`sfx.hit`**: a 💌 landing (a spent one a faint tick).
 - **`sfx.fill`**: the affection tick, climbing octaves as the meter fills.
 - **`sfx.invited`**: the flourish (fuller by level).
@@ -2333,23 +2351,28 @@ The sound effects, all synthesised in the music's key [1]: volume over the music
 - **`sfx.ouch`**: the witch hurt, her cry and a thump (volume; knocked down, her "whoa-oh" at knockdown times that), the music dipped by duck for duckTime seconds (twice that knocked down).
 - **`sfx.impact`**: a lobbed shot landing, a thud (small times volume) or a legend's boom (volume), heard from the lob's landing spot (a legend's twice as far).
 - **`sfx.roar`**: a legend turning angry, its roar (heard twice as far).
-- **`sfx.power`**: a runestone crackling into life as a speaker or soundsystem [1], heard within range metres: its static (crackle), a capacitor's whine, the mains buzz, the cone's thump and the clean tone it settles into, each the home ring's next step up the scale, the last a chord; at most one every gap seconds (volume).
+- **`sfx.power`**: The crackle, whine and thump of a runestone turning into a speaker or soundsystem, each a step up the scale.
   1. Ed, 2026-10-06
-- **`sfx.lament`**: a restless legend calling out sadly [1], its own call lowered (pitch) and slowed (slow) into the legends' space, heard within range metres from the way of its clearing and muffled with distance; a call about every every seconds, down to urgent as its restlessness runs out; at most max restless legends call, the nearest, at least gap seconds apart (volume).
+  a runestone crackling into life as a speaker or soundsystem [1], heard within range metres: its static (crackle), a capacitor's whine, the mains buzz, the cone's thump and the clean tone it settles into, each the home ring's next step up the scale, the last a chord; at most one every gap seconds (volume).
+- **`sfx.lament`**: A restless legend's sad call, heard from the way of its clearing, more often as its restlessness runs out.
   1. Ed, 2026-10-06
+  a restless legend calling out sadly [1], its own call lowered (pitch) and slowed (slow) into the legends' space, heard within range metres from the way of its clearing and muffled with distance; a call about every every seconds, down to urgent as its restlessness runs out; at most max restless legends call, the nearest, at least gap seconds apart (volume).
 - **`sfx.shoes`**: dancers within range metres tapping their party shoes on the beat, at most max at once.
 - **`sfx.pond`**: by a pond within range metres, water lapping (lap), a frog every frogEvery seconds or so (frogs), a drip every dripEvery (drips).
 - **`sfx.picnic`**: by a picnic in a partified area within range metres, its party-goers' murmur and cups clinking every clinkEvery seconds or so.
-- **`sfx.aggro`**: the wild watch's warning [1], while a wild area's watchers stand looking at her before they attack: a low swell in the music's key (swell) opening up and throbbing faster as the watch runs, a gritty riser over it (riser) by the area's danger, a hit as they attack (hit); called off, it sags and falls away over fall seconds; times volume.
+- **`sfx.aggro`**: The wild watch's warning sound: a low swell and a riser while creatures stare at her, and a hit as they attack.
   1. Ed, 2026-10-07: art builder 3's aggroOf
+  the wild watch's warning [1], while a wild area's watchers stand looking at her before they attack: a low swell in the music's key (swell) opening up and throbbing faster as the watch runs, a gritty riser over it (riser) by the area's danger, a hit as they attack (hit); called off, it sags and falls away over fall seconds; times volume.
 - **`sfx.sparkler`**: by the ley line's pulse, its tip a burning sparkler (art builder 2's #491), its fizz within range metres (louder as she nears it): a flickering hiss (hiss) and a crackle of pops (pops), rate sparks a second, a share fork of them forking into a double tick, times volume.
-- **`sfx.fireworks`**: over a soundsystem when a wave reaches an area she'd already cleared (Hotel's waveCelebrate, art builder 2's shells): each shell's climb (whoosh, now and then whistling), its burst (boom, its echo into the night echo, its stars' crackle), heard within range metres and late by the distance over speed metres a second, and the party under it cheering as the finale bursts (cheer) within cheerRange; the shells are rules/fireworks.ts's, the ones drawn, times volume.
+- **`sfx.fireworks`**: The fireworks' whoosh, boom and crackle, and the crowd's cheer at the finale.
+  over a soundsystem when a wave reaches an area she'd already cleared (Hotel's waveCelebrate, art builder 2's shells): each shell's climb (whoosh, now and then whistling), its burst (boom, its echo into the night echo, its stars' crackle), heard within range metres and late by the distance over speed metres a second, and the party under it cheering as the finale bursts (cheer) within cheerRange; the shells are rules/fireworks.ts's, the ones drawn, times volume.
   Code: `rules/fireworks.ts`
 - **`sfx.seaLife`**: what lives in the sea off the beach [1], heard within range metres of it, under the music and the waves: a dolphin leaping off the east coast (splash: its blow and its splash back in), the kraken off the west coast (groan: a deep distant moan.
   1. Ed, 2026-10-07
 - **`sfx.room`**: the creator's room in the treehouse while it's open, its hum, a record's crackle, the timber creaking every creakEvery seconds or so, and after the spell, at her decks before the first home speaker, at decks times its level.
-- **`sfx.deck`**: her decks while she stands behind them (the DJ witch): a stroke of the record on each half-beat of her scratch bars (scratch, its hiss under the stylus hiss, a stroke stroke seconds long) and her "woo-hoo!" when she throws a hand up (hype), and in her routine [1] the tonearm's tick and the needle's drop (needle), times volume.
+- **`sfx.deck`**: The sounds of her decks while she DJs: record scratches, her "woo-hoo!" and the needle dropping.
   1. Ed, 2026-10-07: the needle dropped and a little scratching
+  her decks while she stands behind them (the DJ witch): a stroke of the record on each half-beat of her scratch bars (scratch, its hiss under the stylus hiss, a stroke stroke seconds long) and her "woo-hoo!" when she throws a hand up (hype), and in her routine [1] the tonearm's tick and the needle's drop (needle), times volume.
 - **`sfx.land`**: a 💌 that met no one landing on the ground, a soft puff (at most one every gap seconds).
 - **`sfx.nope`**: a soft two-note "uh-uh" at volume, at most one each gap seconds.
   1. Ed, 2026-10-07: a sigil refused, put down too near one already down, now heard and not drawn
@@ -2363,16 +2386,18 @@ The sound effects, all synthesised in the music's key [1]: volume over the music
 - **`sfx.knock`**: the witch knocked back (#108), a thump and a whoosh by how far (volume, whoosh), and stunned, a soft dizzy twinkle every twinkleEvery seconds (twinkle).
 - **`sfx.charge`**: a legend's long charge, its windup's bellow, heavy hoofbeats by its speed, the ground's rumble along its lane, the skid of its braking arc, a lighter trot home, heard within range metres.
 - **`sfx.relic`**: a relic bottle found (a rare chime), spotted within spot metres on the ground or spotTreetop from the treetops, or reached within reach.
-- **`sfx.meadow`**: home's ambience (breeze, bees, birds, a bird's song about every birdEvery seconds; its picnic's far murmur, its cups clinking about every clinkEvery seconds (clinks), its balloons squeaking about every squeakEvery (balloons)), in home's circle (the map's homeRadius round the dancefloor) fading out over its last fade metres.
+- **`sfx.meadow`**: Home's ambience: breeze, bees, birdsong, a picnic's murmur, clinking cups and squeaking balloons.
+  home's ambience (breeze, bees, birds, a bird's song about every birdEvery seconds; its picnic's far murmur, its cups clinking about every clinkEvery seconds (clinks), its balloons squeaking about every squeakEvery (balloons)), in home's circle (the map's homeRadius round the dancefloor) fading out over its last fade metres.
 - **`sfx.whale`**: the legends' voice [1]: volume, speed (1: moans of 2 to 3 s; 2: twice as fast), depth (Hz of its lowest moan), reverb (how big its space), sleepEvery (seconds between a sleeper's moans, sooner when restless).
   1. Ed, 2026-10-05: "whale song; deep and slow"
 - **`sfx.sail`**: sailing between islands in place (app/sail.ts), the sea's hush and waves (sea, a share) and a soft gusting wind (wind) at volume while the next island is made, fading in and out over about fade seconds, the old night's music fading out over fade seconds as it comes in.
   Code: `app/sail.ts`
 - **`sfx.ambience`**: each area's own soundscape in play [1], the afterparty night's layers without their pad and bells (bed 0), its noise and sounds at noise and sounds, times volume; near the party it keeps only quiet of itself, by how loud the music is there, and gives way to the night once the party's over.
   1. Ed, 2026-10-07: "Each area gets its own ambient soundscape that gives it individual character" (a ravine's gusts, a marsh's frogs and drips, standing stones' low hum, old oaks creaking)
-- **`sfx.sadTrumpet`**: knocked down, a muted trumpet's "wah-wah-wah-waaah" as her hat drops [1], the music dipped by duck under it; knocked down with no hat to drop, its shorter "wah-waaah" if bare is 1 (0: none); and as she's whisked to her decks [2] a backwards record scratch (rewind, times volume) cuts its last note off, never before that note has had cutAfter seconds.
+- **`sfx.sadTrumpet`**: The sad trumpet when she's knocked down, and the backwards record scratch as she's whisked back to her decks.
   1. Ed, 2026-10-07: "a sad trumpet sound"
   2. Ed, 2026-10-07: the teleport's midpoint, the knockout's cut; the hat's scene turns into her decks with a rewind
+  knocked down, a muted trumpet's "wah-wah-wah-waaah" as her hat drops [1], the music dipped by duck under it; knocked down with no hat to drop, its shorter "wah-waaah" if bare is 1 (0: none); and as she's whisked to her decks [2] a backwards record scratch (rewind, times volume) cuts its last note off, never before that note has had cutAfter seconds.
 
 | knob | type | range |
 |---|---|---|
@@ -2568,17 +2593,19 @@ The sound effects, all synthesised in the music's key [1]: volume over the music
 
 ### `music`
 
-Music by proximity [1]: one shared track, full and clear within nearDist metres of a playing soundsystem (or the dancefloor's ring, as loud as its speakers are on), fading to floor of the volume and muffled to a muffle Hz low-pass by farDist metres (clear: the cutoff close by), never gone [2]; a damaged soundsystem nearby wobbles, crackles and drops out, by its damage times distort. Only the music: the room, night and ambience sounds and the effects as they are.
+The music gets louder and clearer near a playing soundsystem and quieter and muffled far off, never silent.
 
 1. Ed, 2026-10-04
 2. Ed's playtest, 2026-10-05: "The music stops playing after about 20 seconds" (at 0.08 and 380 Hz it was, flying away from home; audible: the most dB it may fall from by a soundsystem to anywhere far off, as a laptop plays it, checked by tools/music-lab/check.cjs)
+Music by proximity [1]: one shared track, full and clear within nearDist metres of a playing soundsystem (or the dancefloor's ring, as loud as its speakers are on), fading to floor of the volume and muffled to a muffle Hz low-pass by farDist metres (clear: the cutoff close by), never gone [2]; a damaged soundsystem nearby wobbles, crackles and drops out, by its damage times distort. Only the music: the room, night and ambience sounds and the effects as they are.
 Code: `tools/music-lab/check.cjs`
 
 - **`music.volume`**: the master.
 - **`music.latency`**: the audio context's latencyHint [1]: interactive the smallest output buffer, balanced more room for the audio thread, playback the most (under-runs least likely, sound effects latest); ?latency= tries one for a load (DECISION FOR ED).
   1. Ed, 2026-10-07: "the music is still cutting out"
-- **`music.buffer`**: the audio output's buffer to ask for, in seconds [1], 0 for the latency category below; a browser that under-runs 20 times in a load asks for twice as much next load, up to 0.24 s (platform/audio/buffer.ts); the music goes out early by the context's latency so it stays on the beat shown, only the sound effects come later.
+- **`music.buffer`**: How much audio the game buffers ahead, so the music stays on the beat without crackling.
   1. "music is still cutting out" (Ed's v3167 playtest,: 474 device under-runs, each one 10 ms buffer, on his busy laptop; balanced gives Chrome the same 10 ms as interactive)
+  the audio output's buffer to ask for, in seconds [1], 0 for the latency category below; a browser that under-runs 20 times in a load asks for twice as much next load, up to 0.24 s (platform/audio/buffer.ts); the music goes out early by the context's latency so it stays on the beat shown, only the sound effects come later.
   Code: `platform/audio/buffer.ts`
 - **`music.dropLayers`**: when her needle-drop routine ends after the party spell [1], that many of the intro's layers come in on the next bar line, each home speaker then adding its own on top.
   1. Ed, 2026-10-07: the first music drops straight after it, before she steps off
@@ -2636,11 +2663,12 @@ The soundsystem alarm [1]: a soundsystem (or the home ring's speakers) hit while
 
 ### `boot`
 
-At the start the home speaker ring boots up [1]: its pulse runs from the treehouse's front down to the ring and once round it at speed m/s [2][3], each stone turning into its speaker as it passes; only then does the first wave's pulse set off: time to find and invite your first creatures. It waits for her first step off the decks, the party spell cast (golf: rules/party.ts castPartySpell; rules/bootRing.ts). The ley line runs ahead of it at leyLines.reveal times its pace.
+At the start the home ring of speakers boots up one stone at a time before the first wave sets off.
 
 1. Ed, 2026-10-04
 2. 2026-10-18: 4: the ley pulse's speed till Ed set the waves' to 1 m/s on, the boot kept as it was
 3. 2026-10-06: the 179 m path in about 45 s, the first stone about 3 s off the decks, as Ed asked on
+At the start the home speaker ring boots up [1]: its pulse runs from the treehouse's front down to the ring and once round it at speed m/s [2][3], each stone turning into its speaker as it passes; only then does the first wave's pulse set off: time to find and invite your first creatures. It waits for her first step off the decks, the party spell cast (golf: rules/party.ts castPartySpell; rules/bootRing.ts). The ley line runs ahead of it at leyLines.reveal times its pace.
 Code: `rules/party.ts`, `rules/bootRing.ts`
 
 - **`boot.transform`**: the seconds each takes to turn, glowing and rising into the speaker.
@@ -2654,10 +2682,11 @@ Code: `rules/party.ts`, `rules/bootRing.ts`
 ### `party`
 
 - **`party.motes`**: sparse glowing motes over every partified area, perPatch per 20 x 20 m, rising from from to to metres (under the crowns to above them) at about speed m/s.
-- **`party.uplight`**: crowns in partified areas catch a faint glow from below in the area's colour (strength at its brightest, pulse on the beat, fading over edge metres toward the border). The party spreads: a wave each time the ley pulse reaches the next stone on the route [1], setting off startDelay seconds after home's boot, each waking areasPerWave areas [2], chosen by picker. An area cleared of its own wild creatures before its wave [3] is partified at once, as its wave would (rules/clear.ts); the waves keep to the route all the same, and the wave that comes to a stone already playing changes nothing in the rules but celebrates (the waveCelebrate event).
+- **`party.uplight`**: Tree crowns in partified areas catch a faint glow from below in the area's colour, pulsing on the beat.
   1. Ed, 2026-10-09: "Pure constant speed" (leyLines.pulseSpeed: no fixed interval, each gap its link's length over the speed)
   2. Ed, 2026-10-04: one per witch
   3. Ed, 2026-10-07: every one invited or run off; its legend and its circle's baby don't count
+  crowns in partified areas catch a faint glow from below in the area's colour (strength at its brightest, pulse on the beat, fading over edge metres toward the border). The party spreads: a wave each time the ley pulse reaches the next stone on the route [1], setting off startDelay seconds after home's boot, each waking areasPerWave areas [2], chosen by picker. An area cleared of its own wild creatures before its wave [3] is partified at once, as its wave would (rules/clear.ts); the waves keep to the route all the same, and the wave that comes to a stone already playing changes nothing in the rules but celebrates (the waveCelebrate event).
   Code: `rules/clear.ts`
 - **`party.picker`**: how the next area to wake is chosen: route [1][2][3] wakes them in one order worked out per map so the ley line through them all crosses itself at most a few times, within Ed's rules: a spiral [4].
   1. Ed, 2026-10-06: "I think the leylines should cover the entire set of waves the whole time, but ideally it shouldn't cross itself"
@@ -2698,7 +2727,8 @@ Code: `render/leash/blood.ts`
 - **`blood.style`**: prints (footprints at its stride, left and right; four-legged ones in pairs, insects a tiny track; flyers, birds and snakes drip drops instead), prints+drops (and drops when badly hurt) or drops (drops only).
 - **`blood.colour`**: red (a dark red on the night palette) or neon (a deep shade of the creature's own neon).
 - **`blood.rate`**: drops a second at none of its health left (by how hurt, squared).
-- **`blood.cap`**: marks at once (the oldest gives way). Healed, it stops.
+- **`blood.cap`**: The most blood marks shown at once, the oldest giving way.
+  marks at once (the oldest gives way). Healed, it stops.
 
 | knob | type | range |
 |---|---|---|
@@ -2712,9 +2742,10 @@ Code: `render/leash/blood.ts`
 
 ### `soundsystemGen`
 
-The generated soundsystems [1]: each area's its own genome, dealt as one set a map (none alike). Sized from near times the old stacks' height (three times the witch) by the dancefloor to far times at to metres out and beyond (from metres and nearer all near), more tiers and wider the further out. Turned along the line to the dancefloor, facing it from the far side and away from it on the near side so every one shows its front, as the ring's speakers (toward: always facing it, the near ones showing their carved backs), never more than maxYaw degrees off facing us (a wide stack side-on is a sliver). Baked in the background ahead waves ahead of the party. on false: the old three stacks.
+Each area's soundsystem is generated with its own look, bigger and taller the further from the dancefloor.
 
 1. Ed, 2026-10-08: "a variety, for them all to point towards the dancefloor (like the central speaker ones do; back facing ones face outwards), and broadly for the ones further away to be larger ... we don't see any exactly identical ones on the map" (art/soundsystemGen.js, render/soundsystemGen.ts)
+The generated soundsystems [1]: each area's its own genome, dealt as one set a map (none alike). Sized from near times the old stacks' height (three times the witch) by the dancefloor to far times at to metres out and beyond (from metres and nearer all near), more tiers and wider the further out. Turned along the line to the dancefloor, facing it from the far side and away from it on the near side so every one shows its front, as the ring's speakers (toward: always facing it, the near ones showing their carved backs), never more than maxYaw degrees off facing us (a wide stack side-on is a sliver). Baked in the background ahead waves ahead of the party. on false: the old three stacks.
 Code: `art/soundsystemGen.js`, `render/soundsystemGen.ts`
 
 | knob | type | range |
@@ -2730,10 +2761,11 @@ Code: `art/soundsystemGen.js`, `render/soundsystemGen.ts`
 
 ### `stringLights`
 
-Colourful string lights in every partified area, as long garlands: runsPerArea runs (a range), each spansPerRun spans (a range) from tree to tree, every next tree inside a forward cone of coneAngle degrees either side, so a run sweeps across rather than zig-zagging; runs start at least spread metres apart. Each span is spanMin to spanMax metres. No span crosses another and each tree holds at most two ends, except junction trees (junctionChance per tree on a run) where a branch leaves, so three meet. At height metres, sagging sag metres per 8 m of span, a bulb every bulbSpacing metres, coloured by mode: palette cycles through all of palette's colours [1]; areaNeon is warm white, the palette's first, two bulbs in three and the area's own neon the third (the art director, round 2: one neon an area plus the warm light). The light's grade leaves them their colour (light.spooky only drains what's darker than its gradePivot; measured from the treetops, the same with and without it), twinkling (twinkle 0-1), a chase running along now and then at chaseSpeed bulbs per second. The bulbs only glow (bloom); they cast no light. Each line hung its own way [2]: its two ends up to 1.2 m above or below height, its sag 0.5 to 1.7 times sag, and one in five with a strand of 1.5 to 4 m let hang off its far end (render/strings.ts, from its seed).
+Colourful garlands of string lights strung tree to tree across every partified area.
 
 1. Ed, 2026-10-08: "I liked the six bright colour string lights, please bring them back"
 2. Ed, 2026-10-27: "String lights on the treehouse seem to all have the same shape" (of the crown's)
+Colourful string lights in every partified area, as long garlands: runsPerArea runs (a range), each spansPerRun spans (a range) from tree to tree, every next tree inside a forward cone of coneAngle degrees either side, so a run sweeps across rather than zig-zagging; runs start at least spread metres apart. Each span is spanMin to spanMax metres. No span crosses another and each tree holds at most two ends, except junction trees (junctionChance per tree on a run) where a branch leaves, so three meet. At height metres, sagging sag metres per 8 m of span, a bulb every bulbSpacing metres, coloured by mode: palette cycles through all of palette's colours [1]; areaNeon is warm white, the palette's first, two bulbs in three and the area's own neon the third (the art director, round 2: one neon an area plus the warm light). The light's grade leaves them their colour (light.spooky only drains what's darker than its gradePivot; measured from the treetops, the same with and without it), twinkling (twinkle 0-1), a chase running along now and then at chaseSpeed bulbs per second. The bulbs only glow (bloom); they cast no light. Each line hung its own way [2]: its two ends up to 1.2 m above or below height, its sag 0.5 to 1.7 times sag, and one in five with a strand of 1.5 to 4 m let hang off its far end (render/strings.ts, from its seed).
 Code: `render/strings.ts`
 
 - **`stringLights.more`**: times as many runs an area, their spread apart shrunk by its square root to fit (1 as tuned).
@@ -2760,10 +2792,11 @@ Code: `render/strings.ts`
 
 ### `waveNumbers`
 
-Off [1]; set on to true to bring them back. Wave numbers over the rune stones [2]: each stone shows the wave that will wake it, in its area's neon, over the canopy and clouds from the treetops and above the stone on the ground; on turns them off; On the ground, a number whose stone is within pinRange metres is held inside the top of the screen when it would be above it.
+Numbers over the rune stones showing which wave will wake each one (now switched off).
 
 1. Ed, 2026-10-06: "Remove the floating numbers above the runestones."
 2. Ed, 2026-10-04: "for design purposes, let's just put a big glowing number above the stones"
+Off [1]; set on to true to bring them back. Wave numbers over the rune stones [2]: each stone shows the wave that will wake it, in its area's neon, over the canopy and clouds from the treetops and above the stone on the ground; on turns them off; On the ground, a number whose stone is within pinRange metres is held inside the top of the screen when it would be above it.
 
 - **`waveNumbers.size`**: a digit's height as a share of the screen's.
 - **`waveNumbers.lift`**: metres above the stone (or the treetops).
@@ -2779,10 +2812,13 @@ Off [1]; set on to true to bring them back. Wave numbers over the rune stones [2
 
 ### `dancefloor`
 
+The dancefloor at the island's heart: its size, its ring of stone speakers, the clearing round it and the magic motes rising off it.
+
 The dancefloor: motes: magic particles drifting up off the circle (count, how high they rise in metres, speed in m/s, column: the share of the circle they rise from); its radius in metres; a ring of speakers.count stone speakers (Ed, v160), the first at speakers.start degrees round from the camera side and the rest evenly spaced, speakers.radiusFactor times the radius out, each speakers.footprint metres round; a clear space of clearing metres beyond the speakers' feet (the treehouse stands outside that); the floor's glass tiles light up (Ed, v160): levels: how many areas must have the party for each level of intensity above 1 (up to 4, a full rave).
 
-- **`dancefloor.tiles`**: the witch lights the tiles under her (in witchColour, from the neon) when below witchLift, with a ripple each beat lasting rippleTime seconds (a landing's twice as long), footsteps fading over trailTime, events (a wave arriving, a sigil placed) over eventTime, and at level 1 only lowLevelShare of the lit tiles show; through the boot the floor shows the island's sigil [1], written on stroke by stroke as the boot's pulse goes round the ring, in place of the moon, the sap rising up it every sapBars bars once written, until the first wave switches the floor on (on: false, the moon as before); a glowing magic circle (two hues 0-1, pulse per second, runeSpeed in turns per minute) lighting the ground round it (lightReach metres, lightStrength), a plaza of flagstones round the floor (paving: in rings from the rim out to beyond metres past the speakers' feet, course metres deep, stones about stone metres long, the outer edge breaking up over ragged metres with missing of its stones gone to grass, moss the share of mossy stones; the speakers stand on a course of darker stone); and a magic disco ball floating discoHeight metres up (discoSize metres across, spin turns per minute) throwing specks of light: specks is the share of the sphere that throws one, speckBrightness how bright, speckReach how far.
+- **`dancefloor.tiles`**: The dancefloor's glass tiles light up under her and on events, show the island's sigil during the boot, and glow brighter as more areas join the party.
   1. Ed, 2026-10-11: island; home's the World Tree
+  the witch lights the tiles under her (in witchColour, from the neon) when below witchLift, with a ripple each beat lasting rippleTime seconds (a landing's twice as long), footsteps fading over trailTime, events (a wave arriving, a sigil placed) over eventTime, and at level 1 only lowLevelShare of the lit tiles show; through the boot the floor shows the island's sigil [1], written on stroke by stroke as the boot's pulse goes round the ring, in place of the moon, the sap rising up it every sapBars bars once written, until the first wave switches the floor on (on: false, the moon as before); a glowing magic circle (two hues 0-1, pulse per second, runeSpeed in turns per minute) lighting the ground round it (lightReach metres, lightStrength), a plaza of flagstones round the floor (paving: in rings from the rim out to beyond metres past the speakers' feet, course metres deep, stones about stone metres long, the outer edge breaking up over ragged metres with missing of its stones gone to grass, moss the share of mossy stones; the speakers stand on a course of darker stone); and a magic disco ball floating discoHeight metres up (discoSize metres across, spin turns per minute) throwing specks of light: specks is the share of the sphere that throws one, speckBrightness how bright, speckReach how far.
 
 | knob | type | range |
 |---|---|---|
