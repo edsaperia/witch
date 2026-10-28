@@ -8,7 +8,8 @@
       "what": "how quickly she reaches her speed or stops in the treetops (per second; higher is snappier)."
     },
     "treetop": {
-      "what": "Treetop flight (Ed: a high top speed and momentum; the ground stays snappy): pressing a direction reaches treetopSpeed in about 0.3 s (acceleration); holding it within boostAngle degrees builds boost over boostTime seconds, up to boost times treetopSpeed; her heading turns toward the input at turnRateSlow degrees a second below sharpTurnSpeed of cruise, falling to turnRate at cruise (half that at full boost), so the size of her swoop grows with her speed (Ed); a turn of 90 degrees or more bleeds boost sharpTurnBleed times a second, and above brakeAt of cruise she skids in the brake pose; letting go, she glides to a stop over about glideTime seconds."
+      "what": "Treetop flight: a high top speed with momentum, building a boost while she holds a direction.",
+      "notes": "Treetop flight (Ed: a high top speed and momentum; the ground stays snappy): pressing a direction reaches treetopSpeed in about 0.3 s (acceleration); holding it within boostAngle degrees builds boost over boostTime seconds, up to boost times treetopSpeed; her heading turns toward the input at turnRateSlow degrees a second below sharpTurnSpeed of cruise, falling to turnRate at cruise (half that at full boost), so the size of her swoop grows with her speed (Ed); a turn of 90 degrees or more bleeds boost sharpTurnBleed times a second, and above brakeAt of cruise she skids in the brake pose; letting go, she glides to a stop over about glideTime seconds."
     },
     "treetop.cameraPull": {
       "what": "how far the camera draws back at full boost (a share of its distance)."
@@ -20,7 +21,8 @@
       "what": "the share of the top speed above which she leans into her flight."
     },
     "facing": {
-      "what": "she (and every creature) faces the viewer unless clearly heading up the screen, within awayEnter degrees of straight up (and stays turned away until past awayLeave); sideways, down or stopped faces the viewer. Within headingEnter degrees of straight up or straight down the screen (until past headingLeave) she flies in her heading sprites: seen from behind going up, coming at us going down."
+      "what": "When she and the creatures turn away from the viewer, only when clearly heading up the screen.",
+      "notes": "she (and every creature) faces the viewer unless clearly heading up the screen, within awayEnter degrees of straight up (and stays turned away until past awayLeave); sideways, down or stopped faces the viewer. Within headingEnter degrees of straight up or straight down the screen (until past headingLeave) she flies in her heading sprites: seen from behind going up, coming at us going down."
     },
     "riseTime": {},
     "descendTime": {},
@@ -35,7 +37,7 @@
       ]
     },
     "cooldown": {
-      "what": "One cooldown for her dodge and her take-off [1]: shared on, a counter in seconds draining a second a second; a dodge adds dash.cooldown, a take-off rise, a landing riseCooldown (the Jet nozzles halve both of the last: config/broom-parts.json). It has room for dash.charges dodges (dash.charges x dash.cooldown seconds; more with Hare's Dash bursts and the Twig bristles): an action goes when the counter is at or under that room less its own amount, so two dodges go straight off and the third waits a second as before, and a landing's 3 s (over the room) means no dodge for 2 s and no rising for 3; after a dodge no take-off for a second. Her trail (trail.cooldown) shows it. Off: the dodge's charges and the rise cooldown run apart as before.",
+      "what": "One shared cooldown for her dodge and her take-off.",
       "decisions": [
         {
           "by": "Ed",
@@ -47,12 +49,13 @@
       "links": [
         "rules/cooldown.ts",
         "config/broom-parts.json"
-      ]
+      ],
+      "notes": "One cooldown for her dodge and her take-off [1]: shared on, a counter in seconds draining a second a second; a dodge adds dash.cooldown, a take-off rise, a landing riseCooldown (the Jet nozzles halve both of the last: config/broom-parts.json). It has room for dash.charges dodges (dash.charges x dash.cooldown seconds; more with Hare's Dash bursts and the Twig bristles): an action goes when the counter is at or under that room less its own amount, so two dodges go straight off and the third waits a second as before, and a landing's 3 s (over the room) means no dodge for 2 s and no rising for 3; after a dodge no take-off for a second. Her trail (trail.cooldown) shows it. Off: the dodge's charges and the rise cooldown run apart as before."
     },
     "groundHeight": {},
     "treetopHeight": {},
     "witch": {
-      "what": "Speeds per mode, and how long rising and descending take. The witch is lit by the world's lights like everything else [1], but not by her own glow: never darker than lightFloor times her old unlit look, so she reads in the dark; coloured lights (soundsystems, campfires, rune stones, the dancefloor) tint her by lightTint and rim the edge of her facing them by lightRim. Over the hills [2] she and the camera ride a smoothed height, not the ground under her: the ground averaged over heightLookAhead seconds of her flight behind and ahead of her (so the hills' bumps smooth out and she rises early for a crest), eased by heightSmooth seconds at full speed (a damped spring; less as she slows, none standing still; 0 off), and her feet always at least heightClearance metres over the ground under her and a stride ahead.",
+      "what": "Her speeds on the ground and in the treetops, how long rising and descending take, and how the world's lights light her.",
       "decisions": [
         {
           "by": "Ed",
@@ -65,10 +68,11 @@
           "quote": "when you're moving quickly, you jerk up and down with the roll of hills",
           "rest": "v289"
         }
-      ]
+      ],
+      "notes": "Speeds per mode, and how long rising and descending take. The witch is lit by the world's lights like everything else [1], but not by her own glow: never darker than lightFloor times her old unlit look, so she reads in the dark; coloured lights (soundsystems, campfires, rune stones, the dancefloor) tint her by lightTint and rim the edge of her facing them by lightRim. Over the hills [2] she and the camera ride a smoothed height, not the ground under her: the ground averaged over heightLookAhead seconds of her flight behind and ahead of her (so the hills' bumps smooth out and she rises early for a crest), eased by heightSmooth seconds at full speed (a damped spring; less as she slows, none standing still; 0 off), and her feet always at least heightClearance metres over the ground under her and a stride ahead."
     },
     "witch.knock": {
-      "what": "The witch knocked back and staggered by a blow [1]: thrown straight away from the blow, base metres for any blow (bites, swipes, shots) plus scale times the attack's own knockback (combat.json; so a maul, quake or slam sits in between), at least charge metres when it rams her (a charge, or a leap landing on her), at most max; eased off at ease a second (like a creature's knockback), straight through scenery [2], nudged to the nearest clear spot at the end if she'd rest inside a trunk, rock, speaker, soundsystem or the treehouse (the blink's clearances). Staggered (no moving, blinking or 💌s, a wobble and stars) stunBase seconds plus stunScale a metre thrown past base, at most stunMax; then not staggered again for immune seconds (the blows still count), so a pack can't stun-lock her. A blink dodges it all; the blow that knocks her out throws nothing. on false, or ?knock=0, turns it off.",
+      "what": "A blow knocks her back and staggers her, harder for big attacks and charges.",
       "decisions": [
         {
           "by": "Ed",
@@ -84,17 +88,19 @@
       ],
       "links": [
         "rules/knock.ts"
-      ]
+      ],
+      "notes": "The witch knocked back and staggered by a blow [1]: thrown straight away from the blow, base metres for any blow (bites, swipes, shots) plus scale times the attack's own knockback (combat.json; so a maul, quake or slam sits in between), at least charge metres when it rams her (a charge, or a leap landing on her), at most max; eased off at ease a second (like a creature's knockback), straight through scenery [2], nudged to the nearest clear spot at the end if she'd rest inside a trunk, rock, speaker, soundsystem or the treehouse (the blink's clearances). Staggered (no moving, blinking or 💌s, a wobble and stars) stunBase seconds plus stunScale a metre thrown past base, at most stunMax; then not staggered again for immune seconds (the blows still count), so a pack can't stun-lock her. A blink dodges it all; the blow that knocks her out throws nothing. on false, or ?knock=0, turns it off."
     },
     "stack": {
-      "what": "The sigil stack above the witch's hat: scale (of the sigils' size), offset (the gap between her hat tip and the bottom sigil, in sigil heights), gap (between sigils, in sigil heights). It sways as a chain of springs: stiffness and damping, trail (how far it leans back per m/s of her speed), idleSway (metres of gentle sway when she's still). Its sigils more visible [1]: bright, how bright each stacked sigil is drawn, times leash.sigilGlyph (1 as the sigils on the ground; 1.6 now); backing, a near-black disc behind each (0 none, 1 solid), backSize times the sigil across, so it reads against lit crowns and the sky; over, drawn over the scenery (no depth test, after the see-through pass), so no tree or crown ever hides the stack.",
+      "what": "The stack of sigils above her hat, swaying like a chain of springs as she moves.",
       "decisions": [
         {
           "by": "Ed",
           "date": "2026-10-15",
           "quote": "more opacity, and never obscured by scenery"
         }
-      ]
+      ],
+      "notes": "The sigil stack above the witch's hat: scale (of the sigils' size), offset (the gap between her hat tip and the bottom sigil, in sigil heights), gap (between sigils, in sigil heights). It sways as a chain of springs: stiffness and damping, trail (how far it leans back per m/s of her speed), idleSway (metres of gentle sway when she's still). Its sigils more visible [1]: bright, how bright each stacked sigil is drawn, times leash.sigilGlyph (1 as the sigils on the ground; 1.6 now); backing, a near-black disc behind each (0 none, 1 solid), backSize times the sigil across, so it reads against lit crowns and the sky; over, drawn over the scenery (no depth test, after the see-through pass), so no tree or crown ever hides the stack."
     },
     "witchHealth": {
       "what": "The witch [1]: she takes hits (one point each, whatever hits her) before she's knocked out [2]; one comes back every repairTime seconds, the timer starting over whenever she's hit, so to heal she has to get right out of the fight.",
@@ -192,14 +198,15 @@
       "what": "leashed legends stay with her (false: they're let go too: 'they're too old for this'; only a party legend is ever leashed now, and it's always let go)."
     },
     "knockout.dropHat": {
-      "what": "she drops her hat where she went down and wears none till she stands on it and presses the sigil button (E), which puts it straight back on (never into the stack; on top of a sigil, the hat comes first); a 🎩 pointer shows the way meanwhile. Knocked out again with it still down, nothing more drops. A witch with no hat (the character creator's none) has none of this.",
+      "what": "When knocked out she drops her hat where she fell, and wears none till she goes back and picks it up.",
       "decisions": [
         {
           "by": "Ed",
           "date": "2026-10-06",
           "rest": "'when you are killed, you drop your hat, and there's a direction marker for it, so you can go back and find it'"
         }
-      ]
+      ],
+      "notes": "she drops her hat where she went down and wears none till she stands on it and presses the sigil button (E), which puts it straight back on (never into the stack; on top of a sigil, the hat comes first); a 🎩 pointer shows the way meanwhile. Knocked out again with it still down, nothing more drops. A witch with no hat (the character creator's none) has none of this."
     },
     "knockout.dim": {
       "what": "how much the screen dims round her while her hat floats off, from the knockdown to her sparkle away (her spot and the hat left lit); no hat, no dim.",
@@ -236,7 +243,7 @@
       ]
     },
     "dash": {
-      "what": "The dash, a blink [1]: on the ground only, she vanishes and reappears distance metres the way she's moving [2] in one step, then cooldown seconds before the next. For gone seconds (a few frames) she isn't drawn and can't be hit; otherwise she's as hittable as ever: it's for slipping out of a shot's path. She lands clear of trees, rocks and ruins, soundsystems, the dancefloor's speakers and the treehouse by clear's metres each, the blink shortened to the furthest clear spot.",
+      "what": "The dash: on the ground she blinks a short way in the direction she's moving and can't be hit for a moment.",
       "decisions": [
         {
           "by": "Ed",
@@ -248,7 +255,8 @@
           "date": "2026-10-11",
           "rest": "her steering, on the pad and on keyboard and mouse alike, not the way she's aiming; standing still, the way she's facing"
         }
-      ]
+      ],
+      "notes": "The dash, a blink [1]: on the ground only, she vanishes and reappears distance metres the way she's moving [2] in one step, then cooldown seconds before the next. For gone seconds (a few frames) she isn't drawn and can't be hit; otherwise she's as hittable as ever: it's for slipping out of a shot's path. She lands clear of trees, rocks and ruins, soundsystems, the dancefloor's speakers and the treehouse by clear's metres each, the blink shortened to the furthest clear spot."
     },
     "dash.buffer": {
       "what": "a press up to this many seconds before she can blink (still recharging, landing, staggered) waits and blinks the moment she can."
@@ -268,7 +276,7 @@
       ]
     },
     "spells": {
-      "what": "Spells [1]: two slots, a hat and a broom, each with a spell or none (the plain ones), the hat's chosen in the creator (or ?hat=), the broom's the set its parts complete [2]. Hats are put down with the sigil button held (rules/hat.ts) and work there (some once when placed, some while they lie there); the Helmet is worn. Broom parts change how she moves or pulls (config/broom-parts.json: the Long, Double blink and Haul brooms are the Curled tip, the Twig bristles and the Canoe hull now); an active set spell is cast with the spell button (R; gamepad circle; touch spell), then recharges.",
+      "what": "Her two spell slots, a hat and a broom, each holding a spell or none.",
       "decisions": [
         {
           "by": "Ed",
@@ -286,7 +294,8 @@
         "docs/backlog/unlocks.md",
         "rules/hat.ts",
         "config/broom-parts.json"
-      ]
+      ],
+      "notes": "Spells [1]: two slots, a hat and a broom, each with a spell or none (the plain ones), the hat's chosen in the creator (or ?hat=), the broom's the set its parts complete [2]. Hats are put down with the sigil button held (rules/hat.ts) and work there (some once when placed, some while they lie there); the Helmet is worn. Broom parts change how she moves or pulls (config/broom-parts.json: the Long, Double blink and Haul brooms are the Curled tip, the Twig bristles and the Canoe hull now); an active set spell is cast with the spell button (R; gamepad circle; touch spell), then recharges."
     },
     "spells.hat": {
       "what": "the default."
@@ -321,7 +330,8 @@
       "what": "the Speed broom, her speed times mult for duration seconds, then cooldown seconds to recharge."
     },
     "spells.healing": {
-      "what": "the Healing ring, within radius m of it she heals a hit every `every` seconds while hurt. The Helmet: the first blow knocks it off beside her instead of costing a hit; she picks it up (E) to wear it again."
+      "what": "The Healing ring heals her while she stands near it, and the Helmet takes the first blow for her.",
+      "notes": "the Healing ring, within radius m of it she heals a hit every `every` seconds while hurt. The Helmet: the first blow knocks it off beside her instead of costing a hit; she picks it up (E) to wear it again."
     },
     "spells.battering": {
       "what": "the Battering broom's blink stuns every wild and enraged creature within width m of its line for stun s [1].",
@@ -392,20 +402,21 @@
       ]
     },
     "spells.cyclone": {
-      "what": "the Cyclone hat [1], on putting it down and every every s while it lies there, catches wild and enraged creatures within radius m, sweeps them round it at spin turns a second for time s, lifting them up to lift m, then flings them fling m outward over flingTime s, stunned stun s after they land; never hers, happy ones or legends, and never hurt.",
+      "what": "The Cyclone hat sweeps nearby wild and enraged creatures round it, lifts them and flings them away.",
       "decisions": [
         {
           "by": "Ed",
           "date": "2026-10-12",
           "rest": "instead of the Decoy"
         }
-      ]
+      ],
+      "notes": "the Cyclone hat [1], on putting it down and every every s while it lies there, catches wild and enraged creatures within radius m, sweeps them round it at spin turns a second for time s, lifting them up to lift m, then flings them fling m outward over flingTime s, stunned stun s after they land; never hers, happy ones or legends, and never hurt."
     },
     "spells.nursing": {
       "what": "the Nursing hat heals her own creatures within range m of it, rate of their health a second (0.1: whole again in ten seconds)."
     },
     "trail": {
-      "what": "Her flight trail [1]: a ribbon of glow along her path, fading to nothing at its tail, in the colour of the area she's over (eased over colourEase seconds as she crosses into the next). Its length: ground metres at full speed on the ground, treetops metres over the treetops, from none below from (a share of her top speed) to full at top speed along curve (1 straight), growing to a new speed's over grow seconds and shrinking over shrink. One trail, one cooldown [2]: it also runs along her blink when she dodges (the ribbon laid along the blink's line, from where she left to where she lands), and it is at least cooldown metres times the share of the shared cooldown counter in use (full right after a take-off or a landing, half after a dodge with two in hand, draining to nothing as the counter empties), so its length shows the cooldown; bySpeed off leaves only that (no length from her speed).",
+      "what": "Her flight trail: a glowing ribbon along her path in the colour of the area she's over.",
       "decisions": [
         {
           "by": "Ed",
@@ -417,7 +428,8 @@
           "date": "2026-10-15",
           "rest": "the tuning's cooldown"
         }
-      ]
+      ],
+      "notes": "Her flight trail [1]: a ribbon of glow along her path, fading to nothing at its tail, in the colour of the area she's over (eased over colourEase seconds as she crosses into the next). Its length: ground metres at full speed on the ground, treetops metres over the treetops, from none below from (a share of her top speed) to full at top speed along curve (1 straight), growing to a new speed's over grow seconds and shrinking over shrink. One trail, one cooldown [2]: it also runs along her blink when she dodges (the ribbon laid along the blink's line, from where she left to where she lands), and it is at least cooldown metres times the share of the shared cooldown counter in use (full right after a take-off or a landing, half after a dodge with two in hand, draining to nothing as the counter empties), so its length shows the cooldown; bySpeed off leaves only that (no length from her speed)."
     },
     "trail.width": {
       "what": "metres across on the ground and over the treetops."
@@ -432,14 +444,15 @@
       "what": "the broom's little amber sparks as well. ?trail=0 hides it."
     },
     "swoopTrail": {
-      "what": "The party witches' swoop trails [1]: while one swoops she leaves a ribbon in her trail's look, bright and in rainbow colours, each witch starting at her own hue, the colours running along it (hueSpread turns of the wheel a metre) and shifting over time (hueSpeed turns a second), so a crowd of swoops reads as fireworks over the canopy. width metres across (turned to face the camera, so a climb straight up shows), wider in step with its distance from the camera past near metres (so from the treetops it reads as a streak, not a thread), bright its brightness; it fades in as she lifts off over her first liftFade metres, and each stretch of it fades out life seconds after she passed, so it trails out as she lands. At most slots at once (only while the party is stepped: partyWitches.simRange).",
+      "what": "Rainbow trails the party witches leave as they swoop.",
       "decisions": [
         {
           "by": "Ed",
           "date": "2026-10-06",
           "quote": "Party-witch swoops should get the same following glow that you have, but it should be bright and multicoloured."
         }
-      ]
+      ],
+      "notes": "The party witches' swoop trails [1]: while one swoops she leaves a ribbon in her trail's look, bright and in rainbow colours, each witch starting at her own hue, the colours running along it (hueSpread turns of the wheel a metre) and shifting over time (hueSpeed turns a second), so a crowd of swoops reads as fireworks over the canopy. width metres across (turned to face the camera, so a climb straight up shows), wider in step with its distance from the camera past near metres (so from the treetops it reads as a streak, not a thread), bright its brightness; it fades in as she lifts off over her first liftFade metres, and each stretch of it fades out life seconds after she passed, so it trails out as she lands. At most slots at once (only while the party is stepped: partyWitches.simRange)."
     }
   }
 }
