@@ -25,12 +25,6 @@ export const CREATURE_STAG = {
   temperament: "skittish",
   traits: ["heavy"],
   voice: { family: "big", pitch: 1.2, glide: 0.8, dur: 1.6, noise: 0.2 },
-  buff: {
-    name: "Pierce",
-    kind: "shot",
-    mods: { pierce: 1 },
-    label: "Stag's Pierce: 💌s pass through the first animal and fly on"
-  },
   character: { posture: { head: [-0.02, 0.07], body: 0.01 }, quirk: "perk", every: [5, 10], for: 1.6 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },

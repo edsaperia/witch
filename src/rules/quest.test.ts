@@ -45,9 +45,7 @@ describe("the first quest (Ed, 2026-10-04)", () => {
     run(g, 0.2, { ...idle, sigil: true });
     expect(L.quest!.done).toBeDefined();
     expect(L.legendState).toBe("happy");
-    expect(L.buffed).toBeFalsy();
     expect(g.islandsTonight).toEqual([L.species]);
-    expect(g.buffs.active.length).toBe(0);
   }, 60000);
 
   it("isn't taken once the party's over (Ed, 2026-10-18: permanent unlocks only while the party is on)", async () => {

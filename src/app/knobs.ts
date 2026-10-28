@@ -24,14 +24,13 @@ const fightDefault = () => (fightBuilt ??= { ...TUNING.fight });
 // pause page's sliders; ?fightScale=, ?fightSpeed= and ?fightMomentum= set where they start.
 function setFight({ tuning, playtest }: KnobNight, scale: number, speed: number, log = true, momentum = tuning.fight.momentum): void {
   const clamp = (x: number) => Math.round(Math.min(3, Math.max(0.25, x)) * 100) / 100;
-  tuning.fight.scale = clamp(scale); tuning.fight.speed = clamp(speed); tuning.fight.momentum = clamp(momentum); // (shared with the buffed tuning: live mid-fight)
+  tuning.fight.scale = clamp(scale); tuning.fight.speed = clamp(speed); tuning.fight.momentum = clamp(momentum); // (live mid-fight)
   if (log) playtest.fight(tuning.fight.scale, tuning.fight.speed, tuning.fight.momentum);
 }
 // Treetop speed, live (the world's knobs: see WORLD_DEFAULT in main.ts); area size and the map's are the link's (a new map).
-function setTreetop({ tuning, game, world, playtest }: KnobNight, speed: number, log = true): void {
+function setTreetop({ tuning, world, playtest }: KnobNight, speed: number, log = true): void {
   world.treetopSpeed = Math.round(Math.min(300, Math.max(8, speed)));
   tuning.treetopSpeed = world.treetopSpeed;
-  (game.buffs as { base?: unknown }).base = undefined; // (a legend's buffed copy is made afresh with it)
   if (log) playtest.world(world.areaSize, world.treetopSpeed, world.mapAreas);
 }
 

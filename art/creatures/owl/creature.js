@@ -44,12 +44,6 @@ export const CREATURE_OWL = {
     wave: "sine",
     volume: 0.4
   },
-  buff: {
-    name: "Echo",
-    kind: "shot",
-    mods: { echo: 1 },
-    label: "Owl's Echo: each burst fires again half a second later"
-  },
   character: { sprite: "look", every: [4, 8], for: 1.4 },
   pack: {
     melee: { attacks: [null, "nip", "nip"] },

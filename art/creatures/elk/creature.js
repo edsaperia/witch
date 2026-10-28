@@ -23,12 +23,6 @@ export const CREATURE_ELK = {
   temperament: "skittish",
   traits: ["heavy"],
   voice: { family: "big", pitch: 1.4, glide: 1.25, dur: 1.5, noise: 0.15, am: [0, 0], volume: 0.8 },
-  buff: {
-    name: "Slip past",
-    kind: "shot",
-    mods: { slip: 1 },
-    label: "Elk's Slip past: 💌s slip through enraged animals"
-  },
   character: { posture: { head: [0.03, 0.02], body: 0 }, quirk: "stomp", every: [6, 11], for: 1.2 },
   pack: {
     melee: { attacks: [null, "nip", "maul"], knockback: 8 },

@@ -23,7 +23,6 @@ export const CREATURE_RAM = {
   radius: 0.9,
   temperament: "skittish",
   voice: { family: "big", pitch: 1.6, am: [12, 0.5], vowel: 1, noise: 0.1 },
-  buff: { name: "Steady", kind: "move", mods: { steady: 1 }, label: "Ram's Steady: no slowing while you fire" },
   character: { posture: { head: [0.04, -0.04], body: 0 }, quirk: "stomp", every: [4, 8], for: 1 },
   pack: {
     melee: { attacks: [null, "nip", "maul"], knockback: 6 },

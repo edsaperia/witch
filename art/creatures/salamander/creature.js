@@ -11,12 +11,6 @@ export const CREATURE_SALAMANDER = {
   ranged: true,
   temperament: "skittish",
   voice: { family: "amphibian", pitch: 1.6, am: [48, 0.7] },
-  buff: {
-    name: "Quick fire",
-    kind: "shot",
-    scale: { "invites.cooldown": 0.6 },
-    label: "Salamander's Quick fire: less wait between bursts"
-  },
   character: { posture: { head: [0.03, -0.02], body: -0.01 }, quirk: "tailflick", every: [4, 8], for: 1.2 },
   pack: {
     melee: null,

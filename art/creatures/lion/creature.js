@@ -13,12 +13,6 @@ export const CREATURE_LION = {
   temperament: "curious",
   traits: ["heavy"],
   voice: { family: "big", pitch: 0.55, glide: 0.6 },
-  buff: {
-    name: "Pride",
-    kind: "shot",
-    scale: { "invites.speed": 1.15, "invites.range": 1.15 },
-    label: "Lion's Pride: 💌s fly a little faster and further"
-  },
   character: { posture: { head: [0, 0.03], body: 0.01 }, quirk: "stretch", every: [7, 12], for: 1.5 },
   pack: {
     melee: { attacks: [null, "swipe", "bigswipe"], knockback: 8 },

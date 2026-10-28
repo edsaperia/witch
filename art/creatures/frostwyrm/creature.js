@@ -11,12 +11,6 @@ export const CREATURE_FROSTWYRM = {
   attacks: [null, "swipe", "bigswipe", "legendNova"],
   traits: ["heavy"],
   voice: { family: "snake", pitch: 0.45, glide: 0.9 },
-  buff: {
-    name: "Glide",
-    kind: "move",
-    scale: { "dash.distance": 1.3 },
-    label: "Wyrm's Glide: a longer blink, as over ice"
-  },
   character: { posture: { head: [0.02, 0.03], body: 0 }, quirk: "tailslap", every: [6, 11], for: 1.4 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },

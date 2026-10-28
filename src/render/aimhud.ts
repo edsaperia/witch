@@ -49,7 +49,7 @@ export class AimHud {
     if (!show) { this.root.style.display = "none"; return; }
     this.root.style.display = "block";
     this.root.style.transform = `translate(${Math.round(pointer.x - C)}px, ${Math.round(pointer.y - C)}px)`;
-    const W = g.witches[0], b = W.body, t = g.buffs.tuning;
+    const W = g.witches[0], b = W.body, t = g.tuning;
     const canThrow = b.mode === "ground" && !b.seated && !W.ko && t.invites.on;
     const inRange = canThrow && !!aim && Math.hypot(aim.x, aim.z) <= t.invites.range;
     const ink = inRange ? "rgba(255,150,210,.95)" : canThrow ? "rgba(232,226,244,.55)" : "rgba(232,226,244,.8)";

@@ -27,10 +27,7 @@ const hash = (s: string) => createHash("sha256").update(s).digest("hex").slice(0
 export function fingerprint(g: Game): Record<string, string> {
   const parts: Record<string, unknown> = {
     clock: g.clock, witches: g.witches, creatures: g.creatures, party: g.party, combat: g.combat, growth: g.growth,
-    // The buffs without the tuning they carry (buffs.tuning, the tuning with the buffs on, and buffs.base): the tuning file
-    // is the game's input, not its state, so a knob added, taken away or renamed isn't the game changing (it made "game
-    // unchanged" red on #364, #406 and #407). Which buffs are on, and what they multiply (mods), still count.
-    berries: g.berries, beat: g.beat, camera: g.camera, speakers: g.speakers, floor: g.floor, buffs: { ...g.buffs, tuning: undefined, base: undefined },
+    berries: g.berries, beat: g.beat, camera: g.camera, speakers: g.speakers, floor: g.floor,
     partyWitches: g.partyWitches, friendly: g.friendly, tally: g.tally, over: g.over,
   };
   const out: Record<string, string> = {};
