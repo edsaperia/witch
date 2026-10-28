@@ -13,8 +13,9 @@
 //   5. the decks, until the party spell's cast.
 // The map table's 🧭 is never shown during the night, only once it's over (Ed, 2026-10-26: "you only see 🧭 when the party is over
 // or if the night is won, and there are islands you haven't visited yet. You don't see it all night").
-// The party's own pointers (render/view/hud.ts) are unchanged: this is about the house, so its pin shows only while she's in the
-// treehouse (the bed's, after a lost night, anywhere), and goes while she's at its target, where its tag says what to do. Each
+// The party's own pointers (render/view/hud.ts) are unchanged. The pin shows wherever she is (Ed, 2026-10-28: "Whatever pin you had
+// before leaving the treehouse still shows"), off screen at the edge pointing the way as every pin does (render/pins.ts); and at its
+// target it stays, over the object pointing down at it (Ed: "The pin should no longer hide but point downwards at the object"). Each
 // witch has her own: guidanceOf is per witch, from the night and what her browser keeps (GuideSave, app/guideSave.ts).
 // Rules only: no three.js.
 import type { Game } from "./game";
@@ -75,7 +76,7 @@ export function guidanceOf(g: Game, w: number, save: GuideSave, unvisited: reado
   return at ? { kind: "decks", target: { x: at.x, z: at.z } } : null;
 }
 
-/** Whether `w` is at a guide's target now (its pin hidden: its own tag says what to do there). */
+/** Whether `w` is at a guide's target now (its tag up, the pin over it still: Ed, 2026-10-28). */
 export function atGuide(g: Game, w: number, guide: Guide): boolean {
   const b = g.witches[w]?.body, d = deckOf(g.map, g.tuning);
   if (!b || !d) return false;
@@ -83,9 +84,6 @@ export function atGuide(g: Game, w: number, guide: Guide): boolean {
   if (!("object" in T)) return Math.hypot(b.x - d.seat.x, b.z - d.seat.z) <= AT_DECKS; // (the decks: at her seat)
   return !!b.perch && hasRooms(d) && objectAt(d, b.x, b.z)?.id === T.object;
 }
-
-/** Whether `w`'s guidance pin may show: in the treehouse (perched on it), or anywhere for the bed and once the night's over. */
-export const guideShows = (g: Game, w: number, guide: Guide): boolean => guide.kind === "bed" || nightOver(g) || !!g.witches[w]?.body.perch;
 
 /** The night's over: lost (the afterparty), or won and its finale settled (rules/win.ts settled): the pins lead her home from anywhere. */
 const nightOver = (g: Game): boolean => !!g.partyOver || (g.win?.phase === "won" && !!g.win.settled);

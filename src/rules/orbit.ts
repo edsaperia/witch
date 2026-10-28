@@ -1,6 +1,7 @@
 // Combat as orbit slots (Ed, 2026-10-28: "make it and I'll test in gameplay"): no creature health. A creature's 💌 ring is its one
 // measure: her 💌s fill its slots, and so does a blow from one of hers (an orbiting heart), a harder blow more of them (its damage
-// over the creature's old health, so it takes as many blows to fill as it took to knock down); hearts drain as 💌s do, in one queue with them. All its slots
+// over combat.json levels.stun, a full ring's worth: set to start at the old health, so a creature first took as many blows to fill
+// as it took to knock down; only a starting calibration, for balance passes to tune, Ed 2026-10-28); hearts drain as 💌s do, in one queue with them. All its slots
 // full, it's stunned (lying still, the slots held full): her next 💌 converts it; a hostile one (enraged, besieging) runs away
 // instead, a free area legend sinks back to sleep. One of hers or a happy one takes 💧s from its enemies' blows the same way, and
 // never sheds them but by a berry or a full heal (a befriending, a pickup, the party's end): all its slots 💧, it runs away for
@@ -70,7 +71,7 @@ export const friendly = (c: Creature): boolean => c.leashed || stateOf(c) === "h
 /** Whether a stun sends it running instead of lying stunned: enraged (a wave's besieger). */
 export const hostile = (c: Creature): boolean => stateOf(c) === "enraged";
 
-/** Hearts from a blow: `share` of its slots (damage over its old health). Returns whether they're all full now. */
+/** Hearts from a blow: `share` of its slots (damage over its full ring's worth, combat.json levels.stun). Returns whether they're all full now. */
 export function addHearts(c: Creature, share: number, time: number, M: Drain): boolean {
   if (c.dazed) return true;
   return join(c, share, true, time, M) >= 1 - 1e-9;
