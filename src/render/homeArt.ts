@@ -41,10 +41,13 @@ export function witchSprites(style: Style, genome: unknown, bare: boolean, mk: M
   const drawn = new Map<string, { b: Baked; ground: FrameGround | null }>();
   const wb = (o: object) => {
     if (dry) { W.grounds.push(null); return DRY; }
-    if (quick) { // (the preview: her standing frame for this facing, drawn once)
-      const q = o as { facing?: string; heading?: string }, k = q.heading ? `h${q.heading}` : q.facing ?? "towards";
+    if (quick) { // (the preview: her standing frame for this facing, drawn once; and her walk, its six frames, so she steps as she
+      // walks off a station or out of bed before her whole set is in, not sliding on the standing frame: Ed's v5249 report, 2026-10-28;
+      // carrying her broom as well, the preview's broom left out as standing)
+      const q = o as { facing?: string; heading?: string; pose?: string; frame?: number }, f = q.heading ? `h${q.heading}` : q.facing ?? "towards";
+      const walk = q.pose === "walk" || q.pose === "walkBroom", k = walk ? `${f}-walk${q.frame ?? 0}` : f;
       let d = drawn.get(k);
-      if (!d) { const sp = (Art.witchSprite as (st: Style, o: object) => ReturnType<typeof Art.witchSprite>)(style, { pose: "idle", frame: 0, ...(q.heading ? { heading: q.heading } : { facing: k }), look }) as { anchors?: Record<string, number[]> }; drawn.set(k, (d = { b: Art.bake(sp as ReturnType<typeof Art.witchSprite>, wc, style, style.cOutline, mk) as Baked, ground: groundOf(sp.anchors) })); }
+      if (!d) { const sp = (Art.witchSprite as (st: Style, o: object) => ReturnType<typeof Art.witchSprite>)(style, { pose: walk ? "walk" : "idle", frame: walk ? q.frame ?? 0 : 0, ...(q.heading ? { heading: q.heading } : { facing: f }), look }) as { anchors?: Record<string, number[]> }; drawn.set(k, (d = { b: Art.bake(sp as ReturnType<typeof Art.witchSprite>, wc, style, style.cOutline, mk) as Baked, ground: groundOf(sp.anchors) })); }
       W.grounds.push(d.ground); return d.b;
     }
     const sp = (Art.witchSprite as (st: Style, o: object) => ReturnType<typeof Art.witchSprite>)(style, { ...o, look }) as { anchors?: Record<string, number[]> };
