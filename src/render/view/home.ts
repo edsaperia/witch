@@ -24,7 +24,8 @@ import { mark } from "./pops";
 import { ringStoneKey } from "../artBuild";
 import type { TrunkShadow } from "../trunkShadows";
 import type { RingSpeaker } from "../lasers";
-import { areaTopRanks, EMPTY_STONE, EMPTY_STONE_LIGHT, rankKnobs, stoneRank } from "../leash/ranks";
+import { STONE_FACE } from "../leash/stones";
+import { areaTopRanks, EMPTY_STONE, EMPTY_STONE_LIGHT, rankKnobs, stoneKnobs, stoneRank } from "../leash/ranks";
 
 /** The wave numbers' colour over areas the party has reached (spent). */
 const SPENT = new THREE.Vector3(0.7, 0.7, 0.8);
@@ -57,10 +58,11 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   const casts = !!t.shadows.trunks?.scenery, cast: TrunkShadow[] = [];
   // Rank sigils on (baked so: MarkerArt.ranked), each stone in its area's top rank's colour, or unlit with nobody home (Ed, 2026-10-27);
   // else its species' neon.
-  const ranked = v.markerArt.ranked;
+  const ranked = v.markerArt.ranked, stonesRange = stoneKnobs(t).range;
+  v.leashView.stones.length = 0;
   if (ranked) {
     areaTopRanks(g.creatures, TOP);
-    const C = [...rankKnobs(t).colours, [70, 80, 110]]; // (an empty one's light: cold moonlight, dim: EMPTY_STONE_LIGHT)
+    const C = [...rankKnobs(t).enemy, [70, 80, 110]]; // (an empty one's light: cold moonlight, dim: EMPTY_STONE_LIGHT)
     C.forEach((c, i) => (RANK_RGB[i] ??= new THREE.Vector3()).set(c[0] / 255, c[1] / 255, c[2] / 255));
   }
   v.island.markerGlow.value = ranked ? rankKnobs(t).stoneGlow : 1; // (live: the pause page's Rune stone glow)
@@ -92,6 +94,7 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
     stone(m.x, m.z, m.cell, level);
     // The beam and laser rise from the top of the stone, not from inside it.
     const top = v.markerArt.height(m.cell) * v.mpp * scale;
+    if (ranked && d < stonesRange) v.leashView.stones.push({ key: m.key, x: m.x, z: m.z, top: top * STONE_FACE }); // (its sigils over it: render/leash/stones.ts)
     const A = R.awake, D = R.dormant;
     const strength = (m.awake ? (A.light + A.lightBuild * build) * (0.55 + 0.45 * beat) : D.light) * dim;
     // (the trees, props and scenery round it cast shadows from it, as from a campfire, thrown from the stone itself, not from its

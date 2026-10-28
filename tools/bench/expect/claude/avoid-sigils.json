@@ -1,0 +1,10 @@
+{
+  "reason": "Idling and dancing creatures keep off the sigils on the floor (Ed, 2026-10-28; rules/sigilAvoid.ts): when one picks where to stand next it tries for a spot off every placed sigil, happy creature's rune, relic sigil and hat lying down, and one resting on a sigil moves on. Where no sigil lies, nothing changes; where one does, the creatures round it stand elsewhere.",
+  "frames": {
+    "*": "creatures idling or dancing near a sigil on the floor (a relic's, a happy one's rune, a placed one) stand in different places"
+  },
+  "rules": {
+    "creatures": "the positions, targets and rests of idling, dancing and parked creatures near a floor sigil",
+    "*": "anything downstream of where those creatures stand (fights they meet, who's near her)"
+  }
+}

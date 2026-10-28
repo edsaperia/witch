@@ -38,7 +38,7 @@ function serve() {
     const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
     page.on("pageerror", e => errors.push(`pageerror: ${e.message}`));
     page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
-    await page.goto(`http://127.0.0.1:${port}/?seed=${seed}&creator=0&spell=wait`);
+    await page.goto(`http://127.0.0.1:${port}/?seed=${seed}&creator=0&spell=wait&cast=0`); // (the old clear-to-transform, which this checks: since 2026-10-28 behind ?cast=0, rules/stoneStacks.ts)
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 600000, polling: 500 });
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => window.witch.game.party.spellAt === null && !window.witch.game.clock.paused, null, { timeout: 600000, polling: 500 });
