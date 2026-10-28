@@ -193,6 +193,7 @@ says what each note covers.
 - Controls
 - Bindings
 - Bindings API
+- Settings page
 - Pad layout
 - Glide
 - Resting 💌s

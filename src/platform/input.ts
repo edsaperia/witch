@@ -43,6 +43,9 @@ export class Input {
   private mousePressed = new Set<string>();
   /** The mouse wheel over the game since the last read, in pixels (down: zoom out). */
   private wheel = 0;
+  /** Talk held (as ever) or toggled, a press to start and another to stop (the Settings page: app/playerSettings.ts talk). */
+  talkMode: "hold" | "toggle" = "hold";
+  private talkOn = false;
 
   constructor(target: Window = window) {
     target.addEventListener("keydown", e => {
@@ -129,6 +132,7 @@ export class Input {
     const cursorAim = this.pointer && this.aimFrom ? this.aimFrom(this.pointer.x, this.pointer.y) : null;
     this.lastAim = cursorAim;
     let aimX = cursorAim?.x ?? 0, aimZ = cursorAim?.z ?? 0;
+    if (this.talkMode === "toggle" && p("game.talk")) this.talkOn = !this.talkOn; else if (this.talkMode === "hold") this.talkOn = false; // (Talk toggled: a press each way)
     this.pressed.clear();
 
     // Gamepads: the first one connected with any input.
@@ -170,7 +174,7 @@ export class Input {
 
     const len = Math.hypot(moveX, moveZ);
     if (len > 1) { moveX /= len; moveZ /= len; }
-    const toggleAutoTalk = p("game.autoTalk") || this.touch.autoTalk === true, talkHeld = k("game.talk") > 0;
+    const toggleAutoTalk = p("game.autoTalk") || this.touch.autoTalk === true, talkHeld = this.talkMode === "toggle" ? this.talkOn : k("game.talk") > 0;
     this.touch.autoTalk = false;
     return { moveX, moveZ, toggleMode, zoom: Math.sign(zoom), place, cycle, cycleBack, debug, nextWave, pauseWaves, cycleSpeakers, sigil, sigilHeld, hatHold, hat, inviteNearest, happyNearest, spell, feedNearest, dash, toggleAutoTalk, talkHeld, fire, aimX, aimZ };
   }
