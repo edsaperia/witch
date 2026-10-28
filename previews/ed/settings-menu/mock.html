@@ -1,0 +1,255 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Settings mock</title>
+<style>
+@font-face { font-family: "Tiny5"; src: url(Tiny5.woff2) format("woff2"); }
+@font-face { font-family: "Jacquard 24"; src: url(Jacquard24.woff2) format("woff2"); }
+:root { --u: 3px; --ink: #1a1022; --gold: #f2c46a; --goldd: #b57a2c; --panel: #281a3a; --tab: #3a2850; --deep: #1d1229; --text: #efe4d4; --dim: #a898b8; --warn: #ffb070; }
+* { box-sizing: border-box; border-radius: 0; }
+html, body { margin: 0; width: 1280px; height: 720px; overflow: hidden; background: #000; font-family: "Tiny5", monospace; color: var(--text); -webkit-font-smoothing: none; font-size: calc(var(--u) * 8); line-height: calc(var(--u) * 10); }
+.bg { position: absolute; inset: 0; background: url(ref-pause.png) center/cover; filter: brightness(.22) saturate(.6) blur(1px); image-rendering: pixelated; }
+.cut { clip-path: polygon(var(--u) 0, calc(100% - var(--u)) 0, calc(100% - var(--u)) var(--u), 100% var(--u), 100% calc(100% - var(--u)), calc(100% - var(--u)) calc(100% - var(--u)), calc(100% - var(--u)) 100%, var(--u) 100%, var(--u) calc(100% - var(--u)), 0 calc(100% - var(--u)), 0 var(--u), var(--u) var(--u)); }
+.win { position: absolute; left: 96px; top: 42px; width: 1088px; height: 636px; background: var(--ink); padding: calc(var(--u)); }
+.win > .in { width: 100%; height: 100%; background: var(--panel); box-shadow: inset 0 0 0 var(--u) var(--goldd); display: flex; flex-direction: column; }
+.title { display: flex; align-items: center; gap: 18px; padding: 6px 24px 0; }
+.title h1 { font-family: "Jacquard 24"; font-weight: normal; font-size: 64px; line-height: 64px; margin: 0; color: var(--gold); text-shadow: 3px 3px 0 var(--ink); }
+.title .sub { color: var(--dim); }
+.tabs { display: flex; gap: 6px; padding: 0 24px; align-items: flex-end; }
+.tabs .t { padding: 6px 18px 6px; background: var(--tab); color: var(--dim); box-shadow: inset 0 -3px 0 var(--ink), inset 3px 0 0 #5a4472; }
+.tabs .t.on { background: var(--deep); color: var(--gold); box-shadow: inset 0 3px 0 var(--gold), inset 3px 0 0 var(--goldd), inset -3px 0 0 var(--goldd); }
+.tabs .bump { display: flex; align-items: center; gap: 6px; color: var(--dim); padding-bottom: 6px; }
+.body { flex: 1; overflow: hidden; background: var(--deep); margin: 0 24px; padding: 18px 24px; display: flex; gap: 30px; min-height: 0; box-shadow: inset 0 0 0 3px var(--ink); position: relative; }
+.col { flex: 1; min-width: 0; }
+.sub2 { display: flex; gap: 6px; margin-bottom: 12px; }
+.sub2 .s { padding: 3px 12px; background: var(--tab); color: var(--dim); }
+.sub2 .s.on { background: var(--goldd); color: var(--ink); }
+.row { display: flex; align-items: center; gap: 12px; padding: 1px 12px; min-height: 39px; position: relative; }
+.row .lab { width: 330px; flex: 0 0 auto; white-space: nowrap; overflow: hidden; }
+.row .lab small { display: inline; color: var(--dim); font-size: 18px; line-height: 18px; margin-left: 9px; }
+.row.focus { background: #3a2850; box-shadow: inset 3px 0 0 var(--gold), inset 0 0 0 3px var(--goldd); }
+.row.focus .lab { color: var(--gold); }
+.row.hover { background: #33234a; }
+.row.dim { opacity: .5; }
+.row.conflict .key { box-shadow: 0 0 0 3px var(--warn); }
+.badge { font-size: 18px; color: var(--ink); background: var(--gold); padding: 0 6px; line-height: 24px; }
+.badge.opt { background: #6a5a7a; color: var(--text); }
+.badge.warn { background: var(--warn); }
+.key { display: inline-flex; align-items: center; justify-content: center; min-width: 42px; height: 36px; padding: 0 9px; background: #e8e0ff; color: var(--ink); box-shadow: inset 0 -6px 0 #a898c8, 0 0 0 3px var(--ink); }
+.key.wide { min-width: 150px; white-space: nowrap; font-size: 21px; }
+.slot { display: inline-flex; gap: 12px; align-items: center; }
+.slot .none { color: #6a5a7a; }
+.gl { width: 36px; height: 36px; display: inline-block; image-rendering: pixelated; vertical-align: middle; }
+.bar { display: flex; align-items: center; gap: 12px; }
+.track { width: 300px; height: 9px; background: var(--ink); position: relative; box-shadow: 0 3px 0 #4a3a5e; }
+.track .fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--goldd); }
+.track .thumb { position: absolute; top: -9px; width: 15px; height: 27px; background: var(--gold); box-shadow: inset -3px -3px 0 var(--goldd), inset 3px 3px 0 #fff3c8; }
+.val { width: 66px; text-align: right; color: var(--gold); }
+.check { width: 24px; height: 24px; background: var(--ink); box-shadow: inset 0 0 0 3px #6a5a7a; display: inline-block; }
+.check.on { background: var(--gold); box-shadow: inset 0 0 0 3px var(--ink), inset 0 0 0 6px var(--gold), inset 0 0 0 9px var(--goldd); }
+.choice { display: inline-flex; gap: 6px; }
+.choice span { padding: 0 12px; background: var(--tab); color: var(--dim); line-height: 36px; }
+.choice span.on { background: var(--gold); color: var(--ink); }
+.arrows { color: var(--gold); }
+.note { font-size: 18px; line-height: 21px; color: var(--dim); margin-top: 3px; }
+.foot { display: flex; gap: 30px; align-items: center; padding: 9px 30px 12px; color: var(--dim); }
+.foot .h { display: flex; align-items: center; gap: 9px; }
+.foot .spacer { flex: 1; }
+.panel2 { background: var(--panel); box-shadow: inset 0 0 0 3px var(--goldd); padding: 12px 18px; }
+.scrim { position: absolute; inset: 0; background: rgba(20,12,28,.6); z-index: 10; }
+.modal { z-index: 11; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 640px; background: var(--ink); padding: 3px; }
+.modal .in2 { background: var(--panel); box-shadow: inset 0 0 0 3px var(--gold); padding: 24px 30px; text-align: center; }
+.modal .big { font-size: 32px; line-height: 40px; color: var(--gold); margin: 12px 0; }
+.blink { animation: none; }
+.cursor { position: absolute; width: 33px; height: 36px; z-index: 9; }
+.callout { position: absolute; font-size: 18px; line-height: 20px; color: var(--ink); background: var(--gold); padding: 3px 9px; z-index: 8; }
+.callout.wht { background: #fff3c8; }
+.tag { position: absolute; right: 18px; top: 12px; }
+h3 { margin: 0 0 6px; font-weight: normal; color: var(--gold); font-size: 24px; }
+.list { margin: 0; padding: 0 0 0 0; list-style: none; }
+.list li { padding: 3px 0; display: flex; gap: 12px; align-items: baseline; }
+.list li .badge { flex: 0 0 auto; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 30px; }
+.shot { position: relative; box-shadow: 0 0 0 3px var(--goldd); }
+.shot img { display: block; width: 100%; image-rendering: pixelated; filter: brightness(.8); }
+.caption { color: var(--text); font-size: 21px; line-height: 24px; margin-top: 9px; }
+</style></head>
+<body>
+<div class="bg" id="bg"></div>
+<div id="root"></div>
+<script>
+// PlayStation glyphs and keys, drawn as pixel SVG (Tiny5 has no ✕ ○ □ △).
+const G = {
+  x: '<rect x="1" y="1" width="10" height="10" fill="#1a1022"/><path d="M3 3h1v1h1v1h2V4h1V3h1v1H8v1H7v2h1v1h1v1H8V8H7V7H5v1H4v1H3V8h1V7h1V5H4V4H3z" fill="#7cb2ff"/>',
+  o: '<rect x="1" y="1" width="10" height="10" fill="#1a1022"/><path d="M5 3h2v1h1v1h1v2H8v1H7v1H5V8H4V7H3V5h1V4h1zm0 1v1H4v2h1v1h2V7h1V5H7V4z" fill="#ff7a7a"/>',
+  s: '<rect x="1" y="1" width="10" height="10" fill="#1a1022"/><path d="M3 3h6v6H3zm1 1v4h4V4z" fill="#f29ad8"/>',
+  t: '<rect x="1" y="1" width="10" height="10" fill="#1a1022"/><path d="M5 3h2v1h1v2h1v2h1v1H2V8h1V6h1V4h1zm0 2v1H4v2h4V6H7V5z" fill="#52d6a8"/>',
+};
+const glyph = k => G[k] ? `<svg class="gl" viewBox="0 0 12 12" shape-rendering="crispEdges">${G[k]}</svg>` : `<span class="key">${k}</span>`;
+const sh = k => `<span class="key">${k}</span>`;
+const PAD_ACTIONS = [
+  ["Move", "", ["L-stick"], ""],
+  ["Use · put down · pick up", "choose", ["x"], ""],
+  ["Rise / land", "", ["s"], ""],
+  ["Dodge (blink)", "back", ["o"], ""],
+  ["Invite (💌)", "", ["R2", "L2"], ""],
+  ["Cycle the stack", "next · back", ["R1", "L1"], ""],
+  ["Hat: put down · pick up", "", ["t"], ""],
+  ["Boost (broom spell)", "", ["L3"], ""],
+  ["Zoom", "", ["d-pad ↑↓"], ""],
+  ["Pause", "", ["Options"], ""],
+];
+const KEY_ACTIONS = [
+  ["Move", "", ["W A S D", "Arrows"]],
+  ["Use · put down · pick up", "", ["E", ""]],
+  ["Rise / land", "", ["Space", ""]],
+  ["Dodge (blink)", "", ["Right click", ""]],
+  ["Invite (💌)", "aimed with the mouse", ["Left click", "1"]],
+  ["Cycle the stack", "", ["Q", "Wheel click"]],
+  ["Hat: put down · pick up", "", ["H", ""]],
+  ["Boost (broom spell)", "", ["R", ""]],
+  ["Zoom", "", ["Z / X", "Wheel"]],
+  ["Talk (hold)", "with auto-talk off", ["Shift", ""]],
+  ["Pause", "", ["Esc", ""]],
+];
+const TABS = ["Controls", "Sound", "Display", "Accessibility", "Game"];
+function frame({ tab, mode, body, foot, title = "Settings" }) {
+  return `<div class="win cut"><div class="in">
+    <div class="title"><h1>${title}</h1><span class="sub">Witch · v52xx</span></div>
+    <div class="tabs">${mode === "pad" ? `<span class="bump">${sh("L1")}</span>` : mode === "keys" ? `<span class="bump">${sh("Q")}</span>` : ""}
+      ${TABS.map(t => `<span class="t ${t === tab ? "on" : ""}">${t}</span>`).join("")}
+      ${mode === "pad" ? `<span class="bump">${sh("R1")}</span>` : mode === "keys" ? `<span class="bump">${sh("E")}</span>` : ""}</div>
+    <div class="body">${body}</div>
+    <div class="foot">${foot}</div></div></div>`;
+}
+const footPad = (extra = "") => `<span class="h">${glyph("x")} choose</span><span class="h">${glyph("o")} back</span><span class="h">${sh("L1")}${sh("R1")} tabs</span><span class="h">${glyph("t")} reset this</span>${extra}<span class="spacer"></span><span class="h">changes save as you go</span>`;
+const footKeys = (extra = "") => `<span class="h">${sh("↑↓")} move</span>${extra}<span class="h">${sh("Enter")} choose</span><span class="h">${sh("Esc")} back</span><span class="h">${sh("Q")}${sh("E")} tabs</span><span class="h">${sh("Del")} reset</span>`;
+const footMouse = () => `<span class="h">click to choose · drag sliders · right click: back</span><span class="spacer"></span><span class="key wide">Reset all</span><span class="key wide">Done</span>`;
+const cursorSvg = '<svg class="cursor" viewBox="0 0 11 12" shape-rendering="crispEdges"><path d="M0 0h1v1h1v1h1v1h1v1h1v1h1v1h1v1h1v1H6v1h1v1h1v1H7v1H6v-1H5V9H4v1H3v1H2v1H0z" fill="#1a1022"/><path d="M1 2h1v1h1v1h1v1h1v1h1v1h1v1H5v1h1v1h1v1H6v-1H5V9H4V8H3v1H2v1H1z" fill="#fff"/></svg>';
+
+function padDiagram() {
+  return `<svg viewBox="0 0 120 80" width="360" height="240" shape-rendering="crispEdges">
+    <path d="M20 18h80v4h8v6h4v20h4v16h-4v6h-12v-4h-8v-6H28v6h-8v4H8v-6H4V48h4V28h4v-6h8z" fill="#3a2850" stroke="#b57a2c" stroke-width="2"/>
+    <rect x="18" y="10" width="20" height="6" fill="#5a4472"/><rect x="82" y="10" width="20" height="6" fill="#5a4472"/>
+    <rect x="18" y="4" width="20" height="5" fill="#4a3a5e"/><rect x="82" y="4" width="20" height="5" fill="#4a3a5e"/>
+    <path d="M24 32h6v6h6v6h-6v6h-6v-6h-6v-6h6z" fill="#1a1022"/>
+    <circle cx="96" cy="32" r="4" fill="#1a1022"/><circle cx="104" cy="40" r="4" fill="#1a1022"/><circle cx="88" cy="40" r="4" fill="#1a1022"/><circle cx="96" cy="48" r="4" fill="#1a1022"/>
+    <path d="M94 30h4v1h1v3h-6v-3h1z" fill="#52d6a8"/><path d="M102 38h4v4h-4z" fill="none" stroke="#ff7a7a" stroke-width="1"/><path d="M86 38h4v4h-4z" fill="none" stroke="#f29ad8" stroke-width="1"/><path d="M94 46l4 4m0-4l-4 4" stroke="#7cb2ff" stroke-width="1.4"/>
+    <circle cx="44" cy="56" r="7" fill="#1a1022"/><circle cx="76" cy="56" r="7" fill="#1a1022"/><circle cx="44" cy="56" r="4" fill="#5a4472"/><circle cx="76" cy="56" r="4" fill="#5a4472"/>
+    <rect x="76" y="24" width="6" height="3" fill="#a898b8"/><rect x="50" y="26" width="20" height="12" fill="#281a3a"/>
+  </svg>`;
+}
+function padCallouts() {
+  const C = [["L2 L1", 0, -24], ["R2 R1", 270, -24], ["zoom", -6, 132], ["boost L3", 72, 210], ["pause", 132, 48], ["hat", 312, 66], ["dodge", 306, 132], ["rise", 216, 90], ["use", 270, 174]];
+  return C.map(([t, x, y]) => `<span class="callout wht" style="left:${x}px;top:${y}px">${t}</span>`).join("");
+}
+function controlsPad(state) {
+  const rows = PAD_ACTIONS.map(([a, s, keys], i) => {
+    const focus = state === "list" ? i === 2 : state === "rebind" ? i === 2 : false;
+    const conflict = state === "conflict" && (i === 2 || i === 3);
+    const k = state === "conflict" && i === 2 ? ["o"] : keys;
+    return `<div class="row ${focus ? "focus" : ""} ${conflict ? "conflict" : ""}"><span class="lab">${a}${s ? `<small>${s}</small>` : ""}</span><span class="slot">${k.map(glyph).join(`<span class="none">or</span>`)}</span>${conflict ? `<span class="badge warn">also ${i === 2 ? "Dodge" : "Rise"}</span>` : ""}</div>`;
+  }).join("");
+  let extra = "";
+  if (state === "rebind") extra = `<div class="scrim"></div><div class="modal cut"><div class="in2"><div>Rise / land</div><div class="big">Press a button…</div><div class="note" style="font-size:21px;line-height:26px">now ${glyph("s")}<br>${glyph("o")} cancel · hold ${glyph("x")} to clear · gives up in 5 s</div></div></div>`;
+  if (state === "conflict") extra = `<div class="modal cut" style="top:84%;left:62%"><div class="in2"><div class="big" style="font-size:26px">${glyph("o")} already does Dodge</div><div class="choice"><span class="on">Swap: Dodge to ${glyph("s")}</span><span>Use both</span><span>Cancel</span></div></div></div>`;
+  return frame({ tab: "Controls", mode: "pad", body: `<div class="col" style="flex:1.25"><div class="sub2"><span class="s">Keyboard & mouse</span><span class="s on">Pad</span><span class="s">Glyphs: PlayStation ▸</span></div>${rows}</div>
+    <div class="col" style="position:relative;flex:.8"><div style="position:relative;width:360px;height:240px;margin:24px 0 18px 18px">${padDiagram()}${padCallouts()}</div><div class="note" style="margin-top:6px">Glyphs as on your pad: PlayStation or Xbox, from its name, or forced here.</div><div class="note">${glyph("t")} reset this action · hold ${glyph("t")} reset all</div></div>${extra}`,
+    foot: footPad(state === "rebind" ? "" : "") });
+}
+function controlsKeys() {
+  const rows = KEY_ACTIONS.map(([a, s, k], i) => `<div class="row ${i === 4 ? "hover" : ""} ${i === 6 ? "focus" : ""}"><span class="lab">${a}${s ? `<small>${s}</small>` : ""}</span><span class="slot">${k[0] ? `<span class="key wide">${k[0]}</span>` : ""}${k[1] ? `<span class="key wide">${k[1]}</span>` : `<span class="key wide" style="background:#4a3a5e;color:#a898b8;box-shadow:0 0 0 3px #1a1022">+ add</span>`}</span></div>`).join("");
+  return frame({ tab: "Controls", mode: "keys", body: `<div class="col"><div class="sub2"><span class="s on">Keyboard & mouse</span><span class="s">Pad</span></div>${rows}<div class="cursor" style="left:600px;top:300px">${cursorSvg}</div></div>
+    <div class="col" style="flex:.5"><div class="panel2"><h3>Two keys each</h3><div class="note" style="font-size:21px;line-height:24px">Each action takes up to two keys or mouse buttons. Click one, then press the new key. Esc cancels; Backspace clears it.<br><br>Mouse aim, the 💌 cursor and the wheel are fixed, but each can be swapped for a key.<br><br>Keys the browser keeps (F5, Ctrl+W, F11) can't be bound.</div></div>
+    <div class="panel2" style="margin-top:18px"><h3>Changed</h3><div class="note" style="font-size:21px;line-height:24px">Hat: H (was T)</div><div style="margin-top:9px"><span class="key wide">Reset all keys</span></div></div></div>`,
+    foot: footKeys() + "" });
+}
+function slider(label, v, sub = "", focus = false, opt = false, extra = "") {
+  return `<div class="row ${focus ? "focus" : ""}"><span class="lab">${label}${sub ? `<small>${sub}</small>` : ""}</span><span class="bar"><span class="track"><span class="fill" style="width:${v}%"></span><span class="thumb" style="left:calc(${v}% - 7px)"></span></span><span class="val">${v}%</span></span>${opt ? `<span class="badge opt">optional</span>` : `<span class="badge">common</span>`}${extra}</div>`;
+}
+function toggle(label, on, sub = "", opt = false, focus = false) {
+  return `<div class="row ${focus ? "focus" : ""}"><span class="lab">${label}${sub ? `<small>${sub}</small>` : ""}</span><span class="check ${on ? "on" : ""}"></span><span style="width:240px">${on ? "On" : "Off"}</span>${opt ? `<span class="badge opt">optional</span>` : `<span class="badge">common</span>`}</div>`;
+}
+function choice(label, opts, on, sub = "", opt = false, focus = false, note = "") {
+  return `<div class="row ${focus ? "focus" : ""}"><span class="lab">${label}${sub ? `<small>${sub}</small>` : ""}</span><span class="choice">${opts.map(o => `<span class="${o === on ? "on" : ""}">${o}</span>`).join("")}</span>${opt ? `<span class="badge opt">optional</span>` : `<span class="badge">common</span>`}</div>${note ? `<div class="note" style="margin:-3px 0 6px 294px">${note}</div>` : ""}`;
+}
+function sound() {
+  return frame({ tab: "Sound", mode: "keys", body: `<div class="col">
+    ${slider("Master", 80, "everything")}
+    ${slider("Music", 70, "the night's set", true)}
+    ${slider("Sound effects", 90, "", false)}
+    ${slider("Voices", 85, "babble, the singer", false, true)}
+    ${slider("Ambience", 60, "wind, the forest, the sea", false, true)}
+    ${toggle("Mute when in the background", true, "another tab or window", true)}
+    ${choice("Output", ["Stereo", "Mono"], "Stereo", "", true)}
+    <div class="note" style="margin-top:12px">Today's pause page already saves Music and Sound effects (app/settings.ts): these become the same values, so nobody's volume resets.</div></div>`, foot: footKeys(`<span class="h">${sh("←→")} change</span>`) });
+}
+function display() {
+  return frame({ tab: "Display", mode: "mouse", body: `<div class="col">
+    ${toggle("Fullscreen", true, "F11 or this")}
+    ${choice("Screen", ["This one", "DELL U2720Q", "Built-in"], "DELL U2720Q", "where it goes fullscreen", false, false, "Chrome and Edge: asks once to see your screens, then goes fullscreen on the one you pick. Firefox and Safari: fullscreen on the screen the window is on; move the window first.")}
+    ${choice("Pixel size", ["Auto", "3", "4", "5"], "Auto", "the art's pixels on screen", true)}
+    ${choice("Quality", ["Auto", "High", "Medium", "Low"], "Auto", "the quality ladder", false, true, "Auto steps down when frames run slow and back up when there's room (today's ladder); a level fixes it.")}
+    ${toggle("Screen shake", true, "quakes, a legend's blows")}
+    ${toggle("Tilt-shift blur", true, "the soft edges", true)}
+    ${slider("Brightness", 50, "the night's darkness", false, true)}
+    ${choice("Frame rate cap", ["Off", "60", "30"], "Off", "", true)}
+    <div class="cursor" style="left:480px;top:252px">${cursorSvg}</div></div>`, foot: footMouse() });
+}
+function more() {
+  return frame({ tab: "Accessibility", mode: "pad", body: `<div class="col"><h3>Accessibility</h3><ul class="list">
+      <li><span class="badge">common</span>Text size (menus and hints): 100 / 125 / 150%</li>
+      <li><span class="badge">common</span>Hold or toggle: Talk, the stack's run, boost</li>
+      <li><span class="badge">common</span>Reduce flashing (the danger frame's "now" blink, legends' flashes)</li>
+      <li><span class="badge opt">optional</span>Danger frame stronger: thicker, brighter warnings</li>
+      <li><span class="badge opt">optional</span>Slower game speed (90%, 80%)</li>
+      <li><span class="badge opt">optional</span>Show button hints: always / only at first / never</li>
+      <li><span class="badge opt">optional</span>Stick dead zone, vibration on or off</li></ul></div>
+    <div class="col"><h3>Game</h3><ul class="list">
+      <li><span class="badge">common</span>Pause when the window loses focus</li>
+      <li><span class="badge">common</span>Language (English only today)</li>
+      <li><span class="badge opt">optional</span>Auto-talk on or off (today: T)</li>
+      <li><span class="badge opt">optional</span>Camera: follow tight or loose</li>
+      <li><span class="badge opt">optional</span>Show the timer and wave count</li>
+      <li><span class="badge opt">optional</span>Reset saved settings / reset progress (with a confirm)</li>
+      <li><span class="badge opt">optional</span>Credits and licences (the fonts' OFL)</li></ul>
+      <div class="note" style="margin-top:12px">Ed to pick: these are the usual ones; none is built.</div></div>`, foot: footPad() });
+}
+function where() {
+  return `<div style="position:absolute;inset:0;padding:24px 30px;background:#140c1c">
+    <div class="title" style="padding:0 0 12px"><h1>Where Settings lives</h1></div>
+    <div class="grid2" style="grid-template-columns:1fr 1fr 1fr;gap:24px">
+      <div><div class="shot"><img src="ref-start.png"><span class="key wide" style="position:absolute;right:9px;top:9px;font-size:18px">⚙ Settings</span><span class="key wide" style="position:absolute;right:120px;top:9px;font-size:18px;background:#a898c8">What's new</span></div>
+        <div class="caption"><b style="color:#f2c46a">Start (the bedroom)</b>: a corner button, as What's new is; Options on the pad opens it before she wakes.</div></div>
+      <div><div class="shot"><img src="ref-pause.png"><span class="key wide" style="position:absolute;right:9px;top:9px;font-size:18px">⚙ Settings</span></div>
+        <div class="caption"><b style="color:#f2c46a">Pause page</b>: its corner's Options and Controls become one Settings button (Controls is its first tab). The test sliders stay the dev's, behind ?dev.</div></div>
+      <div><div class="shot"><img src="ref-start.png" style="filter:brightness(.6) hue-rotate(-10deg)"><span class="key" style="position:absolute;left:46%;top:44%;font-size:18px">E</span><span class="callout" style="left:52%;top:44%;position:absolute">the bedside clock</span></div>
+        <div class="caption"><b style="color:#f2c46a">A treehouse station (optional)</b>: the bedside clock in the bedroom, E to open, like the dressing stations. Fun, but not where players look first.</div></div>
+    </div>
+    <div class="caption" style="margin-top:24px;font-size:24px;line-height:30px">One menu, the same from all three. It pauses the night while open. Every change applies at once and saves on this browser (as the volumes do today).</div></div>`;
+}
+function browser() {
+  const T = [["Fullscreen", "Yes", "Yes", "Yes (macOS 16.4+; not iPhone)", "requestFullscreen on the page; F11 always works"],
+    ["Choose the screen", "Yes: asks once (window management)", "No", "No", "getScreenDetails() then requestFullscreen({ screen }); elsewhere the row hides and says: move the window, then Fullscreen"],
+    ["Know how many screens", "After the prompt", "No", "No", "screen.isExtended works without a prompt in Chrome, so the row only shows with 2+"],
+    ["Pad glyphs (PS / Xbox)", "From the pad's name", "From the name", "From the name", "else PlayStation; a toggle to force"],
+    ["Keys the browser keeps", "F5, Ctrl+W, Ctrl+T, F11", "Same", "Same, Cmd+Q", "refused when rebinding, with a note; Esc is ours only outside fullscreen"],
+    ["Saving settings", "localStorage", "localStorage", "localStorage (cleared after 7 days unused in Safari)", "as the volumes are saved today"],
+    ["Frame rate cap", "Our own (skip frames)", "Same", "Same", "the display's refresh can't be changed from a page"]];
+  return `<div style="position:absolute;inset:0;padding:24px 30px;background:#140c1c"><div class="title" style="padding:0 0 12px"><h1>What a browser can do</h1></div>
+  <table style="border-collapse:collapse;font-size:20px;line-height:24px;width:100%">
+  <tr style="color:#f2c46a"><td style="padding:6px">Setting</td><td>Chrome / Edge</td><td>Firefox</td><td>Safari</td><td>How, and the fallback</td></tr>
+  ${T.map(r => `<tr style="border-top:3px solid #3a2850">${r.map((c, i) => `<td style="padding:7px 9px;vertical-align:top;${i === 0 ? "color:#f2c46a;width:200px" : i === 4 ? "color:#a898b8;width:420px" : "width:170px"}">${c}</td>`).join("")}</tr>`).join("")}
+  </table></div>`;
+}
+const S = new URLSearchParams(location.search).get("s") || "pad";
+const R = document.getElementById("root");
+if (S === "where") { document.getElementById("bg").style.display = "none"; R.innerHTML = where(); }
+else if (S === "pad") R.innerHTML = controlsPad("list");
+else if (S === "rebind") R.innerHTML = controlsPad("rebind");
+else if (S === "conflict") R.innerHTML = controlsPad("conflict");
+else if (S === "keys") R.innerHTML = controlsKeys();
+else if (S === "sound") R.innerHTML = sound();
+else if (S === "display") R.innerHTML = display();
+else if (S === "more") R.innerHTML = more();
+else if (S === "browser") { document.getElementById("bg").style.display = "none"; R.innerHTML = browser(); }
+</script>
+</body></html>
