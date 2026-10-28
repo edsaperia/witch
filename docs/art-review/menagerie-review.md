@@ -77,7 +77,7 @@ Two baked frames, each leg swung ±0.32 with a 0.06 lift, the body bobbed 0.04: 
 
 ## 3. What I'm changing, in order (generator first)
 
-Each a small PR with before/after sheets in `docs/art-review/mocks/`, the art check and tests green, nothing pixel-locked (these are meant to change every animal), each knob with a default that keeps a species itself so other builders' records keep working unchanged.
+Each a small PR with before/after sheets in `docs/art-review/mocks/` (the pictures now on claude/ed-shots, [previews/archive/art-review/mocks/](https://github.com/edsaperia/witch/tree/claude/ed-shots/previews/archive/art-review/mocks)), the art check and tests green, nothing pixel-locked (these are meant to change every animal), each knob with a default that keeps a species itself so other builders' records keep working unchanged.
 
 1. **Legs with joints and feet** (`quad3d`): fore = shoulder, elbow, wrist, paw; hind = hip, stifle, hock, paw; a stance by foot kind (paw: digitigrade, elbow and hock bent; hoof: a long upright cannon, a sharp hock; `plantigrade`: a flat foot, a bear's or badger's); the swinging leg flexing in the walk; feet as a pad with toes or a hoof. `m.rig` keeps hip/knee/foot (the rig's IK keeps working; a `hock` joint added for a later rig PR).
 2. **Torso and neck**: a spine line (withers, back, croup) the three masses hang from, a shoulder mass and a pelvis, a two-part neck with a throat; knobs `withers`, `croup`, `loin`, `throat` with defaults by foot kind and the existing `back`.
