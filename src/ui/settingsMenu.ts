@@ -153,6 +153,7 @@ export class SettingsMenu {
       }
     });
     this.el.addEventListener("contextmenu", e => e.preventDefault());
+    this.el.addEventListener("mousedown", e => e.preventDefault()); // (the click redraws it: the browser's focus would fall from the gone target to the page's body, and the freeze then keeps the keys from it)
     this.el.addEventListener("wheel", e => {
       e.preventDefault(); this.mode = "mouse";
       if (this.listen?.device === "keys") this.offer(e.deltaY > 0 ? "mouse:wheelDown" : "mouse:wheelUp");

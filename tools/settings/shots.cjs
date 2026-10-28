@@ -86,7 +86,7 @@ const check = (ok, what) => { console.log(`${ok ? "ok  " : "FAIL"} ${what}`); if
   await clickAt("#settings-page .row[data-row='0'] [data-opt='pad']");
   await clickAt("#settings-page [data-id='game.hat'] [data-slot='1']");
   await page.waitForTimeout(400);
-  await press(16);
+  await page.evaluate(() => { window.__pad.buttons[16] = true; }); await page.waitForTimeout(1500); await page.evaluate(() => { window.__pad.buttons[16] = false; }); await page.waitForTimeout(800); // (held over a few slow frames)
   const pb = await page.evaluate(() => JSON.parse(localStorage.getItem("witch.bindings") || "{}"));
   check(JSON.stringify(pb["game.hat"]?.pad) === JSON.stringify(["triangle", "home"]), `controls: the pad's PS button on Hat ${JSON.stringify(pb["game.hat"])}`);
   await page.mouse.move(700, 600);
