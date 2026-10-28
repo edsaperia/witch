@@ -5,8 +5,9 @@
 // it and holding the sigil button (the cast), or a wave does. Either way (rules/game.ts stepFights) the stone becomes a
 // soundsystem, the babies turn friendly, the leftover wild young and adults besiege it, and every friend sigil falls and
 // scatters round it on the ground (g.loose), for any witch to pick up and leash. A legend's sigil among them, picked up, tethers
-// her to the sleeping legend at the distance it lay from it (her leash's `tether`). With `cast.on` false (?cast=0) the game is as
-// it was: areas clear when their wild are gone (rules/clear.ts), no stacks, no scatter. No drawing here.
+// her to the sleeping legend at the distance it lay from it (her leash's `tether`). With `cast.on` false (the default till the view
+// lands; ?cast=1 turns it on) the game is as it was: areas clear when their wild are gone (rules/clear.ts), no stacks, no scatter.
+// No drawing here.
 import type { Creature } from "./creatures";
 import { LEGEND } from "./creatures";
 import type { Game, Witch } from "./game";
@@ -23,11 +24,16 @@ const keyOf = (c: Cell) => `${c[0]},${c[1]}`;
 
 /** A sigil lying on the ground for anyone to pick up, scattered at a stone's conversion (one a creature; `legend`: a sleeping
  *  legend's, which tethers whoever carries it). */
-export interface LooseSigil extends PlacedSigil { legend?: boolean }
+export interface LooseSigil extends PlacedSigil {
+  legend?: boolean;
+  /** Where it fell from (for the view's arc): its stone's x and z, and y its slot in the stack, 0 at the bottom (stoneStack's order). */
+  from?: { x: number; y: number; z: number };
+}
 
 /** The cast's knobs (the tuning's `cast`). */
 export interface CastTuning {
-  /** Off: the game as before the stacks (auto-clearing, runes at the feet). */
+  /** Off: the game as before the stacks (auto-clearing, runes at the feet). Off by default till the view of them lands (the
+   *  coordinator, 2026-10-28: Rendering's PR turns it on); ?cast=1 turns it on, ?cast=0 off. */
   on: boolean;
   /** Seconds of holding to convert a stone. */
   time: number;
@@ -37,13 +43,16 @@ export interface CastTuning {
   radius: number;
   /** How near the stone (m) the spell's sigil shows (castShown). */
   show: number;
-  /** The ring (m from the stone) its friend sigils scatter onto. */
-  scatter: { min: number; max: number };
+  /** Where its friend sigils scatter (Ed, 2026-10-28: "scattered around the whole runestone clearing"): free hex cells of its open
+   *  ground (a tree's chance there under `open` of the forest's density) between min and reach metres from the stone, in a seeded
+   *  order; never in the hidden wedge just north of it, where the soundsystem's sprite hides the ground from the camera (which looks
+   *  north): `hide.width` metres either side of it, `hide.depth` metres behind. */
+  scatter: { min: number; reach: number; open: number; hide: { width: number; depth: number } };
 }
-export const CAST_DEFAULT: CastTuning = { on: true, time: 6, drain: 0.15, radius: 4, show: 12, scatter: { min: 4, max: 14 } };
-export const castOf = (t: Tuning): CastTuning => ({ ...CAST_DEFAULT, ...t.cast, scatter: { ...CAST_DEFAULT.scatter, ...t.cast?.scatter } });
+export const CAST_DEFAULT: CastTuning = { on: false, time: 6, drain: 0.15, radius: 4, show: 12, scatter: { min: 4, reach: 40, open: 0.25, hide: { width: 5, depth: 14 } } };
+export const castOf = (t: Tuning): CastTuning => ({ ...CAST_DEFAULT, ...t.cast, scatter: { ...CAST_DEFAULT.scatter, ...t.cast?.scatter, hide: { ...CAST_DEFAULT.scatter.hide, ...t.cast?.scatter?.hide } } });
 /** Whether the stacks and the spell are on (else the game as before them). */
-export const castOn = (t: Tuning): boolean => t.cast?.on !== false;
+export const castOn = (t: Tuning): boolean => !!t.cast?.on;
 
 /** One sigil in a stone's stack. */
 export interface StackEntry { id: number; level: number; friend: boolean; legend: boolean }
@@ -57,9 +66,13 @@ export function stoneOpen(g: Game, key: string): boolean {
   return key !== keyOf(g.map.centreCell) && !g.party.areas.has(key) && !g.party.ruined?.has(key);
 }
 
-/** The sigil stack above an area's stone (Ed, 2026-10-28), top first: friends above enemies ("you mostly care about how many
- *  creatures are still hostile"), each group in rank order (babies, youths, adults, the legend), by id within a rank. Empty for a
- *  stone that's converted (its friends' sigils lie on the ground: g.loose), home, a ruined one, or with the stacks off. */
+/** The order of a stack, bottom first: enemies, then friends (Ed, 2026-10-28: friends above enemies, "you mostly care about how many
+ *  creatures are still hostile"), each group in rank order from the bottom (the legend, adults, youths, babies), by id within a rank. */
+const stackOrder = (a: StackEntry, b: StackEntry) => (a.friend === b.friend ? 0 : a.friend ? 1 : -1) || b.level - a.level || a.id - b.id;
+
+/** The sigil stack above an area's stone (Ed, 2026-10-28), in draw order, bottom first: enemies, then friends above them, each group
+ *  the legend, adults, youths, babies (the babies at the top). Empty for a stone that's converted (its friends' sigils lie on the
+ *  ground: g.loose), home, a ruined one, or with the stacks off. */
 export function stoneStack(g: Game, key: string): StackEntry[] {
   if (!castOn(g.tuning) || !stoneOpen(g, key)) return [];
   const out: StackEntry[] = [], own = g.byArea?.get(key) ?? g.creatures;
@@ -67,7 +80,7 @@ export function stoneStack(g: Game, key: string): StackEntry[] {
     if (keyOf(c.cell) !== key || !inStack(c)) continue;
     out.push({ id: c.id, level: c.boss ? LEGEND : c.level, friend: stateOf(c) === "happy", legend: !!c.boss });
   }
-  return out.sort((a, b) => (a.friend === b.friend ? 0 : a.friend ? -1 : 1) || a.level - b.level || a.id - b.id);
+  return out.sort(stackOrder);
 }
 
 /** The stone she'd cast at from (x, z): her area's (a legend area's pair's), if it has a stack and she's within `reach` of it. */
@@ -84,6 +97,10 @@ export function stoneNear(g: Game, x: number, z: number, reach: number): { key: 
   return best;
 }
 
+/** Her record on a stone: her progress (p, 0 to 1) and when it last changed (at); after a hit, the progress it had (lostFrom) and
+ *  when (hitAt), for the view to draw the drain from there. */
+export interface CastRecord { p: number; at: number; lostFrom?: number; hitAt?: number }
+
 /** Her progress on a stone (0 to 1) at her time `ht`: what she cast, drained since she stopped. */
 export function castProgress(W: Witch, key: string, ht: number, t: Tuning): number {
   const r = W.casts?.[key];
@@ -94,11 +111,13 @@ export function castProgress(W: Witch, key: string, ht: number, t: Tuning): numb
 /** What the view shows of her spell (Ed, 2026-10-28: "The music-note sigil becomes visible only as you enter the clearing and get near
  *  the runestone, and disappears as you leave"): the stone she's near on foot (within cast.show), her progress there and whether
  *  she's casting it now; else null. */
-export function castShown(g: Game, W: Witch): { key: string; x: number; z: number; p: number; casting: boolean } | null {
+export function castShown(g: Game, W: Witch): { key: string; x: number; z: number; k: number; lostFrom?: number; hitAt?: number; casting: boolean } | null {
   const t = g.tuning, b = W.body;
   if (!castOn(t) || b.mode !== "ground" || b.seated || b.perch || W.ko) return null;
   const s = stoneNear(g, b.x, b.z, castOf(t).show);
-  return s ? { key: s.key, x: s.x, z: s.z, p: castProgress(W, s.key, g.herTime, t), casting: W.casting === s.key } : null;
+  if (!s) return null;
+  const r = W.casts?.[s.key];
+  return { key: s.key, x: s.x, z: s.z, k: castProgress(W, s.key, g.herTime, t), ...(r?.lostFrom !== undefined ? { lostFrom: r.lostFrom, hitAt: r.hitAt } : {}), casting: W.casting === s.key };
 }
 
 /** The stone she casts at where she stands: on foot, not knocked out, within cast.radius of a stone with a stack (the sigil button
@@ -114,14 +133,15 @@ export function castingStone(g: Game, W: Witch): { key: string; cell: Cell; x: n
  *  does nothing till she lets go and holds again. Full: `convert` partifies the stone's area as a wave would (party.ts clearArea).
  *  Returns the converted stone's key, else null. Two witches at one stone each fill their own, no faster for it. */
 export function stepCast(g: Game, W: Witch, held: boolean, ht: number, hdt: number, convert: (cell: Cell) => void, events: LeashEvent[] = W.leash.events): string | null {
+  if (!castOn(g.tuning)) return null; // (the stacks off: nothing of hers changes)
   const t = g.tuning, C = castOf(t), stone = castingStone(g, W);
   const casts = (W.casts ??= {});
   for (const k of Object.keys(casts)) if (k !== W.casting && castProgress(W, k, ht, t) <= 0) delete casts[k]; // (drained to nothing)
   if (!held) W.castBlocked = undefined;
   const from = W.castFrom ?? Infinity, hit = !!W.casting && (W.health.hurtAt >= from || (W.knock?.at ?? -Infinity) >= from);
   const stop = (kind: "castStop" | "castBroken") => {
-    const k = W.casting!;
-    casts[k] = { p: casts[k]?.p ?? 0, at: ht };
+    const k = W.casting!, p = casts[k]?.p ?? 0;
+    casts[k] = { p, at: ht, ...(kind === "castBroken" ? { lostFrom: p, hitAt: ht } : {}) };
     W.casting = null; W.castFrom = undefined;
     events.push({ kind, id: W.id, x: W.body.x, z: W.body.z, at: ht });
   };
@@ -143,49 +163,48 @@ export function stepCast(g: Game, W: Witch, held: boolean, ht: number, hdt: numb
 }
 
 /** The friend sigils of a converting area, as they scatter (its happy natives' and its legend's, unless angry), in its stack's
- *  order (babies first). */
-export function friendSigils(g: Game, key: string): Creature[] {
-  const out: Creature[] = [];
+ *  order from the bottom, each with its slot (0 at the bottom, under the enemies' left: stoneStack's order). */
+export function friendSigils(g: Game, key: string): { c: Creature; slot: number }[] {
+  const all: StackEntry[] = [], byId = new Map<number, Creature>();
   for (const c of g.creatures) {
     if (keyOf(c.cell) !== key || !inStack(c)) continue;
-    if (c.boss ? c.legendState === "angry" : stateOf(c) !== "happy") continue; // (an angry legend keeps its sigil)
-    out.push(c);
+    const friend = c.boss ? c.legendState !== "angry" : stateOf(c) === "happy"; // (an angry legend keeps its sigil)
+    all.push({ id: c.id, level: c.boss ? LEGEND : c.level, friend, legend: !!c.boss }); byId.set(c.id, c);
   }
-  return out.sort((a, b) => (a.boss ? LEGEND : a.level) - (b.boss ? LEGEND : b.level) || a.id - b.id);
+  return all.sort(stackOrder).map((e, slot) => ({ e, slot })).filter(x => x.e.friend).map(x => ({ c: byId.get(x.e.id)!, slot: x.slot }));
 }
 
-/** Where `n` sigils fall round a stone at (x, z) (Ed, 2026-10-28: "every friend sigil falls and scatters on the ground around it"):
- *  free hex cells (leash.hex) between scatter.min and scatter.max metres, in an order seeded by the area's key (no Math.random),
- *  none where `free` says no (barred, taken, off the land); the ring widens if they don't fit; with the hex grid off, seeded spots on
- *  the ring, leash.spacing apart. */
-export function scatterSpots(key: string, x: number, z: number, n: number, t: Tuning, free: (x: number, z: number) => boolean): { x: number; z: number }[] {
-  const C = castOf(t), H = t.leash.hex && t.leash.hex.size > 0 ? t.leash.hex : null, [kx, ky] = key.split(",").map(Number), out: { x: number; z: number }[] = [];
+/** Where `n` sigils fall round a stone at (x, z) (Ed, 2026-10-28: "It's fine if they're scattered around the whole runestone
+ *  clearing", not "immediately behind the soundsystem where they could be hidden"): free hex cells (leash.hex) of its open ground
+ *  between scatter.min and scatter.reach metres, in an order seeded by the area's key (no Math.random), so they spread over the
+ *  clearing however many there are; never in the hidden wedge north of the stone; none where `free` says no (barred, taken, off the
+ *  land). Open ground first (`open`: the clearing's), then any free cell; with the hex grid off, seeded spots leash.spacing apart. */
+export function scatterSpots(key: string, x: number, z: number, n: number, t: Tuning, free: (x: number, z: number) => boolean, open: (x: number, z: number) => boolean = () => true): { x: number; z: number }[] {
+  const C = castOf(t), S = C.scatter, H = t.leash.hex && t.leash.hex.size > 0 ? t.leash.hex : null, [kx, ky] = key.split(",").map(Number), out: { x: number; z: number }[] = [];
   if (!n) return out;
+  const hidden = (px: number, pz: number) => pz < z && z - pz < S.hide.depth && Math.abs(px - x) < S.hide.width; // (north: behind it on screen)
+  const cells: { x: number; z: number; o: number }[] = [];
   if (H) {
-    const h0 = hexCell(x, z, H.size), seen = new Set<string>();
-    for (let grow = 1; grow <= 4 && out.length < n; grow++) {
-      const lo = C.scatter.min, hi = C.scatter.max * grow, span = Math.ceil(hi / H.size) + 2, cells: { x: number; z: number; o: number; k: string }[] = [];
-      for (let dr = -span; dr <= span; dr++) for (let dq = -span; dq <= span; dq++) {
-        const p = hexCentre(h0.q + dq, h0.r + dr, H.size), d = Math.hypot(p.x - x, p.z - z), k = `${dq},${dr}`;
-        if (d < lo || d > hi || seen.has(k)) continue;
-        cells.push({ ...p, o: hash2(kx * 131 + dq, ky * 131 + dr, 7741), k });
-      }
-      cells.sort((a, b) => a.o - b.o);
-      for (const p of cells) {
-        if (out.length >= n) break;
-        seen.add(p.k);
-        if (free(p.x, p.z)) out.push({ x: p.x, z: p.z });
-      }
+    const h0 = hexCell(x, z, H.size), span = Math.ceil(S.reach / H.size) + 2;
+    for (let dr = -span; dr <= span; dr++) for (let dq = -span; dq <= span; dq++) {
+      const p = hexCentre(h0.q + dq, h0.r + dr, H.size), d = Math.hypot(p.x - x, p.z - z);
+      if (d >= S.min && d <= S.reach && !hidden(p.x, p.z)) cells.push({ ...p, o: hash2(kx * 131 + h0.q + dq, ky * 131 + h0.r + dr, 7741) });
     }
   } else {
-    const gap = t.leash.spacing;
-    for (let i = 0; out.length < n && i < n * 40; i++) {
-      const a = hash2(kx * 97 + i, ky * 97, 811) * Math.PI * 2, r = C.scatter.min + hash2(kx * 97 + i, ky * 97, 812) * (C.scatter.max - C.scatter.min);
+    for (let i = 0; i < 400; i++) {
+      const a = hash2(kx * 97 + i, ky * 97, 811) * Math.PI * 2, r = S.min + Math.sqrt(hash2(kx * 97 + i, ky * 97, 812)) * (S.reach - S.min);
       const p = { x: x + Math.cos(a) * r, z: z + Math.sin(a) * r };
-      if (out.every(o => Math.hypot(o.x - p.x, o.z - p.z) >= gap) && free(p.x, p.z)) out.push(p);
+      if (!hidden(p.x, p.z)) cells.push({ ...p, o: i });
     }
   }
-  while (out.length < n) out.push({ x, z: z + C.scatter.min }); // (nowhere left: by the stone, still to pick up)
+  cells.sort((a, b) => a.o - b.o);
+  const gap = H ? 0 : t.leash.spacing, spaced = (p: { x: number; z: number }) => gap === 0 || out.every(o => Math.hypot(o.x - p.x, o.z - p.z) >= gap);
+  for (const pass of [true, false]) for (const p of cells) {
+    if (out.length >= n) break;
+    if ((pass && !open(p.x, p.z)) || out.some(o => o.x === p.x && o.z === p.z) || !spaced(p) || !free(p.x, p.z)) continue;
+    out.push({ x: p.x, z: p.z });
+  }
+  while (out.length < n) out.push({ x, z: z + S.min }); // (nowhere left: in front of the stone, still to pick up)
   return out;
 }
 
@@ -207,10 +226,10 @@ export function looseAt(loose: readonly LooseSigil[], x: number, z: number, t: T
 /** Keep her within the tether of the legend whose sigil she carries (Ed, 2026-10-28: "too heavy to drag ... she can't go further than
  *  one leash length from the sleeping legend"; its length the distance its sigil lay from it when she picked it up): past it she's put
  *  back on its edge and her speed outward taken away, as a party legend's leash does (rules/partyLegend.ts). */
-export function tetherWitch(body: WitchState, tether: { id: number; len: number } | null | undefined, creatures: readonly Creature[], time: number, was: Pinned | null): { body: WitchState; pinned: Pinned | null } {
+export function tetherWitch(body: WitchState, tether: { id: number; length: number } | null | undefined, creatures: readonly Creature[], time: number, was: Pinned | null): { body: WitchState; pinned: Pinned | null } {
   const L = tether ? creatures[tether.id] : undefined;
   if (!tether || !L || L.gone) return { body, pinned: null };
-  const dx = body.x - L.x, dz = body.z - L.z, d = Math.hypot(dx, dz), reach = tether.len;
+  const dx = body.x - L.x, dz = body.z - L.z, d = Math.hypot(dx, dz), reach = tether.length;
   if (d <= reach - 1e-6) return { body, pinned: null };
   const nx = d > 1e-9 ? dx / d : 1, nz = d > 1e-9 ? dz / d : 0, out = body.vx * nx + body.vz * nz;
   return {

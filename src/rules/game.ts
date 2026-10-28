@@ -47,7 +47,7 @@ import { wearPiece } from "./clothesPile";
 import { hatLetters, hatsDown, onHatPicked, onHatPut, stepHatSpells } from "./hatSpells";
 import { loadOf, type LeashLoad, groundedBy } from "./leashWeight";
 import { pinWitch, type Pinned } from "./partyLegend";
-import { castOn, friendSigils, looseAt, scatterSpots, stoneOpen, tetherWitch, type LooseSigil } from "./stoneStacks";
+import { castOf, castOn, friendSigils, looseAt, scatterSpots, stoneOpen, tetherWitch, type LooseSigil } from "./stoneStacks";
 import { runeOffset } from "./runeOffset";
 import { hurt, knockOut, newHealth, nextStreak, repair, stepKnockout, stepWanderers, type Health, type Knockout, type KnockoutEvent } from "./knockout";
 import { newInvites, stepInvites, type Affection, type Decoy, type InviteControls, type Invites } from "./invites";
@@ -108,7 +108,7 @@ export interface Witch {
   /** Her soundsystem spell (rules/stoneStacks.ts; Ed, 2026-10-28: "a spell that you're choosing to cast on this stone"): her progress
    *  on each stone she's cast at (0 to 1) and when it last changed (it drains while she isn't casting it); the stone she's casting
    *  at now, since when; and, after a hit broke it, held off till she lets go of the button. */
-  casts?: Record<string, { p: number; at: number }>;
+  casts?: Record<string, import("./stoneStacks").CastRecord>;
   casting?: string | null;
   castFrom?: number;
   castBlocked?: boolean;
@@ -1053,13 +1053,16 @@ function markAtStone(g: Game, c: Creature | undefined): void {
 function scatterFriends(g: Game, key: string, at: { x: number; z: number }, time: number): void {
   const t = g.tuning, friends = friendSigils(g, key);
   if (!friends.length) return;
-  const placed = g.witches.flatMap(w => w.leash.placed);
+  const placed = g.witches.flatMap(w => w.leash.placed), S = castOf(t).scatter;
   const free = (x: number, z: number) => !sigilBarred(g, x, z, t) && !looseAt(g.loose, x, z, t) && !looseAt(placed, x, z, t) && isInside(g.map.bounds, x, z, 2);
-  const spots = scatterSpots(key, at.x, at.z, friends.length, t, free);
-  friends.forEach((c, i) => {
-    g.loose.push({ id: c.id, x: spots[i].x, z: spots[i].z, at: time, ...(c.boss ? { legend: true } : {}) });
+  // (its clearing: open ground, in its own area, where the trees thin out)
+  const open = (x: number, z: number) => g.map.treeWeight(x, z) <= S.open * t.treeDensity && cellKey(g.map.areaOf(g.map.cellSafe(x, z).cell)) === key;
+  const spots = scatterSpots(key, at.x, at.z, friends.length, t, free, open);
+  friends.forEach(({ c, slot }, i) => {
+    g.loose.push({ id: c.id, x: spots[i].x, z: spots[i].z, at: time, from: { x: at.x, y: slot, z: at.z }, ...(c.boss ? { legend: true } : {}) });
     c.loose = true; c.atStone = undefined;
   });
+  g.leashEvents.push({ kind: "converted", id: -1, key, x: at.x, z: at.z, at: time });
 }
 
 export function joinParty(g: Game, c: Creature, soundsystem: { x: number; z: number }, cell: Cell): void {

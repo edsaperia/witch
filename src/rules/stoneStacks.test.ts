@@ -3,7 +3,10 @@
 // while she's away), or a wave does; either way its friend sigils scatter round it, loose for anyone; a legend's tethers her.
 import { describe, expect, it } from "vitest";
 import { affectionOf, loseSoundsystem, newGame, stepGame, type Controls, type Game } from "./game";
-import { TUNING, withTuning } from "./tuning";
+import { TUNING as BUILT, withTuning } from "./tuning";
+
+/** The tuning with the stacks on (they ship off till their view lands: ?cast=1). */
+const TUNING = withTuning({ cast: { ...BUILT.cast, on: true } });
 import { cellKey, spreadWave } from "./party";
 import { befriend, hasRune, stateOf } from "./creatureStates";
 import { castOf, castProgress, castShown, stoneStack } from "./stoneStacks";
@@ -49,17 +52,17 @@ function at(g: Game, a: { key: string; stone: { x: number; z: number } }, keep =
 }
 
 describe("runestone stacks (Ed, 2026-10-28)", () => {
-  it("list an area's own creatures at its stone, friends above enemies, each in rank order (babies at the top, the legend at the bottom)", () => {
+  it("list an area's own creatures at its stone in draw order, bottom first: enemies (legend, adults, youths, babies), then friends above them in the same order", () => {
     const g = game(), a = area(g, true), cs = own(g, a.key);
     const youth = cs.find(c => c.level > 0 && !c.boss)!;
     befriend(youth, g.clock.time);
     const s = stoneStack(g, a.key);
     expect(s.length).toBe(cs.filter(c => c.fleeUntil !== Infinity && !c.wanderTo).length);
     const friends = s.filter(e => e.friend), enemies = s.filter(e => !e.friend);
-    expect(s.slice(0, friends.length)).toEqual(friends); // (friends first)
+    expect(s.slice(s.length - friends.length)).toEqual(friends); // (friends last: above the enemies)
     expect(friends.map(e => e.id)).toContain(youth.id);
-    for (const grp of [friends, enemies]) for (let i = 1; i < grp.length; i++) expect(grp[i].level).toBeGreaterThanOrEqual(grp[i - 1].level);
-    expect(enemies[enemies.length - 1].legend).toBe(true); // (the sleeping legend, an enemy's sigil, at the very bottom)
+    for (const grp of [friends, enemies]) for (let i = 1; i < grp.length; i++) expect(grp[i].level).toBeLessThanOrEqual(grp[i - 1].level);
+    expect(s[0].legend).toBe(true); // (the sleeping legend, an enemy's sigil, at the very bottom)
     // one that runs off leaves it
     const baby = cs.find(c => c.level === 0 && !c.boss)!;
     baby.fleeUntil = Infinity;
@@ -104,19 +107,23 @@ describe("the soundsystem spell (Ed, 2026-10-28)", () => {
     expect(W.casting).toBe(a.key);
     expect(castProgress(W, a.key, g.herTime, g.tuning)).toBeGreaterThan(0.75);
     expect(g.party.areas.has(a.key)).toBe(false);
-    run(g, 1.2, hold);
+    let converted = false;
+    for (let i = 0; i < 72; i++) { stepGame(g, hold, 1 / 60); converted ||= g.leashEvents.some(e => e.kind === "converted" && e.key === a.key); }
     expect(g.party.areas.has(a.key)).toBe(true);
     expect(g.party.areas.get(a.key)?.early).toBe(true); // (ahead of its wave: it only celebrates when that comes)
-    run(g, 0.1);
+    expect(castShown(g, W)).toBeNull();
+    for (let i = 0; i < 6; i++) { stepGame(g, still, 1 / 60); converted ||= g.leashEvents.some(e => e.kind === "converted" && e.key === a.key); }
     expect(g.combat.sounds.has(a.key)).toBe(true);
+    expect(converted).toBe(true); // (the "converted" event, for the view)
     const friends = own(g, a.key).filter(c => !c.boss && stateOf(c) === "happy");
     expect(friends.some(c => c.level === 0)).toBe(true); // (its babies turned friendly)
     for (const c of friends) expect(c.loose, `${c.id}`).toBe(true);
     const loose = g.loose.filter(p => friends.some(c => c.id === p.id));
     expect(loose.length).toBe(friends.length);
+    for (const p of loose) expect(p.from && Math.abs(p.from.x - a.stone.x) < 1e-6 && p.from.y >= 0).toBe(true); // (the arc's start: its stone, its slot)
     const H = TUNING.leash.hex!, cells = new Set(loose.map(p => { const h = hexCell(p.x, p.z, H.size); return `${h.q},${h.r}`; }));
     expect(cells.size).toBe(loose.length); // (one a cell)
-    for (const p of loose) { const d = Math.hypot(p.x - a.stone.x, p.z - a.stone.z); expect(d).toBeGreaterThanOrEqual(C.scatter.min - 1e-6); expect(d).toBeLessThanOrEqual(C.scatter.max * 4); }
+    for (const p of loose) { const d = Math.hypot(p.x - a.stone.x, p.z - a.stone.z); expect(d).toBeGreaterThanOrEqual(C.scatter.min - 1e-6); expect(d).toBeLessThanOrEqual(C.scatter.reach + 1e-6); expect(p.z < a.stone.z && a.stone.z - p.z < C.scatter.hide.depth && Math.abs(p.x - a.stone.x) < C.scatter.hide.width, "not hidden behind the soundsystem").toBe(false); }
     expect(castShown(g, W)).toBeNull(); // (the stone's converted: nothing to cast)
   });
 
@@ -142,6 +149,7 @@ describe("the soundsystem spell (Ed, 2026-10-28)", () => {
     run(g, 1 / 60, hold);
     expect(W.casting).toBeNull();
     expect(W.leash.events.some(e => e.kind === "castBroken") || g.leashEvents.some(e => e.kind === "castBroken")).toBe(true);
+    expect(castShown(g, W)?.lostFrom).toBeCloseTo(2 / C.time, 1); // (the view draws the drain in red from there)
     const p = castProgress(W, a.key, g.herTime, g.tuning);
     run(g, 1, hold); // (still holding: nothing)
     expect(castProgress(W, a.key, g.herTime, g.tuning)).toBeLessThan(p);
@@ -216,7 +224,7 @@ describe("loose sigils (Ed, 2026-10-28)", () => {
     const legend = g.creatures[L.id], len = Math.hypot(L.x - legend.x, L.z - legend.z);
     g.witch = { ...g.witch, x: L.x, z: L.z };
     stepGame(g, { ...still, place: true }, 1 / 60);
-    expect(W.leash.tether).toEqual({ id: L.id, len });
+    expect(W.leash.tether).toEqual({ id: L.id, length: len });
     expect(legend.leashed).toBeFalsy(); // (it sleeps on)
     expect(W.leash.stack).not.toContain(L.id);
     run(g, 3, { ...still, moveX: 1 }); // (she walks away: held at its length)
@@ -225,4 +233,21 @@ describe("loose sigils (Ed, 2026-10-28)", () => {
     expect(W.leash.tether).toBeNull();
     expect(g.loose.some(q => q.id === L.id && q.legend)).toBe(true);
   });
+});
+
+describe("the bots and the spell", () => {
+  it("the skilled bot converts a stone by casting it, then gathers its loose sigils (seed 11, the 10-area home)", async () => {
+    const { newBot } = await import("./bot");
+    const g = newGame(11, withTuning({ cast: { ...BUILT.cast, on: true }, map: { ...BUILT.map!, islandAreas: 10 } }));
+    g.clock.paused = false; g.witch = { ...g.witch, seated: false, perch: false };
+    const bot = newBot("skilled");
+    let cast = false, gathered = false;
+    for (let i = 0; i < 60 * 90 && !(cast && gathered); i++) {
+      stepGame(g, bot.decide(g), 1 / 60);
+      cast ||= g.leashEvents.some(e => e.kind === "castDone");
+      gathered ||= cast && g.witches[0].leash.stack.length > 0;
+    }
+    expect(cast).toBe(true);
+    expect(gathered).toBe(true);
+  }, 120000);
 });

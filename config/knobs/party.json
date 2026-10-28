@@ -23,7 +23,7 @@
       ]
     },
     "cast.on": {
-      "what": "on: the stacks and the spell (off, ?cast=0: areas clear by themselves once their wild are gone, as before)."
+      "what": "on: the stacks and the spell; off (the default till their view lands; ?cast=1 turns them on): areas clear by themselves once their wild are gone, as before."
     },
     "cast.time": {
       "what": "seconds of holding the sigil button at a stone to convert it; a hit stops the cast."
@@ -38,7 +38,8 @@
       "what": "how near the stone (m) the spell's music-note sigil shows."
     },
     "cast.scatter": {
-      "what": "the ring round a converted stone (min to max m) its friend sigils scatter onto, on free hex cells, for any witch to pick up."
+      "what": "where a converted stone's friend sigils scatter: free hex cells of its clearing between min and reach metres, never in the hidden wedge just north of the soundsystem (hide.width either side, hide.depth behind).",
+      "notes": "Ed, 2026-10-28: \"It's fine if they're scattered around the whole runestone clearing\"; \"they also shouldn't fall immediately behind the soundsystem where they could be hidden\". Open ground first (a tree's chance there at most open times the forest's density), in a seeded order so they spread however many there are; the wedge is where the soundsystem's sprite hides the ground from the camera, which looks north."
     },
     "leyLines": {
       "what": "The glowing line on the ground that joins the runestones in the order the waves wake them, a pulse flowing along it to the next one.",

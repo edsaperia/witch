@@ -2177,12 +2177,13 @@ The runestone stacks and the soundsystem spell: she converts a stone by holding 
 1. Ed, 2026-10-28: "It's a spell that you're choosing to cast on this stone, rather than a property of the area/stone itself." (every wild creature's sigil in its stone's stack (friends above enemies); no auto-clearing; the spell or a wave converts the stone, its friend sigils scattering round it for anyone to pick up)
 Code: `src/rules/stoneStacks.ts`
 
-- **`cast.on`**: on: the stacks and the spell (off, ?cast=0: areas clear by themselves once their wild are gone, as before).
+- **`cast.on`**: on: the stacks and the spell; off (the default till their view lands; ?cast=1 turns them on): areas clear by themselves once their wild are gone, as before.
 - **`cast.time`**: seconds of holding the sigil button at a stone to convert it; a hit stops the cast.
 - **`cast.drain`**: how much of a full cast her progress on a stone loses a second while she isn't casting it (holding again resumes from there).
 - **`cast.radius`**: how near the stone (m) she has to stand to cast; there the sigil button casts rather than putting down or picking up.
 - **`cast.show`**: how near the stone (m) the spell's music-note sigil shows.
-- **`cast.scatter`**: the ring round a converted stone (min to max m) its friend sigils scatter onto, on free hex cells, for any witch to pick up.
+- **`cast.scatter`**: where a converted stone's friend sigils scatter: free hex cells of its clearing between min and reach metres, never in the hidden wedge just north of the soundsystem (hide.width either side, hide.depth behind).
+  Ed, 2026-10-28: "It's fine if they're scattered around the whole runestone clearing"; "they also shouldn't fall immediately behind the soundsystem where they could be hidden". Open ground first (a tree's chance there at most open times the forest's density), in a seeded order so they spread however many there are; the wedge is where the soundsystem's sprite hides the ground from the camera, which looks north.
 
 | knob | type | range |
 |---|---|---|
@@ -2192,7 +2193,10 @@ Code: `src/rules/stoneStacks.ts`
 | `cast.radius` | number | 0 to … |
 | `cast.show` | number | 0 to … |
 | `cast.scatter.min` | number | 0 to … |
-| `cast.scatter.max` | number | 0 to … |
+| `cast.scatter.reach` | number | 0 to … |
+| `cast.scatter.open` | number | 0 to … |
+| `cast.scatter.hide.width` | number | 0 to … |
+| `cast.scatter.hide.depth` | number | 0 to … |
 
 ### `beat`
 
