@@ -2,7 +2,7 @@
 // indices", render/palette.ts): the built game (DIST, default dist/) in headless Chromium at a night (on foot at home, then a
 // stretch of flight so the creatures' and the next areas' art comes in) and at the zoo with every island found, each left until
 // its art has settled. For each: every texture the scene's sprite materials bind (their albedo and normal planes and palettes:
-// uAlbedo, uNormal, uTufts, uTuftN and their *Pal), its size and bytes as stored (RGBA 4 a pixel, R8 1), split by kind; and every
+// uAlbedo, uNormal, uTufts, uTuftN, the glyph shader's uGlyphs (her sigil stack's canvas, the attack look's atlas) and their *Pal), its size and bytes as stored (RGBA 4 a pixel, R8 1), split by kind; and every
 // texture upload the page made (texImage2D / texSubImage2D of 64 by 64 or more, timed on the page's thread with the GPU drained first (gl.finish): under the cloud's
 // software renderer the upload is a copy made there and then, so its time is real; a GPU's driver may defer it), with the median
 // and worst per atlas. Run it on two builds to compare (an older build's atlases are all RGBA).
@@ -35,13 +35,13 @@ function hookUploads() {
 
 // (in the page: the sprite materials' textures, each once)
 function artTextures() {
-  const v = window.witch.view, seen = new Map(), NAMES = /^u(Albedo|Normal|Tufts|TuftN)(Pal)?$/;
+  const v = window.witch.view, seen = new Map(), NAMES = /^u(Albedo|Normal|Tufts|TuftN|Glyphs)(Pal)?$/;
   v.scene.traverse(o => {
     const mats = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : [];
     for (const m of mats) for (const [k, u] of Object.entries(m.uniforms ?? {})) {
       const t = u && u.value; if (!NAMES.test(k) || !t || !t.isTexture || seen.has(t)) continue;
       const i = t.image ?? {}, w = i.width ?? 0, h = i.height ?? 0, red = t.format === 1028; // (THREE.RedFormat)
-      seen.set(t, { kind: /Pal$/.test(k) ? "palette" : /Albedo|Tufts$/.test(k) ? "albedo" : "normal", w, h, red, bytes: w * h * (red ? 1 : 4) });
+      seen.set(t, { kind: /Pal$/.test(k) ? "palette" : /Glyphs$/.test(k) ? "glyphs" : /Albedo|Tufts$/.test(k) ? "albedo" : "normal", w, h, red, bytes: w * h * (red ? 1 : 4) });
     }
   });
   const list = [...seen.values()], by = {};
@@ -84,7 +84,7 @@ function serve() {
       const art = await p.evaluate(artTextures), up = await p.evaluate(() => window.__uploads);
       const big = up.filter(u => u.w * u.h >= 65536), ms = big.map(u => u.ms).sort((a, b) => a - b);
       result[scene] = { art, list: big, uploads: { n: up.length, atlases: big.length, red: big.filter(u => u.red).length, medianMs: ms[Math.floor(ms.length / 2)] ?? 0, worstMs: ms[ms.length - 1] ?? 0, totalMs: ms.reduce((s, x) => s + x, 0), perMpx: big.reduce((s, u) => s + u.ms, 0) / Math.max(1, big.reduce((s, u) => s + u.w * u.h, 0) / 1e6) } };
-      log(scene, `art ${MB(art.total)} MB in ${art.n} textures (albedo ${MB(art.by.albedo?.bytes ?? 0)} MB, ${art.by.albedo?.indexed ?? 0}/${art.by.albedo?.n ?? 0} indexed; normal ${MB(art.by.normal?.bytes ?? 0)} MB, ${art.by.normal?.indexed ?? 0}/${art.by.normal?.n ?? 0} indexed; palettes ${MB(art.by.palette?.bytes ?? 0)} MB)`);
+      log(scene, `art ${MB(art.total)} MB in ${art.n} textures (albedo ${MB(art.by.albedo?.bytes ?? 0)} MB, ${art.by.albedo?.indexed ?? 0}/${art.by.albedo?.n ?? 0} indexed; normal ${MB(art.by.normal?.bytes ?? 0)} MB, ${art.by.normal?.indexed ?? 0}/${art.by.normal?.n ?? 0} indexed; glyphs ${MB(art.by.glyphs?.bytes ?? 0)} MB, ${art.by.glyphs?.indexed ?? 0}/${art.by.glyphs?.n ?? 0} indexed; palettes ${MB(art.by.palette?.bytes ?? 0)} MB)`);
       log(scene, `uploads: ${big.length} atlases (${result[scene].uploads.red} R8), median ${result[scene].uploads.medianMs.toFixed(2)} ms, worst ${result[scene].uploads.worstMs.toFixed(1)} ms, ${result[scene].uploads.perMpx.toFixed(2)} ms a megapixel, ${result[scene].uploads.totalMs.toFixed(0)} ms in all`);
       await ctx.close();
     }
