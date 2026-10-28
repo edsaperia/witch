@@ -24,7 +24,7 @@ Where this overrides older notes: the record crate no longer picks the map's see
     1. Eligible: kinds introduced in phase p or earlier.
     2. Always: **K itself, plentiful** (about 1 area in 6: its home); **1–3 kinds new to phase p** (more on bigger islands) from nearby on the chart (so it has legends telling of new islands).
     3. The rest by weight: own biome strongly, neighbouring biomes some, temperate commons a little, the opposite biome almost never; recently introduced kinds favoured.
-    4. About a third as many kinds as areas (10 areas ≈ 4 kinds, 50 ≈ 17), each about three times.
+    4. **Every other kind on at most 2 areas** (Ed, 2026-10-28: "we should reduce the number of repeats. Of its own kind, we should have about 1 in 6 as we have now. Of other kinds, there should be no more than 2"), so about half as many kinds as areas (10 areas: 5 kinds, 20: 10, 30: 14, 40: 18, 50: 22). Was: about a third as many kinds as areas (10 areas ≈ 4 kinds, 50 ≈ 17), each about three times.
     5. Biome-themed share of areas grows with phase: home and phase 1 are temperate; biomes come in from phase 2 (since the roster, Ed, 2026-10-23: each biome's first two kinds are introduced in phase 2, so phase 3's islands are the first in the biomes), and their share grows outward to nearly all by phase 5. (Was: phases 1–2 essentially temperate, biomes from phase 3.)
     - Each night's legends (1 in 5 areas) are dealt from the roster, favouring kinds whose islands aren't found yet, never K.
     - Authoring: a table of ~64 kinds, each with a biome and a phase; the rest is the generator.
