@@ -67,8 +67,10 @@ export function getUp(c: Creature, time: number): void {
   c.dazed = false; c.dazedUntil = undefined; c.affection = 1; c.affectionAt = time;
 }
 
-/** Runs away for good (a stunned hostile, a friend full of 💧s): off for the map's edge at a baby's run, its 💧 over it. */
-export function runAway(c: Creature, out: { x: number; z: number }): void {
-  c.fleeUntil = Infinity; c.fleeX = out.x; c.fleeZ = out.z; c.ranOff = true;
+/** Runs away for good (a stunned hostile, a friend full of 💧s): off for its spot on the beach (rules/runaway.ts; none, `exit`, the
+ *  map's edge) at a baby's run, its 💧 over it. (Its `beach` as combat.ts's daze tick sets it, till rules/runaway.ts's runOff lands.) */
+export function runAway(c: Creature, spot: { x: number; z: number } | null, exit: () => { x: number; z: number }): void {
+  const out = spot ?? exit();
+  c.beach = spot ?? undefined; c.fleeUntil = Infinity; c.fleeX = out.x; c.fleeZ = out.z; c.ranOff = true;
   c.fight = undefined; c.siege = undefined; c.enraged = false; c.dazed = false; c.dazedUntil = undefined;
 }

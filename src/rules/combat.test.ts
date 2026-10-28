@@ -91,7 +91,7 @@ describe("combat (Stage 4)", () => {
     place(g, 0, "bear", 2, w.x + 4, w.z); place(g, 0, "bear", 2, w.x + 3, w.z + 2);
     g.witch = { ...g.witch, mode: "treetop", lift: 1 }; // out of reach herself
     run(g, 60);
-    expect(mine.fleeUntil).toBeTruthy();
+    expect(mine.ranOff).toBe(true); // (run away, or there already, asleep on the beach: rules/runaway.ts)
     expect(mine.leashed).toBe(false);
     expect(g.leash.placed.map(p => p.id)).not.toContain(mine.id);
   }, 60000);

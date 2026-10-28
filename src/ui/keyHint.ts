@@ -124,12 +124,17 @@ export function glyphOf(id: ActionId, device: "keys" | "pad" | "touch"): KeycapG
   const ks = bindings.keys(id), k = ks.find(c => keyGlyph(c) !== "?") ?? ks[0];
   return k ? keyGlyph(k) : "?";
 }
+/** The pad's button names (the Settings page's Pad buttons, app/playerSettings.ts padGlyphs): Xbox's letters where PlayStation's
+ *  shapes and names would be (its A where the cross is, B the circle, X the square, Y the triangle; LB RB LT RT, View, Menu). */
+export const padGlyphStyle = { xbox: false };
+const XBOX: Record<string, string> = { cross: "A", circle: "B", square: "X", triangle: "Y", L1: "LB", R1: "RB", L2: "LT", R2: "RT", L3: "LS", R3: "RS", share: "VW", options: "MN", home: "XB" };
+const xboxed = (g: KeycapGlyph): KeycapGlyph => (padGlyphStyle.xbox && g.startsWith("pad:") && XBOX[g.slice(4)] ? `pad:${XBOX[g.slice(4)]}` : g);
 /** A lone keycap (KEY art pixels square) as a canvas, `scale` page pixels an art pixel, drawn sharp: the use prompt's. */
 export function keycapCanvas(glyph: KeycapGlyph, scale = 3, down = false): HTMLCanvasElement {
   const cv = document.createElement("canvas");
   cv.width = KEY; cv.height = KEY;
   cv.style.cssText = `width:${KEY * scale}px;height:${KEY * scale}px;image-rendering:pixelated;display:block`;
-  if (glyph.startsWith("pad:")) drawRound(cv.getContext("2d")!, 0, 0, glyph); else drawKey(cv.getContext("2d")!, 0, 0, glyph, down);
+  if (glyph.startsWith("pad:")) drawRound(cv.getContext("2d")!, 0, 0, xboxed(glyph)); else drawKey(cv.getContext("2d")!, 0, 0, glyph, down);
   return cv;
 }
 /** The walking keys, W A S D in their inverted T (KeyHint.W × KeyHint.H art pixels), as a canvas: the wake-up's "get up" beside
@@ -145,7 +150,7 @@ export function wasdCanvas(scale = 3): HTMLCanvasElement {
 /** The same keycap as an inline image for a panel's hint line (its HTML), `scale` page pixels an art pixel. */
 const capHtml = new Map<string, string>();
 export function keycapHtml(glyph: KeycapGlyph, scale = 2): string {
-  const k = `${glyph}|${scale}`, had = capHtml.get(k);
+  const k = `${glyph}|${scale}|${padGlyphStyle.xbox}`, had = capHtml.get(k);
   if (had) return had;
   const html = `<img class="kc" alt="${glyph.replace(/^pad:/, "").replace(/"/g, "")}" src="${keycapCanvas(glyph, scale).toDataURL()}" style="width:${KEY * scale}px;height:${KEY * scale}px;image-rendering:pixelated;vertical-align:middle">`;
   capHtml.set(k, html);

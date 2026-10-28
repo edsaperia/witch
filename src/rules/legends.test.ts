@@ -89,7 +89,8 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     const happy = put(g, L.species === "wolf" ? "boar" : "wolf", 2, out.x + 2, out.z, g.map.cellSafe(out.x, out.z).cell as [number, number]); happy.state = "happy";
     g.combat.sounds.set("test", { hp: 50, max: 50, x: out.x - 2, z: out.z, radius: 2 });
     let shots = 0;
-    run(g, LEGENDS.attack.interval * 2 + LEGENDS.attack.windup + LEGENDS.attack.lobFlight + 1, idle, () => { for (const e of g.combat.events) if (e.id === L.id && e.at === g.clock.time && (e.kind === "shot" || e.kind === "beam")) shots++; });
+    // (its kind's attack exaggerated, released by the attack engine, rules/attacks/species.ts legendOf; the old throw or beam with ?attacks=old)
+    run(g, LEGENDS.attack.interval * 2 + LEGENDS.attack.windup + LEGENDS.attack.lobFlight + 1, idle, () => { for (const e of g.combat.events) if (e.id === L.id && e.at === g.clock.time && (e.kind === "shot" || e.kind === "beam")) shots++; for (const e of g.combat.spells?.events ?? []) if (e.source === L.id && e.kind === "release") shots++; });
     expect(cellKey(g.map.cellSafe(g.witch.x, g.witch.z).cell)).not.toBe(cellKey(L.cell));
     expect(shots).toBeGreaterThanOrEqual(1);
     expect(shots).toBeLessThanOrEqual(3); // slow
@@ -148,7 +149,11 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     g.witch = { ...g.witch, mode: "treetop", lift: 1 }; // (her posse only)
     const posse = [0, 1, 2, 3, 4].map(i => { const k = put(g, L.species === "wolf" ? "boar" : "wolf", 2, L.x + 60 + i * 12, L.z + 30); k.leashed = true; g.leash.placed.push({ id: k.id, x: k.x, z: k.z, at: 0 }); return k; });
     let volley = 0;
-    run(g, LEGENDS.attack.interval + LEGENDS.attack.windup + 1, idle, () => { if (!volley && g.combat.events.some(e => e.id === L.id && e.at === g.clock.time && (e.kind === "shot" || e.kind === "beam"))) volley = g.combat.shots.filter(q => q.from === L.id).length + g.combat.beams.filter(q => q.from === L.id).length; });
+    // (each aim its own cast of its kind's attack exaggerated, released together: rules/combat/legend.ts; or, ?attacks=old, the old volley)
+    run(g, LEGENDS.attack.interval + LEGENDS.attack.windup + 1, idle, () => {
+      if (!volley && g.combat.events.some(e => e.id === L.id && e.at === g.clock.time && (e.kind === "shot" || e.kind === "beam"))) volley = g.combat.shots.filter(q => q.from === L.id).length + g.combat.beams.filter(q => q.from === L.id).length;
+      if (!volley) volley = (g.combat.spells?.events ?? []).filter(e => e.source === L.id && e.kind === "release").length;
+    });
     expect(volley).toBeGreaterThanOrEqual(2);
     expect(volley).toBeLessThanOrEqual(LEGENDS.attack.targets);
     void posse;

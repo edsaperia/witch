@@ -115,7 +115,7 @@ export function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: 
   // visibly, at a baby's run, and is gone for good. A party animal is lost for the run: off its leash, its sigil gone, as it goes.
   const party = o.leashed;
   if (party) { w.loseParty(o.id); o.leashed = false; }
-  runAway(o, w.exit(o.x, o.z));
+  runAway(o, w.runaway?.(o) ?? null, () => w.exit(o.x, o.z));
   s.events.push({ kind: party ? "lost" : "fled", x: o.x, z: o.z, at: time, id: o.id });
 }
 

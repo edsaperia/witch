@@ -77,6 +77,7 @@ import { OutputMeter } from "./platform/audio/outputMeter";
 import { gameStyle, styleFromLink, viewFromLink } from "./app/viewParams";
 import { setupDebugKeys } from "./app/keys";
 import { ScreenShake } from "./app/shake";
+import { SettingsPage, mutedAway } from "./app/settingsPage";
 import { playerPick as makePlayerPick } from "./app/playerPick";
 import { installHooks } from "./app/hooks";
 import { gpuLine, gpuSample } from "./render/view/gpuBudget";
@@ -289,7 +290,7 @@ sound.leyLink = () => view.ley.currentLink(); // (the pulse's fizz heard where t
 // The freeze (Esc, gamepad Start, the ❚❚ button): a true still for screenshots, . steps (platform/freeze.ts).
 const freeze = page.freeze = new Freeze(N().game, N().seed, BUILD);
 freeze.started = () => (startEl.style.display === "none" || creator.open) && !studio.at; // (in the bedroom too: Ed, 2026-10-14, "Can we pause from the bedroom?")
-freeze.ownsEsc = () => !bot; // (the bot game's Esc is its way back to the start screen: ui/botGame.ts)
+freeze.ownsEsc = () => !bot && !document.querySelector("#settings-page.open"); // (the Settings page's Esc is its own: it closes, the pause page stays) // (the bot game's Esc is its way back to the start screen: ui/botGame.ts)
 
 // Arriving from the sea chart (?arrive=1, or a sail in place; the night's arrival, app/night.ts): the chart's last frame while the
 // night builds, then the flight from the chart's camera down to her asleep in her bed (Ed, 2026-10-25: "a sail always ends with her
@@ -551,7 +552,7 @@ function start(): boolean {
 }
 input.onAny = () => (N().arrival && !N().flags.landed ? true : start()); // (arriving: a key skips the flight, app/arrive.ts; the landing starts it)
 // The audio watchdog (app/sound.ts).
-sound.watch(() => !N().game.clock.paused && !freeze.frozen && !document.hidden, () => N().game.speakerBoot.some(t => t !== null), () => N().playtest);
+sound.watch(() => !N().game.clock.paused && !freeze.frozen && !document.hidden && !mutedAway(), () => N().game.speakerBoot.some(t => t !== null), () => N().playtest);
 // The pause page's test sliders (Ed, 2026-10-12; ui/decide.ts PauseSliders): down the left while frozen, the freeze quiet (no card
 // of its own: nothing else over the game), its stamp at their foot. Their code loads on the first freeze.
 let pauseSliders: import("./ui/decide").PauseSliders | null = null, pauseLoading = false;
@@ -599,7 +600,8 @@ function pauseControls(on: boolean): void {
 }
 freeze.onToggle = on => {
   input.clearPresses(); // (a press not yet read as she pauses or resumes is dropped: an E pending under the pause closed a station's panel there, the pause check's broom bay on a slow runner)
-  sound.freeze(on);
+  settingsPage.gate(); // (suspended while paused, and muted in the background if so set: app/settingsPage.ts)
+  if (!on) settingsPage.close();
   pauseControls(on);
   musicLabPanel?.frozen(on);
   creator.frozen = on; // (paused in her room: its keys and clicks wait, Esc resumes; the sliders backed over its panel)
@@ -609,7 +611,7 @@ freeze.onToggle = on => {
   pauseLoading = true;
   void import("./ui/decide").then(({ PauseSliders }) => {
     const report = () => import("./ui/visualReport").then(({ report }) => report(reportHost()));
-    pauseSliders = new PauseSliders({ get tuning() { return N().game.tuning; }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive, report, musicLab: openMusicLab, audioTest: () => { window.open("audio-test/", "_blank", "noopener"); }, fightArena: () => { window.open(fightLink(newFightSeed()), "_blank", "noopener"); }, finds: () => findsPanel.toggle(true), findsShown: () => N().hud.debugOn || devFinds, quality: { lines: () => ladder.lines(), options: () => ladder.options(), current: () => ladder.current(), choose: v => { ladder.choose(v); ladder.apply(N().game.tuning); } } });
+    pauseSliders = new PauseSliders({ settings: () => settingsPage.show(), get tuning() { return N().game.tuning; }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive, report, musicLab: openMusicLab, audioTest: () => { window.open("audio-test/", "_blank", "noopener"); }, fightArena: () => { window.open(fightLink(newFightSeed()), "_blank", "noopener"); }, finds: () => findsPanel.toggle(true), findsShown: () => N().hud.debugOn || devFinds, quality: { lines: () => ladder.lines(), options: () => ladder.options(), current: () => ladder.current(), choose: v => { ladder.choose(v); ladder.apply(N().game.tuning); } } });
     requestAnimationFrame(() => pauseSliders!.show(freeze.frozen, creator.open)); // (a frame shut first, so it slides in)
   }, () => { // (its files replaced under it: Ed, 2026-10-14, "the menu does not appear")
     pauseLoading = false;
@@ -662,6 +664,8 @@ const frameStats = new FrameStats(view.renderer.getContext());
 /** The quality ladder (app/ladder.ts, rules/ladder.ts; Ed, 2026-10-27): steps the scenery's quality down while the GPU's frames
  *  are over budget and back up while there's room, remembered for this device; ?ladder=off or ?ladder=<n> to hold it. */
 const ladder = new QualityLadder(gpuName(view.renderer.getContext()), params);
+// The player's Settings page (app/settingsPage.ts): its settings on the live pieces now, the page itself opened from the pause page's dev menu.
+const settingsPage = new SettingsPage({ input, shake, ladder, freeze, audio: on => sound.freeze(!on), tuning: () => N().game.tuning, version: BUILD });
 // ?perf=1: the performance panel (app/perfHud.ts), always on.
 const perfHud = page.perfHud = params.get("perf") === "1" ? new PerfHud(N().game, view, frameStats) : null;
 // Frames of 100 ms or more, with what they spent it on (Ed, 2026-10-06: occasional half-second freezes): the overlay and the playtest log.
@@ -1166,6 +1170,7 @@ function frame(now: number): void {
   if (!game.clock.paused) stallLog.frame({ t: game.clock.time, gap: dt * 1000, work: performance.now() - work0, step: stepMs, parts: { ...view.ms, ...outside }, mode: game.witch.mode, x: game.witch.x, z: game.witch.z, wave: game.party.wave, creatures: game.creatures.length });
   shake.apply();
   freeze.update();
+  settingsPage.update(now / 1000);
   // The overlay (app/hud.ts), four times a second.
   hud.overlay(now, overlayHead);
 }

@@ -136,8 +136,13 @@
       "notes": "a 💌 in flight lies flat and turns about the upright this many times a second (drawn only); when it lands it stops and lies flat."
     },
     "invites.orbit": {
-      "what": "the 💌 ring circles a creature at scale times its body radius (movement.json bodies) plus gap metres, at least min, and wider still when it holds many.",
+      "what": "the 💌 ring circles a creature at scale times its body radius (movement.json bodies) plus gap metres, at least min, and at least height times its drawn height (to its top as drawn) plus gap, so it rings the creature you see at any size; wider still when it holds many.",
       "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-28",
+          "quote": "the orbits are smaller than the size of the creatures; their size should adjust depending on how large the creatures are"
+        },
         {
           "by": "Ed's playtest",
           "date": "2026-10-06",

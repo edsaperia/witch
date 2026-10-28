@@ -370,9 +370,10 @@ export class InviteView {
     // (and its hearts and 💧s: combat as orbit slots, Ed 2026-10-28, rules/orbit.ts)
     const near = g.creatures.filter(c => !c.gone && Math.abs(c.x - w.x) < 60 && Math.abs(c.z - w.z) < 60 && (c.affection || c.drops || c.dazed || this.ringModel.rings.has(c.id))), D = drainOf(t);
     const changes = this.ringModel.update(near, c => ringOf(c.level, c.dazed ? 1 : A.affection(c), meterHits(t), fillOf(c, g.clock.time, D).hearts, c.drops ?? 0), won);
-    // (clear of it, by its size: Ed's playtest, 2026-10-06, "Invitation orbits are too tight around the creature"; invites.orbit)
+    // (clear of it, by its size: Ed's playtest, 2026-10-06, "Invitation orbits are too tight around the creature"; invites.orbit;
+    // and by its size as drawn, Ed 2026-10-28: "their size should adjust depending on how large the creatures are")
     const ringAt = (c: Creature, slot: number, slots: number) => {
-      const O = t.invites.orbit, r = Math.max(bodyRadius(c) * O.scale + O.gap, O.min, (slots * 0.42) / (Math.PI * 2)), a = time * 0.7 + (slot / slots) * Math.PI * 2;
+      const O = t.invites.orbit, r = Math.max(bodyRadius(c) * O.scale + O.gap, O.min, (tops.get(c.id) ?? 0) * (O.height ?? 0) + O.gap, (slots * 0.42) / (Math.PI * 2)), a = time * 0.7 + (slot / slots) * Math.PI * 2;
       return { x: c.x + Math.cos(a) * r, y: Math.max(0.5, head(c.id) * 0.55), z: c.z + Math.sin(a) * r };
     };
     const envSize = (slots: number) => (slots > 12 ? 0.55 : slots > 6 ? 0.7 : 0.85); // (smaller as they crowd: 18 still distinct)

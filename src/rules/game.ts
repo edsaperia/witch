@@ -1,5 +1,6 @@
 // The whole game state, and one step of it. No drawing here: the Three.js layer reads this.
 import { creaturesAshore, lakeKnobs, onLake, roundLakes } from "./lakes";
+import { runawaySpot } from "./runaway";
 import { stepWildWatch, type WildEntry } from "./wildWatch";
 import { stepHunts } from "./hunt";
 import { wakeOnInvites } from "./inviteWakes";
@@ -795,6 +796,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     parked: id => views.some(v => v.placed.some(p => p.id === id)),
     talkingTo: id => g.witches.findIndex(w => !!w.leash.talk && w.leash.talk.id === id && !w.leash.talk.refused),
     exit: (x, z) => mapExit(g.map, x, z),
+    runaway: c => runawaySpot(g, c), // (beaten: to sleep on the beach, Ed 2026-10-28)
     round: g.map.bounds.lakes ? (x, z, tx, tz) => roundLakes(g.map.bounds, x, z, tx, tz, lakeKnobs(t).shore + 4) : undefined,
     centre: g.map.dancefloor,
     home: homeArea(g.map),

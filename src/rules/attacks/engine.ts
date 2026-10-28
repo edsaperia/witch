@@ -304,7 +304,9 @@ function showTelegraphs(S: SpellState, W: SpellWorld, spec: AttackSpec, name: st
     }
     case "landing": {
       const tx = at ? at.x : x + Math.cos(heading) * range, tz = at ? at.z : z + Math.sin(heading) * range, fl = spec.body?.flight ?? 1.2;
-      telegraph(S, { ...base, shape: { type: "disc", x: tx, z: tz, r: spec.body?.radius ?? 2 }, until: fire + fl, fire: fire + fl }); return;
+      // (a guided lob's landing follows its target: path home)
+      const guided = (spec.path ?? []).some(t => "home" in t) && target?.kind === "creature";
+      telegraph(S, { ...base, shape: { type: "disc", x: tx, z: tz, r: spec.body?.radius ?? 2 }, until: fire + fl, fire: fire + fl, ...(guided ? { follows: { creature: target!.id as number } } : {}) }); return;
     }
     case "ring": case "cone": {
       const A = A0, cx = centre.x, cz = centre.z, waves = Math.max(1, A.waves ?? 1), last = fire + (waves - 1) * (A.gap ?? 0.5);
@@ -421,7 +423,8 @@ function emitOne(S: SpellState, W: SpellWorld, lib: Library, a: AttackSpec, p: P
     b.id = S.next++;
     if (isPlaced(B)) telegraph(S, { kind: a.telegraph?.kind ?? "arming", attack: p.name, side: p.side, source: p.source, cast: p.cast, start: time, fire: b.armAt, until: B === "seed" ? b.armAt : b.until, shape: { type: "disc", x, z, r: B === "mine" ? a.body?.trigger ?? 2 : a.area?.r ?? a.zone?.r ?? b.radius }, follows: { body: b.id } });
     if (B === "lob") {
-      const at = p.aim && W.where(p.aim.kind, p.aim.id), range = lifeRange(a), fl = a.body?.flight ?? 1.2;
+      // (it lands where its landing was shown: where its target stood as it was cast)
+      const at = p.depth === 0 && p.aimAt ? p.aimAt : p.aim && W.where(p.aim.kind, p.aim.id), range = lifeRange(a), fl = a.body?.flight ?? 1.2;
       const tx = at && p.depth === 0 ? at.x : x + Math.cos(heading) * range * 0.75, tz = at && p.depth === 0 ? at.z : z + Math.sin(heading) * range * 0.75;
       b.lob = { fx: x, fz: z, tx, tz, at: time, lands: time + fl };
     }
@@ -650,6 +653,8 @@ function stepBody(S: SpellState, W: SpellWorld, lib: Library, b: Body, time: num
   if (b.lob) {
     const L = b.lob, k = Math.min(1, (time - L.at) / Math.max(0.01, L.lands - L.at));
     b.x = L.fx + (L.tx - L.fx) * k; b.z = L.fz + (L.tz - L.fz) * k; b.y = 4 * k * (1 - k) * Math.max(2, Math.hypot(L.tx - L.fx, L.tz - L.fz) * 0.25);
+    // (a guided lob, path home: its landing follows its target till it comes down, as its landing's ring does)
+    if (b.target && (a.path ?? []).some(t => "home" in t)) { const at = W.where(b.target.kind, b.target.id); if (at) { L.tx = at.x; L.tz = at.z; } }
     if (time < L.lands) return;
     // (it lands: everything of the other side in its radius hit; a bounce sends it on, shorter, its way)
     for (const t of W.near(b.x, b.z, b.radius + 2)) if (Math.hypot(t.x - b.x, t.z - b.z) <= b.radius + t.r) strike(S, W, a, t, b.damage * (H.damage ?? 1), b.x, b.z, b.side, b.species, b.source, b.name, time, undefined, { body: b.id });

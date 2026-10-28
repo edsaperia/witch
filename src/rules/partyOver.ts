@@ -24,6 +24,7 @@ import { isHomeKey } from "./speakers";
 import { heal, type Creature } from "./creatures";
 import { pointInArea } from "./creatures";
 import { letPartyLegendGo } from "./leash";
+import { offTheBeach } from "./runaway";
 import type { Relic } from "./legends";
 
 /** Whether the party's over by the fight: every one of the home ring's speakers down (Ed, 2026-10-10), whatever else stands. */
@@ -63,7 +64,7 @@ function sleep(c: Creature, time: number): void {
 function calm(c: Creature, time: number): void {
   heal(c, time);
   Object.assign(c, {
-    fight: undefined, siege: undefined, enraged: false, fleeUntil: undefined, fleeX: undefined, fleeZ: undefined, dazed: false, dazedUntil: undefined,
+    fight: undefined, siege: undefined, enraged: false, fleeUntil: undefined, fleeX: undefined, fleeZ: undefined, beach: undefined, dazed: false, dazedUntil: undefined,
     charge: undefined, run: undefined, leap: undefined, burrow: undefined, legend: undefined, aims: undefined, kx: 0, kz: 0, stunUntil: undefined, slowUntil: undefined,
     wanderTo: undefined, retreat: undefined, travelling: false, route: undefined, dancing: false, homing: undefined, hp: undefined,
   });
@@ -149,6 +150,7 @@ export function startPartyOver(g: Game, time: number): void {
     w.health.hp = g.tuning.witchHealth.hits; w.knock = undefined; w.slowUntil = undefined;
   }
   for (const c of g.creatures) {
+    offTheBeach(c); // (a beaten one asleep on the beach: up, and home with the rest, Ed 2026-10-28; rules/runaway.ts)
     if (c.asleep) { calm(c, time); sleep(c, time); continue; } // (a napper too: asleep for good now, its nap's end gone)
     if (c.gone) {
       // Ran off earlier: back home, already asleep (the record was kept: its species, level and area).

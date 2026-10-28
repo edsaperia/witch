@@ -3696,15 +3696,20 @@
             "min": {
               "type": "number",
               "minimum": 0
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
             "scale",
             "gap",
-            "min"
+            "min",
+            "height"
           ],
           "additionalProperties": false,
-          "description": "the 💌 ring circles a creature at scale times its body radius (movement.json bodies) plus gap metres, at least min, and wider still when it holds many."
+          "description": "the 💌 ring circles a creature at scale times its body radius (movement.json bodies) plus gap metres, at least min, and at least height times its drawn height (to its top as drawn) plus gap, so it rings the creature you see at any size; wider still when it holds many."
         },
         "hard": {
           "type": "object",
