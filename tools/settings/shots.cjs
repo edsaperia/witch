@@ -52,7 +52,8 @@ const check = (ok, what) => { console.log(`${ok ? "ok  " : "FAIL"} ${what}`); if
   await page.mouse.move(700, 400);
   await page.screenshot({ path: `${OUT}/3-accessibility-mouse.png`, timeout: 180000 });
   // pad: R1 to the next tab (wrapping to Controls), △ resets, ○ closes
-  const press = async b => { await page.evaluate(b => { window.__pad.buttons[b] = true; }, b); await page.waitForTimeout(150); await page.evaluate(b => { window.__pad.buttons[b] = false; }, b); await page.waitForTimeout(150); };
+  const press = async (b, hold = b >= 12 && b <= 15 ? 300 : 800) => { await page.evaluate(b => { window.__pad.buttons[b] = true; }, b); await page.waitForTimeout(hold); // (over a few slow frames; a d-pad press under its 0.4 s repeat)
+    await page.evaluate(b => { window.__pad.buttons[b] = false; }, b); await page.waitForTimeout(150); };
   await press(5); check((await tab()) === "Controls", "pad: R1 steps to Controls (wrapping)");
   await page.screenshot({ path: `${OUT}/4-controls-pad.png`, timeout: 180000 });
   await press(4); check((await tab()) === "Accessibility", "pad: L1 steps back");
