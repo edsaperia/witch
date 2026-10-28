@@ -2,7 +2,7 @@
 
 Ed: more animals for later islands, each with its own area type. The penguin takes unknown-14's place (cold, phase 3, bearing 346). This is the mock, for approval before the build. Its code is on branch `claude/komodo-mock` (with the Komodo dragon's), not for merging.
 
-`penguin-mock.png` is the whole sheet; `lineup.png` and `area.png` are its two rows at full size.
+[`penguin-mock.png`](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/archive/art-review/mocks/penguin/penguin-mock.png) is the whole sheet; [`lineup.png`](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/archive/art-review/mocks/penguin/lineup.png) and [`area.png`](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/archive/art-review/mocks/penguin/area.png) are its two rows at full size.
 
 ## The creature
 
