@@ -2,6 +2,14 @@
 
 <!-- written by tools/inventory.mjs; edit the scripts' header comments, then run it again -->
 
+## `prop-light-shots.cjs`
+
+Shadows from the soundsystems' and runestones' own light: the built game at 1280×800, stepped at a fixed 1/60 s, her on foot just south of the nearest soundsystem and of the runestone nearest home, her own glow's shadows off so the shadows are the…
+
+```
+npm run build && node tools/shadows/prop-light-shots.cjs <out dir> [seed]
+```
+
 ## `scenery-shots.cjs`
 
 Scenery's shadows from her glow: the built game at 1280×800, stepped at a fixed 1/60 s, her on foot just east of a scene's piece, a set piece, a decor piece, a runestone and a soundsystem, each shot with them and without, coloured, without the taper and…

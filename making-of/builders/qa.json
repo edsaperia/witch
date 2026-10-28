@@ -8,7 +8,7 @@
     "`tools/qa/journey.cjs`: a whole run in headless Chromium, the bedroom to the party's over, a screenshot of each moment, failing on any error, a blank picture or a moment that doesn't happen",
     "`tools/qa/core.cjs`: Ed's core design checked in the built game: an area cleared transforms, a wave at a transformed stone only celebrates, the boot is 30 s, nothing spawns mid-run",
     "The full bench at the start and the end of the night, and the late-game probe's heap and draw calls, compared",
-    "`docs/QA-LOG.md`: the night's record, round by round"
+    "`docs/archive/QA-LOG.md`: the night's record, round by round"
   ],
   "learned": [
     "\"The game is unchanged\" is only as good as its fingerprint: a tuning knob held inside the buffs' state turned every new knob into a rules difference, until #420 left it out.",

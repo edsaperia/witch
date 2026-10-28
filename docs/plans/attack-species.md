@@ -1,5 +1,7 @@
 # Each species' own attack (step 5)
 
+**Status (2026-10-28):** shipped in #1326 (the default, `attacks.species` true; `config/species-attacks.json`, its 64 species matching the table below), drawn in their elements in #1335. Still to do: the legends' own attacks (step 5b).
+
 Each species' attack in the composable grammar (`config/species-attacks.json`; Ed, 2026-10-27, via the coordinator):
 - within each biome every species has a distinct style;
 - the further out its island's phase, the more modules it composes;
