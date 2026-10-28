@@ -1,0 +1,817 @@
+{
+  "section": "light",
+  "about": "Light, sky and mood (drawing only): glow, lights, shadows, haze, mist, smoke, the sky and moon, the looks, tone, bloom and tilt-shift.",
+  "knobs": {
+    "telescope": {
+      "what": "The telescope in the crow's nest [1]: walking up to it looks through it full screen [2], the night running on at the house's tenth, a compass strip along its top.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-21",
+          "rest": "just the view, true to the island, nothing marked; rules/telescope.ts"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-23",
+          "quote": "opens when you walk up to it, look around with aiming keys",
+          "rest": "the mouse, the arrows, the d-pad and the right stick look round; walking her away, E or Esc leaves"
+        }
+      ],
+      "links": [
+        "rules/telescope.ts"
+      ]
+    },
+    "telescope.eye": {
+      "what": "the eye's height [1].",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-23",
+          "quote": "the telescope view should be 'higher'",
+          "rest": "m over the ground at the hub, above its roof; 50 to 100"
+        }
+      ]
+    },
+    "telescope.fovWide": {
+      "what": "its field of view wide and close (degrees; the game's is 20).",
+      "also": [
+        "telescope.fovClose"
+      ]
+    },
+    "telescope.aimWide": {
+      "what": "how far out (m) the middle of the view looks at its lowest (as she first looks: at the forest)."
+    },
+    "telescope.pan": {
+      "what": "degrees a second panning (left, right) and tilting [1] wide, slower zoomed in (alike on screen).",
+      "also": [
+        "telescope.tilt"
+      ],
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-22",
+          "rest": "up, down:, to look at the stars"
+        }
+      ]
+    },
+    "telescope.tiltMax": {
+      "what": "how far up it tilts (degrees)."
+    },
+    "telescope.zoomStep": {
+      "what": "a step of the zoom (the wheel, Z and X, the gamepad's shoulder buttons; 0 wide to 1 close)."
+    },
+    "telescope.bend": {
+      "what": "the world's bend inside it (the treetops' is camera.curve.treetop; gentler, so the far side stays in view)."
+    },
+    "telescope.reach": {
+      "what": "tree crowns are drawn out to this many metres (the island's far side; past the scenery's radius crowns alone)."
+    },
+    "telescope.hazeNear": {
+      "what": "its haze.",
+      "also": [
+        "telescope.hazeFar"
+      ]
+    },
+    "telescope.thinFrom": {
+      "what": "past thinFrom metres only one crown in thin is drawn, thinGrow times as big (the cheaper far forest).",
+      "also": [
+        "telescope.thin",
+        "telescope.thinGrow"
+      ]
+    },
+    "telescope.wedge": {
+      "what": "what's drawn is what lies within its view's width and this many degrees either side, listed again each half of it panned."
+    },
+    "telescope.moonSpread": {
+      "what": "the game's moon stands at a bearing round north, the game's view this many degrees across."
+    },
+    "telescope.consHold": {
+      "what": "tonight's constellation [1]: its stars' brightness (1 the sky's brightest), its faint dotted lines' strength, fading in once she's held the view on it consHold seconds.",
+      "also": [
+        "telescope.consLines",
+        "telescope.consBright"
+      ],
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-22",
+          "rest": "the trunk's find's outline in the stars, at its bearing, rules/constellations.ts"
+        }
+      ],
+      "links": [
+        "rules/constellations.ts"
+      ]
+    },
+    "telescope.resolution": {
+      "what": "its picture's resolution (1 the game's pixels, 2 twice as fine, 0.5 twice as coarse; up to 3)."
+    },
+    "telescope.lowGpuResolution": {
+      "what": "on an integrated GPU (Intel), instead [1].",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-23",
+          "quote": "telescope view is too pixellated",
+          "rest": "1, the game's:, at 0.5"
+        }
+      ]
+    },
+    "telescope.vignette": {
+      "what": "how dark its edges (0 none)."
+    },
+    "smoke": {
+      "what": "Smoke from every fire (Ed, round 13: puffs rising high into the sky before dissipating; render/smoke.ts): the world's campfires, the party's campfires, bonfires and tiki torches, the charcoal burner's mound. Each fire sends up about rate puffs a second (at most perFire at once), each living life seconds: rising at speed m/s at first and slowing, up to rise metres (well over the 24 m treetops), drifting with the wind at drift m/s, starting size metres across and growing to (1 + grow) times that, thinning out before the end; opacity its strength (a cool grey, under the moon and the party's amber), warm how much of the fire's amber the lowest puffs catch underneath; pixel draws them in three stepped tones with a dithered edge at the art pixel (false: smooth). The nearest maxFires fires within range metres smoke, those near the edge fading.",
+      "links": [
+        "render/smoke.ts"
+      ]
+    },
+    "smoke.on": {
+      "what": "false turns it off."
+    },
+    "sky": {
+      "what": "The night sky that shows over the bend in treetop mode (on; ?sky=off leaves the plain dark background there, which costs nothing): stars (how many, 0-1), moon (brightness)."
+    },
+    "sky.clouds": {
+      "what": "count (roughly how many to a screenful of sky), altitude (metres over the ground: above the treetop camera, so never between her and it), speed (m/s they drift), opacity (translucent: stars show through), partyGlow (how strongly what's beneath them lights their undersides: the partified areas' colours, pulsing on the beat; campfires faintly; over dormant forest they stay moonlit grey).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-04",
+          "rest": "real ones, seen only from underneath, over the bend"
+        }
+      ]
+    },
+    "sky.lightning": {
+      "what": "about every so many seconds a cloud in view flickers (flashes per strike), sometimes with a forked bolt toward the horizon."
+    },
+    "sky.lightning.ground": {
+      "what": "the faint flash on the forest (0 none)."
+    },
+    "moon": {
+      "what": "The moon [1]: one moon, drawn in the sky, tinting the moonlight a little, and shown on the dancefloor before the first wave (the same phase).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-06",
+          "quote": "The moon should slowly change: occasionally becoming red, and blue, and yellow, and going through phases, and moving across the sky"
+        }
+      ]
+    },
+    "moon.phasePeriod": {
+      "what": "seconds from new moon to new moon."
+    },
+    "moon.phaseStart": {
+      "what": "its phase at the start (0 new, 0.25 first quarter, 0.5 full)."
+    },
+    "moon.orbit": {
+      "what": "seconds to cross the sky once (it rises at the left from behind the far forest and sets at the right), from arcStart (0-1 of the way)."
+    },
+    "moon.left": {
+      "what": "how far across the screen it goes.",
+      "also": [
+        "moon.right"
+      ]
+    },
+    "moon.low": {
+      "what": "the height of its way up the sky band (fractions of the screen from the bottom: low is behind the far forest). Coloured moons: the run is cut into windows of colourEvery seconds, and in each but the first there's a colourChance of a red (blood), blue or gold (harvest) moon for colourTime seconds, easing in and out over colourFade.",
+      "also": [
+        "moon.high"
+      ]
+    },
+    "moon.colours": {
+      "what": "theirs (0-1 rgb)."
+    },
+    "moon.tint": {
+      "what": "how much of its colour the moonlight on the world takes (0 none, 1 all)."
+    },
+    "moon.bloodTint": {
+      "what": "the same for a red (blood) moon, a little more so it reads through the night grade (the rendering builder, #252)."
+    },
+    "moon.disc": {
+      "what": "the sky moon's size, times its old one (1.5: a crescent survives the sky's tilt-shift blur, the art director, #252)."
+    },
+    "moon.floor": {
+      "what": "the dancefloor's moon before the first wave [1]: palette (dusky violet, slate blue, soft silver, 0-255), size (the moon's radius, a share of the floor's), stars (the share of the floor's sky twinkling round it), flare (seconds the full moon flares out into the party when the first wave comes).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": null,
+          "quote": "only phases of the moon, in muted twilight colours"
+        }
+      ]
+    },
+    "glowReach": {},
+    "sigilSpill": {
+      "what": "The sigils' neon spilling onto the world (overnight phase 3, the art pass): each placed sigil is a small light in its creature's neon, height metres over its rune, reaching reach metres (15% more a level) at strength (0: off), eased in as it's written and breathing with the rune's pulse, so the grass round it, the ground and whoever stands near take its colour; the bottom sigil of her stack is a fainter one (stack, 0 off) reaching stackReach metres, stackHeight metres over her, tinting her and the ground under her as she carries it."
+    },
+    "fireworks": {
+      "what": "The wave's celebration [1]: the rules' waveCelebrate (game.ts) starts a show of shells[0] to shells[1] shells over `over` seconds, the last `finale` going up together at the end, each rising rise[0] to rise[1] seconds from the soundsystem's top to height[0] to height[1] metres, up to drift metres off it, and bursting radius[0] to radius[1] metres across: round peonies, rings, drooping gold willows and crackling glitter, in the party's neons (rules/fireworks.ts: its schedule, from the event alone, so the sound's pops land on the bursts; render/fireworks.ts: the picture, a fixed pool of sparks the GPU flies). From then on that soundsystem's lasers stay fully on, every beam (render/lasers.ts).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-07",
+          "rest": "when the wave reaches an area already cleared, its soundsystem already up, celebrate it: fireworks over that soundsystem, and its lasers on for good, its full party"
+        }
+      ],
+      "links": [
+        "rules/fireworks.ts",
+        "render/fireworks.ts",
+        "render/lasers.ts"
+      ]
+    },
+    "fireworks.on": {
+      "what": "false turns the show off."
+    },
+    "combatLight": {
+      "what": "Her light in the wild and in a fight [1]. Exploring an area the party hasn't reached, her light's reach and strength are times wildReach and wildGlow (the forest beyond her small pool darker); with a fight within range metres of her (any blow, wind-up or shot, her posse's or the wild's) in the last hold seconds, times fightReach and fightGlow instead (the fight lit, a little more than on party ground). Each eased: up over rise seconds, back over fall, shaped smooth. Drawing only.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-07",
+          "rest": "the wild forest darker for exploring; a darker forest makes a fight harder to read, so her light rises during one and settles after, too slowly to notice as an effect; render/combatLight.ts"
+        }
+      ],
+      "links": [
+        "render/combatLight.ts"
+      ]
+    },
+    "nightLight": {
+      "what": "her light reaches at most maxReach metres however far the camera is (stargazing, zoomed out), and over the treetops treetopReach metres at treetopGlow of its strength, eased in as she rises, so the canopy stays moonlit with a lantern's warm glow round her; lying on the beach to stargaze, at most gazeReach metres.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-06",
+          "quote": "Seems very bright for nighttime"
+        }
+      ]
+    },
+    "glowFalloff": {
+      "what": "how fast it falls off, as (1 - distance/(reach × glowNear))^glowFalloff. ?glow=<reach>,<falloff>,<near> in the URL fixes the reach (glowReach metres), the falloff and the near share, to try values live."
+    },
+    "glowNear": {
+      "what": "the share of that reach where her light has fallen to dark [1].",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": null,
+          "quote": "a bit flat, it should fall off closer",
+          "rest": "round 11; 1 lit all the way to the hole's edge"
+        }
+      ]
+    },
+    "glowToCutout": {},
+    "glowHeight": {},
+    "lightBudget": {
+      "what": "how many of the nearest point lights (campfires, magic stones, the dancefloor) light the scene at once."
+    },
+    "lights": {
+      "what": "How far (reach, metres) and how strongly each kind of light lights its surroundings."
+    },
+    "lights.find": {
+      "what": "tonight's find's own pale gold-white light (the finds style guide, docs/art-guide/FINDS.md: the brightest and whitest thing on its patch, brighter than her lantern; out once it's taken).",
+      "links": [
+        "docs/art-guide/FINDS.md"
+      ]
+    },
+    "lights.knee": {
+      "what": "the light falling on a pixel, every source summed, passes unchanged up to knee of brightness, then eases toward ceiling and never past it, in its own hue, so the ground round a soundsystem's party light, campfires and her glow stays under white and keeps its texture; ceiling at or under knee turns it off.",
+      "also": [
+        "lights.ceiling"
+      ],
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-12",
+          "quote": "soundsystems lighting tends to blow out",
+          "rest": "render/lighting.ts softKnee"
+        }
+      ],
+      "links": [
+        "render/lighting.ts"
+      ]
+    },
+    "glowPower": {
+      "what": "the witch's own glow at its brightest (0-1; 0.95, a bright centre that drops quickly to dark, round 11), full under her, falling off as glowFalloff says out to glowNear of her reach, lit from a source glowHeight metres above her. Light falls off smoothly to nothing at its reach: no rings or bands."
+    },
+    "light": {
+      "what": "The lighting's mood [1]: mood spooky lays this grade over the Art Lab's night light, plain is the light as it was (?light=plain or ?light=spooky to compare).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-06",
+          "quote": "make it a spooky dark forest with a party in it",
+          "rest": "render/mood.ts"
+        }
+      ],
+      "links": [
+        "render/mood.ts"
+      ]
+    },
+    "light.spooky": {
+      "what": "ambientHue and ambient (times the tuning's ambient): the shadows' colour and brightness, a deep blue-green."
+    },
+    "light.spooky.moonHue": {
+      "what": "(times tone.moon): a colder moon, a little stronger, so it rims what it lights.",
+      "also": [
+        "light.spooky.moonSat",
+        "light.spooky.moon"
+      ]
+    },
+    "light.spooky.hazeHue": {
+      "what": "(its brightness, 0 to 1): the fog the forest fades into, violet.",
+      "also": [
+        "light.spooky.hazeSat",
+        "light.spooky.haze"
+      ]
+    },
+    "light.spooky.hazeNear": {
+      "what": "where the fog starts and is whole (metres from the witch; nearer than haze.near and haze.far, which still set how far scenery is drawn).",
+      "also": [
+        "light.spooky.hazeFar"
+      ]
+    },
+    "light.spooky.mist": {
+      "what": "the low ground mist's strength (instead of mist.strength)."
+    },
+    "light.spooky.glowHue": {
+      "what": "the witch's glow, warmer, so the party's lights are the warm ones in the wood.",
+      "also": [
+        "light.spooky.glowSat"
+      ]
+    },
+    "light.spooky.grade": {
+      "what": "a grade over the finished picture, draining the dark and middle tones' colour (gradeDesat of it) toward a cold tint (hue and saturation), by grade [1], fading out up to gradePivot brightness, so the bright warm lights keep their colour.",
+      "also": [
+        "light.spooky.gradeDesat",
+        "light.spooky.gradePivot",
+        "light.spooky.gradeHue",
+        "light.spooky.gradeSat"
+      ],
+      "decisions": [
+        {
+          "by": null,
+          "date": "2026-10-26",
+          "rest": "0 off: Ed's tuned value from the pause page, v4522, and so the areas' grade tints with it"
+        }
+      ]
+    },
+    "light.spooky.partyWarm": {
+      "what": "the soundsystems' light, warm amber, pink and gold (one per variant, instead of their crystal cyan, violet and amber), wider and stronger.",
+      "also": [
+        "light.spooky.partyReach",
+        "light.spooky.partyStrength"
+      ]
+    },
+    "light.spooky.decorLights": {
+      "what": "the party decor's lights (lanterns, campfires), how many an area lights (instead of partyObjects.lightsPerArea) and how far and strong, so each party is pools of warm light with dark between.",
+      "also": [
+        "light.spooky.decorReach",
+        "light.spooky.decorStrength"
+      ]
+    },
+    "light.spooky.rimHue": {
+      "what": "a moonlight rim on the characters (the witch and every creature, baked or rigged), a light edge one art pixel wide on the side away from the moon in the night sky's blue-violet, at rim strength (0 off), so they read against the dark (the art director, round 1), only where the sprite is three pixels thick or more and never on the live rig's leg discs [1].",
+      "also": [
+        "light.spooky.rimSat",
+        "light.spooky.rim"
+      ],
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-06",
+          "quote": "Animal legs have outlines on them; they'd look better without"
+        }
+      ]
+    },
+    "light.spooky.witchGlow": {
+      "what": "how much of her own glow lights the witch herself (0: none, as before), so she stands in her pool of light. Round 2 (the art director): moonUp, the moon's fill on whatever faces up (canopy tops, open ground) as a share of the moon, so the dark middle distance still reads (0 none); leyRgb and leyBright, the ley line in the HUD's amber at half its brightness, a guide rather than a light (leave leyRgb out for each area's own colour); berryHalo and berryGlow, a berry's halo's size and strength as shares of the old 2.8 m soft disc, so a berry reads as a crisp dot with a small glow. Round 3: moonUpHue and moonUpSat, the moon fill's own hue and saturation (green-cyan and pale, so the woods are blue-green with violet only in the shadows; left out, the moon's)."
+    },
+    "light.spooky.moonUpWrap": {
+      "what": "the share of that fill every face gets whatever its normal (0: by its normal alone), so a crown's regular bumps don't light up as a lattice of dots. Round 4: decorWarm, how far the party decor's point lights go from their neon to the party's amber (an area's neon pieces lit its ground lime; the neon stays on the bulbs, the pool stays warm)."
+    },
+    "light.spooky.styledRim": {
+      "what": "with ?style=bold or ref, the rim's strength and her own glow on her, in place of rim and witchGlow (the styles bake dark tones with flat normals, so she needs more to stand out in her own pool). witchLift and styledLift: her pool's light thrown back up onto her, added rather than multiplied, so even dark tones lift (0 in the default style; styledLift with bold or ref, where she otherwise vanishes in her own pool).",
+      "also": [
+        "light.spooky.styledGlow"
+      ]
+    },
+    "light.spooky.areaEase": {
+      "what": "how fast the mood eases from one area's to the next (a second)."
+    },
+    "light.spooky.areas": {
+      "what": "each area type's own fog (hazeHue, hazeSat, haze), grade tint (gradeHue, gradeSat) and mist over the above, by area id (\"home\" for home): misty teal over the bogs and water, violet-grey in the dead and ancient woods, blue-violet in the bluebells, pale mist on the open moor, darker in the rocky places, near-black green under the pines, rosy in the honeysuckle and gardens, home a little less cold."
+    },
+    "lightSources": {
+      "what": "Light sources placed by seed, on a grid of spacing metres, mostly in clearings and at area edges: the chance per spot of a campfire [1], a magic stone, or a pond mirroring the moon (wetPond in wet areas: wetland, stream, bog, beaver pond, moor). [2]",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-04",
+          "rest": "shown only once its area is partified: campfires are party objects; they light up with a whoosh of sparks as the party arrives"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-11",
+          "rest": "ponds a quarter of before, pond 0.02 to 0.005 and wetPond 0.12 to 0.03."
+        }
+      ]
+    },
+    "haze": {
+      "what": "the twilight haze fades the forest from near to far metres from the witch; nothing is drawn beyond far."
+    },
+    "shadows": {
+      "what": "a small contact shadow under the witch, each bush, creature and prop."
+    },
+    "shadows.trees": {
+      "what": "a crown-sized shadow under every tree too, cast away from the moon [1].",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-03",
+          "rest": "off"
+        }
+      ]
+    },
+    "shadows.tint": {
+      "what": "every shadow (scenery's, the trees' and palms', and the blobs under creatures, the witch, bushes and small things) at its darkest goes from black toward the complement of the light it lies in by tint (0: black): a campfire's orange throws blue-violet, plain moonlight a warm shade.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-12",
+          "quote": "Runestones and especially soundsystems are bright with coloured light; they should have shadows but they shouldn't be black. Can we have complementary colours in shadows cheaply?"
+        },
+        {
+          "by": null,
+          "date": "2026-10-13",
+          "quote": "colour all the shadows"
+        }
+      ]
+    },
+    "shadows.cast": {
+      "what": "what stands in the trunks', palms' and scenery's shadows (creatures, the witch, bushes, props, scenery) is darkened and tinted by them where they fall on it, from a map of them drawn from above round her (render/castShadows.ts); off, only the ground and grass; castRes is that map's texels across (1024: 6.4 a metre over 160 m; 512 is a quarter of the texels to clear and draw each frame, for a weaker GPU).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-13",
+          "quote": "shadows should darken the things that they land on ... it should be everything"
+        }
+      ],
+      "links": [
+        "render/castShadows.ts"
+      ]
+    },
+    "shadows.trunks.foot": {
+      "what": "a trunk's shadow fades in from nothing over foot metres from its foot (0: none) and opens out from a third of its width over taper metres (0: none; Ed: roots and decorations \"get wide at the base, that look strange when they're rotated\"), fades to nothing as she comes within near metres of its trunk (0: never), and darkens the ground cover it falls on (grass, flowers, tufts) at cover times its strength (0: not at all). Ed's tuned values [3]: strength 0.75, long 2.5, glowReach 50, glowHeight 1.25, soft, core 0.8, across 1, and lights.campfire.reach 40.",
+      "also": [
+        "shadows.trunks.near",
+        "shadows.trunks.cover"
+      ],
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-12",
+          "quote": [
+            "they should fade out at the bottom of the tree",
+            "when you're close to the tree"
+          ],
+          "rest": "for her glow's and the campfires' alike"
+        },
+        {
+          "by": null,
+          "date": null,
+          "quote": "The shadows should darken other foliage that they cast upon",
+          "rest": "and"
+        },
+        {
+          "by": null,
+          "date": "2026-10-12"
+        }
+      ]
+    },
+    "shadows.trunks.scenery": {
+      "what": "scenery casts the same shadows from her glow and the fires, untapered (its foot is its own width): set pieces, ruins, rocks and freak trees, modern and quest relics, the scenes' pieces (temples, castles, cemeteries...), the runestones and the soundsystems; pieces under sceneryMin metres tall cast none.",
+      "also": [
+        "shadows.trunks.sceneryMin"
+      ],
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-12",
+          "quote": [
+            "Scenery (temples etc) should also cast them",
+            "Runestones and soundsystems should also cast shadows"
+          ]
+        }
+      ]
+    },
+    "shadows.trunks.glowLight": {
+      "what": "a glowing caster's (a runestone, a soundsystem) toward a soft shade of its own colour by glowLight (0: as dark as any)."
+    },
+    "shadows.trunks.sceneryFoot": {
+      "what": "scenery's shadow, cast from its middle, fades in from nothing over its own half-width and sceneryFoot metres past it (0: none).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-12",
+          "quote": "Runestones shadow should fade at the base"
+        }
+      ]
+    },
+    "shadows.trunks.sceneryTaper": {
+      "what": "scenery's shadow is pinched to a third at its foot and opens to full over its half-width and sceneryTaper times its width past it (a wide ruin over more ground than a narrow runestone; at most 0.6 of its shadow's length; 0: none).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-12",
+          "quote": "What about tapering?"
+        }
+      ]
+    },
+    "shadows.trunks.lightReach": {
+      "what": "how far a soundsystem's or a runestone's light throws the trees', props' and scenery's shadows, in metres (0: none), past its own glow's reach so the trees round its clearing catch it [2].",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-13",
+          "quote": "the light that soundsystems and runestones produce",
+          "rest": "should make the trees cast shadows"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-13",
+          "quote": [
+            "Try band at 50",
+            "reduce the clearing size to 15m"
+          ],
+          "rest": "its clearing: arena.radius 5, noise 0.05 and band 50 (:), Ed:: the nearest trees about 15 m from it"
+        }
+      ]
+    },
+    "attacks": {
+      "what": "The composable attacks (docs/plans/attack-grammar.md, src/rules/attacks/): reactionFloor, the least warning (s) any attack and each child it makes gives from its first telegraph to its first harm [1]; one under it is lengthened to it, silently in the game, said so in the Fight Arena.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-27",
+          "quote": "we can tune in balancing",
+          "rest": "0.45 s"
+        }
+      ],
+      "links": [
+        "docs/plans/attack-grammar.md"
+      ]
+    },
+    "attacks.species": {
+      "what": "every species fights with its own attack in the grammar (config/species-attacks.json, by biome and island phase), its kind's own moves and its pack's turns as before; false (?attacks=old) the old ones.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-27",
+          "quote": "go ahead and merge them"
+        }
+      ],
+      "links": [
+        "config/species-attacks.json"
+      ]
+    },
+    "gpu": {
+      "what": "The game-wide GPU memory budget [1]: mb MB for a window of refWidth x refHeight physical pixels, scaled by this window's (Google Maps' rule), never under floor nor over ceil. Every every seconds, over it, the art used longest ago (an area type's trees, a creature set, a rig page) is let go till it's under headroom of the budget, nothing used in the last keep seconds (what's on screen is used every frame); it comes back from the art cache when wanted. GL's out-of-memory error, read every errorEvery seconds (each read waits on the GPU), lowers the budget to headroom of what was held then.",
+      "decisions": [
+        {
+          "by": "the coordinator's ask",
+          "date": "2026-10-26",
+          "rest": "Ed-approved; render/gpuLedger.ts counts every texture and render buffer at the GL calls, render/view/gpuBudget.ts keeps it"
+        }
+      ],
+      "links": [
+        "render/gpuLedger.ts",
+        "render/view/gpuBudget.ts"
+      ]
+    },
+    "mist": {
+      "what": "a low drifting mist (height in metres above the ground). Each has on and strength."
+    },
+    "loadingMist": {
+      "what": "The loading mist [1][2]: while the island is still being drawn (its trees one set an area type, nearest the treehouse first), every area whose trees aren't in yet lies under a low glowing night mist, in layers sheets up to height metres over the ground, each at most density opaque (the low ones thickest), in hard steps, glow times as bright as the night's mist. When a type's trees land, its mist rolls back off its areas as a front moving out from the treehouse at speed m/s, and what it hasn't reached cap seconds after the trees landed (the far rim) fades out over a second.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-24",
+          "quote": "Mist sounds ideal, which rolls away when loading finishes. If loading starts with areas closer to the treehouse, this will look fine"
+        },
+        {
+          "by": null,
+          "date": null,
+          "quote": "make the mist roll away progressively away from the treehouse instead of all at once",
+          "rest": "render/loadingMist.ts"
+        }
+      ],
+      "links": [
+        "render/loadingMist.ts"
+      ]
+    },
+    "loadingMist.soft": {
+      "what": "the front's soft edge (m either side), size: its rolling noise (m)."
+    },
+    "loadingMist.sea": {
+      "what": "it lies over the water too, out to sea metres past the island's furthest ground, thinning, and burns off last, as its own front from the treehouse once the land's all in [1]; 0 none. Areas drawn before the first frame (a revisit's, from the art cache) never have any. Off under ?quick=1; ?loadmist=1|0 for one load, ?artdelay=<s> to land the trees drawn ahead of need one every that many seconds and watch it.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": null,
+          "quote": "Maybe it should also appear over the water and burn off there too"
+        }
+      ]
+    },
+    "lightRings": {
+      "what": "Light rings in the canopy [1]: one pass over the screen in the half-size effects layer that lights only what stands at crown height (above metres or more over the ground), never the floor. Centres seeded on a spacing-metre grid (a share of its cells has one), each count faint bands of moonlight out to radius metres, breathing outward at speed bands a second, laid on a level sheet plane metres up (about the crowns' tops: the crowns are upright sprites, so it's where the line of sight crosses that sheet that is ringed).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-07",
+          "quote": "a halo / circle optical illusion: faint concentric rings of moonlight in the canopy, visible from treetop view",
+          "rest": "making the wild forest eerier; render/lightRings.ts"
+        }
+      ],
+      "links": [
+        "render/lightRings.ts"
+      ]
+    },
+    "lightRings.strength": {
+      "what": "a band at its brightest (in the moon's hue, paled), added as light. They fade out between fadeNear and fadeFar metres from her. And the glory: rings of moonlight round her own shadow on the leaves (the halo you see round your shadow on dewy foliage), glory metres across at gloryStrength, faintly prismatic, going with her; off (gloryStrength 0) since Ed, 2026-10-08: \"there's now concentric circles under the witch on the canopy ... I think we should remove them\". Treetops only (fading in as she rises). Scattered rings off [1]; the glory is off too (gloryStrength 0), and the pass is skipped while both are 0.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-11",
+          "rest": "strength 0"
+        }
+      ]
+    },
+    "holograms": {
+      "what": "The soundsystems' sky sigils [1]: each standing soundsystem's projector throws a translucent cone of light from the top of its stack to a hologram of its area's animal sigil over the canopy, in the area's crystal colour, with scanlines, a drifting interference band and a colour fringe, turning gently and bobbing.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-08",
+          "quote": "soundsystems should project their animal sigil into the sky once they're activated, readable from the treetops but in a different character to how the leashing sigils look from treetop; maybe a hologram or peppers ghost or something, replacing the laser we have now",
+          "rest": "render/hologram.ts"
+        }
+      ],
+      "links": [
+        "render/hologram.ts"
+      ]
+    },
+    "holograms.size": {
+      "what": "the glyph (m across: under about 20 its one-pixel strokes are finer than the treetop view's pixels and it smears)."
+    },
+    "holograms.lift": {
+      "what": "how high its middle floats over the projector (m)."
+    },
+    "holograms.glyph": {
+      "what": "how bright (added light; past about 0.7 the bloom swallows its outline).",
+      "also": [
+        "holograms.cone"
+      ]
+    },
+    "holograms.powerUp": {
+      "what": "the flicker as it comes on when the soundsystem has risen (s)."
+    },
+    "holograms.collapse": {
+      "what": "how long it takes to fold to a line and go out when the soundsystem is destroyed (s)."
+    },
+    "holograms.turn": {
+      "what": "how far it turns either way (degrees)."
+    },
+    "holograms.bob": {
+      "what": "how far it bobs (m)."
+    },
+    "holograms.fadeFar": {
+      "what": "it fades out towards this many metres from her. Damaged, it glitches, worse at each of the soundsystem's damage stages (below 75%, 50% and 25% of its health). The glyph is drawn at the sky's depth, so the tilt-shift leaves it nearly as sharp as the stars."
+    },
+    "watching": {
+      "what": "The trees watching her [1]: a leafy thing standing within radius metres of where she was lag seconds ago (eased behind her) leans its tip lean metres that way across the screen, none at its foot; full within 0.4 of the radius. A shader nudge, nothing new drawn; keep it small.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-07",
+          "quote": "canopy tips within a few metres of her sway a beat late and slightly TOWARDS her, as if the trees lean in to watch",
+          "rest": "making the wild forest eerier; render/sprites.ts uWatch"
+        }
+      ],
+      "links": [
+        "render/sprites.ts"
+      ]
+    },
+    "moonbeams": {
+      "what": "How strong the diagonal moonbeam bands are, times the style's Moonbeams knob: 0 is off (Ed, v108: they read as stripes over a dense canopy). ?moonbeams=on brings them back at 1."
+    },
+    "looks": {
+      "what": "The creature states' looks (Ed, issue #87; render/looks.ts).",
+      "links": [
+        "render/looks.ts"
+      ]
+    },
+    "looks.enragedTint": {
+      "what": "an enraged creature's whole sprite goes toward colour by amount (0 none, 1 all), by each pixel's lightness so its shading and shape still read; its angry brows and red eyes stay. No other state is tinted.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-05",
+          "quote": "Enraged creatures should have a red tint so that they're easy to tell apart from the other states"
+        }
+      ]
+    },
+    "looks.anger": {
+      "what": "a pixel 💢 beside an enraged creature's head on the side it faces, popping on a pulse, size times its level's bubble size (bubbles.levelScale). Tint and 💢 each on its own (amount 0 or on false turns one off); both for now [2]. The angry brows are a stopgap for an expression the creature generator will draw (render/looks.ts expression).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": null,
+          "quote": "or a 💢"
+        },
+        {
+          "by": "Ed",
+          "date": null,
+          "quote": "the red tint can be less strong",
+          "rest": "0.38, with a floor so it never goes near-black"
+        }
+      ],
+      "links": [
+        "render/looks.ts"
+      ]
+    },
+    "looks.partyGlow": {
+      "what": "every happy and leashed animal has sparkles twinkling pixels round it, each lit for a moment about rate times a second, size times three game pixels, at strength brightness (additive); leashed ones keep their collar on top.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-05",
+          "quote": "party animals could sparkle or glow a little"
+        }
+      ]
+    },
+    "tone": {
+      "what": "Contrast: ambient scales the twilight fill (lower is darker shade under the canopy), moon the moonlight (both lowered for Ed's dark forest, v149); black is the black point and gamma the curve applied to the whole picture, so dark goes near-black and lit stays bright."
+    },
+    "bloom": {
+      "what": "a gentle glow round bright things (strength 0 or on false turns it off; threshold: how bright a pixel must be to glow)."
+    },
+    "tiltShift": {
+      "what": "blurs the top and bottom of the screen so the forest looks like a miniature."
+    },
+    "tiltShift.skyBlur": {
+      "what": "the share of the blur the night sky takes [1]: 1 blurs it as the ground, 0 leaves its stars sharp; a slider in the decisions panel, with the treetops' strength.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-06",
+          "quote": [
+            "lessen the tilt-shift effect until you can see the stars",
+            "the stars don't have to be crisp, just perceptible"
+          ],
+          "rest": "then"
+        }
+      ]
+    },
+    "tiltShift.stackSharp": {
+      "what": "her sigil stack over her hat kept out of the blur, sharp at any height, however tall [1]; false blurs it with the rest.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-27",
+          "quote": "stacks should not be affected by the tilt shift",
+          "rest": "render/post.ts Post.sharp"
+        }
+      ],
+      "links": [
+        "render/post.ts"
+      ]
+    },
+    "tiltShift.strength": {
+      "what": "the blur at the screen's edges, in pixels."
+    },
+    "tiltShift.band": {
+      "what": "the height of the sharp band (0-1 of the screen)."
+    },
+    "tiltShift.centre": {
+      "what": "where it sits (0 top, 0.5 middle, 1 bottom)."
+    },
+    "tiltShift.treetop": {
+      "what": "the strength and band over the treetops (Ed, v160: a stronger miniature look there), blended in as she rises [1]; ?tilt=<strength>,<band> tries treetop values live; It blurs at the low resolution, before the pixels are scaled up; ?tilt=off turns it off. The night sky over the bend is blurred with the rest, the tilt-shift the last thing done to the finished, bent picture [2].",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-06",
+          "quote": "reduce the intensity of the tilt-shift effect",
+          "rest": "both halved and their sharp bands widened"
+        },
+        {
+          "by": "Ed",
+          "date": null,
+          "quote": "the tilt shift isn't blurring the sky - the tilt shift effect has to be applied after the bend shader rather than before",
+          "rest": "round 12"
+        }
+      ]
+    }
+  }
+}
