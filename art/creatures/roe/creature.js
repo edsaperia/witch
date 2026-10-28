@@ -14,12 +14,6 @@ export const CREATURE_ROE = {
   radius: 0.7,
   temperament: "skittish",
   voice: { family: "big", pitch: 2.1, glide: 0.4, dur: 0.5, noise: 0.35 },
-  buff: {
-    name: "Spring",
-    kind: "move",
-    scale: { "dash.cooldown": 0.7 },
-    label: "Roe's Spring: your dodge comes back sooner"
-  },
   character: { posture: { head: [-0.01, 0.06], body: 0 }, quirk: "perk", every: [3, 7], for: 1.2 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },

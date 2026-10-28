@@ -7,7 +7,6 @@ import { describe, expect, it } from "vitest";
 import type { Creature } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { carryRelic, cycleStack, cycleStackBack, dropRelic, inviteCreature, newLeash, stackBottom, stackOrder, toBottom } from "./leash";
-import { LEGEND_BUFFS } from "./buffs";
 import { LEGENDS } from "./legends";
 import { cellKey } from "./party";
 import { TUNING } from "./tuning";
@@ -84,7 +83,7 @@ describe("a relic's sigil in her stack", () => {
 function setup(): { g: Game; L: Creature; mine: Creature[]; relic: number; ring: { x: number; z: number; r: number } } {
   const g = newGame(123, NO_SLOW);
   g.clock.paused = false; g.party.paused = true; g.clearedAt = Infinity;
-  const L = g.creatures.find(c => c.boss && c.legendState === "asleep" && LEGEND_BUFFS.species[c.species] && !LEGENDS.charge.species.includes(c.species))!;
+  const L = g.creatures.find(c => c.boss && c.legendState === "asleep" && !LEGENDS.charge.species.includes(c.species))!;
   for (const c of g.creatures) if (!c.boss && (cellKey(c.cell) === cellKey(L.cell) || Math.hypot(c.x - L.x, c.z - L.z) < 120)) c.gone = true;
   for (const c of g.creatures) if (c.boss && c !== L && Math.hypot(c.x - L.x, c.z - L.z) < 700) c.gone = true;
   const ring = g.map.legendClearing(L.cell[0], L.cell[1])!;

@@ -15,7 +15,6 @@ export const CREATURE_FOX = {
   radius: 0.7,
   temperament: "curious",
   voice: { family: "canid", pitch: 1.5, glide: 0.8 },
-  buff: { name: "Charm", kind: "shot", mods: { charm: 1 }, label: "Fox's Charm: 💌s home in on the nearest animal" },
   character: { posture: { head: [0.02, 0.03], body: 0 }, quirk: "perk", every: [4, 8], for: 1.1 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },

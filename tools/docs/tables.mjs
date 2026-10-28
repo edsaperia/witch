@@ -53,8 +53,6 @@ export const TABLES = {
     const K = kinds(), phases = [...new Set(K.map(k => k.phase))], biomes = [...new Set(K.map(k => k.biome))].sort((a, b) => (a === "temperate" ? -1 : b === "temperate" ? 1 : byName(a, b)));
     return table(["Biome", ...phases.map(PHASE)], biomes.map(b => [b, ...phases.map(p => K.filter(k => k.biome === b && k.phase === p).map(k => k.kind).join(", ") || "")]));
   },
-  /** Each species' legend buff (its folder's creature.js `buff`; the buffs' numbers in config/legend-buffs.json). */
-  "legend-buffs": async () => table(["Species", "Buff", "On", "What it does"], (await creatures()).filter(c => c.buff).map(c => [c.id, c.buff.name, c.buff.kind === "move" ? "her movement" : "her 💌s", c.buff.label.replace(/^[^:]*:\s*/, "")])),
   /** The broom sets (config/broom-parts.json `sets`): the parts that complete each and its spell. */
   "broom-sets": async () => {
     const B = json("config/broom-parts.json");

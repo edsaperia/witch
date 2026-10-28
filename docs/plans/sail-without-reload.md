@@ -199,7 +199,7 @@ Everything keyed by the map object (WeakMaps in markers, soundsystemGen, scenery
 
 **Listeners.**
 - None in render besides `webglcontextrestored` (view.ts:345, a reload, which stays).
-- The DOM it appends once (bubbles, invites root, leash panels, indicators, minimap, buff HUD) needs clearing, not rebuilding.
+- The DOM it appends once (bubbles, invites root, leash panels, indicators, minimap) needs clearing, not rebuilding.
 
 ### A3. The rules (`src/rules`)
 
@@ -220,7 +220,7 @@ Everything keyed by the map object (WeakMaps in markers, soundsystemGen, scenery
 **newGame** takes `(seed, tuning, players)`. The island comes in through `tuning.map`.
 
 **What the app does after `newGame`** must happen again, in the same order, for night 2 to equal a fresh page:
-- `gameFromLink` (spell, buffs, quest, arena, `party.paused`);
+- `gameFromLink` (spell, quest, arena, `party.paused`);
 - `wearHat`;
 - the loadout.
 

@@ -12,12 +12,6 @@ export const CREATURE_MOLE = {
   temperament: "curious",
   traits: ["burrower"],
   voice: { family: "small", pitch: 0.8, noise: 0.3 },
-  buff: {
-    name: "Burrow",
-    kind: "move",
-    scale: { riseTime: 0.5, descendTime: 0.5 },
-    label: "Mole's Burrow: rise and land twice as fast"
-  },
   character: { sprite: "look", every: [4, 8], for: 1 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },

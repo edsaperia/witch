@@ -138,10 +138,9 @@ export interface Creature {
   /** The night won (rules/win.ts): its place in the conga line (0 the leader), or, a woken legend, -1 - its place in the ring at home. */
   finale?: number;
   /** A legend (rules/legends.ts): its restlessness 0..1 (no kin in its area: a nightmare), whether its
-   *  dream quest can still be done (its dream shows), and whether it gives its buff (for good). */
+   *  dream quest can still be done (its dream shows). */
   restlessness?: number;
   questOpen?: boolean;
-  buffed?: boolean;
   /** A legend winding up a volley: where each shot is aimed, and at whom. */
   aims?: { x: number; z: number; target: import("./combat").Target }[];
   dazedUntil?: number;
@@ -186,8 +185,8 @@ export interface Creature {
   boss?: boolean;
   /** A legend's state (DESIGN.md, "Sleeping legends"): asleep (sunk in the ground, scenery) →
    *  its area's wave → waking (wildLegends.wake seconds, untouchable) → awake (angry, guarding its
-   *  area) → beaten → slept (asleep for good). Asleep or awake → (later: mollified) → happy (its
-   *  buff on, at home in its area). And when it last changed. */
+   *  area) → beaten → slept (asleep for good). Asleep or awake → (later: mollified) → happy (at
+   *  home in its area). And when it last changed. */
   legendState?: LegendState;
   stateAt?: number;
   /** A legend's quest (rules/quest.ts): the creature it dreams of, and whether it was brought. */
@@ -259,7 +258,7 @@ export function makeCreature(map: ForestMap, cell: [number, number], level: Leve
     retreat: undefined, retreatFrom: undefined, fleeX: undefined, fleeZ: undefined, vx: undefined, vz: undefined,
     run: undefined, lairX: undefined, lairZ: undefined, homing: undefined, charge: undefined, dug: undefined,
     travelling: undefined, state: undefined, happyAt: undefined, partyLegend: undefined, dazed: undefined,
-    dancing: undefined, restlessness: undefined, questOpen: undefined, buffed: undefined, aims: undefined,
+    dancing: undefined, restlessness: undefined, questOpen: undefined, aims: undefined,
     dazedUntil: undefined, affection: undefined, affectionAt: undefined, holdT: undefined, holdAt: undefined,
     route: undefined, engagedUntil: undefined, brace: undefined, legend: undefined, moveReadyAt: undefined,
     sprung: undefined, enraged: undefined, asleepAt: undefined, bed: undefined, gone: undefined, siege: undefined,
@@ -274,7 +273,7 @@ export function makeCreature(map: ForestMap, cell: [number, number], level: Leve
 
 /** Every optional field of a Creature, in the order makeCreature's literal lists them (one shape for all; creatures.test.ts checks the order). A field added to
  *  Creature and not here fails the typecheck (OptionalMissing). */
-export const CREATURE_OPTIONAL = ["lod", "hp", "hurtAt", "kx", "kz", "slowUntil", "stunUntil", "burrow", "leap", "fight", "fleeUntil", "retreat", "retreatFrom", "fleeX", "fleeZ", "vx", "vz", "run", "lairX", "lairZ", "homing", "charge", "dug", "travelling", "state", "happyAt", "partyLegend", "dazed", "dancing", "restlessness", "questOpen", "buffed", "aims", "dazedUntil", "affection", "affectionAt", "holdT", "holdAt", "route", "engagedUntil", "brace", "legend", "moveReadyAt", "sprung", "enraged", "asleepAt", "bed", "gone", "siege", "wanderTo", "circle", "dropped", "healedAt", "healedSmall", "boss", "legendState", "stateAt", "quest", "friendly", "asleep", "napUntil", "lulled", "wakeUntil", "safeX", "safeZ", "safeR", "watchUntil", "hunting", "taunt", "swoop", "finale", "packGlow", "packHide", "packShell", "packProwl", "feintUntil", "coverBy", "packSync", "packThrow", "mind", "spell"] as const satisfies readonly (keyof Creature)[];
+export const CREATURE_OPTIONAL = ["lod", "hp", "hurtAt", "kx", "kz", "slowUntil", "stunUntil", "burrow", "leap", "fight", "fleeUntil", "retreat", "retreatFrom", "fleeX", "fleeZ", "vx", "vz", "run", "lairX", "lairZ", "homing", "charge", "dug", "travelling", "state", "happyAt", "partyLegend", "dazed", "dancing", "restlessness", "questOpen", "aims", "dazedUntil", "affection", "affectionAt", "holdT", "holdAt", "route", "engagedUntil", "brace", "legend", "moveReadyAt", "sprung", "enraged", "asleepAt", "bed", "gone", "siege", "wanderTo", "circle", "dropped", "healedAt", "healedSmall", "boss", "legendState", "stateAt", "quest", "friendly", "asleep", "napUntil", "lulled", "wakeUntil", "safeX", "safeZ", "safeR", "watchUntil", "hunting", "taunt", "swoop", "finale", "packGlow", "packHide", "packShell", "packProwl", "feintUntil", "coverBy", "packSync", "packThrow", "mind", "spell"] as const satisfies readonly (keyof Creature)[];
 type RequiredKeys = "id" | "species" | "cell" | "level" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ" | "x" | "z" | "tx" | "tz" | "rest" | "speed" | "facing" | "away" | "moving" | "walk" | "seen" | "leashed" | "rand";
 type OptionalMissing = Exclude<keyof Creature, RequiredKeys | (typeof CREATURE_OPTIONAL)[number]>;
 const _everyField: [OptionalMissing] extends [never] ? true : OptionalMissing = true;
@@ -375,7 +374,7 @@ export function pointInArea(map: ForestMap, c: Pick<Creature, "cell" | "homeX" |
 export function spawnCreatures(map: ForestMap): Creature[] {
   const out: Creature[] = [], pop = population(map);
   // The home area holds no creatures (Ed, 2026-10-03) and no legend (Ed, 2026-10-05: "Home area
-  // shouldn't have a legend": so no buff at the start). The areas map.hasLegend picks (legends.share of them, Ed 2026-10-06) have their legend, sleeping in its clearing.
+  // shouldn't have a legend"). The areas map.hasLegend picks (legends.share of them, Ed 2026-10-06) have their legend, sleeping in its clearing.
   const [hx, hy] = map.centreCell, early = earlyQuest(map), route = routeIndex(routeOf(map).order);
   for (const [cx, cy] of map.cells) {
     const home = cx === hx && cy === hy;

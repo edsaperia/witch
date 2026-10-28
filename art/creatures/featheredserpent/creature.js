@@ -12,12 +12,6 @@ export const CREATURE_FEATHEREDSERPENT = {
   ranged: true,
   traits: ["heavy"],
   voice: { family: "bird", pitch: 0.7, pure: false, wave: "sawtooth", glide: 0.9 },
-  buff: {
-    name: "Plumage",
-    kind: "move",
-    scale: { treetopSpeed: 1.15, riseTime: 0.7 },
-    label: "Feathered serpent's Plumage: a quicker climb to the treetops, and quicker over them"
-  },
   character: { posture: { head: [0, 0.05], body: 0 }, quirk: "shake", every: [5, 9], for: 1.2 },
   pack: {
     melee: { attacks: [null, "nip", "nip"] },

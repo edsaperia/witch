@@ -65,7 +65,6 @@ import { SWOOP_TRAIL_DEFAULT, SwoopTrails } from "./swoopTrails";
 import { LOAD_DEFAULT, loadView } from "./load";
 import { HAND, InviteView, letterAt, type HerOffset } from "./invites";
 import { StateMarks } from "./looks";
-import { BuffHud } from "./buffhud";
 import type { Dancefloor } from "./dancefloor";
 import { PartyView } from "./party";
 import { MarkerArt, MarkerFx, type Mote } from "./markers";
@@ -504,7 +503,6 @@ export class View {
   /** Her flight trail: a ribbon of glow in the colour of the area she's over (render/trail.ts). */
   private trail!: WitchTrail;
   private trailRgb = new THREE.Vector3();
-  private buffHud = new BuffHud(document.body);
   shadow!: THREE.Mesh;
   mpp: number; // metres per art pixel
   /** ?scenery=<metres>: a fixed scenery radius instead of the adaptive one. */
@@ -1210,7 +1208,7 @@ export class View {
     this.strings.setGame(game); this.leashView.setGame(game); this.lasers.setGame(game); this.borders.setGame(game); this.inviteView.setGame(game);
     this.partyObjects.reset(); this.rig?.reset(); this.holograms.reset(); this.glades.reset(); this.wisps?.reset();
     this.clouds.reseed(game.seed); this.lightRings?.reseed(game.map.seed);
-    this.fireworks.reset(); this.swoopTrails.reset(); this.spellFx.reset(); this.trail.newNight(); this.buffHud.reset(); this.combatLight.reset(); this.occlusion.reset();
+    this.fireworks.reset(); this.swoopTrails.reset(); this.spellFx.reset(); this.trail.newNight(); this.combatLight.reset(); this.occlusion.reset();
     this.assets.prefetchType(HOME_LOOK); // home's meadow floor (no trees ask for it)
   }
 
@@ -1600,7 +1598,6 @@ export class View {
       loadView(g, t.load ?? LOAD_DEFAULT, dt, this.leashView.load);
       const Bp = this.leashView.bristle; Bp.x = w.x - w.vx * back; Bp.y = witchHeight(w, t) + 0.25 + this.rideOff; Bp.z = w.z - w.vz * back;
     }
-    this.buffHud.update(g, time);
     // Tufts part round her and the three nearest creatures.
     // (only those within reach made into objects: mapping every creature, a thousand late in a run, every frame was much of the frame's garbage)
     const near: { x: number; z: number; r: number; d: number }[] = [], GR = t.groundCover.radius;

@@ -10,12 +10,6 @@ export const CREATURE_SNOWLEOPARD = {
   radius: 0.85,
   temperament: "skittish",
   voice: { family: "cat", pitch: 0.85, volume: 0.45 },
-  buff: {
-    name: "Ghost of the peaks",
-    kind: "move",
-    scale: { "dash.distance": 1.15, "treetop.turnRate": 1.3 },
-    label: "Snow leopard's Ghost of the peaks: a longer blink, and sharper turns in the treetops"
-  },
   character: { posture: { head: [0.03, -0.03], body: -0.04 }, quirk: "tailflick", every: [4, 8], for: 0.9 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },

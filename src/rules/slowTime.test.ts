@@ -102,7 +102,7 @@ describe("💌s and the circle's edge", () => {
     const s = newInvites();
     s.letters.push({ n: 1, x: fromX, z: 0, vx, vz: 0, flown: 0, at: 0, hit: [] } as unknown as (typeof s.letters)[number]);
     const events: string[] = [];
-    for (let i = 0; i < 60 && s.letters.length; i++) { stepInvites(s, {}, { x: 0, z: 0, facing: 1 }, false, [], none, i * STEP, STEP, TUNING, undefined, undefined, edge); events.push(...s.events.map(e => e.kind)); }
+    for (let i = 0; i < 60 && s.letters.length; i++) { stepInvites(s, {}, { x: 0, z: 0, facing: 1 }, false, [], none, i * STEP, STEP, TUNING, edge); events.push(...s.events.map(e => e.kind)); }
     return { s, events };
   };
   const ring: Ring = { id: 0, x: 0, z: 0, r: 10 };

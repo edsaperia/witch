@@ -1,6 +1,6 @@
 // A dreaming legend's pointer (render/leash.ts drawDreams, render/compass.ts; Ed, 2026-10-06): the built game (DIST, default
 // dist/) at 1600×900 on a seed, the witch on the ground by two sleeping legends in turn, first outside its clearing (its dream
-// bubble, its arrow and its way in words) then inside (the circle's panel naming its boon too), and once walked off to
+// bubble, its arrow and its way in words) then inside (the circle's panel too), and once walked off to
 // one side, 25 m (the arrow and the words kept up). Fails on a page error or a bubble with no way shown. Writes <out dir>/*.png.
 //   npm run build && node tools/smoke/dream-way.cjs [out dir] [seed]
 const http = require("http"), fs = require("fs"), path = require("path");

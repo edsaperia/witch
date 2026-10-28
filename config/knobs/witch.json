@@ -275,6 +275,9 @@
         }
       ]
     },
+    "dash.chain": {
+      "what": "the least time, seconds, from one blink to the next, whatever her charges or the shared cooldown say (it keeps a Double blink's two apart; the legend buffs' blink chain, 0.2, before they were removed)."
+    },
     "spells": {
       "what": "Her two spell slots, a hat and a broom, each holding a spell or none.",
       "decisions": [

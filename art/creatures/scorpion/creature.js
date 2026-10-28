@@ -8,13 +8,6 @@ export const CREATURE_SCORPION = {
   },
   radius: 0.5,
   voice: { family: "bug", pitch: 0.8, am: [40, 0.85], noise: 0.35, volume: 1.3 },
-  buff: {
-    name: "Sting",
-    kind: "shot",
-    mods: { pierce: 1 },
-    scale: { "invites.cooldown": 0.85 },
-    label: "Scorpion's Sting: 💌s pass through to the next, with a little less wait"
-  },
   character: { sprite: "shiver", every: [3, 7], for: 0.5 },
   pack: {
     melee: null,

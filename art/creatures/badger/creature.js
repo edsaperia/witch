@@ -10,12 +10,6 @@ export const CREATURE_BADGER = {
   radius: 0.8,
   temperament: "curious",
   voice: { family: "big", pitch: 1.8, dur: 0.6 },
-  buff: {
-    name: "Big heart",
-    kind: "shot",
-    scale: { "invites.radius": 2.2 },
-    label: "Badger's Big heart: bigger 💌s, easier to land"
-  },
   character: { posture: { head: [0.04, -0.07], body: -0.02 }, quirk: "sniff", every: [3, 6], for: 1.4 },
   pack: {
     melee: { attacks: [null, "maul", "maul"], knockback: 8 },

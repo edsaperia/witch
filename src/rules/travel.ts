@@ -26,8 +26,8 @@ export interface Anchor { x: number; z: number; /** a placed sigil (else her) */
 /** Travellers' steps (their modes set by updateModes): those on her stack head for her, those at a
  *  placed sigil for it. Travellers not busy (evolving) walk their routes; the posse is left to the
  *  leash and combat as ever. */
-export function stepTravel(stack: number[], placed: { id: number; x: number; z: number }[], creatures: Creature[], witch: { x: number; z: number }, map: ForestMap, dt: number, t: Tuning, busy: (id: number) => boolean, pace = 1, data: TravelData = TRAVEL): void {
-  for (const id of stack) { const c = creatures[id]; if (c.travelling && !busy(id) && !c.partyLegend) stepTraveller(c, witch.x, witch.z, map, dt, t, pace, data); }
+export function stepTravel(stack: number[], placed: { id: number; x: number; z: number }[], creatures: Creature[], witch: { x: number; z: number }, map: ForestMap, dt: number, t: Tuning, busy: (id: number) => boolean, data: TravelData = TRAVEL): void {
+  for (const id of stack) { const c = creatures[id]; if (c.travelling && !busy(id) && !c.partyLegend) stepTraveller(c, witch.x, witch.z, map, dt, t, 1, data); }
   for (const p of placed) { const c = creatures[p.id]; if (c.travelling && !busy(p.id)) stepTraveller(c, p.x, p.z, map, dt, t, 1, data); }
 }
 

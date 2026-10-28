@@ -12,12 +12,6 @@ export const CREATURE_TOAD = {
   ranged: true,
   temperament: "skittish",
   voice: { family: "amphibian" },
-  buff: {
-    name: "Spawn",
-    kind: "shot",
-    mods: { split: 1 },
-    label: "Toad's Spawn: a 💌 that lands splits into 3 small ones"
-  },
   character: { sprite: "hop", every: [5, 10], for: 0.7 },
   pack: {
     melee: { attacks: [null, "nip", "nip"] },

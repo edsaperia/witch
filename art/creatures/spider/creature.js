@@ -16,12 +16,6 @@ export const CREATURE_SPIDER = {
   ranged: true,
   temperament: "skittish",
   voice: { family: "bug", pitch: 0.9, am: [45, 0.7], noise: 0.25, volume: 1.2 },
-  buff: {
-    name: "Long thread",
-    kind: "shot",
-    scale: { "invites.range": 1.5 },
-    label: "Spider's Long thread: 💌s fly further"
-  },
   character: { sprite: "shiver", every: [3, 7], for: 0.5 },
   pack: {
     melee: null,

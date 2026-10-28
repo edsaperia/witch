@@ -21,12 +21,6 @@ export const CREATURE_STEGOSAURUS = {
   },
   radius: 1.6,
   voice: { family: "big", pitch: 0.55, volume: 0.9 },
-  buff: {
-    name: "Tail sweep",
-    kind: "shot",
-    scale: { "invites.radius": 1.6 },
-    label: "Stegosaurus's Tail sweep: each 💌 bursts wider"
-  },
   character: { posture: { head: [0.02, -0.03], body: 0 }, quirk: "sniff", every: [4, 8], for: 1 },
   pack: {
     melee: { attacks: [null, "swipe", "bigswipe"], knockback: 8 },

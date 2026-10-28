@@ -10,12 +10,6 @@ export const CREATURE_BEAVER = {
   radius: 0.7,
   temperament: "curious",
   voice: { family: "whistler", pitch: 0.8, trill: [4, 30], volume: 0.7 },
-  buff: {
-    name: "Decoy",
-    kind: "move",
-    mods: { decoy: 1 },
-    label: "Beaver's Decoy: blinking leaves a waiting 💌 where you were"
-  },
   character: { posture: { head: [0.02, -0.02], body: -0.01 }, quirk: "tailslap", every: [5, 9], for: 0.7 },
   pack: {
     melee: { attacks: [null, "nip", "maul"], knockback: 6 },

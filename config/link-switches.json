@@ -218,19 +218,6 @@
    ]
   },
   {
-   "name": "buffs",
-   "values": [
-    "fox,toad",
-    "all"
-   ],
-   "does": "These legends' buffs on from the start.",
-   "group": "debug",
-   "since": "2026-10-07",
-   "readIn": [
-    "src/app/gameParams.ts"
-   ]
-  },
-  {
    "name": "canopy",
    "values": [
     "off"

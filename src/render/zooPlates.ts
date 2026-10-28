@@ -2,7 +2,7 @@
 // the path under each block (its south edge, so it faces the camera, which always looks north), for the blocks near her: its
 // creature's name, its area's and its row's and the area's own line (art/areas.js layout.feel); a block of a kind not yet designed,
 // a "?". DOM over the game, as the legend circle's explainer. (No legend's boon line: legends give no boons since Ed's change of
-// 2026-10-18, docs/notes/gameplay.md "Legend buff".)
+// 2026-10-18, legend buffs removed 2026-10-28.)
 import { blockFront } from "../rules/zooControls";
 import * as THREE from "three";
 import { SPECIES_BY_ID } from "../../art/generator.js";

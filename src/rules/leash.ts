@@ -331,10 +331,10 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
     let to = s.scatter ? scatterSpot(c, witch.x, witch.z, s.scatter, BB.scatter) : trailPoint(s.trail, witch.x, witch.z, (slot + 1) * BB.gap);
     // (scattered off the screen, but never off the island: pulled back toward her till it's on land)
     for (let n = 0; s.scatter && land && n < 8 && !land(to.x, to.z); n++) to = { x: witch.x + (to.x - witch.x) * 0.75, z: witch.z + (to.z - witch.z) * 0.75 };
-    stepBaby(c, to.x, to.z, witch.x, witch.z, leashSpeed(c, t) * (t.leash.pace ?? 1), herSpeed, dt, t);
+    stepBaby(c, to.x, to.z, witch.x, witch.z, leashSpeed(c, t), herSpeed, dt, t);
   }
   const guarding = new Set(guards.map(p => p.id));
-  for (const id of s.stack) if (!busy(id) && !byId(id).partyLegend && !guarding.has(id) && !(babies.length && isBaby(byId(id)))) stepLeashed(byId(id), witch.x, witch.z, dt, t, t.leash.pace ?? 1); // (a party legend never comes to her: rules/partyLegend.ts)
+  for (const id of s.stack) if (!busy(id) && !byId(id).partyLegend && !guarding.has(id) && !(babies.length && isBaby(byId(id)))) stepLeashed(byId(id), witch.x, witch.z, dt, t); // (a party legend never comes to her: rules/partyLegend.ts)
   // Parked, it rests north of its sigil (up the screen, -z), so the sigil stays in sight and easy to pick up (Ed, 2026-10-10: "Leashed
   // animals should come to rest 10m above their placed sigil"; 2026-10-13: the sigil's top just below its feet, by its size: rules/runeOffset.ts).
   for (const p of guards.length ? [...s.placed, ...guards] : s.placed) if (!busy(p.id)) { const c = byId(p.id); stepLeashed(c, p.x, p.z - runeOffset(c, t, 1), dt, t); }
@@ -430,9 +430,9 @@ export function hexSpot(s: LeashState, x: number, z: number, size: number, barre
 /** Whether a sigil put down at (x, z) would land on another. */
 export const blocked = (s: LeashState, x: number, z: number, t: Tuning) => s.placed.some(p => Math.hypot(p.x - x, p.z - z) < t.leash.spacing);
 
-/** A leashed creature (`pace`: a legend buff's speed-up for those following her): out of range, it hurries back toward its leash point (at its run speed,
+/** A leashed creature: out of range, it hurries back toward its leash point (at its run speed,
  *  never teleporting); in range, it roams round it, within the leash, pausing now and then. */
-export function stepLeashed(c: Creature, px: number, pz: number, dt: number, t: Tuning, pace = 1): void {
+export function stepLeashed(c: Creature, px: number, pz: number, dt: number, t: Tuning): void {
   const L = t.leash, len = L.length, far = Math.hypot(c.x - px, c.z - pz) > len;
   if (far) {
     // Head for a spot inside the leash on its own side of the point.
@@ -448,7 +448,7 @@ export function stepLeashed(c: Creature, px: number, pz: number, dt: number, t: 
   }
   const dx = c.tx - c.x, dz = c.tz - c.z, d = Math.hypot(dx, dz);
   if (d < 1e-4) { c.moving = false; return; }
-  const speed = (far ? leashSpeed(c, t) : c.speed * 1.5) * pace;
+  const speed = (far ? leashSpeed(c, t) : c.speed * 1.5);
   const step = Math.min(d, speed * dt);
   c.x += (dx / d) * step; c.z += (dz / d) * step;
   if (Math.abs(dx) > 0.02) c.facing = dx > 0 ? 1 : -1;
