@@ -20,9 +20,13 @@ import type { LeashView } from "../leash";
 import { islandPixels } from "../../../art/islands.js";
 import { islandCoast } from "../../rules/islandShape";
 import { coastSpec, islandOf } from "../../rules/rosters";
+import { BubbleFader, sightOf } from "../bubbleSight";
 
-/** The party's over: 😴 bubbles over at most this many sleepers, within this many metres of her. */
-const SNORES = 6, SNORE_RANGE = 40;
+/** The party's over: 😴 bubbles over at most this many sleepers (within the tuning's bubbles.near of her). */
+const SNORES = 6;
+/** Every creature bubble here faded in and out by how near she is, on the ground only (render/bubbleSight.ts; Ed, 2026-10-28). */
+const sight = new BubbleFader();
+const nowS = (): number => performance.now() / 1000;
 
 /** Bubbles grow with who's talking (Ed, 2026-10-05): the pixel bubble's game pixel (its --px, in
  *  screen px) by level, babies smallest, legends (dreams and nightmares) largest. One style for
@@ -48,7 +52,7 @@ const MOODS = [["😴", "🫩", "🥱", "💼"], ["😐", "😐", "🥱"], ["�
  *  the sigil's own level look, no pips). Only to a witch on the ground near it (dreams.range;
  *  Ed, 2026-10-05: never from the treetops). HTML, like the talk bubbles, so it reads at any zoom. */
 /** The party's over (Ed, 2026-10-06: "all the animals go to sleep and make little 😴 speech bubbles"): over the nearest few
- *  sleepers within SNORE_RANGE of her on the ground, a little dream bubble with a sleepy face (mostly 😴, now and then a yawn
+ *  sleepers within the tuning's bubbles.near of her on the ground (faded in and out by render/bubbleSight.ts), a little dream bubble with a sleepy face (mostly 😴, now and then a yawn
  *  or a sigh: sleepyFace), bobbing and drifting. A sleeper is one the rules have put to sleep (c.asleep: builder hotel's
  *  party's-over rules, legends too), or, before those rules, any creature not hers once the party's well over. */
 export function drawSnores(lv: LeashView, camera: THREE.Camera, width: number, height: number): void {
@@ -57,7 +61,8 @@ export function drawSnores(lv: LeashView, camera: THREE.Camera, width: number, h
   const K = !g.partyOver && worldAsleep(g) ? 1 : lv.partyOverEase;
   let used = 0;
   near.length = 0;
-  if (host && K > 0.3 && w.mode === "ground" && w.lift < 0.5) {
+  const B = g.tuning.bubbles, SNORE_RANGE = B.near;
+  if (host && K > 0.3) {
     for (const c of g.creatures) {
       if (c.gone || c.leashed) continue;
       // (asleep: the rules' c.asleep, legends too; before builder hotel's party's-over rules, any creature not hers once it's well over)
@@ -70,6 +75,8 @@ export function drawSnores(lv: LeashView, camera: THREE.Camera, width: number, h
     }
     const Z = g.tuning.dreams.sleepy, time = g.clock.time;
     for (const { c } of near) {
+      const seen = sight.step(`z${c.id}`, sightOf(w, c.x, c.z, B.near, B.fade), nowS(), B.ease);
+      if (seen < 0.01) continue;
       const bob = Math.sin(time * 1.6 + c.id * 1.7) * 0.18, y = Math.min(lv.tops.get(c.id) ?? 1.5, 6) + 0.35 + bob; // (capped at 6 m: 4 before the creatures grew half again, Ed 2026-10-08)
       const hd = lv.heads.get(c.id); // (its puffs down to its head, Ed 2026-10-12)
       placed(lv.v.set((hd?.x ?? c.x) + Math.sin(time * 0.7 + c.id) * 0.15, y, hd?.z ?? c.z)).project(camera);
@@ -82,7 +89,7 @@ export function drawSnores(lv: LeashView, camera: THREE.Camera, width: number, h
       thoughtEmoji(el, S, face, SNORE_INNER, 1, P);
       const at = thoughtAt(S, ((lv.v.x + 1) / 2) * width, ((1 - lv.v.y) / 2) * height, P);
       el.style.left = `${at.left}px`; el.style.top = `${at.top}px`;
-      el.style.opacity = `${Math.min(1, (K - 0.3) * 4).toFixed(2)}`;
+      el.style.opacity = `${(Math.min(1, (K - 0.3) * 4) * seen).toFixed(2)}`;
       used++;
     }
   }
@@ -93,9 +100,13 @@ export function drawDreams(lv: LeashView, camera: THREE.Camera, width: number, h
   const host = lv.bubbleWitch?.parentElement, g = lv.game, w = g.witch, range = g.tuning.dreams.range;
   if (!host) return;
   if (g.win?.phase === "won") { drawIslandDreams(lv, camera, width, height, host); return; }
-  const list = w.mode !== "ground" || w.lift > 0.5 ? [] : lv.dreams.map(c => ({ c, d: Math.hypot(c.x - w.x, c.z - w.z) })).filter(p => p.d <= range).sort((p, q) => p.d - q.d).slice(0, 4);
+  // (only to a witch on the ground, Ed 2026-10-05: never from the treetops; nor from the treehouse, Ed 2026-10-28: faded in and out by
+  // render/bubbleSight.ts, by its own range, dreams.range, as a dream is there to be found from further than a reply is read)
+  const Bub = g.tuning.bubbles, list = lv.dreams.map(c => ({ c, d: Math.hypot(c.x - w.x, c.z - w.z) })).filter(p => p.d <= range).sort((p, q) => p.d - q.d).slice(0, 4);
   let used = 0;
   for (const { c } of list) {
+    const seen = sight.step(`d${c.id}`, sightOf(w, c.x, c.z, range, Bub.fade), nowS(), Bub.ease);
+    if (seen < 0.01) continue;
     // Its puffs rise from just above the sleeper's head (the art director, #238), its whole height: held to 4.5 m before, a big
     // legend's bubble sat on its back (Ed, 2026-10-08: "their speech bubble and the helper text obscure them").
     const head = lv.tops.get(c.id) ?? 2, y = head + 0.4;
@@ -143,6 +154,7 @@ export function drawDreams(lv: LeashView, camera: THREE.Camera, width: number, h
     }
     el.style.left = `${left}px`;
     el.style.top = `${top}px`;
+    el.style.opacity = seen.toFixed(2);
     tiltFilter(el, top + S.box.y * P + S.box.n * P * 0.5); // (its middle, blurred as the world is there: render/overlayTilt.ts)
     // Its direction (rules/dream.ts; Ed, 2026-10-06: "the legend speech bubble should tell you in what direction you can find
     // the runestone for the area that has the quest animal in it"): the nearest area of the kind it dreams of to her, explored,
@@ -165,6 +177,7 @@ export function drawDreams(lv: LeashView, camera: THREE.Camera, width: number, h
       cap.style.left = `${right + capW <= width - 8 ? right : Math.max(8, snapToP(left - P * 2 - capW))}px`;
       cap.style.top = `${top + snapToP(S.box.y * P + S.box.n * P * 0.5) - 18}px`;
       cap.style.display = "";
+      cap.style.opacity = seen.toFixed(2);
     } else cap.style.display = "none";
     used++;
   }
@@ -357,7 +370,8 @@ export function bubbles(lv: LeashView, time: number, camera: THREE.Camera, width
     bw.classList.remove("on");
     return;
   }
-  const c = g.creatures[talk.id];
+  const c = g.creatures[talk.id], B = g.tuning.bubbles;
+  const seen = sight.step(`t${c.id}`, sightOf(w, c.x, c.z, B.near, B.fade), nowS(), B.ease); // (its bubble as every creature's: render/bubbleSight.ts)
   bc.style.setProperty("--px", `${bubblePx(c.level)}px`);
   place(bw, w.x, witchHeight(w, g.tuning) + 2.2, w.z); // (its tail over her head, Ed 2026-10-12)
   const hd = lv.heads.get(c.id); // (its tail over its head, Ed 2026-10-12: render/view/creatures.ts)
@@ -368,7 +382,7 @@ export function bubbles(lv: LeashView, time: number, camera: THREE.Camera, width
     emoji(lv, line, hash2(talk.id, 1, 9) < 0.5 ? "😒" : "🙄");
     bar.style.display = "none";
     bc.classList.toggle("on", talk.t < 1.6);
-    bc.style.opacity = "1";
+    bc.style.opacity = seen.toFixed(2);
     return;
   }
   bar.style.display = "";
@@ -382,7 +396,7 @@ export function bubbles(lv: LeashView, time: number, camera: THREE.Camera, width
   if (turn >= 1) emoji(lv, line, pick(MOODS[mood], turn - ((turn + 1) % 2))); else say(lv, line, "…");
   (bar.querySelector("i") as HTMLElement).style.width = `${progress * 100}%`;
   bc.classList.add("on");
-  bc.style.opacity = turn % 2 === 1 ? "1" : "0.6";
+  bc.style.opacity = ((turn % 2 === 1 ? 1 : 0.6) * seen).toFixed(2);
   void time;
 }
 
@@ -390,10 +404,12 @@ export function bubbles(lv: LeashView, time: number, camera: THREE.Camera, width
  *  sigil, the same picture that lights up on the sea chart"): over each woken legend dancing at home, the nearest few, a dream
  *  bubble of its island: its coast with its sigil on it (art4's art/islands.js islandPixels, the shape by rules/islandShape.ts). */
 function drawIslandDreams(lv: LeashView, camera: THREE.Camera, width: number, height: number, host: HTMLElement): void {
-  const g = lv.game, w = g.witch, range = g.tuning.dreams.range * 2;
+  const g = lv.game, w = g.witch, range = g.tuning.dreams.range * 2, B = g.tuning.bubbles;
   const list = g.creatures.filter(c => !c.gone && c.finale !== undefined && c.finale < 0).map(c => ({ c, d: Math.hypot(c.x - w.x, c.z - w.z) })).filter(p => p.d <= range).sort((p, q) => p.d - q.d).slice(0, 6);
   let used = 0;
   for (const { c } of list) {
+    const seen = sight.step(`i${c.id}`, sightOf(w, c.x, c.z, range, B.fade), nowS(), B.ease); // (its own range: there to be seen from further)
+    if (seen < 0.01) continue;
     const head = lv.tops.get(c.id) ?? 2;
     const hd = lv.heads.get(c.id);
     placed(lv.v.set(hd?.x ?? c.x, head + 0.4, hd?.z ?? c.z)).project(camera);
@@ -406,6 +422,7 @@ function drawIslandDreams(lv: LeashView, camera: THREE.Camera, width: number, he
     thoughtSymbol(el, S, "sigil", `island:${c.species}`, DREAM_INNER, () => islandCanvas(c.species, g.tuning.islands?.coast, DREAM_INNER), 1, P);
     const at = thoughtAt(S, ((lv.v.x + 1) / 2) * width, ((1 - lv.v.y) / 2) * height, P), left = at.left, top = Math.max(57, at.top);
     el.style.left = `${left}px`; el.style.top = `${top}px`;
+    el.style.opacity = seen.toFixed(2);
     tiltFilter(el, top + S.box.y * P + S.box.n * P * 0.5);
     used++;
   }

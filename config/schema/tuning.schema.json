@@ -6325,12 +6325,28 @@
             "minimum": 0
           },
           "description": "a creature's bubble, emoji and outline together, times this by its level (baby, young, adult, legend); the witch's stays at 1."
+        },
+        "near": {
+          "type": "number",
+          "minimum": 0,
+          "description": "How close (metres) she must be on the ground to see a creature's speech or thought bubble; none from the treetops or the treehouse."
+        },
+        "fade": {
+          "type": "number",
+          "minimum": 0
+        },
+        "ease": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "emojiPixels",
         "scale",
-        "levelScale"
+        "levelScale",
+        "near",
+        "fade",
+        "ease"
       ],
       "additionalProperties": false,
       "description": "The speech and thought bubbles: outline only, with pixel emoji, sized by the speaker's level."
