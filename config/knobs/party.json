@@ -23,7 +23,7 @@
       ]
     },
     "cast.on": {
-      "what": "on: the stacks and the spell; off (the default till their view lands; ?cast=1 turns them on): areas clear by themselves once their wild are gone, as before."
+      "what": "on (the default since their view landed, #1378): the stacks and the spell; off (?cast=0): areas clear by themselves once their wild are gone, as before."
     },
     "cast.time": {
       "what": "seconds of holding the sigil button at a stone to convert it; a hit stops the cast."

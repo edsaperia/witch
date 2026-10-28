@@ -57,6 +57,12 @@ says what each note covers.
 - Legend tether
 - Sigil stack
 - Rank sigils
+- Sides and sizes
+- Stone stack
+- Spell spot
+- Cast ring
+- Conversion
+- Chains
 - Party animal
 - Combat
 - Attack grammar

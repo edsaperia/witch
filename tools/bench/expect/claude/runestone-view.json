@@ -1,0 +1,5 @@
+{
+  "reason": "the runestone view (Ed, 2026-10-28): the cast switched on by default (rules/stoneStacks.ts: no auto-clearing, sigils in the stones' stacks, conversions by the spell or a wave scatter them loose), the side palettes and rank sizes, the stones' columns, the spell's spot, chains for leashes",
+  "frames": { "*": "the stones' sigil columns and the spell's spot, friend and enemy colours by rank and their sizes, leashes drawn as chains" },
+  "rules": { "*": "cast.on true: areas no longer clear by themselves, a befriended creature's sigil stays in its stone's stack (no rune at its feet), converted stones scatter their friend sigils loose" }
+}
