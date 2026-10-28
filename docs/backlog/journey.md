@@ -29,7 +29,7 @@ Where this overrides older notes: the record crate no longer picks the map's see
     - Each night's legends (1 in 5 areas) are dealt from the roster, favouring kinds whose islands aren't found yet, never K.
     - Authoring: a table of ~64 kinds, each with a biome and a phase; the rest is the generator.
 - **Biomes by direction** (Ed): the sea chart is a compass. **North** gets colder (pine forests, eventually tundra); **south** hotter (eventually desert); **east** volcanic (Ed, 2026-10-23: "Can we call 'rocky' 'volcanic'?"); **west** becomes jungle. The further out, the more of an island's areas are themed by its biome. The diagonals have their own (north-east mountains and glaciers, south-east badlands, south-west mangrove swamp, north-west cold rainforest), and each biome brings its own creatures, legends and record genre.
-  - **The roster** (Ed, 2026-10-23; the review page's table): 8 biomes of 6 kinds, one fantastic each, and 16 temperate. **Cold** (N): elk, wolf, arctic fox, penguin, polar bear, frost troll. **Mountains & glaciers** (NE): lynx, raven, ibex, red panda, snow leopard, frost wyrm. **Volcanic** (E): ram, salamander, beetle, woodlouse, komodo, stegosaurus. **Badlands** (SE): spider, meerkat, armadillo, rattlesnake, scorpion, griffin. **Hot** (S): cat (a sand cat or caracal), fennec, lion, cheetah, rhino, sphinx. **Mangrove swamp** (SW): heron, otter, crocodile, dragonfly, crab, hydra. **Jungle** (W): snake (a python), bat, tiger, jaguar, elephant, feathered serpent. **Cold rainforest** (NW): raccoon, owl, roe deer, flying squirrel, bear, unicorn. **Temperate**: home's 10, then toad, beaver, moth (to become a butterfly), newt, stag and boar in phase 1. Each biome's first two kinds come in phase 2, the next two in phase 3, its toughest and its fantastic one in phase 4, their bearings 11.25° either side of its point. The sphinx and feathered serpent take placeholder slots 50 and 58 (unknown-19, unknown-27) when they're built (built: #1031, #1036); the moved kinds' areas and coats follow.
+  - **The roster** (Ed, 2026-10-23; the review page's table): 8 biomes of 6 kinds, one fantastic each, and 16 temperate: home's 10 and 6 more in phase 1 (each kind's own in the table at the end of this file, made from its `art/areas/<id>/kind.json`; the cat a sand cat or caracal, the snake a python, the moth to become a butterfly). Each biome's first two kinds come in phase 2, the next two in phase 3, its toughest and its fantastic one in phase 4, their bearings 11.25° either side of its point. The sphinx and feathered serpent take placeholder slots 50 and 58 (unknown-19, unknown-27) when they're built (built: #1031, #1036); the moved kinds' areas and coats follow.
   - **Tall natural scenery everywhere** (Ed, 2026-10-11): even the bare extremes (desert, volcanic; likewise tundra) keep natural tall scenery standing in for trees, so the treetop view still has a canopy-height layer to fly over and the ground still has cover: e.g. rock spires, hoodoos, mesas and giant cacti in the desert; basalt columns, lava towers and dead giant trees on the volcanic side.
 - **Harder further out.** The further an island is from the first, the more areas it has, the more irregular its shape, and the rarer its animals.
   - Further from home, the more **fantastical** the creatures (dragons, pegasi...); directions are biomes (below). Many more creatures are planned.
@@ -171,3 +171,18 @@ Also on the walls: **the poster** of her biggest party.
 
 - Which rooms are open during the party. Answered: every room (Ed, 2026-10-14; treehouse.md, "A night through the house").
 
+The roster, each biome's kinds by the phase they come in (each kind's `phase` and `biome` in `art/areas/<id>/kind.json`; `node tools/docs/tables.mjs`):
+
+<!-- data: roster (node tools/docs/tables.mjs --write; edit the data, not this) -->
+| Biome | home | phase 1 | phase 2 | phase 3 | phase 4 |
+|---|---|---|---|---|---|
+| temperate | badger, dormouse, fox, hare, hedgehog, marten, mole, snail, squirrel, stoat | beaver, boar, moth, newt, stag, toad |  |  |  |
+| badlands |  |  | meerkat, spider | armadillo, rattlesnake | griffin, scorpion |
+| cold |  |  | elk, wolf | arcticfox, penguin | frosttroll, polarbear |
+| cold rainforest |  |  | owl, raccoon | flyingsquirrel, roe | bear, unicorn |
+| hot |  |  | cat, fennec | cheetah, lion | rhino, sphinx |
+| jungle |  |  | bat, snake | jaguar, tiger | elephant, featheredserpent |
+| mangrove swamp |  |  | heron, otter | crocodile, dragonfly | crab, hydra |
+| mountains and glaciers |  |  | lynx, raven | ibex, redpanda | frostwyrm, snowleopard |
+| volcanic |  |  | ram, salamander | beetle, woodlouse | komodo, stegosaurus |
+<!-- /data: roster -->
