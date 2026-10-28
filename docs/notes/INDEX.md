@@ -53,6 +53,12 @@ says what each note covers.
 - Followers in the treehouse
 - Sigil stack
 - Rank sigils
+- Sides and sizes
+- Stone stack
+- Spell spot
+- Cast ring
+- Conversion
+- Chains
 - Party animal
 - Combat
 - Attack grammar
