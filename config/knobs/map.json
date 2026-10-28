@@ -97,17 +97,23 @@
       ]
     },
     "lakes": {
-      "what": "Lakes [1]: from phase 1 some of an island's areas are water, map.shapes[phase].lakes (fewest, most) of them, each lakeSize (fewest, most) areas, never home or its neighbours, the rest of the island still joined (rules/islandGrowth.ts placeLakes); no beaches but a small shore, their water lighter than the sea; she flies over them in the treetops but never lands on the water, and on foot she and every creature stop at the shore.",
+      "what": "Lakes [1]: from phase 1 some of an island's areas are water, map.shapes[phase].lakes (fewest, most) of them, each lakeSize (fewest, most) areas, never home or its neighbours, the rest of the island still joined (rules/islandGrowth.ts placeLakes); no beaches but a small shore, their water lighter than the sea; she flies over them in the treetops but never lands on the water, and on foot she and every creature stop at the shore. The biome lakes in play [2]: the north's glacier's peaks kept glacierClear metres under her treetop flight (treetopHeight), and the hot springs' (the rust pools') steam: on, puffs rising rise metres over life seconds, size metres across, at opacity, a vent every spacing metres over their deep water.",
       "decisions": [
         {
           "by": "Ed",
           "date": "2026-10-11",
           "rest": "the journey's islands: rules/lakes.ts"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-23",
+          "rest": "render/lakeLooks.ts, each lake the sea chart's look for it"
         }
       ],
       "links": [
         "rules/lakes.ts",
-        "rules/islandGrowth.ts"
+        "rules/islandGrowth.ts",
+        "render/lakeLooks.ts"
       ]
     },
     "lakes.shore": {
@@ -134,21 +140,13 @@
       ]
     },
     "lakes.biomeFirstShare": {
-      "what": "the share of that first phase's lakes that take them, each lake seeded, the rest plain water; further out all of them, further in none [1]. The biome lakes in play [2]: the north's glacier's peaks kept glacierClear metres under her treetop flight (treetopHeight), and the hot springs' (the rust pools') steam: on, puffs rising rise metres over life seconds, size metres across, at opacity, a vent every spacing metres over their deep water.",
+      "what": "the share of that first phase's lakes that take them, each lake seeded, the rest plain water; further out all of them, further in none [1].",
       "decisions": [
         {
           "by": "Ed",
           "date": "2026-10-12",
           "quote": "half the lakes in the third ring are special. Further out they're all special, further in they're all plain"
-        },
-        {
-          "by": "Ed",
-          "date": "2026-10-23",
-          "rest": "render/lakeLooks.ts, each lake the sea chart's look for it"
         }
-      ],
-      "links": [
-        "render/lakeLooks.ts"
       ]
     },
     "chart": {
@@ -359,7 +357,7 @@
     },
     "gladeScale": {},
     "areaEdgeBlend": {
-      "what": "Blended area edges: each tree and bush takes its look (its area type) from a point up to width metres away [1], the offset mostly the plant's own, drawn independently of its neighbours' (stray of it: 0.85, Ed's #887 feedback, so the kinds interleave tree by tree rather than in clumps; it was 0.5), the rest a smooth noise scale metres across so the band doesn't run dead straight; the neighbour's share ramps from about half at the border to none width metres in. And the band itself wanders [2]: every plant near one spot shifted alike by up to warp metres, a noise warpScale metres across, so a border reads as ragged, gradual mixing rather than a line; width doubled to 80 then (it was 40). warp 0 since [3], kept as a knob.",
+      "what": "Blended area edges: each tree and bush takes its look (its area type) from a point up to width metres away [1], the offset mostly the plant's own, drawn independently of its neighbours' (stray of it: 0.85, Ed's #887 feedback, so the kinds interleave tree by tree rather than in clumps; it was 0.5), the rest a smooth noise scale metres across so the band doesn't run dead straight; the neighbour's share ramps from about half at the border to none width metres in. And the band itself wanders [2]: every plant near one spot shifted alike by up to warp metres, a noise warpScale metres across, so a border reads as ragged, gradual mixing rather than a line; width doubled to 80 then (it was 40). warp 0 since [3], kept as a knob. The pause page's Area blend slider sets width (a new map: it reloads). Only the look: creatures, partifying and the party border keep the exact borders.",
       "decisions": [
         {
           "by": "Ed",
@@ -380,7 +378,7 @@
       ]
     },
     "areaEdgeBlend.tufts": {
-      "what": "the share of the band the ground cover blends over (0: the tufts keep the exact border, as before; they lie on the area's own floor, which keeps its edge, and a cave mouth's bare ground taking a grassland's thick grass 40 m in read as wrong; 1 blends them as the trees); their cell (a legend circle's floor, an arena) stays the exact one either way. The pause page's Area blend slider sets width (a new map: it reloads). Only the look: creatures, partifying and the party border keep the exact borders."
+      "what": "the share of the band the ground cover blends over (0: the tufts keep the exact border, as before; they lie on the area's own floor, which keeps its edge, and a cave mouth's bare ground taking a grassland's thick grass 40 m in read as wrong; 1 blends them as the trees); their cell (a legend circle's floor, an arena) stays the exact one either way."
     },
     "groundBlend": {
       "what": "How neighbouring areas' floor textures meet (Ed, v160): the border is warped by noise in two octaves (up to warp metres over about 40 m, and fine metres over about 6 m), so it meanders rather than following the texture's grid; across a band metres wide the two floors mix pixel by pixel, by noise and (dither) an ordered dither, like grass creeping into dirt. Visual only. ?blend=off turns it off."
@@ -444,13 +442,18 @@
       ]
     },
     "glades": {
-      "what": "The sleeping legends' clearings [1]: art builder 1 places them (the map's glades); until then one round each sleeping legend, radius metres across with the legend top of the way toward its top. Only those within reach metres of the witch, the nearest 4, are lit.",
+      "what": "The sleeping legends' clearings [1]: art builder 1 places them (the map's glades); until then one round each sleeping legend, radius metres across with the legend top of the way toward its top. Only those within reach metres of the witch, the nearest 4, are lit. Inside one [2]: the forest's light and haze outside the clearing's own twilight dim by dark (0 none, 1 black), her own glow goes by glowOff (1: off; her moonlit rim stays), both eased in and out over fade seconds.",
       "decisions": [
         {
           "by": "Ed",
           "date": "2026-10-06",
           "quote": "Sleeping legends should be in a small circular clearing, where they sit near the top of the circle. This magical clearing should be lit with an eerie twilight with glowing motes rising in it.",
           "rest": "render/glades.ts"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-06",
+          "quote": "When you go into the legend clearing, the rest of the forest should get darker. Maybe switch off the witch's glow when she's in there."
         }
       ],
       "links": [
@@ -467,20 +470,13 @@
       "what": "its pool, filling the circle and soft at its edge."
     },
     "glades.edge": {
-      "what": "the ring at its edge at full (a quarter of it always marks the circle), which brightens with the witch inside it or a quest sigil or relic put down in it, easing at edgeEase a second. Inside one [1]: the forest's light and haze outside the clearing's own twilight dim by dark (0 none, 1 black), her own glow goes by glowOff (1: off; her moonlit rim stays), both eased in and out over fade seconds.",
-      "decisions": [
-        {
-          "by": "Ed",
-          "date": "2026-10-06",
-          "quote": "When you go into the legend clearing, the rest of the forest should get darker. Maybe switch off the witch's glow when she's in there."
-        }
-      ]
+      "what": "the ring at its edge at full (a quarter of it always marks the circle), which brightens with the witch inside it or a quest sigil or relic put down in it, easing at edgeEase a second."
     },
     "glades.motes": {
       "what": "per to a clearing, rising rise metres a second to height metres, size art pixels, in hue and sat at bright."
     },
     "treehouse": {
-      "what": "The witch's treehouse, home [1][2]: its foot (the Terrace's middle; clear metres round it) stands gap metres beyond the dancefloor's ring of speakers (so however many speakers or how far out, it stays outside them; 22 keeps the oak's rooms, up in its crown, clear of the dancefloor's clearing), at angle degrees (-135: north-west; -90 due north, straight up the screen), always facing south, to the floor and the camera; and keeps a clearing of clear metres round its foot (at least the art's footprint: 8.2 m for the v2 tower); its lantern and fairy lights light lightReach metres round at lightStrength. The game starts with her sitting on its terrace; the first move or rise takes her off. The deck [3]: on (false: the old treehouse), a round deck radius metres across its middle at the Ent (the treehouse's spot), its floor height metres up [4]; in the treetops, landing within radius + grace metres of its middle lands her on it; she walks it, kept rail metres inside its edge, round the map table in its middle (table metres round; Ed: \"The world map is in the centre\"; E within tableUse metres of its edge opens the sea chart) and behind the decks along its south edge [5], where she starts and comes back, seat metres south of the middle. On it, landed, time runs as in a calm legend circle (legendCircle.slow).",
+      "what": "The witch's treehouse, home [1][2]: its foot (the Terrace's middle; clear metres round it) stands gap metres beyond the dancefloor's ring of speakers (so however many speakers or how far out, it stays outside them; 22 keeps the oak's rooms, up in its crown, clear of the dancefloor's clearing), at angle degrees (-135: north-west; -90 due north, straight up the screen), always facing south, to the floor and the camera; and keeps a clearing of clear metres round its foot (at least the art's footprint: 8.2 m for the v2 tower); its lantern and fairy lights light lightReach metres round at lightStrength. The game starts with her sitting on its terrace; the first move or rise takes her off. The deck [3]: on (false: the old treehouse), a round deck radius metres across its middle at the Ent (the treehouse's spot), its floor height metres up [4]; in the treetops, landing within radius + grace metres of its middle lands her on it; she walks it, kept rail metres inside its edge, round the map table in its middle (table metres round; Ed: \"The world map is in the centre\"; E within tableUse metres of its edge opens the sea chart) and behind the decks along its south edge [5], where she starts and comes back, seat metres south of the middle. On it, landed, time runs as in a calm legend circle (legendCircle.slow). The house [6][7]: its floor the oak's one shape (config/house/shape.js) at height metres, rail its edge's keep-in, the Terrace one of its trunk rooms at the treehouse's spot, its layout config/house/base.json's (terrace: the open rim, the decks, her seat, the magic circle): at treetop height she flies straight onto the Terrace and lands over landTime seconds, walks off its rim to fly again, or, with no broom (fall.on, a switch till the brooms are objects), falls for fall.time seconds and comes back at the magic circle (circle.out south of the hub's centre, circle.r), where a knockout brings her back too. The house's walk [8]: on foot in the house (the hub, the balcony, the rooms) she walks, walk metres a second, not at her broom's groundSpeed [9]; her walk cycle is drawn for stride metres a second, its steps quickening above it so her feet don't slide. The dark behind the house [10][11]: with dark.on, on foot in the house, any room or the Terrace, only the house, the Ent's crowns and her are drawn, over black, till the island's ready (its art drawn: g.islandReady); then the forest fades in behind the whole house over dark.reveal seconds and stays behind every room after; leaving the house before then, it comes back from where she stands over dark.fade seconds, and through the telescope it fades in over the same. The great oak's crown [12]: with crown.on, one crown over the whole house in place of the rooms' leaf roofs, grown from the house's outline (config/house/outline.json) and crown.seed: its lobes, the oak's limbs through its gaps, the Terrace's notch open to the sky out to its edge, its string lights and its far landmark. Indoors [13]: the crown cleared over her room (or branch) opens over crown.cutFade seconds as she comes in and fills back in over the same as she leaves, and the forest's hole round her (canopyCutout: its size, its soft edge) is cut in it too, round where she's drawn, opening and closing with it; the Terrace's notch stays open as ever. Its lights [14]: lights of its strings hung, whole strings by a hash (0.5; 1 every one), each string hung its own way (rules/crown.ts: swags with their own sag and steps, some part way, tails hanging off them, spirals round the big limbs, drapes near or long across a gap, garlands part way or all round, tilted and wavering, the bulbs the same spacing on every one, Ed: \"The same bulb spacing\"). Its wrap [15]: wrap long strands spiralling out over its top from its middle as seen from above, in place of its drapes and garlands, each resting on the lobes, its height smoothed along it and sagging across the gaps between them (rules/crown.ts makeCrown); 2, as Ed chose; 0 its drapes and garlands instead. Its warm light [16]: warm times the house's light spilling up onto the lobes' and limbs' undersides over its open rooms (render/crown.ts warmAt: a glow round each room's middle 1.5 m over its floor, its size and 3 m more across, worked out once as the crown's made), in flat quarter steps; 0 none, 1 as Ed chose it from the mock; both live on the pause page's Oak crown group.",
       "decisions": [
         {
           "by": "Ed",
@@ -509,21 +505,6 @@
           "date": null,
           "quote": "The table holding the decks is along the curved bottom edge of the platform",
           "rest": "decks, from where she stands behind them, inner metres out, to their front, outer, from to to degrees round, 90 due south; the Ent's art, art/ent.js, draws them there"
-        }
-      ],
-      "links": [
-        "rules/treehouse.ts",
-        "art/ent.js"
-      ]
-    },
-    "treehouse.carrier": {
-      "what": "\"island\" that island's kind's legend, braced under the Ent, its back about 13 m up and the Ent's trunk that much shorter, so the deck stays where it is (home, the Ent's own island, has none, nor has a map that isn't an island); a kind's id (e.g. \"bear\", or ?carrier=bear) that kind's everywhere; \"none\" no one. The house [2][3]: its floor the oak's one shape (config/house/shape.js) at height metres, rail its edge's keep-in, the Terrace one of its trunk rooms at the treehouse's spot, its layout config/house/base.json's (terrace: the open rim, the decks, her seat, the magic circle): at treetop height she flies straight onto the Terrace and lands over landTime seconds, walks off its rim to fly again, or, with no broom (fall.on, a switch till the brooms are objects), falls for fall.time seconds and comes back at the magic circle (circle.out south of the hub's centre, circle.r), where a knockout brings her back too. The house's walk [4]: on foot in the house (the hub, the balcony, the rooms) she walks, walk metres a second, not at her broom's groundSpeed [5]; her walk cycle is drawn for stride metres a second, its steps quickening above it so her feet don't slide. The dark behind the house [6][7]: with dark.on, on foot in the house, any room or the Terrace, only the house, the Ent's crowns and her are drawn, over black, till the island's ready (its art drawn: g.islandReady); then the forest fades in behind the whole house over dark.reveal seconds and stays behind every room after; leaving the house before then, it comes back from where she stands over dark.fade seconds, and through the telescope it fades in over the same. The great oak's crown [8]: with crown.on, one crown over the whole house in place of the rooms' leaf roofs, grown from the house's outline (config/house/outline.json) and crown.seed: its lobes, the oak's limbs through its gaps, the Terrace's notch open to the sky out to its edge, its string lights and its far landmark. Indoors [9]: the crown cleared over her room (or branch) opens over crown.cutFade seconds as she comes in and fills back in over the same as she leaves, and the forest's hole round her (canopyCutout: its size, its soft edge) is cut in it too, round where she's drawn, opening and closing with it; the Terrace's notch stays open as ever. Its lights [10]: lights of its strings hung, whole strings by a hash (0.5; 1 every one), each string hung its own way (rules/crown.ts: swags with their own sag and steps, some part way, tails hanging off them, spirals round the big limbs, drapes near or long across a gap, garlands part way or all round, tilted and wavering, the bulbs the same spacing on every one, Ed: \"The same bulb spacing\"). Its wrap [11]: wrap long strands spiralling out over its top from its middle as seen from above, in place of its drapes and garlands, each resting on the lobes, its height smoothed along it and sagging across the gaps between them (rules/crown.ts makeCrown); 2, as Ed chose; 0 its drapes and garlands instead. Its warm light [12]: warm times the house's light spilling up onto the lobes' and limbs' undersides over its open rooms (render/crown.ts warmAt: a glow round each room's middle 1.5 m over its floor, its size and 3 m more across, worked out once as the crown's made), in flat quarter steps; 0 none, 1 as Ed chose it from the mock; both live on the pause page's Oak crown group.",
-      "decisions": [
-        {
-          "by": "Ed",
-          "date": "2026-10-10",
-          "quote": "Arriving",
-          "rest": "journey.md: on a new island the Ent stands on the back of a party legend of that island's kind; drawing only, art/carrier.js"
         },
         {
           "by": "Ed",
@@ -589,14 +570,28 @@
         }
       ],
       "links": [
-        "art/carrier.js",
-        "docs/backlog/treehouse.md",
         "rules/treehouse.ts",
+        "art/ent.js",
+        "docs/backlog/treehouse.md",
         "config/house/shape.js",
         "config/house/base.json",
         "rules/crown.ts",
         "render/crown.ts",
         "config/house/outline.json"
+      ]
+    },
+    "treehouse.carrier": {
+      "what": "\"island\" that island's kind's legend, braced under the Ent, its back about 13 m up and the Ent's trunk that much shorter, so the deck stays where it is (home, the Ent's own island, has none, nor has a map that isn't an island); a kind's id (e.g. \"bear\", or ?carrier=bear) that kind's everywhere; \"none\" no one.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-10",
+          "quote": "Arriving",
+          "rest": "journey.md: on a new island the Ent stands on the back of a party legend of that island's kind; drawing only, art/carrier.js"
+        }
+      ],
+      "links": [
+        "art/carrier.js"
       ]
     },
     "home": {

@@ -5,34 +5,22 @@
     "beat": {
       "what": "The music's clock (beats per minute): the lasers sweep to it and party animals dance to it. Later the music itself drives it."
     },
-    "leyLines": {},
-    "leyLines.pulseSpeed": {
-      "what": "the pulse's speed along the route's own curves, metres a second [2], times the party's tempo (a knockdown's BPM speeds it); a wave lands as it reaches the next stone, so a wave's gap is its link's length over the speed; 0 holds the pulse where it is (no waves). The boot has its own speed (boot.speed). The pause page's Waves slider sets it live, 0 to 6, remembered on this browser (config/decisions/953-waves.json, app/settings.ts); ?pulse=<m/s> or ?pulse=off sets it from a link, over the saved one.",
+    "leyLines": {
+      "what": "The pause page's Waves slider sets it live, 0 to 6, remembered on this browser (config/decisions/953-waves.json, app/settings.ts); ?pulse=<m/s> or ?pulse=off sets it from a link, over the saved one. The ley lines [1][2][3]: a glowing line through every wave's runestone in the order the waves wake them, home first, the whole route the whole time (party.picker route keeps it from crossing itself): the sections ahead of the last stone reached each fade times as bright as the one before, the one just left behind behindBright times as bright as the next and each before it fade times that, none fainter than far[0] ahead or far[1] behind (as shares). Each wanders along the low ground between its stones, straying up to valley of its length (80 m at most) to follow the hills' valleys, and a shimmer flows along it toward the next stone at flow[0] m/s, flow[1] m apart. It stays on the ground in both modes (Ed): width metres across on the ground and over the treetops (wider there, with a faint glow through the crowns), height metres over the ground in each. Round 14 [4][5]: on the ground the line is pixels, a hard core core[0] metres each side of its middle (core[1] over the treetops) in whole art pixels, a half-bright rim core[2] (core[3]) round it, its brightness worked out per art pixel along it in flat quarter steps, the pulse's head and the growing tip stepped the same way; round it the smooth glow it casts, over width; from the treetops the glow through the crowns stays smooth. brightness 0.3 -> 0.4, width [2, 4.5] -> [3, 5.5]. ?ley=0 turns them off. Its whole length [6]: fade, behindBright and far all 1, so every section is as bright as the next; unbroken into and out of each stone; laid on the ground every 2 m so it never sinks into a crest; shown through the trees (never through a hill, the witch or a creature) at the same brightness; the current link as bright as the rest, the pulse only adding its head and arrival flash.",
       "decisions": [
         {
           "by": "Ed",
-          "date": "2026-10-09",
-          "quote": "Pure constant speed"
+          "date": "2026-10-04"
         },
         {
-          "by": "Ed",
-          "date": "2026-10-18",
-          "quote": "Default starting wave speed is 1m/s",
-          "rest": "1; 4 before"
-        }
-      ],
-      "links": [
-        "config/decisions/953-waves.json",
-        "app/settings.ts"
-      ]
-    },
-    "leyLines.reveal": {
-      "what": "from the end of home's boot the line grows out from the treehouse along the route at this many links a wave (this many times the pulse's speed), a soft glow at its tip, reaching this stone as the first wave lands and going on at that pace until the whole route is drawn (so no stone pops on at once; rules/leypulse.ts leyReachTimes gives when it reaches each, for the beacons); none at all while home boots up. The pulse itself (render/leylines.ts) runs along the link from the last stone reached by the wave countdown's share (rules/leypulse.ts, as the HUD's wave pointer), the stretch behind it brighter, the whole link brightening toward the wave. The boot (rules/bootRing.ts): the party spell sends the pulse from the treehouse round the home ring clockwise from the top, turning each stone into its speaker, the line drawn ahead of it at reveal times its pace. ?ley=0 turns them off. Round 14 [2][3]: on the ground the line is pixels, a hard core core[0] metres each side of its middle (core[1] over the treetops) in whole art pixels, a half-bright rim core[2] (core[3]) round it, its brightness worked out per art pixel along it in flat quarter steps, the pulse's head and the growing tip stepped the same way; round it the smooth glow it casts, over width; from the treetops the glow through the crowns stays smooth. brightness 0.3 -> 0.4, width [2, 4.5] -> [3, 5.5]. ?ley=0 turns them off. Its whole length [4]: fade, behindBright and far all 1, so every section is as bright as the next; unbroken into and out of each stone; laid on the ground every 2 m so it never sinks into a crest; shown through the trees (never through a hill, the witch or a creature) at the same brightness; the current link as bright as the rest, the pulse only adding its head and arrival flash.",
-      "decisions": [
+          "by": null,
+          "date": "2026-10-05",
+          "quote": "you just follow them from objective to objective"
+        },
         {
-          "by": "Ed",
+          "by": null,
           "date": "2026-10-06",
-          "quote": "The pulse starts from the treehouse at the start of the first wave. before that, during boot up phase, there's no leyline ... Then the leyline appears, starting at the treehouse, moving three times (adjustable) the speed on the pulse (so it reaches runestone 3 by the time the first wave finishes)"
+          "quote": "I think the leylines should cover the entire set of waves the whole time, but ideally it shouldn't cross itself, or try and minimise crossings"
         },
         {
           "by": "Ed",
@@ -51,13 +39,43 @@
         }
       ],
       "links": [
+        "config/decisions/953-waves.json",
+        "app/settings.ts"
+      ]
+    },
+    "leyLines.pulseSpeed": {
+      "what": "the pulse's speed along the route's own curves, metres a second [2], times the party's tempo (a knockdown's BPM speeds it); a wave lands as it reaches the next stone, so a wave's gap is its link's length over the speed; 0 holds the pulse where it is (no waves). The boot has its own speed (boot.speed).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-09",
+          "quote": "Pure constant speed"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-18",
+          "quote": "Default starting wave speed is 1m/s",
+          "rest": "1; 4 before"
+        }
+      ]
+    },
+    "leyLines.reveal": {
+      "what": "from the end of home's boot the line grows out from the treehouse along the route at this many links a wave (this many times the pulse's speed), a soft glow at its tip, reaching this stone as the first wave lands and going on at that pace until the whole route is drawn (so no stone pops on at once; rules/leypulse.ts leyReachTimes gives when it reaches each, for the beacons); none at all while home boots up. The pulse itself (render/leylines.ts) runs along the link from the last stone reached by the wave countdown's share (rules/leypulse.ts, as the HUD's wave pointer), the stretch behind it brighter, the whole link brightening toward the wave. The boot (rules/bootRing.ts): the party spell sends the pulse from the treehouse round the home ring clockwise from the top, turning each stone into its speaker, the line drawn ahead of it at reveal times its pace. ?ley=0 turns them off.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-06",
+          "quote": "The pulse starts from the treehouse at the start of the first wave. before that, during boot up phase, there's no leyline ... Then the leyline appears, starting at the treehouse, moving three times (adjustable) the speed on the pulse (so it reaches runestone 3 by the time the first wave finishes)"
+        }
+      ],
+      "links": [
         "rules/leypulse.ts",
         "render/leylines.ts",
         "rules/bootRing.ts"
       ]
     },
     "leyLines.advance": {
-      "what": "\"first\" moves it on when the next area's quest is done or its wave arrives, whichever comes first; \"wave\" only when its wave arrives. Each wanders along the low ground between its stones, straying up to valley of its length (80 m at most) to follow the hills' valleys, and a shimmer flows along it toward the next stone at flow[0] m/s, flow[1] m apart. It stays on the ground in both modes (Ed): width metres across on the ground and over the treetops (wider there, with a faint glow through the crowns), height metres over the ground in each. \"wave\" (the default) keeps the line, its pulse and its front to the waves, a quest done leaving its stone where it is on the route; \"first\" moves the line on to a stone as soon as its quest is done, as before (the pulse jumping to it).",
+      "what": "\"first\" moves it on when the next area's quest is done or its wave arrives, whichever comes first; \"wave\" only when its wave arrives. \"wave\" (the default) keeps the line, its pulse and its front to the waves, a quest done leaving its stone where it is on the route; \"first\" moves the line on to a stone as soon as its quest is done, as before (the pulse jumping to it).",
       "decisions": [
         {
           "by": "Ed",
@@ -78,27 +96,13 @@
       ]
     },
     "leyLines.depart": {
-      "what": "the first line leaves the treehouse's front round the ring of speakers, avoid metres outside it, on the first objective's side (clockwise on the screen and off to the right, the spiral starting east of home; the other way round for one west of it), then off the ring and looping round the same way out to the first objective; no link of the route passes over the dancefloor. The ley lines [2][3][4]: a glowing line through every wave's runestone in the order the waves wake them, home first, the whole route the whole time (party.picker route keeps it from crossing itself): the sections ahead of the last stone reached each fade times as bright as the one before, the one just left behind behindBright times as bright as the next and each before it fade times that, none fainter than far[0] ahead or far[1] behind (as shares).",
+      "what": "the first line leaves the treehouse's front round the ring of speakers, avoid metres outside it, on the first objective's side (clockwise on the screen and off to the right, the spiral starting east of home; the other way round for one west of it), then off the ring and looping round the same way out to the first objective; no link of the route passes over the dancefloor.",
       "decisions": [
         {
           "by": "Ed",
           "date": "2026-10-06",
           "quote": "The leyline shouldn't cross the dancefloor. After going around the speaker circle it should go off to the right and loop around to whatever direction it needs to go",
           "rest": "it ran due south across the floor before"
-        },
-        {
-          "by": "Ed",
-          "date": "2026-10-04"
-        },
-        {
-          "by": null,
-          "date": "2026-10-05",
-          "quote": "you just follow them from objective to objective"
-        },
-        {
-          "by": null,
-          "date": "2026-10-06",
-          "quote": "I think the leylines should cover the entire set of waves the whole time, but ideally it shouldn't cross itself, or try and minimise crossings"
         }
       ]
     },
@@ -188,9 +192,11 @@
     "lasers": {
       "what": "Each playing soundsystem's laser show: bursts of blockBars bars, on about duty of the time (seeded per soundsystem), up to maxCount beams stepping on the bars, fanned over spread degrees (no beam tilting more than maxTilt from straight up), swinging sweep degrees once every sweepBeats beats (slow, like searchlights), opening and closing the fan every openBars bars, length metres tall, opacity 0-1, fading in over fadeIn and out over fadeOut seconds, and fading with distance from fadeNear to fadeFar metres. Glow only: no light, nothing from the light budget."
     },
-    "borders": {},
+    "borders": {
+      "what": "A sparkling line round the partified region's outside edge, in each area's sigil colour: width (px), brightness, sparkle (0-1, how much it twinkles and runs), step (metres between its sparks)."
+    },
     "borders.on": {
-      "what": "off by default [1][2]. A sparkling line round the partified region's outside edge, in each area's sigil colour: width (px), brightness, sparkle (0-1, how much it twinkles and runs), step (metres between its sparks).",
+      "what": "off by default [1][2].",
       "decisions": [
         {
           "by": "Ed",
@@ -209,16 +215,8 @@
       "what": "(0 a gentle breathing, 1 star-like: brief flashes and dips, now and then a spark out for a moment); each spark flickers between its own area's colour and the one across the edge (Ed, v183), swapRate times a second on its own phase, and swapBeat of them snap on the beat instead. ?border=<twinkle>,<swapRate>,<swapBeat> tries values."
     },
     "bubbles": {
-      "what": "The talk's speech bubbles (Ed): an outline only, no fill. The emoji in them are pixel sprites emojiPixels across, each pixel scale times the game's pixel size on screen (the outline's colour and thickness are in index.html's .bubble)."
-    },
-    "bubbles.levelScale": {
-      "what": "a creature's bubble, emoji and outline together, times this by its level (baby, young, adult, legend); the witch's stays at 1. One bubble style for every speaker (render/bubbles.ts): the 💌 replies, the witches' chat, and the thought bubbles too [2]: a legend's dream, the night won's island dreams and the sleepers' 😴s, cloud and symbol together, by their creature's level.",
+      "what": "The talk's speech bubbles (Ed): an outline only, no fill. The emoji in them are pixel sprites emojiPixels across, each pixel scale times the game's pixel size on screen (the outline's colour and thickness are in index.html's .bubble). One bubble style for every speaker (render/bubbles.ts): the 💌 replies, the witches' chat, and the thought bubbles too [1]: a legend's dream, the night won's island dreams and the sleepers' 😴s, cloud and symbol together, by their creature's level.",
       "decisions": [
-        {
-          "by": "Ed",
-          "date": "2026-10-05",
-          "quote": "the speech bubbles should scale with the level of the animal, with the legends as the largest"
-        },
         {
           "by": "Ed",
           "date": "2026-10-12",
@@ -229,11 +227,29 @@
         "render/bubbles.ts"
       ]
     },
+    "bubbles.levelScale": {
+      "what": "a creature's bubble, emoji and outline together, times this by its level (baby, young, adult, legend); the witch's stays at 1.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-05",
+          "quote": "the speech bubbles should scale with the level of the animal, with the legends as the largest"
+        }
+      ]
+    },
     "runeMarkers": {
-      "what": "Spawn markers (Ed, v147): a rune stone on every spot where a soundsystem will come, scale times the old rune stone's size."
+      "what": "Spawn markers (Ed, v147): a rune stone on every spot where a soundsystem will come, scale times the old rune stone's size. Dormant (not the next wave): the rune glows steadily at dormant.glow (0-1), a modest light (light strength, reach metres) and a faint beacon above the canopy (beam opacity). Awake (the next wave comes here): the rune, its light and its motes pulse on the beat, from awake.glow[0] to [1], light strength plus lightBuild as the wave's countdown runs out, motes rising (motes per stone, plus moteBuild near the end), a stronger beam. When the party comes, the stone flares (flare.light) and sinks over flare.time seconds as its soundsystem arrives. An awake stone shows both [1]: a column of light above the canopy and a thin laser straight up like the disco ball's (laser opacity, width and length in metres; glow only, no light).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": null,
+          "quote": "let's see both",
+          "rest": "v149"
+        }
+      ]
     },
     "runeMarkers.variants": {
-      "what": "each area's stone one of the art's 20 seeded forms, dealt like a shuffled deck so every form is used before any repeats (Ed, #716; rules/runestones.ts) (height, lean, worn top, chips, cracks, moss, the carving's place and wear, the stones and grass at its foot), mirrored at random, its sigil never mirror-written; off, every stone as before. Dormant (not the next wave): the rune glows steadily at dormant.glow (0-1), a modest light (light strength, reach metres) and a faint beacon above the canopy (beam opacity). Awake (the next wave comes here): the rune, its light and its motes pulse on the beat, from awake.glow[0] to [1], light strength plus lightBuild as the wave's countdown runs out, motes rising (motes per stone, plus moteBuild near the end), a stronger beam.",
+      "what": "each area's stone one of the art's 20 seeded forms, dealt like a shuffled deck so every form is used before any repeats (Ed, #716; rules/runestones.ts) (height, lean, worn top, chips, cracks, moss, the carving's place and wear, the stones and grass at its foot), mirrored at random, its sigil never mirror-written; off, every stone as before.",
       "decisions": [
         {
           "by": "Ed",
@@ -249,15 +265,7 @@
       "what": "the beacon's height (metres)."
     },
     "runeMarkers.lightRange": {
-      "what": "stones within this many metres light the scene. When the party comes, the stone flares (flare.light) and sinks over flare.time seconds as its soundsystem arrives. An awake stone shows both [1]: a column of light above the canopy and a thin laser straight up like the disco ball's (laser opacity, width and length in metres; glow only, no light).",
-      "decisions": [
-        {
-          "by": "Ed",
-          "date": null,
-          "quote": "let's see both",
-          "rest": "v149"
-        }
-      ]
+      "what": "stones within this many metres light the scene."
     },
     "sfx": {
       "what": "The sound effects, all synthesised in the music's key [1]: volume over the music's, hear metres (a sound fades to nothing that far from her).",
@@ -499,18 +507,9 @@
         }
       ]
     },
-    "music": {},
-    "music.volume": {
-      "what": "the master."
-    },
-    "music.latency": {
-      "what": "the audio context's latencyHint [1]: interactive the smallest output buffer, balanced more room for the audio thread, playback the most (under-runs least likely, sound effects latest); ?latency= tries one for a load (DECISION FOR ED). Music by proximity [2]: one shared track, full and clear within nearDist metres of a playing soundsystem (or the dancefloor's ring, as loud as its speakers are on), fading to floor of the volume and muffled to a muffle Hz low-pass by farDist metres (clear: the cutoff close by), never gone [3]; a damaged soundsystem nearby wobbles, crackles and drops out, by its damage times distort.",
+    "music": {
+      "what": "Music by proximity [1]: one shared track, full and clear within nearDist metres of a playing soundsystem (or the dancefloor's ring, as loud as its speakers are on), fading to floor of the volume and muffled to a muffle Hz low-pass by farDist metres (clear: the cutoff close by), never gone [2]; a damaged soundsystem nearby wobbles, crackles and drops out, by its damage times distort. Only the music: the room, night and ambience sounds and the effects as they are.",
       "decisions": [
-        {
-          "by": "Ed",
-          "date": "2026-10-07",
-          "quote": "the music is still cutting out"
-        },
         {
           "by": "Ed",
           "date": "2026-10-04"
@@ -524,6 +523,19 @@
       ],
       "links": [
         "tools/music-lab/check.cjs"
+      ]
+    },
+    "music.volume": {
+      "what": "the master."
+    },
+    "music.latency": {
+      "what": "the audio context's latencyHint [1]: interactive the smallest output buffer, balanced more room for the audio thread, playback the most (under-runs least likely, sound effects latest); ?latency= tries one for a load (DECISION FOR ED).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-07",
+          "quote": "the music is still cutting out"
+        }
       ]
     },
     "music.buffer": {
@@ -563,7 +575,7 @@
       "what": "the clearing's metres round a legend where the map draws none."
     },
     "music.house.muffle": {
-      "what": "on the house its low-pass closes to this many Hz as its world slows (eased with the slowing), its volume as it is; lighter than a legend circle's circle.muffle. Only the music: the room, night and ambience sounds and the effects as they are.",
+      "what": "on the house its low-pass closes to this many Hz as its world slows (eased with the slowing), its volume as it is; lighter than a legend circle's circle.muffle.",
       "decisions": [
         {
           "by": "Ed",
@@ -766,7 +778,7 @@
       ]
     },
     "waveNumbers": {
-      "what": "Off [1]; set on to true to bring them back. Wave numbers over the rune stones [2]: each stone shows the wave that will wake it, in its area's neon, over the canopy and clouds from the treetops and above the stone on the ground; on turns them off.",
+      "what": "Off [1]; set on to true to bring them back. Wave numbers over the rune stones [2]: each stone shows the wave that will wake it, in its area's neon, over the canopy and clouds from the treetops and above the stone on the ground; on turns them off; On the ground, a number whose stone is within pinRange metres is held inside the top of the screen when it would be above it.",
       "decisions": [
         {
           "by": "Ed",
@@ -787,7 +799,7 @@
       "what": "metres above the stone (or the treetops)."
     },
     "waveNumbers.spent": {
-      "what": "how bright the number stays once the party has reached the area (0 hides it). On the ground, a number whose stone is within pinRange metres is held inside the top of the screen when it would be above it."
+      "what": "how bright the number stays once the party has reached the area (0 hides it)."
     },
     "dancefloor": {
       "what": "The dancefloor: motes: magic particles drifting up off the circle (count, how high they rise in metres, speed in m/s, column: the share of the circle they rise from); its radius in metres; a ring of speakers.count stone speakers (Ed, v160), the first at speakers.start degrees round from the camera side and the rest evenly spaced, speakers.radiusFactor times the radius out, each speakers.footprint metres round; a clear space of clearing metres beyond the speakers' feet (the treehouse stands outside that); the floor's glass tiles light up (Ed, v160): levels: how many areas must have the party for each level of intensity above 1 (up to 4, a full rave)."

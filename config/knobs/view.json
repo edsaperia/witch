@@ -93,12 +93,8 @@
         }
       ]
     },
-    "camera": {},
-    "camera.zoomEase": {
-      "what": "how softly zoom and rising change the angle and distance. a narrow field of view (fov, degrees) seen from far off, so there is little perspective. Each mode has its own angle (degrees below horizontal) and distance from the witch, at zoomed-in and zoomed-out. Zoom moves between them in zoomSteps steps, starting at startZoom: with 9 steps and startZoom 3 the start is ground 32 degrees at 100 m and treetop 36 degrees at 170 m, with three steps in and five out from each [1].",
-      "also": [
-        "camera.liftEase"
-      ],
+    "camera": {
+      "what": "Near-isometric on the ground, after Transistor; the game opens close in on the witch in her seat on the treehouse (intro: distance metres, angle degrees), easing out to the normal view over intro.ease seconds once she moves or rises (Ed, v171); lower over the treetops, looking toward the horizon to feel the speed. The camera follows the witch on a soft spring (follow: its stiffness; higher keeps her closer to the middle) and looks a little ahead of her: lookAhead seconds of flight, at most lookAheadMax metres, eased in at lookAheadEase. Zoom moves between them in zoomSteps steps, starting at startZoom: with 9 steps and startZoom 3 the start is ground 32 degrees at 100 m and treetop 36 degrees at 170 m, with three steps in and five out from each [1].",
       "decisions": [
         {
           "by": "Ed",
@@ -106,6 +102,12 @@
           "quote": "Increase the range of allowed zooming substantially in both treetop and ground (but keep the step size the same)",
           "rest": "20 m and 2 degrees a step, as before; was 4 steps, startZoom 1, ground 80-140 m, treetop 150-210 m"
         }
+      ]
+    },
+    "camera.zoomEase": {
+      "what": "how softly zoom and rising change the angle and distance. a narrow field of view (fov, degrees) seen from far off, so there is little perspective. Each mode has its own angle (degrees below horizontal) and distance from the witch, at zoomed-in and zoomed-out.",
+      "also": [
+        "camera.liftEase"
       ]
     },
     "camera.curve": {
@@ -119,7 +121,7 @@
       ]
     },
     "camera.curve.beyond": {
-      "what": "how many metres past the bent ground's horizon the distant treetops are still drawn (fewer is cheaper). Near-isometric on the ground, after Transistor; the game opens close in on the witch in her seat on the treehouse (intro: distance metres, angle degrees), easing out to the normal view over intro.ease seconds once she moves or rises (Ed, v171); lower over the treetops, looking toward the horizon to feel the speed. The camera follows the witch on a soft spring (follow: its stiffness; higher keeps her closer to the middle) and looks a little ahead of her: lookAhead seconds of flight, at most lookAheadMax metres, eased in at lookAheadEase."
+      "what": "how many metres past the bent ground's horizon the distant treetops are still drawn (fewer is cheaper)."
     },
     "camera.speedZoom": {
       "what": "the treetop camera's distance is times (treetopSpeed / base) to the power power, so at a faster treetopSpeed it zooms out and the screen holds about as many seconds of flight (power 0: off).",
@@ -220,7 +222,7 @@
       "what": "From the treetops, each placed sigil shows above the canopy over its spot: height metres above the crowns, opacity, size (times the ground rune), and a faint column of light (beam opacity) from the rune up to it. Fades in as she rises."
     },
     "sigilProjection.creatures": {
-      "what": "Wild creatures [1]: every area starts with the same population, population.start [2], and, from the start [3], more by its place on the waves' route (Balance 2's shape; rules/growth.ts routePopulation): byRoute.threat, [route index, F] points (1 the first wave's stone; straight lines between, flat past the ends), is the extra fighting value its young and adults add (F by Lanchester, young 11.6, adult 40, babies 0; about what an area woken at that wave grew to before); its kind spends it by its profile (byRoute.profiles[species], else default: the shares of its extra creatures as babies, young and adults), so many more of a swarm's young than of a heavy kind's adults, at the same danger: count = threat ÷ the profile's mean F a creature × the area's count scale, rounded, split by the shares (largest remainder, ties by the seed). each leashed or happy creature's sigil hangs over it at the same height, moving with it, no beam: only the nearest max within range metres, size times its ground rune, at opacity (a happy one's times happy, as its rune is dimmer on the ground), fading out over the last fade (a share) of the range. Not for one in her stack (its sigil's already over her) or one standing at its placed sigil (that one's projected already).",
+      "what": "Wild creatures [1]: every area starts with the same population, population.start [2], and, from the start [3], more by its place on the waves' route (Balance 2's shape; rules/growth.ts routePopulation): byRoute.threat, [route index, F] points (1 the first wave's stone; straight lines between, flat past the ends), is the extra fighting value its young and adults add (F by Lanchester, young 11.6, adult 40, babies 0; about what an area woken at that wave grew to before); its kind spends it by its profile (byRoute.profiles[species], else default: the shares of its extra creatures as babies, young and adults), so many more of a swarm's young than of a heavy kind's adults, at the same danger: count = threat ÷ the profile's mean F a creature × the area's count scale, rounded, split by the shares (largest remainder, ties by the seed). The hostile swarm [4]: its challenge grows with the area's place p in the runestone order (0 the first stone, 1 the last), whatever its species. Each area fields, of every size up to its species' cap (capScales: the cap grown along the same curve, at least 2) and every young/adult split, the one nearest the target; among those within swarm.mixTolerance (10%) of the nearest, a mix of young and adults first. A simulated power (config/swarm-power.json, empty in phase 1) stands in for the estimate where it has the swarm. So a default map (about 100 areas) holds about 540 hostiles: the curve's average, 5.8 an area. growth is the old growth on a clock, which the game no longer reads (the balance simulators still do): every wave, each area the party hasn't reached gained growth.perWave more [5], each at a random level by growth.weights (baby, young, adult: equal thirds), so the areas the party reaches late are the ones to fear. Areas already partified don't grow. New ones arrive out of the witch's sight (beyond the haze's far edge plus growth.hide metres), never popping in on screen; areas far from every witch keep them as counts only, made real (from the seed) when a witch comes within creatureSimRadius of the area or it wakes. The home area holds none. Fighting value (DESIGN.md, Balance): a young is worth 15.5, an adult 29, a legend 76; so an area woken at wave n brings about 1 + n/3 young and 1 + n/3 adults (F about 44.5 + 14.8 n), besides its legend (wildLegends). Only creatures whose home is within creatureSimRadius metres of the witch move. node tools/balance/sim.mjs forecasts the sieges these numbers make. each leashed or happy creature's sigil hangs over it at the same height, moving with it, no beam: only the nearest max within range metres, size times its ground rune, at opacity (a happy one's times happy, as its rune is dimmer on the ground), fading out over the last fade (a share) of the range. Not for one in her stack (its sigil's already over her) or one standing at its placed sigil (that one's projected already).",
       "decisions": [
         {
           "by": "Ed",
@@ -238,13 +240,26 @@
           "rest": "his new core design"
         },
         {
+          "by": "Ed",
+          "date": "2026-10-08",
+          "rest": "the swarm plan's phase 1: its own young and adults, the ones a wave enrages and sets marching; rules/swarm.ts"
+        },
+        {
+          "by": null,
+          "date": "2026-10-06",
+          "rest": "a fraction carries over: 0.5 is one every other wave; balance, DECISION FOR ED: 0.5, from 1, so a player's defence can hold the early sieges and playing well matters"
+        },
+        {
           "by": "Ed's playtest",
           "date": "2026-10-06",
           "quote": "I should be able to see sigils of leashed creatures and happy creatures from treetop mode"
         }
       ],
       "links": [
-        "rules/growth.ts"
+        "rules/growth.ts",
+        "rules/swarm.ts",
+        "config/swarm-power.json",
+        "tools/balance/sim.mjs"
       ]
     },
     "suspects": {
@@ -336,7 +351,7 @@
       "what": "Never lose the witch: tall things (over minHeight metres) standing in front of her fade to fadeOpacity where they cover her, in a soft circle round her body (a little bigger than her sprite) that eases from see-through at the centre to opaque past edge (a share of its radius), and eases in over a few metres as she moves behind; anything that still hides her shows her silhouette in her glow colour at silhouette opacity."
     },
     "reveal": {
-      "what": "The places she stands in, kept clear [1][2]: while she stands on the ground within a place of interest, everything standing nearer the camera than its centre whose picture covers it (its ring on the ground and what stands at its centre, width by height metres) fades out whole.",
+      "what": "The places she stands in, kept clear [1][2]: while she stands on the ground within a place of interest, everything standing nearer the camera than its centre whose picture covers it (its ring on the ground and what stands at its centre, width by height metres) fades out whole. For these three, whatever stands within keep metres of the thing is never faded: the thing itself (a relic, the trunk and a runestone are stood toward the camera by part of their height, nearer than the spot they mark). A place fades over seconds as she walks in and back over seconds as she leaves.",
       "decisions": [
         {
           "by": "Ed",
@@ -372,13 +387,13 @@
       ]
     },
     "reveal.runestone.bounded": {
-      "what": "(the runestone's): only what stands within radius metres of the thing fades, so the woods round a fight don't thin out past it. For these three, whatever stands within keep metres of the thing is never faded: the thing itself (a relic, the trunk and a runestone are stood toward the camera by part of their height, nearer than the spot they mark)."
+      "what": "(the runestone's): only what stands within radius metres of the thing fades, so the woods round a fight don't thin out past it."
     },
     "reveal.find": {
       "what": "tonight's trunk or wreck, until it's taken."
     },
     "reveal.flask": {
-      "what": "a lying relic flask. Each on or off [1]. A place fades over seconds as she walks in and back over seconds as she leaves.",
+      "what": "a lying relic flask. Each on or off [1].",
       "decisions": [
         {
           "by": "Ed",
@@ -429,7 +444,7 @@
       ]
     },
     "canopyCutout": {
-      "what": "In ground mode the canopy stays drawn at the screen's edges, so she flies under the forest roof; a hole round her is cut out, screenFraction of the screen's width across, its edge edge of the width wide. Each tree has its own radius for it, up to a fifth nearer or further [1], so no line runs across the canopy, and the edge fades over a wide band. Rising closes the hole.",
+      "what": "In ground mode the canopy stays drawn at the screen's edges, so she flies under the forest roof; a hole round her is cut out, screenFraction of the screen's width across, its edge edge of the width wide. Each tree has its own radius for it, up to a fifth nearer or further [1], so no line runs across the canopy, and the edge fades over a wide band. Rising closes the hole. Each crown goes by its middle less half its half-size, so every crown counts a little nearer: the hole and its band came in to keep the roof at the screen's edges (screenFraction 1 -> 0.8, edge 0.5 -> 0.25, outer 0.8 -> 1: crowns fading from about 0.15 to 0.65 of the width out), and glowToCutout 1 -> 1.55 keeps her light's reach as it was. Ed, 2026-10-14 (\"the canopy cut-away radius is too large\"): screenFraction 0.8 -> 0.53 -> 0.4, glowToCutout 1.55 -> 1.95 -> 2.24 keeping her light's reach.",
       "decisions": [
         {
           "by": "Ed",
@@ -461,7 +476,7 @@
       "what": "each tree's own radius spread round the hole's, a share of it (0.2 before), so the edge is several crowns deep and ragged."
     },
     "canopyCutout.lead": {
-      "what": "its middle leans that many seconds ahead of her the way she's going (eased), so the opening opens into her path. Each crown goes by its middle less half its half-size, so every crown counts a little nearer: the hole and its band came in to keep the roof at the screen's edges (screenFraction 1 -> 0.8, edge 0.5 -> 0.25, outer 0.8 -> 1: crowns fading from about 0.15 to 0.65 of the width out), and glowToCutout 1 -> 1.55 keeps her light's reach as it was. Ed, 2026-10-14 (\"the canopy cut-away radius is too large\"): screenFraction 0.8 -> 0.53 -> 0.4, glowToCutout 1.55 -> 1.95 -> 2.24 keeping her light's reach."
+      "what": "its middle leans that many seconds ahead of her the way she's going (eased), so the opening opens into her path."
     },
     "canopyCutout.hold": {
       "what": "the share of the camera's way down (by its eased lift, which trails hers) the hole stays shut before it opens from nothing, its soft edge growing with it, and so the share of its way up by which it has shut [1]",

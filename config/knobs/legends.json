@@ -13,7 +13,7 @@
       ]
     },
     "dreams": {
-      "what": "A sleeping legend's dream (or nightmare) bubble, and its pointer to the nearest runestone of the area type it dreams of [1]: shown only while she's on the ground within range metres of the legend (about its area's clearing and a little more); never from the treetops.",
+      "what": "A sleeping legend's dream (or nightmare) bubble, and its pointer to the nearest runestone of the area type it dreams of [1]: shown only while she's on the ground within range metres of the legend (about its area's clearing and a little more); never from the treetops. A nightmare whose quest has closed shows its face alone.",
       "decisions": [
         {
           "by": "Ed",
@@ -40,7 +40,7 @@
       ]
     },
     "dreams.cycle": {
-      "what": "the pixel thought bubble shows one symbol for hold seconds, the face, then the sigil it dreams of, then the face again; a flask share of the sigil's turns (seeded per legend and turn) show the flask's relic sigil instead [2]; each fades in and out over fade seconds. A nightmare whose quest has closed shows its face alone.",
+      "what": "the pixel thought bubble shows one symbol for hold seconds, the face, then the sigil it dreams of, then the face again; a flask share of the sigil's turns (seeded per legend and turn) show the flask's relic sigil instead [2]; each fades in and out over fade seconds.",
       "decisions": [
         {
           "by": "Ed",
@@ -55,13 +55,16 @@
       ]
     },
     "legends": {
-      "what": "Ed, 2026-10-06: \"Legends should only appear in about half of areas (we can test this ratio); every area makes them too common.\" share: the fraction of the areas (home never) with a sleeping legend [1], seeded per map and spread so they don't clump (no more than two neighbouring areas together where the map allows). The rest have no legend: no clearing, quest, restlessness or legend music. Read as the map is made: the decisions panel reloads. Ed's answers on #259 [2]: buffPower, every legend's buff's strength (\"Bigger buffs\", for quests worth their cost; 1 as written: a scale of v is 1 + (v - 1) x buffPower, an add v x buffPower, a behaviour's count rounded up by it, its limits still holding); happyRange, a happy legend's reach in metres (relic allies: \"They stay home, but if they're not useful enough right now, make their range longer\").",
+      "what": ". The rest have no legend: no clearing, quest, restlessness or legend music. Read as the map is made: the decisions panel reloads. Ed's answers on #259 [2]: buffPower, every legend's buff's strength (\"Bigger buffs\", for quests worth their cost; 1 as written: a scale of v is 1 + (v - 1) x buffPower, an add v x buffPower, a behaviour's count rounded up by it, its limits still holding); happyRange, a happy legend's reach in metres (relic allies: \"They stay home, but if they're not useful enough right now, make their range longer\").",
       "decisions": [
         {
           "by": "Ed",
-          "date": "2026-10-08",
-          "quote": "it should be more like 1/5",
-          "rest": "0.5 before"
+          "date": "2026-10-06",
+          "quote": [
+            "Legends should only appear in about half of areas (we can test this ratio); every area makes them too common.",
+            "it should be more like 1/5"
+          ],
+          "rest": "share: the fraction of the areas (home never) with a sleeping legend (Ed, 2026-10-08:; 0.5 before), seeded per map and spread so they don't clump (no more than two neighbouring areas together where the map allows)"
         },
         {
           "by": null,

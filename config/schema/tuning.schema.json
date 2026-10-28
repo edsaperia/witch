@@ -2187,7 +2187,7 @@
         "treetop"
       ],
       "additionalProperties": false,
-      "description": "Wind sway on leafy things (Ed, v171): trees (both halves together, from the foot) and undergrowth lean with gusts that travel across the forest: strength metres at the top of a crown, gusts moving at speed m/s, gustScale metres across."
+      "description": "Wind sway on leafy things (Ed, v171): trees (both halves together, from the foot) and undergrowth lean with gusts that travel across the forest: strength metres at the top of a crown, gusts moving at speed m/s, gustScale metres across; Walls and set pieces stand still."
     },
     "groundCover": {
       "type": "object",
@@ -4682,7 +4682,8 @@
         "defendRadius",
         "taunt"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "description": "Combat (Stage 4; the attacks themselves are data in config/combat.json; lengths and speeds at the fight's scale: see fight)."
     },
     "notice": {
       "type": "object",
@@ -5565,7 +5566,7 @@
         "partyReach"
       ],
       "additionalProperties": false,
-      "description": "Ed, 2026-10-06: \"Legends should only appear in about half of areas (we can test this ratio); every area makes them too common.\" share: the fraction of the areas (home never) with a sleeping legend, seeded per map and spread so they don't clump (no more than two neighbouring areas together where the map allows)."
+      "description": "."
     },
     "wildLegends": {
       "type": "object",
@@ -5801,7 +5802,8 @@
         "depart",
         "minRadius"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "description": "The pause page's Waves slider sets it live, 0 to 6, remembered on this browser (config/decisions/953-waves.json, app/settings.ts); ?pulse=<m/s> or ?pulse=off sets it from a link, over the saved one."
     },
     "partyObjects": {
       "type": "object",
@@ -6285,7 +6287,8 @@
         "swapRate",
         "swapBeat"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "description": "A sparkling line round the partified region's outside edge, in each area's sigil colour: width (px), brightness, sparkle (0-1, how much it twinkles and runs), step (metres between its sparks)."
     },
     "bubbles": {
       "type": "object",
@@ -8075,7 +8078,8 @@
         "over",
         "beach"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "description": "Music by proximity: one shared track, full and clear within nearDist metres of a playing soundsystem (or the dancefloor's ring, as loud as its speakers are on), fading to floor of the volume and muffled to a muffle Hz low-pass by farDist metres (clear: the cutoff close by), never gone; a damaged soundsystem nearby wobbles, crackles and drops out, by its damage times distort."
     },
     "alarms": {
       "type": "object",
@@ -9511,7 +9515,8 @@
         "house",
         "station"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "description": "Near-isometric on the ground, after Transistor; the game opens close in on the witch in her seat on the treehouse (intro: distance metres, angle degrees), easing out to the normal view over intro.ease seconds once she moves or rises (Ed, v171); lower over the treetops, looking toward the horizon to feel the speed."
     },
     "pixelSize": {
       "type": "number",
@@ -12022,7 +12027,7 @@
         "trunks"
       ],
       "additionalProperties": false,
-      "description": "a small contact shadow under the witch, each bush, creature and prop."
+      "description": "a small contact shadow under the witch, each bush, creature and prop; Ed's tuned values: strength 0.75, long 2.5, glowReach 50, glowHeight 1.25, soft, core 0.8, across 1, and lights.campfire.reach 40."
     },
     "attacks": {
       "type": "object",

@@ -50,10 +50,10 @@
       ]
     },
     "wind": {
-      "what": "Wind sway on leafy things (Ed, v171): trees (both halves together, from the foot) and undergrowth lean with gusts that travel across the forest: strength metres at the top of a crown, gusts moving at speed m/s, gustScale metres across."
+      "what": "Wind sway on leafy things (Ed, v171): trees (both halves together, from the foot) and undergrowth lean with gusts that travel across the forest: strength metres at the top of a crown, gusts moving at speed m/s, gustScale metres across; Walls and set pieces stand still. ?wind=0 turns it off."
     },
     "wind.treetop": {
-      "what": "the share of it seen over the treetops (gentler). Walls and set pieces stand still. ?wind=0 turns it off."
+      "what": "the share of it seen over the treetops (gentler)."
     },
     "groundCover": {
       "what": "Tufts of grass, fern, heather, reeds, moss and clover on the ground round the witch (Ed, v171: so the ground doesn't look flat), in ground mode only: density (times each area type's groundCover.density in area-types.json; ?grass=0..2 scales it live), out to the canopy hole round her, at most radius metres (fading out towards it), at most cap at once; one chance every spacing metres, worked out cell metres square at a time, within budgetMs of each frame; they sway in the wind by sway of their height and part round her and nearby creatures by part. None within sigilClear metres of a placed sigil (or over its rune, if bigger), trampled short just beyond (Ed, v233). None on paths, the dancefloor or ground kept clear; thicker along path edges."
