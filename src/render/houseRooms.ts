@@ -455,6 +455,7 @@ export class HouseRoomsView {
     this.tapUse = usable && v.useDevice === "touch" ? v.onUse : null;
     this.tag.style.pointerEvents = this.tapUse ? "auto" : "none";
     place(this.tag, usable, decks ? 1.9 : tagHeight(usable?.use.kind));
+    if (usable) { const P = v.usePrompt; P.id = usable.id; P.top = screen(usable, decks ? 1.9 : tagHeight(usable.use.kind))[1] - this.tag.offsetHeight; P.at = performance.now(); } // (the keycap stands on that point: translate -100%)
     place(this.bubble, this.said?.obj ?? null, 0.6, this.said?.obj.use.kind === "say" ? this.said.obj.use.line : "");
     const from = W.house?.bedFrom, bed = at?.use.kind === "bed" ? at : null;
     if (bed && from !== undefined) {
