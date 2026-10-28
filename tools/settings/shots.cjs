@@ -34,7 +34,7 @@ const check = (ok, what) => { console.log(`${ok ? "ok  " : "FAIL"} ${what}`); if
     await page.waitForTimeout(500);
   };
   await open();
-  const clickAt = async sel => { const b = await page.evaluate(sel => { const r = document.querySelector(sel).getBoundingClientRect(); return { x: r.left + Math.min(40, r.width / 2), y: r.top + r.height / 2 }; }, sel); await page.mouse.click(b.x, b.y); await page.waitForTimeout(200); };
+  const clickAt = async sel => { const b = await page.evaluate(sel => { const e = document.querySelector(sel); e.scrollIntoView({ block: "center" }); const r = e.getBoundingClientRect(); return { x: r.left + Math.min(40, r.width / 2), y: r.top + r.height / 2 }; }, sel); await page.mouse.click(b.x, b.y); await page.waitForTimeout(200); };
   const focus = () => page.evaluate(() => document.querySelector("#settings-page .row.focus .lab")?.firstChild?.textContent?.trim());
   const tab = () => page.evaluate(() => document.querySelector("#settings-page .tabs button.on")?.textContent);
   const val = () => page.evaluate(() => document.querySelector("#settings-page .row.focus .val, #settings-page .row.focus .opts .on, #settings-page .row.focus .check + span")?.textContent);
