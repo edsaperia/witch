@@ -1,0 +1,130 @@
+{
+  "section": "forest",
+  "about": "The forest: trees, bushes, ground cover and the wind in them.",
+  "knobs": {
+    "treeDensity": {
+      "what": "treeHeight and crownWidth scale the art's trees (1 is the Art Lab's size; crowns widen with treeHeight too, crownWidth is the total). (0-1): the chance of a tree on each spot outside the clearings."
+    },
+    "leafJitter": {
+      "what": "Each tree's own leaf colour [1]: every tree is dealt two fixed seeds from where it stands (-1 to 1 each).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-16",
+          "quote": "a small amount of per-tree colour jitter is wanted, so forests look less uniform",
+          "rest": "docs/ART-GUIDE.md section 3"
+        }
+      ],
+      "links": [
+        "docs/ART-GUIDE.md"
+      ]
+    },
+    "leafJitter.autumn": {
+      "what": "each tree's lit leaf colour drifts toward its own autumn colour (gold, orange, red, crimson or purple, by its first seed) by up to autumn of the way (its own share of it, some trees barely at all), kept at the brightness the night's moonlight gave it, so a red tree is as dark as its neighbours.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-19",
+          "quote": "Why don't I see reds and oranges and purples from the jitter, only blue?",
+          "rest": "then of the two ways offered, a drift toward autumn colours over a plain hue turn"
+        }
+      ]
+    },
+    "leafJitter.value": {
+      "what": "its leaves' brightness scaled by 1 + value times the second seed (on the pixels its sway mask marks as leaves: the wood is untouched; both halves alike)."
+    },
+    "leafJitter.hue": {
+      "what": "its lit leaf colour's hue turned either way by up to hue degrees times the first seed [1]. Ed's v3893 playtest found the hue turn had no visible effect: it was turned on the albedo and the night's coloured moonlight squeezed it to a third on screen (20 degrees moved the crowns 4.9 on average, less than the value's 0.12 alone); it and the autumn drift are applied to the lit colour now, so its degrees are the screen's. All three change live (the pause page's Leaf jitter sliders: autumn 0 to 1, hue 0 to 180, value 0 to 0.6, well past sense: Ed, \"bigger range\"); no rebake. 0 and 0: every tree of a variant the same colour, as before. Ed's tuned values from the pause page [2]: autumn 0.2, value 0.15, hue 0 (no hue turn; the autumn drift carries the variety).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-19",
+          "quote": "And also stretch the slider",
+          "rest": "0 to 180, so any hue"
+        },
+        {
+          "by": null,
+          "date": "2026-10-26",
+          "rest": "v4522"
+        }
+      ]
+    },
+    "wind": {
+      "what": "Wind sway on leafy things (Ed, v171): trees (both halves together, from the foot) and undergrowth lean with gusts that travel across the forest: strength metres at the top of a crown, gusts moving at speed m/s, gustScale metres across; Walls and set pieces stand still. ?wind=0 turns it off."
+    },
+    "wind.treetop": {
+      "what": "the share of it seen over the treetops (gentler)."
+    },
+    "groundCover": {
+      "what": "Tufts of grass, fern, heather, reeds, moss and clover on the ground round the witch (Ed, v171: so the ground doesn't look flat), in ground mode only: density (times each area type's groundCover.density in area-types.json; ?grass=0..2 scales it live), out to the canopy hole round her, at most radius metres (fading out towards it), at most cap at once; one chance every spacing metres, worked out cell metres square at a time, within budgetMs of each frame; they sway in the wind by sway of their height and part round her and nearby creatures by part. None within sigilClear metres of a placed sigil (or over its rune, if bigger), trampled short just beyond (Ed, v233). None on paths, the dancefloor or ground kept clear; thicker along path edges."
+    },
+    "density": {
+      "what": "Tree density is a field, not two states [1]: each area's own density (its layout in art/areas.js) times a patch noise patchScale metres across, from patchMin to patchMax times (dense patches, sparse patches, glades), times the area's pattern (groves, stands, rings, rows, thicket, edges only), times the clearings (soft edges); and lone trees at lone density almost everywhere, so open ground isn't empty. treeDensity scales it all.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-03"
+        }
+      ],
+      "links": [
+        "art/areas.js"
+      ]
+    },
+    "bushDensity": {},
+    "bushClump": {},
+    "treeHeight": {},
+    "treeCap": {
+      "what": "The tallest tree variants (tall, giant) can be drawn squeezed: any height over from metres keeps only keep of the rest. keep 1 since Ed, 2026-10-26 (\"treecap.keep should be 1. Tall trees look awesome. If it hurts performance we can lower the proportion of tall trees\"): every tree stands at its art's own height, so a 45 m giant stands 45 m, over her 24 m treetop flight (treetopHeight) and over the oak's 32.3 m crown. 0.35 before, which squeezed a 45 m giant to about 29 m. With it, half as many tall and giant trees [1]: art/areas.js TREE_HEIGHT_CLASSES and every area's heightMix, their tall and giant shares halved and given to the mature trees (frame time at keep 1 went from +60 to 85% over 0.35 to +30 to 45%).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": null,
+          "quote": "Halve the number of tall trees",
+          "rest": "the same day"
+        }
+      ],
+      "links": [
+        "art/areas.js"
+      ]
+    },
+    "pins": {
+      "what": "The HUD's pointers as map pins over their subject (render/indicator.ts): gap is how far (screen pixels) the arrow's tip floats over the subject's drawn top [1].",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-26",
+          "quote": "pins should be a bit higher"
+        }
+      ],
+      "links": [
+        "render/indicator.ts"
+      ]
+    },
+    "crownWidth": {},
+    "treeSpacingX": {},
+    "treeSpacingZ": {},
+    "crownHalfWidth": {},
+    "crownHeight": {},
+    "bushSpacing": {},
+    "scenery": {
+      "what": "The scenery budget [1]. Creatures, sigils, soundsystems, the dancefloor, the party border, campfires and stones are always drawn. Scenery (trees, bushes, wall objects, set pieces, string lights) is drawn out to a radius round the witch, at most the haze's far edge, fading out over its last fade metres so nothing pops. With adaptive on, the radius follows the frame rate: if it stays under fps minus hysteresis for sustain seconds the radius shrinks by shrink metres a second, never below minRadius; if it stays at fps or more, it grows back by grow metres a second. ?scenery=<metres> fixes the radius (for testing).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-03",
+          "rest": "gameplay always drawn, scenery as much as we can"
+        }
+      ]
+    },
+    "scenery.canopyReach": {
+      "what": "in the treetops, tree crowns alone (no trunk, shadow or undergrowth) are drawn out to this many metres (at most haze.far) where the budget has pulled the rest in closer, so the canopy stays whole to the horizon on a slow machine [1]; 0 off.",
+      "decisions": [
+        {
+          "by": "Ed's playtest",
+          "date": "2026-10-13",
+          "quote": "outside of a circle around the witch, the canopy is not drawn"
+        }
+      ]
+    }
+  }
+}
