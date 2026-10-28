@@ -5,18 +5,18 @@
 // aims at the nearest invitable one and holds fire while it's in range, and moves: circling the
 // crowd at a share of her ground speed (the more she moves, the fewer hits she takes and the fewer
 // letters land), greedily (standing to shoot, closing in when out of range), or kiting (standing to shoot, backing away from any fighter that comes close). It ends when all of them are invited, she's knocked out (sent home), or after a time
-// limit. Builds are the invites tuning (the legend buffs that change it: Flutter +1 a burst, Fan a
-// 3-way spread, Quick fire half the cooldown, Echo a second burst, Long thread more range, Big heart
-// bigger letters, Charm stronger homing), since the rules don't apply buffs to 💌s yet.
+// limit. Builds are stronger invites tunings, named for the legend buffs they were modelled on (Flutter +1 a burst,
+// Fan a 3-way spread, Quick fire half the cooldown, Echo a second burst, Long thread more range, Big heart bigger
+// letters, Charm stronger homing; the buffs themselves removed, Ed 2026-10-28).
 //   node tools/balance/fightbot.mjs [--seeds 2] [--areas 3] [--waves 1,5,10,20,30] [--builds 0,2,4,7] [--bots circle20,circle35,circle50,kiter,greedy,skilled] [--kite 9] [--blink 5] [--limit 240] [--start babies,young,adults] [--json out.json] | --report a.json,b.json
 import { openRules, arg, list, mean } from "./lib.mjs";
 import { readFileSync, writeFileSync } from "node:fs";
 
 const say = s => console.log(s);
 
-// Builds: buff count → the invites tuning (each step adds to the last).
+// Builds: a step number → the invites tuning (each step adds to the last).
 const BUILDS = {
-  0: { name: "no buffs", f: I => I },
+  0: { name: "plain", f: I => I },
   2: { name: "Flutter + Charm", f: I => ({ ...I, burst: I.burst + 1, homing: I.homing * 2, homingRange: I.homingRange * 2 }) },
   4: { name: "+ Fan + Quick fire", f: I => ({ ...BUILDS[2].f(I), multiShot: 3, spread: 30, cooldown: I.cooldown * 0.5 }) },
   7: { name: "+ Echo + Long thread + Big heart", f: I => { const b = BUILDS[4].f(I); return { ...b, burst: b.burst * 2, range: I.range * 1.5, radius: I.radius * 2 }; } },
@@ -144,7 +144,7 @@ else {
   for (const bot of BOTS) for (const b of BUILDS_ON) for (const wv of WAVES) for (const s of seeds) for (let a = 0; a < AREAS; a++) {
     const r = fight(s, a, wv, b, bot);
     rows.push(r);
-    process.stderr.write(`${bot} ${b} buffs w${wv} ${s}/${a} ${r.species}×${r.crowd}: ${r.hits} hits${r.ko ? " KO" : ""}, ${r.time.toFixed(0)} s, ${r.invited} invited\n`);
+    process.stderr.write(`${bot} build ${b} w${wv} ${s}/${a} ${r.species}×${r.crowd}: ${r.hits} hits${r.ko ? " KO" : ""}, ${r.time.toFixed(0)} s, ${r.invited} invited\n`);
   }
   await close();
   if (arg("json")) { writeFileSync(arg("json"), JSON.stringify(rows)); process.exit(0); }
@@ -155,7 +155,7 @@ const KO_TIME = 1.6 + 2; // (the teleport, and a couple of sigils letting go; pl
 say(`What playtesters will feel in fights: the real rules headless, a bot inviting a whole wild area with 💌s; ${rows.length} fights. She has 3 hits (one back every 20 s out of a fight); a knockout sends her home. Each cell: hits taken per fight / knocked out (share of fights) / seconds to invite them all (or until knocked out, or the time limit) / the share of the crowd she invited (the skilled bot: and its trips to the treetops to heal); the crowd is the area's whole population at that wave.\n`);
 for (const bot of BOTS) {
   say(`**${bot === "skilled" ? "Skilled player (pulls from the edge, picks off stragglers, blinks out of telegraphs, rises to heal at 1 hit)" : bot.startsWith("circle") ? `Circling the crowd at ${bot.slice(6)}% of her ground speed while firing` : bot === "kiter" ? "Kiting player (stands to shoot; backs away, still firing, from any fighter within 9 m, and blinks away from one within 5 m)" : "Greedy player (stands to shoot, closes in when out of range)"}**\n`);
-  say("| wave (crowd) | " + BS.map(b => `${b} buffs (${BUILDS[b]?.name ?? b})`).join(" | ") + " |");
+  say("| wave (crowd) | " + BS.map(b => `build ${b} (${BUILDS[b]?.name ?? b})`).join(" | ") + " |");
   say("|---|" + BS.map(() => "---").join("|") + "|");
   for (const wv of WAVES) {
     const crowd = mean(rows.filter(r => r.wave === wv).map(r => r.crowd));

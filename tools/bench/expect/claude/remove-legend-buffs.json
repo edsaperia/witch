@@ -1,0 +1,7 @@
+{
+  "reason": "Legend buffs removed (Ed, 2026-10-28: \"remove them\"). Nothing granted them in play, so the game plays as before; only the shape of the state changes: the buffs' state is gone, and her 💌s carry no buff fields.",
+  "rules": {
+    "buffs": "the part is gone (g.buffs removed with the buffs)",
+    "witches": "her invites lose the buffs' fields (bursts, chargeFrom, charge, cacheAt, orbitAt, lanterns; each letter's pierce, bounce, split and slip, each queued volley's echo); every other value as before (checked with those fields stripped from the old run)"
+  }
+}

@@ -10,12 +10,6 @@ export const CREATURE_REDPANDA = {
   radius: 0.5,
   temperament: "curious",
   voice: { family: "small", pitch: 1.5, glide: 0.5, dur: 0.6 },
-  buff: {
-    name: "Cuddle",
-    kind: "shot",
-    scale: { "invites.radius": 1.5 },
-    label: "Red panda's Cuddle: 💌s land on animals a little wider of where they strike"
-  },
   character: { posture: { head: [0, 0.05], body: 0 }, quirk: "perk", every: [4, 8], for: 1.2 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },

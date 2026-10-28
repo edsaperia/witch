@@ -25,12 +25,6 @@ export const CREATURE_HEDGEHOG = {
   temperament: "curious",
   traits: ["armoured"],
   voice: { family: "small", pitch: 0.9, noise: 0.4, pure: false, wave: "sawtooth" },
-  buff: {
-    name: "Curl",
-    kind: "move",
-    add: { "dash.gone": 0.35 },
-    label: "Hedgehog's Curl: untouchable for longer after a blink"
-  },
   character: { sprite: "puff", every: [4, 8], for: 0.9 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },

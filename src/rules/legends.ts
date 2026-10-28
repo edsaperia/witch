@@ -179,7 +179,7 @@ export function stepLegendStates(w: LegendWorld, ids: number[], data: LegendsDat
     const phase = ((c.id * 0.6180339887) % 1) * data.check;
     if (Math.floor((w.time + phase) / data.check) !== Math.floor((w.time - w.dt + phase) / data.check)) {
       const kin = hasKin(w, c, key);
-      if (c.legendState === "angry" && kin) lull(c, w.time); // (Ed, 2026-10-06: "Angry legends should go back to sleep once one of their own species is back in their area"; its buff, if earned, kept)
+      if (c.legendState === "angry" && kin) lull(c, w.time); // (Ed, 2026-10-06: "Angry legends should go back to sleep once one of their own species is back in their area")
       else if (c.legendState === "asleep" || c.legendState === "restless") {
         if (kin) { c.legendState = "asleep"; c.restlessness = 0; }
         else if (c.legendState === "asleep") { c.legendState = "restless"; c.stateAt = w.time; c.restlessness = c.restlessness ?? 0; }
@@ -220,18 +220,12 @@ export function cheer(c: Creature, time: number): void {
   Object.assign(c, { legendState: "happy", stateAt: time, enraged: false, state: undefined, hp: undefined, fight: undefined, siege: undefined, restlessness: 0, questOpen: false, charge: undefined, legend: undefined });
 }
 
-/** Back to sleep (worn down, or calmed by one of its kind back in its area), its buff (if earned)
- *  kept; away from where it lay, it walks home first (homing; Ed, 2026-10-06). */
+/** Back to sleep (worn down, or calmed by one of its kind back in its area); away from where it lay, it walks home first (homing; Ed, 2026-10-06). */
 export function lull(c: Creature, time: number): void {
   heal(c, time);
   const away = c.lairX !== undefined && c.lairZ !== undefined && Math.hypot(c.x - c.lairX, c.z - c.lairZ) > 0.5;
   Object.assign(c, { legendState: "asleep", stateAt: time, enraged: false, state: undefined, hp: undefined, fight: undefined, siege: undefined, restlessness: 0, charge: undefined, run: undefined, legend: undefined, slowUntil: undefined, stunUntil: undefined, kx: 0, kz: 0, homing: away || undefined, questOpen: false });
 }
-
-/** Whether a legend gives its buff: never now (Ed, 2026-10-18: "Finishing quests no longer gives boons"; a happy legend and a
- *  flask give none either; Ed, 2026-10-24: nor a legend on her leash, rules/buffs.ts partyLegends). Kept as the one place to
- *  turn every legend's power back on. */
-export const buffing = (_c: Creature): boolean => false;
 
 /** The flask (a party relic, Ed 2026-10-18: "All flasks give growth spurt"): the one lying within pickRadius of (x, z), whose
  *  sigil she stands on, else null. Drinking it is the sigil button's (rules/sigilButton.ts): it isn't carried, and a legend is

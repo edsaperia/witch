@@ -20,11 +20,11 @@ describe("the creatures' folders (art/creatures/)", () => {
     const schema = JSON.parse(readFileSync("config/schema/creature.schema.json", "utf8")) as Schema;
     for (const id of CREATURE_IDS) expect(validate(CREATURES[id], schema, `art/creatures/${id}/creature.js`), id).toEqual([]);
   });
-  it("every creature in the game has its folder, with its movement, voice and buff", () => {
+  it("every creature in the game has its folder, with its movement and voice", () => {
     for (const t of AREA_TYPES) {
       const c = CREATURES[t.creature];
       expect(c, `${t.creature} (${t.id}'s creature) has no art/creatures/${t.creature}/creature.js`).toBeTruthy();
-      for (const k of ["movement", "voice", "buff"] as const) expect(c[k], `${t.creature}'s ${k}`).toBeTruthy();
+      for (const k of ["movement", "voice"] as const) expect(c[k], `${t.creature}'s ${k}`).toBeTruthy();
     }
   });
 });

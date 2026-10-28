@@ -17,12 +17,6 @@ export const CREATURE_HARE = {
   temperament: "skittish",
   traits: ["nimble"],
   voice: { family: "small" },
-  buff: {
-    name: "Dash bursts",
-    kind: "move",
-    mods: { charges: 2 },
-    label: "Hare's Dash bursts: 2 more blink charges"
-  },
   character: { posture: { head: [0, 0.04], body: 0 }, quirk: "thump", every: [4, 8], for: 0.8 },
   pack: {
     melee: { attacks: [null, "nip", "maul"], knockback: 6 },

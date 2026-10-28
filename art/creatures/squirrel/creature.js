@@ -16,12 +16,6 @@ export const CREATURE_SQUIRREL = {
   temperament: "curious",
   traits: ["nimble"],
   voice: { family: "small", pitch: 1.2, extra: 3, gap: 0.25, volume: 0.75 },
-  buff: {
-    name: "Cache",
-    kind: "shot",
-    mods: { cache: 1 },
-    label: "Squirrel's Cache: you drop 💌s that wait and fly at animals that come near"
-  },
   character: { posture: { head: [0, 0.04], body: 0 }, quirk: "tailflick", every: [2, 4], for: 0.7 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },

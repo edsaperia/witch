@@ -17,12 +17,6 @@ export const CREATURE_STOAT = {
   temperament: "skittish",
   traits: ["nimble"],
   voice: { family: "small", pitch: 1.1, trill: [24, 80] },
-  buff: {
-    name: "Frenzy",
-    kind: "move",
-    mods: { frenzy: 1 },
-    label: "Stoat's Frenzy: winning an animal over gives back a blink"
-  },
   character: { posture: { head: [0, 0.05], body: 0 }, quirk: "perk", every: [3, 6], for: 1 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },

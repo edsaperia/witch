@@ -33,7 +33,6 @@ export const CREATURE_BAT = {
   temperament: "skittish",
   traits: ["flier", "swarm"],
   voice: { family: "bat" },
-  buff: { name: "Flit", kind: "move", scale: { "dash.distance": 1.5 }, label: "Bat's Flit: your blink goes further" },
   character: { sprite: "shiver", every: [3, 6], for: 0.6 },
   pack: {
     melee: { attacks: [null, "screech", "bigscreech"] },

@@ -15,12 +15,6 @@ export const CREATURE_FLYINGSQUIRREL = {
   },
   radius: 0.4,
   voice: { family: "small", pitch: 1.65, extra: 2, gap: 0.18, volume: 0.7 },
-  buff: {
-    name: "Soar",
-    kind: "move",
-    scale: { treetopSpeed: 1.1, "dash.distance": 1.2 },
-    label: "Flying squirrel's Soar: a little quicker over the treetops, and a longer blink"
-  },
   character: { posture: { head: [0, 0.05], body: 0 }, quirk: "sniff", every: [2, 5], for: 0.6 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },

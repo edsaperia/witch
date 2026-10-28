@@ -16,12 +16,6 @@ export const CREATURE_ARCTICFOX = {
   radius: 0.6,
   temperament: "curious",
   voice: { family: "canid", pitch: 1.75, glide: 0.6 },
-  buff: {
-    name: "Snow pounce",
-    kind: "move",
-    scale: { "dash.distance": 1.2, groundAcceleration: 1.6 },
-    label: "Arctic fox's Snow pounce: a longer blink, and quicker starts on foot"
-  },
   character: { posture: { head: [0.03, 0.02], body: 0 }, quirk: "perk", every: [3, 7], for: 1 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },

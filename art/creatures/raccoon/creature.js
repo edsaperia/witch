@@ -14,12 +14,6 @@ export const CREATURE_RACCOON = {
   },
   radius: 0.6,
   voice: { family: "small", pitch: 1.05, noise: 0.2, extra: 1 },
-  buff: {
-    name: "Light fingers",
-    kind: "shot",
-    scale: { "invites.cooldown": 0.85, "invites.speed": 1.15 },
-    label: "Raccoon's Light fingers: quicker bursts, 💌s flying a little faster"
-  },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
     ranged: { name: "thrown stone", range: 12, shots: [0, 1, 2], spread: 10, tint: "red" },

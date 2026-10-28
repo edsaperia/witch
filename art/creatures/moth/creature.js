@@ -18,12 +18,6 @@ export const CREATURE_MOTH = {
   temperament: "skittish",
   traits: ["flier", "swarm"],
   voice: { family: "bug", pitch: 1.2, am: [120, 0.7], noise: 0.3, volume: 1.2 },
-  buff: {
-    name: "Flutter",
-    kind: "shot",
-    add: { "invites.burst": 1 },
-    label: "Butterfly's Flutter: one more 💌 a burst"
-  },
   character: { sprite: "shiver", every: [2, 5], for: 0.6 },
   pack: {
     melee: null,

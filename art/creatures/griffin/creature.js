@@ -11,12 +11,6 @@ export const CREATURE_GRIFFIN = {
   radius: 1.1,
   traits: ["heavy"],
   voice: { family: "bird", pitch: 0.6, pure: false, wave: "sawtooth", glide: 0.8 },
-  buff: {
-    name: "Talon",
-    kind: "shot",
-    scale: { "invites.speed": 1.25 },
-    label: "Griffin's Talon: 💌s fly a quarter faster"
-  },
   character: { posture: { head: [0.03, 0.03], body: 0 }, quirk: "shake", every: [5, 10], for: 1.2 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
