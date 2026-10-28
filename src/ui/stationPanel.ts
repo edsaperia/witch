@@ -1,12 +1,12 @@
 // A dressing station's panel (Ed, 2026-10-21, the station menus; the mock, previews/ed/station-menus-mock on claude/ed-shots): it
-// slides in from the left on E at a station and away on E again (the pad's □), she standing still at it (main.ts, rules/stations.ts;
+// slides in from the left on E at a station and away on E again (the pad's ✕ opens it, ○ closes it: platform/bindings.ts), she standing still at it (main.ts, rules/stations.ts;
 // Ed, 2026-10-26), over the live game.
 // Its shelves (rules/wardrobe.ts) hold the things she owns, silhouettes for those still to find (no hint: Ed), each shelf's
 // colour grid (5 rows: every colour hers), its fit sliders; and the Workshop's (Ed, 2026-10-22/23; docs/backlog/workshop.md): the bay's
 // part cards (a slot's parts, the empty slot first, the unfound greyed), the sets' chips, the focused part's stats and "Her broom",
 // fitted at once (onFit: main.ts puts them on her broom mid-night and keeps them, app/broomSave.ts); the lathe's colours and fit (no
 // items); the pegboard's 3 × 3 biome board, read-only (its lines focus, nothing is chosen). The mouse points and clicks;
-// the d-pad or the arrow keys move its focus, and only choosing (confirm, platform/menuButtons.ts, or a click) puts what's in focus
+// the d-pad or the arrow keys move its focus, and only choosing (choose, platform/bindings.ts, or a click) puts what's in focus
 // on her (Ed, 2026-10-28: "she should change only when I press the 'choose' button"; till then landing on an item wore it at once),
 // so leaving without choosing leaves her as she was (the focus and the choices: ui/stationChoice.ts). Each change shows on her a
 // beat later (onLook) and she turns to show it (onChange). Her room (ui/creator.ts) is the full-screen creator; this is only the stations'.
@@ -18,10 +18,10 @@ import type { Tuning } from "../rules/tuning";
 import { broomColours, partCanvas } from "../render/workshopArt";
 import { broomSummary, cardAt, panelPad, partStats, partsFound, setChips, setsOf, spellLine, type Line } from "./stationLines";
 import { PanelChoice } from "./stationChoice";
-import { MENU_BUTTONS } from "../platform/menuButtons";
+import { bindings } from "../platform/bindings";
 import { classicPalette, cpuCanvas, slot, swatchAt } from "./creator";
 import { SlideIn } from "./slideIn";
-import { keycapHtml } from "./keyHint";
+import { glyphOf, keycapHtml } from "./keyHint";
 
 type Genome = Record<string, unknown> & { palette: Record<string, number[]> | null; accessories: Record<string, unknown> };
 type Sprite = { A: HTMLCanvasElement; w: number; h: number };
@@ -58,7 +58,7 @@ export class StationPanel {
   onDress: () => void = () => {};
   /** Her broom's parts changed at the bay (a card chosen: fitted at once). */
   onFit: (f: Fitted) => void = () => {};
-  /** Back (platform/menuButtons.ts: E today) pressed while it's open: main.ts closes it (the pad's goes through padControls). */
+  /** Back (platform/bindings.ts menu.back: E, the pad's circle) pressed while it's open: main.ts closes it (the pad's goes through padControls). */
   onBack: () => void = () => {};
   private id: string | null = null;
   private shelves: Shelf[] = [];
@@ -105,11 +105,11 @@ export class StationPanel {
     });
     // The arrow keys move through the panel while it's open (Ed, 2026-10-21: "the arrow keys move through the panel at a station;
     // WASD still walks her"): taken before the game's input sees them.
-    // Confirm (Space or Enter today: platform/menuButtons.ts) chooses what's in focus, and says when it's still to be found; moving
-    // only moves the focus (Ed, 2026-10-28). Back (E today) closes it (onBack: main.ts), a held one's repeats ignored.
+    // Choose (Space or Enter by default: platform/bindings.ts) chooses what's in focus, and says when it's still to be found; moving
+    // only moves the focus (Ed, 2026-10-28). Back (E by default) closes it (onBack: main.ts), a held one's repeats ignored.
     window.addEventListener("keydown", e => {
       if (!this.id) return;
-      const d = ARROWS[e.code], pick = CHOOSE.has(e.code), back = BACK.has(e.code);
+      const d = menuDir(e.code), pick = bindings.keys("menu.choose").includes(e.code), back = bindings.keys("menu.back").includes(e.code);
       if (!d && !pick && !back) return;
       e.preventDefault(); e.stopImmediatePropagation();
       if (d) this.move(d[0], d[1]); else if (e.repeat) return; else if (pick) this.pick(); else this.onBack();
@@ -364,16 +364,18 @@ export function wearPicture(st: Style, g: Record<string, unknown>, it: WardrobeI
 
 // (WASD too: she stands still while it's open, the movement keys its buttons; Ed, 2026-10-26: "walking away shouldn't work - then
 // we can use the movement keys as buttons in the menus")
-const ARROWS: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1], KeyA: [-1, 0], KeyD: [1, 0], KeyW: [0, -1], KeyS: [0, 1] };
-/** The keys and pad buttons (A, X) that choose what's in focus. */
+const menuDir = (code: string): [number, number] | null => {
+  for (const d of ["left", "right", "up", "down"] as const) if (bindings.keys(`menu.${d}`).includes(code)) return PAD_DIRS[d];
+  return null;
+};
 /** The panel's hint line, keycaps and no words, three groups on the device she plays with (Ed, 2026-10-26: "hint line: trim it"):
- *  move (WASD; a pad's stick), choose (Space; ✕) and close (E; □). Enter and the arrows still work, unshown; on touch she taps
+ *  move (WASD; a pad's stick), choose (Space; ✕) and close (E; ○), as bound now (platform/bindings.ts). Enter and the arrows still work, unshown; on touch she taps
  *  what she wants, and the corner's keycap closes it (main.ts). */
 export const footHtml = (device: "keys" | "pad" | "touch"): string =>
-  device === "pad" ? `${keycapHtml("STICK")} · ${keycapHtml("X")} · ${keycapHtml("SQ")}`
+  device === "pad" ? `${keycapHtml(`pad:${bindings.pad("menu.up").find(p => p.startsWith("ls") || p.startsWith("rs")) ?? bindings.pad("menu.up")[0] ?? "?"}`)} · ${keycapHtml(glyphOf("menu.choose", "pad"))} · ${keycapHtml(glyphOf("menu.back", "pad"))}`
   : device === "touch" ? keycapHtml("TAP")
-  : `${(["W", "A", "S", "D"] as const).map(g => keycapHtml(g)).join("")} · <span class="k">Space</span> · ${keycapHtml("E")}`;
-const CHOOSE = new Set<string>(MENU_BUTTONS.confirm.keys), BACK = new Set<string>(MENU_BUTTONS.back.keys); // (platform/menuButtons.ts: one place to remap them)
+  : `${(["menu.up", "menu.left", "menu.down", "menu.right"] as const).map(id => keycapHtml(glyphOf(id, "keys"))).join("")} · ${keycapHtml(glyphOf("menu.choose", "keys"))} · ${keycapHtml(glyphOf("menu.back", "keys"))}`;
+// (the keys and the pad as bound now, platform/bindings.ts: a remap shows here too, Ed 2026-10-28)
 const PAD_DIRS: Record<string, [number, number]> = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] };
 const STATION_NAMES: Record<string, string> = { mirror: "Mirror", dressingTable: "Dressing table", wardrobe: "Wardrobe", cloakPegs: "Cloak pegs", shoeRack: "Shoe rack", bags: "Bags", broomBay: "The bay", lathe: "Lathe", pegboard: "Pegboard" };
 const ART_M = Art.M as Record<string, number>;

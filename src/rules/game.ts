@@ -310,7 +310,7 @@ export function newGame(seed: number, tuning: Tuning, players = 1, ready?: MapPr
 }
 
 /** The presses that happen once (not held): kept for the next step if a frame runs none. */
-const ONE_SHOT = ["toggleMode", "sigil", "place", "cycle", "spell", "castParty", "dash", "nextWave", "pauseWaves", "feedNearest", "inviteNearest", "happyNearest"] as const;
+const ONE_SHOT = ["toggleMode", "sigil", "place", "cycle", "cycleBack", "spell", "castParty", "dash", "nextWave", "pauseWaves", "feedNearest", "inviteNearest", "happyNearest"] as const;
 
 /** Advance the game by one real frame of `realDt` seconds: as many fixed STEPs as that makes up
  *  (at most a few, so a hitch doesn't run away), with the held controls each step and each
@@ -535,7 +535,7 @@ function fixedStep(g: Game, controls: Controls): void {
   // Knocked out: no input but the camera's zoom while it plays out.
   if (W.ko) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
   // Staggered by a blow (rules/knock.ts): no moving, rising, blinking or 💌s for a moment.
-  else if (stunned(W.knock, ht)) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom, sigil: c.sigil, place: c.place, cycle: c.cycle };
+  else if (stunned(W.knock, ht)) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom, sigil: c.sigil, place: c.place, cycle: c.cycle, cycleBack: c.cycleBack };
   // Her movement turned (pack combat: the bat's screech, rules/combat/packs.ts): her steering swung, wavering, as her aim is by the stoat's dance.
   else if (W.confused?.move && ht < W.confused.until && W.body.mode === "ground") { const a = W.confused.drift * Math.sin(ht * 2.3), cs = Math.cos(a), sn = Math.sin(a); c = { ...c, moveX: c.moveX * cs - c.moveZ * sn, moveZ: c.moveX * sn + c.moveZ * cs }; }
   // Grounded by who follows her (Ed, 2026-10-18: "One adult stops you taking off. Three young do.", by weight; "you try and fly
@@ -914,7 +914,7 @@ function stepWitchParty(g: Game, c: Controls, dt: number): void {
   areas.sort((a, b) => a.at - b.at);
   // Debug (?witches=N): N more, as if from soundsystems round the floor.
   for (let i = 0; i < t.partyWitches.debugExtra; i++) areas.push({ key: `debug-${i}`, x: d.x + Math.cos(i * 2.4) * 100, z: d.z + Math.sin(i * 2.4) * 100, at: 0 });
-  const w = g.witch, moving = Math.hypot(c.moveX, c.moveZ) > 0.05 || Math.hypot(w.vx, w.vz) > 0.3 || !!(c.toggleMode || c.sigil || c.place || c.cycle || c.spell) || g.leashEvents.some(e => e.kind === "grounded"); // (a take-off pulled back down is input too: its press was taken off c above)
+  const w = g.witch, moving = Math.hypot(c.moveX, c.moveZ) > 0.05 || Math.hypot(w.vx, w.vz) > 0.3 || !!(c.toggleMode || c.sigil || c.place || c.cycle || c.cycleBack || c.spell) || g.leashEvents.some(e => e.kind === "grounded"); // (a take-off pulled back down is input too: its press was taken off c above)
   // Round the floor they keep clear of trees, rocks, the speakers and the treehouse and its clearing (Ed, 2026-10-06).
   const th = g.map.treehouse, clear = (x: number, z: number) => blinkClear(g, x, z) && Math.hypot(x - th.x, z - th.z) > t.treehouse.clear;
   // Her soundsystem ruined, or the party over, she lies down to stargaze out past the speakers (Ed, 2026-10-11). Up in the treehouse

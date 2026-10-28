@@ -598,7 +598,7 @@ export class View {
   /** The house object whose panel or close-up is open now (main.ts: a station, an instrument), or null: its use prompt is down and
    *  its light out while it's open (render/houseRooms.ts). */
   houseOpen: string | null = null;
-  /** What she plays with, for the use prompts' button (platform/input.ts device): E, the pad's □ or a tap on the prompt itself. */
+  /** What she plays with, for the use prompts' button (platform/input.ts device): the use button as bound (E, the pad's ✕) or a tap on the prompt itself. */
   useDevice: "keys" | "pad" | "touch" = "keys";
   /** A tap on a use prompt (touch): down and up, as the touch sigil button's (main.ts sets it). */
   onUse: ((down: boolean) => void) | null = null;

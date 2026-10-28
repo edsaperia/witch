@@ -1,11 +1,13 @@
 // Rising in the treehouse through the page's own controls (platform/input.ts): with no broom, no input lifts her off but on the
-// Terrace (Ed, 2026-10-23: "She shouldn't be able to rise while in the treehouse, except on the terrace"): the gamepad's X (its
-// rise, the bottom face button) with the stick held toward a station against the wall, as Ed's playtest on v4273 found it taking
+// Terrace (Ed, 2026-10-23: "She shouldn't be able to rise while in the treehouse, except on the terrace"): the gamepad's rise (square since Ed's layout, 2026-10-28; cross before: the old
+// bottom face button) with the stick held toward a station against the wall, as Ed's playtest on v4273 found it taking
 // her off in the bedroom, and Space with the keys held the same way (pushed at a round room's wall she stands on its very edge,
 // where a floor test reads her as just outside the room); with her broom, both take her up from any room (Ed, 2026-10-26: "maybe
 // you can take off from anywhere on the treehouse").
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { Input, KEYS, PAD } from "./input";
+import { Input } from "./input";
+import { bindings } from "./bindings";
+const RISE_KEY = bindings.keys("game.rise")[0], RISE_PAD = bindings.padButtons("game.rise")[0];
 import { TUNING } from "../rules/tuning";
 import { newGame, stepGame, STEP, type Controls, type Game } from "../rules/game";
 import { deckOf, onTerrace } from "../rules/treehouse";
@@ -42,15 +44,15 @@ function pushAndRise(g: Game, x: number, z: number, ux: number, uz: number, how:
   W.body = { ...W.body, x, z, vx: 0, vz: 0, perch: true, mode: "ground", lift: 0, seated: false };
   const k = fakeWindow(), input = new Input(k.w), pad = how === "pad" ? fakePad() : null;
   const keys: string[] = [];
-  if (Math.abs(ux) > 0.3) keys.push(ux > 0 ? KEYS.right[0] : KEYS.left[0]);
-  if (Math.abs(uz) > 0.3) keys.push(uz > 0 ? KEYS.down[0] : KEYS.up[0]);
+  if (Math.abs(ux) > 0.3) keys.push(bindings.keys(ux > 0 ? "game.moveRight" : "game.moveLeft")[0]);
+  if (Math.abs(uz) > 0.3) keys.push(bindings.keys(uz > 0 ? "game.moveDown" : "game.moveUp")[0]);
   if (pad) pad.stick(ux, uz); else for (const c of keys) k.down(c);
   step(g, input, 3); // (into the wall: held there)
   const d = deckOf(g.map, g.tuning)!;
   if (inRooms && onTerrace(d, W.body.x, W.body.z)) { if (pad) pad.stick(0, 0); else for (const c of keys) k.up(c); return "terrace"; } // (along a branch out onto the Terrace: rising's hers there)
-  if (pad) pad.press(PAD.rise[0], true); else k.down(KEYS.rise[0]);
+  if (pad) pad.press(RISE_PAD, true); else k.down(RISE_KEY);
   step(g, input, STEP);
-  if (pad) pad.press(PAD.rise[0], false); else k.up(KEYS.rise[0]);
+  if (pad) pad.press(RISE_PAD, false); else k.up(RISE_KEY);
   step(g, input, 0.4);
   if (!pad) for (const c of keys) k.up(c);
   return W.body.mode;
@@ -75,7 +77,7 @@ describe("rising in the treehouse, through the page's controls", () => {
     }
   }
 
-  it("pad: with no broom, at each bedroom station, the stick held toward it, X doesn't take her off", () => {
+  it("pad: with no broom, at each bedroom station, the stick held toward it, rise doesn't take her off", () => {
     const g = inHouse(), rose: string[] = [];
     for (const o of HOUSE_ROOMS.objects.filter(q => q.room === "bedroom")) {
       const at = objectFront(o, g.map.treehouse, 0.6), to = objectFront(o, g.map.treehouse, -0.5), l = Math.hypot(to.x - at.x, to.z - at.z) || 1;
@@ -85,7 +87,7 @@ describe("rising in the treehouse, through the page's controls", () => {
     expect(rose).toEqual([]);
   });
 
-  it("pad: on the Terrace X still takes her up", () => {
+  it("pad: on the Terrace rise still takes her up", () => {
     const g = inHouse(), d = deckOf(g.map, g.tuning)!;
     expect(["rising", "treetop"]).toContain(pushAndRise(g, d.x, d.z, 0, 0, "pad", false));
   });
