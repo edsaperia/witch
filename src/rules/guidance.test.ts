@@ -10,7 +10,7 @@ import { wakeInBedroom } from "./opening";
 import { startWake, WAKE_DEFAULT } from "./wakeUp";
 import { wearFromStation } from "./clothesPile";
 import { deckOf } from "./treehouse";
-import { atGuide, emptyGuide, guidanceOf, guideShows, seeGuide, GUIDANCE_HOOKS, type GuideSave } from "./guidance";
+import { atGuide, emptyGuide, guidanceOf, seeGuide, GUIDANCE_HOOKS, type GuideSave } from "./guidance";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, s: number, c: Partial<Controls> = {}) => { for (let i = 0; i < Math.round(s / STEP); i++) stepGame(g, { ...idle, ...c }, STEP); };
@@ -115,8 +115,7 @@ describe("guidance pins", () => {
     // "No 💤 if there are new islands, just 🧭 towards islands the player can go to and hasn't visited yet"
     expect(after(g, ["lion"], s)).toEqual(MAP);
     g.witches[0].body = { ...g.witches[0].body, perch: null as never };
-    expect(guideShows(g, 0, after(g, [], s)!)).toBe(true);
-    expect(guideShows(g, 0, after(g, ["lion"], s)!)).toBe(true); // (the 🧭 too, from anywhere: leading her home)
+    expect(after(g, ["lion"], s)).toEqual(MAP); // (the 🧭 too, from anywhere: leading her home)
   });
 
   it("after a won night, once its finale's settled: the map table while there's an island she hasn't been to, even after the chart's opened; then the bed; shown from anywhere (Ed, 2026-10-26)", () => {
@@ -135,16 +134,15 @@ describe("guidance pins", () => {
     // (out in the world, off the treehouse: still shown, pointing her home)
     W.body = { ...W.body, perch: null as never };
     win(["lion"], true);
-    expect(guideShows(g, 0, after(g, ["lion"])!)).toBe(true);
+    expect(after(g, ["lion"])).toEqual(MAP);
     // (a new night: none of it)
     g.win = null;
     expect(after(g, ["lion"])).toBeNull();
   });
 
-  it("shows only in the treehouse, and hides at its target", () => {
+  it("stays the same off the treehouse (Ed, 2026-10-28: \"Whatever pin you had before leaving the treehouse still shows\"), and knows when she's at its target (where the pin stays, over it)", () => {
     const g = up();
     const G = of(g)!;
-    expect(guideShows(g, 0, G)).toBe(true);
     expect(atGuide(g, 0, G)).toBe(false);
     standAt(g, "wardrobe");
     expect(atGuide(g, 0, G)).toBe(true);
@@ -152,7 +150,7 @@ describe("guidance pins", () => {
     expect(atGuide(g, 0, D)).toBe(false);
     g.witches[0].body = { ...g.witches[0].body, x: d.seat.x + 1, z: d.seat.z };
     expect(atGuide(g, 0, D)).toBe(true);
-    g.witches[0].body = { ...g.witches[0].body, perch: null as never };
-    expect(guideShows(g, 0, D)).toBe(false);
+    g.witches[0].body = { ...g.witches[0].body, perch: null as never, x: g.witches[0].body.x + 40 };
+    expect(of(g)).toEqual(G); // (off the treehouse, out in the world: the same pin, still to show; main.ts hides it only under the creator, the chart or a sail)
   });
 });

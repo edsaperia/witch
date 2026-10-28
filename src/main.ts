@@ -64,7 +64,7 @@ import { leaveZoo } from "./app/zooExit";
 import { TelescopeView, integratedGpu } from "./app/telescope";
 import { loadSave, nightOver, sailNight, storeSave, unvisited, worldSeed } from "./app/chartSave";
 import { readZooCoasts } from "./app/zooCoasts";
-import { atGuide, guidanceOf, guideShows, seeGuide, GUIDANCE_HOOKS } from "./rules/guidance";
+import { guidanceOf, seeGuide, GUIDANCE_HOOKS } from "./rules/guidance";
 import { addNew, dropNew, loadGuide, storeGuide } from "./app/guideSave";
 import { GuidePin } from "./render/view/guidance";
 import { warmChart } from "./app/chartWarm";
@@ -427,7 +427,7 @@ function stepGuide(now: number): void {
   if (seeGuide(game, 0, guide)) storeGuide(guide);
   if (now - chartFound.at > 1000) chartFound = { at: now, unvisited: unvisited(loadSave(), N().tuning.map?.island ?? "home") }; // (where she is counts as been to: app/chartSave.ts unvisited)
   const G = guidanceOf(game, 0, guide, chartFound.unvisited);
-  guidePin.update(G, !!G && guideShows(game, 0, G) && !atGuide(game, 0, G) && !creator.open && !chartOpen() && !sailing);
+  guidePin.update(G, !!G && !creator.open && !chartOpen() && !sailing); // (wherever she is, at its target too: Ed, 2026-10-28)
 }
 /** The loan settled as she sleeps (the bed, a sail; Ed, 2026-10-24): the night won, kept for good (its kind's own save, and what she
  *  has on of it with it); not, gone back to the sky, what she has on of it back to what she had before. What her dream shows, or
