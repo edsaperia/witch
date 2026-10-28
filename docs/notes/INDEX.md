@@ -159,6 +159,7 @@ says what each note covers.
 - Quads faded whole
 - The GPU memory budget
 - Quality ladder
+- Palette-indexed art
 
 ## [The run](run.md)
 
