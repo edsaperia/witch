@@ -3759,7 +3759,7 @@
       "properties": {
         "on": {
           "type": "boolean",
-          "description": "on: the stacks and the spell; off (the default till their view lands; ?cast=1 turns them on): areas clear by themselves once their wild are gone, as before."
+          "description": "on (the default since their view landed, #1378): the stacks and the spell; off (?cast=0): areas clear by themselves once their wild are gone, as before."
         },
         "time": {
           "type": "number",
@@ -4383,11 +4383,41 @@
                 "tether": {
                   "type": "number",
                   "minimum": 0
+                },
+                "slack": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "damping": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "gravity": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "arcPull": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "iterations": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "jump": {
+                  "type": "number",
+                  "minimum": 0
                 }
               },
               "required": [
                 "link",
-                "tether"
+                "tether",
+                "slack",
+                "damping",
+                "gravity",
+                "arcPull",
+                "iterations",
+                "jump"
               ],
               "additionalProperties": false
             }

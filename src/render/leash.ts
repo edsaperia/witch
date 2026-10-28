@@ -118,9 +118,10 @@ export class LeashView {
   /** Each stacked sigil's eased height above her hat, by creature. */
   stackY = new Map<number, number>();
   chain: { x: number; z: number; vx: number; vz: number }[] = [];
-  /** Each leash's chain of links, by creature (render/leash/chain.ts), and a legend's tether's length (m), its span at pick-up. */
+  /** Each leash's chain of links, by creature (render/leash/chain.ts; a sleeping legend's tether's by the legend). */
   readonly chains = new Map<number, Chain>();
-  readonly tetherLen = new Map<number, number>();
+  /** This frame's step (s), for the chains. */
+  frameDt = 0;
   /** The rune stones drawn this frame, near enough for their sigils (render/view/home.ts drawMarkers fills it; render/leash/stones.ts). */
   readonly stones: StoneSpot[] = [];
   /** The rune stones' sigils, the spell's spot and its cast (render/leash/stones.ts). */
@@ -218,7 +219,7 @@ export class LeashView {
   setGame(game: Game): void {
     this.game = game;
     this.seatAt = null; this.bloodPool = null;
-    for (const m of [this.ruts, this.evolved, this.cycledAt, this.joined, this.stackY, this.lastSlots, this.travelling, this.routes, this.tops, this.halfW, this.heads, this.dreamStones, this.chains, this.tetherLen]) m.clear();
+    for (const m of [this.ruts, this.evolved, this.cycledAt, this.joined, this.stackY, this.lastSlots, this.travelling, this.routes, this.tops, this.halfW, this.heads, this.dreamStones, this.chains]) m.clear();
     this.look.reset(); this.stones.length = 0; resetStoneView(this.stoneView);
     this.bursts = []; this.chain = []; this.fx = []; this.ringGlows = []; this.dreams = []; this.snoreNear = []; this.projected = [];
     this.lastTime = 0; this.tugAt = -9; this.load = newLoadView(); this.bristle = { x: 0, y: 0, z: 0, on: false };
@@ -651,7 +652,6 @@ export class LeashView {
     // (pickupDelay after), a little brighter. Only near her (RUNE_VIEW m), with the placed sigils' instances.
     for (const c of g.creatures) {
       if (Math.abs(c.x - w.x) > RUNE_VIEW || Math.abs(c.z - w.z) > RUNE_VIEW || !hasRune(c)) continue;
-      if ((this.stoneView.landing.get(c.id) ?? -Infinity) > time) continue; // (its sigil still arcing down off its stone: render/leash/stones.ts)
       const since = time - (c.happyAt ?? -Infinity), k = Math.min(1, Math.max(0, since / 0.45)), ready = hasRune(c, time);
       const slot = ranks ? this.bareSlot(c.species) : this.slotOf(c.species, c.level), col = this.colOf(c), hop = since < 0.45 ? Math.sin(k * Math.PI) * 1.4 : 0, grow = k < 1 ? 0.4 + 0.75 * k - 0.15 * Math.sin(k * Math.PI) : 1;
       const a = ready ? 0.62 + 0.12 * Math.sin(time * 2 + c.id) : 0.3, rz = c.z + runeOffset(c, t), size = (ranks ? sigilSize(2, RUNE_SCALE) * rankSize(t, rankOf(c)) : sigilSize(c.level, RUNE_SCALE)) * grow; // (rank sigils: an adult rune's size, a rank's share of it)
@@ -677,7 +677,7 @@ export class LeashView {
       // (drawn a metre toward the camera, so the legend's own great sprite doesn't hide it)
       const col = null as { r: number; g: number; b: number } | null, from = { x: w.x, y: Math.max(0.6, hatTop * 0.5), z: w.z + 1 }, to = { x: pin.x, y: 1.2, z: pin.z + 1 };
       const d = Math.hypot(to.x - from.x, to.z - from.z), n = Math.max(8, Math.round(d / 0.35)), flash = 0.8 + 0.2 * Math.sin(time * 18);
-      for (let i = 0; i <= n; i++) { const k = i / n; this.standing.add(from.x + (to.x - from.x) * k, from.y + (to.y - from.y) * k, from.z + (to.z - from.z) * k, 0.7, dot, col ? col.r : 1, col ? col.g : 0.82, col ? col.b : 0.45, flash); } // (the lanterns' amber, bright: ruler-straight and taut)
+      if (!(ranks && s.tether?.id === pin.id)) for (let i = 0; i <= n; i++) { const k = i / n; this.standing.add(from.x + (to.x - from.x) * k, from.y + (to.y - from.y) * k, from.z + (to.z - from.z) * k, 0.7, dot, col ? col.r : 1, col ? col.g : 0.82, col ? col.b : 0.45, flash); } // (the lanterns' amber, bright: ruler-straight and taut)
       if (pin.since !== this.boingAt) { this.boingAt = pin.since; this.fx.push({ kind: "ring", x: w.x, y: 0, z: w.z, at: time, life: 0.45, r: AMBER[0], g: AMBER[1], b: AMBER[2], seed: 0, size: 2.2, n: 16, dot: 0.5 }); }
     }
 

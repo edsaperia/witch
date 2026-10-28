@@ -1124,6 +1124,9 @@ function frame(now: number): void {
   // The music: one track, mixed by how near the witch is to a playing soundsystem.
   const cue = N().musicCue = musicCue(game, N().musicCue);
   sound.update(game, cue, creator.open);
+  // The soundsystem spell's analyser bars (render/leash/stones.ts): the mix's spectrum, read once a frame only while its ring shows, and
+  // only while the audio runs (else the bars idle gently).
+  { const SV = view.leashView.stoneView; SV.spectrum = SV.wantsSpectrum && sound.audio?.state === "running" ? sound.music?.spectrum() ?? null : null; }
   const meter0 = performance.now();
   if (sound.audio) {
     meter.tap(sound.audio, [sound.music?.output, sound.music?.circleOutput, sound.sfx?.output]);

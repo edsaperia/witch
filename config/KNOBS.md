@@ -1629,6 +1629,12 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
 | `leash.ranks.stones.convert` | number | 0 to … |
 | `leash.ranks.chain.link` | array of number |  |
 | `leash.ranks.chain.tether` | number | 0 to … |
+| `leash.ranks.chain.slack` | number | 0 to … |
+| `leash.ranks.chain.damping` | number | 0 to … |
+| `leash.ranks.chain.gravity` | number | 0 to … |
+| `leash.ranks.chain.arcPull` | number | 0 to … |
+| `leash.ranks.chain.iterations` | number | 0 to … |
+| `leash.ranks.chain.jump` | number | 0 to … |
 
 ### `bond`
 
@@ -2191,7 +2197,7 @@ The runestone stacks and the soundsystem spell: she converts a stone by holding 
 1. Ed, 2026-10-28: "It's a spell that you're choosing to cast on this stone, rather than a property of the area/stone itself." (every wild creature's sigil in its stone's stack (friends above enemies); no auto-clearing; the spell or a wave converts the stone, its friend sigils scattering round it for anyone to pick up)
 Code: `src/rules/stoneStacks.ts`
 
-- **`cast.on`**: on: the stacks and the spell; off (the default till their view lands; ?cast=1 turns them on): areas clear by themselves once their wild are gone, as before.
+- **`cast.on`**: on (the default since their view landed, #1378): the stacks and the spell; off (?cast=0): areas clear by themselves once their wild are gone, as before.
 - **`cast.time`**: seconds of holding the sigil button at a stone to convert it; a hit stops the cast.
 - **`cast.drain`**: how much of a full cast her progress on a stone loses a second while she isn't casting it (holding again resumes from there).
 - **`cast.radius`**: how near the stone (m) she has to stand to cast; there the sigil button casts rather than putting down or picking up.

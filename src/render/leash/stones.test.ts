@@ -1,44 +1,58 @@
 import { describe, expect, it } from "vitest";
-import { columnOf, stoneStacks, type StackItem } from "./stones";
-import { layChain, type Chain } from "./chain";
+import { barLevel, columnOf } from "./stones";
+import { bowOf, layChain, stepChain, type Chain, type ChainMotion } from "./chain";
+import { CHAIN_DEFAULT } from "./ranks";
 
 describe("rune stones' sigils", () => {
-  it("a stone's column: enemies at the bottom, legend lowest, then friends, babies on top; hers, gone and travelling left out", () => {
-    const c = (id: number, level: number, more = {}) => ({ id, level, cell: [2, 1] as [number, number], leashed: false, state: "wild", ...more });
-    const g = { creatures: [c(0, 0), c(1, 3), c(2, 1, { state: "happy" }), c(3, 2), c(4, 0, { state: "happy" }), c(5, 2, { leashed: true }), c(6, 1, { gone: true }), c(7, 1, { travelling: true }), c(8, 3, { state: "happy" })] } as never;
-    const col = stoneStacks(g, new Map()).get("2,1")!;
-    expect(col.map(i => [i.id, i.friend])).toEqual([[1, false], [3, false], [0, false], [8, true], [2, true], [4, true]]);
-  });
   it("the column climbs from just over the stone, each sigil its size, none overlapping", () => {
-    const items: StackItem[] = [{ id: 0, level: 3, friend: false }, { id: 1, level: 0, friend: false }, { id: 2, level: 2, friend: true }];
-    const P = columnOf(items, l => [0.81, 0.9, 1, 1.1][l] * 2.8);
+    const P = columnOf([{ level: 3 }, { level: 0 }, { level: 2 }], l => [0.81, 0.9, 1, 1.1][l] * 2.8);
     expect(P[0].y - P[0].size / 2).toBeCloseTo(0.6);
     for (let i = 1; i < P.length; i++) expect(P[i].y - P[i].size / 2).toBeGreaterThan(P[i - 1].y + P[i - 1].size / 2);
     expect(P.map(p => p.size)).toEqual([1.1 * 2.8, 0.81 * 2.8, 2.8]);
   });
+  it("the analyser's bars follow the music: the bass at the ring's front, mirrored left and right, silent with silence", () => {
+    const bins = Uint8Array.from({ length: 64 }, (_, i) => (i < 4 ? 255 : 20));
+    expect(barLevel(bins, 0, 36)).toBe(1); // (the front: the bass)
+    expect(barLevel(bins, 18, 36)).toBeLessThan(0.2); // (the back: the treble)
+    for (let i = 1; i < 18; i++) expect(barLevel(bins, i, 36)).toBe(barLevel(bins, 36 - i, 36));
+    expect(barLevel(new Uint8Array(64), 5, 36)).toBe(0);
+  });
 });
 
 describe("chains", () => {
-  it("as many links as fit, gained and lost at the creature's end", () => {
+  const M: ChainMotion = CHAIN_DEFAULT;
+  const run = (ch: Chain, n: number, a: number[], b: number[], h: number, s = 2) => { for (let f = 0; f < s * 60; f++) stepChain(ch, n, 1, a[0], a[1], a[2], b[0], b[1], b[2], h, 1 / 60, M); };
+  it("both ends pinned, its links their length, held up off the ground toward its bow, never under it", () => {
     const ch: Chain = { links: [] };
-    layChain(ch, 0, 2, 0, 10, 0.5, 0, 1, 0.5);
-    const n = ch.links.length, first = { ...ch.links[0] };
-    expect(n).toBe(Math.floor(Math.hypot(10, 1.5)));
-    layChain(ch, 0, 2, 0, 15, 0.5, 0, 1, 0.5);
-    expect(ch.links.length).toBeGreaterThan(n);
-    expect(ch.links[0].x).toBeCloseTo(first.x, 0); // (her end's links stay where they were, near enough)
-    layChain(ch, 0, 2, 0, 4, 0.5, 0, 1, 0.5);
-    expect(ch.links.length).toBe(Math.floor(Math.hypot(4, 1.5)));
+    run(ch, 14, [0, 3, 0], [12, 0.5, 0], 1.5);
+    const P = ch.links;
+    expect([P[0].x, P[0].y, P[0].z]).toEqual([0, 3, 0]);
+    expect([P[14].x, P[14].y, P[14].z]).toEqual([12, 0.5, 0]);
+    for (let i = 0; i < 14; i++) expect(Math.hypot(P[i + 1].x - P[i].x, P[i + 1].y - P[i].y, P[i + 1].z - P[i].z)).toBeCloseTo(1, 1);
+    expect(Math.min(...P.map(p => p.y))).toBeGreaterThanOrEqual(0.15);
+    expect(P[7].y).toBeGreaterThan(1.2); // (up off the ground in the middle, as the bow)
+    for (const p of P) expect(Number.isFinite(p.x + p.y + p.z)).toBe(true);
   });
-  it("a tether keeps its links, bowing up as she comes closer; its last link at the legend; ready for a solver (where it was kept)", () => {
+  it("gains and loses links at the creature's end; laid afresh on a jump; settles (no runaway)", () => {
     const ch: Chain = { links: [] };
-    layChain(ch, 0, 2, 0, 20, 0.5, 0, 1.3, 0, 16);
-    const flat = Math.max(...ch.links.map(l => l.y));
-    layChain(ch, 0, 2, 0, 10, 0.5, 0, 1.3, 0, 16);
-    expect(ch.links.length).toBe(16);
-    expect(Math.max(...ch.links.map(l => l.y))).toBeGreaterThan(flat + 2);
-    const last = ch.links[15];
-    expect([last.x, last.y, last.z]).toEqual([10, 0.5, 0].map(v => expect.closeTo(v, 5)));
-    expect(last.px).toBe(last.x);
+    run(ch, 10, [0, 3, 0], [9, 0.5, 0], 1);
+    const near = { ...ch.links[1] };
+    run(ch, 14, [0, 3, 0], [13, 0.5, 0], 1, 0.05);
+    expect(ch.links.length).toBe(15);
+    expect(ch.links[1].x).toBeCloseTo(near.x, 0); // (her end's links stay where they were)
+    run(ch, 6, [0, 3, 0], [5, 0.5, 0], 1, 0.05);
+    expect(ch.links.length).toBe(7);
+    stepChain(ch, 6, 1, 40, 3, 0, 45, 0.5, 0, 1, 1 / 60, M); // (a blink: 40 m)
+    expect(ch.links[3].x).toBeGreaterThan(40);
+    run(ch, 6, [40, 3, 0], [45, 0.5, 0], 1, 3);
+    const v = Math.max(...ch.links.map(p => Math.hypot(p.x - p.px, p.y - p.py, p.z - p.pz)));
+    expect(v).toBeLessThan(0.01);
+  });
+  it("a tether's held length bows up as she comes closer", () => {
+    expect(bowOf(20, 20, 0)).toBe(0);
+    expect(bowOf(10, 20, 0)).toBeGreaterThan(4);
+    const ch: Chain = { links: [] };
+    layChain(ch, 16, 0, 2, 0, 10, 0.5, 0, bowOf(10, 16 * 1.3, 0.3));
+    expect(Math.max(...ch.links.map(l => l.y))).toBeGreaterThan(3);
   });
 });
