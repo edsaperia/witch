@@ -17,6 +17,7 @@ import { PACKS, clouded, packKindOf, packMoveOf } from "../../rules/combat/packs
 import { elementOf } from "../../rules/attackLook";
 import type { Dress } from "./attackLook";
 import { drawSpells } from "./attackSpells";
+import { comfort } from "../comfort";
 
 /** The attack look (leash/attackLook.ts: attacks in their elements, the danger frame), or ?look=old: the red dots, lines and rings
  *  it replaced, for comparing. */
@@ -95,7 +96,7 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
       // nobody hurt). A legend's blow, all bigger.
       const top = (c && lv.tops.get(c.id)) ?? 1.6, big = e.big ? 2 : 1, bits = c ? hitBits(c.species, c.leashed || c.legendState === "happy") : HIT_BITS.fur, col = bits === HIT_BITS.confetti && c ? neon(c.species) : c ? coatOf(c.species, 0.75) : bits;
       const lf = e.big ? 1 + 2 * t.attackFx.legendFlash : 1; // (a legend's flash: attackFx.legendFlash, 0.5 twice anyone's)
-      lv.fx.push({ kind: "flash", x: e.x, y: Math.min(3.5, top * 0.55), z: e.z, at: time, life: 0.16 * lf, r: 1, g: 1, b: 0.95, seed: e.at * 53 + (e.id ?? 0), size: 0.9 * lf });
+      if (!comfort.reduceFlashing) lv.fx.push({ kind: "flash", x: e.x, y: Math.min(3.5, top * 0.55), z: e.z, at: time, life: 0.16 * lf, r: 1, g: 1, b: 0.95, seed: e.at * 53 + (e.id ?? 0), size: 0.9 * lf });
       if (e.big) lv.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.45, r: 1, g: 0.85, b: 0.6, seed: 0, size: 3.2, n: 28, dot: 0.8 }); // a legend's blow: a shockwave along the ground
       lv.fx.push({ kind: "dust", x: e.x, y: 0.2, z: e.z, at: time, life: 0.5, r: 0.5, g: 0.45, b: 0.38, seed: e.at * 59 + (e.id ?? 0), size: 0.7 * big });
       lv.fx.push({ kind: "bits", x: e.x, y: Math.min(3, top * 0.6), z: e.z, at: time, life: 0.8, r: col.r, g: col.g, b: col.b, seed: e.at * 61 + (e.id ?? 0), size: big, n: bits === HIT_BITS.confetti ? 12 : 8 });
@@ -108,7 +109,7 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
     // Phase 1's (Echo): the heron blinking where she blinked, a white flash out and in; a mirage image bursting, a violet pop.
     if (e.kind === "packSync" && close(e.x, e.z)) { lv.fx.push({ kind: "spark", x: e.x, y: 1.2, z: e.z, at: time, life: 0.45, r: 1, g: 1, b: 1, seed: e.at * 79 + (e.id ?? 0), size: 2.2 }); lv.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.4, r: 1, g: 1, b: 1, seed: 0, size: 1.8, n: 14, dot: 0.6 }); }
     if (e.kind === "mirageBurst" && close(e.x, e.z)) { lv.fx.push({ kind: "spark", x: e.x, y: 1, z: e.z, at: time, life: 0.6, ...PACK_TINTS.violet, seed: e.at * 83 + (e.id ?? 0), size: 2 }); lv.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.5, ...PACK_TINTS.violet, seed: 0, size: 1.6, n: 14, dot: 0.6 }); }
-    if (e.kind === "witchHit") { lv.fx.push({ kind: "spark", x: e.x, y: 1.4, z: e.z, at: time, life: 0.5, r: 1, g: 0.25, b: 0.35, seed: e.at * 31, size: 1.6 }); lv.fx.push({ kind: "flash", x: e.x, y: 1.3, z: e.z, at: time, life: 0.18, r: 1, g: 0.9, b: 0.92, seed: e.at * 67, size: 1.1 }); }
+    if (e.kind === "witchHit") { lv.fx.push({ kind: "spark", x: e.x, y: 1.4, z: e.z, at: time, life: 0.5, r: 1, g: 0.25, b: 0.35, seed: e.at * 31, size: 1.6 }); if (!comfort.reduceFlashing) lv.fx.push({ kind: "flash", x: e.x, y: 1.3, z: e.z, at: time, life: 0.18, r: 1, g: 0.9, b: 0.92, seed: e.at * 67, size: 1.1 }); }
     if (e.kind === "fled" && close(e.x, e.z)) lv.fx.push({ kind: "puff", x: e.x, y: 0.5, z: e.z, at: time, life: 0.8, r: 0.8, g: 0.75, b: 0.7, seed: e.at * 13 });
     if (e.kind === "lost" && c) { const col = neon(c.species); lv.fx.push({ kind: "spark", x: e.x, y: 1, z: e.z, at: time, life: 1.2, r: col.r, g: col.g, b: col.b, seed: e.at * 7, size: 2.5 }); }
     if ((e.kind === "quake" || e.kind === "phase") && close(e.x, e.z, 150)) {

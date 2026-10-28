@@ -83,12 +83,17 @@ function drawRound(c: CanvasRenderingContext2D, kx: number, ky: number, glyph: s
 /** The keycaps a prompt shows: E, a movement key's letter, the pad's square and cross (round), a tap. */
 export type KeycapGlyph = "E" | "SQ" | "X" | "STICK" | "TAP" | "W" | "A" | "S" | "D" | "U" | "N" | "L" | "R";
 const ROUND = new Set(["SQ", "X", "STICK"]);
+/** The pad's button names (the Settings page's Pad buttons, app/playerSettings.ts padGlyphs): Xbox's letters on the round face buttons
+ *  where PlayStation's shapes would be: its X where the square is, its A where the cross is. */
+export const padGlyphStyle = { xbox: false };
+const xboxed = (g: KeycapGlyph): KeycapGlyph => (!padGlyphStyle.xbox ? g : g === "SQ" ? "X" : g === "X" ? "A" : g);
 /** A lone keycap (KEY art pixels square) as a canvas, `scale` page pixels an art pixel, drawn sharp: the use prompt's. */
 export function keycapCanvas(glyph: KeycapGlyph, scale = 3, down = false): HTMLCanvasElement {
   const cv = document.createElement("canvas");
   cv.width = KEY; cv.height = KEY;
   cv.style.cssText = `width:${KEY * scale}px;height:${KEY * scale}px;image-rendering:pixelated;display:block`;
-  if (ROUND.has(glyph)) drawRound(cv.getContext("2d")!, 0, 0, glyph); else drawKey(cv.getContext("2d")!, 0, 0, glyph, down);
+  const g = xboxed(glyph), round = ROUND.has(glyph);
+  if (round) drawRound(cv.getContext("2d")!, 0, 0, g); else drawKey(cv.getContext("2d")!, 0, 0, g, down);
   return cv;
 }
 /** The walking keys, W A S D in their inverted T (KeyHint.W × KeyHint.H art pixels), as a canvas: the wake-up's "get up" beside
@@ -104,7 +109,7 @@ export function wasdCanvas(scale = 3): HTMLCanvasElement {
 /** The same keycap as an inline image for a panel's hint line (its HTML), `scale` page pixels an art pixel. */
 const capHtml = new Map<string, string>();
 export function keycapHtml(glyph: KeycapGlyph, scale = 2): string {
-  const k = `${glyph}|${scale}`, had = capHtml.get(k);
+  const k = `${glyph}|${scale}|${padGlyphStyle.xbox}`, had = capHtml.get(k);
   if (had) return had;
   const html = `<img class="kc" alt="${glyph}" src="${keycapCanvas(glyph, scale).toDataURL()}" style="width:${KEY * scale}px;height:${KEY * scale}px;image-rendering:pixelated;vertical-align:middle">`;
   capHtml.set(k, html);

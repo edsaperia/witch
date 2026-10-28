@@ -16,7 +16,7 @@ import { areaUnderWitch, STEP, stepGame, type Controls, type Game } from "../rul
 const STILL: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 /** The pause page's own pieces: above the shield while frozen, and the only things keys and the mouse reach then (its test
  *  sliders, its Controls / What's new / Options buttons and their panel, the Music Lab, the new-build notice, the freeze's stamp). */
-export const PAUSE_UI = ["#pause-sliders", "#pause-btns", ".corner-panel", "#music-lab", "#new-build", "#freeze-marker", "#freeze-stamp"];
+export const PAUSE_UI = ["#settings-page", "#pause-sliders", "#pause-btns", ".corner-panel", "#music-lab", "#new-build", "#freeze-marker", "#freeze-stamp"];
 /** Over every overlay (the highest is the corner panel's 62). */
 const PAUSE_Z = 1000;
 const LAYER_CSS = `#pause-shield { position: fixed; inset: 0; z-index: ${PAUSE_Z}; display: none; }
@@ -96,6 +96,9 @@ export class Freeze {
   }
 
   /** Gamepad Start (standard button 9) toggles, read once a frame. */
+  /** The real pad (everyone else sees none while frozen): the Settings page reads it (ui/settingsMenu.ts). */
+  pad(): Gamepad | null { return [...(realPads?.() ?? [])].find(p => p) ?? null; }
+
   pollPad(): void {
     const pad = [...(realPads?.() ?? [])].find(p => p), down = !!pad?.buttons[9]?.pressed;
     if (down && !this.padPrev) this.toggle();
