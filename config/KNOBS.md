@@ -1412,6 +1412,7 @@ The 💌 invite [1], replacing the proximity chat when on: on the ground she sho
 - **`invites.hits`**: How many letters it takes to win a creature over by its level, and how fast its meter drains when not being hit.
   1. Ed, 2026-10-06: "the invitation dropoff rate (the speed at which animals become less invited) is too fast" (0.03 after 4 s, a full meter in about 33 s; it was states.json's 0.08 after 1.5 s, this knob unread)
   2. Ed, 2026-10-06: "I think we should remove the 0.5s cooldown between counted hits per creature - better to control this through the witch firing speed instead of having hits not register"
+  3. Ed, 2026-10-28: "let's change the drain rate to 2% instead of 3%" (0.02 after 4 s, a full meter in about 50 s; hearts from her animals' blows fade the same, in one queue with the 💌s ("this should be the same speed as 💌s fade ... and they go in the same fade 'queue'"))
   letters to fill it, by level (baby, young, adult); it drains drain of a full meter a second when not being hit, from config/states.json's affection.drainDelay seconds after the last [1]. Every letter that lands on an invitable creature counts [2]: how fast she invites is her firing rate (burst, burstGap, cooldown), nothing adaptive. Enraged creatures and legends block letters; scenery never stops them (Ed).
   Code: `config/states.json`
 - **`invites.fireSlow`**: her ground speed while firing, times this.
@@ -1420,8 +1421,9 @@ The 💌 invite [1], replacing the proximity chat when on: on the ground she sho
 - **`invites.spin`**: How fast a 💌 spins in flight.
   1. Ed, 2026-10-06: "the envelopes should spin like a frisbee"
   a 💌 in flight lies flat and turns about the upright this many times a second (drawn only); when it lands it stops and lies flat.
-- **`invites.orbit`**: the 💌 ring circles a creature at scale times its body radius (movement.json bodies) plus gap metres, at least min, and wider still when it holds many.
-  1. Ed's playtest, 2026-10-06: "Invitation orbits are too tight around the creature"
+- **`invites.orbit`**: the 💌 ring circles a creature at scale times its body radius (movement.json bodies) plus gap metres, at least min, and at least height times its drawn height (to its top as drawn) plus gap, so it rings the creature you see at any size; wider still when it holds many.
+  1. Ed, 2026-10-28: "the orbits are smaller than the size of the creatures; their size should adjust depending on how large the creatures are"
+  2. Ed's playtest, 2026-10-06: "Invitation orbits are too tight around the creature"
 - **`invites.hard`**: the hard homing of the 💌s her Sentry and Slingshot hats throw: homing degrees a second, cone degrees either side it looks in, range metres it looks out to (was the legend buffs' charm, 420, 80 and 18).
 
 | knob | type | range |
@@ -1450,6 +1452,7 @@ The 💌 invite [1], replacing the proximity chat when on: on the ground she sho
 | `invites.orbit.scale` | number | 0 to … |
 | `invites.orbit.gap` | number | 0 to … |
 | `invites.orbit.min` | number | 0 to … |
+| `invites.orbit.height` | number | 0 to … |
 | `invites.hard.homing` | number | 0 to … |
 | `invites.hard.cone` | number | 0 to … |
 | `invites.hard.range` | number | 0 to … |

@@ -12,7 +12,7 @@ import { isHomeKey } from "./speakers";
 export const levelValue = (level: Level, data: CombatData = COMBAT, species?: string) => Math.sqrt(data.levels.hp[level] * data.levels.dps[level]) * (species ? strengthOf(species, level, data) : 1);
 
 /** One fighter's value now: √(hp left × dps), so a hurt one counts for less. */
-export const creatureValue = (c: Creature, data: CombatData = COMBAT) => { const m = strengthOf(c.species, c.level, data); return Math.sqrt(Math.max(0, c.hp ?? data.levels.hp[c.level] * m) * data.levels.dps[c.level] * m); };
+export const creatureValue = (c: Creature, data: CombatData = COMBAT) => { const m = strengthOf(c.species, c.level, data); return Math.sqrt(Math.max(0, data.levels.hp[c.level] * m * (1 - (c.drops ?? 0))) * data.levels.dps[c.level] * m); }; // (worn by its 💧s: rules/orbit.ts)
 
 /** A side's value: the sum of its fighters'. */
 export const sideValue = (list: Iterable<Creature>, data: CombatData = COMBAT) => { let f = 0; for (const c of list) if (!c.gone) f += creatureValue(c, data); return f; };

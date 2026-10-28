@@ -9,6 +9,10 @@ import { easeRoute } from "../routeEase";
 import { bowOf, drawChain, stepChain } from "./chain";
 import { DISC } from "./glyphs";
 import { chainKnobs, dotAt, drawEmbers, rankKnobs, rankOf, rankSize, ranksOn, shownDots, youthDots } from "./ranks";
+import { meterHits } from "../../rules/game";
+
+/** A 💧's blue, for its dots in her stack. */
+const DROP_RGB: [number, number, number] = [0.42, 0.68, 1];
 
 /** Seconds a travelling animal's drawn route takes to settle onto a re-plan (render/routeEase.ts). */
 const ROUTE_EASE = 0.3;
@@ -68,14 +72,19 @@ export function drawStack(lv: LeashView, time: number, hatTop: number, dot: numb
         // Rank sigils (render/leash/ranks.ts): embers off its glyph, fewer and lower than on the ground; and a youth's dots off to
         // the right of it, two rows, one a berry it eats on the move: bright eaten, dim not, all of them pulsing when it's ready.
         drawEmbers(batch, dot, lv.glyphPts.get(`${sg!.uv[0]},${sg!.uv[1]}`) ?? [], pos.x, pos.y, pos.z, size, false, rankOf(c), [col.r, col.g, col.b], time, it.id * 3 + 1, RK.embers, RK.embers.stack);
-        const D = shownDots(youthDots(c, g.berries.fed.get(c.id) ?? 0, t), RK.dotsPerRow);
-        if (D.n > 0) {
-          const ready = D.lit >= D.n, beat = ready ? 0.65 + 0.35 * Math.sin(time * 6) : 1, ds = size * 0.24;
+        // (the berries' dots in the berries' own colour, and on the left its 💧s in blue: Ed, 2026-10-28, rules/orbit.ts)
+        const drops = c.drops ? meterHits(t)[Math.min(3, c.level)] ?? 4 : 0;
+        const dotSets: [{ n: number; lit: number }, number, [number, number, number]][] = [
+          [shownDots(youthDots(c, g.berries.fed.get(c.id) ?? 0, t), RK.dotsPerRow), 1, lv.berryRgb],
+          [shownDots({ n: drops, lit: Math.ceil((c.drops ?? 0) * drops - 1e-6) }, RK.dotsPerRow), -1, DROP_RGB],
+        ];
+        for (const [D, side, rgb] of dotSets) if (D.n > 0) {
+          const ready = side > 0 && D.lit >= D.n, beat = ready ? 0.65 + 0.35 * Math.sin(time * 6) : 1, ds = size * 0.24;
           for (let i = 0; i < D.n; i++) {
-            const q = dotAt(i, D.n, RK.dotsPerRow), on = i < D.lit, k = on ? (ready ? 1.25 * beat : 1) : 0.42;
-            if (back > 0) lv.stackBack.add(pos.x + q.x * size, pos.y + q.y * size, pos.z, ds * 1.5, dot, 0.02, 0.02, 0.035, back);
+            const q = dotAt(i, D.n, RK.dotsPerRow), qx = q.x * side, on = i < D.lit, k = on ? (ready ? 1.25 * beat : 1) : 0.42;
+            if (back > 0) lv.stackBack.add(pos.x + qx * size, pos.y + q.y * size, pos.z, ds * 1.5, dot, 0.02, 0.02, 0.035, back);
             const lit = on ? 0.3 : 0; // (lit ones toward white a little, so they read over the dim)
-            batch.add(pos.x + q.x * size, pos.y + q.y * size, pos.z + 0.02, ds, dot, (col.r + (1 - col.r) * lit) * k, (col.g + (1 - col.g) * lit) * k, (col.b + (1 - col.b) * lit) * k, on ? 1 : 0.85);
+            batch.add(pos.x + qx * size, pos.y + q.y * size, pos.z + 0.02, ds, dot, (rgb[0] + (1 - rgb[0]) * lit) * k, (rgb[1] + (1 - rgb[1]) * lit) * k, (rgb[2] + (1 - rgb[2]) * lit) * k, on ? 1 : 0.85);
           }
         }
       }

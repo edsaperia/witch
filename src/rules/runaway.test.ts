@@ -8,6 +8,8 @@ import { endParty } from "./partyOver";
 import { cellKey } from "./party";
 import { targetable } from "./combat";
 import { beachOf } from "./mapShape";
+import { runAway } from "./orbit";
+import { runawaySpot } from "./runaway";
 import type { Creature } from "./creatures";
 
 const C = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
@@ -18,12 +20,14 @@ function game(): Game {
   g.witch = { ...g.witch, seated: false, perch: false };
   return g;
 }
-/** Beaten, by her: its daze over now, a few metres from her (in the fight, stepped). */
+/** Beaten, by her: run away (a hostile one stunned, or a friend full of 💧s: rules/orbit.ts), a few metres from her (in the fight, stepped). */
 function beat(g: Game, c: Creature, dx: number): void {
   Object.assign(c, { x: g.witch.x + dx, z: g.witch.z + 6, tx: g.witch.x + dx, tz: g.witch.z + 6, leashed: false, state: undefined, asleep: false, dazed: true, dazedUntil: g.clock.time });
   c.cell = g.map.cellSafe(c.x, c.z).cell as [number, number]; // (of her area, its home: stepped in the fight there)
   Object.assign(c, { homeX: c.x, homeZ: c.z, anchorX: c.x, anchorZ: c.z, safeR: undefined, circle: undefined });
   g.byArea = null;
+  c.dazed = false; c.dazedUntil = undefined;
+  runAway(c, runawaySpot(g, c), () => ({ x: c.x, z: c.z }));
 }
 const wild = (g: Game, n: number) => g.creatures.filter(c => !c.boss && !c.gone && c.level > 0 && !c.leashed).slice(0, n);
 const inOwnArea = (g: Game, c: Creature) => cellKey(g.map.cellSafe(c.x, c.z).cell) === cellKey(c.cell);

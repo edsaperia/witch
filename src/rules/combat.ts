@@ -7,7 +7,7 @@
 // defend against wild wolves). Sieges: when a wave wakes an area, its wild creatures march on its
 // new soundsystem; survivors of a won siege march on to the next-nearest. No drawing here.
 import { LEGEND, type Creature } from "./creatures";
-import { runawayArrives, runOff } from "./runaway";
+import { runawayArrives } from "./runaway";
 import { type Cell } from "./partition";
 import { enrage, foes, huntsWitch, stateOf } from "./creatureStates";
 import { LEGENDS } from "./legends";
@@ -20,6 +20,7 @@ import { contacted, touch, land, area, stepKnock, useData } from "./combat/hits"
 import { stepLegendAttack, stepLegend } from "./combat/legend";
 import { ATTACK_LIB } from "./attacks/index";
 import { cast as castSpell, newSpells, stepSpells } from "./attacks/engine";
+import { getUp } from "./orbit";
 import { hittableOf, meleeExtras, spellAttack, speciesSpell, spellWorld } from "./attacks/combatWorld";
 import { PACKS, stepPacks, packsOn, packKindOf, packAttack, packGate, markStrike, dodgeAim, strikingNow, ownStrike, type Directive } from "./combat/packs";
 import { chaseAt, limitTurn, momentumOf, noteWitches } from "./momentum";
@@ -230,7 +231,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     if (c.dazed) {
       // Dazed: it lies still till its daze is over (invited meanwhile, it's whole and happy: states.befriend), then runs off.
       if (stateOf(c) !== "wild") { c.dazed = false; c.dazedUntil = undefined; }
-      else if (time >= (c.dazedUntil ?? 0)) { c.dazed = false; c.dazedUntil = undefined; runOff(c, w.runaway?.(c) ?? null, () => w.exit(c.x, c.z)); c.fight = undefined; c.siege = undefined; s.events.push({ kind: "fled", x: c.x, z: c.z, at: time, id: c.id }); }
+      else if (time >= (c.dazedUntil ?? 0)) { getUp(c, time); s.events.push({ kind: "up", x: c.x, z: c.z, at: time, id: c.id }); } // (not converted: up again, wild, its slots draining: rules/orbit.ts)
       else { c.moving = false; continue; }
     }
     // Beaten: it runs for its spot on the beach (rules/runaway.ts; no beach, the map's edge), and lies down asleep there once it's
@@ -238,7 +239,8 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     if (c.fleeUntil) {
       const ax = (c.fleeX ?? c.x) - c.x, az = (c.fleeZ ?? c.z) - c.z, d = Math.hypot(ax, az);
       if (d < 1 || w.unseen(c.x, c.z)) { runawayArrives(c, time); continue; }
-      c.x += (ax / d) * c.speed * C.fleeMult * dt; c.z += (az / d) * c.speed * C.fleeMult * dt;
+      const run = Math.max(c.speed * C.fleeMult, t.leash.babies?.farSpeed ?? 0); // (running away: at a baby's run, Ed 2026-10-28)
+      c.x += (ax / d) * run * dt; c.z += (az / d) * run * dt;
       c.facing = ax > 0 ? 1 : -1; c.away = az < -Math.abs(ax);
       c.moving = true; c.walk += dt * 8;
       continue;
