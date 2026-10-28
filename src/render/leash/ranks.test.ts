@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { TUNING } from "../../rules/tuning";
 import { toEvolve } from "../../rules/berries";
-import { areaTopRanks, dotAt, EMPTY_STONE, rankColour, rankOf, shownDots, stoneRank, youthDots, RANKS_DEFAULT } from "./ranks";
+import { areaTopRanks, dotAt, EMPTY_STONE, rankColour, rankOf, rankSize, shownDots, stoneRank, youthDots, RANKS_DEFAULT } from "./ranks";
 
 describe("rank sigils", () => {
   it("a youth's dots are its berries to adult less the last (eaten at a placed sigil), read from the rules", () => {
@@ -30,13 +30,19 @@ describe("rank sigils", () => {
     expect(new Set(pts.map(p => p.x)).size).toBe(8); // (no two on top of each other)
     expect(Math.max(...pts.map(p => p.x))).toBeLessThan(0.66 + 4 * 0.3);
   });
-  it("ranks: baby turquoise, youth purple, adult red, legend yellow", () => {
+  it("ranks: friends pink, light purple, light blue, turquoise; enemies crimson, red, orange, yellow (Ed, 2026-10-28)", () => {
     expect(rankOf({ level: 3 })).toBe(3);
-    const [t, p, r, y] = [0, 1, 2, 3].map(k => rankColour(TUNING, k));
-    expect(t[1] > t[0] && t[2] > t[0]).toBe(true); // turquoise: green and blue
-    expect(p[2] > p[1] && p[0] > p[1]).toBe(true); // purple: blue and red over green
-    expect(r[0] > 0.9 && r[1] < 0.4).toBe(true); // red
-    expect(y[0] > 0.9 && y[1] > 0.8 && y[2] < 0.4).toBe(true); // yellow
+    const [pk, lp, lb, tq] = [0, 1, 2, 3].map(k => rankColour(TUNING, k));
+    expect(pk[0] > 0.9 && pk[2] > pk[1]).toBe(true); // pink: red, then blue over green
+    expect(lp[2] > lp[0] && lp[0] > lp[1]).toBe(true); // light purple: blue over red over green
+    expect(lb[2] > lb[1] && lb[1] > lb[0]).toBe(true); // light blue
+    expect(tq[1] > tq[0] && tq[2] > tq[0]).toBe(true); // turquoise: green and blue
+    const [cr, rd, or, ye] = [0, 1, 2, 3].map(k => rankColour(TUNING, k, false));
+    expect(cr[0] < rd[0] && cr[2] > rd[2]).toBe(true); // crimson: darker and bluer than the red
+    expect(rd[0] > 0.9 && rd[1] < 0.3).toBe(true); // bright red
+    expect(or[0] > 0.9 && or[1] > rd[1] && or[1] < ye[1]).toBe(true); // orange, between red and yellow
+    expect(ye[0] > 0.9 && ye[1] > 0.8 && ye[2] < 0.4).toBe(true); // yellow
+    expect([0, 1, 2, 3].map(k => rankSize(TUNING, k))).toEqual([0.81, 0.9, 1, 1.1]); // (sizes by rank everywhere)
     expect(TUNING.leash.ranks?.on ?? RANKS_DEFAULT.on).toBe(true); // (the default since Ed, 2026-10-27; ?sigils=old off)
     expect(TUNING.leash.hex?.size).toBe(RANKS_DEFAULT.hex); // (their 6 m hex grid with them)
   });
@@ -45,11 +51,13 @@ describe("rank sigils", () => {
     const top = areaTopRanks([
       at([0, 0], 0), at([0, 0], 1), at([0, 0], 3, { leashed: true }), // (her legend doesn't count)
       at([1, 0], 2), at([1, 0], 3), // (a legend home: yellow)
+      at([3, 0], 2, { state: "happy" }), // (a friend now: only the hostile count)
       at([2, 0], 2, { gone: true }), at([2, 0], 1, { fleeUntil: 5 }), at([2, 0], 2, { dancing: true }), at([2, 0], 2, { travelling: true }),
     ]);
     expect(stoneRank(top, [0, 0])).toBe(1);
     expect(stoneRank(top, [1, 0])).toBe(3);
     expect(stoneRank(top, [2, 0])).toBe(EMPTY_STONE); // (everyone gone, fled, dancing or travelling)
+    expect(stoneRank(top, [3, 0])).toBe(EMPTY_STONE);
     expect(stoneRank(top, [5, 5])).toBe(EMPTY_STONE);
   });
 });

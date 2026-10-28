@@ -19,19 +19,35 @@ export interface RankKnobs {
   hex: number;
   /** A placed sigil's glyph, across (m). */
   glyph: number;
-  /** baby, youth, adult, legend (0-255). */
+  /** A friend's colours (hers, and the invited at a stone), baby, youth, adult, legend (0-255; Ed, 2026-10-28: pink, light purple,
+   *  light blue, turquoise). */
   colours: number[][];
+  /** An enemy's (the wild still at their stone; Ed, 2026-10-28: crimson, bright red, orange, yellow, the crimson darker than the red). */
+  enemy: number[][];
+  /** Each rank's sigil size, baby to legend, against an adult's (Ed, 2026-10-28: today's size the adult's, about 10% a step). */
+  sizes: number[];
   /** Embers a sigil on the ground gives off, by rank: how many at once, each one's size (m) and how high it rises (m); in her stack, `stack` of that. */
   embers: { count: number[]; size: number[]; rise: number[]; stack: number };
   /** A youth's dots in her stack: at most this many a row (two rows). */
   dotsPerRow: number;
   /** A rune stone's rune, its glow (Ed, 2026-10-27: "Make runestone sigils glow brighter"): its baked colour times this, hue kept. */
   stoneGlow: number;
+  /** Over each rune stone (Ed, 2026-10-28; render/leash/stones.ts): its area's sigils in a column, shown within `range` m of her
+   *  (fading over the last `fade`); the spell's spot `south` m south of it, `size` m across, fully on within `near` m and gone past
+   *  `far`; the cast's ring of `bars` bars `radius` m round the stone's foot, each step `cell` m; the conversion `convert` seconds. */
+  stones?: { range: number; fade: number; south: number; size: number; near: number; far: number; bars: number; radius: number; cell: number; convert: number };
+  /** The leashes as chains (render/leash/chain.ts): a link's length (m) by rank, baby to legend; a legend's tether's links `tether` times its rank's. */
+  chain?: { link: number[]; tether: number };
 }
+
+export const STONES_DEFAULT = { range: 90, fade: 20, south: 4, size: 4.4, near: 10, far: 20, bars: 36, radius: 4.4, cell: 0.55, convert: 2.4 };
+export const CHAIN_DEFAULT = { link: [0.5, 0.62, 0.78, 1], tether: 1.3 };
 
 export const RANKS_DEFAULT: RankKnobs = {
   on: true, hex: 6, glyph: 5,
-  colours: [[40, 225, 215], [150, 90, 255], [255, 70, 70], [255, 226, 60]],
+  colours: [[255, 120, 200], [190, 150, 255], [110, 190, 255], [40, 225, 215]],
+  enemy: [[200, 30, 70], [255, 40, 40], [255, 140, 30], [255, 226, 60]],
+  sizes: [0.81, 0.9, 1, 1.1],
   embers: { count: [3, 5, 8, 12], size: [0.22, 0.26, 0.3, 0.36], rise: [1.6, 2.1, 2.8, 3.6], stack: 0.4 },
   dotsPerRow: 4, stoneGlow: 2.4,
 };
@@ -40,16 +56,21 @@ export const RANKS_DEFAULT: RankKnobs = {
 export const OLD_HEX = 4;
 
 export const rankKnobs = (t: Tuning): RankKnobs => ({ ...RANKS_DEFAULT, ...(t.leash.ranks ?? {}) });
+export const stoneKnobs = (t: Tuning): NonNullable<RankKnobs["stones"]> => ({ ...STONES_DEFAULT, ...(t.leash.ranks?.stones ?? {}) });
+export const chainKnobs = (t: Tuning): NonNullable<RankKnobs["chain"]> => ({ ...CHAIN_DEFAULT, ...(t.leash.ranks?.chain ?? {}) });
 export const ranksOn = (t: Tuning): boolean => !!t.leash.ranks?.on;
 
 /** A rank: 0 baby, 1 youth, 2 adult, 3 legend (any higher level a legend's). */
 export const rankOf = (c: Pick<Creature, "level">): number => Math.max(0, Math.min(3, c.level));
 
-/** The rank's colour, 0 to 1. */
-export function rankColour(t: Tuning, rank: number): [number, number, number] {
-  const c = rankKnobs(t).colours[Math.max(0, Math.min(3, rank))] ?? [255, 255, 255];
+/** The rank's colour, 0 to 1: a friend's (hers, the invited) or an enemy's (the wild at their stone). */
+export function rankColour(t: Tuning, rank: number, friend = true): [number, number, number] {
+  const K = rankKnobs(t), c = (friend ? K.colours : K.enemy)[Math.max(0, Math.min(3, rank))] ?? [255, 255, 255];
   return [c[0] / 255, c[1] / 255, c[2] / 255];
 }
+
+/** The rank's sigil size against an adult's (Ed, 2026-10-28): 0.81, 0.9, 1, 1.1. */
+export const rankSize = (t: Tuning, rank: number): number => rankKnobs(t).sizes[Math.max(0, Math.min(3, rank))] ?? 1;
 
 /** A youth's dots in her stack: one for each berry it eats on the move (its cost to adult, less the last, eaten at a placed sigil:
  *  rules/berries.ts lastBerry), and how many it has eaten; none for any other rank. Read from the rules (toEvolve), so it follows
@@ -109,11 +130,11 @@ export function drawEmbers(batch: Instances, dot: number[], pts: [number, number
  *  a sigil), nor any gone, fleeing, travelling or off dancing at the party; so it changes as they grow, are recruited away, come
  *  home or leave. */
 export const EMPTY_STONE = 4;
-type Resident = Pick<Creature, "cell" | "level" | "leashed"> & Partial<Pick<Creature, "gone" | "fleeUntil" | "travelling" | "dancing" | "partyLegend">>;
+type Resident = Pick<Creature, "cell" | "level" | "leashed"> & Partial<Pick<Creature, "gone" | "fleeUntil" | "travelling" | "dancing" | "partyLegend" | "state">>;
 export function areaTopRanks(creatures: readonly Resident[], out = new Map<string, number>()): Map<string, number> {
   out.clear();
   for (const c of creatures) {
-    if (c.gone || c.leashed || c.fleeUntil !== undefined || c.travelling || c.dancing || c.partyLegend) continue;
+    if (c.gone || c.leashed || c.state === "happy" || c.fleeUntil !== undefined || c.travelling || c.dancing || c.partyLegend) continue; // (only the still hostile: Ed, 2026-10-28, the stone in the enemy palette)
     const k = c.cell[0] + "," + c.cell[1], r = rankOf(c);
     if ((out.get(k) ?? -1) < r) out.set(k, r);
   }

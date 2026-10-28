@@ -4168,6 +4168,23 @@
                 }
               }
             },
+            "enemy": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              }
+            },
+            "sizes": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
             "embers": {
               "type": "object",
               "properties": {
@@ -4212,6 +4229,85 @@
             "stoneGlow": {
               "type": "number",
               "minimum": 0
+            },
+            "stones": {
+              "type": "object",
+              "properties": {
+                "range": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "fade": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "south": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "size": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "near": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "far": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "bars": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "radius": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "cell": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "convert": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "range",
+                "fade",
+                "south",
+                "size",
+                "near",
+                "far",
+                "bars",
+                "radius",
+                "cell",
+                "convert"
+              ],
+              "additionalProperties": false
+            },
+            "chain": {
+              "type": "object",
+              "properties": {
+                "link": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "tether": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "link",
+                "tether"
+              ],
+              "additionalProperties": false
             }
           },
           "required": [
@@ -4219,9 +4315,13 @@
             "hex",
             "glyph",
             "colours",
+            "enemy",
+            "sizes",
             "embers",
             "dotsPerRow",
-            "stoneGlow"
+            "stoneGlow",
+            "stones",
+            "chain"
           ],
           "additionalProperties": false,
           "description": "Leash sigils drawn as bare glyphs in their rank's colour (baby, youth, adult, legend) with embers rising off them, so ranks are easy to tell apart at a glance."

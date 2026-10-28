@@ -1609,12 +1609,26 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
 | `leash.ranks.hex` | number | 0 to … |
 | `leash.ranks.glyph` | number | 0 to … |
 | `leash.ranks.colours` | array of array |  |
+| `leash.ranks.enemy` | array of array |  |
+| `leash.ranks.sizes` | array of number |  |
 | `leash.ranks.embers.count` | array of number |  |
 | `leash.ranks.embers.size` | array of number |  |
 | `leash.ranks.embers.rise` | array of number |  |
 | `leash.ranks.embers.stack` | number | 0 to … |
 | `leash.ranks.dotsPerRow` | number | 0 to … |
 | `leash.ranks.stoneGlow` | number | 0 to … |
+| `leash.ranks.stones.range` | number | 0 to … |
+| `leash.ranks.stones.fade` | number | 0 to … |
+| `leash.ranks.stones.south` | number | 0 to … |
+| `leash.ranks.stones.size` | number | 0 to … |
+| `leash.ranks.stones.near` | number | 0 to … |
+| `leash.ranks.stones.far` | number | 0 to … |
+| `leash.ranks.stones.bars` | number | 0 to … |
+| `leash.ranks.stones.radius` | number | 0 to … |
+| `leash.ranks.stones.cell` | number | 0 to … |
+| `leash.ranks.stones.convert` | number | 0 to … |
+| `leash.ranks.chain.link` | array of number |  |
+| `leash.ranks.chain.tether` | number | 0 to … |
 
 ### `bond`
 

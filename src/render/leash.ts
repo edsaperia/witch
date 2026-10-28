@@ -39,10 +39,12 @@ import { bubbles, drawCirclePanel, drawDreams, drawSnores } from "./leash/bubble
 import { ZooPlates } from "./zooPlates";
 import { drawDeckBpm } from "./leash/deckBpm";
 import { drawBond, drawStack, drawStrain, stackKey } from "./leash/stack";
+import type { Chain } from "./leash/chain";
+import { drawStones, newStoneView, resetStoneView, type StoneSpot } from "./leash/stones";
 import { drawProjection } from "./leash/projection";
 import { RUNE_SCALE, runeOffset, sigilSize } from "../rules/runeOffset";
 import { relicsOut } from "../rules/partyOver";
-import { drawEmbers, glyphPoints, rankColour, rankKnobs, rankOf, ranksOn, youthDots } from "./leash/ranks";
+import { drawEmbers, glyphPoints, rankColour, rankKnobs, rankOf, rankSize, ranksOn, youthDots } from "./leash/ranks";
 export { BUBBLE_PX, bubblePx } from "./leash/bubbles";
 export { legendarySigil } from "./leash/glyphs";
 
@@ -116,6 +118,13 @@ export class LeashView {
   /** Each stacked sigil's eased height above her hat, by creature. */
   stackY = new Map<number, number>();
   chain: { x: number; z: number; vx: number; vz: number }[] = [];
+  /** Each leash's chain of links, by creature (render/leash/chain.ts), and a legend's tether's length (m), its span at pick-up. */
+  readonly chains = new Map<number, Chain>();
+  readonly tetherLen = new Map<number, number>();
+  /** The rune stones drawn this frame, near enough for their sigils (render/view/home.ts drawMarkers fills it; render/leash/stones.ts). */
+  readonly stones: StoneSpot[] = [];
+  /** The rune stones' sigils, the spell's spot and its cast (render/leash/stones.ts). */
+  readonly stoneView = newStoneView();
   lastTime = 0;
   /** Her last take-off the leashes wouldn't allow (the "grounded" leash event), on her clock: their tug (render/leash/stack.ts drawBond). */
   tugAt = -9;
@@ -209,8 +218,8 @@ export class LeashView {
   setGame(game: Game): void {
     this.game = game;
     this.seatAt = null; this.bloodPool = null;
-    for (const m of [this.ruts, this.evolved, this.cycledAt, this.joined, this.stackY, this.lastSlots, this.travelling, this.routes, this.tops, this.halfW, this.heads, this.dreamStones]) m.clear();
-    this.look.reset();
+    for (const m of [this.ruts, this.evolved, this.cycledAt, this.joined, this.stackY, this.lastSlots, this.travelling, this.routes, this.tops, this.halfW, this.heads, this.dreamStones, this.chains, this.tetherLen]) m.clear();
+    this.look.reset(); this.stones.length = 0; resetStoneView(this.stoneView);
     this.bursts = []; this.chain = []; this.fx = []; this.ringGlows = []; this.dreams = []; this.snoreNear = []; this.projected = [];
     this.lastTime = 0; this.tugAt = -9; this.load = newLoadView(); this.bristle = { x: 0, y: 0, z: 0, on: false };
     this.shakeAt = -Infinity; this.shakeAmp = 0; this.boingAt = -Infinity; this.partyOverEase = 0; this.lettersSeen = -Infinity;
@@ -629,7 +638,7 @@ export class LeashView {
       let col = this.colOf(c);
       const pulse = ranks ? 0.8 + 0.1 * Math.sin(time * 2 + p.id) : 1.05 + 0.25 * Math.sin(time * 2 + p.id); // (a rank sigil's colour kept: brightened, its purple went pink, toward an adult's red)
       const drawn = writeOn(g.herTime, p.at); // (on her clock, as its stamp is: Bravo's dark-circle diagnosis, 2026-10-12)
-      const size = ranks ? RK.glyph : (3 + c.level * 0.8) * sg.scale;
+      const size = ranks ? RK.glyph * rankSize(t, rankOf(c)) : (3 + c.level * 0.8) * sg.scale; // (by rank, Ed 2026-10-28)
       if (ranks) col = this.rankMoment(c, p.x, p.z, size, col, time, dot);
       this.groundSigil(p.x, 0.02, p.z, size, sg.uv, col.r * pulse, col.g * pulse, col.b * pulse, 1, drawn);
       if (seeThrough > 0) this.through.add(p.x, 0.02, p.z, size, sg.uv, col.r * pulse, col.g * pulse, col.b * pulse, seeThrough, drawn);
@@ -642,9 +651,10 @@ export class LeashView {
     // (pickupDelay after), a little brighter. Only near her (RUNE_VIEW m), with the placed sigils' instances.
     for (const c of g.creatures) {
       if (Math.abs(c.x - w.x) > RUNE_VIEW || Math.abs(c.z - w.z) > RUNE_VIEW || !hasRune(c)) continue;
+      if ((this.stoneView.landing.get(c.id) ?? -Infinity) > time) continue; // (its sigil still arcing down off its stone: render/leash/stones.ts)
       const since = time - (c.happyAt ?? -Infinity), k = Math.min(1, Math.max(0, since / 0.45)), ready = hasRune(c, time);
       const slot = ranks ? this.bareSlot(c.species) : this.slotOf(c.species, c.level), col = this.colOf(c), hop = since < 0.45 ? Math.sin(k * Math.PI) * 1.4 : 0, grow = k < 1 ? 0.4 + 0.75 * k - 0.15 * Math.sin(k * Math.PI) : 1;
-      const a = ready ? 0.62 + 0.12 * Math.sin(time * 2 + c.id) : 0.3, rz = c.z + runeOffset(c, t), size = sigilSize(c.level, RUNE_SCALE) * grow;
+      const a = ready ? 0.62 + 0.12 * Math.sin(time * 2 + c.id) : 0.3, rz = c.z + runeOffset(c, t), size = (ranks ? sigilSize(2, RUNE_SCALE) * rankSize(t, rankOf(c)) : sigilSize(c.level, RUNE_SCALE)) * grow; // (rank sigils: an adult rune's size, a rank's share of it)
       this.groundSigil(c.x, 0.03 + hop, rz, size, this.uv(slot), col.r * 0.8, col.g * 0.8, col.b * 0.8, a, k);
       if (seeThrough > 0) this.through.add(c.x, 0.03 + hop, rz, size, this.uv(slot), col.r * 0.8, col.g * 0.8, col.b * 0.8, a * seeThrough, k); // (through scenery as a placed sigil is: Ed, 2026-10-12)
       if (ready && halo > 0) this.flat.add(c.x, 0.015, rz, 4.2, dot, col.r, col.g, col.b, 0.18 * halo);
@@ -682,7 +692,7 @@ export class LeashView {
     } else if (w.mode === "ground" && stackBottom(s)?.kind === "creature" && !blocked(s, w.x, w.z, t) && !s.placed.some(p => Math.hypot(p.x - w.x, p.z - w.z) <= L.pickRadius) && !runeNear(g.creatures, w.x, w.z, L.runeRadius, time, undefined, k => runeOffset(k, t)) && !relicsOut(g).some(r => r.state === "lying" && Math.hypot(r.sx - w.x, r.sz - w.z) <= L.runeRadius)) { // (on a relic's sigil the button picks the relic up)
       const c = g.creatures[s.stack[s.stack.length - 1]], col = this.colOf(c);
       const sg = this.sigilOf(c);
-      this.groundSigil(w.x, 0, w.z, ranks ? RK.glyph : (3 + c.level * 0.8) * sg.scale, sg.uv, col.r, col.g, col.b, 0.22);
+      this.groundSigil(w.x, 0, w.z, ranks ? RK.glyph * rankSize(t, rankOf(c)) : (3 + c.level * 0.8) * sg.scale, sg.uv, col.r, col.g, col.b, 0.22);
     }
 
     // Relics (#87): where one lies, its bottle stands among the scenery in its mound (render/view/scenery.ts, Ed 2026-10-09:
@@ -713,6 +723,7 @@ export class LeashView {
       for (const p of ruts) { const k = 1 - (time - p.at) / RUTS; this.flat.add(p.x, 0, p.z, 2.2, dot, 0.3, 0.22, 0.15, 0.55 * k); }
     }
 
+    drawStones(this, time, dot); // (the rune stones' sigils, the spell's spot, its cast and the conversion: render/leash/stones.ts)
     drawBond(this, time, slotPos, dot); // (the bond: render/leash/stack.ts)
     drawStrain(this, time, dot);
     this.look.end();

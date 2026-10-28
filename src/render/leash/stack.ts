@@ -6,8 +6,9 @@ import { hash2 } from "../../rules/random";
 import { LOAD_DEFAULT } from "../load";
 import type { LeashView } from "../leash";
 import { easeRoute } from "../routeEase";
+import { drawChain, layChain } from "./chain";
 import { DISC } from "./glyphs";
-import { dotAt, drawEmbers, rankKnobs, rankOf, ranksOn, shownDots, youthDots } from "./ranks";
+import { chainKnobs, dotAt, drawEmbers, rankKnobs, rankOf, rankSize, ranksOn, shownDots, youthDots } from "./ranks";
 
 /** Seconds a travelling animal's drawn route takes to settle onto a re-plan (render/routeEase.ts). */
 const ROUTE_EASE = 0.3;
@@ -36,7 +37,7 @@ export function drawStack(lv: LeashView, time: number, hatTop: number, dot: numb
   for (let k = order.length - 1; k >= 0; k--) {
     const it = order[k], relic = it.kind === "relic", key = stackKey(it.kind, it.id), j = order.length - 1 - k, link = lv.chain[j]; // j: 0 at the bottom
     const c = relic ? null : g.creatures[it.id], sg = c ? lv.sigilOf(c) : null;
-    const size = c ? (2 + c.level * 0.4) * S.scale * sg!.scale : 4.2 * S.scale; // (a relic's: half again an adult's size, Ed 2026-10-09: "+50% in the stack"; an adult's before, his playtest 2026-10-07)
+    const size = c ? (ranks ? (2 + 2 * 0.4) * rankSize(t, rankOf(c)) : 2 + c.level * 0.4) * S.scale * sg!.scale : 4.2 * S.scale; // (rank sigils: an adult's size, a rank's share of it, Ed 2026-10-28) // (a relic's: half again an adult's size, Ed 2026-10-09: "+50% in the stack"; an adult's before, his playtest 2026-10-07)
     const idle = Math.sin(time * 1.7 + j * 0.9) * S.idleSway * (1 + j * 0.5) * (1 - 0.6 * LV.load);
     // (under a load it leans toward the pull, each sigil a little further: render/load.ts)
     const lean = LT.stackLean * LV.load;
@@ -109,7 +110,7 @@ export function drawBond(lv: LeashView, time: number, slotPos: Map<number, THREE
   // event, rules/leashWeight.ts groundedBy), the leashes of those that count (following her, not babies) flash from dotted
   // to solid, taut lines as they pull her back down (GROUNDED_FLASH), then back.
   for (const e of g.leashEvents) if (e.kind === "grounded") lv.tugAt = e.at;
-  const solid = groundedSolid(time - lv.tugAt);
+  const solid = groundedSolid(time - lv.tugAt), chains = ranksOn(t), CK = chainKnobs(t), live = new Set<number>();
   for (const id of leashed) {
 
     const c = g.creatures[id], col = ranksOn(t) ? lv.colOf(c) : lv.colours.get(c.species); // (rank sigils: the rank's colour, ranks.ts)
@@ -132,6 +133,7 @@ export function drawBond(lv: LeashView, time: number, slotPos: Map<number, THREE
     if (was && !c.travelling) { lv.fx.push({ kind: "ring", x: c.x, y: 0, z: c.z, at: time, life: 0.5, r: col.r, g: col.g, b: col.b, seed: 0, size: 2.4, n: 18, dot: 0.6 }); lv.fx.push({ kind: "spark", x: c.x, y: 1, z: c.z, at: time, life: 0.5, r: col.r, g: col.g, b: col.b, seed: id * 7 + time, size: 2 }); }
     lv.travelling.set(id, !!c.travelling);
     if (!c.travelling || !c.route) lv.routes.delete(id);
+    else { lv.chains.delete(id); lv.tetherLen.delete(id); } // (a chain begins again when it's back)
     if (c.travelling && c.route) {
       // (bigger from the treetops, where the camera is far off and the routes run far)
       const up = w.mode === "treetop", rd = up ? 1.8 : 0.45, gap = up ? 5 : 2.2, hi = up ? 0.35 : 0; // (and lighter, to show over dark crowns)
@@ -149,9 +151,23 @@ export function drawBond(lv: LeashView, time: number, slotPos: Map<number, THREE
       continue;
     }
     const d = Math.hypot(c.x - lp.x, c.z - lp.z);
-    // (under a load, carried leashes show sooner, taut and brighter: render/load.ts)
+    // (under a load, carried leashes pull taut sooner and brighter: render/load.ts)
     const carried = s.stack.includes(id), whole = carried && solid;
     const ld = carried ? lv.load.load : 0, LT2 = t.load ?? LOAD_DEFAULT, from0 = 0.85 - (0.85 - LT2.threadFrom) * ld;
+    if (chains) {
+      // The leash as a chain (Ed, 2026-10-28; render/leash/chain.ts): links its rank's size, laid from her end (or its placed sigil's),
+      // an upward bow high while slack and flattening as it goes taut (Ed, 2026-10-06), flashing bright while it holds her down. A
+      // legend's is its tether: bigger links, as many as its span when she picked it up, so it bows up as she comes closer.
+      const strain = whole ? 1 : Math.max(0, Math.min(1, (d - L.length * from0) / L.length + ld * 0.5)), lit = 1 + LT2.threadBright * ld + (whole ? 0.6 : 0);
+      const legend = rankOf(c) === 3, link = CK.link[rankOf(c)] * (legend ? CK.tether : 1), ch = lv.chains.get(id) ?? { links: [] };
+      lv.chains.set(id, ch); live.add(id);
+      const span = Math.hypot(c.x - from.x, 0.5 - from.y, c.z - from.z);
+      if (legend && !lv.tetherLen.has(id)) lv.tetherLen.set(id, span); // (its length: the span at pick-up)
+      const count = legend ? Math.round(lv.tetherLen.get(id)! / link) : undefined;
+      layChain(ch, from.x, from.y, from.z, c.x, 0.5, c.z, link, Math.min(B.threadArcMax, d * (B.threadArcTaut + (B.threadArcSlack - B.threadArcTaut) * (1 - strain))), count);
+      drawChain(lv, ch, link, Math.min(1, col.r * lit), Math.min(1, col.g * lit), Math.min(1, col.b * lit), 1, dot);
+      continue;
+    }
     if (B.thread && (d > L.length * from0 || whole)) {
       // (flashing whole: taut, its dots close enough to touch, standing still; Ed's playtest, v3893)
       const len = Math.hypot(d, from.y), strain = whole ? 1 : Math.min(1, (d - L.length * from0) / L.length + ld * 0.5);
@@ -167,6 +183,7 @@ export function drawBond(lv: LeashView, time: number, slotPos: Map<number, THREE
       }
     }
   }
+  for (const id of [...lv.chains.keys()]) if (!live.has(id)) { lv.chains.delete(id); lv.tetherLen.delete(id); }
 }
 
 /** Her broom straining under a load (render/load.ts): sparks splaying back from its bristles, more the heavier; and over
