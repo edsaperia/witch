@@ -135,7 +135,7 @@ export function spellWorld(w: CombatWorld, s: CombatState, grid: Grid, seed: num
       for (const o of grid.near(x, z, r)) if (o.id !== source && o.species === c.species && targetable(o) && !w.asleep(o) && sideOf(o) === side && Math.hypot(o.x - x, o.z - z) <= r) mates.push(o);
       return mates.sort((p, q) => Math.hypot(p.x - x, p.z - z) - Math.hypot(q.x - x, q.z - z) || p.id - q.id);
     },
-    stillCasting(source, cast) { const c = w.creatures[source]; return !!c && !c.gone && !(c.stunUntil !== undefined && w.time < c.stunUntil) && c.fight?.spellCast === cast && !!c.fight.target && !c.charge && !c.leap && !c.burrow && !(c.swoop && (c.swoop.phase === "tele" || c.swoop.phase === "dive")); }, // (off on its own move instead: dropped)
+    stillCasting(source, cast) { const c = w.creatures[source]; return !!c && !c.gone && !(c.stunUntil !== undefined && w.time < c.stunUntil) && (c.fight?.spellCast === cast || !!c.fight?.spellCasts?.includes(cast)) && !!c.fight?.target && !c.charge && !c.leap && !c.burrow && !(c.swoop && (c.swoop.phase === "tele" || c.swoop.phase === "dive")); }, // (off on its own move instead: dropped)
     beat: 60 / w.t.beat.bpm,
   };
 }
