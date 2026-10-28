@@ -80,9 +80,9 @@ export class SoundsystemGenView {
 
   /** Upload an area's atlas as soon as its bake is here (foxtrot's hitch check on #541), so its first frame on screen doesn't
    *  pay for it: for the next waves' areas that's well before they rise. */
-  private warm(a: { atlas: { albedo: THREE.Texture; normal: THREE.Texture } } | undefined): void {
+  private warm(a: { atlas: { albedo: THREE.Texture; normal: THREE.Texture; albedoPal: THREE.Texture; normalPal: THREE.Texture } } | undefined): void {
     if (!a || !this.renderer || this.warmed.has(a)) return;
-    this.warmed.add(a); this.renderer.initTexture(a.atlas.albedo); this.renderer.initTexture(a.atlas.normal);
+    this.warmed.add(a); for (const t of [a.atlas.albedo, a.atlas.normal, a.atlas.albedoPal, a.atlas.normalPal]) this.renderer.initTexture(t);
   }
 
   /** Ask for the next waves' art ahead (in the background), then draw this frame's. Returns, per area drawn, its light colour,
