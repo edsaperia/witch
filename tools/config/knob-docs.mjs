@@ -61,15 +61,15 @@ for (let i = 0; i < keys.length; i++) {
 function sectionOf(top) { let s = null; for (const k of keys) { if (k.startsWith("__")) s = k.slice(2); if (k === top) return s; } return s; }
 
 /** The path a note's opening is about: its own knob; else a path under its home the note's name says (knock: witch.knock; hills:
- *  ground.hills; mapShape: map.shape); else its home's first knob. */
+ *  ground.hills; mapShape: map.shape), or a path anywhere by that name for a note with no knobs after it; else its home's first. */
 function targetOf(name, home) {
   if (paths.has(name)) return name;
   const dotted = name.replace(/([a-z0-9])([A-Z])/g, "$1.$2").replace(/\.([A-Z])/g, (_, c) => "." + c.toLowerCase());
   if (paths.has(dotted)) return dotted;
   for (const h of home) { const p = `${h}.${name}`; if (paths.has(p)) return p; }
-  const ends = [...paths].filter(p => p.endsWith(`.${name}`));
+  const ends = [...paths].filter(p => p.endsWith(`.${name}`) && (!home.length || home.some(h => p.startsWith(`${h}.`))));
   if (ends.length === 1) return ends[0];
-  return home[0] ?? null;
+  return home[0] ?? null; // (_creatures: its knobs after it, population; not sigilProjection.creatures, a name alike elsewhere)
 }
 
 // ---- prose helpers: balanced brackets and quotes

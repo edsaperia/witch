@@ -3,8 +3,30 @@
   "about": "Light, sky and mood (drawing only): glow, lights, shadows, haze, mist, smoke, the sky and moon, the looks, tone, bloom and tilt-shift.",
   "knobs": {
     "telescope": {
-      "what": "The telescope in the crow's nest [1]: walking up to it looks through it full screen [2], the night running on at the house's tenth, a compass strip along its top.",
+      "what": "The rolling ground [1]: ground.hills lifts the ground and everything standing on it into broad swells up to amplitude metres up or down, scale metres across, in octaves layers of noise; drawing only, the game itself stays flat. Paths stay level across, and the ground is levelled into plateaus under the dancefloor, the treehouse, soundsystems, set pieces, the grounds and ponds. ?hills=0 turns it off; ?hills=<amplitude> tries another (6 gentle, 20 rolling, 40 the default: Ed, v289 \"I guess hills=50 is just too much, maybe 40 is enough\"). No slope may rise past the camera's sightline to her [2]: the hills are made at least 4.3 × amplitude / tan(the camera's shallowest pitch) metres across (300 at 40 m and 30°), so taller hills come broader, not steeper; and after everything is combined (the noise, the plateaus' and paths' easing) no slope anywhere is steeper than 0.85 of that pitch [3]: a cliff is cut and filled into a slope of the limit, gentler ground left as it is. Plateaus ease in over 2 times the amplitude and paths over 0.6 times, and sprites stand at the lowest ground under their foot. Off [4]: the fake relief (relief.strength 0; ?relief=0.9 brings its bumps back) and the slopes' exaggerated light (shade 1). shade: the light reads their slopes this many times steeper, so gentle swells (which trees can stand on upright) still show. relief (above) adds the small bumps on top. The telescope in the crow's nest [5]: walking up to it looks through it full screen [6], the night running on at the house's tenth, a compass strip along its top.",
       "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-04"
+        },
+        {
+          "by": "Ed",
+          "date": null,
+          "quote": "so that you never go behind a bump",
+          "rest": "v289"
+        },
+        {
+          "by": "Ed",
+          "date": null,
+          "quote": "bumps are fine, it's cliffs that really show",
+          "rest": "v297"
+        },
+        {
+          "by": "Ed",
+          "date": null,
+          "quote": "remove the slope shading",
+          "rest": "v276"
+        },
         {
           "by": "Ed",
           "date": "2026-10-21",

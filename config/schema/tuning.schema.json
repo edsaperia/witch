@@ -981,8 +981,7 @@
             "scale",
             "shade"
           ],
-          "additionalProperties": false,
-          "description": "(above) adds the small bumps on top."
+          "additionalProperties": false
         },
         "hills": {
           "type": "object",
@@ -1004,8 +1003,7 @@
             },
             "shade": {
               "type": "number",
-              "minimum": 0,
-              "description": "the light reads their slopes this many times steeper, so gentle swells (which trees can stand on upright) still show."
+              "minimum": 0
             }
           },
           "required": [
@@ -1015,8 +1013,7 @@
             "octaves",
             "shade"
           ],
-          "additionalProperties": false,
-          "description": "The rolling ground: ground.hills lifts the ground and everything standing on it into broad swells up to amplitude metres up or down, scale metres across, in octaves layers of noise; drawing only, the game itself stays flat."
+          "additionalProperties": false
         },
         "layout": {
           "type": "object",
@@ -5245,12 +5242,12 @@
         "growth"
       ],
       "additionalProperties": false,
-      "description": "See sigilProjection.creatures."
+      "description": "Wild creatures: every area starts with the same population, population.start, and, from the start, more by its place on the waves' route (Balance 2's shape; rules/growth.ts routePopulation): byRoute.threat, [route index, F] points (1 the first wave's stone; straight lines between, flat past the ends), is the extra fighting value its young and adults add (F by Lanchester, young 11.6, adult 40, babies 0; about what an area woken at that wave grew to before); its kind spends it by its profile (byRoute.profiles[species], else default: the shares of its extra creatures as babies, young and adults), so many more of a swarm's young than of a heavy kind's adults, at the same danger: count = threat ÷ the profile's mean F a creature × the area's count scale, rounded, split by the shares (largest remainder, ties by the seed)."
     },
     "creatureSimRadius": {
       "type": "number",
       "minimum": 0,
-      "description": "See sigilProjection.creatures."
+      "description": "See population."
     },
     "simLod": {
       "type": "object",
@@ -9594,7 +9591,7 @@
             "fade"
           ],
           "additionalProperties": false,
-          "description": "Wild creatures: every area starts with the same population, population.start, and, from the start, more by its place on the waves' route (Balance 2's shape; rules/growth.ts routePopulation): byRoute.threat, [route index, F] points (1 the first wave's stone; straight lines between, flat past the ends), is the extra fighting value its young and adults add (F by Lanchester, young 11.6, adult 40, babies 0; about what an area woken at that wave grew to before); its kind spends it by its profile (byRoute.profiles[species], else default: the shares of its extra creatures as babies, young and adults), so many more of a swarm's young than of a heavy kind's adults, at the same danger: count = threat ÷ the profile's mean F a creature × the area's count scale, rounded, split by the shares (largest remainder, ties by the seed)."
+          "description": "each leashed or happy creature's sigil hangs over it at the same height, moving with it, no beam: only the nearest max within range metres, size times its ground rune, at opacity (a happy one's times happy, as its rune is dimmer on the ground), fading out over the last fade (a share) of the range."
         }
       },
       "required": [
@@ -10385,7 +10382,7 @@
         "vignette"
       ],
       "additionalProperties": false,
-      "description": "The telescope in the crow's nest: walking up to it looks through it full screen, the night running on at the house's tenth, a compass strip along its top."
+      "description": "The rolling ground: ground.hills lifts the ground and everything standing on it into broad swells up to amplitude metres up or down, scale metres across, in octaves layers of noise; drawing only, the game itself stays flat."
     },
     "smoke": {
       "type": "object",
