@@ -52,7 +52,7 @@ const FAR = new Map<string, SpeciesSpell>();
 /** A wild flyer that swoops (its profile's move; hostile: wild or enraged, never hers or happy). */
 const swoops = (c: Creature): boolean => !c.leashed && profileOf(c.species)?.move?.kind === "swoop" && (stateOf(c) === "wild" || stateOf(c) === "enraged");
 
-export { COMBAT, traitsOf, counterOf, newCombat, strengthOf, attackOf, scaled, attackNamed, maxHp, creatureMaxHp } from "./combat/data";
+export { COMBAT, traitsOf, counterOf, newCombat, strengthOf, attackOf, scaled, attackNamed, maxHp, creatureMaxHp, stunWorth } from "./combat/data";
 export type { Delivery, Modifier, Attack, CombatData, Trait, Target, Fight, Shot, Beam, CombatEventKind, CombatEvent, SoundHealth, CombatState, Trail, CombatWorld } from "./combat/data";
 export { fighting, targetable, truce, guardOf, nearestSound } from "./combat/targeting";
 

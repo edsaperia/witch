@@ -21,7 +21,7 @@ import { type Creature, type Level } from "../creatures";
 import { foes, huntsWitch } from "../creatureStates";
 import { hash2 } from "../random";
 import { FIGHT, type Move as OwnMove, profileOf, startCharge, swoopStriking } from "../movement";
-import { type Attack, COMBAT, type CombatState, type CombatWorld, type Target, creatureMaxHp, scaled, strengthOf } from "./data";
+import { type Attack, COMBAT, type CombatState, type CombatWorld, type Target, scaled, strengthOf, stunWorth } from "./data";
 import { fighting, sideOf, targetPos, targetable } from "./targeting";
 
 export type Role = "lunger" | "shooter" | "special" | "hold" | "hurt";
@@ -501,7 +501,7 @@ function special(s: CombatState, w: CombatWorld, pw: PackWorld, st: PackState, K
       for (let q = -L / 2; q <= L / 2 + 1e-6; q += r * 1.2) s.trails.push({ x: cx - hz * q, z: cz + hx * q, r, until: time + T, side, slow: sp.slow ?? 0.5, from: by.id });
       break;
     }
-    case "rally": for (const m of members) if (Math.hypot(m.x - by.x, m.z - by.z) <= Rr) { const max = creatureMaxHp(m), one = COMBAT.levels.dps[m.level] * 1.5 * (sp.heal ?? 1); const off = one / max; if (m.leashed || m.state === "happy") m.drops = Math.max(0, (m.drops ?? 0) - off) || undefined; else m.affection = Math.max(0, (m.affection ?? 0) - off) || undefined; m.slowUntil = undefined; } break; // (its 💧s taken off, or its slots' newest: rules/orbit.ts)
+    case "rally": for (const m of members) if (Math.hypot(m.x - by.x, m.z - by.z) <= Rr) { const max = stunWorth(m), one = COMBAT.levels.dps[m.level] * 1.5 * (sp.heal ?? 1); const off = one / max; if (m.leashed || m.state === "happy") m.drops = Math.max(0, (m.drops ?? 0) - off) || undefined; else m.affection = Math.max(0, (m.affection ?? 0) - off) || undefined; m.slowUntil = undefined; } break; // (its 💧s taken off, or its slots' newest: rules/orbit.ts)
     case "cover": {
       // Digs in by a hurt packmate (else the one her 💌 reached, else where it stands) and takes its hits.
       const ward = members.find(m => roles.get(m.id) === "hurt") ?? hit ?? null, coverer = ward ? healthy.filter(m => m !== ward).sort((a, b) => Math.hypot(a.x - ward.x, a.z - ward.z) - Math.hypot(b.x - ward.x, b.z - ward.z))[0] ?? by : by;
