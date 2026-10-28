@@ -48,6 +48,7 @@ says what each note covers.
 ## [Creatures in play](gameplay.md)
 
 - Talk / invite
+- Bubble sight
 - Babies on her leash
 - Followers in the treehouse
 - Sigil stack
