@@ -24,7 +24,7 @@ Backlog (Ed, 2026-10-09). **Not built yet; don't build without Ed's go.** The tr
 - **Scarf** keeps its own step.
 - **Broom:** a rotator, keep all 18; a width slider scales each broom's distinctive part (bicycle wheels, gyrocopter and drone rotors, handlebar length, hobby-horse head size).
 - **Removed:** bag (satchel, bum bag), backpack; the "Magic and more" items (lantern, potion vial, spellbook, glow sticks, wristband); the Randomise, Wild and Classic buttons.
-- The Player dropdown lives in the debug overlay (built, #649); the Waves dropdown goes for a pause-page wave-speed slider (Ed, 2026-10-18; being built).
+- The Player dropdown lives in the debug overlay (built, #649); the Waves dropdown goes for a pause-page wave-speed slider (Ed, 2026-10-18; built, #953).
 
 ## The bedroom's objects
 

@@ -98,6 +98,14 @@ The research ingredients' numbers, shared by the offline A/B renders and the liv
 
 The Witch Music Lab: plays the game's music engine through the game's own mix from a style, with a pretend run, any one section on a loop, the proximity mix, damage and the hooks, and knobs for the style.
 
+## `latency.cjs`
+
+The audio output's buffer by latencyHint: For each hint, makes an AudioContext in headless Chromium, plays a graph about as heavy as the music's while the page's thread works as a 30 fps game's does, and prints the context's buffer, the device's latency,…
+
+```
+node tools/music-lab/latency.cjs            (HINTS=interactive,balanced,playback,0.06,0.12  LOAD=60  SECS=8)
+```
+
 ## `set.mjs`
 
 A night's set in miniature, rendered: node tools/music-lab/set.mjs [island] [waves] [seed] [bars a wave] [encore bars] [bpm].
@@ -110,6 +118,28 @@ A night's set in miniature: the night's music on the game's mix, each wave `bars
 
 The measured output, live: node tools/music-lab/silence.cjs [dist dir] Loads the built game in headless Chromium with sound, walks her off her decks so the home speakers boot and the music plays, checks the meter hears it, then cuts the music and the sound…
 
+## `stems.cjs`
+
+The music drawn a bar at a time as stems against the same music drawn whole, in headless Chromium, a line of JSON a section: each section as stems through the bus against whole: apart sample by sample, by ear, the seams at the bar lines, and the cost a bar…
+
+```
+node tools/music-lab/stems.cjs [sections: drop,build,breakdown,forest] [bars: 4]
+node tools/music-lab/stems.cjs parts [sections] [bars: 2]     the same, each part alone
+node tools/music-lab/stems.cjs shift [sections] [bars: 1]     the live engine's own music drawn 2 s later against at 0, each
+```
+
+## `stems.ts`
+
+The music drawn a bar at a time as stems, against the same music drawn whole: each bar's notes rendered on an OfflineAudioContext of their own into nine channels, with a tail for what rings past the bar, their bus automation kept, each bar's renderer…
+
+## `tune.cjs`
+
+The singer's tuning check: node tools/music-lab/tune.cjs [section] [seed] [bars] [wave].
+
+## `tune.ts`
+
+The singer's tuning check: the game's own engine renders the sung line alone over a breakdown, offline, and reports every sung note it scheduled, so Node can pitch-track the render and compare.
+
 ## `voices.mjs`
 
 The voices' A/B for Ed: The same generated melody, five ways, each alone and in the music: a: Pink Trombone; b: the recorded woman's G4 retuned to each note, like a sampler; c: the FOF voice, three detuned singers, dry; d: the FOF voice through the…
@@ -120,6 +150,5 @@ node tools/music-lab/voices.mjs [out dir] [wave] [seed] [bars] (default previews
 
 ## Also here
 
-- `dist`
 - `live`
 - `music-lab.html`

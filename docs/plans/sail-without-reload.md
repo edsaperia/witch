@@ -1,5 +1,7 @@
 # Sailing without reloading the page
 
+**Status (2026-10-28):** PRs 1 to 6 shipped (#973, #979, #974, #978, #980, #981, #982; then the transition #1110/#1120, always ending asleep in bed #1123, no stutter #1225): the sail is in place by default (`sail.inPlace`, `src/app/sail.ts`, `?sail=reload` the fallback). PR 7 partly: the wake-up in her bedroom while the island builds is the opening (Ed, 2026-10-23; #985 first put the first load on the chart); still to do: chart.html as a link that opens the game on the chart (decision 7: it is still its own chart page, `src/app/chartPage.ts`).
+
 A plan, not code. Ed, 2026-10-19: "Option 5: we'll have to do this eventually anyway. Start planning it."
 
 ## In plain English
@@ -222,7 +224,7 @@ Everything keyed by the map object (WeakMaps in markers, soundsystemGen, scenery
 - `wearHat`;
 - the loadout.
 
-**Building the map takes time** (docs/perf-housekeeping-review.md):
+**Building the map takes time** (docs/archive/perf-housekeeping-review.md):
 - `generateMap` about 0.6 s on the main thread;
 - `new Forest` about 0.1 s;
 - archipelago about 0.55 s once per world (cached).

@@ -1,5 +1,7 @@
 # Composable attacks: the grammar, its telegraphs, and the plan
 
+**Status (2026-10-28):** steps 1 to 5 shipped: format #1306, engine core #1310, beams, areas and traps #1313, pack interplay #1314, each species' own attack the default #1326 (`docs/plans/attack-species.md`); the arena on it #1304, #1307, #1311; the look layer #1305, #1312, #1315, #1335. Still to do: `randomAttack` (the arena's 🎲 is disabled, no host provides it), the legends' attacks (step 5b), and the optional step 6. The caps are constants (`CAPS`, `src/rules/attacks/engine.ts`), not the tuning's `attacks.caps`.
+
 The coordinator's ask from Ed (2026-10-27): creature ranged attacks varied and fun, built from composable settings, every block at once,
 with a Fight Arena page (Juliet) on top of the format and a look layer (Lima) dressing it. Ed, verbatim: "Put the focus on composability
 for these attack systems — and on telegraphing."

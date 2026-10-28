@@ -1,6 +1,6 @@
 # Hats and brooms
 
-Backlog (Ed, 2026-10-09); **Ed's go 2026-10-11, being built** (rules/spells.ts; the first PR: the two slots, the picker, the plain broom, Speed, Long, Double blink, the Helmet and the Healing ring; the second, Hats A: Harvest, Dowsing, Sentry, Slingshot and Gathering, rules/hatSpells.ts; the third, Hats B: Bramble, Mine, Lullaby, Cyclone and Nursing). The roguelite unlocks: a second axis of progress next to islands and records (see [journey.md](journey.md), section 2).
+Backlog (Ed, 2026-10-09); **Ed's go 2026-10-11, built** (rules/spells.ts; #695, #719, #721, the brooms #728; the brooms since rebuilt as Workshop parts and sets, #1037; the first PR: the two slots, the picker, the plain broom, Speed, Long, Double blink, the Helmet and the Healing ring; the second, Hats A: Harvest, Dowsing, Sentry, Slingshot and Gathering, rules/hatSpells.ts; the third, Hats B: Bramble, Mine, Lullaby, Cyclone and Nursing). The roguelite unlocks: a second axis of progress next to islands and records (see [journey.md](journey.md), section 2).
 
 ## The two slots
 
@@ -15,7 +15,7 @@ Backlog (Ed, 2026-10-09); **Ed's go 2026-10-11, being built** (rules/spells.ts; 
 
 ## Rules for spells
 
-- **Hats and brooms change verbs; quest buffs change numbers** (proposed, 2026-10-11). *Out of date:* quests no longer give buffs (Ed, 2026-10-18; being built). The movement buffs (hare: blink charges; mole: fast rise and land; raven: faster treetops) belong with the broom garage's components, and the 💌 buffs (fox: homing, and the rest) with the bags (below).
+- **Hats and brooms change verbs; quest buffs change numbers** (proposed, 2026-10-11). *Out of date:* quests no longer give buffs (Ed, 2026-10-18; built, #954). The movement buffs (hare: blink charges; mole: fast rise and land; raven: faster treetops) belong with the broom garage's components, and the 💌 buffs (fox: homing, and the rest) with the bags (below).
 - Spells support the basics (speed, attacks, healing, movement). They never fix the failure cascade (soundsystems, bpm, creatures that ran off).
 
 ## Hats
@@ -69,7 +69,7 @@ Suggested:
 
 ## Unlocking: hats found at shrines, brooms made at home (Ed, 2026-10-16)
 
-Ed's idea, superseding the achievements rule below for hats (kept for the record). **Not built; don't build without Ed's go.** It lands with the treehouse's corridors and stations (treehouse.md, build order step 3).
+Ed's idea, superseding the achievements rule below for hats (kept for the record). **Not built; don't build without Ed's go.** (Hats are finds since #1044: "Hats and bags found, one a night", below.) It lands with the treehouse's corridors and stations (treehouse.md, build order step 3).
 
 - **Her first hat is hers; every hat after it is found on an island, at a shrine themed on its power.** A shrine is a set piece in one of the island's areas (placed like relics: about one per island, which hat by the island's kind or biome, so a player learns where to look); e.g. the Harvest hat in a ring of berries, Sentry on a watchtower, Bramble in thorns, Lullaby in a bed of poppies, Mine in a crater, Cyclone on a windy tor, Nursing at a spring, the Helmet on a cairn. The Dowsing hat could point to shrines as well as relics.
 - **She picks it up as a game object** (E, as any hat lying in the world: #717's rule): wearing one already, her own hat goes down where she stands and keeps working there, with its pointer; bareheaded, she puts the found one on and its spell is hers for the night.
@@ -90,7 +90,7 @@ Every spell hat, the bum bag and the backpack are finds in the one draw (rules/f
 
 - **A bag sets how she throws 💌s:** a shooting style (a shotgun spread, a sniper's long slow shot, and so on). She carries one at a time, so a bag is a deliberate choice of build. Easier to balance than the old legend boons, which stacked at random.
 - **Found like hats:** at a shrine themed on its power, picked up as a game object, by the same rules as hats (above).
-- **Where the old boons go** (proposed): the 💌 boons (Charm homing, Pierce, Spawn, Howl's ring...) are the first bags' behaviours; the movement boons (Hare's blink charges, Mole's fast rise, Raven's treetop speed) are broom components (the broom garage, below). Quests no longer give boons (Ed, 2026-10-18; being built).
+- **Where the old boons go** (proposed): the 💌 boons (Charm homing, Pierce, Spawn, Howl's ring...) are the first bags' behaviours; the movement boons (Hare's blink charges, Mole's fast rise, Raven's treetop speed) are broom components (the broom garage, below). Quests no longer give boons (Ed, 2026-10-18; built, #954).
 - Open: the first set of bags; whether bags share the hat shrines or have their own; where spare bags hang in the treehouse.
 
 ## The crystal ball: where an upgrade lies (Ed, 2026-10-18)
@@ -113,7 +113,7 @@ Every spell hat, the bum bag and the backpack are finds in the one draw (rules/f
 
 ## The broom garage (Ed, 2026-10-16)
 
-Ed's design, from a conversation on 2026-10-16. **Not built; don't build without Ed's go.** It replaces the broom room and broom station of treehouse.md and the "brooms by achievements" rule. The game is about exploring the forest to find cool stuff, so broom parts are rare discoveries, and the garage is where they go.
+Ed's design, from a conversation on 2026-10-16. **Not built; don't build without Ed's go.** (Since built in its own form as the Workshop: [workshop.md](workshop.md), #1037, #1040, #1056.) It replaces the broom room and broom station of treehouse.md and the "brooms by achievements" rule. The game is about exploring the forest to find cool stuff, so broom parts are rare discoveries, and the garage is where they go.
 
 ### One broom, three slots
 
