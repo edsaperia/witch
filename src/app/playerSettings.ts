@@ -107,3 +107,10 @@ let current: PlayerSettings | null = null;
 export function currentSettings(): PlayerSettings { return (current ??= loadSettings()); }
 /** New settings for the page, saved (false: not saved, this page only). */
 export function setCurrentSettings(s: PlayerSettings): boolean { current = clean(s); return saveSettings(current); }
+/** The pause page's own Volume sliders (ui/decide.ts, the music and sound effects knobs) moved: the settings follow, so the next night
+ *  (which puts the settings on last) keeps what was chosen there. */
+export function devVolume(knob: string | undefined, v: unknown): void {
+  if (typeof v !== "number" || (knob !== "music.volume" && knob !== "sfx.volume")) return;
+  const s = currentSettings(), x = s.master > 0 ? Math.min(1, Math.max(0, v / s.master)) : v;
+  setCurrentSettings(knob === "music.volume" ? { ...s, music: x } : { ...s, effects: x });
+}

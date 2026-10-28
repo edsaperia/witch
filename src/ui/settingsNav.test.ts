@@ -26,6 +26,8 @@ describe("moving", () => {
     expect(navigate({ tab: 1, row: 1 }, TABS, "right").action).toEqual({ kind: "none" });
     expect(navigate({ tab: 0, row: 0 }, TABS, "back").action).toEqual({ kind: "close" });
     expect(navigate({ tab: 0, row: 0 }, TABS, "reset").action).toEqual({ kind: "reset", id: "master" });
+    expect(navigate({ tab: 0, row: 0 }, [[{ id: "game.use", kind: "bind" }]], "choose").action).toEqual({ kind: "press", id: "game.use" });
+    expect(navigate({ tab: 0, row: 0 }, [[{ id: "game.use", kind: "bind" }]], "right").action).toEqual({ kind: "step", id: "game.use", dir: 1 });
     expect(firstRow([{ id: "a", kind: "toggle", hidden: true }, { id: "b", kind: "toggle" }])).toBe(1);
   });
   it("steps choices round and sliders in twentieths, held to 0..1", () => {

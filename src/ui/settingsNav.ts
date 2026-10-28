@@ -3,14 +3,14 @@
 // acts on it (a toggle flips, a choice steps on, a button presses), back closes, the tab keys step the tab, reset puts the row back to
 // its default. No drawing and no events here: an input in, the new focus and what to do out.
 
-export type RowKind = "slider" | "toggle" | "choice" | "button";
+export type RowKind = "slider" | "toggle" | "choice" | "button" | "bind";
 export interface NavRow { id: string; kind: RowKind; /** a choice's options */ options?: readonly string[]; /** hidden: skipped by the focus */ hidden?: boolean }
 export interface NavState { tab: number; row: number }
 export type NavInput = "up" | "down" | "left" | "right" | "choose" | "back" | "tabPrev" | "tabNext" | "reset";
 export type NavAction =
   | { kind: "none" }
-  | { kind: "step"; id: string; dir: -1 | 1 } // a slider or choice moved a notch, a toggle flipped
-  | { kind: "press"; id: string } // a button
+  | { kind: "step"; id: string; dir: -1 | 1 } // a slider or choice moved a notch, a toggle flipped; a binding's other slot
+  | { kind: "press"; id: string } // a button; a binding's slot listened for
   | { kind: "reset"; id: string }
   | { kind: "close" };
 
@@ -41,7 +41,7 @@ export function navigate(s: NavState, tabs: readonly (readonly NavRow[])[], inpu
     }
     case "choose": {
       if (!row) return { state: s, action: none };
-      if (row.kind === "button") return { state: s, action: { kind: "press", id: row.id } };
+      if (row.kind === "button" || row.kind === "bind") return { state: s, action: { kind: "press", id: row.id } };
       return { state: s, action: { kind: "step", id: row.id, dir: 1 } };
     }
   }

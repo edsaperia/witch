@@ -1,7 +1,7 @@
 // The player's settings (app/playerSettings.ts): saved and loaded on this browser, today's volumes and screen shake carried over the
 // first time, a bad or blocked storage harmless, and each one put on the tuning.
 import { describe, expect, it } from "vitest";
-import { DEFAULTS, KEY, applySettings, clean, ladderChoice, loadSettings, padGlyphs, saveSettings, type Store } from "./playerSettings";
+import { DEFAULTS, KEY, applySettings, clean, currentSettings, devVolume, ladderChoice, loadSettings, padGlyphs, saveSettings, setCurrentSettings, type Store } from "./playerSettings";
 import { TUNING } from "../rules/tuning";
 
 const mem = (init: Record<string, string> = {}): Store & { data: Record<string, string> } => {
@@ -68,5 +68,15 @@ describe("applying", () => {
     expect(padGlyphs("auto", "DualSense Wireless Controller (Vendor: 054c)")).toBe("ps");
     expect(padGlyphs("auto", undefined)).toBe("ps");
     expect(padGlyphs("xbox", "DualSense")).toBe("xbox");
+  });
+});
+
+describe("the pause page's own Volume sliders", () => {
+  it("move the settings with them (over master), so the next night keeps them", () => {
+    setCurrentSettings({ ...DEFAULTS, master: 0.5 });
+    devVolume("music.volume", 0.2); expect(currentSettings().music).toBeCloseTo(0.4);
+    devVolume("sfx.volume", 0.8); expect(currentSettings().effects).toBe(1);
+    devVolume("waves.length", 3); expect(currentSettings()).toMatchObject({ music: 0.4, effects: 1 });
+    setCurrentSettings({ ...DEFAULTS });
   });
 });

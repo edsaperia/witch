@@ -9,6 +9,7 @@
 import { button, h } from "./dom";
 import { byPr, changedIn, DECISION_LIST, decisionLine, groupOf, issueUrl, knobAt, knobParam, openGroups, saveOpenGroups, setKnob, currentValue, valuesText, type Decision } from "./decisions";
 import { saveSetting } from "../app/settings";
+import { devVolume } from "../app/playerSettings";
 export * from "./decisions";
 
 /** What the panel needs from the game. */
@@ -280,7 +281,7 @@ export class PauseSliders {
       const sw = ctl.querySelector<HTMLElement>(".swatch"), S = d.control.type === "slider" ? d.control.swatch : undefined;
       if (sw && S) sw.style.background = swatchCss(Number(knobAt(this.host.tuning, S.hue)), Number(knobAt(this.host.tuning, S.sat)));
     };
-    const set = (v: string | number | boolean) => { this.values.set(d.id, v); applyDecision(this.host, d, v); saveSetting(d, v); if (d.control.type === "slider" && d.control.swatch) for (const p of this.paints) p(); else paint(); this.paintHeads(); this.status.textContent = ""; }; // (a colour's swatch shows on its hue's and saturation's rows both) // (a persisted one, the volumes, remembered: app/settings.ts)
+    const set = (v: string | number | boolean) => { this.values.set(d.id, v); applyDecision(this.host, d, v); saveSetting(d, v); if (d.persist) devVolume(d.apply.knob, v); if (d.control.type === "slider" && d.control.swatch) for (const p of this.paints) p(); else paint(); this.paintHeads(); this.status.textContent = ""; }; // (a colour's swatch shows on its hue's and saturation's rows both) // (a persisted one, the volumes, remembered: app/settings.ts)
     if (d.control.type === "slider") {
       const c = d.control, r = h("input", { type: "range" }), out = h("span");
       r.min = String(c.min); r.max = String(c.max); r.step = String(c.step); out.className = "val";
