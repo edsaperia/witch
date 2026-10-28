@@ -4,8 +4,8 @@ Ten legends redrawn as the elder of their kind, from Golf's ★ picks in `docs/a
 
 The sheets show each species twice: the current version above (baby, young, adult and legend, with the witch for scale) and the new legend below. Only the legend changes; babies, young and adults draw as before.
 
-- `legend-batch-1.png`: wolf, boar, stag, elk, bear.
-- `legend-batch-2.png`: lynx, otter, beaver, toad, owl.
+- [`legend-batch-1.png`](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/archive/art-review/mocks/legend-batch/legend-batch-1.png): wolf, boar, stag, elk, bear.
+- [`legend-batch-2.png`](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/archive/art-review/mocks/legend-batch/legend-batch-2.png): lynx, otter, beaver, toad, owl.
 
 | Species | Current legend | New legend |
 |---|---|---|

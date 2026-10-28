@@ -2,7 +2,7 @@
 
 Ed: more animals for later islands, each with its own area type. The Komodo dragon takes unknown-04's place (rocky, phase 3, bearing 89). This is the mock, for approval before the build. Its code is on branch `claude/komodo-mock`, not for merging.
 
-`komodo-mock.png` is the whole sheet; `lineup.png` and `area.png` are its two rows at full size.
+[`komodo-mock.png`](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/archive/art-review/mocks/komodo/komodo-mock.png) is the whole sheet; [`lineup.png`](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/archive/art-review/mocks/komodo/lineup.png) and [`area.png`](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/archive/art-review/mocks/komodo/area.png) are its two rows at full size.
 
 ## The creature
 
