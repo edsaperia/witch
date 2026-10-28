@@ -13,6 +13,7 @@ import { heal, speedFactor, type Creature } from "./creatures";
 import type { Tuning } from "./tuning";
 import { befriend, inConga, invitableNow, stateOf } from "./creatureStates";
 import { facingAway } from "./witch";
+import { offSigils, onFloorSigil } from "./sigilAvoid";
 
 export interface PlacedSigil { id: number; x: number; z: number; /** game time it was put down */ at: number }
 
@@ -425,11 +426,13 @@ export function stepLeashed(c: Creature, px: number, pz: number, dt: number, t: 
     const d = Math.hypot(c.x - px, c.z - pz), k = (len * 0.5) / d;
     c.tx = px + (c.x - px) * k; c.tz = pz + (c.z - pz) * k;
     c.rest = 0;
-  } else if (c.rest > 0) { c.rest -= dt; c.moving = false; c.away = false; return; }
-  else if (Math.hypot(c.tx - px, c.tz - pz) > len * 0.85 || Math.hypot(c.tx - c.x, c.tz - c.z) < 0.05) {
-    if (Math.hypot(c.tx - c.x, c.tz - c.z) < 0.05) c.rest = 0.5 + c.rand() * 2;
-    const a = c.rand() * Math.PI * 2, r = Math.sqrt(c.rand()) * len * 0.8;
-    c.tx = px + Math.cos(a) * r; c.tz = pz + Math.sin(a) * r;
+  } else if (c.rest > 0 && !onFloorSigil(c.x, c.z, c.id)) { c.rest -= dt; c.moving = false; c.away = false; return; }
+  else if (c.rest > 0 || Math.hypot(c.tx - px, c.tz - pz) > len * 0.85 || Math.hypot(c.tx - c.x, c.tz - c.z) < 0.05) {
+    // (resting on a sigil on the floor, it moves on now: rules/sigilAvoid.ts)
+    const onSigil = c.rest > 0; c.rest = 0;
+    if (!onSigil && Math.hypot(c.tx - c.x, c.tz - c.z) < 0.05) c.rest = 0.5 + c.rand() * 2;
+    // A spot round its point, off the floor's sigils where it can (its own placed sigil too).
+    [c.tx, c.tz] = offSigils(() => { const a = c.rand() * Math.PI * 2, r = Math.sqrt(c.rand()) * len * 0.8; return [px + Math.cos(a) * r, pz + Math.sin(a) * r]; }, c.id)!;
     if (c.rest > 0) { c.moving = false; c.away = false; return; }
   }
   const dx = c.tx - c.x, dz = c.tz - c.z, d = Math.hypot(dx, dz);

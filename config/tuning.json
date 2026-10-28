@@ -95,6 +95,7 @@
     "c": { "on": true, "species": ["wolf", "fox", "marten", "bat"], "moving": 0.6, "share": 0.5, "angle": 0.7, "reach": 0.9, "ahead": 0.5, "sprint": 23 }
   },
   "stoneIdle": { "on": true, "radius": 35, "clear": 5 },
+  "sigilAvoid": { "on": true, "pad": 0.5 },
   "wildWatch": { "on": true, "inviteWakes": true, "provoked": 6, "time": 4, "forget": 20, "hangBack": 4, "dangerF": 90, "tint": 0.8, "fade": 0.7 },
   "hunt": { "on": true },
   "naps": { "on": true, "chance": 0.3, "length": [20, 60], "wake": 1.2, "circle": { "chance": 0.85, "length": [30, 80], "reach": 4 } },

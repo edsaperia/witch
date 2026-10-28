@@ -4968,6 +4968,26 @@
       "additionalProperties": false,
       "description": "A wild area's hostile creatures gather and roam near its runestone."
     },
+    "sigilAvoid": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean",
+          "description": "false lets them stand on sigils as before."
+        },
+        "pad": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Metres past a sigil's edge a creature's middle still counts as on it."
+        }
+      },
+      "required": [
+        "on",
+        "pad"
+      ],
+      "additionalProperties": false,
+      "description": "Idling and dancing creatures keep off the sigils lying on the floor."
+    },
     "wildWatch": {
       "type": "object",
       "properties": {
@@ -12670,6 +12690,7 @@
     "notice",
     "dodge",
     "stoneIdle",
+    "sigilAvoid",
     "wildWatch",
     "hunt",
     "naps",

@@ -38,6 +38,7 @@ import { SIGIL_NEON } from "../../art/sigils.js";
 import { COMBAT, marchOn, marchSpeed, maxHp, nearestHomeSpeaker, newCombat, startSiege, stepCombat, type CombatState } from "./combat";
 import { coarseTurn, fullRadius, inFull, newLodCounts, type LodCounts } from "./simLod";
 import { dropHat, newHat, type HatState } from "./hat";
+import { gatherFloorSigils, setFloorSigils } from "./sigilAvoid";
 import { questsFromPlaced, stepSigilButton } from "./sigilButton";
 
 /** Seconds of pushing on out against the zoo's edge before she leaves it (Game.zooPush). */
@@ -331,7 +332,8 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
     step.zoom = (P.zoom as number) ?? 0;
     delete P.zoom;
     remember(g);
-    fixedStep(g, step);
+    setFloorSigils(gatherFloorSigils(g)); // (the sigils on the floor this step, for the creatures to keep off: rules/sigilAvoid.ts)
+    try { fixedStep(g, step); } finally { setFloorSigils(null); }
   }
   g.alpha = Math.max(0, Math.min(1, g.acc / STEP));
 }
