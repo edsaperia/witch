@@ -19,7 +19,7 @@ Scripts for building, checking and measuring the game, run from the repository r
 - [`chart/`](chart/README.md): 4 scripts — diff.cjs, emerge.cjs, open.cjs, profile.cjs
 - [`config/`](config/README.md): 1 script — schema.mjs
 - [`dj/`](dj/README.md): 5 scripts — booth-sheet.mjs, booth.cjs, candles-sheet.mjs, respawn.cjs, strip.mjs
-- [`docs/`](docs/README.md): 1 script — glossary.mjs
+- [`docs/`](docs/README.md): 2 scripts — glossary.mjs, tables.mjs
 - [`feel/`](feel/README.md): 1 script — trace.cjs
 - [`flora/`](flora/README.md): 5 scripts — bush-sheet.mjs, leaf-jitter-shots.cjs, species-sheet.mjs, tuft-sheet.mjs, vignette.mjs
 - [`forest/`](forest/README.md): 3 scripts — border-map.mjs, border-stats.mjs, border.cjs
