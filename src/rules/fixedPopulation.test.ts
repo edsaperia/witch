@@ -8,6 +8,8 @@ import { loseSoundsystem, newGame, stepGame, STEP, type Game } from "./game";
 import { newBot } from "./bot";
 import { endParty } from "./partyOver";
 import { cellKey } from "./party";
+import { runAway } from "./orbit";
+import { runawaySpot } from "./runaway";
 import type { Creature, Level } from "./creatures";
 
 /** Every one gone is asleep on the beach. */
@@ -25,10 +27,10 @@ describe("a night's creatures (Ed, 2026-10-28)", () => {
     for (let i = 0; i < 20 * 60 * 60 && g.win?.phase !== "won" && !g.partyOver; i++) {
       if (i % (30 * 60) === 0 && i > 0 && dazed < 4) {
         const c = g.creatures.find(c => !c.gone && !c.leashed && !c.boss && !c.fleeUntil && !c.asleep && c.level > 0 && c.state !== "happy" && Math.hypot(c.x - g.witch.x, c.z - g.witch.z) < 60);
-        if (c) { Object.assign(c, { dazed: true, dazedUntil: g.clock.time }); dazed++; }
+        if (c) { runAway(c, runawaySpot(g, c), () => ({ x: c.x, z: c.z })); dazed++; } // (beaten: run away, as a stunned hostile does, rules/orbit.ts)
       }
       if (!lost && g.clock.time > 120) {
-        const area = [...g.party.areas.keys()].find(k => k !== "home" && g.creatures.some(c => !c.gone && !c.leashed && c.level === 0 && c.state === "happy" && cellKey(c.cell) === k));
+        const area = [...g.party.areas.keys()].find(k => k !== "home" && g.creatures.some(c => !c.gone && !c.leashed && !c.loose && c.level === 0 && c.state === "happy" && cellKey(c.cell) === k));
         if (area) { const s = g.combat.sounds.get(area); if (s) s.hp = 0; loseSoundsystem(g, area, s?.x ?? 0, s?.z ?? 0); lost++; }
       }
       if (g.clock.time > loseAt) endParty(g);

@@ -76,7 +76,8 @@ describe("runestone stacks (Ed, 2026-10-28)", () => {
     const g = game(), a = area(g);
     at(g, a, true);
     const y = own(g, a.key).find(c => c.level > 0 && !c.boss)!;
-    affectionOf(g).hit(y, 1e3, g.herTime); // (a 💌 that fills its meter)
+    affectionOf(g).hit(y, 1e3, g.herTime); // (a 💌 that fills its meter: stunned, rules/orbit.ts)
+    affectionOf(g).hit(y, 1e3, g.herTime); // (and the next converts it)
     expect(stateOf(y)).toBe("happy");
     expect(y.atStone).toBe(true);
     expect(hasRune(y, Infinity)).toBe(false);
