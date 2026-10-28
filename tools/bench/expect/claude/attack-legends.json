@@ -1,0 +1,5 @@
+{
+  "reason": "awake legends throw their kind's attack exaggerated (Ed, 2026-10-27; docs/plans/attack-species.md), and a lob now lands where its landing was shown (where its target stood as it was cast)",
+  "frames": { "wave-fight": "a lobbing kind's throws land where they were shown" },
+  "rules": { "*": "legends' throws and lobs land differently: who's hit, when, and the combat state's spells" }
+}

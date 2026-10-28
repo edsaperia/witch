@@ -83,6 +83,7 @@ says what each note covers.
 - Posse / travelling
 - Conga dancer
 - Wild / happy / leashed / enraged
+- Runaway
 - Restless / angry legend, relic
 
 ## [The treehouse and its house](house.md)
@@ -202,6 +203,7 @@ says what each note covers.
 - Controls
 - Bindings
 - Bindings API
+- Settings page
 - Pad layout
 - Glide
 - Resting 💌s
