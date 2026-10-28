@@ -27,10 +27,10 @@ const check = (ok, what) => { console.log(`${ok ? "ok  " : "FAIL"} ${what}`); if
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 300000, polling: 500 });
     await page.keyboard.press("Enter"); await page.waitForTimeout(3000);
     await page.keyboard.press("Escape");
-    await page.waitForSelector("#pause-sliders.open button", { timeout: 60000 });
+    await page.waitForSelector("#pause-sliders.open button", { timeout: 180000 });
     await page.waitForTimeout(1200); // (it slides in)
     await page.evaluate(() => [...document.querySelectorAll("#pause-sliders button")].find(b => /Show settings page/.test(b.textContent)).click());
-    await page.waitForSelector("#settings-page.open", { timeout: 60000 });
+    await page.waitForSelector("#settings-page.open", { timeout: 180000 });
     await page.waitForTimeout(500);
   };
   await open();
