@@ -2,6 +2,15 @@
 
 <!-- written by tools/inventory.mjs; edit the scripts' header comments, then run it again -->
 
+## `linkSwitches.mjs`
+
+The link switches as data: every ?name=value the game reads from its link is a record in config/link-switches.json, and docs/LINK-SWITCHES.md is written from it.
+
+```
+node tools/config/linkSwitches.mjs           refresh each record's readIn from the code, then rewrite docs/LINK-SWITCHES.md
+node tools/config/linkSwitches.mjs --check   say what's out of step (as the test does), change nothing
+```
+
 ## `schema.mjs`
 
 The config schemas: writes and checks config/schema/*.schema.json and the knob reference config/KNOBS.md.

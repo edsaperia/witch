@@ -1,7 +1,8 @@
-// node tools/islands/sheet.mjs <out.png> [--amp 0.3] [--harmonics 4] [--detail 0.35]: every kind's island (home's too, by the map's own coast) as a
+// Every kind's island (home's too, by the map's own coast) as a
 // dream bubble draws it (art/islands.js islandPixels, 30 px at the game's 3-px grid, on the bubble's pale face) and as the sea
 // chart's path, from its coastline (rules/islandShape.ts islandCoast) with the islands' coast knobs (islands.coast) (or those given), its phase
 // from the kinds table (art/areas/<id>/kind.json and config/kinds/) where the rosters have it (else 0).
+//   node tools/islands/sheet.mjs <out.png> [--amp 0.3] [--harmonics 4] [--detail 0.35]
 import fs from "fs";
 import { createRequire } from "module";
 import { openRules, arg } from "../balance/lib.mjs";

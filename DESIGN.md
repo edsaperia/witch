@@ -468,15 +468,81 @@ The buffs below are off since 2026-10-18 (see Legend buffs, redesigned).
 - **Stacking:** buffs stack (two of one kind count twice), each total held inside limits in `config/legend-buffs.json`.
 - **Every hit counts** (Ed, 2026-10-06: "I think we should remove the 0.5s cooldown between counted hits per creature - better to control this through the witch firing speed instead of having hits not register"): every 💌 that lands on an invitable animal adds to its meter; how fast she invites is her firing rate, a tuning value, with nothing adaptive. (Until then each animal took affection from at most one 💌 every 0.5 s.)
 - **Balance** comes from the enemies in later fights, not from weaker buffs.
-- **One projectile model** (`rules/invites.ts`), its modifiers composing:
-  - **Pattern:** Fan (beetle), Rear guard (woodlouse), Howl's ring every 5th burst (wolf), Echo (owl), Wind-up's charged volley (bear), Flutter's extra volley (moth).
-  - **Flight:** Charm's hard homing (fox), Spiral's boomerang (snail), Strike's speed (snake), Long thread's range (spider), Wriggle's speed and range (newt), Lookout's range (meerkat), Big heart's hitbox (badger), Quick fire's shorter cooldown (salamander), Light fingers' quicker bursts and faster 💌s (raccoon).
-  - **On landing:** Pierce (stag), Skimming stone's ricochet (otter), Spawn's split into 3 (toad), Slip past the enraged (elk).
-  - **Lying about:** Paw prints' trail (wildcat), Cache (squirrel), Lullaby orbit (dormouse).
-- **Movement:** Dash bursts, 3 blink charges (hare); Flit, a longer blink (bat); Roll, a little longer blink and untouchable a little longer (armadillo); Curl, untouchable longer (hedgehog); Momentum after a blink (boar); Frenzy, a blink back for each animal won over (stoat); Decoy, a waiting 💌 left where she blinked from (beaver); Scamper on the ground (marten); Poise, sharper turns and quicker starts (lynx); Steady, no slowing while firing (ram); Wings in the treetops (raven); Burrow, quicker rising and landing (mole); Stride, quicker on foot and a longer blink (heron).
+- **One projectile model** (`rules/invites.ts`), its modifiers composing: a pattern (more 💌s, or 💌s at other angles or times), their flight (homing, a boomerang, speed, range, a bigger hitbox, a quicker fire), what they do on landing (pierce, ricochet, split, slip past the enraged) or 💌s lying about (a trail, a cache, an orbit); and her movement (blink charges, a longer blink, longer untouchable, momentum, quicker on foot, in the treetops, rising and landing). Each species' buff is its folder's `art/creatures/<id>/creature.js` `buff`, its numbers in `config/legend-buffs.json` `how`: the table at the end of this section, made from them (the docs pass, 2026-10-28: the lists that stood here named 32 of them).
 - **Firing slows her** to `invites.fireSlow` (0.8) of her ground speed, so Steady has something to take away (the builder's call; easy to set to 1).
 - **Removed:** the posse, berry, evolve, wave-countdown, forecast, glow, spell and talk-time buffs.
 - **Debug:** `?buffs=fox,toad,stag` puts those buffs on from the start (`?buffs=all` all of them).
+
+Each species' buff (`art/creatures/<id>/creature.js` `buff`; `node tools/docs/tables.mjs`):
+
+<!-- data: legend-buffs (node tools/docs/tables.mjs --write; edit the data, not this) -->
+| Species | Buff | On | What it does |
+|---|---|---|---|
+| arcticfox | Snow pounce | her movement | a longer blink, and quicker starts on foot |
+| armadillo | Roll | her movement | a little longer blink, and untouchable a little longer after it |
+| badger | Big heart | her 💌s | bigger 💌s, easier to land |
+| bat | Flit | her movement | your blink goes further |
+| bear | Wind-up | her 💌s | hold to charge, let go for a big volley |
+| beaver | Decoy | her movement | blinking leaves a waiting 💌 where you were |
+| beetle | Fan | her 💌s | each shot a 3-way spread |
+| boar | Momentum | her movement | a burst of speed after each blink |
+| cat | Paw prints | her 💌s | 💌s leave a trail of paw prints that lands too |
+| cheetah | Sprint | her movement | quicker on foot |
+| crab | Sidestep | her movement | quicker off the mark on foot, and a longer blink |
+| crocodile | Snap | her movement | your blink comes back quicker |
+| dormouse | Lullaby orbit | her 💌s | two 💌s circle you and fly at animals close by |
+| dragonfly | Hover | her movement | sharper turns over the treetops, and a little quicker |
+| elephant | Trumpet | her 💌s | bigger 💌s that carry further |
+| elk | Slip past | her 💌s | 💌s slip through enraged animals |
+| featheredserpent | Plumage | her movement | a quicker climb to the treetops, and quicker over them |
+| fennec | Ears | her 💌s | 💌s reach further |
+| flyingsquirrel | Soar | her movement | a little quicker over the treetops, and a longer blink |
+| fox | Charm | her 💌s | 💌s home in on the nearest animal |
+| frosttroll | Long stride | her movement | quicker on foot, and a quicker climb to the treetops |
+| frostwyrm | Glide | her movement | a longer blink, as over ice |
+| griffin | Talon | her 💌s | 💌s fly a quarter faster |
+| hare | Dash bursts | her movement | 2 more blink charges |
+| hedgehog | Curl | her movement | untouchable for longer after a blink |
+| heron | Stride | her movement | a little quicker on foot, and a longer blink |
+| hydra | Many Heads | her 💌s | 💌s come quicker and land a little more easily |
+| ibex | Sure-footed | her movement | quicker starts on foot, and a quicker climb to the treetops |
+| jaguar | Night eyes | her 💌s | 💌s fly further and a little faster |
+| komodo | Lunge | her movement | your blink lunges further |
+| lion | Pride | her 💌s | 💌s fly a little faster and further |
+| lynx | Poise | her movement | sharper turns, quicker starts |
+| marten | Scamper | her movement | faster on the ground |
+| meerkat | Lookout | her 💌s | 💌s reach further |
+| mole | Burrow | her movement | rise and land twice as fast |
+| moth | Flutter | her 💌s | one more 💌 a burst |
+| newt | Wriggle | her 💌s | 💌s fly a little faster and further |
+| otter | Skimming stone | her 💌s | 💌s bounce on to another animal |
+| owl | Echo | her 💌s | each burst fires again half a second later |
+| penguin | Toboggan | her movement | a little quicker on foot, and quicker off the mark |
+| polarbear | Blizzard | her 💌s | 💌s fly further and land more easily |
+| raccoon | Light fingers | her 💌s | quicker bursts, 💌s flying a little faster |
+| ram | Steady | her movement | no slowing while you fire |
+| rattlesnake | Warning | her 💌s | 💌s fly a little faster and land wider |
+| raven | Wings | her movement | faster in the treetops |
+| redpanda | Cuddle | her 💌s | 💌s land on animals a little wider of where they strike |
+| rhino | Charge | her movement | much faster on the ground, slower to get going |
+| roe | Spring | her movement | your dodge comes back sooner |
+| salamander | Quick fire | her 💌s | less wait between bursts |
+| scorpion | Sting | her 💌s | 💌s pass through to the next, with a little less wait |
+| snail | Spiral | her 💌s | 💌s come back to you, landing on the way |
+| snake | Strike | her 💌s | 💌s fly faster |
+| snowleopard | Ghost of the peaks | her movement | a longer blink, and sharper turns in the treetops |
+| sphinx | Riddle | her 💌s | 💌s carry far and come a little quicker |
+| spider | Long thread | her 💌s | 💌s fly further |
+| squirrel | Cache | her 💌s | you drop 💌s that wait and fly at animals that come near |
+| stag | Pierce | her 💌s | 💌s pass through the first animal and fly on |
+| stegosaurus | Tail sweep | her 💌s | each 💌 bursts wider |
+| stoat | Frenzy | her movement | winning an animal over gives back a blink |
+| tiger | Pounce | her movement | a longer blink, and quicker off the mark |
+| toad | Spawn | her 💌s | a 💌 that lands splits into 3 small ones |
+| unicorn | Grace | her movement | a longer blink and quicker starts |
+| wolf | Howl | her 💌s | every 5th burst a ring of 💌s round you |
+| woodlouse | Rear guard | her 💌s | each burst also fires a 💌 behind you |
+<!-- /data: legend-buffs -->
 
 ### Multiplayer (Ed, 2026-10-04)
 
