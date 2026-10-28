@@ -25,6 +25,9 @@ How it sits in the fight:
 
 Complexity by phase: home 0.7, phase 1 1.7, phase 2 2.0, phase 3 2.5, phase 4 2.7. This counts modules and terms beyond a plain single bolt, with children included.
 
+Each species' attack, made from `config/species-attacks.json` and its kind's `art/areas/<id>/kind.json` (`node tools/docs/tables.mjs`):
+
+<!-- data: species-attacks (node tools/docs/tables.mjs --write; edit the data, not this) -->
 | Phase | Biome | Species | Attack |
 |---|---|---|---|
 | 0 | temperate | badger | a shoulder-barge lunge that knocks her back |
@@ -91,3 +94,4 @@ Complexity by phase: home 0.7, phase 1 1.7, phase 2 2.0, phase 3 2.5, phase 4 2.
 | 4 | mountains and glaciers | snowleopard | frost bursts in a cross round where she stood |
 | 4 | volcanic | komodo | a weaving venom bolt that burns and leaves a pool |
 | 4 | volcanic | stegosaurus | a spray of tail spikes swept round |
+<!-- /data: species-attacks -->
