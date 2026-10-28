@@ -132,6 +132,7 @@ export class SettingsMenu {
     this.el.addEventListener("pointerdown", e => {
       e.stopPropagation();
       this.mode = "mouse";
+      this.el.focus({ preventScroll: true }); // (the keys' target stays inside it after a click: the freeze lets only the pause page's own pieces have keys)
       const t = e.target as HTMLElement;
       if (this.listen) { if (this.listen.device === "keys") this.offer(["mouse:left", "mouse:middle", "mouse:right"][e.button] ?? "mouse:left"); else this.stopListening(); return; }
       if (this.clash) { const c = t.closest<HTMLElement>("[data-clash]"); if (c) this.decide(this.clash.choices[Number(c.dataset.clash)]); else if (e.button === 2) this.decide("cancel"); return; }
@@ -288,6 +289,7 @@ export class SettingsMenu {
 
   private startListening(id: ActionId): void {
     this.listen = { id, slot: this.slot, device: this.device, armed: false, until: 0 };
+    this.el.focus({ preventScroll: true });
     this.status = this.device === "pad" ? `Press a button or push a stick for ${ACTION_NAME.get(id)} · wait ${PAD_WAIT} s to cancel` : `Press a key or a mouse button for ${ACTION_NAME.get(id)} · Esc cancels · Delete empties it`;
     this.render();
   }

@@ -73,6 +73,7 @@ const check = (ok, what) => { console.log(`${ok ? "ok  " : "FAIL"} ${what}`); if
   check((await slotText("game.rise", 0)) === "Space", "controls: Rise shows Space");
   await clickAt("#settings-page [data-id='game.boost'] [data-slot='0']");
   check((await slotText("game.boost", 0)) === "Press…", "controls: a slot clicked listens");
+  console.log("     (keys go to:", await page.evaluate(() => { const a = document.activeElement; return a ? `${a.tagName}#${a.id}` : "none"; }), ")");
   await page.keyboard.press("KeyE");
   const clash = await page.evaluate(() => document.querySelector("#settings-page .clash")?.textContent || "");
   check(/E is already Use/.test(clash), `controls: E asks (${clash.replace(/\s+/g, " ").trim().slice(0, 60)})`);
