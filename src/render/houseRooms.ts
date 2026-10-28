@@ -263,7 +263,7 @@ export class HouseRoomsView {
     this.furniture.visible = shown;
     this.workshop.group.visible = shown;
     this.floor.visible = this.terraceFloor.visible = shown;
-    if (!shown) { this.box.style.display = "none"; this.plan = null; this.sparkle?.draw([], 0, 1); return; }
+    if (!shown) { this.box.style.display = "none"; this.plan = null; this.sparkle?.draw([], 0, 1); v.usePrompt.id = ""; return; }
     const D = d as Deck & { house: NonNullable<Deck["house"]> };
     if (this.hub !== D.r) { this.hub = D.r; this.quads = buildQuads(); this.hatsKey = ""; }
     // her hats on the hats' floor (rules/houseRooms.ts floorHats: laid out the first time she comes in)
@@ -455,7 +455,8 @@ export class HouseRoomsView {
     this.tapUse = usable && v.useDevice === "touch" ? v.onUse : null;
     this.tag.style.pointerEvents = this.tapUse ? "auto" : "none";
     place(this.tag, usable, decks ? 1.9 : tagHeight(usable?.use.kind));
-    if (usable) { const P = v.usePrompt; P.id = usable.id; P.top = screen(usable, decks ? 1.9 : tagHeight(usable.use.kind))[1] - this.tag.offsetHeight; P.at = performance.now(); } // (the keycap stands on that point: translate -100%)
+    v.usePrompt.id = usable?.id ?? ""; // (none shown: none for a pin to keep clear of)
+    if (usable) v.usePrompt.top = screen(usable, decks ? 1.9 : tagHeight(usable.use.kind))[1] - this.tag.offsetHeight; // (the keycap stands on that point: translate -100%)
     place(this.bubble, this.said?.obj ?? null, 0.6, this.said?.obj.use.kind === "say" ? this.said.obj.use.line : "");
     const from = W.house?.bedFrom, bed = at?.use.kind === "bed" ? at : null;
     if (bed && from !== undefined) {

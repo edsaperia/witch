@@ -602,9 +602,9 @@ export class View {
   onUse: ((down: boolean) => void) | null = null;
   /** In the house's rooms, her head on the page (CSS px) as the house places it (render/houseRooms.ts) and when (ms). */
   readonly herHouseHead = { x: 0, y: 0, at: -Infinity };
-  /** The use prompt's keycap over a house object this frame (render/houseRooms.ts): its object's id and its top on the page, and when
-   *  (performance.now()): a guidance pin over the same object keeps its tip above it (render/view/guidance.ts). */
-  readonly usePrompt = { id: "", top: 0, at: -Infinity };
+  /** The use prompt's keycap over a house object as last drawn (render/houseRooms.ts): its object's id ("" with none shown, or
+   *  the house not drawn) and its top on the page: a guidance pin over the same object keeps its tip above it (render/view/guidance.ts). */
+  readonly usePrompt = { id: "", top: 0 };
   /** Off the treehouse's hub, how far the camera's aim moves to follow where she's drawn (render/view/witch.ts). */
   readonly houseCam = { x: 0, y: 0, z: 0 };
   /** Where she's drawn less where the rules have her, in the treehouse (render/view/witch.ts), her feet's world height as drawn: her
