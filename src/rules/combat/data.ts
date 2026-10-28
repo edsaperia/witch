@@ -257,6 +257,8 @@ export interface CombatWorld {
   round?: (x: number, z: number, tx: number, tz: number) => { x: number; z: number } | null;
   /** How far a creature at (x, z) runs to leave the map, and where (a point just past its edge). */
   exit: (x: number, z: number) => { x: number; z: number };
+  /** Where a beaten creature runs to sleep on the beach, or null (no beach: `exit`): rules/runaway.ts runawaySpot. */
+  runaway?: (c: Creature) => { x: number; z: number } | null;
   /** The map's centre (home): besiegers march inward, never on a soundsystem further from it than they are (rules/combat.ts). */
   centre?: { x: number; z: number };
   /** Whether (x, z) is out of every witch's sight (far beyond the haze): a fleeing creature there is gone. */
