@@ -1,0 +1,1674 @@
+{
+ "_": "Every ?name=value the game reads from its link (Ed, 2026-10-28: \"Reformat prose into data where you can\"). Each: name; values (\"\" for the bare switch); does, in one plain sentence; group (run, view, debug, compare: brings back how something was before, to compare); since (the date it is first seen read where it's read now, from git; the oldest are the 2026-10-07 survey's); readIn (written by tools/config/linkSwitches.mjs from the code: don't edit); decision (Ed's, if any). docs/LINK-SWITCHES.md is written from this; src/linkSwitches.test.ts checks it against the code.",
+ "intro": "Every `?name=value` the game reads from its link, and where it reads it. Most are read once as the page loads (`src/app/linkParams.ts` for the tuning, `src/app/gameParams.ts` for the game, `src/app/viewParams.ts` for the view, `src/main.ts` for the page); a few are read where they're used. Several can be combined: `?seed=123&wave=30&creator=0`. This page is written from `config/link-switches.json`, and a test checks that file against the code.",
+ "switches": [
+  {
+   "name": "all",
+   "values": [
+    ""
+   ],
+   "does": "With ?zoo, every island counts as found (the map's see-all); on the sea chart page, every island is shown.",
+   "group": "debug",
+   "since": "2026-10-11",
+   "readIn": [
+    "src/app/chartPage.ts",
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "area",
+   "values": [
+    "off"
+   ],
+   "does": "Scenery isn't averaged where it shrinks (a performance suspect, to compare).",
+   "group": "compare",
+   "since": "2026-10-14",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "areaScale",
+   "values": [
+    "<k>"
+   ],
+   "does": "Each area's size as a multiple of the tuning's, for this load only (never remembered).",
+   "group": "run",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "areaSize",
+   "values": [
+    "<m>"
+   ],
+   "does": "Each area's size in metres for this load only (never remembered: it changes the balance).",
+   "group": "run",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "arena",
+   "values": [
+    "wolf*4@2,beetle*3"
+   ],
+   "does": "A fight below the dancefloor, no waves; J sets it up again.",
+   "group": "debug",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/gameParams.ts"
+   ]
+  },
+  {
+   "name": "arrive",
+   "values": [
+    "1"
+   ],
+   "does": "The night opens with the sea chart's arrival flight (a sail sets it); the boot's map isn't made ahead.",
+   "group": "run",
+   "since": "2026-10-12",
+   "readIn": [
+    "index.html",
+    "src/app/night.ts",
+    "src/main.ts"
+   ]
+  },
+  {
+   "name": "artdelay",
+   "values": [
+    "<s>"
+   ],
+   "does": "Each area type's trees drawn ahead of need held back to land one every that many seconds, to watch the loading mist roll away.",
+   "group": "debug",
+   "since": "2026-10-24",
+   "readIn": [
+    "src/app/viewParams.ts"
+   ]
+  },
+  {
+   "name": "at",
+   "values": [
+    "<x>,<z>"
+   ],
+   "does": "The repro link: she starts at this spot (in the treetops with mode=treetop).",
+   "group": "debug",
+   "since": "2026-10-14",
+   "readIn": [
+    "src/app/repro.ts"
+   ]
+  },
+  {
+   "name": "attack",
+   "values": [
+    "<attack as JSON>"
+   ],
+   "does": "The Fight Arena or a debug arena tries this attack (an attack spec, as JSON) on its pack.",
+   "group": "debug",
+   "since": "2026-10-27",
+   "readIn": [
+    "src/app/fightArena.ts",
+    "src/app/gameParams.ts"
+   ]
+  },
+  {
+   "name": "attacks",
+   "values": [
+    "old"
+   ],
+   "does": "Every species fights with its old attacks from config/combat.json, not its own in the attack grammar.",
+   "group": "compare",
+   "since": "2026-10-27",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ],
+   "decision": "Each species' own attack is the default (Ed, 2026-10-27, #1326)"
+  },
+  {
+   "name": "audio",
+   "values": [
+    "lite",
+    "full"
+   ],
+   "does": "The sound's weight for one load: lite sheds the costly parts (platform/audio/shed.ts).",
+   "group": "debug",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/sound.ts"
+   ]
+  },
+  {
+   "name": "bare",
+   "values": [
+    "1",
+    "2"
+   ],
+   "does": "The terrain on its own (2: grey, with contours and a grid).",
+   "group": "view",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "biome",
+   "values": [
+    "<name>",
+    "<a|b|w>"
+   ],
+   "does": "Every area's trees and props in that biome's look (or a blend of two), over the island's own.",
+   "group": "view",
+   "since": "2026-10-23",
+   "readIn": [
+    "src/app/viewParams.ts"
+   ]
+  },
+  {
+   "name": "blend",
+   "values": [
+    "off",
+    "<warp>,<fine>,<band>"
+   ],
+   "does": "Neighbouring floors meet on a plain edge, or tuned.",
+   "group": "view",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "bloom",
+   "values": [
+    "off"
+   ],
+   "does": "The bloom off.",
+   "group": "view",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "border",
+   "values": [
+    "<twinkle>,<swapRate>,<swapBeat>"
+   ],
+   "does": "The party border's sparkle.",
+   "group": "view",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "bot",
+   "values": [
+    "skilled",
+    "crude",
+    "…"
+   ],
+   "does": "A bot plays the run (rules/bot.ts), with a seeded witch.",
+   "group": "run",
+   "since": "2026-10-06",
+   "readIn": [
+    "src/main.ts"
+   ]
+  },
+  {
+   "name": "buffs",
+   "values": [
+    "fox,toad",
+    "all"
+   ],
+   "does": "These legends' buffs on from the start.",
+   "group": "debug",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/gameParams.ts"
+   ]
+  },
+  {
+   "name": "canopy",
+   "values": [
+    "off"
+   ],
+   "does": "The canopy off.",
+   "group": "view",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "carrier",
+   "values": [
+    "<kind>",
+    "none"
+   ],
+   "does": "That kind's legend carries the treehouse Ent, wherever she is; none, no one.",
+   "group": "view",
+   "since": "2026-10-12",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "chart",
+   "values": [
+    "",
+    "all"
+   ],
+   "does": "Opens the sea chart page instead of the game; all shows every island.",
+   "group": "run",
+   "since": "2026-10-11",
+   "readIn": [
+    "index.html",
+    "src/app/chartPage.ts"
+   ]
+  },
+  {
+   "name": "cleared",
+   "values": [
+    "<cx>_<cy>,…"
+   ],
+   "does": "The repro link: these areas start cleared.",
+   "group": "debug",
+   "since": "2026-10-14",
+   "readIn": [
+    "src/app/repro.ts"
+   ]
+  },
+  {
+   "name": "clouds",
+   "values": [
+    "<n>"
+   ],
+   "does": "How many clouds.",
+   "group": "view",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "creator",
+   "values": [
+    "0"
+   ],
+   "does": "No character creator: the plain start card (the tools and the smoke runs).",
+   "group": "run",
+   "since": "2026-10-05",
+   "readIn": [
+    "src/app/fightArena.ts",
+    "src/app/gameParams.ts",
+    "src/app/opening.ts",
+    "src/main.ts"
+   ]
+  },
+  {
+   "name": "creatures",
+   "values": [
+    "<k>"
+   ],
+   "does": "Creatures drawn at this size against the style's (1 is the size before Ed's +50%).",
+   "group": "view",
+   "since": "2026-10-08",
+   "readIn": [
+    "src/app/viewParams.ts"
+   ]
+  },
+  {
+   "name": "cullpass",
+   "values": [
+    "0"
+   ],
+   "does": "Each see-through pass isn't culled by the kind of pixel it keeps, as before the performance pass.",
+   "group": "compare",
+   "since": "2026-10-24",
+   "readIn": [
+    "src/render/sprites.ts"
+   ]
+  },
+  {
+   "name": "curve",
+   "values": [
+    "<k>"
+   ],
+   "does": "The world's bend over the treetops (0 off).",
+   "group": "view",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "cut",
+   "values": [
+    "pixel",
+    "whole"
+   ],
+   "does": "The canopy cut away round her pixel by pixel, or each crown whole (performance suspects).",
+   "group": "compare",
+   "since": "2026-10-14",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "debug",
+   "values": [
+    "",
+    "cull",
+    "shadows",
+    "attack"
+   ],
+   "does": "The debug overlay and the metre rulers on from the start; cull also tints whatever just appeared or vanished (pops), shadows draws every shadow a flat magenta, and attack blows on the two farthest soundsystems every 10 s (never felling one).",
+   "group": "debug",
+   "since": "2026-10-04",
+   "readIn": [
+    "src/app/keys.ts",
+    "src/app/night.ts",
+    "src/app/playerPick.ts",
+    "src/app/viewParams.ts",
+    "src/main.ts"
+   ]
+  },
+  {
+   "name": "decide",
+   "values": [],
+   "does": "Opens Ed's decisions panel (F2 too).",
+   "group": "debug",
+   "since": "2026-10-06",
+   "readIn": [
+    "src/main.ts",
+    "src/ui/decide.ts"
+   ]
+  },
+  {
+   "name": "decor",
+   "values": [
+    "0"
+   ],
+   "does": "The treehouse rooms without their decoration.",
+   "group": "debug",
+   "since": "2026-10-23",
+   "readIn": [
+    "src/render/houseDecor.ts"
+   ]
+  },
+  {
+   "name": "dev",
+   "values": [
+    "0",
+    "finds"
+   ],
+   "does": "Hides the bedroom's dev \"Player:\" pick (0), or opens the finds dev panel (finds).",
+   "group": "run",
+   "since": "2026-10-04",
+   "readIn": [
+    "src/app/playerPick.ts",
+    "src/main.ts"
+   ]
+  },
+  {
+   "name": "dive",
+   "values": [
+    "near",
+    "far",
+    "skim"
+   ],
+   "does": "Where the chart's flight hands over to the game's dive, for one load (Ed, 2026-10-24).",
+   "group": "view",
+   "since": "2026-10-24",
+   "readIn": [
+    "src/app/chartView.ts"
+   ]
+  },
+  {
+   "name": "dodge",
+   "values": [
+    "a,b,c",
+    "0"
+   ],
+   "does": "Which dodge changes are on (Ed, 2026-10-08; all by default): a committed strikes, b predictive aim, c packs cutting off her retreat.",
+   "group": "view",
+   "since": "2026-10-09",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ],
+   "decision": "All on by default (Ed, 2026-10-08)"
+  },
+  {
+   "name": "dream",
+   "values": [
+    "won:<kind>:<item>",
+    "lost:<kind>:<item>"
+   ],
+   "does": "Her dream of a loaned find over the night, at once, for a look at it.",
+   "group": "debug",
+   "since": "2026-10-24",
+   "readIn": [
+    "src/main.ts"
+   ]
+  },
+  {
+   "name": "fight",
+   "values": [
+    "",
+    "<seed>"
+   ],
+   "does": "The Fight Arena: straight into a fight with a seeded pack (a new seed when blank).",
+   "group": "debug",
+   "since": "2026-10-27",
+   "readIn": [
+    "src/app/fightArena.ts",
+    "src/app/gameParams.ts"
+   ]
+  },
+  {
+   "name": "fightMomentum",
+   "values": [
+    "<k>"
+   ],
+   "does": "The creatures' momentum in a fight for this load (the debug overlay's slider; never remembered).",
+   "group": "run",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/knobs.ts"
+   ]
+  },
+  {
+   "name": "fightScale",
+   "values": [
+    "<k>"
+   ],
+   "does": "The fight's scale for this load (the debug overlay's slider; never remembered).",
+   "group": "run",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/knobs.ts"
+   ]
+  },
+  {
+   "name": "fightSpeed",
+   "values": [
+    "<k>"
+   ],
+   "does": "The fight's speed for this load (the debug overlay's slider; never remembered).",
+   "group": "run",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/knobs.ts"
+   ]
+  },
+  {
+   "name": "flora",
+   "values": [
+    "new",
+    "fantasy",
+    "all",
+    "<ids>"
+   ],
+   "does": "Every wooded area grows these tree species.",
+   "group": "view",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/viewParams.ts"
+   ]
+  },
+  {
+   "name": "found",
+   "values": [
+    "<kind>,…"
+   ],
+   "does": "These islands count as found for this load, whatever the browser's save says (the repro link).",
+   "group": "debug",
+   "since": "2026-10-14",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "furniture",
+   "values": [
+    "0"
+   ],
+   "does": "The treehouse rooms without their furniture.",
+   "group": "debug",
+   "since": "2026-10-23",
+   "readIn": [
+    "src/render/houseFurniture.ts"
+   ]
+  },
+  {
+   "name": "glow",
+   "values": [
+    "<reach>,<falloff>,<near>"
+   ],
+   "does": "The witch's glow (0 keeps a value).",
+   "group": "view",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "grass",
+   "values": [
+    "0..2"
+   ],
+   "does": "How thick the ground cover is.",
+   "group": "view",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "hat",
+   "values": [
+    "<id>",
+    "none"
+   ],
+   "does": "She wears this hat for one load (and owns it for that load).",
+   "group": "run",
+   "since": "2026-10-11",
+   "readIn": [
+    "src/app/hatSave.ts",
+    "src/app/loadout.ts"
+   ]
+  },
+  {
+   "name": "hats",
+   "values": [
+    "all",
+    "<id>,…"
+   ],
+   "does": "These hats are hers for one load, instead of her save.",
+   "group": "run",
+   "since": "2026-10-23",
+   "readIn": [
+    "src/app/hatSave.ts"
+   ]
+  },
+  {
+   "name": "hills",
+   "values": [
+    "0",
+    "<m>"
+   ],
+   "does": "The rolling ground flat, or this tall.",
+   "group": "view",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "hiz",
+   "values": [
+    "0"
+   ],
+   "does": "The depth-pyramid culling off, to compare.",
+   "group": "compare",
+   "since": "2026-10-23",
+   "readIn": [
+    "src/render/view.ts"
+   ]
+  },
+  {
+   "name": "hole",
+   "values": [
+    "off",
+    "all"
+   ],
+   "does": "The canopy's hole round her off, or as big as the screen.",
+   "group": "view",
+   "since": "2026-10-13",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "island",
+   "values": [
+    "<kind>",
+    "home",
+    "<n>"
+   ],
+   "does": "Play this kind's island, home, or a random island of n areas.",
+   "group": "run",
+   "since": "2026-10-11",
+   "readIn": [
+    "src/app/linkParams.ts",
+    "src/app/sail.ts",
+    "src/main.ts"
+   ]
+  },
+  {
+   "name": "kit",
+   "values": [
+    "full"
+   ],
+   "does": "Her kit stays full while the party spell waits (otherwise she starts with a fresh kit).",
+   "group": "debug",
+   "since": "2026-10-26",
+   "readIn": [
+    "src/app/gameParams.ts"
+   ]
+  },
+  {
+   "name": "knock",
+   "values": [
+    "0"
+   ],
+   "does": "No knockback or stagger on her.",
+   "group": "view",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "ladder",
+   "values": [
+    "off",
+    "auto",
+    "<n>"
+   ],
+   "does": "The quality ladder off, on under automation, or pinned at rung n.",
+   "group": "view",
+   "since": "2026-10-27",
+   "readIn": [
+    "src/app/ladder.ts"
+   ]
+  },
+  {
+   "name": "lakelook",
+   "values": [
+    "water",
+    "ice",
+    "glacier",
+    "lava",
+    "oasis",
+    "sinkhole",
+    "tarn",
+    "tar",
+    "rust",
+    "lily"
+   ],
+   "does": "Every lake takes this look.",
+   "group": "view",
+   "since": "2026-10-23",
+   "readIn": [
+    "src/render/lakeLooks.ts"
+   ]
+  },
+  {
+   "name": "latency",
+   "values": [
+    "<category>",
+    "<seconds>"
+   ],
+   "does": "The audio output buffer for one load: a latency category or seconds.",
+   "group": "debug",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/sound.ts"
+   ]
+  },
+  {
+   "name": "ley",
+   "values": [
+    "0"
+   ],
+   "does": "No ley lines through the runestones.",
+   "group": "view",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "light",
+   "values": [
+    "spooky",
+    "plain"
+   ],
+   "does": "The lighting's mood.",
+   "group": "view",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "lights",
+   "values": [
+    "<n>"
+   ],
+   "does": "The light budget (0 none).",
+   "group": "view",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "loadmist",
+   "values": [
+    "1",
+    "0"
+   ],
+   "does": "The loading mist (render/loadingMist.ts) on or off for this load, whatever the tuning and `quick=1` say (it's off under `quick=1`).",
+   "group": "debug",
+   "since": "2026-10-24",
+   "readIn": [
+    "src/app/viewParams.ts"
+   ]
+  },
+  {
+   "name": "look",
+   "values": [
+    "old"
+   ],
+   "does": "Fights drawn with the old attack look, not the attack looks and elements.",
+   "group": "compare",
+   "since": "2026-10-27",
+   "readIn": [
+    "src/render/leash/combat.ts"
+   ]
+  },
+  {
+   "name": "lookdemo",
+   "values": [
+    "telegraphs",
+    "elements"
+   ],
+   "does": "The attack looks' showcase round her.",
+   "group": "debug",
+   "since": "2026-10-27",
+   "readIn": [
+    "src/render/leash/combat.ts"
+   ]
+  },
+  {
+   "name": "mapAreas",
+   "values": [
+    "<n>"
+   ],
+   "does": "How many areas the map has, for this load only (never remembered).",
+   "group": "run",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "micCheck",
+   "values": [
+    "1"
+   ],
+   "does": "Also listens to the microphone for dropouts after the game (debug only).",
+   "group": "debug",
+   "since": "2026-10-06",
+   "readIn": [
+    "src/main.ts"
+   ]
+  },
+  {
+   "name": "mist",
+   "values": [
+    "off"
+   ],
+   "does": "The mist off.",
+   "group": "view",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "mistgate",
+   "values": [
+    "0"
+   ],
+   "does": "The bedroom's curtains and door don't wait for the island's art, so she can go out while it's still drawing.",
+   "group": "debug",
+   "since": "2026-10-24",
+   "readIn": [
+    "src/main.ts"
+   ]
+  },
+  {
+   "name": "mode",
+   "values": [
+    "treetop"
+   ],
+   "does": "The repro link: with at=, she starts in the treetops.",
+   "group": "debug",
+   "since": "2026-10-14",
+   "readIn": [
+    "src/app/repro.ts"
+   ]
+  },
+  {
+   "name": "moonbeams",
+   "values": [
+    "on"
+   ],
+   "does": "The moonbeams (off by default).",
+   "group": "compare",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ],
+   "decision": "Kept when the other compare switches were retired (2026-10-07)"
+  },
+  {
+   "name": "music",
+   "values": [
+    "off",
+    "live",
+    "<section>",
+    "wave<N>"
+   ],
+   "does": "No music, the music played live rather than the pre-recorded way (the default since Ed, 2026-10-27), one section on a loop, or wave N's music.",
+   "group": "debug",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/linkParams.ts",
+    "src/app/sound.ts"
+   ],
+   "decision": "Pre-recorded (drawn-ahead) music is the default (Ed, 2026-10-27)"
+  },
+  {
+   "name": "occ",
+   "values": [
+    "off"
+   ],
+   "does": "The occlusion fade (what's in front of her drawn see-through) off.",
+   "group": "compare",
+   "since": "2026-10-13",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "occlusion",
+   "values": [
+    "off"
+   ],
+   "does": "The occlusion probes off.",
+   "group": "debug",
+   "since": "2026-10-19",
+   "readIn": [
+    "src/render/view.ts"
+   ]
+  },
+  {
+   "name": "opening",
+   "values": [
+    "old",
+    "chart"
+   ],
+   "does": "The first load's start: `old`, the bedroom as the loading cover (the creator); `chart`, the new opening's sea chart (the default since 2026-10-21, the tuning's `opening.chart`). A link naming a seed or island wakes her in her bedroom too (Ed, 2026-10-25); one starting a bot game or the zoo, or with `creator=0`, keeps the old start anyway; the tools that drive the old start (the creator, the start card) put `opening=old` in their links.",
+   "group": "run",
+   "since": "2026-10-20",
+   "readIn": [
+    "src/app/opening.ts"
+   ],
+   "decision": "The sea chart opening is the default (2026-10-21)"
+  },
+  {
+   "name": "own",
+   "values": [
+    "all",
+    "none",
+    "<kind>:<item>",
+    "<kind>:*"
+   ],
+   "does": "Finds given or let go on this browser's saves, as the dev control does.",
+   "group": "debug",
+   "since": "2026-10-23",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "pack",
+   "values": [
+    "wolf*4@2,…"
+   ],
+   "does": "The Fight Arena's pack, written as an arena, instead of a rolled one.",
+   "group": "debug",
+   "since": "2026-10-27",
+   "readIn": [
+    "src/app/fightArena.ts"
+   ]
+  },
+  {
+   "name": "parts",
+   "values": [
+    "<part>,…"
+   ],
+   "does": "Her broom's parts for one load, found or not.",
+   "group": "debug",
+   "since": "2026-10-23",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "partyover",
+   "values": [
+    "1"
+   ],
+   "does": "The party's over from the start (the afterparty).",
+   "group": "debug",
+   "since": "2026-10-06",
+   "readIn": [
+    "src/app/gameParams.ts",
+    "src/platform/audio/sfxCues.ts",
+    "src/render/view.ts"
+   ]
+  },
+  {
+   "name": "perf",
+   "values": [
+    "1"
+   ],
+   "does": "The performance panel, always on: frames, hitches, the rules' step, the view's parts (draw split into the scene and the post passes), GL calls, the JS heap and its collections, the crowd and its level of detail.",
+   "group": "debug",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/main.ts"
+   ]
+  },
+  {
+   "name": "phase",
+   "values": [
+    "0",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5"
+   ],
+   "does": "An island of that phase's shape, of random area types.",
+   "group": "run",
+   "since": "2026-10-11",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "pixels",
+   "values": [
+    "keep"
+   ],
+   "does": "The art atlases keep their pixels on the page (the smoke test's floating check reads them).",
+   "group": "debug",
+   "since": "2026-10-13",
+   "readIn": [
+    "src/main.ts"
+   ]
+  },
+  {
+   "name": "playtest",
+   "values": [
+    "download"
+   ],
+   "does": "Saves the playtest log at load (as L does).",
+   "group": "debug",
+   "since": "2026-10-04",
+   "readIn": [
+    "src/main.ts"
+   ]
+  },
+  {
+   "name": "precision",
+   "values": [
+    "high",
+    "medium",
+    "low"
+   ],
+   "does": "Every shader's float precision.",
+   "group": "debug",
+   "since": "2026-10-14",
+   "readIn": [
+    "src/render/view.ts"
+   ]
+  },
+  {
+   "name": "prepChart",
+   "values": [
+    "1",
+    "0"
+   ],
+   "does": "The sea chart made ahead even under automation (1), or never (0).",
+   "group": "debug",
+   "since": "2026-10-19",
+   "readIn": [
+    "src/main.ts"
+   ]
+  },
+  {
+   "name": "pulse",
+   "values": [
+    "<m/s>",
+    "off"
+   ],
+   "does": "How fast the ley pulse spreads the party, for one load; off holds the waves where they are.",
+   "group": "run",
+   "since": "2026-10-09",
+   "readIn": [
+    "src/app/gameParams.ts"
+   ]
+  },
+  {
+   "name": "px",
+   "values": [
+    "2..6"
+   ],
+   "does": "The art pixel (screen pixels per art pixel).",
+   "group": "view",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "quest",
+   "values": [
+    "1"
+   ],
+   "does": "The first quest's demo: beside the nearest sleeping legend with its dream on her stack.",
+   "group": "debug",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/gameParams.ts"
+   ]
+  },
+  {
+   "name": "quick",
+   "values": [
+    "1"
+   ],
+   "does": "Only the art the start needs (the quick smoke and bench).",
+   "group": "debug",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/viewParams.ts"
+   ]
+  },
+  {
+   "name": "relief",
+   "values": [
+    "<strength>"
+   ],
+   "does": "The ground's fake relief (0 flat).",
+   "group": "view",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "reveal",
+   "values": [
+    "legend",
+    "runestone",
+    "find",
+    "flask",
+    "all",
+    "none"
+   ],
+   "does": "Which places she stands in are kept clear of the canopy (a comma list).",
+   "group": "view",
+   "since": "2026-10-26",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "rig",
+   "values": [
+    "0"
+   ],
+   "does": "Creatures as baked sprites, without the live rig.",
+   "group": "debug",
+   "since": "2026-10-05",
+   "readIn": [
+    "src/render/rig/rigView.ts"
+   ]
+  },
+  {
+   "name": "room",
+   "values": [
+    "<S>"
+   ],
+   "does": "The creator's room drawn at this scale.",
+   "group": "run",
+   "since": "2026-10-06",
+   "readIn": [
+    "src/ui/creator.ts"
+   ]
+  },
+  {
+   "name": "sail",
+   "values": [
+    "inplace",
+    "reload"
+   ],
+   "does": "How a sail starts the next night: in place, or by loading the island's link.",
+   "group": "run",
+   "since": "2026-10-20",
+   "readIn": [
+    "src/app/sail.ts"
+   ]
+  },
+  {
+   "name": "scenery",
+   "values": [
+    "<m>"
+   ],
+   "does": "A fixed scenery radius instead of the adaptive budget.",
+   "group": "debug",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/viewParams.ts"
+   ]
+  },
+  {
+   "name": "seed",
+   "values": [
+    "<n>"
+   ],
+   "does": "The run's seed (a random one is put in the link when it's missing).",
+   "group": "run",
+   "since": "2026-10-04",
+   "readIn": [
+    "src/app/sail.ts",
+    "src/main.ts"
+   ]
+  },
+  {
+   "name": "seedepth",
+   "values": [
+    "off"
+   ],
+   "does": "The see-through pass doesn't write depth, as before.",
+   "group": "compare",
+   "since": "2026-10-13",
+   "readIn": [
+    "src/render/sprites.ts"
+   ]
+  },
+  {
+   "name": "set",
+   "values": [
+    "<path>=<value>;…"
+   ],
+   "does": "Any tuning settings for one load (the repro link's: every setting changed from the build's).",
+   "group": "debug",
+   "since": "2026-10-14",
+   "readIn": [
+    "src/app/linkParams.ts",
+    "src/app/mapPrep.ts",
+    "src/app/night.ts",
+    "src/app/sail.ts"
+   ]
+  },
+  {
+   "name": "shadows",
+   "values": [
+    "off"
+   ],
+   "does": "The shadows off.",
+   "group": "view",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "shake",
+   "values": [
+    "0"
+   ],
+   "does": "No screen shake (else the start screen's choice).",
+   "group": "run",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/shake.ts"
+   ]
+  },
+  {
+   "name": "shape",
+   "values": [
+    "square",
+    "circle"
+   ],
+   "does": "The map's shape (circle, the default since 2026-10-06).",
+   "group": "run",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ],
+   "decision": "Circle is the default (2026-10-06)"
+  },
+  {
+   "name": "shot",
+   "values": [
+    "object:<id>",
+    "room:<id>",
+    "area:<type>",
+    "creature:<species>[@level]",
+    "find:<kind>:<item>",
+    "at:<x>,<z>"
+   ],
+   "does": "A builder's quick proof shot: only the art the scene needs, with her put at it.",
+   "group": "debug",
+   "since": "2026-10-23",
+   "readIn": [
+    "src/app/gameParams.ts",
+    "src/app/shot.ts",
+    "src/main.ts"
+   ]
+  },
+  {
+   "name": "sigils",
+   "values": [
+    "new",
+    "old"
+   ],
+   "does": "Rank sigils and the 6 m leash grid (new, the default), or the old sigils and their 4 m grid.",
+   "group": "compare",
+   "since": "2026-10-27",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ],
+   "decision": "Rank sigils are the default (Ed, 2026-10-27: \"go ahead and push all the new sigil work\")"
+  },
+  {
+   "name": "sky",
+   "values": [
+    "off"
+   ],
+   "does": "The night sky off.",
+   "group": "view",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "slow",
+   "values": [
+    "0",
+    "<k>"
+   ],
+   "does": "Legend circles slowing time: off, or another speed (0 < k < 1).",
+   "group": "run",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "spawnfind",
+   "values": [
+    "<kind>:<item>",
+    "tonight"
+   ],
+   "does": "That find spawned once where she first stands on open ground, for shots.",
+   "group": "debug",
+   "since": "2026-10-23",
+   "readIn": [
+    "src/main.ts"
+   ]
+  },
+  {
+   "name": "spell",
+   "values": [
+    "auto",
+    "wait"
+   ],
+   "does": "The party spell: `auto` starts at once anywhere; `wait` keeps her at the decks even with `creator=0`.",
+   "group": "run",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/gameParams.ts"
+   ]
+  },
+  {
+   "name": "style",
+   "values": [
+    "ref"
+   ],
+   "does": "Ed's reference pixel-art treatment (bold, the default, otherwise).",
+   "group": "view",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/viewParams.ts"
+   ]
+  },
+  {
+   "name": "telescopeRes",
+   "values": [
+    "<k>"
+   ],
+   "does": "The telescope's render resolution.",
+   "group": "debug",
+   "since": "2026-10-21",
+   "readIn": [
+    "src/main.ts"
+   ]
+  },
+  {
+   "name": "tilt",
+   "values": [
+    "off",
+    "<strength>,<band>"
+   ],
+   "does": "The treetops' tilt-shift off, or tried at these values.",
+   "group": "view",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "timing",
+   "values": [
+    "1",
+    "0"
+   ],
+   "does": "The frame-timing log on (kept on this browser) or off.",
+   "group": "debug",
+   "since": "2026-10-19",
+   "readIn": [
+    "src/app/timing.ts"
+   ]
+  },
+  {
+   "name": "trail",
+   "values": [
+    "0"
+   ],
+   "does": "No trail behind her.",
+   "group": "view",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "treetopSpeed",
+   "values": [
+    "<m/s>"
+   ],
+   "does": "Her treetop speed for this load only (never remembered: it changes the balance).",
+   "group": "run",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "trunks",
+   "values": [
+    "soft",
+    "hard",
+    "off"
+   ],
+   "does": "The trunks' shadows from her glow and the campfires in ground mode.",
+   "group": "view",
+   "since": "2026-10-12",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "tuning",
+   "values": [
+    "<preset>"
+   ],
+   "does": "A tuning preset laid over the config files for this load.",
+   "group": "debug",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/platform/tuningPreset.ts"
+   ]
+  },
+  {
+   "name": "warmChart",
+   "values": [
+    "1",
+    "0"
+   ],
+   "does": "The night's chart islands made ahead even under automation (1), or never (0).",
+   "group": "debug",
+   "since": "2026-10-12",
+   "readIn": [
+    "src/main.ts"
+   ]
+  },
+  {
+   "name": "wave",
+   "values": [
+    "<n>",
+    "off"
+   ],
+   "does": "The repro link: the night brought on to wave n before play; off holds the waves where they are (as pulse=off).",
+   "group": "run",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/gameParams.ts",
+    "src/app/repro.ts"
+   ]
+  },
+  {
+   "name": "wholecull",
+   "values": [
+    "0"
+   ],
+   "does": "Quads faded whole drawn in the solid and front passes too, as before.",
+   "group": "compare",
+   "since": "2026-10-26",
+   "readIn": [
+    "src/render/sprites.ts"
+   ]
+  },
+  {
+   "name": "wind",
+   "values": [
+    "<strength>"
+   ],
+   "does": "The wind's sway (0 still).",
+   "group": "view",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "witches",
+   "values": [
+    "<n>"
+   ],
+   "does": "This many more party witches.",
+   "group": "debug",
+   "since": "2026-10-07",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
+   "name": "world",
+   "values": [
+    "<n>",
+    "<text>"
+   ],
+   "does": "The campaign's world seed (every island's shape) for this load.",
+   "group": "run",
+   "since": "2026-10-11",
+   "readIn": [
+    "src/app/chartPage.ts",
+    "src/app/linkParams.ts",
+    "src/app/sail.ts",
+    "src/main.ts"
+   ]
+  },
+  {
+   "name": "zoo",
+   "values": [
+    ""
+   ],
+   "does": "The zoo: every area an island laid out like the sea chart, home a plaza, no timer.",
+   "group": "debug",
+   "since": "2026-10-13",
+   "readIn": [
+    "src/app/linkParams.ts",
+    "src/main.ts"
+   ]
+  },
+  {
+   "name": "zoom",
+   "values": [
+    "<n>"
+   ],
+   "does": "The repro link: the camera's zoom step.",
+   "group": "debug",
+   "since": "2026-10-14",
+   "readIn": [
+    "src/app/repro.ts"
+   ]
+  }
+ ],
+ "patterns": [
+  {
+   "name": "d_<id>",
+   "values": [
+    "<v>"
+   ],
+   "does": "A choice from Ed's decisions panel (ui/decide.ts), kept in the link.",
+   "readIn": [
+    "src/app/sail.ts",
+    "src/ui/decide.ts",
+    "src/ui/decisions.ts"
+   ]
+  }
+ ],
+ "retiredIntro": "Switches that brought back an older look or behaviour, to compare against what replaced it, gone with their old code paths (2026-10-07, the coordinator's recommendation to Ed). A link that still names one plays as the default does.",
+ "retired": [
+  {
+   "name": "tilt",
+   "values": [
+    "before|after"
+   ],
+   "broughtBack": "the tilt-shift applied before or after the upscale",
+   "stays": "before (at the low resolution); `tiltShift.where` gone"
+  },
+  {
+   "name": "tiltsky",
+   "values": [
+    "0"
+   ],
+   "broughtBack": "the sky left sharp by the tilt-shift",
+   "stays": "`tiltShift.skyBlur` (the decisions panel's slider); `tiltShift.sky` gone"
+  },
+  {
+   "name": "find",
+   "values": [
+    "0"
+   ],
+   "broughtBack": "the forest without the find-in-the-dark looks",
+   "stays": "always on; `find.on` gone"
+  },
+  {
+   "name": "rune",
+   "values": [
+    "beam|column|both"
+   ],
+   "broughtBack": "one of the ways an awake runestone shows",
+   "stays": "both; `runeMarkers.awakeStyle` gone"
+  },
+  {
+   "name": "picker",
+   "values": [
+    "…"
+   ],
+   "broughtBack": "the older ways of picking the next area to wake",
+   "stays": "the spiral route (and the noisy picker as its own fallback); near3, near3touch, nearest, `variedOrder` and `party.route` gone"
+  },
+  {
+   "name": "route",
+   "values": [
+    "varied"
+   ],
+   "broughtBack": "the older ways of picking the next area to wake",
+   "stays": "the spiral route (and the noisy picker as its own fallback); near3, near3touch, nearest, `variedOrder` and `party.route` gone"
+  },
+  {
+   "name": "fx",
+   "values": [
+    "pixel"
+   ],
+   "broughtBack": "mist, haze and dapple as dithered pixel steps",
+   "stays": "smooth; `fx` and the shaders' `uSmooth`, `uBands` and `uDither` paths gone"
+  },
+  {
+   "name": "props",
+   "values": [
+    "hand"
+   ],
+   "broughtBack": "the hand-made props",
+   "stays": "the prop generator (the Art Lab and `art/check.mjs` still draw both)"
+  },
+  {
+   "name": "texture",
+   "values": [
+    "0"
+   ],
+   "broughtBack": "creatures without fur, feathers and scales",
+   "stays": "the Art Lab's own knob, `style.texture`"
+  },
+  {
+   "name": "subpixel",
+   "values": [
+    "0"
+   ],
+   "broughtBack": "the camera's whole-art-pixel steps",
+   "stays": "the glide"
+  },
+  {
+   "name": "glide",
+   "values": [
+    "camera"
+   ],
+   "broughtBack": "the glide by the camera's snap",
+   "stays": "by the witch's; `view.glide` and the decisions panel's choice gone"
+  },
+  {
+   "name": "style",
+   "values": [
+    "now"
+   ],
+   "broughtBack": "the art before the pixel-art treatment",
+   "stays": "bold (and `style=ref`); the decisions panel's \"As now\" gone"
+  },
+  {
+   "name": "wind",
+   "values": [
+    "smooth"
+   ],
+   "broughtBack": "the old per-pixel sway",
+   "stays": "the pixel wind; `uPixelWind` gone"
+  }
+ ]
+}
