@@ -4,8 +4,10 @@
 import { describe, expect, it } from "vitest";
 import { KINDS_TABLE } from "../kinds";
 import { CREATURE_IDS } from "../creatureConfig";
-import { adultOf, SPECIES_ATTACKS, speciesAttack } from "./species";
+import { adultOf, legendAttack, legendOf, SPECIES_ATTACKS, speciesAttack } from "./species";
+import { LEGENDS } from "../legends";
 import { parseAttack, readability, REACTION_FLOOR, type AttackSpec } from "./index";
+import { ownWarning } from "./timeline";
 import type { Child } from "./types";
 
 /** An attack's style: its body, its pattern, and the modules it composes (two in one biome may not share it). */
@@ -61,5 +63,23 @@ describe("each species' own attack", () => {
     const mean = (xs: number[]) => xs.reduce((s, x) => s + x, 0) / xs.length;
     const phases = [...byPhase.keys()].sort((a, b) => a - b), means = phases.map(p => mean(byPhase.get(p)!));
     for (let i = 1; i < means.length; i++) expect(means[i], `phase ${phases[i]} over ${phases[i - 1]}: ${means.map(m => m.toFixed(2))}`).toBeGreaterThan(means[i - 1]);
+  });
+
+  it("gives each kind's legend its attack exaggerated: thrown from afar with a long warning, bursting into its kind's own, bigger and more of it", () => {
+    const A = LEGENDS.attack, L = { range: A.range, windup: A.windup, interval: A.interval, flight: A.lobFlight, radius: A.lobRadius };
+    for (const sp of Object.keys(SPECIES_ATTACKS)) {
+      const raw = legendOf(SPECIES_ATTACKS[sp], L), a = legendAttack(sp, L)!;
+      expect(parseAttack(raw, {}, { strict: true }).errors, sp).toEqual([]);
+      expect(a.cast?.range, sp).toBe(A.range);
+      // (low threat, long readable warnings: the throw's own, its windup and its flight (a beam's, its charge), and every part of the
+      // burst at least the floor, each showing its own as it goes)
+      expect(ownWarning(a, false), sp).toBeGreaterThanOrEqual(A.windup + (a.body?.kind === "beam" ? 1.2 : A.lobFlight));
+      expect(readability(a, {}).warning, sp).toBeGreaterThanOrEqual(REACTION_FLOOR);
+    }
+    expect(legendAttack("salamander", L)!.beam?.length).toBe(A.range); // (a giant beam across its whole reach)
+    const hog = legendAttack("hedgehog", L)!, burst = hog.on!.land![0].attack as AttackSpec;
+    expect(hog.body?.kind).toBe("lob"); expect(burst.emit?.n).toBe(8); // (its ring of quills, two sizes up)
+    expect((legendAttack("dormouse", L)!.on!.land![0].attack as AttackSpec).emit).toMatchObject({ pattern: "fan", n: 3 }); // (a single becomes three)
+    expect((legendAttack("wolf", L)!.on!.land![0].attack as AttackSpec).body?.kind).toBe("area"); // (a lunge becomes a great slam)
   });
 });

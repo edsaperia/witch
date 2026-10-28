@@ -2414,12 +2414,19 @@ Code: `render/bubbles.ts`
 
 - **`bubbles.levelScale`**: a creature's bubble, emoji and outline together, times this by its level (baby, young, adult, legend); the witch's stays at 1.
   1. Ed, 2026-10-05: "the speech bubbles should scale with the level of the animal, with the legends as the largest"
+- **`bubbles.near`, `bubbles.fade`, `bubbles.ease`**: How close (metres) she must be on the ground to see a creature's speech or thought bubble; none from the treetops or the treehouse.
+  1. Ed, 2026-10-28: "Animal speech bubbles / thought bubbles should fade into view when the witch gets close. I shouldn't see them on the ground when I'm at the treetops. I shouldn't see them on the ground when I'm in the treehouse."
+  Whole within near less fade, fading to nothing at near; eased in and out over ease seconds, so rising, landing and going indoors fade them. 38 and 8 to start: whole to 30 m, about the letters' reach (invites.range 33), so any creature she can throw at answers where she can read it, and gone by 38. The 💌 replies, the talk and the sleepers' 😴s go by it; a legend's dream (dreams.range) and the night won's island dreams (twice that) keep their own ranges, fading at their edge and hidden from the treetops and the treehouse the same.
+  Code: `render/bubbleSight.ts`
 
 | knob | type | range |
 |---|---|---|
 | `bubbles.emojiPixels` | number | 0 to … |
 | `bubbles.scale` | number | 0 to … |
 | `bubbles.levelScale` | array of number |  |
+| `bubbles.near` | number | 0 to … |
+| `bubbles.fade` | number | 0 to … |
+| `bubbles.ease` | number | 0 to … |
 
 ### `runeMarkers`
 

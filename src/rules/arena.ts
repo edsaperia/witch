@@ -7,6 +7,7 @@
 // below the dancefloor, hers on the left, the wild on the right, and she stands behind hers. Creatures are borrowed from the far
 // edge of the map. No drawing here.
 import { LEGEND, speedFactor, wanderRange, type Level } from "./creatures";
+import { offTheBeach } from "./runaway";
 import { newCamera } from "./camera";
 import type { Game } from "./game";
 import { witchHeight } from "./witch";
@@ -79,6 +80,7 @@ export function setupArena(g: Game, spec: string, opts: { wildOnly?: boolean } =
       const c = spare.shift();
       if (!c) return;
       const row = Math.floor(i / 4), col = i % 4, x = cx + sx + (party ? -row : row) * 5 * S, z = cz + (col - 1.5) * 6 * S + (row % 2) * 3 * S;
+      offTheBeach(c); // (one asleep on the beach, rules/runaway.ts: borrowed, it's up)
       Object.assign(c, { circle: undefined,
         species: gr.species, level: gr.level, x, z, tx: x, tz: z, cell, homeX: cx, homeZ: cz, anchorX: x, anchorZ: z, range: wanderRange(g.map),
         speed: (gr.level === LEGEND ? t.legendSpeed : t.creatureSpeed * speedFactor(gr.species, gr.level, t)) * (0.85 + c.rand() * 0.3),

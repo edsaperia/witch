@@ -48,6 +48,7 @@ says what each note covers.
 ## [Creatures in play](gameplay.md)
 
 - Talk / invite
+- Bubble sight
 - Babies on her leash
 - Followers in the treehouse
 - Runestone stack
@@ -76,6 +77,7 @@ says what each note covers.
 - Posse / travelling
 - Conga dancer
 - Wild / happy / leashed / enraged
+- Runaway
 - Restless / angry legend, relic
 
 ## [The treehouse and its house](house.md)

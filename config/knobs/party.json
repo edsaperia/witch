@@ -286,6 +286,24 @@
         }
       ]
     },
+    "bubbles.near": {
+      "what": "How close (metres) she must be on the ground to see a creature's speech or thought bubble; none from the treetops or the treehouse.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-28",
+          "quote": "Animal speech bubbles / thought bubbles should fade into view when the witch gets close. I shouldn't see them on the ground when I'm at the treetops. I shouldn't see them on the ground when I'm in the treehouse."
+        }
+      ],
+      "also": [
+        "bubbles.fade",
+        "bubbles.ease"
+      ],
+      "links": [
+        "render/bubbleSight.ts"
+      ],
+      "notes": "Whole within near less fade, fading to nothing at near; eased in and out over ease seconds, so rising, landing and going indoors fade them. 38 and 8 to start: whole to 30 m, about the letters' reach (invites.range 33), so any creature she can throw at answers where she can read it, and gone by 38. The 💌 replies, the talk and the sleepers' 😴s go by it; a legend's dream (dreams.range) and the night won's island dreams (twice that) keep their own ranges, fading at their edge and hidden from the treetops and the treehouse the same."
+    },
     "runeMarkers": {
       "what": "The rune stones marking where soundsystems will come, glowing, and pulsing on the beat when the next wave is coming to them.",
       "decisions": [
