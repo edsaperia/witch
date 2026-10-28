@@ -32,6 +32,14 @@ export function runawaySpot(g: { map: ForestMap; tuning: Tuning; creatures: read
   return first; // (a crowded stretch: by the nearest anyway)
 }
 
+/** Set it running for its spot on the beach (`spot`, rules/runaway.ts runawaySpot), or, with none (no beach), for `exit` past the
+ *  map's edge: every flee starts here, so nobody vanishes mid-night (Ed, 2026-10-28: "no creatures are created and none are
+ *  destroyed" in a night): a beaten wild one, a party animal knocked down, a ruined area's happy babies. */
+export function runOff(c: Creature, spot: { x: number; z: number } | null, exit: () => { x: number; z: number }): void {
+  const to = spot ?? exit();
+  c.beach = spot ?? undefined; c.fleeUntil = Infinity; c.fleeX = to.x; c.fleeZ = to.z;
+}
+
 /** Its run over: there (or out of every witch's sight, there at once), it lies down asleep at its spot on the beach; with no spot
  *  (no beach), gone off the map's edge, as before. */
 export function runawayArrives(c: Creature, time: number): void {
