@@ -8,6 +8,9 @@ import { FIGHT, type LegendSet } from "../movement";
 import { type Attack, type CombatData, type Target, type Fight, type CombatState, attackNamed, maxHp, type CombatWorld } from "./data";
 import { targetable, sideOf, truce, targetPos, sheltered, Grid, moveToward, unseen } from "./targeting";
 import { land, area } from "./hits";
+import { cast as castSpell, newSpells } from "../attacks/engine";
+import { hittableOf, spellWorld } from "../attacks/combatWorld";
+import { legendAttack } from "../attacks/species";
 
 /** An angry or happy legend's turn (Ed, 2026-10-05; #87; config/legends.json attack): it never
  *  leaves its area (it stands where it lay), but reaches attack.range metres. Every interval seconds it
@@ -15,7 +18,7 @@ import { land, area } from "./hits";
  *  witch in reach the nearest standing soundsystem first: bombarding, below; happy: the enraged), winds up for windup seconds, then lobs (a bomb landing after
  *  lobFlight seconds) or beams (by its species), each hit attack.damage times its level's power for
  *  interval seconds. (Its shots are the wild's when angry, the happy's when happy: foes() does the rest.) */
-export function stepLegendAttack(w: CombatWorld, s: CombatState, c: Creature, _data: CombatData, grid: Grid): void {
+export function stepLegendAttack(w: CombatWorld, s: CombatState, c: Creature, data: CombatData, grid: Grid): void {
   const A = LEGENDS.attack, time = w.time, S = FIGHT.scale, angry = c.legendState !== "happy", R = (angry ? A.range : w.t.legends?.happyRange ?? A.range) * S, side: State = angry ? "wild" : "happy";
   const f = (c.fight ??= { target: null, readyAt: time + A.interval * 0.5, windupUntil: 0, aimX: 0, aimZ: 0 });
   if (c.lairX === undefined) { c.lairX = c.x; c.lairZ = c.z; }
@@ -68,6 +71,16 @@ export function stepLegendAttack(w: CombatWorld, s: CombatState, c: Creature, _d
   }
   c.aims = found.slice(0, A.targets).map(({ x, z, target }) => ({ x, z, target }));
   f.target = c.aims[0].target; f.aimX = c.aims[0].x; f.aimZ = c.aims[0].z; f.windupUntil = time + A.windup;
+  // Its kind's attack, exaggerated (rules/attacks/species.ts legendOf; Ed, 2026-10-27), at her and creatures: cast now, released by
+  // the engine as its windup ends, its landing shown all the while; the old throw or beam only at a soundsystem (the sieges as they were).
+  // (a happy one's bombs are guided onto the enraged, path home: helping her, they land; an angry one's on her come down where she stood)
+  const own = (w.t.attacks?.species ?? true) ? legendAttack(c.species, { range: R, windup: A.windup, interval: A.interval, flight: A.lobFlight, radius: A.lobRadius * S }, w.t.attacks?.reactionFloor) : null, spec = own && !angry && own.body?.kind === "lob" ? { ...own, path: [{ home: { turn: 0 } }] } : own;
+  f.spellCasts = undefined;
+  if (spec) {
+    const S2 = (s.spells ??= newSpells()), W = spellWorld(w, s, grid, S2.seed, data), casts: number[] = [];
+    for (const a of c.aims) if (a.target.kind !== "sound") casts.push(castSpell(S2, W, spec, `legend:${c.species}`, { id: c.id, x: c.x, z: c.z, side, species: c.species, heading: Math.atan2(a.z - c.z, a.x - c.x) }, hittableOf(w, s, a.target), time, A.damage, f.windupUntil));
+    if (casts.length) { f.spellCasts = casts; c.aims = c.aims.filter(a => a.target.kind === "sound"); }
+  }
   c.facing = f.aimX >= c.x ? 1 : -1;
   s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id });
 }
