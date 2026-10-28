@@ -5938,12 +5938,6 @@ const CREATURE_ARCTICFOX = {
   radius: 0.6,
   temperament: "curious",
   voice: { family: "canid", pitch: 1.75, glide: 0.6 },
-  buff: {
-    name: "Snow pounce",
-    kind: "move",
-    scale: { "dash.distance": 1.2, groundAcceleration: 1.6 },
-    label: "Arctic fox's Snow pounce: a longer blink, and quicker starts on foot"
-  },
   character: { posture: { head: [0.03, 0.02], body: 0 }, quirk: "perk", every: [3, 7], for: 1 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
@@ -5984,13 +5978,6 @@ const CREATURE_ARMADILLO = {
   },
   radius: 0.5,
   voice: { family: "small", pitch: 0.75, noise: 0.35 },
-  buff: {
-    name: "Roll",
-    kind: "move",
-    scale: { "dash.distance": 1.2 },
-    add: { "dash.gone": 0.15 },
-    label: "Armadillo's Roll: a little longer blink, and untouchable a little longer after it"
-  },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
     ranged: null,
@@ -6017,12 +6004,6 @@ const CREATURE_BADGER = {
   radius: 0.8,
   temperament: "curious",
   voice: { family: "big", pitch: 1.8, dur: 0.6 },
-  buff: {
-    name: "Big heart",
-    kind: "shot",
-    scale: { "invites.radius": 2.2 },
-    label: "Badger's Big heart: bigger 💌s, easier to land"
-  },
   character: { posture: { head: [0.04, -0.07], body: -0.02 }, quirk: "sniff", every: [3, 6], for: 1.4 },
   pack: {
     melee: { attacks: [null, "maul", "maul"], knockback: 8 },
@@ -6073,7 +6054,6 @@ const CREATURE_BAT = {
   temperament: "skittish",
   traits: ["flier", "swarm"],
   voice: { family: "bat" },
-  buff: { name: "Flit", kind: "move", scale: { "dash.distance": 1.5 }, label: "Bat's Flit: your blink goes further" },
   character: { sprite: "shiver", every: [3, 6], for: 0.6 },
   pack: {
     melee: { attacks: [null, "screech", "bigscreech"] },
@@ -6099,12 +6079,6 @@ const CREATURE_BEAR = {
   temperament: "curious",
   traits: ["heavy"],
   voice: { family: "big", pitch: 0.8 },
-  buff: {
-    name: "Wind-up",
-    kind: "shot",
-    mods: { charge: 1 },
-    label: "Bear's Wind-up: hold to charge, let go for a big volley"
-  },
   character: { posture: { head: [0.04, -0.04], body: 0 }, quirk: "scratch", every: [6, 11], for: 1.6 },
   pack: {
     melee: { attacks: [null, "swipe", "bigswipe"] },
@@ -6132,12 +6106,6 @@ const CREATURE_BEAVER = {
   radius: 0.7,
   temperament: "curious",
   voice: { family: "whistler", pitch: 0.8, trill: [4, 30], volume: 0.7 },
-  buff: {
-    name: "Decoy",
-    kind: "move",
-    mods: { decoy: 1 },
-    label: "Beaver's Decoy: blinking leaves a waiting 💌 where you were"
-  },
   character: { posture: { head: [0.02, -0.02], body: -0.01 }, quirk: "tailslap", every: [5, 9], for: 0.7 },
   pack: {
     melee: { attacks: [null, "nip", "maul"], knockback: 6 },
@@ -6162,7 +6130,6 @@ const CREATURE_BEETLE = {
   temperament: "skittish",
   traits: ["armoured"],
   voice: { family: "bug", pitch: 0.7, am: [60, 0.9], volume: 1.5 },
-  buff: { name: "Fan", kind: "shot", mods: { fan: 1 }, label: "Beetle's Fan: each shot a 3-way spread" },
   character: { sprite: "shiver", every: [4, 8], for: 0.6 },
   pack: {
     melee: { attacks: [null, "nip", "maul"], knockback: 6 },
@@ -6205,12 +6172,6 @@ const CREATURE_BOAR = {
   temperament: "curious",
   traits: ["heavy"],
   voice: { family: "big", pitch: 1.2, noise: 0.55, am: [40, 0.6], volume: 1.3 },
-  buff: {
-    name: "Momentum",
-    kind: "move",
-    mods: { momentum: 1 },
-    label: "Boar's Momentum: a burst of speed after each blink"
-  },
   character: { posture: { head: [0.05, -0.06], body: 0 }, quirk: "stomp", every: [4, 8], for: 1 },
   pack: {
     melee: { attacks: [null, "nip", "maul"], knockback: 8 },
@@ -6238,12 +6199,6 @@ const CREATURE_CAT = {
   radius: 0.6,
   temperament: "skittish",
   voice: { family: "cat", pitch: 1.3, volume: 0.35 },
-  buff: {
-    name: "Paw prints",
-    kind: "shot",
-    mods: { trail: 1 },
-    label: "Wildcat's Paw prints: 💌s leave a trail of paw prints that lands too"
-  },
   character: { posture: { head: [0.03, 0], body: -0.01 }, quirk: "tailflick", every: [3, 7], for: 0.8 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
@@ -6274,7 +6229,6 @@ const CREATURE_CHEETAH = {
   temperament: "skittish",
   traits: ["nimble"],
   voice: { family: "cat", pitch: 1.4, glide: 0.7 },
-  buff: { name: "Sprint", kind: "move", scale: { groundSpeed: 1.15 }, label: "Cheetah's Sprint: quicker on foot" },
   character: { posture: { head: [0.03, 0.02], body: -0.01 }, quirk: "perk", every: [4, 8], for: 1 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
@@ -6304,12 +6258,6 @@ const CREATURE_CRAB = {
   },
   radius: 0.5,
   voice: { family: "bug", pitch: 0.6, am: [28, 0.9], noise: 0.45, volume: 1.3 },
-  buff: {
-    name: "Sidestep",
-    kind: "move",
-    scale: { groundAcceleration: 1.6, "dash.distance": 1.2 },
-    label: "Crab's Sidestep: quicker off the mark on foot, and a longer blink"
-  },
   character: { sprite: "shiver", every: [3, 6], for: 0.6 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
@@ -6336,12 +6284,6 @@ const CREATURE_CROCODILE = {
   },
   radius: 1.2,
   voice: { family: "big", pitch: 0.6, noise: 0.5, am: [18, 0.7], volume: 1.2 },
-  buff: {
-    name: "Snap",
-    kind: "move",
-    scale: { "dash.cooldown": 0.6 },
-    label: "Crocodile's Snap: your blink comes back quicker"
-  },
   character: { posture: { head: [0.02, -0.03], body: -0.01 }, quirk: "tailflick", every: [6, 11], for: 1 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
@@ -6378,12 +6320,6 @@ const CREATURE_DORMOUSE = {
   temperament: "curious",
   traits: ["nimble"],
   voice: { family: "small", pitch: 1.3 },
-  buff: {
-    name: "Lullaby orbit",
-    kind: "shot",
-    mods: { orbit: 1 },
-    label: "Dormouse's Lullaby orbit: two 💌s circle you and fly at animals close by"
-  },
   character: { posture: { head: [0, 0.03], body: 0 }, quirk: "sniff", every: [2, 5], for: 0.8 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
@@ -6429,12 +6365,6 @@ const CREATURE_DRAGONFLY = {
   },
   radius: 0.45,
   voice: { family: "bug", pitch: 1.6, am: [180, 0.6], noise: 0.2, volume: 1.1 },
-  buff: {
-    name: "Hover",
-    kind: "move",
-    scale: { treetopSpeed: 1.1, "treetop.turnRate": 1.6 },
-    label: "Dragonfly's Hover: sharper turns over the treetops, and a little quicker"
-  },
   character: { sprite: "shiver", every: [1.5, 4], for: 0.5 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
@@ -6475,12 +6405,6 @@ const CREATURE_ELEPHANT = {
   attacks: [null, "slam", "bigslam", "quake"],
   traits: ["heavy"],
   voice: { family: "big", pitch: 0.6, glide: 0.9, volume: 0.9 },
-  buff: {
-    name: "Trumpet",
-    kind: "shot",
-    scale: { "invites.radius": 1.6, "invites.range": 1.2 },
-    label: "Elephant's Trumpet: bigger 💌s that carry further"
-  },
   character: { posture: { head: [0.02, -0.03], body: 0 }, quirk: "stomp", every: [6, 12], for: 1.4 },
   pack: {
     melee: { attacks: [null, "swipe", "bigswipe"], knockback: 10 },
@@ -6521,12 +6445,6 @@ const CREATURE_ELK = {
   temperament: "skittish",
   traits: ["heavy"],
   voice: { family: "big", pitch: 1.4, glide: 1.25, dur: 1.5, noise: 0.15, am: [0, 0], volume: 0.8 },
-  buff: {
-    name: "Slip past",
-    kind: "shot",
-    mods: { slip: 1 },
-    label: "Elk's Slip past: 💌s slip through enraged animals"
-  },
   character: { posture: { head: [0.03, 0.02], body: 0 }, quirk: "stomp", every: [6, 11], for: 1.2 },
   pack: {
     melee: { attacks: [null, "nip", "maul"], knockback: 8 },
@@ -6556,12 +6474,6 @@ const CREATURE_FEATHEREDSERPENT = {
   ranged: true,
   traits: ["heavy"],
   voice: { family: "bird", pitch: 0.7, pure: false, wave: "sawtooth", glide: 0.9 },
-  buff: {
-    name: "Plumage",
-    kind: "move",
-    scale: { treetopSpeed: 1.15, riseTime: 0.7 },
-    label: "Feathered serpent's Plumage: a quicker climb to the treetops, and quicker over them"
-  },
   character: { posture: { head: [0, 0.05], body: 0 }, quirk: "shake", every: [5, 9], for: 1.2 },
   pack: {
     melee: { attacks: [null, "nip", "nip"] },
@@ -6595,7 +6507,6 @@ const CREATURE_FENNEC = {
   },
   radius: 0.45,
   voice: { family: "canid", pitch: 2.1, glide: 0.9 },
-  buff: { name: "Ears", kind: "shot", scale: { "invites.range": 1.35 }, label: "Fennec's Ears: 💌s reach further" },
   character: { posture: { head: [0.02, 0.04], body: 0 }, quirk: "perk", every: [3, 6], for: 1.2 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
@@ -6628,12 +6539,6 @@ const CREATURE_FLYINGSQUIRREL = {
   },
   radius: 0.4,
   voice: { family: "small", pitch: 1.65, extra: 2, gap: 0.18, volume: 0.7 },
-  buff: {
-    name: "Soar",
-    kind: "move",
-    scale: { treetopSpeed: 1.1, "dash.distance": 1.2 },
-    label: "Flying squirrel's Soar: a little quicker over the treetops, and a longer blink"
-  },
   character: { posture: { head: [0, 0.05], body: 0 }, quirk: "sniff", every: [2, 5], for: 0.6 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
@@ -6666,7 +6571,6 @@ const CREATURE_FOX = {
   radius: 0.7,
   temperament: "curious",
   voice: { family: "canid", pitch: 1.5, glide: 0.8 },
-  buff: { name: "Charm", kind: "shot", mods: { charm: 1 }, label: "Fox's Charm: 💌s home in on the nearest animal" },
   character: { posture: { head: [0.02, 0.03], body: 0 }, quirk: "perk", every: [4, 8], for: 1.1 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
@@ -6691,12 +6595,6 @@ const CREATURE_FROSTTROLL = {
   temperament: "curious",
   traits: ["heavy"],
   voice: { family: "big", pitch: 0.65, glide: 0.4 },
-  buff: {
-    name: "Long stride",
-    kind: "move",
-    scale: { groundSpeed: 1.12, riseTime: 0.8 },
-    label: "Frost troll's Long stride: quicker on foot, and a quicker climb to the treetops"
-  },
   character: { posture: { head: [0.03, -0.02], body: 0.03 }, quirk: "scratch", every: [5, 10], for: 1.8 },
   pack: {
     melee: { attacks: [null, "swipe", "bigswipe"], knockback: 10 },
@@ -6725,12 +6623,6 @@ const CREATURE_FROSTWYRM = {
   attacks: [null, "swipe", "bigswipe", "legendNova"],
   traits: ["heavy"],
   voice: { family: "snake", pitch: 0.45, glide: 0.9 },
-  buff: {
-    name: "Glide",
-    kind: "move",
-    scale: { "dash.distance": 1.3 },
-    label: "Wyrm's Glide: a longer blink, as over ice"
-  },
   character: { posture: { head: [0.02, 0.03], body: 0 }, quirk: "tailslap", every: [6, 11], for: 1.4 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
@@ -6760,12 +6652,6 @@ const CREATURE_GRIFFIN = {
   radius: 1.1,
   traits: ["heavy"],
   voice: { family: "bird", pitch: 0.6, pure: false, wave: "sawtooth", glide: 0.8 },
-  buff: {
-    name: "Talon",
-    kind: "shot",
-    scale: { "invites.speed": 1.25 },
-    label: "Griffin's Talon: 💌s fly a quarter faster"
-  },
   character: { posture: { head: [0.03, 0.03], body: 0 }, quirk: "shake", every: [5, 10], for: 1.2 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
@@ -6801,12 +6687,6 @@ const CREATURE_HARE = {
   temperament: "skittish",
   traits: ["nimble"],
   voice: { family: "small" },
-  buff: {
-    name: "Dash bursts",
-    kind: "move",
-    mods: { charges: 2 },
-    label: "Hare's Dash bursts: 2 more blink charges"
-  },
   character: { posture: { head: [0, 0.04], body: 0 }, quirk: "thump", every: [4, 8], for: 0.8 },
   pack: {
     melee: { attacks: [null, "nip", "maul"], knockback: 6 },
@@ -6849,12 +6729,6 @@ const CREATURE_HEDGEHOG = {
   temperament: "curious",
   traits: ["armoured"],
   voice: { family: "small", pitch: 0.9, noise: 0.4, pure: false, wave: "sawtooth" },
-  buff: {
-    name: "Curl",
-    kind: "move",
-    add: { "dash.gone": 0.35 },
-    label: "Hedgehog's Curl: untouchable for longer after a blink"
-  },
   character: { sprite: "puff", every: [4, 8], for: 0.9 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
@@ -6902,12 +6776,6 @@ const CREATURE_HERON = {
     vowel: 1,
     volume: 0.9
   },
-  buff: {
-    name: "Stride",
-    kind: "move",
-    scale: { groundSpeed: 1.1, "dash.distance": 1.25 },
-    label: "Heron's Stride: a little quicker on foot, and a longer blink"
-  },
   character: { sprite: "puff", every: [6, 11], for: 1.4 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
@@ -6934,12 +6802,6 @@ const CREATURE_HYDRA = {
   },
   radius: 1.3,
   voice: { family: "snake", pitch: 0.6, glide: 0.8, volume: 1.2 },
-  buff: {
-    name: "Many Heads",
-    kind: "shot",
-    scale: { "invites.cooldown": 0.75, "invites.radius": 1.2 },
-    label: "Hydra's Many Heads: 💌s come quicker and land a little more easily"
-  },
   character: { posture: { head: [0.02, 0.02], body: 0 }, quirk: "rise", every: [5, 9], for: 1.4 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
@@ -6980,12 +6842,6 @@ const CREATURE_IBEX = {
   radius: 0.85,
   temperament: "skittish",
   voice: { family: "big", pitch: 1.85, am: [16, 0.45], vowel: 0.8, noise: 0.15 },
-  buff: {
-    name: "Sure-footed",
-    kind: "move",
-    scale: { groundAcceleration: 1.4, riseTime: 0.75 },
-    label: "Ibex's Sure-footed: quicker starts on foot, and a quicker climb to the treetops"
-  },
   character: { posture: { head: [0.05, 0.02], body: 0 }, quirk: "stomp", every: [5, 9], for: 0.9 },
   pack: {
     melee: { attacks: [null, "nip", "maul"], knockback: 6 },
@@ -7014,12 +6870,6 @@ const CREATURE_JAGUAR = {
   radius: 1,
   attacks: [null, "swipe", "bigswipe", "legendCharge"],
   voice: { family: "cat", pitch: 0.55, glide: 0.5, volume: 0.8 },
-  buff: {
-    name: "Night eyes",
-    kind: "shot",
-    scale: { "invites.range": 1.3, "invites.speed": 1.15 },
-    label: "Jaguar's Night eyes: 💌s fly further and a little faster"
-  },
   character: { posture: { head: [0.02, -0.03], body: -0.02 }, quirk: "tailflick", every: [5, 9], for: 0.9 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
@@ -7046,12 +6896,6 @@ const CREATURE_KOMODO = {
   },
   radius: 1.1,
   voice: { family: "snake", pitch: 0.55, am: [9, 0.4] },
-  buff: {
-    name: "Lunge",
-    kind: "move",
-    scale: { "dash.distance": 1.35 },
-    label: "Komodo dragon's Lunge: your blink lunges further"
-  },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
     ranged: { name: "venom spit", range: 14, shots: [0, 1, 2], spread: 10, tint: "red" },
@@ -7082,12 +6926,6 @@ const CREATURE_LION = {
   temperament: "curious",
   traits: ["heavy"],
   voice: { family: "big", pitch: 0.55, glide: 0.6 },
-  buff: {
-    name: "Pride",
-    kind: "shot",
-    scale: { "invites.speed": 1.15, "invites.range": 1.15 },
-    label: "Lion's Pride: 💌s fly a little faster and further"
-  },
   character: { posture: { head: [0, 0.03], body: 0.01 }, quirk: "stretch", every: [7, 12], for: 1.5 },
   pack: {
     melee: { attacks: [null, "swipe", "bigswipe"], knockback: 8 },
@@ -7115,12 +6953,6 @@ const CREATURE_LYNX = {
   radius: 0.8,
   temperament: "skittish",
   voice: { family: "cat", volume: 0.4 },
-  buff: {
-    name: "Poise",
-    kind: "move",
-    scale: { groundAcceleration: 2, "treetop.turnRate": 1.4 },
-    label: "Lynx's Poise: sharper turns, quicker starts"
-  },
   character: { posture: { head: [0.04, -0.02], body: -0.03 }, quirk: "tailflick", every: [3, 6], for: 0.6 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
@@ -7153,12 +6985,6 @@ const CREATURE_MARTEN = {
   radius: 0.55,
   temperament: "skittish",
   voice: { family: "small", pitch: 0.9, trill: [20, 60] },
-  buff: {
-    name: "Scamper",
-    kind: "move",
-    scale: { groundSpeed: 1.2 },
-    label: "Marten's Scamper: faster on the ground"
-  },
   character: { posture: { head: [0.02, 0.02], body: -0.01 }, quirk: "sniff", every: [3, 6], for: 1 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
@@ -7191,12 +7017,6 @@ const CREATURE_MEERKAT = {
   },
   radius: 0.4,
   voice: { family: "small", pitch: 1.35, extra: 2, gap: 0.2 },
-  buff: {
-    name: "Lookout",
-    kind: "shot",
-    scale: { "invites.range": 1.3 },
-    label: "Meerkat's Lookout: 💌s reach further"
-  },
   character: { posture: { head: [0, 0.06], body: 0.01 }, quirk: "sentinel", every: [5, 9], for: 3.5 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
@@ -7226,12 +7046,6 @@ const CREATURE_MOLE = {
   temperament: "curious",
   traits: ["burrower"],
   voice: { family: "small", pitch: 0.8, noise: 0.3 },
-  buff: {
-    name: "Burrow",
-    kind: "move",
-    scale: { riseTime: 0.5, descendTime: 0.5 },
-    label: "Mole's Burrow: rise and land twice as fast"
-  },
   character: { sprite: "look", every: [4, 8], for: 1 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
@@ -7267,12 +7081,6 @@ const CREATURE_MOTH = {
   temperament: "skittish",
   traits: ["flier", "swarm"],
   voice: { family: "bug", pitch: 1.2, am: [120, 0.7], noise: 0.3, volume: 1.2 },
-  buff: {
-    name: "Flutter",
-    kind: "shot",
-    add: { "invites.burst": 1 },
-    label: "Butterfly's Flutter: one more 💌 a burst"
-  },
   character: { sprite: "shiver", every: [2, 5], for: 0.6 },
   pack: {
     melee: null,
@@ -7299,12 +7107,6 @@ const CREATURE_NEWT = {
   },
   radius: 0.45,
   voice: { family: "amphibian", pitch: 1.9, am: [56, 0.6] },
-  buff: {
-    name: "Wriggle",
-    kind: "shot",
-    scale: { "invites.speed": 1.2, "invites.range": 1.2 },
-    label: "Newt's Wriggle: 💌s fly a little faster and further"
-  },
   character: { posture: { head: [0.03, 0.01], body: -0.01 }, quirk: "tailflick", every: [4, 8], for: 1 },
   pack: {
     melee: null,
@@ -7337,12 +7139,6 @@ const CREATURE_OTTER = {
   temperament: "curious",
   traits: ["nimble"],
   voice: { family: "whistler", volume: 0.7 },
-  buff: {
-    name: "Skimming stone",
-    kind: "shot",
-    mods: { ricochet: 1 },
-    label: "Otter's Skimming stone: 💌s bounce on to another animal"
-  },
   character: { posture: { head: [0.02, 0.02], body: -0.01 }, quirk: "shake", every: [5, 9], for: 0.8 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
@@ -7404,12 +7200,6 @@ const CREATURE_OWL = {
     wave: "sine",
     volume: 0.4
   },
-  buff: {
-    name: "Echo",
-    kind: "shot",
-    mods: { echo: 1 },
-    label: "Owl's Echo: each burst fires again half a second later"
-  },
   character: { sprite: "look", every: [4, 8], for: 1.4 },
   pack: {
     melee: { attacks: [null, "nip", "nip"] },
@@ -7457,12 +7247,6 @@ const CREATURE_PENGUIN = {
     vowel: 0.6,
     volume: 0.9
   },
-  buff: {
-    name: "Toboggan",
-    kind: "move",
-    scale: { groundSpeed: 1.1, groundAcceleration: 1.5 },
-    label: "Penguin's Toboggan: a little quicker on foot, and quicker off the mark"
-  },
   pack: {
     melee: { attacks: [null, "nip", "nip"] },
     ranged: { name: "ice pellet", range: 10, shots: [0, 1, 2], spread: 10, tint: "red" },
@@ -7488,12 +7272,6 @@ const CREATURE_POLARBEAR = {
   },
   radius: 1.4,
   voice: { family: "big", pitch: 0.9, noise: 0.35, volume: 1.2 },
-  buff: {
-    name: "Blizzard",
-    kind: "shot",
-    scale: { "invites.range": 1.25, "invites.radius": 1.3 },
-    label: "Polar bear's Blizzard: 💌s fly further and land more easily"
-  },
   character: { posture: { head: [0.05, -0.02], body: 0 }, quirk: "sniff", every: [5, 9], for: 1.4 },
   pack: {
     melee: { attacks: [null, "swipe", "bigswipe"] },
@@ -7525,12 +7303,6 @@ const CREATURE_RACCOON = {
   },
   radius: 0.6,
   voice: { family: "small", pitch: 1.05, noise: 0.2, extra: 1 },
-  buff: {
-    name: "Light fingers",
-    kind: "shot",
-    scale: { "invites.cooldown": 0.85, "invites.speed": 1.15 },
-    label: "Raccoon's Light fingers: quicker bursts, 💌s flying a little faster"
-  },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
     ranged: { name: "thrown stone", range: 12, shots: [0, 1, 2], spread: 10, tint: "red" },
@@ -7570,7 +7342,6 @@ const CREATURE_RAM = {
   radius: 0.9,
   temperament: "skittish",
   voice: { family: "big", pitch: 1.6, am: [12, 0.5], vowel: 1, noise: 0.1 },
-  buff: { name: "Steady", kind: "move", mods: { steady: 1 }, label: "Ram's Steady: no slowing while you fire" },
   character: { posture: { head: [0.04, -0.04], body: 0 }, quirk: "stomp", every: [4, 8], for: 1 },
   pack: {
     melee: { attacks: [null, "nip", "maul"], knockback: 6 },
@@ -7601,12 +7372,6 @@ const CREATURE_RATTLESNAKE = {
   },
   radius: 0.6,
   voice: { family: "snake", pitch: 0.85 },
-  buff: {
-    name: "Warning",
-    kind: "shot",
-    scale: { "invites.speed": 1.15, "invites.radius": 1.3 },
-    label: "Rattlesnake's Warning: 💌s fly a little faster and land wider"
-  },
   character: { posture: { head: [0, 0.03], body: 0 }, quirk: "rattle", every: [5, 9], for: 1.4 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
@@ -7670,7 +7435,6 @@ const CREATURE_RAVEN = {
     vowel: 0,
     volume: 1.3
   },
-  buff: { name: "Wings", kind: "move", scale: { treetopSpeed: 1.2 }, label: "Raven's Wings: faster in the treetops" },
   character: { sprite: "hop", every: [3, 6], for: 0.7 },
   pack: {
     melee: { attacks: [null, "nip", "nip"] },
@@ -7705,12 +7469,6 @@ const CREATURE_REDPANDA = {
   radius: 0.5,
   temperament: "curious",
   voice: { family: "small", pitch: 1.5, glide: 0.5, dur: 0.6 },
-  buff: {
-    name: "Cuddle",
-    kind: "shot",
-    scale: { "invites.radius": 1.5 },
-    label: "Red panda's Cuddle: 💌s land on animals a little wider of where they strike"
-  },
   character: { posture: { head: [0, 0.05], body: 0 }, quirk: "perk", every: [4, 8], for: 1.2 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
@@ -7749,12 +7507,6 @@ const CREATURE_RHINO = {
   },
   radius: 1.5,
   voice: { family: "big", pitch: 0.7, noise: 0.4, am: [30, 0.5], volume: 1.3 },
-  buff: {
-    name: "Charge",
-    kind: "move",
-    scale: { groundSpeed: 1.25, groundAcceleration: 0.7 },
-    label: "Rhino's Charge: much faster on the ground, slower to get going"
-  },
   character: { posture: { head: [0.04, -0.07], body: 0 }, quirk: "stomp", every: [5, 9], for: 1.2 },
   pack: {
     melee: { attacks: [null, "nip", "maul"], knockback: 8 },
@@ -7787,12 +7539,6 @@ const CREATURE_ROE = {
   radius: 0.7,
   temperament: "skittish",
   voice: { family: "big", pitch: 2.1, glide: 0.4, dur: 0.5, noise: 0.35 },
-  buff: {
-    name: "Spring",
-    kind: "move",
-    scale: { "dash.cooldown": 0.7 },
-    label: "Roe's Spring: your dodge comes back sooner"
-  },
   character: { posture: { head: [-0.01, 0.06], body: 0 }, quirk: "perk", every: [3, 7], for: 1.2 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
@@ -7821,12 +7567,6 @@ const CREATURE_SALAMANDER = {
   ranged: true,
   temperament: "skittish",
   voice: { family: "amphibian", pitch: 1.6, am: [48, 0.7] },
-  buff: {
-    name: "Quick fire",
-    kind: "shot",
-    scale: { "invites.cooldown": 0.6 },
-    label: "Salamander's Quick fire: less wait between bursts"
-  },
   character: { posture: { head: [0.03, -0.02], body: -0.01 }, quirk: "tailflick", every: [4, 8], for: 1.2 },
   pack: {
     melee: null,
@@ -7852,13 +7592,6 @@ const CREATURE_SCORPION = {
   },
   radius: 0.5,
   voice: { family: "bug", pitch: 0.8, am: [40, 0.85], noise: 0.35, volume: 1.3 },
-  buff: {
-    name: "Sting",
-    kind: "shot",
-    mods: { pierce: 1 },
-    scale: { "invites.cooldown": 0.85 },
-    label: "Scorpion's Sting: 💌s pass through to the next, with a little less wait"
-  },
   character: { sprite: "shiver", every: [3, 7], for: 0.5 },
   pack: {
     melee: null,
@@ -7889,12 +7622,6 @@ const CREATURE_SNAIL = {
   temperament: "skittish",
   traits: ["armoured"],
   voice: { family: "amphibian", pitch: 1.2, am: [8, 0.4], noise: 0.3, dur: 1.3 },
-  buff: {
-    name: "Spiral",
-    kind: "shot",
-    mods: { boomerang: 1 },
-    label: "Snail's Spiral: 💌s come back to you, landing on the way"
-  },
   character: { sprite: "puff", every: [6, 12], for: 2 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
@@ -7927,7 +7654,6 @@ const CREATURE_SNAKE = {
   ranged: true,
   temperament: "skittish",
   voice: { family: "snake" },
-  buff: { name: "Strike", kind: "shot", scale: { "invites.speed": 1.4 }, label: "Snake's Strike: 💌s fly faster" },
   character: { posture: { head: [0, 0.02], body: 0 }, quirk: "rise", every: [5, 9], for: 1.4 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
@@ -7956,12 +7682,6 @@ const CREATURE_SNOWLEOPARD = {
   radius: 0.85,
   temperament: "skittish",
   voice: { family: "cat", pitch: 0.85, volume: 0.45 },
-  buff: {
-    name: "Ghost of the peaks",
-    kind: "move",
-    scale: { "dash.distance": 1.15, "treetop.turnRate": 1.3 },
-    label: "Snow leopard's Ghost of the peaks: a longer blink, and sharper turns in the treetops"
-  },
   character: { posture: { head: [0.03, -0.03], body: -0.04 }, quirk: "tailflick", every: [4, 8], for: 0.9 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
@@ -7990,12 +7710,6 @@ const CREATURE_SPHINX = {
   temperament: "curious",
   traits: ["heavy"],
   voice: { family: "big", pitch: 0.75, glide: 0.5, dur: 1.3, noise: 0.15 },
-  buff: {
-    name: "Riddle",
-    kind: "shot",
-    scale: { "invites.range": 1.4, "invites.cooldown": 0.85 },
-    label: "Sphinx's Riddle: 💌s carry far and come a little quicker"
-  },
   character: { posture: { head: [0, 0.06], body: 0 }, quirk: "stretch", every: [8, 14], for: 1.6 },
   pack: {
     melee: { attacks: [null, "screech", "bigscreech"] },
@@ -8030,12 +7744,6 @@ const CREATURE_SPIDER = {
   ranged: true,
   temperament: "skittish",
   voice: { family: "bug", pitch: 0.9, am: [45, 0.7], noise: 0.25, volume: 1.2 },
-  buff: {
-    name: "Long thread",
-    kind: "shot",
-    scale: { "invites.range": 1.5 },
-    label: "Spider's Long thread: 💌s fly further"
-  },
   character: { sprite: "shiver", every: [3, 7], for: 0.5 },
   pack: {
     melee: null,
@@ -8070,12 +7778,6 @@ const CREATURE_SQUIRREL = {
   temperament: "curious",
   traits: ["nimble"],
   voice: { family: "small", pitch: 1.2, extra: 3, gap: 0.25, volume: 0.75 },
-  buff: {
-    name: "Cache",
-    kind: "shot",
-    mods: { cache: 1 },
-    label: "Squirrel's Cache: you drop 💌s that wait and fly at animals that come near"
-  },
   character: { posture: { head: [0, 0.04], body: 0 }, quirk: "tailflick", every: [2, 4], for: 0.7 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
@@ -8118,12 +7820,6 @@ const CREATURE_STAG = {
   temperament: "skittish",
   traits: ["heavy"],
   voice: { family: "big", pitch: 1.2, glide: 0.8, dur: 1.6, noise: 0.2 },
-  buff: {
-    name: "Pierce",
-    kind: "shot",
-    mods: { pierce: 1 },
-    label: "Stag's Pierce: 💌s pass through the first animal and fly on"
-  },
   character: { posture: { head: [-0.02, 0.07], body: 0.01 }, quirk: "perk", every: [5, 10], for: 1.6 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
@@ -8162,12 +7858,6 @@ const CREATURE_STEGOSAURUS = {
   },
   radius: 1.6,
   voice: { family: "big", pitch: 0.55, volume: 0.9 },
-  buff: {
-    name: "Tail sweep",
-    kind: "shot",
-    scale: { "invites.radius": 1.6 },
-    label: "Stegosaurus's Tail sweep: each 💌 bursts wider"
-  },
   character: { posture: { head: [0.02, -0.03], body: 0 }, quirk: "sniff", every: [4, 8], for: 1 },
   pack: {
     melee: { attacks: [null, "swipe", "bigswipe"], knockback: 8 },
@@ -8202,12 +7892,6 @@ const CREATURE_STOAT = {
   temperament: "skittish",
   traits: ["nimble"],
   voice: { family: "small", pitch: 1.1, trill: [24, 80] },
-  buff: {
-    name: "Frenzy",
-    kind: "move",
-    mods: { frenzy: 1 },
-    label: "Stoat's Frenzy: winning an animal over gives back a blink"
-  },
   character: { posture: { head: [0, 0.05], body: 0 }, quirk: "perk", every: [3, 6], for: 1 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
@@ -8238,12 +7922,6 @@ const CREATURE_TIGER = {
   temperament: "curious",
   traits: ["heavy"],
   voice: { family: "cat", pitch: 0.5, glide: 0.6, volume: 0.8 },
-  buff: {
-    name: "Pounce",
-    kind: "move",
-    scale: { "dash.distance": 1.4, groundAcceleration: 1.4 },
-    label: "Tiger's Pounce: a longer blink, and quicker off the mark"
-  },
   character: { posture: { head: [0.02, -0.02], body: -0.02 }, quirk: "tailflick", every: [4, 8], for: 0.9 },
   pack: {
     melee: { attacks: [null, "swipe", "bigswipe"] },
@@ -8273,12 +7951,6 @@ const CREATURE_TOAD = {
   ranged: true,
   temperament: "skittish",
   voice: { family: "amphibian" },
-  buff: {
-    name: "Spawn",
-    kind: "shot",
-    mods: { split: 1 },
-    label: "Toad's Spawn: a 💌 that lands splits into 3 small ones"
-  },
   character: { sprite: "hop", every: [5, 10], for: 0.7 },
   pack: {
     melee: { attacks: [null, "nip", "nip"] },
@@ -8328,12 +8000,6 @@ const CREATURE_UNICORN = {
   radius: 1.1,
   temperament: "skittish",
   voice: { family: "big", pitch: 1.5, glide: 0.9, dur: 1.2, noise: 0.1 },
-  buff: {
-    name: "Grace",
-    kind: "move",
-    scale: { "dash.distance": 1.2, groundAcceleration: 1.5 },
-    label: "Unicorn's Grace: a longer blink and quicker starts"
-  },
   character: { posture: { head: [-0.02, 0.08], body: 0.01 }, quirk: "stomp", every: [5, 10], for: 1.2 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
@@ -8367,12 +8033,6 @@ const CREATURE_WOLF = {
   radius: 0.9,
   temperament: "curious",
   voice: { family: "canid" },
-  buff: {
-    name: "Howl",
-    kind: "shot",
-    mods: { ring: 1 },
-    label: "Wolf's Howl: every 5th burst a ring of 💌s round you"
-  },
   character: { posture: { head: [0.05, -0.05], body: -0.02 }, quirk: "howl", every: [7, 13], for: 1.8 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
@@ -8416,12 +8076,6 @@ const CREATURE_WOODLOUSE = {
   temperament: "skittish",
   traits: ["armoured"],
   voice: { family: "bug", pitch: 1.1, dur: 0.4, extra: 1, volume: 1.3 },
-  buff: {
-    name: "Rear guard",
-    kind: "shot",
-    mods: { rear: 1 },
-    label: "Woodlouse's Rear guard: each burst also fires a 💌 behind you"
-  },
   character: { sprite: "puff", every: [4, 8], for: 1 },
   pack: {
     melee: { attacks: [null, "nip", "nip"] },
