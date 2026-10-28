@@ -3312,7 +3312,7 @@ Light, sky and mood (drawing only): glow, lights, shadows, haze, mist, smoke, th
 
 ### `telescope`
 
-The rolling ground [1]: ground.hills lifts the ground and everything standing on it into broad swells up to amplitude metres up or down, scale metres across, in octaves layers of noise; drawing only, the game itself stays flat. Paths stay level across, and the ground is levelled into plateaus under the dancefloor, the treehouse, soundsystems, set pieces, the grounds and ponds. ?hills=0 turns it off; ?hills=<amplitude> tries another (6 gentle, 20 rolling, 40 the default: Ed, v289 "I guess hills=50 is just too much, maybe 40 is enough"). No slope may rise past the camera's sightline to her [2]: the hills are made at least 4.3 × amplitude / tan(the camera's shallowest pitch) metres across (300 at 40 m and 30°), so taller hills come broader, not steeper; and after everything is combined (the noise, the plateaus' and paths' easing) no slope anywhere is steeper than 0.85 of that pitch [3]: a cliff is cut and filled into a slope of the limit, gentler ground left as it is. Plateaus ease in over 2 times the amplitude and paths over 0.6 times, and sprites stand at the lowest ground under their foot. Off [4]: the fake relief (relief.strength 0; ?relief=0.9 brings its bumps back) and the slopes' exaggerated light (shade 1). shade: the light reads their slopes this many times steeper, so gentle swells (which trees can stand on upright) still show. relief (above) adds the small bumps on top. The telescope in the crow's nest [5]: walking up to it looks through it full screen [6], the night running on at the house's tenth, a compass strip along its top.
+The telescope in the treehouse's crow's nest, which she can walk up to and look through full screen.
 
 1. Ed, 2026-10-04
 2. Ed: "so that you never go behind a bump" (v289)
@@ -3320,6 +3320,7 @@ The rolling ground [1]: ground.hills lifts the ground and everything standing on
 4. Ed: "remove the slope shading" (v276)
 5. Ed, 2026-10-21: just the view, true to the island, nothing marked; rules/telescope.ts
 6. Ed, 2026-10-23: "opens when you walk up to it, look around with aiming keys" (the mouse, the arrows, the d-pad and the right stick look round; walking her away, E or Esc leaves)
+The rolling ground [1]: ground.hills lifts the ground and everything standing on it into broad swells up to amplitude metres up or down, scale metres across, in octaves layers of noise; drawing only, the game itself stays flat. Paths stay level across, and the ground is levelled into plateaus under the dancefloor, the treehouse, soundsystems, set pieces, the grounds and ponds. ?hills=0 turns it off; ?hills=<amplitude> tries another (6 gentle, 20 rolling, 40 the default: Ed, v289 "I guess hills=50 is just too much, maybe 40 is enough"). No slope may rise past the camera's sightline to her [2]: the hills are made at least 4.3 × amplitude / tan(the camera's shallowest pitch) metres across (300 at 40 m and 30°), so taller hills come broader, not steeper; and after everything is combined (the noise, the plateaus' and paths' easing) no slope anywhere is steeper than 0.85 of that pitch [3]: a cliff is cut and filled into a slope of the limit, gentler ground left as it is. Plateaus ease in over 2 times the amplitude and paths over 0.6 times, and sprites stand at the lowest ground under their foot. Off [4]: the fake relief (relief.strength 0; ?relief=0.9 brings its bumps back) and the slopes' exaggerated light (shade 1). shade: the light reads their slopes this many times steeper, so gentle swells (which trees can stand on upright) still show. relief (above) adds the small bumps on top. The telescope in the crow's nest [5]: walking up to it looks through it full screen [6], the night running on at the house's tenth, a compass strip along its top.
 Code: `rules/telescope.ts`
 
 - **`telescope.eye`**: the eye's height [1].
@@ -3372,8 +3373,9 @@ Code: `rules/telescope.ts`
 
 ### `smoke`
 
-Smoke from every fire (Ed, round 13: puffs rising high into the sky before dissipating; render/smoke.ts): the world's campfires, the party's campfires, bonfires and tiki torches, the charcoal burner's mound. Each fire sends up about rate puffs a second (at most perFire at once), each living life seconds: rising at speed m/s at first and slowing, up to rise metres (well over the 24 m treetops), drifting with the wind at drift m/s, starting size metres across and growing to (1 + grow) times that, thinning out before the end; opacity its strength (a cool grey, under the moon and the party's amber), warm how much of the fire's amber the lowest puffs catch underneath; pixel draws them in three stepped tones with a dithered edge at the art pixel (false: smooth). The nearest maxFires fires within range metres smoke, those near the edge fading.
+Smoke puffs rising from every fire (campfires, bonfires, torches, the charcoal burner) high into the sky before they fade.
 
+Smoke from every fire (Ed, round 13: puffs rising high into the sky before dissipating; render/smoke.ts): the world's campfires, the party's campfires, bonfires and tiki torches, the charcoal burner's mound. Each fire sends up about rate puffs a second (at most perFire at once), each living life seconds: rising at speed m/s at first and slowing, up to rise metres (well over the 24 m treetops), drifting with the wind at drift m/s, starting size metres across and growing to (1 + grow) times that, thinning out before the end; opacity its strength (a cool grey, under the moon and the party's amber), warm how much of the fire's amber the lowest puffs catch underneath; pixel draws them in three stepped tones with a dithered edge at the art pixel (false: smooth). The nearest maxFires fires within range metres smoke, those near the edge fading.
 Code: `render/smoke.ts`
 
 - **`smoke.on`**: false turns it off.
@@ -3399,8 +3401,9 @@ Code: `render/smoke.ts`
 
 The night sky that shows over the bend in treetop mode (on; ?sky=off leaves the plain dark background there, which costs nothing): stars (how many, 0-1), moon (brightness).
 
-- **`sky.clouds`**: count (roughly how many to a screenful of sky), altitude (metres over the ground: above the treetop camera, so never between her and it), speed (m/s they drift), opacity (translucent: stars show through), partyGlow (how strongly what's beneath them lights their undersides: the partified areas' colours, pulsing on the beat; campfires faintly; over dormant forest they stay moonlit grey).
+- **`sky.clouds`**: The clouds drifting high over the forest, lit from below by the party's colours.
   1. Ed, 2026-10-04: real ones, seen only from underneath, over the bend
+  count (roughly how many to a screenful of sky), altitude (metres over the ground: above the treetop camera, so never between her and it), speed (m/s they drift), opacity (translucent: stars show through), partyGlow (how strongly what's beneath them lights their undersides: the partified areas' colours, pulsing on the beat; campfires faintly; over dormant forest they stay moonlit grey).
 - **`sky.lightning`**: about every so many seconds a cloud in view flickers (flashes per strike), sometimes with a forked bolt toward the horizon.
 - **`sky.lightning.ground`**: the faint flash on the forest (0 none).
 
@@ -3420,9 +3423,10 @@ The night sky that shows over the bend in treetop mode (on; ?sky=off leaves the 
 
 ### `moon`
 
-The moon [1]: one moon, drawn in the sky, tinting the moonlight a little, and shown on the dancefloor before the first wave (the same phase). Coloured moons: the run is cut into windows of colourEvery seconds, and in each but the first there's a colourChance of a red (blood), blue or gold (harvest) moon for colourTime seconds, easing in and out over colourFade.
+The moon in the sky, and the odd red, blue or gold moon that comes and goes during a run.
 
 1. Ed, 2026-10-06: "The moon should slowly change: occasionally becoming red, and blue, and yellow, and going through phases, and moving across the sky"
+The moon [1]: one moon, drawn in the sky, tinting the moonlight a little, and shown on the dancefloor before the first wave (the same phase). Coloured moons: the run is cut into windows of colourEvery seconds, and in each but the first there's a colourChance of a red (blood), blue or gold (harvest) moon for colourTime seconds, easing in and out over colourFade.
 
 - **`moon.phasePeriod`**: seconds from new moon to new moon.
 - **`moon.phaseStart`**: its phase at the start (0 new, 0.25 first quarter, 0.5 full).
@@ -3469,6 +3473,8 @@ The moon [1]: one moon, drawn in the sky, tinting the moonlight a little, and sh
 
 ### `sigilSpill`
 
+Placed sigils glow like small lights in their creature's neon, tinting the grass, the ground and whoever stands near.
+
 The sigils' neon spilling onto the world (overnight phase 3, the art pass): each placed sigil is a small light in its creature's neon, height metres over its rune, reaching reach metres (15% more a level) at strength (0: off), eased in as it's written and breathing with the rune's pulse, so the grass round it, the ground and whoever stands near take its colour; the bottom sigil of her stack is a fainter one (stack, 0 off) reaching stackReach metres, stackHeight metres over her, tinting her and the ground under her as she carries it.
 
 | knob | type | range |
@@ -3482,9 +3488,10 @@ The sigils' neon spilling onto the world (overnight phase 3, the art pass): each
 
 ### `fireworks`
 
-The wave's celebration [1]: the rules' waveCelebrate (game.ts) starts a show of shells[0] to shells[1] shells over `over` seconds, the last `finale` going up together at the end, each rising rise[0] to rise[1] seconds from the soundsystem's top to height[0] to height[1] metres, up to drift metres off it, and bursting radius[0] to radius[1] metres across: round peonies, rings, drooping gold willows and crackling glitter, in the party's neons (rules/fireworks.ts: its schedule, from the event alone, so the sound's pops land on the bursts; render/fireworks.ts: the picture, a fixed pool of sparks the GPU flies). From then on that soundsystem's lasers stay fully on, every beam (render/lasers.ts).
+The fireworks show over a soundsystem when a wave is celebrated.
 
 1. Ed, 2026-10-07: when the wave reaches an area already cleared, its soundsystem already up, celebrate it: fireworks over that soundsystem, and its lasers on for good, its full party
+The wave's celebration [1]: the rules' waveCelebrate (game.ts) starts a show of shells[0] to shells[1] shells over `over` seconds, the last `finale` going up together at the end, each rising rise[0] to rise[1] seconds from the soundsystem's top to height[0] to height[1] metres, up to drift metres off it, and bursting radius[0] to radius[1] metres across: round peonies, rings, drooping gold willows and crackling glitter, in the party's neons (rules/fireworks.ts: its schedule, from the event alone, so the sound's pops land on the bursts; render/fireworks.ts: the picture, a fixed pool of sparks the GPU flies). From then on that soundsystem's lasers stay fully on, every beam (render/lasers.ts).
 Code: `rules/fireworks.ts`, `render/fireworks.ts`, `render/lasers.ts`
 
 - **`fireworks.on`**: false turns the show off.
@@ -3502,9 +3509,10 @@ Code: `rules/fireworks.ts`, `render/fireworks.ts`, `render/lasers.ts`
 
 ### `combatLight`
 
-Her light in the wild and in a fight [1]. Exploring an area the party hasn't reached, her light's reach and strength are times wildReach and wildGlow (the forest beyond her small pool darker); with a fight within range metres of her (any blow, wind-up or shot, her posse's or the wild's) in the last hold seconds, times fightReach and fightGlow instead (the fight lit, a little more than on party ground). Each eased: up over rise seconds, back over fall, shaped smooth. Drawing only.
+Her light shrinks while she explores a wild area and grows during a fight, so the fight is lit.
 
 1. Ed, 2026-10-07: the wild forest darker for exploring; a darker forest makes a fight harder to read, so her light rises during one and settles after, too slowly to notice as an effect; render/combatLight.ts
+Her light in the wild and in a fight [1]. Exploring an area the party hasn't reached, her light's reach and strength are times wildReach and wildGlow (the forest beyond her small pool darker); with a fight within range metres of her (any blow, wind-up or shot, her posse's or the wild's) in the last hold seconds, times fightReach and fightGlow instead (the fight lit, a little more than on party ground). Each eased: up over rise seconds, back over fall, shaped smooth. Drawing only.
 Code: `render/combatLight.ts`
 
 | knob | type | range |
@@ -3520,9 +3528,10 @@ Code: `render/combatLight.ts`
 
 ### `nightLight`
 
-her light reaches at most maxReach metres however far the camera is (stargazing, zoomed out), and over the treetops treetopReach metres at treetopGlow of its strength, eased in as she rises, so the canopy stays moonlit with a lantern's warm glow round her; lying on the beach to stargaze, at most gazeReach metres.
+How far her light reaches when the camera is far out, over the treetops and while she stargazes on the beach.
 
 1. Ed, 2026-10-06: "Seems very bright for nighttime"
+her light reaches at most maxReach metres however far the camera is (stargazing, zoomed out), and over the treetops treetopReach metres at treetopGlow of its strength, eased in as she rises, so the canopy stays moonlit with a lantern's warm glow round her; lying on the beach to stargaze, at most gazeReach metres.
 
 | knob | type | range |
 |---|---|---|
@@ -3575,8 +3584,9 @@ How far (reach, metres) and how strongly each kind of light lights its surroundi
 
 - **`lights.find`**: tonight's find's own pale gold-white light (the finds style guide, docs/art-guide/FINDS.md: the brightest and whitest thing on its patch, brighter than her lantern; out once it's taken).
   Code: `docs/art-guide/FINDS.md`
-- **`lights.knee`, `lights.ceiling`**: the light falling on a pixel, every source summed, passes unchanged up to knee of brightness, then eases toward ceiling and never past it, in its own hue, so the ground round a soundsystem's party light, campfires and her glow stays under white and keeps its texture; ceiling at or under knee turns it off.
+- **`lights.knee`, `lights.ceiling`**: Bright lights ease off toward a ceiling instead of burning to white, so lit ground keeps its texture.
   1. Ed, 2026-10-12: "soundsystems lighting tends to blow out" (render/lighting.ts softKnee)
+  the light falling on a pixel, every source summed, passes unchanged up to knee of brightness, then eases toward ceiling and never past it, in its own hue, so the ground round a soundsystem's party light, campfires and her glow stays under white and keeps its texture; ceiling at or under knee turns it off.
   Code: `render/lighting.ts`
 
 | knob | type | range |
@@ -3592,6 +3602,8 @@ How far (reach, metres) and how strongly each kind of light lights its surroundi
 
 ### `glowPower`
 
+How bright the witch's own glow is, brightest under her and fading smoothly to dark at its reach.
+
 the witch's own glow at its brightest (0-1; 0.95, a bright centre that drops quickly to dark, round 11), full under her, falling off as glowFalloff says out to glowNear of her reach, lit from a source glowHeight metres above her. Light falls off smoothly to nothing at its reach: no rings or bands.
 
 | knob | type | range |
@@ -3600,9 +3612,10 @@ the witch's own glow at its brightest (0-1; 0.95, a bright centre that drops qui
 
 ### `light`
 
-The lighting's mood [1]: mood spooky lays this grade over the Art Lab's night light, plain is the light as it was (?light=plain or ?light=spooky to compare). Round 2 (the art director): moonUp, the moon's fill on whatever faces up (canopy tops, open ground) as a share of the moon, so the dark middle distance still reads (0 none); leyRgb and leyBright, the ley line in the HUD's amber at half its brightness, a guide rather than a light (leave leyRgb out for each area's own colour); berryHalo and berryGlow, a berry's halo's size and strength as shares of the old 2.8 m soft disc, so a berry reads as a crisp dot with a small glow. Round 3: moonUpHue and moonUpSat, the moon fill's own hue and saturation (green-cyan and pale, so the woods are blue-green with violet only in the shadows; left out, the moon's).
+The night lighting's overall mood: the spooky grade over the plain light, and the moon's fill on everything facing up.
 
 1. Ed, 2026-10-06: "make it a spooky dark forest with a party in it" (render/mood.ts)
+The lighting's mood [1]: mood spooky lays this grade over the Art Lab's night light, plain is the light as it was (?light=plain or ?light=spooky to compare). Round 2 (the art director): moonUp, the moon's fill on whatever faces up (canopy tops, open ground) as a share of the moon, so the dark middle distance still reads (0 none); leyRgb and leyBright, the ley line in the HUD's amber at half its brightness, a guide rather than a light (leave leyRgb out for each area's own colour); berryHalo and berryGlow, a berry's halo's size and strength as shares of the old 2.8 m soft disc, so a berry reads as a crisp dot with a small glow. Round 3: moonUpHue and moonUpSat, the moon fill's own hue and saturation (green-cyan and pale, so the woods are blue-green with violet only in the shadows; left out, the moon's).
 Code: `render/mood.ts`
 
 - **`light.spooky`**: ambientHue and ambient (times the tuning's ambient): the shadows' colour and brightness, a deep blue-green.
@@ -3615,13 +3628,17 @@ Code: `render/mood.ts`
   1. 2026-10-26: 0 off: Ed's tuned value from the pause page, v4522, and so the areas' grade tints with it
 - **`light.spooky.partyWarm`, `light.spooky.partyReach`, `light.spooky.partyStrength`**: the soundsystems' light, warm amber, pink and gold (one per variant, instead of their crystal cyan, violet and amber), wider and stronger.
 - **`light.spooky.decorLights`, `light.spooky.decorReach`, `light.spooky.decorStrength`**: the party decor's lights (lanterns, campfires), how many an area lights (instead of partyObjects.lightsPerArea) and how far and strong, so each party is pools of warm light with dark between.
-- **`light.spooky.rimHue`, `light.spooky.rimSat`, `light.spooky.rim`**: a moonlight rim on the characters (the witch and every creature, baked or rigged), a light edge one art pixel wide on the side away from the moon in the night sky's blue-violet, at rim strength (0 off), so they read against the dark (the art director, round 1), only where the sprite is three pixels thick or more and never on the live rig's leg discs [1].
+- **`light.spooky.rimHue`, `light.spooky.rimSat`, `light.spooky.rim`**: A thin moonlit edge on the witch and every creature, so they stand out against the dark.
   1. Ed, 2026-10-06: "Animal legs have outlines on them; they'd look better without"
+  a moonlight rim on the characters (the witch and every creature, baked or rigged), a light edge one art pixel wide on the side away from the moon in the night sky's blue-violet, at rim strength (0 off), so they read against the dark (the art director, round 1), only where the sprite is three pixels thick or more and never on the live rig's leg discs [1].
 - **`light.spooky.witchGlow`**: how much of her own glow lights the witch herself (0: none, as before), so she stands in her pool of light.
-- **`light.spooky.moonUpWrap`**: the share of that fill every face gets whatever its normal (0: by its normal alone), so a crown's regular bumps don't light up as a lattice of dots. Round 4: decorWarm, how far the party decor's point lights go from their neon to the party's amber (an area's neon pieces lit its ground lime; the neon stays on the bulbs, the pool stays warm).
-- **`light.spooky.styledRim`, `light.spooky.styledGlow`**: with ?style=bold or ref, the rim's strength and her own glow on her, in place of rim and witchGlow (the styles bake dark tones with flat normals, so she needs more to stand out in her own pool). witchLift and styledLift: her pool's light thrown back up onto her, added rather than multiplied, so even dark tones lift (0 in the default style; styledLift with bold or ref, where she otherwise vanishes in her own pool).
+- **`light.spooky.moonUpWrap`**: How evenly the moon's fill lights every face, so tree crowns don't light up as a lattice of dots.
+  the share of that fill every face gets whatever its normal (0: by its normal alone), so a crown's regular bumps don't light up as a lattice of dots. Round 4: decorWarm, how far the party decor's point lights go from their neon to the party's amber (an area's neon pieces lit its ground lime; the neon stays on the bulbs, the pool stays warm).
+- **`light.spooky.styledRim`, `light.spooky.styledGlow`**: Extra rim and glow on the witch in the bold and reference art styles, where she would otherwise vanish in her own light.
+  with ?style=bold or ref, the rim's strength and her own glow on her, in place of rim and witchGlow (the styles bake dark tones with flat normals, so she needs more to stand out in her own pool). witchLift and styledLift: her pool's light thrown back up onto her, added rather than multiplied, so even dark tones lift (0 in the default style; styledLift with bold or ref, where she otherwise vanishes in her own pool).
 - **`light.spooky.areaEase`**: how fast the mood eases from one area's to the next (a second).
-- **`light.spooky.areas`**: each area type's own fog (hazeHue, hazeSat, haze), grade tint (gradeHue, gradeSat) and mist over the above, by area id ("home" for home): misty teal over the bogs and water, violet-grey in the dead and ancient woods, blue-violet in the bluebells, pale mist on the open moor, darker in the rocky places, near-black green under the pines, rosy in the honeysuckle and gardens, home a little less cold.
+- **`light.spooky.areas`**: Each kind of area's own fog colour, tint and mist (teal over bogs, violet in dead woods, pale mist on the moor and so on).
+  each area type's own fog (hazeHue, hazeSat, haze), grade tint (gradeHue, gradeSat) and mist over the above, by area id ("home" for home): misty teal over the bogs and water, violet-grey in the dead and ancient woods, blue-violet in the bluebells, pale mist on the open moor, darker in the rocky places, near-black green under the pines, rosy in the honeysuckle and gardens, home a little less cold.
 
 | knob | type | range |
 |---|---|---|
@@ -3782,14 +3799,17 @@ a small contact shadow under the witch, each bush, creature and prop; Ed's tuned
 - **`shadows.tint`**: every shadow (scenery's, the trees' and palms', and the blobs under creatures, the witch, bushes and small things) at its darkest goes from black toward the complement of the light it lies in by tint (0: black): a campfire's orange throws blue-violet, plain moonlight a warm shade.
   1. Ed, 2026-10-12: "Runestones and especially soundsystems are bright with coloured light; they should have shadows but they shouldn't be black. Can we have complementary colours in shadows cheaply?"
   2. 2026-10-13: "colour all the shadows"
-- **`shadows.cast`**: what stands in the trunks', palms' and scenery's shadows (creatures, the witch, bushes, props, scenery) is darkened and tinted by them where they fall on it, from a map of them drawn from above round her (render/castShadows.ts); off, only the ground and grass; castRes is that map's texels across (1024: 6.4 a metre over 160 m; 512 is a quarter of the texels to clear and draw each frame, for a weaker GPU).
+- **`shadows.cast`**: Creatures, the witch, bushes and props darken where trunk and scenery shadows fall on them, not just the ground.
   1. Ed, 2026-10-13: "shadows should darken the things that they land on ... it should be everything"
+  what stands in the trunks', palms' and scenery's shadows (creatures, the witch, bushes, props, scenery) is darkened and tinted by them where they fall on it, from a map of them drawn from above round her (render/castShadows.ts); off, only the ground and grass; castRes is that map's texels across (1024: 6.4 a metre over 160 m; 512 is a quarter of the texels to clear and draw each frame, for a weaker GPU).
   Code: `render/castShadows.ts`
-- **`shadows.trunks.foot`, `shadows.trunks.near`, `shadows.trunks.cover`**: a trunk's shadow fades in from nothing over foot metres from its foot (0: none) and opens out from a third of its width over taper metres (0: none; Ed: roots and decorations "get wide at the base, that look strange when they're rotated"), fades to nothing as she comes within near metres of its trunk (0: never), and darkens the ground cover it falls on (grass, flowers, tufts) at cover times its strength (0: not at all).
+- **`shadows.trunks.foot`, `shadows.trunks.near`, `shadows.trunks.cover`**: How a trunk's shadow fades in at its foot, widens, fades as she comes close, and darkens the grass it falls on.
   1. Ed, 2026-10-12: "they should fade out at the bottom of the tree" … "when you're close to the tree" (for her glow's and the campfires' alike)
   2. "The shadows should darken other foliage that they cast upon" (and)
-- **`shadows.trunks.scenery`, `shadows.trunks.sceneryMin`**: scenery casts the same shadows from her glow and the fires, untapered (its foot is its own width): set pieces, ruins, rocks and freak trees, modern and quest relics, the scenes' pieces (temples, castles, cemeteries...), the runestones and the soundsystems; pieces under sceneryMin metres tall cast none.
+  a trunk's shadow fades in from nothing over foot metres from its foot (0: none) and opens out from a third of its width over taper metres (0: none; Ed: roots and decorations "get wide at the base, that look strange when they're rotated"), fades to nothing as she comes within near metres of its trunk (0: never), and darkens the ground cover it falls on (grass, flowers, tufts) at cover times its strength (0: not at all).
+- **`shadows.trunks.scenery`, `shadows.trunks.sceneryMin`**: Scenery (ruins, rocks, relics, runestones, soundsystems) casts shadows from her glow and the fires too.
   1. Ed, 2026-10-12: "Scenery (temples etc) should also cast them" … "Runestones and soundsystems should also cast shadows"
+  scenery casts the same shadows from her glow and the fires, untapered (its foot is its own width): set pieces, ruins, rocks and freak trees, modern and quest relics, the scenes' pieces (temples, castles, cemeteries...), the runestones and the soundsystems; pieces under sceneryMin metres tall cast none.
 - **`shadows.trunks.glowLight`**: a glowing caster's (a runestone, a soundsystem) toward a soft shade of its own colour by glowLight (0: as dark as any).
 - **`shadows.trunks.sceneryFoot`**: scenery's shadow, cast from its middle, fades in from nothing over its own half-width and sceneryFoot metres past it (0: none).
   1. Ed, 2026-10-12: "Runestones shadow should fade at the base"
@@ -3843,9 +3863,10 @@ Code: `docs/plans/attack-grammar.md`
 
 ### `gpu`
 
-The game-wide GPU memory budget [1]: mb MB for a window of refWidth x refHeight physical pixels, scaled by this window's (Google Maps' rule), never under floor nor over ceil. Every every seconds, over it, the art used longest ago (an area type's trees, a creature set, a rig page) is let go till it's under headroom of the budget, nothing used in the last keep seconds (what's on screen is used every frame); it comes back from the art cache when wanted. GL's out-of-memory error, read every errorEvery seconds (each read waits on the GPU), lowers the budget to headroom of what was held then.
+How much graphics memory the game lets itself use, letting go of the art used longest ago when it's over.
 
 1. the coordinator's ask, 2026-10-26: Ed-approved; render/gpuLedger.ts counts every texture and render buffer at the GL calls, render/view/gpuBudget.ts keeps it
+The game-wide GPU memory budget [1]: mb MB for a window of refWidth x refHeight physical pixels, scaled by this window's (Google Maps' rule), never under floor nor over ceil. Every every seconds, over it, the art used longest ago (an area type's trees, a creature set, a rig page) is let go till it's under headroom of the budget, nothing used in the last keep seconds (what's on screen is used every frame); it comes back from the art cache when wanted. GL's out-of-memory error, read every errorEvery seconds (each read waits on the GPU), lowers the budget to headroom of what was held then.
 Code: `render/gpuLedger.ts`, `render/view/gpuBudget.ts`
 
 | knob | type | range |
@@ -3862,6 +3883,8 @@ Code: `render/gpuLedger.ts`, `render/view/gpuBudget.ts`
 
 ### `mist`
 
+A low mist drifting just above the ground.
+
 a low drifting mist (height in metres above the ground). Each has on and strength.
 
 | knob | type | range |
@@ -3874,15 +3897,17 @@ a low drifting mist (height in metres above the ground). Each has on and strengt
 
 ### `loadingMist`
 
-The loading mist [1][2]: while the island is still being drawn (its trees one set an area type, nearest the treehouse first), every area whose trees aren't in yet lies under a low glowing night mist, in layers sheets up to height metres over the ground, each at most density opaque (the low ones thickest), in hard steps, glow times as bright as the night's mist. When a type's trees land, its mist rolls back off its areas as a front moving out from the treehouse at speed m/s, and what it hasn't reached cap seconds after the trees landed (the far rim) fades out over a second.
+A glowing mist over the parts of the island still loading, rolling back from the treehouse as their trees arrive.
 
 1. Ed, 2026-10-24: "Mist sounds ideal, which rolls away when loading finishes. If loading starts with areas closer to the treehouse, this will look fine"
 2. "make the mist roll away progressively away from the treehouse instead of all at once" (render/loadingMist.ts)
+The loading mist [1][2]: while the island is still being drawn (its trees one set an area type, nearest the treehouse first), every area whose trees aren't in yet lies under a low glowing night mist, in layers sheets up to height metres over the ground, each at most density opaque (the low ones thickest), in hard steps, glow times as bright as the night's mist. When a type's trees land, its mist rolls back off its areas as a front moving out from the treehouse at speed m/s, and what it hasn't reached cap seconds after the trees landed (the far rim) fades out over a second.
 Code: `render/loadingMist.ts`
 
 - **`loadingMist.soft`**: the front's soft edge (m either side), size: its rolling noise (m).
-- **`loadingMist.sea`**: it lies over the water too, out to sea metres past the island's furthest ground, thinning, and burns off last, as its own front from the treehouse once the land's all in [1]; 0 none. Areas drawn before the first frame (a revisit's, from the art cache) never have any. Off under ?quick=1; ?loadmist=1\|0 for one load, ?artdelay=<s> to land the trees drawn ahead of need one every that many seconds and watch it.
+- **`loadingMist.sea`**: The loading mist lies over the sea too and burns off last, once all the land is in.
   1. Ed: "Maybe it should also appear over the water and burn off there too"
+  it lies over the water too, out to sea metres past the island's furthest ground, thinning, and burns off last, as its own front from the treehouse once the land's all in [1]; 0 none. Areas drawn before the first frame (a revisit's, from the art cache) never have any. Off under ?quick=1; ?loadmist=1\|0 for one load, ?artdelay=<s> to land the trees drawn ahead of need one every that many seconds and watch it.
 
 | knob | type | range |
 |---|---|---|
@@ -3899,11 +3924,12 @@ Code: `render/loadingMist.ts`
 
 ### `lightRings`
 
-Light rings in the canopy [1]: one pass over the screen in the half-size effects layer that lights only what stands at crown height (above metres or more over the ground), never the floor. Centres seeded on a spacing-metre grid (a share of its cells has one), each count faint bands of moonlight out to radius metres, breathing outward at speed bands a second, laid on a level sheet plane metres up (about the crowns' tops: the crowns are upright sprites, so it's where the line of sight crosses that sheet that is ringed); They fade out between fadeNear and fadeFar metres from her. And the glory: rings of moonlight round her own shadow on the leaves (the halo you see round your shadow on dewy foliage), glory metres across at gloryStrength, faintly prismatic, going with her; off (gloryStrength 0) since [2]. Treetops only (fading in as she rises). Scattered rings off [3]; the glory is off too (gloryStrength 0), and the pass is skipped while both are 0.
+Faint rings of moonlight across the treetops (now switched off), and the glory round her shadow on the leaves (off too).
 
 1. Ed, 2026-10-07: "a halo / circle optical illusion: faint concentric rings of moonlight in the canopy, visible from treetop view" (making the wild forest eerier; render/lightRings.ts)
 2. Ed, 2026-10-08: "there's now concentric circles under the witch on the canopy ... I think we should remove them"
 3. Ed, 2026-10-11: strength 0
+Light rings in the canopy [1]: one pass over the screen in the half-size effects layer that lights only what stands at crown height (above metres or more over the ground), never the floor. Centres seeded on a spacing-metre grid (a share of its cells has one), each count faint bands of moonlight out to radius metres, breathing outward at speed bands a second, laid on a level sheet plane metres up (about the crowns' tops: the crowns are upright sprites, so it's where the line of sight crosses that sheet that is ringed); They fade out between fadeNear and fadeFar metres from her. And the glory: rings of moonlight round her own shadow on the leaves (the halo you see round your shadow on dewy foliage), glory metres across at gloryStrength, faintly prismatic, going with her; off (gloryStrength 0) since [2]. Treetops only (fading in as she rises). Scattered rings off [3]; the glory is off too (gloryStrength 0), and the pass is skipped while both are 0.
 Code: `render/lightRings.ts`
 
 - **`lightRings.strength`**: a band at its brightest (in the moon's hue, paled), added as light.
@@ -3926,9 +3952,10 @@ Code: `render/lightRings.ts`
 
 ### `holograms`
 
-The soundsystems' sky sigils [1]: each standing soundsystem's projector throws a translucent cone of light from the top of its stack to a hologram of its area's animal sigil over the canopy, in the area's crystal colour, with scanlines, a drifting interference band and a colour fringe, turning gently and bobbing. The glyph is drawn at the sky's depth, so the tilt-shift leaves it nearly as sharp as the stars.
+Each soundsystem projects a turning hologram of its area's animal sigil into the sky above the trees.
 
 1. Ed, 2026-10-08: "soundsystems should project their animal sigil into the sky once they're activated, readable from the treetops but in a different character to how the leashing sigils look from treetop; maybe a hologram or peppers ghost or something, replacing the laser we have now" (render/hologram.ts)
+The soundsystems' sky sigils [1]: each standing soundsystem's projector throws a translucent cone of light from the top of its stack to a hologram of its area's animal sigil over the canopy, in the area's crystal colour, with scanlines, a drifting interference band and a colour fringe, turning gently and bobbing. The glyph is drawn at the sky's depth, so the tilt-shift leaves it nearly as sharp as the stars.
 Code: `render/hologram.ts`
 
 - **`holograms.size`**: the glyph (m across: under about 20 its one-pixel strokes are finer than the treetop view's pixels and it smears).
@@ -3938,7 +3965,8 @@ Code: `render/hologram.ts`
 - **`holograms.collapse`**: how long it takes to fold to a line and go out when the soundsystem is destroyed (s).
 - **`holograms.turn`**: how far it turns either way (degrees).
 - **`holograms.bob`**: how far it bobs (m).
-- **`holograms.fadeFar`**: it fades out towards this many metres from her. Damaged, it glitches, worse at each of the soundsystem's damage stages (below 75%, 50% and 25% of its health).
+- **`holograms.fadeFar`**: How far from her a soundsystem's hologram fades out; a damaged soundsystem's hologram glitches.
+  it fades out towards this many metres from her. Damaged, it glitches, worse at each of the soundsystem's damage stages (below 75%, 50% and 25% of its health).
 
 | knob | type | range |
 |---|---|---|
@@ -3955,9 +3983,10 @@ Code: `render/hologram.ts`
 
 ### `watching`
 
-The trees watching her [1]: a leafy thing standing within radius metres of where she was lag seconds ago (eased behind her) leans its tip lean metres that way across the screen, none at its foot; full within 0.4 of the radius. A shader nudge, nothing new drawn; keep it small.
+Leafy plants near her path lean toward where she just was, as if the trees are watching her.
 
 1. Ed, 2026-10-07: "canopy tips within a few metres of her sway a beat late and slightly TOWARDS her, as if the trees lean in to watch" (making the wild forest eerier; render/sprites.ts uWatch)
+The trees watching her [1]: a leafy thing standing within radius metres of where she was lag seconds ago (eased behind her) leans its tip lean metres that way across the screen, none at its foot; full within 0.4 of the radius. A shader nudge, nothing new drawn; keep it small.
 Code: `render/sprites.ts`
 
 | knob | type | range |
@@ -3977,15 +4006,18 @@ How strong the diagonal moonbeam bands are, times the style's Moonbeams knob: 0 
 
 ### `looks`
 
-The creature states' looks (Ed, issue #87; render/looks.ts). The angry brows are a stopgap for an expression the creature generator will draw (render/looks.ts expression).
+How creatures look in their different states, such as the angry brows of an enraged one.
 
+The creature states' looks (Ed, issue #87; render/looks.ts). The angry brows are a stopgap for an expression the creature generator will draw (render/looks.ts expression).
 Code: `render/looks.ts`
 
-- **`looks.enragedTint`**: an enraged creature's whole sprite goes toward colour by amount (0 none, 1 all), by each pixel's lightness so its shading and shape still read; its angry brows and red eyes stay. No other state is tinted.
+- **`looks.enragedTint`**: An enraged creature's whole sprite is tinted toward a colour, keeping its shading.
   1. Ed, 2026-10-05: "Enraged creatures should have a red tint so that they're easy to tell apart from the other states"
-- **`looks.anger`**: a pixel 💢 beside an enraged creature's head on the side it faces, popping on a pulse, size times its level's bubble size (bubbles.levelScale). Tint and 💢 each on its own (amount 0 or on false turns one off); both for now [2].
+  an enraged creature's whole sprite goes toward colour by amount (0 none, 1 all), by each pixel's lightness so its shading and shape still read; its angry brows and red eyes stay. No other state is tinted.
+- **`looks.anger`**: A pixel 💢 popping beside an enraged creature's head.
   1. Ed: "or a 💢"
   2. Ed: "the red tint can be less strong" (0.38, with a floor so it never goes near-black)
+  a pixel 💢 beside an enraged creature's head on the side it faces, popping on a pulse, size times its level's bubble size (bubbles.levelScale). Tint and 💢 each on its own (amount 0 or on false turns one off); both for now [2].
 - **`looks.partyGlow`**: every happy and leashed animal has sparkles twinkling pixels round it, each lit for a moment about rate times a second, size times three game pixels, at strength brightness (additive); leashed ones keep their collar on top.
   1. Ed, 2026-10-05: "party animals could sparkle or glow a little"
 
@@ -4034,9 +4066,10 @@ blurs the top and bottom of the screen so the forest looks like a miniature.
 - **`tiltShift.strength`**: the blur at the screen's edges, in pixels.
 - **`tiltShift.band`**: the height of the sharp band (0-1 of the screen).
 - **`tiltShift.centre`**: where it sits (0 top, 0.5 middle, 1 bottom).
-- **`tiltShift.treetop`**: the strength and band over the treetops (Ed, v160: a stronger miniature look there), blended in as she rises [1]; ?tilt=<strength>,<band> tries treetop values live; It blurs at the low resolution, before the pixels are scaled up; ?tilt=off turns it off. The night sky over the bend is blurred with the rest, the tilt-shift the last thing done to the finished, bent picture [2].
+- **`tiltShift.treetop`**: A stronger miniature-world blur when she's up in the treetops.
   1. Ed, 2026-10-06: "reduce the intensity of the tilt-shift effect" (both halved and their sharp bands widened)
   2. Ed: "the tilt shift isn't blurring the sky - the tilt shift effect has to be applied after the bend shader rather than before" (round 12)
+  the strength and band over the treetops (Ed, v160: a stronger miniature look there), blended in as she rises [1]; ?tilt=<strength>,<band> tries treetop values live; It blurs at the low resolution, before the pixels are scaled up; ?tilt=off turns it off. The night sky over the bend is blurred with the rest, the tilt-shift the last thing done to the finished, bent picture [2].
 
 | knob | type | range |
 |---|---|---|

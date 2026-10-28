@@ -10382,7 +10382,7 @@
         "vignette"
       ],
       "additionalProperties": false,
-      "description": "The rolling ground: ground.hills lifts the ground and everything standing on it into broad swells up to amplitude metres up or down, scale metres across, in octaves layers of noise; drawing only, the game itself stays flat."
+      "description": "The telescope in the treehouse's crow's nest, which she can walk up to and look through full screen."
     },
     "smoke": {
       "type": "object",
@@ -10460,7 +10460,7 @@
         "range"
       ],
       "additionalProperties": false,
-      "description": "Smoke from every fire (Ed, round 13: puffs rising high into the sky before dissipating; render/smoke.ts): the world's campfires, the party's campfires, bonfires and tiki torches, the charcoal burner's mound."
+      "description": "Smoke puffs rising from every fire (campfires, bonfires, torches, the charcoal burner) high into the sky before they fade."
     },
     "sky": {
       "type": "object",
@@ -10508,7 +10508,7 @@
             "partyGlow"
           ],
           "additionalProperties": false,
-          "description": "count (roughly how many to a screenful of sky), altitude (metres over the ground: above the treetop camera, so never between her and it), speed (m/s they drift), opacity (translucent: stars show through), partyGlow (how strongly what's beneath them lights their undersides: the partified areas' colours, pulsing on the beat; campfires faintly; over dormant forest they stay moonlit grey)."
+          "description": "The clouds drifting high over the forest, lit from below by the party's colours."
         },
         "lightning": {
           "type": "object",
@@ -10706,7 +10706,7 @@
         "floor"
       ],
       "additionalProperties": false,
-      "description": "The moon: one moon, drawn in the sky, tinting the moonlight a little, and shown on the dancefloor before the first wave (the same phase)."
+      "description": "The moon in the sky, and the odd red, blue or gold moon that comes and goes during a run."
     },
     "glowReach": {
       "type": "number",
@@ -10749,7 +10749,7 @@
         "stackHeight"
       ],
       "additionalProperties": false,
-      "description": "The sigils' neon spilling onto the world (overnight phase 3, the art pass): each placed sigil is a small light in its creature's neon, height metres over its rune, reaching reach metres (15% more a level) at strength (0: off), eased in as it's written and breathing with the rune's pulse, so the grass round it, the ground and whoever stands near take its colour; the bottom sigil of her stack is a fainter one (stack, 0 off) reaching stackReach metres, stackHeight metres over her, tinting her and the ground under her as she carries it."
+      "description": "Placed sigils glow like small lights in their creature's neon, tinting the grass, the ground and whoever stands near."
     },
     "fireworks": {
       "type": "object",
@@ -10810,7 +10810,7 @@
         "finale"
       ],
       "additionalProperties": false,
-      "description": "The wave's celebration: the rules' waveCelebrate (game.ts) starts a show of shells to shells shells over `over` seconds, the last `finale` going up together at the end, each rising rise to rise seconds from the soundsystem's top to height to height metres, up to drift metres off it, and bursting radius to radius metres across: round peonies, rings, drooping gold willows and crackling glitter, in the party's neons (rules/fireworks.ts: its schedule, from the event alone, so the sound's pops land on the bursts; render/fireworks.ts: the picture, a fixed pool of sparks the GPU flies)."
+      "description": "The fireworks show over a soundsystem when a wave is celebrated."
     },
     "combatLight": {
       "type": "object",
@@ -10859,7 +10859,7 @@
         "fall"
       ],
       "additionalProperties": false,
-      "description": "Her light in the wild and in a fight."
+      "description": "Her light shrinks while she explores a wild area and grows during a fight, so the fight is lit."
     },
     "nightLight": {
       "type": "object",
@@ -10888,7 +10888,7 @@
         "gazeReach"
       ],
       "additionalProperties": false,
-      "description": "her light reaches at most maxReach metres however far the camera is (stargazing, zoomed out), and over the treetops treetopReach metres at treetopGlow of its strength, eased in as she rises, so the canopy stays moonlit with a lantern's warm glow round her; lying on the beach to stargaze, at most gazeReach metres."
+      "description": "How far her light reaches when the camera is far out, over the treetops and while she stargazes on the beach."
     },
     "glowFalloff": {
       "type": "number",
@@ -10974,7 +10974,7 @@
         "knee": {
           "type": "number",
           "minimum": 0,
-          "description": "the light falling on a pixel, every source summed, passes unchanged up to knee of brightness, then eases toward ceiling and never past it, in its own hue, so the ground round a soundsystem's party light, campfires and her glow stays under white and keeps its texture; ceiling at or under knee turns it off."
+          "description": "Bright lights ease off toward a ceiling instead of burning to white, so lit ground keeps its texture."
         },
         "ceiling": {
           "type": "number",
@@ -10994,7 +10994,7 @@
     "glowPower": {
       "type": "number",
       "minimum": 0,
-      "description": "the witch's own glow at its brightest (0-1; 0.95, a bright centre that drops quickly to dark, round 11), full under her, falling off as glowFalloff says out to glowNear of her reach, lit from a source glowHeight metres above her."
+      "description": "How bright the witch's own glow is, brightest under her and fading smoothly to dark at its reach."
     },
     "light": {
       "type": "object",
@@ -11122,7 +11122,7 @@
             "rimHue": {
               "type": "number",
               "minimum": 0,
-              "description": "a moonlight rim on the characters (the witch and every creature, baked or rigged), a light edge one art pixel wide on the side away from the moon in the night sky's blue-violet, at rim strength (0 off), so they read against the dark (the art director, round 1), only where the sprite is three pixels thick or more and never on the live rig's leg discs."
+              "description": "A thin moonlit edge on the witch and every creature, so they stand out against the dark."
             },
             "rimSat": {
               "type": "number",
@@ -11152,12 +11152,12 @@
             "moonUpWrap": {
               "type": "number",
               "minimum": 0,
-              "description": "the share of that fill every face gets whatever its normal (0: by its normal alone), so a crown's regular bumps don't light up as a lattice of dots."
+              "description": "How evenly the moon's fill lights every face, so tree crowns don't light up as a lattice of dots."
             },
             "styledRim": {
               "type": "number",
               "minimum": 0,
-              "description": "with ?style=bold or ref, the rim's strength and her own glow on her, in place of rim and witchGlow (the styles bake dark tones with flat normals, so she needs more to stand out in her own pool)."
+              "description": "Extra rim and glow on the witch in the bold and reference art styles, where she would otherwise vanish in her own light."
             },
             "styledGlow": {
               "type": "number",
@@ -11778,7 +11778,7 @@
                 "home"
               ],
               "additionalProperties": false,
-              "description": "each area type's own fog (hazeHue, hazeSat, haze), grade tint (gradeHue, gradeSat) and mist over the above, by area id (\"home\" for home): misty teal over the bogs and water, violet-grey in the dead and ancient woods, blue-violet in the bluebells, pale mist on the open moor, darker in the rocky places, near-black green under the pines, rosy in the honeysuckle and gardens, home a little less cold."
+              "description": "Each kind of area's own fog colour, tint and mist (teal over bogs, violet in dead woods, pale mist on the moor and so on)."
             }
           },
           "required": [
@@ -11834,7 +11834,7 @@
         "spooky"
       ],
       "additionalProperties": false,
-      "description": "The lighting's mood: mood spooky lays this grade over the Art Lab's night light, plain is the light as it was (?light=plain or ?light=spooky to compare)."
+      "description": "The night lighting's overall mood: the spooky grade over the plain light, and the moon's fill on everything facing up."
     },
     "lightSources": {
       "type": "object",
@@ -11910,7 +11910,7 @@
         },
         "cast": {
           "type": "boolean",
-          "description": "what stands in the trunks', palms' and scenery's shadows (creatures, the witch, bushes, props, scenery) is darkened and tinted by them where they fall on it, from a map of them drawn from above round her (render/castShadows.ts); off, only the ground and grass; castRes is that map's texels across (1024: 6.4 a metre over 160 m; 512 is a quarter of the texels to clear and draw each frame, for a weaker GPU)."
+          "description": "Creatures, the witch, bushes and props darken where trunk and scenery shadows fall on them, not just the ground."
         },
         "castRes": {
           "type": "number",
@@ -11949,7 +11949,7 @@
             "foot": {
               "type": "number",
               "minimum": 0,
-              "description": "a trunk's shadow fades in from nothing over foot metres from its foot (0: none) and opens out from a third of its width over taper metres (0: none; Ed: roots and decorations \"get wide at the base, that look strange when they're rotated\"), fades to nothing as she comes within near metres of its trunk (0: never), and darkens the ground cover it falls on (grass, flowers, tufts) at cover times its strength (0: not at all)."
+              "description": "How a trunk's shadow fades in at its foot, widens, fades as she comes close, and darkens the grass it falls on."
             },
             "taper": {
               "type": "number",
@@ -11965,7 +11965,7 @@
             },
             "scenery": {
               "type": "boolean",
-              "description": "scenery casts the same shadows from her glow and the fires, untapered (its foot is its own width): set pieces, ruins, rocks and freak trees, modern and quest relics, the scenes' pieces (temples, castles, cemeteries...), the runestones and the soundsystems; pieces under sceneryMin metres tall cast none."
+              "description": "Scenery (ruins, rocks, relics, runestones, soundsystems) casts shadows from her glow and the fires too."
             },
             "sceneryMin": {
               "type": "number",
@@ -12097,7 +12097,7 @@
         "errorEvery"
       ],
       "additionalProperties": false,
-      "description": "The game-wide GPU memory budget: mb MB for a window of refWidth x refHeight physical pixels, scaled by this window's (Google Maps' rule), never under floor nor over ceil."
+      "description": "How much graphics memory the game lets itself use, letting go of the art used longest ago when it's over."
     },
     "mist": {
       "type": "object",
@@ -12130,7 +12130,7 @@
         "gain"
       ],
       "additionalProperties": false,
-      "description": "a low drifting mist (height in metres above the ground)."
+      "description": "A low mist drifting just above the ground."
     },
     "loadingMist": {
       "type": "object",
@@ -12174,7 +12174,7 @@
         "sea": {
           "type": "number",
           "minimum": 0,
-          "description": "it lies over the water too, out to sea metres past the island's furthest ground, thinning, and burns off last, as its own front from the treehouse once the land's all in; 0 none."
+          "description": "The loading mist lies over the sea too and burns off last, once all the land is in."
         }
       },
       "required": [
@@ -12190,7 +12190,7 @@
         "sea"
       ],
       "additionalProperties": false,
-      "description": "The loading mist: while the island is still being drawn (its trees one set an area type, nearest the treehouse first), every area whose trees aren't in yet lies under a low glowing night mist, in layers sheets up to height metres over the ground, each at most density opaque (the low ones thickest), in hard steps, glow times as bright as the night's mist."
+      "description": "A glowing mist over the parts of the island still loading, rolling back from the treehouse as their trees arrive."
     },
     "lightRings": {
       "type": "object",
@@ -12264,7 +12264,7 @@
         "fadeFar"
       ],
       "additionalProperties": false,
-      "description": "Light rings in the canopy: one pass over the screen in the half-size effects layer that lights only what stands at crown height (above metres or more over the ground), never the floor."
+      "description": "Faint rings of moonlight across the treetops (now switched off), and the glory round her shadow on the leaves (off too)."
     },
     "holograms": {
       "type": "object",
@@ -12314,7 +12314,7 @@
         "fadeFar": {
           "type": "number",
           "minimum": 0,
-          "description": "it fades out towards this many metres from her."
+          "description": "How far from her a soundsystem's hologram fades out; a damaged soundsystem's hologram glitches."
         }
       },
       "required": [
@@ -12330,7 +12330,7 @@
         "fadeFar"
       ],
       "additionalProperties": false,
-      "description": "The soundsystems' sky sigils: each standing soundsystem's projector throws a translucent cone of light from the top of its stack to a hologram of its area's animal sigil over the canopy, in the area's crystal colour, with scanlines, a drifting interference band and a colour fringe, turning gently and bobbing."
+      "description": "Each soundsystem projects a turning hologram of its area's animal sigil into the sky above the trees."
     },
     "watching": {
       "type": "object",
@@ -12358,7 +12358,7 @@
         "lag"
       ],
       "additionalProperties": false,
-      "description": "The trees watching her: a leafy thing standing within radius metres of where she was lag seconds ago (eased behind her) leans its tip lean metres that way across the screen, none at its foot; full within 0.4 of the radius."
+      "description": "Leafy plants near her path lean toward where she just was, as if the trees are watching her."
     },
     "moonbeams": {
       "type": "number",
@@ -12384,7 +12384,7 @@
             "amount"
           ],
           "additionalProperties": false,
-          "description": "an enraged creature's whole sprite goes toward colour by amount (0 none, 1 all), by each pixel's lightness so its shading and shape still read; its angry brows and red eyes stay."
+          "description": "An enraged creature's whole sprite is tinted toward a colour, keeping its shading."
         },
         "anger": {
           "type": "object",
@@ -12402,7 +12402,7 @@
             "size"
           ],
           "additionalProperties": false,
-          "description": "a pixel 💢 beside an enraged creature's head on the side it faces, popping on a pulse, size times its level's bubble size (bubbles.levelScale)."
+          "description": "A pixel 💢 popping beside an enraged creature's head."
         },
         "partyGlow": {
           "type": "object",
@@ -12444,7 +12444,7 @@
         "partyGlow"
       ],
       "additionalProperties": false,
-      "description": "The creature states' looks (Ed, issue #87; render/looks.ts)."
+      "description": "How creatures look in their different states, such as the angry brows of an enraged one."
     },
     "tone": {
       "type": "object",
@@ -12545,7 +12545,7 @@
             "band"
           ],
           "additionalProperties": false,
-          "description": "the strength and band over the treetops (Ed, v160: a stronger miniature look there), blended in as she rises; ?tilt=<strength>,<band> tries treetop values live; It blurs at the low resolution, before the pixels are scaled up; ?tilt=off turns it off."
+          "description": "A stronger miniature-world blur when she's up in the treetops."
         }
       },
       "required": [
