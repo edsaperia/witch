@@ -2,6 +2,7 @@
 // soundsystem or a creature (its traits, guard, knockback, stun and slow), and what follows a knockdown: a legend lulled
 // to sleep, a wild one dazed, anything else running off the map.
 import { LEGEND, type Creature } from "../creatures";
+import { runOff } from "../runaway";
 import { foes, huntsWitch, stateOf, type State } from "../creatureStates";
 import { lull } from "../legends";
 import { bodyRadius } from "../spacing";
@@ -109,12 +110,11 @@ export function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: 
   }
   if (o.hp <= 0) {
     // Knocked down (Ed, 2026-10-04: "it's sad when animals die"; #87: "knocked down", "ran off"):
-    // it runs off the map, visibly, and is gone for good. A party animal is lost for the run: off
-    // its leash as it goes.
+    // it runs off, visibly, to sleep on the beach (rules/runaway.ts). A party animal is lost for the run: off its leash as it goes.
     const party = o.leashed;
     if (party) { w.loseParty(o.id); o.leashed = false; }
-    const out = w.exit(o.x, o.z);
-    o.fleeUntil = Infinity; o.fleeX = out.x; o.fleeZ = out.z; o.fight = undefined; o.siege = undefined; o.enraged = false;
+    runOff(o, w.runaway?.(o) ?? null, () => w.exit(o.x, o.z));
+    o.fight = undefined; o.siege = undefined; o.enraged = false;
     s.events.push({ kind: party ? "lost" : "fled", x: o.x, z: o.z, at: time, id: o.id });
   }
 }

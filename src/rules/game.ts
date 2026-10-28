@@ -1,6 +1,6 @@
 // The whole game state, and one step of it. No drawing here: the Three.js layer reads this.
 import { creaturesAshore, lakeKnobs, onLake, roundLakes } from "./lakes";
-import { runawaySpot } from "./runaway";
+import { runawaySpot, runOff } from "./runaway";
 import { stepWildWatch, type WildEntry } from "./wildWatch";
 import { stepHunts } from "./hunt";
 import { wakeOnInvites } from "./inviteWakes";
@@ -889,10 +889,11 @@ export function loseSoundsystem(g: Game, key: string, x: number, z: number): voi
     key = "home"; x = g.map.dancefloor.x; z = g.map.dancefloor.z;
   } else {
     g.party.areas.delete(key); S.ruined.add(key); (g.party.ruined ??= new Set()).add(key);
-    // Its happy babies run off home, for good (Ed, 2026-10-06); leashed ones (and parked ones, and ones let go at a knockout) stay hers.
+    // Its happy babies run off, for good (Ed, 2026-10-06), to sleep on the beach (Ed, 2026-10-28: nobody vanishes mid-night; rules/runaway.ts);
+    // leashed ones (and parked ones, and ones let go at a knockout) stay hers.
     for (const c of g.creatures) if (!c.gone && !c.leashed && !c.dropped && c.level === 0 && c.state === "happy" && !c.fleeUntil && cellKey(c.cell) === key) {
-      const out = mapExit(g.map, c.x, c.z);
-      Object.assign(c, { fleeUntil: Infinity, fleeX: out.x, fleeZ: out.z, dancing: false, fight: undefined });
+      runOff(c, runawaySpot(g, c), () => mapExit(g.map, c.x, c.z));
+      Object.assign(c, { dancing: false, fight: undefined });
       S.events.push({ kind: "fled", x: c.x, z: c.z, at: time, id: c.id }); S.busy.add(c.id);
     }
   }
