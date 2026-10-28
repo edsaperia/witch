@@ -3,7 +3,7 @@
   "about": "Inviting and the army: the 💌s, the leash and sigil weight, the bond, berries.",
   "knobs": {
     "berries": {
-      "what": "Berries and evolving (Ed): every area has bushesPerArea berry bushes (normal bushes of that area) and perArea [min, max] berries on distinct ones at the start. Bushes grow in patches of patch.bushes [min, max] within patch.radius metres. Party animals (invited, not legends), following her or held at a sigil, take a berry on their way (Ed, v233): within detour metres of the line to where they're heading or of their sigil, never beyond their leash; they nip over, eat it (eatTime seconds) and carry on. The berry grows again at once on a free berry bush somewhere else on the map. A party animal evolves on the next bar line once it has eaten the berries its next level costs [1]: the fighting value it gains (cost.by \"value\": √(hp × dps), its species' strength included) at cost.per a berry, rounded, at least 1: so a berry buys the same fighting value for every species; one of normal strength costs 4 and 4 [2][3][4] (\"power\" would count hp × dps instead). Bigger patches since [5]: perArea and patch.bushes up a quarter to a half, so the first evolve's extra berry (2, was 1) and weaker species' one-berry minimum come out a little faster to feed than before. Evolving stops at adult [6].",
+      "what": "Berries on the bushes of every area, which her creatures eat to evolve.",
       "decisions": [
         {
           "by": "Ed",
@@ -37,22 +37,24 @@
           "date": "2026-10-04",
           "rest": "legends are the areas' own, never grown"
         }
-      ]
+      ],
+      "notes": "Berries and evolving (Ed): every area has bushesPerArea berry bushes (normal bushes of that area) and perArea [min, max] berries on distinct ones at the start. Bushes grow in patches of patch.bushes [min, max] within patch.radius metres. Party animals (invited, not legends), following her or held at a sigil, take a berry on their way (Ed, v233): within detour metres of the line to where they're heading or of their sigil, never beyond their leash; they nip over, eat it (eatTime seconds) and carry on. The berry grows again at once on a free berry bush somewhere else on the map. A party animal evolves on the next bar line once it has eaten the berries its next level costs [1]: the fighting value it gains (cost.by \"value\": √(hp × dps), its species' strength included) at cost.per a berry, rounded, at least 1: so a berry buys the same fighting value for every species; one of normal strength costs 4 and 4 [2][3][4] (\"power\" would count hp × dps instead). Bigger patches since [5]: perArea and patch.bushes up a quarter to a half, so the first evolve's extra berry (2, was 1) and weaker species' one-berry minimum come out a little faster to feed than before. Evolving stops at adult [6]."
     },
     "berries.colour": {
       "what": "the berry's (shiny dark cherry red)."
     },
     "berries.glow": {
-      "what": "its soft halo's strength. B (debug) feeds the nearest party animal one berry. Babies [1]: a baby eats only when its sigil is put down with a berry within babyReach metres of it (following her, it never stops for one; when a baby's sigil is next to go down, the berries within babyReach of her glow brightly), and babyCost berries evolve it into a youth.",
+      "what": "How strongly a berry's soft halo glows.",
       "decisions": [
         {
           "by": "Ed",
           "date": "2026-10-11"
         }
-      ]
+      ],
+      "notes": "its soft halo's strength. B (debug) feeds the nearest party animal one berry. Babies [1]: a baby eats only when its sigil is put down with a berry within babyReach metres of it (following her, it never stops for one; when a baby's sigil is next to go down, the berries within babyReach of her glow brightly), and babyCost berries evolve it into a youth."
     },
     "invites": {
-      "what": "The 💌 invite [1], replacing the proximity chat when on: on the ground she shoots spinning 💌s, aimed with the cursor (click fires) or the right stick (a trigger fires), or 1 toward the cursor. A burst is burst volleys burstGap seconds apart, each multiShot letters fanned over spread degrees, then cooldown seconds before the next; letters fly at speed m/s for range metres, turning toward the nearest invitable creature within homingRange metres and homingCone degrees of straight ahead at up to homing degrees a second, and land on one whose body comes within radius metres. Each hit adds amount to its affection; Round 11 [2]: one 💌 a shot (burst 1, multiShot 1), cooldown 0.55 (just over the old 0.5 s per-creature gap), hits [4, 9, 18, 36] so a meter fills in about the time it did with bursts of three (they gave one hit each 0.84 s); then [3] [4, 7, 14, 36]: the young and adults quicker to win over, so good play counts for more (a skilled player lasts about 2.5 minutes longer, a crude one no longer), range 33 (was 22) and speed 31.2 (was 26).",
+      "what": "The 💌 invite: on the ground she fires spinning love letters at creatures to win them over.",
       "decisions": [
         {
           "by": "Ed",
@@ -69,13 +71,14 @@
           "date": "2026-10-07",
           "rest": "balance, the overnight pass, with the wider level gap"
         }
-      ]
+      ],
+      "notes": "The 💌 invite [1], replacing the proximity chat when on: on the ground she shoots spinning 💌s, aimed with the cursor (click fires) or the right stick (a trigger fires), or 1 toward the cursor. A burst is burst volleys burstGap seconds apart, each multiShot letters fanned over spread degrees, then cooldown seconds before the next; letters fly at speed m/s for range metres, turning toward the nearest invitable creature within homingRange metres and homingCone degrees of straight ahead at up to homing degrees a second, and land on one whose body comes within radius metres. Each hit adds amount to its affection; Round 11 [2]: one 💌 a shot (burst 1, multiShot 1), cooldown 0.55 (just over the old 0.5 s per-creature gap), hits [4, 9, 18, 36] so a meter fills in about the time it did with bursts of three (they gave one hit each 0.84 s); then [3] [4, 7, 14, 36]: the young and adults quicker to win over, so good play counts for more (a skilled player lasts about 2.5 minutes longer, a crude one no longer), range 33 (was 22) and speed 31.2 (was 26)."
     },
     "invites.arc": {
       "what": "the height (m) its lob rises over the straight line from her hand to the ground at its range, where it lands, with a puff (drawn only: the rules fly it flat)."
     },
     "invites.hits": {
-      "what": "letters to fill it, by level (baby, young, adult); it drains drain of a full meter a second when not being hit, from config/states.json's affection.drainDelay seconds after the last [1]. Every letter that lands on an invitable creature counts [2]: how fast she invites is her firing rate (burst, burstGap, cooldown), nothing adaptive. Enraged creatures and legends block letters; scenery never stops them (Ed).",
+      "what": "How many letters it takes to win a creature over by its level, and how fast its meter drains when not being hit.",
       "decisions": [
         {
           "by": "Ed",
@@ -91,7 +94,8 @@
       ],
       "links": [
         "config/states.json"
-      ]
+      ],
+      "notes": "letters to fill it, by level (baby, young, adult); it drains drain of a full meter a second when not being hit, from config/states.json's affection.drainDelay seconds after the last [1]. Every letter that lands on an invitable creature counts [2]: how fast she invites is her firing rate (burst, burstGap, cooldown), nothing adaptive. Enraged creatures and legends block letters; scenery never stops them (Ed)."
     },
     "invites.fireSlow": {
       "what": "her ground speed while firing, times this (Ram's Steady buff takes it away)."
@@ -107,7 +111,7 @@
       ]
     },
     "invites.spin": {
-      "what": "a 💌 in flight lies flat and turns about the upright this many times a second (drawn only); when it lands it stops and lies flat. Data, so legend buffs can change any of it (config/legend-buffs.json).",
+      "what": "How fast a 💌 spins in flight.",
       "decisions": [
         {
           "by": "Ed",
@@ -117,7 +121,8 @@
       ],
       "links": [
         "config/legend-buffs.json"
-      ]
+      ],
+      "notes": "a 💌 in flight lies flat and turns about the upright this many times a second (drawn only); when it lands it stops and lies flat. Data, so legend buffs can change any of it (config/legend-buffs.json)."
     },
     "invites.orbit": {
       "what": "the 💌 ring circles a creature at scale times its body radius (movement.json bodies) plus gap metres, at least min, and wider still when it holds many.",
@@ -130,7 +135,7 @@
       ]
     },
     "invite": {
-      "what": "The old proximity chat [1]: on the ground, she talks by herself (no button: Ed, v244) to the nearest invitable creature within talkRange metres, and sticks with it; you chat in emoji for talkTime seconds (babies, young, adults), taking turns every turn seconds (babies, young, adults), then it is invited and leashed to you. Rising or moving further than cancelDistance stops it, and the chat's progress drains at decayRate of the rate it filled (0.5: half), so coming back soon picks up where it left off. Legends can't be invited: they give one unimpressed look. A legend gives her one unimpressed look for snubTime seconds per approach (not again till she's been beyond cancelDistance). Being hit doesn't set a chat back [2]. talkTime's fourth value is for legends let go on a knockout (wild legends still can't be invited).",
+      "what": "The old proximity chat, now replaced by the 💌 invite: she talked with the nearest creature in emoji.",
       "decisions": [
         {
           "by": null,
@@ -142,10 +147,11 @@
           "date": "2026-10-04",
           "rest": "losing a hit point is the cost"
         }
-      ]
+      ],
+      "notes": "The old proximity chat [1]: on the ground, she talks by herself (no button: Ed, v244) to the nearest invitable creature within talkRange metres, and sticks with it; you chat in emoji for talkTime seconds (babies, young, adults), taking turns every turn seconds (babies, young, adults), then it is invited and leashed to you. Rising or moving further than cancelDistance stops it, and the chat's progress drains at decayRate of the rate it filled (0.5: half), so coming back soon picks up where it left off. Legends can't be invited: they give one unimpressed look. A legend gives her one unimpressed look for snubTime seconds per approach (not again till she's been beyond cancelDistance). Being hit doesn't set a chat back [2]. talkTime's fourth value is for legends let go on a knockout (wild legends still can't be invited)."
     },
     "win": {
-      "what": "The end of the route [1][2]: the last wave landed, a pointer to the enraged animal nearest the centre while any lives (enraged legends don't count; retarget: seconds between re-picks); none left, the victory lap: the pulse races back along the route to home at lapSpeed m/s, every stone it passes firing its fireworks; home reached, the night won: the dealt legends wake (bar any still enraged, which go back to sleep, their islands not found) and dance in place on its far side [3], north of the dancefloor beyond the conga, behind everything from the north-facing camera: on arcs legendGap m outside the conga's circle, legendRow m apart, legendSpace m between them, from due north out to legendArc degrees across, clear of the treehouse, the island's sigil flares on the dancefloor (drawn on over flareDraw s, held flare s), every other animal joins one conga line round it (congaSpeed m/s, congaGap m apart, a circle of at least congaRadius m, as big as the line needs), walking to its place at joinSpeed m/s (out of her sight, seen m off, simply there); settleAfter seconds after, it settles: the guidance pins lead her home [4]. The conga follows her [5]: with follow on, while she's on the ground in the home area (not at the treehouse or in the treetops) the leader trails followLead m behind her along where she's walked and the rest follow single file congaGap apart, walking to their places at joinSpeed or followSpeed times her own speed, whichever is faster; anywhere else the line goes back round the dancefloor.",
+      "what": "The end of the route: after the last wave a pointer leads her to the remaining enraged creatures, then the victory lap.",
       "decisions": [
         {
           "by": "Ed",
@@ -179,7 +185,8 @@
         "rules/win.ts",
         "docs/backlog/journey.md",
         "rules/guidance.ts"
-      ]
+      ],
+      "notes": "The end of the route [1][2]: the last wave landed, a pointer to the enraged animal nearest the centre while any lives (enraged legends don't count; retarget: seconds between re-picks); none left, the victory lap: the pulse races back along the route to home at lapSpeed m/s, every stone it passes firing its fireworks; home reached, the night won: the dealt legends wake (bar any still enraged, which go back to sleep, their islands not found) and dance in place on its far side [3], north of the dancefloor beyond the conga, behind everything from the north-facing camera: on arcs legendGap m outside the conga's circle, legendRow m apart, legendSpace m between them, from due north out to legendArc degrees across, clear of the treehouse, the island's sigil flares on the dancefloor (drawn on over flareDraw s, held flare s), every other animal joins one conga line round it (congaSpeed m/s, congaGap m apart, a circle of at least congaRadius m, as big as the line needs), walking to its place at joinSpeed m/s (out of her sight, seen m off, simply there); settleAfter seconds after, it settles: the guidance pins lead her home [4]. The conga follows her [5]: with follow on, while she's on the ground in the home area (not at the treehouse or in the treetops) the leader trails followLead m behind her along where she's walked and the rest follow single file congaGap apart, walking to their places at joinSpeed or followSpeed times her own speed, whichever is faster; anywhere else the line goes back round the dancefloor."
     },
     "leash": {},
     "leash.length": {
@@ -237,7 +244,7 @@
       ]
     },
     "leash.sigilGlyph": {
-      "what": "every sigil glyph from the leash atlas (placed, happy runes, the ghost, a relic's, her stack, the treetop projection, one walking home after a knockout) is drawn at sigilGlyph times its colour (0.5: under the bloom's threshold, so it doesn't bloom into a disc on lit ground; 1 as bright as before), and the soft halos under placed sigils, ready runes and relic sigils and round a relic in her stack at sigilHalo times their old strength (0: none).",
+      "what": "How bright sigil glyphs are drawn, so they don't bloom into blobs on lit ground.",
       "also": [
         "leash.sigilHalo"
       ],
@@ -247,10 +254,11 @@
           "date": "2026-10-12",
           "quote": "it's their glow that makes them hard to see, not the pixellation"
         }
-      ]
+      ],
+      "notes": "every sigil glyph from the leash atlas (placed, happy runes, the ghost, a relic's, her stack, the treetop projection, one walking home after a knockout) is drawn at sigilGlyph times its colour (0.5: under the bloom's threshold, so it doesn't bloom into a disc on lit ground; 1 as bright as before), and the soft halos under placed sigils, ready runes and relic sigils and round a relic in her stack at sigilHalo times their old strength (0: none)."
     },
     "leash.sigilBacking": {
-      "what": "under every sigil lying on the ground (placed, a happy creature's rune, the ghost, a relic's) a near-black disc in chunky 2-px cells with a lighter outer step, as wide as the glyph's own pixels times size, at dark (0: none), then the glyph painted opaque in its full neon at ink times how much it shows, under the dim added glyph (sigilGlyph).",
+      "what": "A dark patch under every sigil on the ground, so it reads clearly.",
       "decisions": [
         {
           "by": "Ed",
@@ -262,7 +270,8 @@
           ],
           "rest": "Bravo's o3"
         }
-      ]
+      ],
+      "notes": "under every sigil lying on the ground (placed, a happy creature's rune, the ghost, a relic's) a near-black disc in chunky 2-px cells with a lighter outer step, as wide as the glyph's own pixels times size, at dark (0: none), then the glyph painted opaque in its full neon at ink times how much it shows, under the dim added glyph (sigilGlyph)."
     },
     "leash.runeGap": {
       "what": "a happy creature's rune lies south of it (down the screen), and a parked animal roams round a point the same way north of its sigil, by its size: its body radius, half the sigil with its backing, and runeGap metres between (rules/runeOffset.ts; it was a fixed restAbove, 5 m).",
@@ -284,30 +293,32 @@
       ]
     },
     "leash.hex": {
-      "what": "on the ground the sigil button works on a world-fixed hex grid, size metres between neighbouring cells (6 with the rank sigils, their ranks.hex; 4 before them, leash.spacing's density, as ?sigils=old still has it; 0: put down freely where she stands, as before). The cell nearest her decides: a sigil of hers in it, the press picks it up; free, a sigil goes down in its middle (never fizzling). Cells under a runestone or soundsystem (within stone metres of it, plus half a cell) or a home speaker (speaker metres) are skipped: the sigil goes down on the nearest free cell that isn't, within two cells, or not at all. Relic sigils and her hat go down where she stands, off the grid.",
+      "what": "Sigils are put down and picked up on a fixed hex grid on the ground, so a cluster of them reads cleanly.",
       "decisions": [
         {
           "by": "Ed",
           "date": "2026-10-11",
           "quote": "a cluster of placed sigils reads cleanly"
         }
-      ]
+      ],
+      "notes": "on the ground the sigil button works on a world-fixed hex grid, size metres between neighbouring cells (6 with the rank sigils, their ranks.hex; 4 before them, leash.spacing's density, as ?sigils=old still has it; 0: put down freely where she stands, as before). The cell nearest her decides: a sigil of hers in it, the press picks it up; free, a sigil goes down in its middle (never fizzling). Cells under a runestone or soundsystem (within stone metres of it, plus half a cell) or a home speaker (speaker metres) are skipped: the sigil goes down on the nearest free cell that isn't, within two cells, or not at all. Relic sigils and her hat go down where she stands, off the grid."
     },
     "leash.runs": {
-      "what": "with the sigil button held on since a press that picked a sigil up, she keeps picking up any sigil she runs over (her placed ones, happy creatures' runes, a relic's); held since a press that put one down, moving into each empty hex puts down the next (a press that did nothing starts no run, so holding E with nothing to do still puts her hat down). On the pad her hat is triangle's (placed or picked up), circle cycles the stack, L3 casts the broom's spell.",
+      "what": "Holding the sigil button picks up, or puts down, sigils one after another as she runs.",
       "decisions": [
         {
           "by": "Ed",
           "date": "2026-10-15",
           "quote": "Pick up and place in runs"
         }
-      ]
+      ],
+      "notes": "with the sigil button held on since a press that picked a sigil up, she keeps picking up any sigil she runs over (her placed ones, happy creatures' runes, a relic's); held since a press that put one down, moving into each empty hex puts down the next (a press that did nothing starts no run, so holding E with nothing to do still puts her hat down). On the pad her hat is triangle's (placed or picked up), circle cycles the stack, L3 casts the broom's spell."
     },
     "leash.runePull": {
       "what": "on the ground, the nearest happy creature with its rune within radius (m) trots toward her at speed (m/s), stopping stop (m) from her, so its rune comes to her."
     },
     "leash.grounded": {
-      "what": "weight is the most the creatures following her may weigh, together, before she can't take off (their sigils in her stack, each at its leash.weight.levels weight times its species' strength, however near; parked ones at a sigil on the ground don't count, nor babies; 2 is one adult of normal strength, three young 2.4, two 1.6; 0 turns it off). Pressing rise she tries: she lifts a little and the leashes, taut and bright, pull her straight back down (drawn only: she never leaves the ground, so it's no dodge and spends no cooldown). Apart from the pull (weight below); once up she stays up, it only stops the next take-off.",
+      "what": "Too many heavy creatures on her leash stop her taking off.",
       "decisions": [
         {
           "by": "Ed",
@@ -318,7 +329,8 @@
           ],
           "rest": "the numbers indicative"
         }
-      ]
+      ],
+      "notes": "weight is the most the creatures following her may weigh, together, before she can't take off (their sigils in her stack, each at its leash.weight.levels weight times its species' strength, however near; parked ones at a sigil on the ground don't count, nor babies; 2 is one adult of normal strength, three young 2.4, two 1.6; 0 turns it off). Pressing rise she tries: she lifts a little and the leashes, taut and bright, pull her straight back down (drawn only: she never leaves the ground, so it's no dodge and spends no cooldown). Apart from the pull (weight below); once up she stays up, it only stops the next take-off."
     },
     "leash.weight": {
       "what": "How the creatures on her leash pull on her: slower moving away from them, slower to rise, and sinking in the treetops when heavily loaded.",
@@ -356,10 +368,11 @@
       "what": "rising takes 1 + rise x load times as long."
     },
     "leash.weight.sink": {
-      "what": "over the treetops, loaded, she sinks by sink x load of the climb a second (at most sinkMax), to floor (of the climb, just over the crowns) while she flies on, and all the way down to land if she stops or her load reaches extreme; unloaded, she floats back up. The view reads leashLoad (rules/game.ts); the debug overlay shows it.",
+      "what": "Heavily loaded over the treetops she sinks toward the crowns, and lands if she stops.",
       "links": [
         "rules/game.ts"
-      ]
+      ],
+      "notes": "over the treetops, loaded, she sinks by sink x load of the climb a second (at most sinkMax), to floor (of the climb, just over the crowns) while she flies on, and all the way down to land if she stops or her load reaches extreme; unloaded, she floats back up. The view reads leashLoad (rules/game.ts); the debug overlay shows it."
     },
     "leash.weight.babyGround": {
       "what": "a baby's weight on the ground (the treetops' is weight.levels[0]), so 8 fill either allowance; a baby's species strength doesn't count, and in the line its leash's tension is measured from its place in the line."
@@ -410,7 +423,7 @@
       "notes": "on [2], every leash sigil (her stack, placed sigils, happy runes, the ghost, the treetop projection, the bond) is its bare glyph, no ring or disc, glyph metres across on the ground, in its rank's colour (colours: baby, youth, adult, legend; the species' neon stays the world's: borders, stones, fireworks, dancefloor, holograms, chart), with embers rising off its strokes (embers.count at once, each size metres, rising rise metres, by rank; in her stack stack of that), under a dark shade in the glyph's own shape (not a disc); a youth in her stack shows two rows of round dots off to its right, one a berry it eats on the move (toEvolve less the last, eaten at a placed sigil), at most dotsPerRow a row, bright eaten and dim not, pulsing when ready; and the hex grid is hex metres (leash.hex.size)."
     },
     "bond": {
-      "what": "how a creature shows its tie to its sigil (rim: a glow at its feet in the sigil's colour; sparks: one spark every sparkEvery seconds from sigil to creature, staggered; thread: a dotted line only under strain). The bond between her and her leashed creatures: rim, a glow at a creature's feet in its sigil's colour; sparks, one now and then from sigil to creature (every sparkEvery seconds, staggered); thread, a dotted line while a leash is under strain (past 0.85 of its length), bowing upward by threadArcSlack metres per metre of its length while slack, flattening to threadArcTaut as it goes taut [1][2], never more than threadArcMax metres.",
+      "what": "How a leashed creature shows its tie to its sigil: a glow at its feet, sparks, and a thread when the leash is strained.",
       "decisions": [
         {
           "by": "Ed",
@@ -423,7 +436,8 @@
           "quote": "The arc of leashes should be higher",
           "rest": "doubled, 0.4 to 0.8 and the cap 4 to 8"
         }
-      ]
+      ],
+      "notes": "how a creature shows its tie to its sigil (rim: a glow at its feet in the sigil's colour; sparks: one spark every sparkEvery seconds from sigil to creature, staggered; thread: a dotted line only under strain). The bond between her and her leashed creatures: rim, a glow at a creature's feet in its sigil's colour; sparks, one now and then from sigil to creature (every sparkEvery seconds, staggered); thread, a dotted line while a leash is under strain (past 0.85 of its length), bowing upward by threadArcSlack metres per metre of its length while slack, flattening to threadArcTaut as it goes taut [1][2], never more than threadArcMax metres."
     }
   }
 }

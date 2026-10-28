@@ -36,6 +36,15 @@ describe("the knobs' words (config/knobs)", () => {
     expect(bad).toEqual([]);
   });
 
+  it("says what each knob does in one plain sentence (the rest in notes: the coordinator's hand pass, 2026-10-28)", () => {
+    const long: string[] = [];
+    for (const s of sections) for (const [p, e] of Object.entries(s.knobs)) {
+      const w = e.what ?? "";
+      if ((w.match(/\.(\s+["A-Z]|$)/g) ?? []).length > 1 || w.length > 300) long.push(`${s.section}: ${p}`);
+    }
+    expect(long, "make `what` one sentence (300 characters at most) and move the rest into `notes`").toEqual([]);
+  });
+
   it("names only knobs that are there: a dotted path (beat.knockBeats) read from the entry's knob up", () => {
     // (a path whose first name is no knob near the entry is prose or a file: chart.html, art/country.js; a localStorage key is
     // said as one: "localStorage witch.broom")
