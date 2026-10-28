@@ -93,6 +93,7 @@ const quotesIn = s => [...s.matchAll(DQUOTE)].map(m => m[1]).concat([...s.matchA
 /** A parenthesis that's a decision: a date in it, or a quote with someone's name. */
 const isDecision = c => /\b\d{4}-\d{2}-\d{2}\b/.test(c) || ((/"/.test(c) || SQUOTE.test(c)) && /^(Ed|the coordinator|[A-Z][a-z]+'s|[A-Z][a-z]+,)/.test(c.trim()));
 const BY = /(?<![\w'])((?:Ed|the coordinator|Alpha|Bravo|Charlie|Delta|Echo|Foxtrot|Golf|Hotel|India|Juliet)(?:'s (?:[a-z]+ ){0,2}?(?:[a-z]+|[A-Z0-9][\w]*))?)(?:,? (?=\d{4}-\d{2}-\d{2})|,\s*|(?=:)|$)/;
+const PROSE = /(?<![\w'(])(Ed(?:'s (?:[a-z]+ ){0,2}?[a-z]+)?|the coordinator),? (\d{4}-\d{2}-\d{2})(?:, ([^:".;()]{1,60}))?: ?/g;
 const FILE = /(?<![\w/])((?:[\w.-]+\/)+[\w.-]+\.(?:ts|js|json|md|mjs|cjs|glsl|html))\b/g;
 
 /** One decision's parts from a parenthesis's content: split at semicolons outside quotes into one per date (a part without
@@ -170,20 +171,80 @@ function split(note) {
     const st = starts[j], end = j + 1 < starts.length ? starts[j + 1].at : s.length;
     segs.push({ path: st.path, also: st.also, text: s.slice(st.at, end).trim(), name: st.len ? s.slice(st.at, st.at + st.len) : "" });
   }
-  return segs;
+  // (the coordinator, on #1341: a general sentence goes to the note's own entry, not the knob before it: after a knob's clause,
+  // a sentence that opens with a capital and names another of the note's knobs (aggro, witchLose: the note talking about its
+  // knobs at large) is the note's, as its opening is, and so is every sentence after it in that clause; one that names none of
+  // them goes on about the knob before it: "The cell nearest her decides ...")
+  if (!note.target) return segs;
+  let own = segs.find(g => g.path === note.target);
+  if (!own) { own = { path: note.target, also: [], text: "", name: "" }; segs.unshift(own); }
+  for (const g of segs) {
+    if (g === own) continue;
+    const mine = new Set([g.path, ...g.also].flatMap(p => [p.split(".").pop(), ...childrenOf(p).map(c => c.split(".").pop())]));
+    const others = new Set(note.home.flatMap(h => [h, ...childrenOf(h)]).map(p => p.split(".").pop()).filter(n => !mine.has(n)));
+    const [first, ...rest] = sentencesOf(g.text);
+    const keep = [first], move = [];
+    for (const x of rest) {
+      const words = [...x.matchAll(/[A-Za-z][A-Za-z0-9]*/g)].map(w => w[0]);
+      (move.length || (/^["A-Z]/.test(x) && words.some(w => others.has(w)) && !words.some(w => mine.has(w))) ? move : keep).push(x);
+    }
+    if (!move.length) continue;
+    g.text = keep.join(" ");
+    own.text = [own.text, ...move].filter(Boolean).join(" ");
+  }
+  return segs.filter(g => g.text);
+}
+/** A run of prose's sentences: split after ". " where a capital or a quote follows, outside brackets and quotes. */
+function sentencesOf(s) {
+  const out = []; let depth = 0, q = false, last = 0;
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (c === '"') q = !q;
+    else if (!q && c === "(") depth++;
+    else if (!q && c === ")") depth = Math.max(0, depth - 1);
+    else if (!q && !depth && c === "." && s[i + 1] === " " && /["A-Z]/.test(s[i + 2] ?? "")) { out.push(s.slice(last, i + 1).trim()); last = i + 2; }
+  }
+  out.push(s.slice(last).trim());
+  return out.filter(Boolean);
 }
 
 /** A segment's entry: its decisions lifted out of the prose, its leading name dropped (the key says it), the files it names. */
 function entryOf(seg) {
   let t = seg.text;
   const decisions = [];
-  const ps = parens(t);
+  // where decisions were said: bracketed ones ("(Ed, 2026-10-06: ...)") and, outside brackets, said in prose ("Ed, 2026-10-10:
+  // free in the treetops ...", to the end of its clause), in the order they come
+  const spans = parens(t).filter(([a, b]) => isDecision(t.slice(a + 1, b))).map(([a, b]) => ({ a, b: b + 1, ds: decisionsOf(t.slice(a + 1, b)) }));
+  const inside = new Uint8Array(t.length);
+  for (const [a, b] of parens(t)) inside.fill(1, a, b + 1);
+  { let q = false; for (let i = 0; i < t.length; i++) { if (t[i] === '"') q = !q; if (q) inside[i] = 1; } }
+  for (const m of t.matchAll(PROSE)) {
+    if (inside[m.index]) continue;
+    let end = m.index + m[0].length, depth = 0, q = false;
+    for (; end < t.length; end++) {
+      const c = t[end];
+      if (c === '"') q = !q;
+      else if (!q && c === "(") depth++;
+      else if (!q && c === ")") { if (!depth) break; depth--; }
+      else if (!q && !depth && (c === ";" || (c === "." && (end + 1 >= t.length || (t[end + 1] === " " && /["A-Z]/.test(t[end + 2] ?? "")))))) break;
+    }
+    const said = t.slice(m.index + m[0].length, end), quotes = quotesIn(said);
+    let rest = said;
+    for (const qt of quotes) rest = rest.replace(`"${qt}"`, " ");
+    rest = tidy([m[3], rest].filter(Boolean).join(": ")).replace(/^[\s,:;]+|[\s,:;]+$/g, "");
+    const d = { by: m[1], date: m[2] };
+    if (quotes.length === 1) d.quote = quotes[0]; else if (quotes.length) d.quote = quotes;
+    if (rest) d.rest = rest;
+    spans.push({ a: m.index, b: end, ds: [d] });
+  }
+  spans.sort((x, y) => x.a - y.a);
   let out = "", last = 0;
-  for (const [a, b] of ps) {
-    const c = t.slice(a + 1, b);
-    if (!isDecision(c)) continue;
-    const ds = decisionsOf(c);
-    out += t.slice(last, a) + ds.map((_, i) => `[${decisions.length + i + 1}]`).join(""); last = b + 1; // (where it was said: decisions[n - 1])
+  for (const { a, b, ds } of spans) {
+    if (a < last) continue;
+    const before = t.slice(last, a), marks = ds.map((_, i) => `[${decisions.length + i + 1}]`).join(""); // (where it was said: decisions[n - 1])
+    // (a decision said as a sentence of its own marks the sentence before it: "strength) [2]. Less free", not "strength). [2].")
+    out += /\.\s+$/.test(before) && t[b] === "." ? `${before.replace(/\.\s+$/, "")} ${marks}` : before + marks;
+    last = b;
     decisions.push(...ds);
   }
   t = tidy(out + t.slice(last));
@@ -210,7 +271,15 @@ for (const note of notes) {
     if (!had) { knobs[path] = { ...e, from: [note.key] }; continue; }
     // (a knob two notes or two clauses write about: the words joined, the decisions and links added)
     const shift = had.decisions?.length ?? 0; // (the second's markers after the first's)
-    if (e.what) { const w = shift ? e.what.replace(/\[(\d+)\]/g, (_, n) => `[${Number(n) + shift}]`) : e.what; had.what = had.what ? `${sentence(had.what)} ${w}` : w; }
+    if (e.what) {
+      const w = shift ? e.what.replace(/\[(\d+)\]/g, (_, n) => `[${Number(n) + shift}]`) : e.what;
+      const same = (x, y) => x.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim() === y.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+      // (the coordinator, on #1341: two notes defining one knob read twice. The same words once; another note's own short
+      // definition of it, said again, goes to notes; a clause of the same note, or longer words, join the what)
+      if (had.what && same(had.what, w)) { /* said once */ }
+      else if (had.what && !had.from.includes(note.key) && w.length < 240 && had.what.length < 240 && !/\[\d+\]/.test(w)) had.notes = had.notes ? `${had.notes} ${sentence(w)}` : sentence(w);
+      else had.what = had.what ? `${sentence(had.what)} ${w}` : w;
+    }
     if (!had.from.includes(note.key)) had.from.push(note.key);
     for (const k of ["also", "decisions", "links"]) if (e[k]) had[k] = [...new Set([...(had[k] ?? []), ...e[k]].map(x => JSON.stringify(x)))].map(x => JSON.parse(x));
   }
@@ -242,7 +311,9 @@ const newText = [];
 (function walk(o) { if (typeof o === "string") newText.push(o); else if (Array.isArray(o)) o.forEach(walk); else if (o && typeof o === "object") Object.entries(o).forEach(([k, v]) => { if (k !== "from" && k !== "see" && k !== "also") walk(v); }); })([files, fileNotes]);
 newText.push(...NAMED);
 const bag = (arr, re) => { const m = new Map(); for (const s of arr) for (const x of s.matchAll(re)) { const v = x[1] ?? x[0]; m.set(v, (m.get(v) ?? 0) + 1); } return m; };
-const lost = (a, b) => [...a].filter(([k, n]) => (b.get(k) ?? 0) < n).map(([k, n]) => `${k} (${n} → ${b.get(k) ?? 0})`);
+// (each distinct date, quote and word of the old notes must be somewhere in the new data: the same words said twice by two notes
+// are kept once, rule 3)
+const lost = (a, b) => [...a].filter(([k]) => !b.has(k)).map(([k, n]) => `${k} (${n} → 0)`);
 const dates = [bag(oldText, DATE), bag(newText, DATE)];
 const quoteBag = arr => { const m = new Map(); for (const s of arr) for (const q of quotesIn(s)) m.set(q, (m.get(q) ?? 0) + 1); return m; };
 const oldQ = quoteBag(oldText);
