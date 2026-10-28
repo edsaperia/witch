@@ -9,7 +9,8 @@ import { TUNING, withTuning } from "./tuning";
 import { joinParty, loseSoundsystem, newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { befriend } from "./creatureStates";
 import { inviteCreature } from "./leash";
-const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
+// (these test the areas clearing by themselves and the runes at the feet: the game as it was, ?cast=0, rules/stoneStacks.ts)
+const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } }, cast: { ...TUNING.cast, on: false } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 // Each area's sleeping legend lies in a small circular clearing of its own (Ed, 2026-10-06), near its top.
 describe("legend clearings", () => {
@@ -108,7 +109,7 @@ describe("legend clearings", () => {
   // waken the legend": "legends get angry when their area has no animals from its species".
   it("a fallen soundsystem's babies run off home and its besiegers march on: its legend, left without kin, grows restless, then angry", () => {
     const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
-    const g = newGame(123, withTuning({ legends: { ...TUNING.legends, share: 1 } })); // (every area with its legend: at the usual share, none of seed 123's next areas has one)
+    const g = newGame(123, withTuning({ legends: { ...TUNING.legends, share: 1 }, cast: { ...TUNING.cast, on: false } })); // (babies with no loose sigils: the game without the stone stacks, ?cast=0; every area with its legend: at the usual share, none of seed 123's next areas has one)
     g.clock.paused = false;
     g.witches[0].health.hp = 1e6;
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };

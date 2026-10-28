@@ -21,7 +21,7 @@ const run = (g: Game, secs: number, c: Controls = still) => { for (let i = 0; i 
 
 /** A game under way, the witch high over home (out of every fight), the boot long done. */
 function game(seed = 123, t = TUNING): Game {
-  const g = newGame(seed, t);
+  const g = newGame(seed, { ...t, cast: { ...t.cast, on: false } }); // (these test the areas clearing by themselves and the runes at the feet: the game as it was, ?cast=0, rules/stoneStacks.ts)
   g.clock.paused = false; g.party.spellAt = undefined;
   g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
   g.witches[0].health.hp = 1e6;

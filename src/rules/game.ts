@@ -29,7 +29,7 @@ import { clearedAreas } from "./clear";
 import { bootShare, stoneTurned } from "./bootRing";
 import { AREA_TYPES, areaCellAt, generateMap, hydrateMap, type ForestMap, type MapPrep } from "./map";
 import { areaOf, homeArea } from "./homeArea";
-import { beachOf, exitPoint } from "./mapShape";
+import { beachOf, exitPoint, isInside } from "./mapShape";
 import { calmRingAt, keepEnragedOut, leavesCalmRing, stepTimeScale } from "./slowTime";
 import { isHomeKey, nextSpeakerState, speakerIndex, speakerKey, speakerRadius, speakerStateOf, type SpeakerState } from "./speakers";
 import { moonState } from "./moon";
@@ -38,7 +38,7 @@ import { SIGIL_NEON } from "../../art/sigils.js";
 import { COMBAT, marchOn, marchSpeed, maxHp, nearestHomeSpeaker, newCombat, startSiege, stepCombat, type CombatState } from "./combat";
 import { coarseTurn, fullRadius, inFull, newLodCounts, type LodCounts } from "./simLod";
 import { dropHat, newHat, type HatState } from "./hat";
-import { questsFromPlaced, stepSigilButton } from "./sigilButton";
+import { questsFromPlaced, sigilBarred, stepSigilButton } from "./sigilButton";
 
 /** Seconds of pushing on out against the zoo's edge before she leaves it (Game.zooPush). */
 export const ZOO_EDGE_PUSH = 0.5;
@@ -47,6 +47,8 @@ import { wearPiece } from "./clothesPile";
 import { hatLetters, hatsDown, onHatPicked, onHatPut, stepHatSpells } from "./hatSpells";
 import { loadOf, type LeashLoad, groundedBy } from "./leashWeight";
 import { pinWitch, type Pinned } from "./partyLegend";
+import { castOf, castOn, friendSigils, looseAt, scatterSpots, stoneOpen, tetherWitch, type LooseSigil } from "./stoneStacks";
+import { runeOffset } from "./runeOffset";
 import { hurt, knockOut, newHealth, nextStreak, repair, stepKnockout, stepWanderers, type Health, type Knockout, type KnockoutEvent } from "./knockout";
 import { newInvites, stepInvites, type Affection, type Decoy, type InviteControls, type Invites } from "./invites";
 import { burstMirage } from "./combat/packs";
@@ -103,6 +105,13 @@ export interface Witch {
   /** Her night's kit (rules/kit.ts): her invitations and a broom, taken in the house; none on a night that never waits for her
    *  spell (she has both). */
   kit?: Kit;
+  /** Her soundsystem spell (rules/stoneStacks.ts; Ed, 2026-10-28: "a spell that you're choosing to cast on this stone"): her progress
+   *  on each stone she's cast at (0 to 1) and when it last changed (it drains while she isn't casting it); the stone she's casting
+   *  at now, since when; and, after a hit broke it, held off till she lets go of the button. */
+  casts?: Record<string, import("./stoneStacks").CastRecord>;
+  casting?: string | null;
+  castFrom?: number;
+  castBlocked?: boolean;
 }
 
 /** The simulation's fixed step (seconds): the rules advance only in these, driven only by the
@@ -164,6 +173,8 @@ export interface Game {
   waveEvents: WaveEvent[];
   /** This frame's leash events (several steps' worth, or none), for the view: `leash.events` holds only the last step's. */
   leashEvents: LeashEvent[];
+  /** Sigils lying loose on the ground for any witch to pick up (rules/stoneStacks.ts): scattered round a stone at its conversion. */
+  loose: LooseSigil[];
   /** The night over and another on in its place (app/night.ts endNight, marked only under ?debug=sail): stepping it means a reader
    *  was left on the old night, and throws. */
   disposed?: boolean;
@@ -293,7 +304,7 @@ export function newGame(seed: number, tuning: Tuning, players = 1, ready?: MapPr
     speakerBoot: map.dancefloor.speakers.map(() => null),
     beat: newBeatClock(tuning.beat.bpm, waveTempo(tuning, 0)), knockdowns: [] as { at: number; back: number }[], musicSet: set,
     floor: newFloor(), partyWitches: newPartyWitches(seed), beach: newBeachWitches(seed, map.bounds, tuning),
-    combat: newCombat(), koEvents: [] as KnockoutEvent[], friendly: new Set<string>(), wildEntry: new Map(), questEvents: [] as QuestEvent[], islandsTonight: [] as string[], waveEvents: [] as WaveEvent[], leashEvents: [] as LeashEvent[], relics: placeRelics(map, forest), trunk: null as Trunk | null, tally: { berries: 0, invites: 0, evolved: 0 }, growth: newGrowth(), partyOver: null as PartyOver | null, win: null as WinState | null,
+    combat: newCombat(), koEvents: [] as KnockoutEvent[], friendly: new Set<string>(), wildEntry: new Map(), questEvents: [] as QuestEvent[], islandsTonight: [] as string[], waveEvents: [] as WaveEvent[], leashEvents: [] as LeashEvent[], loose: [] as LooseSigil[], relics: placeRelics(map, forest), trunk: null as Trunk | null, tally: { berries: 0, invites: 0, evolved: 0 }, growth: newGrowth(), partyOver: null as PartyOver | null, win: null as WinState | null,
     acc: 0, alpha: 1, timeScale: 1, herTime: 0, pending: {}, prev: { witches: [], creatures: new Float64Array(creatures.length * 2), camera: null },
   };
   g.trunk = placeTrunk(map, forest, g.relics);
@@ -357,6 +368,7 @@ export const affectionOf = (g: Game): Affection => {
       if (napper(c)) Object.assign(c, { asleep: false, napUntil: undefined, lulled: undefined, wakeUntil: undefined, rest: 0 }); // (roused by it: up at once, as rules/inviteWakes.ts wakes its area)
       const was = stateOf(c), time = g.clock.time, party = !!c.partyLegend;
       hitAffection({ time, leash: k => inviteCreature(g.leash, k, k.x, k.z, time) }, c, amount, time, data);
+      if (was !== "happy" && castOn(t)) markAtStone(g, c); // (its sigil friend-coloured in its stone's stack: rules/stoneStacks.ts)
       if (stateOf(c) !== was || (c.partyLegend && !party)) s.events.push({ kind: "happy", x: c.x, z: c.z, at, id: c.id }); // (happy, or leashed; or a party legend)
     },
     affection: c => affection({ time: g.clock.time }, c, data),
@@ -389,6 +401,8 @@ export function hitWitch(g: Game, id: number, worldAt: number, t: Tuning = g.tun
     w.koStreak = { n: streak, at };
     const house = deckOf(g.map, t)?.house; // (the house: back at the magic circle, up out of its floor, then the walk to her decks: rules/knockout.ts)
     const start = g.map.start, walk = house ? Math.hypot(start.x - house.circle.x, start.z - house.circle.z) / Math.max(1, t.groundSpeed * 0.5) : 0;
+    // A legend's sigil she carried (rules/stoneStacks.ts) falls loose at the legend's feet, to pick up again.
+    if (w.leash.tether) { const L = g.creatures[w.leash.tether.id]; g.loose.push({ id: L.id, x: L.x, z: L.z + runeOffset(L, t), at: g.clock.time, legend: true }); L.loose = true; w.leash.tether = null; }
     w.ko = knockOut(w.leash, g.creatures, at, t, { hatFloats, streak, ...(house ? { house: { rise: t.knockout.rise ?? 0, walk } } : {}) }); g.koEvents.push({ kind: "down", at, x: w.body.x, z: w.body.z });
     knockdownTempo(g.beat, t, g.clock.time); // (the beat speeds up: Ed, 2026-10-07, "the BPM goes up by 1 each time you die")
     // her wait ends on a bar line at the new tempo, the nearest to it (never under knockout.respawn.minScratch of scratching):
@@ -584,6 +598,8 @@ function fixedStep(g: Game, controls: Controls): void {
   const onDeck = (b: WitchState) => !!b.perch && b.mode === "ground", perchTurn = !was.seated && onDeck(was) !== onDeck(W.body) ? (onDeck(W.body) ? 1 : -1) : 0;
   // A party legend on her leash (the Easter egg): not a step past legends.partyReach of it, blinking, flying or thrown (rules/partyLegend.ts).
   if (t.legends.partyEgg) { const P = pinWitch(W.body, W.leash.stack, g.creatures, t.legends.partyReach, g.clock.time, W.pinned ?? null); W.body = P.body; W.pinned = P.pinned; }
+  // A sleeping legend's sigil she carries (rules/stoneStacks.ts): not a step past its tether, blinking, flying or thrown.
+  if (W.leash.tether) { const P = tetherWitch(W.body, W.leash.tether, g.creatures, g.clock.time, W.pinned ?? null); W.body = P.body; if (P.pinned) W.pinned = P.pinned; }
   g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, hdt, g.tuning, !!g.witch.seated, g.introFocus, coastOf(g), g.tuning.camera.circle?.on ? legendCircleNear(g, g.witch)?.legend ?? null : null, onTreehouse(g), !!c.framing && onTreehouse(g), c.framePart ?? null); // (in a legend's circle: the lower view, camera.circle; indoors, camera.house; choosing at a station, camera.station)
   // The afterparty (rules/partyOver.ts): the waves have stopped for good.
   // The world before the party is the afterparty's (Ed, 2026-10-26): asleep in bed, or got up as the spell's cast.
@@ -611,7 +627,7 @@ function fixedStep(g: Game, controls: Controls): void {
   if (stepHealingRing(W.spells, W.health, W.body.mode === "ground" ? hatsDown(W) : [], W.body.x, W.body.z, ht, t)) g.koEvents.push({ kind: "healed", at: ht, x: W.body.x, z: W.body.z });
   const B = g.berries, busy = (id: number) => B.feeding.has(id) || B.evolving.has(id);
   // (No growth on a clock: every area is peopled from the start by its place on the route, Ed 2026-10-07; rules/creatures.ts.)
-  if (!still) stepClear(g);
+  if (!still && !castOn(t)) stepClear(g); // (with the stacks on, a stone converts only by her spell or its wave: rules/stoneStacks.ts)
   // (in the treehouse her followers guard home as if their sigils were placed there, her stack unchanged: rules/houseGuard.ts)
   const LV = leashView(W, g.creatures, g.map, t);
   updateModes(LV.stack, LV.placed, g.creatures, g.witch, g.witch.mode === "ground" && !g.witch.seated && !g.witch.perch && !W.ko, g.map, g.clock.time); // (posse or travelling: rules/travel.ts)
@@ -651,6 +667,9 @@ function fixedStep(g: Game, controls: Controls): void {
   if (c.feedNearest) feedNearest(B, g.creatures, g.witch.x, g.witch.z, g.clock.time, t, g.beat);
   stepBerries(B, g.creatures, id => { const p = LV.placed.find(q => q.id === id); return p ? { x: p.x, z: p.z } : leashPoint(g.leash, id, g.witch.x, g.witch.z); }, g.clock.time, dt, t, g.beat, id => { const p = g.leash.placed.find(q => q.id === id); return p ? { x: p.x, z: p.z } : null; }); // (a baby eats only at a real sigil, not at its home spot while she's in the treehouse: Ed, 2026-10-24)
   for (const e of g.leash.events) if (e.kind === "invited" || e.kind === "befriended") g.tally.invites++;
+  // Made happy in an area whose stone still stands (rules/stoneStacks.ts; Ed, 2026-10-28): its sigil turns friend-coloured in the
+  // stone's stack, no rune at its feet, till the stone converts.
+  if (castOn(t)) for (const e of g.leash.events) if (e.kind === "befriended") markAtStone(g, g.creatures[e.id]); // (by talk; by 💌s: affectionOf)
   // Made happy in an area that already has its soundsystem: it joins the dancing there (#87).
   for (const e of g.leash.events) if (e.kind === "befriended") { const c = g.creatures[e.id], a = g.party.areas.get(cellKey(c.cell)); if (a?.soundsystem && g.combat.sounds.has(cellKey(c.cell))) joinParty(g, c, a.soundsystem, a.cell); }
   g.leashEvents.push(...g.leash.events);
@@ -755,12 +774,16 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
   const S = g.combat, time = g.clock.time;
   // A new soundsystem: its area's wild creatures are enraged and march on it (#87: its quest done or not).
   for (const [key, a] of g.party.areas) if (a.soundsystem && !S.sounds.has(key) && !S.ruined.has(key)) {
+    // A friendly area (its legend's quest done before its wave: Ed, 2026-10-28): at its conversion every one of its creatures turns
+    // friendly, young and adults too, and every sigil scatters; no siege.
+    if (castOn(t) && g.friendly.has(key)) for (const c of g.creatures) if (!c.gone && !c.leashed && !c.boss && c.fleeUntil !== Infinity && stateOf(c) === "wild" && c.cell[0] === a.cell[0] && c.cell[1] === a.cell[1]) befriend(c, time);
     startSiege(S, key, a.soundsystem, a.cell, g.creatures, t);
     // Its besiegers march wherever she is (stepped from now on as busy, not only once she comes near).
     for (const c of g.creatures) if (c.siege === key && !c.gone) S.busy.add(c.id);
     // Its wild babies turn happy at once (Ed, 2026-10-06), its legend's circle's too; then its happy ones (#87) come and
     // dance: round it, or at the area's party places (rules/partyGuests.ts).
     for (const c of g.creatures) if (!c.gone && !c.leashed && c.level === 0 && !c.fleeUntil && stateOf(c) === "wild" && c.cell[0] === a.cell[0] && c.cell[1] === a.cell[1]) befriend(c, time);
+    if (castOn(t)) scatterFriends(g, key, a.soundsystem, time); // (its stack falls: every friend sigil scattered round it, rules/stoneStacks.ts)
     for (const c of g.creatures) if (!c.gone && !c.leashed && !c.dropped && c.state === "happy" && c.cell[0] === a.cell[0] && c.cell[1] === a.cell[1]) joinParty(g, c, a.soundsystem, a.cell);
     // (one let go here at her knockout stays where it was dropped, dancing now: rules/knockout.ts letGoHappy)
     for (const c of g.creatures) if (c.dropped && !c.gone && !c.leashed && cellKey(c.dropped.cell) === key) c.dancing = true;
@@ -888,7 +911,7 @@ export function loseSoundsystem(g: Game, key: string, x: number, z: number): voi
   } else {
     g.party.areas.delete(key); S.ruined.add(key); (g.party.ruined ??= new Set()).add(key);
     // Its happy babies run off home, for good (Ed, 2026-10-06); leashed ones (and parked ones, and ones let go at a knockout) stay hers.
-    for (const c of g.creatures) if (!c.gone && !c.leashed && !c.dropped && c.level === 0 && c.state === "happy" && !c.fleeUntil && cellKey(c.cell) === key) {
+    for (const c of g.creatures) if (!c.gone && !c.leashed && !c.dropped && !c.loose && c.level === 0 && c.state === "happy" && !c.fleeUntil && cellKey(c.cell) === key) { // (not one whose sigil lies loose: still hers to pick up, Ed 2026-10-28)
       const out = mapExit(g.map, c.x, c.z);
       Object.assign(c, { fleeUntil: Infinity, fleeX: out.x, fleeZ: out.z, dancing: false, fight: undefined });
       S.events.push({ kind: "fled", x: c.x, z: c.z, at: time, id: c.id }); S.busy.add(c.id);
@@ -1018,6 +1041,30 @@ function stepLegends(g: Game, ids: number[], happyNearest: boolean): void {
  *  in view. */
 /** A happy creature joins its area's party: it goes to its spot (by the soundsystem, or one of the area's party places) and
  *  dances there, at a party place in the first free slot round it (guestSlot, guestGap: by the guests already there). */
+/** A creature just made happy whose stone still stands: its sigil stays in the stack (no rune at its feet). */
+function markAtStone(g: Game, c: Creature | undefined): void {
+  if (!c || c.boss || c.leashed || c.gone || c.dropped || stateOf(c) !== "happy") return;
+  if (stoneOpen(g, cellKey(c.cell))) c.atStone = true;
+}
+
+/** A stone converted (by her spell or its wave: Ed, 2026-10-28): its stack falls, every friend sigil (its happy natives', the babies'
+ *  just befriended, its legend's) scattered on the ground round it (rules/stoneStacks.ts scatterSpots), loose for any witch to pick
+ *  up; the creatures themselves go to the party as ever. */
+function scatterFriends(g: Game, key: string, at: { x: number; z: number }, time: number): void {
+  const t = g.tuning, friends = friendSigils(g, key);
+  if (!friends.length) return;
+  const placed = g.witches.flatMap(w => w.leash.placed), S = castOf(t).scatter;
+  const free = (x: number, z: number) => !sigilBarred(g, x, z, t) && !looseAt(g.loose, x, z, t) && !looseAt(placed, x, z, t) && isInside(g.map.bounds, x, z, 2);
+  // (its clearing: open ground, in its own area, where the trees thin out)
+  const open = (x: number, z: number) => g.map.treeWeight(x, z) <= S.open * t.treeDensity && cellKey(g.map.areaOf(g.map.cellSafe(x, z).cell)) === key;
+  const spots = scatterSpots(key, at.x, at.z, friends.length, t, free, open);
+  friends.forEach(({ c, slot }, i) => {
+    g.loose.push({ id: c.id, x: spots[i].x, z: spots[i].z, at: time, from: { x: at.x, y: slot, z: at.z }, ...(c.boss ? { legend: true } : {}) });
+    c.loose = true; c.atStone = undefined;
+  });
+  g.leashEvents.push({ kind: "converted", id: -1, key, x: at.x, z: at.z, at: time });
+}
+
 export function joinParty(g: Game, c: Creature, soundsystem: { x: number; z: number }, cell: Cell): void {
   // A legend's circle's baby dances in its circle, on its open floor (Ed, 2026-10-06: "Happy Circle baby should stay in its
   // circle, though it can dance there").
