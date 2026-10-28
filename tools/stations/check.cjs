@@ -3,7 +3,7 @@
 // selector around"). For each of her dressing stations (the bedroom's, and the cloak pegs in the Cloakroom; ?shot=object:<id>, app/shot.ts), the loop running as in play:
 //  - framing: once she's choosing, all of her is on screen and the part being chosen near the middle (camera.station.parts), at the
 //    start's zoom and again with the zoom all the way in (Z);
-//  - choosing: the arrow keys and a click each put an owned item on her, and her drawn look follows (the view's assets: her look now,
+//  - choosing: a click, and Space after the arrow keys move the focus (the arrows alone changing nothing), each put an owned item on her, and her drawn look follows (the view's assets: her look now,
 //    and at a hat-off station her hat-off frames for it); Enter, E and Space choose in the panel, not in the game (she neither rises
 //    nor puts anything down), a locked item saying it isn't found yet.
 // Fails on any of those or a page error; writes <out>/<station>-<zoom>.png.
@@ -67,10 +67,16 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
         ok(s.worn.includes(other), `${id}: a click on an owned item puts it on her (worn ${s.worn})`);
         ok(s.saved && JSON.stringify(JSON.parse(s.saved)) === s.drawn, `${id}: her drawn look is the one chosen`);
         await page.mouse.move(W - 20, H - 20); // (the pointer off the panel: the arrows next)
+        // (Ed, 2026-10-28: "she should change only when I press the 'choose' button": an arrow only moves the focus, Space puts it on)
         await page.keyboard.press("ArrowLeft"); await settle();
         s = await state();
-        ok(!s.worn.includes(other), `${id}: an arrow key onto another owned item puts that on instead (worn ${s.worn})`);
-        ok(s.saved && JSON.stringify(JSON.parse(s.saved)) === s.drawn, `${id}: her drawn look follows the arrow key's choice`);
+        ok(s.worn.includes(other) && s.focus !== other, `${id}: an arrow key moves the focus and changes nothing on her (worn ${s.worn}, focus ${s.focus})`);
+        const to = s.focus;
+        await page.keyboard.press("Space"); await settle();
+        s = await state();
+        if (owned.includes(to)) ok(!s.worn.includes(other) && s.worn.includes(to), `${id}: Space puts on what's in focus instead (worn ${s.worn})`);
+        else log(id, `the arrow landed on ${to}, not an owned card: Space's choice not checked here`);
+        ok(s.saved && JSON.stringify(JSON.parse(s.saved)) === s.drawn, `${id}: her drawn look follows the choice`);
       } else log(id, `fewer than two owned items in its first row (${owned.length}): click and arrows on items skipped`);
       // Enter and Space: chosen in the panel, never the game's (no rise, nothing put down); on a locked item, not found yet. (E closes
       // it: Ed, 2026-10-26, "I think E should also close, and we can have spacebar to select"; below.)

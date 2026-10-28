@@ -5,6 +5,7 @@
 // `touch`. The 💌 (issue #87) is aimed twin-stick: the cursor (a click fires) or the right stick (a
 // trigger fires); 1 fires toward the cursor; on touch, its button fires the way she's going.
 import type { Controls } from "../rules/game";
+import { MENU_BUTTONS } from "./menuButtons";
 
 /** Keyboard bindings: each action and the keys (KeyboardEvent.code) that do it. */
 export const KEYS = {
@@ -199,7 +200,7 @@ export function padControls(buttons: readonly boolean[], axes: readonly number[]
   const mag = Math.hypot(sx, sy), dead = 0.18;
   if (mag < dead) { sx = 0; sy = 0; } else { const s = (Math.min(1, mag) - dead) / (1 - dead) / mag; sx *= s; sy *= s; }
   const out = { moveX: sx, moveZ: sy, zoom: 0, toggleMode: false, debug: false, sigil: false, sigilHeld: false, hat: false, spell: false, cycle: false, dash: false, fire: false, aim: null as { x: number; z: number } | null };
-  if (menu) { out.sigil = any(PAD.sigil); return out; } // (at a station: the left stick walks her and square, the use button, closes it; all else is its panel's)
+  if (menu) { out.sigil = any(MENU_BUTTONS.back.pad); return out; } // (at a station: the left stick walks her and back, square today (platform/menuButtons.ts), closes it; all else is its panel's)
   out.moveX += (btn(15) ? 1 : 0) - (btn(14) ? 1 : 0);
   out.moveZ += (btn(13) ? 1 : 0) - (btn(12) ? 1 : 0);
   out.toggleMode = any(PAD.rise);

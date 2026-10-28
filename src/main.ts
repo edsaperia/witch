@@ -393,6 +393,7 @@ stations.onLook = g => {
   if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); wearHat(g); }
   showLook();
 };
+stations.onBack = () => shutStation("back"); // (back, E today: platform/menuButtons.ts; the pad's comes through padControls as the use button)
 stations.onChange = () => { const { game } = N(); view.turnUntil = game.herTime + 0.8; };
 stations.onDress = () => { view.spin = spinStep(view.spin, N().game.herTime); }; // (Ed, 2026-10-26: she twirls while her new look draws)
 // The Workshop's bay (Ed, 2026-10-23; docs/backlog/workshop.md): a part chosen goes on her broom at once, mid-night too (its stats
