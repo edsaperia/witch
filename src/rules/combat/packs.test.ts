@@ -15,8 +15,8 @@ const ON = withTuning({ combat: { ...TUNING.combat, packs: { on: true } } });
 const ON_OLD = withTuning({ combat: { ...TUNING.combat, packs: { on: true } }, attacks: { reactionFloor: 0.45, species: false } });
 
 /** A pack of the kind against her (or hers against wild wolves), the switch on, her health held; then `secs` of play, `each` step. */
-function arena(spec: string, secs: number, each?: (g: Game) => void, t = ON): Game {
-  const g = newGame(5, t);
+function arena(spec: string, secs: number, each?: (g: Game) => void, t = ON, seed = 5): Game {
+  const g = newGame(seed, t);
   g.clock.paused = false; g.party.paused = true;
   setupArena(g, spec);
   for (let i = 0; i < secs / STEP; i++) { g.witches[0].health.hp = 1e6; stepGame(g, idle, STEP); each?.(g); }
@@ -398,7 +398,9 @@ describe("the lull is a retreat, not a halt (Ed's playtests, 2026-10-23: \"lulls
       const away = out * FIGHT.scale * 0.8 * (PACKS.kinds[k].retreat === "leapfrog" ? 0.5 : 1); // (the leapfrog's near half falls back half as far)
       const off = (d0: number, most = 0) => most > d0 + 1 || d0 >= away; // (backed off, or out there already: a shooter at range, a flyer aloft)
       const startD = new Map<number, number>(), most = new Map<number, number>();
-      arena(`pack-${k}`, 30, g => {
+      // (a freeze over two arenas: how long one holds its place depends on where the fight takes it, and one arena's share swings
+      // either side of the 3% line with anything near it, as much as 4.2 to 2.3% on seed 5 for the creatures keeping off sigils, 2026-10-28)
+      for (const seed of PACKS.kinds[k].retreat === "freeze" ? [5, 6] : [5]) arena(`pack-${k}`, 30, g => {
         const st = wildPack(g), W = g.witches[0].body;
         if (!st) return;
         if (st.phase === "lull" && last !== "lull") { for (const [id, d0] of startD) { starts++; if (off(d0, most.get(id))) backed++; } startD.clear(); most.clear(); }
@@ -410,7 +412,7 @@ describe("the lull is a retreat, not a halt (Ed's playtests, 2026-10-23: \"lulls
           if (!startD.has(id)) startD.set(id, d); most.set(id, Math.max(most.get(id) ?? 0, d));
           steps++; if (!c.moving) still++;
         }
-      });
+      }, ON, seed);
       for (const [id, d0] of startD) { starts++; if (off(d0, most.get(id))) backed++; }
       if (!steps) { bad.push(`${k}: no lull`); continue; }
       if (still / steps > (PACKS.kinds[k].retreat === "freeze" ? PACKS.prowl.freeze + 0.1 : 0.1)) bad.push(`${k}: standing ${(100 * still / steps).toFixed(0)}% of its lull`);

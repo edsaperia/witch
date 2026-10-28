@@ -6,6 +6,7 @@
 // never sheds them but by a berry or a full heal (a befriending, a pickup, the party's end): all its slots 💧, it runs away for
 // good. Rules only; render/inviteRing.ts and render/leash draw them.
 import { type Creature } from "./creatures";
+import { runOff } from "./runaway";
 import { stateOf, STATES } from "./creatureStates";
 import type { Tuning } from "./tuning";
 
@@ -67,10 +68,9 @@ export function getUp(c: Creature, time: number): void {
   c.dazed = false; c.dazedUntil = undefined; c.affection = 1; c.affectionAt = time;
 }
 
-/** Runs away for good (a stunned hostile, a friend full of 💧s): off for its spot on the beach (rules/runaway.ts; none, `exit`, the
- *  map's edge) at a baby's run, its 💧 over it. (Its `beach` as combat.ts's daze tick sets it, till rules/runaway.ts's runOff lands.) */
+/** Runs away for good (a stunned hostile, a friend full of 💧s): off for its spot on the beach (rules/runaway.ts runOff; none, `exit`,
+ *  the map's edge) at a baby's run, its 💧 over it. */
 export function runAway(c: Creature, spot: { x: number; z: number } | null, exit: () => { x: number; z: number }): void {
-  const out = spot ?? exit();
-  c.beach = spot ?? undefined; c.fleeUntil = Infinity; c.fleeX = out.x; c.fleeZ = out.z; c.ranOff = true;
+  runOff(c, spot, exit); c.ranOff = true;
   c.fight = undefined; c.siege = undefined; c.enraged = false; c.dazed = false; c.dazedUntil = undefined;
 }

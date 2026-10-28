@@ -1294,6 +1294,20 @@
    ]
   },
   {
+   "name": "cast",
+   "values": [
+    "1",
+    "0"
+   ],
+   "does": "The runestone stacks and the soundsystem spell on (1, the default since their view landed) or off (0): off, areas clear by themselves once their wild are gone, as before.",
+   "group": "compare",
+   "since": "2026-10-28",
+   "decision": "On by default with Rendering’s view of the stacks (#1378; off till then, the coordinator, 2026-10-28)",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
    "name": "slow",
    "values": [
     "0",

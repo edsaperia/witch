@@ -17,6 +17,7 @@ import { facingAway } from "./witch";
 import type { Tuning } from "./tuning";
 import type { Fight } from "./combat";
 import { glideOf } from "./movement";
+import { offSigils, onFloorSigil } from "./sigilAvoid";
 
 export type Level = 0 | 1 | 2 | 3;
 export const LEGEND = 3;
@@ -131,6 +132,11 @@ export interface Creature {
   /** A party legend (Ed's Easter egg, 2026-10-06; tuning legends.partyEgg): a happy legend won over by an absurd number of
    *  💌s (legends.partyHits). It dances in place, fights no one, carries its (legendary) rune, and leashed it pins her to it. */
   partyLegend?: boolean;
+  /** Its sigil is in its stone's stack, friend-coloured (rules/stoneStacks.ts; Ed, 2026-10-28): made happy before its area's
+   *  conversion, so no rune at its feet; its sigil falls among the loose ones at the conversion. */
+  atStone?: boolean;
+  /** Its sigil lies loose on the ground, scattered at its stone's conversion (g.loose), for any witch to pick up. */
+  loose?: boolean;
   /** Knocked down while wild: dazed (nothing attacks it, it can still be invited) until then, then it runs off. */
   dazed?: boolean;
   /** Happy, in an area with a soundsystem: it keeps round it, dancing (rules/creatureStates.ts danceAt). */
@@ -267,7 +273,7 @@ export function makeCreature(map: ForestMap, cell: [number, number], level: Leve
     retreat: undefined, retreatFrom: undefined, fleeX: undefined, fleeZ: undefined, vx: undefined, vz: undefined,
     run: undefined, lairX: undefined, lairZ: undefined, homing: undefined, charge: undefined, dug: undefined,
     travelling: undefined, state: undefined, happyAt: undefined, partyLegend: undefined, dazed: undefined,
-    dancing: undefined, restlessness: undefined, questOpen: undefined, aims: undefined,
+    dancing: undefined, restlessness: undefined, questOpen: undefined, atStone: undefined, loose: undefined, aims: undefined,
     dazedUntil: undefined, affection: undefined, affectionAt: undefined, hearts: undefined, drops: undefined, ranOff: undefined, holdT: undefined, holdAt: undefined,
     route: undefined, engagedUntil: undefined, brace: undefined, legend: undefined, moveReadyAt: undefined,
     sprung: undefined, enraged: undefined, asleepAt: undefined, bed: undefined, gone: undefined, beach: undefined, beached: undefined, siege: undefined,
@@ -282,7 +288,7 @@ export function makeCreature(map: ForestMap, cell: [number, number], level: Leve
 
 /** Every optional field of a Creature, in the order makeCreature's literal lists them (one shape for all; creatures.test.ts checks the order). A field added to
  *  Creature and not here fails the typecheck (OptionalMissing). */
-export const CREATURE_OPTIONAL = ["lod", "hp", "hurtAt", "kx", "kz", "slowUntil", "stunUntil", "burrow", "leap", "fight", "fleeUntil", "retreat", "retreatFrom", "fleeX", "fleeZ", "vx", "vz", "run", "lairX", "lairZ", "homing", "charge", "dug", "travelling", "state", "happyAt", "partyLegend", "dazed", "dancing", "restlessness", "questOpen", "aims", "dazedUntil", "affection", "affectionAt", "hearts", "drops", "ranOff", "holdT", "holdAt", "route", "engagedUntil", "brace", "legend", "moveReadyAt", "sprung", "enraged", "asleepAt", "bed", "gone", "beach", "beached", "siege", "wanderTo", "circle", "dropped", "healedAt", "healedSmall", "boss", "legendState", "stateAt", "quest", "friendly", "asleep", "napUntil", "lulled", "wakeUntil", "safeX", "safeZ", "safeR", "watchUntil", "hunting", "taunt", "swoop", "finale", "packGlow", "packHide", "packShell", "packProwl", "feintUntil", "coverBy", "packSync", "packThrow", "mind", "spell"] as const satisfies readonly (keyof Creature)[];
+export const CREATURE_OPTIONAL = ["lod", "hp", "hurtAt", "kx", "kz", "slowUntil", "stunUntil", "burrow", "leap", "fight", "fleeUntil", "retreat", "retreatFrom", "fleeX", "fleeZ", "vx", "vz", "run", "lairX", "lairZ", "homing", "charge", "dug", "travelling", "state", "happyAt", "partyLegend", "dazed", "dancing", "restlessness", "questOpen", "atStone", "loose", "aims", "dazedUntil", "affection", "affectionAt", "hearts", "drops", "ranOff", "holdT", "holdAt", "route", "engagedUntil", "brace", "legend", "moveReadyAt", "sprung", "enraged", "asleepAt", "bed", "gone", "beach", "beached", "siege", "wanderTo", "circle", "dropped", "healedAt", "healedSmall", "boss", "legendState", "stateAt", "quest", "friendly", "asleep", "napUntil", "lulled", "wakeUntil", "safeX", "safeZ", "safeR", "watchUntil", "hunting", "taunt", "swoop", "finale", "packGlow", "packHide", "packShell", "packProwl", "feintUntil", "coverBy", "packSync", "packThrow", "mind", "spell"] as const satisfies readonly (keyof Creature)[];
 type RequiredKeys = "id" | "species" | "cell" | "level" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ" | "x" | "z" | "tx" | "tz" | "rest" | "speed" | "facing" | "away" | "moving" | "walk" | "seen" | "leashed" | "rand";
 type OptionalMissing = Exclude<keyof Creature, RequiredKeys | (typeof CREATURE_OPTIONAL)[number]>;
 const _everyField: [OptionalMissing] extends [never] ? true : OptionalMissing = true;
@@ -354,7 +360,13 @@ export function pointInCircle(k: NonNullable<Creature["circle"]>, r: () => numbe
 export const idlesAtStone = (c: Partial<Pick<Creature, "level" | "boss" | "friendly" | "leashed" | "state" | "enraged" | "circle">> & { dancing?: boolean }) =>
   (c.level ?? 0) > 0 && c.level !== LEGEND && !c.boss && !c.friendly && !c.leashed && !c.enraged && !c.dancing && !c.circle && c.state !== "happy";
 
-export function pointInArea(map: ForestMap, c: Pick<Creature, "cell" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ"> & Partial<Pick<Creature, "circle" | "leashed" | "state" | "enraged" | "level" | "boss" | "friendly" | "dropped">> & { dancing?: boolean; anywhere?: boolean }, r: () => number): [number, number] {
+type AreaPick = Pick<Creature, "cell" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ"> & Partial<Pick<Creature, "id" | "circle" | "leashed" | "state" | "enraged" | "level" | "boss" | "friendly" | "dropped">> & { dancing?: boolean; anywhere?: boolean };
+
+/** Where it roams to next: a spot in its area (pickInArea), off the sigils lying on the floor where it can (Ed, 2026-10-28:
+ *  rules/sigilAvoid.ts; with none on the floor, exactly as before). */
+export const pointInArea = (map: ForestMap, c: AreaPick, r: () => number): [number, number] => offSigils(() => pickInArea(map, c, r), c.id)!;
+
+function pickInArea(map: ForestMap, c: AreaPick, r: () => number): [number, number] {
   if (c.dropped && !c.anywhere) { // (let go at her knockout: a spot near where it was dropped, never on a lake's water)
     const D = c.dropped, shore = map.bounds.lakes ? lakeKnobs(map.tuning).shore : 0;
     for (let i = 0; i < 12; i++) { const a = r() * Math.PI * 2, d = Math.sqrt(r()) * D.r, x = D.x + Math.cos(a) * d, z = D.z + Math.sin(a) * d; if (!onLake(map.bounds, x, z, shore)) return [x, z]; }
@@ -445,6 +457,8 @@ export function stepCreature(c: Creature, dt: number, map: ForestMap, time?: num
     if (k >= 1) { c.leap = undefined; c.tx = c.x; c.tz = c.z; c.rest = 0.5 + c.rand() * 2; }
     return;
   }
+  // Resting on a sigil on the floor (put down beside it, or a rune come by), it moves on to its next spot (rules/sigilAvoid.ts).
+  if (c.rest > 0 && onFloorSigil(c.x, c.z, c.id)) { c.rest = 0; if (Math.hypot(c.tx - c.x, c.tz - c.z) < 0.05) [c.tx, c.tz] = pointInArea(map, c, c.rand); }
   if (c.rest > 0) { c.rest -= dt; c.moving = false; c.away = false; return; }
   const dx = c.tx - c.x, dz = c.tz - c.z, d = Math.hypot(dx, dz);
   if (d < 0.05) {

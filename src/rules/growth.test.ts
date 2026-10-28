@@ -14,7 +14,7 @@ const plainStrength = () => { for (const k of Object.keys(COMBAT.strength!.speci
 const restoreStrength = () => Object.assign(COMBAT.strength!.species, SAVED_STRENGTH);
 
 // (the mechanism at one creature a wave, whatever the tuning file's pace)
-const T1 = withTuning({ population: { ...TUNING.population, growth: { ...TUNING.population.growth, perWave: 1 } } });
+const T1 = withTuning({ population: { ...TUNING.population, growth: { ...TUNING.population.growth, on: true, perWave: 1 } } }); // (on: the tuning has it off since Ed's 2026-10-28 "no creatures are created" in a night; the mechanics, kept for the simulators)
 const still = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 
 describe("wild areas grow (Ed, 2026-10-04: a creature a wave while wild)", () => {

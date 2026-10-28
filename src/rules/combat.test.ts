@@ -505,7 +505,7 @@ describe("Ed's Stage 4 rulings", () => {
   }, 60000);
 
   it("leaves a woken area's babies out of its siege: they stay home, happy, and can still be leashed (their rune)", () => {
-    const g = newGame(77, TUNING);
+    const g = newGame(77, { ...TUNING, cast: { ...TUNING.cast, on: false } }); // (their runes at their feet: the game without the stone stacks, ?cast=0)
     g.clock.paused = false;
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
     const next = g.party.next[0], here = g.creatures.filter(c => c.cell[0] === next[0] && c.cell[1] === next[1] && !c.boss); // (its legend sleeps on: legends.test.ts)
@@ -593,7 +593,7 @@ describe("Ed's playtest (2026-10-04)", () => {
   }, 60000);
 
   it("can't invite a creature enraged by a wave (besieging); a woken area's babies can still be had (invited, or happy with their rune)", () => {
-    const g = newGame(77, TUNING);
+    const g = newGame(77, { ...TUNING, cast: { ...TUNING.cast, on: false } }); // (their runes at their feet: the game without the stone stacks, ?cast=0)
     g.clock.paused = false;
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
     const next = g.party.next[0], here = g.creatures.filter(c => c.cell[0] === next[0] && c.cell[1] === next[1]);

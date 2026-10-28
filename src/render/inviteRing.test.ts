@@ -8,7 +8,7 @@ import type { Creature } from "../rules/creatures";
 import { RingModel, ringOf, type RingChange } from "./inviteRing";
 
 function setup(level: number) {
-  const g = newGame(123, TUNING), A = affectionOf(g);
+  const g = newGame(123, { ...TUNING, cast: { ...TUNING.cast, on: false } }), A = affectionOf(g); // (its rune at its feet: the game without the stone stacks, ?cast=0)
   const c = g.creatures.find(k => !k.boss && k.level < 3 && stateOf(k) === "wild")!;
   c.level = level as Creature["level"]; // (a baby, a young or an adult, whichever the map has to hand)
   const ring = (_time: number) => ringOf(c.level, A.affection(c), TUNING.invites.hits);

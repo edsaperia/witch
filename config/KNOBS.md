@@ -1615,12 +1615,32 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
 | `leash.ranks.hex` | number | 0 to … |
 | `leash.ranks.glyph` | number | 0 to … |
 | `leash.ranks.colours` | array of array |  |
+| `leash.ranks.enemy` | array of array |  |
+| `leash.ranks.sizes` | array of number |  |
 | `leash.ranks.embers.count` | array of number |  |
 | `leash.ranks.embers.size` | array of number |  |
 | `leash.ranks.embers.rise` | array of number |  |
 | `leash.ranks.embers.stack` | number | 0 to … |
 | `leash.ranks.dotsPerRow` | number | 0 to … |
 | `leash.ranks.stoneGlow` | number | 0 to … |
+| `leash.ranks.stones.range` | number | 0 to … |
+| `leash.ranks.stones.fade` | number | 0 to … |
+| `leash.ranks.stones.south` | number | 0 to … |
+| `leash.ranks.stones.size` | number | 0 to … |
+| `leash.ranks.stones.near` | number | 0 to … |
+| `leash.ranks.stones.far` | number | 0 to … |
+| `leash.ranks.stones.bars` | number | 0 to … |
+| `leash.ranks.stones.radius` | number | 0 to … |
+| `leash.ranks.stones.cell` | number | 0 to … |
+| `leash.ranks.stones.convert` | number | 0 to … |
+| `leash.ranks.chain.link` | array of number |  |
+| `leash.ranks.chain.tether` | number | 0 to … |
+| `leash.ranks.chain.slack` | number | 0 to … |
+| `leash.ranks.chain.damping` | number | 0 to … |
+| `leash.ranks.chain.gravity` | number | 0 to … |
+| `leash.ranks.chain.arcPull` | number | 0 to … |
+| `leash.ranks.chain.iterations` | number | 0 to … |
+| `leash.ranks.chain.jump` | number | 0 to … |
 
 ### `bond`
 
@@ -1872,6 +1892,21 @@ Hostile creatures gather near the runestone [1]: a wild area's own hostile young
 | `stoneIdle.radius` | number | 0 to … |
 | `stoneIdle.clear` | number | 0 to … |
 
+### `sigilAvoid`
+
+Idling and dancing creatures keep off the sigils lying on the floor.
+
+1. Ed, 2026-10-28: "When idling or dancing, creatures should try and avoid standing on floor sigils"
+Creatures keep off floor sigils [1]: wild idlers, happy ones at their area, dancers and parked ones roaming round their sigil choose where to stand next off every sigil on the floor (her placed sigils, happy creatures' runes, relics' sigils, her hats lying down), and one resting on a sigil moves on. Only a nudge: with nowhere clear in a dozen tries it stands where it would have; moving, chasing, fighting and marching are untouched.
+
+- **`sigilAvoid.on`**: false lets them stand on sigils as before.
+- **`sigilAvoid.pad`**: Metres past a sigil's edge a creature's middle still counts as on it.
+
+| knob | type | range |
+|---|---|---|
+| `sigilAvoid.on` | boolean |  |
+| `sigilAvoid.pad` | number | 0 to … |
+
 ### `wildWatch`
 
 On her first landing in a wild area its creatures stare and redden for a few seconds before they attack, and how far they chase her after.
@@ -1962,7 +1997,8 @@ How many wild creatures each area starts with, more along the waves' route so th
 3. Ed, 2026-10-07: "no population growth on a clock" (his new core design)
 4. Ed, 2026-10-08: the swarm plan's phase 1: its own young and adults, the ones a wave enrages and sets marching; rules/swarm.ts
 5. 2026-10-06: a fraction carries over: 0.5 is one every other wave; balance, DECISION FOR ED: 0.5, from 1, so a player's defence can hold the early sieges and playing well matters
-Wild creatures [1]: every area starts with the same population, population.start [2], and, from the start [3], more by its place on the waves' route (Balance 2's shape; rules/growth.ts routePopulation): byRoute's threat (since removed: the hostile swarm below does this now), [route index, F] points (1 the first wave's stone; straight lines between, flat past the ends), is the extra fighting value its young and adults add (F by Lanchester, young 11.6, adult 40, babies 0; about what an area woken at that wave grew to before); its kind spends it by its profile (byRoute's profiles by species (removed with it), else default: the shares of its extra creatures as babies, young and adults), so many more of a swarm's young than of a heavy kind's adults, at the same danger: count = threat ÷ the profile's mean F a creature × the area's count scale, rounded, split by the shares (largest remainder, ties by the seed). The hostile swarm [4]: its challenge grows with the area's place p in the runestone order (0 the first stone, 1 the last), whatever its species. Each area fields, of every size up to its species' cap (capScales: the cap grown along the same curve, at least 2) and every young/adult split, the one nearest the target; among those within swarm.mixTolerance (10%) of the nearest, a mix of young and adults first. A simulated power (config/swarm-power.json, empty in phase 1) stands in for the estimate where it has the swarm. So a default map (about 100 areas) holds about 540 hostiles: the curve's average, 5.8 an area. growth is the old growth on a clock, which the game no longer reads (the balance simulators still do): every wave, each area the party hasn't reached gained growth.perWave more [5], each at a random level by growth.weights (baby, young, adult: equal thirds), so the areas the party reaches late are the ones to fear. Areas already partified don't grow. New ones arrive out of the witch's sight (beyond the haze's far edge plus growth.hide metres), never popping in on screen; areas far from every witch keep them as counts only, made real (from the seed) when a witch comes within creatureSimRadius of the area or it wakes. The home area holds none. Fighting value (DESIGN.md, Balance): a young is worth 15.5, an adult 29, a legend 76; so an area woken at wave n brings about 1 + n/3 young and 1 + n/3 adults (F about 44.5 + 14.8 n), besides its legend (wildLegends). Only creatures whose home is within creatureSimRadius metres of the witch move. node tools/balance/sim.mjs forecasts the sieges these numbers make.
+6. Ed, 2026-10-28: "during a night, no creatures are created and none are destroyed" (growth.on off, so the balance simulators match the game; a creature that runs off sleeps on the beach (rules/runaway.ts))
+Wild creatures [1]: every area starts with the same population, population.start [2], and, from the start [3], more by its place on the waves' route (Balance 2's shape; rules/growth.ts routePopulation): byRoute's threat (since removed: the hostile swarm below does this now), [route index, F] points (1 the first wave's stone; straight lines between, flat past the ends), is the extra fighting value its young and adults add (F by Lanchester, young 11.6, adult 40, babies 0; about what an area woken at that wave grew to before); its kind spends it by its profile (byRoute's profiles by species (removed with it), else default: the shares of its extra creatures as babies, young and adults), so many more of a swarm's young than of a heavy kind's adults, at the same danger: count = threat ÷ the profile's mean F a creature × the area's count scale, rounded, split by the shares (largest remainder, ties by the seed). The hostile swarm [4]: its challenge grows with the area's place p in the runestone order (0 the first stone, 1 the last), whatever its species. Each area fields, of every size up to its species' cap (capScales: the cap grown along the same curve, at least 2) and every young/adult split, the one nearest the target; among those within swarm.mixTolerance (10%) of the nearest, a mix of young and adults first. A simulated power (config/swarm-power.json, empty in phase 1) stands in for the estimate where it has the swarm. So a default map (about 100 areas) holds about 540 hostiles: the curve's average, 5.8 an area. growth is the old growth on a clock, which the game no longer reads, off since [6] (the balance simulators read it only when on): every wave, each area the party hasn't reached gained growth.perWave more [5], each at a random level by growth.weights (baby, young, adult: equal thirds), so the areas the party reaches late are the ones to fear. Areas already partified don't grow. New ones arrive out of the witch's sight (beyond the haze's far edge plus growth.hide metres), never popping in on screen; areas far from every witch keep them as counts only, made real (from the seed) when a witch comes within creatureSimRadius of the area or it wakes. The home area holds none. Fighting value (DESIGN.md, Balance): a young is worth 15.5, an adult 29, a legend 76; so an area woken at wave n brings about 1 + n/3 young and 1 + n/3 adults (F about 44.5 + 14.8 n), besides its legend (wildLegends). Only creatures whose home is within creatureSimRadius metres of the witch move. node tools/balance/sim.mjs forecasts the sieges these numbers make.
 Code: `rules/growth.ts`, `rules/swarm.ts`, `config/swarm-power.json`, `tools/balance/sim.mjs`
 
 - **`population.byRoute.babies`**: babies in every area, start's included [1], at most babyCap.
@@ -2175,6 +2211,34 @@ Code: `config/legends.json`
 ## Party
 
 The party: the beat, waves, soundsystems, the dancefloor, its lights and objects, the party witches, the ley lines, music and sound, and the end.
+
+### `cast`
+
+The runestone stacks and the soundsystem spell: she converts a stone by holding the sigil button at it.
+
+1. Ed, 2026-10-28: "It's a spell that you're choosing to cast on this stone, rather than a property of the area/stone itself." (every wild creature's sigil in its stone's stack (friends above enemies); no auto-clearing; the spell or a wave converts the stone, its friend sigils scattering round it for anyone to pick up)
+Code: `src/rules/stoneStacks.ts`
+
+- **`cast.on`**: on (the default since their view landed, #1378): the stacks and the spell; off (?cast=0): areas clear by themselves once their wild are gone, as before.
+- **`cast.time`**: seconds of holding the sigil button at a stone to convert it; a hit stops the cast.
+- **`cast.drain`**: how much of a full cast her progress on a stone loses a second while she isn't casting it (holding again resumes from there).
+- **`cast.radius`**: how near the stone (m) she has to stand to cast; there the sigil button casts rather than putting down or picking up.
+- **`cast.show`**: how near the stone (m) the spell's music-note sigil shows.
+- **`cast.scatter`**: where a converted stone's friend sigils scatter: free hex cells of its clearing between min and reach metres, never in the hidden wedge just north of the soundsystem (hide.width either side, hide.depth behind).
+  Ed, 2026-10-28: "It's fine if they're scattered around the whole runestone clearing"; "they also shouldn't fall immediately behind the soundsystem where they could be hidden". Open ground first (a tree's chance there at most open times the forest's density), in a seeded order so they spread however many there are; the wedge is where the soundsystem's sprite hides the ground from the camera, which looks north.
+
+| knob | type | range |
+|---|---|---|
+| `cast.on` | boolean |  |
+| `cast.time` | number | 0 to … |
+| `cast.drain` | number | 0 to … |
+| `cast.radius` | number | 0 to … |
+| `cast.show` | number | 0 to … |
+| `cast.scatter.min` | number | 0 to … |
+| `cast.scatter.reach` | number | 0 to … |
+| `cast.scatter.open` | number | 0 to … |
+| `cast.scatter.hide.width` | number | 0 to … |
+| `cast.scatter.hide.depth` | number | 0 to … |
 
 ### `beat`
 
