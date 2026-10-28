@@ -8,6 +8,7 @@ import { BOARD, PARTS, SETS, SLOTS, broomTuning, completeSet, emptySlot, fitPart
 import { broomSpell } from "../rules/spells";
 import { itemsToChoose, shownItems, type Shelf } from "../rules/wardrobe";
 import type { Tuning } from "../rules/tuning";
+import { MENU_BUTTONS } from "../platform/menuButtons";
 
 /** One focusable line of the panel. `readOnly`: focus only, nothing chosen (the pegboard). */
 export interface Line { shelf: number; kind: "items" | "parts" | "grid" | "fit" | "cards" | "chips"; n: number; row?: number; axis?: string; readOnly?: boolean }
@@ -113,5 +114,5 @@ export function panelPad(buttons: readonly boolean[], axes: readonly number[]): 
   const rx = big(2), ry = big(3);
   const dir = b(12) ? "up" : b(13) ? "down" : b(14) ? "left" : b(15) ? "right"
     : Math.max(Math.abs(rx), Math.abs(ry)) < 0.5 ? "" : Math.abs(rx) > Math.abs(ry) ? (rx > 0 ? "right" : "left") : ry > 0 ? "down" : "up";
-  return { dir, choose: b(0) }; // (cross: square, the use button, closes it, Ed 2026-10-26)
+  return { dir, choose: MENU_BUTTONS.confirm.pad.some(b) }; // (confirm, cross today: back closes it, platform/menuButtons.ts)
 }
