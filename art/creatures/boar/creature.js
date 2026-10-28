@@ -24,12 +24,6 @@ export const CREATURE_BOAR = {
   temperament: "curious",
   traits: ["heavy"],
   voice: { family: "big", pitch: 1.2, noise: 0.55, am: [40, 0.6], volume: 1.3 },
-  buff: {
-    name: "Momentum",
-    kind: "move",
-    mods: { momentum: 1 },
-    label: "Boar's Momentum: a burst of speed after each blink"
-  },
   character: { posture: { head: [0.05, -0.06], body: 0 }, quirk: "stomp", every: [4, 8], for: 1 },
   pack: {
     melee: { attacks: [null, "nip", "maul"], knockback: 8 },

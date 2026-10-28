@@ -9,7 +9,6 @@ export const CREATURE_FENNEC = {
   },
   radius: 0.45,
   voice: { family: "canid", pitch: 2.1, glide: 0.9 },
-  buff: { name: "Ears", kind: "shot", scale: { "invites.range": 1.35 }, label: "Fennec's Ears: 💌s reach further" },
   character: { posture: { head: [0.02, 0.04], body: 0 }, quirk: "perk", every: [3, 6], for: 1.2 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },

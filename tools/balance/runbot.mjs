@@ -44,7 +44,7 @@ else {
     const t = withTuning(over()), g = newGame(seed, t), w = g.witches[0], dt = 1 / 60;
     g.clock.paused = false;
     w.body = { ...w.body, seated: false }; // (her first step: the boot-up runs from here)
-    // --happy N: the N legends nearest home happy from the start (their buffs on), to see what the buffs do.
+    // --happy N: the N legends nearest home happy from the start, to see what happy legends do.
     for (const c of g.creatures.filter(c => c.boss).sort((a, b) => Math.hypot(a.x - g.map.dancefloor.x, a.z - g.map.dancefloor.z) - Math.hypot(b.x - g.map.dancefloor.x, b.z - g.map.dancefloor.z)).slice(0, HAPPY)) cheer(c, 0);
     const map = g.map;
     const legendOf = new Map(g.creatures.filter(c => c.boss).map(c => [cellKey(c.cell), c.id]));

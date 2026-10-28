@@ -38,7 +38,6 @@ export const CONFIGS: readonly ConfigSchema[] = [
   },
   { name: "travel", file: "config/travel.json", schema: "config/schema/travel.schema.json", records: [], over: {} },
   { name: "area-types", file: "config/area-types.json", schema: "config/schema/area-types.schema.json", records: ["types"], over: {} },
-  { name: "legend-buffs", file: "config/legend-buffs.json", schema: "config/schema/legend-buffs.schema.json", records: ["limits", "species"], over: {} },
   { name: "house", file: "config/house/", /* (assembled from base.json and rooms/*.json: rules/houseConfig.ts) */ schema: "config/schema/house.schema.json", records: [], over: { "objects[].use.kind": { enum: HOUSE_USES } } },
   {
     name: "broom-parts", file: "config/broom-parts.json", schema: "config/schema/broom-parts.schema.json",

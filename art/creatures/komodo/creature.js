@@ -9,12 +9,6 @@ export const CREATURE_KOMODO = {
   },
   radius: 1.1,
   voice: { family: "snake", pitch: 0.55, am: [9, 0.4] },
-  buff: {
-    name: "Lunge",
-    kind: "move",
-    scale: { "dash.distance": 1.35 },
-    label: "Komodo dragon's Lunge: your blink lunges further"
-  },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
     ranged: { name: "venom spit", range: 14, shots: [0, 1, 2], spread: 10, tint: "red" },

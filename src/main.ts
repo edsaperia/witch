@@ -292,7 +292,7 @@ freeze.ownsEsc = () => !bot; // (the bot game's Esc is its way back to the start
 // it lands she wakes (arrived), and if no key or tap has come by then (browsers keep sound off till one does) a small note asks for one.
 const bootArrival = N().arrival;
 // (Ed, 2026-10-12: the HUD hidden through the flight, fading in as she settles at her decks)
-const HUD_IDS = ["clock", "seed", "version", "buffs", "aim", "touch", "bubbles", "invites"];
+const HUD_IDS = ["clock", "seed", "version", "aim", "touch", "bubbles", "invites"];
 if (bootArrival) {
   hudFade(HUD_IDS); // (app/arrive.ts)
   document.body.classList.add("arriving");

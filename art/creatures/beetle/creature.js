@@ -6,7 +6,6 @@ export const CREATURE_BEETLE = {
   temperament: "skittish",
   traits: ["armoured"],
   voice: { family: "bug", pitch: 0.7, am: [60, 0.9], volume: 1.5 },
-  buff: { name: "Fan", kind: "shot", mods: { fan: 1 }, label: "Beetle's Fan: each shot a 3-way spread" },
   character: { sprite: "shiver", every: [4, 8], for: 0.6 },
   pack: {
     melee: { attacks: [null, "nip", "maul"], knockback: 6 },

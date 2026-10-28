@@ -15,12 +15,6 @@ export const CREATURE_MARTEN = {
   radius: 0.55,
   temperament: "skittish",
   voice: { family: "small", pitch: 0.9, trill: [20, 60] },
-  buff: {
-    name: "Scamper",
-    kind: "move",
-    scale: { groundSpeed: 1.2 },
-    label: "Marten's Scamper: faster on the ground"
-  },
   character: { posture: { head: [0.02, 0.02], body: -0.01 }, quirk: "sniff", every: [3, 6], for: 1 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },

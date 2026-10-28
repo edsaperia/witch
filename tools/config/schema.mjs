@@ -14,7 +14,7 @@ const { validate, inferSchema } = await server.ssrLoadModule("/src/rules/schema.
 const { knobsReference, describeSchema } = await server.ssrLoadModule("/src/rules/knobDocs.ts");
 const { TUNING_OVER } = await server.ssrLoadModule("/src/rules/tuningSchema.ts");
 const { CONFIGS } = await server.ssrLoadModule("/src/rules/configSchemas.ts");
-const { configData } = await server.ssrLoadModule("/src/rules/configData.ts"); // (combat, movement, legend-buffs with their per-species entries from art/creatures/<id>/creature.js)
+const { configData } = await server.ssrLoadModule("/src/rules/configData.ts"); // (combat, movement with their per-species entries from art/creatures/<id>/creature.js)
 const FILE = "config/tuning.json", SCHEMA = "config/schema/tuning.schema.json", DOCS = "config/KNOBS.md";
 const tuning = JSON.parse(readFileSync(FILE, "utf8"));
 const write = (p, o) => writeFileSync(p, JSON.stringify(o, null, 2) + "\n");

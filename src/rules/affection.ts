@@ -9,7 +9,7 @@ import { befriend, invitableNow, makePartyLegend, stateOf, STATES, type StatesDa
 /** What the meter needs of the game: the time, and leashing a happy creature to her. */
 export interface AffectionWorld { time: number; leash: (c: Creature) => void }
 
-/** A 💌 landed on creature c (amount 1 per letter, times any buff). Returns whether it counted. */
+/** A 💌 landed on creature c (amount 1 per letter). Returns whether it counted. */
 export function hit(g: AffectionWorld, c: Creature, amount: number, time: number = g.time, data: StatesData = STATES): boolean {
   if (!invitableNow(c, data)) return false;
   const A = data.affection;

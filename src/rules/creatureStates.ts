@@ -72,7 +72,7 @@ export function invitableNow(c: Creature, data: StatesData = STATES): boolean {
  *  quest) not yet a party legend, free. Asleep, restless and angry ones still block 💌s. */
 export const partyEggOpen = (c: Creature) => !!c.boss && c.legendState === "happy" && !c.partyLegend && !c.leashed && !c.gone;
 
-/** Its 100th 💌: a party legend. It keeps its buff (it was for good), dances where it stands and fights no one; its
+/** Its 100th 💌: a party legend. It dances where it stands and fights no one; its
  *  legendary rune pops out at its feet. */
 export function makePartyLegend(c: Creature, time: number): void {
   c.partyLegend = true; c.affection = undefined; c.affectionAt = undefined; c.happyAt = time;

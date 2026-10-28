@@ -101,7 +101,6 @@ export class InviteView {
   herOffset?: HerOffset;
   private root = document.createElement("div");
   private letters: HTMLImageElement[] = [];
-  private lanterns: HTMLElement[] = [];
   /** The rings (render/inviteRing.ts): what each holds, and its envelopes and gap marks by creature. */
   private ringModel = new RingModel();
   private rings = new Map<number, { imgs: HTMLImageElement[]; dots: HTMLElement[]; joined: number[] }>();
@@ -149,7 +148,7 @@ export class InviteView {
   setGame(game: Game): void {
     this.game = game;
     this.root.replaceChildren();
-    this.letters = []; this.lanterns = []; this.ringModel = new RingModel(); this.rings.clear(); this.falling = []; this.hearts = [];
+    this.letters = []; this.ringModel = new RingModel(); this.rings.clear(); this.falling = []; this.hearts = [];
     this.replies.clear(); this.lastHers = -Infinity; this.pops = []; this.crumples = []; this.lastTime = -1; this.resting = [];
     this.spins.clear(); this.restImgs = []; this.seen.clear();
     this.hers = this.bubble(-1);
@@ -343,33 +342,19 @@ export class InviteView {
       const L = I.letters[i];
       if (!L) { im.style.display = "none"; return; }
       im.style.display = "block";
-      // A cache waits on the ground, bobbing; an orbiting one circles at her hand; the rest fly.
-      const y = L.kind === "cache" ? 0.35 + 0.12 * Math.sin((time - L.at) * 4 + L.n) : L.kind === "orbit" || L.kind === "sling" ? 1.3 : lobHeight(L.flown, L.range ?? this.game.tuning.invites.range, this.game.tuning.invites.arc ?? 0);
+      // One circling a Slingshot hat at hand height; the rest fly.
+      const y = L.kind === "sling" ? 1.3 : lobHeight(L.flown, L.range ?? this.game.tuning.invites.range, this.game.tuning.invites.arc ?? 0);
       const [lx, ly, lz] = letterAt(this.herOffset, L.x, y, L.z); // (in the house, from her hand as drawn)
       place(im, lx, ly, lz);
       // Like a frisbee (Ed, 2026-10-06: "the envelopes should spin like a frisbee"): lying flat, turning
       // about the upright at invites.spin turns a second (snapped to sixteenths, pixel-like), laid flat
-      // for the camera; a small one (Spawn) smaller; a cache still.
-      const turns = L.kind === "cache" ? 0 : Math.round(((time - L.at) * t.invites.spin + L.n * 0.37) * 16) / 16, deg = (turns % 1) * 360, sz = L.small ? 0.6 : 1;
+      // for the camera.
+      const turns = Math.round(((time - L.at) * t.invites.spin + L.n * 0.37) * 16) / 16, deg = (turns % 1) * 360, sz = 1;
       if (!L.kind) this.spins.set(L.n, deg);
       showTurned(im, "💌", n, sz, sz * flat, deg, k); // (in art pixels, on the grid: Ed, round 14)
       hide(im, `l${L.n}`, lx, ly, lz);
     });
     if (this.spins.size > 64) { const live = new Set(I.letters.map(L => L.n)); for (const n of this.spins.keys()) if (!live.has(n)) this.spins.delete(n); }
-    // Paw prints (Wildcat): little glowing hearts where the letters flew, fading out.
-    while (this.lanterns.length < I.lanterns.length) {
-      const d = document.createElement("div");
-      Object.assign(d.style, { position: "absolute", width: `${k * 2}px`, height: `${k * 2}px`, marginLeft: `${-k}px`, marginTop: `${-k}px`, background: "#f3cf9a", boxShadow: "0 0 6px 2px rgba(217,120,158,.7)" });
-      this.root.append(d);
-      this.lanterns.push(d);
-    }
-    this.lanterns.forEach((d, i) => {
-      const p = I.lanterns[i];
-      if (!p) { d.style.display = "none"; return; }
-      d.style.display = "block";
-      place(d, p.x, 1.1, p.z);
-      d.style.opacity = Math.max(0, Math.min(1, (p.until - time) / 0.3)).toFixed(2);
-    });
 
     // The rings: one slot a hit each creature's meter needs (invites.hits by its level), the envelopes it holds
     // orbiting it, flat and spinning, the gaps faint marks; turning slowly round it at about its middle.

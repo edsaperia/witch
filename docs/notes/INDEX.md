@@ -73,7 +73,6 @@ says what each note covers.
 - Conga dancer
 - Wild / happy / leashed / enraged
 - Restless / angry legend, relic
-- Legend buff
 
 ## [The treehouse and its house](house.md)
 

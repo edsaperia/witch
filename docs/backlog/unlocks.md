@@ -15,7 +15,7 @@ Backlog (Ed, 2026-10-09); **Ed's go 2026-10-11, built** (rules/spells.ts; #695, 
 
 ## Rules for spells
 
-- **Hats and brooms change verbs; quest buffs change numbers** (proposed, 2026-10-11). *Out of date:* quests no longer give buffs (Ed, 2026-10-18; built, #954). The movement buffs (hare: blink charges; mole: fast rise and land; raven: faster treetops) belong with the broom garage's components, and the 💌 buffs (fox: homing, and the rest) with the bags (below).
+- **Hats and brooms change verbs; quest buffs change numbers** (proposed, 2026-10-11). *Out of date:* quests no longer give buffs (Ed, 2026-10-18; built, #954), and the buffs are removed (Ed, 2026-10-28). The movement buffs (hare: blink charges; mole: fast rise and land; raven: faster treetops) belong with the broom garage's components, and the 💌 buffs (fox: homing, and the rest) with the bags (below).
 - Spells support the basics (speed, attacks, healing, movement). They never fix the failure cascade (soundsystems, bpm, creatures that ran off).
 
 ## Hats
@@ -90,7 +90,7 @@ Every spell hat, the bum bag and the backpack are finds in the one draw (rules/f
 
 - **A bag sets how she throws 💌s:** a shooting style (a shotgun spread, a sniper's long slow shot, and so on). She carries one at a time, so a bag is a deliberate choice of build. Easier to balance than the old legend boons, which stacked at random.
 - **Found like hats:** at a shrine themed on its power, picked up as a game object, by the same rules as hats (above).
-- **Where the old boons go** (proposed): the 💌 boons (Charm homing, Pierce, Spawn, Howl's ring...) are the first bags' behaviours; the movement boons (Hare's blink charges, Mole's fast rise, Raven's treetop speed) are broom components (the broom garage, below). Quests no longer give boons (Ed, 2026-10-18; built, #954).
+- **Where the old boons go** (proposed): the 💌 boons (Charm homing, Pierce, Spawn, Howl's ring...) are the first bags' behaviours; the movement boons (Hare's blink charges, Mole's fast rise, Raven's treetop speed) are broom components (the broom garage, below). Quests no longer give boons (Ed, 2026-10-18; built, #954), and the boons' code is removed (Ed, 2026-10-28): a bag or part rebuilds one from scratch.
 - Open: the first set of bags; whether bags share the hat shrines or have their own; where spare bags hang in the treehouse.
 
 ## The crystal ball: where an upgrade lies (Ed, 2026-10-18)

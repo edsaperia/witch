@@ -12,12 +12,6 @@ export const CREATURE_SNAIL = {
   temperament: "skittish",
   traits: ["armoured"],
   voice: { family: "amphibian", pitch: 1.2, am: [8, 0.4], noise: 0.3, dur: 1.3 },
-  buff: {
-    name: "Spiral",
-    kind: "shot",
-    mods: { boomerang: 1 },
-    label: "Snail's Spiral: 💌s come back to you, landing on the way"
-  },
   character: { sprite: "puff", every: [6, 12], for: 2 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },

@@ -36,11 +36,6 @@ export function coolSpend(c: CoolState, amount: number, room: number): void {
   c.left = Math.max(c.left, Math.min(c.left + amount, Math.max(room, amount)));
 }
 
-/** Some of it given back (Stoat's Frenzy: a blink refunded). */
-export function coolRefund(c: CoolState, amount: number): void {
-  c.left = Math.max(0, c.left - amount);
-}
-
 /** How near the next action of `amount` is: 1 ready, 0 just spent (the aim reticle's recharge arc). */
 export function coolCharge(c: CoolState, amount: number, room: number): number {
   const at = Math.max(0, room - amount);

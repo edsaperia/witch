@@ -9,12 +9,6 @@ export const CREATURE_HYDRA = {
   },
   radius: 1.3,
   voice: { family: "snake", pitch: 0.6, glide: 0.8, volume: 1.2 },
-  buff: {
-    name: "Many Heads",
-    kind: "shot",
-    scale: { "invites.cooldown": 0.75, "invites.radius": 1.2 },
-    label: "Hydra's Many Heads: 💌s come quicker and land a little more easily"
-  },
   character: { posture: { head: [0.02, 0.02], body: 0 }, quirk: "rise", every: [5, 9], for: 1.4 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
