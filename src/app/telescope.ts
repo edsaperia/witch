@@ -6,6 +6,7 @@
 // the house's tenth round her; the view draws from the crow's nest (render/view/camera.ts placeTelescope), at telescope.resolution
 // (lowGpuResolution on an integrated GPU, Ed's Intel UHD).
 import { newTelescope, stepTelescope, telescopeFov, telescopeMagnification, turnTelescope, wrapBearing, type Telescope, type TelescopeTuning } from "../rules/telescope";
+import { bindings, keysName, padName, type ActionId } from "../platform/bindings";
 
 /** The arrow keys, while she looks: the telescope's (taken before the game's input sees them, as a station's panel takes them). */
 const ARROWS: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
@@ -86,7 +87,7 @@ export class TelescopeView {
   /** A frame (real seconds), with her controls as read (WASD and the left stick in moveX/moveZ: the arrows are the telescope's):
    *  the aiming keys look round (the arrows, the right stick, the d-pad: main.ts gives it the d-pad), and the mouse as it moves;
    *  the wheel, Z and X and the shoulder buttons zoom; WASD and the left stick look round too (she stands still at it: Ed, 2026-10-26,
-   *  "walking away shouldn't work - then we can use the movement keys as buttons"); E (the pad's □) leaves it (Esc pauses over it:
+   *  "walking away shouldn't work - then we can use the movement keys as buttons"); E (the pad's back, ○) leaves it (Esc pauses over it:
    *  platform/freeze.ts takes it first). */
   step(c: { moveX: number; moveZ: number; zoom?: number; sigil?: boolean }, dt: number, T: TelescopeTuning): void {
     if (!this.aim) return;
@@ -94,10 +95,10 @@ export class TelescopeView {
     let lx = Math.abs(c.moveX) > 0.15 ? c.moveX : 0, ly = Math.abs(c.moveZ) > 0.15 ? c.moveZ : 0;
     for (const k of this.held) { lx += ARROWS[k][0]; ly += ARROWS[k][1]; }
     const pad = [...(navigator.getGamepads?.() ?? [])].find(g => g?.connected);
-    if (pad) {
-      const b = (i: number) => !!pad.buttons[i]?.pressed, rx = pad.axes[2] ?? 0, ry = pad.axes[3] ?? 0;
-      lx += (b(15) ? 1 : 0) - (b(14) ? 1 : 0) + (Math.abs(rx) > 0.18 ? rx : 0);
-      ly += (b(13) ? 1 : 0) - (b(12) ? 1 : 0) + (Math.abs(ry) > 0.18 ? ry : 0);
+    if (pad) { // (the menu's directions, the d-pad and the left stick, and the aim stick: platform/bindings.ts)
+      const bs = pad.buttons.map(x => x.pressed), v = (id: ActionId) => bindings.padValue(id, bs, pad.axes);
+      lx += Math.max(v("menu.right"), v("game.aimRight")) - Math.max(v("menu.left"), v("game.aimLeft"));
+      ly += Math.max(v("menu.down"), v("game.aimDown")) - Math.max(v("menu.up"), v("game.aimUp"));
     }
     const l = Math.hypot(lx, ly); if (l > 1) { lx /= l; ly /= l; }
     this.aim = stepTelescope(this.aim, { moveX: lx, moveZ: ly, zoom: c.zoom }, Math.min(dt, 0.1), T); // (a long frame doesn't swing it round)
@@ -113,7 +114,7 @@ export class TelescopeView {
     if (T.vignette !== this.vignette) { this.vignette = T.vignette; this.el.style.background = vignetteCss(T.vignette); } // (live: the pause page's slider)
     const up = Math.round(this.aim.elevation);
     this.drawStrip(this.aim.heading);
-    this.readout.textContent = `${up >= 0 ? "up" : "down"} ${Math.abs(up)}°  ·  ×${telescopeMagnification(T, this.aim.zoom).toFixed(1)}\nthe mouse, ◀ ▶ ▲ ▼ or the right stick look round   wheel / Z X zoom   E □ ⏏`;
+    this.readout.textContent = `${up >= 0 ? "up" : "down"} ${Math.abs(up)}°  ·  ×${telescopeMagnification(T, this.aim.zoom).toFixed(1)}\nthe mouse, ◀ ▶ ▲ ▼ or the sticks look round   wheel / Z X (${padName("menu.zoomIn")} ${padName("menu.zoomOut")}) zoom   ${keysName("menu.back")} ${padName("menu.back")} ⏏`;
   }
 
   /** The compass strip (Ed, 2026-10-23: "Telescope view has a compass at the top"): STRIP.span degrees across, ticks every 15°, the

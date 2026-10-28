@@ -1,0 +1,94 @@
+{
+  "type": "object",
+  "properties": {
+    "actions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "context": {
+            "type": "string",
+            "enum": [
+              "game",
+              "menu",
+              "global"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "about": {
+            "type": "string"
+          },
+          "keys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "mouse": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "left",
+                "right",
+                "middle",
+                "wheelUp",
+                "wheelDown"
+              ]
+            }
+          },
+          "pad": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "cross",
+                "circle",
+                "square",
+                "triangle",
+                "L1",
+                "R1",
+                "L2",
+                "R2",
+                "share",
+                "options",
+                "L3",
+                "R3",
+                "up",
+                "down",
+                "left",
+                "right",
+                "home",
+                "lsUp",
+                "lsDown",
+                "lsLeft",
+                "lsRight",
+                "rsUp",
+                "rsDown",
+                "rsLeft",
+                "rsRight"
+              ]
+            }
+          },
+          "dev": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "context",
+          "name",
+          "about",
+          "keys",
+          "mouse",
+          "pad"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "actions"
+  ]
+}
