@@ -2,7 +2,7 @@
 // the knobs that link keeps from the sliders' carry, Back opening the pause menu, and the quiet fallback to today's reload.
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { BackGuard, chartChoice, chartIsland, linkKnobs, nightFromHref, nightHref, sailHref, sailOrReload, sailParams, sailWay, SAIL_DROPS, stayLabel } from "./sail";
+import { BackGuard, chartChoice, chartIsland, chartOpensOn, linkKnobs, nightFromHref, nightHref, sailHref, sailOrReload, sailParams, sailWay, SAIL_DROPS, stayLabel } from "./sail";
 import { newForestHref } from "./newForest";
 import { carryKnobs } from "./settings";
 import { DECISION_LIST, knobAt, setKnob } from "../ui/decisions";
@@ -172,5 +172,25 @@ describe("choosing the island she's on (Ed, 2026-10-21: \"going to bed does that
     expect(stayLabel("on")).toBe("Back to the party");
     expect(stayLabel("won")).toBe("Back to the party");
     expect(stayLabel("over")).toBe("Back to the afterparty");
+  });
+});
+
+describe("the chart opens on the island she's on (Ed, 2026-10-28: \"When you open the map, the island that's selected should always be the one that you're currently on\")", () => {
+  it("chooses home when she's home, whatever her last voyage", () => {
+    expect(chartOpensOn(undefined, { island: "home", world: 7 }, 7, "fox")).toBe("home");
+  });
+  it("chooses the island she's on, not the last one she sailed to or the default", () => {
+    expect(chartOpensOn(undefined, { island: "fox", world: 7 }, 7, "bear")).toBe("fox");
+    expect(chartOpensOn(undefined, { island: "bear", world: 7 }, 7, undefined)).toBe("bear");
+  });
+  it("keeps a page's own start, and with no night under it (or another world's chart) her last voyage, else home", () => {
+    expect(chartOpensOn("home", { island: "fox", world: 7 }, 7, "bear")).toBe("home");
+    expect(chartOpensOn(undefined, undefined, 7, "bear")).toBe("bear");
+    expect(chartOpensOn(undefined, { island: "fox", world: 7 }, 9, "bear")).toBe("bear");
+    expect(chartOpensOn(undefined, null, 7, undefined)).toBe("home");
+  });
+  it("is what the chart view chooses as it opens, however it's opened (app/chartView.ts)", () => {
+    const src = readFileSync(new URL("./chartView.ts", import.meta.url), "utf8");
+    expect(src).toMatch(/choose\(chartOpensOn\(opts\.start, opts\.here, worldNow\(\), save\.voyages\.at\(-1\)\?\.to\), true, false\)/);
   });
 });

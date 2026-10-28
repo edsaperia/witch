@@ -25,7 +25,7 @@ import { stepTo } from "./chartNav";
 import type { OutlineAsk, OutlineDone } from "./chartOutlines.worker";
 import { writeArrival } from "./arrival";
 import { chartOrder, islandPhase, OUTLINE_STEP } from "./chartWarm";
-import { chartChoice, type ChartHere } from "./sail";
+import { chartChoice, chartOpensOn, type ChartHere } from "./sail";
 
 export type ChartMode = "look" | "sail" | "miniature";
 /** Where the chart's flight hands over to the game's dive (the tuning's arrive.handoff; Ed, 2026-10-24: "maybe it comes from further
@@ -460,7 +460,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   setTimeout(() => {
     if (disposed) return;
     build();
-    choose(opts.start ?? save.voyages.at(-1)?.to ?? "home", true, false);
+    choose(chartOpensOn(opts.start, opts.here, worldNow(), save.voyages.at(-1)?.to), true, false); // (the island she's on, however it's opened: app/sail.ts)
     bakeFor(likely()); // (the next island's trees drawn ahead from the moment the chart opens: app/landingBake.ts)
   }, 50);
 
