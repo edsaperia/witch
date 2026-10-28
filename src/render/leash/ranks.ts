@@ -36,14 +36,14 @@ export interface RankKnobs {
    *  (fading over the last `fade`); the spell's spot `south` m south of it, `size` m across, fully on within `near` m and gone past
    *  `far`; the cast's ring of `bars` bars `radius` m round the stone's foot, each step `cell` m; the conversion `convert` seconds. */
   stones?: { range: number; fade: number; south: number; size: number; near: number; far: number; bars: number; radius: number; cell: number; convert: number };
-  /** The leashes as chains (render/leash/chain.ts): a link's length (m) by rank, baby to legend; a legend's tether's links `tether` times
+  /** The leashes as chains (render/leash/chain.ts): a link's length (m) by rank, youth to legend (babies have no leash: Ed, 2026-10-11, and again 2026-10-28); a legend's tether's links `tether` times
    *  its rank's; a slack leash `slack` longer than its span; and their motion (chain.ts ChainMotion: damping, gravity, arcPull,
    *  iterations, jump). */
   chain?: { link: number[]; tether: number; slack: number; damping: number; gravity: number; arcPull: number; iterations: number; jump: number };
 }
 
 export const STONES_DEFAULT = { range: 90, fade: 20, south: 4, size: 4.4, near: 10, far: 20, bars: 36, radius: 4.4, cell: 0.55, convert: 2.4 };
-export const CHAIN_DEFAULT = { link: [0.5, 0.62, 0.78, 1], tether: 1.3, slack: 0.12, damping: 0.96, gravity: 9.8, arcPull: 60, iterations: 6, jump: 8 };
+export const CHAIN_DEFAULT = { link: [0.62, 0.78, 1], tether: 1.3, slack: 0.12, damping: 0.96, gravity: 9.8, arcPull: 60, iterations: 6, jump: 8 };
 
 export const RANKS_DEFAULT: RankKnobs = {
   on: true, hex: 6, glyph: 5,

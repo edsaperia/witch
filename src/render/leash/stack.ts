@@ -161,7 +161,7 @@ export function drawBond(lv: LeashView, time: number, slotPos: Map<number, THREE
       // sigil) to it, real chain physics pulled toward an upward bow, high while it's slack and flattening as it goes taut (Ed,
       // 2026-10-06), a little longer than its span while slack; flashing bright while it holds her down.
       const strain = whole ? 1 : Math.max(0, Math.min(1, (d - L.length * from0) / L.length + ld * 0.5)), lit = 1 + LT2.threadBright * ld + (whole ? 0.6 : 0);
-      const link = CK.link[rankOf(c)], ch = lv.chains.get(id) ?? { links: [] };
+      const link = CK.link[rankOf(c) - 1], ch = lv.chains.get(id) ?? { links: [] };
       lv.chains.set(id, ch); live.add(id);
       const span = Math.hypot(c.x - from.x, 0.5 - from.y, c.z - from.z), arc = Math.min(B.threadArcMax, d * (B.threadArcTaut + (B.threadArcSlack - B.threadArcTaut) * (1 - strain)));
       stepChain(ch, Math.ceil((span * (1 + CK.slack * (1 - strain))) / link), link, from.x, from.y, from.z, c.x, 0.5, c.z, arc, lv.frameDt, CK);
@@ -188,7 +188,7 @@ export function drawBond(lv: LeashView, time: number, slotPos: Map<number, THREE
   // as she comes closer and pulls straight at its end.
   const T = s.tether, TL = T ? g.creatures[T.id] : undefined, tf = T ? slotPos.get(T.id) : undefined;
   if (chains && T && TL && !TL.gone && tf) {
-    const link = CK.link[3] * CK.tether, ch = lv.chains.get(T.id) ?? { links: [] }, len = Math.hypot(T.length, tf.y - 0.5), n = Math.max(1, Math.ceil(len / link));
+    const link = CK.link[2] * CK.tether, ch = lv.chains.get(T.id) ?? { links: [] }, len = Math.hypot(T.length, tf.y - 0.5), n = Math.max(1, Math.ceil(len / link));
     lv.chains.set(T.id, ch); live.add(T.id);
     const span = Math.hypot(TL.x - tf.x, 0.5 - tf.y, TL.z - tf.z), col = lv.colOf(TL), taut = g.witches[0]?.pinned?.id === T.id ? 1.4 : 1;
     stepChain(ch, n, Math.max(link, span / n), tf.x, tf.y, tf.z, TL.x, 0.5, TL.z, bowOf(span, n * link, 0.3), lv.frameDt, CK);
