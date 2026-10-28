@@ -11,6 +11,7 @@ import type { Tuning } from "../rules/tuning";
 import { hashText } from "../render/artCache";
 import { tuningFromLink } from "./linkParams";
 import { applySavedSettings } from "./settings";
+import { applySettings, currentSettings } from "./playerSettings";
 import { applyLoadRungs } from "./ladder";
 import { getPrep, type PrepAsk, type PrepRecord } from "./mapPrepStore";
 
@@ -28,6 +29,7 @@ export function sailTuning(island: string, world: number | undefined, seed: numb
   const { tuning } = tuningFromLink(params);
   applySavedSettings(tuning, undefined, new Set());
   applyLoadRungs(tuning);
+  applySettings(currentSettings(), tuning); // (as the night's will be: app/night.ts)
   return tuning;
 }
 
@@ -111,6 +113,7 @@ export function startBootMapPrep(seed: number, params: URLSearchParams, ms = 100
     const linkSets = new Set((params.get("set") ?? "").split(";").map(p => p.split("=")[0]).filter(Boolean));
     applySavedSettings(tuning, undefined, linkSets);
     applyLoadRungs(tuning, linkSets); // (as the night's will be: app/night.ts)
+    applySettings(currentSettings(), tuning);
     const job = prepInWorker(seed, tuning, true, false);
     const late = setTimeout(() => job.stop(), ms);
     return job.done.then(r => { clearTimeout(late); return r && typeof r === "object" ? r : null; });

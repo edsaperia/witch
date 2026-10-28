@@ -17,7 +17,7 @@ import { bindings } from "./bindings";
 const STILL: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 /** The pause page's own pieces: above the shield while frozen, and the only things keys and the mouse reach then (its test
  *  sliders, its Controls / What's new / Options buttons and their panel, the Music Lab, the new-build notice, the freeze's stamp). */
-export const PAUSE_UI = ["#pause-sliders", "#pause-btns", ".corner-panel", "#music-lab", "#new-build", "#freeze-marker", "#freeze-stamp"];
+export const PAUSE_UI = ["#settings-page", "#pause-sliders", "#pause-btns", ".corner-panel", "#music-lab", "#new-build", "#freeze-marker", "#freeze-stamp"];
 /** Over every overlay (the highest is the corner panel's 62). */
 const PAUSE_Z = 1000;
 const LAYER_CSS = `#pause-shield { position: fixed; inset: 0; z-index: ${PAUSE_Z}; display: none; }
@@ -95,6 +95,9 @@ export class Freeze {
     const g = this.game;
     for (let i = 0; i < n; i++) { g.clock.paused = false; stepGame(g, STILL, STEP); g.clock.paused = true; }
   }
+
+  /** The real pad (everyone else sees none while frozen): the Settings page reads it (ui/settingsMenu.ts). */
+  pad(): Gamepad | null { return [...(realPads?.() ?? [])].find(p => p) ?? null; }
 
   /** The pad's pause (Options, standard button 9: platform/bindings.ts global.pause) toggles, read once a frame. */
   pollPad(): void {
