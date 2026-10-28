@@ -18,6 +18,14 @@ A still of the character creator's bedroom for review: the game at 1920×1080, t
 node tools/smoke/bedroom.cjs [now/3,bold/4,ref/5]
 ```
 
+## `bounce-off.cjs`
+
+A 💌 refused by an enraged animal: the built game at 1280×720, her in the debug arena with one SPECIES at level 2 made enraged and stood 9 m off, throwing 💌s at it, frames stepped by hand at a fixed 1/30 s, a crop every EVERY frames saved, then made into…
+
+```
+npm run build && node tools/smoke/bounce-off.cjs <out dir> [species] [seed]
+```
+
 ## `canopy-hole.cjs`
 
 The canopy's hole round her in ground mode: the built game at Ed's window, on the ground in the thickest wood near home on a seed, standing still and then walking, each shot after the art has come in.
@@ -88,7 +96,7 @@ npm run build && node tools/smoke/legend-attack.cjs [out dir] [seed]   (DIST=...
 
 ## `legend-panel.cjs`
 
-The legend circle's explainer: the built game at 1600×900 on a seed, the witch on the ground inside two legends' clearings in turn, each asleep, its boon already hers, restless, angry and happy, and once just outside.
+The legend circle's explainer: the built game at 1600×900 on a seed, the witch on the ground inside two legends' clearings in turn, each asleep, restless, angry, happy, with a wrong kind's sigil put down inside, and once the party's over, and once just…
 
 ```
 npm run build && node tools/smoke/legend-panel.cjs [out dir] [seed]
@@ -100,6 +108,14 @@ A legendary sigil in play: the built game at 1280×720 on a seed; at home's open
 
 ```
 npm run build && node tools/smoke/legendary-sigil.cjs <out dir> [seed] [species]
+```
+
+## `legends-flasks.cjs`
+
+Ed's legends-and-flasks ruling: the built game at 1280×720 on a seed.
+
+```
+npm run build && node tools/smoke/legends-flasks.cjs [out dir] [seed]
 ```
 
 ## `looks.cjs`
@@ -130,6 +146,18 @@ Her sigils in the night: the built game at 1280×720 on a seed; at home's open g
 npm run build && node tools/smoke/magic-sigils.cjs <out dir> [seed]
 ```
 
+## `music-lab-pause.cjs`
+
+The Music Lab on the pause page: the built game at the decks, Esc, the pause page's 🎛 button, the panel open down the right edge; a part muted, its channel's gain at 0; a jump to a section, the cue forced; Esc again, the panel still up; ✕, closed.
+
+## `packs.cjs`
+
+Pack combat's shot sheet: the built game at 1280x720 on a seed, pack combat on, and for each kind its debug arena played headless till each moment of its fight: the tell, the combo, its special, and the lull.
+
+```
+npm run build && node tools/smoke/packs.cjs [out dir] [seed] [kinds]
+```
+
 ## `party-join.cjs`
 
 A creature joining the party: the built game at 1280×720 on a seed; she stands by a wild creature and invites it, and frames are saved as it joins, cropped round it.
@@ -149,6 +177,10 @@ The start of play: the built game at 1280×720 on a seed, frames stepped by hand
 ```
 npm run build && node tools/smoke/partyspell.cjs [out dir] [seed]
 ```
+
+## `pause-on-top.cjs`
+
+The pause page over everything: each overlay opened in turn, then Esc: the pause page's sliders are on top where they stand, nothing of the overlay is hit in the middle of the screen, a key and the pad reach nothing under it, and Esc again comes back to…
 
 ## `places.cjs`
 
@@ -192,6 +224,14 @@ A wild flyer's swoop: the built game at 1280×720, her in the debug arena agains
 
 ```
 npm run build && node tools/smoke/swoop.cjs <out dir> [species] [seed]
+```
+
+## `trail-cooldown.cjs`
+
+One trail, one cooldown: the built game at 1280×720 on a seed; on home's open ground she walks, dodges, takes off, flies, lands and walks on while it drains; frames stepped by hand a fixed 1/20 s, a shot every few, the counter and the trail's length…
+
+```
+npm run build && node tools/smoke/trail-cooldown.cjs <out dir> [seed]
 ```
 
 ## `trail.cjs`

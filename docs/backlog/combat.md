@@ -1,12 +1,12 @@
 # Pack combat and three moves per animal
 
-Backlog (Ed, 2026-10-15, from an interview with Juliet). **Build step 1 built (Ed's go, 2026-10-19): home's ten, behind `combat.packs.on` (on by default since Ed, 2026-10-20); and Phase 1's eleven (Echo, 2026-10-19, the same switch); kinds keep their own moves inside a pack (Ed, 2026-10-20: below, "Kinds keep their own moves"); the rest not built yet.** This page is the plan for fights: animals fighting in packs that combo their moves, and every animal with three moves (melee, ranged, special) so kinds feel different from each other. It overrides DESIGN.md's "Level-ups" line (young one attack, adults two, legends one) for every level but the legends'. **Legends are not part of this work** (Ed): they keep their long-range attack and their own moves.
+Backlog (Ed, 2026-10-15, from an interview with Juliet). **Build step 1 built (Ed's go, 2026-10-19): home's ten, behind `combat.packs.on` (on by default since Ed, 2026-10-20); and Phase 1's eleven (Echo, 2026-10-19, the same switch); kinds keep their own moves inside a pack (Ed, 2026-10-20: below, "Kinds keep their own moves"; #993); every other kind's pack and the knockback, pull, decoy and mind-control specials (step 5: #1048 to #1074, #1050, #1053, #1061); the rest not built yet.** This page is the plan for fights: animals fighting in packs that combo their moves, and every animal with three moves (melee, ranged, special) so kinds feel different from each other. It overrides DESIGN.md's "Level-ups" line (young one attack, adults two, legends one) for every level but the legends'. **Legends are not part of this work** (Ed): they keep their long-range attack and their own moves.
 
 Ed's words: "Maybe they should all have three [melee, ranged, special]. The place where this game should shine is animals fighting in packs (where they combo all their attacks differently) and animals feeling different from each other. If one lunges while two lay down crossfire and the last throws a smoke bomb, that would be exciting."
 
 ![A pack fight: one lunges, two lay crossfire, one throws smoke](pack-fight.png)
 
-## What's there today
+## What's there today (2026-10-15, before packs)
 
 - Every species has **one move per level** (`config/combat.json`, each species' `creature.js`): a melee blow (nip, maul, swipe, slam) for about 50 of the 62 kinds; a shot, lob, beam or pulse for 12 (spit, barb, lob, beam, web, screech, upheaval, slam); legends a quake or their long-range throw.
 - Each kind has a **movement profile** (`config/movement.json`, DESIGN.md "Creature movement"): its speed, its steering behaviours, a **pack tactic** for some (surround, pincer, hit and run, volley, flank, swarm) and a **signature move** (charge, leap, burrow, ambush, swoop, dig, block, slime trail, flash).

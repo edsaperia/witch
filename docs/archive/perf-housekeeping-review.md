@@ -2,7 +2,7 @@
 
 Juliet's overnight pass on Ed's ask: "Have an open think about housekeeping, performance and optimisation. If you can think of any ways to improve it, please do so." Everything here was measured on the prototype at #772's merge (`9ad634d`), in the cloud: 4 cores, Node 22, headless Chromium on a software renderer. Nothing visible, playable or balanced changes in any of the PRs; each states its before and after.
 
-The earlier baseline is `docs/perf/BASELINE-2026-10-07.md` (the rules at late waves on the old ~100-area radius map, the browser's frame by part, the heap). This review takes the parts of the game that have moved since (the island maps, the archipelago, the sea chart) and the housekeeping side (the repository, the bundle, the tests, CI).
+The earlier baseline is `docs/archive/BASELINE-2026-10-07.md` (the rules at late waves on the old ~100-area radius map, the browser's frame by part, the heap). This review takes the parts of the game that have moved since (the island maps, the archipelago, the sea chart) and the housekeeping side (the repository, the bundle, the tests, CI).
 
 ## In short
 
@@ -201,7 +201,7 @@ None of it is worth a rules change tonight: a minor collection a second is not w
 - `tools/README.md` didn't mention eight of the 42 tool folders (`hats`, `hologram`, `islands`, `lakes`, `qa`, `samples`, `shadows`, `soundsystem`, `voice` had no README), and seven folders' counts were behind: `node tools/inventory.mjs` run again in #814.
 - `docs/ART-GUIDE.md` pointed at `tools/art-iterations/sheets.mjs` and `silhouettes.mjs` (#97's, never merged) and `docs/art-iterations/README.md`: now the art-iterations README, the area sheet and the silhouette sheet `art/preview.mjs` draws (#814).
 - `tools/bench/late.cjs` took its spot in map metres, the radius map's; on an island that's the sea (#817 fixes it: metres from the dancefloor).
-- `docs/perf/BASELINE-2026-10-07.md` section 1 and `tools/bench/perf.ts` describe the radius map; the probe now plays an island (section 6 above).
+- `docs/archive/BASELINE-2026-10-07.md` section 1 and `tools/bench/perf.ts` describe the radius map; the probe now plays an island (section 6 above).
 - CLAUDE.md's Testing section says the bench's `rules.ts` is "brought to wave 30"; `run.mjs --quick` goes to 10 and the frames' scenes are described twice (once under Testing, once in the bench README). Harmless.
 - `config/changelog/` holds 493 fragment files (2 MB on disk for 54 kB of text); the archive rule froze `archive.json` at round 9. A second archive of everything with a version would keep the folder small; it's Ed's call since the rule was his.
 

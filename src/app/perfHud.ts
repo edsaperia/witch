@@ -1,5 +1,5 @@
 // ?perf=1: a small performance panel, always on, cheap, for reading the game's costs on Ed's own machine (overnight phase 2;
-// docs/perf/BASELINE-2026-10-07.md: the cloud's software renderer can't say what the "draw" part costs a real CPU). Four times
+// docs/archive/BASELINE-2026-10-07.md: the cloud's software renderer can't say what the "draw" part costs a real CPU). Four times
 // a second: the frames (platform/frameStats.ts's lines: fps, frame times, the CPU's own work, the GPU's where the browser
 // times it); hitches (frames over 50 and 100 ms, in the last minute and since the start); the rules' step; the view's
 // biggest parts, "draw" split into the scene (three.js walking it, its uploads and GL calls) and the post passes after; the
