@@ -7,7 +7,7 @@ import { addDrops, addHearts, drainOf, friendly, hostile, runAway, stun } from "
 import { lull } from "../legends";
 import { bodyRadius } from "../spacing";
 import { FIGHT } from "../movement";
-import { type Attack, type CombatData, COMBAT, counterOf, type Target, type CombatState, creatureMaxHp, type CombatWorld } from "./data";
+import { type Attack, type CombatData, COMBAT, counterOf, type Target, type CombatState, stunWorth, type CombatWorld } from "./data";
 import { targetable, sideOf, truce, guardOf, sheltered, inviting, Grid } from "./targeting";
 import { coverOf } from "./packs";
 
@@ -70,9 +70,9 @@ export function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: 
   if (from && inviting(w, from, o)) return; // (her party's shots and area hits pass the one she's inviting by)
   // Its traits against this kind of blow (Stage 5): shown as strong or resisted.
   const k = counterOf(o.species, a.delivery, D), gd = guardOf(o, a.delivery, time), mult = k.damage * gd.damage;
-  // (combat as orbit slots, Ed 2026-10-28, rules/orbit.ts: no health; the blow's share of its old health fills that share of its 💌
+  // (combat as orbit slots, Ed 2026-10-28, rules/orbit.ts: no health; the blow's share of a full ring's worth, combat.json levels.stun, fills that share of its 💌
   // ring's slots, with hearts if it's an enemy of hers, with 💧s if it's hers or happy)
-  const share = (damage * mult) / creatureMaxHp(o), friend = friendly(o);
+  const share = (damage * mult) / stunWorth(o), friend = friendly(o);
   const full = friend ? addDrops(o, share) : addHearts(o, share, time, drainOf(w.t));
   o.hurtAt = time;
   s.events.push({ kind: "hit", x: o.x, z: o.z, at: time, id: o.id, big: from?.level === LEGEND, counter: mult > 1 ? 1 : mult < 1 ? -1 : 0 });

@@ -38,7 +38,7 @@ export interface Attack {
 }
 
 export interface CombatData {
-  levels: { hp: number[]; dps: number[] };
+  levels: { hp: number[]; dps: number[]; /** A full 💌 ring's worth of blows' damage, by level (combat as orbit slots, rules/orbit.ts: a blow fills its damage over this of the slots); hp when missing. */ stun?: number[] };
   attacks: Record<string, Attack>;
   byLevel: { melee: (string | null)[]; ranged: (string | null)[] };
   ranged: string[];
@@ -237,6 +237,12 @@ const LAST_SCALED = new Map<string, { A: Attack; scale: number; speed: number; o
 export const attackNamed = (name: string, data: CombatData = COMBAT): Attack => scaled(name, data.attacks[name]);
 
 export const maxHp = (level: Level, data: CombatData = COMBAT) => data.levels.hp[Math.min(level, data.levels.hp.length - 1)];
+/** A full 💌 ring's worth of blows' damage on c (levels.stun by its level, times its species' strength, as health was): a blow fills
+ *  its damage over this of its slots (rules/orbit.ts). */
+export const stunWorth = (c: { species: string; level: Level }, data: CombatData = COMBAT) => {
+  const s = data.levels.stun ?? data.levels.hp;
+  return s[Math.min(c.level, s.length - 1)] * strengthOf(c.species, c.level, data);
+};
 
 /** A creature's full health: its level's, times its species' strength. */
 export const creatureMaxHp = (c: { species: string; level: Level }, data: CombatData = COMBAT) => maxHp(c.level, data) * strengthOf(c.species, c.level, data);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attackOf, COMBAT, maxHp, strengthOf } from "./combat";
+import { attackOf, COMBAT, strengthOf } from "./combat";
 import { LEGEND, type Creature, type Level } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING, withTuning, type Tuning } from "./tuning";
@@ -30,6 +30,8 @@ function quiet(t: Tuning = TUNING): Game {
 }
 /** A party animal put down on a sigil where it stands (in its posse there with her in the treetops:
  *  following her up there, it would be travelling, rules/travel.ts). */
+/** Never hit (combat as orbit slots, rules/orbit.ts): no 💧s, no hearts in its slots. */
+const unhurt = (c: Creature) => !c.drops && !(c.fills ?? []).some(v => v < 0);
 function park(g: Game, c: Creature): void { g.leash.stack = g.leash.stack.filter(i => i !== c.id); g.leash.placed.push({ id: c.id, x: c.x, z: c.z, at: g.clock.time }); }
 /** Put a creature at (x, z) as a given kind and level, wild or in the witch's party. */
 function place(g: Game, i: number, species: string, level: Level, x: number, z: number, party = false): Creature {
@@ -102,8 +104,8 @@ describe("combat (Stage 4)", () => {
     const mine = place(g, 0, "wolf", 2, w.x + 2, w.z, true), wild = place(g, 0, "wolf", 2, w.x + 3, w.z);
     g.witch = { ...g.witch, mode: "treetop", lift: 1 };
     run(g, 15);
-    expect(mine.hp ?? maxHp(2)).toBe(maxHp(2));
-    expect(wild.hp ?? maxHp(2)).toBe(maxHp(2));
+    expect(unhurt(mine)).toBe(true);
+    expect(unhurt(wild)).toBe(true);
   }, 60000);
 
   it("babies never attack; wild young and up shoot at the witch on the ground, never over the treetops", () => {
@@ -127,8 +129,8 @@ describe("combat (Stage 4)", () => {
     const g = quiet(), w = g.witch;
     const a = place(g, 0, "owl", 2, w.x + 8, w.z), b = place(g, 0, "toad", 2, w.x + 4, w.z); // the toad between the owl and her
     run(g, 9); // (before she's chatted the toad into her party)
-    expect(a.hp ?? maxHp(2)).toBe(maxHp(2));
-    expect(b.hp ?? maxHp(1)).toBe(maxHp(1));
+    expect(unhurt(a)).toBe(true);
+    expect(unhurt(b)).toBe(true);
   }, 60000);
 });
 
@@ -382,8 +384,8 @@ describe("Ed's Stage 4 rulings", () => {
     place(g, 0, "wolf", 2, w.x + 2, w.z - 1, true);
     g.witch = { ...g.witch, mode: "treetop", lift: 1 };
     run(g, 30);
-    expect(pup.gone).toBeFalsy(); expect(pup.hp ?? maxHp(0)).toBe(maxHp(0));
-    expect(wildPup.gone).toBeFalsy(); expect(wildPup.hp ?? maxHp(0)).toBe(maxHp(0));
+    expect(pup.gone).toBeFalsy(); expect(unhurt(pup)).toBe(true);
+    expect(wildPup.gone).toBeFalsy(); expect(unhurt(wildPup)).toBe(true);
   }, 60000);
 
   it("goes for her within 30 m and lets her go when she rises, or once she's out of its area, range and 30 m; then it walks back", () => {

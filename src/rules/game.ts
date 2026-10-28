@@ -36,7 +36,7 @@ import { isHomeKey, nextSpeakerState, speakerIndex, speakerKey, speakerRadius, s
 import { moonState } from "./moon";
 import { floorEvent, floorLevel, islandKinds, islandSigilOf, neon, newFloor, stepFloor, switchOn, tileOf, type FloorInputs, type FloorState } from "./dancefloor";
 import { SIGIL_NEON } from "../../art/sigils.js";
-import { COMBAT, marchOn, marchSpeed, maxHp, nearestHomeSpeaker, newCombat, startSiege, stepCombat, type CombatState } from "./combat";
+import { COMBAT, marchOn, marchSpeed, nearestHomeSpeaker, newCombat, startSiege, stepCombat, type CombatState } from "./combat";
 import { coarseTurn, fullRadius, inFull, newLodCounts, type LodCounts } from "./simLod";
 import { dropHat, newHat, type HatState } from "./hat";
 import { gatherFloorSigils, setFloorSigils } from "./sigilAvoid";
@@ -1032,7 +1032,7 @@ function stepLegends(g: Game, ids: number[], happyNearest: boolean): void {
     g.tally.stomps = (g.tally.stomps ?? 0) + 1;
   });
   // A happy legend heals to whole over legends.healTime while no enemy is near (balance builder, #80).
-  for (const id of ids) { const c = g.creatures[id]; if (c.legendState === "happy" && c.hp !== undefined && !c.fight?.target) healBy(c, (maxHp(c.level) / LEGENDS.healTime) * STEP, maxHp(c.level), g.clock.time); }
+  for (const id of ids) { const c = g.creatures[id]; if (c.legendState === "happy" && c.drops && !c.fight?.target) healBy(c, STEP / LEGENDS.healTime, 1, g.clock.time); } // (its 💧s, a full set in healTime: rules/orbit.ts)
   if (happyNearest) {
     // Debug (O): the nearest sleeping legend made happy, as if a relic were put down by it.
     let best: Creature | null = null, bd = Infinity;
