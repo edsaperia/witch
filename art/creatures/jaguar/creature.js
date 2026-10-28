@@ -11,12 +11,6 @@ export const CREATURE_JAGUAR = {
   radius: 1,
   attacks: [null, "swipe", "bigswipe", "legendCharge"],
   voice: { family: "cat", pitch: 0.55, glide: 0.5, volume: 0.8 },
-  buff: {
-    name: "Night eyes",
-    kind: "shot",
-    scale: { "invites.range": 1.3, "invites.speed": 1.15 },
-    label: "Jaguar's Night eyes: 💌s fly further and a little faster"
-  },
   character: { posture: { head: [0.02, -0.03], body: -0.02 }, quirk: "tailflick", every: [5, 9], for: 0.9 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },

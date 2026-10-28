@@ -16,12 +16,6 @@ export const CREATURE_WOLF = {
   radius: 0.9,
   temperament: "curious",
   voice: { family: "canid" },
-  buff: {
-    name: "Howl",
-    kind: "shot",
-    mods: { ring: 1 },
-    label: "Wolf's Howl: every 5th burst a ring of 💌s round you"
-  },
   character: { posture: { head: [0.05, -0.05], body: -0.02 }, quirk: "howl", every: [7, 13], for: 1.8 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },

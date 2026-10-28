@@ -460,16 +460,15 @@ export class LeashView {
     let newest = seen;
     for (const W of g.witches) {
       for (const L of W.invites.letters) {
-        if (L.kind === "cache") continue;
         const sp = Math.hypot(L.vx, L.vz);
         if (sp < 1e-3) continue;
         const ux = L.vx / sp, uz = L.vz / sp;
         for (let j = 1; j <= 9; j++) {
           const back = j * 0.4, f = L.flown - back;
           if (f < 0) break;
-          const c = j % 2 ? AMBER : ROSE, y = L.kind === "orbit" ? 1.3 : lobHeight(f, L.range, arc);
+          const c = j % 2 ? AMBER : ROSE, y = lobHeight(f, L.range, arc);
           const [tx, ty, tz] = letterAt(this.herOffset, L.x - ux * back, y, L.z - uz * back); // (in the house, behind it as drawn: render/invites.ts)
-          this.standing.add(tx, ty, tz, (L.small ? 0.5 : 0.8) * (1 - j * 0.07), dot, c[0], c[1], c[2], 0.9 * (1 - j / 10));
+          this.standing.add(tx, ty, tz, 0.8 * (1 - j * 0.07), dot, c[0], c[1], c[2], 0.9 * (1 - j / 10));
         }
       }
       for (const e of W.invites.events) {

@@ -1,0 +1,15 @@
+{
+  "readme": "Witch tuning. Edit the numbers, push, and the playable link rebuilds. Distances are metres, times seconds, angles degrees. Keys starting with _ are notes.",
+  "sections": "The knobs come in sections (housekeeping, 2026-10-07): map, forest, witch, army, creatures, legends, party, view, light; each opens with a \"__<name>\" note. Within one, a note says what the knobs after it do.",
+  "order": [
+    "map",
+    "forest",
+    "witch",
+    "army",
+    "creatures",
+    "legends",
+    "party",
+    "view",
+    "light"
+  ]
+}

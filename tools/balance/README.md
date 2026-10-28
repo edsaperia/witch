@@ -10,14 +10,6 @@ A bot's run, as a trace: every change in what it's doing, with the clock, her pl
 node tools/balance/bottrace.mjs [--seed 1000] [--bot skilled] [--island 10] [--kind badger (that kind's island)] [--time 900] [--every 0 (also a line every N s)] [--game (the bot game's options)] [--feed]
 ```
 
-## `buffs.mjs`
-
-💌 throughput under stacked legend buffs: how fast she can fill a crowd's affection with no buffs, typical builds and worst-case stacks, with the per-animal hit gap and other limits; then waves survived in the creature-state model with each build.
-
-```
-node tools/balance/buffs.mjs [--seeds 4] [--gap 120] [--cap 60] [--skills 0.5,1] [--policies defend,leash] [--relics 0] [--no-sim]
-```
-
 ## `charges.mjs`
 
 Can she walk away from a charge or a leap?

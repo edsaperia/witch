@@ -57,19 +57,22 @@ function pushAndRise(g: Game, x: number, z: number, ux: number, uz: number, how:
 }
 
 describe("rising in the treehouse, through the page's controls", () => {
+  // A room a test (all of them in one was 264 pushes on the pad, 36 s alone and past its 60 s cap under a full run's load), one
+  // night shared by a kind's rooms as the one test shared it.
   for (const how of ["pad", "keys"] as const) {
-    it(`${how}: with no broom, pushed against every room's walls, she stays on the ground`, () => {
-      const g = inHouse(), d = deckOf(g.map, g.tuning)!, rose: string[] = [];
-      for (const r of HOUSE_ROOMS.rooms.filter(q => !q.locked && q.id !== "terrace")) { // (the Terrace: rising, and its open rim, are hers)
+    let night: Game | null = null;
+    for (const r of HOUSE_ROOMS.rooms.filter(q => !q.locked && q.id !== "terrace")) { // (the Terrace: rising, and its open rim, are hers)
+      it(`${how}: with no broom, pushed against the ${r.id}'s walls, she stays on the ground`, () => {
+        const g = (night ??= inHouse()), d = deckOf(g.map, g.tuning)!, rose: string[] = [];
         const c = fromPlan(d, (r.x0 + r.x1) / 2, (r.z0 + r.z1) / 2);
         for (let a = 0; a < 360; a += how === "pad" ? 15 : 45) {
           const u = { x: Math.cos((a * Math.PI) / 180), z: Math.sin((a * Math.PI) / 180) };
           const m = pushAndRise(g, c.x, c.z, u.x, u.z, how);
           if (m !== "ground" && m !== "terrace") rose.push(`${r.id} ${a}°: ${m}`);
         }
-      }
-      expect(rose).toEqual([]);
-    });
+        expect(rose).toEqual([]);
+      });
+    }
   }
 
   it("pad: with no broom, at each bedroom station, the stick held toward it, X doesn't take her off", () => {
@@ -90,10 +93,15 @@ describe("rising in the treehouse, through the page's controls", () => {
   for (const how of ["pad", "keys"] as const) {
     it(`${how}: with her broom, rise takes her up from every room, pushed against its wall or not`, () => {
       const stayed: string[] = [];
+      // One night for every case (a new one each was 33 maps, 50 s of the test's 60 s cap), its first dodge's worth of cooldown
+      // over once; each case starts from her as she was then (her cooldowns and landing put back), so none follows from the last.
+      const g = inHouse(true), d = deckOf(g.map, g.tuning)!;
+      for (let i = 0; i < 3 / STEP; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, STEP);
+      const fresh = structuredClone(g.witches[0]);
       for (const r of HOUSE_ROOMS.rooms.filter(q => !q.locked && q.id !== "terrace")) {
         for (const a of [null, 0, 180]) {
-          const g = inHouse(true), d = deckOf(g.map, g.tuning)!, c = fromPlan(d, (r.x0 + r.x1) / 2, (r.z0 + r.z1) / 2);
-          for (let i = 0; i < 3 / STEP; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, STEP); // (the night's first dodge's worth of cooldown over)
+          Object.assign(g.witches[0], structuredClone(fresh));
+          const c = fromPlan(d, (r.x0 + r.x1) / 2, (r.z0 + r.z1) / 2);
           const m = a === null ? pushAndRise(g, c.x, c.z, 0, 0, how, false) : pushAndRise(g, c.x, c.z, Math.cos((a * Math.PI) / 180), Math.sin((a * Math.PI) / 180), how);
           if (m !== "rising" && m !== "treetop" && m !== "terrace") stayed.push(`${r.id} ${a ?? "still"}: ${m}`);
         }

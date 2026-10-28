@@ -2,7 +2,7 @@
 
 Ed, 2026-10-12: "let's see if we can reasonably put trees into areas with no trees". Each area here has no trees, or very few, today. Each proposal uses only the tree species the game already has, and tries to keep the area's character.
 
-Each `<area>.png` shows a small scene: the area's own floor, walls, small pieces, big pieces and set piece as the art draws them today (left), then the same with the proposed trees (right). `all.png` has all twelve together.
+Each `<area>.png` (on claude/ed-shots, [previews/archive/art-review/mocks/trees-for-open-areas/](https://github.com/edsaperia/witch/tree/claude/ed-shots/previews/archive/art-review/mocks/trees-for-open-areas)) shows a small scene: the area's own floor, walls, small pieces, big pieces and set piece as the art draws them today (left), then the same with the proposed trees (right). [`all.png`](https://github.com/edsaperia/witch/blob/claude/ed-shots/previews/archive/art-review/mocks/trees-for-open-areas/all.png) has all twelve together.
 
 These are mocks composed from the real sprites by `tools/flora/vignette.mjs` (the proposals are in `spec.json`), not the game's own placement. The added trees are drawn at the game's tall height class. No game code is changed.
 

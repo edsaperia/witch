@@ -1,0 +1,204 @@
+{
+  "section": "legends",
+  "about": "Legends: their circles, dreams, quests, rage and the wild ones.",
+  "knobs": {
+    "legendCircle": {
+      "what": "Standing in a sleeping or restless legend's circle slows the whole world down.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-06",
+          "quote": "the music and countdown get ~10x slower, things still move on the outside but very slowly, the music audibly slows down (this is a good audio cue for the transition) ... freeze only if the legend is asleep or restless. Enraged creatures outside the circle don't enter it. Your invitations disappear if they go outside the circle from inside"
+        }
+      ],
+      "notes": "A legend's circle [1]: slow: while she stands on the ground in the circle of a legend asleep or restless, the world (the clock, the waves' countdown, the music, every creature, siege and timer) runs at scale of its speed, easing there and back over ease seconds as she crosses its edge; she and everything of hers (moving, blinking, rising and landing, her sigils, her 💌s and their cooldowns, her hat) keep full speed. on false (or ?slow=0) for none. A calm circle (its legend asleep or restless) keeps enraged creatures out whether she's there or not, and a 💌 leaving it from inside vanishes in a sparkle."
+    },
+    "dreams": {
+      "what": "A sleeping legend's dream bubble, showing the quest it wants, and a pointer to where to go.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-05"
+        }
+      ],
+      "notes": "A sleeping legend's dream (or nightmare) bubble, and its pointer to the nearest runestone of the area type it dreams of [1]: shown only while she's on the ground within range metres of the legend (about its area's clearing and a little more); never from the treetops. A nightmare whose quest has closed shows its face alone."
+    },
+    "dreams.nightmare": {
+      "what": "a restless legend's one face [1], slightly sad to angry: faces[k] from restlessness at[k] on.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-05"
+        }
+      ]
+    },
+    "dreams.sleepy": {
+      "what": "A sleeping legend's sleepy face beside its quest sigil, now and then another face.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-06"
+        }
+      ],
+      "notes": "while it sleeps giving its quest (its dream open, no nightmare), its face beside the sigil: mostly face (😴), and now and then, for one turn of every seconds, one of faces instead; each turn its own throw per legend (seeded by its id, so legends never change together), face with chance weight. A face the browser can't draw (🫠 and 😮‍💨 are new) shows as fallback."
+    },
+    "dreams.cycle": {
+      "what": "the pixel thought bubble shows one symbol for hold seconds, the face, then the sigil it dreams of, then the face again; a flask share of the sigil's turns (seeded per legend and turn) show the flask's relic sigil instead [2]; each fades in and out over fade seconds.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-08",
+          "quote": "just one at a time, alternating between emoji and the quest sigil, and occasionally the flask sigil"
+        },
+        {
+          "by": null,
+          "date": "2026-10-18",
+          "rest": "0 since Ed's ruling: a flask no longer wakes a legend, so it no longer dreams of one"
+        }
+      ]
+    },
+    "legends": {
+      "what": "Which areas have a legend, and how far a happy one reaches.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-06",
+          "quote": [
+            "Legends should only appear in about half of areas (we can test this ratio); every area makes them too common.",
+            "it should be more like 1/5"
+          ],
+          "rest": "share: the fraction of the areas (home never) with a sleeping legend (Ed, 2026-10-08:; 0.5 before), seeded per map and spread so they don't clump (no more than two neighbouring areas together where the map allows)"
+        },
+        {
+          "by": null,
+          "date": "2026-10-06"
+        }
+      ],
+      "notes": ". The rest have no legend: no clearing, quest, restlessness or legend music. Read as the map is made: the decisions panel reloads. Ed's answers on #259 [2]: happyRange, a happy legend's reach in metres (relic allies: \"They stay home, but if they're not useful enough right now, make their range longer\")."
+    },
+    "legends.earlyQuest": {
+      "what": "One of the first areas the waves wake has a legend dreaming of a creature from a nearby area, so there's an early quest.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-07",
+          "quote": "for variety we could fix one of [first, second, third] having a legend that wants one of the first three [not itself] so there's always an easy quest to do in the first third"
+        }
+      ],
+      "links": [
+        "rules/quest.ts",
+        "rules/map.ts"
+      ],
+      "notes": "one of the first three areas the waves wake (seeded), one with a legend, dreams of the baby of another of those three's kind (rules/quest.ts earlyQuest); if none of them has a legend, one of them (seeded, one whose kind another of the three lacks) is given one as the map is made, moved from the legend area the route reaches last (or, where that would clump legend areas together, from the one beside it), so share holds (rules/map.ts); false: every dream as before."
+    },
+    "legends.areas": {
+      "what": "Each legend gets an area of its own beside one of its kind's areas.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-26",
+          "quote": "legends are spawned in additional areas that have legend circles where runestones usually are",
+          "rest": "all legends in them"
+        }
+      ],
+      "links": [
+        "rules/map.ts"
+      ],
+      "notes": "on, each of the night's legends gets an area of its own grown out of the island beside one of its kind's areas (its pair), taking its kind and look, with no runestone, soundsystem or route stop, its circle at its heart; the island grows by them; the pair counts as one area for a legend's rage and for creatures attacking and defending (rules/map.ts areaOf); false: legends in their own kind's areas as before."
+    },
+    "legends.questLater": {
+      "what": "a legend dreams only of a kind living in an area later on the route than its own, within questCap areas; failing that, the kind of the nearest later area; with no later area, any kind (the early easy quest keeps its own pick); false: any kind as before.",
+      "decisions": [
+        {
+          "by": "Ed's core design",
+          "date": "2026-10-07",
+          "rest": "relayed by the coordinator: quests point to later areas, deeper in and wilder now the forest is grown before the waves"
+        }
+      ]
+    },
+    "legends.bombard": {
+      "what": "(\"Legend bombards, but prioritises you\"): an angry legend with no witch in its reach throws the first lob or beam of its volley at the nearest standing soundsystem within range metres, damage a hit (of combat.soundsystemHealth); a charging legend lobs at it rather than charge."
+    },
+    "legends.stomp": {
+      "what": "A legend turning angry destroys its own area's soundsystem at once.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-06",
+          "quote": [
+            "perhaps",
+            "an angry legend simply stamps on the soundsystem in its area, destroying immediately. The angry legend waking timer may have to be longer"
+          ],
+          "rest": "a"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-06",
+          "quote": "It would be funny if you could leash an elder, but it's so heavy that it stops you moving at all outside the leash slack distance, and it doesn't move towards you at all. Maybe you should be able to turn a happy legend into a party legend with an absurd number of invites (100?) and then pick up its sigil but it's totally useless",
+          "rest": "rules/partyLegend.ts"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-06",
+          "quote": "They're a high-roll mechanic; you don't know how hard the quest will be before you go off to try and find the creature",
+          "rest": "the gamble kept"
+        }
+      ],
+      "links": [
+        "rules/partyLegend.ts"
+      ],
+      "notes": "on, a legend turning angry while its own area's soundsystem stands destroys it at once (ruined, as any fallen one), and legends are restless angryAfter seconds before they anger (legends.json angryAfter otherwise). The party-legend Easter egg [2]: partyEgg turns it on; a happy legend (by its relic or its quest) then takes 💌s, its meter partyHits long, draining partyDrain of a full meter a second; full, it's a party legend (it dances in place, fights no one, its rune at its feet); picked up, she can go anywhere within partyReach metres of it (the leash's slack: 0.85 of leash.length) and not a step further, and it never comes to her; put down (E), it's let go where it stands. questNear: 0, a legend dreams of any kind on the map [3]; N, one of the N nearest other kinds round it, an area nearer home counting as nearer (a knob for trying it)."
+    },
+    "wildLegends": {
+      "what": "What legends are for: optional quests, relics for powerful allies, and danger to her babies in sieges.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-06"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-04"
+        },
+        {
+          "by": null,
+          "date": "2026-10-05",
+          "quote": "Legends, redesigned",
+          "rest": "redesigned, DESIGN.md"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-08",
+          "rest": "legends.share, never home; half before"
+        },
+        {
+          "by": null,
+          "date": "2026-10-04",
+          "rest": "wake seconds of heaving out of the ground when its wave woke it; heal hp a second while no enemy was near"
+        }
+      ],
+      "links": [
+        "config/legends.json"
+      ],
+      "notes": "What legends are for [1]: a mostly optional layer of tasks; quick players do their quests (open as long as a legend sleeps; legend buffs designed 5 Oct, #87, removed 28 Oct), lucky ones find relics for powerful allies, and a losing player sees their babies hurt in sieges and them enraged, the loss spiral faster and more dramatic (his words in DESIGN.md, \"Legends, redesigned\", and config/legends.json). Area legends [2][3]: about a fifth of the areas [4] have one legend of its kind, sleeping, sunk into the ground like scenery (sink: the share of it under the ground, moss: how far its colours go toward moss). Waves no longer wake it: it grows restless, then angry, while its area has none of its kind, and a relic by it makes it happy (config/legends.json). A happy legend defends against the enraged within guard metres of where it stands; worn down, it goes back to sleep, any buff it gave kept. wake and heal are the first design's [5]; the redesigned rules don't read them (a happy one heals over legends.json healTime). Drawn scale times a legend's size, swelling by breathe as it breathes (once every breathEvery seconds); awake, an aura on the ground aura metres across and, from the treetops, a glow over the canopy (glow its strength) in a dark mix of its sigil's colour."
+    },
+    "wildLegends.seen.dark": {
+      "what": "a legend whose floored look (seen.floor times its coat's luminance, its body colour as baked: render/legendLight.ts) is under seen.dark has its floor raised to seen.dark over that luminance, at most seen.liftMax; the bear, the boar and the others as dark are caught, lighter legends stay as they are.",
+      "also": [
+        "wildLegends.seen.liftMax"
+      ],
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-07",
+          "quote": "lift the night body light only for legends whose coats are dark enough to vanish at night",
+          "rest": "by a measured rule, not a list"
+        }
+      ],
+      "links": [
+        "render/legendLight.ts"
+      ]
+    },
+    "legendSpeed": {}
+  }
+}

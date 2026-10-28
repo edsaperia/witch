@@ -12,5 +12,4 @@ node tools/art-lab/build.mjs
 
 ## Also here
 
-- `dist`
 - `witch-art-lab.html`

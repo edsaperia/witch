@@ -1,11 +1,11 @@
-const http = require("http"), fs = require("fs"), path = require("path");
-let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
-const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist"));
-const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".woff2": "font/woff2", ".ogg": "audio/ogg", ".webp": "image/webp" };
 // Issue #1091 (Foxtrot's neutral pair, 2026-10-24): the see-through at full opacity (occlusion.fadeOpacity 1) should draw what the
 // see-through off (occlusion.on false) draws; at seed 886806, on the ground at 3250,2698, it differed by 440 px. One frame held (the
 // game's time still), drawn with each, then again with each suspect switched off, to bisect; where they differ saved as a PNG.
 //   npm run build && node tools/bench/neutral-hunt.cjs [out dir]   (DIST=, SEED=, AT=x,z, ONLY=base,nohiz,...; FOX=0 placed straight, not as the smoke places her; RAF=1 each picture taken as the smoke's check takes it; NOAT=1 started as the smoke starts her)
+const http = require("http"), fs = require("fs"), path = require("path");
+let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
+const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist"));
+const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".woff2": "font/woff2", ".ogg": "audio/ogg", ".webp": "image/webp" };
 const SEED = process.env.SEED || "886806", AT = (process.env.AT || "3250,2698").split(",").map(Number);
 const uni = (name, v) => `{ let u = null; v.scene.traverse(o => { u ??= o.material?.uniforms?.${name} ?? null; }); if (!u) throw new Error("no ${name}"); u.value = ${v}; }`;
 const SUSPECTS = {

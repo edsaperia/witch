@@ -201,7 +201,6 @@
   },
   "legends": {
    "share": 0.5,
-   "buffPower": 1,
    "happyRange": 420,
    "questCap": 5,
    "questFar": 0.5,

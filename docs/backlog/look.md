@@ -1,6 +1,6 @@
 # The look of the world
 
-Notes (Ed, 2026-10-13). **Nothing here is started; don't start without Ed's go.**
+Notes (Ed, 2026-10-13). **Not started unless marked done; don't start without Ed's go.**
 
 ## Softer borders between areas
 

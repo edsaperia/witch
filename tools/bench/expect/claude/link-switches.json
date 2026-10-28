@@ -1,0 +1,3 @@
+{
+  "reason": "docs work (Ed, 2026-10-28): the link switches as data (config/link-switches.json, the doc written from it, a test) and the explainer brought up to date; no game code changes, so nothing the bench compares should differ"
+}

@@ -148,7 +148,7 @@ export async function startNight(page: Page, spec: NightSpec): Promise<Night> {
   const game = newGame(seed, tuning, 1, map);
   performance.mark("witch:game");
   const cleanups: (() => void)[] = [];
-  // The link's switches for the game: the spell, buffs, quest, party's over, arena and waves (app/gameParams.ts).
+  // The link's switches for the game: the spell, quest, party's over, arena and waves (app/gameParams.ts).
   cleanups.push(gameFromLink(game, tuning, params));
   wearHat(game, page.look());
   // The playtest log (Ed, 2026-10-04): a new run each night, or the nights would merge under the first's seed.

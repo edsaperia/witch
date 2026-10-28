@@ -1,0 +1,540 @@
+{
+  "section": "creatures",
+  "about": "Creatures: how many and how they grow, move, notice, nap, guard and fight.",
+  "knobs": {
+    "fight": {
+      "what": "The scale and speed fights are played at, with creatures running at about her speed.",
+      "decisions": [
+        {
+          "by": "Ed's motion scale pass",
+          "date": "2026-10-04",
+          "quote": "the animals don't move around enough when attacking and defending"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-06",
+          "quote": "Charging creatures can easily be evaded by just walking away from them. They should jump far enough or charge far enough that this doesn't work"
+        }
+      ],
+      "notes": "The fight's scale and speed [1]: fights are drawn and played at the ground camera's scale, creatures running at about the witch's speed and their patterns about 50 m across. Every leap: reach times how far off it leaps from, a pounce (the lynx's) landing through metres past its target (a slam, the toad's, still onto it); Walking away is no escape [2]: charge.chase, a charge runs at least that many times her ground speed and on until it has caught up with her walking straight down its lane (its own time if longer), so stepping out of the lane at its tell, a blink sideways or the treetops get her clear, walking doesn't (0: off); leap.lead, a leap comes down where she'll be when it lands, as she's going at take-off (that share of it; 0: where she was)."
+    },
+    "fight.scale": {
+      "what": "every length in a fight times this (attack ranges, lunges, area radii, beam widths, knockback, the packs' patterns and spacing, pursuit and guard reach, aggro)."
+    },
+    "fight.speed": {
+      "what": "every fight speed times this (running, charging, lunging, shots)."
+    },
+    "fight.momentum": {
+      "what": "How heavily creatures in a fight speed up, brake and turn.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-05",
+          "quote": "they should have more momentum"
+        }
+      ],
+      "notes": "how heavily creatures in a fight change speed and turn: their accelerations, braking and turn rates divided by it (2: twice as heavy). Try ?fightScale= and ?fightSpeed=, or change them live on the pause page (Esc): its Debug knobs sliders, or [ and ] for scale; and ' for speed,, and. for momentum."
+    },
+    "fight.charge": {
+      "what": "every species' charge (movement.json) scaled: reach its run's time and overshoot past its target, turn its turn rate (lower: wider arcs), brake how hard it slows (lower: more momentum).",
+      "also": [
+        "fight.leap"
+      ],
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-06",
+          "rest": "round 13: 'charging and jumping creatures should charge or jump much further... damaging whenever they're touched while in attack mode... much more momentum, travelling in wide arcs'"
+        }
+      ]
+    },
+    "fight.charge.contact": {
+      "what": "it hurts every foe it touches on the way, once each (her grace making one charge one hit). a pounce hurts whoever it touches in the air."
+    },
+    "fight.charge.miss": {
+      "what": "a charge that struck nothing stands winded that many seconds after (stars round its head), an opening for her 💌s [1].",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-06",
+          "quote": "We want to reward skilful use of blink and accurate invitation aiming"
+        }
+      ]
+    },
+    "creatureMomentum": {
+      "what": "Creatures chasing her carry momentum on their run-in and wind-up, so she can dodge past them.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-27",
+          "quote": "most animals don't have enough momentum and can turn too sharply, or alternatively track the witch too quickly and accurately ... less worth dodging"
+        },
+        {
+          "by": null,
+          "date": null,
+          "quote": [
+            "all these as options, which we can tweak later",
+            "prediction is ok, but it should mostly be for telegraphed attacks",
+            "each creature can have different amounts of each"
+          ],
+          "rest": "rules/momentum.ts"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-27"
+        }
+      ],
+      "links": [
+        "rules/momentum.ts"
+      ],
+      "notes": "Creature momentum [1][2], chasing the witch only (fights between creatures, legends and marchers as before): on its run-in and its wind-up (a pack's tell and combo too), never its committed lunge, which goes where the wind-up aimed, reaching up to a quarter again its usual length if the run-in left it short [3], so a strike that starts stays reliable. The pause page's sliders (Creature momentum) are global: turn, delay and strikeLead multiply every species' values, chaseLead adds seconds to every species' own; on false: as before."
+    },
+    "creatureMomentum.turn": {
+      "what": "its heading swings at most turn / (1 + its speed / k) degrees a second (also divided by fight.momentum), slowing to turn tighter when she's far off its heading, so a fast one sidestepped overshoots in an arc."
+    },
+    "creatureMomentum.delay": {
+      "what": "it steers for where she was that many seconds ago (a short trail of her places), so a sidestep or blink fools it a moment."
+    },
+    "creatureMomentum.chaseLead": {
+      "what": "seconds of her velocity it leads her by when just chasing (0: none)."
+    },
+    "creatureMomentum.strikeLead": {
+      "what": "times the lead its telegraphed attacks take (a melee wind-up's tracking, dodge.a.lead; a charge's lane, dodge.b.chargeLead; a leap, fight.leap.lead; a swoop's dive; shots and lobs, dodge.b.lead)."
+    },
+    "creatureMomentum.classes": {
+      "what": "each class's values (heavy: dodge.a.heavy's species; light: those with the nimble or swarm trait; normal: everyone else), and a species may set its own in its folder (art/creatures/<id>/creature.js movement.momentum)."
+    },
+    "attackFx": {
+      "what": "How attacks feel on screen: attackers crouch and lunge, hits squash their target, and hard knock-backs send it tumbling.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-06",
+          "quote": "make creature attack visuals better",
+          "rest": "render/attackFeel.ts"
+        }
+      ],
+      "links": [
+        "render/attackFeel.ts"
+      ],
+      "notes": "How attacks feel on screen [1], a party not a fight: windupSquash, how low and wide an attacker crouches as its wind-up nears the blow (at most windupMax seconds of it shown); lungeStretch, how far it stretches out in its lunge; squash, how flat a hit squashes the one it hits, springing back past its shape over squashSecs seconds; a knock-back thrown faster than tumbleKnock m/s tumbles: up tumbleHeight metres (at most 1.5 times that for the hardest) for tumbleSecs, over on its back from turnFrom to turnTo of the way (one slow beat, never a strobe), landing with a squash. Squash and stretch go in whole art pixels."
+    },
+    "attackFx.legendFlash": {
+      "what": "how much bigger and longer a legend's blow flashes than anyone's (its flash 1 + 2 × legendFlash times; 0.5, twice: Ed's decisions panel, config/decisions.json).",
+      "links": [
+        "config/decisions.json"
+      ]
+    },
+    "combat": {
+      "what": "How creatures fight: who goes for whom, how fast they run and chase, and how much a soundsystem and home's speakers can take.",
+      "decisions": [
+        {
+          "by": "Ed's playtest",
+          "date": "2026-10-04"
+        },
+        {
+          "by": "Ed's playtest",
+          "date": "2026-10-11",
+          "quote": "Animals seem to walk very slowly when they're going towards soundsystems they plan to attack",
+          "rest": "it was its walk times marchMult, under 1 m/s, and marchOnRun 5 m/s marching on"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-11",
+          "quote": "seem to struggle to damage soundsystems",
+          "rest": "some; a charge struck once a run, a swoop once a dive"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-04"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-08",
+          "rest": "from 4000: shorter games, falls that cascade, and you must stop a swarm before it arrives"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-08",
+          "quote": "home as 12 speakers at 500 hp each",
+          "rest": "rules/speakers.ts"
+        }
+      ],
+      "links": [
+        "config/combat.json",
+        "rules/speakers.ts"
+      ],
+      "notes": "Combat (Stage 4; the attacks themselves are data in config/combat.json; lengths and speeds at the fight's scale: see fight). Wild creatures attack party animals of other kinds within aggro metres. They go for the witch on the ground as soon as she's in their area or within their attack's range [1], and let her go when she rises to the treetops, or once she's out of their area, out of their range and at least witchLose metres away; then they walk back to their spot. The one she's inviting holds its fire on her (its friends don't). Party animals following her take on what attacks her or her party; parked ones (at a sigil) guard within guard.radius of it. Babies are never attacked, by either side. Marching on a soundsystem, its own area's or marching on after a fall, a creature moves at marchShare of its top (fight) speed: its movement profile's, else fightRun, a legend legendRun [2]. Against a soundsystem or speaker, charging kinds don't charge and swoopers don't swoop: they land and use their ordinary attack [3]. A beaten creature, wild or party, runs off the map at fleeMult times its speed and is gone for good [4]; a party animal is lost for the run. A soundsystem has soundsystemHealth, passive, and is hit within soundsystemRadius metres: sieges should outlast the wave gap. A soundsystem has 500 [5]. Home is its ring of speakers [6], each a soundsystem of speakerHealth, hit within speakerRadius metres, the besiegers going for the nearest standing one; home falls when every one has (its old homeHealth 8000 and homeRadius 9 gone)."
+    },
+    "combat.packs": {
+      "what": "Pack kinds fight in combos (the nearest lunges, the ranged fire where she'd dodge, one behind her throws its special) and fall back between them.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-19",
+          "rest": "docs/backlog/combat.md, build step 1"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-20",
+          "quote": "Turn pack combat on by default"
+        }
+      ],
+      "links": [
+        "docs/backlog/combat.md",
+        "config/packs.json"
+      ],
+      "notes": "pack combat [1], on by default [2] and on the pause page to turn off for testing: on, packs of config/packs.json's kinds (home's ten and Phase 1's eleven) fight in combos (the nearest lunges, the ones at range fire where a dodge would go, the one behind her throws the special), fall back by their kind's retreat between combos, and her own pack combos without retreating."
+    },
+    "combat.aggro": {
+      "what": "wild creatures go for party animals within this, and for the witch anywhere in their area."
+    },
+    "combat.leaveArea": {
+      "what": "How far past its area's edge a wild creature chases her before giving up and going home.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-05"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-06",
+          "rest": "round 13: 30; it was 10"
+        }
+      ],
+      "notes": "a wild one chasing the witch gives up once she's this far past its area's edge, and turns back home (besiegers keep witchLose: they give up once she's out of their area, out of range and this far off). a wild creature chases her (or her party) up to this many metres past its area's edge [2]; beyond it, or once she rises, it gives up and retreats into its area at its own pace, roaming again once it's in and within retreatHome metres of home, taking up a fight on the way only with someone back in its area (no flip-flopping at the edge). Besiegers march as before; happy and leashed ones aren't affected."
+    },
+    "combat.pursuit": {
+      "what": "how far from her (or its sigil, guarding) a party animal chases a foe before giving up."
+    },
+    "combat.pursuitRun": {
+      "what": "how fast it closes in while over 30 m off (so an area's creatures are onto her in a few seconds when she lands in it)."
+    },
+    "combat.fightRun": {
+      "what": "how fast a creature runs in a fight (m/s), when its movement profile doesn't say (movement.json speed)."
+    },
+    "combat.legendRun": {
+      "what": "a legend's."
+    },
+    "combat.reaction": {
+      "what": "seconds before a creature that has just noticed something goes for it."
+    },
+    "combat.shake": {
+      "what": "how hard a legend's quake shakes the screen (0 none)."
+    },
+    "combat.daze": {
+      "what": "seconds a wild creature knocked down in a fight lies stunned (nothing attacks it, it attacks nothing, she can still invite it; it counts as present for its legend, and no siege takes it) before it runs off home [1].",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-06",
+          "quote": "the length of the stun of wild creatures that are downed in combat, before they run away, should be 20 seconds",
+          "rest": "round 13; it was 8, states.json's daze"
+        }
+      ]
+    },
+    "combat.defendRadius": {
+      "what": "her animals following her within this many metres of her go first for anything attacking her, spread over her attackers; farther off, following her, one fights back only at what's on it itself (and parked, guarding or travelling ones carry on as they were): never pulled across to her fight.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-09",
+          "quote": "just ones that are in the same combat as you",
+          "rest": "her posse defends her"
+        }
+      ]
+    },
+    "combat.taunt": {
+      "what": "a creature after her that one of her animals in her fight hits turns on that animal instead, with chance chance, for time seconds (a lunge at her already under way lands first; then it may come back to her).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-09",
+          "quote": "Taunt seems good",
+          "rest": "on #592"
+        }
+      ]
+    },
+    "notice": {
+      "what": "Creatures notice her on the ground nearby: resting ones turn to look, curious babies come up to her.",
+      "links": [
+        "config/combat.json"
+      ],
+      "notes": "Creatures notice the witch on the ground within radius metres (Ed's playtest: a larger responsive area makes them feel alive): resting ones turn to look at her; babies of a curious kind come up to about curious metres from her, skittish ones keep about skittish metres off (config/combat.json temperament)."
+    },
+    "dodge": {
+      "what": "Dodging matters: creatures commit to their strikes, so she can dodge them by moving or blinking away.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-08",
+          "quote": "almost all animals are easily evaded simply by walking backwards, even large swarms. Ideally good play should require effective use of dodge",
+          "rest": "he picked all three"
+        }
+      ],
+      "notes": "Dodging matters [1]: against the witch only (fights between creatures as before). a, committed strikes: a creature closes on her at chase times its sprint (combat.pursuitRun, or its kind's pursuit: so a slow kind can still be outwalked), a melee one surges on at surge times its sprint while it winds up (no gliding to a stop), tracking her, aiming where she'll be when its blow arrives (her velocity times that time, times lead), until commit seconds before it lets go, when its aim locks (a blink then, or during its lunge, gets her clear), lunging lunge times its attack's lunge, its blow reaching width times its attack's range."
+    },
+    "dodge.a.heavy": {
+      "what": "Heavy kinds chasing her build up speed and swing their charges toward her, so a burst or a blink gets clear.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-09",
+          "quote": "Maybe heavies can have a higher top speed, but slow acceleration?"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-09",
+          "quote": "shooters should have longer range"
+        }
+      ],
+      "notes": "chasing her, those species run at up to speed m/s (above her walk) built up at accel m/s each second, their charges swinging toward her at home degrees a second as they run, so a burst or a blink gets clear and a long retreat is run down (the snail, hedgehog and woodlouse left slow, the last two with their rolling charges; the mole with its own burrow); her blink keeps her untouchable for gone seconds (dash.gone otherwise); and at most tokens creatures wind up or strike at her at once (swarmTokens when swarm or more are on her), the rest keep their places. b, predictive aim: shots aim at release where she'll be when they arrive (times lead), lobs where she'll be when they land (times lobLead), charges down the lane to where she'll be when they reach her (times chargeLead); a shot lives life times its range over its speed (1.3 before); a shot at her flies speed times as fast (chasing her at her walk it closes at only its speed less hers); a shot or lob at her reaches range times as far, the shooter keeping its usual distance, [2] and winds up at most windup seconds (a beam as before: a sweep a blink can't outrun keeps its long warning). c, packs cut off her retreat: while she moves faster than moving times her walk, share of a pack of species (wolves, foxes, martens, bats) take places ahead of her (ahead seconds of her run on, angle radians either side of her heading, reach times their attack's reach out), sprinting at up to sprint m/s to get there. ?dodge=a,b,c turns on those named and off the rest (?dodge=0 none)."
+    },
+    "stoneIdle": {
+      "what": "A wild area's hostile creatures gather and roam near its runestone.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-08",
+          "quote": "if you enter a hostile area and the animals are at the very opposite end, it can be quite a long time before they reach you, and so it feels like nothing is happening. I think we can solve this by having the hostile creatures tend to idle near the runestone"
+        }
+      ],
+      "notes": "Hostile creatures gather near the runestone [1]: a wild area's own hostile young and adults (not its babies, its legend or its circle's baby, nor a friendly area's, nor happy, leashed or enraged ones) start, roam and nap anywhere in a disc of radius metres round its runestone, evenly spread (a loose cluster, not a ring), keeping clear metres off the stone itself; still inside their own area. Arriving at the stone means meeting them."
+    },
+    "stoneIdle.on": {
+      "what": "false lets them roam the whole area as before."
+    },
+    "wildWatch": {
+      "what": "On her first landing in a wild area its creatures stare and redden for a few seconds before they attack, and how far they chase her after.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-07",
+          "quote": "stir, evade and hang back, turning to LOOK at her",
+          "rest": "when she enters a dormant area its animals nap, then, then attack; every creature looks, no special art"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-07",
+          "quote": "make the dormant-to-attacking choreography slower, with a visible sign of aggro (e.g. red tint) rising that lets a player who wanders into a dangerous area understand what's happening and have time to run away"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-08",
+          "quote": "Six second dormant period should be four seconds",
+          "rest": "5.5 before, 2 before that"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-07",
+          "quote": "remove the wild area aggro red glow",
+          "rest": "the screen edges' red that went with it is gone"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-07",
+          "quote": "should fade out rather than cut out instantly",
+          "rest": "DECISION FOR ED, 0.7"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-13",
+          "quote": "Animals should chase outside, and relatively far. The idea is to stop people just sitting near the edge of a territory and sniping/kiting. However if you leave the area before the warning ends then they don't attack"
+        }
+      ],
+      "links": [
+        "rules/power.ts"
+      ],
+      "notes": "The wild watch [1]: on a witch's first coming down on the ground in a wild area (not partified, not friendly, not home), its wild young and adults (not legends, the enraged or besiegers; babies keep their notice) hold off for time seconds, standing and turning to stare at her, any within hangBack metres backing off a little; then they fight as ever. The area is forgotten forget seconds after the last witch was on the ground in it, so a later visit plays it again. Slower, with a warning [2]: time is 4 s [3]; leaving the area or rising before it is up calls it off (they settle back and don't chase; the next visit starts it over). Over the watch each watcher reddens, from faint as they notice her to full just before they attack, the whole area together: its red up to tint [4], times the area's danger, its watchers' fighting value over dangerF (F, rules/power.ts) capped at 1, so a deep, crowded area reads as worse than a first-ring one. When the watch ends (they attack, she invites one, she leaves or rises) the red eases out over fade seconds [5]. The chase [6]: leave before the warning's up and none comes after her; once they've attacked (the warning over with her inside) they follow her out to combat.leaveArea metres past their edge; and a 💌 of hers landing on a wild creature provokes it for provoked seconds: it comes out after her across its edge, to the same band (no sniping from just outside)."
+    },
+    "wildWatch.on": {
+      "what": "false: they attack at once, as before."
+    },
+    "wildWatch.inviteWakes": {
+      "what": "a 💌 landing on one of a wild area's creatures wakes the area at once: its watch is over (or never starts), and its own young and adults, napping or not, wake with no getting up and go for her at once, by the hunt's rules (rules/inviteWakes.ts); its babies, legend and circle baby as before.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-08"
+        }
+      ],
+      "links": [
+        "rules/inviteWakes.ts"
+      ]
+    },
+    "hunt": {
+      "what": "Once the wild watch is over, every awake young and adult in the area hunts her while she's in it.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-07",
+          "quote": "When I go to a wild area, after they are awoken all of the wild creatures from that area should fight with me until either I die or they are invited. When they are all invited, the runestone transforms into a soundsystem. The legend and the circle baby are the exceptions"
+        },
+        {
+          "by": null,
+          "date": null,
+          "quote": "they should lose interest and go home if you leave their area, as they did before",
+          "rest": "and; rules/hunt.ts"
+        }
+      ],
+      "links": [
+        "rules/hunt.ts"
+      ],
+      "notes": "The hunt [1][2]: once a wild area's watch is over with her on the ground in it, every one of its own awake young and adults hunts her while she's in the area, wherever in it they are, never giving up or napping; over the treetops there they hold and come on again when she lands. It ends for one when it's invited, enraged, or knocked down and run off; for all of an area's when she leaves the area (they're ordinary wild creatures again: they give up combat.leaveArea metres past their edge and walk home, as before); for all of hers when she's knocked out (they give up, walk home and roam, DECISION FOR ED, and the area's watch plays again on her next visit). Back in an area she left, it hunts her again at once while it's remembered (wildWatch.forget seconds after she was last on the ground in it), else its watch plays again. Babies don't fight."
+    },
+    "hunt.on": {
+      "what": "false: the old rule (only those near her attack)."
+    },
+    "naps": {
+      "what": "Wild creatures roaming their area now and then lie down for a nap.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-06",
+          "quote": "I think animals in wild areas which are idling can sleep. They awake when you are there in ground mode, but stay asleep if you're in treetop mode, or not in their area (e.g. you see them from an adjacent area)"
+        },
+        {
+          "by": null,
+          "date": null,
+          "quote": "They don't all sleep - but it's one of the things they can do while idling"
+        }
+      ],
+      "notes": "Wild idlers nap [1][2]: a wild creature roaming its own still-wild area (not besieging, fleeing, dazed, marching, fighting, happy or a legend), at each pause, lies down instead with chance, for length seconds (a range: min, max), then gets up. It gets up at once when a witch is on the ground in its area (none starts a nap then), and when its area is partified or it's enraged or taken; getting up takes wake seconds (a stretch, a yawn), out of fights till then, so landing isn't an instant pounce. Asleep it stays down with her in the treetops or on the ground in another area, however near. Sleepers skip their roam and every fight."
+    },
+    "naps.on": {
+      "what": "false turns naps off."
+    },
+    "naps.circle": {
+      "what": "a legend circle's baby [1] naps at each pause with its own chance, for its own length (seconds), and is woken only by a witch on the ground within reach metres of its circle's edge (so she can still invite it), not anywhere in its area.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-07",
+          "quote": "the legend circle baby should spend most of its time napping when in the circle"
+        }
+      ]
+    },
+    "guard": {
+      "what": "Creatures parked at a sigil on the ground guard it, fighting any wild creature that comes near.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-04"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-11",
+          "quote": "Animals leashed inside the home area should aggro enemy creatures within that area"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-15",
+          "quote": "Placing a sigil in any area should work as home does: the creatures defend the whole area, plus a radius round the sigil"
+        }
+      ],
+      "links": [
+        "rules/homeArea.ts"
+      ],
+      "notes": "Parked party animals (at a sigil on the ground) guard it [1]: they take on any wild creature of another kind within radius metres of the sigil, and come back to it. One parked with its sigil in the home area (the dancefloor's) guards all of that area instead [2]: any wild or enraged creature anywhere in it, never one outside it, whatever radius says. Parked in any other area [3], it guards all of its sigil's area and radius metres round the sigil besides (rules/homeArea.ts areaOf)."
+    },
+    "population": {
+      "what": "How many wild creatures each area starts with, more along the waves' route so the later areas are the dangerous ones.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-04"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-05",
+          "rest": "one baby and one young:, 'actually, the game should start with one baby and one youth, otherwise you can't avoid enraging lots of legends', after 'the game is hard! we should start each area with just one baby'; before it, one young and one adult, and before that one baby and two adults"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-07",
+          "quote": "no population growth on a clock",
+          "rest": "his new core design"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-08",
+          "rest": "the swarm plan's phase 1: its own young and adults, the ones a wave enrages and sets marching; rules/swarm.ts"
+        },
+        {
+          "by": null,
+          "date": "2026-10-06",
+          "rest": "a fraction carries over: 0.5 is one every other wave; balance, DECISION FOR ED: 0.5, from 1, so a player's defence can hold the early sieges and playing well matters"
+        }
+      ],
+      "links": [
+        "rules/growth.ts",
+        "rules/swarm.ts",
+        "config/swarm-power.json",
+        "tools/balance/sim.mjs"
+      ],
+      "notes": "Wild creatures [1]: every area starts with the same population, population.start [2], and, from the start [3], more by its place on the waves' route (Balance 2's shape; rules/growth.ts routePopulation): byRoute's threat (since removed: the hostile swarm below does this now), [route index, F] points (1 the first wave's stone; straight lines between, flat past the ends), is the extra fighting value its young and adults add (F by Lanchester, young 11.6, adult 40, babies 0; about what an area woken at that wave grew to before); its kind spends it by its profile (byRoute's profiles by species (removed with it), else default: the shares of its extra creatures as babies, young and adults), so many more of a swarm's young than of a heavy kind's adults, at the same danger: count = threat ÷ the profile's mean F a creature × the area's count scale, rounded, split by the shares (largest remainder, ties by the seed). The hostile swarm [4]: its challenge grows with the area's place p in the runestone order (0 the first stone, 1 the last), whatever its species. Each area fields, of every size up to its species' cap (capScales: the cap grown along the same curve, at least 2) and every young/adult split, the one nearest the target; among those within swarm.mixTolerance (10%) of the nearest, a mix of young and adults first. A simulated power (config/swarm-power.json, empty in phase 1) stands in for the estimate where it has the swarm. So a default map (about 100 areas) holds about 540 hostiles: the curve's average, 5.8 an area. growth is the old growth on a clock, which the game no longer reads (the balance simulators still do): every wave, each area the party hasn't reached gained growth.perWave more [5], each at a random level by growth.weights (baby, young, adult: equal thirds), so the areas the party reaches late are the ones to fear. Areas already partified don't grow. New ones arrive out of the witch's sight (beyond the haze's far edge plus growth.hide metres), never popping in on screen; areas far from every witch keep them as counts only, made real (from the seed) when a witch comes within creatureSimRadius of the area or it wakes. The home area holds none. Fighting value (DESIGN.md, Balance): a young is worth 15.5, an adult 29, a legend 76; so an area woken at wave n brings about 1 + n/3 young and 1 + n/3 adults (F about 44.5 + 14.8 n), besides its legend (wildLegends). Only creatures whose home is within creatureSimRadius metres of the witch move. node tools/balance/sim.mjs forecasts the sieges these numbers make."
+    },
+    "population.byRoute.babies": {
+      "what": "babies in every area, start's included [1], at most babyCap.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-07",
+          "rest": "about two, for quest sigils and berries"
+        }
+      ]
+    },
+    "population.byRoute.minHostile": {
+      "what": "at least this many young or adults in every wild area [1], any shortfall made up with young.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-07",
+          "quote": "every wild area has at least one hostile wild creature"
+        }
+      ]
+    },
+    "population.swarm.classes": {
+      "what": "Swarm species come in strong, medium and light classes, smaller swarms of stronger creatures.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-10",
+          "rest": "2026-10-11"
+        }
+      ],
+      "links": [
+        "rules/combat/data.ts"
+      ],
+      "notes": "strong (cap 6), medium (cap 12: swarm.reference, and every species not listed) and light (cap 16; Ed: \"a swarm of 20 is too many; cap it at 16\"), each class's strength 12 / its cap on its creatures' health and damage (strong ×2, light ×0.75; rules/combat/data.ts), so moving a species is one line here. The target is the estimated power (Σhp × Σdps; the witch doesn't count: her three hits ignore damage) of a medium reference swarm of swarm.start + (swarm.endAverage − swarm.start)·p^swarm.curve creatures (1 + 11·p^1.3), its young share easing from swarm.youngShare[0] (1.0) to [1] (0.2). p is the master curve's [1]: by the area's wave, (wave − 1)/(swarm.waves − 1), so wave swarm.waves (64) brings today's final swarm, every island plays it from wave 1 as far as it has areas, and a bigger map holds there after."
+    },
+    "creatureSimRadius": {
+      "see": "population"
+    },
+    "simLod": {
+      "what": "How far from her wild creatures are simulated every step; further off they're simulated coarsely, and past the sim radius not at all.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-05",
+          "rest": "creatures far from the action frozen until she comes closer; rules/simLod.ts"
+        }
+      ],
+      "links": [
+        "rules/simLod.ts"
+      ],
+      "notes": "The simulation's level of detail [1]. Wild creatures roaming are simulated every step within full.ground metres of the witch on the ground, full.treetop over the treetops (each a little past the most the view shows from there at any zoom: 178 and 262 m in a 1900 by 1240 window); beyond, coarsely: once every `every` steps (60 a second), by that many steps' time at once, taking turns; past creatureSimRadius not at all. Besiegers marching on a soundsystem are simulated every step within full of her or within action metres of a soundsystem, a party animal or a happy legend's guard; elsewhere coarsely, marching `every` steps at a time. Going out, one stays in full until band metres past the line, so none flickers. The debug overlay's sim line counts them."
+    },
+    "creatureSpeed": {},
+    "creatureSpeeds": {
+      "what": "The witch is much faster than almost all creatures.",
+      "decisions": [
+        {
+          "by": null,
+          "date": "2026-10-04"
+        }
+      ],
+      "notes": "Ed [1]: the witch is much faster than almost all creatures (she flies at groundSpeed, 19.25 m/s, on the ground and treetopSpeed, 48, over the treetops; at first 14 and 32). Wild creatures amble at creatureSpeed m/s (legends legendSpeed); leashed ones run after their leash point at leash.runSpeed. The fast few (fast: hare, stoat, marten; rare, and weaker when combat comes) move fastMult times the usual; legends run at legend times it: very slow."
+    }
+  }
+}

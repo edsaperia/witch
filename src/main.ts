@@ -292,7 +292,7 @@ freeze.ownsEsc = () => !bot; // (the bot game's Esc is its way back to the start
 // it lands she wakes (arrived), and if no key or tap has come by then (browsers keep sound off till one does) a small note asks for one.
 const bootArrival = N().arrival;
 // (Ed, 2026-10-12: the HUD hidden through the flight, fading in as she settles at her decks)
-const HUD_IDS = ["clock", "seed", "version", "buffs", "aim", "touch", "bubbles", "invites"];
+const HUD_IDS = ["clock", "seed", "version", "aim", "touch", "bubbles", "invites"];
 if (bootArrival) {
   hudFade(HUD_IDS); // (app/arrive.ts)
   document.body.classList.add("arriving");
@@ -393,6 +393,7 @@ stations.onLook = g => {
   if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); wearHat(g); }
   showLook();
 };
+stations.onBack = () => shutStation("back"); // (back, E today: platform/menuButtons.ts; the pad's comes through padControls as the use button)
 stations.onChange = () => { const { game } = N(); view.turnUntil = game.herTime + 0.8; };
 stations.onDress = () => { view.spin = spinStep(view.spin, N().game.herTime); }; // (Ed, 2026-10-26: she twirls while her new look draws)
 // The Workshop's bay (Ed, 2026-10-23; docs/backlog/workshop.md): a part chosen goes on her broom at once, mid-night too (its stats

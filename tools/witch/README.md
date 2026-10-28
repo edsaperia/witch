@@ -34,6 +34,14 @@ The longest cloak and scarf: our witch in a long cloak and a scarf at the old en
 node tools/witch/longwear-sheet.mjs <out.png>
 ```
 
+## `nightie-sheet.mjs`
+
+Waking in her nightie: her wake-up and on-foot poses in the nightie, last night's clothes in their pile, and her dressed as the pile puts her, at `scale`, a row each, labelled.
+
+```
+node tools/witch/nightie-sheet.mjs <out.png> [scale]
+```
+
 ## `slider-audit.mjs`
 
 The character creator's sliders, option by option: every slider drawn at its min and its max on our witch with each option it applies to, in four poses; a pair whose every pose draws the same is dead.
@@ -56,4 +64,12 @@ The broom's thickness on every kind: each kind at the slider's thinnest, hers an
 
 ```
 node tools/witch/thickness-sheet.mjs [out.png] [kind,...]
+```
+
+## `walk-sheet.mjs`
+
+Her on foot indoors: the idle and the walk, and both carrying her broom, side-on turned towards and away, and heading up the screen and down it, at `scale`, a row each, labelled.
+
+```
+node tools/witch/walk-sheet.mjs <out.png> [scale]
 ```
