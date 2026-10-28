@@ -35,7 +35,7 @@ function serve() {
     const mx = cs.reduce((a, c) => a + c.x, 0) / cs.length, mz = cs.reduce((a, c) => a + c.z, 0) / cs.length;
     g.witch = { ...g.witch, x: mx, z: mz + 16, seated: false, mode: "ground", lift: 0 };
     g.witches[0].health.hp = 1e6;
-    cs.forEach((c, i) => { if (c.leashed) c.drops = Math.max(c.drops ?? 0, 0.2 + 0.15 * (i % 3)); else if (!c.dazed) { c.affection = 0.45 + 0.1 * (i % 3); c.hearts = 0.3; c.affectionAt = g.clock.time; } });
+    cs.forEach((c, i) => { if (c.leashed) c.drops = Math.max(c.drops ?? 0, 0.2 + 0.15 * (i % 3)); else if (!c.dazed) { c.affection = 0.45 + 0.1 * (i % 3); c.fills = [c.affection - 0.3, -0.3]; c.affectionAt = g.clock.time; } });
   });
   await stage();
   await page.waitForFunction(() => (window.witch.view.stats.creatures ?? 0) > 0, null, { timeout: 600000, polling: 1000 }).catch(() => console.log("creatures not drawn yet"));

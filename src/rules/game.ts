@@ -360,7 +360,7 @@ const napper = (c: Creature): boolean => !!c.asleep && c.napUntil !== undefined;
 
 export const affectionOf = (g: Game): Affection => {
   const t = g.tuning, s = g.witches[0].invites, E = t.legends;
-  const data = { ...STATES, partyEgg: E.partyEgg, affection: { ...STATES.affection, hits: meterHits(t), drain: t.invites.drain ?? STATES.affection.drain, gap: 0, legendDrain: E.partyDrain, heartHold: t.invites.heartHold } };
+  const data = { ...STATES, partyEgg: E.partyEgg, affection: { ...STATES.affection, hits: meterHits(t), drain: t.invites.drain ?? STATES.affection.drain, gap: 0, legendDrain: E.partyDrain } };
   return {
     // A napper takes them (Ed, 2026-10-11: "Letters wake them"): the 💌 rouses it, wherever she is, and lands as any other (hit,
     // below). One asleep for good (the party's over: no napUntil) still lets them by.

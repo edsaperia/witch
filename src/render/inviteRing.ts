@@ -9,20 +9,32 @@
 import type { Creature } from "../rules/creatures";
 
 /** A creature's ring now: its slots (the hits its level's meter takes), how many are filled, and of those (combat as orbit slots,
- *  Ed 2026-10-28, rules/orbit.ts) how many are 💧s (the first) and hearts (the next); the rest are 💌s. */
-export interface RingNow { slots: number; filled: number; drops?: number; hearts?: number }
+ *  Ed 2026-10-28, rules/orbit.ts) how many are 💧s (the first) and hearts; `heart`: which of the rest are hearts, slot by slot in
+ *  the order they came (one queue with its 💌s); without it, the hearts come next and the rest are 💌s. */
+export interface RingNow { slots: number; filled: number; drops?: number; hearts?: number; heart?: boolean[] }
 
 /** The ring the meter shows: one slot a hit its level needs (`hits`, by level), filled as far as its affection
  *  (0..1) reaches. A slot empties only once the meter has drained below it, so they drop one at a time. `hearts`: the share of
  *  them that are hearts (from her animals' blows); `drops`: its 💧s' share (one of hers, or a happy one, hit by its enemies). */
-export function ringOf(level: number, affection: number | null, hits: readonly number[], hearts = 0, drops = 0): RingNow {
+export function ringOf(level: number, affection: number | null, hits: readonly number[], hearts: number | readonly number[] = 0, drops = 0): RingNow {
   const slots = Math.max(1, Math.round(hits[Math.min(level, hits.length - 1)] ?? 1));
   const a = Math.max(0, Math.min(1, affection ?? 0)), count = (x: number) => Math.max(0, Math.min(slots, Math.ceil(Math.max(0, Math.min(1, x)) * slots - 1e-6)));
   const d = count(drops), f = Math.max(d, count(a));
+  if (typeof hearts !== "number") {
+    // (the queue, oldest first, + 💌 − heart: each slot what fills its middle, the last what reaches into it)
+    const heart: boolean[] = [];
+    for (let s = d, at = 0, i = 0; s < f; s++) {
+      const mid = (s + 0.5) / slots;
+      while (i < hearts.length - 1 && at + Math.abs(hearts[i]) < mid) at += Math.abs(hearts[i++]);
+      heart.push((hearts[i] ?? 1) < 0);
+    }
+    const n = heart.filter(Boolean).length;
+    return { slots, filled: f, ...(d ? { drops: d } : {}), ...(n ? { hearts: n, heart } : {}) };
+  }
   return { slots, filled: f, ...(d ? { drops: d } : {}), ...(hearts > 0 ? { hearts: Math.min(f - d, count(hearts)) } : {}) };
 }
 /** What slot `s` of a ring holds: a 💧, a heart, a 💌, or nothing (a gap). */
-export const slotKind = (r: RingNow, s: number): "drop" | "heart" | "letter" | null => s >= r.filled ? null : s < (r.drops ?? 0) ? "drop" : s < (r.drops ?? 0) + (r.hearts ?? 0) ? "heart" : "letter";
+export const slotKind = (r: RingNow, s: number): "drop" | "heart" | "letter" | null => s >= r.filled ? null : s < (r.drops ?? 0) ? "drop" : (r.heart ? r.heart[s - (r.drops ?? 0)] : s < (r.drops ?? 0) + (r.hearts ?? 0)) ? "heart" : "letter";
 
 export type RingChange =
   | { kind: "join"; id: number; slot: number; slots: number }

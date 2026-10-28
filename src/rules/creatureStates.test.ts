@@ -83,7 +83,7 @@ describe("creature states (#87)", () => {
     let dazedAt = -1;
     run(g, TUNING.combat.daze + 12, () => { if (dazedAt < 0 && w.dazed) dazedAt = g.clock.time; });
     expect(dazedAt).toBeGreaterThan(0);
-    expect(w.hearts).toBeGreaterThan(0); // (filled by hearts)
+    expect((w.fills ?? []).some(v => v < 0)).toBe(true); // (filled by hearts)
     expect(w.fleeUntil).toBeFalsy(); // (up again once its stun was over, not run off)
     expect(stateOf(w)).toBe("wild");
     // While stunned: untouched, its slots held full, and one 💌 converts it.

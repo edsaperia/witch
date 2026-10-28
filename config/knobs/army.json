@@ -90,26 +90,18 @@
           "by": "Ed",
           "date": "2026-10-06",
           "quote": "I think we should remove the 0.5s cooldown between counted hits per creature - better to control this through the witch firing speed instead of having hits not register"
+        },
+        {
+          "by": "Ed",
+          "date": "2026-10-28",
+          "quote": "let's change the drain rate to 2% instead of 3%",
+          "rest": "0.02 after 4 s, a full meter in about 50 s; hearts from her animals' blows fade the same, in one queue with the 💌s (\"this should be the same speed as 💌s fade ... and they go in the same fade 'queue'\")"
         }
       ],
       "links": [
         "config/states.json"
       ],
       "notes": "letters to fill it, by level (baby, young, adult); it drains drain of a full meter a second when not being hit, from config/states.json's affection.drainDelay seconds after the last [1]. Every letter that lands on an invitable creature counts [2]: how fast she invites is her firing rate (burst, burstGap, cooldown), nothing adaptive. Enraged creatures and legends block letters; scenery never stops them (Ed)."
-    },
-    "invites.heartHold": {
-      "what": "How long (s) a creature's slots hold before draining once they hold hearts (her animals' blows), so a fight's hits, seconds apart through a pack's lulls, can fill them.",
-      "decisions": [
-        {
-          "by": "Ed",
-          "date": "2026-10-28",
-          "quote": "hearts fade at the same rate as 💌s",
-          "rest": "they fade at invites.drain as 💌s do; held this long first (DECISION FOR ED, the builder's: at 💌s' 4 s hold her animals' blows, 5 to 10 s apart in a pack's combos and lulls, never filled a young boar's slots past half)"
-        }
-      ],
-      "links": [
-        "src/rules/orbit.ts"
-      ]
     },
     "invites.fireSlow": {
       "what": "her ground speed while firing, times this."

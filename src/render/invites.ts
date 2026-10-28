@@ -18,7 +18,7 @@ import { BubbleFader, sightOf } from "./bubbleSight";
 import { bodyRadius } from "../rules/spacing";
 import type { Creature } from "../rules/creatures";
 import { RingModel, ringOf, slotKind } from "./inviteRing";
-import { drainOf, fillOf } from "../rules/orbit";
+import { drainOf, fillsOf } from "../rules/orbit";
 import { beachOf } from "../rules/mapShape";
 import { tiltFilter } from "./overlayTilt";
 import type { OcclusionProbes } from "./occlusion";
@@ -369,7 +369,7 @@ export class InviteView {
     // orbiting it, flat and spinning, the gaps faint marks; turning slowly round it at about its middle.
     // (and its hearts and 💧s: combat as orbit slots, Ed 2026-10-28, rules/orbit.ts)
     const near = g.creatures.filter(c => !c.gone && Math.abs(c.x - w.x) < 60 && Math.abs(c.z - w.z) < 60 && (c.affection || c.drops || c.dazed || this.ringModel.rings.has(c.id))), D = drainOf(t);
-    const changes = this.ringModel.update(near, c => ringOf(c.level, c.dazed ? 1 : A.affection(c), meterHits(t), fillOf(c, g.clock.time, D).hearts, c.drops ?? 0), won);
+    const changes = this.ringModel.update(near, c => ringOf(c.level, c.dazed ? 1 : A.affection(c), meterHits(t), fillsOf(c, g.clock.time, D), c.drops ?? 0), won);
     // (clear of it, by its size: Ed's playtest, 2026-10-06, "Invitation orbits are too tight around the creature"; invites.orbit;
     // and by its size as drawn, Ed 2026-10-28: "their size should adjust depending on how large the creatures are")
     const ringAt = (c: Creature, slot: number, slots: number) => {

@@ -6,7 +6,7 @@
 // to her. Enraged ones and legends stop 💌s dead. No drawing here.
 import { LEGEND, type Creature } from "./creatures";
 import { befriend, invitableNow, makePartyLegend, stateOf, STATES, type StatesData } from "./creatureStates";
-import { fillOf, rebase, stun } from "./orbit";
+import { addLetters, fillOf, stun } from "./orbit";
 
 /** What the meter needs of the game: the time, leashing a happy creature to her, and how long a full meter stuns (s: the tuning's
  *  combat.daze). */
@@ -18,13 +18,11 @@ export function hit(g: AffectionWorld, c: Creature, amount: number, time: number
   const A = data.affection;
   if (c.affectionAt !== undefined && time - c.affectionAt < A.gap) return false; // (one 💌 at a time per creature)
   // (stunned, its slots full: this 💌 converts it, Ed 2026-10-28)
-  if (c.dazed && stateOf(c) === "wild" && !c.boss) { c.dazed = false; c.hearts = undefined; befriend(c, time); return true; }
-  const now = rebase(c, time, { drain: A.drain, drainDelay: A.drainDelay, legendDrain: A.legendDrain, heartHold: (A as { heartHold?: number }).heartHold }); // (its hearts drain with its 💌s)
-  c.affection = Math.min(1, now + amount / Math.max(1, A.hits[Math.min(c.level, A.hits.length - 1)]));
-  c.affectionAt = time;
-  if (c.affection >= 1 - 1e-9) {
+  if (c.dazed && stateOf(c) === "wild" && !c.boss) { c.dazed = false; c.fills = undefined; befriend(c, time); return true; }
+  const fill = addLetters(c, amount / Math.max(1, A.hits[Math.min(c.level, A.hits.length - 1)]), time, A); // (in one queue with its hearts: rules/orbit.ts)
+  if (fill >= 1 - 1e-9) {
     if (c.boss) { makePartyLegend(c, time); return true; } // (the Easter egg's 100th 💌)
-    if (stateOf(c) === "happy") { c.affection = undefined; c.hearts = undefined; g.leash(c); }
+    if (stateOf(c) === "happy") { c.affection = undefined; c.fills = undefined; g.leash(c); }
     else stun(c, time, time + (g.stunFor ?? 20)); // (the last slot only stuns: her next 💌 converts)
     return true;
   }
@@ -57,7 +55,5 @@ export function affection(g: { time: number } | { clock: { time: number } }, c: 
 
 /** Its affection now, after draining since its last hit. */
 function drained(c: Creature, time: number, data: StatesData): number {
-  // (stunned: its slots held full; holding hearts, held invites.heartHold first: rules/orbit.ts)
-  const A = data.affection as StatesData["affection"] & { heartHold?: number };
-  return fillOf(c, time, { drain: A.drain, drainDelay: A.drainDelay, legendDrain: A.legendDrain, heartHold: A.heartHold }).fill;
+  return fillOf(c, time, data.affection).fill; // (stunned: its slots held full; hearts in the queue too: rules/orbit.ts)
 }
