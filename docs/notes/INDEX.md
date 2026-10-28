@@ -188,6 +188,9 @@ says what each note covers.
 - The world asleep before the party
 - Dropped hat
 - Controls
+- Bindings
+- Bindings API
+- Pad layout
 - Glide
 - Resting 💌s
 - Aim reticle

@@ -6,7 +6,7 @@ import { ITEMS, shelvesAt, shownItems, wears, type Shelf } from "../rules/wardro
 import { bareBroom, PARTS } from "../rules/broomParts";
 import { pleasingWitch } from "./looks";
 import { PanelChoice, type Genome } from "./stationChoice";
-import { MENU_BUTTONS } from "../platform/menuButtons";
+import { bindings, PAD_BUTTONS } from "../platform/bindings";
 import { panelPad } from "./stationLines";
 
 const STATIONS = ["mirror", "dressingTable", "wardrobe", "cloakPegs", "shoeRack", "bags", "broomBay", "lathe", "pegboard"];
@@ -111,11 +111,11 @@ describe("a station panel: moving only moves the focus, choosing changes her (Ed
     }
   });
 
-  it("confirm and back are one table (platform/menuButtons.ts): the pad's confirm button chooses, its back doesn't", () => {
+  it("choose and back are the bindings' (platform/bindings.ts): the pad's choose button chooses, its back doesn't", () => {
     const press = (i: number) => { const b = Array(17).fill(false); b[i] = true; return b; };
-    for (const i of MENU_BUTTONS.confirm.pad) expect(panelPad(press(i), [0, 0, 0, 0]).choose).toBe(true);
-    for (const i of MENU_BUTTONS.back.pad) expect(panelPad(press(i), [0, 0, 0, 0]).choose).toBe(false);
-    expect(MENU_BUTTONS.confirm.keys).toContain("Space");
-    expect(MENU_BUTTONS.back.keys).toContain("KeyE");
+    for (const p of bindings.pad("menu.choose")) expect(panelPad(press(PAD_BUTTONS[p]), [0, 0, 0, 0]).choose).toBe(true);
+    for (const p of bindings.pad("menu.back")) expect(panelPad(press(PAD_BUTTONS[p]), [0, 0, 0, 0]).choose).toBe(false);
+    expect(bindings.keys("menu.choose")).toContain("Space");
+    expect(bindings.keys("menu.back")).toContain("KeyE");
   });
 });

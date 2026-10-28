@@ -103,6 +103,15 @@ export function cycleStack(s: LeashState): StackItem | null {
   return it;
 }
 
+/** Cycle the stack back (the pad's L1, Ed 2026-10-28): its top sigil to the bottom, the next put down. */
+export function cycleStackBack(s: LeashState): StackItem | null {
+  const order = stackOrder(s);
+  if (order.length < 2) return null;
+  const it = order.shift()!;
+  setStackOrder(s, [...order, it]);
+  return it;
+}
+
 /** A creature's sigil to the very bottom of her stack, under any relics' (the bots' shortcut for cycling to it). */
 export function toBottom(s: LeashState, id: number): void {
   const order = stackOrder(s), i = order.findIndex(it => it.kind === "creature" && it.id === id);
@@ -133,6 +142,8 @@ export interface LeashControls {
   place?: boolean;
   /** Cycle (Q): the bottom sigil to the top, on the ground or in the treetops. */
   cycle?: boolean;
+  /** Cycle back (the pad's L1, Ed 2026-10-28): the top sigil to the bottom. */
+  cycleBack?: boolean;
   /** The sigil button is held on this frame (E, the pad's square, touch): since a press that picked up or put down, a run
    *  (LeashState.run, Ed 2026-10-15): picking up any sigil she runs over, or putting one down in each empty hex she enters. */
   held?: boolean;
@@ -268,6 +279,9 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
   // (Carried relics' sigils cycle with the rest: Ed's playtest, 2026-10-08.)
   if (((c.sigil && !onGround) || c.cycle) && s.stack.length + s.relics.length > 1) {
     const it = cycleStack(s)!;
+    s.events.push({ kind: "cycled", id: it.id, x: witch.x, z: witch.z, at: time, ...(it.kind === "relic" ? { relic: true } : {}) });
+  } else if (c.cycleBack && s.stack.length + s.relics.length > 1) {
+    const it = cycleStackBack(s)!;
     s.events.push({ kind: "cycled", id: it.id, x: witch.x, z: witch.z, at: time, ...(it.kind === "relic" ? { relic: true } : {}) });
   }
   // A run (Ed, 2026-10-15; leash.runs): the button held on since a press that picked up ("pick": she keeps picking up any sigil she
