@@ -122,7 +122,7 @@
       ]
     },
     "combat": {
-      "what": "Combat (Stage 4; the attacks themselves are data in config/combat.json; lengths and speeds at the fight's scale: see fight). Wild creatures attack party animals of other kinds within aggro metres. They go for the witch on the ground as soon as she's in their area or within their attack's range [1], and let her go when she rises to the treetops, or once she's out of their area, out of their range and at least witchLose metres away; then they walk back to their spot. The one she's inviting holds its fire on her (its friends don't). Party animals following her take on what attacks her or her party; parked ones (at a sigil) guard within guard.radius of it. Babies are never attacked, by either side. Marching on a soundsystem, its own area's or marching on after a fall, a creature moves at marchShare of its top (fight) speed: its movement profile's, else fightRun, a legend legendRun [2]. Against a soundsystem or speaker, charging kinds don't charge and swoopers don't swoop: they land and use their ordinary attack [3]. A beaten creature, wild or party, runs off the map at fleeMult times its speed and is gone for good [4]; a party animal is lost for the run. A soundsystem has soundsystemHealth, passive, and is hit within soundsystemRadius metres: sieges should outlast the wave gap. A soundsystem has 500 [5]. Home is its ring of speakers [6], each a soundsystem of speakerHealth, hit within speakerRadius metres, the besiegers going for the nearest standing one; home falls when every one has (its old homeHealth 8000 and homeRadius 9 gone).",
+      "what": "How creatures fight: who goes for whom, how fast they run and chase, and how much a soundsystem and home's speakers can take.",
       "decisions": [
         {
           "by": "Ed's playtest",
@@ -159,10 +159,11 @@
       "links": [
         "config/combat.json",
         "rules/speakers.ts"
-      ]
+      ],
+      "notes": "Combat (Stage 4; the attacks themselves are data in config/combat.json; lengths and speeds at the fight's scale: see fight). Wild creatures attack party animals of other kinds within aggro metres. They go for the witch on the ground as soon as she's in their area or within their attack's range [1], and let her go when she rises to the treetops, or once she's out of their area, out of their range and at least witchLose metres away; then they walk back to their spot. The one she's inviting holds its fire on her (its friends don't). Party animals following her take on what attacks her or her party; parked ones (at a sigil) guard within guard.radius of it. Babies are never attacked, by either side. Marching on a soundsystem, its own area's or marching on after a fall, a creature moves at marchShare of its top (fight) speed: its movement profile's, else fightRun, a legend legendRun [2]. Against a soundsystem or speaker, charging kinds don't charge and swoopers don't swoop: they land and use their ordinary attack [3]. A beaten creature, wild or party, runs off the map at fleeMult times its speed and is gone for good [4]; a party animal is lost for the run. A soundsystem has soundsystemHealth, passive, and is hit within soundsystemRadius metres: sieges should outlast the wave gap. A soundsystem has 500 [5]. Home is its ring of speakers [6], each a soundsystem of speakerHealth, hit within speakerRadius metres, the besiegers going for the nearest standing one; home falls when every one has (its old homeHealth 8000 and homeRadius 9 gone)."
     },
     "combat.packs": {
-      "what": "pack combat [1], on by default [2] and on the pause page to turn off for testing: on, packs of config/packs.json's kinds (home's ten and Phase 1's eleven) fight in combos (the nearest lunges, the ones at range fire where a dodge would go, the one behind her throws the special), fall back by their kind's retreat between combos, and her own pack combos without retreating.",
+      "what": "Pack kinds fight in combos (the nearest lunges, the ranged fire where she'd dodge, one behind her throws its special) and fall back between them.",
       "decisions": [
         {
           "by": "Ed",
@@ -178,7 +179,8 @@
       "links": [
         "docs/backlog/combat.md",
         "config/packs.json"
-      ]
+      ],
+      "notes": "pack combat [1], on by default [2] and on the pause page to turn off for testing: on, packs of config/packs.json's kinds (home's ten and Phase 1's eleven) fight in combos (the nearest lunges, the ones at range fire where a dodge would go, the one behind her throws the special), fall back by their kind's retreat between combos, and her own pack combos without retreating."
     },
     "combat.aggro": {
       "what": "wild creatures go for party animals within this, and for the witch anywhere in their area."
@@ -294,7 +296,7 @@
       "what": "false lets them roam the whole area as before."
     },
     "wildWatch": {
-      "what": "The wild watch [1]: on a witch's first coming down on the ground in a wild area (not partified, not friendly, not home), its wild young and adults (not legends, the enraged or besiegers; babies keep their notice) hold off for time seconds, standing and turning to stare at her, any within hangBack metres backing off a little; then they fight as ever. The area is forgotten forget seconds after the last witch was on the ground in it, so a later visit plays it again. Slower, with a warning [2]: time is 4 s [3]; leaving the area or rising before it is up calls it off (they settle back and don't chase; the next visit starts it over). Over the watch each watcher reddens, from faint as they notice her to full just before they attack, the whole area together: its red up to tint [4], times the area's danger, its watchers' fighting value over dangerF (F, rules/power.ts) capped at 1, so a deep, crowded area reads as worse than a first-ring one. When the watch ends (they attack, she invites one, she leaves or rises) the red eases out over fade seconds [5]. The chase [6]: leave before the warning's up and none comes after her; once they've attacked (the warning over with her inside) they follow her out to combat.leaveArea metres past their edge; and a 💌 of hers landing on a wild creature provokes it for provoked seconds: it comes out after her across its edge, to the same band (no sniping from just outside).",
+      "what": "On her first landing in a wild area its creatures stare and redden for a few seconds before they attack, and how far they chase her after.",
       "decisions": [
         {
           "by": "Ed",
@@ -333,7 +335,8 @@
       ],
       "links": [
         "rules/power.ts"
-      ]
+      ],
+      "notes": "The wild watch [1]: on a witch's first coming down on the ground in a wild area (not partified, not friendly, not home), its wild young and adults (not legends, the enraged or besiegers; babies keep their notice) hold off for time seconds, standing and turning to stare at her, any within hangBack metres backing off a little; then they fight as ever. The area is forgotten forget seconds after the last witch was on the ground in it, so a later visit plays it again. Slower, with a warning [2]: time is 4 s [3]; leaving the area or rising before it is up calls it off (they settle back and don't chase; the next visit starts it over). Over the watch each watcher reddens, from faint as they notice her to full just before they attack, the whole area together: its red up to tint [4], times the area's danger, its watchers' fighting value over dangerF (F, rules/power.ts) capped at 1, so a deep, crowded area reads as worse than a first-ring one. When the watch ends (they attack, she invites one, she leaves or rises) the red eases out over fade seconds [5]. The chase [6]: leave before the warning's up and none comes after her; once they've attacked (the warning over with her inside) they follow her out to combat.leaveArea metres past their edge; and a 💌 of hers landing on a wild creature provokes it for provoked seconds: it comes out after her across its edge, to the same band (no sniping from just outside)."
     },
     "wildWatch.on": {
       "what": "false: they attack at once, as before."
@@ -423,7 +426,7 @@
       ]
     },
     "population": {
-      "what": "Wild creatures [1]: every area starts with the same population, population.start [2], and, from the start [3], more by its place on the waves' route (Balance 2's shape; rules/growth.ts routePopulation): byRoute.threat, [route index, F] points (1 the first wave's stone; straight lines between, flat past the ends), is the extra fighting value its young and adults add (F by Lanchester, young 11.6, adult 40, babies 0; about what an area woken at that wave grew to before); its kind spends it by its profile (byRoute.profiles[species], else default: the shares of its extra creatures as babies, young and adults), so many more of a swarm's young than of a heavy kind's adults, at the same danger: count = threat ÷ the profile's mean F a creature × the area's count scale, rounded, split by the shares (largest remainder, ties by the seed). The hostile swarm [4]: its challenge grows with the area's place p in the runestone order (0 the first stone, 1 the last), whatever its species. Each area fields, of every size up to its species' cap (capScales: the cap grown along the same curve, at least 2) and every young/adult split, the one nearest the target; among those within swarm.mixTolerance (10%) of the nearest, a mix of young and adults first. A simulated power (config/swarm-power.json, empty in phase 1) stands in for the estimate where it has the swarm. So a default map (about 100 areas) holds about 540 hostiles: the curve's average, 5.8 an area. growth is the old growth on a clock, which the game no longer reads (the balance simulators still do): every wave, each area the party hasn't reached gained growth.perWave more [5], each at a random level by growth.weights (baby, young, adult: equal thirds), so the areas the party reaches late are the ones to fear. Areas already partified don't grow. New ones arrive out of the witch's sight (beyond the haze's far edge plus growth.hide metres), never popping in on screen; areas far from every witch keep them as counts only, made real (from the seed) when a witch comes within creatureSimRadius of the area or it wakes. The home area holds none. Fighting value (DESIGN.md, Balance): a young is worth 15.5, an adult 29, a legend 76; so an area woken at wave n brings about 1 + n/3 young and 1 + n/3 adults (F about 44.5 + 14.8 n), besides its legend (wildLegends). Only creatures whose home is within creatureSimRadius metres of the witch move. node tools/balance/sim.mjs forecasts the sieges these numbers make.",
+      "what": "How many wild creatures each area starts with, more along the waves' route so the later areas are the dangerous ones.",
       "decisions": [
         {
           "by": "Ed",
@@ -456,7 +459,8 @@
         "rules/swarm.ts",
         "config/swarm-power.json",
         "tools/balance/sim.mjs"
-      ]
+      ],
+      "notes": "Wild creatures [1]: every area starts with the same population, population.start [2], and, from the start [3], more by its place on the waves' route (Balance 2's shape; rules/growth.ts routePopulation): byRoute's threat (since removed: the hostile swarm below does this now), [route index, F] points (1 the first wave's stone; straight lines between, flat past the ends), is the extra fighting value its young and adults add (F by Lanchester, young 11.6, adult 40, babies 0; about what an area woken at that wave grew to before); its kind spends it by its profile (byRoute's profiles by species (removed with it), else default: the shares of its extra creatures as babies, young and adults), so many more of a swarm's young than of a heavy kind's adults, at the same danger: count = threat ÷ the profile's mean F a creature × the area's count scale, rounded, split by the shares (largest remainder, ties by the seed). The hostile swarm [4]: its challenge grows with the area's place p in the runestone order (0 the first stone, 1 the last), whatever its species. Each area fields, of every size up to its species' cap (capScales: the cap grown along the same curve, at least 2) and every young/adult split, the one nearest the target; among those within swarm.mixTolerance (10%) of the nearest, a mix of young and adults first. A simulated power (config/swarm-power.json, empty in phase 1) stands in for the estimate where it has the swarm. So a default map (about 100 areas) holds about 540 hostiles: the curve's average, 5.8 an area. growth is the old growth on a clock, which the game no longer reads (the balance simulators still do): every wave, each area the party hasn't reached gained growth.perWave more [5], each at a random level by growth.weights (baby, young, adult: equal thirds), so the areas the party reaches late are the ones to fear. Areas already partified don't grow. New ones arrive out of the witch's sight (beyond the haze's far edge plus growth.hide metres), never popping in on screen; areas far from every witch keep them as counts only, made real (from the seed) when a witch comes within creatureSimRadius of the area or it wakes. The home area holds none. Fighting value (DESIGN.md, Balance): a young is worth 15.5, an adult 29, a legend 76; so an area woken at wave n brings about 1 + n/3 young and 1 + n/3 adults (F about 44.5 + 14.8 n), besides its legend (wildLegends). Only creatures whose home is within creatureSimRadius metres of the witch move. node tools/balance/sim.mjs forecasts the sieges these numbers make."
     },
     "population.byRoute.babies": {
       "what": "babies in every area, start's included [1], at most babyCap.",
