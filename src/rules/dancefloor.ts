@@ -305,8 +305,8 @@ export function moonTiles(rgbi: Uint8Array, phase: number, time: number, t: Tuni
   }
 }
 
-/** Which island a map is (journey.md: every island its own legend kind, its own sigil): every map is home for now. The hook for
- *  when islands come: give the map its island and its sigil in art/sigils.js ISLAND_SIGILS. */
+/** Which island a map is (journey.md: every island its own legend kind, its own sigil): its island's kind (`map.island`, a kind's
+ *  island from rules/rosters.ts), "home" for home's and a map that isn't an island; its sigil by art/sigils.js ISLAND_SIGILS. */
 export const islandOf = (map: object): string => { const i = (map as { island?: string | { kind: string } | null }).island; return typeof i === "string" ? i : i?.kind ?? "home"; }; // (the rosters' Island, rules/rosters.ts: its kind)
 /** The sigil of a map's island (home's: the World Tree). */
 export const islandSigilOf = (map: object): string => islandSigil(islandOf(map));
