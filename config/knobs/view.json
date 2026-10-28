@@ -3,14 +3,15 @@
   "about": "The camera and the view (drawing only): framing, pixel size, culling, fading, finding things.",
   "knobs": {
     "sail": {
-      "what": "Sailing from the map table's sea chart (docs/plans/sail-without-reload.md, app/sail.ts): inPlace, the next night started on the same page (the old night's music fading out as a quiet sea and wind come in, sfx.sail; Back then opens the pause menu; anything going wrong loads the page anew, quietly), and so the bed and the bot game's exit, and the cards' Sea chart opening the map table's chart over the game; else the page loaded anew on the island's link (or chart.html) as before. ?sail=inplace or ?sail=reload for one page.",
+      "what": "Sailing from the sea chart starts the next night on the same page, the old night's music fading into sea and wind, rather than reloading.",
       "links": [
         "docs/plans/sail-without-reload.md",
         "app/sail.ts"
-      ]
+      ],
+      "notes": "Sailing from the map table's sea chart (docs/plans/sail-without-reload.md, app/sail.ts): inPlace, the next night started on the same page (the old night's music fading out as a quiet sea and wind come in, sfx.sail; Back then opens the pause menu; anything going wrong loads the page anew, quietly), and so the bed and the bot game's exit, and the cards' Sea chart opening the map table's chart over the game; else the page loaded anew on the island's link (or chart.html) as before. ?sail=inplace or ?sail=reload for one page."
     },
     "loading": {
-      "what": "The loading screen [1]: the World Tree and COVEN RUSH in gold stars, lighting as the game loads, edge first by edge (0 plain random), at most rate stars a second, each flashing for flash seconds; ghost how bright the stars not yet lit show (0: an empty sky, Ed's call); the heart's star last, its supernova to white over nova seconds and the white clearing over clear seconds into the bedroom. It draws fps frames a second while the game loads (each frame costs the load a little), about 20 once it's ready. Read as the page opens, so the pause page's sliders (remembered on this browser) take effect on the next load.",
+      "what": "The loading screen: the World Tree and COVEN RUSH picked out in gold stars that light up as the game loads.",
       "decisions": [
         {
           "by": "Ed",
@@ -20,10 +21,11 @@
       ],
       "links": [
         "src/ui/loadingScreen.js"
-      ]
+      ],
+      "notes": "The loading screen [1]: the World Tree and COVEN RUSH in gold stars, lighting as the game loads, edge first by edge (0 plain random), at most rate stars a second, each flashing for flash seconds; ghost how bright the stars not yet lit show (0: an empty sky, Ed's call); the heart's star last, its supernova to white over nova seconds and the white clearing over clear seconds into the bedroom. It draws fps frames a second while the game loads (each frame costs the load a little), about 20 once it's ready. Read as the page opens, so the pause page's sliders (remembered on this browser) take effect on the next load."
     },
     "opening": {
-      "what": "The opening [1]: bedroom, a plain first load (its link naming no seed or island, no arrival, no bot, the room not skipped) going straight to home's night and waking her in her bedroom there [2][3], asleep in the dark while the night is made. On by default; ?opening=old keeps the old start for a load (the character creator as the loading cover), ?opening=bedroom forces the wake-up; false here turns it off for every load.",
+      "what": "A plain first load wakes her in her bedroom on the home island while the night is made.",
       "decisions": [
         {
           "by": "Ed",
@@ -43,7 +45,8 @@
       ],
       "links": [
         "app/opening.ts"
-      ]
+      ],
+      "notes": "The opening [1]: bedroom, a plain first load (its link naming no seed or island, no arrival, no bot, the room not skipped) going straight to home's night and waking her in her bedroom there [2][3], asleep in the dark while the night is made. On by default; ?opening=old keeps the old start for a load (the character creator as the loading cover), ?opening=bedroom forces the wake-up; false here turns it off for every load."
     },
     "opening.wake": {
       "what": "the wake-up in her bedroom (rules/wakeUp.ts): snooze, a snooze's seconds (Ed: 5, as often as she likes); stretch, her stretch's seconds before she stands; alarmMin, the seconds the alarm rings before E can snooze it.",
@@ -52,7 +55,7 @@
       ]
     },
     "arrive": {
-      "what": "Arriving on an island from the sea chart [1]: the chart hands off over the open sea south of the island (its last frame and camera in sessionStorage, Charlie's chart side), the page shows that still pushing in (a CSS animation in index.html, from the first paint) while the night builds, then cross-fades it away over fade seconds into the game's camera at the same place, and flies on, looking north: over the sea and low over the forest at speed m/s (low: angle degrees down, distance metres back, aimed offshore metres past the south coast at first; each low leg at least minLeg seconds), then up over rise seconds to frame the dancefloor and the treehouse's spot together (frame: angle, distance, lift metres over the ground), then down over settle seconds into the opening shot at her decks. It waits behind the still [2] until warm.frames frames in a row come within warm.ms ms, or warm.max seconds pass, then flies on the frames' own time, each counting at most maxStep seconds, so a stall holds the flight rather than skipping it. Any key skips to the decks. The chart's record (app/arrival.ts) is read once, and ignored if it's stale or for another island; with no still (too big for the storage) a plain dark screen fades instead. The flight starts at the chart's own speed north (its cam.speed). A sail in place [3]: the next night is made under the chart from the moment she sails, and the chart's flight waits for it (hold): from the end of its glide in, while the night isn't ready, its pace eases (over hold.ease seconds) down to hold.rate of its own, slowing on into a hover short of the hand-off, the sea still moving, for at most hold.cap seconds; then on, as it's ready, into the dive.",
+      "what": "Arriving on an island from the sea chart: the camera flies in over the sea, frames the dancefloor and comes round to the treehouse.",
       "decisions": [
         {
           "by": "Ed",
@@ -75,7 +78,8 @@
         "rules/arrive.ts",
         "app/arrive.ts",
         "app/arrival.ts"
-      ]
+      ],
+      "notes": "Arriving on an island from the sea chart [1]: the chart hands off over the open sea south of the island (its last frame and camera in sessionStorage, Charlie's chart side), the page shows that still pushing in (a CSS animation in index.html, from the first paint) while the night builds, then cross-fades it away over fade seconds into the game's camera at the same place, and flies on, looking north: over the sea and low over the forest at speed m/s (low: angle degrees down, distance metres back, aimed offshore metres past the south coast at first; each low leg at least minLeg seconds), then up over rise seconds to frame the dancefloor and the treehouse's spot together (frame: angle, distance, lift metres over the ground), then down over settle seconds into the opening shot at her decks. It waits behind the still [2] until warm.frames frames in a row come within warm.ms ms, or warm.max seconds pass, then flies on the frames' own time, each counting at most maxStep seconds, so a stall holds the flight rather than skipping it. Any key skips to the decks. The chart's record (app/arrival.ts) is read once, and ignored if it's stale or for another island; with no still (too big for the storage) a plain dark screen fades instead. The flight starts at the chart's own speed north (its cam.speed). A sail in place [3]: the next night is made under the chart from the moment she sails, and the chart's flight waits for it (hold): from the end of its glide in, while the night isn't ready, its pace eases (over hold.ease seconds) down to hold.rate of its own, slowing on into a hover short of the hand-off, the sea still moving, for at most hold.cap seconds; then on, as it's ready, into the dive."
     },
     "arrive.handoff": {
       "what": "where the chart hands over, sea metres out to sea off the south coast below the dancefloor (negative: inland), its camera dist metres back and pitchDeg degrees down (the first flight's: -40, 600, 50); ?dive=near|far|skim for one load (app/chartView.ts DIVES).",
@@ -84,17 +88,18 @@
       ]
     },
     "arrive.tree": {
-      "what": "after framing the dancefloor, the camera comes round to the whole treehouse tree from the south, angle degrees up at its middle, far enough back that it fills fill of the frame's height (its height in metres from its art once drawn, height till then), time seconds after the frame, then settle seconds on into her bedroom.",
+      "what": "Where the camera ends its arrival: the whole treehouse tree seen from the south, filling the frame.",
       "decisions": [
         {
           "by": "Ed",
           "date": "2026-10-24",
           "quote": "pan up to see the whole treehouse tree before we fly into her bedroom"
         }
-      ]
+      ],
+      "notes": "after framing the dancefloor, the camera comes round to the whole treehouse tree from the south, angle degrees up at its middle, far enough back that it fills fill of the frame's height (its height in metres from its art once drawn, height till then), time seconds after the frame, then settle seconds on into her bedroom."
     },
     "camera": {
-      "what": "Near-isometric on the ground, after Transistor; the game opens close in on the witch in her seat on the treehouse (intro: distance metres, angle degrees), easing out to the normal view over intro.ease seconds once she moves or rises (Ed, v171); lower over the treetops, looking toward the horizon to feel the speed. The camera follows the witch on a soft spring (follow: its stiffness; higher keeps her closer to the middle) and looks a little ahead of her: lookAhead seconds of flight, at most lookAheadMax metres, eased in at lookAheadEase. Zoom moves between them in zoomSteps steps, starting at startZoom: with 9 steps and startZoom 3 the start is ground 32 degrees at 100 m and treetop 36 degrees at 170 m, with three steps in and five out from each [1].",
+      "what": "The camera: near-isometric on the ground, starting close in on her seat in the treehouse and easing out once she moves.",
       "decisions": [
         {
           "by": "Ed",
@@ -102,13 +107,15 @@
           "quote": "Increase the range of allowed zooming substantially in both treetop and ground (but keep the step size the same)",
           "rest": "20 m and 2 degrees a step, as before; was 4 steps, startZoom 1, ground 80-140 m, treetop 150-210 m"
         }
-      ]
+      ],
+      "notes": "Near-isometric on the ground, after Transistor; the game opens close in on the witch in her seat on the treehouse (intro: distance metres, angle degrees), easing out to the normal view over intro.ease seconds once she moves or rises (Ed, v171); lower over the treetops, looking toward the horizon to feel the speed. The camera follows the witch on a soft spring (follow: its stiffness; higher keeps her closer to the middle) and looks a little ahead of her: lookAhead seconds of flight, at most lookAheadMax metres, eased in at lookAheadEase. Zoom moves between them in zoomSteps steps, starting at startZoom: with 9 steps and startZoom 3 the start is ground 32 degrees at 100 m and treetop 36 degrees at 170 m, with three steps in and five out from each [1]."
     },
     "camera.zoomEase": {
-      "what": "how softly zoom and rising change the angle and distance. a narrow field of view (fov, degrees) seen from far off, so there is little perspective. Each mode has its own angle (degrees below horizontal) and distance from the witch, at zoomed-in and zoomed-out.",
+      "what": "How softly zooming and rising change the camera's angle and distance.",
       "also": [
         "camera.liftEase"
-      ]
+      ],
+      "notes": "how softly zoom and rising change the angle and distance. a narrow field of view (fov, degrees) seen from far off, so there is little perspective. Each mode has its own angle (degrees below horizontal) and distance from the witch, at zoomed-in and zoomed-out."
     },
     "camera.curve": {
       "what": "the world bends away toward the top of the screen [1], per metre ahead of the witch, eased in as she rises; ?curve=<treetop> tries values (0.0015: about 11% of the screen sky in ?bare=1, Ed v276 asked 10-12%; 0.0022 about 24%; under 0.001 none; 0 off).",
@@ -134,17 +141,18 @@
       ]
     },
     "camera.shake": {
-      "what": "each hit adds trauma (0-1), base on her first, perMissingHit more for each hit she was already missing, knockdown on the hit that knocks her down; it falls away at decay a second, and the screen shakes by trauma squared times maxOffsetPx (screen pixels, whole ones) and maxRotDeg, smooth noise wandering speed times a second. ?shake=0 (or the start screen's toggle) turns it off.",
+      "what": "The screen shakes when she's hit, harder for each hit she was already missing and hardest on a knockdown.",
       "decisions": [
         {
           "by": "Ed",
           "date": "2026-10-05",
           "quote": "Screen should shake when the witch is hit. More shake when you are on lower health"
         }
-      ]
+      ],
+      "notes": "each hit adds trauma (0-1), base on her first, perMissingHit more for each hit she was already missing, knockdown on the hit that knocks her down; it falls away at decay a second, and the screen shakes by trauma squared times maxOffsetPx (screen pixels, whole ones) and maxRotDeg, smooth noise wandering speed times a second. ?shake=0 (or the start screen's toggle) turns it off."
     },
     "camera.circle": {
-      "what": "on the ground in a legend's circle the camera eases over ease seconds to angle degrees (from the ground view's 30 to 36), its distance times distance, aimed frame of the way from her to the legend and look metres higher, so the legend stands large over her; it eases back as she leaves. on false turns it off.",
+      "what": "In a legend's circle the camera tilts and frames her and the legend together.",
       "decisions": [
         {
           "by": "Ed",
@@ -152,7 +160,8 @@
           "quote": "lowering the camera angle while you're in the circle to make them seem more looming",
           "rest": "considering it; legends being hard to make out in their circles"
         }
-      ]
+      ],
+      "notes": "on the ground in a legend's circle the camera eases over ease seconds to angle degrees (from the ground view's 30 to 36), its distance times distance, aimed frame of the way from her to the legend and look metres higher, so the legend stands large over her; it eases back as she leaves. on false turns it off."
     },
     "camera.house": {
       "what": "landed on the treehouse's floor, the camera eases over ease seconds to angle degrees and its distance times distance.",
@@ -181,7 +190,7 @@
       "what": "with no part, the camera aimed that share of her height (as she's drawn) up her."
     },
     "camera.station.parts": {
-      "what": "for the part of her the row in focus is about (config/wardrobe.json's frame: head, hat, top, legs, feet, broom; board, the Workshop's pegboard, the wall behind her, so aimed up over her to it), aimed aim of her height (as drawn: 0 her feet, 1 the top of her hat) up her and look metres higher (a thing by her: the board, the broom), and its distance times distance in place of the station's own, eased from part to part as the cursor moves [2].",
+      "what": "Where the camera aims at a dressing station for each part of her being changed (head, hat, top, legs, feet, broom, the pegboard).",
       "decisions": [
         {
           "by": "Ed",
@@ -196,10 +205,11 @@
       ],
       "links": [
         "config/wardrobe.json"
-      ]
+      ],
+      "notes": "for the part of her the row in focus is about (config/wardrobe.json's frame: head, hat, top, legs, feet, broom; board, the Workshop's pegboard, the wall behind her, so aimed up over her to it), aimed aim of her height (as drawn: 0 her feet, 1 the top of her hat) up her and look metres higher (a thing by her: the board, the broom), and its distance times distance in place of the station's own, eased from part to part as the cursor moves [2]."
     },
     "pixelSize": {
-      "what": "Everything the camera can see is drawn, plus viewMargin metres round the view, so nothing appears or vanishes on screen. screen pixels per art pixel [1]. The witch's light reaches as far as the canopy hole round her in ground mode (its radius plus its soft edge, in metres at her depth, times glowToCutout), so beyond it the forest is dark (Ed, v149).",
+      "what": "How many screen pixels each art pixel takes up, the size of the game's chunky pixels.",
       "decisions": [
         {
           "by": "Ed",
@@ -207,7 +217,8 @@
           "quote": "the large pixels look cute but it's impossible to see what's going on",
           "rest": "3 after playtesting 5 and 4; ?px=4|5 to compare"
         }
-      ]
+      ],
+      "notes": "Everything the camera can see is drawn, plus viewMargin metres round the view, so nothing appears or vanishes on screen. screen pixels per art pixel [1]. The witch's light reaches as far as the canopy hole round her in ground mode (its radius plus its soft edge, in metres at her depth, times glowToCutout), so beyond it the forest is dark (Ed, v149)."
     },
     "spriteTilt": {
       "what": "1 = sprites face the camera fully, 0 = stand upright."
@@ -219,17 +230,19 @@
       "see": "pixelSize"
     },
     "sigilProjection": {
-      "what": "From the treetops, each placed sigil shows above the canopy over its spot: height metres above the crowns, opacity, size (times the ground rune), and a faint column of light (beam opacity) from the rune up to it. Fades in as she rises."
+      "what": "From the treetops each placed sigil shows above the canopy over its spot, with a faint beam down to it.",
+      "notes": "From the treetops, each placed sigil shows above the canopy over its spot: height metres above the crowns, opacity, size (times the ground rune), and a faint column of light (beam opacity) from the rune up to it. Fades in as she rises."
     },
     "sigilProjection.creatures": {
-      "what": "each leashed or happy creature's sigil hangs over it at the same height, moving with it, no beam: only the nearest max within range metres, size times its ground rune, at opacity (a happy one's times happy, as its rune is dimmer on the ground), fading out over the last fade (a share) of the range. Not for one in her stack (its sigil's already over her) or one standing at its placed sigil (that one's projected already).",
+      "what": "From the treetops each leashed or happy creature's sigil hangs over it, moving with it.",
       "decisions": [
         {
           "by": "Ed's playtest",
           "date": "2026-10-06",
           "quote": "I should be able to see sigils of leashed creatures and happy creatures from treetop mode"
         }
-      ]
+      ],
+      "notes": "each leashed or happy creature's sigil hangs over it at the same height, moving with it, no beam: only the nearest max within range metres, size times its ground rune, at opacity (a happy one's times happy, as its rune is dimmer on the ground), fading out over the last fade (a share) of the range. Not for one in her stack (its sigil's already over her) or one standing at its placed sigil (that one's projected already)."
     },
     "suspects": {
       "what": "The circle-bug suspects [1]: each effect centred on her with a round edge, on (as ever) or off, read every frame so the pause page's toggles show at once.",
@@ -317,10 +330,11 @@
       "what": "the fix (on): what's in front of her drawn in a see-through pass of its own, writing depth, before the half-faded things (off: one see-through pass, as before, the circle bug)."
     },
     "occlusion": {
-      "what": "Never lose the witch: tall things (over minHeight metres) standing in front of her fade to fadeOpacity where they cover her, in a soft circle round her body (a little bigger than her sprite) that eases from see-through at the centre to opaque past edge (a share of its radius), and eases in over a few metres as she moves behind; anything that still hides her shows her silhouette in her glow colour at silhouette opacity."
+      "what": "Tall things standing in front of the witch fade where they cover her, so she's never lost from view.",
+      "notes": "Never lose the witch: tall things (over minHeight metres) standing in front of her fade to fadeOpacity where they cover her, in a soft circle round her body (a little bigger than her sprite) that eases from see-through at the centre to opaque past edge (a share of its radius), and eases in over a few metres as she moves behind; anything that still hides her shows her silhouette in her glow colour at silhouette opacity."
     },
     "reveal": {
-      "what": "The places she stands in, kept clear [1][2]: while she stands on the ground within a place of interest, everything standing nearer the camera than its centre whose picture covers it (its ring on the ground and what stands at its centre, width by height metres) fades out whole. For these three, whatever stands within keep metres of the thing is never faded: the thing itself (a relic, the trunk and a runestone are stood toward the camera by part of their height, nearer than the spot they mark). A place fades over seconds as she walks in and back over seconds as she leaves.",
+      "what": "Places of interest she stands in are kept clear: whatever stands in front of them and covers them fades away.",
       "decisions": [
         {
           "by": "Ed",
@@ -336,7 +350,8 @@
       ],
       "links": [
         "render/view/reveal.ts"
-      ]
+      ],
+      "notes": "The places she stands in, kept clear [1][2]: while she stands on the ground within a place of interest, everything standing nearer the camera than its centre whose picture covers it (its ring on the ground and what stands at its centre, width by height metres) fades out whole. For these three, whatever stands within keep metres of the thing is never faded: the thing itself (a relic, the trunk and a runestone are stood toward the camera by part of their height, nearer than the spot they mark). A place fades over seconds as she walks in and back over seconds as she leaves."
     },
     "reveal.edge": {
       "what": "(a share of the screen's width) and depth (metres) are how far past its box on screen and nearer than its centre each thing eases from gone to whole, so nothing snaps at a line. ?reveal=legend,runestone,find,flask (or all, or none) sets which are on."
@@ -362,7 +377,7 @@
       "what": "tonight's trunk or wreck, until it's taken."
     },
     "reveal.flask": {
-      "what": "a lying relic flask. Each on or off [1].",
+      "what": "Whether a lying relic flask is kept clear like the other places of interest.",
       "decisions": [
         {
           "by": "Ed",
@@ -370,25 +385,27 @@
           "quote": "All four on",
           "rest": "all four on since; the last three the pause page's toggles, and the runestone's radius its slider"
         }
-      ]
+      ],
+      "notes": "a lying relic flask. Each on or off [1]."
     },
     "canopyShadow": {
       "what": "a dappled shadow from the canopy overhead (height in metres), thinner in clearings, drifting with the wind."
     },
     "rig": {
-      "what": "The live rig [1]: on by default, ?rig=0 turns it off. Creatures keep their baked frames in the treetops, and on the ground when drawn smaller than minPx art pixels, except the levels in alwaysLevels: legends are always rigged. A sleeping area legend is rigged too: lying down, legs folded, head on the ground, eyes shut, breathing slowly, sunk sink of its height into the earth (the baked frames sink wildLegends.sink), its legs paddling and head jerking in a nightmare while restless. Woken (angry or happy) it gets up drowsily over wakeSecs seconds (an angry one angryWake times as long): its head comes up first, sags once, then it heaves itself up out of the ground; lulled back to sleep it settles down over settleSecs.",
+      "what": "Creatures close to the camera on the ground are drawn with a live rig (moving limbs) rather than baked frames; legends always are.",
       "decisions": [
         {
           "by": "Ed",
           "date": "2026-10-05"
         }
-      ]
+      ],
+      "notes": "The live rig [1]: on by default, ?rig=0 turns it off. Creatures keep their baked frames in the treetops, and on the ground when drawn smaller than minPx art pixels, except the levels in alwaysLevels: legends are always rigged. A sleeping area legend is rigged too: lying down, legs folded, head on the ground, eyes shut, breathing slowly, sunk sink of its height into the earth (the baked frames sink wildLegends.sink), its legs paddling and head jerking in a nightmare while restless. Woken (angry or happy) it gets up drowsily over wakeSecs seconds (an angry one angryWake times as long): its head comes up first, sags once, then it heaves itself up out of the ground; lulled back to sleep it settles down over settleSecs."
     },
     "pathFade": {
       "what": "Every end of a path, road, railway or stream (where it stops, peters out or is broken) frays out over its last metres in an ordered dither on the art's pixel grid, broken up by noise (Ed, v149)."
     },
     "trunkFade": {
-      "what": "In ground mode, where the crowns are hidden, each tree's trunk fades out over its top metres in an ordered dither on the art's pixel grid (Ed, v149), instead of ending in a flat cut; over at most share of the trunk's visible height, so short trees keep a solid trunk (Ed, v233). Trunks stand in the canopy's shadow: never darker than lightFloor of their unlit look, with a rim from her glow; and the cut between trunk and crown is where crownShare of the crown's pixels lie above, not its lowest low bough [1].",
+      "what": "On the ground, where the crowns are hidden, each trunk's top fades out in a pixel dither instead of ending in a flat cut.",
       "decisions": [
         {
           "by": "Ed",
@@ -396,10 +413,11 @@
           "quote": "We have really lost our treetrunks",
           "rest": "v271"
         }
-      ]
+      ],
+      "notes": "In ground mode, where the crowns are hidden, each tree's trunk fades out over its top metres in an ordered dither on the art's pixel grid (Ed, v149), instead of ending in a flat cut; over at most share of the trunk's visible height, so short trees keep a solid trunk (Ed, v233). Trunks stand in the canopy's shadow: never darker than lightFloor of their unlit look, with a rim from her glow; and the cut between trunk and crown is where crownShare of the crown's pixels lie above, not its lowest low bough [1]."
     },
     "load": {
-      "what": "Sigil weight, made visible [1]: the load her carried leashes put on her (the rules' leashLoad, by tension and weight) shows from nothing (the rules' leashLoad: its over, the pull past leash.weight.free, so the first few sigils change nothing) to full weight units over: her sigil stack sags (its gaps closing by up to stackSag) and leans toward the pull (stackLean metres a sigil); carried leashes' threads show from threadFrom of the leash's length (0.85 unloaded), taut and brighter (threadBright); flying away from the pull she leans forward (witchLean metres per metre up), her broom tilts nose-up (broomTilt) and its shaft bows (broomBow art pixels), sparks splaying back from its bristles (sparks a second); over the treetops, sinking (her lift below 1 in treetop mode, the rules' leash.weight), sparks fall away below her.",
+      "what": "The weight of her leashed creatures made visible: her sigil stack sags and leans toward the pull, and she leans and her broom bows as she flies away from it.",
       "decisions": [
         {
           "by": "Ed",
@@ -410,10 +428,11 @@
       ],
       "links": [
         "render/load.ts"
-      ]
+      ],
+      "notes": "Sigil weight, made visible [1]: the load her carried leashes put on her (the rules' leashLoad, by tension and weight) shows from nothing (the rules' leashLoad: its over, the pull past leash.weight.free, so the first few sigils change nothing) to full weight units over: her sigil stack sags (its gaps closing by up to stackSag) and leans toward the pull (stackLean metres a sigil); carried leashes' threads show from threadFrom of the leash's length (0.85 unloaded), taut and brighter (threadBright); flying away from the pull she leans forward (witchLean metres per metre up), her broom tilts nose-up (broomTilt) and its shaft bows (broomBow art pixels), sparks splaying back from its bristles (sparks a second); over the treetops, sinking (her lift below 1 in treetop mode, the rules' leash.weight), sparks fall away below her."
     },
     "canopyCutout": {
-      "what": "In ground mode the canopy stays drawn at the screen's edges, so she flies under the forest roof; a hole round her is cut out, screenFraction of the screen's width across, its edge edge of the width wide. Each tree has its own radius for it, up to a fifth nearer or further [1], so no line runs across the canopy, and the edge fades over a wide band. Rising closes the hole. Each crown goes by its middle less half its half-size, so every crown counts a little nearer: the hole and its band came in to keep the roof at the screen's edges (screenFraction 1 -> 0.8, edge 0.5 -> 0.25, outer 0.8 -> 1: crowns fading from about 0.15 to 0.65 of the width out), and glowToCutout 1 -> 1.55 keeps her light's reach as it was. Ed, 2026-10-14 (\"the canopy cut-away radius is too large\"): screenFraction 0.8 -> 0.53 -> 0.4, glowToCutout 1.55 -> 1.95 -> 2.24 keeping her light's reach.",
+      "what": "On the ground the forest roof stays drawn at the screen's edges, with a hole cut round her so she can be seen.",
       "decisions": [
         {
           "by": "Ed",
@@ -421,10 +440,11 @@
           "quote": "the crown-hiding circle still has a very sharp edge",
           "rest": "round 7"
         }
-      ]
+      ],
+      "notes": "In ground mode the canopy stays drawn at the screen's edges, so she flies under the forest roof; a hole round her is cut out, screenFraction of the screen's width across, its edge edge of the width wide. Each tree has its own radius for it, up to a fifth nearer or further [1], so no line runs across the canopy, and the edge fades over a wide band. Rising closes the hole. Each crown goes by its middle less half its half-size, so every crown counts a little nearer: the hole and its band came in to keep the roof at the screen's edges (screenFraction 1 -> 0.8, edge 0.5 -> 0.25, outer 0.8 -> 1: crowns fading from about 0.15 to 0.65 of the width out), and glowToCutout 1 -> 1.55 keeps her light's reach as it was. Ed, 2026-10-14 (\"the canopy cut-away radius is too large\"): screenFraction 0.8 -> 0.53 -> 0.4, glowToCutout 1.55 -> 1.95 -> 2.24 keeping her light's reach."
     },
     "canopyCutout.whole": {
-      "what": "how much the fade goes by each crown's middle rather than by each pixel [1]: by pixel, every crown carried the same circular gradient and they lined up into rings; at 1 each crown fades as a whole. edge 0.2 -> 0.3 with it. Round 14 [2]: by the crown's middle, a big crown near the camera (its middle far off) stood whole right up to her and its edge read as a hard ring, so whole 0.75 -> 0.25 (mostly by pixel again) and the rings are broken another way: wobble, how far the hole's line wanders (a share of edge) by a slow noise on the ground, so the fade's lines aren't circles; outer, how far past the radius the fade reaches (a share of edge; 0.35 before), with edge 0.3 -> 0.5, so the canopy thins over a band several crowns deep. A trunk cut from its crown now fades its top in alpha too (smooth effects). Ed, 2026-10-06 (\"circle\": it still read as a round window, crowns and trunks sliced along its arc): the slicing was the fade going by each pixel, every crown crossing the band cut along the same circle; so whole 0.25 -> 1, each crown (and its trunk) fading as one, by its middle less half its half-size (a big crown over her goes too).",
+      "what": "How much the canopy hole fades each crown as a whole rather than pixel by pixel, so the crowns don't line up into rings.",
       "decisions": [
         {
           "by": "Ed",
@@ -436,7 +456,8 @@
           "date": null,
           "quote": "canopy cut-out circle is still very sharp"
         }
-      ]
+      ],
+      "notes": "how much the fade goes by each crown's middle rather than by each pixel [1]: by pixel, every crown carried the same circular gradient and they lined up into rings; at 1 each crown fades as a whole. edge 0.2 -> 0.3 with it. Round 14 [2]: by the crown's middle, a big crown near the camera (its middle far off) stood whole right up to her and its edge read as a hard ring, so whole 0.75 -> 0.25 (mostly by pixel again) and the rings are broken another way: wobble, how far the hole's line wanders (a share of edge) by a slow noise on the ground, so the fade's lines aren't circles; outer, how far past the radius the fade reaches (a share of edge; 0.35 before), with edge 0.3 -> 0.5, so the canopy thins over a band several crowns deep. A trunk cut from its crown now fades its top in alpha too (smooth effects). Ed, 2026-10-06 (\"circle\": it still read as a round window, crowns and trunks sliced along its arc): the slicing was the fade going by each pixel, every crown crossing the band cut along the same circle; so whole 0.25 -> 1, each crown (and its trunk) fading as one, by its middle less half its half-size (a big crown over her goes too)."
     },
     "canopyCutout.ragged": {
       "what": "its outline's bays and points round her, a share of the radius, drifting slowly round."
@@ -458,7 +479,8 @@
       ]
     },
     "find": {
-      "what": "Finding wild creatures in the dark (Ed, v244: 'quite hard to see in the forest... I don't want to go overboard'): eyeshine, their eyes catching the light in pale gold (strength over their own colour, out to range metres from her, blinking about blink of the time; woken creatures' red eyes stay red); lightFloor, never darker than that share of their unlit look; rim, a faint rim from her glow on the edge facing her; and in place of tone.ambient, ambient, with a cooler, more coloured moon (moonHue, moonSat)."
+      "what": "Wild creatures are easier to find in the dark: their eyes shine pale gold in her light and they never go fully dark.",
+      "notes": "Finding wild creatures in the dark (Ed, v244: 'quite hard to see in the forest... I don't want to go overboard'): eyeshine, their eyes catching the light in pale gold (strength over their own colour, out to range metres from her, blinking about blink of the time; woken creatures' red eyes stay red); lightFloor, never darker than that share of their unlit look; rim, a faint rim from her glow on the edge facing her; and in place of tone.ambient, ambient, with a cooler, more coloured moon (moonHue, moonSat)."
     }
   }
 }

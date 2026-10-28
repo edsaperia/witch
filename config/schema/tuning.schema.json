@@ -24,11 +24,11 @@
         "islandAreas": {
           "type": "number",
           "minimum": 0,
-          "description": "the island is home and exactly this many more areas, those nearest home's, round, its radius halfway out to the next (0: the radius below)."
+          "description": "How many areas the island has round home, and its round, buffered shape."
         },
         "island": {
           "type": "string",
-          "description": "\"home\" plays home by roster, one area per kind she knows (the 10 kinds introduced at home and each kind whose island she's found, map.found: growing outward, its first areas the same; islandAreas its least, the kinds again past one each), its legends dealt each night, 1 in 5 areas; a kind's name (?island=fox) plays that kind's island, its own seed (where it lies on the sea chart) and size by phase (10 a phase), its roster that kind plentiful, 1-3 kinds new to its phase and the rest by bearing; empty, areas of random types as before."
+          "description": "Which island is played: home, built from the kinds she knows, or another by its roster."
         },
         "found": {
           "type": "array",
@@ -37,7 +37,7 @@
         "phase": {
           "type": "number",
           "minimum": 0,
-          "description": "an island grows out from home over its areas' neighbours, each step the area nearest home for the island's reach that way, by its phase's shape (shapes[phase], index 0 home: near-round; 1 gently lobed; 2 bays and a peninsula; 3 arms and inlets; 4 and 5 strongly irregular): lobes, how far its outline swells and shrinks round home (a share of its reach) over harmonics bumps; arms, how far its peninsulas reach past it (a share), armCount to of them, each armWidth radians across; bays, how deep its bays cut in, bayCount to of them; jitter, each area's own seeded nudge in areas (ragged edges)."
+          "description": "How an island grows out from home, its outline rounder or more lobed, bayed and armed the further out it is."
         },
         "shapes": {
           "type": "array",
@@ -148,7 +148,7 @@
             "detail"
           ],
           "additionalProperties": false,
-          "description": "which areas are playable and which the buffer's goes by their centres' distance from home over the same seeded coast, up to amp of its radius in or out (0 for a perfect circle): harmonics gentle bays and headlands (from two round the island up), plus detail (a share) of finer wobble."
+          "description": "How irregular the island's coastline is, with gentle bays and headlands rather than a perfect circle."
         }
       },
       "required": [
@@ -166,7 +166,7 @@
         "coast"
       ],
       "additionalProperties": false,
-      "description": "The forest: mapAreas x mapAreas areas cut by the fractal partition."
+      "description": "The forest's size: how many areas there are and how big each one is."
     },
     "biomeLooks": {
       "type": "object",
@@ -188,7 +188,7 @@
         "strength"
       ],
       "additionalProperties": false,
-      "description": "How strongly an island's forests take its biome's look (art/flora/biomes.js), by its ring: strength for phase from's islands, strength the next ring out, and so on, the last for any further; each mixes the biome's look toward temperate's by 1 - strength (1 the full look)."
+      "description": "How strongly an island's forests take on its biome's look, more so the further out its ring."
     },
     "lakes": {
       "type": "object",
@@ -270,7 +270,7 @@
         "steam"
       ],
       "additionalProperties": false,
-      "description": "Lakes: from phase 1 some of an island's areas are water, map.shapes[phase].lakes (fewest, most) of them, each lakeSize (fewest, most) areas, never home or its neighbours, the rest of the island still joined (rules/islandGrowth.ts placeLakes); no beaches but a small shore, their water lighter than the sea; she flies over them in the treetops but never lands on the water, and on foot she and every creature stop at the shore."
+      "description": "Lakes on the outer islands: some areas are water she can fly over but not land on, some with biome looks like frozen or lava lakes."
     },
     "chart": {
       "type": "object",
@@ -311,7 +311,7 @@
             "disc"
           ],
           "additionalProperties": false,
-          "description": "each time the chart opens the moon rises over its edge at bearing from (degrees, 0 north, clockwise: -45 the north-west) over rise seconds, from just under the horizon to height degrees, then goes round once every turn seconds; every island's relief throws a shadow away from it, across the sea and into its own valleys, shadow its darkest (0 none, 1 black), the hills' shading following it."
+          "description": "The moon rising and circling over the sea chart each time it opens."
         },
         "edgeBand": {
           "type": "number",
@@ -321,7 +321,7 @@
         "sailHold": {
           "type": "number",
           "minimum": 0,
-          "description": "Seconds the use button (E, Enter, the pad's square) or the mouse is held on an island at the map table's chart to sail there, its ring filling; let go early, nothing."
+          "description": "How long the use button is held on an island at the sea chart to sail there."
         }
       },
       "required": [
@@ -363,7 +363,7 @@
         "coast"
       ],
       "additionalProperties": false,
-      "description": "Islands other than home (the wave 2 finale's dream bubbles and the sea chart; rules/islandShape.ts, art/islands.js; Ed, docs/backlog/journey.md): coast, the coastline's knobs as map.coast's (amp, the most it strays from round, a share of the radius; harmonics, how many bays and headlands; detail, the finer wobble), stronger than home's so every island has a shape of its own, read at a bubble's 30 pixels."
+      "description": "How the other islands look on the sea chart and in the dream bubbles: their coastlines and shapes."
     },
     "beach": {
       "type": "object",
@@ -477,7 +477,7 @@
             "kinds"
           ],
           "additionalProperties": false,
-          "description": "round the coast in sectors sectors, about finds finds a sector (shells, starfish, a conch, seaweed, pebbles; rocks on a rocky stretch), each sector with a trails chance of a trail of prints to prints footprints (bare feet, paws, hooves, a bird's, weighted by kinds) wandering along the sand and fading out; all of it on the wet and dry sand, the clear metres of it nearest the woods left bare."
+          "description": "Shells, starfish, seaweed, pebbles and footprint trails scattered along the beach."
         },
         "ease": {
           "type": "number",
@@ -710,7 +710,7 @@
             "time"
           ],
           "additionalProperties": false,
-          "description": "leaping off the east coast, within arc radians of due east, one every every to seconds, pair of them in twos, out to metres past the water's edge from her and ahead to metres north of that (away from the camera: the stargazing bend drops anything much more than 20 m ahead of her below the screen), each leap length metres along the coast and height high over time seconds."
+          "description": "Dolphins leaping off the east coast while she's on the beach."
         },
         "kraken": {
           "type": "object",
@@ -772,7 +772,7 @@
             "head"
           ],
           "additionalProperties": false,
-          "description": "off the west coast, within arc radians of due west, a slot every every seconds, chance of them holding a rising: tentacles to tentacles rising one after another out to metres past the water's edge from her and ahead to metres north of that, each over time seconds, and in head of them the dome of its head and its eye."
+          "description": "A kraken's tentacles rising off the west coast now and then while she's on the beach."
         }
       },
       "required": [
@@ -804,7 +804,7 @@
         "kraken"
       ],
       "additionalProperties": false,
-      "description": "The beach: sand over the last width metres inside her flight's edge (nothing grows or stands on it), the sea from shore metres past the edge, the hills eased over ease metres down to sand metres high where the sand starts and to sea metres at the water."
+      "description": "The strip of sand round the island's edge, where she can lie down to stargaze and meet other witches."
     },
     "areaSize": {
       "type": "number",
@@ -855,12 +855,12 @@
         "curve"
       ],
       "additionalProperties": false,
-      "description": "every area is mostly open within radius metres of its centre and its soundsystem, for fights (they range 15 to 45 m), and (Ed: softer edges; then, at v473, a smaller clearing and a long soft gradient from the area's edge to near its runestone) the woods thicken over a band band metres wide beyond it, across most of the area, along curve (linear: thinning in from right past the open middle; smooth: a slow start), lone trees and bushes thinning out into the clearing, its edge wobbled by noise (a share of the band) so it's no ring; both times fight.scale."
+      "description": "Every area is kept mostly open round its centre and its soundsystem, so fights have room."
     },
     "areaSizeVariance": {
       "type": "number",
       "minimum": 0,
-      "description": "(0-1) makes areas vary in size, some small, some large."
+      "description": "How much areas vary in size, some small and some large."
     },
     "borderLayers": {
       "type": "number",
@@ -879,7 +879,7 @@
     "gladeAmount": {
       "type": "number",
       "minimum": 0,
-      "description": "(0-1) of the woods is open in random glades about gladeScale metres across; trees sit on a staggered grid treeSpacingX by treeSpacingZ metres, so no two crowns pile up."
+      "description": "How much of the woods is open in random glades."
     },
     "gladeScale": {
       "type": "number",
@@ -911,7 +911,7 @@
         "tufts": {
           "type": "number",
           "minimum": 0,
-          "description": "the share of the band the ground cover blends over (0: the tufts keep the exact border, as before; they lie on the area's own floor, which keeps its edge, and a cave mouth's bare ground taking a grassland's thick grass 40 m in read as wrong; 1 blends them as the trees); their cell (a legend circle's floor, an arena) stays the exact one either way."
+          "description": "How far the ground cover blends across area borders as the trees do."
         }
       },
       "required": [
@@ -923,7 +923,7 @@
         "tufts"
       ],
       "additionalProperties": false,
-      "description": "Blended area edges: each tree and bush takes its look (its area type) from a point up to width metres away, the offset mostly the plant's own, drawn independently of its neighbours' (stray of it: 0.85, Ed's #887 feedback, so the kinds interleave tree by tree rather than in clumps; it was 0.5), the rest a smooth noise scale metres across so the band doesn't run dead straight; the neighbour's share ramps from about half at the border to none width metres in."
+      "description": "Trees and bushes near an area's border take the look of the area next door, so borders blend rather than form a line."
     },
     "groundBlend": {
       "type": "object",
@@ -955,7 +955,7 @@
         "dither"
       ],
       "additionalProperties": false,
-      "description": "How neighbouring areas' floor textures meet (Ed, v160): the border is warped by noise in two octaves (up to warp metres over about 40 m, and fine metres over about 6 m), so it meanders rather than following the texture's grid; across a band metres wide the two floors mix pixel by pixel, by noise and (dither) an ordered dither, like grass creeping into dirt."
+      "description": "How neighbouring areas' floor textures meet, along a meandering, blended border."
     },
     "ground": {
       "type": "object",
@@ -1046,7 +1046,7 @@
             "trees"
           ],
           "additionalProperties": false,
-          "description": "every area's runestone stands on a rise and every legend clearing lies in a hollow, rise and dip times the hills' amplitude high and deep (0.15 of 40 m: 6 m), each easing out over reach metres (kept short and low: the stones are about 110 m apart, a clearing about 65 m from its stone, and the slopes must stay under the camera's sightline) (the plateaus then level each one, so a stone tops a knoll and a clearing sits in a dell); trees grow up to trees (a share) thicker in the lowest ground and thinner on the highest, by the land's height over half the hills' amplitude (most of it lies within that)."
+          "description": "Every area's runestone stands on a rise and every legend's clearing lies in a hollow."
         }
       },
       "required": [
@@ -1055,7 +1055,7 @@
         "layout"
       ],
       "additionalProperties": false,
-      "description": "The ground's fake relief (Ed, v171: so the ground doesn't look flat): low rises and hollows from noise about relief.scale metres across, tilting the ground's lighting by relief.strength (0 flat) so the witch's light and the campfires pick out the bumps, and hollows shaded darker by relief.shade."
+      "description": "Low rises and hollows in the ground's lighting, so it doesn't look flat."
     },
     "wisps": {
       "type": "object",
@@ -1136,7 +1136,7 @@
         "bright"
       ],
       "additionalProperties": false,
-      "description": "Will-o'-the-wisps in the wild areas: a seeded chance per square of ground (cell m) within reach of her; none within partyNear of a partified area, the full chance from partyFar; height [low, high] m, drift m, a cycle of period s (fade in, linger, fade out, gone); core and halo size in art pixels; colour."
+      "description": "Will-o'-the-wisps drifting through the wild areas near her, none near a party."
     },
     "glades": {
       "type": "object",
@@ -1252,7 +1252,7 @@
         "motes"
       ],
       "additionalProperties": false,
-      "description": "The sleeping legends' clearings: art builder 1 places them (the map's glades); until then one round each sleeping legend, radius metres across with the legend top of the way toward its top."
+      "description": "The clearings where sleeping legends lie."
     },
     "treehouse": {
       "type": "object",
@@ -1488,7 +1488,7 @@
         },
         "carrier": {
           "type": "string",
-          "description": "\"island\" that island's kind's legend, braced under the Ent, its back about 13 m up and the Ent's trunk that much shorter, so the deck stays where it is (home, the Ent's own island, has none, nor has a map that isn't an island); a kind's id (e.g. \"bear\", or ?carrier=bear) that kind's everywhere; \"none\" no one."
+          "description": "On other islands, that island's legend carries the treehouse on its back, braced under the oak."
         }
       },
       "required": [
@@ -1502,7 +1502,7 @@
         "carrier"
       ],
       "additionalProperties": false,
-      "description": "The witch's treehouse, home: its foot (the Terrace's middle; clear metres round it) stands gap metres beyond the dancefloor's ring of speakers (so however many speakers or how far out, it stays outside them; 22 keeps the oak's rooms, up in its crown, clear of the dancefloor's clearing), at angle degrees (-135: north-west; -90 due north, straight up the screen), always facing south, to the floor and the camera; and keeps a clearing of clear metres round its foot (at least the art's footprint: 8.2 m for the v2 tower); its lantern and fairy lights light lightReach metres round at lightStrength."
+      "description": "The witch's home in the great oak beside the dancefloor: where it stands, its deck and rooms, how she walks and lands there, and the oak's crown, lights and warm glow over it."
     },
     "home": {
       "type": "object",
@@ -1567,7 +1567,7 @@
         "featured"
       ],
       "additionalProperties": false,
-      "description": "Scenes: small vignettes (a farmyard corner, a bus stop, a picnic gone wild...) and large landmarks (a cemetery, a car park, ruined churches and temples, castle ruins...), each a few pieces counting as one, each at most once per map."
+      "description": "Small vignettes and large landmarks (a farmyard corner, a bus stop, a cemetery, castle ruins) placed about the island."
     },
     "grounds": {
       "type": "object",
@@ -1596,7 +1596,7 @@
         "radius"
       ],
       "additionalProperties": false,
-      "description": "Old playgrounds and sports grounds (the relics art's arrangements): an area has one with chance (not home), off to the side of its centre, keeping a clearing of radius metres (per kind) where nothing grows."
+      "description": "Old playgrounds and sports grounds in some areas, off to the side of their centre."
     },
     "legendClearing": {
       "type": "object",
@@ -1728,7 +1728,7 @@
             "jitter"
           ],
           "additionalProperties": false,
-          "description": "round the circle's ragged edge the forest swells, strongest at the edge and easing out (smoothstep) over reach metres to the area's own: there trees stand at up to density (a chance a tree spot), up to tallest of them the area's two tallest kinds, drawn up to scale times bigger, each tree's strength jittered by jitter either way so no ring or step shows; open in front gap degrees either side of due south (toward the camera), easing in over soft degrees more."
+          "description": "The forest swells thicker and taller round the edge of a legend's clearing."
         },
         "fit": {
           "type": "object",
@@ -1752,7 +1752,7 @@
             "areaMax"
           ],
           "additionalProperties": false,
-          "description": "each circle sized to its legend as drawn asleep (config/legend-footprints.json, measured by node tools/legends/footprint.mjs), its sleeping body fitting where it lies with margin metres to spare, never smaller than species (or radius) gives it, never more than max metres (past about 25 a circle can't be placed in its area clear of the runestones); in a legend area of its own (legends.areas) at most areaMax metres, at the area's heart, clear of the runestones round it by minFromOtherStones."
+          "description": "Each legend's clearing is sized to its legend as drawn asleep, with a margin to spare."
         },
         "species": {
           "type": "object",
@@ -1775,7 +1775,7 @@
         "species"
       ],
       "additionalProperties": false,
-      "description": "Each area's sleeping legend lies in a small circular clearing of its own, where no tree or decor stands: radius metres across from its middle (species: a radius for that legend, sized to fit it: half its sleeping width plus 4 m), a soft ring edge metres wide marking it on the ground, and the legend lying top x radius north of the middle (the circle's far side from the camera), the open floor in front."
+      "description": "Each sleeping legend lies in a small round clearing of its own, sized to fit it."
     },
     "relics": {
       "type": "object",
@@ -1804,7 +1804,7 @@
         "minGap"
       ],
       "additionalProperties": false,
-      "description": "Modern relics (cars, trolleys, cones, highway slabs, a phone box, a sofa...): one chance per spacing-metre cell (chance, steered by the area's decor share of modern), nearRoad times as likely within 20 m of a road or railway; never on a path, in a central clearing or a ground; at least minGap metres from the next relic (Ed, v147: too numerous)."
+      "description": "Modern relics (cars, trolleys, cones, highway slabs, a phone box, a sofa) scattered through the forest, more of them near roads."
     },
     "walls": {
       "type": "object",
@@ -1889,7 +1889,7 @@
         "clumpRadius"
       ],
       "additionalProperties": false,
-      "description": "Wall objects as features (Ed, v147), per area: man-made and linear ones (garden walls, hedges, brambles, rock walls) as runs [min,max] of runLength [min,max] pieces joined end to end, along a path where one passes (with a gateway gap gateChance of the time; a garden's flower beds in a row along them); henge stones as rings [min,max] of ringStones [min,max] (the first round the shrine, others ringRadius [min,max] metres across in a glade), an avenue leading in avenueChance of the time, and a lone stone loneChance; water, reeds and boulders as clumps [min,max] of clumpSize [min,max] within clumpRadius metres."
+      "description": "Garden walls, hedges, brambles and rock walls running through the areas, along paths where there are some."
     },
     "decor": {
       "type": "object",
@@ -1964,7 +1964,7 @@
         "footprint"
       ],
       "additionalProperties": false,
-      "description": "Decorations scattered as discoveries: one chance per spacing-metre cell, of a ruin (ruins), a rock (rocks) or a freak tree (freak), each at least minGap metres from the next (Ed, v147: too numerous); fewer under dense canopy; never in an area's central clearing (openness under clearing), on or within pathGap metres of a path, or by the dancefloor."
+      "description": "Ruins, rocks and freak trees scattered as discoveries, fewer under dense canopy."
     },
     "paths": {
       "type": "object",
@@ -1996,7 +1996,7 @@
         "pathHalf": {
           "type": "number",
           "minimum": 0,
-          "description": "half each corridor's width (metres), kept clear of trees, with bushes thick along the edges for edgeBushes metres (bushBoost times as many); streams [min,max] long streams winding across the map (and short ones join wet areas that touch), streamHalf metres half-wide; along a railway, every landmarkSpacing metres, a landmarkChance of a landmark (a wagon, a carriage, a platform, a gantry) and otherwise sometimes a signal post; verge posts along roads every vergeSpacing metres; every 3D piece at least pieceGap metres from the next."
+          "description": "How wide the paths are kept clear of trees, with thick bushes along their edges."
         },
         "roadHalf": {
           "type": "number",
@@ -2081,7 +2081,7 @@
         "bushBoost"
       ],
       "additionalProperties": false,
-      "description": "Paths, roads and railways (Ed): far fewer since 2026-10-11."
+      "description": "Railways, old roads and streams crossing the island."
     },
     "setPieceChance": {
       "type": "number",
@@ -2101,7 +2101,7 @@
     "setPieceFootprint": {
       "type": "number",
       "minimum": 0,
-      "description": "Gameplay is placed first, then scenery keeps clear of it: a set piece's footprint (setPieceFootprint metres round its middle, times setPieceScale) stays reserveMargin metres clear of every soundsystem's spot (soundsystemFootprint metres round it, reserved from the start) and of the dancefloor's clearing; a set piece with no room left is left out."
+      "description": "Scenery keeps clear of the gameplay places: soundsystems, legends and the like."
     },
     "soundsystemFootprint": {
       "type": "number",
@@ -2141,7 +2141,7 @@
           "type": "number",
           "minimum": 0,
           "maximum": 180,
-          "description": "its lit leaf colour's hue turned either way by up to hue degrees times the first seed."
+          "description": "Each tree's leaf colour turned a little either way, so neighbouring trees don't look identical."
         }
       },
       "required": [
@@ -2242,7 +2242,7 @@
         "sigilClear"
       ],
       "additionalProperties": false,
-      "description": "Tufts of grass, fern, heather, reeds, moss and clover on the ground round the witch (Ed, v171: so the ground doesn't look flat), in ground mode only: density (times each area type's groundCover.density in area-types.json; ?grass=0..2 scales it live), out to the canopy hole round her, at most radius metres (fading out towards it), at most cap at once; one chance every spacing metres, worked out cell metres square at a time, within budgetMs of each frame; they sway in the wind by sway of their height and part round her and nearby creatures by part."
+      "description": "Tufts of grass, fern, heather, reeds, moss and clover on the ground round her, so the ground doesn't look flat."
     },
     "density": {
       "type": "object",
@@ -2271,7 +2271,7 @@
         "lone"
       ],
       "additionalProperties": false,
-      "description": "Tree density is a field, not two states: each area's own density (its layout in art/areas.js) times a patch noise patchScale metres across, from patchMin to patchMax times (dense patches, sparse patches, glades), times the area's pattern (groves, stands, rings, rows, thicket, edges only), times the clearings (soft edges); and lone trees at lone density almost everywhere, so open ground isn't empty."
+      "description": "How thick the trees grow: dense patches, sparse patches and glades rather than an even forest."
     },
     "bushDensity": {
       "type": "number",
@@ -2302,7 +2302,7 @@
         "keep"
       ],
       "additionalProperties": false,
-      "description": "The tallest tree variants (tall, giant) can be drawn squeezed: any height over from metres keeps only keep of the rest."
+      "description": "How tall the tallest trees (tall and giant) are drawn."
     },
     "pins": {
       "type": "object",
@@ -2394,7 +2394,7 @@
         "canopyReach"
       ],
       "additionalProperties": false,
-      "description": "The scenery budget."
+      "description": "How far round her trees, bushes and other scenery are drawn; creatures and gameplay objects are always drawn."
     },
     "groundSpeed": {
       "type": "number",
@@ -2467,7 +2467,7 @@
         "cameraPull"
       ],
       "additionalProperties": false,
-      "description": "Treetop flight (Ed: a high top speed and momentum; the ground stays snappy): pressing a direction reaches treetopSpeed in about 0.3 s (acceleration); holding it within boostAngle degrees builds boost over boostTime seconds, up to boost times treetopSpeed; her heading turns toward the input at turnRateSlow degrees a second below sharpTurnSpeed of cruise, falling to turnRate at cruise (half that at full boost), so the size of her swoop grows with her speed (Ed); a turn of 90 degrees or more bleeds boost sharpTurnBleed times a second, and above brakeAt of cruise she skids in the brake pose; letting go, she glides to a stop over about glideTime seconds."
+      "description": "Treetop flight: a high top speed with momentum, building a boost while she holds a direction."
     },
     "groundAcceleration": {
       "type": "number",
@@ -2506,7 +2506,7 @@
         "headingLeave"
       ],
       "additionalProperties": false,
-      "description": "she (and every creature) faces the viewer unless clearly heading up the screen, within awayEnter degrees of straight up (and stays turned away until past awayLeave); sideways, down or stopped faces the viewer."
+      "description": "When she and the creatures turn away from the viewer, only when clearly heading up the screen."
     },
     "riseTime": {
       "type": "number",
@@ -2537,7 +2537,7 @@
         "rise"
       ],
       "additionalProperties": false,
-      "description": "One cooldown for her dodge and her take-off: shared on, a counter in seconds draining a second a second; a dodge adds dash.cooldown, a take-off rise, a landing riseCooldown (the Jet nozzles halve both of the last: config/broom-parts.json)."
+      "description": "One shared cooldown for her dodge and her take-off."
     },
     "groundHeight": {
       "type": "number",
@@ -2606,7 +2606,7 @@
             "immune"
           ],
           "additionalProperties": false,
-          "description": "The witch knocked back and staggered by a blow: thrown straight away from the blow, base metres for any blow (bites, swipes, shots) plus scale times the attack's own knockback (combat.json; so a maul, quake or slam sits in between), at least charge metres when it rams her (a charge, or a leap landing on her), at most max; eased off at ease a second (like a creature's knockback), straight through scenery, nudged to the nearest clear spot at the end if she'd rest inside a trunk, rock, speaker, soundsystem or the treehouse (the blink's clearances)."
+          "description": "A blow knocks her back and staggers her, harder for big attacks and charges."
         },
         "lightFloor": {
           "type": "number",
@@ -2643,7 +2643,7 @@
         "heightClearance"
       ],
       "additionalProperties": false,
-      "description": "Speeds per mode, and how long rising and descending take."
+      "description": "Her speeds on the ground and in the treetops, how long rising and descending take, and how the world's lights light her."
     },
     "stack": {
       "type": "object",
@@ -2706,7 +2706,7 @@
         "over"
       ],
       "additionalProperties": false,
-      "description": "The sigil stack above the witch's hat: scale (of the sigils' size), offset (the gap between her hat tip and the bottom sigil, in sigil heights), gap (between sigils, in sigil heights)."
+      "description": "The stack of sigils above her hat, swaying like a chain of springs as she moves."
     },
     "witchHealth": {
       "type": "object",
@@ -2770,7 +2770,7 @@
         },
         "dropHat": {
           "type": "boolean",
-          "description": "she drops her hat where she went down and wears none till she stands on it and presses the sigil button (E), which puts it straight back on (never into the stack; on top of a sigil, the hat comes first); a 🎩 pointer shows the way meanwhile."
+          "description": "When knocked out she drops her hat where she fell, and wears none till she goes back and picks it up."
         },
         "hatFloat": {
           "type": "number",
@@ -2849,7 +2849,7 @@
         "dropRadius"
       ],
       "additionalProperties": false,
-      "description": "Knocked out: she collapses where she is; her sigil stack lets go from the bottom up, one every releaseEach seconds (releaseMax caps the whole release, 0 no cap; an empty stack waits emptyBeat seconds), each animal turning happy where it stands; then she sparkles out and back in behind her decks in the treehouse over teleport seconds."
+      "description": "What happens when she's knocked out: her creatures go free, she comes back at the treehouse after a wait that grows with each knockdown, and the beat speeds up."
     },
     "dash": {
       "type": "object",
@@ -2928,7 +2928,7 @@
         "clear"
       ],
       "additionalProperties": false,
-      "description": "The dash, a blink: on the ground only, she vanishes and reappears distance metres the way she's moving in one step, then cooldown seconds before the next."
+      "description": "The dash: on the ground she blinks a short way in the direction she's moving and can't be hit for a moment."
     },
     "spells": {
       "type": "object",
@@ -2986,7 +2986,7 @@
             "every"
           ],
           "additionalProperties": false,
-          "description": "the Healing ring, within radius m of it she heals a hit every `every` seconds while hurt."
+          "description": "The Healing ring heals her while she stands near it, and the Helmet takes the first blow for her."
         },
         "helmet": {
           "type": "object",
@@ -3296,7 +3296,7 @@
             "stun"
           ],
           "additionalProperties": false,
-          "description": "the Cyclone hat, on putting it down and every every s while it lies there, catches wild and enraged creatures within radius m, sweeps them round it at spin turns a second for time s, lifting them up to lift m, then flings them fling m outward over flingTime s, stunned stun s after they land; never hers, happy ones or legends, and never hurt."
+          "description": "The Cyclone hat sweeps nearby wild and enraged creatures round it, lifts them and flings them away."
         },
         "nursing": {
           "type": "object",
@@ -3341,7 +3341,7 @@
         "nursing"
       ],
       "additionalProperties": false,
-      "description": "Spells: two slots, a hat and a broom, each with a spell or none (the plain ones), the hat's chosen in the creator (or ?hat=), the broom's the set its parts complete."
+      "description": "Her two spell slots, a hat and a broom, each holding a spell or none."
     },
     "trail": {
       "type": "object",
@@ -3424,7 +3424,7 @@
         "bySpeed"
       ],
       "additionalProperties": false,
-      "description": "Her flight trail: a ribbon of glow along her path, fading to nothing at its tail, in the colour of the area she's over (eased over colourEase seconds as she crosses into the next)."
+      "description": "Her flight trail: a glowing ribbon along her path in the colour of the area she's over."
     },
     "swoopTrail": {
       "type": "object",
@@ -3477,7 +3477,7 @@
         "slots"
       ],
       "additionalProperties": false,
-      "description": "The party witches' swoop trails: while one swoops she leaves a ribbon in her trail's look, bright and in rainbow colours, each witch starting at her own hue, the colours running along it (hueSpread turns of the wheel a metre) and shifting over time (hueSpeed turns a second), so a crowd of swoops reads as fireworks over the canopy."
+      "description": "Rainbow trails the party witches leave as they swoop."
     },
     "berries": {
       "type": "object",
@@ -3550,7 +3550,7 @@
         "glow": {
           "type": "number",
           "minimum": 0,
-          "description": "its soft halo's strength."
+          "description": "How strongly a berry's soft halo glows."
         },
         "babyReach": {
           "type": "number",
@@ -3574,7 +3574,7 @@
         "babyCost"
       ],
       "additionalProperties": false,
-      "description": "Berries and evolving (Ed): every area has bushesPerArea berry bushes (normal bushes of that area) and perArea [min, max] berries on distinct ones at the start."
+      "description": "Berries on the bushes of every area, which her creatures eat to evolve."
     },
     "invites": {
       "type": "object",
@@ -3641,7 +3641,7 @@
             "type": "number",
             "minimum": 0
           },
-          "description": "letters to fill it, by level (baby, young, adult); it drains drain of a full meter a second when not being hit, from config/states.json's affection.drainDelay seconds after the last."
+          "description": "How many letters it takes to win a creature over by its level, and how fast its meter drains when not being hit."
         },
         "drain": {
           "type": "number",
@@ -3669,7 +3669,7 @@
         "spin": {
           "type": "number",
           "minimum": 0,
-          "description": "a 💌 in flight lies flat and turns about the upright this many times a second (drawn only); when it lands it stops and lies flat."
+          "description": "How fast a 💌 spins in flight."
         },
         "orbit": {
           "type": "object",
@@ -3721,7 +3721,7 @@
         "orbit"
       ],
       "additionalProperties": false,
-      "description": "The 💌 invite, replacing the proximity chat when on: on the ground she shoots spinning 💌s, aimed with the cursor (click fires) or the right stick (a trigger fires), or 1 toward the cursor."
+      "description": "The 💌 invite: on the ground she fires spinning love letters at creatures to win them over."
     },
     "invite": {
       "type": "object",
@@ -3766,7 +3766,7 @@
         "decayRate"
       ],
       "additionalProperties": false,
-      "description": "The old proximity chat: on the ground, she talks by herself (no button: Ed, v244) to the nearest invitable creature within talkRange metres, and sticks with it; you chat in emoji for talkTime seconds (babies, young, adults), taking turns every turn seconds (babies, young, adults), then it is invited and leashed to you."
+      "description": "The old proximity chat, now replaced by the 💌 invite: she talked with the nearest creature in emoji."
     },
     "win": {
       "type": "object",
@@ -3859,7 +3859,7 @@
         "retarget"
       ],
       "additionalProperties": false,
-      "description": "The end of the route: the last wave landed, a pointer to the enraged animal nearest the centre while any lives (enraged legends don't count; retarget: seconds between re-picks); none left, the victory lap: the pulse races back along the route to home at lapSpeed m/s, every stone it passes firing its fireworks; home reached, the night won: the dealt legends wake (bar any still enraged, which go back to sleep, their islands not found) and dance in place on its far side, north of the dancefloor beyond the conga, behind everything from the north-facing camera: on arcs legendGap m outside the conga's circle, legendRow m apart, legendSpace m between them, from due north out to legendArc degrees across, clear of the treehouse, the island's sigil flares on the dancefloor (drawn on over flareDraw s, held flare s), every other animal joins one conga line round it (congaSpeed m/s, congaGap m apart, a circle of at least congaRadius m, as big as the line needs), walking to its place at joinSpeed m/s (out of her sight, seen m off, simply there); settleAfter seconds after, it settles: the guidance pins lead her home."
+      "description": "The end of the route: after the last wave a pointer leads her to the remaining enraged creatures, then the victory lap."
     },
     "leash": {
       "type": "object",
@@ -3902,7 +3902,7 @@
         "sigilGlyph": {
           "type": "number",
           "minimum": 0,
-          "description": "every sigil glyph from the leash atlas (placed, happy runes, the ghost, a relic's, her stack, the treetop projection, one walking home after a knockout) is drawn at sigilGlyph times its colour (0.5: under the bloom's threshold, so it doesn't bloom into a disc on lit ground; 1 as bright as before), and the soft halos under placed sigils, ready runes and relic sigils and round a relic in her stack at sigilHalo times their old strength (0: none)."
+          "description": "How bright sigil glyphs are drawn, so they don't bloom into blobs on lit ground."
         },
         "sigilHalo": {
           "type": "number",
@@ -3930,7 +3930,7 @@
             "ink"
           ],
           "additionalProperties": false,
-          "description": "under every sigil lying on the ground (placed, a happy creature's rune, the ghost, a relic's) a near-black disc in chunky 2-px cells with a lighter outer step, as wide as the glyph's own pixels times size, at dark (0: none), then the glyph painted opaque in its full neon at ink times how much it shows, under the dim added glyph (sigilGlyph)."
+          "description": "A dark patch under every sigil on the ground, so it reads clearly."
         },
         "runeGap": {
           "type": "number",
@@ -3959,11 +3959,11 @@
             "speaker"
           ],
           "additionalProperties": false,
-          "description": "on the ground the sigil button works on a world-fixed hex grid, size metres between neighbouring cells (6 with the rank sigils, their ranks.hex; 4 before them, leash.spacing's density, as ?sigils=old still has it; 0: put down freely where she stands, as before)."
+          "description": "Sigils are put down and picked up on a fixed hex grid on the ground, so a cluster of them reads cleanly."
         },
         "runs": {
           "type": "boolean",
-          "description": "with the sigil button held on since a press that picked a sigil up, she keeps picking up any sigil she runs over (her placed ones, happy creatures' runes, a relic's); held since a press that put one down, moving into each empty hex puts down the next (a press that did nothing starts no run, so holding E with nothing to do still puts her hat down)."
+          "description": "Holding the sigil button picks up, or puts down, sigils one after another as she runs."
         },
         "runePull": {
           "type": "object",
@@ -4001,7 +4001,7 @@
             "weight"
           ],
           "additionalProperties": false,
-          "description": "weight is the most the creatures following her may weigh, together, before she can't take off (their sigils in her stack, each at its leash.weight.levels weight times its species' strength, however near; parked ones at a sigil on the ground don't count, nor babies; 2 is one adult of normal strength, three young 2.4, two 1.6; 0 turns it off)."
+          "description": "Too many heavy creatures on her leash stop her taking off."
         },
         "weight": {
           "type": "object",
@@ -4038,7 +4038,7 @@
             "sink": {
               "type": "number",
               "minimum": 0,
-              "description": "over the treetops, loaded, she sinks by sink x load of the climb a second (at most sinkMax), to floor (of the climb, just over the crowns) while she flies on, and all the way down to land if she stops or her load reaches extreme; unloaded, she floats back up."
+              "description": "Heavily loaded over the treetops she sinks toward the crowns, and lands if she stops."
             },
             "sinkMax": {
               "type": "number",
@@ -4077,7 +4077,7 @@
             "babyGround"
           ],
           "additionalProperties": false,
-          "description": "sigil weight: each sigil in her stack (placed ones weigh nothing) pulls her toward its creature by how taut its leash is (0 within 0.85 of length, up to maxTension a leash length further, however far: a far traveller can't pin her) times its weight (levels: baby, young, adult, legend; times its species' combat.json strength)."
+          "description": "How the creatures on her leash pull on her: slower moving away from them, slower to rise, and sinking in the treetops when heavily loaded."
         },
         "babies": {
           "type": "object",
@@ -4111,7 +4111,7 @@
             "farSpeed"
           ],
           "additionalProperties": false,
-          "description": "her leashed babies following her on the ground walk in single file along where she's been, in stack order (the stack's bottom one first), gap metres apart; while she's in a fight they scatter, scatter metres or a quarter more off to the side away from the first attacker, for the whole fight: from the moment something goes for her or one of hers (closing in or winding up, not on the hit), the same way throughout, back into line once nothing has for calm seconds; one more than farAt metres from her (about off the screen) moves at farSpeed m/s, so it's with her in seconds."
+          "description": "Her leashed babies follow her in single file and scatter out of the way while she's in a fight."
         },
         "ranks": {
           "type": "object",
@@ -4193,7 +4193,7 @@
             "stoneGlow"
           ],
           "additionalProperties": false,
-          "description": "on, every leash sigil (her stack, placed sigils, happy runes, the ghost, the treetop projection, the bond) is its bare glyph, no ring or disc, glyph metres across on the ground, in its rank's colour (colours: baby, youth, adult, legend; the species' neon stays the world's: borders, stones, fireworks, dancefloor, holograms, chart), with embers rising off its strokes (embers.count at once, each size metres, rising rise metres, by rank; in her stack stack of that), under a dark shade in the glyph's own shape (not a disc); a youth in her stack shows two rows of round dots off to its right, one a berry it eats on the move (toEvolve less the last, eaten at a placed sigil), at most dotsPerRow a row, bright eaten and dim not, pulsing when ready; and the hex grid is hex metres (leash.hex.size)."
+          "description": "Leash sigils drawn as bare glyphs in their rank's colour (baby, youth, adult, legend) with embers rising off them, so ranks are easy to tell apart at a glance."
         }
       },
       "required": [
@@ -4257,7 +4257,7 @@
         "threadArcMax"
       ],
       "additionalProperties": false,
-      "description": "how a creature shows its tie to its sigil (rim: a glow at its feet in the sigil's colour; sparks: one spark every sparkEvery seconds from sigil to creature, staggered; thread: a dotted line only under strain)."
+      "description": "How a leashed creature shows its tie to its sigil: a glow at its feet, sparks, and a thread when the leash is strained."
     },
     "fight": {
       "type": "object",
@@ -4275,7 +4275,7 @@
         "momentum": {
           "type": "number",
           "minimum": 0,
-          "description": "how heavily creatures in a fight change speed and turn: their accelerations, braking and turn rates divided by it (2: twice as heavy)."
+          "description": "How heavily creatures in a fight speed up, brake and turn."
         },
         "charge": {
           "type": "object",
@@ -4352,7 +4352,7 @@
         "leap"
       ],
       "additionalProperties": false,
-      "description": "The fight's scale and speed: fights are drawn and played at the ground camera's scale, creatures running at about the witch's speed and their patterns about 50 m across."
+      "description": "The scale and speed fights are played at, with creatures running at about her speed."
     },
     "creatureMomentum": {
       "type": "object",
@@ -4471,7 +4471,7 @@
         "classes"
       ],
       "additionalProperties": false,
-      "description": "Creature momentum, chasing the witch only (fights between creatures, legends and marchers as before): on its run-in and its wind-up (a pack's tell and combo too), never its committed lunge, which goes where the wind-up aimed, reaching up to a quarter again its usual length if the run-in left it short, so a strike that starts stays reliable."
+      "description": "Creatures chasing her carry momentum on their run-in and wind-up, so she can dodge past them."
     },
     "attackFx": {
       "type": "object",
@@ -4537,7 +4537,7 @@
         "legendFlash"
       ],
       "additionalProperties": false,
-      "description": "How attacks feel on screen, a party not a fight: windupSquash, how low and wide an attacker crouches as its wind-up nears the blow (at most windupMax seconds of it shown); lungeStretch, how far it stretches out in its lunge; squash, how flat a hit squashes the one it hits, springing back past its shape over squashSecs seconds; a knock-back thrown faster than tumbleKnock m/s tumbles: up tumbleHeight metres (at most 1.5 times that for the hardest) for tumbleSecs, over on its back from turnFrom to turnTo of the way (one slow beat, never a strobe), landing with a squash."
+      "description": "How attacks feel on screen: attackers crouch and lunge, hits squash their target, and hard knock-backs send it tumbling."
     },
     "combat": {
       "type": "object",
@@ -4553,7 +4553,7 @@
             "on"
           ],
           "additionalProperties": false,
-          "description": "pack combat, on by default and on the pause page to turn off for testing: on, packs of config/packs.json's kinds (home's ten and Phase 1's eleven) fight in combos (the nearest lunges, the ones at range fire where a dodge would go, the one behind her throws the special), fall back by their kind's retreat between combos, and her own pack combos without retreating."
+          "description": "Pack kinds fight in combos (the nearest lunges, the ranged fire where she'd dodge, one behind her throws its special) and fall back between them."
         },
         "aggro": {
           "type": "number",
@@ -4567,7 +4567,7 @@
         "leaveArea": {
           "type": "number",
           "minimum": 0,
-          "description": "a wild one chasing the witch gives up once she's this far past its area's edge, and turns back home (besiegers keep witchLose: they give up once she's out of their area, out of range and this far off)."
+          "description": "How far past its area's edge a wild creature chases her before giving up and going home."
         },
         "pursuit": {
           "type": "number",
@@ -4680,7 +4680,7 @@
         "taunt"
       ],
       "additionalProperties": false,
-      "description": "Combat (Stage 4; the attacks themselves are data in config/combat.json; lengths and speeds at the fight's scale: see fight)."
+      "description": "How creatures fight: who goes for whom, how fast they run and chase, and how much a soundsystem and home's speakers can take."
     },
     "notice": {
       "type": "object",
@@ -4704,7 +4704,7 @@
         "skittish"
       ],
       "additionalProperties": false,
-      "description": "Creatures notice the witch on the ground within radius metres (Ed's playtest: a larger responsive area makes them feel alive): resting ones turn to look at her; babies of a curious kind come up to about curious metres from her, skittish ones keep about skittish metres off (config/combat.json temperament)."
+      "description": "Creatures notice her on the ground nearby: resting ones turn to look, curious babies come up to her."
     },
     "dodge": {
       "type": "object",
@@ -4788,7 +4788,7 @@
                 "home"
               ],
               "additionalProperties": false,
-              "description": "chasing her, those species run at up to speed m/s (above her walk) built up at accel m/s each second, their charges swinging toward her at home degrees a second as they run, so a burst or a blink gets clear and a long retreat is run down (the snail, hedgehog and woodlouse left slow, the last two with their rolling charges; the mole with its own burrow); her blink keeps her untouchable for gone seconds (dash.gone otherwise); and at most tokens creatures wind up or strike at her at once (swarmTokens when swarm or more are on her), the rest keep their places."
+              "description": "Heavy kinds chasing her build up speed and swing their charges toward her, so a burst or a blink gets clear."
             }
           },
           "required": [
@@ -4911,7 +4911,7 @@
         "c"
       ],
       "additionalProperties": false,
-      "description": "Dodging matters: against the witch only (fights between creatures as before)."
+      "description": "Dodging matters: creatures commit to their strikes, so she can dodge them by moving or blinking away."
     },
     "stoneIdle": {
       "type": "object",
@@ -4935,7 +4935,7 @@
         "clear"
       ],
       "additionalProperties": false,
-      "description": "Hostile creatures gather near the runestone: a wild area's own hostile young and adults (not its babies, its legend or its circle's baby, nor a friendly area's, nor happy, leashed or enraged ones) start, roam and nap anywhere in a disc of radius metres round its runestone, evenly spread (a loose cluster, not a ring), keeping clear metres off the stone itself; still inside their own area."
+      "description": "A wild area's hostile creatures gather and roam near its runestone."
     },
     "wildWatch": {
       "type": "object",
@@ -4989,7 +4989,7 @@
         "fade"
       ],
       "additionalProperties": false,
-      "description": "The wild watch: on a witch's first coming down on the ground in a wild area (not partified, not friendly, not home), its wild young and adults (not legends, the enraged or besiegers; babies keep their notice) hold off for time seconds, standing and turning to stare at her, any within hangBack metres backing off a little; then they fight as ever."
+      "description": "On her first landing in a wild area its creatures stare and redden for a few seconds before they attack, and how far they chase her after."
     },
     "hunt": {
       "type": "object",
@@ -5003,7 +5003,7 @@
         "on"
       ],
       "additionalProperties": false,
-      "description": "The hunt: once a wild area's watch is over with her on the ground in it, every one of its own awake young and adults hunts her while she's in the area, wherever in it they are, never giving up or napping; over the treetops there they hold and come on again when she lands."
+      "description": "Once the wild watch is over, every awake young and adult in the area hunts her while she's in it."
     },
     "naps": {
       "type": "object",
@@ -5063,7 +5063,7 @@
         "circle"
       ],
       "additionalProperties": false,
-      "description": "Wild idlers nap: a wild creature roaming its own still-wild area (not besieging, fleeing, dazed, marching, fighting, happy or a legend), at each pause, lies down instead with chance, for length seconds (a range: min, max), then gets up."
+      "description": "Wild creatures roaming their area now and then lie down for a nap."
     },
     "guard": {
       "type": "object",
@@ -5077,7 +5077,7 @@
         "radius"
       ],
       "additionalProperties": false,
-      "description": "Parked party animals (at a sigil on the ground) guard it: they take on any wild creature of another kind within radius metres of the sigil, and come back to it."
+      "description": "Creatures parked at a sigil on the ground guard it, fighting any wild creature that comes near."
     },
     "population": {
       "type": "object",
@@ -5181,7 +5181,7 @@
                 ],
                 "additionalProperties": false
               },
-              "description": "strong (cap 6), medium (cap 12: swarm.reference, and every species not listed) and light (cap 16; Ed: \"a swarm of 20 is too many; cap it at 16\"), each class's strength 12 / its cap on its creatures' health and damage (strong ×2, light ×0.75; rules/combat/data.ts), so moving a species is one line here."
+              "description": "Swarm species come in strong, medium and light classes, smaller swarms of stronger creatures."
             },
             "capScales": {
               "type": "boolean"
@@ -5242,7 +5242,7 @@
         "growth"
       ],
       "additionalProperties": false,
-      "description": "Wild creatures: every area starts with the same population, population.start, and, from the start, more by its place on the waves' route (Balance 2's shape; rules/growth.ts routePopulation): byRoute.threat, [route index, F] points (1 the first wave's stone; straight lines between, flat past the ends), is the extra fighting value its young and adults add (F by Lanchester, young 11.6, adult 40, babies 0; about what an area woken at that wave grew to before); its kind spends it by its profile (byRoute.profiles[species], else default: the shares of its extra creatures as babies, young and adults), so many more of a swarm's young than of a heavy kind's adults, at the same danger: count = threat ÷ the profile's mean F a creature × the area's count scale, rounded, split by the shares (largest remainder, ties by the seed)."
+      "description": "How many wild creatures each area starts with, more along the waves' route so the later areas are the dangerous ones."
     },
     "creatureSimRadius": {
       "type": "number",
@@ -5290,7 +5290,7 @@
         "every"
       ],
       "additionalProperties": false,
-      "description": "The simulation's level of detail."
+      "description": "How far from her wild creatures are simulated every step; further off they're simulated coarsely, and past the sim radius not at all."
     },
     "creatureSpeed": {
       "type": "number",
@@ -5320,7 +5320,7 @@
         "legend"
       ],
       "additionalProperties": false,
-      "description": "Ed: the witch is much faster than almost all creatures (she flies at groundSpeed, 19.25 m/s, on the ground and treetopSpeed, 48, over the treetops; at first 14 and 32)."
+      "description": "The witch is much faster than almost all creatures."
     },
     "legendCircle": {
       "type": "object",
@@ -5352,7 +5352,7 @@
         "slow"
       ],
       "additionalProperties": false,
-      "description": "A legend's circle: slow: while she stands on the ground in the circle of a legend asleep or restless, the world (the clock, the waves' countdown, the music, every creature, siege and timer) runs at scale of its speed, easing there and back over ease seconds as she crosses its edge; she and everything of hers (moving, blinking, rising and landing, her sigils, her 💌s and their cooldowns, her hat) keep full speed."
+      "description": "Standing in a sleeping or restless legend's circle slows the whole world down."
     },
     "dreams": {
       "type": "object",
@@ -5417,7 +5417,7 @@
             "fallback"
           ],
           "additionalProperties": false,
-          "description": "while it sleeps giving its quest (its dream open, no nightmare), its face beside the sigil: mostly face (😴), and now and then, for one turn of every seconds, one of faces instead; each turn its own throw per legend (seeded by its id, so legends never change together), face with chance weight."
+          "description": "A sleeping legend's sleepy face beside its quest sigil, now and then another face."
         },
         "cycle": {
           "type": "object",
@@ -5451,7 +5451,7 @@
         "cycle"
       ],
       "additionalProperties": false,
-      "description": "A sleeping legend's dream (or nightmare) bubble, and its pointer to the nearest runestone of the area type it dreams of: shown only while she's on the ground within range metres of the legend (about its area's clearing and a little more); never from the treetops."
+      "description": "A sleeping legend's dream bubble, showing the quest it wants, and a pointer to where to go."
     },
     "legends": {
       "type": "object",
@@ -5462,11 +5462,11 @@
         },
         "earlyQuest": {
           "type": "boolean",
-          "description": "one of the first three areas the waves wake (seeded), one with a legend, dreams of the baby of another of those three's kind (rules/quest.ts earlyQuest); if none of them has a legend, one of them (seeded, one whose kind another of the three lacks) is given one as the map is made, moved from the legend area the route reaches last (or, where that would clump legend areas together, from the one beside it), so share holds (rules/map.ts); false: every dream as before."
+          "description": "One of the first areas the waves wake has a legend dreaming of a creature from a nearby area, so there's an early quest."
         },
         "areas": {
           "type": "boolean",
-          "description": "on, each of the night's legends gets an area of its own grown out of the island beside one of its kind's areas (its pair), taking its kind and look, with no runestone, soundsystem or route stop, its circle at its heart; the island grows by them; the pair counts as one area for a legend's rage and for creatures attacking and defending (rules/map.ts areaOf); false: legends in their own kind's areas as before."
+          "description": "Each legend gets an area of its own beside one of its kind's areas."
         },
         "buffPower": {
           "type": "number",
@@ -5528,7 +5528,7 @@
             "angryAfter"
           ],
           "additionalProperties": false,
-          "description": "on, a legend turning angry while its own area's soundsystem stands destroys it at once (ruined, as any fallen one), and legends are restless angryAfter seconds before they anger (legends.json angryAfter otherwise)."
+          "description": "A legend turning angry destroys its own area's soundsystem at once."
         },
         "partyEgg": {
           "type": "boolean"
@@ -5563,7 +5563,7 @@
         "partyReach"
       ],
       "additionalProperties": false,
-      "description": "."
+      "description": "Which areas have a legend, and how strong legends' buffs are."
     },
     "wildLegends": {
       "type": "object",
@@ -5666,7 +5666,7 @@
         "seen"
       ],
       "additionalProperties": false,
-      "description": "What legends are for: a mostly optional layer of tasks; quick players get buffs from their quests (open as long as a legend sleeps), lucky ones find relics for powerful allies, and a losing player sees their babies hurt in sieges and them enraged, the loss spiral faster and more dramatic (his words in DESIGN.md, \"Legends, redesigned\", and config/legends.json)."
+      "description": "What legends are for: optional quests that give buffs, relics for powerful allies, and danger to her babies in sieges."
     },
     "legendSpeed": {
       "type": "number",
@@ -5689,7 +5689,7 @@
         "knockBeats"
       ],
       "additionalProperties": false,
-      "description": "The music's clock (beats per minute): the lasers sweep to it and party animals dance to it."
+      "description": "The party's tempo in beats per minute, which the lasers sweep to and party animals dance to."
     },
     "leyLines": {
       "type": "object",
@@ -5700,12 +5700,12 @@
         "pulseSpeed": {
           "type": "number",
           "minimum": 0,
-          "description": "the pulse's speed along the route's own curves, metres a second, times the party's tempo (a knockdown's BPM speeds it); a wave lands as it reaches the next stone, so a wave's gap is its link's length over the speed; 0 holds the pulse where it is (no waves)."
+          "description": "How fast the pulse runs along the ley line, which sets how long each wave takes to arrive."
         },
         "reveal": {
           "type": "number",
           "minimum": 0,
-          "description": "from the end of home's boot the line grows out from the treehouse along the route at this many links a wave (this many times the pulse's speed), a soft glow at its tip, reaching this stone as the first wave lands and going on at that pace until the whole route is drawn (so no stone pops on at once; rules/leypulse.ts leyReachTimes gives when it reaches each, for the beacons); none at all while home boots up."
+          "description": "How fast the ley line grows out from the treehouse ahead of the waves, so no stone pops on at once."
         },
         "far": {
           "type": "array",
@@ -5720,7 +5720,7 @@
         },
         "advance": {
           "type": "string",
-          "description": "\"first\" moves it on when the next area's quest is done or its wave arrives, whichever comes first; \"wave\" only when its wave arrives."
+          "description": "Whether the ley line moves on to the next stone only when its wave arrives, or as soon as that area's quest is done."
         },
         "fade": {
           "type": "number",
@@ -5729,7 +5729,7 @@
         "brightness": {
           "type": "number",
           "minimum": 0,
-          "description": "how bright, a share of their first look, the glow through the crowns too."
+          "description": "How bright the ley line glows, each stretch shading from one area's colour to the next."
         },
         "width": {
           "type": "array",
@@ -5775,7 +5775,7 @@
             "avoid"
           ],
           "additionalProperties": false,
-          "description": "the first line leaves the treehouse's front round the ring of speakers, avoid metres outside it, on the first objective's side (clockwise on the screen and off to the right, the spiral starting east of home; the other way round for one west of it), then off the ring and looping round the same way out to the first objective; no link of the route passes over the dancefloor."
+          "description": "How the first stretch of ley line leaves the treehouse, curving round the ring of speakers rather than crossing the dancefloor."
         },
         "minRadius": {
           "type": "number",
@@ -5800,7 +5800,7 @@
         "minRadius"
       ],
       "additionalProperties": false,
-      "description": "The pause page's Waves slider sets it live, 0 to 6, remembered on this browser (config/decisions/953-waves.json, app/settings.ts); ?pulse=<m/s> or ?pulse=off sets it from a link, over the saved one."
+      "description": "The glowing line on the ground that joins the runestones in the order the waves wake them, a pulse flowing along it to the next one."
     },
     "partyObjects": {
       "type": "object",
@@ -5922,7 +5922,7 @@
         "generated"
       ],
       "additionalProperties": false,
-      "description": "Party objects: each partified area gets clusters [min, max] of the art's clusters, loose [min, max] loose pieces (litter, small lights, balloons; neon and balloon colours random per placement), set dressing at setChance, and at caughtChance an escaped balloon caught in a tree; hanging [min, max] lanterns, jars, fairy lights or mirror balls hung from branches in nearby crowns."
+      "description": "The party clutter that appears as an area is partified: litter, lights, balloons, lanterns in the trees and set dressing, and home's own."
     },
     "partyWitches": {
       "type": "object",
@@ -6082,7 +6082,7 @@
             "turn"
           ],
           "additionalProperties": false,
-          "description": "stargazing: beds from to to metres out past the speakers' ring, places side by side one behind another gap metres apart (lying along x, length metres long), each stagger metres along from the last, threes that share of beds (the rest pairs), apart metres between beds; a player keeping still within meet metres of one has the beach's turns with her (a chat, holding hands, a hug, lying side by side), turn seconds each."
+          "description": "Beds out past the speakers where party witches lie stargazing, which she can join."
         }
       },
       "required": [
@@ -6114,7 +6114,7 @@
         "gaze"
       ],
       "additionalProperties": false,
-      "description": "Party witches: one per playing soundsystem (not the dancefloor's), however many, flying in from its side (from flyFrom metres out, at flyHeight, over arriveTime seconds) to land within roam metres of the dancefloor's middle (each new spot at roam × u^centreBias from it: the mean roam / (1 + centreBias), so the floor stays busiest), clear of trees, the speakers and the treehouse, and off again if it stops."
+      "description": "Other witches who fly in to dance, drink, chat and swoop around the dancefloor, one per playing soundsystem."
     },
     "speakerLasers": {
       "type": "object",
@@ -6152,7 +6152,7 @@
         "opacity"
       ],
       "additionalProperties": false,
-      "description": "The dancefloor ring's lasers: a single beam from each playing speaker, at most tilt degrees off straight up and leaning outwards, swinging sweep degrees sideways, over sweepBeats beats, neighbours out of phase; length metres, at opacity (thinner-looking than the area soundsystems' fans)."
+      "description": "A single laser beam swinging up from each speaker in the dancefloor's ring."
     },
     "lasers": {
       "type": "object",
@@ -6235,7 +6235,7 @@
         "fadeFar"
       ],
       "additionalProperties": false,
-      "description": "Each playing soundsystem's laser show: bursts of blockBars bars, on about duty of the time (seeded per soundsystem), up to maxCount beams stepping on the bars, fanned over spread degrees (no beam tilting more than maxTilt from straight up), swinging sweep degrees once every sweepBeats beats (slow, like searchlights), opening and closing the fan every openBars bars, length metres tall, opacity 0-1, fading in over fadeIn and out over fadeOut seconds, and fading with distance from fadeNear to fadeFar metres."
+      "description": "Each playing soundsystem's laser show, its beams fanning and sweeping in time with the music."
     },
     "borders": {
       "type": "object",
@@ -6263,7 +6263,7 @@
         "twinkle": {
           "type": "number",
           "minimum": 0,
-          "description": "(0 a gentle breathing, 1 star-like: brief flashes and dips, now and then a spark out for a moment); each spark flickers between its own area's colour and the one across the edge (Ed, v183), swapRate times a second on its own phase, and swapBeat of them snap on the beat instead."
+          "description": "How the sparks along a partified area's border twinkle, flicker and swap colours with the area next door."
         },
         "swapRate": {
           "type": "number",
@@ -6313,14 +6313,14 @@
         "levelScale"
       ],
       "additionalProperties": false,
-      "description": "The talk's speech bubbles (Ed): an outline only, no fill."
+      "description": "The speech and thought bubbles: outline only, with pixel emoji, sized by the speaker's level."
     },
     "runeMarkers": {
       "type": "object",
       "properties": {
         "variants": {
           "type": "boolean",
-          "description": "each area's stone one of the art's 20 seeded forms, dealt like a shuffled deck so every form is used before any repeats (Ed, #716; rules/runestones.ts) (height, lean, worn top, chips, cracks, moss, the carving's place and wear, the stones and grass at its foot), mirrored at random, its sigil never mirror-written; off, every stone as before."
+          "description": "Each area's rune stone is one of twenty carved forms, all used before any repeats."
         },
         "laser": {
           "type": "object",
@@ -6463,7 +6463,7 @@
         "flare"
       ],
       "additionalProperties": false,
-      "description": "Spawn markers (Ed, v147): a rune stone on every spot where a soundsystem will come, scale times the old rune stone's size."
+      "description": "The rune stones marking where soundsystems will come, glowing, and pulsing on the beat when the next wave is coming to them."
     },
     "sfx": {
       "type": "object",
@@ -6590,7 +6590,7 @@
                 "swapGap"
               ],
               "additionalProperties": false,
-              "description": "an attack a burst of babble in the creature's own voice (pitch Hz for a normal-sized young, lower by level and size; maxVoices at once, the farthest giving way (only to one swapBy nearer, at most one every swapGap seconds: a crowd otherwise cut itself off many times a second), duck: how much the others quieten; syllables per burst; gap: a creature speaks at most every gap seconds; reply: a 💌 hit's answering syllable, its volume share)."
+              "description": "Creatures babble in their own voice when they attack, a few at a time."
             }
           },
           "required": [
@@ -6865,7 +6865,7 @@
             "range"
           ],
           "additionalProperties": false,
-          "description": "a runestone crackling into life as a speaker or soundsystem, heard within range metres: its static (crackle), a capacitor's whine, the mains buzz, the cone's thump and the clean tone it settles into, each the home ring's next step up the scale, the last a chord; at most one every gap seconds (volume)."
+          "description": "The crackle, whine and thump of a runestone turning into a speaker or soundsystem, each a step up the scale."
         },
         "lament": {
           "type": "object",
@@ -6914,7 +6914,7 @@
             "max"
           ],
           "additionalProperties": false,
-          "description": "a restless legend calling out sadly, its own call lowered (pitch) and slowed (slow) into the legends' space, heard within range metres from the way of its clearing and muffled with distance; a call about every every seconds, down to urgent as its restlessness runs out; at most max restless legends call, the nearest, at least gap seconds apart (volume)."
+          "description": "A restless legend's sad call, heard from the way of its clearing, more often as its restlessness runs out."
         },
         "shoes": {
           "type": "object",
@@ -7050,7 +7050,7 @@
             "fall"
           ],
           "additionalProperties": false,
-          "description": "the wild watch's warning, while a wild area's watchers stand looking at her before they attack: a low swell in the music's key (swell) opening up and throbbing faster as the watch runs, a gritty riser over it (riser) by the area's danger, a hit as they attack (hit); called off, it sags and falls away over fall seconds; times volume."
+          "description": "The wild watch's warning sound: a low swell and a riser while creatures stare at her, and a hit as they attack."
         },
         "sparkler": {
           "type": "object",
@@ -7143,7 +7143,7 @@
             "speed"
           ],
           "additionalProperties": false,
-          "description": "over a soundsystem when a wave reaches an area she'd already cleared (Hotel's waveCelebrate, art builder 2's shells): each shell's climb (whoosh, now and then whistling), its burst (boom, its echo into the night echo, its stars' crackle), heard within range metres and late by the distance over speed metres a second, and the party under it cheering as the finale bursts (cheer) within cheerRange; the shells are rules/fireworks.ts's, the ones drawn, times volume."
+          "description": "The fireworks' whoosh, boom and crackle, and the crowd's cheer at the finale."
         },
         "seaLife": {
           "type": "object",
@@ -7265,7 +7265,7 @@
             "respawn"
           ],
           "additionalProperties": false,
-          "description": "her decks while she stands behind them (the DJ witch): a stroke of the record on each half-beat of her scratch bars (scratch, its hiss under the stylus hiss, a stroke stroke seconds long) and her \"woo-hoo!\" when she throws a hand up (hype), and in her routine the tonearm's tick and the needle's drop (needle), times volume."
+          "description": "The sounds of her decks while she DJs: record scratches, her \"woo-hoo!\" and the needle dropping."
         },
         "spell": {
           "type": "object",
@@ -7609,7 +7609,7 @@
             "squeakEvery"
           ],
           "additionalProperties": false,
-          "description": "home's ambience (breeze, bees, birds, a bird's song about every birdEvery seconds; its picnic's far murmur, its cups clinking about every clinkEvery seconds (clinks), its balloons squeaking about every squeakEvery (balloons)), in home's circle (the map's homeRadius round the dancefloor) fading out over its last fade metres."
+          "description": "Home's ambience: breeze, bees, birdsong, a picnic's murmur, clinking cups and squeaking balloons."
         },
         "whale": {
           "type": "object",
@@ -7768,7 +7768,7 @@
             "cutAfter"
           ],
           "additionalProperties": false,
-          "description": "knocked down, a muted trumpet's \"wah-wah-wah-waaah\" as her hat drops, the music dipped by duck under it; knocked down with no hat to drop, its shorter \"wah-waaah\" if bare is 1 (0: none); and as she's whisked to her decks a backwards record scratch (rewind, times volume) cuts its last note off, never before that note has had cutAfter seconds."
+          "description": "The sad trumpet when she's knocked down, and the backwards record scratch as she's whisked back to her decks."
         },
         "night": {
           "type": "object",
@@ -7908,7 +7908,7 @@
         "buffer": {
           "type": "number",
           "minimum": 0,
-          "description": "the audio output's buffer to ask for, in seconds, 0 for the latency category below; a browser that under-runs 20 times in a load asks for twice as much next load, up to 0.24 s (platform/audio/buffer.ts); the music goes out early by the context's latency so it stays on the beat shown, only the sound effects come later."
+          "description": "How much audio the game buffers ahead, so the music stays on the beat without crackling."
         },
         "dropLayers": {
           "type": "number",
@@ -8076,7 +8076,7 @@
         "beach"
       ],
       "additionalProperties": false,
-      "description": "Music by proximity: one shared track, full and clear within nearDist metres of a playing soundsystem (or the dancefloor's ring, as loud as its speakers are on), fading to floor of the volume and muffled to a muffle Hz low-pass by farDist metres (clear: the cutoff close by), never gone; a damaged soundsystem nearby wobbles, crackles and drops out, by its damage times distort."
+      "description": "The music gets louder and clearer near a playing soundsystem and quieter and muffled far off, never silent."
     },
     "alarms": {
       "type": "object",
@@ -8123,7 +8123,7 @@
         "transform"
       ],
       "additionalProperties": false,
-      "description": "At the start the home speaker ring boots up: its pulse runs from the treehouse's front down to the ring and once round it at speed m/s, each stone turning into its speaker as it passes; only then does the first wave's pulse set off: time to find and invite your first creatures."
+      "description": "At the start the home ring of speakers boots up one stone at a time before the first wave sets off."
     },
     "party": {
       "type": "object",
@@ -8179,7 +8179,7 @@
             "edge"
           ],
           "additionalProperties": false,
-          "description": "crowns in partified areas catch a faint glow from below in the area's colour (strength at its brightest, pulse on the beat, fading over edge metres toward the border)."
+          "description": "Tree crowns in partified areas catch a faint glow from below in the area's colour, pulsing on the beat."
         },
         "startDelay": {
           "type": "number",
@@ -8283,7 +8283,7 @@
         "cap": {
           "type": "number",
           "minimum": 0,
-          "description": "marks at once (the oldest gives way)."
+          "description": "The most blood marks shown at once, the oldest giving way."
         },
         "range": {
           "type": "number",
@@ -8347,7 +8347,7 @@
         "ahead"
       ],
       "additionalProperties": false,
-      "description": "The generated soundsystems: each area's its own genome, dealt as one set a map (none alike)."
+      "description": "Each area's soundsystem is generated with its own look, bigger and taller the further from the dancefloor."
     },
     "stringLights": {
       "type": "object",
@@ -8447,7 +8447,7 @@
         "more"
       ],
       "additionalProperties": false,
-      "description": "Colourful string lights in every partified area, as long garlands: runsPerArea runs (a range), each spansPerRun spans (a range) from tree to tree, every next tree inside a forward cone of coneAngle degrees either side, so a run sweeps across rather than zig-zagging; runs start at least spread metres apart."
+      "description": "Colourful garlands of string lights strung tree to tree across every partified area."
     },
     "waveNumbers": {
       "type": "object",
@@ -8483,7 +8483,7 @@
         "pinRange"
       ],
       "additionalProperties": false,
-      "description": "Off; set on to true to bring them back."
+      "description": "Numbers over the rune stones showing which wave will wake each one (now switched off)."
     },
     "dancefloor": {
       "type": "object",
@@ -8637,7 +8637,7 @@
             "lowLevelShare"
           ],
           "additionalProperties": false,
-          "description": "the witch lights the tiles under her (in witchColour, from the neon) when below witchLift, with a ripple each beat lasting rippleTime seconds (a landing's twice as long), footsteps fading over trailTime, events (a wave arriving, a sigil placed) over eventTime, and at level 1 only lowLevelShare of the lit tiles show; through the boot the floor shows the island's sigil, written on stroke by stroke as the boot's pulse goes round the ring, in place of the moon, the sap rising up it every sapBars bars once written, until the first wave switches the floor on (on: false, the moon as before); a glowing magic circle (two hues 0-1, pulse per second, runeSpeed in turns per minute) lighting the ground round it (lightReach metres, lightStrength), a plaza of flagstones round the floor (paving: in rings from the rim out to beyond metres past the speakers' feet, course metres deep, stones about stone metres long, the outer edge breaking up over ragged metres with missing of its stones gone to grass, moss the share of mossy stones; the speakers stand on a course of darker stone); and a magic disco ball floating discoHeight metres up (discoSize metres across, spin turns per minute) throwing specks of light: specks is the share of the sphere that throws one, speckBrightness how bright, speckReach how far."
+          "description": "The dancefloor's glass tiles light up under her and on events, show the island's sigil during the boot, and glow brighter as more areas join the party."
         },
         "island": {
           "type": "object",
@@ -8728,7 +8728,7 @@
         "speckReach"
       ],
       "additionalProperties": false,
-      "description": "The dancefloor: motes: magic particles drifting up off the circle (count, how high they rise in metres, speed in m/s, column: the share of the circle they rise from); its radius in metres; a ring of speakers.count stone speakers (Ed, v160), the first at speakers.start degrees round from the camera side and the rest evenly spaced, speakers.radiusFactor times the radius out, each speakers.footprint metres round; a clear space of clearing metres beyond the speakers' feet (the treehouse stands outside that); the floor's glass tiles light up (Ed, v160): levels: how many areas must have the party for each level of intensity above 1 (up to 4, a full rave)."
+      "description": "The dancefloor at the island's heart: its size, its ring of stone speakers, the clearing round it and the magic motes rising off it."
     },
     "partyOver": {
       "type": "object",
@@ -8768,7 +8768,7 @@
         "inPlace"
       ],
       "additionalProperties": false,
-      "description": "Sailing from the map table's sea chart (docs/plans/sail-without-reload.md, app/sail.ts): inPlace, the next night started on the same page (the old night's music fading out as a quiet sea and wind come in, sfx.sail; Back then opens the pause menu; anything going wrong loads the page anew, quietly), and so the bed and the bot game's exit, and the cards' Sea chart opening the map table's chart over the game; else the page loaded anew on the island's link (or chart.html) as before."
+      "description": "Sailing from the sea chart starts the next night on the same page, the old night's music fading into sea and wind, rather than reloading."
     },
     "loading": {
       "type": "object",
@@ -8812,7 +8812,7 @@
         "fps"
       ],
       "additionalProperties": false,
-      "description": "The loading screen: the World Tree and COVEN RUSH in gold stars, lighting as the game loads, edge first by edge (0 plain random), at most rate stars a second, each flashing for flash seconds; ghost how bright the stars not yet lit show (0: an empty sky, Ed's call); the heart's star last, its supernova to white over nova seconds and the white clearing over clear seconds into the bedroom."
+      "description": "The loading screen: the World Tree and COVEN RUSH picked out in gold stars that light up as the game loads."
     },
     "opening": {
       "type": "object",
@@ -8850,7 +8850,7 @@
         "wake"
       ],
       "additionalProperties": false,
-      "description": "The opening: bedroom, a plain first load (its link naming no seed or island, no arrival, no bot, the room not skipped) going straight to home's night and waking her in her bedroom there, asleep in the dark while the night is made."
+      "description": "A plain first load wakes her in her bedroom on the home island while the night is made."
     },
     "arrive": {
       "type": "object",
@@ -9021,7 +9021,7 @@
             "time"
           ],
           "additionalProperties": false,
-          "description": "after framing the dancefloor, the camera comes round to the whole treehouse tree from the south, angle degrees up at its middle, far enough back that it fills fill of the frame's height (its height in metres from its art once drawn, height till then), time seconds after the frame, then settle seconds on into her bedroom."
+          "description": "Where the camera ends its arrival: the whole treehouse tree seen from the south, filling the frame."
         }
       },
       "required": [
@@ -9039,7 +9039,7 @@
         "tree"
       ],
       "additionalProperties": false,
-      "description": "Arriving on an island from the sea chart: the chart hands off over the open sea south of the island (its last frame and camera in sessionStorage, Charlie's chart side), the page shows that still pushing in (a CSS animation in index.html, from the first paint) while the night builds, then cross-fades it away over fade seconds into the game's camera at the same place, and flies on, looking north: over the sea and low over the forest at speed m/s (low: angle degrees down, distance metres back, aimed offshore metres past the south coast at first; each low leg at least minLeg seconds), then up over rise seconds to frame the dancefloor and the treehouse's spot together (frame: angle, distance, lift metres over the ground), then down over settle seconds into the opening shot at her decks."
+      "description": "Arriving on an island from the sea chart: the camera flies in over the sea, frames the dancefloor and comes round to the treehouse."
     },
     "camera": {
       "type": "object",
@@ -9119,7 +9119,7 @@
         "zoomEase": {
           "type": "number",
           "minimum": 0,
-          "description": "how softly zoom and rising change the angle and distance."
+          "description": "How softly zooming and rising change the camera's angle and distance."
         },
         "liftEase": {
           "type": "number",
@@ -9219,7 +9219,7 @@
             "speed"
           ],
           "additionalProperties": false,
-          "description": "each hit adds trauma (0-1), base on her first, perMissingHit more for each hit she was already missing, knockdown on the hit that knocks her down; it falls away at decay a second, and the screen shakes by trauma squared times maxOffsetPx (screen pixels, whole ones) and maxRotDeg, smooth noise wandering speed times a second."
+          "description": "The screen shakes when she's hit, harder for each hit she was already missing and hardest on a knockdown."
         },
         "follow": {
           "type": "number",
@@ -9284,7 +9284,7 @@
             "look"
           ],
           "additionalProperties": false,
-          "description": "on the ground in a legend's circle the camera eases over ease seconds to angle degrees (from the ground view's 30 to 36), its distance times distance, aimed frame of the way from her to the legend and look metres higher, so the legend stands large over her; it eases back as she leaves."
+          "description": "In a legend's circle the camera tilts and frames her and the legend together."
         },
         "house": {
           "type": "object",
@@ -9477,7 +9477,7 @@
                 "board"
               ],
               "additionalProperties": false,
-              "description": "for the part of her the row in focus is about (config/wardrobe.json's frame: head, hat, top, legs, feet, broom; board, the Workshop's pegboard, the wall behind her, so aimed up over her to it), aimed aim of her height (as drawn: 0 her feet, 1 the top of her hat) up her and look metres higher (a thing by her: the board, the broom), and its distance times distance in place of the station's own, eased from part to part as the cursor moves."
+              "description": "Where the camera aims at a dressing station for each part of her being changed (head, hat, top, legs, feet, broom, the pegboard)."
             }
           },
           "required": [
@@ -9513,12 +9513,12 @@
         "station"
       ],
       "additionalProperties": false,
-      "description": "Near-isometric on the ground, after Transistor; the game opens close in on the witch in her seat on the treehouse (intro: distance metres, angle degrees), easing out to the normal view over intro.ease seconds once she moves or rises (Ed, v171); lower over the treetops, looking toward the horizon to feel the speed."
+      "description": "The camera: near-isometric on the ground, starting close in on her seat in the treehouse and easing out once she moves."
     },
     "pixelSize": {
       "type": "number",
       "minimum": 0,
-      "description": "Everything the camera can see is drawn, plus viewMargin metres round the view, so nothing appears or vanishes on screen."
+      "description": "How many screen pixels each art pixel takes up, the size of the game's chunky pixels."
     },
     "spriteTilt": {
       "type": "number",
@@ -9591,7 +9591,7 @@
             "fade"
           ],
           "additionalProperties": false,
-          "description": "each leashed or happy creature's sigil hangs over it at the same height, moving with it, no beam: only the nearest max within range metres, size times its ground rune, at opacity (a happy one's times happy, as its rune is dimmer on the ground), fading out over the last fade (a share) of the range."
+          "description": "From the treetops each leashed or happy creature's sigil hangs over it, moving with it."
         }
       },
       "required": [
@@ -9602,7 +9602,7 @@
         "creatures"
       ],
       "additionalProperties": false,
-      "description": "From the treetops, each placed sigil shows above the canopy over its spot: height metres above the crowns, opacity, size (times the ground rune), and a faint column of light (beam opacity) from the rune up to it."
+      "description": "From the treetops each placed sigil shows above the canopy over its spot, with a faint beam down to it."
     },
     "suspects": {
       "type": "object",
@@ -9775,7 +9775,7 @@
         "silhouette"
       ],
       "additionalProperties": false,
-      "description": "Never lose the witch: tall things (over minHeight metres) standing in front of her fade to fadeOpacity where they cover her, in a soft circle round her body (a little bigger than her sprite) that eases from see-through at the centre to opaque past edge (a share of its radius), and eases in over a few metres as she moves behind; anything that still hides her shows her silhouette in her glow colour at silhouette opacity."
+      "description": "Tall things standing in front of the witch fade where they cover her, so she's never lost from view."
     },
     "reveal": {
       "type": "object",
@@ -9918,7 +9918,7 @@
             "keep"
           ],
           "additionalProperties": false,
-          "description": "a lying relic flask."
+          "description": "Whether a lying relic flask is kept clear like the other places of interest."
         }
       },
       "required": [
@@ -9931,7 +9931,7 @@
         "flask"
       ],
       "additionalProperties": false,
-      "description": "The places she stands in, kept clear: while she stands on the ground within a place of interest, everything standing nearer the camera than its centre whose picture covers it (its ring on the ground and what stands at its centre, width by height metres) fades out whole."
+      "description": "Places of interest she stands in are kept clear: whatever stands in front of them and covers them fades away."
     },
     "canopyShadow": {
       "type": "object",
@@ -10011,7 +10011,7 @@
         "sink"
       ],
       "additionalProperties": false,
-      "description": "The live rig: on by default, ?rig=0 turns it off."
+      "description": "Creatures close to the camera on the ground are drawn with a live rig (moving limbs) rather than baked frames; legends always are."
     },
     "pathFade": {
       "type": "object",
@@ -10067,7 +10067,7 @@
         "crownShare"
       ],
       "additionalProperties": false,
-      "description": "In ground mode, where the crowns are hidden, each tree's trunk fades out over its top metres in an ordered dither on the art's pixel grid (Ed, v149), instead of ending in a flat cut; over at most share of the trunk's visible height, so short trees keep a solid trunk (Ed, v233)."
+      "description": "On the ground, where the crowns are hidden, each trunk's top fades out in a pixel dither instead of ending in a flat cut."
     },
     "load": {
       "type": "object",
@@ -10125,7 +10125,7 @@
         "sparks"
       ],
       "additionalProperties": false,
-      "description": "Sigil weight, made visible: the load her carried leashes put on her (the rules' leashLoad, by tension and weight) shows from nothing (the rules' leashLoad: its over, the pull past leash.weight.free, so the first few sigils change nothing) to full weight units over: her sigil stack sags (its gaps closing by up to stackSag) and leans toward the pull (stackLean metres a sigil); carried leashes' threads show from threadFrom of the leash's length (0.85 unloaded), taut and brighter (threadBright); flying away from the pull she leans forward (witchLean metres per metre up), her broom tilts nose-up (broomTilt) and its shaft bows (broomBow art pixels), sparks splaying back from its bristles (sparks a second); over the treetops, sinking (her lift below 1 in treetop mode, the rules' leash.weight), sparks fall away below her."
+      "description": "The weight of her leashed creatures made visible: her sigil stack sags and leans toward the pull, and she leans and her broom bows as she flies away from it."
     },
     "canopyCutout": {
       "type": "object",
@@ -10141,7 +10141,7 @@
         "whole": {
           "type": "number",
           "minimum": 0,
-          "description": "how much the fade goes by each crown's middle rather than by each pixel: by pixel, every crown carried the same circular gradient and they lined up into rings; at 1 each crown fades as a whole."
+          "description": "How much the canopy hole fades each crown as a whole rather than pixel by pixel, so the crowns don't line up into rings."
         },
         "wobble": {
           "type": "number",
@@ -10184,7 +10184,7 @@
         "hold"
       ],
       "additionalProperties": false,
-      "description": "In ground mode the canopy stays drawn at the screen's edges, so she flies under the forest roof; a hole round her is cut out, screenFraction of the screen's width across, its edge edge of the width wide."
+      "description": "On the ground the forest roof stays drawn at the screen's edges, with a hole cut round her so she can be seen."
     },
     "find": {
       "type": "object",
@@ -10242,7 +10242,7 @@
         "moonSat"
       ],
       "additionalProperties": false,
-      "description": "Finding wild creatures in the dark (Ed, v244: 'quite hard to see in the forest... I don't want to go overboard'): eyeshine, their eyes catching the light in pale gold (strength over their own colour, out to range metres from her, blinking about blink of the time; woken creatures' red eyes stay red); lightFloor, never darker than that share of their unlit look; rim, a faint rim from her glow on the edge facing her; and in place of tone.ambient, ambient, with a cooler, more coloured moon (moonHue, moonSat)."
+      "description": "Wild creatures are easier to find in the dark: their eyes shine pale gold in her light and they never go fully dark."
     },
     "telescope": {
       "type": "object",
@@ -10382,7 +10382,7 @@
         "vignette"
       ],
       "additionalProperties": false,
-      "description": "The rolling ground: ground.hills lifts the ground and everything standing on it into broad swells up to amplitude metres up or down, scale metres across, in octaves layers of noise; drawing only, the game itself stays flat."
+      "description": "The telescope in the treehouse's crow's nest, which she can walk up to and look through full screen."
     },
     "smoke": {
       "type": "object",
@@ -10460,7 +10460,7 @@
         "range"
       ],
       "additionalProperties": false,
-      "description": "Smoke from every fire (Ed, round 13: puffs rising high into the sky before dissipating; render/smoke.ts): the world's campfires, the party's campfires, bonfires and tiki torches, the charcoal burner's mound."
+      "description": "Smoke puffs rising from every fire (campfires, bonfires, torches, the charcoal burner) high into the sky before they fade."
     },
     "sky": {
       "type": "object",
@@ -10508,7 +10508,7 @@
             "partyGlow"
           ],
           "additionalProperties": false,
-          "description": "count (roughly how many to a screenful of sky), altitude (metres over the ground: above the treetop camera, so never between her and it), speed (m/s they drift), opacity (translucent: stars show through), partyGlow (how strongly what's beneath them lights their undersides: the partified areas' colours, pulsing on the beat; campfires faintly; over dormant forest they stay moonlit grey)."
+          "description": "The clouds drifting high over the forest, lit from below by the party's colours."
         },
         "lightning": {
           "type": "object",
@@ -10706,7 +10706,7 @@
         "floor"
       ],
       "additionalProperties": false,
-      "description": "The moon: one moon, drawn in the sky, tinting the moonlight a little, and shown on the dancefloor before the first wave (the same phase)."
+      "description": "The moon in the sky, and the odd red, blue or gold moon that comes and goes during a run."
     },
     "glowReach": {
       "type": "number",
@@ -10749,7 +10749,7 @@
         "stackHeight"
       ],
       "additionalProperties": false,
-      "description": "The sigils' neon spilling onto the world (overnight phase 3, the art pass): each placed sigil is a small light in its creature's neon, height metres over its rune, reaching reach metres (15% more a level) at strength (0: off), eased in as it's written and breathing with the rune's pulse, so the grass round it, the ground and whoever stands near take its colour; the bottom sigil of her stack is a fainter one (stack, 0 off) reaching stackReach metres, stackHeight metres over her, tinting her and the ground under her as she carries it."
+      "description": "Placed sigils glow like small lights in their creature's neon, tinting the grass, the ground and whoever stands near."
     },
     "fireworks": {
       "type": "object",
@@ -10810,7 +10810,7 @@
         "finale"
       ],
       "additionalProperties": false,
-      "description": "The wave's celebration: the rules' waveCelebrate (game.ts) starts a show of shells to shells shells over `over` seconds, the last `finale` going up together at the end, each rising rise to rise seconds from the soundsystem's top to height to height metres, up to drift metres off it, and bursting radius to radius metres across: round peonies, rings, drooping gold willows and crackling glitter, in the party's neons (rules/fireworks.ts: its schedule, from the event alone, so the sound's pops land on the bursts; render/fireworks.ts: the picture, a fixed pool of sparks the GPU flies)."
+      "description": "The fireworks show over a soundsystem when a wave is celebrated."
     },
     "combatLight": {
       "type": "object",
@@ -10859,7 +10859,7 @@
         "fall"
       ],
       "additionalProperties": false,
-      "description": "Her light in the wild and in a fight."
+      "description": "Her light shrinks while she explores a wild area and grows during a fight, so the fight is lit."
     },
     "nightLight": {
       "type": "object",
@@ -10888,7 +10888,7 @@
         "gazeReach"
       ],
       "additionalProperties": false,
-      "description": "her light reaches at most maxReach metres however far the camera is (stargazing, zoomed out), and over the treetops treetopReach metres at treetopGlow of its strength, eased in as she rises, so the canopy stays moonlit with a lantern's warm glow round her; lying on the beach to stargaze, at most gazeReach metres."
+      "description": "How far her light reaches when the camera is far out, over the treetops and while she stargazes on the beach."
     },
     "glowFalloff": {
       "type": "number",
@@ -10974,7 +10974,7 @@
         "knee": {
           "type": "number",
           "minimum": 0,
-          "description": "the light falling on a pixel, every source summed, passes unchanged up to knee of brightness, then eases toward ceiling and never past it, in its own hue, so the ground round a soundsystem's party light, campfires and her glow stays under white and keeps its texture; ceiling at or under knee turns it off."
+          "description": "Bright lights ease off toward a ceiling instead of burning to white, so lit ground keeps its texture."
         },
         "ceiling": {
           "type": "number",
@@ -10994,7 +10994,7 @@
     "glowPower": {
       "type": "number",
       "minimum": 0,
-      "description": "the witch's own glow at its brightest (0-1; 0.95, a bright centre that drops quickly to dark, round 11), full under her, falling off as glowFalloff says out to glowNear of her reach, lit from a source glowHeight metres above her."
+      "description": "How bright the witch's own glow is, brightest under her and fading smoothly to dark at its reach."
     },
     "light": {
       "type": "object",
@@ -11122,7 +11122,7 @@
             "rimHue": {
               "type": "number",
               "minimum": 0,
-              "description": "a moonlight rim on the characters (the witch and every creature, baked or rigged), a light edge one art pixel wide on the side away from the moon in the night sky's blue-violet, at rim strength (0 off), so they read against the dark (the art director, round 1), only where the sprite is three pixels thick or more and never on the live rig's leg discs."
+              "description": "A thin moonlit edge on the witch and every creature, so they stand out against the dark."
             },
             "rimSat": {
               "type": "number",
@@ -11152,12 +11152,12 @@
             "moonUpWrap": {
               "type": "number",
               "minimum": 0,
-              "description": "the share of that fill every face gets whatever its normal (0: by its normal alone), so a crown's regular bumps don't light up as a lattice of dots."
+              "description": "How evenly the moon's fill lights every face, so tree crowns don't light up as a lattice of dots."
             },
             "styledRim": {
               "type": "number",
               "minimum": 0,
-              "description": "with ?style=bold or ref, the rim's strength and her own glow on her, in place of rim and witchGlow (the styles bake dark tones with flat normals, so she needs more to stand out in her own pool)."
+              "description": "Extra rim and glow on the witch in the bold and reference art styles, where she would otherwise vanish in her own light."
             },
             "styledGlow": {
               "type": "number",
@@ -11778,7 +11778,7 @@
                 "home"
               ],
               "additionalProperties": false,
-              "description": "each area type's own fog (hazeHue, hazeSat, haze), grade tint (gradeHue, gradeSat) and mist over the above, by area id (\"home\" for home): misty teal over the bogs and water, violet-grey in the dead and ancient woods, blue-violet in the bluebells, pale mist on the open moor, darker in the rocky places, near-black green under the pines, rosy in the honeysuckle and gardens, home a little less cold."
+              "description": "Each kind of area's own fog colour, tint and mist (teal over bogs, violet in dead woods, pale mist on the moor and so on)."
             }
           },
           "required": [
@@ -11834,7 +11834,7 @@
         "spooky"
       ],
       "additionalProperties": false,
-      "description": "The lighting's mood: mood spooky lays this grade over the Art Lab's night light, plain is the light as it was (?light=plain or ?light=spooky to compare)."
+      "description": "The night lighting's overall mood: the spooky grade over the plain light, and the moon's fill on everything facing up."
     },
     "lightSources": {
       "type": "object",
@@ -11910,7 +11910,7 @@
         },
         "cast": {
           "type": "boolean",
-          "description": "what stands in the trunks', palms' and scenery's shadows (creatures, the witch, bushes, props, scenery) is darkened and tinted by them where they fall on it, from a map of them drawn from above round her (render/castShadows.ts); off, only the ground and grass; castRes is that map's texels across (1024: 6.4 a metre over 160 m; 512 is a quarter of the texels to clear and draw each frame, for a weaker GPU)."
+          "description": "Creatures, the witch, bushes and props darken where trunk and scenery shadows fall on them, not just the ground."
         },
         "castRes": {
           "type": "number",
@@ -11949,7 +11949,7 @@
             "foot": {
               "type": "number",
               "minimum": 0,
-              "description": "a trunk's shadow fades in from nothing over foot metres from its foot (0: none) and opens out from a third of its width over taper metres (0: none; Ed: roots and decorations \"get wide at the base, that look strange when they're rotated\"), fades to nothing as she comes within near metres of its trunk (0: never), and darkens the ground cover it falls on (grass, flowers, tufts) at cover times its strength (0: not at all)."
+              "description": "How a trunk's shadow fades in at its foot, widens, fades as she comes close, and darkens the grass it falls on."
             },
             "taper": {
               "type": "number",
@@ -11965,7 +11965,7 @@
             },
             "scenery": {
               "type": "boolean",
-              "description": "scenery casts the same shadows from her glow and the fires, untapered (its foot is its own width): set pieces, ruins, rocks and freak trees, modern and quest relics, the scenes' pieces (temples, castles, cemeteries...), the runestones and the soundsystems; pieces under sceneryMin metres tall cast none."
+              "description": "Scenery (ruins, rocks, relics, runestones, soundsystems) casts shadows from her glow and the fires too."
             },
             "sceneryMin": {
               "type": "number",
@@ -12097,7 +12097,7 @@
         "errorEvery"
       ],
       "additionalProperties": false,
-      "description": "The game-wide GPU memory budget: mb MB for a window of refWidth x refHeight physical pixels, scaled by this window's (Google Maps' rule), never under floor nor over ceil."
+      "description": "How much graphics memory the game lets itself use, letting go of the art used longest ago when it's over."
     },
     "mist": {
       "type": "object",
@@ -12130,7 +12130,7 @@
         "gain"
       ],
       "additionalProperties": false,
-      "description": "a low drifting mist (height in metres above the ground)."
+      "description": "A low mist drifting just above the ground."
     },
     "loadingMist": {
       "type": "object",
@@ -12174,7 +12174,7 @@
         "sea": {
           "type": "number",
           "minimum": 0,
-          "description": "it lies over the water too, out to sea metres past the island's furthest ground, thinning, and burns off last, as its own front from the treehouse once the land's all in; 0 none."
+          "description": "The loading mist lies over the sea too and burns off last, once all the land is in."
         }
       },
       "required": [
@@ -12190,7 +12190,7 @@
         "sea"
       ],
       "additionalProperties": false,
-      "description": "The loading mist: while the island is still being drawn (its trees one set an area type, nearest the treehouse first), every area whose trees aren't in yet lies under a low glowing night mist, in layers sheets up to height metres over the ground, each at most density opaque (the low ones thickest), in hard steps, glow times as bright as the night's mist."
+      "description": "A glowing mist over the parts of the island still loading, rolling back from the treehouse as their trees arrive."
     },
     "lightRings": {
       "type": "object",
@@ -12264,7 +12264,7 @@
         "fadeFar"
       ],
       "additionalProperties": false,
-      "description": "Light rings in the canopy: one pass over the screen in the half-size effects layer that lights only what stands at crown height (above metres or more over the ground), never the floor."
+      "description": "Faint rings of moonlight across the treetops (now switched off), and the glory round her shadow on the leaves (off too)."
     },
     "holograms": {
       "type": "object",
@@ -12314,7 +12314,7 @@
         "fadeFar": {
           "type": "number",
           "minimum": 0,
-          "description": "it fades out towards this many metres from her."
+          "description": "How far from her a soundsystem's hologram fades out; a damaged soundsystem's hologram glitches."
         }
       },
       "required": [
@@ -12330,7 +12330,7 @@
         "fadeFar"
       ],
       "additionalProperties": false,
-      "description": "The soundsystems' sky sigils: each standing soundsystem's projector throws a translucent cone of light from the top of its stack to a hologram of its area's animal sigil over the canopy, in the area's crystal colour, with scanlines, a drifting interference band and a colour fringe, turning gently and bobbing."
+      "description": "Each soundsystem projects a turning hologram of its area's animal sigil into the sky above the trees."
     },
     "watching": {
       "type": "object",
@@ -12358,7 +12358,7 @@
         "lag"
       ],
       "additionalProperties": false,
-      "description": "The trees watching her: a leafy thing standing within radius metres of where she was lag seconds ago (eased behind her) leans its tip lean metres that way across the screen, none at its foot; full within 0.4 of the radius."
+      "description": "Leafy plants near her path lean toward where she just was, as if the trees are watching her."
     },
     "moonbeams": {
       "type": "number",
@@ -12384,7 +12384,7 @@
             "amount"
           ],
           "additionalProperties": false,
-          "description": "an enraged creature's whole sprite goes toward colour by amount (0 none, 1 all), by each pixel's lightness so its shading and shape still read; its angry brows and red eyes stay."
+          "description": "An enraged creature's whole sprite is tinted toward a colour, keeping its shading."
         },
         "anger": {
           "type": "object",
@@ -12402,7 +12402,7 @@
             "size"
           ],
           "additionalProperties": false,
-          "description": "a pixel 💢 beside an enraged creature's head on the side it faces, popping on a pulse, size times its level's bubble size (bubbles.levelScale)."
+          "description": "A pixel 💢 popping beside an enraged creature's head."
         },
         "partyGlow": {
           "type": "object",
@@ -12444,7 +12444,7 @@
         "partyGlow"
       ],
       "additionalProperties": false,
-      "description": "The creature states' looks (Ed, issue #87; render/looks.ts)."
+      "description": "How creatures look in their different states, such as the angry brows of an enraged one."
     },
     "tone": {
       "type": "object",
@@ -12545,7 +12545,7 @@
             "band"
           ],
           "additionalProperties": false,
-          "description": "the strength and band over the treetops (Ed, v160: a stronger miniature look there), blended in as she rises; ?tilt=<strength>,<band> tries treetop values live; It blurs at the low resolution, before the pixels are scaled up; ?tilt=off turns it off."
+          "description": "A stronger miniature-world blur when she's up in the treetops."
         }
       },
       "required": [
