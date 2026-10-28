@@ -304,6 +304,23 @@
     "stoneIdle.on": {
       "what": "false lets them roam the whole area as before."
     },
+    "sigilAvoid": {
+      "what": "Idling and dancing creatures keep off the sigils lying on the floor.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-28",
+          "quote": "When idling or dancing, creatures should try and avoid standing on floor sigils"
+        }
+      ],
+      "notes": "Creatures keep off floor sigils [1]: wild idlers, happy ones at their area, dancers and parked ones roaming round their sigil choose where to stand next off every sigil on the floor (her placed sigils, happy creatures' runes, relics' sigils, her hats lying down), and one resting on a sigil moves on. Only a nudge: with nowhere clear in a dozen tries it stands where it would have; moving, chasing, fighting and marching are untouched."
+    },
+    "sigilAvoid.on": {
+      "what": "false lets them stand on sigils as before."
+    },
+    "sigilAvoid.pad": {
+      "what": "Metres past a sigil's edge a creature's middle still counts as on it."
+    },
     "wildWatch": {
       "what": "On her first landing in a wild area its creatures stare and redden for a few seconds before they attack, and how far they chase her after.",
       "decisions": [

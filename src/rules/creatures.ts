@@ -17,6 +17,7 @@ import { facingAway } from "./witch";
 import type { Tuning } from "./tuning";
 import type { Fight } from "./combat";
 import { glideOf } from "./movement";
+import { offSigils, onFloorSigil } from "./sigilAvoid";
 
 export type Level = 0 | 1 | 2 | 3;
 export const LEGEND = 3;
@@ -354,7 +355,13 @@ export function pointInCircle(k: NonNullable<Creature["circle"]>, r: () => numbe
 export const idlesAtStone = (c: Partial<Pick<Creature, "level" | "boss" | "friendly" | "leashed" | "state" | "enraged" | "circle">> & { dancing?: boolean }) =>
   (c.level ?? 0) > 0 && c.level !== LEGEND && !c.boss && !c.friendly && !c.leashed && !c.enraged && !c.dancing && !c.circle && c.state !== "happy";
 
-export function pointInArea(map: ForestMap, c: Pick<Creature, "cell" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ"> & Partial<Pick<Creature, "circle" | "leashed" | "state" | "enraged" | "level" | "boss" | "friendly" | "dropped">> & { dancing?: boolean; anywhere?: boolean }, r: () => number): [number, number] {
+type AreaPick = Pick<Creature, "cell" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ"> & Partial<Pick<Creature, "id" | "circle" | "leashed" | "state" | "enraged" | "level" | "boss" | "friendly" | "dropped">> & { dancing?: boolean; anywhere?: boolean };
+
+/** Where it roams to next: a spot in its area (pickInArea), off the sigils lying on the floor where it can (Ed, 2026-10-28:
+ *  rules/sigilAvoid.ts; with none on the floor, exactly as before). */
+export const pointInArea = (map: ForestMap, c: AreaPick, r: () => number): [number, number] => offSigils(() => pickInArea(map, c, r), c.id)!;
+
+function pickInArea(map: ForestMap, c: AreaPick, r: () => number): [number, number] {
   if (c.dropped && !c.anywhere) { // (let go at her knockout: a spot near where it was dropped, never on a lake's water)
     const D = c.dropped, shore = map.bounds.lakes ? lakeKnobs(map.tuning).shore : 0;
     for (let i = 0; i < 12; i++) { const a = r() * Math.PI * 2, d = Math.sqrt(r()) * D.r, x = D.x + Math.cos(a) * d, z = D.z + Math.sin(a) * d; if (!onLake(map.bounds, x, z, shore)) return [x, z]; }
@@ -445,6 +452,8 @@ export function stepCreature(c: Creature, dt: number, map: ForestMap, time?: num
     if (k >= 1) { c.leap = undefined; c.tx = c.x; c.tz = c.z; c.rest = 0.5 + c.rand() * 2; }
     return;
   }
+  // Resting on a sigil on the floor (put down beside it, or a rune come by), it moves on to its next spot (rules/sigilAvoid.ts).
+  if (c.rest > 0 && onFloorSigil(c.x, c.z, c.id)) { c.rest = 0; if (Math.hypot(c.tx - c.x, c.tz - c.z) < 0.05) [c.tx, c.tz] = pointInArea(map, c, c.rand); }
   if (c.rest > 0) { c.rest -= dt; c.moving = false; c.away = false; return; }
   const dx = c.tx - c.x, dz = c.tz - c.z, d = Math.hypot(dx, dz);
   if (d < 0.05) {

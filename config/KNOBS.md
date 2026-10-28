@@ -1886,6 +1886,21 @@ Hostile creatures gather near the runestone [1]: a wild area's own hostile young
 | `stoneIdle.radius` | number | 0 to … |
 | `stoneIdle.clear` | number | 0 to … |
 
+### `sigilAvoid`
+
+Idling and dancing creatures keep off the sigils lying on the floor.
+
+1. Ed, 2026-10-28: "When idling or dancing, creatures should try and avoid standing on floor sigils"
+Creatures keep off floor sigils [1]: wild idlers, happy ones at their area, dancers and parked ones roaming round their sigil choose where to stand next off every sigil on the floor (her placed sigils, happy creatures' runes, relics' sigils, her hats lying down), and one resting on a sigil moves on. Only a nudge: with nowhere clear in a dozen tries it stands where it would have; moving, chasing, fighting and marching are untouched.
+
+- **`sigilAvoid.on`**: false lets them stand on sigils as before.
+- **`sigilAvoid.pad`**: Metres past a sigil's edge a creature's middle still counts as on it.
+
+| knob | type | range |
+|---|---|---|
+| `sigilAvoid.on` | boolean |  |
+| `sigilAvoid.pad` | number | 0 to … |
+
 ### `wildWatch`
 
 On her first landing in a wild area its creatures stare and redden for a few seconds before they attack, and how far they chase her after.
