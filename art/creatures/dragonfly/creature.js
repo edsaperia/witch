@@ -28,12 +28,6 @@ export const CREATURE_DRAGONFLY = {
   },
   radius: 0.45,
   voice: { family: "bug", pitch: 1.6, am: [180, 0.6], noise: 0.2, volume: 1.1 },
-  buff: {
-    name: "Hover",
-    kind: "move",
-    scale: { treetopSpeed: 1.1, "treetop.turnRate": 1.6 },
-    label: "Dragonfly's Hover: sharper turns over the treetops, and a little quicker"
-  },
   character: { sprite: "shiver", every: [1.5, 4], for: 0.5 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },

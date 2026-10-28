@@ -181,7 +181,7 @@ export class LeashView {
     this.tex.magFilter = THREE.NearestFilter; this.tex.minFilter = THREE.NearestFilter; this.tex.generateMipmaps = false;
     const mat = (flat: number, depthTest = true, solid = false, pull = 0) => new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG,
-      uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uRes: SPRITE_UNIFORMS.uRes, uMpp: { value: metresPerArtPixel(game.tuning) }, uDotMax: { value: PIXEL_DOT_MAX }, uFlat: { value: flat }, uGlyphs: { value: this.tex }, uSolid: { value: solid ? 1 : 0 }, uPull: { value: pull } },
+      uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uRes: SPRITE_UNIFORMS.uRes, uMpp: { value: metresPerArtPixel(game.tuning) }, uDotMax: { value: PIXEL_DOT_MAX }, uFlat: { value: flat }, uGlyphs: { value: this.tex }, uGlyphsPal: { value: this.tex }, uGlyphIdx: { value: 0 }, uSolid: { value: solid ? 1 : 0 }, uPull: { value: pull } },
       transparent: true, depthWrite: false, depthTest, blending: solid ? THREE.NormalBlending : THREE.AdditiveBlending,
     });
     this.standing = new Instances(mat(0));
@@ -460,16 +460,15 @@ export class LeashView {
     let newest = seen;
     for (const W of g.witches) {
       for (const L of W.invites.letters) {
-        if (L.kind === "cache") continue;
         const sp = Math.hypot(L.vx, L.vz);
         if (sp < 1e-3) continue;
         const ux = L.vx / sp, uz = L.vz / sp;
         for (let j = 1; j <= 9; j++) {
           const back = j * 0.4, f = L.flown - back;
           if (f < 0) break;
-          const c = j % 2 ? AMBER : ROSE, y = L.kind === "orbit" ? 1.3 : lobHeight(f, L.range, arc);
+          const c = j % 2 ? AMBER : ROSE, y = lobHeight(f, L.range, arc);
           const [tx, ty, tz] = letterAt(this.herOffset, L.x - ux * back, y, L.z - uz * back); // (in the house, behind it as drawn: render/invites.ts)
-          this.standing.add(tx, ty, tz, (L.small ? 0.5 : 0.8) * (1 - j * 0.07), dot, c[0], c[1], c[2], 0.9 * (1 - j / 10));
+          this.standing.add(tx, ty, tz, 0.8 * (1 - j * 0.07), dot, c[0], c[1], c[2], 0.9 * (1 - j / 10));
         }
       }
       for (const e of W.invites.events) {

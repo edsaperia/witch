@@ -18,12 +18,6 @@ export const CREATURE_DORMOUSE = {
   temperament: "curious",
   traits: ["nimble"],
   voice: { family: "small", pitch: 1.3 },
-  buff: {
-    name: "Lullaby orbit",
-    kind: "shot",
-    mods: { orbit: 1 },
-    label: "Dormouse's Lullaby orbit: two 💌s circle you and fly at animals close by"
-  },
   character: { posture: { head: [0, 0.03], body: 0 }, quirk: "sniff", every: [2, 5], for: 0.8 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },

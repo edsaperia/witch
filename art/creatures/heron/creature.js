@@ -30,12 +30,6 @@ export const CREATURE_HERON = {
     vowel: 1,
     volume: 0.9
   },
-  buff: {
-    name: "Stride",
-    kind: "move",
-    scale: { groundSpeed: 1.1, "dash.distance": 1.25 },
-    label: "Heron's Stride: a little quicker on foot, and a longer blink"
-  },
   character: { sprite: "puff", every: [6, 11], for: 1.4 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },

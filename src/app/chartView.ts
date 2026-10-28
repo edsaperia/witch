@@ -25,7 +25,8 @@ import { stepTo } from "./chartNav";
 import type { OutlineAsk, OutlineDone } from "./chartOutlines.worker";
 import { writeArrival } from "./arrival";
 import { chartOrder, islandPhase, OUTLINE_STEP } from "./chartWarm";
-import { chartChoice, type ChartHere } from "./sail";
+import { chartChoice, chartOpensOn, type ChartHere } from "./sail";
+import { bindings, padName, type ActionId } from "../platform/bindings";
 
 export type ChartMode = "look" | "sail" | "miniature";
 /** Where the chart's flight hands over to the game's dive (the tuning's arrive.handoff; Ed, 2026-10-24: "maybe it comes from further
@@ -185,9 +186,9 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   ($("home") as HTMLElement).hidden = !sailing || !!table; $("sail-any").hidden = !sailing; $("close").hidden = !opts.onClose || !!table;
   if (table) { root.classList.add("table"); $("top").hidden = true; $("world").hidden = true; $("zoom-in").hidden = true; $("zoom-out").hidden = true; $("corner").append($("sail-any")); }
   $("hint").textContent = table
-    ? "point, or the arrows / d-pad / right stick, to choose · hold the mouse, Space or Enter (✕ on a pad) on an island to sail · E (□) to put it down · sigils: islands you can sail to · gold rings: won"
+    ? `point, or the arrows / d-pad / left stick, to choose · hold the mouse, Space or Enter (${padName("menu.choose")} on a pad) on an island to sail · E (${padName("menu.back")}) to put it down · sigils: islands you can sail to · gold rings: won`
     : sailing
-    ? "Tap an island to look at it, again to sail · arrows / stick to choose, Enter / A to sail · sigils: islands you can sail to · gold rings: won"
+    ? `Tap an island to look at it, again to sail · arrows / stick to choose, Enter / ${padName("menu.choose")} to sail · sigils: islands you can sail to · gold rings: won`
     : "Tap an island to look at it · arrows / stick to choose · sigils: islands you can sail to · gold rings: won";
 
   if (mini) chart.orbit = 0.12;
@@ -416,25 +417,23 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   const onKeyUp = (e: KeyboardEvent) => { if (table && (e.key === "Enter" || e.key === " ")) holdEnd("key"); };
   if (table) addEventListener("keyup", onKeyUp);
 
-  // A gamepad: the d-pad or the left stick steps (repeating while held), A sails, B closes, the shoulders zoom.
-  let padWait = 0, squareWas = true; // (square: held, as it brought the chart up, till it's let go)
+  // A gamepad, as bound (platform/bindings.ts, Ed's layout 2026-10-28): the menu's directions step (the d-pad or the left stick,
+  // repeating while held), choose (cross) sails, back (circle) closes or puts it down, its zoom (the triggers) zooms.
+  let padWait = 0, chooseWas = true; // (choose: held, as the use button that brought the chart up is cross too, till it's let go)
   function pad(dt: number): void {
     const p = [...(navigator.getGamepads?.() ?? [])].find(g => g?.connected); if (!p) return;
     padWait -= dt;
     if (chart.flying) { if (p.buttons.some(x => x.pressed)) chart.skipFlight(); return; }
-    const b = (i: number) => !!p.buttons[i]?.pressed;
-    // (at a table either stick chooses, she standing still at it; elsewhere the left)
     if (left) return;
-    const big = (i: number) => (table && Math.abs(p.axes[i + 2] ?? 0) > Math.abs(p.axes[i] ?? 0) ? p.axes[i + 2] : p.axes[i]) ?? 0;
-    const ax = big(0), ay = big(1);
-    const dx = b(15) ? 1 : b(14) ? -1 : Math.abs(ax) > 0.5 ? Math.sign(ax) : 0, dy = b(13) ? 1 : b(12) ? -1 : Math.abs(ay) > 0.5 ? Math.sign(ay) : 0;
+    const buttons = p.buttons.map(x => x.pressed), held = (id: ActionId) => bindings.padHeld(id, buttons, p.axes);
+    const dx = held("menu.right") ? 1 : held("menu.left") ? -1 : 0, dy = held("menu.down") ? 1 : held("menu.up") ? -1 : 0;
     if ((dx || dy) && padWait <= 0) { step(dx, dy); padWait = 0.28; } else if (!dx && !dy) padWait = 0;
-    if (table && b(2) && !squareWas) { leave(); return; } // (square, the use button, again: put away)
-    squareWas = b(2);
-    if (table) { if (b(0)) holdStart(chart.selected, "pad"); else holdEnd("pad"); } // (at a table cross held sails, as Space)
-    else if (b(0) && padWait <= 0) { sailTo(chart.selected); padWait = 0.5; }
-    if (b(1) && padWait <= 0) { if (table) leave(); else if (opts.onClose) opts.onClose(); padWait = 0.5; }
-    if (b(4)) chart.zoom(1 + dt); if (b(5)) chart.zoom(1 - dt * 0.8);
+    const choose = held("menu.choose") && !chooseWas;
+    if (!held("menu.choose")) chooseWas = false;
+    if (table) { if (held("menu.choose") && !chooseWas) holdStart(chart.selected, "pad"); else holdEnd("pad"); } // (at a table choose held sails, as Space)
+    else if (choose && padWait <= 0) { sailTo(chart.selected); padWait = 0.5; }
+    if (held("menu.back") && padWait <= 0) { if (table) leave(); else if (opts.onClose) opts.onClose(); padWait = 0.5; }
+    if (held("menu.zoomOut")) chart.zoom(1 + dt); if (held("menu.zoomIn")) chart.zoom(1 - dt * 0.8);
   }
 
   // Testing (Ed, 2026-10-12: "please give a button that lets me go to island even if I haven't unlocked them yet"): every island
@@ -460,7 +459,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   setTimeout(() => {
     if (disposed) return;
     build();
-    choose(opts.start ?? save.voyages.at(-1)?.to ?? "home", true, false);
+    choose(chartOpensOn(opts.start, opts.here, worldNow(), save.voyages.at(-1)?.to), true, false); // (the island she's on, however it's opened: app/sail.ts)
     bakeFor(likely()); // (the next island's trees drawn ahead from the moment the chart opens: app/landingBake.ts)
   }, 50);
 

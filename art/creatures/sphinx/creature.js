@@ -11,12 +11,6 @@ export const CREATURE_SPHINX = {
   temperament: "curious",
   traits: ["heavy"],
   voice: { family: "big", pitch: 0.75, glide: 0.5, dur: 1.3, noise: 0.15 },
-  buff: {
-    name: "Riddle",
-    kind: "shot",
-    scale: { "invites.range": 1.4, "invites.cooldown": 0.85 },
-    label: "Sphinx's Riddle: 💌s carry far and come a little quicker"
-  },
   character: { posture: { head: [0, 0.06], body: 0 }, quirk: "stretch", every: [8, 14], for: 1.6 },
   pack: {
     melee: { attacks: [null, "screech", "bigscreech"] },

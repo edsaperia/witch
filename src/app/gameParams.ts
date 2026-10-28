@@ -1,8 +1,7 @@
-// The link's switches for the game itself, once it's made: the party spell's start (?creator=0, ?spell=), forced buffs
-// (?buffs=), the quest demo (?quest=1), the party's over (?partyover=1), the debug arena (?arena=, J sets it up again), the Fight
+// The link's switches for the game itself, once it's made: the party spell's start (?creator=0, ?spell=), the
+// quest demo (?quest=1), the party's over (?partyover=1), the debug arena (?arena=, J sets it up again), the Fight
 // Arena (?fight=) and
 // how fast the waves come (?pulse=, ?wave=off); the repro link's place and waves (app/repro.ts).
-import { LEGEND_BUFFS } from "../rules/buffs";
 import { setupArena, arenaAttack } from "../rules/arena";
 import { startFight } from "./fightArena";
 import { endParty } from "../rules/partyOver";
@@ -23,10 +22,6 @@ export function gameFromLink(game: Game, tuning: Tuning, params: URLSearchParams
   // Her night's kit (rules/kit.ts; Ed, 2026-10-26): a night that waits for her spell starts with her invitations on the Parlour's desk
   // and the brooms at the Workshop's lathe; ?kit=full gives her both from the start.
   if (game.party.spellAt === null && params.get("kit") !== "full") for (const W of game.witches) W.kit = newKit(true);
-  // ?buffs=fox,toad,stag (debug): these legends' buffs on from the start, whatever the legends do (a
-  // species twice stacks it). ?buffs=all: every one.
-  const buffsParam = params.get("buffs");
-  if (buffsParam) game.buffs.forced = buffsParam === "all" ? Object.keys(LEGEND_BUFFS.species) : buffsParam.split(",").map(s => s.trim().toLowerCase().replace(/[^a-z]/g, "")).filter(Boolean);
   // ?quest=1 (the first quest, a demo): beside the nearest sleeping legend, with the creature it
   // dreams of on her stack; put its sigil down there (E) to make it happy.
   if (params.get("quest")) setupQuestDemo(game, (x, z) => {

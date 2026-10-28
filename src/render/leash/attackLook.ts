@@ -16,8 +16,8 @@ import type { Game } from "../../rules/game";
 import { LIGHT_UNIFORMS } from "../lighting";
 import { HEIGHT_UNIFORMS } from "../height";
 import { SPRITE_UNIFORMS, metresPerArtPixel } from "../sprites";
-import { gpuKind } from "../gpuLedger";
 import { Instances, VERT, FRAG, PIXEL_DOT_MAX } from "./glyphs";
+import { indexedTexture } from "../atlas";
 
 type RGB = [number, number, number];
 /** How an attack is dressed: its element, its creature's level, and (a party animal's) its neon, which tints the element's grey. */
@@ -65,11 +65,11 @@ export class AttackLook {
     const A = attackLookAtlas(this.cfg);
     K = this.cfg.scale;
     this.cells = A.cells; this.size = A.size;
-    const tex = gpuKind(new THREE.DataTexture(A.rgba, A.size, A.size, THREE.RGBAFormat), "ui");
-    tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.needsUpdate = true;
+    // (as palette indices where it fits, 256 values or fewer: a quarter of the bytes, the colours exact; render/palette.ts)
+    const { tex, pal, indexed } = indexedTexture(new Uint8Array(A.rgba.buffer, A.rgba.byteOffset, A.rgba.length), A.size, A.size, "ui");
     const mat = (flat: number, solid: boolean, depthTest = true) => new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG,
-      uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uRes: SPRITE_UNIFORMS.uRes, uMpp: { value: metresPerArtPixel(game.tuning) }, uDotMax: { value: PIXEL_DOT_MAX }, uFlat: { value: flat }, uGlyphs: { value: tex }, uSolid: { value: solid ? 1 : 0 }, uPull: { value: 0 }, uRgb: { value: 1 } },
+      uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uRes: SPRITE_UNIFORMS.uRes, uMpp: { value: metresPerArtPixel(game.tuning) }, uDotMax: { value: PIXEL_DOT_MAX }, uFlat: { value: flat }, uGlyphs: { value: tex }, uGlyphsPal: { value: pal }, uGlyphIdx: { value: indexed ? 1 : 0 }, uSolid: { value: solid ? 1 : 0 }, uPull: { value: 0 }, uRgb: { value: 1 } },
       transparent: true, depthWrite: false, depthTest, blending: solid ? THREE.NormalBlending : THREE.AdditiveBlending,
     });
     this.paintFlat = new Instances(mat(1, true)); this.paintFlat.mesh.renderOrder = 2.97; // (over the ground, under the creatures)

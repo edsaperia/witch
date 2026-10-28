@@ -3,7 +3,7 @@
 // previews/ed/studio-instruments on claude/ed-shots). Walking up to one lights it with E over it (Ed's playtest, 2026-10-26: "Menus
 // should open when she presses E near an interactive object ... instead of them opening automatically just through proximity");
 // E there and she's at it: its menu slides in (ui/studioPanel.ts) and every key plays it, the movement keys too (Ed: "it's a shame
-// to lose all the movement keys for the instruments"), till E (the pad's □), or Esc (B), steps her away (Ed, 2026-10-26: "instruments: leave with E; if not consistent it will be confusing"), she standing still at it meanwhile. The Studio has its own loop at its own tempo, never the
+// to lose all the movement keys for the instruments"), till E (the pad's ○ since Ed's layout of 2026-10-28), or Esc, steps her away (Ed, 2026-10-26: "instruments: leave with E; if not consistent it will be confusing"), she standing still at it meanwhile. The Studio has its own loop at its own tempo, never the
 // night's music, shared by every player there, while each player's instrument is their own (Ed: three players jamming, one on
 // each, when multiplayer comes). Her notes always sound exactly when pressed, never snapped to the loop (Ed, 2026-10-23). Numbers
 // and names only: app/studio.ts plays them.
@@ -124,11 +124,10 @@ export const soundsOf = (inst: Instrument, S = STUDIO_CONFIG): { id: string; nam
 /** A drum pad's patch in a kit (the house kit's where the kit leaves it out). */
 export const padPatch = (pad: Pad, kit: number, S = STUDIO_CONFIG): string => S.drums.kits[kit]?.pads[pad] ?? S.drums.kits[0].pads[pad] ?? "kick";
 
-/** The gamepad (the standard mapping's button numbers): square (2), the use button, steps away as E does, and circle (1) as Esc
- *  (Ed, 2026-10-26: "instruments: leave with E; if not consistent it will be confusing"); the drum kit's pads; the synth's and the
- *  mic's eight notes (the d-pad and the face buttons, a scale's steps from the middle row's root), the bumpers and the left trigger
- *  an octave down and up. */
-export const PAD_LEAVE: readonly number[] = [2, 1];
+/** The gamepad (the standard mapping's button numbers): the menu's back (circle: platform/bindings.ts, app/studio.ts) steps away, as
+ *  E does (Ed, 2026-10-26: "instruments: leave with E; if not consistent it will be confusing"); the drum kit's pads; the synth's and
+ *  the mic's eight notes (the d-pad and the face buttons, a scale's steps from the middle row's root), the bumpers and the left
+ *  trigger an octave down and up (a button bound to back or the pause plays nothing). */
 export const PAD_DRUMS: Record<number, Pad> = { 0: "kick", 4: "snare", 3: "hat", 5: "openHat", 6: "clap", 7: "crash", 12: "tomHigh", 14: "tomMid", 15: "tomLow", 13: "tomFloor" };
 export const PAD_NOTES: Record<number, number> = { 13: 0, 14: 1, 12: 2, 15: 3, 0: 4, 7: 5, 3: 6, 5: 7 };
 export const PAD_OCTAVE: Record<number, number> = { 4: -1, 6: 1 };

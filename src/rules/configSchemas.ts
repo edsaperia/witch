@@ -25,6 +25,10 @@ export const _check: [Same<(typeof DELIVERIES)[number], Delivery>, Same<(typeof 
 
 export interface ConfigSchema { name: string; file: string; schema: string; records: readonly string[]; over: Record<string, Partial<Schema>> }
 
+/** The bindings' names (platform/bindings.ts: the standard pad's buttons, the sticks' directions, the mouse's). */
+export const PAD_INPUTS = ["cross", "circle", "square", "triangle", "L1", "R1", "L2", "R2", "share", "options", "L3", "R3", "up", "down", "left", "right", "home", "lsUp", "lsDown", "lsLeft", "lsRight", "rsUp", "rsDown", "rsLeft", "rsRight"] as const;
+export const MOUSE_INPUT_NAMES = ["left", "right", "middle", "wheelUp", "wheelDown"] as const;
+
 export const CONFIGS: readonly ConfigSchema[] = [
   {
     name: "combat", file: "config/combat.json", schema: "config/schema/combat.schema.json",
@@ -38,11 +42,14 @@ export const CONFIGS: readonly ConfigSchema[] = [
   },
   { name: "travel", file: "config/travel.json", schema: "config/schema/travel.schema.json", records: [], over: {} },
   { name: "area-types", file: "config/area-types.json", schema: "config/schema/area-types.schema.json", records: ["types"], over: {} },
-  { name: "legend-buffs", file: "config/legend-buffs.json", schema: "config/schema/legend-buffs.schema.json", records: ["limits", "species"], over: {} },
   { name: "house", file: "config/house/", /* (assembled from base.json and rooms/*.json: rules/houseConfig.ts) */ schema: "config/schema/house.schema.json", records: [], over: { "objects[].use.kind": { enum: HOUSE_USES } } },
   {
     name: "broom-parts", file: "config/broom-parts.json", schema: "config/schema/broom-parts.schema.json",
     records: ["parts", "sets", "parts.*.stats"],
     over: { "parts.*.slot": { enum: BROOM_SLOTS }, "parts.*.look.piece": { enum: ["body", "tail"] }, "sets.*.spell": { enum: SET_SPELLS } },
+  },
+  {
+    name: "bindings", file: "config/bindings.json", schema: "config/schema/bindings.schema.json", records: ["actions"],
+    over: { "actions.*.context": { enum: ["game", "menu", "global"] }, "actions.*.pad[]": { enum: PAD_INPUTS }, "actions.*.mouse[]": { enum: MOUSE_INPUT_NAMES } },
   },
 ];

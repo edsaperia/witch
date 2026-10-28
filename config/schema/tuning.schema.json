@@ -2875,6 +2875,11 @@
           "type": "number",
           "minimum": 0
         },
+        "chain": {
+          "type": "number",
+          "minimum": 0,
+          "description": "the least time, seconds, from one blink to the next, whatever her charges or the shared cooldown say (it keeps a Double blink's two apart; the legend buffs' blink chain, 0.2, before they were removed)."
+        },
         "toCursor": {
           "type": "boolean",
           "description": "on, she blinks toward the ground under the cursor (or the way the right stick points), the way she faces when the cursor is within aimDead metres of her, and with nothing to aim by (touch) the way she's steering; off, always the way she's steering."
@@ -2923,6 +2928,7 @@
         "cooldown",
         "buffer",
         "charges",
+        "chain",
         "toCursor",
         "aimDead",
         "clear"
@@ -3651,7 +3657,7 @@
           "type": "number",
           "minimum": 0,
           "maximum": 1,
-          "description": "her ground speed while firing, times this (Ram's Steady buff takes it away)."
+          "description": "her ground speed while firing, times this."
         },
         "linger": {
           "type": "number",
@@ -3694,6 +3700,30 @@
           ],
           "additionalProperties": false,
           "description": "the 💌 ring circles a creature at scale times its body radius (movement.json bodies) plus gap metres, at least min, and wider still when it holds many."
+        },
+        "hard": {
+          "type": "object",
+          "properties": {
+            "homing": {
+              "type": "number",
+              "minimum": 0
+            },
+            "cone": {
+              "type": "number",
+              "minimum": 0
+            },
+            "range": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "homing",
+            "cone",
+            "range"
+          ],
+          "additionalProperties": false,
+          "description": "the hard homing of the 💌s her Sentry and Slingshot hats throw: homing degrees a second, cone degrees either side it looks in, range metres it looks out to (was the legend buffs' charm, 420, 80 and 18)."
         }
       },
       "required": [
@@ -3718,7 +3748,8 @@
         "lingerFade",
         "lingerMax",
         "spin",
-        "orbit"
+        "orbit",
+        "hard"
       ],
       "additionalProperties": false,
       "description": "The 💌 invite: on the ground she fires spinning love letters at creatures to win them over."
@@ -5468,10 +5499,6 @@
           "type": "boolean",
           "description": "Each legend gets an area of its own beside one of its kind's areas."
         },
-        "buffPower": {
-          "type": "number",
-          "minimum": 0
-        },
         "happyRange": {
           "type": "number",
           "minimum": 0
@@ -5479,11 +5506,6 @@
         "questCap": {
           "type": "number",
           "minimum": 0
-        },
-        "questRoll": {
-          "type": "number",
-          "minimum": 0,
-          "description": "(the same: \"the difficulty of the encounter is the slot machine, not the reward size\"): a done quest's buff is this many times as strong as written, whatever its dream's distance (it was 1 to 1.5 by distance, questFar; a relic's stays as written)."
         },
         "questLater": {
           "type": "boolean",
@@ -5550,10 +5572,8 @@
         "share",
         "earlyQuest",
         "areas",
-        "buffPower",
         "happyRange",
         "questCap",
-        "questRoll",
         "questLater",
         "bombard",
         "stomp",
@@ -5563,7 +5583,7 @@
         "partyReach"
       ],
       "additionalProperties": false,
-      "description": "Which areas have a legend, and how strong legends' buffs are."
+      "description": "Which areas have a legend, and how far a happy one reaches."
     },
     "wildLegends": {
       "type": "object",
@@ -5666,7 +5686,7 @@
         "seen"
       ],
       "additionalProperties": false,
-      "description": "What legends are for: optional quests that give buffs, relics for powerful allies, and danger to her babies in sieges."
+      "description": "What legends are for: optional quests, relics for powerful allies, and danger to her babies in sieges."
     },
     "legendSpeed": {
       "type": "number",
@@ -6305,12 +6325,28 @@
             "minimum": 0
           },
           "description": "a creature's bubble, emoji and outline together, times this by its level (baby, young, adult, legend); the witch's stays at 1."
+        },
+        "near": {
+          "type": "number",
+          "minimum": 0,
+          "description": "How close (metres) she must be on the ground to see a creature's speech or thought bubble; none from the treetops or the treehouse."
+        },
+        "fade": {
+          "type": "number",
+          "minimum": 0
+        },
+        "ease": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "emojiPixels",
         "scale",
-        "levelScale"
+        "levelScale",
+        "near",
+        "fade",
+        "ease"
       ],
       "additionalProperties": false,
       "description": "The speech and thought bubbles: outline only, with pixel emoji, sized by the speaker's level."

@@ -10,7 +10,13 @@ Each species' attack in the composable grammar (`config/species-attacks.json`; E
 How each level gets its attack:
 - The young's attack is as written.
 - The adult's is the same grown (`adultOf` in `src/rules/attacks/species.ts`): one more in its pattern, a fifth bigger, a tenth further, and its children grown alike.
-- Legends keep their own moves for now (step 5b).
+- A legend's is its kind's exaggerated (`legendOf`; Ed, 2026-10-27: "bigger, slower, longer range, more children", low threat, long telegraphs, two or three areas away):
+  - most kinds: a huge slow lob thrown up to 420 m (legends.json `attack`: its windup, flight and radius), its landing shown from the windup's start, about 5 s;
+  - where it lands, its kind's own attack bursts out two sizes up: a single becomes a fan of three, a lunge or a pack trick a great slam ring;
+  - a beam kind: one giant beam across its whole reach, charging at least 1.2 s;
+  - each piece at half its share;
+  - a happy legend's bombs are guided onto the enraged it throws at (path `home` on a lob: its landing, and its ring, follow the target); an angry one's at her come down where she stood;
+  - the charging legends still charge, and a bombardment of a soundsystem is the old bomb.
 
 How it sits in the fight:
 - A kind's own moves (charge, leap, swoop, burrow, dig) are as before, on its old attack's reach and budget. A cast wound up before one of them is dropped.

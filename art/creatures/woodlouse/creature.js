@@ -26,12 +26,6 @@ export const CREATURE_WOODLOUSE = {
   temperament: "skittish",
   traits: ["armoured"],
   voice: { family: "bug", pitch: 1.1, dur: 0.4, extra: 1, volume: 1.3 },
-  buff: {
-    name: "Rear guard",
-    kind: "shot",
-    mods: { rear: 1 },
-    label: "Woodlouse's Rear guard: each burst also fires a 💌 behind you"
-  },
   character: { sprite: "puff", every: [4, 8], for: 1 },
   pack: {
     melee: { attacks: [null, "nip", "nip"] },

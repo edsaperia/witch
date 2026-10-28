@@ -36,7 +36,7 @@ function watch<T extends THREE.EventDispatcher<{ dispose: object }>>(list: T[]):
   return n;
 }
 const allOnce = (n: Map<unknown, number>) => [...n.values()].every(k => k === 1);
-const atlas = (): Atlas => ({ albedo: new THREE.DataTexture(new Uint8Array(4), 1, 1), normal: new THREE.DataTexture(new Uint8Array(4), 1, 1), frames: [] });
+const atlas = (): Atlas => ({ albedo: new THREE.DataTexture(new Uint8Array(4), 1, 1), normal: new THREE.DataTexture(new Uint8Array(4), 1, 1), albedoPal: new THREE.DataTexture(new Uint8Array(4), 1, 1), normalPal: new THREE.DataTexture(new Uint8Array(4), 1, 1), indexed: new THREE.Vector2(), frames: [] });
 
 /** A page with just enough of a document for the minimap's canvas. */
 function fakeDocument() {

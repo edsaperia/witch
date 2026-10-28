@@ -2,7 +2,6 @@
 // circle explaining mechanics to do with legends"; its words rewritten to today's rules, Ed 2026-10-19): which legend's clearing
 // she stands in (any state), what the panel says for its state, and how far it has faded in. No drawing here (render/leash.ts
 // draws it).
-import { LEGEND_BUFFS } from "./buffs";
 import type { Creature } from "./creatures";
 import type { Game } from "./game";
 
@@ -40,21 +39,9 @@ export function legendCircleNear(g: Game, at: { x: number; z: number; mode?: str
   return best;
 }
 
-/** One line of the panel: its words, with `{sigil}` (the dreamt creature's sigil), `{relic}` (a relic sigil) or `{boon}` (the
- *  legend's own sigil, the buff's icon in the HUD: render/buffhud.ts) where an icon goes; done: ticked and dimmed (its boon
- *  already hers). */
+/** One line of the panel: its words, with `{sigil}` (the dreamt creature's sigil) or `{relic}` (a relic sigil) where an
+ *  icon goes; done: ticked and dimmed. */
 export interface CircleLine { text: string; done?: boolean }
-
-/** What a legend's boon does, in its own plain words (Ed, 2026-10-06: "The legend circle text should tell you what the boon
- *  will be"): its buff's name and line from config/legend-buffs.json (the label after its "Species's Name: "), so it says
- *  what the game gives; null for a species with no buff. */
-// (Unused since Ed's 2026-10-18 change, the panel naming no boon: kept for when legends' powers come back, rules/legends.ts buffing.)
-export function boonWords(species: string): string | null {
-  const def = LEGEND_BUFFS.species[species];
-  if (!def) return null;
-  const what = def.label.includes(": ") ? def.label.slice(def.label.indexOf(": ") + 2) : def.label;
-  return `${def.name}, ${what}`;
-}
 
 const NAMES: Record<string, string> = { beetle: "stag beetle", cat: "wildcat" };
 

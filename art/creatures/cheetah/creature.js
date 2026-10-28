@@ -13,7 +13,6 @@ export const CREATURE_CHEETAH = {
   temperament: "skittish",
   traits: ["nimble"],
   voice: { family: "cat", pitch: 1.4, glide: 0.7 },
-  buff: { name: "Sprint", kind: "move", scale: { groundSpeed: 1.15 }, label: "Cheetah's Sprint: quicker on foot" },
   character: { posture: { head: [0.03, 0.02], body: -0.01 }, quirk: "perk", every: [4, 8], for: 1 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },

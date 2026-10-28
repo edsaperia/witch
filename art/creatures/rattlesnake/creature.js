@@ -13,12 +13,6 @@ export const CREATURE_RATTLESNAKE = {
   },
   radius: 0.6,
   voice: { family: "snake", pitch: 0.85 },
-  buff: {
-    name: "Warning",
-    kind: "shot",
-    scale: { "invites.speed": 1.15, "invites.radius": 1.3 },
-    label: "Rattlesnake's Warning: 💌s fly a little faster and land wider"
-  },
   character: { posture: { head: [0, 0.03], body: 0 }, quirk: "rattle", every: [5, 9], for: 1.4 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },

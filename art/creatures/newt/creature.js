@@ -8,12 +8,6 @@ export const CREATURE_NEWT = {
   },
   radius: 0.45,
   voice: { family: "amphibian", pitch: 1.9, am: [56, 0.6] },
-  buff: {
-    name: "Wriggle",
-    kind: "shot",
-    scale: { "invites.speed": 1.2, "invites.range": 1.2 },
-    label: "Newt's Wriggle: 💌s fly a little faster and further"
-  },
   character: { posture: { head: [0.03, 0.01], body: -0.01 }, quirk: "tailflick", every: [4, 8], for: 1 },
   pack: {
     melee: null,

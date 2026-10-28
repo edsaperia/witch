@@ -125,6 +125,8 @@ export interface Fight {
   packMove?: "melee" | "ranged";
   /** An attack in the grammar being wound up (rules/attacks/combatWorld.ts): the engine's cast, released at the windup's end. */
   spellCast?: number;
+  /** a legend's casts at once, one an aim (rules/combat/legend.ts) */
+  spellCasts?: number[];
 }
 
 /** A projectile in flight: dodgeable (it flies at a point, not after its target). */

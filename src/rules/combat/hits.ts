@@ -96,7 +96,7 @@ export function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: 
   if (o.hp <= 0 && o.boss && !o.leashed) {
     // An area legend beaten (Ed, 2026-10-04): it sinks back into the ground where it stands,
     // asleep for good; its area's soundsystem is safe from it.
-    lull(o, time); // (#87: worn down, angry or happy, it goes back to sleep; a buff she has from it is kept)
+    lull(o, time); // (#87: worn down, angry or happy, it goes back to sleep)
     s.events.push({ kind: "slept", x: o.x, z: o.z, at: time, id: o.id });
     return;
   }

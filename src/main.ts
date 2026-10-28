@@ -1,6 +1,8 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
 import { spinStep } from "./render/spin";
 import { keycapCanvas } from "./ui/keyHint";
+import { fillControls } from "./ui/controlsText";
+import { bindings } from "./platform/bindings";
 import { wavesOver } from "./rules/win";
 import { chartOpen, closeChart, openChart, prepareChart, type Sailed } from "./ui/chartOverlay";
 import { openingWay, opensInBedroom, sailLandsInBed } from "./app/opening";
@@ -225,6 +227,9 @@ setupStartScreen({
 const seedEl = document.getElementById("seed")!;
 seedEl.innerHTML = `seed <a href="?seed=${N().seed}">${N().seed}</a>`;
 const startEl = document.getElementById("start")!;
+// The controls list as bound now (ui/controlsText.ts; Ed, 2026-10-28: a remap shows everywhere), again on a change (the list moves into
+// the creator's and the pause page's tabs: the element itself kept).
+{ const keysEl = startEl.querySelector<HTMLElement>(".keys"); if (keysEl) { fillControls(keysEl); bindings.onChange(() => fillControls(keysEl)); } }
 /** The party spell (Ed, 2026-10-06): cast by the creator's scroll (ui/spellScroll.ts), its burst starting play; without the
  *  creator (?creator=0&spell=wait), Enter (once play has begun, so the start screen's Enter isn't it) or her spell key casts it
  *  on the next step. */
@@ -292,7 +297,7 @@ freeze.ownsEsc = () => !bot; // (the bot game's Esc is its way back to the start
 // it lands she wakes (arrived), and if no key or tap has come by then (browsers keep sound off till one does) a small note asks for one.
 const bootArrival = N().arrival;
 // (Ed, 2026-10-12: the HUD hidden through the flight, fading in as she settles at her decks)
-const HUD_IDS = ["clock", "seed", "version", "buffs", "aim", "touch", "bubbles", "invites"];
+const HUD_IDS = ["clock", "seed", "version", "aim", "touch", "bubbles", "invites"];
 if (bootArrival) {
   hudFade(HUD_IDS); // (app/arrive.ts)
   document.body.classList.add("arriving");
@@ -370,7 +375,7 @@ creator.onLoadout = l => { const { game } = N(); changeLoadout(game.witches[0], 
 // seed (the only way to: Ed, 2026-10-21; the afterparty's 💤 pin leads her here, rules/guidance.ts).
 // The stations' panels (Ed, 2026-10-21, the station menus: "The menu should open when she gets near, and mouse or gamepad direction
 // keys are used to navigate the options"; rules/stations.ts, rules/wardrobe.ts, ui/stationPanel.ts): walking up to a station slides
-// its shelves in over the game on E there, and E (the pad's □, Esc) slides them out, she standing still at it (Ed, 2026-10-26); no room. What she owns (app/owned.ts) is on its shelves, what's
+// its shelves in over the game on E there, and E (the pad's ○, Esc) slides them out, she standing still at it (Ed, 2026-10-26); no room. What she owns (app/owned.ts) is on its shelves, what's
 // still to find as silhouettes; each change goes on her a beat later and she turns to show it; choosing, the camera eases in on her
 // (camera.station), and out as she moves.
 const stations = new StationPanel(style, bootTuning.pixelSize);
@@ -393,6 +398,7 @@ stations.onLook = g => {
   if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); wearHat(g); }
   showLook();
 };
+stations.onBack = () => shutStation("back"); // (menu.back, E by default: platform/bindings.ts; the pad's, circle, comes through padControls)
 stations.onChange = () => { const { game } = N(); view.turnUntil = game.herTime + 0.8; };
 stations.onDress = () => { view.spin = spinStep(view.spin, N().game.herTime); }; // (Ed, 2026-10-26: she twirls while her new look draws)
 // The Workshop's bay (Ed, 2026-10-23; docs/backlog/workshop.md): a part chosen goes on her broom at once, mid-night too (its stats
@@ -464,7 +470,7 @@ const zoo = new ZooOverlay(domZooHost(on => { const { clock } = N().game; if (on
 // The telescope in the crow's nest (Ed, 2026-10-21; app/telescope.ts, rules/telescope.ts): E at it looks through it (Ed's
 // playtest, 2026-10-26, in place of 2026-10-23's "opens when you walk up to it"; look around with the aiming keys), full screen,
 // the night running on at the house's tenth while she stands still, WASD and the left stick looking round too (Ed, 2026-10-26:
-// "walking away shouldn't work"); E (the pad's □) leaves, and E there looks again; Esc pauses over it. Its picture is drawn at telescope.resolution, on an integrated GPU
+// "walking away shouldn't work"); E (the pad's ○) leaves, and E there looks again; Esc pauses over it. Its picture is drawn at telescope.resolution, on an integrated GPU
 // (Ed's Intel UHD) telescope.lowGpuResolution (?telescopeRes= sets it: 0.25 to 3, 1 the game's pixels, 2 twice as fine).
 // The treehouse Studio's instruments (Ed, 2026-10-23; app/studio.ts, rules/studio.ts, ui/studioPanel.ts): walking up to the drum
 // kit, the modular synth or the microphone she's at it, its menu in and every key playing it (she stands still: her keys are its),
@@ -1012,12 +1018,12 @@ function frame(now: number): void {
   if (takes !== keysTaken) { keysTaken = takes; input.release(); }
   // While a station's panel, the map table's chart, the telescope or an instrument is open she stands still, the movement keys its
   // buttons (Ed, 2026-10-26: "walking away shouldn't work - then we can use the movement keys as buttons in the menus"), and the use
-  // button (E, the pad's □, a tap on touch) closes it, as it opened it: that press is the close and nothing else, even when the thing
+  // button (E; the pad's back, ○, since Ed's layout of 2026-10-28; a tap on touch) closes it: that press is the close and nothing else, even when the thing
   // open closed itself on it a moment before (the chart and the instruments take E themselves), so it never opens it again.
-  const raw = input.read(), openNow = chartOpen() || telescope.on || !!studio.at || !!stations.station, shutTap = !freeze.frozen && !!(raw.sigil || raw.place) && (openNow || openPrev); // (E is `place`; the pad's □ and a tap `sigil`; never under the pause)
+  const raw = input.read(), openNow = chartOpen() || telescope.on || !!studio.at || !!stations.station, shutTap = !freeze.frozen && !!(raw.sigil || raw.place) && (openNow || openPrev); // (E is `place`; the pad's back, ○, and a tap `sigil`; never under the pause)
   if (shutTap) { if (stations.station) shutStation("E"); if (studio.at) studio.leave(); if (chartAt && chartOpen()) { chartAt = null; closeChart(); } } // (the telescope: its own step, below)
   const human = openNow || shutTap ? stillControls(raw) : raw;
-  if (telescope.on) { if (telescope.night !== game || game.witches[0].ko || chartOpen() || !tuning.telescope) telescope.close(); else telescope.step({ ...raw, sigil: !!(raw.sigil || raw.place) }, dt, tuning.telescope); } // (E or □ leaves it)
+  if (telescope.on) { if (telescope.night !== game || game.witches[0].ko || chartOpen() || !tuning.telescope) telescope.close(); else telescope.step({ ...raw, sigil: !!(raw.sigil || raw.place) }, dt, tuning.telescope); } // (E or ○ leaves it)
   view.telescope = tuning.telescope ? telescope.look(tuning.telescope) : null;
   // The sea chart over the night (the transition review, 2026-10-19: the night ran and drew on behind it, and its art workers drew
   // on, so the chart's islands and the next island's art drawn ahead got what was left): while it's open the night is paused,
@@ -1063,17 +1069,17 @@ function frame(now: number): void {
   }
   // The station she's at (lit, E over it: render/houseRooms.ts); E there slides its panel in (Ed's playtest, 2026-10-26: "Menus should
   // open when she presses E near an interactive object ... instead of them opening automatically just through proximity"); walking
-  // off it, out (not over her room open full screen, the chart, or a bot's game). E again or the pad's □ slides it out (Esc pauses over it, platform/freeze.ts) (Ed: "I think E should also close, and we can have spacebar to select"; the frame's start), she standing still at it; Space chooses in it (ui/stationPanel.ts).
+  // off it, out (not over her room open full screen, the chart, or a bot's game). E again or the pad's ○ slides it out (Esc pauses over it, platform/freeze.ts) (Ed: "I think E should also close, and we can have spacebar to select"; the frame's start), she standing still at it; Space chooses in it (ui/stationPanel.ts).
   const station = bot || creator.open || charting ? null : stationOf(game, stations.station), shelves = station ? shelvesAt(station.id) : null;
   stations.setLoaned(loan?.id ?? null); // (its card sparkles: ui/stationPanel.ts)
   if (stations.station && station?.id !== stations.station) shutStation(`off it (${station?.id ?? "none"}${charting ? ", charting" : ""}${creator.open ? ", creator" : ""})`); // (she's somehow off it: a knockout, a new night; E closes it above)
   if (station && shelves && station.id !== stations.station && usedAt(game) === station.id) { const g = (page.look() ?? creator.genome()) as Record<string, unknown>; stations.open(station.id, shelves, g as never, owned ??= loadOwned(g), game.wake && firstEver && !game.wake.yesterday && station.id === "dressingTable" ? "First night · pick your look here, and at the wardrobe, cloak pegs and shoe rack" : "", shelves.some(q => q.slot || q.board) ? workshopNow() : null); }
   else if (!shelves && stations.station) shutStation("no shelves");
   stations.update(performance.now() / 1000);
-  // The telescope: E at it looks (useHouse); E or □ shuts it (its own step; Esc pauses over it); and should she somehow be off it, it shuts.
+  // The telescope: E at it looks (useHouse); E or ○ shuts it (its own step; Esc pauses over it); and should she somehow be off it, it shuts.
   const scope = bot || creator.open || sailing || charting ? null : stationOf(game, telescope.on ? scopeAt : null, tuning, ["telescope"]);
   if (!scope && telescope.on && scopeAt) { telescope.close(); scopeAt = null; }
-  input.dpadMenu = !!stations.station || telescope.on; // (the d-pad: a station's panel's, or the telescope's look)
+  input.dpadMenu = !!stations.station || telescope.on || !!studio.at || chartOpen(); // (a menu owns the pad: a station's panel, the telescope, an instrument, the map table's chart; only its back, circle, closes it: Ed's layout, 2026-10-28)
   openPrev = chartOpen() || telescope.on || !!studio.at || !!stations.station;
   shutButton.style.display = openPrev && input.device === "touch" ? "block" : "none"; // (on touch, a way to close it: the tap keycap)
   // (the use prompts, render/houseRooms.ts: the button on what she plays with, and none over what's open)

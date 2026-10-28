@@ -1205,6 +1205,7 @@ The dash, a blink [1]: on the ground only, she vanishes and reappears distance m
 - **`dash.toCursor`**: on, she blinks toward the ground under the cursor (or the way the right stick points), the way she faces when the cursor is within aimDead metres of her, and with nothing to aim by (touch) the way she's steering; off, always the way she's steering.
   1. Ed's playtest, 2026-10-06
   2. 2026-10-11: off since
+- **`dash.chain`**: the least time, seconds, from one blink to the next, whatever her charges or the shared cooldown say (it keeps a Double blink's two apart; the legend buffs' blink chain, 0.2, before they were removed).
 
 | knob | type | range |
 |---|---|---|
@@ -1213,6 +1214,7 @@ The dash, a blink [1]: on the ground only, she vanishes and reappears distance m
 | `dash.cooldown` | number | 0 to … |
 | `dash.buffer` | number | 0 to … |
 | `dash.charges` | number | 0 to … |
+| `dash.chain` | number | 0 to … |
 | `dash.toCursor` | boolean |  |
 | `dash.aimDead` | number | 0 to … |
 | `dash.clear.tree` | number | 0 to … |
@@ -1412,15 +1414,15 @@ The 💌 invite [1], replacing the proximity chat when on: on the ground she sho
   2. Ed, 2026-10-06: "I think we should remove the 0.5s cooldown between counted hits per creature - better to control this through the witch firing speed instead of having hits not register"
   letters to fill it, by level (baby, young, adult); it drains drain of a full meter a second when not being hit, from config/states.json's affection.drainDelay seconds after the last [1]. Every letter that lands on an invitable creature counts [2]: how fast she invites is her firing rate (burst, burstGap, cooldown), nothing adaptive. Enraged creatures and legends block letters; scenery never stops them (Ed).
   Code: `config/states.json`
-- **`invites.fireSlow`**: her ground speed while firing, times this (Ram's Steady buff takes it away).
+- **`invites.fireSlow`**: her ground speed while firing, times this.
 - **`invites.linger`**: a 💌 that met no one rests where it came down this many seconds, fading over the last lingerFade, at most lingerMax at once (drawn only: it's no hit).
   1. Ed's playtest, 2026-10-06: "invitations should sit on the ground for a little while before they fade away"
 - **`invites.spin`**: How fast a 💌 spins in flight.
   1. Ed, 2026-10-06: "the envelopes should spin like a frisbee"
-  a 💌 in flight lies flat and turns about the upright this many times a second (drawn only); when it lands it stops and lies flat. Data, so legend buffs can change any of it (config/legend-buffs.json).
-  Code: `config/legend-buffs.json`
+  a 💌 in flight lies flat and turns about the upright this many times a second (drawn only); when it lands it stops and lies flat.
 - **`invites.orbit`**: the 💌 ring circles a creature at scale times its body radius (movement.json bodies) plus gap metres, at least min, and wider still when it holds many.
   1. Ed's playtest, 2026-10-06: "Invitation orbits are too tight around the creature"
+- **`invites.hard`**: the hard homing of the 💌s her Sentry and Slingshot hats throw: homing degrees a second, cone degrees either side it looks in, range metres it looks out to (was the legend buffs' charm, 420, 80 and 18).
 
 | knob | type | range |
 |---|---|---|
@@ -1448,6 +1450,9 @@ The 💌 invite [1], replacing the proximity chat when on: on the ground she sho
 | `invites.orbit.scale` | number | 0 to … |
 | `invites.orbit.gap` | number | 0 to … |
 | `invites.orbit.min` | number | 0 to … |
+| `invites.hard.homing` | number | 0 to … |
+| `invites.hard.cone` | number | 0 to … |
+| `invites.hard.range` | number | 0 to … |
 
 ### `invite`
 
@@ -2030,7 +2035,7 @@ Ed [1]: the witch is much faster than almost all creatures (she flies at groundS
 
 ## Legends
 
-Legends: their circles, dreams, quests, buffs, rage and the wild ones.
+Legends: their circles, dreams, quests, rage and the wild ones.
 
 ### `legendCircle`
 
@@ -2077,11 +2082,11 @@ A sleeping legend's dream (or nightmare) bubble, and its pointer to the nearest 
 
 ### `legends`
 
-Which areas have a legend, and how strong legends' buffs are.
+Which areas have a legend, and how far a happy one reaches.
 
 1. Ed, 2026-10-06: "Legends should only appear in about half of areas (we can test this ratio); every area makes them too common." … "it should be more like 1/5" (share: the fraction of the areas (home never) with a sleeping legend (Ed, 2026-10-08:; 0.5 before), seeded per map and spread so they don't clump (no more than two neighbouring areas together where the map allows))
 2. 2026-10-06
-. The rest have no legend: no clearing, quest, restlessness or legend music. Read as the map is made: the decisions panel reloads. Ed's answers on #259 [2]: buffPower, every legend's buff's strength ("Bigger buffs", for quests worth their cost; 1 as written: a scale of v is 1 + (v - 1) x buffPower, an add v x buffPower, a behaviour's count rounded up by it, its limits still holding); happyRange, a happy legend's reach in metres (relic allies: "They stay home, but if they're not useful enough right now, make their range longer").
+. The rest have no legend: no clearing, quest, restlessness or legend music. Read as the map is made: the decisions panel reloads. Ed's answers on #259 [2]: happyRange, a happy legend's reach in metres (relic allies: "They stay home, but if they're not useful enough right now, make their range longer").
 
 - **`legends.earlyQuest`**: One of the first areas the waves wake has a legend dreaming of a creature from a nearby area, so there's an early quest.
   1. Ed, 2026-10-07: "for variety we could fix one of [first, second, third] having a legend that wants one of the first three [not itself] so there's always an easy quest to do in the first third"
@@ -2091,7 +2096,6 @@ Which areas have a legend, and how strong legends' buffs are.
   1. Ed, 2026-10-26: "legends are spawned in additional areas that have legend circles where runestones usually are" (all legends in them)
   on, each of the night's legends gets an area of its own grown out of the island beside one of its kind's areas (its pair), taking its kind and look, with no runestone, soundsystem or route stop, its circle at its heart; the island grows by them; the pair counts as one area for a legend's rage and for creatures attacking and defending (rules/map.ts areaOf); false: legends in their own kind's areas as before.
   Code: `rules/map.ts`
-- **`legends.questRoll`**: (the same: "the difficulty of the encounter is the slot machine, not the reward size"): a done quest's buff is this many times as strong as written, whatever its dream's distance (it was 1 to 1.5 by distance, questFar; a relic's stays as written).
 - **`legends.questLater`**: a legend dreams only of a kind living in an area later on the route than its own, within questCap areas; failing that, the kind of the nearest later area; with no later area, any kind (the early easy quest keeps its own pick); false: any kind as before.
   1. Ed's core design, 2026-10-07: relayed by the coordinator: quests point to later areas, deeper in and wilder now the forest is grown before the waves
 - **`legends.bombard`**: ("Legend bombards, but prioritises you"): an angry legend with no witch in its reach throws the first lob or beam of its volley at the nearest standing soundsystem within range metres, damage a hit (of combat.soundsystemHealth); a charging legend lobs at it rather than charge.
@@ -2099,7 +2103,7 @@ Which areas have a legend, and how strong legends' buffs are.
   1. Ed, 2026-10-06: "perhaps" … "an angry legend simply stamps on the soundsystem in its area, destroying immediately. The angry legend waking timer may have to be longer" (a)
   2. Ed, 2026-10-06: "It would be funny if you could leash an elder, but it's so heavy that it stops you moving at all outside the leash slack distance, and it doesn't move towards you at all. Maybe you should be able to turn a happy legend into a party legend with an absurd number of invites (100?) and then pick up its sigil but it's totally useless" (rules/partyLegend.ts)
   3. Ed, 2026-10-06: "They're a high-roll mechanic; you don't know how hard the quest will be before you go off to try and find the creature" (the gamble kept)
-  on, a legend turning angry while its own area's soundsystem stands destroys it at once (ruined, as any fallen one), and legends are restless angryAfter seconds before they anger (legends.json angryAfter otherwise). The party-legend Easter egg [2]: partyEgg turns it on; a happy legend (by its relic or its quest) then takes 💌s, its meter partyHits long, draining partyDrain of a full meter a second; full, it's a party legend (it keeps its buff, dances in place, fights no one, its rune at its feet); picked up, she can go anywhere within partyReach metres of it (the leash's slack: 0.85 of leash.length) and not a step further, and it never comes to her; put down (E), it's let go where it stands. questNear: 0, a legend dreams of any kind on the map [3]; N, one of the N nearest other kinds round it, an area nearer home counting as nearer (a knob for trying it).
+  on, a legend turning angry while its own area's soundsystem stands destroys it at once (ruined, as any fallen one), and legends are restless angryAfter seconds before they anger (legends.json angryAfter otherwise). The party-legend Easter egg [2]: partyEgg turns it on; a happy legend (by its relic or its quest) then takes 💌s, its meter partyHits long, draining partyDrain of a full meter a second; full, it's a party legend (it dances in place, fights no one, its rune at its feet); picked up, she can go anywhere within partyReach metres of it (the leash's slack: 0.85 of leash.length) and not a step further, and it never comes to her; put down (E), it's let go where it stands. questNear: 0, a legend dreams of any kind on the map [3]; N, one of the N nearest other kinds round it, an area nearer home counting as nearer (a knob for trying it).
   Code: `rules/partyLegend.ts`
 
 | knob | type | range |
@@ -2107,10 +2111,8 @@ Which areas have a legend, and how strong legends' buffs are.
 | `legends.share` | number | 0 to … |
 | `legends.earlyQuest` | boolean |  |
 | `legends.areas` | boolean |  |
-| `legends.buffPower` | number | 0 to … |
 | `legends.happyRange` | number | 0 to … |
 | `legends.questCap` | number | 0 to … |
-| `legends.questRoll` | number | 0 to … |
 | `legends.questLater` | boolean |  |
 | `legends.bombard.on` | boolean |  |
 | `legends.bombard.range` | number | 0 to … |
@@ -2124,14 +2126,14 @@ Which areas have a legend, and how strong legends' buffs are.
 
 ### `wildLegends`
 
-What legends are for: optional quests that give buffs, relics for powerful allies, and danger to her babies in sieges.
+What legends are for: optional quests, relics for powerful allies, and danger to her babies in sieges.
 
 1. Ed, 2026-10-06
 2. Ed, 2026-10-04
 3. 2026-10-05: "Legends, redesigned" (redesigned, DESIGN.md)
 4. Ed, 2026-10-08: legends.share, never home; half before
 5. 2026-10-04: wake seconds of heaving out of the ground when its wave woke it; heal hp a second while no enemy was near
-What legends are for [1]: a mostly optional layer of tasks; quick players get buffs from their quests (open as long as a legend sleeps), lucky ones find relics for powerful allies, and a losing player sees their babies hurt in sieges and them enraged, the loss spiral faster and more dramatic (his words in DESIGN.md, "Legends, redesigned", and config/legends.json). Area legends [2][3]: about a fifth of the areas [4] have one legend of its kind, sleeping, sunk into the ground like scenery (sink: the share of it under the ground, moss: how far its colours go toward moss). Waves no longer wake it: it grows restless, then angry, while its area has none of its kind, and a relic by it makes it happy (config/legends.json). A happy legend defends against the enraged within guard metres of where it stands; worn down, it goes back to sleep, any buff it gave kept. wake and heal are the first design's [5]; the redesigned rules don't read them (a happy one heals over legends.json healTime). Drawn scale times a legend's size, swelling by breathe as it breathes (once every breathEvery seconds); awake, an aura on the ground aura metres across and, from the treetops, a glow over the canopy (glow its strength) in a dark mix of its sigil's colour.
+What legends are for [1]: a mostly optional layer of tasks; quick players do their quests (open as long as a legend sleeps; legend buffs designed 5 Oct, #87, removed 28 Oct), lucky ones find relics for powerful allies, and a losing player sees their babies hurt in sieges and them enraged, the loss spiral faster and more dramatic (his words in DESIGN.md, "Legends, redesigned", and config/legends.json). Area legends [2][3]: about a fifth of the areas [4] have one legend of its kind, sleeping, sunk into the ground like scenery (sink: the share of it under the ground, moss: how far its colours go toward moss). Waves no longer wake it: it grows restless, then angry, while its area has none of its kind, and a relic by it makes it happy (config/legends.json). A happy legend defends against the enraged within guard metres of where it stands; worn down, it goes back to sleep, any buff it gave kept. wake and heal are the first design's [5]; the redesigned rules don't read them (a happy one heals over legends.json healTime). Drawn scale times a legend's size, swelling by breathe as it breathes (once every breathEvery seconds); awake, an aura on the ground aura metres across and, from the treetops, a glow over the canopy (glow its strength) in a dark mix of its sigil's colour.
 Code: `config/legends.json`
 
 - **`wildLegends.seen.dark`, `wildLegends.seen.liftMax`**: a legend whose floored look (seen.floor times its coat's luminance, its body colour as baked: render/legendLight.ts) is under seen.dark has its floor raised to seen.dark over that luminance, at most seen.liftMax; the bear, the boar and the others as dark are caught, lighter legends stay as they are.
@@ -2384,12 +2386,19 @@ Code: `render/bubbles.ts`
 
 - **`bubbles.levelScale`**: a creature's bubble, emoji and outline together, times this by its level (baby, young, adult, legend); the witch's stays at 1.
   1. Ed, 2026-10-05: "the speech bubbles should scale with the level of the animal, with the legends as the largest"
+- **`bubbles.near`, `bubbles.fade`, `bubbles.ease`**: How close (metres) she must be on the ground to see a creature's speech or thought bubble; none from the treetops or the treehouse.
+  1. Ed, 2026-10-28: "Animal speech bubbles / thought bubbles should fade into view when the witch gets close. I shouldn't see them on the ground when I'm at the treetops. I shouldn't see them on the ground when I'm in the treehouse."
+  Whole within near less fade, fading to nothing at near; eased in and out over ease seconds, so rising, landing and going indoors fade them. 38 and 8 to start: whole to 30 m, about the letters' reach (invites.range 33), so any creature she can throw at answers where she can read it, and gone by 38. The 💌 replies, the talk and the sleepers' 😴s go by it; a legend's dream (dreams.range) and the night won's island dreams (twice that) keep their own ranges, fading at their edge and hidden from the treetops and the treehouse the same.
+  Code: `render/bubbleSight.ts`
 
 | knob | type | range |
 |---|---|---|
 | `bubbles.emojiPixels` | number | 0 to … |
 | `bubbles.scale` | number | 0 to … |
 | `bubbles.levelScale` | array of number |  |
+| `bubbles.near` | number | 0 to … |
+| `bubbles.fade` | number | 0 to … |
+| `bubbles.ease` | number | 0 to … |
 
 ### `runeMarkers`
 

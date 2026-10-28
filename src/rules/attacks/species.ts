@@ -42,3 +42,33 @@ export function speciesAttack(species: string, level: number, floor?: number): A
   }
   return a;
 }
+
+/** What a legend's attack reaches and how it's thrown (config/legends.json attack: its range, windup, interval, lob flight and
+ *  radius). */
+export interface LegendThrow { range: number; windup: number; interval: number; flight: number; radius: number }
+
+/** A legend's attack from its kind's (Ed, 2026-10-27: "an exaggerated version of their species' attack: bigger, slower, longer range,
+ *  more children"; low threat, long readable telegraphs, reaching two or three areas away): a beam kind's is one giant beam across its
+ *  whole reach, charging long; every other's a huge slow lob thrown across the areas (its landing shown from the windup's start), and
+ *  where it lands its kind's own attack bursts out, grown twice over, more in it (a single becomes a fan of three), a melee one a
+ *  great slam, a pack's a big ring: Ed's huge bomb bursting into a ring of bombs. Each thing in it carries half its share. */
+export function legendOf(a: AttackSpec, L: LegendThrow): AttackSpec {
+  const big = adultOf(adultOf(a)), kind = a.body?.kind ?? "bolt", el = a.body?.element;
+  const cast = { range: L.range, windup: L.windup, cooldown: L.interval, tell: { pose: "rear" as const, glow: 1 } };
+  const half = (h: AttackSpec["hit"]) => ({ ...h, damage: Math.round((h?.damage ?? 1) * 0.5 * 100) / 100 });
+  if (kind === "beam") return strip({ ...big, cast, body: { ...big.body, look: "legend" }, beam: { ...big.beam, length: L.range, width: Math.max(3, (big.beam?.width ?? 1) * 2), charge: Math.max(1.2, big.beam?.charge ?? 0), sweep: big.beam?.sweep ? big.beam.sweep * 0.5 : undefined, track: big.beam?.track ? big.beam.track * 0.5 : undefined }, pack: undefined, hit: half(big.hit) });
+  let burst: AttackSpec = { ...big, cast: { windup: 0.6 }, pack: undefined, hit: half(big.hit) };
+  if (kind === "melee" || a.pack?.triangulate || a.pack?.tether) burst = { cast: { windup: 0.6 }, body: { kind: "area", element: el }, area: { shape: "ring", r: 12, width: 3, grow: 10 }, hit: { ...half(big.hit) } };
+  else if (burst.area) burst = { ...burst, area: { ...burst.area, at: "spot" } };
+  if ((burst.emit?.pattern ?? "single") === "single" && (kind === "bolt" || kind === "runner" || kind === "lure")) burst = { ...burst, emit: { ...burst.emit, pattern: "fan", n: 3, angle: 40 } };
+  return strip({ note: a.note && `legend: ${a.note}, thrown across the areas`, cast, body: { kind: "lob", radius: L.radius, flight: L.flight, element: el, look: "legend" }, hit: { damage: 0.4 }, on: { land: [{ attack: burst, aim: "target" }] } });
+}
+
+const LEGENDS_MADE = new Map<string, AttackSpec | null>();
+/** A legend's attack by its kind (legendOf), held to the floor; null for a kind with none. */
+export function legendAttack(species: string, L: LegendThrow, floor?: number): AttackSpec | null {
+  const key = `${species}/${L.range}/${L.windup}/${L.interval}/${L.flight}/${L.radius}/${floor ?? ""}`;
+  let a = LEGENDS_MADE.get(key);
+  if (a === undefined) { const young = SPECIES_ATTACKS[species]; a = young ? liftToFloor(legendOf(young, L), {}, floor) : null; LEGENDS_MADE.set(key, a); }
+  return a;
+}

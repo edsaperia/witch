@@ -66,7 +66,8 @@ void main() {
 }`;
 
 export const FRAG = /* glsl */ `
-uniform sampler2D uGlyphs;
+uniform sampler2D uGlyphs, uGlyphsPal;
+uniform float uGlyphIdx; // 1: uGlyphs is an index plane, its colours in uGlyphsPal (render/palette.ts; the attack look's atlas)
 uniform float uSolid;
 uniform float uRgb; // the texture's own colours, times the instance's (the attack look's atlas: render/leash/attackLook.ts); else its colour alone
 varying vec2 vUv, vP;
@@ -77,6 +78,7 @@ varying float vPix, vN;
 ${LIGHT_GLSL}
 void main() {
   vec4 tx = texture2D(uGlyphs, vUv);
+  if (uGlyphIdx > 0.5) tx = texelFetch(uGlyphsPal, ivec2(int(tx.r * 255.0 + 0.5), 0), 0);
   float a = tx.a * vCol.a;
   vec3 rgb = uRgb > 0.5 ? tx.rgb * vCol.rgb : vCol.rgb;
   if (vPix > 0.5) {

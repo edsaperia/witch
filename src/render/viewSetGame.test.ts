@@ -62,7 +62,7 @@ function standInView(g: Game, log: string[]): View {
     assets: { reseat: (o: { seed: number; typeSeed: number }) => log.push(`assets.reseat(${o.seed},${o.typeSeed})`), prefetchType: () => {} },
     partyView: { gen: recorder("soundsystemGen", log) }, houseRooms: null,
   });
-  for (const k of ["beachView", "grass", "strings", "leashView", "lasers", "borders", "inviteView", "partyObjects", "rig", "holograms", "glades", "wisps", "clouds", "lightRings", "fireworks", "swoopTrails", "spellFx", "trail", "buffHud", "combatLight", "occlusion"])
+  for (const k of ["beachView", "grass", "strings", "leashView", "lasers", "borders", "inviteView", "partyObjects", "rig", "holograms", "glades", "wisps", "clouds", "lightRings", "fireworks", "swoopTrails", "spellFx", "trail", "combatLight", "occlusion"])
     v[k] = recorder(k, log);
   // (when the old island is let go, and what's in the scene then)
   const dispose = island.dispose.bind(island);
@@ -109,7 +109,7 @@ describe("View.setGame (another night in the same view)", () => {
     expect(v.appearing.size).toBe(0);
     expect(creatureCacheSizes()).toEqual([0, 0, 0, 0]);
     for (const k of ["strings", "leashView", "lasers", "borders", "inviteView"]) expect(log).toContain(`${k}.setGame(456)`);
-    for (const k of ["partyObjects", "rig", "holograms", "glades", "wisps", "fireworks", "swoopTrails", "spellFx", "buffHud", "combatLight", "occlusion"]) expect(log).toContain(`${k}.reset`);
+    for (const k of ["partyObjects", "rig", "holograms", "glades", "wisps", "fireworks", "swoopTrails", "spellFx", "combatLight", "occlusion"]) expect(log).toContain(`${k}.reset`);
     for (const k of ["beachView.setGround", "grass.setMap", "clouds.reseed", "lightRings.reseed", "trail.newNight"]) expect(at(k)).toBeGreaterThan(-1);
     expect(at("beachView.setGround")).toBeLessThan(at("old.dispose")); // (off the old ground before it's let go)
     // this island's treehouse has the house's rooms: made, in the scene
