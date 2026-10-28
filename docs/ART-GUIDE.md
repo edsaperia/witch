@@ -24,6 +24,7 @@ Ed's main art feedback at this stage. Earlier, about the legends, he said "the m
 
 **Ed's decision (2026-10-05):** "4 or 5, but we will decide in playtesting", then "6 is also good". Two looks stay in the running, **Bold** (rung 3's treatment) and **Reference** (rung 6), each at **art pixel 4 or 5**. The final choice is made in playtesting, with a complete scene in motion ("trees, creatures, witch").
 - **In the game:** `?style=now|bold|ref` and `?px=3|4|5` choose one per load (`art/stylise.js`, applied in `bake`: the live preview PR, branch `claude/art-style-preview`). With neither, the game looks as it did. The generators' own version of the styles will keep these switch names.
+- **The comparison strips** (each style at 3, 4 and 5 px, a strip and the ground): on claude/ed-shots, [`previews/archive/art-guide/styles/`](https://github.com/edsaperia/witch/tree/claude/ed-shots/previews/archive/art-guide/styles) since the docs pass (2026-10-28).
 - **Either way the rest of the reference stands:** exaggerated silhouettes, an evolved design per level (0b), and texture as tone shapes.
 - **Until Ed decides,** the rules below hold for both looks except where marked bold-only or ref-only.
 

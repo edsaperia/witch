@@ -73,7 +73,7 @@ The rest of what builders need lives in a note an area, under `docs/notes/` (hou
 - [`docs/notes/music.md`](docs/notes/music.md): The music: the music engine, its style, sections and arc, the singer, the labs and studio, samples.
 - [`docs/notes/sound.md`](docs/notes/sound.md): Sound effects: the synthesised sound effects, babble and whale song, the mix.
 - [`docs/notes/balance.md`](docs/notes/balance.md): Balance: the balance simulators and bots, fighting value, populations and costs, the playtest log.
-- [`docs/notes/config.md`](docs/notes/config.md): Config files: the tuning file and its schema, the style file.
+- [`docs/notes/config.md`](docs/notes/config.md): Config files: the tuning file and its schema, the style file, the link switches registry.
 - [`docs/notes/testing.md`](docs/notes/testing.md): Testing tools: the full smoke test, proof shots.
 - [`docs/notes/art-checks.md`](docs/notes/art-checks.md): Art checks: the art generator's check, the style bible, the genome compare, the lab and export commands.
 - [`docs/notes/performance.md`](docs/notes/performance.md): Performance: the View's build in slices, the start's shaders, the stall hunt.

@@ -25,6 +25,7 @@ says what each note covers.
 
 - Tuning file
 - Style file
+- Link switches
 
 ## [Creatures' art](creatures.md)
 
