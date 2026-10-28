@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeAll, afterAll } from "vitest";
 import { COMBAT } from "./combat";
 import { setupArena } from "./arena";
-import { counterOf, maxHp, traitsOf } from "./combat";
+import { counterOf, traitsOf } from "./combat";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING } from "./tuning";
 
@@ -20,7 +20,7 @@ function fight(spec: string, secs = 30): { hers: number; wild: number; g: Game }
   g.witch = { ...g.witch, mode: "treetop" }; // (out of it)
   const ids = g.arena!.ids, side = new Map(ids.map(id => [id, g.creatures[id].leashed]));
   for (let i = 0; i < secs / STEP; i++) stepGame(g, idle, STEP);
-  const lost = (hers: boolean) => { let l = 0, n = 0; for (const id of ids) if (side.get(id) === hers) { const c = g.creatures[id]; n++; l += c.fleeUntil || c.gone ? 1 : 1 - (c.hp ?? maxHp(c.level)) / maxHp(c.level); } return l / n; };
+  const lost = (hers: boolean) => { let l = 0, n = 0; for (const id of ids) if (side.get(id) === hers) { const c = g.creatures[id]; n++; l += c.fleeUntil || c.gone || c.dazed ? 1 : hers ? c.drops ?? 0 : c.hearts ?? 0; } return l / n; }; // (its slots filled: 💧s on hers, hearts on the wild; rules/orbit.ts)
   return { hers: lost(true), wild: lost(false), g };
 }
 

@@ -1414,6 +1414,9 @@ The 💌 invite [1], replacing the proximity chat when on: on the ground she sho
   2. Ed, 2026-10-06: "I think we should remove the 0.5s cooldown between counted hits per creature - better to control this through the witch firing speed instead of having hits not register"
   letters to fill it, by level (baby, young, adult); it drains drain of a full meter a second when not being hit, from config/states.json's affection.drainDelay seconds after the last [1]. Every letter that lands on an invitable creature counts [2]: how fast she invites is her firing rate (burst, burstGap, cooldown), nothing adaptive. Enraged creatures and legends block letters; scenery never stops them (Ed).
   Code: `config/states.json`
+- **`invites.heartHold`**: How long (s) a creature's slots hold before draining once they hold hearts (her animals' blows), so a fight's hits, seconds apart through a pack's lulls, can fill them.
+  1. Ed, 2026-10-28: "hearts fade at the same rate as 💌s" (they fade at invites.drain as 💌s do; held this long first (DECISION FOR ED, the builder's: at 💌s' 4 s hold her animals' blows, 5 to 10 s apart in a pack's combos and lulls, never filled a young boar's slots past half))
+  Code: `src/rules/orbit.ts`
 - **`invites.fireSlow`**: her ground speed while firing, times this.
 - **`invites.linger`**: a 💌 that met no one rests where it came down this many seconds, fading over the last lingerFade, at most lingerMax at once (drawn only: it's no hit).
   1. Ed's playtest, 2026-10-06: "invitations should sit on the ground for a little while before they fade away"
@@ -1442,6 +1445,7 @@ The 💌 invite [1], replacing the proximity chat when on: on the ground she sho
 | `invites.amount` | number | 0 to … |
 | `invites.hits` | array of number |  |
 | `invites.drain` | number | 0 to … |
+| `invites.heartHold` | number | 0 to … |
 | `invites.fireSlow` | number | 0 to 1 |
 | `invites.linger` | number | 0 to … |
 | `invites.lingerFade` | number | 0 to … |

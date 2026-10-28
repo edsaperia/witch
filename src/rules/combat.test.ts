@@ -66,18 +66,19 @@ describe("combat (Stage 4)", () => {
     }
   });
 
-  it("party animals and wild ones of other kinds fight until one side is beaten: the wild one runs off the map", () => {
+  it("party animals and wild ones of other kinds fight until one side is beaten: the wild one stunned (Ed, 2026-10-28)", () => {
     const g = quiet(), w = g.witch;
     const mine = place(g, 0, "wolf", 2, w.x + 2, w.z, true), wild = place(g, 0, "boar", 1, w.x + 4, w.z);
     park(g, mine);
     g.witch = { ...g.witch, mode: "treetop", lift: 1 }; // (on the ground she'd chat the boar into her party)
     // (in packs, each a pack of one: they fight in combos with lulls between, and the boar hurt fights on, alone; then its daze)
     // (90 s: each species' own attack, step 5, paces this one a little longer: the boar beaten, dazed, then off)
-    for (let i = 0; i < 90 / STEP && !wild.fleeUntil; i++) stepGame(g, idle, STEP);
-    expect(mine.hp).toBeLessThan(maxHp(2)); // it was hit too
-    expect(wild.fleeUntil).toBeTruthy(); // running for the map's edge (Ed: beaten creatures run off the map)
+    // (combat as orbit slots, rules/orbit.ts: her wolf's blows fill its slots with hearts; full, it's stunned, lying still)
+    for (let i = 0; i < 90 / STEP && !wild.dazed; i++) stepGame(g, idle, STEP);
+    expect(mine.drops ?? 0).toBeGreaterThan(0); // it was hit too: 💧s
+    expect(wild.dazed).toBe(true);
     const x0 = wild.x, z0 = wild.z; run(g, 3);
-    expect(Math.hypot(wild.x - x0, wild.z - z0)).toBeGreaterThan(5);
+    expect(Math.hypot(wild.x - x0, wild.z - z0)).toBeLessThan(5); // (lying there, not running off: only the knock of the blow that stunned it)
     expect(wild.fight).toBeUndefined();
     expect(mine.gone).toBeFalsy();
     expect(g.leash.placed.map(p => p.id)).toContain(mine.id);
@@ -490,17 +491,17 @@ describe("Ed's Stage 4 rulings", () => {
   it("heals a party animal to full when it eats a berry (even a legend) or is invited", () => {
     const g = quiet(), w = g.witch;
     const a = place(g, 0, "fox", 1, w.x + 2, w.z, true), l = place(g, 0, "stag", LEGEND, w.x + 3, w.z, true);
-    a.hp = 10; l.hp = 50;
+    a.drops = 0.7; l.drops = 0.5; // (💧s in their slots: rules/orbit.ts)
     feed(g.berries, a, g.clock.time, TUNING); feed(g.berries, l, g.clock.time, TUNING);
-    expect(a.hp).toBeUndefined(); expect(l.hp).toBeUndefined(); // undefined: full
+    expect(a.drops).toBeUndefined(); expect(l.drops).toBeUndefined(); // all its 💧s gone
     expect(a.healedAt).toBe(g.clock.time);
-    expect(canEat(Object.assign(l, { hp: 1 }), g.berries)).toBe(true); // a hurt legend wants a berry
-    expect(canEat(Object.assign(l, { hp: undefined }), g.berries)).toBe(false); // a whole one doesn't
+    expect(canEat(Object.assign(l, { drops: 0.1 }), g.berries)).toBe(true); // a hurt legend wants a berry
+    expect(canEat(Object.assign(l, { drops: undefined }), g.berries)).toBe(false); // a whole one doesn't
     const wild = place(g, 0, "badger", 1, w.x + 4, w.z);
-    wild.hp = 5;
+    wild.drops = 0.5;
     for (let i = 0; i < 10 / STEP && !wild.leashed; i++) stepGame(g, { ...idle, inviteNearest: i === 0 }, STEP);
     expect(wild.leashed).toBe(true);
-    expect(wild.hp).toBeUndefined();
+    expect(wild.drops).toBeUndefined();
   }, 60000);
 
   it("leaves a woken area's babies out of its siege: they stay home, happy, and can still be leashed (their rune)", () => {
@@ -605,10 +606,10 @@ describe("Ed's playtest (2026-10-04)", () => {
     expect(invitable(here[0]) || hasRune(here[0], g.clock.time)).toBe(true);
   }, 60000);
 
-  it("has a beaten creature run off, out of sight, and then it's gone for good", () => {
+  it("has a stunned hostile run off at a baby's run, out of sight, and then it's gone for good", () => {
     const g = quiet(), w = g.witch;
     const wild = place(g, 0, "boar", 1, w.x + 4, w.z);
-    wild.hp = 1;
+    wild.enraged = true; wild.state = "enraged"; wild.affection = 0.95; wild.affectionAt = g.clock.time; // (enraged, its slots nearly full: rules/orbit.ts)
     const mine = place(g, 0, "wolf", 2, w.x + 2, w.z, true);
     park(g, mine);
     g.witch = { ...g.witch, mode: "treetop", lift: 1 };
@@ -640,12 +641,12 @@ describe("the invitee truce (Ed, 2026-10-04)", () => {
     // (she keeps beside it, as a player would: its blows knock her wolf about and it follows)
     for (let i = 0; i < 6 / STEP; i++) { stepGame(g, { ...idle, autoTalk: true }, STEP); g.witch = { ...g.witch, x: fox.x - 3, z: fox.z }; } // (an adult takes 12 s to invite)
     expect(g.leash.talk?.id).toBe(fox.id);
-    expect(fox.hp).toBeUndefined(); // untouched while they chat
+    expect(fox.hurtAt).toBeUndefined(); // untouched while they chat
     expect(wolf.fight?.target?.kind === "creature" && wolf.fight.target.id === fox.id).toBe(false);
     // She rises: the chat's off, and it's fair game again.
     g.witch = { ...g.witch, mode: "treetop", lift: 1 };
-    for (let i = 0; i < 10 / STEP && fox.hp === undefined; i++) stepGame(g, idle, STEP);
-    expect(fox.hp).toBeDefined();
+    for (let i = 0; i < 10 / STEP && fox.hurtAt === undefined; i++) stepGame(g, idle, STEP);
+    expect(fox.hurtAt).toBeDefined();
   }, 60000);
 });
 

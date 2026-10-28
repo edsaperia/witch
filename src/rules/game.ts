@@ -346,7 +346,7 @@ const napper = (c: Creature): boolean => !!c.asleep && c.napUntil !== undefined;
 
 export const affectionOf = (g: Game): Affection => {
   const t = g.tuning, s = g.witches[0].invites, E = t.legends;
-  const data = { ...STATES, partyEgg: E.partyEgg, affection: { ...STATES.affection, hits: meterHits(t), drain: t.invites.drain ?? STATES.affection.drain, gap: 0, legendDrain: E.partyDrain } };
+  const data = { ...STATES, partyEgg: E.partyEgg, affection: { ...STATES.affection, hits: meterHits(t), drain: t.invites.drain ?? STATES.affection.drain, gap: 0, legendDrain: E.partyDrain, heartHold: t.invites.heartHold } };
   return {
     // A napper takes them (Ed, 2026-10-11: "Letters wake them"): the 💌 rouses it, wherever she is, and lands as any other (hit,
     // below). One asleep for good (the party's over: no napUntil) still lets them by.
@@ -356,7 +356,7 @@ export const affectionOf = (g: Game): Affection => {
       // (the creature's meter on the world's clock; her letters' events on hers: rules/slowTime.ts)
       if (napper(c)) Object.assign(c, { asleep: false, napUntil: undefined, lulled: undefined, wakeUntil: undefined, rest: 0 }); // (roused by it: up at once, as rules/inviteWakes.ts wakes its area)
       const was = stateOf(c), time = g.clock.time, party = !!c.partyLegend;
-      hitAffection({ time, leash: k => inviteCreature(g.leash, k, k.x, k.z, time) }, c, amount, time, data);
+      hitAffection({ time, leash: k => inviteCreature(g.leash, k, k.x, k.z, time), stunFor: t.combat.daze }, c, amount, time, data);
       if (stateOf(c) !== was || (c.partyLegend && !party)) s.events.push({ kind: "happy", x: c.x, z: c.z, at, id: c.id }); // (happy, or leashed; or a party legend)
     },
     affection: c => affection({ time: g.clock.time }, c, data),

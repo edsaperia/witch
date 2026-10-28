@@ -75,40 +75,49 @@ describe("creature states (#87)", () => {
     expect(sieged).toBe(true); // (not stuck: it went on with its siege, on the nearest soundsystem)
   }, 60000);
 
-  it("dazes a knocked-down wild creature (nothing attacks it, it can still be invited), then it runs off", () => {
+  // Combat as orbit slots (Ed, 2026-10-28, rules/orbit.ts): her animals' blows fill a wild one's 💌 slots with hearts; full, it's
+  // stunned (lying still, nothing attacking it); her next 💌 converts it, and left alone it gets up again, wild. (It no longer runs off.)
+  it("stuns a wild creature whose slots fill (nothing attacks it), her next 💌 converting it; left alone, it gets up wild", () => {
     const g = quiet(), w = place(g, "boar", 1, 4, 0), l = place(g, "wolf", 2, 0, 0, "leashed");
-    w.hp = 0.5;
+    w.affection = 0.95; w.affectionAt = g.clock.time;
     let dazedAt = -1;
     run(g, TUNING.combat.daze + 12, () => { if (dazedAt < 0 && w.dazed) dazedAt = g.clock.time; });
     expect(dazedAt).toBeGreaterThan(0);
-    expect(w.fleeUntil).toBeTruthy(); // ran off once its daze was over
-    // While dazed: untouched, and invitable.
+    expect(w.hearts).toBeGreaterThan(0); // (filled by hearts)
+    expect(w.fleeUntil).toBeFalsy(); // (up again once its stun was over, not run off)
+    expect(stateOf(w)).toBe("wild");
+    // While stunned: untouched, its slots held full, and one 💌 converts it.
     const g2 = quiet(), w2 = place(g2, "boar", 1, 4, 0), l2 = place(g2, "wolf", 2, 0, 0, "leashed");
-    w2.hp = 0.5;
-    for (let i = 0; i < 20 / STEP && !w2.dazed; i++) stepGame(g2, idle, STEP);
+    w2.affection = 0.95; w2.affectionAt = g2.clock.time;
+    for (let i = 0; i < 60 / STEP && !w2.dazed; i++) stepGame(g2, idle, STEP); // (its slots draining meanwhile: hearts fade as 💌s do)
     expect(w2.dazed).toBe(true);
     expect(TUNING.combat.daze).toBe(20); // (Ed, 2026-10-06)
     expect(w2.dazedUntil! - g2.clock.time).toBeGreaterThan(TUNING.combat.daze - 1); // (down the full stun)
-    const hp = w2.hp;
     run(g2, TUNING.combat.daze * 0.5, () => { expect(targets(l2, w2)).toBe(false); });
-    expect(w2.hp).toBe(hp);
+    expect(affection({ time: g2.clock.time }, w2)).toBe(1);
     expect(invitable(w2)).toBe(true);
     const world = { time: g2.clock.time, leash: (c: Creature) => inviteCreature(g2.leash, c, c.x, c.z, g2.clock.time) };
-    for (let i = 0; i < 20 && stateOf(w2) === "wild"; i++) hit(world, w2, 1, g2.clock.time + i);
+    hit(world, w2, 1, g2.clock.time);
     expect(stateOf(w2)).toBe("happy");
     run(g2, TUNING.combat.daze);
     expect(w2.fleeUntil).toBeFalsy(); // happy now: it doesn't run off
     void l; void l2;
   }, 60000);
 
-  it("has happy, leashed and enraged ones simply run off when knocked down", () => {
+  it("has a stunned enraged one run away for good (its 💧 over it), and one of hers or a happy one whose 💧s fill", () => {
     const g = quiet(), e = place(g, "wolf", 2, 0, 0, "enraged"), h = place(g, "boar", 2, 5, 0, "happy");
-    e.hp = 0.5;
+    e.affection = 0.95; e.affectionAt = g.clock.time;
     let dazed = false;
     run(g, 10, () => { if (e.dazed) dazed = true; });
     expect(e.fleeUntil).toBeTruthy();
+    expect(e.ranOff).toBe(true);
     expect(dazed).toBe(false);
-    void h;
+    // (the happy boar took the wolf's blows as 💧s, never shed: full, it runs away too)
+    const g2 = quiet(), e2 = place(g2, "wolf", 2, 0, 0, "enraged"), h2 = place(g2, "boar", 2, 5, 0, "happy");
+    h2.drops = 0.95;
+    run(g2, 10);
+    expect(h2.fleeUntil).toBeTruthy(); expect(h2.ranOff).toBe(true);
+    void h; void e2;
   }, 60000);
 
   it("enrages an area's wild creatures when a wave puts a soundsystem there (their meters lost), never the happy ones, the leashed or babies", () => {
@@ -134,7 +143,7 @@ describe("creature states (#87)", () => {
     g.clock.time = t0;
   });
 
-  it("fills the 💌 meter: more hits at higher levels, one counted per creature every gap, draining slowly; full, it's happy, and full again (states.leash 'again') it's leashed", () => {
+  it("fills the 💌 meter: more hits at higher levels, one counted per creature every gap, draining slowly; full, it's stunned, the next makes it happy, and full again (states.leash 'again') it's leashed", () => {
     const g = quiet(), leash = newLeash(), saved = STATES.leash;
     STATES.leash = "again"; // (the old second meter, kept behind the flag: the game picks up a rune now, pickup.test.ts)
     try { for (const level of [0, 1, 2] as const) {
@@ -147,7 +156,9 @@ describe("creature states (#87)", () => {
       expect(affection({ time: t }, c)).toBeCloseTo((need - 1) / need, 5);
       expect(affection({ time: t + STATES.affection.drainDelay + 2 }, c)!).toBeLessThan((need - 1) / need); // draining
       hit(world, c, 1, t);
-      expect(stateOf(c)).toBe("happy");
+      expect(stateOf(c)).toBe("wild"); expect(c.dazed).toBe(true); // (full: stunned, Ed 2026-10-28)
+      hit(world, c, 1, t + STATES.affection.gap);
+      expect(stateOf(c)).toBe("happy"); // (and her next 💌 converts it)
       for (let i = 0; i < need; i++) hit(world, c, 1, t + 1 + i * STATES.affection.gap);
       expect(c.leashed).toBe(true);
       expect(leash.stack).toContain(c.id);

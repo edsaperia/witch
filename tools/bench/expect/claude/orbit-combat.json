@@ -1,0 +1,5 @@
+{
+  "reason": "combat as orbit slots (Ed, 2026-10-28): no creature health, blows fill the 💌 ring with hearts or 💧s, full stuns or sends running; health bars gone, soundsystems' health a ring of 💥s",
+  "frames": { "wave-fight": "no health bars; hearts and 💧s orbiting; 💥 rings on soundsystems" },
+  "rules": { "*": "creatures' slots (affection, hearts, drops) where their health was; stuns instead of knocks-down, getting up instead of running off" }
+}

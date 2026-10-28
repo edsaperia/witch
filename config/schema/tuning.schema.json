@@ -3653,6 +3653,11 @@
           "type": "number",
           "minimum": 0
         },
+        "heartHold": {
+          "type": "number",
+          "minimum": 0,
+          "description": "How long (s) a creature's slots hold before draining once they hold hearts (her animals' blows), so a fight's hits, seconds apart through a pack's lulls, can fill them."
+        },
         "fireSlow": {
           "type": "number",
           "minimum": 0,
@@ -3743,6 +3748,7 @@
         "amount",
         "hits",
         "drain",
+        "heartHold",
         "fireSlow",
         "linger",
         "lingerFade",

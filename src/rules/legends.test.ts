@@ -159,7 +159,7 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     mate!.gone = true;
     run(g, 1.2);
     expect(L.legendState).toBe("angry");
-    L.hp = 1;
+    L.affection = 0.999; L.affectionAt = g.clock.time; // (its slots nearly full of hearts: rules/orbit.ts)
     const wolf = put(g, L.species === "wolf" ? "boar" : "wolf", 2, L.x + 2, L.z);
     wolf.leashed = true; g.leash.placed.push({ id: wolf.id, x: wolf.x, z: wolf.z, at: g.clock.time });
     let slept = false;
@@ -218,10 +218,10 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     const dx = g.map.dancefloor.x - L.x, dz = g.map.dancefloor.z - L.z, dd = Math.hypot(dx, dz) || 1;
     const far = put(g, L.species === "boar" ? "wolf" : "boar", 1, L.x + (dx / dd) * 120, L.z + (dz / dd) * 120); far.enraged = true; far.state = "enraged"; far.siege = "home";
     let hitFar = false;
-    run(g, LEGENDS.attack.interval + LEGENDS.attack.windup + LEGENDS.attack.lobFlight + 2, idle, () => { if (far.hp !== undefined) hitFar = true; });
+    run(g, LEGENDS.attack.interval + LEGENDS.attack.windup + LEGENDS.attack.lobFlight + 2, idle, () => { if (far.hurtAt !== undefined) hitFar = true; });
     expect(hitFar).toBe(true);
     // Worn down by an enraged one beside it.
-    L.hp = 0.5;
+    L.drops = 0.999; // (its slots nearly full of 💧s: rules/orbit.ts)
     const near = put(g, L.species === "boar" ? "wolf" : "boar", 2, L.x + 1.5, L.z, L.cell); near.enraged = true; near.state = "enraged";
     run(g, 10);
     expect(L.legendState).toBe("asleep");

@@ -26,7 +26,7 @@ const wildPack = (g: Game) => [...(g.combat.packs?.values() ?? [])].find(s => !s
 const fresh = (g: Game) => g.combat.events.filter(e => e.at === g.clock.time);
 
 describe("pack combat's roles by position (Ed: 2b)", () => {
-  const at = (id: number, x: number, z: number, hp?: number): Creature => ({ id, species: "fox", level: 2, x, z, hp }) as Creature;
+  const at = (id: number, x: number, z: number, hp?: number): Creature => ({ id, species: "fox", level: 2, x, z, ...(hp !== undefined ? { affection: 0.99 } : {}) }) as Creature; // (hurt: its slots nearly full, rules/orbit.ts)
   it("the nearest lunges, the one behind her throws the special, the rest fire; the hurt keep away; past the combo's size they hold", () => {
     const her = { x: 0, z: 0 }, heading = { x: 0, z: -1 }; // (she's going north: her back is south, +z)
     const m = [at(1, 3, 0), at(2, 0, 12), at(3, -10, 0), at(4, 9, -9), at(5, 1, 1, 1)];
@@ -422,7 +422,7 @@ describe("the lull is a retreat, not a halt (Ed's playtests, 2026-10-23: \"lulls
 });
 
 describe("pack combat's fixes (Ed, 2026-10-20)", () => {
-  const at = (id: number, x: number, z: number, hp?: number): Creature => ({ id, species: "boar", level: 1, x, z, hp }) as Creature;
+  const at = (id: number, x: number, z: number, hp?: number): Creature => ({ id, species: "boar", level: 1, x, z, ...(hp !== undefined ? { affection: 0.99 } : {}) }) as Creature; // (hurt: its slots nearly full, rules/orbit.ts)
 
   it("a pack all hurt, or a lone hurt one, fights on (so a fight ends); one hurt beside a healthy packmate still keeps away", () => {
     const her = { x: 0, z: 0 };
@@ -441,7 +441,7 @@ describe("pack combat's fixes (Ed, 2026-10-20)", () => {
     const spare = g.creatures.filter(c => !c.gone && !c.leashed && !c.boss && Math.hypot(c.x - g.witch.x, c.z - g.witch.z) > 80);
     const put = (c: Creature, species: string, level: 1 | 2, dx: number) => { const x = g.witch.x + dx, z = g.witch.z; Object.assign(c, { circle: undefined, species, level, x, z, tx: x, tz: z, homeX: x, homeZ: z, anchorX: x, anchorZ: z, safeR: undefined, seen: g.clock.time, hp: undefined, boss: false, siege: undefined, rest: 0 }); c.cell = g.map.cellSafe(x, z).cell as [number, number]; return c; };
     const boar = put(spare[0], "boar", 1, 4), wolf = put(spare[1], "wolf", 2, 2);
-    boar.hp = 1;
+    boar.affection = 0.99; boar.affectionAt = g.clock.time; // (its slots nearly full: rules/orbit.ts)
     wolf.leashed = true; g.leash.placed.push({ id: wolf.id, x: wolf.x, z: wolf.z, at: g.clock.time });
     g.byArea = null;
     let downAt = -1;

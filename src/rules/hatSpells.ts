@@ -154,7 +154,7 @@ export function stepHatSpells(g: Game, W: Witch, down: { x: number; z: number; s
       const N = t.spells.nursing;
       for (const id of [...W.leash.stack, ...W.leash.placed.map(p => p.id)]) {
         const c = g.creatures[id];
-        if (!c || c.gone || c.hp === undefined || Math.hypot(c.x - d.x, c.z - d.z) > N.range) continue;
+        if (!c || c.gone || !c.drops || Math.hypot(c.x - d.x, c.z - d.z) > N.range) continue;
         const max = creatureMaxHp(c);
         healBy(c, max * N.rate * dt, max, now);
       }

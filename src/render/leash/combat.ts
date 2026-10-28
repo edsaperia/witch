@@ -2,7 +2,7 @@
 // trait marks, health bars, the knockout's release and the quake's shake.
 import * as THREE from "three";
 import { speciesColours, defaultStyle, M } from "../../../art/generator.js";
-import { attackNamed, attackOf, creatureMaxHp, traitsOf, type Trait } from "../../rules/combat";
+import { attackNamed, attackOf, traitsOf, type Trait } from "../../rules/combat";
 import { hash2 } from "../../rules/random";
 import { FIGHT, profileOf } from "../../rules/movement";
 import { bodyRadius } from "../../rules/spacing";
@@ -431,24 +431,16 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
     // Healed (every heal, rules/creatures.ts heal and healBy: Ed, 2026-10-09): its bar shows full a moment, and green "+"s float up off it.
     const healed = c.healedAt !== undefined && time - c.healedAt < 0.8;
     if (c.healedAt !== undefined && time - c.healedAt < HEAL_PLUS.span) healPluses(lv, c, time - c.healedAt, artPx, up, camera, height);
-    // Health bars, only when hurt: ten squares over its head.
-    const max = creatureMaxHp(c), hp = c.hp ?? max;
     // Stunned (an armoured one knocked over): stars round its head.
     if (c.stunUntil !== undefined && time < c.stunUntil && lookOn) lv.look.motif("stun", null, c.x, lv.tops.get(c.id) ?? 1.4, c.z, time, c.id);
     else if (c.stunUntil !== undefined && time < c.stunUntil) { const y = (lv.tops.get(c.id) ?? 1.4) + 0.2; for (let i = 0; i < 3; i++) { const a = time * 5 + (i / 3) * Math.PI * 2; lv.standing.add(c.x + Math.cos(a) * 0.6, y + Math.sin(a * 2) * 0.08, c.z + Math.sin(a) * 0.4, 0.22, dot, 1, 0.95, 0.5, 0.9); } }
-    // Its traits' marks (Stage 5, readable counters), left of its health bar, while it fights or is hurt.
-    if ((hp < max || healed || c.fight?.target) && !c.fleeUntil && c.level > 0) {
+    // Its traits' marks (Stage 5, readable counters), over its head while it fights. (No health bars since Ed, 2026-10-28: its 💌
+    // ring's hearts and 💧s are its one measure, render/invites.ts.)
+    if ((healed || c.fight?.target) && !c.fleeUntil && c.level > 0) {
       const tr = traitsOf(c.species);
       if (tr.length) {
         const y = (lv.tops.get(c.id) ?? 1.6 + c.level * 0.7) + 0.5, R = SPRITE_UNIFORMS.uRight.value, wide = 1 + c.level * 0.25;
         for (let j = 0; j < tr.length; j++) { const o = -5.2 * 0.17 * wide - 0.3 - j * 0.35, px = c.x + R.x * o, pz = c.z + R.z * o, M = TRAIT_MARKS[tr[j]]; lv.over.add(px, y, pz, M.size, M.square ? sq : dot, M.r, M.g, M.b, 0.95); }
-      }
-    }
-    if ((hp < max || healed) && !c.fleeUntil) {
-      const y = (lv.tops.get(c.id) ?? 1.6 + c.level * 0.7) + 0.5, share = Math.max(0, hp / max), R = SPRITE_UNIFORMS.uRight.value, wide = 1 + c.level * 0.25;
-      for (let i = 0; i < 10; i++) { // drawn over everything, so a big creature's own sprite doesn't hide it
-        const o = (i - 4.5) * 0.17 * wide, lit = (i + 0.5) / 10 <= share;
-        lv.over.add(c.x + R.x * o, y, c.z + R.z * o, 0.2 * wide, sq, lit ? 1 - share * 0.7 : 0.3, lit ? 0.3 + share * 0.7 : 0.3, lit ? 0.3 : 0.35, lit ? 0.95 : 0.35);
       }
     }
     // Let go on a knockout and walking home: a faint marker and its sigil, grey and flickering.
@@ -458,12 +450,7 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
       for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2 + time; if (i % 2) lv.flat.add(c.x + Math.cos(a) * 1.4, 0, c.z + Math.sin(a) * 1.1, 0.25, dot, 0.8, 0.8, 0.9, 0.35); }
     }
   }
-  // Soundsystems under siege: a long bar over each, when hurt.
-  for (const [, h] of g.combat.sounds) {
-    if (h.hp >= h.max || h.hp <= 0 || !close(h.x, h.z, 200)) continue;
-    const share = h.hp / h.max, R = SPRITE_UNIFORMS.uRight.value, n = 20, y = h.radius > 5 ? 9 : 7;
-    for (let i = 0; i < n; i++) { const o = (i - (n - 1) / 2) * 0.35, lit = (i + 0.5) / n <= share; lv.over.add(h.x + R.x * o, y, h.z + R.z * o, 0.32, sq, lit ? 1 : 0.3, lit ? 0.35 + 0.5 * share : 0.3, lit ? 0.55 : 0.35, lit ? 1 : 0.35); }
-  }
+  // (a soundsystem's health is its ring of 💥s now, Ed 2026-10-28: render/invites.ts)
   // Knocked out: dizzy stars over her while she's down.
   if (W.ko && time < W.ko.teleportAt) for (let i = 0; i < 5; i++) { const a = time * 3 + (i / 5) * Math.PI * 2; lv.standing.add(w.x + Math.cos(a) * 0.7, 1.6 + Math.sin(a * 2) * 0.1, w.z + Math.sin(a) * 0.5, 0.25, dot, 1, 0.95, 0.5, 0.9); }
   drawSlashes(lv, time, camera, width, height);

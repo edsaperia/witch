@@ -147,6 +147,11 @@ export interface Creature {
   /** Its 💌 invite meter (0..1 at its last hit) and when that was (rules/affection.ts). */
   affection?: number;
   affectionAt?: number;
+  /** Combat as orbit slots (rules/orbit.ts): the hearts' share of its 💌 meter (draining with it); its 💧s (0..1 of its slots, never
+   *  draining); whether it ran away from a stun or a full set of 💧s (its 💧 marker). */
+  hearts?: number;
+  drops?: number;
+  ranOff?: boolean;
   /** The invite button held on it (states.leash "hold"): for how long, till when. */
   holdT?: number;
   holdAt?: number;
@@ -259,7 +264,7 @@ export function makeCreature(map: ForestMap, cell: [number, number], level: Leve
     run: undefined, lairX: undefined, lairZ: undefined, homing: undefined, charge: undefined, dug: undefined,
     travelling: undefined, state: undefined, happyAt: undefined, partyLegend: undefined, dazed: undefined,
     dancing: undefined, restlessness: undefined, questOpen: undefined, aims: undefined,
-    dazedUntil: undefined, affection: undefined, affectionAt: undefined, holdT: undefined, holdAt: undefined,
+    dazedUntil: undefined, affection: undefined, affectionAt: undefined, hearts: undefined, drops: undefined, ranOff: undefined, holdT: undefined, holdAt: undefined,
     route: undefined, engagedUntil: undefined, brace: undefined, legend: undefined, moveReadyAt: undefined,
     sprung: undefined, enraged: undefined, asleepAt: undefined, bed: undefined, gone: undefined, siege: undefined,
     wanderTo: undefined, circle: undefined, dropped: undefined, healedAt: undefined, healedSmall: undefined, boss: undefined, legendState: undefined,
@@ -273,7 +278,7 @@ export function makeCreature(map: ForestMap, cell: [number, number], level: Leve
 
 /** Every optional field of a Creature, in the order makeCreature's literal lists them (one shape for all; creatures.test.ts checks the order). A field added to
  *  Creature and not here fails the typecheck (OptionalMissing). */
-export const CREATURE_OPTIONAL = ["lod", "hp", "hurtAt", "kx", "kz", "slowUntil", "stunUntil", "burrow", "leap", "fight", "fleeUntil", "retreat", "retreatFrom", "fleeX", "fleeZ", "vx", "vz", "run", "lairX", "lairZ", "homing", "charge", "dug", "travelling", "state", "happyAt", "partyLegend", "dazed", "dancing", "restlessness", "questOpen", "aims", "dazedUntil", "affection", "affectionAt", "holdT", "holdAt", "route", "engagedUntil", "brace", "legend", "moveReadyAt", "sprung", "enraged", "asleepAt", "bed", "gone", "siege", "wanderTo", "circle", "dropped", "healedAt", "healedSmall", "boss", "legendState", "stateAt", "quest", "friendly", "asleep", "napUntil", "lulled", "wakeUntil", "safeX", "safeZ", "safeR", "watchUntil", "hunting", "taunt", "swoop", "finale", "packGlow", "packHide", "packShell", "packProwl", "feintUntil", "coverBy", "packSync", "packThrow", "mind", "spell"] as const satisfies readonly (keyof Creature)[];
+export const CREATURE_OPTIONAL = ["lod", "hp", "hurtAt", "kx", "kz", "slowUntil", "stunUntil", "burrow", "leap", "fight", "fleeUntil", "retreat", "retreatFrom", "fleeX", "fleeZ", "vx", "vz", "run", "lairX", "lairZ", "homing", "charge", "dug", "travelling", "state", "happyAt", "partyLegend", "dazed", "dancing", "restlessness", "questOpen", "aims", "dazedUntil", "affection", "affectionAt", "hearts", "drops", "ranOff", "holdT", "holdAt", "route", "engagedUntil", "brace", "legend", "moveReadyAt", "sprung", "enraged", "asleepAt", "bed", "gone", "siege", "wanderTo", "circle", "dropped", "healedAt", "healedSmall", "boss", "legendState", "stateAt", "quest", "friendly", "asleep", "napUntil", "lulled", "wakeUntil", "safeX", "safeZ", "safeR", "watchUntil", "hunting", "taunt", "swoop", "finale", "packGlow", "packHide", "packShell", "packProwl", "feintUntil", "coverBy", "packSync", "packThrow", "mind", "spell"] as const satisfies readonly (keyof Creature)[];
 type RequiredKeys = "id" | "species" | "cell" | "level" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ" | "x" | "z" | "tx" | "tz" | "rest" | "speed" | "facing" | "away" | "moving" | "walk" | "seen" | "leashed" | "rand";
 type OptionalMissing = Exclude<keyof Creature, RequiredKeys | (typeof CREATURE_OPTIONAL)[number]>;
 const _everyField: [OptionalMissing] extends [never] ? true : OptionalMissing = true;
@@ -543,16 +548,16 @@ export function stepNotice(list: Iterable<Creature>, witches: { x: number; z: nu
 /** Every heal goes through these two (Ed, 2026-10-09: "Whenever a creature is healed they should get the green +s"), so the
  *  view's "+"s follow every one. Whole again (a berry, invited, leashed, a legend's turn, bedtime): true if it was hurt. */
 export function heal(c: Creature, time: number): boolean {
-  if (c.hp === undefined) return false;
-  c.hp = undefined; c.healedAt = time; c.healedSmall = false;
+  if (c.hp === undefined && !c.drops) return false;
+  c.hp = undefined; c.drops = undefined; c.healedAt = time; c.healedSmall = false; // (its 💧s all gone: rules/orbit.ts)
   return true;
 }
 /** How often a slow mend (healBy) shows its one small "+", seconds. */
 export const HEAL_TRICKLE_GAP = 1.5;
 /** Mended a little (a happy legend's regeneration): whole at `max`, with a small "+" every HEAL_TRICKLE_GAP seconds meanwhile. */
 export function healBy(c: Creature, amount: number, max: number, time: number): void {
-  if (c.hp === undefined || amount <= 0) return;
-  c.hp += amount;
-  if (c.hp >= max) { heal(c, time); return; }
+  if (!c.drops || amount <= 0) return;
+  c.drops -= amount / Math.max(1e-9, max); // (its 💧s taken off a little at a time: rules/orbit.ts)
+  if (c.drops <= 1e-9) { heal(c, time); return; }
   if (c.healedAt === undefined || time - c.healedAt >= HEAL_TRICKLE_GAP) { c.healedAt = time; c.healedSmall = true; }
 }
