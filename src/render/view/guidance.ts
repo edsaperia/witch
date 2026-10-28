@@ -119,8 +119,8 @@ export class GuidePin {
   private pin: (Pin & { remove(): void }) | null = null;
   private key = "";
   constructor(private view: View) {}
-  /** This frame's guide (or null), and whether it shows (rules/guidance.ts guideShows, not at its target): the pin moved to it and
-   *  shown, or hidden, eased (render/pins.ts). */
+  /** This frame's guide (or null), and whether it shows (wherever she is, at its target too, but under the creator, the chart or a
+   *  sail: main.ts): the pin moved to it and shown, or hidden, eased (render/pins.ts). */
   update(guide: Guide | null, shows: boolean): void {
     if (guide) {
       const T = guide.target, target: PinTarget = "object" in T ? { object: T.object, top: TOPS[T.object] } : { x: T.x, z: T.z, top: 1.2, house: true };
@@ -137,6 +137,9 @@ export class GuidePin {
     // The decks: over them as drawn, slid with the house's drawing as they are, just over the tempo there (render/leash/deckBpm.ts).
     const L = this.view.leashView, seat = L.seatAt;
     if (guide?.kind === "decks" && seat) this.pin.target = { x: seat.x + L.seatSlide.x, z: seat.z + L.seatSlide.z, top: seat.y + L.seatSlide.y + DECKS_TOP };
+    // At its target, the pin stays over the object (Ed, 2026-10-28), its tip clear above the use prompt's keycap there (render/houseRooms.ts).
+    const P = this.view.usePrompt, on = !!guide && !!P.id && P.id === ("object" in guide.target ? guide.target.object : "decks");
+    this.pin.above = on ? P.top : null;
     if (guide && shows) this.pin.show(); else this.pin.hide();
   }
   /** Its kind now and its strength (tools, the shots). */
