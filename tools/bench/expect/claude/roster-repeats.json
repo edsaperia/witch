@@ -1,0 +1,3 @@
+{
+  "reason": "fewer repeats on an island's roster (Ed, 2026-10-28): every kind but the island's own on at most 2 areas, so a kind's island has about half as many kinds as areas (it was a third). Only the islands by kind (map.island = a kind) change; home is one area per kind she knows and is untouched, and the bench's scenes and rules runs are all on home, so nothing the bench compares should differ"
+}
