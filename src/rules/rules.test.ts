@@ -1724,7 +1724,7 @@ describe("the dash (Ed, 2026-10-04)", () => {
     expect(z0 - g.witch.z).toBeGreaterThan(TUNING.dash.distance * 0.8);
     expect(Math.abs(g.witch.x - x0)).toBeLessThan(0.5);
     expect(dashing(g.witches[0].dash, g.clock.time)).toBe(true); // gone: not drawn, not hit
-    run(g, Math.ceil(blinkGone(g.buffs.tuning) / STEP) + 1); // (the home legend's buff may be Curl; committed strikes make it longer)
+    run(g, Math.ceil(blinkGone(g.tuning) / STEP) + 1); // (committed strikes make it longer)
     expect(dashing(g.witches[0].dash, g.clock.time)).toBe(false);
     const z1 = g.witch.z;
     run(g, 1, { dash: true, moveX: 0, moveZ: -1 }); // still cooling down: no blink
@@ -1737,7 +1737,7 @@ describe("the dash (Ed, 2026-10-04)", () => {
     run(g, 1, { dash: true, moveX: 0, moveZ: -1 });
     const first = D.at;
     // Too early: pressed well over dash.buffer before it's ready, it's forgotten.
-    while (g.clock.time < D.readyAt - g.buffs.tuning.dash.buffer - 0.2) run(g, 1);
+    while (g.clock.time < D.readyAt - g.tuning.dash.buffer - 0.2) run(g, 1);
     run(g, 1, { dash: true, moveX: 0, moveZ: -1 });
     while (g.clock.time < D.readyAt + 0.1) run(g, 1);
     expect(D.at).toBe(first);
@@ -1745,7 +1745,7 @@ describe("the dash (Ed, 2026-10-04)", () => {
     run(g, 1, { dash: true, moveX: 0, moveZ: -1 }); // (ready now: this one goes at once)
     const second = D.at;
     expect(second).toBeGreaterThan(first);
-    while (g.clock.time < D.readyAt - g.buffs.tuning.dash.buffer / 2) run(g, 1);
+    while (g.clock.time < D.readyAt - g.tuning.dash.buffer / 2) run(g, 1);
     run(g, 1, { dash: true, moveX: 0, moveZ: -1 });
     while (g.clock.time < D.readyAt + 2 * STEP) run(g, 1);
     expect(D.at).toBeGreaterThan(second);
@@ -1803,7 +1803,7 @@ describe("the dash (Ed, 2026-10-04)", () => {
     const before = hp();
     hitWitch(g, 0, g.clock.time);
     expect(hp()).toBe(before);
-    run(g, Math.ceil(blinkGone(g.buffs.tuning) / STEP) + 1); // (the home legend's buff may be Curl; committed strikes make it longer)
+    run(g, Math.ceil(blinkGone(g.tuning) / STEP) + 1); // (committed strikes make it longer)
     hitWitch(g, 0, g.clock.time + 0.01); // back: hittable as ever
     expect(hp()).not.toBe(before);
   });

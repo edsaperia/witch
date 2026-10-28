@@ -98,7 +98,7 @@
       "notes": "letters to fill it, by level (baby, young, adult); it drains drain of a full meter a second when not being hit, from config/states.json's affection.drainDelay seconds after the last [1]. Every letter that lands on an invitable creature counts [2]: how fast she invites is her firing rate (burst, burstGap, cooldown), nothing adaptive. Enraged creatures and legends block letters; scenery never stops them (Ed)."
     },
     "invites.fireSlow": {
-      "what": "her ground speed while firing, times this (Ram's Steady buff takes it away)."
+      "what": "her ground speed while firing, times this."
     },
     "invites.linger": {
       "what": "a 💌 that met no one rests where it came down this many seconds, fading over the last lingerFade, at most lingerMax at once (drawn only: it's no hit).",
@@ -119,10 +119,7 @@
           "quote": "the envelopes should spin like a frisbee"
         }
       ],
-      "links": [
-        "config/legend-buffs.json"
-      ],
-      "notes": "a 💌 in flight lies flat and turns about the upright this many times a second (drawn only); when it lands it stops and lies flat. Data, so legend buffs can change any of it (config/legend-buffs.json)."
+      "notes": "a 💌 in flight lies flat and turns about the upright this many times a second (drawn only); when it lands it stops and lies flat."
     },
     "invites.orbit": {
       "what": "the 💌 ring circles a creature at scale times its body radius (movement.json bodies) plus gap metres, at least min, and wider still when it holds many.",
@@ -133,6 +130,9 @@
           "quote": "Invitation orbits are too tight around the creature"
         }
       ]
+    },
+    "invites.hard": {
+      "what": "the hard homing of the 💌s her Sentry and Slingshot hats throw: homing degrees a second, cone degrees either side it looks in, range metres it looks out to (was the legend buffs' charm, 420, 80 and 18)."
     },
     "invite": {
       "what": "The old proximity chat, now replaced by the 💌 invite: she talked with the nearest creature in emoji.",

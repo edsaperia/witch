@@ -68,14 +68,13 @@ export function strengthGain(level: Level, species: string | undefined, t: Tunin
 }
 
 /** Berries needed to go up from a level (Ed, 2026-10-05: "tie the cost to strength"): the strength
- *  it gains, at berries.cost.per a berry, rounded, at least one (times cost.scale, the legends'
- *  evolve-faster buff). By fighting value (cost.by "value") a species of normal strength pays 4 and 4. Adults and
+ *  it gains, at berries.cost.per a berry, rounded, at least one. By fighting value (cost.by "value") a species of normal strength pays 4 and 4. Adults and
  *  legends don't evolve. */
 export const toEvolve = (level: Level, t: Tuning, species?: string): number => {
   if (level >= TOP_LEVEL) return Infinity;
   if (level === 0 && t.berries.babyCost !== undefined) return Math.max(1, t.berries.babyCost); // (one berry makes a baby a youth: Ed, 2026-10-11)
   const C = t.berries.cost;
-  return Math.max(1, Math.round((strengthGain(level, species, t) / C.per) * (C.scale ?? 1)));
+  return Math.max(1, Math.round(strengthGain(level, species, t) / C.per));
 };
 /** Who may eat berries: party animals that aren't legends (and aren't already evolving). */
 /** Whether a party animal goes for berries: not mid-fight or evolving; still able to evolve

@@ -39,8 +39,8 @@ const serve = () => new Promise(r => { const s = http.createServer((req, res) =>
       const g = window.witch.game, c = g.creatures[id], t = g.clock.time;
       Object.assign(c, { facing: 1, away: false, vx: 0, vz: 0, tx: c.x, tz: c.z });
       if (what === "restless") Object.assign(c, { legendState: "restless", stateAt: t, restlessness: 0.9 });
-      if (what === "happy") Object.assign(c, { legendState: "happy", stateAt: t, enraged: false, state: undefined, restlessness: 0, questOpen: false, buffed: true });
-      if (what === "asleep") Object.assign(c, { legendState: "asleep", stateAt: t, restlessness: 0, buffed: false });
+      if (what === "happy") Object.assign(c, { legendState: "happy", stateAt: t, enraged: false, state: undefined, restlessness: 0, questOpen: false });
+      if (what === "asleep") Object.assign(c, { legendState: "asleep", stateAt: t, restlessness: 0 });
     }, { id, what });
     await set("asleep");
     await page.waitForFunction(id => { const c = window.witch.game.creatures[id]; return !window.witch.view.rig || !!window.witch.view.assets.rigArt(c.species, c.level); }, id, { timeout: 240000, polling: 500 }).catch(() => console.log("no rig parts (yet) for", sp)); // its rig parts baked (four-legged and serpents)

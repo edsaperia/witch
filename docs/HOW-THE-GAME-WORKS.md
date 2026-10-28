@@ -277,15 +277,7 @@ The young's moves are weaker and slower (`young`: wind-ups 1.3 times as long, bo
 **Happy legends.** A legend is made happy by doing its quest. It gives **no buff** (Ed, 2026-10-18). It defends its area, shooting enraged animals from up to **420 m** (`legends.happyRange`), and heals to full over **120 s** (`legends.json` `healTime`).
 - **The party-legend Easter egg** (`legends.partyEgg` on): 100 💌s (`legends.partyHits`) turn a happy legend into a **party legend**. You can pick up its rune, but it never moves, and it pins you within 6.8 m of it (`legends.partyReach`). Totally useless, as intended.
 
-**Buffs** (`config/legend-buffs.json`): 32 of them, one per species. Each changes **only your 💌s or your movement**. **Nothing grants them now** (Ed, 2026-10-18: no quest boons, and flasks and happy legends give none; 2026-10-24: nor a legend on her leash); the file and the code stay, and `?buffs=` still forces some on for testing. Buffs stack, within limits. Examples:
-- Fox, *Charm*: 💌s home in hard.
-- Stag, *Pierce*: 💌s fly through the first animal.
-- Toad, *Spawn*: a 💌 that lands splits into three.
-- Wolf, *Howl*: every 5th throw adds a ring of 💌s round you.
-- Hare, *Dash bursts*: three blink charges.
-- Mole, *Burrow*: rise and land twice as fast.
-- Ram, *Steady*: no slowdown while firing.
-- Raven, *Wings*: faster treetops.
+**Buffs**: none. Legend buffs were designed 5 Oct (#87), switched off 18 and 24 Oct, and removed 28 Oct.
 
 **Slowed time in a calm circle.** While you stand on the ground inside the circle of a **sleeping or restless** legend, the **whole world slows to a tenth of its speed** (`legendCircle.slow.scale` 0.1, easing over 0.5 s). That includes the wave countdown, the music, every animal and every siege. You keep full speed.
 - No attack reaches you in there from outside.

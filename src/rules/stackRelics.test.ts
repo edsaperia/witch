@@ -6,8 +6,7 @@
 import { describe, expect, it } from "vitest";
 import type { Creature } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
-import { carryRelic, cycleStack, dropRelic, inviteCreature, newLeash, stackBottom, stackOrder, toBottom } from "./leash";
-import { LEGEND_BUFFS } from "./buffs";
+import { carryRelic, cycleStack, cycleStackBack, dropRelic, inviteCreature, newLeash, stackBottom, stackOrder, toBottom } from "./leash";
 import { LEGENDS } from "./legends";
 import { cellKey } from "./party";
 import { TUNING } from "./tuning";
@@ -47,6 +46,28 @@ describe("a relic's sigil in her stack", () => {
     expect(stackBottom(s)).toEqual({ kind: "relic", id: 5 });
   });
 
+  it("cycles back too (the pad's L1, Ed's layout 2026-10-28): the top sigil to the bottom, undoing a cycle forward", () => {
+    const s = newLeash();
+    s.stack.push(1, 2, 3);
+    carryRelic(s, 0);
+    expect(cycleStackBack(s)).toEqual({ kind: "creature", id: 1 });
+    expect(names(s)).toEqual(["c2", "c3", "r0", "c1"]);
+    expect(stackBottom(s)).toEqual({ kind: "creature", id: 1 });
+    cycleStack(s);
+    expect(names(s)).toEqual(["c1", "c2", "c3", "r0"]);
+    const one = newLeash(); one.stack.push(4);
+    expect(cycleStackBack(one)).toBeNull();
+  });
+
+  it("cycles back in play, on the cycle-back control", () => {
+    const g = newGame(5, TUNING);
+    g.clock.paused = false; g.party.paused = true;
+    g.leash.stack.push(...g.creatures.slice(0, 3).map(c => c.id));
+    const before = names(g.leash);
+    run(g, 0.2, { ...idle, cycleBack: true });
+    expect(names(g.leash)).toEqual([...before.slice(1), before[0]]);
+  });
+
   it("a relic alone, or a creature alone, doesn't cycle; the two together do", () => {
     const s = newLeash();
     carryRelic(s, 3);
@@ -62,7 +83,7 @@ describe("a relic's sigil in her stack", () => {
 function setup(): { g: Game; L: Creature; mine: Creature[]; relic: number; ring: { x: number; z: number; r: number } } {
   const g = newGame(123, NO_SLOW);
   g.clock.paused = false; g.party.paused = true; g.clearedAt = Infinity;
-  const L = g.creatures.find(c => c.boss && c.legendState === "asleep" && LEGEND_BUFFS.species[c.species] && !LEGENDS.charge.species.includes(c.species))!;
+  const L = g.creatures.find(c => c.boss && c.legendState === "asleep" && !LEGENDS.charge.species.includes(c.species))!;
   for (const c of g.creatures) if (!c.boss && (cellKey(c.cell) === cellKey(L.cell) || Math.hypot(c.x - L.x, c.z - L.z) < 120)) c.gone = true;
   for (const c of g.creatures) if (c.boss && c !== L && Math.hypot(c.x - L.x, c.z - L.z) < 700) c.gone = true;
   const ring = g.map.legendClearing(L.cell[0], L.cell[1])!;

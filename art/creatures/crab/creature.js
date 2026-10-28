@@ -12,12 +12,6 @@ export const CREATURE_CRAB = {
   },
   radius: 0.5,
   voice: { family: "bug", pitch: 0.6, am: [28, 0.9], noise: 0.45, volume: 1.3 },
-  buff: {
-    name: "Sidestep",
-    kind: "move",
-    scale: { groundAcceleration: 1.6, "dash.distance": 1.2 },
-    label: "Crab's Sidestep: quicker off the mark on foot, and a longer blink"
-  },
   character: { sprite: "shiver", every: [3, 6], for: 0.6 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },

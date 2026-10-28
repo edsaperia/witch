@@ -2,27 +2,29 @@
 // describes (coordinator, 2026-10-19, for Ed: stale lines in it misled new players).
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { KEYS, PAD } from "./platform/input";
+import { bindings, padName } from "./platform/bindings";
 
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
-const keys = html.slice(html.indexOf('<div class="keys">'), html.indexOf("</div>", html.indexOf('<div class="keys">')));
+const raw = html.slice(html.indexOf('<div class="keys">'), html.indexOf("</div>", html.indexOf('<div class="keys">')));
+const keys = raw.replace(/<[^>]+>/g, ""); // (as read: the spans the bindings fill, ui/controlsText.ts, hold the defaults)
 
 describe("the controls text", () => {
-  it("names the keys as input.ts binds them", () => {
-    expect(KEYS.autoTalk).toEqual(["KeyT"]);
+  it("names the keys and buttons as the bindings have them (platform/bindings.ts), each a span the bindings fill", () => {
+    expect(bindings.keys("game.autoTalk")).toEqual(["KeyT"]);
     expect(keys).toContain("T turns auto-talk on or off (off, she talks while Shift is held)");
-    expect(KEYS.talk).toContain("ShiftLeft");
-    expect(KEYS.place).toEqual(["KeyE"]); expect(KEYS.cycle).toEqual(["KeyQ"]); expect(KEYS.spell).toEqual(["KeyR"]); expect(KEYS.rise).toEqual(["Space"]);
-    // The pad: square the sigil, triangle the hat, circle cycles, the left stick pressed the broom's spell.
-    expect([PAD.sigil[0], PAD.hat[0], PAD.cycle[0], PAD.spell[0]]).toEqual([2, 3, 1, 10]);
-    expect(keys).toContain("square puts down or picks up");
-    expect(keys).toContain("triangle puts her hat down or picks it up · circle cycles the stack · pressing the left stick, her broom's spell");
+    expect(bindings.keys("game.talk")).toContain("ShiftLeft");
+    expect([bindings.keys("game.use"), bindings.keys("game.cycleNext"), bindings.keys("game.boost"), bindings.keys("game.rise")]).toEqual([["KeyE"], ["KeyQ"], ["KeyR"], ["Space"]]);
+    // The pad (Ed's layout, 2026-10-28): each span's default text is what the bindings fill it with.
+    for (const m of raw.matchAll(/<span data-pad="([^"]+)">([^<]*)<\/span>/g)) expect(m[2], m[1]).toBe(padName(m[1] as never));
+    expect(keys).toContain("□ rises or lands, and nothing else");
+    expect(keys).toContain("✕ uses what's here");
+    expect(keys).toContain("△ puts her hat down or picks it up · R1 and L1 cycle the stack");
   });
   it("covers the treehouse: the map's sea chart, the stations, the bed held", () => {
     for (const s of ["E at the map", "sea chart", "walking up to the mirror", "the bay fits her broom's parts", "E at the bestiary's book opens the zoo", "hold E at the bed"]) expect(keys).toContain(s);
   });
   it("keeps nothing stale: no Player pick, no Esc back to the start, no dodge diamond, no old pad layout", () => {
-    for (const s of ['"Player:"', "Esc back here", "diamond", "triangle cycles", "circle broom spell", "broom stand"]) expect(keys).not.toContain(s);
+    for (const s of ['"Player:"', "Esc back here", "diamond", "triangle cycles", "circle broom spell", "broom stand", "circle cycles the stack", "cross rises", "shoulder buttons zoom"]) expect(keys).not.toContain(s);
   });
 });
 

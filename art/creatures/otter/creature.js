@@ -15,12 +15,6 @@ export const CREATURE_OTTER = {
   temperament: "curious",
   traits: ["nimble"],
   voice: { family: "whistler", volume: 0.7 },
-  buff: {
-    name: "Skimming stone",
-    kind: "shot",
-    mods: { ricochet: 1 },
-    label: "Otter's Skimming stone: 💌s bounce on to another animal"
-  },
   character: { posture: { head: [0.02, 0.02], body: -0.01 }, quirk: "shake", every: [5, 9], for: 0.8 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },

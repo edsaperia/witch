@@ -28,7 +28,7 @@ import { DECOR_ROOMS } from "./houseDecor";
 import { Spotlight } from "./spotlight";
 import { LoanSparkle } from "./loanSparkle";
 import { UseGlow } from "./useGlow";
-import { keycapCanvas, wasdCanvas, type KeycapGlyph } from "../ui/keyHint";
+import { glyphOf, keycapCanvas, wasdCanvas, type KeycapGlyph } from "../ui/keyHint";
 import { atDecks } from "../rules/wakeUp";
 import { loanFind } from "../rules/finds";
 
@@ -446,11 +446,11 @@ export class HouseRoomsView {
     const waking = !!g.wake && (!g.wake.open || (at?.use.kind === "bed" && g.party.spellAt === null)); // (the new opening's wake-up, rules/wakeUp.ts: no tag while she's in bed; the bed's not for sleeping yet)
     // over it, the button that uses it (Ed's playtest, 2026-10-26: "there's a prompt showing the button to press to open it"; then
     // "Please remove words from the station tags. We used to have little keys to show 'WASD', can we use these for E"): a keycap
-    // alone, the old walking keys' (ui/keyHint.ts), E, the pad's □, or on a touch screen the keycap itself to tap; none while it's
+    // alone, the old walking keys' (ui/keyHint.ts), the use button as bound (E, the pad's ✕: ui/keyHint.ts glyphOf), or on a touch screen the keycap itself to tap; none while it's
     // open. Up at her decks before the party, E there starts it (rules/wakeUp.ts atDecks).
     const decks = !at && g.wake?.open && g.party.spellAt === null && atDecks(g) ? decksSpot(D) : null;
     const tagged = decks ?? (at && !this.said && !waking && !(at.use.kind === "pile" && !pileOut(g.wake)) ? at : null);
-    const usable = tagged && tagged.id !== v.houseOpen ? tagged : null, px = Math.max(2, Math.round(cv.width / Math.max(1, v.width))), glyph = USE_GLYPH[v.useDevice], cap = `${glyph}|${px}`;
+    const usable = tagged && tagged.id !== v.houseOpen ? tagged : null, px = Math.max(2, Math.round(cv.width / Math.max(1, v.width))), glyph = useGlyph(v.useDevice), cap = `${glyph}|${px}`;
     if (cap !== this.tagKey) { this.tagKey = cap; this.tag.replaceChildren(keycapCanvas(glyph, px)); }
     this.tapUse = usable && v.useDevice === "touch" ? v.onUse : null;
     this.tag.style.pointerEvents = this.tapUse ? "auto" : "none";
@@ -465,15 +465,15 @@ export class HouseRoomsView {
     } else this.ring.style.display = "none";
     // the wake-up in bed (rules/wakeUp.ts; Ed, 2026-10-26: "This should just be WASD in keycaps to the left of the bed and 'E
     // snooooze' to the right", "or the equivalent for controller"), in place of the card at the foot of the screen: the walking keys
-    // (a pad's left stick) beside the bed's left, its snooze key (a pad's □) and "snooooze" beside its right while it rings (not
+    // (a pad's left stick) beside the bed's left, its snooze key (the use button as bound) and "snooooze" beside its right while it rings (not
     // snoozing; every morning alike since Ed's playtest of v4821, one wake-up); the keys follow the device she last played with
     const wk = g.wake, inBed = !!wk && !wk.open && (wk.beat === "alarm" || wk.beat === "snooze"), bedObj = inBed ? HOUSE_ROOMS.objects.find(o => o.use.kind === "bed") ?? null : null;
-    const pad = v.useDevice === "pad", snooze = inBed && wk!.beat === "alarm", wkey = `${pad}|${px}`;
+    const pad = v.useDevice === "pad", snooze = inBed && wk!.beat === "alarm", wkey = `${pad}|${px}|${useGlyph(v.useDevice)}|${glyphOf("game.moveUp", "keys")}`;
     if (bedObj && wkey !== this.wakeKey) {
       this.wakeKey = wkey;
-      this.wakeL.replaceChildren(pad ? keycapCanvas("STICK", px) : wasdCanvas(px));
+      this.wakeL.replaceChildren(pad ? keycapCanvas(glyphOf("game.moveUp", "pad"), px) : wasdCanvas(px));
       const word = document.createElement("span"); word.textContent = "snooooze";
-      this.wakeR.replaceChildren(keycapCanvas(pad ? "SQ" : "E", px), word);
+      this.wakeR.replaceChildren(keycapCanvas(useGlyph(pad ? "pad" : "keys"), px), word);
     }
     const gap = 1.5; // (metres out from the bed's sides)
     place(this.wakeL, bedObj && { ...bedObj, x: bedObj.x - bedObj.w / 2 - gap }, 0.2);
@@ -482,8 +482,8 @@ export class HouseRoomsView {
   }
 }
 
-/** The use prompt's keycap on each device: E, the pad's left face button (the sigil's, platform/input.ts PAD), a tap. */
-export const USE_GLYPH: Record<"keys" | "pad" | "touch", KeycapGlyph> = { keys: "E", pad: "SQ", touch: "TAP" };
+/** The use prompt's keycap on each device: the use action's as bound now (platform/bindings.ts: E, the pad's cross), a tap. */
+export const useGlyph = (device: "keys" | "pad" | "touch"): KeycapGlyph => glyphOf("game.use", device);
 
 /** Her decks' spot for a tag, as a house object's (on the plan: rules/houseRooms.ts), just behind her seat. */
 function decksSpot(D: Deck): HouseObject {

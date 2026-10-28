@@ -23,13 +23,6 @@ export const CREATURE_ARMADILLO = {
   },
   radius: 0.5,
   voice: { family: "small", pitch: 0.75, noise: 0.35 },
-  buff: {
-    name: "Roll",
-    kind: "move",
-    scale: { "dash.distance": 1.2 },
-    add: { "dash.gone": 0.15 },
-    label: "Armadillo's Roll: a little longer blink, and untouchable a little longer after it"
-  },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
     ranged: null,

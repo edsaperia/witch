@@ -21,12 +21,6 @@ export const CREATURE_RHINO = {
   },
   radius: 1.5,
   voice: { family: "big", pitch: 0.7, noise: 0.4, am: [30, 0.5], volume: 1.3 },
-  buff: {
-    name: "Charge",
-    kind: "move",
-    scale: { groundSpeed: 1.25, groundAcceleration: 0.7 },
-    label: "Rhino's Charge: much faster on the ground, slower to get going"
-  },
   character: { posture: { head: [0.04, -0.07], body: 0 }, quirk: "stomp", every: [5, 9], for: 1.2 },
   pack: {
     melee: { attacks: [null, "nip", "maul"], knockback: 8 },

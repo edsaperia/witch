@@ -8,6 +8,7 @@ import { BOARD, PARTS, SETS, SLOTS, broomTuning, completeSet, emptySlot, fitPart
 import { broomSpell } from "../rules/spells";
 import { itemsToChoose, shownItems, type Shelf } from "../rules/wardrobe";
 import type { Tuning } from "../rules/tuning";
+import { bindings, type Bindings } from "../platform/bindings";
 
 /** One focusable line of the panel. `readOnly`: focus only, nothing chosen (the pegboard). */
 export interface Line { shelf: number; kind: "items" | "parts" | "grid" | "fit" | "cards" | "chips"; n: number; row?: number; axis?: string; readOnly?: boolean }
@@ -105,13 +106,11 @@ export const spellLine = (f: Fitted): string => { const s = completeSet(f); retu
 export const partsFound = (found: ReadonlySet<string>): string => `${PARTS.filter(p => found.has(p.id)).length} of ${PARTS.length} parts found`;
 export type { BroomPart };
 
-/** A gamepad on a station's panel (Ed's playtest, 2026-10-23: "right stick is probably more natural"): which way it moves the
- *  selector (the d-pad, or either stick pushed past half way, by its stronger axis: she stands still at it) and whether it
- *  chooses (the bottom face button, cross: as Space and Enter; the left one, square, is the use button that closes it, as E). */
-export function panelPad(buttons: readonly boolean[], axes: readonly number[]): { dir: "" | "up" | "down" | "left" | "right"; choose: boolean } {
-  const b = (i: number) => !!buttons[i], big = (i: number) => Math.abs(axes[i] ?? 0) > Math.abs(axes[i ^ 2] ?? 0) ? axes[i] ?? 0 : axes[i ^ 2] ?? 0; // (either stick: she stands still at it, Ed 2026-10-26)
-  const rx = big(2), ry = big(3);
-  const dir = b(12) ? "up" : b(13) ? "down" : b(14) ? "left" : b(15) ? "right"
-    : Math.max(Math.abs(rx), Math.abs(ry)) < 0.5 ? "" : Math.abs(rx) > Math.abs(ry) ? (rx > 0 ? "right" : "left") : ry > 0 ? "down" : "up";
-  return { dir, choose: b(0) }; // (cross: square, the use button, closes it, Ed 2026-10-26)
+/** A gamepad on a station's panel (Ed's playtest, 2026-10-23; his layout, 2026-10-28: "the left stick or d-pad moves the highlight",
+ *  cross chooses, circle goes back): which way it moves the highlight (the menu's directions, platform/bindings.ts: the d-pad, or the
+ *  left stick pushed past half way, by its strongest) and whether choose is held (main.ts closes it on back, through padControls). */
+export function panelPad(buttons: readonly boolean[], axes: readonly number[], B: Bindings = bindings): { dir: "" | "up" | "down" | "left" | "right"; choose: boolean } {
+  let dir: "" | "up" | "down" | "left" | "right" = "", best = 0.5;
+  for (const d of ["up", "down", "left", "right"] as const) { const v = B.padValue(`menu.${d}`, buttons, axes); if (v >= best) { best = v + 1e-9; dir = d; } }
+  return { dir, choose: B.padHeld("menu.choose", buttons, axes) };
 }

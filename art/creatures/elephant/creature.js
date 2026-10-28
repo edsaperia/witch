@@ -23,12 +23,6 @@ export const CREATURE_ELEPHANT = {
   attacks: [null, "slam", "bigslam", "quake"],
   traits: ["heavy"],
   voice: { family: "big", pitch: 0.6, glide: 0.9, volume: 0.9 },
-  buff: {
-    name: "Trumpet",
-    kind: "shot",
-    scale: { "invites.radius": 1.6, "invites.range": 1.2 },
-    label: "Elephant's Trumpet: bigger 💌s that carry further"
-  },
   character: { posture: { head: [0.02, -0.03], body: 0 }, quirk: "stomp", every: [6, 12], for: 1.4 },
   pack: {
     melee: { attacks: [null, "swipe", "bigswipe"], knockback: 10 },

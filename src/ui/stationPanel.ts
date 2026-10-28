@@ -1,24 +1,27 @@
 // A dressing station's panel (Ed, 2026-10-21, the station menus; the mock, previews/ed/station-menus-mock on claude/ed-shots): it
-// slides in from the left on E at a station and away on E again (the pad's □), she standing still at it (main.ts, rules/stations.ts;
+// slides in from the left on E at a station and away on E again (the pad's ✕ opens it, ○ closes it: platform/bindings.ts), she standing still at it (main.ts, rules/stations.ts;
 // Ed, 2026-10-26), over the live game.
 // Its shelves (rules/wardrobe.ts) hold the things she owns, silhouettes for those still to find (no hint: Ed), each shelf's
 // colour grid (5 rows: every colour hers), its fit sliders; and the Workshop's (Ed, 2026-10-22/23; docs/backlog/workshop.md): the bay's
 // part cards (a slot's parts, the empty slot first, the unfound greyed), the sets' chips, the focused part's stats and "Her broom",
 // fitted at once (onFit: main.ts puts them on her broom mid-night and keeps them, app/broomSave.ts); the lathe's colours and fit (no
 // items); the pegboard's 3 × 3 biome board, read-only (its lines focus, nothing is chosen). The mouse points and clicks;
-// the d-pad or the arrow keys move through it, each owned item or colour landed on going on her at once (Ed: "landing on an item
-// wears it at once"); WASD and the left stick only ever walk her. Each change shows on her a beat later (onLook) and she turns to
-// show it (onChange). Her room (ui/creator.ts) is the full-screen creator; this is only the stations'.
+// the d-pad or the arrow keys move its focus, and only choosing (choose, platform/bindings.ts, or a click) puts what's in focus
+// on her (Ed, 2026-10-28: "she should change only when I press the 'choose' button"; till then landing on an item wore it at once),
+// so leaving without choosing leaves her as she was (the focus and the choices: ui/stationChoice.ts). Each change shows on her a
+// beat later (onLook) and she turns to show it (onChange). Her room (ui/creator.ts) is the full-screen creator; this is only the stations'.
 import * as Art from "../../art/generator.js";
 import type { Style } from "../render/style";
 import { bareHeadAt, CLOTH_COLS, CLOTH_ROWS, GRID_ROWS, shownItems, SKIN_COLS, skinSwatch, wear, wears, type Shelf, type WardrobeItem } from "../rules/wardrobe";
 import { BOARD, partById, type Fitted } from "../rules/broomParts";
 import type { Tuning } from "../rules/tuning";
 import { broomColours, partCanvas } from "../render/workshopArt";
-import { broomSummary, canChoose, cardAt, choose, panelPad, partStats, partsFound, setChips, setsOf, spellLine, stationLines, type Line } from "./stationLines";
+import { broomSummary, cardAt, panelPad, partStats, partsFound, setChips, setsOf, spellLine, type Line } from "./stationLines";
+import { PanelChoice } from "./stationChoice";
+import { bindings } from "../platform/bindings";
 import { classicPalette, cpuCanvas, slot, swatchAt } from "./creator";
 import { SlideIn } from "./slideIn";
-import { keycapHtml } from "./keyHint";
+import { glyphOf, keycapHtml } from "./keyHint";
 
 type Genome = Record<string, unknown> & { palette: Record<string, number[]> | null; accessories: Record<string, unknown> };
 type Sprite = { A: HTMLCanvasElement; w: number; h: number };
@@ -55,22 +58,25 @@ export class StationPanel {
   onDress: () => void = () => {};
   /** Her broom's parts changed at the bay (a card chosen: fitted at once). */
   onFit: (f: Fitted) => void = () => {};
+  /** Back (platform/bindings.ts menu.back: E, the pad's circle) pressed while it's open: main.ts closes it (the pad's goes through padControls). */
+  onBack: () => void = () => {};
   private id: string | null = null;
   private shelves: Shelf[] = [];
-  private g!: Genome;
-  private owned = new Set<string>();
+  /** The focus and what's chosen (ui/stationChoice.ts): her look, what she owns, her broom's parts. */
+  private c!: PanelChoice;
+  private get g(): Genome { return this.c.g as Genome; }
+  private set g(v: Genome) { this.c.g = v; }
+  private get owned(): ReadonlySet<string> { return this.c.owned; }
   /** Tonight's find on loan (app/loan.ts), its card sparkling (Ed, 2026-10-24: no words, "sparkly somehow"), or null. */
   private loaned: string | null = null;
   private ws: WorkshopCtx | null = null;
   private banner = "";
   private st: Style;
-  /** The focus (a line and a place along it), the shelf whose colours are open, each shelf's chosen part, what the mouse is over. */
-  private at = { line: 0, col: 0 };
-  private part = new Map<string, string>();
+  /** The focus (a line and a place along it: PanelChoice's), and what the mouse is over (it only highlights). */
+  private get at(): { line: number; col: number } { return this.c.at; }
+  private set at(v: { line: number; col: number }) { this.c.at = v; }
   private hover: { line: number; col: number } | null = null;
   private pointerIn = false;
-  /** A choice made on something still to be found (pick): its place, till the focus moves (paintDetail says so). */
-  private nope: { line: number; col: number } | null = null;
   private padChoose = false;
   private navAt = -1e9;
   private lookTimer = 0;
@@ -95,18 +101,18 @@ export class StationPanel {
       e.preventDefault();
       const line = +t.dataset.line!, L = this.lines()[line];
       if (L?.kind === "fit") { const bar = t.querySelector<HTMLElement>(".bar") ?? t; const set = (x: number) => { const r = bar.getBoundingClientRect(); this.setFit(L.axis!, (x - r.left) / r.width); }; set(e.clientX); const mv = (m: PointerEvent) => set(m.clientX), up = () => { window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); }; window.addEventListener("pointermove", mv); window.addEventListener("pointerup", up); this.at = { line, col: 0 }; this.paint(); return; }
-      this.go(line, +t.dataset.col!);
+      this.c.focus(line, +t.dataset.col!); this.pick(); // (a click chooses: the pointer over it only highlights)
     });
     // The arrow keys move through the panel while it's open (Ed, 2026-10-21: "the arrow keys move through the panel at a station;
     // WASD still walks her"): taken before the game's input sees them.
-    // Space or Enter chooses what's in focus (E did, till Ed's 2026-10-26: "E should also close, and we can have spacebar to select"; Ed's playtest, 2026-10-23: "I can't select them, I can only move the selector
-    // around"): landing on an owned item already wears it; choosing does too, and says when it's still to be found.
+    // Choose (Space or Enter by default: platform/bindings.ts) chooses what's in focus, and says when it's still to be found; moving
+    // only moves the focus (Ed, 2026-10-28). Back (E by default) closes it (onBack: main.ts), a held one's repeats ignored.
     window.addEventListener("keydown", e => {
       if (!this.id) return;
-      const d = ARROWS[e.code], pick = CHOOSE.has(e.code);
-      if (!d && !pick) return;
+      const d = menuDir(e.code), pick = bindings.keys("menu.choose").includes(e.code), back = bindings.keys("menu.back").includes(e.code);
+      if (!d && !pick && !back) return;
       e.preventDefault(); e.stopImmediatePropagation();
-      if (d) this.move(d[0], d[1]); else if (!e.repeat) this.pick();
+      if (d) this.move(d[0], d[1]); else if (e.repeat) return; else if (pick) this.pick(); else this.onBack();
     }, true);
   }
 
@@ -126,7 +132,13 @@ export class StationPanel {
 
   /** Slides `station`'s panel in (another's swapped for it) with her look, what she owns and (the Workshop's) her broom's parts. */
   open(station: string, shelves: Shelf[], g: Genome, owned: Set<string>, banner = "", ws: WorkshopCtx | null = null): void {
-    this.id = station; this.shelves = shelves; this.g = clone(g); this.owned = owned; this.banner = banner; this.ws = ws;
+    this.id = station; this.shelves = shelves; this.banner = banner; this.ws = ws;
+    this.c = new PanelChoice(shelves, clone(g), owned, ws?.found ?? new Set(), ws ? { ...ws.fitted } : null, {
+      grid: s => ({ cols: s.grid === "skin" ? SKIN_COLS : CLOTH_COLS, rows: GRID_ROWS }),
+      swatch: (s, col, row) => this.swatch(s, col, row),
+      palette: g2 => ({ ...classicPalette(this.st), ...g2.palette }),
+      fitOn: (a, g2) => !FIT_NEEDS[a] || FIT_NEEDS[a](g2 as Genome),
+    });
     this.navAt = -1e9; this.hover = null;
     this.padChoose = true; // (the pad's use button that opened it is held: let go first, then a press chooses)
     const L = this.lines(), first = L.findIndex(l => l.kind === "items" || (l.kind === "cards" && !l.readOnly));
@@ -148,7 +160,12 @@ export class StationPanel {
     delete this.root.dataset.station;
   }
   /** The Workshop's state changed elsewhere (a part found, her broom changed): the panel follows. */
-  setWorkshop(ws: WorkshopCtx): void { if (this.id && this.ws && JSON.stringify([...ws.found, ws.fitted, ws.tonight]) !== JSON.stringify([...this.ws.found, this.ws.fitted, this.ws.tonight])) { this.ws = ws; this.paint(); } else if (this.ws) this.ws = ws; }
+  setWorkshop(ws: WorkshopCtx): void {
+    const changed = !!this.id && !!this.ws && JSON.stringify([...ws.found, ws.fitted, ws.tonight]) !== JSON.stringify([...this.ws.found, this.ws.fitted, this.ws.tonight]);
+    if (this.ws) this.ws = ws;
+    if (this.id && this.c && this.ws) { this.c.found = ws.found; this.c.fitted = { ...ws.fitted }; }
+    if (changed) this.paint();
+  }
   /** Her look changed elsewhere (her room, a hat put on): the panel's copy follows. */
   /** Tonight's loan (its id, or null): its card sparkles, the panel repainted if it's open and that changed. */
   setLoaned(id: string | null): void { if (id !== this.loaned) { this.loaned = id; if (this.id) this.paint(); } }
@@ -171,12 +188,10 @@ export class StationPanel {
 
   // ---- what's on it ----
   /** The panel's lines, top to bottom (ui/stationLines.ts). */
-  private lines(): Line[] {
-    return stationLines(this.shelves, { owned: this.owned, fitOn: a => this.fitOn(a), grid: s => ({ cols: s.grid === "skin" ? SKIN_COLS : CLOTH_COLS, rows: GRID_ROWS }) });
-  }
+  private lines(): Line[] { return this.c.lines(); }
   private found_(): ReadonlySet<string> { return this.ws?.found ?? new Set(); }
   private fitOn(axis: string): boolean { return !FIT_NEEDS[axis] || FIT_NEEDS[axis](this.g); }
-  private partOf(s: Shelf): string { const p = this.part.get(s.id); return p && s.colour!.includes(p) ? p : s.colour![0]; }
+  private partOf(s: Shelf): string { return this.c.partOf(s); }
   private colourOf(part: string): number[] { return { ...classicPalette(this.st), ...this.g.palette }[part] ?? [.07, .5, .45]; }
   private swatch(s: Shelf, col: number, row: number): number[] { return s.grid === "skin" ? skinSwatch(col, row) : swatchAt(col, CLOTH_ROWS[row]); }
   /** The swatch nearest her colour for `s`'s chosen part (column, row of its 5), by red, green and blue as the eye weighs them. */
@@ -194,57 +209,34 @@ export class StationPanel {
   private fitRange(axis: string): [number, number] { const [lo, hi] = AXES[axis] as number[]; return [axis in FIT_NEEDS ? Math.max(lo, .25) : lo, hi]; }
 
   // ---- moving and choosing ----
+  /** The focus moved (the d-pad, the arrows, the stick): nothing on her changes (Ed, 2026-10-28); a fit slider's ◀ ▶ moves it. */
   private move(dx: number, dy: number): void {
     const L = this.lines(); if (!L.length) return;
     this.navAt = 1; this.hover = null;
-    let { line, col } = this.at;
-    const cur = L[Math.min(line, L.length - 1)];
-    if (dy) {
-      const next = Math.max(0, Math.min(L.length - 1, line + dy));
-      if (next === line) return;
-      const to = L[next];
-      // from a shelf's items to its grid and back: the same share of the way along
-      col = cur.n > 1 && to.n > 1 && cur.kind !== to.kind ? Math.round(col / (cur.n - 1) * (to.n - 1)) : Math.min(col, to.n - 1);
-      line = next;
-    } else if (cur.kind === "fit") { const [lo, hi] = this.fitRange(cur.axis!); this.setFit(cur.axis!, (this.fitValue(cur.axis!) - lo) / (hi - lo) + dx * .1); return; }
-    else { col = Math.max(0, Math.min(cur.n - 1, col + dx)); if (col === this.at.col) return; }
-    this.go(line, col);
+    const cur = L[Math.min(this.at.line, L.length - 1)];
+    if (!dy && cur.kind === "fit") { const [lo, hi] = this.fitRange(cur.axis!); this.setFit(cur.axis!, (this.fitValue(cur.axis!) - lo) / (hi - lo) + dx * .1); return; }
+    if (this.c.move(dx, dy)) this.paint();
   }
-  /** Choose what's in focus (Enter, Space, E, the pad's A or X): as landing on it, and a locked one says it's still to be found. */
+  /** Choose what's in focus (confirm, a click): an owned item or a colour on her, the part the colours are for, a broom part fitted
+   *  at the bay; a locked one says it's still to be found. */
   private pick(): void {
-    const l = this.lines()[this.at.line]; if (!l) return;
-    const s = this.shelves[l.shelf], locked = l.kind === "items" ? !this.owned.has(shownItems(s)[this.at.col].id) : l.kind === "cards" && !!s.slot && !!this.ws && !canChoose(s, l, this.at.col, this.found_());
-    this.nope = locked ? this.at : null;
-    this.go(this.at.line, this.at.col);
-  }
-  private tried(at: { line: number; col: number }): boolean { return !!this.nope && this.nope.line === at.line && this.nope.col === at.col; }
-  /** Focus a place, and choose what's there (an owned item or a colour on her, a part to colour, a broom part fitted at the bay;
-   *  a read-only line, the pegboard's, only focuses). */
-  private go(line: number, col: number): void {
-    const L = this.lines(), l = L[line]; if (!l) return;
-    const s = this.shelves[l.shelf];
-    this.at = { line, col };
-    if (l.kind === "items") {
-      const it = shownItems(s)[col];
-      if (this.owned.has(it.id) && !wears(this.g, it)) this.change(wear(this.g, it) as Genome);
-    } else if (l.kind === "parts") this.part.set(s.id, s.colour![col]);
-    else if (l.kind === "grid") { const part = this.partOf(s), c = this.swatch(s, col, l.row!); this.change({ ...this.g, palette: { ...classicPalette(this.st), ...this.g.palette, [part]: c } }); }
-    else if (l.kind === "cards" && s.slot && this.ws && canChoose(s, l, col, this.found_())) {
-      const id = cardAt(s, l, col);
-      if (this.ws.fitted[s.slot] !== id) { this.ws = { ...this.ws, fitted: choose(this.ws.fitted, s.slot, id) }; this.onFit(this.ws.fitted); this.onChange(); }
-    }
+    const r = this.c.choose();
+    if (r.look) this.change(r.look);
+    if (r.fitted && this.ws) { this.ws = { ...this.ws, fitted: r.fitted }; this.onFit(r.fitted); this.onChange(); }
     this.paint();
   }
+  private tried(at: { line: number; col: number }): boolean { const n = this.c.nope; return !!n && n.line === at.line && n.col === at.col; }
   private setFit(axis: string, share: number): void {
     if (!this.fitOn(axis)) return;
     const [lo, hi] = this.fitRange(axis), v = +(lo + Math.max(0, Math.min(1, share)) * (hi - lo)).toFixed(3);
     if (Math.abs(v - this.fitValue(axis)) < 1e-6) return;
     const g = clone(this.g), [p, k] = slot(axis);
     if (p) (g[p] as Record<string, unknown>)[k] = v; else g[k] = v;
-    this.change(g); this.paint();
+    if (JSON.stringify(g) !== JSON.stringify(this.g)) this.change(g);
+    this.paint();
   }
   private change(g: Genome): void {
-    if (JSON.stringify(g) !== JSON.stringify(this.g)) this.onDress();
+    this.onDress(); // (a change chosen: she twirls while it draws)
     this.g = g;
     clearTimeout(this.lookTimer); this.lookTimer = window.setTimeout(() => this.lookNow(), LOOK_AFTER);
     this.onChange();
@@ -306,7 +298,7 @@ export class StationPanel {
     let title = "", text = "", locked = false, sub = "", stats: { name: string; from: string; to: string; better: boolean | null }[] = [];
     if (l) {
       const s = this.shelves[l.shelf];
-      if (l.kind === "items") { const it = shownItems(s)[at.col]; locked = !this.owned.has(it.id); title = locked ? "🔒" : it.name; text = locked ? (this.tried(at) ? "Not found yet." : "") : wears(this.g, it) ? "Wearing." : "Hers."; } // (a silhouette, nothing more: Ed, 2026-10-21; chosen anyway, it says it's not hers yet)
+      if (l.kind === "items") { const it = shownItems(s)[at.col]; locked = !this.owned.has(it.id); title = locked ? "🔒" : it.name; text = locked ? (this.tried(at) ? "Not found yet." : "") : wears(this.g, it) ? "Wearing." : "Hers: choose to wear it."; } // (a silhouette, nothing more: Ed, 2026-10-21; chosen anyway, it says it's not hers yet)
       else if (l.kind === "cards" && s.board) {
         const id = cardAt(s, l, at.col)!, cell = BOARD[(l.row ?? 0) * 3 + at.col], own = this.found_().has(id), where = `${cell.point.toLowerCase()} · ${cell.biome.toLowerCase()}`;
         if (own) { title = partById(id)!.name; text = `${where}. ${setsOf(id).map(n => `${n} set`).join(", ")}. Fit it at the bay.`; }
@@ -318,8 +310,8 @@ export class StationPanel {
         else if (!this.found_().has(p.id)) { title = "🔒"; locked = true; if (this.tried(at)) text = "Not found yet."; } // (unfound: a silhouette, no hint)
         else { title = p.name; sub = `${p.slot}${setsOf(p.id).length ? ` · ${setsOf(p.id).join(", ")} set${setsOf(p.id).length > 1 ? "s" : ""}` : ""}`; stats = this.ws ? partStats(p.id, this.ws.tuning) : []; text = this.ws?.fitted[p.slot] === p.id ? "On her broom." : "Choose it to fit it."; }
       } else if (l.kind === "chips") { const x = setChips(this.ws?.fitted ?? { tip: null, chassis: null, exhaust: null })[at.col]; title = `${x.name} · ${x.spell}`; text = x.whole ? `Whole: R casts ${x.spell}.` : `${x.fitted} of its ${x.of} parts on her broom.`; }
-      else if (l.kind === "parts") { title = `Colour: ${PART_NAMES[s.colour![at.col]] ?? s.colour![at.col]}`; text = "Every colour is hers."; }
-      else if (l.kind === "grid") { title = `${s.label}: colour`; text = "Every colour is hers."; }
+      else if (l.kind === "parts") { const p = s.colour![at.col]; title = `Colour: ${PART_NAMES[p] ?? p}`; text = p === this.partOf(s) ? "The colours below are for this." : "Choose it to colour it below."; }
+      else if (l.kind === "grid") { const [sc, sr] = this.chosenSwatch(s); title = `${s.label}: colour`; text = sc === at.col && sr === l.row ? "Wearing." : "Every colour is hers: choose to put it on."; }
       else { const on = !FIT_NEEDS[l.axis!] || FIT_NEEDS[l.axis!](this.g); title = FIT_NAMES[l.axis!] ?? l.axis!; text = on ? "◀ ▶ or drag to change it." : "Put it on first."; }
     }
     box.className = `sp-detail${locked ? " locked" : ""}`;
@@ -372,16 +364,18 @@ export function wearPicture(st: Style, g: Record<string, unknown>, it: WardrobeI
 
 // (WASD too: she stands still while it's open, the movement keys its buttons; Ed, 2026-10-26: "walking away shouldn't work - then
 // we can use the movement keys as buttons in the menus")
-const ARROWS: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1], KeyA: [-1, 0], KeyD: [1, 0], KeyW: [0, -1], KeyS: [0, 1] };
-/** The keys and pad buttons (A, X) that choose what's in focus. */
+const menuDir = (code: string): [number, number] | null => {
+  for (const d of ["left", "right", "up", "down"] as const) if (bindings.keys(`menu.${d}`).includes(code)) return PAD_DIRS[d];
+  return null;
+};
 /** The panel's hint line, keycaps and no words, three groups on the device she plays with (Ed, 2026-10-26: "hint line: trim it"):
- *  move (WASD; a pad's stick), choose (Space; ✕) and close (E; □). Enter and the arrows still work, unshown; on touch she taps
+ *  move (WASD; a pad's stick), choose (Space; ✕) and close (E; ○), as bound now (platform/bindings.ts). Enter and the arrows still work, unshown; on touch she taps
  *  what she wants, and the corner's keycap closes it (main.ts). */
 export const footHtml = (device: "keys" | "pad" | "touch"): string =>
-  device === "pad" ? `${keycapHtml("STICK")} · ${keycapHtml("X")} · ${keycapHtml("SQ")}`
+  device === "pad" ? `${keycapHtml(`pad:${bindings.pad("menu.up").find(p => p.startsWith("ls") || p.startsWith("rs")) ?? bindings.pad("menu.up")[0] ?? "?"}`)} · ${keycapHtml(glyphOf("menu.choose", "pad"))} · ${keycapHtml(glyphOf("menu.back", "pad"))}`
   : device === "touch" ? keycapHtml("TAP")
-  : `${(["W", "A", "S", "D"] as const).map(g => keycapHtml(g)).join("")} · <span class="k">Space</span> · ${keycapHtml("E")}`;
-const CHOOSE = new Set(["Enter", "NumpadEnter", "Space"]); // (Space chooses, E closes it: Ed, 2026-10-26, "E should also close, and we can have spacebar to select")
+  : `${(["menu.up", "menu.left", "menu.down", "menu.right"] as const).map(id => keycapHtml(glyphOf(id, "keys"))).join("")} · ${keycapHtml(glyphOf("menu.choose", "keys"))} · ${keycapHtml(glyphOf("menu.back", "keys"))}`;
+// (the keys and the pad as bound now, platform/bindings.ts: a remap shows here too, Ed 2026-10-28)
 const PAD_DIRS: Record<string, [number, number]> = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] };
 const STATION_NAMES: Record<string, string> = { mirror: "Mirror", dressingTable: "Dressing table", wardrobe: "Wardrobe", cloakPegs: "Cloak pegs", shoeRack: "Shoe rack", bags: "Bags", broomBay: "The bay", lathe: "Lathe", pegboard: "Pegboard" };
 const ART_M = Art.M as Record<string, number>;
@@ -408,7 +402,7 @@ function installCss(): void {
 #station-panel .sp-card { position: relative; width: 50px; height: 50px; border-radius: 8px; background: radial-gradient(closest-side, rgba(11,7,22,.55), rgba(11,7,22,0)); display: grid; place-items: center; cursor: pointer; box-sizing: border-box; }
 #station-panel .sp-card canvas { image-rendering: pixelated; width: auto; height: 46px; max-width: 46px; object-fit: contain; filter: drop-shadow(1px 0 0 var(--ol)) drop-shadow(-1px 0 0 var(--ol)) drop-shadow(0 1px 0 var(--ol)) drop-shadow(0 -1px 0 var(--ol)); }
 #station-panel .sp-card.locked { cursor: default; } #station-panel .sp-card.locked canvas { filter: brightness(0) invert(.22) drop-shadow(1px 0 0 rgba(232,226,244,.5)) drop-shadow(-1px 0 0 rgba(232,226,244,.5)) drop-shadow(0 1px 0 rgba(232,226,244,.5)) drop-shadow(0 -1px 0 rgba(232,226,244,.5)); }
-#station-panel .focus { outline: 2px solid var(--accent, #e8b46a); outline-offset: 1px; box-shadow: 0 0 10px rgba(232,180,106,.6), inset 0 0 0 1px var(--ol); }
+#station-panel .focus { outline: 2px solid #fff; outline-offset: 1px; box-shadow: 0 0 10px rgba(255,255,255,.75), inset 0 0 0 1px var(--ol); }
 #station-panel .sp-card.worn:not(.focus) { outline: 1px solid rgba(232,180,106,.7); outline-offset: 1px; }
 #station-panel .sp-none { font-style: normal; font-size: 22px; color: var(--ink, #e8e2f4); }
 #station-panel .sp-tick { position: absolute; top: 1px; right: 1px; width: 14px; height: 14px; border-radius: 50%; background: var(--accent, #e8b46a); color: #1a1430; font-size: 9px; display: grid; place-items: center; text-shadow: none; box-shadow: 0 0 0 1px var(--ol); }
@@ -417,7 +411,7 @@ function installCss(): void {
 #station-panel .sp-parts span.on { opacity: 1; color: var(--accent, #e8b46a); } #station-panel .sp-parts i { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 0 1px var(--ol); }
 #station-panel .sp-grid { display: grid; gap: 1px; padding: 1px; background: var(--ol); border-radius: 3px; width: fit-content; } #station-panel .sp-grid + .sp-grid { margin-top: -1px; }
 #station-panel .sp-grid i { width: 17px; height: 9px; cursor: pointer; position: relative; display: block; }
-#station-panel .sp-grid i.sel { outline: 2px solid var(--accent, #e8b46a); outline-offset: 0; z-index: 1; } #station-panel .sp-grid i.focus { outline: 2px solid #fff; z-index: 2; box-shadow: 0 0 6px rgba(255,255,255,.8); }
+#station-panel .sp-grid i.sel { outline: 2px solid var(--accent, #e8b46a); outline-offset: 0; z-index: 1; position: relative; } #station-panel .sp-grid i.sel::after { content: "✓"; position: absolute; inset: 0; display: grid; place-items: center; font-size: 9px; font-style: normal; color: #fff; text-shadow: 0 0 2px #000, 0 0 2px #000; } #station-panel .sp-grid i.focus { outline: 2px solid #fff; z-index: 2; box-shadow: 0 0 6px rgba(255,255,255,.8); }
 #station-panel .sp-fit { display: flex; align-items: center; gap: 10px; padding: 1px 2px; border-radius: 6px; cursor: pointer; } #station-panel .sp-fit.off { opacity: .45; cursor: default; }
 #station-panel .sp-fit span { width: 100px; font-size: 12px; } #station-panel .sp-fit .bar { position: relative; flex: 1; height: 4px; background: rgba(232,226,244,.55); border-radius: 2px; box-shadow: 0 0 0 1px var(--ol); }
 #station-panel .sp-fit .bar i { position: absolute; top: -5px; width: 8px; height: 14px; margin-left: -4px; border-radius: 3px; background: var(--accent, #e8b46a); box-shadow: 0 0 0 1px var(--ol); }

@@ -10,12 +10,6 @@ export const CREATURE_CAT = {
   radius: 0.6,
   temperament: "skittish",
   voice: { family: "cat", pitch: 1.3, volume: 0.35 },
-  buff: {
-    name: "Paw prints",
-    kind: "shot",
-    mods: { trail: 1 },
-    label: "Wildcat's Paw prints: 💌s leave a trail of paw prints that lands too"
-  },
   character: { posture: { head: [0.03, 0], body: -0.01 }, quirk: "tailflick", every: [3, 7], for: 0.8 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },

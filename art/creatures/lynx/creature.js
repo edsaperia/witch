@@ -10,12 +10,6 @@ export const CREATURE_LYNX = {
   radius: 0.8,
   temperament: "skittish",
   voice: { family: "cat", volume: 0.4 },
-  buff: {
-    name: "Poise",
-    kind: "move",
-    scale: { groundAcceleration: 2, "treetop.turnRate": 1.4 },
-    label: "Lynx's Poise: sharper turns, quicker starts"
-  },
   character: { posture: { head: [0.04, -0.02], body: -0.03 }, quirk: "tailflick", every: [3, 6], for: 0.6 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },

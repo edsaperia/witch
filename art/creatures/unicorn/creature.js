@@ -22,12 +22,6 @@ export const CREATURE_UNICORN = {
   radius: 1.1,
   temperament: "skittish",
   voice: { family: "big", pitch: 1.5, glide: 0.9, dur: 1.2, noise: 0.1 },
-  buff: {
-    name: "Grace",
-    kind: "move",
-    scale: { "dash.distance": 1.2, groundAcceleration: 1.5 },
-    label: "Unicorn's Grace: a longer blink and quicker starts"
-  },
   character: { posture: { head: [-0.02, 0.08], body: 0.01 }, quirk: "stomp", every: [5, 10], for: 1.2 },
   pack: {
     melee: { attacks: [null, "nip", "maul"] },
