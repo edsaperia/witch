@@ -21,7 +21,8 @@ export function islandArtSeed(world: number, island: string): number {
 declare const __ART_HASH__: string;
 export const ART_HASH = typeof __ART_HASH__ === "string" ? __ART_HASH__ : "dev";
 
-const DB = "witch-art", STORE = "sets";
+// (version 2: atlases kept as palette indices, render/palette.ts; the RGBA sets of version 1 are let go as it opens)
+const DB = "witch-art", STORE = "sets", VERSION = 2;
 let opening: Promise<IDBDatabase | null> | null = null;
 
 function open(): Promise<IDBDatabase | null> {
@@ -29,8 +30,8 @@ function open(): Promise<IDBDatabase | null> {
   opening = new Promise<IDBDatabase | null>(resolve => {
     try {
       if (typeof indexedDB === "undefined") return resolve(null);
-      const r = indexedDB.open(DB, 1);
-      r.onupgradeneeded = () => { try { r.result.createObjectStore(STORE); } catch { /* answered by onerror */ } };
+      const r = indexedDB.open(DB, VERSION);
+      r.onupgradeneeded = () => { try { if (r.result.objectStoreNames.contains(STORE)) r.result.deleteObjectStore(STORE); r.result.createObjectStore(STORE); } catch { /* answered by onerror */ } };
       r.onsuccess = () => resolve(r.result);
       r.onerror = () => resolve(null);
       r.onblocked = () => resolve(null);

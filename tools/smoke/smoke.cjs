@@ -875,8 +875,9 @@ async function main() {
     await shot(page, "ground-cave-mouth.png");
     const r = await page.evaluate(() => {
       const v = window.witch.view, out = { n: 0, worst: 0, bad: [] };
+      const rgba = (t, p, on) => { const d = t.image.data; if (!on || !d) return d; const P = p.image.data, o = new Uint8Array(d.length * 4); for (let i = 0; i < d.length; i++) { const k = d[i] * 4; o[i * 4] = P[k]; o[i * 4 + 1] = P[k + 1]; o[i * 4 + 2] = P[k + 2]; o[i * 4 + 3] = P[k + 3]; } return o; }; // (an indexed plane as RGBA: render/palette.ts)
       for (const [type, b] of [...v.typeBatches, ...[...v.decorBatches].filter(([k]) => k !== "decals" && k !== "sceneDecals"), ["treehouse", v.treehouseBatch]]) { // decals lie flat
-        const img = b.atlas.albedo.image, W = img.width, H = img.height, D = img.data;
+        const img = b.atlas.albedo.image, W = img.width, H = img.height, D = rgba(b.atlas.albedo, b.atlas.albedoPal, b.atlas.indexed.x > 0.5);
         for (const it of b.items) {
           if (it.top || it.overlay) continue; // (crowns, and the treehouse's DJ table drawn over it, stand on their trunk)
           if (type === "treehouse" && it.scale !== undefined) continue; // (the Ent's halves, moved along the camera's rays to land on their own pixels: render/view/home.ts alongRay; their y isn't a ground height)
@@ -900,8 +901,9 @@ async function main() {
     // in the slope; where the ground at an end of its drawn foot is lower than that, the end floats. None may float past 1 art px.
     const hr = await page.evaluate(() => {
       const v = window.witch.view, h = window.witch.groundHeight, R = window.witch.spriteRight(), out = { n: 0, worst: 0, bad: [], hilly: 0 };
+      const rgba = (t, p, on) => { const d = t.image.data; if (!on || !d) return d; const P = p.image.data, o = new Uint8Array(d.length * 4); for (let i = 0; i < d.length; i++) { const k = d[i] * 4; o[i * 4] = P[k]; o[i * 4 + 1] = P[k + 1]; o[i * 4 + 2] = P[k + 2]; o[i * 4 + 3] = P[k + 3]; } return o; }; // (an indexed plane as RGBA: render/palette.ts)
       for (const [type, b] of [...v.typeBatches, ...v.creatureBatches, ...[...v.decorBatches].filter(([k]) => k !== "decals"), ["treehouse", v.treehouseBatch]]) { // (she hovers)
-        const img = b.atlas.albedo.image, W = img.width, D = img.data;
+        const img = b.atlas.albedo.image, W = img.width, D = rgba(b.atlas.albedo, b.atlas.albedoPal, b.atlas.indexed.x > 0.5);
         for (const it of b.items) {
           if (it.top || it.overlay) continue; // (crowns, and the treehouse's DJ table drawn over it, stand on their trunk)
           if (type === "treehouse" && it.scale !== undefined) continue; // (the Ent's halves along the rays, as above)

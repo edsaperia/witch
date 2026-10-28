@@ -3,7 +3,8 @@
 // Sets are asked for as the witch nears them and drawn by a few Web Workers in the background;
 // where workers or OffscreenCanvas are missing, they are drawn on the page, one per frame.
 import * as Art from "../../art/generator.js";
-import { atlasFromPixels, placeholderAtlas, type Atlas } from "./atlas";
+import { atlasBytes, atlasFromPixels, placeholderAtlas, type Atlas } from "./atlas";
+import { channelAt } from "./palette";
 import type { GpuKind } from "./gpuLedger";
 import { witchSprites, type SoundsystemGenArt, type TreehouseArt, type WitchArt } from "./homeArt";
 import { creatureFrame, walkGait, runJob, type ArtJob, type ArtResult, type BeachArt, type BeachEdgeArt, type LakeShoreArt, type DecorPiece, type PartyWitchArt, type PartyArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
@@ -367,7 +368,7 @@ export class AssetLibrary {
       for (const p of r.result.layout!.big) {
         if (p.top === null) continue;
         const counts = (k: number) => { const f = px.frames[k], x0 = Math.round(f.uv[0] * px.width), y0 = Math.round(f.uv[1] * px.height), rows = new Array<number>(f.h).fill(0);
-          for (let y = 0; y < f.h; y++) for (let x = 0; x < f.w; x++) if (px.albedo[((y0 + y) * px.width + x0 + x) * 4 + 3] > 0) rows[y]++;
+          for (let y = 0; y < f.h; y++) for (let x = 0; x < f.w; x++) if (channelAt(px.albedo, px.albedoPal, (y0 + y) * px.width + x0 + x, 3) > 0) rows[y]++;
           return rows; };
         const c = trunkCut(counts(p.top), counts(p.bot), share); // (never above the trunk's own top: trunkCut.ts)
         if (c !== undefined) cut.set(p.bot, c);
@@ -481,10 +482,10 @@ export class AssetLibrary {
     for (const [k, a] of this.creatures) if (a.atlas === atlas) this.creatures.delete(k);
     atlas.albedo.dispose(); atlas.normal.dispose();
   }
-  /** The rig pages held and their size in bytes (albedo and normal), for the debug overlay. */
+  /** The rig pages held and their size in bytes (albedo and normal, as stored: render/atlas.ts atlasBytes), for the debug overlay. */
   rigStats(): { pages: number; bytes: number } {
     let bytes = 0;
-    for (const v of this.rigs.values()) bytes += (v.atlas.albedo.image.width * v.atlas.albedo.image.height) * 8;
+    for (const v of this.rigs.values()) bytes += atlasBytes(v.atlas);
     return { pages: this.rigs.size, bytes };
   }
   creatureArt(species: string): CreatureArt | undefined {
