@@ -122,3 +122,10 @@ export function stayLabel(state: NightState): string {
 export function chartChoice(here: { island: string; world: number } | null | undefined, chosen: string, world: number): "stay" | "sail" {
   return here && here.island === chosen && here.world === world ? "stay" : "sail";
 }
+
+/** The island the chart opens with chosen (Ed, 2026-10-28: "When you open the map, the island that's selected should always be the one
+ *  that you're currently on"): one asked for (the page's own `start`), else the island she's on (home too) when the chart shows her
+ *  world, else her last voyage's island, else home (the chart page, with no night under it). */
+export function chartOpensOn(start: string | undefined, here: { island: string; world: number } | null | undefined, world: number, lastVoyage: string | undefined): string {
+  return start ?? (here && here.world === world ? here.island : undefined) ?? lastVoyage ?? "home";
+}
