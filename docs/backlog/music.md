@@ -1,6 +1,6 @@
 # Music: witchier, and a palette of genres
 
-Backlog (Ed, 2026-10-11). Nothing here is built yet; don't build without Ed's go.
+Backlog (Ed, 2026-10-11). Not built unless marked built; don't build without Ed's go.
 
 **Open to change** (Ed): we can move away from dorian and from today's music structure (32-bar ABAC, sections) if we find better alternatives.
 
@@ -30,7 +30,7 @@ Today every note is synthesised live; samples are now allowed, especially for **
 
 - **Licences:** CC0 / public domain freely; CC-BY with credits; check "royalty-free" packs (many forbid redistributing raw sounds, and a game can count); **no non-commercial (NC) licences**, and no ripped drum-machine recordings (synthesise 808/909-style sounds instead).
 - **Sources:** VCSL (Versilian Community Sample Library, CC0: percussion, folk and orchestral instruments, some voices), Freesound filtered to CC0 (one-shots, field recordings, vocal chops), Hydrogen drum kits (check each kit's licence), SFZ instruments such as Salamander (CC-BY).
-- **Setup:** a `samples/` folder with a manifest giving each file's source and licence; a CI check that every sample has an approved licence; credits generated from the manifest; a size budget (a few MB of compressed audio for the web build).
+- **Setup:** a `samples/` folder with a manifest giving each file's source and licence; a CI check that every sample has an approved licence; credits generated from the manifest; a size budget (a few MB of compressed audio for the web build). **Built** (#656: `samples/manifest.json`, `tools/samples/` check, credits and a 3 MB budget, run by `src/samples.test.ts`).
 
 ## A better vocalise
 
@@ -67,7 +67,7 @@ Proposed mapping (records and biomes: see journey.md): home and temperate island
 
 ## The singer, and the music round it: a proposal (India, 2026-10-14)
 
-For Ed to approve. Nothing here is built. Two rounds of questions with Ed and a measurement of today's renders are behind it.
+For Ed to approve. **Slice 1 built** (#920: the alto, the stepwise melody, the two chains by place, the voice out of the drops; #921: the A/B live in the Music Lab; `tools/music-lab/tune.cjs`); slices 2 and 3 not built. Two rounds of questions with Ed and a measurement of today's renders are behind it.
 
 ### What Ed said
 
