@@ -13,6 +13,7 @@ import { witchHeight } from "../rules/witch";
 import { hash2 } from "../rules/random";
 import { groundHeight, placed, shownOverBend } from "./height";
 import { pixelEmoji, pixelEmojiData, pixelSprite, sizeBubble, speechBubble } from "./bubbles";
+import { BubbleFader, sightOf } from "./bubbleSight";
 
 import { bodyRadius } from "../rules/spacing";
 import type { Creature } from "../rules/creatures";
@@ -109,6 +110,8 @@ export class InviteView {
   private hearts: { x: number; y: number; z: number; at: number; el: HTMLImageElement }[] = [];
   private hers: Bubble;
   private replies = new Map<number, Bubble>();
+  /** The replies faded in and out by how near she is, on the ground only (render/bubbleSight.ts; Ed, 2026-10-28). */
+  private sight = new BubbleFader();
   private lastHers = -Infinity;
   /** Little pops where letters land: { element, where, when }. */
   private pops: { el: HTMLImageElement; e: string; x: number; y: number; z: number; at: number }[] = [];
@@ -301,6 +304,9 @@ export class InviteView {
       if (time >= b.until || c.gone) { b.el.remove(); this.replies.delete(id); continue; }
       const hd = heads?.get(id); // (its tail over its head: Ed, 2026-10-12)
       place(b.el, hd?.x ?? c.x, head(id) + 0.9, hd?.z ?? c.z);
+      const seen = this.sight.step(`r${id}`, sightOf(w, c.x, c.z, t.bubbles.near, t.bubbles.fade), performance.now() / 1000, t.bubbles.ease);
+      b.el.style.opacity = seen.toFixed(2);
+      if (seen < 0.01) b.el.style.visibility = "hidden";
     }
 
     // Flat on the ground, seen from the camera: squashed top to bottom by how steeply it looks down.

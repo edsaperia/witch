@@ -164,8 +164,12 @@ export interface Creature {
   asleepAt?: number;
   /** The party's over and it's walking home to bed here (rules/partyOver.ts): then it lies down. */
   bed?: { x: number; z: number };
-  /** Gone for the run: a beaten creature that ran off the map. */
+  /** Gone for the run: a beaten creature that ran off the map, or lies asleep on the beach (`beached`). */
   gone?: boolean;
+  /** Beaten, the spot on the beach it's running to, to sleep there (rules/runaway.ts); kept while it lies there. */
+  beach?: { x: number; z: number };
+  /** Asleep at its spot on the beach (rules/runaway.ts): `gone` for the rules, but drawn there. */
+  beached?: boolean;
   /** Marching on a soundsystem (its area's key, "home" for the dancefloor): a siege. */
   siege?: string;
   /** Let go when its witch was knocked out (Ed, 2026-10-04): neutral, walking to this area of its
@@ -262,7 +266,7 @@ export function makeCreature(map: ForestMap, cell: [number, number], level: Leve
     dancing: undefined, restlessness: undefined, questOpen: undefined, aims: undefined,
     dazedUntil: undefined, affection: undefined, affectionAt: undefined, holdT: undefined, holdAt: undefined,
     route: undefined, engagedUntil: undefined, brace: undefined, legend: undefined, moveReadyAt: undefined,
-    sprung: undefined, enraged: undefined, asleepAt: undefined, bed: undefined, gone: undefined, siege: undefined,
+    sprung: undefined, enraged: undefined, asleepAt: undefined, bed: undefined, gone: undefined, beach: undefined, beached: undefined, siege: undefined,
     wanderTo: undefined, circle: undefined, dropped: undefined, healedAt: undefined, healedSmall: undefined, boss: undefined, legendState: undefined,
     stateAt: undefined, quest: undefined, friendly: undefined, asleep: undefined, napUntil: undefined, lulled: undefined,
     wakeUntil: undefined, safeX: undefined, safeZ: undefined, safeR: undefined, watchUntil: undefined, hunting: undefined, taunt: undefined, swoop: undefined, finale: undefined,
@@ -274,7 +278,7 @@ export function makeCreature(map: ForestMap, cell: [number, number], level: Leve
 
 /** Every optional field of a Creature, in the order makeCreature's literal lists them (one shape for all; creatures.test.ts checks the order). A field added to
  *  Creature and not here fails the typecheck (OptionalMissing). */
-export const CREATURE_OPTIONAL = ["lod", "hp", "hurtAt", "kx", "kz", "slowUntil", "stunUntil", "burrow", "leap", "fight", "fleeUntil", "retreat", "retreatFrom", "fleeX", "fleeZ", "vx", "vz", "run", "lairX", "lairZ", "homing", "charge", "dug", "travelling", "state", "happyAt", "partyLegend", "dazed", "dancing", "restlessness", "questOpen", "aims", "dazedUntil", "affection", "affectionAt", "holdT", "holdAt", "route", "engagedUntil", "brace", "legend", "moveReadyAt", "sprung", "enraged", "asleepAt", "bed", "gone", "siege", "wanderTo", "circle", "dropped", "healedAt", "healedSmall", "boss", "legendState", "stateAt", "quest", "friendly", "asleep", "napUntil", "lulled", "wakeUntil", "safeX", "safeZ", "safeR", "watchUntil", "hunting", "taunt", "swoop", "finale", "packGlow", "packHide", "packShell", "packProwl", "feintUntil", "coverBy", "packSync", "packThrow", "mind", "spell"] as const satisfies readonly (keyof Creature)[];
+export const CREATURE_OPTIONAL = ["lod", "hp", "hurtAt", "kx", "kz", "slowUntil", "stunUntil", "burrow", "leap", "fight", "fleeUntil", "retreat", "retreatFrom", "fleeX", "fleeZ", "vx", "vz", "run", "lairX", "lairZ", "homing", "charge", "dug", "travelling", "state", "happyAt", "partyLegend", "dazed", "dancing", "restlessness", "questOpen", "aims", "dazedUntil", "affection", "affectionAt", "holdT", "holdAt", "route", "engagedUntil", "brace", "legend", "moveReadyAt", "sprung", "enraged", "asleepAt", "bed", "gone", "beach", "beached", "siege", "wanderTo", "circle", "dropped", "healedAt", "healedSmall", "boss", "legendState", "stateAt", "quest", "friendly", "asleep", "napUntil", "lulled", "wakeUntil", "safeX", "safeZ", "safeR", "watchUntil", "hunting", "taunt", "swoop", "finale", "packGlow", "packHide", "packShell", "packProwl", "feintUntil", "coverBy", "packSync", "packThrow", "mind", "spell"] as const satisfies readonly (keyof Creature)[];
 type RequiredKeys = "id" | "species" | "cell" | "level" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ" | "x" | "z" | "tx" | "tz" | "rest" | "speed" | "facing" | "away" | "moving" | "walk" | "seen" | "leashed" | "rand";
 type OptionalMissing = Exclude<keyof Creature, RequiredKeys | (typeof CREATURE_OPTIONAL)[number]>;
 const _everyField: [OptionalMissing] extends [never] ? true : OptionalMissing = true;

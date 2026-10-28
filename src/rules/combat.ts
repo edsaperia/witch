@@ -7,6 +7,7 @@
 // defend against wild wolves). Sieges: when a wave wakes an area, its wild creatures march on its
 // new soundsystem; survivors of a won siege march on to the next-nearest. No drawing here.
 import { LEGEND, type Creature } from "./creatures";
+import { runawayArrives } from "./runaway";
 import { type Cell } from "./partition";
 import { enrage, foes, huntsWitch, stateOf } from "./creatureStates";
 import { LEGENDS } from "./legends";
@@ -229,13 +230,14 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     if (c.dazed) {
       // Dazed: it lies still till its daze is over (invited meanwhile, it's whole and happy: states.befriend), then runs off.
       if (stateOf(c) !== "wild") { c.dazed = false; c.dazedUntil = undefined; }
-      else if (time >= (c.dazedUntil ?? 0)) { c.dazed = false; c.dazedUntil = undefined; const out = w.exit(c.x, c.z); c.fleeUntil = Infinity; c.fleeX = out.x; c.fleeZ = out.z; c.fight = undefined; c.siege = undefined; s.events.push({ kind: "fled", x: c.x, z: c.z, at: time, id: c.id }); }
+      else if (time >= (c.dazedUntil ?? 0)) { c.dazed = false; c.dazedUntil = undefined; const spot = w.runaway?.(c) ?? null, out = spot ?? w.exit(c.x, c.z); c.beach = spot ?? undefined; c.fleeUntil = Infinity; c.fleeX = out.x; c.fleeZ = out.z; c.fight = undefined; c.siege = undefined; s.events.push({ kind: "fled", x: c.x, z: c.z, at: time, id: c.id }); }
       else { c.moving = false; continue; }
     }
-    // Beaten: it runs for the map's edge, and is gone once it's off the map or out of every witch's sight.
+    // Beaten: it runs for its spot on the beach (rules/runaway.ts; no beach, the map's edge), and lies down asleep there once it's
+    // there or out of every witch's sight (gone, off the map's edge, with no beach).
     if (c.fleeUntil) {
       const ax = (c.fleeX ?? c.x) - c.x, az = (c.fleeZ ?? c.z) - c.z, d = Math.hypot(ax, az);
-      if (d < 1 || w.unseen(c.x, c.z)) { c.gone = true; continue; }
+      if (d < 1 || w.unseen(c.x, c.z)) { runawayArrives(c, time); continue; }
       c.x += (ax / d) * c.speed * C.fleeMult * dt; c.z += (az / d) * c.speed * C.fleeMult * dt;
       c.facing = ax > 0 ? 1 : -1; c.away = az < -Math.abs(ax);
       c.moving = true; c.walk += dt * 8;

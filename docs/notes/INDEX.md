@@ -48,6 +48,7 @@ says what each note covers.
 ## [Creatures in play](gameplay.md)
 
 - Talk / invite
+- Bubble sight
 - Babies on her leash
 - Followers in the treehouse
 - Sigil stack
@@ -72,6 +73,7 @@ says what each note covers.
 - Posse / travelling
 - Conga dancer
 - Wild / happy / leashed / enraged
+- Runaway
 - Restless / angry legend, relic
 
 ## [The treehouse and its house](house.md)
@@ -159,6 +161,7 @@ says what each note covers.
 - Quads faded whole
 - The GPU memory budget
 - Quality ladder
+- Palette-indexed art
 
 ## [The run](run.md)
 
@@ -188,6 +191,10 @@ says what each note covers.
 - The world asleep before the party
 - Dropped hat
 - Controls
+- Bindings
+- Bindings API
+- Settings page
+- Pad layout
 - Glide
 - Resting 💌s
 - Aim reticle

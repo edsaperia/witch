@@ -2,11 +2,11 @@
 // treehouse oak, about twice her height ... a usable object ... the keycap prompt, plus the word 'exit' next to the keycap"; rules/
 // zoo.ts zooExitSpot, atZooExit): the treehouse's own art (the old treehouse, art/treehouse.js: the zoo has no deck) shrunk to
 // twice her height as drawn (miniTall), its trunk's foot on the spot; lit, breathing, while E there leaves (the house's objects' gold: render/useGlow.ts),
-// and over it the keycap (E, the pad's □, a tap) with "exit" beside it (render/houseRooms.ts's wake-up words). Drawing only.
+// and over it the keycap (the use button as bound: E, the pad's ✕, a tap) with "exit" beside it (render/houseRooms.ts's wake-up words). Drawing only.
 import type { SpriteInstance } from "./sprites";
 import { SPRITE_UNIFORMS } from "./sprites";
 import { keycapCanvas } from "../ui/keyHint";
-import { USE_GLYPH } from "./houseRooms";
+import { useGlyph } from "./houseRooms";
 import { atZooExit, zooExitSpot } from "../rules/zoo";
 import type { View } from "./view";
 
@@ -43,7 +43,7 @@ export class ZooExitTag {
   update(v: View): void {
     const g = v.game, s = zooExitSpot(g.map);
     if (!s || !atZooExit(g.map, g.witch) || g.zooExit !== undefined) { this.el.style.display = "none"; this.tap = null; return; }
-    const cv = v.canvas.getBoundingClientRect(), px = Math.max(2, Math.round(cv.width / Math.max(1, v.width))), glyph = USE_GLYPH[v.useDevice], key = `${glyph}|${px}`;
+    const cv = v.canvas.getBoundingClientRect(), px = Math.max(2, Math.round(cv.width / Math.max(1, v.width))), glyph = useGlyph(v.useDevice), key = `${glyph}|${px}`;
     if (key !== this.key) {
       this.key = key;
       const word = document.createElement("span"); word.textContent = "exit";

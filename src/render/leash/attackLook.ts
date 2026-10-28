@@ -16,8 +16,9 @@ import type { Game } from "../../rules/game";
 import { LIGHT_UNIFORMS } from "../lighting";
 import { HEIGHT_UNIFORMS } from "../height";
 import { SPRITE_UNIFORMS, metresPerArtPixel } from "../sprites";
-import { gpuKind } from "../gpuLedger";
 import { Instances, VERT, FRAG, PIXEL_DOT_MAX } from "./glyphs";
+import { comfort } from "../comfort";
+import { indexedTexture } from "../atlas";
 
 type RGB = [number, number, number];
 /** How an attack is dressed: its element, its creature's level, and (a party animal's) its neon, which tints the element's grey. */
@@ -65,11 +66,11 @@ export class AttackLook {
     const A = attackLookAtlas(this.cfg);
     K = this.cfg.scale;
     this.cells = A.cells; this.size = A.size;
-    const tex = gpuKind(new THREE.DataTexture(A.rgba, A.size, A.size, THREE.RGBAFormat), "ui");
-    tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.needsUpdate = true;
+    // (as palette indices where it fits, 256 values or fewer: a quarter of the bytes, the colours exact; render/palette.ts)
+    const { tex, pal, indexed } = indexedTexture(new Uint8Array(A.rgba.buffer, A.rgba.byteOffset, A.rgba.length), A.size, A.size, "ui");
     const mat = (flat: number, solid: boolean, depthTest = true) => new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG,
-      uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uRes: SPRITE_UNIFORMS.uRes, uMpp: { value: metresPerArtPixel(game.tuning) }, uDotMax: { value: PIXEL_DOT_MAX }, uFlat: { value: flat }, uGlyphs: { value: tex }, uSolid: { value: solid ? 1 : 0 }, uPull: { value: 0 }, uRgb: { value: 1 } },
+      uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uRes: SPRITE_UNIFORMS.uRes, uMpp: { value: metresPerArtPixel(game.tuning) }, uDotMax: { value: PIXEL_DOT_MAX }, uFlat: { value: flat }, uGlyphs: { value: tex }, uGlyphsPal: { value: pal }, uGlyphIdx: { value: indexed ? 1 : 0 }, uSolid: { value: solid ? 1 : 0 }, uPull: { value: 0 }, uRgb: { value: 1 } },
       transparent: true, depthWrite: false, depthTest, blending: solid ? THREE.NormalBlending : THREE.AdditiveBlending,
     });
     this.paintFlat = new Instances(mat(1, true)); this.paintFlat.mesh.renderOrder = 2.97; // (over the ground, under the creatures)
@@ -165,8 +166,8 @@ export class AttackLook {
     const e = this.el(d), P = this.colours(d), pw = spellPower(d.level) * size, solid = this.solid(d), t = this.tinted(d);
     const n = Math.round(this.cfg.particles.impact * pw), fall = FALLS[e.impact] ?? 0;
     // the flash and its light (every element)
-    if (k < 0.25) this.put(this.glow, `flash${Math.min(2, Math.floor(k * 12))}`, x, y, z, Math.max(1, Math.round(pw)), 1 - k * 3, P[3]);
-    this.glow.add(x, y, z, 3.2 * pw * (0.6 + k), this.uv("dot"), P[1][0], P[1][1], P[1][2], 0.7 * (1 - k) * (1 - k));
+    if (k < 0.25 && !comfort.reduceFlashing) this.put(this.glow, `flash${Math.min(2, Math.floor(k * 12))}`, x, y, z, Math.max(1, Math.round(pw)), 1 - k * 3, P[3]);
+    this.glow.add(x, y, z, 3.2 * pw * (0.6 + k), this.uv("dot"), P[1][0], P[1][1], P[1][2], (comfort.reduceFlashing ? 0.3 : 0.7) * (1 - k) * (1 - k));
     // its shock ring, on the ground, in its bright colour (two for the ring element, moonlight's)
     const rings = e.impact === "ring" ? 2 : 1;
     for (let r = 0; r < rings; r++) {
@@ -281,7 +282,7 @@ export class AttackLook {
   /** The danger layer: on the ground, or over the crowns from the treetops. */
   private dl(up: boolean): Instances { return up ? this.over : this.paintFlat; }
   /** A "now" blink: off for a moment, flash seconds before it lands. */
-  private blink(left: number, time: number): number { return left < this.cfg.danger.flash && Math.floor(time * 16) % 2 ? 0.35 : 1; }
+  private blink(left: number, time: number): number { return !comfort.reduceFlashing && left < this.cfg.danger.flash && Math.floor(time * 16) % 2 ? 0.35 : 1; } // (none with reduce flashing: the Settings page)
   /** A dashed path of warn pixels along f(s), s 0 to L metres, its dashes marching (forward: along it). */
   private dashes(L: number, at: (s: number) => [number, number], time: number, a: number, up: boolean, scale = 1): void {
     const D = this.cfg.danger, step = (2 * K * scale) / PPM, period = ((D.dash + D.gap) * 2 * K * scale) / PPM, on = (D.dash * 2 * K * scale) / PPM, march = ((time * D.march * K) / PPM) % period;
@@ -293,7 +294,7 @@ export class AttackLook {
     this.dashes(C, s => [x + Math.cos(s / R) * R, z + Math.sin(s / R) * R], time, a, up, sc);
     const r2 = R * (1 - clamp01(fill));
     if (r2 > 0.3) { const C2 = TAU * r2, n = Math.round(C2 / ((3 * K * sc) / PPM)); for (let i = 0; i < n; i++) { const q = (i / n) * TAU; this.put(this.dl(up), "px", x + Math.cos(q) * r2, 0.03, z + Math.sin(q) * r2, sc * 0.5, 0.55 * a); } }
-    if (left < this.cfg.danger.flash) this.put(up ? this.over : this.glow, `flash${Math.floor(time * 12) % 3}`, x, up ? 0.04 : 0.6, z, sc, 0.9);
+    if (left < this.cfg.danger.flash && !comfort.reduceFlashing) this.put(up ? this.over : this.glow, `flash${Math.floor(time * 12) % 3}`, x, up ? 0.04 : 0.6, z, sc, 0.9);
   }
   /** A lane from (x0, z0) to (x1, z1), half its width each side: its two edges dashed and marching, chevrons filling it from the
    *  caster as time runs out (fill 0 to 1). */
@@ -331,7 +332,7 @@ export class AttackLook {
   /** A tether's line before it goes live: dashed, flickering as it's about to. */
   tether(x0: number, z0: number, x1: number, z1: number, left: number, time: number, up = false): void {
     const dx = x1 - x0, dz = z1 - z0, L = Math.hypot(dx, dz) || 1;
-    if (left < this.cfg.danger.flash * 2 && Math.floor(time * 20) % 2) return;
+    if (left < this.cfg.danger.flash * 2 && !comfort.reduceFlashing && Math.floor(time * 20) % 2) return;
     this.dashes(L, s => [x0 + (dx * s) / L, z0 + (dz * s) / L], time, 1, up, up ? 2.6 : 1);
   }
   /** The ground outside a shrinking safe circle: dark hatch from R out to Rout. */
@@ -368,7 +369,7 @@ export class AttackLook {
       case "arming": this.arming(S.x, S.z, S.r ?? 1.5, k, time, up); break;
       case "chainNext": { const [a, b, c, d] = seg(); this.chainNext(a, b, c, d, S.y ?? 1.4, k, time, up); break; }
       case "tetherLine": { const [a, b, c, d] = seg(); this.tether(a, b, c, d, left, time, up); break; }
-      case "lockOn": this.brackets(S.x, (S.y ?? 1.6) * 0.6, S.z, 1.1 - 0.5 * k, k > 0.8 || Math.floor(time * 10) % 3 ? 1 : 0.55, up); break;
+      case "lockOn": this.brackets(S.x, (S.y ?? 1.6) * 0.6, S.z, 1.1 - 0.5 * k, k > 0.8 || comfort.reduceFlashing || Math.floor(time * 10) % 3 ? 1 : 0.55, up); break;
       case "flash": this.tell(S.x, S.z, S.y ?? 1.4, S.r ?? 1.2, k, time, up); break;
       case "safeCircle": this.hatch(S.x, S.z, S.r ?? 4, (S.r ?? 4) + 2.5, up); this.ring(S.x, S.z, S.r ?? 4, 0, left, time, up); break;
       default: break; // ("none")
@@ -384,7 +385,7 @@ export class AttackLook {
       this.dashes(L, s => [x0 + ((x1 - x0) * s) / L, z0 + ((z1 - z0) * s) / L], time, a, up, sc);
       if (q > 0.05) { const m = Math.round((L * q) / ((3 * K * sc) / PPM)); for (let j = 0; j <= m; j++) { const u = j / Math.max(1, m); this.put(this.dl(up), "px", cx + (x0 + (x1 - x0) * u - cx) * q, 0.03, cz + (z0 + (z1 - z0) * u - cz) * q, sc * 0.5, 0.55 * a); } }
     }
-    if (left < this.cfg.danger.flash) this.put(up ? this.over : this.glow, `flash${Math.floor(time * 12) % 3}`, cx, up ? 0.04 : 0.6, cz, sc, 0.9);
+    if (left < this.cfg.danger.flash && !comfort.reduceFlashing) this.put(up ? this.over : this.glow, `flash${Math.floor(time * 12) % 3}`, cx, up ? 0.04 : 0.6, cz, sc, 0.9);
   }
   /** A lingering zone (a puddle, fire, frost, a web): its element's tiles over its shape, a slow shimmer of its light, fading in
    *  and out; inside(x, z) says which of the tiles' places are in it (a ring's, a cone's, a polygon's shape). */
@@ -404,7 +405,7 @@ export class AttackLook {
   tell(x: number, z: number, top: number, r: number, k: number, time: number, up = false): void {
     const R = r * (1.6 - 0.6 * k), sc = up ? 2.6 : 1, n = Math.round((TAU * R) / ((3 * K * sc) / PPM));
     for (let i = 0; i < n; i++) { const q = (i / n) * TAU + time; this.put(this.dl(up), i % 2 ? "warn" : "px", x + Math.cos(q) * R, 0.03, z + Math.sin(q) * R, i % 2 ? sc : sc * 0.5, 0.4 + 0.6 * k); }
-    if (k > 0.55) this.put(up ? this.over : this.paint, "tick", x, top + 0.5 + (up ? 1 : 0), z, sc, k > 0.85 && Math.floor(time * 16) % 2 ? 0.5 : 1);
+    if (k > 0.55) this.put(up ? this.over : this.paint, "tick", x, top + 0.5 + (up ? 1 : 0), z, sc, k > 0.85 && !comfort.reduceFlashing && Math.floor(time * 16) % 2 ? 0.5 : 1);
   }
 
   /** A showcase round (x, z) (?lookdemo=telegraphs|elements: render/leash/combat.ts), looping every few seconds: every

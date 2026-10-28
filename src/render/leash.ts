@@ -181,7 +181,7 @@ export class LeashView {
     this.tex.magFilter = THREE.NearestFilter; this.tex.minFilter = THREE.NearestFilter; this.tex.generateMipmaps = false;
     const mat = (flat: number, depthTest = true, solid = false, pull = 0) => new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG,
-      uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uRes: SPRITE_UNIFORMS.uRes, uMpp: { value: metresPerArtPixel(game.tuning) }, uDotMax: { value: PIXEL_DOT_MAX }, uFlat: { value: flat }, uGlyphs: { value: this.tex }, uSolid: { value: solid ? 1 : 0 }, uPull: { value: pull } },
+      uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uRes: SPRITE_UNIFORMS.uRes, uMpp: { value: metresPerArtPixel(game.tuning) }, uDotMax: { value: PIXEL_DOT_MAX }, uFlat: { value: flat }, uGlyphs: { value: this.tex }, uGlyphsPal: { value: this.tex }, uGlyphIdx: { value: 0 }, uSolid: { value: solid ? 1 : 0 }, uPull: { value: pull } },
       transparent: true, depthWrite: false, depthTest, blending: solid ? THREE.NormalBlending : THREE.AdditiveBlending,
     });
     this.standing = new Instances(mat(0));

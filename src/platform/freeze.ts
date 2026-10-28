@@ -12,11 +12,12 @@
 // Studio instrument Esc is still hers first: Ed, 2026-10-23, "Esc steps her away, the next Esc pauses", main.ts freeze.started); and the gamepad reads as none to all but the freeze (navigator.getGamepads wrapped), so
 // an overlay's own pad loop doesn't move under the pause. Thawed, everything is as it was: the overlay open as it was left.
 import { areaUnderWitch, STEP, stepGame, type Controls, type Game } from "../rules/game";
+import { bindings } from "./bindings";
 
 const STILL: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 /** The pause page's own pieces: above the shield while frozen, and the only things keys and the mouse reach then (its test
  *  sliders, its Controls / What's new / Options buttons and their panel, the Music Lab, the new-build notice, the freeze's stamp). */
-export const PAUSE_UI = ["#pause-sliders", "#pause-btns", ".corner-panel", "#music-lab", "#new-build", "#freeze-marker", "#freeze-stamp"];
+export const PAUSE_UI = ["#settings-page", "#pause-sliders", "#pause-btns", ".corner-panel", "#music-lab", "#new-build", "#freeze-marker", "#freeze-stamp"];
 /** Over every overlay (the highest is the corner panel's 62). */
 const PAUSE_Z = 1000;
 const LAYER_CSS = `#pause-shield { position: fixed; inset: 0; z-index: ${PAUSE_Z}; display: none; }
@@ -63,7 +64,7 @@ export class Freeze {
     // Before the game's own input and every overlay's (capture, and made first), so a press while frozen never starts, flies or
     // chooses anything: Esc is the pause's alone; frozen, only the pause page's own pieces have keys.
     window.addEventListener("keydown", e => {
-      if (e.code === "Escape" && this.ownsEsc() && (this.frozen || this.started())) {
+      if (bindings.keys("global.pause").includes(e.code) && this.ownsEsc() && (this.frozen || this.started())) {
         e.preventDefault(); e.stopImmediatePropagation();
         if (!e.repeat) this.toggle();
       }
@@ -95,9 +96,12 @@ export class Freeze {
     for (let i = 0; i < n; i++) { g.clock.paused = false; stepGame(g, STILL, STEP); g.clock.paused = true; }
   }
 
-  /** Gamepad Start (standard button 9) toggles, read once a frame. */
+  /** The real pad (everyone else sees none while frozen): the Settings page reads it (ui/settingsMenu.ts). */
+  pad(): Gamepad | null { return [...(realPads?.() ?? [])].find(p => p) ?? null; }
+
+  /** The pad's pause (Options, standard button 9: platform/bindings.ts global.pause) toggles, read once a frame. */
   pollPad(): void {
-    const pad = [...(realPads?.() ?? [])].find(p => p), down = !!pad?.buttons[9]?.pressed;
+    const pad = [...(realPads?.() ?? [])].find(p => p), down = !!pad && bindings.padHeld("global.pause", pad.buttons.map(b => b.pressed), pad.axes);
     if (down && !this.padPrev) this.toggle();
     this.padPrev = down;
   }

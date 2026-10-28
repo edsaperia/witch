@@ -14,6 +14,7 @@ import { canvasPixels, discoDrawn, seaSprites, stoneSprites, type CanvasPixels, 
 import { housePiece, type PiecePixels } from "./housePieces";
 import { workshopPicture, type WorkshopPic } from "./workshopPieces";
 import { clearMask } from "./crownMask";
+import { indexPlane } from "./palette";
 
 type AnyCanvas = HTMLCanvasElement | OffscreenCanvas;
 export interface Baked { A: AnyCanvas; N: AnyCanvas; w: number; h: number; /** A wild creature's eye pixels (1), for eyeshine (Ed, v244). */ eyes?: Uint8Array; /** Its sway mask (#34: grey, 0 rigid to 255 the leafy tips), packed into the normal map's alpha. */ S?: AnyCanvas; /** A creature's head (art pixels from its top left): bubbles point their tails at it (headPoint). */ head?: [number, number] }
@@ -21,7 +22,9 @@ export interface Baked { A: AnyCanvas; N: AnyCanvas; w: number; h: number; /** A
 /** pad: empty rows (nothing drawn) at the bottom of the sprite, so it can stand on its lowest
  *  drawn pixel rather than on its box. */
 export interface Frame { uv: [number, number, number, number]; w: number; h: number; pad?: number; /** How far its lowest drawn row reaches either side of its middle, in art pixels (the farther side): the sprite shader stands it on the lowest ground across that much (a kapok's buttresses, a strangler fig's roots). */ foot?: number; /** Its sway mask is in its normal map's alpha (#34): it sways per pixel, leaves only. */ masked?: boolean; /** A creature's head, art pixels from its top left (Baked.head). */ head?: [number, number] }
-export interface AtlasPixels { albedo: Uint8Array; normal: Uint8Array; width: number; height: number; frames: Frame[] }
+/** An atlas's pixels: its albedo and normal planes, each one byte a pixel (an index into its palette, render/palette.ts) where
+ *  it has 256 values or fewer, else RGBA as drawn; `albedoPal`/`normalPal` the palettes (null: that plane is RGBA). */
+export interface AtlasPixels { albedo: Uint8Array; normal: Uint8Array; albedoPal?: Uint8Array | null; normalPal?: Uint8Array | null; width: number; height: number; frames: Frame[] }
 
 export type MakeCanvas = (w: number, h: number) => AnyCanvas;
 
@@ -254,7 +257,12 @@ export function* packSteps(sprites: Baked[], width = 2048): Steps<AtlasPixels> {
     if (pad < s.h) { const row = s.h - 1 - pad; for (let x = 0; x < s.w; x++) if (pa[(row * s.w + x) * 4 + 3] >= 128) foot = Math.max(foot, Math.abs(x + 0.5 - s.w / 2) + 0.5); }
     frames.push({ uv: [p.x / W, p.y / H, (p.x + s.w) / W, (p.y + s.h) / H], w: s.w, h: s.h, pad: Math.min(pad, s.h), ...(foot ? { foot } : {}), ...(s.S ? { masked: true } : {}), ...(s.head ? { head: s.head } : {}) });
   }
-  return { albedo, normal, width: W, height: H, frames };
+  // Each plane as palette indices where it can be (render/palette.ts: a quarter of the bytes, the colours exact).
+  yield;
+  const a = indexPlane(albedo);
+  yield;
+  const n = indexPlane(normal);
+  return { albedo: a?.idx ?? albedo, normal: n?.idx ?? normal, albedoPal: a?.pal ?? null, normalPal: n?.pal ?? null, width: W, height: H, frames };
 }
 
 export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: number; /** the island's biome blend's key (rules/lakeLooks.ts biomeKey), its look over the area's trees and props; none, temperate */ biome?: string } | { kind: "creature"; id: string; style: Style } | { kind: "rig"; id: string; species: string; level: number; style: Style; /** a party animal's gear, baked on */ gear?: RigGear }
@@ -690,4 +698,4 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
 
 /** The buffers a result can hand over to the page without copying. */
 export const transferables = (r: ArtResult): ArrayBuffer[] =>
-  [r.px.albedo.buffer, r.px.normal.buffer, ...(r.floor ? [r.floor.albedo.buffer, r.floor.normal.buffer] : []), ...(r.disco ? [r.disco.base.px.buffer, r.disco.lit.px.buffer] : []), ...(r.housePiece ? [r.housePiece.px.buffer] : []), ...(r.mask ? [r.mask.buffer] : [])] as ArrayBuffer[];
+  [r.px.albedo.buffer, r.px.normal.buffer, ...(r.px.albedoPal ? [r.px.albedoPal.buffer] : []), ...(r.px.normalPal ? [r.px.normalPal.buffer] : []), ...(r.floor ? [r.floor.albedo.buffer, r.floor.normal.buffer] : []), ...(r.disco ? [r.disco.base.px.buffer, r.disco.lit.px.buffer] : []), ...(r.housePiece ? [r.housePiece.px.buffer] : []), ...(r.mask ? [r.mask.buffer] : [])] as ArrayBuffer[];

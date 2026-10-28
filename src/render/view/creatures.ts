@@ -138,7 +138,7 @@ export function drawCreatures(v: View, time = 0): void {
   const U = SPRITE_UNIFORMS.uUp.value, F = v.camera.getWorldDirection(FWD), toward = U.dot(CAM_UP.set(0, 1, 0).applyQuaternion(v.camera.quaternion)) / Math.max(0.2, -F.y);
   for (let i = 0; i < g.creatures.length; i++) { // (by index: no iterator object a creature)
     const c = g.creatures[i];
-    if (c.gone || Math.abs(c.x - g.witch.x) > R || Math.abs(c.z - g.witch.z) > R) continue;
+    if ((c.gone && !c.beached) || Math.abs(c.x - g.witch.x) > R || Math.abs(c.z - g.witch.z) > R) continue;
     if (c.burrow || c.packHide) continue; // under the ground (Stage 5: the mole), a mound shows where (leash view); up the trees or underground in a pack's lull (rules/combat/packs.ts)
     // (its species' art asked for only once it may be on screen, by the biggest a creature is drawn, a legend's: the first
     // frame's creatures first, not every one within the haze; the island's own come ahead of need, view.ts askIsland)

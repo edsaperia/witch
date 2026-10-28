@@ -7,8 +7,9 @@ import { MusicEngine } from "../platform/audio/musicEngine";
 import { voiceRecordings } from "../platform/audio/voiceSamples";
 import type { Game } from "../rules/game";
 import type { MusicStyle, Patch } from "../rules/musicScore";
-import { applyControl, controlFor, DRUM_KEYS, leaveInstrument, loopHits, newStudio, noteFor, PAD_DRUMS, PAD_LEAVE, PAD_NOTES, PAD_OCTAVE, padPatch, scaleNote, soundsOf, stepStudio, STUDIO_CONFIG as S, type Instrument, type Pad, type StudioState, type Vowel } from "../rules/studio";
+import { applyControl, controlFor, DRUM_KEYS, leaveInstrument, loopHits, newStudio, noteFor, PAD_DRUMS, PAD_NOTES, PAD_OCTAVE, padPatch, scaleNote, soundsOf, stepStudio, STUDIO_CONFIG as S, type Instrument, type Pad, type StudioState, type Vowel } from "../rules/studio";
 import type { StudioPanel } from "../ui/studioPanel";
+import { bindings } from "../platform/bindings";
 
 /** Keys never taken while she's at an instrument (the debug overlay, the browser's own). */
 const PASS = new Set(["Backquote", "Tab", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", "MetaLeft", "MetaRight", "ControlLeft", "ControlRight", "AltLeft", "AltRight"]);
@@ -185,8 +186,8 @@ export class StudioPlayer {
       const on = b.pressed, was = this.pad[i] ?? false;
       this.pad[i] = on;
       if (on === was) return;
-      if (PAD_LEAVE.includes(i)) { if (on) this.leave(); return; }
-      if (i === 9) return; // (Start: the pause)
+      if (bindings.padButtons("menu.back").includes(i)) { if (on) this.leave(); return; } // (back: circle, platform/bindings.ts)
+      if (bindings.padButtons("global.pause").includes(i)) return; // (Options: the pause)
       this.press(`pad:${i}`, on);
     });
     if (this.at === "synth") { const y = gp.axes[1] ?? 0, x = gp.axes[2] ?? 0; if (Math.abs(y) > 0.2) this.live.cutoff = Math.max(120, Math.min(18000, this.live.cutoff * Math.pow(y < 0 ? 4 : 0.2, Math.abs(y) / 60))); this.live.wobble = Math.max(this.live.wobble, Math.abs(x) > 0.2 ? Math.abs(x) : 0); }
