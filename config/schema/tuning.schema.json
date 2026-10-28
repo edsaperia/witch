@@ -3754,6 +3754,64 @@
       "additionalProperties": false,
       "description": "The 💌 invite: on the ground she fires spinning love letters at creatures to win them over."
     },
+    "cast": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean",
+          "description": "on: the stacks and the spell (off, ?cast=0: areas clear by themselves once their wild are gone, as before)."
+        },
+        "time": {
+          "type": "number",
+          "minimum": 0,
+          "description": "seconds of holding the sigil button at a stone to convert it; a hit stops the cast."
+        },
+        "drain": {
+          "type": "number",
+          "minimum": 0,
+          "description": "how much of a full cast her progress on a stone loses a second while she isn't casting it (holding again resumes from there)."
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 0,
+          "description": "how near the stone (m) she has to stand to cast; there the sigil button casts rather than putting down or picking up."
+        },
+        "show": {
+          "type": "number",
+          "minimum": 0,
+          "description": "how near the stone (m) the spell's music-note sigil shows."
+        },
+        "scatter": {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "number",
+              "minimum": 0
+            },
+            "max": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "min",
+            "max"
+          ],
+          "additionalProperties": false,
+          "description": "the ring round a converted stone (min to max m) its friend sigils scatter onto, on free hex cells, for any witch to pick up."
+        }
+      },
+      "required": [
+        "on",
+        "time",
+        "drain",
+        "radius",
+        "show",
+        "scatter"
+      ],
+      "additionalProperties": false,
+      "description": "The runestone stacks and the soundsystem spell: she converts a stone by holding the sigil button at it."
+    },
     "invite": {
       "type": "object",
       "properties": {
@@ -12659,6 +12717,7 @@
     "swoopTrail",
     "berries",
     "invites",
+    "cast",
     "invite",
     "win",
     "leash",

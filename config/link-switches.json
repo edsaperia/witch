@@ -1294,6 +1294,19 @@
    ]
   },
   {
+   "name": "cast",
+   "values": [
+    "0"
+   ],
+   "does": "The runestone stacks and the soundsystem spell off: areas clear by themselves once their wild are gone, as before.",
+   "group": "compare",
+   "since": "2026-10-28",
+   "decision": "The stacks and the spell are the default (Ed, 2026-10-28); off only to compare",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
    "name": "slow",
    "values": [
     "0",

@@ -50,6 +50,10 @@ says what each note covers.
 - Talk / invite
 - Babies on her leash
 - Followers in the treehouse
+- Runestone stack
+- Soundsystem spell / cast
+- Loose sigil
+- Legend tether
 - Sigil stack
 - Rank sigils
 - Party animal

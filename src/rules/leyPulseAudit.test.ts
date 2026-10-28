@@ -6,6 +6,8 @@
 import { describe, expect, it } from "vitest";
 import { hitWitch, loseSoundsystem, newGame, stepGame, type Game } from "./game";
 import { TUNING, withTuning } from "./tuning";
+// (these test the areas clearing by themselves and the runes at the feet: the game as it was, ?cast=0, rules/stoneStacks.ts)
+const NOCAST = { ...TUNING, cast: { ...TUNING.cast, on: false } };
 import { cellKey, type PartyState } from "./party";
 import { tempoRate } from "./beat";
 import { leyChain, onAreaDone, waveReached } from "./leylines";
@@ -19,7 +21,7 @@ const run = (g: Game, secs: number) => { for (let i = 0; i < Math.round(secs * 6
 const wave = (g: Game) => stepGame(g, { ...still, nextWave: true }, 1 / 60);
 /** A game under way, the boot over, the witch over the treetops at home (out of every fight). */
 function game(): Game {
-  const g = newGame(123, TUNING);
+  const g = newGame(123, NOCAST);
   g.clock.paused = false; g.party.spellAt = undefined;
   g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
   g.witches[0].health.hp = 1e6;
@@ -120,7 +122,7 @@ describe("the wave's pulse, drawn where the wave is (Ed, 2026-10-08)", () => {
 
 describe("the pulse and the line's front never skip (Ed, 2026-10-08), at a constant speed along the route (Ed, 2026-10-09: \"Pure constant speed\")", () => {
   /** A fast pulse (40 m/s: the boot 4.5 s, a wave every few seconds), so a test sees several waves in its time. */
-  const FAST = withTuning({ leyLines: { ...TUNING.leyLines, pulseSpeed: 40 } });
+  const FAST = withTuning({ leyLines: { ...TUNING.leyLines, pulseSpeed: 40 }, cast: { ...TUNING.cast, on: false } });
   function fast(extra?: Parameters<typeof withTuning>[0]): Game {
     const g = newGame(123, extra ? withTuning({ ...FAST, ...extra } as never) : FAST);
     g.clock.paused = false; g.party.spellAt = undefined;
