@@ -804,7 +804,7 @@
         "kraken"
       ],
       "additionalProperties": false,
-      "description": "The beach: sand over the last width metres inside her flight's edge (nothing grows or stands on it), the sea from shore metres past the edge, the hills eased over ease metres down to sand metres high where the sand starts and to sea metres at the water."
+      "description": "The strip of sand round the island's edge, where she can lie down to stargaze and meet other witches."
     },
     "areaSize": {
       "type": "number",
@@ -1502,7 +1502,7 @@
         "carrier"
       ],
       "additionalProperties": false,
-      "description": "The witch's treehouse, home: its foot (the Terrace's middle; clear metres round it) stands gap metres beyond the dancefloor's ring of speakers (so however many speakers or how far out, it stays outside them; 22 keeps the oak's rooms, up in its crown, clear of the dancefloor's clearing), at angle degrees (-135: north-west; -90 due north, straight up the screen), always facing south, to the floor and the camera; and keeps a clearing of clear metres round its foot (at least the art's footprint: 8.2 m for the v2 tower); its lantern and fairy lights light lightReach metres round at lightStrength."
+      "description": "The witch's home in the great oak beside the dancefloor: where it stands, its deck and rooms, how she walks and lands there, and the oak's crown, lights and warm glow over it."
     },
     "home": {
       "type": "object",
@@ -2849,7 +2849,7 @@
         "dropRadius"
       ],
       "additionalProperties": false,
-      "description": "Knocked out: she collapses where she is; her sigil stack lets go from the bottom up, one every releaseEach seconds (releaseMax caps the whole release, 0 no cap; an empty stack waits emptyBeat seconds), each animal turning happy where it stands; then she sparkles out and back in behind her decks in the treehouse over teleport seconds."
+      "description": "What happens when she's knocked out: her creatures go free, she comes back at the treehouse after a wait that grows with each knockdown, and the beat speeds up."
     },
     "dash": {
       "type": "object",
@@ -4077,7 +4077,7 @@
             "babyGround"
           ],
           "additionalProperties": false,
-          "description": "sigil weight: each sigil in her stack (placed ones weigh nothing) pulls her toward its creature by how taut its leash is (0 within 0.85 of length, up to maxTension a leash length further, however far: a far traveller can't pin her) times its weight (levels: baby, young, adult, legend; times its species' combat.json strength)."
+          "description": "How the creatures on her leash pull on her: slower moving away from them, slower to rise, and sinking in the treetops when heavily loaded."
         },
         "babies": {
           "type": "object",
@@ -4111,7 +4111,7 @@
             "farSpeed"
           ],
           "additionalProperties": false,
-          "description": "her leashed babies following her on the ground walk in single file along where she's been, in stack order (the stack's bottom one first), gap metres apart; while she's in a fight they scatter, scatter metres or a quarter more off to the side away from the first attacker, for the whole fight: from the moment something goes for her or one of hers (closing in or winding up, not on the hit), the same way throughout, back into line once nothing has for calm seconds; one more than farAt metres from her (about off the screen) moves at farSpeed m/s, so it's with her in seconds."
+          "description": "Her leashed babies follow her in single file and scatter out of the way while she's in a fight."
         },
         "ranks": {
           "type": "object",
@@ -4193,7 +4193,7 @@
             "stoneGlow"
           ],
           "additionalProperties": false,
-          "description": "on, every leash sigil (her stack, placed sigils, happy runes, the ghost, the treetop projection, the bond) is its bare glyph, no ring or disc, glyph metres across on the ground, in its rank's colour (colours: baby, youth, adult, legend; the species' neon stays the world's: borders, stones, fireworks, dancefloor, holograms, chart), with embers rising off its strokes (embers.count at once, each size metres, rising rise metres, by rank; in her stack stack of that), under a dark shade in the glyph's own shape (not a disc); a youth in her stack shows two rows of round dots off to its right, one a berry it eats on the move (toEvolve less the last, eaten at a placed sigil), at most dotsPerRow a row, bright eaten and dim not, pulsing when ready; and the hex grid is hex metres (leash.hex.size)."
+          "description": "Leash sigils drawn as bare glyphs in their rank's colour (baby, youth, adult, legend) with embers rising off them, so ranks are easy to tell apart at a glance."
         }
       },
       "required": [
@@ -4553,7 +4553,7 @@
             "on"
           ],
           "additionalProperties": false,
-          "description": "pack combat, on by default and on the pause page to turn off for testing: on, packs of config/packs.json's kinds (home's ten and Phase 1's eleven) fight in combos (the nearest lunges, the ones at range fire where a dodge would go, the one behind her throws the special), fall back by their kind's retreat between combos, and her own pack combos without retreating."
+          "description": "Pack kinds fight in combos (the nearest lunges, the ranged fire where she'd dodge, one behind her throws its special) and fall back between them."
         },
         "aggro": {
           "type": "number",
@@ -4680,7 +4680,7 @@
         "taunt"
       ],
       "additionalProperties": false,
-      "description": "Combat (Stage 4; the attacks themselves are data in config/combat.json; lengths and speeds at the fight's scale: see fight)."
+      "description": "How creatures fight: who goes for whom, how fast they run and chase, and how much a soundsystem and home's speakers can take."
     },
     "notice": {
       "type": "object",
@@ -4989,7 +4989,7 @@
         "fade"
       ],
       "additionalProperties": false,
-      "description": "The wild watch: on a witch's first coming down on the ground in a wild area (not partified, not friendly, not home), its wild young and adults (not legends, the enraged or besiegers; babies keep their notice) hold off for time seconds, standing and turning to stare at her, any within hangBack metres backing off a little; then they fight as ever."
+      "description": "On her first landing in a wild area its creatures stare and redden for a few seconds before they attack, and how far they chase her after."
     },
     "hunt": {
       "type": "object",
@@ -5242,7 +5242,7 @@
         "growth"
       ],
       "additionalProperties": false,
-      "description": "Wild creatures: every area starts with the same population, population.start, and, from the start, more by its place on the waves' route (Balance 2's shape; rules/growth.ts routePopulation): byRoute.threat, [route index, F] points (1 the first wave's stone; straight lines between, flat past the ends), is the extra fighting value its young and adults add (F by Lanchester, young 11.6, adult 40, babies 0; about what an area woken at that wave grew to before); its kind spends it by its profile (byRoute.profiles[species], else default: the shares of its extra creatures as babies, young and adults), so many more of a swarm's young than of a heavy kind's adults, at the same danger: count = threat ÷ the profile's mean F a creature × the area's count scale, rounded, split by the shares (largest remainder, ties by the seed)."
+      "description": "How many wild creatures each area starts with, more along the waves' route so the later areas are the dangerous ones."
     },
     "creatureSimRadius": {
       "type": "number",
@@ -5800,7 +5800,7 @@
         "minRadius"
       ],
       "additionalProperties": false,
-      "description": "The pause page's Waves slider sets it live, 0 to 6, remembered on this browser (config/decisions/953-waves.json, app/settings.ts); ?pulse=<m/s> or ?pulse=off sets it from a link, over the saved one."
+      "description": "The glowing line on the ground that joins the runestones in the order the waves wake them, a pulse flowing along it to the next one."
     },
     "partyObjects": {
       "type": "object",

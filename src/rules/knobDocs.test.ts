@@ -52,10 +52,7 @@ describe("the knobs' words (config/knobs)", () => {
         if (!ups.some(up => at([...up, ...p]) !== undefined)) wrong.push(`${path}: ${m[2]}`);
       }
     }
-    // (the old _creatures note's words for knobs since removed from the code, kept word for word by the conversion, 2026-10-28;
-    // the hand pass after it says what replaced them)
-    const STALE = ["population: byRoute.threat", "population: byRoute.profiles"];
-    expect(wrong.filter(w => !STALE.includes(w)), "an entry names a knob that isn't in config/tuning.json: rename or drop it in config/knobs").toEqual([]);
+    expect(wrong, "an entry names a knob that isn't in config/tuning.json: rename or drop it in config/knobs").toEqual([]);
   });
 
   it("keeps config/KNOBS.md and the schema's descriptions up to date (node tools/config/schema.mjs --docs)", () => {
