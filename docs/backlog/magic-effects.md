@@ -331,35 +331,14 @@ Each stage is its own PR, with before and after frames, the art check, the attac
 - **Scope creep.** "Make everything magic" never ends. The pass covers what's in the inventory, in the plan's order, and stops.
 - **Overlap with work in flight.** Orbit combat and the soundsystem spell are landing now. They keep their look until stage 5, unless Ed chooses otherwise (E4).
 
-## 5. Questions for Ed
+## 5. Ed's answers (2026-10-28)
 
-Each has the art director's recommendation first.
+Asked as multiple choice, the art director's recommendation first.
 
-- **E1. How pixel should the effects be?**
-  - (a) **Pixel cores and dithered halos, with a small smooth bloom over the top (recommended)**, as Rappenem's sheet.
-  - (b) Strictly pixel, no smooth glow at all.
-  - (c) Pixel cores with painterly vector glow, as the batch 2 references.
-- **E2. Should attacks light the world?**
-  - (a) **Yes, capped, with the strongest effects winning (recommended).**
-  - (b) Only legends' attacks and the big spells.
-  - (c) No, halos only.
-- **E3. Scenery imprints (frozen trees and the like)?**
-  - (a) **Yes, all elements, fading within seconds (recommended).**
-  - (b) Frost and scorch only, to start.
-  - (c) Not for now.
-- **E4. The soundsystem spell and orbit combat, landing now?**
-  - (a) **Leave their look as built, and redo them in the language at stage 5 (recommended).**
-  - (b) Hold their visuals until stage 1 exists.
-  - (c) Leave them out of the pass.
-- **E5. Which element first, for the mock?**
-  - (a) **Fire, with a frost blast for the imprint (recommended).**
-  - (b) The party's own element (the witch's magic).
-  - (c) Whatever the most common creature uses.
-- **E6. Screen shake and flash?**
-  - (a) **Legends' big blows and the big spells only, all off with reduce flashing (recommended).**
-  - (b) Scaled by intensity for every effect.
-  - (c) None.
-- **E7. When?**
-  - (a) **After combat's rules settle (orbit combat merged), starting with the stage 0 mock (recommended).**
-  - (b) Next, before anything else.
-  - (c) Later, after the content passes.
+- **E1. How pixel?** Pixel cores and dithered pixel halos, with a small smooth bloom over the top, as Rappenem's sheet.
+- **E2. Should attacks light the world?** Yes, capped (about 6 effect lights at once), the strongest winning, so the world's own lights stay.
+- **E3. Scenery imprints?** Yes, all elements (frost, scorch, wet, bloom, charge, push), fading within seconds.
+- **E4. The soundsystem spell and orbit combat?** Ship their look as built, and redo them in the language at stage 5.
+- **E5. The first mock?** Fire across 4 forms × 3 intensities, plus a frost blast beside a tree to show the frozen imprint.
+- **E6. Screen shake and flash?** Legends' big blows and the big spells only; all off with reduce flashing.
+- **E7. When?** **Later, after the content passes**, not the art director's recommendation (after orbit combat merges). The pass waits; this brief is its starting point, stage 0 (the mock) first.
