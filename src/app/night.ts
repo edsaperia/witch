@@ -15,6 +15,7 @@ import type { View } from "../render/view";
 import { applyLoadRungs } from "./ladder";
 import { tuningFromLink } from "./linkParams";
 import { applySavedSettings, carryKnobs } from "./settings";
+import { applySettings, currentSettings } from "./playerSettings";
 import { linkKnobs } from "./sail";
 import { DECISION_LIST } from "../ui/decisions";
 import { readyMap, takeMapPrep, useReadyMap } from "./mapPrep";
@@ -135,6 +136,7 @@ export async function startNight(page: Page, spec: NightSpec): Promise<Night> {
   // A night after another on this page: every pause-page slider as it was set (Ed's decision 5: the game's knobs too), on purpose,
   // but for those this night's link sets itself.
   if (old) carryKnobs(old.tuning, tuning, DECISION_LIST, linkKnobs(params, DECISION_LIST));
+  applySettings(currentSettings(), tuning); // (the player's settings, last: app/playerSettings.ts; the same in mapPrep.ts, so the map prep's key matches)
   // Sailed here (&arrive=1, or in place): the island's map made already, in a worker while the chart flew (app/mapPrep.ts), if it's this night's.
   // (the boot: its own map, if the worker it started at once has it: app/mapPrep.ts startBootMapPrep)
   const sailed = !!params.get("arrive") || spec.how === "sail", mapPrep = sailed ? await takeMapPrep(seed, tuning) : spec.ready ? useReadyMap(await spec.ready, seed, tuning) : null;
