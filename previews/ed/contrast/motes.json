@@ -91,62 +91,62 @@
   "result": {
     "embers": {
       "before": {
-        "energy": 61.2,
-        "px": 300,
-        "peak": 0.593
+        "energy": 54.8,
+        "px": 249,
+        "peak": 0.716
       },
       "after": {
-        "energy": 114.2,
-        "px": 753,
-        "peak": 0.74
+        "energy": 84.1,
+        "px": 549,
+        "peak": 0.711
       }
     },
     "stack": {
       "before": {
-        "energy": 5.4,
-        "px": 17,
-        "peak": 0.761
+        "energy": 5.6,
+        "px": 10,
+        "peak": 0.852
       },
       "after": {
-        "energy": 7.8,
-        "px": 12,
-        "peak": 0.913
+        "energy": 9.5,
+        "px": 23,
+        "peak": 0.909
       }
     },
     "burst": {
       "before": {
-        "energy": 38.2,
-        "px": 287,
-        "peak": 0.284
+        "energy": 36.9,
+        "px": 293,
+        "peak": 0.263
       },
       "after": {
-        "energy": 109,
-        "px": 507,
-        "peak": 0.494
+        "energy": 94.1,
+        "px": 467,
+        "peak": 0.475
       }
     },
     "stone": {
       "before": {
-        "energy": 0,
-        "px": 0,
-        "peak": 0
+        "energy": 86.5,
+        "px": 714,
+        "peak": 0.186
       },
       "after": {
-        "energy": 0,
-        "px": 0,
-        "peak": 0
+        "energy": 34.8,
+        "px": 442,
+        "peak": 0.198
       }
     },
     "crowd": {
       "before": {
-        "energy": 494,
-        "px": 4615,
-        "peak": 0.48
+        "energy": 503.8,
+        "px": 4894,
+        "peak": 0.386
       },
       "after": {
-        "energy": 292.6,
-        "px": 1811,
-        "peak": 0.758
+        "energy": 197.5,
+        "px": 910,
+        "peak": 0.748
       }
     }
   }

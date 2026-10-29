@@ -89,16 +89,64 @@
     }
   },
   "result": {
-    "stone": {
+    "embers": {
       "before": {
-        "energy": 5,
-        "px": 54,
-        "peak": 0.119
+        "energy": 54.8,
+        "px": 249,
+        "peak": 0.716
       },
       "after": {
-        "energy": 33.6,
-        "px": 353,
-        "peak": 0.245
+        "energy": 84.1,
+        "px": 549,
+        "peak": 0.711
+      }
+    },
+    "stack": {
+      "before": {
+        "energy": 5.6,
+        "px": 10,
+        "peak": 0.852
+      },
+      "after": {
+        "energy": 9.5,
+        "px": 23,
+        "peak": 0.909
+      }
+    },
+    "burst": {
+      "before": {
+        "energy": 36.9,
+        "px": 293,
+        "peak": 0.263
+      },
+      "after": {
+        "energy": 94.1,
+        "px": 467,
+        "peak": 0.475
+      }
+    },
+    "stone": {
+      "before": {
+        "energy": 86.5,
+        "px": 714,
+        "peak": 0.186
+      },
+      "after": {
+        "energy": 34.8,
+        "px": 442,
+        "peak": 0.198
+      }
+    },
+    "crowd": {
+      "before": {
+        "energy": 503.8,
+        "px": 4894,
+        "peak": 0.386
+      },
+      "after": {
+        "energy": 197.5,
+        "px": 910,
+        "peak": 0.748
       }
     }
   }
