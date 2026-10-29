@@ -17,12 +17,12 @@ describe("the default bindings", () => {
     const pad = (id: Parameters<Bindings["pad"]>[0]) => B.pad(id);
     expect(pad("game.rise")).toEqual(["square"]);
     expect(pad("game.use")).toEqual(["cross"]);
-    expect(pad("game.dodge")).toEqual(["circle"]);
-    expect(pad("game.invite")).toEqual(["R2", "L2"]);
+    expect(pad("game.dodge")).toEqual(["L2", "circle"]); // (Ed, 2026-10-29: "Left trigger needs to be dodge")
+    expect(pad("game.invite")).toEqual(["R2"]);
     expect([pad("game.cycleNext"), pad("game.cyclePrev")]).toEqual([["R1"], ["L1"]]);
     expect(pad("game.hat")).toEqual(["triangle"]);
     expect(pad("game.boost")).toEqual(["L3"]);
-    expect([pad("game.zoomIn"), pad("game.zoomOut")]).toEqual([["up"], ["down"]]);
+    expect([pad("game.zoomIn"), pad("game.zoomOut")]).toEqual([["down"], ["up"]]); // (Ed, 2026-10-29: "d-pad up/down should be zoom out/zoom in")
     expect(pad("global.pause")).toEqual(["options"]);
     expect([pad("game.moveUp"), pad("game.aimUp")]).toEqual([["lsUp"], ["rsUp"]]);
     expect([pad("menu.choose"), pad("menu.back"), pad("menu.tabPrev"), pad("menu.tabNext")]).toEqual([["cross"], ["circle"], ["L1"], ["R1"]]);
@@ -80,7 +80,7 @@ describe("a player's own bindings", () => {
     expect(B.keys("game.rise")).toEqual(["Space"]);
     expect(B.pad("game.dodge")).toEqual(["R3"]);
     B.resetAll();
-    expect(B.pad("game.dodge")).toEqual(["circle"]);
+    expect(B.pad("game.dodge")).toEqual(["L2", "circle"]);
     expect(s.data.has("witch.bindings")).toBe(false);
     expect(B.list().every(a => a.isDefault)).toBe(true);
   });
