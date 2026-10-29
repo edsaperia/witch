@@ -2310,10 +2310,22 @@
         "gap": {
           "type": "number",
           "minimum": 0
+        },
+        "plate": {
+          "type": "number",
+          "minimum": 0,
+          "description": "A dark plate behind each edge pointer's ring and round its arrow, its opacity, so the pointers read on any ground (0 none, as before)."
+        },
+        "vivid": {
+          "type": "number",
+          "minimum": 0,
+          "description": "How much of the pointers' calming toward the night is taken back: 0 as calmed, 1 the area's neon itself."
         }
       },
       "required": [
-        "gap"
+        "gap",
+        "plate",
+        "vivid"
       ],
       "additionalProperties": false,
       "description": "The HUD's pointers as map pins over their subject (render/indicator.ts): gap is how far (screen pixels) the arrow's tip floats over the subject's drawn top."
@@ -3781,6 +3793,10 @@
           "minimum": 0,
           "description": "how much of a full cast her progress on a stone loses a second while she isn't casting it (holding again resumes from there)."
         },
+        "spot": {
+          "type": "number",
+          "minimum": 0
+        },
         "radius": {
           "type": "number",
           "minimum": 0,
@@ -3839,6 +3855,7 @@
         "on",
         "time",
         "drain",
+        "spot",
         "radius",
         "show",
         "scatter"
@@ -3953,10 +3970,6 @@
           "type": "number",
           "minimum": 0
         },
-        "settleAfter": {
-          "type": "number",
-          "minimum": 0
-        },
         "retarget": {
           "type": "number",
           "minimum": 0
@@ -3978,7 +3991,6 @@
         "legendArc",
         "flareDraw",
         "flare",
-        "settleAfter",
         "retarget"
       ],
       "additionalProperties": false,
@@ -4054,6 +4066,40 @@
           ],
           "additionalProperties": false,
           "description": "A dark patch under every sigil on the ground, so it reads clearly."
+        },
+        "placeMotes": {
+          "type": "object",
+          "properties": {
+            "count": {
+              "type": "number",
+              "minimum": 0
+            },
+            "size": {
+              "type": "number",
+              "minimum": 0
+            },
+            "bright": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rise": {
+              "type": "number",
+              "minimum": 0
+            },
+            "life": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "count",
+            "size",
+            "bright",
+            "rise",
+            "life"
+          ],
+          "additionalProperties": false,
+          "description": "A sigil put down or picked up: its burst of motes rising in its colour (render/leash.ts, drawn in render/leash/combat.ts): count, size (m), bright (times its colour), rise and life (times the old height and length)."
         },
         "runeGap": {
           "type": "number",
@@ -4304,13 +4350,25 @@
                 "stack": {
                   "type": "number",
                   "minimum": 0
+                },
+                "bright": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The embers rising off rank sigils (on the ground, in her stack, over the rune stones): their colour times this."
+                },
+                "crowd": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Past this many of her sigils put down, each one's embers thinned by the square root, so a crowd of them isn't noise (0: never)."
                 }
               },
               "required": [
                 "count",
                 "size",
                 "rise",
-                "stack"
+                "stack",
+                "bright",
+                "crowd"
               ],
               "additionalProperties": false
             },
@@ -4322,6 +4380,10 @@
               "type": "number",
               "minimum": 0
             },
+            "standScale": {
+              "type": "number",
+              "minimum": 0
+            },
             "stones": {
               "type": "object",
               "properties": {
@@ -4330,10 +4392,6 @@
                   "minimum": 0
                 },
                 "fade": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "south": {
                   "type": "number",
                   "minimum": 0
                 },
@@ -4364,19 +4422,23 @@
                 "convert": {
                   "type": "number",
                   "minimum": 0
+                },
+                "ringTilt": {
+                  "type": "number",
+                  "minimum": 0
                 }
               },
               "required": [
                 "range",
                 "fade",
-                "south",
                 "size",
                 "near",
                 "far",
                 "bars",
                 "radius",
                 "cell",
-                "convert"
+                "convert",
+                "ringTilt"
               ],
               "additionalProperties": false
             },
@@ -4442,6 +4504,7 @@
             "embers",
             "dotsPerRow",
             "stoneGlow",
+            "standScale",
             "stones",
             "chain"
           ],
@@ -4460,6 +4523,7 @@
         "sigilGlyph",
         "sigilHalo",
         "sigilBacking",
+        "placeMotes",
         "runeGap",
         "hex",
         "runs",
@@ -6698,6 +6762,21 @@
             "moteBuild": {
               "type": "number",
               "minimum": 0
+            },
+            "moteSize": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The motes rising off an awake runestone: their size in the picture's pixels (render/markers.ts)."
+            },
+            "moteBright": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The motes rising off an awake runestone: their brightness, times its colour."
+            },
+            "moteRise": {
+              "type": "number",
+              "minimum": 0,
+              "description": "How high (m) an awake runestone's motes rise before they fade."
             }
           },
           "required": [
@@ -6707,7 +6786,10 @@
             "reach",
             "beam",
             "motes",
-            "moteBuild"
+            "moteBuild",
+            "moteSize",
+            "moteBright",
+            "moteRise"
           ],
           "additionalProperties": false
         },
@@ -11291,6 +11373,11 @@
               "type": "number",
               "minimum": 0
             },
+            "unlit": {
+              "type": "number",
+              "minimum": 0,
+              "description": "How dark the forest is where nothing lights it: the ambient and the moonlight on ground, trees, bushes and creatures times this, while the lights (her glow, the party's, fires, lava, runestones, sigils) stay as they are (1 as before)."
+            },
             "moonHue": {
               "type": "number",
               "minimum": 0,
@@ -12062,6 +12149,7 @@
           "required": [
             "ambientHue",
             "ambient",
+            "unlit",
             "moonHue",
             "moonSat",
             "moon",

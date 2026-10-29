@@ -104,6 +104,24 @@
         "render/indicator.ts"
       ]
     },
+    "pins.plate": {
+      "what": "A dark plate behind each edge pointer's ring and round its arrow, its opacity, so the pointers read on any ground (0 none, as before).",
+      "decisions": [
+        {
+          "by": "Ed's playtest",
+          "date": "2026-10-29",
+          "quote": "Also, it's easy to miss the pointers"
+        }
+      ],
+      "links": [
+        "render/indicator.ts",
+        "render/view/hud.ts"
+      ]
+    },
+    "pins.vivid": {
+      "what": "How much of the pointers' calming toward the night is taken back: 0 as calmed, 1 the area's neon itself.",
+      "see": "pins.plate"
+    },
     "crownWidth": {},
     "treeSpacingX": {},
     "treeSpacingZ": {},

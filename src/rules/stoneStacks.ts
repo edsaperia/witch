@@ -43,9 +43,12 @@ export interface CastTuning {
   time: number;
   /** How much of a full cast drains a second while she isn't casting it. */
   drain: number;
-  /** How near the stone (m) she casts. */
+  /** How far south of its stone (m) the spell's spot lies (the 🎶 drawn on the ground: render/leash/stones.ts). */
+  spot: number;
+  /** How near the spot's middle (m) she casts (Ed's playtest, 2026-10-29: "I should have to stand on the soundsystem spell sigil
+   *  when casting it"): about the drawn spot's own radius. */
   radius: number;
-  /** How near the stone (m) the spell's sigil shows (castShown). */
+  /** How near the spot (m) the spell's sigil shows (castShown). */
   show: number;
   /** Where its friend sigils scatter (Ed, 2026-10-28: "scattered around the whole runestone clearing"): free hex cells of its open
    *  ground (a tree's chance there under `open` of the forest's density) between min and reach metres from the stone, in a seeded
@@ -53,7 +56,7 @@ export interface CastTuning {
    *  north): `hide.width` metres either side of it, `hide.depth` metres behind. */
   scatter: { min: number; reach: number; open: number; hide: { width: number; depth: number } };
 }
-export const CAST_DEFAULT: CastTuning = { on: false, time: 6, drain: 0.15, radius: 4, show: 12, scatter: { min: 4, reach: 40, open: 0.25, hide: { width: 5, depth: 14 } } };
+export const CAST_DEFAULT: CastTuning = { on: false, time: 6, drain: 0.15, spot: 4, radius: 2.2, show: 6, scatter: { min: 4, reach: 20, open: 0.25, hide: { width: 5, depth: 14 } } };
 export const castOf = (t: Tuning): CastTuning => ({ ...CAST_DEFAULT, ...t.cast, scatter: { ...CAST_DEFAULT.scatter, ...t.cast?.scatter, hide: { ...CAST_DEFAULT.scatter.hide, ...t.cast?.scatter?.hide } } });
 /** Whether the stacks and the spell are on (else the game as before them). */
 export const castOn = (t: Tuning): boolean => !!t.cast?.on;
@@ -70,12 +73,15 @@ export function stoneOpen(g: Game, key: string): boolean {
   return key !== keyOf(g.map.centreCell) && !g.party.areas.has(key) && !g.party.ruined?.has(key);
 }
 
-/** The order of a stack, bottom first: enemies, then friends (Ed, 2026-10-28: friends above enemies, "you mostly care about how many
- *  creatures are still hostile"), each group in rank order from the bottom (the legend, adults, youths, babies), by id within a rank. */
-const stackOrder = (a: StackEntry, b: StackEntry) => (a.friend === b.friend ? 0 : a.friend ? 1 : -1) || b.level - a.level || a.id - b.id;
+/** The order of a stack, bottom first: the enemy fighters, then the friend fighters (Ed, 2026-10-28: friends above enemies, "you
+ *  mostly care about how many creatures are still hostile"), each in rank order from the bottom (the legend, adults, youths), then
+ *  every baby on top whatever its state (Ed, 2026-10-29: "baby sigils are purple (neither friend nor enemy) ... And they're always at
+ *  the top of the stack"), by id within a rank. */
+const isBaby = (e: StackEntry) => e.level === 0 && !e.legend;
+const stackOrder = (a: StackEntry, b: StackEntry) => (+isBaby(a) - +isBaby(b)) || (isBaby(a) ? 0 : a.friend === b.friend ? 0 : a.friend ? 1 : -1) || b.level - a.level || a.id - b.id;
 
-/** The sigil stack above an area's stone (Ed, 2026-10-28), in draw order, bottom first: enemies, then friends above them, each group
- *  the legend, adults, youths, babies (the babies at the top). Empty for a stone that's converted (its friends' sigils lie on the
+/** The sigil stack above an area's stone (Ed, 2026-10-28), in draw order, bottom first: the enemy fighters, then the friend
+ *  fighters above them, each the legend, adults, youths; then the babies at the top (stackOrder). Empty for a stone that's converted (its friends' sigils lie on the
  *  ground: g.loose), home, a ruined one, or with the stacks off. */
 export function stoneStack(g: Game, key: string): StackEntry[] {
   if (!castOn(g.tuning) || !stoneOpen(g, key)) return [];
@@ -87,7 +93,18 @@ export function stoneStack(g: Game, key: string): StackEntry[] {
   return out.sort(stackOrder);
 }
 
-/** The stone she'd cast at from (x, z): her area's (a legend area's pair's), if it has a stack and she's within `reach` of it. */
+/** Whether a stone's spell can be cast (Ed, 2026-10-29: "Stop you from casting until all wild animals are invited"): no enemy
+ *  fighter left on its stack, every wild youth and adult of its area invited (happy, or leashed and so off it). Its babies don't
+ *  count (they turn friendly at the conversion), nor its sleeping legend. A wave converts it whatever. */
+export function castReady(g: Game, key: string): boolean {
+  return !stoneStack(g, key).some(e => !e.friend && !e.legend && e.level > 0);
+}
+
+/** Where a stone at (x, z)'s spell spot lies: cast.spot m south of it. */
+export const castSpot = (s: { x: number; z: number }, t: Tuning): { x: number; z: number } => ({ x: s.x, z: s.z + castOf(t).spot });
+
+/** The stone she'd cast at from (x, z): her area's (a legend area's pair's), if it has a stack, is ready to cast (castReady) and
+ *  she's within `reach` of its spell spot (castSpot). Its x, z the stone's own. */
 export function stoneNear(g: Game, x: number, z: number, reach: number): { key: string; cell: Cell; x: number; z: number } | null {
   // (her area's stone, or a neighbour's: a stone can stand near its area's edge, and a step either way of the line mustn't lose it)
   const here = g.map.cellSafe(x, z).cell, keys = [keyOf(here), ...(g.map.neighbours.get(keyOf(here)) ?? [])];
@@ -95,8 +112,8 @@ export function stoneNear(g: Game, x: number, z: number, reach: number): { key: 
   for (const k of keys) {
     const [cx, cy] = k.split(",").map(Number), cell = g.map.areaOf ? g.map.areaOf([cx, cy]) : ([cx, cy] as Cell), key = keyOf(cell);
     if (!g.map.playable(cell[0], cell[1]) || !stoneOpen(g, key)) continue;
-    const s = g.map.soundsystemSpot(cell[0], cell[1]), d = Math.hypot(s.x - x, s.z - z);
-    if (d <= bd) { bd = d; best = { key, cell, x: s.x, z: s.z }; }
+    const s = g.map.soundsystemSpot(cell[0], cell[1]), p = castSpot(s, g.tuning), d = Math.hypot(p.x - x, p.z - z);
+    if (d <= bd && castReady(g, key)) { bd = d; best = { key, cell, x: s.x, z: s.z }; }
   }
   return best;
 }
@@ -113,7 +130,7 @@ export function castProgress(W: Witch, key: string, ht: number, t: Tuning): numb
 }
 
 /** What the view shows of her spell (Ed, 2026-10-28: "The music-note sigil becomes visible only as you enter the clearing and get near
- *  the runestone, and disappears as you leave"): the stone she's near on foot (within cast.show), her progress there and whether
+ *  the runestone, and disappears as you leave"): the stone she's near on foot (its spot within cast.show), her progress there and whether
  *  she's casting it now; else null. */
 export function castShown(g: Game, W: Witch): { key: string; x: number; z: number; k: number; lostFrom?: number; hitAt?: number; casting: boolean } | null {
   const t = g.tuning, b = W.body;
@@ -124,7 +141,7 @@ export function castShown(g: Game, W: Witch): { key: string; x: number; z: numbe
   return { key: s.key, x: s.x, z: s.z, k: castProgress(W, s.key, g.herTime, t), ...(r?.lostFrom !== undefined ? { lostFrom: r.lostFrom, hitAt: r.hitAt } : {}), casting: W.casting === s.key };
 }
 
-/** The stone she casts at where she stands: on foot, not knocked out, within cast.radius of a stone with a stack (the sigil button
+/** The stone she casts at where she stands: on foot, not knocked out, within cast.radius of the spot of a stone with a stack (the sigil button
  *  then casts, rather than putting down or picking up: rules/sigilButton.ts); else null. */
 export function castingStone(g: Game, W: Witch): { key: string; cell: Cell; x: number; z: number } | null {
   const b = W.body;

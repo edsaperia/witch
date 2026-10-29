@@ -1,5 +1,5 @@
 // Guidance pins (rules/guidance.ts; Ed's list, 2026-10-26): one at a time, in order: the bed after a lost night; her first night's
-// dressing, station by station; the invitations desk and the lathe (her night's kit, rules/kit.ts); something new till
+// morning in Ed's order (2026-10-29: the dressing table, wardrobe, shoes, bags, invitations, cloak, hat, broom); later mornings the invitations desk and the lathe (her night's kit, rules/kit.ts); something new till
 // she's been to it; the map table for an island found she hasn't seen; the decks. Each gone once it's done, hidden at its target.
 import { newKit, takeBroom, takeInvites } from "./kit";
 import { describe, expect, it } from "vitest";
@@ -33,17 +33,37 @@ describe("guidance pins", () => {
     expect(of(g)).toBeNull();
   });
 
-  it("her first night: the dressing stations in turn, the wardrobe first, till she's dressed; then the decks", () => {
+  it("a game's first morning, in Ed's order (2026-10-29): the dressing table (skin, hair), wardrobe, shoes, bags, the invitations, the cloak, her hat, her broom; then the decks", () => {
     const g = up();
     expect(g.wake!.open).toBe(true);
-    expect(of(g)).toEqual({ kind: "dress", target: { object: "wardrobe" } });
+    let inv = false, broom = false;
+    const hooks = { invitationsReady: () => inv, broomTaken: () => broom }, at = () => { const G = guidanceOf(g, 0, emptyGuide(), [], hooks)!; return "object" in G.target ? G.target.object : G.kind; };
+    expect(guidanceOf(g, 0, emptyGuide(), [], hooks)).toEqual({ kind: "dress", target: { object: "dressingTable" } });
+    g.wake!.styled = true;
+    expect(at()).toBe("wardrobe");
     wearFromStation(g.wake!, "wardrobe");
-    expect(of(g)?.target).toEqual({ object: "shoeRack" });
-    wearFromStation(g.wake!, "shoeRack"); wearFromStation(g.wake!, "cloakPegs"); wearFromStation(g.wake!, "bags");
-    expect(of(g)?.target).toEqual({ object: "hats" });
+    expect(at()).toBe("shoeRack");
+    wearFromStation(g.wake!, "shoeRack");
+    expect(at()).toBe("bags");
+    wearFromStation(g.wake!, "bags");
+    expect(at()).toBe("invitations");
+    inv = true;
+    expect(at()).toBe("cloakPegs");
+    wearFromStation(g.wake!, "cloakPegs");
+    expect(at()).toBe("hats");
     g.wake!.pile = [];
-    const d = deckOf(g.map, g.tuning)!;
-    expect(of(g)).toEqual({ kind: "decks", target: { x: d.house!.desk.x, z: d.house!.desk.z } });
+    expect(at()).toBe("lathe");
+    broom = true;
+    expect(at()).toBe("decks");
+  });
+
+  it("the dressing table's step is done once she's used it: E there (its panel opened)", () => {
+    const g = up();
+    expect(of(g)?.target).toEqual({ object: "dressingTable" });
+    standAt(g, "dressingTable");
+    run(g, STEP, { place: true } as Partial<Controls>);
+    expect(g.wake!.styled).toBe(true);
+    expect(of(g)?.target).toEqual({ object: "wardrobe" });
   });
 
   it("no dressing pin after a night played: last night's clothes are in their pile; straight to the decks", () => {
@@ -56,6 +76,8 @@ describe("guidance pins", () => {
     const g = newGame(123, TUNING);
     g.party.spellAt = null; g.clock.paused = false; wakeInBedroom(g); startWake(g, g.herTime, { mirrored: true });
     run(g, 0.1, { moveX: 1 }); run(g, WAKE_DEFAULT.stretch + 0.1);
+    expect(of(g)).toEqual({ kind: "dress", target: { object: "dressingTable" } });
+    g.wake!.styled = true;
     expect(of(g)).toEqual({ kind: "dress", target: { object: "wardrobe" } });
     for (const st of ["wardrobe", "shoeRack", "cloakPegs", "bags"]) wearFromStation(g.wake!, st);
     expect(of(g)).toEqual({ kind: "dress", target: { object: "hats" } });
@@ -147,7 +169,7 @@ describe("guidance pins", () => {
     const g = up();
     const G = of(g)!;
     expect(atGuide(g, 0, G)).toBe(false);
-    standAt(g, "wardrobe");
+    standAt(g, "dressingTable"); // (her first morning's first pin: Ed, 2026-10-29)
     expect(atGuide(g, 0, G)).toBe(true);
     const d = deckOf(g.map, g.tuning)!, D = { kind: "decks" as const, target: { x: d.house!.desk.x, z: d.house!.desk.z } }; // (over the desk; at it, at her seat)
     expect(atGuide(g, 0, D)).toBe(false);
