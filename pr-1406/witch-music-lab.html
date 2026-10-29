@@ -1771,7 +1771,8 @@ label.check input { accent-color: var(--accent); }
       melee: { attacks: [null, "nip", "maul"], knockback: 6 },
       ranged: { name: "dislodged stone", range: 14, shots: [0, 1, 1], tint: "red" },
       special: "knockback",
-      retreat: "trees",
+      retreat: "leapfrog",
+      // (Ed, 2026-10-29: bounding back uphill, half behind the other half, never hidden: "trees" put it out of sight and back at once)
       rhythm: "steady",
       pressure: 1,
       call: "backs off uphill",
