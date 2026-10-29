@@ -31,6 +31,12 @@ Older measurements predate pack combat, orbit combat, the bags, the stumps' spel
 
 Adult garrison jobs; off-route rewards or pull; a witch-nearby boost (no change). Set pieces are phased out (docs still to update).
 
+## Matched real-rules reports (Ed's reporting pass, 2026-10-29)
+
+`node tools/balance/report.mjs runs` reports wins, losses and censored runs by island, journey phase, record bpm and explicit bag, with run-phase times, waves reached/passed and knockdowns. `stuns` measures landed invitation hits by species/rank/bag through the real rules. `sloppy` uses the existing novice policy; every bot receives the same chosen loadout. Commands, definitions, restart guarantees and the legacy coverage map are in [balance-report-coverage.md](balance-report-coverage.md); committed measurements are in [balance-baselines.md](balance-baselines.md). No tuning or rule changes.
+
+The coordinator's ruling on PR #1463 (2026-10-29): ranged exposure is **actual ranged targeting (wind-ups and casts) / conscious ground time**, explicitly an observed lower bound. It is not every position from which she could be shot, nor a hit probability. Deferred: measuring all possible-position exposure needs a public read-only rules query; act when that query exists or the coordinator authorizes its owner to provide it. Do not copy combat geometry into the reporting tool. Legacy `balance.ts`/`states.ts` retirement is conditional on the explicit coverage map becoming complete or the coordinator ruling uncovered counterfactuals obsolete; until then retain them as historical, uncalibrated models.
+
 ## Playtest logs
 
 Ed's logs (the pause page's **Download log**) are kept on `claude/ed-shots` under `previews/ed/playtests/`; each file holds several sessions, newest last.
