@@ -4,6 +4,7 @@
 // value. Kept on this browser (localStorage), the last few runs; L downloads them as JSON, and so
 // does opening the game with ?playtest=download. Browser-side, outside the rules.
 import { powerReport } from "../rules/power";
+import { stackOrder } from "../rules/leash";
 import type { Game } from "../rules/game";
 import type { Stall } from "./stallLog";
 import type { CompareKey } from "../app/compareKey";
@@ -31,6 +32,10 @@ export interface PlaytestSample {
   marching: number;
   /** The witch's hits left. */
   hits: number;
+  /** Her stack as drawn, top first (Ed's playtest of v5399: "one of them seemed pinned to the bottom of the stack"): each creature's
+   *  sigil as `#id species level`, a carried relic's as `relic #id`, and last a sleeping legend's sigil she carries, which never
+   *  cycles (rules/stoneStacks.ts), as `tether #id species`. */
+  stack?: string[];
   /** The frames of the last two seconds (platform/frameStats.ts; Ed's overlay, 2026-10-13: "gpu 21.4 ms median", so a log shows
    *  where a slow frame's time goes): their length and the page's own work (ms, median and p95), the GPU's own time where the
    *  browser can time it, the share over 20 ms, and what was drawn (draw calls, trees, bushes, creatures, the mode and zoom). */
@@ -94,6 +99,7 @@ export class PlaytestLog {
       berries: g.tally.berries, invites: g.tally.invites, evolved: g.tally.evolved,
       sieges: p.sieges.map(s => ({ key: s.key, value: round(s.value), count: s.count, hp: Math.round(s.hp) })), marching: round(p.marching),
       hits: g.witches[0].health.hp,
+      stack: stackShown(g),
       audio: this.audioState?.(),
       frames: this.frameState?.(),
       gpu: this.gpuState?.(),
@@ -169,4 +175,12 @@ export class PlaytestLog {
     document.body.append(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }
+}
+
+/** Her stack as drawn (render/leash/stack.ts), top first, for the log. */
+export function stackShown(g: Game): string[] {
+  const s = g.witches[0].leash, out = stackOrder(s).map(it => (it.kind === "relic" ? `relic #${it.id}` : `#${it.id} ${g.creatures[it.id]?.species} ${g.creatures[it.id]?.level}`));
+  const L = s.tether ? g.creatures[s.tether.id] : undefined;
+  if (L) out.push(`tether #${L.id} ${L.species}`);
+  return out;
 }

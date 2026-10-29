@@ -13,7 +13,7 @@ import { barAt, musicCue, planBlock } from "./musicPlan";
 import type { MusicStyle } from "./musicScore";
 import { composeFloor, newFloor } from "./dancefloor";
 import { floorInputs } from "./game";
-import { congaFollows, congaPlace, congaRadius, finalStone, trailPlaces, islandCleared, legendPlaces, winFlare, nearestStraggler, routeDone, straggler, WIN_DEFAULT, winLit, winPulse, winPulseOut, winTarget } from "./win";
+import { atTheParty, congaFollows, congaPlace, congaRadius, finalStone, trailPlaces, islandCleared, legendPlaces, winFlare, nearestStraggler, routeDone, straggler, WIN_DEFAULT, winLit, winPulse, winPulseOut, winTarget } from "./win";
 import { cellKey, clearArea, wavePlan } from "./party";
 import { leyChain } from "./leylines";
 import { fillTrunk } from "./finds";
@@ -184,6 +184,17 @@ describe("the end of the route (rules/win.ts)", () => {
     for (const c of dancers) { expect(c.z).toBeLessThan(d0.z - R); expect(Math.hypot(c.x - d0.x, c.z - d0.z)).toBeGreaterThan(R + W.legendGap - 0.6); expect(c.away).toBe(false); }
     for (const a of dancers) for (const b of dancers) if (a !== b) expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThan(W.legendSpace - 0.6);
     expect(g.creatures.some(c => c.fight?.target)).toBe(false);
+    // It settles once she reaches the party (Ed, 2026-10-28: "anywhere on the dancefloor, on foot or flying low over it"), not by time.
+    g.witch = { ...g.witch, x: d0.x + d0.radius + 30, z: d0.z, vx: 0, vz: 0, lift: 0, mode: "ground", seated: false, perch: undefined };
+    run(g, 1);
+    expect(atTheParty(g)).toBe(false);
+    expect(w.settled).toBe(false);
+    g.witch = { ...g.witch, x: d0.x, z: d0.z + d0.radius * 0.5, lift: 1 };
+    run(g, 0.1);
+    expect(atTheParty(g)).toBe(false); // (high over it: not there)
+    g.witch = { ...g.witch, lift: 0 };
+    run(g, 0.1);
+    expect(atTheParty(g)).toBe(true);
     expect(w.settled).toBe(true);
     expect(winFlare(g)).toBeNull(); // (held win.flare seconds, then gone)
     expect(g.partyOver).toBeNull();

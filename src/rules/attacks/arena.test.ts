@@ -59,7 +59,9 @@ describe("attacks in the grammar in the real fight", () => {
   });
 
   it("gives every species its own attack by default (step 5): the wild cats' claws flown by the engine, telegraphed", () => {
-    const { g } = arena("wolf*3@2,cat*3@2", null, 12);
+    // (20 s: the cats' first claw comes 6 to 14 s in by the seed and the fight's turns, 9.3 s here before their leaps flew on through a
+    // stun and hidden ones made their way round, 2026-10-29, 14 s since: rules/combat.ts)
+    const { g } = arena("wolf*3@2,cat*3@2", null, 20);
     const S = g.combat.spells!;
     expect(S.stats.bodies[0]).toBeGreaterThan(0);
     expect(S.telegraphs.some(t => t.attack === "species:cat")).toBe(true); // (its warnings: the pool keeps the last ones)

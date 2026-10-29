@@ -888,9 +888,16 @@ The HUD's pointers as map pins over their subject (render/indicator.ts): gap is 
 1. Ed, 2026-10-26: "pins should be a bit higher"
 Code: `render/indicator.ts`
 
+- **`pins.plate`**: A dark plate behind each edge pointer's ring and round its arrow, its opacity, so the pointers read on any ground (0 none, as before).
+  1. Ed's playtest, 2026-10-29: "Also, it's easy to miss the pointers"
+  Code: `render/indicator.ts`, `render/view/hud.ts`
+- **`pins.vivid`**: How much of the pointers' calming toward the night is taken back: 0 as calmed, 1 the area's neon itself.
+
 | knob | type | range |
 |---|---|---|
 | `pins.gap` | number | 0 to … |
+| `pins.plate` | number | 0 to … |
+| `pins.vivid` | number | 0 to … |
 
 ### `crownWidth`
 
@@ -1239,6 +1246,10 @@ Code: `rules/spells.ts`, `docs/backlog/unlocks.md`, `rules/hat.ts`, `config/broo
 - **`spells.parts`**: her broom's parts, a comma list of ids from config/broom-parts.json (the page sets it from her save, localStorage witch.broom, fitted at the Workshop's bay; ?parts= for one load); the bare broom, none, has no spell and no quick take-off [1], and a complete set gives its spell.
   1. Ed, 2026-10-23
   Code: `config/broom-parts.json`
+- **`spells.bag`**: her bag, a config/wardrobe.json bag item's id or empty for none, whose invites multiply invites.cooldown and invites.range while she carries it (rules/bags.ts).
+  1. Ed, 2026-10-29: "We should start with a choice of two bags; faster rate of fire but shorter range, and slower rate of fire but longer range"
+  The page sets it from her look (localStorage witch.genome, chosen at the bags station; ?bag=quick or ?bag=far for one load). The Quick bag (bumbag) throws 💌s faster and shorter, the Far bag (satchel) slower and further; none, the tuning's own.
+  Code: `config/wardrobe.json`
 - **`spells.speed`**: the Speed broom, her speed times mult for duration seconds, then cooldown seconds to recharge.
 - **`spells.healing`**: The Healing ring heals her while she stands near it, and the Helmet takes the first blow for her.
   the Healing ring, within radius m of it she heals a hit every `every` seconds while hurt. The Helmet: the first blow knocks it off beside her instead of costing a hit; she picks it up (E) to wear it again.
@@ -1269,6 +1280,7 @@ Code: `rules/spells.ts`, `docs/backlog/unlocks.md`, `rules/hat.ts`, `config/broo
 | `spells.hat` | string |  |
 | `spells.hats` | string |  |
 | `spells.parts` | string |  |
+| `spells.bag` | string |  |
 | `spells.speed.mult` | number | 0 to … |
 | `spells.speed.duration` | number | 0 to … |
 | `spells.speed.cooldown` | number | 0 to … |
@@ -1424,6 +1436,8 @@ The 💌 invite [1], replacing the proximity chat when on: on the ground she sho
 - **`invites.orbit`**: the 💌 ring circles a creature at scale times its body radius (movement.json bodies) plus gap metres, at least min, and at least height times its drawn height (to its top as drawn) plus gap, so it rings the creature you see at any size; wider still when it holds many.
   1. Ed, 2026-10-28: "the orbits are smaller than the size of the creatures; their size should adjust depending on how large the creatures are"
   2. Ed's playtest, 2026-10-06: "Invitation orbits are too tight around the creature"
+  3. Ed's playtest, 2026-10-29: "damage orbits are too wide, bring them in by around 30%" (scale 2 to 1.4, gap 1 to 0.7, min 2 to 1.4, height 0.9 to 0.63 (all x0.7); the soundsystem's 💥 ring 1.5 to 1.05 m outside it)
+  A soundsystem's 💥 ring sits 1.5 gaps outside its radius.
 - **`invites.hard`**: the hard homing of the 💌s her Sentry and Slingshot hats throw: homing degrees a second, cone degrees either side it looks in, range metres it looks out to (was the legend buffs' charm, 420, 80 and 18).
 
 | knob | type | range |
@@ -1483,7 +1497,7 @@ The end of the route: after the last wave a pointer leads her to the remaining e
 3. Ed, 2026-10-11: a ring inside the conga's hid it from the ground
 4. 2026-10-26: "Remove the end cards" (rules/guidance.ts; no card since Ed's)
 5. Ed's playtest, 2026-10-26: "when you're on the ground in the home area, the line should follow you"
-The end of the route [1][2]: the last wave landed, a pointer to the enraged animal nearest the centre while any lives (enraged legends don't count; retarget: seconds between re-picks); none left, the victory lap: the pulse races back along the route to home at lapSpeed m/s, every stone it passes firing its fireworks; home reached, the night won: the dealt legends wake (bar any still enraged, which go back to sleep, their islands not found) and dance in place on its far side [3], north of the dancefloor beyond the conga, behind everything from the north-facing camera: on arcs legendGap m outside the conga's circle, legendRow m apart, legendSpace m between them, from due north out to legendArc degrees across, clear of the treehouse, the island's sigil flares on the dancefloor (drawn on over flareDraw s, held flare s), every other animal joins one conga line round it (congaSpeed m/s, congaGap m apart, a circle of at least congaRadius m, as big as the line needs), walking to its place at joinSpeed m/s (out of her sight, seen m off, simply there); settleAfter seconds after, it settles: the guidance pins lead her home [4]. The conga follows her [5]: with follow on, while she's on the ground in the home area (not at the treehouse or in the treetops) the leader trails followLead m behind her along where she's walked and the rest follow single file congaGap apart, walking to their places at joinSpeed or followSpeed times her own speed, whichever is faster; anywhere else the line goes back round the dancefloor.
+The end of the route [1][2]: the last wave landed, a pointer to the enraged animal nearest the centre while any lives (enraged legends don't count; retarget: seconds between re-picks); none left, the victory lap: the pulse races back along the route to home at lapSpeed m/s, every stone it passes firing its fireworks; home reached, the night won: the dealt legends wake (bar any still enraged, which go back to sleep, their islands not found) and dance in place on its far side [3], north of the dancefloor beyond the conga, behind everything from the north-facing camera: on arcs legendGap m outside the conga's circle, legendRow m apart, legendSpace m between them, from due north out to legendArc degrees across, clear of the treehouse, the island's sigil flares on the dancefloor (drawn on over flareDraw s, held flare s), every other animal joins one conga line round it (congaSpeed m/s, congaGap m apart, a circle of at least congaRadius m, as big as the line needs), walking to its place at joinSpeed m/s (out of her sight, seen m off, simply there); once she reaches the party after the win (anywhere on the dancefloor, on foot or flying low: Ed, 2026-10-28), it settles: the guidance pins lead her home [4]. The conga follows her [5]: with follow on, while she's on the ground in the home area (not at the treehouse or in the treetops) the leader trails followLead m behind her along where she's walked and the rest follow single file congaGap apart, walking to their places at joinSpeed or followSpeed times her own speed, whichever is faster; anywhere else the line goes back round the dancefloor.
 Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
 
 | knob | type | range |
@@ -1503,7 +1517,6 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
 | `win.legendArc` | number | 0 to … |
 | `win.flareDraw` | number | 0 to … |
 | `win.flare` | number | 0 to … |
-| `win.settleAfter` | number | 0 to … |
 | `win.retarget` | number | 0 to … |
 
 ### `leash`
@@ -1568,6 +1581,12 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
   2. Ed, 2026-10-27: "go ahead and push all the new sigil work" (the default since; ?sigils=old turns them off and the hex grid back to 4 m)
   on [2], every leash sigil (her stack, placed sigils, happy runes, the ghost, the treetop projection, the bond) is its bare glyph, no ring or disc, glyph metres across on the ground, in its rank's colour (colours: baby, youth, adult, legend; the species' neon stays the world's: borders, stones, fireworks, dancefloor, holograms, chart), with embers rising off its strokes (embers.count at once, each size metres, rising rise metres, by rank; in her stack stack of that), under a dark shade in the glyph's own shape (not a disc); a youth in her stack shows two rows of round dots off to its right, one a berry it eats on the move (toEvolve less the last, eaten at a placed sigil), at most dotsPerRow a row, bright eaten and dim not, pulsing when ready; and the hex grid is hex metres (leash.hex.size).
   Code: `render/leash/ranks.ts`
+- **`leash.placeMotes`**: A sigil put down or picked up: its burst of motes rising in its colour (render/leash.ts, drawn in render/leash/combat.ts): count, size (m), bright (times its colour), rise and life (times the old height and length).
+  1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
+- **`leash.ranks.embers.bright`**: The embers rising off rank sigils (on the ground, in her stack, over the rune stones): their colour times this.
+  1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
+- **`leash.ranks.embers.crowd`**: Past this many of her sigils put down, each one's embers thinned by the square root, so a crowd of them isn't noise (0: never).
+  1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
 
 | knob | type | range |
 |---|---|---|
@@ -1583,6 +1602,11 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
 | `leash.sigilBacking.dark` | number | 0 to … |
 | `leash.sigilBacking.size` | number | 0 to … |
 | `leash.sigilBacking.ink` | number | 0 to … |
+| `leash.placeMotes.count` | number | 0 to … |
+| `leash.placeMotes.size` | number | 0 to … |
+| `leash.placeMotes.bright` | number | 0 to … |
+| `leash.placeMotes.rise` | number | 0 to … |
+| `leash.placeMotes.life` | number | 0 to … |
 | `leash.runeGap` | number | 0 to … |
 | `leash.hex.size` | number | 0 to … |
 | `leash.hex.stone` | number | 0 to … |
@@ -1618,11 +1642,13 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
 | `leash.ranks.embers.size` | array of number |  |
 | `leash.ranks.embers.rise` | array of number |  |
 | `leash.ranks.embers.stack` | number | 0 to … |
+| `leash.ranks.embers.bright` | number | 0 to … |
+| `leash.ranks.embers.crowd` | number | 0 to … |
 | `leash.ranks.dotsPerRow` | number | 0 to … |
 | `leash.ranks.stoneGlow` | number | 0 to … |
+| `leash.ranks.standScale` | number | 0 to … |
 | `leash.ranks.stones.range` | number | 0 to … |
 | `leash.ranks.stones.fade` | number | 0 to … |
-| `leash.ranks.stones.south` | number | 0 to … |
 | `leash.ranks.stones.size` | number | 0 to … |
 | `leash.ranks.stones.near` | number | 0 to … |
 | `leash.ranks.stones.far` | number | 0 to … |
@@ -1630,6 +1656,7 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
 | `leash.ranks.stones.radius` | number | 0 to … |
 | `leash.ranks.stones.cell` | number | 0 to … |
 | `leash.ranks.stones.convert` | number | 0 to … |
+| `leash.ranks.stones.ringTilt` | number | 0 to … |
 | `leash.ranks.chain.link` | array of number |  |
 | `leash.ranks.chain.tether` | number | 0 to … |
 | `leash.ranks.chain.slack` | number | 0 to … |
@@ -2229,6 +2256,7 @@ Code: `src/rules/stoneStacks.ts`
 | `cast.on` | boolean |  |
 | `cast.time` | number | 0 to … |
 | `cast.drain` | number | 0 to … |
+| `cast.spot` | number | 0 to … |
 | `cast.radius` | number | 0 to … |
 | `cast.show` | number | 0 to … |
 | `cast.scatter.min` | number | 0 to … |
@@ -2480,6 +2508,12 @@ Spawn markers (Ed, v147): a rune stone on every spot where a soundsystem will co
   Code: `rules/runestones.ts`
 - **`runeMarkers.beamHeight`**: the beacon's height (metres).
 - **`runeMarkers.lightRange`**: stones within this many metres light the scene.
+- **`runeMarkers.awake.moteSize`**: The motes rising off an awake runestone: their size in the picture's pixels (render/markers.ts).
+  1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
+- **`runeMarkers.awake.moteBright`**: The motes rising off an awake runestone: their brightness, times its colour.
+  1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
+- **`runeMarkers.awake.moteRise`**: How high (m) an awake runestone's motes rise before they fade.
+  1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
 
 | knob | type | range |
 |---|---|---|
@@ -2501,6 +2535,9 @@ Spawn markers (Ed, v147): a rune stone on every spot where a soundsystem will co
 | `runeMarkers.awake.beam` | number | 0 to … |
 | `runeMarkers.awake.motes` | number | 0 to … |
 | `runeMarkers.awake.moteBuild` | number | 0 to … |
+| `runeMarkers.awake.moteSize` | number | 0 to … |
+| `runeMarkers.awake.moteBright` | number | 0 to … |
+| `runeMarkers.awake.moteRise` | number | 0 to … |
 | `runeMarkers.flare.time` | number | 0 to … |
 | `runeMarkers.flare.light` | number | 0 to … |
 
@@ -3878,12 +3915,16 @@ Code: `render/mood.ts`
 - **`light.spooky.areaEase`**: how fast the mood eases from one area's to the next (a second).
 - **`light.spooky.areas`**: Each kind of area's own fog colour, tint and mist (teal over bogs, violet in dead woods, pale mist on the moor and so on).
   each area type's own fog (hazeHue, hazeSat, haze), grade tint (gradeHue, gradeSat) and mist over the above, by area id ("home" for home): misty teal over the bogs and water, violet-grey in the dead and ancient woods, blue-violet in the bluebells, pale mist on the open moor, darker in the rocky places, near-black green under the pines, rosy in the honeysuckle and gardens, home a little less cold.
+- **`light.spooky.unlit`**: How dark the forest is where nothing lights it: the ambient and the moonlight on ground, trees, bushes and creatures times this, while the lights (her glow, the party's, fires, lava, runestones, sigils) stay as they are (1 as before).
+  1. Ed's playtest, 2026-10-29: "Contrast on the visuals seems low; the important parts of the scene don't stand out very well. The unlit forest needs to be darker." (v5399; measured with tools/shot/contrast.cjs)
+  Code: `render/lighting.ts`, `render/view.ts`
 
 | knob | type | range |
 |---|---|---|
 | `light.mood` | string |  |
 | `light.spooky.ambientHue` | number | 0 to … |
 | `light.spooky.ambient` | number | 0 to … |
+| `light.spooky.unlit` | number | 0 to … |
 | `light.spooky.moonHue` | number | 0 to … |
 | `light.spooky.moonSat` | number | 0 to … |
 | `light.spooky.moon` | number | 0 to … |

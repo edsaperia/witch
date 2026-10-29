@@ -139,8 +139,15 @@
           "by": "Ed's playtest",
           "date": "2026-10-06",
           "quote": "Invitation orbits are too tight around the creature"
+        },
+        {
+          "by": "Ed's playtest",
+          "date": "2026-10-29",
+          "quote": "damage orbits are too wide, bring them in by around 30%",
+          "rest": "scale 2 to 1.4, gap 1 to 0.7, min 2 to 1.4, height 0.9 to 0.63 (all x0.7); the soundsystem's 💥 ring 1.5 to 1.05 m outside it"
         }
-      ]
+      ],
+      "notes": "A soundsystem's 💥 ring sits 1.5 gaps outside its radius."
     },
     "invites.hard": {
       "what": "the hard homing of the 💌s her Sentry and Slingshot hats throw: homing degrees a second, cone degrees either side it looks in, range metres it looks out to (was the legend buffs' charm, 420, 80 and 18)."
@@ -197,7 +204,7 @@
         "docs/backlog/journey.md",
         "rules/guidance.ts"
       ],
-      "notes": "The end of the route [1][2]: the last wave landed, a pointer to the enraged animal nearest the centre while any lives (enraged legends don't count; retarget: seconds between re-picks); none left, the victory lap: the pulse races back along the route to home at lapSpeed m/s, every stone it passes firing its fireworks; home reached, the night won: the dealt legends wake (bar any still enraged, which go back to sleep, their islands not found) and dance in place on its far side [3], north of the dancefloor beyond the conga, behind everything from the north-facing camera: on arcs legendGap m outside the conga's circle, legendRow m apart, legendSpace m between them, from due north out to legendArc degrees across, clear of the treehouse, the island's sigil flares on the dancefloor (drawn on over flareDraw s, held flare s), every other animal joins one conga line round it (congaSpeed m/s, congaGap m apart, a circle of at least congaRadius m, as big as the line needs), walking to its place at joinSpeed m/s (out of her sight, seen m off, simply there); settleAfter seconds after, it settles: the guidance pins lead her home [4]. The conga follows her [5]: with follow on, while she's on the ground in the home area (not at the treehouse or in the treetops) the leader trails followLead m behind her along where she's walked and the rest follow single file congaGap apart, walking to their places at joinSpeed or followSpeed times her own speed, whichever is faster; anywhere else the line goes back round the dancefloor."
+      "notes": "The end of the route [1][2]: the last wave landed, a pointer to the enraged animal nearest the centre while any lives (enraged legends don't count; retarget: seconds between re-picks); none left, the victory lap: the pulse races back along the route to home at lapSpeed m/s, every stone it passes firing its fireworks; home reached, the night won: the dealt legends wake (bar any still enraged, which go back to sleep, their islands not found) and dance in place on its far side [3], north of the dancefloor beyond the conga, behind everything from the north-facing camera: on arcs legendGap m outside the conga's circle, legendRow m apart, legendSpace m between them, from due north out to legendArc degrees across, clear of the treehouse, the island's sigil flares on the dancefloor (drawn on over flareDraw s, held flare s), every other animal joins one conga line round it (congaSpeed m/s, congaGap m apart, a circle of at least congaRadius m, as big as the line needs), walking to its place at joinSpeed m/s (out of her sight, seen m off, simply there); once she reaches the party after the win (anywhere on the dancefloor, on foot or flying low: Ed, 2026-10-28), it settles: the guidance pins lead her home [4]. The conga follows her [5]: with follow on, while she's on the ground in the home area (not at the treehouse or in the treetops) the leader trails followLead m behind her along where she's walked and the rest follow single file congaGap apart, walking to their places at joinSpeed or followSpeed times her own speed, whichever is faster; anywhere else the line goes back round the dancefloor."
     },
     "leash": {},
     "leash.length": {
@@ -449,6 +456,39 @@
         }
       ],
       "notes": "how a creature shows its tie to its sigil (rim: a glow at its feet in the sigil's colour; sparks: one spark every sparkEvery seconds from sigil to creature, staggered; thread: a dotted line only under strain). The bond between her and her leashed creatures: rim, a glow at a creature's feet in its sigil's colour; sparks, one now and then from sigil to creature (every sparkEvery seconds, staggered); thread, a dotted line while a leash is under strain (past 0.85 of its length), bowing upward by threadArcSlack metres per metre of its length while slack, flattening to threadArcTaut as it goes taut [1][2], never more than threadArcMax metres."
+    },
+    "leash.placeMotes": {
+      "what": "A sigil put down or picked up: its burst of motes rising in its colour (render/leash.ts, drawn in render/leash/combat.ts): count, size (m), bright (times its colour), rise and life (times the old height and length).",
+      "decisions": [
+        {
+          "by": "the coordinator",
+          "date": "2026-10-29",
+          "quote": "Given current settings, the motes from sigils don't do much",
+          "rest": "Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them)"
+        }
+      ]
+    },
+    "leash.ranks.embers.bright": {
+      "what": "The embers rising off rank sigils (on the ground, in her stack, over the rune stones): their colour times this.",
+      "decisions": [
+        {
+          "by": "the coordinator",
+          "date": "2026-10-29",
+          "quote": "Given current settings, the motes from sigils don't do much",
+          "rest": "Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them)"
+        }
+      ]
+    },
+    "leash.ranks.embers.crowd": {
+      "what": "Past this many of her sigils put down, each one's embers thinned by the square root, so a crowd of them isn't noise (0: never).",
+      "decisions": [
+        {
+          "by": "the coordinator",
+          "date": "2026-10-29",
+          "quote": "Given current settings, the motes from sigils don't do much",
+          "rest": "Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them)"
+        }
+      ]
     }
   }
 }

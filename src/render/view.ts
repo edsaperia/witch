@@ -1347,6 +1347,7 @@ export class View {
     LIGHT_UNIFORMS.uMoon.value.set(this.moonBase.x * r * n, this.moonBase.y * gr * n, this.moonBase.z * b * n);
     const U = LIGHT_UNIFORMS.uMoonUp.value;
     U.set(this.moonUpBase.x * r * n, this.moonUpBase.y * gr * n, this.moonUpBase.z * b * n, U.w);
+    LIGHT_UNIFORMS.uUnlitDim.value = moodOf(g.tuning)?.unlit ?? 1; // (what nothing lights, darker: live from the pause page)
     return m;
   }
 
