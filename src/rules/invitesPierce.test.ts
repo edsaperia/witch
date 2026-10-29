@@ -71,17 +71,22 @@ describe("pierce", () => {
 
   it("does to a stunned creature or one about to be stunned just what a direct letter does, then flies on", () => {
     const { g, foxes } = line(1, [6, 10]);
-    const direct = line(0, [6, 10]); // (a direct letter each: the near one first, then, with it converted and gone by, the next)
-    for (const G of [g, direct.g]) for (const c of G === g ? foxes.slice(0, 2) : direct.foxes) { c.affection = 1; c.affectionAt = G.clock.time; }
-    for (const [G, c] of [[g, foxes[0]], [direct.g, direct.foxes[0]]] as const) stun(c, G.clock.time, G.clock.time + 60); // (stunned: her next 💌 converts it)
-    for (const c of [foxes[1], direct.foxes[1]]) { c.affection = 0.99; c.fills = [0.99]; }
+    // (each against its own direct letter, thrown at the same moment: one letter, then nothing to wait on, so creatures that
+    // move in a fight, rules/combat/styles.ts, are where they were in both)
+    const direct = [line(0, [6]), line(0, [10])];
+    const ready = (G: Game, stunned: Creature | null, near: Creature | null) => {
+      if (stunned) { stunned.affection = 1; stunned.affectionAt = G.clock.time; stun(stunned, G.clock.time, G.clock.time + 60); } // (stunned: her next 💌 converts it)
+      if (near) { near.affection = 0.99; near.fills = [0.99]; near.affectionAt = G.clock.time; }
+    };
+    ready(g, foxes[0], foxes[1]); ready(direct[0].g, direct[0].foxes[0], null); ready(direct[1].g, null, direct[1].foxes[0]);
     expect(throwOne(g)).toBe(2);
-    throwOne(direct.g); throwOne(direct.g);
+    expect(throwOne(direct[0].g)).toBe(1); expect(throwOne(direct[1].g)).toBe(1);
+    const D = [direct[0].foxes[0], direct[1].foxes[0]];
     for (const k of [0, 1]) {
-      expect(stateOf(foxes[k]), `fox ${k}`).toBe(stateOf(direct.foxes[k]));
-      expect(!!foxes[k].leashed, `fox ${k}`).toBe(!!direct.foxes[k].leashed);
-      expect(!!foxes[k].dazed, `fox ${k}`).toBe(!!direct.foxes[k].dazed);
-      expect(foxes[k].affection ?? 0, `fox ${k}`).toBeCloseTo(direct.foxes[k].affection ?? 0, 9);
+      expect(stateOf(foxes[k]), `fox ${k}`).toBe(stateOf(D[k]));
+      expect(!!foxes[k].leashed, `fox ${k}`).toBe(!!D[k].leashed);
+      expect(!!foxes[k].dazed, `fox ${k}`).toBe(!!D[k].dazed);
+      expect(foxes[k].affection ?? 0, `fox ${k}`).toBeCloseTo(D[k].affection ?? 0, 9);
     }
   });
 });
