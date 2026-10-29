@@ -13,7 +13,10 @@ import type { Freeze } from "../platform/freeze";
 import type { SettingsMenu } from "../ui/settingsMenu";
 
 /** The page's text panels text size scales (CSS zoom; Chrome, Safari and Firefox 126 on). */
-const TEXT = ["#station-panel", "#studio-panel", ".corner-panel", ".legend-panel", ".boot-pop", ".loss-pop", "#sound-note", "#pause-btns", "#settings-page .win"];
+const TEXT = ["#studio-panel", ".corner-panel", ".legend-panel", ".boot-pop", ".loss-pop", "#sound-note", "#pause-btns", "#settings-page .win"];
+
+/** The station panel's type (ui/stationPanel.ts), scaled by text size in place of a zoom. */
+const STATION_TYPE = "clamp(15px, 1.45vw, 26px)";
 
 export interface SettingsPageHost {
   input: Input; shake: ScreenShake; ladder: QualityLadder; freeze: Freeze;
@@ -53,7 +56,7 @@ export class SettingsPage {
     this.host.shake.shake.on = s.shake;
     this.host.input.talkMode = s.talk;
     comfort.reduceFlashing = s.reduceFlashing;
-    this.style.textContent = s.textSize === 1 ? "" : `${TEXT.join(", ")} { zoom: ${s.textSize}; }`;
+    this.style.textContent = s.textSize === 1 ? "" : `${TEXT.join(", ")} { zoom: ${s.textSize}; } #station-panel { font-size: calc(${STATION_TYPE} * ${s.textSize}); }`; // (the station panel's type, not its size: it's the screen's left half, ui/stationPanel.ts)
     const q = ladderChoice(s.quality, RUNGS.length - 1);
     if (!(boot && s.quality === "auto") && q !== this.quality) this.host.ladder.choose(q);
     this.quality = q;

@@ -9,6 +9,7 @@ import { beatTime } from "../rules/beat";
 import * as THREE from "three";
 import { carrierOf, deckOf } from "../rules/treehouse";
 import { HOUSE_LAYER } from "./post";
+import { StationBackdrop } from "./stationBackdrop";
 import type { MapTable } from "./mapTable";
 import { islandArtSeed } from "./artCache";
 import { biomeKey } from "../rules/lakeLooks";
@@ -625,6 +626,10 @@ export class View {
   houseShift = 0;
   /** Her height as drawn (metres: her frame's, times her scale on the treehouse's floor): what a station's aim is a share of. */
   witchTall = 0;
+  /** Her height as drawn from her feet (her frame's ground) to its top (her hat's), last frame: a station frames her whole by it (render/view/camera.ts). */
+  witchFeetTop = 0;
+  /** The dark wash behind her at a station, her drawn again over it (render/stationBackdrop.ts). */
+  backdrop!: StationBackdrop;
   shadowList: ShadowInstance[] = [];
   /** The trunks' shadows from her glow and the fires, a batch an area type (render/trunkShadows.ts); and the scenery's, a batch
    *  an atlas (decor, relics, scenes: render/view/scenery.ts; the runestones, the soundsystems: render/view/home.ts, render/party.ts). */
@@ -763,6 +768,7 @@ export class View {
     // her, a silhouette in her glow colour shows through, and tall things in front of her fade.
     const O = t.occlusion;
     this.witchBatch = this.makeWitchBatch();
+    this.backdrop = new StationBackdrop(this.scene);
     SPRITE_UNIFORMS.uOcc.value.set(O.fadeOpacity, O.edge, O.minHeight, O.on ? 1 : 0);
     // The treehouse, home: its base and its crown (the crown only from the treetops), its trunk's
     // foot on its spot. It fades like other tall things when she's behind it.

@@ -68,7 +68,7 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
     const at = inHouse ? objectAt(deck!, x, z) : null;
     if ((sigil || place) && deck && g.witch.mode === "ground" && !g.witch.seated && atMapTable(deck, x, z)) relicEvents.push({ kind: "chart", id: W.id, x: deck.x, z: deck.z, at: ht });
     else if ((sigil || place) && at && at.use.kind === "hats") { const e = useHats(W, deck!, x, z, ht, t.leash.runeRadius); if (e) relicEvents.push(e); }
-    else if ((sigil || place) && at && at.use.kind !== "bed") {
+    else if ((sigil || place) && at && at.use.kind !== "bed" && at.use.kind !== "scenery") {
       // her night's kit (rules/kit.ts): E at the invitations desk, tonight's invitations; at the lathe, a broom
       if (at.use.kind === "invites" && needsBag(W)) relicEvents.push({ kind: "needBag", id: W.id, x: deck!.x + at.x, z: deck!.z + at.z, at: ht, obj: at.id }); // (no bag to carry them: the desk says so, rules/kit.ts NEED_BAG)
       else if (at.use.kind === "invites" ? takeInvites(W) : at.id === "lathe" && takeBroom(g, W)) relicEvents.push({ kind: "kit", id: W.id, x: deck!.x + at.x, z: deck!.z + at.z, at: ht, obj: at.use.kind === "invites" ? "invites" : "broom" });

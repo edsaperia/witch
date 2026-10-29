@@ -8,9 +8,7 @@
     "cloakPegs": ["cloak", "scarf", "cloakFit"],
     "shoeRack": ["shoes"],
     "bags": ["bag", "bagFit"],
-    "broomBay": ["tip", "chassis", "exhaust", "sets"],
-    "lathe": ["broomBody", "broomTrim", "broomFit"],
-    "pegboard": ["pegboard"]
+    "lathe": ["tip", "chassis", "exhaust", "sets", "broomBody", "broomTrim", "broomFit", "pegboard"]
   },
   "shelves": {
     "hair": { "frame": "head", "label": "Hair", "colour": ["hair"], "items": [
@@ -53,7 +51,7 @@
       { "id": "shoes-trainers", "name": "Trainers", "set": { "accessories.chunky": false }, "start": true },
       { "id": "shoes-chunky", "name": "Chunky trainers", "set": { "accessories.chunky": true } }
     ] },
-    "bag": { "frame": "top", "label": "Bag", "colour": ["satchel"], "items": [
+    "bag": { "frame": "top", "label": "Bag", "list": true, "colour": ["satchel"], "items": [
       { "id": "satchel", "name": "Satchel", "stat": "steady throws, a little homing", "invites": { "cooldown": 1, "range": 1, "homing": 1.5, "homingCone": 1.5 }, "set": { "accessories.satchel": true, "accessories.bumbag": false, "accessories.purse": false, "accessories.tote": false, "accessories.duffel": false, "accessories.briefcase": false, "accessories.clutch": false, "accessories.messenger": false, "backpackSize": 0 }, "start": true },
       { "id": "bumbag", "name": "Bumbag", "stat": "faster throws, shorter reach", "invites": { "cooldown": 0.76, "range": 0.76 }, "invitesAdd": { "inaccuracy": 2, "bloomPer": 1, "bloomDecay": 6, "bloomMax": 5 }, "set": { "accessories.satchel": false, "accessories.bumbag": true, "accessories.purse": false, "accessories.tote": false, "accessories.duffel": false, "accessories.briefcase": false, "accessories.clutch": false, "accessories.messenger": false, "backpackSize": 0 }, "start": true },
       { "id": "purse", "name": "Purse", "stat": "slower throws, longer reach", "invites": { "cooldown": 1.27, "range": 1.3 }, "set": { "accessories.satchel": false, "accessories.bumbag": false, "accessories.purse": true, "accessories.tote": false, "accessories.duffel": false, "accessories.briefcase": false, "accessories.clutch": false, "accessories.messenger": false, "backpackSize": 0 }, "start": true },

@@ -11,7 +11,7 @@ import type { Tuning } from "../rules/tuning";
 import { bindings, type Bindings } from "../platform/bindings";
 
 /** One focusable line of the panel. `readOnly`: focus only, nothing chosen (the pegboard). */
-export interface Line { shelf: number; kind: "items" | "parts" | "grid" | "fit" | "cards" | "chips"; n: number; row?: number; axis?: string; readOnly?: boolean }
+export interface Line { shelf: number; kind: "items" | "parts" | "grid" | "fit" | "cards" | "chips"; n: number; row?: number; axis?: string; readOnly?: boolean; /** a list shelf's line: the one item it is (its index among the shown items) */ item?: number }
 /** What the lines are made with: what she owns (items) and has found (parts), and which fit sliders mean anything on her now. */
 export interface LineCtx { owned: ReadonlySet<string>; fitOn(axis: string): boolean; grid(s: Shelf): { cols: number; rows: number } }
 
@@ -25,7 +25,10 @@ export function stationLines(shelves: readonly Shelf[], ctx: LineCtx): Line[] {
     if (s.slot) out.push({ shelf: i, kind: "cards", n: 1 + partsFor(s.slot).length });
     if (s.board) for (let r = 0; r < 3; r++) out.push({ shelf: i, kind: "cards", n: 3, row: r, readOnly: true });
     if (s.sets) out.push({ shelf: i, kind: "chips", n: SETS.length, readOnly: true });
-    if (itemsToChoose(s, ctx.owned)) out.push({ shelf: i, kind: "items", n: shownItems(s).length, ...(s.readOnly ? { readOnly: true } : {}) });
+    if (itemsToChoose(s, ctx.owned)) {
+      if (s.list) shownItems(s).forEach((_, k) => out.push({ shelf: i, kind: "items", n: 1, item: k })); // (a list: an item a line, up and down to choose)
+      else out.push({ shelf: i, kind: "items", n: shownItems(s).length, ...(s.readOnly ? { readOnly: true } : {}) });
+    }
     if (s.colour) {
       if (s.colour.length > 1) out.push({ shelf: i, kind: "parts", n: s.colour.length });
       const { cols, rows } = ctx.grid(s);
@@ -36,6 +39,8 @@ export function stationLines(shelves: readonly Shelf[], ctx: LineCtx): Line[] {
   return out;
 }
 
+/** The item on an items line's place: a list's own one, or the row's `col`th. */
+export const itemAt = (s: Shelf, l: Line, col: number) => shownItems(s)[l.item ?? col];
 /** The part on a cards line's cell: the bay's slot (null, the empty slot, first; then its parts) or the pegboard's cell (row by
  *  row from the north-west). */
 export function cardAt(s: Shelf, l: Line, col: number): string | null {
@@ -109,8 +114,10 @@ export type { BroomPart };
 /** A gamepad on a station's panel (Ed's playtest, 2026-10-23; his layout, 2026-10-28: "the left stick or d-pad moves the highlight",
  *  cross chooses, circle goes back): which way it moves the highlight (the menu's directions, platform/bindings.ts: the d-pad, or the
  *  left stick pushed past half way, by its strongest) and whether choose is held (main.ts closes it on back, through padControls). */
-export function panelPad(buttons: readonly boolean[], axes: readonly number[], B: Bindings = bindings): { dir: "" | "up" | "down" | "left" | "right"; choose: boolean } {
+export function panelPad(buttons: readonly boolean[], axes: readonly number[], B: Bindings = bindings): { dir: "" | "up" | "down" | "left" | "right"; choose: boolean; card: -1 | 0 | 1 } {
   let dir: "" | "up" | "down" | "left" | "right" = "", best = 0.5;
   for (const d of ["up", "down", "left", "right"] as const) { const v = B.padValue(`menu.${d}`, buttons, axes); if (v >= best) { best = v + 1e-9; dir = d; } }
-  return { dir, choose: B.padHeld("menu.choose", buttons, axes) };
+  // (L1 and R1, the menus' tabs: a station's card before or after, Ed 2026-10-29)
+  const card = B.padHeld("menu.tabNext", buttons, axes) ? 1 : B.padHeld("menu.tabPrev", buttons, axes) ? -1 : 0;
+  return { dir, choose: B.padHeld("menu.choose", buttons, axes), card };
 }
