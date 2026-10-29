@@ -82,7 +82,7 @@ export function drawRainbow(lv: LeashView, time: number, dot: number[], camera: 
     const B = L.bars;
     for (let j = 0; j < B.links.length; j++) {
       const l = B.links[j];
-      if (l < L.from) continue;
+      if (l < L.from || (l >= L.hide[0] && l < L.hide[1])) continue;
       if (l > L.to) break;
       const p = L.place(l, time, at);
       if (!p) break;

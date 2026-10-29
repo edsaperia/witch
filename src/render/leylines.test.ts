@@ -240,6 +240,9 @@ describe("the line as dots through the boot (Ed, 2026-10-29: \"The leyline does 
     ley.pulse(sp, true); ley.grow(leyDrawnTo(p, map, time, reveal, false)); ley.ring(null, 1, 0.35); ley.front(time, 0);
     let [ring, route] = ley.dotLines(2);
     expect(ring.strength).toBeCloseTo(0.35); expect(ring.to).toBe(1); expect(ring.spark).toBe(Infinity);
+    // Where the route runs on round the ring from the lap's end, the ring's dots give way to the route's (one path over itself).
+    expect(ring.hide[0]).toBeCloseTo(P.ringFrom / P.length, 6); expect(ring.hide[1]).toBeGreaterThan(ring.hide[0] + 0.2); expect(ring.hide[1]).toBeLessThan(1);
+    expect(route.hide[1]).toBe(0);
     expect(route.strength).toBe(1); expect(route.spark).toBe(ley.sparkLinks()!); expect(route.spark).toBeGreaterThan(route.from);
     expect(Array.from(route.bars.links).some(l => l >= route.from && l <= route.spark)).toBe(true);
     expect(Array.from(route.bars.links).some(l => l > route.spark && l <= route.to)).toBe(true);

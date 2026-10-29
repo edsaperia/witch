@@ -18,6 +18,7 @@
 import type { PartyState } from "../rules/party";
 import { frontMetres, metresToLinks, pulseProgress, routeLengths } from "../rules/leypulse";
 import { bootPath } from "../rules/bootRing";
+import { speakerCircle } from "../rules/departure";
 import * as THREE from "three";
 import { freeObjects } from "./free";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
@@ -366,6 +367,9 @@ export class LeyLines {
   /** Metres along the one path the ring and the route make to the route's start: the boot path's length (the rainbow's hue and the
    *  dots' spacing run on from the ring without a seam: build, runAt, barsOn). */
   private routeRun0 = 0;
+  /** How far (m) the route's first link runs on round the ring from the lap's end before it leaves (rules/departure.ts): there the
+   *  one path lies over itself, and the ring's dots give way to the route's (dotLines). */
+  private routeOnRing = 0;
 
   /** The boot's ring (rules/bootRing.ts; Ed, 2026-10-06): one path from the treehouse's front round the home ring, its
    *  own pulse and reveal (shares of the path), drawn while the boot runs and faint round the speakers after. */
@@ -427,6 +431,7 @@ export class LeyLines {
         if (was && P.chain[P.current] && P.chain[P.current].cell.join() === was.cell.join()) this.shiftFrom = time; // (moved on)
         this.build(this.cur.geo, P.colours, P.routes, P.chain[0]?.depart ? this.routeRun0 : 0);
         this.routes = P.routes;
+        this.routeOnRing = this.map && P.chain[0]?.depart ? onRingMetres(this.map, P.routes[0]) : 0;
         this.cur.current.value = P.current;
         this.key = P.key; this.chain = P.chain; this.current = P.current; this.pending = null;
       }
@@ -653,7 +658,9 @@ export class LeyLines {
    *    hat's), its spark the wave's where that's drawn (front()), else where the shader has it: at the route's start while the boot
    *    runs (the wave's pulse waits at the lap's end: every dot ahead of it, single), none at all with the waves off (all of it lit:
    *    the analyser the whole way, as the shader's lit line was).
-   *  Behind a spark the analyser's bars stand, ahead of it single dots; `strength` 0 means not drawn. */
+   *  Behind a spark the analyser's bars stand, ahead of it single dots; `strength` 0 means not drawn. Where the route runs on round
+   *  the ring from the lap's end (the one path over itself, its hue there the route's, a lap further on), the ring's dots are hidden
+   *  as far as the route is drawn over them (`hide`). */
   dotLines(spacing: number): readonly DotLine[] {
     const P = this.u.uPulse.value, on = this.T.on, route = this.dotRoute, ring = this.dotRing, R = this.ringLive;
     route.bars = this.barsOn(this.drawn, spacing, this.routeBars, this.routeRun0);
@@ -663,10 +670,15 @@ export class LeyLines {
     ring.bars = this.barsOn(this.ringDrawn, spacing, this.ringBars, 0);
     ring.from = 0; ring.to = R ? R.line : 0; ring.spark = R?.pulse ?? Infinity;
     ring.strength = on && R && this.ringDrawn.length > 0 ? R.strength : 0;
+    ring.hide[0] = ring.hide[1] = 0;
+    if (route.strength > 0 && this.map && this.routeOnRing > 0) {
+      const Q = bootPath(this.map), drawn = this.growTo === null ? Infinity : this.runAt(this.growTo) - this.routeRun0;
+      ring.hide[0] = Q.ringFrom / Q.length; ring.hide[1] = (Q.ringFrom + Math.min(this.routeOnRing, drawn)) / Q.length;
+    }
     return this.dots;
   }
-  private dotRoute: DotLine = { bars: this.routeBars.bars, from: 0, to: 0, spark: Infinity, strength: 0, place: (links, time, out) => this.placeOn(this.drawn, links, time, out, true) };
-  private dotRing: DotLine = { bars: this.ringBars.bars, from: 0, to: 0, spark: Infinity, strength: 0, place: (links, time, out) => this.placeOn(this.ringDrawn, links, time, out, false) };
+  private dotRoute: DotLine = { bars: this.routeBars.bars, from: 0, to: 0, spark: Infinity, strength: 0, hide: [0, 0], place: (links, time, out) => this.placeOn(this.drawn, links, time, out, true) };
+  private dotRing: DotLine = { bars: this.ringBars.bars, from: 0, to: 0, spark: Infinity, strength: 0, hide: [0, 0], place: (links, time, out) => this.placeOn(this.ringDrawn, links, time, out, false) };
   private dots: readonly DotLine[] = [this.dotRing, this.dotRoute];
 
   /** The point `links` along drawn links D (on the line as the shader draws it, its slow sideways drift too), its colour toward
@@ -695,7 +707,19 @@ interface BarsCache { on: DrawnLink[] | null; gap: number; bars: Bars }
 /** One of the ley line's lines as dots (LeyLines.dotLines): its points (`bars`), the stretch of it drawn (`from` to `to`, in its
  *  places), where its spark is (`spark`: the analyser's bars behind it, single dots ahead; Infinity, all bars), how strong it's drawn
  *  (0: not at all), and the point at a place along it as drawn. */
-export interface DotLine { bars: Bars; from: number; to: number; spark: number; strength: number; place: (links: number, time: number, out: { x: number; z: number }) => { x: number; z: number } | null }
+export interface DotLine { bars: Bars; from: number; to: number; spark: number; strength: number; /** a stretch of it (places) not drawn: another line's dots lie over it */ hide: [number, number]; place: (links: number, time: number, out: { x: number; z: number }) => { x: number; z: number } | null }
+
+/** How far (m) a link from the treehouse runs on round the boot ring (the speakers' circle) from its start before it leaves it. */
+function onRingMetres(map: ForestMap, link: readonly (readonly [number, number])[] | undefined): number {
+  if (!link || link.length < 2) return 0;
+  const d = map.dancefloor, rho = speakerCircle(map);
+  let m = 0;
+  for (let i = 1; i < link.length; i++) {
+    if (Math.hypot(link[i][0] - d.x, link[i][1] - d.z) > rho + 1) return m;
+    m += Math.hypot(link[i][0] - link[i - 1][0], link[i][1] - link[i - 1][1]);
+  }
+  return m;
+}
 
 
 /** A drawn link: its points, the distance along it to each, its length, and its stones' colours. */
