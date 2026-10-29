@@ -3948,10 +3948,6 @@
           "type": "number",
           "minimum": 0
         },
-        "settleAfter": {
-          "type": "number",
-          "minimum": 0
-        },
         "retarget": {
           "type": "number",
           "minimum": 0
@@ -3973,7 +3969,6 @@
         "legendArc",
         "flareDraw",
         "flare",
-        "settleAfter",
         "retarget"
       ],
       "additionalProperties": false,
@@ -4359,6 +4354,10 @@
                 "convert": {
                   "type": "number",
                   "minimum": 0
+                },
+                "ringTilt": {
+                  "type": "number",
+                  "minimum": 0
                 }
               },
               "required": [
@@ -4371,7 +4370,8 @@
                 "bars",
                 "radius",
                 "cell",
-                "convert"
+                "convert",
+                "ringTilt"
               ],
               "additionalProperties": false
             },

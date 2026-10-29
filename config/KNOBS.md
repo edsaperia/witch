@@ -1483,7 +1483,7 @@ The end of the route: after the last wave a pointer leads her to the remaining e
 3. Ed, 2026-10-11: a ring inside the conga's hid it from the ground
 4. 2026-10-26: "Remove the end cards" (rules/guidance.ts; no card since Ed's)
 5. Ed's playtest, 2026-10-26: "when you're on the ground in the home area, the line should follow you"
-The end of the route [1][2]: the last wave landed, a pointer to the enraged animal nearest the centre while any lives (enraged legends don't count; retarget: seconds between re-picks); none left, the victory lap: the pulse races back along the route to home at lapSpeed m/s, every stone it passes firing its fireworks; home reached, the night won: the dealt legends wake (bar any still enraged, which go back to sleep, their islands not found) and dance in place on its far side [3], north of the dancefloor beyond the conga, behind everything from the north-facing camera: on arcs legendGap m outside the conga's circle, legendRow m apart, legendSpace m between them, from due north out to legendArc degrees across, clear of the treehouse, the island's sigil flares on the dancefloor (drawn on over flareDraw s, held flare s), every other animal joins one conga line round it (congaSpeed m/s, congaGap m apart, a circle of at least congaRadius m, as big as the line needs), walking to its place at joinSpeed m/s (out of her sight, seen m off, simply there); settleAfter seconds after, it settles: the guidance pins lead her home [4]. The conga follows her [5]: with follow on, while she's on the ground in the home area (not at the treehouse or in the treetops) the leader trails followLead m behind her along where she's walked and the rest follow single file congaGap apart, walking to their places at joinSpeed or followSpeed times her own speed, whichever is faster; anywhere else the line goes back round the dancefloor.
+The end of the route [1][2]: the last wave landed, a pointer to the enraged animal nearest the centre while any lives (enraged legends don't count; retarget: seconds between re-picks); none left, the victory lap: the pulse races back along the route to home at lapSpeed m/s, every stone it passes firing its fireworks; home reached, the night won: the dealt legends wake (bar any still enraged, which go back to sleep, their islands not found) and dance in place on its far side [3], north of the dancefloor beyond the conga, behind everything from the north-facing camera: on arcs legendGap m outside the conga's circle, legendRow m apart, legendSpace m between them, from due north out to legendArc degrees across, clear of the treehouse, the island's sigil flares on the dancefloor (drawn on over flareDraw s, held flare s), every other animal joins one conga line round it (congaSpeed m/s, congaGap m apart, a circle of at least congaRadius m, as big as the line needs), walking to its place at joinSpeed m/s (out of her sight, seen m off, simply there); once she reaches the party after the win (anywhere on the dancefloor, on foot or flying low: Ed, 2026-10-28), it settles: the guidance pins lead her home [4]. The conga follows her [5]: with follow on, while she's on the ground in the home area (not at the treehouse or in the treetops) the leader trails followLead m behind her along where she's walked and the rest follow single file congaGap apart, walking to their places at joinSpeed or followSpeed times her own speed, whichever is faster; anywhere else the line goes back round the dancefloor.
 Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
 
 | knob | type | range |
@@ -1503,7 +1503,6 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
 | `win.legendArc` | number | 0 to … |
 | `win.flareDraw` | number | 0 to … |
 | `win.flare` | number | 0 to … |
-| `win.settleAfter` | number | 0 to … |
 | `win.retarget` | number | 0 to … |
 
 ### `leash`
@@ -1630,6 +1629,7 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
 | `leash.ranks.stones.radius` | number | 0 to … |
 | `leash.ranks.stones.cell` | number | 0 to … |
 | `leash.ranks.stones.convert` | number | 0 to … |
+| `leash.ranks.stones.ringTilt` | number | 0 to … |
 | `leash.ranks.chain.link` | array of number |  |
 | `leash.ranks.chain.tether` | number | 0 to … |
 | `leash.ranks.chain.slack` | number | 0 to … |

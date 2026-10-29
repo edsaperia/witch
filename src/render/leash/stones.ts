@@ -162,12 +162,14 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
     // (the music's level at this bar, rising at once and falling slowly, as an analyser's do; with no audio running, a gentle idle)
     const live = spec ? barLevel(spec, i, n) : 0.25 + 0.2 * Math.abs(Math.sin(time * 1.3 + i * 1.7) * 0.6 + Math.sin(time * 2.1 + i * 0.9) * 0.4);
     V.bars[i] = Math.max(live, V.bars[i] - dt * 1.8);
-    const f = i / n, a = Math.PI / 2 + f * Math.PI * 2, ux = Math.cos(a), uz = Math.sin(a) * 0.8, cx = cs.x, cz = cs.z + 0.6, lv0 = V.bars[i];
+    const f = i / n, a = Math.PI / 2 + f * Math.PI * 2, ux = Math.cos(a), uz = Math.sin(a) * (K.ringTilt ?? 1), cx = cs.x, cz = cs.z + 0.6, lv0 = V.bars[i];
     const lit = f < k, lost = !lit && f < dr && lostA > 0;
     const h = lit ? 1 + Math.round(lv0 * 7 * (cs.casting ? 1 : 0.6)) : lost ? 1 + Math.round(lv0 * 3) : 1 + Math.round(lv0 * 1.5), c = lit ? hue(f + time * 0.15) : lost ? [1, 0.2, 0.15] : [0.45, 0.45, 0.5];
     for (let j = 0; j < h; j++) {
       const r = K.radius + j * cell * 1.1, x = cx + ux * r, z = cz + uz * r, tip = j === h - 1;
-      lv.flat.add(x, 0, z, cell * (lit ? 1 : 0.85), dot, c[0], c[1], c[2], lit ? (tip ? 1 : 0.85) : lost ? lostA : 0.35);
+      // (the ring's far half, behind the stone from the camera, over it: Ed's playtest, 2026-10-29, "I can usually only see the beginning
+      // and the end of the dial"; the near half lies on the ground as before)
+      (uz < 0 ? lv.over : lv.flat).add(x, uz < 0 ? 0.06 : 0, z, cell * (lit ? 1 : 0.85), dot, c[0], c[1], c[2], lit ? (tip ? 1 : 0.85) : lost ? lostA : 0.35);
       if (lit && tip) lv.over.add(x, 0.2, z, cell * 0.9, dot, c[0], c[1], c[2], 0.45);
     }
   }

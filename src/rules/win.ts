@@ -64,7 +64,7 @@ export interface WinState {
    *  the sea chart's), and the night's dealt legends still enraged at the end (calmed, back to sleep), by kind. */
   found: string[];
   lost: string[];
-  /** The finale has settled (win.settleAfter seconds after the win): the guidance pins lead her home (rules/guidance.ts) and the
+  /** The finale has settled (once she's reached the party after the win: atTheParty; Ed, 2026-10-28): the guidance pins lead her home (rules/guidance.ts) and the
    *  night is recorded on the sea chart. */
   settled: boolean;
   /** The conga: the leader's starting angle round the dancefloor (towards her, as the night's won), and how many dance in it. */
@@ -101,12 +101,11 @@ export interface WinTuning {
   /** The island's sigil on the dancefloor as it's won: seconds to draw it on, and how long it holds. */
   flareDraw: number;
   flare: number;
-  /** Seconds from the win until it settles (the pins lead her home); how often the stragglers' pointer re-picks. */
-  settleAfter: number;
+  /** How often the stragglers' pointer re-picks (s). */
   retarget: number;
 }
 
-export const WIN_DEFAULT: WinTuning = { lapSpeed: 120, congaSpeed: 2.5, congaGap: 2.4, congaRadius: 34, joinSpeed: 14, seen: 120, follow: true, followLead: 5, followSpeed: 1.25, legendGap: 12, legendRow: 14, legendSpace: 14, legendArc: 150, flareDraw: 3, flare: 16, settleAfter: 20, retarget: 0.25 };
+export const WIN_DEFAULT: WinTuning = { lapSpeed: 120, congaSpeed: 2.5, congaGap: 2.4, congaRadius: 34, joinSpeed: 14, seen: 120, follow: true, followLead: 5, followSpeed: 1.25, legendGap: 12, legendRow: 14, legendSpace: 14, legendArc: 150, flareDraw: 3, flare: 16, retarget: 0.25 };
 const tuningOf = (g: Game): WinTuning => ({ ...WIN_DEFAULT, ...(g.tuning.win ?? {}) });
 
 /** A legend (an area's, or any at the legend level). */
@@ -349,7 +348,15 @@ export function stepWin(g: Game, dt: number): void {
     } else if (c.finale >= 0) { const p = congaPlace(g, c.finale, n, time); toward(g, c, p, dt, T); if (Math.hypot(p.x - c.x, p.z - c.z) < 0.5) { c.facing = p.facing; c.away = p.away; c.moving = true; } }
     else { toward(g, c, { x: c.anchorX, z: c.anchorZ }, dt, T); if (!c.moving) c.away = false; } // (there: facing us, dancing in place)
   }
-  if (!w.settled && time >= (w.wonAt ?? Infinity) + T.settleAfter) w.settled = true;
+  if (!w.settled && atTheParty(g)) w.settled = true; // (Ed, 2026-10-28: once she reaches the party; at once if she's there at the win)
+}
+
+/** Whether she's reached the party (Ed, 2026-10-28: "anywhere on the dancefloor, on foot or flying low over it"): within its radius,
+ *  no higher than its tiles light under her (dancefloor.tiles.witchLift). The won night settles then: the guidance pins lead her
+ *  home (rules/guidance.ts), the party pointer's 🪩 gone (render/view/pointers.ts). */
+export function atTheParty(g: Pick<Game, "witch" | "map" | "tuning">): boolean {
+  const W = g.witch, d = g.map.dancefloor;
+  return Math.hypot(W.x - d.x, W.z - d.z) <= d.radius && W.lift < (g.tuning.dancefloor.tiles?.witchLift ?? 0.3);
 }
 
 /** Whether the night's won (nothing fights, no waves, nothing hurts her). */
