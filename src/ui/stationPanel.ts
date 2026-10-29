@@ -49,7 +49,7 @@ const CROP: Record<string, [number, number]> = { hair: [.1, .52], face: [.16, .5
 
 
 /** A list card's live picture (ui/bagPreview.ts BagPreview): its element, run or stopped, freed. */
-export interface Preview { readonly el: HTMLElement; run(on: boolean): void; dispose(): void }
+export interface Preview { readonly el: HTMLElement; run(on: boolean): void; /** the card in focus: full brightness, the others a little dimmed */ focus?(on: boolean): void; dispose(): void }
 
 export class StationPanel {
   readonly root = document.createElement("div");
@@ -324,6 +324,7 @@ export class StationPanel {
       let p = this.previews.get(id);
       if (!p) { const made = this.preview(id); if (!made) continue; this.previews.set(id, (p = made)); }
       if (p.el.parentElement !== slot) slot.replaceChildren(p.el);
+      p.focus?.(!!slot.closest(".focus"));
       this.seen.observe(slot); // (its first word, at once, runs it or stops it)
     }
   }
