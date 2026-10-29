@@ -7,7 +7,7 @@
 //    `quietFor` seconds, or anything non-finite in it (a filter blown up, a limiter latched on a
 //    NaN): the music rebuilt afresh;
 //  - anything non-finite in the sound effects' output: the sound effects rebuilt afresh.
-// Each mend is reported (the playtest log keeps them: L saves it). Browser-side, outside the rules.
+// Each mend is reported (the playtest log keeps them: the pause page's Download log saves it). Browser-side, outside the rules.
 export interface AudioTap {
   /** The node whose output reaches the speakers (tapped, never altered). */
   readonly output: AudioNode;

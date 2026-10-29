@@ -132,7 +132,7 @@ export class Sound {
 
   /** The audio watchdog (Ed, round 13: "the music stops after about two minutes"): once a second, a context suspended is
    *  resumed, and music gone silent (or anything non-finite in the music or the sound effects) is rebuilt afresh; each
-   *  mend goes in the playtest log (L). (Before the first home speaker boots, the music is silent on purpose: not
+   *  mend goes in the playtest log (the pause page's Download log). (Before the first home speaker boots, the music is silent on purpose: not
    *  expected.) `live`: whether the game is being played now (not paused, frozen or hidden); `booted`: a home speaker up; `log`:
    *  the night's playtest log (or a way to it, read each time: a new night's own run). */
   watch(live: () => boolean, booted: () => boolean, log: PlaytestLog | (() => PlaytestLog)): void {
