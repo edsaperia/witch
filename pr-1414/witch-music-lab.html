@@ -8321,6 +8321,25 @@ registerProcessor("witch-fof", WitchFof);
       K.osc("sine", f * ratio, at2, dec + 0.05, g);
     }
   }
+  function thunk(K, amount, pan = 0, near = 1) {
+    const T = K.T.thunk;
+    if (!T || !K.ready("thunk", T.gap)) return;
+    const c = K.ctx, at2 = c.currentTime + 4e-3, out = K.voice(pan, 0.8), vol = T.volume * near;
+    const f = mtof(K.root + 12 + T.low + (T.high - T.low) * Math.max(0, Math.min(1, amount)));
+    const g = c.createGain();
+    g.connect(out);
+    K.env(g, at2, vol, 2e-3, 0.11);
+    const o = K.osc("sine", f * 1.6, at2, 0.14, g);
+    o.frequency.exponentialRampToValueAtTime(f, at2 + 0.05);
+    const lp = c.createBiquadFilter(), ng = c.createGain();
+    lp.type = "lowpass";
+    lp.frequency.value = 900 + f * 2;
+    lp.Q.value = 0.7;
+    ng.connect(out);
+    K.env(ng, at2, vol * 0.35, 1e-3, 0.03);
+    lp.connect(ng);
+    K.noiseBurst(at2, 0.05, lp, Math.random());
+  }
   function fill(K, amount, pan = 0, near = 1) {
     const F = K.T.fill;
     const c = K.ctx, at2 = c.currentTime + 0.03, out = K.voice(pan, 0.9);
@@ -9008,6 +9027,10 @@ registerProcessor("witch-fof", WitchFof);
     fill(amount, pan = 0, near = 1) {
       fill(this.k, amount, pan, near);
     }
+    /** A 💌 landing on a creature: a soft thunk rising as its ring fills (chimes.ts thunk). */
+    thunk(amount, pan = 0, near = 1) {
+      thunk(this.k, amount, pan, near);
+    }
     invited(level, pan = 0, near = 1) {
       invited(this.k, level, pan, near);
     }
@@ -9320,7 +9343,7 @@ registerProcessor("witch-fof", WitchFof);
     trail: { on: true, ground: 5, treetops: 20, from: 0.15, curve: 1, width: [1, 1.7], bright: 1, fade: 2, grow: 0.25, shrink: 0.6, colourEase: 0.6, sparks: true, cooldown: 24, bySpeed: true },
     swoopTrail: { on: true, life: 1.4, width: 1.8, near: 50, bright: 2.2, hueSpeed: 0.3, hueSpread: 0.015, liftFade: 3, slots: 96 },
     berries: { perArea: [5, 8], bushesPerArea: 10, patch: { bushes: [4, 7], radius: 3.5 }, detour: 4.5, eatTime: 0.25, cost: { by: "value", per: 7.25 }, colour: "#9e1024", glow: 0.8, babyReach: 10, babyCost: 1 },
-    invites: { on: true, burst: 1, burstGap: 0.12, cooldown: 0.55, range: 33, speed: 31.2, arc: 1.2, homing: 120, homingCone: 30, homingRange: 10, multiShot: 1, spread: 14, radius: 0.5, amount: 1, hits: [4, 7, 14, 36], drain: 0.02, fireSlow: 0.8, linger: 2.5, lingerFade: 0.6, lingerMax: 30, spin: 2.5, orbit: { scale: 1.4, gap: 0.7, min: 1.4, height: 0.63 }, hard: { homing: 420, cone: 80, range: 18 } },
+    invites: { on: true, burst: 1, burstGap: 0.12, cooldown: 0.55, range: 33, speed: 31.2, arc: 1.2, homing: 120, homingCone: 30, homingRange: 10, multiShot: 1, spread: 14, radius: 0.5, amount: 1, hits: [4, 7, 14, 36], drain: 0.02, fireSlow: 0.8, linger: 2.5, lingerFade: 0.6, lingerMax: 30, spin: 2.5, impact: { flash: 0.07, squash: 0.08, gentle: 0.04, squashSecs: 0.22, pop: 0.45, popSecs: 0.3, hitstop: 0.07 }, cheer: { secs: 1, hearts: 8 }, orbit: { scale: 1.4, gap: 0.7, min: 1.4, height: 0.63 }, hard: { homing: 420, cone: 80, range: 18 } },
     cast: { on: true, time: 6, drain: 0.15, spot: 4, radius: 2.2, show: 6, scatter: { min: 4, reach: 20, open: 0.25, hide: { width: 5, depth: 14 } } },
     invite: { talkRange: 12, cancelDistance: 18, snubTime: 2, talkTime: [3, 6, 12, 24], turn: [0.7, 0.9, 1.3], decayRate: 0.5 },
     win: { lapSpeed: 120, congaSpeed: 2.5, congaGap: 2.4, congaRadius: 34, joinSpeed: 14, seen: 120, follow: true, followLead: 5, followSpeed: 1.25, legendGap: 12, legendRow: 14, legendSpace: 14, legendArc: 150, flareDraw: 3, flare: 16, retarget: 0.25 },
@@ -9329,7 +9352,7 @@ registerProcessor("witch-fof", WitchFof);
     fight: { scale: 1, speed: 1, momentum: 1, charge: { reach: 2, turn: 0.4, brake: 0.5, contact: true, chase: 1.6, miss: 1.2 }, leap: { reach: 1.5, through: 5, contact: true, lead: 1 } },
     creatureMomentum: { on: true, turn: 1, delay: 1, chaseLead: 0, strikeLead: 1, classes: { heavy: { turn: 220, k: 6, delay: 0.4 }, normal: { turn: 420, k: 6, delay: 0.25 }, light: { turn: 650, k: 8, delay: 0.15 } } },
     attackFx: { windupSquash: 0.12, windupMax: 0.6, lungeStretch: 0.14, squash: 0.24, squashSecs: 0.34, tumbleKnock: 20, tumbleHeight: 0.9, tumbleSecs: 0.5, turnFrom: 0.3, turnTo: 0.7, legendFlash: 0.5 },
-    combat: { packs: { on: true }, aggro: 30, witchLose: 45, leaveArea: 30, pursuit: 40, pursuitRun: 20, fightRun: 14, legendRun: 6, reaction: 0.3, marchShare: 0.5, fleeMult: 8, soundsystemHealth: 500, soundsystemRadius: 2.5, speakerHealth: 500, speakerRadius: 2, shake: 0.6, daze: 20, retreatHome: 40, defendRadius: 30, taunt: { time: 3.5, chance: 1 } },
+    combat: { packs: { on: true, shadow: { shade: 0.85, opacity: 0.35, fade: 0.3 } }, aggro: 30, witchLose: 45, leaveArea: 30, pursuit: 40, pursuitRun: 20, fightRun: 14, legendRun: 6, reaction: 0.3, marchShare: 0.5, fleeMult: 8, soundsystemHealth: 500, soundsystemRadius: 2.5, speakerHealth: 500, speakerRadius: 2, shake: 0.6, daze: 20, retreatHome: 40, defendRadius: 30, taunt: { time: 3.5, chance: 1 } },
     notice: { radius: 30, curious: 4, skittish: 12 },
     dodge: {
       a: { on: true, lead: 1, commit: 0.18, chase: 1.15, lunge: 1.4, surge: 1.15, width: 1.25, gone: 0.2, tokens: 1, swarm: 12, swarmTokens: 1, gap: 0.5, heavy: { species: ["boar", "elk", "ram", "stag", "bear", "heron", "lion", "tiger", "elephant", "ibex"], speed: 26, accel: 15, home: 60 } },
@@ -9361,7 +9384,7 @@ registerProcessor("witch-fof", WitchFof);
     borders: { on: false, width: 2, brightness: 1.2, sparkle: 0.9, step: 1.6, twinkle: 1, swapRate: 0.8, swapBeat: 0.3 },
     bubbles: { emojiPixels: 11, scale: 1, levelScale: [0.8, 1, 1.3, 1.8], near: 38, fade: 8, ease: 0.35 },
     runeMarkers: { variants: true, laser: { opacity: 0.55, width: 0.25, length: 70 }, scale: 2.25, beamHeight: 46, lightRange: 160, dormant: { glow: 0.8, light: 0.55, reach: 12, beam: 0.1 }, awake: { glow: [0.7, 1], light: 0.9, lightBuild: 1, reach: 18, beam: 0.3, motes: 12, moteBuild: 16, moteSize: 4, moteBright: 1.8, moteRise: 9 }, flare: { time: 1.6, light: 3.5 } },
-    sfx: { on: true, volume: 1, hear: 70, budget: { voices: 24 }, voice: { witch: { volume: 0.2, pitch: 330, range: 0.3, pace: 0.09, timbre: 1.15, phraseGap: 0.3 }, animals: { volume: 0.28, pitch: 240, maxVoices: 4, duck: 0.6, syllables: [2, 4], gap: 0.7, reply: 0.35, swapBy: 0.15, swapGap: 0.25 } }, hit: { volume: 0.2, gap: 0.05 }, fill: { volume: 0.07, octaves: 1 }, invited: { volume: 0.3 }, enraged: { volume: 0.32, gap: 0.4 }, happy: { volume: 0.36, gap: 0.15 }, snore: { volume: 0.045, range: 40 }, nightmare: { volume: 0.06 }, windup: { volume: 0.4, length: 1 }, lost: { volume: 0.28 }, ouch: { volume: 0.28, knockdown: 0.45, duck: 0.35, duckTime: 0.45 }, impact: { volume: 0.6, small: 0.8 }, roar: { volume: 0.1 }, power: { volume: 0.65, crackle: 0.5, whine: 0.06, buzz: 0.35, thump: 0.8, tone: 0.3, gap: 0.1, range: 160 }, lament: { volume: 0.42, pitch: 0.8, slow: 1.6, every: 14, urgent: 5, range: 160, gap: 3, max: 2 }, shoes: { volume: 0.4, range: 30, max: 4 }, pond: { volume: 0.2, lap: 0.6, frogs: 0.5, frogEvery: 6, drips: 0.2, dripEvery: 2.5, range: 30 }, picnic: { volume: 0.18, murmur: 0.5, clinks: 0.3, clinkEvery: 6, range: 25 }, aggro: { volume: 0.45, swell: 1, riser: 0.5, hit: 1, fall: 0.6 }, sparkler: { volume: 0.07, hiss: 0.5, pops: 1, rate: 60, fork: 0.4, range: 45 }, fireworks: { volume: 0.55, whoosh: 0.7, boom: 1, echo: 0.4, crackle: 0.35, cheer: 0.8, range: 400, cheerRange: 150, speed: 343 }, seaLife: { volume: 0.3, splash: 0.5, groan: 0.25, pour: 0.2, range: 300 }, room: { volume: 0.2, hum: 0.4, crackle: 0.5, creak: 0.3, creakEvery: 9, decks: 0.5 }, deck: { volume: 0.3, scratch: 1.1, hiss: 0.6, stroke: 0.16, hype: 0.7, needle: 1, knock: 3, respawn: 3 }, spell: { volume: 0.4, hum: 0.2, rustle: 0.3, crackle: 0.45, burst: 0.6 }, land: { volume: 0.6, gap: 0.06 }, nope: { volume: 0.5, gap: 0.25 }, thud: { volume: 0.6, gap: 0.5 }, alarm: { volume: 0.3, gap: 1.2 }, refused: { volume: 0.4, gap: 0.12 }, cleared: { volume: 0.3, range: 300, floor: 0.4 }, tempoUp: { volume: 0.45 }, stir: { volume: 0.45 }, knock: { volume: 0.6, whoosh: 1, twinkle: 0.16, twinkleEvery: 0.13 }, charge: { volume: 0.5, bellow: 0.28, hooves: 0.8, rumble: 0.5, skid: 0.35, trot: 0.35, range: 140 }, relic: { volume: 0.145, spot: 30, spotTreetop: 18, reach: 4 }, meadow: { volume: 0.18, breeze: 0.5, bees: 0.06, birds: 0.35, birdEvery: 3.5, fade: 30, murmur: 0.25, clinks: 0.25, clinkEvery: 7, balloons: 0.15, squeakEvery: 9 }, whale: { volume: 0.11, speed: 1, depth: 62, reverb: 0.7, sleepEvery: 9 }, waves: { volume: 0.3, every: 7, wash: 0.5, range: 260 }, sail: { volume: 0.7, sea: 0.8, wind: 0.35, fade: 1.5 }, ambience: { volume: 0.35, bed: 0, noise: 0.1, sounds: 0.3, quiet: 0.25 }, sadTrumpet: { volume: 0.18, duck: 0.55, bare: 1, rewind: 0.9, cutAfter: 0.35 }, night: { volume: 0.5, bed: 0.05, noise: 0.12, sounds: 0.3, from: 0.6, snore: { volume: 0.3, gap: 1.2, range: 40, max: 3 } } },
+    sfx: { on: true, volume: 1, hear: 70, budget: { voices: 24 }, voice: { witch: { volume: 0.2, pitch: 330, range: 0.3, pace: 0.09, timbre: 1.15, phraseGap: 0.3 }, animals: { volume: 0.28, pitch: 240, maxVoices: 4, duck: 0.6, syllables: [2, 4], gap: 0.7, reply: 0.35, swapBy: 0.15, swapGap: 0.25 } }, hit: { volume: 0.2, gap: 0.05 }, fill: { volume: 0.07, octaves: 1 }, invited: { volume: 0.3 }, enraged: { volume: 0.32, gap: 0.4 }, happy: { volume: 0.36, gap: 0.15 }, snore: { volume: 0.045, range: 40 }, nightmare: { volume: 0.06 }, windup: { volume: 0.4, length: 1 }, lost: { volume: 0.28 }, ouch: { volume: 0.28, knockdown: 0.45, duck: 0.35, duckTime: 0.45 }, impact: { volume: 0.6, small: 0.8 }, roar: { volume: 0.1 }, power: { volume: 0.65, crackle: 0.5, whine: 0.06, buzz: 0.35, thump: 0.8, tone: 0.3, gap: 0.1, range: 160 }, lament: { volume: 0.42, pitch: 0.8, slow: 1.6, every: 14, urgent: 5, range: 160, gap: 3, max: 2 }, shoes: { volume: 0.4, range: 30, max: 4 }, pond: { volume: 0.2, lap: 0.6, frogs: 0.5, frogEvery: 6, drips: 0.2, dripEvery: 2.5, range: 30 }, picnic: { volume: 0.18, murmur: 0.5, clinks: 0.3, clinkEvery: 6, range: 25 }, aggro: { volume: 0.45, swell: 1, riser: 0.5, hit: 1, fall: 0.6 }, sparkler: { volume: 0.07, hiss: 0.5, pops: 1, rate: 60, fork: 0.4, range: 45 }, fireworks: { volume: 0.55, whoosh: 0.7, boom: 1, echo: 0.4, crackle: 0.35, cheer: 0.8, range: 400, cheerRange: 150, speed: 343 }, seaLife: { volume: 0.3, splash: 0.5, groan: 0.25, pour: 0.2, range: 300 }, room: { volume: 0.2, hum: 0.4, crackle: 0.5, creak: 0.3, creakEvery: 9, decks: 0.5 }, deck: { volume: 0.3, scratch: 1.1, hiss: 0.6, stroke: 0.16, hype: 0.7, needle: 1, knock: 3, respawn: 3 }, spell: { volume: 0.4, hum: 0.2, rustle: 0.3, crackle: 0.45, burst: 0.6 }, land: { volume: 0.6, gap: 0.06 }, thunk: { volume: 0.14, gap: 0.04, low: -12, high: 7 }, nope: { volume: 0.5, gap: 0.25 }, thud: { volume: 0.6, gap: 0.5 }, alarm: { volume: 0.3, gap: 1.2 }, refused: { volume: 0.4, gap: 0.12 }, cleared: { volume: 0.3, range: 300, floor: 0.4 }, tempoUp: { volume: 0.45 }, stir: { volume: 0.45 }, knock: { volume: 0.6, whoosh: 1, twinkle: 0.16, twinkleEvery: 0.13 }, charge: { volume: 0.5, bellow: 0.28, hooves: 0.8, rumble: 0.5, skid: 0.35, trot: 0.35, range: 140 }, relic: { volume: 0.145, spot: 30, spotTreetop: 18, reach: 4 }, meadow: { volume: 0.18, breeze: 0.5, bees: 0.06, birds: 0.35, birdEvery: 3.5, fade: 30, murmur: 0.25, clinks: 0.25, clinkEvery: 7, balloons: 0.15, squeakEvery: 9 }, whale: { volume: 0.11, speed: 1, depth: 62, reverb: 0.7, sleepEvery: 9 }, waves: { volume: 0.3, every: 7, wash: 0.5, range: 260 }, sail: { volume: 0.7, sea: 0.8, wind: 0.35, fade: 1.5 }, ambience: { volume: 0.35, bed: 0, noise: 0.1, sounds: 0.3, quiet: 0.25 }, sadTrumpet: { volume: 0.18, duck: 0.55, bare: 1, rewind: 0.9, cutAfter: 0.35 }, night: { volume: 0.5, bed: 0.05, noise: 0.12, sounds: 0.3, from: 0.6, snore: { volume: 0.3, gap: 1.2, range: 40, max: 3 } } },
     music: { on: true, volume: 0.5, latency: "balanced", buffer: 0.06, dropLayers: 3, nearDist: 25, farDist: 260, floor: 0.3, muffle: 1e3, audible: 15, circle: { muffle: 320, quiet: 0.85, ease: 0.35, level: 1.3, radius: 14 }, slow: { on: true, pitch: 0.35, floor: 0.5 }, house: { muffle: 800 }, clear: 16e3, distort: 1, src: "", over: { stop: 0.6, floor: 0.15 }, beach: { fade: 140, quiet: 0.08 } },
     alarms: { linger: 4, fall: 1.2, most: 3 },
     boot: { speed: 4, transform: 0.9 },
