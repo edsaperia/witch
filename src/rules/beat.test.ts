@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { beatAt, beatTime, blockLineAfter, bpmAt, newBeatClock, rampTo, shiftBeat, timeAt, waveArrived, waveTempo } from "./beat";
+import { beatAt, beatTime, blockLineAfter, bpmAt, newBeatClock, rampTo, recordTempo, shiftBeat, targetTempo, timeAt, waveArrived, waveTempo } from "./beat";
 import { TUNING, type Tuning } from "./tuning";
 
 const tuning = (tempos: number[]): Tuning => ({ ...TUNING, beat: { bpm: 120, tempos, blockBars: 4, rampBars: 8 } });
@@ -84,3 +84,22 @@ describe("beat clock", () => {
   });
 });
 
+
+describe("her record's tempo (Ed, 2026-10-29: the DJ booth's records, rules/records.ts)", () => {
+  const t = { beat: { bpm: 120, tempos: [120, 124, 130, 140], rampBars: 8, blockBars: 4 } };
+  it("sets the tempo to the record's at once and shifts the whole arc by the difference, beat-time's base unchanged", () => {
+    const c = newBeatClock(120, waveTempo(t, 0));
+    recordTempo(c, t, 100, 5);
+    expect(bpmAt(c, 5)).toBe(100); expect(bpmAt(c, 50)).toBe(100);
+    expect(c.base).toBe(120);
+    expect(targetTempo(c, t)).toBe(100);
+    waveArrived(c, t, 2, 60);
+    expect(targetTempo(c, t)).toBe(110); // (wave 2's 130, 20 lower)
+    expect(bpmAt(c, 400)).toBeCloseTo(110, 6);
+  });
+  it("at 120 (the arc's own start) changes nothing", () => {
+    const a = newBeatClock(120, waveTempo(t, 0)), b = newBeatClock(120, waveTempo(t, 0));
+    recordTempo(b, t, 120, 3);
+    for (const time of [0, 3, 10, 100]) expect(beatAt(b, time)).toBeCloseTo(beatAt(a, time), 9);
+  });
+});

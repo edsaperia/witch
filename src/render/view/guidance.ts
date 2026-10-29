@@ -8,6 +8,7 @@ import type { Guide, GuideKind } from "../../rules/guidance";
 import { EMOJI_PX, HAT, MAP, NOTES } from "../indicator";
 export { MAP };
 import { pixelSprite } from "../bubbles";
+import { comfort } from "../comfort";
 
 const INK = new THREE.Vector3(1, 0.94, 0.82);
 
@@ -114,6 +115,14 @@ const TOPS: Record<string, number> = { hats: 1 };
 /** Over her seat at the decks, the pin's tip just over the tempo shown there (2.5 m up). */
 const DECKS_TOP = 3;
 
+/** A guidance pin's size this moment (`seconds`): the morning's breathe, 1 to 1 + pins.pulse and back pinsRate times a second, half
+ *  as much with reduce flashing; the night's end's 🧭 and 💤 (and none) still at 1. */
+export function guidePulse(guide: Guide | null, seconds: number, T: { pulse?: number; pulseRate?: number } | undefined, reduceFlashing = false): number {
+  const amt = (T?.pulse ?? 0) * (reduceFlashing ? 0.5 : 1);
+  if (!guide || guide.kind === "bed" || guide.kind === "chart" || !(amt > 0)) return 1;
+  return 1 + amt * 0.5 * (1 - Math.cos(seconds * Math.PI * 2 * (T?.pulseRate ?? 1)));
+}
+
 /** Her one guidance pin, on her view. */
 export class GuidePin {
   private pin: (Pin & { remove(): void }) | null = null;
@@ -140,6 +149,9 @@ export class GuidePin {
     // At its target, the pin stays over the object (Ed, 2026-10-28), its tip clear above the use prompt's keycap there (render/houseRooms.ts).
     const P = this.view.usePrompt, on = !!guide && !!P.id && P.id === ("object" in guide.target ? guide.target.object : "decks");
     this.pin.above = on ? P.top : null;
+    // The morning's pins breathe (Ed, 2026-10-29: "morning routine pointers should pulse slightly (wake up to spell)"): every one
+    // till the party spell, not the night's end's 🧭 and 💤; a gentle swell, half as much with reduce flashing (render/comfort.ts).
+    this.pin.scale = guidePulse(guide, performance.now() / 1000, this.view.game.tuning.pins, comfort.reduceFlashing);
     if (guide && shows) this.pin.show(); else this.pin.hide();
   }
   /** Its kind now and its strength (tools, the shots). */

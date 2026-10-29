@@ -65,10 +65,15 @@ export class IslandLayers {
   markerBatch!: SpriteBatch;
   /** The great stumps (runeMarkers.stump), in place of the stones: a floor, under everything standing (render/view/home.ts). */
   readonly stumpBatches = new Map<string, SpriteBatch>();
-  /** A great stump's batch (one a baked stump, its own atlas: AssetLibrary.stumpArt), made the first time it's drawn. */
-  stumpBatch(id: string, atlas: Atlas, mpp: number): SpriteBatch {
+  /** A great stump's batch (one a baked stump, its own atlas: AssetLibrary.stumpArt), made the first time it's drawn: lying on the
+   *  ground (`lie`, StumpArt.depth), at the world heights given, a little in front of the ground under it so they never fight. */
+  stumpBatch(id: string, atlas: Atlas, mpp: number, lie: number): SpriteBatch {
     let b = this.stumpBatches.get(id);
-    if (!b) { b = asFloor(new SpriteBatch(atlas, mpp, { scenery: true, flat: true }).name("stump")); this.stumpBatches.set(id, b); this.root.add(...b.meshes); }
+    if (!b) {
+      b = asFloor(new SpriteBatch(atlas, mpp, { scenery: true, flat: true, absolute: true, lie }).name("stump"));
+      for (const m of b.meshes) Object.assign(m.material as THREE.Material, { polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 });
+      this.stumpBatches.set(id, b); this.root.add(...b.meshes);
+    }
     return b;
   }
   /** The runestones' trunk shadows (render/view/home.ts), made as they're first cast. */

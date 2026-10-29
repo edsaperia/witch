@@ -900,6 +900,36 @@
           "rest": "via the coordinator, after the art director's measurement of \"the pixels are just hard to read\" (previews/ed/blur/); 3 → 1.5"
         }
       ]
+    },
+    "sigilSpill.stack": {
+      "what": "The light the bottom sigil of her stack throws from over her hat, in its colour (0 none).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "the warm light is probably the sigil stack lighting; it takes the colour of the bottom sigil. We're replacing this with the wisps.",
+          "rest": "0.35 → 0"
+        }
+      ]
+    },
+    "light.spooky.wildGlow": {
+      "what": "Her glow cooled toward a teal while she's in an area the party hasn't reached, eased in and out as she crosses.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "the overall lighting palette should be an eerie blue/green; this is to contrast with the bright and warm post-soundsystem lighting"
+        }
+      ]
+    },
+    "light.spooky.wildGlow.mix": {
+      "what": "How far her glow is cooled in the wild (0 her own colour everywhere)."
+    },
+    "light.spooky.wildGlow.colour": {
+      "what": "The colour (0-255) her glow cools toward in the wild."
+    },
+    "light.spooky.wildGlow.ease": {
+      "what": "How long (s) her glow takes to cool or warm as she crosses into or out of the party's ground."
     }
   }
 }

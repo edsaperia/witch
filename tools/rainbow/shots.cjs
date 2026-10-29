@@ -1,7 +1,7 @@
 // The rainbow wave in the built game (Ed, 2026-10-29; rules/rainbow.ts, render/leash/rainbow.ts): from by home on an island, a wave
-// set off as an early clear would send it (g.rainbows), shot a few times as it runs out along the ley line, the line it passes over
-// shown and fading behind it.
-//   npm run build && node tools/rainbow/shots.cjs [out dir]   (ISLAND=fox, SEED=123, SIZE=1280x720, AT="x,z" where she stands, TIMES="1,2.5,4")
+// set off as an early clear would send it from its stone (window.witch.rainbow: AHEAD metres past the spark), shot a few times as
+// its two runs go out along the ley line, on to the route's end and back to the spark.
+//   npm run build && node tools/rainbow/shots.cjs [out dir]   (ISLAND=fox, SEED=123, SIZE=1280x720, AT="x,z" where she stands, TIMES="1,2.5,4", AHEAD=40)
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const outDir = path.resolve(process.argv[2] || path.join(__dirname, "../../previews/rainbow"));
@@ -35,7 +35,7 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
     log("scene:", said.say);
     const step = n => page.evaluate(n => { const w = window.witch; for (let i = 0; i < n; i++) w.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 60, i === n - 1); }, n);
     for (let round = 0, calm = 0; calm < 2 && round < 40; round++) { await step(10); const p = await page.evaluate(() => window.witch.view.assets.pending); if (p === 0) calm++; else { calm = 0; await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 600000, polling: 500 }); } }
-    await page.evaluate(() => { const g = window.witch.game; g.rainbows = [g.clock.time]; });
+    await page.evaluate(a => window.witch.rainbow(a), Number(process.env.AHEAD ?? 40));
     let at = 0;
     for (const s of TIMES) {
       await step(Math.max(1, Math.round((s - at) * 60))); at = s;

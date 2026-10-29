@@ -892,12 +892,19 @@ Code: `render/indicator.ts`
   1. Ed's playtest, 2026-10-29: "Also, it's easy to miss the pointers"
   Code: `render/indicator.ts`, `render/view/hud.ts`
 - **`pins.vivid`**: How much of the pointers' calming toward the night is taken back: 0 as calmed, 1 the area's neon itself.
+- **`pins.pulse`, `pins.pulseRate`**: How much the morning's guidance pins breathe, from waking up till the party spell: their size swells by up to this share and back (0 still; half as much with reduce flashing).
+  1. Ed, 2026-10-29: "morning routine pointers should pulse slightly (wake up to spell)"
+  Code: `render/view/guidance.ts`, `render/indicator.ts`
+- **`pins.pulseRate`**: How many times a second the morning's guidance pins breathe.
 
 | knob | type | range |
 |---|---|---|
 | `pins.gap` | number | 0 to … |
 | `pins.plate` | number | 0 to … |
 | `pins.vivid` | number | 0 to … |
+| `pins.pulse` | number | 0 to … |
+| `pins.pulseRate` | number | 0 to … |
+| `pins.track` | number | 0 to … |
 
 ### `crownWidth`
 
@@ -2369,12 +2376,15 @@ Code: `config/decisions/953-waves.json`, `app/settings.ts`
 | `leyLines.minRadius` | number | 0 to … |
 | `leyLines.rainbow.on` | boolean |  |
 | `leyLines.rainbow.speed` | number | 0 to … |
-| `leyLines.rainbow.linger` | number | 0 to … |
 | `leyLines.rainbow.max` | number | 0 to … |
 | `leyLines.rainbow.bars` | number | 0 to … |
 | `leyLines.rainbow.spacing` | number | 0 to … |
 | `leyLines.rainbow.cell` | number | 0 to … |
 | `leyLines.rainbow.height` | number | 0 to … |
+| `leyLines.rainbow.route.on` | boolean |  |
+| `leyLines.rainbow.route.spacing` | number | 0 to … |
+| `leyLines.rainbow.route.height` | number | 0 to … |
+| `leyLines.rainbow.route.cell` | number | 0 to … |
 
 ### `partyObjects`
 
@@ -2565,6 +2575,29 @@ Spawn markers (Ed, v147): a rune stone on every spot where a soundsystem will co
   1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
 - **`runeMarkers.awake.moteRise`**: How high (m) an awake runestone's motes rise before they fade.
   1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
+- **`runeMarkers.stump.wisps`**: A wild stump's will-o'-the-wisps, drifting round its clearing before its soundsystem, in place of its own light.
+  1. Ed, 2026-10-29: "pre-soundsystem stump area lighting should change to be more like eerie moonlight; maybe it can be lit by a mix of blue/green/white wisps or something like that, that move around the stump area? Remove the current lighting. Decide on something and make it, no need for me to review." (via the coordinator; the art director's design (render/stumpWisps.ts))
+- **`runeMarkers.stump.wisps.on`**: The wild stumps' wisps on or off.
+- **`runeMarkers.stump.wisps.count`**: How many wisps a wild stump has.
+- **`runeMarkers.stump.wisps.colours`**: The wisps' colours (0-255), a wisp each in turn: blue, green and teal.
+- **`runeMarkers.stump.wisps.radius`**: How far (m) from the stump's middle a wisp wanders at most.
+- **`runeMarkers.stump.wisps.inner`**: How near the middle a wisp comes, times the radius.
+- **`runeMarkers.stump.wisps.height`**: How high (m) the wisps float.
+- **`runeMarkers.stump.wisps.bob`**: How much (m) the wisps rise and fall as they drift.
+- **`runeMarkers.stump.wisps.speed`**: How fast (m/s) the wisps drift round the clearing.
+- **`runeMarkers.stump.wisps.reach`**: How far (m) a wisp's light reaches.
+- **`runeMarkers.stump.wisps.strength`**: How bright a wisp's light is.
+- **`runeMarkers.stump.wisps.lights`**: How many of the nearest wisps light the ground at once.
+- **`runeMarkers.stump.wisps.lightRange`**: How near her (m) a stump must be for its wisps to light the ground.
+- **`runeMarkers.stump.wisps.breathe`**: How much the wisps swell brighter and dimmer, slowly (0 steady; steady anyway with reduce flashing).
+- **`runeMarkers.stump.wisps.bright`**: How bright a wisp's mote is drawn.
+- **`runeMarkers.stump.wisps.trail`**: How many fading motes trail behind each wisp.
+- **`runeMarkers.stump.wisps.fill`**: The wild clearing's own dim teal moonlight over the stump's middle.
+  1. Ed, 2026-10-29: "the overall lighting palette should be an eerie blue/green; this is to contrast with the bright and warm post-soundsystem lighting"
+- **`runeMarkers.stump.wisps.fill.colour`**: The clearing's moonlight colour (0-255).
+- **`runeMarkers.stump.wisps.fill.reach`**: How far (m) the clearing's moonlight reaches.
+- **`runeMarkers.stump.wisps.fill.strength`**: How bright the clearing's moonlight is (0 none).
+- **`runeMarkers.stump.wisps.fill.height`**: How high (m) over the stump the clearing's moonlight hangs.
 
 | knob | type | range |
 |---|---|---|
@@ -2594,12 +2627,39 @@ Spawn markers (Ed, v147): a rune stone on every spot where a soundsystem will co
 | `runeMarkers.stump.on` | boolean |  |
 | `runeMarkers.stump.variants` | number | 0 to … |
 | `runeMarkers.stump.clear` | number | 0 to … |
-| `runeMarkers.stump.ring.radius` | number | 0 to … |
+| `runeMarkers.stump.stack` | number | 0 to … |
+| `runeMarkers.stump.ring.inner` | number | 0 to … |
+| `runeMarkers.stump.ring.fill` | number | 0 to … |
 | `runeMarkers.stump.ring.cell` | number | 0 to … |
+| `runeMarkers.stump.ring.glow` | number | 0 to … |
+| `runeMarkers.stump.ring.light.reach` | number | 0 to … |
+| `runeMarkers.stump.ring.light.strength` | number | 0 to … |
+| `runeMarkers.stump.ring.light.height` | number | 0 to … |
+| `runeMarkers.stump.ring.wave.hold` | number | 0 to … |
+| `runeMarkers.stump.ring.wave.fade` | number | 0 to … |
 | `runeMarkers.stump.light.reach` | number | 0 to … |
 | `runeMarkers.stump.light.strength` | number | 0 to … |
 | `runeMarkers.stump.light.height` | number | 0 to … |
 | `runeMarkers.stump.light.saturate` | number | 0 to … |
+| `runeMarkers.stump.wisps.on` | boolean |  |
+| `runeMarkers.stump.wisps.count` | number | 0 to … |
+| `runeMarkers.stump.wisps.colours` | array of array |  |
+| `runeMarkers.stump.wisps.radius` | number | 0 to … |
+| `runeMarkers.stump.wisps.inner` | number | 0 to … |
+| `runeMarkers.stump.wisps.height` | number | 0 to … |
+| `runeMarkers.stump.wisps.bob` | number | 0 to … |
+| `runeMarkers.stump.wisps.speed` | number | 0 to … |
+| `runeMarkers.stump.wisps.reach` | number | 0 to … |
+| `runeMarkers.stump.wisps.strength` | number | 0 to … |
+| `runeMarkers.stump.wisps.lights` | number | 0 to … |
+| `runeMarkers.stump.wisps.lightRange` | number | 0 to … |
+| `runeMarkers.stump.wisps.breathe` | number | 0 to … |
+| `runeMarkers.stump.wisps.bright` | number | 0 to … |
+| `runeMarkers.stump.wisps.trail` | number | 0 to … |
+| `runeMarkers.stump.wisps.fill.colour` | array of number |  |
+| `runeMarkers.stump.wisps.fill.reach` | number | 0 to … |
+| `runeMarkers.stump.wisps.fill.strength` | number | 0 to … |
+| `runeMarkers.stump.wisps.fill.height` | number | 0 to … |
 
 ### `sfx`
 
@@ -3843,6 +3903,9 @@ Placed sigils glow like small lights in their creature's neon, tinting the grass
 
 The sigils' neon spilling onto the world (overnight phase 3, the art pass): each placed sigil is a small light in its creature's neon, height metres over its rune, reaching reach metres (15% more a level) at strength (0: off), eased in as it's written and breathing with the rune's pulse, so the grass round it, the ground and whoever stands near take its colour; the bottom sigil of her stack is a fainter one (stack, 0 off) reaching stackReach metres, stackHeight metres over her, tinting her and the ground under her as she carries it.
 
+- **`sigilSpill.stack`**: The light the bottom sigil of her stack throws from over her hat, in its colour (0 none).
+  1. Ed, 2026-10-29: "the warm light is probably the sigil stack lighting; it takes the colour of the bottom sigil. We're replacing this with the wisps." (0.35 → 0)
+
 | knob | type | range |
 |---|---|---|
 | `sigilSpill.strength` | number | 0 to … |
@@ -4008,6 +4071,11 @@ Code: `render/mood.ts`
 - **`light.spooky.unlit`**: How dark the forest is where nothing lights it: the ambient and the moonlight on ground, trees, bushes and creatures times this, while the lights (her glow, the party's, fires, lava, runestones, sigils) stay as they are (1 as before).
   1. Ed's playtest, 2026-10-29: "Contrast on the visuals seems low; the important parts of the scene don't stand out very well. The unlit forest needs to be darker." (v5399; measured with tools/shot/contrast.cjs)
   Code: `render/lighting.ts`, `render/view.ts`
+- **`light.spooky.wildGlow`**: Her glow cooled toward a teal while she's in an area the party hasn't reached, eased in and out as she crosses.
+  1. Ed, 2026-10-29: "the overall lighting palette should be an eerie blue/green; this is to contrast with the bright and warm post-soundsystem lighting"
+- **`light.spooky.wildGlow.mix`**: How far her glow is cooled in the wild (0 her own colour everywhere).
+- **`light.spooky.wildGlow.colour`**: The colour (0-255) her glow cools toward in the wild.
+- **`light.spooky.wildGlow.ease`**: How long (s) her glow takes to cool or warm as she crosses into or out of the party's ground.
 
 | knob | type | range |
 |---|---|---|
@@ -4015,6 +4083,9 @@ Code: `render/mood.ts`
 | `light.spooky.ambientHue` | number | 0 to … |
 | `light.spooky.ambient` | number | 0 to … |
 | `light.spooky.unlit` | number | 0 to … |
+| `light.spooky.wildGlow.mix` | number | 0 to … |
+| `light.spooky.wildGlow.colour` | array of number |  |
+| `light.spooky.wildGlow.ease` | number | 0 to … |
 | `light.spooky.moonHue` | number | 0 to … |
 | `light.spooky.moonSat` | number | 0 to … |
 | `light.spooky.moon` | number | 0 to … |

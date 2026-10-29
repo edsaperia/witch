@@ -16,8 +16,8 @@ describe("the controls text", () => {
     expect([bindings.keys("game.use"), bindings.keys("game.cycleNext"), bindings.keys("game.boost"), bindings.keys("game.rise")]).toEqual([["KeyE"], ["KeyQ"], ["KeyR"], ["Space"]]);
     // The pad (Ed's layout, 2026-10-28): each span's default text is what the bindings fill it with.
     for (const m of raw.matchAll(/<span data-pad="([^"]+)">([^<]*)<\/span>/g)) expect(m[2], m[1]).toBe(padName(m[1] as never));
-    expect(keys).toContain("□ rises or lands, and nothing else");
-    expect(keys).toContain("✕ uses what's here");
+    expect(keys).toContain("✕ rises or lands, and nothing else");
+    expect(keys).toContain("□ uses what's here");
     expect(keys).toContain("△ puts her hat down or picks it up · R1 and L1 cycle the stack");
   });
   it("covers the treehouse: the map's sea chart, the stations, the bed held", () => {

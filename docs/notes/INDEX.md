@@ -108,6 +108,8 @@ says what each note covers.
 - The Clutch
 - Chain
 - The Messenger
+- DJ booth
+- Records
 - Bag design
 - Use prompt
 - Wake-up keys
@@ -236,9 +238,11 @@ says what each note covers.
 ## [The view](view.md)
 
 - Pixel snap
+- Stump wisps
 - Tilt-shift
 - Debug overlay
 - Test sliders / pause page
+- Default look
 - Smooth effects
 - Loading mist
 - Pop

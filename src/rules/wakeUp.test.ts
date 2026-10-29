@@ -8,7 +8,7 @@ import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { HOUSE_ROOMS, floorHats, fromObject, fromPlan, hatSlots, objectAt, objectFront, toPlan } from "./houseRooms";
 import { inRoom as inBlob } from "../../config/house/shape.js";
 import { wakeInBedroom } from "./opening";
-import { atDecks, bedRoom, doorShut, endDream, startWake, WAKE_DEFAULT, type WakeEvent } from "./wakeUp";
+import { atDecks, startParty, bedRoom, doorShut, endDream, startWake, WAKE_DEFAULT, type WakeEvent } from "./wakeUp";
 import { dressed, pileOut, PILE_SLOTS, wearFromStation, wearPiece, wornGenome } from "./clothesPile";
 import { deckOf, onTerrace } from "./treehouse";
 import { heldByRoutine } from "./djSet";
@@ -203,13 +203,14 @@ function upAndDressed(): Game {
 }
 
 describe("last night's clothes (Ed, 2026-10-23: \"When waking up she wears only a nightie; last night's clothes are in a pile on the floor (pick all up with x/e)\")", () => {
-  it("she wakes in her nightie, every piece of her outfit in the pile in her Bedroom, by the wardrobe (her bed up in the Turret: Ed, 2026-10-26)", () => {
+  it("she wakes in her nightie, every piece of her outfit in the pile in the middle of her Bedroom (her bed up in the Turret: Ed, 2026-10-26; the middle, 2026-10-29)", () => {
     const g = woken(false, true);
     expect(pileOut(g.wake)).toBe(true);
     expect(g.wake!.pile).toEqual([...PILE_SLOTS]);
-    const pile = HOUSE_ROOMS.objects.find(o => o.use.kind === "pile")!, by = obj("wardrobe");
+    const pile = HOUSE_ROOMS.objects.find(o => o.use.kind === "pile")!;
     expect(pile.room).toBe("bedroom");
-    expect(Math.hypot(pile.x - by.x, pile.z - by.z)).toBeLessThan(5); // (by the wardrobe)
+    const room = HOUSE_ROOMS.rooms.find(r => r.id === pile.room)!;
+    expect(Math.hypot(pile.x - room.x, pile.z - room.z)).toBeLessThan(0.5); // (Ed, 2026-10-29: "bedroom1's yesterday's clothes move to the centre of bedroom1")
     const on = wornGenome(null, g.wake!.pile) as unknown as { hat: { shape: string }; cloak: string; accessories: Record<string, unknown> };
     expect(on.accessories.nightie).toBe(true); expect(on.accessories.barefoot).toBe(true); expect(on.accessories.phones).toBe(false);
     expect(on.hat.shape).toBe("none"); expect(on.cloak).toBe("none");
@@ -324,11 +325,15 @@ describe("the DJ intro at her decks (in place of the party spell)", () => {
     expect(g.party.spellAt).toBeNull();
   });
 
-  it("E at her decks seats her behind them and casts it: its routine holds her there, then the party's on", () => {
+  it("E at her decks opens her DJ booth (Ed, 2026-10-29), and \"Get this party started\" seats her behind them and casts it: its routine holds her there, then the party's on", () => {
     const g = upAndDressed();
     toSeat(g);
     expect(atDecks(g)).toBe(true);
-    expect(press(g)).toContain("decks");
+    const ev = press(g);
+    expect(ev).toContain("booth"); expect(ev).not.toContain("decks");
+    expect(g.party.spellAt).toBeNull(); expect(g.witch.seated).toBeFalsy(); // (the booth open: nothing started yet)
+    expect(startParty(g, 120)).toBe(true);
+    expect(g.wake!.events).toContain("decks");
     expect(g.witch.seated).toBe(true);
     expect(g.party.spellAt).not.toBeNull();
     const d = deckOf(g.map, g.tuning)!;
@@ -498,7 +503,8 @@ describe("a sail always ends with her asleep in bed (Ed, 2026-10-25, his 2a)", (
     const seat = d.seat, W = g.witches[0];
     for (let i = 0; i < 10 / STEP && !atDecks(g); i++) { const dx = seat.x - W.body.x, dz = seat.z - W.body.z, L = Math.hypot(dx, dz) || 1; stepGame(g, { ...idle, moveX: dx / L, moveZ: dz / L }, STEP); }
     expect(atDecks(g)).toBe(true);
-    expect(press(g)).toContain("decks");
+    expect(press(g)).toContain("booth");
+    expect(startParty(g, 120)).toBe(true);
     expect(g.party.spellAt).not.toBeNull();
   });
   it("with a find on loan: the same bed, dreaming first, the alarm as the dream ends", () => {

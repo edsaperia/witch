@@ -54,7 +54,7 @@ export function soundsystemSpecs(map: ForestMap, K: SoundsystemGenKnobs): Map<st
 export const genKnobs = (g: Game): SoundsystemGenKnobs => ({ ...SOUNDSYSTEM_GEN_DEFAULT, ...((g.tuning as { soundsystemGen?: Partial<SoundsystemGenKnobs> }).soundsystemGen ?? {}) });
 
 /** One area's soundsystem drawn this frame: where it stands, its state's frame, how far risen (0..1). */
-export interface GenDraw { key: string; x: number; z: number; rise: number; /** 0 playing, 1 to 3 damaged by stage (art DAMAGE_STAGES), 4 destroyed. */ stage: number; time: number; fresh?: boolean; /** Switched off: the party's over and still standing (Ed, 2026-10-10): still, its glow out. */ off?: boolean; /** Standing this high (m): on a great stump's cut (runeMarkers.stump; Ed, 2026-10-29: "the soundsystem can grow sitting on top of it"). */ lift?: number }
+export interface GenDraw { key: string; x: number; z: number; rise: number; /** 0 playing, 1 to 3 damaged by stage (art DAMAGE_STAGES), 4 destroyed. */ stage: number; time: number; fresh?: boolean; /** Switched off: the party's over and still standing (Ed, 2026-10-10): still, its glow out. */ off?: boolean }
 
 /** The damage stage for a share of health left (art/soundsystemGen.js DAMAGE_STAGES): 0 playing, 1 to 3 damaged, 4 destroyed. */
 export function damageStage(share: number, ruined: boolean): number {
@@ -109,7 +109,7 @@ export class SoundsystemGenView {
       if (!b) { b = new SpriteBatch(art.atlas, this.mpp, { solid: true }); this.batches.set(bid, b); this.scene.add(...b.meshes); }
       const fi = !dmg ? (d.off ? 0 : Math.floor(d.time * 6) % 3) : d.stage >= 4 ? 6 : (d.stage - 1) * 2 + (d.off ? 0 : Math.floor(d.time * (3 + d.stage * 2)) % 2), f = art.atlas.frames[fi], o = art.origins[fi], p = art.projectors[fi];
       if (!f) continue;
-      const h = f.h * this.mpp, pad = (f.pad ?? 0) * this.mpp, dx = (o.x - f.w / 2) * this.mpp, below = Math.max(0, f.h - (f.pad ?? 0) - o.y) * this.mpp, y = (d.lift ?? 0) - (1 - d.rise) * h;
+      const h = f.h * this.mpp, pad = (f.pad ?? 0) * this.mpp, dx = (o.x - f.w / 2) * this.mpp, below = Math.max(0, f.h - (f.pad ?? 0) - o.y) * this.mpp, y = -(1 - d.rise) * h;
       // its lowest drawn pixel on the ground, its middle where it stands (on screen): sideways by the origin's offset, towards
       // the camera by the rows below it, and down the billboard by the frame's empty pad
       const bx = d.x - R.x * dx - U.x * pad, by = y - U.y * pad, bz = d.z - R.z * dx + below * toward - U.z * pad;

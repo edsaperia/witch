@@ -21,6 +21,7 @@ import { button, h } from "./dom";
 import { HAT_SPELLS, ownsHat } from "../rules/spells";
 import { HAT_ICONS } from "../render/hatIcons";
 import { runSliced, type Steps } from "../render/slices";
+import { defaultGenome, newWitch } from "../app/defaultLook";
 
 type Genome = { hat: Record<string, number | string>; hair: string; top: string; cloak: string; broom: Record<string, number | string>; accessories: Record<string, boolean | string>; palette: Record<string, number[]> | null; scarfLength?: number; bagSize?: number; backpackSize?: number; [k: string]: unknown };
 
@@ -31,17 +32,20 @@ const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v));
 /** A saved genome with every field it lacks taken from hers (art/witchGenome.js upgradeGenome). */
 export const upgrade = (g: unknown): Genome => (Art.upgradeGenome as (g: unknown) => Genome)(g);
 
-/** Her saved look, if any and still a witch by the generator's rules. */
+/** Her saved look, if any and still a witch by the generator's rules; else the game's default look (config/default-look.json:
+ *  null, the classic witch). ?newWitch=1: the default, whatever she saved (app/defaultLook.ts). */
 export function loadGenome(): Genome | null {
+  const fresh = () => defaultGenome() as Genome | null;
+  if (newWitch()) return fresh();
   try {
     const raw = localStorage.getItem(KEY);
-    if (!raw) return null;
+    if (!raw) return fresh();
     const g = upgrade(JSON.parse(raw)); // a save from before round 2 gets the new fields as hers
     g.palette = snapPalette(g.palette); // (a save from the rainbow pickers' days: each colour to its nearest swatch)
-    return (Art.witchGenomeProblems as (g: unknown) => string[])(g).length ? null : g;
-  } catch { return null; }
+    return (Art.witchGenomeProblems as (g: unknown) => string[])(g).length ? fresh() : g;
+  } catch { return fresh(); }
 }
-export function saveGenome(g: Genome): void { try { localStorage.setItem(KEY, JSON.stringify(g)); } catch { /* storage blocked: this run only */ } }
+export function saveGenome(g: Genome): void { if (newWitch()) return; try { localStorage.setItem(KEY, JSON.stringify(g)); } catch { /* storage blocked: this run only */ } }
 
 /** Where an axis lives in the genome: hatHeight is hat.height, broom is broom.kind, broomLength is
  *  broom.length, bristles is broom.bristles, hair is hair; a new axis follows the same pattern. */

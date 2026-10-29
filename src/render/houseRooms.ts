@@ -13,7 +13,7 @@ import * as THREE from "three";
 import { gpuKind } from "./gpuLedger";
 import type { View } from "./view";
 import { deckOf, type Deck } from "../rules/treehouse";
-import { fromPlan, toPlan, HOUSE_ROOMS, hatsOnFloor, hatSlots, objectAt, type HouseObject } from "../rules/houseRooms";
+import { fromPlan, toPlan, HOUSE_ROOMS, hatsOnFloor, hatSlots, hatToTake, objectAt, type HouseObject } from "../rules/houseRooms";
 import { groundHeight } from "./height";
 import { alongRay } from "./view/home";
 import { standing, type FloorPixels } from "./houseArt";
@@ -311,11 +311,15 @@ export class HouseRoomsView {
     // plane, the crown, is drawn after them with no depth)
     { const flat = (px: number, pz: number, h: number) => { const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent!.deck.x + x / v.mpp, T.ent!.deck.y + z * ky + v.houseShift - h / v.mpp); return new THREE.Vector3(p.x, p.y + g0, p.z); }; // (slid with the rooms: houseShift)
       const o = flat(0, 0, 0); this.plan = { o, ex: flat(1, 0, 0).sub(o), ey: flat(0, 0, 1).sub(o), ez: flat(0, 1, 0).sub(o) }; }
-    const at = objectAt(D, w.x, w.z), lit = at && at.id !== v.houseOpen ? at.id : undefined; // (lit, the one she can use; out while it's open)
+    // (the hats' floor isn't a thing to use: the hat she's by is, hatToTake; Ed, 2026-10-29: "just an area where normal hat objects
+    // are placed")
+    const at0 = objectAt(D, w.x, w.z), hatBy = at0?.use.kind === "hats" ? hatToTake(W, D, w.x, w.z, g.tuning.leash.runeRadius) : null;
+    const at = at0?.use.kind === "hats" && !hatBy ? null : at0;
+    const lit = at && at.id !== v.houseOpen ? (hatBy ? (hatBy.slot !== undefined ? `hat:${hatBy.slot}` : "") : at.id) : undefined; // (lit, the one she can use; out while it's open)
     for (const P of this.parts) {
       let k = 0;
       for (const q of P.quads) {
-        const glow = q.obj && (q.obj === lit || (lit === "hats" && q.obj.startsWith("hat:"))) ? 1.45 : 1;
+        const glow = q.obj && q.obj === lit ? 1.45 : 1;
         for (const [x, z, h] of q.p) { const p = toWorld(x, z, h); P.pos[k] = p.x; P.pos[k + 1] = p.y; P.pos[k + 2] = p.z; P.col[k] = Math.min(1, q.rgb[0] * glow); P.col[k + 1] = Math.min(1, q.rgb[1] * glow); P.col[k + 2] = Math.min(1, q.rgb[2] * glow); k += 3; }
       }
       (P.geo.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
@@ -455,7 +459,7 @@ export class HouseRoomsView {
     // open. Up at her decks before the party, E there starts it (rules/wakeUp.ts atDecks).
     const decks = !at && g.wake?.open && g.party.spellAt === null && atDecks(g) ? decksSpot(D) : null;
     const tagged = decks ?? (at && at.use.kind !== "scenery" && !this.said && !waking && !(at.use.kind === "pile" && !pileOut(g.wake)) ? at : null);
-    const usable = tagged && tagged.id !== v.houseOpen ? tagged : null, px = Math.max(2, Math.round(cv.width / Math.max(1, v.width))), glyph = useGlyph(v.useDevice), cap = `${glyph}|${px}`;
+    const usable0 = tagged && tagged.id !== v.houseOpen ? tagged : null, usable = usable0 && hatBy && usable0 === at ? { ...usable0, ...toPlanAt0(hatBy.x - D.x, hatBy.z - D.z), h: 0 } : usable0, px = Math.max(2, Math.round(cv.width / Math.max(1, v.width))), glyph = useGlyph(v.useDevice), cap = `${glyph}|${px}`;
     if (cap !== this.tagKey) { this.tagKey = cap; this.tag.replaceChildren(keycapCanvas(glyph, px)); }
     this.tapUse = usable && v.useDevice === "touch" ? v.onUse : null;
     this.tag.style.pointerEvents = this.tapUse ? "auto" : "none";

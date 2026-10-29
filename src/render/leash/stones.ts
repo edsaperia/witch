@@ -20,7 +20,7 @@ import type { LeashView } from "../leash";
 import { SPRITE_UNIFORMS } from "../sprites";
 import { groundHeight } from "../height";
 import { SLOT, SLOTS } from "./glyphs";
-import { drawEmbers, legendShine, rankColour, rankKnobs, rankSize, standScale, stoneKnobs } from "./ranks";
+import { asleepLegend, drawEmbers, legendShine, rankColour, rankKnobs, rankSize, sigilRankColour, standScale, stoneKnobs } from "./ranks";
 
 /** Each stacked sigil's side as last drawn, and when it last turned (won over: Ed, 2026-10-29); its size times a pop as it flips to
  *  the friends' colour, swelling and settling over a third of a second (no flash: it's the colour that turns). */
@@ -35,7 +35,7 @@ function flipPop(id: number, friend: boolean, time: number): number {
 
 /** A rune stone drawn this frame: its area's key ("cx,cy"), where it stands and its stone's height (m, STONE_FACE of its drawn height;
  *  up its face: the sprites lean back toward the camera, render/sprites.ts uUp, and its column climbs on up that way, in its plane). */
-export interface StoneSpot { key: string; x: number; z: number; top: number }
+export interface StoneSpot { key: string; x: number; z: number; top: number; /** On a great stump: its root area's outline round the rings' middle (m, at even angles from east towards the camera: StumpArt.roots), and whether it's drawn mirrored. */ roots?: number[]; flip?: boolean }
 /** The share of a stone's drawn height (render/markers.ts MarkerArt.height: to the top of its rune's glow) that is the stone itself:
  *  measured in the game, 2026-10-28 (the column drawn at 1, 0.7, 0.5, 0.3 and 0 of it: 0.5 sits on the stone's top). */
 export const STONE_FACE = 0.5;
@@ -59,9 +59,15 @@ export interface StoneView {
   spectrum: Uint8Array | null;
   wantsSpectrum: boolean;
   bars: Float32Array;
+  /** The spell's spot shown this frame (its 🎶: x, z, its size in m, how far faded in, and whether she's casting there), for its key
+   *  prompt (render/castTag.ts); null: none shown. */
+  notes: { x: number; z: number; size: number; on: number; casting: boolean } | null;
+  /** On a stump, the light riding the dial's filling edge round it in that bar's colour (render/view/home.ts lights the stump and the
+   *  trees round it with it, a frame on); null: none. */
+  castLight: { x: number; z: number; rgb: [number, number, number]; k: number } | null;
 }
-export const newStoneView = (): StoneView => ({ last: new Map(), converted: [], falls: new Map(), seen: new Set(), spectrum: null, wantsSpectrum: false, bars: new Float32Array(64) });
-export const resetStoneView = (v: StoneView): void => { v.last.clear(); v.converted.length = 0; v.falls.clear(); v.seen.clear(); v.spectrum = null; v.wantsSpectrum = false; v.bars.fill(0); };
+export const newStoneView = (): StoneView => ({ last: new Map(), converted: [], falls: new Map(), seen: new Set(), spectrum: null, wantsSpectrum: false, bars: new Float32Array(128), notes: null, castLight: null });
+export const resetStoneView = (v: StoneView): void => { v.last.clear(); v.converted.length = 0; v.falls.clear(); v.seen.clear(); v.spectrum = null; v.wantsSpectrum = false; v.bars.fill(0); v.notes = null; v.castLight = null; };
 
 /** A column's sigils' heights over the stone's top and sizes (m), bottom first. */
 export function columnOf(items: readonly { level: number }[], size: (level: number) => number): { y: number; size: number }[] {
@@ -86,7 +92,7 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
   if (!t.leash.ranks?.on) return;
   const sizeOf = (lvl: number) => (2 + 2 * 0.4) * S.scale * rankSize(t, lvl) * standScale(t), notes = notesSlot(lv);
   const sigil = (id: number, level: number, x: number, y: number, z: number, size: number, alpha: number, c: [number, number, number]) => {
-    const sp = g.creatures[id]?.species ?? "fox", uv = lv.uv(lv.bareSlot(sp)), sh = lv.shadeOf(uv);
+    const sp = g.creatures[id]?.species ?? "fox", uv = lv.uv(lv.bareSlot(sp, level >= 3)), sh = lv.shadeOf(uv);
     if (sh) lv.stackBack.add(x, y, z, size, sh, 0.02, 0.02, 0.035, (S.backing ?? 0.6) * alpha);
     lv.stackGlyphs.add(x, y, z, size, uv, c[0], c[1], c[2], alpha, 1, false, legendShine(level, time, id)); // (a legend's shiny: ranks.ts)
     if (alpha > 0.5) drawEmbers(lv.stackGlyphs, dot, lv.glyphPts.get(`${uv[0]},${uv[1]}`) ?? [], x, y, z, size, false, level, c, time, id * 7 + 3, RK.embers, RK.embers.stack);
@@ -97,6 +103,7 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
   const U = SPRITE_UNIFORMS.uUp.value, upZ = (z: number, h: number) => z + 0.3 + h * U.z;
   const upY = (x: number, z: number, h: number) => h * U.y + groundHeight(x, z) - groundHeight(x, upZ(z, h));
   const shown = new Set<string>();
+  V.notes = null;
   for (const st of lv.stones) {
     const items = stoneStack(g, st.key);
     if (!items.length) continue;
@@ -105,7 +112,7 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
     V.last.set(st.key, { x: st.x, z: st.z, top: st.top, items: items.map((it, i) => ({ ...it, y: P[i].y, size: P[i].size })) });
     // The column: the friends above the enemies, each side legend lowest, babies on top (stoneStack's order, bottom first).
     const vis = smooth((K.range - Math.hypot(st.x - w.x, st.z - w.z)) / Math.max(1, K.fade));
-    if (vis > 0.01) items.forEach((it, i) => { const h = st.top + P[i].y; sigil(it.id, it.level, st.x, upY(st.x, st.z, h), upZ(st.z, h), P[i].size * flipPop(it.id, it.friend, time), vis, rankColour(t, it.level, it.friend)); });
+    if (vis > 0.01) items.forEach((it, i) => { const h = st.top + P[i].y; sigil(it.id, it.level, st.x, upY(st.x, st.z, h), upZ(st.z, h), P[i].size * flipPop(it.id, it.friend, time), vis, sigilRankColour(t, it.level, it.friend, asleepLegend(g.creatures[it.id]))); });
     // The spell's spot: south of the stone, only as she comes near it, and only once it can be cast (castReady: every wild fighter
     // of its area invited; Ed, 2026-10-29).
     const { x: sx, z: sz } = castSpot(st, t), on = smooth((K.far - Math.hypot(w.x - sx, w.z - sz)) / Math.max(0.1, K.far - K.near));
@@ -114,6 +121,7 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
       lv.flat.add(sx, 0, sz, K.size * 1.9, dot, c[0], c[1], c[2], 0.22 * on, 1, true); // (its glow)
       lv.ink.add(sx, 0, sz, K.size, notes, c[0] * on, c[1] * on, c[2] * on, on);
       lv.flat.add(sx, 0, sz, K.size, notes, c[0], c[1], c[2], 0.6 * on);
+      if (!V.notes || on > V.notes.on) V.notes = { x: sx, z: sz, size: K.size, on, casting: g.witches?.[0]?.casting === st.key };
     }
   }
   // The conversions: a stone's friend sigils newly loose, each from its slot in the stack (rules/game.ts, LooseSigil.from).
@@ -137,7 +145,7 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
   for (const C of V.converted) {
     const T = (time - C.at) / K.convert, c = C.col;
     if (T < 0.3) { const f = 1 - T / 0.3; lv.over.add(c.x, upY(c.x, c.z, c.top + 1), upZ(c.z, c.top + 1), 9 * (1.2 - f), dot, 1, 0.95, 0.85, 0.55 * f, 1, true); } // (its flare)
-    if (T < 0.35) for (const it of c.items) if (!looseIds.has(it.id)) { const h = c.top + it.y; sigil(it.id, it.level, c.x, upY(c.x, c.z, h), upZ(c.z, h), it.size, 1 - T / 0.35, rankColour(t, it.level, it.friend)); } // (the wild ones' fade)
+    if (T < 0.35) for (const it of c.items) if (!looseIds.has(it.id)) { const h = c.top + it.y; sigil(it.id, it.level, c.x, upY(c.x, c.z, h), upZ(c.z, h), it.size, 1 - T / 0.35, sigilRankColour(t, it.level, it.friend, asleepLegend(g.creatures[it.id]))); } // (the wild ones' fade)
   }
   // The loose sigils: falling, or lying on the ground to pick up.
   for (const p of g.loose ?? []) {
@@ -157,7 +165,7 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
       continue;
     }
     if (Math.abs(p.x - w.x) > K.range || Math.abs(p.z - w.z) > K.range) continue;
-    const uv = lv.uv(lv.bareSlot(cr?.species ?? "fox")), size = sigilSize(2, RUNE_SCALE) * rankSize(t, lvl) * (p.legend ? 1.25 : 1), a = (0.62 + 0.12 * Math.sin(time * 2 + p.id)) * (F?.hidden ? smooth((time - F.land) / Math.max(0.05, K.convert * 0.3)) : 1);
+    const uv = lv.uv(lv.bareSlot(cr?.species ?? "fox", lvl >= 3)), size = sigilSize(2, RUNE_SCALE) * rankSize(t, lvl) * (p.legend ? 1.25 : 1), a = (0.62 + 0.12 * Math.sin(time * 2 + p.id)) * (F?.hidden ? smooth((time - F.land) / Math.max(0.05, K.convert * 0.3)) : 1);
     lv.groundSigil(p.x, 0.03, p.z, size, uv, to[0] * 0.8, to[1] * 0.8, to[2] * 0.8, a);
     lv.flat.add(p.x, 0.015, p.z, size * 0.9, dot, to[0], to[1], to[2], 0.18 * a / 0.62); // (a glint: ready to pick up)
     drawEmbers(lv.standing, dot, lv.glyphPts.get(`${uv[0]},${uv[1]}`) ?? [], p.x, 0.02, p.z, size, true, lvl, to, time, p.id * 11 + 5, RK.embers);
@@ -165,26 +173,80 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
   for (const k of [...V.last.keys()]) if (!shown.has(k) && !V.converted.some(C => C.col === V.last.get(k))) V.last.delete(k);
   // The cast: the ring round the stone's foot, its bars the music's analyser, and the motes.
   const W = g.witches?.[0], cs = W ? castShown(g, W) : null, show = !!cs && (cs.casting || cs.k > 0 || cs.lostFrom !== undefined);
-  V.wantsSpectrum = show;
+  const n = Math.max(8, Math.min(V.bars.length, Math.round(K.bars))), spec = V.spectrum, dt = Math.min(0.1, lv.frameDt);
+  // (the music's level at bar i of m, rising at once and falling slowly, as an analyser's do; with no audio running, a gentle idle)
+  const level = (i: number, m: number) => {
+    const live = spec ? barLevel(spec, i, m) : 0.25 + 0.2 * Math.abs(Math.sin(time * 1.3 + i * 1.7) * 0.6 + Math.sin(time * 2.1 + i * 0.9) * 0.4);
+    return (V.bars[i] = Math.max(live, V.bars[i] - dt * 1.8));
+  };
+  // On a great stump (Ed, 2026-10-29: "the audio analyser effect should be the same orientation as the stump rings and fill the whole
+  // treestump area"; "The audio bars should be long enough that they fill the whole root area, not just the cut trunk circle"): it lies
+  // on the ground with the stump, its bars running out from the rings' middle (where she casts) over the roots all round, following
+  // the root area's outline (StoneSpot.roots), only the filled ones drawn ("the unfilled white bars don't need to be drawn").
+  const SR = t.runeMarkers.stump?.on ? t.runeMarkers.stump.ring : null, nb = Math.min(V.bars.length, n * 2); // (twice the bars: they reach out over the roots, so their ends stay close)
+  const edgeOf = (st: StoneSpot) => (a: number) => { // (the root area's radius that way: between its two nearest angles; mirrored with the stump)
+    const R = st.roots!, N = R.length, u = ((((st.flip ? Math.PI - a : a) / (Math.PI * 2)) * N) % N + N) % N, i0 = Math.floor(u), q = u - i0;
+    return R[i0] * (1 - q) + R[(i0 + 1) % N] * q;
+  };
+  // (one bar, at angle a from the rings' middle (x, z), `reach` of the way out to the roots' edge, in colour c)
+  const rootBar = (S: NonNullable<typeof SR>, edge: (a: number) => number, x0: number, z0: number, a: number, reach: number, c: number[], alpha: number) => {
+    const ux = Math.cos(a), uz = Math.sin(a), steps = Math.max(1, Math.floor((edge(a) * S.fill - S.inner) / S.cell)), top = Math.round(reach * steps);
+    for (let j = 0; j <= top; j++) {
+      const r = S.inner + j * S.cell, tip = j === top, x = x0 + ux * r, z = z0 + uz * r;
+      // (painted on, not added: added light vanishes on the cut lit by its sigils)
+      lv.ink.add(x, 0.06, z, S.cell, dot, c[0], c[1], c[2], alpha * (tip ? 1 : 0.9));
+      // (and glowing bright over it, as light, in its own colour: Ed, 2026-10-29, "music spell filled bars can glow brightly", "don't
+      // wash out to white light, it should bloom in the colour of the dot": its hue alone added, the grey in it taken out, so on the
+      // lit wood and where the glows overlap it saturates rather than whitening)
+      const gk = S.glow ?? 0, lo = Math.min(c[0], c[1], c[2]) * 0.9;
+      if (gk > 0) lv.flat.add(x, 0.08, z, S.cell * 1.8, dot, (c[0] - lo) * gk, (c[1] - lo) * gk, (c[2] - lo) * gk, alpha * (tip ? 0.6 : 0.45), 1, true);
+    }
+  };
+  V.castLight = null;
+  // A wave's cast (Ed, 2026-10-29: "when the wave causes the soundsystem spell to be cast, it does it instantly, and the visual effect is
+  // all the stacks in the soundwave filling out from the centre simultaneously as the soundsystem appears, instead of filling up
+  // radially"): an area the wave partified (not one she cast early, Partified.early), every bar at once growing out from the rings'
+  // middle over the soundsystem's rise (party.transition), held a moment at the music's level, then fading; its light at the middle.
+  let waving = false;
+  if (SR) for (const st of lv.stones) {
+    const A = g.party.areas.get(st.key), WV = SR.wave;
+    if (!st.roots?.length || !A || A.early || !WV) continue;
+    const e = g.clock.time - A.at, T = Math.max(0.1, t.party.transition);
+    if (e < 0 || e > T + WV.hold + WV.fade) continue;
+    const fill = smooth(e / T), fade = 1 - smooth((e - T - WV.hold) / Math.max(0.05, WV.fade)), edge = edgeOf(st);
+    waving = true;
+    for (let i = 0; i < nb; i++) { const f = i / nb; rootBar(SR, edge, st.x, st.z, Math.PI / 2 + f * Math.PI * 2, fill * (0.55 + 0.45 * level(i, nb)), hue(f + time * 0.15), fade); }
+    if (!V.castLight) V.castLight = { x: st.x, z: st.z, rgb: hue(time * 0.3) as [number, number, number], k: fill * fade };
+  }
+  V.wantsSpectrum = show || waving;
   if (!cs || !show) return;
   const st = lv.stones.find(s => s.key === cs.key), top = st ? upY(st.x, st.z, st.top) : 5.4, k = Math.max(0, Math.min(1, cs.k)), dr = Math.max(k, cs.lostFrom ?? k);
-  // (on a great stump, Ed 2026-10-29: "the spell and the audio circle effect can be on top of the stump": the ring on its cut, sized to it)
-  const SR = t.runeMarkers.stump?.on ? t.runeMarkers.stump.ring : null, ringY = SR && st ? st.top : 0;
-  const lostA = cs.hitAt === undefined ? 0 : Math.max(0, 1 - (g.herTime - cs.hitAt) / 1.2), n = Math.max(8, Math.min(V.bars.length, Math.round(K.bars))), cell = SR ? SR.cell : K.cell, radius = SR ? SR.radius : K.radius;
-  const spec = V.spectrum, dt = Math.min(0.1, lv.frameDt);
-  for (let i = 0; i < n; i++) {
-    // (the music's level at this bar, rising at once and falling slowly, as an analyser's do; with no audio running, a gentle idle)
-    const live = spec ? barLevel(spec, i, n) : 0.25 + 0.2 * Math.abs(Math.sin(time * 1.3 + i * 1.7) * 0.6 + Math.sin(time * 2.1 + i * 0.9) * 0.4);
-    V.bars[i] = Math.max(live, V.bars[i] - dt * 1.8);
-    const f = i / n, a = Math.PI / 2 + f * Math.PI * 2, ux = Math.cos(a), uz = Math.sin(a) * (K.ringTilt ?? 1), cx = cs.x, cz = cs.z + (SR ? 0 : 0.6), lv0 = V.bars[i];
+  const lostA = cs.hitAt === undefined ? 0 : Math.max(0, 1 - (g.herTime - cs.hitAt) / 1.2);
+  // Her cast on a stump: the cast's share lights the bars round the dial, each reaching out as far as the music's level, and a hit
+  // flashes the lost part red.
+  if (SR && st?.roots?.length) {
+    const edge = edgeOf(st);
+    for (let i = 0; i < nb; i++) {
+      const lv0 = level(i, nb), f = i / nb, lit = f < k, lost = !lit && f < dr && lostA > 0;
+      if (!lit && !lost) continue;
+      rootBar(SR, edge, cs.x, cs.z, Math.PI / 2 + f * Math.PI * 2, lit ? lv0 * (cs.casting ? 1 : 0.6) : lv0 * 0.5, lit ? hue(f + time * 0.15) : [1, 0.2, 0.15], lit ? 1 : lostA);
+    }
+    // The bloom going round (Ed, 2026-10-29: "a bloom of the rainbow light go round the stump and surrounding trees as the bar fills"):
+    // one light at the dial's filling edge, partway out over the roots, in that bar's colour, brighter while she casts.
+    if (k > 0) {
+      const a = Math.PI / 2 + k * Math.PI * 2, r = edge(a) * 0.55;
+      V.castLight = { x: cs.x + Math.cos(a) * r, z: cs.z + Math.sin(a) * r, rgb: hue(k + time * 0.15) as [number, number, number], k: cs.casting ? 1 : 0.5 };
+    }
+  } else for (let i = 0; i < n; i++) {
+    const lv0 = level(i, n), f = i / n, a = Math.PI / 2 + f * Math.PI * 2, ux = Math.cos(a), uz = Math.sin(a) * (K.ringTilt ?? 1), cx = cs.x, cz = cs.z + 0.6;
     const lit = f < k, lost = !lit && f < dr && lostA > 0;
     const h = lit ? 1 + Math.round(lv0 * 7 * (cs.casting ? 1 : 0.6)) : lost ? 1 + Math.round(lv0 * 3) : 1 + Math.round(lv0 * 1.5), c = lit ? hue(f + time * 0.15) : lost ? [1, 0.2, 0.15] : [0.45, 0.45, 0.5];
     for (let j = 0; j < h; j++) {
-      const r = radius + j * cell * 1.1, x = cx + ux * r, z = cz + uz * r, tip = j === h - 1;
+      const r = K.radius + j * K.cell * 1.1, x = cx + ux * r, z = cz + uz * r, tip = j === h - 1;
       // (the ring's far half, behind the stone from the camera, over it: Ed's playtest, 2026-10-29, "I can usually only see the beginning
       // and the end of the dial"; the near half lies on the ground as before)
-      (uz < 0 || SR ? lv.over : lv.flat).add(x, ringY + (uz < 0 || SR ? 0.06 : 0), z, cell * (lit ? 1 : 0.85), dot, c[0], c[1], c[2], lit ? (tip ? 1 : 0.85) : lost ? lostA : 0.35);
-      if (lit && tip) lv.over.add(x, ringY + 0.2, z, cell * 0.9, dot, c[0], c[1], c[2], 0.45);
+      (uz < 0 ? lv.over : lv.flat).add(x, uz < 0 ? 0.06 : 0, z, K.cell * (lit ? 1 : 0.85), dot, c[0], c[1], c[2], lit ? (tip ? 1 : 0.85) : lost ? lostA : 0.35);
+      if (lit && tip) lv.over.add(x, 0.2, z, K.cell * 0.9, dot, c[0], c[1], c[2], 0.45);
     }
   }
   const m = Math.round(6 + 34 * k * (cs.casting ? 1 : 0.4));

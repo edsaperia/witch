@@ -15,6 +15,7 @@
 // itself (the page's endDream) or any key or move is pressed, her phone's alarm goes off and the wake-up goes on as ever.
 import type { Controls, Game } from "./game";
 import { castPartySpell } from "./party";
+import { recordTempo } from "./beat";
 import { deckOf } from "./treehouse";
 import { HOUSE_ROOMS, objectAt, objectWorld } from "./houseRooms";
 import { bedside } from "./opening";
@@ -22,7 +23,7 @@ import { pileOut, PILE_SLOTS, type PileSlot } from "./clothesPile";
 
 export type WakeBeat = /** asleep, dreaming (finds on loan) */ "dream" | "alarm" | "snooze" | "stretch" | "up";
 /** Something that happened this step, for the page (its sound and cards). */
-export type WakeEvent = "snooze" | "ring" | "stretch" | "up" | "mirror" | "decks" | /** E at the pile: dressed */ "dressed";
+export type WakeEvent = "snooze" | "ring" | "stretch" | "up" | "mirror" | "decks" | /** E at the pile: dressed */ "dressed" | /** E at her decks: her DJ booth's panel to open (the page's), the party started from it (startParty) */ "booth";
 
 export interface WakeState {
   beat: WakeBeat;
@@ -139,17 +140,28 @@ export function atDecks(g: Game): boolean {
   const d = deckOf(g.map, g.tuning), b = g.witches[0].body;
   return !!d && b.mode === "ground" && Math.hypot(b.x - d.seat.x, b.z - d.seat.z) <= DECKS_REACH;
 }
-/** Up, the party not started: out to her decks, where E seats her and casts the spell (its routine the DJ intro); no other key
- *  casts it meanwhile, dressed or in her nightie. */
+/** Up, the party not started: out to her decks, her DJ booth (Ed, 2026-10-29: "you open it as a station, select a record ...
+ *  Underneath there's a button that says 'Get this party started'"): E there opens its panel (the "booth" event: the page's,
+ *  ui/stationPanel.ts), which starts the party (startParty); no other key casts it meanwhile, dressed or in her nightie. */
 function toDecks(g: Game, c: Controls, press: boolean): Controls {
   if (press && atDecks(g)) {
-    const d = deckOf(g.map, g.tuning)!, W = g.witches[0];
-    W.body = { ...W.body, x: d.seat.x, z: d.seat.z, vx: 0, vz: 0, seated: true, facing: 1, away: false, heading: "side" };
-    castPartySpell(g.party, g.map, g.clock.time);
-    g.wake!.events.push("decks");
+    g.wake!.events.push("booth");
     return { ...c, place: false, sigil: false, castParty: false, spell: false };
   }
   return { ...c, castParty: false, spell: false };
+}
+
+/** "Get this party started" at her DJ booth, with the record at `bpm` on (rules/records.ts; Ed, 2026-10-29): she's seated behind
+ *  the decks, the night's tempo set to the record's (rules/beat.ts recordTempo) and the spell cast, its routine (rules/djSet.ts,
+ *  the DJ intro) at that bpm. Only up, at her decks, the party not started; true if it started. */
+export function startParty(g: Game, bpm: number): boolean {
+  if (!g.wake?.open || g.party.spellAt !== null || !atDecks(g)) return false;
+  const d = deckOf(g.map, g.tuning)!, W = g.witches[0];
+  W.body = { ...W.body, x: d.seat.x, z: d.seat.z, vx: 0, vz: 0, seated: true, facing: 1, away: false, heading: "side" };
+  recordTempo(g.beat, g.tuning, bpm, g.clock.time);
+  castPartySpell(g.party, g.map, g.clock.time);
+  g.wake.events.push("decks");
+  return true;
 }
 
 /** The room her bed stands in (Ed, 2026-10-26: "Move the bed to the turret"; it was her Bedroom): where she wakes. */

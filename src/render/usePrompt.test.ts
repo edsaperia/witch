@@ -9,11 +9,11 @@ import { bindings } from "../platform/bindings";
 afterEach(() => bindings.resetAll());
 
 describe("the use prompt", () => {
-  it("is E on the keyboard, the pad's cross on a pad, and a tap on touch: a keycap each, no words", () => {
-    expect([useGlyph("keys"), useGlyph("pad"), useGlyph("touch")]).toEqual(["E", "pad:cross", "TAP"]);
+  it("is E on the keyboard, the pad's square on a pad (Ed, 2026-10-29), and a tap on touch: a keycap each, no words", () => {
+    expect([useGlyph("keys"), useGlyph("pad"), useGlyph("touch")]).toEqual(["E", "pad:square", "TAP"]);
   });
   it("follows a remap", () => {
-    bindings.set("game.use", { keys: ["KeyF"], pad: ["square"] });
-    expect([useGlyph("keys"), useGlyph("pad")]).toEqual(["F", "pad:square"]);
+    bindings.set("game.use", { keys: ["KeyF"], pad: ["triangle"] });
+    expect([useGlyph("keys"), useGlyph("pad")]).toEqual(["F", "pad:triangle"]);
   });
 });

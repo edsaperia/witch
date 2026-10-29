@@ -28,7 +28,7 @@ import { beachOf, type Beach } from "../../rules/mapShape";
 import { dolphinLeaps, krakenRising } from "../../rules/seaLife";
 import { speechMood, voiceOf } from "./voices";
 import { dances } from "../../render/looks";
-import { beatAt, timeAt } from "../../rules/beat";
+import { beatAt, bpmAt, timeAt } from "../../rules/beat";
 import { cellKey } from "../../rules/party";
 import { dressingOf, partyDef, type Dressing } from "../../rules/partyDressing";
 import { musicMix, partyOverEase } from "../../rules/music";
@@ -345,7 +345,7 @@ export class SfxCues {
       this.deckUpTo = time; this.deckHalf = Math.floor(beatAt(g.beat, time) * 2);
       // (her wait after a knockdown, the music silent: her scratching on the new record the show, sfx.deck.respawn louder)
       const loud = g.witches[0]?.ko ? g.tuning.sfx.deck.respawn ?? 1 : 1;
-      if (this.primed) for (const s of djStrokes(g, from + 1e-9, time + 1e-9)) this.sfx.deck(s.stroke, 0.1, loud);
+      if (this.primed) for (const s of djStrokes(g, from + 1e-9, time + 1e-9)) this.sfx.deck(s.stroke, 0.1, loud, bpmAt(g.beat, time));
       const hype = r.gesture === "hype";
       if (hype && !this.deckHype && this.primed) this.sfx.whoop(0.1);
       this.deckHype = hype;

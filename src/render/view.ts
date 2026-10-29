@@ -101,8 +101,6 @@ import { GpuLedger } from "./gpuLedger";
 import { keepUnderBudget, newGpuState } from "./view/gpuBudget";
 import { berrySprite } from "./berries";
 import { leyDrawnTo, shaderPulse, type LeyLines } from "./leylines";
-import { rainbowFronts } from "../rules/rainbow";
-import { metresToLinks, routeLengths } from "../rules/leypulse";
 import { routeSeen } from "../rules/hatSpells";
 import { bootLineAt, bootPath, bootPulseAt } from "../rules/bootRing";
 import { Glades } from "./glades";
@@ -128,6 +126,7 @@ import { drawHatArt } from "./view/hatArt";
 import { drawFinds, findClear } from "./view/finds";
 import { drawMarkers, drawSpeakers, forgetCandles, placeTreehouse, entDeckDrawn } from "./view/home";
 import { miniTreehouse, ZooExitTag } from "./zooExit";
+import { CastTag } from "./castTag";
 import { lanternLights, relicLights, setLights, sigilLights, updateSources } from "./view/lights";
 import { placeCamera } from "./view/camera";
 import { setFrameUniforms } from "./view/frameUniforms";
@@ -463,6 +462,8 @@ export class View {
   houseRooms: HouseRoomsView | null = null;
   /** The zoo's little treehouse's "exit" prompt (render/zooExit.ts), made in the zoo. */
   zooExitTag: ZooExitTag | null = null;
+  /** The spell's key prompt by its 🎶 (render/castTag.ts), made the first frame. */
+  castTag: CastTag | null = null;
   /** The great oak's crown over the house (render/crown.ts), with the house's rooms and treehouse.house.crown on. */
   crown: CrownView | null = null;
   /** The crown seen over the horizon from far off (render/crownLandmark.ts). */
@@ -517,8 +518,6 @@ export class View {
   private get dancefloor(): Dancefloor { return this.island.dancefloor; }
   propBatch!: SpriteBatch;
   private partyView!: PartyView;
-  /** A soundsystem's height on its great stump's cut, by its area's key (made once: render/party.ts liftOf). */
-  private readonly stumpLift = (key: string): number => { const i = key.indexOf(","); const s = this.markerArt.stump([+key.slice(0, i), +key.slice(i + 1)]); return s ? this.assets.stumpArt(s.spec, false)?.art.height ?? 0 : 0; };
   private strings!: StringLightsView;
   leashView!: LeashView;
   private lasers!: Lasers;
@@ -1519,7 +1518,6 @@ export class View {
     const over = updatePartyOver(g, partyOverEase(g, this.overDebug), this.over), offAt = (x: number, z: number) => partyOff(over, x, z);
     this.leashView.partyOverEase = over.ease;
     this.fireworks.update(g.waveEvents, time, t, key => { const [cx, cy] = key.split(",").map(Number); return sigilColour(AREA_TYPES[g.map.typeOf(cx, cy)].creature) as number[]; }, at => !!g.win && g.win.lapAt !== undefined && at >= g.win.lapAt); // (the win's, from its victory lap on: the finale's palette; before the soundsystems: a celebrated one's lasers come on as its show starts)
-    this.partyView.liftOf = this.markerArt?.stumps ? this.stumpLift : null; // (on a great stump's cut)
     const party = this.partyView.update(g, time, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), () => false, this.fireworks.celebrated, offAt);
     if (over.front > 0) { for (const l of party.lights) l.strength *= 1 - offAt(l.x, l.z); party.playing = party.playing.filter(p => offAt(p.x, p.z) < 0.98); party.projectors = party.projectors.filter(p => offAt(p.x, p.z) < 0.98); }
     this.soundBatch.set(party.items);
@@ -1555,10 +1553,6 @@ export class View {
       this.ley.near(w.x, w.z);
       // (the Route-seer hat worn, rules/hatSpells.ts: the whole route, however far the reveal has grown)
       this.ley.grow(leyDrawnTo(g.party, g.map, time, t.leyLines.reveal ?? 3, this.ley.branch(), routeSeen(g))); // (none before the party, the hat's too)
-      { // (an early clear's rainbow waves show the line as they pass: rules/rainbow.ts)
-        const R = g.rainbows?.length ? rainbowFronts(g.party, g.map, g.rainbows, g.clock.time) : [], lens = R.length ? routeLengths(g.party, g.map) : [];
-        this.ley.rains(R.map(w => ({ front: metresToLinks(lens, w.front), tail: metresToLinks(lens, Math.max(0, w.tail)) })));
-      }
       { // The boot's ring (rules/bootRing.ts): the line round the home ring at reveal x the pulse, the pulse turning the stones; faint after.
         // (Its sparkler runs the whole lap, past the last stone to where it came on to the ring, at the pulse's speed, the boot
         // ending as it gets there, and hands over to the wave's: Ed, 2026-10-07, "The two pulses or tips don't join correctly at
@@ -1566,6 +1560,7 @@ export class View {
         const B = bootPath(g.map), live = g.party.spellAt !== null && (g.party.bootFrom === undefined || time < g.party.bootUntil);
         this.ley.ring(live ? bootPulseAt(g.party, g.map, time) / B.length : null, bootLineAt(g.party, g.map, time, t.leyLines.reveal ?? 3) / B.length, (g.party.spellAt === null ? 0 : live ? 1 : 0.35) * (1 - (g.partyOver?.ease ?? 0)), this.leyRgb ?? undefined); // (the boot ring fades out too once the party's over)
         this.ley.front(time, (beatTime(g.beat, time) * t.beat.bpm) / 60, 1 - (g.partyOver?.ease ?? 0)); // its front and pulses: pixel sparks, small lights, embers (render/leyHead.ts)
+        this.leashView.ley = this.ley; // (the rainbow wave and the analyser behind the spark stand on the line as drawn: render/leash/rainbow.ts)
       }
     }
     // The sleeping legends' clearings: their twilight and motes, the nearest few (render/glades.ts).
@@ -1732,6 +1727,7 @@ export class View {
     drawPointers(this, time);
     this.time("hud");
     this.leashView.update(ht, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop, this.witchBodyY, this.witchFeetY, this.witchFrameH);
+    (this.castTag ??= new CastTag()).update(this); // (the spell's key prompt by its 🎶, drawn just now: render/castTag.ts)
     this.time("leash");
     workAhead(this);
     if (this.debugCull) drawGhosts(this, time);

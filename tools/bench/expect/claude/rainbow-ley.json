@@ -1,0 +1,9 @@
+{
+  "reason": "the ley line in the rainbow, a bigger spark, the analyser behind the spark; the rainbow wave from the early-cleared stone both ways, twice as fast, three times as long, no trail (Ed, 2026-10-29)",
+  "frames": {
+    "*": "the ley line's colour (rainbow), its spark's size, and the analyser bars behind the spark"
+  },
+  "rules": {
+    "*": "a rainbow wave records where it set off (g.rainbows: { at, from }), runs both ways at 1.7 x ground speed, 84 bars long"
+  }
+}

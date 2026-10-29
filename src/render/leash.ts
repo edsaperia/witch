@@ -16,7 +16,7 @@ import { moodOf } from "./mood";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
 import { gpuKind } from "./gpuLedger";
-import { drawSigil, sigilColour, LEGEND_SCALE, BOLD_GRID, boldGlyph } from "../../art/generator.js";
+import { drawSigil, sigilColour, LEGEND_SCALE, BOLD_GRID, boldGlyph, LEGEND_CROWN_H, crownGlyph } from "../../art/generator.js";
 import { dormant, type Game } from "../rules/game";
 import type { Creature } from "../rules/creatures";
 
@@ -41,11 +41,12 @@ import { drawDeckBpm } from "./leash/deckBpm";
 import { drawBond, drawStack, drawStrain, stackKey } from "./leash/stack";
 import type { Chain } from "./leash/chain";
 import { drawRainbow } from "./leash/rainbow";
+import type { LeyLines } from "./leylines";
 import { drawStones, newStoneView, resetStoneView, type StoneSpot } from "./leash/stones";
 import { drawProjection } from "./leash/projection";
 import { RUNE_SCALE, runeOffset, sigilSize } from "../rules/runeOffset";
 import { relicsOut } from "../rules/partyOver";
-import { drawEmbers, glyphPoints, legendShine, rankColour, rankKnobs, rankOf, rankSize, ranksOn, youthDots } from "./leash/ranks";
+import { crowned, drawEmbers, glyphPoints, legendShine, rankColour, rankKnobs, rankOf, rankSize, ranksOn, youthDots } from "./leash/ranks";
 export { BUBBLE_PX, bubblePx } from "./leash/bubbles";
 export { legendarySigil } from "./leash/glyphs";
 
@@ -92,6 +93,10 @@ export class LeashView {
   /** The stack above her hat drawn over the scenery (no depth test, after the see-through pass: Ed, 2026-10-15, "never obscured by scenery"), and a near-black disc behind each of its sigils. */
   stackGlyphs: Instances;
   stackBack: Instances;
+  /** The ley line as drawn (render/leylines.ts), handed over by the view each frame: the rainbow's bars stand on it (render/leash/rainbow.ts). */
+  ley: LeyLines | null = null;
+  /** Quads the rainbow's bars drew last frame (the wave's and the analyser's behind the spark): for tools. */
+  rainbowQuads = 0;
   /** Her stack's meshes, each with its coverage material: kept sharp through the tilt-shift (Post.sharp). */
   readonly stackMask: { mesh: THREE.Mesh; mask: THREE.Material }[];
   flat: Instances;
@@ -507,9 +512,10 @@ export class LeashView {
   /** A rank sigil's glyph (render/leash/ranks.ts): the species' bare glyph (no ring, no dots, any rank; its bold sigil with
    *  leash.ranks.bold on, where it has one: art/sigils.js BOLD), white in the atlas, and in
    *  the next slot its shade, the glyph's own shape grown two pixels all round (the dark under it on the ground and in the stack,
-   *  not a disc); its pixels kept for the embers. */
-  bareSlot(species: string): number {
-    const bold = !!this.game.tuning.leash.ranks?.bold && boldGlyph(species), key = `${species}:bare${bold ? ":bold" : ""}`, had = this.slots.get(key);
+   *  not a disc); its pixels kept for the embers. `crown`, a legend's: its crown just above it (art/sigils.js LEGEND_CROWN; Ed, 2026-10-29),
+   *  the sigil a little lower in the slot to make room. */
+  bareSlot(species: string, crown = false): number {
+    const bold = !!this.game.tuning.leash.ranks?.bold && boldGlyph(species), key = `${species}:bare${bold ? ":bold" : ""}${crown ? ":crown" : ""}`, had = this.slots.get(key);
     if (had !== undefined) return had;
     const s = this.nextSlot++, sh = this.nextSlot++;
     this.slots.set(key, s);
@@ -520,12 +526,17 @@ export class LeashView {
     if (bold) {
       // (its bold sigil, art/sigils.js BOLD: its 24 px glyph pixel for pixel in the middle of the slot, so its 2 px strokes stay whole)
       img = g.createImageData(SLOT, SLOT);
-      const o = (SLOT - BOLD_GRID) >> 1;
-      for (let y = 0; y < BOLD_GRID; y++) for (let x = 0; x < BOLD_GRID; x++) if (bold.m[y * BOLD_GRID + x]) { const i = ((y + o) * SLOT + x + o) * 4; img.data[i] = img.data[i + 1] = img.data[i + 2] = img.data[i + 3] = 255; }
+      const o = (SLOT - BOLD_GRID) >> 1, oy2 = crown ? SLOT - BOLD_GRID : o;
+      for (let y = 0; y < BOLD_GRID; y++) for (let x = 0; x < BOLD_GRID; x++) if (bold.m[y * BOLD_GRID + x]) { const i = ((y + oy2) * SLOT + x + o) * 4; img.data[i] = img.data[i + 1] = img.data[i + 2] = img.data[i + 3] = 255; }
     } else {
-      drawSigil(g, species, { x: ox + 3, y: oy + 3, size: SLOT - 6, level: null, colour: [255, 255, 255], glow: false });
+      const top = crown ? LEGEND_CROWN_H + 2 : 3, sz = SLOT - 3 - top;
+      drawSigil(g, species, { x: ox + (SLOT - sz) / 2, y: oy + top, size: sz, level: null, colour: [255, 255, 255], glow: false });
       img = g.getImageData(ox, oy, SLOT, SLOT);
       for (let i = 3; i < img.data.length; i += 4) img.data[i] = img.data[i] > 90 ? 255 : 0;
+    }
+    if (crown) { // (the crown in the slot's top rows, over the sigil)
+      const C = crownGlyph(), cx = (SLOT - C.w) >> 1;
+      for (let y = 0; y < C.h; y++) for (let x = 0; x < C.w; x++) if (C.m[y * C.w + x]) { const i = (y * SLOT + x + cx) * 4; img.data[i] = img.data[i + 1] = img.data[i + 2] = img.data[i + 3] = 255; }
     }
     g.putImageData(img, ox, oy);
     const shade = g.createImageData(SLOT, SLOT), on = (x: number, y: number) => x >= 0 && y >= 0 && x < SLOT && y < SLOT && img.data[(y * SLOT + x) * 4 + 3] > 0;
@@ -560,7 +571,7 @@ export class LeashView {
   /** A creature's sigil in the stack and on the ground: a legend's is its legendary sigil (Ed, 2026-10-06: "huge, twice as
    *  wide and more detailed", a magic circle with the animal in the centre), LEGEND_SCALE times a legend's (`scale`). */
   sigilOf(c: Creature): { uv: number[]; scale: number } {
-    if (ranksOn(this.game.tuning)) return { uv: this.uv(this.bareSlot(c.species)), scale: 1 }; // (rank sigils: the bare glyph, any rank)
+    if (ranksOn(this.game.tuning)) return { uv: this.uv(this.bareSlot(c.species, crowned(c))), scale: 1 }; // (rank sigils: the bare glyph, any rank; a legend's crowned)
     if (legendarySigil(c)) return { uv: this.uv(this.slotOf(c.species, LEGEND_LEVEL, true), 2), scale: LEGEND_SCALE };
     return { uv: this.uv(this.slotOf(c.species, c.level)), scale: 1 };
   }
@@ -664,7 +675,7 @@ export class LeashView {
     for (const c of g.creatures) {
       if (Math.abs(c.x - w.x) > RUNE_VIEW || Math.abs(c.z - w.z) > RUNE_VIEW || !hasRune(c)) continue;
       const since = time - (c.happyAt ?? -Infinity), k = Math.min(1, Math.max(0, since / 0.45)), ready = hasRune(c, time);
-      const slot = ranks ? this.bareSlot(c.species) : this.slotOf(c.species, c.level), col = this.colOf(c), hop = since < 0.45 ? Math.sin(k * Math.PI) * 1.4 : 0, grow = k < 1 ? 0.4 + 0.75 * k - 0.15 * Math.sin(k * Math.PI) : 1;
+      const slot = ranks ? this.bareSlot(c.species, crowned(c)) : this.slotOf(c.species, c.level), col = this.colOf(c), hop = since < 0.45 ? Math.sin(k * Math.PI) * 1.4 : 0, grow = k < 1 ? 0.4 + 0.75 * k - 0.15 * Math.sin(k * Math.PI) : 1;
       const a = ready ? 0.62 + 0.12 * Math.sin(time * 2 + c.id) : 0.3, rz = c.z + runeOffset(c, t), size = (ranks ? sigilSize(2, RUNE_SCALE) * rankSize(t, rankOf(c)) : sigilSize(c.level, RUNE_SCALE)) * grow; // (rank sigils: an adult rune's size, a rank's share of it)
       this.groundSigil(c.x, 0.03 + hop, rz, size, this.uv(slot), col.r * 0.8, col.g * 0.8, col.b * 0.8, a, k, ranks ? legendShine(rankOf(c), time, c.id) : 0);
       if (seeThrough > 0) this.through.add(c.x, 0.03 + hop, rz, size, this.uv(slot), col.r * 0.8, col.g * 0.8, col.b * 0.8, a * seeThrough, k); // (through scenery as a placed sigil is: Ed, 2026-10-12)
@@ -735,7 +746,7 @@ export class LeashView {
     }
 
     drawStones(this, time, dot); // (the rune stones' sigils, the spell's spot, its cast and the conversion: render/leash/stones.ts)
-    drawRainbow(this, time, dot); // (an early clear's rainbow wave down the ley line: render/leash/rainbow.ts)
+    drawRainbow(this, time, dot, camera); // (an early clear's rainbow wave along the ley line, and the analyser behind the spark: render/leash/rainbow.ts)
     drawBond(this, time, slotPos, dot); // (the bond: render/leash/stack.ts)
     drawStrain(this, time, dot);
     this.look.end();

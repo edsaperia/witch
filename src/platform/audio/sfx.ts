@@ -165,7 +165,8 @@ export class Sfx {
   /** Her decks (deck.ts): a stroke of the record under her hand; her hype. */
   scratch(forward: boolean, pan = 0, near = 1): void { scratch(this.k, forward, pan, near); }
   /** Her routine's strokes (art/witch.js DJ_ROUTINE): the tonearm lifted and dropped, a stroke, a chirp, the spin-back, her hype. */
-  deck(stroke: "lift" | "drop" | "f" | "b" | "chirp" | "spin" | "hype" | "trans" | "flare" | "tear" | "stab", pan = 0, near = 1): void {
+  deck(stroke: "lift" | "drop" | "f" | "b" | "chirp" | "spin" | "hype" | "trans" | "flare" | "tear" | "stab", pan = 0, near = 1, bpm = 120): void {
+    this.k.pace = Math.min(1, 120 / Math.max(1, bpm)); // (a faster record's strokes shorter: none longer than at 120)
     if (stroke === "hype") this.babble.whoop(pan, near);
     else if (stroke === "trans" || stroke === "flare" || stroke === "tear" || stroke === "stab") technique(this.k, stroke, pan, near);
     else if (stroke === "lift" || stroke === "drop") needle(this.k, stroke, pan, near);

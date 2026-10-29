@@ -2320,12 +2320,29 @@
           "type": "number",
           "minimum": 0,
           "description": "How much of the pointers' calming toward the night is taken back: 0 as calmed, 1 the area's neon itself."
+        },
+        "pulse": {
+          "type": "number",
+          "minimum": 0,
+          "description": "How much the morning's guidance pins breathe, from waking up till the party spell: their size swells by up to this share and back (0 still; half as much with reduce flashing)."
+        },
+        "pulseRate": {
+          "type": "number",
+          "minimum": 0,
+          "description": "How many times a second the morning's guidance pins breathe."
+        },
+        "track": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "gap",
         "plate",
-        "vivid"
+        "vivid",
+        "pulse",
+        "pulseRate",
+        "track"
       ],
       "additionalProperties": false,
       "description": "The HUD's pointers as map pins over their subject (render/indicator.ts): gap is how far (screen pixels) the arrow's tip floats over the subject's drawn top."
@@ -6256,10 +6273,6 @@
               "type": "number",
               "minimum": 0
             },
-            "linger": {
-              "type": "number",
-              "minimum": 0
-            },
             "max": {
               "type": "number",
               "minimum": 0
@@ -6279,17 +6292,44 @@
             "height": {
               "type": "number",
               "minimum": 0
+            },
+            "route": {
+              "type": "object",
+              "properties": {
+                "on": {
+                  "type": "boolean"
+                },
+                "spacing": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "height": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "cell": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "on",
+                "spacing",
+                "height",
+                "cell"
+              ],
+              "additionalProperties": false
             }
           },
           "required": [
             "on",
             "speed",
-            "linger",
             "max",
             "bars",
             "spacing",
             "cell",
-            "height"
+            "height",
+            "route"
           ],
           "additionalProperties": false
         }
@@ -7012,21 +7052,78 @@
               "type": "number",
               "minimum": 0
             },
+            "stack": {
+              "type": "number",
+              "minimum": 0
+            },
             "ring": {
               "type": "object",
               "properties": {
-                "radius": {
+                "inner": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "fill": {
                   "type": "number",
                   "minimum": 0
                 },
                 "cell": {
                   "type": "number",
                   "minimum": 0
+                },
+                "glow": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "light": {
+                  "type": "object",
+                  "properties": {
+                    "reach": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "strength": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "height": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "reach",
+                    "strength",
+                    "height"
+                  ],
+                  "additionalProperties": false
+                },
+                "wave": {
+                  "type": "object",
+                  "properties": {
+                    "hold": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "fade": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hold",
+                    "fade"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "required": [
-                "radius",
-                "cell"
+                "inner",
+                "fill",
+                "cell",
+                "glow",
+                "light",
+                "wave"
               ],
               "additionalProperties": false
             },
@@ -7057,14 +7154,157 @@
                 "saturate"
               ],
               "additionalProperties": false
+            },
+            "wisps": {
+              "type": "object",
+              "properties": {
+                "on": {
+                  "type": "boolean",
+                  "description": "The wild stumps' wisps on or off."
+                },
+                "count": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How many wisps a wild stump has."
+                },
+                "colours": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "description": "The wisps' colours (0-255), a wisp each in turn: blue, green and teal."
+                },
+                "radius": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How far (m) from the stump's middle a wisp wanders at most."
+                },
+                "inner": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How near the middle a wisp comes, times the radius."
+                },
+                "height": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How high (m) the wisps float."
+                },
+                "bob": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How much (m) the wisps rise and fall as they drift."
+                },
+                "speed": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How fast (m/s) the wisps drift round the clearing."
+                },
+                "reach": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How far (m) a wisp's light reaches."
+                },
+                "strength": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How bright a wisp's light is."
+                },
+                "lights": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How many of the nearest wisps light the ground at once."
+                },
+                "lightRange": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How near her (m) a stump must be for its wisps to light the ground."
+                },
+                "breathe": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How much the wisps swell brighter and dimmer, slowly (0 steady; steady anyway with reduce flashing)."
+                },
+                "bright": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How bright a wisp's mote is drawn."
+                },
+                "trail": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How many fading motes trail behind each wisp."
+                },
+                "fill": {
+                  "type": "object",
+                  "properties": {
+                    "colour": {
+                      "type": "array",
+                      "items": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "description": "The clearing's moonlight colour (0-255)."
+                    },
+                    "reach": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "How far (m) the clearing's moonlight reaches."
+                    },
+                    "strength": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "How bright the clearing's moonlight is (0 none)."
+                    },
+                    "height": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "How high (m) over the stump the clearing's moonlight hangs."
+                    }
+                  },
+                  "required": [
+                    "colour",
+                    "reach",
+                    "strength",
+                    "height"
+                  ],
+                  "additionalProperties": false,
+                  "description": "The wild clearing's own dim teal moonlight over the stump's middle."
+                }
+              },
+              "required": [
+                "on",
+                "count",
+                "colours",
+                "radius",
+                "inner",
+                "height",
+                "bob",
+                "speed",
+                "reach",
+                "strength",
+                "lights",
+                "lightRange",
+                "breathe",
+                "bright",
+                "trail",
+                "fill"
+              ],
+              "additionalProperties": false,
+              "description": "A wild stump's will-o'-the-wisps, drifting round its clearing before its soundsystem, in place of its own light."
             }
           },
           "required": [
             "on",
             "variants",
             "clear",
+            "stack",
             "ring",
-            "light"
+            "light",
+            "wisps"
           ],
           "additionalProperties": false
         }
@@ -11406,7 +11646,8 @@
         },
         "stack": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "description": "The light the bottom sigil of her stack throws from over her hat, in its colour (0 none)."
         },
         "stackReach": {
           "type": "number",
@@ -11694,6 +11935,36 @@
               "type": "number",
               "minimum": 0,
               "description": "How dark the forest is where nothing lights it: the ambient and the moonlight on ground, trees, bushes and creatures times this, while the lights (her glow, the party's, fires, lava, runestones, sigils) stay as they are (1 as before)."
+            },
+            "wildGlow": {
+              "type": "object",
+              "properties": {
+                "mix": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How far her glow is cooled in the wild (0 her own colour everywhere)."
+                },
+                "colour": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "description": "The colour (0-255) her glow cools toward in the wild."
+                },
+                "ease": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How long (s) her glow takes to cool or warm as she crosses into or out of the party's ground."
+                }
+              },
+              "required": [
+                "mix",
+                "colour",
+                "ease"
+              ],
+              "additionalProperties": false,
+              "description": "Her glow cooled toward a teal while she's in an area the party hasn't reached, eased in and out as she crosses."
             },
             "moonHue": {
               "type": "number",
@@ -12467,6 +12738,7 @@
             "ambientHue",
             "ambient",
             "unlit",
+            "wildGlow",
             "moonHue",
             "moonSat",
             "moon",

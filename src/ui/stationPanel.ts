@@ -36,14 +36,14 @@ const LOOK_AFTER = 60;
 /** The d-pad held: its first repeat after this many seconds, then one every REPEAT. */
 const HOLD = .35, REPEAT = .11;
 /** The fit sliders that only mean anything while what they shape is on (none at 0: the fit never puts it on). */
-const FIT_NEEDS: Record<string, (g: Genome) => boolean> = { scarfLength: g => !!g.accessories.scarf, bagSize: g => !!g.accessories.satchel, backpackSize: g => Number(g.backpackSize) > 0 };
-const FIT_NAMES: Record<string, string> = { hatHeight: "Height", hatBrim: "Brim", hatTilt: "Tilt", hatBand: "Band", cloakLength: "Cloak length", scarfLength: "Scarf length", bagSize: "Bag size", backpackSize: "Backpack size", broomLength: "Length", broomThickness: "Thickness", broomBend: "Bend", bristles: "Exhaust size" };
+const FIT_NEEDS: Record<string, (g: Genome) => boolean> = { cloakLength: g => !!g.cloak && g.cloak !== "none", scarfLength: g => !!g.accessories.scarf, bagSize: g => !!g.accessories.satchel, backpackSize: g => Number(g.backpackSize) > 0 };
+const FIT_NAMES: Record<string, string> = { hatHeight: "Height", hatBrim: "Brim", hatTilt: "Tilt", hatBand: "Width", cloakLength: "Length", scarfLength: "Length", bagSize: "Bag size", backpackSize: "Backpack size", broomLength: "Length", broomThickness: "Thickness", broomBend: "Bend", bristles: "Exhaust size" };
 /** What each of her broom's slots does (docs/backlog/workshop.md: the tip steers, the chassis is the body, the exhaust is thrust). */
 const SLOT_ROLE: Record<string, string> = { tip: "steering", chassis: "body", exhaust: "thrust" };
 /** The Workshop's state the bay and the pegboard show (main.ts): the parts she's found, those on her broom, tonight's part to find
  *  (the night's find when it's a part, not yet taken: one's out there, never where) and the tuning her parts change. */
 export interface WorkshopCtx { found: ReadonlySet<string>; fitted: Fitted; tonight: string | null; tuning: Tuning }
-const PART_NAMES: Record<string, string> = { broom: "handle", bristles: "bristles", hat: "hat", plume: "plume" };
+const PART_NAMES: Record<string, string> = { broom: "handle", bristles: "bristles", hat: "hat", plume: "band" };
 /** Where an item's picture is cut from her sprite (shares of its height; the broom's, her flying frame whole). */
 const CROP: Record<string, [number, number]> = { hair: [.1, .52], face: [.16, .5], earrings: [.14, .5], jacket: [.33, .8], shoes: [.72, 1], cloak: [.1, 1], scarf: [.1, .8], bag: [.25, 1], backpack: [.1, 1] };
 
@@ -186,7 +186,7 @@ export class StationPanel {
   /** Tonight's loan (its id, or null): its card sparkles, the panel repainted if it's open and that changed. */
   setLoaned(id: string | null): void { if (id !== this.loaned) { this.loaned = id; if (this.id) this.paint(); } }
   setLook(g: Genome): void { if (this.id && JSON.stringify(g) !== JSON.stringify(this.g)) { this.g = clone(g); this.paint(); } }
-  /** Each frame while open: the pad's d-pad or right stick moves, its bottom face button chooses (the left stick walks her, square closes it:
+  /** Each frame while open: the pad's d-pad or right stick moves, its bottom face button chooses (the left stick walks her, circle closes it:
    *  platform/input.ts padControls leaves the rest of the pad to the panel). */
   update(time: number): void {
     if (!this.id) return;
@@ -224,7 +224,7 @@ export class StationPanel {
     return best;
   }
   private fitValue(axis: string): number { const [p, k] = slot(axis); return Number(p ? (this.g[p] as Record<string, unknown>)[k] : this.g[k]); }
-  private fitRange(axis: string): [number, number] { const [lo, hi] = AXES[axis] as number[]; return [axis in FIT_NEEDS ? Math.max(lo, .25) : lo, hi]; }
+  private fitRange(axis: string): [number, number] { const [lo, hi] = axis === "cloakLength" ? (Art.cloakRange as (c: unknown) => number[])(this.g.cloak) : AXES[axis] as number[]; /* (each cloak its own side of her knee: art/witchGenome.js) */ return [axis in FIT_NEEDS ? Math.max(lo, .25) : lo, hi]; }
 
   // ---- moving and choosing ----
   /** The focus moved (the d-pad, the arrows, the stick): nothing on her changes (Ed, 2026-10-28); a fit slider's ◀ ▶ moves it. */

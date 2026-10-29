@@ -5,6 +5,7 @@
 // standing about 35° up at its bearing from the treehouse, there all night and gone once she's found it. Seen only through the telescope (render/view/camera.ts); its stars
 // a little brighter than their neighbours, faint dotted lines between them fading in once she holds the view on it (render/sky.ts).
 // Here, the outlines and where tonight's stands: drawing only, nothing in the rules reads it.
+import { RECORD_FINDS } from "./records";
 import type { NightFind } from "./finds";
 
 /** An outline: its stars (degrees across the sky from its middle: x to the right, y up) and the lines joining them (by index). */
@@ -26,6 +27,7 @@ export const OUTLINES: Record<string, Outline> = {
   briefcase: { stars: [[-5, 2], [5, 2], [5, -4], [-5, -4], [-1.5, 2], [-1.5, 4], [1.5, 4], [1.5, 2], [-5, -1], [5, -1]], lines: [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [8, 9]] },
   clutch: { stars: [[-6, 1.5], [6, 1.5], [6, -1.5], [-6, -1.5], [-6, 0.5], [0, -0.5], [6, 0.5], [0, 1.5]], lines: [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6]] },
   messenger: { stars: [[-5, 2], [5, 2], [5, -4], [-5, -4], [-5, -0.5], [5, -0.5], [-3, 7], [3, 7]], lines: [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [0, 6], [6, 7], [7, 1]] },
+  ...Object.fromEntries(RECORD_FINDS.map(id => [id, { stars: [[-5, 5], [5, 5], [5, -5], [-5, -5], [2, 4], [8, 0], [2, -4], [3, 0]], lines: [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6]] }])), // (a record half out of its sleeve: every one alike)
   backpack: { stars: [[-3.5, 4], [3.5, 4], [4, -5], [-4, -5], [-3.5, 1], [3.5, 1], [0, 6.5]], lines: [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [0, 6], [6, 1]] },
   // The broom parts (the Workshop, Ed 2026-10-23: rules/broomParts.ts, found in wrecks): each part's own shape.
   missile: { stars: [[0, 7], [-2.5, 3], [2.5, 3], [-2.5, -4], [2.5, -4], [-5, -7], [5, -7], [-2.5, 1], [2.5, 1]], lines: [[0, 1], [0, 2], [1, 7], [7, 3], [2, 8], [8, 4], [3, 5], [4, 6], [7, 8]] }, // (a nose cone, its band, its fins)

@@ -748,12 +748,15 @@ const SPRITE_CHECKS = async ({ names, only }) => {
         if (sp.m.some(m => EM.has(m))) bad.push(`${species} ${seed} glows`);
         const across = sp.w / ppm, h = p.variant.height; if (across < 14 || across > 32 || h < .6 || h > 1.6) bad.push(`${species} ${seed}: ${across.toFixed(1)} m across, cut ${h.toFixed(2)} m`);
         for (const [k, q] of [["top", p.top], ["origin", p.origin]]) if (!(q.x >= 0 && q.x <= sp.w && q.y >= 0 && q.y <= sp.h)) bad.push(`${species} ${seed}: ${k} off it`);
+        // (its root area's outline, for the cast's analyser: every angle measured, past the trunk, within the sprite's width; it lies on the ground by its depth)
+        if (p.roots?.length !== G.ROOT_ANGLES || p.roots.some(r => !(r > 0 && r <= sp.w))) bad.push(`${species} ${seed}: root outline ${p.roots?.length ?? "none"}`);
+        if (!(p.depth > 1.5 && p.depth < 2.5)) bad.push(`${species} ${seed}: depth ${p.depth}`);
       }
     }
     for (const biome of ["temperate", "cold", "mountains and glaciers", "volcanic", "badlands", "hot", "mangrove swamp", "jungle", "cold rainforest"]) if (!G.STUMP_GENOMES[G.stumpSpecies(biome)]) bad.push(`no stump for ${biome}`);
     // every area type's own stump (stumpForArea: its main tree's form, its bark and ground) draws, fitted (Ed, 2026-10-29: "a different stump per area type")
     for (const def of G.AREAS) { const form = G.stumpForArea(def, undefined); if (!G.STUMP_GENOMES[form]) { bad.push(`${def.id}: no form`); continue; } const p = G.stumpPiece(form, { seed: 1 }, def, st); if (p.sp.m.filter(Boolean).length < 2000 || !Object.values(p.colours).every(c => c.every(Number.isFinite))) bad.push(`${def.id} (${form}) doesn't draw`); }
-    res.push({ what: "great stumps: every species' 4 seeded stumps draw, none alike, nothing glowing, 14 to 32 m across, cut 0.6 to 1.6 m high, its cut and foot on the sprite; a stump for every biome and every area type, fitted to it", good: !bad.length, info: bad.slice(0, 8).join("; ") || `${Object.keys(G.STUMP_GENOMES).length} species` });
+    res.push({ what: "great stumps: every species' 4 seeded stumps draw, none alike, nothing glowing, 14 to 32 m across, cut 0.6 to 1.6 m high, its cut and foot on the sprite, its root area's outline whole; a stump for every biome and every area type, fitted to it", good: !bad.length, info: bad.slice(0, 8).join("; ") || `${Object.keys(G.STUMP_GENOMES).length} species` });
   });
   task("set-piece-generator", async () => { // the set-piece generator (art/props/sets.js): every kind's 12 seeded variants draw, stand on their bottom row, nothing NaN, none alike, landmark-sized
     // (6 to 12 m across or tall) with their origin on the sprite, one warm glowing touch at most (a lantern, embers), a punt's and a jetty's pool mostly water;
