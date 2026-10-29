@@ -56,6 +56,11 @@ Written from `FIND_KINDS`, so it can't drift: `src/rules/findsList.test.ts` fail
 - Jet nozzles (`nozzles`), drawn as `find-part-nozzles`
 - Twig bristles (`twigs`), drawn as `find-part-twigs`
 - Oar blade (`oar`), drawn as `find-part-oar`
+
+### record: found as a record (2)
+
+- record-110 (`record-110`), drawn as `find-record`
+- record-130 (`record-130`), drawn as `find-record`
 <!-- finds:end -->
 
 

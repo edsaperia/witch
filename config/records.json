@@ -1,0 +1,9 @@
+{
+  "_": "The records at her DJ booth (Ed, 2026-10-29: \"Remove record station, instead have dj booth as a station; you open it as a station, select a record (each record has a bpm ...) and is an item which the player will unlock. Start with 100 and 120.\" then \"Actually maybe just 100, 110, 120, 130 bpm records, not every 5\"; rules/records.ts). Each record: its id, its name, its bpm (the night's tempo it starts the party at), and start (hers in a first game; the rest are found in the forest, one find among the others: rules/finds.ts).",
+  "records": [
+    { "id": "record-100", "name": "100 BPM", "bpm": 100, "start": true },
+    { "id": "record-110", "name": "110 BPM", "bpm": 110 },
+    { "id": "record-120", "name": "120 BPM", "bpm": 120, "start": true },
+    { "id": "record-130", "name": "130 BPM", "bpm": 130 }
+  ]
+}

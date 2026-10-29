@@ -291,6 +291,14 @@ function fdBag(m) {
   m.box([0, .3, 0], [.012, .025, .02], M.BELLY, { group: 20 });
   for (const s of [-1, 1]) m.ell([s * .025, .325, 0], [.026, .014, .016], M.BELLY, { group: 21, dir: [s, .5, 0] });
 }
+/** A record standing in its square sleeve, the black disc slid half out of its side, the finds' ribbon round the sleeve (a record: Ed, 2026-10-29). */
+function fdRecord(m) {
+  m.ell([.15, .16, -.004], [.12, .12, .008], M.STONED, { group: 2, dir: [1, 0, 0], up: [0, 1, 0] }); // the disc, slid out to the side
+  m.ell([.17, .16, .006], [.035, .035, .004], M.FLOWER, { group: 3, dir: [1, 0, 0], up: [0, 1, 0] }); // its label
+  m.box([0, .16, 0], [.15, .15, .012], M.HAT1, { round: .005, group: 1 }); // the sleeve
+  m.box([0, .16, .014], [.152, .014, .004], M.BELLY, { group: 20 }); // the ribbon round it
+  for (const s of [-1, 1]) m.ell([s * .025, .2, .022], [.026, .014, .016], M.BELLY, { group: 21, dir: [s, .5, 0] });
+}
 /** A pointed witch's hat lying on its brim, a little crooked, the finds' ribbon for its band (its colours its spell's: #1044's job). */
 function fdHat(m) {
   m.ell([0, .02, 0], [.17, .018, .15], M.HAT1, { group: 1, rough: .004 }); // the brim
@@ -322,6 +330,7 @@ const FIND_PART_KINDS = {
 export const FIND_SIZE = .6;
 const FIND_PIECES = {
   "find-bundle": { size: FIND_SIZE, desc: "a find: a folded bundle of clothes tied with the finds' pale ribbon (a wearable: rules/finds.ts)", build: fdBundle },
+  "find-record": { size: FIND_SIZE, desc: "a find: a record in its square sleeve, the disc slid half out, the finds' ribbon round it (a record: rules/records.ts)", build: fdRecord },
   "find-hat": { size: FIND_SIZE, desc: "a find: a pointed hat lying on its brim, the finds' ribbon its band (a hat: #1044)", build: fdHat },
   "find-bag": { size: FIND_SIZE, desc: "a find: a little leather bag, its strap tied with the finds' ribbon (a bag: rules/finds.ts)", build: fdBag },
   ...Object.fromEntries(Object.entries(FIND_PART_KINDS).map(([id, [kind, piece]]) => [`find-part-${id}`, { size: FIND_SIZE, desc: `a find: the ${id} broom part, tied with the finds' ribbon (the Workshop: rules/finds.ts)`, build: m => fdPart(m, kind, piece) }])),

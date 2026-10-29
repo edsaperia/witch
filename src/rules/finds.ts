@@ -27,6 +27,7 @@
 // is won. Its constellation lights up in full (loanFind: in the telescope and the game's own sky, at its true bearing), and the
 // page holds the loan (app/loan.ts) till she sleeps, when her dream tells her: won, it's hers for good; not, it goes back to the
 // sky, to be drawn again another night. Once the night is won, a find not yet taken is gone (goneAtWin, rules/win.ts).
+import { RECORD_FINDS } from "./records";
 import type { ForestMap } from "./map";
 import { isInside } from "./mapShape";
 import type { Plant } from "./forest";
@@ -39,7 +40,7 @@ import { deckOf, onFloor } from "./treehouse";
 import type { Game } from "./game";
 
 /** The kinds of permanent upgrade found in the forest, one a night across them all. */
-export type FindKindId = "wearable" | "part" | "hat" | "bag";
+export type FindKindId = "wearable" | "part" | "hat" | "bag" | "record";
 /** The night's find: where it stands, what kind it is and what's in it (item null: not yet filled, or nothing she lacks, so none
  *  tonight), and whether she's taken it. A wearable's is the travel trunk, a broom part's a wreck; kept as `g.trunk` either way. */
 export interface Trunk { x: number; z: number; cell: [number, number]; kind: FindKindId; item: string | null; found: boolean }
@@ -67,6 +68,8 @@ export const FIND_KINDS: readonly FindKind[] = [
   { id: "bag", name: "bag", items: BAG_ITEMS, piece: () => "find-bag" },
   // (a part found is hers, not fitted: it waits at the Workshop, the bay to fit it, the pegboard to show it; docs/backlog/workshop.md)
   { id: "part", name: "broom part", items: PART_IDS, piece: id => `find-part-${id}` },
+  // (a record found is hers to play at her DJ booth: app/recordSave.ts; Ed, 2026-10-29)
+  { id: "record", name: "record", items: RECORD_FINDS, piece: () => "find-record" },
 ];
 export const findKind = (id: FindKindId): FindKind => FIND_KINDS.find(k => k.id === id)!;
 /** What she has found (or owns) of each kind; a kind left out counts as none found. */
