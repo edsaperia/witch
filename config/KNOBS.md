@@ -1433,6 +1433,8 @@ The 💌 invite [1], replacing the proximity chat when on: on the ground she sho
 - **`invites.bloomPer`**: degrees more inaccuracy each volley while she keeps firing (the bloom); 0, none, and a bag adds its own.
 - **`invites.bloomDecay`**: degrees a second the bloom falls back by.
 - **`invites.bloomMax`**: the most degrees the bloom can reach.
+- **`invites.pierce`**: how many more creatures a 💌 flies on through after the first it lands on, each a hit as any letter's; 0, it stops at the first, and a bag adds its own (config/wardrobe.json invitesAdd).
+  1. Ed, 2026-10-29: "pierce, yes"
 - **`invites.linger`**: a 💌 that met no one rests where it came down this many seconds, fading over the last lingerFade, at most lingerMax at once (drawn only: it's no hit).
   1. Ed's playtest, 2026-10-06: "invitations should sit on the ground for a little while before they fade away"
 - **`invites.spin`**: How fast a 💌 spins in flight.
@@ -1463,6 +1465,7 @@ The 💌 invite [1], replacing the proximity chat when on: on the ground she sho
 | `invites.bloomPer` | number | 0 to … |
 | `invites.bloomDecay` | number | 0 to … |
 | `invites.bloomMax` | number | 0 to … |
+| `invites.pierce` | number | 0 to … |
 | `invites.radius` | number | 0 to … |
 | `invites.amount` | number | 0 to … |
 | `invites.hits` | array of number |  |

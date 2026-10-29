@@ -16,7 +16,7 @@ export const WITCH_GENOME = {
   hair: "long", top: "jacket", cloak: "none",
   broom: { kind: "classic", length: 1, bend: 0, bristles: 1, thickness: 1 },
   accessories: { phones: true, shades: false, glowsticks: false, scarf: false, satchel: false, pendant: false, earrings: false,
-    lantern: false, vial: false, book: false, patches: false, bumbag: false, purse: false, tote: false, duffel: false, briefcase: false, wristband: false, chunky: false },
+    lantern: false, vial: false, book: false, patches: false, bumbag: false, purse: false, tote: false, duffel: false, briefcase: false, clutch: false, wristband: false, chunky: false },
   cloakLength: 1, scarfLength: 1, bagSize: 1, backpackSize: 0,
   palette: null, // null: hers (DEFAULT_OUTFIT, the style's hues on top)
 };

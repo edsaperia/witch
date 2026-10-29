@@ -7,9 +7,9 @@ const b = await openBrowser();
 await b.page.goto(b.base + "/art/headless-blank.html").catch(() => {});
 const url = await b.page.evaluate(async () => {
   const G = await import("/art/generator.js"), st = G.defaultStyle(), base = G.genomeLook(G.WITCH_GENOME).look;
-  const bags = [["Satchel", { satchel: true }], ["Bumbag", { bumbag: true }], ["Purse", { purse: true }], ["Tote", { tote: true }], ["Duffel", { duffel: true }], ["Briefcase", { briefcase: true }], ["Backpack", { backpackSize: 1 }]];
+  const bags = [["Satchel", { satchel: true }], ["Bumbag", { bumbag: true }], ["Purse", { purse: true }], ["Tote", { tote: true }], ["Duffel", { duffel: true }], ["Briefcase", { briefcase: true }], ["Clutch", { clutch: true }], ["Backpack", { backpackSize: 1 }]];
   const col = G.witchColours(st, G.DEFAULT_OUTFIT);
-  const items = bags.map(([name, on]) => { const look = { ...base, satchel: false, bumbag: false, purse: false, tote: false, duffel: false, briefcase: false, backpackSize: 0, ...on };
+  const items = bags.map(([name, on]) => { const look = { ...base, satchel: false, bumbag: false, purse: false, tote: false, duffel: false, briefcase: false, clutch: false, backpackSize: 0, ...on };
     return { name, sp: [{ look, pose: "stand", frame: 0 }, { look, frame: 0 }, { look, frame: 0, facing: "away" }].map(o => G.bake(G.witchSprite(st, o), col, st, st.cOutline)) }; });
   const per = 4, cellW = 560, cellH = 460, W = per * cellW, H = Math.ceil(items.length / per) * cellH;
   const c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d"); g.fillStyle = "#3d5a3a"; g.fillRect(0, 0, W, H); g.imageSmoothingEnabled = false;

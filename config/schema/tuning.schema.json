@@ -3670,6 +3670,11 @@
           "minimum": 0,
           "description": "the most degrees the bloom can reach."
         },
+        "pierce": {
+          "type": "number",
+          "minimum": 0,
+          "description": "how many more creatures a 💌 flies on through after the first it lands on, each a hit as any letter's; 0, it stops at the first, and a bag adds its own (config/wardrobe.json invitesAdd)."
+        },
         "radius": {
           "type": "number",
           "minimum": 0
@@ -3785,6 +3790,7 @@
         "bloomPer",
         "bloomDecay",
         "bloomMax",
+        "pierce",
         "radius",
         "amount",
         "hits",

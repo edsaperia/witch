@@ -125,6 +125,16 @@
     "invites.bloomMax": {
       "what": "the most degrees the bloom can reach."
     },
+    "invites.pierce": {
+      "what": "how many more creatures a 💌 flies on through after the first it lands on, each a hit as any letter's; 0, it stops at the first, and a bag adds its own (config/wardrobe.json invitesAdd).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "pierce, yes"
+        }
+      ]
+    },
     "invites.linger": {
       "what": "a 💌 that met no one rests where it came down this many seconds, fading over the last lingerFade, at most lingerMax at once (drawn only: it's no hit).",
       "decisions": [

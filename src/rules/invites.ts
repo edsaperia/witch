@@ -249,7 +249,8 @@ export function stepInvites(s: Invites, c: InviteControls, witch: { x: number; z
       if (A.blocksLetters(first)) { s.events.push({ kind: "blocked", x: L.x, z: L.z, at: time, id: first.id, n: L.n, vx: L.vx, vz: L.vz }); return false; }
       love(first, L.x, L.z, L.n);
       L.hit.push(first.id);
-      return false;
+      // Pierce (Ed, 2026-10-29: "pierce, yes"): it flies on through up to `pierce` more, the ones it has landed on passed by.
+      if (L.hit.length > Math.round(I.pierce ?? 0)) return false;
     }
     if (L.flown >= L.range) { s.events.push({ kind: "fizzled", x: L.x, z: L.z, at: time, n: L.n }); return false; }
     return true;

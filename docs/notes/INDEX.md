@@ -103,6 +103,8 @@ says what each note covers.
 - Bag names
 - Bag preview
 - Bag accuracy
+- Pierce
+- The Clutch
 - Bag design
 - Use prompt
 - Wake-up keys
