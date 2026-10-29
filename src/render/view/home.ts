@@ -25,8 +25,8 @@ import { ringStoneKey, stumpId } from "../artBuild";
 import type { TrunkShadow } from "../trunkShadows";
 import type { RingSpeaker } from "../lasers";
 import { STONE_FACE } from "../leash/stones";
-import { areaTopRanks, asleepLegend, EMPTY_STONE, EMPTY_STONE_LIGHT, rankKnobs, sigilRankColour, stoneKnobs, stoneRank } from "../leash/ranks";
-import { stoneStack } from "../../rules/stoneStacks";
+import { areaTopRanks, EMPTY_STONE, EMPTY_STONE_LIGHT, rankKnobs, stoneKnobs, stoneRank } from "../leash/ranks";
+import { STUMP_WISPS, stumpWisps, type WispLight } from "../stumpWisps";
 
 /** The wave numbers' colour over areas the party has reached (spent). */
 const SPENT = new THREE.Vector3(0.7, 0.7, 0.8);
@@ -37,6 +37,8 @@ const SPARKLE_RGB = new THREE.Vector3(1, 0.75, 0.9);
 /** The markers' motes: one list, its records pooled (a record a mote a frame before, dozens a stone). */
 const MOTES: Mote[] = [], MOTE_POOL: Mote[] = [];
 let moteN = 0;
+/** The wild stumps' wisps' lights this frame (render/stumpWisps.ts), the nearest kept. */
+const WISP_LIGHTS: WispLight[] = [];
 // Rank sigils' stones (render/leash/ranks.ts areaTopRanks): each area's top rank this frame, and the colours by it (the ranks', unlit).
 const TOP = new Map<string, number>(), RANK_RGB: THREE.Vector3[] = [];
 /** The great stumps' instances this frame, by their baked stump (reused: render/view/home.ts drawMarkers). */
@@ -57,6 +59,7 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   const phase = (beatTime(g.beat, time) * t.beat.bpm) / 60, beat = Math.pow(0.5 + 0.5 * Math.cos(phase * Math.PI * 2), 2); // 1 on the beat
   const inst: SpriteInstance[] = [], lights: ForestLight[] = [], beacons: Beacon[] = [], motes = MOTES, lasers: Laser[] = [];
   motes.length = 0; moteN = 0;
+  const WT = { ...STUMP_WISPS, ...R.stump?.wisps }; WISP_LIGHTS.length = 0;
   const scale = R.scale / v.markerArt.scale; // (baked at its size: 1)
   const casts = !!t.shadows.trunks?.scenery, cast: TrunkShadow[] = [];
   // Rank sigils on (baked so: MarkerArt.ranked), each stone in its area's top rank's colour, or unlit with nobody home (Ed, 2026-10-27);
@@ -75,11 +78,9 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   const stumps = !!v.markerArt.stumps; // (the great stumps: drawn below, every area's, in place of the stones)
   // (an area's stump as baked so far: its art comes as it's wanted, AssetLibrary.stumpArt; urgent: on screen soon)
   const stumpOf = (cell: readonly [number, number], urgent = false) => { const s = v.markerArt.stump(cell); if (!s) return null; const a = v.assets.stumpArt(s.spec, urgent); return a ? { spec: s.spec, flip: s.flip, atlas: a.atlas, art: a.art } : null; };
-  // (a stump is a floor card standing at its near edge, render/sprites.ts asFloor: what lights its picture of the cut is a light where
-  // that picture is, `toward` m nearer than its middle and `rise` m up the card)
-  const camF = v.camera.getWorldDirection(v.v3b), camU = v.v3c.set(0, 1, 0).applyQuaternion(v.camera.quaternion), UP = SPRITE_UNIFORMS.uUp.value, rise = UP.dot(camU) / Math.max(0.2, -camF.y);
-  const cardOf = (cell: readonly [number, number]) => { const s = stumpOf(cell); if (!s) return null; const fr = s.atlas.frames[0], h = (fr.h - s.art.top.y) * v.mpp; return { toward: Math.max(0, fr.h - s.art.origin.y) * v.mpp * rise + UP.z * h, up: UP.y * h }; };
   const topOf = (cell: readonly [number, number]) => stumps ? stumpOf(cell)?.art.height ?? 1 : v.markerArt.height(cell) * v.mpp * scale; // (m: the stone's drawn height, or the stump's cut)
+  // (a stump is a floor card standing at its near edge, render/sprites.ts asFloor: `rise` m up the card a metre toward the camera)
+  const camF = v.camera.getWorldDirection(v.v3b), camU = v.v3c.set(0, 1, 0).applyQuaternion(v.camera.quaternion), UP = SPRITE_UNIFORMS.uUp.value, rise = UP.dot(camU) / Math.max(0.2, -camF.y);
   const stone = (x: number, z: number, cell: readonly [number, number], level: number, y = 0) => {
     if (stumps) return true;
     const frame = v.markerArt.atlas.frames[v.markerArt.frame(cell, level, variant(cell))];
@@ -112,19 +113,10 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
     // (the trees, props and scenery round it cast shadows from it, as from a campfire, thrown from the stone itself, not from its
     // light's spot in front of it, so the stone casts none of its own: render/trunkShadows.ts; Ed, 2026-10-13)
     if (d < R.lightRange && !stumps) near.push({ d, l: { x: m.x, y: 0.5, z: m.z + 1.5, reach: m.awake ? A.reach : D.reach, rgb: col, strength, shadow: { x: m.x, y: 1.5, z: m.z, k: m.awake ? 1 : 0.7 } } });
-    // A stump's light is its sigils' (Ed, 2026-10-29: "they will be lit by the sigils that float above them"; "the treestump clearing ...
-    // is lit primarily by a mix of the glow from the sigils that float above the stump"): one light over its cut, its colour the stack's
-    // mix, each sigil weighed by its rank (a legend's the most), brighter the more there are; so a wild stump's clearing glows red-orange,
-    // a won one's blue, and it shifts as the stack does. An empty stack: a dim cold light.
-    if (d < R.lightRange && stumps) {
-      const L = R.stump!.light, items = ranked ? stoneStack(g, m.key) : [], C = cardOf(m.cell), ly = (C ? C.up : top) + L.height, lz = m.z + (C ? C.toward : 0);
-      let wsum = 0, r = 0, gg = 0, b = 0;
-      for (const it of items) { const wgt = [1, 1.4, 2, 3][Math.max(0, Math.min(3, it.level))], c = sigilRankColour(t, it.level, it.friend, asleepLegend(g.creatures[it.id])); r += c[0] * wgt; gg += c[1] * wgt; b += c[2] * wgt; wsum += wgt; }
-      // (the mix pushed away from grey, so a won stump's light reads blue rather than washing to white under its own brightness)
-      const mr = r / Math.max(wsum, 1e-6), mg = gg / Math.max(wsum, 1e-6), mb = b / Math.max(wsum, 1e-6), grey = (mr + mg + mb) / 3, sat = L.saturate ?? 1.6;
-      if (wsum > 0) near.push({ d, l: { x: m.x, y: ly, z: lz, reach: L.reach, rgb: new THREE.Vector3(Math.max(0, grey + (mr - grey) * sat), Math.max(0, grey + (mg - grey) * sat), Math.max(0, grey + (mb - grey) * sat)), strength: L.strength * Math.min(1.4, 0.55 + 0.09 * wsum), shadow: { x: m.x, y: ly, z: m.z, k: 0.8 } } });
-      else near.push({ d, l: { x: m.x, y: ly, z: lz, reach: L.reach * 0.7, rgb: col, strength: L.strength * 0.35 * dim } });
-    }
+    // A wild stump's clearing (before its soundsystem): no light of its own, eerie moonlight and a few pale wisps drifting round it,
+    // the nearest few lighting the ground (Ed, 2026-10-29: "more like eerie moonlight ... blue/green/white wisps ... that move around
+    // the stump area. Remove the current lighting"; render/stumpWisps.ts). (Its sigils' mixed light, runeMarkers.stump.light, is gone.)
+    if (stumps) stumpWisps(WT, m.cell, m.x, m.z, d, time, mote, WISP_LIGHTS);
     // Awake: a column of light and a thin laser straight up (Ed, v149: "let's see both"); dormant:
     // only the faint column above the canopy. The beams grow as the
     // countdown to the stone's wake runs (Ed, 2026-10-04): the next stone's from half to full,
@@ -155,6 +147,9 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
     stone(s0.x, s0.z, a.cell, MARKER_LEVELS - 1, -k * k * 4 * scale);
     near.push({ d: 0, l: { x: s0.x, y: 2.5, z: s0.z, reach: R.awake.reach * 1.5, rgb: col, strength: R.flare.light * (1 - k), shadow: { x: s0.x, y: 2.5, z: s0.z, k: 1 - k } } });
   }
+  // (the wild stumps' wisps' lights: only the nearest few, so the markers' eight have room for the flares)
+  WISP_LIGHTS.sort((p, q) => p.d - q.d);
+  for (let i = 0; i < Math.min(WT.lights, WISP_LIGHTS.length); i++) { const L = WISP_LIGHTS[i]; near.push({ d: L.d, l: { x: L.x, y: L.y, z: L.z, reach: L.reach, rgb: L.rgb, strength: L.strength } }); }
   near.sort((p, q) => p.d - q.d);
   for (const n of near.slice(0, 8)) lights.push(n.l);
   if (stumps) { // every area's stump (but home's), partified or not: each a floor anchored by its ground point, under everything standing

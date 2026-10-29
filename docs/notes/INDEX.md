@@ -236,6 +236,7 @@ says what each note covers.
 ## [The view](view.md)
 
 - Pixel snap
+- Stump wisps
 - Tilt-shift
 - Debug overlay
 - Test sliders / pause page

@@ -972,6 +972,84 @@
           "rest": "Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them)"
         }
       ]
+    },
+    "runeMarkers.stump.wisps": {
+      "what": "A wild stump's will-o'-the-wisps, drifting round its clearing before its soundsystem, in place of its own light.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "pre-soundsystem stump area lighting should change to be more like eerie moonlight; maybe it can be lit by a mix of blue/green/white wisps or something like that, that move around the stump area? Remove the current lighting. Decide on something and make it, no need for me to review.",
+          "rest": "via the coordinator; the art director's design (render/stumpWisps.ts)"
+        }
+      ]
+    },
+    "runeMarkers.stump.wisps.on": {
+      "what": "The wild stumps' wisps on or off."
+    },
+    "runeMarkers.stump.wisps.count": {
+      "what": "How many wisps a wild stump has."
+    },
+    "runeMarkers.stump.wisps.colours": {
+      "what": "The wisps' colours (0-255), a wisp each in turn: blue, green and teal."
+    },
+    "runeMarkers.stump.wisps.radius": {
+      "what": "How far (m) from the stump's middle a wisp wanders at most."
+    },
+    "runeMarkers.stump.wisps.inner": {
+      "what": "How near the middle a wisp comes, times the radius."
+    },
+    "runeMarkers.stump.wisps.height": {
+      "what": "How high (m) the wisps float."
+    },
+    "runeMarkers.stump.wisps.bob": {
+      "what": "How much (m) the wisps rise and fall as they drift."
+    },
+    "runeMarkers.stump.wisps.speed": {
+      "what": "How fast (m/s) the wisps drift round the clearing."
+    },
+    "runeMarkers.stump.wisps.reach": {
+      "what": "How far (m) a wisp's light reaches."
+    },
+    "runeMarkers.stump.wisps.strength": {
+      "what": "How bright a wisp's light is."
+    },
+    "runeMarkers.stump.wisps.lights": {
+      "what": "How many of the nearest wisps light the ground at once."
+    },
+    "runeMarkers.stump.wisps.lightRange": {
+      "what": "How near her (m) a stump must be for its wisps to light the ground."
+    },
+    "runeMarkers.stump.wisps.breathe": {
+      "what": "How much the wisps swell brighter and dimmer, slowly (0 steady; steady anyway with reduce flashing)."
+    },
+    "runeMarkers.stump.wisps.bright": {
+      "what": "How bright a wisp's mote is drawn."
+    },
+    "runeMarkers.stump.wisps.trail": {
+      "what": "How many fading motes trail behind each wisp."
+    },
+    "runeMarkers.stump.wisps.fill": {
+      "what": "The wild clearing's own dim teal moonlight over the stump's middle.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "the overall lighting palette should be an eerie blue/green; this is to contrast with the bright and warm post-soundsystem lighting"
+        }
+      ]
+    },
+    "runeMarkers.stump.wisps.fill.colour": {
+      "what": "The clearing's moonlight colour (0-255)."
+    },
+    "runeMarkers.stump.wisps.fill.reach": {
+      "what": "How far (m) the clearing's moonlight reaches."
+    },
+    "runeMarkers.stump.wisps.fill.strength": {
+      "what": "How bright the clearing's moonlight is (0 none)."
+    },
+    "runeMarkers.stump.wisps.fill.height": {
+      "what": "How high (m) over the stump the clearing's moonlight hangs."
     }
   }
 }
