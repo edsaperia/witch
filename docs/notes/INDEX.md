@@ -105,6 +105,8 @@ says what each note covers.
 - Bag accuracy
 - Pierce
 - The Clutch
+- Chain
+- The Messenger
 - Bag design
 - Use prompt
 - Wake-up keys

@@ -3675,6 +3675,16 @@
           "minimum": 0,
           "description": "how many more creatures a 💌 flies on through after the first it lands on, each a hit as any letter's; 0, it stops at the first, and a bag adds its own (config/wardrobe.json invitesAdd)."
         },
+        "chain": {
+          "type": "number",
+          "minimum": 0,
+          "description": "how many hops a spent 💌 makes on to the nearest other invitable creature within chainRange metres (never one it has landed on, nor a stunned one), each a hit as any letter's; 0, none, and a bag adds its own (config/wardrobe.json invitesAdd)."
+        },
+        "chainRange": {
+          "type": "number",
+          "minimum": 0,
+          "description": "how far (m) a chained 💌 looks for the next creature to hop to."
+        },
         "radius": {
           "type": "number",
           "minimum": 0
@@ -3791,6 +3801,8 @@
         "bloomDecay",
         "bloomMax",
         "pierce",
+        "chain",
+        "chainRange",
         "radius",
         "amount",
         "hits",

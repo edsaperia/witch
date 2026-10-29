@@ -45,7 +45,7 @@ describe("her 💌s' accuracy", () => {
   });
 
   it("the spray, burst and stream bags carry it; the satchel, purse and briefcase fly true", () => {
-    for (const b of ["satchel", "purse", "briefcase", "clutch"]) { const I = bagTuning(TUNING, b).invites; expect((I.inaccuracy ?? 0) + (I.bloomMax ?? 0)).toBe(0); }
+    for (const b of ["satchel", "purse", "briefcase", "clutch", "messenger"]) { const I = bagTuning(TUNING, b).invites; expect((I.inaccuracy ?? 0) + (I.bloomMax ?? 0)).toBe(0); }
     for (const b of ["bumbag", "tote", "duffel", "backpack"]) { const I = bagTuning(TUNING, b).invites; expect((I.inaccuracy ?? 0) + (I.bloomMax ?? 0)).toBeGreaterThan(0); }
     const pack = angles(bagTuning(TUNING, "backpack"), 3), I = bagTuning(TUNING, "backpack").invites;
     for (const x of pack) expect(Math.abs(x)).toBeLessThanOrEqual(I.inaccuracy! + I.bloomMax! + 1e-9);

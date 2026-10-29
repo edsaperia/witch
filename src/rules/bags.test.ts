@@ -15,8 +15,8 @@ const starter = itemById("satchel")!, quick = itemById("bumbag")!, far = itemByI
 
 describe("the starting bags", () => {
   it("are the satchel (the starter, at the top), the Bumbag and the Purse: all hers from the start, no None", () => {
-    expect(SHELVES.bag.items.map(i => i.id)).toEqual(["satchel", "bumbag", "purse", "tote", "duffel", "briefcase", "clutch", "backpack"]); // (the starter, the other starting bags, then the found ones: Ed, 2026-10-29)
-    expect(BAGS.length).toBe(8);
+    expect(SHELVES.bag.items.map(i => i.id)).toEqual(["satchel", "bumbag", "purse", "tote", "duffel", "briefcase", "clutch", "messenger", "backpack"]); // (the starter, the other starting bags, then the found ones: Ed, 2026-10-29)
+    expect(BAGS.length).toBe(9);
     expect(itemById("bag-none")).toBeUndefined();
     const own = ownedOf([], null);
     for (const b of BAGS) expect(own.has(b.id), b.id).toBe(!!b.start);
@@ -67,7 +67,7 @@ describe("the starting bags", () => {
   });
 
   it("the starting three aren't found in the forest; the rest are, each its own way to throw (Ed, 2026-10-29)", () => {
-    expect([...BAG_ITEMS].sort()).toEqual(["backpack", "briefcase", "clutch", "duffel", "tote"]);
+    expect([...BAG_ITEMS].sort()).toEqual(["backpack", "briefcase", "clutch", "duffel", "messenger", "tote"]);
     const I = TUNING.invites, tote = bagTuning(TUNING, "tote").invites, duffel = bagTuning(TUNING, "duffel").invites, brief = bagTuning(TUNING, "briefcase").invites, pack = bagTuning(TUNING, "backpack").invites;
     expect([tote.multiShot, tote.spread]).toEqual([5 * I.multiShot, 3 * I.spread]); expect(tote.range).toBeLessThan(I.range);
     expect(duffel.burst).toBe(4 * I.burst); expect(duffel.cooldown).toBeGreaterThan(2 * I.cooldown);

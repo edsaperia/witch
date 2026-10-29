@@ -49,7 +49,7 @@ export const DEFAULT_LOOK = { hat: "classic", hair: "long", top: "jacket", phone
   hatHeight: 1, hatBrim: 1, hatTilt: 0, hatBand: 1, broom: "classic", broomLength: 1, broomBend: 0, bristles: 1, broomThickness: 1, cloak: "none", scarf: false, satchel: false, pendant: false, earrings: false,
   // its accessories (Ed: "both witchy and modern"): the cloak's length (times its kind's), patches on it; a lantern at her hip, a potion vial and a spellbook at her belt; a bum bag, a festival
   // wristband, chunky trainers, round sunglasses (shades "round")
-  cloakLength: 1, patches: false, lantern: false, vial: false, book: false, bumbag: false, purse: false, tote: false, duffel: false, briefcase: false, clutch: false, wristband: false, chunky: false,
+  cloakLength: 1, patches: false, lantern: false, vial: false, book: false, bumbag: false, purse: false, tote: false, duffel: false, briefcase: false, clutch: false, messenger: false, wristband: false, chunky: false,
   // the creator's (Ed, round 11): the scarf's length (times hers; 0 none, 3 trailing on the ground), the satchel's size, a backpack's size (0 none)
   scarfLength: 1, bagSize: 1, backpackSize: 0 };
 const shoeR = L => L.chunky ? [.095, .056, .056] : [.08, .04, .045]; // her sneakers, or chunky trainers
@@ -371,6 +371,11 @@ function drawAccessories(m, L, chest, fwd, spine, flying) {
   if (L.clutch) { // a slim clutch tucked under her near arm, long and flat, a gold flap along its top (Ed, 2026-10-29: the sniper's bag)
     const c = at(-.03, .05, .2);
     m.ell(c, [.095, .045, .02], M.SHOES, { dir: fwd, up: spine, group: 24, paint: p => v3.dot(v3.sub(p, c), spine) > .02 ? M.FRAME : undefined });
+  }
+  if (L.messenger) { // a messenger bag on a wide strap across her, hung at her near hip, its big flap in her trim colour (Ed, 2026-10-29: the chain's bag)
+    const c = at(waist - .07, -.02, .17);
+    m.ell(c, [.09, .07, .028], M.POM, { dir: fwd, up: spine, group: 24, paint: p => v3.dot(v3.sub(p, c), spine) > -.01 ? M.HAT1 : undefined });
+    m.chain([[...at(.14, -.02, -.08), .009], [...at(.06, .09, .04), .009], [...v3.add(c, v3.mul(spine, .06)), .009]], M.HAT1, { group: 24 });
   }
   if (L.bumbag) { const c = at(waist - .03, .1, .03); m.ell(c, [.035, .03, .065], M.EAR, { dir: fwd, up: spine, group: 22 }); m.chain([[...at(waist - .02, .07, -.08), .008], [...c, .008], [...at(waist - .02, .07, .1), .008]], M.EAR, { group: 22 }); }
 }

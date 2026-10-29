@@ -1435,6 +1435,9 @@ The 💌 invite [1], replacing the proximity chat when on: on the ground she sho
 - **`invites.bloomMax`**: the most degrees the bloom can reach.
 - **`invites.pierce`**: how many more creatures a 💌 flies on through after the first it lands on, each a hit as any letter's; 0, it stops at the first, and a bag adds its own (config/wardrobe.json invitesAdd).
   1. Ed, 2026-10-29: "pierce, yes"
+- **`invites.chain`**: how many hops a spent 💌 makes on to the nearest other invitable creature within chainRange metres (never one it has landed on, nor a stunned one), each a hit as any letter's; 0, none, and a bag adds its own (config/wardrobe.json invitesAdd).
+  1. Ed, 2026-10-29: "chain"
+- **`invites.chainRange`**: how far (m) a chained 💌 looks for the next creature to hop to.
 - **`invites.linger`**: a 💌 that met no one rests where it came down this many seconds, fading over the last lingerFade, at most lingerMax at once (drawn only: it's no hit).
   1. Ed's playtest, 2026-10-06: "invitations should sit on the ground for a little while before they fade away"
 - **`invites.spin`**: How fast a 💌 spins in flight.
@@ -1466,6 +1469,8 @@ The 💌 invite [1], replacing the proximity chat when on: on the ground she sho
 | `invites.bloomDecay` | number | 0 to … |
 | `invites.bloomMax` | number | 0 to … |
 | `invites.pierce` | number | 0 to … |
+| `invites.chain` | number | 0 to … |
+| `invites.chainRange` | number | 0 to … |
 | `invites.radius` | number | 0 to … |
 | `invites.amount` | number | 0 to … |
 | `invites.hits` | array of number |  |
