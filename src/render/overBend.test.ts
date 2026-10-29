@@ -1,7 +1,7 @@
 // overBendAt (render/height.ts): the CPU twin of the shaders' overBend, for what's drawn over the picture (Ed, 2026-10-06:
 // "I shouldn't see anything on the ground that's obscured when it goes past the bend").
 import { afterEach, describe, expect, it } from "vitest";
-import { HEIGHT_UNIFORMS, overBendAt } from "./height";
+import { groundSeenAt, HEIGHT_UNIFORMS, overBendAt, useHeightField } from "./height";
 
 describe("nothing on the ground past the bend", () => {
   afterEach(() => { HEIGHT_UNIFORMS.uBend.value.set(0, 0, 0, 0); HEIGHT_UNIFORMS.uBendFwd.value.set(0, -1); });
@@ -20,5 +20,24 @@ describe("nothing on the ground past the bend", () => {
     HEIGHT_UNIFORMS.uBend.value.set(0.0015, 0, 0, 0);
     expect(overBendAt(0, 0, -260, cam)).toBe(false);
     expect(overBendAt(0, 120, -260, cam)).toBe(true);
+  });
+});
+
+describe("the ley line's dots seen over the rolling ground (groundSeenAt, groundSeen's twin; Ed's quick win, 2026-10-29: \"I can see it through the ground, under the horizon\")", () => {
+  afterEach(() => { HEIGHT_UNIFORMS.uBend.value.set(0, 0, 0, 0); HEIGHT_UNIFORMS.uBendFwd.value.set(0, -1); useHeightField(null); });
+  const cam = { x: 0, y: 135, z: 160 };
+  const field = (h: (x: number, z: number) => number) => useHeightField({ heightAt: h } as unknown as Parameters<typeof useHeightField>[0]);
+  it("hides a dot past the bend's horizon, shows one this side of it", () => {
+    HEIGHT_UNIFORMS.uBend.value.set(0.0015, 0, 0, 0); HEIGHT_UNIFORMS.uBendFwd.value.set(0, -1);
+    expect(groundSeenAt(0, 0.25, -100, cam)).toBe(true);
+    expect(groundSeenAt(0, 0.25, -400, cam)).toBe(false);
+    expect(groundSeenAt(0, 0.25, 100, cam)).toBe(true);
+  });
+  it("hides a dot behind a hill on the way to the camera, shows it when the hill's gone", () => {
+    field((_x, z) => (z > -60 && z < -40 ? 60 : 0)); // (a 60 m ridge between the camera and the dot)
+    expect(groundSeenAt(0, 0.25, -120, cam)).toBe(false);
+    expect(groundSeenAt(0, 0.25, -30, cam)).toBe(true); // (this side of the ridge)
+    field(() => 0);
+    expect(groundSeenAt(0, 0.25, -120, cam)).toBe(true);
   });
 });
