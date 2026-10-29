@@ -64,7 +64,7 @@ export class Input {
     if (typeof document !== "undefined") document.addEventListener("visibilitychange", () => { if (document.hidden) this.release(); });
     // Mouse buttons use mousedown/up: a chorded press/release doesn't always emit pointerdown/up.
     // Pointer events still distinguish real mouse input from a touch's compatibility mouse events.
-    target.addEventListener("pointermove", e => { if (e.pointerType === "mouse") this.pointer = { x: e.clientX, y: e.clientY }; });
+    target.addEventListener("pointermove", e => { if (e.pointerType === "mouse") { this.pointer = { x: e.clientX, y: e.clientY }; this.device = "keys"; } });
     target.addEventListener("pointerdown", e => {
       this.device = e.pointerType === "touch" ? "touch" : "keys";
       this.mousePointer = e.pointerType === "mouse";
