@@ -991,7 +991,7 @@
       "what": "How many wisps a wild stump has."
     },
     "runeMarkers.stump.wisps.colours": {
-      "what": "The wisps' colours (0-255), a wisp each in turn: pale blue, green and white."
+      "what": "The wisps' colours (0-255), a wisp each in turn: blue, green and teal."
     },
     "runeMarkers.stump.wisps.radius": {
       "what": "How far (m) from the stump's middle a wisp wanders at most."
@@ -1028,6 +1028,28 @@
     },
     "runeMarkers.stump.wisps.trail": {
       "what": "How many fading motes trail behind each wisp."
+    },
+    "runeMarkers.stump.wisps.fill": {
+      "what": "The wild clearing's own dim teal moonlight over the stump's middle.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "the overall lighting palette should be an eerie blue/green; this is to contrast with the bright and warm post-soundsystem lighting"
+        }
+      ]
+    },
+    "runeMarkers.stump.wisps.fill.colour": {
+      "what": "The clearing's moonlight colour (0-255)."
+    },
+    "runeMarkers.stump.wisps.fill.reach": {
+      "what": "How far (m) the clearing's moonlight reaches."
+    },
+    "runeMarkers.stump.wisps.fill.strength": {
+      "what": "How bright the clearing's moonlight is (0 none)."
+    },
+    "runeMarkers.stump.wisps.fill.height": {
+      "what": "How high (m) over the stump the clearing's moonlight hangs."
     }
   }
 }

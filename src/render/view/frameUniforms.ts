@@ -11,10 +11,14 @@ import { groundHeight, placed } from "../height";
 import { focusOf } from "./culling";
 import { LIGHT_UNIFORMS } from "../lighting";
 import { hsvInto, moodOf } from "../mood";
+import { cellKey, partifiedKey } from "../../rules/party";
 import { biomeJitter } from "../../../art/flora/biomes.js";
 import { FADE_MATERIALS, FADE_MESHES, SPRITE_UNIFORMS } from "../sprites";
 
 /** Sets this frame's sprite and light uniforms, after the camera (`up`, its tilted up). */
+/** How far her glow is cooled toward the wild's teal (0 to 1, eased) and when it was last eased (light.spooky.wildGlow). */
+const WILD = { k: 0, at: 0 };
+
 export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void {
   const g = v.game, t = g.tuning;
   // Sprites face the camera, tilted back toward it by spriteTilt.
@@ -55,6 +59,17 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
   SPRITE_UNIFORMS.uTrunkFade.value.set(S.trunkFade ? t.trunkFade.metres : 0, v.mpp, t.trunkFade.share);
   SPRITE_UNIFORMS.uOcc.value.set(t.occlusion.fadeOpacity, t.occlusion.edge, t.occlusion.minHeight, t.occlusion.on && S.seeThrough ? 1 : 0); // (every frame: the pause page's sliders)
   { const M = moodOf(t); if (M && !t.bare) hsvInto(LIGHT_UNIFORMS.uGlowRgb.value, M.glowHue, M.glowSat, 1); } // (her glow's colour, every frame: the pause page's Hidden witch sliders)
+  // In the wild (an area the party hasn't reached), her glow cools toward the wild stumps' teal, so the night there reads eerie
+  // blue-green against the party's warm light (Ed, 2026-10-29: "the overall lighting palette should be an eerie blue/green; this is
+  // to contrast with the bright and warm post-soundsystem lighting"); eased in and out over `ease` s as she crosses into or out of
+  // the party's ground (light.spooky.wildGlow: mix 0 her own colour everywhere).
+  { const M = moodOf(t), W = M?.wildGlow, g = v.game;
+    if (W && W.mix > 0 && !t.bare) {
+      const wild = partifiedKey(g.party, g.map, cellKey(g.map.areaAt(g.witch.x, g.witch.z).cell)) ? 0 : 1, dt = Math.max(0, Math.min(0.2, time - WILD.at));
+      WILD.at = time; WILD.k += (wild - WILD.k) * Math.min(1, dt / Math.max(0.05, W.ease));
+      const k = W.mix * WILD.k, G = LIGHT_UNIFORMS.uGlowRgb.value;
+      if (k > 0) G.set(G.x + (W.colour[0] / 255 - G.x) * k, G.y + (W.colour[1] / 255 - G.y) * k, G.z + (W.colour[2] / 255 - G.z) * k);
+    } }
   for (const b of [v.witchBatch, v.bareBatch]) if (b) { b.silhouetteOpacity = t.occlusion.silhouette; b.silhouetteColour = LIGHT_UNIFORMS.uGlowRgb.value; } // (her silhouette's strength and colour, live too)
   for (const m of FADE_MATERIALS) { m.depthWrite = S.seeWrite; if (m.stencilRef === 1) m.stencilWrite = S.seeStencil; m.blending = S.seeNoBlend ? THREE.NoBlending : THREE.NormalBlending; }
   for (const o of FADE_MESHES) o.renderOrder = S.seeEarly ? 0.6 : 11;

@@ -1,7 +1,8 @@
 // The wild stumps' wisps (Ed, 2026-10-29: "pre-soundsystem stump area lighting should change to be more like eerie moonlight; maybe it
 // can be lit by a mix of blue/green/white wisps or something like that, that move around the stump area? Remove the current
+// lighting"; "the overall lighting palette should be an eerie blue/green; this is to contrast with the bright and warm post-soundsystem
 // lighting"): every great stump not yet won (render/view/home.ts drawMarkers' list: before its soundsystem) has a few will-o'-the-wisps
-// drifting round its clearing, pale blue, green and white, cold against the party's warm lights and the sigils' red and blue. Each
+// drifting round its clearing, blue, green and teal under a dim teal moonlight over the stump, cold against the party's warm lights and the sigils' red and blue. Each
 // wanders the clearing slowly at its own radius and height, breathing slowly brighter and dimmer (still, with reduce flashing); the
 // nearest few are real lights that light the ground and the stump (within the markers' light budget), and every one is drawn as a
 // bright mote with a short fading tail. Where they are is worked out from the time and the stump's cell, never stored.
@@ -12,8 +13,9 @@ import { comfort } from "./comfort";
 
 /** As built (runeMarkers.stump.wisps): three a stump, blue, green and white, wandering 3 to 8 m out at about 1.6 m up. */
 export const STUMP_WISPS: StumpWispTuning = {
-  on: true, count: 3, colours: [[140, 190, 255], [130, 255, 190], [225, 238, 255]], radius: 8, inner: 0.35, height: 1.6, bob: 0.5,
-  speed: 0.5, reach: 9, strength: 0.9, lights: 6, lightRange: 70, breathe: 0.3, bright: 1.3, trail: 4,
+  on: true, count: 3, colours: [[60, 130, 255], [50, 230, 140], [60, 205, 215]], radius: 8, inner: 0.35, height: 1.6, bob: 0.5,
+  speed: 0.5, reach: 10, strength: 1.2, lights: 6, lightRange: 70, breathe: 0.3, bright: 0.8, trail: 4,
+  fill: { colour: [70, 190, 200], reach: 18, strength: 0.7, height: 5 },
 };
 
 export interface WispLight { d: number; x: number; y: number; z: number; reach: number; rgb: THREE.Vector3; strength: number }
@@ -38,14 +40,16 @@ export function wispAt(T: StumpWispTuning, seed: number, i: number, cx: number, 
   return out;
 }
 
-const P = { x: 0, y: 0, z: 0 }, Q = { x: 0, y: 0, z: 0 };
+const P = { x: 0, y: 0, z: 0 }, Q = { x: 0, y: 0, z: 0 }, FILL = new THREE.Vector3();
 
 /** One wild stump's wisps at `time`: their motes into `mote` (a core and a tail each) and, within lightRange of her (`d` m off),
  *  their lights into `lights` (the caller keeps the nearest `T.lights`). */
 export function stumpWisps(T: StumpWispTuning, cell: readonly [number, number], cx: number, cz: number, d: number, time: number,
   mote: (x: number, y: number, z: number, c: THREE.Vector3, a: number) => void, lights: WispLight[]): void {
   if (!T.on || T.count <= 0) return;
-  const seed = cell[0] * 7919 + cell[1] * 104729;
+  const seed = cell[0] * 7919 + cell[1] * 104729, F = T.fill;
+  // (the clearing's own cold moonlight, first so the nearest stump's always has it)
+  if (F && F.strength > 0 && d < T.lightRange) lights.push({ d: d - 0.5, x: cx, y: F.height, z: cz, reach: F.reach, rgb: FILL.set(F.colour[0] / 255, F.colour[1] / 255, F.colour[2] / 255), strength: F.strength });
   for (let i = 0; i < T.count; i++) {
     const c = colourOf(T, i), ph = hash2(seed, i, 23) * 6.28;
     // (breathing: a slow swell, five seconds or so a breath; held steady with reduce flashing)

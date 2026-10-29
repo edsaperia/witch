@@ -5,7 +5,7 @@
 // 0.02) and the mean colour of what they add (cool: blue and green over red). Frames <out>/<name>-<view>-<n>.png, numbers
 // <out>/wisps-<name>.json.
 //   npm run build && node tools/shot/wisps.cjs [out dir]   (NAME=after, DIST=dist (a build of the base for NAME=before), SEED=542195,
-//   LINK= more of the link, SIZE=1106x743, MOMENTS=3)
+//   LINK= more of the link, SIZE=1106x743, MOMENTS=3, VIEWS=ground,treetop)
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist"));
@@ -38,7 +38,7 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
     log("stump", JSON.stringify(st));
     const put = mode => page.evaluate(([x, z, mode]) => { const g = window.witch.game, b = g.witches[0].body; g.witches[0].body = { ...b, x, z, vx: 0, vz: 0, mode, lift: mode === "treetop" ? 1 : 0, perch: false, seated: false }; }, [st.x, st.z + (mode === "treetop" ? 14 : 11), mode]);
     const lum = () => page.evaluate(() => { const w = window.witch, gl = w.view.renderer.getContext(), cw = gl.drawingBufferWidth, ch = gl.drawingBufferHeight, px = new Uint8Array(cw * ch * 4); w.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 0, true); gl.readPixels(0, 0, cw, ch, gl.RGBA, gl.UNSIGNED_BYTE, px); return Array.from(px); });
-    for (const view of ["ground", "treetop"]) {
+    for (const view of (process.env.VIEWS || "ground,treetop").split(",")) {
       await put(view); await settle();
       const sum = { energy: 0, px: 0, r: 0, g: 0, b: 0 };
       for (let n = 0; n < MOMENTS; n++) {

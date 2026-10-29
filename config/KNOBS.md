@@ -2569,7 +2569,7 @@ Spawn markers (Ed, v147): a rune stone on every spot where a soundsystem will co
   1. Ed, 2026-10-29: "pre-soundsystem stump area lighting should change to be more like eerie moonlight; maybe it can be lit by a mix of blue/green/white wisps or something like that, that move around the stump area? Remove the current lighting. Decide on something and make it, no need for me to review." (via the coordinator; the art director's design (render/stumpWisps.ts))
 - **`runeMarkers.stump.wisps.on`**: The wild stumps' wisps on or off.
 - **`runeMarkers.stump.wisps.count`**: How many wisps a wild stump has.
-- **`runeMarkers.stump.wisps.colours`**: The wisps' colours (0-255), a wisp each in turn: pale blue, green and white.
+- **`runeMarkers.stump.wisps.colours`**: The wisps' colours (0-255), a wisp each in turn: blue, green and teal.
 - **`runeMarkers.stump.wisps.radius`**: How far (m) from the stump's middle a wisp wanders at most.
 - **`runeMarkers.stump.wisps.inner`**: How near the middle a wisp comes, times the radius.
 - **`runeMarkers.stump.wisps.height`**: How high (m) the wisps float.
@@ -2582,6 +2582,12 @@ Spawn markers (Ed, v147): a rune stone on every spot where a soundsystem will co
 - **`runeMarkers.stump.wisps.breathe`**: How much the wisps swell brighter and dimmer, slowly (0 steady; steady anyway with reduce flashing).
 - **`runeMarkers.stump.wisps.bright`**: How bright a wisp's mote is drawn.
 - **`runeMarkers.stump.wisps.trail`**: How many fading motes trail behind each wisp.
+- **`runeMarkers.stump.wisps.fill`**: The wild clearing's own dim teal moonlight over the stump's middle.
+  1. Ed, 2026-10-29: "the overall lighting palette should be an eerie blue/green; this is to contrast with the bright and warm post-soundsystem lighting"
+- **`runeMarkers.stump.wisps.fill.colour`**: The clearing's moonlight colour (0-255).
+- **`runeMarkers.stump.wisps.fill.reach`**: How far (m) the clearing's moonlight reaches.
+- **`runeMarkers.stump.wisps.fill.strength`**: How bright the clearing's moonlight is (0 none).
+- **`runeMarkers.stump.wisps.fill.height`**: How high (m) over the stump the clearing's moonlight hangs.
 
 | knob | type | range |
 |---|---|---|
@@ -2632,6 +2638,10 @@ Spawn markers (Ed, v147): a rune stone on every spot where a soundsystem will co
 | `runeMarkers.stump.wisps.breathe` | number | 0 to … |
 | `runeMarkers.stump.wisps.bright` | number | 0 to … |
 | `runeMarkers.stump.wisps.trail` | number | 0 to … |
+| `runeMarkers.stump.wisps.fill.colour` | array of number |  |
+| `runeMarkers.stump.wisps.fill.reach` | number | 0 to … |
+| `runeMarkers.stump.wisps.fill.strength` | number | 0 to … |
+| `runeMarkers.stump.wisps.fill.height` | number | 0 to … |
 
 ### `sfx`
 
@@ -3875,6 +3885,9 @@ Placed sigils glow like small lights in their creature's neon, tinting the grass
 
 The sigils' neon spilling onto the world (overnight phase 3, the art pass): each placed sigil is a small light in its creature's neon, height metres over its rune, reaching reach metres (15% more a level) at strength (0: off), eased in as it's written and breathing with the rune's pulse, so the grass round it, the ground and whoever stands near take its colour; the bottom sigil of her stack is a fainter one (stack, 0 off) reaching stackReach metres, stackHeight metres over her, tinting her and the ground under her as she carries it.
 
+- **`sigilSpill.stack`**: The light the bottom sigil of her stack throws from over her hat, in its colour (0 none).
+  1. Ed, 2026-10-29: "the warm light is probably the sigil stack lighting; it takes the colour of the bottom sigil. We're replacing this with the wisps." (0.35 → 0)
+
 | knob | type | range |
 |---|---|---|
 | `sigilSpill.strength` | number | 0 to … |
@@ -4040,6 +4053,11 @@ Code: `render/mood.ts`
 - **`light.spooky.unlit`**: How dark the forest is where nothing lights it: the ambient and the moonlight on ground, trees, bushes and creatures times this, while the lights (her glow, the party's, fires, lava, runestones, sigils) stay as they are (1 as before).
   1. Ed's playtest, 2026-10-29: "Contrast on the visuals seems low; the important parts of the scene don't stand out very well. The unlit forest needs to be darker." (v5399; measured with tools/shot/contrast.cjs)
   Code: `render/lighting.ts`, `render/view.ts`
+- **`light.spooky.wildGlow`**: Her glow cooled toward a teal while she's in an area the party hasn't reached, eased in and out as she crosses.
+  1. Ed, 2026-10-29: "the overall lighting palette should be an eerie blue/green; this is to contrast with the bright and warm post-soundsystem lighting"
+- **`light.spooky.wildGlow.mix`**: How far her glow is cooled in the wild (0 her own colour everywhere).
+- **`light.spooky.wildGlow.colour`**: The colour (0-255) her glow cools toward in the wild.
+- **`light.spooky.wildGlow.ease`**: How long (s) her glow takes to cool or warm as she crosses into or out of the party's ground.
 
 | knob | type | range |
 |---|---|---|
@@ -4047,6 +4065,9 @@ Code: `render/mood.ts`
 | `light.spooky.ambientHue` | number | 0 to … |
 | `light.spooky.ambient` | number | 0 to … |
 | `light.spooky.unlit` | number | 0 to … |
+| `light.spooky.wildGlow.mix` | number | 0 to … |
+| `light.spooky.wildGlow.colour` | array of number |  |
+| `light.spooky.wildGlow.ease` | number | 0 to … |
 | `light.spooky.moonHue` | number | 0 to … |
 | `light.spooky.moonSat` | number | 0 to … |
 | `light.spooky.moon` | number | 0 to … |

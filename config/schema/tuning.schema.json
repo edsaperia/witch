@@ -7079,7 +7079,7 @@
                       "minimum": 0
                     }
                   },
-                  "description": "The wisps' colours (0-255), a wisp each in turn: pale blue, green and white."
+                  "description": "The wisps' colours (0-255), a wisp each in turn: blue, green and teal."
                 },
                 "radius": {
                   "type": "number",
@@ -7140,6 +7140,42 @@
                   "type": "number",
                   "minimum": 0,
                   "description": "How many fading motes trail behind each wisp."
+                },
+                "fill": {
+                  "type": "object",
+                  "properties": {
+                    "colour": {
+                      "type": "array",
+                      "items": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "description": "The clearing's moonlight colour (0-255)."
+                    },
+                    "reach": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "How far (m) the clearing's moonlight reaches."
+                    },
+                    "strength": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "How bright the clearing's moonlight is (0 none)."
+                    },
+                    "height": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "How high (m) over the stump the clearing's moonlight hangs."
+                    }
+                  },
+                  "required": [
+                    "colour",
+                    "reach",
+                    "strength",
+                    "height"
+                  ],
+                  "additionalProperties": false,
+                  "description": "The wild clearing's own dim teal moonlight over the stump's middle."
                 }
               },
               "required": [
@@ -7157,7 +7193,8 @@
                 "lightRange",
                 "breathe",
                 "bright",
-                "trail"
+                "trail",
+                "fill"
               ],
               "additionalProperties": false,
               "description": "A wild stump's will-o'-the-wisps, drifting round its clearing before its soundsystem, in place of its own light."
@@ -11511,7 +11548,8 @@
         },
         "stack": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "description": "The light the bottom sigil of her stack throws from over her hat, in its colour (0 none)."
         },
         "stackReach": {
           "type": "number",
@@ -11799,6 +11837,36 @@
               "type": "number",
               "minimum": 0,
               "description": "How dark the forest is where nothing lights it: the ambient and the moonlight on ground, trees, bushes and creatures times this, while the lights (her glow, the party's, fires, lava, runestones, sigils) stay as they are (1 as before)."
+            },
+            "wildGlow": {
+              "type": "object",
+              "properties": {
+                "mix": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How far her glow is cooled in the wild (0 her own colour everywhere)."
+                },
+                "colour": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "description": "The colour (0-255) her glow cools toward in the wild."
+                },
+                "ease": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How long (s) her glow takes to cool or warm as she crosses into or out of the party's ground."
+                }
+              },
+              "required": [
+                "mix",
+                "colour",
+                "ease"
+              ],
+              "additionalProperties": false,
+              "description": "Her glow cooled toward a teal while she's in an area the party hasn't reached, eased in and out as she crosses."
             },
             "moonHue": {
               "type": "number",
@@ -12572,6 +12640,7 @@
             "ambientHue",
             "ambient",
             "unlit",
+            "wildGlow",
             "moonHue",
             "moonSat",
             "moon",
