@@ -60,6 +60,7 @@ says what each note covers.
 - Sides and sizes
 - Stone stack
 - Spell spot
+- Sigil motes
 - Cast ring
 - Conversion
 - Chains
