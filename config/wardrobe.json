@@ -55,8 +55,8 @@
     ] },
     "bag": { "frame": "top", "label": "Bag", "colour": ["satchel"], "items": [
       { "id": "satchel", "name": "Satchel", "stat": "steady throws, a little homing", "invites": { "cooldown": 1, "range": 1, "homing": 1.5, "homingCone": 1.5 }, "set": { "accessories.satchel": true, "accessories.bumbag": false, "accessories.purse": false }, "start": true },
-      { "id": "bumbag", "name": "Quick bag", "stat": "faster throws, shorter reach", "invites": { "cooldown": 0.76, "range": 0.76 }, "set": { "accessories.satchel": false, "accessories.bumbag": true, "accessories.purse": false }, "start": true },
-      { "id": "purse", "name": "Far purse", "stat": "slower throws, longer reach", "invites": { "cooldown": 1.27, "range": 1.3 }, "set": { "accessories.satchel": false, "accessories.bumbag": false, "accessories.purse": true }, "start": true }
+      { "id": "bumbag", "name": "Bumbag", "stat": "faster throws, shorter reach", "invites": { "cooldown": 0.76, "range": 0.76 }, "set": { "accessories.satchel": false, "accessories.bumbag": true, "accessories.purse": false }, "start": true },
+      { "id": "purse", "name": "Purse", "stat": "slower throws, longer reach", "invites": { "cooldown": 1.27, "range": 1.3 }, "set": { "accessories.satchel": false, "accessories.bumbag": false, "accessories.purse": true }, "start": true }
     ] },
     "backpack": { "frame": "top", "label": "Backpack", "colour": ["backpack"], "items": [
       { "id": "backpack-none", "name": "None", "set": { "backpackSize": 0 }, "start": true },

@@ -1,4 +1,4 @@
-// Her bags on her (Ed, 2026-10-29: the Quick bag, the purse and the Far bag, config/wardrobe.json's bag shelf): each standing and
+// Her bags on her (Ed, 2026-10-29: the Bumbag, the purse and the Far bag, config/wardrobe.json's bag shelf): each standing and
 // hovering, towards and away, at the game's size (scale 2), then standing close up (scale 5), labelled.
 //   node tools/witch/bags-sheet.mjs <out.png>
 import { openBrowser } from "../../art/headless.mjs";
@@ -7,7 +7,7 @@ const b = await openBrowser();
 await b.page.goto(b.base + "/art/headless-blank.html").catch(() => {});
 const url = await b.page.evaluate(async () => {
   const G = await import("/art/generator.js"), st = G.defaultStyle(), base = G.genomeLook(G.WITCH_GENOME).look;
-  const bags = [["Satchel (the starter)", { satchel: true }], ["Quick bag (bum bag)", { bumbag: true }], ["Far purse", { purse: true }]];
+  const bags = [["Satchel (the starter)", { satchel: true }], ["Bumbag", { bumbag: true }], ["Purse", { purse: true }]];
   const col = G.witchColours(st, G.DEFAULT_OUTFIT);
   const items = bags.map(([name, on]) => { const look = { ...base, satchel: false, bumbag: false, purse: false, ...on };
     return { name, sp: [{ look, pose: "stand", frame: 0 }, { look, frame: 0 }, { look, frame: 0, facing: "away" }].map(o => G.bake(G.witchSprite(st, o), col, st, st.cOutline)) }; });

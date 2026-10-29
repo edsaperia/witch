@@ -1,5 +1,5 @@
 // The bags' preview scene (ui/bagSim.ts; Ed, 2026-10-29: "little animations of each bag \"firing\""): the real 💌 rules with each
-// bag's stats, so the previews show the bags as they play: the Quick bag throws most often, the far purse least, every letter gives
+// bag's stats, so the previews show the bags as they play: the Bumbag throws most often, the Purse least, every letter gives
 // out at its bag's reach, letters land on the creatures, and the loop starts over the same.
 import { describe, expect, it } from "vitest";
 import { BagSim, SCENE } from "./bagSim";
@@ -21,14 +21,14 @@ function loop(bag: string) {
 }
 
 describe("a bag's preview", () => {
-  it("throws at its bag's rate: the Quick bag most, the far purse least", () => {
+  it("throws at its bag's rate: the Bumbag most, the Purse least", () => {
     const n = Object.fromEntries(BAGS.map(b => [b.id, loop(b.id).thrown]));
     expect(n.bumbag).toBeGreaterThan(n.satchel);
     expect(n.satchel).toBeGreaterThan(n.purse);
     for (const b of BAGS) { const every = bagTuning(TUNING, b.id).invites.cooldown; expect(n[b.id], b.id).toBeGreaterThanOrEqual(3 * Math.floor((SCENE.loop / 3 - SCENE.wait) / every)); }
   });
 
-  it("gives out at its bag's reach, landing letters on the creatures in reach: the far one only for the far purse", () => {
+  it("gives out at its bag's reach, landing letters on the creatures in reach: the far one only for the Purse", () => {
     for (const b of BAGS) {
       const r = loop(b.id), reach = bagTuning(TUNING, b.id).invites.range;
       expect(r.far, b.id).toBeLessThanOrEqual(reach + 1);
