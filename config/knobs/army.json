@@ -106,6 +106,48 @@
     "invites.fireSlow": {
       "what": "her ground speed while firing, times this."
     },
+    "invites.inaccuracy": {
+      "what": "degrees either side of her aim each 💌 may go (a fixed hash of its number, so the same throws go the same ways); 0, dead straight, and a bag adds its own (config/wardrobe.json invitesAdd).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "For things with rapid rate of fire or shot-gun like clusters, we can also have accuracy/spread"
+        }
+      ]
+    },
+    "invites.bloomPer": {
+      "what": "degrees more inaccuracy each volley while she keeps firing (the bloom); 0, none, and a bag adds its own."
+    },
+    "invites.bloomDecay": {
+      "what": "degrees a second the bloom falls back by."
+    },
+    "invites.bloomMax": {
+      "what": "the most degrees the bloom can reach."
+    },
+    "invites.pierce": {
+      "what": "how many more creatures a 💌 flies on through after the first it lands on, each a hit as any letter's; 0, it stops at the first, and a bag adds its own (config/wardrobe.json invitesAdd).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "pierce, yes"
+        }
+      ]
+    },
+    "invites.chain": {
+      "what": "how many hops a spent 💌 makes on to the nearest other invitable creature within chainRange metres (never one it has landed on, nor a stunned one), each a hit as any letter's; 0, none, and a bag adds its own (config/wardrobe.json invitesAdd).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "chain"
+        }
+      ]
+    },
+    "invites.chainRange": {
+      "what": "how far (m) a chained 💌 looks for the next creature to hop to."
+    },
     "invites.linger": {
       "what": "a 💌 that met no one rests where it came down this many seconds, fading over the last lingerFade, at most lingerMax at once (drawn only: it's no hit).",
       "decisions": [
@@ -126,6 +168,37 @@
         }
       ],
       "notes": "a 💌 in flight lies flat and turns about the upright this many times a second (drawn only); when it lands it stops and lies flat."
+    },
+    "invites.impact": {
+      "what": "how a 💌 landing on a creature feels (drawn only): a white flash for flash seconds, a squash of squash springing back over squashSecs, its ring slot popping in by pop over popSecs, and hitstop seconds of held picture on the 💌 that fills the ring.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "invitation impacts feel unsatisfying",
+          "rest": "full hit feedback for a 💌 landing on a creature: a white flash, a little squash, its ring slot popping in, a thunk rising as the ring fills, a hitstop on the 💌 that fills it; no flash and a gentler squash with reduce-flashing on"
+        }
+      ],
+      "links": [
+        "src/render/impact.ts",
+        "src/render/comfort.ts"
+      ],
+      "notes": "With reduce-flashing on there's no flash and the squash is gentle instead. The hitstop holds the picture only (the last frame kept, starting from the frame that shows the flash); the rules run on."
+    },
+    "invites.cheer": {
+      "what": "one won over by her 💌s celebrates secs seconds by its body (render/cheer.ts), out of every fight meanwhile, a burst of that many hearts (hearts) off it.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "when a creature is won over ... it celebrates for about 1 s in a way that suits its body type",
+          "rest": "hoppers a jump-spin, four-legged a roll-over, flyers a loop, the rest a wiggle-dance; hearts burst, the happy sting, its sigil flipping to the friends' colour with a pop; out of every fight meanwhile (a short rules hold)"
+        }
+      ],
+      "links": [
+        "src/render/cheer.ts",
+        "src/rules/affection.ts"
+      ]
     },
     "invites.orbit": {
       "what": "the 💌 ring circles a creature at scale times its body radius (movement.json bodies) plus gap metres, at least min, and at least height times its drawn height (to its top as drawn) plus gap, so it rings the creature you see at any size; wider still when it holds many.",

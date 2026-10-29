@@ -106,14 +106,14 @@ describe("guidance pins", () => {
   });
 
   it("something new, newest first, till she's been to it; never the map table during the night, new islands or not (Ed, 2026-10-26: \"You don't see it all night\")", () => {
-    const g = up(true), s: GuideSave = { unseen: [{ kind: "part", id: "p", at: "broomBay" }, { kind: "hat", id: "h", at: "hats" }] };
+    const g = up(true), s: GuideSave = { unseen: [{ kind: "part", id: "p", at: "lathe" }, { kind: "hat", id: "h", at: "hats" }] };
     expect(of(g, s, ["tiger", "lion"])).toEqual({ kind: "hat", target: { object: "hats" } });
-    standAt(g, "lathe");
+    standAt(g, "bags");
     expect(seeGuide(g, 0, s)).toBe(false);
     standAt(g, "hats");
     expect(seeGuide(g, 0, s)).toBe(true);
-    expect(of(g, s, ["tiger", "lion"])).toEqual({ kind: "part", target: { object: "broomBay" } });
-    standAt(g, "broomBay"); seeGuide(g, 0, s);
+    expect(of(g, s, ["tiger", "lion"])).toEqual({ kind: "part", target: { object: "lathe" } });
+    standAt(g, "lathe"); seeGuide(g, 0, s);
     expect(s.unseen).toEqual([]);
     expect(of(g, s, ["tiger", "lion"])?.kind).toBe("decks"); // (islands she hasn't been to: still the decks, not the map table)
   });

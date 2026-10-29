@@ -59,12 +59,26 @@ describe("attacks in the grammar in the real fight", () => {
   });
 
   it("gives every species its own attack by default (step 5): the wild cats' claws flown by the engine, telegraphed", () => {
-    // (20 s: the cats' first claw comes 6 to 14 s in by the seed and the fight's turns, 9.3 s here before their leaps flew on through a
-    // stun and hidden ones made their way round, 2026-10-29, 14 s since: rules/combat.ts)
-    const { g } = arena("wolf*3@2,cat*3@2", null, 20);
+    // (25 s: the cats' first claw came 6 to 14 s in by the seed and the fight's turns, and since the fight styles they flank her and open
+    // with their leap from further out, so it comes 12 to 25 s in: Ed's playtest, 2026-10-29)
+    const { g } = arena("wolf*3@2,cat*3@2", null, 25);
     const S = g.combat.spells!;
     expect(S.stats.bodies[0]).toBeGreaterThan(0);
     expect(S.telegraphs.some(t => t.attack === "species:cat")).toBe(true); // (its warnings: the pool keeps the last ones)
+  });
+
+  it("lets a lone one of a pack kind throw its own attack, not its pack's lunge (Ed's playtest, 2026-10-29: no projectiles seen)", () => {
+    // (a fox alone is a pack of one, its own lunger: its bolt, not the fox pack's bite)
+    const g = newGame(5, TUNING);
+    g.clock.paused = false; g.party.paused = true;
+    setupArena(g, "wolf*3@2,fox*1@2");
+    const fox = g.arena!.ids.find(id => g.creatures[id].species === "fox")!;
+    let bolts = 0; // (the engine's events are each step's)
+    for (let i = 0; i < 15 / STEP; i++) {
+      g.witches[0].health.hp = 1e6; stepGame(g, idle, STEP);
+      for (const e of g.combat.spells?.events ?? []) if (e.kind === "release" && e.attack === "species:fox" && e.source === fox) bolts++;
+    }
+    expect(bolts).toBeGreaterThan(0);
   });
 
   it("leaves a fight with no attack in the grammar as it was (the old attacks: ?attacks=old)", () => {

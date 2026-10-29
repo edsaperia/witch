@@ -79,6 +79,11 @@ export interface Creature {
   /** Burrowed (the mole, Stage 5): under the ground until, untouchable. */
   burrow?: { until: number };
   /** Leaping (the toad, Stage 5): from, to, when it took off and lands, how high. */
+  /** A hopper's bound (Ed, 2026-10-29: "Enemies that move in big hops were fun to fight"; rules/movement.ts stepHop): from (fx, fz)
+   *  to (tx, tz), leaving the ground at `at` and landing at `lands`, `height` m at its top; harmless, its way of moving in a fight. */
+  hop?: { fx: number; fz: number; tx: number; tz: number; at: number; lands: number; height: number };
+  /** When a hopper may take its next bound (a beat on the ground between them). */
+  hopNext?: number;
   leap?: { fx: number; fz: number; tx: number; tz: number; at: number; lands: number; height: number; /** whom a pounce has touched on the way (fight.leap.contact) */ hit?: number[]; /** the toad pack's cloud leap: it lands harmless, its cloud coming down (rules/combat/packs.ts) */ cloud?: boolean };
   /** A wild flyer's swoop (the owl, the bat, the raven: rules/movement.ts stepSwoop): circling out of reach, telegraphing, diving at
    *  her and pulling back up. `up` while it's out of reach (no 💌, blow or talk reaches it). */
@@ -110,7 +115,7 @@ export interface Creature {
    *  underground: untouchable, not drawn) till then, coming back down at (tx, tz); in its shell (untouchable) till then; faking a
    *  lunge's tell till then (the fox's feint); and a packmate dug in beside it taking its hits (the badger's cover) till then. */
   packGlow?: number;
-  packHide?: { until: number; tx?: number; tz?: number };
+  packHide?: { until: number; tx?: number; tz?: number; /** when it went into hiding (the view fades it to a shadow from then) */ at?: number };
   packShell?: number;
   /** Its lull's prowl (rules/combat.ts): how far round her (radians) its place has moved since it got there, this lull. */
   packProwl?: number;
@@ -159,6 +164,8 @@ export interface Creature {
   fills?: number[];
   drops?: number;
   ranOff?: boolean;
+  /** Won over just now (Ed, 2026-10-29): celebrating till then, out of every fight (rules/affection.ts; drawn by render/cheer.ts). */
+  cheerUntil?: number;
   /** The invite button held on it (states.leash "hold"): for how long, till when. */
   holdT?: number;
   holdAt?: number;
@@ -275,13 +282,13 @@ export function makeCreature(map: ForestMap, cell: [number, number], level: Leve
     run: undefined, lairX: undefined, lairZ: undefined, homing: undefined, charge: undefined, dug: undefined,
     travelling: undefined, state: undefined, happyAt: undefined, partyLegend: undefined, dazed: undefined,
     dancing: undefined, restlessness: undefined, questOpen: undefined, atStone: undefined, loose: undefined, aims: undefined,
-    dazedUntil: undefined, affection: undefined, affectionAt: undefined, fills: undefined, drops: undefined, ranOff: undefined, holdT: undefined, holdAt: undefined,
+    dazedUntil: undefined, affection: undefined, affectionAt: undefined, fills: undefined, drops: undefined, ranOff: undefined, cheerUntil: undefined, holdT: undefined, holdAt: undefined,
     route: undefined, engagedUntil: undefined, brace: undefined, legend: undefined, moveReadyAt: undefined,
     sprung: undefined, enraged: undefined, asleepAt: undefined, bed: undefined, gone: undefined, beach: undefined, beached: undefined, siege: undefined,
     wanderTo: undefined, circle: undefined, dropped: undefined, healedAt: undefined, healedSmall: undefined, boss: undefined, legendState: undefined,
     stateAt: undefined, quest: undefined, friendly: undefined, asleep: undefined, napUntil: undefined, lulled: undefined,
     wakeUntil: undefined, safeX: undefined, safeZ: undefined, safeR: undefined, watchUntil: undefined, hunting: undefined, taunt: undefined, swoop: undefined, finale: undefined,
-    packGlow: undefined, packHide: undefined, packShell: undefined, packProwl: undefined, feintUntil: undefined, coverBy: undefined, packSync: undefined, packThrow: undefined, mind: undefined, spell: undefined,
+    packGlow: undefined, packHide: undefined, packShell: undefined, packProwl: undefined, feintUntil: undefined, coverBy: undefined, packSync: undefined, packThrow: undefined, mind: undefined, spell: undefined, hop: undefined, hopNext: undefined,
   };
   if (level === LEGEND) { c.boss = true; c.legendState = "asleep"; c.stateAt = 0; }
   return c;
@@ -289,7 +296,7 @@ export function makeCreature(map: ForestMap, cell: [number, number], level: Leve
 
 /** Every optional field of a Creature, in the order makeCreature's literal lists them (one shape for all; creatures.test.ts checks the order). A field added to
  *  Creature and not here fails the typecheck (OptionalMissing). */
-export const CREATURE_OPTIONAL = ["lod", "hp", "hurtAt", "kx", "kz", "slowUntil", "stunUntil", "burrow", "leap", "fight", "fleeUntil", "retreat", "retreatFrom", "fleeX", "fleeZ", "vx", "vz", "run", "lairX", "lairZ", "homing", "charge", "dug", "travelling", "state", "happyAt", "partyLegend", "dazed", "dancing", "restlessness", "questOpen", "atStone", "loose", "aims", "dazedUntil", "affection", "affectionAt", "fills", "drops", "ranOff", "holdT", "holdAt", "route", "engagedUntil", "brace", "legend", "moveReadyAt", "sprung", "enraged", "asleepAt", "bed", "gone", "beach", "beached", "siege", "wanderTo", "circle", "dropped", "healedAt", "healedSmall", "boss", "legendState", "stateAt", "quest", "friendly", "asleep", "napUntil", "lulled", "wakeUntil", "safeX", "safeZ", "safeR", "watchUntil", "hunting", "taunt", "swoop", "finale", "packGlow", "packHide", "packShell", "packProwl", "feintUntil", "coverBy", "packSync", "packThrow", "mind", "spell"] as const satisfies readonly (keyof Creature)[];
+export const CREATURE_OPTIONAL = ["lod", "hp", "hurtAt", "kx", "kz", "slowUntil", "stunUntil", "burrow", "leap", "fight", "fleeUntil", "retreat", "retreatFrom", "fleeX", "fleeZ", "vx", "vz", "run", "lairX", "lairZ", "homing", "charge", "dug", "travelling", "state", "happyAt", "partyLegend", "dazed", "dancing", "restlessness", "questOpen", "atStone", "loose", "aims", "dazedUntil", "affection", "affectionAt", "fills", "drops", "ranOff", "cheerUntil", "holdT", "holdAt", "route", "engagedUntil", "brace", "legend", "moveReadyAt", "sprung", "enraged", "asleepAt", "bed", "gone", "beach", "beached", "siege", "wanderTo", "circle", "dropped", "healedAt", "healedSmall", "boss", "legendState", "stateAt", "quest", "friendly", "asleep", "napUntil", "lulled", "wakeUntil", "safeX", "safeZ", "safeR", "watchUntil", "hunting", "taunt", "swoop", "finale", "packGlow", "packHide", "packShell", "packProwl", "feintUntil", "coverBy", "packSync", "packThrow", "mind", "spell", "hop", "hopNext"] as const satisfies readonly (keyof Creature)[];
 type RequiredKeys = "id" | "species" | "cell" | "level" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ" | "x" | "z" | "tx" | "tz" | "rest" | "speed" | "facing" | "away" | "moving" | "walk" | "seen" | "leashed" | "rand";
 type OptionalMissing = Exclude<keyof Creature, RequiredKeys | (typeof CREATURE_OPTIONAL)[number]>;
 const _everyField: [OptionalMissing] extends [never] ? true : OptionalMissing = true;

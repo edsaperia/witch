@@ -192,7 +192,7 @@ export function cameraPose(c: CameraState, lift: number, t: Tuning): CameraPose 
   // Its distance a share of the start's (on foot, indoors), never further out than the zoom has her: the zoom in and the station's
   // never stacking, so she's never closer than the station frames her (Ed's playtest, 2026-10-23: zoomed close at a station, the two
   // together put the camera a few metres off, her head off the top of the screen).
-  if (Sc && sk > 0) {
+  if (Sc && sk > 0 && !Sc.whole?.on) { // (her whole in the right half instead: render/view/camera.ts)
     const steps = Math.max(1, t.camera.zoomSteps), z0 = steps > 1 ? t.camera.startZoom / (steps - 1) : 0, start = lerp(g.distanceIn, g.distanceOut, z0) * (Hc ? lerp(1, Hc.distance, hk) : 1);
     distance = lerp(distance, Math.min(distance, start * (c.stationDistance ?? Sc.distance)), sk); side += Sc.side * distance * sk; look += (c.stationLook ?? 0) * sk; aim = (c.stationAim ?? 0) * sk;
   }

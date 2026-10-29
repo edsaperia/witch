@@ -37,14 +37,15 @@ export class ScreenShake {
 
   /** The camera's sub-pixel glide (view.subpixel): the snap it took off, given back in whole screen pixels. */
   glide(): { gx: number; gy: number } {
-    const p = this.tuning.pixelSize, s = this.view.subpixel;
-    return { gx: Math.round(s.x * p), gy: Math.round(s.y * p) };
+    // (in whole device pixels: a css pixel at a DPR of 1.25 is 1.25 of them, and the canvas moved by part of one is resampled, blurred)
+    const p = this.view.cssPixel, s = this.view.subpixel, d = typeof devicePixelRatio === "number" && devicePixelRatio > 0 ? devicePixelRatio : 1;
+    return { gx: Math.round(s.x * p * d) / d, gy: Math.round(s.y * p * d) / d };
   }
 
   apply(): void {
     const game = this.game, canvas = this.canvas, W = game.witches[0];
     this.shake.watch(W.health, !!W.ko, this.tuning.witchHealth.hits, game.clock.time);
-    const o = this.shake.offset(game.clock.time, this.tuning.pixelSize);
+    const o = this.shake.offset(game.clock.time, this.view.cssPixel);
     const { gx, gy } = this.glide();
     if (o.amount <= 0) {
       if (gx || gy) { canvas.style.transform = `translate(${gx}px, ${gy}px)`; this.shaken = true; }

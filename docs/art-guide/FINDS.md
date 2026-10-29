@@ -36,8 +36,13 @@ Written from `FIND_KINDS`, so it can't drift: `src/rules/findsList.test.ts` fail
 - edgeseer (`edgeseer`), drawn as `find-hat`
 - routeseer (`routeseer`), drawn as `find-hat`
 
-### bag: found as a bag (1)
+### bag: found as a bag (6)
 
+- tote (`tote`), drawn as `find-bag`
+- duffel (`duffel`), drawn as `find-bag`
+- briefcase (`briefcase`), drawn as `find-bag`
+- clutch (`clutch`), drawn as `find-bag`
+- messenger (`messenger`), drawn as `find-bag`
 - backpack (`backpack`), drawn as `find-bag`
 
 ### part: found as a broom part (9)

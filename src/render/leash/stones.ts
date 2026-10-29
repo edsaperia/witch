@@ -22,6 +22,17 @@ import { groundHeight } from "../height";
 import { SLOT, SLOTS } from "./glyphs";
 import { drawEmbers, legendShine, rankColour, rankKnobs, rankSize, standScale, stoneKnobs } from "./ranks";
 
+/** Each stacked sigil's side as last drawn, and when it last turned (won over: Ed, 2026-10-29); its size times a pop as it flips to
+ *  the friends' colour, swelling and settling over a third of a second (no flash: it's the colour that turns). */
+const sides = new Map<number, { friend: boolean; at: number }>();
+function flipPop(id: number, friend: boolean, time: number): number {
+  const s = sides.get(id);
+  if (!s) { sides.set(id, { friend, at: -9 }); return 1; }
+  if (s.friend !== friend) { s.friend = friend; s.at = time; }
+  const u = (time - s.at) / 0.35;
+  return u >= 0 && u < 1 ? 1 + 0.6 * Math.sin(Math.PI * u) * (1 - u) : 1;
+}
+
 /** A rune stone drawn this frame: its area's key ("cx,cy"), where it stands and its stone's height (m, STONE_FACE of its drawn height;
  *  up its face: the sprites lean back toward the camera, render/sprites.ts uUp, and its column climbs on up that way, in its plane). */
 export interface StoneSpot { key: string; x: number; z: number; top: number }
@@ -94,7 +105,7 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
     V.last.set(st.key, { x: st.x, z: st.z, top: st.top, items: items.map((it, i) => ({ ...it, y: P[i].y, size: P[i].size })) });
     // The column: the friends above the enemies, each side legend lowest, babies on top (stoneStack's order, bottom first).
     const vis = smooth((K.range - Math.hypot(st.x - w.x, st.z - w.z)) / Math.max(1, K.fade));
-    if (vis > 0.01) items.forEach((it, i) => { const h = st.top + P[i].y; sigil(it.id, it.level, st.x, upY(st.x, st.z, h), upZ(st.z, h), P[i].size, vis, rankColour(t, it.level, it.friend)); });
+    if (vis > 0.01) items.forEach((it, i) => { const h = st.top + P[i].y; sigil(it.id, it.level, st.x, upY(st.x, st.z, h), upZ(st.z, h), P[i].size * flipPop(it.id, it.friend, time), vis, rankColour(t, it.level, it.friend)); });
     // The spell's spot: south of the stone, only as she comes near it, and only once it can be cast (castReady: every wild fighter
     // of its area invited; Ed, 2026-10-29).
     const { x: sx, z: sz } = castSpot(st, t), on = smooth((K.far - Math.hypot(w.x - sx, w.z - sz)) / Math.max(0.1, K.far - K.near));

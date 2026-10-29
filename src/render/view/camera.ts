@@ -14,9 +14,25 @@ import { groundHeight, HEIGHT_UNIFORMS } from "../height";
 import { SPRITE_UNIFORMS } from "../sprites";
 import { updateFrustum } from "./culling";
 
+/** At a station (camera.station.whole; Ed, 2026-10-29: "the witch right half of the screen, and she should be nicely centred and
+ *  visible top of hat to bottom of shoes"): the camera's distance made so she, feet to the top of her hat as drawn (last frame's,
+ *  View.witchFeetTop: she stands still at a station), fills the screen's height but `margin` of it above and below, aimed at her
+ *  middle, and the aim put aside so she stands `at` of the screen's width across (the panel the left half: ui/stationPanel.ts),
+ *  eased in and out with the station's own ease (the rules' camera.station, then her aim from her feet below). Her twirl and her
+ *  turn to face us are hers, unchanged. */
+function wholeAtStation(v: View, pose: ReturnType<typeof poseOf>): ReturnType<typeof poseOf> {
+  const S = v.game.tuning.camera.station, W = S?.on ? S.whole : undefined, s = Math.min(1, Math.max(0, v.game.camera.station ?? 0));
+  if (!W?.on || v.fly || s <= 0 || !(v.witchFeetTop > 0) || !(v.witchTall > 0)) return pose;
+  const k = s * s * (3 - 2 * s), tan = Math.tan((v.game.tuning.camera.fov * Math.PI) / 360);
+  const want = v.witchFeetTop / (Math.max(0.2, 1 - 2 * W.margin) * 2 * tan), distance = pose.distance + (want - pose.distance) * k;
+  const across = 2 * distance * tan * (v.width / Math.max(1, v.height)); // (the screen's width in metres where she stands)
+  return { ...pose, distance, tx: pose.tx - (W.at - 0.5) * across * k, aim: (k * v.witchFeetTop) / (2 * v.witchTall) };
+}
+
 /** Places the camera for this frame; returns the camera's up (tilted with its pitch), for the sprites' facing. */
 export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseOf>): THREE.Vector3 {
   const g = v.game, t = g.tuning;
+  pose = wholeAtStation(v, pose);
   const a = (pose.angle * Math.PI) / 180;
   // Camera, snapped to the pixel grid along the screen's axes so the art does not shimmer.
   // Arriving from the sea chart (rules/arrive.ts, app/arrive.ts): the flight's shot in place of hers, its field of view

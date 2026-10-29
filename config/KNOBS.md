@@ -1248,7 +1248,7 @@ Code: `rules/spells.ts`, `docs/backlog/unlocks.md`, `rules/hat.ts`, `config/broo
   Code: `config/broom-parts.json`
 - **`spells.bag`**: her bag, a config/wardrobe.json bag item's id or empty for none, whose invites multiply invites.cooldown and invites.range while she carries it (rules/bags.ts).
   1. Ed, 2026-10-29: "We should start with a choice of two bags; faster rate of fire but shorter range, and slower rate of fire but longer range"
-  The page sets it from her look (localStorage witch.genome, chosen at the bags station; ?bag=starter, quick or far for one load). The Satchel (the starter) throws at the base rate and reach with a little more homing, the Quick bag (bumbag) faster and shorter, the Far purse (purse) slower and further; none, the tuning's own, and no invitations at the desk till she carries one (rules/kit.ts).
+  The page sets it from her look (localStorage witch.genome, chosen at the bags station; ?bag=starter, quick or far for one load). The Satchel (the starter) throws at the base rate and reach with a little more homing, the Bumbag faster and shorter, the Purse slower and further; none, the tuning's own, and no invitations at the desk till she carries one (rules/kit.ts).
   Code: `config/wardrobe.json`
 - **`spells.speed`**: the Speed broom, her speed times mult for duration seconds, then cooldown seconds to recharge.
 - **`spells.healing`**: The Healing ring heals her while she stands near it, and the Helmet takes the first blow for her.
@@ -1428,11 +1428,28 @@ The 💌 invite [1], replacing the proximity chat when on: on the ground she sho
   letters to fill it, by level (baby, young, adult); it drains drain of a full meter a second when not being hit, from config/states.json's affection.drainDelay seconds after the last [1]. Every letter that lands on an invitable creature counts [2]: how fast she invites is her firing rate (burst, burstGap, cooldown), nothing adaptive. Enraged creatures and legends block letters; scenery never stops them (Ed).
   Code: `config/states.json`
 - **`invites.fireSlow`**: her ground speed while firing, times this.
+- **`invites.inaccuracy`**: degrees either side of her aim each 💌 may go (a fixed hash of its number, so the same throws go the same ways); 0, dead straight, and a bag adds its own (config/wardrobe.json invitesAdd).
+  1. Ed, 2026-10-29: "For things with rapid rate of fire or shot-gun like clusters, we can also have accuracy/spread"
+- **`invites.bloomPer`**: degrees more inaccuracy each volley while she keeps firing (the bloom); 0, none, and a bag adds its own.
+- **`invites.bloomDecay`**: degrees a second the bloom falls back by.
+- **`invites.bloomMax`**: the most degrees the bloom can reach.
+- **`invites.pierce`**: how many more creatures a 💌 flies on through after the first it lands on, each a hit as any letter's; 0, it stops at the first, and a bag adds its own (config/wardrobe.json invitesAdd).
+  1. Ed, 2026-10-29: "pierce, yes"
+- **`invites.chain`**: how many hops a spent 💌 makes on to the nearest other invitable creature within chainRange metres (never one it has landed on, nor a stunned one), each a hit as any letter's; 0, none, and a bag adds its own (config/wardrobe.json invitesAdd).
+  1. Ed, 2026-10-29: "chain"
+- **`invites.chainRange`**: how far (m) a chained 💌 looks for the next creature to hop to.
 - **`invites.linger`**: a 💌 that met no one rests where it came down this many seconds, fading over the last lingerFade, at most lingerMax at once (drawn only: it's no hit).
   1. Ed's playtest, 2026-10-06: "invitations should sit on the ground for a little while before they fade away"
 - **`invites.spin`**: How fast a 💌 spins in flight.
   1. Ed, 2026-10-06: "the envelopes should spin like a frisbee"
   a 💌 in flight lies flat and turns about the upright this many times a second (drawn only); when it lands it stops and lies flat.
+- **`invites.impact`**: how a 💌 landing on a creature feels (drawn only): a white flash for flash seconds, a squash of squash springing back over squashSecs, its ring slot popping in by pop over popSecs, and hitstop seconds of held picture on the 💌 that fills the ring.
+  1. Ed, 2026-10-29: "invitation impacts feel unsatisfying" (full hit feedback for a 💌 landing on a creature: a white flash, a little squash, its ring slot popping in, a thunk rising as the ring fills, a hitstop on the 💌 that fills it; no flash and a gentler squash with reduce-flashing on)
+  With reduce-flashing on there's no flash and the squash is gentle instead. The hitstop holds the picture only (the last frame kept, starting from the frame that shows the flash); the rules run on.
+  Code: `src/render/impact.ts`, `src/render/comfort.ts`
+- **`invites.cheer`**: one won over by her 💌s celebrates secs seconds by its body (render/cheer.ts), out of every fight meanwhile, a burst of that many hearts (hearts) off it.
+  1. Ed, 2026-10-29: "when a creature is won over ... it celebrates for about 1 s in a way that suits its body type" (hoppers a jump-spin, four-legged a roll-over, flyers a loop, the rest a wiggle-dance; hearts burst, the happy sting, its sigil flipping to the friends' colour with a pop; out of every fight meanwhile (a short rules hold))
+  Code: `src/render/cheer.ts`, `src/rules/affection.ts`
 - **`invites.orbit`**: the 💌 ring circles a creature at scale times its body radius (movement.json bodies) plus gap metres, at least min, and at least height times its drawn height (to its top as drawn) plus gap, so it rings the creature you see at any size; wider still when it holds many.
   1. Ed, 2026-10-28: "the orbits are smaller than the size of the creatures; their size should adjust depending on how large the creatures are"
   2. Ed's playtest, 2026-10-06: "Invitation orbits are too tight around the creature"
@@ -1454,6 +1471,13 @@ The 💌 invite [1], replacing the proximity chat when on: on the ground she sho
 | `invites.homingRange` | number | 0 to … |
 | `invites.multiShot` | number | 0 to … |
 | `invites.spread` | number | 0 to … |
+| `invites.inaccuracy` | number | 0 to … |
+| `invites.bloomPer` | number | 0 to … |
+| `invites.bloomDecay` | number | 0 to … |
+| `invites.bloomMax` | number | 0 to … |
+| `invites.pierce` | number | 0 to … |
+| `invites.chain` | number | 0 to … |
+| `invites.chainRange` | number | 0 to … |
 | `invites.radius` | number | 0 to … |
 | `invites.amount` | number | 0 to … |
 | `invites.hits` | array of number |  |
@@ -1463,6 +1487,15 @@ The 💌 invite [1], replacing the proximity chat when on: on the ground she sho
 | `invites.lingerFade` | number | 0 to … |
 | `invites.lingerMax` | number | 0 to … |
 | `invites.spin` | number | 0 to … |
+| `invites.impact.flash` | number | 0 to … |
+| `invites.impact.squash` | number | 0 to … |
+| `invites.impact.gentle` | number | 0 to … |
+| `invites.impact.squashSecs` | number | 0 to … |
+| `invites.impact.pop` | number | 0 to … |
+| `invites.impact.popSecs` | number | 0 to … |
+| `invites.impact.hitstop` | number | 0 to … |
+| `invites.cheer.secs` | number | 0 to … |
+| `invites.cheer.hearts` | number | 0 to … |
 | `invites.orbit.scale` | number | 0 to … |
 | `invites.orbit.gap` | number | 0 to … |
 | `invites.orbit.min` | number | 0 to … |
@@ -1647,6 +1680,7 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
 | `leash.ranks.dotsPerRow` | number | 0 to … |
 | `leash.ranks.stoneGlow` | number | 0 to … |
 | `leash.ranks.standScale` | number | 0 to … |
+| `leash.ranks.bold` | boolean |  |
 | `leash.ranks.stones.range` | number | 0 to … |
 | `leash.ranks.stones.fade` | number | 0 to … |
 | `leash.ranks.stones.size` | number | 0 to … |
@@ -1794,6 +1828,12 @@ How creatures fight: who goes for whom, how fast they run and chase, and how muc
 Combat (Stage 4; the attacks themselves are data in config/combat.json; lengths and speeds at the fight's scale: see fight). Wild creatures attack party animals of other kinds within aggro metres. They go for the witch on the ground as soon as she's in their area or within their attack's range [1], and let her go when she rises to the treetops, or once she's out of their area, out of their range and at least witchLose metres away; then they walk back to their spot. The one she's inviting holds its fire on her (its friends don't). Party animals following her take on what attacks her or her party; parked ones (at a sigil) guard within guard.radius of it. Babies are never attacked, by either side. Marching on a soundsystem, its own area's or marching on after a fall, a creature moves at marchShare of its top (fight) speed: its movement profile's, else fightRun, a legend legendRun [2]. Against a soundsystem or speaker, charging kinds don't charge and swoopers don't swoop: they land and use their ordinary attack [3]. A beaten creature, wild or party, runs off the map at fleeMult times its speed and is gone for good [4]; a party animal is lost for the run. A soundsystem has soundsystemHealth, passive, and is hit within soundsystemRadius metres: sieges should outlast the wave gap. A soundsystem has 500 [5]. Home is its ring of speakers [6], each a soundsystem of speakerHealth, hit within speakerRadius metres, the besiegers going for the nearest standing one; home falls when every one has (its old homeHealth 8000 and homeRadius 9 gone).
 Code: `config/combat.json`, `rules/speakers.ts`
 
+- **`combat.packs.shadow`**: A pack member hiding in its lull (in the trees, underground, under water, in the branches, or scattered) is drawn as a shadow of itself, not left out.
+  1. Ed, 2026-10-29: "'hiding' maybe should look like the animal becoming a shadow (dark and transparent), rather than teleporting"
+  Hiding looks like a shadow [1]: while it's hidden (and can't be hit) it's drawn as its own sprite darkened by shade (0 its own colours, 1 black) at opacity, running round to where it comes back, fading from solid to shadow over fade seconds as it hides and back as it comes out (render/view/creatures.ts).
+- **`combat.packs.shadow.shade`**: How dark: 0 its own colours, 1 black.
+- **`combat.packs.shadow.opacity`**: How opaque the shadow is (0 invisible, 1 solid).
+- **`combat.packs.shadow.fade`**: Seconds to turn from solid to shadow as it hides, and back as it comes out.
 - **`combat.packs`**: Pack kinds fight in combos (the nearest lunges, the ranged fire where she'd dodge, one behind her throws its special) and fall back between them.
   1. Ed, 2026-10-19: docs/backlog/combat.md, build step 1
   2. Ed, 2026-10-20: "Turn pack combat on by default"
@@ -1820,6 +1860,9 @@ Code: `config/combat.json`, `rules/speakers.ts`
 | knob | type | range |
 |---|---|---|
 | `combat.packs.on` | boolean |  |
+| `combat.packs.shadow.shade` | number | 0 to … |
+| `combat.packs.shadow.opacity` | number | 0 to … |
+| `combat.packs.shadow.fade` | number | 0 to … |
 | `combat.aggro` | number | 0 to … |
 | `combat.witchLose` | number | 0 to … |
 | `combat.leaveArea` | number | 0 to … |
@@ -2606,6 +2649,9 @@ The sound effects, all synthesised in the music's key [1]: volume over the music
   1. Ed, 2026-10-07: the needle dropped and a little scratching
   her decks while she stands behind them (the DJ witch): a stroke of the record on each half-beat of her scratch bars (scratch, its hiss under the stylus hiss, a stroke stroke seconds long) and her "woo-hoo!" when she throws a hand up (hype), and in her routine [1] the tonearm's tick and the needle's drop (needle), times volume.
 - **`sfx.land`**: a 💌 that met no one landing on the ground, a soft puff (at most one every gap seconds).
+- **`sfx.thunk`**: a 💌 landing on a creature, a soft thunk at volume (at most one every gap seconds), its pitch climbing from low to high semitones off the key as the ring fills.
+  1. Ed, 2026-10-29: "invitation impacts feel unsatisfying" (full hit feedback for a 💌 landing on a creature: a white flash, a little squash, its ring slot popping in, a thunk rising as the ring fills, a hitstop on the 💌 that fills it; no flash and a gentler squash with reduce-flashing on)
+  Code: `src/platform/audio/chimes.ts`
 - **`sfx.nope`**: a soft two-note "uh-uh" at volume, at most one each gap seconds.
   1. Ed, 2026-10-07: a sigil refused, put down too near one already down, now heard and not drawn
 - **`sfx.alarm`**: her phone ringing in the dark, a run of six bright plucks at volume, rung again every gap seconds while it rings.
@@ -2751,6 +2797,10 @@ The sound effects, all synthesised in the music's key [1]: volume over the music
 | `sfx.spell.burst` | number | 0 to … |
 | `sfx.land.volume` | number | 0 to … |
 | `sfx.land.gap` | number | 0 to … |
+| `sfx.thunk.volume` | number | 0 to … |
+| `sfx.thunk.gap` | number | 0 to … |
+| `sfx.thunk.low` | number |  |
+| `sfx.thunk.high` | number | 0 to … |
 | `sfx.nope.volume` | number | 0 to … |
 | `sfx.nope.gap` | number | 0 to … |
 | `sfx.thud.volume` | number | 0 to … |
@@ -3238,6 +3288,14 @@ Near-isometric on the ground, after Transistor; the game opens close in on the w
   2. Ed's playtest, 2026-10-23: aimed by metres from her feet, her head went off the top of the screen up close; by her height it stays on the part chosen at any zoom
   for the part of her the row in focus is about (config/wardrobe.json's frame: head, hat, top, legs, feet, broom; board, the Workshop's pegboard, the wall behind her, so aimed up over her to it), aimed aim of her height (as drawn: 0 her feet, 1 the top of her hat) up her and look metres higher (a thing by her: the board, the broom), and its distance times distance in place of the station's own, eased from part to part as the cursor moves [2].
   Code: `config/wardrobe.json`
+- **`camera.station.whole`**: At a dressing station the camera frames her whole, top of her hat to the soles of her shoes, in the right half of the screen while the panel takes the left half.
+  1. Ed, 2026-10-29: "Menus should be left half of the screen, and the witch right half of the screen, and she should be nicely centred and visible top of hat to bottom of shoes."
+  margin is the share of the screen's height left clear above and below her; at is where across the screen's width she stands (0.75: the right half's middle). On, it replaces distance, side, aim and parts (the zoom on the part of her being chosen), which stay for it off.
+  Code: `src/render/view/camera.ts`, `src/ui/stationPanel.ts`
+- **`camera.station.dim`**: How dark the picture behind her goes while she's framed at a station, so she stands out: 0 leaves it as it is, 1 makes it black.
+  1. Ed, 2026-10-29: "When the witch opens a station, make the background behind her darker so that she stands out more clearly"
+  a black wash over the whole picture, eased in with the framing, and her drawn again over it at full light; the panel's own wash on the left half is separate (ui/stationPanel.ts).
+  Code: `src/render/stationBackdrop.ts`
 
 | knob | type | range |
 |---|---|---|
@@ -3284,6 +3342,10 @@ Near-isometric on the ground, after Transistor; the game opens close in on the w
 | `camera.house.distance` | number | 0 to … |
 | `camera.house.ease` | number | 0 to … |
 | `camera.station.on` | boolean |  |
+| `camera.station.whole.on` | boolean |  |
+| `camera.station.whole.margin` | number | 0 to … |
+| `camera.station.whole.at` | number | 0 to … |
+| `camera.station.dim` | number | 0 to … |
 | `camera.station.distance` | number | 0 to … |
 | `camera.station.side` | number |  |
 | `camera.station.ease` | number | 0 to … |
@@ -3598,6 +3660,17 @@ Finding wild creatures in the dark (Ed, v244: 'quite hard to see in the forest..
 | `find.ambient` | number | 0 to … |
 | `find.moonHue` | number | 0 to … |
 | `find.moonSat` | number | 0 to … |
+
+### `pixels`
+
+The picture's pixels on the screen.
+
+- **`pixels.snap`**: Each of the picture's pixels drawn a whole number of the screen's own pixels, the pixel size rounded to the nearest (render/view.ts resize; ?snap=0 off).
+  1. Ed, 2026-10-29: "the pixels are just hard to read" (via the coordinator: measured at his 1.25 DPR as 3.75 device pixels a pixel, drawn 3 and 4 wide by turns (previews/ed/blur/); Ed picked rounding to the nearest)
+
+| knob | type | range |
+|---|---|---|
+| `pixels.snap` | boolean |  |
 
 ## Light
 
@@ -4361,12 +4434,15 @@ blurs the top and bottom of the screen so the forest looks like a miniature.
   1. Ed, 2026-10-27: "stacks should not be affected by the tilt shift" (render/post.ts Post.sharp)
   Code: `render/post.ts`
 - **`tiltShift.strength`**: the blur at the screen's edges, in pixels.
+  1. Ed, 2026-10-29: "reduce the tilt shift effect at top and bottom by 50%" (via the coordinator, after the art director's measurement of "the pixels are just hard to read" (previews/ed/blur/); 1.5 → 0.75)
 - **`tiltShift.band`**: the height of the sharp band (0-1 of the screen).
 - **`tiltShift.centre`**: where it sits (0 top, 0.5 middle, 1 bottom).
 - **`tiltShift.treetop`**: A stronger miniature-world blur when she's up in the treetops.
   1. Ed, 2026-10-06: "reduce the intensity of the tilt-shift effect" (both halved and their sharp bands widened)
   2. Ed: "the tilt shift isn't blurring the sky - the tilt shift effect has to be applied after the bend shader rather than before" (round 12)
   the strength and band over the treetops (Ed, v160: a stronger miniature look there), blended in as she rises [1]; ?tilt=<strength>,<band> tries treetop values live; It blurs at the low resolution, before the pixels are scaled up; ?tilt=off turns it off. The night sky over the bend is blurred with the rest, the tilt-shift the last thing done to the finished, bent picture [2].
+- **`tiltShift.treetop.strength`**: The tilt-shift's blur over the treetops, in pixels, blended in by lift.
+  1. Ed, 2026-10-29: "reduce the tilt shift effect at top and bottom by 50%" (via the coordinator, after the art director's measurement of "the pixels are just hard to read" (previews/ed/blur/); 3 → 1.5)
 
 | knob | type | range |
 |---|---|---|

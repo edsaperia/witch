@@ -24,14 +24,14 @@
       "pr": 249,
       "group": "Stars through the tilt-shift",
       "label": "Tilt-shift from the treetops",
-      "note": "The blur toward the top and bottom of the screen over the treetops (the ground's is 1.5).",
+      "note": "The blur toward the top and bottom of the screen over the treetops (the ground's is 1.5). Halved to 1.5 (Ed, 2026-10-29: \"reduce the tilt shift effect at top and bottom by 50%\").",
       "control": {
         "type": "slider",
         "min": 0,
         "max": 8,
         "step": 0.5
       },
-      "default": 3,
+      "default": 1.5,
       "apply": {
         "knob": "tiltShift.treetop.strength"
       }

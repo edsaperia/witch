@@ -86,6 +86,8 @@ export function tuningFromLink(params: URLSearchParams) {
   // ?tilt=<strength>,<band>: the treetops' tilt-shift, to try values live (e.g. ?tilt=6,0.28).
   else if (tilt && /^[\d.]+(,[\d.]+)?$/.test(tilt)) { const [st, bd] = tilt.split(",").map(Number); tuning.tiltShift.on = true; tuning.tiltShift.treetop.strength = st; if (bd > 0) tuning.tiltShift.treetop.band = bd; }
   if (params.get("bloom") === "off") tuning.bloom.on = false;
+  // ?snap=0: the picture's pixels as the pixel size has them, not snapped to whole device pixels (render/view.ts resize), to compare.
+  if (params.get("snap") === "0") tuning.pixels = { ...tuning.pixels, snap: false };
   if (params.get("moonbeams") === "on") tuning.moonbeams = 1;
   const witchesParam = Number(params.get("witches")); // debug: this many more party witches
   if (witchesParam > 0) tuning.partyWitches = { ...tuning.partyWitches, debugExtra: Math.min(500, Math.floor(witchesParam)) };
@@ -226,9 +228,13 @@ export function tuningFromLink(params: URLSearchParams) {
   tuning.paths = { ...tuning.paths, fingerposts: true };
   // Rank sigils (render/leash/ranks.ts; the default since Ed, 2026-10-27: "go ahead and push all the new sigil work"): every leash
   // sigil its bare glyph in its rank's colour with embers, the rune stones in their areas' top ranks', and the leash hex grid at
-  // leash.ranks.hex metres (6). ?sigils=old brings back the old sigils and their 4 m grid (OLD_HEX); ?sigils=new, the default.
+  // leash.ranks.hex metres (6). ?sigils=old brings back the old sigils and their 4 m grid (OLD_HEX); ?sigils=new, the default;
+  // ?sigils=bold, rank sigils drawn bold (leash.ranks.bold, the default since every species has one: Ed, 2026-10-29); ?sigils=thin,
+  // rank sigils in their monoline glyphs, to compare.
   { const v = params.get("sigils"), R = tuning.leash.ranks;
     if (R && (v === "new" || v === "old")) tuning.leash = { ...tuning.leash, ranks: { ...R, on: v === "new" } };
+    if (R && v === "bold") tuning.leash = { ...tuning.leash, ranks: { ...R, on: true, bold: true } }; // (the bold sigils, where a species has one: art/sigils.js BOLD)
+    if (R && v === "thin") tuning.leash = { ...tuning.leash, ranks: { ...R, on: true, bold: false } };
     if (R && tuning.leash.hex) tuning.leash = { ...tuning.leash, hex: { ...tuning.leash.hex, size: tuning.leash.ranks!.on ? R.hex : OLD_HEX } }; }
   applyKnobParams(tuning, params); // (Ed's decisions panel: its knobs' choices kept in the URL as d_<id>)
   // The sea chart's save (app/chartSave.ts): the islands she's found, so the night's legends favour the others (rules/rosters.ts).
@@ -245,7 +251,7 @@ export function tuningFromLink(params: URLSearchParams) {
   // Her broom's parts (app/broomSave.ts; the Workshop, Ed 2026-10-23): those fitted at the bay on this browser, or
   // ?parts=missile,ladder,nozzles for one load (any parts, found or not: for testing). Her broom's spell is the set they complete.
   { const P = params.get("parts"); tuning.spells = { ...tuning.spells, parts: P !== null ? P : fittedParts(loadBroom().fitted).map(p => p.id).join(",") }; }
-  // Her bag (rules/bags.ts; Ed, 2026-10-29: a Quick bag and a Far bag to choose from): the one her saved look wears (localStorage
+  // Her bag (rules/bags.ts; Ed, 2026-10-29: a Bumbag and a Far bag to choose from): the one her saved look wears (localStorage
   // witch.genome, chosen at the bags station), or ?bag=starter, ?bag=quick, ?bag=far (or a bag item's id; ?bag=none for none) for one load.
   { const B = params.get("bag"), ids: Record<string, string> = { starter: "satchel", quick: "bumbag", far: "purse", none: "" };
     let look: Record<string, unknown> | null = null; try { look = JSON.parse(localStorage.getItem("witch.genome") ?? "null"); } catch { /* storage blocked or spoilt: none */ }

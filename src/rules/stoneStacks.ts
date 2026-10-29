@@ -189,7 +189,9 @@ export function stepCast(g: Game, W: Witch, held: boolean, ht: number, hdt: numb
 export function friendSigils(g: Game, key: string): { c: Creature; slot: number }[] {
   const all: StackEntry[] = [], byId = new Map<number, Creature>();
   for (const c of g.creatures) {
-    if (keyOf(c.cell) !== key || !inStack(c)) continue;
+    // (one whose sigil is in the stack though it's off about its business just now, a happy one walking to its dance: its sigil falls
+    // too, else it'd be left with none, neither in a stack nor on the ground)
+    if (keyOf(c.cell) !== key || !(inStack(c) || (c.atStone && !c.gone && !c.leashed))) continue;
     const friend = c.boss ? c.legendState !== "angry" : stateOf(c) === "happy"; // (an angry legend keeps its sigil)
     all.push({ id: c.id, level: c.boss ? LEGEND : c.level, friend, legend: !!c.boss }); byId.set(c.id, c);
   }
