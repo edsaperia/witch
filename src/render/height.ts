@@ -598,6 +598,24 @@ export function shownOverBend(x: number, y: number, z: number, cam: { x: number;
   return overBendAt(x, y + groundHeight(x, z), z, cam);
 }
 
+const SEEN_STEPS = 16, seenQ = { x: 0, y: 0, z: 0 }, seenG = { x: 0, y: 0, z: 0 };
+/** groundSeen's twin on the CPU (GROUND_SEEN_GLSL): whether nothing of the bent, rolling ground stands between a point `y` metres
+ *  above the ground at (x, z) and `cam`: the bend's horizon (overBendAt), then the hills on the way, marched in SEEN_STEPS steps
+ *  along the line of sight, both bent as drawn. For what is drawn without a depth test, so it hides where the earth would hide it
+ *  (the ley line's dots, render/leash/rainbow.ts; Ed, 2026-10-29: "I can see it through the ground, under the horizon"). */
+export function groundSeenAt(x: number, y: number, z: number, cam: { x: number; y: number; z: number }): boolean {
+  const gy = y + groundHeight(x, z);
+  if (!overBendAt(x, gy, z, cam)) return false;
+  seenQ.x = x; seenQ.y = gy; seenQ.z = z; bendPoint(seenQ);
+  const bx = seenQ.x, by = seenQ.y, bz = seenQ.z;
+  for (let i = 1; i < SEEN_STEPS; i++) {
+    const f = i / SEEN_STEPS, qx = bx + (cam.x - bx) * f, qy = by + (cam.y - by) * f, qz = bz + (cam.z - bz) * f;
+    seenG.x = qx; seenG.y = groundHeight(qx, qz); seenG.z = qz; bendPoint(seenG);
+    if (seenG.y > qy + 0.3) return false;
+  }
+  return true;
+}
+
 /** A point given as height above the ground, lifted onto it and bent (in place): where it is drawn. */
 export function placed<V extends { x: number; y: number; z: number }>(v: V): V {
   v.y += groundHeight(v.x, v.z);

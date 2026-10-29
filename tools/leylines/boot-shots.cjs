@@ -3,13 +3,13 @@
 // render/leylines.ts dotLines, render/leash/rainbow.ts): on a seed, her on the dancefloor with the party spell cast, the boot wound
 // to a moment part way round the home ring (the boot's pulse on the ring, the route branched off it), then to moments after the
 // boot with the wave's spark so many metres along the first link. One still each.
-//   npm run build && node tools/leylines/boot-shots.cjs [out dir]   (SEED=123, SIZE=1280x720, ZOOM=4, OFFSET="6,4" m east and south of the floor's middle where she stands, BOOT="25" s into the boot, AFTER="30,80" m along the first link after it)
+//   npm run build && node tools/leylines/boot-shots.cjs [out dir]   (SEED=123, SIZE=1280x720, ZOOM=4, OFFSET="6,4" m east and south of the floor's middle where she stands, TREETOP=1 up in the treetops there (the world bent: the line toward the horizon), BOOT="25" s into the boot, AFTER="30,80" m along the first link after it)
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const outDir = path.resolve(process.argv[2] || path.join(__dirname, "../../previews/leylines"));
 const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist"));
 const [W, H] = (process.env.SIZE || "1280x720").split("x").map(Number), ZOOM = process.env.ZOOM || "4";
-const BOOT = (process.env.BOOT || "25").split(",").map(Number), AFTER = (process.env.AFTER || "30,80").split(",").map(Number), OFFSET = (process.env.OFFSET || "6,4").split(",").map(Number);
+const BOOT = (process.env.BOOT || "25").split(",").map(Number), AFTER = (process.env.AFTER || "30,80").split(",").map(Number), OFFSET = (process.env.OFFSET || "6,4").split(",").map(Number), TREETOP = process.env.TREETOP === "1";
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".woff2": "font/woff2", ".ogg": "audio/ogg" };
 const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000).toFixed(0)} s]`, ...a);
 (async () => {
@@ -25,7 +25,7 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
     // (the dancefloor's place read off a first load, then loaded there, so the shot loads the art round it)
     await page.goto(`${base}&shot=${encodeURIComponent("object:mapTable")}`);
     await page.waitForFunction(() => window.witch && window.witch.game, null, { timeout: 600000, polling: 500 });
-    const scene = await page.evaluate(o => { const d = window.witch.game.map.dancefloor; return `at:${(d.x + o[0]).toFixed(1)},${(d.z + o[1]).toFixed(1)}`; }, OFFSET);
+    const scene = await page.evaluate(([o, up]) => { const d = window.witch.game.map.dancefloor; return `at:${(d.x + o[0]).toFixed(1)},${(d.z + o[1]).toFixed(1)}${up ? ",treetop" : ""}`; }, [OFFSET, TREETOP]);
     await page.goto(`${base}&shot=${encodeURIComponent(scene)}`);
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 600000, polling: 500 });
     await page.evaluate(() => { window.witch.manual = true; });
