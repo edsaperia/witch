@@ -1,0 +1,182 @@
+[
+ {
+  "area": "moonpool-glade",
+  "biome": "cold rainforest (NW)",
+  "what": "moon pool",
+  "contrast": {
+   "piece": [
+    41,
+    70,
+    104
+   ],
+   "floor": [
+    231,
+    197,
+    119
+   ],
+   "ratio": 5.85,
+   "lighter": false,
+   "hue": 171
+  }
+ },
+ {
+  "area": "snowy-taiga",
+  "biome": "cold (N)",
+  "what": "frozen spring: an ice dome",
+  "contrast": {
+   "piece": [
+    65,
+    121,
+    166
+   ],
+   "floor": [
+    116,
+    95,
+    51
+   ],
+   "ratio": 1.32,
+   "lighter": true,
+   "hue": 166
+  }
+ },
+ {
+  "area": "crags",
+  "biome": "mountains & glaciers (NE)",
+  "what": "moss campion cushion",
+  "contrast": {
+   "piece": [
+    51,
+    99,
+    44
+   ],
+   "floor": [
+    202,
+    161,
+    99
+   ],
+   "ratio": 2.97,
+   "lighter": false,
+   "hue": 76
+  }
+ },
+ {
+  "area": "river-jungle",
+  "biome": "jungle (W)",
+  "what": "rafflesia flower",
+  "contrast": {
+   "piece": [
+    159,
+    41,
+    36
+   ],
+   "floor": [
+    59,
+    47,
+    22
+   ],
+   "ratio": 1.75,
+   "lighter": true,
+   "hue": 38
+  }
+ },
+ {
+  "area": "old-oaks",
+  "biome": "temperate (home)",
+  "what": "great oak stump",
+  "contrast": {
+   "piece": [
+    146,
+    116,
+    78
+   ],
+   "floor": [
+    61,
+    37,
+    18
+   ],
+   "ratio": 3.27,
+   "lighter": true,
+   "hue": 6
+  }
+ },
+ {
+  "area": "cinder-slopes",
+  "biome": "volcanic (E)",
+  "what": "basalt columns",
+  "contrast": {
+   "piece": [
+    82,
+    78,
+    92
+   ],
+   "floor": [
+    27,
+    20,
+    17
+   ],
+   "ratio": 2.25,
+   "lighter": true,
+   "hue": 122
+  }
+ },
+ {
+  "area": "mangrove-pools",
+  "biome": "mangrove swamp (SW)",
+  "what": "giant water-lily pad",
+  "contrast": {
+   "piece": [
+    70,
+    133,
+    57
+   ],
+   "floor": [
+    88,
+    53,
+    28
+   ],
+   "ratio": 2.4,
+   "lighter": true,
+   "hue": 84
+  }
+ },
+ {
+  "area": "savanna",
+  "biome": "hot (S)",
+  "what": "salt pan",
+  "contrast": {
+   "piece": [
+    246,
+    246,
+    240
+   ],
+   "floor": [
+    205,
+    138,
+    76
+   ],
+   "ratio": 2.64,
+   "lighter": true,
+   "hue": 31
+  }
+ },
+ {
+  "area": "red-canyon",
+  "biome": "badlands (SE)",
+  "what": "open geode",
+  "contrast": {
+   "piece": [
+    92,
+    76,
+    67
+   ],
+   "floor": [
+    140,
+    99,
+    59
+   ],
+   "ratio": 1.55,
+   "lighter": false,
+   "hue": 8
+  }
+ }
+]
