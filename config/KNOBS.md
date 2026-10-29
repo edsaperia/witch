@@ -904,6 +904,7 @@ Code: `render/indicator.ts`
 | `pins.vivid` | number | 0 to … |
 | `pins.pulse` | number | 0 to … |
 | `pins.pulseRate` | number | 0 to … |
+| `pins.track` | number | 0 to … |
 
 ### `crownWidth`
 

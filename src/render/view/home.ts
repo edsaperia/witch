@@ -25,7 +25,7 @@ import { ringStoneKey, stumpId } from "../artBuild";
 import type { TrunkShadow } from "../trunkShadows";
 import type { RingSpeaker } from "../lasers";
 import { STONE_FACE } from "../leash/stones";
-import { areaTopRanks, EMPTY_STONE, EMPTY_STONE_LIGHT, rankColour, rankKnobs, stoneKnobs, stoneRank } from "../leash/ranks";
+import { areaTopRanks, asleepLegend, EMPTY_STONE, EMPTY_STONE_LIGHT, rankKnobs, sigilRankColour, stoneKnobs, stoneRank } from "../leash/ranks";
 import { stoneStack } from "../../rules/stoneStacks";
 
 /** The wave numbers' colour over areas the party has reached (spent). */
@@ -119,7 +119,7 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
     if (d < R.lightRange && stumps) {
       const L = R.stump!.light, items = ranked ? stoneStack(g, m.key) : [], C = cardOf(m.cell), ly = (C ? C.up : top) + L.height, lz = m.z + (C ? C.toward : 0);
       let wsum = 0, r = 0, gg = 0, b = 0;
-      for (const it of items) { const wgt = [1, 1.4, 2, 3][Math.max(0, Math.min(3, it.level))], c = rankColour(t, it.level, it.friend); r += c[0] * wgt; gg += c[1] * wgt; b += c[2] * wgt; wsum += wgt; }
+      for (const it of items) { const wgt = [1, 1.4, 2, 3][Math.max(0, Math.min(3, it.level))], c = sigilRankColour(t, it.level, it.friend, asleepLegend(g.creatures[it.id])); r += c[0] * wgt; gg += c[1] * wgt; b += c[2] * wgt; wsum += wgt; }
       // (the mix pushed away from grey, so a won stump's light reads blue rather than washing to white under its own brightness)
       const mr = r / Math.max(wsum, 1e-6), mg = gg / Math.max(wsum, 1e-6), mb = b / Math.max(wsum, 1e-6), grey = (mr + mg + mb) / 3, sat = L.saturate ?? 1.6;
       if (wsum > 0) near.push({ d, l: { x: m.x, y: ly, z: lz, reach: L.reach, rgb: new THREE.Vector3(Math.max(0, grey + (mr - grey) * sat), Math.max(0, grey + (mg - grey) * sat), Math.max(0, grey + (mb - grey) * sat)), strength: L.strength * Math.min(1.4, 0.55 + 0.09 * wsum), shadow: { x: m.x, y: ly, z: m.z, k: 0.8 } } });

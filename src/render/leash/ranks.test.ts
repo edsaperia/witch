@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { TUNING } from "../../rules/tuning";
 import { toEvolve } from "../../rules/berries";
-import { areaTopRanks, dotAt, EMPTY_STONE, legendShine, rankColour, standScale, rankOf, rankSize, shownDots, stoneRank, youthDots, RANKS_DEFAULT } from "./ranks";
+import { areaTopRanks, asleepLegend, crowned, dotAt, EMPTY_STONE, legendShine, rankColour, standScale, rankOf, rankSize, shownDots, sigilRankColour, stoneRank, youthDots, RANKS_DEFAULT } from "./ranks";
+import { crownGlyph, LEGEND_CROWN_W } from "../../../art/generator.js";
 
 describe("rank sigils", () => {
   it("a youth's dots are its berries to adult less the last (eaten at a placed sigil), read from the rules", () => {
@@ -68,5 +69,30 @@ describe("rank sigils", () => {
     expect(stoneRank(top, [2, 0])).toBe(EMPTY_STONE); // (everyone gone, fled, dancing or travelling)
     expect(stoneRank(top, [3, 0])).toBe(EMPTY_STONE);
     expect(stoneRank(top, [5, 5])).toBe(EMPTY_STONE);
+  });
+  it("a sleeping legend's sigil is the baby's purple, neutral; awake, its side's colour again (Ed, 2026-10-29)", () => {
+    const purple = rankColour(TUNING, 0, false);
+    expect(asleepLegend({ boss: true, legendState: "asleep" })).toBe(true);
+    expect(sigilRankColour(TUNING, 3, false, true)).toEqual(purple);
+    expect(sigilRankColour(TUNING, 3, false, true)).toEqual(rankColour(TUNING, 0, true)); // (the one purple, friend or enemy)
+    for (const s of ["restless", "angry", "happy"]) expect(asleepLegend({ boss: true, legendState: s })).toBe(false);
+    expect(asleepLegend({ legendState: "asleep" })).toBe(false); // (a legend's only)
+    expect(sigilRankColour(TUNING, 3, false, false)).toEqual(rankColour(TUNING, 3, false));
+    expect(sigilRankColour(TUNING, 3, true, false)).toEqual(rankColour(TUNING, 3, true));
+  });
+  it("every legend's sigil wears the one crown, no one else's; the crown reads at stack size", () => {
+    expect(crowned({ level: 3 })).toBe(true);
+    expect(crowned({ level: 1, boss: true })).toBe(true);
+    for (const level of [0, 1, 2] as const) expect(crowned({ level })).toBe(false);
+    const C = crownGlyph();
+    expect(C.w).toBe(LEGEND_CROWN_W);
+    const row = (y: number) => Array.from(C.m.subarray(y * C.w, (y + 1) * C.w));
+    expect(row(0).filter(Boolean).length).toBeGreaterThan(0); // (the middle point, tallest)
+    expect(row(0)[0]).toBe(0); expect(row(1)[0]).toBe(1); // (the side points start a row lower)
+    const foot = row(C.h - 1); // (no band: its foot curving up in the middle, Ed, 2026-10-29)
+    expect(foot[C.w / 2] || foot[C.w / 2 - 1]).toBe(0); expect(foot.some(Boolean)).toBe(true);
+    expect(row(C.h - 2).every((v, x) => v || x === 0 || x === C.w - 1)).toBe(true); // (its body whole above the foot)
+    const small = crownGlyph(10);
+    expect(small.w).toBe(10); expect(small.m.some(Boolean)).toBe(true);
   });
 });

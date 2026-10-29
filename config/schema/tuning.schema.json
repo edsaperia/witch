@@ -2330,12 +2330,17 @@
           "type": "number",
           "minimum": 0,
           "description": "How many times a second the morning's guidance pins breathe."
+        },
+        "track": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "gap",
         "plate",
-        "vivid"
+        "vivid",
+        "track"
       ],
       "additionalProperties": false,
       "description": "The HUD's pointers as map pins over their subject (render/indicator.ts): gap is how far (screen pixels) the arrow's tip floats over the subject's drawn top."
