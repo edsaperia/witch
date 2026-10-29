@@ -104,6 +104,14 @@ describe("the line's front (Ed, 2026-10-06: \"Please come up with a better desig
     expect(ley.meshes.filter(m => (m as { isPoints?: boolean }).isPoints).length).toBe(1);
     ley.lap(1, 1.5, 1.5); ley.front(1, 1);
     expect(ley.meshes.filter(m => (m as { isPoints?: boolean }).isPoints).length).toBe(2);
+    // The victory lap's pulse home (rules/win.ts): at the route's links 0.5, half way along the first route link; at -1, home, the
+    // treehouse's front, the ring's link run back (Ed's quick win, 2026-10-29: it stopped at the ring's top).
+    ley.lap(0.5, null, null); ley.front(1, 1);
+    expect(ley.pulseTip!.links).toBeCloseTo(1.5, 6);
+    ley.lap(-1, null, null); ley.front(1, 1);
+    const front = g.map.treehouseFront;
+    expect(ley.pulseTip!.links).toBe(0); expect(Math.hypot(ley.pulseTip!.x - front.x, ley.pulseTip!.z - front.z)).toBeLessThan(0.01);
+    ley.lap(null);
   }, 30000);
 });
 
