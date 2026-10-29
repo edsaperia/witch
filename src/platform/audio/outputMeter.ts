@@ -3,7 +3,7 @@
 // scheduled (musicEngine.stats). An analyser taps every node that reaches the context's destination (the music's
 // master, the legend circle's layer, the sound effects' limiter: summed, as the destination sums them) and, a few
 // times a second, reads the level of what played since the last read. Silence while the mix says the music should be
-// heard is an episode: over MIN_EPISODE seconds, it goes in the playtest log (L) with where she was and the nearest
+// heard is an episode: over MIN_EPISODE seconds, it goes in the playtest log (the pause page's Download log) with where she was and the nearest
 // stall. It also watches the context: its state, its latencies, and its clock against the page's (a stalled audio
 // thread). It measures what the game hands the browser: it can't see the device's volume, the OS mixer or whether
 // speakers are plugged in.

@@ -147,7 +147,7 @@ export class SfxCues {
       else if (e.kind === "hit") {
         S.hit(pan(e.x), k, !!e.spent);
         const m = e.id !== undefined && g.creatures[e.id] ? affectionOf(g).affection(g.creatures[e.id]) ?? undefined : undefined; // (its meter after the hit: rules/affection.ts)
-        if (!e.spent && m !== undefined) S.fill(m, pan(e.x), k);
+        if (!e.spent && m !== undefined) { S.fill(m, pan(e.x), k); S.thunk(m, pan(e.x), k); } // (and its thunk, rising as the ring fills: Ed, 2026-10-29)
         const c = e.id !== undefined ? g.creatures[e.id] : undefined;
         if (c && !e.spent && this.ready(c.id, time, 0.3)) S.reply(voiceOf(c, g.tuning), m ?? 0, pan(e.x), k);
       } else if (e.kind === "happy" && e.id !== undefined) this.flourish(g, e.id, time, k, pan(e.x));

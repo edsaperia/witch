@@ -91,7 +91,7 @@ For the builders, the smoke and bench runs, the repro link and the arenas.
 | `at=<x>,<z>` | The repro link: she starts at this spot (in the treetops with mode=treetop). | 2026-10-14 | app/repro.ts |
 | `attack=<attack as JSON>` | The Fight Arena or a debug arena tries this attack (an attack spec, as JSON) on its pack. | 2026-10-27 | app/fightArena.ts, app/gameParams.ts |
 | `audio=lite` / `audio=full` | The sound's weight for one load: lite sheds the costly parts (platform/audio/shed.ts). | 2026-10-07 | app/sound.ts |
-| `bag=quick` / `bag=far` / `bag=none` / `bag=<bag item id>` | Her bag for one load: the Quick bag (faster 💌s, shorter reach) or the Far bag (slower, further); none, no bag. | 2026-10-29 | app/linkParams.ts |
+| `bag=starter` / `bag=quick` / `bag=far` / `bag=none` / `bag=<bag item id>` | Her bag for one load: the Satchel (the starter: base rate and reach, a little homing), the Quick bag (faster 💌s, shorter reach) or the Far purse (slower, further); none, no bag. | 2026-10-29 | app/linkParams.ts |
 | `cleared=<cx>_<cy>,…` | The repro link: these areas start cleared. | 2026-10-14 | app/repro.ts |
 | `debug` / `debug=cull` / `debug=shadows` / `debug=attack` | The debug overlay and the metre rulers on from the start; cull also tints whatever just appeared or vanished (pops), shadows draws every shadow a flat magenta, and attack blows on the two farthest soundsystems every 10 s (never felling one). | 2026-10-04 | app/keys.ts, app/night.ts, app/playerPick.ts, app/viewParams.ts, main.ts |
 | `decide` | Opens Ed's decisions panel (F2 too). | 2026-10-06 | main.ts, ui/decide.ts |
@@ -148,7 +148,7 @@ Each brings back how something was before a change, to compare against what repl
 | `moonbeams=on` | The moonbeams (off by default). *Decision: Kept when the other compare switches were retired (2026-10-07).* | 2026-10-07 | app/linkParams.ts |
 | `occ=off` | The occlusion fade (what's in front of her drawn see-through) off. | 2026-10-13 | app/linkParams.ts |
 | `seedepth=off` | The see-through pass doesn't write depth, as before. | 2026-10-13 | render/sprites.ts |
-| `sigils=new` / `sigils=old` | Rank sigils and the 6 m leash grid (new, the default), or the old sigils and their 4 m grid. *Decision: Rank sigils are the default (Ed, 2026-10-27: "go ahead and push all the new sigil work").* | 2026-10-27 | app/linkParams.ts |
+| `sigils=new` / `sigils=old` / `sigils=bold` | Rank sigils and the 6 m leash grid (new, the default), or the old sigils and their 4 m grid; bold, the rank sigils drawn bold where a species has its bold sigil (art/sigils.js BOLD). *Decision: Rank sigils are the default (Ed, 2026-10-27: "go ahead and push all the new sigil work").* | 2026-10-27 | app/linkParams.ts |
 | `cast=1` / `cast=0` | The runestone stacks and the soundsystem spell on (1, the default since their view landed) or off (0): off, areas clear by themselves once their wild are gone, as before. *Decision: On by default with Rendering’s view of the stacks (#1378; off till then, the coordinator, 2026-10-28).* | 2026-10-28 | app/linkParams.ts |
 | `wholecull=0` | Quads faded whole drawn in the solid and front passes too, as before. | 2026-10-26 | render/sprites.ts |
 

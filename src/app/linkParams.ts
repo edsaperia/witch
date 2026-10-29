@@ -8,6 +8,7 @@ import { zooCoastsHeld } from "./zooCoasts";
 import { applySet } from "./repro";
 import { loadoutFrom } from "./loadout";
 import { hatsFrom } from "./hatSave";
+import { unlockAll } from "./debugUnlock";
 import { loadBroom } from "./broomSave";
 import { applyOwn } from "./finds";
 import { fittedParts } from "../rules/broomParts";
@@ -225,9 +226,11 @@ export function tuningFromLink(params: URLSearchParams) {
   tuning.paths = { ...tuning.paths, fingerposts: true };
   // Rank sigils (render/leash/ranks.ts; the default since Ed, 2026-10-27: "go ahead and push all the new sigil work"): every leash
   // sigil its bare glyph in its rank's colour with embers, the rune stones in their areas' top ranks', and the leash hex grid at
-  // leash.ranks.hex metres (6). ?sigils=old brings back the old sigils and their 4 m grid (OLD_HEX); ?sigils=new, the default.
+  // leash.ranks.hex metres (6). ?sigils=old brings back the old sigils and their 4 m grid (OLD_HEX); ?sigils=new, the default;
+  // ?sigils=bold, rank sigils drawn bold (leash.ranks.bold) where a species has its bold sigil yet.
   { const v = params.get("sigils"), R = tuning.leash.ranks;
     if (R && (v === "new" || v === "old")) tuning.leash = { ...tuning.leash, ranks: { ...R, on: v === "new" } };
+    if (R && v === "bold") tuning.leash = { ...tuning.leash, ranks: { ...R, on: true, bold: true } }; // (the bold sigils, where a species has one: art/sigils.js BOLD)
     if (R && tuning.leash.hex) tuning.leash = { ...tuning.leash, hex: { ...tuning.leash.hex, size: tuning.leash.ranks!.on ? R.hex : OLD_HEX } }; }
   applyKnobParams(tuning, params); // (Ed's decisions panel: its knobs' choices kept in the URL as d_<id>)
   // The sea chart's save (app/chartSave.ts): the islands she's found, so the night's legends favour the others (rules/rosters.ts).
@@ -240,13 +243,13 @@ export function tuningFromLink(params: URLSearchParams) {
   { const own = params.get("own"); if (own !== null) applyOwn(own); }
   // Her hat's spell (app/loadout.ts): the creator's, kept on this browser, or ?hat=; her hats (app/hatSave.ts; Ed, 2026-10-23: the
   // plain hat hers, the rest found): a saved hat she doesn't own is the plain one.
-  { const L = loadoutFrom(params), hats = hatsFrom(params, L.hat), hat = hats === "*" || L.hat === "none" || hats.split(",").includes(L.hat) ? L.hat : "none"; tuning.spells = { ...tuning.spells, hat, hats }; }
+  { const L = loadoutFrom(params), hats = hatsFrom(params, L.hat), hat = hats === "*" || L.hat === "none" || hats.split(",").includes(L.hat) || unlockAll() ? L.hat : "none"; tuning.spells = { ...tuning.spells, hat, hats }; }
   // Her broom's parts (app/broomSave.ts; the Workshop, Ed 2026-10-23): those fitted at the bay on this browser, or
   // ?parts=missile,ladder,nozzles for one load (any parts, found or not: for testing). Her broom's spell is the set they complete.
   { const P = params.get("parts"); tuning.spells = { ...tuning.spells, parts: P !== null ? P : fittedParts(loadBroom().fitted).map(p => p.id).join(",") }; }
   // Her bag (rules/bags.ts; Ed, 2026-10-29: a Quick bag and a Far bag to choose from): the one her saved look wears (localStorage
-  // witch.genome, chosen at the bags station), or ?bag=quick, ?bag=far (or a bag item's id; ?bag=none for none) for one load.
-  { const B = params.get("bag"), ids: Record<string, string> = { quick: "bumbag", far: "satchel", none: "" };
+  // witch.genome, chosen at the bags station), or ?bag=starter, ?bag=quick, ?bag=far (or a bag item's id; ?bag=none for none) for one load.
+  { const B = params.get("bag"), ids: Record<string, string> = { starter: "satchel", quick: "bumbag", far: "purse", none: "" };
     let look: Record<string, unknown> | null = null; try { look = JSON.parse(localStorage.getItem("witch.genome") ?? "null"); } catch { /* storage blocked or spoilt: none */ }
     tuning.spells = { ...tuning.spells, bag: B !== null ? ids[B] ?? B : bagOf(look) }; }
   // ?set=path=value;path=value (the repro link's: every setting changed from the build's, app/repro.ts), last, over the rest.

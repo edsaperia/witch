@@ -1,7 +1,7 @@
 // The playtest log (Ed, 2026-10-04: so his playtests give the real rate a player grows at): every
 // logEvery seconds of game time, the wave, the party's fighting value (leashed and parked), its
 // creatures by level, berries eaten, invites and evolutions so far, and each siege's fighting
-// value. Kept on this browser (localStorage), the last few runs; L downloads them as JSON, and so
+// value. Kept on this browser (localStorage), the last few runs; the pause page's Download log saves them as JSON, and so
 // does opening the game with ?playtest=download. Browser-side, outside the rules.
 import { powerReport } from "../rules/power";
 import { stackOrder } from "../rules/leash";
