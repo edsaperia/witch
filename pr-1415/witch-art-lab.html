@@ -2440,7 +2440,7 @@ const WITCH_GENOME = {
   hair: "long", top: "jacket", cloak: "none",
   broom: { kind: "classic", length: 1, bend: 0, bristles: 1, thickness: 1 },
   accessories: { phones: true, shades: false, glowsticks: false, scarf: false, satchel: false, pendant: false, earrings: false,
-    lantern: false, vial: false, book: false, patches: false, bumbag: false, wristband: false, chunky: false },
+    lantern: false, vial: false, book: false, patches: false, bumbag: false, purse: false, wristband: false, chunky: false },
   cloakLength: 1, scarfLength: 1, bagSize: 1, backpackSize: 0,
   palette: null, // null: hers (DEFAULT_OUTFIT, the style's hues on top)
 };
@@ -2574,7 +2574,7 @@ const DEFAULT_LOOK = { hat: "classic", hair: "long", top: "jacket", phones: true
   hatHeight: 1, hatBrim: 1, hatTilt: 0, hatBand: 1, broom: "classic", broomLength: 1, broomBend: 0, bristles: 1, broomThickness: 1, cloak: "none", scarf: false, satchel: false, pendant: false, earrings: false,
   // its accessories (Ed: "both witchy and modern"): the cloak's length (times its kind's), patches on it; a lantern at her hip, a potion vial and a spellbook at her belt; a bum bag, a festival
   // wristband, chunky trainers, round sunglasses (shades "round")
-  cloakLength: 1, patches: false, lantern: false, vial: false, book: false, bumbag: false, wristband: false, chunky: false,
+  cloakLength: 1, patches: false, lantern: false, vial: false, book: false, bumbag: false, purse: false, wristband: false, chunky: false,
   // the creator's (Ed, round 11): the scarf's length (times hers; 0 none, 3 trailing on the ground), the satchel's size, a backpack's size (0 none)
   scarfLength: 1, bagSize: 1, backpackSize: 0 };
 const shoeR = L => L.chunky ? [.095, .056, .056] : [.08, .04, .045]; // her sneakers, or chunky trainers
@@ -2860,7 +2860,7 @@ function drawExtras(m, L, chest, fwd, spine, flying) {
 }
 // The witch generator's accessories (Ed: "both witchy and modern"), all ellipsoids and limbs so the posed flight turns them: a
 // lantern hanging at her far hip (lit), a potion vial (glowing) and a spellbook at her
-// belt, a bum bag at her front.
+// belt, a bum bag at her front, a purse at her far hip (Ed, 2026-10-29: the third bag, "in between").
 function drawAccessories(m, L, chest, fwd, spine, flying) {
   const side = [0, 0, 1], back = v3.mul(fwd, -1), at = (u, f, s) => v3.add(chest, v3.add(v3.mul(spine, u), v3.add(v3.mul(fwd, f), v3.mul(side, s))));
   const waist = -.16;
@@ -2871,6 +2871,12 @@ function drawAccessories(m, L, chest, fwd, spine, flying) {
   }
   if (L.vial) { const c = at(waist - .02, .07, .1); m.ell(c, [.018, .03, .018], M.CRYSTAL, { group: 20, paint: p => p[1] < c[1] ? M.GLOW : undefined }); m.ell(v3.add(c, v3.mul(spine, .035)), [.009, .009, .009], M.WOOD, { group: 20 }); }
   if (L.book) { const c = at(waist, -.07, .1); m.ell(c, [.05, .062, .022], M.BARKD, { dir: fwd, up: spine, group: 21, paint: p => Math.abs(p[1] - c[1]) < .01 ? M.FRAME : undefined }); }
+  if (L.purse) { // a small purse on a thin crossbody strap, high at her near side, in her hat's trim colour (so it reads apart from the brown satchel), a gold clasp
+    const c = at(waist + .07, .06, .115);
+    m.ell(c, [.05, .038, .024], M.HAT1, { dir: fwd, up: spine, group: 24 });
+    m.ell(v3.add(c, v3.add(v3.mul(spine, .025), v3.mul(fwd, .024))), [.014, .011, .011], M.FRAME, { group: 24 });
+    m.chain([[...at(.13, .0, -.08), .006], [...at(.07, .1, .0), .006], [...v3.add(c, v3.mul(spine, .032)), .006]], M.FRAME, { group: 24 });
+  }
   if (L.bumbag) { const c = at(waist - .03, .1, .03); m.ell(c, [.035, .03, .065], M.EAR, { dir: fwd, up: spine, group: 22 }); m.chain([[...at(waist - .02, .07, -.08), .008], [...c, .008], [...at(waist - .02, .07, .1), .008]], M.EAR, { group: 22 }); }
 }
 // Every part (those `only` picks), flat and anchor of m turned by angle a about the vertical ("y") or the side-to-side ("z") axis through P.
