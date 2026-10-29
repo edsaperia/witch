@@ -4398,10 +4398,6 @@
                   "type": "number",
                   "minimum": 0
                 },
-                "south": {
-                  "type": "number",
-                  "minimum": 0
-                },
                 "size": {
                   "type": "number",
                   "minimum": 0
@@ -4438,7 +4434,6 @@
               "required": [
                 "range",
                 "fade",
-                "south",
                 "size",
                 "near",
                 "far",

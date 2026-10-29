@@ -1650,7 +1650,6 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
 | `leash.ranks.bold` | boolean |  |
 | `leash.ranks.stones.range` | number | 0 to … |
 | `leash.ranks.stones.fade` | number | 0 to … |
-| `leash.ranks.stones.south` | number | 0 to … |
 | `leash.ranks.stones.size` | number | 0 to … |
 | `leash.ranks.stones.near` | number | 0 to … |
 | `leash.ranks.stones.far` | number | 0 to … |
