@@ -9,6 +9,14 @@ says what each note covers.
 - Style bible
 - Bold sigils
 
+## [Balance baselines — v5655 rules](balance-baselines.md)
+
+(no entries: its tools and checks only)
+
+## [Real-rules reports and legacy coverage](balance-report-coverage.md)
+
+(no entries: its tools and checks only)
+
 ## [Balance](balance.md)
 
 - Legacy models retained (2026-10-29, #1459, coordinator decision).
