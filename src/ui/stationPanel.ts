@@ -275,7 +275,7 @@ export class StationPanel {
         html += `<div class="sp-shelf${L[at.line]?.shelf === l.shelf ? " on" : ""}" data-shelf="${l.shelf}"><div class="sp-lab" data-card="${i}"><b>${esc(s.label)}</b>${worn ? `<span>${esc(worn)}</span>` : ""}${note ? `<em>${esc(note)}</em>` : ""}</div>`;
       }
       const f = (c: number) => at.line === i && at.col === c ? " focus" : "";
-      if (l.kind === "items") html += `<div class="sp-row">${shownItems(s).map((it, c) => { const own = this.owned.has(it.id); return `<div class="sp-card${own ? "" : " locked"}${wears(this.g, it) ? " worn" : ""}${it.id === this.loaned ? " loaned" : ""}${f(c)}" data-line="${i}" data-col="${c}">${none(it) ? `<i class="sp-none">∅</i>` : `<span data-thumb="${this.thumbKey(it, s)}"></span>`}${wears(this.g, it) ? `<b class="sp-tick">✓</b>` : ""}${own ? "" : `<b class="sp-lock">🔒</b>`}</div>`; }).join("")}</div>`;
+      if (l.kind === "items") html += `<div class="sp-row">${shownItems(s).map((it, c) => { const own = this.owned.has(it.id), stat = own ? statOf(it) : ""; return `<div class="sp-card${stat ? " sp-statcard" : ""}${own ? "" : " locked"}${wears(this.g, it) ? " worn" : ""}${it.id === this.loaned ? " loaned" : ""}${f(c)}" data-line="${i}" data-col="${c}">${none(it) ? `<i class="sp-none">∅</i>` : `<span data-thumb="${this.thumbKey(it, s)}"></span>`}${stat ? `<span class="sp-stat"><b>${esc(it.name)}</b>${esc(stat)}</span>` : ""}${wears(this.g, it) ? `<b class="sp-tick">✓</b>` : ""}${own ? "" : `<b class="sp-lock">🔒</b>`}</div>`; }).join("")}</div>`;
       else if (l.kind === "cards" && s.board) html += `<div class="sp-row sp-board">${Array.from({ length: l.n }, (_, c) => {
         const id = cardAt(s, l, c)!, cell = BOARD[(l.row ?? 0) * 3 + c], own = this.found_().has(id), tonight = !own && this.ws?.tonight === id;
         return `<div class="sp-cell${own ? "" : " locked"}${tonight ? " tonight" : ""}${id === this.loaned ? " loaned" : ""}${f(c)}" data-line="${i}" data-col="${c}"><small>${esc(cell.point)} · ${esc(cell.biome)}</small><span data-thumb="${this.partKey(id)}"></span><b>${own ? esc(partById(id)!.name) : "?"}</b></div>`;
@@ -397,6 +397,9 @@ export const footHtml = (device: "keys" | "pad" | "touch"): string =>
 const PAD_DIRS: Record<string, [number, number]> = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] };
 const STATION_NAMES: Record<string, string> = { mirror: "Mirror", dressingTable: "Dressing table", wardrobe: "Wardrobe", cloakPegs: "Cloak pegs", shoeRack: "Shoe rack", bags: "Bags", broomBay: "The bay", lathe: "Broom", pegboard: "Pegboard" };
 const ART_M = Art.M as Record<string, number>;
+/** An item's stat line, on its card (Juliet's two bags, 2026-10-29: "faster throws, shorter reach"; config/wardrobe.json `stat`,
+ *  rules/bags.ts), or "". */
+const statOf = (it: WardrobeItem): string => { const s = (it as WardrobeItem & { stat?: unknown }).stat; return typeof s === "string" ? s : ""; };
 const none = (it: WardrobeItem) => Object.values(it.set).every(v => v === false || v === 0 || v === "none");
 const esc = (s: string) => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 const hash = (s: string) => { let x = 2166136261; for (let i = 0; i < s.length; i++) x = Math.imul(x ^ s.charCodeAt(i), 16777619); return (x >>> 0).toString(36); };
@@ -437,6 +440,8 @@ function installCss(): void {
 #station-panel .sp-fit span { width: 8em; font-size: .9em; } #station-panel .sp-fit .bar { position: relative; flex: 1; height: .35em; background: rgba(232,226,244,.55); border-radius: .2em; box-shadow: 0 0 0 1px var(--ol); }
 #station-panel .sp-fit .bar i { position: absolute; top: -.45em; width: .7em; height: 1.25em; margin-left: -.35em; border-radius: .2em; background: var(--gold); box-shadow: 0 0 0 1px var(--ol); }
 #station-panel .sp-detail { padding: .45em .6em; border-radius: .45em; background: rgba(11,7,22,.5); } #station-panel .sp-detail h3 { margin: 0 0 .15em; font-size: 1em; font-weight: 600; } #station-panel .sp-detail p { margin: 0; font-size: .85em; opacity: .9; }
+#station-panel .sp-statcard { width: auto; min-width: 13em; max-width: 100%; grid-template-columns: 4.4em 1fr; gap: .5em; padding: 0 .7em 0 .1em; justify-items: start; }
+#station-panel .sp-stat { display: flex; flex-direction: column; font-size: .85em; line-height: 1.2; } #station-panel .sp-stat b { color: var(--gold); font-weight: 600; }
 #station-panel .sp-wide { width: 6.4em; height: 3.8em; } #station-panel .sp-wide canvas { height: auto; width: auto; max-width: 5.9em; max-height: 3.3em; }
 #station-panel .sp-board { flex-wrap: nowrap; gap: .45em; } #station-panel .sp-cell { flex: 1; position: relative; min-height: 6.2em; border: 1px solid rgba(232,226,244,.3); border-radius: .45em; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: .3em .2em; cursor: default; background: rgba(11,7,22,.5); }
 #station-panel .sp-cell small { font-size: .65em; line-height: 1.15; text-align: center; text-transform: uppercase; letter-spacing: .5px; opacity: .85; } #station-panel .sp-cell b { font-size: .75em; font-weight: normal; text-align: center; }
