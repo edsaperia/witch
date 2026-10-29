@@ -17,14 +17,14 @@ export const POINTER_SIGIL = 17;
 
 /** A pointer's subject: where it is, how tall it stands (m), its colour (0-1) and, a creature's, its sigil and that sigil's size, and
  *  whether it shines, a legend's (render/leash/ranks.ts legendShine). */
-export interface PointerTarget { x: number; z: number; top: number; colour: [number, number, number]; species?: string; sigilSize?: number; id?: number; shine?: boolean }
+export interface PointerTarget { x: number; z: number; top: number; colour: [number, number, number]; species?: string; sigilSize?: number; id?: number; shine?: boolean; /** its bold sigil (leash.ranks.bold: art/sigils.js BOLD) */ bold?: boolean }
 
 /** The straggler pointer's subject: the enraged animal the route ends on, in the enemy palette at its rank's size; null without one. */
 export function stragglerPointer(g: Game, t: Tuning = g.tuning): PointerTarget | null {
   const S = winTarget(g);
   if (!S) return null;
   const r = rankOf(S);
-  return { x: S.x, z: S.z, top: 2.5, colour: rankColour(t, r, false), species: S.species, sigilSize: POINTER_SIGIL * rankSize(t, r), id: S.id, shine: r === 3 };
+  return { x: S.x, z: S.z, top: 2.5, colour: rankColour(t, r, false), species: S.species, sigilSize: POINTER_SIGIL * rankSize(t, r), id: S.id, shine: r === 3, bold: !!t.leash.ranks?.bold };
 }
 
 /** Whether a legend is awake: not asleep (restless, angry or happy), not gone. */
@@ -37,7 +37,7 @@ export function legendPointers(g: Game, tops?: ReadonlyMap<number, number>, t: T
   const out: PointerTarget[] = [];
   for (const c of g.creatures) {
     if (!awakeLegend(c)) continue;
-    out.push({ x: c.x, z: c.z, top: tops?.get(c.id) ?? 6, colour: rankColour(t, 3, c.legendState === "happy"), species: c.species, sigilSize: POINTER_SIGIL * rankSize(t, 3), id: c.id, shine: true });
+    out.push({ x: c.x, z: c.z, top: tops?.get(c.id) ?? 6, colour: rankColour(t, 3, c.legendState === "happy"), species: c.species, sigilSize: POINTER_SIGIL * rankSize(t, 3), id: c.id, shine: true, bold: !!t.leash.ranks?.bold });
   }
   return out;
 }

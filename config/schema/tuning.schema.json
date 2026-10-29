@@ -3714,6 +3714,69 @@
           "minimum": 0,
           "description": "How fast a 💌 spins in flight."
         },
+        "impact": {
+          "type": "object",
+          "properties": {
+            "flash": {
+              "type": "number",
+              "minimum": 0
+            },
+            "squash": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gentle": {
+              "type": "number",
+              "minimum": 0
+            },
+            "squashSecs": {
+              "type": "number",
+              "minimum": 0
+            },
+            "pop": {
+              "type": "number",
+              "minimum": 0
+            },
+            "popSecs": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hitstop": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "flash",
+            "squash",
+            "gentle",
+            "squashSecs",
+            "pop",
+            "popSecs",
+            "hitstop"
+          ],
+          "additionalProperties": false,
+          "description": "how a 💌 landing on a creature feels (drawn only): a white flash for flash seconds, a squash of squash springing back over squashSecs, its ring slot popping in by pop over popSecs, and hitstop seconds of held picture on the 💌 that fills the ring."
+        },
+        "cheer": {
+          "type": "object",
+          "properties": {
+            "secs": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hearts": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "secs",
+            "hearts"
+          ],
+          "additionalProperties": false,
+          "description": "one won over by her 💌s celebrates secs seconds by its body (render/cheer.ts), out of every fight meanwhile, a burst of that many hearts (hearts) off it."
+        },
         "orbit": {
           "type": "object",
           "properties": {
@@ -3794,6 +3857,8 @@
         "lingerFade",
         "lingerMax",
         "spin",
+        "impact",
+        "cheer",
         "orbit",
         "hard"
       ],
@@ -4408,6 +4473,9 @@
               "type": "number",
               "minimum": 0
             },
+            "bold": {
+              "type": "boolean"
+            },
             "stones": {
               "type": "object",
               "properties": {
@@ -4529,6 +4597,7 @@
             "dotsPerRow",
             "stoneGlow",
             "standScale",
+            "bold",
             "stones",
             "chain"
           ],
@@ -4888,10 +4957,38 @@
           "properties": {
             "on": {
               "type": "boolean"
+            },
+            "shadow": {
+              "type": "object",
+              "properties": {
+                "shade": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How dark: 0 its own colours, 1 black."
+                },
+                "opacity": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How opaque the shadow is (0 invisible, 1 solid)."
+                },
+                "fade": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Seconds to turn from solid to shadow as it hides, and back as it comes out."
+                }
+              },
+              "required": [
+                "shade",
+                "opacity",
+                "fade"
+              ],
+              "additionalProperties": false,
+              "description": "A pack member hiding in its lull (in the trees, underground, under water, in the branches, or scattered) is drawn as a shadow of itself, not left out."
             }
           },
           "required": [
-            "on"
+            "on",
+            "shadow"
           ],
           "additionalProperties": false,
           "description": "Pack kinds fight in combos (the nearest lunges, the ranged fire where she'd dodge, one behind her throws its special) and fall back between them."
@@ -7751,6 +7848,34 @@
           "additionalProperties": false,
           "description": "a 💌 that met no one landing on the ground, a soft puff (at most one every gap seconds)."
         },
+        "thunk": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            },
+            "low": {
+              "type": "number"
+            },
+            "high": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "gap",
+            "low",
+            "high"
+          ],
+          "additionalProperties": false,
+          "description": "a 💌 landing on a creature, a soft thunk at volume (at most one every gap seconds), its pitch climbing from low to high semitones off the key as the ring fills."
+        },
         "nope": {
           "type": "object",
           "properties": {
@@ -8296,6 +8421,7 @@
         "deck",
         "spell",
         "land",
+        "thunk",
         "nope",
         "thud",
         "alarm",
