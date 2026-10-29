@@ -14,7 +14,7 @@ import { comfort } from "./comfort";
 /** As built (runeMarkers.stump.wisps): three a stump, blue, green and white, wandering 3 to 8 m out at about 1.6 m up. */
 export const STUMP_WISPS: StumpWispTuning = {
   on: true, count: 3, colours: [[60, 130, 255], [50, 230, 140], [60, 205, 215]], radius: 8, inner: 0.35, height: 1.6, bob: 0.5,
-  speed: 0.5, reach: 10, strength: 1.2, lights: 6, lightRange: 70, breathe: 0.3, bright: 0.8, trail: 4, size: 0.3, fade: [40, 90],
+  speed: 0.5, reach: 10, strength: 1.2, lights: 6, lightRange: 70, breathe: 0.3, bright: 0.8, trail: 4, size: 0.4, fade: [40, 90],
   fill: { colour: [70, 190, 200], reach: 18, strength: 0.7, height: 5 },
 };
 

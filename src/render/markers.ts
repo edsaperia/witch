@@ -141,7 +141,7 @@ export interface Laser { x: number; z: number; colour: THREE.Vector3; strength: 
 export interface Mote { x: number; y: number; z: number; colour: THREE.Vector3; alpha: number; size?: number }
 
 /** The motes' points: a colour each (rgb, alpha: added on), at the picture's moteSize pixels, or (aSize > 0) aSize metres across as
- *  the camera sees it there: a soft round glow while it's a few pixels across, one pixel dimmed by its share of it when smaller. */
+ *  the camera sees it there: a soft round glow while it's a few pixels across, one faint pixel when smaller. */
 function motePoints(size: number): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
     vertexShader: /* glsl */ `attribute vec4 color;
@@ -157,7 +157,7 @@ void main() {
   vSoft = 0.0;
   if (aSize > 0.0) {
     float px = aSize * projectionMatrix[1][1] * 0.5 * uRes.y / max(0.001, gl_Position.w);
-    vCol.a *= min(1.0, px * px);
+    vCol.a *= clamp(px, 0.4, 1.0); // (from afar a faint single pixel, not a square nor nothing)
     gl_PointSize = max(1.0, floor(px + 0.5));
     if (px >= 2.5) { vSoft = 1.0; vCol.a *= 1.6; } // (the round falloff's light made back)
   } else gl_PointSize = uSize;
