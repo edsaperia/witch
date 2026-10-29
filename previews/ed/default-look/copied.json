@@ -1,0 +1,50 @@
+{
+  "_": "What a brand-new witch starts with (Ed, 2026-10-29: \"Please give me an easy way to select character creation defaults ... This is a dev tool - just so I can set the defaults for the game\"; src/app/defaultLook.ts). genome: her look (art/witchGenome.js's shape: hat, hair, top, cloak, broom's colours and fit, accessories, sizes, palette), or null for the classic witch (WITCH_GENOME, her colours DEFAULT_OUTFIT under the style's hues); whatever it wears is hers from the start, over config/wardrobe.json's start items. broom: the parts fitted in each slot (config/broom-parts.json), found from the start, or null for a bare broom. Made by the pause page's Copy look as defaults (with the debug overlay or Unlock everything on): paste its text over this file. A genome the generator's rules refuse is the classic witch. ?newWitch=1 plays a load as a brand-new witch, nothing saved.",
+  "genome": {
+    "hat": {
+      "shape": "classic",
+      "height": 1,
+      "brim": 1,
+      "tilt": 0,
+      "band": 1
+    },
+    "hair": "mohawk",
+    "top": "jacket",
+    "cloak": "none",
+    "broom": {
+      "kind": "classic",
+      "length": 1,
+      "bend": 0,
+      "bristles": 1,
+      "thickness": 1
+    },
+    "accessories": {
+      "phones": true,
+      "shades": false,
+      "glowsticks": false,
+      "scarf": false,
+      "satchel": false,
+      "pendant": false,
+      "earrings": false,
+      "lantern": false,
+      "vial": false,
+      "book": false,
+      "patches": false,
+      "bumbag": true,
+      "purse": false,
+      "tote": false,
+      "duffel": false,
+      "briefcase": false,
+      "clutch": false,
+      "messenger": false,
+      "wristband": false,
+      "chunky": false
+    },
+    "cloakLength": 1,
+    "scarfLength": 1,
+    "bagSize": 1,
+    "backpackSize": 0,
+    "palette": null
+  },
+  "broom": null
+}
