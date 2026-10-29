@@ -618,7 +618,6 @@ function pauseControls(on: boolean): void {
 }
 freeze.onToggle = on => {
   input.clearPresses(); // (a press not yet read as she pauses or resumes is dropped: an E pending under the pause closed a station's panel there, the pause check's broom bay on a slow runner)
-  if (!on) input.holdPad(); // (the pad's press that resumed is the resume and nothing else: the frozen pad reads as none, so it would be fresh)
   settingsPage.gate(); // (suspended while paused, and muted in the background if so set: app/settingsPage.ts)
   if (!on) settingsPage.close();
   pauseControls(on);
