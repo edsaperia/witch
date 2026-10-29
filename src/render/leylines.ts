@@ -87,10 +87,11 @@ attribute float aT;      // 0 to 1 along its link
 attribute float aLink;   // which link (0 the first, the oldest)
 attribute float aLen;    // its link's length (m)
 attribute vec3 aCol;
+attribute float aRun;   // metres along the whole route from its start (the rainbow's hue runs by it)
 uniform vec2 uLeyWidth, uLeyHeight;
 uniform float uLift, uTime, uGlowPass, uThrough, uDrift;
 uniform vec3 uNear; // where she is (x, z) and how far round her the line shows through the trees (m)
-varying float vSide, vS, vT, vLink, vSeen, vW, vLen;
+varying float vSide, vS, vT, vLink, vSeen, vW, vLen, vRun;
 varying vec3 vCol;
 ${HEIGHT_VERT_GLSL}
 void main() {
@@ -110,9 +111,15 @@ void main() {
   if (uThrough > 0.5) {
     vSeen = length(p.xz - uNear.xy) < uNear.z ? groundSeen(p) : 0.0;
   }
-  vSide = aSide; vS = aS; vT = aT; vLink = aLink; vCol = aCol; vW = w; vLen = aLen;
+  vSide = aSide; vS = aS; vT = aT; vLink = aLink; vCol = aCol; vW = w; vLen = aLen; vRun = aRun;
   gl_Position = clipOf(p);
 }`;
+
+/** Metres along the route for a whole turn of the rainbow's wheel (render/leylines.ts's route; the analyser bars behind the spark
+ *  share it: render/leash/rainbow.ts). */
+export const RAINBOW_M = 60;
+/** The route's spark, times the boot ring's (Ed, 2026-10-29: "the spark should be larger"). */
+const SPARK_SIZE = 1.8;
 
 /** The ley lines' ripple: how fast it runs along a line (m/s) and how often one passes any point (s). */
 const RIPPLE_SPEED = 28, RIPPLE_EVERY = 4.5;
@@ -126,13 +133,11 @@ uniform vec2 uPulse; // the wave's pulse on the link from the last stone reached
 uniform vec2 uFlow;
 uniform vec4 uCore; // its pixel core's half-width and rim (metres) on the ground and over the treetops
 uniform float uMpp; // metres per art pixel
-uniform vec4 uRainF, uRainT; // the rainbow waves (rules/rainbow.ts), up to four: each one's front and the end of the line it still shows, in links (-1: none)
-varying float vSide, vS, vT, vLink, vSeen, vW, vLen;
+uniform float uRainbow; // 1: the route, in the cycling rainbow (Ed, 2026-10-29: "The leyline should be rainbow"); 0: the boot ring, as it was
+varying float vSide, vS, vT, vLink, vSeen, vW, vLen, vRun;
 varying vec3 vCol;
-// How much a rainbow wave shows the line here (Ed, 2026-10-29: "reveal now, not cumulative"): fully just behind its front, fading
-// back to nothing where it passed its linger ago.
-float rain1(float a, float f, float t) { return f >= 0.0 && a <= f && a >= t ? (a - t) / max(1e-4, f - t) : 0.0; }
-float rainAt(float a) { return max(max(rain1(a, uRainF.x, uRainT.x), rain1(a, uRainF.y, uRainT.y)), max(rain1(a, uRainF.z, uRainT.z), rain1(a, uRainF.w, uRainT.w))); }
+// The rainbow (render/indicator.ts rainbow, the soundsystem spell's): a hue round its wheel, its colour (0-1).
+vec3 rbow(float h) { vec3 q = mod(vec3(5.0, 3.0, 1.0) + h * 6.0, 6.0); return 1.0 - clamp(min(q, 4.0 - q), 0.0, 1.0); }
 float lh(float p) { return fract(sin(p * 127.1) * 43758.5453); }
 float soft0(float d) { return smoothstep(0.0, 8.0, d); }
 // The ripple (Ed, 2026-10-07: "The leyline should have an occasional ripple along its length that shows you which direction
@@ -149,9 +154,10 @@ void main() {
   // Growing (Ed, 2026-10-06: "a better design for the front of the leyline"): written on pixel by pixel, the end at a whole art
   // pixel along it; tipD, metres behind the front (on its own link; further back, more).
   float tipD = uGrow.y > 0.5 ? (uGrow.x - vLink) * vLen - (floor(vS / uMpp) + 0.5) * uMpp : 1e6;
-  // (past its front only where a rainbow wave shows it, for now: rules/rainbow.ts)
-  float rv = tipD < 0.0 ? rainAt(along) : 1.0;
-  if (rv <= 0.0 || (uGrow.y > 0.5 && along < uGrow.z)) discard; // (none on the boot ring itself: that is the ring's own line)
+  if (tipD < 0.0 || (uGrow.y > 0.5 && along < uGrow.z)) discard; // (none past its front; none on the boot ring itself: that is the ring's own line)
+  // The route in the rainbow (Ed, 2026-10-29): its hue running along it, a turn of the wheel every RAINBOW_M metres, drifting
+  // on with time; in whole art pixels along it, as the line is.
+  vec3 hue = rbow((floor(vRun / uMpp) * uMpp) / ${RAINBOW_M.toFixed(1)} - uTime * 0.12);
   float across = 1.0 - abs(vSide), halo = across * across;
   // Ed, round 14: "the leyline and pulse are not pixelated. Lighting effects can be non-pixel but they should be lighting
   // objects that are pixels"; and "the leyline is too faint". On the ground the line itself is pixels: a hard core a whole
@@ -184,11 +190,19 @@ void main() {
   // it (drawn, not yet lit) it's a sketch, a promise: a thin dashed line of art pixels in crisp silver, with no glow. The
   // pulse (its sparkler: render/sparkler.ts) lights it as it passes.
   float pAlong = uPulse.y > 0.5 ? uCurrent + uPulse.x : 1e6;
+  if (along > pAlong && uRainbow > 0.5) {
+    // Ahead of the spark: the rainbow line, thin (its middle pixel or two) and bright, its glow faint from the treetops.
+    if (uGlowPass > 0.5) { gl_FragColor = vec4(hue * 0.14 * halo * uLift * uStrength, 1.0); return; }
+    if (off >= max(1.0, floor(coreN * 0.5))) discard;
+    float rip = floor(ripple(sq, vLink) * 3.0 + 0.5) / 3.0;
+    gl_FragColor = vec4(min(hue * (0.75 + 0.25 * rip) * uStrength, vec3(0.9)), 1.0);
+    return;
+  }
   if (along > pAlong) {
     float grey = dot(vCol, vec3(0.3, 0.59, 0.11));
     vec3 cool = mix(vec3(grey), vec3(0.55, 0.68, 1.0) * grey * 1.3, 0.55);
     // (From the treetops, a faint cool glow along it, so it still reads there.)
-    if (uGlowPass > 0.5) { gl_FragColor = vec4(cool * 0.12 * halo * uLift * uStrength * rv, 1.0); return; }
+    if (uGlowPass > 0.5) { gl_FragColor = vec4(cool * 0.12 * halo * uLift * uStrength, 1.0); return; }
     // (Ed, 2026-10-08: "The leyline ahead of the pulse doesn't seem to be visible anymore": once the line behind the pulse went
     // thin and pale, the old dim grey sketch vanished beside it at night; and then "I preferred it when it was thinner and
     // silver". So it's thin and silver as before, but bright: a near-white cool silver, not dimmed with the lit line's
@@ -197,7 +211,7 @@ void main() {
     float dash = mod(floor(vS / uMpp), 4.0) < 3.0 || rip > 0.6 ? 1.0 : 0.0, thin = off < max(1.0, floor(coreN * 0.5)) ? 1.0 : 0.0;
     if (dash * thin < 0.5) discard;
     vec3 silver = mix(vec3(0.74, 0.79, 0.88), cool / max(grey, 0.05) * 0.8, 0.12);
-    gl_FragColor = vec4(min(silver * (0.9 + 0.25 * rip) * uStrength * rv, vec3(0.95)), 1.0);
+    gl_FragColor = vec4(min(silver * (0.9 + 0.25 * rip) * uStrength, vec3(0.95)), 1.0);
     return;
   }
   float litD = pAlong > 1e5 ? 1e6 : (pAlong - along) * vLen; // metres behind the pulse (on its own link)
@@ -206,6 +220,15 @@ void main() {
   // still (no shimmer), dim but whole, so the way home still reads; just behind the tip an ember, orange cooling to red over
   // a few metres, and a few pixels still smouldering further back, flickering. From the treetops, a faint grey glow and the
   // ember's.
+  if (uRainbow > 0.5 && uPulse.y > 0.5) {
+    // Behind the spark (Ed, 2026-10-29: "the post spark route should look like the audio analyser along its whole length"): the
+    // analyser's bars stand along it (render/leash/rainbow.ts); under them the line is its middle pixel or two in the rainbow,
+    // dimmer, and a faint glow from the treetops.
+    if (uGlowPass > 0.5) { gl_FragColor = vec4(hue * 0.1 * halo * soft0(tipD) * uLift * uStrength, 1.0); return; }
+    if (off >= max(1.0, floor(coreN * 0.5))) discard;
+    gl_FragColor = vec4(min(hue * 0.5 * uStrength, vec3(0.9)), 1.0);
+    return;
+  }
   if (uSpent > 0.5 && uPulse.y > 0.5) { // (the sketch never gets here: all of it is ahead)
     float grey = dot(vCol, vec3(0.3, 0.59, 0.11)), ember = exp(-litD / 4.5), warm = exp(-litD / 12.0);
     vec3 ash = mix(vec3(grey), vCol, 0.2) * vec3(1.0, 0.9, 0.8) * 0.55 + vec3(0.05, 0.045, 0.04);
@@ -248,7 +271,7 @@ void main() {
   }
   // (Its front, a pixel spark with its own small light, is render/leyHead.ts.)
   // Never past white (the bloom took a blown-out line for a glare), each pass a little under.
-  gl_FragColor = vec4(min(vCol * a * link * ends * uStrength, vec3(0.9)), 1.0);
+  gl_FragColor = vec4(min((uRainbow > 0.5 ? hue : vCol) * a * link * ends * uStrength, vec3(0.9)), 1.0);
 }`;
 
 interface LeySet { geo: THREE.BufferGeometry; meshes: THREE.Mesh[]; current: { value: number } }
@@ -318,13 +341,12 @@ export class LeyLines {
       uShift: { value: 0 }, uFar: { value: new THREE.Vector2(T.far[0], T.far[1]) }, uFlow: { value: new THREE.Vector2(T.flow[0], T.flow[1]) },
       uPulse: { value: new THREE.Vector2() }, uGrow: { value: new THREE.Vector3() }, uNear: { value: new THREE.Vector3(0, 0, NEAR) },
       uCore: { value: new THREE.Vector4(...(T.core ?? [0.3, 0.6, 0.15, 0.3])) }, uMpp: { value: map ? metresPerArtPixel(map.tuning) : 0.1 },
-      uRainF: { value: new THREE.Vector4(-1, -1, -1, -1) }, uRainT: { value: new THREE.Vector4(-1, -1, -1, -1) },
     };
-    this.cur = this.makeSet();
+    this.cur = this.makeSet({ uRainbow: { value: 1 } });
     this.ringSet = this.makeSet({ uPulse: { value: this.ringPulse }, uGrow: { value: this.ringGrow }, uStrength: this.ringStrength, uSpent: { value: 1 }, uDrift: { value: 0 } }); // (spent behind its own pulse, as the route behind the wave's: Ed, 2026-10-07)
     if (map) this.build(this.ringSet.geo, [new THREE.Vector3(1, 0.7, 0.42), new THREE.Vector3(1, 0.7, 0.42)], [bootPath(map).path]);
     const mpp = this.u.uMpp.value as number;
-    this.sparkler = new Sparkler(SPRITE_UNIFORMS.uRes, mpp);
+    this.sparkler = new Sparkler(SPRITE_UNIFORMS.uRes, mpp, SPARK_SIZE);
     this.ringSparkler = new Sparkler(SPRITE_UNIFORMS.uRes, mpp);
     this.mpp = mpp;
     this.meshes = [...this.cur.meshes, ...this.ringSet.meshes, ...this.sparkler.meshes, ...this.ringSparkler.meshes];
@@ -360,13 +382,6 @@ export class LeyLines {
   private pulseFrom = 0;
   private pulseHead = true;
   /** How far the line is drawn, in links along the route from its start (leyReveal), or null for all of it. */
-  /** The rainbow waves showing the line (rules/rainbow.ts): each one's front and the end of what it still shows, in links along
-   *  the route (as grow's); up to four. */
-  rains(waves: readonly { front: number; tail: number }[]): void {
-    const F = this.u.uRainF.value as THREE.Vector4, T = this.u.uRainT.value as THREE.Vector4;
-    F.set(-1, -1, -1, -1); T.set(-1, -1, -1, -1);
-    waves.slice(0, 4).forEach((w, i) => { F.setComponent(i, w.front); T.setComponent(i, w.tail); });
-  }
   grow(links: number | null): void { this.u.uGrow.value.set(links ?? 0, links === null ? 0 : 1, this.branchAt?.share ?? 0); this.growTo = links; }
   /** Where the first link leaves the boot ring (leyReveal), once the line is routed; null before. */
   branch(): LeyBranch | null { return this.branchAt; }
@@ -400,7 +415,7 @@ export class LeyLines {
     // a creature or a hill; and, from the treetops, its wide glow through the crowns.
     const make = (glow: boolean, order: number, through = false) => {
       const m = new THREE.Mesh(geo, new THREE.ShaderMaterial({
-        vertexShader: VERT, fragmentShader: FRAG, uniforms: { ...this.u, uGlowPass: { value: glow ? 1 : 0 }, uThrough: { value: through ? 1 : 0 }, uCurrent: current, uStrength: { value: 1 }, uSpent: { value: 1 }, uDrift: { value: 1 }, ...extra },
+        vertexShader: VERT, fragmentShader: FRAG, uniforms: { ...this.u, uGlowPass: { value: glow ? 1 : 0 }, uThrough: { value: through ? 1 : 0 }, uCurrent: current, uStrength: { value: 1 }, uSpent: { value: 1 }, uDrift: { value: 1 }, uRainbow: { value: 0 }, ...extra },
         transparent: true, depthWrite: false, depthTest: !glow, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
         ...(through ? { depthFunc: THREE.GreaterDepth, stencilWrite: true, stencilRef: 1, stencilFunc: THREE.EqualStencilFunc, stencilFail: THREE.KeepStencilOp, stencilZFail: THREE.KeepStencilOp, stencilZPass: THREE.KeepStencilOp } : {}),
       }));
@@ -530,7 +545,8 @@ export class LeyLines {
     // Every FINE metres at most, each point laid on the ground (the shader's onGround), so it hugs the hills between its route
     // points (8 m apart, a straight ribbon between them sank into every crest: Ed, "I don't think I can see it along its whole length").
     routes = routes.map(pts => fine(pts, FINE));
-    const pos: number[] = [], dir: number[] = [], side: number[] = [], s: number[] = [], tt: number[] = [], link: number[] = [], len: number[] = [], col: number[] = [], idx: number[] = [];
+    const pos: number[] = [], dir: number[] = [], side: number[] = [], s: number[] = [], tt: number[] = [], link: number[] = [], len: number[] = [], col: number[] = [], run: number[] = [], idx: number[] = [];
+    let before = 0; // (metres along the route to this link's start)
     const drawn: DrawnLink[] = [];
     routes.forEach((pts, k) => {
       const ca = colours[k], cb = colours[k + 1], lens = [0];
@@ -542,11 +558,12 @@ export class LeyLines {
         const t = lens[i] / total, base = pos.length / 3;
         for (const sd of [-1, 1]) {
           pos.push(p[0], 0, p[1]); dir.push((q1[0] - q0[0]) / l, (q1[1] - q0[1]) / l); side.push(sd);
-          s.push(lens[i]); tt.push(t); link.push(k); len.push(total);
+          s.push(lens[i]); tt.push(t); link.push(k); len.push(total); run.push(before + lens[i]);
           col.push(ca.x + (cb.x - ca.x) * t, ca.y + (cb.y - ca.y) * t, ca.z + (cb.z - ca.z) * t);
         }
         if (i > 0) idx.push(base - 2, base - 1, base, base - 1, base + 1, base);
       });
+      before += total;
     });
     g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
     g.setAttribute("aDir", new THREE.Float32BufferAttribute(dir, 2));
@@ -556,6 +573,7 @@ export class LeyLines {
     g.setAttribute("aLink", new THREE.Float32BufferAttribute(link, 1));
     g.setAttribute("aLen", new THREE.Float32BufferAttribute(len, 1));
     g.setAttribute("aCol", new THREE.Float32BufferAttribute(col, 3));
+    g.setAttribute("aRun", new THREE.Float32BufferAttribute(run, 1));
     g.setIndex(idx);
     if (g === this.cur.geo) this.drawn = drawn; else this.ringDrawn = drawn;
   }
@@ -596,11 +614,43 @@ export class LeyLines {
     const ringPulse = ringOn ? this.pointAt(this.ringDrawn, R!.pulse!, time, 3) : null;
     const ringK = strength * (R?.strength ?? 0);
     const outPulse = this.lapOut !== null ? this.pointAt(D, Math.max(0, Math.min(D.length, this.lapOut)), time, 5) : null;
-    if (outPulse && !this.outSparkler) { this.outSparkler = new Sparkler(SPRITE_UNIFORMS.uRes, this.mpp); this.meshes.push(...this.outSparkler.meshes); this.addMeshes(this.outSparkler.meshes); }
+    if (outPulse && !this.outSparkler) { this.outSparkler = new Sparkler(SPRITE_UNIFORMS.uRes, this.mpp, SPARK_SIZE); this.meshes.push(...this.outSparkler.meshes); this.addMeshes(this.outSparkler.meshes); }
     this.sparkler.update(pulse, time, strength); this.ringSparkler.update(ringPulse, time, ringK); this.outSparkler?.update(outPulse, time, strength);
     this.tip = tip; this.pulseTip = pulse;
     return tip;
   }
+
+  /** Where the route's spark is (links along the route as drawn), or null with none (front() sets it each frame). */
+  sparkLinks(): number | null { return this.T.on && this.pulseTip ? this.pulseTip.links : null; }
+  /** The point `links` along the route as drawn (its slow drift too), into `out`; null before it's routed. */
+  placeAt(links: number, time: number, out: { x: number; z: number }): { x: number; z: number } | null {
+    const D = this.drawn;
+    if (!D.length || !(links >= 0)) return null;
+    const k = Math.min(D.length - 1, Math.floor(links)), L = D[k], f = Math.max(0, Math.min(1, links - k)), want = f * L.total;
+    let lo = 1, hi = L.lens.length - 1;
+    while (lo < hi) { const mid = (lo + hi) >> 1; if (L.lens[mid] < want) lo = mid + 1; else hi = mid; } // (binary: a long link has hundreds of points)
+    const a = L.pts[lo - 1], b = L.pts[lo], seg = L.lens[lo] - L.lens[lo - 1] || 1, u = (want - L.lens[lo - 1]) / seg;
+    const dx = b[0] - a[0], dz = b[1] - a[1], dl = Math.hypot(dx, dz) || 1, d = leyDrift(want, f, k, time);
+    out.x = a[0] + dx * u + (-dz / dl) * d; out.z = a[1] + dz * u + (dx / dl) * d;
+    return out;
+  }
+  /** The route as drawn, a point every `spacing` metres from its start (each its place in links, and its metres along the route
+   *  for the rainbow's hue), worked out again only when the route is (the analyser bars behind the spark: render/leash/rainbow.ts). */
+  barsAlong(spacing: number): { links: Float32Array; run: Float32Array } {
+    if (this.barsFor !== this.drawn || this.barsGap !== spacing) {
+      const links: number[] = [], run: number[] = [];
+      let before = 0;
+      this.drawn.forEach((L, k) => {
+        for (let m = (spacing - (before % spacing)) % spacing; m < L.total; m += spacing) { links.push(k + m / L.total); run.push(before + m); }
+        before += L.total;
+      });
+      this.bars = { links: Float32Array.from(links), run: Float32Array.from(run) }; this.barsFor = this.drawn; this.barsGap = spacing;
+    }
+    return this.bars;
+  }
+  private bars = { links: new Float32Array(0), run: new Float32Array(0) };
+  private barsFor: DrawnLink[] | null = null;
+  private barsGap = 0;
 
   /** The point `links` along drawn links D (on the line as the shader draws it, its slow sideways drift too), its colour toward
    *  the next stone's as it nears it; a pulse's, whiter. */
@@ -620,6 +670,7 @@ export class LeyLines {
 }
 
 const WHITE = new THREE.Vector3(1, 1, 1);
+
 
 /** A drawn link: its points, the distance along it to each, its length, and its stones' colours. */
 interface DrawnLink { pts: [number, number][]; lens: number[]; total: number; from: THREE.Vector3; to: THREE.Vector3 }

@@ -41,6 +41,7 @@ import { drawDeckBpm } from "./leash/deckBpm";
 import { drawBond, drawStack, drawStrain, stackKey } from "./leash/stack";
 import type { Chain } from "./leash/chain";
 import { drawRainbow } from "./leash/rainbow";
+import type { LeyLines } from "./leylines";
 import { drawStones, newStoneView, resetStoneView, type StoneSpot } from "./leash/stones";
 import { drawProjection } from "./leash/projection";
 import { RUNE_SCALE, runeOffset, sigilSize } from "../rules/runeOffset";
@@ -92,6 +93,10 @@ export class LeashView {
   /** The stack above her hat drawn over the scenery (no depth test, after the see-through pass: Ed, 2026-10-15, "never obscured by scenery"), and a near-black disc behind each of its sigils. */
   stackGlyphs: Instances;
   stackBack: Instances;
+  /** The ley line as drawn (render/leylines.ts), handed over by the view each frame: the rainbow's bars stand on it (render/leash/rainbow.ts). */
+  ley: LeyLines | null = null;
+  /** Quads the rainbow's bars drew last frame (the wave's and the analyser's behind the spark): for tools. */
+  rainbowQuads = 0;
   /** Her stack's meshes, each with its coverage material: kept sharp through the tilt-shift (Post.sharp). */
   readonly stackMask: { mesh: THREE.Mesh; mask: THREE.Material }[];
   flat: Instances;
@@ -735,7 +740,7 @@ export class LeashView {
     }
 
     drawStones(this, time, dot); // (the rune stones' sigils, the spell's spot, its cast and the conversion: render/leash/stones.ts)
-    drawRainbow(this, time, dot); // (an early clear's rainbow wave down the ley line: render/leash/rainbow.ts)
+    drawRainbow(this, time, dot, camera); // (an early clear's rainbow wave along the ley line, and the analyser behind the spark: render/leash/rainbow.ts)
     drawBond(this, time, slotPos, dot); // (the bond: render/leash/stack.ts)
     drawStrain(this, time, dot);
     this.look.end();

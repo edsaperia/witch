@@ -50,7 +50,7 @@ import { hatLetters, hatsDown, onHatPicked, onHatPut, stepHatSpells } from "./ha
 import { loadOf, type LeashLoad, groundedBy } from "./leashWeight";
 import { pinWitch, type Pinned } from "./partyLegend";
 import { castOf, castOn, circleSpot, friendSigils, looseAt, scatterSpots, stoneOpen, tetherWitch, type LooseSigil } from "./stoneStacks";
-import { liveRainbows, sendRainbow } from "./rainbow";
+import { liveRainbows, sendRainbow, stoneMetres, type RainbowWave } from "./rainbow";
 import { runeOffset } from "./runeOffset";
 import { hurt, knockOut, newHealth, nextStreak, repair, stepKnockout, stepWanderers, type Health, type Knockout, type KnockoutEvent } from "./knockout";
 import { bagTuning } from "./bags";
@@ -73,6 +73,7 @@ import { deckOf, onTreehouse } from "./treehouse";
 import { homeDown, startPartyOver, stepPartyOver, stepWorldAsleep, worldAsleep, type PartyOver } from "./partyOver";
 import { stepWin, winFlare, won, type WinState } from "./win";
 import { hasBroom, hasInvites, type Kit } from "./kit";
+import { pulseRouteMetres } from "./leypulse";
 
 /** One player's witch (Stage 4: game.witches, one per player, the first this machine's): her
  *  body (where she is and how she flies), her leash, her spell. */
@@ -179,8 +180,8 @@ export interface Game {
   leashEvents: LeashEvent[];
   /** Sigils lying loose on the ground for any witch to pick up (rules/stoneStacks.ts): scattered round a stone at its conversion. */
   loose: LooseSigil[];
-  /** The rainbow waves on their way down the ley line (rules/rainbow.ts): when each set off, from an early clear. */
-  rainbows?: number[];
+  /** The rainbow waves on their way along the ley line (rules/rainbow.ts): when each set off from an early clear, and from where. */
+  rainbows?: RainbowWave[];
   /** The night over and another on in its place (app/night.ts endNight, marked only under ?debug=sail): stepping it means a reader
    *  was left on the old night, and throws. */
   disposed?: boolean;
@@ -792,7 +793,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     for (const c of g.creatures) if (!c.gone && !c.leashed && c.level === 0 && !c.fleeUntil && stateOf(c) === "wild" && c.cell[0] === a.cell[0] && c.cell[1] === a.cell[1]) befriend(c, time);
     if (castOn(t)) scatterFriends(g, key, a.soundsystem, time); // (its stack falls: every friend sigil scattered round it, rules/stoneStacks.ts)
     // (cleared before its wave: a rainbow wave down the ley line, Ed 2026-10-29, rules/rainbow.ts)
-    if (a.early) { g.rainbows = liveRainbows(g.party, g.map, g.rainbows ?? [], time); sendRainbow(g.rainbows, t, time); }
+    if (a.early) { g.rainbows = liveRainbows(g.party, g.map, g.rainbows ?? [], time); sendRainbow(g.rainbows, t, time, stoneMetres(g.party, g.map, a.cell) ?? pulseRouteMetres(g.party, g.map, time)); } // (from its own stone: Ed, 2026-10-29)
     for (const c of g.creatures) if (!c.gone && !c.leashed && !c.dropped && c.state === "happy" && c.cell[0] === a.cell[0] && c.cell[1] === a.cell[1]) joinParty(g, c, a.soundsystem, a.cell);
     // (one let go here at her knockout stays where it was dropped, dancing now: rules/knockout.ts letGoHappy)
     for (const c of g.creatures) if (c.dropped && !c.gone && !c.leashed && cellKey(c.dropped.cell) === key) c.dancing = true;

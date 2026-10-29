@@ -112,7 +112,9 @@ export class Sparkler {
   private owed = 0;
   private seed = 7;
 
-  constructor(uRes: { value: THREE.Vector2 }, mpp: number) {
+  /** `size`: its hot spot, its light, its sparks' reach and how many it spits, times this (the route's pulse: Ed, 2026-10-29, "the
+   *  spark should be larger"; the boot ring's 1). */
+  constructor(uRes: { value: THREE.Vector2 }, mpp: number, private size = 1) {
     // One vertex per streak pixel, and the hot spot last.
     const n = SPARKS * TRAIL + 1, kind = new Float32Array(n * 2);
     for (let s = 0; s < SPARKS; s++) for (let j = 0; j < TRAIL; j++) kind[(s * TRAIL + j) * 2 + 1] = j;
@@ -165,19 +167,21 @@ export class Sparkler {
     this.u.uFlick.value = fl;
     if (tip && on) {
       const dt = L.on && time > L.time ? Math.min(0.1, time - L.time) : 0;
-      this.owed += dt * RATE;
+      this.owed += dt * RATE * this.size;
       for (; this.owed >= 1; this.owed--) {
         const kind = this.rand();
         // Most short and fast; some arcing out slower and longer, falling to the ground.
-        if (kind < 0.85) this.strike(tip.x, TIP_Y, tip.z, time - this.rand() * dt, 12 + this.rand() * 10, 0.6, 0.08 + this.rand() * 0.12);
-        else this.strike(tip.x, TIP_Y, tip.z, time - this.rand() * dt, 4 + this.rand() * 3, 4, 0.45 + this.rand() * 0.3);
+        const k = this.size;
+        if (kind < 0.85) this.strike(tip.x, TIP_Y, tip.z, time - this.rand() * dt, (12 + this.rand() * 10) * k, 0.6 * k, 0.08 + this.rand() * 0.12);
+        else this.strike(tip.x, TIP_Y, tip.z, time - this.rand() * dt, (4 + this.rand() * 3) * k, 4 * k, 0.45 + this.rand() * 0.3);
       }
       // Reaching a stone: a burst.
       if (L.on && Math.floor(tip.links) > Math.floor(L.links) && tip.links - L.links < 0.5) for (let i = 0; i < 32; i++) this.strike(tip.x, TIP_Y, tip.z, time, 8 + this.rand() * 8, 3, 0.3 + this.rand() * 0.4);
       L.x = tip.x; L.z = tip.z; L.links = tip.links;
       this.u.uTip.value.set(tip.x, TIP_Y, tip.z);
-      this.u.uSpot.value = fl < 0.3 ? SPOT_PX - 1 : fl > 0.85 ? SPOT_PX + 2 : SPOT_PX;
-      this.glow.position.set(tip.x, 0.1, tip.z); this.glow.scale.setScalar(GLOW_R * 2 * (0.9 + 0.2 * fl)); this.glow.scale.y = 1;
+      const spot = Math.round(SPOT_PX * this.size);
+      this.u.uSpot.value = fl < 0.3 ? spot - 1 : fl > 0.85 ? spot + 2 : spot;
+      this.glow.position.set(tip.x, 0.1, tip.z); this.glow.scale.setScalar(GLOW_R * this.size * 2 * (0.9 + 0.2 * fl)); this.glow.scale.y = 1;
       this.glowU.uStrength.value = GLOW_I * (0.8 + 0.4 * fl) * strength;
     } else this.owed = 0;
     L.on = on; L.time = time;

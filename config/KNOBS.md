@@ -2369,12 +2369,15 @@ Code: `config/decisions/953-waves.json`, `app/settings.ts`
 | `leyLines.minRadius` | number | 0 to … |
 | `leyLines.rainbow.on` | boolean |  |
 | `leyLines.rainbow.speed` | number | 0 to … |
-| `leyLines.rainbow.linger` | number | 0 to … |
 | `leyLines.rainbow.max` | number | 0 to … |
 | `leyLines.rainbow.bars` | number | 0 to … |
 | `leyLines.rainbow.spacing` | number | 0 to … |
 | `leyLines.rainbow.cell` | number | 0 to … |
 | `leyLines.rainbow.height` | number | 0 to … |
+| `leyLines.rainbow.route.on` | boolean |  |
+| `leyLines.rainbow.route.spacing` | number | 0 to … |
+| `leyLines.rainbow.route.height` | number | 0 to … |
+| `leyLines.rainbow.route.cell` | number | 0 to … |
 
 ### `partyObjects`
 
