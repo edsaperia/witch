@@ -45,7 +45,9 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
       const panelIn = () => page.evaluate(() => !!document.querySelector("#station-panel")?.classList.contains("in") && !window.witch.game.clock.paused);
       for (let i = 0; i < 300 && !(await panelIn()); i++) { if (await page.evaluate(() => !window.witch.game.clock.paused)) { await page.keyboard.press("KeyE"); for (let j = 0; j < 40 && !(await panelIn()); j++) await page.waitForTimeout(500); } else await page.waitForTimeout(1000); } /* (one E, then up to 20 s for a slow frame to see it: E closes it too) */
       await page.waitForFunction(() => document.querySelector("#station-panel")?.classList.contains("in") && !window.witch.game.clock.paused, null, { timeout: 30000, polling: 500 });
-      const settle = async () => { await page.waitForTimeout(1500); await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 900000, polling: 500 }); await page.waitForTimeout(3000); };
+      // (her art and the house's in: the outdoor world's jobs left out, which in the house never land under a software GL, on
+      // claude/prototype too: party objects, relics, creatures; 2026-10-29)
+      const settle = async () => { await page.waitForTimeout(1500); await page.waitForFunction(() => [...window.witch.view.assets.inFlight].every(k => /^(partyObjects|relics|creature)s?:/.test(k)), null, { timeout: 900000, polling: 500 }); await page.waitForTimeout(3000); };
       // Where she's drawn on screen: her feet (the view's witchBase) and her top (up her sprite by her drawn height).
       const her = () => page.evaluate(([W, H]) => {
         const v = window.witch.view, c = v.camera, b = v.witchBase, up = window.witch.spriteUp(), V = c.position.constructor;
