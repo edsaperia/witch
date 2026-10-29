@@ -36,6 +36,33 @@ export function departureFromRing(map: ForestMap, line: readonly P2[]): { share:
   return { share, length: total * (1 - share) };
 }
 
+/** A link's own line along the route (from the treehouse: the departure from where it meets the boot ring), as linkLength measures
+ *  it: for following the route on the ground (rules/rainbow.ts). */
+const lines = new WeakMap<object, Map<string, P2[]>>();
+export function linkLine(map: ForestMap, a: LeyStone, b: LeyStone): P2[] {
+  const key = `${a.depart ? "d" : ""}${a.x},${a.z}>${b.x},${b.z}`;
+  let m = lines.get(map.dancefloor);
+  if (!m) lines.set(map.dancefloor, (m = new Map()));
+  let l = m.get(key);
+  if (!l) m.set(key, (l = lineOf(map, a, b)));
+  return l;
+}
+function lineOf(map: ForestMap, a: LeyStone, b: LeyStone): P2[] {
+  if (a.depart) {
+    const line = departureRoute(map, b, map.tuning.leyLines?.depart?.avoid ?? 2, 2) as P2[], { share } = departureFromRing(map, line);
+    let cut = polyLength(line) * share;
+    for (let i = 1; i < line.length; i++) {
+      const d = Math.hypot(line[i][0] - line[i - 1][0], line[i][1] - line[i - 1][1]);
+      if (cut <= d) { const f = d > 0 ? cut / d : 0; return [[line[i - 1][0] + (line[i][0] - line[i - 1][0]) * f, line[i - 1][1] + (line[i][1] - line[i - 1][1]) * f], ...line.slice(i)]; }
+      cut -= d;
+    }
+    return line.slice(-1);
+  }
+  let links = routeLinks.get(map.dancefloor);
+  if (!links) routeLinks.set(map.dancefloor, (links = new Map(routeOf(map).links.slice(1).map(l => [`${l[0][0]},${l[0][1]}>${l[l.length - 1][0]},${l[l.length - 1][1]}`, l]))));
+  return links.get(`${a.x},${a.z}>${b.x},${b.z}`) ?? [[a.x, a.z], [b.x, b.z]];
+}
+
 const lengths = new WeakMap<object, Map<string, number>>();
 const routeLinks = new WeakMap<object, Map<string, P2[]>>();
 /** A link's length along the route (m): the route's own curve between two stones next to each other on it; from the
