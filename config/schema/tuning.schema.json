@@ -6858,6 +6858,71 @@
             "light"
           ],
           "additionalProperties": false
+        },
+        "stump": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "variants": {
+              "type": "number",
+              "minimum": 0
+            },
+            "clear": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ring": {
+              "type": "object",
+              "properties": {
+                "radius": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "cell": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "radius",
+                "cell"
+              ],
+              "additionalProperties": false
+            },
+            "light": {
+              "type": "object",
+              "properties": {
+                "reach": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "strength": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "height": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "reach",
+                "strength",
+                "height"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "on",
+            "variants",
+            "clear",
+            "ring",
+            "light"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -6868,7 +6933,8 @@
         "lightRange",
         "dormant",
         "awake",
-        "flare"
+        "flare",
+        "stump"
       ],
       "additionalProperties": false,
       "description": "The rune stones marking where soundsystems will come, glowing, and pulsing on the beat when the next wave is coming to them."

@@ -223,7 +223,7 @@ export class HeightField {
     for (const c of m.legendClearings ?? []) add(c.x, c.z, c.r + 2);
     for (const [cx, cy] of m.cells) {
       const s = m.soundsystemSpot(cx, cy);
-      if (cx !== m.centreCell[0] || cy !== m.centreCell[1]) add(s.x, s.z, T.soundsystemFootprint + 2); // (home's has none)
+      if (cx !== m.centreCell[0] || cy !== m.centreCell[1]) add(s.x, s.z, Math.max(T.soundsystemFootprint, T.runeMarkers?.stump?.on ? T.runeMarkers.stump.clear : 0) + 2); // (home's has none; a great stump's roots lie level)
       const p = m.setPieceSpot(cx, cy);
       if (p) add(p.x, p.z, T.setPieceFootprint * T.setPieceScale + 2);
     }

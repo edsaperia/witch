@@ -2548,6 +2548,14 @@ Spawn markers (Ed, v147): a rune stone on every spot where a soundsystem will co
 | `runeMarkers.awake.moteRise` | number | 0 to … |
 | `runeMarkers.flare.time` | number | 0 to … |
 | `runeMarkers.flare.light` | number | 0 to … |
+| `runeMarkers.stump.on` | boolean |  |
+| `runeMarkers.stump.variants` | number | 0 to … |
+| `runeMarkers.stump.clear` | number | 0 to … |
+| `runeMarkers.stump.ring.radius` | number | 0 to … |
+| `runeMarkers.stump.ring.cell` | number | 0 to … |
+| `runeMarkers.stump.light.reach` | number | 0 to … |
+| `runeMarkers.stump.light.strength` | number | 0 to … |
+| `runeMarkers.stump.light.height` | number | 0 to … |
 
 ### `sfx`
 
