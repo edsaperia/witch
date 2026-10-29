@@ -2007,6 +2007,13 @@ const rough = (p, a) => a * (Math.sin(p[0] * 23 + p[1] * 7) * Math.sin(p[1] * 19
 const sdf0 = (q, p) => q.type === "ell" ? sdEllipsoid(sub(p, q.cw), q) : q.type === "box" ? sdRoundBox(sub(p, q.cw), q) : sdRoundCone(sub(p, q.aw), q);
 const sdf = (q, p) => q.rough ? sdf0(q, p) + rough(p, q.rough) : sdf0(q, p);
 
+// A part's signed distance at a model-space point (unturned: Model.field, groupField).
+function sdModel(q, p) {
+  if (q.type === "ell") return sdEllipsoid(sub(p, q.c), q);
+  if (q.type === "box") return sdRoundBox(sub(p, q.c), q);
+  const ba = sub(q.b, q.a), l2 = Math.max(1e-9, dot(ba, ba)), rr = q.r1 - q.r2;
+  return sdRoundCone(sub(p, q.a), { ba, l2, rr, a2: l2 - rr * rr, il2: 1 / l2, r1: q.r1, r2: q.r2 });
+}
 class Model {
   // part: the label each primitive added from now on carries ("body", "head", a leg, "tail"...), so
   // the live rig (art/genome/parts.js) can bake a creature's pieces apart; rendering ignores it.
@@ -2041,12 +2048,19 @@ class Model {
     let d = Infinity;
     for (const q of this.parts) {
       if (q.extra || q.cut) continue;
-      let e;
-      if (q.type === "ell") e = sdEllipsoid(sub(p, q.c), q);
-      else if (q.type === "box") e = sdRoundBox(sub(p, q.c), q);
-      else { const ba = sub(q.b, q.a), l2 = Math.max(1e-9, dot(ba, ba)), rr = q.r1 - q.r2; e = sdRoundCone(sub(p, q.a), { ba, l2, rr, a2: l2 - rr * rr, il2: 1 / l2, r1: q.r1, r2: q.r2 }); }
+      const e = sdModel(q, p);
       if (e < d) d = e; // (a degenerate part's NaN is skipped)
     }
+    return d;
+  }
+  // The signed distance at a model-space point to one group's solid as drawn: its parts' smooth union (the model's blend), its
+  // cut parts carved out (but those marked `skip`), roughness left out; for measuring a shape's own outline (a great stump's cut:
+  // art/props/stumps.js stumpCut).
+  groupField(group, p) {
+    const k = this.blend, smin = (a, b) => { const h = Math.max(k - Math.abs(a - b), 0) / k; return Math.min(a, b) - h * h * k * .25; };
+    let d = Infinity;
+    for (const q of this.parts) if (q.group === group && !q.cut && !q.extra) { const e = sdModel(q, p); d = d === Infinity ? e : smin(d, e); }
+    for (const q of this.parts) if (q.group === group && q.cut && !q.skip) d = Math.max(d, -sdModel(q, p));
     return d;
   }
   // The point on an ellipsoid's surface (centre c, radii r along the model axes) in direction dir.
@@ -13557,6 +13571,8 @@ function biomeColours(c, look, M, { flower = true, stone = false } = {}) {
 const SU = 1 / 1.9; // model units a metre (as the prop generator's PR_U)
 /** How many angles a stump's root area's outline is measured at (stumpPiece's `roots`). */
 const ROOT_ANGLES = 32;
+/** How many angles a stump's cut's outline is measured at (stumpCut). */
+const CUT_ANGLES = 48;
 // lobes: how many, how far each swells past the trunk at its foot (a share of the radius) and how wide (radians); flute: the
 // clefts between them; plank: the lobes thin walls (a kapok's buttresses); roots: how many, branching (the chance of a second
 // branch), dives (the chance of each of two underground runs); top: weathered, slabs (the saw at different heights), hollow (a
@@ -13638,8 +13654,13 @@ const tone = (c, r, k) => hsv2rgb(((c[0] + (r() - .5) * k * .5) % 1 + 1) % 1, Ma
 
 function build(m, v, G) {
   const r = v.r, K = SU, h = v.height * K, lift = (v.lift ?? 0) * K, nL = v.lobes, tw = G.twist ?? 0;
-  // the lobes: each a buttress from the trunk's middle out to its foot, fused with the core (one group: a smooth union)
+  // its irregularity (Ed, 2026-10-29: "The trunk shape and rings are a bit even, can they be more irregular?"; runeMarkers.stump.irregular,
+  // 0 as first drawn): from a stream of its own, so the rest of its shape is as it was
+  const irr = Math.max(0, v.irregular ?? 0), ri = rng((v.seed * 7121 + 503) >>> 0);
+  // the lobes: each a buttress from the trunk's middle out to its foot, fused with the core (one group: a smooth union); uneven ones
+  // swelling more or less and bunching
   const lobes = [...Array(nL).keys()].map(i => ({ a: i / nL * Math.PI * 2 + (r() - .5) * Math.PI * 1.1 / nL, A: v.lobe * (.75 + r() * .5) }));
+  for (const L of lobes) { L.A *= Math.max(.3, 1 + irr * (ri() - .45) * 1.1); L.a += irr * (ri() - .5) * Math.PI * .5 / nL; }
   // the radius that puts its cut, on average, `across` wide: the core's top radius, the lobes reaching past it
   const R = v.across * K * .5 / (1 + (G.plank ? .15 : .45) * v.lobe * nL * G.lobeWidth / Math.PI);
   const bark = p => { // furrows running up it (twisting on a juniper), plates between, moss and frost on its shady (far) side
@@ -13665,24 +13686,57 @@ function build(m, v, G) {
     const a = (lobes[i].a + lobes[(i + 1) % nL].a + (i === nL - 1 ? Math.PI * 2 : 0)) / 2, w = Math.min(R * .14 * G.flute, h * .3);
     m.seg([Math.cos(a) * R * 1.12, base - .05, Math.sin(a) * R * 1.12], [Math.cos(a + tw * .5) * R * 1.1, h * .5, Math.sin(a + tw * .5) * R * 1.1], w * 1.4, w, M.TRUNK, { group: 1, cut: true });
   }
+  // irregular: knuckles of wood swelling the rim between the lobes, a side grown flat, and a notch (a wedge the saw or a split took)
+  const notches = [];
+  if (irr > 0) {
+    const nk = Math.round(2 + 3 * ri());
+    for (let i = 0; i < nk; i++) {
+      const a = ri() * Math.PI * 2, w = R * (.18 + .22 * ri()) * Math.min(1.5, irr), c = R * (.78 + .14 * ri());
+      m.seg([Math.cos(a) * c, base - .05, Math.sin(a) * c], [Math.cos(a) * c * .97, h + .2, Math.sin(a) * c * .97], w * 1.15, w, M.TRUNK, { group: 1, rough: G.smooth ? .004 : .012, paint: bark });
+    }
+    if (ri() < .55 * Math.min(1, irr)) { // a flattened side: everything past a line, shaved off
+      const a = ri() * Math.PI * 2, n = [Math.cos(a), 0, Math.sin(a)], big = R * 4;
+      m.box(v3.add(v3.mul(n, R * (.86 + .1 * ri()) + big), [0, h * .5, 0]), [big, h, big], M.TRUNK, { dir: n, up: [0, 1, 0], cut: true, group: 1, paint: bark });
+    }
+    if (ri() < .75 * Math.min(1, irr)) { // a V notch into the rim, down the side
+      const a = ri() * Math.PI * 2, w = R * (.13 + .1 * ri()) * Math.min(1.3, irr), c = R * 1.04, turn = Math.PI / 4;
+      m.box([Math.cos(a) * c, h, Math.sin(a) * c], [w, h * .7, w], M.BARKL, { dir: [Math.cos(a + turn), 0, Math.sin(a + turn)], up: [0, 1, 0], cut: true, group: 1 });
+      notches.push(a);
+    }
+  }
   // the cut: sawn flat long ago, a little out of level; on a pine, charred or juniper stump in slabs the saw left at different heights
   const tilt = v3.norm([(r() - .5) * .05, 1, (r() - .5) * .05]), hollow = v.hollow * R, nRings = 16 + Math.floor(r() * 10);
-  const checks = [...Array(v.cracks).keys()].map(() => r() * Math.PI * 2);
+  const checks = [...Array(v.cracks).keys()].map(() => { const c = r() * Math.PI * 2; return { c, w: 1, to: .2 + .8 * ((c * 7) % 1) }; });
+  // irregular: the heart (the pith, where the rings start) off the middle, the rings unevenly spaced (closer towards the bark, as the
+  // tree's growth slowed) and wavering, and a long split from the heart to the rim
+  const ha = ri() * Math.PI * 2, hr = R * .14 * Math.min(1.3, irr) * (.5 + .5 * ri()), heart = [Math.cos(ha) * hr, Math.sin(ha) * hr];
+  const widths = [...Array(nRings).keys()].map(i => Math.max(.3, 1 + irr * (ri() - .5) * 1.5) * (1 - .45 * Math.min(1, irr) * i / nRings));
+  const sumW = widths.reduce((a, b) => a + b, 0), bounds = []; { let acc = 0; for (const w of widths) bounds.push((acc += w) / sumW); }
+  const ringOf = q => { let i = 0; while (i < nRings && bounds[i] <= q) i++; return i; };
+  const wav = [ri() * 6.28, ri() * 6.28, ri() * 6.28];
+  if (irr > 0 && ri() < .6 * Math.min(1, irr)) checks.push({ c: ri() * Math.PI * 2, w: 2.5, to: 1.1 });
+  // (the cut's outline, measured once it's built (cutEdge): the rings follow it out at the rim)
+  let edgeAt = () => R;
   const cutPaint = p => {
-    const q = Math.hypot(p[0], p[2]) / R, a = Math.atan2(p[2], p[0]);
-    if (hollow && q * R < hollow * 1.15) return M.STONED; // the rotted heart
-    if (checks.some(c => Math.cos(a - c) > 0 && Math.abs(Math.sin(a - c)) * q * R < .012 + .012 * q && q > .25 && q < .2 + .8 * ((c * 7) % 1))) return M.STONED; // a check, splitting out from the heart
+    const a = Math.atan2(p[2], p[0]), E = edgeAt(a), dx = p[0] - heart[0], dz = p[2] - heart[1], q0 = Math.hypot(dx, dz) / E;
+    // (the rings round the heart in the middle, round the outline at the rim)
+    const f = Math.max(0, 1 - Math.min(1, q0)), qx = p[0] - heart[0] * f, qz = p[2] - heart[1] * f, q = Math.hypot(qx, qz) / E, ah = Math.atan2(dz, dx);
+    if (hollow && Math.hypot(dx, dz) < hollow * 1.15) return M.STONED; // the rotted heart
+    if (checks.some(k => Math.cos(ah - k.c) > 0 && Math.abs(Math.sin(ah - k.c)) * q * R < (.012 + .012 * q) * k.w && q > .25 / k.w && q < k.to)) return M.STONED; // a check, splitting out from the heart
     if (v.moss && p[2] < -R * .55 && q > .75 && cellHash(p, 12, 44) < v.moss * .7 * (q - .6)) return M.MOSS;
     if (v.frost && q > .55 && cellHash(p, 16, 45) < v.frost * (q - .45)) return M.WEB;
-    return (Math.floor((q + Math.sin(a * 3 + v.seed) * .02) * nRings) & 1) && q < 1.05 ? M.ACCENT : undefined;
+    const wobble = Math.sin(a * 3 + v.seed) * .02 + irr * q * (.03 * Math.sin(a * 2 + wav[0]) + .022 * Math.sin(a * 5 + wav[1]) + .012 * Math.sin(a * 9 + q * 7 + wav[2]));
+    return (ringOf(q + wobble) & 1) && q < 1.05 ? M.ACCENT : undefined;
   };
   const big = R * 4;
   m.box(v3.add([0, h, 0], v3.mul(tilt, big)), [big, big, big], M.BELLY, { dir: [1, 0, 0], up: tilt, cut: true, group: 1, paint: cutPaint });
+  m.parts[m.parts.length - 1].skip = true; // (the cut itself: its outline's measured just under it, stumpCut)
   for (let i = 0; i < v.slabs; i++) { // a slab: everything one side of a line, a little lower
     const a = i / v.slabs * Math.PI * 2 + r() * .9, n = [Math.cos(a), 0, Math.sin(a)], drop = v.slabDrop * K * (.5 + r());
     m.box(v3.add(v3.add([0, h - drop, 0], v3.mul(n, R * (.35 + r() * .3) + big)), [0, big, 0]), [big, big, big], M.BELLY, { dir: n, up: [0, 1, 0], cut: true, group: 1, paint: cutPaint });
+    m.parts[m.parts.length - 1].skip = true;
   }
-  if (hollow) m.ell([0, h, 0], [hollow, Math.min(h * .8, hollow), hollow], M.STONED, { cut: true, group: 1 });
+  if (hollow) { m.ell([heart[0], h, heart[1]], [hollow, Math.min(h * .8, hollow), hollow], M.STONED, { cut: true, group: 1 }); m.parts[m.parts.length - 1].skip = true; }
   // the roots: out of the flare along the ground, in short straight runs with a kink between, branching, diving under the earth
   // and surfacing further out; a mangrove's arch from high on its trunk down into the ground
   const reach = v.spread * K * .5;
@@ -13713,7 +13767,44 @@ function build(m, v, G) {
     root(Math.cos(a) * start, Math.sin(a) * start, a, G.stilts ? lift * (.8 + r() * .5) : h * .18, len, v.rootGirth * K * (G.stilts ? 1 : main ? 1 : .7), 0, i + 1);
   }
   m.clipY = 0; // (what's under the ground isn't drawn: the roots' buried runs, the earth's)
-  return R;
+  const cut = cutOutline(m, h, R);
+  edgeAt = a => { const u = ((a / (Math.PI * 2)) * CUT_ANGLES % CUT_ANGLES + CUT_ANGLES) % CUT_ANGLES, i = Math.floor(u), t = u - i; return cut[i] * (1 - t) + cut[(i + 1) % CUT_ANGLES] * t; };
+  return { R, cut, heart };
+}
+
+// The cut's outline (model units, at CUT_ANGLES angles from +x towards +z): the trunk's solid (group 1, carved by its notches and
+// shaved sides but not by the saw's cut itself) just under the cut, from outside in.
+function cutOutline(m, h, R) {
+  const y = h - .03, out = [], step = R * .06;
+  for (let i = 0; i < CUT_ANGLES; i++) {
+    const a = i / CUT_ANGLES * Math.PI * 2, c = Math.cos(a), s = Math.sin(a), f = q => m.groupField(1, [c * q, y, s * q]);
+    let q = R * 2.2;
+    while (q > step && f(q) > 0) q -= step;
+    let lo = q, hi = q + step; // (inside at lo, outside at hi)
+    for (let k = 0; k < 10; k++) { const mid = (lo + hi) / 2; if (f(mid) > 0) hi = mid; else lo = mid; }
+    out.push(lo);
+  }
+  return out;
+}
+
+// A stump's variant: its genome's draw for its seed, and o.irregular (runeMarkers.stump.irregular).
+function stumpVariant(species, o) {
+  const v = propVariant(species, o.seed ?? 0, o, STUMP_GENOMES);
+  for (const k of ["lift", "slabDrop"]) if (v[k] === undefined) v[k] = 0;
+  v.irregular = o.irregular ?? 0;
+  return v;
+}
+
+/** A stump's cut's outline on the ground (Ed, 2026-10-29: "The area in which I can cast the soundsystem spell should be the whole
+ *  trunk (cut part, not the roots)"): its radius (m) round its middle at CUT_ANGLES even angles from east towards the camera (+z) as it
+ *  lies in the game, seen from o.yaw (as stumpPiece draws it), mirrored with `flip` (the view's: render/markers.ts stumpDeal). Built
+ *  as stumpPiece builds it, not drawn: for the rules (rules/stumps.ts). */
+function stumpCut(species, o = {}, flip = false) {
+  const G = STUMP_GENOMES[species]; if (!G) throw new Error(`no stump species "${species}"`);
+  const v = stumpVariant(species, o), { cut } = build(new Model({ blend: .18 }), v, G), yaw = o.yaw ?? v.r() * Math.PI * 2;
+  const at = a => { const u = ((a / (Math.PI * 2)) * CUT_ANGLES % CUT_ANGLES + CUT_ANGLES) % CUT_ANGLES, i = Math.floor(u), t = u - i; return cut[i] * (1 - t) + cut[(i + 1) % CUT_ANGLES] * t; };
+  // (the model turned by yaw, as drawn: a world angle A is the model's A - yaw; mirrored, A is PI - A)
+  return [...Array(CUT_ANGLES).keys()].map(i => { const A = i / CUT_ANGLES * Math.PI * 2; return +(at((flip ? Math.PI - A : A) - yaw) / SU).toFixed(3); });
 }
 
 /** One stump: species (a STUMP_GENOMES key), o.seed (its shape and colours), o.yaw (the angle it's seen from, radians; seeded when
@@ -13721,11 +13812,10 @@ function build(m, v, G) {
  *  far its rows reach over the ground (`depth`) and its variant. */
 function stumpPiece(species, o = {}, def = null, st = {}, ppm = 16) {
   const G = STUMP_GENOMES[species]; if (!G) throw new Error(`no stump species "${species}"`);
-  const v = propVariant(species, o.seed ?? 0, o, STUMP_GENOMES);
-  for (const k of ["lift", "slabDrop"]) if (v[k] === undefined) v[k] = 0;
+  const v = stumpVariant(species, o);
   { const b = String(st.biome ?? "").split(/[/|]/)[0]; if (v.frost && def && b !== "cold" && b !== "mountains and glaciers" && !def.snow) v.frost = 0; } // (frost only where it snows)
   const m = new Model({ blend: .18 });
-  const R = build(m, v, G), yaw = o.yaw ?? v.r() * Math.PI * 2;
+  const { R, cut } = build(m, v, G), yaw = o.yaw ?? v.r() * Math.PI * 2;
   const px = witchPixelsPerUnit(st), { sp: raw, project } = render(m, { scale: px, yaw, lineGap: .3 });
   const top0 = project([0, v.height * SU, 0]), foot0 = project([0, 0, 0]);
   const { sp, x0 = 0, y0 = 0 } = cropTight(raw);
