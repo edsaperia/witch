@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { TUNING } from "../../rules/tuning";
 import { toEvolve } from "../../rules/berries";
-import { areaTopRanks, dotAt, EMPTY_STONE, legendShine, rankColour, rankOf, rankSize, shownDots, stoneRank, youthDots, RANKS_DEFAULT } from "./ranks";
+import { areaTopRanks, dotAt, EMPTY_STONE, legendShine, rankColour, standScale, rankOf, rankSize, shownDots, stoneRank, youthDots, RANKS_DEFAULT } from "./ranks";
 
 describe("rank sigils", () => {
   it("a youth's dots are its berries to adult less the last (eaten at a placed sigil), read from the rules", () => {
@@ -42,6 +42,7 @@ describe("rank sigils", () => {
     for (const L of [E, F]) { for (let i = 1; i < 3; i++) expect(sat(L[i])).toBeGreaterThan(sat(L[i - 1]) + 0.1); expect(sat(L[2])).toBeGreaterThan(0.9); } // (by intensity: the legend at the end, the most vivid)
     for (const c of [...E, ...F]) { const h = hue(c); expect(Math.abs(h - baby)).toBeGreaterThan(40); } // (the purple is the babies' alone)
     expect([0, 1, 2, 3].map(k => rankSize(TUNING, k))).toEqual([0.81, 0.9, 1, 1.35]); // (sizes by rank everywhere)
+    expect(standScale(TUNING)).toBe(1.5); // (standing up, in her stack and over the stones, half again: Ed, 2026-10-29)
     expect(TUNING.leash.ranks?.on ?? RANKS_DEFAULT.on).toBe(true); // (the default since Ed, 2026-10-27; ?sigils=old off)
     expect(TUNING.leash.hex?.size).toBe(RANKS_DEFAULT.hex); // (their 6 m hex grid with them)
   });

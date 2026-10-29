@@ -4380,6 +4380,10 @@
               "type": "number",
               "minimum": 0
             },
+            "standScale": {
+              "type": "number",
+              "minimum": 0
+            },
             "stones": {
               "type": "object",
               "properties": {
@@ -4500,6 +4504,7 @@
             "embers",
             "dotsPerRow",
             "stoneGlow",
+            "standScale",
             "stones",
             "chain"
           ],

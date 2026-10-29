@@ -1646,6 +1646,7 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
 | `leash.ranks.embers.crowd` | number | 0 to … |
 | `leash.ranks.dotsPerRow` | number | 0 to … |
 | `leash.ranks.stoneGlow` | number | 0 to … |
+| `leash.ranks.standScale` | number | 0 to … |
 | `leash.ranks.stones.range` | number | 0 to … |
 | `leash.ranks.stones.fade` | number | 0 to … |
 | `leash.ranks.stones.size` | number | 0 to … |

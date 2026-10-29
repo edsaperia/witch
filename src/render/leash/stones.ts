@@ -20,7 +20,7 @@ import type { LeashView } from "../leash";
 import { SPRITE_UNIFORMS } from "../sprites";
 import { groundHeight } from "../height";
 import { SLOT, SLOTS } from "./glyphs";
-import { drawEmbers, legendShine, rankColour, rankKnobs, rankSize, stoneKnobs } from "./ranks";
+import { drawEmbers, legendShine, rankColour, rankKnobs, rankSize, standScale, stoneKnobs } from "./ranks";
 
 /** A rune stone drawn this frame: its area's key ("cx,cy"), where it stands and its stone's height (m, STONE_FACE of its drawn height;
  *  up its face: the sprites lean back toward the camera, render/sprites.ts uUp, and its column climbs on up that way, in its plane). */
@@ -73,7 +73,7 @@ const smooth = (k: number) => { const q = Math.max(0, Math.min(1, k)); return q 
 export function drawStones(lv: LeashView, time: number, dot: number[]): void {
   const g = lv.game, t = g.tuning, V = lv.stoneView, K = stoneKnobs(t), RK = rankKnobs(t), w = g.witch, S = t.stack;
   if (!t.leash.ranks?.on) return;
-  const sizeOf = (lvl: number) => (2 + 2 * 0.4) * S.scale * rankSize(t, lvl), notes = notesSlot(lv);
+  const sizeOf = (lvl: number) => (2 + 2 * 0.4) * S.scale * rankSize(t, lvl) * standScale(t), notes = notesSlot(lv);
   const sigil = (id: number, level: number, x: number, y: number, z: number, size: number, alpha: number, c: [number, number, number]) => {
     const sp = g.creatures[id]?.species ?? "fox", uv = lv.uv(lv.bareSlot(sp)), sh = lv.shadeOf(uv);
     if (sh) lv.stackBack.add(x, y, z, size, sh, 0.02, 0.02, 0.035, (S.backing ?? 0.6) * alpha);

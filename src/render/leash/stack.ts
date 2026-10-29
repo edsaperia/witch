@@ -8,7 +8,7 @@ import type { LeashView } from "../leash";
 import { easeRoute } from "../routeEase";
 import { bowOf, drawChain, stepChain } from "./chain";
 import { DISC } from "./glyphs";
-import { chainKnobs, dotAt, drawEmbers, legendShine, rankKnobs, rankOf, rankSize, ranksOn, shownDots, youthDots } from "./ranks";
+import { chainKnobs, dotAt, drawEmbers, legendShine, rankKnobs, rankOf, rankSize, ranksOn, standScale, shownDots, youthDots } from "./ranks";
 import { meterHits } from "../../rules/game";
 
 /** A 💧's blue, for its dots in her stack. */
@@ -43,7 +43,7 @@ export function drawStack(lv: LeashView, time: number, hatTop: number, dot: numb
   for (let k = order.length - 1; k >= 0; k--) {
     const it = order[k], relic = it.kind === "relic", key = stackKey(it.kind, it.id), j = order.length - 1 - k, link = lv.chain[j]; // j: 0 at the bottom
     const c = relic ? null : g.creatures[it.id], sg = c ? lv.sigilOf(c) : null;
-    const size = c ? (ranks ? (2 + 2 * 0.4) * rankSize(t, rankOf(c)) : 2 + c.level * 0.4) * S.scale * sg!.scale : 4.2 * S.scale; // (rank sigils: an adult's size, a rank's share of it, Ed 2026-10-28) // (a relic's: half again an adult's size, Ed 2026-10-09: "+50% in the stack"; an adult's before, his playtest 2026-10-07)
+    const size = c ? (ranks ? (2 + 2 * 0.4) * rankSize(t, rankOf(c)) * standScale(t) : 2 + c.level * 0.4) * S.scale * sg!.scale : 4.2 * S.scale; // (rank sigils: an adult's size, a rank's share of it, Ed 2026-10-28) // (a relic's: half again an adult's size, Ed 2026-10-09: "+50% in the stack"; an adult's before, his playtest 2026-10-07)
     const idle = Math.sin(time * 1.7 + j * 0.9) * S.idleSway * (1 + j * 0.5) * (1 - 0.6 * LV.load);
     // (under a load it leans toward the pull, each sigil a little further: render/load.ts)
     const lean = LT.stackLean * LV.load;
