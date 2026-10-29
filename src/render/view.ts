@@ -1547,12 +1547,11 @@ export class View {
       const bootPulse = g.party.spellAt !== null && time < g.party.bootUntil;
       this.ley.pulse(g.partyOver ? null : bootPulse ? 0 : shaderPulse(g.party, g.map, time), !bootPulse);
       this.ley.lap(winPulse(g)?.links ?? null, winPulseOut(g)?.links ?? null, winLit(g)); // (the victory lap: its sparklers racing home and on to the route's end from where the wave's pulse was, rules/win.ts)
-      // None till the party spell, nor before the boot's pulse reaches where the first link leaves the home ring (Ed, v2001 and
-      // 2026-10-07): there it branches off, an extension of the boot's line, out to the first stone as the boot goes on round
-      // (leyReveal, by the boot pulse's own progress), then on along the route.
+      // None till the party spell; then reveal times as far along the one path the ring and the route make as the pulse (the boot's,
+      // then the wave's: leyReveal), the route from where the boot's lap ends (Ed, 2026-10-29: one path, on round the same way).
       this.ley.near(w.x, w.z);
       // (the Route-seer hat worn, rules/hatSpells.ts: the whole route, however far the reveal has grown)
-      this.ley.grow(leyDrawnTo(g.party, g.map, time, t.leyLines.reveal ?? 3, this.ley.branch(), routeSeen(g))); // (none before the party, the hat's too)
+      this.ley.grow(leyDrawnTo(g.party, g.map, time, t.leyLines.reveal ?? 3, routeSeen(g))); // (none before the party, the hat's too)
       { // The boot's ring (rules/bootRing.ts): the line round the home ring at reveal x the pulse, the pulse turning the stones; faint after.
         // (Its sparkler runs the whole lap, past the last stone to where it came on to the ring, at the pulse's speed, the boot
         // ending as it gets there, and hands over to the wave's: Ed, 2026-10-07, "The two pulses or tips don't join correctly at

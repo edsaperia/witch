@@ -13,6 +13,7 @@ import { tempoRate } from "./beat";
 import { leyChain, onAreaDone, waveReached } from "./leylines";
 import { frontMetres, leyReachTimes, pulseLinks, pulseProgress, pulseRouteMetres } from "./leypulse";
 import { behindLength } from "./pulseRoute";
+import { bootPath } from "./bootRing";
 import { holdsArea } from "./clear";
 import { leyReveal } from "../render/leylines";
 
@@ -156,7 +157,8 @@ describe("the pulse and the line's front never skip (Ed, 2026-10-08), at a const
     expect(g.party.wave).toBe(5);
     const links = pulseLinks(g.party, g.map, g.clock.time);
     expect(links).toBeGreaterThanOrEqual(5); expect(links).toBeLessThan(5.1);
-    expect(end.front).toBeCloseTo((g.map.tuning.leyLines.reveal ?? 3) * end.pulse, 6);
+    const B = bootPath(g.map).length; // (the ring and the route one path: the front reveal times the pulse's distance along both, from the boot's end on)
+    expect(end.front + B).toBeCloseTo((g.map.tuning.leyLines.reveal ?? 3) * (end.pulse + B), 6);
   }, 180000);
 
   it("a tempo change mid-link (a knockdown's BPM): the pace changes, nothing jumps, and it still arrives with the wave", () => {

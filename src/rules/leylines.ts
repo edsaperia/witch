@@ -18,8 +18,8 @@ export interface LeyStone { cell: Cell; x: number; z: number; /** The wave that 
 }
 
 /** Where a stone stands: an area's soundsystem spot; home's, the treehouse's front (Ed, 2026-10-05:
- *  "The start of the first leyline should go from the front of the treehouse"), the line leaving it
- *  due south (departureRoute). */
+ *  "The start of the first leyline should go from the front of the treehouse"), the boot ring's path from there and the
+ *  line's first link on from where its lap ends (departureRoute). */
 function stoneOf(map: ForestMap, cell: Cell, wave: number): LeyStone {
   if (cell[0] === map.centreCell[0] && cell[1] === map.centreCell[1]) return { cell, x: map.treehouseFront.x, z: map.treehouseFront.z, wave, depart: true };
   const s = map.soundsystemSpot(cell[0], cell[1]);

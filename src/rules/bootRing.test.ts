@@ -102,20 +102,19 @@ function maxTurn(pts: [number, number][]): number {
   return most;
 }
 
-describe("the ring and the way out are one path (Ed, 2026-10-06: \"it doesn't connect with the leyline around the dancefloor\")", () => {
-  it("the first line's way out runs on the boot ring's circle from the treehouse and leaves it from a point on it", async () => {
+describe("the ring and the way out are one path (Ed, 2026-10-06: \"it doesn't connect with the leyline around the dancefloor\"; 2026-10-29: the line goes on from the lap the same way round)", () => {
+  it("the first line's way out starts where the boot's lap ends, runs on round the ring's circle and leaves it from a point on it", async () => {
     const { newGame } = await import("./game");
     const { TUNING } = await import("./tuning");
     const { departureRoute } = await import("./departure");
     const g = newGame(123, TUNING), d = g.map.dancefloor, R = ringRadius(g.map), P = bootPath(g.map);
     for (const to of [{ x: d.x + 400, z: d.z + 300 }, { x: d.x - 500, z: d.z - 100 }]) {
       const route = departureRoute(g.map, to, TUNING.leyLines.depart.avoid, 4), r = (p: [number, number]) => Math.hypot(p[0] - d.x, p[1] - d.z);
-      expect(route[0]).toEqual(P.path[0]); // (both from the treehouse's front)
-      // Never inside the ring; in from the treehouse's front onto it (the ring is the speakers' own circle, inside the front:
-      // Ed, 2026-10-07), a stretch on it (within the smoothing's half metre or so), then out.
+      expect(route[0]).toEqual(P.path[P.path.length - 1]); // (from where the boot's lap ends: one path)
+      // Never inside the ring; a stretch on it (within the smoothing's half metre or so), then out.
       expect(Math.min(...route.map(r))).toBeGreaterThan(R - 0.6);
       const on = route.findIndex(p => Math.abs(r(p) - R) < 1.5), onRing = on + route.slice(on).findIndex(p => r(p) > R + 1.5);
-      expect(on).toBeGreaterThan(0);
+      expect(on).toBe(0);
       expect(onRing - on).toBeGreaterThan(2);
       for (const p of route.slice(on, onRing)) expect(Math.abs(r(p) - R)).toBeLessThan(1.5);
       // No right angle (Ed's second shot): onto the ring, round it and off it, each step turns gently.
