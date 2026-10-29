@@ -41,7 +41,7 @@ describe("rank sigils", () => {
     for (const c of F) { const h = hue(c); expect(h).toBeGreaterThan(200); expect(h).toBeLessThan(235); } // (blue: no turquoise, no purple)
     for (const L of [E, F]) for (let i = 1; i < 3; i++) expect(lum(L[i])).toBeGreaterThan(lum(L[i - 1])); // (ranks apart by lightness, too)
     for (const c of [...E, ...F]) { const h = hue(c); expect(Math.abs(h - baby)).toBeGreaterThan(40); } // (the purple is the babies' alone)
-    expect([0, 1, 2, 3].map(k => rankSize(TUNING, k))).toEqual([0.81, 0.9, 1, 1.1]); // (sizes by rank everywhere)
+    expect([0, 1, 2, 3].map(k => rankSize(TUNING, k))).toEqual([0.81, 0.9, 1, 1.35]); // (sizes by rank everywhere)
     expect(TUNING.leash.ranks?.on ?? RANKS_DEFAULT.on).toBe(true); // (the default since Ed, 2026-10-27; ?sigils=old off)
     expect(TUNING.leash.hex?.size).toBe(RANKS_DEFAULT.hex); // (their 6 m hex grid with them)
   });

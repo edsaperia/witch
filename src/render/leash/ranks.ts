@@ -26,7 +26,8 @@ export interface RankKnobs {
   /** An enemy's (the wild still at their stone), baby to legend: the same purple for a baby, then three clear reds, darker to lighter
    *  (no pink, magenta or purple; before, crimson, red, orange and yellow). The baby's purple is the only purple there is. */
   enemy: number[][];
-  /** Each rank's sigil size, baby to legend, against an adult's (Ed, 2026-10-28: today's size the adult's, about 10% a step). */
+  /** Each rank's sigil size, baby to legend, against an adult's (Ed, 2026-10-28: today's size the adult's, about 10% a step; a legend's
+   *  1.35 since Ed's "I didn't notice any legends in any runestone sigil stacks", 2026-10-29, with its ring: legendRing). */
   sizes: number[];
   /** Embers a sigil on the ground gives off, by rank: how many at once, each one's size (m) and how high it rises (m); in her stack, `stack` of that. */
   embers: { count: number[]; size: number[]; rise: number[]; stack: number };
@@ -51,7 +52,7 @@ export const RANKS_DEFAULT: RankKnobs = {
   on: true, hex: 6, glyph: 5,
   colours: [[180, 100, 255], [45, 100, 235], [70, 160, 255], [160, 210, 255]],
   enemy: [[180, 100, 255], [205, 35, 35], [255, 65, 50], [255, 150, 105]],
-  sizes: [0.81, 0.9, 1, 1.1],
+  sizes: [0.81, 0.9, 1, 1.35],
   embers: { count: [3, 5, 8, 12], size: [0.22, 0.26, 0.3, 0.36], rise: [1.6, 2.1, 2.8, 3.6], stack: 0.4 },
   dotsPerRow: 4, stoneGlow: 2.4,
 };
@@ -73,7 +74,7 @@ export function rankColour(t: Tuning, rank: number, friend = true): [number, num
   return [c[0] / 255, c[1] / 255, c[2] / 255];
 }
 
-/** The rank's sigil size against an adult's (Ed, 2026-10-28): 0.81, 0.9, 1, 1.1. */
+/** The rank's sigil size against an adult's (Ed, 2026-10-28): 0.81, 0.9, 1, and a legend 1.35 (coordinator, 2026-10-29: unmistakable). */
 export const rankSize = (t: Tuning, rank: number): number => rankKnobs(t).sizes[Math.max(0, Math.min(3, rank))] ?? 1;
 
 /** A youth's dots in her stack: one for each berry it eats on the move (its cost to adult, less the last, eaten at a placed sigil:
@@ -125,6 +126,16 @@ export function drawEmbers(batch: Instances, dot: number[], pts: [number, number
     const s = sz * (1 - life * 0.45);
     if (flat) batch.add(x + p[0] * size + drift, y + 0.1 + life * rise, z + p[1] * size, s, dot, cr, cg, cb, a);
     else batch.add(x + p[0] * size + drift, y - p[1] * size + life * rise, z + 0.05, s, dot, cr, cg, cb, a);
+  }
+}
+
+/** A legend's sigil, unmistakable in a stack (Ed, 2026-10-29: "I didn't notice any legends in any runestone sigil stacks"): a ring of
+ *  dots round its glyph in its colour, slowly turning, besides its bigger size (sizes[3]). Standing (her stack, a stone's column). */
+export function legendRing(batch: Instances, dot: number[], x: number, y: number, z: number, size: number, col: readonly number[], time: number, alpha = 1): void {
+  const n = 18, R = size * 0.62, d = Math.max(0.12, size * 0.075);
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 + time * 0.6, k = 0.75 + 0.25 * Math.sin(time * 3 + i);
+    batch.add(x + Math.cos(a) * R, y + Math.sin(a) * R, z + 0.03, d, dot, col[0] * k, col[1] * k, col[2] * k, alpha);
   }
 }
 
