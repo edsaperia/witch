@@ -1,0 +1,10 @@
+{
+  "reason": "No creature jumps in a fight (Ed's playtest, 2026-10-29: \"some animals seem to teleport\"): a pack member hidden in its lull (trees, burrow, water, branches) or scattered runs, unseen, toward where it comes back down instead of being put there when its hide ends; a leap goes on along its arc through steps something else holds it (a stun), and one whose target is lost finishes its arc instead of being put at its landing.",
+  "frames": {
+    "*": "in a fight with a hiding, scattering or leaping kind, those creatures stand somewhere else after their lull or leap"
+  },
+  "rules": {
+    "creatures": "the positions of pack members after a hide or scatter, and of leapers stunned or left without a target mid-leap",
+    "*": "anything downstream of where those creatures stand (the fight's hits, who's near her)"
+  }
+}
