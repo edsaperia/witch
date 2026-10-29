@@ -484,6 +484,20 @@
     "sfx.land": {
       "what": "a 💌 that met no one landing on the ground, a soft puff (at most one every gap seconds)."
     },
+    "sfx.thunk": {
+      "what": "a 💌 landing on a creature, a soft thunk at volume (at most one every gap seconds), its pitch climbing from low to high semitones off the key as the ring fills.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "invitation impacts feel unsatisfying",
+          "rest": "full hit feedback for a 💌 landing on a creature: a white flash, a little squash, its ring slot popping in, a thunk rising as the ring fills, a hitstop on the 💌 that fills it; no flash and a gentler squash with reduce-flashing on"
+        }
+      ],
+      "links": [
+        "src/platform/audio/chimes.ts"
+      ]
+    },
     "sfx.nope": {
       "what": "a soft two-note \"uh-uh\" at volume, at most one each gap seconds.",
       "decisions": [

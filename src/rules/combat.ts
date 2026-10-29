@@ -224,6 +224,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
   };
   const ownStruck = (pd: Directive | undefined, c: Creature, tg: Target): void => { if (pd) { take(tg); markStrike(pd, c); } };
   for (const c of w.active) {
+    if (c.cheerUntil !== undefined && time >= c.cheerUntil) c.cheerUntil = undefined; // (its celebration over: back in the fight, rules/affection.ts)
     stepKnock(c, dt);
     if (c.gone) continue;
     // A flyer swooping that's no longer a wild one in a fight (invited, leashed, dazed, running off, asleep) glides down (rules/movement.ts).
