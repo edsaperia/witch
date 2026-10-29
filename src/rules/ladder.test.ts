@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { inEffect, LADDER_KNOBS, loadEffects, newLadder, pending, RUNGS, setMode, stepLadder, type LadderState } from "./ladder";
+import { inEffect, LADDER_KNOBS, loadEffects, newLadder, pending, retryAfter, RUNGS, setMode, stepLadder, type LadderState } from "./ladder";
 
 const at = (id: string) => RUNGS.findIndex(r => r.id === id);
 /** `n` one-second windows at `ms` against a 16.7 ms budget. */
@@ -92,5 +92,62 @@ describe("the quality ladder", () => {
     for (let i = 0; i < 30; i++) s = stepLadder(s, 40, 16.7, 1, true);
     s = run(s, NaN, 30);
     expect(s.rung).toBe(0);
+  });
+  it("doesn't step down on a spike, a stall or a load that a skip window breaks up", () => {
+    const K = LADDER_KNOBS;
+    let s = run(newLadder(), 5, K.settle + 1);
+    // (two slow windows, a skipped one (a pause, a hidden tab, a hitch over 250 ms), two slow again: never three in a row)
+    s = run(s, 30, K.downAfter - 1);
+    s = stepLadder(s, 30, 16.7, 1, true);
+    s = run(s, 30, K.downAfter - 1);
+    expect(s.rung).toBe(0);
+    // (the frames just after a skip settle: a load's compiles and uploads aren't counted)
+    s = run(s, 5, 5);
+    s = stepLadder(s, 30, 16.7, 1, true);
+    s = run(s, 30, K.settle);
+    expect(s.rung).toBe(0);
+    s = run(s, 30, K.downAfter); // (but slow after settling is slow)
+    expect(s.rung).toBe(at("farDither"));
+  });
+
+  it("climbs back once the room is real, though a spike pushed it down: retried after a while, longer each time it's left", () => {
+    const K = LADDER_KNOBS;
+    // (a few seconds' spike at the cut-away's soft fade pushes it down to the solid crowns, its cost remembered as 25 ms)
+    let s = run(newLadder(at("still")), 25, K.settle + K.downAfter);
+    expect(s.rung).toBe(at("hardCut"));
+    // (then 4.4 ms of 16.7, as in Ed's playtest: not straight back, as the soft fade didn't fit last time...)
+    s = run(s, 4.4, K.settle + K.upAfter + 5);
+    expect(s.rung).toBe(at("hardCut"));
+    // (...but once its retry's come, it is, and on up to full quality)
+    s = run(s, 4.4, K.retry);
+    expect(s.rung).toBeLessThan(at("hardCut"));
+    s = run(s, 4.4, 4 * (K.settle + K.upAfter + 1));
+    expect(s.rung).toBe(0);
+    expect(s.locked).toBe(false);
+  });
+
+  it("a rung that really doesn't fit is tried again less and less often", () => {
+    const K = LADDER_KNOBS;
+    let s = newLadder(at("hardCut"));
+    s = { ...s, left: s.left.map((_, i) => (i === at("still") ? 1 : 0)) };
+    expect(retryAfter(s, at("still"))).toBe(K.retry);
+    s = { ...s, left: s.left.map((_, i) => (i === at("still") ? 3 : 0)) };
+    expect(retryAfter(s, at("still"))).toBe(4 * K.retry);
+    s = { ...s, left: s.left.map((_, i) => (i === at("still") ? 10 : 0)) };
+    expect(retryAfter(s, at("still"))).toBe(K.retryMax);
+    // (the soft fade costs 20 ms, the solid crowns 10: each retry at it is slow and back down, the waits between longer)
+    let t = newLadder(at("still")), ups = 0;
+    const T = 1200;
+    for (let k = 0; k < T; k++) { const b = t.rung; t = stepLadder(t, t.rung < at("hardCut") ? 20 : 10, 16.7); if (t.rung < b) ups++; }
+    expect(t.left[at("still")]).toBe(ups + 1);
+    expect(ups).toBeLessThanOrEqual(4); // (60 + 120 + 240 + 480 s: about four tries in 20 minutes, not twenty)
+    expect(ups).toBeGreaterThanOrEqual(2);
+  });
+
+  it("on frame time (no GPU timer), a frame keeping up with the refresh isn't slow, and only missed frames step down", () => {
+    const K = LADDER_KNOBS, ft = (s: LadderState, ms: number, n: number) => { for (let i = 0; i < n; i++) s = stepLadder(s, ms, 16.7, 1, false, K, false); return s; };
+    expect(ft(newLadder(), 16.7, 60).rung).toBe(0);
+    expect(ft(newLadder(at("hardCut")), 16.7, K.settle + K.upAfter + 1).rung).toBeLessThan(at("hardCut")); // (and climbs while it keeps up)
+    expect(ft(newLadder(), 25, K.settle + K.downAfter).rung).toBe(at("farDither"));
   });
 });
