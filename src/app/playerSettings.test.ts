@@ -10,6 +10,12 @@ const mem = (init: Record<string, string> = {}): Store & { data: Record<string, 
 };
 
 describe("saving and loading", () => {
+  it("defaults rumble on for older saves and remembers it off", () => {
+    expect(loadSettings(mem({ [KEY]: JSON.stringify({ shake: true }) })).rumble).toBe(true);
+    const st = mem(); saveSettings({ ...DEFAULTS, rumble: false }, st);
+    expect(loadSettings(st).rumble).toBe(false);
+    expect(clean({ rumble: "yes" }).rumble).toBe(true);
+  });
   it("is the defaults on a new browser", () => expect(loadSettings(mem())).toEqual(DEFAULTS));
   it("comes back as saved", () => {
     const st = mem(), s = { ...DEFAULTS, master: 0.6, quality: "low" as const, reduceFlashing: true, talk: "toggle" as const, textSize: 1.25 as const, glyphs: "xbox" as const };
