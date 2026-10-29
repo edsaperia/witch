@@ -61,11 +61,9 @@ describe("the Studio's loop", () => {
 
 describe("the Studio's instruments by nearness", () => {
   const at = { x: 0, z: 0 }, kit = HOUSE_ROOMS.objects.find(o => o.id === "drumKit")!, mic = HOUSE_ROOMS.objects.find(o => o.id === "microphone")!;
-  it("stands the drum kit, the synth and the mic in the Studio, and the record shelf by the decks", () => {
+  it("stands the drum kit, the synth and the mic in the Studio; no record shelf (Ed, 2026-10-29: \"Remove record station, instead have dj booth\": her decks)", () => {
     for (const id of ["drumKit", "synthRack", "microphone"]) expect(HOUSE_ROOMS.objects.find(o => o.id === id)?.room).toBe("studio");
-    const shelf = HOUSE_ROOMS.objects.find(o => o.id === "recordShelf")!;
-    expect(shelf.room).toBe("terrace");
-    expect(Math.hypot(shelf.x, shelf.z - 9.77)).toBeLessThan(6); // (by her seat at the decks, on the balcony south of the hub)
+    expect(HOUSE_ROOMS.objects.find(o => o.id === "recordShelf")).toBeUndefined();
   });
   it("lights the instrument she walks up to, is at it only on E there, holds it a little past reach, and lets go on Esc (Ed's playtest, 2026-10-26)", () => {
     const front = { x: kit.x, z: kit.z + kit.d / 2 + 0.5 };

@@ -1,5 +1,6 @@
 // Things to wear found in the forest (rules/finds.ts; Ed, 2026-10-21): tonight's travel trunk, what's in it, taking it, and the
 // crystal ball's way to it.
+import { RECORD_FINDS } from "./records";
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { newGame, stepGame, type Controls, type Game } from "./game";
@@ -45,7 +46,7 @@ describe("tonight's travel trunk", () => {
     expect(FINDABLE.length).toBeGreaterThan(5);
     for (const i of FINDABLE) { expect(i.start, i.id).toBeFalsy(); expect(i.set["broom.kind"], i.id).toBeUndefined(); } // (no broom shapes: brooms are parts)
     const wearables = new Set(FINDABLE.map(i => i.id)), parts = new Set(PART_IDS), hats = new Set(HAT_FINDS), bags = new Set(BAG_ITEMS);
-    const of = { wearable: wearables, part: parts, hat: hats, bag: bags } as const;
+    const of = { wearable: wearables, part: parts, hat: hats, bag: bags, record: new Set(RECORD_FINDS) } as const;
     // the same night, the same find; nights differ, and over many both kinds come up
     const pick = nightPick(123, {})!;
     expect(nightPick(123, {})).toEqual(pick);
@@ -55,7 +56,7 @@ describe("tonight's travel trunk", () => {
     for (const p of picks) expect(of[p.kind].has(p.item), p.item).toBe(true);
     // what she has is never drawn; a kind with nothing left never comes up
     expect(nightPick(123, { [pick.kind]: new Set([pick.item]) })).not.toEqual(pick);
-    for (let s = 1; s <= 40; s++) { expect(nightPick(s, { part: parts, hat: hats, bag: bags })!.kind).toBe("wearable"); expect(nightPick(s, { wearable: wearables, hat: hats, bag: bags })!.kind).toBe("part"); }
+    for (let s = 1; s <= 40; s++) { expect(nightPick(s, { part: parts, hat: hats, bag: bags, record: of.record })!.kind).toBe("wearable"); expect(nightPick(s, { wearable: wearables, hat: hats, bag: bags, record: of.record })!.kind).toBe("part"); }
     // everything found: nothing to find, and no trunk or wreck tonight
     expect(nightPick(5, of)).toBeNull();
     const g = game(); fillTrunk(g, of);

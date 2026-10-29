@@ -27,7 +27,7 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
     for (const id of OBJECTS) {
       const page = await browser.newPage({ viewport: { width: W, height: H } });
       page.on("pageerror", e => errors.push(`${id}: ${e.message}`));
-      const scene = id === "terrace" ? "object:recordShelf" : id.includes(":") ? id : `object:${id}`, station = id !== "terrace" && !id.includes(":");
+      const scene = id === "terrace" ? "room:terrace" : id.includes(":") ? id : `object:${id}`, station = id !== "terrace" && !id.includes(":");
       await page.goto(`http://127.0.0.1:${server.address().port}/?shot=${scene}&seed=123&quick=1`);
       await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 1800000, polling: 500 });
       await page.evaluate(() => { window.witch.manual = true; window.witch.game.clock.paused = false; }); // (no key: Enter would cast the party spell and seat her at her decks)
