@@ -1,7 +1,7 @@
 // The beat speeds up as she's knocked down (Ed, 2026-10-07: "the BPM goes up by 1 each time you die"): the party's tempo
 // rises by knockout.bpmStep a knockdown, eased in from the next beat, and the wave countdown runs that much faster.
 import { describe, expect, it } from "vitest";
-import { beatAt, bpmAt, knockdownTempo, newBeatClock, tempoRate } from "./beat";
+import { beatAt, bpmAt, knockdownTempo, newBeatClock, recordTempo, tempoRate } from "./beat";
 import { hitWitch, newGame, stepGame, type Controls, type Game } from "./game";
 import { TUNING } from "./tuning";
 
@@ -65,3 +65,10 @@ function start(seed: number): Game {
 function runUntil(g: Game, done: () => boolean): void {
   for (let i = 0; i < 60 * 600 && !done(); i++) stepGame(g, still, 1 / 60);
 }
+
+describe("the record's tempo runs the pulse (Ed, 2026-10-29: \"Even at 200bpm the spark seems to be moving quite slowly\")", () => {
+  it("a 200 bpm record runs the pulse and the countdown twice as fast as a 100 bpm one", () => {
+    const at = (bpm: number) => { const c = newBeatClock(120); recordTempo(c, TUNING, bpm, 0); return tempoRate(c, TUNING); };
+    expect(at(200) / at(100)).toBeCloseTo(2, 5);
+  });
+});

@@ -131,9 +131,12 @@ export function recordTempo(c: BeatClock, t: Pick<Tuning, "beat">, bpm: number, 
   const s = c.segs[c.segs.length - 1]; s.bpm = s.bpmTo; // (at once: from this moment, not eased from the old)
 }
 
-/** How much faster than its wave's own tempo the party runs (her knockdowns' bonus over the wave's tempo): the wave
- *  countdown and the ley line's pulse run this many times as fast (Ed, 2026-10-07: the pulse travels at the tempo). */
-export const tempoRate = (c: BeatClock, t: Pick<Tuning, "beat">): number => 1 + (c.bonus ?? 0) / Math.max(1, waveTempo(t, c.wave));
+/** How much faster than its wave's own tempo the party runs (her record's shift and her knockdowns' bonus over the wave's
+ *  tempo): the wave countdown and the ley line's pulse run this many times as fast (Ed, 2026-10-07: the pulse travels at the
+ *  tempo; 2026-10-29, the record: "Even at 200bpm the spark seems to be moving quite slowly, certainly not twice as fast as it
+ *  does at 100bpm"). */
+export const tempoRate = (c: BeatClock, t: Pick<Tuning, "beat">): number =>
+  Math.max(0.1, 1 + ((c.shift ?? 0) + (c.bonus ?? 0)) / Math.max(1, waveTempo(t, c.wave)));
 
 /** She's been knocked down at `time` (Ed, 2026-10-07: "the BPM goes up by 1 each time you die"): the bonus rises by
  *  knockout.bpmStep (to knockout.bpmCap, if set), eased in over beat.knockBeats (a bar) from the next bar line (bonusAt), so
