@@ -5,7 +5,7 @@ import { leyDrawnTo, leyReveal, shaderPulse } from "./leylines";
 import { newGame } from "../rules/game";
 import { TUNING } from "../rules/tuning";
 import { castPartySpell } from "../rules/party";
-import { bootPath, bootSeconds } from "../rules/bootRing";
+import { bootLineAt, bootPath, bootPulseAt, bootSeconds } from "../rules/bootRing";
 import { metresToLinks, pulseRouteMetres, routeLengths } from "../rules/leypulse";
 
 /** A real game booted by 10 s, the ley pulse setting off then (Ed, 2026-10-09: "Pure constant speed"). */
@@ -174,4 +174,73 @@ describe("the ley line before the party (Ed, 2026-10-26: \"Before the party, the
     expect(leyDrawnTo(on, map, first, 3, null, true)).toBeNull(); // (the hat's whole route, once the party's on)
     expect(leyDrawnTo(on, map, first, 3, null, false)).toBe(leyReveal(on, map, first, 3, null));
   });
+});
+
+describe("the line as dots through the boot (Ed, 2026-10-29: \"The leyline does not show as dots, just a faint rainbow glow, until the boot-up period is finished. The boot-up period leyline did not show as dots or spectrum as it went round the circle\")", () => {
+  // A real game, its line routed, the boot's pulse part way round the ring (as render/view.ts drives it each frame: pulse() with no
+  // head, grow() by leyReveal, ring() by the boot's own progress, then front()).
+  const g = newGame(123, TUNING), p = g.party, map = g.map, P = bootPath(map), reveal = TUNING.leyLines.reveal ?? 3, v = TUNING.leyLines.pulseSpeed;
+  castPartySpell(p, map, 0); p.bootFrom = 0; p.bootUntil = bootSeconds(map); p.pulse.at = p.bootUntil; p.pulse.d = 0; p.pulse.v = v;
+  const make = async () => {
+    const THREE = await import("three");
+    const { leyChain } = await import("../rules/leylines");
+    const { LeyLines } = await import("./leylines");
+    const ley = new LeyLines(TUNING.leyLines, () => 0, map), chain = leyChain(p, map);
+    for (let i = 0; i < 2000 && !ley.currentLink(); i++) ley.update(1, () => chain, () => new THREE.Vector3(1, 1, 1), 0, 0);
+    return ley;
+  };
+  const uniform = (ley: object, set: "ringSet" | "cur", name: string) => ((ley as unknown as Record<string, { meshes: { material: { uniforms: Record<string, { value: number }> } }[] }>)[set].meshes[0].material.uniforms[name].value);
+  it("draws the boot ring in the rainbow as the route, and its spark the route's size", async () => {
+    const ley = await make();
+    expect(uniform(ley, "ringSet", "uRainbow")).toBe(1);
+    expect(uniform(ley, "cur", "uRainbow")).toBe(1);
+    const sizes = ley.meshes.filter(m => (m as { isPoints?: boolean }).isPoints).map(m => (m as unknown as { material: { uniforms: { uSpot: { value: number } } } }).material.uniforms.uSpot.value);
+    expect(sizes.length).toBe(2); expect(sizes[0]).toBe(sizes[1]);
+  }, 30000);
+  it("mid-boot: the ring's dots run as far as its line, bars behind its pulse and single dots ahead; the route, branched off, all single dots", async () => {
+    const ley = await make(), b = ley.branch()!, mid = (b.at + P.length) / 2, time = mid / TUNING.boot.speed!; // (the boot's pulse past the branch, half way to the end)
+    ley.pulse(0, false);
+    ley.grow(leyDrawnTo(p, map, time, reveal, b, false));
+    const pulse = bootPulseAt(p, map, time) / P.length, line = bootLineAt(p, map, time, reveal) / P.length;
+    ley.ring(pulse, line, 1); ley.front(time, 0);
+    expect(ley.sparkLinks()).toBeNull(); // (the wave's spark isn't drawn yet: it waits at the ring)
+    const [ring, route] = ley.dotLines(2);
+    expect(ring.strength).toBe(1); expect(ring.from).toBe(0); expect(ring.to).toBeCloseTo(line); expect(ring.spark).toBeCloseTo(pulse);
+    expect(pulse).toBeGreaterThan(0.3); expect(pulse).toBeLessThan(1);
+    const behind = Array.from(ring.bars.links).filter(l => l <= ring.spark && l >= ring.from), ahead = Array.from(ring.bars.links).filter(l => l > ring.spark && l <= ring.to);
+    expect(behind.length).toBeGreaterThan(10); expect(ahead.length).toBeGreaterThan(10); // (both kinds on the ring: bars, then dots)
+    expect(ring.place(ring.spark, time, { x: 0, z: 0 })).not.toBeNull();
+    expect(route.strength).toBe(1);
+    expect(route.from).toBeCloseTo(b.share); expect(route.to!).toBeGreaterThan(b.share); expect(route.to!).toBeLessThan(1);
+    expect(route.spark).toBe(0); // (every dot of it ahead of the spark: single dots, none of them the analyser)
+    const drawn = Array.from(route.bars.links).filter(l => l >= route.from && l <= route.to);
+    expect(drawn.length).toBeGreaterThan(5);
+    expect(drawn.every(l => l > route.spark)).toBe(true);
+    // One rainbow along both: the ring's metres where the route leaves it match the route's there (the hue runs by them).
+    const leave = ring.bars.run[ring.bars.links.findIndex(l => l >= b.at / P.length)], fork = route.bars.run[route.bars.links.findIndex(l => l >= route.from)];
+    expect(Math.abs(leave - fork)).toBeLessThan(4);
+  }, 30000);
+  it("before the boot's pulse reaches the branch, only the ring is drawn; before the spell, neither", async () => {
+    const ley = await make(), b = ley.branch()!, time = (b.at / 2) / TUNING.boot.speed!;
+    ley.pulse(0, false); ley.grow(leyDrawnTo(p, map, time, reveal, b, false));
+    ley.ring(bootPulseAt(p, map, time) / P.length, bootLineAt(p, map, time, reveal) / P.length, 1); ley.front(time, 0);
+    let [ring, route] = ley.dotLines(2);
+    expect(ring.strength).toBe(1); expect(route.strength).toBe(0);
+    ley.grow(0); ley.ring(null, 0, 0); ley.front(time, 0);
+    [ring, route] = ley.dotLines(2);
+    expect(ring.strength).toBe(0); expect(route.strength).toBe(0);
+  }, 30000);
+  it("the boot over: the ring faint and all bars, the route's spark the wave's, bars behind it and dots ahead; the whole line shown (the hat), the spark still", async () => {
+    const C1 = routeLengths(p, map)[0], ley = await make(), time = p.bootUntil + (0.6 * C1) / v, sp = shaderPulse(p, map, time)!; // (the wave's spark 0.6 of the way along the first link: past the ring, which it runs round first)
+    expect(sp).toBeCloseTo(0.6, 6);
+    ley.pulse(sp, true); ley.grow(leyDrawnTo(p, map, time, reveal, ley.branch(), false)); ley.ring(null, 1, 0.35); ley.front(time, 0);
+    let [ring, route] = ley.dotLines(2);
+    expect(ring.strength).toBeCloseTo(0.35); expect(ring.to).toBe(1); expect(ring.spark).toBe(Infinity);
+    expect(route.strength).toBe(1); expect(route.spark).toBe(ley.sparkLinks()!); expect(route.spark).toBeGreaterThan(route.from);
+    expect(Array.from(route.bars.links).some(l => l >= route.from && l <= route.spark)).toBe(true);
+    expect(Array.from(route.bars.links).some(l => l > route.spark && l <= route.to)).toBe(true);
+    ley.grow(leyDrawnTo(p, map, time, reveal, ley.branch(), true)); ley.front(time, 0); // (the Route-seer hat: all of it)
+    [ring, route] = ley.dotLines(2);
+    expect(route.to).toBe(Infinity); expect(ley.sparkLinks()).not.toBeNull(); expect(route.spark).toBe(ley.sparkLinks()!);
+  }, 30000);
 });

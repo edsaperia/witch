@@ -8,7 +8,10 @@
 //   post spark route should look like the audio analyser along its whole length"): a dot every `route.spacing` metres along it as
 //   drawn, behind the spark each the foot of an analyser bar, lower than the wave's, ahead of it a single dot, all in the line's own
 //   rainbow, its colours drifting on toward the tip ("so you know which way is the front": render/leylines.ts RAINBOW_M); only
-//   those in view (the camera's frustum, at the bent world's place: render/height.ts bendPoint).
+//   those in view (the camera's frustum, at the bent world's place: render/height.ts bendPoint). Both its lines the same way, the
+//   boot's ring round the home speakers and the route out from it (render/leylines.ts dotLines: what each is, how far it's drawn and
+//   where its spark is, as the shader has them): the ring's behind the boot's pulse, the route's behind the wave's, the route all
+//   single dots till that sets off (Ed, 2026-10-29: the ring showed neither, and the route only its glow, till the boot was over).
 // Comfort's reduce-flashing slows the colours and calms the bars. lv.rainbowQuads counts what's drawn.
 import * as THREE from "three";
 import { rainbow } from "../indicator";
@@ -17,7 +20,7 @@ import { SPRITE_UNIFORMS } from "../sprites";
 import { bendPoint, groundHeight } from "../height";
 import { rainbowKnobs, rainbowRuns, routePoint } from "../../rules/rainbow";
 import { metresToLinks, routeLengths } from "../../rules/leypulse";
-import { RAINBOW_M } from "../leylines";
+import { RAINBOW_M, type DotLine } from "../leylines";
 import { barLevel } from "./stones";
 import type { LeashView } from "../leash";
 
@@ -26,13 +29,16 @@ const ROUTE_BINS = 24;
 const levels = new Float32Array(128), routeLevels = new Float32Array(ROUTE_BINS);
 const frustum = new THREE.Frustum(), pv = new THREE.Matrix4(), sphere = new THREE.Sphere(), at = { x: 0, z: 0 };
 export const ROUTE_DEFAULT = { on: true, spacing: 2, height: 7, cell: 0.5 };
+const NONE: readonly DotLine[] = [];
 
 export function drawRainbow(lv: LeashView, time: number, dot: number[], camera: THREE.Camera): void {
   lv.rainbowQuads = 0;
   const g = lv.game, t = g.tuning, K = rainbowKnobs(t), R = { ...ROUTE_DEFAULT, ...(K.route ?? {}) }, ley = lv.ley;
-  const spark = R.on && ley && !g.partyOver ? ley.sparkLinks() : null;
+  const lines = R.on && ley && !g.partyOver ? ley.dotLines(R.spacing) : NONE;
+  let dots = false;
+  for (const L of lines) if (L.strength > 0.001) dots = true;
   const runs = K.on && g.rainbows?.length ? rainbowRuns(g.party, g.map, g.rainbows, g.clock.time) : [];
-  if (!runs.length && spark === null) return;
+  if (!runs.length && !dots) return;
   const V = lv.stoneView;
   V.wantsSpectrum = true; // (the mix's spectrum for the bars, from the next frame: main.ts)
   const n = Math.max(4, Math.min(levels.length, Math.round(K.bars ?? 84))), gap = K.spacing ?? 1.4, cell = K.cell ?? 0.6, tall = K.height ?? 9;
@@ -40,7 +46,7 @@ export function drawRainbow(lv: LeashView, time: number, dot: number[], camera: 
   const settle = (L: Float32Array, i: number, live: number) => { L[i] = Math.max(calm ? L[i] * 0.9 + live * 0.1 : live, L[i] - dt * (calm ? 0.8 : 1.8)); };
   const idle = (i: number) => 0.3 + 0.25 * Math.abs(Math.sin(time * 1.7 + i * 1.3) * 0.6 + Math.sin(time * 2.6 + i * 0.7) * 0.4);
   if (runs.length) for (let i = 0; i < n; i++) settle(levels, i, spec ? barLevel(spec, i, n * 2) : idle(i));
-  if (spark !== null) for (let i = 0; i < ROUTE_BINS; i++) settle(routeLevels, i, spec ? barLevel(spec, i, ROUTE_BINS * 2) : idle(i));
+  if (dots) for (let i = 0; i < ROUTE_BINS; i++) settle(routeLevels, i, spec ? barLevel(spec, i, ROUTE_BINS * 2) : idle(i));
   pv.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); frustum.setFromProjectionMatrix(pv);
   // (upright: up the sprites' own up, leaning back toward the camera, on the ground at the bar's foot: as a stone's column stands)
   const U = SPRITE_UNIFORMS.uUp.value, upZ = (z: number, h: number) => z + h * U.z, upY = (x: number, z: number, h: number) => h * U.y + groundHeight(x, z) - groundHeight(x, upZ(z, h));
@@ -68,15 +74,21 @@ export function drawRainbow(lv: LeashView, time: number, dot: number[], camera: 
       bar(p.x, p.z, h, cell, hueAt(ley ? ley.runAt(L) : m), Math.min(1, back * 1.4));
     }
   }
-  // The line as dots, every R.spacing metres of it as drawn up to its tip: behind the spark the analyser's bars, ahead single dots.
-  if (spark !== null && ley) {
-    const B = ley.barsAlong(R.spacing), fade = 1 - (g.partyOver?.ease ?? 0), tip = ley.drawnTo() ?? Infinity;
-    for (let j = 0; j < B.links.length && B.links[j] <= tip; j++) {
-      const p = ley.placeAt(B.links[j], time, at);
+  // The lines as dots (the boot's ring, then the route), every R.spacing metres of each as drawn, the stretch of it that's drawn:
+  // behind its spark the analyser's bars, ahead of it single dots.
+  const fade = 1 - (g.partyOver?.ease ?? 0);
+  for (const L of lines) {
+    if (L.strength <= 0.001) continue;
+    const B = L.bars;
+    for (let j = 0; j < B.links.length; j++) {
+      const l = B.links[j];
+      if (l < L.from) continue;
+      if (l > L.to) break;
+      const p = L.place(l, time, at);
       if (!p) break;
-      const k = j % (ROUTE_BINS * 2), h = B.links[j] > spark ? 1 : 1 + Math.round(routeLevels[k < ROUTE_BINS ? k : ROUTE_BINS * 2 - 1 - k] * R.height);
+      const k = j % (ROUTE_BINS * 2), h = l > L.spark ? 1 : 1 + Math.round(routeLevels[k < ROUTE_BINS ? k : ROUTE_BINS * 2 - 1 - k] * R.height);
       if (!seen(p.x, p.z, h * R.cell)) continue;
-      bar(p.x, p.z, h, R.cell, hueAt(B.run[j]), 0.9 * fade);
+      bar(p.x, p.z, h, R.cell, hueAt(B.run[j]), 0.9 * fade * L.strength);
     }
   }
 }

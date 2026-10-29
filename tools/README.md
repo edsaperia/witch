@@ -33,6 +33,7 @@ Scripts for building, checking and measuring the game, run from the repository r
 - [`labs/`](labs/README.md): 1 script — publish.mjs
 - [`lakes/`](lakes/README.md): 4 scripts — leylines.mjs, looks-map.mjs, looks.cjs, shots.cjs
 - [`leash/`](leash/README.md): 5 scripts — arc-shots.cjs, grounded-shots.cjs, route-strip.mjs, runs-gif.cjs, stack-shots.cjs
+- [`leylines/`](leylines/README.md): 1 script — boot-shots.cjs
 - [`legends/`](legends/README.md): 1 script — footprint.mjs
 - [`lib/`](lib/README.md): 3 scripts — entries.mjs, genomeRecords.mjs, kinds.mjs
 - [`lighting/`](lighting/README.md): 1 script — survey.cjs
