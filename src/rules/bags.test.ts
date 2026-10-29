@@ -14,19 +14,20 @@ import { BAG_ITEMS } from "./finds";
 const starter = itemById("satchel")!, quick = itemById("bumbag")!, far = itemById("purse")!;
 
 describe("the starting bags", () => {
-  it("are the satchel (the starter, at the top), the Quick bag and the far purse: all hers from the start, no None", () => {
-    expect(SHELVES.bag.items.map(i => i.id)).toEqual(["satchel", "bumbag", "purse"]);
-    expect(BAGS.length).toBe(3);
+  it("are the satchel (the starter, at the top), the Bumbag and the Purse: all hers from the start, no None", () => {
+    expect(SHELVES.bag.items.map(i => i.id)).toEqual(["satchel", "bumbag", "purse", "tote", "duffel", "briefcase", "clutch", "messenger", "backpack"]); // (the starter, the other starting bags, then the found ones: Ed, 2026-10-29)
+    expect(BAGS.length).toBe(9);
     expect(itemById("bag-none")).toBeUndefined();
     const own = ownedOf([], null);
-    for (const b of BAGS) expect(own.has(b.id), b.id).toBe(true);
+    for (const b of BAGS) expect(own.has(b.id), b.id).toBe(!!b.start);
+    expect(BAGS.filter(b => b.start).map(b => b.id)).toEqual(["satchel", "bumbag", "purse"]);
     expect(bagLine("satchel")).toBe("Satchel: steady throws, a little homing");
-    expect(bagLine("bumbag")).toBe("Quick bag: faster throws, shorter reach");
-    expect(bagLine("purse")).toBe("Far purse: slower throws, longer reach");
+    expect(bagLine("bumbag")).toBe("Bumbag: faster throws, shorter reach");
+    expect(bagLine("purse")).toBe("Purse: slower throws, longer reach");
     expect(bagLine("")).toBe("");
   });
 
-  it("the satchel throws at the base rate and reach with a little more homing; the Quick bag faster and shorter; the purse slower and further", () => {
+  it("the satchel throws at the base rate and reach with a little more homing; the Bumbag faster and shorter; the purse slower and further", () => {
     const I = TUNING.invites, s = bagTuning(TUNING, "satchel").invites, q = bagTuning(TUNING, "bumbag").invites, f = bagTuning(TUNING, "purse").invites;
     expect([s.cooldown, s.range]).toEqual([I.cooldown, I.range]);
     expect(s.homing).toBeGreaterThan(I.homing); expect(s.homingCone).toBeGreaterThan(I.homingCone);
@@ -47,7 +48,7 @@ describe("the starting bags", () => {
     expect(bagOf(null)).toBe("");
   });
 
-  it("sets her 💌s in play: the Quick bag's letters fly 25 m and come every 0.42 s, the purse's 43 m every 0.7 s", () => {
+  it("sets her 💌s in play: the Bumbag's letters fly 25 m and come every 0.42 s, the purse's 43 m every 0.7 s", () => {
     for (const [bag, range, every] of [["bumbag", 25.08, 0.418], ["purse", 42.9, 0.6985]] as const) {
       const g = newGame(5, withTuning({ spells: { ...TUNING.spells, bag } }));
       g.clock.paused = false; g.party.paused = true;
@@ -65,12 +66,18 @@ describe("the starting bags", () => {
     }
   });
 
-  it("are not found in the forest (they're hers from the start)", () => {
-    for (const b of BAGS) expect(BAG_ITEMS).not.toContain(b.id);
-    expect(BAG_ITEMS).toContain("backpack"); // (the backpack still a find)
+  it("the starting three aren't found in the forest; the rest are, each its own way to throw (Ed, 2026-10-29)", () => {
+    expect([...BAG_ITEMS].sort()).toEqual(["backpack", "briefcase", "clutch", "duffel", "messenger", "tote"]);
+    const I = TUNING.invites, tote = bagTuning(TUNING, "tote").invites, duffel = bagTuning(TUNING, "duffel").invites, brief = bagTuning(TUNING, "briefcase").invites, pack = bagTuning(TUNING, "backpack").invites;
+    expect([tote.multiShot, tote.spread]).toEqual([5 * I.multiShot, 3 * I.spread]); expect(tote.range).toBeLessThan(I.range);
+    expect(duffel.burst).toBe(4 * I.burst); expect(duffel.cooldown).toBeGreaterThan(2 * I.cooldown);
+    expect(brief.homing).toBe(3 * I.homing); expect(brief.speed).toBeLessThan(I.speed);
+    expect(pack.cooldown).toBeLessThan(0.8 * I.cooldown); expect(pack.cooldown).toBeLessThan(bagTuning(TUNING, "satchel").invites.cooldown); expect(pack.fireSlow).toBeLessThan(I.fireSlow!);
+    // a bag at a time: the backpack is one of them now, not worn as well
+    for (const b of BAGS) expect(bagOf(wear(wear(pleasingWitch(3) as never, itemById("backpack")!), b)), b.id).toBe(b.id);
   });
 
-  it("every bot carries one, the same every game: the careful ones the far purse, the others the satchel", () => {
+  it("every bot carries one, the same every game: the careful ones the Purse, the others the satchel", () => {
     for (const seed of [1, 2]) {
       const g = newGame(seed, TUNING); newBot("skilled").decide(g);
       expect(g.witches[0].spells.bag).toBe("purse");

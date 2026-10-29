@@ -48,8 +48,8 @@ export interface Trunk { x: number; z: number; cell: [number, number]; kind: Fin
 export const TRUNK_REACH = 2.2, TRUNK_CLEAR = 30;
 const RINGS = [45, 60, 35, 75, 28];
 
-/** The bags found each on its own (Ed, 2026-10-23): the bag station's wearables not hers from the start (the Quick and Far bags are: Ed, 2026-10-29, rules/bags.ts). */
-export const BAG_ITEMS: readonly string[] = [...SHELVES.bag.items, ...SHELVES.backpack.items].filter(i => !i.start).map(i => i.id);
+/** The bags found each on its own (Ed, 2026-10-23): the bag shelf's not hers from the start (Ed, 2026-10-29: the Satchel, Bumbag and Purse are; Tote, Duffel, Briefcase, Backpack are found, each its own way to throw: rules/bags.ts). */
+export const BAG_ITEMS: readonly string[] = SHELVES.bag.items.filter(i => !i.start).map(i => i.id);
 /** The hats found (Ed, 2026-10-23): every built spell hat; the plain one is hers from the start. */
 export const HAT_FINDS: readonly string[] = HAT_SPELLS.filter(s => s.built && s.id !== "none").map(s => s.id);
 /** The wearables a trunk can hold: everything not hers from the start, but the brooms (Ed, 2026-10-21: "Brooms are made of

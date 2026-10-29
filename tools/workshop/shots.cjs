@@ -1,10 +1,10 @@
 // The Workshop's room in play (Ed, 2026-10-22/23; docs/backlog/workshop.md): the built game (DIST, default dist/) at 1600×900, her
 // broom's save set first (FOUND, the parts found, default six of them; FITTED, those on her broom, default the Rocket set) and
-// tonight's find made a part she hasn't found (TONIGHT, default the Curled tip), then she's stood at each of the Workshop's stations
-// in turn, its menu in (`bay.png`, `lathe.png`, `pegboard.png`; the bay's with a card chosen: `bay-fit.png`, the Ladder in the
-// chassis, the Pile driver whole), and in the room's middle, the menus away, her broom on the bay and the parts on the pegboard (`room.png`), then
-// closer to each (`pegboard-near.png`, `bay-near.png`: no broom on the bay, she's not at it), and on the Terrace carrying her
-// broom (`terrace.png`, `terrace-walk.png`).
+// tonight's find made a part she hasn't found (TONIGHT, default the Curled tip), then she's stood at the broom's one station, the
+// lathe (Ed, 2026-10-29), its menu in (`broom.png`; a card chosen: `broom-fit.png`, the Ladder in the chassis, the Pile driver
+// whole; card by card down to its colours, `broom-colours.png`, and its pegboard, `broom-pegboard.png`), and in the room's middle,
+// the menu away, her broom and the parts on the pegboard (`room.png`), then closer to the bay and the pegboard, scenery now
+// (`pegboard-near.png`, `bay-near.png`), and on the Terrace carrying her broom (`terrace.png`, `terrace-walk.png`).
 // Fails on a page error, or a station whose menu doesn't come in.
 //   npm run build && node tools/workshop/shots.cjs <out dir> [seed]
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -50,32 +50,28 @@ const front = (id, gap = 0.7) => {
       await page.waitForTimeout(12000); // (its pictures baked a few a frame; the camera easing in)
       out[id] = await page.evaluate(() => document.querySelector("#station-panel .sp-head")?.textContent);
     };
-    await at("pegboard"); await shot("pegboard");
-    // LOOKS=0,1.5:0.5,3: the pegboard's frame tried at each look (and distance, after a colon: camera.station.parts.board), live,
-    // then stop (for tuning it)
-    if (process.env.LOOKS) {
-      for (const v of process.env.LOOKS.split(",")) {
-        const [look, distance] = v.split(":").map(Number);
-        await page.evaluate(([look, distance]) => { const B = window.witch.game.tuning.camera.station.parts.board; B.look = look; if (distance) B.distance = distance; }, [look, distance]);
-        await page.waitForTimeout(10000); await shot(`pegboard-look${v.replace(":", "-d")}`);
-      }
-      return;
-    }
-    await at("broomBay"); await shot("bay");
-    // a card chosen: down to the chassis's line (the Jet-bike fairing, fitted), one along to the Ladder: on her broom at once, the
-    // Pile driver whole (the Ladder and the Jet nozzles: Ground pound)
+    // the broom's one station at the lathe (Ed, 2026-10-29: "The broom area can probably just be one station instead of two"): its
+    // part cards first, then (PageDown, card by card) its colours and fit, then the pegboard
+    await at("lathe"); await shot("broom");
+    // a card chosen: down to the chassis's line (the Jet-bike fairing, fitted), one along to the Ladder, chosen (Space: choose to
+    // change, Ed 2026-10-28): on her broom at once, the Pile driver whole (the Ladder and the Jet nozzles: Ground pound)
     await page.keyboard.press("ArrowDown"); await page.waitForTimeout(800);
-    await page.keyboard.press("ArrowRight"); await page.waitForTimeout(6000);
+    await page.keyboard.press("ArrowRight"); await page.waitForTimeout(800);
+    await page.keyboard.press("Space"); await page.waitForTimeout(6000);
     out.fitted = await page.evaluate(() => window.witch.game.spells.parts);
     out.spell = await page.evaluate(() => window.witch.game.spells.broom);
-    await shot("bay-fit");
-    await at("lathe"); await shot("lathe");
+    await shot("broom-fit");
+    for (let i = 0; i < 3; i++) { await page.keyboard.press("PageDown"); await page.waitForTimeout(500); }
+    await page.waitForTimeout(3000); await shot("broom-colours");
+    for (let i = 0; i < 3; i++) { await page.keyboard.press("PageDown"); await page.waitForTimeout(500); }
+    await page.waitForTimeout(3000); await shot("broom-pegboard");
+    out.cards = await page.evaluate(() => [...document.querySelectorAll("#station-panel .sp-shelf .sp-lab b")].map(e => e.textContent));
     await put([cx, cz + 2.5]); await settle();
     await page.waitForFunction(() => !document.querySelector("#station-panel.in"), null, { timeout: 120000, polling: 500 });
     await page.waitForTimeout(10000);
     await shot("room");
     // closer, the menus away (she stands past a station's reach): the pegboard's parts, her broom on the bay
-    for (const [id, name] of [["pegboard", "pegboard-near"], ["broomBay", "bay-near"]]) {
+    for (const [id, name] of [["pegboard", "pegboard-near"], ["broomBay", "bay-near"]]) { // (scenery now: no prompt, no menu)
       await put(front(id, 3.2)); await settle();
       await page.waitForFunction(() => !document.querySelector("#station-panel.in"), null, { timeout: 120000, polling: 500 });
       await page.waitForTimeout(8000);

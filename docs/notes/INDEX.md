@@ -100,6 +100,14 @@ says what each note covers.
 - Furniture: size, freestanding, mess and layout
 - Station menus
 - Starting bags
+- Found bags
+- Bag names
+- Bag preview
+- Bag accuracy
+- Pierce
+- The Clutch
+- Chain
+- The Messenger
 - Bag design
 - Use prompt
 - Wake-up keys
@@ -227,6 +235,7 @@ says what each note covers.
 
 ## [The view](view.md)
 
+- Pixel snap
 - Tilt-shift
 - Debug overlay
 - Test sliders / pause page

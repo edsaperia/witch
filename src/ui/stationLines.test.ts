@@ -8,16 +8,16 @@ import { BOARD, PARTS, bareBroom, fittedKey, fittedOf, partById } from "../rules
 import { setParts } from "../rules/spells";
 import { SHELVES, shelvesAt, type Shelf } from "../rules/wardrobe";
 import { HOUSE_ROOMS } from "../rules/houseRooms";
-import { broomSummary, canChoose, cardAt, choose, panelPad, partStats, setChips, stationLines, type Line } from "./stationLines";
+import { broomSummary, canChoose, cardAt, choose, itemAt, panelPad, partStats, setChips, stationLines, type Line } from "./stationLines";
 
 const ctx = (owned: string[] = []) => ({ owned: new Set(owned), fitOn: () => true, grid: (s: Shelf) => ({ cols: s.grid === "skin" ? 6 : 13, rows: 5 }) });
 const linesAt = (id: string) => { const sh = shelvesAt(id)!; return { sh, L: stationLines(sh, ctx()) }; };
 const cards = (sh: Shelf[], l: Line) => Array.from({ length: l.n }, (_, c) => cardAt(sh[l.shelf], l, c));
 
-describe("the bay", () => {
+describe("the broom's parts (the lathe's first cards: the broom one station since Ed, 2026-10-29)", () => {
   it("has a line of cards for each slot, the empty slot first then its three parts, and a line of the five sets' chips", () => {
-    const { sh, L } = linesAt("broomBay");
-    expect(L.map(l => l.kind)).toEqual(["cards", "cards", "cards", "chips"]);
+    const { sh, L } = linesAt("lathe");
+    expect(L.slice(0, 4).map(l => l.kind)).toEqual(["cards", "cards", "cards", "chips"]);
     expect(L.slice(0, 3).map(l => sh[l.shelf].slot)).toEqual(["tip", "chassis", "exhaust"]);
     for (const l of L.slice(0, 3)) {
       const ids = cards(sh, l);
@@ -29,7 +29,7 @@ describe("the bay", () => {
     expect(SHELVES.tip.frame).toBe("broom");
   });
   it("only the empty slot and the parts she's found can be chosen (an unfound one is a silhouette)", () => {
-    const { sh, L } = linesAt("broomBay"), tip = L[0], found = new Set(["missile"]);
+    const { sh, L } = linesAt("lathe"), tip = L[0], found = new Set(["missile"]);
     expect(canChoose(sh[tip.shelf], tip, 0, found)).toBe(true); // ∅
     expect(canChoose(sh[tip.shelf], tip, 1, found)).toBe(true); // the Missile nose, found
     expect(canChoose(sh[tip.shelf], tip, 2, found)).toBe(false);
@@ -66,19 +66,18 @@ describe("the bay", () => {
 });
 
 describe("the lathe", () => {
-  it("holds the broom's two colour grids (body and trim, 5 rows each) and its fit, no items, no shapes, no power", () => {
+  it("is the broom's one station: its parts and sets, then its two colour grids (body and trim, 5 rows each) and its fit, then the pegboard; no items, no shapes, no power", () => {
     const { sh, L } = linesAt("lathe");
-    expect(sh.map(s => s.id)).toEqual(["broomBody", "broomTrim", "broomFit"]);
+    expect(sh.map(s => s.id)).toEqual(["tip", "chassis", "exhaust", "sets", "broomBody", "broomTrim", "broomFit", "pegboard"]);
     expect(L.filter(l => l.kind === "grid").length).toBe(10);
     expect(L.filter(l => l.kind === "fit").map(l => l.axis)).toEqual(["broomLength", "broomThickness", "broomBend", "bristles"]);
-    expect(L.some(l => l.kind === "items" || l.kind === "cards")).toBe(false);
-    for (const s of sh) expect(s.frame).toBe("broom");
+    expect(L.some(l => l.kind === "items")).toBe(false);
   });
 });
 
 describe("the pegboard", () => {
-  it("is read-only: three lines of three cards, the 3 × 3 biome map row by row from the north-west", () => {
-    const { sh, L } = linesAt("pegboard");
+  it("is read-only: three lines of three cards, the 3 × 3 biome map row by row from the north-west (the lathe's last card)", () => {
+    const { sh, L: all } = linesAt("lathe"), L = all.filter(l => sh[l.shelf].board);
     expect(L.map(l => [l.kind, l.n, l.readOnly])).toEqual([["cards", 3, true], ["cards", 3, true], ["cards", 3, true]]);
     const order = L.flatMap(l => cards(sh, l));
     expect(order).toEqual(["oar", "ladder", "missile", "horse", "twigs", "fairing", "canoe", "curl", "nozzles"]);
@@ -94,10 +93,20 @@ describe("the pegboard", () => {
   });
 });
 
+describe("a list shelf (Ed, 2026-10-29, the bags: \"a vertical list you move down to select\")", () => {
+  it("is a line an item, each its own, the bags' station's bag shelf a list", () => {
+    const { sh, L } = (() => { const sh = shelvesAt("bags")!; return { sh, L: stationLines(sh, ctx(["bag-none", "satchel", "bumbag"])) }; })();
+    const bag = sh.findIndex(s => s.id === "bag"), lines = L.filter(l => l.shelf === bag && l.kind === "items");
+    expect(sh[bag].list).toBe(true);
+    expect(lines.map(l => [l.n, l.item])).toEqual(sh[bag].items.map((_, k) => [1, k]));
+    expect(lines.map(l => itemAt(sh[bag], l, 0).id)).toEqual(sh[bag].items.map(i => i.id));
+  });
+});
+
 describe("the stations", () => {
-  it("the Workshop's bay, lathe and pegboard are stations; the broom stand is gone", () => {
+  it("the Workshop's lathe is the broom's one station (the bay and the pegboard scenery); the broom stand is gone", () => {
     const ids = HOUSE_ROOMS.objects.filter(o => o.use.kind === "creator").map(o => o.id);
-    expect(ids).toEqual(expect.arrayContaining(["broomBay", "lathe", "pegboard"]));
+    expect(ids).toContain("lathe"); expect(ids).not.toContain("broomBay"); expect(ids).not.toContain("pegboard");
     expect(ids).not.toContain("broomStand");
     for (const id of ids) expect(shelvesAt(id), id).not.toBeNull();
   });

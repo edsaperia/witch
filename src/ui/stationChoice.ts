@@ -3,9 +3,9 @@
 // button": moving (the d-pad, the right stick, the arrows, WASD, the mouse over it) only moves the focus; choosing (confirm,
 // platform/bindings.ts menu.choose, or a click) puts what's in focus on her (an owned item, a colour, the part the colours are for, a broom part
 // at the bay); leaving without choosing leaves her as she was. A fit slider is the one line ◀ ▶ changes: that's the slider itself.
-import { shownItems, wear, wears, type Shelf } from "../rules/wardrobe";
+import { wear, wears, type Shelf } from "../rules/wardrobe";
 import type { Fitted } from "../rules/broomParts";
-import { canChoose, cardAt, choose, stationLines, type Line } from "./stationLines";
+import { canChoose, cardAt, choose, itemAt, stationLines, type Line } from "./stationLines";
 
 export type Genome = Record<string, unknown> & { palette: Record<string, number[]> | null; accessories: Record<string, unknown> };
 export interface At { line: number; col: number }
@@ -55,6 +55,20 @@ export class PanelChoice {
     return true;
   }
 
+  /** The focus to the next card (`dir` 1) or the last (-1): its first line (Ed, 2026-10-29: each item kind its own card; the pad's
+   *  L1/R1, PageUp/PageDown). Back from inside a card goes to its own first line first. False if it didn't move. */
+  jumpCard(dir: -1 | 1): boolean {
+    const L = this.lines(); if (!L.length) return false;
+    const line = Math.min(this.at.line, L.length - 1), shelf = L[line].shelf, first = (sh: number) => L.findIndex(l => l.shelf === sh);
+    let to = -1;
+    if (dir > 0) to = L.findIndex((l, i) => i > line && l.shelf !== shelf);
+    else if (first(shelf) < line) to = first(shelf);
+    else { const prev = [...L.slice(0, line)].reverse().find(l => l.shelf !== shelf); to = prev ? first(prev.shelf) : -1; }
+    if (to < 0) return false;
+    this.focus(to, Math.min(this.at.col, L[to].n - 1));
+    return true;
+  }
+
   /** The focus put on a place (the mouse, a move): nothing on her changes. */
   focus(line: number, col: number): void { this.at = { line, col }; this.nope = null; }
 
@@ -65,7 +79,7 @@ export class PanelChoice {
     if (!l) return { locked: false };
     const s = this.shelves[l.shelf], col = this.at.col;
     if (l.kind === "items") {
-      const it = shownItems(s)[col];
+      const it = itemAt(s, l, col);
       if (!this.owned.has(it.id)) { this.nope = { ...this.at }; return { locked: true }; }
       this.nope = null;
       if (wears(this.g, it)) return { locked: false };

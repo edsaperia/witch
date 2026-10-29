@@ -1,0 +1,10 @@
+{
+  "reason": "Fight movement styles by species (Ed's playtest, 2026-10-29: \"enemies thundering around the area, running past me, circling, flanking, more dynamic\"; config/packs.json _styles): a wild pack at her moves by its kind's style while it waits its turn (chargers wheel round wide in the lull, circlers orbit her and spiral in, flankers keep beside or behind her, hoppers bound in harmless hops), every pack's lull at her is spread wider with its members kept 8 m apart, her animals and happy ones on one creature take places evenly round it, and a 💌's homing leads a moving creature and turns harder after a quick one.",
+  "frames": {
+    "*": "in a fight: where the creatures stand and how they move (hoppers in the air on their bounds), and so the fight's hits and what's drawn for them"
+  },
+  "rules": {
+    "creatures": "the fighting creatures' positions, velocities, hops, health and states from the first fight on",
+    "*": "anything downstream of the fights (hits, knockouts, invites, sieges, the waves' outcomes)"
+  }
+}
