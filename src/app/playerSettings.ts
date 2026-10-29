@@ -74,7 +74,14 @@ export function saveSettings(s: PlayerSettings, store: Store | null = local()): 
 /** The tuning's knobs the settings set, and what each was as the tuning was made (so a change is from the built value, not
  *  compounded). */
 interface Knobs { music: { volume: number }; sfx: { volume: number; voice: Record<string, { volume?: number }> }; combat: { shake: number }; attackFx: { legendFlash: number } }
-const BASE = new WeakMap<object, { voices: Record<string, number>; shake: number; legendFlash: number }>();
+export interface SettingsBase { voices: Record<string, number>; shake: number; legendFlash: number }
+const BASE = new WeakMap<object, SettingsBase>();
+/** A resumed tuning has settings baked in already; retain the original levels so applying settings doesn't compound them. */
+export function settingsBase(tuning: object): SettingsBase | undefined { const b = BASE.get(tuning); return b ? structuredClone(b) : undefined; }
+export function restoreSettingsBase(tuning: object, base: SettingsBase): void {
+  if (!base || !base.voices || typeof base.voices !== "object" || !Number.isFinite(base.shake) || !Number.isFinite(base.legendFlash) || Object.values(base.voices).some(v => !Number.isFinite(v))) throw new Error("Invalid saved settings levels.");
+  BASE.set(tuning, structuredClone(base));
+}
 
 /** The settings on to a night's tuning: the volumes (master times each; the voices on every babbling voice's own level), a legend's
  *  quake shake (off with screen shake), a legend's flash (none with reduce flashing). */
