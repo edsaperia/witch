@@ -4,7 +4,7 @@
 const fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const [shots, outDir] = process.argv.slice(2);
-const meta = { ...JSON.parse(fs.readFileSync(path.join(shots, "meta-home.json"))), ...JSON.parse(fs.readFileSync(path.join(shots, "meta.json"))) };
+const meta = { ...(fs.existsSync(path.join(shots, "meta-home.json")) ? JSON.parse(fs.readFileSync(path.join(shots, "meta-home.json"))) : {}), ...JSON.parse(fs.readFileSync(path.join(shots, "meta.json"))) };
 const ENEMY = [[200, 30, 70], [255, 40, 40], [255, 140, 30], [255, 226, 60]], FRIEND = [[255, 120, 200], [190, 150, 255], [110, 190, 255], [40, 225, 215]];
 const SIZE = [0.81, 0.9, 1, 1.1];
 // (bottom first: enemies, then friends above them, each side by rank: Ed's runestone stacks)
@@ -18,16 +18,16 @@ const TILES = [
   { area: "snowy-taiga", name: "Snowy taiga", biome: "cold (N)", piece: "icedome", what: "frozen spring: an ice dome", top: 0.85, own: "wolf", friends: ["elk", "fox", "hare"] },
   { area: "crags", name: "Crags", biome: "mountains & glaciers (NE)", piece: "cushion", what: "moss campion cushion", top: 1.15, own: "ibex", friends: ["raven", "lynx", "hare"] },
   { area: "river-jungle", name: "River jungle", biome: "jungle (W)", piece: "rafflesia", what: "rafflesia flower", top: 0.6, own: "jaguar", friends: ["snake", "bat", "heron"] },
-  { area: "old-oaks", name: "Old oaks", biome: "temperate (home)", piece: "stump", what: "great oak stump", top: 1.0, own: "fox", friends: ["hare", "owl", "stag"] },
+  { area: "old-oaks", name: "Old oaks", biome: "temperate (home)", piece: "stump", what: "great oak stump", top: 1.3, own: "fox", friends: ["hare", "owl", "stag"] },
   { area: "cinder-slopes", name: "Cinder slopes", biome: "volcanic (E)", piece: "basalt", what: "basalt columns", top: 1.9, own: "stegosaurus", friends: ["beetle", "moth", "boar"] },
   { area: "mangrove-pools", name: "Mangrove pools", biome: "mangrove swamp (SW)", piece: "lilypad", what: "giant water-lily pad", top: 0.6, own: "dragonfly", friends: ["heron", "crab", "snake"] },
   { area: "savanna", name: "Savanna", biome: "hot (S)", piece: "saltpan", what: "salt pan", top: 0.2, own: "lion", friends: ["elk", "snake", "hare"] },
   { area: "red-canyon", name: "Red canyon", biome: "badlands (SE)", piece: "geode", what: "open geode", top: 0.75, own: "scorpion", friends: ["snake", "lynx", "raven"] },
 ];
-const TW = 560, TH = 560;
+const TW = 1180, TH = 960, SW = Number(process.env.SW || 1600), SH = Number(process.env.SH || 1000);
 (async () => {
   fs.mkdirSync(outDir, { recursive: true });
-  const browser = await playwright.chromium.launch(), page = await browser.newPage({ viewport: { width: 1800, height: 1800 } });
+  const browser = await playwright.chromium.launch(), page = await browser.newPage({ viewport: { width: 3700, height: 3000 } });
   page.on("console", m => console.log("page:", m.text()));
   page.on("pageerror", e => console.log("page error:", e.message));
   await page.setContent("<html><body></body></html>");
@@ -40,7 +40,7 @@ const TW = 560, TH = 560;
     const r = await page.evaluate(s => window.mock(s), { bg, meta: M, piece: T.piece, top: T.top, reflect: !!T.reflect, stack: stackOf(T.own, T.friends) });
     const full = Buffer.from(r.png.split(",")[1], "base64");
     fs.writeFileSync(path.join(outDir, `full-${T.area}.png`), full);
-    const x0 = Math.round(Math.max(0, Math.min(1280 - TW, r.at[0] - TW / 2))), y0 = Math.round(Math.max(0, Math.min(720 - TH, r.at[1] - TH + 150)));
+    const x0 = Math.round(Math.max(0, Math.min(SW - TW, r.at[0] - TW / 2))), y0 = Math.round(Math.max(0, Math.min(SH - TH, r.at[1] - TH + 330)));
     tiles.push({ T, png: r.png, x0, y0, at: r.at });
     report.push({ area: T.area, biome: T.biome, what: T.what, contrast: r.contrast });
     console.log(T.area, JSON.stringify(r.contrast));
@@ -58,7 +58,7 @@ const TW = 560, TH = 560;
       g.fillStyle = "#fff"; g.font = "bold 17px monospace"; g.fillText(`${t.T.name} · ${t.T.biome}`, gx + 12, gy + TH - 30);
       g.fillStyle = "#ffd98a"; g.font = "15px monospace"; g.fillText(t.T.what, gx + 12, gy + TH - 10);
       // 3x: the centrepiece and its ring, nearest
-      const Z = document.createElement("canvas"), cw = 300, ch = 150; Z.width = cw * 3; Z.height = ch * 3 + 40;
+      const Z = document.createElement("canvas"), cw = 480, ch = 260; Z.width = cw * 3; Z.height = ch * 3 + 40;
       const z = Z.getContext("2d"); z.imageSmoothingEnabled = false; z.fillStyle = "#0b0b10"; z.fillRect(0, 0, Z.width, Z.height);
       z.drawImage(im, Math.round(t.at[0] - cw / 2), Math.round(t.at[1] - ch * 0.62), cw, ch, 0, 0, cw * 3, ch * 3);
       z.fillStyle = "#fff"; z.font = "bold 20px monospace"; z.fillText(`${t.T.name} · ${t.T.biome} · ${t.T.what} (3x)`, 12, ch * 3 + 28);

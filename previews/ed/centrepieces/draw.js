@@ -18,15 +18,22 @@ window.mock = async function (spec) {
   const P = (e, n, y) => [ax0 + (e * M.east[0] + n * M.north[0] + y * M.up[0]) / PX, ay0 + (e * M.east[1] + n * M.north[1] + y * M.up[1]) / PX];
   const tops = []; // (the piece's own colours, for the contrast)
   // plot: a surface point in metres (east, north, up) with its colour; nearer (less north, higher) wins
+  const herX = Math.floor((M.at[0] + 7 * M.east[0]) / PX), herY = Math.floor((M.at[1] + 7 * M.east[1]) / PX);
+  let surrounding = false;
   const plot = (e, n, y, c, opts = {}) => {
     const [x, yy] = P(e, n, y), ix = Math.floor(x), iy = Math.floor(yy);
     if (ix < 0 || iy < 0 || ix >= AW || iy >= AH) return;
+    // (never over her: she stands 7 m east of the stone, about 2 m wide and 2.5 m tall on screen)
+    if (y > 0.05 && Math.abs(ix - herX) <= 5 && iy >= herY - 15 && iy <= herY + 2) return;
     const i = iy * AW + ix, d = n - y * 0.8;
+    if (surrounding && mask[i] === 4) return; // (the ring's dots stay on top of the surround, as the game's overlay)
     if (d >= zb[i]) return;
     zb[i] = d;
     const a = art.data;
+    // (see-through ground: mixed with the frame's own floor under it, so its tufts show through)
+    if (opts.alpha !== undefined) { const j = (Math.min(H - 1, iy * PX + 1) * W + Math.min(W - 1, ix * PX + 1)) * 4, k = opts.alpha; c = [c[0] * k + bgData[j] * (1 - k), c[1] * k + bgData[j + 1] * (1 - k), c[2] * k + bgData[j + 2] * (1 - k)]; }
     a[i * 4] = Math.max(0, Math.min(255, c[0])); a[i * 4 + 1] = Math.max(0, Math.min(255, c[1])); a[i * 4 + 2] = Math.max(0, Math.min(255, c[2])); a[i * 4 + 3] = 255;
-    mask[i] = opts.water ? 2 : 1;
+    mask[i] = opts.water ? 2 : opts.ring ? 4 : 1;
     if (opts.top) tops.push(c);
   };
   // the floor's colour round it (between the piece and the ring), from the frame
@@ -36,27 +43,39 @@ window.mock = async function (spec) {
   const floor = [med(0), med(1), med(2)];
   const L = [-0.55, 0.45, 0.7]; // (moonlight from up and to the west, a little from the north)
   const lit = (c, nrm, amb = 0.45) => { const k = amb + (1 - amb) * Math.max(0, nrm[0] * L[0] + nrm[1] * L[1] + nrm[2] * L[2]) / Math.hypot(...L); return c.map(v => v * k); };
-  const step = 0.035, R = spec.r ?? 3.25;
+  // (Ed, 2026-10-29: "big ancient things that feel large compared to the rest of the scenery": each piece drawn at K times its
+  // model, about 11 m across; the ring and the surround go out with it)
+  const K = spec.scale ?? 1.7, step = 0.035 / K, R = spec.r ?? 3.25;
   const glows = []; // [e, n, y, radius m, rgb, strength]
-  const ctx = { plot, lit, mix, hash, R, step, glows, rainbow };
+  // (its age: lichen and moss flecking whatever isn't water or glowing, a few per square metre)
+  const aged = (e, n, y, c, o = {}) => { if (!o.water && y > 0.08 && hash(Math.round(e * 7), Math.round(n * 7), Math.round(y * 7)) > 0.93 && c[0] + c[1] + c[2] < 600) c = hash(Math.round(e * 3), Math.round(n * 3)) > 0.5 ? [120, 136, 96] : [70, 96, 52]; plot(e * K, n * K, y * K, c, o); };
+  const ctx = { plot: aged, lit, mix, hash, R, step, glows, rainbow, floor };
   PIECES[spec.piece](ctx, spec);
+  ctx.plot = plot; ctx.R = R * K; ctx.step = 0.035; // (the ring and the surround in true metres)
   // the analyser ring at its foot (the cast ring: 36 bars round the stone's foot, cell 0.55 m, radius 4.4 m, rainbow; idle heights)
   const ringPts = [];
   for (let i = 0; i < 36; i++) {
     // (mid-cast, as the game draws it: the share filled lit in the rainbow, the rest short and grey)
     const f = i / 36, a = Math.PI / 2 + f * Math.PI * 2, ux = Math.cos(a), uz = Math.sin(a) * 0.8, lv = 0.35 + 0.3 * Math.abs(Math.sin(i * 1.7) * 0.6 + Math.sin(i * 0.9 + 1) * 0.4), lit = f < 0.55;
     const h = lit ? 1 + Math.round(lv * 4) : 1 + Math.round(lv * 1.5), c = lit ? rainbow(f + 0.3) : [0.45, 0.45, 0.5];
-    for (let j = 0; j < h; j++) { const r = 4.4 + j * 0.55 * 1.1; ringPts.push([ux * r, -(uz * r + 0.6), c, j === h - 1, lit]); }
+    for (let j = 0; j < h; j++) { const r = 4.4 * K + j * 0.55 * 1.1; ringPts.push([ux * r, -(uz * r + 0.6), c, j === h - 1, lit]); }
   }
   // the ring's dots on the ground (flat, as the game's), behind the piece where it stands in front of them
-  for (const [e, n, c, tip, on] of ringPts) { const k = on ? (tip ? 1 : 0.85) : 0.35, col = c.map((v, i) => floor[i] * (1 - k) + v * 255 * k); for (let a = -0.25; a <= 0.25; a += 0.06) for (let b = -0.25; b <= 0.25; b += 0.06) plot(e + a, n + b, 0, col); }
+  for (const [e, n, c, tip, on] of ringPts) { const k = on ? (tip ? 1 : 0.85) : 0.35, col = c.map((v, i) => floor[i] * (1 - k) + v * 255 * k); for (let a = -0.25; a <= 0.25; a += 0.06) for (let b = -0.25; b <= 0.25; b += 0.06) plot(e + a, n + b, 0, col, { ring: true }); }
+  // its surround, so it sits in its ground rather than on it (the ring's dots are already down and keep their place)
+  surrounding = true;
+  if (SURROUNDS[spec.piece]) SURROUNDS[spec.piece](ctx, spec);
+  // and wider, about five times its width (Ed, 2026-10-29): its ground in patches and its smaller kin, thinning out into the floor
+  if (WIDE[spec.piece]) wide(ctx, WIDE[spec.piece]);
+  surrounding = false;
+
   // the art laid down
   const ac = document.createElement("canvas"); ac.width = AW; ac.height = AH;
   const actx = ac.getContext("2d");
   actx.putImageData(art, 0, 0);
   // the sigil stack over it (Ed: 1.5 times, in the rank colours: friends above enemies)
   const stack = spec.stack, glyphs = [];
-  let y = (spec.top ?? 1) + 2.0;
+  let y = (spec.top ?? 1) * K + 4.0;
   for (const s of stack) { const size = 2.27 * s.size * 1.5; y += size / 2; glyphs.push({ ...s, y, size }); y += size / 2 + size * 0.15; }
   const drawGlyph = (g, cx, cy, side, alpha, flip) => {
     const N = Math.max(8, Math.round(side)), t = document.createElement("canvas"); t.width = N; t.height = N;
@@ -94,7 +113,9 @@ window.mock = async function (spec) {
   o.drawImage(ac, 0, 0, AW * PX, AH * PX);
   // its glow: natural light, soft (lighting may be smooth: Ed, round 14), additive
   o.globalCompositeOperation = "lighter";
-  for (const [e, n, yy, r, rgb, k] of glows) { const [x, y] = P(e, n, yy), gr = o.createRadialGradient(x * PX, y * PX, 0, x * PX, y * PX, r * M.east[0]); gr.addColorStop(0, `rgba(${rgb.join(",")},${k})`); gr.addColorStop(1, `rgba(${rgb.join(",")},0)`); o.fillStyle = gr; o.fillRect(0, 0, W, H); }
+  // (subtle, Ed 2026-10-29: no beacon pooling light over the clearing as the runestone's did; the glow is in the source's own
+  // pixels, and round it only a small faint halo, half the size and under half the strength it was, catching the nearest ground)
+  for (const [e0, n0, y0, r0, rgb, k0] of glows) { const e = e0 * K, n = n0 * K, yy = y0 * K, r = r0 * 0.55 * K, k = k0 * 0.42, [x, y] = P(e, n, yy), gr = o.createRadialGradient(x * PX, y * PX, 0, x * PX, y * PX, r * M.east[0]); gr.addColorStop(0, `rgba(${rgb.join(",")},${k})`); gr.addColorStop(1, `rgba(${rgb.join(",")},0)`); o.fillStyle = gr; o.fillRect(0, 0, W, H); }
   o.globalCompositeOperation = "source-over";
   // the contrast with the floor: the piece's top colours' median against the floor's
   const tm = ch => { const v = tops.map(c => c[ch]).sort((a, b) => a - b); return v[Math.floor(v.length / 2)] ?? 0; };
@@ -108,9 +129,26 @@ const PIECES = {
   // Temperate (old oaks): a great oak's stump, sawn flat long ago: pale rings, dark bark, buttress roots, moss on its north lip,
   // its heartwood faintly amber where the old sap still glows.
   stump({ plot, lit, mix, hash, R, step, glows }, spec) {
-    const r = R * 0.78, h = 1.0;
-    // roots: six buttresses flaring out low
-    for (let k = 0; k < 6; k++) { const a = (k / 6) * Math.PI * 2 + 0.35; for (let s = r * 0.85; s < R * 1.05; s += step) for (let w = -0.45; w <= 0.45; w += step) { const t = (s - r * 0.85) / (R * 1.05 - r * 0.85), half = 0.45 * (1 - t * 0.7); if (Math.abs(w) > half) continue; const e = Math.cos(a) * s - Math.sin(a) * w, n = Math.sin(a) * s + Math.cos(a) * w, y = (1 - t) * 0.55 * (1 - (w / half) ** 2); plot(e, n, y, lit([70, 50, 36], [Math.cos(a) * 0.6, Math.sin(a) * 0.6, 0.8])); } }
+    const r = R * 0.72, h = 1.3;
+    // roots (Ed: "the giant treestump has big deep roots"): eight great buttresses arching out of the trunk, thick and ridged, each
+    // diving into the earth and breaking surface again further out, smaller, twice, before it's gone
+    for (let k = 0; k < 8; k++) {
+      const a0 = (k / 8) * Math.PI * 2 + 0.2 + (hash(k, 1) - 0.5) * 0.4, reach = R * (1.5 + 0.5 * hash(k, 2));
+      for (let s = r * 0.7; s < reach; s += step) {
+        const t = (s - r * 0.7) / (reach - r * 0.7), a = a0 + Math.sin(t * 5 + k) * 0.12 * t, half = 0.75 * (1 - t * 0.75);
+        // (its arch: high at the trunk, under the ground between its humps)
+        const arch = t < 0.35 ? 1.0 * (1 - t / 0.35) + 0.35 * Math.sin((t / 0.35) * Math.PI) : 0.32 * Math.sin(((t - 0.35) / 0.65) * Math.PI * 2.4) * (1 - t);
+        if (arch <= 0.02) continue;
+        for (let w = -half; w <= half; w += step) {
+          const q = w / half, y = arch * Math.sqrt(Math.max(0, 1 - q * q)) * (t < 0.35 ? 1 : 0.9);
+          const e = Math.cos(a) * s - Math.sin(a) * w, n = Math.sin(a) * s + Math.cos(a) * w;
+          const ridge = Math.abs(Math.sin(s * 6 + q * 2)) < 0.15 ? 0.75 : 1;
+          plot(e, n, y, lit([150 * ridge, 112 * ridge, 76 * ridge], [Math.cos(a) * 0.3 - Math.sin(a) * q * 0.8, Math.sin(a) * 0.3 + Math.cos(a) * q * 0.8, 0.9], 0.45));
+        }
+        // (the earth heaped and split where it dives and comes up)
+        if (arch < 0.08 && t > 0.35) for (let w = -half * 1.4; w <= half * 1.4; w += step * 2) plot(Math.cos(a) * s - Math.sin(a) * w, Math.sin(a) * s + Math.cos(a) * w, 0.02, [48, 34, 22]);
+      }
+    }
     // bark sides
     for (let t = 0; t < Math.PI * 2; t += step / r) for (let y = 0; y <= h; y += step) { const furrow = hash(Math.floor(t * 18)) < 0.35 ? 0.7 : 1; plot(Math.cos(t) * r, Math.sin(t) * r, y, lit([82 * furrow, 58 * furrow, 40 * furrow], [Math.cos(t), Math.sin(t), 0], 0.35)); }
     // the sawn top: rings, cracks, heartwood
@@ -175,7 +213,7 @@ const PIECES = {
     for (let e = -r; e <= r; e += step) for (let n = -r; n <= r; n += step) {
       const p = Math.hypot(e, n), a = Math.atan2(n, e), wob = 1 + 0.06 * Math.sin(a * 7) + 0.04 * Math.sin(a * 13); if (p > r * wob) continue;
       const k = p / (r * wob);
-      if (k > 0.78) { const y = rim * (1 - Math.abs(k - 0.9) / 0.12) * (0.85 + 0.15 * hash(Math.round(a * 20))), c = k > 0.86 ? [118, 96, 82] : [176, 160, 150]; plot(e, n, Math.max(0.05, y), lit(c, [Math.cos(a), Math.sin(a), 0.8]), { top: true }); continue; }
+      if (k > 0.78) { const y = rim * (1 - Math.abs(k - 0.9) / 0.12) * (0.85 + 0.15 * hash(Math.round(a * 20))), c = k > 0.86 ? [206, 190, 168] : [238, 228, 214]; plot(e, n, Math.max(0.05, y), lit(c, [Math.cos(a), Math.sin(a), 0.8]), { top: true }); continue; }
       const cell = Math.floor(e * 4) * 31 + Math.floor(n * 4), spike = hash(cell) * 0.35, y = 0.15 + (k * 0.5) + spike * (1 - k) * 0.6;
       let c = mix([200, 150, 255], [90, 40, 150], k); if (hash(cell, 2) > 0.85) c = [240, 220, 255]; plot(e, n, y, lit(c, [0.3 - e * 0.1, 0.2 - n * 0.1, 1], 0.7));
     }
@@ -190,11 +228,10 @@ const PIECES = {
       const p = Math.hypot(e, n), a = Math.atan2(n, e), wob = 1 + 0.07 * Math.sin(a * 5 + 1) + 0.04 * Math.sin(a * 11); if (p > r * wob) continue;
       let d1 = 1e9, d2 = 1e9; for (const s of sites) { const d = Math.hypot(e - s[0], n - s[1]); if (d < d1) { d2 = d1; d1 = d; } else if (d < d2) d2 = d; }
       const seam = d2 - d1 < 0.07, lip = p > r * wob - 0.2;
-      let c = seam ? [96, 88, 76] : [246, 246, 240]; if (lip) c = [222, 216, 204]; if (!seam && hash(Math.round(e * 10), Math.round(n * 10)) > 0.96) c = [255, 255, 255];
+      let c = seam ? [84, 76, 64] : [214, 212, 204]; if (lip) c = [190, 184, 172]; if (!seam && hash(Math.round(e * 10), Math.round(n * 10)) > 0.97) c = [255, 255, 250]; // (its glints: the only light it gives)
       plot(e, n, seam ? 0.03 : lip ? 0.16 : 0.1, c, { top: !seam });
     }
     for (let k = 0; k < 10; k++) { const a = hash(k, 8) * Math.PI * 2, p = Math.sqrt(hash(k, 9)) * r * 0.85; glows.push([Math.cos(a) * p, Math.sin(a) * p, 0.1, 0.25, [255, 255, 240], 0.45]); }
-    glows.push([0, 0, 0.1, 3.2, [200, 210, 230], 0.12]);
   },
   // Mangrove swamp (mangrove pools): a giant water-lily pad, its rim turned up, veined, floating on a ring of dark water, one
   // flower at its heart opening pale and glowing.
@@ -211,4 +248,105 @@ const PIECES = {
     for (let e = -0.8; e <= 0.8; e += step * 0.7) for (let n = -0.8; n <= 0.8; n += step * 0.7) { const p = Math.hypot(e, n), a = Math.atan2(n, e), petal = 0.55 + 0.25 * Math.abs(Math.cos(4 * a)); if (p > petal) continue; const c = p < 0.2 ? [255, 210, 90] : mix([255, 240, 245], [235, 120, 170], p / petal); plot(e, n, 0.25 + 0.35 * (1 - p / petal), c); }
     glows.push([0, 0, 0.5, 1.4, [255, 200, 220], 0.35]);
   },
+};
+
+// ---- the surrounds: the ground round each piece, blending it into its floor ----
+// scatter: points on a jittered grid in the ring from a to b metres out, more of them nearer (dithered: whole pixels, no fades);
+// apron: the ground just round its foot, its floor darkened and tinted toward the piece (a contact shadow, damp, worn)
+function scatter(ctx, a, b, cell, dens, fn) {
+  const { hash } = ctx;
+  for (let e = -b; e <= b; e += cell) for (let n = -b; n <= b; n += cell) {
+    const je = e + (hash(Math.round(e * 31), Math.round(n * 31), 7) - 0.5) * cell, jn = n + (hash(Math.round(e * 31), Math.round(n * 31), 8) - 0.5) * cell;
+    const p = Math.hypot(je, jn); if (p < a || p > b) continue;
+    const t = (p - a) / (b - a);
+    if (hash(Math.round(je * 53), Math.round(jn * 53), 9) < dens * Math.pow(1 - t, 1.6)) fn(je, jn, t, hash(Math.round(je * 17), Math.round(jn * 17), 4));
+  }
+}
+function apron(ctx, a, b, tint, k = 0.45) {
+  const { plot, mix, hash, floor } = ctx, c = mix(floor, tint, 0.5).map(v => v * 0.7);
+  for (let e = -b; e <= b; e += 0.06) for (let n = -b; n <= b; n += 0.06) { const p = Math.hypot(e, n); if (p < a || p > b) continue; const t = (p - a) / (b - a); if (hash(Math.round(e * 20), Math.round(n * 20), 11) < k * (1 - t)) plot(e, n, 0.003, c); }
+}
+const blob = (ctx, e0, n0, r, y, col) => { const { plot } = ctx; for (let e = -r; e <= r; e += 0.05) for (let n = -r; n <= r; n += 0.05) if (Math.hypot(e, n) <= r) plot(e0 + e, n0 + n, y * (1 - (Math.hypot(e, n) / r) ** 2), col); };
+const SURROUNDS = {
+  stump(ctx) {
+    const { plot, mix, floor, R } = ctx;
+    apron(ctx, R * 0.75, R * 1.35, [60, 40, 26]);
+    // sawdust and chips, pale, thinning out; moss and dead leaves further
+    scatter(ctx, R * 0.8, R + 1.6, 0.22, 0.75, (e, n, t, h) => blob(ctx, e, n, 0.08 + 0.06 * h, 0.03, h > 0.5 ? [176, 140, 94] : [140, 108, 70]));
+    scatter(ctx, R * 0.9, R + 3.0, 0.35, 0.5, (e, n, t, h) => blob(ctx, e, n, 0.16 + 0.12 * h, 0.04, h > 0.6 ? [62, 92, 46] : mix(floor, [92, 60, 36], 0.6)));
+  },
+  moonpool(ctx) {
+    const { mix, floor, R } = ctx;
+    apron(ctx, R * 0.9, R * 1.5, [30, 46, 40], 0.7);
+    scatter(ctx, R * 1.0, R + 2.4, 0.3, 0.6, (e, n, t, h) => blob(ctx, e, n, 0.15 + 0.15 * h, h > 0.55 ? 0.25 : 0.06, h > 0.55 ? [96, 100, 108] : [64, 104, 58]));
+    scatter(ctx, R * 1.0, R + 1.5, 0.5, 0.45, (e, n, t, h) => { for (let k = 0; k < 4; k++) blob(ctx, e + (k - 1.5) * 0.08, n, 0.04, 0.6 + 0.3 * h, [70, 112, 66]); }); // reeds
+  },
+  icedome(ctx) {
+    const { mix, floor, R } = ctx;
+    // drifts of snow fading into the ground, ice shards
+    scatter(ctx, R * 0.9, R + 2.8, 0.18, 0.95, (e, n, t, h) => blob(ctx, e, n, 0.12 + 0.12 * h, 0.05, mix([226, 232, 240], floor, t * 0.6)));
+    scatter(ctx, R * 0.95, R + 1.8, 0.45, 0.4, (e, n, t, h) => blob(ctx, e, n, 0.1 + 0.08 * h, 0.25, [130, 200, 235]));
+  },
+  cushion(ctx) {
+    const { R } = ctx;
+    apron(ctx, R * 0.85, R * 1.25, [40, 70, 40]);
+    // young cushions round it, and scree
+    scatter(ctx, R * 0.95, R + 2.6, 0.7, 0.55, (e, n, t, h) => blob(ctx, e, n, 0.25 + 0.3 * h * (1 - t), 0.3 * (1 - t), h > 0.8 ? [210, 80, 170] : [60, 108, 50]));
+    scatter(ctx, R * 0.9, R + 3.0, 0.3, 0.5, (e, n, t, h) => blob(ctx, e, n, 0.1 + 0.1 * h, 0.08, h > 0.5 ? [138, 136, 132] : [104, 100, 98]));
+  },
+  rafflesia(ctx) {
+    const { plot, mix, floor, R, hash } = ctx;
+    apron(ctx, R * 0.85, R * 1.3, [50, 30, 20]);
+    // its host vine running off under the litter, fallen petal bits, dark leaf litter
+    for (let k = 0; k < 3; k++) { let a = k * 2.1 + 0.4, e = Math.cos(a) * R * 0.8, n = Math.sin(a) * R * 0.8; for (let s = 0; s < 70; s++) { a += (hash(k, s) - 0.5) * 0.25; e += Math.cos(a) * 0.06; n += Math.sin(a) * 0.06; blob(ctx, e, n, 0.09, 0.08, [70, 52, 34]); } }
+    scatter(ctx, R * 0.9, R + 2.0, 0.4, 0.45, (e, n, t, h) => blob(ctx, e, n, 0.1 + 0.08 * h, 0.03, h > 0.6 ? [150, 40, 36] : mix(floor, [40, 58, 30], 0.7)));
+  },
+  basalt(ctx) {
+    const { mix, floor, R, glows } = ctx;
+    apron(ctx, R * 0.85, R * 1.4, [30, 28, 34], 0.7);
+    // broken stubs and cinders, ash, a few glowing cracks in the ground
+    scatter(ctx, R * 0.95, R + 2.2, 0.75, 0.5, (e, n, t, h) => blob(ctx, e, n, 0.3 + 0.2 * h, 0.35 * (1 - t), [70, 72, 84]));
+    scatter(ctx, R * 0.9, R + 3.0, 0.2, 0.7, (e, n, t, h) => blob(ctx, e, n, 0.06 + 0.05 * h, 0.03, h > 0.93 ? [255, 120, 40] : h > 0.5 ? [44, 42, 48] : mix(floor, [110, 106, 104], 0.5)));
+  },
+  lilypad(ctx) {
+    const { R } = ctx;
+    // the water spreading into mud, small pads on it
+    apron(ctx, R * 0.98, R * 1.4, [24, 34, 30], 0.8);
+    scatter(ctx, R * 0.98, R + 2.0, 0.7, 0.5, (e, n, t, h) => blob(ctx, e, n, 0.25 + 0.25 * h * (1 - t), 0.05, h > 0.85 ? [220, 120, 160] : [70, 130, 58]));
+  },
+  saltpan(ctx) {
+    const { mix, floor, R } = ctx;
+    // the crust breaking up into plates and flecks, the mud between darker
+    apron(ctx, R * 0.95, R * 1.3, [110, 96, 80], 0.6);
+    scatter(ctx, R * 0.95, R + 2.8, 0.32, 0.9, (e, n, t, h) => blob(ctx, e, n, 0.12 + 0.2 * h * (1 - t), 0.04, mix([238, 236, 228], floor, t * 0.5)));
+  },
+  geode(ctx) {
+    const { R } = ctx;
+    apron(ctx, R * 0.85, R * 1.3, [104, 58, 44]);
+    // pale rind rubble and fallen crystal points
+    scatter(ctx, R * 0.9, R + 2.4, 0.4, 0.6, (e, n, t, h) => blob(ctx, e, n, 0.14 + 0.16 * h, 0.12, [168, 150, 138]));
+    scatter(ctx, R * 0.9, R + 1.6, 0.5, 0.45, (e, n, t, h) => blob(ctx, e, n, 0.08 + 0.06 * h, 0.2, h > 0.5 ? [200, 150, 255] : [150, 100, 220]));
+  },
+};
+
+// ---- the wide surround: out to five times its radius ----
+function wide(ctx, W) {
+  const { mix, floor, R, hash } = ctx, out = R * 5;
+  // its ground, in soft patches (dithered), the tint fading with distance
+  scatter(ctx, R * 1.05, R * 3, 0.55, 0.35, (e, n, t, h) => { for (let q = 0; q < 3; q++) { const r = 0.14 + 0.24 * hash(h * 9, q), oe = (hash(h * 7, q, 1) - 0.5) * 0.6, on = (hash(h * 5, q, 2) - 0.5) * 0.4; for (let a = -r; a <= r; a += 0.05) for (let b = -r; b <= r; b += 0.05) { const d = Math.hypot(a, b) / r; if (d <= 1 && hash(Math.round((e + oe + a) * 20), Math.round((n + on + b) * 20), 7) > 0.35 + 0.5 * d) ctx.plot(e + oe + a, n + on + b, 0, W.tint, { alpha: 0.32 * (1 - t) }); } } });
+  // its kin: smaller relatives, fewer further out
+  scatter(ctx, R * 1.4, out * 0.9, 3.2, 0.5, (e, n, t, h) => W.kin(ctx, e, n, 0.5 + 0.5 * (1 - t), h));
+}
+const disc = (ctx, e0, n0, r, y, top, side) => { const { plot } = ctx; for (let a = 0; a < Math.PI * 2; a += 0.05 / r) for (let yy = 0; yy <= y; yy += 0.04) plot(e0 + Math.cos(a) * r, n0 + Math.sin(a) * r, yy, side); for (let e = -r; e <= r; e += 0.04) for (let n = -r; n <= r; n += 0.04) if (Math.hypot(e, n) <= r) plot(e0 + e, n0 + n, y, top); };
+const WIDE = {
+  // (a great tree's leavings: fallen boughs and logs, mossed, lying every way)
+  stump: { tint: [60, 84, 42], kin: (c, e, n, k, h) => { const a = h * Math.PI * 2, L = 1.2 + 2.2 * k * c.hash(h * 13, 3), rr = 0.12 + 0.18 * k; for (let s = -L / 2; s <= L / 2; s += 0.05) { const x = e + Math.cos(a) * s, z = n + Math.sin(a) * s; for (let w = -rr; w <= rr; w += 0.05) { const y = Math.sqrt(Math.max(0, rr * rr - w * w)); c.plot(x - Math.sin(a) * w, z + Math.cos(a) * w, y, c.hash(Math.round(s * 4), Math.round(w * 9)) > 0.75 ? [70, 100, 50] : [120, 88, 60]); } } } },
+  moonpool: { tint: [34, 52, 46], kin: (c, e, n, k, h) => { blob(c, e, n, 0.55 * k + 0.2, 0.012, [28, 46, 70]); blob(c, e - 0.15, n + 0.1, 0.12, 0.014, [170, 190, 210]); } },
+  icedome: { tint: [176, 186, 200], kin: (c, e, n, k, h) => blob(c, e, n, 0.4 * k + 0.15, 0.3 * k, h > 0.5 ? [110, 180, 220] : [200, 225, 240]) },
+  cushion: { tint: [116, 114, 110], kin: (c, e, n, k, h) => { blob(c, e, n, 0.5 * k + 0.15, 0.35 * k, [58, 104, 48]); if (h > 0.4) blob(c, e + 0.1, n - 0.05, 0.07, 0.36 * k, [220, 80, 170]); } },
+  rafflesia: { tint: [62, 46, 28], kin: (c, e, n, k, h) => { blob(c, e, n, 0.35 * k + 0.1, 0.25 * k, [120, 34, 30]); blob(c, e, n, 0.1, 0.27 * k, [200, 170, 150]); } },
+  basalt: { tint: [66, 64, 70], kin: (c, e, n, k, h) => { disc(c, e, n, 0.35 * k + 0.15, 0.5 * k, [84, 86, 98], [56, 58, 68]); if (h > 0.6) blob(c, e + 0.3, n, 0.06, 0.02, [255, 120, 40]); } },
+  lilypad: { tint: [30, 40, 34], kin: (c, e, n, k, h) => { blob(c, e, n, 0.6 * k + 0.2, 0.01, [22, 34, 32]); blob(c, e, n, 0.35 * k + 0.1, 0.04, h > 0.85 ? [220, 120, 160] : [74, 136, 60]); } },
+  saltpan: { tint: [168, 150, 120], kin: (c, e, n, k, h) => blob(c, e, n, 0.5 * k + 0.2, 0.05, [210, 208, 200]) },
+  geode: { tint: [150, 82, 56], kin: (c, e, n, k, h) => { blob(c, e, n, 0.3 * k + 0.1, 0.15, [176, 104, 72]); for (let j = 0; j < 3; j++) blob(c, e + (j - 1) * 0.1, n, 0.05, 0.3 * k + 0.1 * j, [190, 140, 250]); } },
 };

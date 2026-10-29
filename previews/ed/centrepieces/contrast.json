@@ -5,18 +5,18 @@
   "what": "moon pool",
   "contrast": {
    "piece": [
-    41,
-    70,
-    104
+    40,
+    68,
+    103
    ],
    "floor": [
-    231,
-    197,
-    119
+    226,
+    195,
+    117
    ],
-   "ratio": 5.85,
+   "ratio": 5.8,
    "lighter": false,
-   "hue": 171
+   "hue": 170
   }
  },
  {
@@ -25,18 +25,18 @@
   "what": "frozen spring: an ice dome",
   "contrast": {
    "piece": [
-    65,
-    121,
-    166
+    67,
+    120,
+    163
    ],
    "floor": [
-    116,
-    95,
-    51
+    105,
+    90,
+    49
    ],
-   "ratio": 1.32,
+   "ratio": 1.43,
    "lighter": true,
-   "hue": 166
+   "hue": 163
   }
  },
  {
@@ -45,18 +45,18 @@
   "what": "moss campion cushion",
   "contrast": {
    "piece": [
-    51,
-    99,
-    44
+    52,
+    98,
+    45
    ],
    "floor": [
-    202,
-    161,
-    99
+    191,
+    156,
+    97
    ],
-   "ratio": 2.97,
+   "ratio": 2.76,
    "lighter": false,
-   "hue": 76
+   "hue": 75
   }
  },
  {
@@ -65,18 +65,18 @@
   "what": "rafflesia flower",
   "contrast": {
    "piece": [
-    159,
-    41,
+    158,
+    42,
     36
    ],
    "floor": [
-    59,
+    57,
     47,
     22
    ],
-   "ratio": 1.75,
+   "ratio": 1.76,
    "lighter": true,
-   "hue": 38
+   "hue": 40
   }
  },
  {
@@ -90,13 +90,13 @@
     78
    ],
    "floor": [
-    61,
-    37,
-    18
+    49,
+    32,
+    16
    ],
-   "ratio": 3.27,
+   "ratio": 3.58,
    "lighter": true,
-   "hue": 6
+   "hue": 4
   }
  },
  {
@@ -110,13 +110,13 @@
     92
    ],
    "floor": [
-    27,
-    20,
-    17
+    25,
+    18,
+    16
    ],
-   "ratio": 2.25,
+   "ratio": 2.29,
    "lighter": true,
-   "hue": 122
+   "hue": 117
   }
  },
  {
@@ -126,15 +126,15 @@
   "contrast": {
    "piece": [
     70,
-    133,
+    132,
     57
    ],
    "floor": [
-    88,
-    53,
-    28
+    85,
+    52,
+    27
    ],
-   "ratio": 2.4,
+   "ratio": 2.45,
    "lighter": true,
    "hue": 84
   }
@@ -145,18 +145,18 @@
   "what": "salt pan",
   "contrast": {
    "piece": [
-    246,
-    246,
-    240
+    214,
+    212,
+    204
    ],
    "floor": [
-    205,
-    138,
-    76
+    194,
+    134,
+    75
    ],
-   "ratio": 2.64,
+   "ratio": 2.08,
    "lighter": true,
-   "hue": 31
+   "hue": 18
   }
  },
  {
@@ -165,18 +165,18 @@
   "what": "open geode",
   "contrast": {
    "piece": [
-    92,
-    76,
-    67
+    156,
+    146,
+    131
    ],
    "floor": [
-    140,
-    99,
-    59
+    120,
+    89,
+    51
    ],
-   "ratio": 1.55,
-   "lighter": false,
-   "hue": 8
+   "ratio": 2.1,
+   "lighter": true,
+   "hue": 3
   }
  }
 ]
