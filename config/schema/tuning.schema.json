@@ -2963,6 +2963,10 @@
           "type": "string",
           "description": "her broom's parts, a comma list of ids from config/broom-parts.json (the page sets it from her save, localStorage witch.broom, fitted at the Workshop's bay; ?parts= for one load); the bare broom, none, has no spell and no quick take-off, and a complete set gives its spell."
         },
+        "bag": {
+          "type": "string",
+          "description": "her bag, a config/wardrobe.json bag item's id or empty for none, whose invites multiply invites.cooldown and invites.range while she carries it (rules/bags.ts)."
+        },
         "speed": {
           "type": "object",
           "properties": {
@@ -3340,6 +3344,7 @@
         "hat",
         "hats",
         "parts",
+        "bag",
         "speed",
         "healing",
         "helmet",
@@ -3788,6 +3793,10 @@
           "minimum": 0,
           "description": "how much of a full cast her progress on a stone loses a second while she isn't casting it (holding again resumes from there)."
         },
+        "spot": {
+          "type": "number",
+          "minimum": 0
+        },
         "radius": {
           "type": "number",
           "minimum": 0,
@@ -3846,6 +3855,7 @@
         "on",
         "time",
         "drain",
+        "spot",
         "radius",
         "show",
         "scatter"
@@ -3960,10 +3970,6 @@
           "type": "number",
           "minimum": 0
         },
-        "settleAfter": {
-          "type": "number",
-          "minimum": 0
-        },
         "retarget": {
           "type": "number",
           "minimum": 0
@@ -3985,7 +3991,6 @@
         "legendArc",
         "flareDraw",
         "flare",
-        "settleAfter",
         "retarget"
       ],
       "additionalProperties": false,
@@ -4375,6 +4380,10 @@
               "type": "number",
               "minimum": 0
             },
+            "standScale": {
+              "type": "number",
+              "minimum": 0
+            },
             "stones": {
               "type": "object",
               "properties": {
@@ -4383,10 +4392,6 @@
                   "minimum": 0
                 },
                 "fade": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "south": {
                   "type": "number",
                   "minimum": 0
                 },
@@ -4417,19 +4422,23 @@
                 "convert": {
                   "type": "number",
                   "minimum": 0
+                },
+                "ringTilt": {
+                  "type": "number",
+                  "minimum": 0
                 }
               },
               "required": [
                 "range",
                 "fade",
-                "south",
                 "size",
                 "near",
                 "far",
                 "bars",
                 "radius",
                 "cell",
-                "convert"
+                "convert",
+                "ringTilt"
               ],
               "additionalProperties": false
             },
@@ -4495,6 +4504,7 @@
             "embers",
             "dotsPerRow",
             "stoneGlow",
+            "standScale",
             "stones",
             "chain"
           ],

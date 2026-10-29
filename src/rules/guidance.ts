@@ -4,10 +4,12 @@
 //   1. after a night, lost or won (once its finale's settled): the map table while there's an island found she can sail to and
 //      hasn't been to, else the bed (both shown from anywhere: they lead her home; Ed, 2026-10-26: "No 💤 if there are new
 //      islands, just 🧭 towards islands the player can go to and hasn't visited yet");
-//   2. a game's first morning (no pile of last night's clothes: rules/wakeUp.ts yesterday): the dressing stations, the first whose
-//      piece she still has to put on (the wardrobe first; her hat on the hats' floor), until she's dressed (Ed: "if it's the first
-//      night, there won't be any last night's clothes"; with a pile, E there dresses her, and there's no dressing pin);
-//   3. every night, before the party: the invitations desk, then the lathe (her broom), each until it's done tonight (her night's
+//   2. a game's first morning (no pile of last night's clothes: rules/wakeUp.ts yesterday), in Ed's order (2026-10-29: "skin/hair,
+//      then jacket/top/trousers, then shoes, then bag, then invitations, then cloak, then hat, then broom"; FIRST_MORNING): the
+//      dressing table till she's used it (E there: wake.styled), the wardrobe, shoe rack and bags till each piece is on, the
+//      invitations desk, the cloak pegs, the hats' floor, the lathe (Ed: "if it's the first night, there won't be any last night's
+//      clothes"; with a pile, E there dresses her, and there's no dressing pin);
+//   3. every later night, before the party: the invitations desk, then the lathe (her broom), each until it's done tonight (her night's
 //      kit, rules/kit.ts, through GUIDANCE_HOOKS; a night with no kit, the tools' and the bots', has both, so those pins never show);
 //   4. something new in the treehouse (a find), each until she's been to where it is, newest first;
 //   5. the decks, until the party spell's cast.
@@ -47,9 +49,14 @@ export const GUIDANCE_HOOKS = {
   broomTaken: (g: Game, w: number): boolean => !g.witches[w] || hasBroom(g.witches[w]),
 };
 
-/** The dressing stations in the order her first night's pin takes them, by the piece each puts on (rules/clothesPile.ts
- *  STATION_SLOT; her hat off the hats' floor). */
-export const DRESS_ORDER: readonly [PileSlot, string][] = [["top", "wardrobe"], ["shoes", "shoeRack"], ["cloak", "cloakPegs"], ["bits", "bags"], ["hat", "hats"]];
+/** A game's first morning, in Ed's order (2026-10-29: "The first station you go to after waking up should be skin/hair, then
+ *  jacket/top/trousers, then shoes, then bag, then invitations, then cloak, then hat, then broom"): the dressing table till she's
+ *  used it (wake.styled), each dressing station till its piece is on (rules/clothesPile.ts STATION_SLOT; her hat off the hats'
+ *  floor), the invitations desk and the lathe till her night's kit has them. */
+export const FIRST_MORNING: readonly ({ dress: PileSlot | "styled"; at: string } | { kit: "desk" | "lathe" })[] = [
+  { dress: "styled", at: "dressingTable" }, { dress: "top", at: "wardrobe" }, { dress: "shoes", at: "shoeRack" }, { dress: "bits", at: "bags" },
+  { kit: "desk" }, { dress: "cloak", at: "cloakPegs" }, { dress: "hat", at: "hats" }, { kit: "lathe" },
+];
 
 /** How near the decks' seat she's at them (m): rules/wakeUp.ts atDecks's reach. */
 const AT_DECKS = 2.5;
@@ -63,10 +70,13 @@ export function guidanceOf(g: Game, w: number, save: GuideSave, unvisited: reado
   if (nightOver(g)) return unvisited.length ? { kind: "chart", target: { object: "mapTable" } } : { kind: "bed", target: { object: "bed" } };
   const k = g.wake;
   if (!k?.open || g.party.spellAt !== null) return null; // (still in bed, or the party's on: the party's pointers guide her)
-  if (!pileOut(k) && !dressed(k)) { // (no pile to put on at once: a game's first morning)
-    const next = DRESS_ORDER.find(([slot]) => k.pile!.includes(slot));
-    if (next) return { kind: "dress", target: { object: next[1] } };
+  if (!k.yesterday && !pileOut(k)) { // (a game's first morning: no pile of last night's clothes to put on at once)
+    for (const s of FIRST_MORNING) {
+      if ("kit" in s) { if (s.kit === "desk" ? !hooks.invitationsReady(g, w) : !hooks.broomTaken(g, w)) return s.kit === "desk" ? { kind: "desk", target: { object: "invitations" } } : { kind: "lathe", target: { object: "lathe" } }; }
+      else if (s.dress === "styled" ? !k.styled : !dressed(k) && !!k.pile?.includes(s.dress)) return { kind: "dress", target: { object: s.at } };
+    }
   }
+  // (later mornings: E at the pile dresses her at once; then her kit, the invitations before the broom)
   if (!hooks.invitationsReady(g, w)) return { kind: "desk", target: { object: "invitations" } };
   if (!hooks.broomTaken(g, w)) return { kind: "lathe", target: { object: "lathe" } };
   const n = save.unseen[save.unseen.length - 1];

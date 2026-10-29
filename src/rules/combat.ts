@@ -226,6 +226,9 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
   for (const c of w.active) {
     stepKnock(c, dt);
     if (c.gone) continue;
+    // A leap under way flies on whatever holds it this step (a stun, a daze, its pack's turn): its arc goes by the time, so steps
+    // missed would put it the rest of the way at once (Ed's playtest, 2026-10-29: "some animals seem to teleport"). It lands as ever.
+    if (c.leap && c.fight) { const L = c.leap, k = Math.min(1, (time - L.at) / Math.max(0.01, L.lands - L.at)); c.x = L.fx + (L.tx - L.fx) * k; c.z = L.fz + (L.tz - L.fz) * k; }
     // A flyer swooping that's no longer a wild one in a fight (invited, leashed, dazed, running off, asleep) glides down (rules/movement.ts).
     if (c.swoop && (!swoops(c) || !fighting(c) || w.asleep(c))) landSwoop(c, time);
     if (c.dazed) {
@@ -253,7 +256,13 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     // Stunned (an armoured one knocked over): it does nothing for a moment.
     if (c.stunUntil !== undefined && time < c.stunUntil) { c.moving = false; c.vx = 0; c.vz = 0; continue; }
     const pd = c.spell === undefined ? PK?.get(c.id) : undefined; // (one given an attack in the grammar (the arena's) fights on its own; a species' own keeps its pack's turns)
-    if (c.packHide && PK) { c.moving = false; c.vx = 0; c.vz = 0; continue; } // (up the trees or underground: rules/combat/packs.ts)
+    // Up the trees, underground or under water (rules/combat/packs.ts): out of sight, it makes its way round to where it comes back down
+    // at its own run, so it shows again where it got to (Ed's playtest, 2026-10-29: "some animals seem to teleport": it was put there at once).
+    if (c.packHide && PK) {
+      const H = c.packHide;
+      if (H.tx !== undefined) moveToward(c, H.tx, H.tz!, 0.1, (profileOf(c.species)?.speed ?? C.fightRun) * FIGHT.speed, dt);
+      c.moving = false; c.vx = 0; c.vz = 0; continue;
+    }
     // (an attack in the grammar given it, rules/attacks/; else its species' own, the default since step 5: ?attacks=old for the old)
     // (its species' own: against a soundsystem its old attack, so the sieges stay as balanced; in a pack, as its role's strike when its
     // range suits the role, a lunger's close (a lunge, or an area round itself), a shooter's from afar, else its pack's own move, so the
@@ -323,7 +332,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       if (c.swoop) landSwoop(c, time); // (a flyer glides down)
       c.sprung = undefined; // (an ambusher lies in wait again)
       if (c.burrow) c.burrow = undefined; // (a burrower comes up)
-      if (c.leap) { c.x = c.leap.tx; c.z = c.leap.tz; c.leap = undefined; } // (a leaper comes down)
+      if (c.leap) { const L = c.leap, k = Math.min(1, (time - L.at) / Math.max(0.01, L.lands - L.at)); c.x = L.fx + (L.tx - L.fx) * k; c.z = L.fz + (L.tz - L.fz) * k; if (k >= 1) c.leap = undefined; } // (a leaper comes down, the rest of its arc: not put there at once)
       c.dug = undefined; c.brace = undefined; // (a digger comes up, a blocker lowers its tail)
       continue;
     }
