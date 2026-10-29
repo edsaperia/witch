@@ -73,6 +73,9 @@ describe("guidance pins", () => {
     // (the hooks are her night's kit, rules/kit.ts: a night with none has both; one that waits for her spell, each till she takes it)
     expect(GUIDANCE_HOOKS.invitationsReady(g, 0) && GUIDANCE_HOOKS.broomTaken(g, 0)).toBe(true);
     g.witches[0].kit = newKit(true);
+    // no bag yet (Ed, 2026-10-29: invitations need a bag): the pin leads to the bags first, then the desk
+    expect(guidanceOf(g, 0, emptyGuide(), [])).toEqual({ kind: "dress", target: { object: "bags" } });
+    g.witches[0].spells.bag = "satchel";
     expect(guidanceOf(g, 0, emptyGuide(), [])).toEqual({ kind: "desk", target: { object: "invitations" } });
     takeInvites(g.witches[0]);
     expect(guidanceOf(g, 0, emptyGuide(), [])).toEqual({ kind: "lathe", target: { object: "lathe" } });

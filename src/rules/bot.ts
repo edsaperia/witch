@@ -32,8 +32,10 @@ import { BOT_KINDS, type BotKind } from "./botKinds";
 import { isHomeKey } from "./speakers";
 import { winTarget } from "./win";
 import { bagTuning, setBag } from "./bags";
-/** The careful bots' bag: the Far bag (the satchel). */
-const FAR_BAG = "satchel";
+/** The careful bots' bag: the far one (the purse). */
+const FAR_BAG = "purse";
+/** The other bots': the starter, the satchel (the base rate and reach, a little more homing: Ed, 2026-10-29). */
+const STARTER_BAG = "satchel";
 export { BOT_KINDS, type BotKind };
 
 export interface BotOptions {
@@ -49,8 +51,8 @@ export interface BotOptions {
   relics?: boolean;
   /** Which sleeping legend gets each relic (Ed, 2026-10-06: "you get to choose where relic allies are"): nearest her (the naive one), home (nearest the dancefloor), front (in an area the next wave wakes), far (the most remote: the worst). */
   relicPolicy?: "nearest" | "home" | "front" | "far";
-  /** Her bag (rules/bags.ts; Ed, 2026-10-29, two to choose from at the start): a bag item's id, "" for none. Absent, the careful
-   *  bots carry the Far bag (the satchel: her 💌s reach further, slower; she keeps her distance) and the others what the game gave her. */
+  /** Her bag (rules/bags.ts; Ed, 2026-10-29, chosen at the start: nobody plays bagless): a bag item's id. Absent, the careful bots
+   *  carry the far bag (the purse: her 💌s reach further, slower; she keeps her distance) and the others the satchel (the starter). */
   bag?: string;
   /** At most this many quests, then she plays on as usual (a quick player does a few). */
   questMax?: number;
@@ -211,7 +213,7 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
 
   function decide(g: Game): Controls {
     const w0 = g.witches[0];
-    if (!bagPicked) { bagPicked = true; const pick = o.bag ?? (careful ? FAR_BAG : undefined); if (pick !== undefined) setBag(w0.spells, pick); } // (her bag, picked once: the same every game)
+    if (!bagPicked) { bagPicked = true; const pick = o.bag ?? (careful ? FAR_BAG : STARTER_BAG); setBag(w0.spells, pick); } // (her bag, picked once: the same every game)
     const map = g.map, w = w0, b = w.body, time = g.clock.time, t = g.tuning, R = bagTuning(t, w.spells.bag).invites.range, H = t.witchHealth.hits;
     const homeKey = cellKey(map.centreCell), stacks = castOn(t);
     if (w.ko) { if (carried.length) { for (const id of carried) letGo.add(id); carried = []; } } else carried = [...w.leash.stack];

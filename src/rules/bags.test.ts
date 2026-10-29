@@ -1,51 +1,54 @@
-// The two starting bags (Ed, 2026-10-29: "We should start with a choice of two bags; faster rate of fire but shorter range, and slower
-// rate of fire but longer range"; rules/bags.ts, config/wardrobe.json): each hers from the start, each its own 💌 stats, neither
-// strictly better, worn as she wears it, and the skilled bot carrying the same one every game.
+// The starting bags (Ed, 2026-10-29: "We should start with a choice of two bags; faster rate of fire but shorter range, and slower
+// rate of fire but longer range"; then "Remove none", "You can add 'purse' which has the stats of the 'none' option", and "The 'base'
+// bag that comes at the top of the list should have a medium rate of fire, medium range, and a little homing to help beginner
+// players. Probably a satchel."; rules/bags.ts, config/wardrobe.json): each hers from the start, each its own 💌 stats, no None.
 import { describe, expect, it } from "vitest";
 import { BAGS, bagLine, bagOf, bagTuning } from "./bags";
-import { ownedOf, wear, itemById } from "./wardrobe";
+import { ownedOf, wear, itemById, SHELVES } from "./wardrobe";
 import { pleasingWitch } from "../ui/looks";
 import { newGame, stepGame, STEP, witchTuning, type Controls } from "./game";
 import { TUNING, withTuning } from "./tuning";
 import { newBot } from "./bot";
 import { BAG_ITEMS } from "./finds";
 
-const quick = itemById("bumbag")!, far = itemById("satchel")!;
+const starter = itemById("satchel")!, quick = itemById("bumbag")!, far = itemById("purse")!;
 
-describe("the two starting bags", () => {
-  it("are the Quick bag (the bum bag) and the Far bag (the satchel), both hers from the start, each a name and a stat line", () => {
-    expect(BAGS.map(b => b.id).sort()).toEqual(["bumbag", "satchel"]);
-    expect([quick.name, far.name]).toEqual(["Quick bag", "Far bag"]);
+describe("the starting bags", () => {
+  it("are the satchel (the starter, at the top), the Quick bag and the far purse: all hers from the start, no None", () => {
+    expect(SHELVES.bag.items.map(i => i.id)).toEqual(["satchel", "bumbag", "purse"]);
+    expect(BAGS.length).toBe(3);
+    expect(itemById("bag-none")).toBeUndefined();
     const own = ownedOf([], null);
-    expect(own.has("bumbag") && own.has("satchel")).toBe(true);
+    for (const b of BAGS) expect(own.has(b.id), b.id).toBe(true);
+    expect(bagLine("satchel")).toBe("Satchel: steady throws, a little homing");
     expect(bagLine("bumbag")).toBe("Quick bag: faster throws, shorter reach");
-    expect(bagLine("satchel")).toBe("Far bag: slower throws, longer reach");
+    expect(bagLine("purse")).toBe("Far purse: slower throws, longer reach");
     expect(bagLine("")).toBe("");
   });
 
-  it("the Quick bag throws faster and shorter, the Far bag slower and further; no bag, the tuning's own", () => {
-    const I = TUNING.invites, q = bagTuning(TUNING, "bumbag").invites, f = bagTuning(TUNING, "satchel").invites;
-    expect(q.cooldown).toBeCloseTo(0.418, 3); expect(q.range).toBeCloseTo(25.08, 2);
+  it("the satchel throws at the base rate and reach with a little more homing; the Quick bag faster and shorter; the purse slower and further", () => {
+    const I = TUNING.invites, s = bagTuning(TUNING, "satchel").invites, q = bagTuning(TUNING, "bumbag").invites, f = bagTuning(TUNING, "purse").invites;
+    expect([s.cooldown, s.range]).toEqual([I.cooldown, I.range]);
+    expect(s.homing).toBeGreaterThan(I.homing); expect(s.homingCone).toBeGreaterThan(I.homingCone);
+    expect(q.cooldown).toBeCloseTo(0.418, 3); expect(q.range).toBeCloseTo(25.08, 2); expect(q.homing).toBe(I.homing);
     expect(f.cooldown).toBeCloseTo(0.6985, 3); expect(f.range).toBeCloseTo(42.9, 2);
-    expect(q.cooldown).toBeLessThan(I.cooldown); expect(q.range).toBeLessThan(I.range);
-    expect(f.cooldown).toBeGreaterThan(I.cooldown); expect(f.range).toBeGreaterThan(I.range);
     expect(bagTuning(TUNING, "")).toBe(TUNING);
-    expect(bagTuning(TUNING, "bag-none")).toBe(TUNING);
-    // neither strictly better: the quick one throws more a second, the far one reaches further
+    // neither of the quick and far strictly better: the quick one throws more a second, the far one reaches further
     expect(1 / q.cooldown).toBeGreaterThan(1 / f.cooldown);
     expect(f.range).toBeGreaterThan(q.range);
   });
 
-  it("is the bag she wears", () => {
+  it("is the bag she wears; with none on, none", () => {
     const g = pleasingWitch(7) as unknown as Record<string, unknown>;
+    expect(bagOf(wear(g, starter))).toBe("satchel");
     expect(bagOf(wear(g, quick))).toBe("bumbag");
-    expect(bagOf(wear(g, far))).toBe("satchel");
-    expect(bagOf(wear(g, itemById("bag-none")!))).toBe("");
+    expect(bagOf(wear(g, far))).toBe("purse");
+    expect(bagOf({ ...g, accessories: { ...(g.accessories as object), satchel: false, bumbag: false, purse: false } })).toBe("");
     expect(bagOf(null)).toBe("");
   });
 
-  it("sets her 💌s in play: the Quick bag's letters fly 25 m and come every 0.42 s, the Far bag's 43 m every 0.7 s", () => {
-    for (const [bag, range, every] of [["bumbag", 25.08, 0.418], ["satchel", 42.9, 0.6985]] as const) {
+  it("sets her 💌s in play: the Quick bag's letters fly 25 m and come every 0.42 s, the purse's 43 m every 0.7 s", () => {
+    for (const [bag, range, every] of [["bumbag", 25.08, 0.418], ["purse", 42.9, 0.6985]] as const) {
       const g = newGame(5, withTuning({ spells: { ...TUNING.spells, bag } }));
       g.clock.paused = false; g.party.paused = true;
       g.witch = { ...g.witch, seated: false, mode: "ground", lift: 0, vx: 0, vz: 0 }; g.witches[0].health.hp = 1e6;
@@ -59,22 +62,21 @@ describe("the two starting bags", () => {
       const gaps = shots.slice(1).map((t, i) => t - shots[i]);
       for (const d of gaps) expect(d, bag).toBeGreaterThanOrEqual(every - STEP - 1e-6);
       expect(Math.min(...gaps), bag).toBeLessThan(every + 2 * STEP);
-      expect(W.invites.letters.every(L => L.range === undefined || Math.abs(L.range - range) < 0.01 || L.home), bag).toBe(true);
     }
   });
 
-  it("are no longer found in the forest (they're hers from the start)", () => {
-    expect(BAG_ITEMS).not.toContain("bumbag");
+  it("are not found in the forest (they're hers from the start)", () => {
+    for (const b of BAGS) expect(BAG_ITEMS).not.toContain(b.id);
     expect(BAG_ITEMS).toContain("backpack"); // (the backpack still a find)
   });
 
-  it("the skilled bot carries the Far bag every game", () => {
+  it("every bot carries one, the same every game: the careful ones the far purse, the others the satchel", () => {
     for (const seed of [1, 2]) {
-      const g = newGame(seed, TUNING), bot = newBot("skilled");
-      g.clock.paused = false;
-      bot.decide(g);
-      expect(g.witches[0].spells.bag).toBe("satchel");
+      const g = newGame(seed, TUNING); newBot("skilled").decide(g);
+      expect(g.witches[0].spells.bag).toBe("purse");
     }
+    const n = newGame(3, TUNING); newBot("novice").decide(n);
+    expect(n.witches[0].spells.bag).toBe("satchel");
     const g = newGame(3, TUNING); newBot("skilled", { bag: "bumbag" }).decide(g);
     expect(g.witches[0].spells.bag).toBe("bumbag");
   });

@@ -7,7 +7,7 @@ const b = await openBrowser();
 await b.page.goto(b.base + "/art/headless-blank.html").catch(() => {});
 const url = await b.page.evaluate(async () => {
   const G = await import("/art/generator.js"), st = G.defaultStyle(), base = G.genomeLook(G.WITCH_GENOME).look;
-  const bags = [["Quick bag (bum bag)", { bumbag: true }], ["Purse", { purse: true }], ["Far bag (satchel)", { satchel: true }]];
+  const bags = [["Satchel (the starter)", { satchel: true }], ["Quick bag (bum bag)", { bumbag: true }], ["Far purse", { purse: true }]];
   const col = G.witchColours(st, G.DEFAULT_OUTFIT);
   const items = bags.map(([name, on]) => { const look = { ...base, satchel: false, bumbag: false, purse: false, ...on };
     return { name, sp: [{ look, pose: "stand", frame: 0 }, { look, frame: 0 }, { look, frame: 0, facing: "away" }].map(o => G.bake(G.witchSprite(st, o), col, st, st.cOutline)) }; });
