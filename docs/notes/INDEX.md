@@ -11,6 +11,7 @@ says what each note covers.
 
 ## [Balance](balance.md)
 
+- Legacy models retained (2026-10-29, #1459, coordinator decision).
 - Fighting value (F)
 - Population growth
 - Strength
