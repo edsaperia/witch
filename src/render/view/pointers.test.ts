@@ -24,12 +24,17 @@ describe("the edge pointers (Ed's pointer pass, 2026-10-28)", () => {
     expect(P[0].colour).toEqual(rankColour(TUNING, 3, false)); // (hostile: the enemy's yellow)
     expect(P[2].colour).toEqual(rankColour(TUNING, 3, true)); // (happy: the friend's)
     expect(P[2].top).toBe(9);
-    expect(P[0].sigilSize).toBeCloseTo(POINTER_SIGIL * 1.1);
+    expect(P[0].sigilSize).toBeCloseTo(POINTER_SIGIL * 1.35); expect(P.every(p => p.shine)).toBe(true); // (shiny, a legend's)
     expect(legendPointers(game([L(1, "angry")], { phase: "won" }))).toEqual([]);
     expect(legendPointers(game([L(1, "angry")], { phase: "lap", lap: [] })).length).toBe(1); // (till won: through the lap)
   });
-  it("the party's is the lap's pulse alone (none before the lap)", () => {
+  it("the party's: none before the lap; the disco ball over the dancefloor once won, till she's reached the party (settled)", () => {
     expect(partyPointer(game([c(1)], { phase: "stragglers", target: 1 }))).toBeNull();
     expect(partyPointer(game([]))).toBeNull();
+    const at = (win: Record<string, unknown>) => partyPointer({ tuning: TUNING, creatures: [], win, clock: { time: 0 }, map: { dancefloor: { x: 3, z: 4, radius: 20 } } } as never);
+    const P = at({ phase: "won", settled: false })!;
+    expect([P.x, P.z]).toEqual([3, 4]);
+    expect(P.top).toBeGreaterThan(TUNING.dancefloor.discoHeight); // (over the ball)
+    expect(at({ phase: "won", settled: true })).toBeNull(); // (she's there: the pins take over)
   });
 });

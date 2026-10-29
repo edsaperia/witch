@@ -49,7 +49,7 @@ const CROP: Record<string, [number, number]> = { hair: [.1, .52], face: [.16, .5
 
 
 /** A list card's live picture (ui/bagPreview.ts BagPreview): its element, run or stopped, freed. */
-export interface Preview { readonly el: HTMLElement; run(on: boolean): void; /** the card in focus: full brightness, the others a little dimmed */ focus?(on: boolean): void; dispose(): void }
+export interface Preview { readonly el: HTMLElement; run(on: boolean): void; /** drawn at this size (CSS px) */ resize?(w: number, h: number): void; /** the card in focus: full brightness, the others a little dimmed */ focus?(on: boolean): void; dispose(): void }
 
 export class StationPanel {
   readonly root = document.createElement("div");
@@ -68,6 +68,7 @@ export class StationPanel {
    *  screen. Unset, the list's cards have none. */
   preview: ((item: string) => Preview | null) | null = null;
   private previews = new Map<string, Preview>();
+  private sized = new Map<string, string>();
   private seen: IntersectionObserver | null = null;
   private id: string | null = null;
   private shelves: Shelf[] = [];
@@ -169,7 +170,7 @@ export class StationPanel {
     if (!this.id) return;
     if (this.lookTimer) this.lookNow();
     this.id = null; this.pointerIn = false; this.queue = [];
-    this.seen?.disconnect(); this.seen = null; for (const p of this.previews.values()) p.dispose(); this.previews.clear(); // (no preview runs with the panel shut)
+    this.seen?.disconnect(); this.seen = null; for (const p of this.previews.values()) p.dispose(); this.previews.clear(); this.sized.clear(); // (no preview runs with the panel shut)
     this.slide.out();
     this.root.classList.remove("in");
     delete this.root.dataset.station;
@@ -324,6 +325,8 @@ export class StationPanel {
       let p = this.previews.get(id);
       if (!p) { const made = this.preview(id); if (!made) continue; this.previews.set(id, (p = made)); }
       if (p.el.parentElement !== slot) slot.replaceChildren(p.el);
+      const r = slot.getBoundingClientRect(), size = `${Math.round(r.width)}x${Math.round(r.height)}`; // (the slot's size: 12em × 6em, with the panel's type)
+      if (r.width > 0 && this.sized.get(id) !== size) { p.resize?.(r.width, r.height); this.sized.set(id, size); }
       p.focus?.(!!slot.closest(".focus"));
       this.seen.observe(slot); // (its first word, at once, runs it or stops it)
     }
@@ -346,7 +349,7 @@ export class StationPanel {
     let title = "", text = "", locked = false, sub = "", stats: { name: string; from: string; to: string; better: boolean | null }[] = [];
     if (l) {
       const s = this.shelves[l.shelf];
-      if (l.kind === "items") { const it = itemAt(s, l, at.col); locked = !this.owned.has(it.id); title = locked ? "🔒" : it.name; text = locked ? (this.tried(at) ? "Not found yet." : "") : wears(this.g, it) ? "Wearing." : "Hers: choose to wear it."; } // (a silhouette, nothing more: Ed, 2026-10-21; chosen anyway, it says it's not hers yet)
+      if (l.kind === "items") { const it = itemAt(s, l, at.col); locked = !this.owned.has(it.id); title = locked ? "🔒" : it.name; text = locked ? (this.tried(at) ? "Not found yet." : "") : (wears(this.g, it) ? "Wearing." : "Hers: choose to wear it.") + (it.stat ? ` ${it.stat[0].toUpperCase()}${it.stat.slice(1)}.` : ""); } // (a bag's 💌 stats in words: rules/bags.ts) // (a silhouette, nothing more: Ed, 2026-10-21; chosen anyway, it says it's not hers yet)
       else if (l.kind === "cards" && s.board) {
         const id = cardAt(s, l, at.col)!, cell = BOARD[(l.row ?? 0) * 3 + at.col], own = this.found_().has(id), where = `${cell.point.toLowerCase()} · ${cell.biome.toLowerCase()}`;
         if (own) { title = partById(id)!.name; text = `${where}. ${setsOf(id).map(n => `${n} set`).join(", ")}. Fit it at the bay.`; }

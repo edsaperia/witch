@@ -1,0 +1,9 @@
+{
+  "reason": "rank sigils standing up (her stack, a rune stone's column) half again as big, leash.ranks.standScale 1.5 (Ed, 2026-10-29: \"perhaps 1.5x\"); on top of claude/party-pointer's look until it merges",
+  "frames": {
+    "*": "her stack's and the stones' sigils bigger, their spacing with them; and claude/party-pointer's changes (sigil colours, the legend's glint, the spell spot, chains, the cast ring)"
+  },
+  "rules": {
+    "*": "claude/party-pointer's: the won night settles when she reaches the dancefloor"
+  }
+}

@@ -8,6 +8,7 @@
 // walks on them; drawn only while she's in the house (from outside the house isn't seen: treehouse.md). Over them, on the page:
 // the object she's at, its name and E; a placeholder's line in a bubble a few seconds when she uses it; the bed's ring filling as
 // E is held (rules/houseRooms.ts stepBed).
+import { NEED_BAG } from "../rules/kit";
 import * as THREE from "three";
 import { gpuKind } from "./gpuLedger";
 import type { View } from "./view";
@@ -169,7 +170,7 @@ export class HouseRoomsView {
   private readonly wakeL: HTMLDivElement;
   private readonly wakeR: HTMLDivElement;
   private wakeKey = "";
-  private said: { obj: HouseObject; at: number } | null = null;
+  private said: { obj: HouseObject; at: number; line: string } | null = null;
   private readonly labels: { el: HTMLDivElement; x: number; z: number }[] = [];
   /** The furniture drawn as art (render/houseFurniture.ts): each piece's picture and its quad, baked a piece a frame as she first comes in. */
   private readonly furniture = new THREE.Group();
@@ -423,7 +424,11 @@ export class HouseRoomsView {
     } else if (this.pile) this.pile.mesh.visible = false;
     if (!glowed) this.glow.set(null);
     // on the page: the object she's at, a placeholder's line, the bed's ring
-    for (const e of g.leashEvents) if (e.kind === "house" && e.obj) { const o = HOUSE_ROOMS.objects.find(q => q.id === e.obj); if (o?.use.kind === "say") this.said = { obj: o, at: ht }; }
+    for (const e of g.leashEvents) if ((e.kind === "house" || e.kind === "needBag") && e.obj) {
+      const o = HOUSE_ROOMS.objects.find(q => q.id === e.obj);
+      if (o && e.kind === "needBag") this.said = { obj: o, at: ht, line: NEED_BAG }; // (the desk with no bag to carry them: rules/kit.ts)
+      else if (o?.use.kind === "say" && this.said?.at !== ht) this.said = { obj: o, at: ht, line: o.use.line };
+    }
     if (this.said && (ht - this.said.at > SAY_FOR || this.said.at > ht)) this.said = null;
     const cv = v.canvas.getBoundingClientRect(), screen = (o: HouseObject, up: number) => { const p = toWorld(o.x, o.z, o.h + up), s = v.v3.set(p.x, p.y, p.z).project(v.camera); return [cv.left + (s.x + 1) / 2 * cv.width, cv.top + (1 - s.y) / 2 * cv.height]; };
     const place = (el: HTMLElement, o: HouseObject | null, up: number, text?: string) => {
@@ -457,7 +462,7 @@ export class HouseRoomsView {
     place(this.tag, usable, decks ? 1.9 : tagHeight(usable?.use.kind));
     v.usePrompt.id = usable?.id ?? ""; // (none shown: none for a pin to keep clear of)
     if (usable) v.usePrompt.top = screen(usable, decks ? 1.9 : tagHeight(usable.use.kind))[1] - this.tag.offsetHeight; // (the keycap stands on that point: translate -100%)
-    place(this.bubble, this.said?.obj ?? null, 0.6, this.said?.obj.use.kind === "say" ? this.said.obj.use.line : "");
+    place(this.bubble, this.said?.obj ?? null, 0.6, this.said?.line ?? "");
     const from = W.house?.bedFrom, bed = at?.use.kind === "bed" ? at : null;
     if (bed && from !== undefined) {
       const f = Math.min(1, (ht - from) / Math.max(1e-6, HOUSE_ROOMS.bed.hold));

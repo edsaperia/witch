@@ -2,6 +2,7 @@
 import { spinStep } from "./render/spin";
 import { keycapCanvas } from "./ui/keyHint";
 import { fillControls } from "./ui/controlsText";
+import { bagOf, setBag } from "./rules/bags";
 import { bindings } from "./platform/bindings";
 import { wavesOver } from "./rules/win";
 import { chartOpen, closeChart, openChart, prepareChart, type Sailed } from "./ui/chartOverlay";
@@ -58,6 +59,8 @@ import { DreamView, dreamArt, findCanvas } from "./render/dream";
 import { LoanIcon } from "./render/loanIcon";
 import { FindsPanel } from "./ui/findsPanel";
 import { fightDt, fightFrame, fightLink, newFightSeed } from "./app/fightArena";
+import { BagPreview } from "./ui/bagPreview";
+import { BAGS } from "./rules/bags";
 import { StationPanel, type WorkshopCtx } from "./ui/stationPanel";
 import { ZooOverlay, domZooHost, zooUrl } from "./app/zooOverlay";
 import { leaveZoo } from "./app/zooExit";
@@ -380,6 +383,8 @@ creator.onLoadout = l => { const { game } = N(); changeLoadout(game.witches[0], 
 // still to find as silhouettes; each change goes on her a beat later and she turns to show it; choosing, the camera eases in on her
 // (camera.station), and out as she moves.
 const stations = new StationPanel(style, bootTuning.pixelSize);
+// (the bags' list: each bag firing, Juliet's BagPreview running the 💌 rules with its stats; Ed, 2026-10-29)
+stations.preview = id => (BAGS.some(b => b.id === id) ? new BagPreview(id, { w: 220, h: 110, tuning: N().tuning }) : null);
 /** Something of the house's open at the end of the last frame (a station, the chart, the telescope, an instrument): a use press now
  *  closes it, nothing else (the frame below). */
 let openPrev = false;
@@ -396,7 +401,7 @@ stations.onLook = g => {
   saveGenome(lookWithoutLoan(g as Record<string, unknown>, loan) as never); creator.adopt(g); // (saved without the loan: app/loan.ts)
   // (not yet dressed: a station's choice puts its piece on her, out of last night's pile: rules/clothesPile.ts; Ed, 2026-10-23)
   const w = N().game.wake; if (w && stations.station) wearFromStation(w, stations.station);
-  if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); wearHat(g); }
+  if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); wearHat(g); setBag(N().game.witches[0].spells, bagOf(g as Record<string, unknown>)); } // (her bag's 💌 stats follow the bag she wears: rules/bags.ts)
   showLook();
 };
 stations.onBack = () => shutStation("back"); // (menu.back, E by default: platform/bindings.ts; the pad's, circle, comes through padControls)

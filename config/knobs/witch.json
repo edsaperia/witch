@@ -329,6 +329,20 @@
         "config/broom-parts.json"
       ]
     },
+    "spells.bag": {
+      "what": "her bag, a config/wardrobe.json bag item's id or empty for none, whose invites multiply invites.cooldown and invites.range while she carries it (rules/bags.ts).",
+      "notes": "The page sets it from her look (localStorage witch.genome, chosen at the bags station; ?bag=starter, quick or far for one load). The Satchel (the starter) throws at the base rate and reach with a little more homing, the Quick bag (bumbag) faster and shorter, the Far purse (purse) slower and further; none, the tuning's own, and no invitations at the desk till she carries one (rules/kit.ts).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "We should start with a choice of two bags; faster rate of fire but shorter range, and slower rate of fire but longer range"
+        }
+      ],
+      "links": [
+        "config/wardrobe.json"
+      ]
+    },
     "spells.speed": {
       "what": "the Speed broom, her speed times mult for duration seconds, then cooldown seconds to recharge."
     },

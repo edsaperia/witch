@@ -53,10 +53,12 @@ describe("the wardrobe", () => {
     expect(wear(CLASSIC, pack).backpackSize).toBe(1);
   });
 
-  it("starts her owning what she has on, on every shelf with items", () => {
-    for (const s of Object.values(SHELVES).filter(q => q.items.length)) {
+  it("starts her owning what she has on, on every shelf with items but the bags (she starts with none: Ed, 2026-10-29, \"Remove none\")", () => {
+    for (const s of Object.values(SHELVES).filter(q => q.items.length && q.id !== "bag")) {
       expect(s.items.some(i => i.start && wears(CLASSIC, i)), s.id).toBe(true);
     }
+    expect(SHELVES.bag.items.some(i => wears(CLASSIC, i))).toBe(false);
+    expect(SHELVES.bag.items.every(i => i.start)).toBe(true); // (each hers to choose)
     expect(STARTING_SET.length).toBeGreaterThan(10);
   });
 
