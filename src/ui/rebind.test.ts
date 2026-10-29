@@ -9,7 +9,8 @@ describe("slots", () => {
   it("shows the mouse then the keys, or the pad", () => {
     const B = new Bindings(null);
     expect(inputsOf(B.get("game.invite"), "keys")).toEqual(["mouse:left", "key:Digit1"]);
-    expect(inputsOf(B.get("game.invite"), "pad")).toEqual(["pad:R2", "pad:L2"]);
+    expect(inputsOf(B.get("game.invite"), "pad")).toEqual(["pad:R2"]);
+    expect(inputsOf(B.get("game.dodge"), "pad")).toEqual(["pad:L2", "pad:circle"]);
   });
   it("sets a slot, fills an empty one, empties one, and swaps with its own other slot", () => {
     const B = new Bindings(null), up = B.get("game.moveUp"); // W, ↑
