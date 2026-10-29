@@ -49,7 +49,7 @@ export class QualityLadder {
       this.timed = Number.isFinite(g);
       this.ms = this.timed ? g : median(W.frames);
       const before = this.state.rung;
-      this.state = stepLadder(this.state, this.ms, this.cap30 ? BUDGET30 : BUDGET, secs, W.skip || n < 5);
+      this.state = stepLadder(this.state, this.ms, this.cap30 ? BUDGET30 : BUDGET, secs, W.skip || n < 5, undefined, this.timed);
       if (this.state.rung !== before && this.state.mode === "auto") this.save();
       this.sync();
       W.t0 = now; W.frames = []; W.skip = false;
