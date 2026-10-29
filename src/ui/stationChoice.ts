@@ -55,6 +55,20 @@ export class PanelChoice {
     return true;
   }
 
+  /** The focus to the next card (`dir` 1) or the last (-1): its first line (Ed, 2026-10-29: each item kind its own card; the pad's
+   *  L1/R1, PageUp/PageDown). Back from inside a card goes to its own first line first. False if it didn't move. */
+  jumpCard(dir: -1 | 1): boolean {
+    const L = this.lines(); if (!L.length) return false;
+    const line = Math.min(this.at.line, L.length - 1), shelf = L[line].shelf, first = (sh: number) => L.findIndex(l => l.shelf === sh);
+    let to = -1;
+    if (dir > 0) to = L.findIndex((l, i) => i > line && l.shelf !== shelf);
+    else if (first(shelf) < line) to = first(shelf);
+    else { const prev = [...L.slice(0, line)].reverse().find(l => l.shelf !== shelf); to = prev ? first(prev.shelf) : -1; }
+    if (to < 0) return false;
+    this.focus(to, Math.min(this.at.col, L[to].n - 1));
+    return true;
+  }
+
   /** The focus put on a place (the mouse, a move): nothing on her changes. */
   focus(line: number, col: number): void { this.at = { line, col }; this.nope = null; }
 

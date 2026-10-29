@@ -78,6 +78,7 @@ export class StationPanel {
   private hover: { line: number; col: number } | null = null;
   private pointerIn = false;
   private padChoose = false;
+  private padCard: -1 | 0 | 1 = 0;
   private navAt = -1e9;
   private lookTimer = 0;
   private slide: SlideIn;
@@ -97,6 +98,8 @@ export class StationPanel {
     this.root.addEventListener("pointerleave", () => { this.pointerIn = false; if (this.hover) { this.hover = null; this.paintDetail(); } });
     this.root.addEventListener("pointerover", e => { const t = (e.target as HTMLElement).closest<HTMLElement>("[data-line]"); const at = t && { line: +t.dataset.line!, col: +t.dataset.col! }; if (at && (at.line !== this.hover?.line || at.col !== this.hover?.col)) { this.hover = at; this.paintDetail(); } });
     this.root.addEventListener("pointerdown", e => {
+      const title = (e.target as HTMLElement).closest<HTMLElement>("[data-card]");
+      if (title) { e.preventDefault(); this.navAt = 1; this.c.focus(+title.dataset.card!, 0); this.paint(); return; } // (a card's title: its first line in focus)
       const t = (e.target as HTMLElement).closest<HTMLElement>("[data-line]"); if (!t) return;
       e.preventDefault();
       const line = +t.dataset.line!, L = this.lines()[line];
@@ -110,9 +113,10 @@ export class StationPanel {
     window.addEventListener("keydown", e => {
       if (!this.id) return;
       const d = menuDir(e.code), pick = bindings.keys("menu.choose").includes(e.code), back = bindings.keys("menu.back").includes(e.code);
-      if (!d && !pick && !back) return;
+      const card = e.code === "PageDown" || bindings.keys("menu.tabNext").includes(e.code) ? 1 : e.code === "PageUp" || bindings.keys("menu.tabPrev").includes(e.code) ? -1 : 0;
+      if (!d && !pick && !back && !card) return;
       e.preventDefault(); e.stopImmediatePropagation();
-      if (d) this.move(d[0], d[1]); else if (e.repeat) return; else if (pick) this.pick(); else this.onBack();
+      if (d) this.move(d[0], d[1]); else if (card) this.jump(card); else if (e.repeat) return; else if (pick) this.pick(); else this.onBack();
     }, true);
   }
 
@@ -175,10 +179,12 @@ export class StationPanel {
   update(time: number): void {
     if (!this.id) return;
     const pads = typeof navigator !== "undefined" && navigator.getGamepads ? navigator.getGamepads() : [];
-    let dir = "", choose = false;
-    for (const p of pads) { if (!p) continue; const P = panelPad(p.buttons.map(x => x.pressed), p.axes); choose ||= P.choose; dir = P.dir; if (dir) break; }
+    let dir = "", choose = false, card: -1 | 0 | 1 = 0;
+    for (const p of pads) { if (!p) continue; const P = panelPad(p.buttons.map(x => x.pressed), p.axes); choose ||= P.choose; card ||= P.card; dir = P.dir; if (dir) break; }
     if (choose && !this.padChoose) this.pick(); // (the pad's A or X: platform/input.ts leaves them to the panel while it's open)
     this.padChoose = choose;
+    if (card && card !== this.padCard) this.jump(card); // (L1 and R1: the card before or after, once a press)
+    this.padCard = card;
     if (!dir) { this.pad.held = ""; return; }
     if (dir !== this.pad.held) { this.pad = { held: dir, next: time + HOLD }; }
     else if (time >= this.pad.next) this.pad.next = time + REPEAT;
@@ -217,6 +223,8 @@ export class StationPanel {
     if (!dy && cur.kind === "fit") { const [lo, hi] = this.fitRange(cur.axis!); this.setFit(cur.axis!, (this.fitValue(cur.axis!) - lo) / (hi - lo) + dx * .1); return; }
     if (this.c.move(dx, dy)) this.paint();
   }
+  /** The focus to the next card or the last (L1/R1, PageUp/PageDown): nothing on her changes. */
+  private jump(dir: -1 | 1): void { this.navAt = 1; this.hover = null; if (this.c.jumpCard(dir)) this.paint(); }
   /** Choose what's in focus (confirm, a click): an owned item or a colour on her, the part the colours are for, a broom part fitted
    *  at the bay; a locked one says it's still to be found. */
   private pick(): void {
@@ -244,6 +252,10 @@ export class StationPanel {
   private lookNow(): void { clearTimeout(this.lookTimer); this.lookTimer = 0; this.onLook(clone(this.g)); }
 
   // ---- drawing ----
+  /** The panel as cards (Ed, 2026-10-29: "different items should be on their own cards with clear titles, controls for each item
+   *  should be together on the same card"): one a shelf, its title (what she has on in it) and all its lines together (its items or
+   *  parts, its colours' parts and grid, its fit sliders; the Workshop's set chips with "Her broom" under them), stacked down the
+   *  left half and scrolling; the card in focus lit, the detail of what's in focus at its foot. */
   private paint(): void {
     if (!this.id) return;
     const L = this.lines(); // (a fit slider comes and goes with what it shapes: the focus kept on a line that's there)
@@ -252,20 +264,21 @@ export class StationPanel {
     let html = this.banner ? `<div class="sp-banner">${esc(this.banner)}</div>` : "";
     html += `<div class="sp-head"><b>${esc(STATION_NAMES[this.id] ?? this.id)}</b><span>${this.found()}</span></div><div class="sp-body">`;
     let shelf = -1;
+    const shut = (i: number) => { const s = this.shelves[i]; return `${s.sets && this.ws ? this.summary(this.ws) : ""}</div>`; };
     L.forEach((l, i) => {
       const s = this.shelves[l.shelf];
       if (l.shelf !== shelf) {
-        if (shelf >= 0) html += `</div>`;
+        if (shelf >= 0) html += shut(shelf);
         shelf = l.shelf;
-        const worn = s.slot ? partById(this.ws?.fitted[s.slot])?.name : shownItems(s).find(it => wears(this.g, it))?.name;
+        const worn = s.slot ? partById(this.ws?.fitted[s.slot])?.name ?? "Empty" : shownItems(s).find(it => wears(this.g, it))?.name;
         const note = s.always ? "every colour" : s.slot ? SLOT_ROLE[s.slot] : s.board ? "north up" : "";
-        html += `<div class="sp-shelf${L[at.line]?.shelf === l.shelf ? " on" : ""}"><div class="sp-lab">${esc(s.label)}${worn ? `<span> · ${esc(worn)}</span>` : ""}${note ? `<em>${esc(note)}</em>` : ""}</div>`;
+        html += `<div class="sp-shelf${L[at.line]?.shelf === l.shelf ? " on" : ""}" data-shelf="${l.shelf}"><div class="sp-lab" data-card="${i}"><b>${esc(s.label)}</b>${worn ? `<span>${esc(worn)}</span>` : ""}${note ? `<em>${esc(note)}</em>` : ""}</div>`;
       }
       const f = (c: number) => at.line === i && at.col === c ? " focus" : "";
       if (l.kind === "items") html += `<div class="sp-row">${shownItems(s).map((it, c) => { const own = this.owned.has(it.id); return `<div class="sp-card${own ? "" : " locked"}${wears(this.g, it) ? " worn" : ""}${it.id === this.loaned ? " loaned" : ""}${f(c)}" data-line="${i}" data-col="${c}">${none(it) ? `<i class="sp-none">∅</i>` : `<span data-thumb="${this.thumbKey(it, s)}"></span>`}${wears(this.g, it) ? `<b class="sp-tick">✓</b>` : ""}${own ? "" : `<b class="sp-lock">🔒</b>`}</div>`; }).join("")}</div>`;
       else if (l.kind === "cards" && s.board) html += `<div class="sp-row sp-board">${Array.from({ length: l.n }, (_, c) => {
         const id = cardAt(s, l, c)!, cell = BOARD[(l.row ?? 0) * 3 + c], own = this.found_().has(id), tonight = !own && this.ws?.tonight === id;
-        return `<div class="sp-cell${own ? "" : " locked"}${tonight ? " tonight" : ""}${id === this.loaned ? " loaned" : ""}${f(c)}" data-line="${i}" data-col="${c}"><small>${esc(cell.point)}<br>${esc(cell.biome)}</small><span data-thumb="${this.partKey(id)}"></span><b>${own ? esc(partById(id)!.name) : "?"}</b></div>`;
+        return `<div class="sp-cell${own ? "" : " locked"}${tonight ? " tonight" : ""}${id === this.loaned ? " loaned" : ""}${f(c)}" data-line="${i}" data-col="${c}"><small>${esc(cell.point)} · ${esc(cell.biome)}</small><span data-thumb="${this.partKey(id)}"></span><b>${own ? esc(partById(id)!.name) : "?"}</b></div>`;
       }).join("")}</div>`;
       else if (l.kind === "cards") html += `<div class="sp-row">${Array.from({ length: l.n }, (_, c) => {
         const id = cardAt(s, l, c), own = id === null || this.found_().has(id), on = (this.ws?.fitted[s.slot!] ?? null) === id;
@@ -276,12 +289,13 @@ export class StationPanel {
       else if (l.kind === "grid") { const [sc, sr] = this.chosenSwatch(s); html += `<div class="sp-grid" style="grid-template-columns:repeat(${l.n},1fr)">${Array.from({ length: l.n }, (_, c) => `<i class="${sc === c && sr === l.row ? "sel" : ""}${f(c)}" data-line="${i}" data-col="${c}" style="background:${css(this.swatch(s, c, l.row!))}"></i>`).join("")}</div>`; }
       else if (l.kind === "fit") { const [lo, hi] = this.fitRange(l.axis!), on = !FIT_NEEDS[l.axis!] || FIT_NEEDS[l.axis!](this.g), v = Math.max(0, Math.min(1, (this.fitValue(l.axis!) - lo) / (hi - lo))); html += `<div class="sp-fit${on ? "" : " off"}${f(0)}" data-line="${i}" data-col="0"><span>${esc(FIT_NAMES[l.axis!] ?? l.axis!)}</span><div class="bar"><i style="left:${(v * 100).toFixed(1)}%"></i></div></div>`; }
     });
-    if (shelf >= 0) html += `</div>`;
-    html += `</div><div class="sp-detail"></div>${this.shelves.some(q => q.slot) && this.ws ? this.summary(this.ws) : ""}<div class="sp-foot">${footHtml(this.device)}</div>`;
+    if (shelf >= 0) html += shut(shelf);
+    html += `</div><div class="sp-foot">${footHtml(this.device)}</div>`;
     this.root.innerHTML = html;
     for (const el of this.root.querySelectorAll<HTMLElement>("[data-thumb]")) this.thumbInto(el);
     this.paintDetail();
-    this.root.querySelector<HTMLElement>(".focus")?.scrollIntoView({ block: "nearest" });
+    const card = this.root.querySelector<HTMLElement>(".sp-shelf.on"), fo = this.root.querySelector<HTMLElement>(".focus");
+    card?.scrollIntoView({ block: "nearest" }); fo?.scrollIntoView({ block: "nearest" }); // (the focused card whole where it fits, its focus always)
   }
   private found(): string {
     if (this.shelves.some(q => q.slot || q.board)) return partsFound(this.found_());
@@ -290,11 +304,14 @@ export class StationPanel {
   /** "Her broom" (the bay): every number her parts change, bare → now, up green and down red, and her spell. */
   private summary(ws: WorkshopCtx): string {
     const rows = broomSummary(ws.fitted, ws.tuning);
-    return `<div class="sp-sum"><div class="sp-lab">Her broom<em>bare → now</em></div>${rows.length ? rows.map(r => `<div class="${r.better ? "up" : "down"}"><span>${esc(r.name)}</span><b>${esc(r.from)} → ${esc(r.to)}</b></div>`).join("") : `<div><span>A bare broom</span><b>as it comes</b></div>`}<div class="${spellLine(ws.fitted).startsWith("none") ? "" : "up"}"><span>Spell (R)</span><b>${esc(spellLine(ws.fitted))}</b></div></div>`;
+    return `<div class="sp-sum"><div class="sp-sub">Her broom<em>bare → now</em></div>${rows.length ? rows.map(r => `<div class="${r.better ? "up" : "down"}"><span>${esc(r.name)}</span><b>${esc(r.from)} → ${esc(r.to)}</b></div>`).join("") : `<div><span>A bare broom</span><b>as it comes</b></div>`}<div class="${spellLine(ws.fitted).startsWith("none") ? "" : "up"}"><span>Spell (R)</span><b>${esc(spellLine(ws.fitted))}</b></div></div>`;
   }
   private paintDetail(): void {
-    const box = this.root.querySelector<HTMLElement>(".sp-detail"); if (!box) return;
     const at = this.hover ?? this.at, l = this.lines()[at.line];
+    const card = l ? this.root.querySelector<HTMLElement>(`.sp-shelf[data-shelf="${l.shelf}"]`) : null; if (!card) return;
+    let box = this.root.querySelector<HTMLElement>(".sp-detail");
+    if (!box) { box = document.createElement("div"); }
+    if (box.parentElement !== card) card.append(box); // (at the foot of the card it's about: its own controls together, Ed 2026-10-29)
     let title = "", text = "", locked = false, sub = "", stats: { name: string; from: string; to: string; better: boolean | null }[] = [];
     if (l) {
       const s = this.shelves[l.shelf];
@@ -315,6 +332,7 @@ export class StationPanel {
       else { const on = !FIT_NEEDS[l.axis!] || FIT_NEEDS[l.axis!](this.g); title = FIT_NAMES[l.axis!] ?? l.axis!; text = on ? "◀ ▶ or drag to change it." : "Put it on first."; }
     }
     box.className = `sp-detail${locked ? " locked" : ""}`;
+    if (!title && !text && !stats.length) { box.remove(); return; }
     box.innerHTML = `<h3>${esc(title)}${sub ? `<small>${esc(sub)}</small>` : ""}</h3>${stats.map(r => `<p class="${r.better ? "up" : "down"}">${r.better ? "▲" : "▼"} ${esc(r.name)} ${esc(r.from)} → ${esc(r.to)}</p>`).join("")}<p>${esc(text)}</p>`;
   }
 
@@ -377,7 +395,7 @@ export const footHtml = (device: "keys" | "pad" | "touch"): string =>
   : `${(["menu.up", "menu.left", "menu.down", "menu.right"] as const).map(id => keycapHtml(glyphOf(id, "keys"))).join("")} · ${keycapHtml(glyphOf("menu.choose", "keys"))} · ${keycapHtml(glyphOf("menu.back", "keys"))}`;
 // (the keys and the pad as bound now, platform/bindings.ts: a remap shows here too, Ed 2026-10-28)
 const PAD_DIRS: Record<string, [number, number]> = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] };
-const STATION_NAMES: Record<string, string> = { mirror: "Mirror", dressingTable: "Dressing table", wardrobe: "Wardrobe", cloakPegs: "Cloak pegs", shoeRack: "Shoe rack", bags: "Bags", broomBay: "The bay", lathe: "Lathe", pegboard: "Pegboard" };
+const STATION_NAMES: Record<string, string> = { mirror: "Mirror", dressingTable: "Dressing table", wardrobe: "Wardrobe", cloakPegs: "Cloak pegs", shoeRack: "Shoe rack", bags: "Bags", broomBay: "The bay", lathe: "Broom", pegboard: "Pegboard" };
 const ART_M = Art.M as Record<string, number>;
 const none = (it: WardrobeItem) => Object.values(it.set).every(v => v === false || v === 0 || v === "none");
 const esc = (s: string) => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
@@ -389,37 +407,40 @@ function installCss(): void {
   if (cssDone) return; cssDone = true;
   const s = document.createElement("style");
   s.textContent = `
-#station-panel { --ol: #0b0716; position: fixed; left: 0; top: 12px; bottom: 12px; width: min(330px, 40vw); z-index: 18; box-sizing: border-box; padding: 8px 12px 8px 16px; border: 1px solid rgba(232,180,106,.7); border-left: 0; border-radius: 0 12px 12px 0; box-shadow: 0 0 0 1px rgba(11,7,22,.75), inset 0 0 0 1px rgba(11,7,22,.75); color: var(--ink, #e8e2f4); font: 13px/1.35 ui-monospace, Menlo, Consolas, monospace; flex-direction: column; gap: 6px; user-select: none; text-shadow: -1px -1px 0 var(--ol), 1px -1px 0 var(--ol), -1px 1px 0 var(--ol), 1px 1px 0 var(--ol), 0 0 6px rgba(0,0,0,.9); }
-#station-panel .sp-banner { color: var(--accent, #e8b46a); font-size: 12px; }
-#station-panel .sp-head { display: flex; align-items: baseline; gap: 8px; }
-#station-panel .sp-head b { font-size: 18px; color: var(--accent, #e8b46a); letter-spacing: 1px; } #station-panel .sp-head span { margin-left: auto; color: var(--ink, #e8e2f4); font-size: 11px; opacity: .85; }
-#station-panel .sp-body { flex: 1; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; gap: 10px; }
-#station-panel .sp-shelf { opacity: .82; } #station-panel .sp-shelf.on { opacity: 1; }
-#station-panel .sp-lab { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--ink, #e8e2f4); margin-bottom: 3px; display: flex; gap: 4px; align-items: baseline; }
-#station-panel .sp-shelf.on .sp-lab { color: var(--accent, #e8b46a); } #station-panel .sp-lab span { text-transform: none; letter-spacing: 0; color: var(--ink, #e8e2f4); }
-#station-panel .sp-lab em { margin-left: auto; font-style: normal; text-transform: none; letter-spacing: 0; color: var(--ink, #e8e2f4); opacity: .8; }
-#station-panel .sp-row { display: flex; flex-wrap: wrap; gap: 4px; }
-#station-panel .sp-card { position: relative; width: 50px; height: 50px; border-radius: 8px; background: radial-gradient(closest-side, rgba(11,7,22,.55), rgba(11,7,22,0)); display: grid; place-items: center; cursor: pointer; box-sizing: border-box; }
-#station-panel .sp-card canvas { image-rendering: pixelated; width: auto; height: 46px; max-width: 46px; object-fit: contain; filter: drop-shadow(1px 0 0 var(--ol)) drop-shadow(-1px 0 0 var(--ol)) drop-shadow(0 1px 0 var(--ol)) drop-shadow(0 -1px 0 var(--ol)); }
+#station-panel { --ol: #0b0716; --gold: var(--accent, #e8b46a); position: fixed; left: 0; top: 0; bottom: 0; width: 50vw; z-index: 18; box-sizing: border-box; padding: 1.1em 1.4em 0.9em 1.4em; color: var(--ink, #e8e2f4); font: clamp(15px, 1.45vw, 26px)/1.35 ui-monospace, Menlo, Consolas, monospace; flex-direction: column; gap: .6em; user-select: none; text-shadow: -1px -1px 0 var(--ol), 1px -1px 0 var(--ol), -1px 1px 0 var(--ol), 1px 1px 0 var(--ol), 0 0 6px rgba(0,0,0,.9);
+  background: linear-gradient(90deg, rgba(11,7,22,.72) 0%, rgba(11,7,22,.55) 80%, rgba(11,7,22,0) 100%); }
+#station-panel .sp-banner { color: var(--gold); font-size: .9em; }
+#station-panel .sp-head { display: flex; align-items: baseline; gap: .6em; }
+#station-panel .sp-head b { font-size: 1.6em; color: var(--gold); letter-spacing: 1px; } #station-panel .sp-head span { margin-left: auto; font-size: .8em; opacity: .85; }
+#station-panel .sp-body { flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(232,180,106,.5) transparent; display: flex; flex-direction: column; gap: .75em; padding: 2px 4px 2px 2px; }
+#station-panel .sp-shelf { flex: none; display: flex; flex-direction: column; gap: .5em; padding: .7em .9em .8em; border-radius: .7em; background: rgba(26,18,44,.88); box-shadow: inset 0 0 0 1px rgba(232,226,244,.16), 0 2px 10px rgba(0,0,0,.35); }
+#station-panel .sp-shelf.on { background: rgba(38,26,62,.94); box-shadow: inset 0 0 0 2px rgba(232,180,106,.85), 0 2px 14px rgba(0,0,0,.45); }
+#station-panel .sp-lab { display: flex; gap: .6em; align-items: baseline; cursor: pointer; }
+#station-panel .sp-lab b { font-size: 1.15em; letter-spacing: .5px; } #station-panel .sp-shelf.on .sp-lab b { color: var(--gold); }
+#station-panel .sp-lab span { font-size: .85em; opacity: .9; } #station-panel .sp-lab em { margin-left: auto; font-style: normal; font-size: .75em; opacity: .75; }
+#station-panel .sp-sub { font-size: .8em; display: flex; gap: .5em; opacity: .9; } #station-panel .sp-sub em { margin-left: auto; font-style: normal; opacity: .75; }
+#station-panel .sp-row { display: flex; flex-wrap: wrap; gap: .45em; }
+#station-panel .sp-card { position: relative; width: 4.6em; height: 4.6em; border-radius: .5em; background: rgba(11,7,22,.55); box-shadow: inset 0 0 0 1px rgba(232,226,244,.14); display: grid; place-items: center; cursor: pointer; box-sizing: border-box; }
+#station-panel .sp-card canvas { image-rendering: pixelated; width: auto; height: 4.2em; max-width: 4.3em; object-fit: contain; filter: drop-shadow(1px 0 0 var(--ol)) drop-shadow(-1px 0 0 var(--ol)) drop-shadow(0 1px 0 var(--ol)) drop-shadow(0 -1px 0 var(--ol)); }
 #station-panel .sp-card.locked { cursor: default; } #station-panel .sp-card.locked canvas { filter: brightness(0) invert(.22) drop-shadow(1px 0 0 rgba(232,226,244,.5)) drop-shadow(-1px 0 0 rgba(232,226,244,.5)) drop-shadow(0 1px 0 rgba(232,226,244,.5)) drop-shadow(0 -1px 0 rgba(232,226,244,.5)); }
-#station-panel .focus { outline: 2px solid #fff; outline-offset: 1px; box-shadow: 0 0 10px rgba(255,255,255,.75), inset 0 0 0 1px var(--ol); }
-#station-panel .sp-card.worn:not(.focus) { outline: 1px solid rgba(232,180,106,.7); outline-offset: 1px; }
-#station-panel .sp-none { font-style: normal; font-size: 22px; color: var(--ink, #e8e2f4); }
-#station-panel .sp-tick { position: absolute; top: 1px; right: 1px; width: 14px; height: 14px; border-radius: 50%; background: var(--accent, #e8b46a); color: #1a1430; font-size: 9px; display: grid; place-items: center; text-shadow: none; box-shadow: 0 0 0 1px var(--ol); }
-#station-panel .sp-lock { position: absolute; bottom: 0; right: 1px; font-size: 11px; font-weight: normal; }
-#station-panel .sp-parts { display: flex; gap: 6px; margin: 2px 0; } #station-panel .sp-parts span { display: inline-flex; gap: 5px; align-items: center; font-size: 11px; padding: 0 4px; border-radius: 10px; cursor: pointer; opacity: .8; }
-#station-panel .sp-parts span.on { opacity: 1; color: var(--accent, #e8b46a); } #station-panel .sp-parts i { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 0 1px var(--ol); }
-#station-panel .sp-grid { display: grid; gap: 1px; padding: 1px; background: var(--ol); border-radius: 3px; width: fit-content; } #station-panel .sp-grid + .sp-grid { margin-top: -1px; }
-#station-panel .sp-grid i { width: 17px; height: 9px; cursor: pointer; position: relative; display: block; }
-#station-panel .sp-grid i.sel { outline: 2px solid var(--accent, #e8b46a); outline-offset: 0; z-index: 1; position: relative; } #station-panel .sp-grid i.sel::after { content: "✓"; position: absolute; inset: 0; display: grid; place-items: center; font-size: 9px; font-style: normal; color: #fff; text-shadow: 0 0 2px #000, 0 0 2px #000; } #station-panel .sp-grid i.focus { outline: 2px solid #fff; z-index: 2; box-shadow: 0 0 6px rgba(255,255,255,.8); }
-#station-panel .sp-fit { display: flex; align-items: center; gap: 10px; padding: 1px 2px; border-radius: 6px; cursor: pointer; } #station-panel .sp-fit.off { opacity: .45; cursor: default; }
-#station-panel .sp-fit span { width: 100px; font-size: 12px; } #station-panel .sp-fit .bar { position: relative; flex: 1; height: 4px; background: rgba(232,226,244,.55); border-radius: 2px; box-shadow: 0 0 0 1px var(--ol); }
-#station-panel .sp-fit .bar i { position: absolute; top: -5px; width: 8px; height: 14px; margin-left: -4px; border-radius: 3px; background: var(--accent, #e8b46a); box-shadow: 0 0 0 1px var(--ol); }
-#station-panel .sp-detail { padding: 0 2px; min-height: 40px; } #station-panel .sp-detail h3 { margin: 0; font-size: 15px; font-weight: 600; } #station-panel .sp-detail p { margin: 0; font-size: 12px; opacity: .85; }
-#station-panel .sp-wide { width: 72px; height: 40px; } #station-panel .sp-wide canvas { height: auto; width: auto; max-width: 66px; max-height: 34px; }
-#station-panel .sp-board { flex-wrap: nowrap; gap: 4px; } #station-panel .sp-cell { flex: 1; position: relative; min-height: 78px; border: 1px solid rgba(232,226,244,.35); border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 3px 2px; cursor: default; background: radial-gradient(closest-side, rgba(11,7,22,.5), rgba(11,7,22,0)); }
-#station-panel .sp-cell small { font-size: 9px; line-height: 1.1; text-align: center; text-transform: uppercase; letter-spacing: .5px; opacity: .85; } #station-panel .sp-cell b { font-size: 10px; font-weight: normal; text-align: center; }
-#station-panel .sp-cell canvas { image-rendering: pixelated; max-width: 84px; max-height: 34px; width: auto; height: auto; filter: drop-shadow(1px 0 0 var(--ol)) drop-shadow(-1px 0 0 var(--ol)) drop-shadow(0 1px 0 var(--ol)) drop-shadow(0 -1px 0 var(--ol)); }
+#station-panel .focus { outline: 3px solid #fff; outline-offset: 2px; box-shadow: 0 0 12px rgba(255,255,255,.75), inset 0 0 0 1px var(--ol); }
+#station-panel .sp-card.worn:not(.focus) { outline: 2px solid rgba(232,180,106,.8); outline-offset: 1px; }
+#station-panel .sp-none { font-style: normal; font-size: 1.8em; }
+#station-panel .sp-tick { position: absolute; top: .15em; right: .15em; width: 1.2em; height: 1.2em; border-radius: 50%; background: var(--gold); color: #1a1430; font-size: .75em; display: grid; place-items: center; text-shadow: none; box-shadow: 0 0 0 1px var(--ol); }
+#station-panel .sp-lock { position: absolute; bottom: .1em; right: .2em; font-size: .9em; font-weight: normal; }
+#station-panel .sp-parts { display: flex; gap: .5em; flex-wrap: wrap; } #station-panel .sp-parts span { display: inline-flex; gap: .4em; align-items: center; font-size: .9em; padding: .15em .6em; border-radius: 1em; cursor: pointer; background: rgba(11,7,22,.45); opacity: .85; }
+#station-panel .sp-parts span.on { opacity: 1; color: var(--gold); box-shadow: inset 0 0 0 1px rgba(232,180,106,.7); } #station-panel .sp-parts i { width: .85em; height: .85em; border-radius: 50%; box-shadow: 0 0 0 1px var(--ol); }
+#station-panel .sp-grid { display: grid; gap: 2px; padding: 2px; background: var(--ol); border-radius: 4px; } #station-panel .sp-grid + .sp-grid { margin-top: calc(-.5em - 2px); }
+#station-panel .sp-grid i { height: 1.45em; cursor: pointer; position: relative; display: block; }
+#station-panel .sp-grid i.sel { outline: 3px solid var(--gold); outline-offset: 0; z-index: 1; } #station-panel .sp-grid i.sel::after { content: "✓"; position: absolute; inset: 0; display: grid; place-items: center; font-size: .8em; font-style: normal; color: #fff; text-shadow: 0 0 2px #000, 0 0 2px #000; } #station-panel .sp-grid i.focus { outline: 3px solid #fff; z-index: 2; box-shadow: 0 0 8px rgba(255,255,255,.85); }
+#station-panel .sp-fit { display: flex; align-items: center; gap: .8em; padding: .25em .3em; border-radius: .4em; cursor: pointer; } #station-panel .sp-fit.off { opacity: .45; cursor: default; }
+#station-panel .sp-fit span { width: 8em; font-size: .9em; } #station-panel .sp-fit .bar { position: relative; flex: 1; height: .35em; background: rgba(232,226,244,.55); border-radius: .2em; box-shadow: 0 0 0 1px var(--ol); }
+#station-panel .sp-fit .bar i { position: absolute; top: -.45em; width: .7em; height: 1.25em; margin-left: -.35em; border-radius: .2em; background: var(--gold); box-shadow: 0 0 0 1px var(--ol); }
+#station-panel .sp-detail { padding: .45em .6em; border-radius: .45em; background: rgba(11,7,22,.5); } #station-panel .sp-detail h3 { margin: 0 0 .15em; font-size: 1em; font-weight: 600; } #station-panel .sp-detail p { margin: 0; font-size: .85em; opacity: .9; }
+#station-panel .sp-wide { width: 6.4em; height: 3.8em; } #station-panel .sp-wide canvas { height: auto; width: auto; max-width: 5.9em; max-height: 3.3em; }
+#station-panel .sp-board { flex-wrap: nowrap; gap: .45em; } #station-panel .sp-cell { flex: 1; position: relative; min-height: 6.2em; border: 1px solid rgba(232,226,244,.3); border-radius: .45em; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: .3em .2em; cursor: default; background: rgba(11,7,22,.5); }
+#station-panel .sp-cell small { font-size: .65em; line-height: 1.15; text-align: center; text-transform: uppercase; letter-spacing: .5px; opacity: .85; } #station-panel .sp-cell b { font-size: .75em; font-weight: normal; text-align: center; }
+#station-panel .sp-cell canvas { image-rendering: pixelated; max-width: 6.5em; max-height: 2.8em; width: auto; height: auto; filter: drop-shadow(1px 0 0 var(--ol)) drop-shadow(-1px 0 0 var(--ol)) drop-shadow(0 1px 0 var(--ol)) drop-shadow(0 -1px 0 var(--ol)); }
 #station-panel .sp-cell.locked canvas { filter: brightness(0) invert(.12) drop-shadow(1px 0 0 rgba(232,226,244,.45)) drop-shadow(-1px 0 0 rgba(232,226,244,.45)) drop-shadow(0 1px 0 rgba(232,226,244,.45)) drop-shadow(0 -1px 0 rgba(232,226,244,.45)); }
 #station-panel .sp-cell.tonight { border-color: rgba(255,214,120,.9); box-shadow: 0 0 10px rgba(255,214,120,.55), inset 0 0 8px rgba(255,214,120,.3); } #station-panel .sp-cell.tonight canvas { filter: brightness(0) invert(.12) drop-shadow(1px 0 0 #ffd678) drop-shadow(-1px 0 0 #ffd678) drop-shadow(0 1px 0 #ffd678) drop-shadow(0 -1px 0 #ffd678) drop-shadow(0 0 4px rgba(255,214,120,.9)); animation: sp-glow 1.6s ease-in-out infinite; }
 @keyframes sp-glow { 50% { opacity: .65; } }
@@ -429,12 +450,12 @@ function installCss(): void {
   animation: sp-glint 1.7s steps(5) infinite; }
 #station-panel .loaned::before { top: 7px; left: 8px; } #station-panel .loaned::after { bottom: 9px; right: 7px; animation-delay: -.85s; }
 @keyframes sp-glint { 0%, 100% { opacity: 0; transform: scale(.6); } 50% { opacity: 1; transform: scale(1); } }
-#station-panel .sp-chips { display: flex; flex-wrap: wrap; gap: 4px; } #station-panel .sp-chips span { font-size: 11px; padding: 1px 7px; border-radius: 10px; border: 1px solid rgba(232,226,244,.35); opacity: .75; }
-#station-panel .sp-chips span.some { opacity: .95; } #station-panel .sp-chips span.whole { opacity: 1; color: #1d1408; background: var(--accent, #e8b46a); text-shadow: none; border-color: var(--accent, #e8b46a); }
-#station-panel .sp-detail h3 small { font-size: 11px; font-weight: normal; margin-left: 6px; opacity: .8; } #station-panel .sp-detail p.up, #station-panel .sp-sum .up b { color: #8fe39a; } #station-panel .sp-detail p.down, #station-panel .sp-sum .down b { color: #ff9a8a; }
-#station-panel .sp-sum { padding: 4px 6px; border: 1px solid rgba(232,226,244,.25); border-radius: 6px; font-size: 12px; } #station-panel .sp-sum > div:not(.sp-lab) { display: flex; gap: 6px; } #station-panel .sp-sum > div > b { margin-left: auto; font-weight: normal; }
-#station-panel .sp-foot { font-size: 11px; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; opacity: .85; }
-#station-panel .k { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 4px; background: rgba(11,7,22,.6); border: 1px solid rgba(232,226,244,.6); border-bottom-width: 2px; color: var(--ink, #e8e2f4); font-size: 10px; text-shadow: none; }
+#station-panel .sp-chips { display: flex; flex-wrap: wrap; gap: .45em; } #station-panel .sp-chips span { font-size: .85em; padding: .15em .7em; border-radius: 1em; border: 1px solid rgba(232,226,244,.35); opacity: .8; }
+#station-panel .sp-chips span.some { opacity: .95; } #station-panel .sp-chips span.whole { opacity: 1; color: #1d1408; background: var(--gold); text-shadow: none; border-color: var(--gold); }
+#station-panel .sp-detail h3 small { font-size: .8em; font-weight: normal; margin-left: .5em; opacity: .8; } #station-panel .sp-detail p.up, #station-panel .sp-sum .up b { color: #8fe39a; } #station-panel .sp-detail p.down, #station-panel .sp-sum .down b { color: #ff9a8a; }
+#station-panel .sp-sum { padding: .45em .6em; border-radius: .45em; background: rgba(11,7,22,.5); font-size: .85em; display: flex; flex-direction: column; gap: .1em; } #station-panel .sp-sum > div:not(.sp-sub) { display: flex; gap: .5em; } #station-panel .sp-sum > div > b { margin-left: auto; font-weight: normal; }
+#station-panel .sp-foot { font-size: .8em; display: flex; align-items: center; gap: .4em; flex-wrap: wrap; opacity: .9; }
+#station-panel .sp-foot img.kc { transform: scale(1.4); margin: 0 .3em; }
 `;
   document.head.append(s);
 }

@@ -9,7 +9,7 @@ import { PanelChoice, type Genome } from "./stationChoice";
 import { bindings, PAD_BUTTONS } from "../platform/bindings";
 import { panelPad } from "./stationLines";
 
-const STATIONS = ["mirror", "dressingTable", "wardrobe", "cloakPegs", "shoeRack", "bags", "broomBay", "lathe", "pegboard"];
+const STATIONS = ["mirror", "dressingTable", "wardrobe", "cloakPegs", "shoeRack", "bags", "lathe"];
 const ctx = {
   grid: (s: Shelf) => ({ cols: s.grid === "skin" ? 6 : 13, rows: 5 }),
   swatch: (_s: Shelf, col: number, row: number) => [col / 13, 0.3 + row / 10, 0.5],
@@ -91,8 +91,8 @@ describe("a station panel: moving only moves the focus, choosing changes her (Ed
     expect(p.nope).toBeNull();
   });
 
-  it("at the bay, moving over the cards fits nothing; choosing one fits it", () => {
-    const p = panel("broomBay"), L = p.lines();
+  it("at the broom's station, moving over the cards fits nothing; choosing one fits it", () => {
+    const p = panel("lathe"), L = p.lines();
     walk(p);
     expect(p.fitted).toEqual(bareBroom());
     p.focus(0, 1);

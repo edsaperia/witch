@@ -3184,6 +3184,10 @@ Near-isometric on the ground, after Transistor; the game opens close in on the w
   2. Ed's playtest, 2026-10-23: aimed by metres from her feet, her head went off the top of the screen up close; by her height it stays on the part chosen at any zoom
   for the part of her the row in focus is about (config/wardrobe.json's frame: head, hat, top, legs, feet, broom; board, the Workshop's pegboard, the wall behind her, so aimed up over her to it), aimed aim of her height (as drawn: 0 her feet, 1 the top of her hat) up her and look metres higher (a thing by her: the board, the broom), and its distance times distance in place of the station's own, eased from part to part as the cursor moves [2].
   Code: `config/wardrobe.json`
+- **`camera.station.whole`**: At a dressing station the camera frames her whole, top of her hat to the soles of her shoes, in the right half of the screen while the panel takes the left half.
+  1. Ed, 2026-10-29: "Menus should be left half of the screen, and the witch right half of the screen, and she should be nicely centred and visible top of hat to bottom of shoes."
+  margin is the share of the screen's height left clear above and below her; at is where across the screen's width she stands (0.75: the right half's middle). On, it replaces distance, side, aim and parts (the zoom on the part of her being chosen), which stay for it off.
+  Code: `src/render/view/camera.ts`, `src/ui/stationPanel.ts`
 
 | knob | type | range |
 |---|---|---|
@@ -3230,6 +3234,9 @@ Near-isometric on the ground, after Transistor; the game opens close in on the w
 | `camera.house.distance` | number | 0 to … |
 | `camera.house.ease` | number | 0 to … |
 | `camera.station.on` | boolean |  |
+| `camera.station.whole.on` | boolean |  |
+| `camera.station.whole.margin` | number | 0 to … |
+| `camera.station.whole.at` | number | 0 to … |
 | `camera.station.distance` | number | 0 to … |
 | `camera.station.side` | number |  |
 | `camera.station.ease` | number | 0 to … |

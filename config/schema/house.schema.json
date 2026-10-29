@@ -252,6 +252,7 @@
                 "type": "string",
                 "enum": [
                   "creator",
+                  "scenery",
                   "hats",
                   "bed",
                   "zoo",

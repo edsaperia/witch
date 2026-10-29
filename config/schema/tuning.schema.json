@@ -9593,6 +9593,29 @@
             "on": {
               "type": "boolean"
             },
+            "whole": {
+              "type": "object",
+              "properties": {
+                "on": {
+                  "type": "boolean"
+                },
+                "margin": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "at": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "on",
+                "margin",
+                "at"
+              ],
+              "additionalProperties": false,
+              "description": "At a dressing station the camera frames her whole, top of her hat to the soles of her shoes, in the right half of the screen while the panel takes the left half."
+            },
             "distance": {
               "type": "number",
               "minimum": 0
@@ -9755,6 +9778,7 @@
           },
           "required": [
             "on",
+            "whole",
             "distance",
             "side",
             "ease",

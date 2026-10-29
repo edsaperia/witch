@@ -1,6 +1,6 @@
 // The pause page over everything (Ed's playtest, 2026-10-23: "pause menu should go on top of e.g. map screen and other things
 // like that"; platform/freeze.ts): each overlay opened in turn (the sea chart, the map table's chart, a dressing station, the
-// Workshop's bay and pegboard, the telescope, the finds dev panel), then Esc: the pause page's sliders are
+// Workshop's broom station, the telescope, the finds dev panel), then Esc: the pause page's sliders are
 // on top where they stand, nothing of the overlay is hit in the middle of the screen, a key and the pad (a stubbed one: the
 // d-pad, B) reach nothing under it, and Esc again comes back to the overlay as it was. Fails on any of those or a page error.
 // Each case's line says how long it took, the page thread's longest wait in it and the frames over 100 ms it saw, with what they
@@ -27,8 +27,7 @@ const CASES = [
   // (a station's own panel, not the last one's: the wardrobe's, still in as she was put at the bay on a slow runner, read as the
   // bay's and then shut by the game under the pause, she no longer at the wardrobe: the broom-bay flake, 2026-10-26)
   { id: "wardrobe", at: "wardrobe", sel: '#station-panel.in[data-station="wardrobe"]', state: true },
-  { id: "broom-bay", at: "broomBay", sel: '#station-panel.in[data-station="broomBay"]', state: true },
-  { id: "pegboard", at: "pegboard", sel: '#station-panel.in[data-station="pegboard"]', state: true },
+  { id: "broom", at: "lathe", sel: '#station-panel.in[data-station="lathe"]', state: true }, // (the broom's one station: its parts, colours and pegboard, Ed 2026-10-29)
   // (at an instrument Esc is hers, Ed 2026-10-23: "Esc (a gamepad's B) steps her away, the next Esc pauses": so not here)
   { id: "telescope", open: p => p.evaluate(() => window.witch.telescope.look(0, 0.5)), on: () => window.witch.telescope.on },
   { id: "finds-dev", open: p => p.evaluate(() => document.getElementById("finds-dev-btn")?.click()), sel: "#finds-dev.on" },

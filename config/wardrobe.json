@@ -8,9 +8,7 @@
     "cloakPegs": ["cloak", "scarf", "cloakFit"],
     "shoeRack": ["shoes"],
     "bags": ["bag", "backpack", "bagFit"],
-    "broomBay": ["tip", "chassis", "exhaust", "sets"],
-    "lathe": ["broomBody", "broomTrim", "broomFit"],
-    "pegboard": ["pegboard"]
+    "lathe": ["tip", "chassis", "exhaust", "sets", "broomBody", "broomTrim", "broomFit", "pegboard"]
   },
   "shelves": {
     "hair": { "frame": "head", "label": "Hair", "colour": ["hair"], "items": [

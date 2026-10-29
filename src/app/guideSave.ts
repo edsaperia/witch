@@ -13,7 +13,7 @@ export function loadGuide(storage?: Store | null): GuideSave {
     if (!o) return emptyGuide();
     const ok = (n: NewThing) => n && KINDS.includes(n.kind) && typeof n.id === "string" && typeof n.at === "string";
     return {
-      unseen: (Array.isArray(o.unseen) ? o.unseen : []).filter(ok).map(n => ({ kind: n.kind, id: n.id, at: n.at })),
+      unseen: (Array.isArray(o.unseen) ? o.unseen : []).filter(ok).map(n => ({ kind: n.kind, id: n.id, at: n.at === "broomBay" || n.at === "pegboard" ? "lathe" : n.at })), // (the broom one station at the lathe since 2026-10-29: a part found before waits there)
     };
   } catch { return emptyGuide(); }
 }

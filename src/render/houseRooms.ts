@@ -38,7 +38,7 @@ type V3 = { x: number; y: number; z: number };
  *  within it, `depth`: how far south its nearest point is in the world (the far drawn first). */
 interface Quad { p: [number, number, number][]; rgb: [number, number, number]; obj?: string; layer: number; depth: number }
 
-const KIND: Record<HouseObject["use"]["kind"], [number, number, number]> = { creator: [0.32, 0.62, 0.45], hats: [0.32, 0.62, 0.45], zoo: [0.32, 0.62, 0.45], telescope: [0.32, 0.62, 0.45], bed: [0.82, 0.62, 0.3], say: [0.48, 0.42, 0.56], chart: [0.32, 0.62, 0.45], instrument: [0.62, 0.36, 0.7], invites: [0.32, 0.62, 0.45], pile: [0.32, 0.62, 0.45] };
+const KIND: Record<HouseObject["use"]["kind"], [number, number, number]> = { creator: [0.32, 0.62, 0.45], hats: [0.32, 0.62, 0.45], zoo: [0.32, 0.62, 0.45], telescope: [0.32, 0.62, 0.45], bed: [0.82, 0.62, 0.3], say: [0.48, 0.42, 0.56], chart: [0.32, 0.62, 0.45], instrument: [0.62, 0.36, 0.7], invites: [0.32, 0.62, 0.45], pile: [0.32, 0.62, 0.45], scenery: [0.48, 0.42, 0.56] };
 /** How long a placeholder's line stays up (s). */
 const SAY_FOR = 3.5;
 
@@ -449,7 +449,7 @@ export class HouseRoomsView {
     // alone, the old walking keys' (ui/keyHint.ts), the use button as bound (E, the pad's ✕: ui/keyHint.ts glyphOf), or on a touch screen the keycap itself to tap; none while it's
     // open. Up at her decks before the party, E there starts it (rules/wakeUp.ts atDecks).
     const decks = !at && g.wake?.open && g.party.spellAt === null && atDecks(g) ? decksSpot(D) : null;
-    const tagged = decks ?? (at && !this.said && !waking && !(at.use.kind === "pile" && !pileOut(g.wake)) ? at : null);
+    const tagged = decks ?? (at && at.use.kind !== "scenery" && !this.said && !waking && !(at.use.kind === "pile" && !pileOut(g.wake)) ? at : null);
     const usable = tagged && tagged.id !== v.houseOpen ? tagged : null, px = Math.max(2, Math.round(cv.width / Math.max(1, v.width))), glyph = useGlyph(v.useDevice), cap = `${glyph}|${px}`;
     if (cap !== this.tagKey) { this.tagKey = cap; this.tag.replaceChildren(keycapCanvas(glyph, px)); }
     this.tapUse = usable && v.useDevice === "touch" ? v.onUse : null;

@@ -1,8 +1,11 @@
 // The dressing stations in the built game (Ed's playtest of v4273, 2026-10-23: "When the camera zooms in on the witch, it aims at her
 // feet, and so when you're zoomed close her head is off screen"; "When choosing clothes etc I can't select them, I can only move the
 // selector around"). For each of her dressing stations (the bedroom's, and the cloak pegs in the Cloakroom; ?shot=object:<id>, app/shot.ts), the loop running as in play:
-//  - framing: once she's choosing, all of her is on screen and the part being chosen near the middle (camera.station.parts), at the
-//    start's zoom and again with the zoom all the way in (Z);
+//  - framing: once she's choosing, all of her on screen, whole, in the right half (camera.station.whole; Ed, 2026-10-29: "the witch
+//    right half of the screen, and she should be nicely centred and visible top of hat to bottom of shoes"): her middle near the
+//    screen's, her height most of it, and her across about three quarters of the way, at the start's zoom and with the zoom all the
+//    way in (Z); the panel the left half, a card a shelf;
+//  - the pad (a stubbed one): the d-pad moves the focus and changes nothing, ✕ chooses, R1 jumps to the next card;
 //  - choosing: a click, and Space after the arrow keys move the focus (the arrows alone changing nothing), each put an owned item on her, and her drawn look follows (the view's assets: her look now,
 //    and at a hat-off station her hat-off frames for it); Enter, E and Space choose in the panel, not in the game (she neither rises
 //    nor puts anything down), a locked item saying it isn't found yet.
@@ -27,6 +30,12 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
     for (const id of STATIONS) {
       if (ONLY && !ONLY.includes(id)) continue;
       const page = await browser.newPage({ viewport: { width: W, height: H } });
+      // a pad the page can read, its buttons set from here (window.__pad), as tools/settings/shots.cjs
+      await page.addInitScript(() => {
+        window.__pad = { buttons: Array.from({ length: 17 }, () => false), axes: [0, 0, 0, 0] };
+        const real = navigator.getGamepads ? navigator.getGamepads.bind(navigator) : null;
+        Object.defineProperty(navigator, "getGamepads", { configurable: true, writable: true, value: () => (window.__padOn ? [{ id: "DualSense (STANDARD GAMEPAD Vendor: 054c)", index: 0, connected: true, mapping: "standard", timestamp: performance.now(), axes: window.__pad.axes, buttons: window.__pad.buttons.map(p => ({ pressed: p, touched: p, value: p ? 1 : 0 })) }] : real ? real() : []) });
+      });
       page.on("pageerror", e => fails.push(`${id}: page error ${e.message}`));
       await page.goto(`http://127.0.0.1:${server.address().port}/?shot=object:${id}&seed=123`);
       await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000, polling: 500 });
@@ -41,17 +50,34 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
       const her = () => page.evaluate(([W, H]) => {
         const v = window.witch.view, c = v.camera, b = v.witchBase, up = window.witch.spriteUp(), V = c.position.constructor;
         const at = k => { const p = new V(b.x + up.x * v.witchTall * k, b.y + up.y * v.witchTall * k, b.z + up.z * v.witchTall * k).project(c); return [(p.x * 0.5 + 0.5) * W, (-p.y * 0.5 + 0.5) * H]; };
-        return { feet: at(0), top: at(1), aim: window.witch.game.camera.stationAim ?? 0, choosing: window.witch.game.camera.station ?? 0 };
+        const tall = v.witchFeetTop / v.witchTall; // (her feet to her hat's top, of her frame's height)
+        return { feet: at(0), top: at(tall), choosing: window.witch.game.camera.station ?? 0 };
       }, [W, H]);
       for (const zoom of ["start", "closest"]) {
         if (zoom === "closest") { for (let i = 0; i < 10; i++) { await page.keyboard.press("KeyZ"); await page.waitForTimeout(150); } }
         await settle();
-        const h = await her(), mid = h.feet[1] + (h.top[1] - h.feet[1]) * h.aim;
+        const h = await her(), mid = (h.feet[1] + h.top[1]) / 2, x = (h.feet[0] + h.top[0]) / 2, tall = h.feet[1] - h.top[1];
         await page.screenshot({ path: path.join(out, `${id}-${zoom}.png`) });
-        log(id, zoom, JSON.stringify({ feet: h.feet.map(Math.round), top: h.top.map(Math.round), aim: +h.aim.toFixed(2), choosing: +h.choosing.toFixed(2) }));
+        log(id, zoom, JSON.stringify({ feet: h.feet.map(Math.round), top: h.top.map(Math.round), choosing: +h.choosing.toFixed(2) }));
         ok(h.choosing > 0.9, `${id} (${zoom} zoom): the camera's in on her, choosing`);
-        ok(h.top[1] >= 0 && h.feet[1] <= H, `${id} (${zoom} zoom): all of her on screen (top ${Math.round(h.top[1])}, feet ${Math.round(h.feet[1])} of ${H})`);
-        ok(Math.abs(mid - H / 2) < H * 0.12, `${id} (${zoom} zoom): the part chosen near the middle (${Math.round(mid)} of ${H})`);
+        ok(h.top[1] >= 0 && h.feet[1] <= H, `${id} (${zoom} zoom): all of her on screen, hat to shoes (top ${Math.round(h.top[1])}, feet ${Math.round(h.feet[1])} of ${H})`);
+        ok(Math.abs(mid - H / 2) < H * 0.06, `${id} (${zoom} zoom): her middle at the screen's (${Math.round(mid)} of ${H})`);
+        ok(tall > H * 0.65, `${id} (${zoom} zoom): she fills most of its height (${Math.round(tall)} of ${H})`);
+        ok(Math.abs(x - W * 0.75) < W * 0.06, `${id} (${zoom} zoom): she stands in the right half's middle (${Math.round(x)} of ${W})`);
+        const P = await page.evaluate(() => { const p = document.querySelector("#station-panel").getBoundingClientRect(); return { w: p.width, cards: document.querySelectorAll("#station-panel .sp-shelf").length, titled: [...document.querySelectorAll("#station-panel .sp-shelf")].every(c => c.querySelector(".sp-lab b")?.textContent.trim()) }; });
+        ok(Math.abs(P.w - W / 2) < 4 && P.cards >= 1 && P.titled, `${id}: the panel the left half (${Math.round(P.w)} px), ${P.cards} titled cards`);
+      }
+      // The pad: the d-pad moves the focus (nothing on her changes), R1 the next card, ✕ chooses.
+      {
+        const press = async (b, hold = 700) => { await page.evaluate(b => { window.__pad.buttons[b] = true; }, b); await page.waitForTimeout(hold); await page.evaluate(b => { window.__pad.buttons[b] = false; }, b); await page.waitForTimeout(500); };
+        const focusNow = () => page.evaluate(() => { const f = document.querySelector("#station-panel .focus"); return f ? { at: `${f.dataset.line}:${f.dataset.col}`, card: f.closest(".sp-shelf")?.dataset.shelf, worn: [...document.querySelectorAll("#station-panel .worn, #station-panel .sel")].map(e => `${e.dataset.line}:${e.dataset.col}`).join(",") } : null; });
+        await page.evaluate(() => { window.__padOn = true; }); await page.waitForTimeout(600);
+        const a = await focusNow(); await press(15, 300); const b = await focusNow();
+        ok(a && b && a.at !== b.at && a.worn === b.worn, `${id}: the pad's d-pad moves the focus and changes nothing (${a?.at} → ${b?.at})`);
+        const cards = await page.evaluate(() => document.querySelectorAll("#station-panel .sp-shelf").length);
+        if (cards > 1) { await press(5); const c = await focusNow(); ok(c && c.card !== b.card, `${id}: R1 jumps to the next card (${b?.card} → ${c?.card})`); await press(4); }
+        await press(14, 300); // (back where it was)
+        await page.evaluate(() => { window.__padOn = false; }); await page.waitForTimeout(600);
       }
       // Choosing: what's in focus, what she wears, and what's drawn on her.
       const state = () => page.evaluate(() => { const p = document.querySelector("#station-panel"), f = p.querySelector(".focus"); return { worn: [...p.querySelectorAll(".sp-card.worn")].map(e => `${e.dataset.line}:${e.dataset.col}`), focus: f ? `${f.dataset.line}:${f.dataset.col}` : null, locked: !!f?.classList.contains("locked"), detail: p.querySelector(".sp-detail")?.innerText ?? "", saved: localStorage.getItem("witch.genome"), drawn: JSON.stringify(window.witch.view.assets.witchGenome ?? null), witch: { y: window.witch.game.witch.mode, perch: !!window.witch.game.witch.perch } }; });

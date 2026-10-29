@@ -208,6 +208,21 @@
       ],
       "notes": "for the part of her the row in focus is about (config/wardrobe.json's frame: head, hat, top, legs, feet, broom; board, the Workshop's pegboard, the wall behind her, so aimed up over her to it), aimed aim of her height (as drawn: 0 her feet, 1 the top of her hat) up her and look metres higher (a thing by her: the board, the broom), and its distance times distance in place of the station's own, eased from part to part as the cursor moves [2]."
     },
+    "camera.station.whole": {
+      "what": "At a dressing station the camera frames her whole, top of her hat to the soles of her shoes, in the right half of the screen while the panel takes the left half.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "Menus should be left half of the screen, and the witch right half of the screen, and she should be nicely centred and visible top of hat to bottom of shoes."
+        }
+      ],
+      "links": [
+        "src/render/view/camera.ts",
+        "src/ui/stationPanel.ts"
+      ],
+      "notes": "margin is the share of the screen's height left clear above and below her; at is where across the screen's width she stands (0.75: the right half's middle). On, it replaces distance, side, aim and parts (the zoom on the part of her being chosen), which stay for it off."
+    },
     "pixelSize": {
       "what": "How many screen pixels each art pixel takes up, the size of the game's chunky pixels.",
       "decisions": [

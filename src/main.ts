@@ -414,7 +414,7 @@ function lendFind(kind: FindKindId, id: string): void {
   if (kind === "wearable" || kind === "bag") findsCtx().owned().add(id); // (in what she owns tonight, not in her save)
   view.partsFound = partsNow();
   // (new in the treehouse: her guidance pin over where it is till she's been there, rules/guidance.ts)
-  const at = kind === "part" ? "broomBay" : kind === "hat" ? "hats" : stationsShowing(shelfOf(id)?.id ?? "")[0];
+  const at = kind === "part" ? "lathe" : kind === "hat" ? "hats" : stationsShowing(shelfOf(id)?.id ?? "")[0];
   if (at) { addNew(guide, { kind: kind === "part" || kind === "hat" ? kind : "wearable", id, at }); storeGuide(guide); }
 }
 /** Her guidance (rules/guidance.ts): what's kept of it on this browser (app/guideSave.ts), her pin, and the islands found (the

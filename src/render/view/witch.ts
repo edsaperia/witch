@@ -203,6 +203,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // (her frames from the atlas her batch draws: through a twirl that is still the clothes she had, render/spin.ts)
   const watlas = (bare ?? v.witchBatch).atlas, wframe = watlas.frames[wf], hatTop = wyy + wframe.h * v.mpp;
   v.witchTall = wframe.h * v.mpp * herScale; // (a station's aim is a share of it: render/view/camera.ts)
+  v.witchFeetTop = (watlas.grounds?.[wf]?.y ?? wframe.h) * v.mpp * herScale; // (feet to hat: a station frames her whole by it)
   // Stood by her frame's ground (art/witch.js liftShadow): the point under her on the model's ground lands on wyy, so on
   // foot her feet are on the ground, not on the bottom of a box that held a shadow drawn into her (Ed, 2026-10-06); and
   // her shadow lies at that point, under her feet whatever the pose.

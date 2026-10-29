@@ -623,6 +623,8 @@ export class View {
   houseShift = 0;
   /** Her height as drawn (metres: her frame's, times her scale on the treehouse's floor): what a station's aim is a share of. */
   witchTall = 0;
+  /** Her height as drawn from her feet (her frame's ground) to its top (her hat's), last frame: a station frames her whole by it (render/view/camera.ts). */
+  witchFeetTop = 0;
   shadowList: ShadowInstance[] = [];
   /** The trunks' shadows from her glow and the fires, a batch an area type (render/trunkShadows.ts); and the scenery's, a batch
    *  an atlas (decor, relics, scenes: render/view/scenery.ts; the runestones, the soundsystems: render/view/home.ts, render/party.ts). */

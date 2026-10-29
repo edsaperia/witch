@@ -109,8 +109,10 @@ export type { BroomPart };
 /** A gamepad on a station's panel (Ed's playtest, 2026-10-23; his layout, 2026-10-28: "the left stick or d-pad moves the highlight",
  *  cross chooses, circle goes back): which way it moves the highlight (the menu's directions, platform/bindings.ts: the d-pad, or the
  *  left stick pushed past half way, by its strongest) and whether choose is held (main.ts closes it on back, through padControls). */
-export function panelPad(buttons: readonly boolean[], axes: readonly number[], B: Bindings = bindings): { dir: "" | "up" | "down" | "left" | "right"; choose: boolean } {
+export function panelPad(buttons: readonly boolean[], axes: readonly number[], B: Bindings = bindings): { dir: "" | "up" | "down" | "left" | "right"; choose: boolean; card: -1 | 0 | 1 } {
   let dir: "" | "up" | "down" | "left" | "right" = "", best = 0.5;
   for (const d of ["up", "down", "left", "right"] as const) { const v = B.padValue(`menu.${d}`, buttons, axes); if (v >= best) { best = v + 1e-9; dir = d; } }
-  return { dir, choose: B.padHeld("menu.choose", buttons, axes) };
+  // (L1 and R1, the menus' tabs: a station's card before or after, Ed 2026-10-29)
+  const card = B.padHeld("menu.tabNext", buttons, axes) ? 1 : B.padHeld("menu.tabPrev", buttons, axes) ? -1 : 0;
+  return { dir, choose: B.padHeld("menu.choose", buttons, axes), card };
 }
