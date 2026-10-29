@@ -139,7 +139,7 @@ export function castShown(g: Game, W: Witch): { key: string; x: number; z: numbe
   const s = stoneNear(g, b.x, b.z, castOf(t).show);
   if (!s) return null;
   const r = W.casts?.[s.key];
-  return { key: s.key, x: s.x, z: s.z, k: castProgress(W, s.key, g.herTime, t), ...(r?.lostFrom !== undefined ? { lostFrom: r.lostFrom, hitAt: r.hitAt } : {}), casting: W.casting === s.key };
+  return { key: s.key, x: s.x, z: s.z, k: castProgress(W, s.key, W.time ?? g.herTime, t), ...(r?.lostFrom !== undefined ? { lostFrom: r.lostFrom, hitAt: r.hitAt } : {}), casting: W.casting === s.key };
 }
 
 /** The stone she casts at where she stands: on foot, not knocked out, within cast.radius of the spot of a stone with a stack (the sigil button

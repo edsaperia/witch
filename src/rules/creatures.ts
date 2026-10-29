@@ -513,7 +513,7 @@ export function wakeUp(c: Creature, time: number, wake: number): void {
  *  while is put where it would plausibly be by now (a point in its area chosen from its id and
  *  the time), rather than where it was left. A `dormant` one (a wild legend still asleep) stays
  *  where it lies. */
-export function stepCreaturesNear(all: Creature[], x: number, z: number, radius: number, dt: number, time: number, map: ForestMap, dormant: (c: Creature) => boolean = () => false, lod: { full: number; band: number; every: number } = { full: Infinity, band: 0, every: 1 }, counts?: LodCounts, naps?: NapRules, watch?: { hangBack: number }): void {
+export function stepCreaturesNear(all: Creature[], x: number, z: number, radius: number, dt: number, time: number, map: ForestMap, dormant: (c: Creature) => boolean = () => false, lod: { full: number; band: number; every: number } = { full: Infinity, band: 0, every: 1 }, counts?: LodCounts, naps?: NapRules, watch?: { hangBack: number }, watchers?: readonly { x: number; z: number; radius: number; full: number }[]): void {
   // In full within lod.full of her (what the view can show); beyond, coarsely (rules/simLod.ts):
   // once every lod.every steps, by that many steps at once, taking turns by id; past `radius`
   // (by its home) not at all.
@@ -522,17 +522,25 @@ export function stepCreaturesNear(all: Creature[], x: number, z: number, radius:
     // A napper up when it's time, when she's on the ground in its area, or when it may nap no longer (wherever it is).
     if (c.napUntil !== undefined && (time >= c.napUntil || !napper(c) || (!c.lulled && (!naps || !naps.wild(c) || naps.roused(c))))) wakeUp(c, time, naps?.wake ?? 0); // (a lulled one: only its own end, or a 💌)
     if (c.leashed || c.gone) continue;
-    const ax = Math.abs((c.dropped?.x ?? c.homeX) - x), az = Math.abs((c.dropped?.z ?? c.homeZ) - z); // (one let go at a knockout: by where it was dropped)
-    if (ax > radius || az > radius) { if (counts) counts.frozen++; continue; }
+    let nearest: NonNullable<typeof watchers>[number] | undefined, distance = Infinity, inside = Infinity;
+    if (watchers) for (const w of watchers) {
+      if (Math.abs((c.dropped?.x ?? c.homeX) - w.x) > w.radius || Math.abs((c.dropped?.z ?? c.homeZ) - w.z) > w.radius) continue;
+      const d = (c.x - w.x) ** 2 + (c.z - w.z) ** 2;
+      if (d < distance) { distance = d; nearest = w; }
+      inside = Math.min(inside, Math.max(Math.abs(c.x - w.x), Math.abs(c.z - w.z)) - w.full);
+    }
+    const wx = nearest?.x ?? x, wz = nearest?.z ?? z;
+    const ax = Math.abs((c.dropped?.x ?? c.homeX) - wx), az = Math.abs((c.dropped?.z ?? c.homeZ) - wz); // (one let go at a knockout: by where it was dropped)
+    if (watchers ? !nearest : ax > radius || az > radius) { if (counts) counts.frozen++; continue; }
     if (heldByCombat(c)) { c.seen = time; continue; } // fighting, fleeing, marching or walking home: moved by combat and knockout
-    const full = inFull(c, Math.max(Math.abs(c.x - x), Math.abs(c.z - z)), lod.full, lod.band);
+    const full = watchers ? inFull(c, inside, 0, lod.band) : inFull(c, Math.max(Math.abs(c.x - wx), Math.abs(c.z - wz)), lod.full, lod.band);
     if (counts) { if (full) counts.full++; else counts.coarse++; }
     if (!full && !coarseTurn(tick, c.id, lod.every) && time - c.seen <= 3) continue; // (its turn comes well within 3 s: `seen` is kept fresh by it)
     if (dormant(c)) { c.seen = time; c.moving = false; c.away = false; continue; }
     // Asleep or getting up: lying where it is, no roam (and no AI: combat leaves it out too).
     if (napping(c, time)) { c.seen = time; c.moving = false; c.away = false; continue; }
     // Watching her, just come down in its wild area (rules/wildWatch.ts): still, turned to her, backing off if she's close.
-    if (watch && c.watchUntil !== undefined && time < c.watchUntil) { c.seen = time; watchStep(c, x, z, dt, watch.hangBack); continue; }
+    if (watch && c.watchUntil !== undefined && time < c.watchUntil) { c.seen = time; watchStep(c, wx, wz, dt, watch.hangBack); continue; }
     c.wakeUntil = undefined;
     if (time - c.seen > 3) {
       const r = rng(c.id * 7919 + Math.floor(time / 20) * 131 + 5);

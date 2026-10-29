@@ -34,7 +34,7 @@ export function stepWildWatch(g: Game, t: Tuning): void {
   let here: string | null = null, here2: string | null = null; // (the areas a witch is on the ground in this step: one or two players)
   for (const w of g.witches) {
     if (w.body.mode !== "ground" || w.body.seated || w.body.perch || w.ko) continue; // (up on the treehouse deck: not in any area)
-    if (stealthed(w.spells, g.herTime)) continue; // (her Stealth broom: unseen, nothing notices her; rules/brooms.ts)
+    if (stealthed(w.spells, w.time ?? g.herTime)) continue; // (her Stealth broom: unseen, nothing notices her; rules/brooms.ts)
     const k = cellKey(areaCellAt(g.map, w.body.x, w.body.z)), e = g.wildEntry.get(k);
     if (here === null) here = k; else here2 = k;
     if (e) { e.last = time; continue; }
