@@ -1,5 +1,201 @@
 {
   "_": "What a brand-new witch starts with (Ed, 2026-10-29: \"Please give me an easy way to select character creation defaults ... This is a dev tool - just so I can set the defaults for the game\"; src/app/defaultLook.ts). genome: her look (art/witchGenome.js's shape: hat, hair, top, cloak, broom's colours and fit, accessories, sizes, palette), or null for the classic witch (WITCH_GENOME, her colours DEFAULT_OUTFIT under the style's hues); whatever it wears is hers from the start, over config/wardrobe.json's start items. broom: the parts fitted in each slot (config/broom-parts.json), found from the start, or null for a bare broom. Made by the pause page's Copy look as defaults (with the debug overlay or Unlock everything on): paste its text over this file. A genome the generator's rules refuse is the classic witch. ?newWitch=1 plays a load as a brand-new witch, nothing saved.",
-  "genome": null,
+  "genome": {
+    "hat": {
+      "shape": "classic",
+      "height": 1.11,
+      "brim": 1.45,
+      "tilt": 0.734,
+      "band": 1.26
+    },
+    "hair": "long",
+    "top": "jacket",
+    "cloak": "short",
+    "broom": {
+      "kind": "classic",
+      "length": 1.2,
+      "bend": -0.673,
+      "bristles": 1.096,
+      "thickness": 0.67
+    },
+    "accessories": {
+      "phones": false,
+      "shades": false,
+      "glowsticks": false,
+      "scarf": true,
+      "satchel": true,
+      "pendant": false,
+      "earrings": false,
+      "lantern": false,
+      "vial": false,
+      "book": false,
+      "patches": false,
+      "bumbag": false,
+      "purse": false,
+      "tote": false,
+      "duffel": false,
+      "briefcase": false,
+      "clutch": false,
+      "messenger": false,
+      "wristband": false,
+      "chunky": false
+    },
+    "cloakLength": 2.318,
+    "scarfLength": 2.275,
+    "bagSize": 2.512,
+    "backpackSize": 0,
+    "palette": {
+      "hair": [
+        0,
+        0,
+        0.1775
+      ],
+      "hat": [
+        0.8333,
+        1,
+        0.3
+      ],
+      "headphones": [
+        0.0833,
+        1,
+        1
+      ],
+      "top": [
+        0.0833,
+        0.5,
+        1
+      ],
+      "jacket": [
+        0.8333,
+        1,
+        0.3
+      ],
+      "jeans": [
+        0.6667,
+        0.5,
+        1
+      ],
+      "sneakers": [
+        0.0833,
+        0.5,
+        1
+      ],
+      "broom": [
+        0.0833,
+        1,
+        0.3
+      ],
+      "bristles": [
+        0.1667,
+        1,
+        0.74
+      ],
+      "skin": [
+        0.07,
+        0.22,
+        0.96
+      ],
+      "pattern": [
+        0.1667,
+        0.12,
+        1
+      ],
+      "trim": [
+        0,
+        0.72,
+        1
+      ],
+      "flower": [
+        0.9167,
+        0.5,
+        1
+      ],
+      "flower2": [
+        0.1667,
+        0.5,
+        1
+      ],
+      "cup": [
+        0,
+        0.72,
+        1
+      ],
+      "glow": [
+        0.9167,
+        0.72,
+        1
+      ],
+      "glow2": [
+        0.3333,
+        0.72,
+        1
+      ],
+      "shades": [
+        0.5833,
+        1,
+        0.13
+      ],
+      "frame": [
+        0.0833,
+        0.5,
+        1
+      ],
+      "cloak": [
+        0.75,
+        1,
+        0.3
+      ],
+      "scarf": [
+        0.5,
+        0.5,
+        1
+      ],
+      "satchel": [
+        0.0833,
+        1,
+        0.3
+      ],
+      "lantern": [
+        0,
+        0,
+        0.295
+      ],
+      "book": [
+        0,
+        0,
+        0.1775
+      ],
+      "bumbag": [
+        0,
+        0,
+        0.53
+      ],
+      "band": [
+        0.9167,
+        0.72,
+        1
+      ],
+      "vial": [
+        0.6667,
+        0.12,
+        1
+      ],
+      "plume": [
+        0.9167,
+        1,
+        0.3
+      ],
+      "gold": [
+        0.0833,
+        0.72,
+        1
+      ],
+      "backpack": [
+        0.3333,
+        1,
+        1
+      ]
+    }
+  },
   "broom": null
 }
