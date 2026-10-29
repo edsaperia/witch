@@ -32,6 +32,8 @@ import { flightHeight } from "../../rules/movement";
 import { inView } from "./culling";
 import { mark } from "./pops";
 import { attackFeel, newFeel } from "../attackFeel";
+import { impactOf } from "../impact";
+import { cheerKind, cheerPose, type CheerPose } from "../cheer";
 import { legendSleep, newSleepTrack, type SleepPose } from "../legendSleep";
 /** How near her (m) a rattlesnake rattles its warning (config/character.json's "rattle" quirk). */
 const RATTLE_NEAR = 14;
@@ -39,6 +41,8 @@ const SQ = { hop: 0, x: 0, sx: 1, sy: 1, turned: false }; // (a baked frame's id
 const CP = newCongaPose(); // (a conga dancer's step, filled each creature: no allocation)
 
 const FEEL = newFeel(); // (filled per creature, never kept)
+const IMPACT = { flash: 0, sx: 1, sy: 1 }; // (likewise: render/impact.ts)
+const CHEER: CheerPose = { y: 0, x: 0, sx: 1, sy: 1, flip: false }; // (likewise: render/cheer.ts)
 const SLEEP: SleepPose = { sleep: 0, droop: 0 }; // (likewise)
 const FWD = new THREE.Vector3(), CAM_UP = new THREE.Vector3(); // (the camera's look and up, a frame's working)
 
@@ -251,10 +255,20 @@ export function drawCreatures(v: View, time = 0): void {
       else { const l = v.aggroLast.get(c.id); if (l) { const a = aggroFadeOut(l.a, time - l.at, WW.fade); if (a > 0.005) glow = aggroGlow(a); else v.aggroLast.delete(c.id); } }
     }
     const feel = attackFeel(c, time, g.tuning.attackFx, FEEL);
+    // A 💌 just landed on it (render/impact.ts): an instant's white flash and a little squash, springing back.
+    const imp = impactOf(c.id, g.tuning.invites.impact, IMPACT);
+    if (imp.flash > 0) glow = Math.max(glow, imp.flash);
+    feel.sx *= imp.sx; feel.sy *= imp.sy;
     // Leaping (Stage 5: the toad): up in an arc over its shadow.
     let hop = c.leap ? Math.sin(Math.min(1, Math.max(0, (time - c.leap.at) / Math.max(0.01, c.leap.lands - c.leap.at))) * Math.PI) * c.leap.height : 0;
     hop += feel.hop; // (a tumble's arc: render/attackFeel.ts)
     hop += flightHeight(c, time); // (a wild flyer swooping: up out of reach over its shadow, rules/movement.ts stepSwoop)
+    // Won over just now: it celebrates by its body, a jump-spin, a roll-over, a loop or a wiggle (render/cheer.ts; rules/affection.ts).
+    if (c.cheerUntil !== undefined && time < c.cheerUntil) {
+      const P2 = cheerPose(cheerKind(c.species), 1 - (c.cheerUntil - time) / (g.tuning.invites.cheer?.secs ?? 1), CHEER), hM2 = (frame.h - (frame.pad ?? 0)) * v.mpp * scale, R2 = SPRITE_UNIFORMS.uRight.value;
+      hop += P2.y * hM2; cx += R2.x * P2.x * hM2; cz += R2.z * P2.x * hM2;
+      feel.sx *= P2.sx; feel.sy *= P2.sy; if (P2.flip) feel.flip = !feel.flip;
+    }
     for (let wi = 0; wi < g.witches.length; wi++) { const W = g.witches[wi]; if (W.spells.cyc) hop += cycloneLift(W.spells, c.id, g.clock.time, g.tuning); } // (whirled up by her Cyclone hat: rules/hatSpells.ts)
     // Just joined the party: two little hops of joy, the second smaller (straight up, nothing like a pounce).
     const joined = v.leashView.joined.get(c.id);

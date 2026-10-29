@@ -229,6 +229,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
   };
   const ownStruck = (pd: Directive | undefined, c: Creature, tg: Target): void => { if (pd) { take(tg); markStrike(pd, c); } };
   for (const c of w.active) {
+    if (c.cheerUntil !== undefined && time >= c.cheerUntil) c.cheerUntil = undefined; // (its celebration over: back in the fight, rules/affection.ts)
     stepKnock(c, dt);
     if (c.gone) continue;
     // A leap under way flies on whatever holds it this step (a stun, a daze, its pack's turn): its arc goes by the time, so steps
