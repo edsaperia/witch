@@ -126,8 +126,13 @@ uniform vec2 uPulse; // the wave's pulse on the link from the last stone reached
 uniform vec2 uFlow;
 uniform vec4 uCore; // its pixel core's half-width and rim (metres) on the ground and over the treetops
 uniform float uMpp; // metres per art pixel
+uniform vec4 uRainF, uRainT; // the rainbow waves (rules/rainbow.ts), up to four: each one's front and the end of the line it still shows, in links (-1: none)
 varying float vSide, vS, vT, vLink, vSeen, vW, vLen;
 varying vec3 vCol;
+// How much a rainbow wave shows the line here (Ed, 2026-10-29: "reveal now, not cumulative"): fully just behind its front, fading
+// back to nothing where it passed its linger ago.
+float rain1(float a, float f, float t) { return f >= 0.0 && a <= f && a >= t ? (a - t) / max(1e-4, f - t) : 0.0; }
+float rainAt(float a) { return max(max(rain1(a, uRainF.x, uRainT.x), rain1(a, uRainF.y, uRainT.y)), max(rain1(a, uRainF.z, uRainT.z), rain1(a, uRainF.w, uRainT.w))); }
 float lh(float p) { return fract(sin(p * 127.1) * 43758.5453); }
 float soft0(float d) { return smoothstep(0.0, 8.0, d); }
 // The ripple (Ed, 2026-10-07: "The leyline should have an occasional ripple along its length that shows you which direction
@@ -144,7 +149,9 @@ void main() {
   // Growing (Ed, 2026-10-06: "a better design for the front of the leyline"): written on pixel by pixel, the end at a whole art
   // pixel along it; tipD, metres behind the front (on its own link; further back, more).
   float tipD = uGrow.y > 0.5 ? (uGrow.x - vLink) * vLen - (floor(vS / uMpp) + 0.5) * uMpp : 1e6;
-  if (tipD < 0.0 || (uGrow.y > 0.5 && along < uGrow.z)) discard; // (none on the boot ring itself: that is the ring's own line)
+  // (past its front only where a rainbow wave shows it, for now: rules/rainbow.ts)
+  float rv = tipD < 0.0 ? rainAt(along) : 1.0;
+  if (rv <= 0.0 || (uGrow.y > 0.5 && along < uGrow.z)) discard; // (none on the boot ring itself: that is the ring's own line)
   float across = 1.0 - abs(vSide), halo = across * across;
   // Ed, round 14: "the leyline and pulse are not pixelated. Lighting effects can be non-pixel but they should be lighting
   // objects that are pixels"; and "the leyline is too faint". On the ground the line itself is pixels: a hard core a whole
@@ -157,7 +164,7 @@ void main() {
   // Its growing end (Ed, 2026-10-07: "I don't think there should be anything much at the leyline tip. It can just be the leyline
   // finishing plainly (but not a flat end)"): no head, no glow; the line narrows to its middle pixel over its last metre or so,
   // a rounded end in whole pixels.
-  float capN = floor((coreN + rimN) * sqrt(clamp(tipD / 1.2, 0.0, 1.0)) + 0.5);
+  float capN = tipD < 0.0 ? max(1.0, floor(coreN * 0.5)) : floor((coreN + rimN) * sqrt(clamp(tipD / 1.2, 0.0, 1.0)) + 0.5);
   if (uGlowPass < 0.5 && off > capN) discard;
   float sAt = uGlowPass > 0.5 ? vS : sq;
   // The shimmer: bright heads travelling from the earlier stone to the later, each trailing off behind.
@@ -181,7 +188,7 @@ void main() {
     float grey = dot(vCol, vec3(0.3, 0.59, 0.11));
     vec3 cool = mix(vec3(grey), vec3(0.55, 0.68, 1.0) * grey * 1.3, 0.55);
     // (From the treetops, a faint cool glow along it, so it still reads there.)
-    if (uGlowPass > 0.5) { gl_FragColor = vec4(cool * 0.12 * halo * uLift * uStrength, 1.0); return; }
+    if (uGlowPass > 0.5) { gl_FragColor = vec4(cool * 0.12 * halo * uLift * uStrength * rv, 1.0); return; }
     // (Ed, 2026-10-08: "The leyline ahead of the pulse doesn't seem to be visible anymore": once the line behind the pulse went
     // thin and pale, the old dim grey sketch vanished beside it at night; and then "I preferred it when it was thinner and
     // silver". So it's thin and silver as before, but bright: a near-white cool silver, not dimmed with the lit line's
@@ -190,7 +197,7 @@ void main() {
     float dash = mod(floor(vS / uMpp), 4.0) < 3.0 || rip > 0.6 ? 1.0 : 0.0, thin = off < max(1.0, floor(coreN * 0.5)) ? 1.0 : 0.0;
     if (dash * thin < 0.5) discard;
     vec3 silver = mix(vec3(0.74, 0.79, 0.88), cool / max(grey, 0.05) * 0.8, 0.12);
-    gl_FragColor = vec4(min(silver * (0.9 + 0.25 * rip) * uStrength, vec3(0.95)), 1.0);
+    gl_FragColor = vec4(min(silver * (0.9 + 0.25 * rip) * uStrength * rv, vec3(0.95)), 1.0);
     return;
   }
   float litD = pAlong > 1e5 ? 1e6 : (pAlong - along) * vLen; // metres behind the pulse (on its own link)
@@ -311,6 +318,7 @@ export class LeyLines {
       uShift: { value: 0 }, uFar: { value: new THREE.Vector2(T.far[0], T.far[1]) }, uFlow: { value: new THREE.Vector2(T.flow[0], T.flow[1]) },
       uPulse: { value: new THREE.Vector2() }, uGrow: { value: new THREE.Vector3() }, uNear: { value: new THREE.Vector3(0, 0, NEAR) },
       uCore: { value: new THREE.Vector4(...(T.core ?? [0.3, 0.6, 0.15, 0.3])) }, uMpp: { value: map ? metresPerArtPixel(map.tuning) : 0.1 },
+      uRainF: { value: new THREE.Vector4(-1, -1, -1, -1) }, uRainT: { value: new THREE.Vector4(-1, -1, -1, -1) },
     };
     this.cur = this.makeSet();
     this.ringSet = this.makeSet({ uPulse: { value: this.ringPulse }, uGrow: { value: this.ringGrow }, uStrength: this.ringStrength, uSpent: { value: 1 }, uDrift: { value: 0 } }); // (spent behind its own pulse, as the route behind the wave's: Ed, 2026-10-07)
@@ -352,6 +360,13 @@ export class LeyLines {
   private pulseFrom = 0;
   private pulseHead = true;
   /** How far the line is drawn, in links along the route from its start (leyReveal), or null for all of it. */
+  /** The rainbow waves showing the line (rules/rainbow.ts): each one's front and the end of what it still shows, in links along
+   *  the route (as grow's); up to four. */
+  rains(waves: readonly { front: number; tail: number }[]): void {
+    const F = this.u.uRainF.value as THREE.Vector4, T = this.u.uRainT.value as THREE.Vector4;
+    F.set(-1, -1, -1, -1); T.set(-1, -1, -1, -1);
+    waves.slice(0, 4).forEach((w, i) => { F.setComponent(i, w.front); T.setComponent(i, w.tail); });
+  }
   grow(links: number | null): void { this.u.uGrow.value.set(links ?? 0, links === null ? 0 : 1, this.branchAt?.share ?? 0); this.growTo = links; }
   /** Where the first link leaves the boot ring (leyReveal), once the line is routed; null before. */
   branch(): LeyBranch | null { return this.branchAt; }
