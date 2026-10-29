@@ -892,12 +892,18 @@ Code: `render/indicator.ts`
   1. Ed's playtest, 2026-10-29: "Also, it's easy to miss the pointers"
   Code: `render/indicator.ts`, `render/view/hud.ts`
 - **`pins.vivid`**: How much of the pointers' calming toward the night is taken back: 0 as calmed, 1 the area's neon itself.
+- **`pins.pulse`, `pins.pulseRate`**: How much the morning's guidance pins breathe, from waking up till the party spell: their size swells by up to this share and back (0 still; half as much with reduce flashing).
+  1. Ed, 2026-10-29: "morning routine pointers should pulse slightly (wake up to spell)"
+  Code: `render/view/guidance.ts`, `render/indicator.ts`
+- **`pins.pulseRate`**: How many times a second the morning's guidance pins breathe.
 
 | knob | type | range |
 |---|---|---|
 | `pins.gap` | number | 0 to … |
 | `pins.plate` | number | 0 to … |
 | `pins.vivid` | number | 0 to … |
+| `pins.pulse` | number | 0 to … |
+| `pins.pulseRate` | number | 0 to … |
 
 ### `crownWidth`
 

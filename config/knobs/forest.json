@@ -122,6 +122,25 @@
       "what": "How much of the pointers' calming toward the night is taken back: 0 as calmed, 1 the area's neon itself.",
       "see": "pins.plate"
     },
+    "pins.pulse": {
+      "what": "How much the morning's guidance pins breathe, from waking up till the party spell: their size swells by up to this share and back (0 still; half as much with reduce flashing).",
+      "also": ["pins.pulseRate"],
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "morning routine pointers should pulse slightly (wake up to spell)"
+        }
+      ],
+      "links": [
+        "render/view/guidance.ts",
+        "render/indicator.ts"
+      ]
+    },
+    "pins.pulseRate": {
+      "what": "How many times a second the morning's guidance pins breathe.",
+      "see": "pins.pulse"
+    },
     "crownWidth": {},
     "treeSpacingX": {},
     "treeSpacingZ": {},
