@@ -22,6 +22,7 @@ import { glacierMesh, lakeLooksOf } from "./lakeLooks";
 import { lakeKnobs } from "../rules/lakes";
 import { MapTable } from "./mapTable";
 import { MarkerArt } from "./markers";
+import type { Atlas } from "./atlas";
 import { Minimap } from "./minimap";
 import { PathView } from "./paths";
 import { asFloor, SPRITE_UNIFORMS, SpriteBatch } from "./sprites";
@@ -63,7 +64,13 @@ export class IslandLayers {
   readonly markerGlow = { value: 1 };
   markerBatch!: SpriteBatch;
   /** The great stumps (runeMarkers.stump), in place of the stones: a floor, under everything standing (render/view/home.ts). */
-  stumpBatch: SpriteBatch | null = null;
+  readonly stumpBatches = new Map<string, SpriteBatch>();
+  /** A great stump's batch (one a baked stump, its own atlas: AssetLibrary.stumpArt), made the first time it's drawn. */
+  stumpBatch(id: string, atlas: Atlas, mpp: number): SpriteBatch {
+    let b = this.stumpBatches.get(id);
+    if (!b) { b = asFloor(new SpriteBatch(atlas, mpp, { scenery: true, flat: true }).name("stump")); this.stumpBatches.set(id, b); this.root.add(...b.meshes); }
+    return b;
+  }
   /** The runestones' trunk shadows (render/view/home.ts), made as they're first cast. */
   markerShadows: TrunkShadowBatch | null = null;
   ley!: LeyLines;
@@ -152,7 +159,6 @@ export class IslandLayers {
     this.markerArt = new MarkerArt(style, game.tuning, game.map, stones);
     this.markerBatch = new SpriteBatch(this.markerArt.atlas, mpp, { solid: true, glowGain: this.markerGlow }).name("markers");
     this.root.add(...this.markerBatch.meshes);
-    if (this.markerArt.stumps) { this.stumpBatch = asFloor(new SpriteBatch(this.markerArt.atlas, mpp, { scenery: true, flat: true }).name("stumps")); this.root.add(...this.stumpBatch.meshes); }
   }
 
   /** The runestones' trunk shadows, made the first time they're asked for. */
@@ -191,7 +197,7 @@ export class IslandLayers {
     this.minimap?.dispose();
     this.markerShadows?.dispose();
     this.markerBatch?.release();
-    this.stumpBatch?.release(); this.stumpBatch = null;
+    for (const b of this.stumpBatches.values()) b.release(); this.stumpBatches.clear();
     this.markerArt?.dispose();
     this.ley?.dispose();
     this.dancefloor?.dispose();

@@ -313,6 +313,8 @@ export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: 
   | { kind: "stones"; id: string; style: Style; stones: StoneSpec[]; levels: number[]; scale: number }
   /** The great stumps (art/props/stumps.js; Ed, 2026-10-29): in place of the runestones, each a species seen from its own angle. */
   | { kind: "stumps"; id: string; style: Style; stumps: StumpSpec[] }
+  /** One area type's great stump, baked as it's wanted (render/view/home.ts, AssetLibrary.stumpArt). */
+  | { kind: "stump"; id: string; style: Style; stump: StumpSpec }
   /** One area's generated soundsystem (art/soundsystemGen.js): its genome at its yaw (degrees) and size. */
   | { kind: "soundsystem"; id: string; style: Style; genome: unknown; yaw: number; size: number; /** "play" (its 3 playing frames) or "damage" (its damage stages and rubble) */ part: "play" | "damage" }
   /** Every party object (#38) in each neon and balloon palette a placement can pick (campfires in their three frames), and the clusters' layouts. */
@@ -375,9 +377,11 @@ export interface DecorPiece { id: string; family: string; bot: number; top: numb
 /** A floor tile's pixels: albedo and normal map, w x h. */
 export interface TilePixels { albedo: Uint8Array; normal: Uint8Array; w: number; h: number }
 /** A stump to bake: its species (art/props/stumps.js STUMP_GENOMES), seed and the angle it's seen from (radians). */
-export interface StumpSpec { species: string; seed: number; yaw: number }
+export interface StumpSpec { species: string; seed: number; yaw: number; /** fitted to this area type (its id: its main tree's bark, its ground) */ area?: string; /** in this biome (art/flora/biomes.js key) */ biome?: string }
 /** A baked stump: the ground under its middle and its cut's middle on the sprite (art pixels from its top-left), the cut's height
  *  and the trunk's radius (m). */
+/** A stump spec's id: its art job's, and its key in the asset library. */
+export const stumpId = (s: StumpSpec): string => `${s.species}:${s.area ?? ""}:${s.seed}:${s.yaw.toFixed(3)}:${s.biome ?? ""}`;
 export interface StumpArt { origin: { x: number; y: number }; top: { x: number; y: number }; height: number; radius: number }
 export interface ArtResult { /** The dancefloor's looks (kind disco). */ disco?: { base: CanvasPixels; lit: CanvasPixels; pitch: number; size: number; gridOrigin: number; rimOuter: number; radius: number }; /** The runestones' heights, in order (kind stones). */ stones?: number[]; /** The stumps' ground points and cuts (kind stumps), in order. */ stumps?: StumpArt[]; /** The sea creatures' frames' origins (kind sea). */ sea?: { x: number; y: number }[]; /** The beach's edge of the woods: its palms' frames (crown, trunk) and its shrubs' and grass clumps'. */ beachEdge?: BeachEdgeArt; /** The biome lakes' shore dressing. */ lakeShore?: LakeShoreArt; /** A sleeping legend's ground line in each frame: rows from its top (the art's origin). */ ground?: number[]; /** And how far its body's middle (the origin) lies right of the frame's middle, pixels. */ centre?: number[]; /** The live rig's parts (#79): their joints and pieces. */ rig?: RigMeta; px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[]; pieces?: PathPieceArt[]; relics?: RelicArt[]; beach?: BeachArt; layouts?: RelicLayouts; speakers?: SpeakerArt; scenes?: SceneArt; witch?: PartyWitchArt; party?: PartyArt; /** Our witch's poses (render/homeArt.ts). */ ours?: WitchArt; /** The treehouse's anchors. */ treehouse?: TreehouseArt; /** A generated soundsystem's origins and projector tops. */ ss?: SoundsystemGenArt; /** A treehouse piece's picture (kinds housePiece and workshopPic; null: nothing to draw). */ housePiece?: PiecePixels | null; /** The crown's clearing over a floor (kind crownMask). */ mask?: Uint8Array }
 
@@ -633,7 +637,15 @@ export function partyGearOf(seed: number, colour: number[] | null): RigGear {
 export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "disco") { const d = discoDrawn(job.style, mk); return { px: packPixels([], 16), disco: { ...d, base: canvasPixels(d.base), lit: canvasPixels(d.lit) } }; }
   if (job.kind === "sea") { const { sprites, origins } = seaSprites(job.id, job.style, mk); return { px: packPixels(sprites, job.id === "kraken" ? 1024 : 512), sea: origins }; }
-  if (job.kind === "stumps") { const sprites: Baked[] = [], stumps: StumpArt[] = []; for (const s of job.stumps) { const p = (Art.stumpPiece as unknown as (sp: string, o: object, def: null, st: Style) => { sp: unknown; colours: unknown; origin: { x: number; y: number }; top: { x: number; y: number }; variant: { height: number }; metres: { radius: number } })(s.species, { seed: s.seed, yaw: s.yaw }, null, job.style); sprites.push(Art.bake(p.sp, p.colours, job.style, "none", mk) as Baked); stumps.push({ origin: p.origin, top: p.top, height: p.variant.height, radius: p.metres.radius }); } return { px: packPixels(sprites, 2048), stumps }; }
+  if (job.kind === "stumps" || job.kind === "stump") {
+    const sprites: Baked[] = [], stumps: StumpArt[] = [];
+    for (const s of job.kind === "stump" ? [job.stump] : job.stumps) {
+      const def = s.area ? (Art.AREA_BY_ID as Record<string, unknown>)[s.area] ?? null : null, st = s.biome ? ({ ...job.style, biome: s.biome } as unknown as Style) : job.style;
+      const p = (Art.stumpPiece as unknown as (sp: string, o: object, def: unknown, st: Style) => { sp: unknown; colours: unknown; origin: { x: number; y: number }; top: { x: number; y: number }; variant: { height: number }; metres: { radius: number } })(s.species, { seed: s.seed, yaw: s.yaw }, def, st);
+      sprites.push(Art.bake(p.sp, p.colours, st, "none", mk) as Baked); stumps.push({ origin: p.origin, top: p.top, height: p.variant.height, radius: p.metres.radius });
+    }
+    return { px: packPixels(sprites, job.kind === "stump" ? 512 : 2048), stumps };
+  }
   if (job.kind === "stones") { const { sprites, heights } = stoneSprites(job.style, job.stones, job.levels, job.scale, mk); return { px: packPixels(sprites, 2048), stones: heights }; }
   if (job.kind === "witch") { const { sprites, witch } = witchSprites(job.style, job.genome, job.bare, mk, false, !!job.quick); return { px: packPixels(sprites, 2048), ours: witch }; }
   if (job.kind === "hat") {

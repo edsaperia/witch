@@ -7,7 +7,7 @@ import { atlasBytes, atlasFromPixels, placeholderAtlas, type Atlas } from "./atl
 import { channelAt } from "./palette";
 import type { GpuKind } from "./gpuLedger";
 import { witchSprites, type SoundsystemGenArt, type TreehouseArt, type WitchArt } from "./homeArt";
-import { creatureFrame, walkGait, runJob, type ArtJob, type ArtResult, type BeachArt, type BeachEdgeArt, type LakeShoreArt, type DecorPiece, type PartyWitchArt, type PartyArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
+import { creatureFrame, walkGait, runJob, stumpId, type StumpArt, type StumpSpec, type ArtJob, type ArtResult, type BeachArt, type BeachEdgeArt, type LakeShoreArt, type DecorPiece, type PartyWitchArt, type PartyArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
 import { artCacheKey, cachePut, hashText, type CacheHint } from "./artCache";
 import { rigGearKey, type RigGear, type RigMeta } from "./rig/rigBuild";
@@ -45,7 +45,7 @@ export function prewarmArtWorkers(): void {
 /** An art set's row in the GPU ledger (render/gpuLedger.ts), by its job's kind. */
 const LEDGER_KINDS: Record<string, GpuKind> = { type: "trees", creature: "creatures", sleep: "creatures", nap: "creatures", glide: "creatures", woken: "creatures", face: "creatures", party: "creatures", rig: "creatures", witch: "witch", hat: "witch", partyWitch: "witch", treehouse: "house" };
 const ledgerKind = (k: string): GpuKind => LEDGER_KINDS[k] ?? "props";
-const ISLAND_KINDS = new Set<string>(["type", "treehouse", "soundsystem"]);
+const ISLAND_KINDS = new Set<string>(["type", "treehouse", "soundsystem", "stump"]);
 /** A job, or a waiting job's key ("kind:id..."), of the island's own. */
 export const islandBound = (j: ArtJob | string): boolean => ISLAND_KINDS.has(typeof j === "string" ? j.slice(0, j.indexOf(":")) : j.kind);
 /** A job as asked: the art's generation it was asked in (reseat). */
@@ -70,6 +70,8 @@ export class AssetLibrary {
   private rigs = new Map<string, RigArt>();
   private partyWitches = new Map<string, PartyWitchArt & { atlas: Atlas }>();
   private soundsystemsGen = new Map<string, SoundsystemGenArt & { atlas: Atlas }>();
+  /** The great stumps baked so far (render/markers.ts stumpDeal), by their spec's id. */
+  private stumps = new Map<string, { atlas: Atlas; art: StumpArt }>();
   private party: (PartyArt & { atlas: Atlas }) | undefined;
   private decor: DecorArt | undefined;
   /** The beach's edge of the woods (render/beach.ts): asked for only when she comes near the sand. */
@@ -340,6 +342,8 @@ export class AssetLibrary {
       this.party = { atlas, ...r.result.party! };
     } else if (r.job.kind === "soundsystem") {
       this.soundsystemsGen.set(r.job.id, { atlas, ...r.result.ss! });
+    } else if (r.job.kind === "stump") {
+      this.stumps.set(r.job.id, { atlas, art: r.result.stumps![0] });
     } else if (r.job.kind === "find") {
       this.finds.set(r.job.id, { atlas, ...r.result.scenes! });
     } else if (r.job.kind === "hat") {
@@ -659,6 +663,12 @@ export class AssetLibrary {
     if (!a) this.ask({ kind: "soundsystem", id: k, style: this.style, genome, yaw, size, part }, urgent);
     return a;
   }
+  /** An area's great stump (runeMarkers.stump; render/markers.ts stumpDeal's spec), baked as it's wanted: undefined till it lands. */
+  stumpArt(spec: StumpSpec, urgent = true): { atlas: Atlas; art: StumpArt } | undefined {
+    const id = stumpId(spec), a = this.stumps.get(id);
+    if (!a) this.ask({ kind: "stump", id, style: this.style, stump: spec }, urgent);
+    return a;
+  }
   /** Ask for a set ahead of need, without using it. */
   prefetchType(t: number): void { if (!this.types.has(t)) this.ask({ kind: "type", id: t, style: this.style, seed: this.typeSeed, K: this.K, biome: this.typeBiome }); }
   /** Tonight's own trees (the night's seed), for the area types `types`, if they were drawn ahead and kept (app/landingBake.ts):
@@ -707,7 +717,8 @@ export class AssetLibrary {
     for (const a of this.types.values()) free(a.atlas);
     for (const a of this.tonightTypes.values()) free(a.atlas);
     for (const a of this.soundsystemsGen.values()) free(a.atlas);
-    this.types.clear(); this.tonightTypes.clear(); this.soundsystemsGen.clear(); this.typeLog.clear(); this.typeNext = 0;
+    for (const a of this.stumps.values()) free(a.atlas);
+    this.types.clear(); this.tonightTypes.clear(); this.soundsystemsGen.clear(); this.stumps.clear(); this.typeLog.clear(); this.typeNext = 0;
     this.tonightShut = false;
     this.seed = o.seed; this.typeSeed = o.typeSeed; this.typeBiome = o.typeBiome;
     if (o.treehouse !== this.treehouseId || !this.home.treehouse) { // (another, or this one still being drawn: asked again, the last ask dropped)

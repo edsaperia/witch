@@ -518,7 +518,7 @@ export class View {
   propBatch!: SpriteBatch;
   private partyView!: PartyView;
   /** A soundsystem's height on its great stump's cut, by its area's key (made once: render/party.ts liftOf). */
-  private readonly stumpLift = (key: string): number => { const i = key.indexOf(","); return this.markerArt.stump([+key.slice(0, i), +key.slice(i + 1)])?.art.height ?? 0; };
+  private readonly stumpLift = (key: string): number => { const i = key.indexOf(","); const s = this.markerArt.stump([+key.slice(0, i), +key.slice(i + 1)]); return s ? this.assets.stumpArt(s.spec, false)?.art.height ?? 0 : 0; };
   private strings!: StringLightsView;
   leashView!: LeashView;
   private lasers!: Lasers;

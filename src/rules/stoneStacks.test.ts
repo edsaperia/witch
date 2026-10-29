@@ -9,7 +9,7 @@ import { TUNING as BUILT, withTuning } from "./tuning";
 const TUNING = withTuning({ cast: { ...BUILT.cast, on: true } });
 import { cellKey, spreadWave } from "./party";
 import { befriend, hasRune, stateOf } from "./creatureStates";
-import { castingStone, castOf, castProgress, castReady, castShown, stoneStack } from "./stoneStacks";
+import { castingStone, castOf, castProgress, castReady, castShown, castSpot, stoneStack } from "./stoneStacks";
 import { hexCell } from "./leash";
 
 const still: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
@@ -43,12 +43,13 @@ function nextArea(g: Game): { key: string; cell: [number, number]; stone: { x: n
   const [cx, cy] = g.party.next[0];
   return { key: `${cx},${cy}`, cell: [cx, cy], stone: g.map.soundsystemSpot(cx, cy) };
 }
-/** Her on foot on a stone's spell spot (cast.spot south of it); the area's hostiles made friends (so nothing hits her) unless `keep`. */
+/** Her on foot on a stone's spell spot (castSpot: cast.spot south of it, or a great stump's middle); the area's hostiles made friends (so nothing hits her) unless `keep`. */
 function at(g: Game, a: { key: string; stone: { x: number; z: number } }, keep = false): void {
   if (!keep) for (const c of own(g, a.key)) if (!c.boss && c.level > 0) befriend(c, g.clock.time);
   for (const c of g.creatures) if (!c.boss && cellKey(c.cell) !== a.key && Math.hypot(c.x - a.stone.x, c.z - a.stone.z) < 250) c.gone = true; // (no visitors to hit her)
   g.byArea = null;
-  g.witch = { ...g.witch, x: a.stone.x + 0.5, z: a.stone.z + C.spot + 0.5, mode: "ground", lift: 0, seated: false, perch: undefined, vx: 0, vz: 0 };
+  const spot = castSpot(a.stone, g.tuning);
+  g.witch = { ...g.witch, x: spot.x + 0.5, z: spot.z + 0.5, mode: "ground", lift: 0, seated: false, perch: undefined, vx: 0, vz: 0 };
 }
 
 describe("runestone stacks (Ed, 2026-10-28)", () => {
@@ -151,7 +152,8 @@ describe("the soundsystem spell (Ed, 2026-10-28)", () => {
   });
 
   it("casts only standing on the spell spot (Ed's playtest, 2026-10-29: \"I should have to stand on the soundsystem spell sigil\"), not just north of it by the stone", () => {
-    const g = game(), a = area(g), W = g.witches[0];
+    // (the runestone's spell spot, cast.spot south of the stone: the great stumps off; on, it's the stump's middle, tested below)
+    const g = game(123, withTuning({ cast: { ...BUILT.cast, on: true }, runeMarkers: { ...BUILT.runeMarkers, stump: { ...BUILT.runeMarkers.stump!, on: false } } })), a = area(g), W = g.witches[0];
     at(g, a);
     expect(castingStone(g, W)?.key).toBe(a.key);
     for (const [dx, dz] of [[0, 1], [0, C.spot - C.radius - 0.3], [C.radius + 0.3, C.spot]]) {

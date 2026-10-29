@@ -19,6 +19,9 @@ import { Model, render, v3 } from "../model3d.js";
 import { witchPixelsPerUnit, cleanFlecks } from "../witch.js";
 import { propVariant } from "./generator.js";
 import { groundColours } from "../ground.js";
+import { treeSpecies, treeColours } from "../trees.js";
+import { AREA_FLORA } from "../flora/areas.js";
+import { biomeLook, biomeColours } from "../flora/biomes.js";
 
 const SU = 1 / 1.9; // model units a metre (as the prop generator's PR_U)
 // lobes: how many, how far each swells past the trunk at its foot (a share of the radius) and how wide (radians); flute: the
@@ -68,13 +71,34 @@ export const STUMP_GENOMES = {
   },
   juniper: { // (badlands) silver, twisted, split into strands, gnarled
     across: [7, 9], spread: [20, 24], height: [.8, 1], lobes: [4, 6], lobe: [.35, .6], lobeWidth: .28, flute: .55, twist: 1.1,
-    roots: [5, 7], rootGirth: [0.68, 1.02], branch: .5, dives: .6, slabs: [2, 3], slabDrop: [.05, .15], hollow: [.08, .25], cracks: [5, 9], moss: 0,
+    roots: [5, 7], rootGirth: [0.68, 1.02], branch: .5, dives: .6, slabs: [0, 0], slabDrop: [.05, .15], hollow: [.08, .25], cracks: [5, 9], moss: 0,
     colour: { bark: [.1, .08, .46], dark: [.08, .12, .28], light: [.1, .05, .62], top: [.1, 0.06, 0.57], ring: [.08, .16, .5], moss: [.2, .3, .5], spread: .03 },
   },
 };
 // The species each biome grows (art/flora/biomes.js BIOME_LOOKS' keys).
-export const STUMP_FOR_BIOME = { temperate: "oak", "cold rainforest": "cedar", cold: "spruce", "mountains and glaciers": "pine", jungle: "kapok", volcanic: "charred", "mangrove swamp": "mangrove", hot: "baobab", badlands: "juniper" };
-export const stumpSpecies = biome => STUMP_FOR_BIOME[String(biome ?? "").split("/")[0]] ?? "oak";
+export const STUMP_FOR_BIOME = { temperate: "oak", "cold rainforest": "cedar", cold: "spruce", "mountains and glaciers": "pine", jungle: "oak", volcanic: "charred", "mangrove swamp": "mangrove", hot: "baobab", badlands: "juniper" };
+export const stumpSpecies = biome => STUMP_FOR_BIOME[String(biome ?? "").split(/[/|]/)[0]] ?? "oak";
+// Each area type's stump (Ed, 2026-10-29: "a different stump per area type"; "they don't necessarily have to look very different between
+// area types, they just have to fit in with the area's look"): the stump of its own main tree (AREA_FLORA's first species), by the form
+// nearest that tree (broadleaves the oak's, firs the spruce's, pines and larches the pine's...), its bark that tree's in the area's biome,
+// its moss and the earth over its roots the area's own ground (stumpPiece's colours). A main kind that makes no sawn stump (palms, cacti,
+// bamboo, cycads) takes the biome's form, as before.
+export const STUMP_FOR_TREE = {
+  oak: "oak", beech: "oak", ash: "oak", lime: "oak", sycamore: "oak", chestnut: "oak", elm: "oak", whitebeam: "oak", crabApple: "oak", broad: "oak", flat: "oak",
+  olive: "oak", cherry: "oak", marula: "oak", mopane: "oak", rowan: "oak", hawthorn: "oak", hazel: "oak", elder: "oak", alder: "oak", willow: "oak", birch: "oak",
+  weepingBirch: "oak", aspen: "oak", holly: "oak", glowcap: "oak", vinewood: "oak", crystal: "oak",
+  cedar: "cedar", yew: "cedar", baldCypress: "cedar", fir: "spruce", pine: "pine", larch: "pine",
+  juniper: "juniper", acacia: "juniper", paloVerde: "juniper", mesquite: "juniper", desertIronwood: "juniper",
+  kapok: "oak", strangler: "oak", ironwood: "oak", mangrove: "mangrove", baobab: "baobab", // (the jungle's buttressed trees the oak's broad flare: the kapok's thin planks read as flat fins in the game)
+};
+/** An area's main tree (its flora's first species), or null. */
+export const areaMainTree = def => AREA_FLORA[def?.id]?.species?.[0]?.[0] ?? null;
+/** The stump form (a STUMP_GENOMES key) for an area (its def) in a biome (key). */
+export function stumpForArea(def, biome) {
+  const tree = areaMainTree(def), b = String(biome ?? "").split(/[/|]/)[0];
+  if (b === "volcanic") return "charred"; // (the volcanic biome's trunks are charred black: art/flora/biomes.js)
+  return STUMP_FOR_TREE[tree] ?? stumpSpecies(biome);
+}
 
 // A colour from its [h, s, v], spread a little by the seed.
 const tone = (c, r, k) => hsv2rgb(((c[0] + (r() - .5) * k * .5) % 1 + 1) % 1, Math.max(0, Math.min(1, c[1] + (r() - .5) * k)), Math.max(0, Math.min(1, c[2] + (r() - .5) * k * 1.5)));
@@ -165,6 +189,7 @@ export function stumpPiece(species, o = {}, def = null, st = {}, ppm = 16) {
   const G = STUMP_GENOMES[species]; if (!G) throw new Error(`no stump species "${species}"`);
   const v = propVariant(species, o.seed ?? 0, o, STUMP_GENOMES);
   for (const k of ["lift", "slabDrop"]) if (v[k] === undefined) v[k] = 0;
+  { const b = String(st.biome ?? "").split(/[/|]/)[0]; if (v.frost && def && b !== "cold" && b !== "mountains and glaciers" && !def.snow) v.frost = 0; } // (frost only where it snows)
   const m = new Model({ blend: .18 });
   const R = build(m, v, G), yaw = o.yaw ?? v.r() * Math.PI * 2;
   const { sp: raw, project } = render(m, { scale: witchPixelsPerUnit(st), yaw, lineGap: .3 });
@@ -172,7 +197,18 @@ export function stumpPiece(species, o = {}, def = null, st = {}, ppm = 16) {
   const { sp, x0 = 0, y0 = 0 } = cropTight(raw);
   cleanFlecks(sp);
   const r = rng((v.seed * 7919 + 29) >>> 0), C = G.colour, k = C.spread, g = def?.floor ? groundColours(def, st) : null;
+  // fitted to its area (def): its bark its main tree's (treeColours, the biome's look over it, as the area's own trees are coloured:
+  // art/areas.js prop), a smooth-barked kind's smooth bark (beech, rowan, holly...); its moss the area's ground's
+  let fit = null;
+  if (def && G.fit !== false) {
+    const tree = areaMainTree(def), S = tree ? treeSpecies(tree) : null, look = st.biome ? biomeLook(st.biome) : null;
+    if (S && STUMP_FOR_TREE[tree]) { const c = treeColours(rng(v.seed * 31 + 7), { ...st, leafHue: def.leaf ?? st.leafHue }, S.fn); biomeColours(c, look, M); fit = { bark: S.trunk ? c[M.BARK2] : c[M.TRUNK], dark: c[M.BARKD], light: c[M.BARKL] }; }
+    else if (look) { const c = { [M.TRUNK]: tone(C.bark, r, 0), [M.BARKD]: tone(C.dark, r, 0), [M.BARKL]: tone(C.light, r, 0) }; biomeColours(c, look, M); fit = { bark: c[M.TRUNK], dark: c[M.BARKD], light: c[M.BARKL] }; }
+  }
+  const mixc = (a, b, t) => a.map((x, i) => Math.round(x + (b[i] - x) * t));
   const colours = { [M.TRUNK]: tone(C.bark, r, k), [M.BARKD]: tone(C.dark, r, k), [M.BARKL]: tone(C.light, r, k), [M.BELLY]: tone(C.top, r, k * .5), [M.ACCENT]: tone(C.ring, r, k * .5), [M.STONED]: hsv2rgb(C.dark[0], C.dark[1] * .8, C.dark[2] * .45), [M.MOSS]: tone(C.moss, r, k), [M.WEB]: tone(C.frost ?? [.6, .06, .9], r, k * .3), [M.BODY2]: g ? g[M.BODY2] : hsv2rgb(.08, .4, .22), [M.BODY]: g ? g[M.BODY] : hsv2rgb(.08, .35, .3), [M.LINE]: hsv2rgb(C.dark[0], C.dark[1], C.dark[2] * .55) };
+  if (fit) { colours[M.TRUNK] = mixc(colours[M.TRUNK], fit.bark, .7); colours[M.BARKD] = mixc(colours[M.BARKD], fit.dark, .7); colours[M.BARKL] = mixc(colours[M.BARKL], fit.light, .7); colours[M.LINE] = mixc(colours[M.LINE], fit.dark.map(c => c * .6), .7); }
+  if (g && g[M.MOSS]) colours[M.MOSS] = mixc(colours[M.MOSS], g[M.MOSS], .6);
   const { r: _r, ...variant } = v;
   return { sp, colours, metres: { height: +(sp.h / ppm).toFixed(1), width: +(sp.w / ppm).toFixed(1), radius: +(R / SU).toFixed(1) }, top: { x: top0[0] - x0, y: top0[1] - y0 }, origin: { x: foot0[0] - x0, y: foot0[1] - y0 }, yaw, variant };
 }
