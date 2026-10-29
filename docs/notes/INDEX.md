@@ -233,6 +233,7 @@ says what each note covers.
 - Decor
 - Rolling ground
 - Ley lines
+- Rainbow wave
 - Edge pointers
 - Ride
 - Bend

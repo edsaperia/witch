@@ -100,6 +100,8 @@ import { GpuLedger } from "./gpuLedger";
 import { keepUnderBudget, newGpuState } from "./view/gpuBudget";
 import { berrySprite } from "./berries";
 import { leyDrawnTo, shaderPulse, type LeyLines } from "./leylines";
+import { rainbowFronts } from "../rules/rainbow";
+import { metresToLinks, routeLengths } from "../rules/leypulse";
 import { routeSeen } from "../rules/hatSpells";
 import { bootLineAt, bootPath, bootPulseAt } from "../rules/bootRing";
 import { Glades } from "./glades";
@@ -1536,6 +1538,10 @@ export class View {
       this.ley.near(w.x, w.z);
       // (the Route-seer hat worn, rules/hatSpells.ts: the whole route, however far the reveal has grown)
       this.ley.grow(leyDrawnTo(g.party, g.map, time, t.leyLines.reveal ?? 3, this.ley.branch(), routeSeen(g))); // (none before the party, the hat's too)
+      { // (an early clear's rainbow waves show the line as they pass: rules/rainbow.ts)
+        const R = g.rainbows?.length ? rainbowFronts(g.party, g.map, g.rainbows, g.clock.time) : [], lens = R.length ? routeLengths(g.party, g.map) : [];
+        this.ley.rains(R.map(w => ({ front: metresToLinks(lens, w.front), tail: metresToLinks(lens, Math.max(0, w.tail)) })));
+      }
       { // The boot's ring (rules/bootRing.ts): the line round the home ring at reveal x the pulse, the pulse turning the stones; faint after.
         // (Its sparkler runs the whole lap, past the last stone to where it came on to the ring, at the pulse's speed, the boot
         // ending as it gets there, and hands over to the wave's: Ed, 2026-10-07, "The two pulses or tips don't join correctly at

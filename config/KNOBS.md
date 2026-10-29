@@ -2296,6 +2296,14 @@ Code: `config/decisions/953-waves.json`, `app/settings.ts`
 | `leyLines.flow` | array of number |  |
 | `leyLines.depart.avoid` | number | 0 to … |
 | `leyLines.minRadius` | number | 0 to … |
+| `leyLines.rainbow.on` | boolean |  |
+| `leyLines.rainbow.speed` | number | 0 to … |
+| `leyLines.rainbow.linger` | number | 0 to … |
+| `leyLines.rainbow.max` | number | 0 to … |
+| `leyLines.rainbow.bars` | number | 0 to … |
+| `leyLines.rainbow.spacing` | number | 0 to … |
+| `leyLines.rainbow.cell` | number | 0 to … |
+| `leyLines.rainbow.height` | number | 0 to … |
 
 ### `partyObjects`
 
