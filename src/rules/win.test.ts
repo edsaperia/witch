@@ -18,6 +18,7 @@ import { cellKey, clearArea, wavePlan } from "./party";
 import { leyChain } from "./leylines";
 import { fillTrunk } from "./finds";
 import { pulseLinks } from "./leypulse";
+import { bootPath } from "./bootRing";
 
 const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const W = { ...WIN_DEFAULT, ...(TUNING.win ?? {}) };
@@ -119,7 +120,7 @@ describe("the end of the route (rules/win.ts)", () => {
     // both set off from the wave's pulse's place on the line (links along the route as drawn), one each way
     expect(lap[0].links).toBeCloseTo(at, 1);
     expect(out[0]).toBe(lap[0]);
-    expect(lap.slice(1).map(s => s.links)).toEqual([...Array(reached + 1).keys()].reverse());
+    expect(lap.slice(1).map(s => s.links)).toEqual([...[...Array(reached + 1).keys()].reverse().slice(0, -1), -1]); // (home: the boot ring's link, -1)
     expect(lap[lap.length - 1].key).toBe("home");
     expect(out.slice(1).map(s => s.key)).toEqual(plan);
     const home = winPulse(g)!, away = winPulseOut(g)!;
@@ -215,6 +216,52 @@ describe("the end of the route (rules/win.ts)", () => {
     const play = () => { const { g } = toTheEnd(11); run(g, 0.2); calmAll(g); run(g, 30); return JSON.stringify({ w: g.win, xs: g.creatures.map(c => [Math.round(c.x * 100), Math.round(c.z * 100), c.finale ?? null]) }); };
     expect(play()).toBe(play());
   }, 120000);
+});
+
+describe("a quick win (Ed, 2026-10-29: \"The pulse ended in a strange place, possibly because I won the night very quickly\"): the lap's pulse home runs the whole line back to the treehouse's front", () => {
+  // The island cleared while the wave's pulse is at each stage: on the ring's stretch of the first link, out along the first link,
+  // and mid-route after wave 1. Home's stone is the treehouse's front, the boot ring's path before the route's start (links -1), so
+  // the pulse home runs on round the ring, that much longer, and the win comes as it gets there.
+  function cleared(stage: "ring" | "first" | "start" | "route"): Game {
+    const g = newGame(7, withTuning({ map: { ...TUNING.map!, islandAreas: 10 } }));
+    g.clock.paused = false; g.party.spellAt = undefined; g.party.paused = true;
+    g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
+    stepGame(g, idle, STEP);
+    for (const [k, h] of g.combat.sounds) if (isHomeKey(k)) h.hp = h.max = 1e9;
+    if (stage === "route" || stage === "start") { stepGame(g, { ...idle, nextWave: true }, STEP); } // (wave 1 brought on: the island can only count as cleared after it)
+    g.party.bootUntil = 0; g.party.paused = false; g.party.pulse.at = g.clock.time; g.party.pulse.d = stage === "ring" ? 20 : stage === "first" ? 150 : stage === "start" ? 0.5 : 50; g.party.pulse.v = TUNING.leyLines.pulseSpeed;
+    stepGame(g, idle, STEP);
+    const plan = [...wavePlan(g.party, g.map).entries()].sort((a, b) => a[1] - b[1]).map(([k]) => k);
+    for (const c of g.creatures) if (plan.includes(cellKey(c.cell)) && !c.boss) c.gone = true;
+    for (const k of plan) { const [x, y] = k.split(",").map(Number); clearArea(g.party, g.map, [x, y], g.clock.time); }
+    calmAll(g);
+    return g;
+  }
+  it("before wave 1 lands (the pulse still on the ring's stretch, or out along the first link) the island can't count as cleared, so no lap sets off", () => {
+    for (const stage of ["ring", "first"] as const) {
+      const g = cleared(stage);
+      expect(pulseLinks(g.party, g.map, g.clock.time)).toBeLessThan(1);
+      run(g, 2);
+      expect(g.win).toBeFalsy(); expect(g.party.wave).toBe(0);
+    }
+  }, 60000);
+  for (const stage of ["start", "route"] as const) it(`won ${stage === "start" ? "just as wave 1 lands, the pulse at the second link's start" : "mid-route after wave 1"}: the pulse home runs to links -1, the front, the ring's path longer, and the win comes there`, () => {
+    const g = cleared(stage), from = pulseLinks(g.party, g.map, g.clock.time), ring = bootPath(g.map).length;
+    expect(from).toBeGreaterThanOrEqual(1);
+    stepGame(g, idle, STEP);
+    expect(g.win?.phase).toBe("lap");
+    const lap = g.win!.lap, home = lap[lap.length - 1], last = lap[lap.length - 2];
+    expect(home.key).toBe("home"); expect(home.links).toBe(-1);
+    expect([home.x, home.z]).toEqual([g.map.treehouseFront.x, g.map.treehouseFront.z]);
+    // Its last leg is the ring's path longer than the straight way (at the lap's speed), so the pulse has time to run it.
+    expect((home.at - last.at) * W.lapSpeed).toBeCloseTo(Math.hypot(home.x - last.x, home.z - last.z) + ring, 3);
+    // The pulse's place along the route falls from where it set off to -1, never past it, and the win comes as it gets there.
+    let links = from + 1e-6, wonAt = -1;
+    run(g, home.at - g.clock.time + 0.5, () => { const h = winPulse(g); if (h) { expect(h.links).toBeLessThanOrEqual(links + 1e-9); expect(h.links).toBeGreaterThanOrEqual(-1); links = h.links; } else if (wonAt < 0 && g.win?.phase === "won") wonAt = g.clock.time; });
+    expect(links).toBeLessThan(-0.9);
+    expect(wonAt).toBeGreaterThanOrEqual(home.at - STEP); expect(wonAt).toBeLessThanOrEqual(home.at + STEP + 1e-6);
+    expect(winPulse(g)).toBeNull();
+  }, 60000);
 });
 
 describe("the conga follows her (Ed's playtest, 2026-10-26: on the ground in the home area, the line follows you)", () => {

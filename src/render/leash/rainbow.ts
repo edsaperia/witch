@@ -17,7 +17,7 @@ import * as THREE from "three";
 import { rainbow } from "../indicator";
 import { comfort } from "../comfort";
 import { SPRITE_UNIFORMS } from "../sprites";
-import { bendPoint, groundHeight } from "../height";
+import { bendPoint, groundHeight, shownOverBend } from "../height";
 import { rainbowKnobs, rainbowRuns, routePoint } from "../../rules/rainbow";
 import { metresToLinks, routeLengths } from "../../rules/leypulse";
 import { RAINBOW_M, type DotLine } from "../leylines";
@@ -50,7 +50,11 @@ export function drawRainbow(lv: LeashView, time: number, dot: number[], camera: 
   pv.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); frustum.setFromProjectionMatrix(pv);
   // (upright: up the sprites' own up, leaning back toward the camera, on the ground at the bar's foot: as a stone's column stands)
   const U = SPRITE_UNIFORMS.uUp.value, upZ = (z: number, h: number) => z + h * U.z, upY = (x: number, z: number, h: number) => h * U.y + groundHeight(x, z) - groundHeight(x, upZ(z, h));
-  const seen = (x: number, z: number, h: number) => { sphere.center.set(x, groundHeight(x, z) + h * 0.5, z); bendPoint(sphere.center); sphere.radius = h * 0.5 + 3; return frustum.intersectsSphere(sphere); };
+  // (in the camera's frustum, and this side of the bent ground's horizon: nothing on the ground shows past the bend, Ed 2026-10-06;
+  // these are drawn with no depth test, so the earth's curve can't hide them itself: Ed's quick win, 2026-10-29, "I can see the
+  // route through the bend")
+  const cam = camera.position;
+  const seen = (x: number, z: number, h: number) => { if (!shownOverBend(x, 0.25, z, cam)) return false; sphere.center.set(x, groundHeight(x, z) + h * 0.5, z); bendPoint(sphere.center); sphere.radius = h * 0.5 + 3; return frustum.intersectsSphere(sphere); };
   const bar = (x: number, z: number, steps: number, size: number, c: readonly number[], a: number) => {
     for (let j = 0; j < steps; j++) {
       const y = (j + 0.5) * size;

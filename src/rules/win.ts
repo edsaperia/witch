@@ -33,9 +33,12 @@ import { pulseProgress } from "./leypulse";
 import { goneAtWin } from "./finds";
 import { homeArea } from "./homeArea";
 import { updateTrail } from "./babies";
+import { bootPath } from "./bootRing";
 
 /** A point on one of the lap's pulses' runs: a stone (its key; "" for where it set off), where it stands, when the pulse passes
- *  it, and its place along the ley route as drawn (links: home's stone 0, the route's j-th stone j). */
+ *  it, and its place along the ley route (links: the route's j-th stone j, from where the boot ring's lap ends; home's stone, the
+ *  treehouse's front, -1: the boot ring's path is the line's way back there from the route's start, one line, and the lap's
+ *  pulse home runs it: render/leylines.ts ringLinks; Ed's quick win, 2026-10-29: "The pulse ended in a strange place"). */
 export interface LapPoint { key: string; x: number; z: number; at: number; links: number }
 
 export type WinPhase = "stragglers" | "lap" | "won";
@@ -159,9 +162,12 @@ function lapRuns(g: Game, from: number, speed: number): { home: LapPoint[]; out:
   const links = Math.max(0, Math.min(n - 1, c.current + (routeDone(g) ? 0 : pulseProgress(p, g.map, from))));
   const k = Math.floor(links), a = S[k], b = S[Math.min(n - 1, k + 1)], f = links - k;
   const start: LapPoint = { key: "", x: a.x + (b.x - a.x) * f, z: a.z + (b.z - a.z) * f, at: from, links };
+  // (Home's stone is the treehouse's front, the boot ring's path away from where the route starts: the pulse home runs the ring
+  // back round to it, that much further, to links -1: one line.)
+  const ring = S[0]?.depart ? bootPath(g.map).length : 0;
   const run = (stones: number[]): LapPoint[] => {
     let d = 0, prev: { x: number; z: number } = start;
-    return [start, ...stones.map(i => { const s = S[i]; d += Math.hypot(s.x - prev.x, s.z - prev.z); prev = s; return { key: i === 0 ? "home" : cellKey(s.cell), x: s.x, z: s.z, at: from + d / speed, links: i }; })];
+    return [start, ...stones.map(i => { const s = S[i]; d += Math.hypot(s.x - prev.x, s.z - prev.z) + (i === 0 ? ring : 0); prev = s; return { key: i === 0 ? "home" : cellKey(s.cell), x: s.x, z: s.z, at: from + d / speed, links: i === 0 && ring > 0 ? -1 : i }; })];
   };
   const home: number[] = [], out: number[] = [];
   for (let i = k; i >= 0; i--) home.push(i);
