@@ -6,16 +6,15 @@
 // party comes, the stone flares and sinks into the ground as its soundsystem arrives.
 // The art (frames), the beacons and the motes; which stones to draw is the view's.
 import * as THREE from "three";
-import { groundPoints, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
+import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
+import { SPRITE_UNIFORMS } from "./sprites";
 import * as Art from "../../art/generator.js";
 import { AREA_TYPES, type ForestMap } from "../rules/map";
 import { dealRunestones, type Runestone } from "../rules/runestones";
 import type { Tuning } from "../rules/tuning";
 import { atlasFromPixels, type Atlas } from "./atlas";
-import { runJob, type ArtJob, type ArtResult, type AtlasPixels, type MakeCanvas, type StumpSpec } from "./artBuild";
-import { biomeKey } from "../rules/lakeLooks";
-import { islandArtSeed } from "./artCache";
-import { hash2 } from "../rules/random";
+import { runJob, type ArtJob, type ArtResult, type AtlasPixels, type MakeCanvas } from "./artBuild";
+import { stumpDeal, stumpDealOf, type StumpDeal, type StumpSpec } from "../rules/stumps";
 import type { StoneSpec } from "./islandArt";
 import { awaitOr, runSync, type Steps } from "./slices";
 import type { Style } from "./style";
@@ -38,25 +37,9 @@ export function runestoneOf(map: ForestMap, cx: number, cy: number, t: Tuning): 
 /** A map's runestones drawn and packed (MarkerArt.stones), for its MarkerArt. */
 export interface MarkerStones { index: Map<string, number>; stoneOf: Map<string, string>; heights: Map<string, number>; pixels: AtlasPixels; /** In stump mode: each area's stump spec and mirroring (baked as it's wanted: AssetLibrary.stumpArt). */ stumps?: StumpDeal }
 
-/** The great stumps (Ed, 2026-10-29: "we could make them all treestumps"; runeMarkers.stump): every area's centrepiece a giant
- *  tree's stump in place of its runestone, each area type's its own (Ed: "a different stump per area type ... they just have to fit
- *  in with the area's look"): its main tree's form and bark in the island's biome, its ground's moss and earth (art/props/stumps.js
- *  stumpForArea), `variants` of each type dealt round its areas, each seen from its own angle and mirrored at random. Baked as each is
- *  wanted (AssetLibrary.stumpArt), not with the island. */
-export interface StumpDeal { specs: Map<string, StumpSpec>; flip: Map<string, boolean> }
-export function stumpDeal(t: Tuning, map: ForestMap): StumpDeal {
-  const S = t.runeMarkers.stump!, island = t.map?.island ?? "home", world = t.map?.world ?? 0, base = islandArtSeed(world, island);
-  const biome = biomeKey(island, world, t.biomeLooks), n = Math.max(1, Math.round(S.variants)), specs = new Map<string, StumpSpec>(), flip = new Map<string, boolean>(), seen = new Map<number, number>();
-  const AREA = Art.AREA_BY_ID as Record<string, unknown>;
-  const order = [...map.cells].sort((a, b) => hash2(a[0], a[1], base) - hash2(b[0], b[1], base));
-  for (const [cx, cy] of order) {
-    const type = map.typeOf(cx, cy), area = AREA_TYPES[type].id, k = seen.get(type) ?? 0; seen.set(type, k + 1);
-    const v = k % n, seed = base * 7 + type * 131 + v * 101;
-    specs.set(`${cx},${cy}`, { species: Art.stumpForArea(AREA[area], biome) as string, seed, yaw: hash2(type, v, base + 77) * Math.PI * 2, area, ...(biome ? { biome } : {}) });
-    flip.set(`${cx},${cy}`, hash2(cx, cy, base + 3) < 0.5);
-  }
-  return { specs, flip };
-}
+/** The great stumps' deal (rules/stumps.ts, shared with the rules: where she casts is each stump's cut). */
+export type { StumpDeal };
+export { stumpDeal };
 
 export class MarkerArt {
   readonly atlas: Atlas;
@@ -105,7 +88,7 @@ export class MarkerArt {
     const { job, index, stoneOf, keys } = MarkerArt.stoneJob(style, t, map), heights = new Map<string, number>();
     yield "stones";
     const made = yield* awaitOr(() => art ? art(job) : Promise.reject(new Error("here")), () => runJob(job, Art.defaultCanvas as MakeCanvas));
-    if (made.stumps) return { index, stoneOf, heights, pixels: made.px, stumps: stumpDeal(t, map) };
+    if (made.stumps) return { index, stoneOf, heights, pixels: made.px, stumps: stumpDealOf(t, map) };
     keys.forEach((k, i) => heights.set(k, made.stones![i]));
     return { index, stoneOf, heights, pixels: made.px };
   }
@@ -153,7 +136,42 @@ void main() {
 export interface Beacon { x: number; z: number; colour: THREE.Vector3; strength: number; base?: number; /** its own height (metres), else the shared one */ height?: number }
 /** A thin laser straight up from an awake stone (Ed, v149), like the disco ball's: width and height in metres. */
 export interface Laser { x: number; z: number; colour: THREE.Vector3; strength: number; width: number; height: number; base?: number }
-export interface Mote { x: number; y: number; z: number; colour: THREE.Vector3; alpha: number }
+/** size: its size in metres (a soft round point shrinking with the world, dimming once it's under a pixel: the wild stumps' wisps,
+ *  Ed, 2026-10-29: "I can see the trunk area wisps from far away and they look like big squares"); 0 or none, moteSize pixels. */
+export interface Mote { x: number; y: number; z: number; colour: THREE.Vector3; alpha: number; size?: number }
+
+/** The motes' points: a colour each (rgb, alpha: added on), at the picture's moteSize pixels, or (aSize > 0) aSize metres across as
+ *  the camera sees it there: a soft round glow while it's a few pixels across, one pixel dimmed by its share of it when smaller. */
+function motePoints(size: number): THREE.ShaderMaterial {
+  return new THREE.ShaderMaterial({
+    vertexShader: /* glsl */ `attribute vec4 color;
+attribute float aSize;
+varying vec4 vCol;
+varying float vSoft;
+uniform float uSize;
+uniform vec2 uRes;
+${HEIGHT_VERT_GLSL}
+void main() {
+  vCol = color;
+  gl_Position = clipOf(onGround(position));
+  vSoft = 0.0;
+  if (aSize > 0.0) {
+    float px = aSize * projectionMatrix[1][1] * 0.5 * uRes.y / max(0.001, gl_Position.w);
+    vCol.a *= min(1.0, px * px);
+    gl_PointSize = max(1.0, floor(px + 0.5));
+    if (px >= 2.5) { vSoft = 1.0; vCol.a *= 1.6; } // (the round falloff's light made back)
+  } else gl_PointSize = uSize;
+}`,
+    fragmentShader: /* glsl */ `varying vec4 vCol;
+varying float vSoft;
+void main() {
+  vec4 c = vCol;
+  if (vSoft > 0.5) { vec2 p = gl_PointCoord * 2.0 - 1.0; float r = dot(p, p); if (r > 1.0) discard; c.a *= (1.0 - r) * (1.0 - r); }
+  gl_FragColor = c;
+}`,
+    uniforms: { ...HEIGHT_UNIFORMS, uSize: { value: size }, uRes: SPRITE_UNIFORMS.uRes }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  });
+}
 
 /** The columns of light over the stones (seen from the treetops) and the motes rising from them. */
 export class MarkerFx {
@@ -165,6 +183,7 @@ export class MarkerFx {
   private motes: THREE.Points;
   private mPos: Float32Array;
   private mCol: Float32Array;
+  private mSize: Float32Array;
   private m4 = new THREE.Matrix4();
 
   constructor(private readonly maxBeams = 64, private readonly maxMotes = 600) {
@@ -183,10 +202,12 @@ export class MarkerFx {
     this.lasers.renderOrder = 9;
     this.mPos = new Float32Array(maxMotes * 3);
     this.mCol = new Float32Array(maxMotes * 4);
+    this.mSize = new Float32Array(maxMotes);
     const mg = new THREE.BufferGeometry();
     mg.setAttribute("position", new THREE.BufferAttribute(this.mPos, 3));
     mg.setAttribute("color", new THREE.BufferAttribute(this.mCol, 4));
-    this.motes = new THREE.Points(mg, groundPoints(3));
+    mg.setAttribute("aSize", new THREE.BufferAttribute(this.mSize, 1));
+    this.motes = new THREE.Points(mg, motePoints(3));
     this.motes.frustumCulled = false;
     this.group.add(this.beams, this.lasers, this.motes);
   }
@@ -217,14 +238,15 @@ export class MarkerFx {
     this.beams.instanceMatrix.needsUpdate = true;
     this.beamAttr.needsUpdate = true;
     (this.beams.material as THREE.ShaderMaterial).uniforms.uShown.value = shown;
-    const m = Math.min(this.maxMotes, motes.length), P = this.mPos, C = this.mCol;
+    const m = Math.min(this.maxMotes, motes.length), P = this.mPos, C = this.mCol, Z = this.mSize;
     for (let i = 0; i < m; i++) {
       const p = motes[i], c = p.colour, j3 = i * 3, j4 = i * 4; // (written straight in: a list a mote a frame before)
       P[j3] = p.x; P[j3 + 1] = p.y; P[j3 + 2] = p.z;
       C[j4] = c.x; C[j4 + 1] = c.y; C[j4 + 2] = c.z; C[j4 + 3] = p.alpha;
+      Z[i] = p.size ?? 0;
     }
     const g = this.motes.geometry;
     g.setDrawRange(0, m);
-    for (const k of ["position", "color"]) { const a = g.getAttribute(k) as THREE.BufferAttribute; a.clearUpdateRanges(); a.addUpdateRange(0, m * a.itemSize); a.needsUpdate = true; } // (only those in use)
+    for (const k of ["position", "color", "aSize"]) { const a = g.getAttribute(k) as THREE.BufferAttribute; a.clearUpdateRanges(); a.addUpdateRange(0, m * a.itemSize); a.needsUpdate = true; } // (only those in use)
   }
 }

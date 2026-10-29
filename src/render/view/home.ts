@@ -43,10 +43,10 @@ const WISP_LIGHTS: WispLight[] = [];
 const TOP = new Map<string, number>(), RANK_RGB: THREE.Vector3[] = [];
 /** The great stumps' instances this frame, by their baked stump (reused: render/view/home.ts drawMarkers). */
 const STUMP_LISTS = new Map<string, SpriteInstance[]>(), NONE: SpriteInstance[] = [];
-function mote(x: number, y: number, z: number, colour: THREE.Vector3, alpha: number): void {
+function mote(x: number, y: number, z: number, colour: THREE.Vector3, alpha: number, size = 0): void {
   let m = MOTE_POOL[moteN];
-  if (!m) MOTE_POOL[moteN] = m = { x, y, z, colour, alpha };
-  else { m.x = x; m.y = y; m.z = z; m.colour = colour; m.alpha = alpha; }
+  if (!m) MOTE_POOL[moteN] = m = { x, y, z, colour, alpha, size };
+  else { m.x = x; m.y = y; m.z = z; m.colour = colour; m.alpha = alpha; m.size = size; }
   MOTES.push(m); moteN++;
 }
 
