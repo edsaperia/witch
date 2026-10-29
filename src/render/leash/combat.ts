@@ -170,7 +170,7 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
   }
   { let j = 0; for (const f of lv.fx) if (time - f.at < f.life) lv.fx[j++] = f; lv.fx.length = j; } // (in place: no new array a frame)
   for (const f of lv.fx) {
-    const k = (time - f.at) / f.life, n = f.kind === "flash" ? 13 : f.kind === "dust" ? 10 : f.kind === "bits" ? f.n ?? 8 : f.kind === "spark" ? 10 : f.kind === "splash" ? 22 : f.kind === "puff" ? 12 : f.kind === "teleport" ? 40 : f.kind === "ring" ? f.n ?? 36 : f.kind === "motes" ? 16 : 14, sz = f.size ?? 1;
+    const k = (time - f.at) / f.life, n = f.kind === "flash" ? 13 : f.kind === "dust" ? 10 : f.kind === "bits" ? f.n ?? 8 : f.kind === "spark" ? 10 : f.kind === "splash" ? 22 : f.kind === "puff" ? 12 : f.kind === "teleport" ? 40 : f.kind === "ring" ? f.n ?? 36 : f.kind === "motes" ? f.n ?? 16 : 14, sz = f.size ?? 1;
     for (let i = 0; i < n; i++) {
       const a = hash2(f.seed, i, 3) * Math.PI * 2, r1 = hash2(f.seed, i, 5), r2 = hash2(f.seed, i, 7);
       if (f.kind === "spark") lv.standing.add(f.x + Math.cos(a) * sz * k * (0.5 + r1), f.y + sz * k * r2, f.z + Math.sin(a) * sz * k * (0.5 + r1), 0.22 * Math.sqrt(sz), dot, f.r, f.g, f.b, 1 - k);
@@ -191,7 +191,7 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
         const sp = (0.8 + r1 * 1.4) * sz, up = (2 + r2 * 2.5) * sz, px = artPx * (r1 > 0.6 ? 2 : 1);
         lv.solid.add(f.x + Math.cos(a) * sp * k, Math.max(0.05, f.y + up * k - 6 * k * k), f.z + Math.sin(a) * sp * k, px, sq, f.r, f.g, f.b, 1 - k * k * k);
       }
-      else if (f.kind === "motes") { const R = sz * (0.3 + r1 * 0.7), h = (f.tx ?? 3) * (0.2 + 0.8 * r2) * Math.sqrt(k); lv.standing.add(f.x + Math.cos(a) * R, f.y + h, f.z + Math.sin(a) * R * 0.8, 0.7 * (1 - k * 0.5), dot, f.r, f.g, f.b, Math.sin(Math.PI * Math.min(1, k * 1.4)) * 0.9); } // (a sigil's motes rising: tx their height)
+      else if (f.kind === "motes") { const R = sz * (0.3 + r1 * 0.7), h = (f.tx ?? 3) * (0.2 + 0.8 * r2) * Math.sqrt(k); lv.standing.add(f.x + Math.cos(a) * R, f.y + h, f.z + Math.sin(a) * R * 0.8, (f.dot ?? 0.7) * (1 - k * 0.5), dot, f.r, f.g, f.b, Math.sin(Math.PI * Math.min(1, k * 1.4)) * 0.9); } // (a sigil's motes rising: tx their height)
       else if (f.kind === "ring") { const aa = (i / n) * Math.PI * 2, R = sz * (0.3 + 0.7 * k); lv.flat.add(f.x + Math.cos(aa) * R, 0, f.z + Math.sin(aa) * R * 0.8, f.dot ?? 0.7, dot, f.r, f.g, f.b, 1 - k); }
     }
   }

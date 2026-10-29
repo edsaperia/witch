@@ -30,7 +30,7 @@ export interface RankKnobs {
    *  1.35 since Ed's "I didn't notice any legends in any runestone sigil stacks", 2026-10-29, with its ring: legendRing). */
   sizes: number[];
   /** Embers a sigil on the ground gives off, by rank: how many at once, each one's size (m) and how high it rises (m); in her stack, `stack` of that. */
-  embers: { count: number[]; size: number[]; rise: number[]; stack: number };
+  embers: { count: number[]; size: number[]; rise: number[]; stack: number; bright?: number; crowd?: number };
   /** A youth's dots in her stack: at most this many a row (two rows). */
   dotsPerRow: number;
   /** A rune stone's rune, its glow (Ed, 2026-10-27: "Make runestone sigils glow brighter"): its baked colour times this, hue kept. */
@@ -122,7 +122,7 @@ export function drawEmbers(batch: Instances, dot: number[], pts: [number, number
     const life = (time * (0.32 + 0.12 * hash2(seed, i, 71)) + hash2(seed, i, 73)) % 1, p = pts[Math.floor(hash2(seed, i, 79) * pts.length)];
     const drift = Math.sin((life * 0.8 + hash2(seed, i, 83)) * Math.PI * 2) * 0.12 * size * 0.3;
     const hot = r === 3 ? 0.9 * (1 - life) : 0.55 * (1 - life); // (white at the core when it leaves the stroke; a legend's white-hot)
-    const cr = col[0] + (1 - col[0]) * hot, cg = col[1] + (1 - col[1]) * hot, cb = col[2] + (1 - col[2]) * hot, a = life < 0.8 ? 1 : (1 - life) / 0.2;
+    const b = E.bright ?? 1, cr = (col[0] + (1 - col[0]) * hot) * b, cg = (col[1] + (1 - col[1]) * hot) * b, cb = (col[2] + (1 - col[2]) * hot) * b, a = life < 0.8 ? 1 : (1 - life) / 0.2;
     const s = sz * (1 - life * 0.45);
     if (flat) batch.add(x + p[0] * size + drift, y + 0.1 + life * rise, z + p[1] * size, s, dot, cr, cg, cb, a);
     else batch.add(x + p[0] * size + drift, y - p[1] * size + life * rise, z + 0.05, s, dot, cr, cg, cb, a);
