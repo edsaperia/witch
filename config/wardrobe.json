@@ -2,10 +2,9 @@
   "_": "A bag item's invites: its 💌 stats, multipliers on the tuning's invites numbers (cooldown, range, homing...) while she wears it, and invitesAdd: the ones the tuning has at 0 (inaccuracy, bloomPer, bloomDecay, bloomMax: degrees), added on (rules/bags.ts; Ed, 2026-10-29: \"We should start with a choice of two bags; faster rate of fire but shorter range, and slower rate of fire but longer range\", then \"Remove none\" and \"You can add 'purse' which has the stats of the 'none' option\": no None, and she can't take invitations till she carries one), and stat: the words the panel shows under its name. What she can wear at the treehouse's dressing stations (Ed, 2026-10-21, the station menus: previews/ed/station-menus-mock on claude/ed-shots; src/rules/wardrobe.ts, ui/stationPanel.ts). stations: each station (a house object's id, config/house/) and the shelves its panel shows, top to bottom. shelves: each a row of items (her own and, as silhouettes, those still to find), and under it its colour grid (colour: the genome's palette parts it colours, the first chosen first; grid cloth, 5 rows by 13 columns, or skin, 5 by 6: Ed, \"Colour picker has only 5 rows\"; every colour hers from the start: Ed, \"She starts with all the colour variants\"), its fit (the genome's sliders that shape what it holds, WITCH_AXES: Ed, the sliders that aren't items go on a Fit shelf at the station of what they shape). The Workshop's (Ed, 2026-10-23; docs/backlog/workshop.md): slot, a row of broom-part cards for that slot (tip, chassis, exhaust: config/broom-parts.json), the empty slot first, the parts she hasn't found as silhouettes; sets, the sets' progress as chips; board, the pegboard's 3 × 3 biome map of the parts (broom-parts.json board); readOnly, a shelf to look at, not choose from (the pegboard: fitting is the bay's). The broom's colours and fit are the lathe's (Body, Trim, Fit), its shapes gone (brooms are made of parts) and its Power gone (the spell is the set her parts complete). An item: its id, its name, what it sets on her genome (set: a path, dotted for a part, and its value; a number counts as worn whenever hers is above 0, and putting it on keeps hers when it is), start (hers in a first game: the starting set) (the rest are found in the forest, as the other permanent upgrades are, the crystal ball giving the hints: Ed, 2026-10-21; till then a silhouette, with no hint: Ed, \"No line to the crystal ball\"). always: a shelf whose every choice is hers (skin). frame: the part of her the camera zooms in on while a shelf's row is chosen (the tuning's camera.station.parts; Ed, 2026-10-23: zoom in on what's being chosen). bareHead: the stations where she's drawn without her hat while the panel's open, so what's on her head and face shows (Ed, 2026-10-23). A row with fewer than two choices she owns isn't shown, nor a fit slider while what it shapes is off (Ed: \"Don't show options where there's nothing to choose yet\").",
   "bareHead": ["dressingTable"],
   "stations": {
-    "mirror": ["hat"],
     "dressingTable": ["hair", "skin", "face", "earrings"],
-    "wardrobe": ["jacket", "top", "trousers"],
-    "cloakPegs": ["cloak", "scarf", "cloakFit"],
+    "wardrobe": ["jacket", "top", "trousers", "hat", "band"],
+    "cloakPegs": ["cloak", "scarf"],
     "shoeRack": ["shoes"],
     "bags": ["bag", "bagFit"],
     "lathe": ["tip", "chassis", "exhaust", "sets", "broomBody", "broomTrim", "broomFit", "pegboard"]
@@ -26,7 +25,8 @@
       { "id": "earrings-none", "name": "None", "set": { "accessories.earrings": false }, "start": true },
       { "id": "earrings", "name": "Hoops", "set": { "accessories.earrings": true }, "start": true }
     ] },
-    "hat": { "frame": "hat", "label": "Hat", "colour": ["hat", "plume"], "fit": ["hatHeight", "hatBrim", "hatTilt", "hatBand"], "items": [] },
+    "hat": { "frame": "hat", "label": "Hat", "colour": ["hat"], "fit": ["hatHeight", "hatBrim", "hatTilt"], "items": [] },
+    "band": { "frame": "hat", "label": "Band", "colour": ["plume"], "fit": ["hatBand"], "items": [] },
     "jacket": { "frame": "top", "label": "Jacket", "colour": ["jacket"], "items": [
       { "id": "top-jacket", "name": "Velvet jacket", "set": { "top": "jacket" }, "start": true },
       { "id": "top-poncho", "name": "Poncho", "set": { "top": "poncho" }, "start": true },
@@ -36,17 +36,16 @@
     ] },
     "top": { "frame": "top", "label": "Top", "colour": ["top"], "items": [] },
     "trousers": { "frame": "legs", "label": "Trousers", "colour": ["jeans"], "items": [] },
-    "cloak": { "frame": "top", "label": "Cloak", "colour": ["cloak"], "items": [
+    "cloak": { "frame": "top", "label": "Cloak", "colour": ["cloak"], "fit": ["cloakLength"], "items": [
       { "id": "cloak-none", "name": "None", "set": { "cloak": "none" }, "start": true },
       { "id": "cloak-short", "name": "Short cloak", "set": { "cloak": "short" }, "start": true },
       { "id": "cloak-long", "name": "Long cloak", "set": { "cloak": "long" } },
       { "id": "cloak-hooded", "name": "Hooded cloak", "set": { "cloak": "hooded" } }
     ] },
-    "scarf": { "frame": "top", "label": "Scarf", "colour": ["scarf"], "items": [
+    "scarf": { "frame": "top", "label": "Scarf", "colour": ["scarf"], "fit": ["scarfLength"], "items": [
       { "id": "scarf-none", "name": "None", "set": { "accessories.scarf": false }, "start": true },
       { "id": "scarf", "name": "Scarf", "set": { "accessories.scarf": true }, "start": true }
     ] },
-    "cloakFit": { "frame": "top", "label": "Fit", "fit": ["cloakLength", "scarfLength"], "items": [] },
     "shoes": { "frame": "feet", "label": "Shoes", "colour": ["sneakers"], "items": [
       { "id": "shoes-trainers", "name": "Trainers", "set": { "accessories.chunky": false }, "start": true },
       { "id": "shoes-chunky", "name": "Chunky trainers", "set": { "accessories.chunky": true } }

@@ -29,7 +29,8 @@ function inHouse(dx: number, dz: number): Game {
 
 describe("the dressing stations by nearness", () => {
   it("are the creator's stations, and there are some", () => {
-    expect(STATIONS.map(o => o.id)).toEqual(expect.arrayContaining(["mirror", "wardrobe", "cloakPegs", "shoeRack", "bags", "lathe", "dressingTable"]));
+    expect(STATIONS.map(o => o.id)).toEqual(expect.arrayContaining(["wardrobe", "cloakPegs", "shoeRack", "bags", "lathe", "dressingTable"]));
+    expect(STATIONS.map(o => o.id)).not.toContain("mirror"); // (the hat's colours and fit at the wardrobe, its mirror scenery: Ed, 2026-10-29)
     expect(STATIONS.map(o => o.id)).not.toContain("broomBay"); expect(STATIONS.map(o => o.id)).not.toContain("pegboard"); // (the broom one station, at the lathe: Ed, 2026-10-29)
   });
 
@@ -64,9 +65,9 @@ describe("the dressing stations by nearness", () => {
   });
 
   it("one at a time: walking from one station to the next swaps them", () => {
-    const a = before("mirror", 0.3), b = before("wardrobe", 0.3);
+    const a = before("dressingTable", 0.3), b = before("wardrobe", 0.3);
     const first = stationAt(at, a.x, a.z, null)?.id ?? null;
-    expect(first).toBe("mirror");
+    expect(first).toBe("dressingTable");
     expect(stationAt(at, b.x, b.z, first)?.id).toBe("wardrobe");
   });
 
@@ -80,10 +81,10 @@ describe("the dressing stations by nearness", () => {
   });
 
   it("in the game: none once she is off her feet (rising)", () => {
-    const p = objectFrontAt(obj("mirror"), at, 0.4), g = inHouse(p.x, p.z);
-    expect(stationOf(g, null)?.id).toBe("mirror");
+    const p = objectFrontAt(obj("cloakPegs"), at, 0.4), g = inHouse(p.x, p.z);
+    expect(stationOf(g, null)?.id).toBe("cloakPegs");
     g.witch = { ...g.witch, mode: "rising" };
-    expect(stationOf(g, "mirror")).toBeNull();
+    expect(stationOf(g, "cloakPegs")).toBeNull();
   });
 
   it("choosing there, with her whole framed (camera.station.whole), the rules leave the camera's distance and aim to the view (render/view/camera.ts) but ease in and out", () => {
