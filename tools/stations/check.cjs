@@ -78,10 +78,12 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
       }
       // The pad: the d-pad moves the focus (nothing on her changes), R1 the next card, ✕ chooses.
       {
-        const press = async (b, hold = 2500) => { await page.evaluate(b => { window.__pad.buttons[b] = true; }, b); await page.waitForTimeout(hold); await page.evaluate(b => { window.__pad.buttons[b] = false; }, b); await page.waitForTimeout(500); };
+        // (each button held till the focus moves, up to 20 s: in the house under a software GL a frame can take seconds, and a fixed
+        // press fell between frames)
         const focusNow = () => page.evaluate(() => { const f = document.querySelector("#station-panel .focus"); return f ? { at: `${f.dataset.line}:${f.dataset.col}`, card: f.closest(".sp-shelf")?.dataset.shelf, worn: [...document.querySelectorAll("#station-panel .worn, #station-panel .sel")].map(e => `${e.dataset.line}:${e.dataset.col}`).join(",") } : null; });
+        const press = async b => { const was = (await focusNow())?.at; await page.evaluate(b => { window.__pad.buttons[b] = true; }, b); for (let t = 0; t < 40 && (await focusNow())?.at === was; t++) await page.waitForTimeout(500); await page.evaluate(b => { window.__pad.buttons[b] = false; }, b); await page.waitForTimeout(1500); };
         await page.evaluate(() => { window.__padOn = true; }); await page.waitForTimeout(600);
-        const a = await focusNow(); await press(15, 300); let b = await focusNow(); if (a && b && a.at === b.at) { await press(15, 2500); b = await focusNow(); } // (the house a few frames a second here: held long enough to be seen)
+        const a = await focusNow(); await press(15); const b = await focusNow();
         ok(a && b && a.at !== b.at && a.worn === b.worn, `${id}: the pad's d-pad moves the focus and changes nothing (${a?.at} → ${b?.at})`);
         const cards = await page.evaluate(() => document.querySelectorAll("#station-panel .sp-shelf").length);
         if (cards > 1) { await press(5); const c = await focusNow(); ok(c && c.card !== b.card, `${id}: R1 jumps to the next card (${b?.card} → ${c?.card})`); await press(4); }
