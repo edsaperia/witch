@@ -188,10 +188,10 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
   // on the ground with the stump, its bars running out from the rings' middle (where she casts) over the roots all round, following
   // the root area's outline (StoneSpot.roots), only the filled ones drawn ("the unfilled white bars don't need to be drawn").
   const SR = t.runeMarkers.stump?.on ? t.runeMarkers.stump.ring : null, nb = Math.min(V.bars.length, n * 2); // (twice the bars: they reach out over the roots, so their ends stay close)
-  const edgeOf = (st: StoneSpot) => (a: number) => { // (the root area's radius that way: between its two nearest angles; mirrored with the stump)
-    const R = st.roots!, N = R.length, u = ((((st.flip ? Math.PI - a : a) / (Math.PI * 2)) * N) % N + N) % N, i0 = Math.floor(u), q = u - i0;
-    return R[i0] * (1 - q) + R[(i0 + 1) % N] * q;
-  };
+  // (an even circle round the cut's middle, as far out as the root area reaches on average: Ed, 2026-10-29, after "why is the spectrum
+  // circle longer at the bottom than at the top?" (the drawn roots lie farther south, the picture laid on the ground by its cut); the
+  // even circle chosen over following them)
+  const edgeOf = (st: StoneSpot) => { const R = st.roots!, mean = R.reduce((p, q) => p + q, 0) / Math.max(1, R.length); return (_a: number) => mean; };
   // (one bar, at angle a from the rings' middle (x, z), `reach` of the way out to the roots' edge, in colour c)
   const rootBar = (S: NonNullable<typeof SR>, edge: (a: number) => number, x0: number, z0: number, a: number, reach: number, c: number[], alpha: number) => {
     const ux = Math.cos(a), uz = Math.sin(a), steps = Math.max(1, Math.floor((edge(a) * S.fill - S.inner) / S.cell)), top = Math.round(reach * steps);
