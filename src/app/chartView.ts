@@ -19,6 +19,7 @@ import { TUNING } from "../rules/tuning";
 import { islandSigil } from "../../art/sigils.js";
 import { CHART_PIXEL, releaseSeaChart, SeaChart, takeSeaChart, type ChartIsland, type FlightEnd, type FlyOptions } from "../render/chart/seaChart";
 import { loadSave, unlocked, unvisited, type ChartSave } from "./chartSave";
+import { unlockAll } from "./debugUnlock";
 import { ChartPin } from "../render/chart/chartPin";
 import { islandAt } from "./chartLayout";
 import { stepTo } from "./chartNav";
@@ -321,7 +322,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
 
   /** Every island, always: home and each found with its sigil, sailable; the rest bare land, the placeholders dimmest. */
   function build(): void {
-    const open = new Set(sailAny ? ["home", ...REAL_KINDS] : unlocked(save)), won = new Set(save.won), w = worldNow(), fresh = new Set(unvisited(save, opts.here?.island));
+    const open = new Set(sailAny || unlockAll() ? ["home", ...REAL_KINDS] : unlocked(save)) /* (or the pause page's Unlock everything: app/debugUnlock.ts) */, won = new Set(save.won), w = worldNow(), fresh = new Set(unvisited(save, opts.here?.island));
     const one = (id: string, radii: ArrayLike<number>, sigil: string): ChartIsland => {
       const at = islandAt(id, w)!, unknown = isPlaceholder(id);
       return { id, x: at.x, y: at.y, phase: islandPhase(id, w), radii, sail: open.has(id) && !unknown, unknown, won: won.has(id), fresh: open.has(id) && !unknown && fresh.has(id), sigil };
