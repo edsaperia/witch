@@ -84,6 +84,8 @@ export class Sfx {
   letter(pan = 0, near = 1): void { this.babble.letter(pan, near); }
   hit(pan = 0, near = 1, spent = false): void { chimes.hit(this.k, pan, near, spent); }
   fill(amount: number, pan = 0, near = 1): void { chimes.fill(this.k, amount, pan, near); }
+  /** A 💌 landing on a creature: a soft thunk rising as its ring fills (chimes.ts thunk). */
+  thunk(amount: number, pan = 0, near = 1): void { chimes.thunk(this.k, amount, pan, near); }
   invited(level: number, pan = 0, near = 1): void { chimes.invited(this.k, level, pan, near); }
   /** A 💌 coming down on the ground, having met no one. */
   land(pan = 0, near = 1): void { chimes.land(this.k, pan, near); }
