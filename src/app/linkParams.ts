@@ -225,10 +225,12 @@ export function tuningFromLink(params: URLSearchParams) {
   // Rank sigils (render/leash/ranks.ts; the default since Ed, 2026-10-27: "go ahead and push all the new sigil work"): every leash
   // sigil its bare glyph in its rank's colour with embers, the rune stones in their areas' top ranks', and the leash hex grid at
   // leash.ranks.hex metres (6). ?sigils=old brings back the old sigils and their 4 m grid (OLD_HEX); ?sigils=new, the default;
-  // ?sigils=bold, rank sigils drawn bold (leash.ranks.bold) where a species has its bold sigil yet.
+  // ?sigils=bold, rank sigils drawn bold (leash.ranks.bold, the default since every species has one: Ed, 2026-10-29); ?sigils=thin,
+  // rank sigils in their monoline glyphs, to compare.
   { const v = params.get("sigils"), R = tuning.leash.ranks;
     if (R && (v === "new" || v === "old")) tuning.leash = { ...tuning.leash, ranks: { ...R, on: v === "new" } };
     if (R && v === "bold") tuning.leash = { ...tuning.leash, ranks: { ...R, on: true, bold: true } }; // (the bold sigils, where a species has one: art/sigils.js BOLD)
+    if (R && v === "thin") tuning.leash = { ...tuning.leash, ranks: { ...R, on: true, bold: false } };
     if (R && tuning.leash.hex) tuning.leash = { ...tuning.leash, hex: { ...tuning.leash.hex, size: tuning.leash.ranks!.on ? R.hex : OLD_HEX } }; }
   applyKnobParams(tuning, params); // (Ed's decisions panel: its knobs' choices kept in the URL as d_<id>)
   // The sea chart's save (app/chartSave.ts): the islands she's found, so the night's legends favour the others (rules/rosters.ts).
