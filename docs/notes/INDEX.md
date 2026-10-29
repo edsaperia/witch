@@ -181,6 +181,7 @@ says what each note covers.
 
 ## [Performance](performance.md)
 
+- The sail's terrain relocation
 - The View's build in slices
 - The start's shaders
 - The stall hunt
