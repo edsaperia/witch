@@ -761,6 +761,17 @@ See `setPieceFootprint`.
 |---|---|---|
 | `reserveMargin` | number | 0 to … |
 
+### `stoneKeepClear`
+
+The keep-clear zone round each area's stone (its great stump, or its runestone with the stumps off), in metres from its middle.
+
+1. Ed, 2026-10-29: "No special areas should appear so close to stump/runestone areas; no special scenery, no finds or flasks, no legend circles" (and the party relics, walls and ruins, ponds, picnics and campfires, and the playgrounds too)
+Nothing special within it: no scene or set piece, ruin or freak tree (the giant mushroom), modern relic, the night's find, flask (party relic), legend's clearing, wall or stone ring, pond, campfire or magic stone, the party's picnics, clusters, set dressing and campfires, or ground (playgrounds and sports grounds): each keeps its whole footprint out (map.clearOfStones). Ordinary trees, bushes, rocks and groundcover may stand in it; the stump's own clearing (runeMarkers.stump.clear) keeps the trees off its roots. A legend's clearing that can't fit out of it (a small area) goes at the farthest spot it fits, and the map says so in the log. The 40 m: the stump's 17 m clearing and a margin.
+
+| knob | type | range |
+|---|---|---|
+| `stoneKeepClear` | number | 0 to … |
+
 ### `treeMarginFromSoundsystem`
 
 See `setPieceFootprint`.

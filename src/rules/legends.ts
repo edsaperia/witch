@@ -70,7 +70,7 @@ export const relicGlints = (forest: { treesNear(x: number, z: number, r: number)
 export function placeRelics(map: ForestMap, forest: { treesNear(x: number, z: number, r: number): Plant[] }, data: LegendsData = LEGENDS): Relic[] {
   const R = data.relics, b = map.bounds, inside = (x: number, z: number) => isInside(b, x, z, 60);
   const woods = (px: number, pz: number) => forest.treesNear(px, pz, 14).filter(t => Math.hypot(t.x - px, t.z - pz) < 14).length >= 3;
-  const out: Relic[] = [];
+  const out: Relic[] = [], keep = 4 + R.sigilOffset; // (the bottle and its sigil, south of it, out of every stone's keep-clear zone: Ed, 2026-10-29)
   const gapTo = (x: number, z: number) => out.reduce((m, r) => Math.min(m, Math.hypot(r.x - x, r.z - z)), Infinity);
   // How many (Ed, 2026-10-11: one per relics.perAreas areas the waves reach, at least home's), and which: the kinds in a seeded
   // order (relicKinds: bottle, mirrored or not, colour), never one bottle twice in a colour while they last (Ed: "We shouldn't use
@@ -101,7 +101,7 @@ export function placeRelics(map: ForestMap, forest: { treesNear(x: number, z: nu
         for (let r = map.homeRadius; r < 600; r += 4) if (!inHome(home.x + dx * r, home.z + dz * r)) { edge = r; break; }
         if (edge < 0) continue;
         const r = edge + side * R.homeInset, x = home.x + dx * r, z = home.z + dz * r;
-        if (r > map.homeRadius + 5 && Math.hypot(x - map.treehouse.x, z - map.treehouse.z) >= R.clearOfTreehouse && inside(x, z) && !map.hardClear(x, z) && inHome(x, z) === (side < 0)) spot = { x, z };
+        if (r > map.homeRadius + 5 && Math.hypot(x - map.treehouse.x, z - map.treehouse.z) >= R.clearOfTreehouse && inside(x, z) && !map.hardClear(x, z) && map.clearOfStones(x, z, keep) && inHome(x, z) === (side < 0)) spot = { x, z };
       }
       if (spot) break;
     }
@@ -116,7 +116,7 @@ export function placeRelics(map: ForestMap, forest: { treesNear(x: number, z: nu
     for (const r of [55, 70, 45, 85, 40, 30, 20]) {
       for (let k = 0; k < 12 && found < 2; k++) {
         const a = a0 + (k / 12) * Math.PI * 2, px = site.x + Math.cos(a) * r, pz = site.z + Math.sin(a) * r, kc = map.cellSafe(px, pz).cell;
-        if (kc[0] !== cell[0] || kc[1] !== cell[1] || !inside(px, pz) || map.hardClear(px, pz)) continue;
+        if (kc[0] !== cell[0] || kc[1] !== cell[1] || !inside(px, pz) || map.hardClear(px, pz) || !map.clearOfStones(px, pz, keep)) continue; // (out of every stone's keep-clear zone: Ed, 2026-10-29)
         const lc = map.legendClearing(cell[0], cell[1]); // (the whole bottle off its legend's circle, not just its middle: Ed, v1628)
         if (lc && Math.hypot(px - lc.x, pz - lc.z) < lc.r + (R.clearOfCircle ?? 0)) continue;
         const inWoods = woods(px, pz), want = inWoods && canopyOver(forest, map, px, pz) !== gap;

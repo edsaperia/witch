@@ -298,6 +298,7 @@ says what each note covers.
 - Art style / art pixel
 - Prop generator
 - Great stump
+- Stone keep-clear zone
 - Set-piece generator
 - Area recipe
 - Area folder

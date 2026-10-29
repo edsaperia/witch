@@ -35,6 +35,7 @@
   "setPieceFootprint": 7,
   "soundsystemFootprint": 6,
   "reserveMargin": 3,
+  "stoneKeepClear": 40,
   "treeMarginFromSoundsystem": 1.5,
 
   "treeDensity": 1,
