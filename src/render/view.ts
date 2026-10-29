@@ -2,6 +2,8 @@
 // (window size / pixel size) and stretched with nearest-neighbour by the browser, so every art
 // pixel stays a crisp square.
 import { RigView, rigOn } from "./rig/rigView";
+import { FxMock } from "./fxMock";
+const FX_MOCK_MODE = new URLSearchParams(globalThis.location?.search ?? "").get("fxmock");
 import type { RigGear } from "./rig/rigBuild";
 import type { Creature } from "../rules/creatures";
 import { partyGearOf } from "./artBuild";
@@ -362,6 +364,8 @@ const HOUSE_TILT_EASE = 0.6;
 export class View {
   readonly renderer: THREE.WebGLRenderer;
   scene = new THREE.Scene();
+  /** Stage 0 art review only; absent in ordinary play. */
+  fxMock: FxMock | null = null;
   camera: THREE.PerspectiveCamera;
   /** The far haze as it was, while the circle-bug suspects have it off (tuning suspects.haze; render/view/frameUniforms.ts). */
   hazeKept: THREE.Vector2 | null = null;
@@ -1726,6 +1730,7 @@ export class View {
     this.leashView.update(ht, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop, this.witchBodyY, this.witchFeetY, this.witchFrameH);
     (this.castTag ??= new CastTag()).update(this); // (the spell's key prompt by its 🎶, drawn just now: render/castTag.ts)
     this.time("leash");
+    if (FX_MOCK_MODE) (this.fxMock ??= new FxMock(this, FX_MOCK_MODE)).update(this, ht);
     workAhead(this);
     if (this.debugCull) drawGhosts(this, time);
     if (!draw) return;
