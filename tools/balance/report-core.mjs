@@ -1,5 +1,5 @@
 // Observation and presentation only: no combat, progression or wave model lives here.
-export const SCHEMA = 1;
+export const SCHEMA = 2;
 export const seedAt = i => 1000 + 7919 * i;
 export const caseKey = c => JSON.stringify([c.seed, c.island, c.bpm, c.bag, c.bot, c.species, c.level]);
 export const phaseOf = g => g.win?.phase ?? (g.party.wave > 0 ? "waves" : "opening");
@@ -64,7 +64,7 @@ const groupBy = (rows, key) => {
   return groups;
 };
 export function markdown(rows, manifest) {
-  const out = [`Real-rules balance report (schema ${SCHEMA})`, "", `Source: ${manifest.build}; commit ${manifest.commit}; source fingerprint ${manifest.fingerprint}.`,
+  const out = [`Real-rules balance report (schema ${manifest.schema ?? SCHEMA})`, "", `Source: ${manifest.build}; commit ${manifest.commit}; source fingerprint ${manifest.fingerprint}.`,
     `Fixed step ${manifest.step} s; limit ${manifest.limit} player seconds; seeds ${manifest.seeds.join(", ")}. Times below use the world clock (slowed by legend circles). Same seeds and loadouts across bots.`,
     "Sloppy is the existing novice bot: intermittent throws, imperfect aim, no dash. Bare broom, no hat; bag explicit for every bot.",
     "Censored = time limit reached without a win/loss; excluded from completed-phase times, included in win denominator. Win times include winners only.",
@@ -87,7 +87,7 @@ export function markdown(rows, manifest) {
     const r = rs[0], done = ps.filter(x => x.completed), unfinished = ps.filter(x => !x.completed);
     out.push(`| ${r.island} | ${r.bpm} | ${r.bag} | ${r.bot} | ${p} | ${ps.length} | ${done.length} | ${fmt(mean(done.map(x => x.seconds)))} | ${fmt(mean(unfinished.map(x => x.seconds)))} |`);
   }
-  out.push("", "Isolated stuns: stationary witch with protected health, one active wild target, no waves, no allies; aimed continuously at its current position. Hits count landed letters, not throws. Timeouts aren't proof a species can never be stunned.", "", "| species | rank | bpm | bag | n | stunned | landed hits (completed mean) | seconds (completed mean) | timeout landed hits |", "|---|---|---|---|---|---|---|---|---|");
+  out.push("", "Isolated active-party stuns: stationary witch with protected health, one wild target, no allies or waves. The party intro finishes before timing starts; movement, retaliation and invitation/orbit rules remain active. Aim tracks the target. Hits count landed letters, not throws. Timeouts aren't proof a species can never be stunned.", "", "| species | rank | bpm | bag | n | stunned | landed hits (completed mean) | seconds (completed mean) | timeout landed hits |", "|---|---|---|---|---|---|---|---|---|");
   for (const rs of groupBy(rows.filter(r => r.mode === "stuns"), r => JSON.stringify([r.species, r.level, r.bpm, r.bag])).values()) {
     const r = rs[0], done = rs.filter(x => x.stunned);
     out.push(`| ${r.species} | ${r.level} | ${r.bpm} | ${r.bag} | ${rs.length} | ${done.length} | ${fmt(mean(done.map(x => x.hits)))} | ${fmt(mean(done.map(x => x.end)))} | ${fmt(mean(rs.filter(x => !x.stunned).map(x => x.hits)))} |`);

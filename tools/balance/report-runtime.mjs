@@ -1,3 +1,4 @@
+// Real-rule runner and isolated invitation fixtures for report.mjs; no simulated combat model.
 import { openRules } from "./lib.mjs";
 import { observer, phaseOf, rangedTargeted } from "./report-core.mjs";
 
@@ -13,6 +14,8 @@ export async function runtime() {
     const { recordTempo } = await load("/src/rules/beat.ts");
     const { attackOf } = await load("/src/rules/combat/data.ts");
     const { fillTrunk } = await load("/src/rules/finds.ts");
+    const { castPartySpell, heldBySpell } = await load("/src/rules/party.ts");
+    const { worldAsleep } = await load("/src/rules/partyOver.ts");
     const make = c => {
       const g = newGame(c.seed, withTuning({ map: { ...TUNING.map, island: c.island ?? "home" }, spells: { ...TUNING.spells, bag: c.bag, hat: "none", parts: [] } }));
       g.clock.paused = false;
@@ -38,21 +41,28 @@ export async function runtime() {
       w.body = { ...w.body, x: d.x, z: d.z + 20, mode: "ground", lift: 0, vx: 0, vz: 0 };
       const target = g.creatures.find(q => !q.boss && !q.leashed);
       if (!target) throw Error(`No spare rank ${c.level} creature`);
-      // A fixture, not a copied model: all movement, attacks, letters and orbit slots still run normally.
-      for (const q of g.creatures) if (q !== target) q.gone = true;
+      // newGame's legacy headless start is active (spellAt undefined); the app opening sets it to null.
+      // If waiting for the spell, start it publicly and finish its input hold before timing the fixture.
+      for (const q of g.creatures) q.gone = true;
+      if (g.party.spellAt === null) castPartySpell(g.party, g.map, g.clock.time);
+      const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
+      while (heldBySpell(g.party, g.clock.time)) stepGame(g, idle, STEP);
+      if (worldAsleep(g)) throw Error("Stun fixture requires an active party");
       const x = w.body.x + distance, z = w.body.z;
-      Object.assign(target, { species: c.species, level: c.level, x, z, tx: x, tz: z, homeX: x, homeZ: z, anchorX: x, anchorZ: z, circle: undefined, safeR: undefined, seen: 0, boss: false, siege: undefined, rest: 0, asleep: undefined, napUntil: undefined, affection: undefined, affectionAt: undefined, fills: undefined, hp: undefined, dazed: false, dazedUntil: undefined, fight: undefined });
+      Object.assign(target, { species: c.species, level: c.level, x, z, tx: x, tz: z, homeX: x, homeZ: z, anchorX: x, anchorZ: z, circle: undefined, safeR: undefined, seen: g.clock.time, gone: false, boss: false, siege: undefined, rest: 0, asleep: undefined, bed: undefined, napUntil: undefined, affection: undefined, affectionAt: undefined, fills: undefined, hp: undefined, dazed: false, dazedUntil: undefined, fight: undefined });
       target.cell = g.map.cellSafe(x, z).cell;
       g.byArea = null;
-      let hits = 0, stunned = false;
+      const start = g.clock.time;
+      let hits = 0, stunned = false, retaliation = 0;
       for (let i = 0; i < Math.ceil(limit / STEP); i++) {
         w.health.hp = 1e6;
         stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, fire: true, aimX: target.x - w.body.x, aimZ: target.z - w.body.z }, Math.min(STEP, limit - i * STEP));
         hits += w.invites.events.filter(e => e.kind === "hit" && e.id === target.id).length;
+        retaliation += g.combat.events.filter(e => e.kind === "windup" && e.id === target.id).length;
         stunned = !!target.dazed || target.leashed || w.invites.events.some(e => e.kind === "happy" && e.id === target.id);
         if (stunned) break;
       }
-      return { ...c, mode: "stuns", distance, hits, stunned, end: g.clock.time };
+      return { ...c, mode: "stuns", distance, hits, stunned, retaliation, end: g.clock.time - start, fixture: "active-party-after-intro-v2" };
     }
     return { close, run, stun, STEP, bags: BAGS.map(b => b.id), bots: [...BOT_KINDS, "sloppy"], islands: ["home", ...REAL_KINDS], species: [...CREATURE_IDS].sort() };
   } catch (e) { await close(); throw e; }

@@ -1,3 +1,5 @@
+// Focused observation, replay and fixture checks for the real-rules balance report.
+// node --test --test-concurrency=1 tools/balance/report.test.mjs
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { observer, phaseOf, markdown, caseKey, rangedTargeted } from "./report-core.mjs";
@@ -43,6 +45,9 @@ test("real-rules replay is deterministic across interleaved bots and bags", asyn
     const stun = { seed: 1000, bpm: 100, bag: "tote", species: "fox", level: 1 };
     const a = r.stun(stun, 15, 10), b = r.stun(stun, 15, 10);
     assert.deepEqual(a, b); assert.equal(a.stunned, true); assert.ok(a.hits > 0);
+    const active = r.stun({ ...stun, bag: "satchel", species: "boar", level: 2 }, 30, 10);
+    assert.ok(active.retaliation > 0, "the target must be fighting, not repeatedly put to bed before the party");
+    assert.equal(active.fixture, "active-party-after-intro-v2");
   } finally { await r.close(); }
 });
 
