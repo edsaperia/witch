@@ -84,6 +84,8 @@ export interface Witch {
   paused?: boolean;
   wake?: WakeState;
   pending?: Partial<Controls>;
+  /** Her own outward-push hold in the zoo; the solo counter remains Game.zooPush. */
+  zooPush?: number;
   body: WitchState;
   leash: LeashState;
   spells: SpellState;
@@ -334,10 +336,8 @@ export function newGame(seed: number, tuning: Tuning, players = 1, ready?: MapPr
 
 /** The presses that happen once (not held): kept for the next step if a frame runs none. */
 const ONE_SHOT = ["toggleMode", "sigil", "place", "cycle", "cycleBack", "spell", "castParty", "dash", "nextWave", "pauseWaves", "feedNearest", "inviteNearest", "happyNearest"] as const;
+const NO_INPUT: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 
-/** Advance the game by one real frame of `realDt` seconds: as many fixed STEPs as that makes up
- *  (at most a few, so a hitch doesn't run away), with the held controls each step and each
- *  one-shot press on the first step that comes. */
 /** Her local pause page. Station panels never stop a multiplayer night. */
 export function setWitchPaused(g: Game, id: number, paused: boolean): void {
   const W = g.witches[id];
@@ -346,10 +346,11 @@ export function setWitchPaused(g: Game, id: number, paused: boolean): void {
   else { W.paused = paused; g.clock.paused = g.witches.every(w => w.paused); }
 }
 
-/** One controls object is the legacy solo API; a multiplayer frame supplies exactly one per stable witch ID. */
+/** Advance by realDt in fixed steps, consuming each one-shot once. Explicit input arrays must
+ * contain one entry per stable witch ID. Legacy scalar callers control the host, with neutral guests. */
 export function stepGame(g: Game, controls: Controls | readonly Controls[], realDt: number): void {
   if (g.disposed) throw new Error("stepGame: a night that has ended (a reader left on the old night)");
-  const inputs: readonly Controls[] = Array.isArray(controls) ? controls : [controls as Controls];
+  const inputs: readonly Controls[] = Array.isArray(controls) ? controls : g.witches.map((_, i) => i === 0 ? controls as Controls : NO_INPUT);
   if (inputs.length !== g.witches.length) throw new RangeError("One input is required for each witch");
   const multi = g.witches.length > 1;
   const edges = multi ? [...ONE_SHOT, "hat" as const] : ONE_SHOT;
@@ -551,6 +552,11 @@ function fixedStep(g: Game, controls: readonly Controls[]): void {
   const motions = g.witches.map((W, i) => {
     const ht = witchTime(g, W);
     let c = controls[i];
+    if (g.witches.length > 1 && W.house?.slept) {
+      // Finished the existing bed hold: asleep until this shared night ends. No new wake gesture.
+      W.body = { ...W.body, vx: 0, vz: 0 };
+      return { W, c: NO_INPUT, ht, was: W.body, deck: deckOf(g.map, t), perchTurn: 0, firing: false, LV: null as ReturnType<typeof leashView> | null };
+    }
     // The party spell (Ed, 2026-10-06): until it's cast, and while she casts it, she stands behind the decks: no moving,
     // rising, blinking, spells or 💌s (the camera's zoom still works). Its button, Enter, or her spell key (R, the pad's L3, touch
     // "spell") while the game waits casts it, rather than the boost (the hold drops that spell press).
@@ -627,8 +633,9 @@ function fixedStep(g: Game, controls: readonly Controls[]): void {
     if (g.map.zoo?.layout) {
       const Ld = g.map.bounds.land, B = W.body;
       const held = !!Ld && !B.seated && Ld.distAt(B.x, B.z) < (t.map?.push ?? 0) * 0.6 && seaward(B, c, g.map.bounds) === true;
-      g.zooPush = held ? (g.zooPush ?? 0) + hdt : 0;
-      if (g.zooPush >= ZOO_EDGE_PUSH) g.zooExit ??= ht;
+      const pushed = held ? ((g.witches.length > 1 ? W.zooPush : g.zooPush) ?? 0) + hdt : 0;
+      if (g.witches.length > 1) W.zooPush = pushed; else g.zooPush = pushed;
+      if (pushed >= ZOO_EDGE_PUSH) g.zooExit ??= ht;
     }
     if (waking) keepInBedroom(g, W); // (the bedroom's door shut till she's up: rules/wakeUp.ts)
     if (W.knock) W.body = stepWitchKnock(W.knock, W.body, hdt, t, g.map.bounds, (x, z) => blinkClear(g, x, z, W.body));
@@ -715,7 +722,7 @@ function fixedStep(g: Game, controls: readonly Controls[]): void {
       else if (e.kind === "hatPicked") { onHatPicked(g, W, e.x, e.z, ht, t); const waking = wakeOf(g, W); if (waking) wearPiece(waking, "hat"); } // (a hat on her head: out of last night's pile, so she's drawn in it; rules/clothesPile.ts)
     }
     // The 💌s (issue #87): on the ground, off her seat, not knocked out.
-    stepInvites(W.invites, W.ko ? {} : confusedAim(W, c, ht), { ...W.body }, t.invites.on && hasInvites(W) && W.body.mode === "ground" && !W.body.seated && !W.ko, g.creatures, affectionOf(g, W), ht, hdt, bagTuning(t, W.spells.bag), g.tuning.legendCircle?.slow.on === false ? undefined : leavesCalmRing(g, W.body), hasInvites(W) ? hatLetters(hatsDown(W), t) : undefined, g.combat.mirages?.length || g.combat.decoys?.length ? mirageDecoys(g, g.clock.time) : undefined);
+    stepInvites(W.invites, W.ko ? {} : confusedAim(W, c, ht), { ...W.body }, t.invites.on && hasInvites(W) && W.body.mode === "ground" && !W.body.seated && !W.ko && !(g.witches.length > 1 && W.house?.slept), g.creatures, affectionOf(g, W), ht, hdt, bagTuning(t, W.spells.bag), g.tuning.legendCircle?.slow.on === false ? undefined : leavesCalmRing(g, W.body), hasInvites(W) ? hatLetters(hatsDown(W), t) : undefined, g.combat.mirages?.length || g.combat.decoys?.length ? mirageDecoys(g, g.clock.time) : undefined);
     if (!worldAsleep(g)) wakeOnInvites(g, W.invites.events, t); // (a 💌 landing on a wild one wakes its area: rules/inviteWakes.ts)
     questsFromPlaced(g, ht, W);
     if (c.feedNearest) feedNearest(B, g.creatures, W.body.x, W.body.z, g.clock.time, t, g.beat);

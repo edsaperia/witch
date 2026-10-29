@@ -11,10 +11,12 @@ import { startWake, wakeOf, startParty, WAKE_DEFAULT } from "./wakeUp";
 import { HOUSE_ROOMS, objectFront } from "./houseRooms";
 import { inviteCreature } from "./leash";
 import { sharedNightProgress } from "./sharedNightProgress";
-import { spreadWave } from "./party";
+import { spreadWave, cellKey } from "./party";
 import { stepCreaturesNear } from "./creatures";
 import { rng, rngState } from "./random";
 import { newLodCounts } from "./simLod";
+import { stepWildWatch, watcher } from "./wildWatch";
+import { keepIn } from "./mapShape";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 function fresh(players = 2): Game {
@@ -52,7 +54,10 @@ describe("several witches in one deterministic night", () => {
     expect(g.witches.map(W => W.time)).toEqual([g.herTime, g.herTime]);
     expect(g.creatures.length).toBe(solo.creatures.length);
     expect(g.witches.map(W => W.health.hp)).toEqual([solo.witches[0].health.hp, solo.witches[0].health.hp]);
-    expect(() => stepGame(g, idle, STEP)).toThrow("One input");
+    const guest = { ...g.witches[1].body };
+    stepGame(g, idle, STEP); // legacy host-only callers supply neutral guest controls
+    expect(g.witches[1].body.x).toBeCloseTo(guest.x);
+    expect(() => stepGame(g, [idle], STEP)).toThrow("One input");
   });
 
   it("queues each player's one-shot independently across a frame without a simulation step", () => {
@@ -157,12 +162,42 @@ describe("several witches in one deterministic night", () => {
     expect(g.witches[0].house?.slept).toBe(true);
     expect(g.witches[1].house?.slept).not.toBe(true);
     expect(g.leashEvents.some(e => e.obj === "slept")).toBe(false);
+    const sleeping = { ...g.witches[0].body };
+    run(g, 20, [{ ...idle, moveX: 1, fire: true, dash: true, spell: true, sigil: true }, idle]);
+    expect(g.witches[0].body).toEqual(sleeping);
+    expect(g.witches[0].invites.letters).toHaveLength(0);
+    expect(g.leashEvents.some(e => e.obj === "slept")).toBe(false);
     let ended = 0;
     for (let i = 0; i < Math.ceil((HOUSE_ROOMS.bed.hold + 0.1) / STEP); i++) {
       run(g, 1, [idle, { ...idle, sigilHeld: true }]);
       ended += g.leashEvents.filter(e => e.obj === "slept").length;
     }
     expect(ended).toBe(1);
+  });
+
+  it("keeps all three occupied wild watches until each area's last witch leaves", () => {
+    const g = fresh(3), occupied = new Map<string, typeof g.creatures[number]>(), home = cellKey(g.map.centreCell);
+    for (const c of g.creatures) if (watcher(c) && cellKey(c.cell) !== home) occupied.set(cellKey(c.cell), c);
+    const areas = [...occupied].slice(0, 3); expect(areas).toHaveLength(3);
+    areas.forEach(([, c], i) => { g.witches[i].body = { ...g.witches[i].body, x: c.x, z: c.z }; });
+    g.clock.time = 1; stepWildWatch(g, g.tuning);
+    const starts = areas.map(([key]) => g.wildEntry.get(key)!.at);
+    g.clock.time = 2; stepWildWatch(g, g.tuning);
+    expect(areas.map(([key]) => g.wildEntry.get(key)!.at)).toEqual(starts);
+    g.witches[0].body.perch = true; stepWildWatch(g, g.tuning);
+    expect(g.wildEntry.has(areas[0][0])).toBe(false);
+    expect(areas.slice(1).every(([key]) => g.wildEntry.has(key))).toBe(true);
+  });
+
+  it("does not let another witch reset an outward push against the zoo edge", () => {
+    const t = structuredClone(TUNING); t.map = { ...t.map!, shape: "zoo", island: "", islandAreas: 0 }; t.beach!.on = false;
+    const g = newGame(7, t, 2), [a, b] = g.witches, L = g.map.zoo!.layout!;
+    const edge = keepIn(g.map.bounds, L.home.x, g.map.bounds.minZ);
+    a.body = { ...a.body, x: edge.x, z: edge.z, seated: false, perch: false };
+    run(g, 45, [{ ...idle, moveZ: -1 }, idle]);
+    expect(a.zooPush).toBeGreaterThanOrEqual(0.5);
+    expect(b.zooPush).toBe(0);
+    expect(g.zooExit).toBeDefined();
   });
 
   it("simulates creatures near the guest once, even when two witch ranges overlap", () => {
@@ -194,7 +229,12 @@ describe("several witches in one deterministic night", () => {
     const inputs = (i: number): Controls[] => [0, 1].map(p => ({ ...idle, moveX: Math.sin((i + p * 600) / 120), moveZ: Math.cos((i + p * 300) / 150), toggleMode: i % (383 + p * 12) === 0, dash: i % (127 + p * 14) === 0, fire: i % 120 < 30, spell: i % 997 === 0, pausePage: i % 2000 >= 1970 + p * 5, sigil: i % (503 + p * 20) === 0 }));
     for (let i = 0; i < 60 * 180; i++) {
       if (i === 1800) { spreadWave(a.party, a.map, a.clock.time); spreadWave(b.party, b.map, b.clock.time); }
-      if (i === 2400) { a.witches[1].health.hp = 1; b.witches[1].health.hp = 1; hitWitch(a, 1, a.clock.time); hitWitch(b, 1, b.clock.time); }
+      if (i === 2400) {
+        for (const g of [a, b]) {
+          const W = g.witches[1]; W.health.hp = 1; W.health.hurtAt = -Infinity; W.dash.until = -Infinity;
+          hitWitch(g, 1, g.clock.time); expect(W.ko).not.toBeNull();
+        }
+      }
       const c = inputs(i); stepGame(a, c, STEP); stepGame(b, c, STEP);
       if (i % 1800 === 1799 || i % 2000 === 1980) expect(hash(a)).toBe(hash(b));
     }
