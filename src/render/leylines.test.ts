@@ -217,8 +217,9 @@ describe("the line as dots through the boot (Ed, 2026-10-29: \"The leyline does 
     const behind = Array.from(L.bars.links).filter(l => l <= L.spark), ahead = Array.from(L.bars.links).filter(l => l > L.spark && l <= L.to), route = ahead.filter(l => l >= 1);
     expect(behind.length).toBeGreaterThan(10); expect(ahead.length).toBeGreaterThan(10); expect(route.length).toBeGreaterThan(5); // (bars, then dots round the ring and on out along the route)
     expect(L.place(L.spark, time, { x: 0, z: 0 })).not.toBeNull();
-    // Where the route runs on round the ring from the lap's end, the ring's dots give way to the route's (the line over itself).
-    expect(L.hide[0]).toBeCloseTo(P.ringFrom / P.length, 6); expect(L.hide[1]).toBeGreaterThan(L.hide[0]); expect(L.hide[1]).toBeLessThan(1);
+    // Where the route runs on round the ring from the lap's end (the line over itself), the ring's bars stand while the boot's spark is
+    // on the ring: the route's dots over them are hidden, as far as they're drawn.
+    expect(L.hide[0]).toBe(1); expect(L.hide[1]).toBeGreaterThan(1.05); expect(L.hide[1]).toBeLessThan(to);
   }, 30000);
   it("before the tip is round the whole ring, only the ring is drawn, as far as its line's got; before the spell, nothing, and no spark", async () => {
     const ley = await make(), time = (0.2 * P.length) / TUNING.boot.speed!, line = bootLineAt(p, map, time, reveal) / P.length;
@@ -238,7 +239,7 @@ describe("the line as dots through the boot (Ed, 2026-10-29: \"The leyline does 
     expect(L.strength).toBe(1); expect(L.spark).toBe(ley.sparkLinks()!); expect(L.spark).toBeCloseTo(1 + sp, 6); expect(L.to).toBeGreaterThan(L.spark);
     expect(Array.from(L.bars.links).some(l => l >= 1 && l <= L.spark)).toBe(true);
     expect(Array.from(L.bars.links).some(l => l > L.spark && l <= L.to)).toBe(true);
-    // Where the route runs on round the ring from the lap's end, the ring's dots give way to the route's (the line over itself).
+    // Where the route runs on round the ring from the lap's end (the line over itself), the boot over, the ring's dots give way to the route's.
     expect(L.hide[0]).toBeCloseTo(P.ringFrom / P.length, 6); expect(L.hide[1]).toBeGreaterThan(L.hide[0] + 0.2); expect(L.hide[1]).toBeLessThan(1);
     ley.grow(leyDrawnTo(p, map, time, reveal, true), 1); ley.front(time, 0); // (the Route-seer hat: all of it)
     [L] = ley.dotLines(2);

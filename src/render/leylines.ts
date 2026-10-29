@@ -679,9 +679,14 @@ export class LeyLines {
     L.strength = on && this.drawn.length > 0 && L.to > 0 ? 1 : 0;
     L.ringLinks = this.ringLinks; L.ringK = this.ringK.value;
     L.hide[0] = L.hide[1] = 0;
-    if (L.strength > 0 && this.map && this.ringLinks > 0 && this.routeOnRing > 0 && L.to > 1) {
-      const Q = bootPath(this.map), drawn = L.to === Infinity ? Infinity : this.runAt(L.to - this.ringLinks) - Q.length;
-      L.hide[0] = Q.ringFrom / Q.length; L.hide[1] = (Q.ringFrom + Math.min(this.routeOnRing, drawn)) / Q.length;
+    if (L.strength > 0 && this.map && this.ringLinks > 0 && this.routeOnRing > 0 && L.to > 1 && this.drawn.length > 1) {
+      // The line over itself, round the ring from the lap's end: the ring's bars stand while the spark is still on the ring (the
+      // boot's, the stones turning behind it: Ed's "spectrum as it went round the circle"), the route's dots over them hidden as far
+      // as they're drawn; the boot over, the route's (the wave's spark runs that stretch: bars behind it, dots ahead) and the ring's
+      // under them hidden.
+      const Q = bootPath(this.map), drawn = L.to === Infinity ? Infinity : this.runAt(L.to - this.ringLinks) - Q.length, on = Math.min(this.routeOnRing, drawn);
+      if (P.y > 0.5 && this.cur.current.value < this.ringLinks) { L.hide[0] = this.ringLinks; L.hide[1] = this.ringLinks + on / this.drawn[this.ringLinks].total; }
+      else { L.hide[0] = Q.ringFrom / Q.length; L.hide[1] = (Q.ringFrom + on) / Q.length; }
     }
     return this.dots;
   }
