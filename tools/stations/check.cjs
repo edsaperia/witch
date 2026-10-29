@@ -64,7 +64,8 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
         ok(h.choosing > 0.9, `${id} (${zoom} zoom): the camera's in on her, choosing`);
         ok(h.top[1] >= 0 && h.feet[1] <= H, `${id} (${zoom} zoom): all of her on screen, hat to shoes (top ${Math.round(h.top[1])}, feet ${Math.round(h.feet[1])} of ${H})`);
         ok(Math.abs(mid - H / 2) < H * 0.06, `${id} (${zoom} zoom): her middle at the screen's (${Math.round(mid)} of ${H})`);
-        ok(tall > H * 0.65, `${id} (${zoom} zoom): she fills most of its height (${Math.round(tall)} of ${H})`);
+        const margin = await page.evaluate(() => window.witch.game.tuning.camera.station.whole.margin);
+        ok(Math.abs(tall - H * (1 - 2 * margin)) < H * 0.05, `${id} (${zoom} zoom): she fills its height but the margin above and below (${Math.round(tall)} of ${H}, margin ${margin})`);
         ok(Math.abs(x - W * 0.75) < W * 0.06, `${id} (${zoom} zoom): she stands in the right half's middle (${Math.round(x)} of ${W})`);
         const P = await page.evaluate(() => { const p = document.querySelector("#station-panel").getBoundingClientRect(); return { w: p.width, cards: document.querySelectorAll("#station-panel .sp-shelf").length, titled: [...document.querySelectorAll("#station-panel .sp-shelf")].every(c => c.querySelector(".sp-lab b")?.textContent.trim()) }; });
         ok(Math.abs(P.w - W / 2) < 4 && P.cards >= 1 && P.titled, `${id}: the panel the left half (${Math.round(P.w)} px), ${P.cards} titled cards`);
