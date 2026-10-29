@@ -21,7 +21,7 @@
 import { hash2 } from "./core.js";
 import { SPECIES } from "./creatures.js";
 import { L, A, D, C, E, at, stave, FOOT, mirror, pair, bow, wave, spiral, rays } from "./sigils/strokes.js";
-import { CREATURE_SIGILS, CREATURE_NEONS } from "./creatures/index.js";
+import { CREATURE_SIGILS, CREATURE_NEONS, CREATURE_BOLD } from "./creatures/index.js";
 
 export const SIGIL_STROKE = .07;  // stroke width, in the unit box
 export const SIGIL_DOT = .048;    // end-dot radius
@@ -441,6 +441,39 @@ export function sigilArrival(id, size = 16, { stroke = SIGIL_STROKE } = {}) { //
   const strokes = sigilStrokes(id), at = new Float64Array(size * size), half = Math.max(stroke / 2, .62 / size);
   for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) at[y * size + x] = inkAt(strokes, (x + .5) / size, (y + .5) / size, half);
   return at;
+}
+
+// ---- the bold sigils ----
+// (Ed, 2026-10-29: the monoline sigils can't be read at stack size, about 12 px with 1 px strokes: "perhaps 1.5x ... and then
+// redraw?") Each species' animal reduced to its one defining feature (antlers, ears, tusks, shell, wings...), drawn for a 24 px
+// grid with 2 px strokes and fat dots, in art/creatures/<id>/bold.js (`BOLD_<ID> = { strokes }`, the same building blocks as
+// sigil.js: art/sigils/strokes.js; docs/notes/art-checks.md **Bold sigils**). Where the leash shows a creature's sigil small
+// (her stack, the stones' columns, runes, placed sigils, the pointers: render/leash.ts bareSlot, render/indicator.ts) with
+// tuning leash.ranks.bold on; the monoline sigil stays on the rune stones' runes and the chart, and wherever a species has no
+// bold one yet.
+export const BOLD = { ...CREATURE_BOLD };
+export const BOLD_GRID = 24;            // the grid it's drawn for (px)
+export const BOLD_STROKE = 2 / BOLD_GRID; // stroke width, in the unit box: 2 px
+export const BOLD_DOT = 1.5 / BOLD_GRID;  // a dot's radius: 3 px across
+export const hasBold = id => !!BOLD[id];
+// A pixel glyph of the bold sigil, `size` px square ({ w, h, m }, m 1 where there is ink): a pixel is ink where its middle is within
+// half a stroke of a line, or a dot's radius of a dot; strokes are at least a pixel thick at any size. null without a bold sigil.
+export function boldGlyph(id, size = BOLD_GRID) {
+  if (!BOLD[id]) return null;
+  const segs = BOLD[id].map(polyline), half = Math.max(BOLD_STROKE / 2, .55 / size), dotR = Math.max(BOLD_DOT, .7 / size), m = new Uint8Array(size * size);
+  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+    const u = (x + .5) / size, v = (y + .5) / size;
+    for (const s of segs) {
+      if (s.dot) { if (Math.hypot(u - s.pts[0][0], v - s.pts[0][1]) <= dotR) { m[y * size + x] = 1; break; } continue; }
+      let hit = false;
+      for (let i = 1; i < s.pts.length && !hit; i++) {
+        const [ax, ay] = s.pts[i - 1], [bx, by] = s.pts[i], dx = bx - ax, dy = by - ay, l2 = dx * dx + dy * dy || 1e-12, t = Math.max(0, Math.min(1, ((u - ax) * dx + (v - ay) * dy) / l2));
+        if (Math.hypot(u - ax - dx * t, v - ay - dy * t) <= half) hit = true;
+      }
+      if (hit) { m[y * size + x] = 1; break; }
+    }
+  }
+  return { w: size, h: size, m };
 }
 
 // ---- the neon pixel field: on the ground, or floating upright ----

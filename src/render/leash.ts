@@ -16,7 +16,7 @@ import { moodOf } from "./mood";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
 import { gpuKind } from "./gpuLedger";
-import { drawSigil, sigilColour, LEGEND_SCALE } from "../../art/generator.js";
+import { drawSigil, sigilColour, LEGEND_SCALE, BOLD_GRID, boldGlyph } from "../../art/generator.js";
 import { dormant, type Game } from "../rules/game";
 import type { Creature } from "../rules/creatures";
 
@@ -503,20 +503,29 @@ export class LeashView {
     return [x / N, 1 - y / N, (x + SLOT * span) / N, 1 - (y + SLOT * span) / N];
   }
 
-  /** A rank sigil's glyph (render/leash/ranks.ts): the species' bare glyph (no ring, no dots, any rank), white in the atlas, and in
+  /** A rank sigil's glyph (render/leash/ranks.ts): the species' bare glyph (no ring, no dots, any rank; its bold sigil with
+   *  leash.ranks.bold on, where it has one: art/sigils.js BOLD), white in the atlas, and in
    *  the next slot its shade, the glyph's own shape grown two pixels all round (the dark under it on the ground and in the stack,
    *  not a disc); its pixels kept for the embers. */
   bareSlot(species: string): number {
-    const key = `${species}:bare`, had = this.slots.get(key);
+    const bold = !!this.game.tuning.leash.ranks?.bold && boldGlyph(species), key = `${species}:bare${bold ? ":bold" : ""}`, had = this.slots.get(key);
     if (had !== undefined) return had;
     const s = this.nextSlot++, sh = this.nextSlot++;
     this.slots.set(key, s);
     const g = this.canvas.getContext("2d", { willReadFrequently: true })!, at = (k: number) => [(k % SLOTS) * SLOT, Math.floor(k / SLOTS) * SLOT];
     const [ox, oy] = at(s), [sx, sy] = at(sh);
     g.clearRect(ox, oy, SLOT, SLOT); g.clearRect(sx, sy, SLOT, SLOT);
-    drawSigil(g, species, { x: ox + 3, y: oy + 3, size: SLOT - 6, level: null, colour: [255, 255, 255], glow: false });
-    const img = g.getImageData(ox, oy, SLOT, SLOT);
-    for (let i = 3; i < img.data.length; i += 4) img.data[i] = img.data[i] > 90 ? 255 : 0;
+    let img: ImageData;
+    if (bold) {
+      // (its bold sigil, art/sigils.js BOLD: its 24 px glyph pixel for pixel in the middle of the slot, so its 2 px strokes stay whole)
+      img = g.createImageData(SLOT, SLOT);
+      const o = (SLOT - BOLD_GRID) >> 1;
+      for (let y = 0; y < BOLD_GRID; y++) for (let x = 0; x < BOLD_GRID; x++) if (bold.m[y * BOLD_GRID + x]) { const i = ((y + o) * SLOT + x + o) * 4; img.data[i] = img.data[i + 1] = img.data[i + 2] = img.data[i + 3] = 255; }
+    } else {
+      drawSigil(g, species, { x: ox + 3, y: oy + 3, size: SLOT - 6, level: null, colour: [255, 255, 255], glow: false });
+      img = g.getImageData(ox, oy, SLOT, SLOT);
+      for (let i = 3; i < img.data.length; i += 4) img.data[i] = img.data[i] > 90 ? 255 : 0;
+    }
     g.putImageData(img, ox, oy);
     const shade = g.createImageData(SLOT, SLOT), on = (x: number, y: number) => x >= 0 && y >= 0 && x < SLOT && y < SLOT && img.data[(y * SLOT + x) * 4 + 3] > 0;
     for (let y = 0; y < SLOT; y++) for (let x = 0; x < SLOT; x++) {

@@ -1286,9 +1286,10 @@
    "name": "sigils",
    "values": [
     "new",
-    "old"
+    "old",
+    "bold"
    ],
-   "does": "Rank sigils and the 6 m leash grid (new, the default), or the old sigils and their 4 m grid.",
+   "does": "Rank sigils and the 6 m leash grid (new, the default), or the old sigils and their 4 m grid; bold, the rank sigils drawn bold where a species has its bold sigil (art/sigils.js BOLD).",
    "group": "compare",
    "since": "2026-10-27",
    "readIn": [
