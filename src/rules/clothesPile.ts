@@ -43,7 +43,7 @@ export function wearPiece(w: { pile?: PileSlot[] }, slot: PileSlot): boolean {
 interface Genome { hat?: { shape?: string }; cloak?: string; backpackSize?: number; accessories?: Record<string, unknown> }
 
 /** Her accessories that lie in the pile as her bits (the earrings stay on: the dressing table's, hers in the nightie too). */
-const BITS = ["phones", "shades", "glowsticks", "satchel", "pendant", "lantern", "vial", "book", "bumbag", "wristband"];
+const BITS = ["phones", "shades", "glowsticks", "satchel", "pendant", "lantern", "vial", "book", "bumbag", "purse", "wristband"];
 
 /** Her look with what's still in the pile taken off (the nightie for her top, bare feet for her shoes, and no cloak, scarf, hat or
  *  bits), for the page to draw her by; `pile` empty, her genome as it is. A null genome (the classic witch) is hers, art/witchGenome.js WITCH_GENOME. */

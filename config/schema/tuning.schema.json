@@ -6106,6 +6106,53 @@
         "minRadius": {
           "type": "number",
           "minimum": 0
+        },
+        "rainbow": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "speed": {
+              "type": "number",
+              "minimum": 0
+            },
+            "linger": {
+              "type": "number",
+              "minimum": 0
+            },
+            "max": {
+              "type": "number",
+              "minimum": 0
+            },
+            "bars": {
+              "type": "number",
+              "minimum": 0
+            },
+            "spacing": {
+              "type": "number",
+              "minimum": 0
+            },
+            "cell": {
+              "type": "number",
+              "minimum": 0
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "speed",
+            "linger",
+            "max",
+            "bars",
+            "spacing",
+            "cell",
+            "height"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -6123,7 +6170,8 @@
         "valley",
         "flow",
         "depart",
-        "minRadius"
+        "minRadius",
+        "rainbow"
       ],
       "additionalProperties": false,
       "description": "The glowing line on the ground that joins the runestones in the order the waves wake them, a pulse flowing along it to the next one."

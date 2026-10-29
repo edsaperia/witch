@@ -30,7 +30,9 @@ export function bagTuning(t: Tuning, id: string | undefined): Tuning {
   if (!by) cache.set(t, (by = new Map()));
   const hit = by.get(id!);
   if (hit) return hit;
-  const out = { ...t, invites: { ...t.invites, cooldown: t.invites.cooldown * (m.cooldown ?? 1), range: t.invites.range * (m.range ?? 1) } } as Tuning;
+  const I = { ...t.invites } as Record<string, unknown>;
+  for (const [k, f] of Object.entries(m)) if (typeof I[k] === "number" && typeof f === "number") I[k] = (I[k] as number) * f; // (any of the 💌's numbers: the bags' weapon stats, Ed 2026-10-29)
+  const out = { ...t, invites: I } as Tuning;
   by.set(id!, out);
   return out;
 }
