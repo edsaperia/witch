@@ -132,6 +132,7 @@ For the builders, the smoke and bench runs, the repro link and the arenas.
 | `witches=<n>` | This many more party witches. | 2026-10-07 | app/linkParams.ts |
 | `zoo` | The zoo: every area an island laid out like the sea chart, home a plaza, no timer. | 2026-10-13 | app/linkParams.ts, main.ts |
 | `zoom=<n>` | The repro link: the camera's zoom step. | 2026-10-14 | app/repro.ts |
+| `newWitch=1` | This load as a brand-new witch (the pause page's Try as a new witch): the game's default look (config/default-look.json), the starting wardrobe, the default broom and no hats found, her saves of those neither read nor written. | 2026-10-29 | app/defaultLook.ts |
 
 ## Compare with the old
 
