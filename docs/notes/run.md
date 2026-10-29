@@ -2,6 +2,8 @@
 
 Part of Witch's notes (CLAUDE.md is the index): the phases of a run, the opening and the party spell, the clock, her controls and the camera, waves, knockouts and the party's end. Moved here from CLAUDE.md as it stood (housekeeping, Ed 2026-10-23: a note an area, so pull requests add to their own area's file, not one shared file); every rule kept. Add to this file, not CLAUDE.md, when you change this area.
 
+Input reliability (2026-10-29, #1454): `platform/input.ts` reads every action's press before consuming keyboard/mouse edges, including Talk and Auto-talk. All three mouse buttons have held state; their down/up events track chords and releases over panels, while touch compatibility mouse events are ignored. `game.ts` queues hat presses with the other one-shot actions until the next fixed step and consumes each once, whether a rendered frame runs zero, one or several steps. Regression tests cover 30/60/144 fps, mouse holds for inviting/using (stump, bed and sigils), toggle bindings, chords, blur and start-screen consumption. Stump casting and the floor-hat rules are unchanged.
+
 **The phases of a run** (Ed's names, 2026-10-07), in order, and what marks each in the code:
 
 - **Bedroom**: by default (the opening, below) the wake-up in her Bedroom in the treehouse, dressing at its stations; with `?opening=old` the character creator (`ui/creator.ts`, main.ts `creator.show()` only when the load doesn't open in the bedroom), the loading screen too there: she walks her room (WASD, `ui/roomWalk.ts`) and dresses up while the forest grows behind it. `?creator=0` skips it (the tools and smoke runs).
