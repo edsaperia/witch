@@ -2565,6 +2565,23 @@ Spawn markers (Ed, v147): a rune stone on every spot where a soundsystem will co
   1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
 - **`runeMarkers.awake.moteRise`**: How high (m) an awake runestone's motes rise before they fade.
   1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
+- **`runeMarkers.stump.wisps`**: A wild stump's will-o'-the-wisps, drifting round its clearing before its soundsystem, in place of its own light.
+  1. Ed, 2026-10-29: "pre-soundsystem stump area lighting should change to be more like eerie moonlight; maybe it can be lit by a mix of blue/green/white wisps or something like that, that move around the stump area? Remove the current lighting. Decide on something and make it, no need for me to review." (via the coordinator; the art director's design (render/stumpWisps.ts))
+- **`runeMarkers.stump.wisps.on`**: The wild stumps' wisps on or off.
+- **`runeMarkers.stump.wisps.count`**: How many wisps a wild stump has.
+- **`runeMarkers.stump.wisps.colours`**: The wisps' colours (0-255), a wisp each in turn: pale blue, green and white.
+- **`runeMarkers.stump.wisps.radius`**: How far (m) from the stump's middle a wisp wanders at most.
+- **`runeMarkers.stump.wisps.inner`**: How near the middle a wisp comes, times the radius.
+- **`runeMarkers.stump.wisps.height`**: How high (m) the wisps float.
+- **`runeMarkers.stump.wisps.bob`**: How much (m) the wisps rise and fall as they drift.
+- **`runeMarkers.stump.wisps.speed`**: How fast (m/s) the wisps drift round the clearing.
+- **`runeMarkers.stump.wisps.reach`**: How far (m) a wisp's light reaches.
+- **`runeMarkers.stump.wisps.strength`**: How bright a wisp's light is.
+- **`runeMarkers.stump.wisps.lights`**: How many of the nearest wisps light the ground at once.
+- **`runeMarkers.stump.wisps.lightRange`**: How near her (m) a stump must be for its wisps to light the ground.
+- **`runeMarkers.stump.wisps.breathe`**: How much the wisps swell brighter and dimmer, slowly (0 steady; steady anyway with reduce flashing).
+- **`runeMarkers.stump.wisps.bright`**: How bright a wisp's mote is drawn.
+- **`runeMarkers.stump.wisps.trail`**: How many fading motes trail behind each wisp.
 
 | knob | type | range |
 |---|---|---|
@@ -2600,6 +2617,21 @@ Spawn markers (Ed, v147): a rune stone on every spot where a soundsystem will co
 | `runeMarkers.stump.light.strength` | number | 0 to … |
 | `runeMarkers.stump.light.height` | number | 0 to … |
 | `runeMarkers.stump.light.saturate` | number | 0 to … |
+| `runeMarkers.stump.wisps.on` | boolean |  |
+| `runeMarkers.stump.wisps.count` | number | 0 to … |
+| `runeMarkers.stump.wisps.colours` | array of array |  |
+| `runeMarkers.stump.wisps.radius` | number | 0 to … |
+| `runeMarkers.stump.wisps.inner` | number | 0 to … |
+| `runeMarkers.stump.wisps.height` | number | 0 to … |
+| `runeMarkers.stump.wisps.bob` | number | 0 to … |
+| `runeMarkers.stump.wisps.speed` | number | 0 to … |
+| `runeMarkers.stump.wisps.reach` | number | 0 to … |
+| `runeMarkers.stump.wisps.strength` | number | 0 to … |
+| `runeMarkers.stump.wisps.lights` | number | 0 to … |
+| `runeMarkers.stump.wisps.lightRange` | number | 0 to … |
+| `runeMarkers.stump.wisps.breathe` | number | 0 to … |
+| `runeMarkers.stump.wisps.bright` | number | 0 to … |
+| `runeMarkers.stump.wisps.trail` | number | 0 to … |
 
 ### `sfx`
 

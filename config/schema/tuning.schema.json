@@ -7057,6 +7057,110 @@
                 "saturate"
               ],
               "additionalProperties": false
+            },
+            "wisps": {
+              "type": "object",
+              "properties": {
+                "on": {
+                  "type": "boolean",
+                  "description": "The wild stumps' wisps on or off."
+                },
+                "count": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How many wisps a wild stump has."
+                },
+                "colours": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "description": "The wisps' colours (0-255), a wisp each in turn: pale blue, green and white."
+                },
+                "radius": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How far (m) from the stump's middle a wisp wanders at most."
+                },
+                "inner": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How near the middle a wisp comes, times the radius."
+                },
+                "height": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How high (m) the wisps float."
+                },
+                "bob": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How much (m) the wisps rise and fall as they drift."
+                },
+                "speed": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How fast (m/s) the wisps drift round the clearing."
+                },
+                "reach": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How far (m) a wisp's light reaches."
+                },
+                "strength": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How bright a wisp's light is."
+                },
+                "lights": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How many of the nearest wisps light the ground at once."
+                },
+                "lightRange": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How near her (m) a stump must be for its wisps to light the ground."
+                },
+                "breathe": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How much the wisps swell brighter and dimmer, slowly (0 steady; steady anyway with reduce flashing)."
+                },
+                "bright": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How bright a wisp's mote is drawn."
+                },
+                "trail": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How many fading motes trail behind each wisp."
+                }
+              },
+              "required": [
+                "on",
+                "count",
+                "colours",
+                "radius",
+                "inner",
+                "height",
+                "bob",
+                "speed",
+                "reach",
+                "strength",
+                "lights",
+                "lightRange",
+                "breathe",
+                "bright",
+                "trail"
+              ],
+              "additionalProperties": false,
+              "description": "A wild stump's will-o'-the-wisps, drifting round its clearing before its soundsystem, in place of its own light."
             }
           },
           "required": [
@@ -7064,7 +7168,8 @@
             "variants",
             "clear",
             "ring",
-            "light"
+            "light",
+            "wisps"
           ],
           "additionalProperties": false
         }

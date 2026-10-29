@@ -47,6 +47,13 @@ export interface Mood {
 }
 
 /** Will-o'-the-wisps: faint slow lights drifting between the trees of the wild areas (render/wisps.ts, Ed 2026-10-07). */
+/** The wild stumps' wisps (Ed, 2026-10-29: "eerie moonlight ... a mix of blue/green/white wisps ... that move around the stump area";
+ *  render/stumpWisps.ts): how many a stump, their colours (0-255, a wisp each in turn), how far out they wander (radius m, the nearest
+ *  inner times it), how high (m) and how much they bob (m), how fast they drift (m/s), each one's light (reach m, strength), how many
+ *  of the nearest light the ground (lights) within lightRange m of her, how much they breathe (0 steady), their motes' brightness and
+ *  tail (motes). */
+export interface StumpWispTuning { on: boolean; count: number; colours: number[][]; radius: number; inner: number; height: number; bob: number; speed: number; reach: number; strength: number; lights: number; lightRange: number; breathe: number; bright: number; trail: number }
+
 export interface WispTuning {
   on: boolean;
   /** The ground is split into squares this wide (m); each may hold a wisp, by a seeded chance. */
@@ -395,7 +402,7 @@ export interface Tuning {
   runeMarkers: { variants: boolean; laser: { opacity: number; width: number; length: number }; scale: number; beamHeight: number; lightRange: number; dormant: { glow: number; light: number; reach: number; beam: number }; awake: { glow: number[]; light: number; lightBuild: number; reach: number; beam: number; motes: number; moteBuild: number; /** its motes' size in the picture's pixels (absent: 3), brightness times their colour (absent: 1) and how high they rise, m (absent: 7) (render/view/home.ts; the coordinator, 2026-10-29, Ed: "the motes from sigils don't do much") */ moteSize?: number; moteBright?: number; moteRise?: number }; flare: { time: number; light: number }; /** The great stumps in place of the stones (Ed, 2026-10-29; render/markers.ts, art/props/stumps.js): on; how many seeded variants of
    *  each area type's stump are dealt round its areas (each seen from its own angle, mirrored at random; baked as each is wanted); the clearing (m) the rules keep free of trees
    *  round its middle and the ground levelled under it; the cast ring on its cut (its radius and bar size, m); and the light its stack
-   *  of sigils throws on it (render/view/home.ts: reach m, strength, how high over the cut, m). */ stump?: { on: boolean; variants: number; clear: number; ring: { radius: number; cell: number }; light: { reach: number; strength: number; height: number; /** its colour pushed away from grey by this (1 as mixed) */ saturate?: number } } };
+   *  of sigils throws on it (render/view/home.ts: reach m, strength, how high over the cut, m). */ stump?: { on: boolean; variants: number; clear: number; ring: { radius: number; cell: number }; light: { reach: number; strength: number; height: number; /** its colour pushed away from grey by this (1 as mixed) */ saturate?: number }; /** a wild stump's wisps, in place of its light before its soundsystem (render/stumpWisps.ts) */ wisps?: StumpWispTuning } };
   walls: { runs: number[]; runLength: number[]; gateChance: number; rings: number[]; ringStones: number[]; ringRadius: number[]; avenueChance: number; loneChance: number; clumps: number[]; clumpSize: number[]; clumpRadius: number };
   grounds: { chance: number; kinds: string[]; radius: Record<string, number> };
   /** Each area's sleeping legend lies in a small circular clearing of its own (Ed, 2026-10-06): radius metres (or its species' own,
