@@ -6,7 +6,7 @@ export type HintDevice = "keys" | "pad" | "touch";
 
 export function telescopeHint(device: HintDevice): string {
   return device === "pad"
-    ? `${padMoveName("menu")} or right stick look round   ${padName("menu.zoomIn")} / ${padName("menu.zoomOut")} zoom   ${padName("menu.back")} ⏏`
+    ? `${padMoveName("menu")} or ${padMoveName("game.aim")} look round   ${padName("menu.zoomIn")} / ${padName("menu.zoomOut")} zoom   ${padName("menu.back")} ⏏`
     : device === "touch"
     ? "movement control looks round   + / − zoom   sigil to leave"
     : `mouse or arrow keys look round   wheel / ${keysName("menu.zoomIn")} / ${keysName("menu.zoomOut")} zoom   ${keysName("menu.back")} ⏏`;

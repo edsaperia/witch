@@ -24,6 +24,9 @@ it("moving the mouse switches prompts back from gamepad, but touch movement does
   expect(input.device).toBe("pad");
   emit("pointermove", { clientX: 21, clientY: 31 });
   expect(input.device).toBe("keys");
+  input.device = "pad";
+  emit("wheel", { deltaY: 20, deltaMode: 0 });
+  expect(input.device).toBe("keys");
 });
 
 describe("auto-talk and talk events", () => {

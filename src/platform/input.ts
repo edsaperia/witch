@@ -86,6 +86,7 @@ export class Input {
     // without scrolling the page: a step a notch (about 100 px), a trackpad's small deltas adding up.
     target.addEventListener("wheel", e => {
       if (!onCanvas(e)) return;
+      this.device = "keys";
       e.preventDefault();
       this.wheel += e.deltaY * (e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? 400 : 1);
     }, { passive: false });
