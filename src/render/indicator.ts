@@ -167,6 +167,9 @@ export function paintPin(c: PixelCue, rgb: number[], emoji: string, angle = Math
 /** The pin's ring radius and its arrow's tip, from its middle (art pixels): where its tip lands. */
 export const PIN_TIP = RING_R + 7;
 
+/** A rainbow hue, 0 to 1 round (0-1 rgb): the soundsystem spell's cycling colour (render/leash/stones.ts, the wave pointer). */
+export const rainbow = (h: number): [number, number, number] => { const f = (n: number) => { const q = (((n + h * 6) % 6) + 6) % 6; return 1 - Math.max(0, Math.min(1, Math.min(q, 4 - q))); }; return [f(5), f(3), f(1)]; };
+
 /** An area's neon calmed for the HUD: a little less saturated and bright, so it sits on the dark forest. */
 export const calm = (c: number[]) => {
   // by saturation, not value (the art director, #188: "keep its value up … take the calm from lower saturation"): half way to
@@ -294,7 +297,7 @@ export class StoneIndicator {
 
   /** Point at the next waking stone at (x, z), its area's creature `species` and neon (rgb 0-1);
    *  `fill`: how far the countdown to the next wave has run (0 just after one, 1 as it comes). null hides it. */
-  update(camera: THREE.Camera, width: number, height: number, at: { x: number; z: number; colour: THREE.Vector3; species: string; notes?: boolean; glyph?: readonly string[]; /** an emoji in its middle, drawn in pixels in its own colours (render/bubbles.ts, as the thrown 💌; the guidance pins: render/view/guidance.ts), else the glyph */ emoji?: string; /** the glyph in its own colour (her hats' pointers), the ring in `colour` */ glyphColour?: THREE.Vector3; /** how tall the subject stands (m): the pin hovers over its top (a stone's 3.2 m by default) */ top?: number; /** screen pixels from the arrow's tip up to that top (tuning pins.gap) */ gap?: number; /** the page's y its tip stays above, in view (a use prompt under it: render/view/guidance.ts) */ above?: number } | null, wx: number, wz: number, time: number, bpm: number, fill: number, label?: string): void {
+  update(camera: THREE.Camera, width: number, height: number, at: { x: number; z: number; colour: THREE.Vector3; species: string; notes?: boolean; glyph?: readonly string[]; /** an emoji in its middle, drawn in pixels in its own colours (render/bubbles.ts, as the thrown 💌; the guidance pins: render/view/guidance.ts), else the glyph */ emoji?: string; /** the glyph in its own colour (her hats' pointers), the ring in `colour` */ glyphColour?: THREE.Vector3; /** the ring and its glyph cycling through the rainbow, as the soundsystem spell's spot does (the wave pointer: Ed, 2026-10-28) */ rainbow?: boolean; /** the creature's sigil this many art pixels across (its rank's size: 17 an adult's) */ sigilSize?: number; /** how tall the subject stands (m): the pin hovers over its top (a stone's 3.2 m by default) */ top?: number; /** screen pixels from the arrow's tip up to that top (tuning pins.gap) */ gap?: number; /** the page's y its tip stays above, in view (a use prompt under it: render/view/guidance.ts) */ above?: number } | null, wx: number, wz: number, time: number, bpm: number, fill: number, label?: string): void {
     const c = this.cue;
     // The party spread (the countdown went back to the start): a flash.
     if (fill < this.lastFill - 0.5) this.flashAt = time;
@@ -321,12 +324,15 @@ export class StoneIndicator {
     const beat = (time * bpm) / 60, pulse = Math.pow(0.5 + 0.5 * Math.cos((beat % 1) * Math.PI * 2), 2);
     const flash = Math.max(0, 1 - (time - this.flashAt) / 0.5);
     // in the area's colour, calmed toward the night (art review round 1: the UI's yellow and magenta shouted over the art)
-    const neon = calm([at.colour.x * 255, at.colour.y * 255, at.colour.z * 255]), bright = neon.map(v => Math.min(255, v * (0.9 + 0.15 * pulse) + 255 * flash * 0.4));
+    // (rainbow: the spell spot's own cycling hue, render/leash/stones.ts; its ring a wheel of it, turning)
+    const hueAt = (h: number) => { const r = rainbow(h); return calm([r[0] * 255, r[1] * 255, r[2] * 255]); };
+    const neon = at.rainbow ? hueAt(time * 0.25) : calm([at.colour.x * 255, at.colour.y * 255, at.colour.z * 255]), lift = (n: number[]) => n.map(v => Math.min(255, v * (0.9 + 0.15 * pulse) + 255 * flash * 0.4)), bright = lift(neon);
     // The ring: dim all round, bright neon clockwise from 12 o'clock as far as the countdown has run.
     const R = RING_R, ring = ringPixels(), dim = neon.map(v => v * 0.55); // the rest of the ring: dimmer, but still there on dark grass
     for (let k = 0; k < ring.length; k += 3) {
-      if (ring[k + 2] <= fill || flash > 0) c.dot(ring[k], ring[k + 1], bright, 1);
-      else c.dot(ring[k], ring[k + 1], dim, 0.9);
+      const own = at.rainbow ? hueAt(ring[k + 2] + time * 0.25) : null;
+      if (ring[k + 2] <= fill || flash > 0) c.dot(ring[k], ring[k + 1], own ? lift(own) : bright, 1);
+      else c.dot(ring[k], ring[k + 1], own ? own.map(v => v * 0.55) : dim, 0.9);
     }
     // In the middle: 🎶 (the wave pointer), or the rune: the area's creature's sigil, in its neon.
     const E = at.emoji ? pixelEmojiData(at.emoji, EMOJI_PX) : null;
@@ -338,8 +344,9 @@ export class StoneIndicator {
       const G = at.glyph ?? NOTES, ox = Math.floor((N - G[0].length) / 2), oy = Math.floor((N - G.length) / 2), band = ink.map(v => Math.min(255, v * 0.6 + 255 * 0.4));
       for (let y = 0; y < G.length; y++) { const row = G[y]; for (let x = 0; x < row.length; x++) { const on = row[x]; if (on === "#") c.dot(ox + x, oy + y, ink, 1); else if (on === "+") c.dot(ox + x, oy + y, band, 1); } }
     } else if (at.species) {
-      let g = this.glyphs.get(at.species);
-      if (!g) { g = sigilGlyph(at.species, 17) as { w: number; m: Uint8Array }; this.glyphs.set(at.species, g); }
+      const gs = Math.max(8, Math.min(N - 6, Math.round(at.sigilSize ?? 17))), gk = `${at.species}:${gs}`;
+      let g = this.glyphs.get(gk);
+      if (!g) { g = sigilGlyph(at.species, gs) as { w: number; m: Uint8Array }; this.glyphs.set(gk, g); }
       const o = Math.floor((N - g.w) / 2);
       for (let y = 0; y < g.w; y++) for (let x = 0; x < g.w; x++) if (g.m[y * g.w + x]) c.dot(o + x, o + y, bright, 1);
     }
