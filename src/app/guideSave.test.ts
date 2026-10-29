@@ -9,7 +9,7 @@ describe("guidance's save", () => {
     expect(g).toEqual({ unseen: [] });
     addNew(g, { kind: "hat", id: "a", at: "hats" }); addNew(g, { kind: "part", id: "b", at: "broomBay" }); addNew(g, { kind: "hat", id: "a", at: "hats" });
     storeGuide(g, s);
-    expect(loadGuide(s)).toEqual({ unseen: [{ kind: "part", id: "b", at: "broomBay" }, { kind: "hat", id: "a", at: "hats" }] });
+    expect(loadGuide(s)).toEqual({ unseen: [{ kind: "part", id: "b", at: "lathe" }, { kind: "hat", id: "a", at: "hats" }] }); // (a part saved for the bay, before the broom was one station at the lathe: now at the lathe)
     dropNew(g, "a");
     expect(g.unseen.map(n => n.id)).toEqual(["b"]);
     s.m.set(GUIDE_KEY, "{oops"); expect(loadGuide(s)).toEqual({ unseen: [] });

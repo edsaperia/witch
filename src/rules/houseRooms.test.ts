@@ -151,8 +151,17 @@ describe("the oak's rooms", () => {
     expect(["rising", "treetop"]).toContain(rise(0, 0)); // (the Terrace's middle, as before)
   });
 
+  it("the Workshop's bay and pegboard are only to look at: E there does nothing (Ed, 2026-10-29: the broom one station, at the lathe)", () => {
+    for (const id of ["broomBay", "pegboard"]) {
+      const o = obj(id), g = inHouse(0, 0), at = before(o);
+      expect(o.use.kind, id).toBe("scenery");
+      put(g, at.x, at.z);
+      expect(press(g).find(e => e.kind === "house"), id).toBeUndefined();
+    }
+  });
+
   it("E at each working object says which (main.ts opens its station, the creator at its choices, or the zoo)", () => {
-    for (const id of ["mirror", "wardrobe", "cloakPegs", "shoeRack", "bags", "broomBay", "lathe", "pegboard", "book"]) {
+    for (const id of ["mirror", "wardrobe", "cloakPegs", "shoeRack", "bags", "lathe", "book"]) {
       const o = obj(id), g = inHouse(0, 0), d = deck(g), at = before(o);
       put(g, at.x, at.z);
       expect(objectAt(d, g.witches[0].body.x, g.witches[0].body.z)?.id, id).toBe(id);

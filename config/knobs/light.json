@@ -856,7 +856,15 @@
       ]
     },
     "tiltShift.strength": {
-      "what": "the blur at the screen's edges, in pixels."
+      "what": "the blur at the screen's edges, in pixels.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "reduce the tilt shift effect at top and bottom by 50%",
+          "rest": "via the coordinator, after the art director's measurement of \"the pixels are just hard to read\" (previews/ed/blur/); 1.5 → 0.75"
+        }
+      ]
     },
     "tiltShift.band": {
       "what": "the height of the sharp band (0-1 of the screen)."
@@ -881,6 +889,17 @@
         }
       ],
       "notes": "the strength and band over the treetops (Ed, v160: a stronger miniature look there), blended in as she rises [1]; ?tilt=<strength>,<band> tries treetop values live; It blurs at the low resolution, before the pixels are scaled up; ?tilt=off turns it off. The night sky over the bend is blurred with the rest, the tilt-shift the last thing done to the finished, bent picture [2]."
+    },
+    "tiltShift.treetop.strength": {
+      "what": "The tilt-shift's blur over the treetops, in pixels, blended in by lift.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "reduce the tilt shift effect at top and bottom by 50%",
+          "rest": "via the coordinator, after the art director's measurement of \"the pixels are just hard to read\" (previews/ed/blur/); 3 → 1.5"
+        }
+      ]
     }
   }
 }

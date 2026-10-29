@@ -7,9 +7,9 @@ import { bareBroom, PARTS } from "../rules/broomParts";
 import { pleasingWitch } from "./looks";
 import { PanelChoice, type Genome } from "./stationChoice";
 import { bindings, PAD_BUTTONS } from "../platform/bindings";
-import { panelPad } from "./stationLines";
+import { panelPad, itemAt } from "./stationLines";
 
-const STATIONS = ["mirror", "dressingTable", "wardrobe", "cloakPegs", "shoeRack", "bags", "broomBay", "lathe", "pegboard"];
+const STATIONS = ["mirror", "dressingTable", "wardrobe", "cloakPegs", "shoeRack", "bags", "lathe"];
 const ctx = {
   grid: (s: Shelf) => ({ cols: s.grid === "skin" ? 6 : 13, rows: 5 }),
   swatch: (_s: Shelf, col: number, row: number) => [col / 13, 0.3 + row / 10, 0.5],
@@ -52,7 +52,7 @@ describe("a station panel: moving only moves the focus, choosing changes her (Ed
       const p = panel(st), L = p.lines();
       L.forEach((l, line) => {
         if (l.kind !== "items") return;
-        const items = shownItems(p.shelves[l.shelf]), col = items.findIndex(it => !wears(p.g, it));
+        const items = l.item !== undefined ? [itemAt(p.shelves[l.shelf], l, 0)] : shownItems(p.shelves[l.shelf]), col = items.findIndex(it => !wears(p.g, it)); // (a list's line: its own one item)
         if (col < 0) return;
         p.focus(line, col);
         const before = JSON.stringify(p.g), r = p.choose();
@@ -79,6 +79,18 @@ describe("a station panel: moving only moves the focus, choosing changes her (Ed
     }
   });
 
+  it("at the bags, a list: down moves bag to bag changing nothing, choosing a bag's line wears that bag", () => {
+    const p = panel("bags"), L = p.lines(), bag = p.shelves.findIndex(s => s.id === "bag"), lines = L.map((l, i) => [l, i] as const).filter(([l]) => l.shelf === bag && l.kind === "items");
+    expect(lines.length).toBe(p.shelves[bag].items.length);
+    p.focus(lines[0][1], 0);
+    const before = JSON.stringify(p.g);
+    for (let k = 1; k < lines.length; k++) { expect(p.move(0, 1)).toBe(true); expect(p.at.line).toBe(lines[k][1]); }
+    expect(JSON.stringify(p.g)).toBe(before);
+    const want = lines.map(([l]) => itemAt(p.shelves[bag], l, 0)).find(it => !wears(p.g, it))!, at = lines.find(([l]) => itemAt(p.shelves[bag], l, 0) === want)![1];
+    p.focus(at, 0); p.choose();
+    expect(wears(p.g, want)).toBe(true);
+  });
+
   it("an item still to be found, chosen, changes nothing and is marked till the focus moves", () => {
     const p = panel("wardrobe", false), L = p.lines(), items = L.findIndex(l => l.kind === "items");
     if (items < 0) return; // (nothing to choose among with none owned)
@@ -91,8 +103,8 @@ describe("a station panel: moving only moves the focus, choosing changes her (Ed
     expect(p.nope).toBeNull();
   });
 
-  it("at the bay, moving over the cards fits nothing; choosing one fits it", () => {
-    const p = panel("broomBay"), L = p.lines();
+  it("at the broom's station, moving over the cards fits nothing; choosing one fits it", () => {
+    const p = panel("lathe"), L = p.lines();
     walk(p);
     expect(p.fitted).toEqual(bareBroom());
     p.focus(0, 1);

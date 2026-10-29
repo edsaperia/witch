@@ -61,6 +61,8 @@ import { DreamView, dreamArt, findCanvas } from "./render/dream";
 import { LoanIcon } from "./render/loanIcon";
 import { FindsPanel } from "./ui/findsPanel";
 import { fightDt, fightFrame, fightLink, newFightSeed } from "./app/fightArena";
+import { BagPreview } from "./ui/bagPreview";
+import { BAGS } from "./rules/bags";
 import { StationPanel, type WorkshopCtx } from "./ui/stationPanel";
 import { ZooOverlay, domZooHost, zooUrl } from "./app/zooOverlay";
 import { leaveZoo } from "./app/zooExit";
@@ -383,6 +385,8 @@ creator.onLoadout = l => { const { game } = N(); changeLoadout(game.witches[0], 
 // still to find as silhouettes; each change goes on her a beat later and she turns to show it; choosing, the camera eases in on her
 // (camera.station), and out as she moves.
 const stations = new StationPanel(style, bootTuning.pixelSize);
+// (the bags' list: each bag firing, Juliet's BagPreview running the 💌 rules with its stats; Ed, 2026-10-29)
+stations.preview = id => (BAGS.some(b => b.id === id) ? new BagPreview(id, { w: 220, h: 110, tuning: N().tuning }) : null);
 /** Something of the house's open at the end of the last frame (a station, the chart, the telescope, an instrument): a use press now
  *  closes it, nothing else (the frame below). */
 let openPrev = false;
@@ -417,7 +421,7 @@ function lendFind(kind: FindKindId, id: string): void {
   if (kind === "wearable" || kind === "bag") findsCtx().owned().add(id); // (in what she owns tonight, not in her save)
   view.partsFound = partsNow();
   // (new in the treehouse: her guidance pin over where it is till she's been there, rules/guidance.ts)
-  const at = kind === "part" ? "broomBay" : kind === "hat" ? "hats" : stationsShowing(shelfOf(id)?.id ?? "")[0];
+  const at = kind === "part" ? "lathe" : kind === "hat" ? "hats" : stationsShowing(shelfOf(id)?.id ?? "")[0];
   if (at) { addNew(guide, { kind: kind === "part" || kind === "hat" ? kind : "wearable", id, at }); storeGuide(guide); }
 }
 /** Her guidance (rules/guidance.ts): what's kept of it on this browser (app/guideSave.ts), her pin, and the islands found (the

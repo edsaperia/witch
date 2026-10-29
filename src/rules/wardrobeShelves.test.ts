@@ -58,7 +58,7 @@ describe("the wardrobe", () => {
       expect(s.items.some(i => i.start && wears(CLASSIC, i)), s.id).toBe(true);
     }
     expect(SHELVES.bag.items.some(i => wears(CLASSIC, i))).toBe(false);
-    expect(SHELVES.bag.items.every(i => i.start)).toBe(true); // (each hers to choose)
+    expect(SHELVES.bag.items.filter(i => i.start).map(i => i.id)).toEqual(["satchel", "bumbag", "purse"]); // (hers to choose from; the rest found)
     expect(STARTING_SET.length).toBeGreaterThan(10);
   });
 
@@ -89,7 +89,8 @@ describe("Ed's redo (2026-10-23): nothing with no choice in it, the broom till t
   });
   it("the broom stand is gone (the Workshop's bay, lathe and pegboard in its place), and no station offers a broom's power or shape", () => {
     expect(shelvesAt("broomStand")).toBeNull();
-    for (const id of ["broomBay", "lathe", "pegboard"]) expect(shelvesAt(id), id).not.toBeNull();
+    expect(shelvesAt("lathe")!.map(s => s.id)).toEqual(["tip", "chassis", "exhaust", "sets", "broomBody", "broomTrim", "broomFit", "pegboard"]); // (one broom station: Ed, 2026-10-29, "one for colours, the other for components")
+    for (const id of ["broomBay", "pegboard"]) expect(shelvesAt(id), id).toBeNull();
     for (const s of Object.values(SHELVES)) { expect((s as unknown as Record<string, unknown>).power, s.id).toBeUndefined(); for (const i of s.items) expect(i.set["broom.kind"], i.id).toBeUndefined(); }
   });
   it("every shelf names the part of her the camera zooms on, one the tuning has", () => {

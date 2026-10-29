@@ -377,7 +377,7 @@ describe("a pack against her walking away (Ed's playtest, v3893)", () => {
   it("lands its lunges and bolts, and hits her about as often as without packs", () => {
     const plain = chase(false), packs = chase(true);
     expect(packs.lunges).toBeGreaterThanOrEqual(5);
-    expect(packs.landed / packs.lunges).toBeGreaterThanOrEqual(0.7); // (a lunge that starts reaches her)
+    expect(packs.landed / packs.lunges).toBeGreaterThanOrEqual(0.6); // (a lunge that starts reaches her: 7 of 10 before the fight styles, 4 of 6 since, the hares bounding in: Ed's playtest, 2026-10-29)
     expect(packs.shotHits / Math.max(1, packs.fired)).toBeGreaterThanOrEqual(0.35); // (13 to 26% before: aimed behind her)
     expect(packs.hits).toBeGreaterThanOrEqual(plain.hits * 0.5); // (9 to 17 of plain's 24 to 30 before; and since Ed, 2026-10-20, a pack's strikes at her take the dodge's tokens, one at a time as the plain fight's do, with its lulls besides)
   }, 60000);
@@ -410,7 +410,7 @@ describe("the lull is a retreat, not a halt (Ed's playtests, 2026-10-23: \"lulls
           const c = g.creatures[id]; if (!c || c.packHide || c.burrow || c.leap || c.charge) continue;
           const d = Math.hypot(c.x - W.x, c.z - W.z);
           if (!startD.has(id)) startD.set(id, d); most.set(id, Math.max(most.get(id) ?? 0, d));
-          steps++; if (!c.moving) still++;
+          steps++; if (!c.moving && !(c.hopNext !== undefined && g.clock.time < c.hopNext)) still++; // (a hopper's beat on the ground between bounds is its gait, not standing: Ed, 2026-10-29)
         }
       }, ON, seed);
       for (const [id, d0] of startD) { starts++; if (off(d0, most.get(id))) backed++; }
@@ -533,19 +533,21 @@ describe("kinds keep their own moves in a pack (Ed, 2026-10-20)", () => {
     expect(slime.size).toBeGreaterThan(10);
   }, 60000);
 
-  it("the wolves surround her: waiting their turns (its approach and its tell) they go round her to their places, not straight in", () => {
-    let turn = 0, t = 0;
+  it("the wolves circle her (Ed's playtest, 2026-10-29: a circler): waiting their turns they go round her, the pack all one way, not straight in", () => {
+    let turn = 0, signed = 0, t = 0;
     const last = new Map<number, number>();
     wild("wolf", "wolf*1@0,wolf*6@2", 30, (g, them) => {
       const st = wildPack(g), w = g.witches[0].body;
       for (const c of them) {
         const a = Math.atan2(c.z - w.z, c.x - w.x), was = last.get(c.id);
         last.set(c.id, a);
-        if ((st?.phase !== "approach" && st?.phase !== "tell") || was === undefined || c.gone) continue;
-        turn += Math.abs(((a - was + Math.PI * 3) % (Math.PI * 2)) - Math.PI); t += STEP;
+        if ((st?.phase !== "approach" && st?.phase !== "tell" && st?.phase !== "combo") || was === undefined || c.gone || strikingNow(c)) continue;
+        const da = ((a - was + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+        turn += Math.abs(da); signed += da; t += STEP;
       }
     });
     expect(t).toBeGreaterThan(5);
-    expect((turn / t) * (180 / Math.PI)).toBeGreaterThan(25); // (degrees a second round her: about 45 to 55, 12 to 22 before, straight in from where they came; about 30 with creature momentum, 2026-10-27: they can't whip round her at a run)
+    expect((turn / t) * (180 / Math.PI)).toBeGreaterThan(20); // (degrees a second round her: about 12 to 22 straight in from where they came, about 30 surrounding before)
+    expect(Math.abs(signed) / turn).toBeGreaterThan(0.5); // (one way round, mostly)
   }, 60000);
 });
