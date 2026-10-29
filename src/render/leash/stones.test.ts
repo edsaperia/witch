@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { barLevel, columnOf } from "./stones";
-import { bowOf, layChain, stepChain, type Chain, type ChainMotion } from "./chain";
+import { bowOf, layChain, LINK_ANGLES, linkAngle, stepChain, type Chain, type ChainMotion } from "./chain";
 import { CHAIN_DEFAULT } from "./ranks";
 
 describe("rune stones' sigils", () => {
@@ -54,5 +54,15 @@ describe("chains", () => {
     const ch: Chain = { links: [] };
     layChain(ch, 16, 0, 2, 0, 10, 0.5, 0, bowOf(10, 16 * 1.3, 0.3));
     expect(Math.max(...ch.links.map(l => l.y))).toBeGreaterThan(3);
+  });
+});
+
+describe("chain links turned along their span on screen", () => {
+  it("picks the nearest of the angles, a link the same turned round", () => {
+    expect(linkAngle(1, 0)).toBe(0); // (across the screen)
+    expect(linkAngle(0, 1)).toBe(LINK_ANGLES / 2); // (up the screen: north-south)
+    expect(linkAngle(0, -1)).toBe(LINK_ANGLES / 2); // (the same, the other way)
+    expect(linkAngle(-1, 0)).toBe(0);
+    expect(linkAngle(1, 1)).toBe(LINK_ANGLES / 4);
   });
 });

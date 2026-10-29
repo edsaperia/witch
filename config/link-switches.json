@@ -141,6 +141,21 @@
    ]
   },
   {
+   "name": "bag",
+   "values": [
+    "quick",
+    "far",
+    "none",
+    "<bag item id>"
+   ],
+   "does": "Her bag for one load: the Quick bag (faster 💌s, shorter reach) or the Far bag (slower, further); none, no bag.",
+   "group": "debug",
+   "since": "2026-10-29",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
    "name": "bare",
    "values": [
     "1",

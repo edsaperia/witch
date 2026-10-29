@@ -66,14 +66,14 @@ describe("tonight's travel trunk", () => {
     expect(findPiece(h.trunk!)).toBe(FIND_KINDS.find(k => k.id === h.trunk!.kind)!.piece(h.trunk!.item!));
   });
 
-  it("finds hats and bags each on its own (Ed, 2026-10-23): every spell hat but the plain one, the bum bag and the backpack, out of the trunk", () => {
+  it("finds hats and bags each on its own (Ed, 2026-10-23): every spell hat but the plain one, and the backpack (the Quick and Far bags hers from the start: Ed, 2026-10-29), out of the trunk", () => {
     expect(HAT_FINDS).not.toContain("none");
     expect(HAT_FINDS.length).toBe(14);
-    expect([...BAG_ITEMS].sort()).toEqual(["backpack", "bumbag"]);
+    expect([...BAG_ITEMS].sort()).toEqual(["backpack"]);
     for (const b of BAG_ITEMS) expect(FINDABLE.some(i => i.id === b), b).toBe(false); // (no longer in the trunk)
     for (const k of FIND_KINDS) for (const id of k.items) { expect(COUNTRY_BY_ID[k.piece(id)], k.piece(id)).toBeDefined(); } // (every find drawn: art/country.js)
     const hat = FIND_KINDS.find(k => k.id === "hat")!, bag = FIND_KINDS.find(k => k.id === "bag")!;
-    expect(hat.piece("sentry")).toBe("find-hat"); expect(bag.piece("bumbag")).toBe("find-bag");
+    expect(hat.piece("sentry")).toBe("find-hat"); expect(bag.piece("backpack")).toBe("find-bag");
     // taken, the piece stands on without it
     const g = game(); g.trunk = { ...g.trunk!, kind: "hat", item: "sentry", found: false };
     expect(findPiece(g.trunk)).toBe("find-hat");

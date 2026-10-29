@@ -60,6 +60,8 @@ export interface SpellState {
   broom: BroomSpellId;
   /** Her broom's parts, a slot each (rules/broomParts.ts). */
   parts: Fitted;
+  /** Her bag (a config/wardrobe.json bag item's id: rules/bags.ts, its 💌 stats), or none. */
+  bag?: string;
   /** Game time the active broom spell's effect ends (it's active before then). */
   activeUntil: number;
   /** Game time it can be cast again. */
@@ -84,7 +86,7 @@ export interface SpellState {
 export function newSpells(t: Tuning): SpellState {
   const parts = fittedOf(t.spells.parts);
   const owned = t.spells.hats;
-  return { hat: hatOf(t.spells.hat), ...(owned !== undefined && owned !== "*" ? { hats: owned.split(",").filter(id => hatOf(id) !== "none") } : {}), broom: spellOfParts(parts), parts, activeUntil: -Infinity, readyAt: 0, castAt: -Infinity };
+  return { hat: hatOf(t.spells.hat), ...(owned !== undefined && owned !== "*" ? { hats: owned.split(",").filter(id => hatOf(id) !== "none") } : {}), broom: spellOfParts(parts), parts, ...(t.spells.bag ? { bag: t.spells.bag } : {}), activeUntil: -Infinity, readyAt: 0, castAt: -Infinity };
 }
 /** Whether she owns a hat (the plain hat is always hers). */
 export const ownsHat = (s: Pick<SpellState, "hats">, id: string): boolean => id === "none" || !s.hats || s.hats.includes(id);

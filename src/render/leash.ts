@@ -44,7 +44,7 @@ import { drawStones, newStoneView, resetStoneView, type StoneSpot } from "./leas
 import { drawProjection } from "./leash/projection";
 import { RUNE_SCALE, runeOffset, sigilSize } from "../rules/runeOffset";
 import { relicsOut } from "../rules/partyOver";
-import { drawEmbers, glyphPoints, rankColour, rankKnobs, rankOf, rankSize, ranksOn, youthDots } from "./leash/ranks";
+import { drawEmbers, glyphPoints, legendShine, rankColour, rankKnobs, rankOf, rankSize, ranksOn, youthDots } from "./leash/ranks";
 export { BUBBLE_PX, bubblePx } from "./leash/bubbles";
 export { legendarySigil } from "./leash/glyphs";
 
@@ -235,7 +235,7 @@ export class LeashView {
    *  not too smooth", "sigils less transparent"). A near-black backing disc as wide as the glyph's own pixels (times
    *  leash.sigilBacking.size) at leash.sigilBacking.dark, then the glyph painted opaque in its full neon, then the dim added glyph as
    *  ever (its glow). `a` is how much it shows (a fresh rune's, the ghost's), `draw` its write-on. */
-  groundSigil(x: number, y: number, z: number, size: number, uv: number[], r: number, g: number, b: number, a: number, draw = 1): void {
+  groundSigil(x: number, y: number, z: number, size: number, uv: number[], r: number, g: number, b: number, a: number, draw = 1, shine = 0): void {
     const B = this.game.tuning.leash.sigilBacking;
     if (B && B.dark > 0) {
       const reach = this.extent.get(`${uv[0]},${uv[1]}`) ?? 1;
@@ -245,7 +245,7 @@ export class LeashView {
       else this.backing.add(x, y, z, size * reach * B.size, this.uv(DISC), 0.02, 0.02, 0.035, B.dark * shown, draw);
       this.ink.add(x, y, z, size, uv, Math.min(1, r), Math.min(1, g), Math.min(1, b), shown, draw);
     }
-    this.flat.add(x, y, z, size, uv, r, g, b, a, draw);
+    this.flat.add(x, y, z, size, uv, r, g, b, a, draw, false, shine); // (a legend's shiny: render/leash/ranks.ts legendShine)
   }
 
   /** A species' sigil at a level (it grows more ornate with level), white in the atlas, tinted
@@ -578,6 +578,7 @@ export class LeashView {
     this.drawBosses(time);
     this.drawLetters(time);
     drawCombat(this, time, camera, width, height, hatTop);
+    const PM = { count: 16, size: 0.7, bright: 1, rise: 1, life: 1, ...t.leash.placeMotes }; // (a sigil put down or picked up: its burst of motes)
     for (const e of g.leashEvents) { // (the whole frame's, not only its last step's)
       if (e.kind === "invited" || e.kind === "befriended") {
         // its own colour for the burst: its sigil's neon, calmed toward the night (as the HUD's, #188)
@@ -592,12 +593,12 @@ export class LeashView {
       if (sc) {
         const col = this.colOf(sc), R = 3 + sc.level * 0.8;
         if (e.kind === "placed") this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.6, r: 0.62, g: 0.4, b: 0.2, seed: 0, size: R * 0.8, n: 20, dot: 0.8 }); // (a deep amber: its dots overlap and add up, and it mustn't reach white)
-        this.fx.push({ kind: "motes", x: e.x, y: 0.2, z: e.z, at: time, life: e.kind === "placed" ? 0.9 : 0.7, r: col.r, g: col.g, b: col.b, seed: e.at * 53 + e.id!, size: e.kind === "placed" ? R * 0.35 : R * 0.25, tx: e.kind === "placed" ? 3 : 4.5 });
+        this.fx.push({ kind: "motes", x: e.x, y: 0.2, z: e.z, at: time, life: (e.kind === "placed" ? 0.9 : 0.7) * PM.life, r: col.r * PM.bright, g: col.g * PM.bright, b: col.b * PM.bright, seed: e.at * 53 + e.id!, size: e.kind === "placed" ? R * 0.35 : R * 0.25, tx: (e.kind === "placed" ? 3 : 4.5) * PM.rise, n: PM.count, dot: PM.size });
       }
       if (e.kind === "relicDropped") { // (a flask's sigil put down: the same amber ring, and gold motes)
         const col = (this.slotOf("relic", 0), this.colours.get("relic")!);
         this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.6, r: 0.62, g: 0.4, b: 0.2, seed: 0, size: 4.8, n: 20, dot: 0.8 });
-        this.fx.push({ kind: "motes", x: e.x, y: 0.2, z: e.z, at: time, life: 0.9, r: col.r, g: col.g, b: col.b, seed: e.at * 53 + e.id, size: 2, tx: 3 });
+        this.fx.push({ kind: "motes", x: e.x, y: 0.2, z: e.z, at: time, life: 0.9 * PM.life, r: col.r * PM.bright, g: col.g * PM.bright, b: col.b * PM.bright, seed: e.at * 53 + e.id, size: 2, tx: 3 * PM.rise, n: PM.count, dot: PM.size });
       }
       if (e.kind === "cycled" && e.id !== undefined) this.cycledAt.set(stackKey(e.relic ? "relic" : "creature", e.id), time);
     }
@@ -633,7 +634,7 @@ export class LeashView {
     // Placed sigils, written on the ground, a little brighter than they were so they read in the
     // grass (Ed, v233; the grass is trampled clear round them, grass.ts).
     const seeThrough = t.leash.placedThrough ?? 0;
-    const ranks = ranksOn(t), RK = rankKnobs(t);
+    const ranks = ranksOn(t), RK = rankKnobs(t), crowd = RK.embers.crowd ? Math.min(1, Math.sqrt(RK.embers.crowd / Math.max(1, s.placed.length))) : 1; // (a crowd of them thinned, not noise)
     for (const p of s.placed) {
       const c = g.creatures[p.id], sg = this.sigilOf(c);
       let col = this.colOf(c);
@@ -641,9 +642,9 @@ export class LeashView {
       const drawn = writeOn(g.herTime, p.at); // (on her clock, as its stamp is: Bravo's dark-circle diagnosis, 2026-10-12)
       const size = ranks ? RK.glyph * rankSize(t, rankOf(c)) : (3 + c.level * 0.8) * sg.scale; // (by rank, Ed 2026-10-28)
       if (ranks) col = this.rankMoment(c, p.x, p.z, size, col, time, dot);
-      this.groundSigil(p.x, 0.02, p.z, size, sg.uv, col.r * pulse, col.g * pulse, col.b * pulse, 1, drawn);
+      this.groundSigil(p.x, 0.02, p.z, size, sg.uv, col.r * pulse, col.g * pulse, col.b * pulse, 1, drawn, ranks ? legendShine(rankOf(c), time, p.id) : 0);
       if (seeThrough > 0) this.through.add(p.x, 0.02, p.z, size, sg.uv, col.r * pulse, col.g * pulse, col.b * pulse, seeThrough, drawn);
-      if (ranks && drawn >= 1) drawEmbers(this.standing, dot, this.glyphPts.get(`${sg.uv[0]},${sg.uv[1]}`) ?? [], p.x, 0.02, p.z, size, true, rankOf(c), [col.r, col.g, col.b], time, p.id, RK.embers);
+      if (ranks && drawn >= 1) drawEmbers(this.standing, dot, this.glyphPts.get(`${sg.uv[0]},${sg.uv[1]}`) ?? [], p.x, 0.02, p.z, size, true, rankOf(c), [col.r, col.g, col.b], time, p.id, RK.embers, crowd);
       if (halo > 0) this.flat.add(p.x, 0.01, p.z, 5.5, dot, col.r, col.g, col.b, 0.38 * halo);
     }
 
@@ -655,7 +656,7 @@ export class LeashView {
       const since = time - (c.happyAt ?? -Infinity), k = Math.min(1, Math.max(0, since / 0.45)), ready = hasRune(c, time);
       const slot = ranks ? this.bareSlot(c.species) : this.slotOf(c.species, c.level), col = this.colOf(c), hop = since < 0.45 ? Math.sin(k * Math.PI) * 1.4 : 0, grow = k < 1 ? 0.4 + 0.75 * k - 0.15 * Math.sin(k * Math.PI) : 1;
       const a = ready ? 0.62 + 0.12 * Math.sin(time * 2 + c.id) : 0.3, rz = c.z + runeOffset(c, t), size = (ranks ? sigilSize(2, RUNE_SCALE) * rankSize(t, rankOf(c)) : sigilSize(c.level, RUNE_SCALE)) * grow; // (rank sigils: an adult rune's size, a rank's share of it)
-      this.groundSigil(c.x, 0.03 + hop, rz, size, this.uv(slot), col.r * 0.8, col.g * 0.8, col.b * 0.8, a, k);
+      this.groundSigil(c.x, 0.03 + hop, rz, size, this.uv(slot), col.r * 0.8, col.g * 0.8, col.b * 0.8, a, k, ranks ? legendShine(rankOf(c), time, c.id) : 0);
       if (seeThrough > 0) this.through.add(c.x, 0.03 + hop, rz, size, this.uv(slot), col.r * 0.8, col.g * 0.8, col.b * 0.8, a * seeThrough, k); // (through scenery as a placed sigil is: Ed, 2026-10-12)
       if (ready && halo > 0) this.flat.add(c.x, 0.015, rz, 4.2, dot, col.r, col.g, col.b, 0.18 * halo);
     }

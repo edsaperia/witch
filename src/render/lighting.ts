@@ -12,6 +12,8 @@ export const MAX_GLADES = 4;
 
 export const LIGHT_UNIFORMS = {
   uAmb: { value: new THREE.Vector3() },
+  /** What nothing lights, darkened: the ambient and the moonlight times this (the mood's unlit; 1 as they are). */
+  uUnlitDim: { value: 1 },
   uMoon: { value: new THREE.Vector3() },
   uMoonDir: { value: new THREE.Vector3(-0.45, 0.75, 0.5).normalize() },
   uMoonBeam: { value: new THREE.Vector3() },
@@ -97,6 +99,7 @@ export function applyStyleLight(st: Style, glowReach: number, metresPerArtPixel:
 
 export const LIGHT_GLSL = /* glsl */ `
 uniform vec3 uAmb, uMoon, uMoonDir, uMoonBeam, uGlowPos, uGlowRgb;
+uniform float uUnlitDim;
 uniform vec4 uMoonUp;
 uniform float uShafts, uShaftScale, uGlowR, uGlowFalloff, uGlowNear, uGlowPower, uGlowDim, uTime;
 uniform vec2 uHazeCentre, uHazeRange;
@@ -195,6 +198,9 @@ vec3 nightLightShaded(vec3 N, vec3 P, float moonK) {
     float s = mod(P.x / uShaftScale + P.z * 0.9 / uShaftScale, 150.0);
     l += uMoonBeam * smoothstep(0.0, 6.0, s) * (1.0 - smoothstep(28.0, 34.0, s)); // soft-edged beams
   }
+  // What nothing lights, darker (the mood's unlit: Ed's v5399 playtest, "The unlit forest needs to be darker"): the night's own light
+  // so far, the ambient and the moon's; what's added below (her glow, the glades, the lights) stays as it is, so the lit stands out.
+  l *= uUnlitDim;
   // The witch's glow (Ed, v147: "should fall off faster"; round 11: "a bit flat, it should fall off
   // closer"): full under her, falling off with the distance along the ground as
   // (1 - d/(reach × near))^falloff, a bright centre dropping quickly to dark at near of the reach;
