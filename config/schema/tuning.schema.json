@@ -6271,10 +6271,6 @@
               "type": "number",
               "minimum": 0
             },
-            "linger": {
-              "type": "number",
-              "minimum": 0
-            },
             "max": {
               "type": "number",
               "minimum": 0
@@ -6294,17 +6290,44 @@
             "height": {
               "type": "number",
               "minimum": 0
+            },
+            "route": {
+              "type": "object",
+              "properties": {
+                "on": {
+                  "type": "boolean"
+                },
+                "spacing": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "height": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "cell": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "on",
+                "spacing",
+                "height",
+                "cell"
+              ],
+              "additionalProperties": false
             }
           },
           "required": [
             "on",
             "speed",
-            "linger",
             "max",
             "bars",
             "spacing",
             "cell",
-            "height"
+            "height",
+            "route"
           ],
           "additionalProperties": false
         }
