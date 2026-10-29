@@ -22,7 +22,7 @@ import type { Game } from "./game";
 import { dressed, pileOut, type PileSlot } from "./clothesPile";
 import { deckOf } from "./treehouse";
 import { hasRooms, objectAt } from "./houseRooms";
-import { hasBroom, hasInvites } from "./kit";
+import { hasBag, hasBroom, hasInvites } from "./kit";
 
 /** What a guidance pin is for (render/view/guidance.ts gives each its glyph). */
 export type GuideKind = "bed" | "dress" | "desk" | "lathe" | "hat" | "part" | "wearable" | "chart" | "decks";
@@ -44,6 +44,8 @@ export const emptyGuide = (): GuideSave => ({ unseen: [] });
  *  broom taken off the lathe. */
 export const GUIDANCE_HOOKS = {
   invitationsReady: (g: Game, w: number): boolean => !g.witches[w] || hasInvites(g.witches[w]),
+  /** A bag on her to carry them in (Ed, 2026-10-29: rules/kit.ts needsBag). */
+  bagCarried: (g: Game, w: number): boolean => !g.witches[w] || hasBag(g.witches[w]),
   broomTaken: (g: Game, w: number): boolean => !g.witches[w] || hasBroom(g.witches[w]),
 };
 
@@ -56,7 +58,7 @@ const AT_DECKS = 2.5;
 
 /** What's in front of her, `w`'s pin, or null (nothing to guide). `unvisited` the islands found she can sail to and hasn't been to
  *  (app/chartSave.ts unvisited). */
-export function guidanceOf(g: Game, w: number, save: GuideSave, unvisited: readonly string[] = [], hooks = GUIDANCE_HOOKS): Guide | null {
+export function guidanceOf(g: Game, w: number, save: GuideSave, unvisited: readonly string[] = [], hooks: Omit<typeof GUIDANCE_HOOKS, "bagCarried"> & Partial<Pick<typeof GUIDANCE_HOOKS, "bagCarried">> = GUIDANCE_HOOKS): Guide | null {
   // The night over, lost (the afterparty) or won (its finale settled: rules/win.ts), home: the map table while there's an island
   // found she can sail to and hasn't been to (`unvisited`: app/chartSave.ts unvisited; Ed, 2026-10-26: "No 💤 if there are new
   // islands, just 🧭 towards islands the player can go to and hasn't visited yet"), even once she's looked at the chart; then the bed.
@@ -67,7 +69,7 @@ export function guidanceOf(g: Game, w: number, save: GuideSave, unvisited: reado
     const next = DRESS_ORDER.find(([slot]) => k.pile!.includes(slot));
     if (next) return { kind: "dress", target: { object: next[1] } };
   }
-  if (!hooks.invitationsReady(g, w)) return { kind: "desk", target: { object: "invitations" } };
+  if (!hooks.invitationsReady(g, w)) return (hooks.bagCarried ?? GUIDANCE_HOOKS.bagCarried)(g, w) ? { kind: "desk", target: { object: "invitations" } } : { kind: "dress", target: { object: "bags" } }; // (no bag yet: to the bags first)
   if (!hooks.broomTaken(g, w)) return { kind: "lathe", target: { object: "lathe" } };
   const n = save.unseen[save.unseen.length - 1];
   if (n) return { kind: n.kind, target: { object: n.at } };
