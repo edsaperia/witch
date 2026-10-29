@@ -4,10 +4,11 @@
 // every one is offered, nothing written. Storage blocked: this run only.
 import { RECORDS, RECORD_FINDS, START_RECORDS, recordById } from "../rules/records";
 import { unlockAll } from "./debugUnlock";
+import { fallbackStorage } from "./storageFallback";
 
 export const RECORDS_KEY = "witch.records";
 type Store = Pick<Storage, "getItem" | "setItem">;
-const storeOf = (s?: Store | null): Store | null => { try { return s ?? globalThis.localStorage ?? null; } catch { return null; } };
+const storeOf = fallbackStorage;
 interface Saved { found: string[]; last?: string }
 
 function load(storage?: Store | null): Saved {

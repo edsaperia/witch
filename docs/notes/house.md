@@ -1,5 +1,7 @@
 # The treehouse and its house
 
+Broom parts and record choices retain failed storage writes in this page through `app/storageFallback.ts`, so a station's next read keeps the choice. The fallback is isolated by storage object; a successful retry clears it. Browser console warnings name each affected key once per page. Reloading cannot retain changes the browser refused to save. Player settings use the same fallback; save-session ownership remains separate.
+
 Part of Witch's notes (CLAUDE.md is the index): the treehouse and its deck, arriving, the house's rooms, the station menus, the Studio, finds, the Workshop and broom parts, hats and brooms, the telescope. Moved here from CLAUDE.md as it stood (housekeeping, Ed 2026-10-23: a note an area, so pull requests add to their own area's file, not one shared file); every rule kept. Add to this file, not CLAUDE.md, when you change this area.
 
 **The dressing stations** (Ed's playtest of v4273, 2026-10-23): `node tools/stations/check.cjs [out] [dist]` shots each bedroom station (`?shot=object:<id>`) with the loop running and fails unless, once she's choosing, all of her is on screen and the part chosen near the middle at the start's zoom and zoomed all the way in, a click and the arrow keys each put an owned item on her with her drawn look following, Enter, E and Space stay in the panel (she neither rises nor puts anything down), and Enter on a locked item says it's not found yet (about 15 minutes in the cloud; `ONLY=wardrobe`). Run it after a change to the station menus or their camera.
