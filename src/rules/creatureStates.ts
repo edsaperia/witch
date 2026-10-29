@@ -85,7 +85,7 @@ export function makePartyLegend(c: Creature, time: number): void {
  *  legend circle's baby, once happy, carries one like any other). `time` given: whether it's ready yet
  *  (pickupDelay after the hearts); without, whether it has one at all (the view draws it popping out). */
 export function hasRune(c: Creature, time?: number, data: StatesData = STATES): boolean {
-  if (c.asleep || c.bed || inConga(c)) return false;
+  if (c.asleep || c.bed || inConga(c) || c.packHide) return false; // (hiding in a pack's lull, a shadow of itself: no rune till it's back, Ed 2026-10-29)
   if (c.atStone || c.loose) return false; // (its sigil in its stone's stack, or lying loose by its soundsystem: rules/stoneStacks.ts)
   if (c.partyLegend) { if (data.leash !== "pickup" || c.gone || c.leashed) return false; } // (a party legend's: the egg)
   else if (data.leash !== "pickup" || c.gone || c.leashed || c.boss || c.level === LEGEND || c.legendState === "happy" || stateOf(c) !== "happy") return false;
