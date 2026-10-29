@@ -1,6 +1,6 @@
 // Her records (Ed, 2026-10-29: "Remove record station, instead have dj booth as a station; you open it as a station, select a
-// record (each record has a bpm ...) and is an item which the player will unlock. Start with 100 and 120."; then "Actually maybe
-// just 100, 110, 120, 130 bpm records, not every 5"): config/records.json. She chooses one at her DJ booth (the decks on the
+// record (each record has a bpm ...) and is an item which the player will unlock. Start with 100 and 120."; then "full set from 100 to
+// 200, but only every 10 bpm, not every 5"): config/records.json. She chooses one at her DJ booth (the decks on the
 // Terrace, rules/wakeUp.ts) before the party; the party starts at its bpm. Those she hasn't found are finds (rules/finds.ts).
 import DATA from "../../config/records.json";
 

@@ -9,10 +9,10 @@ import { UNLOCK_KEY } from "./debugUnlock";
 const store = () => { const m = new Map<string, string>(); return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v), removeItem: (k: string) => void m.delete(k), m }; };
 
 describe("her records", () => {
-  it("are 100, 110, 120 and 130 bpm (Ed, 2026-10-29: \"just 100, 110, 120, 130 bpm records\"); she starts with 100 and 120, the others are finds", () => {
-    expect(RECORDS.map(r => r.bpm)).toEqual([100, 110, 120, 130]);
+  it("are every 10 bpm from 100 to 200 (Ed, 2026-10-29: \"full set from 100 to 200, but only every 10 bpm\"); she starts with 100 and 120, the other 9 are finds", () => {
+    expect(RECORDS.map(r => r.bpm)).toEqual([100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200]);
     expect(START_RECORDS).toEqual(["record-100", "record-120"]);
-    expect(RECORD_FINDS).toEqual(["record-110", "record-130"]);
+    expect(RECORD_FINDS.length).toBe(9); expect(RECORD_FINDS).not.toContain("record-100"); expect(RECORD_FINDS).not.toContain("record-120");
     expect(FIND_KINDS.find(k => k.id === "record")!.items).toEqual(RECORD_FINDS);
   });
   it("keeps the starting ones always, adds and drops finds, remembers the last chosen while she has it", () => {
@@ -20,7 +20,7 @@ describe("her records", () => {
     expect(ownedRecords(s)).toEqual(["record-100", "record-120"]);
     expect(lastRecord(s)).toBeNull();
     recordFound("record-130", s); recordFound("record-100", s); // (a starting one isn't a find: nothing changes)
-    expect(ownedRecords(s)).toEqual(["record-100", "record-120", "record-130"]);
+    expect(ownedRecords(s)).toEqual(["record-100", "record-120", "record-130"]); // (slowest first)
     chooseRecord("record-130", s); expect(lastRecord(s)).toBe("record-130");
     recordDropped("record-130", s); expect(ownedRecords(s)).toEqual(["record-100", "record-120"]); expect(lastRecord(s)).toBeNull();
     chooseRecord("no-such", s); expect(lastRecord(s)).toBeNull();

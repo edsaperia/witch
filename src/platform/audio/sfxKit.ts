@@ -11,6 +11,9 @@ export class SfxKit {
   /** The last node before the speakers (its limiter): the watchdog taps it. */
   readonly final: DynamicsCompressorNode;
   readonly noise: AudioBuffer;
+  /** Her routine's strokes' length, times (audio/deck.ts): 1 at 120 bpm and slower, shorter at a faster record's tempo so the
+   *  strokes of a quick bar don't run over each other (sfxCues.ts sets it from the beat; Ed's DJ booth records, 2026-10-29). */
+  pace = 1;
   private lastAt = new Map<string, number>();
   /** The legends' big space (a long generated reverb), built when one first sings. */
   private ocean: GainNode | null = null;
