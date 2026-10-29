@@ -19,6 +19,9 @@
 // function. Either way the heap is sampled every quarter second (heapCurve: seconds, MB) and its floors (the least seen in each
 // 5 s: what's live, under the garbage) reported first to last.
 //   node tools/bench/stalls.cjs [out dir]   DIST=dist-prof SEED=2267 X=2673 Z=2484 ZOOM=3 SECONDS=60 SIZE=640x360 WARM=8 RUN_MS=50 NODRAW=1 HEAP=0 HEAP_EVERY=4096
+// ROUTE=1 replaces the stationary dwell with tools/bench/ordinary.cjs: ordinary play across ground,
+// treetops, house, party, wave and fight; ordinary.json keeps each frame and scene key. REFRESH_MS=50
+// fails the process if any scenery refresh exceeds that CPU budget (not a GPU/frame-rate budget).
 const http = require("http");
 const { pageKey } = require("./comparable.cjs"); // (the result's comparability key: tools/bench/comparable.cjs)
 let KEY = null;
@@ -119,7 +122,9 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   const counts0 = COUNT ? await countKinds(cdp) : null;
   const heap0 = await page.evaluate(() => performance.memory?.usedJSHeapSize ?? 0), tg0 = await page.evaluate(() => window.witch.game.clock.time);
   lap(`profiling ${SECONDS} s`);
-  if (LAND) {
+  if (env("ROUTE", "0") === "1") {
+    await require("./ordinary.cjs").ordinary(page, SECONDS, out);
+  } else if (LAND) {
     await page.evaluate(() => {
       const v = window.witch.view, A = window.witch.audio, cw = A.meter?.clockWatch, ms = () => A.music?.stats ?? {};
       window.__land = { t0: performance.now(), at: null, rows: [], art0: v.assets.timings.length };
