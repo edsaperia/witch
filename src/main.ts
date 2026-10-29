@@ -3,6 +3,7 @@ import { drew, holding } from "./render/impact";
 import { spinStep } from "./render/spin";
 import { keycapCanvas } from "./ui/keyHint";
 import { fillControls } from "./ui/controlsText";
+import { bagOf, setBag } from "./rules/bags";
 import { bindings } from "./platform/bindings";
 import { wavesOver } from "./rules/win";
 import { chartOpen, closeChart, openChart, prepareChart, type Sailed } from "./ui/chartOverlay";
@@ -397,7 +398,7 @@ stations.onLook = g => {
   saveGenome(lookWithoutLoan(g as Record<string, unknown>, loan) as never); creator.adopt(g); // (saved without the loan: app/loan.ts)
   // (not yet dressed: a station's choice puts its piece on her, out of last night's pile: rules/clothesPile.ts; Ed, 2026-10-23)
   const w = N().game.wake; if (w && stations.station) wearFromStation(w, stations.station);
-  if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); wearHat(g); }
+  if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); wearHat(g); setBag(N().game.witches[0].spells, bagOf(g as Record<string, unknown>)); } // (her bag's 💌 stats follow the bag she wears: rules/bags.ts)
   showLook();
 };
 stations.onBack = () => shutStation("back"); // (menu.back, E by default: platform/bindings.ts; the pad's, circle, comes through padControls)

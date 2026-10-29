@@ -171,6 +171,12 @@ export const PIN_TIP = RING_R + 7;
 export const rainbow = (h: number): [number, number, number] => { const f = (n: number) => { const q = (((n + h * 6) % 6) + 6) % 6; return 1 - Math.max(0, Math.min(1, Math.min(q, 4 - q))); }; return [f(5), f(3), f(1)]; };
 
 /** An area's neon calmed for the HUD: a little less saturated and bright, so it sits on the dark forest. */
+/** How the edge pointers stand out (Ed's v5399 playtest, 2026-10-29: "it's easy to miss the pointers"; the tuning's pins, set each frame
+ *  by render/view/hud.ts): `plate` a dark disc behind the ring and an outline round the arrow, its opacity (0 none, as before), so they
+ *  read on any ground; `vivid` how much of the calming toward the night (calm) is taken back, 0 as calmed, 1 the neon itself. */
+export const PIN_LOOK = { plate: 0, vivid: 0 };
+const PLATE_RGB = [10, 8, 20];
+
 export const calm = (c: number[]) => {
   // by saturation, not value (the art director, #188: "keep its value up … take the calm from lower saturation"): half way to
   // its grey, then lifted back so its lightest channel is near the neon's own
@@ -193,24 +199,6 @@ export const NOTES = [
   "#####...######.",
   "#####...######.",
   ".###.....####..",
-];
-
-/** 🎉 in pixels: a party popper, its cone (`#`) bursting streamers and confetti (`+`) up to the right (the wave pointer's middle
- *  for the route's last stone: Ed, 2026-10-10, "Last call"; and the victory lap's pointer). */
-export const PARTY = [
-  "..........+...+",
-  "......+.....+..",
-  "...........+...",
-  ".......+.+.....",
-  "....##....+..+.",
-  "...####.+......",
-  "..######...+...",
-  "..#######......",
-  ".########..+...",
-  ".#########.....",
-  "###########....",
-  "##########.....",
-  "########.......",
 ];
 
 /** 🎩 in pixels: her hat, a tall crown leaning back over a wide brim, its band (`+`) a lighter line (the dropped hat's pointer, rules/hat.ts). */
@@ -266,6 +254,21 @@ export const FLASK = [
   "...#########...",
 ];
 
+/** 🪩 in pixels: a mirror ball on its hanger, its facets a grid of lines (`#`) over lighter tiles (`+`) (the party pointer: Ed,
+ *  2026-10-28, "🪩 not 🎉"). */
+export const MIRRORBALL: readonly string[] = (() => {
+  const rows: string[] = [];
+  for (let y = 0; y < 15; y++) {
+    let row = "";
+    for (let x = 0; x < 15; x++) {
+      const r = Math.hypot(x - 7, (y - 8.5) * 1.05);
+      row += y < 2 ? (x === 7 ? "#" : ".") : r > 6.5 ? "." : r > 5.6 || x % 3 === 1 || y % 3 === 0 ? "#" : "+";
+    }
+    rows.push(row);
+  }
+  return rows;
+})();
+
 /** A pin's arrow tip over its subject's top (CSS pixels), and how far it bobs either way. */
 const PIN_GAP = 20, PIN_BOB = 3;
 /** Angle `a` turned toward `b` by share `k`, the short way round. */
@@ -297,7 +300,7 @@ export class StoneIndicator {
 
   /** Point at the next waking stone at (x, z), its area's creature `species` and neon (rgb 0-1);
    *  `fill`: how far the countdown to the next wave has run (0 just after one, 1 as it comes). null hides it. */
-  update(camera: THREE.Camera, width: number, height: number, at: { x: number; z: number; colour: THREE.Vector3; species: string; notes?: boolean; glyph?: readonly string[]; /** an emoji in its middle, drawn in pixels in its own colours (render/bubbles.ts, as the thrown 💌; the guidance pins: render/view/guidance.ts), else the glyph */ emoji?: string; /** the glyph in its own colour (her hats' pointers), the ring in `colour` */ glyphColour?: THREE.Vector3; /** the ring and its glyph cycling through the rainbow, as the soundsystem spell's spot does (the wave pointer: Ed, 2026-10-28) */ rainbow?: boolean; /** the creature's sigil this many art pixels across (its rank's size: 17 an adult's) */ sigilSize?: number; /** how tall the subject stands (m): the pin hovers over its top (a stone's 3.2 m by default) */ top?: number; /** screen pixels from the arrow's tip up to that top (tuning pins.gap) */ gap?: number; /** the page's y its tip stays above, in view (a use prompt under it: render/view/guidance.ts) */ above?: number } | null, wx: number, wz: number, time: number, bpm: number, fill: number, label?: string): void {
+  update(camera: THREE.Camera, width: number, height: number, at: { x: number; z: number; colour: THREE.Vector3; species: string; notes?: boolean; glyph?: readonly string[]; /** an emoji in its middle, drawn in pixels in its own colours (render/bubbles.ts, as the thrown 💌; the guidance pins: render/view/guidance.ts), else the glyph */ emoji?: string; /** the glyph in its own colour (her hats' pointers), the ring in `colour` */ glyphColour?: THREE.Vector3; /** the ring and its glyph cycling through the rainbow, as the soundsystem spell's spot does (the wave pointer: Ed, 2026-10-28) */ rainbow?: boolean; /** the creature's sigil this many art pixels across (its rank's size: 17 an adult's) */ sigilSize?: number; /** the sigil a legend's: its colour full, not calmed, and a glint sweeping across it (render/leash/ranks.ts legendShine) */ shine?: boolean; /** how tall the subject stands (m): the pin hovers over its top (a stone's 3.2 m by default) */ top?: number; /** screen pixels from the arrow's tip up to that top (tuning pins.gap) */ gap?: number; /** the page's y its tip stays above, in view (a use prompt under it: render/view/guidance.ts) */ above?: number } | null, wx: number, wz: number, time: number, bpm: number, fill: number, label?: string): void {
     const c = this.cue;
     // The party spread (the countdown went back to the start): a flash.
     if (fill < this.lastFill - 0.5) this.flashAt = time;
@@ -325,8 +328,17 @@ export class StoneIndicator {
     const flash = Math.max(0, 1 - (time - this.flashAt) / 0.5);
     // in the area's colour, calmed toward the night (art review round 1: the UI's yellow and magenta shouted over the art)
     // (rainbow: the spell spot's own cycling hue, render/leash/stones.ts; its ring a wheel of it, turning)
-    const hueAt = (h: number) => { const r = rainbow(h); return calm([r[0] * 255, r[1] * 255, r[2] * 255]); };
-    const neon = at.rainbow ? hueAt(time * 0.25) : calm([at.colour.x * 255, at.colour.y * 255, at.colour.z * 255]), lift = (n: number[]) => n.map(v => Math.min(255, v * (0.9 + 0.15 * pulse) + 255 * flash * 0.4)), bright = lift(neon);
+    // (less calmed by pins.vivid, so they stand out: Ed's v5399 playtest)
+    const calmed = (c: number[]) => { const k = calm(c), v = PIN_LOOK.vivid; return v > 0 ? k.map((x, i) => Math.min(255, x + (c[i] - x) * v)) : k; };
+    const hueAt = (h: number) => { const r = rainbow(h); return calmed([r[0] * 255, r[1] * 255, r[2] * 255]); };
+    const neon = at.rainbow ? hueAt(time * 0.25) : calmed([at.colour.x * 255, at.colour.y * 255, at.colour.z * 255]), lift = (n: number[]) => n.map(v => Math.min(255, v * (0.9 + 0.15 * pulse) + 255 * flash * 0.4)), bright = lift(neon);
+    // A dark plate behind the ring and round the arrow (pins.plate: Ed's v5399 playtest, "it's easy to miss the pointers"), first, so
+    // the ring, the glyph and the arrow (drawn whole over it) read on any ground, the forest's dark or a lit floor.
+    if (PIN_LOOK.plate > 0) {
+      const pr = RING_R + 2.2;
+      for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (Math.hypot(x + 0.5 - N / 2, y + 0.5 - N / 2) <= pr) c.dot(x, y, PLATE_RGB, PIN_LOOK.plate);
+      drawArrow(c, arrow, N, RING_R + 1, RING_R + 8.5, 5, PLATE_RGB, PIN_LOOK.plate);
+    }
     // The ring: dim all round, bright neon clockwise from 12 o'clock as far as the countdown has run.
     const R = RING_R, ring = ringPixels(), dim = neon.map(v => v * 0.55); // the rest of the ring: dimmer, but still there on dark grass
     for (let k = 0; k < ring.length; k += 3) {
@@ -347,8 +359,17 @@ export class StoneIndicator {
       const gs = Math.max(8, Math.min(N - 6, Math.round(at.sigilSize ?? 17))), gk = `${at.species}:${gs}`;
       let g = this.glyphs.get(gk);
       if (!g) { g = sigilGlyph(at.species, gs) as { w: number; m: Uint8Array }; this.glyphs.set(gk, g); }
-      const o = Math.floor((N - g.w) / 2);
-      for (let y = 0; y < g.w; y++) for (let x = 0; x < g.w; x++) if (g.m[y * g.w + x]) c.dot(o + x, o + y, bright, 1);
+      const o = Math.floor((N - g.w) / 2), w = g.w, m = g.m;
+      if (at.shine) {
+        // (a legend's: its full colour, and every 2.6 s a glint corner to corner, as in the world)
+        const full = lift([at.colour.x * 255, at.colour.y * 255, at.colour.z * 255]), white = (k: number) => full.map(v => v + (255 - v) * k);
+        const ph = (time / 2.6) % 1, sweep = ph < 0.4 ? (ph / 0.4) * 1.6 - 0.3 : -9;
+        for (let y = 0; y < w; y++) for (let x = 0; x < w; x++) {
+          if (!m[y * w + x]) continue;
+          const glint = Math.abs(((x + 0.5) / w + 1 - (y + 0.5) / w) / 2 - sweep) < 0.13;
+          c.dot(o + x, o + y, glint ? white(0.85) : full, 1);
+        }
+      } else for (let y = 0; y < w; y++) for (let x = 0; x < w; x++) if (m[y * w + x]) c.dot(o + x, o + y, bright, 1);
     }
     // The arrowhead outside the ring: toward the subject at the edge, straight down at it as a pin.
     drawArrow(c, arrow, N, R + 2, R + 7, 3.5, bright, 1);

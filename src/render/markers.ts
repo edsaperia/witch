@@ -159,7 +159,9 @@ export class MarkerFx {
   }
 
   /** shown: how much the beacons show (0 on the ground, 1 at the treetops). */
-  update(beacons: Beacon[], height: number, shown: number, motes: Mote[], lasers: Laser[] = []): void {
+  /** moteSize: the motes' size in the picture's pixels (runeMarkers.awake.moteSize). */
+  update(beacons: Beacon[], height: number, shown: number, motes: Mote[], lasers: Laser[] = [], moteSize = 3): void {
+    (this.motes.material as THREE.ShaderMaterial).uniforms.uSize.value = moteSize;
     const nl = Math.min(this.maxBeams, lasers.length);
     for (let i = 0; i < nl; i++) {
       const b = lasers[i];

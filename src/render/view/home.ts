@@ -118,7 +118,7 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
       for (let i = 0; i < n; i++) {
         const s = (m.cell[0] * 31 + m.cell[1] * 17 + i * 7.3) % 1 || 0.37 * (i + 1) % 1, rise = ((time * (0.25 + 0.15 * ((i * 0.618) % 1)) + i / n) % 1);
         const a = i * 2.399 + m.cell[0];
-        mote(m.x + Math.cos(a) * (0.6 + rise * 1.4), 0.6 + rise * 7, m.z + Math.sin(a) * (0.6 + rise * 1.4), col, (1 - rise) * (0.5 + 0.5 * beat) * (0.6 + s * 0.4));
+        mote(m.x + Math.cos(a) * (0.6 + rise * 1.4), 0.6 + rise * (A.moteRise ?? 7), m.z + Math.sin(a) * (0.6 + rise * 1.4), col, (1 - rise) * (0.5 + 0.5 * beat) * (0.6 + s * 0.4) * (A.moteBright ?? 1));
       }
     }
   }
@@ -147,7 +147,7 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
     for (let i = 0; i < 8; i++) { const a = i * 0.785 + s.at * 3, r = 0.2 + k * 1.1; mote(s.x + Math.cos(a) * r, 1 + Math.sin(a * 2) * 0.4 * k + k * 0.6, s.z + Math.sin(a) * r, SPARKLE_RGB, (1 - k) * (i % 2 ? 1 : 0.6)); }
   }
   for (let i = 0; i < v.fireSparks.length; i++) motes.push(v.fireSparks[i]); // (after the markers' own, as the joined list was)
-  v.markerFx.update(beacons, R.beamHeight, canopyShown(w), motes, lasers);
+  v.markerFx.update(beacons, R.beamHeight, canopyShown(w), motes, lasers, R.awake.moteSize ?? 3);
   const up = canopyShown(w);
   // Wave numbers over the stones (Ed, 2026-10-04, a design aid): above the stone on the ground,
   // above the canopy from the treetops; the reached areas' dimmed.

@@ -20,11 +20,12 @@ describe("padControls in play (Ed's layout, 2026-10-28)", () => {
     expect(play("cross").toggleMode).toBe(false);
     expect([play("square").sigil, play("square").sigilHeld]).toEqual([false, false]);
   });
-  it("R1 cycles forward, L1 back; either trigger invites; the d-pad zooms (up in) and no longer moves her; Share debug", () => {
+  it("R1 cycles forward, L1 back; R2 invites and L2 dodges (Ed, 2026-10-29); the d-pad zooms (up out, down in: Ed, 2026-10-29) and no longer moves her; Share debug", () => {
     expect([play("R1").cycle, play("R1").cycleBack]).toEqual([true, false]);
     expect([play("L1").cycle, play("L1").cycleBack]).toEqual([false, true]);
-    expect(play("R2").fire).toBe(true); expect(play("L2").fire).toBe(true);
-    expect(play("up").zoom).toBe(-1); expect(play("down").zoom).toBe(1);
+    expect(play("R2").fire).toBe(true); expect([play("L2").fire, play("L2").dash]).toEqual([false, true]);
+    expect(play("circle").dash).toBe(true); // (still)
+    expect(play("up").zoom).toBe(1); expect(play("down").zoom).toBe(-1); // (+1: out, the camera further away)
     for (const d of ["up", "down", "left", "right"]) expect([play(d).moveX, play(d).moveZ], d).toEqual([0, 0]);
     expect(play("share").debug).toBe(true);
   });

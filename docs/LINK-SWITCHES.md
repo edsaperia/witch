@@ -91,6 +91,7 @@ For the builders, the smoke and bench runs, the repro link and the arenas.
 | `at=<x>,<z>` | The repro link: she starts at this spot (in the treetops with mode=treetop). | 2026-10-14 | app/repro.ts |
 | `attack=<attack as JSON>` | The Fight Arena or a debug arena tries this attack (an attack spec, as JSON) on its pack. | 2026-10-27 | app/fightArena.ts, app/gameParams.ts |
 | `audio=lite` / `audio=full` | The sound's weight for one load: lite sheds the costly parts (platform/audio/shed.ts). | 2026-10-07 | app/sound.ts |
+| `bag=quick` / `bag=far` / `bag=none` / `bag=<bag item id>` | Her bag for one load: the Quick bag (faster 💌s, shorter reach) or the Far bag (slower, further); none, no bag. | 2026-10-29 | app/linkParams.ts |
 | `cleared=<cx>_<cy>,…` | The repro link: these areas start cleared. | 2026-10-14 | app/repro.ts |
 | `debug` / `debug=cull` / `debug=shadows` / `debug=attack` | The debug overlay and the metre rulers on from the start; cull also tints whatever just appeared or vanished (pops), shadows draws every shadow a flat magenta, and attack blows on the two farthest soundsystems every 10 s (never felling one). | 2026-10-04 | app/keys.ts, app/night.ts, app/playerPick.ts, app/viewParams.ts, main.ts |
 | `decide` | Opens Ed's decisions panel (F2 too). | 2026-10-06 | main.ts, ui/decide.ts |

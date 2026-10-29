@@ -3,7 +3,7 @@
 // - over each stone, its stack as one column of sigils, the friends (invited) above the enemies (still wild), each side in rank order,
 //   legend lowest and babies on top, in the side's palette and the rank's size (Ed: "you mostly care about how many creatures are still
 //   hostile"); it may run off the top of the screen;
-// - the spell's spot, the HUD's music notes (render/indicator.ts NOTES) in a cycling rainbow, `south` m south of a stone with a stack,
+// - the spell's spot, the HUD's music notes (render/indicator.ts NOTES) in a cycling rainbow, cast.spot m south of a stone with a stack (rules/stoneStacks.ts castSpot, where she casts),
 //   fading in as she comes within `far` m of it and fully on within `near`;
 // - the cast (castShown): a ring of rainbow bars round the stone's foot, an analyser of the music playing (Ed, 2026-10-28: "the
 //   soundsystem spell audio analyser bars should move with the music": the mix's spectrum, platform/audio/music.ts spectrum, read once
@@ -13,14 +13,14 @@
 //   flares, the friends' sigils arc down off the column to where they lie, the enemies' fade;
 // - the loose sigils lying on the ground, to pick up (a sleeping legend's tethers her: render/leash/stack.ts).
 import { NOTES, rainbow } from "../indicator";
-import { castShown, stoneStack, type StackEntry } from "../../rules/stoneStacks";
+import { castReady, castShown, castSpot, stoneStack, type StackEntry } from "../../rules/stoneStacks";
 import { RUNE_SCALE, sigilSize } from "../../rules/runeOffset";
 import { hash2 } from "../../rules/random";
 import type { LeashView } from "../leash";
 import { SPRITE_UNIFORMS } from "../sprites";
 import { groundHeight } from "../height";
 import { SLOT, SLOTS } from "./glyphs";
-import { drawEmbers, rankColour, rankKnobs, rankSize, stoneKnobs } from "./ranks";
+import { drawEmbers, legendShine, rankColour, rankKnobs, rankSize, standScale, stoneKnobs } from "./ranks";
 
 /** Each stacked sigil's side as last drawn, and when it last turned (won over: Ed, 2026-10-29); its size times a pop as it flips to
  *  the friends' colour, swelling and settling over a third of a second (no flash: it's the colour that turns). */
@@ -84,11 +84,11 @@ const smooth = (k: number) => { const q = Math.max(0, Math.min(1, k)); return q 
 export function drawStones(lv: LeashView, time: number, dot: number[]): void {
   const g = lv.game, t = g.tuning, V = lv.stoneView, K = stoneKnobs(t), RK = rankKnobs(t), w = g.witch, S = t.stack;
   if (!t.leash.ranks?.on) return;
-  const sizeOf = (lvl: number) => (2 + 2 * 0.4) * S.scale * rankSize(t, lvl), notes = notesSlot(lv);
+  const sizeOf = (lvl: number) => (2 + 2 * 0.4) * S.scale * rankSize(t, lvl) * standScale(t), notes = notesSlot(lv);
   const sigil = (id: number, level: number, x: number, y: number, z: number, size: number, alpha: number, c: [number, number, number]) => {
     const sp = g.creatures[id]?.species ?? "fox", uv = lv.uv(lv.bareSlot(sp)), sh = lv.shadeOf(uv);
     if (sh) lv.stackBack.add(x, y, z, size, sh, 0.02, 0.02, 0.035, (S.backing ?? 0.6) * alpha);
-    lv.stackGlyphs.add(x, y, z, size, uv, c[0], c[1], c[2], alpha);
+    lv.stackGlyphs.add(x, y, z, size, uv, c[0], c[1], c[2], alpha, 1, false, legendShine(level, time, id)); // (a legend's shiny: ranks.ts)
     if (alpha > 0.5) drawEmbers(lv.stackGlyphs, dot, lv.glyphPts.get(`${uv[0]},${uv[1]}`) ?? [], x, y, z, size, false, level, c, time, id * 7 + 3, RK.embers, RK.embers.stack);
   };
   // A point `h` m up a stone's face (its sprite's up: leaning back toward the camera), a little in front of it.
@@ -106,9 +106,10 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
     // The column: the friends above the enemies, each side legend lowest, babies on top (stoneStack's order, bottom first).
     const vis = smooth((K.range - Math.hypot(st.x - w.x, st.z - w.z)) / Math.max(1, K.fade));
     if (vis > 0.01) items.forEach((it, i) => { const h = st.top + P[i].y; sigil(it.id, it.level, st.x, upY(st.x, st.z, h), upZ(st.z, h), P[i].size * flipPop(it.id, it.friend, time), vis, rankColour(t, it.level, it.friend)); });
-    // The spell's spot: south of the stone, only as she comes near it.
-    const sx = st.x, sz = st.z + K.south, on = smooth((K.far - Math.hypot(w.x - sx, w.z - sz)) / Math.max(0.1, K.far - K.near));
-    if (on > 0.01) {
+    // The spell's spot: south of the stone, only as she comes near it, and only once it can be cast (castReady: every wild fighter
+    // of its area invited; Ed, 2026-10-29).
+    const { x: sx, z: sz } = castSpot(st, t), on = smooth((K.far - Math.hypot(w.x - sx, w.z - sz)) / Math.max(0.1, K.far - K.near));
+    if (on > 0.01 && castReady(g, st.key)) {
       const c = hue(time * 0.25);
       lv.flat.add(sx, 0, sz, K.size * 1.9, dot, c[0], c[1], c[2], 0.22 * on, 1, true); // (its glow)
       lv.ink.add(sx, 0, sz, K.size, notes, c[0] * on, c[1] * on, c[2] * on, on);
@@ -173,12 +174,14 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
     // (the music's level at this bar, rising at once and falling slowly, as an analyser's do; with no audio running, a gentle idle)
     const live = spec ? barLevel(spec, i, n) : 0.25 + 0.2 * Math.abs(Math.sin(time * 1.3 + i * 1.7) * 0.6 + Math.sin(time * 2.1 + i * 0.9) * 0.4);
     V.bars[i] = Math.max(live, V.bars[i] - dt * 1.8);
-    const f = i / n, a = Math.PI / 2 + f * Math.PI * 2, ux = Math.cos(a), uz = Math.sin(a) * 0.8, cx = cs.x, cz = cs.z + 0.6, lv0 = V.bars[i];
+    const f = i / n, a = Math.PI / 2 + f * Math.PI * 2, ux = Math.cos(a), uz = Math.sin(a) * (K.ringTilt ?? 1), cx = cs.x, cz = cs.z + 0.6, lv0 = V.bars[i];
     const lit = f < k, lost = !lit && f < dr && lostA > 0;
     const h = lit ? 1 + Math.round(lv0 * 7 * (cs.casting ? 1 : 0.6)) : lost ? 1 + Math.round(lv0 * 3) : 1 + Math.round(lv0 * 1.5), c = lit ? hue(f + time * 0.15) : lost ? [1, 0.2, 0.15] : [0.45, 0.45, 0.5];
     for (let j = 0; j < h; j++) {
       const r = K.radius + j * cell * 1.1, x = cx + ux * r, z = cz + uz * r, tip = j === h - 1;
-      lv.flat.add(x, 0, z, cell * (lit ? 1 : 0.85), dot, c[0], c[1], c[2], lit ? (tip ? 1 : 0.85) : lost ? lostA : 0.35);
+      // (the ring's far half, behind the stone from the camera, over it: Ed's playtest, 2026-10-29, "I can usually only see the beginning
+      // and the end of the dial"; the near half lies on the ground as before)
+      (uz < 0 ? lv.over : lv.flat).add(x, uz < 0 ? 0.06 : 0, z, cell * (lit ? 1 : 0.85), dot, c[0], c[1], c[2], lit ? (tip ? 1 : 0.85) : lost ? lostA : 0.35);
       if (lit && tip) lv.over.add(x, 0.2, z, cell * 0.9, dot, c[0], c[1], c[2], 0.45);
     }
   }

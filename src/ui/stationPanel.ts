@@ -298,7 +298,7 @@ export class StationPanel {
     let title = "", text = "", locked = false, sub = "", stats: { name: string; from: string; to: string; better: boolean | null }[] = [];
     if (l) {
       const s = this.shelves[l.shelf];
-      if (l.kind === "items") { const it = shownItems(s)[at.col]; locked = !this.owned.has(it.id); title = locked ? "🔒" : it.name; text = locked ? (this.tried(at) ? "Not found yet." : "") : wears(this.g, it) ? "Wearing." : "Hers: choose to wear it."; } // (a silhouette, nothing more: Ed, 2026-10-21; chosen anyway, it says it's not hers yet)
+      if (l.kind === "items") { const it = shownItems(s)[at.col]; locked = !this.owned.has(it.id); title = locked ? "🔒" : it.name; text = locked ? (this.tried(at) ? "Not found yet." : "") : (wears(this.g, it) ? "Wearing." : "Hers: choose to wear it.") + (it.stat ? ` ${it.stat[0].toUpperCase()}${it.stat.slice(1)}.` : ""); } // (a bag's 💌 stats in words: rules/bags.ts) // (a silhouette, nothing more: Ed, 2026-10-21; chosen anyway, it says it's not hers yet)
       else if (l.kind === "cards" && s.board) {
         const id = cardAt(s, l, at.col)!, cell = BOARD[(l.row ?? 0) * 3 + at.col], own = this.found_().has(id), where = `${cell.point.toLowerCase()} · ${cell.biome.toLowerCase()}`;
         if (own) { title = partById(id)!.name; text = `${where}. ${setsOf(id).map(n => `${n} set`).join(", ")}. Fit it at the bay.`; }
