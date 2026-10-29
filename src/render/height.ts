@@ -496,7 +496,7 @@ export class HeightField {
    *  at a time. Used before a sail's first draw too: its camera jumps from the bedroom to the sea. */
   *fillSteps(x: number, z: number): Steps {
     if (!this.H.on) { this.follow(x, z); return; }
-    const ci = Math.round(x / RES / STEP) * STEP, cj = Math.round(z / RES / STEP) * STEP, h = N / 2, i0 = ci - h, j0 = cj - h, CH = 8;
+    const ci = Math.round(x / RES / STEP) * STEP, cj = Math.round(z / RES / STEP) * STEP, h = N / 2, i0 = ci - h, j0 = cj - h, CH = this.filled ? 2 : 8;
     if (this.filled && ci === this.ci && cj === this.cj) return;
     // The house can finish preparing between slices. Keep its current heights valid until the whole new window is ready.
     const half = this.filled ? new Uint16Array(N * N) : this.half, data = this.filled ? new Float32Array(N * N) : this.data;

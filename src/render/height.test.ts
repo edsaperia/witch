@@ -34,7 +34,7 @@ describe("rolling ground", () => {
       a.follow(x, z);
       const before = (b.texture.image.data as Uint16Array).slice();
       let steps = 0;
-      for (const _ of b.fillSteps(x, z)) { steps++; if (steps === 75 && z !== df.z) expect(b.texture.image.data).toEqual(before); }
+      for (const _ of b.fillSteps(x, z)) { steps++; if (steps === 300 && z !== df.z) expect(b.texture.image.data).toEqual(before); }
       expect(steps).toBeGreaterThan(1);
       expect(b.texture.image.data).toEqual(a.texture.image.data);
       expect(b.follow(x, z)).toBe(false);
