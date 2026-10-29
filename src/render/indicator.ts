@@ -268,6 +268,9 @@ const PIN_GAP = 20, PIN_BOB = 3;
 /** Angle `a` turned toward `b` by share `k`, the short way round. */
 const turnToward = (a: number, b: number, k: number) => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * k;
 
+/** Pixels a pin's tip keeps over a use prompt under it (StoneIndicator.update's `above`). */
+const ABOVE_GAP = 6;
+
 export class StoneIndicator {
   private cue: PixelCue;
   private v = new THREE.Vector3();
@@ -291,7 +294,7 @@ export class StoneIndicator {
 
   /** Point at the next waking stone at (x, z), its area's creature `species` and neon (rgb 0-1);
    *  `fill`: how far the countdown to the next wave has run (0 just after one, 1 as it comes). null hides it. */
-  update(camera: THREE.Camera, width: number, height: number, at: { x: number; z: number; colour: THREE.Vector3; species: string; notes?: boolean; glyph?: readonly string[]; /** an emoji in its middle, drawn in pixels in its own colours (render/bubbles.ts, as the thrown 💌; the guidance pins: render/view/guidance.ts), else the glyph */ emoji?: string; /** the glyph in its own colour (her hats' pointers), the ring in `colour` */ glyphColour?: THREE.Vector3; /** how tall the subject stands (m): the pin hovers over its top (a stone's 3.2 m by default) */ top?: number; /** screen pixels from the arrow's tip up to that top (tuning pins.gap) */ gap?: number } | null, wx: number, wz: number, time: number, bpm: number, fill: number, label?: string): void {
+  update(camera: THREE.Camera, width: number, height: number, at: { x: number; z: number; colour: THREE.Vector3; species: string; notes?: boolean; glyph?: readonly string[]; /** an emoji in its middle, drawn in pixels in its own colours (render/bubbles.ts, as the thrown 💌; the guidance pins: render/view/guidance.ts), else the glyph */ emoji?: string; /** the glyph in its own colour (her hats' pointers), the ring in `colour` */ glyphColour?: THREE.Vector3; /** how tall the subject stands (m): the pin hovers over its top (a stone's 3.2 m by default) */ top?: number; /** screen pixels from the arrow's tip up to that top (tuning pins.gap) */ gap?: number; /** the page's y its tip stays above, in view (a use prompt under it: render/view/guidance.ts) */ above?: number } | null, wx: number, wz: number, time: number, bpm: number, fill: number, label?: string): void {
     const c = this.cue;
     // The party spread (the countdown went back to the start): a flash.
     if (fill < this.lastFill - 0.5) this.flashAt = time;
@@ -307,7 +310,8 @@ export class StoneIndicator {
     const dist = Math.hypot(at.x - wx, at.z - wz), over = 1 - e.show, ease = over * over * (3 - 2 * over);
     const size = 1 - 0.3 * ease * (1 - Math.min(1, Math.max(0, (dist - 12) / 28)));
     const px = c.scale * size, half = (N * px) / 2, bob = ease * PIN_BOB * Math.sin(time * Math.PI); // (a bob every two beats)
-    const pinY = Math.max(half + 4, e.sy - (at.gap ?? PIN_GAP) - (RING_R + 7) * px) + bob; // (the arrow's tip the gap over its top)
+    const tip = Math.min(e.sy - (at.gap ?? PIN_GAP), (at.above ?? Infinity) - ABOVE_GAP); // (the arrow's tip the gap over its top; over a use prompt there, clear of it)
+    const pinY = Math.max(half + 4, tip - (RING_R + 7) * px) + bob;
     let cx = e.ex + (e.sx - e.ex) * ease, cy = e.ey + (pinY - e.ey) * ease;
     // (pins side by side where they'd overlap, as the edge's cues are along the edge)
     const arrow = turnToward(e.angle, Math.PI / 2, ease);

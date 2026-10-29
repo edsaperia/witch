@@ -21,6 +21,7 @@
 //     won night keeps them), then to bed (rules/guidance.ts).
 // The losing still comes first: home's speakers down before the win, the party's over as ever (rules/partyOver.ts). No drawing.
 import type { Game } from "./game";
+import { runawayArrives } from "./runaway";
 import type { Creature } from "./creatures";
 import { LEGEND } from "./creatures";
 import { befriend } from "./creatureStates";
@@ -250,6 +251,9 @@ function win(g: Game, time: number): void {
     if (c.legendState === "angry" || c.enraged) { lull(c, time); w.lost.push(c.species); continue; }
     woken.push(c);
   }
+  // One still running for the beach (rules/runaway.ts): there at once, asleep, as it stays (Ed, 2026-10-28: "stay there if it's won");
+  // nothing fights after the win, so its run would stop where it stood, and the line would have it back.
+  for (const c of g.creatures) if (c.fleeUntil && c.beach && !c.gone) runawayArrives(c, time);
   // Every other animal: a party animal, in the line.
   w.lead = Math.atan2(g.witch.z - d0.z, g.witch.x - d0.x);
   const line = congaOrder(g, w.lead);

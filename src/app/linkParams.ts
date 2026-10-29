@@ -175,6 +175,9 @@ export function tuningFromLink(params: URLSearchParams) {
   // The map's shape (Ed, 2026-10-06: circular, with a buffer ring): ?shape=square brings back the old square map to compare.
   const shapeParam = params.get("shape");
   if ((shapeParam === "square" || shapeParam === "circle") && tuning.map) tuning.map = { ...tuning.map, shape: shapeParam };
+  // The runestone stacks and the soundsystem spell (Ed, 2026-10-28; rules/stoneStacks.ts): off by default till their view lands
+  // (areas clearing by themselves once their wild are gone); ?cast=1 turns them on, ?cast=0 off.
+  { const v = params.get("cast"); if ((v === "1" || v === "0") && tuning.cast) tuning.cast = { ...tuning.cast, on: v === "1" }; }
   // Legend circles slow time (Ed, 2026-10-06; rules/slowTime.ts): ?slow=0 turns it off, ?slow=<scale> tries another speed.
   { const v = params.get("slow"); if (v !== null && tuning.legendCircle) { const k = Number(v); tuning.legendCircle = { slow: { ...tuning.legendCircle.slow, on: k > 0 && k < 1, scale: k > 0 && k < 1 ? k : tuning.legendCircle.slow.scale } }; } }
 

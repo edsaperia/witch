@@ -37,7 +37,7 @@ describe("attacks in the grammar in the real fight", () => {
     // (her wolves were hit by it: the fight's own hit events, from the ravens)
     const ravens = new Set(g.arena!.ids.filter(id => g.creatures[id].species === "raven"));
     expect(g.creatures.filter(c => ravens.has(c.id)).every(c => c.spell === "arena")).toBe(true);
-    expect(g.creatures.filter(c => g.arena!.ids.includes(c.id) && c.species === "wolf").some(c => (c.hp ?? Infinity) < 1e9 && c.hurtAt !== undefined)).toBe(true);
+    expect(g.creatures.filter(c => g.arena!.ids.includes(c.id) && c.species === "wolf").some(c => c.hurtAt !== undefined && (c.drops ?? 0) > 0)).toBe(true); // (💧s: rules/orbit.ts)
   });
 
   it("names an attack from the library, refuses a bad one, and plays the same twice", () => {

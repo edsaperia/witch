@@ -6,7 +6,6 @@ import { TUNING, type Tuning } from "./tuning";
 import { newGame, stepGame, type Controls, type Game } from "./game";
 import { cyclonePose } from "./hatSpells";
 import { inviteCreature } from "./leash";
-import { creatureMaxHp } from "./combat";
 import type { Creature } from "./creatures";
 
 const C: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
@@ -140,9 +139,9 @@ describe("the Nursing hat", () => {
     const g = game(wearingHat("nursing")), p = spot(g);
     at(g, p.x, p.z); putDown(g);
     const d = g.witches[0].hat.down!, hers = mine(g, WILD_STATE(g, d.x + 4, d.z)), wild = WILD_STATE(g, d.x - 4, d.z);
-    hers.hp = creatureMaxHp(hers) * 0.3; wild.hp = creatureMaxHp(wild) * 0.3;
+    hers.drops = 0.7; wild.drops = 0.7; // (70% of their slots 💧s: rules/orbit.ts)
     away(g); step(g, 1 / TUNING.spells.nursing!.rate + 1);
-    expect(hers.hp).toBeUndefined(); // (whole again)
-    expect(wild.hp).toBeCloseTo(creatureMaxHp(wild) * 0.3, 5);
+    expect(hers.drops).toBeUndefined(); // (whole again)
+    expect(wild.drops).toBeCloseTo(0.7, 5);
   });
 });

@@ -226,6 +226,7 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
   };
   const grow = (key: string, cell: Cell, wave: number) => {
     const G = t.population.growth, species = AREA_TYPES[map.typeOf(cell[0], cell[1])].creature, site = map.siteOf(cell[0], cell[1]);
+    if (!G.on) return; // (off, as the game: no growth in a night, Ed 2026-10-07 and 2026-10-28)
     for (let n = 0; n < grownAt(wave, G.perWave, countScale(species)); n++) {
       const level = growthLevel(map.seed, cell, wave, n, G.weights), a = hash2(wave * 31 + n, cell[0] * 97 + cell[1], map.seed + 404) * Math.PI * 2, r = size * 0.35 * Math.sqrt(hash2(wave * 17 + n, cell[1] * 89 + cell[0], map.seed + 405));
       add(make(nextId++, species, key, site.x + Math.cos(a) * r, site.z + Math.sin(a) * r, level));

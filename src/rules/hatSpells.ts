@@ -12,7 +12,7 @@ import { growRing } from "./berries";
 import { setLoadout, type SpellState } from "./spells";
 import { leaveHat, wearing } from "./hat";
 import { LEGEND, healBy, type Creature } from "./creatures";
-import { creatureMaxHp } from "./combat";
+import { stunWorth } from "./combat";
 import { relicsOut } from "./partyOver";
 
 /** Whom a hat's spell may stun, slow or move: a wild or enraged creature, not hers, not happy, not a legend, not one running
@@ -154,8 +154,8 @@ export function stepHatSpells(g: Game, W: Witch, down: { x: number; z: number; s
       const N = t.spells.nursing;
       for (const id of [...W.leash.stack, ...W.leash.placed.map(p => p.id)]) {
         const c = g.creatures[id];
-        if (!c || c.gone || c.hp === undefined || Math.hypot(c.x - d.x, c.z - d.z) > N.range) continue;
-        const max = creatureMaxHp(c);
+        if (!c || c.gone || !c.drops || Math.hypot(c.x - d.x, c.z - d.z) > N.range) continue;
+        const max = stunWorth(c);
         healBy(c, max * N.rate * dt, max, now);
       }
     } else if (d.spell === "cyclone") startCyclone(g, S, d.x, d.z, t);

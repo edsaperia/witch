@@ -11,6 +11,13 @@
             "minimum": 0
           }
         },
+        "stun": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
         "dps": {
           "type": "array",
           "items": {
@@ -21,6 +28,7 @@
       },
       "required": [
         "hp",
+        "stun",
         "dps"
       ],
       "additionalProperties": false

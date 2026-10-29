@@ -38,7 +38,7 @@ export interface Attack {
 }
 
 export interface CombatData {
-  levels: { hp: number[]; dps: number[] };
+  levels: { hp: number[]; dps: number[]; /** A full 💌 ring's worth of blows' damage, by level (combat as orbit slots, rules/orbit.ts: a blow fills its damage over this of the slots); hp when missing. */ stun?: number[] };
   attacks: Record<string, Attack>;
   byLevel: { melee: (string | null)[]; ranged: (string | null)[] };
   ranged: string[];
@@ -156,7 +156,7 @@ export interface Shot {
 /** A beam burning (Stage 5): from its creature toward an angle, sweeping toward its target. */
 export interface Beam { /** A legend's bombardment: the soundsystem it burns, and the damage a tick. */ sound?: { key: string; damage: number }; /** A legend's spin (radians a second), and when each thing it swept was last hit. */ spin?: number; last?: Record<string, number>; id: number; from: number; angle: number; length: number; width: number; until: number; nextTick: number; tick: number; damage: number; side: State; species: string; attack: string; target: Target }
 
-export type CombatEventKind = /** one of her posse drew it off her (rules/combat/hits.ts) */ "taunted" | "hit" | "windup" | "shot" | "quake" | "landed" | "beam" | "charged" | "sprung" | "stunned" | "pulse" | "burrowed" | "surfaced" | "leapt" | "slammed" | "nova" | "rush" | "phase" | "slept" | "fled" | "lost" | "witchHit" | "soundHit" | "soundDestroyed" | "dug" | "braced" | "blocked" | "flash" | "dazed" | "swooped" | /** pack combat (rules/combat/packs.ts): its tell, its special, her party animal splitting it */ "packTell" | "packSpecial" | "packPull" | "packMind" | "packSplit" | /** Phase 1's (Echo): a mirage image taking a 💌 and bursting, a heron blinking where she blinked */ "mirageBurst" | "packSync";
+export type CombatEventKind = /** one of her posse drew it off her (rules/combat/hits.ts) */ "taunted" | "hit" | "windup" | "shot" | "quake" | "landed" | "beam" | "charged" | "sprung" | "stunned" | "pulse" | "burrowed" | "surfaced" | "leapt" | "slammed" | "nova" | "rush" | "phase" | "slept" | "fled" | "lost" | "witchHit" | "soundHit" | "soundDestroyed" | "dug" | "braced" | "blocked" | "flash" | "dazed" | /** stunned and not converted: up again (rules/orbit.ts) */ "up" | "swooped" | /** pack combat (rules/combat/packs.ts): its tell, its special, her party animal splitting it */ "packTell" | "packSpecial" | "packPull" | "packMind" | "packSplit" | /** Phase 1's (Echo): a mirage image taking a 💌 and bursting, a heron blinking where she blinked */ "mirageBurst" | "packSync";
 /** A soundsystem's events carry its key; every other combat event its creature's id (witchHit: the witch's). */
 export type SoundEventKind = "soundHit" | "soundDestroyed";
 export interface CombatEventAt { x: number; z: number; at: number; big?: boolean; /** A hit: strong against its target's traits (1), resisted (-1). */ counter?: number }
@@ -237,6 +237,12 @@ const LAST_SCALED = new Map<string, { A: Attack; scale: number; speed: number; o
 export const attackNamed = (name: string, data: CombatData = COMBAT): Attack => scaled(name, data.attacks[name]);
 
 export const maxHp = (level: Level, data: CombatData = COMBAT) => data.levels.hp[Math.min(level, data.levels.hp.length - 1)];
+/** A full 💌 ring's worth of blows' damage on c (levels.stun by its level, times its species' strength, as health was): a blow fills
+ *  its damage over this of its slots (rules/orbit.ts). */
+export const stunWorth = (c: { species: string; level: Level }, data: CombatData = COMBAT) => {
+  const s = data.levels.stun ?? data.levels.hp;
+  return s[Math.min(c.level, s.length - 1)] * strengthOf(c.species, c.level, data);
+};
 
 /** A creature's full health: its level's, times its species' strength. */
 export const creatureMaxHp = (c: { species: string; level: Level }, data: CombatData = COMBAT) => maxHp(c.level, data) * strengthOf(c.species, c.level, data);
@@ -257,6 +263,8 @@ export interface CombatWorld {
   round?: (x: number, z: number, tx: number, tz: number) => { x: number; z: number } | null;
   /** How far a creature at (x, z) runs to leave the map, and where (a point just past its edge). */
   exit: (x: number, z: number) => { x: number; z: number };
+  /** Where a beaten creature runs to sleep on the beach, or null (no beach: `exit`): rules/runaway.ts runawaySpot. */
+  runaway?: (c: Creature) => { x: number; z: number } | null;
   /** The map's centre (home): besiegers march inward, never on a soundsystem further from it than they are (rules/combat.ts). */
   centre?: { x: number; z: number };
   /** Whether (x, z) is out of every witch's sight (far beyond the haze): a fleeing creature there is gone. */

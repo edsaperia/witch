@@ -5,9 +5,10 @@ import { foes, stateOf, type State } from "../creatureStates";
 import { LEGENDS } from "../legends";
 import { bodyRadius } from "../spacing";
 import { FIGHT, type LegendSet } from "../movement";
-import { type Attack, type CombatData, type Target, type Fight, type CombatState, attackNamed, maxHp, type CombatWorld } from "./data";
+import { type Attack, type CombatData, type Target, type Fight, type CombatState, attackNamed, type CombatWorld } from "./data";
 import { targetable, sideOf, truce, targetPos, sheltered, Grid, moveToward, unseen } from "./targeting";
 import { land, area } from "./hits";
+import { drainOf, fillOf } from "../orbit";
 import { cast as castSpell, newSpells } from "../attacks/engine";
 import { hittableOf, spellWorld } from "../attacks/combatWorld";
 import { legendAttack } from "../attacks/species";
@@ -158,10 +159,10 @@ export function stepLongCharge(w: CombatWorld, s: CombatState, c: Creature, f: F
  *  reach and winding it up long and visibly (the view telegraphs each), and roars into its second
  *  phase at phase2.at of its health: a faster pattern with more in it. */
 export function stepLegend(w: CombatWorld, s: CombatState, c: Creature, f: Fight, p: { x: number; z: number; r: number }, d: number, L: LegendSet, data: CombatData, grid: Grid): void {
-  const { time, dt } = w, C = w.t.combat, st = (c.legend ??= { step: 0, phase: 1 }), max = maxHp(c.level, data);
+  const { time, dt } = w, C = w.t.combat, st = (c.legend ??= { step: 0, phase: 1 });
   // An area legend guards its own area (Ed, 2026-10-04): nothing beyond it (an arena's has none).
   if (c.boss && !c.charge && !w.inArea(c, p.x, p.z)) { f.target = null; f.windupUntil = 0; f.move = undefined; return; }
-  if (st.phase === 1 && (c.hp ?? max) <= max * L.phase2.at) {
+  if (st.phase === 1 && fillOf(c, time, drainOf(w.t)).fill >= 1 - L.phase2.at) { // (its slots that full: rules/orbit.ts)
     // The phase change: a roar (a burst and the screen shaking), and it starts its second pattern.
     st.phase = 2; st.step = 0; f.windupUntil = 0; f.move = undefined; c.charge = undefined; f.readyAt = time + 1.2; c.moving = false;
     s.events.push({ kind: "phase", x: c.x, z: c.z, at: time, id: c.id, big: true });

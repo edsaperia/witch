@@ -15,8 +15,8 @@ const ON = withTuning({ combat: { ...TUNING.combat, packs: { on: true } } });
 const ON_OLD = withTuning({ combat: { ...TUNING.combat, packs: { on: true } }, attacks: { reactionFloor: 0.45, species: false } });
 
 /** A pack of the kind against her (or hers against wild wolves), the switch on, her health held; then `secs` of play, `each` step. */
-function arena(spec: string, secs: number, each?: (g: Game) => void, t = ON): Game {
-  const g = newGame(5, t);
+function arena(spec: string, secs: number, each?: (g: Game) => void, t = ON, seed = 5): Game {
+  const g = newGame(seed, t);
   g.clock.paused = false; g.party.paused = true;
   setupArena(g, spec);
   for (let i = 0; i < secs / STEP; i++) { g.witches[0].health.hp = 1e6; stepGame(g, idle, STEP); each?.(g); }
@@ -26,7 +26,7 @@ const wildPack = (g: Game) => [...(g.combat.packs?.values() ?? [])].find(s => !s
 const fresh = (g: Game) => g.combat.events.filter(e => e.at === g.clock.time);
 
 describe("pack combat's roles by position (Ed: 2b)", () => {
-  const at = (id: number, x: number, z: number, hp?: number): Creature => ({ id, species: "fox", level: 2, x, z, hp }) as Creature;
+  const at = (id: number, x: number, z: number, hp?: number): Creature => ({ id, species: "fox", level: 2, x, z, ...(hp !== undefined ? { affection: 0.99 } : {}) }) as Creature; // (hurt: its slots nearly full, rules/orbit.ts)
   it("the nearest lunges, the one behind her throws the special, the rest fire; the hurt keep away; past the combo's size they hold", () => {
     const her = { x: 0, z: 0 }, heading = { x: 0, z: -1 }; // (she's going north: her back is south, +z)
     const m = [at(1, 3, 0), at(2, 0, 12), at(3, -10, 0), at(4, 9, -9), at(5, 1, 1, 1)];
@@ -398,7 +398,9 @@ describe("the lull is a retreat, not a halt (Ed's playtests, 2026-10-23: \"lulls
       const away = out * FIGHT.scale * 0.8 * (PACKS.kinds[k].retreat === "leapfrog" ? 0.5 : 1); // (the leapfrog's near half falls back half as far)
       const off = (d0: number, most = 0) => most > d0 + 1 || d0 >= away; // (backed off, or out there already: a shooter at range, a flyer aloft)
       const startD = new Map<number, number>(), most = new Map<number, number>();
-      arena(`pack-${k}`, 30, g => {
+      // (a freeze over two arenas: how long one holds its place depends on where the fight takes it, and one arena's share swings
+      // either side of the 3% line with anything near it, as much as 4.2 to 2.3% on seed 5 for the creatures keeping off sigils, 2026-10-28)
+      for (const seed of PACKS.kinds[k].retreat === "freeze" ? [5, 6] : [5]) arena(`pack-${k}`, 30, g => {
         const st = wildPack(g), W = g.witches[0].body;
         if (!st) return;
         if (st.phase === "lull" && last !== "lull") { for (const [id, d0] of startD) { starts++; if (off(d0, most.get(id))) backed++; } startD.clear(); most.clear(); }
@@ -410,7 +412,7 @@ describe("the lull is a retreat, not a halt (Ed's playtests, 2026-10-23: \"lulls
           if (!startD.has(id)) startD.set(id, d); most.set(id, Math.max(most.get(id) ?? 0, d));
           steps++; if (!c.moving) still++;
         }
-      });
+      }, ON, seed);
       for (const [id, d0] of startD) { starts++; if (off(d0, most.get(id))) backed++; }
       if (!steps) { bad.push(`${k}: no lull`); continue; }
       if (still / steps > (PACKS.kinds[k].retreat === "freeze" ? PACKS.prowl.freeze + 0.1 : 0.1)) bad.push(`${k}: standing ${(100 * still / steps).toFixed(0)}% of its lull`);
@@ -422,7 +424,7 @@ describe("the lull is a retreat, not a halt (Ed's playtests, 2026-10-23: \"lulls
 });
 
 describe("pack combat's fixes (Ed, 2026-10-20)", () => {
-  const at = (id: number, x: number, z: number, hp?: number): Creature => ({ id, species: "boar", level: 1, x, z, hp }) as Creature;
+  const at = (id: number, x: number, z: number, hp?: number): Creature => ({ id, species: "boar", level: 1, x, z, ...(hp !== undefined ? { affection: 0.99 } : {}) }) as Creature; // (hurt: its slots nearly full, rules/orbit.ts)
 
   it("a pack all hurt, or a lone hurt one, fights on (so a fight ends); one hurt beside a healthy packmate still keeps away", () => {
     const her = { x: 0, z: 0 };
@@ -441,7 +443,7 @@ describe("pack combat's fixes (Ed, 2026-10-20)", () => {
     const spare = g.creatures.filter(c => !c.gone && !c.leashed && !c.boss && Math.hypot(c.x - g.witch.x, c.z - g.witch.z) > 80);
     const put = (c: Creature, species: string, level: 1 | 2, dx: number) => { const x = g.witch.x + dx, z = g.witch.z; Object.assign(c, { circle: undefined, species, level, x, z, tx: x, tz: z, homeX: x, homeZ: z, anchorX: x, anchorZ: z, safeR: undefined, seen: g.clock.time, hp: undefined, boss: false, siege: undefined, rest: 0 }); c.cell = g.map.cellSafe(x, z).cell as [number, number]; return c; };
     const boar = put(spare[0], "boar", 1, 4), wolf = put(spare[1], "wolf", 2, 2);
-    boar.hp = 1;
+    boar.affection = 0.99; boar.affectionAt = g.clock.time; // (its slots nearly full: rules/orbit.ts)
     wolf.leashed = true; g.leash.placed.push({ id: wolf.id, x: wolf.x, z: wolf.z, at: g.clock.time });
     g.byArea = null;
     let downAt = -1;

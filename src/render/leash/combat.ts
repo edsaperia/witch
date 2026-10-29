@@ -2,7 +2,7 @@
 // trait marks, health bars, the knockout's release and the quake's shake.
 import * as THREE from "three";
 import { speciesColours, defaultStyle, M } from "../../../art/generator.js";
-import { attackNamed, attackOf, creatureMaxHp, traitsOf, type Trait } from "../../rules/combat";
+import { attackNamed, attackOf, traitsOf, type Trait } from "../../rules/combat";
 import { hash2 } from "../../rules/random";
 import { FIGHT, profileOf } from "../../rules/movement";
 import { bodyRadius } from "../../rules/spacing";
@@ -17,6 +17,7 @@ import { PACKS, clouded, packKindOf, packMoveOf } from "../../rules/combat/packs
 import { elementOf } from "../../rules/attackLook";
 import type { Dress } from "./attackLook";
 import { drawSpells } from "./attackSpells";
+import { comfort } from "../comfort";
 
 /** The attack look (leash/attackLook.ts: attacks in their elements, the danger frame), or ?look=old: the red dots, lines and rings
  *  it replaced, for comparing. */
@@ -95,7 +96,7 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
       // nobody hurt). A legend's blow, all bigger.
       const top = (c && lv.tops.get(c.id)) ?? 1.6, big = e.big ? 2 : 1, bits = c ? hitBits(c.species, c.leashed || c.legendState === "happy") : HIT_BITS.fur, col = bits === HIT_BITS.confetti && c ? neon(c.species) : c ? coatOf(c.species, 0.75) : bits;
       const lf = e.big ? 1 + 2 * t.attackFx.legendFlash : 1; // (a legend's flash: attackFx.legendFlash, 0.5 twice anyone's)
-      lv.fx.push({ kind: "flash", x: e.x, y: Math.min(3.5, top * 0.55), z: e.z, at: time, life: 0.16 * lf, r: 1, g: 1, b: 0.95, seed: e.at * 53 + (e.id ?? 0), size: 0.9 * lf });
+      if (!comfort.reduceFlashing) lv.fx.push({ kind: "flash", x: e.x, y: Math.min(3.5, top * 0.55), z: e.z, at: time, life: 0.16 * lf, r: 1, g: 1, b: 0.95, seed: e.at * 53 + (e.id ?? 0), size: 0.9 * lf });
       if (e.big) lv.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.45, r: 1, g: 0.85, b: 0.6, seed: 0, size: 3.2, n: 28, dot: 0.8 }); // a legend's blow: a shockwave along the ground
       lv.fx.push({ kind: "dust", x: e.x, y: 0.2, z: e.z, at: time, life: 0.5, r: 0.5, g: 0.45, b: 0.38, seed: e.at * 59 + (e.id ?? 0), size: 0.7 * big });
       lv.fx.push({ kind: "bits", x: e.x, y: Math.min(3, top * 0.6), z: e.z, at: time, life: 0.8, r: col.r, g: col.g, b: col.b, seed: e.at * 61 + (e.id ?? 0), size: big, n: bits === HIT_BITS.confetti ? 12 : 8 });
@@ -108,7 +109,7 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
     // Phase 1's (Echo): the heron blinking where she blinked, a white flash out and in; a mirage image bursting, a violet pop.
     if (e.kind === "packSync" && close(e.x, e.z)) { lv.fx.push({ kind: "spark", x: e.x, y: 1.2, z: e.z, at: time, life: 0.45, r: 1, g: 1, b: 1, seed: e.at * 79 + (e.id ?? 0), size: 2.2 }); lv.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.4, r: 1, g: 1, b: 1, seed: 0, size: 1.8, n: 14, dot: 0.6 }); }
     if (e.kind === "mirageBurst" && close(e.x, e.z)) { lv.fx.push({ kind: "spark", x: e.x, y: 1, z: e.z, at: time, life: 0.6, ...PACK_TINTS.violet, seed: e.at * 83 + (e.id ?? 0), size: 2 }); lv.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.5, ...PACK_TINTS.violet, seed: 0, size: 1.6, n: 14, dot: 0.6 }); }
-    if (e.kind === "witchHit") { lv.fx.push({ kind: "spark", x: e.x, y: 1.4, z: e.z, at: time, life: 0.5, r: 1, g: 0.25, b: 0.35, seed: e.at * 31, size: 1.6 }); lv.fx.push({ kind: "flash", x: e.x, y: 1.3, z: e.z, at: time, life: 0.18, r: 1, g: 0.9, b: 0.92, seed: e.at * 67, size: 1.1 }); }
+    if (e.kind === "witchHit") { lv.fx.push({ kind: "spark", x: e.x, y: 1.4, z: e.z, at: time, life: 0.5, r: 1, g: 0.25, b: 0.35, seed: e.at * 31, size: 1.6 }); if (!comfort.reduceFlashing) lv.fx.push({ kind: "flash", x: e.x, y: 1.3, z: e.z, at: time, life: 0.18, r: 1, g: 0.9, b: 0.92, seed: e.at * 67, size: 1.1 }); }
     if (e.kind === "fled" && close(e.x, e.z)) lv.fx.push({ kind: "puff", x: e.x, y: 0.5, z: e.z, at: time, life: 0.8, r: 0.8, g: 0.75, b: 0.7, seed: e.at * 13 });
     if (e.kind === "lost" && c) { const col = neon(c.species); lv.fx.push({ kind: "spark", x: e.x, y: 1, z: e.z, at: time, life: 1.2, r: col.r, g: col.g, b: col.b, seed: e.at * 7, size: 2.5 }); }
     if ((e.kind === "quake" || e.kind === "phase") && close(e.x, e.z, 150)) {
@@ -431,24 +432,16 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
     // Healed (every heal, rules/creatures.ts heal and healBy: Ed, 2026-10-09): its bar shows full a moment, and green "+"s float up off it.
     const healed = c.healedAt !== undefined && time - c.healedAt < 0.8;
     if (c.healedAt !== undefined && time - c.healedAt < HEAL_PLUS.span) healPluses(lv, c, time - c.healedAt, artPx, up, camera, height);
-    // Health bars, only when hurt: ten squares over its head.
-    const max = creatureMaxHp(c), hp = c.hp ?? max;
     // Stunned (an armoured one knocked over): stars round its head.
     if (c.stunUntil !== undefined && time < c.stunUntil && lookOn) lv.look.motif("stun", null, c.x, lv.tops.get(c.id) ?? 1.4, c.z, time, c.id);
     else if (c.stunUntil !== undefined && time < c.stunUntil) { const y = (lv.tops.get(c.id) ?? 1.4) + 0.2; for (let i = 0; i < 3; i++) { const a = time * 5 + (i / 3) * Math.PI * 2; lv.standing.add(c.x + Math.cos(a) * 0.6, y + Math.sin(a * 2) * 0.08, c.z + Math.sin(a) * 0.4, 0.22, dot, 1, 0.95, 0.5, 0.9); } }
-    // Its traits' marks (Stage 5, readable counters), left of its health bar, while it fights or is hurt.
-    if ((hp < max || healed || c.fight?.target) && !c.fleeUntil && c.level > 0) {
+    // Its traits' marks (Stage 5, readable counters), over its head while it fights. (No health bars since Ed, 2026-10-28: its 💌
+    // ring's hearts and 💧s are its one measure, render/invites.ts.)
+    if ((healed || c.fight?.target) && !c.fleeUntil && c.level > 0) {
       const tr = traitsOf(c.species);
       if (tr.length) {
         const y = (lv.tops.get(c.id) ?? 1.6 + c.level * 0.7) + 0.5, R = SPRITE_UNIFORMS.uRight.value, wide = 1 + c.level * 0.25;
         for (let j = 0; j < tr.length; j++) { const o = -5.2 * 0.17 * wide - 0.3 - j * 0.35, px = c.x + R.x * o, pz = c.z + R.z * o, M = TRAIT_MARKS[tr[j]]; lv.over.add(px, y, pz, M.size, M.square ? sq : dot, M.r, M.g, M.b, 0.95); }
-      }
-    }
-    if ((hp < max || healed) && !c.fleeUntil) {
-      const y = (lv.tops.get(c.id) ?? 1.6 + c.level * 0.7) + 0.5, share = Math.max(0, hp / max), R = SPRITE_UNIFORMS.uRight.value, wide = 1 + c.level * 0.25;
-      for (let i = 0; i < 10; i++) { // drawn over everything, so a big creature's own sprite doesn't hide it
-        const o = (i - 4.5) * 0.17 * wide, lit = (i + 0.5) / 10 <= share;
-        lv.over.add(c.x + R.x * o, y, c.z + R.z * o, 0.2 * wide, sq, lit ? 1 - share * 0.7 : 0.3, lit ? 0.3 + share * 0.7 : 0.3, lit ? 0.3 : 0.35, lit ? 0.95 : 0.35);
       }
     }
     // Let go on a knockout and walking home: a faint marker and its sigil, grey and flickering.
@@ -458,12 +451,7 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
       for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2 + time; if (i % 2) lv.flat.add(c.x + Math.cos(a) * 1.4, 0, c.z + Math.sin(a) * 1.1, 0.25, dot, 0.8, 0.8, 0.9, 0.35); }
     }
   }
-  // Soundsystems under siege: a long bar over each, when hurt.
-  for (const [, h] of g.combat.sounds) {
-    if (h.hp >= h.max || h.hp <= 0 || !close(h.x, h.z, 200)) continue;
-    const share = h.hp / h.max, R = SPRITE_UNIFORMS.uRight.value, n = 20, y = h.radius > 5 ? 9 : 7;
-    for (let i = 0; i < n; i++) { const o = (i - (n - 1) / 2) * 0.35, lit = (i + 0.5) / n <= share; lv.over.add(h.x + R.x * o, y, h.z + R.z * o, 0.32, sq, lit ? 1 : 0.3, lit ? 0.35 + 0.5 * share : 0.3, lit ? 0.55 : 0.35, lit ? 1 : 0.35); }
-  }
+  // (a soundsystem's health is its ring of 💥s now, Ed 2026-10-28: render/invites.ts)
   // Knocked out: dizzy stars over her while she's down.
   if (W.ko && time < W.ko.teleportAt) for (let i = 0; i < 5; i++) { const a = time * 3 + (i / 5) * Math.PI * 2; lv.standing.add(w.x + Math.cos(a) * 0.7, 1.6 + Math.sin(a * 2) * 0.1, w.z + Math.sin(a) * 0.5, 0.25, dot, 1, 0.95, 0.5, 0.9); }
   drawSlashes(lv, time, camera, width, height);

@@ -2,11 +2,12 @@
 // soundsystem or a creature (its traits, guard, knockback, stun and slow), and what follows a knockdown: a legend lulled
 // to sleep, a wild one dazed, anything else running off the map.
 import { LEGEND, type Creature } from "../creatures";
-import { foes, huntsWitch, stateOf, type State } from "../creatureStates";
+import { foes, huntsWitch, type State } from "../creatureStates";
+import { addDrops, addHearts, drainOf, friendly, hostile, runAway, stun } from "../orbit";
 import { lull } from "../legends";
 import { bodyRadius } from "../spacing";
 import { FIGHT } from "../movement";
-import { type Attack, type CombatData, COMBAT, counterOf, type Target, type CombatState, creatureMaxHp, type CombatWorld } from "./data";
+import { type Attack, type CombatData, COMBAT, counterOf, type Target, type CombatState, stunWorth, type CombatWorld } from "./data";
 import { targetable, sideOf, truce, guardOf, sheltered, inviting, Grid } from "./targeting";
 import { coverOf } from "./packs";
 
@@ -69,7 +70,10 @@ export function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: 
   if (from && inviting(w, from, o)) return; // (her party's shots and area hits pass the one she's inviting by)
   // Its traits against this kind of blow (Stage 5): shown as strong or resisted.
   const k = counterOf(o.species, a.delivery, D), gd = guardOf(o, a.delivery, time), mult = k.damage * gd.damage;
-  o.hp = (o.hp ?? creatureMaxHp(o)) - damage * mult;
+  // (combat as orbit slots, Ed 2026-10-28, rules/orbit.ts: no health; the blow's share of a full ring's worth, combat.json levels.stun, fills that share of its 💌
+  // ring's slots, with hearts if it's an enemy of hers, with 💧s if it's hers or happy)
+  const share = (damage * mult) / stunWorth(o), friend = friendly(o);
+  const full = friend ? addDrops(o, share) : addHearts(o, share, time, drainOf(w.t));
   o.hurtAt = time;
   s.events.push({ kind: "hit", x: o.x, z: o.z, at: time, id: o.id, big: from?.level === LEGEND, counter: mult > 1 ? 1 : mult < 1 ? -1 : 0 });
   if (gd.damage < 1 && !o.charge?.curl) s.events.push({ kind: "blocked", x: o.x, z: o.z, at: time, id: o.id });
@@ -93,30 +97,26 @@ export function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: 
     }
     s.events.push({ kind: "taunted", x: o.x, z: o.z, at: time, id: o.id });
   }
-  if (o.hp <= 0 && o.boss && !o.leashed) {
-    // An area legend beaten (Ed, 2026-10-04): it sinks back into the ground where it stands,
-    // asleep for good; its area's soundsystem is safe from it.
-    lull(o, time); // (#87: worn down, angry or happy, it goes back to sleep)
+  if (!full || o.dazed && !friend) return;
+  if (o.boss && !o.leashed) {
+    // An area legend's slots full (Ed, 2026-10-04; #87: worn down, angry or happy): it sinks back into the ground where it stands,
+    // asleep; its area's soundsystem is safe from it.
+    lull(o, time);
     s.events.push({ kind: "slept", x: o.x, z: o.z, at: time, id: o.id });
     return;
   }
-  if (o.hp <= 0 && stateOf(o) === "wild" && !o.dazed) {
-    // Knocked down while wild (Ed, 2026-10-05, #87): dazed a while (nothing attacks it, and she
-    // can still invite it), then it runs off (stepCombat).
-    o.dazed = true; o.dazedUntil = time + w.t.combat.daze; o.fight = undefined; o.moving = false; o.vx = 0; o.vz = 0;
+  if (!friend && !hostile(o)) {
+    // Stunned (Ed, 2026-10-28): lying still a while, its slots held full (nothing attacks it); her next 💌 converts it, else it gets up.
+    stun(o, time, time + w.t.combat.daze);
     s.events.push({ kind: "dazed", x: o.x, z: o.z, at: time, id: o.id });
     return;
   }
-  if (o.hp <= 0) {
-    // Knocked down (Ed, 2026-10-04: "it's sad when animals die"; #87: "knocked down", "ran off"):
-    // it runs off the map, visibly, and is gone for good. A party animal is lost for the run: off
-    // its leash as it goes.
-    const party = o.leashed;
-    if (party) { w.loseParty(o.id); o.leashed = false; }
-    const out = w.exit(o.x, o.z);
-    o.fleeUntil = Infinity; o.fleeX = out.x; o.fleeZ = out.z; o.fight = undefined; o.siege = undefined; o.enraged = false;
-    s.events.push({ kind: party ? "lost" : "fled", x: o.x, z: o.z, at: time, id: o.id });
-  }
+  // A hostile one stunned, or a friend full of 💧s (Ed, 2026-10-04: "it's sad when animals die"; #87: "ran off"): it runs away,
+  // visibly, at a baby's run, and is gone for good. A party animal is lost for the run: off its leash, its sigil gone, as it goes.
+  const party = o.leashed;
+  if (party) { w.loseParty(o.id); o.leashed = false; }
+  runAway(o, w.runaway?.(o) ?? null, () => w.exit(o.x, o.z));
+  s.events.push({ kind: party ? "lost" : "fled", x: o.x, z: o.z, at: time, id: o.id });
 }
 
 /** Everything of the other side (not its own kind, never babies) within `r` of (x, z) is hit: a lob landing. */

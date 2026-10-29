@@ -72,7 +72,7 @@ describe("charges and leaps go further (Ed, 2026-10-06)", () => {
       last = W.health.hp;
     });
     expect(charging).toBe(true);
-    expect(mate.hp ?? Infinity).toBeLessThan(1e9); // (struck: its health set below its whole)
+    expect(mate.drops ?? 0).toBeGreaterThan(0); // (struck: 💧s in its slots, rules/orbit.ts)
     expect(most).toBeLessThanOrEqual(1); // (one charge, one hit: the grace, #197)
     expect(W.health.hp).toBeLessThan(hp0);
   }, 60000);

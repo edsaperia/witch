@@ -148,6 +148,7 @@ Each brings back how something was before a change, to compare against what repl
 | `occ=off` | The occlusion fade (what's in front of her drawn see-through) off. | 2026-10-13 | app/linkParams.ts |
 | `seedepth=off` | The see-through pass doesn't write depth, as before. | 2026-10-13 | render/sprites.ts |
 | `sigils=new` / `sigils=old` | Rank sigils and the 6 m leash grid (new, the default), or the old sigils and their 4 m grid. *Decision: Rank sigils are the default (Ed, 2026-10-27: "go ahead and push all the new sigil work").* | 2026-10-27 | app/linkParams.ts |
+| `cast=1` / `cast=0` | The runestone stacks and the soundsystem spell on (1, the default since their view landed) or off (0): off, areas clear by themselves once their wild are gone, as before. *Decision: On by default with Rendering’s view of the stacks (#1378; off till then, the coordinator, 2026-10-28).* | 2026-10-28 | app/linkParams.ts |
 | `wholecull=0` | Quads faded whole drawn in the solid and front passes too, as before. | 2026-10-26 | render/sprites.ts |
 
 ## Families

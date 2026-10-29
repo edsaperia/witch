@@ -21,7 +21,7 @@ import { type Creature, type Level } from "../creatures";
 import { foes, huntsWitch } from "../creatureStates";
 import { hash2 } from "../random";
 import { FIGHT, type Move as OwnMove, profileOf, startCharge, swoopStriking } from "../movement";
-import { type Attack, COMBAT, type CombatState, type CombatWorld, type Target, creatureMaxHp, scaled, strengthOf } from "./data";
+import { type Attack, COMBAT, type CombatState, type CombatWorld, type Target, scaled, strengthOf, stunWorth } from "./data";
 import { fighting, sideOf, targetPos, targetable } from "./targeting";
 
 export type Role = "lunger" | "shooter" | "special" | "hold" | "hurt";
@@ -154,7 +154,8 @@ export const packMoveOf = (c: Creature): { attack: Attack; name: string } | null
 // ---- Roles by position -----------------------------------------------------------------------------------------------------
 
 /** Whether a member is hurt (under limits.hurt of its health): it leaves the combo and keeps away. */
-export const hurt = (c: Creature, data: PacksData = PACKS): boolean => (c.hp ?? Infinity) < creatureMaxHp(c) * data.limits.hurt;
+/** Hurt: its slots filled past the share limits.hurt leaves (hearts on one of the wild, 💧s on one of hers: rules/orbit.ts). */
+export const hurt = (c: Creature, data: PacksData = PACKS): boolean => (c.leashed || c.state === "happy" ? c.drops ?? 0 : c.dazed ? 1 : c.affection ?? 0) > 1 - data.limits.hurt + 1e-9;
 
 /** Roles by position (Ed: 2b): the nearest healthy member lunges (and any other within limits.close of her), the one behind her
  *  (else the furthest) throws the special, the rest at range fire; the hurt keep away while a healthy one fights (all of them hurt,
@@ -241,7 +242,7 @@ export function stepPacks(s: CombatState, w: CombatWorld, pw: PackWorld = {}, da
     const heading = headingFor(w, tg), roles = assignRoles(members, p, heading, data), young = members.every(m => m.level === 1);
     // A loss (one of them knocked down, invited or run off): the rest scatter and regroup (Ed: 7d).
     // (lost: one of last step's members knocked down, run off, dazed or invited away; not one that has only turned on someone else)
-    const lostOne = st.members.some((id: number) => { const o = w.creatures[id]; return !o || o.gone || !!o.fleeUntil || !!o.dazed || !!o.leashed !== st!.hers || (o.hp ?? 1) <= 0; });
+    const lostOne = st.members.some((id: number) => { const o = w.creatures[id]; return !o || o.gone || !!o.fleeUntil || !!o.dazed || !!o.leashed !== st!.hers; });
     st.size = members.length; st.members = members.map(m => m.id);
     const healthy = members.filter(m => roles.get(m.id) !== "hurt" && roles.get(m.id) !== "hold");
     // (a member whose strike is its own move engages from that move's reach: a charge's or a leap's furthest, a burrow's start, a
@@ -500,7 +501,7 @@ function special(s: CombatState, w: CombatWorld, pw: PackWorld, st: PackState, K
       for (let q = -L / 2; q <= L / 2 + 1e-6; q += r * 1.2) s.trails.push({ x: cx - hz * q, z: cz + hx * q, r, until: time + T, side, slow: sp.slow ?? 0.5, from: by.id });
       break;
     }
-    case "rally": for (const m of members) if (Math.hypot(m.x - by.x, m.z - by.z) <= Rr) { const max = creatureMaxHp(m), one = COMBAT.levels.dps[m.level] * 1.5 * (sp.heal ?? 1); m.hp = Math.min(max, (m.hp ?? max) + one); m.slowUntil = undefined; } break;
+    case "rally": for (const m of members) if (Math.hypot(m.x - by.x, m.z - by.z) <= Rr) { const max = stunWorth(m), one = COMBAT.levels.dps[m.level] * 1.5 * (sp.heal ?? 1); const off = one / max; if (m.leashed || m.state === "happy") m.drops = Math.max(0, (m.drops ?? 0) - off) || undefined; else m.affection = Math.max(0, (m.affection ?? 0) - off) || undefined; m.slowUntil = undefined; } break; // (its 💧s taken off, or its slots' newest: rules/orbit.ts)
     case "cover": {
       // Digs in by a hurt packmate (else the one her 💌 reached, else where it stands) and takes its hits.
       const ward = members.find(m => roles.get(m.id) === "hurt") ?? hit ?? null, coverer = ward ? healthy.filter(m => m !== ward).sort((a, b) => Math.hypot(a.x - ward.x, a.z - ward.z) - Math.hypot(b.x - ward.x, b.z - ward.z))[0] ?? by : by;

@@ -51,8 +51,18 @@ says what each note covers.
 - Bubble sight
 - Babies on her leash
 - Followers in the treehouse
+- Runestone stack
+- Soundsystem spell / cast
+- Loose sigil
+- Legend tether
 - Sigil stack
 - Rank sigils
+- Sides and sizes
+- Stone stack
+- Spell spot
+- Cast ring
+- Conversion
+- Chains
 - Party animal
 - Combat
 - Attack grammar
@@ -73,6 +83,7 @@ says what each note covers.
 - Posse / travelling
 - Conga dancer
 - Wild / happy / leashed / enraged
+- Runaway
 - Restless / angry legend, relic
 
 ## [The treehouse and its house](house.md)
@@ -192,6 +203,7 @@ says what each note covers.
 - Controls
 - Bindings
 - Bindings API
+- Settings page
 - Pad layout
 - Glide
 - Resting 💌s

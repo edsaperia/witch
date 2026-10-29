@@ -17,7 +17,8 @@ import { BubbleFader, sightOf } from "./bubbleSight";
 
 import { bodyRadius } from "../rules/spacing";
 import type { Creature } from "../rules/creatures";
-import { RingModel, ringOf } from "./inviteRing";
+import { RingModel, ringOf, slotKind } from "./inviteRing";
+import { drainOf, fillsOf } from "../rules/orbit";
 import { beachOf } from "../rules/mapShape";
 import { tiltFilter } from "./overlayTilt";
 import type { OcclusionProbes } from "./occlusion";
@@ -108,6 +109,8 @@ export class InviteView {
   /** Envelopes falling out of orbit (then resting), and hearts rising off a full ring. */
   private falling: { x: number; y: number; z: number; at: number; tilt: number; el: HTMLImageElement }[] = [];
   private hearts: { x: number; y: number; z: number; at: number; el: HTMLImageElement }[] = [];
+  /** Each soundsystem's 💥s (Ed, 2026-10-28: its health as a ring of them, one a tenth of it left). */
+  private booms = new Map<string, HTMLImageElement[]>();
   private hers: Bubble;
   private replies = new Map<number, Bubble>();
   /** The replies faded in and out by how near she is, on the ground only (render/bubbleSight.ts; Ed, 2026-10-28). */
@@ -364,11 +367,13 @@ export class InviteView {
 
     // The rings: one slot a hit each creature's meter needs (invites.hits by its level), the envelopes it holds
     // orbiting it, flat and spinning, the gaps faint marks; turning slowly round it at about its middle.
-    const near = g.creatures.filter(c => !c.gone && Math.abs(c.x - w.x) < 60 && Math.abs(c.z - w.z) < 60 && (c.affection || this.ringModel.rings.has(c.id)));
-    const changes = this.ringModel.update(near, c => ringOf(c.level, A.affection(c), meterHits(t)), won);
-    // (clear of it, by its size: Ed's playtest, 2026-10-06, "Invitation orbits are too tight around the creature"; invites.orbit)
+    // (and its hearts and 💧s: combat as orbit slots, Ed 2026-10-28, rules/orbit.ts)
+    const near = g.creatures.filter(c => !c.gone && Math.abs(c.x - w.x) < 60 && Math.abs(c.z - w.z) < 60 && (c.affection || c.drops || c.dazed || this.ringModel.rings.has(c.id))), D = drainOf(t);
+    const changes = this.ringModel.update(near, c => ringOf(c.level, c.dazed ? 1 : A.affection(c), meterHits(t), fillsOf(c, g.clock.time, D), c.drops ?? 0), won);
+    // (clear of it, by its size: Ed's playtest, 2026-10-06, "Invitation orbits are too tight around the creature"; invites.orbit;
+    // and by its size as drawn, Ed 2026-10-28: "their size should adjust depending on how large the creatures are")
     const ringAt = (c: Creature, slot: number, slots: number) => {
-      const O = t.invites.orbit, r = Math.max(bodyRadius(c) * O.scale + O.gap, O.min, (slots * 0.42) / (Math.PI * 2)), a = time * 0.7 + (slot / slots) * Math.PI * 2;
+      const O = t.invites.orbit, r = Math.max(bodyRadius(c) * O.scale + O.gap, O.min, (tops.get(c.id) ?? 0) * (O.height ?? 0) + O.gap, (slots * 0.42) / (Math.PI * 2)), a = time * 0.7 + (slot / slots) * Math.PI * 2;
       return { x: c.x + Math.cos(a) * r, y: Math.max(0.5, head(c.id) * 0.55), z: c.z + Math.sin(a) * r };
     };
     const envSize = (slots: number) => (slots > 12 ? 0.55 : slots > 6 ? 0.7 : 0.85); // (smaller as they crowd: 18 still distinct)
@@ -409,7 +414,7 @@ export class InviteView {
         this.root.append(d); r.dots.push(d);
       }
       for (let s = 0; s < r.imgs.length; s++) {
-        const im = r.imgs[s], d = r.dots[s], on = s < now.filled, there = s < now.slots;
+        const im = r.imgs[s], d = r.dots[s], on = s < now.filled, there = s < now.slots, kind = slotKind(now, s);
         im.style.display = on ? "block" : "none";
         d.style.display = there && !on ? "block" : "none";
         if (!there) continue;
@@ -419,10 +424,30 @@ export class InviteView {
           hide(im, rkey, rx, ry, rz);
           const pop = Math.min(1, (time - (r.joined[s] ?? -9)) / 0.25), grow = pop < 1 ? 1.4 - 0.4 * pop : 1; // (joining: a little pop)
           const deg = ((Math.round((time * t.invites.spin * 0.5 + s * 0.13) * 16) / 16) % 1) * 360;
-          showTurned(im, "💌", n, sz * grow, sz * grow * flat, deg, k);
+          // (a heart or a 💧 stands upright, bobbing, in its own glow, so the three read apart: 💌 flat and spinning, warm)
+          if (kind === "letter") { showTurned(im, "💌", n, sz * grow, sz * grow * flat, deg, k); im.style.filter = "drop-shadow(0 0 2px rgba(232,180,106,.6))"; }
+          else { showTurned(im, kind === "drop" ? "💧" : "❤️", n, sz * grow * 0.9, sz * grow * 0.9, 0, k); im.style.filter = kind === "drop" ? "drop-shadow(0 0 2px rgba(110,170,255,.9))" : "drop-shadow(0 0 2px rgba(255,90,150,.8))"; }
         } else { place(d, p.x, p.y, p.z); hide(d, rkey, rx, ry, rz); }
       }
     }
+    // A soundsystem hurt: its health as a ring of 💥s round it, one a tenth of what's left, turning slowly (Ed, 2026-10-28; it was a
+    // bar over it).
+    const boomsSeen = new Set<string>();
+    for (const [key, h] of g.combat.sounds) {
+      if (h.hp >= h.max || h.hp <= 0 || Math.abs(h.x - w.x) > 120 || Math.abs(h.z - w.z) > 120) continue;
+      boomsSeen.add(key);
+      const nb = Math.max(1, Math.ceil((10 * h.hp) / h.max)), els = this.booms.get(key) ?? [];
+      while (els.length < 10) { const im = img("💥", n); im.style.filter = "drop-shadow(0 0 2px rgba(255,170,60,.8))"; els.push(im); }
+      this.booms.set(key, els);
+      const r = h.radius + 1.5, y = h.radius > 5 ? 6 : 4;
+      els.forEach((im, i) => {
+        if (i >= nb) { im.style.display = "none"; return; }
+        const a = time * 0.4 + (i / 10) * Math.PI * 2, x = h.x + Math.cos(a) * r, z = h.z + Math.sin(a) * r;
+        im.style.display = "block"; place(im, x, y, z); hide(im, `boom${key}`, h.x, y, h.z);
+        showTurned(im, "💥", n, 0.95, 0.95, 0, k);
+      });
+    }
+    for (const [key, els] of this.booms) if (!boomsSeen.has(key)) { for (const im of els) im.remove(); this.booms.delete(key); }
     // Falling out of orbit (0.45 s), then resting where it came down with the other resting 💌s.
     this.falling = this.falling.filter(f => {
       const u = (time - f.at) / 0.45;

@@ -64,7 +64,7 @@ export function drawSnores(lv: LeashView, camera: THREE.Camera, width: number, h
   const B = g.tuning.bubbles, SNORE_RANGE = B.near;
   if (host && K > 0.3) {
     for (const c of g.creatures) {
-      if (c.gone || c.leashed) continue;
+      if ((c.gone && !c.beached) || c.leashed) continue; // (asleep on the beach: its 😴 too, rules/runaway.ts)
       // (asleep: the rules' c.asleep, legends too; before builder hotel's party's-over rules, any creature not hers once it's well over)
       const asleep = (c as { asleep?: boolean }).asleep, rules = "partyOver" in g, dx = c.x - w.x, dz = c.z - w.z;
       if (!(asleep || (!rules && asleep === undefined && K >= 0.6 && c.level !== 3 && !c.boss)) || Math.abs(dx) > SNORE_RANGE || Math.abs(dz) > SNORE_RANGE) continue;
