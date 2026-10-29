@@ -2440,7 +2440,7 @@ const WITCH_GENOME = {
   hair: "long", top: "jacket", cloak: "none",
   broom: { kind: "classic", length: 1, bend: 0, bristles: 1, thickness: 1 },
   accessories: { phones: true, shades: false, glowsticks: false, scarf: false, satchel: false, pendant: false, earrings: false,
-    lantern: false, vial: false, book: false, patches: false, bumbag: false, purse: false, wristband: false, chunky: false },
+    lantern: false, vial: false, book: false, patches: false, bumbag: false, purse: false, tote: false, duffel: false, briefcase: false, clutch: false, messenger: false, wristband: false, chunky: false },
   cloakLength: 1, scarfLength: 1, bagSize: 1, backpackSize: 0,
   palette: null, // null: hers (DEFAULT_OUTFIT, the style's hues on top)
 };
@@ -2574,7 +2574,7 @@ const DEFAULT_LOOK = { hat: "classic", hair: "long", top: "jacket", phones: true
   hatHeight: 1, hatBrim: 1, hatTilt: 0, hatBand: 1, broom: "classic", broomLength: 1, broomBend: 0, bristles: 1, broomThickness: 1, cloak: "none", scarf: false, satchel: false, pendant: false, earrings: false,
   // its accessories (Ed: "both witchy and modern"): the cloak's length (times its kind's), patches on it; a lantern at her hip, a potion vial and a spellbook at her belt; a bum bag, a festival
   // wristband, chunky trainers, round sunglasses (shades "round")
-  cloakLength: 1, patches: false, lantern: false, vial: false, book: false, bumbag: false, purse: false, wristband: false, chunky: false,
+  cloakLength: 1, patches: false, lantern: false, vial: false, book: false, bumbag: false, purse: false, tote: false, duffel: false, briefcase: false, clutch: false, messenger: false, wristband: false, chunky: false,
   // the creator's (Ed, round 11): the scarf's length (times hers; 0 none, 3 trailing on the ground), the satchel's size, a backpack's size (0 none)
   scarfLength: 1, bagSize: 1, backpackSize: 0 };
 const shoeR = L => L.chunky ? [.095, .056, .056] : [.08, .04, .045]; // her sneakers, or chunky trainers
@@ -2876,6 +2876,31 @@ function drawAccessories(m, L, chest, fwd, spine, flying) {
     m.ell(c, [.05, .038, .024], M.HAT1, { dir: fwd, up: spine, group: 24 });
     m.ell(v3.add(c, v3.add(v3.mul(spine, .025), v3.mul(fwd, .024))), [.014, .011, .011], M.FRAME, { group: 24 });
     m.chain([[...at(.13, .0, -.08), .006], [...at(.07, .1, .0), .006], [...v3.add(c, v3.mul(spine, .032)), .006]], M.FRAME, { group: 24 });
+  }
+  if (L.tote) { // a tall canvas tote hanging from her near shoulder by two straps (Ed, 2026-10-29: a found bag)
+    const c = at(waist - .05, .04, .16);
+    m.ell(c, [.07, .09, .026], M.WEB, { dir: fwd, up: spine, group: 24 });
+    for (const f of [-.03, .03]) m.chain([[...at(.14, f, .09), .006], [...v3.add(c, v3.add(v3.mul(spine, .07), v3.mul(fwd, f))), .006]], M.HAT1, { group: 24 });
+  }
+  if (L.duffel) { // a long duffel slung at her near hip, end to end along her, its strap over the far shoulder, its ends in her trim colour
+    const c = at(waist - .03, .0, .17);
+    m.ell(c, [.13, .055, .05], M.STONED, { dir: fwd, up: spine, group: 24, paint: p => Math.abs(v3.dot(v3.sub(p, c), fwd)) > .1 ? M.HAT1 : undefined });
+    m.chain([[...at(.13, .0, -.08), .007], [...at(.06, .1, .02), .007], [...v3.add(c, v3.mul(spine, .04)), .007]], M.STONED, { group: 24 });
+  }
+  if (L.briefcase) { // a briefcase at her near side, flat and square, a gold clasp and handle
+    const c = at(waist - .12, .04, .18);
+    m.ell(c, [.085, .065, .02], M.BARKD, { dir: fwd, up: spine, group: 24 });
+    m.ell(v3.add(c, v3.mul(spine, .07)), [.025, .012, .01], M.FRAME, { group: 24 });
+    m.ell(v3.add(c, v3.add(v3.mul(spine, .03), v3.mul(fwd, .02))), [.01, .008, .008], M.FRAME, { group: 24 });
+  }
+  if (L.clutch) { // a slim clutch tucked under her near arm, long and flat, a gold flap along its top (Ed, 2026-10-29: the sniper's bag)
+    const c = at(-.03, .05, .2);
+    m.ell(c, [.095, .045, .02], M.SHOES, { dir: fwd, up: spine, group: 24, paint: p => v3.dot(v3.sub(p, c), spine) > .02 ? M.FRAME : undefined });
+  }
+  if (L.messenger) { // a messenger bag on a wide strap across her, hung at her near hip, its big flap in her trim colour (Ed, 2026-10-29: the chain's bag)
+    const c = at(waist - .07, -.02, .17);
+    m.ell(c, [.09, .07, .028], M.POM, { dir: fwd, up: spine, group: 24, paint: p => v3.dot(v3.sub(p, c), spine) > -.01 ? M.HAT1 : undefined });
+    m.chain([[...at(.14, -.02, -.08), .009], [...at(.06, .09, .04), .009], [...v3.add(c, v3.mul(spine, .06)), .009]], M.HAT1, { group: 24 });
   }
   if (L.bumbag) { const c = at(waist - .03, .1, .03); m.ell(c, [.035, .03, .065], M.EAR, { dir: fwd, up: spine, group: 22 }); m.chain([[...at(waist - .02, .07, -.08), .008], [...c, .008], [...at(waist - .02, .07, .1), .008]], M.EAR, { group: 22 }); }
 }
@@ -3234,7 +3259,7 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
     const foot = given ? [given[0], given[1] + hop, given[2]] : K.sit ? [.24 + swing, .09 + Math.max(0, swing) * .6, side * .1] : side > 0 && K.legUp ? K.legUp : [(side > 0 ? .05 : -.01) + (K.toes ? -.03 : 0), .07 + (K.toes ? hop * .4 : hop), side * .1];
     const knee = K.sit && !given ? [.21, hipY + .01, side * .09] : kneeOf(hip, foot, .21);
     const toe = K.toes ? [.03, -.045, 0] : [.05, -.03, 0];
-    // in her nightie (Ed, 2026-10-23: "When waking up she wears only a nightie"): bare legs below its hem; barefoot till her shoes are on
+    // in her nightie (Ed, 2026-10-23: "When waking up she wears only a nightie"; mid-thigh since 2026-10-29): bare legs below its hem; barefoot till her shoes are on
     if (L.nightie) { m.seg(hip, knee, .05, .04, M.SKIN, { group: g }); m.seg(knee, foot, .04, .033, M.SKIN, { group: g }); }
     else { m.seg(hip, knee, .055, .045, M.JEANS, { group: g }); m.seg(knee, foot, .045, .04, M.JEANS, { group: g }); }
     if (L.barefoot) m.ell(v3.add(foot, [.035, -.035, 0]), [.06, .026, .036], M.SKIN, { dir: K.toes ? [1, -.6, 0] : [1, 0, 0], group: g });
@@ -3244,11 +3269,22 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
   const spine = v3.norm([Math.sin(K.bend), Math.cos(K.bend), Math.sin(K.roll)]), fwd = [Math.cos(K.bend), -Math.sin(K.bend), 0];
   const hips = [hipX, hipY + .03, 0];
   const chest = v3.add(hips, v3.add(v3.mul(spine, .19), [0, K.breathe, 0]));
-  if (L.nightie) { // a long white nightdress: its bodice, its skirt flaring from her hips to below her knees, its hem trimmed in her jacket's colour and a ribbon at her waist in her hat's (her own colours on it)
-    m.ell(chest, [.095, .15 + K.breathe * .5, .11], M.BELLY, { dir: fwd, group: 1, paint: p => (v3.dot(v3.sub(p, chest), spine) > .1 && v3.dot(v3.sub(p, chest), fwd) > .04 ? M.SKIN : undefined) });
-    const hem = K.sit ? v3.add(hips, [.2, -.04, 0]) : v3.add(hips, [.01 - sway * .3, -Math.min(.33, hipY - .1), 0]);
-    m.seg(v3.add(hips, v3.mul(spine, .06)), hem, .1, .14, M.BELLY, { group: 1, paint: p => { const t = v3.dot(v3.sub(p, hem), v3.norm(v3.sub(hips, hem))); return t < .02 ? M.JACKET : undefined; } });
-    m.ell(v3.add(hips, v3.mul(spine, .1)), [.1, .02, .112], M.HAT, { group: 1 });
+  if (L.nightie) { // a short white cotton chemise (Ed's reference, 2026-10-29): thin straps over bare shoulders, a lace-edged V at the neck, gathered under the bust, falling loose to mid-thigh and a ruffled tier at its hem, all white
+    const up = p => v3.dot(v3.sub(p, chest), spine), front = p => v3.dot(v3.sub(p, chest), fwd) > .015, across = p => Math.abs(p[2] - chest[2]);
+    // the bodice: bare above its neckline, a V at the front and straight across at the back (the straps carry it); no lines drawn on it
+    // (its lace and its seams too fine for her few pixels: dashes along the edge, a ring under the bust, read as dirt)
+    const neck = p => (front(p) ? .02 + across(p) * 1.1 : .075);
+    m.ell(chest, [.095, .15 + K.breathe * .5, .11], M.BELLY, { dir: fwd, group: 1, paint: p => (up(p) > neck(p) ? M.SKIN : undefined) });
+    for (const side of [-1, 1]) { // (its straps, over each shoulder, front to back)
+      const at = (f, u) => v3.add(chest, v3.add(v3.mul(fwd, f), v3.add(v3.mul(spine, u), [0, 0, side * .075])));
+      m.seg(at(.06, .1), at(0, .15), .011, .011, M.BELLY, { group: 1 }); m.seg(at(0, .15), at(-.06, .09), .011, .011, M.BELLY, { group: 1 });
+    }
+    // the skirt: from under the bust, loose and flaring to mid-thigh (sat, over her lap), its ruffled tier flared wider (the step in its
+    // outline is the ruffle)
+    const top = v3.add(chest, v3.mul(spine, -.06)), hem = K.sit ? v3.add(hips, [.15, -.02, 0]) : v3.add(hips, [.01 - sway * .3, -Math.min(.17, hipY - .1), 0]);
+    const axis = v3.norm(v3.sub(top, hem)), tier = v3.add(hem, v3.mul(axis, .055)), low = v3.add(hem, v3.mul(axis, -.012));
+    m.seg(top, tier, .1, .135, M.BELLY, { group: 1 });
+    m.seg(tier, low, .145, .172, M.BELLY, { group: 1 });
   } else m.ell(hips, [.1, .08, .105], M.JEANS, { group: 1 });
   if (!L.nightie) m.ell(chest, [.1, .15 + K.breathe * .5, .115], M.JACKET, { dir: fwd, group: 1, paint: torsoPaint(L, chest, fwd) });
   // the jacket's hem hanging behind, stirring (a poncho or a cape instead)
@@ -3263,7 +3299,7 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
   for (const side of [-1, 1]) {
     const g = side > 0 ? 7 : 5, sh = shoulder(side), hand = side > 0 ? free : K.far || grip || [hipX + .03, hipY + .02, -.16]; // (no broom to hold: at her side)
     const elbow = side > 0 && K.elbow ? K.elbow : side < 0 && K.farElbow ? K.farElbow : v3.add(v3.lerp(sh, hand, .5), [-.03, -.02, side * .05]);
-    if (L.nightie) { m.ell(sh, [.05, .045, .05], M.BELLY, { group: g }); m.seg(sh, elbow, .033, .029, M.SKIN, { group: g }); m.seg(elbow, hand, .029, .025, M.SKIN, { group: g }); } // (a puff sleeve, bare arms)
+    if (L.nightie) { m.ell(sh, [.036, .034, .036], M.SKIN, { group: g }); m.seg(sh, elbow, .031, .028, M.SKIN, { group: g }); m.seg(elbow, hand, .028, .025, M.SKIN, { group: g }); } // (bare shoulders and arms: only its straps over them)
     else { m.seg(sh, elbow, .04, .035, M.JACKET, { group: g }); m.seg(elbow, hand, .035, .03, M.JACKET, { group: g }); }
     drawHand(m, side > 0 ? (astride ? "grip" : K.hand) : K.farHand || "grip", hand, g);
     drawGlowsticks(m, L, elbow, hand, side, g);
@@ -5925,10 +5961,46 @@ const CREATURE_SIGILS = { arcticfox: SIGIL_ARCTICFOX.strokes, armadillo: SIGIL_A
 const CREATURE_LEGENDS = { arcticfox: LEGEND_ARCTICFOX, armadillo: LEGEND_ARMADILLO, badger: LEGEND_BADGER, bat: LEGEND_BAT, bear: LEGEND_BEAR, beaver: LEGEND_BEAVER, beetle: LEGEND_BEETLE, boar: LEGEND_BOAR, cat: LEGEND_CAT, cheetah: LEGEND_CHEETAH, crab: LEGEND_CRAB, crocodile: LEGEND_CROCODILE, dormouse: LEGEND_DORMOUSE, dragonfly: LEGEND_DRAGONFLY, elephant: LEGEND_ELEPHANT, elk: LEGEND_ELK, featheredserpent: LEGEND_FEATHEREDSERPENT, fennec: LEGEND_FENNEC, flyingsquirrel: LEGEND_FLYINGSQUIRREL, fox: LEGEND_FOX, frosttroll: LEGEND_FROSTTROLL, frostwyrm: LEGEND_FROSTWYRM, griffin: LEGEND_GRIFFIN, hare: LEGEND_HARE, hedgehog: LEGEND_HEDGEHOG, heron: LEGEND_HERON, hydra: LEGEND_HYDRA, ibex: LEGEND_IBEX, jaguar: LEGEND_JAGUAR, komodo: LEGEND_KOMODO, lion: LEGEND_LION, lynx: LEGEND_LYNX, marten: LEGEND_MARTEN, meerkat: LEGEND_MEERKAT, mole: LEGEND_MOLE, moth: LEGEND_MOTH, newt: LEGEND_NEWT, otter: LEGEND_OTTER, owl: LEGEND_OWL, penguin: LEGEND_PENGUIN, polarbear: LEGEND_POLARBEAR, raccoon: LEGEND_RACCOON, ram: LEGEND_RAM, rattlesnake: LEGEND_RATTLESNAKE, raven: LEGEND_RAVEN, redpanda: LEGEND_REDPANDA, rhino: LEGEND_RHINO, roe: LEGEND_ROE, salamander: LEGEND_SALAMANDER, scorpion: LEGEND_SCORPION, snail: LEGEND_SNAIL, snake: LEGEND_SNAKE, snowleopard: LEGEND_SNOWLEOPARD, sphinx: LEGEND_SPHINX, spider: LEGEND_SPIDER, squirrel: LEGEND_SQUIRREL, stag: LEGEND_STAG, stegosaurus: LEGEND_STEGOSAURUS, stoat: LEGEND_STOAT, tiger: LEGEND_TIGER, toad: LEGEND_TOAD, unicorn: LEGEND_UNICORN, wolf: LEGEND_WOLF, woodlouse: LEGEND_WOODLOUSE };
 const CREATURE_NAPS = { arcticfox: NAP_ARCTICFOX, armadillo: NAP_ARMADILLO, badger: NAP_BADGER, bat: NAP_BAT, bear: NAP_BEAR, beaver: NAP_BEAVER, beetle: NAP_BEETLE, boar: NAP_BOAR, cat: NAP_CAT, cheetah: NAP_CHEETAH, crab: NAP_CRAB, crocodile: NAP_CROCODILE, dormouse: NAP_DORMOUSE, dragonfly: NAP_DRAGONFLY, elephant: NAP_ELEPHANT, elk: NAP_ELK, featheredserpent: NAP_FEATHEREDSERPENT, fennec: NAP_FENNEC, flyingsquirrel: NAP_FLYINGSQUIRREL, fox: NAP_FOX, frosttroll: NAP_FROSTTROLL, frostwyrm: NAP_FROSTWYRM, griffin: NAP_GRIFFIN, hare: NAP_HARE, hedgehog: NAP_HEDGEHOG, heron: NAP_HERON, hydra: NAP_HYDRA, jaguar: NAP_JAGUAR, komodo: NAP_KOMODO, lion: NAP_LION, lynx: NAP_LYNX, marten: NAP_MARTEN, meerkat: NAP_MEERKAT, mole: NAP_MOLE, moth: NAP_MOTH, newt: NAP_NEWT, otter: NAP_OTTER, owl: NAP_OWL, penguin: NAP_PENGUIN, polarbear: NAP_POLARBEAR, raccoon: NAP_RACCOON, ram: NAP_RAM, rattlesnake: NAP_RATTLESNAKE, raven: NAP_RAVEN, redpanda: NAP_REDPANDA, rhino: NAP_RHINO, roe: NAP_ROE, salamander: NAP_SALAMANDER, scorpion: NAP_SCORPION, snail: NAP_SNAIL, snake: NAP_SNAKE, snowleopard: NAP_SNOWLEOPARD, sphinx: NAP_SPHINX, spider: NAP_SPIDER, squirrel: NAP_SQUIRREL, stag: NAP_STAG, stegosaurus: NAP_STEGOSAURUS, stoat: NAP_STOAT, tiger: NAP_TIGER, toad: NAP_TOAD, unicorn: NAP_UNICORN, wolf: NAP_WOLF, woodlouse: NAP_WOODLOUSE };
 const CREATURE_NEONS = { arcticfox: SIGIL_ARCTICFOX.neon, armadillo: SIGIL_ARMADILLO.neon, badger: SIGIL_BADGER.neon, bat: SIGIL_BAT.neon, bear: SIGIL_BEAR.neon, beaver: SIGIL_BEAVER.neon, beetle: SIGIL_BEETLE.neon, boar: SIGIL_BOAR.neon, cat: SIGIL_CAT.neon, cheetah: SIGIL_CHEETAH.neon, crab: SIGIL_CRAB.neon, crocodile: SIGIL_CROCODILE.neon, dormouse: SIGIL_DORMOUSE.neon, dragonfly: SIGIL_DRAGONFLY.neon, elephant: SIGIL_ELEPHANT.neon, elk: SIGIL_ELK.neon, featheredserpent: SIGIL_FEATHEREDSERPENT.neon, fennec: SIGIL_FENNEC.neon, flyingsquirrel: SIGIL_FLYINGSQUIRREL.neon, fox: SIGIL_FOX.neon, frosttroll: SIGIL_FROSTTROLL.neon, frostwyrm: SIGIL_FROSTWYRM.neon, griffin: SIGIL_GRIFFIN.neon, hare: SIGIL_HARE.neon, hedgehog: SIGIL_HEDGEHOG.neon, heron: SIGIL_HERON.neon, hydra: SIGIL_HYDRA.neon, ibex: SIGIL_IBEX.neon, jaguar: SIGIL_JAGUAR.neon, komodo: SIGIL_KOMODO.neon, lion: SIGIL_LION.neon, lynx: SIGIL_LYNX.neon, marten: SIGIL_MARTEN.neon, meerkat: SIGIL_MEERKAT.neon, mole: SIGIL_MOLE.neon, moth: SIGIL_MOTH.neon, newt: SIGIL_NEWT.neon, otter: SIGIL_OTTER.neon, owl: SIGIL_OWL.neon, penguin: SIGIL_PENGUIN.neon, polarbear: SIGIL_POLARBEAR.neon, raccoon: SIGIL_RACCOON.neon, ram: SIGIL_RAM.neon, rattlesnake: SIGIL_RATTLESNAKE.neon, raven: SIGIL_RAVEN.neon, redpanda: SIGIL_REDPANDA.neon, rhino: SIGIL_RHINO.neon, roe: SIGIL_ROE.neon, salamander: SIGIL_SALAMANDER.neon, scorpion: SIGIL_SCORPION.neon, snail: SIGIL_SNAIL.neon, snake: SIGIL_SNAKE.neon, snowleopard: SIGIL_SNOWLEOPARD.neon, sphinx: SIGIL_SPHINX.neon, spider: SIGIL_SPIDER.neon, squirrel: SIGIL_SQUIRREL.neon, stag: SIGIL_STAG.neon, stegosaurus: SIGIL_STEGOSAURUS.neon, stoat: SIGIL_STOAT.neon, tiger: SIGIL_TIGER.neon, toad: SIGIL_TOAD.neon, unicorn: SIGIL_UNICORN.neon, wolf: SIGIL_WOLF.neon, woodlouse: SIGIL_WOODLOUSE.neon };
+// ---- inlined from art/creatures/arcticfox/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): small round ears on a round fluffy face, its ruff in tufts
+const BOLD_ARCTICFOX = { strokes: [...pair(A(.27, .26, .12, 180, 360), L([.15, .26], [.04, .5], [.16, .56], [.06, .72], [.24, .78], [.5, .94]), D(.36, .52)), L([.39, .26], [.61, .26]), D(.5, .78)] };
+
+
+// ---- inlined from art/creatures/armadillo/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): side on: the dome of its shell banded across, its long snout and upright ear
+const BOLD_ARMADILLO = { strokes: [E(.56, .8, .4, .52, 180, 360), L([.42, .34], [.44, .8]), L([.58, .28], [.58, .8]), L([.74, .34], [.72, .8]), L([.16, .8], [.96, .8]), L([.3, .8], [.3, .96]), L([.8, .8], [.8, .96]), L([.18, .68], [.04, .88]), L([.2, .62], [.14, .36])] };
+
+
+// ---- inlined from art/creatures/badger/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): the two dark stripes down its long white face
+const BOLD_BADGER = { strokes: [...pair(L([.22, .1], [.12, .44], [.5, .96]), L([.3, .1], [.4, .78]), L([.36, .1], [.46, .78]))] };
+
+
+// ---- inlined from art/creatures/bat/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): the fruit bat: a fox's face with big eyes, its broad wings spread
+const BOLD_BAT = { strokes: [...pair(L([.36, .3], [.2, .2], [.02, .34], [.08, .54], [.18, .52], [.22, .68], [.32, .64], [.42, .8]), L([.4, .26], [.38, .14], [.46, .2]), D(.42, .4)), L([.42, .8], [.5, .9], [.58, .8]), L([.42, .52], [.5, .64], [.58, .52])] };
+
+
 // ---- inlined from art/creatures/bear/bold.js ----
 
 // bold (stacks, runes, pointers: art/sigils.js BOLD): the round ears and the round muzzle with its nose
 const BOLD_BEAR = { strokes: [C(.2, .22, .11), C(.8, .22, .11), A(.5, .55, .38, 180, 360), ...pair(L([.12, .55], [.2, .85], [.5, .95])), C(.5, .72, .14), D(.5, .66), ...pair(D(.34, .45))] };
+
+
+// ---- inlined from art/creatures/beaver/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): the two big front teeth under a round face
+const BOLD_BEAVER = { strokes: [...pair(D(.2, .16), L([.22, .24], [.14, .5], [.26, .78], [.36, .8])), L([.36, .8], [.64, .8]), L([.4, .66], [.6, .66]), L([.42, .82], [.42, .98], [.58, .98], [.58, .82]), L([.5, .82], [.5, .96]), ...pair(D(.36, .42))] };
+
+
+// ---- inlined from art/creatures/beetle/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): from above: the great antler mandibles over its split wing cases
+const BOLD_BEETLE = { strokes: [...pair(L([.42, .38], [.3, .26], [.22, .04]), L([.3, .26], [.36, .1]), L([.3, .44], [.2, .62], [.24, .86], [.5, .96]), L([.26, .56], [.06, .5]), L([.24, .76], [.06, .84])), L([.36, .42], [.64, .42]), L([.5, .42], [.5, .96])] };
 
 
 // ---- inlined from art/creatures/boar/bold.js ----
@@ -5943,19 +6015,337 @@ const BOLD_BOAR = { strokes: [...pair(L([.24, .3], [.14, .08], [.36, .2]), L([.2
 const BOLD_CAT = { strokes: [...pair(L([.2, .5], [.2, .12], [.44, .3])), C(.5, .52, .3), ...pair(L([.02, .6], [.3, .64]), L([.04, .78], [.3, .7]), D(.38, .5))] };
 
 
+// ---- inlined from art/creatures/cheetah/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): the black tear lines running from its eyes to its mouth
+const BOLD_CHEETAH = { strokes: [...pair(A(.22, .24, .08, 180, 360), L([.14, .3], [.08, .52], [.22, .82], [.5, .96]), D(.36, .4), L([.36, .5], [.38, .72], [.46, .8])), D(.5, .7)] };
+
+
+// ---- inlined from art/creatures/crab/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): front on: a broad shell, eyes up on stalks, one great claw
+const BOLD_CRAB = { strokes: [E(.5, .66, .34, .16), ...pair(L([.4, .5], [.38, .32]), L([.2, .78], [.06, .96]), D(.38, .3)), A(.82, .3, .14, 100, 400), L([.76, .52], [.8, .44]), L([.2, .52], [.1, .3], [.2, .22])] };
+
+
+// ---- inlined from art/creatures/crocodile/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): from above: the long tapering jaw with teeth poking out of its sides, eyes up at the back
+const BOLD_CROCODILE = { strokes: [...pair(L([.38, .2], [.42, .96], [.5, .98]), C(.3, .14, .1), L([.4, .4], [.3, .42]), L([.41, .58], [.31, .6]), L([.42, .76], [.32, .78])), L([.4, .26], [.6, .26])] };
+
+
+// ---- inlined from art/creatures/dormouse/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): curled up asleep in a ball, its furry tail wrapped round
+const BOLD_DORMOUSE = { strokes: [C(.5, .54, .4), spiral(.5, .54, .26, .04, .75, 0), D(.3, .3)] };
+
+
+// ---- inlined from art/creatures/dragonfly/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): from above: the long thin tail and the two pairs of long wings out straight
+const BOLD_DRAGONFLY = { strokes: [L([.5, .1], [.5, .98]), C(.5, .12, .08), ...pair(L([.44, .26], [.04, .16], [.04, .26], [.44, .3]), L([.44, .42], [.06, .5], [.08, .58], [.44, .46]))] };
+
+
+// ---- inlined from art/creatures/elephant/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): the two great fan ears either side of its trunk
+const BOLD_ELEPHANT = { strokes: [...pair(L([.36, .2], [.14, .1], [.02, .3], [.06, .66], [.24, .7], [.36, .56]), D(.38, .38), L([.38, .54], [.34, .7])), L([.44, .5], [.44, .9], [.56, .98], [.62, .9]), L([.56, .5], [.56, .82])] };
+
+
+// ---- inlined from art/creatures/elk/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): the broad palmate antlers like open hands, the long overhanging nose
+const BOLD_ELK = { strokes: [...pair(L([.4, .4], [.06, .36], [.02, .1]), L([.06, .32], [.12, .06], [.2, .28], [.26, .06], [.32, .3]), L([.38, .44], [.34, .82], [.38, .96], [.5, .96]))] };
+
+
+// ---- inlined from art/creatures/featheredserpent/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): the fan of feathers round its head
+const BOLD_FEATHEREDSERPENT = { strokes: [L([.1, .98], [.36, .92], [.42, .76], [.3, .66], [.32, .56], [.46, .52]), C(.58, .4, .12), L(...Array.from({ length: 11 }, (_, i) => at(.58, .4, i % 2 ? .25 : .4, -200 + i * 22)))] };
+
+
+// ---- inlined from art/creatures/fennec/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): ears far bigger than its face, flaring out wide over a small pointed face
+const BOLD_FENNEC = { strokes: [...pair(L([.4, .46], [.02, .02], [.2, .6], [.5, .94]), D(.38, .66)), L([.4, .46], [.6, .46]), D(.5, .86)] };
+
+
+// ---- inlined from art/creatures/flyingsquirrel/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): from below, gliding: its skin stretched square between its four legs
+const BOLD_FLYINGSQUIRREL = { strokes: [L([.04, .1], [.5, .2], [.96, .1], [.84, .5], [.96, .88], [.5, .8], [.04, .88], [.16, .5], [.04, .1]), C(.5, .36, .1), L([.5, .52], [.5, .98])] };
+
+
+// ---- inlined from art/creatures/fox/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): the tall pointed ears and the wide cheeks narrowing to a sharp muzzle
+const BOLD_FOX = { strokes: [...pair(L([.42, .3], [.18, .04], [.08, .46], [.5, .94]), D(.34, .52)), L([.42, .3], [.58, .3]), D(.5, .82)] };
+
+
+// ---- inlined from art/creatures/frosttroll/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): the bulb of a nose and the two little tusks under its shaggy brow
+const BOLD_FROSTTROLL = { strokes: [L([.06, .3], [.18, .14], [.3, .26], [.42, .1], [.58, .26], [.7, .1], [.82, .26], [.94, .12]), ...pair(C(.28, .44, .1), L([.24, .78], [.2, .6])), C(.5, .64, .14), L([.2, .9], [.8, .9])] };
+
+
+// ---- inlined from art/creatures/frostwyrm/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): the long snout between great swept-back horns, an icicle beard
+const BOLD_FROSTWYRM = { strokes: [...pair(L([.36, .3], [.18, .14], [.02, .04]), L([.4, .26], [.36, .6], [.42, .72]), D(.34, .14), L([.42, .72], [.38, .9], [.46, .82])), L([.4, .26], [.6, .26]), L([.46, .82], [.5, .98], [.54, .82])] };
+
+
+// ---- inlined from art/creatures/griffin/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): the eagle's head with its hooked beak and feathered ear tuft
+const BOLD_GRIFFIN = { strokes: [L([.18, .98], [.2, .6], [.28, .34], [.46, .2], [.68, .22], [.86, .34], [.94, .52], [.86, .68], [.82, .52], [.64, .52], [.5, .64], [.48, .98]), L([.28, .34], [.04, .16]), D(.6, .36)] };
+
+
+// ---- inlined from art/creatures/hare/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): the long upright ears
+const BOLD_HARE = { strokes: [...pair(L([.4, .5], [.26, .02], [.08, .06], [.28, .52]), D(.38, .7)), C(.5, .72, .24)] };
+
+
+// ---- inlined from art/creatures/hedgehog/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): side on: the dome of spines, its pointed snout
+const BOLD_HEDGEHOG = { strokes: [L(...Array.from({ length: 15 }, (_, i) => at(.5, .78, i % 2 ? .3 : .46, 180 + i * 180 / 14))), L([.04, .78], [.96, .78]), L([.04, .78], [.06, .88], [.2, .92]), D(.16, .7)] };
+
+
+// ---- inlined from art/creatures/heron/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): side on: the dagger bill and plume, the S of its neck
+const BOLD_HERON = { strokes: [L([.98, .3], [.5, .2], [.36, .22], [.3, .32], [.4, .44], [.5, .56], [.46, .72], [.3, .8], [.1, .76]), L([.36, .22], [.06, .1]), L([.1, .76], [.3, .98]), D(.44, .28)] };
+
+
+// ---- inlined from art/creatures/hydra/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): three serpent necks rising from one body, each with its head
+const BOLD_HYDRA = { strokes: [L([.5, .96], [.5, .2]), C(.5, .12, .08), L([.4, .96], [.32, .7], [.16, .5], [.12, .36]), C(.12, .3, .08), L([.6, .96], [.68, .7], [.84, .5], [.88, .36]), C(.88, .3, .08), L([.3, .98], [.7, .98])] };
+
+
+// ---- inlined from art/creatures/ibex/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): the great horns sweeping up and back in long arcs over a long goat's face, a beard
+const BOLD_IBEX = { strokes: [...pair(L([.42, .36], [.36, .12], [.22, .03], [.06, .06], [.03, .24]), L([.38, .36], [.38, .7], [.5, .78])), L([.5, .78], [.5, .98])] };
+
+
+// ---- inlined from art/creatures/jaguar/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): its coat's rosettes, broken rings in a cluster
+const BOLD_JAGUAR = { strokes: [A(.26, .26, .16, 0, 290), A(.74, .28, .16, 120, 410), A(.27, .74, .16, 200, 490), A(.74, .74, .16, -60, 230)] };
+
+
+// ---- inlined from art/creatures/komodo/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): side on: the heavy head with its long forked tongue flicking out
+const BOLD_KOMODO = { strokes: [L([.98, .9], [.6, .7], [.42, .46], [.26, .36], [.1, .4], [.06, .5], [.24, .56], [.42, .58], [.6, .74]), L([.06, .5], [.0, .58]), L([.04, .52], [.02, .68]), D(.26, .44), L([.6, .74], [.56, .98]), L([.82, .8], [.86, .98])] };
+
+
+// ---- inlined from art/creatures/lion/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): the great mane in rays round a calm face
+const BOLD_LION = { strokes: [L(...Array.from({ length: 21 }, (_, i) => at(.5, .5, i % 2 ? .3 : .48, i * 18 - 90))), C(.5, .52, .14), ...pair(D(.42, .46))] };
+
+
 // ---- inlined from art/creatures/lynx/bold.js ----
 
 // bold (stacks, runes, pointers: art/sigils.js BOLD): the tall tufted ears and the flared cheek ruff
 const BOLD_LYNX = { strokes: [...pair(L([.24, .44], [.26, .08]), L([.26, .08], [.27, .02]), L([.26, .08], [.42, .32]), L([.2, .5], [.06, .72], [.2, .74], [.16, .92], [.5, .96]), D(.38, .55))] };
 
 
+// ---- inlined from art/creatures/marten/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): round ears high on a pointed face, the pale bib under its chin
+const BOLD_MARTEN = { strokes: [...pair(C(.2, .22, .1), L([.28, .2], [.5, .18]), L([.14, .32], [.16, .5], [.5, .74]), D(.36, .42)), D(.5, .64), L([.2, .82], [.5, .96], [.8, .82])] };
+
+
+// ---- inlined from art/creatures/meerkat/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): standing tall on watch, its paws at its chest
+const BOLD_MEERKAT = { strokes: [C(.5, .16, .12), ...pair(L([.4, .3], [.32, .56], [.36, .96]), L([.4, .44], [.3, .5])), L([.36, .96], [.64, .96]), L([.64, .9], [.86, .98])] };
+
+
+// ---- inlined from art/creatures/mole/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): the two broad clawed digging hands beside its long snout
+const BOLD_MOLE = { strokes: [...pair(L([.36, .5], [.2, .56], [.08, .5]), L([.12, .42], [.02, .28]), L([.2, .4], [.16, .24]), L([.28, .42], [.3, .26]), L([.36, .5], [.44, .92]), D(.38, .38)), L([.42, .26], [.5, .1], [.58, .26]), L([.44, .92], [.56, .92])] };
+
+
+// ---- inlined from art/creatures/moth/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): the swallowtail: broad forewings and the long tails on its hind wings
+const BOLD_MOTH = { strokes: [...pair(L([.46, .3], [.04, .06], [.06, .36], [.46, .42]), L([.46, .56], [.16, .62], [.18, .8], [.3, .82], [.46, .7]), L([.3, .82], [.26, .98]), L([.46, .2], [.36, .04])), L([.5, .2], [.5, .76])] };
+
+
+// ---- inlined from art/creatures/newt/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): side on: the wavy crest running along its back and tail
+const BOLD_NEWT = { strokes: [L([.02, .7], [.16, .58], [.3, .66], [.56, .66], [.98, .6]), L([.26, .6], [.34, .38], [.42, .56], [.5, .3], [.58, .54], [.66, .3], [.74, .52], [.82, .32], [.9, .5], [.98, .36]), L([.3, .66], [.24, .9]), L([.56, .66], [.62, .9]), D(.12, .52)] };
+
+
+// ---- inlined from art/creatures/otter/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): its whiskered head up out of the water
+const BOLD_OTTER = { strokes: [A(.5, .48, .3, 180, 360), ...pair(D(.12, .24), L([.2, .48], [.2, .62]), L([.02, .5], [.26, .56]), D(.38, .4)), D(.5, .54), L([.02, .82], [.18, .74], [.34, .82], [.5, .74], [.66, .82], [.82, .74], [.98, .82])] };
+
+
 // ---- inlined from art/creatures/owl/bold.js ----
 
-// bold (stacks, runes, pointers: art/sigils.js BOLD): the two great eye rings, the hooked beak, the ear tufts
-const BOLD_OWL = { strokes: [C(.31, .5, .17), C(.69, .5, .17), L([.43, .7], [.5, .84], [.57, .7]), ...pair(L([.14, .36], [.08, .06], [.36, .3]), D(.31, .5))] };
+// bold (stacks, runes, pointers: art/sigils.js BOLD): the spotted owl: the two great eye rings in its round face, the hooked beak
+const BOLD_OWL = { strokes: [A(.5, .52, .46, 222, 318), C(.3, .54, .15), C(.7, .54, .15), L([.43, .74], [.5, .94], [.57, .74])] };
 
 
-const CREATURE_BOLD = { bear: BOLD_BEAR.strokes, boar: BOLD_BOAR.strokes, cat: BOLD_CAT.strokes, lynx: BOLD_LYNX.strokes, owl: BOLD_OWL.strokes };
+// ---- inlined from art/creatures/penguin/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): the white belly in its black coat, the flippers out
+const BOLD_PENGUIN = { strokes: [E(.5, .54, .3, .42), E(.5, .62, .14, .28), L([.42, .26], [.5, .36], [.58, .26]), ...pair(L([.22, .44], [.04, .66]))] };
+
+
+// ---- inlined from art/creatures/polarbear/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): side on: the long head and roman nose, the small ear, the long neck
+const BOLD_POLARBEAR = { strokes: [L([.06, .98], [.14, .6], [.3, .38], [.36, .22], [.5, .16], [.7, .2], [.94, .38], [.92, .5], [.62, .56], [.42, .7], [.4, .98]), L([.36, .22], [.32, .08], [.46, .16]), D(.6, .34)] };
+
+
+// ---- inlined from art/creatures/raccoon/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): the black bandit mask across its eyes
+const BOLD_RACCOON = { strokes: [...pair(L([.24, .34], [.2, .08], [.4, .26]), L([.06, .44], [.24, .58], [.42, .48]), L([.08, .52], [.24, .64], [.42, .54]), L([.1, .46], [.5, .96])), D(.5, .86)] };
+
+
+// ---- inlined from art/creatures/ram/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): the great horns curling round beside a long face
+const BOLD_RAM = { strokes: [...pair(A(.22, .42, .19, -70, -340), A(.22, .42, .06, 0, 360), L([.4, .26], [.42, .86], [.5, .96]))] };
+
+
+// ---- inlined from art/creatures/rattlesnake/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): the rattle held up behind its coil in three buttons
+const BOLD_RATTLESNAKE = { strokes: [E(.42, .76, .38, .18), L([.4, .58], [.32, .4], [.34, .2]), C(.34, .14, .1), L([.8, .7], [.86, .52]), L([.76, .46], [.94, .42]), L([.78, .32], [.94, .28]), L([.8, .18], [.92, .14])] };
+
+
+// ---- inlined from art/creatures/raven/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): side on: the great thick beak, a bright eye
+const BOLD_RAVEN = { strokes: [L([.08, .98], [.1, .52], [.2, .26], [.4, .14], [.6, .22], [.98, .42], [.6, .56], [.42, .68], [.44, .98]), L([.62, .39], [.86, .42]), D(.38, .34)] };
+
+
+// ---- inlined from art/creatures/redpanda/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): its long bushy tail in rings
+const BOLD_REDPANDA = { strokes: [L([.3, .98], [.22, .7], [.3, .4], [.52, .14], [.7, .02]), L([.66, .98], [.56, .7], [.62, .46], [.76, .28], [.96, .2]), L([.24, .8], [.6, .8]), L([.26, .58], [.58, .58]), L([.36, .36], [.66, .38]), L([.56, .14], [.84, .22])] };
+
+
+// ---- inlined from art/creatures/rhino/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): front on: the great horn rising from its nose up past its brow
+const BOLD_RHINO = { strokes: [L([.4, .62], [.5, .02], [.6, .62]), ...pair(L([.24, .26], [.12, .1], [.3, .2]), L([.3, .26], [.22, .5], [.24, .86], [.5, .96]), D(.32, .5)), L([.36, .78], [.64, .78])] };
+
+
+// ---- inlined from art/creatures/roe/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): a slim deer's face with its big ears and its short spiked antlers
+const BOLD_ROE = { strokes: [...pair(L([.42, .3], [.4, .02]), L([.41, .14], [.3, .1]), L([.34, .36], [.06, .2], [.14, .44], [.34, .44]), L([.36, .44], [.42, .86], [.5, .96]), D(.36, .52))] };
+
+
+// ---- inlined from art/creatures/salamander/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): from above: a plump spotted body, splayed legs and a curling tail
+const BOLD_SALAMANDER = { strokes: [C(.5, .14, .1), E(.5, .48, .16, .26), A(.68, .74, .18, 180, 400), ...pair(L([.36, .34], [.14, .26], [.08, .14]), L([.36, .6], [.14, .7], [.08, .82])), D(.5, .4), D(.5, .56)] };
+
+
+// ---- inlined from art/creatures/scorpion/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): from above: the pincers ahead and the tail curled up over its back to the sting
+const BOLD_SCORPION = { strokes: [...pair(C(.18, .14, .1), L([.22, .24], [.38, .44])), E(.5, .58, .14, .18), A(.5, .66, .26, -10, 180), L([.24, .66], [.18, .52], [.3, .5])] };
+
+
+// ---- inlined from art/creatures/snail/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): the spiral shell on its foot, two eye stalks
+const BOLD_SNAIL = { strokes: [spiral(.56, .5, .32, .04, 1.4, 90), L([.02, .9], [.98, .9]), L([.16, .9], [.16, .7], [.06, .4]), L([.16, .7], [.24, .44]), D(.06, .4), D(.24, .42)] };
+
+
+// ---- inlined from art/creatures/snake/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): its body in an S, its head raised and its forked tongue out
+const BOLD_SNAKE = { strokes: [L([.06, .94], [.3, .98], [.5, .9], [.5, .74], [.3, .66], [.24, .52], [.36, .4], [.6, .4], [.7, .3], [.66, .14]), C(.62, .12, .08), L([.7, .06], [.82, .02]), L([.76, .04], [.84, .12])] };
+
+
+// ---- inlined from art/creatures/snowleopard/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): the long thick tail curled round it
+const BOLD_SNOWLEOPARD = { strokes: [A(.5, .5, .44, 160, 430), A(.5, .5, .38, 165, 425), C(.5, .54, .16), ...pair(L([.4, .42], [.38, .3], [.46, .38]))] };
+
+
+// ---- inlined from art/creatures/sphinx/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): the headcloth's flat crown and its striped lappets falling either side of a calm face
+const BOLD_SPHINX = { strokes: [L([.24, .08], [.76, .08]), ...pair(L([.24, .08], [.02, .9]), L([.2, .32], [.08, .6]), L([.3, .2], [.3, .58], [.5, .74]), D(.38, .38)), L([.46, .76], [.46, .96], [.54, .96], [.54, .76])] };
+
+
+// ---- inlined from art/creatures/spider/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): the tarantula: its big furry abdomen and thick bent legs
+const BOLD_SPIDER = { strokes: [C(.5, .7, .2), C(.5, .34, .1), ...pair(L([.4, .3], [.2, .12], [.16, .02]), L([.4, .38], [.12, .3], [.02, .4]), L([.4, .44], [.12, .52], [.04, .66]), L([.42, .5], [.22, .72], [.16, .9]))] };
+
+
+// ---- inlined from art/creatures/squirrel/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): the great bushy tail curling up over its back
+const BOLD_SQUIRREL = { strokes: [A(.64, .38, .34, 95, 370), A(.64, .38, .27, 105, 360), C(.22, .5, .14), L([.16, .38], [.12, .26], [.24, .34]), L([.3, .62], [.28, .96], [.56, .96])] };
+
+
+// ---- inlined from art/creatures/stag/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): the great branching antlers over a slim face
+const BOLD_STAG = { strokes: [...pair(L([.42, .44], [.22, .3], [.06, .02]), L([.24, .3], [.3, .06]), L([.13, .17], [.02, .2]), L([.42, .44], [.42, .84], [.5, .96]), L([.42, .52], [.22, .6]))] };
+
+
+// ---- inlined from art/creatures/stegosaurus/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): side on: the zigzag of plates along its arched back, the spiked tail
+const BOLD_STEGOSAURUS = { strokes: [L([.02, .9], [.2, .7], [.5, .62], [.8, .7], [.98, .88]), L([.12, .76], [.18, .44], [.3, .66], [.38, .28], [.5, .62], [.62, .28], [.7, .66], [.82, .44], [.88, .78]), L([.9, .84], [.98, .66]), L([.3, .66], [.28, .96]), L([.66, .66], [.66, .96])] };
+
+
+// ---- inlined from art/creatures/stoat/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): its long slender body curled round in a ring, the dark tail tip by its nose
+const BOLD_STOAT = { strokes: [A(.5, .52, .4, 50, 320), A(.5, .52, .33, 55, 315), L([.86, .26], [.98, .38], [.82, .42]), D(.72, .74)] };
+
+
+// ---- inlined from art/creatures/tiger/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): the stripes across its brow and cheeks
+const BOLD_TIGER = { strokes: [C(.5, .54, .4), ...pair(A(.2, .2, .08, 180, 360), L([.38, .22], [.42, .36]), L([.12, .5], [.28, .56]), L([.14, .68], [.28, .68]), D(.38, .56)), L([.5, .18], [.5, .32]), D(.5, .74)] };
+
+
+// ---- inlined from art/creatures/toad/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): the bulging eyes on top of its wide flat head, its wide mouth
+const BOLD_TOAD = { strokes: [...pair(C(.26, .32, .12), L([.14, .4], [.04, .6], [.1, .8], [.5, .86]), D(.26, .32)), L([.38, .32], [.62, .32]), A(.5, .52, .32, 30, 150)] };
+
+
+// ---- inlined from art/creatures/unicorn/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): side on: the horse's head with its one long horn
+const BOLD_UNICORN = { strokes: [L([.52, .32], [.8, .02]), L([.16, .98], [.2, .62], [.34, .3], [.5, .3], [.74, .5], [.94, .74], [.86, .9], [.62, .82], [.48, .98]), L([.34, .3], [.32, .1], [.44, .24]), D(.5, .48)] };
+
+
+// ---- inlined from art/creatures/wolf/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): front on: the long muzzle and the heavy ruff round its neck
+const BOLD_WOLF = { strokes: [...pair(L([.36, .28], [.26, .02], [.18, .32]), L([.18, .32], [.04, .44], [.14, .54], [.04, .66], [.16, .74], [.1, .88], [.3, .86]), L([.36, .46], [.38, .84], [.5, .96]), D(.28, .46)), L([.36, .28], [.64, .28]), L([.42, .8], [.58, .8])] };
+
+
+// ---- inlined from art/creatures/woodlouse/bold.js ----
+
+// bold (stacks, runes, pointers: art/sigils.js BOLD): from above: its oval shell in bands of plates
+const BOLD_WOODLOUSE = { strokes: [E(.5, .54, .32, .42), L([.22, .38], [.78, .38]), L([.2, .54], [.8, .54]), L([.22, .7], [.78, .7]), ...pair(L([.42, .14], [.3, .02]))] };
+
+
+const CREATURE_BOLD = { arcticfox: BOLD_ARCTICFOX.strokes, armadillo: BOLD_ARMADILLO.strokes, badger: BOLD_BADGER.strokes, bat: BOLD_BAT.strokes, bear: BOLD_BEAR.strokes, beaver: BOLD_BEAVER.strokes, beetle: BOLD_BEETLE.strokes, boar: BOLD_BOAR.strokes, cat: BOLD_CAT.strokes, cheetah: BOLD_CHEETAH.strokes, crab: BOLD_CRAB.strokes, crocodile: BOLD_CROCODILE.strokes, dormouse: BOLD_DORMOUSE.strokes, dragonfly: BOLD_DRAGONFLY.strokes, elephant: BOLD_ELEPHANT.strokes, elk: BOLD_ELK.strokes, featheredserpent: BOLD_FEATHEREDSERPENT.strokes, fennec: BOLD_FENNEC.strokes, flyingsquirrel: BOLD_FLYINGSQUIRREL.strokes, fox: BOLD_FOX.strokes, frosttroll: BOLD_FROSTTROLL.strokes, frostwyrm: BOLD_FROSTWYRM.strokes, griffin: BOLD_GRIFFIN.strokes, hare: BOLD_HARE.strokes, hedgehog: BOLD_HEDGEHOG.strokes, heron: BOLD_HERON.strokes, hydra: BOLD_HYDRA.strokes, ibex: BOLD_IBEX.strokes, jaguar: BOLD_JAGUAR.strokes, komodo: BOLD_KOMODO.strokes, lion: BOLD_LION.strokes, lynx: BOLD_LYNX.strokes, marten: BOLD_MARTEN.strokes, meerkat: BOLD_MEERKAT.strokes, mole: BOLD_MOLE.strokes, moth: BOLD_MOTH.strokes, newt: BOLD_NEWT.strokes, otter: BOLD_OTTER.strokes, owl: BOLD_OWL.strokes, penguin: BOLD_PENGUIN.strokes, polarbear: BOLD_POLARBEAR.strokes, raccoon: BOLD_RACCOON.strokes, ram: BOLD_RAM.strokes, rattlesnake: BOLD_RATTLESNAKE.strokes, raven: BOLD_RAVEN.strokes, redpanda: BOLD_REDPANDA.strokes, rhino: BOLD_RHINO.strokes, roe: BOLD_ROE.strokes, salamander: BOLD_SALAMANDER.strokes, scorpion: BOLD_SCORPION.strokes, snail: BOLD_SNAIL.strokes, snake: BOLD_SNAKE.strokes, snowleopard: BOLD_SNOWLEOPARD.strokes, sphinx: BOLD_SPHINX.strokes, spider: BOLD_SPIDER.strokes, squirrel: BOLD_SQUIRREL.strokes, stag: BOLD_STAG.strokes, stegosaurus: BOLD_STEGOSAURUS.strokes, stoat: BOLD_STOAT.strokes, tiger: BOLD_TIGER.strokes, toad: BOLD_TOAD.strokes, unicorn: BOLD_UNICORN.strokes, wolf: BOLD_WOLF.strokes, woodlouse: BOLD_WOODLOUSE.strokes };
 // ---- inlined from art/creatures/arcticfox/creature.js ----
 // arcticfox: what the game's rules and sounds know about it, section by section (the config files' per-species entries, 2026-10-13;
 // its genome, sigil, sleeping form and nap are its other files). The schema: config/schema/creature.schema.json.
