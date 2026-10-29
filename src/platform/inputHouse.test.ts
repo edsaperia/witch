@@ -1,5 +1,5 @@
 // Rising in the treehouse through the page's own controls (platform/input.ts): with no broom, no input lifts her off but on the
-// Terrace (Ed, 2026-10-23: "She shouldn't be able to rise while in the treehouse, except on the terrace"): the gamepad's rise (square since Ed's layout, 2026-10-28; cross before: the old
+// Terrace (Ed, 2026-10-23: "She shouldn't be able to rise while in the treehouse, except on the terrace"): the gamepad's rise (cross again since Ed's swap, 2026-10-29; square from 2026-10-28; cross before: the old
 // bottom face button) with the stick held toward a station against the wall, as Ed's playtest on v4273 found it taking
 // her off in the bedroom, and Space with the keys held the same way (pushed at a round room's wall she stands on its very edge,
 // where a floor test reads her as just outside the room); with her broom, both take her up from any room (Ed, 2026-10-26: "maybe
