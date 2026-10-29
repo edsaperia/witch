@@ -342,8 +342,10 @@ const round2 = (x: number) => Math.round(x * 100) / 100;
 
 // ---- releasing ----
 
-const lifeRange = (a: AttackSpec) => a.life?.range ?? (a.cast?.range ?? 20) * 1.3;
-const lifeTime = (a: AttackSpec, v: number) => a.life?.time ?? Math.min(12, lifeRange(a) / Math.max(1, v) + 0.5);
+/** How far a body flies before it ends (its life's range, else 1.3 times its cast's), and for how long (its life's time, else that
+ *  range at its starting speed and half a second more, 12 s at most). */
+export const lifeRange = (a: AttackSpec) => a.life?.range ?? (a.cast?.range ?? 20) * 1.3;
+export const lifeTime = (a: AttackSpec, v: number) => a.life?.time ?? Math.min(12, lifeRange(a) / Math.max(1, v) + 0.5);
 
 /** A body's speed `t` s after it set off (its profile). */
 export function speedAt(a: AttackSpec, t: number): number {

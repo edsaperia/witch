@@ -10094,6 +10094,10 @@
             "speed": {
               "type": "number",
               "minimum": 0
+            },
+            "maxSecs": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -10103,7 +10107,8 @@
             "decay",
             "maxOffsetPx",
             "maxRotDeg",
-            "speed"
+            "speed",
+            "maxSecs"
           ],
           "additionalProperties": false,
           "description": "The screen shakes when she's hit, harder for each hit she was already missing and hardest on a knockdown."

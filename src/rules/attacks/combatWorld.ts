@@ -10,7 +10,7 @@ import { sideOf, targetable, type Grid } from "../combat/targeting";
 import { strengthOf } from "../combat/data";
 import { withBase, type Library } from "./parse";
 import { speciesAttack } from "./species";
-import { type Hittable, type SpellWorld } from "./engine";
+import { lifeRange, lifeTime, speedAt, type Hittable, type SpellWorld } from "./engine";
 import type { AttackSpec, Effect } from "./types";
 
 /** The flat record the fight's movement reads for an attack in the grammar (how near it wants to be, its windup and cooldown, how
@@ -22,6 +22,26 @@ export function asFightAttack(a: AttackSpec): Attack {
   // (a melee one is the fight's own lunge, landing as a blow does: its knockback or slow as the blow's modifier, the rest after it)
   if (kind === "melee") { out.lunge = a.body?.lunge ?? 12; Object.assign(out, blowOf(a.hit?.effect, "melee")); out.range = a.cast?.range ?? 2; out.windup = a.cast?.windup ?? 0.6; out.cooldown = a.cast?.cooldown ?? 2; }
   return out;
+}
+
+/** How far a thrown body (a bolt or a runner) really gets: its speed over its life, no further than its life's range (a slowing or
+ *  stop-and-go one may run out of time first); anything else (a lob, a mine, an area, a beam) goes where it's aimed: Infinity. */
+export function bodyReach(a: AttackSpec): number {
+  const kind = a.body?.kind ?? "bolt";
+  if (kind !== "bolt" && kind !== "runner") return Infinity;
+  const R = lifeRange(a), T = lifeTime(a, speedAt(a, 0)), dt = 1 / 60;
+  let d = 0;
+  for (let t = 0; t < T && d < R; t += dt) d += speedAt(a, t) * dt;
+  return Math.min(d, R);
+}
+
+/** A thrown attack at her reaching `k` times as far (tuning dodge.b.range; Ed, 2026-10-09: "I think shooters should have longer
+ *  range"): its cast's range and its life's both, the rest as it is (its children, its speed). The fight already lets a shooter fire
+ *  at her from k times its range; without this its bolt still ended at its own (Ed's playtest, 2026-10-29: "ranged weapons from
+ *  creatures that I encountered seem to have a very short range"). */
+export function reachingFurther(a: AttackSpec, k: number): AttackSpec {
+  if (k === 1) return a;
+  return { ...a, cast: { ...a.cast, range: (a.cast?.range ?? 20) * k }, life: { ...a.life, range: lifeRange(a) * k } };
 }
 
 /** A creature's attack in the grammar, if it has one: its name, the flat record for its movement, the damage of a cast (the level's
