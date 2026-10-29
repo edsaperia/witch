@@ -204,6 +204,44 @@ describe("a stone's conversion by its wave (Ed, 2026-10-28: the same rule as the
   });
 });
 
+describe("a legend circle's baby's sigil (Ed, 2026-10-28: it lands in its circle)", () => {
+  /** Its circle's baby lies in its circle, clear of the legend, flagged for the view; the others by the stone, unflagged. */
+  const check = (g: Game, key: string, stone: { x: number; z: number }) => {
+    const b = own(g, key).find(c => c.circle && !c.boss && c.loose)!, k = b.circle!, p = g.loose.find(q => q.id === b.id)!;
+    expect(p.to).toBe("circle");
+    expect(Math.hypot(p.x - k.x, p.z - k.z)).toBeLessThan(k.r);
+    expect(Math.hypot(p.x - k.legendX, p.z - k.legendZ)).toBeGreaterThan(2);
+    const others = g.loose.filter(q => q.id !== b.id && own(g, key).some(c => c.id === q.id && !c.boss));
+    expect(others.length).toBeGreaterThan(0);
+    for (const q of others) { expect(q.to).toBeUndefined(); expect(Math.hypot(q.x - stone.x, q.z - stone.z)).toBeLessThanOrEqual(C.scatter.reach + 1e-6); }
+  };
+  const withBaby = (g: Game, keys: readonly (readonly [number, number])[]) => keys.map(([cx, cy]) => `${cx},${cy}`).find(key => own(g, key).some(c => c.circle && !c.boss && c.level === 0) && own(g, key).some(c => !c.circle && !c.boss && c.level === 0));
+
+  it("by the spell", () => {
+    const g = game(), home = cellKey(g.map.centreCell);
+    const key = withBaby(g, g.map.cells.filter(([cx, cy]) => `${cx},${cy}` !== home && !g.party.areas.has(`${cx},${cy}`) && g.map.playable(cx, cy)))!;
+    expect(key).toBeDefined();
+    const [cx, cy] = key.split(",").map(Number), a = { key, stone: g.map.soundsystemSpot(cx, cy) };
+    at(g, a);
+    run(g, C.time + 0.5, hold);
+    expect(g.party.areas.has(key)).toBe(true);
+    run(g, 0.1);
+    check(g, key, a.stone);
+  });
+
+  it("by its wave", () => {
+    const g = game();
+    for (let n = 0; n < 40; n++) {
+      const [cx, cy] = g.party.next[0], key = `${cx},${cy}`;
+      const has = withBaby(g, [[cx, cy]]);
+      spreadWave(g.party, g.map, g.clock.time);
+      run(g, 0.1);
+      if (has) return check(g, key, g.map.soundsystemSpot(cx, cy));
+    }
+    throw new Error("no wave woke a legend's area");
+  });
+});
+
 describe("loose sigils (Ed, 2026-10-28)", () => {
   it("are picked up like any sigil, leashing the creature; a legend's tethers her at the distance it lay, till she puts it down", () => {
     const g = game(), a = area(g, true), W = g.witches[0];

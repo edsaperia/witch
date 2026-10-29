@@ -12,7 +12,7 @@
 // - the conversion (`convert` s; the rules scatter its friend sigils, g.loose, each with the stack slot it fell from): the stone
 //   flares, the friends' sigils arc down off the column to where they lie, the enemies' fade;
 // - the loose sigils lying on the ground, to pick up (a sleeping legend's tethers her: render/leash/stack.ts).
-import { NOTES } from "../indicator";
+import { NOTES, rainbow } from "../indicator";
 import { castShown, stoneStack, type StackEntry } from "../../rules/stoneStacks";
 import { RUNE_SCALE, sigilSize } from "../../rules/runeOffset";
 import { hash2 } from "../../rules/random";
@@ -38,8 +38,9 @@ export interface StoneView {
   last: Map<string, Column>;
   /** The conversions under way. */
   converted: Converted[];
-  /** Each loose sigil's fall (by creature): from where, when it began and when it lands; none for one put down (a tether's). */
-  falls: Map<number, { x: number; y: number; z: number; t0: number; land: number; was: boolean }>;
+  /** Each loose sigil's fall (by creature): from where, when it began and when it lands; none for one put down (a tether's).
+   *  `hidden`: a legend circle's baby's (LooseSigil.to "circle"), not seen in flight: it fades out of the stack and in where it lands. */
+  falls: Map<number, { x: number; y: number; z: number; t0: number; land: number; was: boolean; hidden?: boolean }>;
   /** The loose sigils seen so far (by creature). */
   seen: Set<number>;
   /** The music's spectrum this frame (main.ts sets it while `wantsSpectrum`: the ring showing; null: no audio running), and the bars'
@@ -65,8 +66,8 @@ export function barLevel(bins: ArrayLike<number>, i: number, n: number): number 
   return Math.max(0, Math.min(1, (bins[b] ?? 0) / 255));
 }
 
-/** A rainbow hue, 0 to 1 round. */
-const hue = (h: number): [number, number, number] => { const f = (n: number) => { const q = (((n + h * 6) % 6) + 6) % 6; return 1 - Math.max(0, Math.min(1, Math.min(q, 4 - q))); }; return [f(5), f(3), f(1)]; };
+/** A rainbow hue, 0 to 1 round (the wave pointer cycles the same: render/indicator.ts). */
+const hue = rainbow;
 const smooth = (k: number) => { const q = Math.max(0, Math.min(1, k)); return q * q * (3 - 2 * q); };
 
 export function drawStones(lv: LeashView, time: number, dot: number[]): void {
@@ -117,7 +118,7 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
     }
     const it = C.col.items.find(q => q.id === p.id), lvl = it?.level ?? Math.min(3, g.creatures[p.id]?.level ?? 0), y = it?.y ?? 0.6 + (p.from.y + 0.5) * sizeOf(lvl) * 1.15;
     const t0 = time + K.convert * (0.1 + 0.2 * hash2(p.id, 3, 91));
-    V.falls.set(p.id, { x: C.col.x, y: upY(C.col.x, C.col.z, C.col.top + y), z: upZ(C.col.z, C.col.top + y), t0, land: time + K.convert * (0.65 + 0.2 * hash2(p.id, 5, 91)), was: it?.friend ?? true });
+    V.falls.set(p.id, { x: C.col.x, y: upY(C.col.x, C.col.z, C.col.top + y), z: upZ(C.col.z, C.col.top + y), t0, land: time + K.convert * (0.65 + 0.2 * hash2(p.id, 5, 91)), was: it?.friend ?? true, ...(p.to === "circle" ? { hidden: true } : {}) });
   }
   for (const id of [...V.seen]) if (!looseIds.has(id)) { V.seen.delete(id); V.falls.delete(id); }
   V.converted = V.converted.filter(C => time - C.at < K.convert);
@@ -129,6 +130,11 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
   // The loose sigils: falling, or lying on the ground to pick up.
   for (const p of g.loose ?? []) {
     const cr = g.creatures[p.id], lvl = Math.min(3, cr?.boss ? 3 : cr?.level ?? 0), to = rankColour(t, lvl, true), F = V.falls.get(p.id);
+    if (F?.hidden && time < F.land) { // (gone from the stack in a fade, unseen on its way to its circle)
+      const out = 1 - smooth((time - F.t0) / Math.max(0.05, (F.land - F.t0) * 0.3));
+      if (out > 0.01) sigil(p.id, lvl, F.x, F.y, F.z, sizeOf(lvl), out, rankColour(t, lvl, F.was));
+      continue;
+    }
     if (F && time < F.land) {
       const e = smooth((time - F.t0) / Math.max(0.05, F.land - F.t0)), from = rankColour(t, lvl, F.was), m = smooth((time - F.t0) / 0.6);
       const c: [number, number, number] = [from[0] + (to[0] - from[0]) * m, from[1] + (to[1] - from[1]) * m, from[2] + (to[2] - from[2]) * m];
@@ -139,9 +145,9 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
       continue;
     }
     if (Math.abs(p.x - w.x) > K.range || Math.abs(p.z - w.z) > K.range) continue;
-    const uv = lv.uv(lv.bareSlot(cr?.species ?? "fox")), size = sigilSize(2, RUNE_SCALE) * rankSize(t, lvl) * (p.legend ? 1.25 : 1), a = 0.62 + 0.12 * Math.sin(time * 2 + p.id);
+    const uv = lv.uv(lv.bareSlot(cr?.species ?? "fox")), size = sigilSize(2, RUNE_SCALE) * rankSize(t, lvl) * (p.legend ? 1.25 : 1), a = (0.62 + 0.12 * Math.sin(time * 2 + p.id)) * (F?.hidden ? smooth((time - F.land) / Math.max(0.05, K.convert * 0.3)) : 1);
     lv.groundSigil(p.x, 0.03, p.z, size, uv, to[0] * 0.8, to[1] * 0.8, to[2] * 0.8, a);
-    lv.flat.add(p.x, 0.015, p.z, size * 0.9, dot, to[0], to[1], to[2], 0.18); // (a glint: ready to pick up)
+    lv.flat.add(p.x, 0.015, p.z, size * 0.9, dot, to[0], to[1], to[2], 0.18 * a / 0.62); // (a glint: ready to pick up)
     drawEmbers(lv.standing, dot, lv.glyphPts.get(`${uv[0]},${uv[1]}`) ?? [], p.x, 0.02, p.z, size, true, lvl, to, time, p.id * 11 + 5, RK.embers);
   }
   for (const k of [...V.last.keys()]) if (!shown.has(k) && !V.converted.some(C => C.col === V.last.get(k))) V.last.delete(k);

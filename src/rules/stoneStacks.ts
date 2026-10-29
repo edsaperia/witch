@@ -28,6 +28,10 @@ export interface LooseSigil extends PlacedSigil {
   legend?: boolean;
   /** Where it fell from (for the view's arc): its stone's x and z, and y its slot in the stack, 0 at the bottom (stoneStack's order). */
   from?: { x: number; y: number; z: number };
+  /** "circle": a legend circle's baby's, landed in its circle (Ed, 2026-10-28: "this baby's sigil should land in the legend circle
+   *  instead of near the soundsystem"), not seen in flight: it fades out leaving the stack and in where it lands ("I don't think you
+   *  should see this sigil in flight"). */
+  to?: "circle";
 }
 
 /** The cast's knobs (the tuning's `cast`). */
@@ -206,6 +210,21 @@ export function scatterSpots(key: string, x: number, z: number, n: number, t: Tu
   }
   while (out.length < n) out.push({ x, z: z + S.min }); // (nowhere left: in front of the stone, still to pick up)
   return out;
+}
+
+/** Where a legend circle's baby's sigil lands at its stone's conversion (Ed, 2026-10-28): on its circle's open floor, clear of the
+ *  sleeping legend's body (`clear` metres round where it lies) and of anything `free` says no to (barred, another sigil near): the
+ *  free spot nearest where its baby dances (the circle's middle, a little south), a seeded jitter between equals; the circle can sit
+ *  across its area's edge, so no area or clearing test. With nowhere free, that dancing spot. */
+export function circleSpot(circle: { x: number; z: number; r: number; legendX: number; legendZ: number }, clear: number, seed: number, free: (x: number, z: number) => boolean): { x: number; z: number } {
+  const dance = { x: circle.x, z: circle.z + circle.r * 0.3 }, cands: { x: number; z: number; o: number }[] = [];
+  for (const k of [0, 0.3, 0.55, 0.8]) for (let i = 0; i < (k ? 16 : 1); i++) {
+    const a = (i / 16) * Math.PI * 2, x = dance.x + Math.cos(a) * circle.r * k, z = dance.z + Math.sin(a) * circle.r * k;
+    if (Math.hypot(x - circle.x, z - circle.z) > circle.r * 0.85 || Math.hypot(x - circle.legendX, z - circle.legendZ) < clear) continue;
+    cands.push({ x, z, o: Math.hypot(x - dance.x, z - dance.z) + hash2(seed, i * 7 + k * 100, 4417) * 0.5 });
+  }
+  cands.sort((a, b) => a.o - b.o);
+  return cands.find(p => free(p.x, p.z)) ?? dance;
 }
 
 /** The loose sigil nearest (x, z) within r: its index, or -1. */

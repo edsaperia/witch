@@ -49,7 +49,7 @@ import { wearPiece } from "./clothesPile";
 import { hatLetters, hatsDown, onHatPicked, onHatPut, stepHatSpells } from "./hatSpells";
 import { loadOf, type LeashLoad, groundedBy } from "./leashWeight";
 import { pinWitch, type Pinned } from "./partyLegend";
-import { castOf, castOn, friendSigils, looseAt, scatterSpots, stoneOpen, tetherWitch, type LooseSigil } from "./stoneStacks";
+import { castOf, castOn, circleSpot, friendSigils, looseAt, scatterSpots, stoneOpen, tetherWitch, type LooseSigil } from "./stoneStacks";
 import { runeOffset } from "./runeOffset";
 import { hurt, knockOut, newHealth, nextStreak, repair, stepKnockout, stepWanderers, type Health, type Knockout, type KnockoutEvent } from "./knockout";
 import { newInvites, stepInvites, type Affection, type Decoy, type InviteControls, type Invites } from "./invites";
@@ -1062,11 +1062,20 @@ function scatterFriends(g: Game, key: string, at: { x: number; z: number }, time
   const free = (x: number, z: number) => !sigilBarred(g, x, z, t) && !looseAt(g.loose, x, z, t) && !looseAt(placed, x, z, t) && isInside(g.map.bounds, x, z, 2);
   // (its clearing: open ground, in its own area, where the trees thin out)
   const open = (x: number, z: number) => g.map.treeWeight(x, z) <= S.open * t.treeDensity && cellKey(g.map.areaOf(g.map.cellSafe(x, z).cell)) === key;
-  const spots = scatterSpots(key, at.x, at.z, friends.length, t, free, open);
-  friends.forEach(({ c, slot }, i) => {
-    g.loose.push({ id: c.id, x: spots[i].x, z: spots[i].z, at: time, from: { x: at.x, y: slot, z: at.z }, ...(c.boss ? { legend: true } : {}) });
+  // A legend circle's baby's sigil lands in its circle (Ed, 2026-10-28), the rest scatter over the stone's clearing.
+  const inCircle = friends.filter(f => f.c.circle && !f.c.boss), round = friends.filter(f => !inCircle.includes(f));
+  const spots = scatterSpots(key, at.x, at.z, round.length, t, free, open);
+  const drop = ({ c, slot }: { c: Creature; slot: number }, x: number, z: number, circle: boolean) => {
+    g.loose.push({ id: c.id, x, z, at: time, from: { x: at.x, y: slot, z: at.z }, ...(c.boss ? { legend: true } : {}), ...(circle ? { to: "circle" as const } : {}) });
     c.loose = true; c.atStone = undefined;
-  });
+  };
+  round.forEach((f, i) => drop(f, spots[i].x, spots[i].z, false));
+  for (const f of inCircle) {
+    const k = f.c.circle!, L = g.creatures.find(o => o.boss && !o.gone && Math.abs(o.x - k.legendX) < 1 && Math.abs(o.z - k.legendZ) < 1);
+    const near = (x: number, z: number) => [...g.loose, ...placed].some(p => Math.hypot(p.x - x, p.z - z) < t.leash.spacing);
+    const s = circleSpot(k, (L ? bodyRadius(L) : 3) + 1, f.c.id, (x, z) => !sigilBarred(g, x, z, t) && !near(x, z));
+    drop(f, s.x, s.z, true);
+  }
   g.leashEvents.push({ kind: "converted", id: -1, key, x: at.x, z: at.z, at: time });
 }
 

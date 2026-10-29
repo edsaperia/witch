@@ -561,8 +561,11 @@ export class View {
   hatPointers: StoneIndicator[] = [];
   /** The Dowsing hat's pointer toward the nearest relic (rules/hatSpells.ts). */
   dowsePointer: StoneIndicator | null = null;
-  /** The end of the route's pointer (rules/win.ts): toward the straggler nearest the centre, then the victory lap's pulse. */
-  winPointer: StoneIndicator | null = null;
+  /** The end of the route's two pointers (render/view/pointers.ts): the straggler's and the victory lap's (the party's). */
+  stragglerPointer: StoneIndicator | null = null;
+  partyPointer: StoneIndicator | null = null;
+  /** The awake legends' pointers. */
+  legendPointers: StoneIndicator[] = [];
   /** Pins anyone has put up (render/pins.ts: view.pin(target, look)), drawn with the pointers. */
   readonly pins = new Set<Pin>();
   pinsAt = Number.NaN;
