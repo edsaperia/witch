@@ -101,7 +101,8 @@ export function castReady(g: Game, key: string): boolean {
 }
 
 /** Where a stone at (x, z)'s spell spot lies: cast.spot m south of it. */
-export const castSpot = (s: { x: number; z: number }, t: Tuning): { x: number; z: number } => ({ x: s.x, z: s.z + castOf(t).spot });
+// (on a great stump, its cut's middle: Ed, 2026-10-29, "the spell and the audio circle effect can be on top of the stump"; runeMarkers.stump)
+export const castSpot = (s: { x: number; z: number }, t: Tuning): { x: number; z: number } => ({ x: s.x, z: s.z + (t.runeMarkers?.stump?.on ? 0 : castOf(t).spot) });
 
 /** The stone she'd cast at from (x, z): her area's (a legend area's pair's), if it has a stack, is ready to cast (castReady) and
  *  she's within `reach` of its spell spot (castSpot). Its x, z the stone's own. */
