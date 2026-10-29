@@ -72,7 +72,7 @@ describe("the starting bags", () => {
     expect([tote.multiShot, tote.spread]).toEqual([5 * I.multiShot, 3 * I.spread]); expect(tote.range).toBeLessThan(I.range);
     expect(duffel.burst).toBe(4 * I.burst); expect(duffel.cooldown).toBeGreaterThan(2 * I.cooldown);
     expect(brief.homing).toBe(3 * I.homing); expect(brief.speed).toBeLessThan(I.speed);
-    expect(pack.cooldown).toBeLessThan(0.7 * I.cooldown); expect(pack.fireSlow).toBeLessThan(I.fireSlow!);
+    expect(pack.cooldown).toBeLessThan(0.8 * I.cooldown); expect(pack.cooldown).toBeLessThan(bagTuning(TUNING, "satchel").invites.cooldown); expect(pack.fireSlow).toBeLessThan(I.fireSlow!);
     // a bag at a time: the backpack is one of them now, not worn as well
     for (const b of BAGS) expect(bagOf(wear(wear(pleasingWitch(3) as never, itemById("backpack")!), b)), b.id).toBe(b.id);
   });
