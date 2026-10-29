@@ -2951,6 +2951,10 @@
           "type": "string",
           "description": "her broom's parts, a comma list of ids from config/broom-parts.json (the page sets it from her save, localStorage witch.broom, fitted at the Workshop's bay; ?parts= for one load); the bare broom, none, has no spell and no quick take-off, and a complete set gives its spell."
         },
+        "bag": {
+          "type": "string",
+          "description": "her bag, a config/wardrobe.json bag item's id, or empty for none (the page sets it from her look, saved in localStorage witch.genome, chosen at the bags station; ?bag=quick or ?bag=far for one load): the Quick bag (bumbag) throws 💌s faster and shorter, the Far bag (satchel) slower and further, each its item's invites multiplying invites.cooldown and invites.range (rules/bags.ts); none, the tuning's own."
+        },
         "speed": {
           "type": "object",
           "properties": {
@@ -3328,6 +3332,7 @@
         "hat",
         "hats",
         "parts",
+        "bag",
         "speed",
         "healing",
         "helmet",

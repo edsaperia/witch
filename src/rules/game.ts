@@ -52,6 +52,7 @@ import { pinWitch, type Pinned } from "./partyLegend";
 import { castOf, castOn, circleSpot, friendSigils, looseAt, scatterSpots, stoneOpen, tetherWitch, type LooseSigil } from "./stoneStacks";
 import { runeOffset } from "./runeOffset";
 import { hurt, knockOut, newHealth, nextStreak, repair, stepKnockout, stepWanderers, type Health, type Knockout, type KnockoutEvent } from "./knockout";
+import { bagTuning } from "./bags";
 import { newInvites, stepInvites, type Affection, type Decoy, type InviteControls, type Invites } from "./invites";
 import { burstMirage } from "./combat/packs";
 import { affection, blocksLetters, hit as hitAffection } from "./affection";
@@ -439,7 +440,7 @@ export function blinkClear(g: Game, x: number, z: number): boolean {
 
 /** The tuning witch W moves by: the game's with her broom's parts' numbers (rules/broomParts.ts: the
  *  Workshop, Ed 2026-10-23); the bare broom's is the step's own. */
-export const witchTuning = (g: Game, W: Witch): Tuning => broomTuning(g.tuning, W.spells.parts);
+export const witchTuning = (g: Game, W: Witch): Tuning => bagTuning(broomTuning(g.tuning, W.spells.parts), W.spells.bag); // (and her bag's 💌 stats: rules/bags.ts)
 
 /** Her blinks in hand before the cooldown: the tuning's two (Ed, 2026-10-08), Hare's Dash bursts' more, the Twig bristles' one more. */
 export const blinkCharges = (g: Game, W: Witch): number => broomTuning(g.tuning, W.spells.parts).dash.charges ?? 1;
@@ -664,7 +665,7 @@ function fixedStep(g: Game, controls: Controls): void {
     else if (e.kind === "hatPicked") { onHatPicked(g, W, e.x, e.z, ht, t); if (g.wake && W === g.witches[0]) wearPiece(g.wake, "hat"); } // (a hat on her head: out of last night's pile, so she's drawn in it; rules/clothesPile.ts)
   }
   // The 💌s (issue #87): on the ground, off her seat, not knocked out.
-  stepInvites(W.invites, W.ko ? {} : confusedAim(W, c, ht), { ...g.witch }, t.invites.on && hasInvites(W) && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.creatures, affectionOf(g), ht, hdt, t, g.tuning.legendCircle?.slow.on === false ? undefined : leavesCalmRing(g, W.body), hasInvites(W) ? hatLetters(hatsDown(W), t) : undefined, g.combat.mirages?.length || g.combat.decoys?.length ? mirageDecoys(g, g.clock.time) : undefined);
+  stepInvites(W.invites, W.ko ? {} : confusedAim(W, c, ht), { ...g.witch }, t.invites.on && hasInvites(W) && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.creatures, affectionOf(g), ht, hdt, bagTuning(t, W.spells.bag), g.tuning.legendCircle?.slow.on === false ? undefined : leavesCalmRing(g, W.body), hasInvites(W) ? hatLetters(hatsDown(W), t) : undefined, g.combat.mirages?.length || g.combat.decoys?.length ? mirageDecoys(g, g.clock.time) : undefined);
   if (!worldAsleep(g)) wakeOnInvites(g, W.invites.events, t); // (a 💌 landing on a wild one wakes its area: rules/inviteWakes.ts)
   questsFromPlaced(g, ht);
   if (c.feedNearest) feedNearest(B, g.creatures, g.witch.x, g.witch.z, g.clock.time, t, g.beat);

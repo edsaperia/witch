@@ -329,6 +329,19 @@
         "config/broom-parts.json"
       ]
     },
+    "spells.bag": {
+      "what": "her bag, a config/wardrobe.json bag item's id, or empty for none (the page sets it from her look, saved in localStorage witch.genome, chosen at the bags station; ?bag=quick or ?bag=far for one load): the Quick bag (bumbag) throws 💌s faster and shorter, the Far bag (satchel) slower and further, each its item's invites multiplying invites.cooldown and invites.range (rules/bags.ts); none, the tuning's own.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "We should start with a choice of two bags; faster rate of fire but shorter range, and slower rate of fire but longer range"
+        }
+      ],
+      "links": [
+        "config/wardrobe.json"
+      ]
+    },
     "spells.speed": {
       "what": "the Speed broom, her speed times mult for duration seconds, then cooldown seconds to recharge."
     },

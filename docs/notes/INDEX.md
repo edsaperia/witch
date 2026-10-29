@@ -97,6 +97,7 @@ says what each note covers.
 - The oak
 - Furniture: size, freestanding, mess and layout
 - Station menus
+- Starting bags
 - Use prompt
 - Wake-up keys
 - The Studio's instruments
