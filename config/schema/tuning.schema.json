@@ -7057,6 +7057,24 @@
                     "height"
                   ],
                   "additionalProperties": false
+                },
+                "wave": {
+                  "type": "object",
+                  "properties": {
+                    "hold": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "fade": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hold",
+                    "fade"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "required": [
@@ -7064,7 +7082,8 @@
                 "fill",
                 "cell",
                 "glow",
-                "light"
+                "light",
+                "wave"
               ],
               "additionalProperties": false
             },
