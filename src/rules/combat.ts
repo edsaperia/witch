@@ -33,11 +33,12 @@ import { chaseAt, limitTurn, momentumOf, noteWitches } from "./momentum";
 function roleSpell(sp: SpeciesSpell | null, c: Creature, kind: ReturnType<typeof packKindOf> | null, pd: Directive | undefined): SpeciesSpell | null {
   if (!sp || !pd || !kind) return sp;
   const close = sp.attack.delivery === "melee" || sp.attack.delivery === "pulse", alone = pd.state.size < 2;
+  const designed = !!kind.ranged && !!(kind.ranged.patch || kind.ranged.attacks || kind.ranged.delivery === "lob"); // (its pack's own designed shot: the toad's spores, the salamander's beam)
   if (!alone) {
     if (pd.move === "melee") return close ? sp : null;
     if (close && kind.melee) return null;
-    if (kind.ranged && (kind.ranged.patch || kind.ranged.attacks || kind.ranged.delivery === "lob")) return null; // (its pack's own designed shot stays: the toad's spores)
-  }
+    if (designed) return null; // (its pack's shot stays)
+  } else if (designed && !close) return null; // (alone too: its pack's designed shot, not its own)
   const P = packAttack(c.species, c.level, "ranged");
   if (close || !P) return sp;
   const key = `${sp.name}/${c.level}`;
