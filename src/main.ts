@@ -5,6 +5,8 @@ import { keycapCanvas } from "./ui/keyHint";
 import { fillControls } from "./ui/controlsText";
 import { bagOf, setBag } from "./rules/bags";
 import { bindings } from "./platform/bindings";
+import { Rumble } from "./platform/rumble";
+import { currentSettings } from "./app/playerSettings";
 import { wavesOver } from "./rules/win";
 import { chartOpen, closeChart, openChart, prepareChart, type Sailed } from "./ui/chartOverlay";
 import { openingWay, opensInBedroom, sailLandsInBed } from "./app/opening";
@@ -726,6 +728,7 @@ const frameStats = new FrameStats(view.renderer.getContext());
 const ladder = new QualityLadder(gpuName(view.renderer.getContext()), params);
 // The player's Settings page (app/settingsPage.ts): its settings on the live pieces now, the page itself opened from the pause page's dev menu.
 const settingsPage = new SettingsPage({ input, shake, ladder, freeze, audio: on => sound.freeze(!on), tuning: () => N().game.tuning, version: BUILD });
+const rumble = new Rumble();
 // ?perf=1: the performance panel (app/perfHud.ts), always on.
 const perfHud = page.perfHud = params.get("perf") === "1" ? new PerfHud(N().game, view, frameStats) : null;
 // Frames of 100 ms or more, with what they spent it on (Ed, 2026-10-06: occasional half-second freezes): the overlay and the playtest log.
@@ -1111,6 +1114,7 @@ function frame(now: number): void {
   view.debugReadouts = hud.debugOn;
   const step0 = performance.now();
   stepGame(game, c, fightDt(dt * (botTag?.speed ?? 1))); // (the Fight Arena's slow motion, pause and frame at a time: app/fightArena.ts)
+  rumble.update(game, currentSettings(), input.device === "pad" && !document.hidden ? [freeze.pad()] : [], now);
   // ?debug=attack: every 10 s, a few seconds of blows on the two soundsystems farthest from her (never felling one), so the
   // 🔇 alarm (render/alarm.ts) shows whenever she's away from them.
   if (ATTACK_DEBUG && !game.clock.paused) { const tt = game.clock.time, ph = tt % 10; if (ph < 4 && Math.floor(tt * 2) !== F.attackTick) { F.attackTick = Math.floor(tt * 2); debugBlows(game.combat.sounds, game.combat.events, game.witch.x, game.witch.z, tt); } }

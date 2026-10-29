@@ -16,3 +16,21 @@ The balance simulator (`src/rules/balance.ts`, run by `node tools/balance/sim.mj
 - **Playtest log**: `src/platform/playtestLog.ts`: a sample every 10 s of play on this browser (localStorage `witch.playtest`, the last 8 runs); the pause page's ⬇ Download log button (Ed, 2026-10-29: the L key is gone) or `?playtest=download` saves it as JSON. `?timing=1` (kept for the tab; `?timing=0` stops it; `src/app/timing.ts`) adds the transition's steps to the run as `timing`: the marks from the treehouse's map table to her decks (`chart:open`, `chart:mounted`, `chart:island1`, `chart:islands`, `chart:sail`, `chart:flown`, `chart:go`, then the new page's `witch:*` and `game:frame1`, `game:arrived`), carried across the sail's reload, in wall ms from the first with each step's own time, and the main thread's long tasks (over 50 ms). Each run has its comparability `key` and each sample its `scene` (docs/notes/performance.md **Like with like**): `node tools/playtest/compare.cjs <log> [<log>]` splits a run by scene and compares two only like with like.
 - **Balance simulator**: `rules/balance.ts` and `tools/balance/sim.mjs` (above). The full-run bot, `tools/balance/runbot.mjs`, plays the bots of `src/rules/bot.ts` (the bot game's too) through the real rules for the first 30 minutes (skilled, crude, idle, hover; `--set`, `--happy N`, `--feed` to lead her young ones to berry patches, `--guards`/`--keep` for how many she parks at the next soundsystem) and reports the first knockout, knockouts, invites, the share of each woken area invited, angry legends, quests and soundsystems lost. The opening bot, `tools/balance/opening.mjs`, plays the real rules from her first step to wave 1, recruiting the nearest areas three ways, and counts the legends it angers.
 - **Bot / bot game**: `src/rules/bot.ts`, the balance builder's bots (skilled, crude, idle, hover) as one pure module: `newBot(kind, options).decide(game)` gives back the controls a player would, step by step, and `doing` says what she's up to in a few words. `tools/balance/runbot.mjs` plays it headless; the game's **bot game** (the start screen's 🤖 Bot game, or `?bot=skilled|crude`) plays it in real time: a seeded witch (no character creation), the bot casts the party spell itself, the player's input doesn't steer her (the zoom and `~` still work), a corner tag (`ui/botGame.ts`) with what she's doing, 1×/2×/4× (keys 1, 2, 4) and Esc back to the start screen. Tactics changes go in `bot.ts`, so they show in both.
+
+## Where balance stands (the coordinator, 2026-10-29)
+
+Older measurements predate pack combat, orbit combat, the bags, the stumps' spell and the removed buffs; re-measure before trusting them. Known numbers and gaps:
+
+- **Bags:** the Tote stuns a rank-1 fox in 1.8 s, the Satchel in 5.3 s.
+- **Lone shooters** (Golf's gaps after #1405/#1418): (a) a group lunger with a ranged attack of its own; (b) lone kinds with a designed pack shot; (c) the ibex island's hits to stun went 17 → 36.
+- **7 species/ages can't be stunned by one witch alone.**
+- **Changed on 2026-10-29, live:** creature shots now reach about 2.6× their cast range (about 47 m for an 18 m caster; her invite range is 33 m; #1444, Ed chose "longer shots"); species shots don't yet use `dodge.b.speed`. The record's bpm scales the pulse and the wave countdowns (a 200 bpm night twice a 100's; #1450). The soundsystem spell takes 4 s (`cast.time`). Wave 1 comes later since the ley line became one line (+22 s on home, up to about +100 s on islands whose first stone lies west; #1442, accepted by Ed). Nothing within 40 m of a stump (`stoneKeepClear`, #1443).
+- **Ed's direction:** no difficulty scaling with the number of witches in co-op ("people will need friends to help them"); the later maps and faster speeds should get very hard. The balancing pass comes after his next playtest: about 200 seeds per bot type, a sloppy bot, win-rate drift, then retune blows-to-stun.
+
+## Parked by Ed (2026-10-29: "not yet")
+
+Adult garrison jobs; off-route rewards or pull; a witch-nearby boost (no change). Set pieces are phased out (docs still to update).
+
+## Playtest logs
+
+Ed's logs (the pause page's **Download log**) are kept on `claude/ed-shots` under `previews/ed/playtests/`; each file holds several sessions, newest last.

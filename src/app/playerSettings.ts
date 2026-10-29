@@ -27,9 +27,11 @@ export interface PlayerSettings {
   textSize: 1 | 1.25 | 1.5;
   /** the pad's button names: from its name, or PlayStation's or Xbox's */
   glyphs: Glyphs;
+  /** short event feedback on gamepads that support vibration */
+  rumble: boolean;
 }
 
-export const DEFAULTS: PlayerSettings = { master: 1, music: 0.5, effects: 1, voices: 1, muteBackground: true, quality: "auto", shake: true, screen: "", reduceFlashing: false, talk: "hold", textSize: 1, glyphs: "auto" };
+export const DEFAULTS: PlayerSettings = { master: 1, music: 0.5, effects: 1, voices: 1, muteBackground: true, quality: "auto", shake: true, screen: "", reduceFlashing: false, talk: "hold", textSize: 1, glyphs: "auto", rumble: true };
 export const KEY = "witch.player";
 /** (the pause page's saved volumes and the start screen's shake: carried over the first time) */
 const OLD_VOLUMES = "witch.settings", OLD_SHAKE = "witch.shake";
@@ -45,7 +47,7 @@ export function clean(raw: unknown): PlayerSettings {
   const bool = (k: keyof PlayerSettings) => { if (typeof r[k] === "boolean") (out as Record<string, unknown>)[k] = r[k]; };
   const one = <T>(k: keyof PlayerSettings, opts: readonly T[]) => { if (opts.includes(r[k] as T)) (out as Record<string, unknown>)[k] = r[k]; };
   num("master"); num("music"); num("effects"); num("voices");
-  bool("muteBackground"); bool("shake"); bool("reduceFlashing");
+  bool("muteBackground"); bool("shake"); bool("reduceFlashing"); bool("rumble");
   one("quality", ["auto", "high", "medium", "low"]); one("talk", ["hold", "toggle"]); one("textSize", [1, 1.25, 1.5]); one("glyphs", ["auto", "ps", "xbox"]);
   if (typeof r.screen === "string") out.screen = r.screen.slice(0, 80);
   return out;

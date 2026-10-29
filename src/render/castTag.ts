@@ -1,7 +1,8 @@
 // The spell's key prompt (Ed, 2026-10-29: "a key-press hint near the music sigil when it's shown (i.e. a picture of a button, like with
 // the clothes stations)"): while the 🎶 shows on a stump (render/leash/stones.ts StoneView.notes), the use button as bound (E, the pad's
 // ✕: the cast is the use button held, rules/sigilButton.ts) as a keycap with "hold" beside it, just right of the 🎶 on screen, faded in
-// with it; gone while she casts. On a touch screen the prompt is the button, as the zoo's way out is (render/zooExit.ts). Drawing only.
+// with it, only where holding it casts (StoneView.notes.here: on the stump's cut); gone while she casts. On a touch screen the
+// prompt is the button, as the zoo's way out is (render/zooExit.ts). Drawing only.
 import { SPRITE_UNIFORMS } from "./sprites";
 import { keycapCanvas } from "../ui/keyHint";
 import { useGlyph } from "./houseRooms";
@@ -20,7 +21,7 @@ export class CastTag {
   }
   update(v: View): void {
     const n = v.leashView?.stoneView.notes;
-    if (!n || n.casting || n.on < 0.05) { this.el.style.display = "none"; this.tap = null; return; }
+    if (!n || n.casting || !n.here || n.on < 0.05) { this.el.style.display = "none"; this.tap = null; return; } // (only where holding it casts)
     const cv = v.canvas.getBoundingClientRect(), px = Math.max(2, Math.round(cv.width / Math.max(1, v.width))), glyph = useGlyph(v.useDevice), key = `${glyph}|${px}`;
     if (key !== this.key) {
       this.key = key;

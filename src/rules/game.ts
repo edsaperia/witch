@@ -335,7 +335,7 @@ export function newGame(seed: number, tuning: Tuning, players = 1, ready?: MapPr
 }
 
 /** The presses that happen once (not held): kept for the next step if a frame runs none. */
-const ONE_SHOT = ["toggleMode", "sigil", "place", "cycle", "cycleBack", "spell", "castParty", "dash", "nextWave", "pauseWaves", "feedNearest", "inviteNearest", "happyNearest"] as const;
+const ONE_SHOT = ["toggleMode", "sigil", "place", "hat", "cycle", "cycleBack", "spell", "castParty", "dash", "nextWave", "pauseWaves", "feedNearest", "inviteNearest", "happyNearest"] as const;
 const NO_INPUT: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 
 /** Her local pause page. Station panels never stop a multiplayer night. */
@@ -353,7 +353,7 @@ export function stepGame(g: Game, controls: Controls | readonly Controls[], real
   const inputs: readonly Controls[] = Array.isArray(controls) ? controls : g.witches.map((_, i) => i === 0 ? controls as Controls : NO_INPUT);
   if (inputs.length !== g.witches.length) throw new RangeError("One input is required for each witch");
   const multi = g.witches.length > 1;
-  const edges = multi ? [...ONE_SHOT, "hat" as const] : ONE_SHOT;
+  const edges = ONE_SHOT;
   const queues = inputs.map((c, i) => {
     if (c.pausePage !== undefined) setWitchPaused(g, i, c.pausePage);
     if (c.cycleSpeakers) g.speakers = g.speakers.map(nextSpeakerState);
