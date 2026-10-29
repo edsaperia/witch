@@ -7,6 +7,7 @@ says what each note covers.
 ## [Art checks](art-checks.md)
 
 - Style bible
+- Bold sigils
 
 ## [Balance](balance.md)
 

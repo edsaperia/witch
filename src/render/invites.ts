@@ -19,6 +19,7 @@ import { bodyRadius } from "../rules/spacing";
 import type { Creature } from "../rules/creatures";
 import { RingModel, ringOf, slotKind } from "./inviteRing";
 import { drainOf, fillsOf } from "../rules/orbit";
+import { letterLanded, popScale, ringFilled } from "./impact";
 import { beachOf } from "../rules/mapShape";
 import { tiltFilter } from "./overlayTilt";
 import type { OcclusionProbes } from "./occlusion";
@@ -232,7 +233,7 @@ export class InviteView {
 
     // The bubbles: hers on a shot (at most one every bubbleEvery seconds, replacing the last); a
     // creature's reply on a hit or a block (one per creature, replacing its last).
-    const A = affectionOf(g), won: number[] = [];
+    const A = affectionOf(g), won: number[] = [], landedNow = new Set<number>();
     for (const e of I.events) {
       const key = `${e.kind}:${e.n ?? ""}:${e.id ?? ""}:${e.at}`;
       if (this.seen.has(key)) continue;
@@ -251,6 +252,7 @@ export class InviteView {
         if (e.kind === "blocked") { this.pop("💢", e.x, head(e.id) * 0.6 + 0.5, e.z, time); this.crumple(e, head(e.id) * 0.5, time); }
         if (e.kind === "happy") won.push(e.id);
         if (e.spent) continue;
+        if (e.kind === "hit") { letterLanded(e.id); landedNow.add(e.id); } // (its flash and squash: render/impact.ts)
         let b = this.replies.get(e.id);
         if (!b) { b = this.bubble(e.id); this.replies.set(e.id, b); }
         if (e.kind !== "happy" && b.until > time + 0.4) continue; // (still showing its last)
@@ -390,6 +392,7 @@ export class InviteView {
         let r = R;
         if (!r) { r = { imgs: [], dots: [], joined: [] }; this.rings.set(ch.id, r); }
         r.joined[ch.slot] = time;
+        if (ch.slot === ch.slots - 1 && landedNow.has(ch.id)) ringFilled(t.invites.impact?.hitstop ?? 0); // (the 💌 that fills its ring: a hitstop, render/impact.ts)
       } else if (ch.kind === "drop" && c) {
         // Out of orbit: it falls from where it was to the ground, then rests a moment there (no piling up).
         const p = ringAt(c, ch.slot, ch.slots);
@@ -398,6 +401,12 @@ export class InviteView {
         // Full: the envelopes' paper vanishes, leaving each its ❤️, rising and fading.
         for (let s = 0; s < ch.slots; s++) this.hearts.push({ ...ringAt(c, s, ch.slots), at: time, el: img("❤️", Math.max(5, Math.round(n * envSize(ch.slots) * 0.75))) });
       }
+    }
+    // Won over: a burst of hearts off it besides its ring's, as it celebrates (render/cheer.ts; invites.cheer.hearts).
+    for (const id of won) {
+      const c = g.creatures[id], N = t.invites.cheer?.hearts ?? 0;
+      if (!c) continue;
+      for (let i = 0; i < N; i++) { const a = (i / N) * Math.PI * 2 + hash2(id, i, 23), r = 0.6 + 0.8 * hash2(id, i, 29); this.hearts.push({ x: c.x + Math.cos(a) * r, y: head(id) * (0.4 + 0.5 * hash2(id, i, 31)), z: c.z + Math.sin(a) * r * 0.6, at: time, el: img("❤️", Math.max(5, Math.round(n * 0.6))) }); }
     }
     for (const [id, r] of this.rings) {
       const now = this.ringModel.rings.get(id), c = g.creatures[id];
@@ -422,7 +431,7 @@ export class InviteView {
         if (on) {
           place(im, p.x, p.y, p.z);
           hide(im, rkey, rx, ry, rz);
-          const pop = Math.min(1, (time - (r.joined[s] ?? -9)) / 0.25), grow = pop < 1 ? 1.4 - 0.4 * pop : 1; // (joining: a little pop)
+          const grow = popScale(time - (r.joined[s] ?? -9), t.invites.impact); // (joining: a pop, overshooting and settling: render/impact.ts)
           const deg = ((Math.round((time * t.invites.spin * 0.5 + s * 0.13) * 16) / 16) % 1) * 360;
           // (a heart or a 💧 stands upright, bobbing, in its own glow, so the three read apart: 💌 flat and spinning, warm)
           if (kind === "letter") { showTurned(im, "💌", n, sz * grow, sz * grow * flat, deg, k); im.style.filter = "drop-shadow(0 0 2px rgba(232,180,106,.6))"; }
