@@ -181,6 +181,7 @@ says what each note covers.
 
 ## [Performance](performance.md)
 
+- Ordinary-play scenery stalls
 - The sail's terrain relocation
 - The View's build in slices
 - The start's shaders
