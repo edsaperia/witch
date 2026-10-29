@@ -72,6 +72,7 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
       // her night's kit (rules/kit.ts): E at the invitations desk, tonight's invitations; at the lathe, a broom
       if (at.use.kind === "invites" ? takeInvites(W) : at.id === "lathe" && takeBroom(g, W)) relicEvents.push({ kind: "kit", id: W.id, x: deck!.x + at.x, z: deck!.z + at.z, at: ht, obj: at.use.kind === "invites" ? "invites" : "broom" });
       relicEvents.push({ kind: "house", id: W.id, x: deck!.x + at.x, z: deck!.z + at.z, at: ht, obj: at.id });
+      if (at.id === "dressingTable" && g.wake) g.wake.styled = true; // (her skin and hair seen to: the first morning's first step, rules/guidance.ts)
     }
     if ((inHouse || W.house) && stepBed(W, at?.use.kind === "bed", !!c.sigilHeld && inHouse, ht).slept) relicEvents.push({ kind: "house", id: W.id, x, z, at: ht, obj: "slept" });
     sigil = false; place = false;
