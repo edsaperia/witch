@@ -8,6 +8,7 @@ import { setupArena } from "../arena";
 import { newGame, stepGame, STEP, type Controls } from "../game";
 import { TUNING } from "../tuning";
 import { FIGHT } from "../movement";
+import { PACKS } from "./packs";
 
 // The kinds that hide in a lull (trees, burrow, water, branches), scatter, or leap; the ibex Ed saw; and a plain lunger.
 const KINDS = ["ibex", "squirrel", "roe", "cat", "mole", "otter", "owl", "toad", "wolf"];
@@ -41,4 +42,10 @@ describe("no creature jumps in a fight (Ed's playtest, 2026-10-29)", () => {
     }
     expect(bad).toEqual([]);
   }, 600000);
+
+  it("the ibex bounds back in its lull, in sight (the coordinator, 2026-10-29: \"backs off uphill\", not into the trees)", () => {
+    const R = PACKS.kinds.ibex.retreat;
+    expect(R).toBe("leapfrog");
+    expect(PACKS.retreats[R].hide).toBeFalsy();
+  });
 });
