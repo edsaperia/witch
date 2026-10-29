@@ -47,7 +47,13 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
       await page.waitForFunction(() => document.querySelector("#station-panel")?.classList.contains("in") && !window.witch.game.clock.paused, null, { timeout: 30000, polling: 500 });
       // (her art and the house's in: the outdoor world's jobs left out, which in the house never land under a software GL, on
       // claude/prototype too: party objects, relics, creatures; 2026-10-29)
-      const settle = async () => { await page.waitForTimeout(1500); await page.waitForFunction(() => [...window.witch.view.assets.inFlight].every(k => /^(partyObjects|relics|creature)s?:/.test(k)), null, { timeout: 900000, polling: 500 }); await page.waitForTimeout(3000); };
+      // (and the camera eased in on her, once she's choosing)
+      const settle = async () => {
+        await page.waitForTimeout(1500);
+        try { await page.waitForFunction(() => [...window.witch.view.assets.inFlight].every(k => /^(partyObjects|relics|creature)s?:/.test(k)) && (!document.querySelector("#station-panel.in") || (window.witch.game.camera.station ?? 0) > 0.99), null, { timeout: 180000, polling: 500 }); }
+        catch { log(id, "settle: still in flight", JSON.stringify([...await page.evaluate(() => [...window.witch.view.assets.inFlight])]), "station", await page.evaluate(() => window.witch.game.camera.station)); }
+        await page.waitForTimeout(3000);
+      };
       // Where she's drawn on screen: her feet (the view's witchBase) and her top (up her sprite by her drawn height).
       const her = () => page.evaluate(([W, H]) => {
         const v = window.witch.view, c = v.camera, b = v.witchBase, up = window.witch.spriteUp(), V = c.position.constructor;
@@ -72,14 +78,14 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
       }
       // The pad: the d-pad moves the focus (nothing on her changes), R1 the next card, ✕ chooses.
       {
-        const press = async (b, hold = 700) => { await page.evaluate(b => { window.__pad.buttons[b] = true; }, b); await page.waitForTimeout(hold); await page.evaluate(b => { window.__pad.buttons[b] = false; }, b); await page.waitForTimeout(500); };
+        const press = async (b, hold = 2500) => { await page.evaluate(b => { window.__pad.buttons[b] = true; }, b); await page.waitForTimeout(hold); await page.evaluate(b => { window.__pad.buttons[b] = false; }, b); await page.waitForTimeout(500); };
         const focusNow = () => page.evaluate(() => { const f = document.querySelector("#station-panel .focus"); return f ? { at: `${f.dataset.line}:${f.dataset.col}`, card: f.closest(".sp-shelf")?.dataset.shelf, worn: [...document.querySelectorAll("#station-panel .worn, #station-panel .sel")].map(e => `${e.dataset.line}:${e.dataset.col}`).join(",") } : null; });
         await page.evaluate(() => { window.__padOn = true; }); await page.waitForTimeout(600);
-        const a = await focusNow(); await press(15, 300); const b = await focusNow();
+        const a = await focusNow(); await press(15, 300); let b = await focusNow(); if (a && b && a.at === b.at) { await press(15, 2500); b = await focusNow(); } // (the house a few frames a second here: held long enough to be seen)
         ok(a && b && a.at !== b.at && a.worn === b.worn, `${id}: the pad's d-pad moves the focus and changes nothing (${a?.at} → ${b?.at})`);
         const cards = await page.evaluate(() => document.querySelectorAll("#station-panel .sp-shelf").length);
         if (cards > 1) { await press(5); const c = await focusNow(); ok(c && c.card !== b.card, `${id}: R1 jumps to the next card (${b?.card} → ${c?.card})`); await press(4); }
-        await press(14, 300); // (back where it was)
+        await page.keyboard.press("ArrowLeft"); await page.waitForTimeout(800); // (back where it was: the keys, at once)
         await page.evaluate(() => { window.__padOn = false; }); await page.waitForTimeout(600);
       }
       // Choosing: what's in focus, what she wears, and what's drawn on her.
