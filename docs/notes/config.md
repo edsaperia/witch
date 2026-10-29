@@ -1,5 +1,7 @@
 # Config files
 
+The link-switch scanner records paths with forward slashes on every OS. Its generated-document check ignores checkout CRLF versus LF only; all text and spacing must still match.
+
 Part of Witch's notes (CLAUDE.md is the index): the tuning file and its schema, the style file. Moved here from CLAUDE.md as it stood (housekeeping, Ed 2026-10-23: a note an area, so pull requests add to their own area's file, not one shared file); every rule kept. Add to this file, not CLAUDE.md, when you change this area.
 
 Technical-debt cleanup (2026-10-29, #1459): `lasers.maxTilt` was removed from the values, type, schema and reference. Its old note claimed a limit on beam tilt, but neither the laser rules nor the renderer read it; the dancefloor ring's actual tilt remains `speakerLasers.tilt`. The retired `runeMarkers.stump.light` group (reach, strength, height, saturate) was removed after merging the current stump polish: no runtime reader remains; the screenshot tool retains an optional fallback for older builds. The active cast-dial light (`stump.ring.light`) and wisps/moonlight (`stump.wisps`) stay unchanged. No other tuning value or game behaviour changed.
