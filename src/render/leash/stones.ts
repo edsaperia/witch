@@ -12,7 +12,7 @@
 // - the conversion (`convert` s; the rules scatter its friend sigils, g.loose, each with the stack slot it fell from): the stone
 //   flares, the friends' sigils arc down off the column to where they lie, the enemies' fade;
 // - the loose sigils lying on the ground, to pick up (a sleeping legend's tethers her: render/leash/stack.ts).
-import { NOTES } from "../indicator";
+import { NOTES, rainbow } from "../indicator";
 import { castShown, stoneStack, type StackEntry } from "../../rules/stoneStacks";
 import { RUNE_SCALE, sigilSize } from "../../rules/runeOffset";
 import { hash2 } from "../../rules/random";
@@ -66,8 +66,8 @@ export function barLevel(bins: ArrayLike<number>, i: number, n: number): number 
   return Math.max(0, Math.min(1, (bins[b] ?? 0) / 255));
 }
 
-/** A rainbow hue, 0 to 1 round. */
-const hue = (h: number): [number, number, number] => { const f = (n: number) => { const q = (((n + h * 6) % 6) + 6) % 6; return 1 - Math.max(0, Math.min(1, Math.min(q, 4 - q))); }; return [f(5), f(3), f(1)]; };
+/** A rainbow hue, 0 to 1 round (the wave pointer cycles the same: render/indicator.ts). */
+const hue = rainbow;
 const smooth = (k: number) => { const q = Math.max(0, Math.min(1, k)); return q * q * (3 - 2 * q); };
 
 export function drawStones(lv: LeashView, time: number, dot: number[]): void {
