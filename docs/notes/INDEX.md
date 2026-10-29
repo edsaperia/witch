@@ -240,6 +240,7 @@ says what each note covers.
 - Tilt-shift
 - Debug overlay
 - Test sliders / pause page
+- Default look
 - Smooth effects
 - Loading mist
 - Pop

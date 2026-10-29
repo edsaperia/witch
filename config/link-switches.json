@@ -1578,6 +1578,18 @@
    "readIn": [
     "src/app/repro.ts"
    ]
+  },
+  {
+   "name": "newWitch",
+   "values": [
+    "1"
+   ],
+   "does": "This load as a brand-new witch (the pause page's Try as a new witch): the game's default look (config/default-look.json), the starting wardrobe, the default broom and no hats found, her saves of those neither read nor written.",
+   "group": "debug",
+   "since": "2026-10-29",
+   "readIn": [
+    "src/app/defaultLook.ts"
+   ]
   }
  ],
  "patterns": [

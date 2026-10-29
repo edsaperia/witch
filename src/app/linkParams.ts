@@ -17,6 +17,7 @@ import type { MusicCue } from "../rules/musicPlan";
 import type { MusicStyle } from "../rules/musicScore";
 import musicStyleJson from "../../config/music-style.json";
 import { applyKnobParams } from "../ui/decisions";
+import { defaultGenome, newWitch } from "./defaultLook";
 
 /** The browser keys that once remembered knobs which change the world or the balance: the world's shape and travel speed
  *  (witch.world: area size, map areas, treetop speed) and the fight's scale, speed and momentum (witch.fight). They're the
@@ -254,7 +255,8 @@ export function tuningFromLink(params: URLSearchParams) {
   // Her bag (rules/bags.ts; Ed, 2026-10-29: a Bumbag and a Far bag to choose from): the one her saved look wears (localStorage
   // witch.genome, chosen at the bags station), or ?bag=starter, ?bag=quick, ?bag=far (or a bag item's id; ?bag=none for none) for one load.
   { const B = params.get("bag"), ids: Record<string, string> = { starter: "satchel", quick: "bumbag", far: "purse", none: "" };
-    let look: Record<string, unknown> | null = null; try { look = JSON.parse(localStorage.getItem("witch.genome") ?? "null"); } catch { /* storage blocked or spoilt: none */ }
+    let look: Record<string, unknown> | null = null; try { look = newWitch() ? null : JSON.parse(localStorage.getItem("witch.genome") ?? "null"); } catch { /* storage blocked or spoilt: none */ }
+    look ??= defaultGenome(); // (a brand-new witch: the game's default look's bag, app/defaultLook.ts)
     tuning.spells = { ...tuning.spells, bag: B !== null ? ids[B] ?? B : bagOf(look) }; }
   // ?set=path=value;path=value (the repro link's: every setting changed from the build's, app/repro.ts), last, over the rest.
   applySet(tuning, params.get("set"));
