@@ -122,12 +122,13 @@ async function main() {
     [a, b] = await hold("ArrowUp", FLY);
     check(a.z - b.z > 20, `flies in the treetops (${(a.z - b.z).toFixed(0)} m north in ${(b.t - a.t).toFixed(1)} s)`);
     check(b.trees > 20, `the forest is drawn (${b.trees} trees)`);
-    // Not a blank picture: the canvas holds many distinct colours.
+    // Not a blank picture: the canvas holds many distinct colours (in 6-bit steps: the night's darker since #1398, its unlit forest
+    // in fewer of the old 5-bit steps, and a run in the treetops had come out at 40; a blank canvas is one or two either way).
     const colours = await page.evaluate(() => {
       const c = document.querySelector("canvas#game"), w = 64, h = 36, o = document.createElement("canvas");
       o.width = w; o.height = h; const x = o.getContext("2d"); x.drawImage(c, 0, 0, w, h);
       const d = x.getImageData(0, 0, w, h).data, seen = new Set();
-      for (let i = 0; i < d.length; i += 4) seen.add((d[i] >> 3) * 1024 + (d[i + 1] >> 3) * 32 + (d[i + 2] >> 3));
+      for (let i = 0; i < d.length; i += 4) seen.add((d[i] >> 2) * 4096 + (d[i + 1] >> 2) * 64 + (d[i + 2] >> 2));
       return seen.size;
     });
     check(colours > 40, `the picture isn't blank (${colours} colours)`);

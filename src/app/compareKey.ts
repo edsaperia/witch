@@ -1,6 +1,6 @@
 // The comparability key (Ed, 2026-10-26: "only compare like with like"; tools/bench/comparable.cjs compares two): what a run of the
 // game was, where, on what and with what, so a tool comparing two runs can refuse a pair that differs in more than what's being
-// tested. In the playtest log's run (the L key, platform/playtestLog.ts) and every browser bench's result (window.witch.compareKey).
+// tested. In the playtest log's run (the pause page's Download log, platform/playtestLog.ts) and every browser bench's result (window.witch.compareKey).
 import type { Game } from "../rules/game";
 import { browserOs } from "./repro";
 

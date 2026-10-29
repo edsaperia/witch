@@ -40,6 +40,7 @@ import { ZooPlates } from "./zooPlates";
 import { drawDeckBpm } from "./leash/deckBpm";
 import { drawBond, drawStack, drawStrain, stackKey } from "./leash/stack";
 import type { Chain } from "./leash/chain";
+import { drawRainbow } from "./leash/rainbow";
 import { drawStones, newStoneView, resetStoneView, type StoneSpot } from "./leash/stones";
 import { drawProjection } from "./leash/projection";
 import { RUNE_SCALE, runeOffset, sigilSize } from "../rules/runeOffset";
@@ -725,6 +726,7 @@ export class LeashView {
     }
 
     drawStones(this, time, dot); // (the rune stones' sigils, the spell's spot, its cast and the conversion: render/leash/stones.ts)
+    drawRainbow(this, time, dot); // (an early clear's rainbow wave down the ley line: render/leash/rainbow.ts)
     drawBond(this, time, slotPos, dot); // (the bond: render/leash/stack.ts)
     drawStrain(this, time, dot);
     this.look.end();
