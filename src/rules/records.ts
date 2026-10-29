@@ -4,12 +4,12 @@
 // Terrace, rules/wakeUp.ts) before the party; the party starts at its bpm. Those she hasn't found are finds (rules/finds.ts).
 import DATA from "../../config/records.json";
 
-export interface Record { id: string; name: string; bpm: number; start?: boolean }
+export interface Vinyl { id: string; name: string; bpm: number; start?: boolean }
 
 /** Every record, in the booth's order (slowest first). */
-export const RECORDS: readonly Record[] = (DATA.records as Record[]).slice().sort((a, b) => a.bpm - b.bpm);
+export const RECORDS: readonly Vinyl[] = (DATA.records as Vinyl[]).slice().sort((a, b) => a.bpm - b.bpm);
 /** The records she starts with (100 and 120). */
 export const START_RECORDS: readonly string[] = RECORDS.filter(r => r.start).map(r => r.id);
 /** The records found in the forest. */
 export const RECORD_FINDS: readonly string[] = RECORDS.filter(r => !r.start).map(r => r.id);
-export const recordById = (id: string | null | undefined): Record | undefined => RECORDS.find(r => r.id === id);
+export const recordById = (id: string | null | undefined): Vinyl | undefined => RECORDS.find(r => r.id === id);

@@ -9,7 +9,7 @@ import { wavesOver } from "./rules/win";
 import { chartOpen, closeChart, openChart, prepareChart, type Sailed } from "./ui/chartOverlay";
 import { openingWay, opensInBedroom, sailLandsInBed } from "./app/opening";
 import { wakeInBedroom } from "./rules/opening";
-import { endDream, startWake } from "./rules/wakeUp";
+import { endDream, startParty, startWake } from "./rules/wakeUp";
 import { wearFromStation, wornGenome } from "./rules/clothesPile";
 import { WakeCard } from "./render/wakeUp";
 import { toggleCornerPanel, closeCornerPanel } from "./ui/cornerPanel";
@@ -64,6 +64,8 @@ import { fightDt, fightFrame, fightLink, newFightSeed } from "./app/fightArena";
 import { BagPreview } from "./ui/bagPreview";
 import { BAGS } from "./rules/bags";
 import { StationPanel, type WorkshopCtx } from "./ui/stationPanel";
+import { DjBooth } from "./ui/djBooth";
+import { chooseRecord, lastRecord, ownedRecords } from "./app/recordSave";
 import { ZooOverlay, domZooHost, zooUrl } from "./app/zooOverlay";
 import { leaveZoo } from "./app/zooExit";
 import { TelescopeView, integratedGpu } from "./app/telescope";
@@ -407,6 +409,11 @@ stations.onLook = g => {
   showLook();
 };
 stations.onBack = () => shutStation("back"); // (menu.back, E by default: platform/bindings.ts; the pad's, circle, comes through padControls)
+// Her DJ booth at the decks (Ed, 2026-10-29; ui/djBooth.ts): E there opens it (the wake-up's "booth" event); "Get this party started"
+// closes it and starts the party at the record's bpm (rules/wakeUp.ts startParty), the record remembered for next time.
+const booth = new DjBooth();
+booth.onBack = () => booth.close();
+booth.onStart = r => { chooseRecord(r.id); booth.close(); startParty(N().game, r.bpm); };
 stations.onChange = () => { const { game } = N(); view.turnUntil = game.herTime + 0.8; };
 stations.onDress = () => { view.spin = spinStep(view.spin, N().game.herTime); }; // (Ed, 2026-10-26: she twirls while her new look draws)
 // The Workshop's bay (Ed, 2026-10-23; docs/backlog/workshop.md): a part chosen goes on her broom at once, mid-night too (its stats
@@ -1031,8 +1038,8 @@ function frame(now: number): void {
   // buttons (Ed, 2026-10-26: "walking away shouldn't work - then we can use the movement keys as buttons in the menus"), and the use
   // button (E; the pad's back, ○, since Ed's layout of 2026-10-28; a tap on touch) closes it: that press is the close and nothing else, even when the thing
   // open closed itself on it a moment before (the chart and the instruments take E themselves), so it never opens it again.
-  const raw = input.read(), openNow = chartOpen() || telescope.on || !!studio.at || !!stations.station, shutTap = !freeze.frozen && !!(raw.sigil || raw.place) && (openNow || openPrev); // (E is `place`; the pad's back, ○, and a tap `sigil`; never under the pause)
-  if (shutTap) { if (stations.station) shutStation("E"); if (studio.at) studio.leave(); if (chartAt && chartOpen()) { chartAt = null; closeChart(); } } // (the telescope: its own step, below)
+  const raw = input.read(), openNow = chartOpen() || telescope.on || !!studio.at || !!stations.station || booth.isOpen, shutTap = !freeze.frozen && !!(raw.sigil || raw.place) && (openNow || openPrev); // (E is `place`; the pad's back, ○, and a tap `sigil`; never under the pause)
+  if (shutTap) { if (booth.isOpen) booth.close(); if (stations.station) shutStation("E"); if (studio.at) studio.leave(); if (chartAt && chartOpen()) { chartAt = null; closeChart(); } } // (the telescope: its own step, below)
   const human = openNow || shutTap ? stillControls(raw) : raw;
   if (telescope.on) { if (telescope.night !== game || game.witches[0].ko || chartOpen() || !tuning.telescope) telescope.close(); else telescope.step({ ...raw, sigil: !!(raw.sigil || raw.place) }, dt, tuning.telescope); } // (E or ○ leaves it)
   view.telescope = tuning.telescope ? telescope.look(tuning.telescope) : null;
@@ -1086,15 +1093,15 @@ function frame(now: number): void {
   if (stations.station && station?.id !== stations.station) shutStation(`off it (${station?.id ?? "none"}${charting ? ", charting" : ""}${creator.open ? ", creator" : ""})`); // (she's somehow off it: a knockout, a new night; E closes it above)
   if (station && shelves && station.id !== stations.station && usedAt(game) === station.id) { const g = (page.look() ?? creator.genome()) as Record<string, unknown>; stations.open(station.id, shelves, g as never, ownedToChoose(owned ??= loadOwned(g)), game.wake && firstEver && !game.wake.yesterday && station.id === "dressingTable" ? "First night · pick your look here, and at the wardrobe, cloak pegs and shoe rack" : "", shelves.some(q => q.slot || q.board) ? workshopNow() : null); }
   else if (!shelves && stations.station) shutStation("no shelves");
-  stations.update(performance.now() / 1000);
+  stations.update(performance.now() / 1000); booth.update(performance.now() / 1000);
   // The telescope: E at it looks (useHouse); E or ○ shuts it (its own step; Esc pauses over it); and should she somehow be off it, it shuts.
   const scope = bot || creator.open || sailing || charting ? null : stationOf(game, telescope.on ? scopeAt : null, tuning, ["telescope"]);
   if (!scope && telescope.on && scopeAt) { telescope.close(); scopeAt = null; }
-  input.dpadMenu = !!stations.station || telescope.on || !!studio.at || chartOpen(); // (a menu owns the pad: a station's panel, the telescope, an instrument, the map table's chart; only its back, circle, closes it: Ed's layout, 2026-10-28)
-  openPrev = chartOpen() || telescope.on || !!studio.at || !!stations.station;
+  input.dpadMenu = !!stations.station || booth.isOpen || telescope.on || !!studio.at || chartOpen(); // (a menu owns the pad: a station's panel, the telescope, an instrument, the map table's chart; only its back, circle, closes it: Ed's layout, 2026-10-28)
+  openPrev = chartOpen() || telescope.on || !!studio.at || !!stations.station || booth.isOpen;
   shutButton.style.display = openPrev && input.device === "touch" ? "block" : "none"; // (on touch, a way to close it: the tap keycap)
   // (the use prompts, render/houseRooms.ts: the button on what she plays with, and none over what's open)
-  view.useDevice = input.device; stations.setDevice(input.device); studioPanel.setDevice(input.device); view.houseOpen = stations.station ?? studio.state.players[0].object ?? (telescope.on ? scopeAt : null) ?? chartAt;
+  view.useDevice = input.device; stations.setDevice(input.device); booth.setDevice(input.device); studioPanel.setDevice(input.device); view.houseOpen = stations.station ?? studio.state.players[0].object ?? (telescope.on ? scopeAt : null) ?? chartAt;
   // The new opening's wake-up (rules/wakeUp.ts, render/wakeUp.ts): its card, the dark and her phone; its beats marked for ?timing=1,
   // and the first time she comes to the dressing table; the island's art latched drawn (marked, nothing waits on it).
   if (!game.islandReady && F.ready && F.artRevealed && (mistGateOff || view.islandDrawn())) { game.islandReady = true; mark("island:ready"); } // (latched: the island's own art drawn, render/view.ts islandDrawn; its time marked for ?timing=1)
@@ -1108,7 +1115,7 @@ function frame(now: number): void {
   // The on-loan icon, top left (render/loanIcon.ts): tonight's find once she's taken it, till she sleeps.
   { const lf = loanFind(game, game.map.treehouse.x, game.map.treehouse.z); loanIcon.set(bot ? null : lf?.item ?? null, () => (lf ? findCanvas(findKind(lf.kind).piece(lf.item), view.assets.style) : null)); loanIcon.draw(now / 1000); }
   if (game.wake) {
-    for (const e of game.wake.events) { mark(`opening:${e}`); if (e === "up") woke(); if (e === "mirror") sawMirror(); if (e === "dressed") sound.sfx?.spell("rustle", 0.6); } // (dressed: a rustle of clothes) // (the dressing table's mirror: its panel on E, as every station's)
+    for (const e of game.wake.events) { mark(`opening:${e}`); if (e === "up") woke(); if (e === "mirror") sawMirror(); if (e === "dressed") sound.sfx?.spell("rustle", 0.6); if (e === "booth") booth.open(ownedRecords(), lastRecord()); } // (dressed: a rustle of clothes) // (the dressing table's mirror: its panel on E, as every station's)
     if (creator.open || stations.station) wakeCard?.hide(); // (at the mirror: its panel over it)
     else (wakeCard ??= new WakeCard()).update(game, game.herTime, dt, () => sound.sfx?.alarm());
   } else if (!sailing && !bootAsleep) wakeCard?.hide(); // (asleep while the next night's made: kept up)

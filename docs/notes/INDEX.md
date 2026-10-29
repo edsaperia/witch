@@ -108,6 +108,8 @@ says what each note covers.
 - The Clutch
 - Chain
 - The Messenger
+- DJ booth
+- Records
 - Bag design
 - Use prompt
 - Wake-up keys
