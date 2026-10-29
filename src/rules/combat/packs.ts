@@ -225,7 +225,7 @@ export function stepPacks(s: CombatState, w: CombatWorld, pw: PackWorld = {}, da
   }
   // Hidden ones come back down round her (the squirrels' scatter, the trees, the burrow) once their time is up.
   for (const c of w.active) {
-    if (c.packHide && time >= c.packHide.until) { if (c.packHide.tx !== undefined) { c.x = c.packHide.tx; c.z = c.packHide.tz!; } c.packHide = undefined; }
+    if (c.packHide && time >= c.packHide.until) c.packHide = undefined; // (where its way round got it to: rules/combat.ts)
     if (c.packShell !== undefined && time >= c.packShell) c.packShell = undefined;
     if (c.packSync !== undefined && time >= c.packSync) c.packSync = undefined;
     if (c.mind && time >= c.mind.until) { c.mind = undefined; if (c.fight?.target?.kind === "witch" && c.leashed) c.fight.target = null; } // (her animal turned on her is hers again)
