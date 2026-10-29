@@ -8,7 +8,7 @@ import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { HOUSE_ROOMS, floorHats, fromObject, fromPlan, hatSlots, objectAt, objectFront, toPlan } from "./houseRooms";
 import { inRoom as inBlob } from "../../config/house/shape.js";
 import { wakeInBedroom } from "./opening";
-import { atDecks, bedRoom, doorShut, endDream, startWake, WAKE_DEFAULT, type WakeEvent } from "./wakeUp";
+import { atDecks, startParty, bedRoom, doorShut, endDream, startWake, WAKE_DEFAULT, type WakeEvent } from "./wakeUp";
 import { dressed, pileOut, PILE_SLOTS, wearFromStation, wearPiece, wornGenome } from "./clothesPile";
 import { deckOf, onTerrace } from "./treehouse";
 import { heldByRoutine } from "./djSet";
@@ -324,11 +324,15 @@ describe("the DJ intro at her decks (in place of the party spell)", () => {
     expect(g.party.spellAt).toBeNull();
   });
 
-  it("E at her decks seats her behind them and casts it: its routine holds her there, then the party's on", () => {
+  it("E at her decks opens her DJ booth (Ed, 2026-10-29), and \"Get this party started\" seats her behind them and casts it: its routine holds her there, then the party's on", () => {
     const g = upAndDressed();
     toSeat(g);
     expect(atDecks(g)).toBe(true);
-    expect(press(g)).toContain("decks");
+    const ev = press(g);
+    expect(ev).toContain("booth"); expect(ev).not.toContain("decks");
+    expect(g.party.spellAt).toBeNull(); expect(g.witch.seated).toBeFalsy(); // (the booth open: nothing started yet)
+    expect(startParty(g, 120)).toBe(true);
+    expect(g.wake!.events).toContain("decks");
     expect(g.witch.seated).toBe(true);
     expect(g.party.spellAt).not.toBeNull();
     const d = deckOf(g.map, g.tuning)!;
@@ -498,7 +502,8 @@ describe("a sail always ends with her asleep in bed (Ed, 2026-10-25, his 2a)", (
     const seat = d.seat, W = g.witches[0];
     for (let i = 0; i < 10 / STEP && !atDecks(g); i++) { const dx = seat.x - W.body.x, dz = seat.z - W.body.z, L = Math.hypot(dx, dz) || 1; stepGame(g, { ...idle, moveX: dx / L, moveZ: dz / L }, STEP); }
     expect(atDecks(g)).toBe(true);
-    expect(press(g)).toContain("decks");
+    expect(press(g)).toContain("booth");
+    expect(startParty(g, 120)).toBe(true);
     expect(g.party.spellAt).not.toBeNull();
   });
   it("with a find on loan: the same bed, dreaming first, the alarm as the dream ends", () => {
