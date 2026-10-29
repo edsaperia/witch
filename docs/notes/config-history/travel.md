@@ -1,0 +1,7 @@
+# travel config history and detailed field notes
+
+Moved from `config/travel.json` on 2026-10-29 for #1459. Original notes below are preserved verbatim, including quotes and dates. They record the design when written; the config and rules remain the source of current behaviour.
+
+## Overview
+
+Travelling and posse (Ed, 2026-10-05: 'We probably don't want party animals getting into fights while they're just traversing the world when you're not looking'). A party animal is in her posse within posse metres (times tuning fight.scale) of the witch while she's on the ground, or, at a placed sigil, inside the sigil's area or within posse metres of it; it fights, is noticed and defends as ever. It leaves the posse only once it's leave times that far out (hysteresis: no flicker at a fight's edge), and never while engaged: while it has a target, or for engaged seconds after it last had one or was hit. Anywhere else it is travelling: quiet both ways (wild creatures, besiegers too, don't notice or target it, and it engages nothing; area hits pass it by), it eats no berries, and it walks a route planned along area borders: the straight line to its target, its points pushed out of every area's middle to at least clear metres from the area's centre (but near its start and its target), smoothed, with points every step metres; re-planned when its target has moved replan metres from the route's end. It travels at speed times its leash pace.
