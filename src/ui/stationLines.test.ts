@@ -8,7 +8,7 @@ import { BOARD, PARTS, bareBroom, fittedKey, fittedOf, partById } from "../rules
 import { setParts } from "../rules/spells";
 import { SHELVES, shelvesAt, type Shelf } from "../rules/wardrobe";
 import { HOUSE_ROOMS } from "../rules/houseRooms";
-import { broomSummary, canChoose, cardAt, choose, panelPad, partStats, setChips, stationLines, type Line } from "./stationLines";
+import { broomSummary, canChoose, cardAt, choose, itemAt, panelPad, partStats, setChips, stationLines, type Line } from "./stationLines";
 
 const ctx = (owned: string[] = []) => ({ owned: new Set(owned), fitOn: () => true, grid: (s: Shelf) => ({ cols: s.grid === "skin" ? 6 : 13, rows: 5 }) });
 const linesAt = (id: string) => { const sh = shelvesAt(id)!; return { sh, L: stationLines(sh, ctx()) }; };
@@ -90,6 +90,16 @@ describe("the pegboard", () => {
     expect(col(1)).toEqual(["curl", "ladder", "twigs"]);
     expect(col(2)).toEqual(["fairing", "missile", "nozzles"]);
     for (const c of BOARD) expect(partById(c.part), c.part).toBeTruthy();
+  });
+});
+
+describe("a list shelf (Ed, 2026-10-29, the bags: \"a vertical list you move down to select\")", () => {
+  it("is a line an item, each its own, the bags' station's bag shelf a list", () => {
+    const { sh, L } = (() => { const sh = shelvesAt("bags")!; return { sh, L: stationLines(sh, ctx(["bag-none", "satchel", "bumbag"])) }; })();
+    const bag = sh.findIndex(s => s.id === "bag"), lines = L.filter(l => l.shelf === bag && l.kind === "items");
+    expect(sh[bag].list).toBe(true);
+    expect(lines.map(l => [l.n, l.item])).toEqual(sh[bag].items.map((_, k) => [1, k]));
+    expect(lines.map(l => itemAt(sh[bag], l, 0).id)).toEqual(sh[bag].items.map(i => i.id));
   });
 });
 

@@ -16,7 +16,7 @@ import { bareHeadAt, CLOTH_COLS, CLOTH_ROWS, GRID_ROWS, shownItems, SKIN_COLS, s
 import { BOARD, partById, type Fitted } from "../rules/broomParts";
 import type { Tuning } from "../rules/tuning";
 import { broomColours, partCanvas } from "../render/workshopArt";
-import { broomSummary, cardAt, panelPad, partStats, partsFound, setChips, setsOf, spellLine, type Line } from "./stationLines";
+import { broomSummary, cardAt, itemAt, panelPad, partStats, partsFound, setChips, setsOf, spellLine, type Line } from "./stationLines";
 import { PanelChoice } from "./stationChoice";
 import { bindings } from "../platform/bindings";
 import { classicPalette, cpuCanvas, slot, swatchAt } from "./creator";
@@ -48,6 +48,9 @@ const PART_NAMES: Record<string, string> = { broom: "handle", bristles: "bristle
 const CROP: Record<string, [number, number]> = { hair: [.1, .52], face: [.16, .5], earrings: [.14, .5], jacket: [.33, .8], shoes: [.72, 1], cloak: [.1, 1], scarf: [.1, .8], bag: [.25, 1], backpack: [.1, 1] };
 
 
+/** A list card's live picture (ui/bagPreview.ts BagPreview): its element, run or stopped, freed. */
+export interface Preview { readonly el: HTMLElement; run(on: boolean): void; dispose(): void }
+
 export class StationPanel {
   readonly root = document.createElement("div");
   /** Her look as it changes (a beat after the last change). */
@@ -60,6 +63,12 @@ export class StationPanel {
   onFit: (f: Fitted) => void = () => {};
   /** Back (platform/bindings.ts menu.back: E, the pad's circle) pressed while it's open: main.ts closes it (the pad's goes through padControls). */
   onBack: () => void = () => {};
+  /** A list shelf's item's live picture, a bag firing (Ed, 2026-10-29: "The bag menu should also show little animations of each bag
+   *  'firing'"; Juliet's BagPreview, main.ts sets it): made once an item, kept while the panel's open, run only while its card is on
+   *  screen. Unset, the list's cards have none. */
+  preview: ((item: string) => Preview | null) | null = null;
+  private previews = new Map<string, Preview>();
+  private seen: IntersectionObserver | null = null;
   private id: string | null = null;
   private shelves: Shelf[] = [];
   /** The focus and what's chosen (ui/stationChoice.ts): her look, what she owns, her broom's parts. */
@@ -148,7 +157,8 @@ export class StationPanel {
     const L = this.lines(), first = L.findIndex(l => l.kind === "items" || (l.kind === "cards" && !l.readOnly));
     const s0 = first >= 0 ? this.shelves[L[first].shelf] : null;
     const worn = !s0 ? 0 : s0.slot ? Math.max(0, Array.from({ length: L[first].n }, (_, c) => cardAt(s0, L[first], c)).indexOf(this.ws?.fitted[s0.slot] ?? null)) : shownItems(s0).findIndex(i => wears(this.g, i));
-    this.at = { line: Math.max(0, first), col: Math.max(0, worn) };
+    if (s0?.list) { const at = L.findIndex(l => l.shelf === L[first].shelf && l.item === worn); this.at = { line: Math.max(first, at), col: 0 }; } // (a list: the line of what she wears)
+    else this.at = { line: Math.max(0, first), col: Math.max(0, worn) };
     this.paint();
     this.slide.in(); // (another station's swapped in place: it's in already)
     this.root.classList.add("in"); // (a mark for the tools: tools/opening/shots.cjs)
@@ -159,6 +169,7 @@ export class StationPanel {
     if (!this.id) return;
     if (this.lookTimer) this.lookNow();
     this.id = null; this.pointerIn = false; this.queue = [];
+    this.seen?.disconnect(); this.seen = null; for (const p of this.previews.values()) p.dispose(); this.previews.clear(); // (no preview runs with the panel shut)
     this.slide.out();
     this.root.classList.remove("in");
     delete this.root.dataset.station;
@@ -275,7 +286,8 @@ export class StationPanel {
         html += `<div class="sp-shelf${L[at.line]?.shelf === l.shelf ? " on" : ""}" data-shelf="${l.shelf}"><div class="sp-lab" data-card="${i}"><b>${esc(s.label)}</b>${worn ? `<span>${esc(worn)}</span>` : ""}${note ? `<em>${esc(note)}</em>` : ""}</div>`;
       }
       const f = (c: number) => at.line === i && at.col === c ? " focus" : "";
-      if (l.kind === "items") html += `<div class="sp-row">${shownItems(s).map((it, c) => { const own = this.owned.has(it.id), stat = own ? statOf(it) : ""; return `<div class="sp-card${stat ? " sp-statcard" : ""}${own ? "" : " locked"}${wears(this.g, it) ? " worn" : ""}${it.id === this.loaned ? " loaned" : ""}${f(c)}" data-line="${i}" data-col="${c}">${none(it) ? `<i class="sp-none">∅</i>` : `<span data-thumb="${this.thumbKey(it, s)}"></span>`}${stat ? `<span class="sp-stat"><b>${esc(it.name)}</b>${esc(stat)}</span>` : ""}${wears(this.g, it) ? `<b class="sp-tick">✓</b>` : ""}${own ? "" : `<b class="sp-lock">🔒</b>`}</div>`; }).join("")}</div>`;
+      if (l.kind === "items" && l.item !== undefined) { const it = itemAt(s, l, 0), own = this.owned.has(it.id), on = wears(this.g, it), stat = own ? statOf(it) : ""; html += `<div class="sp-card sp-listrow${own ? "" : " locked"}${on ? " worn" : ""}${it.id === this.loaned ? " loaned" : ""}${f(0)}" data-line="${i}" data-col="0">${none(it) ? `<i class="sp-none">∅</i>` : `<span class="sp-pic" data-thumb="${this.thumbKey(it, s)}"></span>`}<span class="sp-stat"><b>${own ? esc(it.name) : "🔒"}</b>${esc(stat)}</span>${own && !none(it) && this.preview ? `<span class="sp-preview" data-preview="${esc(it.id)}"></span>` : ""}${on ? `<b class="sp-tick">✓</b>` : ""}</div>`; }
+      else if (l.kind === "items") html += `<div class="sp-row">${shownItems(s).map((it, c) => { const own = this.owned.has(it.id), stat = own ? statOf(it) : ""; return `<div class="sp-card${stat ? " sp-statcard" : ""}${own ? "" : " locked"}${wears(this.g, it) ? " worn" : ""}${it.id === this.loaned ? " loaned" : ""}${f(c)}" data-line="${i}" data-col="${c}">${none(it) ? `<i class="sp-none">∅</i>` : `<span data-thumb="${this.thumbKey(it, s)}"></span>`}${stat ? `<span class="sp-stat"><b>${esc(it.name)}</b>${esc(stat)}</span>` : ""}${wears(this.g, it) ? `<b class="sp-tick">✓</b>` : ""}${own ? "" : `<b class="sp-lock">🔒</b>`}</div>`; }).join("")}</div>`;
       else if (l.kind === "cards" && s.board) html += `<div class="sp-row sp-board">${Array.from({ length: l.n }, (_, c) => {
         const id = cardAt(s, l, c)!, cell = BOARD[(l.row ?? 0) * 3 + c], own = this.found_().has(id), tonight = !own && this.ws?.tonight === id;
         return `<div class="sp-cell${own ? "" : " locked"}${tonight ? " tonight" : ""}${id === this.loaned ? " loaned" : ""}${f(c)}" data-line="${i}" data-col="${c}"><small>${esc(cell.point)} · ${esc(cell.biome)}</small><span data-thumb="${this.partKey(id)}"></span><b>${own ? esc(partById(id)!.name) : "?"}</b></div>`;
@@ -293,9 +305,27 @@ export class StationPanel {
     html += `</div><div class="sp-foot">${footHtml(this.device)}</div>`;
     this.root.innerHTML = html;
     for (const el of this.root.querySelectorAll<HTMLElement>("[data-thumb]")) this.thumbInto(el);
+    this.placePreviews();
     this.paintDetail();
     const card = this.root.querySelector<HTMLElement>(".sp-shelf.on"), fo = this.root.querySelector<HTMLElement>(".focus");
     card?.scrollIntoView({ block: "nearest" }); fo?.scrollIntoView({ block: "nearest" }); // (the focused card whole where it fits, its focus always)
+  }
+  /** The list's live pictures into their cards (each made once and kept while the panel's open: the panel's HTML is rebuilt on every
+   *  move), each run only while its card shows in the scrolling body (an IntersectionObserver), so ten bags cost the work of the two or
+   *  three on screen. */
+  private placePreviews(): void {
+    const slots = this.root.querySelectorAll<HTMLElement>("[data-preview]");
+    if (!slots.length || !this.preview) return;
+    const body = this.root.querySelector<HTMLElement>(".sp-body");
+    this.seen?.disconnect();
+    this.seen = new IntersectionObserver(es => { for (const e of es) this.previews.get((e.target as HTMLElement).dataset.preview!)?.run(e.isIntersecting); }, { root: body, threshold: 0.1 });
+    for (const slot of slots) {
+      const id = slot.dataset.preview!;
+      let p = this.previews.get(id);
+      if (!p) { const made = this.preview(id); if (!made) continue; this.previews.set(id, (p = made)); }
+      if (p.el.parentElement !== slot) slot.replaceChildren(p.el);
+      this.seen.observe(slot); // (its first word, at once, runs it or stops it)
+    }
   }
   private found(): string {
     if (this.shelves.some(q => q.slot || q.board)) return partsFound(this.found_());
@@ -315,7 +345,7 @@ export class StationPanel {
     let title = "", text = "", locked = false, sub = "", stats: { name: string; from: string; to: string; better: boolean | null }[] = [];
     if (l) {
       const s = this.shelves[l.shelf];
-      if (l.kind === "items") { const it = shownItems(s)[at.col]; locked = !this.owned.has(it.id); title = locked ? "🔒" : it.name; text = locked ? (this.tried(at) ? "Not found yet." : "") : wears(this.g, it) ? "Wearing." : "Hers: choose to wear it."; } // (a silhouette, nothing more: Ed, 2026-10-21; chosen anyway, it says it's not hers yet)
+      if (l.kind === "items") { const it = itemAt(s, l, at.col); locked = !this.owned.has(it.id); title = locked ? "🔒" : it.name; text = locked ? (this.tried(at) ? "Not found yet." : "") : wears(this.g, it) ? "Wearing." : "Hers: choose to wear it."; } // (a silhouette, nothing more: Ed, 2026-10-21; chosen anyway, it says it's not hers yet)
       else if (l.kind === "cards" && s.board) {
         const id = cardAt(s, l, at.col)!, cell = BOARD[(l.row ?? 0) * 3 + at.col], own = this.found_().has(id), where = `${cell.point.toLowerCase()} · ${cell.biome.toLowerCase()}`;
         if (own) { title = partById(id)!.name; text = `${where}. ${setsOf(id).map(n => `${n} set`).join(", ")}. Fit it at the bay.`; }
@@ -440,6 +470,11 @@ function installCss(): void {
 #station-panel .sp-fit span { width: 8em; font-size: .9em; } #station-panel .sp-fit .bar { position: relative; flex: 1; height: .35em; background: rgba(232,226,244,.55); border-radius: .2em; box-shadow: 0 0 0 1px var(--ol); }
 #station-panel .sp-fit .bar i { position: absolute; top: -.45em; width: .7em; height: 1.25em; margin-left: -.35em; border-radius: .2em; background: var(--gold); box-shadow: 0 0 0 1px var(--ol); }
 #station-panel .sp-detail { padding: .45em .6em; border-radius: .45em; background: rgba(11,7,22,.5); } #station-panel .sp-detail h3 { margin: 0 0 .15em; font-size: 1em; font-weight: 600; } #station-panel .sp-detail p { margin: 0; font-size: .85em; opacity: .9; }
+#station-panel .sp-listrow { width: 100%; height: auto; min-height: 5.2em; grid-template-columns: 4.4em 1fr auto; gap: .7em; padding: .35em .8em .35em .2em; justify-items: start; }
+#station-panel .sp-listrow + .sp-listrow, #station-panel .sp-row + .sp-listrow { margin-top: -.1em; }
+#station-panel .sp-listrow .sp-pic canvas { height: 4.2em; }
+#station-panel .sp-preview { width: 12em; height: 6em; border-radius: .4em; overflow: hidden; background: rgba(11,7,22,.6); justify-self: end; }
+#station-panel .sp-preview > * { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
 #station-panel .sp-statcard { width: auto; min-width: 13em; max-width: 100%; grid-template-columns: 4.4em 1fr; gap: .5em; padding: 0 .7em 0 .1em; justify-items: start; }
 #station-panel .sp-stat { display: flex; flex-direction: column; font-size: .85em; line-height: 1.2; } #station-panel .sp-stat b { color: var(--gold); font-weight: 600; }
 #station-panel .sp-wide { width: 6.4em; height: 3.8em; } #station-panel .sp-wide canvas { height: auto; width: auto; max-width: 5.9em; max-height: 3.3em; }

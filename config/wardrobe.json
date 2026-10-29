@@ -51,7 +51,7 @@
       { "id": "shoes-trainers", "name": "Trainers", "set": { "accessories.chunky": false }, "start": true },
       { "id": "shoes-chunky", "name": "Chunky trainers", "set": { "accessories.chunky": true } }
     ] },
-    "bag": { "frame": "top", "label": "Bag", "colour": ["satchel"], "items": [
+    "bag": { "frame": "top", "label": "Bag", "list": true, "colour": ["satchel"], "items": [
       { "id": "bag-none", "name": "None", "set": { "accessories.satchel": false, "accessories.bumbag": false }, "start": true },
       { "id": "satchel", "name": "Satchel", "set": { "accessories.satchel": true, "accessories.bumbag": false }, "start": true },
       { "id": "bumbag", "name": "Bum bag", "set": { "accessories.satchel": false, "accessories.bumbag": true } }
