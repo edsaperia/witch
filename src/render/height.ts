@@ -491,12 +491,13 @@ export class HeightField {
     return true;
   }
 
-  /** The window's first fill round (x, z), as follow makes it, in steps (render/slices.ts: View.build's ground): its samples
+  /** Fill or relocate the window round (x, z), as follow makes it, in steps (render/slices.ts: View.build's ground): its samples
    *  worked out a few rows at a time (the same values a row or the whole window at once: limitedBlock), then stored a few rows
-   *  at a time. Filled already: follow as ever. */
+   *  at a time. Used before a sail's first draw too: its camera jumps from the bedroom to the sea. */
   *fillSteps(x: number, z: number): Steps {
-    if (this.filled || !this.H.on) { this.follow(x, z); return; }
+    if (!this.H.on) { this.follow(x, z); return; }
     const ci = Math.round(x / RES / STEP) * STEP, cj = Math.round(z / RES / STEP) * STEP, h = N / 2, i0 = ci - h, j0 = cj - h, CH = 8;
+    if (this.filled && ci === this.ci && cj === this.cj) return;
     const ahead = (i: number, j: number, v: number) => { const k = sampleKey(i, j); if (!this.ahead.has(k)) this.ahead.set(k, v); };
     for (let j = j0; j < j0 + N; j += CH) { yield; this.limitedBlock(i0, i0 + N, j, Math.min(j + CH, j0 + N), ahead); }
     for (let j = j0; j < j0 + N; j += CH) { yield; for (let jj = j; jj < Math.min(j + CH, j0 + N); jj++) for (let i = i0; i < i0 + N; i++) this.put(i, jj); }

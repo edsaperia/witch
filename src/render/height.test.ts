@@ -28,6 +28,18 @@ function shaderRead(x: number, z: number): number {
 }
 
 describe("rolling ground", () => {
+  it("relocates the arrival window in slices with exactly the synchronous samples", () => {
+    const a = new HeightField(map, forest, { ...H, maxSlope: PITCH }), b = new HeightField(map, forest, { ...H, maxSlope: PITCH });
+    for (const [x, z] of [[df.x, df.z], [df.x + 1200, df.z + 900], [df.x + 1168, df.z + 868], [df.x, df.z]]) {
+      a.follow(x, z);
+      let steps = 0;
+      for (const _ of b.fillSteps(x, z)) steps++;
+      expect(steps).toBeGreaterThan(1);
+      expect(b.texture.image.data).toEqual(a.texture.image.data);
+      expect(b.follow(x, z)).toBe(false);
+    }
+    a.dispose(); b.dispose();
+  });
   it("the hills' noise stays within its amplitude and is seeded", () => {
     for (let i = 0; i < 500; i++) { const v = hillsAt(i * 7.3, i * 3.1, 9, H); expect(Math.abs(v)).toBeLessThanOrEqual(H.amplitude + 1e-9); }
     expect(hillsAt(12, 34, 9, H)).toBe(hillsAt(12, 34, 9, H));
