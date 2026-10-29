@@ -888,9 +888,16 @@ The HUD's pointers as map pins over their subject (render/indicator.ts): gap is 
 1. Ed, 2026-10-26: "pins should be a bit higher"
 Code: `render/indicator.ts`
 
+- **`pins.plate`**: A dark plate behind each edge pointer's ring and round its arrow, its opacity, so the pointers read on any ground (0 none, as before).
+  1. Ed's playtest, 2026-10-29: "Also, it's easy to miss the pointers"
+  Code: `render/indicator.ts`, `render/view/hud.ts`
+- **`pins.vivid`**: How much of the pointers' calming toward the night is taken back: 0 as calmed, 1 the area's neon itself.
+
 | knob | type | range |
 |---|---|---|
 | `pins.gap` | number | 0 to … |
+| `pins.plate` | number | 0 to … |
+| `pins.vivid` | number | 0 to … |
 
 ### `crownWidth`
 
@@ -3878,12 +3885,16 @@ Code: `render/mood.ts`
 - **`light.spooky.areaEase`**: how fast the mood eases from one area's to the next (a second).
 - **`light.spooky.areas`**: Each kind of area's own fog colour, tint and mist (teal over bogs, violet in dead woods, pale mist on the moor and so on).
   each area type's own fog (hazeHue, hazeSat, haze), grade tint (gradeHue, gradeSat) and mist over the above, by area id ("home" for home): misty teal over the bogs and water, violet-grey in the dead and ancient woods, blue-violet in the bluebells, pale mist on the open moor, darker in the rocky places, near-black green under the pines, rosy in the honeysuckle and gardens, home a little less cold.
+- **`light.spooky.unlit`**: How dark the forest is where nothing lights it: the ambient and the moonlight on ground, trees, bushes and creatures times this, while the lights (her glow, the party's, fires, lava, runestones, sigils) stay as they are (1 as before).
+  1. Ed's playtest, 2026-10-29: "Contrast on the visuals seems low; the important parts of the scene don't stand out very well. The unlit forest needs to be darker." (v5399; measured with tools/shot/contrast.cjs)
+  Code: `render/lighting.ts`, `render/view.ts`
 
 | knob | type | range |
 |---|---|---|
 | `light.mood` | string |  |
 | `light.spooky.ambientHue` | number | 0 to … |
 | `light.spooky.ambient` | number | 0 to … |
+| `light.spooky.unlit` | number | 0 to … |
 | `light.spooky.moonHue` | number | 0 to … |
 | `light.spooky.moonSat` | number | 0 to … |
 | `light.spooky.moon` | number | 0 to … |

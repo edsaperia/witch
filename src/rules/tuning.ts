@@ -9,6 +9,11 @@ export interface CameraModeTuning { angleIn: number; angleOut: number; distanceI
 export interface Mood {
   /** The ambient (shadow) light's hue (0 to 1) and its brightness, times the tuning's. */
   ambientHue: number; ambient: number;
+  /** What nothing lights (Ed's v5399 playtest, 2026-10-29: "Contrast on the visuals seems low; the important parts of the scene don't
+   *  stand out very well. The unlit forest needs to be darker"): the ambient and the moonlight (its fill and beams too) on ground,
+   *  trees, bushes and creatures times this, the lights (her glow, the party's, fires, lava, runestones, sigils), glowing pixels and her
+   *  own shading as they were (1 as before; render/lighting.ts nightLightShaded) */
+  unlit?: number;
   /** The moonlight's hue, saturation and brightness (times the tuning's). */
   moonHue: number; moonSat: number; moon: number;
   /** The fog's colour (hue, saturation, brightness 0 to 1) and where it starts and is whole (m from the witch). */
@@ -396,7 +401,7 @@ export interface Tuning {
   relics: { spacing: number; chance: number; nearRoad: number; minGap: number };
   treeCap: { from: number; keep: number };
   /** The HUD's pointers as map pins (render/indicator.ts): gap screen pixels between the arrow's tip and its subject's drawn top. */
-  pins?: { gap: number };
+  pins?: { gap: number; /** the edge pointers' dark plate behind the ring and round the arrow, its opacity (0 none; Ed's v5399 playtest, 2026-10-29: "it's easy to miss the pointers"; render/indicator.ts PIN_LOOK) */ plate?: number; /** how much of the pointers' calming toward the night is taken back (0 as calmed, 1 the neon itself) */ vivid?: number };
   treetop: { boost: number; boostTime: number; boostAngle: number; turnRate: number; turnRateSlow: number; sharpTurnSpeed: number; brakeAt: number; glideTime: number; sharpTurnBleed: number; cameraPull: number };
   /** The creature states' looks (render/looks.ts): enraged ones tinted toward colour by amount (0 none, 1 all). */
   /** The live rig (#79, render/rig/): on by default (?rig=0 off); creatures in the treetops, or drawn smaller than minPx art pixels, keep their baked frames, except the levels in alwaysLevels ("baby", "young", "adult", "legend"), rigged at any size (Ed, 2026-10-05: legends always). */

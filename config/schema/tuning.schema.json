@@ -2310,10 +2310,22 @@
         "gap": {
           "type": "number",
           "minimum": 0
+        },
+        "plate": {
+          "type": "number",
+          "minimum": 0,
+          "description": "A dark plate behind each edge pointer's ring and round its arrow, its opacity, so the pointers read on any ground (0 none, as before)."
+        },
+        "vivid": {
+          "type": "number",
+          "minimum": 0,
+          "description": "How much of the pointers' calming toward the night is taken back: 0 as calmed, 1 the area's neon itself."
         }
       },
       "required": [
-        "gap"
+        "gap",
+        "plate",
+        "vivid"
       ],
       "additionalProperties": false,
       "description": "The HUD's pointers as map pins over their subject (render/indicator.ts): gap is how far (screen pixels) the arrow's tip floats over the subject's drawn top."
@@ -11286,6 +11298,11 @@
               "type": "number",
               "minimum": 0
             },
+            "unlit": {
+              "type": "number",
+              "minimum": 0,
+              "description": "How dark the forest is where nothing lights it: the ambient and the moonlight on ground, trees, bushes and creatures times this, while the lights (her glow, the party's, fires, lava, runestones, sigils) stay as they are (1 as before)."
+            },
             "moonHue": {
               "type": "number",
               "minimum": 0,
@@ -12057,6 +12074,7 @@
           "required": [
             "ambientHue",
             "ambient",
+            "unlit",
             "moonHue",
             "moonSat",
             "moon",
