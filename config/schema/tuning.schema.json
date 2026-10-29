@@ -3650,6 +3650,26 @@
           "type": "number",
           "minimum": 0
         },
+        "inaccuracy": {
+          "type": "number",
+          "minimum": 0,
+          "description": "degrees either side of her aim each 💌 may go (a fixed hash of its number, so the same throws go the same ways); 0, dead straight, and a bag adds its own (config/wardrobe.json invitesAdd)."
+        },
+        "bloomPer": {
+          "type": "number",
+          "minimum": 0,
+          "description": "degrees more inaccuracy each volley while she keeps firing (the bloom); 0, none, and a bag adds its own."
+        },
+        "bloomDecay": {
+          "type": "number",
+          "minimum": 0,
+          "description": "degrees a second the bloom falls back by."
+        },
+        "bloomMax": {
+          "type": "number",
+          "minimum": 0,
+          "description": "the most degrees the bloom can reach."
+        },
         "radius": {
           "type": "number",
           "minimum": 0
@@ -3761,6 +3781,10 @@
         "homingRange",
         "multiShot",
         "spread",
+        "inaccuracy",
+        "bloomPer",
+        "bloomDecay",
+        "bloomMax",
         "radius",
         "amount",
         "hits",

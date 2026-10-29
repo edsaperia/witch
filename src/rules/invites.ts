@@ -11,6 +11,7 @@
 // speed instead of having hits not register"): how fast she invites is her firing rate, a tuning value. No drawing here.
 import { type Creature } from "./creatures";
 import { bodyRadius } from "./spacing";
+import { hash2 } from "./random";
 import type { Tuning } from "./tuning";
 
 export interface Letter {
@@ -78,6 +79,9 @@ export interface Invites {
   next: number;
   /** The burst's volleys to fire: when, and which way. */
   queue: { at: number; ax: number; az: number }[];
+  /** The bloom: degrees her aim has spread from firing on (invites.bloomPer), and when it was last brought up to date. */
+  bloom?: number;
+  bloomAt?: number;
   /** When the Sentry hat may throw its next 💌. */
   sentryAt?: number;
   /** This frame's events, for the view (stepGame clears them each frame, like combat's). */
@@ -113,6 +117,16 @@ function letter(s: Invites, x: number, z: number, a: number, time: number, t: Tu
   return L;
 }
 
+/** A volley's accuracy at `time` (Ed, 2026-10-29: "For things with rapid rate of fire or shot-gun like clusters, we can also have
+ *  accuracy/spread"): how many degrees either side of her aim its letters may go, inaccuracy plus the bloom (which falls bloomDecay
+ *  degrees a second since the last volley, then grows bloomPer for this one, at most bloomMax). Each letter's own share of it is a
+ *  hash of its number, so the same throws always go the same ways. */
+export function aimOff(s: Invites, time: number, I: Tuning["invites"]): number {
+  const per = I.bloomPer ?? 0, b = Math.max(0, (s.bloom ?? 0) - (I.bloomDecay ?? 0) * Math.max(0, time - (s.bloomAt ?? time)));
+  s.bloom = Math.min(I.bloomMax ?? 0, b + per); s.bloomAt = time;
+  return (I.inaccuracy ?? 0) + b;
+}
+
 /** One step: start or carry on a burst, fly the letters, and land them. `canFire`: on the ground,
  *  off her seat, not knocked out. */
 export function stepInvites(s: Invites, c: InviteControls, witch: { x: number; z: number; facing: number; vx?: number; vz?: number }, canFire: boolean, creatures: Creature[], A: Affection, time: number, dt: number, t: Tuning, leaves?: (x0: number, z0: number, x1: number, z1: number) => boolean, hat?: HatLetters, decoys?: readonly Decoy[]): void {
@@ -134,7 +148,8 @@ export function stepInvites(s: Invites, c: InviteControls, witch: { x: number; z
   while (s.queue.length && time >= s.queue[0].at - 1e-9) {
     const q = s.queue.shift()!;
     const n = Math.max(1, Math.round(I.multiShot)), base = Math.atan2(q.az, q.ax), fan = (I.spread * Math.PI) / 180;
-    for (let k = 0; k < n; k++) { const a = base + (n > 1 ? (k / (n - 1) - 0.5) * fan : 0); letter(s, witch.x + Math.cos(a) * 0.6, witch.z + Math.sin(a) * 0.6, a, time, t); }
+    const off = (aimOff(s, q.at, I) * Math.PI) / 180;
+    for (let k = 0; k < n; k++) { const a = base + (n > 1 ? (k / (n - 1) - 0.5) * fan : 0) + (off > 0 ? (hash2(s.next, 7, 1) * 2 - 1) * off : 0); letter(s, witch.x + Math.cos(a) * 0.6, witch.z + Math.sin(a) * 0.6, a, time, t); }
     s.events.push({ kind: "shot", x: witch.x, z: witch.z, at: time, n: s.next - 1 });
   }
   s.burstLeft = s.queue.length;

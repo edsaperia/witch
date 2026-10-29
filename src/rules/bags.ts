@@ -24,7 +24,7 @@ export function bagLine(id: string): string {
 const cache = new WeakMap<Tuning, Map<string, Tuning>>();
 /** The tuning with bag `id`'s 💌 stats on it (the same object for no bag, or one without any). */
 export function bagTuning(t: Tuning, id: string | undefined): Tuning {
-  const m = id ? itemById(id)?.invites : undefined;
+  const b = id ? itemById(id) : undefined, m = b?.invites;
   if (!m) return t;
   let by = cache.get(t);
   if (!by) cache.set(t, (by = new Map()));
@@ -32,6 +32,7 @@ export function bagTuning(t: Tuning, id: string | undefined): Tuning {
   if (hit) return hit;
   const I = { ...t.invites } as Record<string, unknown>;
   for (const [k, f] of Object.entries(m)) if (typeof I[k] === "number" && typeof f === "number") I[k] = (I[k] as number) * f; // (any of the 💌's numbers: the bags' weapon stats, Ed 2026-10-29)
+  for (const [k, f] of Object.entries(b?.invitesAdd ?? {})) if (typeof I[k] === "number" && typeof f === "number") I[k] = (I[k] as number) + f; // (the ones that start at 0: accuracy, Ed: "we can also have accuracy/spread")
   const out = { ...t, invites: I } as Tuning;
   by.set(id!, out);
   return out;

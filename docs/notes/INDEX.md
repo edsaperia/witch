@@ -102,6 +102,7 @@ says what each note covers.
 - Found bags
 - Bag names
 - Bag preview
+- Bag accuracy
 - Bag design
 - Use prompt
 - Wake-up keys
