@@ -31,6 +31,11 @@ export interface RankKnobs {
   /** Each rank's sigil size, baby to legend, against an adult's (Ed, 2026-10-28: today's size the adult's, about 10% a step; a legend's
    *  1.35 since Ed's "I didn't notice any legends in any runestone sigil stacks", 2026-10-29: "Bigger is ok"). */
   sizes: number[];
+  /** Rank sigils standing up (her stack, a rune stone's column) this much bigger than they were (Ed, 2026-10-29, on the sigils
+   *  being hard to read: "2x is too much, but perhaps 1.5x"; their spacing goes with them, a share of their size). The runes and
+   *  placed sigils on the ground (already two to three times a stack sigil's size on screen) and the pointers (drawn to the pixel,
+   *  in their ring) keep theirs. */
+  standScale?: number;
   /** Embers a sigil on the ground gives off, by rank: how many at once, each one's size (m) and how high it rises (m); in her stack, `stack` of that. */
   embers: { count: number[]; size: number[]; rise: number[]; stack: number };
   /** A youth's dots in her stack: at most this many a row (two rows). */
@@ -56,7 +61,7 @@ export const RANKS_DEFAULT: RankKnobs = {
   enemy: [[180, 100, 255], [190, 105, 100], [225, 45, 40], [255, 55, 15]],
   sizes: [0.81, 0.9, 1, 1.35],
   embers: { count: [3, 5, 8, 12], size: [0.22, 0.26, 0.3, 0.36], rise: [1.6, 2.1, 2.8, 3.6], stack: 0.4 },
-  dotsPerRow: 4, stoneGlow: 2.4,
+  dotsPerRow: 4, stoneGlow: 2.4, standScale: 1.5,
 };
 
 /** The leash hex grid's size (m) before the rank sigils (4: leash.spacing's density), as ?sigils=old brings it back. */
@@ -78,6 +83,8 @@ export function rankColour(t: Tuning, rank: number, friend = true): [number, num
 
 /** The rank's sigil size against an adult's (Ed, 2026-10-28): 0.81, 0.9, 1, and a legend 1.35 (coordinator, 2026-10-29: unmistakable). */
 export const rankSize = (t: Tuning, rank: number): number => rankKnobs(t).sizes[Math.max(0, Math.min(3, rank))] ?? 1;
+/** How much bigger a rank sigil stands in her stack and a stone's column than at its rank's size (standScale). */
+export const standScale = (t: Tuning): number => rankKnobs(t).standScale ?? 1;
 
 /** A youth's dots in her stack: one for each berry it eats on the move (its cost to adult, less the last, eaten at a placed sigil:
  *  rules/berries.ts lastBerry), and how many it has eaten; none for any other rank. Read from the rules (toEvolve), so it follows
