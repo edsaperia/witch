@@ -132,6 +132,34 @@ export interface SteerContext {
   momentum?: import("./momentum").Resolved | null;
   /** Where the target really is, when it steers for somewhere else (where she was: momentum); its strike goes by this. */
   now?: { x: number; z: number };
+  /** The place its fight style gives it while it waits its turn, or a friend's place round its target (rules/combat.ts; packs.json
+   *  _styles): it makes for this over its pack's tactic. */
+  style?: { x: number; z: number } | null;
+}
+
+/** A hop under way (a hopper's bound: packs.json styles.hopper) flies on by the time, whatever holds the creature (Ed's playtest,
+ *  2026-10-29: nothing jumps): along its line, landing at its end. Whether it's in the air. */
+export function advanceHop(c: Creature, time: number): boolean {
+  const h = c.hop;
+  if (!h) return false;
+  const k = Math.min(1, Math.max(0, (time - h.at) / Math.max(0.01, h.lands - h.at)));
+  c.x = h.fx + (h.tx - h.fx) * k; c.z = h.fz + (h.tz - h.fz) * k; c.moving = true;
+  if (k >= 1) { c.hop = undefined; c.vx = 0; c.vz = 0; return false; }
+  return true;
+}
+
+/** A hopper's next bound toward (gx, gz), if it's on the ground and its pause is over and it's more than a little way off: up to
+ *  `length` m, its flight and height shorter for a shorter one. Whether it set off. */
+export function startHop(c: Creature, gx: number, gz: number, time: number, H: { length: number; time: number; height: number; pause: number }): boolean {
+  if (c.hop || time < (c.hopNext ?? -Infinity)) return false;
+  const S = FIGHT.scale, dx = gx - c.x, dz = gz - c.z, d = Math.hypot(dx, dz);
+  if (d < 1.5 * S) return false;
+  const full = H.length * S, L = Math.min(d, full), f = Math.sqrt(L / full), dur = Math.max(0.15 / FIGHT.speed, (H.time * f) / FIGHT.speed, L / (50 * FIGHT.speed)); // (never quicker than a lunge's 60 m/s)
+  c.hop = { fx: c.x, fz: c.z, tx: c.x + (dx / d) * L, tz: c.z + (dz / d) * L, at: time, lands: time + dur, height: H.height * S * f };
+  c.hopNext = time + dur + H.pause / FIGHT.speed;
+  c.vx = (dx / d) * (L / dur); c.vz = (dz / d) * (L / dur); c.moving = true;
+  if (Math.abs(dx) > 0.5) c.facing = dx > 0 ? 1 : -1;
+  return true;
 }
 
 /** Steer a fighting creature by its profile for one step. Returns whether it may start an attack now. */
@@ -175,6 +203,7 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
     }
     default: break;
   }
+  if (x.style) slot = x.style; // (its style's place, or a friend's: over the tactic's)
   // Cutting off her retreat (dodge.c): a place ahead of her as she runs, to one side (by its id), making for it hard whatever
   // its tactic (or its kind's behaviours: a bat has no slot to keep), striking from there as she comes.
   const cut = x.cutoff && x.heading ? x.cutoff : null;
@@ -227,6 +256,8 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
       }
     }
   }
+  // (its style's place pulls it there whether or not its kind keeps slots)
+  if (x.style && !cut && !P.fight.some(b => b.kind === "slot")) { const sx = x.style.x - c.x, sz = x.style.z - c.z, sd = Math.hypot(sx, sz) || 1e-6; if (sd > 0.6 * S) add(sx / sd, sz / sd, 1.3 * Math.min(1, sd / (4 * S))); }
   // A behaviour asking for more than full speed is held to it; then ease toward it at its acceleration.
   const m = Math.hypot(vx, vz);
   if (m > 1) { vx /= m; vz /= m; }

@@ -203,10 +203,13 @@ export function stepInvites(s: Invites, c: InviteControls, witch: { x: number; z
         if (d < bd && d > 1e-6 && (dx * ux + dz * uz) / d > cone) { bd = d; best = k; }
       }
       if (best) {
-        const want = Math.atan2(best.z - L.z, best.x - L.x), cur = Math.atan2(uz, ux);
+        // (toward where it'll be as the 💌 gets there, by how it's moving: so it finds the quick movers too, the circlers and the
+        // hoppers of the fight styles; Ed's playtest, 2026-10-29)
+        const ahead = bd / sp, want = Math.atan2(best.z + (best.vx === undefined ? 0 : (best.vz ?? 0) * ahead) - L.z, best.x + (best.vx ?? 0) * ahead - L.x), cur = Math.atan2(uz, ux);
         let turn = want - cur;
         turn = Math.atan2(Math.sin(turn), Math.cos(turn));
-        const a = cur + Math.max(-homing * dt, Math.min(homing * dt, turn));
+        const quick = Math.max(1, Math.hypot(best.vx ?? 0, best.vz ?? 0) / 10), h = homing * quick; // (turning harder after a quick one: ×1 at 10 m/s and under)
+        const a = cur + Math.max(-h * dt, Math.min(h * dt, turn));
         L.vx = Math.cos(a) * sp; L.vz = Math.sin(a) * sp;
       }
     }

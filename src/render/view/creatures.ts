@@ -246,7 +246,8 @@ export function drawCreatures(v: View, time = 0): void {
     }
     const feel = attackFeel(c, time, g.tuning.attackFx, FEEL);
     // Leaping (Stage 5: the toad): up in an arc over its shadow.
-    let hop = c.leap ? Math.sin(Math.min(1, Math.max(0, (time - c.leap.at) / Math.max(0.01, c.leap.lands - c.leap.at))) * Math.PI) * c.leap.height : 0;
+    const L = c.leap ?? c.hop; // (a leap, or a hopper's bound: rules/movement.ts)
+    let hop = L ? Math.sin(Math.min(1, Math.max(0, (time - L.at) / Math.max(0.01, L.lands - L.at))) * Math.PI) * L.height : 0;
     hop += feel.hop; // (a tumble's arc: render/attackFeel.ts)
     hop += flightHeight(c, time); // (a wild flyer swooping: up out of reach over its shadow, rules/movement.ts stepSwoop)
     for (let wi = 0; wi < g.witches.length; wi++) { const W = g.witches[wi]; if (W.spells.cyc) hop += cycloneLift(W.spells, c.id, g.clock.time, g.tuning); } // (whirled up by her Cyclone hat: rules/hatSpells.ts)
