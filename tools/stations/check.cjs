@@ -50,7 +50,7 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
       // (and the camera eased in on her, once she's choosing)
       const settle = async () => {
         await page.waitForTimeout(1500);
-        try { await page.waitForFunction(() => [...window.witch.view.assets.inFlight].every(k => /^(partyObjects|relics|creature)s?:/.test(k)) && (!document.querySelector("#station-panel.in") || (window.witch.game.camera.station ?? 0) > 0.99), null, { timeout: 180000, polling: 500 }); }
+        try { await page.waitForFunction(bare => [...window.witch.view.assets.inFlight].every(k => /^(partyObjects|relics|creature)s?:/.test(k) || (bare === false && /-bare/.test(k))) && (!document.querySelector("#station-panel.in") || (window.witch.game.camera.station ?? 0) > 0.99), id !== "dressingTable" ? false : null, { timeout: 180000, polling: 500 }); }
         catch { log(id, "settle: still in flight", JSON.stringify([...await page.evaluate(() => [...window.witch.view.assets.inFlight])]), "station", await page.evaluate(() => window.witch.game.camera.station)); }
         await page.waitForTimeout(3000);
       };
@@ -65,7 +65,7 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
         if (zoom === "closest") { for (let i = 0; i < 10; i++) { await page.keyboard.press("KeyZ"); await page.waitForTimeout(150); } }
         await settle();
         const h = await her(), mid = (h.feet[1] + h.top[1]) / 2, x = (h.feet[0] + h.top[0]) / 2, tall = h.feet[1] - h.top[1];
-        await page.screenshot({ path: path.join(out, `${id}-${zoom}.png`) });
+        await page.screenshot({ path: path.join(out, `${id}-${zoom}.png`), timeout: 300000 });
         log(id, zoom, JSON.stringify({ feet: h.feet.map(Math.round), top: h.top.map(Math.round), choosing: +h.choosing.toFixed(2) }));
         ok(h.choosing > 0.9, `${id} (${zoom} zoom): the camera's in on her, choosing`);
         ok(h.top[1] >= 0 && h.feet[1] <= H, `${id} (${zoom} zoom): all of her on screen, hat to shoes (top ${Math.round(h.top[1])}, feet ${Math.round(h.feet[1])} of ${H})`);
