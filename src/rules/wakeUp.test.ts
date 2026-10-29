@@ -203,13 +203,14 @@ function upAndDressed(): Game {
 }
 
 describe("last night's clothes (Ed, 2026-10-23: \"When waking up she wears only a nightie; last night's clothes are in a pile on the floor (pick all up with x/e)\")", () => {
-  it("she wakes in her nightie, every piece of her outfit in the pile in her Bedroom, by the wardrobe (her bed up in the Turret: Ed, 2026-10-26)", () => {
+  it("she wakes in her nightie, every piece of her outfit in the pile in the middle of her Bedroom (her bed up in the Turret: Ed, 2026-10-26; the middle, 2026-10-29)", () => {
     const g = woken(false, true);
     expect(pileOut(g.wake)).toBe(true);
     expect(g.wake!.pile).toEqual([...PILE_SLOTS]);
-    const pile = HOUSE_ROOMS.objects.find(o => o.use.kind === "pile")!, by = obj("wardrobe");
+    const pile = HOUSE_ROOMS.objects.find(o => o.use.kind === "pile")!;
     expect(pile.room).toBe("bedroom");
-    expect(Math.hypot(pile.x - by.x, pile.z - by.z)).toBeLessThan(5); // (by the wardrobe)
+    const room = HOUSE_ROOMS.rooms.find(r => r.id === pile.room)!;
+    expect(Math.hypot(pile.x - room.x, pile.z - room.z)).toBeLessThan(0.5); // (Ed, 2026-10-29: "bedroom1's yesterday's clothes move to the centre of bedroom1")
     const on = wornGenome(null, g.wake!.pile) as unknown as { hat: { shape: string }; cloak: string; accessories: Record<string, unknown> };
     expect(on.accessories.nightie).toBe(true); expect(on.accessories.barefoot).toBe(true); expect(on.accessories.phones).toBe(false);
     expect(on.hat.shape).toBe("none"); expect(on.cloak).toBe("none");

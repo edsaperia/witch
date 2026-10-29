@@ -167,28 +167,39 @@ export function addFloorHat(W: Witch, id: string): void {
   if (hats && i >= 0 && !hats[i] && W.spells.hat !== id) hats[i] = id;
 }
 
-/** E at the hats' floor (Ed, 2026-10-19: "there's no hat rack per se - just an area to put down hats, which are just game objects
- *  that can be picked up and put down"). By a hat lying in its slot, she takes it: the one she wore goes down in its place, and
- *  bare-headed, her own lying elsewhere stays where it lies (rules/hat.ts leaveHat). Otherwise it's her own hat's pick-up and
- *  put-down as anywhere (rules/hat.ts, as the pad's hat button): her own (or a left one) in reach picked up, bare-headed; else,
- *  wearing it, hers goes down at her feet. Returns the leash event, or null when the press did nothing. */
-export function useHats(W: Witch, at: At, x: number, z: number, time: number, radius: number, reach = 0.9): LeashEvent | null {
+/** The hat E would take, standing at (x, z) on the hats' floor (Ed, 2026-10-29: "The floor hats are not a separate station; it's
+ *  just an area where normal hat objects are placed when they spawn"): the nearest hat lying in its slot within `reach` (`slot`), or
+ *  else her own lying within `radius` (her first morning's, in the floor's middle); null by none (the floor itself does nothing).
+ *  Where it lies, in the world. */
+export function hatToTake(W: Witch, at: At, x: number, z: number, radius: number, reach = 0.9): { x: number; z: number; slot?: number } | null {
   if (!W.hat.has) return null;
-  const hats = floorHats(W), slots = hatSlots(at);
+  const hats = hatsOnFloor(W), slots = hatSlots(at);
   let pick = -1, bd = reach;
   hats.forEach((s, i) => { const d = Math.hypot(slots[i].x - x, slots[i].z - z); if (s && d <= bd) { bd = d; pick = i; } });
-  if (pick >= 0) {
-    const took = hats[pick], worn = wearing(W.hat);
+  if (pick >= 0) return { ...slots[pick], slot: pick };
+  const d = W.hat.down;
+  return d && Math.hypot(d.x - x, d.z - z) <= radius ? { x: d.x, z: d.z } : null;
+}
+
+/** E by a hat on the hats' floor (Ed, 2026-10-19: "there's no hat rack per se - just an area to put down hats, which are just game
+ *  objects that can be picked up and put down"; 2026-10-29, each an object of its own: hatToTake). By a hat lying in its slot, she
+ *  takes it: the one she wore goes down in its place, and bare-headed, her own lying elsewhere stays where it lies (rules/hat.ts
+ *  leaveHat). By her own lying there, she picks it up. Nowhere near a hat, nothing. Returns the leash event, or null when the press
+ *  did nothing. */
+export function useHats(W: Witch, at: At, x: number, z: number, time: number, radius: number, reach = 0.9): LeashEvent | null {
+  const h = hatToTake(W, at, x, z, radius, reach);
+  if (!h) return null;
+  if (h.slot !== undefined) {
+    const hats = floorHats(W), took = hats[h.slot], worn = wearing(W.hat);
     if (!worn) leaveHat(W.hat, W.spells.hat);
-    hats[pick] = worn && W.spells.hat !== "none" ? W.spells.hat : "";
+    hats[h.slot] = worn && W.spells.hat !== "none" ? W.spells.hat : "";
     setLoadout(W.spells, took);
-    return { kind: "hatPicked", id: W.id, x: slots[pick].x, z: slots[pick].z, at: time };
+    return { kind: "hatPicked", id: W.id, x: h.x, z: h.z, at: time };
   }
   const own = hatButton(W.hat, x, z, radius, W.spells.hat);
-  if (own !== null) { if (own !== W.spells.hat) setLoadout(W.spells, own); return { kind: "hatPicked", id: W.id, x, z, at: time }; }
-  if (!wearing(W.hat)) return null;
-  W.hat.down = { x, z, at: time }; delete W.hat.hold;
-  return { kind: "hatPut", id: W.id, x, z, at: time };
+  if (own === null) return null;
+  if (own !== W.spells.hat) setLoadout(W.spells, own);
+  return { kind: "hatPicked", id: W.id, x, z, at: time };
 }
 
 /** The bed's hold (Ed, 2026-10-19: "hold E with a filling ring ... releasing early cancels"): E held at the bed since `bedFrom`;
