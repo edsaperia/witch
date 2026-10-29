@@ -10,7 +10,7 @@
 // (an older build's too: the order comes from the view's art timings) and, where the build logs them, when and how it was asked.
 // SIZE (960x540), ARTDELAY (s, 20), FRAMES (frames to step, 300), EVERY (a picture every N frames, 20), SPOT
 // ("treetop": over the treetops 160 m south of the treehouse, clear of its rooms; "x,z[,treetop]"; or any shot scene, e.g.
-// "object:recordShelf" on the Terrace), MIST (1; 0: ?loadmist=0, to time the frames
+// "room:terrace"), MIST (1; 0: ?loadmist=0, to time the frames
 // without it), TIMEOUT (s, 3600), EXTRA (more of the link). Writes <out>/frame-NNN.png and <out>/order.json.
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
