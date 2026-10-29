@@ -12,7 +12,7 @@ const DANCE_STYLES = ["bounce", "sway", "hop", "bob"] as const;
 import type { RigGear } from "../rig/rigBuild";
 import type { RigLook } from "../rig/rigView";
 import type { ShadowInstance } from "../shadows";
-import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "../sprites";
+import { SHADOW_LOOK, SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "../sprites";
 import { beatTime } from "../../rules/beat";
 import { congaBody, congaPose, newCongaPose } from "../conga";
 import { bossBreath, legendNeon } from "../leash";
@@ -139,7 +139,13 @@ export function drawCreatures(v: View, time = 0): void {
   for (let i = 0; i < g.creatures.length; i++) { // (by index: no iterator object a creature)
     const c = g.creatures[i];
     if ((c.gone && !c.beached) || Math.abs(c.x - g.witch.x) > R || Math.abs(c.z - g.witch.z) > R) continue;
-    if (c.burrow || c.packHide) continue; // under the ground (Stage 5: the mole), a mound shows where (leash view); up the trees or underground in a pack's lull (rules/combat/packs.ts)
+    if (c.burrow) continue; // under the ground (Stage 5: the mole), a mound shows where (leash view)
+    // Up the trees, underground or under water in a pack's lull (rules/combat/packs.ts; Ed, 2026-10-29: "'hiding' maybe should look like
+    // the animal becoming a shadow (dark and transparent), rather than teleporting"): a shadow of itself running round to where it comes
+    // back, fading to it as it hides and back as it comes out (combat.packs.shadow); with no shadow look, out of sight as before.
+    const hide = c.packHide, SH = g.tuning.combat.packs?.shadow;
+    if (hide && !SH) continue;
+    const shadowK = hide && SH ? Math.max(0, Math.min(1, (g.clock.time - (hide.at ?? -Infinity)) / Math.max(1e-3, SH.fade), (hide.until - g.clock.time) / Math.max(1e-3, SH.fade))) : 0;
     // (its species' art asked for only once it may be on screen, by the biggest a creature is drawn, a legend's: the first
     // frame's creatures first, not every one within the haze; the island's own come ahead of need, view.ts askIsland)
     if (!v.assets.hasCreature(c.species) && !inView(v, c.x, c.z, 40, 50, 4)) continue;
@@ -185,7 +191,7 @@ export function drawCreatures(v: View, time = 0): void {
     const glided = !napped && !st && !!c.leap && time >= c.leap.at && !!glideOf(c.species) ? v.assets.glideArt(c.species) : undefined;
     const art = glided ?? napped ?? party ?? woken ?? slept ?? faced ?? v.assets.creatureArt(c.species), key = glided ? keyOf("glide", c.species) : idlePose && !asleepArt ? keyOf("idle", c.species) : napped ? (party ? keyOf(keyOf(look === "happy" ? "nap-happy" : "nap-party", c.species), c.id) : keyOf("nap", c.species)) : party ? keyOf(keyOf(look === "happy" ? "happy" : "party", c.species), c.id) : slept ? keyOf("sleep", c.species) : sleeping ? keyOf("sunk", c.species) : woken ? keyOf("woken", c.species) : faced ? keyOf((FACE_KEY[face] ??= `face-${face}`), c.species) : c.species;
     if (!art) continue;
-    const lk = c.boss && !c.leashed && g.tuning.wildLegends.seen ? keyOf("legend", key) : key; // (a wild legend in a batch of its own: its rim and its light in steps)
+    const lk = hide ? keyOf("shadow", key) : c.boss && !c.leashed && g.tuning.wildLegends.seen ? keyOf("legend", key) : key; // (a wild legend in a batch of its own: its rim and its light in steps; one hiding, in a shadow batch)
     if (lk !== key) legendKeys.set(lk, c.species);
     arts.set(lk, art);
     const gait = art.walk, fi = glided ? art.frame(c.level, Math.floor(time * 3 + c.id * 0.37) % 2) : slept || napped ? art.frame(c.level, Math.floor(time / (slept ? 2.5 : 1.8) + c.id * 0.37) % 2) : art.frame(c.level, strideFrame(v, c, time, art.atlas.frames[art.frame(c.level, 0, c.away)].w * v.mpp * (gait?.step ?? 0.3), gait?.frames ?? 2), c.away), frame = art.atlas.frames[fi]; // (walking: its cycle by the distance it's gone, a planted foot staying put) // (asleep: a slow breath, in and out)
@@ -277,7 +283,8 @@ export function drawCreatures(v: View, time = 0): void {
     // body's middle lies from its place (a sleeping form's frame is often off-centre: a curl, a legend's tails).
     const flip = ((c.facing < 0) !== (toss > 0.5 && Math.floor(time * 0.35 + c.id * 0.13) % 2 === 1)) !== feel.flip, mid = (slept ?? napped)?.centre?.[fi] ?? 0, RT = SPRITE_UNIFORMS.uRight.value;
     let rigged = false;
-    if (v.rig && !form && !idlePose && !glided) { // the rig draws it, if it can (its look record filled in place: one for every creature)
+    if (hide) glow = shadowK; // (a shadow batch's glow: how far gone to its shadow)
+    if (v.rig && !form && !idlePose && !glided && !hide) { // the rig draws it, if it can (its look record filled in place: one for every creature)
       const L = LOOK;
       L.y = dance + hop + (st ? rigSunk : sunk); L.tap = tap; L.scale = scale; L.glow = glow; L.fresh = fresh; L.h = frame.h - (frame.pad ?? 0); L.face = lying > 0.5 ? "asleep" : face; L.sleep = lying; L.droop = droop; L.twitch = toss;
       L.sx = feel.sx * csx; L.sy = feel.sy * breathY * csy; L.dx = cx; L.dz = cz; L.crouch = feel.crouch; L.lunging = feel.lunging; L.gear = party ? v.rigGear(c, look === "leashed") : c.enraged ? WOKEN_GEAR : undefined; L.posture = ch.rig; L.quirk = ch.quirk; L.quirkK = quirkK; L.lookAt = watching ? g.witch : undefined;
@@ -304,6 +311,7 @@ export function drawCreatures(v: View, time = 0): void {
     n++;
   }
   v.rig?.end();
+  { const SH = g.tuning.combat.packs?.shadow; if (SH) SHADOW_LOOK.value.set(1, SH.shade, SH.opacity, 0); } // (the shadows' look, live from the knobs)
   v.creatureBatches.forEach(clearUnused);
   const now = performance.now();
   per.forEach((list, s) => {
@@ -311,6 +319,7 @@ export function drawCreatures(v: View, time = 0): void {
     v.creatureUsed.set(s, now); // (drawn: kept by the GPU budget, view/gpuBudget.ts)
     let b = v.creatureBatches.get(s);
     if (!b) {
+      if (s.startsWith("shadow-")) { b = v.batchFor(v.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, v.mpp, { solid: true, rim: true, shadow: true }); }); b?.set(list); return; } // (pack members hiding: render/sprites.ts SHADOW_LOOK)
       const k = legendKeys.has(s) ? s.slice(7) : s; // (a legend's batch: as its own key's, plus its look)
       b = v.batchFor(v.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, v.mpp, { solid: true, rim: true, find: !k.startsWith("party-") && !k.startsWith("happy-") && !k.startsWith("woken-") && !k.startsWith("sleep-") && !k.startsWith("nap-"), tint: k.startsWith("woken-") ? ENRAGED_TINT : undefined, ...(legendKeys.has(s) ? legendLook(legendKeys.get(s)!, v.game.tuning, v.style) : {}) }); }); // (enraged ones glow red-eyed already) creatures stay solid round her (Ed, v149); wild ones findable in the dark (Ed, v244)
     }

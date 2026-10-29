@@ -366,7 +366,7 @@ export function stepPacks(s: CombatState, w: CombatWorld, pw: PackWorld = {}, da
         d.slot = styleOf(m.species, data) === "charger" && tg.kind === "witch" && !R2.still && !st!.lost ? wheelSlot(st!, R2, m, p, data) : retreatSlot(K.retreat, st!, R2, m, i, n, p, k, time);
         d.still = !!R2.still; d.freeze = K.retreat === "freeze" && !st!.lost && k < data.prowl.freeze; // (a freeze holds only the lull's first part, then prowls: Ed, 2026-10-23)
         // Out of sight in the trees or underground for the lull's middle, back down from another side (rules here, drawing: not drawn).
-        if ((R2.hide === true || (R2.hide === "half" && i % 2 === 0)) && !m.packHide && k > 0.3 && k < 0.5) { const a = st!.seed * Math.PI * 2 + Math.PI + (i / n) * Math.PI * 2, r = (R2.out * 0.8) * FIGHT.scale; m.packHide = { until: st!.until, tx: p.x + Math.cos(a) * r, tz: p.z + Math.sin(a) * r }; }
+        if ((R2.hide === true || (R2.hide === "half" && i % 2 === 0)) && !m.packHide && k > 0.3 && k < 0.5) { const a = st!.seed * Math.PI * 2 + Math.PI + (i / n) * Math.PI * 2, r = (R2.out * 0.8) * FIGHT.scale; m.packHide = { until: st!.until, tx: p.x + Math.cos(a) * r, tz: p.z + Math.sin(a) * r, at: time }; }
         if (K.retreat === "shell" && !m.packShell) m.packShell = Math.min(st!.until, time + 2); // (the snail: into its shell, untouchable 2 s)
         if (K.retreat === "hold" && (m.dug === undefined || time >= m.dug)) m.dug = st!.until; // (the badger: digs in and waits)
       } else if (st!.phase === "combo") {
@@ -467,7 +467,7 @@ function special(s: CombatState, w: CombatWorld, pw: PackWorld, st: PackState, K
       if (tg.kind === "witch" && huntsWitch(side)) { st.callUntil = time + T; st.struck = []; break; }
       const P = profileOf(by.species)?.move; for (const m of healthy) if (P?.kind === "charge" && !m.charge && m.fight && !m.fight.lunge && m.fight.windupUntil === 0) startCharge(m, P, p.x, p.z, time); break;
     }
-    case "scatter": { const n = healthy.length; healthy.forEach((m, i) => { const a = st.seed * Math.PI * 2 + (i / Math.max(1, n)) * Math.PI * 2, r = Math.max(6 * S, (packAttack(m.species, m.level, "ranged", data)?.attack.range ?? 10) * 0.6) * (sp.ring ?? 1); if (m.fight && !m.fight.lunge && m.fight.windupUntil === 0) m.packHide = { until: time + T, tx: p.x + Math.cos(a) * r, tz: p.z + Math.sin(a) * r }; }); break; }
+    case "scatter": { const n = healthy.length; healthy.forEach((m, i) => { const a = st.seed * Math.PI * 2 + (i / Math.max(1, n)) * Math.PI * 2, r = Math.max(6 * S, (packAttack(m.species, m.level, "ranged", data)?.attack.range ?? 10) * 0.6) * (sp.ring ?? 1); if (m.fight && !m.fight.lunge && m.fight.windupUntil === 0) m.packHide = { until: time + T, tx: p.x + Math.cos(a) * r, tz: p.z + Math.sin(a) * r, at: time }; }); break; }
     case "call": st.callUntil = time + T; st.struck = []; break;
     case "feint": break; // (it feints at the combo's start: stepPacks)
     case "confusion": {

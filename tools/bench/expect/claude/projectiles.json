@@ -1,0 +1,5 @@
+{
+  "reason": "a lone creature of a pack kind throws its own attack instead of its pack's lunge (Ed's playtest, 2026-10-29: \"I didn't seem to see any projectile attacks\"): lone foxes, martens, dormice and the like shoot their bolts, squirrels lob, at their pack's shooters' timing",
+  "frames": { "wave-fight": "a lone wild creature's bolts or lobs in flight, and where it stands to throw them" },
+  "rules": { "*": "the fights play out differently: who hits whom, when, and where they stand; creatures' health, the witch's, the combat state and its spells" }
+}

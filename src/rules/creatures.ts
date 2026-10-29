@@ -115,7 +115,7 @@ export interface Creature {
    *  underground: untouchable, not drawn) till then, coming back down at (tx, tz); in its shell (untouchable) till then; faking a
    *  lunge's tell till then (the fox's feint); and a packmate dug in beside it taking its hits (the badger's cover) till then. */
   packGlow?: number;
-  packHide?: { until: number; tx?: number; tz?: number };
+  packHide?: { until: number; tx?: number; tz?: number; /** when it went into hiding (the view fades it to a shadow from then) */ at?: number };
   packShell?: number;
   /** Its lull's prowl (rules/combat.ts): how far round her (radians) its place has moved since it got there, this lull. */
   packProwl?: number;
