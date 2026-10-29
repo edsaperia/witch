@@ -879,9 +879,16 @@ export class View {
   private hazeBeforeTelescope: THREE.Vector2 | null = null;
   /** The picture's pixels this many times the pixel size (the telescope: 1 over its resolution, finer below 1; main.ts resizes). */
   pixelScale = 1;
+  /** A picture's pixel on the page, css pixels: the pixel size, snapped (pixels.snap) so it's a whole number of the screen's own
+   *  pixels (Ed, 2026-10-29: "the pixels are just hard to read"; at a DPR of 1.25 a pixel size of 3 was 3.75 device pixels, its
+   *  pixels drawn 3 and 4 wide by turns: 3.2 css, 4 device pixels, now). Set by resize. */
+  cssPixel = 1;
   /** Fit the canvas to the window: the scene at low resolution, shown scaled up by the pixel size. */
   resize(cssW: number, cssH: number): void {
-    const p = this.game.tuning.pixelSize * this.pixelScale;
+    const t = this.game.tuning, dpr = typeof devicePixelRatio === "number" && devicePixelRatio > 0 ? devicePixelRatio : 1;
+    // (to the nearest whole number of device pixels, Ed's pick: 4 at 1.25, 5 at 1.5; not through the telescope, finer by design)
+    const p0 = t.pixelSize * this.pixelScale, p = t.pixels?.snap !== false && this.pixelScale === 1 ? Math.max(1, Math.round(p0 * dpr)) / dpr : p0;
+    this.cssPixel = p;
     this.width = Math.max(1, Math.ceil(cssW / p));
     this.height = Math.max(1, Math.ceil(cssH / p));
     // The canvas holds the low-resolution picture, which the browser scales up with nearest-neighbour.

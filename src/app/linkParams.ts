@@ -86,6 +86,8 @@ export function tuningFromLink(params: URLSearchParams) {
   // ?tilt=<strength>,<band>: the treetops' tilt-shift, to try values live (e.g. ?tilt=6,0.28).
   else if (tilt && /^[\d.]+(,[\d.]+)?$/.test(tilt)) { const [st, bd] = tilt.split(",").map(Number); tuning.tiltShift.on = true; tuning.tiltShift.treetop.strength = st; if (bd > 0) tuning.tiltShift.treetop.band = bd; }
   if (params.get("bloom") === "off") tuning.bloom.on = false;
+  // ?snap=0: the picture's pixels as the pixel size has them, not snapped to whole device pixels (render/view.ts resize), to compare.
+  if (params.get("snap") === "0") tuning.pixels = { ...tuning.pixels, snap: false };
   if (params.get("moonbeams") === "on") tuning.moonbeams = 1;
   const witchesParam = Number(params.get("witches")); // debug: this many more party witches
   if (witchesParam > 0) tuning.partyWitches = { ...tuning.partyWitches, debugExtra: Math.min(500, Math.floor(witchesParam)) };

@@ -13110,6 +13110,20 @@
       "additionalProperties": false,
       "description": "a gentle glow round bright things (strength 0 or on false turns it off; threshold: how bright a pixel must be to glow)."
     },
+    "pixels": {
+      "type": "object",
+      "properties": {
+        "snap": {
+          "type": "boolean",
+          "description": "Each of the picture's pixels drawn a whole number of the screen's own pixels, the pixel size rounded to the nearest (render/view.ts resize; ?snap=0 off)."
+        }
+      },
+      "required": [
+        "snap"
+      ],
+      "additionalProperties": false,
+      "description": "The picture's pixels on the screen."
+    },
     "tiltShift": {
       "type": "object",
       "properties": {
@@ -13145,7 +13159,8 @@
           "properties": {
             "strength": {
               "type": "number",
-              "minimum": 0
+              "minimum": 0,
+              "description": "The tilt-shift's blur over the treetops, in pixels, blended in by lift."
             },
             "band": {
               "type": "number",
@@ -13349,6 +13364,7 @@
     "looks",
     "tone",
     "bloom",
+    "pixels",
     "tiltShift"
   ],
   "additionalProperties": false

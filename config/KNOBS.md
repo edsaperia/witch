@@ -3652,6 +3652,17 @@ Finding wild creatures in the dark (Ed, v244: 'quite hard to see in the forest..
 | `find.moonHue` | number | 0 to … |
 | `find.moonSat` | number | 0 to … |
 
+### `pixels`
+
+The picture's pixels on the screen.
+
+- **`pixels.snap`**: Each of the picture's pixels drawn a whole number of the screen's own pixels, the pixel size rounded to the nearest (render/view.ts resize; ?snap=0 off).
+  1. Ed, 2026-10-29: "the pixels are just hard to read" (via the coordinator: measured at his 1.25 DPR as 3.75 device pixels a pixel, drawn 3 and 4 wide by turns (previews/ed/blur/); Ed picked rounding to the nearest)
+
+| knob | type | range |
+|---|---|---|
+| `pixels.snap` | boolean |  |
+
 ## Light
 
 Light, sky and mood (drawing only): glow, lights, shadows, haze, mist, smoke, the sky and moon, the looks, tone, bloom and tilt-shift.
@@ -4414,12 +4425,15 @@ blurs the top and bottom of the screen so the forest looks like a miniature.
   1. Ed, 2026-10-27: "stacks should not be affected by the tilt shift" (render/post.ts Post.sharp)
   Code: `render/post.ts`
 - **`tiltShift.strength`**: the blur at the screen's edges, in pixels.
+  1. Ed, 2026-10-29: "reduce the tilt shift effect at top and bottom by 50%" (via the coordinator, after the art director's measurement of "the pixels are just hard to read" (previews/ed/blur/); 1.5 → 0.75)
 - **`tiltShift.band`**: the height of the sharp band (0-1 of the screen).
 - **`tiltShift.centre`**: where it sits (0 top, 0.5 middle, 1 bottom).
 - **`tiltShift.treetop`**: A stronger miniature-world blur when she's up in the treetops.
   1. Ed, 2026-10-06: "reduce the intensity of the tilt-shift effect" (both halved and their sharp bands widened)
   2. Ed: "the tilt shift isn't blurring the sky - the tilt shift effect has to be applied after the bend shader rather than before" (round 12)
   the strength and band over the treetops (Ed, v160: a stronger miniature look there), blended in as she rises [1]; ?tilt=<strength>,<band> tries treetop values live; It blurs at the low resolution, before the pixels are scaled up; ?tilt=off turns it off. The night sky over the bend is blurred with the rest, the tilt-shift the last thing done to the finished, bent picture [2].
+- **`tiltShift.treetop.strength`**: The tilt-shift's blur over the treetops, in pixels, blended in by lift.
+  1. Ed, 2026-10-29: "reduce the tilt shift effect at top and bottom by 50%" (via the coordinator, after the art director's measurement of "the pixels are just hard to read" (previews/ed/blur/); 3 → 1.5)
 
 | knob | type | range |
 |---|---|---|
