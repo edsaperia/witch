@@ -1,7 +1,7 @@
 // Each bag's 💌s against one wild creature (Ed, 2026-10-29: the bags as weapon archetypes, rules/bags.ts; the coordinator: "hits per
 // second and time-to-stun per bag ... for all bags, so Ed can compare"): the real rules headless, her standing still at a distance
 // from one wild creature of a kind and rank, throwing at it all the while (her health held up), the letters that land counted and
-// the seconds till its ring is full (stunned: rules/orbit.ts) taken. Every bag on the bag shelf, starting or found.
+// the seconds till its ring is full (stunned, rules/orbit.ts, or won over at once) taken. Every bag on the bag shelf, starting or found.
 //   node tools/balance/bagstun.mjs [--bags satchel,bumbag,...] [--species fox] [--levels 1,2] [--dists 10,20,30] [--seeds 2] [--time 60]
 import { openRules, arg, list, median } from "./lib.mjs";
 
@@ -26,8 +26,9 @@ function measure(seed, bag, level, dist) {
   for (let i = 0; i < TIME / STEP; i++) {
     const W = g.witches[0]; W.health.hp = 1e6;
     stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, fire: true, aimX: c.x - g.witch.x, aimZ: c.z - g.witch.z }, STEP);
-    for (const e of W.invites.events) if (e.kind === "hit" && e.id === c.id) landed++;
-    if (c.dazed || c.gone || c.leashed) return { landed, secs: g.clock.time };
+    let won = false;
+    for (const e of W.invites.events) { if (e.kind === "hit" && e.id === c.id) landed++; if (e.kind === "happy" && e.id === c.id) won = true; }
+    if (c.dazed || c.gone || c.leashed || won) return { landed, secs: g.clock.time }; // (stunned, or its ring full and won over at once)
   }
   return { landed, secs: Infinity };
 }
