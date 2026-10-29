@@ -1,0 +1,105 @@
+{
+  "seed": "542195",
+  "link": "world=1268398697&island=ibex&found=squirrel,hedgehog&hat=none&creator=0",
+  "size": "1106x743",
+  "moments": 6,
+  "before": {
+    "embers": {
+      "count": [
+        3,
+        5,
+        8,
+        12
+      ],
+      "size": [
+        0.22,
+        0.26,
+        0.3,
+        0.36
+      ],
+      "rise": [
+        1.6,
+        2.1,
+        2.8,
+        3.6
+      ],
+      "bright": 1,
+      "crowd": 0
+    },
+    "placeMotes": {
+      "count": 16,
+      "size": 0.7,
+      "bright": 1,
+      "rise": 1,
+      "life": 1
+    },
+    "awake": {
+      "motes": 8,
+      "moteBuild": 12,
+      "moteSize": 3,
+      "moteBright": 1,
+      "moteRise": 7
+    }
+  },
+  "after": {
+    "embers": {
+      "count": [
+        4,
+        6,
+        9,
+        12
+      ],
+      "size": [
+        0.3,
+        0.36,
+        0.42,
+        0.5
+      ],
+      "rise": [
+        2,
+        2.6,
+        3.4,
+        4.2
+      ],
+      "stack": 0.4,
+      "bright": 1.6,
+      "crowd": 6
+    },
+    "placeMotes": {
+      "count": 24,
+      "size": 0.9,
+      "bright": 1.6,
+      "rise": 1.3,
+      "life": 1.4
+    },
+    "awake": {
+      "glow": [
+        0.7,
+        1
+      ],
+      "light": 0.9,
+      "lightBuild": 1,
+      "reach": 18,
+      "beam": 0.3,
+      "motes": 12,
+      "moteBuild": 16,
+      "moteSize": 4,
+      "moteBright": 1.8,
+      "moteRise": 9
+    }
+  },
+  "result": {
+    "stone": {
+      "before": {
+        "energy": 5,
+        "px": 54,
+        "peak": 0.119
+      },
+      "after": {
+        "energy": 33.6,
+        "px": 353,
+        "peak": 0.245
+      }
+    }
+  }
+}
