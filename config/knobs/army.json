@@ -139,8 +139,15 @@
           "by": "Ed's playtest",
           "date": "2026-10-06",
           "quote": "Invitation orbits are too tight around the creature"
+        },
+        {
+          "by": "Ed's playtest",
+          "date": "2026-10-29",
+          "quote": "damage orbits are too wide, bring them in by around 30%",
+          "rest": "scale 2 to 1.4, gap 1 to 0.7, min 2 to 1.4, height 0.9 to 0.63 (all x0.7); the soundsystem's 💥 ring 1.5 to 1.05 m outside it"
         }
-      ]
+      ],
+      "notes": "A soundsystem's 💥 ring sits 1.5 gaps outside its radius."
     },
     "invites.hard": {
       "what": "the hard homing of the 💌s her Sentry and Slingshot hats throw: homing degrees a second, cone degrees either side it looks in, range metres it looks out to (was the legend buffs' charm, 420, 80 and 18)."
