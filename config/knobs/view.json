@@ -223,6 +223,20 @@
       ],
       "notes": "margin is the share of the screen's height left clear above and below her; at is where across the screen's width she stands (0.75: the right half's middle). On, it replaces distance, side, aim and parts (the zoom on the part of her being chosen), which stay for it off."
     },
+    "camera.station.dim": {
+      "what": "How dark the picture behind her goes while she's framed at a station, so she stands out: 0 leaves it as it is, 1 makes it black.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "When the witch opens a station, make the background behind her darker so that she stands out more clearly"
+        }
+      ],
+      "links": [
+        "src/render/stationBackdrop.ts"
+      ],
+      "notes": "a black wash over the whole picture, eased in with the framing, and her drawn again over it at full light; the panel's own wash on the left half is separate (ui/stationPanel.ts)."
+    },
     "pixelSize": {
       "what": "How many screen pixels each art pixel takes up, the size of the game's chunky pixels.",
       "decisions": [

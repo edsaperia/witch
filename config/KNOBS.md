@@ -3188,6 +3188,10 @@ Near-isometric on the ground, after Transistor; the game opens close in on the w
   1. Ed, 2026-10-29: "Menus should be left half of the screen, and the witch right half of the screen, and she should be nicely centred and visible top of hat to bottom of shoes."
   margin is the share of the screen's height left clear above and below her; at is where across the screen's width she stands (0.75: the right half's middle). On, it replaces distance, side, aim and parts (the zoom on the part of her being chosen), which stay for it off.
   Code: `src/render/view/camera.ts`, `src/ui/stationPanel.ts`
+- **`camera.station.dim`**: How dark the picture behind her goes while she's framed at a station, so she stands out: 0 leaves it as it is, 1 makes it black.
+  1. Ed, 2026-10-29: "When the witch opens a station, make the background behind her darker so that she stands out more clearly"
+  a black wash over the whole picture, eased in with the framing, and her drawn again over it at full light; the panel's own wash on the left half is separate (ui/stationPanel.ts).
+  Code: `src/render/stationBackdrop.ts`
 
 | knob | type | range |
 |---|---|---|
@@ -3237,6 +3241,7 @@ Near-isometric on the ground, after Transistor; the game opens close in on the w
 | `camera.station.whole.on` | boolean |  |
 | `camera.station.whole.margin` | number | 0 to … |
 | `camera.station.whole.at` | number | 0 to … |
+| `camera.station.dim` | number | 0 to … |
 | `camera.station.distance` | number | 0 to … |
 | `camera.station.side` | number |  |
 | `camera.station.ease` | number | 0 to … |

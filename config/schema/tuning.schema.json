@@ -9616,6 +9616,11 @@
               "additionalProperties": false,
               "description": "At a dressing station the camera frames her whole, top of her hat to the soles of her shoes, in the right half of the screen while the panel takes the left half."
             },
+            "dim": {
+              "type": "number",
+              "minimum": 0,
+              "description": "How dark the picture behind her goes while she's framed at a station, so she stands out: 0 leaves it as it is, 1 makes it black."
+            },
             "distance": {
               "type": "number",
               "minimum": 0
@@ -9779,6 +9784,7 @@
           "required": [
             "on",
             "whole",
+            "dim",
             "distance",
             "side",
             "ease",
