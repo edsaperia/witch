@@ -262,10 +262,24 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     if (c.stunUntil !== undefined && time < c.stunUntil) { c.moving = false; c.vx = 0; c.vz = 0; continue; }
     const pd = c.spell === undefined ? PK?.get(c.id) : undefined; // (one given an attack in the grammar (the arena's) fights on its own; a species' own keeps its pack's turns)
     // Up the trees, underground or under water (rules/combat/packs.ts): out of sight, it makes its way round to where it comes back down
-    // at its own run, so it shows again where it got to (Ed's playtest, 2026-10-29: "some animals seem to teleport": it was put there at once).
+    // (Ed's playtest, 2026-10-29: "some animals seem to teleport": it was put there at once), arriving as its hide ends: round her, not
+    // through her, a share of what's left each step (at its own run, straight, it crossed her and came up short and close: a lone mole
+    // burrowing again under her where it should have thrown from out there, #1405), never faster than 48 m/s (under a lunge's 60, the
+    // room left for the spacing's nudge: a short hide, a squirrel's scatter, comes back where that got it, a little short).
     if (c.packHide && PK) {
       const H = c.packHide;
-      if (H.tx !== undefined) moveToward(c, H.tx, H.tz!, 0.1, (profileOf(c.species)?.speed ?? C.fightRun) * FIGHT.speed, dt);
+      if (H.tx !== undefined) {
+        const k = Math.min(1, dt / Math.max(dt, H.until - time)), tg = c.fight?.target ? targetPos(w, s, c.fight.target) : null, x0 = c.x, z0 = c.z;
+        if (tg) {
+          const a0 = Math.atan2(c.z - tg.z, c.x - tg.x), r0 = Math.hypot(c.x - tg.x, c.z - tg.z), a1 = Math.atan2(H.tz! - tg.z, H.tx - tg.x), r1 = Math.hypot(H.tx - tg.x, H.tz! - tg.z);
+          let da = a1 - a0; while (da > Math.PI) da -= Math.PI * 2; while (da < -Math.PI) da += Math.PI * 2;
+          const a = a0 + da * k, r = r0 + (r1 - r0) * k;
+          c.x = tg.x + Math.cos(a) * r; c.z = tg.z + Math.sin(a) * r;
+        } else { c.x += (H.tx - c.x) * k; c.z += (H.tz! - c.z) * k; }
+        const most = 48 * FIGHT.speed * dt, mv = Math.hypot(c.x - x0, c.z - z0);
+        if (mv > most) { c.x = x0 + ((c.x - x0) * most) / mv; c.z = z0 + ((c.z - z0) * most) / mv; }
+        if (Math.abs(c.x - x0) > 0.02) c.facing = c.x > x0 ? 1 : -1;
+      }
       c.moving = false; c.vx = 0; c.vz = 0; continue;
     }
     // (an attack in the grammar given it, rules/attacks/; else its species' own, the default since step 5: ?attacks=old for the old)
