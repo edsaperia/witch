@@ -1,0 +1,9 @@
+{
+  "reason": "The DJ booth (Ed, 2026-10-29): records are a new kind of find (rules/finds.ts `record`, nine of them), so a night's one seeded draw over everything she lacks can come out differently, and the Terrace's record shelf is gone (her decks are the booth).",
+  "frames": {
+    "*": "the night's find where it differs (a record half out of its sleeve, or another find drawn), and the Terrace without its record shelf"
+  },
+  "rules": {
+    "*": "the night's find (its kind, item and place: g.trunk) and anything downstream of it"
+  }
+}

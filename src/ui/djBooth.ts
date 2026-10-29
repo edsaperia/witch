@@ -117,7 +117,7 @@ export class DjBooth {
     const f = (i: number) => (N.focus === i ? " focus" : "");
     const cards = RECORDS.map((r, i) => {
       const own = N.owned.has(r.id), on = N.chosen === r.id;
-      return `<div class="db-card${own ? "" : " locked"}${on ? " worn" : ""}${f(i)}" data-at="${i}"><b>${own ? r.bpm : "🔒"}</b><small>BPM</small>${on ? `<i class="db-tick">✓</i>` : ""}</div>`;
+      return `<div class="db-card${own ? "" : " locked"}${on ? " worn" : ""}${f(i)}" data-at="${i}"><b>${r.bpm}</b><small>${own ? "" : "🔒 "}BPM</small>${on ? `<i class="db-tick">✓</i>` : ""}</div>`;
     }).join("");
     const go = `<button class="db-go${N.ready ? "" : " off"}${f(RECORDS.length)}" data-at="${RECORDS.length}"${N.ready ? "" : " aria-disabled=\"true\""}>Get this party started</button>`;
     this.root.innerHTML = `<div class="db-head"><b>DJ booth</b><span>${N.owned.size} of ${RECORDS.length} records</span></div>`
@@ -140,7 +140,7 @@ function installCss(): void {
 #dj-booth .db-row { display: flex; flex-wrap: wrap; gap: .45em; }
 #dj-booth .db-card { position: relative; width: 4.6em; height: 4.6em; border-radius: 50%; background: radial-gradient(circle, #14101f 0 46%, #241c36 47% 50%, #14101f 51% 62%, #241c36 63% 66%, #14101f 67%); box-shadow: inset 0 0 0 1px rgba(232,226,244,.2); display: grid; place-content: center; text-align: center; cursor: pointer; }
 #dj-booth .db-card b { font-size: 1.1em; line-height: 1; } #dj-booth .db-card small { font-size: .55em; opacity: .8; letter-spacing: 1px; }
-#dj-booth .db-card.locked { cursor: default; opacity: .55; filter: grayscale(1); }
+#dj-booth .db-card.locked { cursor: default; opacity: .55; filter: grayscale(1); } #dj-booth .db-card.locked b { color: rgba(232,226,244,.6); } /* (its bpm greyed, the padlock by it: what's left to find, Ed 2026-10-29) */
 #dj-booth .db-card.worn:not(.focus) { outline: 2px solid rgba(232,180,106,.8); outline-offset: 1px; }
 #dj-booth .db-tick { position: absolute; top: .1em; right: .1em; width: 1.2em; height: 1.2em; border-radius: 50%; background: var(--gold); color: #1a1430; font: normal .75em/1.2em sans-serif; text-shadow: none; }
 #dj-booth .focus { outline: 3px solid #fff; outline-offset: 2px; box-shadow: 0 0 12px rgba(255,255,255,.75); }
