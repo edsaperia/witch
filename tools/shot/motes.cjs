@@ -70,6 +70,8 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
       window.__crowd = used.slice(8, 28).map((c, i) => ({ id: c.id, x: b.x + Math.cos(i * 0.9) * (5 + i * 0.6), z: b.z + Math.sin(i * 0.9) * (4 + i * 0.5), at: g.clock.time - 30 }));
       window.__stack = used.slice(4, 8).map(c => c.id);
       const st = window.witch.view.markerCache.list.filter(m => m.awake).sort((p, q) => Math.hypot(p.x - b.x, p.z - b.z) - Math.hypot(q.x - b.x, q.z - b.z))[0];
+      // (its column and motes show only once the ley line has reached it: counted reached, as the Route-seer hat has them)
+      if (st) { const v = window.witch.view, reach = { key: "", times: new Map([[st.key, -1e9]]) }; Object.defineProperty(v, "leyReach", { get: () => reach, set: () => {}, configurable: true }); }
       return { x: b.x, z: b.z, stone: st ? { x: st.x, z: st.z } : null };
     });
     log("scene", JSON.stringify(spot));
