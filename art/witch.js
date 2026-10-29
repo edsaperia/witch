@@ -369,8 +369,8 @@ function drawAccessories(m, L, chest, fwd, spine, flying) {
     m.ell(v3.add(c, v3.add(v3.mul(spine, .03), v3.mul(fwd, .02))), [.01, .008, .008], M.FRAME, { group: 24 });
   }
   if (L.clutch) { // a slim clutch tucked under her near arm, long and flat, a gold flap along its top (Ed, 2026-10-29: the sniper's bag)
-    const c = at(.03, .03, .17);
-    m.ell(c, [.08, .032, .016], M.STONED, { dir: fwd, up: spine, group: 24, paint: p => v3.dot(v3.sub(p, c), spine) > .012 ? M.FRAME : undefined });
+    const c = at(-.03, .05, .2);
+    m.ell(c, [.095, .045, .02], M.SHOES, { dir: fwd, up: spine, group: 24, paint: p => v3.dot(v3.sub(p, c), spine) > .02 ? M.FRAME : undefined });
   }
   if (L.bumbag) { const c = at(waist - .03, .1, .03); m.ell(c, [.035, .03, .065], M.EAR, { dir: fwd, up: spine, group: 22 }); m.chain([[...at(waist - .02, .07, -.08), .008], [...c, .008], [...at(waist - .02, .07, .1), .008]], M.EAR, { group: 22 }); }
 }
