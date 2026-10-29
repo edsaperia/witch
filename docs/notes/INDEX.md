@@ -219,6 +219,7 @@ says what each note covers.
 - Bindings API
 - Settings page
 - Pad layout
+- Screen shake
 - Glide
 - Resting 💌s
 - Aim reticle
@@ -298,6 +299,7 @@ says what each note covers.
 - Art style / art pixel
 - Prop generator
 - Great stump
+- Stone keep-clear zone
 - Set-piece generator
 - Area recipe
 - Area folder

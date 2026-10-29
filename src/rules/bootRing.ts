@@ -8,9 +8,10 @@
 // the ring clockwise as seen from the default camera (north up: north, east, south, west) back to the top. The pulse sets
 // off from the treehouse as she leaves her decks and runs along it at the ley pulse's own speed (Ed, 2026-10-09: "Pure
 // constant speed"; its own speed since Ed set the waves' to 1 m/s, 2026-10-18: boot.speed, 4), the boot ending as it comes round to where it came on to the ring,
-// where the first ley line's pulse takes over; each stone turns into a speaker as it passes. The line runs ahead of it at `reveal` times its pace,
-// drawing the whole ring in the first part of the boot. Measures are metres along the path (render/leylines.ts draws it
-// by the same arc length).
+// where the first ley line's pulse takes over and the ley line's first link goes on round the same way (Ed, 2026-10-29: one path,
+// rules/departure.ts); each stone turns into a speaker as it passes. The line runs ahead of it at `reveal` times its pace, drawing the
+// whole ring in the first part of the boot and on along the route (rules/leypulse.ts frontMetres). Measures are metres along the path
+// (render/leylines.ts draws it by the same arc length).
 import type { ForestMap } from "./map";
 import type { PartyState } from "./party";
 import { ringApproach, speakerCircle } from "./departure";
@@ -19,7 +20,7 @@ type P2 = [number, number];
 type Floor = Pick<ForestMap, "dancefloor" | "treehouseFront"> & { tuning: { boot?: { speed?: number } } };
 
 /** The pulse's speed in the boot (m/s): its own (boot.speed, 4), so the waves' slower pulse doesn't make the boot crawl. */
-const bootSpeed = (map: Floor): number => Math.max(0, map.tuning.boot?.speed ?? 4);
+export const bootSpeed = (map: Floor): number => Math.max(0, map.tuning.boot?.speed ?? 4);
 /** How long the boot takes (s): the whole boot path at the pulse's speed (179 m at 4 m/s: about 45 s); 0 with no speed. */
 export const bootSeconds = (map: Floor): number => { const v = bootSpeed(map); return v > 0 ? bootPath(map).length / v : 0; };
 
@@ -27,9 +28,8 @@ export const bootSeconds = (map: Floor): number => { const v = bootSpeed(map); r
 
 /** The ring's radius: the stones' own circle, so the boot's pulse runs through each stone as it turns it (Ed, 2026-10-07: "The
  *  boot leyline does not go around the dancefloor where the speakers are": it ran on the treehouse front's circle, 6.5 m outside
- *  them, across the ground in front of the near ones). The first line's way out runs on this same circle (rules/departure.ts),
- *  so the line leaving home is still one path with the ring, leaving it at a point on it (Ed, 2026-10-06: "it doesn't connect
- *  with the leyline around the dancefloor"). */
+ *  them, across the ground in front of the near ones). The first line's way out goes on round this same circle from where the lap
+ *  ends (rules/departure.ts), one path with the ring (Ed, 2026-10-06: "it doesn't connect with the leyline around the dancefloor"). */
 export const ringRadius = (map: Floor): number => speakerCircle(map);
 
 /** The stones in the order the pulse turns them: indices into dancefloor.speakers, the first clockwise from the top. */
@@ -87,11 +87,4 @@ export function stonesTurned(p: PartyState, map: Floor, time: number): number {
   let n = 0;
   for (let i = 0; i < map.dancefloor.speakers.length; i++) if (stoneTurned(p, map, time, i)) n++;
   return n;
-}
-
-/** How far along the boot path (m) the pulse passes the point of the ring nearest (x, z): round it clockwise from where the
- *  path meets it (as each stone's stoneAt). The first ley line leaves the ring at one such point (render/leylines.ts). */
-export function ringAlong(map: Floor, x: number, z: number): number {
-  const P = bootPath(map), d = map.dancefloor, R = ringRadius(map), TAU = Math.PI * 2;
-  return P.ringFrom + R * ((((P.a0 - Math.atan2(x - d.x, z - d.z)) % TAU) + TAU) % TAU);
 }

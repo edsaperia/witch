@@ -27,8 +27,8 @@ export class ScreenShake {
     });
   }
 
-  /** A new night on the same page (app/night.ts): its game and tuning from here on (the shake's own feel kept). */
-  retarget(game: Game, tuning: Tuning): void { this.game = game; this.tuning = tuning; }
+  /** A new night on the same page (app/night.ts): its game and tuning from here on (the shake's own feel kept), still, its clock new. */
+  retarget(game: Game, tuning: Tuning): void { this.game = game; this.tuning = tuning; this.shake.reset(); }
 
   private showOption(): void {
     const on = this.shake.on;
@@ -44,8 +44,9 @@ export class ScreenShake {
 
   apply(): void {
     const game = this.game, canvas = this.canvas, W = game.witches[0];
-    this.shake.watch(W.health, !!W.ko, this.tuning.witchHealth.hits, game.clock.time);
-    const o = this.shake.offset(game.clock.time, this.view.cssPixel);
+    // (on her clock, as her hits are: the world's runs at a tenth in a sleeping legend's circle and on the deck, render/shake.ts)
+    this.shake.watch(W.health, !!W.ko, this.tuning.witchHealth.hits, game.herTime);
+    const o = this.shake.offset(game.herTime, this.view.cssPixel);
     const { gx, gy } = this.glide();
     if (o.amount <= 0) {
       if (gx || gy) { canvas.style.transform = `translate(${gx}px, ${gy}px)`; this.shaken = true; }

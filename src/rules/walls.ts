@@ -25,7 +25,7 @@ export function wallFeatures(map: ForestMap, cx: number, cy: number): WallFeatur
   const shape = SHAPE[kind.wall] ?? "clump", r = rng(map.seed * 97 + cx * 7919 + cy * 104729 + 17), site = map.siteOf(cx, cy), A = map.areaSize;
   let n = 0;
   const own = (x: number, z: number) => { const c = map.areaAt(x, z).cell; return c[0] === cx && c[1] === cy; };
-  const free = (x: number, z: number) => own(x, z) && !map.hardClear(x, z) && !map.reserved(x, z, 1.5) && map.paths.clearance(x, z).bushes !== 0;
+  const free = (x: number, z: number) => own(x, z) && !map.hardClear(x, z) && !map.reserved(x, z, 1.5) && map.clearOfStones(x, z, 1.5) && map.paths.clearance(x, z).bushes !== 0;
   const put = (list: Plant[], x: number, z: number) => { if (!free(x, z)) return false; list.push({ x, z, type, variant: Math.floor(hash2(cx * 131 + n, cy * 37 + n++, map.seed + 311) * 1e6), flip: r() < 0.5 }); return true; };
   // A spot in the area, between its clearing and its edge.
   const spot = () => {

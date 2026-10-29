@@ -97,7 +97,7 @@ export function placeTrunk(map: ForestMap, forest: { treesNear(x: number, z: num
     let best: { x: number; z: number; score: number } | null = null;
     for (const r of RINGS) for (let k = 0; k < 12; k++) {
       const a = a0 + (k / 12) * Math.PI * 2, x = site.x + Math.cos(a) * r, z = site.z + Math.sin(a) * r, kc = map.cellSafe(x, z).cell;
-      if (kc[0] !== cell[0] || kc[1] !== cell[1] || !isInside(b, x, z, 60) || map.hardClear(x, z)) continue;
+      if (kc[0] !== cell[0] || kc[1] !== cell[1] || !isInside(b, x, z, 60) || map.hardClear(x, z) || !map.clearOfStones(x, z, TRUNK_REACH)) continue; // (out of every stone's keep-clear zone: Ed, 2026-10-29)
       if (lc && Math.hypot(x - lc.x, z - lc.z) < lc.r + 6) continue;
       if (relics.some(q => Math.hypot(q.x - x, q.z - z) < TRUNK_CLEAR)) continue;
       const score = (woods(x, z) ? 1 : 0) + (canopyOver(forest, map, x, z) ? 2 : 0);

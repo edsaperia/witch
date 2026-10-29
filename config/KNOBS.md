@@ -761,6 +761,17 @@ See `setPieceFootprint`.
 |---|---|---|
 | `reserveMargin` | number | 0 to … |
 
+### `stoneKeepClear`
+
+The keep-clear zone round each area's stone (its great stump, or its runestone with the stumps off), in metres from its middle.
+
+1. Ed, 2026-10-29: "No special areas should appear so close to stump/runestone areas; no special scenery, no finds or flasks, no legend circles" (and the party relics, walls and ruins, ponds, picnics and campfires, and the playgrounds too)
+Nothing special within it: no scene or set piece, ruin or freak tree (the giant mushroom), modern relic, the night's find, flask (party relic), legend's clearing, wall or stone ring, pond, campfire or magic stone, the party's picnics, clusters, set dressing and campfires, or ground (playgrounds and sports grounds): each keeps its whole footprint out (clearOfStones in rules/map.ts). Ordinary trees, bushes, rocks and groundcover may stand in it; the stump's own clearing (runeMarkers.stump.clear) keeps the trees off its roots. A legend's clearing that can't fit out of it (a small area) goes at the farthest spot it fits, and the map says so in the log. The 40 m: the stump's 17 m clearing and a margin.
+
+| knob | type | range |
+|---|---|---|
+| `stoneKeepClear` | number | 0 to … |
+
 ### `treeMarginFromSoundsystem`
 
 See `setPieceFootprint`.
@@ -3333,7 +3344,8 @@ Near-isometric on the ground, after Transistor; the game opens close in on the w
   1. Ed, 2026-10-05: treetop mode much faster, for travel
 - **`camera.shake`**: The screen shakes when she's hit, harder for each hit she was already missing and hardest on a knockdown.
   1. Ed, 2026-10-05: "Screen should shake when the witch is hit. More shake when you are on lower health"
-  each hit adds trauma (0-1), base on her first, perMissingHit more for each hit she was already missing, knockdown on the hit that knocks her down; it falls away at decay a second, and the screen shakes by trauma squared times maxOffsetPx (screen pixels, whole ones) and maxRotDeg, smooth noise wandering speed times a second. ?shake=0 (or the start screen's toggle) turns it off.
+  2. Ed's playtest, 2026-10-29: "I replicated screen shake - it's from the witch being hit by an enemy creature, I guess the effect is activated and then doesn't switch off properly." (on the world's clock it ran ten times as long in a sleeping legend's circle or on the deck; now on hers, and capped at maxSecs)
+  each hit adds trauma (0-1), base on her first, perMissingHit more for each hit she was already missing, knockdown on the hit that knocks her down; it falls away at decay a second, and the screen shakes by trauma squared times maxOffsetPx (screen pixels, whole ones) and maxRotDeg, smooth noise wandering speed times a second. ?shake=0 (or the start screen's toggle) turns it off. It runs on her clock (a pause holds it, a slowed world doesn't stretch it), and a bout of hits shakes for maxSecs seconds at most from its first (a knockdown starts a new bout).
 - **`camera.circle`**: In a legend's circle the camera tilts and frames her and the legend together.
   1. Ed, 2026-10-08: "lowering the camera angle while you're in the circle to make them seem more looming" (considering it; legends being hard to make out in their circles)
   on the ground in a legend's circle the camera eases over ease seconds to angle degrees (from the ground view's 30 to 36), its distance times distance, aimed frame of the way from her to the legend and look metres higher, so the legend stands large over her; it eases back as she leaves. on false turns it off.
@@ -3387,6 +3399,7 @@ Near-isometric on the ground, after Transistor; the game opens close in on the w
 | `camera.shake.maxOffsetPx` | number | 0 to … |
 | `camera.shake.maxRotDeg` | number | 0 to … |
 | `camera.shake.speed` | number | 0 to … |
+| `camera.shake.maxSecs` | number | 0 to … |
 | `camera.follow` | number | 0 to … |
 | `camera.intro.distance` | number | 0 to … |
 | `camera.intro.angle` | number | 0 to … |

@@ -9,6 +9,7 @@ import { pulseLinksIn, pulseMetres, waveCountdown } from "./party";
 import { behindLength, linkLength } from "./pulseRoute";
 import { leyChain, leyKey, questsMove, waveReached } from "./leylines";
 import { cellKey } from "./party";
+import { bootPath, bootPulseAt, bootSpeed } from "./bootRing";
 
 export type P2 = readonly [number, number];
 
@@ -21,16 +22,16 @@ export function pulseProgress(p: PartyState, map: ForestMap, time: number): numb
   return pulseLinksIn(p, time);
 }
 
-/** The pulse's distance along the whole route (m), from where the first link leaves the boot ring: the route behind the last
- *  stone reached, and its run since. */
+/** The pulse's distance along the whole route (m), from where the boot's lap ends (the first link's start): the route behind the
+ *  last stone reached, and its run since; 0 while home boots up. */
 export function pulseRouteMetres(p: PartyState, map: ForestMap, time: number): number {
   if (!p.pulse) return 0;
   return behindLength(p, map) + (waveCountdown(p, map, time).booting ? 0 : pulseMetres(p, time));
 }
 
 const chainLens = new WeakMap<object, { key: number; lens: number[] }>();
-/** Every link's length along the route (m), the first from where it leaves the boot ring (rules/pulseRoute.ts), as the chain
- *  stands (worked out again only when it changes). */
+/** Every link's length along the route (m), the first from where the boot's lap ends (rules/pulseRoute.ts), as the chain stands
+ *  (worked out again only when it changes). */
 export function routeLengths(p: PartyState, map: ForestMap): number[] {
   const key = leyKey(p), hit = chainLens.get(p);
   if (hit && hit.key === key) return hit.lens;
@@ -39,16 +40,25 @@ export function routeLengths(p: PartyState, map: ForestMap): number[] {
   chainLens.set(p, { key, lens });
   return lens;
 }
-/** Metres along the route (from where it leaves the boot ring) as links: the links passed and the share of the one it's in. */
+/** Metres along the route (from where the boot's lap ends) as links: the links passed and the share of the one it's in. */
 export function metresToLinks(lens: readonly number[], m: number): number {
   for (let i = 0; i < lens.length; i++) { if (m < lens[i]) return i + Math.max(0, m) / lens[i]; m -= lens[i]; }
   return lens.length;
 }
-/** How far the line's front is along the route (m): `reveal` times the pulse's distance (Ed, 2026-10-08, kept 2026-10-09), but
- *  from the first stone, which the front reaches as the boot ends, till that catches up (the boot's branch, render/leylines.ts). */
-export function frontMetres(p: PartyState, map: ForestMap, time: number, reveal: number, fromFirst = true): number {
-  const m = pulseRouteMetres(p, map, time), C1 = routeLengths(p, map)[0] ?? 0;
-  return fromFirst && m < C1 ? C1 + (reveal - 1) * m : reveal * m;
+/** The pulse's distance along the one path the boot ring and the route make (m, from the treehouse's front): the boot's pulse
+ *  along its path while home boots up (rules/bootRing.ts), then the whole boot path and the wave's pulse along the route. */
+export function pulsePathMetres(p: PartyState, map: ForestMap, time: number): number {
+  const B = bootPath(map).length;
+  return waveCountdown(p, map, time).booting ? bootPulseAt(p, map, time) : B + pulseRouteMetres(p, map, time);
+}
+/** How far the line's front is along the route (m, from where the boot's lap ends; 0 while it's still on the ring): `reveal` times
+ *  the pulse's distance along the one path the ring and the route make (Ed, 2026-10-06: "The leyline should always go from the
+ *  treehouse to 3x the progress of the pulse"; 2026-10-29: one path, the line going on round from the lap the same way), so it runs
+ *  round the ring as the boot's pulse sets off and on out along the route without a break or a jump as the boot ends and the wave's
+ *  pulse takes over; nothing before the party spell. */
+export function frontMetres(p: PartyState, map: ForestMap, time: number, reveal: number): number {
+  if (p.spellAt === null) return 0;
+  return Math.max(0, reveal * pulsePathMetres(p, map, time) - bootPath(map).length);
 }
 
 /** How many of the route's stones the line has reached (home not counted): the ley chain's current stone's place in it. */
@@ -62,8 +72,8 @@ export function stonesReached(p: PartyState, map: ForestMap): number {
   return n;
 }
 
-/** The wave's pulse's distance along the whole route, in links from the treehouse: continuous and never going back (Ed,
- *  2026-10-08), the line's front reckoned from it (render/leylines.ts leyReveal: `reveal` times as far). */
+/** The wave's pulse's distance along the whole route, in links from the boot's lap's end: continuous and never going back (Ed,
+ *  2026-10-08). */
 export function pulseLinks(p: PartyState, map: ForestMap, time: number): number {
   return stonesReached(p, map) + pulseProgress(p, map, time);
 }
@@ -136,24 +146,26 @@ export const TIP_PACE = 3;
 /** When the drawn ley line's growing tip reaches each stone on the route (Ed, 2026-10-06: "The column of light above a
  *  runestone first appears when the leyline meets it"): stone key → game time; null before the party spell (the tip
  *  hasn't set off). The shared seam for the line's reveal (render/leylines.ts leyReveal) and the stones' beacons
- *  (render/view/home.ts). The tip branches off the boot ring as the boot's pulse goes round it and reaches the first stone
- *  as the boot ends (Ed, 2026-10-07); then on at `reveal` times the pulse's distance along the route (frontMetres), the pulse
- *  at a constant speed (Ed, 2026-10-09): each stone's time by the pulse's distance and speed at `time` (now: a time ahead
- *  moves sooner as a knockdown's BPM speeds the pulse). A stone its wave (or quest) has already reached counts as reached
- *  then, if sooner; one cleared before its wave doesn't (waveReached). */
+ *  (render/view/home.ts). The tip runs at `reveal` times the pulse's distance along the one path the boot ring and the route
+ *  make (frontMetres): a stone the tip reaches while home boots up, by the boot pulse's own speed; one after, by the wave's pulse
+ *  at a constant speed (Ed, 2026-10-09): each stone's time by the pulse's distance and speed at `time` (now: a time ahead moves
+ *  sooner as a knockdown's BPM speeds the pulse). A stone its wave (or quest) has already reached counts as reached then, if
+ *  sooner; one cleared before its wave doesn't (waveReached). */
 export function leyReachTimes(p: PartyState, map: ForestMap, time = p.pulse?.at ?? 0): Map<string, number> | null {
   if (clockStart(p) === null) return null;
   const r = Math.max(1.0001, map.tuning.leyLines.reveal ?? TIP_PACE), { stones } = leyChain(p, map), lens = routeLengths(p, map), out = new Map<string, number>();
   const done = (questsMove(map) ? p.leyDone : undefined) ?? new Map<string, number>();
   // The pulse's distance and speed now (a wave, so the front, at a constant speed along the route: Ed, 2026-10-09), and when
   // it sets off if it hasn't: each stone's time by the distance the pulse must run for the front to reach it.
-  const v = p.pulse?.v || map.tuning.leyLines.pulseSpeed, m = pulseRouteMetres(p, map, time), C1 = lens[0] ?? 0, wait = Math.max(0, (p.pulse?.at ?? 0) - time);
+  const B = bootPath(map).length, vb = bootSpeed(map), bootFrom = p.bootFrom ?? p.bootUntil - (vb > 0 ? B / vb : 0);
+  const v = p.pulse?.v || map.tuning.leyLines.pulseSpeed, m = pulseRouteMetres(p, map, time), wait = Math.max(0, (p.pulse?.at ?? 0) - time);
   let C = 0;
   stones.forEach((s, k) => {
     if (k > 0) C += lens[k - 1] ?? 0;
     const key = cellKey(s.cell), at = key === cellKey(map.centreCell) ? -Infinity : waveReached(p, key) ?? Infinity, was = Math.min(at, done.get(key) ?? Infinity); // (cleared early: at its wave's pace, not its clear)
-    const mk = C < r * C1 ? Math.max(0, (C - C1) / (r - 1)) : C / r; // (the pulse's distance as the front reaches it)
-    const tip = k === 0 ? -Infinity : k === 1 ? p.bootUntil : v > 0 ? time + (mk > m ? wait : 0) + (mk - m) / v : mk > m ? Infinity : time; // (the pulse held at 0 m/s: not yet)
+    const X = (B + C) / r; // (the pulse's distance along the one path as the front reaches it)
+    const mk = X - B; // (the wave's pulse's, along the route; under 0: while home still boots)
+    const tip = k === 0 ? -Infinity : mk <= 0 ? (vb > 0 ? bootFrom + X / vb : p.bootUntil) : v > 0 ? time + (mk > m ? wait : 0) + (mk - m) / v : mk > m ? Infinity : time; // (the pulse held at 0 m/s: not yet)
     out.set(key, Math.min(tip, was));
   });
   return out;

@@ -9,12 +9,16 @@
 // through the bent earth). When the next stone is reached the sections brighten and dim to their
 // new places.
 //
+// The boot's ring round the home speakers and the route are one path (Ed, 2026-10-29): the ring from the treehouse's front, its lap
+// ending where it came on; the route from there, on round the same way and off (rules/departure.ts); the rainbow's hue and the dots
+// run along both as one.
 // One ribbon mesh for the whole line, rebuilt only when the route changes (its links routed a
 // couple of milliseconds' worth a frame; moving on along it only sets a uniform); two draws,
 // nothing allocated a frame.
 import type { PartyState } from "../rules/party";
 import { frontMetres, metresToLinks, pulseProgress, routeLengths } from "../rules/leypulse";
-import { bootPath, bootPulseAt, ringAlong, ringRadius } from "../rules/bootRing";
+import { bootPath } from "../rules/bootRing";
+import { speakerCircle } from "../rules/departure";
 import * as THREE from "three";
 import { freeObjects } from "./free";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
@@ -89,7 +93,7 @@ attribute float aLen;    // its link's length (m)
 attribute vec3 aCol;
 attribute float aRun;   // metres along the whole route from its start (the rainbow's hue runs by it)
 uniform vec2 uLeyWidth, uLeyHeight;
-uniform float uLift, uTime, uGlowPass, uThrough, uDrift;
+uniform float uLift, uTime, uGlowPass, uThrough, uRingLinks;
 uniform vec3 uNear; // where she is (x, z) and how far round her the line shows through the trees (m)
 varying float vSide, vS, vT, vLink, vSeen, vW, vLen, vRun;
 varying vec3 vCol;
@@ -98,8 +102,8 @@ void main() {
   vec2 side = vec2(-aDir.y, aDir.x);
   float w = mix(uLeyWidth.x, uLeyWidth.y, uLift) * (uGlowPass > 0.5 ? 3.0 : 1.0);
   // Wispy: the line drifts a little side to side as it goes, slowly.
-  // (Not the boot ring, uDrift 0: it runs through the stones, the pulse touching each as it turns it, Ed 2026-10-07.)
-  float drift = (sin(aS * 0.11 + uTime * 0.6 + aLink * 1.7) * 0.6 + sin(aS * 0.037 - uTime * 0.23) * 1.2) * uDrift; // (leyDrift, for the sparkler)
+  // (Not on the boot ring's link, the first uRingLinks: it runs through the stones, the pulse touching each as it turns it, Ed 2026-10-07.)
+  float drift = (sin(aS * 0.11 + uTime * 0.6 + aLink * 1.7) * 0.6 + sin(aS * 0.037 - uTime * 0.23) * 1.2) * (aLink < uRingLinks - 0.5 ? 0.0 : 1.0); // (leyDrift, for the sparkler)
   vec2 xz = position.xz + side * (drift * sin(3.14159 * aT) + aSide * w * 0.5);
   vec3 p = onGround(vec3(xz.x, mix(uLeyHeight.x, uLeyHeight.y, uLift), xz.y));
   vSeen = uGlowPass > 0.5 ? groundSeen(p) : 1.0; // (seen through the leaves, never through the earth: the bend's horizon or a hill)
@@ -118,8 +122,13 @@ void main() {
 /** Metres along the route for a whole turn of the rainbow's wheel (render/leylines.ts's route; the analyser bars behind the spark
  *  share it: render/leash/rainbow.ts). */
 export const RAINBOW_M = 60;
-/** The route's spark, times the boot ring's (Ed, 2026-10-29: "the spark should be larger"). */
+/** The line's spark, times its first size (Ed, 2026-10-29: "the spark should be larger"). */
 const SPARK_SIZE = 1.8;
+/** How strong the boot ring's link is drawn once the boot is over: faint round the speakers (its old faint line's 0.35; while home
+ *  boots up 1, before the party spell 0: render/view.ts ring()). */
+export const RING_AFTER = 0.35;
+/** The boot ring's own colour (its spark's tint while home boots up, white-ish; the line itself is the rainbow). */
+const RING_COLOUR = new THREE.Vector3(1, 0.7, 0.42);
 
 /** The ley lines' ripple: how fast it runs along a line (m/s) and how often one passes any point (s). */
 const RIPPLE_SPEED = 28, RIPPLE_EVERY = 4.5;
@@ -128,12 +137,13 @@ const FRAG = /* glsl */ `
 uniform float uTime, uGlowPass, uBright, uFade, uBehind, uShift, uLift, uCurrent, uStrength;
 uniform float uSpent; // 1: behind the wave's pulse the line is spent, a burnt fuse (the route, not the boot's ring)
 uniform vec2 uFar; // the faintest a section gets, ahead and behind (the whole route always shows)
-uniform vec3 uGrow; // the line drawn only this far (x, in links along the route from its start) while y is 1, and from z on: Ed's reveal, branching off the boot ring
+uniform vec2 uGrow; // the line drawn only this far (x, in links along the route from its start) while y is 1: Ed's reveal
 uniform vec2 uPulse; // the wave's pulse on the link from the last stone reached: x how far it's got (0-1, by arc length), y 1 when there's a wave clock
 uniform vec2 uFlow;
 uniform vec4 uCore; // its pixel core's half-width and rim (metres) on the ground and over the treetops
 uniform float uMpp; // metres per art pixel
-uniform float uRainbow; // 1: the route, in the cycling rainbow (Ed, 2026-10-29: "The leyline should be rainbow"); 0: the boot ring, as it was
+uniform float uRainbow; // 1: the route, in the cycling rainbow (Ed, 2026-10-29: "The leyline should be rainbow"); 0: the line as it was (unused: the ring and the route are one rainbow line)
+uniform float uRingLinks, uRingK; // the boot ring: the first uRingLinks links of the line (1, or 0 with no ring), drawn uRingK as strong (1 while home boots up, RING_AFTER after)
 varying float vSide, vS, vT, vLink, vSeen, vW, vLen, vRun;
 varying vec3 vCol;
 // The rainbow (render/indicator.ts rainbow, the soundsystem spell's): a hue round its wheel, its colour (0-1).
@@ -150,11 +160,12 @@ float ripple(float s, float link) {
 float ln(float p) { float i = floor(p), f = fract(p); return mix(lh(i), lh(i + 1.0), f * f * (3.0 - 2.0 * f)); }
 void main() {
   if (vSeen < 0.5) discard;
-  float along = vLink + vT; // links along the route from its start
+  float along = vLink + vT; // links along the line from its start (the boot ring's link first)
+  float ringK = vLink < uRingLinks - 0.5 ? uRingK : 1.0; // (the ring faint round the speakers once the boot's over)
   // Growing (Ed, 2026-10-06: "a better design for the front of the leyline"): written on pixel by pixel, the end at a whole art
   // pixel along it; tipD, metres behind the front (on its own link; further back, more).
   float tipD = uGrow.y > 0.5 ? (uGrow.x - vLink) * vLen - (floor(vS / uMpp) + 0.5) * uMpp : 1e6;
-  if (tipD < 0.0 || (uGrow.y > 0.5 && along < uGrow.z)) discard; // (none past its front; none on the boot ring itself: that is the ring's own line)
+  if (tipD < 0.0) discard; // (none past its front)
   // The route in the rainbow (Ed, 2026-10-29): its hue running along it, a turn of the wheel every RAINBOW_M metres, the colours
   // drifting slowly on toward its tip ("so you know which way is the front"); in whole art pixels along it, as the line is.
   vec3 hue = rbow((floor(vRun / uMpp) * uMpp) / ${RAINBOW_M.toFixed(1)} - uTime * 0.12);
@@ -193,7 +204,7 @@ void main() {
   if (along > pAlong && uRainbow > 0.5) {
     // Ahead of the spark (Ed, 2026-10-29: "The leyline should be dots instead of a line (like the analyser but only one dot tall)"):
     // the line itself is a row of single dots (render/leash/rainbow.ts); here only its faint glow from the treetops.
-    if (uGlowPass > 0.5) { gl_FragColor = vec4(hue * 0.14 * halo * uLift * uStrength, 1.0); return; }
+    if (uGlowPass > 0.5) { gl_FragColor = vec4(hue * 0.14 * halo * uLift * uStrength * ringK, 1.0); return; }
     discard;
   }
   if (along > pAlong) {
@@ -221,7 +232,7 @@ void main() {
   if (uRainbow > 0.5 && uPulse.y > 0.5) {
     // Behind the spark (Ed, 2026-10-29: "the post spark route should look like the audio analyser along its whole length"): the
     // analyser's bars stand along it (render/leash/rainbow.ts), the line itself only their dots; here its faint glow from the treetops.
-    if (uGlowPass > 0.5) { gl_FragColor = vec4(hue * 0.1 * halo * soft0(tipD) * uLift * uStrength, 1.0); return; }
+    if (uGlowPass > 0.5) { gl_FragColor = vec4(hue * 0.1 * halo * soft0(tipD) * uLift * uStrength * ringK, 1.0); return; }
     discard;
   }
   if (uSpent > 0.5 && uPulse.y > 0.5) { // (the sketch never gets here: all of it is ahead)
@@ -269,51 +280,35 @@ void main() {
   gl_FragColor = vec4(min((uRainbow > 0.5 ? hue : vCol) * a * link * ends * uStrength, vec3(0.9)), 1.0);
 }`;
 
-interface LeySet { geo: THREE.BufferGeometry; meshes: THREE.Mesh[]; current: { value: number } }
+interface LeySet { geo: THREE.BufferGeometry; meshes: THREE.Mesh[]; /** the glow from the treetops: the only pass that draws (the rainbow line is dots, render/leash/rainbow.ts) */ glow: THREE.Mesh; current: { value: number } }
 
 /** The pulse's place along the current link for the shader (0-1), or null for none: the HUD's wave pointer's own
- *  (rules/leypulse.ts pulseProgress, so the two agree), but none while home boots up (Ed, 2026-10-06: "during boot up
- *  phase, there's no leyline") or with the waves off (paused: ?pulse=off). */
+ *  (rules/leypulse.ts pulseProgress, so the two agree), but none while home boots up (the boot ring's pulse runs then; the wave's
+ *  takes over from it as the boot ends) or with the waves off (paused: ?pulse=off). */
 export function shaderPulse(p: PartyState, map: ForestMap, time: number): number | null {
   if (p.paused || time < p.bootUntil) return null;
   return pulseProgress(p, map, time);
 }
 
-/** Where the first link leaves the boot ring: its share of that link (0-1, the ring's own line before it) and how far along
- *  the boot path (m) the boot's pulse passes that point (rules/bootRing.ts ringAlong). */
-export interface LeyBranch { share: number; at: number }
-
-/** How far the line is drawn, in links along the whole route from the treehouse, or null for all of it. None before the
- *  party spell, nor while the boot's pulse is still on its way to where the first link leaves the home ring (Ed, v2001: the
- *  line to the first stone showed before the boot began; 2026-10-07, "It branches off the ring as an EXTENSION of the boot ley
- *  line, and the pulse carries on out along it towards the first stone while the rest of the ring finishes"). As the pulse
- *  passes that point (`branch`, about a third of the way round) the line branches off there, its tip running out to the
- *  first stone as the boot's pulse goes on round, reaching it as the last speaker turns (the boot's end): by the boot
- *  pulse's own progress, so a shorter boot keeps it. Then (Ed, 2026-10-06: "moving three times (adjustable) the speed on the
- *  pulse (so it reaches runestone 3 by the time the first wave finishes)") it goes on at a pace that reaches the `reveal`th
- *  stone as the first wave lands, then `reveal` links a wave, until it has drawn the whole route; with no wave clock, all
- *  of it once booted. Without a branch (the line not yet routed) it starts from the treehouse as the boot ends.
- *  rules/leypulse.ts leyReachTimes says when it reaches each stone, at the same pace. */
-/** How far the line's drawn (links; null for all of it): none at all before the party spell (Ed, 2026-10-26: "Before the party,
- *  the ley line is not visible"), the Route-seer hat's whole route (`seen`) included, else as leyReveal. */
-export function leyDrawnTo(p: PartyState, map: ForestMap, time: number, reveal: number, branch: LeyBranch | null | undefined, seen: boolean): number | null {
+/** How far the line's drawn (links along the route from where the boot's lap ends; null for all of it): none at all before the
+ *  party spell (Ed, 2026-10-26: "Before the party, the ley line is not visible"), the Route-seer hat's whole route (`seen`)
+ *  included, else as leyReveal. */
+export function leyDrawnTo(p: PartyState, map: ForestMap, time: number, reveal: number, seen: boolean): number | null {
   if (p.spellAt === null) return 0;
-  return seen ? null : leyReveal(p, map, time, reveal, branch);
+  return seen ? null : leyReveal(p, map, time, reveal);
 }
 
-export function leyReveal(p: PartyState, map: ForestMap, time: number, reveal: number, branch?: LeyBranch | null): number | null {
+/** How far the line is drawn, in links along the route from where the boot's lap ends, or null for all of it (the waves off:
+ *  paused, ?pulse=off). The ring and the route are one path (Ed, 2026-10-29): the tip runs `reveal` times as far along it as the
+ *  pulse, round the ring as the boot's pulse sets off (the ring's own line, render/view.ts ring()) and on along the route from
+ *  the lap's end, without a break or a jump as the boot ends and the wave's pulse takes over (rules/leypulse.ts frontMetres); with
+ *  no wave clock, all of it once booted. (Before: the route showed first as a branch off the ring, a third of the way round, its
+ *  tip reaching the first stone as the boot ended: Ed, v2001 and 2026-10-07.) */
+export function leyReveal(p: PartyState, map: ForestMap, time: number, reveal: number): number | null {
   if (p.spellAt === null) return 0;
-  if (time < p.bootUntil) {
-    if (!branch || !map.dancefloor) return 0;
-    const P = bootPath(map), at = bootPulseAt(p, map, time), end = P.order.length ? P.stoneAt[P.order[P.order.length - 1]] : P.length;
-    if (!(at > 0) || at < branch.at) return 0;
-    const u = end > branch.at ? Math.min(1, (at - branch.at) / (end - branch.at)) : 1;
-    return branch.share + (1 - branch.share) * u;
-  }
-  if (shaderPulse(p, map, time) === null) return null;
-  // (reveal times as far along the route as the pulse, in metres, so it never skips either: Ed, 2026-10-08, 2026-10-09; from
-  // the boot's branch, already at the first stone, till reveal times the pulse catches up: rules/leypulse.ts frontMetres)
-  return metresToLinks(routeLengths(p, map), frontMetres(p, map, time, reveal, !!branch));
+  if (p.paused) return null;
+  // (reveal times as far along the one path as the pulse, in metres, so it never skips either: Ed, 2026-10-08, 2026-10-09)
+  return metresToLinks(routeLengths(p, map), frontMetres(p, map, time, reveal));
 }
 
 export class LeyLines {
@@ -334,18 +329,27 @@ export class LeyLines {
       uLeyWidth: { value: new THREE.Vector2(T.width[0], T.width[1]) }, uLeyHeight: { value: new THREE.Vector2(T.height[0], T.height[1]) },
       uLift: { value: 0 }, uBright: { value: T.brightness * BRIGHT }, uFade: { value: T.fade }, uBehind: { value: T.behindBright },
       uShift: { value: 0 }, uFar: { value: new THREE.Vector2(T.far[0], T.far[1]) }, uFlow: { value: new THREE.Vector2(T.flow[0], T.flow[1]) },
-      uPulse: { value: new THREE.Vector2() }, uGrow: { value: new THREE.Vector3() }, uNear: { value: new THREE.Vector3(0, 0, NEAR) },
+      uPulse: { value: new THREE.Vector2() }, uGrow: { value: new THREE.Vector2() }, uNear: { value: new THREE.Vector3(0, 0, NEAR) },
       uCore: { value: new THREE.Vector4(...(T.core ?? [0.3, 0.6, 0.15, 0.3])) }, uMpp: { value: map ? metresPerArtPixel(map.tuning) : 0.1 },
+      uRingLinks: this.ringLinksU, uRingK: this.ringK,
     };
-    this.cur = this.makeSet({ uRainbow: { value: 1 } });
-    this.ringSet = this.makeSet({ uPulse: { value: this.ringPulse }, uGrow: { value: this.ringGrow }, uStrength: this.ringStrength, uSpent: { value: 1 }, uDrift: { value: 0 } }); // (spent behind its own pulse, as the route behind the wave's: Ed, 2026-10-07)
-    if (map) this.build(this.ringSet.geo, [new THREE.Vector3(1, 0.7, 0.42), new THREE.Vector3(1, 0.7, 0.42)], [bootPath(map).path]);
+    // One line (Ed, 2026-10-29: "merging the lines"): the boot ring is its first link, from the treehouse's front round the home ring
+    // (rules/bootRing.ts), the route's links after it from where the lap ends; one geometry, one set of uniforms, one spark. (Before:
+    // a set, a sparkler and uniforms of its own, and the route's first link cut where it entered and left the ring.)
+    this.cur = this.makeSet();
+    this.ringLinks = map ? 1 : 0; this.ringLinksU.value = this.ringLinks;
+    if (map) this.build(this.cur.geo, [RING_COLOUR, RING_COLOUR], [bootPath(map).path]); // (the ring alone till the route is worked out)
     const mpp = this.u.uMpp.value as number;
     this.sparkler = new Sparkler(SPRITE_UNIFORMS.uRes, mpp, SPARK_SIZE);
-    this.ringSparkler = new Sparkler(SPRITE_UNIFORMS.uRes, mpp);
     this.mpp = mpp;
-    this.meshes = [...this.cur.meshes, ...this.ringSet.meshes, ...this.sparkler.meshes, ...this.ringSparkler.meshes];
+    this.meshes = [...this.cur.meshes, ...this.sparkler.meshes];
   }
+  /** The boot ring's links at the line's start: 1 with a map (the chain leaving home), else 0 (a bare chain: tools, tests). The
+   *  rules' links along the route (from where the lap ends) are this many further along the line as drawn. */
+  private ringLinks = 0;
+  private ringLinksU = { value: 0 };
+  /** How strong the ring's link is drawn (ring()): 1 while home boots up, RING_AFTER after, 0 before the party spell. */
+  private ringK = { value: 1 };
 
   /** Let go of its lines' and sparklers' geometries and materials (the victory lap's too, if made); a route being worked out is dropped. */
   dispose(): void { freeObjects(this.meshes); this.pending = null; }
@@ -359,65 +363,65 @@ export class LeyLines {
   /** The line's brightness times k (the mood's leyBright). */
   scale(k: number): void { this.u.uBright.value = this.T.brightness * BRIGHT * k; }
 
-  /** The wave's pulse on the current link: how far it's got (0-1), or null for none (leyPulse). */
-  /** `head` false: lit only to there, with no pulse drawn (the boot: the wave's pulse waits at the treehouse, so the line the
-   *  boot branches off is drawn as it will be when the boot ends, the not-yet-lit sketch, its tip running out ahead). */
-  /** The victory lap's pulses (rules/win.ts winPulse, winPulseOut): their places along the route as drawn (links from home),
+  /** The victory lap's pulses (rules/win.ts winPulse, winPulseOut): their places along the route (links from home, the rules'),
    *  or null; and how far the line's lit (winLit: the outward pulse lights it as it goes), or null to leave the wave's. */
   lap(home: number | null, out: number | null = null, lit: number | null = null): void {
-    this.lapAt = home; this.lapOut = out;
-    if (lit !== null) this.u.uPulse.value.set(lit - this.current, 1);
+    this.lapAt = home === null ? null : this.ringLinks + home; this.lapOut = out === null ? null : this.ringLinks + out;
+    if (lit !== null) this.setPulse(this.ringLinks + lit);
   }
   private lapAt: number | null = null;
   private lapOut: number | null = null;
-  pulse(p: number | null, head = true): void { this.u.uPulse.value.set(p ?? 0, p === null ? 0 : 1); this.pulseHead = head; }
-  /** Where on the first link the wave's sparkler is first drawn (a share of it): where it meets the boot ring, as the ring's own
-   *  sparkler, done its lap, hands over there (Ed, 2026-10-07: "The two pulses or tips don't join correctly at the top of the
-   *  speaker circle"); on the way down to the ring from the treehouse it isn't drawn (that's the ring's line). */
-  private pulseFrom = 0;
-  private pulseHead = true;
-  /** How far the line is drawn, in links along the route from its start (leyReveal), or null for all of it. */
-  grow(links: number | null): void { this.u.uGrow.value.set(links ?? 0, links === null ? 0 : 1, this.branchAt?.share ?? 0); this.growTo = links; }
-  /** Where the first link leaves the boot ring (leyReveal), once the line is routed; null before. */
-  branch(): LeyBranch | null { return this.branchAt; }
-  private branchAt: LeyBranch | null = null;
+  /** The pulse along the line: the wave's on the current link (`route`: how far it's got, 0-1, rules/leypulse.ts; null for none)
+   *  or, while home boots up, the boot's (`boot`: its share of the boot path, rules/bootRing.ts bootPulseAt; null after). One
+   *  spark: the boot's runs the ring's link and the wave's takes over where the lap ends. */
+  pulse(route: number | null, boot: number | null = null): void {
+    this.setPulse(boot !== null && this.ringLinks > 0 ? boot * this.ringLinks : route !== null ? this.ringLinks + this.current + route : null);
+  }
+  /** The pulse at `links` along the line as drawn (null: none): the shader's link and share, and where the spark is drawn (front()). */
+  private setPulse(links: number | null): void {
+    this.pulseAt = links;
+    const k = links === null ? this.ringLinks + this.current : Math.min(Math.max(0, this.drawn.length - 1), Math.floor(links));
+    this.cur.current.value = k; this.u.uPulse.value.set(links === null ? 0 : links - k, links === null ? 0 : 1);
+  }
+  private pulseAt: number | null = null;
+  /** How far the line is drawn: `route` links along the route from where the lap ends (leyReveal; null for all of it), and, while
+   *  the tip is still on the ring, `boot` its share of the boot path (rules/bootRing.ts bootLineAt). */
+  grow(route: number | null, boot = 0): void {
+    this.growTo = route === null ? null : route > 0 ? this.ringLinks + route : Math.min(1, Math.max(0, boot)) * this.ringLinks;
+    this.u.uGrow.value.set(this.growTo ?? 0, this.growTo === null ? 0 : 1);
+  }
+  /** How far (m) the route's first link runs on round the ring from the lap's end before it leaves (rules/departure.ts): there the
+   *  one line lies over itself, and the ring's dots give way to the route's (dotLines). */
+  private routeOnRing = 0;
 
-  /** The boot's ring (rules/bootRing.ts; Ed, 2026-10-06): one path from the treehouse's front round the home ring, its
-   *  own pulse and reveal (shares of the path), drawn while the boot runs and faint round the speakers after. */
-  private ringSet: LeySet;
-  private ringPulse = new THREE.Vector2();
-  private ringGrow = new THREE.Vector3();
-  /** The ring: its pulse (a share of the path, or null for none), how far it's drawn (a share), its strength (0 hides it). */
-  ring(pulse: number | null, line: number, strength: number, colour?: THREE.Vector3): void {
-    // (With no pulse, the boot done, all of it spent: its fuse burnt round; before the spell it isn't drawn.)
-    this.ringPulse.set(pulse ?? 9, 1); this.ringGrow.set(line, 1); this.ringStrength.value = strength;
-    for (const m of this.ringSet.meshes) m.visible = this.T.on && strength > 0.001 && line > 0;
-    if (colour && !this.ringColoured) { this.ringColoured = true; const a = this.ringSet.geo.getAttribute("aCol") as THREE.BufferAttribute | undefined; if (a) { for (let i = 0; i < a.count; i++) a.setXYZ(i, colour.x, colour.y, colour.z); a.needsUpdate = true; } for (const L of this.ringDrawn) { L.from = colour.clone(); L.to = colour.clone(); } }
-    this.ringLive = this.T.on && strength > 0.001 && line > 0 ? { pulse, line, strength } : null;
+  /** The boot ring's link (rules/bootRing.ts; Ed, 2026-10-06): how strong it's drawn (1 while home boots up, RING_AFTER once the
+   *  boot's over, faint round the speakers; 0 before the party spell: nothing of it) and, once, the colour its spark takes. */
+  ring(strength: number, colour?: THREE.Vector3): void {
+    this.ringK.value = Math.max(0, strength);
+    if (colour && !this.ringColoured && this.ringLinks > 0) { this.ringColoured = true; this.ringColour.copy(colour); const L = this.drawn[0]; if (L) { L.from = this.ringColour; L.to = this.ringColour; } }
   }
   private ringColoured = false;
-  /** The ring while it's drawn: its pulse and how far it's drawn (shares of its path), its strength; null when not. */
-  private ringLive: { pulse: number | null; line: number; strength: number } | null = null;
-  private ringDrawn: DrawnLink[] = [];
+  private ringColour = RING_COLOUR.clone();
   /** Where she is, each frame: the line shows through the trees only near her. */
   near(x: number, z: number): void { this.u.uNear.value.set(x, z, NEAR); }
-  private ringStrength = { value: 1 };
 
-  private makeSet(extra: Record<string, THREE.IUniform> = {}): LeySet {
+  private makeSet(): LeySet {
     const geo = new THREE.BufferGeometry(), current = { value: 0 };
     // The line where it's in view; the same line where the trees hide it (behind what's drawn, where that is scenery:
     // its stencil mark, sprites.ts), so it shows along its whole length, at the same brightness, but never over the witch,
     // a creature or a hill; and, from the treetops, its wide glow through the crowns.
     const make = (glow: boolean, order: number, through = false) => {
       const m = new THREE.Mesh(geo, new THREE.ShaderMaterial({
-        vertexShader: VERT, fragmentShader: FRAG, uniforms: { ...this.u, uGlowPass: { value: glow ? 1 : 0 }, uThrough: { value: through ? 1 : 0 }, uCurrent: current, uStrength: { value: 1 }, uSpent: { value: 1 }, uDrift: { value: 1 }, uRainbow: { value: 0 }, ...extra },
+        vertexShader: VERT, fragmentShader: FRAG, uniforms: { ...this.u, uGlowPass: { value: glow ? 1 : 0 }, uThrough: { value: through ? 1 : 0 }, uCurrent: current, uStrength: { value: 1 }, uSpent: { value: 1 }, uRainbow: { value: 1 } },
         transparent: true, depthWrite: false, depthTest: !glow, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
         ...(through ? { depthFunc: THREE.GreaterDepth, stencilWrite: true, stencilRef: 1, stencilFunc: THREE.EqualStencilFunc, stencilFail: THREE.KeepStencilOp, stencilZFail: THREE.KeepStencilOp, stencilZPass: THREE.KeepStencilOp } : {}),
       }));
       m.frustumCulled = false; m.renderOrder = order; m.visible = false;
       return m;
     };
-    return { geo, meshes: [make(false, 13), make(false, 13, true), make(true, 14)], current };
+    // (The two ground passes draw nothing in the rainbow, the line being dots: kept, never shown.)
+    const glow = make(true, 14);
+    return { geo, meshes: [make(false, 13), make(false, 13, true), glow], glow, current };
   }
 
   /** chain: the stones in wave order and which is the last reached (rules/leylines.ts leyChain);
@@ -429,7 +433,7 @@ export class LeyLines {
       // on along it: no new routes, the sections just brighten and dim to their new places.
       if (!this.pending && was.length === c.stones.length && c.stones.every((s, i) => s.cell[0] === was[i].cell[0] && s.cell[1] === was[i].cell[1])) {
         if (c.current !== this.current) this.shiftFrom = time;
-        this.key = key; this.current = c.current; this.cur.current.value = c.current;
+        this.key = key; this.current = c.current;
       } else this.pending = { key, chain: c.stones, current: c.current, colours: c.stones.map(colourOf), job: this.routeAll(c.stones), routes: null };
     }
     // Route links for up to ROUTE_MS a frame (each kept from meeting those before it), a taming step at a time (a whole link
@@ -440,16 +444,17 @@ export class LeyLines {
       if (P.routes) {
         const was = this.chain[this.current + 1];
         if (was && P.chain[P.current] && P.chain[P.current].cell.join() === was.cell.join()) this.shiftFrom = time; // (moved on)
-        this.build(this.cur.geo, P.colours, P.routes);
+        // (The boot ring's link first, when the line leaves home; a chain off the route, none.)
+        const ring = this.map && P.chain[0]?.depart ? 1 : 0;
+        this.ringLinks = ring; this.ringLinksU.value = ring;
+        this.build(this.cur.geo, ring ? [this.ringColour, ...P.colours] : P.colours, ring ? [bootPath(this.map!).path, ...P.routes] : P.routes); // (a colour a stone, the ring's before home's: the ring's link runs ring to home)
         this.routes = P.routes;
-        this.branchAt = this.map && P.chain[0]?.depart ? leaveRing(this.map, P.routes[0]) : null;
-        this.pulseFrom = this.map && P.chain[0]?.depart ? enterRing(this.map, P.routes[0]) : 0;
-        this.cur.current.value = P.current;
+        this.routeOnRing = ring ? onRingMetres(this.map!, P.routes[0]) : 0;
         this.key = P.key; this.chain = P.chain; this.current = P.current; this.pending = null;
       }
     }
-    const on = this.T.on && this.chain.length > 1;
-    for (const m of this.cur.meshes) m.visible = on;
+    const on = this.T.on && this.drawn.length > 0;
+    for (const m of this.cur.meshes) m.visible = on && m === this.cur.glow; // (only the glow draws: the line is dots)
     this.u.uLift.value = lift;
     this.u.uShift.value = Math.max(0, 1 - (time - this.shiftFrom) / 1.5);
   }
@@ -541,7 +546,7 @@ export class LeyLines {
     // points (8 m apart, a straight ribbon between them sank into every crest: Ed, "I don't think I can see it along its whole length").
     routes = routes.map(pts => fine(pts, FINE));
     const pos: number[] = [], dir: number[] = [], side: number[] = [], s: number[] = [], tt: number[] = [], link: number[] = [], len: number[] = [], col: number[] = [], run: number[] = [], idx: number[] = [];
-    let before = 0; // (metres along the route to this link's start)
+    let before = 0; // (metres along the line to this link's start)
     const drawn: DrawnLink[] = [];
     routes.forEach((pts, k) => {
       const ca = colours[k], cb = colours[k + 1], lens = [0];
@@ -570,7 +575,7 @@ export class LeyLines {
     g.setAttribute("aCol", new THREE.Float32BufferAttribute(col, 3));
     g.setAttribute("aRun", new THREE.Float32BufferAttribute(run, 1));
     g.setIndex(idx);
-    if (g === this.cur.geo) this.drawn = drawn; else this.ringDrawn = drawn;
+    this.drawn = drawn;
   }
 
   /** The line's links as drawn (each its points, their distances along it, its length, and its two stones' colours). */
@@ -579,10 +584,9 @@ export class LeyLines {
   private growTo: number | null = null;
   /** (No head at its front, nor the boot ring's: Ed, 2026-10-07, "It can just be the leyline finishing plainly". The shader
    *  rounds the end.) */
-  /** The wave's pulse: a sparkler's burning tip (render/sparkler.ts); and the boot's, round the ring, the same (Ed, 2026-10-07:
-   *  "The boot leyline pulse does not have the sparkler pulse"). */
+  /** The pulse: a sparkler's burning tip (render/sparkler.ts), the boot's round the ring then the wave's on along the route, one
+   *  spark (Ed, 2026-10-07: "The boot leyline pulse does not have the sparkler pulse"; 2026-10-29: one line). */
   private sparkler: Sparkler;
-  private ringSparkler: Sparkler;
   /** The victory lap's outward pulse (rules/win.ts winPulseOut), the same: made as the lap first needs it, its meshes handed to
    *  `addMeshes` (the view's scene), so nothing before a win changes (three.js breaks ties in its draw order by object id). */
   private outSparkler: Sparkler | null = null;
@@ -592,69 +596,102 @@ export class LeyLines {
   private tipPoints: LeyTip[] = this.tipColours.map(colour => ({ x: 0, z: 0, colour, links: 0 }));
   /** The front as last drawn (for tools), or null. */
   tip: LeyTip | null = null;
-  /** Where the wave's sparkler was last drawn (front()), or null with none: the HUD's wave pointer points here, so the two
-   *  always agree (on the first link it starts where the line meets the boot ring, pulseFrom, not at the treehouse). */
+  /** Where the sparkler was last drawn (front()), or null with none: the HUD's wave pointer points here, so the two always
+   *  agree (its `links` along the line as drawn: the ring's link first). */
   pulseTip: LeyTip | null = null;
 
   /** Each frame after grow(): the front of the line, where it's drawn to (none with the whole line drawn, or none yet: for
    *  tools; nothing's drawn there), and the pulses' sparklers. strength: how far it's faded (the party's over). */
   front(time: number, _beats: number, strength = 1): LeyTip | null {
-    const g = this.growTo, D = this.drawn, on = this.T.on, P = this.u.uPulse.value;
+    const g = this.growTo, D = this.drawn, on = this.T.on, at = this.pulseAt;
     // The front of the line (none drawn while it's all shown), and its pulse (lighting it as it passes).
     const tip = on && g !== null && g > 0 && g < D.length ? this.pointAt(D, g, time, 0) : null;
-    const at = this.current + (this.current === 0 ? this.pulseFrom + (1 - this.pulseFrom) * Math.min(1, P.x) + Math.max(0, P.x - 1) : P.x); // (the first link timed from the ring: rules/pulseRoute.ts departureFromRing)
-    const pulse = this.lapAt !== null ? this.pointAt(D, Math.max(0, Math.min(D.length, this.lapAt)), time, 1) : on && this.pulseHead && P.y > 0.5 && g !== null ? this.pointAt(D, Math.min(g, at), time, 1) : null; // (the victory lap's runs home along the whole route: rules/win.ts)
-    // The boot's ring: its pulse, while it boots.
-    const R = this.ringLive, ringOn = !!R && R.pulse !== null;
-    const ringPulse = ringOn ? this.pointAt(this.ringDrawn, R!.pulse!, time, 3) : null;
-    const ringK = strength * (R?.strength ?? 0);
+    // (The spark: the victory lap's runs home along the whole route, rules/win.ts; else the pulse's, never past the front, and none
+    // while nothing's drawn, the spell cast but she still at her decks; with the whole line shown, the Route-seer hat's, still.)
+    const pulse = this.lapAt !== null ? this.pointAt(D, Math.max(0, Math.min(D.length, this.lapAt)), time, 1) : on && at !== null && (g === null || g > 0) ? this.pointAt(D, g !== null ? Math.min(g, at) : at, time, 1) : null;
     const outPulse = this.lapOut !== null ? this.pointAt(D, Math.max(0, Math.min(D.length, this.lapOut)), time, 5) : null;
     if (outPulse && !this.outSparkler) { this.outSparkler = new Sparkler(SPRITE_UNIFORMS.uRes, this.mpp, SPARK_SIZE); this.meshes.push(...this.outSparkler.meshes); this.addMeshes(this.outSparkler.meshes); }
-    this.sparkler.update(pulse, time, strength); this.ringSparkler.update(ringPulse, time, ringK); this.outSparkler?.update(outPulse, time, strength);
+    // (The ring's link's spark as strong as the ring: faint with it once the boot's over, though the wave's pulse is never there then.)
+    this.sparkler.update(pulse, time, strength * (pulse && pulse.links < this.ringLinks ? this.ringK.value : 1)); this.outSparkler?.update(outPulse, time, strength);
     this.tip = tip; this.pulseTip = pulse;
     return tip;
   }
 
-  /** Where the route's spark is (links along the route as drawn), or null with none (front() sets it each frame). */
+  /** Where the spark is (links along the line as drawn, the ring's link first), or null with none (front() sets it each frame). */
   sparkLinks(): number | null { return this.T.on && this.pulseTip ? this.pulseTip.links : null; }
-  /** How far the line is drawn (links), or null for all of it (grow()). */
+  /** How far the line is drawn (links along it as drawn, the ring's link first), or null for all of it (grow()). */
   drawnTo(): number | null { return this.growTo; }
-  /** Metres along the route as drawn to `links` along it (the rainbow's hue runs by it: RAINBOW_M). */
+  /** Metres along the line as drawn (the boot ring, then the route) to `links` along the route (the rules': from where the lap ends;
+   *  the rainbow's hue runs by it: RAINBOW_M). */
   runAt(links: number): number {
+    links += this.ringLinks;
     const D = this.drawn, k = Math.max(0, Math.min(D.length - 1, Math.floor(links)));
     let m = 0;
     for (let i = 0; i < k; i++) m += D[i].total;
     return D.length ? m + Math.max(0, Math.min(1, links - k)) * D[k].total : 0;
   }
-  /** The point `links` along the route as drawn (its slow drift too), into `out`; null before it's routed. */
-  placeAt(links: number, time: number, out: { x: number; z: number }): { x: number; z: number } | null {
-    const D = this.drawn;
+  /** The point `links` along the route (the rules': from where the lap ends) as drawn (its slow drift too), into `out`; null before
+   *  it's routed. */
+  placeAt(links: number, time: number, out: { x: number; z: number }): { x: number; z: number } | null { return this.placeOn(this.drawn, links + this.ringLinks, time, out); }
+  /** The point `links` along the line as drawn (the ring's link first: no drift there, it runs through the stones), into `out`. */
+  private placeOn(D: DrawnLink[], links: number, time: number, out: { x: number; z: number }): { x: number; z: number } | null {
     if (!D.length || !(links >= 0)) return null;
     const k = Math.min(D.length - 1, Math.floor(links)), L = D[k], f = Math.max(0, Math.min(1, links - k)), want = f * L.total;
     let lo = 1, hi = L.lens.length - 1;
     while (lo < hi) { const mid = (lo + hi) >> 1; if (L.lens[mid] < want) lo = mid + 1; else hi = mid; } // (binary: a long link has hundreds of points)
     const a = L.pts[lo - 1], b = L.pts[lo], seg = L.lens[lo] - L.lens[lo - 1] || 1, u = (want - L.lens[lo - 1]) / seg;
-    const dx = b[0] - a[0], dz = b[1] - a[1], dl = Math.hypot(dx, dz) || 1, d = leyDrift(want, f, k, time);
+    const dx = b[0] - a[0], dz = b[1] - a[1], dl = Math.hypot(dx, dz) || 1, d = k < this.ringLinks ? 0 : leyDrift(want, f, k, time);
     out.x = a[0] + dx * u + (-dz / dl) * d; out.z = a[1] + dz * u + (dx / dl) * d;
     return out;
   }
   /** The route as drawn, a point every `spacing` metres from its start (each its place in links, and its metres along the route
    *  for the rainbow's hue), worked out again only when the route is (the analyser bars behind the spark: render/leash/rainbow.ts). */
-  barsAlong(spacing: number): { links: Float32Array; run: Float32Array } {
-    if (this.barsFor !== this.drawn || this.barsGap !== spacing) {
+  barsAlong(spacing: number): Bars { return this.barsOn(this.drawn, spacing, this.lineBars); }
+  private barsOn(D: DrawnLink[], spacing: number, c: BarsCache): Bars {
+    if (c.on !== D || c.gap !== spacing) {
       const links: number[] = [], run: number[] = [];
       let before = 0;
-      this.drawn.forEach((L, k) => {
+      D.forEach((L, k) => {
         for (let m = (spacing - (before % spacing)) % spacing; m < L.total; m += spacing) { links.push(k + m / L.total); run.push(before + m); }
         before += L.total;
       });
-      this.bars = { links: Float32Array.from(links), run: Float32Array.from(run) }; this.barsFor = this.drawn; this.barsGap = spacing;
+      c.bars = { links: Float32Array.from(links), run: Float32Array.from(run) }; c.on = D; c.gap = spacing;
     }
-    return this.bars;
+    return c.bars;
   }
-  private bars = { links: new Float32Array(0), run: new Float32Array(0) };
-  private barsFor: DrawnLink[] | null = null;
-  private barsGap = 0;
+  private lineBars: BarsCache = { on: null, gap: 0, bars: { links: new Float32Array(0), run: new Float32Array(0) } };
+
+  /** The ley line as dots (Ed, 2026-10-29: "The leyline should be dots instead of a line (like the analyser but only one dot tall)";
+   *  render/leash/rainbow.ts draws them): the one line as it stands this frame (after front()), the same object filled in place each
+   *  call, the shader's own reading of its uniforms, so what the overlay draws can't disagree with it (the boot's own look was left
+   *  to the shader when the route went to dots, #1436: the route showed no dots till the wave's spark was drawn, the ring none at
+   *  all): its points every `spacing` m as drawn from the treehouse's front (the boot ring's link, then the route's), as far as it's
+   *  drawn (all of it, the Route-seer hat's); its spark where that's drawn (front()), else where the shader has it (the wave's pulse
+   *  on its link; none at all with the waves off: all of it lit, the analyser the whole way, as the shader's lit line was); behind
+   *  the spark the analyser's bars stand, ahead of it single dots; `strength` 0 means not drawn; the ring's link (`ringLinks`) drawn
+   *  `ringK` as strong (faint once the boot's over); and where the route runs on round the ring from the lap's end (the line over
+   *  itself, its hue there the route's, a lap further on), the ring's dots hidden as far as the route is drawn over them (`hide`). */
+  dotLines(spacing: number): readonly DotLine[] {
+    const P = this.u.uPulse.value, on = this.T.on, L = this.dotLine;
+    L.bars = this.barsOn(this.drawn, spacing, this.lineBars);
+    L.from = 0; L.to = this.growTo ?? Infinity;
+    L.spark = this.pulseTip ? this.pulseTip.links : P.y > 0.5 ? this.cur.current.value + P.x : Infinity;
+    L.strength = on && this.drawn.length > 0 && L.to > 0 ? 1 : 0;
+    L.ringLinks = this.ringLinks; L.ringK = this.ringK.value;
+    L.hide[0] = L.hide[1] = 0;
+    if (L.strength > 0 && this.map && this.ringLinks > 0 && this.routeOnRing > 0 && L.to > 1 && this.drawn.length > 1) {
+      // The line over itself, round the ring from the lap's end: the ring's bars stand while the spark is still on the ring (the
+      // boot's, the stones turning behind it: Ed's "spectrum as it went round the circle"), the route's dots over them hidden as far
+      // as they're drawn; the boot over, the route's (the wave's spark runs that stretch: bars behind it, dots ahead) and the ring's
+      // under them hidden.
+      const Q = bootPath(this.map), drawn = L.to === Infinity ? Infinity : this.runAt(L.to - this.ringLinks) - Q.length, on = Math.min(this.routeOnRing, drawn);
+      if (P.y > 0.5 && this.cur.current.value < this.ringLinks) { L.hide[0] = this.ringLinks; L.hide[1] = this.ringLinks + on / this.drawn[this.ringLinks].total; }
+      else { L.hide[0] = Q.ringFrom / Q.length; L.hide[1] = (Q.ringFrom + on) / Q.length; }
+    }
+    return this.dots;
+  }
+  private dotLine: DotLine = { bars: this.lineBars.bars, from: 0, to: 0, spark: Infinity, strength: 0, ringLinks: 0, ringK: 1, hide: [0, 0], place: (links, time, out) => this.placeOn(this.drawn, links, time, out) };
+  private dots: readonly DotLine[] = [this.dotLine];
 
   /** The point `links` along drawn links D (on the line as the shader draws it, its slow sideways drift too), its colour toward
    *  the next stone's as it nears it; a pulse's, whiter. */
@@ -664,7 +701,7 @@ export class LeyLines {
     let i = 1;
     while (i < L.lens.length - 1 && L.lens[i] < want) i++;
     const a = L.pts[i - 1], b = L.pts[i], seg = L.lens[i] - L.lens[i - 1] || 1, u = (want - L.lens[i - 1]) / seg;
-    const dx = b[0] - a[0], dz = b[1] - a[1], dl = Math.hypot(dx, dz) || 1, d = slot === 2 || slot === 3 ? 0 : leyDrift(want, f, k, time); // (the boot ring's slots: no drift)
+    const dx = b[0] - a[0], dz = b[1] - a[1], dl = Math.hypot(dx, dz) || 1, d = k < this.ringLinks ? 0 : leyDrift(want, f, k, time); // (the boot ring's link: no drift)
     const c = this.tipColours[slot].copy(L.from).lerp(L.to, 0.4 + 0.6 * f);
     if (slot % 2 === 1) c.lerp(WHITE, 0.35);
     const tip = this.tipPoints[slot]; // (one each, filled in place: nothing allocated a frame)
@@ -675,39 +712,34 @@ export class LeyLines {
 
 const WHITE = new THREE.Vector3(1, 1, 1);
 
+/** A line's points every so many metres as drawn: each its place along the line (the route's in links, the ring's a share of its
+ *  path) and its metres along it from its start (the rainbow's hue runs by it: RAINBOW_M). */
+export interface Bars { links: Float32Array; run: Float32Array }
+interface BarsCache { on: DrawnLink[] | null; gap: number; bars: Bars }
+/** The ley line as dots (LeyLines.dotLines): its points (`bars`), the stretch of it drawn (`from` to `to`, in links as drawn), where
+ *  its spark is (`spark`: the analyser's bars behind it, single dots ahead; Infinity, all bars), how strong it's drawn (0: not at
+ *  all), the boot ring's links at its start and how strong they're drawn, a stretch not drawn (the line over itself), and the point
+ *  at a place along it as drawn. */
+export interface DotLine { bars: Bars; from: number; to: number; spark: number; strength: number; ringLinks: number; ringK: number; /** a stretch of it (links) not drawn: the line's own later dots lie over it */ hide: [number, number]; place: (links: number, time: number, out: { x: number; z: number }) => { x: number; z: number } | null }
+
+/** How far (m) a link from the treehouse runs on round the boot ring (the speakers' circle) from its start before it leaves it. */
+function onRingMetres(map: ForestMap, link: readonly (readonly [number, number])[] | undefined): number {
+  if (!link || link.length < 2) return 0;
+  const d = map.dancefloor, rho = speakerCircle(map);
+  let m = 0;
+  for (let i = 1; i < link.length; i++) {
+    if (Math.hypot(link[i][0] - d.x, link[i][1] - d.z) > rho + 1) return m;
+    m += Math.hypot(link[i][0] - link[i - 1][0], link[i][1] - link[i - 1][1]);
+  }
+  return m;
+}
+
 
 /** A drawn link: its points, the distance along it to each, its length, and its stones' colours. */
 interface DrawnLink { pts: [number, number][]; lens: number[]; total: number; from: THREE.Vector3; to: THREE.Vector3 }
 
-/** The line's slow sideways drift (m) at s metres along link k, t of the way along it, as the vertex shader has it. */
+/** The line's slow sideways drift (m) at s metres along link k, t of the way along it, as the vertex shader has it (none on the boot
+ *  ring's link: the caller's). */
 export function leyDrift(s: number, t: number, k: number, time: number): number {
   return (Math.sin(s * 0.11 + time * 0.6 + k * 1.7) * 0.6 + Math.sin(s * 0.037 - time * 0.23) * 1.2) * Math.sin(Math.PI * t);
-}
-
-/** Where a link from the treehouse leaves the boot ring (rules/bootRing.ts: the first link runs on the ring's circle from the
- *  treehouse, then off it): the last of its points still on the circle, as a share of the link and as the boot pulse's
- *  distance along its path there. */
-/** Where the first link, on its way down from the treehouse, first meets the boot ring: a share of it (0 if it never does). */
-function enterRing(map: ForestMap, link: readonly (readonly [number, number])[] | undefined): number {
-  if (!link || link.length < 2) return 0;
-  const d = map.dancefloor, rho = ringRadius(map);
-  let total = 0, upTo = -1;
-  for (let i = 1; i < link.length; i++) {
-    total += Math.hypot(link[i][0] - link[i - 1][0], link[i][1] - link[i - 1][1]);
-    if (upTo < 0 && Math.hypot(link[i][0] - d.x, link[i][1] - d.z) <= rho + 0.5) upTo = total;
-  }
-  return total > 0 && upTo >= 0 ? upTo / total : 0;
-}
-
-function leaveRing(map: ForestMap, link: readonly (readonly [number, number])[] | undefined): LeyBranch | null {
-  if (!link || link.length < 2) return null;
-  const d = map.dancefloor, rho = ringRadius(map), on = (q: readonly [number, number]) => Math.hypot(q[0] - d.x, q[1] - d.z) <= rho + 1;
-  // (Its stretch on the ring, from where it first comes on to it, down from the treehouse's front, to where it leaves.)
-  let total = 0, upTo = 0, at = 0, entered = on(link[0]), left = false;
-  for (let i = 1; i < link.length; i++) {
-    total += Math.hypot(link[i][0] - link[i - 1][0], link[i][1] - link[i - 1][1]);
-    if (left) continue;
-    if (on(link[i])) { entered = true; at = i; upTo = total; } else if (entered) left = true;
-  }
-  return { share: total > 0 ? upTo / total : 0, at: ringAlong(map, link[at][0], link[at][1]) };
 }

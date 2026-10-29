@@ -1,0 +1,5 @@
+{
+  "reason": "a species' shot at her flies dodge.b.range times as far, as far as it may be fired from, and none is fired from beyond its bolt's reach (Ed's playtest, 2026-10-29: \"ranged weapons from creatures that I encountered seem to have a very short range\"); the screen shake on her clock, a bout capped (render/shake.ts)",
+  "frames": { "wave-fight": "where shooters stand and how far their shots fly" },
+  "rules": { "*": "the fights play out differently: which shots reach her, where shooters stand; creatures' health, the witch's, the combat state and its spells" }
+}

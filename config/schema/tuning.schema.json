@@ -2113,6 +2113,11 @@
       "minimum": 0,
       "description": "See setPieceFootprint."
     },
+    "stoneKeepClear": {
+      "type": "number",
+      "minimum": 0,
+      "description": "The keep-clear zone round each area's stone (its great stump, or its runestone with the stumps off), in metres from its middle."
+    },
     "treeMarginFromSoundsystem": {
       "type": "number",
       "minimum": 0,
@@ -10094,6 +10099,10 @@
             "speed": {
               "type": "number",
               "minimum": 0
+            },
+            "maxSecs": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -10103,7 +10112,8 @@
             "decay",
             "maxOffsetPx",
             "maxRotDeg",
-            "speed"
+            "speed",
+            "maxSecs"
           ],
           "additionalProperties": false,
           "description": "The screen shakes when she's hit, harder for each hit she was already missing and hardest on a knockdown."
@@ -13568,6 +13578,7 @@
     "setPieceFootprint",
     "soundsystemFootprint",
     "reserveMargin",
+    "stoneKeepClear",
     "treeMarginFromSoundsystem",
     "treeDensity",
     "leafJitter",
