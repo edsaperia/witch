@@ -20,7 +20,7 @@ import type { LeashView } from "../leash";
 import { SPRITE_UNIFORMS } from "../sprites";
 import { groundHeight } from "../height";
 import { SLOT, SLOTS } from "./glyphs";
-import { drawEmbers, legendShine, rankColour, rankKnobs, rankSize, standScale, stoneKnobs } from "./ranks";
+import { asleepLegend, drawEmbers, legendShine, rankColour, rankKnobs, rankSize, sigilRankColour, standScale, stoneKnobs } from "./ranks";
 
 /** Each stacked sigil's side as last drawn, and when it last turned (won over: Ed, 2026-10-29); its size times a pop as it flips to
  *  the friends' colour, swelling and settling over a third of a second (no flash: it's the colour that turns). */
@@ -86,7 +86,7 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
   if (!t.leash.ranks?.on) return;
   const sizeOf = (lvl: number) => (2 + 2 * 0.4) * S.scale * rankSize(t, lvl) * standScale(t), notes = notesSlot(lv);
   const sigil = (id: number, level: number, x: number, y: number, z: number, size: number, alpha: number, c: [number, number, number]) => {
-    const sp = g.creatures[id]?.species ?? "fox", uv = lv.uv(lv.bareSlot(sp)), sh = lv.shadeOf(uv);
+    const sp = g.creatures[id]?.species ?? "fox", uv = lv.uv(lv.bareSlot(sp, level >= 3)), sh = lv.shadeOf(uv);
     if (sh) lv.stackBack.add(x, y, z, size, sh, 0.02, 0.02, 0.035, (S.backing ?? 0.6) * alpha);
     lv.stackGlyphs.add(x, y, z, size, uv, c[0], c[1], c[2], alpha, 1, false, legendShine(level, time, id)); // (a legend's shiny: ranks.ts)
     if (alpha > 0.5) drawEmbers(lv.stackGlyphs, dot, lv.glyphPts.get(`${uv[0]},${uv[1]}`) ?? [], x, y, z, size, false, level, c, time, id * 7 + 3, RK.embers, RK.embers.stack);
@@ -105,7 +105,7 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
     V.last.set(st.key, { x: st.x, z: st.z, top: st.top, items: items.map((it, i) => ({ ...it, y: P[i].y, size: P[i].size })) });
     // The column: the friends above the enemies, each side legend lowest, babies on top (stoneStack's order, bottom first).
     const vis = smooth((K.range - Math.hypot(st.x - w.x, st.z - w.z)) / Math.max(1, K.fade));
-    if (vis > 0.01) items.forEach((it, i) => { const h = st.top + P[i].y; sigil(it.id, it.level, st.x, upY(st.x, st.z, h), upZ(st.z, h), P[i].size * flipPop(it.id, it.friend, time), vis, rankColour(t, it.level, it.friend)); });
+    if (vis > 0.01) items.forEach((it, i) => { const h = st.top + P[i].y; sigil(it.id, it.level, st.x, upY(st.x, st.z, h), upZ(st.z, h), P[i].size * flipPop(it.id, it.friend, time), vis, sigilRankColour(t, it.level, it.friend, asleepLegend(g.creatures[it.id]))); });
     // The spell's spot: south of the stone, only as she comes near it, and only once it can be cast (castReady: every wild fighter
     // of its area invited; Ed, 2026-10-29).
     const { x: sx, z: sz } = castSpot(st, t), on = smooth((K.far - Math.hypot(w.x - sx, w.z - sz)) / Math.max(0.1, K.far - K.near));
@@ -137,7 +137,7 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
   for (const C of V.converted) {
     const T = (time - C.at) / K.convert, c = C.col;
     if (T < 0.3) { const f = 1 - T / 0.3; lv.over.add(c.x, upY(c.x, c.z, c.top + 1), upZ(c.z, c.top + 1), 9 * (1.2 - f), dot, 1, 0.95, 0.85, 0.55 * f, 1, true); } // (its flare)
-    if (T < 0.35) for (const it of c.items) if (!looseIds.has(it.id)) { const h = c.top + it.y; sigil(it.id, it.level, c.x, upY(c.x, c.z, h), upZ(c.z, h), it.size, 1 - T / 0.35, rankColour(t, it.level, it.friend)); } // (the wild ones' fade)
+    if (T < 0.35) for (const it of c.items) if (!looseIds.has(it.id)) { const h = c.top + it.y; sigil(it.id, it.level, c.x, upY(c.x, c.z, h), upZ(c.z, h), it.size, 1 - T / 0.35, sigilRankColour(t, it.level, it.friend, asleepLegend(g.creatures[it.id]))); } // (the wild ones' fade)
   }
   // The loose sigils: falling, or lying on the ground to pick up.
   for (const p of g.loose ?? []) {
@@ -157,7 +157,7 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
       continue;
     }
     if (Math.abs(p.x - w.x) > K.range || Math.abs(p.z - w.z) > K.range) continue;
-    const uv = lv.uv(lv.bareSlot(cr?.species ?? "fox")), size = sigilSize(2, RUNE_SCALE) * rankSize(t, lvl) * (p.legend ? 1.25 : 1), a = (0.62 + 0.12 * Math.sin(time * 2 + p.id)) * (F?.hidden ? smooth((time - F.land) / Math.max(0.05, K.convert * 0.3)) : 1);
+    const uv = lv.uv(lv.bareSlot(cr?.species ?? "fox", lvl >= 3)), size = sigilSize(2, RUNE_SCALE) * rankSize(t, lvl) * (p.legend ? 1.25 : 1), a = (0.62 + 0.12 * Math.sin(time * 2 + p.id)) * (F?.hidden ? smooth((time - F.land) / Math.max(0.05, K.convert * 0.3)) : 1);
     lv.groundSigil(p.x, 0.03, p.z, size, uv, to[0] * 0.8, to[1] * 0.8, to[2] * 0.8, a);
     lv.flat.add(p.x, 0.015, p.z, size * 0.9, dot, to[0], to[1], to[2], 0.18 * a / 0.62); // (a glint: ready to pick up)
     drawEmbers(lv.standing, dot, lv.glyphPts.get(`${uv[0]},${uv[1]}`) ?? [], p.x, 0.02, p.z, size, true, lvl, to, time, p.id * 11 + 5, RK.embers);

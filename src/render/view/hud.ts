@@ -88,7 +88,7 @@ export function drawPointers(v: View, time: number): void {
     if (S || v.stragglerPointer) {
       const P = (v.stragglerPointer ??= new StoneIndicator(document.body, 3));
       P.fade(S ? calm : 0);
-      P.update(v.camera, cw, ch, S ? { x: S.x, z: S.z, colour: vec(S.colour), species: S.species!, sigilSize: S.sigilSize, shine: S.shine, bold: S.bold, gap: t.pins?.gap, top: S.top } : null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 1);
+      P.update(v.camera, cw, ch, S ? { x: S.x, z: S.z, colour: vec(S.colour), species: S.species!, sigilSize: S.sigilSize, shine: S.shine, bold: S.bold, crown: S.crown, gap: t.pins?.gap, top: S.top } : null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 1);
     }
     const L = partyPointer(g, v.ley.pulseTip);
     if (L || v.partyPointer) {
@@ -103,7 +103,7 @@ export function drawPointers(v: View, time: number): void {
     v.legendPointers.forEach((P, i) => {
       const T = LG[i];
       P.fade(T ? lgShown : 0);
-      P.update(v.camera, cw, ch, T && lgShown > 0 ? { x: T.x, z: T.z, colour: vec(T.colour), species: T.species!, sigilSize: T.sigilSize, shine: T.shine, bold: T.bold, gap: t.pins?.gap, top: T.top } : null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 1);
+      P.update(v.camera, cw, ch, T && lgShown > 0 ? { x: T.x, z: T.z, colour: vec(T.colour), species: T.species!, sigilSize: T.sigilSize, shine: T.shine, bold: T.bold, crown: T.crown, bare: T.bare, gap: t.pins?.gap, top: T.top } : null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 1);
     });
     // Anyone's pins (render/pins.ts: view.pin), toward their targets as the pointers are, a house object's as the house is drawn.
     const ht = g.herTime, dt = Number.isFinite(v.pinsAt) ? Math.min(0.1, Math.max(0, ht - v.pinsAt)) : 0; v.pinsAt = ht; // (on her clock: the house's time runs at a tenth)

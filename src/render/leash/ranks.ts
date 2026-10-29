@@ -81,6 +81,14 @@ export function rankColour(t: Tuning, rank: number, friend = true): [number, num
   return [c[0] / 255, c[1] / 255, c[2] / 255];
 }
 
+/** Whether a creature is a sleeping legend: its sigil is neutral, the baby's purple (Ed, 2026-10-29: "Sleeping legend sigils should
+ *  be purple, like babies, as they are neutral"), till it wakes (restless or angry, the enemy's; happy, the friend's). */
+export const asleepLegend = (c: { boss?: unknown; legendState?: string } | undefined): boolean => !!c?.boss && c.legendState === "asleep";
+/** Whether a creature's sigil wears the legend's crown (art/sigils.js LEGEND_CROWN; Ed, 2026-10-29): every legend's. */
+export const crowned = (c: Pick<Creature, "level"> & { boss?: unknown }): boolean => !!c.boss || rankOf(c) >= 3;
+/** A sigil's colour, 0 to 1: its rank's, a friend's or an enemy's, or a sleeping legend's purple (asleepLegend). */
+export const sigilRankColour = (t: Tuning, rank: number, friend: boolean, asleep: boolean): [number, number, number] => rankColour(t, asleep ? 0 : rank, friend);
+
 /** The rank's sigil size against an adult's (Ed, 2026-10-28): 0.81, 0.9, 1, and a legend 1.35 (coordinator, 2026-10-29: unmistakable). */
 export const rankSize = (t: Tuning, rank: number): number => rankKnobs(t).sizes[Math.max(0, Math.min(3, rank))] ?? 1;
 /** How much bigger a rank sigil stands in her stack and a stone's column than at its rank's size (standScale). */
