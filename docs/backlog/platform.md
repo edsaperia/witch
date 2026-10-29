@@ -74,6 +74,20 @@ Design only: **nothing here is built, and nothing is to be started without Ed's 
   - **in the treehouse**, it drops on the floor where she stood (the same rule as anywhere else), except **in her bedroom**: that room shuts when she leaves, so the hat reappears on the hats' floor in the Cloakroom.
 - **Ending the night:** only when **every witch is in bed**.
 
+## Multiplayer first, in the browser (Ed, 2026-10-29)
+
+Ed: "the game is pretty playable now ... I feel like prioritising multiplayer so that I can start doing social playtests." This changes the **Sequence** above: online co-op comes **before** the port, in the browser. **Notes only: don't build without Ed's go** ("don't build anything yet but note these answers").
+
+- **Online, not one screen:** "online, we will get a server" (for introductions and the relay; GitHub Pages can't run one).
+- **Time:** "it runs at normal speed unless all witches are in the treehouse, in which case it runs at treehouse speed." (Simpler than 2026-10-24's "every witch in a slow place: house, legend circle or pause menu". Whether a legend circle still counts is to confirm.)
+- **Pausing:** "game does not pause unless all players pause, or maybe if the host pauses. check what games normally do here." The coordinator's note: in most online co-op games a player's menus don't stop the world (Minecraft, Valheim, Don't Starve Together); some two-player games pause for both when either opens the menu (It Takes Two). Proposed: station menus and the DJ booth never pause; the world pauses only when every player is on the pause page; the host can't pause alone.
+- **The morning and the treehouse:** "guests visit the host - that's why there are guest bedrooms" (as 2026-10-24).
+- **Progress:** "all successful permanent unlocks are shared by all players."
+- **Difficulty:** no scaling with the number of witches: "the later maps and faster speeds get very hard, people will need friends to help them." (As 2026-10-24: waves run as normal.)
+- **Knocked down:** no helping each other up: "current design is fine for now."
+- **Music** (every player on the same beat) and **many animals** (the same rules run from one seed, inputs sent, occasional checks): "ok".
+- **First steps proposed (not started):** (1) groundwork testable without a network: several witches in the rules, all randomness from the night's seed, stable IDs, a saveable night; (2) a two-witch prototype online, the host's island, joined by link; (3) the telephone, three witches, joining mid-night, dropped lines, logs from every player.
+
 ## Technical-debt cleanup (before the port)
 
 - Remove dead knobs.
