@@ -78,9 +78,10 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   const stumps = !!v.markerArt.stumps; // (the great stumps: drawn below, every area's, in place of the stones)
   // (an area's stump as baked so far: its art comes as it's wanted, AssetLibrary.stumpArt; urgent: on screen soon)
   const stumpOf = (cell: readonly [number, number], urgent = false) => { const s = v.markerArt.stump(cell); if (!s) return null; const a = v.assets.stumpArt(s.spec, urgent); return a ? { spec: s.spec, flip: s.flip, atlas: a.atlas, art: a.art } : null; };
-  const topOf = (cell: readonly [number, number]) => stumps ? stumpOf(cell)?.art.height ?? 1 : v.markerArt.height(cell) * v.mpp * scale; // (m: the stone's drawn height, or the stump's cut)
-  // (a stump is a floor card standing at its near edge, render/sprites.ts asFloor: `rise` m up the card a metre toward the camera)
-  const camF = v.camera.getWorldDirection(v.v3b), camU = v.v3c.set(0, 1, 0).applyQuaternion(v.camera.quaternion), UP = SPRITE_UNIFORMS.uUp.value, rise = UP.dot(camU) / Math.max(0.2, -camF.y);
+  // (m: the stone's drawn height; on a stump, its column clear over her head as she stands on the rings' middle to cast, Ed 2026-10-29:
+  // "high enough over the centre of the stump that the witch can stand underneath and not overlap it": her drawn height and `stack` m)
+  const overHer = (v.witchTall || 2.1) + (R.stump?.stack ?? 0);
+  const topOf = (cell: readonly [number, number]) => stumps ? Math.max(stumpOf(cell)?.art.height ?? 1, overHer) : v.markerArt.height(cell) * v.mpp * scale;
   const stone = (x: number, z: number, cell: readonly [number, number], level: number, y = 0) => {
     if (stumps) return true;
     const frame = v.markerArt.atlas.frames[v.markerArt.frame(cell, level, variant(cell))];
@@ -107,7 +108,10 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
     stone(m.x, m.z, m.cell, level);
     // The beam and laser rise from the top of the stone, not from inside it.
     const top = topOf(m.cell);
-    if (ranked && d < stonesRange) v.leashView.stones.push({ key: m.key, x: m.x, z: m.z, top: stumps ? top : top * STONE_FACE }); // (its sigils over it: render/leash/stones.ts; on a stump, from its cut)
+    if (ranked && d < stonesRange) { // (its sigils over it: render/leash/stones.ts; on a stump, from its cut, and the analyser on its cut)
+      const s = stumps ? stumpOf(m.cell) : null;
+      v.leashView.stones.push({ key: m.key, x: m.x, z: m.z, top: stumps ? top : top * STONE_FACE, ...(s ? { roots: s.art.roots.map(r => r * v.mpp), flip: s.flip } : {}) });
+    }
     const A = R.awake, D = R.dormant;
     const strength = (m.awake ? (A.light + A.lightBuild * build) * (0.55 + 0.45 * beat) : D.light) * dim;
     // (the trees, props and scenery round it cast shadows from it, as from a campfire, thrown from the stone itself, not from its
@@ -152,7 +156,16 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   for (let i = 0; i < Math.min(WT.lights, WISP_LIGHTS.length); i++) { const L = WISP_LIGHTS[i]; near.push({ d: L.d, l: { x: L.x, y: L.y, z: L.z, reach: L.reach, rgb: L.rgb, strength: L.strength } }); }
   near.sort((p, q) => p.d - q.d);
   for (const n of near.slice(0, 8)) lights.push(n.l);
-  if (stumps) { // every area's stump (but home's), partified or not: each a floor anchored by its ground point, under everything standing
+  // The spell's rainbow light going round its stump as the dial fills (render/leash/stones.ts castLight: last frame's, the leash drawn
+  // after the lights are set)
+  const CL = v.leashView?.stoneView.castLight, CK = R.stump?.ring.light;
+  if (CL && CK) lights.push({ x: CL.x, y: CK.height, z: CL.z, reach: CK.reach, rgb: new THREE.Vector3(...CL.rgb), strength: CK.strength * CL.k });
+  // Every area's great stump (but home's), partified or not: a floor under everything standing, lying on the ground (render/sprites.ts
+  // `lie`: its rows away from the camera as the art's camera saw them, so its roots meet the ground at any pitch; Ed, 2026-10-29,
+  // "Stumps do not sit on the ground"), with its rings' middle on its spot: where she casts, the soundsystem stands and the analyser
+  // turns (Ed: "Music spell should be right in the centre of the stump rings"). It has no height in play: the cut is drawn at the
+  // ground's, so everything on it stands on the ground at its spot.
+  if (stumps) {
     const Rt = SPRITE_UNIFORMS.uRight.value, [hx, hy] = g.map.centreCell, lists = STUMP_LISTS;
     for (const l of lists.values()) l.length = 0;
     if (!g.map.zoo?.layout) for (const [cx, cy] of g.map.cells) {
@@ -161,11 +174,12 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
       if (d > range) continue;
       const s = stumpOf([cx, cy], d < range * 0.6);
       if (!s) continue;
-      const frame = s.atlas.frames[0], dx = (s.art.origin.x - frame.w / 2) * v.mpp * (s.flip ? -1 : 1), toward = Math.max(0, frame.h - s.art.origin.y) * v.mpp * rise;
-      const at = { x: q.x - Rt.x * dx, y: 0, z: q.z - Rt.z * dx + toward };
-      if (!inView(v, at.x, at.z, frame.w * v.mpp, frame.h * v.mpp, 6)) continue;
+      // (its near edge, the rows below the cut's middle nearer the camera, along the ground; its cut's middle on the spot)
+      const frame = s.atlas.frames[0], dx = (s.art.top.x - frame.w / 2) * v.mpp * (s.flip ? -1 : 1), toward = (frame.h - s.art.top.y) * v.mpp * s.art.depth;
+      const at = { x: q.x - Rt.x * dx - Rt.z * toward, y: groundHeight(q.x, q.z) + 0.03, z: q.z - Rt.z * dx + Rt.x * toward };
+      if (!inView(v, at.x, at.z, frame.w * v.mpp, frame.h * v.mpp * s.art.depth, 6)) continue; // (its box reaching north from its near edge over all its rows)
       const id = stumpId(s.spec); let l = lists.get(id); if (!l) lists.set(id, (l = []));
-      v.island.stumpBatch(id, s.atlas, v.mpp);
+      v.island.stumpBatch(id, s.atlas, v.mpp, s.art.depth);
       l.push({ ...at, frame, flip: s.flip, fresh: mark(v, "marker", q.x, q.z, frame.h * v.mpp) });
     }
     for (const [id, b] of v.island.stumpBatches) b.set(lists.get(id) ?? NONE);
