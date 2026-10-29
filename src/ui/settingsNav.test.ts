@@ -1,11 +1,14 @@
 // The Settings page's navigation (ui/settingsNav.ts): the pad, the keyboard and the mouse's shared moves.
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
+import { bindings } from "../platform/bindings";
 import { PadNav, firstRow, keyInput, navigate, stepChoice, stepSlider, type NavRow } from "./settingsNav";
 
 const TABS: NavRow[][] = [
   [{ id: "master", kind: "slider" }, { id: "hidden", kind: "toggle", hidden: true }, { id: "mute", kind: "toggle" }],
   [{ id: "quality", kind: "choice", options: ["auto", "high"] }, { id: "full", kind: "button" }],
 ];
+
+afterEach(() => bindings.resetAll());
 
 describe("moving", () => {
   it("moves the focus down and up, skipping hidden rows and wrapping", () => {
@@ -48,6 +51,15 @@ describe("the keyboard", () => {
 
 describe("the pad", () => {
   const press = (i: number) => Array.from({ length: 17 }, (_, k) => k === i);
+  it("ordinary menus follow remaps, while Settings keeps its fixed choose/back recovery", () => {
+    bindings.set("menu.choose", { pad: ["triangle"] });
+    bindings.set("menu.back", { pad: ["square"] });
+    expect(new PadNav().readBound(press(3), [], 0)).toEqual(["choose"]);
+    expect(new PadNav().readBound(press(2), [], 0)).toEqual(["back"]);
+    expect(new PadNav().readBound(press(0), [], 0)).toEqual([]);
+    expect(new PadNav().read(press(0), 0, 0, 0)).toEqual(["choose"]);
+    expect(new PadNav().read(press(1), 0, 0, 0)).toEqual(["back"]);
+  });
   it("✕ chooses, ○ goes back, L1/R1 the tabs, △ resets: once a press, not again while held", () => {
     const p = new PadNav();
     expect(p.read(press(0), 0, 0, 0)).toEqual(["choose"]);

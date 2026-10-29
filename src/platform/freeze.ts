@@ -14,6 +14,9 @@
 import { areaUnderWitch, STEP, stepGame, type Controls, type Game } from "../rules/game";
 import { bindings } from "./bindings";
 
+/** Start always reaches pause, even after its configurable binding is changed or cleared. */
+export const padPauseHeld = (buttons: readonly boolean[], axes: readonly number[]): boolean => !!buttons[9] || bindings.padHeld("global.pause", buttons, axes);
+
 const STILL: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 /** The pause page's own pieces: above the shield while frozen, and the only things keys and the mouse reach then (its test
  *  sliders, its Controls / What's new / Options buttons and their panel, the Music Lab, the new-build notice, the freeze's stamp). */
@@ -101,7 +104,7 @@ export class Freeze {
 
   /** The pad's pause (Options, standard button 9: platform/bindings.ts global.pause) toggles, read once a frame. */
   pollPad(): void {
-    const pad = [...(realPads?.() ?? [])].find(p => p), down = !!pad && bindings.padHeld("global.pause", pad.buttons.map(b => b.pressed), pad.axes);
+    const pad = [...(realPads?.() ?? [])].find(p => p), down = !!pad && padPauseHeld(pad.buttons.map(b => b.pressed), pad.axes);
     if (down && !this.padPrev) this.toggle();
     this.padPrev = down;
   }

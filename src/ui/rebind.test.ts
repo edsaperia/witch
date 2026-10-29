@@ -1,7 +1,7 @@
 // The Controls tab's rebinding (ui/rebind.ts) on a fresh set of bindings (platform/bindings.ts), saved to a stand-in storage.
 import { describe, expect, it } from "vitest";
 import { Bindings } from "../platform/bindings";
-import { assign, clashes, inputName, inputsOf, padIdle, padPress, withSlot } from "./rebind";
+import { assign, clashes, clearSlot, inputName, inputsOf, padIdle, padPress, withSlot } from "./rebind";
 
 const store = () => { const m = new Map<string, string>(); return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v), removeItem: (k: string) => void m.delete(k), m }; };
 
@@ -24,6 +24,35 @@ describe("slots", () => {
 });
 
 describe("clashes", () => {
+  it("cannot clear the last Choose or Back input on either device, but can remove surplus inputs", () => {
+    for (const id of ["menu.choose", "menu.back"] as const) for (const device of ["keys", "pad"] as const) {
+      const B = new Bindings(null);
+      B.set(id, device === "keys" ? { keys: ["KeyJ"], mouse: [] } : { pad: ["triangle"] });
+      const before = B.get(id);
+      expect(clearSlot(B, id, device, 0)).toBe(false);
+      expect(B.get(id)).toEqual(before);
+      B.set(id, device === "keys" ? { keys: ["KeyJ", "KeyK"] } : { pad: ["triangle", "square"] });
+      expect(clearSlot(B, id, device, 0)).toBe(true);
+      expect(inputsOf(B.get(id), device)).toHaveLength(1);
+    }
+    const B = new Bindings(null);
+    expect(clearSlot(B, "game.boost", "keys", 0)).toBe(true);
+    expect(B.get("game.boost").keys).toEqual([]);
+  });
+  it("a swap into an empty slot cannot steal the last menu recovery input or partially mutate other bindings", () => {
+    for (const id of ["menu.choose", "menu.back"] as const) {
+      const B = new Bindings(null);
+      B.set(id, { pad: ["triangle"] });
+      B.set("menu.tabNext", { pad: ["triangle"] });
+      B.set("menu.tabPrev", { pad: [] });
+      const before = B.list();
+      expect(assign(B, "menu.tabPrev", "pad", 0, "pad:triangle", "swap")).toBe(id);
+      expect(B.list()).toEqual(before);
+      expect(assign(B, "menu.tabPrev", "pad", 0, "pad:triangle", "both")).toBeNull();
+      expect(B.get(id).pad).toEqual(["triangle"]);
+      expect(B.get("menu.tabPrev").pad).toEqual(["triangle"]);
+    }
+  });
   it("finds what has the input where the action works, not across play and menus", () => {
     const B = new Bindings(null);
     expect(clashes(B, "game.boost", "key:KeyE")).toEqual(["game.use"]);

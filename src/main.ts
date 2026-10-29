@@ -14,7 +14,8 @@ import { wakeInBedroom } from "./rules/opening";
 import { endDream, startParty, startWake } from "./rules/wakeUp";
 import { wearFromStation, wornGenome } from "./rules/clothesPile";
 import { WakeCard } from "./render/wakeUp";
-import { toggleCornerPanel, closeCornerPanel } from "./ui/cornerPanel";
+import { toggleCornerPanel, closeCornerPanel, cornerPanelRoot } from "./ui/cornerPanel";
+import { MenuFocus } from "./ui/menuFocus";
 import { carryTiming, clearCarried, mark, sinceSail, timingOn, transitionTiming, watchLongTasks } from "./app/timing";
 import "./platform/tuningPreset"; // (first: ?tuning=pre-overnight writes the old balance over the config before anything reads it)
 import { FrameStats } from "./platform/frameStats";
@@ -683,6 +684,7 @@ const frameStats = new FrameStats(view.renderer.getContext());
 const ladder = new QualityLadder(gpuName(view.renderer.getContext()), params);
 // The player's Settings page (app/settingsPage.ts): its settings on the live pieces now, the page itself opened from the pause page's dev menu.
 const settingsPage = new SettingsPage({ input, shake, ladder, freeze, audio: on => sound.freeze(!on), tuning: () => N().game.tuning, version: BUILD });
+const pauseFocus = new MenuFocus();
 const rumble = new Rumble();
 // ?perf=1: the performance panel (app/perfHud.ts), always on.
 const perfHud = page.perfHud = params.get("perf") === "1" ? new PerfHud(N().game, view, frameStats) : null;
@@ -1045,6 +1047,7 @@ function frame(now: number): void {
   const raw = input.read(), openNow = chartOpen() || telescope.on || !!studio.at || !!stations.station || booth.isOpen, shutTap = !freeze.frozen && !!(raw.sigil || raw.place) && (openNow || openPrev); // (E is `place`; the pad's back, ○, and a tap `sigil`; never under the pause)
   if (shutTap) { if (booth.isOpen) booth.close(); if (stations.station) shutStation("E"); if (studio.at) studio.leave(); if (chartAt && chartOpen()) { chartAt = null; closeChart(); } } // (the telescope: its own step, below)
   const human = openNow || shutTap ? stillControls(raw) : raw;
+  telescope.device = input.device;
   if (telescope.on) { if (telescope.night !== game || game.witches[0].ko || chartOpen() || !tuning.telescope) telescope.close(); else telescope.step({ ...raw, sigil: !!(raw.sigil || raw.place) }, dt, tuning.telescope); } // (E or ○ leaves it)
   view.telescope = tuning.telescope ? telescope.look(tuning.telescope) : null;
   // The sea chart over the night (the transition review, 2026-10-19: the night ran and drew on behind it, and its art workers drew
@@ -1196,6 +1199,8 @@ function frame(now: number): void {
   shake.apply();
   freeze.update();
   settingsPage.update(now / 1000);
+  const corner = cornerPanelRoot(), pauseRoots = freeze.frozen && !settingsPage.open ? (corner ? [corner] : [document.getElementById("pause-sliders"), pauseBtns].filter((el): el is HTMLElement => !!el)) : [];
+  if (pauseFocus.update(pauseRoots, freeze.pad(), now / 1000, () => { if (corner) closeCornerPanel(); else freeze.toggle(); })) input.device = "pad";
   // The overlay (app/hud.ts), four times a second.
   hud.overlay(now, overlayHead);
 }
