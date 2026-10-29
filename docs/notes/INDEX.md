@@ -21,6 +21,11 @@ says what each note covers.
 - Playtest log
 - Balance simulator
 - Bot / bot game
+- Bags:
+- Lone shooters
+- 7 species/ages can't be stunned by one witch alone.
+- Changed on 2026-10-29, live:
+- Ed's direction:
 
 ## [Config files](config.md)
 
