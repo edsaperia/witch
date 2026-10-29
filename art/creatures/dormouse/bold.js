@@ -1,3 +1,3 @@
-import { C, D, spiral } from "../../sigils/strokes.js";
-// bold (stacks, runes, pointers: art/sigils.js BOLD): curled up asleep in a ball, its furry tail wrapped round
-export const BOLD_DORMOUSE = { strokes: [C(.5, .54, .4), spiral(.5, .54, .26, .04, .75, 0), D(.3, .3)] };
+import { A, C, D, L, pair } from "../../sigils/strokes.js";
+// bold (stacks, runes, pointers: art/sigils.js BOLD): the big round ears and the big dark eyes
+export const BOLD_DORMOUSE = { strokes: [...pair(C(.2, .22, .16), C(.34, .58, .08), L([.14, .76], [.02, .8])), A(.5, .62, .36, 200, 340), ...pair(L([.14, .6], [.2, .82], [.5, .94])), D(.5, .78)] };

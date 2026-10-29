@@ -1,3 +1,3 @@
-import { D, L, pair } from "../../sigils/strokes.js";
-// bold (stacks, runes, pointers: art/sigils.js BOLD): the headcloth's flat crown and its striped lappets falling either side of a calm face
-export const BOLD_SPHINX = { strokes: [L([.24, .08], [.76, .08]), ...pair(L([.24, .08], [.02, .9]), L([.2, .32], [.08, .6]), L([.3, .2], [.3, .58], [.5, .74]), D(.38, .38)), L([.46, .76], [.46, .96], [.54, .96], [.54, .76])] };
+import { D, L } from "../../sigils/strokes.js";
+// bold (stacks, runes, pointers: art/sigils.js BOLD): side on: a lion lying with its paws out, its headcloth's flap falling behind its head
+export const BOLD_SPHINX = { strokes: [L([.02, .94], [.98, .94]), L([.02, .84], [.28, .84], [.3, .62], [.24, .54], [.26, .36], [.34, .24], [.46, .26], [.5, .4], [.54, .6], [.84, .56], [.96, .7], [.98, .94]), L([.46, .26], [.5, .54]), D(.32, .4)] };

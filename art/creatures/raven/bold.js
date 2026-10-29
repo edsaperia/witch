@@ -1,3 +1,3 @@
-import { D, L } from "../../sigils/strokes.js";
-// bold (stacks, runes, pointers: art/sigils.js BOLD): side on: the great thick beak, a bright eye
-export const BOLD_RAVEN = { strokes: [L([.08, .98], [.1, .52], [.2, .26], [.4, .14], [.6, .22], [.98, .42], [.6, .56], [.42, .68], [.44, .98]), L([.62, .39], [.86, .42]), D(.38, .34)] };
+import { A, D, L } from "../../sigils/strokes.js";
+// bold (stacks, runes, pointers: art/sigils.js BOLD): side on: the great heavy beak
+export const BOLD_RAVEN = { strokes: [A(.32, .5, .32, 70, 290), L([.42, .2], [.98, .5], [.42, .8]), L([.48, .5], [.82, .5]), D(.28, .4)] };
