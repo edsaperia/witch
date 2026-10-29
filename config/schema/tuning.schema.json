@@ -6730,10 +6730,6 @@
           "type": "number",
           "minimum": 0
         },
-        "maxTilt": {
-          "type": "number",
-          "minimum": 0
-        },
         "sweep": {
           "type": "number",
           "minimum": 0
@@ -6780,7 +6776,6 @@
         "maxCount",
         "length",
         "spread",
-        "maxTilt",
         "sweep",
         "sweepBeats",
         "openBars",

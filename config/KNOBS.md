@@ -2502,7 +2502,7 @@ The dancefloor ring's lasers [1]: a single beam from each playing speaker, at mo
 
 Each playing soundsystem's laser show, its beams fanning and sweeping in time with the music.
 
-Each playing soundsystem's laser show: bursts of blockBars bars, on about duty of the time (seeded per soundsystem), up to maxCount beams stepping on the bars, fanned over spread degrees (no beam tilting more than maxTilt from straight up), swinging sweep degrees once every sweepBeats beats (slow, like searchlights), opening and closing the fan every openBars bars, length metres tall, opacity 0-1, fading in over fadeIn and out over fadeOut seconds, and fading with distance from fadeNear to fadeFar metres. Glow only: no light, nothing from the light budget.
+Each playing soundsystem's laser show: bursts of blockBars bars, on about duty of the time (seeded per soundsystem), up to maxCount beams stepping on the bars, fanned over spread degrees, swinging sweep degrees once every sweepBeats beats (slow, like searchlights), opening and closing the fan every openBars bars, length metres tall, opacity 0-1, fading in over fadeIn and out over fadeOut seconds, and fading with distance from fadeNear to fadeFar metres. Glow only: no light, nothing from the light budget.
 
 | knob | type | range |
 |---|---|---|
@@ -2510,7 +2510,6 @@ Each playing soundsystem's laser show: bursts of blockBars bars, on about duty o
 | `lasers.maxCount` | number | 0 to … |
 | `lasers.length` | number | 0 to … |
 | `lasers.spread` | number | 0 to … |
-| `lasers.maxTilt` | number | 0 to … |
 | `lasers.sweep` | number | 0 to … |
 | `lasers.sweepBeats` | number | 0 to … |
 | `lasers.openBars` | number | 0 to … |
