@@ -7,6 +7,8 @@
 import { M, Sprite, uni, hash2, lerp2, add, unitVec, matOf } from "../core.js";
 import { bough, roots, bark, smoothBark, trim, spread } from "../trees.js";
 
+/** A 4×4 ordered dither's thresholds (0 to 15/16, plus half a step). */
+const BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map(v => (v + .5) / 16);
 const BLOB_LIGHT = unitVec([-.5, -.75, .45]); // from the upper left and a little in front, as the creatures are lit
 const LEAFY = [M.LEAF, M.LEAF2, M.LEAF3];
 // A point a fraction f of the way along a limb's polyline.
@@ -187,7 +189,11 @@ export function blobTree(r, st, s, P) {
     const p = lerp2(tr.pts[i], tr.pts[i + 1], u + r() * T.bands * .4), wl = 2 + Math.floor(r() * 4) * s;
     if (r() < .7) for (let dy = 0; dy < Math.max(2, Math.round(s * 1.2)); dy++) for (let dx = -wl; dx <= wl; dx++) if (sp.get(p[0] + dx, p[1] + dy) === tmat) sp.recolour(p[0] + dx, p[1] + dy, bandM);
   }
-  if (T.upper) for (let y = 0; y < PY + H * T.upper; y++) for (let x = 0; x < sp.w; x++) { const m = sp.get(x, y); if (m === M.TRUNK || m === M.BARKD || m === tmat) sp.recolour(x, y, M.BELLY); }
+  // (where the upper bark stops short of the foot (a pine's), it keeps the bark's dark marks and comes in over a few pixels'
+  // ordered dither, not at a line: in ground mode the crown's cut away, and a flat, hard-edged orange read as a pale band round
+  // the top of the trunk; Ed, 2026-10-29, the Old pinewood)
+  if (T.upper) { const top = PY + H * T.upper, fade = T.upper < 1 ? Math.max(2, Math.round(8 * s)) : 0;
+    for (let y = 0; y < top; y++) for (let x = 0; x < sp.w; x++) { const m = sp.get(x, y); if ((m === M.TRUNK || m === tmat || (!fade && m === M.BARKD)) && (!fade || (top - y) / fade > BAYER4[(y & 3) * 4 + (x & 3)])) sp.recolour(x, y, M.BELLY); } }
   if (T.scars) for (let y = PY % Math.max(2, Math.round(T.scars * s)); y < sp.h; y += Math.max(2, Math.round(T.scars * s))) for (let x = 0; x < sp.w; x++) if (sp.get(x, y) === tmat) sp.recolour(x, y, M.BARKD);
   const C = st.biomeCrown ? { ...P.crown, ...Object.fromEntries(Object.entries(st.biomeCrown).filter(([k]) => !P.crown[k])) } : P.crown, lowestEnd = Math.max(...ends.map(e => e[1]));
   if (st.treeBare || !tips.length) return trim(sp, bx, Math.min(lowestEnd, gy - 6 * s) + 4 * s);
