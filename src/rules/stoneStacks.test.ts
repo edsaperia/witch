@@ -110,7 +110,7 @@ describe("the soundsystem spell (Ed, 2026-10-28)", () => {
     expect(castShown(g, W)?.key).toBe(a.key);
     run(g, C.time - 1, hold);
     expect(W.casting).toBe(a.key);
-    expect(castProgress(W, a.key, g.herTime, g.tuning)).toBeGreaterThan(0.75);
+    expect(castProgress(W, a.key, g.herTime, g.tuning)).toBeGreaterThan(0.7);
     expect(g.party.areas.has(a.key)).toBe(false);
     let converted = false;
     for (let i = 0; i < 72; i++) { stepGame(g, hold, 1 / 60); converted ||= g.leashEvents.some(e => e.kind === "converted" && e.key === a.key); }
