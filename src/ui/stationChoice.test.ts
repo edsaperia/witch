@@ -9,7 +9,7 @@ import { PanelChoice, type Genome } from "./stationChoice";
 import { bindings, PAD_BUTTONS } from "../platform/bindings";
 import { panelPad, itemAt } from "./stationLines";
 
-const STATIONS = ["dressingTable", "wardrobe", "cloakPegs", "shoeRack", "bags", "lathe"];
+const STATIONS = ["mirror", "dressingTable", "wardrobe", "cloakPegs", "shoeRack", "bags", "lathe"];
 const ctx = {
   grid: (s: Shelf) => ({ cols: s.grid === "skin" ? 6 : 13, rows: 5 }),
   swatch: (_s: Shelf, col: number, row: number) => [col / 13, 0.3 + row / 10, 0.5],

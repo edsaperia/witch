@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { deckOf, keepInHouse, onFloor, onTerrace } from "./treehouse";
-import { HOUSE_ROOMS, floorHats, fromPlan, hatSlots, objectAt, objectFront, objectWorld, toPlan } from "./houseRooms";
+import { HOUSE_ROOMS, floorHats, fromPlan, hatSlots, hatToTake, objectAt, objectFront, objectWorld, toPlan } from "./houseRooms";
 import { field, inRoom } from "../../config/house/shape.js";
 import { wearing } from "./hat";
 import { endParty } from "./partyOver";
@@ -161,7 +161,7 @@ describe("the oak's rooms", () => {
   });
 
   it("E at each working object says which (main.ts opens its station, the creator at its choices, or the zoo)", () => {
-    for (const id of ["wardrobe", "cloakPegs", "shoeRack", "bags", "lathe", "book"]) {
+    for (const id of ["mirror", "wardrobe", "cloakPegs", "shoeRack", "bags", "lathe", "book"]) {
       const o = obj(id), g = inHouse(0, 0), d = deck(g), at = before(o);
       put(g, at.x, at.z);
       expect(objectAt(d, g.witches[0].body.x, g.witches[0].body.z)?.id, id).toBe(id);
@@ -185,7 +185,7 @@ describe("the oak's rooms", () => {
     expect(press(inHouse(0, -2.4)).some(e => e.kind === "chart")).toBe(false);
   });
 
-  it("the hats' floor, in the Cloakroom: E by a hat takes it and leaves hers in its place; with none near, E puts hers down at her feet and picks it up again", () => {
+  it("the hats' floor, in the Cloakroom: E by a hat takes it and leaves hers in its place; with none near, E does nothing (each hat an object of its own: Ed, 2026-10-29)", () => {
     const H = obj("hats");
     expect(H.room).toBe("cloakroom");
     const s = before(H, 0.9), g = inHouse(s.x, s.z), W = g.witches[0], d = deck(g);
@@ -195,14 +195,14 @@ describe("the oak's rooms", () => {
     expect(press(g).some(e => e.kind === "hatPicked")).toBe(true);
     expect(W.spells.hat).toBe(took);
     expect(floorHats(W)[i]).toBe(worn === "none" ? "" : worn);
-    put(g, s.x, s.z);
-    stepGame(g, idle, STEP);
-    expect(press(g).some(e => e.kind === "hatPut")).toBe(true);
-    expect(wearing(W.hat)).toBe(false);
-    stepGame(g, idle, STEP);
-    expect(press(g).some(e => e.kind === "hatPicked")).toBe(true);
-    expect(wearing(W.hat)).toBe(true);
-    expect(W.spells.hat).toBe(took);
+    const far = slots.reduce((m, p) => Math.min(m, Math.hypot(p.x - s.x, p.z - s.z)), Infinity);
+    if (far > 0.9) { // (the floor's front edge, away from every hat)
+      put(g, s.x, s.z);
+      stepGame(g, idle, STEP);
+      expect(press(g).some(e => e.kind === "hatPut" || e.kind === "hatPicked")).toBe(false);
+      expect(wearing(W.hat)).toBe(true);
+    }
+    if (worn !== "none") expect(hatToTake(W, d, slots[i].x, slots[i].z, 1)?.slot).toBe(i); // (the one she wore lies there now, to take back)
   });
 
   it("the bed: E held for its hold sleeps, once (the night's over); let go early, it starts again", () => {

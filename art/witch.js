@@ -296,16 +296,20 @@ function longCloak(m, L, sh, dir, back, len, flying, patch) {
   }
   m.ell(pts[n], [.05, .025, cloakWidth(len) + .03], M.CLOTH, { dir: v3.norm(v3.sub(pts[n], pts[n - 1])), up: flying || pts[n][1] <= .031 ? [0, 1, 0] : back, group: 14, extra: true });
 }
-// The short cloak's length slider (Ed, 2026-10-29: "Short cape can be long"): as before up to 1.4 (the generator's shortest to
-// longest short cloak, so every party witch's is as it was), then steeper, so its top reaches the long cloak's longest.
-const SHORT_KNEE = 1.4, CLOAK_TOP = 6; // (CLOAK_TOP: witchGenome.js WITCH_AXES.cloakLength's top)
-const shortStretch = k => k <= SHORT_KNEE ? k : SHORT_KNEE + (k - SHORT_KNEE) * (CLOAK_TOP * .42 / .22 - SHORT_KNEE) / (CLOAK_TOP - SHORT_KNEE);
+// Each cloak's own Length (Ed, 2026-10-29: "the short cape should not be able to be as long as the long one ... Longest short cape
+// and shortest long cape should be at knee length"): a cloak hangs CLOAK_DROP metres times her cloakLength, the short one at most
+// to her knee, the long ones at least to it. CLOAK_KNEE: from where it hangs to her knee joint, standing (footModel's stand: the
+// hang at y .77, the knee at .265, the cloak falling a little back).
+export const CLOAK_KNEE = .51;
+export const cloakDrop = cloak => cloak === "short" ? .22 : .42;
+/** A cloak's cloakLength kept on its own side of the knee (lo and hi: the slider's whole range, witchGenome.js WITCH_AXES). */
+export const cloakLengthIn = (cloak, k, lo = .6, hi = 6) => { const knee = CLOAK_KNEE / cloakDrop(cloak); return cloak === "short" ? Math.max(lo, Math.min(knee, k)) : Math.max(knee, Math.min(hi, k)); };
 // The witch generator's extras: a cloak from her shoulders (short, long, or long with a hood), streaming out behind in flight or
 // hanging down her back; a scarf round her neck, its end flying; a satchel on her near hip on a strap across her; a glowing pendant.
 function drawExtras(m, L, chest, fwd, spine, flying) {
   const back = v3.mul(fwd, -1), side = [0, 0, 1], neck = v3.add(chest, v3.mul(spine, .14));
   if (L.cloak && L.cloak !== "none") {
-    const len = L.cloak === "short" ? .22 * shortStretch(L.cloakLength || 1) : .42 * (L.cloakLength || 1), sh = v3.add(chest, v3.add(v3.mul(spine, .1), v3.mul(back, .07)));
+    const len = cloakDrop(L.cloak) * cloakLengthIn(L.cloak, L.cloakLength || 1), sh = v3.add(chest, v3.add(v3.mul(spine, .1), v3.mul(back, .07)));
     const dir = flying ? v3.norm(v3.add(back, v3.mul(spine, -.15))) : v3.norm(v3.add(v3.mul(spine, -1), v3.mul(back, .18)));
     const mid = v3.add(sh, v3.mul(dir, len * .5)), end = v3.add(sh, v3.mul(dir, len));
     const patch = L.patches ? p => hash2(Math.floor(p[0] * 11), Math.floor(p[1] * 11) + Math.floor(p[2] * 11) * 17, 23) < .14 ? M.HAT2 : undefined : undefined; // patched: squares of another cloth

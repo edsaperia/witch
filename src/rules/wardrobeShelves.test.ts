@@ -97,9 +97,9 @@ describe("Ed's redo (2026-10-23): nothing with no choice in it, the broom till t
     const parts = TUNING.camera.station!.parts!;
     for (const s of Object.values(SHELVES)) expect(parts[s.frame!], s.id).toBeTruthy();
   });
-  it("her hat comes off at the dressing table, not at the wardrobe (her hat's colours and fit)", () => {
+  it("her hat comes off at the dressing table, not at the hat's mirror", () => {
     expect(bareHeadAt("dressingTable")).toBe(true);
-    expect(bareHeadAt("wardrobe")).toBe(false);
+    expect(bareHeadAt("mirror")).toBe(false);
   });
 });
 

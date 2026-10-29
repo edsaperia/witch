@@ -224,7 +224,7 @@ export class StationPanel {
     return best;
   }
   private fitValue(axis: string): number { const [p, k] = slot(axis); return Number(p ? (this.g[p] as Record<string, unknown>)[k] : this.g[k]); }
-  private fitRange(axis: string): [number, number] { const [lo, hi] = AXES[axis] as number[]; return [axis in FIT_NEEDS ? Math.max(lo, .25) : lo, hi]; }
+  private fitRange(axis: string): [number, number] { const [lo, hi] = axis === "cloakLength" ? (Art.cloakRange as (c: unknown) => number[])(this.g.cloak) : AXES[axis] as number[]; /* (each cloak its own side of her knee: art/witchGenome.js) */ return [axis in FIT_NEEDS ? Math.max(lo, .25) : lo, hi]; }
 
   // ---- moving and choosing ----
   /** The focus moved (the d-pad, the arrows, the stick): nothing on her changes (Ed, 2026-10-28); a fit slider's ◀ ▶ moves it. */
@@ -429,7 +429,7 @@ export const footHtml = (device: "keys" | "pad" | "touch"): string =>
   : `${(["menu.up", "menu.left", "menu.down", "menu.right"] as const).map(id => keycapHtml(glyphOf(id, "keys"))).join("")} · ${keycapHtml(glyphOf("menu.choose", "keys"))} · ${keycapHtml(glyphOf("menu.back", "keys"))}`;
 // (the keys and the pad as bound now, platform/bindings.ts: a remap shows here too, Ed 2026-10-28)
 const PAD_DIRS: Record<string, [number, number]> = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] };
-const STATION_NAMES: Record<string, string> = { dressingTable: "Dressing table", wardrobe: "Wardrobe", cloakPegs: "Cloak pegs", shoeRack: "Shoe rack", bags: "Bags", broomBay: "The bay", lathe: "Broom", pegboard: "Pegboard" };
+const STATION_NAMES: Record<string, string> = { mirror: "Mirror", dressingTable: "Dressing table", wardrobe: "Wardrobe", cloakPegs: "Cloak pegs", shoeRack: "Shoe rack", bags: "Bags", broomBay: "The bay", lathe: "Broom", pegboard: "Pegboard" };
 const ART_M = Art.M as Record<string, number>;
 /** An item's stat line, on its card (Juliet's two bags, 2026-10-29: "faster throws, shorter reach"; config/wardrobe.json `stat`,
  *  rules/bags.ts), or "". */
