@@ -27,13 +27,17 @@ import { chaseAt, limitTurn, momentumOf, noteWitches } from "./momentum";
 
 /** A species' own attack as a pack member's strike: a lunger's if it's close (a lunge, or an area round itself), a shooter's if it's
  *  from afar (moving and timed as its pack's shooters, reaching as far) and its pack's shot is the plain bolt, not one of its own (the
- *  toad's spores); else none, its pack's own move. Out of a pack, always. */
+ *  toad's spores); else none, its pack's own move. Out of a pack, always. Alone (a pack of one: no combo to keep) always too, a
+ *  far one timed as its pack's shooters (Ed's playtest, 2026-10-29, "I didn't seem to see any projectile attacks": a lone fox,
+ *  marten or dormouse was its own lunger and never threw its bolt). */
 function roleSpell(sp: SpeciesSpell | null, c: Creature, kind: ReturnType<typeof packKindOf> | null, pd: Directive | undefined): SpeciesSpell | null {
   if (!sp || !pd || !kind) return sp;
-  const close = sp.attack.delivery === "melee" || sp.attack.delivery === "pulse";
-  if (pd.move === "melee") return close ? sp : null;
-  if (close && kind.melee) return null;
-  if (kind.ranged && (kind.ranged.patch || kind.ranged.attacks || kind.ranged.delivery === "lob")) return null; // (its pack's own designed shot stays: the toad's spores)
+  const close = sp.attack.delivery === "melee" || sp.attack.delivery === "pulse", alone = pd.state.size < 2;
+  if (!alone) {
+    if (pd.move === "melee") return close ? sp : null;
+    if (close && kind.melee) return null;
+    if (kind.ranged && (kind.ranged.patch || kind.ranged.attacks || kind.ranged.delivery === "lob")) return null; // (its pack's own designed shot stays: the toad's spores)
+  }
   const P = packAttack(c.species, c.level, "ranged");
   if (close || !P) return sp;
   const key = `${sp.name}/${c.level}`;
