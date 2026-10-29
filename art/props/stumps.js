@@ -12,10 +12,11 @@
 // - "they will be lit by the sigils that float above them": nothing here glows; its normals take the stack's light.
 //   STUMP_GENOMES: each species' ranges (sizes in metres), choices and colours ([h, s, v], a small seeded spread)
 //   stumpSpecies(biome): the species a biome grows (art/flora/biomes.js keys; a blend "a/b" takes its first)
-//   stumpPiece(species, { seed, yaw }, def, st): { sp, colours, metres, top, origin, yaw, variant } (top: the cut's middle on the
-//   sprite, origin: the ground under it, px from its top-left)
+//   stumpPiece(species, { seed, yaw }, def, st): { sp, colours, metres, top, origin, roots, depth, yaw, variant } (top: the cut's middle
+//   on the sprite, origin: the ground under it, px from its top-left; roots: the root area's outline, its radius in art pixels
+//   at ROOT_ANGLES angles; depth: metres on the ground a metre of the sprite's height is, seen from the art's camera, so it can lie on the ground)
 import { M, hsv2rgb, rng, cellHash, cropTight } from "../core.js";
-import { Model, render, v3 } from "../model3d.js";
+import { Model, render, v3, PITCH } from "../model3d.js";
 import { witchPixelsPerUnit, cleanFlecks } from "../witch.js";
 import { propVariant } from "./generator.js";
 import { groundColours } from "../ground.js";
@@ -24,6 +25,8 @@ import { AREA_FLORA } from "../flora/areas.js";
 import { biomeLook, biomeColours } from "../flora/biomes.js";
 
 const SU = 1 / 1.9; // model units a metre (as the prop generator's PR_U)
+/** How many angles a stump's root area's outline is measured at (stumpPiece's `roots`). */
+export const ROOT_ANGLES = 32;
 // lobes: how many, how far each swells past the trunk at its foot (a share of the radius) and how wide (radians); flute: the
 // clefts between them; plank: the lobes thin walls (a kapok's buttresses); roots: how many, branching (the chance of a second
 // branch), dives (the chance of each of two underground runs); top: weathered, slabs (the saw at different heights), hollow (a
@@ -184,7 +187,8 @@ function build(m, v, G) {
 }
 
 /** One stump: species (a STUMP_GENOMES key), o.seed (its shape and colours), o.yaw (the angle it's seen from, radians; seeded when
- *  not given). Returns its sprite, colours, size, the cut's middle on the sprite (`top`, px from its top-left) and its variant. */
+ *  not given). Returns its sprite, colours, size, the cut's middle on the sprite (`top`, px from its top-left), its root area's outline (`roots`), how
+ *  far its rows reach over the ground (`depth`) and its variant. */
 export function stumpPiece(species, o = {}, def = null, st = {}, ppm = 16) {
   const G = STUMP_GENOMES[species]; if (!G) throw new Error(`no stump species "${species}"`);
   const v = propVariant(species, o.seed ?? 0, o, STUMP_GENOMES);
@@ -192,9 +196,27 @@ export function stumpPiece(species, o = {}, def = null, st = {}, ppm = 16) {
   { const b = String(st.biome ?? "").split(/[/|]/)[0]; if (v.frost && def && b !== "cold" && b !== "mountains and glaciers" && !def.snow) v.frost = 0; } // (frost only where it snows)
   const m = new Model({ blend: .18 });
   const R = build(m, v, G), yaw = o.yaw ?? v.r() * Math.PI * 2;
-  const { sp: raw, project } = render(m, { scale: witchPixelsPerUnit(st), yaw, lineGap: .3 });
+  const px = witchPixelsPerUnit(st), { sp: raw, project } = render(m, { scale: px, yaw, lineGap: .3 });
   const top0 = project([0, v.height * SU, 0]), foot0 = project([0, 0, 0]);
   const { sp, x0 = 0, y0 = 0 } = cropTight(raw);
+  // The root area's outline round the rings' middle (Ed, 2026-10-29: the analyser's bars "should be long enough that they fill the whole
+  // root area, not just the cut trunk circle"): its radius (art pixels across, as the sprite's width) at ROOT_ANGLES angles on the
+  // ground, from east round towards the camera (+z, south in the game): the farthest pixel of it that way as it lies, the envelope
+  // of its roots (each angle the most of its neighbours within an eighth of a turn, smoothed), so the bars reach out over the roots
+  // and the gaps between them alike
+  const far = [];
+  for (let i = 0; i < ROOT_ANGLES; i++) {
+    const a = i / ROOT_ANGLES * Math.PI * 2 - yaw, c = Math.cos(a), s = Math.sin(a); // (the model turned by yaw: render's toWorld)
+    let f = 0;
+    for (let q = 0; q < v.spread * SU * .6; q += .01) { // (on the cut's plane: the game lays the picture on the ground by its cut's middle)
+      const [sx, sy] = project([c * q, v.height * SU, s * q]), x = Math.round(sx - x0 - .5), y = Math.round(sy - y0 - .5);
+      if (x >= 0 && y >= 0 && x < sp.w && y < sp.h && sp.m[y * sp.w + x]) f = q;
+    }
+    far.push(Math.max(f, R));
+  }
+  const W = Math.round(ROOT_ANGLES / 8), at = i => far[(i % ROOT_ANGLES + ROOT_ANGLES) % ROOT_ANGLES];
+  const env = far.map((_, i) => { let m = 0; for (let d = -W; d <= W; d++) m = Math.max(m, at(i + d)); return m; });
+  const roots = env.map((_, i) => +((env[(i + ROOT_ANGLES - 1) % ROOT_ANGLES] + 2 * env[i] + env[(i + 1) % ROOT_ANGLES]) / 4 * px).toFixed(1));
   cleanFlecks(sp);
   const r = rng((v.seed * 7919 + 29) >>> 0), C = G.colour, k = C.spread, g = def?.floor ? groundColours(def, st) : null;
   // fitted to its area (def): its bark its main tree's (treeColours, the biome's look over it, as the area's own trees are coloured:
@@ -210,5 +232,5 @@ export function stumpPiece(species, o = {}, def = null, st = {}, ppm = 16) {
   if (fit) { colours[M.TRUNK] = mixc(colours[M.TRUNK], fit.bark, .7); colours[M.BARKD] = mixc(colours[M.BARKD], fit.dark, .7); colours[M.BARKL] = mixc(colours[M.BARKL], fit.light, .7); colours[M.LINE] = mixc(colours[M.LINE], fit.dark.map(c => c * .6), .7); }
   if (g && g[M.MOSS]) colours[M.MOSS] = mixc(colours[M.MOSS], g[M.MOSS], .6);
   const { r: _r, ...variant } = v;
-  return { sp, colours, metres: { height: +(sp.h / ppm).toFixed(1), width: +(sp.w / ppm).toFixed(1), radius: +(R / SU).toFixed(1) }, top: { x: top0[0] - x0, y: top0[1] - y0 }, origin: { x: foot0[0] - x0, y: foot0[1] - y0 }, yaw, variant };
+  return { sp, colours, metres: { height: +(sp.h / ppm).toFixed(1), width: +(sp.w / ppm).toFixed(1), radius: +(R / SU).toFixed(1) }, top: { x: top0[0] - x0, y: top0[1] - y0 }, origin: { x: foot0[0] - x0, y: foot0[1] - y0 }, roots, depth: +(1 / Math.sin(PITCH)).toFixed(4), yaw, variant };
 }

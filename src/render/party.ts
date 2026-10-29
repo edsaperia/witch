@@ -21,8 +21,6 @@ import type { Projector } from "./hologram";
 
 export class PartyView {
   constructor(public atlas: Atlas, private metresPerPixel: number, public gen: SoundsystemGenView | null = null) {}
-  /** How high an area's soundsystem stands (m, by its key): on its great stump's cut (runeMarkers.stump; the view sets it). */
-  liftOf: ((key: string) => number) | null = null;
 
   /** A generated soundsystem's crystal colour as a light's vector, made once a colour. */
   private rgbs = new Map<number[], THREE.Vector3>();
@@ -57,7 +55,7 @@ export class PartyView {
     if (gen) list.forEach((s, i) => {
       if (rises[i].rise <= 0 || !visible(s.x, s.z, 12, 14)) return;
       const hp = g.combat.sounds.get(s.key), stage = damageStage(hp ? hp.hp / Math.max(1, hp.max) : 1, g.combat.ruined.has(s.key));
-      draws.push({ key: s.key, x: s.x, z: s.z, rise: rises[i].rise, stage, time, fresh: mark(s.x, s.z, 12), off: off(s.x, s.z), lift: this.liftOf?.(s.key) ?? 0 });
+      draws.push({ key: s.key, x: s.x, z: s.z, rise: rises[i].rise, stage, time, fresh: mark(s.x, s.z, 12), off: off(s.x, s.z) });
     });
     const info = gen ? gen.update(g, draws) : null;
     list.forEach((s, i) => {
@@ -67,7 +65,7 @@ export class PartyView {
         // Each faces left or right, seeded from where it stands (Ed, 2026-10-03); the shader mirrors
         // its normal map too, and its light and lasers rise from its centre either way.
         const flip = hash2(Math.round(s.x * 10), Math.round(s.z * 10), 911) < 0.5;
-        items.push({ x: s.x, y: (this.liftOf?.(s.key) ?? 0) - (1 - rise) * h, z: s.z, frame, flip, fresh: mark(s.x, s.z, h), glow: dark ? -0.5 : undefined });
+        items.push({ x: s.x, y: -(1 - rise) * h, z: s.z, frame, flip, fresh: mark(s.x, s.z, h), glow: dark ? -0.5 : undefined });
       }
       // Its projector (render/hologram.ts): the sky sigil comes on as it finishes rising. A generated soundsystem in view gives its
       // projector's top, its crystal colour and its damage stage (render/soundsystemGen.ts), and none when it's destroyed (so the

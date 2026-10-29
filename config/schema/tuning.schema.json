@@ -7012,21 +7012,59 @@
               "type": "number",
               "minimum": 0
             },
+            "stack": {
+              "type": "number",
+              "minimum": 0
+            },
             "ring": {
               "type": "object",
               "properties": {
-                "radius": {
+                "inner": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "fill": {
                   "type": "number",
                   "minimum": 0
                 },
                 "cell": {
                   "type": "number",
                   "minimum": 0
+                },
+                "glow": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "light": {
+                  "type": "object",
+                  "properties": {
+                    "reach": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "strength": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "height": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "reach",
+                    "strength",
+                    "height"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "required": [
-                "radius",
-                "cell"
+                "inner",
+                "fill",
+                "cell",
+                "glow",
+                "light"
               ],
               "additionalProperties": false
             },
@@ -7063,6 +7101,7 @@
             "on",
             "variants",
             "clear",
+            "stack",
             "ring",
             "light"
           ],

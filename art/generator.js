@@ -21,8 +21,8 @@ import { BRIDGE_GENOMES, BRIDGE_IDS, BRIDGE_VARIANTS, PATH_GEN_IDS, bridgeVarian
 export { BRIDGE_GENOMES, BRIDGE_IDS, BRIDGE_VARIANTS, PATH_GEN_IDS, bridgeVariant };
 import { SET_PROP_GENOMES, SET_PROP_KINDS, setPropVariant, genSetPiece } from "./props/sets.js";
 export { SET_PROP_GENOMES, SET_PROP_KINDS, setPropVariant, genSetPiece };
-import { STUMP_GENOMES, STUMP_FOR_BIOME, STUMP_FOR_TREE, stumpSpecies, stumpForArea, areaMainTree, stumpPiece } from "./props/stumps.js";
-export { STUMP_GENOMES, STUMP_FOR_BIOME, STUMP_FOR_TREE, stumpSpecies, stumpForArea, areaMainTree, stumpPiece };
+import { STUMP_GENOMES, STUMP_FOR_BIOME, STUMP_FOR_TREE, ROOT_ANGLES, stumpSpecies, stumpForArea, areaMainTree, stumpPiece } from "./props/stumps.js";
+export { STUMP_GENOMES, STUMP_FOR_BIOME, STUMP_FOR_TREE, ROOT_ANGLES, stumpSpecies, stumpForArea, areaMainTree, stumpPiece };
 import { WITCH_GENOME, WITCH_AXES, WITCH_RANDOM, witchGenome, genomeLook, witchGenomeProblems, upgradeGenome, WITCH_INERT, sliderApplies } from "./witchGenome.js";
 import { bedroomSprite, bedroomColours, BEDROOM_PROPS, BANNER_FONT, ROOM } from "./bedroom.js";
 export { bedroomSprite, bedroomColours, BEDROOM_PROPS, BANNER_FONT, ROOM };
