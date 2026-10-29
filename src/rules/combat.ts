@@ -27,13 +27,18 @@ import { chaseAt, limitTurn, momentumOf, noteWitches } from "./momentum";
 
 /** A species' own attack as a pack member's strike: a lunger's if it's close (a lunge, or an area round itself), a shooter's if it's
  *  from afar (moving and timed as its pack's shooters, reaching as far) and its pack's shot is the plain bolt, not one of its own (the
- *  toad's spores); else none, its pack's own move. Out of a pack, always. */
+ *  toad's spores); else none, its pack's own move. Out of a pack, always. Alone (a pack of one: no combo to keep) too, a far one
+ *  timed as its pack's shooters, unless its pack's shot is one of its own (Ed's playtest, 2026-10-29, "I didn't seem to see any
+ *  projectile attacks": a lone fox, marten or dormouse was its own lunger and never threw its bolt). */
 function roleSpell(sp: SpeciesSpell | null, c: Creature, kind: ReturnType<typeof packKindOf> | null, pd: Directive | undefined): SpeciesSpell | null {
   if (!sp || !pd || !kind) return sp;
-  const close = sp.attack.delivery === "melee" || sp.attack.delivery === "pulse";
-  if (pd.move === "melee") return close ? sp : null;
-  if (close && kind.melee) return null;
-  if (kind.ranged && (kind.ranged.patch || kind.ranged.attacks || kind.ranged.delivery === "lob")) return null; // (its pack's own designed shot stays: the toad's spores)
+  const close = sp.attack.delivery === "melee" || sp.attack.delivery === "pulse", alone = pd.state.size < 2;
+  const designed = !!kind.ranged && !!(kind.ranged.patch || kind.ranged.attacks || kind.ranged.delivery === "lob"); // (its pack's own designed shot: the toad's spores, the salamander's beam)
+  if (!alone) {
+    if (pd.move === "melee") return close ? sp : null;
+    if (close && kind.melee) return null;
+    if (designed) return null; // (its pack's shot stays)
+  } else if (designed && !close) return null; // (alone too: its pack's designed shot, not its own)
   const P = packAttack(c.species, c.level, "ranged");
   if (close || !P) return sp;
   const key = `${sp.name}/${c.level}`;
@@ -257,11 +262,26 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     if (c.stunUntil !== undefined && time < c.stunUntil) { c.moving = false; c.vx = 0; c.vz = 0; continue; }
     const pd = c.spell === undefined ? PK?.get(c.id) : undefined; // (one given an attack in the grammar (the arena's) fights on its own; a species' own keeps its pack's turns)
     // Up the trees, underground or under water (rules/combat/packs.ts): out of sight, it makes its way round to where it comes back down
-    // at its own run, so it shows again where it got to (Ed's playtest, 2026-10-29: "some animals seem to teleport": it was put there at once).
+    // (Ed's playtest, 2026-10-29: "some animals seem to teleport": it was put there at once), arriving as its hide ends: round her, not
+    // through her, a share of what's left each step (at its own run, straight, it crossed her and came up short and close: a lone mole
+    // burrowing again under her where it should have thrown from out there, #1405), never faster than 48 m/s (under a lunge's 60, the
+    // room left for the spacing's nudge: a short hide, a squirrel's scatter, comes back where that got it, a little short).
     if (c.packHide && PK) {
       const H = c.packHide;
-      const left = H.tx !== undefined ? moveToward(c, H.tx, H.tz!, 0.1, (profileOf(c.species)?.speed ?? C.fightRun) * FIGHT.speed, dt) : 0;
-      c.moving = left > 0.1; c.vx = 0; c.vz = 0; continue; // (moving: its shadow runs, render/view/creatures.ts)
+      if (H.tx !== undefined) {
+        const k = Math.min(1, dt / Math.max(dt, H.until - time)), tg = c.fight?.target ? targetPos(w, s, c.fight.target) : null, x0 = c.x, z0 = c.z;
+        if (tg) {
+          const a0 = Math.atan2(c.z - tg.z, c.x - tg.x), r0 = Math.hypot(c.x - tg.x, c.z - tg.z), a1 = Math.atan2(H.tz! - tg.z, H.tx - tg.x), r1 = Math.hypot(H.tx - tg.x, H.tz! - tg.z);
+          let da = a1 - a0; while (da > Math.PI) da -= Math.PI * 2; while (da < -Math.PI) da += Math.PI * 2;
+          const a = a0 + da * k, r = r0 + (r1 - r0) * k;
+          c.x = tg.x + Math.cos(a) * r; c.z = tg.z + Math.sin(a) * r;
+        } else { c.x += (H.tx - c.x) * k; c.z += (H.tz! - c.z) * k; }
+        const most = 48 * FIGHT.speed * dt, mv = Math.hypot(c.x - x0, c.z - z0);
+        if (mv > most) { c.x = x0 + ((c.x - x0) * most) / mv; c.z = z0 + ((c.z - z0) * most) / mv; }
+        if (Math.abs(c.x - x0) > 0.02) c.facing = c.x > x0 ? 1 : -1;
+        c.moving = Math.hypot(c.x - x0, c.z - z0) > 1e-3; c.walk += dt * 5; // (its shadow runs: render/view/creatures.ts)
+      } else c.moving = false;
+      c.vx = 0; c.vz = 0; continue;
     }
     // (an attack in the grammar given it, rules/attacks/; else its species' own, the default since step 5: ?attacks=old for the old)
     // (its species' own: against a soundsystem its old attack, so the sieges stay as balanced; in a pack, as its role's strike when its
