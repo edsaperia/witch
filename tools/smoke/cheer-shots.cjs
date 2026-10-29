@@ -28,34 +28,36 @@ function serve() {
   await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 300000, polling: 500 });
   await page.keyboard.press("Enter");
   await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 30000 }).catch(() => {});
-  // Her beside the arena on the ground (before its art bakes, so the view's there), out of its way and unhurt.
+  // Everyone in the arena held where it stands and out of any fight, every frame (moved by hand, the view would drop them), and each
+  // held `at` of the way through its celebration once a shot is wanted (window.__cheerAt; null: not yet); her at their middle.
+  await page.evaluate(() => {
+    window.__cheerAt = null;
+    const tick = () => {
+      const g = window.witch.game, S = g.tuning.invites.cheer?.secs ?? 1;
+      for (const id of g.arena.ids) {
+        const c = g.creatures[id];
+        if (c.gone) continue;
+        Object.assign(c, { tx: c.x, tz: c.z, fight: undefined, fleeUntil: undefined, dazed: false, affection: undefined, fills: undefined, drops: undefined, cheerUntil: window.__cheerAt === null ? undefined : g.clock.time + S * (1 - window.__cheerAt) });
+      }
+      requestAnimationFrame(tick);
+    };
+    tick();
+  });
   const place = () => page.evaluate(() => {
     const g = window.witch.game, cs = g.arena.ids.map(id => g.creatures[id]).filter(c => !c.gone);
     const mx = cs.reduce((a, c) => a + c.x, 0) / cs.length, mz = cs.reduce((a, c) => a + c.z, 0) / cs.length;
-    g.witch = { ...g.witch, x: mx, z: mz + 16, seated: false, mode: "ground", lift: 0 };
+    g.witch = { ...g.witch, x: mx, z: mz + 7, seated: false, mode: "ground", lift: 0 };
     g.witches[0].health.hp = 1e6;
   });
   await place();
-  for (let i = 0; i < +(process.env.ZOOM || 3); i++) { await page.keyboard.press("KeyZ"); await page.waitForTimeout(400); } // (in close: the celebrations are small moves)
-  await page.waitForFunction(() => (window.witch.view.stats.creatures ?? 0) > 0, null, { timeout: 600000, polling: 1000 }).catch(() => console.log("creatures not drawn yet"));
+  for (let i = 0; i < +(process.env.ZOOM || 4); i++) { await page.keyboard.press("KeyZ"); await page.waitForTimeout(400); } // (in close: the celebrations are small moves)
+  await page.waitForFunction(() => { const g = window.witch.game, v = window.witch.view; return g.arena.ids.every(id => g.creatures[id].gone || v.assets.hasCreature(g.creatures[id].species)); }, null, { timeout: 900000, polling: 2000 }).catch(() => console.log("art not all baked"));
+  await place();
   await page.waitForTimeout(3000);
   for (const [k, at] of AT.entries()) {
-    // every one celebrating, `at` of the way through (its second: the tuning's invites.cheer.secs), held there for the shot
-    // (re-staged every frame, the game running: stood in a row just in front of her, one of each body, out of any fight, each held
-    // `at` of the way through its celebration)
-    await page.evaluate(at => {
-      window.__cheerAt = at;
-      if (window.__cheerLoop) return;
-      window.__cheerLoop = true;
-      const tick = () => {
-        const g = window.witch.game, S = g.tuning.invites.cheer?.secs ?? 1, w = g.witch, ids = g.arena.ids.filter(id => !g.creatures[id].gone);
-        ids.forEach((id, i) => { const c = g.creatures[id], x = w.x + (i - (ids.length - 1) / 2) * 2.6, z = w.z - 4; Object.assign(c, { x, z, tx: x, tz: z, fleeUntil: undefined, dazed: false, moving: false, fight: undefined, affection: undefined, fills: undefined, drops: undefined, cheerUntil: g.clock.time + S * (1 - window.__cheerAt) }); });
-        requestAnimationFrame(tick);
-      };
-      tick();
-    }, at);
-    await page.waitForTimeout(k === 0 ? +(process.env.SETTLE || 30000) : 2500); // (the first: their art baked, software-rendered)
-    console.log(at, JSON.stringify(await page.evaluate(() => ({ stats: window.witch.view.stats.creatures, art: window.witch.view.stats.pending ?? null }))));
+    await page.evaluate(at => { window.__cheerAt = at; }, at);
+    await page.waitForTimeout(2500);
+    console.log(at, JSON.stringify(await page.evaluate(() => { const g = window.witch.game, v = window.witch.view; return { sprites: v.stats.creatures, near: g.arena.ids.map(id => { const c = g.creatures[id]; return [c.species, c.gone ? "gone" : Math.round(c.x - g.witch.x) + "," + Math.round(c.z - g.witch.z)]; }) }; })));
     await page.screenshot({ path: path.join(out, `cheer-${String(k).padStart(2, "0")}.png`) });
   }
   console.log(errors.length ? errors.slice(0, 5) : "no errors");
