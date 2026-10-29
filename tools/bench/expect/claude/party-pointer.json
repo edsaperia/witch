@@ -1,5 +1,9 @@
 {
-  "reason": "the party pointer's 🪩 and the won night settling when she reaches the dancefloor (Ed, 2026-10-28); the spell spot's nearer fade, chain links turned along their spans, the cast ring stretched and its far half over the stone (Ed's playtest, 2026-10-29)",
-  "frames": { "*": "the spell spot shows nearer the stone; chain links and the cast ring drawn differently" },
-  "rules": { "*": "the won night settles when she reaches the dancefloor, not win.settleAfter seconds after the win (the knob gone)" }
+  "reason": "the party pointer's 🪩 and the won night settling when she reaches the dancefloor (Ed, 2026-10-28); the spell spot's nearer fade, chain links turned along their spans, the cast ring stretched and its far half over the stone (Ed's playtest, 2026-10-29); sigils red for the wild and blue for friends, every baby's purple (Ed's playtest, 2026-10-29)",
+  "frames": {
+    "*": "the spell spot shows nearer the stone; chain links and the cast ring drawn differently; every sigil's colour (red, blue, purple)"
+  },
+  "rules": {
+    "*": "the won night settles when she reaches the dancefloor, not win.settleAfter seconds after the win (the knob gone)"
+  }
 }

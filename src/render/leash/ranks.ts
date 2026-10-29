@@ -2,7 +2,7 @@
 // is good; it's more important in rapid gameplay to be able to tell ranks apart than creatures"; tuning leash.ranks; the default since Ed, 2026-10-27:
 // "go ahead and push all the new sigil work"; ?sigils=old the old look):
 // every leash sigil (her stack, placed sigils, happy runes, the ghost, the treetop projection, the bond) is the bare glyph in its
-// rank's colour (baby turquoise, youth purple, adult red, legend yellow: no ring, no disc), embers rising off its strokes (more,
+// rank's colour (a baby's purple on either side; a friend's three blues, an enemy's three reds: no ring, no disc), embers rising off its strokes (more,
 // bigger, brighter and higher each rank; a legend's white-hot), and a youth in her stack has two rows of round dots off to the
 // right of its glyph, one a berry it still eats on the move (bright eaten, dim not; all bright, they pulse: ready), the last berry
 // (eaten only at a sigil she's put down: rules/berries.ts lastBerry) its adult moment on the ground. Pure helpers here; the
@@ -19,10 +19,12 @@ export interface RankKnobs {
   hex: number;
   /** A placed sigil's glyph, across (m). */
   glyph: number;
-  /** A friend's colours (hers, and the invited at a stone), baby, youth, adult, legend (0-255; Ed, 2026-10-28: pink, light purple,
-   *  light blue, turquoise). */
+  /** A friend's colours (hers, and the invited), baby to legend (0-255): the baby's purple, then three clear blues, darker to lighter
+   *  (Ed's playtest, 2026-10-29: "more strictly do hostile reds vs friendly blues, no purples"; "baby sigils are purple (neither friend
+   *  nor enemy)"; before, pink, light purple, light blue and turquoise). */
   colours: number[][];
-  /** An enemy's (the wild still at their stone; Ed, 2026-10-28: crimson, bright red, orange, yellow, the crimson darker than the red). */
+  /** An enemy's (the wild still at their stone), baby to legend: the same purple for a baby, then three clear reds, darker to lighter
+   *  (no pink, magenta or purple; before, crimson, red, orange and yellow). The baby's purple is the only purple there is. */
   enemy: number[][];
   /** Each rank's sigil size, baby to legend, against an adult's (Ed, 2026-10-28: today's size the adult's, about 10% a step). */
   sizes: number[];
@@ -47,8 +49,8 @@ export const CHAIN_DEFAULT = { link: [0.62, 0.78, 1], tether: 1.3, slack: 0.12, 
 
 export const RANKS_DEFAULT: RankKnobs = {
   on: true, hex: 6, glyph: 5,
-  colours: [[255, 120, 200], [190, 150, 255], [110, 190, 255], [40, 225, 215]],
-  enemy: [[200, 30, 70], [255, 40, 40], [255, 140, 30], [255, 226, 60]],
+  colours: [[180, 100, 255], [45, 100, 235], [70, 160, 255], [160, 210, 255]],
+  enemy: [[180, 100, 255], [205, 35, 35], [255, 65, 50], [255, 150, 105]],
   sizes: [0.81, 0.9, 1, 1.1],
   embers: { count: [3, 5, 8, 12], size: [0.22, 0.26, 0.3, 0.36], rise: [1.6, 2.1, 2.8, 3.6], stack: 0.4 },
   dotsPerRow: 4, stoneGlow: 2.4,
