@@ -1,5 +1,7 @@
 # The run
 
+Screen selection in Settings is offered only when the browser implements `getScreenDetails`; checking support does not request permission.
+
 Part of Witch's notes (CLAUDE.md is the index): the phases of a run, the opening and the party spell, the clock, her controls and the camera, waves, knockouts and the party's end. Moved here from CLAUDE.md as it stood (housekeeping, Ed 2026-10-23: a note an area, so pull requests add to their own area's file, not one shared file); every rule kept. Add to this file, not CLAUDE.md, when you change this area.
 
 Gamepad foundation (#1456, 2026-10-29): every game action in the bindings table is dispatched on the pad, including Talk held/toggled, Auto-talk and the playtest actions. Tests remap actions across all 17 standard buttons. `platform/rumble.ts` observes hits, knockdowns, landing, waves and the night's outcome; it emits one modest pulse per event, capped at 160 ms and strength 0.35, and silently ignores unsupported/disconnected devices. The Accessibility page's Gamepad rumble setting defaults on for older saves; off, Reduce flashing or a paused game suppresses it. The rules and save lifecycle are unchanged.
