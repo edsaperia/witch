@@ -24,7 +24,7 @@ import type { Game } from "./game";
 import { dressed, pileOut, type PileSlot } from "./clothesPile";
 import { deckOf } from "./treehouse";
 import { hasRooms, objectAt } from "./houseRooms";
-import { hasBroom, hasInvites } from "./kit";
+import { hasBag, hasBroom, hasInvites } from "./kit";
 
 /** What a guidance pin is for (render/view/guidance.ts gives each its glyph). */
 export type GuideKind = "bed" | "dress" | "desk" | "lathe" | "hat" | "part" | "wearable" | "chart" | "decks";
@@ -46,6 +46,8 @@ export const emptyGuide = (): GuideSave => ({ unseen: [] });
  *  broom taken off the lathe. */
 export const GUIDANCE_HOOKS = {
   invitationsReady: (g: Game, w: number): boolean => !g.witches[w] || hasInvites(g.witches[w]),
+  /** A bag on her to carry them in (Ed, 2026-10-29: rules/kit.ts needsBag). */
+  bagCarried: (g: Game, w: number): boolean => !g.witches[w] || hasBag(g.witches[w]),
   broomTaken: (g: Game, w: number): boolean => !g.witches[w] || hasBroom(g.witches[w]),
 };
 
@@ -63,21 +65,23 @@ const AT_DECKS = 2.5;
 
 /** What's in front of her, `w`'s pin, or null (nothing to guide). `unvisited` the islands found she can sail to and hasn't been to
  *  (app/chartSave.ts unvisited). */
-export function guidanceOf(g: Game, w: number, save: GuideSave, unvisited: readonly string[] = [], hooks = GUIDANCE_HOOKS): Guide | null {
+export function guidanceOf(g: Game, w: number, save: GuideSave, unvisited: readonly string[] = [], hooks: Omit<typeof GUIDANCE_HOOKS, "bagCarried"> & Partial<Pick<typeof GUIDANCE_HOOKS, "bagCarried">> = GUIDANCE_HOOKS): Guide | null {
   // The night over, lost (the afterparty) or won (its finale settled: rules/win.ts), home: the map table while there's an island
   // found she can sail to and hasn't been to (`unvisited`: app/chartSave.ts unvisited; Ed, 2026-10-26: "No 💤 if there are new
   // islands, just 🧭 towards islands the player can go to and hasn't visited yet"), even once she's looked at the chart; then the bed.
   if (nightOver(g)) return unvisited.length ? { kind: "chart", target: { object: "mapTable" } } : { kind: "bed", target: { object: "bed" } };
+  // the invitations desk, or, with no bag to carry them in yet, the bags first (Ed, 2026-10-29: rules/kit.ts needsBag)
+  const desk = (): Guide => (hooks.bagCarried ?? GUIDANCE_HOOKS.bagCarried)(g, w) ? { kind: "desk", target: { object: "invitations" } } : { kind: "dress", target: { object: "bags" } };
   const k = g.wake;
   if (!k?.open || g.party.spellAt !== null) return null; // (still in bed, or the party's on: the party's pointers guide her)
   if (!k.yesterday && !pileOut(k)) { // (a game's first morning: no pile of last night's clothes to put on at once)
     for (const s of FIRST_MORNING) {
-      if ("kit" in s) { if (s.kit === "desk" ? !hooks.invitationsReady(g, w) : !hooks.broomTaken(g, w)) return s.kit === "desk" ? { kind: "desk", target: { object: "invitations" } } : { kind: "lathe", target: { object: "lathe" } }; }
+      if ("kit" in s) { if (s.kit === "desk" ? !hooks.invitationsReady(g, w) : !hooks.broomTaken(g, w)) return s.kit === "desk" ? desk() : { kind: "lathe", target: { object: "lathe" } }; }
       else if (s.dress === "styled" ? !k.styled : !dressed(k) && !!k.pile?.includes(s.dress)) return { kind: "dress", target: { object: s.at } };
     }
   }
   // (later mornings: E at the pile dresses her at once; then her kit, the invitations before the broom)
-  if (!hooks.invitationsReady(g, w)) return { kind: "desk", target: { object: "invitations" } };
+  if (!hooks.invitationsReady(g, w)) return desk();
   if (!hooks.broomTaken(g, w)) return { kind: "lathe", target: { object: "lathe" } };
   const n = save.unseen[save.unseen.length - 1];
   if (n) return { kind: n.kind, target: { object: n.at } };

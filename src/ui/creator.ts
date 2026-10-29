@@ -65,7 +65,7 @@ export const BOXES: { id: string; name: string; axes: string[]; wear: string[]; 
   { id: "shoes", name: "👟 Shoes", axes: [], wear: ["chunky"], parts: ["sneakers"] },
   { id: "broom", name: "🧹 Broom", axes: ["broomLength", "broomThickness", "broomBend", "bristles"], wear: [], parts: ["broom", "bristles"] }, // (Classic only, no power: its parts and their set's spell are the Workshop's, Ed 2026-10-23)
   { id: "scarf", name: "🧣 Scarf", axes: ["scarfLength"], wear: ["scarf"], parts: ["scarf"] },
-  { id: "bag", name: "👜 Bag", axes: ["bagSize"], wear: ["satchel", "bumbag"], parts: ["satchel"] },
+  { id: "bag", name: "👜 Bag", axes: ["bagSize"], wear: ["satchel", "bumbag", "purse"], parts: ["satchel"] },
   { id: "backpack", name: "🎒 Backpack", axes: ["backpackSize"], wear: [], parts: ["backpack"] },
   { id: "phones", name: "🎧 Headphones", axes: [], wear: ["phones"], parts: ["headphones"] },
   { id: "more", name: "✨ Magic and more", axes: [], wear: ["lantern", "vial", "book", "glowsticks", "wristband"], parts: [] },
@@ -82,7 +82,7 @@ const NAMES: Record<string, string> = { conical: "farmer's", boppers: "deely bop
 const BROOM_NAMES: Record<string, string> = { curl: "curled tip", hobbyhorse: "hobby horse", jetbike: "jet bike", speeder: "speeder bike", drone: "quad drone" };
 const optName = (axis: string, opt: string) => axis === "hatShape" ? (opt === "none" ? "no hat" : NAMES[opt] ?? opt) : axis === "broom" ? BROOM_NAMES[opt] ?? opt : opt;
 /** What a toggle or a colour part is called in its box (its genome name otherwise). */
-const WEAR_NAMES: Record<string, string> = { phones: "wearing them", shades: "sunglasses", scarf: "wearing it", satchel: "satchel", bumbag: "bum bag", chunky: "chunky trainers", glowsticks: "glow sticks", vial: "potion vial", book: "spellbook", patches: "cloak patches" };
+const WEAR_NAMES: Record<string, string> = { phones: "wearing them", shades: "sunglasses", scarf: "wearing it", satchel: "satchel", bumbag: "bum bag", purse: "purse", chunky: "chunky trainers", glowsticks: "glow sticks", vial: "potion vial", book: "spellbook", patches: "cloak patches" };
 const PART_NAMES: Record<string, string> = { jacket: "jacket", cloak: "cloak", top: "top", jeans: "jeans", hat: "hat", plume: "plume", broom: "handle / body", bristles: "bristles / trim" };
 /** The accessory a slider belongs to: moving it puts that on. */
 const WEARS: Record<string, string> = { scarfLength: "scarf", bagSize: "satchel" };

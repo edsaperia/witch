@@ -331,7 +331,7 @@
     },
     "spells.bag": {
       "what": "her bag, a config/wardrobe.json bag item's id or empty for none, whose invites multiply invites.cooldown and invites.range while she carries it (rules/bags.ts).",
-      "notes": "The page sets it from her look (localStorage witch.genome, chosen at the bags station; ?bag=quick or ?bag=far for one load). The Quick bag (bumbag) throws 💌s faster and shorter, the Far bag (satchel) slower and further; none, the tuning's own.",
+      "notes": "The page sets it from her look (localStorage witch.genome, chosen at the bags station; ?bag=starter, quick or far for one load). The Satchel (the starter) throws at the base rate and reach with a little more homing, the Quick bag (bumbag) faster and shorter, the Far purse (purse) slower and further; none, the tuning's own, and no invitations at the desk till she carries one (rules/kit.ts).",
       "decisions": [
         {
           "by": "Ed",

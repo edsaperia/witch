@@ -1248,7 +1248,7 @@ Code: `rules/spells.ts`, `docs/backlog/unlocks.md`, `rules/hat.ts`, `config/broo
   Code: `config/broom-parts.json`
 - **`spells.bag`**: her bag, a config/wardrobe.json bag item's id or empty for none, whose invites multiply invites.cooldown and invites.range while she carries it (rules/bags.ts).
   1. Ed, 2026-10-29: "We should start with a choice of two bags; faster rate of fire but shorter range, and slower rate of fire but longer range"
-  The page sets it from her look (localStorage witch.genome, chosen at the bags station; ?bag=quick or ?bag=far for one load). The Quick bag (bumbag) throws 💌s faster and shorter, the Far bag (satchel) slower and further; none, the tuning's own.
+  The page sets it from her look (localStorage witch.genome, chosen at the bags station; ?bag=starter, quick or far for one load). The Satchel (the starter) throws at the base rate and reach with a little more homing, the Quick bag (bumbag) faster and shorter, the Far purse (purse) slower and further; none, the tuning's own, and no invitations at the desk till she carries one (rules/kit.ts).
   Code: `config/wardrobe.json`
 - **`spells.speed`**: the Speed broom, her speed times mult for duration seconds, then cooldown seconds to recharge.
 - **`spells.healing`**: The Healing ring heals her while she stands near it, and the Helmet takes the first blow for her.

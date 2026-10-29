@@ -8,7 +8,7 @@ import type { Slot } from "./broomParts";
 /** A thing she can wear: what it sets on her genome (a dotted path for a part), and whether it's hers in a first game (the rest
  *  are found in the forest, as the other permanent upgrades are: Ed, 2026-10-21). */
 export interface WardrobeItem { id: string; name: string; set: Record<string, string | number | boolean>; start?: boolean;
-  /** a bag's 💌 stats: multiplying the tuning's invites.cooldown and invites.range while she wears it (rules/bags.ts) */ invites?: { cooldown?: number; range?: number };
+  /** a bag's 💌 stats: multipliers on the tuning's invites numbers (cooldown, range, homing...) while she wears it (rules/bags.ts) */ invites?: Record<string, number>;
   /** the words under its name on a panel's card ("faster throws, shorter reach") */ stat?: string }
 /** A row of a station's panel: its items, its colour grid's parts and kind, its fit sliders (WITCH_AXES); or the Workshop's (Ed,
  *  2026-10-23; docs/backlog/workshop.md): a slot's broom-part cards, the sets' chips, the pegboard's 3 × 3 board. */
