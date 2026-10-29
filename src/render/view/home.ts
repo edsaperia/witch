@@ -25,7 +25,8 @@ import { ringStoneKey } from "../artBuild";
 import type { TrunkShadow } from "../trunkShadows";
 import type { RingSpeaker } from "../lasers";
 import { STONE_FACE } from "../leash/stones";
-import { areaTopRanks, EMPTY_STONE, EMPTY_STONE_LIGHT, rankKnobs, stoneKnobs, stoneRank } from "../leash/ranks";
+import { areaTopRanks, EMPTY_STONE, EMPTY_STONE_LIGHT, rankColour, rankKnobs, stoneKnobs, stoneRank } from "../leash/ranks";
+import { stoneStack } from "../../rules/stoneStacks";
 
 /** The wave numbers' colour over areas the party has reached (spent). */
 const SPENT = new THREE.Vector3(0.7, 0.7, 0.8);
@@ -69,7 +70,14 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   const variant = (cell: readonly [number, number]) => ranked ? stoneRank(TOP, cell) : 0;
   const stoneCol = (cell: readonly [number, number]): THREE.Vector3 => ranked ? RANK_RGB[variant(cell)] : v.markerArt.colour.get(AREA_TYPES[g.map.typeOf(cell[0], cell[1])].creature)!;
   const col = (cell: readonly [number, number]) => { const c = stoneCol(cell); return c ? [c.x, c.y, c.z] : [0.8, 0.7, 1]; };
+  const stumps = v.markerArt.stumps ? v.island.stumpBatch : null; // (the great stumps: drawn below, every area's, in place of the stones)
+  // (a stump is a floor card standing at its near edge, render/sprites.ts asFloor: what lights its picture of the cut is a light where
+  // that picture is, `toward` m nearer than its middle and `rise` m up the card)
+  const camF = v.camera.getWorldDirection(v.v3b), camU = v.v3c.set(0, 1, 0).applyQuaternion(v.camera.quaternion), UP = SPRITE_UNIFORMS.uUp.value, rise = UP.dot(camU) / Math.max(0.2, -camF.y);
+  const cardOf = (cell: readonly [number, number]) => { const s = v.markerArt.stump(cell); if (!s) return null; const fr = v.markerArt.atlas.frames[s.frame], h = (fr.h - s.art.top.y) * v.mpp; return { toward: Math.max(0, fr.h - s.art.origin.y) * v.mpp * rise + UP.z * h, up: UP.y * h }; };
+  const topOf = (cell: readonly [number, number]) => { const s = v.markerArt.stump(cell); return s ? s.art.height : v.markerArt.height(cell) * v.mpp * scale; }; // (m: the stone's drawn height, or the stump's cut)
   const stone = (x: number, z: number, cell: readonly [number, number], level: number, y = 0) => {
+    if (stumps) return true;
     const frame = v.markerArt.atlas.frames[v.markerArt.frame(cell, level, variant(cell))];
     if (!inView(v, x, z, frame.w * v.mpp * scale, frame.h * v.mpp * scale, 6)) return false;
     inst.push({ x, y, z, frame, flip: false, scale, fresh: mark(v, "marker", x, z, frame.h * v.mpp * scale) });
@@ -93,13 +101,26 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
     const level = m.awake ? 1 + Math.round(Math.min(1, beat * (0.4 + 0.6 * build)) * (MARKER_LEVELS - 2)) : 0;
     stone(m.x, m.z, m.cell, level);
     // The beam and laser rise from the top of the stone, not from inside it.
-    const top = v.markerArt.height(m.cell) * v.mpp * scale;
-    if (ranked && d < stonesRange) v.leashView.stones.push({ key: m.key, x: m.x, z: m.z, top: top * STONE_FACE }); // (its sigils over it: render/leash/stones.ts)
+    const top = topOf(m.cell);
+    if (ranked && d < stonesRange) v.leashView.stones.push({ key: m.key, x: m.x, z: m.z, top: stumps ? top : top * STONE_FACE }); // (its sigils over it: render/leash/stones.ts; on a stump, from its cut)
     const A = R.awake, D = R.dormant;
     const strength = (m.awake ? (A.light + A.lightBuild * build) * (0.55 + 0.45 * beat) : D.light) * dim;
     // (the trees, props and scenery round it cast shadows from it, as from a campfire, thrown from the stone itself, not from its
     // light's spot in front of it, so the stone casts none of its own: render/trunkShadows.ts; Ed, 2026-10-13)
-    if (d < R.lightRange) near.push({ d, l: { x: m.x, y: 0.5, z: m.z + 1.5, reach: m.awake ? A.reach : D.reach, rgb: col, strength, shadow: { x: m.x, y: 1.5, z: m.z, k: m.awake ? 1 : 0.7 } } });
+    if (d < R.lightRange && !stumps) near.push({ d, l: { x: m.x, y: 0.5, z: m.z + 1.5, reach: m.awake ? A.reach : D.reach, rgb: col, strength, shadow: { x: m.x, y: 1.5, z: m.z, k: m.awake ? 1 : 0.7 } } });
+    // A stump's light is its sigils' (Ed, 2026-10-29: "they will be lit by the sigils that float above them"; "the treestump clearing ...
+    // is lit primarily by a mix of the glow from the sigils that float above the stump"): one light over its cut, its colour the stack's
+    // mix, each sigil weighed by its rank (a legend's the most), brighter the more there are; so a wild stump's clearing glows red-orange,
+    // a won one's blue, and it shifts as the stack does. An empty stack: a dim cold light.
+    if (d < R.lightRange && stumps) {
+      const L = R.stump!.light, items = ranked ? stoneStack(g, m.key) : [], C = cardOf(m.cell), ly = (C ? C.up : top) + L.height, lz = m.z + (C ? C.toward : 0);
+      let wsum = 0, r = 0, gg = 0, b = 0;
+      for (const it of items) { const wgt = [1, 1.4, 2, 3][Math.max(0, Math.min(3, it.level))], c = rankColour(t, it.level, it.friend); r += c[0] * wgt; gg += c[1] * wgt; b += c[2] * wgt; wsum += wgt; }
+      // (the mix pushed away from grey, so a won stump's light reads blue rather than washing to white under its own brightness)
+      const mr = r / Math.max(wsum, 1e-6), mg = gg / Math.max(wsum, 1e-6), mb = b / Math.max(wsum, 1e-6), grey = (mr + mg + mb) / 3, sat = L.saturate ?? 1.6;
+      if (wsum > 0) near.push({ d, l: { x: m.x, y: ly, z: lz, reach: L.reach, rgb: new THREE.Vector3(Math.max(0, grey + (mr - grey) * sat), Math.max(0, grey + (mg - grey) * sat), Math.max(0, grey + (mb - grey) * sat)), strength: L.strength * Math.min(1.4, 0.55 + 0.09 * wsum), shadow: { x: m.x, y: ly, z: m.z, k: 0.8 } } });
+      else near.push({ d, l: { x: m.x, y: ly, z: lz, reach: L.reach * 0.7, rgb: col, strength: L.strength * 0.35 * dim } });
+    }
     // Awake: a column of light and a thin laser straight up (Ed, v149: "let's see both"); dormant:
     // only the faint column above the canopy. The beams grow as the
     // countdown to the stone's wake runs (Ed, 2026-10-04): the next stone's from half to full,
@@ -132,6 +153,19 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   }
   near.sort((p, q) => p.d - q.d);
   for (const n of near.slice(0, 8)) lights.push(n.l);
+  if (stumps) { // every area's stump (but home's), partified or not: each a floor anchored by its ground point, under everything standing
+    const Rt = SPRITE_UNIFORMS.uRight.value, out: SpriteInstance[] = [], [hx, hy] = g.map.centreCell;
+    if (!g.map.zoo?.layout) for (const [cx, cy] of g.map.cells) {
+      if ((cx === hx && cy === hy) || !g.map.playable(cx, cy)) continue;
+      const s = v.markerArt.stump([cx, cy]), q = g.map.soundsystemSpot(cx, cy);
+      if (!s || Math.hypot(q.x - w.x, q.z - w.z) > range) continue;
+      const frame = v.markerArt.atlas.frames[s.frame], dx = (s.art.origin.x - frame.w / 2) * v.mpp * (s.flip ? -1 : 1), toward = Math.max(0, frame.h - s.art.origin.y) * v.mpp * rise;
+      const at = { x: q.x - Rt.x * dx, y: 0, z: q.z - Rt.z * dx + toward };
+      if (!inView(v, at.x, at.z, frame.w * v.mpp, frame.h * v.mpp, 6)) continue;
+      out.push({ ...at, frame, flip: s.flip, fresh: mark(v, "marker", q.x, q.z, frame.h * v.mpp) });
+    }
+    stumps.set(out);
+  }
   v.markerBatch.set(inst);
   if (casts || v.trunkShadowBatches.has("markers")) { // (a batch of their own: their atlas)
     let b = v.trunkShadowBatches.get("markers");
@@ -174,7 +208,7 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
     for (const m of mc.list) {
       const wave = v.plan.waves.get(m.key);
       if (wave === undefined || Math.hypot(m.x - w.x, m.z - w.z) > range) continue;
-      const species = AREA_TYPES[g.map.typeOf(m.cell[0], m.cell[1])].creature, top = v.markerArt.height(m.cell) * v.mpp * scale;
+      const species = AREA_TYPES[g.map.typeOf(m.cell[0], m.cell[1])].creature, top = topOf(m.cell);
       const k = shown(m.key, m.x, m.z, top);
       // the next stone's number as bright as its ring; the rest dimmer (the art director, #188)
       if (k > 0.02) nums.push({ x: m.x, z: m.z, y: lift(top), wave, colour: v.markerArt.colour.get(species)!, alpha: m.stage === "next" ? 1 : 0.5, show: k, top, pin: pin(m.x, m.z) });

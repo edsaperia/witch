@@ -1,3 +1,3 @@
 import { A, C, L } from "../../sigils/strokes.js";
-// bold (stacks, runes, pointers: art/sigils.js BOLD): the great bushy tail curling up over its back
-export const BOLD_SQUIRREL = { strokes: [A(.64, .38, .34, 95, 370), A(.64, .38, .27, 105, 360), C(.22, .5, .14), L([.16, .38], [.12, .26], [.24, .34]), L([.3, .62], [.28, .96], [.56, .96])] };
+// bold (stacks, runes, pointers: art/sigils.js BOLD): the great bushy tail curled up over its back
+export const BOLD_SQUIRREL = { strokes: [A(.6, .4, .36, 100, 400), A(.6, .4, .28, 110, 390), A(.6, .4, .14, 150, 420), C(.24, .66, .12), L([.18, .54], [.16, .4], [.26, .5]), L([.3, .78], [.3, .98], [.54, .98])] };

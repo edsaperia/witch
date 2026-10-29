@@ -517,6 +517,8 @@ export class View {
   private get dancefloor(): Dancefloor { return this.island.dancefloor; }
   propBatch!: SpriteBatch;
   private partyView!: PartyView;
+  /** A soundsystem's height on its great stump's cut, by its area's key (made once: render/party.ts liftOf). */
+  private readonly stumpLift = (key: string): number => { const i = key.indexOf(","); return this.markerArt.stump([+key.slice(0, i), +key.slice(i + 1)])?.art.height ?? 0; };
   private strings!: StringLightsView;
   leashView!: LeashView;
   private lasers!: Lasers;
@@ -1517,6 +1519,7 @@ export class View {
     const over = updatePartyOver(g, partyOverEase(g, this.overDebug), this.over), offAt = (x: number, z: number) => partyOff(over, x, z);
     this.leashView.partyOverEase = over.ease;
     this.fireworks.update(g.waveEvents, time, t, key => { const [cx, cy] = key.split(",").map(Number); return sigilColour(AREA_TYPES[g.map.typeOf(cx, cy)].creature) as number[]; }, at => !!g.win && g.win.lapAt !== undefined && at >= g.win.lapAt); // (the win's, from its victory lap on: the finale's palette; before the soundsystems: a celebrated one's lasers come on as its show starts)
+    this.partyView.liftOf = this.markerArt?.stumps ? this.stumpLift : null; // (on a great stump's cut)
     const party = this.partyView.update(g, time, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), () => false, this.fireworks.celebrated, offAt);
     if (over.front > 0) { for (const l of party.lights) l.strength *= 1 - offAt(l.x, l.z); party.playing = party.playing.filter(p => offAt(p.x, p.z) < 0.98); party.projectors = party.projectors.filter(p => offAt(p.x, p.z) < 0.98); }
     this.soundBatch.set(party.items);
