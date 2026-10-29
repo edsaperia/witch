@@ -300,7 +300,7 @@ export class StoneIndicator {
 
   /** Point at the next waking stone at (x, z), its area's creature `species` and neon (rgb 0-1);
    *  `fill`: how far the countdown to the next wave has run (0 just after one, 1 as it comes). null hides it. */
-  update(camera: THREE.Camera, width: number, height: number, at: { x: number; z: number; colour: THREE.Vector3; species: string; notes?: boolean; glyph?: readonly string[]; /** an emoji in its middle, drawn in pixels in its own colours (render/bubbles.ts, as the thrown 💌; the guidance pins: render/view/guidance.ts), else the glyph */ emoji?: string; /** the glyph in its own colour (her hats' pointers), the ring in `colour` */ glyphColour?: THREE.Vector3; /** the ring and its glyph cycling through the rainbow, as the soundsystem spell's spot does (the wave pointer: Ed, 2026-10-28) */ rainbow?: boolean; /** the creature's sigil this many art pixels across (its rank's size: 17 an adult's) */ sigilSize?: number; /** how tall the subject stands (m): the pin hovers over its top (a stone's 3.2 m by default) */ top?: number; /** screen pixels from the arrow's tip up to that top (tuning pins.gap) */ gap?: number; /** the page's y its tip stays above, in view (a use prompt under it: render/view/guidance.ts) */ above?: number } | null, wx: number, wz: number, time: number, bpm: number, fill: number, label?: string): void {
+  update(camera: THREE.Camera, width: number, height: number, at: { x: number; z: number; colour: THREE.Vector3; species: string; notes?: boolean; glyph?: readonly string[]; /** an emoji in its middle, drawn in pixels in its own colours (render/bubbles.ts, as the thrown 💌; the guidance pins: render/view/guidance.ts), else the glyph */ emoji?: string; /** the glyph in its own colour (her hats' pointers), the ring in `colour` */ glyphColour?: THREE.Vector3; /** the ring and its glyph cycling through the rainbow, as the soundsystem spell's spot does (the wave pointer: Ed, 2026-10-28) */ rainbow?: boolean; /** the creature's sigil this many art pixels across (its rank's size: 17 an adult's) */ sigilSize?: number; /** the sigil a legend's: its colour full, not calmed, and a glint sweeping across it (render/leash/ranks.ts legendShine) */ shine?: boolean; /** how tall the subject stands (m): the pin hovers over its top (a stone's 3.2 m by default) */ top?: number; /** screen pixels from the arrow's tip up to that top (tuning pins.gap) */ gap?: number; /** the page's y its tip stays above, in view (a use prompt under it: render/view/guidance.ts) */ above?: number } | null, wx: number, wz: number, time: number, bpm: number, fill: number, label?: string): void {
     const c = this.cue;
     // The party spread (the countdown went back to the start): a flash.
     if (fill < this.lastFill - 0.5) this.flashAt = time;
@@ -359,8 +359,17 @@ export class StoneIndicator {
       const gs = Math.max(8, Math.min(N - 6, Math.round(at.sigilSize ?? 17))), gk = `${at.species}:${gs}`;
       let g = this.glyphs.get(gk);
       if (!g) { g = sigilGlyph(at.species, gs) as { w: number; m: Uint8Array }; this.glyphs.set(gk, g); }
-      const o = Math.floor((N - g.w) / 2);
-      for (let y = 0; y < g.w; y++) for (let x = 0; x < g.w; x++) if (g.m[y * g.w + x]) c.dot(o + x, o + y, bright, 1);
+      const o = Math.floor((N - g.w) / 2), w = g.w, m = g.m;
+      if (at.shine) {
+        // (a legend's: its full colour, and every 2.6 s a glint corner to corner, as in the world)
+        const full = lift([at.colour.x * 255, at.colour.y * 255, at.colour.z * 255]), white = (k: number) => full.map(v => v + (255 - v) * k);
+        const ph = (time / 2.6) % 1, sweep = ph < 0.4 ? (ph / 0.4) * 1.6 - 0.3 : -9;
+        for (let y = 0; y < w; y++) for (let x = 0; x < w; x++) {
+          if (!m[y * w + x]) continue;
+          const glint = Math.abs(((x + 0.5) / w + 1 - (y + 0.5) / w) / 2 - sweep) < 0.13;
+          c.dot(o + x, o + y, glint ? white(0.85) : full, 1);
+        }
+      } else for (let y = 0; y < w; y++) for (let x = 0; x < w; x++) if (m[y * w + x]) c.dot(o + x, o + y, bright, 1);
     }
     // The arrowhead outside the ring: toward the subject at the edge, straight down at it as a pin.
     drawArrow(c, arrow, N, R + 2, R + 7, 3.5, bright, 1);

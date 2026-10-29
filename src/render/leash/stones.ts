@@ -20,7 +20,7 @@ import type { LeashView } from "../leash";
 import { SPRITE_UNIFORMS } from "../sprites";
 import { groundHeight } from "../height";
 import { SLOT, SLOTS } from "./glyphs";
-import { drawEmbers, legendRing, rankColour, rankKnobs, rankSize, stoneKnobs } from "./ranks";
+import { drawEmbers, legendShine, rankColour, rankKnobs, rankSize, stoneKnobs } from "./ranks";
 
 /** A rune stone drawn this frame: its area's key ("cx,cy"), where it stands and its stone's height (m, STONE_FACE of its drawn height;
  *  up its face: the sprites lean back toward the camera, render/sprites.ts uUp, and its column climbs on up that way, in its plane). */
@@ -77,8 +77,7 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
   const sigil = (id: number, level: number, x: number, y: number, z: number, size: number, alpha: number, c: [number, number, number]) => {
     const sp = g.creatures[id]?.species ?? "fox", uv = lv.uv(lv.bareSlot(sp)), sh = lv.shadeOf(uv);
     if (sh) lv.stackBack.add(x, y, z, size, sh, 0.02, 0.02, 0.035, (S.backing ?? 0.6) * alpha);
-    lv.stackGlyphs.add(x, y, z, size, uv, c[0], c[1], c[2], alpha);
-    if (level >= 3) legendRing(lv.stackGlyphs, dot, x, y, z, size, c, time, alpha); // (a legend's: unmistakable, ranks.ts)
+    lv.stackGlyphs.add(x, y, z, size, uv, c[0], c[1], c[2], alpha, 1, false, legendShine(level, time, id)); // (a legend's shiny: ranks.ts)
     if (alpha > 0.5) drawEmbers(lv.stackGlyphs, dot, lv.glyphPts.get(`${uv[0]},${uv[1]}`) ?? [], x, y, z, size, false, level, c, time, id * 7 + 3, RK.embers, RK.embers.stack);
   };
   // A point `h` m up a stone's face (its sprite's up: leaning back toward the camera), a little in front of it.

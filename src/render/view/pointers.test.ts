@@ -24,7 +24,7 @@ describe("the edge pointers (Ed's pointer pass, 2026-10-28)", () => {
     expect(P[0].colour).toEqual(rankColour(TUNING, 3, false)); // (hostile: the enemy's yellow)
     expect(P[2].colour).toEqual(rankColour(TUNING, 3, true)); // (happy: the friend's)
     expect(P[2].top).toBe(9);
-    expect(P[0].sigilSize).toBeCloseTo(POINTER_SIGIL * 1.35);
+    expect(P[0].sigilSize).toBeCloseTo(POINTER_SIGIL * 1.35); expect(P.every(p => p.shine)).toBe(true); // (shiny, a legend's)
     expect(legendPointers(game([L(1, "angry")], { phase: "won" }))).toEqual([]);
     expect(legendPointers(game([L(1, "angry")], { phase: "lap", lap: [] })).length).toBe(1); // (till won: through the lap)
   });
