@@ -1575,6 +1575,12 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
   2. Ed, 2026-10-27: "go ahead and push all the new sigil work" (the default since; ?sigils=old turns them off and the hex grid back to 4 m)
   on [2], every leash sigil (her stack, placed sigils, happy runes, the ghost, the treetop projection, the bond) is its bare glyph, no ring or disc, glyph metres across on the ground, in its rank's colour (colours: baby, youth, adult, legend; the species' neon stays the world's: borders, stones, fireworks, dancefloor, holograms, chart), with embers rising off its strokes (embers.count at once, each size metres, rising rise metres, by rank; in her stack stack of that), under a dark shade in the glyph's own shape (not a disc); a youth in her stack shows two rows of round dots off to its right, one a berry it eats on the move (toEvolve less the last, eaten at a placed sigil), at most dotsPerRow a row, bright eaten and dim not, pulsing when ready; and the hex grid is hex metres (leash.hex.size).
   Code: `render/leash/ranks.ts`
+- **`leash.placeMotes`**: A sigil put down or picked up: its burst of motes rising in its colour (render/leash.ts, drawn in render/leash/combat.ts): count, size (m), bright (times its colour), rise and life (times the old height and length).
+  1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
+- **`leash.ranks.embers.bright`**: The embers rising off rank sigils (on the ground, in her stack, over the rune stones): their colour times this.
+  1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
+- **`leash.ranks.embers.crowd`**: Past this many of her sigils put down, each one's embers thinned by the square root, so a crowd of them isn't noise (0: never).
+  1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
 
 | knob | type | range |
 |---|---|---|
@@ -1590,6 +1596,11 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
 | `leash.sigilBacking.dark` | number | 0 to … |
 | `leash.sigilBacking.size` | number | 0 to … |
 | `leash.sigilBacking.ink` | number | 0 to … |
+| `leash.placeMotes.count` | number | 0 to … |
+| `leash.placeMotes.size` | number | 0 to … |
+| `leash.placeMotes.bright` | number | 0 to … |
+| `leash.placeMotes.rise` | number | 0 to … |
+| `leash.placeMotes.life` | number | 0 to … |
 | `leash.runeGap` | number | 0 to … |
 | `leash.hex.size` | number | 0 to … |
 | `leash.hex.stone` | number | 0 to … |
@@ -1625,6 +1636,8 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
 | `leash.ranks.embers.size` | array of number |  |
 | `leash.ranks.embers.rise` | array of number |  |
 | `leash.ranks.embers.stack` | number | 0 to … |
+| `leash.ranks.embers.bright` | number | 0 to … |
+| `leash.ranks.embers.crowd` | number | 0 to … |
 | `leash.ranks.dotsPerRow` | number | 0 to … |
 | `leash.ranks.stoneGlow` | number | 0 to … |
 | `leash.ranks.stones.range` | number | 0 to … |
@@ -2487,6 +2500,12 @@ Spawn markers (Ed, v147): a rune stone on every spot where a soundsystem will co
   Code: `rules/runestones.ts`
 - **`runeMarkers.beamHeight`**: the beacon's height (metres).
 - **`runeMarkers.lightRange`**: stones within this many metres light the scene.
+- **`runeMarkers.awake.moteSize`**: The motes rising off an awake runestone: their size in the picture's pixels (render/markers.ts).
+  1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
+- **`runeMarkers.awake.moteBright`**: The motes rising off an awake runestone: their brightness, times its colour.
+  1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
+- **`runeMarkers.awake.moteRise`**: How high (m) an awake runestone's motes rise before they fade.
+  1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
 
 | knob | type | range |
 |---|---|---|
@@ -2508,6 +2527,9 @@ Spawn markers (Ed, v147): a rune stone on every spot where a soundsystem will co
 | `runeMarkers.awake.beam` | number | 0 to … |
 | `runeMarkers.awake.motes` | number | 0 to … |
 | `runeMarkers.awake.moteBuild` | number | 0 to … |
+| `runeMarkers.awake.moteSize` | number | 0 to … |
+| `runeMarkers.awake.moteBright` | number | 0 to … |
+| `runeMarkers.awake.moteRise` | number | 0 to … |
 | `runeMarkers.flare.time` | number | 0 to … |
 | `runeMarkers.flare.light` | number | 0 to … |
 

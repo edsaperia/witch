@@ -4062,6 +4062,40 @@
           "additionalProperties": false,
           "description": "A dark patch under every sigil on the ground, so it reads clearly."
         },
+        "placeMotes": {
+          "type": "object",
+          "properties": {
+            "count": {
+              "type": "number",
+              "minimum": 0
+            },
+            "size": {
+              "type": "number",
+              "minimum": 0
+            },
+            "bright": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rise": {
+              "type": "number",
+              "minimum": 0
+            },
+            "life": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "count",
+            "size",
+            "bright",
+            "rise",
+            "life"
+          ],
+          "additionalProperties": false,
+          "description": "A sigil put down or picked up: its burst of motes rising in its colour (render/leash.ts, drawn in render/leash/combat.ts): count, size (m), bright (times its colour), rise and life (times the old height and length)."
+        },
         "runeGap": {
           "type": "number",
           "minimum": 0,
@@ -4311,13 +4345,25 @@
                 "stack": {
                   "type": "number",
                   "minimum": 0
+                },
+                "bright": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The embers rising off rank sigils (on the ground, in her stack, over the rune stones): their colour times this."
+                },
+                "crowd": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Past this many of her sigils put down, each one's embers thinned by the square root, so a crowd of them isn't noise (0: never)."
                 }
               },
               "required": [
                 "count",
                 "size",
                 "rise",
-                "stack"
+                "stack",
+                "bright",
+                "crowd"
               ],
               "additionalProperties": false
             },
@@ -4467,6 +4513,7 @@
         "sigilGlyph",
         "sigilHalo",
         "sigilBacking",
+        "placeMotes",
         "runeGap",
         "hex",
         "runs",
@@ -6705,6 +6752,21 @@
             "moteBuild": {
               "type": "number",
               "minimum": 0
+            },
+            "moteSize": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The motes rising off an awake runestone: their size in the picture's pixels (render/markers.ts)."
+            },
+            "moteBright": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The motes rising off an awake runestone: their brightness, times its colour."
+            },
+            "moteRise": {
+              "type": "number",
+              "minimum": 0,
+              "description": "How high (m) an awake runestone's motes rise before they fade."
             }
           },
           "required": [
@@ -6714,7 +6776,10 @@
             "reach",
             "beam",
             "motes",
-            "moteBuild"
+            "moteBuild",
+            "moteSize",
+            "moteBright",
+            "moteRise"
           ],
           "additionalProperties": false
         },

@@ -925,6 +925,39 @@
     },
     "partyOver.walk": {
       "what": "their pace home, times their roaming speed (they walk, not run: a stroll home after the party)."
+    },
+    "runeMarkers.awake.moteSize": {
+      "what": "The motes rising off an awake runestone: their size in the picture's pixels (render/markers.ts).",
+      "decisions": [
+        {
+          "by": "the coordinator",
+          "date": "2026-10-29",
+          "quote": "Given current settings, the motes from sigils don't do much",
+          "rest": "Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them)"
+        }
+      ]
+    },
+    "runeMarkers.awake.moteBright": {
+      "what": "The motes rising off an awake runestone: their brightness, times its colour.",
+      "decisions": [
+        {
+          "by": "the coordinator",
+          "date": "2026-10-29",
+          "quote": "Given current settings, the motes from sigils don't do much",
+          "rest": "Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them)"
+        }
+      ]
+    },
+    "runeMarkers.awake.moteRise": {
+      "what": "How high (m) an awake runestone's motes rise before they fade.",
+      "decisions": [
+        {
+          "by": "the coordinator",
+          "date": "2026-10-29",
+          "quote": "Given current settings, the motes from sigils don't do much",
+          "rest": "Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them)"
+        }
+      ]
     }
   }
 }
