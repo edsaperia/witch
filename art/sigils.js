@@ -458,18 +458,18 @@ export const BOLD_DOT = 1.5 / BOLD_GRID;  // a dot's radius: 3 px across
 export const hasBold = id => !!BOLD[id];
 // ---- the legend's crown ----
 // (Ed, 2026-10-29: "Give the legend sigils a crown in the same colour (just above the sigil, the same on all legend sigils, not drawn
-// different for each one)"; his reference on claude/ed-shots, previews/ed/legend-crown/: three points, the middle tallest, notches
-// between them, a band apart under it.) One crown for every legend, in art pixels, filled so it reads at stack size: drawn just above
+// different for each one)"; his reference on claude/ed-shots, previews/ed/legend-crown/: three points, the middle tallest, round
+// notches between them; and, Ed the same day, no band under it, its foot curving up in the middle.) One crown for every legend, in art pixels, filled so it reads at stack size: drawn just above
 // a legend's sigil in the sigil's own colour wherever the leash shows one (render/leash.ts bareSlot) and on the pointers
 // (render/indicator.ts).
 export const LEGEND_CROWN = [
   ".......##.......",
   "#......##......#",
   "##....####....##",
-  "###.########.###",
-  "################",
-  "................",
+  "###..######..###",
+  ".##..######..##.",
   ".##############.",
+  "..####....####..",
 ];
 export const LEGEND_CROWN_W = LEGEND_CROWN[0].length, LEGEND_CROWN_H = LEGEND_CROWN.length;
 // The crown `w` px wide ({ w, h, m }, m 1 where there is ink), nearest-neighbour from LEGEND_CROWN (its own size at 16), at least 8 across.

@@ -89,8 +89,9 @@ describe("rank sigils", () => {
     const row = (y: number) => Array.from(C.m.subarray(y * C.w, (y + 1) * C.w));
     expect(row(0).filter(Boolean).length).toBeGreaterThan(0); // (the middle point, tallest)
     expect(row(0)[0]).toBe(0); expect(row(1)[0]).toBe(1); // (the side points start a row lower)
-    expect(row(C.h - 2).some(Boolean)).toBe(false); // (the band apart under it)
-    expect(row(C.h - 1).filter(Boolean).length).toBeGreaterThan(C.w / 2);
+    const foot = row(C.h - 1); // (no band: its foot curving up in the middle, Ed, 2026-10-29)
+    expect(foot[C.w / 2] || foot[C.w / 2 - 1]).toBe(0); expect(foot.some(Boolean)).toBe(true);
+    expect(row(C.h - 2).every((v, x) => v || x === 0 || x === C.w - 1)).toBe(true); // (its body whole above the foot)
     const small = crownGlyph(10);
     expect(small.w).toBe(10); expect(small.m.some(Boolean)).toBe(true);
   });
