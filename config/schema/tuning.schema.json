@@ -4449,6 +4449,9 @@
               "type": "number",
               "minimum": 0
             },
+            "bold": {
+              "type": "boolean"
+            },
             "stones": {
               "type": "object",
               "properties": {
@@ -4570,6 +4573,7 @@
             "dotsPerRow",
             "stoneGlow",
             "standScale",
+            "bold",
             "stones",
             "chain"
           ],
