@@ -27,9 +27,10 @@ describe("home grows with the kinds she knows", () => {
     expect([...a10.values()].sort()).toEqual([...homeKinds()].sort());
     expect([...a13.values()].sort()).toEqual([...homeKinds(), "beetle", "otter", "moth"].sort());
     expect(m13.centreCell).toEqual(m10.centreCell);
-    // the 10-area home's areas, kinds and all, every night after (whatever the night's seed)
-    for (const [k, kind] of a10) { expect(a11.get(k)).toBe(kind); expect(a13.get(k)).toBe(kind); }
-    for (const [k, kind] of a11) expect(a13.get(k)).toBe(kind);
+    // the 10-area home's areas every night after (whatever the night's seed); which kind is where is the night's own (Ed,
+    // 2026-10-28, rules/deal.ts: its types dealt along each night's route)
+    for (const k of a10.keys()) { expect(a11.has(k)).toBe(true); expect(a13.has(k)).toBe(true); }
+    for (const k of a11.keys()) expect(a13.has(k)).toBe(true);
     // the new ones further out, along the island's shape (rules/islandGrowth.ts: each the next it takes from its edge): each
     // joined to the areas before it, and past home's own neighbours
     const ring = new Set(m13.neighbours.get(m13.centreCell.join(",")) ?? []);

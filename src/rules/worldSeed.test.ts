@@ -1,5 +1,5 @@
 // The world seed (Ed, 2026-10-11; rules/rosters.ts, rules/map.ts): a campaign's islands keep their shapes (coast, areas, roster,
-// place on the chart) night after night; what's inside them (scenery, creatures, the night's legends) changes each night; another
+// place on the chart) night after night; what's inside them (scenery, creatures, the night's legends, which type is where) changes each night; another
 // world has other shapes.
 import { describe, expect, it } from "vitest";
 import { bearingOf, homeIsland, islandOf, KIND_NAMES, KINDS } from "./rosters";
@@ -8,8 +8,9 @@ import { TUNING, type Tuning } from "./tuning";
 import { newGame } from "./game";
 
 const at = (island: string, world: number, areas = 10): Tuning => ({ ...TUNING, map: { ...TUNING.map!, island, world, islandAreas: areas } });
-const shape = (m: ReturnType<typeof generateMap>) => ({ cells: m.cells, types: m.cells.map(([x, y]) => AREA_TYPES[m.typeOf(x, y)].id), r: m.bounds.land!.box, coast: [0, 1, 2, 3, 4, 5].map(a => m.coast(a)) });
-const insides = (m: ReturnType<typeof generateMap>) => JSON.stringify({ scenes: m.scenes, grounds: m.grounds, legends: m.legendKinds, paths: m.paths.lines?.length ?? 0 });
+// (its areas' types are the night's too, dealt along its route (Ed, 2026-10-28, rules/deal.ts); the roster they're dealt from, its world's)
+const shape = (m: ReturnType<typeof generateMap>) => ({ cells: m.cells, roster: m.cells.map(([x, y]) => AREA_TYPES[m.typeOf(x, y)].id).sort(), r: m.bounds.land!.box, coast: [0, 1, 2, 3, 4, 5].map(a => m.coast(a)) });
+const insides = (m: ReturnType<typeof generateMap>) => JSON.stringify({ types: m.cells.map(([x, y]) => m.typeOf(x, y)), scenes: m.scenes, grounds: m.grounds, legends: m.legendKinds, paths: m.paths.lines?.length ?? 0 });
 
 describe("the world seed", () => {
   it("fixes every island in a world (world 0: the table's own bearings), and moves them all in another", () => {

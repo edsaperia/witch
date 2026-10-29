@@ -60,7 +60,10 @@ export class PathNetwork {
   private grid = new Map<string, [number, number][]>(); // cell -> [line, segment]
   private readonly cell = 24;
 
-  constructor(readonly map: ForestMap) {
+  /** `wetBefore`: the night's deal (rules/deal.ts) made the paths once for the world's own types and now makes them for the
+   *  night's: the streams between wet areas then follow the night's types from a draw of their own, while the draws the world's
+   *  streams took are taken again (and their lines dropped), so every other line comes out exactly as before. */
+  constructor(readonly map: ForestMap, wetBefore?: (cx: number, cy: number) => boolean) {
     // Railways and roads run off the map's whole extent, so they leave it rather than stop at its edge.
     const t = map.tuning.paths, b = map.extent, r = rng(map.seed * 7 + 4242);
     // The zoo (rules/zoo.ts): a straight path along every border between its blocks, nothing else; laid out like the chart
@@ -112,17 +115,23 @@ export class PathNetwork {
         const s = Math.floor(r() * 4), e = (s + 2) % 4;
         this.lines.push({ kind: "stream", pts: crossing(edgePoint(s, 0.1 + r() * 0.8), edgePoint(e, 0.1 + r() * 0.8), 90, 70), half: t.streamHalf });
       }
-      const wet = (cx: number, cy: number) => AREA_TYPES[map.typeOf(cx, cy)].wet; // (the area's flag: art/areas.js)
-      for (const [k, nbrs] of map.neighbours) {
-        const [ax, ay] = k.split(",").map(Number);
-        if (!wet(ax, ay)) continue;
-        for (const nk of nbrs) {
-          const [bx, by] = nk.split(",").map(Number);
-          if (k > nk || !wet(bx, by)) continue;
-          const [a, c] = this.trim(map.siteOf(ax, ay), map.siteOf(bx, by), this.clearOf(ax, ay), this.clearOf(bx, by));
-          if (a) this.lines.push({ kind: "stream", pts: this.meander(a, c, r), half: t.streamHalf });
+      const wetNow = (cx: number, cy: number) => AREA_TYPES[map.typeOf(cx, cy)].wet; // (the area's flag: art/areas.js)
+      const wetStreams = (wet: (cx: number, cy: number) => boolean, draw: () => number, keep: boolean) => {
+        for (const [k, nbrs] of map.neighbours) {
+          const [ax, ay] = k.split(",").map(Number);
+          if (!wet(ax, ay)) continue;
+          for (const nk of nbrs) {
+            const [bx, by] = nk.split(",").map(Number);
+            if (k > nk || !wet(bx, by)) continue;
+            const [a, c] = this.trim(map.siteOf(ax, ay), map.siteOf(bx, by), this.clearOf(ax, ay), this.clearOf(bx, by));
+            if (!a) continue;
+            const pts = this.meander(a, c, draw);
+            if (keep) this.lines.push({ kind: "stream", pts, half: t.streamHalf });
+          }
         }
-      }
+      };
+      if (wetBefore) { wetStreams(wetBefore, r, false); wetStreams(wetNow, rng(map.seed * 7 + 4243), true); }
+      else wetStreams(wetNow, r, true);
       // Paths: between neighbouring areas' centres (some pairs), meandering; and a dead end or two
       // in some areas, out to nothing in particular (a ruin, later).
       const seen = new Set<string>();

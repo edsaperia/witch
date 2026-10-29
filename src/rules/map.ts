@@ -21,6 +21,7 @@ const frontOf = (t: { x: number; z: number }, d: { x: number; z: number }, clear
 export const treehouseDistance = (t: Tuning) => speakerRadius(t) + t.dancefloor.speakers.footprint + t.treehouse.gap + t.treehouse.clear;
 import { PathNetwork } from "./paths";
 import { routeOf } from "./party";
+import { dealAlongRoute, matchLegendAreas } from "./deal";
 import { beachOf, isInside, makeCoast, type Bounds } from "./mapShape";
 import { landOf, makeLand, type LandData, type LandMap } from "./land";
 import { knownRoute, rememberRoute, type LeyRoute } from "./leyroute";
@@ -496,7 +497,8 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   }
   // (an island by roster grows only its roster's species, Ed 2026-10-12: every area past its playable ones, the buffer ring's, the
   // sea's and the lakes', takes the type of the nearest playable area but home's, centre to centre, so its shore is its own forest)
-  if (rosterIsland && others.length) {
+  // (again after the night's deal, below: typeBeyond)
+  const typeBeyond = () => {
     const own = others.map(([x, y]) => { const s = siteXZ(x, y); return { x: s[0], z: s[1], t: types.get(cellKey(x, y))! }; });
     for (const k of [...types.keys()]) {
       const [cx, cy] = k.split(",").map(Number);
@@ -506,7 +508,8 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
       for (const o of own) { const d = (o.x - s[0]) ** 2 + (o.z - s[1]) ** 2; if (d < bd) { bd = d; best = o; } }
       types.set(k, best.t);
     }
-  }
+  };
+  if (rosterIsland && others.length) typeBeyond();
 
   // The legend areas (Ed, 2026-10-26: "legends are spawned in additional areas that have legend circles where runestones usually
   // are"; "extra areas are added to each island, and the legend areas can be adjacent to the same type of area, so it effectively
@@ -519,6 +522,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   // (map.areaOf, map.sameArea): a legend's kin and rage, wild creatures chasing and defending. A kind with no room beside any of
   // its areas keeps its legend in one of its own areas, as before (below, once the route's known).
   const legendAreas = new Map<string, string>(), pairCells = new Map<string, Cell>(); // (a legend area's key -> its pair's key, and its pair's cell)
+  const slotRoom = new Map<string, number>(); // (each legend area's room, m: the biggest circle it holds, up to its first kind's need)
   let dealtKinds: string[] | null = null;
   const LC0 = tuning.legendClearing, areaMax = LC0.fit?.areaMax ?? LC0.fit?.max ?? 25;
   if (rosterIsland && grownSet && !zoo && tuning.legends?.areas !== false && others.length) {
@@ -564,6 +568,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
       }
       if (!best) return;
       taken.add(best.k);
+      slotRoom.set(best.k, best.room);
       legendAreas.set(best.k, best.pair);
       types.set(best.k, types.get(best.pair)!);
     });
@@ -848,6 +853,54 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   // The paths first (their lines need only the areas), so soundsystems, set pieces and the
   // grounds can keep off them; then the grounds; then the paths' pieces, clear of all of those.
   map.paths = new PathNetwork(map);
+  // The night's deal (Ed, 2026-10-28; rules/deal.ts): the island's types dealt again onto its areas along tonight's route, its own
+  // kind first, no kind twice in a row; its shapes (areas, lakes, coast, legend areas) left as its world made them. The route
+  // first (through the soundsystems' spots, kept off the paths made above: those spots are kept, so the route and its stones stay
+  // as planned), then the deal, then everything that follows the types: the shore's forest, the legend areas' pairs and looks,
+  // the paths again (the streams between wet areas: the only lines that follow the types), the set pieces and scenes below.
+  let legendSlotOf: Map<string, string> | null = null;
+  if (rosterIsland && !zoo && others.length > 1) {
+    const order = routeOf(map as unknown as ForestMap).order, at = (k: string): Cell => { const [x, y] = k.split(",").map(Number); return [x, y]; };
+    for (const k of order) { const [x, y] = at(k); soundsystemSpot(x, y); } // (kept: the route's stones)
+    const kindOfType = (t: number) => AREA_TYPES[t]?.creature ?? "", own = rosterIsland.kind === "home" ? null : rosterIsland.kind;
+    const deck = order.map(k => types.get(k)!), found = new Set(MS.found ?? []), before = new Map(types);
+    // (the legend areas each of tonight's legends could have, given a deal: those beside one of its kind's areas, the roomiest
+    // for it first; tonight's legends as the route's first three areas deal them, rules/rosters.ts dealLegends)
+    const slots = [...legendAreas.keys()], homeKey = cellKey(centreCell[0], centreCell[1]);
+    const legendsOf = (dealt: number[]) => {
+      const kindAt = new Map(order.map((k, i) => [k, kindOfType(dealt[i])]));
+      const first = order.slice(0, 3), early = tuning.legends?.earlyQuest !== false ? first.filter(k => first.some(o => o !== k && kindAt.get(o) !== kindAt.get(k))).map(k => kindAt.get(k)!) : [];
+      const kinds = dealLegends(rosterIsland, runSeed, found, early), byKind = new Map<string, string[]>();
+      for (const kind of kinds) {
+        const want = legendRadius(kind, LC0, areaMax), fits = (s: string) => Math.min(slotRoom.get(s) ?? 0, want); // (room up to its need)
+        byKind.set(kind, slots.filter(s => [...(neighbours.get(s) ?? [])].some(o => o !== homeKey && kindAt.get(o) === kind)).sort((a, b) => fits(b) - fits(a) || (a < b ? -1 : 1)));
+      }
+      const slotOf = matchLegendAreas(kinds, k => byKind.get(k) ?? []);
+      return { kinds, slotOf, kindAt };
+    };
+    const { types: dealt } = dealAlongRoute(deck, kindOfType, own, runSeed, d => legendsOf(d).slotOf.size);
+    order.forEach((k, i) => types.set(k, dealt[i]));
+    typeBeyond();
+    // (the legend areas paired again: tonight's legends each beside one of its kind's areas where the matching found one, the rest
+    // beside the area they were grown from, each taking its pair's look)
+    const { kinds, slotOf, kindAt } = legendsOf(dealt), mine = new Map([...slotOf].map(([kind, s]) => [s, kind]));
+    // (each pair its own: tonight's legends' first, then the rest, the area each was grown beside where it's free)
+    const used = new Set<string>(), nextTo = (s: string) => [...(neighbours.get(s) ?? [])].filter(o => kindAt.has(o) && !used.has(o)).sort((a, b) => order.indexOf(a) - order.indexOf(b));
+    const pairOf = new Map<string, string>();
+    for (const s of slots) { const kind = mine.get(s); if (!kind) continue; const p = nextTo(s).find(o => kindAt.get(o) === kind)!; pairOf.set(s, p); used.add(p); }
+    for (const s of slots) { if (mine.has(s)) continue; const was = legendAreas.get(s)!, p = !used.has(was) ? was : nextTo(s)[0] ?? was; pairOf.set(s, p); used.add(p); }
+    for (const s of slots) {
+      const pair = pairOf.get(s)!;
+      legendAreas.set(s, pair);
+      pairCells.set(s, at(pair));
+      types.set(s, types.get(pair)!);
+    }
+    dealtKinds = kinds;
+    legendSlotOf = new Map([...slotOf].map(([kind, s]) => [kind, legendAreas.get(s)!]));
+    pieceHome = null;
+    pieceSpots.clear();
+    map.paths = new PathNetwork(map, (cx, cy) => AREA_TYPES[before.get(cellKey(cx, cy)) ?? typeOf(cx, cy)].wet);
+  }
   // The grounds: some areas (not home) have one, off to the side of the area's centre; its whole
   // clearing keeps clear of everything placed before it (soundsystems, the dancefloor, the
   // treehouse, set pieces, other grounds), turning round the centre to find room, or left out.
@@ -909,7 +962,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     legendKinds = dealtKinds ?? dealLegends(rosterIsland, runSeed, new Set(MS.found ?? []), early); // (dealt with the legend areas, above)
     map.legendKinds = legendKinds;
     for (const kind of legendKinds) {
-      const pair = [...legendAreas.values()].find(p => kindAt(p) === kind); // (its legend area's pair: the legend's own area)
+      const pair = legendSlotOf ? legendSlotOf.get(kind) : [...legendAreas.values()].find(p => kindAt(p) === kind); // (its legend area's pair: the legend's own area)
       if (pair) { legendCells.add(pair); continue; }
       const mine = order.filter(k => kindAt(k) === kind);
       const at = mine.find(k => first.includes(k)) ?? mine[Math.floor(hash2(runSeed, mine.length, 7357 + legendKinds.indexOf(kind)) * mine.length)];
