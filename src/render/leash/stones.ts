@@ -173,42 +173,63 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
   for (const k of [...V.last.keys()]) if (!shown.has(k) && !V.converted.some(C => C.col === V.last.get(k))) V.last.delete(k);
   // The cast: the ring round the stone's foot, its bars the music's analyser, and the motes.
   const W = g.witches?.[0], cs = W ? castShown(g, W) : null, show = !!cs && (cs.casting || cs.k > 0 || cs.lostFrom !== undefined);
-  V.wantsSpectrum = show;
-  V.castLight = null;
-  if (!cs || !show) return;
-  const st = lv.stones.find(s => s.key === cs.key), top = st ? upY(st.x, st.z, st.top) : 5.4, k = Math.max(0, Math.min(1, cs.k)), dr = Math.max(k, cs.lostFrom ?? k);
-  const lostA = cs.hitAt === undefined ? 0 : Math.max(0, 1 - (g.herTime - cs.hitAt) / 1.2), n = Math.max(8, Math.min(V.bars.length, Math.round(K.bars)));
-  const spec = V.spectrum, dt = Math.min(0.1, lv.frameDt);
+  const n = Math.max(8, Math.min(V.bars.length, Math.round(K.bars))), spec = V.spectrum, dt = Math.min(0.1, lv.frameDt);
+  // (the music's level at bar i of m, rising at once and falling slowly, as an analyser's do; with no audio running, a gentle idle)
+  const level = (i: number, m: number) => {
+    const live = spec ? barLevel(spec, i, m) : 0.25 + 0.2 * Math.abs(Math.sin(time * 1.3 + i * 1.7) * 0.6 + Math.sin(time * 2.1 + i * 0.9) * 0.4);
+    return (V.bars[i] = Math.max(live, V.bars[i] - dt * 1.8));
+  };
   // On a great stump (Ed, 2026-10-29: "the audio analyser effect should be the same orientation as the stump rings and fill the whole
   // treestump area"; "The audio bars should be long enough that they fill the whole root area, not just the cut trunk circle"): it lies
   // on the ground with the stump, its bars running out from the rings' middle (where she casts) over the roots all round, following
-  // the root area's outline (StoneSpot.roots); the cast's share lights them round the dial, each bar reaching out as far as the music's
-  // level, and a hit flashes the lost part red; the rest of the dial isn't drawn.
-  const SR = t.runeMarkers.stump?.on ? t.runeMarkers.stump.ring : null, roots = SR ? st?.roots : undefined;
-  if (SR && roots?.length) {
-    const N = roots.length, edge = (a: number) => { // (the root area's radius that way: between its two nearest angles; mirrored with the stump)
-      const u = ((((st!.flip ? Math.PI - a : a) / (Math.PI * 2)) * N) % N + N) % N, i0 = Math.floor(u), q = u - i0;
-      return roots[i0] * (1 - q) + roots[(i0 + 1) % N] * q;
-    };
-    const nb = Math.min(V.bars.length, n * 2); // (twice the bars: they reach out over the roots, so their ends stay close)
+  // the root area's outline (StoneSpot.roots), only the filled ones drawn ("the unfilled white bars don't need to be drawn").
+  const SR = t.runeMarkers.stump?.on ? t.runeMarkers.stump.ring : null, nb = Math.min(V.bars.length, n * 2); // (twice the bars: they reach out over the roots, so their ends stay close)
+  const edgeOf = (st: StoneSpot) => (a: number) => { // (the root area's radius that way: between its two nearest angles; mirrored with the stump)
+    const R = st.roots!, N = R.length, u = ((((st.flip ? Math.PI - a : a) / (Math.PI * 2)) * N) % N + N) % N, i0 = Math.floor(u), q = u - i0;
+    return R[i0] * (1 - q) + R[(i0 + 1) % N] * q;
+  };
+  // (one bar, at angle a from the rings' middle (x, z), `reach` of the way out to the roots' edge, in colour c)
+  const rootBar = (S: NonNullable<typeof SR>, edge: (a: number) => number, x0: number, z0: number, a: number, reach: number, c: number[], alpha: number) => {
+    const ux = Math.cos(a), uz = Math.sin(a), steps = Math.max(1, Math.floor((edge(a) * S.fill - S.inner) / S.cell)), top = Math.round(reach * steps);
+    for (let j = 0; j <= top; j++) {
+      const r = S.inner + j * S.cell, tip = j === top, x = x0 + ux * r, z = z0 + uz * r;
+      // (painted on, not added: added light vanishes on the cut lit by its sigils)
+      lv.ink.add(x, 0.06, z, S.cell, dot, c[0], c[1], c[2], alpha * (tip ? 1 : 0.9));
+      // (and glowing bright over it, as light, in its own colour: Ed, 2026-10-29, "music spell filled bars can glow brightly", "don't
+      // wash out to white light, it should bloom in the colour of the dot": its hue alone added, the grey in it taken out, so on the
+      // lit wood and where the glows overlap it saturates rather than whitening)
+      const gk = S.glow ?? 0, lo = Math.min(c[0], c[1], c[2]) * 0.9;
+      if (gk > 0) lv.flat.add(x, 0.08, z, S.cell * 1.8, dot, (c[0] - lo) * gk, (c[1] - lo) * gk, (c[2] - lo) * gk, alpha * (tip ? 0.6 : 0.45), 1, true);
+    }
+  };
+  V.castLight = null;
+  // A wave's cast (Ed, 2026-10-29: "when the wave causes the soundsystem spell to be cast, it does it instantly, and the visual effect is
+  // all the stacks in the soundwave filling out from the centre simultaneously as the soundsystem appears, instead of filling up
+  // radially"): an area the wave partified (not one she cast early, Partified.early), every bar at once growing out from the rings'
+  // middle over the soundsystem's rise (party.transition), held a moment at the music's level, then fading; its light at the middle.
+  let waving = false;
+  if (SR) for (const st of lv.stones) {
+    const A = g.party.areas.get(st.key), WV = SR.wave;
+    if (!st.roots?.length || !A || A.early || !WV) continue;
+    const e = g.clock.time - A.at, T = Math.max(0.1, t.party.transition);
+    if (e < 0 || e > T + WV.hold + WV.fade) continue;
+    const fill = smooth(e / T), fade = 1 - smooth((e - T - WV.hold) / Math.max(0.05, WV.fade)), edge = edgeOf(st);
+    waving = true;
+    for (let i = 0; i < nb; i++) { const f = i / nb; rootBar(SR, edge, st.x, st.z, Math.PI / 2 + f * Math.PI * 2, fill * (0.55 + 0.45 * level(i, nb)), hue(f + time * 0.15), fade); }
+    if (!V.castLight) V.castLight = { x: st.x, z: st.z, rgb: hue(time * 0.3) as [number, number, number], k: fill * fade };
+  }
+  V.wantsSpectrum = show || waving;
+  if (!cs || !show) return;
+  const st = lv.stones.find(s => s.key === cs.key), top = st ? upY(st.x, st.z, st.top) : 5.4, k = Math.max(0, Math.min(1, cs.k)), dr = Math.max(k, cs.lostFrom ?? k);
+  const lostA = cs.hitAt === undefined ? 0 : Math.max(0, 1 - (g.herTime - cs.hitAt) / 1.2);
+  // Her cast on a stump: the cast's share lights the bars round the dial, each reaching out as far as the music's level, and a hit
+  // flashes the lost part red.
+  if (SR && st?.roots?.length) {
+    const edge = edgeOf(st);
     for (let i = 0; i < nb; i++) {
-      const live = spec ? barLevel(spec, i, nb) : 0.25 + 0.2 * Math.abs(Math.sin(time * 1.3 + i * 1.7) * 0.6 + Math.sin(time * 2.1 + i * 0.9) * 0.4);
-      V.bars[i] = Math.max(live, V.bars[i] - dt * 1.8);
-      const f = i / nb, a = Math.PI / 2 + f * Math.PI * 2, ux = Math.cos(a), uz = Math.sin(a), lv0 = V.bars[i];
-      const lit = f < k, lost = !lit && f < dr && lostA > 0;
-      if (!lit && !lost) continue; // (only the filled bars: Ed, 2026-10-29, "the unfilled white bars don't need to be drawn")
-      const c = lit ? hue(f + time * 0.15) : [1, 0.2, 0.15], out = edge(a) * SR.fill, steps = Math.max(1, Math.floor((out - SR.inner) / SR.cell));
-      const top = Math.round((lit ? lv0 * (cs.casting ? 1 : 0.6) : lv0 * 0.5) * steps);
-      for (let j = 0; j <= top; j++) {
-        const r = SR.inner + j * SR.cell, tip = j === top, x = cs.x + ux * r, z = cs.z + uz * r;
-        // (painted on, not added: added light vanishes on the cut lit by its sigils)
-        lv.ink.add(x, 0.06, z, SR.cell, dot, c[0], c[1], c[2], lit ? (tip ? 1 : 0.9) : lostA);
-        // (and glowing bright over it, as light, in its own colour: Ed, 2026-10-29, "music spell filled bars can glow brightly", "don't
-        // wash out to white light, it should bloom in the colour of the dot": its hue alone added, the grey in it taken out, so on the
-        // lit wood and where the glows overlap it saturates rather than whitening)
-        const gk = SR.glow ?? 0, lo = Math.min(c[0], c[1], c[2]) * 0.9;
-        if (gk > 0) lv.flat.add(x, 0.08, z, SR.cell * 1.8, dot, (c[0] - lo) * gk, (c[1] - lo) * gk, (c[2] - lo) * gk, lit ? (tip ? 0.6 : 0.45) : 0.45 * lostA, 1, true);
-      }
+      const lv0 = level(i, nb), f = i / nb, lit = f < k, lost = !lit && f < dr && lostA > 0;
+      if (!lit && !lost) continue;
+      rootBar(SR, edge, cs.x, cs.z, Math.PI / 2 + f * Math.PI * 2, lit ? lv0 * (cs.casting ? 1 : 0.6) : lv0 * 0.5, lit ? hue(f + time * 0.15) : [1, 0.2, 0.15], lit ? 1 : lostA);
     }
     // The bloom going round (Ed, 2026-10-29: "a bloom of the rainbow light go round the stump and surrounding trees as the bar fills"):
     // one light at the dial's filling edge, partway out over the roots, in that bar's colour, brighter while she casts.
@@ -217,10 +238,7 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
       V.castLight = { x: cs.x + Math.cos(a) * r, z: cs.z + Math.sin(a) * r, rgb: hue(k + time * 0.15) as [number, number, number], k: cs.casting ? 1 : 0.5 };
     }
   } else for (let i = 0; i < n; i++) {
-    // (the music's level at this bar, rising at once and falling slowly, as an analyser's do; with no audio running, a gentle idle)
-    const live = spec ? barLevel(spec, i, n) : 0.25 + 0.2 * Math.abs(Math.sin(time * 1.3 + i * 1.7) * 0.6 + Math.sin(time * 2.1 + i * 0.9) * 0.4);
-    V.bars[i] = Math.max(live, V.bars[i] - dt * 1.8);
-    const f = i / n, a = Math.PI / 2 + f * Math.PI * 2, ux = Math.cos(a), uz = Math.sin(a) * (K.ringTilt ?? 1), cx = cs.x, cz = cs.z + 0.6, lv0 = V.bars[i];
+    const lv0 = level(i, n), f = i / n, a = Math.PI / 2 + f * Math.PI * 2, ux = Math.cos(a), uz = Math.sin(a) * (K.ringTilt ?? 1), cx = cs.x, cz = cs.z + 0.6;
     const lit = f < k, lost = !lit && f < dr && lostA > 0;
     const h = lit ? 1 + Math.round(lv0 * 7 * (cs.casting ? 1 : 0.6)) : lost ? 1 + Math.round(lv0 * 3) : 1 + Math.round(lv0 * 1.5), c = lit ? hue(f + time * 0.15) : lost ? [1, 0.2, 0.15] : [0.45, 0.45, 0.5];
     for (let j = 0; j < h; j++) {

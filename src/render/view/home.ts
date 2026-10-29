@@ -165,6 +165,14 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   // "Stumps do not sit on the ground"), with its rings' middle on its spot: where she casts, the soundsystem stands and the analyser
   // turns (Ed: "Music spell should be right in the centre of the stump rings"). It has no height in play: the cut is drawn at the
   // ground's, so everything on it stands on the ground at its spot.
+  // (the stumps a wave has just partified, gone from the markers: their analyser fills out at once as the soundsystem rises, render/leash/
+  // stones.ts; Ed, 2026-10-29)
+  const WV = R.stump?.ring.wave;
+  if (stumps && WV) for (const [key, a] of g.party.areas) {
+    if (a.early || !(g.clock.time - a.at <= t.party.transition + WV.hold + WV.fade) || g.clock.time < a.at) continue;
+    const s = stumpOf(a.cell), q = g.map.soundsystemSpot(a.cell[0], a.cell[1]);
+    if (s && Math.hypot(q.x - w.x, q.z - w.z) < stonesRange) v.leashView.stones.push({ key, x: q.x, z: q.z, top: 0, roots: s.art.roots.map(r => r * v.mpp), flip: s.flip });
+  }
   if (stumps) {
     const Rt = SPRITE_UNIFORMS.uRight.value, [hx, hy] = g.map.centreCell, lists = STUMP_LISTS;
     for (const l of lists.values()) l.length = 0;
