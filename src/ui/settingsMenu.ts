@@ -239,6 +239,7 @@ export class SettingsMenu {
       ],
       [
         { id: "reduceFlashing", kind: "toggle", label: "Reduce flashing", sub: "warnings, hits" },
+        { id: "rumble", kind: "toggle", label: "Gamepad rumble", sub: "short feedback", note: "Off with Reduce flashing too. Only on pads that support vibration." },
         { id: "talk", kind: "choice", label: "Talk", sub: keysName("game.talk"), options: ["hold", "toggle"] },
         { id: "textSize", kind: "choice", label: "Text size", sub: "menus, hints", options: ["1", "1.25", "1.5"] },
       ],

@@ -46,7 +46,8 @@ describe("padControls with a menu open (Ed's playtest, 2026-10-23: the bottom fa
     for (let i = 0; i < 17; i++) {
       const b = Array(17).fill(false); b[i] = true;
       const c = padControls(b, still, none, false, true);
-      expect(c, `button ${i}`).toEqual({ moveX: 0, moveZ: 0, zoom: i === PAD_BUTTONS.R2 ? -1 : i === PAD_BUTTONS.L2 ? 1 : 0, toggleMode: false, debug: false, sigil: i === PAD_BUTTONS.circle, sigilHeld: false, hat: false, spell: false, cycle: false, cycleBack: false, dash: false, fire: false, aim: null });
+      expect(c, `button ${i}`).toEqual({ moveX: 0, moveZ: 0, zoom: i === PAD_BUTTONS.R2 ? -1 : i === PAD_BUTTONS.L2 ? 1 : 0, toggleMode: false, debug: false, sigil: i === PAD_BUTTONS.circle, sigilHeld: false, hat: false, spell: false, cycle: false, cycleBack: false, dash: false, fire: false, aim: null,
+        talkHeld: false, talkPressed: false, toggleAutoTalk: false, nextWave: false, pauseWaves: false, cycleSpeakers: false, inviteNearest: false, feedNearest: false, happyNearest: false });
     }
     expect(padControls(none, [1, 1, 1, 1], none, false, true).aim).toBeNull();
     expect(padControls(none, [1, 0, 0, 0], none, false, true).moveX).toBe(0);
