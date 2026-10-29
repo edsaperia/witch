@@ -23,7 +23,7 @@ import { musicCue } from "./rules/musicPlan";
 import { areaUnderWitch, interpolated, STEP, stepGame, type Game } from "./rules/game";
 import { TUNING, type Tuning } from "./rules/tuning";
 import { diveReach, diveTrack, handoffShot, newFlightClock, stepFlightClock, type Shot } from "./rules/arrive";
-import { nextFrame } from "./render/slices";
+import { nextFrame, runSliced } from "./render/slices";
 import { compareKey, rendererOf, sceneMode } from "./app/compareKey";
 import { debugText, machineLines, precisionLines, reproLine, reproQuery, reproState, tuningDiff } from "./app/repro";
 import { currentValue, DECISION_LIST, valuesText } from "./ui/decisions";
@@ -932,6 +932,7 @@ async function makeSailNight(to: Sailed, arrival?: Arrival, at?: FlightEnd["cam"
 /** The night's first frames drawn at `shot` (the chart's hand-off), under the chart, until they come calm as the flight's warm-up
  *  waits for (rules/arrive.ts stepFlightClock): the heavy ones over before the dive, not at its start. */
 async function warmAt(n: Night, shot: Shot, A: NonNullable<Tuning["arrive"]>): Promise<void> {
+  await runSliced(view.heights.fillSteps(shot.tx, shot.tz), "handoff-heights");
   const c = newFlightClock();
   view.fly = shot;
   view.assets.hold(true); // (the art workers paused for them: the first draws not fighting them for the machine)
