@@ -1,6 +1,6 @@
 // What a builder needs to reproduce a bug from a screenshot of the debug overlay (~) alone (Ed, 2026-10-14: "put as much as you
 // need in the overlay to help debugging"): a link that rebuilds the world as she saw it and puts her where she was, the machine
-// it ran on, and every setting changed from the build's. The same goes in the playtest log (L). The link's switches are
+// it ran on, and every setting changed from the build's. The same goes in the playtest log (the pause page's Download log). The link's switches are
 // honoured by applyRepro (the game, once made) and by tuningFromLink (?found=, ?set=: before the map is made).
 import { STEP, stepGame, type Controls, type Game } from "../rules/game";
 import { clearArea, resetPulse } from "../rules/party";

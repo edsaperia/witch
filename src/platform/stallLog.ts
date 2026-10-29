@@ -3,7 +3,7 @@
 // what it spent the time on (the rules' step and the view's biggest parts), and the browser's
 // own account of long frames where it gives one (the Long Animation Frames API: the scripts that
 // ran, including work outside our frame, like the art workers' results arriving; else long
-// tasks, with no detail). The debug overlay shows the count and the last; the playtest log (L)
+// tasks, with no detail). The debug overlay shows the count and the last; the playtest log (the pause page's Download log)
 // keeps the last STALLS_KEPT, so a playtest tells us what froze. Browser-side, outside the rules.
 
 export interface Stall {
