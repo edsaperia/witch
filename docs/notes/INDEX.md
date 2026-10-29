@@ -8,11 +8,6 @@ says what each note covers.
 
 - Style bible
 - Bold sigils
-- The brief.
-- The grid.
-- The files.
-- The samples
-- The checks.
 
 ## [Balance](balance.md)
 

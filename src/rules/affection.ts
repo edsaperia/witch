@@ -10,7 +10,7 @@ import { addLetters, fillOf, stun } from "./orbit";
 
 /** What the meter needs of the game: the time, leashing a happy creature to her, and how long a full meter stuns (s: the tuning's
  *  combat.daze). */
-export interface AffectionWorld { time: number; leash: (c: Creature) => void; stunFor?: number }
+export interface AffectionWorld { time: number; leash: (c: Creature) => void; stunFor?: number; /** Seconds one won over celebrates, out of every fight (invites.cheer.secs). */ cheerFor?: number }
 
 /** A 💌 landed on creature c (amount 1 per letter). Returns whether it counted. */
 export function hit(g: AffectionWorld, c: Creature, amount: number, time: number = g.time, data: StatesData = STATES): boolean {
@@ -18,7 +18,7 @@ export function hit(g: AffectionWorld, c: Creature, amount: number, time: number
   const A = data.affection;
   if (c.affectionAt !== undefined && time - c.affectionAt < A.gap) return false; // (one 💌 at a time per creature)
   // (stunned, its slots full: this 💌 converts it, Ed 2026-10-28)
-  if (c.dazed && stateOf(c) === "wild" && !c.boss) { c.dazed = false; c.fills = undefined; befriend(c, time); return true; }
+  if (c.dazed && stateOf(c) === "wild" && !c.boss) { c.dazed = false; c.fills = undefined; befriend(c, time); if (g.cheerFor) c.cheerUntil = time + g.cheerFor; return true; } // (won over: it celebrates a moment, Ed 2026-10-29)
   const fill = addLetters(c, amount / Math.max(1, A.hits[Math.min(c.level, A.hits.length - 1)]), time, A); // (in one queue with its hearts: rules/orbit.ts)
   if (fill >= 1 - 1e-9) {
     if (c.boss) { makePartyLegend(c, time); return true; } // (the Easter egg's 100th 💌)
