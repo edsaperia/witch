@@ -7,6 +7,8 @@
 // number of repeats. Of its own kind, we should have about 1 in 6 as we have now. Of other kinds, there should be no more than 2";
 // it was about a third as many kinds as areas, each about three times), so about half as many kinds as areas. Each night's legends (1 in 5 areas)
 // are dealt from the roster, favouring kinds whose islands aren't found yet, never K. Home: one area per kind she knows.
+// Where each type lies is the night's (Ed, 2026-10-28, rules/deal.ts): the island's shapes are its world's, and each night its types are
+// dealt onto them along that night's route, K first, no kind twice in a row.
 import { archipelago, rememberArchipelago, type Archipelago } from "./archipelago";
 import { KINDS_TABLE, type KindInfo } from "./kinds";
 export type { KindInfo };

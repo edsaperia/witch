@@ -1,0 +1,5 @@
+{
+  "reason": "the night's deal of area types (Ed, 2026-10-28): every island by roster, home included, deals its area types onto its areas along the night's route (own kind first, no kind twice in a row), and the streams between wet areas draw from their own seed",
+  "rules": { "*": "home's areas have their types in other places, so its creatures, legends and paths differ" },
+  "frames": { "*": "home's trees, ground, scenery, set pieces, scenes and paths sit in other places" }
+}
