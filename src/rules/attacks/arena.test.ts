@@ -67,6 +67,20 @@ describe("attacks in the grammar in the real fight", () => {
     expect(S.telegraphs.some(t => t.attack === "species:cat")).toBe(true); // (its warnings: the pool keeps the last ones)
   });
 
+  it("lets a lone one of a pack kind throw its own attack, not its pack's lunge (Ed's playtest, 2026-10-29: no projectiles seen)", () => {
+    // (a fox alone is a pack of one, its own lunger: its bolt, not the fox pack's bite)
+    const g = newGame(5, TUNING);
+    g.clock.paused = false; g.party.paused = true;
+    setupArena(g, "wolf*3@2,fox*1@2");
+    const fox = g.arena!.ids.find(id => g.creatures[id].species === "fox")!;
+    let bolts = 0; // (the engine's events are each step's)
+    for (let i = 0; i < 15 / STEP; i++) {
+      g.witches[0].health.hp = 1e6; stepGame(g, idle, STEP);
+      for (const e of g.combat.spells?.events ?? []) if (e.kind === "release" && e.attack === "species:fox" && e.source === fox) bolts++;
+    }
+    expect(bolts).toBeGreaterThan(0);
+  });
+
   it("leaves a fight with no attack in the grammar as it was (the old attacks: ?attacks=old)", () => {
     const { g } = arena("wolf*3@2,raven*3@2", null, 8, withTuning({ attacks: { reactionFloor: 0.45, species: false } }));
     expect(g.combat.spells).toBeUndefined();
