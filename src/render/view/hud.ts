@@ -7,7 +7,7 @@ import { waveCountdown } from "../../rules/party";
 import { hatMarkers } from "../../rules/hat";
 import { hatInk, hatKey, noteHatLooks } from "./hatLooks";
 import { leyPulse, pointerShown } from "../../rules/leypulse";
-import { edgeLayout, FLASK, HAT, MIRRORBALL, StoneIndicator } from "../indicator";
+import { edgeLayout, FLASK, HAT, MIRRORBALL, PIN_LOOK, StoneIndicator } from "../indicator";
 import { dowseMarker } from "../../rules/hatSpells";
 import { AlarmIndicators } from "../alarm";
 import { pinSpot } from "../pins";
@@ -29,6 +29,7 @@ const PIN_TOP = { stone: 3.2, pulse: 1.5, ground: 0.6, creature: 2.5 };
 
 export function drawPointers(v: View, time: number): void {
   const g = v.game, t = g.tuning, w = g.witch;
+  PIN_LOOK.plate = t.pins?.plate ?? 0; PIN_LOOK.vivid = t.pins?.vivid ?? 0; // (how they stand out: Ed's v5399 playtest, render/indicator.ts)
   // The wave pointer (Ed, 2026-10-06): toward the ley line's pulse on its way to the next wave's stone (rules/leypulse.ts,
   // along the link as drawn), 🎶 in its ring as the countdown fills, ring and 🎶 cycling the rainbow as the soundsystem spell's spot
   // does, the route's last stone too (Ed, 2026-10-28: "it should have the same symbol as the soundsystem spell, and be coloured the

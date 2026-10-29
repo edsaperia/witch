@@ -37,22 +37,22 @@ export interface RankKnobs {
    *  in their ring) keep theirs. */
   standScale?: number;
   /** Embers a sigil on the ground gives off, by rank: how many at once, each one's size (m) and how high it rises (m); in her stack, `stack` of that. */
-  embers: { count: number[]; size: number[]; rise: number[]; stack: number };
+  embers: { count: number[]; size: number[]; rise: number[]; stack: number; bright?: number; crowd?: number };
   /** A youth's dots in her stack: at most this many a row (two rows). */
   dotsPerRow: number;
   /** A rune stone's rune, its glow (Ed, 2026-10-27: "Make runestone sigils glow brighter"): its baked colour times this, hue kept. */
   stoneGlow: number;
   /** Over each rune stone (Ed, 2026-10-28; render/leash/stones.ts): its area's sigils in a column, shown within `range` m of her
-   *  (fading over the last `fade`); the spell's spot `south` m south of it, `size` m across, fully on within `near` m and gone past
+   *  (fading over the last `fade`); the spell's spot (cast.spot m south of it) `size` m across, fully on within `near` m and gone past
    *  `far`; the cast's ring of `bars` bars `radius` m round the stone's foot, each step `cell` m, stretched north-south by `ringTilt` against the camera's foreshortening; the conversion `convert` seconds. */
-  stones?: { range: number; fade: number; south: number; size: number; near: number; far: number; bars: number; radius: number; cell: number; convert: number; ringTilt?: number };
+  stones?: { range: number; fade: number; size: number; near: number; far: number; bars: number; radius: number; cell: number; convert: number; ringTilt?: number };
   /** The leashes as chains (render/leash/chain.ts): a link's length (m) by rank, youth to legend (babies have no leash: Ed, 2026-10-11, and again 2026-10-28); a legend's tether's links `tether` times
    *  its rank's; a slack leash `slack` longer than its span; and their motion (chain.ts ChainMotion: damping, gravity, arcPull,
    *  iterations, jump). */
   chain?: { link: number[]; tether: number; slack: number; damping: number; gravity: number; arcPull: number; iterations: number; jump: number };
 }
 
-export const STONES_DEFAULT = { range: 90, fade: 20, south: 4, size: 4.4, near: 5, far: 10, bars: 36, radius: 4.4, cell: 0.55, convert: 2.4, ringTilt: 1.6 };
+export const STONES_DEFAULT = { range: 90, fade: 20, size: 4.4, near: 5, far: 10, bars: 36, radius: 4.4, cell: 0.55, convert: 2.4, ringTilt: 1.6 };
 export const CHAIN_DEFAULT = { link: [0.62, 0.78, 1], tether: 1.3, slack: 0.12, damping: 0.96, gravity: 9.8, arcPull: 60, iterations: 6, jump: 8 };
 
 export const RANKS_DEFAULT: RankKnobs = {
@@ -131,7 +131,7 @@ export function drawEmbers(batch: Instances, dot: number[], pts: [number, number
     const life = (time * (0.32 + 0.12 * hash2(seed, i, 71)) + hash2(seed, i, 73)) % 1, p = pts[Math.floor(hash2(seed, i, 79) * pts.length)];
     const drift = Math.sin((life * 0.8 + hash2(seed, i, 83)) * Math.PI * 2) * 0.12 * size * 0.3;
     const hot = r === 3 ? 0.9 * (1 - life) : 0.55 * (1 - life); // (white at the core when it leaves the stroke; a legend's white-hot)
-    const cr = col[0] + (1 - col[0]) * hot, cg = col[1] + (1 - col[1]) * hot, cb = col[2] + (1 - col[2]) * hot, a = life < 0.8 ? 1 : (1 - life) / 0.2;
+    const b = E.bright ?? 1, cr = (col[0] + (1 - col[0]) * hot) * b, cg = (col[1] + (1 - col[1]) * hot) * b, cb = (col[2] + (1 - col[2]) * hot) * b, a = life < 0.8 ? 1 : (1 - life) / 0.2;
     const s = sz * (1 - life * 0.45);
     if (flat) batch.add(x + p[0] * size + drift, y + 0.1 + life * rise, z + p[1] * size, s, dot, cr, cg, cb, a);
     else batch.add(x + p[0] * size + drift, y - p[1] * size + life * rise, z + 0.05, s, dot, cr, cg, cb, a);

@@ -72,7 +72,7 @@ describe("a find on loan", () => {
   });
 
   it("writes nothing while it's on loan: no save holds it, so a reload mid-night keeps nothing", () => {
-    for (const [kind, item] of [["wearable", top.id], ["hat", "sentry"], ["part", "nozzles"], ["bag", "bumbag"]] as [FindKindId, string][]) {
+    for (const [kind, item] of [["wearable", top.id], ["hat", "sentry"], ["part", "nozzles"], ["bag", "backpack"]] as [FindKindId, string][]) {
       store.clear();
       const p = new Page(night(kind, item));
       p.take();
@@ -93,7 +93,7 @@ describe("a find on loan", () => {
   });
 
   it("goes back to the sky on a lost night: nothing kept, and she owns tonight only what her save says", () => {
-    for (const [kind, item] of [["wearable", top.id], ["hat", "sentry"], ["part", "nozzles"], ["bag", "bumbag"]] as [FindKindId, string][]) {
+    for (const [kind, item] of [["wearable", top.id], ["hat", "sentry"], ["part", "nozzles"], ["bag", "backpack"]] as [FindKindId, string][]) {
       store.clear();
       const p = new Page(night(kind, item));
       p.take();
@@ -165,7 +165,7 @@ describe("a find on loan", () => {
     const st = (id: string) => (id.startsWith("top") ? ["wardrobe"] : id.startsWith("shoes") ? ["shoeRack"] : ["cloakPegs"]);
     expect(homeOf({ kind: "hat", id: "sentry" }, st)).toBe("hats");
     expect(homeOf({ kind: "part", id: "nozzles" }, st)).toBe("pegboard");
-    expect(homeOf({ kind: "bag", id: "bumbag" }, st)).toBe("bags");
+    expect(homeOf({ kind: "bag", id: "backpack" }, st)).toBe("bags");
     expect(homeOf({ kind: "wearable", id: "top-cape" }, st)).toBe("wardrobe");
   });
 });

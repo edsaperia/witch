@@ -50,8 +50,10 @@ import { hatLetters, hatsDown, onHatPicked, onHatPut, stepHatSpells } from "./ha
 import { loadOf, type LeashLoad, groundedBy } from "./leashWeight";
 import { pinWitch, type Pinned } from "./partyLegend";
 import { castOf, castOn, circleSpot, friendSigils, looseAt, scatterSpots, stoneOpen, tetherWitch, type LooseSigil } from "./stoneStacks";
+import { liveRainbows, sendRainbow } from "./rainbow";
 import { runeOffset } from "./runeOffset";
 import { hurt, knockOut, newHealth, nextStreak, repair, stepKnockout, stepWanderers, type Health, type Knockout, type KnockoutEvent } from "./knockout";
+import { bagTuning } from "./bags";
 import { newInvites, stepInvites, type Affection, type Decoy, type InviteControls, type Invites } from "./invites";
 import { burstMirage } from "./combat/packs";
 import { affection, blocksLetters, hit as hitAffection } from "./affection";
@@ -177,6 +179,8 @@ export interface Game {
   leashEvents: LeashEvent[];
   /** Sigils lying loose on the ground for any witch to pick up (rules/stoneStacks.ts): scattered round a stone at its conversion. */
   loose: LooseSigil[];
+  /** The rainbow waves on their way down the ley line (rules/rainbow.ts): when each set off, from an early clear. */
+  rainbows?: number[];
   /** The night over and another on in its place (app/night.ts endNight, marked only under ?debug=sail): stepping it means a reader
    *  was left on the old night, and throws. */
   disposed?: boolean;
@@ -439,7 +443,7 @@ export function blinkClear(g: Game, x: number, z: number): boolean {
 
 /** The tuning witch W moves by: the game's with her broom's parts' numbers (rules/broomParts.ts: the
  *  Workshop, Ed 2026-10-23); the bare broom's is the step's own. */
-export const witchTuning = (g: Game, W: Witch): Tuning => broomTuning(g.tuning, W.spells.parts);
+export const witchTuning = (g: Game, W: Witch): Tuning => bagTuning(broomTuning(g.tuning, W.spells.parts), W.spells.bag); // (and her bag's 💌 stats: rules/bags.ts)
 
 /** Her blinks in hand before the cooldown: the tuning's two (Ed, 2026-10-08), Hare's Dash bursts' more, the Twig bristles' one more. */
 export const blinkCharges = (g: Game, W: Witch): number => broomTuning(g.tuning, W.spells.parts).dash.charges ?? 1;
@@ -664,7 +668,7 @@ function fixedStep(g: Game, controls: Controls): void {
     else if (e.kind === "hatPicked") { onHatPicked(g, W, e.x, e.z, ht, t); if (g.wake && W === g.witches[0]) wearPiece(g.wake, "hat"); } // (a hat on her head: out of last night's pile, so she's drawn in it; rules/clothesPile.ts)
   }
   // The 💌s (issue #87): on the ground, off her seat, not knocked out.
-  stepInvites(W.invites, W.ko ? {} : confusedAim(W, c, ht), { ...g.witch }, t.invites.on && hasInvites(W) && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.creatures, affectionOf(g), ht, hdt, t, g.tuning.legendCircle?.slow.on === false ? undefined : leavesCalmRing(g, W.body), hasInvites(W) ? hatLetters(hatsDown(W), t) : undefined, g.combat.mirages?.length || g.combat.decoys?.length ? mirageDecoys(g, g.clock.time) : undefined);
+  stepInvites(W.invites, W.ko ? {} : confusedAim(W, c, ht), { ...g.witch }, t.invites.on && hasInvites(W) && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.creatures, affectionOf(g), ht, hdt, bagTuning(t, W.spells.bag), g.tuning.legendCircle?.slow.on === false ? undefined : leavesCalmRing(g, W.body), hasInvites(W) ? hatLetters(hatsDown(W), t) : undefined, g.combat.mirages?.length || g.combat.decoys?.length ? mirageDecoys(g, g.clock.time) : undefined);
   if (!worldAsleep(g)) wakeOnInvites(g, W.invites.events, t); // (a 💌 landing on a wild one wakes its area: rules/inviteWakes.ts)
   questsFromPlaced(g, ht);
   if (c.feedNearest) feedNearest(B, g.creatures, g.witch.x, g.witch.z, g.clock.time, t, g.beat);
@@ -787,6 +791,8 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     // dance: round it, or at the area's party places (rules/partyGuests.ts).
     for (const c of g.creatures) if (!c.gone && !c.leashed && c.level === 0 && !c.fleeUntil && stateOf(c) === "wild" && c.cell[0] === a.cell[0] && c.cell[1] === a.cell[1]) befriend(c, time);
     if (castOn(t)) scatterFriends(g, key, a.soundsystem, time); // (its stack falls: every friend sigil scattered round it, rules/stoneStacks.ts)
+    // (cleared before its wave: a rainbow wave down the ley line, Ed 2026-10-29, rules/rainbow.ts)
+    if (a.early) { g.rainbows = liveRainbows(g.party, g.map, g.rainbows ?? [], time); sendRainbow(g.rainbows, t, time); }
     for (const c of g.creatures) if (!c.gone && !c.leashed && !c.dropped && c.state === "happy" && c.cell[0] === a.cell[0] && c.cell[1] === a.cell[1]) joinParty(g, c, a.soundsystem, a.cell);
     // (one let go here at her knockout stays where it was dropped, dancing now: rules/knockout.ts letGoHappy)
     for (const c of g.creatures) if (c.dropped && !c.gone && !c.leashed && cellKey(c.dropped.cell) === key) c.dancing = true;

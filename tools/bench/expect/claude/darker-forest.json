@@ -1,0 +1,5 @@
+{
+  "reason": "Ed's v5399 playtest: the unlit forest darker (light.spooky.unlit 0.7) and the edge pointers on a dark plate in stronger colour",
+  "frames": { "*": "everything nothing lights is drawn darker" },
+  "rules": {}
+}

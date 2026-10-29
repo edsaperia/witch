@@ -171,6 +171,12 @@ export const PIN_TIP = RING_R + 7;
 export const rainbow = (h: number): [number, number, number] => { const f = (n: number) => { const q = (((n + h * 6) % 6) + 6) % 6; return 1 - Math.max(0, Math.min(1, Math.min(q, 4 - q))); }; return [f(5), f(3), f(1)]; };
 
 /** An area's neon calmed for the HUD: a little less saturated and bright, so it sits on the dark forest. */
+/** How the edge pointers stand out (Ed's v5399 playtest, 2026-10-29: "it's easy to miss the pointers"; the tuning's pins, set each frame
+ *  by render/view/hud.ts): `plate` a dark disc behind the ring and an outline round the arrow, its opacity (0 none, as before), so they
+ *  read on any ground; `vivid` how much of the calming toward the night (calm) is taken back, 0 as calmed, 1 the neon itself. */
+export const PIN_LOOK = { plate: 0, vivid: 0 };
+const PLATE_RGB = [10, 8, 20];
+
 export const calm = (c: number[]) => {
   // by saturation, not value (the art director, #188: "keep its value up … take the calm from lower saturation"): half way to
   // its grey, then lifted back so its lightest channel is near the neon's own
@@ -322,8 +328,17 @@ export class StoneIndicator {
     const flash = Math.max(0, 1 - (time - this.flashAt) / 0.5);
     // in the area's colour, calmed toward the night (art review round 1: the UI's yellow and magenta shouted over the art)
     // (rainbow: the spell spot's own cycling hue, render/leash/stones.ts; its ring a wheel of it, turning)
-    const hueAt = (h: number) => { const r = rainbow(h); return calm([r[0] * 255, r[1] * 255, r[2] * 255]); };
-    const neon = at.rainbow ? hueAt(time * 0.25) : calm([at.colour.x * 255, at.colour.y * 255, at.colour.z * 255]), lift = (n: number[]) => n.map(v => Math.min(255, v * (0.9 + 0.15 * pulse) + 255 * flash * 0.4)), bright = lift(neon);
+    // (less calmed by pins.vivid, so they stand out: Ed's v5399 playtest)
+    const calmed = (c: number[]) => { const k = calm(c), v = PIN_LOOK.vivid; return v > 0 ? k.map((x, i) => Math.min(255, x + (c[i] - x) * v)) : k; };
+    const hueAt = (h: number) => { const r = rainbow(h); return calmed([r[0] * 255, r[1] * 255, r[2] * 255]); };
+    const neon = at.rainbow ? hueAt(time * 0.25) : calmed([at.colour.x * 255, at.colour.y * 255, at.colour.z * 255]), lift = (n: number[]) => n.map(v => Math.min(255, v * (0.9 + 0.15 * pulse) + 255 * flash * 0.4)), bright = lift(neon);
+    // A dark plate behind the ring and round the arrow (pins.plate: Ed's v5399 playtest, "it's easy to miss the pointers"), first, so
+    // the ring, the glyph and the arrow (drawn whole over it) read on any ground, the forest's dark or a lit floor.
+    if (PIN_LOOK.plate > 0) {
+      const pr = RING_R + 2.2;
+      for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (Math.hypot(x + 0.5 - N / 2, y + 0.5 - N / 2) <= pr) c.dot(x, y, PLATE_RGB, PIN_LOOK.plate);
+      drawArrow(c, arrow, N, RING_R + 1, RING_R + 8.5, 5, PLATE_RGB, PIN_LOOK.plate);
+    }
     // The ring: dim all round, bright neon clockwise from 12 o'clock as far as the countdown has run.
     const R = RING_R, ring = ringPixels(), dim = neon.map(v => v * 0.55); // the rest of the ring: dimmer, but still there on dark grass
     for (let k = 0; k < ring.length; k += 3) {

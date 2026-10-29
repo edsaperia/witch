@@ -66,6 +66,7 @@ says what each note covers.
 - Sides and sizes
 - Stone stack
 - Spell spot
+- Sigil motes
 - Cast ring
 - Conversion
 - Chains
@@ -103,6 +104,8 @@ says what each note covers.
 - The oak
 - Furniture: size, freestanding, mess and layout
 - Station menus
+- Starting bags
+- Bag design
 - Use prompt
 - Wake-up keys
 - The Studio's instruments
@@ -239,7 +242,9 @@ says what each note covers.
 - Decor
 - Rolling ground
 - Ley lines
+- Rainbow wave
 - Edge pointers
+- Unlit
 - Ride
 - Bend
 - Smoke

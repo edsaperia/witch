@@ -141,6 +141,22 @@
    ]
   },
   {
+   "name": "bag",
+   "values": [
+    "starter",
+    "quick",
+    "far",
+    "none",
+    "<bag item id>"
+   ],
+   "does": "Her bag for one load: the Satchel (the starter: base rate and reach, a little homing), the Quick bag (faster 💌s, shorter reach) or the Far purse (slower, further); none, no bag.",
+   "group": "debug",
+   "since": "2026-10-29",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
    "name": "bare",
    "values": [
     "1",

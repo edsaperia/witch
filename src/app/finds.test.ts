@@ -38,7 +38,7 @@ const saves = () => Object.fromEntries([...store].sort());
 const spellsOf = (g: Game) => { const s = g.witches[0].spells; return { parts: s.parts, broom: s.broom }; };
 
 describe("a find given through the dev control is a find found", () => {
-  const cases: [FindKindId, string][] = [["wearable", FINDABLE[0].id], ["part", "nozzles"], ["part", "ladder"], ["hat", "sentry"], ["bag", "bumbag"]];
+  const cases: [FindKindId, string][] = [["wearable", FINDABLE[0].id], ["part", "nozzles"], ["part", "ladder"], ["hat", "sentry"], ["bag", "backpack"]];
   for (const [kind, item] of cases) it(`${kind} ${item}: the same saves and the same broom`, () => {
     const a = night(kind, item);
     findIt(a);

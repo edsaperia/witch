@@ -9,7 +9,7 @@ import { TUNING as BUILT, withTuning } from "./tuning";
 const TUNING = withTuning({ cast: { ...BUILT.cast, on: true } });
 import { cellKey, spreadWave } from "./party";
 import { befriend, hasRune, stateOf } from "./creatureStates";
-import { castOf, castProgress, castShown, stoneStack } from "./stoneStacks";
+import { castingStone, castOf, castProgress, castReady, castShown, stoneStack } from "./stoneStacks";
 import { hexCell } from "./leash";
 
 const still: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
@@ -43,28 +43,31 @@ function nextArea(g: Game): { key: string; cell: [number, number]; stone: { x: n
   const [cx, cy] = g.party.next[0];
   return { key: `${cx},${cy}`, cell: [cx, cy], stone: g.map.soundsystemSpot(cx, cy) };
 }
-/** Her on foot at a stone; the area's hostiles made friends (so nothing hits her) unless `keep`. */
+/** Her on foot on a stone's spell spot (cast.spot south of it); the area's hostiles made friends (so nothing hits her) unless `keep`. */
 function at(g: Game, a: { key: string; stone: { x: number; z: number } }, keep = false): void {
   if (!keep) for (const c of own(g, a.key)) if (!c.boss && c.level > 0) befriend(c, g.clock.time);
   for (const c of g.creatures) if (!c.boss && cellKey(c.cell) !== a.key && Math.hypot(c.x - a.stone.x, c.z - a.stone.z) < 250) c.gone = true; // (no visitors to hit her)
   g.byArea = null;
-  g.witch = { ...g.witch, x: a.stone.x + 1, z: a.stone.z + 1, mode: "ground", lift: 0, seated: false, perch: undefined, vx: 0, vz: 0 };
+  g.witch = { ...g.witch, x: a.stone.x + 0.5, z: a.stone.z + C.spot + 0.5, mode: "ground", lift: 0, seated: false, perch: undefined, vx: 0, vz: 0 };
 }
 
 describe("runestone stacks (Ed, 2026-10-28)", () => {
-  it("list an area's own creatures at its stone in draw order, bottom first: enemies (legend, adults, youths, babies), then friends above them in the same order", () => {
+  it("list an area's own creatures at its stone in draw order, bottom first: enemy fighters (legend, adults, youths), friend fighters in the same order, then every baby on top (Ed, 2026-10-29)", () => {
     const g = game(), a = area(g, true), cs = own(g, a.key);
-    const youth = cs.find(c => c.level > 0 && !c.boss)!;
-    befriend(youth, g.clock.time);
+    const youth = cs.find(c => c.level > 0 && !c.boss)!, baby = cs.find(c => c.level === 0 && !c.boss)!;
+    befriend(youth, g.clock.time); befriend(baby, g.clock.time);
     const s = stoneStack(g, a.key);
     expect(s.length).toBe(cs.filter(c => c.fleeUntil !== Infinity && !c.wanderTo).length);
-    const friends = s.filter(e => e.friend), enemies = s.filter(e => !e.friend);
-    expect(s.slice(s.length - friends.length)).toEqual(friends); // (friends last: above the enemies)
+    const babies = s.filter(e => e.level === 0 && !e.legend), fighters = s.filter(e => !babies.includes(e));
+    expect(s.slice(s.length - babies.length)).toEqual(babies); // (babies last: on top, whatever their state)
+    if (babies.length > 1) expect(babies.some(e => e.friend) && babies.some(e => !e.friend)).toBe(true); // (friend or not, all on top)
+    const friends = fighters.filter(e => e.friend), enemies = fighters.filter(e => !e.friend);
+    expect(fighters.slice(fighters.length - friends.length)).toEqual(friends); // (friend fighters above the enemy ones)
     expect(friends.map(e => e.id)).toContain(youth.id);
     for (const grp of [friends, enemies]) for (let i = 1; i < grp.length; i++) expect(grp[i].level).toBeLessThanOrEqual(grp[i - 1].level);
     expect(s[0].legend).toBe(true); // (the sleeping legend, an enemy's sigil, at the very bottom)
+    baby.state = "wild"; // (as found again, for what follows)
     // one that runs off leaves it
-    const baby = cs.find(c => c.level === 0 && !c.boss)!;
     baby.fleeUntil = Infinity;
     expect(stoneStack(g, a.key).map(e => e.id)).not.toContain(baby.id);
     // none at home, nor at a converted stone, nor with the stacks off
@@ -126,6 +129,37 @@ describe("the soundsystem spell (Ed, 2026-10-28)", () => {
     expect(cells.size).toBe(loose.length); // (one a cell)
     for (const p of loose) { const d = Math.hypot(p.x - a.stone.x, p.z - a.stone.z); expect(d).toBeGreaterThanOrEqual(C.scatter.min - 1e-6); expect(d).toBeLessThanOrEqual(C.scatter.reach + 1e-6); expect(p.z < a.stone.z && a.stone.z - p.z < C.scatter.hide.depth && Math.abs(p.x - a.stone.x) < C.scatter.hide.width, "not hidden behind the soundsystem").toBe(false); }
     expect(castShown(g, W)).toBeNull(); // (the stone's converted: nothing to cast)
+  });
+
+  it("can't be cast till every wild youth and adult of its area is invited (Ed, 2026-10-29); its babies and its sleeping legend don't count", () => {
+    const g = game(), a = area(g, true), W = g.witches[0];
+    at(g, a, true);
+    const fighters = own(g, a.key).filter(c => !c.boss && c.level > 0);
+    expect(castReady(g, a.key)).toBe(false);
+    expect(castingStone(g, W)).toBeNull();
+    expect(castShown(g, W)).toBeNull(); // (no 🎶 spot yet)
+    run(g, 1, hold);
+    expect(W.casting ?? null).toBeNull();
+    for (const c of fighters.slice(1)) befriend(c, g.clock.time);
+    expect(castReady(g, a.key)).toBe(false); // (one left)
+    befriend(fighters[0], g.clock.time);
+    expect(own(g, a.key).some(c => c.level === 0 && !c.boss && stateOf(c) !== "happy")).toBe(true);
+    expect(own(g, a.key).some(c => c.boss)).toBe(true);
+    expect(castReady(g, a.key)).toBe(true);
+    expect(castingStone(g, W)?.key).toBe(a.key);
+    expect(castShown(g, W)?.key).toBe(a.key);
+  });
+
+  it("casts only standing on the spell spot (Ed's playtest, 2026-10-29: \"I should have to stand on the soundsystem spell sigil\"), not just north of it by the stone", () => {
+    const g = game(), a = area(g), W = g.witches[0];
+    at(g, a);
+    expect(castingStone(g, W)?.key).toBe(a.key);
+    for (const [dx, dz] of [[0, 1], [0, C.spot - C.radius - 0.3], [C.radius + 0.3, C.spot]]) {
+      g.witch = { ...g.witch, x: a.stone.x + dx, z: a.stone.z + dz };
+      expect(castingStone(g, W), `${dx},${dz}`).toBeNull();
+    }
+    g.witch = { ...g.witch, x: a.stone.x, z: a.stone.z + C.spot + C.radius * 0.9 };
+    expect(castingStone(g, W)?.key).toBe(a.key);
   });
 
   it("drains while she's away, and resumes from where it has drained to", () => {
@@ -239,6 +273,26 @@ describe("a legend circle's baby's sigil (Ed, 2026-10-28: it lands in its circle
       if (has) return check(g, key, g.map.soundsystemSpot(cx, cy));
     }
     throw new Error("no wave woke a legend's area");
+  });
+});
+
+describe("a legend's sigil in its stone's stack (Ed's playtest, 2026-10-29: \"I didn't notice any legends in any runestone sigil stacks\")", () => {
+  it("on the islands (legend areas), every night's legend is at the bottom of its area's stone's enemies, and falls with the friends at its conversion", () => {
+    for (const seed of [542195, 428455, 7]) {
+      const g = game(seed, withTuning({ cast: { ...BUILT.cast, on: true }, map: { ...BUILT.map!, islandAreas: 10, island: "home" } }));
+      const legends = g.creatures.filter(c => c.boss && !c.gone);
+      expect(legends.length).toBe(g.map.legendKinds.length);
+      for (const L of legends) {
+        const key = cellKey(L.cell), stack = stoneStack(g, key);
+        expect(stack[0], `${seed} ${L.species} at ${key}`).toMatchObject({ id: L.id, legend: true, friend: false });
+      }
+      const L = legends[0], key = cellKey(L.cell), [cx, cy] = L.cell, stone = g.map.soundsystemSpot(cx, cy);
+      at(g, { key, stone });
+      run(g, C.time + 0.5, hold);
+      run(g, 0.1);
+      expect(g.party.areas.has(key)).toBe(true);
+      expect(g.loose.find(p => p.id === L.id)?.legend, `${seed}`).toBe(true);
+    }
   });
 });
 
