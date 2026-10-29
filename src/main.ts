@@ -618,6 +618,7 @@ function pauseControls(on: boolean): void {
 }
 freeze.onToggle = on => {
   input.clearPresses(); // (a press not yet read as she pauses or resumes is dropped: an E pending under the pause closed a station's panel there, the pause check's broom bay on a slow runner)
+  if (!on) input.holdPad(); // (the pad's press that resumed is the resume and nothing else: the frozen pad reads as none, so it would be fresh)
   settingsPage.gate(); // (suspended while paused, and muted in the background if so set: app/settingsPage.ts)
   if (!on) settingsPage.close();
   pauseControls(on);
@@ -1182,6 +1183,10 @@ function frame(now: number): void {
   // (arriving: the flight's shot on the view, every frame; landed, the night starts)
   const flying = !!arrival && !F.landed && F.ready;
   if (flying && arrival!.frame(view, game, now)) arrived();
+  // The pad on the pause page and Settings: before the chart's or the zoo's early return, so it works paused over the chart too.
+  settingsPage.update(now / 1000);
+  const corner = cornerPanelRoot(), pauseRoots = freeze.frozen && !settingsPage.open ? (corner ? [corner] : [document.getElementById("pause-sliders"), pauseBtns].filter((el): el is HTMLElement => !!el)) : [];
+  if (pauseFocus.update(pauseRoots, freeze.pad(), now / 1000, () => { if (corner) closeCornerPanel(); else freeze.toggle(); })) input.device = "pad";
   if (chartHeld || zooHeld) return; // (the sea chart or the zoo over the night: its last frame kept, nothing drawn)
   if (game.clock.paused && !freeze.frozen && !flying && now - lastDraw < 300) return;
   lastDraw = now;
@@ -1199,9 +1204,6 @@ function frame(now: number): void {
   if (!game.clock.paused) stallLog.frame({ t: game.clock.time, gap: dt * 1000, work: performance.now() - work0, step: stepMs, parts: { ...view.ms, ...outside }, mode: game.witch.mode, x: game.witch.x, z: game.witch.z, wave: game.party.wave, creatures: game.creatures.length });
   shake.apply();
   freeze.update();
-  settingsPage.update(now / 1000);
-  const corner = cornerPanelRoot(), pauseRoots = freeze.frozen && !settingsPage.open ? (corner ? [corner] : [document.getElementById("pause-sliders"), pauseBtns].filter((el): el is HTMLElement => !!el)) : [];
-  if (pauseFocus.update(pauseRoots, freeze.pad(), now / 1000, () => { if (corner) closeCornerPanel(); else freeze.toggle(); })) input.device = "pad";
   // The overlay (app/hud.ts), four times a second.
   hud.overlay(now, overlayHead);
 }

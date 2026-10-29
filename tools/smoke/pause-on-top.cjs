@@ -115,10 +115,14 @@ const CASES = [
     for (const key of ["ArrowDown", "ArrowRight", "KeyD", "Enter", "KeyE"]) await page.keyboard.press(key);
     check(await page.evaluate(() => window.__keys) === k0, `${C.id}: keys reach nothing under the pause`);
     await page.evaluate(() => { window.__pad = [13, 15]; }); await page.waitForTimeout(700);
+    await page.evaluate(() => { window.__pad = null; }); await page.waitForTimeout(300);
+    check(await paused(), `${C.id}: the pad's d-pad didn't unpause it`);
+    // (the pad's B is the pause page's Back, #1456: it resumes, and that press is the resume and nothing else, so what's under stays)
     await page.evaluate(() => { window.__pad = [1]; }); await page.waitForTimeout(700);
     await page.evaluate(() => { window.__pad = null; }); await page.waitForTimeout(300);
-    check(await paused(), `${C.id}: the pad didn't unpause it`);
-    check(await isOpen(), `${C.id}: the pad's B didn't shut the overlay under the pause`);
+    check(!(await paused()), `${C.id}: the pad's B resumes`);
+    check(await isOpen(), `${C.id}: the pad's B didn't also shut the overlay under the pause`);
+    if (!(await paused())) { await page.keyboard.press("Escape"); try { await page.waitForFunction(() => !!document.querySelector("#pause-sliders.open"), null, { timeout: 60000, polling: 250 }); } catch { /* checked below */ } } // (paused again, for the rest)
     if (!(await isOpen())) console.log(`  ${C.id}: closed by ${JSON.stringify(await page.evaluate(() => (window.witch.stationShuts ?? []).slice(-3)))}`); // (main.ts: why it shut, and whether paused)
     if (C.state) { const after = await focus(); check(after === before, `${C.id}: the d-pad and keys didn't move its focus (${before} → ${after})`); }
     // resume: back to it as it was

@@ -100,6 +100,13 @@ export class Input {
     t.toggle = false; t.zoom = 0; t.debug = false;
   }
 
+  /** The pad's buttons held now count as already pressed: a press that resumed the pause (its Back, src/ui/menuFocus.ts) isn't
+   *  read again as a fresh one by the game a frame later, where it shut the station open under the pause (pause-on-top's wardrobe). */
+  holdPad(): void {
+    const pad = typeof navigator !== "undefined" && navigator.getGamepads ? [...navigator.getGamepads()].find(p => p) : null;
+    if (pad) { this.padPrev = pad.buttons.map(b => b.pressed); this.padPrevAxes = [...pad.axes]; }
+  }
+
   /** Let go of everything held and not yet read (a menu or overlay that takes the keys opening or closing, the page losing focus or
    *  hidden): a key-up it took, or one lost behind a frame, can't leave her walking. A key still down presses again. */
   release(): void {
