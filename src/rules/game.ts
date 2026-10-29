@@ -374,7 +374,7 @@ export const affectionOf = (g: Game): Affection => {
       // (the creature's meter on the world's clock; her letters' events on hers: rules/slowTime.ts)
       if (napper(c)) Object.assign(c, { asleep: false, napUntil: undefined, lulled: undefined, wakeUntil: undefined, rest: 0 }); // (roused by it: up at once, as rules/inviteWakes.ts wakes its area)
       const was = stateOf(c), time = g.clock.time, party = !!c.partyLegend;
-      hitAffection({ time, leash: k => inviteCreature(g.leash, k, k.x, k.z, time), stunFor: t.combat.daze }, c, amount, time, data);
+      hitAffection({ time, leash: k => inviteCreature(g.leash, k, k.x, k.z, time), stunFor: t.combat.daze, cheerFor: t.invites.cheer?.secs }, c, amount, time, data);
       if (was !== "happy" && castOn(t)) markAtStone(g, c); // (its sigil friend-coloured in its stone's stack: rules/stoneStacks.ts)
       if (stateOf(c) !== was || (c.partyLegend && !party)) s.events.push({ kind: "happy", x: c.x, z: c.z, at, id: c.id }); // (happy, or leashed; or a party legend)
     },

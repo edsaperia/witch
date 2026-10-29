@@ -1433,6 +1433,13 @@ The 💌 invite [1], replacing the proximity chat when on: on the ground she sho
 - **`invites.spin`**: How fast a 💌 spins in flight.
   1. Ed, 2026-10-06: "the envelopes should spin like a frisbee"
   a 💌 in flight lies flat and turns about the upright this many times a second (drawn only); when it lands it stops and lies flat.
+- **`invites.impact`**: how a 💌 landing on a creature feels (drawn only): a white flash for flash seconds, a squash of squash springing back over squashSecs, its ring slot popping in by pop over popSecs, and hitstop seconds of held picture on the 💌 that fills the ring.
+  1. Ed, 2026-10-29: "invitation impacts feel unsatisfying" (full hit feedback for a 💌 landing on a creature: a white flash, a little squash, its ring slot popping in, a thunk rising as the ring fills, a hitstop on the 💌 that fills it; no flash and a gentler squash with reduce-flashing on)
+  With reduce-flashing on there's no flash and the squash is gentle instead. The hitstop holds the picture only (the last frame kept, starting from the frame that shows the flash); the rules run on.
+  Code: `src/render/impact.ts`, `src/render/comfort.ts`
+- **`invites.cheer`**: one won over by her 💌s celebrates secs seconds by its body (render/cheer.ts), out of every fight meanwhile, a burst of that many hearts (hearts) off it.
+  1. Ed, 2026-10-29: "when a creature is won over ... it celebrates for about 1 s in a way that suits its body type" (hoppers a jump-spin, four-legged a roll-over, flyers a loop, the rest a wiggle-dance; hearts burst, the happy sting, its sigil flipping to the friends' colour with a pop; out of every fight meanwhile (a short rules hold))
+  Code: `src/render/cheer.ts`, `src/rules/affection.ts`
 - **`invites.orbit`**: the 💌 ring circles a creature at scale times its body radius (movement.json bodies) plus gap metres, at least min, and at least height times its drawn height (to its top as drawn) plus gap, so it rings the creature you see at any size; wider still when it holds many.
   1. Ed, 2026-10-28: "the orbits are smaller than the size of the creatures; their size should adjust depending on how large the creatures are"
   2. Ed's playtest, 2026-10-06: "Invitation orbits are too tight around the creature"
@@ -1463,6 +1470,15 @@ The 💌 invite [1], replacing the proximity chat when on: on the ground she sho
 | `invites.lingerFade` | number | 0 to … |
 | `invites.lingerMax` | number | 0 to … |
 | `invites.spin` | number | 0 to … |
+| `invites.impact.flash` | number | 0 to … |
+| `invites.impact.squash` | number | 0 to … |
+| `invites.impact.gentle` | number | 0 to … |
+| `invites.impact.squashSecs` | number | 0 to … |
+| `invites.impact.pop` | number | 0 to … |
+| `invites.impact.popSecs` | number | 0 to … |
+| `invites.impact.hitstop` | number | 0 to … |
+| `invites.cheer.secs` | number | 0 to … |
+| `invites.cheer.hearts` | number | 0 to … |
 | `invites.orbit.scale` | number | 0 to … |
 | `invites.orbit.gap` | number | 0 to … |
 | `invites.orbit.min` | number | 0 to … |
@@ -2606,6 +2622,9 @@ The sound effects, all synthesised in the music's key [1]: volume over the music
   1. Ed, 2026-10-07: the needle dropped and a little scratching
   her decks while she stands behind them (the DJ witch): a stroke of the record on each half-beat of her scratch bars (scratch, its hiss under the stylus hiss, a stroke stroke seconds long) and her "woo-hoo!" when she throws a hand up (hype), and in her routine [1] the tonearm's tick and the needle's drop (needle), times volume.
 - **`sfx.land`**: a 💌 that met no one landing on the ground, a soft puff (at most one every gap seconds).
+- **`sfx.thunk`**: a 💌 landing on a creature, a soft thunk at volume (at most one every gap seconds), its pitch climbing from low to high semitones off the key as the ring fills.
+  1. Ed, 2026-10-29: "invitation impacts feel unsatisfying" (full hit feedback for a 💌 landing on a creature: a white flash, a little squash, its ring slot popping in, a thunk rising as the ring fills, a hitstop on the 💌 that fills it; no flash and a gentler squash with reduce-flashing on)
+  Code: `src/platform/audio/chimes.ts`
 - **`sfx.nope`**: a soft two-note "uh-uh" at volume, at most one each gap seconds.
   1. Ed, 2026-10-07: a sigil refused, put down too near one already down, now heard and not drawn
 - **`sfx.alarm`**: her phone ringing in the dark, a run of six bright plucks at volume, rung again every gap seconds while it rings.
@@ -2751,6 +2770,10 @@ The sound effects, all synthesised in the music's key [1]: volume over the music
 | `sfx.spell.burst` | number | 0 to … |
 | `sfx.land.volume` | number | 0 to … |
 | `sfx.land.gap` | number | 0 to … |
+| `sfx.thunk.volume` | number | 0 to … |
+| `sfx.thunk.gap` | number | 0 to … |
+| `sfx.thunk.low` | number |  |
+| `sfx.thunk.high` | number | 0 to … |
 | `sfx.nope.volume` | number | 0 to … |
 | `sfx.nope.gap` | number | 0 to … |
 | `sfx.thud.volume` | number | 0 to … |
