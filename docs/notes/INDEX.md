@@ -99,6 +99,7 @@ says what each note covers.
 - Furniture: size, freestanding, mess and layout
 - Station menus
 - Starting bags
+- Found bags
 - Bag names
 - Bag preview
 - Bag design

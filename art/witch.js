@@ -49,7 +49,7 @@ export const DEFAULT_LOOK = { hat: "classic", hair: "long", top: "jacket", phone
   hatHeight: 1, hatBrim: 1, hatTilt: 0, hatBand: 1, broom: "classic", broomLength: 1, broomBend: 0, bristles: 1, broomThickness: 1, cloak: "none", scarf: false, satchel: false, pendant: false, earrings: false,
   // its accessories (Ed: "both witchy and modern"): the cloak's length (times its kind's), patches on it; a lantern at her hip, a potion vial and a spellbook at her belt; a bum bag, a festival
   // wristband, chunky trainers, round sunglasses (shades "round")
-  cloakLength: 1, patches: false, lantern: false, vial: false, book: false, bumbag: false, purse: false, wristband: false, chunky: false,
+  cloakLength: 1, patches: false, lantern: false, vial: false, book: false, bumbag: false, purse: false, tote: false, duffel: false, briefcase: false, wristband: false, chunky: false,
   // the creator's (Ed, round 11): the scarf's length (times hers; 0 none, 3 trailing on the ground), the satchel's size, a backpack's size (0 none)
   scarfLength: 1, bagSize: 1, backpackSize: 0 };
 const shoeR = L => L.chunky ? [.095, .056, .056] : [.08, .04, .045]; // her sneakers, or chunky trainers
@@ -351,6 +351,22 @@ function drawAccessories(m, L, chest, fwd, spine, flying) {
     m.ell(c, [.05, .038, .024], M.HAT1, { dir: fwd, up: spine, group: 24 });
     m.ell(v3.add(c, v3.add(v3.mul(spine, .025), v3.mul(fwd, .024))), [.014, .011, .011], M.FRAME, { group: 24 });
     m.chain([[...at(.13, .0, -.08), .006], [...at(.07, .1, .0), .006], [...v3.add(c, v3.mul(spine, .032)), .006]], M.FRAME, { group: 24 });
+  }
+  if (L.tote) { // a tall canvas tote hanging from her near shoulder by two straps (Ed, 2026-10-29: a found bag)
+    const c = at(waist - .05, .04, .16);
+    m.ell(c, [.07, .09, .026], M.WEB, { dir: fwd, up: spine, group: 24 });
+    for (const f of [-.03, .03]) m.chain([[...at(.14, f, .09), .006], [...v3.add(c, v3.add(v3.mul(spine, .07), v3.mul(fwd, f))), .006]], M.HAT1, { group: 24 });
+  }
+  if (L.duffel) { // a long duffel slung at her near hip, end to end along her, its strap over the far shoulder, its ends in her trim colour
+    const c = at(waist - .03, .0, .17);
+    m.ell(c, [.13, .055, .05], M.STONED, { dir: fwd, up: spine, group: 24, paint: p => Math.abs(v3.dot(v3.sub(p, c), fwd)) > .1 ? M.HAT1 : undefined });
+    m.chain([[...at(.13, .0, -.08), .007], [...at(.06, .1, .02), .007], [...v3.add(c, v3.mul(spine, .04)), .007]], M.STONED, { group: 24 });
+  }
+  if (L.briefcase) { // a briefcase at her near side, flat and square, a gold clasp and handle
+    const c = at(waist - .12, .04, .18);
+    m.ell(c, [.085, .065, .02], M.BARKD, { dir: fwd, up: spine, group: 24 });
+    m.ell(v3.add(c, v3.mul(spine, .07)), [.025, .012, .01], M.FRAME, { group: 24 });
+    m.ell(v3.add(c, v3.add(v3.mul(spine, .03), v3.mul(fwd, .02))), [.01, .008, .008], M.FRAME, { group: 24 });
   }
   if (L.bumbag) { const c = at(waist - .03, .1, .03); m.ell(c, [.035, .03, .065], M.EAR, { dir: fwd, up: spine, group: 22 }); m.chain([[...at(waist - .02, .07, -.08), .008], [...c, .008], [...at(waist - .02, .07, .1), .008]], M.EAR, { group: 22 }); }
 }

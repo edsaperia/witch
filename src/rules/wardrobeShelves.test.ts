@@ -58,7 +58,7 @@ describe("the wardrobe", () => {
       expect(s.items.some(i => i.start && wears(CLASSIC, i)), s.id).toBe(true);
     }
     expect(SHELVES.bag.items.some(i => wears(CLASSIC, i))).toBe(false);
-    expect(SHELVES.bag.items.every(i => i.start)).toBe(true); // (each hers to choose)
+    expect(SHELVES.bag.items.filter(i => i.start).map(i => i.id)).toEqual(["satchel", "bumbag", "purse"]); // (hers to choose from; the rest found)
     expect(STARTING_SET.length).toBeGreaterThan(10);
   });
 
