@@ -3776,6 +3776,10 @@
           "minimum": 0,
           "description": "how much of a full cast her progress on a stone loses a second while she isn't casting it (holding again resumes from there)."
         },
+        "spot": {
+          "type": "number",
+          "minimum": 0
+        },
         "radius": {
           "type": "number",
           "minimum": 0,
@@ -3834,6 +3838,7 @@
         "on",
         "time",
         "drain",
+        "spot",
         "radius",
         "show",
         "scatter"
@@ -4328,10 +4333,6 @@
                   "type": "number",
                   "minimum": 0
                 },
-                "south": {
-                  "type": "number",
-                  "minimum": 0
-                },
                 "size": {
                   "type": "number",
                   "minimum": 0
@@ -4364,7 +4365,6 @@
               "required": [
                 "range",
                 "fade",
-                "south",
                 "size",
                 "near",
                 "far",

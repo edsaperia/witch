@@ -22,7 +22,7 @@ import { cellKey } from "./party";
 import { hexSpot, stackBottom, toBottom } from "./leash";
 import { groundedBy } from "./leashWeight";
 import { hasRune, runeNear, stateOf } from "./creatureStates";
-import { castingStone, castOn, looseNear, stoneOpen } from "./stoneStacks";
+import { castingStone, castOf, castOn, castReady, castSpot, looseNear, stoneOpen } from "./stoneStacks";
 import { creatureValue, sideValue } from "./power";
 import type { Controls, Game } from "./game";
 import type { Creature } from "./creatures";
@@ -249,7 +249,7 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
         const L = LO.get(key); if (L !== undefined && g.creatures[L].legendState === "angry") continue; // (keep out of an angry legend's area)
         const s = map.siteOf(i, j), d = Math.hypot(s.x - b.x, s.z - b.z);
         if (d > K.recruitRange) continue;
-        const open = inviteable(key, cell); if (!open.length && !(stacks && stoneOpen(g, key) && friendsAt(key))) continue; // (or one to cast at: rules/stoneStacks.ts)
+        const open = inviteable(key, cell); if (!open.length && !(stacks && stoneOpen(g, key) && castReady(g, key) && friendsAt(key))) continue; // (or one to cast at, its fighters all won over: rules/stoneStacks.ts)
         // (the careful ones: ahead of the wave first, where there are fighters to win over, and the area she's on stays hers
         // while it has any: no flying back and forth as the waves move the front)
         const fighters = careful ? open.filter(c => c.level > 0).length : 1;
@@ -587,13 +587,13 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
         bot.doing = target ? (there(target.x, target.z) ? `inviting the ${plural(species(target.cell))}` : `flying to the ${plural(species(target.cell))}`) : "looking for someone to invite";
         if (target && goTo(target.x, target.z, true)) {
           const open = inviteable(target.key, target.cell).filter(c => Math.hypot(c.x - b.x, c.z - b.z) < 140);
-          if (stacks && stoneOpen(g, target.key) && !open.some(c => c.level > 0)) {
-            // No fighters left to win over here (babies come with the stone): to its stone, and the soundsystem spell (the sigil button
-            // held: rules/stoneStacks.ts); a hit breaks it, so she lets go a moment and holds again.
-            const s = map.soundsystemSpot(target.cell[0], target.cell[1]), sd = Math.hypot(s.x - b.x, s.z - b.z);
+          if (stacks && stoneOpen(g, target.key) && castReady(g, target.key)) {
+            // Every fighter of its area won over (babies come with the stone; castReady): to its stone's spot, and the soundsystem
+            // spell (the sigil button held: rules/stoneStacks.ts); a hit breaks it, so she lets go a moment and holds again.
+            const s = castSpot(map.soundsystemSpot(target.cell[0], target.cell[1]), t), sd = Math.hypot(s.x - b.x, s.z - b.z); // (its spell spot, south of it)
             bot.doing = `casting at the ${plural(species(target.cell))}' stone`;
             if (castingStone(g, w)?.key === target.key) held = !w.castBlocked;
-            if (sd > 2) { mx = (s.x - b.x) / sd; mz = (s.z - b.z) / sd; } else { mx = 0; mz = 0; } // (at the stone she stands still to cast)
+            if (sd > castOf(t).radius * 0.5) { mx = (s.x - b.x) / sd; mz = (s.z - b.z) / sd; } else { mx = 0; mz = 0; } // (on the spot she stands still to cast)
           } else if (!open.length) { target = null; pickAt = time; }
           else {
             let tg = open[0], td = Infinity, ts = Infinity;

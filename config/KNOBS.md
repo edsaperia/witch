@@ -1622,7 +1622,6 @@ Code: `rules/win.ts`, `docs/backlog/journey.md`, `rules/guidance.ts`
 | `leash.ranks.stoneGlow` | number | 0 to … |
 | `leash.ranks.stones.range` | number | 0 to … |
 | `leash.ranks.stones.fade` | number | 0 to … |
-| `leash.ranks.stones.south` | number | 0 to … |
 | `leash.ranks.stones.size` | number | 0 to … |
 | `leash.ranks.stones.near` | number | 0 to … |
 | `leash.ranks.stones.far` | number | 0 to … |
@@ -2229,6 +2228,7 @@ Code: `src/rules/stoneStacks.ts`
 | `cast.on` | boolean |  |
 | `cast.time` | number | 0 to … |
 | `cast.drain` | number | 0 to … |
+| `cast.spot` | number | 0 to … |
 | `cast.radius` | number | 0 to … |
 | `cast.show` | number | 0 to … |
 | `cast.scatter.min` | number | 0 to … |

@@ -3,7 +3,7 @@
 // - over each stone, its stack as one column of sigils, the friends (invited) above the enemies (still wild), each side in rank order,
 //   legend lowest and babies on top, in the side's palette and the rank's size (Ed: "you mostly care about how many creatures are still
 //   hostile"); it may run off the top of the screen;
-// - the spell's spot, the HUD's music notes (render/indicator.ts NOTES) in a cycling rainbow, `south` m south of a stone with a stack,
+// - the spell's spot, the HUD's music notes (render/indicator.ts NOTES) in a cycling rainbow, cast.spot m south of a stone with a stack (rules/stoneStacks.ts castSpot, where she casts),
 //   fading in as she comes within `far` m of it and fully on within `near`;
 // - the cast (castShown): a ring of rainbow bars round the stone's foot, an analyser of the music playing (Ed, 2026-10-28: "the
 //   soundsystem spell audio analyser bars should move with the music": the mix's spectrum, platform/audio/music.ts spectrum, read once
@@ -13,7 +13,7 @@
 //   flares, the friends' sigils arc down off the column to where they lie, the enemies' fade;
 // - the loose sigils lying on the ground, to pick up (a sleeping legend's tethers her: render/leash/stack.ts).
 import { NOTES, rainbow } from "../indicator";
-import { castShown, stoneStack, type StackEntry } from "../../rules/stoneStacks";
+import { castReady, castShown, castSpot, stoneStack, type StackEntry } from "../../rules/stoneStacks";
 import { RUNE_SCALE, sigilSize } from "../../rules/runeOffset";
 import { hash2 } from "../../rules/random";
 import type { LeashView } from "../leash";
@@ -95,9 +95,10 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
     // The column: the friends above the enemies, each side legend lowest, babies on top (stoneStack's order, bottom first).
     const vis = smooth((K.range - Math.hypot(st.x - w.x, st.z - w.z)) / Math.max(1, K.fade));
     if (vis > 0.01) items.forEach((it, i) => { const h = st.top + P[i].y; sigil(it.id, it.level, st.x, upY(st.x, st.z, h), upZ(st.z, h), P[i].size, vis, rankColour(t, it.level, it.friend)); });
-    // The spell's spot: south of the stone, only as she comes near it.
-    const sx = st.x, sz = st.z + K.south, on = smooth((K.far - Math.hypot(w.x - sx, w.z - sz)) / Math.max(0.1, K.far - K.near));
-    if (on > 0.01) {
+    // The spell's spot: south of the stone, only as she comes near it, and only once it can be cast (castReady: every wild fighter
+    // of its area invited; Ed, 2026-10-29).
+    const { x: sx, z: sz } = castSpot(st, t), on = smooth((K.far - Math.hypot(w.x - sx, w.z - sz)) / Math.max(0.1, K.far - K.near));
+    if (on > 0.01 && castReady(g, st.key)) {
       const c = hue(time * 0.25);
       lv.flat.add(sx, 0, sz, K.size * 1.9, dot, c[0], c[1], c[2], 0.22 * on, 1, true); // (its glow)
       lv.ink.add(sx, 0, sz, K.size, notes, c[0] * on, c[1] * on, c[2] * on, on);
