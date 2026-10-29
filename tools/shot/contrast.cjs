@@ -68,6 +68,9 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
         log(v, u, JSON.stringify(result[v][u]));
       }
       // (PINS=1: the edge pointers as before, no plate and fully calmed, and as tuned, at the last unlit: pins-<view>-<before|after>.png)
+      // (pins put up for it, in case none is: one off the screen east, one north-west, one on the screen over a spot near her)
+      if (process.env.PINS) await page.evaluate(() => { const w = window.witch, b = w.game.witches[0].body; (window.__pinsUp ?? []).forEach(p => p.remove());
+        window.__pinsUp = [w.view.pin({ x: b.x + 120, z: b.z + 10 }, { colour: { x: 1, y: 0.3, z: 0.75 }, emoji: "🎶" }), w.view.pin({ x: b.x - 90, z: b.z - 140 }, { colour: { x: 0.3, y: 0.9, z: 1 }, emoji: "🎉" }), w.view.pin({ x: b.x + 6, z: b.z + 4 }, { colour: { x: 1, y: 0.75, z: 0.2 }, emoji: "🎉" })]; });
       if (process.env.PINS) for (const [n, k] of [["before", { plate: 0, vivid: 0 }], ["after", null]]) {
         await page.evaluate(k => { const p = window.witch.tuning.pins, s = window.__pins ??= { plate: p.plate, vivid: p.vivid }; Object.assign(p, k ?? s); }, k);
         await step(12); await page.screenshot({ path: path.join(out, `pins-${v}-${n}.png`), timeout: 300000 }); log("pins", v, n);
