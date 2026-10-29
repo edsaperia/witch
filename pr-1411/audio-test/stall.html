@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Witch Music Stall Test</title>
+<meta name="description" content="Whether the game's music goes silent when the page's thread stalls for 1.5 s.">
+<style>
+/* The audio capacity test (Ed, 2026-10-26): one column, dark like the labs; the table scrolls on its own on a phone. */
+:root { --bg: #0f0d16; --panel: #18151f; --line: #2b2636; --fg: #e6e1ee; --muted: #9b93ab; --accent: #ff5fc8; --good: #7dff8a; --bad: #ff6b6b;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { background: var(--bg); color: var(--fg); margin: 0; }
+body { font: 16px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; padding: 16px 16px 64px; }
+.wrap { max-width: 1000px; margin: 0 auto; display: grid; gap: 14px; }
+h1 { font: 600 20px var(--mono); margin: 0; }
+h2 { font: 600 13px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .1em; margin: 0; }
+p { margin: 0; color: var(--muted); }
+.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+button { min-height: 48px; padding: 0 22px; font: 700 17px system-ui, sans-serif; border-radius: 24px; border: 2px solid var(--accent); background: var(--accent); color: #1a0a14; cursor: pointer; }
+button:disabled { opacity: .45; cursor: default; }
+button.ghost { background: transparent; color: var(--accent); }
+#status { font: 600 15px var(--mono); }
+#machine { font: 13px var(--mono); color: var(--muted); }
+.card { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: 12px 14px; display: grid; gap: 10px; min-width: 0; }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; font: 13px var(--mono); min-width: 760px; width: 100%; }
+th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; }
+tr.bad td:last-child { color: var(--bad); }
+a { color: var(--accent); }
+tr.ok td:last-child { color: var(--good); }
+tr.drift td:last-child { color: #ffb35f; }
+#summary { white-space: pre-wrap; font: 15px/1.5 var(--mono); }
+textarea { width: 100%; min-height: 160px; font: 12px var(--mono); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 10px; }
+</style>
+  <script type="module" crossorigin src="./assets/stall-BBggJ63Q.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/buffer-DmteLhcw.js">
+</head>
+<body>
+<div class="wrap">
+  <h1>⏸ Witch music stall test</h1>
+  <p>About 50 seconds a mode, two modes: today's music played live, and drawn ahead (the default now). The game's own music plays while this page's thread is held busy for 1.5 s four times, as a long frame in the game would hold it, the last while the world is slowed as in the treehouse; what reaches the speakers is recorded and searched for silences. Keep this tab in front, and expect the page to freeze for a moment each time. Nothing in the game changes. <a href="./">← the audio test</a></p>
+  <div class="row"><button id="go">Start the test</button><span id="status">ready</span></div>
+  <div id="runs" class="wrap"></div>
+  <section class="card"><h2>Result</h2><div id="summary">Not run yet.</div>
+    <div class="row"><button id="copy" class="ghost" disabled>Copy results</button><p>Copies everything as JSON: paste it to the builders.</p></div>
+    <textarea id="json" readonly spellcheck="false"></textarea></section>
+</div>
+</body>
+</html>
