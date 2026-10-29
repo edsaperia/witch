@@ -2,7 +2,7 @@
 // is good; it's more important in rapid gameplay to be able to tell ranks apart than creatures"; tuning leash.ranks; the default since Ed, 2026-10-27:
 // "go ahead and push all the new sigil work"; ?sigils=old the old look):
 // every leash sigil (her stack, placed sigils, happy runes, the ghost, the treetop projection, the bond) is the bare glyph in its
-// rank's colour (baby turquoise, youth purple, adult red, legend yellow: no ring, no disc), embers rising off its strokes (more,
+// rank's colour (a baby's purple on either side; a friend's three blues, an enemy's three reds: no ring, no disc), embers rising off its strokes (more,
 // bigger, brighter and higher each rank; a legend's white-hot), and a youth in her stack has two rows of round dots off to the
 // right of its glyph, one a berry it still eats on the move (bright eaten, dim not; all bright, they pulse: ready), the last berry
 // (eaten only at a sigil she's put down: rules/berries.ts lastBerry) its adult moment on the ground. Pure helpers here; the
@@ -19,12 +19,15 @@ export interface RankKnobs {
   hex: number;
   /** A placed sigil's glyph, across (m). */
   glyph: number;
-  /** A friend's colours (hers, and the invited at a stone), baby, youth, adult, legend (0-255; Ed, 2026-10-28: pink, light purple,
-   *  light blue, turquoise). */
+  /** A friend's colours (hers, and the invited), baby to legend (0-255): the baby's purple, then three clear blues, darker to lighter
+   *  (Ed's playtest, 2026-10-29: "more strictly do hostile reds vs friendly blues, no purples"; "baby sigils are purple (neither friend
+   *  nor enemy)"; before, pink, light purple, light blue and turquoise). */
   colours: number[][];
-  /** An enemy's (the wild still at their stone; Ed, 2026-10-28: crimson, bright red, orange, yellow, the crimson darker than the red). */
+  /** An enemy's (the wild still at their stone), baby to legend: the same purple for a baby, then three clear reds, darker to lighter
+   *  (no pink, magenta or purple; before, crimson, red, orange and yellow). The baby's purple is the only purple there is. */
   enemy: number[][];
-  /** Each rank's sigil size, baby to legend, against an adult's (Ed, 2026-10-28: today's size the adult's, about 10% a step). */
+  /** Each rank's sigil size, baby to legend, against an adult's (Ed, 2026-10-28: today's size the adult's, about 10% a step; a legend's
+   *  1.35 since Ed's "I didn't notice any legends in any runestone sigil stacks", 2026-10-29, with its ring: legendRing). */
   sizes: number[];
   /** Embers a sigil on the ground gives off, by rank: how many at once, each one's size (m) and how high it rises (m); in her stack, `stack` of that. */
   embers: { count: number[]; size: number[]; rise: number[]; stack: number };
@@ -34,22 +37,22 @@ export interface RankKnobs {
   stoneGlow: number;
   /** Over each rune stone (Ed, 2026-10-28; render/leash/stones.ts): its area's sigils in a column, shown within `range` m of her
    *  (fading over the last `fade`); the spell's spot (cast.spot m south of it) `size` m across, fully on within `near` m and gone past
-   *  `far`; the cast's ring of `bars` bars `radius` m round the stone's foot, each step `cell` m; the conversion `convert` seconds. */
-  stones?: { range: number; fade: number; size: number; near: number; far: number; bars: number; radius: number; cell: number; convert: number };
+   *  `far`; the cast's ring of `bars` bars `radius` m round the stone's foot, each step `cell` m, stretched north-south by `ringTilt` against the camera's foreshortening; the conversion `convert` seconds. */
+  stones?: { range: number; fade: number; size: number; near: number; far: number; bars: number; radius: number; cell: number; convert: number; ringTilt?: number };
   /** The leashes as chains (render/leash/chain.ts): a link's length (m) by rank, youth to legend (babies have no leash: Ed, 2026-10-11, and again 2026-10-28); a legend's tether's links `tether` times
    *  its rank's; a slack leash `slack` longer than its span; and their motion (chain.ts ChainMotion: damping, gravity, arcPull,
    *  iterations, jump). */
   chain?: { link: number[]; tether: number; slack: number; damping: number; gravity: number; arcPull: number; iterations: number; jump: number };
 }
 
-export const STONES_DEFAULT = { range: 90, fade: 20, size: 4.4, near: 10, far: 20, bars: 36, radius: 4.4, cell: 0.55, convert: 2.4 };
+export const STONES_DEFAULT = { range: 90, fade: 20, size: 4.4, near: 5, far: 10, bars: 36, radius: 4.4, cell: 0.55, convert: 2.4, ringTilt: 1.6 };
 export const CHAIN_DEFAULT = { link: [0.62, 0.78, 1], tether: 1.3, slack: 0.12, damping: 0.96, gravity: 9.8, arcPull: 60, iterations: 6, jump: 8 };
 
 export const RANKS_DEFAULT: RankKnobs = {
   on: true, hex: 6, glyph: 5,
-  colours: [[255, 120, 200], [190, 150, 255], [110, 190, 255], [40, 225, 215]],
-  enemy: [[200, 30, 70], [255, 40, 40], [255, 140, 30], [255, 226, 60]],
-  sizes: [0.81, 0.9, 1, 1.1],
+  colours: [[180, 100, 255], [45, 100, 235], [70, 160, 255], [160, 210, 255]],
+  enemy: [[180, 100, 255], [205, 35, 35], [255, 65, 50], [255, 150, 105]],
+  sizes: [0.81, 0.9, 1, 1.35],
   embers: { count: [3, 5, 8, 12], size: [0.22, 0.26, 0.3, 0.36], rise: [1.6, 2.1, 2.8, 3.6], stack: 0.4 },
   dotsPerRow: 4, stoneGlow: 2.4,
 };
@@ -71,7 +74,7 @@ export function rankColour(t: Tuning, rank: number, friend = true): [number, num
   return [c[0] / 255, c[1] / 255, c[2] / 255];
 }
 
-/** The rank's sigil size against an adult's (Ed, 2026-10-28): 0.81, 0.9, 1, 1.1. */
+/** The rank's sigil size against an adult's (Ed, 2026-10-28): 0.81, 0.9, 1, and a legend 1.35 (coordinator, 2026-10-29: unmistakable). */
 export const rankSize = (t: Tuning, rank: number): number => rankKnobs(t).sizes[Math.max(0, Math.min(3, rank))] ?? 1;
 
 /** A youth's dots in her stack: one for each berry it eats on the move (its cost to adult, less the last, eaten at a placed sigil:
@@ -123,6 +126,16 @@ export function drawEmbers(batch: Instances, dot: number[], pts: [number, number
     const s = sz * (1 - life * 0.45);
     if (flat) batch.add(x + p[0] * size + drift, y + 0.1 + life * rise, z + p[1] * size, s, dot, cr, cg, cb, a);
     else batch.add(x + p[0] * size + drift, y - p[1] * size + life * rise, z + 0.05, s, dot, cr, cg, cb, a);
+  }
+}
+
+/** A legend's sigil, unmistakable in a stack (Ed, 2026-10-29: "I didn't notice any legends in any runestone sigil stacks"): a ring of
+ *  dots round its glyph in its colour, slowly turning, besides its bigger size (sizes[3]). Standing (her stack, a stone's column). */
+export function legendRing(batch: Instances, dot: number[], x: number, y: number, z: number, size: number, col: readonly number[], time: number, alpha = 1): void {
+  const n = 18, R = size * 0.62, d = Math.max(0.12, size * 0.075);
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 + time * 0.6, k = 0.75 + 0.25 * Math.sin(time * 3 + i);
+    batch.add(x + Math.cos(a) * R, y + Math.sin(a) * R, z + 0.03, d, dot, col[0] * k, col[1] * k, col[2] * k, alpha);
   }
 }
 

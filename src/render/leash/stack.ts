@@ -8,7 +8,7 @@ import type { LeashView } from "../leash";
 import { easeRoute } from "../routeEase";
 import { bowOf, drawChain, stepChain } from "./chain";
 import { DISC } from "./glyphs";
-import { chainKnobs, dotAt, drawEmbers, rankKnobs, rankOf, rankSize, ranksOn, shownDots, youthDots } from "./ranks";
+import { chainKnobs, dotAt, drawEmbers, legendRing, rankKnobs, rankOf, rankSize, ranksOn, shownDots, youthDots } from "./ranks";
 import { meterHits } from "../../rules/game";
 
 /** A 💧's blue, for its dots in her stack. */
@@ -68,6 +68,7 @@ export function drawStack(lv: LeashView, time: number, hatTop: number, dot: numb
       // (No flicker when she's hurt: Ed, 2026-10-08, "When you're hurt, your leashes sigils flash - please turn this off"; her
       // claw slashes say how hurt she is.)
       batch.add(pos.x, pos.y, pos.z, size, sg!.uv, col.r, col.g, col.b, 1);
+      if (ranks && rankOf(c) === 3) legendRing(batch, dot, pos.x, pos.y, pos.z, size, [col.r, col.g, col.b], time); // (a legend's: unmistakable, ranks.ts)
       if (ranks) {
         // Rank sigils (render/leash/ranks.ts): embers off its glyph, fewer and lower than on the ground; and a youth's dots off to
         // the right of it, two rows, one a berry it eats on the move: bright eaten, dim not, all of them pulsing when it's ready.

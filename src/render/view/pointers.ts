@@ -5,8 +5,8 @@
 // - the legend pointers: one for each legend awake (restless, angry or happy), till the party's won: its sigil at a legend's size in
 //   its stack colour, the enemy's while it's hostile, the friend's once it's happy (Ed: "It looks like their sigil in their sigil
 //   colour");
-// - the party pointer: the victory lap's pulse racing home, 🎉 (its plan, 🪩 staying on the disco ball till she reaches the party, is
-//   Ed's to settle: partyPointer is its one seam).
+// - the party pointer (Ed, 2026-10-28): 🪩 in the rainbow ring on the victory lap's pulse racing home, then on the disco ball after the
+//   win till she reaches the party (rules/win.ts atTheParty), when the guidance pins take over.
 import type { Game } from "../../rules/game";
 import type { Tuning } from "../../rules/tuning";
 import { winPulse, winTarget, won } from "../../rules/win";
@@ -41,9 +41,14 @@ export function legendPointers(g: Game, tops?: ReadonlyMap<number, number>, t: T
   return out;
 }
 
-/** The party pointer's subject: the victory lap's pulse racing home (its sparkler's own point when drawn: `tip`), 🎉. Its one seam:
- *  the plan for it (🪩, staying on the disco ball after the win till she reaches the party) changes only this and its glyph. */
+/** The party pointer's subject (Ed's plan, 2026-10-28): 🪩 in the wave pointer's rainbow ring, on the victory lap's pulse racing home
+ *  (its sparkler's own point when drawn: `tip`); at the win, on the disco ball over the dancefloor, staying there till she reaches the
+ *  party (rules/win.ts atTheParty: the night settles and the guidance pins take over at once); none before the lap, after that, or on a
+ *  lost night. */
 export function partyPointer(g: Game, tip?: { x: number; z: number } | null): { x: number; z: number; top: number } | null {
   const L = winPulse(g);
-  return L ? { x: tip?.x ?? L.x, z: tip?.z ?? L.z, top: 1.5 } : null;
+  if (L) return { x: tip?.x ?? L.x, z: tip?.z ?? L.z, top: 1.5 };
+  if (!won(g) || g.win?.settled) return null;
+  const d = g.map.dancefloor, D = g.tuning.dancefloor;
+  return { x: d.x, z: d.z, top: D.discoHeight + D.discoSize / 2 };
 }

@@ -7,6 +7,7 @@
 // creature's end.
 import type { LeashView } from "../leash";
 import { SLOT, SLOTS } from "./glyphs";
+import { SPRITE_UNIFORMS } from "../sprites";
 
 /** A chain's point: where it is and where it was (verlet). */
 export interface ChainLink { x: number; y: number; z: number; px: number; py: number; pz: number }
@@ -77,8 +78,16 @@ export function stepChain(ch: Chain, n: number, link: number, ax: number, ay: nu
   }
 }
 
-/** The atlas's link glyphs (made once into the leash view's atlas): a link face on (an oval ring) and edge on (a bar). */
-export function linkSlots(lv: LeashView): { face: number[]; edge: number[] } {
+/** How many angles a link is drawn at (over half a turn: a link reads the same turned round). */
+export const LINK_ANGLES = 8;
+
+/** Which of the LINK_ANGLES a span (dx, dy) on the screen (x right, y up) runs at, the nearest. */
+export const linkAngle = (dx: number, dy: number): number => { const k = Math.round(Math.atan2(dy, dx) / (Math.PI / LINK_ANGLES)); return ((k % LINK_ANGLES) + LINK_ANGLES) % LINK_ANGLES; };
+
+/** The atlas's link glyphs (made once into the leash view's atlas), at each of LINK_ANGLES: a link face on (an oval ring, long along
+ *  the chain) and edge on (a bar), so a chain reads as joined whichever way it runs across the screen (Ed's playtest, 2026-10-29:
+ *  "the links don't join together when seen from all directions, esp north-south"). */
+export function linkSlots(lv: LeashView): { face: number[][]; edge: number[][] } {
   const slot = (key: string, draw: (g: CanvasRenderingContext2D, ox: number, oy: number) => void): number[] => {
     const had = lv.slots.get(key);
     if (had !== undefined) return lv.uv(had);
@@ -87,19 +96,28 @@ export function linkSlots(lv: LeashView): { face: number[]; edge: number[] } {
     lv.slots.set(key, s); lv.tex.needsUpdate = true;
     return lv.uv(s);
   };
-  return {
-    face: slot("chain:face", (g, ox, oy) => { for (let y = 0; y < 32; y++) for (let x = 0; x < 32; x++) { const r = Math.hypot((x + 0.5 - 16) / 13, (y + 0.5 - 16) / 8); if (r <= 1 && r >= 0.62) g.fillRect(ox + x, oy + y, 1, 1); } }),
-    edge: slot("chain:edge", (g, ox, oy) => g.fillRect(ox + 3, oy + 13, 26, 6)),
+  // (each pixel's place along the link (u) and across it (v), the link turned to its angle; the atlas's y runs down the screen)
+  const shape = (a: number, inside: (u: number, v: number) => boolean) => (g: CanvasRenderingContext2D, ox: number, oy: number) => {
+    const c = Math.cos(a), sn = Math.sin(a);
+    for (let y = 0; y < 32; y++) for (let x = 0; x < 32; x++) { const px = x + 0.5 - 16, py = -(y + 0.5 - 16), u = px * c + py * sn, v = -px * sn + py * c; if (inside(u, v)) g.fillRect(ox + x, oy + y, 1, 1); }
   };
+  const face: number[][] = [], edge: number[][] = [];
+  for (let k = 0; k < LINK_ANGLES; k++) {
+    const a = (k * Math.PI) / LINK_ANGLES;
+    face.push(slot(`chain:face:${k}`, shape(a, (u, v) => { const r = Math.hypot(u / 13, v / 8); return r <= 1 && r >= 0.62; })));
+    edge.push(slot(`chain:edge:${k}`, shape(a, (u, v) => Math.abs(u) <= 13 && Math.abs(v) <= 3)));
+  }
+  return { face, edge };
 }
 
-/** Draw a chain: a link on each span between its points, alternately face on and edge on, crisp (the solid batch), each with a faint
- *  glow of its colour. */
+/** Draw a chain: a link on each span between its points, alternately face on and edge on, each turned along its span as the screen
+ *  shows it (the sprites' right and up: render/sprites.ts), crisp (the solid batch), each with a faint glow of its colour. */
 export function drawChain(lv: LeashView, ch: Chain, link: number, r: number, g: number, b: number, a: number, dot: number[], glow = 0.12): void {
-  const S = linkSlots(lv), P = ch.links;
+  const S = linkSlots(lv), P = ch.links, R = SPRITE_UNIFORMS.uRight.value, U = SPRITE_UNIFORMS.uUp.value;
   for (let i = 0; i + 1 < P.length; i++) {
     const p = P[i], q = P[i + 1], x = (p.x + q.x) / 2, y = (p.y + q.y) / 2, z = (p.z + q.z) / 2, face = i % 2 === 1;
-    lv.solid.add(x, y, z, link * (face ? 1.25 : 1.1), face ? S.face : S.edge, r, g, b, a);
+    const dx = q.x - p.x, dy = q.y - p.y, dz = q.z - p.z, k = linkAngle(dx * R.x + dy * R.y + dz * R.z, dx * U.x + dy * U.y + dz * U.z);
+    lv.solid.add(x, y, z, link * (face ? 1.25 : 1.1), face ? S.face[k] : S.edge[k], r, g, b, a);
     if (glow > 0) lv.over.add(x, y, z, link * 1.6, dot, r, g, b, glow * a, 1, true);
   }
 }

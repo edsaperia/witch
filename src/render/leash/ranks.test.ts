@@ -30,19 +30,18 @@ describe("rank sigils", () => {
     expect(new Set(pts.map(p => p.x)).size).toBe(8); // (no two on top of each other)
     expect(Math.max(...pts.map(p => p.x))).toBeLessThan(0.66 + 4 * 0.3);
   });
-  it("ranks: friends pink, light purple, light blue, turquoise; enemies crimson, red, orange, yellow (Ed, 2026-10-28)", () => {
+  it("ranks: babies purple on either side; enemies three clear reds, friends three clear blues, each darker to lighter (Ed, 2026-10-29)", () => {
     expect(rankOf({ level: 3 })).toBe(3);
-    const [pk, lp, lb, tq] = [0, 1, 2, 3].map(k => rankColour(TUNING, k));
-    expect(pk[0] > 0.9 && pk[2] > pk[1]).toBe(true); // pink: red, then blue over green
-    expect(lp[2] > lp[0] && lp[0] > lp[1]).toBe(true); // light purple: blue over red over green
-    expect(lb[2] > lb[1] && lb[1] > lb[0]).toBe(true); // light blue
-    expect(tq[1] > tq[0] && tq[2] > tq[0]).toBe(true); // turquoise: green and blue
-    const [cr, rd, or, ye] = [0, 1, 2, 3].map(k => rankColour(TUNING, k, false));
-    expect(cr[0] < rd[0] && cr[2] > rd[2]).toBe(true); // crimson: darker and bluer than the red
-    expect(rd[0] > 0.9 && rd[1] < 0.3).toBe(true); // bright red
-    expect(or[0] > 0.9 && or[1] > rd[1] && or[1] < ye[1]).toBe(true); // orange, between red and yellow
-    expect(ye[0] > 0.9 && ye[1] > 0.8 && ye[2] < 0.4).toBe(true); // yellow
-    expect([0, 1, 2, 3].map(k => rankSize(TUNING, k))).toEqual([0.81, 0.9, 1, 1.1]); // (sizes by rank everywhere)
+    const hue = ([r, g, b]: number[]) => { const M = Math.max(r, g, b), m = Math.min(r, g, b), d = M - m || 1; const h = M === r ? ((g - b) / d) % 6 : M === g ? (b - r) / d + 2 : (r - g) / d + 4; return (h * 60 + 360) % 360; };
+    const lum = ([r, g, b]: number[]) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    expect(rankColour(TUNING, 0, true)).toEqual(rankColour(TUNING, 0, false)); // (a baby's the same whatever its side)
+    const baby = hue(rankColour(TUNING, 0)), F = [1, 2, 3].map(k => rankColour(TUNING, k)), E = [1, 2, 3].map(k => rankColour(TUNING, k, false));
+    expect(baby).toBeGreaterThan(255); expect(baby).toBeLessThan(290); // (purple)
+    for (const c of E) { const h = hue(c); expect(h < 25 || h > 350).toBe(true); } // (red: no pink, magenta or purple)
+    for (const c of F) { const h = hue(c); expect(h).toBeGreaterThan(200); expect(h).toBeLessThan(235); } // (blue: no turquoise, no purple)
+    for (const L of [E, F]) for (let i = 1; i < 3; i++) expect(lum(L[i])).toBeGreaterThan(lum(L[i - 1])); // (ranks apart by lightness, too)
+    for (const c of [...E, ...F]) { const h = hue(c); expect(Math.abs(h - baby)).toBeGreaterThan(40); } // (the purple is the babies' alone)
+    expect([0, 1, 2, 3].map(k => rankSize(TUNING, k))).toEqual([0.81, 0.9, 1, 1.35]); // (sizes by rank everywhere)
     expect(TUNING.leash.ranks?.on ?? RANKS_DEFAULT.on).toBe(true); // (the default since Ed, 2026-10-27; ?sigils=old off)
     expect(TUNING.leash.hex?.size).toBe(RANKS_DEFAULT.hex); // (their 6 m hex grid with them)
   });

@@ -20,7 +20,7 @@ import type { LeashView } from "../leash";
 import { SPRITE_UNIFORMS } from "../sprites";
 import { groundHeight } from "../height";
 import { SLOT, SLOTS } from "./glyphs";
-import { drawEmbers, rankColour, rankKnobs, rankSize, stoneKnobs } from "./ranks";
+import { drawEmbers, legendRing, rankColour, rankKnobs, rankSize, stoneKnobs } from "./ranks";
 
 /** A rune stone drawn this frame: its area's key ("cx,cy"), where it stands and its stone's height (m, STONE_FACE of its drawn height;
  *  up its face: the sprites lean back toward the camera, render/sprites.ts uUp, and its column climbs on up that way, in its plane). */
@@ -78,6 +78,7 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
     const sp = g.creatures[id]?.species ?? "fox", uv = lv.uv(lv.bareSlot(sp)), sh = lv.shadeOf(uv);
     if (sh) lv.stackBack.add(x, y, z, size, sh, 0.02, 0.02, 0.035, (S.backing ?? 0.6) * alpha);
     lv.stackGlyphs.add(x, y, z, size, uv, c[0], c[1], c[2], alpha);
+    if (level >= 3) legendRing(lv.stackGlyphs, dot, x, y, z, size, c, time, alpha); // (a legend's: unmistakable, ranks.ts)
     if (alpha > 0.5) drawEmbers(lv.stackGlyphs, dot, lv.glyphPts.get(`${uv[0]},${uv[1]}`) ?? [], x, y, z, size, false, level, c, time, id * 7 + 3, RK.embers, RK.embers.stack);
   };
   // A point `h` m up a stone's face (its sprite's up: leaning back toward the camera), a little in front of it.
@@ -163,12 +164,14 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
     // (the music's level at this bar, rising at once and falling slowly, as an analyser's do; with no audio running, a gentle idle)
     const live = spec ? barLevel(spec, i, n) : 0.25 + 0.2 * Math.abs(Math.sin(time * 1.3 + i * 1.7) * 0.6 + Math.sin(time * 2.1 + i * 0.9) * 0.4);
     V.bars[i] = Math.max(live, V.bars[i] - dt * 1.8);
-    const f = i / n, a = Math.PI / 2 + f * Math.PI * 2, ux = Math.cos(a), uz = Math.sin(a) * 0.8, cx = cs.x, cz = cs.z + 0.6, lv0 = V.bars[i];
+    const f = i / n, a = Math.PI / 2 + f * Math.PI * 2, ux = Math.cos(a), uz = Math.sin(a) * (K.ringTilt ?? 1), cx = cs.x, cz = cs.z + 0.6, lv0 = V.bars[i];
     const lit = f < k, lost = !lit && f < dr && lostA > 0;
     const h = lit ? 1 + Math.round(lv0 * 7 * (cs.casting ? 1 : 0.6)) : lost ? 1 + Math.round(lv0 * 3) : 1 + Math.round(lv0 * 1.5), c = lit ? hue(f + time * 0.15) : lost ? [1, 0.2, 0.15] : [0.45, 0.45, 0.5];
     for (let j = 0; j < h; j++) {
       const r = K.radius + j * cell * 1.1, x = cx + ux * r, z = cz + uz * r, tip = j === h - 1;
-      lv.flat.add(x, 0, z, cell * (lit ? 1 : 0.85), dot, c[0], c[1], c[2], lit ? (tip ? 1 : 0.85) : lost ? lostA : 0.35);
+      // (the ring's far half, behind the stone from the camera, over it: Ed's playtest, 2026-10-29, "I can usually only see the beginning
+      // and the end of the dial"; the near half lies on the ground as before)
+      (uz < 0 ? lv.over : lv.flat).add(x, uz < 0 ? 0.06 : 0, z, cell * (lit ? 1 : 0.85), dot, c[0], c[1], c[2], lit ? (tip ? 1 : 0.85) : lost ? lostA : 0.35);
       if (lit && tip) lv.over.add(x, 0.2, z, cell * 0.9, dot, c[0], c[1], c[2], 0.45);
     }
   }

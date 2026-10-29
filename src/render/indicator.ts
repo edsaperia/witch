@@ -195,24 +195,6 @@ export const NOTES = [
   ".###.....####..",
 ];
 
-/** 🎉 in pixels: a party popper, its cone (`#`) bursting streamers and confetti (`+`) up to the right (the wave pointer's middle
- *  for the route's last stone: Ed, 2026-10-10, "Last call"; and the victory lap's pointer). */
-export const PARTY = [
-  "..........+...+",
-  "......+.....+..",
-  "...........+...",
-  ".......+.+.....",
-  "....##....+..+.",
-  "...####.+......",
-  "..######...+...",
-  "..#######......",
-  ".########..+...",
-  ".#########.....",
-  "###########....",
-  "##########.....",
-  "########.......",
-];
-
 /** 🎩 in pixels: her hat, a tall crown leaning back over a wide brim, its band (`+`) a lighter line (the dropped hat's pointer, rules/hat.ts). */
 /** A folded map: the map table. */
 export const MAP = [
@@ -265,6 +247,21 @@ export const FLASK = [
   "..#+++++++++#..",
   "...#########...",
 ];
+
+/** 🪩 in pixels: a mirror ball on its hanger, its facets a grid of lines (`#`) over lighter tiles (`+`) (the party pointer: Ed,
+ *  2026-10-28, "🪩 not 🎉"). */
+export const MIRRORBALL: readonly string[] = (() => {
+  const rows: string[] = [];
+  for (let y = 0; y < 15; y++) {
+    let row = "";
+    for (let x = 0; x < 15; x++) {
+      const r = Math.hypot(x - 7, (y - 8.5) * 1.05);
+      row += y < 2 ? (x === 7 ? "#" : ".") : r > 6.5 ? "." : r > 5.6 || x % 3 === 1 || y % 3 === 0 ? "#" : "+";
+    }
+    rows.push(row);
+  }
+  return rows;
+})();
 
 /** A pin's arrow tip over its subject's top (CSS pixels), and how far it bobs either way. */
 const PIN_GAP = 20, PIN_BOB = 3;
