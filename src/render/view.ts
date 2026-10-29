@@ -100,7 +100,7 @@ import { packAtlas } from "./atlas";
 import { GpuLedger } from "./gpuLedger";
 import { keepUnderBudget, newGpuState } from "./view/gpuBudget";
 import { berrySprite } from "./berries";
-import { leyDrawnTo, shaderPulse, type LeyLines } from "./leylines";
+import { leyDrawnTo, RING_AFTER, shaderPulse, type LeyLines } from "./leylines";
 import { routeSeen } from "../rules/hatSpells";
 import { bootLineAt, bootPath, bootPulseAt } from "../rules/bootRing";
 import { Glades } from "./glades";
@@ -1542,23 +1542,21 @@ export class View {
       // The party's over (rules/partyOver.ts): the line fades to partyOver.leyFloor of itself, its pulse gone.
       const po = g.partyOver?.ease ?? 0, leyK = this.leyBase * (1 - (1 - t.partyOver.leyFloor) * po);
       if (leyK !== this.leyScaled) { this.leyScaled = leyK; this.ley.scale(leyK); }
-      // the wave's pulse along the current link, by the party's clock (as the HUD's pointer); while home boots, none drawn, but the
-      // line the boot branches off unlit ahead of where it will set off (as it is once the boot ends: no change as it does)
-      const bootPulse = g.party.spellAt !== null && time < g.party.bootUntil;
-      this.ley.pulse(g.partyOver ? null : bootPulse ? 0 : shaderPulse(g.party, g.map, time), !bootPulse);
+      // One line (Ed, 2026-10-29): the boot ring's link first, from the treehouse's front round the home ring (rules/bootRing.ts),
+      // the route on from where its lap ends. Its pulse: the boot's along the ring while home boots up (its share of the boot path,
+      // the stones turning as it passes), then the wave's along the current link, by the party's clock (as the HUD's pointer).
+      const B = bootPath(g.map), bootPulse = g.party.spellAt !== null && time < g.party.bootUntil;
+      this.ley.pulse(g.partyOver || bootPulse ? null : shaderPulse(g.party, g.map, time), g.partyOver || !bootPulse ? null : bootPulseAt(g.party, g.map, time) / B.length);
       this.ley.lap(winPulse(g)?.links ?? null, winPulseOut(g)?.links ?? null, winLit(g)); // (the victory lap: its sparklers racing home and on to the route's end from where the wave's pulse was, rules/win.ts)
-      // None till the party spell; then reveal times as far along the one path the ring and the route make as the pulse (the boot's,
-      // then the wave's: leyReveal), the route from where the boot's lap ends (Ed, 2026-10-29: one path, on round the same way).
+      // None till the party spell; then reveal times as far along the line as the pulse (the boot's, then the wave's: leyReveal and
+      // bootLineAt, the same measure), the tip round the ring first and on out along the route without a jump.
       this.ley.near(w.x, w.z);
       // (the Route-seer hat worn, rules/hatSpells.ts: the whole route, however far the reveal has grown)
-      this.ley.grow(leyDrawnTo(g.party, g.map, time, t.leyLines.reveal ?? 3, routeSeen(g))); // (none before the party, the hat's too)
-      { // The boot's ring (rules/bootRing.ts): the line round the home ring at reveal x the pulse, the pulse turning the stones; faint after.
-        // (Its sparkler runs the whole lap, past the last stone to where it came on to the ring, at the pulse's speed, the boot
-        // ending as it gets there, and hands over to the wave's: Ed, 2026-10-07, "The two pulses or tips don't join correctly at
-        // the top of the speaker circle"; 2026-10-09, "Pure constant speed", boot included.)
-        const B = bootPath(g.map), live = g.party.spellAt !== null && (g.party.bootFrom === undefined || time < g.party.bootUntil);
-        this.ley.ring(live ? bootPulseAt(g.party, g.map, time) / B.length : null, bootLineAt(g.party, g.map, time, t.leyLines.reveal ?? 3) / B.length, (g.party.spellAt === null ? 0 : live ? 1 : 0.35) * (1 - (g.partyOver?.ease ?? 0)), this.leyRgb ?? undefined); // (the boot ring fades out too once the party's over)
-        this.ley.front(time, (beatTime(g.beat, time) * t.beat.bpm) / 60, 1 - (g.partyOver?.ease ?? 0)); // its front and pulses: pixel sparks, small lights, embers (render/leyHead.ts)
+      this.ley.grow(leyDrawnTo(g.party, g.map, time, t.leyLines.reveal ?? 3, routeSeen(g)), bootLineAt(g.party, g.map, time, t.leyLines.reveal ?? 3) / B.length); // (none before the party, the hat's too)
+      { // The ring's link: full while home boots up, faint round the speakers after (RING_AFTER), nothing before the spell; it fades out too once the party's over.
+        const live = g.party.spellAt !== null && (g.party.bootFrom === undefined || time < g.party.bootUntil);
+        this.ley.ring((g.party.spellAt === null ? 0 : live ? 1 : RING_AFTER) * (1 - (g.partyOver?.ease ?? 0)), this.leyRgb ?? undefined);
+        this.ley.front(time, (beatTime(g.beat, time) * t.beat.bpm) / 60, 1 - (g.partyOver?.ease ?? 0)); // its front and pulse: a pixel spark, its small light (render/sparkler.ts)
         this.leashView.ley = this.ley; // (the rainbow wave and the analyser behind the spark stand on the line as drawn: render/leash/rainbow.ts)
       }
     }

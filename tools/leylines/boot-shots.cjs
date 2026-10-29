@@ -34,10 +34,10 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
     log("scene:", said.say);
     const step = n => page.evaluate(n => { const w = window.witch; for (let i = 0; i < n; i++) w.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 60, i === n - 1); }, n);
     for (let round = 0, calm = 0; calm < 2 && round < 40; round++) { await step(10); const p = await page.evaluate(() => window.witch.view.assets.pending); if (p === 0) calm++; else { calm = 0; await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 600000, polling: 500 }); } }
-    // (and each line as dots, render/leylines.ts dotLines: how far it's drawn, where its spark is, how many of its dots are on that stretch)
+    // (and the line as dots, render/leylines.ts dotLines: how far it's drawn, where its spark is, how many of its dots are on that stretch)
     const state = () => page.evaluate(() => {
       const g = window.witch.game, p = g.party, lv = window.witch.view.leashView, ley = lv?.ley, d = g.map.dancefloor;
-      const lines = ley ? ley.dotLines(2).map((L, i) => { const n = Array.from(L.bars.links).filter(l => l >= L.from && l <= L.to).length, q = L.place(L.from, g.clock.time, { x: 0, z: 0 }); return `${i ? "route" : "ring"}: strength ${L.strength.toFixed(2)} from ${L.from.toFixed(2)} to ${L.to === Infinity ? "all" : L.to.toFixed(2)} spark ${L.spark === Infinity ? "none (all bars)" : L.spark.toFixed(2)} dots ${n}${q ? ` starts ${(q.x - d.x).toFixed(0)} m east ${(q.z - d.z).toFixed(0)} m south of the floor` : ""}`; }).join("; ") : "no line";
+      const lines = ley ? ley.dotLines(2).map(L => { const n = Array.from(L.bars.links).filter(l => l >= L.from && l <= L.to && !(l >= L.hide[0] && l < L.hide[1])).length; return `line: strength ${L.strength.toFixed(2)} to ${L.to === Infinity ? "all" : L.to.toFixed(2)} (links as drawn, the ring's link first) spark ${L.spark === Infinity ? "none (all bars)" : L.spark.toFixed(2)} ring x${L.ringK.toFixed(2)} dots ${n}${L.hide[1] > 0 ? ` (the ring's hidden under the route ${L.hide[0].toFixed(2)}-${L.hide[1].toFixed(2)})` : ""}`; }).join("; ") : "no line";
       return `clock ${g.clock.time.toFixed(1)}${g.clock.paused ? " (paused)" : ""} spellAt ${p.spellAt}${p.paused ? " party paused" : ""} bootFrom ${p.bootFrom?.toFixed(1)} bootUntil ${p.bootUntil.toFixed(1)} pulse d ${p.pulse.d.toFixed(1)} v ${p.pulse.v} at ${p.pulse.at.toFixed(1)} rainbowQuads ${lv?.rainbowQuads}\n    ${lines}`;
     });
     log(await state());

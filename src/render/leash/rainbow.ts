@@ -8,10 +8,10 @@
 //   post spark route should look like the audio analyser along its whole length"): a dot every `route.spacing` metres along it as
 //   drawn, behind the spark each the foot of an analyser bar, lower than the wave's, ahead of it a single dot, all in the line's own
 //   rainbow, its colours drifting on toward the tip ("so you know which way is the front": render/leylines.ts RAINBOW_M); only
-//   those in view (the camera's frustum, at the bent world's place: render/height.ts bendPoint). Both its lines the same way, the
-//   boot's ring round the home speakers and the route out from it (render/leylines.ts dotLines: what each is, how far it's drawn and
-//   where its spark is, as the shader has them): the ring's behind the boot's pulse, the route's behind the wave's, the route all
-//   single dots till that sets off (Ed, 2026-10-29: the ring showed neither, and the route only its glow, till the boot was over).
+//   those in view (the camera's frustum, at the bent world's place: render/height.ts bendPoint). The boot's ring round the home
+//   speakers and the route out from it are one line (render/leylines.ts dotLines: how far it's drawn and where its spark is, as the
+//   shader has them): bars behind the boot's pulse on the ring, then behind the wave's along the route, single dots ahead (Ed,
+//   2026-10-29: the ring showed neither, and the route only its glow, till the boot was over).
 // Comfort's reduce-flashing slows the colours and calms the bars. lv.rainbowQuads counts what's drawn.
 import * as THREE from "three";
 import { rainbow } from "../indicator";
@@ -74,7 +74,7 @@ export function drawRainbow(lv: LeashView, time: number, dot: number[], camera: 
       bar(p.x, p.z, h, cell, hueAt(ley ? ley.runAt(L) : m), Math.min(1, back * 1.4));
     }
   }
-  // The lines as dots (the boot's ring, then the route), every R.spacing metres of each as drawn, the stretch of it that's drawn:
+  // The line as dots (the boot's ring, then the route: one line), every R.spacing metres of it as drawn, the stretch that's drawn:
   // behind its spark the analyser's bars, ahead of it single dots.
   const fade = 1 - (g.partyOver?.ease ?? 0);
   for (const L of lines) {
@@ -88,7 +88,7 @@ export function drawRainbow(lv: LeashView, time: number, dot: number[], camera: 
       if (!p) break;
       const k = j % (ROUTE_BINS * 2), h = l > L.spark ? 1 : 1 + Math.round(routeLevels[k < ROUTE_BINS ? k : ROUTE_BINS * 2 - 1 - k] * R.height);
       if (!seen(p.x, p.z, h * R.cell)) continue;
-      bar(p.x, p.z, h, R.cell, hueAt(B.run[j]), 0.9 * fade * L.strength);
+      bar(p.x, p.z, h, R.cell, hueAt(B.run[j]), 0.9 * fade * L.strength * (l < L.ringLinks ? L.ringK : 1)); // (the ring's link faint once the boot's over)
     }
   }
 }
