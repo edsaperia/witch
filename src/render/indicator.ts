@@ -174,7 +174,7 @@ export const rainbow = (h: number): [number, number, number] => { const f = (n: 
 /** How the edge pointers stand out (Ed's v5399 playtest, 2026-10-29: "it's easy to miss the pointers"; the tuning's pins, set each frame
  *  by render/view/hud.ts): `plate` a dark disc behind the ring and an outline round the arrow, its opacity (0 none, as before), so they
  *  read on any ground; `vivid` how much of the calming toward the night (calm) is taken back, 0 as calmed, 1 the neon itself. */
-export const PIN_LOOK = { plate: 0, vivid: 0 };
+export const PIN_LOOK = { plate: 0, vivid: 0, track: 0.55 };
 const PLATE_RGB = [10, 8, 20];
 
 export const calm = (c: number[]) => {
@@ -340,11 +340,13 @@ export class StoneIndicator {
       drawArrow(c, arrow, N, RING_R + 1, RING_R + 8.5, 5, PLATE_RGB, PIN_LOOK.plate);
     }
     // The ring: dim all round, bright neon clockwise from 12 o'clock as far as the countdown has run.
-    const R = RING_R, ring = ringPixels(), dim = neon.map(v => v * 0.55); // the rest of the ring: dimmer, but still there on dark grass
+    // (the rest of the ring, not yet filled: a dark, greyed track, pins.track bright, so the fill reads at a glance; Ed, 2026-10-29)
+    const track = (n: number[]) => { const grey = (n[0] + n[1] + n[2]) / 3, T = PIN_LOOK.track, sat = Math.min(1, T * 0.8); return n.map(v => (grey + (v - grey) * sat) * T); };
+    const R = RING_R, ring = ringPixels(), dim = track(neon); // the rest of the ring: dimmer, but still there on dark grass
     for (let k = 0; k < (at.bare ? 0 : ring.length); k += 3) {
       const own = at.rainbow ? hueAt(ring[k + 2] + time * 0.25) : null;
       if (ring[k + 2] <= fill || flash > 0) c.dot(ring[k], ring[k + 1], own ? lift(own) : bright, 1);
-      else c.dot(ring[k], ring[k + 1], own ? own.map(v => v * 0.55) : dim, 0.9);
+      else c.dot(ring[k], ring[k + 1], own ? track(own) : dim, 0.9);
     }
     // In the middle: 🎶 (the wave pointer), or the rune: the area's creature's sigil, in its neon.
     const E = at.emoji ? pixelEmojiData(at.emoji, EMOJI_PX) : null;

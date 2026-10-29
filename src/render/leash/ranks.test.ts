@@ -83,7 +83,7 @@ describe("rank sigils", () => {
   it("every legend's sigil wears the one crown, no one else's; the crown reads at stack size", () => {
     expect(crowned({ level: 3 })).toBe(true);
     expect(crowned({ level: 1, boss: true })).toBe(true);
-    for (const level of [0, 1, 2]) expect(crowned({ level })).toBe(false);
+    for (const level of [0, 1, 2] as const) expect(crowned({ level })).toBe(false);
     const C = crownGlyph();
     expect(C.w).toBe(LEGEND_CROWN_W);
     const row = (y: number) => Array.from(C.m.subarray(y * C.w, (y + 1) * C.w));

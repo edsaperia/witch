@@ -46,7 +46,7 @@
   "bushClump": 0.8,
   "treeHeight": 2.25,
   "treeCap": { "from": 20, "keep": 1 },
-  "pins": { "gap": 20, "plate": 0.6, "vivid": 0.5 },
+  "pins": { "gap": 20, "plate": 0.6, "vivid": 0.5, "track": 0.28 },
   "crownWidth": 1.7,
   "treeSpacingX": 4.6,
   "treeSpacingZ": 2.8,

@@ -898,6 +898,7 @@ Code: `render/indicator.ts`
 | `pins.gap` | number | 0 to … |
 | `pins.plate` | number | 0 to … |
 | `pins.vivid` | number | 0 to … |
+| `pins.track` | number | 0 to … |
 
 ### `crownWidth`
 
