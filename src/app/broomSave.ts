@@ -8,6 +8,7 @@
 // nothing of it is owned). Once, then witch.broom says it's done.
 import { PART_IDS, SLOTS, bareBroom, partById, type Fitted } from "../rules/broomParts";
 import { LOADOUT_KEY } from "./loadout";
+import { unlockAll } from "./debugUnlock";
 
 export const BROOM_KEY = "witch.broom";
 const GENOME_KEY = "witch.genome";
@@ -22,7 +23,7 @@ export function loadBroom(storage?: Store | null): BroomSave {
     const o = JSON.parse(storeOf(storage)?.getItem(BROOM_KEY) ?? "null") as Partial<BroomSave> | null;
     if (!o) return out;
     out.found = PART_IDS.filter(id => Array.isArray(o.found) && o.found.includes(id));
-    for (const s of SLOTS) { const id = o.fitted?.[s]; if (id && out.found.includes(id) && partById(id)?.slot === s) out.fitted[s] = id; }
+    for (const s of SLOTS) { const id = o.fitted?.[s]; if (id && (out.found.includes(id) || unlockAll()) && partById(id)?.slot === s) out.fitted[s] = id; } // (one she hasn't found, fitted under the pause page's Unlock everything, stays while it's on: app/debugUnlock.ts)
   } catch { /* spoilt: a bare broom */ }
   return out;
 }
@@ -43,7 +44,7 @@ export function partFound(id: string, storage?: Store | null): BroomSave {
  *  ?parts= can fit for a load, isn't kept). */
 export function fitBroom(fitted: Fitted, storage?: Store | null): BroomSave {
   const b = loadBroom(storage);
-  for (const s of SLOTS) { const id = fitted[s]; b.fitted[s] = id && b.found.includes(id) && partById(id)?.slot === s ? id : null; }
+  for (const s of SLOTS) { const id = fitted[s]; b.fitted[s] = id && (b.found.includes(id) || unlockAll()) && partById(id)?.slot === s ? id : null; }
   saveBroom(b, storage);
   return loadBroom(storage);
 }

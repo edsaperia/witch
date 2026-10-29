@@ -53,6 +53,7 @@ import { FIND_KINDS, fillTrunk, findKind, loanFind, spawnFind, spawnSpot, type F
 import { fitBroom, loadBroom, migrateBroom } from "./app/broomSave";
 import { partById } from "./rules/broomParts";
 import { loadOwned } from "./app/owned";
+import { ownedToChoose, partsToChoose, setUnlockAll, unlockAll } from "./app/debugUnlock";
 import { foundAll, keepFound, type FindsCtx } from "./app/finds";
 import { dreamsAfter, homeOf, hatWithoutLoan, lend, loanName, lookWithoutLoan, partsWithoutLoan, settle, withLoan, type Loan } from "./app/loan";
 import { DreamView, dreamArt, findCanvas } from "./render/dream";
@@ -200,9 +201,9 @@ const input = new Input();
 input.aimFrom = (x, y) => view.aimAt(x, y);
 const aimHud = new AimHud(canvas); // the reticle where the mouse aims: 💌 range and the dodge's recharge
 setupDebugKeys(view, input, params); // (app/keys.ts)
-// The playtest log (Ed, 2026-10-04): a sample every 10 s of play, kept on this browser, a run a night (app/night.ts); L, or
-// opening the game with ?playtest=download, saves the last few runs as JSON.
-window.addEventListener("keydown", e => { if (e.code === "KeyL" && !e.repeat) N().playtest.download(); });
+// The playtest log (Ed, 2026-10-04): a sample every 10 s of play, kept on this browser, a run a night (app/night.ts); the pause
+// page's Download log (Ed, 2026-10-29: "rather than a key": the L key is gone), or opening the game with ?playtest=download, saves
+// the last few runs as JSON.
 if (params.get("playtest") === "download") setTimeout(() => N().playtest.download(), 500);
 
 // The debug knobs: the fight's scale, speed and momentum, the treetop speed (app/knobs.ts): their keys, and their live setters
@@ -367,7 +368,7 @@ const creator = new Creator(style, savedLook, bootTuning.pixelSize);
 creator.version = typeof __BUILD__ === "string" ? __BUILD__.split(" ")[0] : "dev"; // (its version, top left: Ed, 2026-10-13)
 (window as unknown as { __creator: Creator }).__creator = creator; // (the creator's smoke scripts read her place in the room)
 // Her hat's spell (rules/spells.ts, app/loadout.ts): the creator's Hat box chooses it from the hats she owns, kept on this browser.
-creator.loadout = { hat: N().game.spells.hat }; creator.hats = N().game.spells.hats;
+creator.loadout = { hat: N().game.spells.hat }; creator.hats = unlockAll() ? undefined : N().game.spells.hats; // (the pause page's Unlock everything: every hat, app/debugUnlock.ts)
 creator.onLoadout = l => { const { game } = N(); changeLoadout(game.witches[0], l.hat); saveLoadout({ hat: hatWithoutLoan(game.spells.hat, loan) as typeof game.spells.hat }); wearHat(page.look()); }; // (a loaned hat never saved: app/loan.ts; a hat swapped while hers lies elsewhere leaves that one lying: rules/hatSpells.ts)
 // Her room mid-night from the treehouse's rooms (rules/houseRooms.ts; Ed, 2026-10-19): E at a dressing station, the bags or the broom
 // stand opens it at only that station's choices (config/house/), the world running on at the house's tenth; its way out brings
@@ -407,7 +408,7 @@ stations.onDress = () => { view.spin = spinStep(view.spin, N().game.herTime); };
 // and its set's spell with it: rules/spells.ts setParts), and is kept on this browser for the nights after (app/broomSave.ts).
 stations.onFit = f => { const { game } = N(); setParts(game.witches[0].spells, f); fitBroom(partsWithoutLoan(f, loan)); }; // (kept without a part on loan: app/loan.ts)
 /** What the Workshop's stations show (ui/stationPanel.ts): the parts found, her broom, tonight's part to find, her tuning. */
-const workshopNow = (): WorkshopCtx => { const { game, tuning } = N(), t = game.trunk; return { found: partsNow(), fitted: game.witches[0].spells.parts, tonight: t && t.kind === "part" && !t.found ? t.item : null, tuning }; };
+const workshopNow = (): WorkshopCtx => { const { game, tuning } = N(), t = game.trunk; return { found: partsToChoose(partsNow()), fitted: game.witches[0].spells.parts, tonight: t && t.kind === "part" && !t.found ? t.item : null, tuning }; };
 /** Tonight's find taken (the "found" event): on loan till she sleeps (app/loan.ts), hers to wear or use at once, never written. */
 function lendFind(kind: FindKindId, id: string): void {
   const { game } = N();
@@ -612,7 +613,7 @@ freeze.onToggle = on => {
   pauseLoading = true;
   void import("./ui/decide").then(({ PauseSliders }) => {
     const report = () => import("./ui/visualReport").then(({ report }) => report(reportHost()));
-    pauseSliders = new PauseSliders({ settings: () => settingsPage.show(), get tuning() { return N().game.tuning; }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive, report, musicLab: openMusicLab, audioTest: () => { window.open("audio-test/", "_blank", "noopener"); }, fightArena: () => { window.open(fightLink(newFightSeed()), "_blank", "noopener"); }, finds: () => findsPanel.toggle(true), findsShown: () => N().hud.debugOn || devFinds, quality: { lines: () => ladder.lines(), options: () => ladder.options(), current: () => ladder.current(), choose: v => { ladder.choose(v); ladder.apply(N().game.tuning); } } });
+    pauseSliders = new PauseSliders({ settings: () => settingsPage.show(), get tuning() { return N().game.tuning; }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive, report, musicLab: openMusicLab, audioTest: () => { window.open("audio-test/", "_blank", "noopener"); }, downloadLog: () => N().playtest.download(), unlockAll: { get: () => unlockAll(), set: on => { setUnlockAll(on); creator.hats = on ? undefined : N().game.spells.hats; } }, fightArena: () => { window.open(fightLink(newFightSeed()), "_blank", "noopener"); }, finds: () => findsPanel.toggle(true), findsShown: () => N().hud.debugOn || devFinds, quality: { lines: () => ladder.lines(), options: () => ladder.options(), current: () => ladder.current(), choose: v => { ladder.choose(v); ladder.apply(N().game.tuning); } } });
     requestAnimationFrame(() => pauseSliders!.show(freeze.frozen, creator.open)); // (a frame shut first, so it slides in)
   }, () => { // (its files replaced under it: Ed, 2026-10-14, "the menu does not appear")
     pauseLoading = false;
@@ -674,7 +675,7 @@ const stallLog = new StallLog();
 // (the playtest log's hooks read the night on now, so they carry to the next night's run as they are: app/night.ts)
 N().playtest.stalls = () => stallLog.stalls;
 // What a builder needs from a screenshot of the overlay (Ed, 2026-10-14; app/repro.ts): the link that rebuilds what she saw, the
-// machine, and every setting changed from the build's; the same in the playtest log (L).
+// machine, and every setting changed from the build's; the same in the playtest log (the pause page's Download log).
 const repro = (() => {
   let machine: string[] | null = null, diff: [string, unknown][] = [], at = -Infinity;
   const changed = () => { const now = performance.now(); if (now - at > 1000) { at = now; diff = tuningDiff(N().tuning, BUILT); } return diff; };
@@ -747,7 +748,7 @@ N().playtest.keyState = () => keyNow();
 N().playtest.sceneState = () => sceneMode(N().game);
 // The measured output (Ed, round 16: "Is there a way for the game to know if anything is being sent to the speakers or not?";
 // platform/audio/outputMeter.ts): what leaves the game for the speakers, read a few times a second; silence while the music
-// should be heard goes in the playtest log (L) with where she was and the nearest stall. ?micCheck=1 (debug only) also
+// should be heard goes in the playtest log (the pause page's Download log) with where she was and the nearest stall. ?micCheck=1 (debug only) also
 // listens to the microphone for dropouts after the game. It measures what the game sends: not the device's volume.
 const meter = new OutputMeter();
 const nearestStall = (pageS: number): { off: number; ms: number } | undefined => {
@@ -970,7 +971,7 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   dreamNext = null;
   const n = await startNight(page, spec);
   seedEl.innerHTML = `seed <a href="?seed=${n.seed}">${n.seed}</a>`;
-  creator.loadout = { hat: n.game.spells.hat }; creator.hats = n.game.spells.hats;
+  creator.loadout = { hat: n.game.spells.hat }; creator.hats = unlockAll() ? undefined : n.game.spells.hats;
   lastDraw = 0;
   await view.prepare();
   n.flags.ready = true;
@@ -1078,7 +1079,7 @@ function frame(now: number): void {
   const station = bot || creator.open || charting ? null : stationOf(game, stations.station), shelves = station ? shelvesAt(station.id) : null;
   stations.setLoaned(loan?.id ?? null); // (its card sparkles: ui/stationPanel.ts)
   if (stations.station && station?.id !== stations.station) shutStation(`off it (${station?.id ?? "none"}${charting ? ", charting" : ""}${creator.open ? ", creator" : ""})`); // (she's somehow off it: a knockout, a new night; E closes it above)
-  if (station && shelves && station.id !== stations.station && usedAt(game) === station.id) { const g = (page.look() ?? creator.genome()) as Record<string, unknown>; stations.open(station.id, shelves, g as never, owned ??= loadOwned(g), game.wake && firstEver && !game.wake.yesterday && station.id === "dressingTable" ? "First night · pick your look here, and at the wardrobe, cloak pegs and shoe rack" : "", shelves.some(q => q.slot || q.board) ? workshopNow() : null); }
+  if (station && shelves && station.id !== stations.station && usedAt(game) === station.id) { const g = (page.look() ?? creator.genome()) as Record<string, unknown>; stations.open(station.id, shelves, g as never, ownedToChoose(owned ??= loadOwned(g)), game.wake && firstEver && !game.wake.yesterday && station.id === "dressingTable" ? "First night · pick your look here, and at the wardrobe, cloak pegs and shoe rack" : "", shelves.some(q => q.slot || q.board) ? workshopNow() : null); }
   else if (!shelves && stations.station) shutStation("no shelves");
   stations.update(performance.now() / 1000);
   // The telescope: E at it looks (useHouse); E or ○ shuts it (its own step; Esc pauses over it); and should she somehow be off it, it shuts.
