@@ -116,7 +116,9 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
       const L = R.stump!.light, items = ranked ? stoneStack(g, m.key) : [], C = cardOf(m.cell), ly = (C ? C.up : top) + L.height, lz = m.z + (C ? C.toward : 0);
       let wsum = 0, r = 0, gg = 0, b = 0;
       for (const it of items) { const wgt = [1, 1.4, 2, 3][Math.max(0, Math.min(3, it.level))], c = rankColour(t, it.level, it.friend); r += c[0] * wgt; gg += c[1] * wgt; b += c[2] * wgt; wsum += wgt; }
-      if (wsum > 0) near.push({ d, l: { x: m.x, y: ly, z: lz, reach: L.reach, rgb: new THREE.Vector3(r / wsum, gg / wsum, b / wsum), strength: L.strength * Math.min(1.4, 0.55 + 0.09 * wsum), shadow: { x: m.x, y: ly, z: m.z, k: 0.8 } } });
+      // (the mix pushed away from grey, so a won stump's light reads blue rather than washing to white under its own brightness)
+      const mr = r / Math.max(wsum, 1e-6), mg = gg / Math.max(wsum, 1e-6), mb = b / Math.max(wsum, 1e-6), grey = (mr + mg + mb) / 3, sat = L.saturate ?? 1.6;
+      if (wsum > 0) near.push({ d, l: { x: m.x, y: ly, z: lz, reach: L.reach, rgb: new THREE.Vector3(Math.max(0, grey + (mr - grey) * sat), Math.max(0, grey + (mg - grey) * sat), Math.max(0, grey + (mb - grey) * sat)), strength: L.strength * Math.min(1.4, 0.55 + 0.09 * wsum), shadow: { x: m.x, y: ly, z: m.z, k: 0.8 } } });
       else near.push({ d, l: { x: m.x, y: ly, z: lz, reach: L.reach * 0.7, rgb: col, strength: L.strength * 0.35 * dim } });
     }
     // Awake: a column of light and a thin laser straight up (Ed, v149: "let's see both"); dormant:

@@ -6905,12 +6905,17 @@
                 "height": {
                   "type": "number",
                   "minimum": 0
+                },
+                "saturate": {
+                  "type": "number",
+                  "minimum": 0
                 }
               },
               "required": [
                 "reach",
                 "strength",
-                "height"
+                "height",
+                "saturate"
               ],
               "additionalProperties": false
             }

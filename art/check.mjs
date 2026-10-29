@@ -735,6 +735,24 @@ const SPRITE_CHECKS = async ({ names, only }) => {
     }
     res.push({ what: "generated bridges: footbridges, rope bridges and root bridges, 8 variants each, standing, none alike, within a third of the hand-made piece's size, unlit; fingerposts 8 variants, standing, none alike, 1.4 to 3 m, unlit", good: !bad.length, info: bad.slice(0, 6).join("; ") });
   });
+  task("stumps", async () => { // the great stumps (art/props/stumps.js; Ed, 2026-10-29): every species' 4 seeded stumps draw, nothing NaN, none alike, nothing
+    // glowing (the sigils over them light them), its roots 14 to 32 m across, its cut 0.6 to 1.6 m high, the cut's middle and the ground under it on
+    // the sprite; and every biome grows one
+    const bad = [], EM = new Set([...G.EMISSIVE]), ppm = G.witchPixelsPerUnit(st) / 1.9;
+    for (const species of Object.keys(G.STUMP_GENOMES)) {
+      const seen = new Set();
+      for (let seed = 0; seed < 4; seed++) {
+        const p = G.stumpPiece(species, { seed }, null, st), sp = p.sp, n = sp.m.filter(Boolean).length, key = sp.w + "x" + sp.h + ":" + Array.from(sp.m).join("");
+        if (n < 2000 || !Array.from(sp.n).every(Number.isFinite)) { bad.push(`${species} ${seed}: ${n} px`); continue; }
+        if (seen.has(key)) bad.push(`${species} ${seed} repeats another`); seen.add(key);
+        if (sp.m.some(m => EM.has(m))) bad.push(`${species} ${seed} glows`);
+        const across = sp.w / ppm, h = p.variant.height; if (across < 14 || across > 32 || h < .6 || h > 1.6) bad.push(`${species} ${seed}: ${across.toFixed(1)} m across, cut ${h.toFixed(2)} m`);
+        for (const [k, q] of [["top", p.top], ["origin", p.origin]]) if (!(q.x >= 0 && q.x <= sp.w && q.y >= 0 && q.y <= sp.h)) bad.push(`${species} ${seed}: ${k} off it`);
+      }
+    }
+    for (const biome of ["temperate", "cold", "mountains and glaciers", "volcanic", "badlands", "hot", "mangrove swamp", "jungle", "cold rainforest"]) if (!G.STUMP_GENOMES[G.stumpSpecies(biome)]) bad.push(`no stump for ${biome}`);
+    res.push({ what: "great stumps: every species' 4 seeded stumps draw, none alike, nothing glowing, 14 to 32 m across, cut 0.6 to 1.6 m high, its cut and foot on the sprite; a stump for every biome", good: !bad.length, info: bad.slice(0, 8).join("; ") || `${Object.keys(G.STUMP_GENOMES).length} species` });
+  });
   task("set-piece-generator", async () => { // the set-piece generator (art/props/sets.js): every kind's 12 seeded variants draw, stand on their bottom row, nothing NaN, none alike, landmark-sized
     // (6 to 12 m across or tall) with their origin on the sprite, one warm glowing touch at most (a lantern, embers), a punt's and a jetty's pool mostly water;
     // and an area naming one as its set piece gets it built (setPiece3d)

@@ -283,6 +283,7 @@ says what each note covers.
 - Plant genome
 - Art style / art pixel
 - Prop generator
+- Great stump
 - Set-piece generator
 - Area recipe
 - Area folder
