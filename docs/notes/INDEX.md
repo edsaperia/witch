@@ -219,6 +219,7 @@ says what each note covers.
 - Bindings API
 - Settings page
 - Pad layout
+- Screen shake
 - Glide
 - Resting 💌s
 - Aim reticle

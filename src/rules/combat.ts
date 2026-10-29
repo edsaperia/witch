@@ -22,7 +22,8 @@ import { stepLegendAttack, stepLegend } from "./combat/legend";
 import { ATTACK_LIB } from "./attacks/index";
 import { cast as castSpell, newSpells, stepSpells } from "./attacks/engine";
 import { getUp } from "./orbit";
-import { hittableOf, meleeExtras, spellAttack, speciesSpell, spellWorld } from "./attacks/combatWorld";
+import { bodyReach, hittableOf, meleeExtras, reachingFurther, spellAttack, speciesSpell, spellWorld } from "./attacks/combatWorld";
+import type { AttackSpec } from "./attacks/types";
 import { PACKS, stepPacks, packsOn, packKindOf, packAttack, packGate, markStrike, dodgeAim, strikingNow, ownStrike, styleOf, type Directive } from "./combat/packs";
 import { chaseAt, limitTurn, momentumOf, noteWitches } from "./momentum";
 
@@ -54,6 +55,9 @@ function roleSpell(sp: SpeciesSpell | null, c: Creature, kind: ReturnType<typeof
 }
 type SpeciesSpell = NonNullable<ReturnType<typeof speciesSpell>>;
 const FAR = new Map<string, SpeciesSpell>();
+/** Each attack in the grammar as thrown (stepCombat's thrown): at her (by dodge.b.range) or at anything else. */
+type Thrown = { base: Attack; k: number; spec: AttackSpec; attack: Attack };
+const THROWN = new WeakMap<AttackSpec, { her?: Thrown; any?: Thrown }>();
 // (split into rules/combat/: data, targeting, hits, legend; everything public is still exported from here)
 /** A wild flyer that swoops (its profile's move; hostile: wild or enraged, never hers or happy). */
 const swoops = (c: Creature): boolean => !c.leashed && profileOf(c.species)?.move?.kind === "swoop" && (stateOf(c) === "wild" || stateOf(c) === "enraged");
@@ -182,10 +186,10 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
   }
   /** An attack in the grammar starts its windup: its telegraphs and its cast with the engine, released at the windup's end (its own
    *  windup, whatever shortens other shots'). */
-  const startSpell = (c: Creature, f: NonNullable<Creature["fight"]>, atk: { name: string; damage: number; spec: import("./attacks/types").AttackSpec }) => {
-    const S = (s.spells ??= newSpells());
+  const startSpell = (c: Creature, f: NonNullable<Creature["fight"]>, atk: { name: string; damage: number; attack: Attack; spec: AttackSpec }) => {
+    const S = (s.spells ??= newSpells()), spec = f.target ? thrown(atk, f.target).spec : atk.spec;
     f.windupUntil = time + (atk.spec.cast?.windup ?? 0.6);
-    f.spellCast = castSpell(S, spellWorld(w, s, grid, S.seed, data), atk.spec, atk.name, { id: c.id, x: c.x, z: c.z, side: sideOf(c), species: c.species, heading: Math.atan2(f.aimZ - c.z, f.aimX - c.x) }, hittableOf(w, s, f.target), time, atk.damage, f.windupUntil);
+    f.spellCast = castSpell(S, spellWorld(w, s, grid, S.seed, data), spec, atk.name, { id: c.id, x: c.x, z: c.z, side: sideOf(c), species: c.species, heading: Math.atan2(f.aimZ - c.z, f.aimX - c.x) }, hittableOf(w, s, f.target), time, atk.damage, f.windupUntil);
   };
   /** May it start a strike at tg now (a token free; only her strikers are counted)? Takes the token if so. A pack member takes one as
    *  well as its pack's turn and pressure, its call too (Ed, 2026-10-20: the dodge's limit holds inside a pack; fights between
@@ -202,6 +206,19 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     let L = longer.get(A);
     if (!L) longer.set(A, (L = { ...A, range: A.range * DB.range }));
     return L;
+  };
+  /** An attack in the grammar thrown at tg: a shot at her reaching dodge.b.range times as far, its bolt too (rules/attacks/combatWorld.ts
+   *  reachingFurther), and fired from no further than its bolt really gets (bodyReach: a frost shard that ends short and bursts, a
+   *  roller that slows or stops and goes), so no shot is fired that can't reach. */
+  const thrown = (sp: { attack: Attack; spec: AttackSpec }, tg: Target): Thrown => {
+    const her = !!DB && tg.kind === "witch" && sp.attack.delivery === "shot", k = her ? DB!.range : 1;
+    let m = THROWN.get(sp.spec);
+    if (!m) THROWN.set(sp.spec, (m = {}));
+    const hit = her ? m.her : m.any;
+    if (hit && hit.base === sp.attack && hit.k === k) return hit;
+    const spec = reachingFurther(sp.spec, k), A = reachOf(sp.attack, tg), reach = bodyReach(spec), out: Thrown = { base: sp.attack, k, spec, attack: reach < A.range ? { ...A, range: reach } : A };
+    if (her) m.her = out; else m.any = out;
+    return out;
   };
   /** The heavies (dodge.a.heavy; Ed, 2026-10-09: "Maybe heavies can have a higher top speed, but slow acceleration?"): chasing her,
    *  a top speed above her walk built up slowly, so a burst or a blink gets clear and a long straight retreat is run down. */
@@ -367,14 +384,14 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     }
     const p = targetPos(w, s, f.target);
     if (!p) { f.target = null; f.windupUntil = 0; continue; } // (it fell this very step)
-    const d = Math.hypot(p.x - c.x, p.z - c.z), A = reachOf(atk.attack, f.target), K = data.kite, kites = A.delivery === "shot" && K.species.includes(c.species);
+    const d = Math.hypot(p.x - c.x, p.z - c.z), A = spell ? thrown(spell, f.target).attack : reachOf(atk.attack, f.target), K = data.kite, kites = A.delivery === "shot" && K.species.includes(c.species);
     // Momentum chasing her (tuning creatureMomentum; rules/momentum.ts): its turn limit and reaction delay, and its telegraphed
     // attacks' lead times its strikeLead (lead: her velocity so scaled).
     const mo = f.target.kind === "witch" && c.level !== LEGEND ? momentumOf(c.species, t) : null, sl = mo?.strikeLead ?? 1;
     const lead = (tg: Target) => { const v = velOf(tg); return { vx: v.vx * sl, vz: v.vz * sl }; };
     // (a shooter keeps its usual distance, A0's, however far it may now fire at her: so she can still reach it with her 💌s)
     const A0 = atk.attack;
-    let want = A.delivery === "shot" || A.delivery === "lob" || A.delivery === "beam" ? A0.range * (kites ? K.far : 0.8) : A.delivery === "pulse" ? Math.max(0.8, (A.radius ?? 2) * 0.6) : A.range + p.r + (A.lunge ?? 0) * 0.85 - 0.3;
+    let want = A.delivery === "shot" || A.delivery === "lob" || A.delivery === "beam" ? Math.min(A0.range * (kites ? K.far : 0.8), A.range * 0.9) : A.delivery === "pulse" ? Math.max(0.8, (A.radius ?? 2) * 0.6) : A.range + p.r + (A.lunge ?? 0) * 0.85 - 0.3;
     // A pack member whose strike is its own move (a charge, a leap, a burrow: config/movement.json), the move ready, waits its turn
     // where that move sets off from, not on top of her: where it stands, if that's in the move's reach (so its turn come it charges,
     // leaps or goes under from there: rules/combat/packs.ts).
