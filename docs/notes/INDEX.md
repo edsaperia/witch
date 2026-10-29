@@ -273,7 +273,7 @@ says what each note covers.
 ## [The world's art](world-art.md)
 
 - Area type
-- Wall objects, small objects, big objects, set piece
+- Wall objects, small objects, big objects (legacy set pieces)
 - Layout
 - Area blend
 - Modern relics
@@ -300,7 +300,7 @@ says what each note covers.
 - Prop generator
 - Great stump
 - Stone keep-clear zone
-- Set-piece generator
+- Set-piece generator (legacy art)
 - Area recipe
 - Area folder
 - Snow crowns
