@@ -65,9 +65,9 @@ export function installHooks({ night, view, sound, meter, shake, frameStats, lad
      *  things landed on screen, in screen pixels as drawn (the art-pixel snap and the canvas's shift):
      *  the witch, ground points (probes, metres) and creatures (ids). */
     frameLive: (c: Parameters<typeof stepGame>[1], dt: number, probes: { x: number; z: number }[] = [], ids: number[] = []) => {
-      const { game, tuning } = night(), t0 = game.clock.time;
+      const { game } = night(), t0 = game.clock.time;
       stepGame(game, c, dt);
-      const steps = Math.round((game.clock.time - t0) / STEP), alpha = game.alpha, P = tuning.pixelSize;
+      const steps = Math.round((game.clock.time - t0) / STEP), alpha = game.alpha, P = view.cssPixel;
       const v = new Vector3(), ndc = (x: number, y: number, z: number) => { placed(v.set(x, y, z)).project(view.camera); return v; };
       const snap = (n: Vector3) => [(Math.floor((n.x * 0.5 + 0.5) * view.width) + 0.5) * P, (Math.floor((-n.y * 0.5 + 0.5) * view.height) + 0.5) * P];
       let at: { witch: number[]; probes: number[][]; creatures: (number[] | null)[]; witchWorld: number[] } = { witch: [], probes: [], creatures: [], witchWorld: [] };

@@ -481,6 +481,20 @@
     "find": {
       "what": "Wild creatures are easier to find in the dark: their eyes shine pale gold in her light and they never go fully dark.",
       "notes": "Finding wild creatures in the dark (Ed, v244: 'quite hard to see in the forest... I don't want to go overboard'): eyeshine, their eyes catching the light in pale gold (strength over their own colour, out to range metres from her, blinking about blink of the time; woken creatures' red eyes stay red); lightFloor, never darker than that share of their unlit look; rim, a faint rim from her glow on the edge facing her; and in place of tone.ambient, ambient, with a cooler, more coloured moon (moonHue, moonSat)."
+    },
+    "pixels": {
+      "what": "The picture's pixels on the screen."
+    },
+    "pixels.snap": {
+      "what": "Each of the picture's pixels drawn a whole number of the screen's own pixels, the pixel size rounded to the nearest (render/view.ts resize; ?snap=0 off).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "the pixels are just hard to read",
+          "rest": "via the coordinator: measured at his 1.25 DPR as 3.75 device pixels a pixel, drawn 3 and 4 wide by turns (previews/ed/blur/); Ed picked rounding to the nearest"
+        }
+      ]
     }
   }
 }

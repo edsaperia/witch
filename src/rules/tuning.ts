@@ -475,6 +475,8 @@ export interface Tuning {
   bond: { rim: boolean; sparks: boolean; thread: boolean; sparkEvery: number; /** The thread's upward bow: metres per metre of length, from threadArcSlack when slack to threadArcTaut at full strain, up to threadArcMax. */ threadArcSlack: number; threadArcTaut: number; threadArcMax: number };
   tone: { black: number; gamma: number; ambient: number; moon: number };
   bloom: { on: boolean; strength: number; threshold: number };
+  /** The picture's pixels: snap, each a whole number of the screen's own pixels (render/view.ts resize; ?snap=0 off; absent: on). */
+  pixels?: { snap: boolean };
   tiltShift: { on: boolean; /** The share of the blur the sky takes, so the stars stay perceptible (Ed, 2026-10-06); 1 as the ground. */ skyBlur?: number; /** Her sigil stack kept out of the blur, sharp at any height (Ed, 2026-10-27); default on. */ stackSharp?: boolean; strength: number; band: number; centre: number; /** Over the treetops (Ed, v160: stronger there), blended in by lift. */ treetop: { strength: number; band: number } };
   /** Wild creatures: every area starts with `start` and, from the first frame (Ed, 2026-10-07: no growth on a clock),
    *  byRoute's extra by its place on the waves' route (rules/growth.ts routePopulation: a threat curve spent by each

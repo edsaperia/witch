@@ -209,5 +209,6 @@
   "looks": { "enragedTint": { "colour": "#ff2a2a", "amount": 0.38 }, "anger": { "on": true, "size": 1 }, "partyGlow": { "on": true, "sparkles": 4, "rate": 0.9, "size": 1.4, "strength": 1 } },
   "tone": { "black": 0.03, "gamma": 1.35, "ambient": 0.22, "moon": 0.7 },
   "bloom": { "on": true, "strength": 0.7, "threshold": 0.55 },
-  "tiltShift": { "on": true, "skyBlur": 0.3, "stackSharp": true, "strength": 1.5, "band": 0.5, "centre": 0.55, "treetop": { "strength": 3, "band": 0.38 } }
+  "pixels": { "snap": true },
+  "tiltShift": { "on": true, "skyBlur": 0.3, "stackSharp": true, "strength": 0.75, "band": 0.5, "centre": 0.55, "treetop": { "strength": 1.5, "band": 0.38 } }
 }
