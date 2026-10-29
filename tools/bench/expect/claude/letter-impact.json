@@ -1,0 +1,5 @@
+{
+  "reason": "💌 hit feedback and the won-over celebration (Ed, 2026-10-29): a 💌's flash, squash and slot pop, a hitstop on the ring's last 💌, and a creature won over celebrating a second out of every fight",
+  "rules": { "creatures": "a creature won over sits out the fight for invites.cheer.secs (cheerUntil), so fights after a conversion run differently" },
+  "frames": { "*": "creatures squash and flash as 💌s land, ring slots pop in with an overshoot, ones won over celebrate by body" }
+}
