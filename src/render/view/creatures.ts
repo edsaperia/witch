@@ -260,7 +260,8 @@ export function drawCreatures(v: View, time = 0): void {
     if (imp.flash > 0) glow = Math.max(glow, imp.flash);
     feel.sx *= imp.sx; feel.sy *= imp.sy;
     // Leaping (Stage 5: the toad): up in an arc over its shadow.
-    let hop = c.leap ? Math.sin(Math.min(1, Math.max(0, (time - c.leap.at) / Math.max(0.01, c.leap.lands - c.leap.at))) * Math.PI) * c.leap.height : 0;
+    const L = c.leap ?? c.hop; // (a leap, or a hopper's bound: rules/movement.ts)
+    let hop = L ? Math.sin(Math.min(1, Math.max(0, (time - L.at) / Math.max(0.01, L.lands - L.at))) * Math.PI) * L.height : 0;
     hop += feel.hop; // (a tumble's arc: render/attackFeel.ts)
     hop += flightHeight(c, time); // (a wild flyer swooping: up out of reach over its shadow, rules/movement.ts stepSwoop)
     // Won over just now: it celebrates by its body, a jump-spin, a roll-over, a loop or a wiggle (render/cheer.ts; rules/affection.ts).
