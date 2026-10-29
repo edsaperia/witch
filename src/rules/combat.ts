@@ -260,8 +260,8 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     // at its own run, so it shows again where it got to (Ed's playtest, 2026-10-29: "some animals seem to teleport": it was put there at once).
     if (c.packHide && PK) {
       const H = c.packHide;
-      if (H.tx !== undefined) moveToward(c, H.tx, H.tz!, 0.1, (profileOf(c.species)?.speed ?? C.fightRun) * FIGHT.speed, dt);
-      c.moving = false; c.vx = 0; c.vz = 0; continue;
+      const left = H.tx !== undefined ? moveToward(c, H.tx, H.tz!, 0.1, (profileOf(c.species)?.speed ?? C.fightRun) * FIGHT.speed, dt) : 0;
+      c.moving = left > 0.1; c.vx = 0; c.vz = 0; continue; // (moving: its shadow runs, render/view/creatures.ts)
     }
     // (an attack in the grammar given it, rules/attacks/; else its species' own, the default since step 5: ?attacks=old for the old)
     // (its species' own: against a soundsystem its old attack, so the sieges stay as balanced; in a pack, as its role's strike when its

@@ -4795,10 +4795,38 @@
           "properties": {
             "on": {
               "type": "boolean"
+            },
+            "shadow": {
+              "type": "object",
+              "properties": {
+                "shade": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How dark: 0 its own colours, 1 black."
+                },
+                "opacity": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How opaque the shadow is (0 invisible, 1 solid)."
+                },
+                "fade": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Seconds to turn from solid to shadow as it hides, and back as it comes out."
+                }
+              },
+              "required": [
+                "shade",
+                "opacity",
+                "fade"
+              ],
+              "additionalProperties": false,
+              "description": "A pack member hiding in its lull (in the trees, underground, under water, in the branches, or scattered) is drawn as a shadow of itself, not left out."
             }
           },
           "required": [
-            "on"
+            "on",
+            "shadow"
           ],
           "additionalProperties": false,
           "description": "Pack kinds fight in combos (the nearest lunges, the ranged fire where she'd dodge, one behind her throws its special) and fall back between them."

@@ -1767,6 +1767,12 @@ How creatures fight: who goes for whom, how fast they run and chase, and how muc
 Combat (Stage 4; the attacks themselves are data in config/combat.json; lengths and speeds at the fight's scale: see fight). Wild creatures attack party animals of other kinds within aggro metres. They go for the witch on the ground as soon as she's in their area or within their attack's range [1], and let her go when she rises to the treetops, or once she's out of their area, out of their range and at least witchLose metres away; then they walk back to their spot. The one she's inviting holds its fire on her (its friends don't). Party animals following her take on what attacks her or her party; parked ones (at a sigil) guard within guard.radius of it. Babies are never attacked, by either side. Marching on a soundsystem, its own area's or marching on after a fall, a creature moves at marchShare of its top (fight) speed: its movement profile's, else fightRun, a legend legendRun [2]. Against a soundsystem or speaker, charging kinds don't charge and swoopers don't swoop: they land and use their ordinary attack [3]. A beaten creature, wild or party, runs off the map at fleeMult times its speed and is gone for good [4]; a party animal is lost for the run. A soundsystem has soundsystemHealth, passive, and is hit within soundsystemRadius metres: sieges should outlast the wave gap. A soundsystem has 500 [5]. Home is its ring of speakers [6], each a soundsystem of speakerHealth, hit within speakerRadius metres, the besiegers going for the nearest standing one; home falls when every one has (its old homeHealth 8000 and homeRadius 9 gone).
 Code: `config/combat.json`, `rules/speakers.ts`
 
+- **`combat.packs.shadow`**: A pack member hiding in its lull (in the trees, underground, under water, in the branches, or scattered) is drawn as a shadow of itself, not left out.
+  1. Ed, 2026-10-29: "'hiding' maybe should look like the animal becoming a shadow (dark and transparent), rather than teleporting"
+  Hiding looks like a shadow [1]: while it's hidden (and can't be hit) it's drawn as its own sprite darkened by shade (0 its own colours, 1 black) at opacity, running round to where it comes back, fading from solid to shadow over fade seconds as it hides and back as it comes out (render/view/creatures.ts).
+- **`combat.packs.shadow.shade`**: How dark: 0 its own colours, 1 black.
+- **`combat.packs.shadow.opacity`**: How opaque the shadow is (0 invisible, 1 solid).
+- **`combat.packs.shadow.fade`**: Seconds to turn from solid to shadow as it hides, and back as it comes out.
 - **`combat.packs`**: Pack kinds fight in combos (the nearest lunges, the ranged fire where she'd dodge, one behind her throws its special) and fall back between them.
   1. Ed, 2026-10-19: docs/backlog/combat.md, build step 1
   2. Ed, 2026-10-20: "Turn pack combat on by default"
@@ -1793,6 +1799,9 @@ Code: `config/combat.json`, `rules/speakers.ts`
 | knob | type | range |
 |---|---|---|
 | `combat.packs.on` | boolean |  |
+| `combat.packs.shadow.shade` | number | 0 to … |
+| `combat.packs.shadow.opacity` | number | 0 to … |
+| `combat.packs.shadow.fade` | number | 0 to … |
 | `combat.aggro` | number | 0 to … |
 | `combat.witchLose` | number | 0 to … |
 | `combat.leaveArea` | number | 0 to … |
