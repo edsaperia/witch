@@ -2113,6 +2113,11 @@
       "minimum": 0,
       "description": "See setPieceFootprint."
     },
+    "stoneKeepClear": {
+      "type": "number",
+      "minimum": 0,
+      "description": "The keep-clear zone round each area's stone (its great stump, or its runestone with the stumps off), in metres from its middle."
+    },
     "treeMarginFromSoundsystem": {
       "type": "number",
       "minimum": 0,
@@ -13568,6 +13573,7 @@
     "setPieceFootprint",
     "soundsystemFootprint",
     "reserveMargin",
+    "stoneKeepClear",
     "treeMarginFromSoundsystem",
     "treeDensity",
     "leafJitter",

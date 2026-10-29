@@ -284,6 +284,9 @@ export interface Tuning {
   setPieceFootprint: number;
   soundsystemFootprint: number;
   reserveMargin: number;
+  /** The keep-clear zone round each area's stone (its great stump or runestone), metres from its middle: no special scenery, finds,
+   *  flasks, legends' clearings, walls, ponds, campfires, picnics or grounds in it (Ed, 2026-10-29; map.clearOfStones). Absent: 40. */
+  stoneKeepClear?: number;
   treeMarginFromSoundsystem: number;
   bushDensity: number;
   /** How much bushes gather in clumps with open floor between (0 even, 1 strongly clumped). */
