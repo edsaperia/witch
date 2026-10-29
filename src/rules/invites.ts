@@ -11,6 +11,7 @@
 // speed instead of having hits not register"): how fast she invites is her firing rate, a tuning value. No drawing here.
 import { type Creature } from "./creatures";
 import { bodyRadius } from "./spacing";
+import { hash2 } from "./random";
 import type { Tuning } from "./tuning";
 
 export interface Letter {
@@ -35,6 +36,8 @@ export interface Letter {
   /** Caught by the Slingshot hat: when it flies on, and its place round the hat. */
   until?: number;
   slot?: number;
+  /** Hops it has made on to another creature (chain, invites.chain). */
+  hops?: number;
   /** Thrown by her hat (the Sentry's), or flung by it (the Slingshot's): it isn't caught again. */
   hat?: boolean;
   /** Caught by a Slingshot hat: where that hat lies. */
@@ -78,6 +81,9 @@ export interface Invites {
   next: number;
   /** The burst's volleys to fire: when, and which way. */
   queue: { at: number; ax: number; az: number }[];
+  /** The bloom: degrees her aim has spread from firing on (invites.bloomPer), and when it was last brought up to date. */
+  bloom?: number;
+  bloomAt?: number;
   /** When the Sentry hat may throw its next 💌. */
   sentryAt?: number;
   /** This frame's events, for the view (stepGame clears them each frame, like combat's). */
@@ -113,6 +119,16 @@ function letter(s: Invites, x: number, z: number, a: number, time: number, t: Tu
   return L;
 }
 
+/** A volley's accuracy at `time` (Ed, 2026-10-29: "For things with rapid rate of fire or shot-gun like clusters, we can also have
+ *  accuracy/spread"): how many degrees either side of her aim its letters may go, inaccuracy plus the bloom (which falls bloomDecay
+ *  degrees a second since the last volley, then grows bloomPer for this one, at most bloomMax). Each letter's own share of it is a
+ *  hash of its number, so the same throws always go the same ways. */
+export function aimOff(s: Invites, time: number, I: Tuning["invites"]): number {
+  const per = I.bloomPer ?? 0, b = Math.max(0, (s.bloom ?? 0) - (I.bloomDecay ?? 0) * Math.max(0, time - (s.bloomAt ?? time)));
+  s.bloom = Math.min(I.bloomMax ?? 0, b + per); s.bloomAt = time;
+  return (I.inaccuracy ?? 0) + b;
+}
+
 /** One step: start or carry on a burst, fly the letters, and land them. `canFire`: on the ground,
  *  off her seat, not knocked out. */
 export function stepInvites(s: Invites, c: InviteControls, witch: { x: number; z: number; facing: number; vx?: number; vz?: number }, canFire: boolean, creatures: Creature[], A: Affection, time: number, dt: number, t: Tuning, leaves?: (x0: number, z0: number, x1: number, z1: number) => boolean, hat?: HatLetters, decoys?: readonly Decoy[]): void {
@@ -134,7 +150,8 @@ export function stepInvites(s: Invites, c: InviteControls, witch: { x: number; z
   while (s.queue.length && time >= s.queue[0].at - 1e-9) {
     const q = s.queue.shift()!;
     const n = Math.max(1, Math.round(I.multiShot)), base = Math.atan2(q.az, q.ax), fan = (I.spread * Math.PI) / 180;
-    for (let k = 0; k < n; k++) { const a = base + (n > 1 ? (k / (n - 1) - 0.5) * fan : 0); letter(s, witch.x + Math.cos(a) * 0.6, witch.z + Math.sin(a) * 0.6, a, time, t); }
+    const off = (aimOff(s, q.at, I) * Math.PI) / 180;
+    for (let k = 0; k < n; k++) { const a = base + (n > 1 ? (k / (n - 1) - 0.5) * fan : 0) + (off > 0 ? (hash2(s.next, 7, 1) * 2 - 1) * off : 0); letter(s, witch.x + Math.cos(a) * 0.6, witch.z + Math.sin(a) * 0.6, a, time, t); }
     s.events.push({ kind: "shot", x: witch.x, z: witch.z, at: time, n: s.next - 1 });
   }
   s.burstLeft = s.queue.length;
@@ -143,12 +160,12 @@ export function stepInvites(s: Invites, c: InviteControls, witch: { x: number; z
   let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
   const sentries = hat?.sentry ?? [], slings = hat?.sling ?? [];
   for (const p of [...s.letters, ...sentries, ...slings]) { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); z0 = Math.min(z0, p.z); z1 = Math.max(z1, p.z); }
-  const pad = Math.max(HARD.range, I.homingRange, ...sentries.map(q => q.range), ...slings.map(q => q.fire)) + 4;
+  const pad = Math.max(HARD.range, I.homingRange, I.chainRange ?? 0, ...sentries.map(q => q.range), ...slings.map(q => q.fire)) + 4;
   const near = x0 <= x1 ? creatures.filter(k => !k.gone && k.x > x0 - pad && k.x < x1 + pad && k.z > z0 - pad && k.z < z1 + pad) : [];
   /** The nearest invitable animal to (x, z) within r. */
-  const nearest = (x: number, z: number, r: number): Creature | null => {
+  const nearest = (x: number, z: number, r: number, skip?: (k: Creature) => boolean): Creature | null => {
     let best: Creature | null = null, bd = r;
-    for (const k of near) { if (!A.invitable(k)) continue; const d = Math.hypot(k.x - x, k.z - z); if (d < bd) { bd = d; best = k; } }
+    for (const k of near) { if (!A.invitable(k) || skip?.(k)) continue; const d = Math.hypot(k.x - x, k.z - z); if (d < bd) { bd = d; best = k; } }
     return best;
   };
   const aimAt = (L: Letter, k: Creature) => { const sp = Math.hypot(L.vx, L.vz) || I.speed, d = Math.hypot(k.x - L.x, k.z - L.z) || 1; L.vx = ((k.x - L.x) / d) * sp; L.vz = ((k.z - L.z) / d) * sp; };
@@ -198,7 +215,7 @@ export function stepInvites(s: Invites, c: InviteControls, witch: { x: number; z
       const ux = L.vx / sp, uz = L.vz / sp;
       let best: Creature | null = null, bd = hr;
       for (const k of near) {
-        if (!A.invitable(k) || L.hit.includes(k.id)) continue;
+        if (!A.invitable(k) || L.hit.includes(k.id) || (L.hops && k.dazed)) continue;
         const dx = k.x - L.x, dz = k.z - L.z, d = Math.hypot(dx, dz);
         if (d < bd && d > 1e-6 && (dx * ux + dz * uz) / d > cone) { bd = d; best = k; }
       }
@@ -217,7 +234,7 @@ export function stepInvites(s: Invites, c: InviteControls, witch: { x: number; z
     // The first creature its path this step passes within reach of: a hit, a block, or nothing (it passes through).
     let first: Creature | null = null, ft = Infinity;
     for (const k of near) {
-      if (L.hit.includes(k.id) || k.swoop?.up) continue; // (a flyer aloft: it passes under, rules/movement.ts stepSwoop)
+      if (L.hit.includes(k.id) || k.swoop?.up || (L.hops && k.dazed)) continue; // (a flyer aloft: it passes under, rules/movement.ts stepSwoop; a hop passes a stunned one by)
       const hitR = L.r + bodyRadius(k), dx = L.x - px, dz = L.z - pz, len2 = dx * dx + dz * dz;
       const f = len2 > 0 ? Math.max(0, Math.min(1, ((k.x - px) * dx + (k.z - pz) * dz) / len2)) : 0;
       if (Math.hypot(px + dx * f - k.x, pz + dz * f - k.z) > hitR || f >= ft) continue;
@@ -234,7 +251,16 @@ export function stepInvites(s: Invites, c: InviteControls, witch: { x: number; z
       if (A.blocksLetters(first)) { s.events.push({ kind: "blocked", x: L.x, z: L.z, at: time, id: first.id, n: L.n, vx: L.vx, vz: L.vz }); return false; }
       love(first, L.x, L.z, L.n);
       L.hit.push(first.id);
-      return false;
+      // Pierce (Ed, 2026-10-29: "pierce, yes"): it flies on through up to `pierce` more, the ones it has landed on passed by.
+      if (L.hit.length > Math.round(I.pierce ?? 0)) {
+        // Chain (Ed, 2026-10-29: "chain"): spent, it hops on from this one to the nearest other invitable creature within
+        // chainRange (never one it has landed on, nor a stunned one), homing hard, up to `chain` hops.
+        const next = (L.hops ?? 0) < Math.round(I.chain ?? 0) ? nearest(first.x, first.z, I.chainRange ?? 0, k => L.hit.includes(k.id) || !!k.dazed) : null;
+        if (!next) return false;
+        Object.assign(L, { hops: (L.hops ?? 0) + 1, x: first.x, z: first.z, flown: 0, range: (I.chainRange ?? 0) * 1.5, home: true }); aimAt(L, next);
+        s.events.push({ kind: "shot", x: L.x, z: L.z, at: time, n: L.n });
+        return true;
+      }
     }
     if (L.flown >= L.range) { s.events.push({ kind: "fizzled", x: L.x, z: L.z, at: time, n: L.n }); return false; }
     return true;

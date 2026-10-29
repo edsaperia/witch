@@ -3650,6 +3650,41 @@
           "type": "number",
           "minimum": 0
         },
+        "inaccuracy": {
+          "type": "number",
+          "minimum": 0,
+          "description": "degrees either side of her aim each 💌 may go (a fixed hash of its number, so the same throws go the same ways); 0, dead straight, and a bag adds its own (config/wardrobe.json invitesAdd)."
+        },
+        "bloomPer": {
+          "type": "number",
+          "minimum": 0,
+          "description": "degrees more inaccuracy each volley while she keeps firing (the bloom); 0, none, and a bag adds its own."
+        },
+        "bloomDecay": {
+          "type": "number",
+          "minimum": 0,
+          "description": "degrees a second the bloom falls back by."
+        },
+        "bloomMax": {
+          "type": "number",
+          "minimum": 0,
+          "description": "the most degrees the bloom can reach."
+        },
+        "pierce": {
+          "type": "number",
+          "minimum": 0,
+          "description": "how many more creatures a 💌 flies on through after the first it lands on, each a hit as any letter's; 0, it stops at the first, and a bag adds its own (config/wardrobe.json invitesAdd)."
+        },
+        "chain": {
+          "type": "number",
+          "minimum": 0,
+          "description": "how many hops a spent 💌 makes on to the nearest other invitable creature within chainRange metres (never one it has landed on, nor a stunned one), each a hit as any letter's; 0, none, and a bag adds its own (config/wardrobe.json invitesAdd)."
+        },
+        "chainRange": {
+          "type": "number",
+          "minimum": 0,
+          "description": "how far (m) a chained 💌 looks for the next creature to hop to."
+        },
         "radius": {
           "type": "number",
           "minimum": 0
@@ -3824,6 +3859,13 @@
         "homingRange",
         "multiShot",
         "spread",
+        "inaccuracy",
+        "bloomPer",
+        "bloomDecay",
+        "bloomMax",
+        "pierce",
+        "chain",
+        "chainRange",
         "radius",
         "amount",
         "hits",

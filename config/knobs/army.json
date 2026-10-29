@@ -106,6 +106,48 @@
     "invites.fireSlow": {
       "what": "her ground speed while firing, times this."
     },
+    "invites.inaccuracy": {
+      "what": "degrees either side of her aim each 💌 may go (a fixed hash of its number, so the same throws go the same ways); 0, dead straight, and a bag adds its own (config/wardrobe.json invitesAdd).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "For things with rapid rate of fire or shot-gun like clusters, we can also have accuracy/spread"
+        }
+      ]
+    },
+    "invites.bloomPer": {
+      "what": "degrees more inaccuracy each volley while she keeps firing (the bloom); 0, none, and a bag adds its own."
+    },
+    "invites.bloomDecay": {
+      "what": "degrees a second the bloom falls back by."
+    },
+    "invites.bloomMax": {
+      "what": "the most degrees the bloom can reach."
+    },
+    "invites.pierce": {
+      "what": "how many more creatures a 💌 flies on through after the first it lands on, each a hit as any letter's; 0, it stops at the first, and a bag adds its own (config/wardrobe.json invitesAdd).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "pierce, yes"
+        }
+      ]
+    },
+    "invites.chain": {
+      "what": "how many hops a spent 💌 makes on to the nearest other invitable creature within chainRange metres (never one it has landed on, nor a stunned one), each a hit as any letter's; 0, none, and a bag adds its own (config/wardrobe.json invitesAdd).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "chain"
+        }
+      ]
+    },
+    "invites.chainRange": {
+      "what": "how far (m) a chained 💌 looks for the next creature to hop to."
+    },
     "invites.linger": {
       "what": "a 💌 that met no one rests where it came down this many seconds, fading over the last lingerFade, at most lingerMax at once (drawn only: it's no hit).",
       "decisions": [

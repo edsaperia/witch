@@ -1248,7 +1248,7 @@ Code: `rules/spells.ts`, `docs/backlog/unlocks.md`, `rules/hat.ts`, `config/broo
   Code: `config/broom-parts.json`
 - **`spells.bag`**: her bag, a config/wardrobe.json bag item's id or empty for none, whose invites multiply invites.cooldown and invites.range while she carries it (rules/bags.ts).
   1. Ed, 2026-10-29: "We should start with a choice of two bags; faster rate of fire but shorter range, and slower rate of fire but longer range"
-  The page sets it from her look (localStorage witch.genome, chosen at the bags station; ?bag=starter, quick or far for one load). The Satchel (the starter) throws at the base rate and reach with a little more homing, the Quick bag (bumbag) faster and shorter, the Far purse (purse) slower and further; none, the tuning's own, and no invitations at the desk till she carries one (rules/kit.ts).
+  The page sets it from her look (localStorage witch.genome, chosen at the bags station; ?bag=starter, quick or far for one load). The Satchel (the starter) throws at the base rate and reach with a little more homing, the Bumbag faster and shorter, the Purse slower and further; none, the tuning's own, and no invitations at the desk till she carries one (rules/kit.ts).
   Code: `config/wardrobe.json`
 - **`spells.speed`**: the Speed broom, her speed times mult for duration seconds, then cooldown seconds to recharge.
 - **`spells.healing`**: The Healing ring heals her while she stands near it, and the Helmet takes the first blow for her.
@@ -1428,6 +1428,16 @@ The 💌 invite [1], replacing the proximity chat when on: on the ground she sho
   letters to fill it, by level (baby, young, adult); it drains drain of a full meter a second when not being hit, from config/states.json's affection.drainDelay seconds after the last [1]. Every letter that lands on an invitable creature counts [2]: how fast she invites is her firing rate (burst, burstGap, cooldown), nothing adaptive. Enraged creatures and legends block letters; scenery never stops them (Ed).
   Code: `config/states.json`
 - **`invites.fireSlow`**: her ground speed while firing, times this.
+- **`invites.inaccuracy`**: degrees either side of her aim each 💌 may go (a fixed hash of its number, so the same throws go the same ways); 0, dead straight, and a bag adds its own (config/wardrobe.json invitesAdd).
+  1. Ed, 2026-10-29: "For things with rapid rate of fire or shot-gun like clusters, we can also have accuracy/spread"
+- **`invites.bloomPer`**: degrees more inaccuracy each volley while she keeps firing (the bloom); 0, none, and a bag adds its own.
+- **`invites.bloomDecay`**: degrees a second the bloom falls back by.
+- **`invites.bloomMax`**: the most degrees the bloom can reach.
+- **`invites.pierce`**: how many more creatures a 💌 flies on through after the first it lands on, each a hit as any letter's; 0, it stops at the first, and a bag adds its own (config/wardrobe.json invitesAdd).
+  1. Ed, 2026-10-29: "pierce, yes"
+- **`invites.chain`**: how many hops a spent 💌 makes on to the nearest other invitable creature within chainRange metres (never one it has landed on, nor a stunned one), each a hit as any letter's; 0, none, and a bag adds its own (config/wardrobe.json invitesAdd).
+  1. Ed, 2026-10-29: "chain"
+- **`invites.chainRange`**: how far (m) a chained 💌 looks for the next creature to hop to.
 - **`invites.linger`**: a 💌 that met no one rests where it came down this many seconds, fading over the last lingerFade, at most lingerMax at once (drawn only: it's no hit).
   1. Ed's playtest, 2026-10-06: "invitations should sit on the ground for a little while before they fade away"
 - **`invites.spin`**: How fast a 💌 spins in flight.
@@ -1461,6 +1471,13 @@ The 💌 invite [1], replacing the proximity chat when on: on the ground she sho
 | `invites.homingRange` | number | 0 to … |
 | `invites.multiShot` | number | 0 to … |
 | `invites.spread` | number | 0 to … |
+| `invites.inaccuracy` | number | 0 to … |
+| `invites.bloomPer` | number | 0 to … |
+| `invites.bloomDecay` | number | 0 to … |
+| `invites.bloomMax` | number | 0 to … |
+| `invites.pierce` | number | 0 to … |
+| `invites.chain` | number | 0 to … |
+| `invites.chainRange` | number | 0 to … |
 | `invites.radius` | number | 0 to … |
 | `invites.amount` | number | 0 to … |
 | `invites.hits` | array of number |  |

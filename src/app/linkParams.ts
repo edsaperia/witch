@@ -249,7 +249,7 @@ export function tuningFromLink(params: URLSearchParams) {
   // Her broom's parts (app/broomSave.ts; the Workshop, Ed 2026-10-23): those fitted at the bay on this browser, or
   // ?parts=missile,ladder,nozzles for one load (any parts, found or not: for testing). Her broom's spell is the set they complete.
   { const P = params.get("parts"); tuning.spells = { ...tuning.spells, parts: P !== null ? P : fittedParts(loadBroom().fitted).map(p => p.id).join(",") }; }
-  // Her bag (rules/bags.ts; Ed, 2026-10-29: a Quick bag and a Far bag to choose from): the one her saved look wears (localStorage
+  // Her bag (rules/bags.ts; Ed, 2026-10-29: a Bumbag and a Far bag to choose from): the one her saved look wears (localStorage
   // witch.genome, chosen at the bags station), or ?bag=starter, ?bag=quick, ?bag=far (or a bag item's id; ?bag=none for none) for one load.
   { const B = params.get("bag"), ids: Record<string, string> = { starter: "satchel", quick: "bumbag", far: "purse", none: "" };
     let look: Record<string, unknown> | null = null; try { look = JSON.parse(localStorage.getItem("witch.genome") ?? "null"); } catch { /* storage blocked or spoilt: none */ }
