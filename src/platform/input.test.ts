@@ -9,16 +9,16 @@ const none = Array(17).fill(false), still = [0, 0, 0, 0];
 const play = (...names: string[]) => padControls(pressed(...names), still, none, false, false);
 
 describe("padControls in play (Ed's layout, 2026-10-28)", () => {
-  it("square rises or lands; cross uses (puts down, picks up, held: a run); circle dodges; triangle the hat; L3 the boost", () => {
-    expect(play("square").toggleMode).toBe(true);
-    expect([play("cross").sigil, play("cross").sigilHeld]).toEqual([true, true]);
+  it("cross rises or lands; square uses (puts down, picks up, held: a run) (Ed, 2026-10-29: \"swap x and square\"); circle dodges; triangle the hat; L3 the boost", () => {
+    expect(play("cross").toggleMode).toBe(true);
+    expect([play("square").sigil, play("square").sigilHeld]).toEqual([true, true]);
     expect(play("circle").dash).toBe(true);
     expect(play("triangle").hat).toBe(true);
     expect(play("L3").spell).toBe(true);
   });
-  it("cross never rises; square never uses (never opens a station or puts down a sigil)", () => {
-    expect(play("cross").toggleMode).toBe(false);
-    expect([play("square").sigil, play("square").sigilHeld]).toEqual([false, false]);
+  it("square never rises; cross never uses (never opens a station or puts down a sigil)", () => {
+    expect(play("square").toggleMode).toBe(false);
+    expect([play("cross").sigil, play("cross").sigilHeld]).toEqual([false, false]);
   });
   it("R1 cycles forward, L1 back; R2 invites and L2 dodges (Ed, 2026-10-29); the d-pad zooms (up out, down in: Ed, 2026-10-29) and no longer moves her; Share debug", () => {
     expect([play("R1").cycle, play("R1").cycleBack]).toEqual([true, false]);
@@ -36,8 +36,8 @@ describe("padControls in play (Ed's layout, 2026-10-28)", () => {
     expect(padControls(none, [0, 0, 0, 1], none, false, false).aim).toEqual({ x: 0, z: 20 });
   });
   it("a button held from last frame isn't pressed again; one taken by something else (the start) does nothing", () => {
-    expect(padControls(pressed("square"), still, pressed("square"), false, false).toggleMode).toBe(false);
-    expect(padControls(pressed("square"), still, none, true, false).toggleMode).toBe(false);
+    expect(padControls(pressed("cross"), still, pressed("cross"), false, false).toggleMode).toBe(false);
+    expect(padControls(pressed("cross"), still, none, true, false).toggleMode).toBe(false);
   });
 });
 

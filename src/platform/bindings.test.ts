@@ -13,10 +13,10 @@ function memory(): Storage & { data: Map<string, string> } {
 
 describe("the default bindings", () => {
   const B = new Bindings(null);
-  it("are Ed's pad layout (2026-10-28, with his swap of cross and square)", () => {
+  it("are Ed's pad layout (2026-10-28; cross and square swapped back in play, 2026-10-29: \"square is use and place, x is takeoff/land\")", () => {
     const pad = (id: Parameters<Bindings["pad"]>[0]) => B.pad(id);
-    expect(pad("game.rise")).toEqual(["square"]);
-    expect(pad("game.use")).toEqual(["cross"]);
+    expect(pad("game.rise")).toEqual(["cross"]);
+    expect(pad("game.use")).toEqual(["square"]);
     expect(pad("game.dodge")).toEqual(["L2", "circle"]); // (Ed, 2026-10-29: "Left trigger needs to be dodge")
     expect(pad("game.invite")).toEqual(["R2"]);
     expect([pad("game.cycleNext"), pad("game.cyclePrev")]).toEqual([["R1"], ["L1"]]);
@@ -28,16 +28,16 @@ describe("the default bindings", () => {
     expect([pad("menu.choose"), pad("menu.back"), pad("menu.tabPrev"), pad("menu.tabNext")]).toEqual([["cross"], ["circle"], ["L1"], ["R1"]]);
     expect(pad("menu.up")).toEqual(["up", "lsUp"]);
   });
-  it("cross never rises and square never uses (opens a station, puts down a sigil) or chooses, in any context", () => {
+  it("square never rises or chooses, and cross never uses (opens a station, puts down a sigil), in any context", () => {
     for (const a of DEFAULTS) {
-      if (a.pad.includes("cross")) expect(["game.use", "menu.choose"], a.id).toContain(a.id);
-      if (a.pad.includes("square")) expect(a.id).toBe("game.rise");
+      if (a.pad.includes("cross")) expect(["game.rise", "menu.choose"], a.id).toContain(a.id);
+      if (a.pad.includes("square")) expect(a.id).toBe("game.use");
     }
     // and as read
     const b = Array(17).fill(false); b[PAD_BUTTONS.cross] = true;
-    expect(padControls(b, [0, 0, 0, 0], [], false, false, [], B).toggleMode).toBe(false);
+    expect(padControls(b, [0, 0, 0, 0], [], false, false, [], B).sigil).toBe(false);
     const q = Array(17).fill(false); q[PAD_BUTTONS.square] = true;
-    expect(padControls(q, [0, 0, 0, 0], [], false, false, [], B).sigil).toBe(false);
+    expect(padControls(q, [0, 0, 0, 0], [], false, false, [], B).toggleMode).toBe(false);
   });
   it("leave the keyboard and mouse as they were", () => {
     expect(B.keys("game.rise")).toEqual(["Space"]);
@@ -61,7 +61,7 @@ describe("a player's own bindings", () => {
     let told = 0; B.onChange(() => told++);
     expect(B.set("game.rise", { keys: ["KeyF"] })).toEqual([]);
     expect(B.keys("game.rise")).toEqual(["KeyF"]);
-    expect(B.pad("game.rise")).toEqual(["square"]); // (what wasn't set kept)
+    expect(B.pad("game.rise")).toEqual(["cross"]); // (what wasn't set kept)
     expect(told).toBe(1);
     expect(JSON.parse(s.data.get("witch.bindings")!)).toEqual({ "game.rise": { keys: ["KeyF"] } }); // (only what differs)
     expect(new Bindings(s).keys("game.rise")).toEqual(["KeyF"]);
@@ -91,13 +91,13 @@ describe("a player's own bindings", () => {
   });
   it("report conflicts: two actions on one input in one context (global counts in both); a game and a menu action may share", () => {
     const B = new Bindings(null);
-    expect(B.set("game.dodge", { pad: ["cross"] })).toEqual([{ context: "game", input: "pad:cross", actions: ["game.use", "game.dodge"] }]);
+    expect(B.set("game.dodge", { pad: ["cross"] })).toEqual([{ context: "game", input: "pad:cross", actions: ["game.rise", "game.dodge"] }]);
     B.resetAll();
     expect(B.set("menu.back", { keys: ["Escape"] })).toEqual([{ context: "menu", input: "key:Escape", actions: ["global.pause", "menu.back"] }]);
     B.resetAll();
     expect(B.set("game.rise", { mouse: ["right"] })).toEqual([{ context: "game", input: "mouse:right", actions: ["game.rise", "game.dodge"] }]);
     B.resetAll();
-    expect(B.set("menu.choose", { pad: ["cross"] })).toEqual([]); // (cross: use in play, choose in a menu)
+    expect(B.set("menu.choose", { pad: ["cross"] })).toEqual([]); // (cross: rise in play, choose in a menu)
   });
   it("refuse unknown actions and inputs; a spoilt store reads as the defaults", () => {
     const B = new Bindings(null);

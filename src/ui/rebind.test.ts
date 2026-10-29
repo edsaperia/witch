@@ -30,7 +30,7 @@ describe("clashes", () => {
     expect(clashes(B, "game.boost", "key:KeyY")).toEqual([]);
     expect(clashes(B, "game.boost", "key:Escape")).toEqual(["global.pause"]); // (global: both)
     expect(clashes(B, "menu.back", "key:Space")).toEqual(["menu.choose"]); // (not Rise, a game action)
-    expect(clashes(B, "game.hat", "pad:cross")).toEqual(["game.use"]);
+    expect(clashes(B, "game.hat", "pad:square")).toEqual(["game.use"]);
   });
   it("swap: each other action takes the old input in its place; use both: they share; saved", () => {
     const s = store(), B = new Bindings(s);
@@ -38,11 +38,11 @@ describe("clashes", () => {
     expect(B.get("game.boost").keys).toEqual(["KeyE"]);
     expect(B.get("game.use").keys).toEqual(["KeyR"]);
     expect(B.conflicts()).toEqual([]);
-    assign(B, "game.hat", "pad", 0, "pad:cross", "both"); // Hat's △ becomes ✕, Use keeps ✕ too
-    expect(B.get("game.hat").pad).toEqual(["cross"]);
-    expect(B.get("game.use").pad).toEqual(["cross"]);
-    expect(B.conflicts().map(c => c.input)).toEqual(["pad:cross"]);
-    expect(JSON.parse(s.m.get("witch.bindings")!)).toMatchObject({ "game.boost": { keys: ["KeyE"] }, "game.use": { keys: ["KeyR"] }, "game.hat": { pad: ["cross"] } });
+    assign(B, "game.hat", "pad", 0, "pad:square", "both"); // Hat's △ becomes □, Use keeps □ too
+    expect(B.get("game.hat").pad).toEqual(["square"]);
+    expect(B.get("game.use").pad).toEqual(["square"]);
+    expect(B.conflicts().map(c => c.input)).toEqual(["pad:square"]);
+    expect(JSON.parse(s.m.get("witch.bindings")!)).toMatchObject({ "game.boost": { keys: ["KeyE"] }, "game.use": { keys: ["KeyR"] }, "game.hat": { pad: ["square"] } });
     expect(new Bindings(s).get("game.use").keys).toEqual(["KeyR"]); // (read back)
   });
   it("swap into an empty slot: the other loses the input", () => {
