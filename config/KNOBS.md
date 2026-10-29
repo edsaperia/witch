@@ -1421,9 +1421,10 @@ The 💌 invite [1], replacing the proximity chat when on: on the ground she sho
 - **`invites.spin`**: How fast a 💌 spins in flight.
   1. Ed, 2026-10-06: "the envelopes should spin like a frisbee"
   a 💌 in flight lies flat and turns about the upright this many times a second (drawn only); when it lands it stops and lies flat.
-- **`invites.orbit`**: the 💌 ring circles a creature at scale times its body radius (movement.json bodies) plus gap metres, at least min, and at least height times its drawn height (to its top as drawn) plus gap, so it rings the creature you see at any size; wider still when it holds many.
+- **`invites.orbit`**: the 💌 ring circles a creature at scale times its body radius (movement.json bodies) plus gap metres, at least min, and at least height times its drawn height (to its top as drawn) plus gap, so it rings the creature you see at any size (a soundsystem's 💥 ring sits 1.5 gaps outside its radius); wider still when it holds many.
   1. Ed, 2026-10-28: "the orbits are smaller than the size of the creatures; their size should adjust depending on how large the creatures are"
   2. Ed's playtest, 2026-10-06: "Invitation orbits are too tight around the creature"
+  3. Ed's playtest, 2026-10-29: "damage orbits are too wide, bring them in by around 30%" (scale 2 to 1.4, gap 1 to 0.7, min 2 to 1.4, height 0.9 to 0.63 (all x0.7); the soundsystem's 💥 ring 1.5 to 1.05 m outside it)
 - **`invites.hard`**: the hard homing of the 💌s her Sentry and Slingshot hats throw: homing degrees a second, cone degrees either side it looks in, range metres it looks out to (was the legend buffs' charm, 420, 80 and 18).
 
 | knob | type | range |

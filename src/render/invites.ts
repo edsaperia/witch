@@ -439,7 +439,7 @@ export class InviteView {
       const nb = Math.max(1, Math.ceil((10 * h.hp) / h.max)), els = this.booms.get(key) ?? [];
       while (els.length < 10) { const im = img("💥", n); im.style.filter = "drop-shadow(0 0 2px rgba(255,170,60,.8))"; els.push(im); }
       this.booms.set(key, els);
-      const r = h.radius + 1.5, y = h.radius > 5 ? 6 : 4;
+      const r = h.radius + t.invites.orbit.gap * 1.5, y = h.radius > 5 ? 6 : 4; // (just outside it, by the orbits' gap)
       els.forEach((im, i) => {
         if (i >= nb) { im.style.display = "none"; return; }
         const a = time * 0.4 + (i / 10) * Math.PI * 2, x = h.x + Math.cos(a) * r, z = h.z + Math.sin(a) * r;
