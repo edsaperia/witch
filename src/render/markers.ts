@@ -12,8 +12,8 @@ import { AREA_TYPES, type ForestMap } from "../rules/map";
 import { dealRunestones, type Runestone } from "../rules/runestones";
 import type { Tuning } from "../rules/tuning";
 import { atlasFromPixels, type Atlas } from "./atlas";
-import { runJob, type ArtJob, type ArtResult, type AtlasPixels, type MakeCanvas, type StumpArt, type StumpSpec } from "./artBuild";
-import { islandBlend } from "../rules/lakeLooks";
+import { runJob, type ArtJob, type ArtResult, type AtlasPixels, type MakeCanvas, type StumpSpec } from "./artBuild";
+import { biomeKey } from "../rules/lakeLooks";
 import { islandArtSeed } from "./artCache";
 import { hash2 } from "../rules/random";
 import type { StoneSpec } from "./islandArt";
@@ -36,18 +36,26 @@ export function runestoneOf(map: ForestMap, cx: number, cy: number, t: Tuning): 
 }
 
 /** A map's runestones drawn and packed (MarkerArt.stones), for its MarkerArt. */
-export interface MarkerStones { index: Map<string, number>; stoneOf: Map<string, string>; heights: Map<string, number>; pixels: AtlasPixels; /** In stump mode: each baked stump's ground point and cut, and each area's mirroring. */ stumps?: { art: StumpArt[]; flip: Map<string, boolean> } }
+export interface MarkerStones { index: Map<string, number>; stoneOf: Map<string, string>; heights: Map<string, number>; pixels: AtlasPixels; /** In stump mode: each area's stump spec and mirroring (baked as it's wanted: AssetLibrary.stumpArt). */ stumps?: StumpDeal }
 
 /** The great stumps (Ed, 2026-10-29: "we could make them all treestumps"; runeMarkers.stump): every area's centrepiece a giant
- *  tree's stump in place of its runestone, its species the island's biome's (art/props/stumps.js stumpSpecies), `variants` of it
- *  baked, each from its own angle, dealt to the areas (no two neighbours in the deal's order alike) and mirrored at random. */
-export function stumpDeal(t: Tuning, map: ForestMap): { stumps: StumpSpec[]; of: Map<string, number>; flip: Map<string, boolean> } {
+ *  tree's stump in place of its runestone, each area type's its own (Ed: "a different stump per area type ... they just have to fit
+ *  in with the area's look"): its main tree's form and bark in the island's biome, its ground's moss and earth (art/props/stumps.js
+ *  stumpForArea), `variants` of each type dealt round its areas, each seen from its own angle and mirrored at random. Baked as each is
+ *  wanted (AssetLibrary.stumpArt), not with the island. */
+export interface StumpDeal { specs: Map<string, StumpSpec>; flip: Map<string, boolean> }
+export function stumpDeal(t: Tuning, map: ForestMap): StumpDeal {
   const S = t.runeMarkers.stump!, island = t.map?.island ?? "home", world = t.map?.world ?? 0, base = islandArtSeed(world, island);
-  const species = Art.stumpSpecies(islandBlend(island, world).a) as string, n = Math.max(1, Math.round(S.variants));
-  const stumps = Array.from({ length: n }, (_, i) => ({ species, seed: base * 7 + i * 101, yaw: hash2(i, base, 77) * Math.PI * 2 }));
-  const order = [...map.cells].sort((a, b) => hash2(a[0], a[1], base) - hash2(b[0], b[1], base)), of = new Map<string, number>(), flip = new Map<string, boolean>();
-  order.forEach(([cx, cy], i) => { of.set(`${cx},${cy}`, i % n); flip.set(`${cx},${cy}`, hash2(cx, cy, base + 3) < 0.5); });
-  return { stumps, of, flip };
+  const biome = biomeKey(island, world, t.biomeLooks), n = Math.max(1, Math.round(S.variants)), specs = new Map<string, StumpSpec>(), flip = new Map<string, boolean>(), seen = new Map<number, number>();
+  const AREA = Art.AREA_BY_ID as Record<string, unknown>;
+  const order = [...map.cells].sort((a, b) => hash2(a[0], a[1], base) - hash2(b[0], b[1], base));
+  for (const [cx, cy] of order) {
+    const type = map.typeOf(cx, cy), area = AREA_TYPES[type].id, k = seen.get(type) ?? 0; seen.set(type, k + 1);
+    const v = k % n, seed = base * 7 + type * 131 + v * 101;
+    specs.set(`${cx},${cy}`, { species: Art.stumpForArea(AREA[area], biome) as string, seed, yaw: hash2(type, v, base + 77) * Math.PI * 2, area, ...(biome ? { biome } : {}) });
+    flip.set(`${cx},${cy}`, hash2(cx, cy, base + 3) < 0.5);
+  }
+  return { specs, flip };
 }
 
 export class MarkerArt {
@@ -63,7 +71,7 @@ export class MarkerArt {
   /** The scale the stones are baked at (runeMarkers.scale): drawn at runeMarkers.scale / this, so 1 (docs/STYLE.md §1). */
   readonly scale: number;
   /** Stump mode (runeMarkers.stump.on): each baked stump's ground point and cut, and each area's mirroring; null for stones. */
-  readonly stumps: { art: StumpArt[]; flip: Map<string, boolean> } | null;
+  readonly stumps: StumpDeal | null;
 
   constructor(style: Style, t: Tuning, map: ForestMap, made: MarkerStones = runSync(MarkerArt.stones(style, t, map))) {
     this.scale = t.runeMarkers.scale;
@@ -76,12 +84,7 @@ export class MarkerArt {
   /** The art job for the stones this map stands (one an area: its species' sigil on its form), and where each area's is in it. */
   static stoneJob(style: Style, t: Tuning, map: ForestMap): { job: ArtJob; index: Map<string, number>; stoneOf: Map<string, string>; keys: string[] } {
     const R = t.runeMarkers, index = new Map<string, number>(), stoneOf = new Map<string, string>(), stones: StoneSpec[] = [], keys: string[] = [];
-    if (R.stump?.on) { // the great stumps: one frame a variant
-      const d = stumpDeal(t, map);
-      d.stumps.forEach((_, i) => { index.set(`stump:${i}`, i); keys.push(`stump:${i}`); });
-      for (const [k, i] of d.of) stoneOf.set(k, `stump:${i}`);
-      return { job: { kind: "stumps", id: d.stumps.map(s => `${s.species}:${s.seed}:${s.yaw.toFixed(3)}`).join(";"), style, stumps: d.stumps }, index, stoneOf, keys };
-    }
+    if (R.stump?.on) return { job: { kind: "stumps", id: "none", style, stumps: [] }, index, stoneOf, keys }; // (the great stumps: baked as each is wanted)
     const levels = [R.dormant.glow, ...Array.from({ length: MARKER_LEVELS - 1 }, (_, i) => R.awake.glow[0] + ((R.awake.glow[1] - R.awake.glow[0]) * i) / (MARKER_LEVELS - 2))];
     // Rank sigils on (render/leash/ranks.ts): each stone baked in the four ranks' colours and unlit (EMPTY_STONE), the view picking
     // by its area's top rank; else once, in its sigil's colour.
@@ -102,7 +105,7 @@ export class MarkerArt {
     const { job, index, stoneOf, keys } = MarkerArt.stoneJob(style, t, map), heights = new Map<string, number>();
     yield "stones";
     const made = yield* awaitOr(() => art ? art(job) : Promise.reject(new Error("here")), () => runJob(job, Art.defaultCanvas as MakeCanvas));
-    if (made.stumps) return { index, stoneOf, heights, pixels: made.px, stumps: { art: made.stumps, flip: stumpDeal(t, map).flip } };
+    if (made.stumps) return { index, stoneOf, heights, pixels: made.px, stumps: stumpDeal(t, map) };
     keys.forEach((k, i) => heights.set(k, made.stones![i]));
     return { index, stoneOf, heights, pixels: made.px };
   }
@@ -110,14 +113,14 @@ export class MarkerArt {
   dispose(): void { this.atlas.albedo.dispose(); this.atlas.normal.dispose(); }
   /** The frame for an area's stone (by its cell) at a level (0 dormant, 1.. awake), in its colour `variant` (rank sigils: its area's
    *  top rank, or EMPTY_STONE; render/leash/ranks.ts) where baked so. */
-  frame(cell: readonly [number, number], level: number, variant = 0): number { if (this.stumps) return this.index.get(this.stoneOf.get(`${cell[0]},${cell[1]}`) ?? "") ?? 0; return (this.index.get(this.stoneOf.get(`${cell[0]},${cell[1]}`) ?? "") ?? 0) + (this.ranked ? variant * MARKER_LEVELS : 0) + Math.max(0, Math.min(MARKER_LEVELS - 1, level)); }
+  frame(cell: readonly [number, number], level: number, variant = 0): number { return (this.index.get(this.stoneOf.get(`${cell[0]},${cell[1]}`) ?? "") ?? 0) + (this.ranked ? variant * MARKER_LEVELS : 0) + Math.max(0, Math.min(MARKER_LEVELS - 1, level)); }
   /** How many art pixels an area's stone stands (its frame's drawn rows). */
   height(cell: readonly [number, number]): number { return this.heights.get(this.stoneOf.get(`${cell[0]},${cell[1]}`) ?? "") ?? 0; }
-  /** Stump mode: an area's stump (its baked art) and whether it's mirrored; null for stones. */
-  stump(cell: readonly [number, number]): { art: StumpArt; flip: boolean; frame: number } | null {
+  /** Stump mode: an area's stump spec and whether it's mirrored; null for stones (or an area dealt none). */
+  stump(cell: readonly [number, number]): { spec: StumpSpec; flip: boolean } | null {
     if (!this.stumps) return null;
-    const k = `${cell[0]},${cell[1]}`, frame = this.index.get(this.stoneOf.get(k) ?? "") ?? 0;
-    return { art: this.stumps.art[frame], flip: this.stumps.flip.get(k) ?? false, frame };
+    const k = `${cell[0]},${cell[1]}`, spec = this.stumps.specs.get(k);
+    return spec ? { spec, flip: this.stumps.flip.get(k) ?? false } : null;
   }
 }
 

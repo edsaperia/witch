@@ -21,7 +21,7 @@ import { speakerBoot } from "../../rules/game";
 import type { ForestLight, View } from "../view";
 import { inView, overBulge } from "./culling";
 import { mark } from "./pops";
-import { ringStoneKey } from "../artBuild";
+import { ringStoneKey, stumpId } from "../artBuild";
 import type { TrunkShadow } from "../trunkShadows";
 import type { RingSpeaker } from "../lasers";
 import { STONE_FACE } from "../leash/stones";
@@ -39,6 +39,8 @@ const MOTES: Mote[] = [], MOTE_POOL: Mote[] = [];
 let moteN = 0;
 // Rank sigils' stones (render/leash/ranks.ts areaTopRanks): each area's top rank this frame, and the colours by it (the ranks', unlit).
 const TOP = new Map<string, number>(), RANK_RGB: THREE.Vector3[] = [];
+/** The great stumps' instances this frame, by their baked stump (reused: render/view/home.ts drawMarkers). */
+const STUMP_LISTS = new Map<string, SpriteInstance[]>(), NONE: SpriteInstance[] = [];
 function mote(x: number, y: number, z: number, colour: THREE.Vector3, alpha: number): void {
   let m = MOTE_POOL[moteN];
   if (!m) MOTE_POOL[moteN] = m = { x, y, z, colour, alpha };
@@ -70,12 +72,14 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   const variant = (cell: readonly [number, number]) => ranked ? stoneRank(TOP, cell) : 0;
   const stoneCol = (cell: readonly [number, number]): THREE.Vector3 => ranked ? RANK_RGB[variant(cell)] : v.markerArt.colour.get(AREA_TYPES[g.map.typeOf(cell[0], cell[1])].creature)!;
   const col = (cell: readonly [number, number]) => { const c = stoneCol(cell); return c ? [c.x, c.y, c.z] : [0.8, 0.7, 1]; };
-  const stumps = v.markerArt.stumps ? v.island.stumpBatch : null; // (the great stumps: drawn below, every area's, in place of the stones)
+  const stumps = !!v.markerArt.stumps; // (the great stumps: drawn below, every area's, in place of the stones)
+  // (an area's stump as baked so far: its art comes as it's wanted, AssetLibrary.stumpArt; urgent: on screen soon)
+  const stumpOf = (cell: readonly [number, number], urgent = false) => { const s = v.markerArt.stump(cell); if (!s) return null; const a = v.assets.stumpArt(s.spec, urgent); return a ? { spec: s.spec, flip: s.flip, atlas: a.atlas, art: a.art } : null; };
   // (a stump is a floor card standing at its near edge, render/sprites.ts asFloor: what lights its picture of the cut is a light where
   // that picture is, `toward` m nearer than its middle and `rise` m up the card)
   const camF = v.camera.getWorldDirection(v.v3b), camU = v.v3c.set(0, 1, 0).applyQuaternion(v.camera.quaternion), UP = SPRITE_UNIFORMS.uUp.value, rise = UP.dot(camU) / Math.max(0.2, -camF.y);
-  const cardOf = (cell: readonly [number, number]) => { const s = v.markerArt.stump(cell); if (!s) return null; const fr = v.markerArt.atlas.frames[s.frame], h = (fr.h - s.art.top.y) * v.mpp; return { toward: Math.max(0, fr.h - s.art.origin.y) * v.mpp * rise + UP.z * h, up: UP.y * h }; };
-  const topOf = (cell: readonly [number, number]) => { const s = v.markerArt.stump(cell); return s ? s.art.height : v.markerArt.height(cell) * v.mpp * scale; }; // (m: the stone's drawn height, or the stump's cut)
+  const cardOf = (cell: readonly [number, number]) => { const s = stumpOf(cell); if (!s) return null; const fr = s.atlas.frames[0], h = (fr.h - s.art.top.y) * v.mpp; return { toward: Math.max(0, fr.h - s.art.origin.y) * v.mpp * rise + UP.z * h, up: UP.y * h }; };
+  const topOf = (cell: readonly [number, number]) => stumps ? stumpOf(cell)?.art.height ?? 1 : v.markerArt.height(cell) * v.mpp * scale; // (m: the stone's drawn height, or the stump's cut)
   const stone = (x: number, z: number, cell: readonly [number, number], level: number, y = 0) => {
     if (stumps) return true;
     const frame = v.markerArt.atlas.frames[v.markerArt.frame(cell, level, variant(cell))];
@@ -154,17 +158,22 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   near.sort((p, q) => p.d - q.d);
   for (const n of near.slice(0, 8)) lights.push(n.l);
   if (stumps) { // every area's stump (but home's), partified or not: each a floor anchored by its ground point, under everything standing
-    const Rt = SPRITE_UNIFORMS.uRight.value, out: SpriteInstance[] = [], [hx, hy] = g.map.centreCell;
+    const Rt = SPRITE_UNIFORMS.uRight.value, [hx, hy] = g.map.centreCell, lists = STUMP_LISTS;
+    for (const l of lists.values()) l.length = 0;
     if (!g.map.zoo?.layout) for (const [cx, cy] of g.map.cells) {
       if ((cx === hx && cy === hy) || !g.map.playable(cx, cy)) continue;
-      const s = v.markerArt.stump([cx, cy]), q = g.map.soundsystemSpot(cx, cy);
-      if (!s || Math.hypot(q.x - w.x, q.z - w.z) > range) continue;
-      const frame = v.markerArt.atlas.frames[s.frame], dx = (s.art.origin.x - frame.w / 2) * v.mpp * (s.flip ? -1 : 1), toward = Math.max(0, frame.h - s.art.origin.y) * v.mpp * rise;
+      const q = g.map.soundsystemSpot(cx, cy), d = Math.hypot(q.x - w.x, q.z - w.z);
+      if (d > range) continue;
+      const s = stumpOf([cx, cy], d < range * 0.6);
+      if (!s) continue;
+      const frame = s.atlas.frames[0], dx = (s.art.origin.x - frame.w / 2) * v.mpp * (s.flip ? -1 : 1), toward = Math.max(0, frame.h - s.art.origin.y) * v.mpp * rise;
       const at = { x: q.x - Rt.x * dx, y: 0, z: q.z - Rt.z * dx + toward };
       if (!inView(v, at.x, at.z, frame.w * v.mpp, frame.h * v.mpp, 6)) continue;
-      out.push({ ...at, frame, flip: s.flip, fresh: mark(v, "marker", q.x, q.z, frame.h * v.mpp) });
+      const id = stumpId(s.spec); let l = lists.get(id); if (!l) lists.set(id, (l = []));
+      v.island.stumpBatch(id, s.atlas, v.mpp);
+      l.push({ ...at, frame, flip: s.flip, fresh: mark(v, "marker", q.x, q.z, frame.h * v.mpp) });
     }
-    stumps.set(out);
+    for (const [id, b] of v.island.stumpBatches) b.set(lists.get(id) ?? NONE);
   }
   v.markerBatch.set(inst);
   if (casts || v.trunkShadowBatches.has("markers")) { // (a batch of their own: their atlas)

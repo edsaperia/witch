@@ -32,6 +32,7 @@
 //   node art/preview.mjs treeheights fern-forest,garden art/previews/tree-heights.png [scale]
 //   node art/preview.mjs lights all art/previews/light-sources.png [scale]
 //   node art/preview.mjs stumps all|<species> art/previews/stumps.png [scale]   (the great stumps, art/props/stumps.js: each species a row of PER (default 4) seeds, each from its own angle, the witch for scale; NIGHT=1 lit only by its sigils above it, enemy reds and friend blues)
+//   node art/preview.mjs stumpareas all|<areas> art/previews/stump-areas.png [scale]   (each area type's great stump on its own ground: its main tree's form and bark, its ground's moss and earth; BIOME=<key> as an island in that biome; PER=n to a row)
 //   node art/preview.mjs runestones all|<species> art/previews/runestones.png [scale]   (each species' rune stone with its sigil in its neon; NIGHT=1; PER=n to a row)
 //   node art/preview.mjs runestoneforms <species> <png> [scale]   (today's stone, its 20 seeded forms, and four of them beside their mirror images)
 //   node art/preview.mjs party wolf,fox,owl art/previews/party.png [scale]
@@ -487,6 +488,16 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
   } else if (what === "rim") { // the legend clearings' rim kit: each area (all, or listed) a row of its 6 rim pieces, the witch closing each row
     const ids = list === "all" ? G.AREAS.map(a => a.id) : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline);
     for (const id of ids) rows.push([...G.areaAssets(id, st).rim.map(b => b.sp), wit]);
+  } else if (what === "stumpareas") { // each area type's great stump (art/props/stumps.js stumpForArea) on a patch of its own floor, PER (default 6) to a row
+    const ids = list === "all" ? G.AREAS.map(a => a.id) : list.split(","), per = window.PER || 6, bst = window.BIOME ? { ...st, biome: window.BIOME } : st, items = [];
+    for (const id of ids) {
+      const def = G.AREA_BY_ID[id], form = G.stumpForArea(def, bst.biome), p = G.stumpPiece(form, { seed: 1 }, def, bst), b = G.bake(p.sp, p.colours, bst, "none");
+      const tile = G.areaAssets(id, bst).floor.sp, w = b.w + 16, h = b.h + 16, A = document.createElement("canvas"), N = document.createElement("canvas"); A.width = N.width = w; A.height = N.height = h;
+      const a = A.getContext("2d"), n = N.getContext("2d"); for (let y = 0; y < h; y += tile.h) for (let x = 0; x < w; x += tile.w) { a.drawImage(tile.A, x, y); n.drawImage(tile.N, x, y); }
+      a.drawImage(b.A, 8, 8); n.drawImage(b.N, 8, 8); a.fillStyle = "#fff"; a.font = "10px monospace"; a.fillText(`${id} (${form})`, 4, h - 4);
+      items.push({ A, N, w, h });
+    }
+    for (let i = 0; i < items.length; i += per) rows.push(items.slice(i, i + per));
   } else if (what === "props") { // the prop generator (art/props/): each kind (all, or listed), a row of variants (PER, default 8) from seeds 0.., the witch closing each row; AREA=moor for its grass
     const kinds = list === "all" ? G.PROP_KINDS : list.split(","), per = window.PER || 8, wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), def = G.AREA_BY_ID[window.AREA || "moor"];
     for (const kind of kinds) rows.push([...[...Array(per).keys()].map(seed => { const p = G.propPiece(kind, { seed, ...(window.BOG ? { bog: true } : {}) }, def, st); return G.bake(p.sp, p.colours, st, "none"); }), wit]);
