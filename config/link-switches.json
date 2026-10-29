@@ -208,6 +208,18 @@
    ]
   },
   {
+   "name": "snap",
+   "values": [
+    "0"
+   ],
+   "does": "The picture's pixels as the pixel size has them, not snapped to whole device pixels (pixels.snap), to compare.",
+   "group": "compare",
+   "since": "2026-10-29",
+   "readIn": [
+    "src/app/linkParams.ts"
+   ]
+  },
+  {
    "name": "border",
    "values": [
     "<twinkle>,<swapRate>,<swapBeat>"
