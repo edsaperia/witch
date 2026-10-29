@@ -155,8 +155,8 @@ void main() {
   // pixel along it; tipD, metres behind the front (on its own link; further back, more).
   float tipD = uGrow.y > 0.5 ? (uGrow.x - vLink) * vLen - (floor(vS / uMpp) + 0.5) * uMpp : 1e6;
   if (tipD < 0.0 || (uGrow.y > 0.5 && along < uGrow.z)) discard; // (none past its front; none on the boot ring itself: that is the ring's own line)
-  // The route in the rainbow (Ed, 2026-10-29): its hue running along it, a turn of the wheel every RAINBOW_M metres, drifting
-  // on with time; in whole art pixels along it, as the line is.
+  // The route in the rainbow (Ed, 2026-10-29): its hue running along it, a turn of the wheel every RAINBOW_M metres, the colours
+  // drifting slowly on toward its tip ("so you know which way is the front"); in whole art pixels along it, as the line is.
   vec3 hue = rbow((floor(vRun / uMpp) * uMpp) / ${RAINBOW_M.toFixed(1)} - uTime * 0.12);
   float across = 1.0 - abs(vSide), halo = across * across;
   // Ed, round 14: "the leyline and pulse are not pixelated. Lighting effects can be non-pixel but they should be lighting
@@ -191,12 +191,10 @@ void main() {
   // pulse (its sparkler: render/sparkler.ts) lights it as it passes.
   float pAlong = uPulse.y > 0.5 ? uCurrent + uPulse.x : 1e6;
   if (along > pAlong && uRainbow > 0.5) {
-    // Ahead of the spark: the rainbow line, thin (its middle pixel or two) and bright, its glow faint from the treetops.
+    // Ahead of the spark (Ed, 2026-10-29: "The leyline should be dots instead of a line (like the analyser but only one dot tall)"):
+    // the line itself is a row of single dots (render/leash/rainbow.ts); here only its faint glow from the treetops.
     if (uGlowPass > 0.5) { gl_FragColor = vec4(hue * 0.14 * halo * uLift * uStrength, 1.0); return; }
-    if (off >= max(1.0, floor(coreN * 0.5))) discard;
-    float rip = floor(ripple(sq, vLink) * 3.0 + 0.5) / 3.0;
-    gl_FragColor = vec4(min(hue * (0.75 + 0.25 * rip) * uStrength, vec3(0.9)), 1.0);
-    return;
+    discard;
   }
   if (along > pAlong) {
     float grey = dot(vCol, vec3(0.3, 0.59, 0.11));
@@ -222,12 +220,9 @@ void main() {
   // ember's.
   if (uRainbow > 0.5 && uPulse.y > 0.5) {
     // Behind the spark (Ed, 2026-10-29: "the post spark route should look like the audio analyser along its whole length"): the
-    // analyser's bars stand along it (render/leash/rainbow.ts); under them the line is its middle pixel or two in the rainbow,
-    // dimmer, and a faint glow from the treetops.
+    // analyser's bars stand along it (render/leash/rainbow.ts), the line itself only their dots; here its faint glow from the treetops.
     if (uGlowPass > 0.5) { gl_FragColor = vec4(hue * 0.1 * halo * soft0(tipD) * uLift * uStrength, 1.0); return; }
-    if (off >= max(1.0, floor(coreN * 0.5))) discard;
-    gl_FragColor = vec4(min(hue * 0.5 * uStrength, vec3(0.9)), 1.0);
-    return;
+    discard;
   }
   if (uSpent > 0.5 && uPulse.y > 0.5) { // (the sketch never gets here: all of it is ahead)
     float grey = dot(vCol, vec3(0.3, 0.59, 0.11)), ember = exp(-litD / 4.5), warm = exp(-litD / 12.0);
@@ -622,6 +617,15 @@ export class LeyLines {
 
   /** Where the route's spark is (links along the route as drawn), or null with none (front() sets it each frame). */
   sparkLinks(): number | null { return this.T.on && this.pulseTip ? this.pulseTip.links : null; }
+  /** How far the line is drawn (links), or null for all of it (grow()). */
+  drawnTo(): number | null { return this.growTo; }
+  /** Metres along the route as drawn to `links` along it (the rainbow's hue runs by it: RAINBOW_M). */
+  runAt(links: number): number {
+    const D = this.drawn, k = Math.max(0, Math.min(D.length - 1, Math.floor(links)));
+    let m = 0;
+    for (let i = 0; i < k; i++) m += D[i].total;
+    return D.length ? m + Math.max(0, Math.min(1, links - k)) * D[k].total : 0;
+  }
   /** The point `links` along the route as drawn (its slow drift too), into `out`; null before it's routed. */
   placeAt(links: number, time: number, out: { x: number; z: number }): { x: number; z: number } | null {
     const D = this.drawn;

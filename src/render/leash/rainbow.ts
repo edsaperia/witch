@@ -1,11 +1,14 @@
 // The rainbow's bars on the ley line, each an upright bar of the music's analyser (the mix's spectrum, read while any is shown:
 // render/leash/stones.ts StoneView.spectrum), standing on the line as drawn (render/leylines.ts placeAt):
 // - the rainbow wave (Ed, 2026-10-29: "Perhaps this looks like the spectrum analyser running along the line, pointing vertically";
-//   rules/rainbow.ts): each run's row of bars, its head first, each bar its own colour of a rainbow cycling along the row as the
-//   soundsystem spell's spot does, the row thinning out toward its tail; nothing left behind it;
-// - behind the spark (Ed, 2026-10-29: "the post spark route should look like the audio analyser along its whole length"): a bar
-//   every `route.spacing` metres from home up to the spark, lower than the wave's, in the line's own rainbow (render/leylines.ts
-//   RAINBOW_M), only those in view (the camera's frustum, at the bent world's place: render/height.ts bendPoint).
+//   rules/rainbow.ts): each run's row of bars, its head first, the row thinning out toward its tail, each bar the line's own colour
+//   where it stands (Ed, 2026-10-29: "the colours drifting on the pre-spark, post-spark, and early soundsystem spell effect should all
+//   match": one rainbow, `hueAt`); nothing left behind it;
+// - the line itself (Ed, 2026-10-29: "The leyline should be dots instead of a line (like the analyser but only one dot tall)"; "the
+//   post spark route should look like the audio analyser along its whole length"): a dot every `route.spacing` metres along it as
+//   drawn, behind the spark each the foot of an analyser bar, lower than the wave's, ahead of it a single dot, all in the line's own
+//   rainbow, its colours drifting on toward the tip ("so you know which way is the front": render/leylines.ts RAINBOW_M); only
+//   those in view (the camera's frustum, at the bent world's place: render/height.ts bendPoint).
 // Comfort's reduce-flashing slows the colours and calms the bars. lv.rainbowQuads counts what's drawn.
 import * as THREE from "three";
 import { rainbow } from "../indicator";
@@ -49,29 +52,31 @@ export function drawRainbow(lv: LeashView, time: number, dot: number[], camera: 
     }
     lv.rainbowQuads += steps;
   };
-  const place = (m: number, lens: readonly number[]) => (ley ? ley.placeAt(metresToLinks(lens, m), time, at) : routePoint(g.party, g.map, m));
+  const place = (links: number, m: number) => (ley ? ley.placeAt(links, time, at) : routePoint(g.party, g.map, m));
+  // (the one rainbow along the line, drifting on toward its tip: render/leylines.ts's shader, the dots and bars, the waves)
+  const hueAt = (run: number) => rainbow(run / RAINBOW_M - time * (calm ? 0.04 : 0.12));
   // The waves' rows: each bar from its run's head back toward where it set off, only on its stretch (rules/rainbow.ts).
   if (runs.length) {
     const lens = routeLengths(g.party, g.map);
     for (const r of runs) for (let i = 0; i < n; i++) {
       const m = r.head - r.dir * i * gap;
       if (m < r.lo || m > r.hi) continue;
-      const p = place(m, lens);
+      const L = metresToLinks(lens, m), p = place(L, m);
       if (!p) continue;
       const back = 1 - i / n, h = 1 + Math.round(levels[i] * tall * (0.45 + 0.55 * back));
       if (!seen(p.x, p.z, h * cell)) continue;
-      bar(p.x, p.z, h, cell, rainbow(i / n + time * (calm ? 0.04 : 0.15)), Math.min(1, back * 1.4));
+      bar(p.x, p.z, h, cell, hueAt(ley ? ley.runAt(L) : m), Math.min(1, back * 1.4));
     }
   }
-  // Behind the spark: the analyser the whole way, a bar every R.spacing metres of the line as drawn, in its own rainbow.
+  // The line as dots, every R.spacing metres of it as drawn up to its tip: behind the spark the analyser's bars, ahead single dots.
   if (spark !== null && ley) {
-    const B = ley.barsAlong(R.spacing), fade = 1 - (g.partyOver?.ease ?? 0);
-    for (let j = 0; j < B.links.length && B.links[j] <= spark; j++) {
+    const B = ley.barsAlong(R.spacing), fade = 1 - (g.partyOver?.ease ?? 0), tip = ley.drawnTo() ?? Infinity;
+    for (let j = 0; j < B.links.length && B.links[j] <= tip; j++) {
       const p = ley.placeAt(B.links[j], time, at);
       if (!p) break;
-      const k = j % (ROUTE_BINS * 2), h = 1 + Math.round(routeLevels[k < ROUTE_BINS ? k : ROUTE_BINS * 2 - 1 - k] * R.height);
+      const k = j % (ROUTE_BINS * 2), h = B.links[j] > spark ? 1 : 1 + Math.round(routeLevels[k < ROUTE_BINS ? k : ROUTE_BINS * 2 - 1 - k] * R.height);
       if (!seen(p.x, p.z, h * R.cell)) continue;
-      bar(p.x, p.z, h, R.cell, rainbow(B.run[j] / RAINBOW_M - time * (calm ? 0.04 : 0.12)), 0.9 * fade);
+      bar(p.x, p.z, h, R.cell, hueAt(B.run[j]), 0.9 * fade);
     }
   }
 }
