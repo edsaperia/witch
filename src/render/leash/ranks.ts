@@ -19,15 +19,17 @@ export interface RankKnobs {
   hex: number;
   /** A placed sigil's glyph, across (m). */
   glyph: number;
-  /** A friend's colours (hers, and the invited), baby to legend (0-255): the baby's purple, then three clear blues, darker to lighter
-   *  (Ed's playtest, 2026-10-29: "more strictly do hostile reds vs friendly blues, no purples"; "baby sigils are purple (neither friend
-   *  nor enemy)"; before, pink, light purple, light blue and turquoise). */
+  /** A friend's colours (hers, and the invited), baby to legend (0-255): the baby's purple, then three blues by intensity, a youth's
+   *  muted, an adult's strong, a legend's the most saturated and vivid, pure brilliant blue, and shiny (legendShine) (Ed, 2026-10-29:
+   *  "more strictly do hostile reds vs friendly blues, no purples"; "baby sigils are purple (neither friend nor enemy)"; on the
+   *  legend: "the colour doesn't say 'elite' to me. It should be shiny or very saturated or clearly at the end of the colour
+   *  progression"; before, a lightness ramp to a pale legend, and before that pink, light purple, light blue and turquoise). */
   colours: number[][];
-  /** An enemy's (the wild still at their stone), baby to legend: the same purple for a baby, then three clear reds, darker to lighter
-   *  (no pink, magenta or purple; before, crimson, red, orange and yellow). The baby's purple is the only purple there is. */
+  /** An enemy's (the wild still at their stone), baby to legend: the same purple for a baby, then three reds by intensity, a youth's
+   *  muted, an adult's strong, a legend's a blazing red (no pink, magenta or purple). The baby's purple is the only purple there is. */
   enemy: number[][];
   /** Each rank's sigil size, baby to legend, against an adult's (Ed, 2026-10-28: today's size the adult's, about 10% a step; a legend's
-   *  1.35 since Ed's "I didn't notice any legends in any runestone sigil stacks", 2026-10-29, with its ring: legendRing). */
+   *  1.35 since Ed's "I didn't notice any legends in any runestone sigil stacks", 2026-10-29: "Bigger is ok"). */
   sizes: number[];
   /** Embers a sigil on the ground gives off, by rank: how many at once, each one's size (m) and how high it rises (m); in her stack, `stack` of that. */
   embers: { count: number[]; size: number[]; rise: number[]; stack: number };
@@ -50,8 +52,8 @@ export const CHAIN_DEFAULT = { link: [0.62, 0.78, 1], tether: 1.3, slack: 0.12, 
 
 export const RANKS_DEFAULT: RankKnobs = {
   on: true, hex: 6, glyph: 5,
-  colours: [[180, 100, 255], [45, 100, 235], [70, 160, 255], [160, 210, 255]],
-  enemy: [[180, 100, 255], [205, 35, 35], [255, 65, 50], [255, 150, 105]],
+  colours: [[180, 100, 255], [125, 145, 195], [55, 115, 220], [0, 135, 255]],
+  enemy: [[180, 100, 255], [190, 105, 100], [225, 45, 40], [255, 55, 15]],
   sizes: [0.81, 0.9, 1, 1.35],
   embers: { count: [3, 5, 8, 12], size: [0.22, 0.26, 0.3, 0.36], rise: [1.6, 2.1, 2.8, 3.6], stack: 0.4 },
   dotsPerRow: 4, stoneGlow: 2.4,
@@ -129,14 +131,13 @@ export function drawEmbers(batch: Instances, dot: number[], pts: [number, number
   }
 }
 
-/** A legend's sigil, unmistakable in a stack (Ed, 2026-10-29: "I didn't notice any legends in any runestone sigil stacks"): a ring of
- *  dots round its glyph in its colour, slowly turning, besides its bigger size (sizes[3]). Standing (her stack, a stone's column). */
-export function legendRing(batch: Instances, dot: number[], x: number, y: number, z: number, size: number, col: readonly number[], time: number, alpha = 1): void {
-  const n = 18, R = size * 0.62, d = Math.max(0.12, size * 0.075);
-  for (let i = 0; i < n; i++) {
-    const a = (i / n) * Math.PI * 2 + time * 0.6, k = 0.75 + 0.25 * Math.sin(time * 3 + i);
-    batch.add(x + Math.cos(a) * R, y + Math.sin(a) * R, z + 0.03, d, dot, col[0] * k, col[1] * k, col[2] * k, alpha);
-  }
+/** A legend's sigil's shine (Ed, 2026-10-29: "shiny or very saturated"; the ring of dots it had first, "not a good idea"): what its
+ *  instances carry (render/leash/glyphs.ts Instances.add `shine`): 0 for any other rank; for a legend, every `period` s for 40% of
+ *  it, a glint sweeping across its glyph corner to corner (2 + where the glint is, -0.3 to 1.3; 1 between glints). `seed` sets each one's glint apart. */
+export function legendShine(rank: number, time: number, seed = 0, period = 2.6): number {
+  if (rank < 3) return 0;
+  const k = (((time / period + seed * 0.37) % 1) + 1) % 1;
+  return k < 0.4 ? 2 + (k / 0.4) * 1.6 - 0.3 : 1;
 }
 
 /** The rank on an area's rune stone (Ed, 2026-10-27: "Runestone sigils adopt the new colour scheme; they are the colour of the
