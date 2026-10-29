@@ -242,7 +242,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     // A leap under way flies on whatever holds it this step (a stun, a daze, its pack's turn): its arc goes by the time, so steps
     // missed would put it the rest of the way at once (Ed's playtest, 2026-10-29: "some animals seem to teleport"). It lands as ever.
     if (c.leap && c.fight) { const L = c.leap, k = Math.min(1, (time - L.at) / Math.max(0.01, L.lands - L.at)); c.x = L.fx + (L.tx - L.fx) * k; c.z = L.fz + (L.tz - L.fz) * k; }
-    advanceHop(c, time); // (a hopper's bound flies on by the time, whatever else holds it: rules/movement.ts)
+    const aloft = !!c.hop; advanceHop(c, time); // (a hopper's bound flies on by the time, whatever else holds it, landing this step or later: rules/movement.ts)
     // A flyer swooping that's no longer a wild one in a fight (invited, leashed, dazed, running off, asleep) glides down (rules/movement.ts).
     if (c.swoop && (!swoops(c) || !fighting(c) || w.asleep(c))) landSwoop(c, time);
     if (c.dazed) {
@@ -277,7 +277,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     // room left for the spacing's nudge: a short hide, a squirrel's scatter, comes back where that got it, a little short).
     if (c.packHide && PK) {
       const H = c.packHide;
-      if (H.tx !== undefined && !c.leap && !c.hop) { // (a leap or a bound under way carries it: both at once would be a jump)
+      if (H.tx !== undefined && !c.leap && !aloft) { // (a leap or a bound under way carries it: both at once would be a jump)
         const k = Math.min(1, dt / Math.max(dt, H.until - time)), tg = c.fight?.target ? targetPos(w, s, c.fight.target) : null, x0 = c.x, z0 = c.z;
         if (tg) {
           const a0 = Math.atan2(c.z - tg.z, c.x - tg.x), r0 = Math.hypot(c.x - tg.x, c.z - tg.z), a1 = Math.atan2(H.tz! - tg.z, H.tx - tg.x), r1 = Math.hypot(H.tx - tg.x, H.tz! - tg.z);
@@ -289,7 +289,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         if (mv > most) { c.x = x0 + ((c.x - x0) * most) / mv; c.z = z0 + ((c.z - z0) * most) / mv; }
         if (Math.abs(c.x - x0) > 0.02) c.facing = c.x > x0 ? 1 : -1;
         c.moving = Math.hypot(c.x - x0, c.z - z0) > 1e-3; c.walk += dt * 5; // (its shadow runs: render/view/creatures.ts)
-      } else if (!c.leap && !c.hop) c.moving = false;
+      } else if (!c.leap && !aloft) c.moving = false;
       c.vx = 0; c.vz = 0; continue;
     }
     // (an attack in the grammar given it, rules/attacks/; else its species' own, the default since step 5: ?attacks=old for the old)

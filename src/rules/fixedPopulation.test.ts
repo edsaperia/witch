@@ -20,7 +20,9 @@ describe("a night's creatures (Ed, 2026-10-28)", () => {
    *  (the bot rarely beats one or loses a soundsystem here): a beaten wild one now and then, and a soundsystem with happy babies
    *  lost; till it's won, or the party's lost at `loseAt` (game time). */
   function night(loseAt = Infinity) {
-    const g = newGame(22, withTuning({ map: { ...TUNING.map!, islandAreas: 10 } }));
+    // (the stacks off, ?cast=0: with them a converted area's babies' sigils lie loose round it and they don't run off when it falls
+    // (DESIGN.md, "Loose sigils stay"), so this night's lost soundsystem would only have had runaways by chance)
+    const g = newGame(22, withTuning({ map: { ...TUNING.map!, islandAreas: 10 }, cast: { ...TUNING.cast!, on: false } }));
     g.clock.paused = false; g.witch = { ...g.witch, seated: false, perch: false };
     const bot = newBot("skilled"), start = g.creatures.length, ran = new Set<number>();
     let most = start, dazed = 0, lost = 0;
