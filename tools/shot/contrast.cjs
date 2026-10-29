@@ -9,7 +9,7 @@
 //   key   lit p99 over dark p25: how far what's lit stands out
 // Frames <out>/<view>-<unlit>.png, numbers <out>/contrast.json.
 //   npm run build && node tools/shot/contrast.cjs [out dir]   (SEED=542195, LINK= more of the link, UNLIT=1,0.75,0.6,0.5,
-//   VIEWS=playtest,party,treetop, SIZE=1106x743 (Ed's window), PX= pixel size, DIST=dist)
+//   VIEWS=playtest,party,treetop, SIZE=1106x743 (Ed's window), PX= pixel size, DIST=dist, PINS=1 the pointers before and after)
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist"));
@@ -66,6 +66,11 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
         result[v][u] = { p10: r(m.p10), p25: r(m.p25), p50: r(m.p50), p90: r(m.p90), p99: r(m.p99), her: r(m.her), key: +(m.p99 / Math.max(1e-3, m.p25)).toFixed(2) };
         await page.screenshot({ path: path.join(out, `${v}-${u}.png`), timeout: 300000 });
         log(v, u, JSON.stringify(result[v][u]));
+      }
+      // (PINS=1: the edge pointers as before, no plate and fully calmed, and as tuned, at the last unlit: pins-<view>-<before|after>.png)
+      if (process.env.PINS) for (const [n, k] of [["before", { plate: 0, vivid: 0 }], ["after", null]]) {
+        await page.evaluate(k => { const p = window.witch.tuning.pins, s = window.__pins ??= { plate: p.plate, vivid: p.vivid }; Object.assign(p, k ?? s); }, k);
+        await step(12); await page.screenshot({ path: path.join(out, `pins-${v}-${n}.png`), timeout: 300000 }); log("pins", v, n);
       }
     }
     fs.writeFileSync(path.join(out, "contrast.json"), JSON.stringify({ seed: SEED, link: LINK, size: `${W}x${H}`, views: SPOTS, result }, null, 2));

@@ -234,6 +234,7 @@ says what each note covers.
 - Rolling ground
 - Ley lines
 - Edge pointers
+- Unlit
 - Ride
 - Bend
 - Smoke
