@@ -43,6 +43,9 @@ export interface WakeState {
   /** Last night's clothes still in the pile by her bed (rules/clothesPile.ts; Ed, 2026-10-23): she's in her nightie till it's empty,
    *  dressed or not, she can leave (Ed, 2026-10-25). Absent (an older wake-up): dressed. */
   pile?: PileSlot[];
+  /** She's used the dressing table this morning (E there, its panel opened: rules/sigilButton.ts): her first morning's first guidance
+   *  step, skin and hair (Ed, 2026-10-29; rules/guidance.ts FIRST_MORNING). */
+  styled?: boolean;
 }
 
 /** The wake-up's knobs (the tuning's opening.wake): a snooze's seconds (Ed: 5), the stretch's, and how long the alarm rings before E

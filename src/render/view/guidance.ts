@@ -95,7 +95,7 @@ export const WINGS = [
  *  (render/indicator.ts emoji), each with a glyph of ours in its place where the browser has no such emoji. */
 const EMOJI: Partial<Record<GuideKind, string>> = { bed: "💤", desk: "💌", chart: "🧭", hat: "🎁", part: "🎁", wearable: "🎁" };
 const GLYPH: Record<GuideKind, readonly string[]> = { bed: BED, dress: SHIRT, desk: LETTER, lathe: WINGS, hat: GIFT, part: GIFT, wearable: GIFT, chart: MAP, decks: NOTES };
-const DRESS: Record<string, { emoji?: string; glyph: readonly string[] }> = { wardrobe: { emoji: "👗", glyph: SHIRT }, shoeRack: { emoji: "👠", glyph: SHIRT }, cloakPegs: { emoji: "🧥", glyph: SHIRT }, bags: { emoji: "👜", glyph: SHIRT }, hats: { glyph: HAT } };
+const DRESS: Record<string, { emoji?: string; glyph: readonly string[] }> = { dressingTable: { emoji: "💇", glyph: SHIRT }, wardrobe: { emoji: "👗", glyph: SHIRT }, shoeRack: { emoji: "👠", glyph: SHIRT }, cloakPegs: { emoji: "🧥", glyph: SHIRT }, bags: { emoji: "👜", glyph: SHIRT }, hats: { glyph: HAT } };
 /** The pair of wings: 🪽 and 🪽 mirrored, spread either side, one pixel sprite (render/bubbles.ts pixelSprite, served as an emoji is). */
 const wings = (): string => pixelSprite("🪽pair", EMOJI_PX, (x, n) => {
   x.font = `${Math.round(n * 0.62)}px sans-serif`; x.textAlign = "center"; x.textBaseline = "middle";
