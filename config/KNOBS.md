@@ -1239,6 +1239,10 @@ Code: `rules/spells.ts`, `docs/backlog/unlocks.md`, `rules/hat.ts`, `config/broo
 - **`spells.parts`**: her broom's parts, a comma list of ids from config/broom-parts.json (the page sets it from her save, localStorage witch.broom, fitted at the Workshop's bay; ?parts= for one load); the bare broom, none, has no spell and no quick take-off [1], and a complete set gives its spell.
   1. Ed, 2026-10-23
   Code: `config/broom-parts.json`
+- **`spells.bag`**: her bag, a config/wardrobe.json bag item's id or empty for none, whose invites multiply invites.cooldown and invites.range while she carries it (rules/bags.ts).
+  1. Ed, 2026-10-29: "We should start with a choice of two bags; faster rate of fire but shorter range, and slower rate of fire but longer range"
+  The page sets it from her look (localStorage witch.genome, chosen at the bags station; ?bag=quick or ?bag=far for one load). The Quick bag (bumbag) throws 💌s faster and shorter, the Far bag (satchel) slower and further; none, the tuning's own.
+  Code: `config/wardrobe.json`
 - **`spells.speed`**: the Speed broom, her speed times mult for duration seconds, then cooldown seconds to recharge.
 - **`spells.healing`**: The Healing ring heals her while she stands near it, and the Helmet takes the first blow for her.
   the Healing ring, within radius m of it she heals a hit every `every` seconds while hurt. The Helmet: the first blow knocks it off beside her instead of costing a hit; she picks it up (E) to wear it again.
@@ -1269,6 +1273,7 @@ Code: `rules/spells.ts`, `docs/backlog/unlocks.md`, `rules/hat.ts`, `config/broo
 | `spells.hat` | string |  |
 | `spells.hats` | string |  |
 | `spells.parts` | string |  |
+| `spells.bag` | string |  |
 | `spells.speed.mult` | number | 0 to … |
 | `spells.speed.duration` | number | 0 to … |
 | `spells.speed.cooldown` | number | 0 to … |

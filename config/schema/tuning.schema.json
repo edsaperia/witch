@@ -2951,6 +2951,10 @@
           "type": "string",
           "description": "her broom's parts, a comma list of ids from config/broom-parts.json (the page sets it from her save, localStorage witch.broom, fitted at the Workshop's bay; ?parts= for one load); the bare broom, none, has no spell and no quick take-off, and a complete set gives its spell."
         },
+        "bag": {
+          "type": "string",
+          "description": "her bag, a config/wardrobe.json bag item's id or empty for none, whose invites multiply invites.cooldown and invites.range while she carries it (rules/bags.ts)."
+        },
         "speed": {
           "type": "object",
           "properties": {
@@ -3328,6 +3332,7 @@
         "hat",
         "hats",
         "parts",
+        "bag",
         "speed",
         "healing",
         "helmet",
