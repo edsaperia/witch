@@ -803,7 +803,9 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     if (cell[0] === centreCell[0] && cell[1] === centreCell[1]) return false;
     if (!playable(cell[0], cell[1])) return false; // (no soundsystem ever stands in the buffer's areas)
     const q = soundsystemSpot(cell[0], cell[1]);
-    return Math.hypot(x - q.x, z - q.z) < tuning.soundsystemFootprint + tuning.treeMarginFromSoundsystem;
+    // (a great stump in its place: its roots kept clear of trees, runeMarkers.stump.clear: Ed, 2026-10-29)
+    const S = tuning.runeMarkers?.stump;
+    return Math.hypot(x - q.x, z - q.z) < Math.max(tuning.soundsystemFootprint + tuning.treeMarginFromSoundsystem, S?.on ? S.clear : 0);
   };
   const hardClear = (x: number, z: number) => { const [u, v] = toPart(x, z); return hardCell(x, z, partition.partition(u, v)); };
   // Every area's fighting arena (Ed, 2026-10-05: "each is effectively a fighting arena... not much

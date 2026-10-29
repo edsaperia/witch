@@ -162,6 +162,16 @@ describe("the soundsystem spell (Ed, 2026-10-28)", () => {
     expect(castingStone(g, W)?.key).toBe(a.key);
   });
 
+  it("casts from the middle of a great stump's cut, not south of it (Ed, 2026-10-29: \"the spell and the audio circle effect can be on top of the stump\")", () => {
+    const T = withTuning({ cast: { ...BUILT.cast, on: true }, runeMarkers: { ...BUILT.runeMarkers, stump: { ...BUILT.runeMarkers.stump!, on: true } } });
+    const g = game(123, T), a = area(g), W = g.witches[0];
+    at(g, a);
+    g.witch = { ...g.witch, x: a.stone.x + 0.5, z: a.stone.z + 0.5 };
+    expect(castingStone(g, W)?.key).toBe(a.key);
+    g.witch = { ...g.witch, x: a.stone.x, z: a.stone.z + C.spot };
+    expect(castingStone(g, W)).toBeNull();
+  });
+
   it("drains while she's away, and resumes from where it has drained to", () => {
     const g = game(), a = area(g), W = g.witches[0];
     at(g, a);

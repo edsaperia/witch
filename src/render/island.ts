@@ -24,7 +24,7 @@ import { MapTable } from "./mapTable";
 import { MarkerArt } from "./markers";
 import { Minimap } from "./minimap";
 import { PathView } from "./paths";
-import { SPRITE_UNIFORMS, SpriteBatch } from "./sprites";
+import { asFloor, SPRITE_UNIFORMS, SpriteBatch } from "./sprites";
 import { runSync, type Later, type Steps } from "./slices";
 import type { Style } from "./style";
 import { TrunkShadowBatch } from "./trunkShadows";
@@ -62,6 +62,8 @@ export class IslandLayers {
   /** The stones' runes' glow (rank sigils: leash.ranks.stoneGlow, set each frame by render/view/home.ts; 1 otherwise). */
   readonly markerGlow = { value: 1 };
   markerBatch!: SpriteBatch;
+  /** The great stumps (runeMarkers.stump), in place of the stones: a floor, under everything standing (render/view/home.ts). */
+  stumpBatch: SpriteBatch | null = null;
   /** The runestones' trunk shadows (render/view/home.ts), made as they're first cast. */
   markerShadows: TrunkShadowBatch | null = null;
   ley!: LeyLines;
@@ -150,6 +152,7 @@ export class IslandLayers {
     this.markerArt = new MarkerArt(style, game.tuning, game.map, stones);
     this.markerBatch = new SpriteBatch(this.markerArt.atlas, mpp, { solid: true, glowGain: this.markerGlow }).name("markers");
     this.root.add(...this.markerBatch.meshes);
+    if (this.markerArt.stumps) { this.stumpBatch = asFloor(new SpriteBatch(this.markerArt.atlas, mpp, { scenery: true, flat: true }).name("stumps")); this.root.add(...this.stumpBatch.meshes); }
   }
 
   /** The runestones' trunk shadows, made the first time they're asked for. */
@@ -188,6 +191,7 @@ export class IslandLayers {
     this.minimap?.dispose();
     this.markerShadows?.dispose();
     this.markerBatch?.release();
+    this.stumpBatch?.release(); this.stumpBatch = null;
     this.markerArt?.dispose();
     this.ley?.dispose();
     this.dancefloor?.dispose();

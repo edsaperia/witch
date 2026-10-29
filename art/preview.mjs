@@ -31,6 +31,7 @@
 //   node art/preview.mjs partywitches poses|outfits|pairs|lean art/previews/party-witches.png [scale]   (her party poses, a row per facing; the party outfits; pairs put together at their anchors; her lean cycle. ANCHORS=1, POSES=...)
 //   node art/preview.mjs treeheights fern-forest,garden art/previews/tree-heights.png [scale]
 //   node art/preview.mjs lights all art/previews/light-sources.png [scale]
+//   node art/preview.mjs stumps all|<species> art/previews/stumps.png [scale]   (the great stumps, art/props/stumps.js: each species a row of PER (default 4) seeds, each from its own angle, the witch for scale; NIGHT=1 lit only by its sigils above it, enemy reds and friend blues)
 //   node art/preview.mjs runestones all|<species> art/previews/runestones.png [scale]   (each species' rune stone with its sigil in its neon; NIGHT=1; PER=n to a row)
 //   node art/preview.mjs runestoneforms <species> <png> [scale]   (today's stone, its 20 seeded forms, and four of them beside their mirror images)
 //   node art/preview.mjs party wolf,fox,owl art/previews/party.png [scale]
@@ -237,6 +238,21 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
     });
     const big = document.createElement("canvas"); big.width = W * scale; big.height = H * scale;
     const bg = big.getContext("2d"); bg.imageSmoothingEnabled = false; bg.drawImage(c, 0, 0, W * scale, H * scale);
+    return big.toDataURL("image/png");
+  }
+  if (what === "stumps") { // the great stumps (art/props/stumps.js): a row per species, PER seeds each from its own angle, the witch for scale; at NIGHT lit only by a stack of sigils over each (Ed, 2026-10-29: "they will be lit by the sigils that float above them")
+    const ids = list === "all" ? Object.keys(G.STUMP_GENOMES) : list.split(","), per = window.PER || 4, wsp = G.witchSprite(st, { pose: "stand", frame: 0 }), wit = G.bake(wsp, G.witchColours(st), st, st.cOutline), def = G.AREA_BY_ID[window.AREA || "old-oaks"] ?? null;
+    const STACK = [[255, 140, 30], [255, 40, 40], [110, 190, 255], [190, 150, 255]], gap = 8, rows2 = [];
+    for (const id of ids) rows2.push([...Array(per).keys()].map(seed => { const p = G.stumpPiece(id, { seed }, def, st); return { b: G.bake(p.sp, p.colours, st, "none"), top: p.top }; }));
+    const w = Math.max(...rows2.map(r => r.reduce((a, c) => a + c.b.w + gap, gap))) + wit.w + gap, rh = rows2.map(r => Math.max(...r.map(c => c.b.h)) + gap), h = rh.reduce((a, v) => a + v, gap);
+    const mk = () => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
+    const A = mk(), N = mk(), a = A.getContext("2d"), n = N.getContext("2d"), lights = [];
+    a.fillStyle = `rgb(${G.hsv2rgb(st.groundHue, .4, window.NIGHT ? st.groundVal * .35 : st.groundVal)})`; a.fillRect(0, 0, w, h); n.fillStyle = "rgb(128,75,240)"; n.fillRect(0, 0, w, h);
+    const ppm = G.witchPixelsPerUnit(st) / 1.9;
+    let y = gap;
+    rows2.forEach((r, i) => { let x = gap; y += rh[i] - gap; for (const c of r) { a.drawImage(c.b.A, x, y - c.b.h); n.drawImage(c.b.N, x, y - c.b.h); STACK.forEach((rgb, k) => lights.push({ x: x + c.top.x, y: y - c.b.h + c.top.y, z: ppm * (4.5 + k * 2.3), R: ppm * 16, power: .55, rgb })); x += c.b.w + gap; } a.drawImage(wit.A, x, y - wit.h); n.drawImage(wit.N, x, y - wit.h); y += gap; });
+    let lit = mk(); shade({ a, n, w, h }, lit, window.NIGHT ? st : studio, window.NIGHT ? lights : [], [0, 0, w, h]);
+    const big = document.createElement("canvas"); big.width = w * scale; big.height = h * scale; const g = big.getContext("2d"); g.imageSmoothingEnabled = false; g.drawImage(lit, 0, 0, w * scale, h * scale);
     return big.toDataURL("image/png");
   }
   if (what === "ent") { // the treehouse Ent (art/ent.js): towards and away, the witch at the decks (dj frame `list`) between its far and near halves; then the deck up close
