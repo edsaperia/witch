@@ -1,5 +1,5 @@
 {
-  "sha": "f720f368016ea0986f6dfd310761637e981c808e",
+  "sha": "544b7b619eaac767ce4640f51c12f675c3250c4e",
   "measurements": [
     {
       "id": "meerkat",
@@ -7,7 +7,7 @@
       "facing": "towards",
       "frame": 0,
       "level": 0,
-      "pixelDiff": 242,
+      "pixelDiff": 254,
       "current": [
         46,
         42
@@ -23,7 +23,7 @@
       "facing": "towards",
       "frame": 0,
       "level": 1,
-      "pixelDiff": 482,
+      "pixelDiff": 493,
       "current": [
         66,
         61
@@ -39,7 +39,7 @@
       "facing": "towards",
       "frame": 0,
       "level": 2,
-      "pixelDiff": 1489,
+      "pixelDiff": 1521,
       "current": [
         116,
         100
@@ -55,7 +55,7 @@
       "facing": "towards",
       "frame": 0,
       "level": 3,
-      "pixelDiff": 5375,
+      "pixelDiff": 5385,
       "current": [
         270,
         231
@@ -71,7 +71,7 @@
       "facing": "towards",
       "frame": 1,
       "level": 0,
-      "pixelDiff": 301,
+      "pixelDiff": 317,
       "current": [
         49,
         42
@@ -87,7 +87,7 @@
       "facing": "towards",
       "frame": 1,
       "level": 1,
-      "pixelDiff": 525,
+      "pixelDiff": 533,
       "current": [
         68,
         61
@@ -103,7 +103,7 @@
       "facing": "towards",
       "frame": 1,
       "level": 2,
-      "pixelDiff": 1675,
+      "pixelDiff": 1687,
       "current": [
         123,
         100
@@ -119,7 +119,7 @@
       "facing": "towards",
       "frame": 1,
       "level": 3,
-      "pixelDiff": 5917,
+      "pixelDiff": 5924,
       "current": [
         287,
         232
@@ -135,7 +135,7 @@
       "facing": "away",
       "frame": 0,
       "level": 0,
-      "pixelDiff": 188,
+      "pixelDiff": 200,
       "current": [
         41,
         41
@@ -151,7 +151,7 @@
       "facing": "away",
       "frame": 0,
       "level": 1,
-      "pixelDiff": 519,
+      "pixelDiff": 529,
       "current": [
         70,
         61
@@ -167,7 +167,7 @@
       "facing": "away",
       "frame": 0,
       "level": 2,
-      "pixelDiff": 1626,
+      "pixelDiff": 1654,
       "current": [
         123,
         100
@@ -183,7 +183,7 @@
       "facing": "away",
       "frame": 0,
       "level": 3,
-      "pixelDiff": 5894,
+      "pixelDiff": 5895,
       "current": [
         292,
         232
@@ -199,7 +199,7 @@
       "facing": "away",
       "frame": 1,
       "level": 0,
-      "pixelDiff": 227,
+      "pixelDiff": 238,
       "current": [
         43,
         41
@@ -215,7 +215,7 @@
       "facing": "away",
       "frame": 1,
       "level": 1,
-      "pixelDiff": 595,
+      "pixelDiff": 599,
       "current": [
         73,
         62
@@ -231,7 +231,7 @@
       "facing": "away",
       "frame": 1,
       "level": 2,
-      "pixelDiff": 1716,
+      "pixelDiff": 1721,
       "current": [
         127,
         100
@@ -247,7 +247,7 @@
       "facing": "away",
       "frame": 1,
       "level": 3,
-      "pixelDiff": 6579,
+      "pixelDiff": 6582,
       "current": [
         300,
         233
@@ -262,73 +262,73 @@
       "pose": "idle",
       "facing": "towards",
       "frame": 0,
-      "level": 0,
-      "pixelDiff": 410,
-      "current": [
-        54,
-        54
-      ],
-      "proposed": [
-        54,
-        54
-      ]
-    },
-    {
-      "id": "meerkat",
-      "pose": "idle",
-      "facing": "towards",
-      "frame": 0,
-      "level": 1,
-      "pixelDiff": 857,
-      "current": [
-        78,
-        80
-      ],
-      "proposed": [
-        78,
-        80
-      ]
-    },
-    {
-      "id": "meerkat",
-      "pose": "idle",
-      "facing": "towards",
-      "frame": 0,
-      "level": 2,
-      "pixelDiff": 2434,
-      "current": [
-        131,
-        131
-      ],
-      "proposed": [
-        131,
-        131
-      ]
-    },
-    {
-      "id": "meerkat",
-      "pose": "idle",
-      "facing": "towards",
-      "frame": 0,
-      "level": 3,
-      "pixelDiff": 9594,
-      "current": [
-        335,
-        422
-      ],
-      "proposed": [
-        335,
-        422
-      ]
-    },
-    {
-      "id": "meerkat",
-      "pose": "idle",
-      "facing": "towards",
-      "frame": 1,
       "level": 0,
       "pixelDiff": 415,
       "current": [
+        54,
+        54
+      ],
+      "proposed": [
+        54,
+        54
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "idle",
+      "facing": "towards",
+      "frame": 0,
+      "level": 1,
+      "pixelDiff": 875,
+      "current": [
+        78,
+        80
+      ],
+      "proposed": [
+        78,
+        80
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "idle",
+      "facing": "towards",
+      "frame": 0,
+      "level": 2,
+      "pixelDiff": 2481,
+      "current": [
+        131,
+        131
+      ],
+      "proposed": [
+        131,
+        131
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "idle",
+      "facing": "towards",
+      "frame": 0,
+      "level": 3,
+      "pixelDiff": 9630,
+      "current": [
+        335,
+        422
+      ],
+      "proposed": [
+        335,
+        422
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "idle",
+      "facing": "towards",
+      "frame": 1,
+      "level": 0,
+      "pixelDiff": 424,
+      "current": [
         55,
         54
       ],
@@ -343,7 +343,7 @@
       "facing": "towards",
       "frame": 1,
       "level": 1,
-      "pixelDiff": 864,
+      "pixelDiff": 882,
       "current": [
         81,
         80
@@ -359,7 +359,7 @@
       "facing": "towards",
       "frame": 1,
       "level": 2,
-      "pixelDiff": 2442,
+      "pixelDiff": 2490,
       "current": [
         135,
         131
@@ -375,7 +375,7 @@
       "facing": "towards",
       "frame": 1,
       "level": 3,
-      "pixelDiff": 9224,
+      "pixelDiff": 9249,
       "current": [
         344,
         423
@@ -391,7 +391,7 @@
       "facing": "away",
       "frame": 0,
       "level": 0,
-      "pixelDiff": 234,
+      "pixelDiff": 242,
       "current": [
         43,
         53
@@ -407,7 +407,7 @@
       "facing": "away",
       "frame": 0,
       "level": 1,
-      "pixelDiff": 480,
+      "pixelDiff": 494,
       "current": [
         63,
         78
@@ -423,7 +423,7 @@
       "facing": "away",
       "frame": 0,
       "level": 2,
-      "pixelDiff": 1355,
+      "pixelDiff": 1381,
       "current": [
         107,
         129
@@ -439,7 +439,7 @@
       "facing": "away",
       "frame": 0,
       "level": 3,
-      "pixelDiff": 5212,
+      "pixelDiff": 5234,
       "current": [
         317,
         421
@@ -455,7 +455,7 @@
       "facing": "away",
       "frame": 1,
       "level": 0,
-      "pixelDiff": 236,
+      "pixelDiff": 246,
       "current": [
         44,
         53
@@ -471,7 +471,7 @@
       "facing": "away",
       "frame": 1,
       "level": 1,
-      "pixelDiff": 501,
+      "pixelDiff": 513,
       "current": [
         65,
         79
@@ -487,7 +487,7 @@
       "facing": "away",
       "frame": 1,
       "level": 2,
-      "pixelDiff": 1469,
+      "pixelDiff": 1491,
       "current": [
         110,
         129
@@ -503,7 +503,7 @@
       "facing": "away",
       "frame": 1,
       "level": 3,
-      "pixelDiff": 5081,
+      "pixelDiff": 5099,
       "current": [
         325,
         421
@@ -572,6 +572,8 @@
         "snoutTaper": 0.4,
         "face": "meerkat",
         "whiskers": true,
+        "eyeK": 1.25,
+        "eyePatchPx": 2,
         "belly": true,
         "bands": {
           "n": 5,
@@ -580,9 +582,35 @@
         "ear": "round",
         "earS": 0.45,
         "tail": "meerkat",
-        "paw": "paw"
+        "paw": "paw",
+        "regions": {
+          "tail": {
+            "tip": {
+              "length": 0.25,
+              "mat": "BODY3"
+            }
+          }
+        }
       },
-      "look": null,
+      "look": {
+        "sentinel": {
+          "belly": {
+            "mat": "BELLY",
+            "extent": {
+              "along": [
+                0,
+                0.8
+              ],
+              "width": 0.6,
+              "depth": 1
+            }
+          },
+          "tailTip": {
+            "length": 0.25,
+            "mat": "BODY3"
+          }
+        }
+      },
       "paletteHSV": [
         0.09,
         0.35,
@@ -666,6 +694,8 @@
         "snoutTaper": 0.4,
         "face": "meerkat",
         "whiskers": true,
+        "eyeK": 1.25,
+        "eyePatchPx": 2,
         "belly": true,
         "bands": {
           "n": 5,
@@ -694,9 +724,35 @@
           "hip": {
             "w": 0.9
           }
+        },
+        "regions": {
+          "tail": {
+            "tip": {
+              "length": 0.25,
+              "mat": "BODY3"
+            }
+          }
         }
       },
-      "look": null,
+      "look": {
+        "sentinel": {
+          "belly": {
+            "mat": "BELLY",
+            "extent": {
+              "along": [
+                0,
+                0.8
+              ],
+              "width": 0.6,
+              "depth": 1
+            }
+          },
+          "tailTip": {
+            "length": 0.25,
+            "mat": "BODY3"
+          }
+        }
+      },
       "paletteHSV": [
         0.09,
         0.35,
@@ -779,6 +835,8 @@
         "snoutTaper": 0.4,
         "face": "meerkat",
         "whiskers": true,
+        "eyeK": 1.2,
+        "eyePatchPx": 2,
         "belly": true,
         "bands": {
           "n": 5,
@@ -806,9 +864,35 @@
           "hip": {
             "w": 0.98
           }
+        },
+        "regions": {
+          "tail": {
+            "tip": {
+              "length": 0.25,
+              "mat": "BODY3"
+            }
+          }
         }
       },
-      "look": null,
+      "look": {
+        "sentinel": {
+          "belly": {
+            "mat": "BELLY",
+            "extent": {
+              "along": [
+                0,
+                0.8
+              ],
+              "width": 0.6,
+              "depth": 1
+            }
+          },
+          "tailTip": {
+            "length": 0.25,
+            "mat": "BODY3"
+          }
+        }
+      },
       "paletteHSV": [
         0.09,
         0.35,
@@ -872,6 +956,8 @@
         "snoutTaper": 0.4,
         "face": "meerkat",
         "whiskers": true,
+        "eyeK": false,
+        "eyePatchPx": 2,
         "belly": true,
         "bands": {
           "n": 5,
@@ -882,7 +968,25 @@
         "tail": "meerkat",
         "paw": "paw"
       },
-      "look": null,
+      "look": {
+        "sentinel": {
+          "belly": {
+            "mat": "BELLY",
+            "extent": {
+              "along": [
+                0,
+                0.8
+              ],
+              "width": 0.6,
+              "depth": 1
+            }
+          },
+          "tailTip": {
+            "length": 0.25,
+            "mat": "BODY3"
+          }
+        }
+      },
       "paletteHSV": [
         0.09,
         0.35,
@@ -946,6 +1050,8 @@
         "snoutTaper": 0.4,
         "face": "meerkat",
         "whiskers": true,
+        "eyeK": 1.25,
+        "eyePatchPx": 2,
         "belly": true,
         "bands": {
           "n": 5,
@@ -954,9 +1060,35 @@
         "ear": "round",
         "earS": 0.45,
         "tail": "meerkat",
-        "paw": "paw"
+        "paw": "paw",
+        "regions": {
+          "tail": {
+            "tip": {
+              "length": 0.25,
+              "mat": "BODY3"
+            }
+          }
+        }
       },
-      "look": null,
+      "look": {
+        "sentinel": {
+          "belly": {
+            "mat": "BELLY",
+            "extent": {
+              "along": [
+                0,
+                0.8
+              ],
+              "width": 0.6,
+              "depth": 1
+            }
+          },
+          "tailTip": {
+            "length": 0.25,
+            "mat": "BODY3"
+          }
+        }
+      },
       "paletteHSV": [
         0.09,
         0.35,
@@ -1040,6 +1172,8 @@
         "snoutTaper": 0.4,
         "face": "meerkat",
         "whiskers": true,
+        "eyeK": 1.25,
+        "eyePatchPx": 2,
         "belly": true,
         "bands": {
           "n": 5,
@@ -1068,9 +1202,35 @@
           "hip": {
             "w": 0.9
           }
+        },
+        "regions": {
+          "tail": {
+            "tip": {
+              "length": 0.25,
+              "mat": "BODY3"
+            }
+          }
         }
       },
-      "look": null,
+      "look": {
+        "sentinel": {
+          "belly": {
+            "mat": "BELLY",
+            "extent": {
+              "along": [
+                0,
+                0.8
+              ],
+              "width": 0.6,
+              "depth": 1
+            }
+          },
+          "tailTip": {
+            "length": 0.25,
+            "mat": "BODY3"
+          }
+        }
+      },
       "paletteHSV": [
         0.09,
         0.35,
@@ -1153,6 +1313,8 @@
         "snoutTaper": 0.4,
         "face": "meerkat",
         "whiskers": true,
+        "eyeK": 1.2,
+        "eyePatchPx": 2,
         "belly": true,
         "bands": {
           "n": 5,
@@ -1180,9 +1342,35 @@
           "hip": {
             "w": 0.98
           }
+        },
+        "regions": {
+          "tail": {
+            "tip": {
+              "length": 0.25,
+              "mat": "BODY3"
+            }
+          }
         }
       },
-      "look": null,
+      "look": {
+        "sentinel": {
+          "belly": {
+            "mat": "BELLY",
+            "extent": {
+              "along": [
+                0,
+                0.8
+              ],
+              "width": 0.6,
+              "depth": 1
+            }
+          },
+          "tailTip": {
+            "length": 0.25,
+            "mat": "BODY3"
+          }
+        }
+      },
       "paletteHSV": [
         0.09,
         0.35,
@@ -1246,6 +1434,8 @@
         "snoutTaper": 0.4,
         "face": "meerkat",
         "whiskers": true,
+        "eyeK": false,
+        "eyePatchPx": 2,
         "belly": true,
         "bands": {
           "n": 5,
@@ -1256,7 +1446,25 @@
         "tail": "meerkat",
         "paw": "paw"
       },
-      "look": null,
+      "look": {
+        "sentinel": {
+          "belly": {
+            "mat": "BELLY",
+            "extent": {
+              "along": [
+                0,
+                0.8
+              ],
+              "width": 0.6,
+              "depth": 1
+            }
+          },
+          "tailTip": {
+            "length": 0.25,
+            "mat": "BODY3"
+          }
+        }
+      },
       "paletteHSV": [
         0.09,
         0.35,
@@ -1264,7 +1472,7 @@
       ]
     }
   ],
-  "modelSourceCommit": "10c8c9bd910c917c52001e07eb688c73ebd3417e",
+  "modelSourceCommit": "e4b77ac10557c73b19828efe7c0b98e99b6123d7",
   "lighting": "albedo",
   "style": {
     "ambientHue": 0.68,

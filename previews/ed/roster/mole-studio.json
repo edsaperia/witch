@@ -1,5 +1,5 @@
 {
-  "sha": "4badb78ac02b04e7c7ab8a548a404da5d7fd5507",
+  "sha": "544b7b619eaac767ce4640f51c12f675c3250c4e",
   "measurements": [
     {
       "id": "mole",
@@ -7,7 +7,7 @@
       "facing": "towards",
       "frame": 0,
       "level": 0,
-      "pixelDiff": null,
+      "pixelDiff": 733,
       "current": [
         41,
         34
@@ -23,7 +23,7 @@
       "facing": "towards",
       "frame": 0,
       "level": 1,
-      "pixelDiff": null,
+      "pixelDiff": 1038,
       "current": [
         53,
         45
@@ -39,7 +39,7 @@
       "facing": "towards",
       "frame": 0,
       "level": 2,
-      "pixelDiff": null,
+      "pixelDiff": 1786,
       "current": [
         78,
         71
@@ -71,7 +71,7 @@
       "facing": "towards",
       "frame": 1,
       "level": 0,
-      "pixelDiff": null,
+      "pixelDiff": 793,
       "current": [
         44,
         34
@@ -87,7 +87,7 @@
       "facing": "towards",
       "frame": 1,
       "level": 1,
-      "pixelDiff": null,
+      "pixelDiff": 1059,
       "current": [
         57,
         45
@@ -103,7 +103,7 @@
       "facing": "towards",
       "frame": 1,
       "level": 2,
-      "pixelDiff": null,
+      "pixelDiff": 1938,
       "current": [
         81,
         71
@@ -135,7 +135,7 @@
       "facing": "away",
       "frame": 0,
       "level": 0,
-      "pixelDiff": null,
+      "pixelDiff": 792,
       "current": [
         46,
         35
@@ -151,7 +151,7 @@
       "facing": "away",
       "frame": 0,
       "level": 1,
-      "pixelDiff": null,
+      "pixelDiff": 1022,
       "current": [
         58,
         45
@@ -167,7 +167,7 @@
       "facing": "away",
       "frame": 0,
       "level": 2,
-      "pixelDiff": null,
+      "pixelDiff": 1797,
       "current": [
         81,
         71
@@ -199,7 +199,7 @@
       "facing": "away",
       "frame": 1,
       "level": 0,
-      "pixelDiff": null,
+      "pixelDiff": 835,
       "current": [
         45,
         35
@@ -215,7 +215,7 @@
       "facing": "away",
       "frame": 1,
       "level": 1,
-      "pixelDiff": null,
+      "pixelDiff": 1006,
       "current": [
         55,
         45
@@ -231,7 +231,7 @@
       "facing": "away",
       "frame": 1,
       "level": 2,
-      "pixelDiff": null,
+      "pixelDiff": 1703,
       "current": [
         78,
         71

@@ -1,5 +1,5 @@
 {
-  "sha": "4badb78ac02b04e7c7ab8a548a404da5d7fd5507",
+  "sha": "544b7b619eaac767ce4640f51c12f675c3250c4e",
   "measurements": [
     {
       "id": "flyingsquirrel",
@@ -71,7 +71,7 @@
       "facing": "towards",
       "frame": 1,
       "level": 0,
-      "pixelDiff": null,
+      "pixelDiff": 449,
       "current": [
         39,
         29
@@ -135,7 +135,7 @@
       "facing": "away",
       "frame": 0,
       "level": 0,
-      "pixelDiff": null,
+      "pixelDiff": 342,
       "current": [
         31,
         28
@@ -167,7 +167,7 @@
       "facing": "away",
       "frame": 0,
       "level": 2,
-      "pixelDiff": null,
+      "pixelDiff": 1901,
       "current": [
         83,
         63
@@ -199,7 +199,7 @@
       "facing": "away",
       "frame": 1,
       "level": 0,
-      "pixelDiff": null,
+      "pixelDiff": 343,
       "current": [
         32,
         28
