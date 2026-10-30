@@ -44,6 +44,29 @@ export async function compareGround({ baseline, candidate, fixture, beach }) {
   set('uLakes', tex(distances, n, n, T.RedFormat, T.FloatType)); set('uLakeLooks', tex(looks, n, n, T.RedFormat));
   set('uBeach', beach ? 1 : 0, 0, 0, 0); set('uLandBox', -64, -64, 1 / 128, 1 / 128);
   set('uLand', tex(land, n, n, T.RGBAFormat, T.FloatType));
+  uniforms.uCoastAppear = { value: 1 }; // production beach wrapper is a no-op at full readiness
+  const extraSwitches = {};
+  if (fixture.extras) {
+    const enabled = new Set(fixture.extras);
+    const image = (w, h, pixel) => { const data = new Uint8Array(w * h * 4); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) data.set(pixel(x, y), (y * w + x) * 4); return tex(data, w, h); };
+    set('uFloor', -24, 22, 12); set('uDiscoGeom', 1, 1, 32, 16);
+    set('uDiscoRim', enabled.has('DANCEFLOOR') ? 12 : 0);
+    set('uDiscoBase', image(32, 32, (x, y) => [90 + (x % 4) * 20, 80 + (y % 3) * 30, 100, 255]));
+    set('uDiscoLit', image(42, 14, () => [120, 150, 230, 255]));
+    set('uDiscoTiles', image(32, 32, () => [180, 220, 160, 85]));
+    set('uPave', 12, enabled.has('PAVEMENT') ? 25 : 0, 2, 3); set('uPave2', 1, 0.2, 0.3, 18);
+    set('uPaveStone', 0.5, 0.48, 0.43); set('uPaveDark', 0.22, 0.24, 0.25); set('uPaveMoss', 0.13, 0.28, 0.12); set('uPaveGrout', 0.09, 0.08, 0.07);
+    set('uZooStreet', enabled.has('ZOO_STREET') ? 1 : 0, 1, 5, 0);
+    set('uZooPlaza', -25, -24, 15, enabled.has('ZOO_PLAZA') ? 1 : 0);
+    set('uPlazaSigil', image(64, 64, (x, y) => { const p = x % 11 < 2 || y % 13 < 2 ? 255 : 0; return [p, p, p, 255]; }));
+    set('uLegendRingCount', enabled.has('LEGENDS') ? 1 : 0); uniforms.uLegendRings.value[0].set(25, -24, 17, 5);
+    uniforms.uLegendGlow.value[0] = 0.7; set('uLegendFloor', enabled.has('LEGEND_FLOOR') ? 1 : 0, 0.45, 2, 0);
+    uniforms.uLegendStone.value[0].set(0.5, 0.48, 0.42, 1); uniforms.uLegendDebris.value[0].set(0.3, 0.2, 0.1, 2); uniforms.uLegendGrowth.value[0].set(0.3, 0.4, 0, 0);
+    set('uLegendCarve', image(64, 64, (x, y) => [x % 7 < 2 || y % 9 < 2 ? 255 : 0, 0, 0, 255]));
+    uniforms.uKoi.value[0].set(-24, 0, enabled.has('KOI') ? 12 : 0, 17.4); set('uKoiSize', 4);
+    set('uBare', enabled.has('BARE') ? 2 : 0);
+    Object.assign(extraSwitches, { ZOO_STREET: ['uZooStreet', 'x'], ZOO_PLAZA: ['uZooPlaza', 'w'], DANCEFLOOR: ['uDiscoRim'], PAVEMENT: ['uPave', 'y'], LEGENDS: ['uLegendRingCount'], LEGEND_FLOOR: ['uLegendFloor', 'x'], BARE: ['uBare'] });
+  }
   let size = 128;
   if (fixture.field) {
     const f = fixture.field, [x, z, w, d] = f.box;
@@ -59,8 +82,8 @@ export async function compareGround({ baseline, candidate, fixture, beach }) {
     set('uPixel', Math.max(0.5, size / 384));
   }
   const defines = { ...(fixture.ids.length ? { GROUND_LAKES: '' } : {}), ...(beach ? { GROUND_BEACH: '' } : {}) };
-  const control = new T.ShaderMaterial({ vertexShader: baseline.VERT, fragmentShader: baseline.FRAG, defines, uniforms });
-  const mine = new T.ShaderMaterial({ vertexShader: candidate.VERT, fragmentShader: candidate.FRAG, defines: { ...defines, ...fixture.defines }, uniforms });
+  const control = new T.ShaderMaterial({ vertexShader: baseline.VERT, fragmentShader: baseline.FRAG, defines: { ...defines, ...fixture.defines }, uniforms });
+  const mine = new T.ShaderMaterial({ vertexShader: candidate.VERT, fragmentShader: beach && candidate.BEACH_FRAG ? candidate.BEACH_FRAG : candidate.FRAG, defines: { ...defines, ...fixture.defines }, uniforms });
   const geometry = new T.PlaneGeometry(size * 1.1, size * 1.1); geometry.rotateX(-Math.PI / 2);
   const mesh = new T.Mesh(geometry, control); scene.add(mesh);
   if (fixture.field) { const [x, z, w, d] = fixture.field.box; mesh.position.set(x + w / 2, 0, z + d / 2); }
@@ -78,7 +101,16 @@ export async function compareGround({ baseline, candidate, fixture, beach }) {
     const colors = new Set(); for (let i = 0; i < before.length; i += 4) colors.add(`${before[i]},${before[i + 1]},${before[i + 2]}`);
     if (colors.size < 3) throw Error('blank/flat fixture');
     // Ensure the removed code would affect these pixels: changing the lake look must change the reference picture.
-    let sensitivity = null;
+    let sensitivity = null, extraSensitivity = null;
+    if (fixture.sensitiveExtra) {
+      const key = fixture.sensitiveExtra, [name, component] = key === 'KOI' ? ['uKoi', 'z'] : extraSwitches[key];
+      const u = key === 'KOI' ? uniforms.uKoi.value[0] : uniforms[name];
+      const target = key === 'KOI' ? u : u.value, saved = component ? target[component] : u.value;
+      if (component) target[component] = 0; else u.value = 0;
+      extraSensitivity = { feature: key, ...diff(before, read(control)) };
+      if (component) target[component] = saved; else u.value = saved;
+      if (!extraSensitivity.pixels) throw Error(`ground extra ${key} not exercised`);
+    }
     if (fixture.ids.length) {
       const pixels = uniforms.uLakeLooks.value.image.data, original = pixels.slice(); sensitivity = [];
       for (const id of fixture.ids) {
@@ -92,7 +124,7 @@ export async function compareGround({ baseline, candidate, fixture, beach }) {
     const debug = gl.getExtension('WEBGL_debug_renderer_info');
     return { fixture: fixture.name, ids: fixture.ids, mode: beach ? 'beach' : 'plain', defines: mine.defines,
       gpu: debug ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER),
-      parallel: renderer.extensions.has('KHR_parallel_shader_compile'), sampledColors: colors.size, sensitivity,
+      parallel: renderer.extensions.has('KHR_parallel_shader_compile'), sampledColors: colors.size, sensitivity, extraSensitivity,
       parity: diff(before, after), currentDrift: diff(after, repeat), baselineDrift: diff(before, baseRepeat) };
   } finally {
     renderer.setRenderTarget(null); target.dispose(); control.dispose(); mine.dispose(); geometry.dispose();
