@@ -1,0 +1,135 @@
+// Skilled's recruit/kite/heal/cast/sigil priorities rebuilt across an explicit
+// observation boundary. No policy function receives Game or mutates the world.
+import type { Bot } from "../rules/bot";
+import type { Controls, Game } from "../rules/game";
+import { newObserver, type Observation, type Point } from "./observe";
+
+export const EXPERT_DEFAULTS = {
+  healAt: 1, healTo: 3, kite: 9, dashAt: 5, fireFrac: 0.95, closeFrac: 0.8,
+  stick: 250, ahead: 400, homeRange: 120, follow: 10,
+  homeStand: 22, castMoveFrac: 0.5, pickRadiusFrac: 0.6, retargetSeconds: 3,
+  questRange: 700, questBias: 400,
+};
+export type ExpertParams = typeof EXPERT_DEFAULTS;
+export const EXPERT_LIMITS = { reactionSeconds: 0.25, inputHz: 8, aimErrorMetres: 1 };
+export interface HumanLimits { reactionSeconds: number; inputHz: number; aimErrorMetres: number }
+
+const idle = (): Controls => ({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 });
+const dist = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.z - b.z);
+
+export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: HumanLimits = EXPERT_LIMITS): Bot {
+  if (limits.reactionSeconds < 0.25 || limits.inputHz > 8 || limits.inputHz <= 0 || limits.aimErrorMetres < 1 || ![limits.reactionSeconds, limits.inputHz, limits.aimErrorMetres].every(Number.isFinite)) throw Error("Expert human limits below approved floors");
+  const K = { ...EXPERT_DEFAULTS, ...params }, observe = newObserver();
+  if (!Object.values(K).every(Number.isFinite)) throw Error("Invalid expert parameters");
+  const queue: Observation[] = [], memory = new Map<string, Observation["stones"][number]>();
+  const quests = new Map<number, Observation["quests"][number]>();
+  let random = seed >>> 0, nextInput = 0, controls = idle(), healing = false, target: number | null = null, retargetAt = 0, lastArea = "", patrol = 0;
+  const bot: Bot = { kind: "expert", doing: "waiting for observations", done: { quests: [], relics: [] }, decide };
+  return bot;
+
+  function decide(g: Game): Controls {
+    const now = observe(g); queue.push(now);
+    let seen: Observation | null = null;
+    while (queue.length && queue[0].playerTime <= now.playerTime - limits.reactionSeconds + 1e-9) seen = queue.shift()!;
+    if (now.playerTime + 1e-9 < nextInput || !seen) return { ...controls, toggleMode: false, sigil: false, place: false, cycle: false, castParty: false };
+    nextInput = now.playerTime + 1 / limits.inputHz;
+    controls = policy(seen);
+    if (controls.fire) {
+      random = (Math.imul(random, 1664525) + 1013904223) >>> 0;
+      const angle = random / 4294967296 * 2 * Math.PI;
+      controls.aimX = (controls.aimX ?? 0) + Math.cos(angle) * limits.aimErrorMetres;
+      controls.aimZ = (controls.aimZ ?? 0) + Math.sin(angle) * limits.aimErrorMetres;
+    }
+    return { ...controls };
+  }
+
+  function policy(o: Observation): Controls {
+    const c = idle(), w = o.self;
+    for (const q of o.quests) { if (q.open) quests.set(q.id, structuredClone(q)); else quests.delete(q.id); }
+    const putDown = () => {
+      const near = o.placed.find(p => dist(w, p) < Math.max(o.pickRadius, o.spacing) * 1.1);
+      if (!near) c.sigil = true;
+      else { const d = dist(w, near); c.moveX = d > 0.01 ? (w.x - near.x) / d : 1; c.moveZ = d > 0.01 ? (w.z - near.z) / d : 0; }
+    };
+    for (const s of o.stones) memory.set(s.key, { ...s, cast: { ...s.cast } });
+    const go = (p: Point, stop = 3, fly = false) => {
+      const d = dist(w, p);
+      if (d > stop) { c.moveX = (p.x - w.x) / d; c.moveZ = (p.z - w.z) / d; }
+      const want = fly && d > 45 && !w.grounded ? "treetop" : "ground";
+      if ((w.mode === "ground" && want === "treetop") || (w.mode === "treetop" && want === "ground")) c.toggleMode = true;
+      return d <= stop && w.mode === "ground";
+    };
+    if (w.ko) { bot.doing = "recovering"; return c; }
+    if (o.waiting) { bot.doing = "casting the party spell"; c.castParty = true; return c; }
+    if (w.seated) { bot.doing = "leaving her seat"; c.moveZ = 1; return c; }
+    if (w.perched && w.mode === "ground") { bot.doing = "rising off the treehouse deck"; c.toggleMode = true; return c; }
+    if (w.hp <= K.healAt) healing = true;
+    if (w.hp >= K.healTo) healing = false;
+    if (healing) {
+      bot.doing = "rising to heal";
+      if (w.grounded) putDown();
+      else if (w.mode === "ground") c.toggleMode = true;
+      return c;
+    }
+    const cue = o.windups.sort((a, b) => dist(w, a) - dist(w, b))[0];
+    if (w.mode === "ground" && cue && dist(w, cue) < K.kite) {
+      const dx = w.x - cue.x, dz = w.z - cue.z, d = Math.hypot(dx, dz) || 1;
+      c.moveX = -dz / d; c.moveZ = dx / d; c.dash = true; c.aimX = c.moveX * 10; c.aimZ = c.moveZ * 10;
+      bot.doing = "dodging an audible wind-up"; return c;
+    }
+    if (o.find) { bot.doing = "collecting tonight's find"; if (go(o.find, o.pickRadius * K.pickRadiusFrac)) c.place = true; return c; }
+    const quest = [...quests.values()].filter(q => dist(w, q.delivery) <= K.questRange).sort((a, b) => dist(w, a.delivery) - dist(w, b.delivery))[0];
+    const offering = quest ? o.carried.find(a => a.species === quest.wants) : null;
+    if (quest && offering) {
+      bot.doing = "bringing a requested sigil to a legend";
+      if (go(quest.delivery, 3, true)) {
+        if (o.carried[o.carried.length - 1]?.id === offering.id) putDown(); else c.cycle = true;
+      }
+      return c;
+    }
+    const loot = [...o.loose, ...o.creatures.flatMap(a => a.rune ? [a.rune] : [])].sort((a, b) => dist(w, a) - dist(w, b))[0];
+    if (loot && dist(w, loot) < 25) {
+      bot.doing = "gathering a sigil";
+      if (go(loot, o.pickRadius * K.pickRadiusFrac)) c.place = true;
+      return c;
+    }
+    if (o.carried.length > K.follow && dist(w, o.home) < K.homeRange) {
+      bot.doing = "posting guards at home";
+      if (go({ x: o.home.x, z: o.home.z + K.homeStand }, 8, true)) putDown();
+      return c;
+    }
+    const ready = o.stones.filter(s => s.open && s.ready).sort((a, b) => dist(w, a) - dist(w, b))[0];
+    if (ready) {
+      bot.doing = "casting at a ready stone";
+      if (go(ready.cast, o.castRadius * K.castMoveFrac)) c.sigilHeld = !o.castBlocked;
+      return c;
+    }
+    const candidates = o.creatures.filter(a => !a.boss && !a.friendly && !a.rune && (a.level > 0 || a.species === quest?.wants));
+    const score = (a: typeof candidates[number]) => dist(w, a) - (a.area === lastArea ? K.stick : 0) - (o.next && dist(a, o.next) < 100 ? K.ahead : 0) - (a.species === quest?.wants ? K.questBias : 0);
+    if (o.playerTime >= retargetAt || !candidates.some(a => a.id === target)) {
+      target = [...candidates].sort((a, b) => score(a) - score(b) || a.id - b.id)[0]?.id ?? null;
+      retargetAt = o.playerTime + K.retargetSeconds;
+    }
+    const a = candidates.find(a => a.id === target);
+    if (a) {
+      lastArea = a.area; bot.doing = `inviting ${a.species}`;
+      if (w.mode !== "ground") { c.toggleMode = w.mode === "treetop"; return c; }
+      const d = dist(w, a); c.aimX = a.x - w.x; c.aimZ = a.z - w.z; c.fire = d < o.range * K.fireFrac;
+      if (d < K.kite && !a.stunned) { c.moveX = (w.x - a.x) / (d || 1); c.moveZ = (w.z - a.z) / (d || 1); c.dash = d < K.dashAt; }
+      else if (d > o.range * K.closeFrac) { c.moveX = (a.x - w.x) / (d || 1); c.moveZ = (a.z - w.z) / (d || 1); }
+      if (c.dash) { c.aimX = c.moveX * 10; c.aimZ = c.moveZ * 10; c.fire = false; }
+      return c;
+    }
+    const alarm = o.alarms[0], destination = o.straggler ?? alarm ?? quest?.hint ?? o.next;
+    if (destination && dist(w, destination) > 12) {
+      bot.doing = o.straggler ? "following the straggler pointer" : alarm ? "answering an alarm" : "following the wave pointer";
+      go(destination, 10, true); return c;
+    }
+    const unseen = [...memory.values()].filter(s => s.open && !o.stones.some(v => v.key === s.key)).sort((a, b) => dist(w, a) - dist(w, b))[0];
+    if (unseen) { bot.doing = "returning to a remembered stone"; go(unseen, 10, true); return c; }
+    // Local exploration uses no map, future wave list or unseen creature positions.
+    const angle = (patrol++ % 64) / 64 * Math.PI * 2;
+    bot.doing = "looking for someone to invite"; c.moveX = Math.cos(angle); c.moveZ = Math.sin(angle);
+    return c;
+  }
+}

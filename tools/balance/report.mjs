@@ -47,7 +47,7 @@ if (mode === "report") {
         else if (/\.(ts|mjs|js|json)$/.test(e.name)) { hash.update(relative(root, path).replaceAll("\\", "/")); hash.update(readFileSync(path)); }
       }
     }
-    for (const dir of ["src/rules", "config", "art", "tools/balance"]) addTree(dir);
+    for (const dir of ["src/rules", "src/bots", "config", "art", "tools/balance"]) addTree(dir);
     const commit = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
     const manifest = { schema: SCHEMA, mode, commit, build: arg("build", "local source (no published version asserted)"), fingerprint: hash.digest("hex"), step: R.STEP, limit, distance, seeds, bags, bpms, ...(mode === "runs" ? { bots, islands } : { species, levels }), loadout: { hat: "none", broomParts: [], ownedFinds: {} } };
     if (records.length && JSON.stringify(records[0].manifest) !== JSON.stringify(manifest)) throw Error("Experiment manifest differs; choose a new --out file. Existing results preserved.");

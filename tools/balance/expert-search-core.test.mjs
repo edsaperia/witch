@@ -4,7 +4,7 @@ import { startSearch, ask, tell, objective, better } from "./expert-search-core.
 
 const space = [["distance", 1, 10], ["guards", 0, 6, true]];
 const start = () => startSearch(space, { distance: 5, guards: 2 }, 713);
-const score = p => [0, p.guards, 10 - Math.abs(p.distance - 7)];
+const score = p => [0, 0, 0, 0, p.guards, 10 - Math.abs(p.distance - 7)];
 
 test("a serialized pending evaluation resumes the exact search trajectory", () => {
   let interrupted = start(); const uninterrupted = start();
@@ -21,10 +21,10 @@ test("a serialized pending evaluation resumes the exact search trajectory", () =
 });
 
 test("wins dominate all progress; waves dominate survival; ties retain incumbent", () => {
-  assert.equal(better([1, 0, 0], [0, 1e9, 1e12]), true);
-  assert.equal(better([0, 2, 0], [0, 1, 1e12]), true);
-  assert.equal(better([0, 2, 9], [0, 2, 9]), false);
-  assert.deepEqual(objective([{ outcome: "won", wavesPassed: 3, end: 10 }, { outcome: "censored", wavesPassed: 1, end: 20 }]), [1, 4, 30]);
+  assert.equal(better([1, 0, 0, 0, 0, 0], [0, 1e9, 1e9, 1e9, 1e9, 1e12]), true);
+  assert.equal(better([0, 2, 0, 0, 0, 0], [0, 1, 1e9, 1e9, 1e9, 1e12]), true);
+  assert.equal(better([0, 0, 0, 0, 2, 9], [0, 0, 0, 0, 2, 9]), false);
+  assert.deepEqual(objective([{ outcome: "won", questsCompleted: 1, questsTotal: 1, upgradeEligibleToKeep: true, wavesPassed: 3, end: 10 }, { outcome: "censored", questsCompleted: 0, questsTotal: 2, upgradeEligibleToKeep: false, wavesPassed: 1, end: 20 }]), [1, 1, 1, 1, 4, 30]);
 });
 
 test("invalid domains, results and mismatched checkpoint replies are refused", () => {
@@ -34,7 +34,7 @@ test("invalid domains, results and mismatched checkpoint replies are refused", (
   assert.throws(() => objective([]));
   assert.throws(() => objective([{ outcome: "lost", wavesPassed: NaN, end: 1 }]));
   const s = start(), c = ask(s);
-  assert.throws(() => tell(s, { ...c, id: 3 }, [0, 0, 0]));
-  assert.throws(() => tell(s, c, [NaN, 0, 0]));
-  tell(s, c, [0, 0, 0]); assert.throws(() => tell(s, c, [0, 0, 0]));
+  assert.throws(() => tell(s, { ...c, id: 3 }, [0, 0, 0, 0, 0, 0]));
+  assert.throws(() => tell(s, c, [NaN, 0, 0, 0, 0, 0]));
+  tell(s, c, [0, 0, 0, 0, 0, 0]); assert.throws(() => tell(s, c, [0, 0, 0, 0, 0, 0]));
 });
