@@ -1,5 +1,5 @@
 {
-  "sha": "dc564acf06ebac9d169bdc2636ded927c9db1626",
+  "sha": "e75a98186793c72edb79038c25648a2e91488718",
   "measurements": [
     {
       "id": "bat",
@@ -716,7 +716,7 @@
       ]
     }
   ],
-  "modelSourceCommit": "e8fea579c78b032809a82c297c1623c379c62459",
+  "modelSourceCommit": "090f76fdfaa584e6c7ef31a064771ba26aa590c8",
   "lighting": "albedo",
   "style": {
     "ambientHue": 0.68,

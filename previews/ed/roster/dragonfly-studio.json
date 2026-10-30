@@ -1,0 +1,813 @@
+{
+  "sha": "e75a98186793c72edb79038c25648a2e91488718",
+  "measurements": [
+    {
+      "id": "dragonfly",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 0,
+      "pixelDiff": 433,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            3,
+            10,
+            31,
+            39
+          ],
+          "occupiedPixels": 263
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            3,
+            11,
+            33,
+            38
+          ],
+          "occupiedPixels": 237
+        }
+      ],
+      "current": [
+        39,
+        40
+      ],
+      "proposed": [
+        40,
+        39
+      ]
+    },
+    {
+      "id": "dragonfly",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 1,
+      "pixelDiff": 762,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            4,
+            15,
+            51,
+            56
+          ],
+          "occupiedPixels": 551
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            4,
+            16,
+            54,
+            54
+          ],
+          "occupiedPixels": 497
+        }
+      ],
+      "current": [
+        61,
+        57
+      ],
+      "proposed": [
+        64,
+        55
+      ]
+    },
+    {
+      "id": "dragonfly",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 2,
+      "pixelDiff": 2751,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            2,
+            7,
+            84,
+            90
+          ],
+          "occupiedPixels": 1507
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            2,
+            7,
+            90,
+            87
+          ],
+          "occupiedPixels": 1379
+        }
+      ],
+      "current": [
+        98,
+        91
+      ],
+      "proposed": [
+        103,
+        88
+      ]
+    },
+    {
+      "id": "dragonfly",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 3,
+      "pixelDiff": 11197,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            5,
+            15,
+            213,
+            210
+          ],
+          "occupiedPixels": 8928
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            5,
+            14,
+            228,
+            202
+          ],
+          "occupiedPixels": 8048
+        }
+      ],
+      "current": [
+        244,
+        211
+      ],
+      "proposed": [
+        257,
+        203
+      ]
+    },
+    {
+      "id": "dragonfly",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 0,
+      "pixelDiff": 298,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            3,
+            13,
+            31,
+            36
+          ],
+          "occupiedPixels": 246
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            3,
+            11,
+            33,
+            38
+          ],
+          "occupiedPixels": 237
+        }
+      ],
+      "current": [
+        39,
+        37
+      ],
+      "proposed": [
+        40,
+        39
+      ]
+    },
+    {
+      "id": "dragonfly",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 1,
+      "pixelDiff": 1004,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            4,
+            18,
+            52,
+            51
+          ],
+          "occupiedPixels": 544
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            4,
+            16,
+            54,
+            54
+          ],
+          "occupiedPixels": 497
+        }
+      ],
+      "current": [
+        62,
+        52
+      ],
+      "proposed": [
+        64,
+        55
+      ]
+    },
+    {
+      "id": "dragonfly",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 2,
+      "pixelDiff": 1967,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            2,
+            7,
+            85,
+            81
+          ],
+          "occupiedPixels": 1518
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            2,
+            7,
+            90,
+            87
+          ],
+          "occupiedPixels": 1379
+        }
+      ],
+      "current": [
+        99,
+        82
+      ],
+      "proposed": [
+        103,
+        88
+      ]
+    },
+    {
+      "id": "dragonfly",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 3,
+      "pixelDiff": 15761,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            5,
+            13,
+            216,
+            187
+          ],
+          "occupiedPixels": 8608
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            5,
+            14,
+            228,
+            202
+          ],
+          "occupiedPixels": 8048
+        }
+      ],
+      "current": [
+        246,
+        188
+      ],
+      "proposed": [
+        257,
+        203
+      ]
+    },
+    {
+      "id": "dragonfly",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 0,
+      "pixelDiff": 347,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            3,
+            8,
+            24,
+            34
+          ],
+          "occupiedPixels": 185
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            3,
+            9,
+            26,
+            33
+          ],
+          "occupiedPixels": 167
+        }
+      ],
+      "current": [
+        32,
+        35
+      ],
+      "proposed": [
+        33,
+        34
+      ]
+    },
+    {
+      "id": "dragonfly",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 1,
+      "pixelDiff": 754,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            4,
+            12,
+            43,
+            51
+          ],
+          "occupiedPixels": 436
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            4,
+            15,
+            45,
+            50
+          ],
+          "occupiedPixels": 378
+        }
+      ],
+      "current": [
+        52,
+        52
+      ],
+      "proposed": [
+        54,
+        51
+      ]
+    },
+    {
+      "id": "dragonfly",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 2,
+      "pixelDiff": 2375,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            2,
+            7,
+            75,
+            87
+          ],
+          "occupiedPixels": 1310
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            2,
+            7,
+            80,
+            84
+          ],
+          "occupiedPixels": 1172
+        }
+      ],
+      "current": [
+        89,
+        88
+      ],
+      "proposed": [
+        93,
+        85
+      ]
+    },
+    {
+      "id": "dragonfly",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 3,
+      "pixelDiff": 9642,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            4,
+            15,
+            197,
+            209
+          ],
+          "occupiedPixels": 8039
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            4,
+            14,
+            212,
+            201
+          ],
+          "occupiedPixels": 7365
+        }
+      ],
+      "current": [
+        227,
+        210
+      ],
+      "proposed": [
+        239,
+        202
+      ]
+    },
+    {
+      "id": "dragonfly",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 0,
+      "pixelDiff": 328,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            3,
+            10,
+            25,
+            31
+          ],
+          "occupiedPixels": 174
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            3,
+            9,
+            26,
+            33
+          ],
+          "occupiedPixels": 167
+        }
+      ],
+      "current": [
+        32,
+        32
+      ],
+      "proposed": [
+        33,
+        34
+      ]
+    },
+    {
+      "id": "dragonfly",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 1,
+      "pixelDiff": 614,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            4,
+            16,
+            44,
+            46
+          ],
+          "occupiedPixels": 420
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            4,
+            15,
+            45,
+            50
+          ],
+          "occupiedPixels": 378
+        }
+      ],
+      "current": [
+        53,
+        47
+      ],
+      "proposed": [
+        54,
+        51
+      ]
+    },
+    {
+      "id": "dragonfly",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 2,
+      "pixelDiff": 2654,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            2,
+            6,
+            77,
+            77
+          ],
+          "occupiedPixels": 1294
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            2,
+            7,
+            80,
+            84
+          ],
+          "occupiedPixels": 1172
+        }
+      ],
+      "current": [
+        89,
+        78
+      ],
+      "proposed": [
+        93,
+        85
+      ]
+    },
+    {
+      "id": "dragonfly",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 3,
+      "pixelDiff": 16180,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            4,
+            13,
+            201,
+            182
+          ],
+          "occupiedPixels": 8230
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            4,
+            14,
+            212,
+            201
+          ],
+          "occupiedPixels": 7365
+        }
+      ],
+      "current": [
+        229,
+        183
+      ],
+      "proposed": [
+        239,
+        202
+      ]
+    }
+  ],
+  "resolvedRecords": [
+    {
+      "level": 0,
+      "column": "current",
+      "body": {
+        "wing": 0.62,
+        "tail": 0.6
+      },
+      "look": null,
+      "paletteHSV": [
+        0.5,
+        0.62,
+        0.62
+      ]
+    },
+    {
+      "level": 0,
+      "column": "proposed",
+      "body": {
+        "wing": 0.62,
+        "tail": 0.6,
+        "wingLength": 1.15,
+        "wingWidth": 0.55,
+        "wingAngle": 0
+      },
+      "look": null,
+      "paletteHSV": [
+        0.5,
+        0.62,
+        0.62
+      ]
+    },
+    {
+      "level": 1,
+      "column": "current",
+      "body": {
+        "wing": 0.8,
+        "tail": 0.85
+      },
+      "look": null,
+      "paletteHSV": [
+        0.5,
+        0.62,
+        0.62
+      ]
+    },
+    {
+      "level": 1,
+      "column": "proposed",
+      "body": {
+        "wing": 0.8,
+        "tail": 0.85,
+        "wingLength": 1.15,
+        "wingWidth": 0.55,
+        "wingAngle": 0
+      },
+      "look": null,
+      "paletteHSV": [
+        0.5,
+        0.62,
+        0.62
+      ]
+    },
+    {
+      "level": 2,
+      "column": "current",
+      "body": {
+        "wing": 1,
+        "tail": 1
+      },
+      "look": null,
+      "paletteHSV": [
+        0.5,
+        0.62,
+        0.62
+      ]
+    },
+    {
+      "level": 2,
+      "column": "proposed",
+      "body": {
+        "wing": 1,
+        "tail": 1,
+        "wingLength": 1.15,
+        "wingWidth": 0.55,
+        "wingAngle": 0
+      },
+      "look": null,
+      "paletteHSV": [
+        0.5,
+        0.62,
+        0.62
+      ]
+    },
+    {
+      "level": 3,
+      "column": "current",
+      "body": {
+        "wing": 1.45,
+        "tail": 1.4
+      },
+      "look": null,
+      "paletteHSV": [
+        0.5,
+        0.62,
+        0.62
+      ]
+    },
+    {
+      "level": 3,
+      "column": "proposed",
+      "body": {
+        "wing": 1.45,
+        "tail": 1.4,
+        "wingLength": 1.15,
+        "wingWidth": 0.55,
+        "wingAngle": 0
+      },
+      "look": null,
+      "paletteHSV": [
+        0.5,
+        0.62,
+        0.62
+      ]
+    }
+  ],
+  "modelSourceCommit": "090f76fdfaa584e6c7ef31a064771ba26aa590c8",
+  "lighting": "studio",
+  "style": {
+    "ambientHue": 0.68,
+    "ambient": 0.22,
+    "moon": 0.3,
+    "moonHue": 0.58,
+    "glowHue": 0.13,
+    "glowSat": 0.35,
+    "glowRadius": 110,
+    "glowPower": 1.4,
+    "bands": 3,
+    "dither": 0.35,
+    "round": 0.9,
+    "outline": "none",
+    "cOutline": "dark",
+    "shafts": 0.3,
+    "areaContrast": 0.6,
+    "sat": 0.9,
+    "leafHue": 0.3,
+    "leafVariety": 0.3,
+    "trunkHue": 0.07,
+    "groundHue": 0.27,
+    "groundVal": 0.4,
+    "pixel": 3,
+    "treeSize": 0.85,
+    "crownWidth": 3,
+    "clearing": 0.55,
+    "depth": 4,
+    "areaScale": 1,
+    "areaTypes": 64,
+    "density": 0.55,
+    "clump": 0.6,
+    "gnarl": 0.5,
+    "roots": 0.6,
+    "bark": 0.6,
+    "trees": 1,
+    "wBroad": 0.8,
+    "wFir": 0.6,
+    "wWillow": 0.5,
+    "wBirch": 0.5,
+    "wPalm": 0.3,
+    "wFlat": 0.5,
+    "bushes": 55,
+    "bushSize": 1,
+    "flowers": 0.3,
+    "cSat": 0.6,
+    "cVal": 0.85,
+    "head": 0.44,
+    "eye": 1,
+    "legs": 1,
+    "long": 1,
+    "size": 8,
+    "growth": 20,
+    "magicHue": 0.5,
+    "fur": 0.5,
+    "creatureScale": 1.5,
+    "texture": 1,
+    "texDetail": 0.3,
+    "hueShift": 0,
+    "cloakHue": 0.72,
+    "hairHue": 0.01,
+    "hatHue": 0.74,
+    "topHue": 0.13,
+    "jeansHue": 0.6,
+    "shoeHue": 0,
+    "phonesHue": 0.92,
+    "artStyle": "bold"
+  },
+  "largestCell": [
+    257,
+    211
+  ],
+  "selectionInterface": "shared #1470 selector"
+}
