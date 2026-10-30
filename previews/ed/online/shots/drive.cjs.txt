@@ -1,0 +1,123 @@
+const fs = require("fs"), path = require("path"), { chromium } = require("playwright");
+const out = process.argv[2], base = "http://127.0.0.1:4178";
+const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000).toFixed(0)} s]`, ...a);
+const R = { checks: [], errors: { host: [], guest: [], guest2: [], solo: [] } };
+const check = (ok, what) => { R.checks.push(`${ok === null ? "N/A " : ok ? "PASS" : "FAIL"} ${what}`); log(ok === null ? "N/A " : ok ? "PASS" : "FAIL", what); };
+const wait = ms => new Promise(r => setTimeout(r, ms));
+(async () => {
+  const browser = await chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
+  const mk = async name => { const ctx = await browser.newContext({ viewport: { width: 960, height: 540 } }); const p = await ctx.newPage(); p.on("pageerror", e => R.errors[name].push(`pageerror: ${e.message}`)); p.on("console", m => { if (m.type() === "error") R.errors[name].push(`console.error: ${m.text()}`); }); return p; };
+  let n = 0; const shot = async (p, name) => { const f = path.join(out, `${String(++n).padStart(2, "0")}-${name}.png`); await p.screenshot({ path: f }); log("shot", f); };
+  const O = p => p.evaluate(() => { const o = window.witchOnline; return o && { ready: o.ready, build: o.build, role: o.role, tick: o.tick, players: o.players, failure: o.failure, status: document.getElementById("status")?.textContent }; });
+  // host-side recorder: per frame (after the game's own rAF), tick, Date.now, players, clock
+  const recorder = () => { window.__rec = []; window.__snaps = new Map(); const loop = () => { requestAnimationFrame(loop); const o = window.witchOnline; if (!o?.ready) return; window.__rec.push({ tick: o.tick, now: Date.now(), players: o.players }); if (window.__rec.length > 4000) window.__rec.shift(); if (window.__keep) { window.__snaps.set(o.tick, JSON.stringify(o.state)); if (window.__snaps.size > 200) window.__snaps.delete(window.__snaps.keys().next().value); } }; requestAnimationFrame(loop); };
+  const host = await mk("host");
+  try {
+    await host.goto(`${base}/online/online.html?online=host&relay=ws%3A%2F%2Flocalhost%3A8787&seed=123&quick=1`);
+    await host.waitForFunction(() => window.witchOnline?.ready, null, { timeout: 300000, polling: 500 });
+    await host.evaluate(recorder);
+    let h = await O(host); log("host", JSON.stringify(h)); R.hostBuild = h.build;
+    await shot(host, "host-ready");
+    // host runs before guest
+    const a = await O(host); await wait(4000); const b = await O(host);
+    R.stateKeys = await host.evaluate(() => Object.keys(window.witchOnline.state || {}));
+    const clk = await host.evaluate(() => window.__rec.slice(-1)[0]);
+    check(b.tick > a.tick && b.players.length === 1, `host keeps running before a guest joins (tick ${a.tick} → ${b.tick} in 4 s, ${b.players.length} witch)`);
+    await host.waitForFunction(() => { const a = document.getElementById("invite"); return a && !a.hidden && a.href.includes("invite"); }, null, { timeout: 60000 });
+    const inviteHref = await host.evaluate(() => document.getElementById("invite").href); R.invite = inviteHref.replace(/invite=[^&]+/, "invite=<token>");
+    log("invite", R.invite);
+    const guest = await mk("guest");
+    const hostTickAtJoin = (await O(host)).tick;
+    await guest.goto(inviteHref);
+    const gT = Date.now(); await guest.waitForFunction(() => window.witchOnline?.ready, null, { timeout: 600000, polling: 500 }); R.guestReadySecs = (Date.now() - gT) / 1000; log('guest ready after', R.guestReadySecs);
+    await wait(2000);
+    h = await O(host); let g = await O(guest); log("host", JSON.stringify(h)); log("guest", JSON.stringify(g)); R.guestBuild = g.build;
+    check(h.players.length === 2 && g.players.length === 2 && g.role === "guest" && g.tick > hostTickAtJoin && !g.failure && !h.failure, `handshake and mid-night attach (guest joined at host tick ≥${hostTickAtJoin}; host ${h.players.length} witches, guest ${g.players.length}; guest tick ${g.tick}; failures ${h.failure}/${g.failure})`);
+    await shot(host, "host-after-join"); await shot(guest, "guest-after-join");
+    // matched-tick comparison
+    await host.evaluate(() => { window.__keep = true; }); await wait(1500);
+    const gs = await guest.evaluate(() => ({ tick: window.witchOnline.tick, s: JSON.stringify(window.witchOnline.state) }));
+    await wait(300);
+    const hsAt = await host.evaluate(t => window.__snaps.get(t) ?? null, gs.tick);
+    const hTicks = await host.evaluate(() => [...window.__snaps.keys()].slice(0, 3).concat([...window.__snaps.keys()].slice(-3)));
+    if (hsAt) {
+      const A = JSON.parse(hsAt), B = JSON.parse(gs.s), diffs = [];
+      const walk = (x, y, p) => { if (diffs.length > 15) return; if (typeof x !== typeof y) { diffs.push(`${p}: ${typeof x} vs ${typeof y}`); return; } if (x && typeof x === "object") { const ks = new Set([...Object.keys(x), ...Object.keys(y || {})]); for (const k of ks) walk(x[k], y?.[k], `${p}.${k}`); } else if (typeof x === "number" ? Math.abs(x - y) > 1e-9 && !(Number.isNaN(x) && Number.isNaN(y)) : x !== y) diffs.push(`${p}: ${JSON.stringify(x)?.slice(0, 60)} vs ${JSON.stringify(y)?.slice(0, 60)}`); };
+      walk(A, B, "state"); R.matchedDiffs = diffs;
+      check(diffs.length === 0, `complete state matches at matched authoritative tick ${gs.tick} (${diffs.length ? diffs.length + "+ differences: " + diffs.slice(0, 6).join("; ") : "identical snapshots, " + hsAt.length + " chars"})`);
+    } else check(false, `matched-tick comparison: host had no snapshot for guest tick ${gs.tick} (host kept ${JSON.stringify(hTicks)})`);
+    await host.evaluate(() => { window.__keep = false; window.__snaps.clear(); });
+    // guest input moves witch 1 only. Get the host witch up first? Host is idle; measure both.
+    const p0 = (await O(host)).players;
+    await guest.bringToFront(); await guest.keyboard.down("KeyD"); await wait(2500); await guest.keyboard.up("KeyD"); await wait(800);
+    const p1 = (await O(host)).players;
+    const d = i => Math.hypot(p1[i].x - p0[i].x, p1[i].z - p0[i].z);
+    R.inputMove = { before: p0, after: p1 };
+    check(d(1) > 0.5 && d(0) < 0.05, `guest input moves witch 1 only (witch 1 moved ${d(1).toFixed(2)} m, witch 0 ${d(0).toFixed(3)} m)`);
+    await shot(host, "host-after-guest-moved"); await shot(guest, "guest-after-guest-moved");
+    // follows own witch / sees other: positions on each page
+    R.follow = { host: await O(host), guest: await O(guest) };
+    // 250 ms neutralization: hold D on guest, then block guest JS for 2 s so no input is sent.
+    await guest.keyboard.down("KeyD"); await wait(1500);
+    const blockAt = Date.now();
+    const blocking = guest.evaluate(() => { const t = Date.now(); while (Date.now() - t < 2500) {} return Date.now(); });
+    await blocking; const unblock = Date.now();
+    await guest.keyboard.up("KeyD"); await wait(800);
+    const rec = await host.evaluate(([a, b]) => window.__rec.filter(r => r.now >= a - 600 && r.now <= b + 200).map(r => ({ now: r.now, x: r.players[1]?.x, z: r.players[1]?.z })), [blockAt, unblock]);
+    let lastMove = null; for (let i = 1; i < rec.length; i++) { const m = Math.hypot(rec[i].x - rec[i - 1].x, rec[i].z - rec[i - 1].z); if (m > 0.002 && rec[i].now <= unblock) lastMove = rec[i].now; }
+    const movingBefore = rec.filter(r => r.now < blockAt).length > 1 && Math.hypot(rec.find(r => r.now >= blockAt - 400)?.x - rec.find(r => r.now >= blockAt - 50)?.x, 0) > 0.05;
+    R.neutral = { blockAt, unblock, lastMove, frames: rec.length };
+    check(movingBefore && lastMove !== null && lastMove - blockAt < 600 && lastMove - blockAt > 100, `missing guest input goes neutral (moving before the guest page froze: ${movingBefore}; witch 1's last movement ${lastMove ? lastMove - blockAt : "?"} ms after the guest's last chance to send, expected ≈250 ms + latency + slowdown; the guest frozen ${unblock - blockAt} ms)`);
+    // cursor + fire on both pages
+    for (const p of [host, guest]) { await p.bringToFront(); for (let i = 0; i < 6; i++) { await p.mouse.move(200 + i * 100, 150 + (i % 3) * 100); await wait(150); } await p.mouse.down(); await wait(300); await p.mouse.up(); await p.mouse.click(700, 300); await wait(300); }
+    await wait(1000);
+    const nullErr = [...R.errors.host, ...R.errors.guest].filter(e => /null|undefined|control/i.test(e));
+    h = await O(host); g = await O(guest);
+    check(nullErr.length === 0 && !h.failure && !g.failure, `cursor moves and fire on both pages: no null-control exception (${nullErr.length} matching errors; failures ${h.failure}/${g.failure})`);
+    // pause
+    const clockAt = async () => host.evaluate(() => { const s = window.witchOnline.state; return { clock: s?.clock?.time ?? null, herTimes: (s?.witches || []).map(w => w.time ?? null), paused: window.witchOnline.players.map(p => p.paused) }; });
+    await host.bringToFront(); await host.keyboard.press("Escape"); await wait(600);
+    const c1 = await clockAt(); await wait(2000); const c2 = await clockAt();
+    await guest.bringToFront(); await guest.keyboard.press("Escape"); await wait(800);
+    const c3 = await clockAt(); await wait(2000); const c4 = await clockAt();
+    await shot(host, "host-both-paused"); await shot(guest, "guest-both-paused");
+    await guest.keyboard.press("Escape"); await host.bringToFront(); await host.keyboard.press("Escape"); await wait(800);
+    const c5 = await clockAt(); await wait(1500); const c6 = await clockAt();
+    R.pause = { c1, c2, c3, c4, c5, c6 };
+    check(c2.clock > c1.clock && c4.clock === c3.clock && c6.clock > c5.clock, `the world stops only when both pause (host paused: world ${c1.clock?.toFixed(2)}→${c2.clock?.toFixed(2)}, paused flags ${JSON.stringify(c2.paused)}; both: ${c3.clock?.toFixed(2)}→${c4.clock?.toFixed(2)}, ${JSON.stringify(c4.paused)}; both resumed: ${c5.clock?.toFixed(2)}→${c6.clock?.toFixed(2)})`);
+    // guest leaves
+    const before = await host.evaluate(() => { const s = window.witchOnline.state; const cr = s?.creatures || []; return { happy: cr.filter(c => c.state === "happy").length, creatures: cr.length, sigils: JSON.stringify(s?.floorSigils ?? s?.sigils ?? null)?.length ?? null, keys: Object.keys(s || {}).length }; });
+    await guest.click("#leave"); await wait(3000);
+    h = await O(host);
+    const after = await host.evaluate(() => { const s = window.witchOnline.state; const cr = s?.creatures || []; return { happy: cr.filter(c => c.state === "happy").length, creatures: cr.length, sigils: JSON.stringify(s?.floorSigils ?? s?.sigils ?? null)?.length ?? null, keys: Object.keys(s || {}).length }; });
+    const t1 = (await O(host)).tick; await wait(1500); const t2 = (await O(host)).tick;
+    R.leave = { before, after, guestUrl: guest.url() };
+    check(h.players.length === 1 && after.creatures === before.creatures && after.happy >= before.happy && t2 > t1 && !h.failure, `guest leaving keeps the world intact (host witches ${h.players.length}, status "${h.status}"; creatures ${before.creatures}→${after.creatures}, happy ${before.happy}→${after.happy} — note: no happy creatures or placed sigils were set up, so that part is not exercised; host ticking ${t1}→${t2}; guest went to ${guest.url()})`);
+    await shot(host, "host-after-guest-left");
+    // host leaving: new guest
+    const guest2 = await mk("guest2");
+    await guest2.goto(inviteHref);
+    const joined = await guest2.waitForFunction(() => window.witchOnline?.ready, null, { timeout: 600000, polling: 500 }).then(() => true).catch(() => false);
+    const g2 = joined ? await O(guest2) : { players: [] };
+    log("guest2", JSON.stringify(g2));
+    if (joined && g2.players.length === 2) {
+      await shot(guest2, "guest2-joined");
+      await host.click("#leave");
+      const back = await guest2.waitForFunction(() => !location.pathname.includes("/online/"), null, { timeout: 60000, polling: 200 }).then(() => true).catch(() => false);
+      const url = guest2.url();
+      const solo = back ? await guest2.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 300000, polling: 500 }).then(() => true).catch(() => false) : false;
+      check(back && solo, `host leaving returns the guest to the normal game (guest now at ${url.replace(/invite=[^&#]+/, "invite=<token>")}; ordinary game ready ${solo})`);
+      await shot(guest2, "guest2-returned-home");
+    } else check(false, `host leaving: couldn't rejoin a second guest with the same invitation (ready ${joined}, ${JSON.stringify(g2).slice(0, 200)}) — host-leave not driven`);
+    // ordinary entry
+    const solo = await mk("solo");
+    await solo.goto(`${base}/?seed=123&quick=1`);
+    const ok = await solo.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 300000, polling: 500 }).then(() => true).catch(() => false);
+    const ver = await solo.evaluate(() => document.getElementById("version")?.textContent);
+    check(ok && R.errors.solo.length === 0, `the ordinary entry still loads (${base}/?seed=123&quick=1 ready ${ok}, version "${ver}", ${R.errors.solo.length} errors)`);
+    await shot(solo, "ordinary-entry");
+  } catch (e) { R.driverError = e.stack; log("DRIVER", e.stack); }
+  fs.writeFileSync(path.join(out, "result.json"), JSON.stringify(R, null, 1));
+  log("errors", JSON.stringify(R.errors).slice(0, 3000));
+  await browser.close();
+})();

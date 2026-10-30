@@ -1,0 +1,7 @@
+[26 s] host {"ready":true,"build":"dev · ef4c78a","role":"host","tick":2,"players":[{"id":0,"x":3160.7087183662898,"z":2720.746777190793}],"failure":null,"status":"Host · dev · ef4c78a"}
+[27 s] shot shots/01-host-ready.png
+[31 s] PASS host keeps running before a guest joins (tick 6 → 69 in 4 s, 1 witch)
+[31 s] invite http://127.0.0.1:4178/online/online.html?online=guest&relay=ws%3A%2F%2Flocalhost%3A8787&seed=123&quick=1&room=9157113#invite=<token>
+[638 s] DRIVER page.waitForFunction: Timeout 600000ms exceeded.
+    at /tmp/claude-0/-home-user-witch/0d548b8a-0656-537d-b576-63f846372a2d/scratchpad/online/drive.cjs:32:40
+[638 s] errors {"host":[],"guest":[],"guest2":[],"solo":[]}

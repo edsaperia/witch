@@ -1,0 +1,20 @@
+const { chromium } = require("playwright"), fs = require("fs");
+(async () => {
+  const b = await chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
+  const mk = async n => { const c = await b.newContext({ viewport: { width: 960, height: 540 } }); const p = await c.newPage(); p.on("console", m => { if (m.type() !== "warning") console.log(n, m.type(), m.text().slice(0, 200)); }); p.on("pageerror", e => console.log(n, "PAGEERROR", e.message)); return p; };
+  const h = await mk("H");
+  await h.goto("http://127.0.0.1:4178/online/online.html?online=host&relay=ws%3A%2F%2Flocalhost%3A8787&seed=123&quick=1");
+  await h.waitForFunction(() => window.witchOnline?.ready && !document.getElementById("invite").hidden, null, { timeout: 300000, polling: 500 });
+  await h.screenshot({ path: "shots/01-host-ready.png" });
+  const inv = await h.evaluate(() => document.getElementById("invite").href);
+  const g = await mk("G"); const t = Date.now();
+  await g.goto(inv);
+  g.on("framenavigated", f => { if (f === g.mainFrame()) console.log("G navigated", ((Date.now() - t) / 1000).toFixed(1), f.url().replace(/invite=[^&]+/, "invite=T")); }); await new Promise(r => setTimeout(r, 8000));
+  console.log("host players", JSON.stringify(await h.evaluate(() => window.witchOnline.players)));
+  await h.screenshot({ path: "shots/02-host-after-guest-joined.png" });
+  const ok = await g.waitForFunction(() => window.witchOnline?.ready, null, { timeout: 420000, polling: 1000 }).then(() => true).catch(() => false);
+  console.log("guest ready", ok, "after", (Date.now() - t) / 1000, "s", g.url().replace(/invite=[^&]+/, "invite=T"), JSON.stringify(await g.evaluate(() => ({ status: document.getElementById("status")?.textContent, tick: window.witchOnline?.tick, failure: window.witchOnline?.failure, solo: !!window.witch }))), "host", JSON.stringify(await h.evaluate(() => ({ status: document.getElementById("status").textContent, players: window.witchOnline.players }))));
+  await g.screenshot({ path: "shots/03-guest-after-wait.png" });
+  const cdp = await g.context().newCDPSession(g); await cdp.send("Debugger.enable"); await cdp.send("Debugger.pause").catch(() => {});
+  await b.close();
+})();

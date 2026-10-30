@@ -1,0 +1,20 @@
+{
+ "checks": [
+  "PASS host keeps running before a guest joins (tick 6 → 69 in 4 s, 1 witch)"
+ ],
+ "errors": {
+  "host": [],
+  "guest": [],
+  "guest2": [],
+  "solo": []
+ },
+ "hostBuild": "dev · ef4c78a",
+ "stateKeys": [
+  "version",
+  "seed",
+  "tuning",
+  "state"
+ ],
+ "invite": "http://127.0.0.1:4178/online/online.html?online=guest&relay=ws%3A%2F%2Flocalhost%3A8787&seed=123&quick=1&room=9157113#invite=<token>",
+ "driverError": "page.waitForFunction: Timeout 600000ms exceeded.\n    at /tmp/claude-0/-home-user-witch/0d548b8a-0656-537d-b576-63f846372a2d/scratchpad/online/drive.cjs:32:40"
+}
