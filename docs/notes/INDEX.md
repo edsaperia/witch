@@ -214,6 +214,7 @@ says what each note covers.
 
 ## [Performance](performance.md)
 
+- Startup bundle baseline
 - Slow-frame summaries
 - Reused surface roughness (#1464, 2026-10-30):
 - Exact travel art profiles (2026-10-30, #1464):

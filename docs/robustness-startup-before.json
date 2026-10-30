@@ -1,0 +1,6585 @@
+{
+  "sourceSha": "46cfe048e65fa17746662d5435028ca311b1386d",
+  "build": {
+    "version": "dev · 46cfe04",
+    "built": "2026-10-30T17:17:26.642Z"
+  },
+  "buildOptions": "npx vite build --sourcemap --manifest; WITCH_SHA=sourceSha; WITCH_VERSION unset",
+  "scope": "HTML scripts/modulepreloads plus transitive static JS/CSS imports; worker/font/URL assets listed separately, not assumed downloaded",
+  "compression": "gzip level9 / Brotli quality5, each file separately; estimates, not observed network traffic",
+  "files": [
+    {
+      "file": "assets/beat-eYCIESfM.js",
+      "bytes": 53915,
+      "gzip9": 14445,
+      "brotli5": 13982
+    },
+    {
+      "file": "assets/botKinds-BSkcDjtV.js",
+      "bytes": 2167,
+      "gzip9": 1182,
+      "brotli5": 1139
+    },
+    {
+      "file": "assets/chartView-fA2QDNGY.js",
+      "bytes": 676733,
+      "gzip9": 188029,
+      "brotli5": 176160
+    },
+    {
+      "file": "assets/decisions-CblCDwpL.js",
+      "bytes": 60851,
+      "gzip9": 18728,
+      "brotli5": 17899
+    },
+    {
+      "file": "assets/dom-D4rI-PaU.js",
+      "bytes": 698,
+      "gzip9": 393,
+      "brotli5": 337
+    },
+    {
+      "file": "assets/finds-C2fUlpkj.js",
+      "bytes": 1111169,
+      "gzip9": 384439,
+      "brotli5": 357819
+    },
+    {
+      "file": "assets/generator-aUTBQg5K.js",
+      "bytes": 72676,
+      "gzip9": 25138,
+      "brotli5": 24247
+    },
+    {
+      "file": "assets/linkParams-D2oyREu3.js",
+      "bytes": 22922,
+      "gzip9": 9322,
+      "brotli5": 9000
+    },
+    {
+      "file": "assets/main-DdDt3PZI.js",
+      "bytes": 1344022,
+      "gzip9": 488166,
+      "brotli5": 448605
+    },
+    {
+      "file": "assets/mapPrep-tGzc15yT.js",
+      "bytes": 338251,
+      "gzip9": 123118,
+      "brotli5": 117029
+    },
+    {
+      "file": "assets/opening-ilra2oSt.js",
+      "bytes": 209711,
+      "gzip9": 76141,
+      "brotli5": 73503
+    },
+    {
+      "file": "assets/party-D1H0hqdq.js",
+      "bytes": 33247,
+      "gzip9": 13574,
+      "brotli5": 13234
+    },
+    {
+      "file": "assets/playtestComments-CRW8xwkb.js",
+      "bytes": 25678,
+      "gzip9": 9116,
+      "brotli5": 8844
+    },
+    {
+      "file": "assets/settings-BcyKAogI.js",
+      "bytes": 3540,
+      "gzip9": 1616,
+      "brotli5": 1516
+    },
+    {
+      "file": "assets/stoneStacks-NtcG0lIn.js",
+      "bytes": 57308,
+      "gzip9": 23473,
+      "brotli5": 23032
+    },
+    {
+      "file": "assets/storageFallback-Cob04PA5.js",
+      "bytes": 635,
+      "gzip9": 409,
+      "brotli5": 372
+    },
+    {
+      "file": "assets/viewParams-DsUvcQ32.js",
+      "bytes": 1065,
+      "gzip9": 596,
+      "brotli5": 555
+    },
+    {
+      "file": "assets/zooControls-BWV1nMoL.js",
+      "bytes": 2192,
+      "gzip9": 1052,
+      "brotli5": 1000
+    }
+  ],
+  "totals": {
+    "bytes": 4016780,
+    "gzip9": 1378937,
+    "brotli5": 1288273
+  },
+  "unmappedInitialJsBytes": 127590,
+  "sources": [
+    {
+      "source": "node_modules/three/build/three.module.js",
+      "generatedBytes": 352427,
+      "sourceTextBytes": 662772
+    },
+    {
+      "source": "node_modules/three/build/three.core.js",
+      "generatedBytes": 183789,
+      "sourceTextBytes": 1458113
+    },
+    {
+      "source": "art/creatures3d.js",
+      "generatedBytes": 124265,
+      "sourceTextBytes": 248092
+    },
+    {
+      "source": "src/render/ground.ts",
+      "generatedBytes": 57403,
+      "sourceTextBytes": 79283
+    },
+    {
+      "source": "src/render/view.ts",
+      "generatedBytes": 54547,
+      "sourceTextBytes": 147019
+    },
+    {
+      "source": "art/witch.js",
+      "generatedBytes": 54405,
+      "sourceTextBytes": 113822
+    },
+    {
+      "source": "src/render/sprites.ts",
+      "generatedBytes": 52816,
+      "sourceTextBytes": 74138
+    },
+    {
+      "source": "art/furniture.js",
+      "generatedBytes": 47356,
+      "sourceTextBytes": 91481
+    },
+    {
+      "source": "src/main.ts",
+      "generatedBytes": 45696,
+      "sourceTextBytes": 126207
+    },
+    {
+      "source": "art/party.js",
+      "generatedBytes": 45612,
+      "sourceTextBytes": 69959
+    },
+    {
+      "source": "art/areas.js",
+      "generatedBytes": 44866,
+      "sourceTextBytes": 84881
+    },
+    {
+      "source": "art/landmarks.js",
+      "generatedBytes": 40105,
+      "sourceTextBytes": 63178
+    },
+    {
+      "source": "art/country.js",
+      "generatedBytes": 38611,
+      "sourceTextBytes": 60890
+    },
+    {
+      "source": "src/render/chart/seaChart.ts",
+      "generatedBytes": 34371,
+      "sourceTextBytes": 73475
+    },
+    {
+      "source": "src/rules/game.ts",
+      "generatedBytes": 33390,
+      "sourceTextBytes": 99923
+    },
+    {
+      "source": "src/render/workshopPieces.ts",
+      "generatedBytes": 33181,
+      "sourceTextBytes": 5078
+    },
+    {
+      "source": "src/rules/map.ts",
+      "generatedBytes": 31978,
+      "sourceTextBytes": 99871
+    },
+    {
+      "source": "src/ui/creator.ts",
+      "generatedBytes": 31947,
+      "sourceTextBytes": 74391
+    },
+    {
+      "source": "src/platform/audio/musicEngine.ts",
+      "generatedBytes": 30683,
+      "sourceTextBytes": 75082
+    },
+    {
+      "source": "src/render/leash/combat.ts",
+      "generatedBytes": 30142,
+      "sourceTextBytes": 58903
+    },
+    {
+      "source": "src/rules/combat.ts",
+      "generatedBytes": 29715,
+      "sourceTextBytes": 73616
+    },
+    {
+      "source": "src/rules/attacks/engine.ts",
+      "generatedBytes": 29163,
+      "sourceTextBytes": 65391
+    },
+    {
+      "source": "src/ui/stationPanel.ts",
+      "generatedBytes": 29001,
+      "sourceTextBytes": 50389
+    },
+    {
+      "source": "src/rules/islandShape.ts",
+      "generatedBytes": 27888,
+      "sourceTextBytes": 4695
+    },
+    {
+      "source": "src/render/leylines.ts",
+      "generatedBytes": 26313,
+      "sourceTextBytes": 56603
+    },
+    {
+      "source": "art/effects.js",
+      "generatedBytes": 25631,
+      "sourceTextBytes": 47506
+    },
+    {
+      "source": "art/relics.js",
+      "generatedBytes": 22831,
+      "sourceTextBytes": 35298
+    },
+    {
+      "source": "src/render/houseRooms.ts",
+      "generatedBytes": 22819,
+      "sourceTextBytes": 52171
+    },
+    {
+      "source": "src/render/leash.ts",
+      "generatedBytes": 22008,
+      "sourceTextBytes": 60513
+    },
+    {
+      "source": "art/setpieces.js",
+      "generatedBytes": 21554,
+      "sourceTextBytes": 35186
+    },
+    {
+      "source": "art/props/generator.js",
+      "generatedBytes": 20902,
+      "sourceTextBytes": 39010
+    },
+    {
+      "source": "art/bedroom.js",
+      "generatedBytes": 20882,
+      "sourceTextBytes": 39813
+    },
+    {
+      "source": "art/ent.js",
+      "generatedBytes": 20600,
+      "sourceTextBytes": 44996
+    },
+    {
+      "source": "art/treehouse.js",
+      "generatedBytes": 20493,
+      "sourceTextBytes": 40358
+    },
+    {
+      "source": "src/render/assets.ts",
+      "generatedBytes": 19645,
+      "sourceTextBytes": 58087
+    },
+    {
+      "source": "src/rules/attacks/parse.ts",
+      "generatedBytes": 19483,
+      "sourceTextBytes": 6079
+    },
+    {
+      "source": "art/decor.js",
+      "generatedBytes": 19352,
+      "sourceTextBytes": 31971
+    },
+    {
+      "source": "art/dancefloor.js",
+      "generatedBytes": 19245,
+      "sourceTextBytes": 31935
+    },
+    {
+      "source": "src/render/leash/attackLook.ts",
+      "generatedBytes": 19208,
+      "sourceTextBytes": 41869
+    },
+    {
+      "source": "art/paths.js",
+      "generatedBytes": 18560,
+      "sourceTextBytes": 30720
+    },
+    {
+      "source": "src/app/chartView.ts",
+      "generatedBytes": 18375,
+      "sourceTextBytes": 40839
+    },
+    {
+      "source": "src/render/artBuild.ts",
+      "generatedBytes": 18328,
+      "sourceTextBytes": 67094
+    },
+    {
+      "source": "src/render/lakeLooks.ts",
+      "generatedBytes": 18292,
+      "sourceTextBytes": 26002
+    },
+    {
+      "source": "src/rules/combat/packs.ts",
+      "generatedBytes": 17847,
+      "sourceTextBytes": 51645
+    },
+    {
+      "source": "src/render/crown.ts",
+      "generatedBytes": 17510,
+      "sourceTextBytes": 30265
+    },
+    {
+      "source": "src/render/leash/bubbles.ts",
+      "generatedBytes": 16997,
+      "sourceTextBytes": 33046
+    },
+    {
+      "source": "art/sigils.js",
+      "generatedBytes": 16709,
+      "sourceTextBytes": 54330
+    },
+    {
+      "source": "art/props/sets.js",
+      "generatedBytes": 16412,
+      "sourceTextBytes": 29640
+    },
+    {
+      "source": "src/platform/audio/sfxCues.ts",
+      "generatedBytes": 15797,
+      "sourceTextBytes": 40089
+    },
+    {
+      "source": "src/rules/forest.ts",
+      "generatedBytes": 14964,
+      "sourceTextBytes": 40043
+    },
+    {
+      "source": "src/render/height.ts",
+      "generatedBytes": 14715,
+      "sourceTextBytes": 38574
+    },
+    {
+      "source": "art/trees.js",
+      "generatedBytes": 14493,
+      "sourceTextBytes": 38301
+    },
+    {
+      "source": "src/render/view/home.ts",
+      "generatedBytes": 14364,
+      "sourceTextBytes": 41219
+    },
+    {
+      "source": "src/render/invites.ts",
+      "generatedBytes": 14162,
+      "sourceTextBytes": 34638
+    },
+    {
+      "source": "art/flora/blob.js",
+      "generatedBytes": 13586,
+      "sourceTextBytes": 27835
+    },
+    {
+      "source": "art/props/stumps.js",
+      "generatedBytes": 13162,
+      "sourceTextBytes": 29521
+    },
+    {
+      "source": "src/render/post.ts",
+      "generatedBytes": 13096,
+      "sourceTextBytes": 24651
+    },
+    {
+      "source": "src/render/view/witch.ts",
+      "generatedBytes": 13057,
+      "sourceTextBytes": 35432
+    },
+    {
+      "source": "art/attackLook.js",
+      "generatedBytes": 12991,
+      "sourceTextBytes": 23184
+    },
+    {
+      "source": "src/render/view/scenery.ts",
+      "generatedBytes": 12858,
+      "sourceTextBytes": 30987
+    },
+    {
+      "source": "art/scenes.js",
+      "generatedBytes": 12140,
+      "sourceTextBytes": 19441
+    },
+    {
+      "source": "src/ui/loadingScreen.js",
+      "generatedBytes": 12091,
+      "sourceTextBytes": 24391
+    },
+    {
+      "source": "src/rules/movement.ts",
+      "generatedBytes": 12015,
+      "sourceTextBytes": 38923
+    },
+    {
+      "source": "src/rules/partyWitches.ts",
+      "generatedBytes": 11959,
+      "sourceTextBytes": 30856
+    },
+    {
+      "source": "src/ui/pixelUi.ts",
+      "generatedBytes": 11790,
+      "sourceTextBytes": 16691
+    },
+    {
+      "source": "src/render/view/creatures.ts",
+      "generatedBytes": 11647,
+      "sourceTextBytes": 33797
+    },
+    {
+      "source": "src/rules/crown.ts",
+      "generatedBytes": 11541,
+      "sourceTextBytes": 32914
+    },
+    {
+      "source": "art/elders.js",
+      "generatedBytes": 11229,
+      "sourceTextBytes": 21798
+    },
+    {
+      "source": "src/render/strings.ts",
+      "generatedBytes": 11206,
+      "sourceTextBytes": 20682
+    },
+    {
+      "source": "src/render/grass.ts",
+      "generatedBytes": 11198,
+      "sourceTextBytes": 22569
+    },
+    {
+      "source": "src/rules/leyroute.ts",
+      "generatedBytes": 10924,
+      "sourceTextBytes": 32582
+    },
+    {
+      "source": "src/rules/musicScore.ts",
+      "generatedBytes": 10723,
+      "sourceTextBytes": 53232
+    },
+    {
+      "source": "art/soundsystemGen.js",
+      "generatedBytes": 10694,
+      "sourceTextBytes": 23541
+    },
+    {
+      "source": "art/core.js",
+      "generatedBytes": 10595,
+      "sourceTextBytes": 23962
+    },
+    {
+      "source": "src/ui/fightArena.ts",
+      "generatedBytes": 10580,
+      "sourceTextBytes": 15612
+    },
+    {
+      "source": "art/soundsystem.js",
+      "generatedBytes": 10427,
+      "sourceTextBytes": 22935
+    },
+    {
+      "source": "src/ui/studioPanel.ts",
+      "generatedBytes": 10256,
+      "sourceTextBytes": 14263
+    },
+    {
+      "source": "src/render/sky.ts",
+      "generatedBytes": 10197,
+      "sourceTextBytes": 14106
+    },
+    {
+      "source": "art/model3d.js",
+      "generatedBytes": 9957,
+      "sourceTextBytes": 21008
+    },
+    {
+      "source": "src/platform/audio/chimes.ts",
+      "generatedBytes": 9895,
+      "sourceTextBytes": 19632
+    },
+    {
+      "source": "src/render/lighting.ts",
+      "generatedBytes": 9873,
+      "sourceTextBytes": 15300
+    },
+    {
+      "source": "src/render/zooFences.ts",
+      "generatedBytes": 9687,
+      "sourceTextBytes": 18967
+    },
+    {
+      "source": "src/ui/spellScroll.ts",
+      "generatedBytes": 9646,
+      "sourceTextBytes": 21000
+    },
+    {
+      "source": "src/render/indicator.ts",
+      "generatedBytes": 9601,
+      "sourceTextBytes": 28089
+    },
+    {
+      "source": "src/rules/creatures.ts",
+      "generatedBytes": 9582,
+      "sourceTextBytes": 44834
+    },
+    {
+      "source": "src/rules/land.ts",
+      "generatedBytes": 9536,
+      "sourceTextBytes": 25477
+    },
+    {
+      "source": "src/platform/audio/night.ts",
+      "generatedBytes": 9332,
+      "sourceTextBytes": 17544
+    },
+    {
+      "source": "src/platform/audio/ambience.ts",
+      "generatedBytes": 9126,
+      "sourceTextBytes": 15353
+    },
+    {
+      "source": "src/rules/paths.ts",
+      "generatedBytes": 9031,
+      "sourceTextBytes": 22349
+    },
+    {
+      "source": "src/render/fx/system.ts",
+      "generatedBytes": 9022,
+      "sourceTextBytes": 15008
+    },
+    {
+      "source": "src/rules/leash.ts",
+      "generatedBytes": 9010,
+      "sourceTextBytes": 35934
+    },
+    {
+      "source": "src/render/rig/rig.ts",
+      "generatedBytes": 8995,
+      "sourceTextBytes": 25285
+    },
+    {
+      "source": "art/brooms.js",
+      "generatedBytes": 8915,
+      "sourceTextBytes": 16379
+    },
+    {
+      "source": "src/app/timing.ts",
+      "generatedBytes": 8855,
+      "sourceTextBytes": 5541
+    },
+    {
+      "source": "src/rules/combat/legend.ts",
+      "generatedBytes": 8719,
+      "sourceTextBytes": 17973
+    },
+    {
+      "source": "src/platform/audio/babble.ts",
+      "generatedBytes": 8637,
+      "sourceTextBytes": 19393
+    },
+    {
+      "source": "src/platform/audio/outputMeter.ts",
+      "generatedBytes": 8613,
+      "sourceTextBytes": 21720
+    },
+    {
+      "source": "art/houseMess.js",
+      "generatedBytes": 8584,
+      "sourceTextBytes": 15839
+    },
+    {
+      "source": "src/render/cauldronView.ts",
+      "generatedBytes": 8530,
+      "sourceTextBytes": 14953
+    },
+    {
+      "source": "src/render/trunkShadows.ts",
+      "generatedBytes": 8383,
+      "sourceTextBytes": 14147
+    },
+    {
+      "source": "config/house/assemble.js",
+      "generatedBytes": 8350,
+      "sourceTextBytes": 5572
+    },
+    {
+      "source": "src/render/fireworks.ts",
+      "generatedBytes": 8338,
+      "sourceTextBytes": 18093
+    },
+    {
+      "source": "art/legends.js",
+      "generatedBytes": 8315,
+      "sourceTextBytes": 18531
+    },
+    {
+      "source": "art/broomParts.js",
+      "generatedBytes": 8222,
+      "sourceTextBytes": 16462
+    },
+    {
+      "source": "src/app/linkParams.ts",
+      "generatedBytes": 8195,
+      "sourceTextBytes": 24077
+    },
+    {
+      "source": "src/render/leash/stones.ts",
+      "generatedBytes": 8184,
+      "sourceTextBytes": 23560
+    },
+    {
+      "source": "src/platform/audio/voiceFx.ts",
+      "generatedBytes": 8157,
+      "sourceTextBytes": 19875
+    },
+    {
+      "source": "art/tufts.js",
+      "generatedBytes": 8023,
+      "sourceTextBytes": 14124
+    },
+    {
+      "source": "src/rules/dancefloor.ts",
+      "generatedBytes": 7971,
+      "sourceTextBytes": 24306
+    },
+    {
+      "source": "src/render/dream.ts",
+      "generatedBytes": 7969,
+      "sourceTextBytes": 19765
+    },
+    {
+      "source": "src/rules/combat/targeting.ts",
+      "generatedBytes": 7871,
+      "sourceTextBytes": 16846
+    },
+    {
+      "source": "src/platform/audio/places.ts",
+      "generatedBytes": 7863,
+      "sourceTextBytes": 14892
+    },
+    {
+      "source": "art/partyRelics.js",
+      "generatedBytes": 7856,
+      "sourceTextBytes": 17740
+    },
+    {
+      "source": "src/render/clouds.ts",
+      "generatedBytes": 7618,
+      "sourceTextBytes": 14428
+    },
+    {
+      "source": "src/render/paths.ts",
+      "generatedBytes": 7546,
+      "sourceTextBytes": 14815
+    },
+    {
+      "source": "src/rules/party.ts",
+      "generatedBytes": 7344,
+      "sourceTextBytes": 26395
+    },
+    {
+      "source": "src/render/fx/batch.ts",
+      "generatedBytes": 7336,
+      "sourceTextBytes": 8280
+    },
+    {
+      "source": "art/ground.js",
+      "generatedBytes": 7331,
+      "sourceTextBytes": 14081
+    },
+    {
+      "source": "src/render/fxMock.ts",
+      "generatedBytes": 7318,
+      "sourceTextBytes": 10521
+    },
+    {
+      "source": "src/rules/berries.ts",
+      "generatedBytes": 7308,
+      "sourceTextBytes": 20000
+    },
+    {
+      "source": "src/rules/win.ts",
+      "generatedBytes": 7265,
+      "sourceTextBytes": 25353
+    },
+    {
+      "source": "src/app/studio.ts",
+      "generatedBytes": 7211,
+      "sourceTextBytes": 14817
+    },
+    {
+      "source": "src/render/hologram.ts",
+      "generatedBytes": 7210,
+      "sourceTextBytes": 14671
+    },
+    {
+      "source": "src/app/sail.ts",
+      "generatedBytes": 7142,
+      "sourceTextBytes": 8585
+    },
+    {
+      "source": "src/rules/finds.ts",
+      "generatedBytes": 7065,
+      "sourceTextBytes": 14997
+    },
+    {
+      "source": "src/rules/zooMap.ts",
+      "generatedBytes": 7043,
+      "sourceTextBytes": 21425
+    },
+    {
+      "source": "src/render/partyObjects.ts",
+      "generatedBytes": 7016,
+      "sourceTextBytes": 17959
+    },
+    {
+      "source": "src/render/loadingMist.ts",
+      "generatedBytes": 6943,
+      "sourceTextBytes": 13126
+    },
+    {
+      "source": "src/rules/mapShape.ts",
+      "generatedBytes": 6907,
+      "sourceTextBytes": 13114
+    },
+    {
+      "source": "art/tall.js",
+      "generatedBytes": 6657,
+      "sourceTextBytes": 12254
+    },
+    {
+      "source": "src/render/leash/stack.ts",
+      "generatedBytes": 6631,
+      "sourceTextBytes": 18717
+    },
+    {
+      "source": "src/render/crownLandmark.ts",
+      "generatedBytes": 6609,
+      "sourceTextBytes": 14111
+    },
+    {
+      "source": "src/rules/sigilButton.ts",
+      "generatedBytes": 6605,
+      "sourceTextBytes": 19311
+    },
+    {
+      "source": "art/houseDecor.js",
+      "generatedBytes": 6565,
+      "sourceTextBytes": 12260
+    },
+    {
+      "source": "src/ui/schemaForm.ts",
+      "generatedBytes": 6545,
+      "sourceTextBytes": 13975
+    },
+    {
+      "source": "src/render/smoke.ts",
+      "generatedBytes": 6542,
+      "sourceTextBytes": 10949
+    },
+    {
+      "source": "src/render/sparkler.ts",
+      "generatedBytes": 6539,
+      "sourceTextBytes": 12071
+    },
+    {
+      "source": "src/platform/playtestJournal.ts",
+      "generatedBytes": 6439,
+      "sourceTextBytes": 12799
+    },
+    {
+      "source": "src/rules/stoneStacks.ts",
+      "generatedBytes": 6423,
+      "sourceTextBytes": 21579
+    },
+    {
+      "source": "src/ui/fonts/CinzelDecorative-Regular.ttf?url",
+      "generatedBytes": 6362,
+      "sourceTextBytes": 41
+    },
+    {
+      "source": "src/ui/djBooth.ts",
+      "generatedBytes": 6318,
+      "sourceTextBytes": 10777
+    },
+    {
+      "source": "src/platform/input.ts",
+      "generatedBytes": 6291,
+      "sourceTextBytes": 15654
+    },
+    {
+      "source": "src/app/sound.ts",
+      "generatedBytes": 6091,
+      "sourceTextBytes": 17803
+    },
+    {
+      "source": "src/render/markers.ts",
+      "generatedBytes": 6020,
+      "sourceTextBytes": 15685
+    },
+    {
+      "source": "art/props/bridges.js",
+      "generatedBytes": 5987,
+      "sourceTextBytes": 10406
+    },
+    {
+      "source": "src/render/occlusion.ts",
+      "generatedBytes": 5847,
+      "sourceTextBytes": 12271
+    },
+    {
+      "source": "src/ui/keyHint.ts",
+      "generatedBytes": 5811,
+      "sourceTextBytes": 12456
+    },
+    {
+      "source": "src/platform/audio/musicAhead.ts",
+      "generatedBytes": 5805,
+      "sourceTextBytes": 14531
+    },
+    {
+      "source": "src/rules/constellations.ts",
+      "generatedBytes": 5761,
+      "sourceTextBytes": 10657
+    },
+    {
+      "source": "src/render/view/camera.ts",
+      "generatedBytes": 5756,
+      "sourceTextBytes": 17229
+    },
+    {
+      "source": "src/rules/leycurve.ts",
+      "generatedBytes": 5663,
+      "sourceTextBytes": 15477
+    },
+    {
+      "source": "src/rules/nightSnapshot.ts",
+      "generatedBytes": 5659,
+      "sourceTextBytes": 10184
+    },
+    {
+      "source": "src/ui/findsPanel.ts",
+      "generatedBytes": 5652,
+      "sourceTextBytes": 8839
+    },
+    {
+      "source": "src/render/leash/glyphs.ts",
+      "generatedBytes": 5644,
+      "sourceTextBytes": 11370
+    },
+    {
+      "source": "art/witchGenome.js",
+      "generatedBytes": 5640,
+      "sourceTextBytes": 12340
+    },
+    {
+      "source": "src/platform/playtestLog.ts",
+      "generatedBytes": 5629,
+      "sourceTextBytes": 21198
+    },
+    {
+      "source": "src/rules/witch.ts",
+      "generatedBytes": 5618,
+      "sourceTextBytes": 18368
+    },
+    {
+      "source": "src/rules/legends.ts",
+      "generatedBytes": 5616,
+      "sourceTextBytes": 19029
+    },
+    {
+      "source": "src/rules/attacks/species.ts",
+      "generatedBytes": 5588,
+      "sourceTextBytes": 6372
+    },
+    {
+      "source": "src/render/trail.ts",
+      "generatedBytes": 5554,
+      "sourceTextBytes": 12742
+    },
+    {
+      "source": "src/render/zooInscriptions.ts",
+      "generatedBytes": 5550,
+      "sourceTextBytes": 12915
+    },
+    {
+      "source": "art/creatures/index.js",
+      "generatedBytes": 5547,
+      "sourceTextBytes": 31673
+    },
+    {
+      "source": "src/render/homeArt.ts",
+      "generatedBytes": 5520,
+      "sourceTextBytes": 20148
+    },
+    {
+      "source": "src/rules/musicPlan.ts",
+      "generatedBytes": 5441,
+      "sourceTextBytes": 17473
+    },
+    {
+      "source": "art/generator.js",
+      "generatedBytes": 5394,
+      "sourceTextBytes": 26291
+    },
+    {
+      "source": "src/rules/partyDressing.ts",
+      "generatedBytes": 5361,
+      "sourceTextBytes": 15200
+    },
+    {
+      "source": "art/areas/index.js",
+      "generatedBytes": 5349,
+      "sourceTextBytes": 11527
+    },
+    {
+      "source": "src/render/beach.ts",
+      "generatedBytes": 5344,
+      "sourceTextBytes": 13642
+    },
+    {
+      "source": "src/rules/invites.ts",
+      "generatedBytes": 5283,
+      "sourceTextBytes": 17589
+    },
+    {
+      "source": "src/render/swoopTrails.ts",
+      "generatedBytes": 5229,
+      "sourceTextBytes": 11241
+    },
+    {
+      "source": "art/beach.js",
+      "generatedBytes": 5116,
+      "sourceTextBytes": 8751
+    },
+    {
+      "source": "src/rules/attacks/combatWorld.ts",
+      "generatedBytes": 5048,
+      "sourceTextBytes": 12677
+    },
+    {
+      "source": "src/render/view/frameUniforms.ts",
+      "generatedBytes": 4980,
+      "sourceTextBytes": 12560
+    },
+    {
+      "source": "src/ui/decisions.ts",
+      "generatedBytes": 4960,
+      "sourceTextBytes": 8154
+    },
+    {
+      "source": "config/house/shape.js",
+      "generatedBytes": 4935,
+      "sourceTextBytes": 12856
+    },
+    {
+      "source": "src/app/repro.ts",
+      "generatedBytes": 4913,
+      "sourceTextBytes": 10740
+    },
+    {
+      "source": "src/render/view/lights.ts",
+      "generatedBytes": 4885,
+      "sourceTextBytes": 12792
+    },
+    {
+      "source": "src/platform/freeze.ts",
+      "generatedBytes": 4884,
+      "sourceTextBytes": 11949
+    },
+    {
+      "source": "art/flora/biomes.js",
+      "generatedBytes": 4798,
+      "sourceTextBytes": 10012
+    },
+    {
+      "source": "src/render/dancefloor.ts",
+      "generatedBytes": 4764,
+      "sourceTextBytes": 8895
+    },
+    {
+      "source": "src/platform/audio/fof/fof.ts",
+      "generatedBytes": 4751,
+      "sourceTextBytes": 8440
+    },
+    {
+      "source": "src/rules/archipelago.ts",
+      "generatedBytes": 4687,
+      "sourceTextBytes": 16911
+    },
+    {
+      "source": "src/platform/audio/music.ts",
+      "generatedBytes": 4685,
+      "sourceTextBytes": 12391
+    },
+    {
+      "source": "src/rules/musicSet.ts",
+      "generatedBytes": 4668,
+      "sourceTextBytes": 17177
+    },
+    {
+      "source": "src/rules/lakes.ts",
+      "generatedBytes": 4656,
+      "sourceTextBytes": 11088
+    },
+    {
+      "source": "src/platform/inputRecording.ts",
+      "generatedBytes": 4646,
+      "sourceTextBytes": 8964
+    },
+    {
+      "source": "src/render/hiz.ts",
+      "generatedBytes": 4543,
+      "sourceTextBytes": 11406
+    },
+    {
+      "source": "src/app/telescope.ts",
+      "generatedBytes": 4471,
+      "sourceTextBytes": 10839
+    },
+    {
+      "source": "src/render/rig/rigView.ts",
+      "generatedBytes": 4453,
+      "sourceTextBytes": 12577
+    },
+    {
+      "source": "src/platform/logCodec.ts",
+      "generatedBytes": 4449,
+      "sourceTextBytes": 8495
+    },
+    {
+      "source": "art/props/genomes.js",
+      "generatedBytes": 4413,
+      "sourceTextBytes": 11373
+    },
+    {
+      "source": "src/render/gpuLedger.ts",
+      "generatedBytes": 4398,
+      "sourceTextBytes": 12623
+    },
+    {
+      "source": "src/render/lightRings.ts",
+      "generatedBytes": 4375,
+      "sourceTextBytes": 8155
+    },
+    {
+      "source": "src/rules/camera.ts",
+      "generatedBytes": 4359,
+      "sourceTextBytes": 15226
+    },
+    {
+      "source": "src/app/ladder.ts",
+      "generatedBytes": 4342,
+      "sourceTextBytes": 10731
+    },
+    {
+      "source": "src/render/houseArt.ts",
+      "generatedBytes": 4304,
+      "sourceTextBytes": 13097
+    },
+    {
+      "source": "art/creatures.js",
+      "generatedBytes": 4288,
+      "sourceTextBytes": 12137
+    },
+    {
+      "source": "src/rules/terrain.ts",
+      "generatedBytes": 4287,
+      "sourceTextBytes": 12672
+    },
+    {
+      "source": "src/platform/bindings.ts",
+      "generatedBytes": 4272,
+      "sourceTextBytes": 11215
+    },
+    {
+      "source": "src/rules/spells.ts",
+      "generatedBytes": 4243,
+      "sourceTextBytes": 12546
+    },
+    {
+      "source": "src/render/glades.ts",
+      "generatedBytes": 4234,
+      "sourceTextBytes": 10626
+    },
+    {
+      "source": "src/rules/hatSpells.ts",
+      "generatedBytes": 4216,
+      "sourceTextBytes": 12171
+    },
+    {
+      "source": "src/rules/knockout.ts",
+      "generatedBytes": 4213,
+      "sourceTextBytes": 15661
+    },
+    {
+      "source": "src/render/borders.ts",
+      "generatedBytes": 4106,
+      "sourceTextBytes": 8091
+    },
+    {
+      "source": "src/render/leash/attackSpells.ts",
+      "generatedBytes": 4080,
+      "sourceTextBytes": 8695
+    },
+    {
+      "source": "src/app/playtestComments.ts",
+      "generatedBytes": 4074,
+      "sourceTextBytes": 8685
+    },
+    {
+      "source": "src/app/fightArena.ts",
+      "generatedBytes": 4050,
+      "sourceTextBytes": 10269
+    },
+    {
+      "source": "src/render/soundsystemGen.ts",
+      "generatedBytes": 4024,
+      "sourceTextBytes": 11985
+    },
+    {
+      "source": "src/platform/audio/sfx.ts",
+      "generatedBytes": 3989,
+      "sourceTextBytes": 14821
+    },
+    {
+      "source": "src/rules/arena.ts",
+      "generatedBytes": 3958,
+      "sourceTextBytes": 9657
+    },
+    {
+      "source": "src/platform/audio/deck.ts",
+      "generatedBytes": 3898,
+      "sourceTextBytes": 8788
+    },
+    {
+      "source": "src/render/looks.ts",
+      "generatedBytes": 3896,
+      "sourceTextBytes": 11083
+    },
+    {
+      "source": "art/genome/texture.js",
+      "generatedBytes": 3895,
+      "sourceTextBytes": 10563
+    },
+    {
+      "source": "art/lakeShore.js",
+      "generatedBytes": 3894,
+      "sourceTextBytes": 7529
+    },
+    {
+      "source": "src/rules/attacks/schema.ts",
+      "generatedBytes": 3794,
+      "sourceTextBytes": 6759
+    },
+    {
+      "source": "src/render/island.ts",
+      "generatedBytes": 3786,
+      "sourceTextBytes": 11489
+    },
+    {
+      "source": "src/rules/treehouse.ts",
+      "generatedBytes": 3772,
+      "sourceTextBytes": 16875
+    },
+    {
+      "source": "src/platform/audio/voiceSamples.ts",
+      "generatedBytes": 3756,
+      "sourceTextBytes": 1698
+    },
+    {
+      "source": "src/rules/studio.ts",
+      "generatedBytes": 3741,
+      "sourceTextBytes": 12452
+    },
+    {
+      "source": "src/rules/combat/hits.ts",
+      "generatedBytes": 3714,
+      "sourceTextBytes": 9902
+    },
+    {
+      "source": "src/rules/creatureConfig.ts",
+      "generatedBytes": 3699,
+      "sourceTextBytes": 2160
+    },
+    {
+      "source": "src/app/arrive.ts",
+      "generatedBytes": 3677,
+      "sourceTextBytes": 10168
+    },
+    {
+      "source": "src/rules/djSet.ts",
+      "generatedBytes": 3656,
+      "sourceTextBytes": 12438
+    },
+    {
+      "source": "src/render/castShadows.ts",
+      "generatedBytes": 3643,
+      "sourceTextBytes": 4025
+    },
+    {
+      "source": "art/sigilDetail.js",
+      "generatedBytes": 3639,
+      "sourceTextBytes": 9698
+    },
+    {
+      "source": "art/naps.js",
+      "generatedBytes": 3634,
+      "sourceTextBytes": 9067
+    },
+    {
+      "source": "src/render/partyWitches.ts",
+      "generatedBytes": 3634,
+      "sourceTextBytes": 9997
+    },
+    {
+      "source": "src/render/waveNumbers.ts",
+      "generatedBytes": 3618,
+      "sourceTextBytes": 6702
+    },
+    {
+      "source": "art/genome/parts.js",
+      "generatedBytes": 3613,
+      "sourceTextBytes": 10276
+    },
+    {
+      "source": "src/render/wisps.ts",
+      "generatedBytes": 3604,
+      "sourceTextBytes": 6607
+    },
+    {
+      "source": "src/rules/partyOver.ts",
+      "generatedBytes": 3591,
+      "sourceTextBytes": 12432
+    },
+    {
+      "source": "src/app/mapPrep.ts",
+      "generatedBytes": 3572,
+      "sourceTextBytes": 9438
+    },
+    {
+      "source": "src/render/areaWindow.ts",
+      "generatedBytes": 3527,
+      "sourceTextBytes": 9731
+    },
+    {
+      "source": "src/rules/arrive.ts",
+      "generatedBytes": 3519,
+      "sourceTextBytes": 14168
+    },
+    {
+      "source": "src/app/shot.ts",
+      "generatedBytes": 3454,
+      "sourceTextBytes": 8286
+    },
+    {
+      "source": "src/render/legendFloor.ts",
+      "generatedBytes": 3383,
+      "sourceTextBytes": 7125
+    },
+    {
+      "source": "src/rules/islandGrowth.ts",
+      "generatedBytes": 3376,
+      "sourceTextBytes": 10375
+    },
+    {
+      "source": "src/ui/stationLines.ts",
+      "generatedBytes": 3364,
+      "sourceTextBytes": 10195
+    },
+    {
+      "source": "src/rules/ladder.ts",
+      "generatedBytes": 3348,
+      "sourceTextBytes": 11029
+    },
+    {
+      "source": "src/render/chart/islandMesh.ts",
+      "generatedBytes": 3330,
+      "sourceTextBytes": 10395
+    },
+    {
+      "source": "src/render/view/hud.ts",
+      "generatedBytes": 3281,
+      "sourceTextBytes": 9983
+    },
+    {
+      "source": "src/render/view/culling.ts",
+      "generatedBytes": 3266,
+      "sourceTextBytes": 9690
+    },
+    {
+      "source": "src/rules/beachDecor.ts",
+      "generatedBytes": 3253,
+      "sourceTextBytes": 8634
+    },
+    {
+      "source": "src/platform/audio/knockdown.ts",
+      "generatedBytes": 3232,
+      "sourceTextBytes": 6736
+    },
+    {
+      "source": "src/app/chartSave.ts",
+      "generatedBytes": 3223,
+      "sourceTextBytes": 7669
+    },
+    {
+      "source": "src/rules/beach.ts",
+      "generatedBytes": 3214,
+      "sourceTextBytes": 8080
+    },
+    {
+      "source": "src/platform/audio/seaLife.ts",
+      "generatedBytes": 3113,
+      "sourceTextBytes": 5882
+    },
+    {
+      "source": "src/rules/travel.ts",
+      "generatedBytes": 3107,
+      "sourceTextBytes": 9885
+    },
+    {
+      "source": "src/render/beachEdge.ts",
+      "generatedBytes": 3096,
+      "sourceTextBytes": 9471
+    },
+    {
+      "source": "art/stylise.js",
+      "generatedBytes": 3071,
+      "sourceTextBytes": 7372
+    },
+    {
+      "source": "src/render/hatIcons.ts",
+      "generatedBytes": 3065,
+      "sourceTextBytes": 5413
+    },
+    {
+      "source": "src/app/hud.ts",
+      "generatedBytes": 3060,
+      "sourceTextBytes": 6268
+    },
+    {
+      "source": "src/platform/audio/whale.ts",
+      "generatedBytes": 3057,
+      "sourceTextBytes": 6489
+    },
+    {
+      "source": "src/render/bubbles.ts",
+      "generatedBytes": 3037,
+      "sourceTextBytes": 8971
+    },
+    {
+      "source": "src/rules/legendFit.ts",
+      "generatedBytes": 3033,
+      "sourceTextBytes": 2475
+    },
+    {
+      "source": "src/platform/audio/spell.ts",
+      "generatedBytes": 2970,
+      "sourceTextBytes": 5558
+    },
+    {
+      "source": "src/platform/audio/fireworks.ts",
+      "generatedBytes": 2940,
+      "sourceTextBytes": 5672
+    },
+    {
+      "source": "src/render/view/guidance.ts",
+      "generatedBytes": 2937,
+      "sourceTextBytes": 7956
+    },
+    {
+      "source": "src/platform/audio/aggro.ts",
+      "generatedBytes": 2926,
+      "sourceTextBytes": 5978
+    },
+    {
+      "source": "src/ui/chartOverlay.ts",
+      "generatedBytes": 2915,
+      "sourceTextBytes": 8626
+    },
+    {
+      "source": "src/rules/rosters.ts",
+      "generatedBytes": 2906,
+      "sourceTextBytes": 12635
+    },
+    {
+      "source": "src/rules/quest.ts",
+      "generatedBytes": 2903,
+      "sourceTextBytes": 10429
+    },
+    {
+      "source": "src/rules/houseRooms.ts",
+      "generatedBytes": 2888,
+      "sourceTextBytes": 17613
+    },
+    {
+      "source": "src/render/leash/blood.ts",
+      "generatedBytes": 2865,
+      "sourceTextBytes": 8953
+    },
+    {
+      "source": "src/render/workshopArt.ts",
+      "generatedBytes": 2852,
+      "sourceTextBytes": 8981
+    },
+    {
+      "source": "src/rules/walls.ts",
+      "generatedBytes": 2841,
+      "sourceTextBytes": 6436
+    },
+    {
+      "source": "src/rules/partition.ts",
+      "generatedBytes": 2813,
+      "sourceTextBytes": 9771
+    },
+    {
+      "source": "art/genome/templates.js",
+      "generatedBytes": 2800,
+      "sourceTextBytes": 5303
+    },
+    {
+      "source": "src/platform/audio/sfxKit.ts",
+      "generatedBytes": 2793,
+      "sourceTextBytes": 7078
+    },
+    {
+      "source": "src/app/perfHud.ts",
+      "generatedBytes": 2782,
+      "sourceTextBytes": 5621
+    },
+    {
+      "source": "src/rules/wakeUp.ts",
+      "generatedBytes": 2764,
+      "sourceTextBytes": 13712
+    },
+    {
+      "source": "src/rules/houseConfig.ts",
+      "generatedBytes": 2715,
+      "sourceTextBytes": 2025
+    },
+    {
+      "source": "src/app/night.ts",
+      "generatedBytes": 2683,
+      "sourceTextBytes": 14540
+    },
+    {
+      "source": "src/render/leash/chain.ts",
+      "generatedBytes": 2670,
+      "sourceTextBytes": 8739
+    },
+    {
+      "source": "src/rules/beat.ts",
+      "generatedBytes": 2661,
+      "sourceTextBytes": 9839
+    },
+    {
+      "source": "src/render/leash/ranks.ts",
+      "generatedBytes": 2656,
+      "sourceTextBytes": 14702
+    },
+    {
+      "source": "src/app/hooks.ts",
+      "generatedBytes": 2625,
+      "sourceTextBytes": 8727
+    },
+    {
+      "source": "src/render/spellfx.ts",
+      "generatedBytes": 2622,
+      "sourceTextBytes": 7508
+    },
+    {
+      "source": "src/app/playerSettings.ts",
+      "generatedBytes": 2535,
+      "sourceTextBytes": 8758
+    },
+    {
+      "source": "src/render/shadows.ts",
+      "generatedBytes": 2532,
+      "sourceTextBytes": 5170
+    },
+    {
+      "source": "src/render/houseDecor.ts",
+      "generatedBytes": 2532,
+      "sourceTextBytes": 7461
+    },
+    {
+      "source": "src/rules/leypulse.ts",
+      "generatedBytes": 2520,
+      "sourceTextBytes": 12437
+    },
+    {
+      "source": "src/render/lasers.ts",
+      "generatedBytes": 2494,
+      "sourceTextBytes": 5404
+    },
+    {
+      "source": "src/platform/logRecords.ts",
+      "generatedBytes": 2461,
+      "sourceTextBytes": 4617
+    },
+    {
+      "source": "src/rules/lakeLooks.ts",
+      "generatedBytes": 2447,
+      "sourceTextBytes": 9713
+    },
+    {
+      "source": "src/app/settingsPage.ts",
+      "generatedBytes": 2445,
+      "sourceTextBytes": 6145
+    },
+    {
+      "source": "src/rules/legendCircle.ts",
+      "generatedBytes": 2444,
+      "sourceTextBytes": 7381
+    },
+    {
+      "source": "src/app/nightSave.ts",
+      "generatedBytes": 2405,
+      "sourceTextBytes": 5631
+    },
+    {
+      "source": "src/render/aimhud.ts",
+      "generatedBytes": 2383,
+      "sourceTextBytes": 4872
+    },
+    {
+      "source": "src/ui/settingsNav.ts",
+      "generatedBytes": 2338,
+      "sourceTextBytes": 6594
+    },
+    {
+      "source": "src/render/party.ts",
+      "generatedBytes": 2327,
+      "sourceTextBytes": 7422
+    },
+    {
+      "source": "src/platform/stallLog.ts",
+      "generatedBytes": 2294,
+      "sourceTextBytes": 5927
+    },
+    {
+      "source": "src/platform/audio/power.ts",
+      "generatedBytes": 2268,
+      "sourceTextBytes": 4520
+    },
+    {
+      "source": "src/render/housePieces.ts",
+      "generatedBytes": 2264,
+      "sourceTextBytes": 8134
+    },
+    {
+      "source": "src/render/view/gpuBudget.ts",
+      "generatedBytes": 2242,
+      "sourceTextBytes": 5886
+    },
+    {
+      "source": "art/sheeted.js",
+      "generatedBytes": 2221,
+      "sourceTextBytes": 5561
+    },
+    {
+      "source": "src/rules/lakeShore.ts",
+      "generatedBytes": 2209,
+      "sourceTextBytes": 6291
+    },
+    {
+      "source": "src/rules/creatureStates.ts",
+      "generatedBytes": 2208,
+      "sourceTextBytes": 8012
+    },
+    {
+      "source": "src/platform/frameStats.ts",
+      "generatedBytes": 2208,
+      "sourceTextBytes": 5004
+    },
+    {
+      "source": "src/render/atlas.ts",
+      "generatedBytes": 2186,
+      "sourceTextBytes": 7723
+    },
+    {
+      "source": "src/ui/stationChoice.ts",
+      "generatedBytes": 2161,
+      "sourceTextBytes": 6497
+    },
+    {
+      "source": "src/render/rulers.ts",
+      "generatedBytes": 2147,
+      "sourceTextBytes": 4947
+    },
+    {
+      "source": "src/rules/combat/data.ts",
+      "generatedBytes": 2144,
+      "sourceTextBytes": 19877
+    },
+    {
+      "source": "src/rules/spacing.ts",
+      "generatedBytes": 2135,
+      "sourceTextBytes": 6169
+    },
+    {
+      "source": "src/render/leash/rainbow.ts",
+      "generatedBytes": 2126,
+      "sourceTextBytes": 7666
+    },
+    {
+      "source": "src/render/thoughtCloud.ts",
+      "generatedBytes": 2120,
+      "sourceTextBytes": 7159
+    },
+    {
+      "source": "src/render/view/pops.ts",
+      "generatedBytes": 2102,
+      "sourceTextBytes": 4570
+    },
+    {
+      "source": "src/rules/cauldronNight.ts",
+      "generatedBytes": 2080,
+      "sourceTextBytes": 5444
+    },
+    {
+      "source": "src/render/view/reveal.ts",
+      "generatedBytes": 2066,
+      "sourceTextBytes": 6623
+    },
+    {
+      "source": "art/genome/expressions.js",
+      "generatedBytes": 2027,
+      "sourceTextBytes": 6405
+    },
+    {
+      "source": "src/platform/audio/sparkler.ts",
+      "generatedBytes": 2021,
+      "sourceTextBytes": 4667
+    },
+    {
+      "source": "src/render/fx/model.ts",
+      "generatedBytes": 2003,
+      "sourceTextBytes": 3759
+    },
+    {
+      "source": "src/render/useGlow.ts",
+      "generatedBytes": 1997,
+      "sourceTextBytes": 4033
+    },
+    {
+      "source": "art/genome/index.js",
+      "generatedBytes": 1995,
+      "sourceTextBytes": 7557
+    },
+    {
+      "source": "src/rules/zooControls.ts",
+      "generatedBytes": 1995,
+      "sourceTextBytes": 5837
+    },
+    {
+      "source": "src/ui/menuFocus.ts",
+      "generatedBytes": 1983,
+      "sourceTextBytes": 4140
+    },
+    {
+      "source": "src/render/legendCarving.ts",
+      "generatedBytes": 1982,
+      "sourceTextBytes": 5819
+    },
+    {
+      "source": "src/rules/seaLife.ts",
+      "generatedBytes": 1962,
+      "sourceTextBytes": 6697
+    },
+    {
+      "source": "src/rules/departure.ts",
+      "generatedBytes": 1959,
+      "sourceTextBytes": 8693
+    },
+    {
+      "source": "art/dolphins.js",
+      "generatedBytes": 1957,
+      "sourceTextBytes": 4827
+    },
+    {
+      "source": "src/rules/strings.ts",
+      "generatedBytes": 1953,
+      "sourceTextBytes": 5067
+    },
+    {
+      "source": "art/kraken.js",
+      "generatedBytes": 1926,
+      "sourceTextBytes": 5323
+    },
+    {
+      "source": "src/app/finds.ts",
+      "generatedBytes": 1899,
+      "sourceTextBytes": 7292
+    },
+    {
+      "source": "src/render/spotlight.ts",
+      "generatedBytes": 1898,
+      "sourceTextBytes": 4179
+    },
+    {
+      "source": "src/render/zooExit.ts",
+      "generatedBytes": 1898,
+      "sourceTextBytes": 4308
+    },
+    {
+      "source": "src/ui/touch.ts",
+      "generatedBytes": 1874,
+      "sourceTextBytes": 3393
+    },
+    {
+      "source": "src/ui/bagPreview.ts",
+      "generatedBytes": 1871,
+      "sourceTextBytes": 4583
+    },
+    {
+      "source": "src/render/lakeShore.ts",
+      "generatedBytes": 1862,
+      "sourceTextBytes": 4917
+    },
+    {
+      "source": "src/ui/resumeNight.ts",
+      "generatedBytes": 1845,
+      "sourceTextBytes": 2971
+    },
+    {
+      "source": "src/render/alarm.ts",
+      "generatedBytes": 1831,
+      "sourceTextBytes": 5066
+    },
+    {
+      "source": "src/render/islandArt.ts",
+      "generatedBytes": 1823,
+      "sourceTextBytes": 6778
+    },
+    {
+      "source": "src/app/knobs.ts",
+      "generatedBytes": 1820,
+      "sourceTextBytes": 4935
+    },
+    {
+      "source": "src/render/slices.ts",
+      "generatedBytes": 1794,
+      "sourceTextBytes": 6338
+    },
+    {
+      "source": "src/rules/attacks/timeline.ts",
+      "generatedBytes": 1759,
+      "sourceTextBytes": 5660
+    },
+    {
+      "source": "src/render/stumpWisps.ts",
+      "generatedBytes": 1743,
+      "sourceTextBytes": 5851
+    },
+    {
+      "source": "src/rules/wardrobe.ts",
+      "generatedBytes": 1742,
+      "sourceTextBytes": 6914
+    },
+    {
+      "source": "src/rules/broomParts.ts",
+      "generatedBytes": 1717,
+      "sourceTextBytes": 7663
+    },
+    {
+      "source": "src/rules/leylines.ts",
+      "generatedBytes": 1699,
+      "sourceTextBytes": 7266
+    },
+    {
+      "source": "src/rules/zoo.ts",
+      "generatedBytes": 1695,
+      "sourceTextBytes": 7612
+    },
+    {
+      "source": "src/rules/crossing.ts",
+      "generatedBytes": 1694,
+      "sourceTextBytes": 4367
+    },
+    {
+      "source": "src/app/shake.ts",
+      "generatedBytes": 1676,
+      "sourceTextBytes": 3592
+    },
+    {
+      "source": "src/render/dolphins.ts",
+      "generatedBytes": 1667,
+      "sourceTextBytes": 5216
+    },
+    {
+      "source": "src/render/witchLight.ts",
+      "generatedBytes": 1662,
+      "sourceTextBytes": 2690
+    },
+    {
+      "source": "src/rules/momentum.ts",
+      "generatedBytes": 1660,
+      "sourceTextBytes": 5521
+    },
+    {
+      "source": "src/render/leash/slashes.ts",
+      "generatedBytes": 1651,
+      "sourceTextBytes": 6655
+    },
+    {
+      "source": "src/rules/music.ts",
+      "generatedBytes": 1648,
+      "sourceTextBytes": 5731
+    },
+    {
+      "source": "src/platform/audio/shed.ts",
+      "generatedBytes": 1647,
+      "sourceTextBytes": 5005
+    },
+    {
+      "source": "art/sway.js",
+      "generatedBytes": 1616,
+      "sourceTextBytes": 5712
+    },
+    {
+      "source": "art/carrier.js",
+      "generatedBytes": 1613,
+      "sourceTextBytes": 4769
+    },
+    {
+      "source": "src/render/loanIcon.ts",
+      "generatedBytes": 1605,
+      "sourceTextBytes": 3252
+    },
+    {
+      "source": "src/rules/slowTime.ts",
+      "generatedBytes": 1604,
+      "sourceTextBytes": 5112
+    },
+    {
+      "source": "src/render/wakeUp.ts",
+      "generatedBytes": 1603,
+      "sourceTextBytes": 3538
+    },
+    {
+      "source": "src/rules/sigilAvoid.ts",
+      "generatedBytes": 1596,
+      "sourceTextBytes": 5002
+    },
+    {
+      "source": "src/rules/guidance.ts",
+      "generatedBytes": 1593,
+      "sourceTextBytes": 8868
+    },
+    {
+      "source": "src/rules/groundcover.ts",
+      "generatedBytes": 1573,
+      "sourceTextBytes": 5151
+    },
+    {
+      "source": "src/rules/orbit.ts",
+      "generatedBytes": 1572,
+      "sourceTextBytes": 6520
+    },
+    {
+      "source": "src/render/shake.ts",
+      "generatedBytes": 1567,
+      "sourceTextBytes": 5959
+    },
+    {
+      "source": "src/app/zooOverlay.ts",
+      "generatedBytes": 1558,
+      "sourceTextBytes": 3756
+    },
+    {
+      "source": "src/render/zooPlates.ts",
+      "generatedBytes": 1554,
+      "sourceTextBytes": 3681
+    },
+    {
+      "source": "src/rules/rainbow.ts",
+      "generatedBytes": 1548,
+      "sourceTextBytes": 6232
+    },
+    {
+      "source": "src/rules/fightArena.ts",
+      "generatedBytes": 1545,
+      "sourceTextBytes": 5405
+    },
+    {
+      "source": "src/render/minimap.ts",
+      "generatedBytes": 1530,
+      "sourceTextBytes": 2701
+    },
+    {
+      "source": "src/rules/pulseRoute.ts",
+      "generatedBytes": 1489,
+      "sourceTextBytes": 5058
+    },
+    {
+      "source": "src/platform/audio/tract/tract.ts",
+      "generatedBytes": 1477,
+      "sourceTextBytes": 4426
+    },
+    {
+      "source": "art/areas/crags/recipe.js",
+      "generatedBytes": 1469,
+      "sourceTextBytes": 2359
+    },
+    {
+      "source": "art/creatures/boar/genome.js",
+      "generatedBytes": 1469,
+      "sourceTextBytes": 2428
+    },
+    {
+      "source": "src/rules/dash.ts",
+      "generatedBytes": 1449,
+      "sourceTextBytes": 5688
+    },
+    {
+      "source": "src/render/inviteRing.ts",
+      "generatedBytes": 1448,
+      "sourceTextBytes": 5306
+    },
+    {
+      "source": "src/app/attackLibrary.ts",
+      "generatedBytes": 1448,
+      "sourceTextBytes": 4022
+    },
+    {
+      "source": "src/rules/stumps.ts",
+      "generatedBytes": 1439,
+      "sourceTextBytes": 5517
+    },
+    {
+      "source": "src/rules/babies.ts",
+      "generatedBytes": 1438,
+      "sourceTextBytes": 5297
+    },
+    {
+      "source": "src/render/kraken.ts",
+      "generatedBytes": 1430,
+      "sourceTextBytes": 4831
+    },
+    {
+      "source": "art/creatures/cheetah/genome.js",
+      "generatedBytes": 1423,
+      "sourceTextBytes": 2330
+    },
+    {
+      "source": "src/rules/swarm.ts",
+      "generatedBytes": 1420,
+      "sourceTextBytes": 7834
+    },
+    {
+      "source": "src/rules/wildWatch.ts",
+      "generatedBytes": 1419,
+      "sourceTextBytes": 5385
+    },
+    {
+      "source": "src/render/leash/projection.ts",
+      "generatedBytes": 1410,
+      "sourceTextBytes": 3798
+    },
+    {
+      "source": "src/platform/audio/watchdog.ts",
+      "generatedBytes": 1406,
+      "sourceTextBytes": 4235
+    },
+    {
+      "source": "src/rules/schema.ts",
+      "generatedBytes": 1398,
+      "sourceTextBytes": 9842
+    },
+    {
+      "source": "src/ui/cornerPanel.ts",
+      "generatedBytes": 1397,
+      "sourceTextBytes": 2773
+    },
+    {
+      "source": "art/areas/desert-ruin/recipe.js",
+      "generatedBytes": 1385,
+      "sourceTextBytes": 2161
+    },
+    {
+      "source": "src/rules/hunt.ts",
+      "generatedBytes": 1382,
+      "sourceTextBytes": 4883
+    },
+    {
+      "source": "art/areas/step-pyramid/recipe.js",
+      "generatedBytes": 1377,
+      "sourceTextBytes": 2240
+    },
+    {
+      "source": "art/areas/drowned-wood/recipe.js",
+      "generatedBytes": 1376,
+      "sourceTextBytes": 2289
+    },
+    {
+      "source": "src/render/loanSparkle.ts",
+      "generatedBytes": 1374,
+      "sourceTextBytes": 2890
+    },
+    {
+      "source": "src/app/loan.ts",
+      "generatedBytes": 1364,
+      "sourceTextBytes": 6993
+    },
+    {
+      "source": "src/render/castTag.ts",
+      "generatedBytes": 1361,
+      "sourceTextBytes": 2760
+    },
+    {
+      "source": "src/render/mist.ts",
+      "generatedBytes": 1358,
+      "sourceTextBytes": 2724
+    },
+    {
+      "source": "art/areas/icefall/recipe.js",
+      "generatedBytes": 1346,
+      "sourceTextBytes": 2261
+    },
+    {
+      "source": "art/lighting.js",
+      "generatedBytes": 1325,
+      "sourceTextBytes": 2547
+    },
+    {
+      "source": "src/render/mood.ts",
+      "generatedBytes": 1321,
+      "sourceTextBytes": 4640
+    },
+    {
+      "source": "art/areas/packice/recipe.js",
+      "generatedBytes": 1320,
+      "sourceTextBytes": 2000
+    },
+    {
+      "source": "src/rules/opening.ts",
+      "generatedBytes": 1320,
+      "sourceTextBytes": 2197
+    },
+    {
+      "source": "art/areas/rookery/recipe.js",
+      "generatedBytes": 1318,
+      "sourceTextBytes": 2130
+    },
+    {
+      "source": "art/islands.js",
+      "generatedBytes": 1315,
+      "sourceTextBytes": 4154
+    },
+    {
+      "source": "src/ui/looks.ts",
+      "generatedBytes": 1307,
+      "sourceTextBytes": 3972
+    },
+    {
+      "source": "art/areas/warren/recipe.js",
+      "generatedBytes": 1298,
+      "sourceTextBytes": 2033
+    },
+    {
+      "source": "art/areas/frostcave/recipe.js",
+      "generatedBytes": 1295,
+      "sourceTextBytes": 1903
+    },
+    {
+      "source": "src/render/fx/native.ts",
+      "generatedBytes": 1292,
+      "sourceTextBytes": 2011
+    },
+    {
+      "source": "art/creatures/ram/genome.js",
+      "generatedBytes": 1286,
+      "sourceTextBytes": 2294
+    },
+    {
+      "source": "art/areas/scrub-wash/recipe.js",
+      "generatedBytes": 1282,
+      "sourceTextBytes": 1973
+    },
+    {
+      "source": "src/render/attackFeel.ts",
+      "generatedBytes": 1278,
+      "sourceTextBytes": 4064
+    },
+    {
+      "source": "src/rules/brooms.ts",
+      "generatedBytes": 1272,
+      "sourceTextBytes": 4416
+    },
+    {
+      "source": "art/areas/cinder-slopes/recipe.js",
+      "generatedBytes": 1267,
+      "sourceTextBytes": 1993
+    },
+    {
+      "source": "art/areas/bushveld/recipe.js",
+      "generatedBytes": 1259,
+      "sourceTextBytes": 1964
+    },
+    {
+      "source": "art/areas/mangrove/recipe.js",
+      "generatedBytes": 1253,
+      "sourceTextBytes": 1876
+    },
+    {
+      "source": "art/areas/mistwood/recipe.js",
+      "generatedBytes": 1252,
+      "sourceTextBytes": 1831
+    },
+    {
+      "source": "art/creatures/lion/genome.js",
+      "generatedBytes": 1243,
+      "sourceTextBytes": 1891
+    },
+    {
+      "source": "art/areas/snowfield/recipe.js",
+      "generatedBytes": 1239,
+      "sourceTextBytes": 1786
+    },
+    {
+      "source": "art/creatures/stegosaurus/genome.js",
+      "generatedBytes": 1238,
+      "sourceTextBytes": 2119
+    },
+    {
+      "source": "art/areas/erg/recipe.js",
+      "generatedBytes": 1237,
+      "sourceTextBytes": 1760
+    },
+    {
+      "source": "art/areas/trollwood/recipe.js",
+      "generatedBytes": 1229,
+      "sourceTextBytes": 2053
+    },
+    {
+      "source": "art/areas/dragon-scrub/recipe.js",
+      "generatedBytes": 1228,
+      "sourceTextBytes": 1934
+    },
+    {
+      "source": "src/rules/knock.ts",
+      "generatedBytes": 1225,
+      "sourceTextBytes": 5206
+    },
+    {
+      "source": "src/rules/partyGuests.ts",
+      "generatedBytes": 1223,
+      "sourceTextBytes": 5686
+    },
+    {
+      "source": "src/app/broomSave.ts",
+      "generatedBytes": 1216,
+      "sourceTextBytes": 4499
+    },
+    {
+      "source": "src/render/mapTable.ts",
+      "generatedBytes": 1215,
+      "sourceTextBytes": 3376
+    },
+    {
+      "source": "src/rules/telescope.ts",
+      "generatedBytes": 1215,
+      "sourceTextBytes": 7204
+    },
+    {
+      "source": "art/areas/mangrove-pools/recipe.js",
+      "generatedBytes": 1214,
+      "sourceTextBytes": 1954
+    },
+    {
+      "source": "art/areas/mudflat/recipe.js",
+      "generatedBytes": 1210,
+      "sourceTextBytes": 1980
+    },
+    {
+      "source": "art/areas/plains/recipe.js",
+      "generatedBytes": 1209,
+      "sourceTextBytes": 1805
+    },
+    {
+      "source": "src/render/stationBackdrop.ts",
+      "generatedBytes": 1208,
+      "sourceTextBytes": 3169
+    },
+    {
+      "source": "art/areas/mangrove-heronry/recipe.js",
+      "generatedBytes": 1196,
+      "sourceTextBytes": 1964
+    },
+    {
+      "source": "art/areas/red-canyon/recipe.js",
+      "generatedBytes": 1191,
+      "sourceTextBytes": 2052
+    },
+    {
+      "source": "src/render/barkFaces.ts",
+      "generatedBytes": 1190,
+      "sourceTextBytes": 3640
+    },
+    {
+      "source": "art/creatures/sphinx/genome.js",
+      "generatedBytes": 1189,
+      "sourceTextBytes": 2132
+    },
+    {
+      "source": "src/rules/houseGuard.ts",
+      "generatedBytes": 1182,
+      "sourceTextBytes": 4760
+    },
+    {
+      "source": "art/areas/temple-jungle/recipe.js",
+      "generatedBytes": 1181,
+      "sourceTextBytes": 1815
+    },
+    {
+      "source": "src/rules/records.ts",
+      "generatedBytes": 1180,
+      "sourceTextBytes": 1205
+    },
+    {
+      "source": "src/render/conga.ts",
+      "generatedBytes": 1179,
+      "sourceTextBytes": 5069
+    },
+    {
+      "source": "art/areas/mossy-creek/recipe.js",
+      "generatedBytes": 1178,
+      "sourceTextBytes": 1818
+    },
+    {
+      "source": "art/areas/river-jungle/recipe.js",
+      "generatedBytes": 1176,
+      "sourceTextBytes": 1761
+    },
+    {
+      "source": "src/render/character.ts",
+      "generatedBytes": 1174,
+      "sourceTextBytes": 4550
+    },
+    {
+      "source": "src/rules/bootRing.ts",
+      "generatedBytes": 1166,
+      "sourceTextBytes": 6844
+    },
+    {
+      "source": "art/areas/cactus-flats/recipe.js",
+      "generatedBytes": 1164,
+      "sourceTextBytes": 2029
+    },
+    {
+      "source": "src/render/fx/uniforms.ts",
+      "generatedBytes": 1163,
+      "sourceTextBytes": 1534
+    },
+    {
+      "source": "src/rules/alarms.ts",
+      "generatedBytes": 1161,
+      "sourceTextBytes": 4210
+    },
+    {
+      "source": "art/creatures/fox/genome.js",
+      "generatedBytes": 1159,
+      "sourceTextBytes": 2178
+    },
+    {
+      "source": "src/render/view/hatArt.ts",
+      "generatedBytes": 1154,
+      "sourceTextBytes": 2820
+    },
+    {
+      "source": "art/areas/savanna/recipe.js",
+      "generatedBytes": 1148,
+      "sourceTextBytes": 1697
+    },
+    {
+      "source": "art/creatures/polarbear/genome.js",
+      "generatedBytes": 1143,
+      "sourceTextBytes": 2093
+    },
+    {
+      "source": "art/areas/eyrie/recipe.js",
+      "generatedBytes": 1123,
+      "sourceTextBytes": 1597
+    },
+    {
+      "source": "src/render/shaders.ts",
+      "generatedBytes": 1121,
+      "sourceTextBytes": 2188
+    },
+    {
+      "source": "art/areas/bamboo-jungle/recipe.js",
+      "generatedBytes": 1115,
+      "sourceTextBytes": 1625
+    },
+    {
+      "source": "art/creatures/fennec/genome.js",
+      "generatedBytes": 1112,
+      "sourceTextBytes": 1731
+    },
+    {
+      "source": "art/sigils/strokes.js",
+      "generatedBytes": 1099,
+      "sourceTextBytes": 2850
+    },
+    {
+      "source": "src/render/pins.ts",
+      "generatedBytes": 1099,
+      "sourceTextBytes": 5706
+    },
+    {
+      "source": "art/creatures/jaguar/genome.js",
+      "generatedBytes": 1097,
+      "sourceTextBytes": 2284
+    },
+    {
+      "source": "art/creatures/tiger/genome.js",
+      "generatedBytes": 1093,
+      "sourceTextBytes": 2018
+    },
+    {
+      "source": "src/rules/deal.ts",
+      "generatedBytes": 1092,
+      "sourceTextBytes": 5101
+    },
+    {
+      "source": "art/areas/moonpool-glade/recipe.js",
+      "generatedBytes": 1089,
+      "sourceTextBytes": 1805
+    },
+    {
+      "source": "art/creatures/wolf/genome.js",
+      "generatedBytes": 1088,
+      "sourceTextBytes": 1833
+    },
+    {
+      "source": "src/render/houseFurniture.ts",
+      "generatedBytes": 1088,
+      "sourceTextBytes": 6048
+    },
+    {
+      "source": "art/areas/misty-terraces/recipe.js",
+      "generatedBytes": 1083,
+      "sourceTextBytes": 1604
+    },
+    {
+      "source": "art/creatures/badger/genome.js",
+      "generatedBytes": 1074,
+      "sourceTextBytes": 1957
+    },
+    {
+      "source": "src/rules/leashWeight.ts",
+      "generatedBytes": 1072,
+      "sourceTextBytes": 6433
+    },
+    {
+      "source": "art/creatures/griffin/genome.js",
+      "generatedBytes": 1067,
+      "sourceTextBytes": 1761
+    },
+    {
+      "source": "src/ui/roomWalk.ts",
+      "generatedBytes": 1067,
+      "sourceTextBytes": 3846
+    },
+    {
+      "source": "src/platform/online/replay.ts",
+      "generatedBytes": 1065,
+      "sourceTextBytes": 3396
+    },
+    {
+      "source": "art/areas/mossy-dell/recipe.js",
+      "generatedBytes": 1053,
+      "sourceTextBytes": 1726
+    },
+    {
+      "source": "art/creatures/rhino/genome.js",
+      "generatedBytes": 1051,
+      "sourceTextBytes": 1972
+    },
+    {
+      "source": "art/areas/fen/recipe.js",
+      "generatedBytes": 1049,
+      "sourceTextBytes": 1513
+    },
+    {
+      "source": "src/app/compareKey.ts",
+      "generatedBytes": 1049,
+      "sourceTextBytes": 3519
+    },
+    {
+      "source": "src/render/combatLight.ts",
+      "generatedBytes": 1032,
+      "sourceTextBytes": 3067
+    },
+    {
+      "source": "art/creatures/arcticfox/genome.js",
+      "generatedBytes": 1021,
+      "sourceTextBytes": 2010
+    },
+    {
+      "source": "src/app/chartWarm.ts",
+      "generatedBytes": 1019,
+      "sourceTextBytes": 3992
+    },
+    {
+      "source": "art/creatures/frostwyrm/genome.js",
+      "generatedBytes": 1013,
+      "sourceTextBytes": 1764
+    },
+    {
+      "source": "src/render/crownMask.ts",
+      "generatedBytes": 1001,
+      "sourceTextBytes": 3388
+    },
+    {
+      "source": "src/render/koIris.ts",
+      "generatedBytes": 982,
+      "sourceTextBytes": 4261
+    },
+    {
+      "source": "src/app/gameParams.ts",
+      "generatedBytes": 982,
+      "sourceTextBytes": 4634
+    },
+    {
+      "source": "src/app/workerJobTrace.ts",
+      "generatedBytes": 973,
+      "sourceTextBytes": 5440
+    },
+    {
+      "source": "src/rules/fireworks.ts",
+      "generatedBytes": 966,
+      "sourceTextBytes": 3436
+    },
+    {
+      "source": "src/render/programInventory.ts",
+      "generatedBytes": 963,
+      "sourceTextBytes": 2543
+    },
+    {
+      "source": "src/render/compass.ts",
+      "generatedBytes": 954,
+      "sourceTextBytes": 2536
+    },
+    {
+      "source": "art/creatures/komodo/genome.js",
+      "generatedBytes": 952,
+      "sourceTextBytes": 2054
+    },
+    {
+      "source": "src/ui/bagSim.ts",
+      "generatedBytes": 952,
+      "sourceTextBytes": 3243
+    },
+    {
+      "source": "src/rules/borders.ts",
+      "generatedBytes": 950,
+      "sourceTextBytes": 2902
+    },
+    {
+      "source": "src/render/artCache.ts",
+      "generatedBytes": 949,
+      "sourceTextBytes": 4606
+    },
+    {
+      "source": "src/rules/clear.ts",
+      "generatedBytes": 940,
+      "sourceTextBytes": 5281
+    },
+    {
+      "source": "src/render/ride.ts",
+      "generatedBytes": 933,
+      "sourceTextBytes": 4310
+    },
+    {
+      "source": "src/render/rig/rigBuild.ts",
+      "generatedBytes": 933,
+      "sourceTextBytes": 4892
+    },
+    {
+      "source": "art/creatures/elephant/genome.js",
+      "generatedBytes": 930,
+      "sourceTextBytes": 1846
+    },
+    {
+      "source": "art/creatures/ibex/genome.js",
+      "generatedBytes": 926,
+      "sourceTextBytes": 1834
+    },
+    {
+      "source": "src/render/view/finds.ts",
+      "generatedBytes": 923,
+      "sourceTextBytes": 3897
+    },
+    {
+      "source": "src/ui/deviceHints.ts",
+      "generatedBytes": 917,
+      "sourceTextBytes": 1615
+    },
+    {
+      "source": "src/app/newBuild.ts",
+      "generatedBytes": 915,
+      "sourceTextBytes": 2850
+    },
+    {
+      "source": "art/creatures/bear/genome.js",
+      "generatedBytes": 912,
+      "sourceTextBytes": 1292
+    },
+    {
+      "source": "art/creatures/raven/creature.js",
+      "generatedBytes": 910,
+      "sourceTextBytes": 1718
+    },
+    {
+      "source": "src/rules/runaway.ts",
+      "generatedBytes": 908,
+      "sourceTextBytes": 4101
+    },
+    {
+      "source": "src/app/defaultLook.ts",
+      "generatedBytes": 902,
+      "sourceTextBytes": 3176
+    },
+    {
+      "source": "src/render/load.ts",
+      "generatedBytes": 901,
+      "sourceTextBytes": 3841
+    },
+    {
+      "source": "src/rules/power.ts",
+      "generatedBytes": 899,
+      "sourceTextBytes": 3962
+    },
+    {
+      "source": "art/creatures/owl/creature.js",
+      "generatedBytes": 888,
+      "sourceTextBytes": 1636
+    },
+    {
+      "source": "src/render/cheer.ts",
+      "generatedBytes": 885,
+      "sourceTextBytes": 3395
+    },
+    {
+      "source": "art/creatures/cat/genome.js",
+      "generatedBytes": 883,
+      "sourceTextBytes": 1694
+    },
+    {
+      "source": "art/creatures/redpanda/genome.js",
+      "generatedBytes": 882,
+      "sourceTextBytes": 1708
+    },
+    {
+      "source": "src/render/routeEase.ts",
+      "generatedBytes": 880,
+      "sourceTextBytes": 3153
+    },
+    {
+      "source": "src/render/impact.ts",
+      "generatedBytes": 868,
+      "sourceTextBytes": 3380
+    },
+    {
+      "source": "src/platform/rumble.ts",
+      "generatedBytes": 852,
+      "sourceTextBytes": 2224
+    },
+    {
+      "source": "src/app/settings.ts",
+      "generatedBytes": 850,
+      "sourceTextBytes": 2845
+    },
+    {
+      "source": "src/render/houseFloor.ts",
+      "generatedBytes": 849,
+      "sourceTextBytes": 2037
+    },
+    {
+      "source": "src/render/overlayTilt.ts",
+      "generatedBytes": 845,
+      "sourceTextBytes": 3615
+    },
+    {
+      "source": "src/rules/clothesPile.ts",
+      "generatedBytes": 843,
+      "sourceTextBytes": 4854
+    },
+    {
+      "source": "src/app/playerPick.ts",
+      "generatedBytes": 841,
+      "sourceTextBytes": 2169
+    },
+    {
+      "source": "src/rules/cauldronKitchen.ts",
+      "generatedBytes": 828,
+      "sourceTextBytes": 2958
+    },
+    {
+      "source": "src/rules/moon.ts",
+      "generatedBytes": 823,
+      "sourceTextBytes": 3261
+    },
+    {
+      "source": "src/rules/hat.ts",
+      "generatedBytes": 815,
+      "sourceTextBytes": 5416
+    },
+    {
+      "source": "art/creatures/bat/creature.js",
+      "generatedBytes": 808,
+      "sourceTextBytes": 1480
+    },
+    {
+      "source": "art/flora/genomes.js",
+      "generatedBytes": 807,
+      "sourceTextBytes": 3305
+    },
+    {
+      "source": "art/creatures/meerkat/genome.js",
+      "generatedBytes": 805,
+      "sourceTextBytes": 1232
+    },
+    {
+      "source": "src/rules/stations.ts",
+      "generatedBytes": 797,
+      "sourceTextBytes": 5314
+    },
+    {
+      "source": "src/render/view/pointers.ts",
+      "generatedBytes": 795,
+      "sourceTextBytes": 4536
+    },
+    {
+      "source": "src/rules/inviteWakes.ts",
+      "generatedBytes": 789,
+      "sourceTextBytes": 2634
+    },
+    {
+      "source": "src/app/viewParams.ts",
+      "generatedBytes": 783,
+      "sourceTextBytes": 3564
+    },
+    {
+      "source": "src/platform/audio/voices.ts",
+      "generatedBytes": 780,
+      "sourceTextBytes": 3574
+    },
+    {
+      "source": "src/render/sleepyFace.ts",
+      "generatedBytes": 776,
+      "sourceTextBytes": 2179
+    },
+    {
+      "source": "src/platform/online/guestInput.ts",
+      "generatedBytes": 772,
+      "sourceTextBytes": 3170
+    },
+    {
+      "source": "src/rules/dream.ts",
+      "generatedBytes": 769,
+      "sourceTextBytes": 3380
+    },
+    {
+      "source": "src/render/partyOver.ts",
+      "generatedBytes": 767,
+      "sourceTextBytes": 3625
+    },
+    {
+      "source": "src/app/recordSave.ts",
+      "generatedBytes": 766,
+      "sourceTextBytes": 2836
+    },
+    {
+      "source": "art/creatures/raccoon/genome.js",
+      "generatedBytes": 762,
+      "sourceTextBytes": 1279
+    },
+    {
+      "source": "src/app/debugUnlock.ts",
+      "generatedBytes": 761,
+      "sourceTextBytes": 3404
+    },
+    {
+      "source": "src/render/leash/deckBpm.ts",
+      "generatedBytes": 759,
+      "sourceTextBytes": 1894
+    },
+    {
+      "source": "art/creatures/flyingsquirrel/genome.js",
+      "generatedBytes": 743,
+      "sourceTextBytes": 1263
+    },
+    {
+      "source": "art/creatures/snowleopard/genome.js",
+      "generatedBytes": 743,
+      "sourceTextBytes": 1629
+    },
+    {
+      "source": "art/creatures/crocodile/genome.js",
+      "generatedBytes": 733,
+      "sourceTextBytes": 1309
+    },
+    {
+      "source": "art/creatures/unicorn/genome.js",
+      "generatedBytes": 732,
+      "sourceTextBytes": 1599
+    },
+    {
+      "source": "src/rules/cauldron.ts",
+      "generatedBytes": 729,
+      "sourceTextBytes": 2867
+    },
+    {
+      "source": "art/creatures/tiger/creature.js",
+      "generatedBytes": 724,
+      "sourceTextBytes": 1247
+    },
+    {
+      "source": "art/creatures/stag/creature.js",
+      "generatedBytes": 723,
+      "sourceTextBytes": 1330
+    },
+    {
+      "source": "src/render/view/ahead.ts",
+      "generatedBytes": 713,
+      "sourceTextBytes": 2224
+    },
+    {
+      "source": "art/creatures/lion/creature.js",
+      "generatedBytes": 711,
+      "sourceTextBytes": 1223
+    },
+    {
+      "source": "art/creatures/featheredserpent/creature.js",
+      "generatedBytes": 710,
+      "sourceTextBytes": 1289
+    },
+    {
+      "source": "art/creatures/flyingsquirrel/creature.js",
+      "generatedBytes": 703,
+      "sourceTextBytes": 1274
+    },
+    {
+      "source": "src/render/berries.ts",
+      "generatedBytes": 702,
+      "sourceTextBytes": 1529
+    },
+    {
+      "source": "src/render/landingReadiness.ts",
+      "generatedBytes": 700,
+      "sourceTextBytes": 1988
+    },
+    {
+      "source": "art/creatures/elk/creature.js",
+      "generatedBytes": 698,
+      "sourceTextBytes": 1283
+    },
+    {
+      "source": "src/render/cauldronMaterials.ts",
+      "generatedBytes": 697,
+      "sourceTextBytes": 1586
+    },
+    {
+      "source": "art/creatures/ibex/creature.js",
+      "generatedBytes": 696,
+      "sourceTextBytes": 1417
+    },
+    {
+      "source": "src/rules/random.ts",
+      "generatedBytes": 696,
+      "sourceTextBytes": 1881
+    },
+    {
+      "source": "art/creatures/roe/genome.js",
+      "generatedBytes": 694,
+      "sourceTextBytes": 1483
+    },
+    {
+      "source": "src/app/zooExit.ts",
+      "generatedBytes": 693,
+      "sourceTextBytes": 1961
+    },
+    {
+      "source": "art/creatures/cheetah/creature.js",
+      "generatedBytes": 682,
+      "sourceTextBytes": 1207
+    },
+    {
+      "source": "src/ui/slideIn.ts",
+      "generatedBytes": 676,
+      "sourceTextBytes": 2020
+    },
+    {
+      "source": "art/creatures/griffin/creature.js",
+      "generatedBytes": 675,
+      "sourceTextBytes": 1195
+    },
+    {
+      "source": "art/creatures/jaguar/creature.js",
+      "generatedBytes": 673,
+      "sourceTextBytes": 1186
+    },
+    {
+      "source": "art/creatures/dormouse/genome.js",
+      "generatedBytes": 672,
+      "sourceTextBytes": 1053
+    },
+    {
+      "source": "art/creatures/stoat/genome.js",
+      "generatedBytes": 672,
+      "sourceTextBytes": 1051
+    },
+    {
+      "source": "art/creatures/dragonfly/creature.js",
+      "generatedBytes": 672,
+      "sourceTextBytes": 1317
+    },
+    {
+      "source": "art/creatures/unicorn/creature.js",
+      "generatedBytes": 672,
+      "sourceTextBytes": 1260
+    },
+    {
+      "source": "art/creatures/arcticfox/creature.js",
+      "generatedBytes": 668,
+      "sourceTextBytes": 1226
+    },
+    {
+      "source": "art/creatures/sphinx/creature.js",
+      "generatedBytes": 666,
+      "sourceTextBytes": 1163
+    },
+    {
+      "source": "art/creatures/toad/creature.js",
+      "generatedBytes": 666,
+      "sourceTextBytes": 1239
+    },
+    {
+      "source": "src/app/chartCache.ts",
+      "generatedBytes": 663,
+      "sourceTextBytes": 7044
+    },
+    {
+      "source": "art/creatures/ram/creature.js",
+      "generatedBytes": 661,
+      "sourceTextBytes": 1242
+    },
+    {
+      "source": "src/ui/dom.ts",
+      "generatedBytes": 656,
+      "sourceTextBytes": 2420
+    },
+    {
+      "source": "art/creatures/spider/creature.js",
+      "generatedBytes": 656,
+      "sourceTextBytes": 1197
+    },
+    {
+      "source": "art/creatures/heron/creature.js",
+      "generatedBytes": 652,
+      "sourceTextBytes": 1271
+    },
+    {
+      "source": "art/creatures/rhino/creature.js",
+      "generatedBytes": 652,
+      "sourceTextBytes": 1233
+    },
+    {
+      "source": "src/render/chart/chartPin.ts",
+      "generatedBytes": 651,
+      "sourceTextBytes": 2864
+    },
+    {
+      "source": "art/creatures/lynx/genome.js",
+      "generatedBytes": 651,
+      "sourceTextBytes": 904
+    },
+    {
+      "source": "src/loading.js",
+      "generatedBytes": 649,
+      "sourceTextBytes": 1954
+    },
+    {
+      "source": "src/render/legendSleep.ts",
+      "generatedBytes": 648,
+      "sourceTextBytes": 2569
+    },
+    {
+      "source": "src/app/hatSave.ts",
+      "generatedBytes": 647,
+      "sourceTextBytes": 2425
+    },
+    {
+      "source": "art/creatures/stoat/creature.js",
+      "generatedBytes": 646,
+      "sourceTextBytes": 1187
+    },
+    {
+      "source": "art/creatures/hedgehog/creature.js",
+      "generatedBytes": 644,
+      "sourceTextBytes": 1241
+    },
+    {
+      "source": "art/creatures/beaver/genome.js",
+      "generatedBytes": 643,
+      "sourceTextBytes": 834
+    },
+    {
+      "source": "art/creatures/hare/creature.js",
+      "generatedBytes": 641,
+      "sourceTextBytes": 1178
+    },
+    {
+      "source": "art/creatures/dormouse/creature.js",
+      "generatedBytes": 640,
+      "sourceTextBytes": 1198
+    },
+    {
+      "source": "src/render/spin.ts",
+      "generatedBytes": 640,
+      "sourceTextBytes": 2892
+    },
+    {
+      "source": "src/app/guideSave.ts",
+      "generatedBytes": 640,
+      "sourceTextBytes": 1908
+    },
+    {
+      "source": "src/rules/affection.ts",
+      "generatedBytes": 640,
+      "sourceTextBytes": 4113
+    },
+    {
+      "source": "art/creatures/salamander/genome.js",
+      "generatedBytes": 639,
+      "sourceTextBytes": 829
+    },
+    {
+      "source": "art/creatures/snake/creature.js",
+      "generatedBytes": 639,
+      "sourceTextBytes": 1177
+    },
+    {
+      "source": "art/creatures/moth/creature.js",
+      "generatedBytes": 637,
+      "sourceTextBytes": 1190
+    },
+    {
+      "source": "art/creatures/otter/genome.js",
+      "generatedBytes": 635,
+      "sourceTextBytes": 953
+    },
+    {
+      "source": "art/creatures/squirrel/creature.js",
+      "generatedBytes": 633,
+      "sourceTextBytes": 1167
+    },
+    {
+      "source": "art/creatures/stegosaurus/creature.js",
+      "generatedBytes": 632,
+      "sourceTextBytes": 1213
+    },
+    {
+      "source": "art/creatures/roe/creature.js",
+      "generatedBytes": 631,
+      "sourceTextBytes": 1154
+    },
+    {
+      "source": "art/creatures/wolf/creature.js",
+      "generatedBytes": 631,
+      "sourceTextBytes": 1167
+    },
+    {
+      "source": "art/creatures/frostwyrm/creature.js",
+      "generatedBytes": 626,
+      "sourceTextBytes": 1123
+    },
+    {
+      "source": "art/creatures/mole/creature.js",
+      "generatedBytes": 619,
+      "sourceTextBytes": 1102
+    },
+    {
+      "source": "art/flora/species/crystal.js",
+      "generatedBytes": 618,
+      "sourceTextBytes": 788
+    },
+    {
+      "source": "art/creatures/boar/creature.js",
+      "generatedBytes": 612,
+      "sourceTextBytes": 1187
+    },
+    {
+      "source": "art/creatures/meerkat/creature.js",
+      "generatedBytes": 612,
+      "sourceTextBytes": 1148
+    },
+    {
+      "source": "art/creatures/cat/creature.js",
+      "generatedBytes": 611,
+      "sourceTextBytes": 1099
+    },
+    {
+      "source": "art/creatures/beaver/creature.js",
+      "generatedBytes": 607,
+      "sourceTextBytes": 1103
+    },
+    {
+      "source": "art/creatures/elephant/creature.js",
+      "generatedBytes": 606,
+      "sourceTextBytes": 1180
+    },
+    {
+      "source": "art/flora/species/olive.js",
+      "generatedBytes": 606,
+      "sourceTextBytes": 1005
+    },
+    {
+      "source": "art/creatures/snowleopard/creature.js",
+      "generatedBytes": 605,
+      "sourceTextBytes": 1111
+    },
+    {
+      "source": "art/creatures/rattlesnake/creature.js",
+      "generatedBytes": 604,
+      "sourceTextBytes": 1139
+    },
+    {
+      "source": "src/app/keys.ts",
+      "generatedBytes": 604,
+      "sourceTextBytes": 1398
+    },
+    {
+      "source": "art/creatures/marten/creature.js",
+      "generatedBytes": 602,
+      "sourceTextBytes": 1131
+    },
+    {
+      "source": "art/creatures/fox/creature.js",
+      "generatedBytes": 600,
+      "sourceTextBytes": 1121
+    },
+    {
+      "source": "src/render/programReadiness.ts",
+      "generatedBytes": 599,
+      "sourceTextBytes": 1848
+    },
+    {
+      "source": "art/creatures/frosttroll/genome.js",
+      "generatedBytes": 597,
+      "sourceTextBytes": 1192
+    },
+    {
+      "source": "src/render/shaderDrawGate.ts",
+      "generatedBytes": 597,
+      "sourceTextBytes": 1944
+    },
+    {
+      "source": "art/creatures/lynx/creature.js",
+      "generatedBytes": 596,
+      "sourceTextBytes": 1085
+    },
+    {
+      "source": "art/creatures/redpanda/creature.js",
+      "generatedBytes": 592,
+      "sourceTextBytes": 1087
+    },
+    {
+      "source": "art/flora/species/paloVerde.js",
+      "generatedBytes": 590,
+      "sourceTextBytes": 869
+    },
+    {
+      "source": "art/flora/species/glowcap.js",
+      "generatedBytes": 589,
+      "sourceTextBytes": 762
+    },
+    {
+      "source": "art/creatures/woodlouse/creature.js",
+      "generatedBytes": 585,
+      "sourceTextBytes": 1177
+    },
+    {
+      "source": "art/flora/species/ironwood.js",
+      "generatedBytes": 584,
+      "sourceTextBytes": 756
+    },
+    {
+      "source": "art/creatures/crocodile/creature.js",
+      "generatedBytes": 583,
+      "sourceTextBytes": 1079
+    },
+    {
+      "source": "art/creatures/stag/genome.js",
+      "generatedBytes": 581,
+      "sourceTextBytes": 751
+    },
+    {
+      "source": "src/app/storageFallback.ts",
+      "generatedBytes": 581,
+      "sourceTextBytes": 1682
+    },
+    {
+      "source": "src/platform/audio/buffer.ts",
+      "generatedBytes": 580,
+      "sourceTextBytes": 2762
+    },
+    {
+      "source": "art/creatures/otter/creature.js",
+      "generatedBytes": 578,
+      "sourceTextBytes": 1093
+    },
+    {
+      "source": "art/flora/species/desertIronwood.js",
+      "generatedBytes": 577,
+      "sourceTextBytes": 920
+    },
+    {
+      "source": "art/creatures/badger/creature.js",
+      "generatedBytes": 573,
+      "sourceTextBytes": 1056
+    },
+    {
+      "source": "src/rules/speakers.ts",
+      "generatedBytes": 569,
+      "sourceTextBytes": 3239
+    },
+    {
+      "source": "art/creatures/penguin/creature.js",
+      "generatedBytes": 567,
+      "sourceTextBytes": 1175
+    },
+    {
+      "source": "art/creatures/salamander/creature.js",
+      "generatedBytes": 565,
+      "sourceTextBytes": 1050
+    },
+    {
+      "source": "art/flora/species/index.js",
+      "generatedBytes": 565,
+      "sourceTextBytes": 3970
+    },
+    {
+      "source": "src/rules/bags.ts",
+      "generatedBytes": 565,
+      "sourceTextBytes": 2545
+    },
+    {
+      "source": "art/creatures/newt/genome.js",
+      "generatedBytes": 564,
+      "sourceTextBytes": 868
+    },
+    {
+      "source": "art/creatures/hydra/creature.js",
+      "generatedBytes": 560,
+      "sourceTextBytes": 1033
+    },
+    {
+      "source": "art/flora/species/cherry.js",
+      "generatedBytes": 557,
+      "sourceTextBytes": 848
+    },
+    {
+      "source": "art/flora/species/vinewood.js",
+      "generatedBytes": 556,
+      "sourceTextBytes": 722
+    },
+    {
+      "source": "src/ui/controlsText.ts",
+      "generatedBytes": 555,
+      "sourceTextBytes": 1525
+    },
+    {
+      "source": "art/creatures/elk/genome.js",
+      "generatedBytes": 547,
+      "sourceTextBytes": 707
+    },
+    {
+      "source": "src/rules/attackLook.ts",
+      "generatedBytes": 540,
+      "sourceTextBytes": 7235
+    },
+    {
+      "source": "art/creatures/fennec/creature.js",
+      "generatedBytes": 538,
+      "sourceTextBytes": 1014
+    },
+    {
+      "source": "art/flora/species/kapok.js",
+      "generatedBytes": 532,
+      "sourceTextBytes": 777
+    },
+    {
+      "source": "art/flora/species/strangler.js",
+      "generatedBytes": 529,
+      "sourceTextBytes": 688
+    },
+    {
+      "source": "art/creatures/marten/genome.js",
+      "generatedBytes": 526,
+      "sourceTextBytes": 689
+    },
+    {
+      "source": "art/flora/species/crabApple.js",
+      "generatedBytes": 526,
+      "sourceTextBytes": 688
+    },
+    {
+      "source": "art/flora/species/bamboo.js",
+      "generatedBytes": 523,
+      "sourceTextBytes": 675
+    },
+    {
+      "source": "src/app/opening.ts",
+      "generatedBytes": 520,
+      "sourceTextBytes": 3661
+    },
+    {
+      "source": "art/flora/species/saguaro.js",
+      "generatedBytes": 519,
+      "sourceTextBytes": 801
+    },
+    {
+      "source": "src/app/arrival.ts",
+      "generatedBytes": 513,
+      "sourceTextBytes": 2468
+    },
+    {
+      "source": "art/flora/species/joshua.js",
+      "generatedBytes": 511,
+      "sourceTextBytes": 664
+    },
+    {
+      "source": "src/render/loadingFront.ts",
+      "generatedBytes": 511,
+      "sourceTextBytes": 3659
+    },
+    {
+      "source": "src/rules/creatureCues.ts",
+      "generatedBytes": 510,
+      "sourceTextBytes": 1242
+    },
+    {
+      "source": "art/creatures/raccoon/creature.js",
+      "generatedBytes": 509,
+      "sourceTextBytes": 1012
+    },
+    {
+      "source": "art/flora/species/mesquite.js",
+      "generatedBytes": 508,
+      "sourceTextBytes": 842
+    },
+    {
+      "source": "art/creatures/frosttroll/creature.js",
+      "generatedBytes": 507,
+      "sourceTextBytes": 957
+    },
+    {
+      "source": "art/workshop.js",
+      "generatedBytes": 507,
+      "sourceTextBytes": 2606
+    },
+    {
+      "source": "art/creatures/snail/creature.js",
+      "generatedBytes": 504,
+      "sourceTextBytes": 976
+    },
+    {
+      "source": "src/render/bubbleSight.ts",
+      "generatedBytes": 504,
+      "sourceTextBytes": 3456
+    },
+    {
+      "source": "art/flora/species/elder.js",
+      "generatedBytes": 494,
+      "sourceTextBytes": 644
+    },
+    {
+      "source": "art/flora/species/pricklyPear.js",
+      "generatedBytes": 492,
+      "sourceTextBytes": 644
+    },
+    {
+      "source": "art/creatures/komodo/creature.js",
+      "generatedBytes": 487,
+      "sourceTextBytes": 948
+    },
+    {
+      "source": "art/flora/species/baldCypress.js",
+      "generatedBytes": 486,
+      "sourceTextBytes": 860
+    },
+    {
+      "source": "art/flora/areas.js",
+      "generatedBytes": 486,
+      "sourceTextBytes": 2151
+    },
+    {
+      "source": "art/flora/species/broad.js",
+      "generatedBytes": 485,
+      "sourceTextBytes": 668
+    },
+    {
+      "source": "art/flora/species/marula.js",
+      "generatedBytes": 484,
+      "sourceTextBytes": 802
+    },
+    {
+      "source": "src/platform/audio/dsp.ts",
+      "generatedBytes": 484,
+      "sourceTextBytes": 1621
+    },
+    {
+      "source": "art/creatures/featheredserpent/genome.js",
+      "generatedBytes": 483,
+      "sourceTextBytes": 1312
+    },
+    {
+      "source": "art/creatures/bear/creature.js",
+      "generatedBytes": 481,
+      "sourceTextBytes": 913
+    },
+    {
+      "source": "art/flora/species/elm.js",
+      "generatedBytes": 480,
+      "sourceTextBytes": 625
+    },
+    {
+      "source": "art/creatures/polarbear/creature.js",
+      "generatedBytes": 478,
+      "sourceTextBytes": 946
+    },
+    {
+      "source": "art/creatures/scorpion/creature.js",
+      "generatedBytes": 476,
+      "sourceTextBytes": 944
+    },
+    {
+      "source": "src/app/mapPrepStore.ts",
+      "generatedBytes": 474,
+      "sourceTextBytes": 2285
+    },
+    {
+      "source": "art/flora/species/weepingBirch.js",
+      "generatedBytes": 472,
+      "sourceTextBytes": 622
+    },
+    {
+      "source": "art/flora/species/whitebeam.js",
+      "generatedBytes": 472,
+      "sourceTextBytes": 622
+    },
+    {
+      "source": "art/flora/species/juniper.js",
+      "generatedBytes": 470,
+      "sourceTextBytes": 864
+    },
+    {
+      "source": "art/creatures/newt/creature.js",
+      "generatedBytes": 467,
+      "sourceTextBytes": 918
+    },
+    {
+      "source": "art/flora/species/hazel.js",
+      "generatedBytes": 465,
+      "sourceTextBytes": 600
+    },
+    {
+      "source": "art/creatures/squirrel/genome.js",
+      "generatedBytes": 464,
+      "sourceTextBytes": 604
+    },
+    {
+      "source": "art/flora/species/mangrove.js",
+      "generatedBytes": 460,
+      "sourceTextBytes": 613
+    },
+    {
+      "source": "src/rules/cooldown.ts",
+      "generatedBytes": 460,
+      "sourceTextBytes": 3000
+    },
+    {
+      "source": "art/creatures/armadillo/creature.js",
+      "generatedBytes": 459,
+      "sourceTextBytes": 1012
+    },
+    {
+      "source": "art/creatures/beetle/creature.js",
+      "generatedBytes": 459,
+      "sourceTextBytes": 899
+    },
+    {
+      "source": "art/flora/species/aspen.js",
+      "generatedBytes": 458,
+      "sourceTextBytes": 596
+    },
+    {
+      "source": "art/flora/species/holly.js",
+      "generatedBytes": 458,
+      "sourceTextBytes": 596
+    },
+    {
+      "source": "art/flora/species/pine.js",
+      "generatedBytes": 456,
+      "sourceTextBytes": 596
+    },
+    {
+      "source": "art/creatures/snail/genome.js",
+      "generatedBytes": 455,
+      "sourceTextBytes": 1173
+    },
+    {
+      "source": "src/render/palette.ts",
+      "generatedBytes": 450,
+      "sourceTextBytes": 2962
+    },
+    {
+      "source": "art/flora/species/birch.js",
+      "generatedBytes": 442,
+      "sourceTextBytes": 577
+    },
+    {
+      "source": "src/rules/homeArea.ts",
+      "generatedBytes": 442,
+      "sourceTextBytes": 1754
+    },
+    {
+      "source": "art/flora/species/larch.js",
+      "generatedBytes": 440,
+      "sourceTextBytes": 573
+    },
+    {
+      "source": "art/flora/species/mopane.js",
+      "generatedBytes": 440,
+      "sourceTextBytes": 758
+    },
+    {
+      "source": "art/flora/species/willow.js",
+      "generatedBytes": 439,
+      "sourceTextBytes": 577
+    },
+    {
+      "source": "art/flora/species/fir.js",
+      "generatedBytes": 438,
+      "sourceTextBytes": 568
+    },
+    {
+      "source": "src/render/loadingLight.ts",
+      "generatedBytes": 437,
+      "sourceTextBytes": 582
+    },
+    {
+      "source": "art/flora/species/rowan.js",
+      "generatedBytes": 436,
+      "sourceTextBytes": 562
+    },
+    {
+      "source": "src/rules/growth.ts",
+      "generatedBytes": 435,
+      "sourceTextBytes": 10224
+    },
+    {
+      "source": "src/rules/kit.ts",
+      "generatedBytes": 433,
+      "sourceTextBytes": 3180
+    },
+    {
+      "source": "src/rules/budget.ts",
+      "generatedBytes": 432,
+      "sourceTextBytes": 1824
+    },
+    {
+      "source": "art/flora/species/alder.js",
+      "generatedBytes": 427,
+      "sourceTextBytes": 561
+    },
+    {
+      "source": "art/creatures/crab/creature.js",
+      "generatedBytes": 425,
+      "sourceTextBytes": 897
+    },
+    {
+      "source": "art/flora/species/acacia.js",
+      "generatedBytes": 423,
+      "sourceTextBytes": 633
+    },
+    {
+      "source": "src/platform/tuningPreset.ts",
+      "generatedBytes": 422,
+      "sourceTextBytes": 2044
+    },
+    {
+      "source": "src/render/overrides.ts",
+      "generatedBytes": 421,
+      "sourceTextBytes": 1890
+    },
+    {
+      "source": "art/flora/species/baobab.js",
+      "generatedBytes": 419,
+      "sourceTextBytes": 629
+    },
+    {
+      "source": "art/flora/species/yew.js",
+      "generatedBytes": 419,
+      "sourceTextBytes": 546
+    },
+    {
+      "source": "src/rules/kinds.ts",
+      "generatedBytes": 417,
+      "sourceTextBytes": 4023
+    },
+    {
+      "source": "art/flora/species/beech.js",
+      "generatedBytes": 415,
+      "sourceTextBytes": 537
+    },
+    {
+      "source": "art/flora/species/cedar.js",
+      "generatedBytes": 415,
+      "sourceTextBytes": 547
+    },
+    {
+      "source": "art/flora/species/ocotillo.js",
+      "generatedBytes": 415,
+      "sourceTextBytes": 547
+    },
+    {
+      "source": "art/flora/species/hawthorn.js",
+      "generatedBytes": 402,
+      "sourceTextBytes": 529
+    },
+    {
+      "source": "art/flora/species/flat.js",
+      "generatedBytes": 394,
+      "sourceTextBytes": 517
+    },
+    {
+      "source": "art/flora/species/coconut.js",
+      "generatedBytes": 393,
+      "sourceTextBytes": 726
+    },
+    {
+      "source": "art/flora/species/datePalm.js",
+      "generatedBytes": 390,
+      "sourceTextBytes": 589
+    },
+    {
+      "source": "src/app/loadout.ts",
+      "generatedBytes": 388,
+      "sourceTextBytes": 1817
+    },
+    {
+      "source": "src/render/view/hatLooks.ts",
+      "generatedBytes": 388,
+      "sourceTextBytes": 1859
+    },
+    {
+      "source": "art/flora/species/cycad.js",
+      "generatedBytes": 384,
+      "sourceTextBytes": 725
+    },
+    {
+      "source": "src/render/groundFamily.ts",
+      "generatedBytes": 384,
+      "sourceTextBytes": 1074
+    },
+    {
+      "source": "art/creatures/hare/genome.js",
+      "generatedBytes": 380,
+      "sourceTextBytes": 496
+    },
+    {
+      "source": "src/render/dirty.ts",
+      "generatedBytes": 380,
+      "sourceTextBytes": 1645
+    },
+    {
+      "source": "art/creatures/woodlouse/genome.js",
+      "generatedBytes": 378,
+      "sourceTextBytes": 1067
+    },
+    {
+      "source": "art/creatures/owl/genome.js",
+      "generatedBytes": 374,
+      "sourceTextBytes": 1171
+    },
+    {
+      "source": "art/flora/species/nipa.js",
+      "generatedBytes": 374,
+      "sourceTextBytes": 647
+    },
+    {
+      "source": "art/flora/variants.js",
+      "generatedBytes": 373,
+      "sourceTextBytes": 2136
+    },
+    {
+      "source": "art/flora/species/ash.js",
+      "generatedBytes": 372,
+      "sourceTextBytes": 486
+    },
+    {
+      "source": "src/rules/partyLegend.ts",
+      "generatedBytes": 367,
+      "sourceTextBytes": 2142
+    },
+    {
+      "source": "art/flora/species/lime.js",
+      "generatedBytes": 365,
+      "sourceTextBytes": 478
+    },
+    {
+      "source": "art/flora/species/chestnut.js",
+      "generatedBytes": 362,
+      "sourceTextBytes": 477
+    },
+    {
+      "source": "art/flora/species/oak.js",
+      "generatedBytes": 351,
+      "sourceTextBytes": 490
+    },
+    {
+      "source": "art/creatures/crab/genome.js",
+      "generatedBytes": 346,
+      "sourceTextBytes": 880
+    },
+    {
+      "source": "src/app/recordingHooks.ts",
+      "generatedBytes": 340,
+      "sourceTextBytes": 1371
+    },
+    {
+      "source": "art/recipes.js",
+      "generatedBytes": 338,
+      "sourceTextBytes": 2675
+    },
+    {
+      "source": "src/render/chart/moon.ts",
+      "generatedBytes": 335,
+      "sourceTextBytes": 1647
+    },
+    {
+      "source": "art/creatures/armadillo/genome.js",
+      "generatedBytes": 327,
+      "sourceTextBytes": 778
+    },
+    {
+      "source": "art/creatures/rattlesnake/genome.js",
+      "generatedBytes": 324,
+      "sourceTextBytes": 741
+    },
+    {
+      "source": "art/creatures/penguin/genome.js",
+      "generatedBytes": 322,
+      "sourceTextBytes": 1083
+    },
+    {
+      "source": "art/flora/species/sycamore.js",
+      "generatedBytes": 319,
+      "sourceTextBytes": 424
+    },
+    {
+      "source": "art/flora/species/palm.js",
+      "generatedBytes": 315,
+      "sourceTextBytes": 469
+    },
+    {
+      "source": "art/creatures/hedgehog/genome.js",
+      "generatedBytes": 305,
+      "sourceTextBytes": 485
+    },
+    {
+      "source": "src/app/chartNav.ts",
+      "generatedBytes": 302,
+      "sourceTextBytes": 1285
+    },
+    {
+      "source": "art/creatures/scorpion/genome.js",
+      "generatedBytes": 299,
+      "sourceTextBytes": 686
+    },
+    {
+      "source": "src/render/chart/flightClock.ts",
+      "generatedBytes": 295,
+      "sourceTextBytes": 980
+    },
+    {
+      "source": "art/creatures/komodo/sigil.js",
+      "generatedBytes": 292,
+      "sourceTextBytes": 725
+    },
+    {
+      "source": "src/app/owned.ts",
+      "generatedBytes": 288,
+      "sourceTextBytes": 990
+    },
+    {
+      "source": "src/render/fxMockModel.ts",
+      "generatedBytes": 287,
+      "sourceTextBytes": 949
+    },
+    {
+      "source": "src/rules/cauldronTrip.ts",
+      "generatedBytes": 287,
+      "sourceTextBytes": 920
+    },
+    {
+      "source": "src/render/retire.ts",
+      "generatedBytes": 285,
+      "sourceTextBytes": 1762
+    },
+    {
+      "source": "art/creatures/scorpion/sigil.js",
+      "generatedBytes": 284,
+      "sourceTextBytes": 545
+    },
+    {
+      "source": "art/areaRenames.js",
+      "generatedBytes": 284,
+      "sourceTextBytes": 2885
+    },
+    {
+      "source": "src/rules/runestones.ts",
+      "generatedBytes": 284,
+      "sourceTextBytes": 1288
+    },
+    {
+      "source": "art/creatures/featheredserpent/sigil.js",
+      "generatedBytes": 281,
+      "sourceTextBytes": 535
+    },
+    {
+      "source": "art/creatures/dragonfly/genome.js",
+      "generatedBytes": 280,
+      "sourceTextBytes": 665
+    },
+    {
+      "source": "art/creatures/crab/sigil.js",
+      "generatedBytes": 268,
+      "sourceTextBytes": 521
+    },
+    {
+      "source": "art/creatures/flyingsquirrel/sigil.js",
+      "generatedBytes": 268,
+      "sourceTextBytes": 582
+    },
+    {
+      "source": "art/creatures/newt/sigil.js",
+      "generatedBytes": 268,
+      "sourceTextBytes": 408
+    },
+    {
+      "source": "src/rules/simLod.ts",
+      "generatedBytes": 265,
+      "sourceTextBytes": 2696
+    },
+    {
+      "source": "src/app/zooCoasts.ts",
+      "generatedBytes": 264,
+      "sourceTextBytes": 1900
+    },
+    {
+      "source": "src/render/chart/chartPinPlace.ts",
+      "generatedBytes": 262,
+      "sourceTextBytes": 1561
+    },
+    {
+      "source": "src/render/free.ts",
+      "generatedBytes": 261,
+      "sourceTextBytes": 777
+    },
+    {
+      "source": "art/creatures/woodlouse/sigil.js",
+      "generatedBytes": 256,
+      "sourceTextBytes": 472
+    },
+    {
+      "source": "art/creatures/armadillo/sigil.js",
+      "generatedBytes": 252,
+      "sourceTextBytes": 490
+    },
+    {
+      "source": "src/render/legendLight.ts",
+      "generatedBytes": 245,
+      "sourceTextBytes": 1331
+    },
+    {
+      "source": "art/creatures/cat/sigil.js",
+      "generatedBytes": 243,
+      "sourceTextBytes": 553
+    },
+    {
+      "source": "art/creatures/lynx/sigil.js",
+      "generatedBytes": 242,
+      "sourceTextBytes": 428
+    },
+    {
+      "source": "art/creatures/unicorn/sigil.js",
+      "generatedBytes": 241,
+      "sourceTextBytes": 580
+    },
+    {
+      "source": "src/render/fx/palette.ts",
+      "generatedBytes": 239,
+      "sourceTextBytes": 521
+    },
+    {
+      "source": "art/creatures/crocodile/bold.js",
+      "generatedBytes": 235,
+      "sourceTextBytes": 476
+    },
+    {
+      "source": "art/creatures/moth/sigil.js",
+      "generatedBytes": 234,
+      "sourceTextBytes": 555
+    },
+    {
+      "source": "art/creatures/stegosaurus/sigil.js",
+      "generatedBytes": 231,
+      "sourceTextBytes": 482
+    },
+    {
+      "source": "art/creatures/elk/sigil.js",
+      "generatedBytes": 228,
+      "sourceTextBytes": 444
+    },
+    {
+      "source": "src/render/trunkCut.ts",
+      "generatedBytes": 228,
+      "sourceTextBytes": 1258
+    },
+    {
+      "source": "art/creatures/tiger/sigil.js",
+      "generatedBytes": 226,
+      "sourceTextBytes": 462
+    },
+    {
+      "source": "art/creatures/dragonfly/sigil.js",
+      "generatedBytes": 225,
+      "sourceTextBytes": 473
+    },
+    {
+      "source": "art/creatures/stoat/bold.js",
+      "generatedBytes": 224,
+      "sourceTextBytes": 467
+    },
+    {
+      "source": "art/creatures/sphinx/sigil.js",
+      "generatedBytes": 223,
+      "sourceTextBytes": 503
+    },
+    {
+      "source": "art/creatures/cheetah/bold.js",
+      "generatedBytes": 222,
+      "sourceTextBytes": 466
+    },
+    {
+      "source": "art/creatures/scorpion/bold.js",
+      "generatedBytes": 221,
+      "sourceTextBytes": 451
+    },
+    {
+      "source": "art/creatures/boar/sigil.js",
+      "generatedBytes": 220,
+      "sourceTextBytes": 439
+    },
+    {
+      "source": "art/creatures/stegosaurus/bold.js",
+      "generatedBytes": 219,
+      "sourceTextBytes": 463
+    },
+    {
+      "source": "art/creatures/ibex/sigil.js",
+      "generatedBytes": 216,
+      "sourceTextBytes": 437
+    },
+    {
+      "source": "art/creatures/newt/bold.js",
+      "generatedBytes": 216,
+      "sourceTextBytes": 443
+    },
+    {
+      "source": "art/creatures/crocodile/sigil.js",
+      "generatedBytes": 214,
+      "sourceTextBytes": 481
+    },
+    {
+      "source": "src/render/legendOutline.ts",
+      "generatedBytes": 214,
+      "sourceTextBytes": 1412
+    },
+    {
+      "source": "art/creatures/hydra/sigil.js",
+      "generatedBytes": 213,
+      "sourceTextBytes": 466
+    },
+    {
+      "source": "art/creatures/armadillo/bold.js",
+      "generatedBytes": 213,
+      "sourceTextBytes": 463
+    },
+    {
+      "source": "art/creatures/beetle/sigil.js",
+      "generatedBytes": 212,
+      "sourceTextBytes": 425
+    },
+    {
+      "source": "art/creatures/griffin/bold.js",
+      "generatedBytes": 211,
+      "sourceTextBytes": 437
+    },
+    {
+      "source": "art/creatures/roe/sigil.js",
+      "generatedBytes": 210,
+      "sourceTextBytes": 552
+    },
+    {
+      "source": "art/creatures/jaguar/bold.js",
+      "generatedBytes": 210,
+      "sourceTextBytes": 461
+    },
+    {
+      "source": "art/creatures/salamander/sigil.js",
+      "generatedBytes": 209,
+      "sourceTextBytes": 446
+    },
+    {
+      "source": "art/creatures/squirrel/sigil.js",
+      "generatedBytes": 208,
+      "sourceTextBytes": 435
+    },
+    {
+      "source": "art/creatures/mole/bold.js",
+      "generatedBytes": 204,
+      "sourceTextBytes": 435
+    },
+    {
+      "source": "art/creatures/stag/sigil.js",
+      "generatedBytes": 203,
+      "sourceTextBytes": 384
+    },
+    {
+      "source": "art/creatures/beetle/bold.js",
+      "generatedBytes": 203,
+      "sourceTextBytes": 441
+    },
+    {
+      "source": "art/creatures/redpanda/bold.js",
+      "generatedBytes": 203,
+      "sourceTextBytes": 400
+    },
+    {
+      "source": "art/creatures/bat/bold.js",
+      "generatedBytes": 202,
+      "sourceTextBytes": 443
+    },
+    {
+      "source": "art/creatures/squirrel/bold.js",
+      "generatedBytes": 202,
+      "sourceTextBytes": 369
+    },
+    {
+      "source": "art/creatures/komodo/bold.js",
+      "generatedBytes": 199,
+      "sourceTextBytes": 434
+    },
+    {
+      "source": "art/creatures/bat/sigil.js",
+      "generatedBytes": 197,
+      "sourceTextBytes": 378
+    },
+    {
+      "source": "art/creatures/spider/genome.js",
+      "generatedBytes": 194,
+      "sourceTextBytes": 464
+    },
+    {
+      "source": "art/creatures/griffin/sigil.js",
+      "generatedBytes": 194,
+      "sourceTextBytes": 424
+    },
+    {
+      "source": "art/creatures/frostwyrm/sigil.js",
+      "generatedBytes": 192,
+      "sourceTextBytes": 429
+    },
+    {
+      "source": "art/creatures/rattlesnake/sigil.js",
+      "generatedBytes": 191,
+      "sourceTextBytes": 491
+    },
+    {
+      "source": "art/creatures/spider/sigil.js",
+      "generatedBytes": 190,
+      "sourceTextBytes": 375
+    },
+    {
+      "source": "art/creatures/otter/bold.js",
+      "generatedBytes": 189,
+      "sourceTextBytes": 404
+    },
+    {
+      "source": "art/creatures/heron/sigil.js",
+      "generatedBytes": 188,
+      "sourceTextBytes": 307
+    },
+    {
+      "source": "art/creatures/sphinx/bold.js",
+      "generatedBytes": 188,
+      "sourceTextBytes": 441
+    },
+    {
+      "source": "art/creatures/frosttroll/sigil.js",
+      "generatedBytes": 187,
+      "sourceTextBytes": 438
+    },
+    {
+      "source": "art/creatures/penguin/sigil.js",
+      "generatedBytes": 186,
+      "sourceTextBytes": 631
+    },
+    {
+      "source": "src/render/aggro.ts",
+      "generatedBytes": 186,
+      "sourceTextBytes": 1779
+    },
+    {
+      "source": "art/creatures/mole/sigil.js",
+      "generatedBytes": 182,
+      "sourceTextBytes": 389
+    },
+    {
+      "source": "art/creatures/stoat/sigil.js",
+      "generatedBytes": 181,
+      "sourceTextBytes": 390
+    },
+    {
+      "source": "art/creatures/hydra/bold.js",
+      "generatedBytes": 181,
+      "sourceTextBytes": 404
+    },
+    {
+      "source": "art/creatures/frosttroll/bold.js",
+      "generatedBytes": 180,
+      "sourceTextBytes": 422
+    },
+    {
+      "source": "art/creatures/frostwyrm/bold.js",
+      "generatedBytes": 180,
+      "sourceTextBytes": 418
+    },
+    {
+      "source": "art/creatures/polarbear/sigil.js",
+      "generatedBytes": 178,
+      "sourceTextBytes": 422
+    },
+    {
+      "source": "art/creatures/lion/sigil.js",
+      "generatedBytes": 177,
+      "sourceTextBytes": 389
+    },
+    {
+      "source": "art/creatures/moth/bold.js",
+      "generatedBytes": 177,
+      "sourceTextBytes": 414
+    },
+    {
+      "source": "art/creatures/snowleopard/sigil.js",
+      "generatedBytes": 176,
+      "sourceTextBytes": 407
+    },
+    {
+      "source": "art/creatures/bat/genome.js",
+      "generatedBytes": 175,
+      "sourceTextBytes": 434
+    },
+    {
+      "source": "art/creatures/boar/bold.js",
+      "generatedBytes": 175,
+      "sourceTextBytes": 392
+    },
+    {
+      "source": "art/creatures/elephant/bold.js",
+      "generatedBytes": 175,
+      "sourceTextBytes": 397
+    },
+    {
+      "source": "art/creatures/beetle/genome.js",
+      "generatedBytes": 172,
+      "sourceTextBytes": 460
+    },
+    {
+      "source": "art/creatures/spider/bold.js",
+      "generatedBytes": 171,
+      "sourceTextBytes": 398
+    },
+    {
+      "source": "art/creatures/mole/genome.js",
+      "generatedBytes": 170,
+      "sourceTextBytes": 232
+    },
+    {
+      "source": "art/creatures/arcticfox/sigil.js",
+      "generatedBytes": 170,
+      "sourceTextBytes": 411
+    },
+    {
+      "source": "art/creatures/heron/bold.js",
+      "generatedBytes": 169,
+      "sourceTextBytes": 390
+    },
+    {
+      "source": "art/creatures/rattlesnake/bold.js",
+      "generatedBytes": 169,
+      "sourceTextBytes": 389
+    },
+    {
+      "source": "art/creatures/snake/bold.js",
+      "generatedBytes": 169,
+      "sourceTextBytes": 391
+    },
+    {
+      "source": "art/creatures/elephant/sigil.js",
+      "generatedBytes": 168,
+      "sourceTextBytes": 428
+    },
+    {
+      "source": "src/platform/inputTarget.ts",
+      "generatedBytes": 168,
+      "sourceTextBytes": 399
+    },
+    {
+      "source": "art/creatures/rhino/sigil.js",
+      "generatedBytes": 167,
+      "sourceTextBytes": 408
+    },
+    {
+      "source": "art/creatures/crab/bold.js",
+      "generatedBytes": 167,
+      "sourceTextBytes": 399
+    },
+    {
+      "source": "art/creatures/tiger/bold.js",
+      "generatedBytes": 167,
+      "sourceTextBytes": 379
+    },
+    {
+      "source": "art/creatures/hydra/genome.js",
+      "generatedBytes": 166,
+      "sourceTextBytes": 618
+    },
+    {
+      "source": "src/render/hatFlight.ts",
+      "generatedBytes": 164,
+      "sourceTextBytes": 893
+    },
+    {
+      "source": "art/creatures/otter/sigil.js",
+      "generatedBytes": 163,
+      "sourceTextBytes": 350
+    },
+    {
+      "source": "art/creatures/redpanda/sigil.js",
+      "generatedBytes": 163,
+      "sourceTextBytes": 420
+    },
+    {
+      "source": "art/creatures/moth/legend.js",
+      "generatedBytes": 162,
+      "sourceTextBytes": 229
+    },
+    {
+      "source": "art/creatures/owl/legend.js",
+      "generatedBytes": 162,
+      "sourceTextBytes": 263
+    },
+    {
+      "source": "art/creatures/salamander/bold.js",
+      "generatedBytes": 161,
+      "sourceTextBytes": 407
+    },
+    {
+      "source": "art/creatures/featheredserpent/bold.js",
+      "generatedBytes": 160,
+      "sourceTextBytes": 377
+    },
+    {
+      "source": "art/creatures/fox/sigil.js",
+      "generatedBytes": 159,
+      "sourceTextBytes": 345
+    },
+    {
+      "source": "src/rules/runeOffset.ts",
+      "generatedBytes": 159,
+      "sourceTextBytes": 1511
+    },
+    {
+      "source": "art/creatures/moth/genome.js",
+      "generatedBytes": 158,
+      "sourceTextBytes": 458
+    },
+    {
+      "source": "art/creatures/meerkat/sigil.js",
+      "generatedBytes": 158,
+      "sourceTextBytes": 277
+    },
+    {
+      "source": "art/creatures/dragonfly/legend.js",
+      "generatedBytes": 158,
+      "sourceTextBytes": 325
+    },
+    {
+      "source": "art/creatures/beaver/sigil.js",
+      "generatedBytes": 156,
+      "sourceTextBytes": 331
+    },
+    {
+      "source": "art/creatures/marten/sigil.js",
+      "generatedBytes": 154,
+      "sourceTextBytes": 340
+    },
+    {
+      "source": "art/creatures/rhino/bold.js",
+      "generatedBytes": 154,
+      "sourceTextBytes": 384
+    },
+    {
+      "source": "art/creatures/snake/genome.js",
+      "generatedBytes": 153,
+      "sourceTextBytes": 444
+    },
+    {
+      "source": "art/creatures/hare/sigil.js",
+      "generatedBytes": 153,
+      "sourceTextBytes": 339
+    },
+    {
+      "source": "src/render/view/scenerySchedule.ts",
+      "generatedBytes": 153,
+      "sourceTextBytes": 624
+    },
+    {
+      "source": "src/rules/clock.ts",
+      "generatedBytes": 153,
+      "sourceTextBytes": 603
+    },
+    {
+      "source": "art/creatures/hedgehog/bold.js",
+      "generatedBytes": 152,
+      "sourceTextBytes": 373
+    },
+    {
+      "source": "src/render/slowtime.ts",
+      "generatedBytes": 152,
+      "sourceTextBytes": 1399
+    },
+    {
+      "source": "art/creatures/owl/sigil.js",
+      "generatedBytes": 151,
+      "sourceTextBytes": 309
+    },
+    {
+      "source": "art/creatures/snail/sigil.js",
+      "generatedBytes": 151,
+      "sourceTextBytes": 313
+    },
+    {
+      "source": "art/creatures/toad/sigil.js",
+      "generatedBytes": 151,
+      "sourceTextBytes": 342
+    },
+    {
+      "source": "src/rules/botKinds.ts",
+      "generatedBytes": 150,
+      "sourceTextBytes": 396
+    },
+    {
+      "source": "art/creatures/arcticfox/bold.js",
+      "generatedBytes": 150,
+      "sourceTextBytes": 381
+    },
+    {
+      "source": "art/creatures/lynx/bold.js",
+      "generatedBytes": 150,
+      "sourceTextBytes": 361
+    },
+    {
+      "source": "art/creatures/stag/bold.js",
+      "generatedBytes": 150,
+      "sourceTextBytes": 356
+    },
+    {
+      "source": "art/creatures/raccoon/bold.js",
+      "generatedBytes": 149,
+      "sourceTextBytes": 354
+    },
+    {
+      "source": "art/creatures/bat/legend.js",
+      "generatedBytes": 148,
+      "sourceTextBytes": 210
+    },
+    {
+      "source": "art/creatures/roe/bold.js",
+      "generatedBytes": 148,
+      "sourceTextBytes": 377
+    },
+    {
+      "source": "art/creatures/fennec/sigil.js",
+      "generatedBytes": 147,
+      "sourceTextBytes": 267
+    },
+    {
+      "source": "art/creatures/bear/bold.js",
+      "generatedBytes": 147,
+      "sourceTextBytes": 366
+    },
+    {
+      "source": "art/creatures/hedgehog/sigil.js",
+      "generatedBytes": 145,
+      "sourceTextBytes": 328
+    },
+    {
+      "source": "art/creatures/elk/bold.js",
+      "generatedBytes": 144,
+      "sourceTextBytes": 373
+    },
+    {
+      "source": "art/creatures/jaguar/sigil.js",
+      "generatedBytes": 143,
+      "sourceTextBytes": 354
+    },
+    {
+      "source": "art/creatures/dormouse/bold.js",
+      "generatedBytes": 143,
+      "sourceTextBytes": 357
+    },
+    {
+      "source": "src/render/style.ts",
+      "generatedBytes": 143,
+      "sourceTextBytes": 688
+    },
+    {
+      "source": "art/creatures/crocodile/legend.js",
+      "generatedBytes": 141,
+      "sourceTextBytes": 335
+    },
+    {
+      "source": "art/creatures/heron/genome.js",
+      "generatedBytes": 140,
+      "sourceTextBytes": 316
+    },
+    {
+      "source": "art/creatures/cheetah/sigil.js",
+      "generatedBytes": 140,
+      "sourceTextBytes": 370
+    },
+    {
+      "source": "art/creatures/raven/sigil.js",
+      "generatedBytes": 140,
+      "sourceTextBytes": 319
+    },
+    {
+      "source": "art/creatures/heron/legend.js",
+      "generatedBytes": 140,
+      "sourceTextBytes": 325
+    },
+    {
+      "source": "art/creatures/dragonfly/bold.js",
+      "generatedBytes": 140,
+      "sourceTextBytes": 383
+    },
+    {
+      "source": "art/creatures/wolf/sigil.js",
+      "generatedBytes": 139,
+      "sourceTextBytes": 334
+    },
+    {
+      "source": "art/creatures/marten/bold.js",
+      "generatedBytes": 138,
+      "sourceTextBytes": 368
+    },
+    {
+      "source": "art/creatures/raven/legend.js",
+      "generatedBytes": 136,
+      "sourceTextBytes": 198
+    },
+    {
+      "source": "art/creatures/wolf/bold.js",
+      "generatedBytes": 136,
+      "sourceTextBytes": 309
+    },
+    {
+      "source": "src/app/landingSleep.ts",
+      "generatedBytes": 136,
+      "sourceTextBytes": 452
+    },
+    {
+      "source": "art/creatures/snail/bold.js",
+      "generatedBytes": 135,
+      "sourceTextBytes": 348
+    },
+    {
+      "source": "art/creatures/flyingsquirrel/bold.js",
+      "generatedBytes": 134,
+      "sourceTextBytes": 368
+    },
+    {
+      "source": "art/areas/jungle-understory/flora.js",
+      "generatedBytes": 132,
+      "sourceTextBytes": 632
+    },
+    {
+      "source": "art/creatures/wolf/legend.js",
+      "generatedBytes": 132,
+      "sourceTextBytes": 188
+    },
+    {
+      "source": "art/creatures/meerkat/bold.js",
+      "generatedBytes": 132,
+      "sourceTextBytes": 341
+    },
+    {
+      "source": "art/creatures/beaver/bold.js",
+      "generatedBytes": 131,
+      "sourceTextBytes": 294
+    },
+    {
+      "source": "art/creatures/polarbear/bold.js",
+      "generatedBytes": 131,
+      "sourceTextBytes": 278
+    },
+    {
+      "source": "art/creatures/toad/bold.js",
+      "generatedBytes": 131,
+      "sourceTextBytes": 359
+    },
+    {
+      "source": "art/creatures/badger/sigil.js",
+      "generatedBytes": 129,
+      "sourceTextBytes": 350
+    },
+    {
+      "source": "art/creatures/hare/legend.js",
+      "generatedBytes": 128,
+      "sourceTextBytes": 278
+    },
+    {
+      "source": "art/creatures/raccoon/sigil.js",
+      "generatedBytes": 127,
+      "sourceTextBytes": 347
+    },
+    {
+      "source": "art/creatures/ram/sigil.js",
+      "generatedBytes": 127,
+      "sourceTextBytes": 292
+    },
+    {
+      "source": "art/creatures/woodlouse/bold.js",
+      "generatedBytes": 127,
+      "sourceTextBytes": 337
+    },
+    {
+      "source": "art/creatures/ibex/bold.js",
+      "generatedBytes": 126,
+      "sourceTextBytes": 366
+    },
+    {
+      "source": "art/creatures/elk/legend.js",
+      "generatedBytes": 125,
+      "sourceTextBytes": 179
+    },
+    {
+      "source": "art/creatures/scorpion/legend.js",
+      "generatedBytes": 125,
+      "sourceTextBytes": 264
+    },
+    {
+      "source": "art/creatures/snake/sigil.js",
+      "generatedBytes": 124,
+      "sourceTextBytes": 245
+    },
+    {
+      "source": "art/creatures/beetle/legend.js",
+      "generatedBytes": 124,
+      "sourceTextBytes": 180
+    },
+    {
+      "source": "art/creatures/stag/legend.js",
+      "generatedBytes": 124,
+      "sourceTextBytes": 179
+    },
+    {
+      "source": "art/creatures/unicorn/bold.js",
+      "generatedBytes": 124,
+      "sourceTextBytes": 291
+    },
+    {
+      "source": "src/app/newForest.ts",
+      "generatedBytes": 123,
+      "sourceTextBytes": 686
+    },
+    {
+      "source": "art/areas/grassland/flora.js",
+      "generatedBytes": 123,
+      "sourceTextBytes": 177
+    },
+    {
+      "source": "art/areas/mangrove-channel/flora.js",
+      "generatedBytes": 123,
+      "sourceTextBytes": 573
+    },
+    {
+      "source": "art/creatures/roe/legend.js",
+      "generatedBytes": 123,
+      "sourceTextBytes": 236
+    },
+    {
+      "source": "art/creatures/marten/legend.js",
+      "generatedBytes": 122,
+      "sourceTextBytes": 177
+    },
+    {
+      "source": "art/creatures/cat/bold.js",
+      "generatedBytes": 122,
+      "sourceTextBytes": 337
+    },
+    {
+      "source": "art/areas/tundra-bog/flora.js",
+      "generatedBytes": 119,
+      "sourceTextBytes": 418
+    },
+    {
+      "source": "art/areas/meadow/flora.js",
+      "generatedBytes": 118,
+      "sourceTextBytes": 169
+    },
+    {
+      "source": "art/creatures/spider/legend.js",
+      "generatedBytes": 118,
+      "sourceTextBytes": 174
+    },
+    {
+      "source": "art/areas/ancient/flora.js",
+      "generatedBytes": 117,
+      "sourceTextBytes": 319
+    },
+    {
+      "source": "art/creatures/cat/legend.js",
+      "generatedBytes": 115,
+      "sourceTextBytes": 167
+    },
+    {
+      "source": "art/creatures/dormouse/sigil.js",
+      "generatedBytes": 114,
+      "sourceTextBytes": 311
+    },
+    {
+      "source": "art/creatures/stoat/legend.js",
+      "generatedBytes": 114,
+      "sourceTextBytes": 169
+    },
+    {
+      "source": "art/creatures/featheredserpent/legend.js",
+      "generatedBytes": 113,
+      "sourceTextBytes": 334
+    },
+    {
+      "source": "art/creatures/mole/legend.js",
+      "generatedBytes": 113,
+      "sourceTextBytes": 165
+    },
+    {
+      "source": "art/creatures/lion/bold.js",
+      "generatedBytes": 113,
+      "sourceTextBytes": 326
+    },
+    {
+      "source": "art/creatures/penguin/bold.js",
+      "generatedBytes": 113,
+      "sourceTextBytes": 324
+    },
+    {
+      "source": "art/creatures/raven/genome.js",
+      "generatedBytes": 112,
+      "sourceTextBytes": 159
+    },
+    {
+      "source": "art/creatures/bear/sigil.js",
+      "generatedBytes": 112,
+      "sourceTextBytes": 269
+    },
+    {
+      "source": "art/creatures/ram/legend.js",
+      "generatedBytes": 112,
+      "sourceTextBytes": 163
+    },
+    {
+      "source": "art/creatures/snail/legend.js",
+      "generatedBytes": 112,
+      "sourceTextBytes": 165
+    },
+    {
+      "source": "art/creatures/unicorn/legend.js",
+      "generatedBytes": 112,
+      "sourceTextBytes": 274
+    },
+    {
+      "source": "art/creatures/dormouse/legend.js",
+      "generatedBytes": 111,
+      "sourceTextBytes": 167
+    },
+    {
+      "source": "art/creatures/redpanda/legend.js",
+      "generatedBytes": 111,
+      "sourceTextBytes": 245
+    },
+    {
+      "source": "art/creatures/squirrel/legend.js",
+      "generatedBytes": 111,
+      "sourceTextBytes": 167
+    },
+    {
+      "source": "art/creatures/snowleopard/bold.js",
+      "generatedBytes": 111,
+      "sourceTextBytes": 313
+    },
+    {
+      "source": "src/app/chartLayout.ts",
+      "generatedBytes": 110,
+      "sourceTextBytes": 3368
+    },
+    {
+      "source": "art/areas/alder-forest/flora.js",
+      "generatedBytes": 110,
+      "sourceTextBytes": 253
+    },
+    {
+      "source": "art/areas/fern-forest/flora.js",
+      "generatedBytes": 110,
+      "sourceTextBytes": 298
+    },
+    {
+      "source": "art/creatures/penguin/legend.js",
+      "generatedBytes": 110,
+      "sourceTextBytes": 335
+    },
+    {
+      "source": "art/areas/hazel-forest/flora.js",
+      "generatedBytes": 109,
+      "sourceTextBytes": 168
+    },
+    {
+      "source": "art/creatures/flyingsquirrel/legend.js",
+      "generatedBytes": 109,
+      "sourceTextBytes": 289
+    },
+    {
+      "source": "art/creatures/snake/legend.js",
+      "generatedBytes": 109,
+      "sourceTextBytes": 161
+    },
+    {
+      "source": "art/areas/deadwood/flora.js",
+      "generatedBytes": 108,
+      "sourceTextBytes": 175
+    },
+    {
+      "source": "art/creatures/komodo/legend.js",
+      "generatedBytes": 108,
+      "sourceTextBytes": 281
+    },
+    {
+      "source": "art/creatures/otter/legend.js",
+      "generatedBytes": 108,
+      "sourceTextBytes": 161
+    },
+    {
+      "source": "art/creatures/cheetah/legend.js",
+      "generatedBytes": 107,
+      "sourceTextBytes": 264
+    },
+    {
+      "source": "art/creatures/fennec/legend.js",
+      "generatedBytes": 107,
+      "sourceTextBytes": 264
+    },
+    {
+      "source": "art/creatures/fox/legend.js",
+      "generatedBytes": 107,
+      "sourceTextBytes": 157
+    },
+    {
+      "source": "art/creatures/salamander/legend.js",
+      "generatedBytes": 107,
+      "sourceTextBytes": 164
+    },
+    {
+      "source": "art/creatures/toad/genome.js",
+      "generatedBytes": 106,
+      "sourceTextBytes": 245
+    },
+    {
+      "source": "art/creatures/lynx/legend.js",
+      "generatedBytes": 106,
+      "sourceTextBytes": 157
+    },
+    {
+      "source": "art/creatures/bear/legend.js",
+      "generatedBytes": 105,
+      "sourceTextBytes": 155
+    },
+    {
+      "source": "art/creatures/hedgehog/legend.js",
+      "generatedBytes": 105,
+      "sourceTextBytes": 159
+    },
+    {
+      "source": "art/creatures/lion/legend.js",
+      "generatedBytes": 105,
+      "sourceTextBytes": 274
+    },
+    {
+      "source": "art/creatures/newt/legend.js",
+      "generatedBytes": 105,
+      "sourceTextBytes": 222
+    },
+    {
+      "source": "art/creatures/rattlesnake/legend.js",
+      "generatedBytes": 105,
+      "sourceTextBytes": 280
+    },
+    {
+      "source": "art/areas/jungle-cave/flora.js",
+      "generatedBytes": 104,
+      "sourceTextBytes": 513
+    },
+    {
+      "source": "art/creatures/arcticfox/legend.js",
+      "generatedBytes": 104,
+      "sourceTextBytes": 209
+    },
+    {
+      "source": "art/creatures/boar/legend.js",
+      "generatedBytes": 104,
+      "sourceTextBytes": 154
+    },
+    {
+      "source": "art/creatures/toad/legend.js",
+      "generatedBytes": 104,
+      "sourceTextBytes": 154
+    },
+    {
+      "source": "art/creatures/fox/bold.js",
+      "generatedBytes": 104,
+      "sourceTextBytes": 329
+    },
+    {
+      "source": "art/areas/snowy-taiga/flora.js",
+      "generatedBytes": 103,
+      "sourceTextBytes": 558
+    },
+    {
+      "source": "art/creatures/armadillo/legend.js",
+      "generatedBytes": 103,
+      "sourceTextBytes": 254
+    },
+    {
+      "source": "art/creatures/beaver/legend.js",
+      "generatedBytes": 103,
+      "sourceTextBytes": 155
+    },
+    {
+      "source": "art/creatures/crab/legend.js",
+      "generatedBytes": 103,
+      "sourceTextBytes": 245
+    },
+    {
+      "source": "art/creatures/frosttroll/legend.js",
+      "generatedBytes": 103,
+      "sourceTextBytes": 228
+    },
+    {
+      "source": "art/creatures/hydra/legend.js",
+      "generatedBytes": 103,
+      "sourceTextBytes": 372
+    },
+    {
+      "source": "art/creatures/rhino/legend.js",
+      "generatedBytes": 103,
+      "sourceTextBytes": 292
+    },
+    {
+      "source": "art/creatures/woodlouse/legend.js",
+      "generatedBytes": 103,
+      "sourceTextBytes": 158
+    },
+    {
+      "source": "art/areas/tangly-forest/flora.js",
+      "generatedBytes": 102,
+      "sourceTextBytes": 158
+    },
+    {
+      "source": "art/creatures/ibex/legend.js",
+      "generatedBytes": 102,
+      "sourceTextBytes": 217
+    },
+    {
+      "source": "art/creatures/jaguar/legend.js",
+      "generatedBytes": 102,
+      "sourceTextBytes": 265
+    },
+    {
+      "source": "art/creatures/polarbear/legend.js",
+      "generatedBytes": 102,
+      "sourceTextBytes": 280
+    },
+    {
+      "source": "art/creatures/snowleopard/legend.js",
+      "generatedBytes": 102,
+      "sourceTextBytes": 232
+    },
+    {
+      "source": "art/creatures/tiger/legend.js",
+      "generatedBytes": 102,
+      "sourceTextBytes": 305
+    },
+    {
+      "source": "art/creatures/fennec/bold.js",
+      "generatedBytes": 102,
+      "sourceTextBytes": 334
+    },
+    {
+      "source": "art/areas/honeysuckle-tangle/flora.js",
+      "generatedBytes": 101,
+      "sourceTextBytes": 162
+    },
+    {
+      "source": "art/creatures/elephant/legend.js",
+      "generatedBytes": 101,
+      "sourceTextBytes": 281
+    },
+    {
+      "source": "art/creatures/meerkat/legend.js",
+      "generatedBytes": 101,
+      "sourceTextBytes": 245
+    },
+    {
+      "source": "art/creatures/sphinx/legend.js",
+      "generatedBytes": 101,
+      "sourceTextBytes": 306
+    },
+    {
+      "source": "art/areas/bluebell-glade/flora.js",
+      "generatedBytes": 100,
+      "sourceTextBytes": 157
+    },
+    {
+      "source": "art/areas/muddy-forest/flora.js",
+      "generatedBytes": 100,
+      "sourceTextBytes": 155
+    },
+    {
+      "source": "art/creatures/badger/legend.js",
+      "generatedBytes": 100,
+      "sourceTextBytes": 152
+    },
+    {
+      "source": "art/creatures/frostwyrm/legend.js",
+      "generatedBytes": 100,
+      "sourceTextBytes": 256
+    },
+    {
+      "source": "art/creatures/griffin/legend.js",
+      "generatedBytes": 100,
+      "sourceTextBytes": 270
+    },
+    {
+      "source": "art/creatures/stegosaurus/legend.js",
+      "generatedBytes": 100,
+      "sourceTextBytes": 284
+    },
+    {
+      "source": "art/creatures/owl/bold.js",
+      "generatedBytes": 100,
+      "sourceTextBytes": 323
+    },
+    {
+      "source": "art/areas/berry-thicket/flora.js",
+      "generatedBytes": 99,
+      "sourceTextBytes": 155
+    },
+    {
+      "source": "art/areas/wispy-forest/flora.js",
+      "generatedBytes": 99,
+      "sourceTextBytes": 154
+    },
+    {
+      "source": "art/creatures/raccoon/legend.js",
+      "generatedBytes": 99,
+      "sourceTextBytes": 229
+    },
+    {
+      "source": "art/creatures/ram/bold.js",
+      "generatedBytes": 99,
+      "sourceTextBytes": 301
+    },
+    {
+      "source": "art/creatures/raven/bold.js",
+      "generatedBytes": 98,
+      "sourceTextBytes": 279
+    },
+    {
+      "source": "art/areas/heath/flora.js",
+      "generatedBytes": 96,
+      "sourceTextBytes": 144
+    },
+    {
+      "source": "art/creatures/badger/bold.js",
+      "generatedBytes": 94,
+      "sourceTextBytes": 293
+    },
+    {
+      "source": "art/areas/old-oaks/flora.js",
+      "generatedBytes": 93,
+      "sourceTextBytes": 144
+    },
+    {
+      "source": "art/creatures/dragonfly/nap.js",
+      "generatedBytes": 89,
+      "sourceTextBytes": 141
+    },
+    {
+      "source": "art/areas/beaver-pond/flora.js",
+      "generatedBytes": 88,
+      "sourceTextBytes": 140
+    },
+    {
+      "source": "art/creatures/hare/bold.js",
+      "generatedBytes": 87,
+      "sourceTextBytes": 264
+    },
+    {
+      "source": "art/areas/thorn-scrub/flora.js",
+      "generatedBytes": 86,
+      "sourceTextBytes": 518
+    },
+    {
+      "source": "art/creatures/moth/nap.js",
+      "generatedBytes": 85,
+      "sourceTextBytes": 130
+    },
+    {
+      "source": "art/areas/moor/flora.js",
+      "generatedBytes": 84,
+      "sourceTextBytes": 129
+    },
+    {
+      "source": "art/areas/wetland/flora.js",
+      "generatedBytes": 83,
+      "sourceTextBytes": 131
+    },
+    {
+      "source": "art/areas/old-pinewood/flora.js",
+      "generatedBytes": 82,
+      "sourceTextBytes": 195
+    },
+    {
+      "source": "art/areas/log-pile/flora.js",
+      "generatedBytes": 81,
+      "sourceTextBytes": 130
+    },
+    {
+      "source": "art/areas/stone-shrine/flora.js",
+      "generatedBytes": 81,
+      "sourceTextBytes": 134
+    },
+    {
+      "source": "art/creatures/bat/nap.js",
+      "generatedBytes": 81,
+      "sourceTextBytes": 123
+    },
+    {
+      "source": "art/areas/ravine/flora.js",
+      "generatedBytes": 80,
+      "sourceTextBytes": 127
+    },
+    {
+      "source": "art/areas/rocky-slope/flora.js",
+      "generatedBytes": 80,
+      "sourceTextBytes": 132
+    },
+    {
+      "source": "art/areas/twiggy-forest/flora.js",
+      "generatedBytes": 78,
+      "sourceTextBytes": 132
+    },
+    {
+      "source": "src/render/chart/chartScale.ts",
+      "generatedBytes": 77,
+      "sourceTextBytes": 1043
+    },
+    {
+      "source": "src/rules/attacks/index.ts",
+      "generatedBytes": 76,
+      "sourceTextBytes": 1139
+    },
+    {
+      "source": "src/platform/caughtError.ts",
+      "generatedBytes": 73,
+      "sourceTextBytes": 477
+    },
+    {
+      "source": "art/creatures/owl/nap.js",
+      "generatedBytes": 73,
+      "sourceTextBytes": 121
+    },
+    {
+      "source": "src/ui/fonts/Jacquard24.woff2?url",
+      "generatedBytes": 70,
+      "sourceTextBytes": 41
+    },
+    {
+      "source": "art/creatures/raven/nap.js",
+      "generatedBytes": 69,
+      "sourceTextBytes": 109
+    },
+    {
+      "source": "art/creatures/heron/nap.js",
+      "generatedBytes": 65,
+      "sourceTextBytes": 104
+    },
+    {
+      "source": "samples/alto/alto-55.ogg?url",
+      "generatedBytes": 65,
+      "sourceTextBytes": 41
+    },
+    {
+      "source": "samples/voices/female-note.ogg?url",
+      "generatedBytes": 63,
+      "sourceTextBytes": 41
+    },
+    {
+      "source": "samples/voices/whispers.ogg?url",
+      "generatedBytes": 60,
+      "sourceTextBytes": 41
+    },
+    {
+      "source": "art/creatures/spider/nap.js",
+      "generatedBytes": 59,
+      "sourceTextBytes": 97
+    },
+    {
+      "source": "src/ui/fonts/Tiny5.woff2?url",
+      "generatedBytes": 59,
+      "sourceTextBytes": 41
+    },
+    {
+      "source": "samples/alto/alto-57.ogg?url",
+      "generatedBytes": 59,
+      "sourceTextBytes": 41
+    },
+    {
+      "source": "samples/alto/alto-59.ogg?url",
+      "generatedBytes": 59,
+      "sourceTextBytes": 41
+    },
+    {
+      "source": "samples/alto/alto-61.ogg?url",
+      "generatedBytes": 59,
+      "sourceTextBytes": 41
+    },
+    {
+      "source": "samples/alto/alto-63.ogg?url",
+      "generatedBytes": 59,
+      "sourceTextBytes": 41
+    },
+    {
+      "source": "samples/alto/alto-65.ogg?url",
+      "generatedBytes": 59,
+      "sourceTextBytes": 41
+    },
+    {
+      "source": "samples/alto/alto-69.ogg?url",
+      "generatedBytes": 59,
+      "sourceTextBytes": 41
+    },
+    {
+      "source": "samples/alto/alto-71.ogg?url",
+      "generatedBytes": 59,
+      "sourceTextBytes": 41
+    },
+    {
+      "source": "samples/alto/alto-73.ogg?url",
+      "generatedBytes": 59,
+      "sourceTextBytes": 41
+    },
+    {
+      "source": "samples/alto/alto-75.ogg?url",
+      "generatedBytes": 59,
+      "sourceTextBytes": 41
+    },
+    {
+      "source": "samples/alto/alto-77.ogg?url",
+      "generatedBytes": 59,
+      "sourceTextBytes": 41
+    },
+    {
+      "source": "samples/alto/alto-79.ogg?url",
+      "generatedBytes": 59,
+      "sourceTextBytes": 41
+    },
+    {
+      "source": "art/creatures/snake/nap.js",
+      "generatedBytes": 57,
+      "sourceTextBytes": 93
+    },
+    {
+      "source": "art/creatures/cat/nap.js",
+      "generatedBytes": 56,
+      "sourceTextBytes": 89
+    },
+    {
+      "source": "art/creatures/fennec/nap.js",
+      "generatedBytes": 56,
+      "sourceTextBytes": 131
+    },
+    {
+      "source": "art/creatures/fox/nap.js",
+      "generatedBytes": 56,
+      "sourceTextBytes": 98
+    },
+    {
+      "source": "art/creatures/frostwyrm/nap.js",
+      "generatedBytes": 56,
+      "sourceTextBytes": 146
+    },
+    {
+      "source": "art/creatures/griffin/nap.js",
+      "generatedBytes": 56,
+      "sourceTextBytes": 137
+    },
+    {
+      "source": "art/creatures/jaguar/nap.js",
+      "generatedBytes": 56,
+      "sourceTextBytes": 138
+    },
+    {
+      "source": "art/creatures/lion/nap.js",
+      "generatedBytes": 56,
+      "sourceTextBytes": 137
+    },
+    {
+      "source": "art/creatures/lynx/nap.js",
+      "generatedBytes": 56,
+      "sourceTextBytes": 90
+    },
+    {
+      "source": "art/creatures/marten/nap.js",
+      "generatedBytes": 56,
+      "sourceTextBytes": 92
+    },
+    {
+      "source": "art/creatures/meerkat/nap.js",
+      "generatedBytes": 56,
+      "sourceTextBytes": 93
+    },
+    {
+      "source": "art/creatures/raccoon/nap.js",
+      "generatedBytes": 56,
+      "sourceTextBytes": 93
+    },
+    {
+      "source": "art/creatures/tiger/nap.js",
+      "generatedBytes": 56,
+      "sourceTextBytes": 136
+    },
+    {
+      "source": "art/creatures/arcticfox/nap.js",
+      "generatedBytes": 55,
+      "sourceTextBytes": 94
+    },
+    {
+      "source": "art/creatures/dormouse/nap.js",
+      "generatedBytes": 55,
+      "sourceTextBytes": 93
+    },
+    {
+      "source": "art/creatures/flyingsquirrel/nap.js",
+      "generatedBytes": 55,
+      "sourceTextBytes": 99
+    },
+    {
+      "source": "art/creatures/redpanda/nap.js",
+      "generatedBytes": 55,
+      "sourceTextBytes": 93
+    },
+    {
+      "source": "art/creatures/snowleopard/nap.js",
+      "generatedBytes": 55,
+      "sourceTextBytes": 225
+    },
+    {
+      "source": "art/creatures/squirrel/nap.js",
+      "generatedBytes": 55,
+      "sourceTextBytes": 93
+    },
+    {
+      "source": "art/creatures/cheetah/nap.js",
+      "generatedBytes": 54,
+      "sourceTextBytes": 136
+    },
+    {
+      "source": "art/creatures/stoat/nap.js",
+      "generatedBytes": 54,
+      "sourceTextBytes": 89
+    },
+    {
+      "source": "art/creatures/wolf/nap.js",
+      "generatedBytes": 54,
+      "sourceTextBytes": 88
+    },
+    {
+      "source": "art/creatures/rattlesnake/nap.js",
+      "generatedBytes": 51,
+      "sourceTextBytes": 101
+    },
+    {
+      "source": "art/creatures/snail/nap.js",
+      "generatedBytes": 45,
+      "sourceTextBytes": 78
+    },
+    {
+      "source": "art/creatures/hedgehog/nap.js",
+      "generatedBytes": 43,
+      "sourceTextBytes": 79
+    },
+    {
+      "source": "art/creatures/penguin/nap.js",
+      "generatedBytes": 43,
+      "sourceTextBytes": 123
+    },
+    {
+      "source": "art/creatures/armadillo/nap.js",
+      "generatedBytes": 42,
+      "sourceTextBytes": 79
+    },
+    {
+      "source": "art/creatures/featheredserpent/nap.js",
+      "generatedBytes": 42,
+      "sourceTextBytes": 141
+    },
+    {
+      "source": "art/creatures/komodo/nap.js",
+      "generatedBytes": 42,
+      "sourceTextBytes": 76
+    },
+    {
+      "source": "art/creatures/newt/nap.js",
+      "generatedBytes": 41,
+      "sourceTextBytes": 73
+    },
+    {
+      "source": "art/creatures/otter/nap.js",
+      "generatedBytes": 41,
+      "sourceTextBytes": 74
+    },
+    {
+      "source": "art/creatures/salamander/nap.js",
+      "generatedBytes": 41,
+      "sourceTextBytes": 79
+    },
+    {
+      "source": "art/creatures/beetle/nap.js",
+      "generatedBytes": 37,
+      "sourceTextBytes": 78
+    },
+    {
+      "source": "art/creatures/mole/nap.js",
+      "generatedBytes": 37,
+      "sourceTextBytes": 67
+    },
+    {
+      "source": "art/creatures/scorpion/nap.js",
+      "generatedBytes": 37,
+      "sourceTextBytes": 71
+    },
+    {
+      "source": "art/creatures/woodlouse/nap.js",
+      "generatedBytes": 37,
+      "sourceTextBytes": 72
+    },
+    {
+      "source": "art/creatures/crab/nap.js",
+      "generatedBytes": 36,
+      "sourceTextBytes": 66
+    },
+    {
+      "source": "art/creatures/frosttroll/nap.js",
+      "generatedBytes": 36,
+      "sourceTextBytes": 72
+    },
+    {
+      "source": "art/creatures/hydra/nap.js",
+      "generatedBytes": 36,
+      "sourceTextBytes": 155
+    },
+    {
+      "source": "art/creatures/toad/nap.js",
+      "generatedBytes": 36,
+      "sourceTextBytes": 66
+    },
+    {
+      "source": "art/creatures/boar/nap.js",
+      "generatedBytes": 34,
+      "sourceTextBytes": 64
+    },
+    {
+      "source": "art/creatures/crocodile/nap.js",
+      "generatedBytes": 34,
+      "sourceTextBytes": 155
+    },
+    {
+      "source": "art/creatures/elephant/nap.js",
+      "generatedBytes": 34,
+      "sourceTextBytes": 107
+    },
+    {
+      "source": "art/creatures/elk/nap.js",
+      "generatedBytes": 34,
+      "sourceTextBytes": 71
+    },
+    {
+      "source": "art/creatures/hare/nap.js",
+      "generatedBytes": 34,
+      "sourceTextBytes": 64
+    },
+    {
+      "source": "art/creatures/ram/nap.js",
+      "generatedBytes": 34,
+      "sourceTextBytes": 63
+    },
+    {
+      "source": "art/creatures/rhino/nap.js",
+      "generatedBytes": 34,
+      "sourceTextBytes": 65
+    },
+    {
+      "source": "art/creatures/roe/nap.js",
+      "generatedBytes": 34,
+      "sourceTextBytes": 63
+    },
+    {
+      "source": "art/creatures/sphinx/nap.js",
+      "generatedBytes": 34,
+      "sourceTextBytes": 120
+    },
+    {
+      "source": "art/creatures/stag/nap.js",
+      "generatedBytes": 34,
+      "sourceTextBytes": 64
+    },
+    {
+      "source": "art/creatures/stegosaurus/nap.js",
+      "generatedBytes": 34,
+      "sourceTextBytes": 71
+    },
+    {
+      "source": "art/creatures/unicorn/nap.js",
+      "generatedBytes": 34,
+      "sourceTextBytes": 67
+    },
+    {
+      "source": "art/creatures/badger/nap.js",
+      "generatedBytes": 33,
+      "sourceTextBytes": 65
+    },
+    {
+      "source": "art/creatures/bear/nap.js",
+      "generatedBytes": 33,
+      "sourceTextBytes": 63
+    },
+    {
+      "source": "art/creatures/beaver/nap.js",
+      "generatedBytes": 33,
+      "sourceTextBytes": 65
+    },
+    {
+      "source": "art/creatures/polarbear/nap.js",
+      "generatedBytes": 33,
+      "sourceTextBytes": 68
+    },
+    {
+      "source": "src/render/comfort.ts",
+      "generatedBytes": 29,
+      "sourceTextBytes": 373
+    },
+    {
+      "source": "art/genome/species.js",
+      "generatedBytes": 11,
+      "sourceTextBytes": 1399
+    },
+    {
+      "source": "src/rules/tuning.ts",
+      "generatedBytes": 6,
+      "sourceTextBytes": 99860
+    }
+  ],
+  "dynamic": [
+    {
+      "file": "assets/landingBake-1e3nuFdi.js",
+      "bytes": 1989,
+      "gzip9": 1160,
+      "brotli5": 1097
+    },
+    {
+      "file": "assets/musicLab-DAwUIClf.js",
+      "bytes": 3943,
+      "gzip9": 1736,
+      "brotli5": 1648
+    },
+    {
+      "file": "assets/whatsNew-CBTEU4y-.js",
+      "bytes": 1906,
+      "gzip9": 935,
+      "brotli5": 884
+    },
+    {
+      "file": "assets/fofModule-DnlCtyj3.js",
+      "bytes": 47338,
+      "gzip9": 16001,
+      "brotli5": 14001
+    },
+    {
+      "file": "assets/tractModule-Bw6xQDFz.js",
+      "bytes": 21684,
+      "gzip9": 7355,
+      "brotli5": 7357
+    },
+    {
+      "file": "assets/bot-ZJNWEbFW.js",
+      "bytes": 32228,
+      "gzip9": 12682,
+      "brotli5": 12279
+    },
+    {
+      "file": "assets/botGame-CDe8D6aN.js",
+      "bytes": 2044,
+      "gzip9": 1140,
+      "brotli5": 1053
+    },
+    {
+      "file": "assets/decide-rXvmGR72.js",
+      "bytes": 21369,
+      "gzip9": 7192,
+      "brotli5": 6742
+    },
+    {
+      "file": "assets/musicLabPanel-BanvrGy1.js",
+      "bytes": 15077,
+      "gzip9": 5156,
+      "brotli5": 4940
+    },
+    {
+      "file": "assets/settingsMenu-Ciaylx36.js",
+      "bytes": 27168,
+      "gzip9": 8816,
+      "brotli5": 8515
+    },
+    {
+      "file": "assets/visualReport-C8tiMfZn.js",
+      "bytes": 4206,
+      "gzip9": 2062,
+      "brotli5": 1947
+    },
+    {
+      "file": "assets/panel-gwz9UQEo.js",
+      "bytes": 4059,
+      "gzip9": 1765,
+      "brotli5": 1644
+    }
+  ],
+  "referencedAssets": [
+    {
+      "file": "assets/CinzelDecorative-Regular-BEUupow3.ttf",
+      "bytes": 58828
+    },
+    {
+      "file": "assets/Jacquard24-C1P8W-p0.woff2",
+      "bytes": 35376
+    },
+    {
+      "file": "assets/Tiny5-BsIaeAHC.woff2",
+      "bytes": 9036
+    },
+    {
+      "file": "assets/alto-55-kfHfpVXJ.ogg",
+      "bytes": 15306
+    },
+    {
+      "file": "assets/alto-57-ChpFwkAD.ogg",
+      "bytes": 14777
+    },
+    {
+      "file": "assets/alto-59-CohumzPg.ogg",
+      "bytes": 15724
+    },
+    {
+      "file": "assets/alto-61-2J4XMLlR.ogg",
+      "bytes": 15892
+    },
+    {
+      "file": "assets/alto-63-CXwO43P4.ogg",
+      "bytes": 16502
+    },
+    {
+      "file": "assets/alto-65-DUZFd6T5.ogg",
+      "bytes": 16634
+    },
+    {
+      "file": "assets/alto-69-rI4VPnF9.ogg",
+      "bytes": 17071
+    },
+    {
+      "file": "assets/alto-71-BNZ7Rxsc.ogg",
+      "bytes": 17237
+    },
+    {
+      "file": "assets/alto-73-CQUM0pQl.ogg",
+      "bytes": 16869
+    },
+    {
+      "file": "assets/alto-75-BvI_OS0c.ogg",
+      "bytes": 17287
+    },
+    {
+      "file": "assets/alto-77-CWXMPX9o.ogg",
+      "bytes": 17992
+    },
+    {
+      "file": "assets/alto-79-CmRqQeSu.ogg",
+      "bytes": 19298
+    },
+    {
+      "file": "assets/female-note-1jIu5nQY.ogg",
+      "bytes": 21381
+    },
+    {
+      "file": "assets/whispers-Cmv3gsx5.ogg",
+      "bytes": 64459
+    }
+  ],
+  "newsAssets": [
+    {
+      "file": "news/batch-0-7f7446d8b81a.json",
+      "bytes": 64806
+    },
+    {
+      "file": "news/batch-1-f8ae3f8530d0.json",
+      "bytes": 725
+    },
+    {
+      "file": "news/batch-10-6dc496ae805b.json",
+      "bytes": 879
+    },
+    {
+      "file": "news/batch-100-a36ec74a1240.json",
+      "bytes": 1436
+    },
+    {
+      "file": "news/batch-101-4df74deafc66.json",
+      "bytes": 1397
+    },
+    {
+      "file": "news/batch-102-b7d2a77826d2.json",
+      "bytes": 1707
+    },
+    {
+      "file": "news/batch-103-0e75ada9b356.json",
+      "bytes": 1594
+    },
+    {
+      "file": "news/batch-104-43dd374f30d0.json",
+      "bytes": 1163
+    },
+    {
+      "file": "news/batch-105-3c9205d33e23.json",
+      "bytes": 1168
+    },
+    {
+      "file": "news/batch-106-e62f96d60701.json",
+      "bytes": 1108
+    },
+    {
+      "file": "news/batch-107-ab50ca0b8a98.json",
+      "bytes": 996
+    },
+    {
+      "file": "news/batch-108-6706132b79c4.json",
+      "bytes": 1137
+    },
+    {
+      "file": "news/batch-109-9b103c5c52bc.json",
+      "bytes": 1298
+    },
+    {
+      "file": "news/batch-11-0c6dd8be63b5.json",
+      "bytes": 949
+    },
+    {
+      "file": "news/batch-110-4ce8bcdb587d.json",
+      "bytes": 909
+    },
+    {
+      "file": "news/batch-111-a2ef80b0ceb4.json",
+      "bytes": 864
+    },
+    {
+      "file": "news/batch-112-3835209a3391.json",
+      "bytes": 662
+    },
+    {
+      "file": "news/batch-113-c332337f39ee.json",
+      "bytes": 844
+    },
+    {
+      "file": "news/batch-114-d939ebf2e156.json",
+      "bytes": 1159
+    },
+    {
+      "file": "news/batch-115-9411451be9e9.json",
+      "bytes": 886
+    },
+    {
+      "file": "news/batch-116-96bcf8d7dc2f.json",
+      "bytes": 824
+    },
+    {
+      "file": "news/batch-117-0c4aee4affe3.json",
+      "bytes": 908
+    },
+    {
+      "file": "news/batch-118-f3c22d94cc18.json",
+      "bytes": 1355
+    },
+    {
+      "file": "news/batch-119-27fd00e750d1.json",
+      "bytes": 1346
+    },
+    {
+      "file": "news/batch-12-19093e9f5341.json",
+      "bytes": 1220
+    },
+    {
+      "file": "news/batch-120-80ce0183e78a.json",
+      "bytes": 929
+    },
+    {
+      "file": "news/batch-121-acab4671b643.json",
+      "bytes": 1062
+    },
+    {
+      "file": "news/batch-122-a340d9578901.json",
+      "bytes": 1330
+    },
+    {
+      "file": "news/batch-123-7de1aa4577a4.json",
+      "bytes": 1085
+    },
+    {
+      "file": "news/batch-124-036f18830805.json",
+      "bytes": 650
+    },
+    {
+      "file": "news/batch-125-fd6f3a5366d0.json",
+      "bytes": 1238
+    },
+    {
+      "file": "news/batch-126-abf90929d327.json",
+      "bytes": 834
+    },
+    {
+      "file": "news/batch-127-2d9e85473743.json",
+      "bytes": 1212
+    },
+    {
+      "file": "news/batch-128-848bd83fb788.json",
+      "bytes": 1023
+    },
+    {
+      "file": "news/batch-129-9de08985bb6e.json",
+      "bytes": 1009
+    },
+    {
+      "file": "news/batch-13-3d50816456db.json",
+      "bytes": 1144
+    },
+    {
+      "file": "news/batch-130-31bad1ccb6fe.json",
+      "bytes": 919
+    },
+    {
+      "file": "news/batch-131-506a7a2962ce.json",
+      "bytes": 832
+    },
+    {
+      "file": "news/batch-132-4f79c73d494f.json",
+      "bytes": 1128
+    },
+    {
+      "file": "news/batch-133-ac55c716e0b4.json",
+      "bytes": 715
+    },
+    {
+      "file": "news/batch-134-e80512cdd69a.json",
+      "bytes": 895
+    },
+    {
+      "file": "news/batch-135-4a4d92bdb2a0.json",
+      "bytes": 1583
+    },
+    {
+      "file": "news/batch-136-e8c64c9d9368.json",
+      "bytes": 822
+    },
+    {
+      "file": "news/batch-137-844806d14822.json",
+      "bytes": 1286
+    },
+    {
+      "file": "news/batch-138-f78f60e2d627.json",
+      "bytes": 871
+    },
+    {
+      "file": "news/batch-139-cdbc0e8269e2.json",
+      "bytes": 1021
+    },
+    {
+      "file": "news/batch-14-d619738f1bac.json",
+      "bytes": 1191
+    },
+    {
+      "file": "news/batch-140-6aa630d87efa.json",
+      "bytes": 1511
+    },
+    {
+      "file": "news/batch-141-ba0a4926654a.json",
+      "bytes": 782
+    },
+    {
+      "file": "news/batch-142-bab2be84291b.json",
+      "bytes": 861
+    },
+    {
+      "file": "news/batch-143-f6efb7712d18.json",
+      "bytes": 1122
+    },
+    {
+      "file": "news/batch-144-e315c7a933c2.json",
+      "bytes": 784
+    },
+    {
+      "file": "news/batch-145-9a435cf036ec.json",
+      "bytes": 720
+    },
+    {
+      "file": "news/batch-146-8bbcf6faa321.json",
+      "bytes": 668
+    },
+    {
+      "file": "news/batch-147-aa817d384654.json",
+      "bytes": 704
+    },
+    {
+      "file": "news/batch-148-6da6a9475749.json",
+      "bytes": 747
+    },
+    {
+      "file": "news/batch-149-e9fac7747776.json",
+      "bytes": 1318
+    },
+    {
+      "file": "news/batch-15-3340714d7df1.json",
+      "bytes": 1228
+    },
+    {
+      "file": "news/batch-150-fea19be0fd0c.json",
+      "bytes": 947
+    },
+    {
+      "file": "news/batch-151-f3f4b0886188.json",
+      "bytes": 835
+    },
+    {
+      "file": "news/batch-152-3bfe660419a5.json",
+      "bytes": 687
+    },
+    {
+      "file": "news/batch-153-654935d38faa.json",
+      "bytes": 1031
+    },
+    {
+      "file": "news/batch-154-19a5e7c9ac94.json",
+      "bytes": 1014
+    },
+    {
+      "file": "news/batch-155-e5cb2f035969.json",
+      "bytes": 740
+    },
+    {
+      "file": "news/batch-156-2531791c1322.json",
+      "bytes": 1143
+    },
+    {
+      "file": "news/batch-157-5661b60be417.json",
+      "bytes": 1079
+    },
+    {
+      "file": "news/batch-158-cec0a35aac86.json",
+      "bytes": 657
+    },
+    {
+      "file": "news/batch-159-f43f5396cbeb.json",
+      "bytes": 896
+    },
+    {
+      "file": "news/batch-16-c0158359de5f.json",
+      "bytes": 1129
+    },
+    {
+      "file": "news/batch-160-7161b49950d0.json",
+      "bytes": 848
+    },
+    {
+      "file": "news/batch-161-6b010ed03147.json",
+      "bytes": 1273
+    },
+    {
+      "file": "news/batch-162-934eb25f413f.json",
+      "bytes": 862
+    },
+    {
+      "file": "news/batch-163-a8b3ea0185c5.json",
+      "bytes": 775
+    },
+    {
+      "file": "news/batch-164-693c793cb9e2.json",
+      "bytes": 977
+    },
+    {
+      "file": "news/batch-165-8f0def409a8a.json",
+      "bytes": 979
+    },
+    {
+      "file": "news/batch-166-154f0f348d1f.json",
+      "bytes": 820
+    },
+    {
+      "file": "news/batch-167-2cd025f3bdf5.json",
+      "bytes": 921
+    },
+    {
+      "file": "news/batch-168-111d8871ff1b.json",
+      "bytes": 723
+    },
+    {
+      "file": "news/batch-169-32c22ae915b2.json",
+      "bytes": 1153
+    },
+    {
+      "file": "news/batch-17-c1fe89f2f14e.json",
+      "bytes": 841
+    },
+    {
+      "file": "news/batch-170-095f150aadd9.json",
+      "bytes": 665
+    },
+    {
+      "file": "news/batch-171-ff7c7ba4cd12.json",
+      "bytes": 955
+    },
+    {
+      "file": "news/batch-172-270aee3fceba.json",
+      "bytes": 776
+    },
+    {
+      "file": "news/batch-173-5d026ade8865.json",
+      "bytes": 618
+    },
+    {
+      "file": "news/batch-174-6710f55d23e5.json",
+      "bytes": 912
+    },
+    {
+      "file": "news/batch-175-10f1f63a6801.json",
+      "bytes": 1269
+    },
+    {
+      "file": "news/batch-176-5def16f6eeac.json",
+      "bytes": 1073
+    },
+    {
+      "file": "news/batch-177-e1de52e122df.json",
+      "bytes": 1083
+    },
+    {
+      "file": "news/batch-178-9e9595b46074.json",
+      "bytes": 1004
+    },
+    {
+      "file": "news/batch-179-8d864cd8d185.json",
+      "bytes": 998
+    },
+    {
+      "file": "news/batch-18-7f23561b6485.json",
+      "bytes": 1007
+    },
+    {
+      "file": "news/batch-180-6985dad016e4.json",
+      "bytes": 927
+    },
+    {
+      "file": "news/batch-181-c33c55b969dd.json",
+      "bytes": 921
+    },
+    {
+      "file": "news/batch-182-d44f8c89025b.json",
+      "bytes": 880
+    },
+    {
+      "file": "news/batch-183-64ed6f9fccee.json",
+      "bytes": 1029
+    },
+    {
+      "file": "news/batch-184-0cacd97babd2.json",
+      "bytes": 1180
+    },
+    {
+      "file": "news/batch-185-ee9a934f0ba1.json",
+      "bytes": 1043
+    },
+    {
+      "file": "news/batch-186-f50eef0d47fa.json",
+      "bytes": 898
+    },
+    {
+      "file": "news/batch-187-699165d545c5.json",
+      "bytes": 1061
+    },
+    {
+      "file": "news/batch-188-dd9b0e049697.json",
+      "bytes": 1150
+    },
+    {
+      "file": "news/batch-189-3679558932e7.json",
+      "bytes": 1430
+    },
+    {
+      "file": "news/batch-19-055837bc0367.json",
+      "bytes": 1088
+    },
+    {
+      "file": "news/batch-190-ace3811e7541.json",
+      "bytes": 1205
+    },
+    {
+      "file": "news/batch-191-7eeaaf4e35a2.json",
+      "bytes": 881
+    },
+    {
+      "file": "news/batch-192-31ed6bc1df32.json",
+      "bytes": 725
+    },
+    {
+      "file": "news/batch-193-77e36f29669f.json",
+      "bytes": 776
+    },
+    {
+      "file": "news/batch-194-44d5d79c434f.json",
+      "bytes": 1005
+    },
+    {
+      "file": "news/batch-195-c17db7566465.json",
+      "bytes": 1005
+    },
+    {
+      "file": "news/batch-196-ba6857fc7aa0.json",
+      "bytes": 942
+    },
+    {
+      "file": "news/batch-197-92141ea01028.json",
+      "bytes": 1159
+    },
+    {
+      "file": "news/batch-198-7a503d6f185f.json",
+      "bytes": 810
+    },
+    {
+      "file": "news/batch-199-0314988bdd5d.json",
+      "bytes": 746
+    },
+    {
+      "file": "news/batch-2-f0fe15ccb23d.json",
+      "bytes": 1007
+    },
+    {
+      "file": "news/batch-20-2d460cb3d3e5.json",
+      "bytes": 1122
+    },
+    {
+      "file": "news/batch-200-a01b13b2fe75.json",
+      "bytes": 1368
+    },
+    {
+      "file": "news/batch-201-29006e626629.json",
+      "bytes": 867
+    },
+    {
+      "file": "news/batch-202-02f4bc3181f4.json",
+      "bytes": 1011
+    },
+    {
+      "file": "news/batch-203-abc9a9d11630.json",
+      "bytes": 844
+    },
+    {
+      "file": "news/batch-204-c120967222d3.json",
+      "bytes": 835
+    },
+    {
+      "file": "news/batch-205-360b1d482bdc.json",
+      "bytes": 839
+    },
+    {
+      "file": "news/batch-206-502752a2ed41.json",
+      "bytes": 1046
+    },
+    {
+      "file": "news/batch-207-a04bf686597c.json",
+      "bytes": 1113
+    },
+    {
+      "file": "news/batch-208-f576a883e496.json",
+      "bytes": 868
+    },
+    {
+      "file": "news/batch-209-001e2516c8a3.json",
+      "bytes": 764
+    },
+    {
+      "file": "news/batch-21-9effba39cbb3.json",
+      "bytes": 897
+    },
+    {
+      "file": "news/batch-210-cd518d38fed8.json",
+      "bytes": 1046
+    },
+    {
+      "file": "news/batch-211-ec633a6421a1.json",
+      "bytes": 1128
+    },
+    {
+      "file": "news/batch-212-aa97884eefe3.json",
+      "bytes": 917
+    },
+    {
+      "file": "news/batch-213-2927eb62988d.json",
+      "bytes": 1018
+    },
+    {
+      "file": "news/batch-214-9c79fc62e0ff.json",
+      "bytes": 858
+    },
+    {
+      "file": "news/batch-215-7290308f21e5.json",
+      "bytes": 972
+    },
+    {
+      "file": "news/batch-216-fe9db80a0074.json",
+      "bytes": 1205
+    },
+    {
+      "file": "news/batch-217-2a550c40b280.json",
+      "bytes": 1237
+    },
+    {
+      "file": "news/batch-218-c12724450e82.json",
+      "bytes": 1257
+    },
+    {
+      "file": "news/batch-219-5c56284d0ccb.json",
+      "bytes": 920
+    },
+    {
+      "file": "news/batch-22-7a1a68446e55.json",
+      "bytes": 1121
+    },
+    {
+      "file": "news/batch-220-9b84525eeddb.json",
+      "bytes": 1201
+    },
+    {
+      "file": "news/batch-221-9594f5ea4690.json",
+      "bytes": 955
+    },
+    {
+      "file": "news/batch-222-2daa6abaa96b.json",
+      "bytes": 962
+    },
+    {
+      "file": "news/batch-223-e1763675ab54.json",
+      "bytes": 1146
+    },
+    {
+      "file": "news/batch-224-01bc804fbbae.json",
+      "bytes": 995
+    },
+    {
+      "file": "news/batch-225-d9ee63f9bfca.json",
+      "bytes": 1146
+    },
+    {
+      "file": "news/batch-226-bc079a859ac8.json",
+      "bytes": 1196
+    },
+    {
+      "file": "news/batch-227-ef475d7ce8d8.json",
+      "bytes": 1439
+    },
+    {
+      "file": "news/batch-228-496aa4fe4027.json",
+      "bytes": 807
+    },
+    {
+      "file": "news/batch-229-9f8858fe0340.json",
+      "bytes": 1111
+    },
+    {
+      "file": "news/batch-23-9318241e791e.json",
+      "bytes": 810
+    },
+    {
+      "file": "news/batch-230-c17f743e6a61.json",
+      "bytes": 1480
+    },
+    {
+      "file": "news/batch-231-92a570ccc91d.json",
+      "bytes": 1029
+    },
+    {
+      "file": "news/batch-232-f64358b3a704.json",
+      "bytes": 4518
+    },
+    {
+      "file": "news/batch-233-0b3b9748180e.json",
+      "bytes": 5804
+    },
+    {
+      "file": "news/batch-234-af0f86bec09e.json",
+      "bytes": 2060
+    },
+    {
+      "file": "news/batch-235-f97cfcc4bfe0.json",
+      "bytes": 5703
+    },
+    {
+      "file": "news/batch-236-f0e1635e57dc.json",
+      "bytes": 6893
+    },
+    {
+      "file": "news/batch-237-daf6fe62a928.json",
+      "bytes": 1344
+    },
+    {
+      "file": "news/batch-238-d17d7fb49d5b.json",
+      "bytes": 1235
+    },
+    {
+      "file": "news/batch-239-407777be7ea2.json",
+      "bytes": 2873
+    },
+    {
+      "file": "news/batch-24-4de59a8a7687.json",
+      "bytes": 1054
+    },
+    {
+      "file": "news/batch-240-b5bbff70e2f6.json",
+      "bytes": 1254
+    },
+    {
+      "file": "news/batch-241-6125e255ae8c.json",
+      "bytes": 1330
+    },
+    {
+      "file": "news/batch-242-edb86580cf2b.json",
+      "bytes": 1000
+    },
+    {
+      "file": "news/batch-243-13c8d1f9db80.json",
+      "bytes": 556
+    },
+    {
+      "file": "news/batch-25-0518e29afb3b.json",
+      "bytes": 783
+    },
+    {
+      "file": "news/batch-26-cb3df394af6a.json",
+      "bytes": 929
+    },
+    {
+      "file": "news/batch-27-c22f8da389de.json",
+      "bytes": 818
+    },
+    {
+      "file": "news/batch-28-49ee2356e864.json",
+      "bytes": 1016
+    },
+    {
+      "file": "news/batch-29-d527f4e32a0d.json",
+      "bytes": 860
+    },
+    {
+      "file": "news/batch-3-6b96ba5dd212.json",
+      "bytes": 927
+    },
+    {
+      "file": "news/batch-30-9f296b10994f.json",
+      "bytes": 1089
+    },
+    {
+      "file": "news/batch-31-cb1dbe820005.json",
+      "bytes": 718
+    },
+    {
+      "file": "news/batch-32-a3f2bb44f36f.json",
+      "bytes": 866
+    },
+    {
+      "file": "news/batch-33-a247889d4ad6.json",
+      "bytes": 761
+    },
+    {
+      "file": "news/batch-34-2cc8bbe777a4.json",
+      "bytes": 876
+    },
+    {
+      "file": "news/batch-35-5d8a49763af9.json",
+      "bytes": 971
+    },
+    {
+      "file": "news/batch-36-9ef48d2e54fe.json",
+      "bytes": 950
+    },
+    {
+      "file": "news/batch-37-d5b9769872ec.json",
+      "bytes": 744
+    },
+    {
+      "file": "news/batch-38-b84a8eba988f.json",
+      "bytes": 1021
+    },
+    {
+      "file": "news/batch-39-7bff3168a111.json",
+      "bytes": 1231
+    },
+    {
+      "file": "news/batch-4-22d0ee1f51b2.json",
+      "bytes": 989
+    },
+    {
+      "file": "news/batch-40-511813de5b2e.json",
+      "bytes": 1121
+    },
+    {
+      "file": "news/batch-41-9e729d5c4119.json",
+      "bytes": 1955
+    },
+    {
+      "file": "news/batch-42-447d62ecdcce.json",
+      "bytes": 1606
+    },
+    {
+      "file": "news/batch-43-29f9b6bbb4f8.json",
+      "bytes": 831
+    },
+    {
+      "file": "news/batch-44-544dbd9413a3.json",
+      "bytes": 794
+    },
+    {
+      "file": "news/batch-45-94f2b957c936.json",
+      "bytes": 1280
+    },
+    {
+      "file": "news/batch-46-18eabb59822e.json",
+      "bytes": 915
+    },
+    {
+      "file": "news/batch-47-77582574588d.json",
+      "bytes": 823
+    },
+    {
+      "file": "news/batch-48-8d5d46cbbae9.json",
+      "bytes": 1014
+    },
+    {
+      "file": "news/batch-49-f78eaafcd785.json",
+      "bytes": 873
+    },
+    {
+      "file": "news/batch-5-6ca812688711.json",
+      "bytes": 1158
+    },
+    {
+      "file": "news/batch-50-7cd15317e82d.json",
+      "bytes": 939
+    },
+    {
+      "file": "news/batch-51-97e26661e926.json",
+      "bytes": 735
+    },
+    {
+      "file": "news/batch-52-5df3556a282c.json",
+      "bytes": 646
+    },
+    {
+      "file": "news/batch-53-f103d9074c5a.json",
+      "bytes": 1137
+    },
+    {
+      "file": "news/batch-54-10b18799f901.json",
+      "bytes": 1912
+    },
+    {
+      "file": "news/batch-55-3008d455a40f.json",
+      "bytes": 1411
+    },
+    {
+      "file": "news/batch-56-303297d5b401.json",
+      "bytes": 702
+    },
+    {
+      "file": "news/batch-57-76bb98419698.json",
+      "bytes": 649
+    },
+    {
+      "file": "news/batch-58-c89caf89bcb3.json",
+      "bytes": 906
+    },
+    {
+      "file": "news/batch-59-f7ed23048737.json",
+      "bytes": 876
+    },
+    {
+      "file": "news/batch-6-59647061fe18.json",
+      "bytes": 1122
+    },
+    {
+      "file": "news/batch-60-86f9bd1d800a.json",
+      "bytes": 924
+    },
+    {
+      "file": "news/batch-61-9b02c0a1fa98.json",
+      "bytes": 932
+    },
+    {
+      "file": "news/batch-62-971cb4e09b71.json",
+      "bytes": 1018
+    },
+    {
+      "file": "news/batch-63-44ce0050c515.json",
+      "bytes": 1115
+    },
+    {
+      "file": "news/batch-64-447ebeb13f49.json",
+      "bytes": 1791
+    },
+    {
+      "file": "news/batch-65-b71fc0c0bd81.json",
+      "bytes": 836
+    },
+    {
+      "file": "news/batch-66-f02ab1eb5cca.json",
+      "bytes": 967
+    },
+    {
+      "file": "news/batch-67-826bbb012d01.json",
+      "bytes": 1403
+    },
+    {
+      "file": "news/batch-68-a929101380d9.json",
+      "bytes": 1410
+    },
+    {
+      "file": "news/batch-69-d3e208b23281.json",
+      "bytes": 1115
+    },
+    {
+      "file": "news/batch-7-68f549dd974f.json",
+      "bytes": 667
+    },
+    {
+      "file": "news/batch-70-f743bd490602.json",
+      "bytes": 1068
+    },
+    {
+      "file": "news/batch-71-db9e96ac2189.json",
+      "bytes": 1089
+    },
+    {
+      "file": "news/batch-72-d87bae29fbe8.json",
+      "bytes": 1090
+    },
+    {
+      "file": "news/batch-73-1b8a67234a75.json",
+      "bytes": 984
+    },
+    {
+      "file": "news/batch-74-bbb22a051a91.json",
+      "bytes": 1104
+    },
+    {
+      "file": "news/batch-75-009e2a166a66.json",
+      "bytes": 1184
+    },
+    {
+      "file": "news/batch-76-c8438906f290.json",
+      "bytes": 1718
+    },
+    {
+      "file": "news/batch-77-ee7aa570a68a.json",
+      "bytes": 1042
+    },
+    {
+      "file": "news/batch-78-e664a4cebdad.json",
+      "bytes": 1082
+    },
+    {
+      "file": "news/batch-79-577e99e4e658.json",
+      "bytes": 1191
+    },
+    {
+      "file": "news/batch-8-5819f7f47626.json",
+      "bytes": 1114
+    },
+    {
+      "file": "news/batch-80-8f2fe198cc8d.json",
+      "bytes": 1006
+    },
+    {
+      "file": "news/batch-81-91ace9f187e2.json",
+      "bytes": 944
+    },
+    {
+      "file": "news/batch-82-bf4f62ee6db1.json",
+      "bytes": 1160
+    },
+    {
+      "file": "news/batch-83-337cc2a9402e.json",
+      "bytes": 1410
+    },
+    {
+      "file": "news/batch-84-f58053bf256c.json",
+      "bytes": 1097
+    },
+    {
+      "file": "news/batch-85-e4a95550b40c.json",
+      "bytes": 841
+    },
+    {
+      "file": "news/batch-86-f9046f25a159.json",
+      "bytes": 1003
+    },
+    {
+      "file": "news/batch-87-c70efe1add6b.json",
+      "bytes": 724
+    },
+    {
+      "file": "news/batch-88-d967ac7cc310.json",
+      "bytes": 1164
+    },
+    {
+      "file": "news/batch-89-5e54deb56075.json",
+      "bytes": 787
+    },
+    {
+      "file": "news/batch-9-2db6504570a2.json",
+      "bytes": 1185
+    },
+    {
+      "file": "news/batch-90-924aef58eb2c.json",
+      "bytes": 1234
+    },
+    {
+      "file": "news/batch-91-6abae61e0385.json",
+      "bytes": 1452
+    },
+    {
+      "file": "news/batch-92-ebd444e1bc49.json",
+      "bytes": 1107
+    },
+    {
+      "file": "news/batch-93-c5915d0d7673.json",
+      "bytes": 782
+    },
+    {
+      "file": "news/batch-94-5826e6c5b1fa.json",
+      "bytes": 959
+    },
+    {
+      "file": "news/batch-95-ba9ec5e2bbeb.json",
+      "bytes": 1021
+    },
+    {
+      "file": "news/batch-96-49844421c4f9.json",
+      "bytes": 1176
+    },
+    {
+      "file": "news/batch-97-12dc9c863f0d.json",
+      "bytes": 1293
+    },
+    {
+      "file": "news/batch-98-b2060e52bb42.json",
+      "bytes": 1024
+    },
+    {
+      "file": "news/batch-99-c3ed074c15cc.json",
+      "bytes": 1189
+    },
+    {
+      "file": "news/index.json",
+      "bytes": 7247
+    }
+  ],
+  "actualBrowserBootMeasured": false
+}
