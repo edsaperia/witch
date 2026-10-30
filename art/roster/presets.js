@@ -15,6 +15,13 @@ const JAGUAR_REGIONS = {
   legs: { kind: "spots", k: 12, density: .5, radius: .4, mat: "BODY3" },
 };
 export const ROSTER_PRESETS = {
+  mole: {
+    reason: "One fit-corrected trial: a deeper narrow cylinder and projecting pink snout and spades while keeping the mole small.",
+    modelCommit: "e8fea579c78b032809a82c297c1623c379c62459",
+    patch: { look: { mole: { fit: "current", bodyVerticalDepth: 1.4, bodyWidth: 1, bodyLength: 1.25, snoutProjection: 1.5, snoutThickness: 1.2, snoutForward: .04, snoutLift: .03, forepawSpread: 1.15, forepawSize: 1, forepawForward: .1, forepawLength: 1.25, forepawWidth: 1.4, forepawThickness: .65 } }, palette: { hue: .64, sat: .06, val: .38, over: { BODY: [65, 66, 69], BODY2: [47, 49, 53], BODYL: [89, 92, 96], SKIN: [228, 166, 157], NOSE: [220, 145, 139] } } },
+    legendPatch: { look: { mole: null } },
+    text: "A velvet-grey mole with a pointed pink snout and broad digging paws.",
+  },
   crocodile: {
     reason: "Flatten the existing long jaw, thicken its existing tapering tail and reveal a pale underside.",
     patch: { head: { snout: 4.5, snoutD: .55, muzzle: true, jawCoat: false }, body: { tailK: 1.65, sprawl: .55 }, coat: { belly: true }, palette: { over: { BELLY: [210, 212, 178] } } },
