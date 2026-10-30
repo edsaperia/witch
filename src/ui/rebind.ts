@@ -28,6 +28,17 @@ export function withSlot(b: Binding, device: Device, slot: number, input: string
 const meets = (a: Context, b: Context) => a === b || a === "global" || b === "global";
 const CONTEXT = new Map(DEFAULTS.map(a => [a.id, a.context]));
 
+/** Choose and Back keep an input on each device, so remapping cannot strand the player outside Settings. */
+const losesMenuInput = (id: ActionId, device: Device, b: Binding): boolean => (id === "menu.choose" || id === "menu.back") && !inputsOf(b, device).length;
+
+/** A refused clear is a no-op; other actions may still be left unbound. */
+export function clearSlot(B: Bindings, id: ActionId, device: Device, slot: number): boolean {
+  const next = withSlot(B.get(id), device, slot, null);
+  if (losesMenuInput(id, device, { ...B.get(id), ...next })) return false;
+  B.set(id, next);
+  return true;
+}
+
 /** The other actions that already have `input` where `id` works (its context; global counts in both). */
 export function clashes(B: Bindings, id: ActionId, input: string): ActionId[] {
   const ctx = CONTEXT.get(id)!;
@@ -36,13 +47,18 @@ export function clashes(B: Bindings, id: ActionId, input: string): ActionId[] {
 
 /** What a clash's choice does. Swap: the slot takes `input` and each other action takes the slot's old input in its place (or loses
  *  it, the slot having been empty). Use both: the slot takes it and the others keep it too. */
-export function assign(B: Bindings, id: ActionId, device: Device, slot: number, input: string, how: "swap" | "both"): void {
+export function assign(B: Bindings, id: ActionId, device: Device, slot: number, input: string, how: "swap" | "both"): ActionId | null {
   const old = inputsOf(B.get(id), device)[slot] ?? null;
+  const changes = new Map<ActionId, Partial<Binding>>();
   if (how === "swap") for (const o of clashes(B, id, input)) {
     const at = inputsOf(B.get(o), device).indexOf(input);
-    B.set(o, withSlot(B.get(o), device, at, old && !inputsOf(B.get(o), device).includes(old) ? old : null));
+    changes.set(o, withSlot(B.get(o), device, at, old && !inputsOf(B.get(o), device).includes(old) ? old : null));
   }
-  B.set(id, withSlot(B.get(id), device, slot, input));
+  changes.set(id, withSlot(B.get(id), device, slot, input));
+  // Validate the whole swap before saving any part of it.
+  for (const [action, change] of changes) if (losesMenuInput(action, device, { ...B.get(action), ...change })) return action;
+  for (const [action, change] of changes) B.set(action, change);
+  return null;
 }
 
 /** The pad input pressed now that wasn't last frame: a button, or a stick pushed past `PUSH` one way. */

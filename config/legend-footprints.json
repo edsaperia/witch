@@ -1,5 +1,5 @@
 {
- "_": "Each species' legend as drawn, in metres: asleep (its nap, both breaths) and awake (standing, both frames, facing us and away), each [width, height]. Written by node tools/legends/footprint.mjs from the art in the game's style (config/style.json at the tuning's pixelSize); rules/legendFit.ts sizes each legend's circle from it. Run it again after a change to a creature's art (--check says whether it's stale).",
+ "_": "Drawn legend footprints in metres, for sleeping and awake poses. Detailed notes and decisions: docs/notes/config-history/legend-footprints.md.",
  "species": {
   "arcticfox": {
    "asleep": [22.9, 11.5],

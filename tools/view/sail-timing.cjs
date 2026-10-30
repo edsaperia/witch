@@ -8,6 +8,10 @@
 // every that many ms from the press to the alarm too (slows the run: time it without). Writes <out>.json (and <out>-NNN.png).
 //   npm run build && node tools/view/sail-timing.cjs [out] [dist]
 // ISLAND (fox), THEN (islands to sail on to after it, on the same page: a warm sail, "fox,owl"), THROTTLE (CPU slow-down, 1), SIZE (960x540), GAP (ms, 100), EXTRA (more of the link), RUNS (1), AFTER (ms after landing whose frames are counted as `settle`: the island's art coming in, 15000).
+// EXPECT_SHA verifies version.json before measuring; PROFILE=1 writes a CPU profile per leg. CHROMIUM selects an installed
+// browser, GPU=hardware requests its default renderer (check the result's renderer: it may still fall back to software).
+// SAIL_SEED fixes the selected island's night seed; TIMEOUT bounds each arrival (300000 ms). Each completed leg is saved
+// immediately with its own comparability key, chart wait, build stamp and resource counts (heap is not collected).
 const http = require("http"), fs = require("fs"), path = require("path");
 const { pageKey } = require("../bench/comparable.cjs"); // (the result's comparability key: tools/bench/comparable.cjs)
 let KEY = null;
@@ -24,7 +28,7 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
   fs.mkdirSync(path.dirname(out), { recursive: true });
   const server = http.createServer((req, res) => { const p = path.join(root, decodeURIComponent(new URL(req.url, "http://x").pathname)), f = fs.existsSync(p) && fs.statSync(p).isDirectory() ? path.join(p, "index.html") : p; if (!f.startsWith(root) || !fs.existsSync(f)) { res.writeHead(404); res.end(); return; } res.writeHead(200, { "Content-Type": types[path.extname(f)] || "application/octet-stream" }); fs.createReadStream(f).pipe(res); });
   await new Promise(r => server.listen(0, "127.0.0.1", r));
-  const browser = await pw.chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
+  const browser = await pw.chromium.launch({ executablePath: process.env.CHROMIUM, args: process.env.GPU === 'hardware' ? [] : ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
   const errors = [], runs = [];
   let code = 0;
   try {
@@ -41,35 +45,44 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
       const link = `http://127.0.0.1:${server.address().port}/?creator=0&timing=1${process.env.EXTRA ? "&" + process.env.EXTRA : ""}`;
       log(`run ${run + 1}: loading`, link.replace(/^http:\/\/[^/]+/, ""), THR > 1 ? `(CPU ×${THR})` : "");
       await page.goto(link);
+      const version = await page.evaluate(async () => (await fetch('./version.json', { cache: 'no-store' })).json());
+      if (process.env.EXPECT_SHA && !version.version.includes(process.env.EXPECT_SHA.slice(0, 7))) throw new Error(`served build ${version.version} does not match ${process.env.EXPECT_SHA}`);
+      log('served build', version.version);
       await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 1800000, polling: 500 });
       KEY ??= await pageKey(page, { spot: `sail-timing.cjs: home to ${ISLAND0}` });
       await page.waitForTimeout(3000);
       for (const [leg, ISLAND] of [ISLAND0, ...THEN].entries()) { // (THEN: on the same page after, warm: its art, programs and workers the last island's)
       if (leg) await page.waitForTimeout(5000);
       log("ready; opening the chart");
+      const chartOpened = await page.evaluate(() => performance.now());
+      const cdp = await page.context().newCDPSession(page);
+      if (process.env.PROFILE === '1') { await cdp.send('Profiler.enable'); await cdp.send('Profiler.start'); }
       await page.evaluate(() => window.witch.chart());
       await page.waitForFunction(i => { const c = window.chart; return c && c.islands && c.islands().find(x => x.id === i && x.outline); }, ISLAND, { timeout: 600000, polling: 250 });
       await page.waitForTimeout(1500);
-      await page.evaluate(i => window.chart.choose(i), ISLAND);
-      await page.waitForTimeout(1500);
+      await page.evaluate(async ([i, seed]) => { const random = Math.random; if (seed != null) Math.random = () => Number(seed) / 1000000; try { window.chart.choose(i); await new Promise(r => setTimeout(r, 1500)); } finally { Math.random = random; } }, [ISLAND, process.env.SAIL_SEED ?? null]);
       log("sailing to", ISLAND);
       const progs = () => page.evaluate(() => (window.witch.view.renderer.info.programs ?? []).map(p => `${p.name}|${p.cacheKey.length}|${p.cacheKey.slice(-40)}`)).catch(() => []);
       const before = await progs();
       const sail = await page.evaluate(() => performance.now());
       await page.keyboard.press("Enter");
       const shots = [];
-      const until = Date.now() + 1800000;
+      const until = Date.now() + Number(process.env.TIMEOUT || 300000);
+      let landed = false, doneAt = null;
       for (let i = 0; Date.now() < until; i++) {
         const done = await page.evaluate(s0 => ["opening:alarm", "game:arrived"].some(n => performance.getEntriesByName(n).some(e => e.startTime >= s0)), sail).catch(() => false);
         if (STRIP > 0) {
           const at = await page.evaluate(() => performance.now()).catch(() => 0), file = `${path.basename(out)}-${String(i).padStart(3, "0")}.png`;
           await page.screenshot({ path: path.join(path.dirname(out), file) }).catch(() => {});
           shots.push({ file, t: Math.round(at - sail) });
-          if (done && shots.length > 1 && at - sail > shots.at(-2).t + 3000) break;
+          if (done && doneAt === null) doneAt = at;
+          if (doneAt !== null && at - doneAt >= 3000) { landed = true; break; }
           await page.waitForTimeout(STRIP);
-        } else { if (done) break; await page.waitForTimeout(500); }
+        } else { if (done) { landed = true; break; } if (i && i % 60 === 0) log('still travelling', await page.evaluate(() => ({ marks: performance.getEntriesByType('mark').slice(-6).map(e => e.name), house: window.witch.view.homeDone, ready: window.witch.ready }))); await page.waitForTimeout(500); }
       }
+      if (!landed) throw new Error(`arrival timed out after ${process.env.TIMEOUT || 300000} ms on ${ISLAND}`);
       await page.waitForTimeout(AFTER);
+      if (process.env.PROFILE === '1') { const { profile } = await cdp.send('Profiler.stop'); fs.writeFileSync(`${out}-${run}-${leg}.cpuprofile`, JSON.stringify(profile)); }
       const r = await page.evaluate(([names, gap, s0, after]) => {
         const at = n => { const e = performance.getEntriesByName(n).filter(x => x.startTime >= s0); return e.length ? Math.round(e[0].startTime - s0) : null; };
         const m = Object.fromEntries(names.map(n => [n, at(n)]));
@@ -86,8 +99,14 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
         return { slices, settleParts: parts, sailMark: Math.round(sailAt - s0), marks: m, toDive: sum(s0, dive), diveToEnd: sum(dive, end), settle: sum(end, end + after), tasks, steps };
       }, [MARKS, GAP * THR, sail, AFTER]);
       const after = await progs(); r.programs = { before: before.length, after: after.length, made: after.filter(x => !before.includes(x)) }; // (the shader programs this sail made anew)
+      r.key = await pageKey(page, { spot: `sail-timing.cjs: arrival ${ISLAND}` });
+      r.chartWaitMs = Math.round(sail - chartOpened);
+      r.resources = await page.evaluate(() => { const v = window.witch.view; return { heap: performance.memory?.usedJSHeapSize, dom: document.getElementsByTagName('*').length, textures: v.renderer.info.memory.textures, geometries: v.renderer.info.memory.geometries }; });
+      r.resources.workers = page.workers().length;
+      r.version = version;
       r.shots = shots; r.island = ISLAND; r.leg = leg ? "warm" : "cold";
       runs.push(r);
+      fs.writeFileSync(out + ".json", JSON.stringify({ key: KEY, island: ISLAND0, then: THEN, throttle: THR, size: `${W}x${H}`, gap: GAP, runs }, null, 1));
       log(JSON.stringify({ island: ISLAND, leg: r.leg, marks: r.marks, toDive: r.toDive, diveToEnd: r.diveToEnd, settle: r.settle, settleParts: r.settleParts, programs: { ...r.programs, made: r.programs.made.length }, slices: r.slices, tasks: r.tasks }));
       }
       await page.close();

@@ -457,12 +457,12 @@ export class HeightField {
     return out;
   }
 
-  private put(i: number, j: number): void {
+  private put(i: number, j: number, half = this.half, data = this.data): void {
     const k = sampleKey(i, j), pre = this.ahead.get(k);
     if (pre !== undefined) this.ahead.delete(k);
     const s = ((j % N) + N) % N * N + ((i % N) + N) % N, v = pre ?? this.limited(i, j, true);
-    this.half[s] = THREE.DataUtils.toHalfFloat(v);
-    this.data[s] = quantise(v);
+    half[s] = THREE.DataUtils.toHalfFloat(v);
+    data[s] = quantise(v);
   }
 
   /** Let go of its texture. The shaders' uniform and the field in use (useHeightField) are left as they are: the next island's
@@ -491,15 +491,19 @@ export class HeightField {
     return true;
   }
 
-  /** The window's first fill round (x, z), as follow makes it, in steps (render/slices.ts: View.build's ground): its samples
+  /** Fill or relocate the window round (x, z), as follow makes it, in steps (render/slices.ts: View.build's ground): its samples
    *  worked out a few rows at a time (the same values a row or the whole window at once: limitedBlock), then stored a few rows
-   *  at a time. Filled already: follow as ever. */
+   *  at a time. Used before a sail's first draw too: its camera jumps from the bedroom to the sea. */
   *fillSteps(x: number, z: number): Steps {
-    if (this.filled || !this.H.on) { this.follow(x, z); return; }
-    const ci = Math.round(x / RES / STEP) * STEP, cj = Math.round(z / RES / STEP) * STEP, h = N / 2, i0 = ci - h, j0 = cj - h, CH = 8;
+    if (!this.H.on) { this.follow(x, z); return; }
+    const ci = Math.round(x / RES / STEP) * STEP, cj = Math.round(z / RES / STEP) * STEP, h = N / 2, i0 = ci - h, j0 = cj - h, CH = this.filled ? 2 : 8;
+    if (this.filled && ci === this.ci && cj === this.cj) return;
+    // The house can finish preparing between slices. Keep its current heights valid until the whole new window is ready.
+    const half = this.filled ? new Uint16Array(N * N) : this.half, data = this.filled ? new Float32Array(N * N) : this.data;
     const ahead = (i: number, j: number, v: number) => { const k = sampleKey(i, j); if (!this.ahead.has(k)) this.ahead.set(k, v); };
     for (let j = j0; j < j0 + N; j += CH) { yield; this.limitedBlock(i0, i0 + N, j, Math.min(j + CH, j0 + N), ahead); }
-    for (let j = j0; j < j0 + N; j += CH) { yield; for (let jj = j; jj < Math.min(j + CH, j0 + N); jj++) for (let i = i0; i < i0 + N; i++) this.put(i, jj); }
+    for (let j = j0; j < j0 + N; j += CH) { yield; for (let jj = j; jj < Math.min(j + CH, j0 + N); jj++) for (let i = i0; i < i0 + N; i++) this.put(i, jj, half, data); }
+    if (half !== this.half) { this.half.set(half); this.data.set(data); }
     this.ci = ci; this.cj = cj; this.filled = true;
     this.texture.needsUpdate = true;
     HEIGHT_UNIFORMS.uHeightWin.value.set(RES, N, ci * RES, cj * RES);

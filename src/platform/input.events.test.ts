@@ -17,6 +17,18 @@ function device() {
 }
 afterEach(() => bindings.resetAll());
 
+it("moving the mouse switches prompts back from gamepad, but touch movement does not", () => {
+  const { input, emit } = device();
+  input.device = "pad";
+  emit("pointermove", { pointerType: "touch" });
+  expect(input.device).toBe("pad");
+  emit("pointermove", { clientX: 21, clientY: 31 });
+  expect(input.device).toBe("keys");
+  input.device = "pad";
+  emit("wheel", { deltaY: 20, deltaMode: 0 });
+  expect(input.device).toBe("keys");
+});
+
 describe("auto-talk and talk events", () => {
   it("T toggles once per press; Shift remains held independently", () => {
     const { input, emit } = device();

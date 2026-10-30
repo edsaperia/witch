@@ -5,6 +5,8 @@
 // (witch.shake) carry over the first time. What each one changes in the game: `applySettings` here for the tuning's knobs, the rest
 // read where they act (the comfort flags, render/comfort.ts; the hold or toggle, platform/input.ts; text size, the page's CSS).
 
+import { fallbackStorage } from "./storageFallback";
+
 export type Quality = "auto" | "high" | "medium" | "low";
 export type HoldMode = "hold" | "toggle";
 export type Glyphs = "auto" | "ps" | "xbox";
@@ -38,7 +40,7 @@ const OLD_VOLUMES = "witch.settings", OLD_SHAKE = "witch.shake";
 
 /** A storage (localStorage, or a test's stand-in). */
 export interface Store { getItem(k: string): string | null; setItem(k: string, v: string): void }
-const local = (): Store | null => { try { return typeof localStorage === "undefined" ? null : localStorage; } catch { return null; } };
+const local = (): Store => fallbackStorage();
 
 /** Each value checked against its kind and range; anything else is its default. */
 export function clean(raw: unknown): PlayerSettings {

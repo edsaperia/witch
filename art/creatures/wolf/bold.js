@@ -1,3 +1,3 @@
-import { D, L, pair } from "../../sigils/strokes.js";
-// bold (stacks, runes, pointers: art/sigils.js BOLD): front on: the long muzzle and the heavy ruff round its neck
-export const BOLD_WOLF = { strokes: [...pair(L([.36, .28], [.26, .02], [.18, .32]), L([.18, .32], [.04, .44], [.14, .54], [.04, .66], [.16, .74], [.1, .88], [.3, .86]), L([.36, .46], [.38, .84], [.5, .96]), D(.28, .46)), L([.36, .28], [.64, .28]), L([.42, .8], [.58, .8])] };
+import { L, pair } from "../../sigils/strokes.js";
+// Ed's approved option, 2026-10-29: cleaner cheeks, pointed ears and a long muzzle.
+export const BOLD_WOLF = { strokes: [...pair(L([.5,.92],[.28,.74],[.1,.6],[.16,.38],[.2,.08],[.4,.28])), ...pair(L([.28,.46],[.4,.5])), L([.4,.67],[.5,.75],[.6,.67])] };

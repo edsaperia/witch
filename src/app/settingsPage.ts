@@ -28,6 +28,8 @@ export interface SettingsPageHost {
 
 type ScreenDetails = { screens: { label?: string }[] };
 const getDetails = (): Promise<ScreenDetails> | null => { const w = window as unknown as { getScreenDetails?: () => Promise<ScreenDetails> }; return w.getScreenDetails ? w.getScreenDetails() : null; };
+/** Detect support without asking for screen permission until the player chooses it. */
+export const canPickScreen = (): boolean => typeof window !== "undefined" && typeof (window as unknown as { getScreenDetails?: unknown }).getScreenDetails === "function";
 
 /** Muted in the background: the setting on, and the page hidden or its window not focused (the audio watchdog, main.ts, keeps out too). */
 export const mutedAway = (): boolean => currentSettings().muteBackground && typeof document !== "undefined" && (document.hidden || !document.hasFocus());
@@ -83,7 +85,7 @@ export class SettingsPage {
             return null;
           } catch { return "The browser wants a key or a click for fullscreen: press Enter on it, or click it (a pad can't start it)."; }
         },
-        canPickScreen: () => !!getDetails,
+        canPickScreen,
         screens: async () => { try { const d = await getDetails(); return d ? d.screens.map((x, i) => x.label || `Screen ${i + 1}`) : null; } catch { return null; } },
         pad: () => this.host.freeze.pad(),
       });

@@ -1,0 +1,7 @@
+# broom-parts config history and detailed field notes
+
+Moved from `config/broom-parts.json` on 2026-10-29 for #1459. Original notes below are preserved verbatim, including quotes and dates. They record the design when written; the config and rules remain the source of current behaviour.
+
+## Overview
+
+The Workshop's broom parts and sets (Ed, 2026-10-22/23; docs/backlog/workshop.md, rules/broomParts.ts). One broom, three slots (tip, chassis, exhaust), one part a slot. Each part's stats change the tuning's numbers for her own movement: a key is a tuning path (or pull: how hard her sigils pull on her, 1 the bare broom's), its mult times the bare broom's number and its add plus it; parts fitted together add up (each mult's share over 1 summed, then the adds). The bare broom (every slot empty) is the tuning as it stands: no quick take-off (Ed, 2026-10-23: it loses the plain broom's; the jet nozzles win it back). look: the broom kind (art/brooms.js; twig, art/witch.js's bristles) whose body (a tip or chassis) or tail (an exhaust) it is. A set complete (all its pieces fitted) gives her its broom spell (rules/spells.ts); no broom completes two at once. board: the Workshop's pegboard (a read-only station: ui/stationPanel.ts), the 3 × 3 biome map with north up, its cells row by row from the north-west (Ed, 2026-10-23; docs/backlog/workshop.md): each cell's part, its compass point and its biome; the three columns are the three-piece sets (west Ferry, middle Hedge, east Rocket).
