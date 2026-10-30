@@ -17,6 +17,7 @@ Backlog (Ed, 2026-10-09 to 10-10). **Not built yet; don't build without Ed's go.
 - Near a basket, it **lights up and trembles**; **E throws one in**.
 - **Partial ingredients stay in the pot** when she leaves; she can return and finish it (Ed, 2026-10-30, coordinator ruling on PR #1472).
 - **Co-op has shared baskets and one shared pot in the host's treehouse** (Ed, 2026-10-30, coordinator ruling on PR #1472). **Everyone standing in the kitchen when the shared brew completes takes the trip together; witches elsewhere stay normal** (Ed, 2026-10-30, subsequent coordinator ruling on PR #1472).
+- The group is **fixed at the instant the third ingredient goes in**; that same group exits after one second of smoke. Entering or leaving during the smoke changes nothing (coordinator detail ruling, 2026-10-30, PR #1472 comment6512476115).
 - **Three in = a brew, at once** (no use button, no bottle): the cauldron bubbles, colourful bubbles pour out, the room fills with smoke, and a second later she staggers outside and the world is... different.
 - The kitchen travels with the Ent, so brewing works on any island. Rooms visited during the party slow time and add their own music (journey.md).
 

@@ -3,45 +3,50 @@ import { addIngredient, depositMushrooms, type CauldronInventory, type MushroomK
 export interface KitchenBrew {
   recipe: Recipe;
   elapsed: number;
+  recipients: number[];
 }
 
 /** Isolated kitchen sequence; callers choose inventory ownership, room geometry and rendering. */
 export interface CauldronKitchen {
-  inside: boolean;
+  occupants: number[];
   brew: KitchenBrew | null;
 }
 
 export type KitchenEvent =
   | { kind: "deposited" }
   | { kind: "ingredient"; mushroom: MushroomKind }
-  | { kind: "brewing"; recipe: Recipe }
-  | { kind: "exit"; recipe: Recipe };
+  | { kind: "brewing"; recipe: Recipe; recipients: number[] }
+  | { kind: "exit"; recipe: Recipe; recipients: number[] };
 
 export function newCauldronKitchen(): CauldronKitchen {
-  return { inside: false, brew: null };
+  return { occupants: [], brew: null };
 }
 
 /** Call on crossing into the kitchen, not on every frame spent in it. */
-export function enterKitchen(kitchen: CauldronKitchen, inventory: CauldronInventory): KitchenEvent[] {
-  if (kitchen.inside || kitchen.brew) return [];
-  kitchen.inside = true;
+export function enterKitchen(kitchen: CauldronKitchen, inventory: CauldronInventory, witch = 0): KitchenEvent[] {
+  if (kitchen.occupants.includes(witch)) return [];
+  kitchen.occupants.push(witch);
+  kitchen.occupants.sort((a, b) => a - b);
   depositMushrooms(inventory);
   return [{ kind: "deposited" }];
 }
 
 /** Room tracking only; inventory ownership and persistence remain the host's responsibility. */
-export function leaveKitchen(kitchen: CauldronKitchen): void {
-  kitchen.inside = false;
+export function leaveKitchen(kitchen: CauldronKitchen, witch = 0): void {
+  kitchen.occupants = kitchen.occupants.filter(id => id !== witch);
 }
 
 /** One use edge at the nearby basket; the host owns proximity and input debouncing. */
-export function useKitchenBasket(kitchen: CauldronKitchen, inventory: CauldronInventory, mushroom: MushroomKind): KitchenEvent[] {
-  if (!kitchen.inside || kitchen.brew || inventory.baskets[mushroom] === 0) return [];
+export function useKitchenBasket(kitchen: CauldronKitchen, inventory: CauldronInventory, mushroom: MushroomKind, witch = 0): KitchenEvent[] {
+  if (!kitchen.occupants.includes(witch) || kitchen.brew || inventory.baskets[mushroom] === 0) return [];
   const recipe = addIngredient(inventory, mushroom);
   const events: KitchenEvent[] = [{ kind: "ingredient", mushroom }];
   if (recipe) {
-    kitchen.brew = { recipe, elapsed: 0 };
-    events.push({ kind: "brewing", recipe });
+    // Coordinator ruling, 2026-10-30 (#1472 comment6512476115): snapshot at the third
+    // ingredient. Entering/leaving during the smoke cannot change who takes the trip.
+    const recipients = [...kitchen.occupants];
+    kitchen.brew = { recipe, elapsed: 0, recipients };
+    events.push({ kind: "brewing", recipe, recipients: [...recipients] });
   }
   return events;
 }
@@ -54,7 +59,8 @@ export function stepKitchen(kitchen: CauldronKitchen, dt: number): KitchenEvent[
   // Ed, 2026-10-09/10: smoke fills the room and a second later she staggers outside.
   if (kitchen.brew.elapsed < 1 - 1e-9) return [];
   const recipe = kitchen.brew.recipe;
+  const recipients = [...kitchen.brew.recipients];
   kitchen.brew = null;
-  kitchen.inside = false;
-  return [{ kind: "exit", recipe }];
+  kitchen.occupants = kitchen.occupants.filter(id => !recipients.includes(id));
+  return [{ kind: "exit", recipe, recipients }];
 }
