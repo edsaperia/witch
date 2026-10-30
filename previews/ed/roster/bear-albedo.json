@@ -1,5 +1,5 @@
 {
-  "sha": "258baf5bdc8feded5d6c70efcb9ce443254a1c0e",
+  "sha": "697443fa1ac85dc9f437670ad3380069f40e06c8",
   "measurements": [
     {
       "id": "bear",
@@ -294,9 +294,9 @@
       },
       "look": null,
       "paletteHSV": [
-        0.7,
-        0.12,
-        0.2
+        0.075,
+        0.22,
+        0.28
       ]
     },
     {
@@ -366,9 +366,9 @@
       },
       "look": null,
       "paletteHSV": [
-        0.7,
-        0.12,
-        0.2
+        0.075,
+        0.22,
+        0.28
       ]
     },
     {
@@ -438,9 +438,9 @@
       },
       "look": null,
       "paletteHSV": [
-        0.7,
-        0.12,
-        0.2
+        0.075,
+        0.22,
+        0.28
       ]
     },
     {
@@ -510,13 +510,13 @@
       },
       "look": null,
       "paletteHSV": [
-        0.7,
-        0.12,
-        0.2
+        0.075,
+        0.22,
+        0.28
       ]
     }
   ],
-  "modelSourceCommit": "258baf5bdc8feded5d6c70efcb9ce443254a1c0e",
+  "modelSourceCommit": "84976b88a3ed48cf83ab3bebc981a17952464945",
   "lighting": "albedo",
   "style": {
     "ambientHue": 0.68,
@@ -589,5 +589,5 @@
     444,
     362
   ],
-  "selectionInterface": "isolated pre-hook genome data"
+  "selectionInterface": "shared #1470 selector"
 }
