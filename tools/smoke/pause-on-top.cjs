@@ -90,6 +90,7 @@ const CASES = [
     try { await page.waitForFunction(() => (document.getElementById("pause-sliders")?.getBoundingClientRect().left ?? -1) >= 0, null, { timeout: 30000, polling: 200 }); } catch { /* checked below */ }
     check(await paused(), `${C.id}: Esc pauses`);
     check(await isOpen(), `${C.id}: the overlay is still there under the pause`);
+    if (C.state) check(await page.$eval(C.sel, e => getComputedStyle(e).visibility === "hidden"), `${C.id}: station text is hidden behind the transparent pause page`);
     if (!(await isOpen())) console.log(`  ${C.id}: closed by ${JSON.stringify(await page.evaluate(() => (window.witch.stationShuts ?? []).slice(-3)))}`);
     const top = await page.evaluate(() => {
       const s = document.getElementById("pause-sliders")?.getBoundingClientRect(), mid = (x, y) => document.elementFromPoint(x, y);
@@ -133,6 +134,7 @@ const CASES = [
     await page.waitForTimeout(800);
     check(!(await paused()), `${C.id}: Esc resumes`);
     check(await isOpen(), `${C.id}: back to the overlay on resume`);
+    if (C.state) check(await page.$eval(C.sel, e => getComputedStyle(e).visibility === "visible"), `${C.id}: station text is visible again on resume`);
     // close it for the next one
     if (C.id === "sea-chart") await page.evaluate(() => document.querySelector("#chart-overlay button[title*='lose'], #chart-overlay .close")?.click());
     if (C.id === "map-table") { await page.keyboard.press("KeyE"); await page.waitForTimeout(600); } // (E again: it's put away; walking doesn't, Ed 2026-10-26)

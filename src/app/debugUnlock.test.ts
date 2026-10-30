@@ -1,13 +1,59 @@
 import { describe, expect, it } from "vitest";
-import { UNLOCK_KEY, ownedToChoose, partsToChoose, setUnlockAll, unlockAll } from "./debugUnlock";
+import { UNLOCK_KEY, ownedToChoose, partsToChoose, setUnlockAll, syncHatUnlock, unlockAll } from "./debugUnlock";
 import { BROOM_KEY, fitBroom, loadBroom } from "./broomSave";
 import { ITEMS } from "../rules/wardrobe";
 import { PART_IDS, SLOTS, partById } from "../rules/broomParts";
+import { tuningFromLink } from "./linkParams";
+import { newGame } from "../rules/game";
+import { TUNING } from "../rules/tuning";
+import { floorHats, HOUSE_ROOMS } from "../rules/houseRooms";
+import { HAT_SPELLS } from "../rules/spells";
 
 // The pause page's Unlock everything (Ed, 2026-10-29): it widens what the pickers offer and never writes anything as found.
 const memory = () => { const m = new Map<string, string>(); return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v), removeItem: (k: string) => void m.delete(k), m }; };
 
 describe("Unlock everything (the pause page's debug switch)", () => {
+  it("refreshes an existing floor, preserves hats in play and finds, and restores earned hats when switched off", () => {
+    const s = memory(), g = globalThis as { localStorage?: unknown }, was = g.localStorage;
+    g.localStorage = s;
+    try {
+      s.setItem("witch.hats", JSON.stringify(["healing"]));
+      const W = newGame(123, { ...TUNING, spells: { ...TUNING.spells, hat: "helmet", hats: "healing" } }).witches[0];
+      W.hat.left.push({ x: 1, z: 1, at: 0, spell: "harvest" });
+      const floor = floorHats(W);
+      expect(floor.filter(Boolean)).toEqual(["healing"]);
+      syncHatUnlock(W, true);
+      expect(floorHats(W)).toBe(floor);
+      expect(floor.filter(Boolean)).toEqual(HAT_SPELLS.filter(h => h.built && !["none", "helmet", "harvest"].includes(h.id)).map(h => h.id));
+      syncHatUnlock(W, true); // Repeated grants never duplicate hats already out.
+      expect(floor.filter(h => h === "harvest" || h === "helmet")).toEqual([]);
+      expect(s.m.get("witch.hats")).toBe('["healing"]');
+      s.setItem("witch.hats", JSON.stringify(["healing", "sentry"])); // A real find while debug is on stays hers.
+      syncHatUnlock(W, false);
+      expect(floor.filter(Boolean)).toEqual(["healing", "sentry"]);
+      expect(W.spells.hat).toBe("helmet");
+      syncHatUnlock(W, false, new URLSearchParams("hats=all"));
+      expect(W.spells.hats).toBeUndefined();
+    } finally { g.localStorage = was; }
+  });
+  it("loads every built spell hat onto the Cloakroom floor with the debug switch, link, or headless defaults", () => {
+    const s = memory(), g = globalThis as { localStorage?: unknown }, was = g.localStorage;
+    g.localStorage = s;
+    try {
+      const all = HAT_SPELLS.filter(h => h.built && h.id !== "none").map(h => h.id);
+      expect(HOUSE_ROOMS.objects.find(o => o.use.kind === "hats")?.room).toBe("cloakroom");
+      setUnlockAll(true);
+      const debug = tuningFromLink(new URLSearchParams()).tuning;
+      setUnlockAll(false);
+      const link = tuningFromLink(new URLSearchParams("hats=all")).tuning;
+      for (const tuning of [debug, link, TUNING]) {
+        const W = newGame(123, { ...TUNING, ...tuning }).witches[0];
+        expect(floorHats(W).filter(Boolean)).toEqual(all);
+      }
+      expect(floorHats(newGame(123, { ...TUNING, ...tuningFromLink(new URLSearchParams()).tuning }).witches[0]).filter(Boolean)).toEqual([]);
+      expect(s.m.has("witch.hats")).toBe(false);
+    } finally { g.localStorage = was; }
+  });
   it("is off by default, and on and off in its own key", () => {
     const s = memory();
     expect(unlockAll(s)).toBe(false);

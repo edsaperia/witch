@@ -12,7 +12,7 @@ import { chartOpen, closeChart, openChart, prepareChart, type Sailed } from "./u
 import { openingWay, opensInBedroom, opensWithCreator, sailLandsInBed } from "./app/opening";
 import { wakeInBedroom } from "./rules/opening";
 import { endDream, startParty, startWake } from "./rules/wakeUp";
-import { wearFromStation, wornGenome } from "./rules/clothesPile";
+import { STATION_SLOT, wearFromStation, wornGenome } from "./rules/clothesPile";
 import { WakeCard } from "./render/wakeUp";
 import { toggleCornerPanel, closeCornerPanel, cornerPanelRoot } from "./ui/cornerPanel";
 import { MenuFocus } from "./ui/menuFocus";
@@ -57,7 +57,7 @@ import { FIND_KINDS, fillTrunk, findKind, loanFind, spawnFind, spawnSpot, type F
 import { fitBroom, loadBroom, migrateBroom } from "./app/broomSave";
 import { partById } from "./rules/broomParts";
 import { loadOwned } from "./app/owned";
-import { ownedToChoose, partsToChoose, setUnlockAll, unlockAll } from "./app/debugUnlock";
+import { ownedToChoose, partsToChoose, setUnlockAll, syncHatUnlock, unlockAll } from "./app/debugUnlock";
 import { defaultsText, newWitchLink } from "./app/defaultLook";
 import { foundAll, keepFound, type FindsCtx } from "./app/finds";
 import { dreamsAfter, homeOf, hatWithoutLoan, lend, loanName, lookWithoutLoan, partsWithoutLoan, settle, withLoan, type Loan } from "./app/loan";
@@ -658,7 +658,7 @@ freeze.onToggle = on => {
   pauseLoading = true;
   void import("./ui/decide").then(({ PauseSliders }) => {
     const report = () => import("./ui/visualReport").then(({ report }) => report(reportHost()));
-    pauseSliders = new PauseSliders({ settings: () => settingsPage.show(), get tuning() { return N().game.tuning; }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive, report, musicLab: openMusicLab, audioTest: () => { window.open("audio-test/", "_blank", "noopener"); }, downloadLog: () => N().playtest.download(), unlockAll: { get: () => unlockAll(), set: on => { setUnlockAll(on); creator.hats = on ? undefined : N().game.spells.hats; } }, defaults: { text: () => defaultsText(lookWithoutLoan((page.look() ?? creator.genome()) as Record<string, unknown> | null, loan), partsWithoutLoan(N().game.witches[0].spells.parts, loan)), tryIt: () => { window.open(newWitchLink(location.href), "_blank", "noopener"); }, shown: () => N().hud.debugOn || unlockAll() }, fightArena: () => { window.open(fightLink(newFightSeed()), "_blank", "noopener"); }, finds: () => findsPanel.toggle(true), findsShown: () => N().hud.debugOn || devFinds, quality: { lines: () => ladder.lines(), options: () => ladder.options(), current: () => ladder.current(), choose: v => { ladder.choose(v); ladder.apply(N().game.tuning); } } });
+    pauseSliders = new PauseSliders({ settings: () => settingsPage.show(), get tuning() { return N().game.tuning; }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive, report, musicLab: openMusicLab, audioTest: () => { window.open("audio-test/", "_blank", "noopener"); }, downloadLog: () => N().playtest.download(), unlockAll: { get: () => unlockAll(), set: on => { setUnlockAll(on); for (const W of N().game.witches) syncHatUnlock(W, on, params); creator.hats = N().game.spells.hats; } }, defaults: { text: () => defaultsText(lookWithoutLoan((page.look() ?? creator.genome()) as Record<string, unknown> | null, loan), partsWithoutLoan(N().game.witches[0].spells.parts, loan)), tryIt: () => { window.open(newWitchLink(location.href), "_blank", "noopener"); }, shown: () => N().hud.debugOn || unlockAll() }, fightArena: () => { window.open(fightLink(newFightSeed()), "_blank", "noopener"); }, finds: () => findsPanel.toggle(true), findsShown: () => N().hud.debugOn || devFinds, quality: { lines: () => ladder.lines(), options: () => ladder.options(), current: () => ladder.current(), choose: v => { ladder.choose(v); ladder.apply(N().game.tuning); } } });
     requestAnimationFrame(() => pauseSliders!.show(freeze.frozen, creator.open)); // (a frame shut first, so it slides in)
   }, () => { // (its files replaced under it: Ed, 2026-10-14, "the menu does not appear")
     pauseLoading = false;
@@ -1147,7 +1147,7 @@ function frame(now: number): void {
   const station = bot || creator.open || charting ? null : stationOf(game, stations.station), shelves = station ? shelvesAt(station.id) : null;
   stations.setLoaned(loan?.id ?? null); // (its card sparkles: ui/stationPanel.ts)
   if (stations.station && station?.id !== stations.station) shutStation(`off it (${station?.id ?? "none"}${charting ? ", charting" : ""}${creator.open ? ", creator" : ""})`); // (she's somehow off it: a knockout, a new night; E closes it above)
-  if (station && shelves && station.id !== stations.station && usedAt(game) === station.id) { const g = (page.look() ?? creator.genome()) as Record<string, unknown>; stations.open(station.id, shelves, g as never, ownedToChoose(findsCtx().owned()), game.wake && firstEver && !game.wake.yesterday && station.id === "dressingTable" ? "First night · pick your look here, and at the wardrobe, cloak pegs and shoe rack" : "", shelves.some(q => q.slot || q.board) ? workshopNow() : null); }
+  if (station && shelves && station.id !== stations.station && usedAt(game) === station.id) { const g = (page.look() ?? creator.genome()) as Record<string, unknown>; stations.open(station.id, shelves, g as never, ownedToChoose(findsCtx().owned()), game.wake && firstEver && !game.wake.yesterday && station.id === "dressingTable" ? "First night · pick your look here, and at the wardrobe, cloak pegs and shoe rack" : "", shelves.some(q => q.slot || q.board) ? workshopNow() : null, !!game.wake?.pile?.includes(STATION_SLOT[station.id])); }
   else if (!shelves && stations.station) shutStation("no shelves");
   stations.update(performance.now() / 1000); booth.update(performance.now() / 1000);
   // The telescope: E at it looks (useHouse); E or ○ shuts it (its own step; Esc pauses over it); and should she somehow be off it, it shuts.
