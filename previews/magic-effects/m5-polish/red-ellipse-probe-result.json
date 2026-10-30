@@ -1,0 +1,33 @@
+{
+ "element": "sand",
+ "info": {
+  "witchMeshes": 2,
+  "fxScene": true,
+  "fxChildren": 1,
+  "legacy": true,
+  "keys": [
+   "witchBatch",
+   "bareBatch",
+   "bareAsked",
+   "hatOff",
+   "partyWitchView",
+   "hatPointers",
+   "witchBase",
+   "witchTall",
+   "witchFeetTop",
+   "witchShadows",
+   "witchBodyY",
+   "witchFeetY",
+   "witchFrameH",
+   "hatLooks",
+   "irisHat"
+  ]
+ },
+ "res": {
+  "baseline": 0,
+  "witchHidden": 0,
+  "legacyOff": 0,
+  "fxSceneOff": 0,
+  "allOff": 0
+ }
+}

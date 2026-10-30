@@ -1,0 +1,419 @@
+{
+  "commit": "a3bd2127b39045d72edb0635906545b82aad6542",
+  "build": {
+    "version": "dev · a3bd212",
+    "built": "2026-10-30T10:25:43.876Z"
+  },
+  "modes": {
+    "fire": {
+      "state": {
+        "version": "Coven Rush",
+        "camera": {
+          "zoomStep": 3,
+          "zoom": 0.375,
+          "tx": 3190.754367956137,
+          "ty": 1.4,
+          "tz": 3106.559326444441,
+          "vx": 0,
+          "vy": 0,
+          "vz": 0,
+          "ax": 0,
+          "az": 0,
+          "lift": 0,
+          "pull": 0,
+          "intro": 0,
+          "coast": 0,
+          "gaze": 0,
+          "seaBehind": 0.569416652176196
+        },
+        "lights": 20,
+        "effectLights": 6,
+        "budget": 20,
+        "treeReady": null
+      },
+      "timing": {
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "samples": [
+          {
+            "enabled": false,
+            "gpuMs": 6667.253692,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 7182.344788,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 7607.332485,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 8421.55301,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          }
+        ]
+      },
+      "beamPixels": 10412
+    },
+    "frost": {
+      "state": {
+        "version": "Coven Rush",
+        "camera": {
+          "zoomStep": 3,
+          "zoom": 0.375,
+          "tx": 3190.754367956137,
+          "ty": 1.4,
+          "tz": 3106.559326444441,
+          "vx": 0,
+          "vy": 0,
+          "vz": 0,
+          "ax": 0,
+          "az": 0,
+          "lift": 0,
+          "pull": 0,
+          "intro": 0,
+          "coast": 0,
+          "gaze": 0,
+          "seaBehind": 0.569416652176196
+        },
+        "lights": 20,
+        "effectLights": 6,
+        "budget": 20,
+        "treeReady": null
+      },
+      "timing": {
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "samples": [
+          {
+            "enabled": false,
+            "gpuMs": 9157.527964,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 9252.742142,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 9499.741456,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 9449.488502,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          }
+        ]
+      },
+      "beamPixels": 7002,
+      "frostTree": {
+        "x": 3182.425910089053,
+        "z": 3088.2695047176157,
+        "type": 29,
+        "samples": [
+          {
+            "time": 1.5,
+            "amount": 0.8076810948988971
+          },
+          {
+            "time": 4.5,
+            "amount": 0.20768109489889705
+          },
+          {
+            "time": 7.5,
+            "amount": 0
+          }
+        ]
+      }
+    },
+    "venom": {
+      "state": {
+        "version": "Coven Rush",
+        "camera": {
+          "zoomStep": 3,
+          "zoom": 0.375,
+          "tx": 3190.754367956137,
+          "ty": 1.4,
+          "tz": 3106.559326444441,
+          "vx": 0,
+          "vy": 0,
+          "vz": 0,
+          "ax": 0,
+          "az": 0,
+          "lift": 0,
+          "pull": 0,
+          "intro": 0,
+          "coast": 0,
+          "gaze": 0,
+          "seaBehind": 0.569416652176196
+        },
+        "lights": 20,
+        "effectLights": 6,
+        "budget": 20,
+        "treeReady": null
+      },
+      "timing": {
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "samples": [
+          {
+            "enabled": false,
+            "gpuMs": 8819.009617,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 20
+          },
+          {
+            "enabled": true,
+            "gpuMs": 9013.091466,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 8259.594144,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 20
+          },
+          {
+            "enabled": true,
+            "gpuMs": 7431.055938,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          }
+        ]
+      },
+      "beamPixels": 6246
+    },
+    "moonlight": {
+      "state": {
+        "version": "Coven Rush",
+        "camera": {
+          "zoomStep": 3,
+          "zoom": 0.375,
+          "tx": 3190.754367956137,
+          "ty": 1.4,
+          "tz": 3106.559326444441,
+          "vx": 0,
+          "vy": 0,
+          "vz": 0,
+          "ax": 0,
+          "az": 0,
+          "lift": 0,
+          "pull": 0,
+          "intro": 0,
+          "coast": 0,
+          "gaze": 0,
+          "seaBehind": 0.569416652176196
+        },
+        "lights": 20,
+        "effectLights": 6,
+        "budget": 20,
+        "treeReady": null
+      },
+      "timing": {
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "samples": [
+          {
+            "enabled": false,
+            "gpuMs": 8247.62564,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 20
+          },
+          {
+            "enabled": true,
+            "gpuMs": 7958.663782,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 9278.356488,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 20
+          },
+          {
+            "enabled": true,
+            "gpuMs": 8353.409891,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          }
+        ]
+      },
+      "beamPixels": 8586
+    },
+    "storm": {
+      "state": {
+        "version": "Coven Rush",
+        "camera": {
+          "zoomStep": 3,
+          "zoom": 0.375,
+          "tx": 3190.754367956137,
+          "ty": 1.4,
+          "tz": 3106.559326444441,
+          "vx": 0,
+          "vy": 0,
+          "vz": 0,
+          "ax": 0,
+          "az": 0,
+          "lift": 0,
+          "pull": 0,
+          "intro": 0,
+          "coast": 0,
+          "gaze": 0,
+          "seaBehind": 0.569416652176196
+        },
+        "lights": 20,
+        "effectLights": 6,
+        "budget": 20,
+        "treeReady": null
+      },
+      "timing": {
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "samples": [
+          {
+            "enabled": false,
+            "gpuMs": 8714.446645,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 20
+          },
+          {
+            "enabled": true,
+            "gpuMs": 7729.775614,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 8328.831784,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 20
+          },
+          {
+            "enabled": true,
+            "gpuMs": 7844.771273,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          }
+        ]
+      },
+      "beamPixels": 6669
+    },
+    "earth": {
+      "state": {
+        "version": "Coven Rush",
+        "camera": {
+          "zoomStep": 3,
+          "zoom": 0.375,
+          "tx": 3190.754367956137,
+          "ty": 1.4,
+          "tz": 3106.559326444441,
+          "vx": 0,
+          "vy": 0,
+          "vz": 0,
+          "ax": 0,
+          "az": 0,
+          "lift": 0,
+          "pull": 0,
+          "intro": 0,
+          "coast": 0,
+          "gaze": 0,
+          "seaBehind": 0.569416652176196
+        },
+        "lights": 20,
+        "effectLights": 6,
+        "budget": 20,
+        "treeReady": null
+      },
+      "timing": {
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "samples": [
+          {
+            "enabled": false,
+            "gpuMs": 7679.416417,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 20
+          },
+          {
+            "enabled": true,
+            "gpuMs": 7400.630229,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 8133.790811,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 20
+          },
+          {
+            "enabled": true,
+            "gpuMs": 7543.976241,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          }
+        ]
+      },
+      "beamPixels": 5913
+    }
+  },
+  "errors": []
+}
