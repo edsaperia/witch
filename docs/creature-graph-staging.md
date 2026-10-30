@@ -461,3 +461,14 @@ old builder that is still needed by a default-off switch waits for coordinator
 routing. Art checks/captures run on a cloud runner assigned by the coordinator
 for an exact SHA and command. The current graph/gait fixtures remain engine
 diagnostics, not animal art parity or a completed unified generator.
+# Optional small-animal controls (2026-10-30)
+
+Coordinator requests 6516050444 and 6516100269 use the existing builders. No Current genome enables these fields; absent fields preserve material and normal bytes.
+
+- `look.mole: {bodyDepth, bodyLength, snoutProjection, forepawSpread, forepawSize}`: finite positive multipliers, each default 1. Depth scales the barrel's vertical and lateral radii while retaining its bottom; length changes the longitudinal barrel and attachment positions. Snout projection changes its existing snout. Forepaw spread and size change existing hands and claws.
+- A flying squirrel's existing `features` entry `{kind:"patagium", groundSkirt:.5, mat:"BODYL", rim:"BELLY"}` adds ground/flank membrane extent in body-halfwidth units. `groundSkirt` is in [0,1], default 0; it acts only at levels 2 and 3, outside glide. Existing `mat` and `rim` remain the palette controls.
+- Walking meerkat `head.eyePatchPx:2` sets the nominal art-pixel half-extent around existing eye-patch centres in both vertical and lateral directions. Zero disables those patches; absence retains legacy proportions. It changes paint, not eyes or geometry, and does not change sentinel eye patches.
+- Sentinel idle uses `look.sentinel.belly:{mat:"BELLY",extent:{along:[0,.8],width:.6,depth:1}}`, reusing the shared bib schema. Along runs from the lower upright torso to its neck; width and ventral depth use twice the torso's lateral radius as their unit. This replaces the old front belly paint only when supplied.
+- Sentinel `look.sentinel.tailTip:{length:.2,mat:"BODY3"}` uses the shared tail-chain tip painter, with length a fraction of the existing path. Walking tails use `coat.regions.tail` separately. Neither control replaces anatomy or adds another builder.
+
+These interfaces enable roster fitting; they do not establish likeness or activation approval. The accepted cats-6c cloud checkpoint stays frozen at `76a7c703ac8deb01956a32552307814a6da4e5a3`.
