@@ -165,6 +165,14 @@ The first restricted test attempt failed during temporary-file rename before
 loading tests; the authorized rerun passed. Initial unused-import errors were
 removed before the passing typecheck.
 
+An AST audit also compared all 41 existing function bodies with 446989d71 after
+LF/CRLF normalization; all matched, including creatureSprites, runJob and
+rigSprites. creatureSprites is now in creatureArt.ts, so #1470's six color-call
+changes must be carried to that whole-function move when combining branches.
+The reusable no-browser check is `node tools/art-cache/parity.mjs capture <dir>`
+before a mechanical change, then `compare <dir>` afterward. Snapshots are local
+binary outputs, not committed generated art. Unsupported canvas operations fail.
+
 House lighting still imports hsv2rgb through the omnibus generator facade.
 QUESTION6523616809 requests its one-line direct import from core.js; no lighting
 or generator edit has been made pending that additional scope route. Fingerprint
