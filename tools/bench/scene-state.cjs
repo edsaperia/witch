@@ -11,6 +11,12 @@ module.exports.sceneState = page => page.evaluate(() => {
   const entities = g.creatures.map(c => ({ id: c.id, species: c.species, level: c.level,
     world: [c.x, c.y ?? 0, c.z], screen: project([c.x, c.y ?? 0, c.z], false), sprites: [] }));
   const sprites = [], lights = [], seenLightUniforms = new Set();
+  const owners = new Map();
+  for (const [rootName, root] of [['view', v], ['rig', v.rig]]) if (root) {
+    for (const [field, value] of Object.entries(root)) if (value instanceof Map) {
+      for (const [key, batch] of value) for (const mesh of batch?.meshes ?? []) owners.set(mesh, `${rootName}.${field}:${String(key)}`);
+    }
+  }
   const plain = x => x?.toArray ? x.toArray() : Array.isArray(x) ? x.map(plain) :
     ArrayBuffer.isView(x) ? Array.from(x) : x;
   v.scene.traverse(o => {
@@ -38,7 +44,7 @@ module.exports.sceneState = page => page.evaluate(() => {
           y0 + r.y * across + lift.y * rise + up.y * skew, p[2] + r.z * across + lift.z * rise + up.z * skew]));
       }
       const bounds = [Math.min(...corners.map(p => p[0])), Math.min(...corners.map(p => p[1])), Math.max(...corners.map(p => p[0])), Math.max(...corners.map(p => p[1]))];
-      const sprite = { name: o.name, instance: i, world: p, size, bounds, overlaps: overlaps(bounds) };
+      const sprite = { name: o.name, owner: owners.get(o) ?? null, mesh: o.uuid, instance: i, world: p, size, bounds, overlaps: overlaps(bounds) };
       const matches = entities.filter(entity => Math.hypot(entity.world[0] - p[0], entity.world[2] - p[2]) < .1);
       if (sprite.overlaps || matches.length) sprites.push(sprite);
       for (const entity of matches) entity.sprites.push(sprite);

@@ -112,7 +112,7 @@ function lgMove(m, f) {
 function lgForm(S, { breath }) {
   const pose = LEGEND_POSES[S.id], over = pose.over;
   const form = (m, o) => {
-    const s = render(m, { ...o, measure: true }).s; // the awake legend's scale
+    const standing = render(m, { ...o, measure: true }), s = standing.s; // the awake legend's scale and allocated height
     const r = rng(S.id.length * 977 + 31);
     lgGroup = 200;
     // the ground line it sleeps sunk to
@@ -174,10 +174,17 @@ function lgForm(S, { breath }) {
     for (let i = 0; i < (over.stones || 0); i++) lgAddStone(m, v3.add(round(i * 3 + 1), [0, unit * .02, 0]), unit * uni(r, .1, .2), r);
     if (over.nest) lgAddNest(m, [cx, G + unit * .08, 0], Math.max(rz, rx * .6) * 1.05, unit * .08, r);
     m.clipY = G;
-    const res = render(m, { scale: s, facing: o.facing });
-    res.sp.origin = res.project([cx, G, 0]); // the ground under its middle, on the sprite
-    res.sp.groundLine = G;
-    return res.sp;
+    let scale = s, sp;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const res = render(m, { scale, facing: o.facing });
+      res.sp.origin = res.project([cx, G, 0]); // the ground under its middle, on the sprite
+      res.sp.groundLine = G;
+      sp = res.sp;
+      const height = lgCrop(sp).h;
+      if (!o.sizeTarget || height <= standing.height) break;
+      scale *= (standing.height - .5) / height;
+    }
+    return sp;
   };
   form.motes = false;
   form.fold = pose.fold ?? 0; // (a builder that can fold itself up asleep reads it: the heron's neck laid back onto its shoulders)
