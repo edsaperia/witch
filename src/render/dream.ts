@@ -14,6 +14,7 @@ import { litCanvas, standing, type Drawn } from "./houseFurniture";
 import { OUTLINES } from "../rules/constellations";
 import { HOUSE_ROOMS } from "../rules/houseRooms";
 import type { Style } from "./style";
+import { logCaughtError } from "../platform/caughtError";
 
 /** What the dream shows: the find (its kind and id, its name as said, its find art's piece id), the verdict, and its home's house object. */
 export interface DreamOf { item: string; name: string; piece: string; won: boolean; home: string }
@@ -33,7 +34,7 @@ export function dreamArt(d: Pick<DreamOf, "home" | "piece">, st: Style): DreamAr
   try {
     const o = HOUSE_ROOMS.objects.find(q => q.id === d.home);
     if (o) { const { foot } = standing(o); home = litCanvas(furnitureSprite(o.id, foot, st, { ppm: 44, pitch: 0.62, yaw: 0, curve: 0 }) as Drawn, o.room, st, 1, o.id); }
-  } catch { home = null; }
+  } catch (e) { logCaughtError(e, "dream furniture"); home = null; }
   return { home, find };
 }
 
@@ -48,7 +49,7 @@ export function findCanvas(piece: string, st: Style, fine = 1): HTMLCanvasElemen
     const sf = m.get(fine)!;
     const p = (Art.scenePiece as (id: string, st: Style) => { sprite: { whole: Drawn["sp"]; origin: { x: number; y: number } }; colours: Record<string, number[]> })(piece, sf);
     return litCanvas({ sp: p.sprite.whole, origin: p.sprite.origin, lights: [] }, "bedroom", sf, 1, "", p.colours);
-  } catch { return null; }
+  } catch (e) { logCaughtError(e, `dream find ${piece}`); return null; }
 }
 
 /** The dream over the page: its own canvas over the sleep's dark (render/wakeUp.ts's veil), under its card. */

@@ -11,6 +11,8 @@
 //   canvas), with a bar for how far the conversation has got.
 // The sigils are the art builder's (art/sigils.js), drawn per species and level into an atlas.
 import type { SlashPixel } from "./leash/slashes";
+import { bossBreath } from "../rules/creatureCues";
+export { bossBreath } from "../rules/creatureCues";
 import { ROUTE_SAMPLES, type RouteShape } from "./routeEase";
 import { moodOf } from "./mood";
 import { beatTime } from "../rules/beat";
@@ -786,6 +788,4 @@ export function legendNeon(species: string): [number, number, number] {
   const c = sigilColour(species) as number[], m = Math.max(1, c[0], c[1], c[2]);
   return [0, 1, 2].map(i => 0.82 * (c[i] / m) + 0.18) as [number, number, number];
 }
-
-export const bossBreath = (time: number, id: number, every: number) => 0.5 - 0.5 * Math.cos((time / Math.max(0.1, every) + (id % 7) / 7) * Math.PI * 2);
 

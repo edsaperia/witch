@@ -6,25 +6,8 @@
 // area clears first and the nearer of a type's areas finish sooner. Its speed is the tuning's `speed`; what it hasn't reached `cap`
 // seconds after the art landed fades out (never the mist hanging on long after the trees are there).
 
-export interface LoadingMistTuning {
-  on: boolean;
-  /** How many sheets of mist are stacked, and how high the top one stands (m over the ground). */
-  layers: number;
-  height: number;
-  /** How thick it is: each sheet's opacity at its thickest (0 to 1), the low ones thickest. */
-  density: number;
-  /** How bright it glows (times the night's mist colour). */
-  glow: number;
-  /** The front's speed out from the treehouse (m/s), and the seconds after a type's art lands that what's left of its mist fades
-   *  out (over FADE more). */
-  speed: number;
-  cap: number;
-  /** The front's soft edge (m either side) and its noise's size (m). */
-  soft: number;
-  size: number;
-  /** How far out to sea it lies past the island's furthest ground (m; 0 none over the water). */
-  sea: number;
-}
+import type { Tuning } from "../rules/tuning";
+export type LoadingMistTuning = NonNullable<Tuning["loadingMist"]>;
 
 /** One area type's areas as the front sees them: the nearest and furthest of their ground from the treehouse (m). */
 export interface TypeReach { near: number; far: number }

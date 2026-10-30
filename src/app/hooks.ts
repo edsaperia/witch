@@ -7,7 +7,7 @@ import { Vector3 } from "three";
 import { arenaAttack, setupArena } from "../rules/arena";
 import { lastShot, takeShot } from "./shot";
 import { cellKey } from "../rules/party";
-import { areaUnderWitch, hitWitch, interpolated, joinParty, loseSoundsystem, STEP, stepGame, type Game } from "../rules/game";
+import { areaUnderWitch, hitWitch, interpolated, joinParty, loseSoundsystem, STEP, stepGame as baseStepGame, type Game } from "../rules/game";
 import { AREA_TYPES } from "../rules/map";
 import { coastFacing } from "../rules/land";
 import { musicCue, type MusicCue } from "../rules/musicPlan";
@@ -29,6 +29,7 @@ import { sliceLog } from "../render/slices";
 export interface HookNight { game: Game; tuning: Tuning; hud: Hud }
 
 export interface HookDeps {
+  advance?: typeof baseStepGame;
   night: () => HookNight; view: View; sound: Sound; meter: OutputMeter; shake: ScreenShake;
   /** The frames' own stats (the overlay's fps, cpu and gpu lines), for the probes. */
   frameStats: FrameStats;
@@ -39,7 +40,8 @@ export interface HookDeps {
   loop: { manual: boolean; readonly bot: Bot | null; readonly botTag: BotTag | null; readonly ready: boolean };
 }
 
-export function installHooks({ night, view, sound, meter, shake, frameStats, ladder, loadTimes, loop }: HookDeps): void {
+export function installHooks({ night, view, sound, meter, shake, frameStats, ladder, loadTimes, loop, advance = baseStepGame }: HookDeps): void {
+  const stepGame = advance;
   let soundCue: MusicCue | undefined; // (the audit's own: the loop keeps its own cue)
   const applyShake = () => shake.apply();
   (window as unknown as { witch: unknown }).witch = { get game() { return night().game; }, view, get tuning() { return night().tuning; }, frameStats, ladder, sound, slices: sliceLog, // (the sliced builds' longest steps: render/slices.ts, tools/view/build-budget.cjs)

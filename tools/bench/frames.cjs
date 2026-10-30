@@ -12,6 +12,7 @@
 //   fight (a debug arena below the dancefloor, a wave called in). Compare a quick run only with a quick run.
 const http = require("http");
 const { pageKey } = require("./comparable.cjs");
+const { holdSimulation, startingBoundary } = require("./hold-simulation.cjs");
 const fs = require("fs");
 const path = require("path");
 let playwright;
@@ -172,6 +173,7 @@ async function main() {
   for (const s of QUICK ? QUICK_SCENES : SCENES) {
     if (only && !only.includes(s.name)) continue;
     const page = await context.newPage();
+    await page.addInitScript(holdSimulation);
     await page.addInitScript(CLOCK);
     await page.addInitScript(WORKERS, ARTCORES);
     if (process.env.BENCH_LAPS) await page.addInitScript(JOBS);
@@ -188,7 +190,7 @@ async function main() {
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000 }); // (the cloud's software renderer can take minutes, more when the machine is busy)
     lap("ready");
     if (process.env.BENCH_LAPS) { const c = await page.evaluate(() => window.__benchCores); console.log(`  ${s.name} cores: the machine's ${require("os").availableParallelism()}, the page's ${c?.real}, told ${c?.told}`); }
-    // The loop stands still while the art is drawn (it stood still from just after, anyway: below): left running, the page
+    // The loop has stood still since installHooks, before readiness on old and direct-play builds: left running, the page
     // redraws its scene on the software renderer every frame meanwhile, and on CI's 4 cores that took most of the CPU from the
     // art workers (#1024 made those frames dearer and the boot's art wait doubled, 12 to 13 minutes: every long bench past the
     // job's 40 minutes, 2026-10-23). Nothing the scenes draw changes: the shots wait for all the art either way.
@@ -206,18 +208,24 @@ async function main() {
     if (s.creator) {
       // The bedroom: the character creator as it opens, the game behind it not yet started.
       await page.evaluate(() => { window.witch.manual = true; });
+      const start = await page.evaluate(startingBoundary, { paused: true });
       const shot = await settle(page, path.join(out, `${s.name}.png`), !!s.frozen);
-      result.scenes[s.name] = { creator: await page.evaluate(() => !!window.__creator?.open), shot, secs: Math.round((Date.now() - t0) / 1000) };
+      result.scenes[s.name] = { creator: await page.evaluate(() => !!window.__creator?.open), start, shot, secs: Math.round((Date.now() - t0) / 1000) };
       console.log(s.name, JSON.stringify(result.scenes[s.name]));
       await page.close();
       continue;
     }
-    // The loop stands still before the start, so every scene starts at game time 0. The treehouse deck's map table off: its live
+    // The init script holds the loop before readiness, so every scene starts at game time 0. The treehouse deck's map table off: its live
     // miniature chart (render/mapTable.ts) draws islands a worker makes in real time, so whether they're in by the shot is a race
     // (two runs of one build differed by 3584 px in the boot scene, #758); with its view gone it's never made or shown.
     await page.evaluate(() => { window.witch.manual = true; const v = window.witch.view; if (v.mapTable) { v.mapTable.drop(); v.mapTable.mesh.visible = false; v.mapTable = null; } });
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 60000 });
+    // Old builds reveal/swap art on Enter; direct-play builds do so at readiness. Both
+    // must finish that same requested work before the first controlled simulation step.
+    await page.evaluate(() => window.witch.view.assets.whenIdle());
+    await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 2400000, polling: 1000 });
+    const start = await page.evaluate(startingBoundary);
     // (the party spell cast long since, so she isn't held at the decks: every scene a run under way, the same each time)
     await page.evaluate(() => { const p = window.witch.game.party; if (p.spellAt === null) p.spellAt = -100; });
     lap("started");
@@ -228,7 +236,7 @@ async function main() {
     const shot = await settle(page, path.join(out, `${s.name}.png`));
     const g = await page.evaluate(() => { const g = window.witch.game, w = g.witch; return { time: +g.clock.time.toFixed(4), x: +w.x.toFixed(3), z: +w.z.toFixed(3), mode: w.mode, seated: !!w.seated, wave: g.party.wave }; });
     const landed = await page.evaluate(() => window.__benchLanded?.at ?? []);
-    result.scenes[s.name] = { ...g, shot, landed, secs: Math.round((Date.now() - t0) / 1000), ...(times && times.length ? { work: summarise(times) } : {}) };
+    result.scenes[s.name] = { ...g, start, shot, landed, secs: Math.round((Date.now() - t0) / 1000), ...(times && times.length ? { work: summarise(times) } : {}) };
     console.log(s.name, JSON.stringify(result.scenes[s.name]));
     await page.close();
   }

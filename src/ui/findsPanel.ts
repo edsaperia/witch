@@ -30,6 +30,7 @@ const CSS = `
 export interface LoanControl { now(): string | null; keep(): void; back(): void }
 
 export class FindsPanel {
+  mutate: (action: () => void) => void = action => action();
   private readonly el = document.createElement("div");
 
   private said = "";
@@ -60,6 +61,9 @@ export class FindsPanel {
   toggle(on = !this.on): void { this.el.classList.toggle("on", on); if (on) this.draw(); }
 
   private click(e: Event): void {
+    this.mutate(() => this.clickNow(e));
+  }
+  private clickNow(e: Event): void {
     const b = (e.target as HTMLElement).closest("button");
     if (!b) return;
     const c = this.ctx(), kind = b.dataset.kind as (typeof FIND_KINDS)[number]["id"] | undefined, id = b.dataset.id;
