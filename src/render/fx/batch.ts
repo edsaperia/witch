@@ -53,7 +53,8 @@ void main(){
   if(form>10.5)d=max(abs(p.y)*3.0,abs(p.x)*1.1);
   else if(form<0.5 || form>9.5)d=length(p*vec2(1.1,1.3));
   else if(form<1.5)d=r/(0.65+sin(angle*7.0-time)*0.07+phase*0.15);
-  else if(form<2.5)d=max(abs(p.y)*3.0,abs(p.x)*1.1);
+  // Broader, longer visible core inside the same authored beam quad; endpoints and draw cost stay bounded.
+  else if(form<2.5)d=max(abs(p.y)*1.8,abs(p.x)*0.95);
   else if(form<3.5)d=max(abs(r-(0.55+phase*0.25))*5.0,r*0.9);
   else if(form<4.5)d=abs(length(p*vec2(1.0,0.85))-0.62)*6.0;
   else if(form<5.5)d=max(abs(p.x)/(0.15+(1.0-p.y)*0.2),abs(p.y)*1.1);
