@@ -8,6 +8,7 @@ import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { lakeDepth, lakeKnobs } from "./lakes";
 import { newWitch, stepWitch, NO_INTENT, type WitchState } from "./witch";
 
+// Keep this 40-area phase-4 seed: it supplies the real deep-water/ashore pair used by the lake landing regression.
 const isle: Tuning = { ...TUNING, map: { ...TUNING.map!, islandAreas: 40, island: "", phase: 4 } };
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 
