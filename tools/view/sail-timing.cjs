@@ -12,8 +12,20 @@
 // browser, GPU=hardware requests its default renderer (check the result's renderer: it may still fall back to software).
 // SAIL_SEED fixes the selected island's night seed; TIMEOUT bounds each arrival (300000 ms). Each completed leg is saved
 // immediately with its own comparability key, chart wait, build stamp and resource counts (heap is not collected).
+// TRACE=1 adds worker callback/send and upload-call wall times, reported worker bake times and quality samples.
+// BUDGET=1 also fails handoff/task/frame/slice/quality checks (MAX_TASK_MS=1000, MAX_FRAME_MS=1000, MAX_SLICE_MS=100).
+// Trace defaults: seed 123, world 0, target SAIL_SEED=424242, warmChart=1, prepChart=1, ladder=auto; explicit EXTRA wins.
+// ROUTE=api invokes window.witch.sail directly (no chart/map prep overlap); chart is the default. Never compare the routes.
 const http = require("http"), fs = require("fs"), path = require("path");
 const { pageKey } = require("../bench/comparable.cjs"); // (the result's comparability key: tools/bench/comparable.cjs)
+const { installTravelProbe } = require('./travel-probe.cjs');
+const { checkTravel, summarizeTravel } = require('../bench/travel-budget.cjs');
+const TRACE = process.env.TRACE === '1' || process.env.BUDGET === '1', ROUTE = process.env.ROUTE || 'chart';
+if (!['chart', 'api'].includes(ROUTE)) throw new Error('ROUTE must be chart or api');
+const SAIL_SEED = process.env.SAIL_SEED ?? (TRACE || ROUTE === 'api' ? '424242' : null);
+const extra = new URLSearchParams(process.env.EXTRA || '');
+if (TRACE) for (const [k,v] of Object.entries({ seed: '123', world: '0', warmChart: '1', prepChart: '1', ladder: 'auto' })) if (!extra.has(k)) extra.set(k,v);
+const toolKey = key => ({ ...key, knobs: { ...key.knobs, 'tool.route': ROUTE, 'tool.trace': TRACE, 'tool.profile': process.env.PROFILE === '1' } });
 let KEY = null;
 let pw; try { pw = require("playwright"); } catch { pw = require("/opt/node22/lib/node_modules/playwright"); }
 const [outArg = "previews/sail/timing", distArg] = process.argv.slice(2);
@@ -34,43 +46,52 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
   try {
     for (let run = 0; run < RUNS; run++) {
       const page = await browser.newPage({ viewport: { width: W, height: H } });
+      const prepNotes = [];
       page.on("pageerror", e => errors.push(e.message));
-      page.on("console", m => { const t = m.text(); if (t.startsWith("sail-timing:") || t.startsWith("arrival:")) log(t); });
+      page.on("console", m => { const t = m.text(); if (t.startsWith('map prep:')) prepNotes.push(t); if (t.startsWith("sail-timing:") || t.startsWith("arrival:")) log(t); });
       await page.addInitScript(() => {
         try { localStorage.setItem("witch.chart.sailAnywhere", "1"); } catch { /* */ }
         window.__f = []; window.__parts = []; const f = t => { window.__f.push(t); const ms = window.witch?.view?.ms; if (ms) { const e = Object.entries(ms).filter(([, v]) => v > 2); if (e.reduce((p, [, v]) => p + v, 0) > 20) window.__parts.push({ t, parts: e }); } requestAnimationFrame(f); }; requestAnimationFrame(f); // (the view's own work by part, on frames it passed 20 ms)
-        window.__lt = []; try { new PerformanceObserver(l => { for (const e of l.getEntries()) window.__lt.push([e.startTime, e.duration]); }).observe({ type: "longtask", buffered: true }); } catch { /* */ }
+        window.__lt = []; window.__ltSupported = false; try { if (!PerformanceObserver.supportedEntryTypes || PerformanceObserver.supportedEntryTypes.includes('longtask')) { new PerformanceObserver(l => { for (const e of l.getEntries()) window.__lt.push([e.startTime, e.duration]); }).observe({ type: "longtask", buffered: true }); window.__ltSupported = true; } } catch { /* */ }
       });
+      if (TRACE) await page.addInitScript(installTravelProbe);
       if (THR > 1) { const cdp = await page.context().newCDPSession(page); await cdp.send("Emulation.setCPUThrottlingRate", { rate: THR }); }
-      const link = `http://127.0.0.1:${server.address().port}/?creator=0&timing=1${process.env.EXTRA ? "&" + process.env.EXTRA : ""}`;
+      const link = `http://127.0.0.1:${server.address().port}/?creator=0&timing=1&${extra}`;
       log(`run ${run + 1}: loading`, link.replace(/^http:\/\/[^/]+/, ""), THR > 1 ? `(CPU ×${THR})` : "");
       await page.goto(link);
       const version = await page.evaluate(async () => (await fetch('./version.json', { cache: 'no-store' })).json());
       if (process.env.EXPECT_SHA && !version.version.includes(process.env.EXPECT_SHA.slice(0, 7))) throw new Error(`served build ${version.version} does not match ${process.env.EXPECT_SHA}`);
       log('served build', version.version);
-      await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 1800000, polling: 500 });
-      KEY ??= await pageKey(page, { spot: `sail-timing.cjs: home to ${ISLAND0}` });
+      await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: TRACE ? 180000 : 1800000, polling: 500 });
+      KEY ??= toolKey(await pageKey(page, { spot: `sail-timing.cjs: home to ${ISLAND0}` }));
       await page.waitForTimeout(3000);
       for (const [leg, ISLAND] of [ISLAND0, ...THEN].entries()) { // (THEN: on the same page after, warm: its art, programs and workers the last island's)
       if (leg) await page.waitForTimeout(5000);
-      log("ready; opening the chart");
-      const chartOpened = await page.evaluate(() => performance.now());
+      const prepNoteStart = prepNotes.length;
+      log(ROUTE === 'chart' ? "ready; opening the chart" : 'ready; direct API sail');
+      const observation = await page.evaluate(() => { window.__travelProbe?.reset(); window.__travelOldSlices = new Set(window.witch.slices); const s = window.witch.ladder?.state; return { at: performance.now(), quality: s ? { rung: s.rung, mode: s.mode } : null }; });
+      const chartOpened = observation.at; let qualityBefore = observation.quality;
       const cdp = await page.context().newCDPSession(page);
       if (process.env.PROFILE === '1') { await cdp.send('Profiler.enable'); await cdp.send('Profiler.start'); }
+      if (ROUTE === 'chart') {
       await page.evaluate(() => window.witch.chart());
-      await page.waitForFunction(i => { const c = window.chart; return c && c.islands && c.islands().find(x => x.id === i && x.outline); }, ISLAND, { timeout: 600000, polling: 250 });
+      await page.waitForFunction(i => { const c = window.chart; return c && c.islands && c.islands().find(x => x.id === i && x.outline); }, ISLAND, { timeout: TRACE ? 120000 : 600000, polling: 250 });
       await page.waitForTimeout(1500);
-      await page.evaluate(async ([i, seed]) => { const random = Math.random; if (seed != null) Math.random = () => Number(seed) / 1000000; try { window.chart.choose(i); await new Promise(r => setTimeout(r, 1500)); } finally { Math.random = random; } }, [ISLAND, process.env.SAIL_SEED ?? null]);
+      await page.evaluate(async ([i, seed]) => { const random = Math.random; if (seed != null) Math.random = () => Number(seed) / 1000000; try { window.chart.choose(i); await new Promise(r => setTimeout(r, 1500)); } finally { Math.random = random; } }, [ISLAND, SAIL_SEED]);
+      }
       log("sailing to", ISLAND);
       const progs = () => page.evaluate(() => (window.witch.view.renderer.info.programs ?? []).map(p => `${p.name}|${p.cacheKey.length}|${p.cacheKey.slice(-40)}`)).catch(() => []);
       const before = await progs();
-      const sail = await page.evaluate(() => performance.now());
-      await page.keyboard.press("Enter");
+      const beforeSail = await page.evaluate(() => { const s = window.witch.ladder?.state; return { at: performance.now(), quality: s ? { rung: s.rung, mode: s.mode } : null }; });
+      const sail = beforeSail.at; if (ROUTE === 'api') qualityBefore = beforeSail.quality;
+      if (ROUTE === 'chart') await page.keyboard.press("Enter");
+      else await page.evaluate(([island, seed]) => { window.__travelError = null; void window.witch.sail(island, Number(seed)).then(ok => { if (!ok) window.__travelError = 'API sail reloaded'; }, e => { window.__travelError = String(e); }); }, [ISLAND, SAIL_SEED]);
       const shots = [];
       const until = Date.now() + Number(process.env.TIMEOUT || 300000);
       let landed = false, doneAt = null;
       for (let i = 0; Date.now() < until; i++) {
         const done = await page.evaluate(s0 => ["opening:alarm", "game:arrived"].some(n => performance.getEntriesByName(n).some(e => e.startTime >= s0)), sail).catch(() => false);
+        const travelError = await page.evaluate(() => window.__travelError).catch(() => null); if (travelError) throw new Error(travelError);
         if (STRIP > 0) {
           const at = await page.evaluate(() => performance.now()).catch(() => 0), file = `${path.basename(out)}-${String(i).padStart(3, "0")}.png`;
           await page.screenshot({ path: path.join(path.dirname(out), file) }).catch(() => {});
@@ -83,7 +104,7 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
       if (!landed) throw new Error(`arrival timed out after ${process.env.TIMEOUT || 300000} ms on ${ISLAND}`);
       await page.waitForTimeout(AFTER);
       if (process.env.PROFILE === '1') { const { profile } = await cdp.send('Profiler.stop'); fs.writeFileSync(`${out}-${run}-${leg}.cpuprofile`, JSON.stringify(profile)); }
-      const r = await page.evaluate(([names, gap, s0, after]) => {
+      const r = await page.evaluate(([names, gap, s0, after, from]) => {
         const at = n => { const e = performance.getEntriesByName(n).filter(x => x.startTime >= s0); return e.length ? Math.round(e[0].startTime - s0) : null; };
         const m = Object.fromEntries(names.map(n => [n, at(n)]));
         const sailAt = performance.getEntriesByName("chart:sail").filter(x => x.startTime >= s0)[0]?.startTime ?? s0;
@@ -94,13 +115,24 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
         const all = performance.getEntriesByType("mark").filter(e => e.startTime >= s0).sort((a, b) => a.startTime - b.startTime);
         const tasks = window.__lt.filter(([t]) => t >= s0 && t < dive).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([t, d]) => ({ at: Math.round(t - s0), ms: Math.round(d), after: all.filter(e => e.startTime <= t).at(-1)?.name ?? "" }));
         const steps = all.filter(e => e.startTime < dive).map(e => [e.name, Math.round(e.startTime - s0)]); // (every mark to the dive, in order)
-        const slices = (window.witch.slices ?? []).map(x => ({ what: x.what, ms: Math.round(x.ms), slices: x.slices, longest: Math.round(x.longest), at: x.longestAt })); // (the sliced builds' own time: render/slices.ts)
+        const slices = (window.witch.slices ?? []).filter(x => !window.__travelOldSlices?.has(x)).map(x => ({ what: x.what, ms: Math.round(x.ms), slices: x.slices, longest: Math.round(x.longest), at: x.longestAt })); // only this trip, not the boot's retained slices
         const parts = {}; for (const f of window.__parts ?? []) if (f.t >= end && f.t < end + after) for (const [k, ms] of f.parts) parts[k] = Math.round((parts[k] ?? 0) + ms);
-        return { slices, settleParts: parts, sailMark: Math.round(sailAt - s0), marks: m, toDive: sum(s0, dive), diveToEnd: sum(dive, end), settle: sum(end, end + after), tasks, steps };
-      }, [MARKS, GAP * THR, sail, AFTER]);
+        const timeline = performance.getEntriesByType('mark').filter(e => e.startTime >= from).map(e => ({ name: e.name, at: Math.round(e.startTime-s0), detail: e.detail }));
+        const longTasks = window.__lt.filter(([t]) => t >= from && t < end+after).map(([t,ms]) => ({ at: Math.round(t-s0), ms: Math.round(ms), after: timeline.filter(e => e.at <= t-s0).at(-1)?.name || '' }));
+        const probe = window.__travelProbe?.trace;
+        const trace = probe ? { events: probe.events.filter(e => e.at >= from).map(e => ({ ...e, at: Math.round(e.at-s0) })), dropped: probe.dropped, capabilities: probe.capabilities } : undefined;
+        const quality = (probe?.quality || []).filter(q => q.at >= from).map(q => ({ ...q, at: Math.round(q.at-s0) }));
+        return { slices, settleParts: parts, sailMark: Math.round(sailAt - s0), marks: m, chartFrames: sum(from,s0), toDive: sum(s0, dive), diveToEnd: sum(dive, end), settle: sum(end, end + after), tasks, steps, longTasks, timeline, trace, quality, coverage: { longTasks: window.__ltSupported } };
+      }, [MARKS, GAP * THR, sail, AFTER, ROUTE === 'api' ? sail : chartOpened]);
       const after = await progs(); r.programs = { before: before.length, after: after.length, made: after.filter(x => !before.includes(x)) }; // (the shader programs this sail made anew)
-      r.key = await pageKey(page, { spot: `sail-timing.cjs: arrival ${ISLAND}` });
-      r.chartWaitMs = Math.round(sail - chartOpened);
+      r.key = toolKey(await pageKey(page, { spot: `sail-timing.cjs: arrival ${ISLAND}` }));
+      r.route = ROUTE; r.qualityBefore = qualityBefore; r.observationStart = ROUTE === 'api' ? 0 : Math.round(chartOpened-sail);
+      if (ROUTE === 'api') delete r.chartFrames;
+      r.prepNotes = prepNotes.slice(prepNoteStart);
+      if (TRACE && r.key.seed !== Number(SAIL_SEED)) throw new Error(`requested seed ${SAIL_SEED}, got ${r.key.seed}; trace is not comparable`);
+      r.summary = summarizeTravel(r);
+      if (process.env.BUDGET === '1') { r.budget = checkTravel(r, { task: Number(process.env.MAX_TASK_MS || 1000)*THR, frame: Number(process.env.MAX_FRAME_MS || 1000)*THR, slice: Number(process.env.MAX_SLICE_MS || 100)*THR }); if (!r.budget.ok) code = 1; log('budget', r.budget); }
+      r.chartWaitMs = ROUTE === 'chart' ? Math.round(sail - chartOpened) : null;
       r.resources = await page.evaluate(() => { const v = window.witch.view; return { heap: performance.memory?.usedJSHeapSize, dom: document.getElementsByTagName('*').length, textures: v.renderer.info.memory.textures, geometries: v.renderer.info.memory.geometries }; });
       r.resources.workers = page.workers().length;
       r.version = version;
@@ -113,7 +145,7 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
     }
     fs.writeFileSync(out + ".json", JSON.stringify({ key: KEY, island: ISLAND0, then: THEN, throttle: THR, size: `${W}x${H}`, gap: GAP, runs }, null, 1));
     log("written", out + ".json");
-  } catch (e) { console.error(e); code = 1; } finally { await browser.close(); server.close(); }
+  } catch (e) { console.error(e); code = 1; fs.writeFileSync(out+'.json', JSON.stringify({ key: KEY, route: ROUTE, runs, error: String(e) }, null, 1)); } finally { await browser.close(); server.close(); }
   if (errors.length) { console.error("page errors:\n" + errors.join("\n")); code = 1; }
   process.exit(code);
 })();
