@@ -41,6 +41,8 @@ import { coarseTurn, fullRadius, inFull, newLodCounts, type LodCounts } from "./
 import { dropHat, newHat, type HatState } from "./hat";
 import { gatherFloorSigils, setFloorSigils } from "./sigilAvoid";
 import { questsFromPlaced, sigilBarred, stepSigilButton } from "./sigilButton";
+import { stepCauldronNight, type CauldronNight } from "./cauldronNight";
+import type { CauldronInventory } from "./cauldron";
 
 /** Seconds of pushing on out against the zoo's edge before she leaves it (Game.zooPush). */
 export const ZOO_EDGE_PUSH = 0.5;
@@ -79,6 +81,8 @@ import { pulseRouteMetres } from "./leypulse";
  *  body (where she is and how she flies), her leash, her spell. */
 export interface Witch {
   id: number;
+  /** Her hidden mushroom bag references the host's shared baskets/pot when the cauldron gate is enabled. */
+  mushrooms?: CauldronInventory;
   /** Her own clock, pause page and wake-up in a multiplayer night. Solo keeps its legacy clock/state. */
   time?: number;
   paused?: boolean;
@@ -132,6 +136,7 @@ export const STEP = 1 / 60;
 
 export interface Game {
   readonly seed: number;
+  cauldron: CauldronNight | null;
   /** The world's speed (rules/slowTime.ts, Ed 2026-10-06): 1, or legendCircle.slow.scale while she stands in a sleeping or restless
    *  legend's circle, eased between. The world's clock (clock.time) runs at it; hers (herTime) at full speed. For the music too. */
   timeScale: number;
@@ -312,7 +317,7 @@ export function newGame(seed: number, tuning: Tuning, players = 1, ready?: MapPr
   // gameplay's: Ed, "tempo is set by the gameplay")
   const set = nightFor(map, seed);
   const g = {
-    seed, tuning, map, forest, creatures, clock: newClock(), witches,
+    seed, tuning, map, forest, creatures, clock: newClock(), witches, cauldron: null as CauldronNight | null,
     get witch() { return this.witches[0].body; }, set witch(w: WitchState) { this.witches[0].body = w; },
     get leash() { return this.witches[0].leash; }, set leash(l: LeashState) { this.witches[0].leash = l; },
     get spells() { return this.witches[0].spells; }, set spells(s: SpellState) { this.witches[0].spells = s; },
@@ -650,6 +655,10 @@ function fixedStep(g: Game, controls: readonly Controls[]): void {
     if (W.leash.tether) { const P = tetherWitch(W.body, W.leash.tether, g.creatures, g.clock.time, W.pinned ?? null); W.body = P.body; if (P.pinned) W.pinned = P.pinned; }
     return { W, c, ht, was, deck, perchTurn, firing, LV: null as ReturnType<typeof leashView> | null };
   });
+  if (g.cauldron) {
+    const routed = stepCauldronNight(g, motions.map(m => m.c), hdt);
+    motions.forEach((m, i) => { m.c = routed[i]; });
+  }
   const c = motions[0].c;
   g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, hdt, g.tuning, !!g.witch.seated, g.introFocus, coastOf(g), g.tuning.camera.circle?.on ? legendCircleNear(g, g.witch)?.legend ?? null : null, onTreehouse(g), !!c.framing && onTreehouse(g), c.framePart ?? null); // (in a legend's circle: the lower view, camera.circle; indoors, camera.house; choosing at a station, camera.station)
   // The afterparty (rules/partyOver.ts): the waves have stopped for good.
