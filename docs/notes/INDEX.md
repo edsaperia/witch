@@ -21,6 +21,10 @@ says what each note covers.
 
 (no entries: its tools and checks only)
 
+## [Wide, shallow balance survey — design v1](balance-survey-design.md)
+
+- First dispatch is the 24-shard wave 1 below, not the 190-shard full envelope.
+
 ## [Balance](balance.md)
 
 - Legacy models retained (2026-10-29, #1459, coordinator decision).
