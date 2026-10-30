@@ -34,13 +34,14 @@ const fixtures = Array.from({ length: 960 }, (_, i) => {
   if (phase === 14) o.self.mode = "treetop";
   return o;
 });
-for (const questMax of [1, 2]) for (const coverageExploration of [false, true]) for (const knownQuestPriority of [false, true]) test(`diagnostic output preserves every control, questMax=${questMax}, coverage=${coverageExploration}, questJob=${knownQuestPriority}`, () => {
+for (const questMax of [1, 2]) for (const coverageExploration of [false, true]) for (const knownQuestPriority of [false, true]) for (const questDeliveryRepair of [false, true]) test(`diagnostic output preserves every control, questMax=${questMax}, coverage=${coverageExploration}, questJob=${knownQuestPriority}, delivery=${questDeliveryRepair}`, () => {
   const events: ExpertTrace[] = [];
-  const plain = newExpert({ questMax }, 123, EXPERT_LIMITS, undefined, { coverageExploration, knownQuestPriority }), logged = newExpert({ questMax }, 123, EXPERT_LIMITS, e => events.push(e), { coverageExploration, knownQuestPriority });
+  const plain = newExpert({ questMax }, 123, EXPERT_LIMITS, undefined, { coverageExploration, knownQuestPriority, questDeliveryRepair }), logged = newExpert({ questMax }, 123, EXPERT_LIMITS, e => events.push(e), { coverageExploration, knownQuestPriority, questDeliveryRepair });
   const mutating = newExpert({ questMax }, 123, EXPERT_LIMITS, e => {
     e.controls.moveX = 999; e.observation.self.hp = -999; e.knownQuests.length = 0; e.heardDreams.push(999);
     e.questJob.id = 999; e.questJob.deadline = -999;
-  }, { coverageExploration, knownQuestPriority });
+    e.deliverySelection.pending = "mutated";
+  }, { coverageExploration, knownQuestPriority, questDeliveryRepair });
   for (const fixture of fixtures) {
     const g = { fixture } as unknown as Game, expected = plain.decide(g);
     expect(logged.decide(g)).toEqual(expected); expect(mutating.decide(g)).toEqual(expected);
@@ -203,4 +204,45 @@ test("a requested recruit's visible sigil is picked up before following its drea
   expect(at(1.5).questJob.reason).toBe("pickup");
   expect(at(2.5).doing).toBe("bringing a requested sigil to a legend");
   expect(at(2.5).questJob.deadline).toBe(at(.5).questJob.deadline);
+});
+
+function offeringScript(repaired:boolean,change:(o:Observation,t:number)=>void) {
+  const events:ExpertTrace[]=[],bot=newExpert({},1,EXPERT_LIMITS,e=>events.push(e),{questDeliveryRepair:repaired});
+  for(let i=0;i<=3*60;i++){
+    const o=observation();o.playerTime=i/60;o.worldTime=o.playerTime;
+    o.quests=[{id:297,wants:"tiger",open:true,delivery:{x:0,z:0},hint:null}];
+    o.carried=[{id:338,species:"tiger",level:0},{id:340,species:"tiger",level:1}];
+    change(o,o.playerTime);bot.decide({fixture:o} as unknown as Game);
+  }
+  return events;
+}
+test("the duplicate-tiger delivery regression places either matching bottom rather than cycling forever",()=>{
+  for(const reverse of [false,true]){
+    const change=(o:Observation)=>{if(reverse)o.carried.reverse();};
+    const off=offeringScript(false,change),on=offeringScript(true,change);
+    expect(off.every(e=>e.controls.cycle&&!e.controls.sigil)).toBe(true);
+    expect(on.every(e=>e.controls.sigil&&!e.controls.cycle)).toBe(true);
+    expect(on.every(e=>!e.questJob.enabled)).toBe(true);
+  }
+});
+test("mixed delivery sends only one cycle while waiting for the actual delayed stack change",()=>{
+  const events=offeringScript(true,(o,t)=>{
+    const tiger={id:338,species:"tiger",level:0},fox={id:20,species:"fox",level:1};
+    o.carried=t<1?[tiger,fox]:[fox,tiger];
+  });
+  expect(events.filter(e=>e.controls.cycle).length).toBe(1);
+  expect(events.filter(e=>e.observation.playerTime<1).slice(1).every(e=>!e.controls.sigil&&!e.controls.cycle)).toBe(true);
+  expect(events.find(e=>e.observation.playerTime>=1)?.controls.sigil).toBe(true);
+});
+test("healing and KO keep precedence while a cycle acknowledgement is outstanding",()=>{
+  const events=offeringScript(true,(o,t)=>{
+    o.carried=[{id:338,species:"tiger",level:0},{id:20,species:"fox",level:1}];
+    if(t>=.5&&t<1.5)o.self.hp=1;
+    if(t>=1.5&&t<2)o.self.ko=true;
+    if(t>=2)o.carried.reverse();
+  });
+  expect(events.find(e=>e.observation.playerTime>=.6)?.doing).toBe("rising to heal");
+  expect(events.find(e=>e.observation.playerTime>=1.6)?.doing).toBe("recovering");
+  expect(events.filter(e=>e.controls.cycle).length).toBe(1);
+  expect(events.find(e=>e.observation.playerTime>=2.1)?.controls.sigil).toBe(true);
 });

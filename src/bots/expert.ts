@@ -5,6 +5,7 @@ import type { Controls, Game } from "../rules/game";
 import { newObserver, type Observation, type Point } from "./observe";
 import { newCoverage } from "./coverage";
 import { newKnownQuestJob } from "./knownQuest";
+import { newQuestOffering } from "./questOffering";
 
 export const EXPERT_DEFAULTS = {
   healAt: 1, healTo: 3, kite: 9, dashAt: 5, fireFrac: 0.95, closeFrac: 0.8,
@@ -15,7 +16,7 @@ export const EXPERT_DEFAULTS = {
 export type ExpertParams = typeof EXPERT_DEFAULTS;
 export const EXPERT_LIMITS = { reactionSeconds: 0.25, inputHz: 8, aimErrorMetres: 1 };
 export interface HumanLimits { reactionSeconds: number; inputHz: number; aimErrorMetres: number }
-export interface ExpertOptions { rememberDreamVisits?: boolean; coverageExploration?: boolean; knownQuestPriority?: boolean }
+export interface ExpertOptions { rememberDreamVisits?: boolean; coverageExploration?: boolean; knownQuestPriority?: boolean; questDeliveryRepair?: boolean }
 // Output only: detached copies, emitted after choosing controls. Never read back.
 export interface ExpertTrace {
   playerTime: number; observation: Observation; doing: string; controls: Controls;
@@ -23,6 +24,7 @@ export interface ExpertTrace {
   dreamVisit: (Point & { id: number; until: number }) | null;
   coverage: ReturnType<ReturnType<typeof newCoverage>["snapshot"]>;
   questJob: ReturnType<ReturnType<typeof newKnownQuestJob>["snapshot"]>;
+  deliverySelection: ReturnType<ReturnType<typeof newQuestOffering>["snapshot"]>;
 }
 
 const idle = (): Controls => ({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 });
@@ -45,6 +47,7 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
   const coverage = newCoverage(), coverageEnabled = options.coverageExploration === true;
   // Candidate stays opt-in until the coordinator disposes of the fixed test.
   const questJob = newKnownQuestJob(options.knownQuestPriority === true);
+  const deliverySelection = newQuestOffering(), deliveryRepair = options.questDeliveryRepair === true;
   const bot: Bot = { kind: "expert", doing: "waiting for observations", done: { quests: [], relics: [] }, decide };
   return bot;
 
@@ -70,7 +73,7 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
       controls.aimZ = (controls.aimZ ?? 0) + Math.sin(angle) * limits.aimErrorMetres;
     }
     if (trace && observed) trace(structuredClone({ playerTime: now.playerTime, observation: observed,
-      doing: bot.doing, controls, knownQuests: [...quests.values()], heardDreams: [...heardDreams], selectedQuest, visitingLegend, dreamVisit, coverage: coverage.snapshot(), questJob: questJob.snapshot() }));
+      doing: bot.doing, controls, knownQuests: [...quests.values()], heardDreams: [...heardDreams], selectedQuest, visitingLegend, dreamVisit, coverage: coverage.snapshot(), questJob: questJob.snapshot(), deliverySelection: deliverySelection.snapshot() }));
     return { ...controls };
   }
 
@@ -129,7 +132,10 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
     if (quest && offering) {
       bot.doing = "bringing a requested sigil to a legend";
       if (go(quest.delivery, 3, true)) {
-        if (o.carried[o.carried.length - 1]?.id === offering.id) putDown(); else c.cycle = true;
+        if (deliveryRepair) {
+          const action = deliverySelection.choose(quest.wants, o.carried);
+          if (action === "place") putDown(); else if (action === "cycle") c.cycle = true;
+        } else if (o.carried[o.carried.length - 1]?.id === offering.id) putDown(); else c.cycle = true;
       }
       return c;
     }

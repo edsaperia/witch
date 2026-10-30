@@ -1,5 +1,28 @@
 # Expert search: implementation and fairness audit
 
+Delivery cycling repair (coordinator6520516411, 2026-10-30), opt-in
+`questDeliveryRepair:true`, default off pending its correctness ablation:
+the shared delivery branch selected the first requested ID but insisted it be at
+the bottom. With two matching tigers this generated 4097 cycles and no placement
+in both arms of result5a0d2a99, despite arrival inside wolf297's clearing.
+The repair accepts any observed bottom of the wanted species; otherwise it sends
+one cycle pulse and waits for a changed delayed carried-stack observation. It
+never mutates the stack or reads hidden creature state. Existing safety priorities
+and visit memory remain; known-quest priority and coverage remain off.
+
+`--delivery-screen` fixes repair off/on, night32676/world0/unlockedhome100,120
+player seconds each, defaultquestMax1/Satchel/nohat/barebroom/visitsON. Protected
+and reserved pairs are rejected before output/Game. Preflight120s, worker180s,
+WHOLE300s; no restart. The manifest gate is verbatim: "Gate: OFF reproduces
+stall,ON completes actualwolf297quest by120,no addedKO/loss/contractviolation;
+otherwise stop." Actual quest completion comes only from output rule state,
+never from arrival, placement attempts or policy diagnostics. This is one bug
+correctness check, not strength, model selection or permission for another search.
+
+The known-quest screen below finished with zero actual completions in either arm;
+coordinator6520516411 accepted DO NOT PROMOTE under its unchanged point7 gate.
+It remains off without tuning. Its source/results are retained as provenance.
+
 Known-quest priority candidate (coordinator 6520033543, 2026-10-30) is opt-in
 `knownQuestPriority:true`, default off pending its fixed test. Ed ruled that
 quests finish before natural win; no game rules changed. `knownQuest.ts` remembers
