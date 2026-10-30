@@ -19,7 +19,7 @@ export function replayStart(game: Game, build: string, tick: number): ReplayStar
   };
 }
 
-export function replayGuest(start: ReplayStart, build: string, reuse?: Game) {
+export function replayGuest(start: ReplayStart, build: string, reuse?: Game, validateControls: (input: unknown) => Controls | null = wireControls) {
   if (start.build !== build || !Number.isSafeInteger(start.tick) || start.tick < 0) throw new Error("Incompatible online night");
   let game = restoreGame(start.snapshot);
   if (reuse) {
@@ -42,7 +42,7 @@ export function replayGuest(start: ReplayStart, build: string, reuse?: Game) {
     get tick() { return tick; },
     apply(frame: ReplayFrame): boolean {
       if (frame.tick !== tick + 1 || !Number.isFinite(frame.dt) || frame.dt < 0 || frame.dt > 0.25 || !Array.isArray(frame.inputs) || frame.inputs.length !== game.witches.length) return false;
-      const inputs = frame.inputs.map(wireControls);
+      const inputs = frame.inputs.map(validateControls);
       if (inputs.some(c => c === null)) return false;
       stepGame(game, inputs as Controls[], frame.dt); tick = frame.tick;
       return true;
