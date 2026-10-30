@@ -65,6 +65,10 @@ describe("gated cauldron game hooks", () => {
     expect(g.leashEvents.some(e => e.kind === "house")).toBe(false);
     for (let i = 0; i < 60; i++) stepGame(g, [idle, idle], STEP);
     expect(g.cauldron!.events).toContainEqual({ kind: "exit", recipe: ["B", "B", "B"], recipients: [0, 1] });
+    expect(g.witches.map(W => W.body.perch)).toEqual([false, false]);
+    expect(g.witches.map(W => W.cauldronTrip?.kind)).toEqual(["mirrorFloor", "mirrorFloor"]);
+    expect(g.witches[0].cauldronTrip).not.toBe(g.witches[1].cauldronTrip);
+    expect(g.witches.map(W => W.cauldronTrip?.elapsed)).toEqual([0, 0]);
   });
 
   it("preserves shared basket and pot references across save/restore", () => {

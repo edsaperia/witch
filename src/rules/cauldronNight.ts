@@ -3,6 +3,8 @@ import { collectMushroom, newCauldronInventory, newCauldronStock, type CauldronS
 import { enterKitchen, leaveKitchen, newCauldronKitchen, stepKitchen, useKitchenBasket, type CauldronKitchen, type KitchenEvent } from "./cauldronKitchen";
 import { fromPlan, HOUSE_ROOMS, roomAt } from "./houseRooms";
 import { deckOf } from "./treehouse";
+import { newMirrorFloorTrip, stepTrip } from "./cauldronTrip";
+import { tutorialTrip } from "./cauldron";
 
 export interface MushroomPickup { id: number; kind: MushroomKind; x: number; z: number; collected: boolean }
 export interface CauldronNight {
@@ -47,9 +49,24 @@ export function kitchenBasketNear(g: Game, W: Witch): number {
 export function stepCauldronNight(g: Game, inputs: readonly Controls[], dt: number): Controls[] {
   const state = g.cauldron;
   if (!state) return [...inputs];
+  for (const W of g.witches) {
+    const trip = stepTrip(W.cauldronTrip, dt);
+    if (trip) W.cauldronTrip = trip;
+    else delete W.cauldronTrip;
+  }
   // Finish an existing smoke sequence before accepting this step's ingredients. A new brew
   // gets its full second beginning at the third ingredient, not one timestep less.
   state.events = stepKitchen(state.kitchen, dt);
+  for (const event of state.events) if (event.kind === "exit") {
+    for (const id of event.recipients) {
+      const W = g.witches.find(w => w.id === id);
+      if (!W) continue;
+      // The dancefloor is a guaranteed clear outdoor landing, beside the Ent's house.
+      W.body = { ...W.body, x: g.map.dancefloor.x + id * 2, z: g.map.dancefloor.z,
+        vx: 0, vz: 0, perch: false, seated: false, mode: "ground", lift: 0, falling: undefined };
+      if (tutorialTrip(event.recipe) === "mirrorFloor") W.cauldronTrip = newMirrorFloorTrip();
+    }
+  }
   for (const W of g.witches) {
     const inventory = W.mushrooms ??= newCauldronInventory(state.stock);
     if (inKitchen(g, W)) state.events.push(...enterKitchen(state.kitchen, inventory, W.id));

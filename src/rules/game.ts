@@ -43,6 +43,7 @@ import { gatherFloorSigils, setFloorSigils } from "./sigilAvoid";
 import { questsFromPlaced, sigilBarred, stepSigilButton } from "./sigilButton";
 import { stepCauldronNight, type CauldronNight } from "./cauldronNight";
 import type { CauldronInventory } from "./cauldron";
+import type { CauldronTrip } from "./cauldronTrip";
 
 /** Seconds of pushing on out against the zoo's edge before she leaves it (Game.zooPush). */
 export const ZOO_EDGE_PUSH = 0.5;
@@ -83,6 +84,7 @@ export interface Witch {
   id: number;
   /** Her hidden mushroom bag references the host's shared baskets/pot when the cauldron gate is enabled. */
   mushrooms?: CauldronInventory;
+  cauldronTrip?: CauldronTrip;
   /** Her own clock, pause page and wake-up in a multiplayer night. Solo keeps its legacy clock/state. */
   time?: number;
   paused?: boolean;
