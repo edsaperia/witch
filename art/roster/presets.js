@@ -14,6 +14,11 @@ const JAGUAR_REGIONS = {
   legs: { kind: "spots", k: 12, density: .5, radius: .4, mat: "BODY3" },
 };
 export const ROSTER_PRESETS = {
+  raccoon: {
+    reason: "Strengthen the existing eye mask and tail rings against neutral grizzled-grey fur.",
+    patch: { palette: { hue: .6, sat: .025, val: .56, over: { BODY: [142, 145, 148], BODY2: [96, 99, 102], BODY3: [28, 27, 29], BODYL: [180, 181, 183], BELLY: [241, 240, 233] } } },
+    text: "A grizzled-grey raccoon with a black eye mask, pale muzzle and ringed tail.",
+  },
   badger: {
     reason: "Make the existing badger face stripes and black legs read against silver-grey fur.",
     patch: { head: { blaze: 1 }, palette: { hue: .61, sat: .035, val: .55, over: { BODY: [140, 142, 145], BODY2: [45, 46, 47], BODY3: [25, 25, 25], BELLY: [245, 244, 238], BODYL: [180, 183, 186] } } },
