@@ -13,11 +13,16 @@ export const EXPERT_DEFAULTS = {
 export type ExpertParams = typeof EXPERT_DEFAULTS;
 export const EXPERT_LIMITS = { reactionSeconds: 0.25, inputHz: 8, aimErrorMetres: 1 };
 export interface HumanLimits { reactionSeconds: number; inputHz: number; aimErrorMetres: number }
+// Output only: detached copies, emitted after choosing controls. Never read back.
+export interface ExpertTrace {
+  playerTime: number; observation: Observation; doing: string; controls: Controls;
+  knownQuests: Observation["quests"]; heardDreams: number[]; selectedQuest: number | null; visitingLegend: number | null;
+}
 
 const idle = (): Controls => ({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 });
 const dist = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.z - b.z);
 
-export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: HumanLimits = EXPERT_LIMITS): Bot {
+export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: HumanLimits = EXPERT_LIMITS, trace?: (event: ExpertTrace) => void): Bot {
   if (limits.reactionSeconds < 0.25 || limits.inputHz > 8 || limits.inputHz <= 0 || limits.aimErrorMetres < 1 || ![limits.reactionSeconds, limits.inputHz, limits.aimErrorMetres].every(Number.isFinite)) throw Error("Expert human limits below approved floors");
   const K = { ...EXPERT_DEFAULTS, ...params }, observe = newObserver();
   if (!Object.values(K).every(Number.isFinite)) throw Error("Invalid expert parameters");
@@ -27,6 +32,8 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
   let random = seed >>> 0, nextInput = 0, controls = idle(), healing = false, target: number | null = null, retargetAt = 0, lastArea = "", patrol = 0;
   let modePending: { from: Observation["self"]["mode"]; at: number } | null = null;
   let patrolPoint: (Point & { until: number }) | null = null;
+  let selectedQuest: number | null = null;
+  let visitingLegend: number | null = null;
   const bot: Bot = { kind: "expert", doing: "waiting for observations", done: { quests: [], relics: [] }, decide };
   return bot;
 
@@ -36,6 +43,7 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
     while (queue.length && queue[0].playerTime <= now.playerTime - limits.reactionSeconds + 1e-9) seen = queue.shift()!;
     if (now.playerTime + 1e-9 < nextInput || !seen) return { ...controls, toggleMode: false, sigil: false, place: false, cycle: false, castParty: false };
     nextInput = now.playerTime + 1 / limits.inputHz;
+    const observed = trace ? structuredClone(seen) : null;
     controls = policy(seen);
     // Delayed feedback must acknowledge a toggle before another press. Otherwise
     // two old "treetop" observations reverse the same landing back into a rise.
@@ -50,10 +58,14 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
       controls.aimX = (controls.aimX ?? 0) + Math.cos(angle) * limits.aimErrorMetres;
       controls.aimZ = (controls.aimZ ?? 0) + Math.sin(angle) * limits.aimErrorMetres;
     }
+    if (trace && observed) trace(structuredClone({ playerTime: now.playerTime, observation: observed,
+      doing: bot.doing, controls, knownQuests: [...quests.values()], heardDreams: [...heardDreams], selectedQuest, visitingLegend }));
     return { ...controls };
   }
 
   function policy(o: Observation): Controls {
+    selectedQuest = null;
+    visitingLegend = null;
     const c = idle(), w = o.self;
     for (const q of o.quests) { heardDreams.add(q.id); if (q.open) quests.set(q.id, structuredClone(q)); else quests.delete(q.id); }
     const putDown = () => {
@@ -91,6 +103,7 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
     }
     if (o.find) { bot.doing = "collecting tonight's find"; if (go(o.find, o.pickRadius * K.pickRadiusFrac)) c.place = true; return c; }
     const quest = [...quests.values()].filter(q => dist(w, q.delivery) <= K.questRange).sort((a, b) => dist(w, a.delivery) - dist(w, b.delivery))[0];
+    selectedQuest = quest?.id ?? null;
     const offering = quest ? o.carried.find(a => a.species === quest.wants) : null;
     if (quest && offering) {
       bot.doing = "bringing a requested sigil to a legend";
@@ -103,6 +116,7 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
     // pointer. Only approach one actually seen, then read its ground-level dream.
     const sleeper = !quests.size && heardDreams.size < K.questMax ? o.creatures.filter(a => a.boss && !a.friendly && !a.angry && !heardDreams.has(a.id) && dist(w, a) <= K.questRange).sort((a, b) => dist(w, a) - dist(w, b))[0] : null;
     if (sleeper) {
+      visitingLegend = sleeper.id;
       bot.doing = "visiting a visible legend's dream";
       if (go({ x: sleeper.x + 4, z: sleeper.z + 4 }, 6, true)) heardDreams.add(sleeper.id);
       return c;

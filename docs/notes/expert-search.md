@@ -1,5 +1,22 @@
 # Expert search: implementation and fairness audit
 
+Diagnostic quest traces (coordinator 6517804162, 2026-10-30):
+`expert-quest-trace.mjs` runs exactly baseline versus D (`questMax:2`) on
+world 0/night 1000/home/100 bpm, matched and home-everything, Satchel/no
+hat/bare broom, 3000 player seconds. One cloud worker, 1200 s parent-enforced
+worker cap and 1500 s whole-job cap including preflight; no resume or restart.
+The optional fourth argument to `newExpert` emits detached delayed observations,
+known quests, selected quest/legend, decision branch and final controls. Its
+return value is ignored; no diagnostic world state enters the policy.
+Pure scripted-observation tests compare every control with the sink absent,
+present, and mutating its payload, for both policies. They generate no Game.
+The runner separately logs full quest-state transitions and existing rule events
+as privileged output only. Control change points plus step counts reconstruct
+the full control stream, which also has a SHA-256 checksum. Each trace stops
+at the existing first win/loss boundary or cutoff, and records all unfinished
+quests and whether they were known/selected/offered before the win. This is
+diagnosis, not new training fitness, post-win play or a behaviour change.
+
 PR #1477, coordinator brief 6512521421, addition 6512547737 and ruling
 6512668954 (2026-10-30). Work in progress; no trained expert or strong-play
 claim yet. The game rules, tuning and existing skilled baseline are unchanged.
