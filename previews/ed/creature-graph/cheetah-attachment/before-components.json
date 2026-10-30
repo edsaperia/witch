@@ -1,0 +1,344 @@
+[
+  {
+    "label": "current",
+    "width": 673,
+    "height": 510,
+    "components": [
+      {
+        "size": 84963,
+        "box": [
+          29,
+          48,
+          649,
+          509
+        ],
+        "materials": {
+          "MAGIC2": 1205,
+          "MAGIC": 439,
+          "BODY": 63004,
+          "NOSE": 7818,
+          "BODY2": 6209,
+          "LINE": 119,
+          "BODY3": 1339,
+          "BELLY": 4699,
+          "EAR": 131
+        }
+      },
+      {
+        "size": 3396,
+        "box": [
+          274,
+          39,
+          354,
+          113
+        ],
+        "materials": {
+          "MAGIC2": 2052,
+          "MAGIC": 1344
+        }
+      },
+      {
+        "size": 2280,
+        "box": [
+          357,
+          75,
+          409,
+          151
+        ],
+        "materials": {
+          "MAGIC2": 1389,
+          "MAGIC": 891
+        }
+      },
+      {
+        "size": 2274,
+        "box": [
+          439,
+          129,
+          491,
+          207
+        ],
+        "materials": {
+          "MAGIC2": 1375,
+          "MAGIC": 899
+        }
+      },
+      {
+        "size": 1155,
+        "box": [
+          408,
+          103,
+          436,
+          169
+        ],
+        "materials": {
+          "MAGIC2": 708,
+          "MAGIC": 447
+        }
+      },
+      {
+        "size": 5,
+        "box": [
+          431,
+          102,
+          433,
+          104
+        ],
+        "materials": {
+          "MAGIC": 4,
+          "MAGIC2": 1
+        }
+      },
+      {
+        "size": 5,
+        "box": [
+          78,
+          228,
+          80,
+          230
+        ],
+        "materials": {
+          "MAGIC": 4,
+          "MAGIC2": 1
+        }
+      },
+      {
+        "size": 1,
+        "box": [
+          416,
+          12,
+          416,
+          12
+        ],
+        "materials": {
+          "MAGIC2": 1
+        }
+      },
+      {
+        "size": 1,
+        "box": [
+          508,
+          50,
+          508,
+          50
+        ],
+        "materials": {
+          "MAGIC2": 1
+        }
+      },
+      {
+        "size": 1,
+        "box": [
+          177,
+          88,
+          177,
+          88
+        ],
+        "materials": {
+          "MAGIC2": 1
+        }
+      },
+      {
+        "size": 1,
+        "box": [
+          586,
+          104,
+          586,
+          104
+        ],
+        "materials": {
+          "MAGIC2": 1
+        }
+      },
+      {
+        "size": 1,
+        "box": [
+          81,
+          147,
+          81,
+          147
+        ],
+        "materials": {
+          "MAGIC2": 1
+        }
+      }
+    ]
+  },
+  {
+    "label": "candidate",
+    "width": 674,
+    "height": 510,
+    "components": [
+      {
+        "size": 83945,
+        "box": [
+          29,
+          114,
+          649,
+          509
+        ],
+        "materials": {
+          "NOSE": 7643,
+          "BODY2": 6109,
+          "BODY": 63222,
+          "LINE": 117,
+          "BODY3": 1345,
+          "BELLY": 4863,
+          "EAR": 132,
+          "MAGIC2": 514
+        }
+      },
+      {
+        "size": 3407,
+        "box": [
+          275,
+          36,
+          354,
+          113
+        ],
+        "materials": {
+          "MAGIC2": 2049,
+          "MAGIC": 1358
+        }
+      },
+      {
+        "size": 2284,
+        "box": [
+          357,
+          74,
+          409,
+          150
+        ],
+        "materials": {
+          "MAGIC2": 1381,
+          "MAGIC": 903
+        }
+      },
+      {
+        "size": 2275,
+        "box": [
+          440,
+          131,
+          492,
+          206
+        ],
+        "materials": {
+          "MAGIC2": 1384,
+          "MAGIC": 891
+        }
+      },
+      {
+        "size": 1157,
+        "box": [
+          408,
+          101,
+          436,
+          168
+        ],
+        "materials": {
+          "MAGIC2": 710,
+          "MAGIC": 447
+        }
+      },
+      {
+        "size": 1128,
+        "box": [
+          244,
+          48,
+          272,
+          112
+        ],
+        "materials": {
+          "MAGIC2": 692,
+          "MAGIC": 436
+        }
+      },
+      {
+        "size": 5,
+        "box": [
+          431,
+          102,
+          433,
+          104
+        ],
+        "materials": {
+          "MAGIC": 4,
+          "MAGIC2": 1
+        }
+      },
+      {
+        "size": 5,
+        "box": [
+          78,
+          228,
+          80,
+          230
+        ],
+        "materials": {
+          "MAGIC": 4,
+          "MAGIC2": 1
+        }
+      },
+      {
+        "size": 1,
+        "box": [
+          416,
+          12,
+          416,
+          12
+        ],
+        "materials": {
+          "MAGIC2": 1
+        }
+      },
+      {
+        "size": 1,
+        "box": [
+          509,
+          50,
+          509,
+          50
+        ],
+        "materials": {
+          "MAGIC2": 1
+        }
+      },
+      {
+        "size": 1,
+        "box": [
+          177,
+          88,
+          177,
+          88
+        ],
+        "materials": {
+          "MAGIC2": 1
+        }
+      },
+      {
+        "size": 1,
+        "box": [
+          587,
+          104,
+          587,
+          104
+        ],
+        "materials": {
+          "MAGIC2": 1
+        }
+      },
+      {
+        "size": 1,
+        "box": [
+          81,
+          147,
+          81,
+          147
+        ],
+        "materials": {
+          "MAGIC2": 1
+        }
+      }
+    ]
+  }
+]
