@@ -201,6 +201,8 @@ says what each note covers.
 
 ## [Performance](performance.md)
 
+- Reused surface roughness (#1464, 2026-10-30):
+- Exact travel art profiles (2026-10-30, #1464):
 - Ordinary-play scenery stalls
 - Travel evidence and budgets
 - Cached bare sigils

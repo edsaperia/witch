@@ -1,0 +1,132 @@
+{
+  "source": "bef277eba",
+  "note": "Sampled self time, not exact per-stage wall time; chart totals are nested. Raw native profiles retained outside repository.",
+  "cases": {
+    "0-map": [
+      {
+        "functionName": "into",
+        "sampledSelfMs": 119.417
+      },
+      {
+        "functionName": "owns",
+        "sampledSelfMs": 49.18399999999999
+      },
+      {
+        "functionName": "archipelago",
+        "sampledSelfMs": 48.65700000000001
+      },
+      {
+        "functionName": "makeLand",
+        "sampledSelfMs": 43.586000000000006
+      },
+      {
+        "functionName": "nearest",
+        "sampledSelfMs": 39.626
+      },
+      {
+        "functionName": "(anonymous)",
+        "sampledSelfMs": 38.416000000000004
+      },
+      {
+        "functionName": "(program)",
+        "sampledSelfMs": 34.547000000000004
+      },
+      {
+        "functionName": "generateMap",
+        "sampledSelfMs": 26.630999999999997
+      },
+      {
+        "functionName": "(garbage collector)",
+        "sampledSelfMs": 21.447999999999997
+      },
+      {
+        "functionName": "score",
+        "sampledSelfMs": 16.612000000000002
+      }
+    ],
+    "2-chart": [
+      {
+        "functionName": "segDist",
+        "sampledSelfMs": 1051.0519999999988
+      },
+      {
+        "functionName": "carved",
+        "sampledSelfMs": 881.4190000000003
+      },
+      {
+        "functionName": "sigilDetail",
+        "sampledSelfMs": 190.11399999999998
+      },
+      {
+        "functionName": "polyDist",
+        "sampledSelfMs": 182.53499999999997
+      },
+      {
+        "functionName": "(anonymous)",
+        "sampledSelfMs": 174.73499999999999
+      },
+      {
+        "functionName": "into",
+        "sampledSelfMs": 119.612
+      },
+      {
+        "functionName": "makeLand",
+        "sampledSelfMs": 103.43899999999998
+      },
+      {
+        "functionName": "buildIslandMesh",
+        "sampledSelfMs": 98.56200000000001
+      },
+      {
+        "functionName": "(garbage collector)",
+        "sampledSelfMs": 83.49199999999999
+      },
+      {
+        "functionName": "partition",
+        "sampledSelfMs": 76.131
+      }
+    ],
+    "4-art": [
+      {
+        "functionName": "edgeVectors",
+        "sampledSelfMs": 347.18800000000005
+      },
+      {
+        "functionName": "(anonymous)",
+        "sampledSelfMs": 210.53000000000003
+      },
+      {
+        "functionName": "fillMask",
+        "sampledSelfMs": 184.37699999999998
+      },
+      {
+        "functionName": "render",
+        "sampledSelfMs": 107.68700000000004
+      },
+      {
+        "functionName": "emitReadable_",
+        "sampledSelfMs": 78.056
+      },
+      {
+        "functionName": "rough",
+        "sampledSelfMs": 66.07100000000001
+      },
+      {
+        "functionName": "(garbage collector)",
+        "sampledSelfMs": 52.15800000000001
+      },
+      {
+        "functionName": "stampBlobs",
+        "sampledSelfMs": 48.339999999999996
+      },
+      {
+        "functionName": "sdEllipsoid",
+        "sampledSelfMs": 43.25300000000001
+      },
+      {
+        "functionName": "tallPiece",
+        "sampledSelfMs": 39.231
+      }
+    ]
+  }
+}
