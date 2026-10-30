@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url';
 import { WebSocketServer, WebSocket } from 'ws';
 
 /** Relay only: the host browser owns all simulation and permanent outcomes. */
-export function createRelay({ dropMs = 5000, joiningGraceMs = 600000, joiningStallMs = 60000, hostJoiningDropMs = 20000, checkMs = 250, now = Date.now, log = line => console.info(JSON.stringify(line)), build = process.env.WITCH_SHA ?? 'local-unidentified' } = {}) {
+export function createRelay({ dropMs = 5000, joiningGraceMs = 600000, joiningStallMs = 90000, hostJoiningDropMs = 20000, checkMs = 250, now = Date.now, log = line => console.info(JSON.stringify(line)), build = process.env.WITCH_SHA ?? 'local-unidentified' } = {}) {
   if (!(Number.isFinite(dropMs) && Number.isFinite(joiningGraceMs) && joiningGraceMs >= dropMs && Number.isFinite(joiningStallMs) && joiningStallMs > 0 && Number.isFinite(hostJoiningDropMs) && hostJoiningDropMs >= dropMs && Number.isFinite(checkMs) && dropMs > 0 && checkMs > 0)) throw new Error('Invalid relay timing');
   const rooms = new Map();
   const http = createServer((_req, res) => { res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify({ service: 'witch-relay', protocol: 1, build })); });
@@ -100,6 +100,6 @@ export function createRelay({ dropMs = 5000, joiningGraceMs = 600000, joiningSta
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const relay = createRelay({ dropMs: Number(process.env.WITCH_DROP_MS ?? 5000), joiningGraceMs: Number(process.env.WITCH_JOIN_GRACE_MS ?? 600000), joiningStallMs: Number(process.env.WITCH_JOIN_STALL_MS ?? 60000), hostJoiningDropMs: Number(process.env.WITCH_HOST_JOIN_DROP_MS ?? 20000) });
+  const relay = createRelay({ dropMs: Number(process.env.WITCH_DROP_MS ?? 5000), joiningGraceMs: Number(process.env.WITCH_JOIN_GRACE_MS ?? 600000), joiningStallMs: Number(process.env.WITCH_JOIN_STALL_MS ?? 90000), hostJoiningDropMs: Number(process.env.WITCH_HOST_JOIN_DROP_MS ?? 20000) });
   relay.http.listen(Number(process.env.PORT ?? 8787), process.env.HOST ?? '127.0.0.1', () => console.log('Witch relay listening', relay.http.address()));
 }

@@ -41,6 +41,7 @@ it("repeated progress and waiting messages cannot renew a stalled preparation", 
   const fail = vi.fn();
   const result = prepareJoin({ restore: () => 1, prepare: async () => new Promise(() => {}), trace: vi.fn(), fail, progress: () => progress });
   await vi.advanceTimersByTimeAsync(30000); progress = 0;
+  await vi.advanceTimersByTimeAsync(30000); expect(fail).not.toHaveBeenCalled();
   await vi.advanceTimersByTimeAsync(30000);
   expect(await result).toBe(false); expect(fail.mock.calls[0][0].message).toContain("stalled");
 });

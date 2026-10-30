@@ -96,11 +96,12 @@ test('heartbeats and repeated progress cannot hide a loading stall', { timeout: 
   const h = await host(connect);
   send(h.ws, { type: 'progress', payload: 1 });
   await new Promise(resolve => setTimeout(resolve, 10));
-  clock = 59000; send(h.ws, { type: 'heartbeat' }); send(h.ws, { type: 'progress', payload: 1 });
+  clock = 60000; send(h.ws, { type: 'heartbeat' }); send(h.ws, { type: 'progress', payload: 1 });
   await new Promise(resolve => setTimeout(resolve, 10));
-  const closed = once(h.ws, 'close'); clock = 60000; await closed;
+  assert.equal(h.ws.readyState, WebSocket.OPEN);
+  const closed = once(h.ws, 'close'); clock = 90000; await closed;
   await new Promise(resolve => setTimeout(resolve, 10));
-  assert.equal(logs[0].rule, 'join-stall'); assert.equal(logs[0].limitMs, 60000);
+  assert.equal(logs[0].rule, 'join-stall'); assert.equal(logs[0].limitMs, 90000);
 });
 
 test('host departure closes guest and releases the room number', { timeout: 5000 }, async t => {

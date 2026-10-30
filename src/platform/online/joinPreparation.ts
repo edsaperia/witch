@@ -19,8 +19,8 @@ export async function prepareJoin<T>(options: JoinPreparation<T>): Promise<boole
       const current = options.progress?.() ?? 0, now = Date.now();
       if (Number.isSafeInteger(current) && current > progress) { progress = current; advancedAt = now; }
       if (now - started >= (options.absoluteMs ?? 600000)) reject(new Error(`Guest joining reached its maximum wait during ${phase}`));
-      else if (now - advancedAt >= (options.stallMs ?? 60000)) reject(new Error(`Guest joining stalled during ${phase}`));
-    }, Math.min(1000, options.stallMs ?? 60000, options.absoluteMs ?? 600000));
+      else if (now - advancedAt >= (options.stallMs ?? 90000)) reject(new Error(`Guest joining stalled during ${phase}`));
+    }, Math.min(1000, options.stallMs ?? 90000, options.absoluteMs ?? 600000));
   });
   const task = async () => {
     options.trace("replay-restore:start");
