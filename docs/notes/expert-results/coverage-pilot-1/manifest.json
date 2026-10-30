@@ -1,0 +1,77 @@
+{
+  "schema": 1,
+  "diagnosticOnly": true,
+  "startedUtc": "2026-10-30T09:14:42.904Z",
+  "sourceCommit": "e582f33e140b631db3283fb57a2689b8e1964f68",
+  "fingerprint": "581bd39d4c2545bab17d344db621d6d4d15fda194eb7733f59d916e11e445c3b",
+  "previousSource": "1ce28fd9d9f96ea2518b3d97811760ae793d2c8f",
+  "runtime": {
+    "node": "v22.22.0",
+    "platform": "linux",
+    "arch": "x64"
+  },
+  "observation": "approximate fair observation",
+  "reactionSeconds": 0.25,
+  "inputHz": 8,
+  "aimErrorMetres": 1,
+  "limit": 300,
+  "workerWallSeconds": 360,
+  "wholeJobWallSeconds": 480,
+  "heldCases": 0,
+  "noRestart": true,
+  "dreamVisitAblation": false,
+  "coveragePilot": true,
+  "rememberDreamVisitsDefault": true,
+  "coverageDefault": false,
+  "stop": "first wonAt, partyOver, or 300 player seconds; no post-win extension",
+  "cases": [
+    {
+      "vector": "off",
+      "condition": "matched",
+      "seed": 1000,
+      "worldSeed": 0,
+      "island": "home",
+      "bpm": 100,
+      "bag": "satchel",
+      "hat": "none",
+      "wearsHat": false,
+      "parts": []
+    },
+    {
+      "vector": "on",
+      "condition": "matched",
+      "seed": 1000,
+      "worldSeed": 0,
+      "island": "home",
+      "bpm": 100,
+      "bag": "satchel",
+      "hat": "none",
+      "wearsHat": false,
+      "parts": []
+    },
+    {
+      "vector": "off",
+      "condition": "home-everything",
+      "seed": 1000,
+      "worldSeed": 0,
+      "island": "home",
+      "bpm": 100,
+      "bag": "satchel",
+      "hat": "none",
+      "wearsHat": false,
+      "parts": []
+    },
+    {
+      "vector": "on",
+      "condition": "home-everything",
+      "seed": 1000,
+      "worldSeed": 0,
+      "island": "home",
+      "bpm": 100,
+      "bag": "satchel",
+      "hat": "none",
+      "wearsHat": false,
+      "parts": []
+    }
+  ]
+}
