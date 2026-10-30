@@ -18,7 +18,7 @@ export const ROSTER_PRESETS = {
   mole: {
     reason: "A deeper velvet barrel, projecting snout and broad forward digging paws using the existing mole parts.",
     modelCommit: "e4b77ac10557c73b19828efe7c0b98e99b6123d7",
-    patch: { look: { mole: { bodyDepth: 1.25, bodyLength: 1.2, snoutProjection: 1.35, forepawSpread: 1.2, forepawSize: 1.25 } }, palette: { hue: .64, sat: .06, val: .38 } },
+    patch: { look: { mole: { bodyDepth: 1.65, bodyLength: 1.7, snoutProjection: 1.8, forepawSpread: 1.55, forepawSize: 1.65 } }, palette: { hue: .64, sat: .06, val: .38, over: { BODY: [65, 66, 69], BODY2: [47, 49, 53], BODYL: [89, 92, 96], SKIN: [228, 166, 157], NOSE: [220, 145, 139] } } },
     text: "A velvet-grey mole with a pointed snout and broad spade-like digging paws.",
   },
   meerkat: {
