@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MUSHROOM_KINDS, addIngredient, collectMushroom, depositMushrooms, newCauldronInventory, recipeKey, tutorialTrip, type Recipe } from "./cauldron";
+import { MUSHROOM_KINDS, addIngredient, collectMushroom, depositMushrooms, newCauldronInventory, newCauldronStock, recipeKey, tutorialTrip, type Recipe } from "./cauldron";
 
 describe("commutative mushroom recipes", () => {
   it("has exactly 56 unordered three-mushroom recipes, including repeats", () => {
@@ -66,6 +66,27 @@ describe("hidden bag and kitchen baskets", () => {
     depositMushrooms(a);
     addIngredient(a, "B");
     expect(b).toEqual(newCauldronInventory());
+  });
+
+  it("keeps visitors' bags separate while sharing the host's baskets and partial pot", () => {
+    const stock = newCauldronStock();
+    const host = newCauldronInventory(stock), guest = newCauldronInventory(stock);
+    collectMushroom(host, "B");
+    collectMushroom(guest, "B");
+    collectMushroom(guest, "B");
+    depositMushrooms(host);
+    expect(guest.bag.B).toBe(2);
+    expect(guest.baskets.B).toBe(1);
+    expect(addIngredient(host, "B")).toBeNull();
+    expect(guest.ingredients).toEqual(["B"]);
+    depositMushrooms(guest);
+    expect(addIngredient(guest, "B")).toBeNull();
+    expect(addIngredient(host, "B")).toEqual(["B", "B", "B"]);
+    expect(stock.ingredients).toEqual([]);
+    expect(guest.ingredients).toEqual([]);
+    expect(stock.baskets.B).toBe(0);
+    // Another treehouse does not share this stock.
+    expect(newCauldronInventory().baskets.B).toBe(0);
   });
 
 });

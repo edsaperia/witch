@@ -15,6 +15,8 @@ Backlog (Ed, 2026-10-09 to 10-10). **Not built yet; don't build without Ed's go.
 - She enters from the bottom. **A big cauldron at the top**, **six baskets in a row round its base**, one kind each.
 - Coming in with a full bag, her mushrooms **jump out of her into their baskets**.
 - Near a basket, it **lights up and trembles**; **E throws one in**.
+- **Partial ingredients stay in the pot** when she leaves; she can return and finish it (Ed, 2026-10-30, coordinator ruling on PR #1472).
+- **Co-op has shared baskets and one shared pot in the host's treehouse** (Ed, 2026-10-30, coordinator ruling on PR #1472). Who takes the resulting trip remains to be confirmed.
 - **Three in = a brew, at once** (no use button, no bottle): the cauldron bubbles, colourful bubbles pour out, the room fills with smoke, and a second later she staggers outside and the world is... different.
 - The kitchen travels with the Ent, so brewing works on any island. Rooms visited during the party slow time and add their own music (journey.md).
 
@@ -26,7 +28,8 @@ Backlog (Ed, 2026-10-09 to 10-10). **Not built yet; don't build without Ed's go.
 - **Recipes are the same in every run** (players learn and share them); the game never tells, and keeps **no recipe book**.
 - **Order doesn't matter; repeats are allowed** (Ed): 6 kinds make **56 recipes** (20 all different, 30 a pair plus one, 6 triples).
 - **Every combination is its own effect, unrelated to its parts** (Ed): mushroom colour or shape doesn't hint at the result.
-- **The one-frame rule** (Ed): a single frame must show the game is doing something weird *on purpose*. Proposed fix for the subtle ones: a **trip frame**, a shimmering coloured edge on every trip that shrinks as it wears off.
+- **The one-frame rule** (Ed): a single frame must show the game is doing something weird *on purpose*. The earlier proposed **trip frame** (a shimmering coloured edge that shrinks as it wears off) is superseded by the wobbly-edge ruling below.
+- **First slice: Mirror Floor (BBB)** (Ed, 2026-10-30, coordinator ruling on PR #1472). The cue for the trip's length is **"slight wobbly edges to the screen"**, not the proposed coloured frame.
 - **Build from what's there** (Ed): as many as possible from shaders and parameters already in the game; avoid new systems that bring bugs; take inspiration from bugs found while making the game.
 - Considered and dropped: creature sigils as ingredients, potion bottles, and ingredients with hidden traits.
 
@@ -131,6 +134,6 @@ Visual references: Qualia Research Institute's replications of psychedelic visua
 
 - Assign the 56 trips to recipes; name the six mushrooms.
 - CRT: replace Underwater, or wait for a seventh mushroom?
-- The trip frame: adopt it for every trip, or fix the subtle ones one by one?
+- Who takes the trip when a shared brew completes (proposed: the witch who adds the third ingredient; awaiting Ed's confirmation).
 
 - **The build-cost sort is accepted as it stands** (Ed, 2026-10-11).

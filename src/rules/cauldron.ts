@@ -23,15 +23,23 @@ export function emptyMushrooms(): MushroomCounts {
   return { A: 0, B: 0, north: 0, south: 0, east: 0, west: 0 };
 }
 
-export interface CauldronInventory {
-  bag: MushroomCounts;
+export interface CauldronStock {
   baskets: MushroomCounts;
   ingredients: MushroomKind[];
 }
 
-/** Allocate per witch; sharing baskets or retaining this across nights is not decided. */
-export function newCauldronInventory(): CauldronInventory {
-  return { bag: emptyMushrooms(), baskets: emptyMushrooms(), ingredients: [] };
+export interface CauldronInventory extends CauldronStock {
+  bag: MushroomCounts;
+}
+
+/** Ed, 2026-10-30: shared baskets and one shared pot in the host's treehouse. */
+export function newCauldronStock(): CauldronStock {
+  return { baskets: emptyMushrooms(), ingredients: [] };
+}
+
+/** Each witch carries her own bag; pass the same host stock to every visitor. */
+export function newCauldronInventory(stock: CauldronStock = newCauldronStock()): CauldronInventory {
+  return { bag: emptyMushrooms(), baskets: stock.baskets, ingredients: stock.ingredients };
 }
 
 /** Ed, 2026-10-30: unlimited bag; nothing is lost on knockout. */
