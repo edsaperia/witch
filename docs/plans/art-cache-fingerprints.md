@@ -104,5 +104,6 @@ selection, focused tests and this documentation. Leave PR1470's creature models,
 PR1464's arrival readiness and the art worker's scheduling untouched. Flag any
 required overlap to the coordinator before changing that owner's area.
 
-Post this plan on the new draft PR, then wait for coordinator review before
-implementation. No expected hit-rate number is claimed before the replay runs.
+Post this plan on the new draft PR before implementation, and flag any required
+ownership overlap before touching that owner's files. No expected hit-rate number
+is claimed before the dependency map and replay run.
