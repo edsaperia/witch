@@ -1,5 +1,5 @@
 {
-  "sha": "0f4181fdabe97c79e0263192c1bf2c4c7dc15c71",
+  "sha": "d80882128609f8962f3b15fe241dda3900b2ab32",
   "measurements": [
     {
       "id": "snowleopard",
@@ -283,9 +283,31 @@
         "whiskers": true,
         "belly": true,
         "spots": false,
-        "rosettes": {
-          "k": 5,
-          "density": 0.55
+        "rosettes": false,
+        "regions": {
+          "torso": {
+            "kind": "rosettes",
+            "k": 4.5,
+            "density": 0.55,
+            "inner": 0.2,
+            "outer": 0.43,
+            "mat": "BODY3",
+            "centreMat": "BODYL"
+          },
+          "head": {
+            "kind": "spots",
+            "k": 14,
+            "density": 0.6,
+            "radius": 0.32,
+            "mat": "BODY3"
+          },
+          "legs": {
+            "kind": "spots",
+            "k": 14,
+            "density": 0.6,
+            "radius": 0.33,
+            "mat": "BODY3"
+          }
         },
         "ear": "round",
         "earS": 0.95,
@@ -294,8 +316,8 @@
       },
       "look": null,
       "paletteHSV": [
-        0.12,
-        0.1,
+        0.59,
+        0.03,
         0.82
       ]
     },
@@ -355,9 +377,31 @@
         "whiskers": true,
         "belly": true,
         "spots": false,
-        "rosettes": {
-          "k": 5,
-          "density": 0.55
+        "rosettes": false,
+        "regions": {
+          "torso": {
+            "kind": "rosettes",
+            "k": 4.5,
+            "density": 0.55,
+            "inner": 0.2,
+            "outer": 0.43,
+            "mat": "BODY3",
+            "centreMat": "BODYL"
+          },
+          "head": {
+            "kind": "spots",
+            "k": 14,
+            "density": 0.6,
+            "radius": 0.32,
+            "mat": "BODY3"
+          },
+          "legs": {
+            "kind": "spots",
+            "k": 14,
+            "density": 0.6,
+            "radius": 0.33,
+            "mat": "BODY3"
+          }
         },
         "ear": "round",
         "earS": 0.7,
@@ -366,8 +410,8 @@
       },
       "look": null,
       "paletteHSV": [
-        0.12,
-        0.1,
+        0.59,
+        0.03,
         0.82
       ]
     },
@@ -427,9 +471,31 @@
         "whiskers": true,
         "belly": true,
         "spots": false,
-        "rosettes": {
-          "k": 5,
-          "density": 0.55
+        "rosettes": false,
+        "regions": {
+          "torso": {
+            "kind": "rosettes",
+            "k": 4.5,
+            "density": 0.55,
+            "inner": 0.2,
+            "outer": 0.43,
+            "mat": "BODY3",
+            "centreMat": "BODYL"
+          },
+          "head": {
+            "kind": "spots",
+            "k": 14,
+            "density": 0.6,
+            "radius": 0.32,
+            "mat": "BODY3"
+          },
+          "legs": {
+            "kind": "spots",
+            "k": 14,
+            "density": 0.6,
+            "radius": 0.33,
+            "mat": "BODY3"
+          }
         },
         "ear": "round",
         "earS": 0.7,
@@ -438,8 +504,8 @@
       },
       "look": null,
       "paletteHSV": [
-        0.12,
-        0.1,
+        0.59,
+        0.03,
         0.82
       ]
     },
@@ -502,6 +568,7 @@
         "belly": true,
         "spots": true,
         "rosettes": false,
+        "regions": false,
         "ear": "round",
         "earS": 0.7,
         "tail": "scarf",
@@ -509,7 +576,7 @@
         "frost": true,
         "beads": true
       },
-      "look": null,
+      "look": {},
       "paletteHSV": [
         0.12,
         0.1,
@@ -517,6 +584,7 @@
       ]
     }
   ],
+  "modelSourceCommit": "aad8b13327282d13d7d6a4e2e1b28aa2acfd6b6c",
   "lighting": "studio",
   "style": {
     "ambientHue": 0.68,
@@ -589,5 +657,5 @@
     362,
     271
   ],
-  "selectionInterface": "isolated pre-hook genome data"
+  "selectionInterface": "shared #1470 selector"
 }
