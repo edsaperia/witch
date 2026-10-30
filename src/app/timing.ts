@@ -23,25 +23,31 @@ export function timingOn(params: URLSearchParams): boolean {
 export function mark(name: string): void { try { performance.mark(name); } catch { /* no performance timeline */ } }
 
 export interface TimingLine { name: string; at: number; page: number; ms?: number }
-export interface Timing { steps: TimingLine[]; longTasks: { at: number; ms: number }[]; /** The sliced builds on this page (render/slices.ts): each one's slices, its longest step and the stage it was in (witch:build-<stage>). */ builds?: { what: string; ms: number; slices: number; longest: number; longestAt: string }[] }
+export interface Timing { steps: TimingLine[]; longTasks: { at: number; ms: number }[]; /** Older collector history was clipped to its memory limit. */ longTasksLimited?: boolean; /** The sliced builds on this page (render/slices.ts): each one's slices, its longest step and the stage it was in (witch:build-<stage>). */ builds?: { what: string; ms: number; slices: number; longest: number; longestAt: string }[] }
 
 const longTasks: { at: number; ms: number }[] = [];
+const LONG_TASK_LIMIT = 2048;
+let longTasksLimited = false;
 let observing = false;
-/** Watch the main thread's long tasks (over 50 ms) from here on (with ?timing=1). */
+/** Watch the main thread's long tasks (over 50 ms): requested timings, or every sail's diagnostic log. */
 export function watchLongTasks(): void {
   if (observing || typeof PerformanceObserver === "undefined") return;
   observing = true;
-  try { new PerformanceObserver(l => { for (const e of l.getEntries()) longTasks.push({ at: Math.round(performance.timeOrigin + e.startTime), ms: Math.round(e.duration) }); }).observe({ type: "longtask", buffered: true }); } catch { /* not in this browser */ }
+  try { new PerformanceObserver(l => {
+    for (const e of l.getEntries()) longTasks.push({ at: Math.round(performance.timeOrigin + e.startTime), ms: Math.round(e.duration) });
+    if (longTasks.length > LONG_TASK_LIMIT) { longTasks.splice(0, longTasks.length - LONG_TASK_LIMIT); longTasksLimited = true; }
+  }).observe({ type: "longtask", buffered: true }); } catch { /* not in this browser */ }
 }
 
 /** This page's marks and long tasks, in wall-clock ms. */
 function thisPage(page: number): Timing {
-  const steps = performance.getEntriesByType("mark").filter(m => /^(witch|chart|game|opening):/.test(m.name)).map(m => ({ name: m.name, at: Math.round(performance.timeOrigin + m.startTime), page }));
-  return { steps, longTasks: longTasks.slice() };
+  const steps = performance.getEntriesByType("mark").filter(m => /^(witch|chart|sail|dive|game|opening):/.test(m.name)).map(m => ({ name: m.name, at: Math.round(performance.timeOrigin + m.startTime), page }));
+  return { steps, longTasks: longTasks.slice(), ...(longTasksLimited ? { longTasksLimited: true } : {}) };
 }
 
 /** The page is leaving for the next island (the chart's sail): its marks kept for the next page. */
 export function carryTiming(): void {
+  watchLongTasks(); // Ordinary sail logs need their stalls too, without requiring a special link.
   const s = store();
   if (!s || s.getItem(ON) !== "1") return;
   try { s.setItem(KEY, JSON.stringify(thisPage(0))); } catch { /* full */ }
@@ -55,7 +61,7 @@ export function transitionTiming(): Timing {
   const now = thisPage(1), steps = [...before.steps, ...now.steps].sort((a, b) => a.at - b.at), t0 = steps[0]?.at ?? 0;
   const out = steps.map((s, i) => ({ ...s, at: s.at - t0, ms: i ? s.at - steps[i - 1].at : 0 }));
   const longs = [...before.longTasks, ...now.longTasks].map(l => ({ at: l.at - t0, ms: l.ms })).filter(l => l.at >= 0);
-  return { steps: out, longTasks: longs, builds: sliceLog.map(b => ({ what: b.what, ms: Math.round(b.ms), slices: b.slices, longest: Math.round(b.longest), longestAt: b.longestAt })) };
+  return { steps: out, longTasks: longs, ...(before.longTasksLimited || now.longTasksLimited ? { longTasksLimited: true } : {}), builds: sliceLog.map(b => ({ what: b.what, ms: Math.round(b.ms), slices: b.slices, longest: Math.round(b.longest), longestAt: b.longestAt })) };
 }
 
 /** Done with what's carried (written into the log). */

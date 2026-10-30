@@ -139,6 +139,8 @@ export function dropRelic(s: LeashState, id: number): void {
 }
 
 export interface LeashControls {
+  /** Floor sigils are shared in co-op. Taking one removes its previous leash attachment. */
+  sharedPlaced?: { sigils: PlacedSigil[]; take(id: number): void };
   /** The sigil button was pressed this frame: on the ground, place the bottom sigil or pick one up;
    *  in the treetops, cycle the stack (the gamepad's and touch's one button). */
   sigil: boolean;
@@ -357,13 +359,14 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
  *  cell or at her feet). Returns what it did ("pick", "place"), or null when nothing happened (a fizzle counts as nothing). */
 function sigilPress(s: LeashState, creatures: Creature[], c: LeashControls, witch: { x: number; z: number }, time: number, t: Tuning, only: "pick" | "place" | undefined): "pick" | "place" | null {
   const L = t.leash, byId = (id: number) => creatures[id];
+  const floor = c.sharedPlaced ? { ...s, placed: [...s.placed, ...c.sharedPlaced.sigils] } : s;
   let pick = -1, pd = L.pickRadius;
   // On the hex grid (Ed, 2026-10-11: "a cluster of placed sigils reads cleanly"): the cell nearest her decides; taken, the press
   // picks its sigil up (no fizzling); free, a sigil goes down on it, or, if it's barred, on the nearest free cell that isn't.
   const H = L.hex && L.hex.size > 0 ? L.hex : null;
-  const spot = H ? hexSpot(s, witch.x, witch.z, H.size, c.barred) : null;
+  const spot = H ? hexSpot(floor, witch.x, witch.z, H.size, c.barred) : null;
   if (spot) pick = spot.taken;
-  else s.placed.forEach((p, i) => { const d = Math.hypot(p.x - witch.x, p.z - witch.z); if (d <= pd) { pd = d; pick = i; } });
+  else floor.placed.forEach((p, i) => { const d = Math.hypot(p.x - witch.x, p.z - witch.z); if (d <= pd) { pd = d; pick = i; } });
   if (only === "place") pick = -1;
   // (Her own placed sigil first, then a happy creature's rune: Ed, 2026-10-06, the nearest; her hat before both, rules/game.ts.)
   // (then a loose one, scattered at a stone's conversion: rules/stoneStacks.ts; then a happy creature's rune)
@@ -378,7 +381,8 @@ function sigilPress(s: LeashState, creatures: Creature[], c: LeashControls, witc
     return "pick";
   }
   if (pick >= 0) {
-    const [p] = s.placed.splice(pick, 1);
+    const p = floor.placed[pick];
+    if (pick < s.placed.length) s.placed.splice(pick, 1); else c.sharedPlaced!.take(p.id);
     s.stack.push(p.id);
     s.events.push({ kind: "picked", id: p.id, x: p.x, z: p.z, at: time });
     return "pick";
@@ -391,7 +395,7 @@ function sigilPress(s: LeashState, creatures: Creature[], c: LeashControls, witc
   if (spot && spot.taken >= 0) return null; // (a run of placing over a taken cell: nothing)
   if (s.tether && c.dropTether) {
     // A legend's sigil she carries (rules/stoneStacks.ts): the next she puts down, anywhere, loose again; her tether gone.
-    const at = spot ? spot.at : blocked(s, witch.x, witch.z, t) ? null : { x: witch.x, z: witch.z };
+    const at = spot ? spot.at : blocked(floor, witch.x, witch.z, t) ? null : { x: witch.x, z: witch.z };
     if (!at) return null;
     const id = s.tether.id;
     c.dropTether(id, at.x, at.z); s.tether = null;
@@ -416,7 +420,7 @@ function sigilPress(s: LeashState, creatures: Creature[], c: LeashControls, witc
     else if (spot) {
       if (spot.at) { s.stack.pop(); s.placed.push({ id, x: spot.at.x, z: spot.at.z, at: time }); s.events.push({ kind: "placed", id, x: spot.at.x, z: spot.at.z, at: time }); return "place"; }
       // (no allowed free cell near her: nothing)
-    } else if (blocked(s, witch.x, witch.z, t)) s.events.push({ kind: "fizzled", id, x: witch.x, z: witch.z, at: time });
+    } else if (blocked(floor, witch.x, witch.z, t)) s.events.push({ kind: "fizzled", id, x: witch.x, z: witch.z, at: time });
     else {
       s.stack.pop();
       s.placed.push({ id, x: witch.x, z: witch.z, at: time });

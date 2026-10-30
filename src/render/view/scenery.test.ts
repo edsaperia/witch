@@ -1,6 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
 import type { View } from "../view";
-import { cancelRefresh, refresh } from "./scenery";
 
 vi.mock("../../rules/game", () => ({ poseOf: () => ({ distance: 100, angle: 45 }) }));
 vi.mock("../../rules/partyOver", () => ({ relicsOut: () => [] }));
@@ -8,7 +7,10 @@ vi.mock("./culling", () => ({ focusOf: () => ({ x: 0, z: 0 }), viewRect: () => (
 
 afterEach(() => vi.restoreAllMocks());
 
-it.each(["trees", "bushes"])("yields while scanning %s rejected before sprite creation", kind => {
+it.each(["trees", "bushes"])("yields while scanning %s rejected before sprite creation", async kind => {
+  // (a fresh copy under the mocks above: tests share module state, isolate false, and another file may have loaded the real one)
+  vi.resetModules();
+  const { cancelRefresh, refresh } = await import("./scenery");
   // A deterministic work clock: missing art/off-screen candidates used to bypass every yield.
   let now = 0, visited = 0;
   vi.spyOn(performance, "now").mockImplementation(() => now++);
