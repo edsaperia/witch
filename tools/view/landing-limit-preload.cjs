@@ -13,6 +13,32 @@ pw.chromium.launch = async opts => {
   const newPage = browser.newPage.bind(browser);
   browser.newPage = async options => {
     const page = await newPage(options);
+    const closePage = page.close.bind(page);
+    page.close = async (...args) => {
+      // sail-timing closes its page before the browser. Capture here, while the final counters still exist.
+      const final = await page.evaluate(() => ({ at: performance.now(), methods: window.__landingDemo?.methods,
+        unsafeUniformReads: window.__landingDemo?.unsafeUniformReads, drawStatus: window.witch?.view.shaderDrawStatus,
+        worstFrameMs: Math.max(0, ...(window.__landingDemo?.frames ?? []).map(f => f.ms)),
+        marks: performance.getEntriesByType('mark').filter(e => e.startTime >= (window.__landingDemo?.sail ?? Infinity)).map(e => ({ name: e.name, at: e.startTime, detail: e.name === 'chart:landing-due' ? e.detail : undefined })) }));
+      fs.writeFileSync(out + '-final.json', JSON.stringify(final, null, 2));
+      const shot = fs.existsSync(out + '-15s.json') ? JSON.parse(fs.readFileSync(out + '-15s.json', 'utf8')) : null;
+      const due = final.marks.find(m => m.name === 'chart:landing-due')?.detail?.at;
+      const arrival = final.marks.find(m => m.name === 'game:arrived')?.at;
+      const failures = [];
+      if (!shot || !fs.existsSync(out + '-15s.png')) failures.push('missing15.5s capture');
+      if (shot?.chartPresent) failures.push('chart still covering scene at15.5s');
+      if (!shot?.limited || !Object.keys(shot?.drawStatus?.fallback ?? {}).length) failures.push('no visible fallback submission at15.5s');
+      if (!(shot?.graceMs >= 15000 && shot.graceMs <= 16000)) failures.push('capture outside15–16s');
+      if (!(arrival !== undefined && due !== undefined && arrival - due <= 16000)) failures.push('arrival later than16s after due');
+      if (!final.marks.some(m => m.name === 'witch:shader-background-ready')) failures.push('background-ready not observed');
+      if (final.unsafeUniformReads || !Object.keys(final.methods ?? {}).length) failures.push('unsafe/missing uniform counters');
+      for (const [name, m] of Object.entries(final.methods ?? {})) if (m.longestMs > 100) failures.push(`${name} exceeded100ms`);
+      // This is deliberately stricter than attributing a long frame to shaders: don't hide an unclassified stall.
+      if ((shot?.worstFrameMs ?? Infinity) > 100) failures.push('frame over100ms in the grace/capture window');
+      fs.writeFileSync(out + '-verdict.json', JSON.stringify({ ok: !failures.length, failures }, null, 2));
+      await closePage(...args);
+      if (failures.length) throw Error('landing proof failed: ' + failures.join('; '));
+    };
     await page.exposeFunction('__landingSnapshot', async snapshot => {
       fs.writeFileSync(out + '-15s.json', JSON.stringify(snapshot, null, 2));
       await page.screenshot({ path: out + '-15s.png' });
