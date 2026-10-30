@@ -1,10 +1,14 @@
-import { expect, test, vi } from "vitest";
+import { afterAll, expect, test, vi } from "vitest";
 import type { Game } from "../rules/game";
 import type { Observation } from "./observe";
 import { EXPERT_LIMITS, newExpert, type ExpertTrace } from "./expert";
 
 // Pure scripted observations: no newGame, stepping, map generation or simulation.
+// The project uses isolate:false: expert.test may already have cached the real
+// observer. Reset before this file's imports, then leave no mock/cache behind.
+vi.hoisted(() => vi.resetModules());
 vi.mock("./observe", () => ({ newObserver: () => (g: { fixture: Observation }) => structuredClone(g.fixture) }));
+afterAll(() => { vi.doUnmock("./observe"); vi.resetModules(); });
 const observation = (): Observation => ({ playerTime: 0, worldTime: 0,
   self: { x: 0, z: 0, mode: "ground", hp: 3, ko: false, seated: false, perched: false, grounded: false },
   range: 30, pickRadius: 4, spacing: 4, castRadius: 5, castBlocked: false, waiting: false, home: { x: 0, z: 0 },
