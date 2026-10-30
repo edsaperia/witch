@@ -6,7 +6,19 @@ const ROSTER_SNOW_REGIONS = {
   head: { kind: "spots", k: 14, density: .5, radius: .43, mat: "BODY3" },
   legs: { kind: "spots", k: 14, density: .5, radius: .43, mat: "BODY3" },
 };
+// One staged white ramp shared by pale mammals; no production palette mutation.
+const COOL_WHITE = { hue: .59, sat: .025, over: { BODY3: [113, 126, 143], BODY2: [168, 181, 196], BODY: [225, 231, 237], BODYL: [243, 246, 249], BELLY: [239, 243, 247] } };
 export const ROSTER_PRESETS = {
+  polarbear: {
+    reason: "Cool white fur and blue-grey coat shadows; keep the existing long neck and small head.",
+    patch: { palette: COOL_WHITE },
+    text: "A white bear with a long neck, narrow head and broad paws.",
+  },
+  unicorn: {
+    reason: "White coat with cool shadows; retain its existing horn and legend features.",
+    patch: { palette: COOL_WHITE },
+    text: "A white woodland unicorn with a spiralling horn.",
+  },
   beetle: {
     reason: "Ordinary stag-beetle wing cases and jaws are dark natural materials; reserve ember fissures for the elder.",
     reference: "https://www.nhm.ac.uk/discover/stag-beetles.html",
@@ -24,14 +36,14 @@ export const ROSTER_PRESETS = {
   bear: {
     reason: "A black bear has no grizzly shoulder hump; retain its dark coat and bear body.",
     reference: "https://www.nps.gov/articles/bear-identification.htm",
-    patch: { body: { humpK: 0, front: 1 } },
+    patch: { body: { humpK: 0, front: 1 }, palette: { hue: .075, sat: .22, val: .28, over: { BODYL: [100, 85, 74], BODY2: [69, 58, 51], BELLY: [151, 119, 87] } } },
     ordinaryLevels: { 0: { body: { humpK: 0, front: 1 } }, 1: { body: { humpK: 0, front: 1 } }, 2: { body: { humpK: 0, front: 1 } } },
     text: "A dark forest bear with a straight back, prominent ears and a pale muzzle.",
   },
   arcticfox: {
     reason: "Short ears and a compact winter body distinguish this fox naturally; reduce the blue cast.",
     reference: "https://www.adfg.alaska.gov/index.cfm?adfg=arcticfox.main",
-    patch: { palette: { sat: .04 }, parts: { ears: { kind: "round", size: .65 } } },
+    patch: { palette: COOL_WHITE, parts: { ears: { kind: "round", size: .65 } } },
     ordinaryLevels: { 0: { parts: { ears: { kind: "round", size: .65 } } }, 1: { parts: { ears: { kind: "round", size: .65 } } }, 2: { parts: { ears: { kind: "round", size: .65 } } } },
     text: "A compact white winter fox with short rounded ears and a dense brush tail.",
   },
