@@ -16,12 +16,15 @@ const JAGUAR_REGIONS = {
 export const ROSTER_PRESETS = {
   badger: {
     reason: "Make the existing badger face stripes and black legs read against silver-grey fur.",
-    patch: { palette: { hue: .61, sat: .035, val: .55, over: { BODY3: [30, 29, 29], BELLY: [238, 237, 232], BODYL: [172, 175, 178] } } },
+    patch: { head: { blaze: 1 }, palette: { hue: .61, sat: .035, val: .55, over: { BODY: [140, 142, 145], BODY2: [45, 46, 47], BODY3: [25, 25, 25], BELLY: [245, 244, 238], BODYL: [180, 183, 186] } } },
+    ordinaryLevels: { 2: { head: { blaze: .85 } } },
+    legendPatch: { head: { blaze: .85 } },
     text: "A low silver-grey badger with a striped white face, dark legs and a short tail.",
   },
   stoat: {
     reason: "Chestnut back, cream underside and the existing black-tipped stoat tail.",
-    patch: { palette: { hue: .065, sat: .55, val: .56, belly: [.11, .16, .92], over: { BODY3: [36, 27, 23], BELLY: [235, 224, 200] } } },
+    omitLegendFeatures: ["darken"],
+    patch: { palette: { hue: .065, sat: .45, val: .68, belly: [.11, .16, .92], over: { BODY3: [36, 27, 23], BODYL: [202, 147, 100], BELLY: [242, 231, 207] } } },
     text: "A long chestnut stoat with a cream underside and a black-tipped tail.",
   },
   otter: {
@@ -130,7 +133,9 @@ export function rosterVariant(genome) {
       // an unused level-3 .9/.07 palette; do not let that overwrite the actual
       // original base palette while restoring the selected review elder.
       if (preset.ordinaryOnly) elder.palette = expectedRosterLegendPalette(genome);
-      return merge(elder, { ...preset.legendPatch, palette: elder.palette });
+      const selectedElder = merge(elder, { ...preset.legendPatch, palette: elder.palette });
+      if (preset.omitLegendFeatures) selectedElder.features = (selectedElder.features || []).filter(f => !preset.omitLegendFeatures.includes(f.kind));
+      return selectedElder;
     }
     return merge(original, preset.ordinaryLevels?.[level] || {});
   });
