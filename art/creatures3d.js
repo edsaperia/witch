@@ -7,6 +7,7 @@ import { textureLumps } from "./genome/texture.js";
 import { compileGraph } from "./body-graph/graph.js";
 import { quadrupedTorsoGraph, quadrupedEarSocket, triangularEarMask, triangularEarFaces, wrappedRosette, regionMarking, rosetteSizing, bibCoordinates } from "./body-graph/quadruped.js";
 import { mandiblePart } from "./body-graph/mandibles.js";
+import { paintTailParts } from "./body-graph/tail-markings.js";
 import { elderQuad, grizzle, notch, surfaceFrom, ring, fitRing, frontPts, closed, charm, crown, drawOn, meerkatDress, sentinelHeap } from "./elders.js";
 
 // Levels (Ed): 0 baby, 1 young, 2 adult, 3 legend.
@@ -836,7 +837,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   // ---- tail ----
   const tb = [-len * 1.05, top - .1 + arch * .5, 0], tw = frame ? .04 : -.02;
   m.part = "tail"; m.rig.head = { nb, H, hr }; m.rig.tail = tb;
-  if (!elder?.tail && !has("tails") && !feats?.some(f => f.kind === "tails" && f.replace)) tail3d(m, has("starTail") ? "star" : q.tail, tb, len, top, tw, q.tailL ?? 1, q.tailK ?? 1);
+  if (!elder?.tail && !has("tails") && !feats?.some(f => f.kind === "tails" && f.replace)) tail3d(m, has("starTail") ? "star" : q.tail, tb, len, top, tw, q.tailL ?? 1, q.tailK ?? 1, q.regions?.tail, () => markingScale);
   m.part = "head";
   // ---- horns, antlers, tusks ----
   const hornTips = [];
@@ -908,11 +909,11 @@ export function quad3d(S, level, frame, st, facing = "towards") {
     const previous = m.atScale;
     m.atScale = scale => { previous?.(scale); const radius = q.whiskerMinPx / (2 * scale); for (const part of whiskerParts) { part.r1 = Math.max(part.r1, radius); part.r2 = Math.max(part.r2, radius); } };
   }
-  if (q.regions?.torso?.outerPx) {
+  if (q.regions?.torso?.outerPx || q.regions?.tail?.outerPx) {
     const previous = m.atScale;
     m.atScale = scale => {
       markingScale = scale;
-      m.markingMetrics = { pixelsPerUnit: scale, ...rosetteSizing(q.regions.torso, { depth: Math.max(.04, Math.abs(top - chest) / 2), width: bw, pixelsPerUnit: scale }) };
+      if (q.regions?.torso?.outerPx) m.markingMetrics = { pixelsPerUnit: scale, ...rosetteSizing(q.regions.torso, { depth: Math.max(.04, Math.abs(top - chest) / 2), width: bw, pixelsPerUnit: scale }) };
       previous?.(scale);
     };
   }
@@ -992,7 +993,8 @@ function grownTail(m, tb, k, w) {
 }
 // k, w: its tail's length and thickness, 1 as built (body.tailL, body.tailK: a young one's shorter, an old one's bushier, a snow
 // leopard's thick), scaled from its root, whatever its kind.
-function tail3d(m0, kind, tb, len, top, tw, k = 1, w = 1) {
+function tail3d(m0, kind, tb, len, top, tw, k = 1, w = 1, marking = null, pixelsPerUnit = () => null) {
+  const firstPart = m0.parts.length;
   const m = k === 1 && w === 1 ? m0 : grownTail(m0, tb, k, w);
   const o = { group: 3 }, X = k => -len * k;
   if (kind === "brush") m.chain([[...tb, .1], [X(1.3), top - .25 + tw, 0, .15], [X(1.4), top - .55, 0, .14], [X(1.35), .38 + tw, 0, .09]], M.BODY, { ...o, paint: p => p[1] < .32 ? M.BODY3 : undefined });
@@ -1042,6 +1044,7 @@ function tail3d(m0, kind, tb, len, top, tw, k = 1, w = 1) {
   else if (kind === "glider") { m.seg(tb, [X(1.2), top - .12 + tw, 0], .09, .1, M.BODY, o); m.ell([X(1.65), top - .16 + tw * .7, 0], [.5, .06, .2], M.BODY, { ...o, dir: [1, .12, 0], paint: p => p[0] < X(1.95) ? M.BODY3 : Math.abs(p[2]) > .13 ? M.BODY2 : undefined }); } // a flying squirrel's: flat and feathered either side, held level behind (its rudder in a glide), its tip dark
   else if (kind === "ringed") m.chain([[...tb, .1], [X(1.05) - .3, top - .1 + tw, 0, .15], [X(1.05) - .7, top - .25 + tw, 0, .15], [X(1.05) - .95, top - .4 + tw, 0, .09]], M.BODY, { ...o, paint: p => Math.floor(-p[0] * 7) % 2 || p[0] < X(1.05) - .85 ? M.BODY3 : undefined }); // thick, held low, ringed in black, its tip black (the raccoon's)
   else if (kind === "thin") { m.chain([[...tb, .04], [X(1.1), top - .3, 0, .03], [X(1.12) + tw, top - .55, 0, .025]], M.BODY, o); m.ell([X(1.12) + tw, top - .62, 0], [.04, .07, .04], M.BODY3, o); }
+  if (marking) paintTailParts(m0.parts.slice(firstPart), marking, pixelsPerUnit);
 }
 
 function antlers3d(m, q, b, side, size, has) { // size: its antler size curve at this level (the template's)

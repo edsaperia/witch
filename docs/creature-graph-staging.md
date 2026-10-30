@@ -242,7 +242,47 @@ No Current genome enables the field. Tests pin the pre-change marten material
 and normal byte hash, exercise the bounds, and verify a visible selected bib
 with a brown centre underside and identical geometry/normals. Visual
 likeness is not asserted by these painter tests. Tail work is held behind this
-priority request, with its draft retained in the builder's local work folder.
+priority request; the bib landed before the resumed tail region below.
+
+### Optional tail markings (6515428487)
+
+`coat.regions.tail` paints an existing standard quadruped cone-chain tail.
+Missing/null retains the old callbacks byte-for-byte. Enabling the region
+replaces those callbacks; geometry and literal part materials stay intact.
+Coordinates follow cumulative arc length of the actual grown/bent tail,
+0 at root and 1 at tip, with a transported frame around the chain. No gloss
+or highlight band is introduced.
+
+```js
+// Raccoon-style bands and a dark terminal fifth:
+tail: { kind: "rings", count: 6, width: .45, mat: "BODY3",
+        tip: { length: .2, mat: "BODY3" } }
+// A stoat-style tip without the old positional paint:
+tail: { tip: { length: .2, mat: "BODY3" } }
+// Filled spots, or the existing regional rosette controls:
+tail: { kind: "spots", k: 8, density: .6, radius: .4, mat: "BODY3" }
+tail: { kind: "rosettes", outerPx: 7, density: .7, filledFraction: .25,
+        centreDotRadius: .4, centreDotMat: "BODY3", mat: "BODY3" }
+```
+
+Ring `count` is a positive integer; `width` is the coloured fraction of each
+ring period in [0,1]. Rings and tip `mat` accept material names or palette
+indices 1–63, with colour supplied by existing palette controls. Tip `length`
+is a fraction in [0,1] and takes precedence over the pattern. Spots/rosettes
+reuse `regionMarking`, including its seeded variation, filled/closed cells,
+centre dots and falloff. `outerPx` uses the existing measured-scale callback.
+The region covers the whole circumference; existing torso/head/leg regions
+remain independent. An explicit `kind:"none"` removes old paint callbacks
+while retaining the underlying part material; null restores the legacy path.
+
+This first API requires a standard main cone chain. Ellipsoid-only tails and
+separate elder/replacement-tail builders are not covered; unsupported opted-in
+chains fail clearly rather than guessing coordinates. No Current genome or
+cats-6c fixture enables it. Tests pin pre-change raccoon/stoat/jaguar material
+and normal hashes, verify curved-tail rings and tip extent, seeded wrap/native
+scale, geometry preservation and selected-creature integration. The legacy
+duplicate `kind === "ringed"` branch in `tail3d` is untouched; its shape
+taxonomy is outside this paint change.
 
 Cats-1 independent review (Yankee, comment 6513855670): likeness scores
 current → graph were sand cat 2→2, snow leopard 3→3.5, jaguar 3→3.5,
