@@ -11,6 +11,7 @@ import { LEGENDS } from '../../src/rules/legends.ts';
 import { newObserver } from '../../src/bots/observe.ts';
 import { cast, newSpells, stepSpells, readability, ownWarning, telegraphKind, parseAttack } from '../../src/rules/attacks/index.ts';
 import { classOf, momentumOf } from '../../src/rules/momentum.ts';
+import { observeAttacks, attackObserverErrors } from '../../src/rules/attackObservation.ts';
 
 const out = process.argv[2], save = (name, value) => writeFileSync(join(out, name), JSON.stringify(value, null, 2) + '\n');
 const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
@@ -80,6 +81,29 @@ const cases = [
   { id: 'wolves-ravens-repeat', seed: 5, spec: 'wolf*3@2,raven*3@2' },
 ];
 const arenaRows = [];
+function acceptedSummary(outcomes) {
+  const groups = {};
+  for (const row of outcomes) {
+    const key = JSON.stringify([row.attack, row.source, row.targetKind]);
+    const group = groups[key] ??= { attack: row.attack, source: row.source, targetKind: row.targetKind, attempts: 0, acceptedDamage: 0,
+      unknownDamage: 0, damageDodges: 0, unknownDodge: 0, stunUpdates: 0, selfMisses: 0, selfStunUpdates: 0, unknownStun: 0, healthLost: 0, orbitAdded: 0 };
+    group.attempts++;
+    if (row.damageAccepted === true) group.acceptedDamage++;
+    if (row.damageRequested > 0 && row.damageAccepted === null) group.unknownDamage++;
+    if (row.damageDodged === true) group.damageDodges++;
+    if (row.damageRequested > 0 && row.damageDodged === null) group.unknownDodge++;
+    if (row.phase === 'self-miss') { group.selfMisses++; if (row.stunApplied === true) group.selfStunUpdates++; }
+    else if (row.stunApplied === true) group.stunUpdates++;
+    if (row.stunApplied === null) group.unknownStun++;
+    group.healthLost += row.healthLost ?? 0; group.orbitAdded += row.orbitAdded ?? 0;
+  }
+  return Object.values(groups);
+}
+function saveOutcomes(id, g, outcomes) {
+  if (attackObserverErrors(g.combat)) throw Error('Diagnostic observer failed; results incomplete');
+  if (outcomes.length) appendFileSync(join(out, 'accepted-outcomes.jsonl'), outcomes.map(row => JSON.stringify({ case: id, ...row })).join('\n') + '\n');
+  return acceptedSummary(outcomes);
+}
 for (const fixture of process.argv.includes('--witch-only') ? [] : cases) {
   const began = performance.now(), g = newGame(fixture.seed, TUNING);
   g.clock.paused = false; g.party.paused = true; setupArena(g, fixture.spec);
@@ -88,6 +112,7 @@ for (const fixture of process.argv.includes('--witch-only') ? [] : cases) {
   // Isolate the arena as the existing arena tests do; no health/stun/damage tuning.
   const arenaSet = new Set(ids); for (const c of g.creatures) if (!arenaSet.has(c.id)) c.gone = true;
   g.byArea = null;
+  const outcomes = []; observeAttacks(g.combat, row => outcomes.push(row));
   const events = {}, byAttack = {}, seen = new WeakSet(), bodyTouched = new Set();
   let completed = null;
   for (let frame = 0; frame < 20 / STEP; frame++) {
@@ -103,7 +128,8 @@ for (const fixture of process.argv.includes('--witch-only') ? [] : cases) {
     if (completed === null && (!alive(first).length || !alive(second).length)) completed = { atWorldSeconds: g.clock.time, winner: alive(first).length ? 'party' : alive(second).length ? 'wild' : 'neither', definition: 'first side with no active non-dazed/non-running members, not conversion or persistence' };
   }
   const final = ids.map(id => { const c = g.creatures[id]; return { id, species: c.species, level: c.level, x: +c.x.toFixed(6), z: +c.z.toFixed(6), dazed: !!c.dazed, ranOff: !!c.ranOff, gone: !!c.gone, affection: c.affection ?? 0, drops: c.drops ?? 0 }; });
-  const record = { ...fixture, requestedStepSeconds: 20, worldSeconds: g.clock.time, witchMode: g.witches[0].body.mode, executionMs: performance.now() - began, completed, censored: completed === null, events, byAttack: Object.values(byAttack), final, digest: createHash('sha256').update(JSON.stringify({ final, events, byAttack })).digest('hex'), limits: 'Witch stays treetop to avoid distracting the pack-v-pack fight. No visual/readability judgement. Engine hit contacts are not accepted damage; effective hits/dodges/stuns lack per-attack attribution and are null. Expired-body misses exclude live bodies/zones/beams. Single-seed examples do not rank general strength.' };
+  const acceptedByAttack = saveOutcomes(fixture.id, g, outcomes);
+  const record = { ...fixture, requestedStepSeconds: 20, worldSeconds: g.clock.time, witchMode: g.witches[0].body.mode, executionMs: performance.now() - began, completed, censored: completed === null, events, byAttack: Object.values(byAttack), acceptedByAttack, final, digest: createHash('sha256').update(JSON.stringify({ final, events, byAttack })).digest('hex'), limits: 'Witch stays treetop. No visual/readability judgement. byAttack retains event-only counters and null outcomes; acceptedByAttack uses detached actual-state outcomes. Unlabelled legacy attacks have null names; unknown outcomes are counted separately. Stun updates include extensions, not unique incapacitations. Expired-body misses exclude live bodies/zones/beams and remain proxies. Digest deliberately retains prior state/event table for comparison. Single-seed examples do not rank general strength.' };
   arenaRows.push(record); appendFileSync(join(out, 'arena.jsonl'), JSON.stringify(record) + '\n');
   console.log(JSON.stringify({ case: fixture.id, executionMs: record.executionMs, digest: record.digest, completed }));
 }
@@ -111,6 +137,7 @@ const witchRows = [];
 for (const species of ['wolf', 'cat']) for (const delayed of [false, true]) {
   const g = newGame(5, TUNING); g.clock.paused = false; g.party.paused = true; setupArena(g, `pack-${species}`, { wildOnly: true });
   const ids = new Set(g.arena.ids); for (const c of g.creatures) if (!ids.has(c.id)) c.gone = true; g.byArea = null;
+  const outcomes = []; observeAttacks(g.combat, row => outcomes.push(row));
   const observe = newObserver(), queue = [], actions = [], inputTimes = [];
   let control = idle, nextInput = 0, nextDash = 0, acceptedHits = 0, attempts = 0, blinks = 0, kos = 0, beforeKo = false, lastAt = g.witches[0].dash.at;
   for (let frame = 0; frame < 12 / STEP; frame++) {
@@ -131,7 +158,8 @@ for (const species of ['wolf', 'cat']) for (const delayed of [false, true]) {
     if (W.dash.at !== lastAt && Number.isFinite(W.dash.at)) blinks++; lastAt = W.dash.at;
     if (W.ko && !beforeKo) kos++; beforeKo = !!W.ko;
   }
-  const record = { species, seed: 5, delayedPolicy: delayed, requestedStepSeconds: 12, worldSeconds: g.clock.time, acceptedHealthLost: acceptedHits, koEntries: kos, dashAttempts: attempts, acceptedBlinks: blinks, actions, inputIntervalMinimum: 0.125, actualMinimumInputGap: Math.min(...inputTimes.slice(1).map((t, i) => t - inputTimes[i])), reactionDelay: 0.25, observation: 'Existing expert approximate default-camera rectangle without occlusion plus public HUD/audio cues; policy uses delayed self and windup positions only.', limits: 'One fixed sidestep policy, no aiming or invitation. A failure is not proof that no dodge works; not a trained-bot or win-strength claim.' };
+  const acceptedByAttack = saveOutcomes(`${species}-${delayed ? 'delayed' : 'idle'}`, g, outcomes);
+  const record = { species, seed: 5, delayedPolicy: delayed, requestedStepSeconds: 12, worldSeconds: g.clock.time, acceptedHealthLost: acceptedHits, koEntries: kos, dashAttempts: attempts, acceptedBlinks: blinks, actions, acceptedByAttack, inputIntervalMinimum: 0.125, actualMinimumInputGap: Math.min(...inputTimes.slice(1).map((t, i) => t - inputTimes[i])), reactionDelay: 0.25, observation: 'Existing expert approximate default-camera rectangle without occlusion plus public HUD/audio cues; policy uses delayed self and windup positions only.', limits: 'Diagnostic outcomes are privileged and never fed to this policy. One fixed sidestep policy, no aiming or invitation. A failure is not proof that no dodge works; not a trained-bot or win-strength claim. Unknown attack names/outcomes remain explicit; physical non-contact misses remain separately limited.' };
   witchRows.push(record); appendFileSync(join(out, 'witch-arena.jsonl'), JSON.stringify(record) + '\n');
 }
 save('summary.json', { species: rows.length, minimumYoungWarning: Math.min(...rows.map(r => r.youngWarning)), minimumAdultWarning: Math.min(...rows.map(r => r.adultWarning)), parseErrors: rows.reduce((n, r) => n + r.parseErrors.length + r.adultParseErrors.length, 0), engineReactionAssessed: fairness.filter(r => r.assessed).length, engineReactionStillContactAfterBlink: fairness.filter(r => r.assessed && r.dodgingContacts > 0).map(r => r.species), arenaCases: arenaRows.length, repeatedCaseMatches: arenaRows.length === 4 ? arenaRows[0].digest === arenaRows[3].digest : null, reactionBudget: { reaction: 0.25, inputInterval: 0.125, worstQuantizedPlusStep: 0.25 + 0.125 + STEP }, limits: ['No general dodge guarantee', 'No arena dominance ranking from three small paired matches', 'No invisible-source or real terrain proof from flat engine fixtures', 'No current validation of seven impossible solo stuns; historical protected-health cutoff is not impossibility'] });

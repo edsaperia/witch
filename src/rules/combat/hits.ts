@@ -10,6 +10,7 @@ import { FIGHT } from "../movement";
 import { type Attack, type CombatData, COMBAT, counterOf, type Target, type CombatState, stunWorth, type CombatWorld } from "./data";
 import { targetable, sideOf, truce, guardOf, sheltered, inviting, Grid } from "./targeting";
 import { coverOf } from "./packs";
+import { observeAttack, type AttackContext } from "../attackObservation";
 
 let D: CombatData = COMBAT; // (the data stepCombat was given, for land)
 /** stepCombat hands land the data it was given. */
@@ -43,7 +44,13 @@ export function touch(w: CombatWorld, s: CombatState, c: Creature, damage: numbe
   }
 }
 
-export function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: Target, damage: number, a: Attack, fx: number, fz: number): void {
+export function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: Target, damage: number, a: Attack, fx: number, fz: number, context?: AttackContext): void {
+  const observation = context ?? { source: from?.id ?? null, attack: null, delivery: a.delivery, phase: "damage" as const };
+  observeAttack(w, s, tg, observation, damage, () => landUnobserved(w, s, from, tg, damage, a, fx, fz, observation));
+}
+
+/** Inside an adapter that observes the combined damage and effects as one contact. */
+export function landUnobserved(w: CombatWorld, s: CombatState, from: Creature | null, tg: Target, damage: number, a: Attack, fx: number, fz: number, context?: AttackContext): void {
   const time = w.time;
   if (tg.kind === "witch") {
     if (sheltered(w.witches[tg.id], from)) return; // (in a legend's circle: a shot or blow already on its way doesn't land)
@@ -66,7 +73,7 @@ export function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: 
   const o = w.creatures[tg.id];
   if (!o || o.gone || o.level === 0) return; // babies can't be hurt
   const cover = o.coverBy ? coverOf(w, o) : null; // (a packmate dug in beside it takes the blow: the badger's cover, rules/combat/packs.ts)
-  if (cover) { land(w, s, from, { kind: "creature", id: cover.id }, damage, a, fx, fz); return; }
+  if (cover) { land(w, s, from, { kind: "creature", id: cover.id }, damage, a, fx, fz, context ? { ...context, phase: "damage" } : undefined); return; }
   if (from && inviting(w, from, o)) return; // (her party's shots and area hits pass the one she's inviting by)
   // Its traits against this kind of blow (Stage 5): shown as strong or resisted.
   const k = counterOf(o.species, a.delivery, D), gd = guardOf(o, a.delivery, time), mult = k.damage * gd.damage;

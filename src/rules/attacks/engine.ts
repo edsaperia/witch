@@ -25,7 +25,7 @@ export interface SpellWorld {
   /** Whether this is a foe of `side` (never the caster's own kind; anything else that isn't a foe is an ally, hit only as hit.allies says). */
   hostile(side: string, target: Hittable, casterSpecies: string, casterId: number): boolean;
   /** A hit lands: its damage and effect, from (fx, fz). */
-  harm(target: Hittable, damage: number, effect: Effect | undefined, fx: number, fz: number, source: number, attack: string, /** what landed it (for the fight's counters) */ body?: BodyKind): void;
+  harm(target: Hittable, damage: number, effect: Effect | undefined, fx: number, fz: number, source: number, attack: string, /** what landed it (for the fight's counters) */ body?: BodyKind, context?: { cast?: number; body?: number; zone?: number; beam?: number }): void;
   /** A creature's place now (a caster or a stuck body's host), or null when it's gone. */
   where(kind: Hittable["kind"], id: number | string): { x: number; z: number; vx?: number; vz?: number } | null;
   /** Ground a runner can't cross (water), or a wall a bolt bounces off; absent: none. */
@@ -228,7 +228,7 @@ const targetKey = (t: Hittable): string => JSON.stringify([t.kind, t.id]);
 /** One thing an attack reaches: a foe takes its damage and effect; another animal (an ally) only hit.allies' share and the effects it
  *  names (none of either: untouched); her, by a zone or a beam, damaged only the first time (`once`). A burn is the engine's own.
  *  Whether it touched a foe or landed anything on an ally. */
-function strike(S: SpellState, W: SpellWorld, a: AttackSpec, t: Hittable, damage: number, fx: number, fz: number, side: string, species: string, source: number, name: string, time: number, once?: (number | string)[], ref?: { body?: number; zone?: number; beam?: number }): boolean {
+function strike(S: SpellState, W: SpellWorld, a: AttackSpec, t: Hittable, damage: number, fx: number, fz: number, side: string, species: string, source: number, name: string, time: number, once?: (number | string)[], ref?: { body?: number; zone?: number; beam?: number }, castId?: number): boolean {
   const H = a.hit ?? {};
   let dmg = damage, effect = H.effect, ally = false;
   const foe = W.hostile(side, t, species, source);
@@ -246,7 +246,7 @@ function strike(S: SpellState, W: SpellWorld, a: AttackSpec, t: Hittable, damage
     const { burn: _b, ...rest } = effect; effect = Object.keys(rest).length ? rest : undefined;
   }
   if (dmg <= 0 && !effect) return foe; // (a foe touched all the same: a harmless sticky bolt still sticks)
-  W.harm(t, dmg, effect, fx, fz, source, name, a.body?.kind ?? "bolt");
+  W.harm(t, dmg, effect, fx, fz, source, name, a.body?.kind ?? "bolt", { ...ref, cast: castId });
   S.events.push({ kind: "hit", at: time, x: t.x, z: t.z, attack: name, source, element: a.body?.element, ...ref, ...(ally ? { ally } : {}) });
   return true;
 }
@@ -570,7 +570,7 @@ function stepBeam(S: SpellState, W: SpellWorld, b: Beam, time: number, dt: numbe
       const da = (((Math.atan2(rz, rx) - (swept > 0 ? from : b.angle)) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
       on = da <= Math.abs(swept) + (b.width / 2 + t.r) / d;
     }
-    if (on) strike(S, W, b.attack, t, b.damage, b.x, b.z, b.side, b.species, b.source, b.name, time, b.hits, { beam: b.id });
+    if (on) strike(S, W, b.attack, t, b.damage, b.x, b.z, b.side, b.species, b.source, b.name, time, b.hits, { beam: b.id }, b.cast);
   }
 }
 
@@ -662,7 +662,7 @@ function stepBody(S: SpellState, W: SpellWorld, lib: Library, b: Body, time: num
     if (b.target && (a.path ?? []).some(t => "home" in t)) { const at = W.where(b.target.kind, b.target.id); if (at) { L.tx = at.x; L.tz = at.z; } }
     if (time < L.lands) return;
     // (it lands: everything of the other side in its radius hit; a bounce sends it on, shorter, its way)
-    for (const t of W.near(b.x, b.z, b.radius + 2)) if (Math.hypot(t.x - b.x, t.z - b.z) <= b.radius + t.r) strike(S, W, a, t, b.damage * (H.damage ?? 1), b.x, b.z, b.side, b.species, b.source, b.name, time, undefined, { body: b.id });
+    for (const t of W.near(b.x, b.z, b.radius + 2)) if (Math.hypot(t.x - b.x, t.z - b.z) <= b.radius + t.r) strike(S, W, a, t, b.damage * (H.damage ?? 1), b.x, b.z, b.side, b.species, b.source, b.name, time, undefined, { body: b.id }, b.cast);
     const bounce = a.life?.bounce;
     if (bounce && b.bounced < Math.min(bounce.n, CAPS.bounces)) {
       b.bounced++;
@@ -698,7 +698,7 @@ function stepBody(S: SpellState, W: SpellWorld, lib: Library, b: Body, time: num
   }
   if (b.y < 1.2) for (const t of W.near(b.x, b.z, b.radius + 2)) {
     if (b.hits.includes(targetKey(t)) || Math.hypot(t.x - b.x, t.z - b.z) > b.radius + t.r) continue;
-    if (!strike(S, W, a, t, b.damage * (H.damage ?? 1), b.x - b.hx, b.z - b.hz, b.side, b.species, b.source, b.name, time, undefined, { body: b.id })) continue;
+    if (!strike(S, W, a, t, b.damage * (H.damage ?? 1), b.x - b.hx, b.z - b.hz, b.side, b.species, b.source, b.name, time, undefined, { body: b.id }, b.cast)) continue;
     b.hits.push(targetKey(t));
     for (const c of a.on?.hit ?? []) child(S, W, lib, b, c, time, "hit", { x: t.x, z: t.z });
     if (b.chain > 0 && W.hostile(b.side, t, b.species, b.source) && chainOn(S, W, b, t, time)) return;
@@ -788,7 +788,7 @@ function stepPlaced(S: SpellState, W: SpellWorld, lib: Library, b: Body, time: n
   const R = a.area?.r ?? Math.max(trig, 3);
   b.alive = false;
   S.events.push({ kind: "sprung", at: time, x: b.x, z: b.z, attack: b.name, source: b.source, body: b.id, element: b.element });
-  for (const t of W.near(b.x, b.z, R + 1)) if (Math.hypot(t.x - b.x, t.z - b.z) <= R + t.r) strike(S, W, a, t, b.damage * (a.hit?.damage ?? 1), b.x, b.z, b.side, b.species, b.source, b.name, time, undefined, { body: b.id });
+  for (const t of W.near(b.x, b.z, R + 1)) if (Math.hypot(t.x - b.x, t.z - b.z) <= R + t.r) strike(S, W, a, t, b.damage * (a.hit?.damage ?? 1), b.x, b.z, b.side, b.species, b.source, b.name, time, undefined, { body: b.id }, b.cast);
   for (const c of a.on?.hit ?? []) child(S, W, lib, b, c, time, "hit");
 }
 
@@ -822,7 +822,7 @@ function stepZone(S: SpellState, W: SpellWorld, z: Zone, time: number, dt: numbe
   if (z.attack.force) pushAround(W, z.attack, z.x, z.z, z.r, z.side, z.species, z.source, dt);
   if (z.once) {
     // (an area strikes everything in it once; an expanding ring whatever its edge passes over, once each)
-    for (const t of W.near(z.x, z.z, z.r + 2)) if (!z.hit.includes(targetKey(t)) && inZone(z, t.x, t.z, t.r, time)) { z.hit.push(targetKey(t)); strike(S, W, z.attack, t, z.damage, z.x, z.z, z.side, z.species, z.source, z.name, time, undefined, { zone: z.id }); }
+    for (const t of W.near(z.x, z.z, z.r + 2)) if (!z.hit.includes(targetKey(t)) && inZone(z, t.x, t.z, t.r, time)) { z.hit.push(targetKey(t)); strike(S, W, z.attack, t, z.damage, z.x, z.z, z.side, z.species, z.source, z.name, time, undefined, { zone: z.id }, z.cast); }
     if (time >= z.until) z.alive = false;
     return;
   }
@@ -831,6 +831,6 @@ function stepZone(S: SpellState, W: SpellWorld, z: Zone, time: number, dt: numbe
   z.nextTick += z.tick;
   // (a lingering zone: each tick, everything in it its share of the damage a tick and its effect; her damaged once, its effect each tick)
   const ticks = Math.max(1, Math.round((z.until - z.from) / z.tick));
-  for (const t of W.near(z.x, z.z, z.r + 2)) if (inZone(z, t.x, t.z, t.r, time)) strike(S, W, z.attack, t, z.damage / ticks, z.x, z.z, z.side, z.species, z.source, z.name, time, z.hit, { zone: z.id });
+  for (const t of W.near(z.x, z.z, z.r + 2)) if (inZone(z, t.x, t.z, t.r, time)) strike(S, W, z.attack, t, z.damage / ticks, z.x, z.z, z.side, z.species, z.source, z.name, time, z.hit, { zone: z.id }, z.cast);
 }
 
