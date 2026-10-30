@@ -43,4 +43,6 @@ The coordinator's ruling on PR #1463 (2026-10-29): ranged exposure is **actual r
 
 The follow-up [balance study](balance-study.md) records a same-source 100/200-bpm, longer-horizon preflight on home/Tiger, with its raw evidence and limits. It leaves the v5655 baseline intact; the larger matched study's scope is a coordinator decision on PR #1475.
 
+The approved [wide/shallow survey design](balance-survey-design.md) freezes five study manifests and cloud shards on PR #1475. It measures night outcome, real quest completion and permanent-find eligibility separately, labels legacy bots as privileged, and reserves final expert held-out pairs from both search rounds. No survey executes before the expert is trained; game tuning remains outside this work.
+
 Ed's logs (the pause page's **Download log**) are kept on `claude/ed-shots` under `previews/ed/playtests/`; each file holds several sessions, newest last.

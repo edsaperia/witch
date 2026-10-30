@@ -6,6 +6,7 @@ Backlog (Ed, 2026-10-09 to 10-10). **Not built yet; don't build without Ed's go.
 
 - **Six kinds of mushroom** (Ed), in various shapes and colours. Every ingredient is a mushroom.
 - She **picks them up by walking over them**, into a **hidden bag**: not in her stack, not shown in the UI.
+- **Unlimited bag; nothing is lost on knockout** (Ed, 2026-10-30, cauldron builder chat: "bag capacity is unlimited, nothing is lost on knockout").
 - Where they grow: two temperate kinds at home from the start, one kind per biome direction on phase-3-and-beyond islands; a kind found once grows at home from then on (journey.md).
 - After the party's over she can still collect mushrooms and brew, so players explore trips without time pressure.
 
@@ -14,6 +15,9 @@ Backlog (Ed, 2026-10-09 to 10-10). **Not built yet; don't build without Ed's go.
 - She enters from the bottom. **A big cauldron at the top**, **six baskets in a row round its base**, one kind each.
 - Coming in with a full bag, her mushrooms **jump out of her into their baskets**.
 - Near a basket, it **lights up and trembles**; **E throws one in**.
+- **Partial ingredients stay in the pot** when she leaves; she can return and finish it (Ed, 2026-10-30, coordinator ruling on PR #1472).
+- **Co-op has shared baskets and one shared pot in the host's treehouse** (Ed, 2026-10-30, coordinator ruling on PR #1472). **Everyone standing in the kitchen when the shared brew completes takes the trip together; witches elsewhere stay normal** (Ed, 2026-10-30, subsequent coordinator ruling on PR #1472).
+- The group is **fixed at the instant the third ingredient goes in**; that same group exits after one second of smoke. Entering or leaving during the smoke changes nothing (coordinator detail ruling, 2026-10-30, PR #1472 comment6512476115).
 - **Three in = a brew, at once** (no use button, no bottle): the cauldron bubbles, colourful bubbles pour out, the room fills with smoke, and a second later she staggers outside and the world is... different.
 - The kitchen travels with the Ent, so brewing works on any island. Rooms visited during the party slow time and add their own music (journey.md).
 
@@ -25,7 +29,8 @@ Backlog (Ed, 2026-10-09 to 10-10). **Not built yet; don't build without Ed's go.
 - **Recipes are the same in every run** (players learn and share them); the game never tells, and keeps **no recipe book**.
 - **Order doesn't matter; repeats are allowed** (Ed): 6 kinds make **56 recipes** (20 all different, 30 a pair plus one, 6 triples).
 - **Every combination is its own effect, unrelated to its parts** (Ed): mushroom colour or shape doesn't hint at the result.
-- **The one-frame rule** (Ed): a single frame must show the game is doing something weird *on purpose*. Proposed fix for the subtle ones: a **trip frame**, a shimmering coloured edge on every trip that shrinks as it wears off.
+- **The one-frame rule** (Ed): a single frame must show the game is doing something weird *on purpose*. The earlier proposed **trip frame** (a shimmering coloured edge that shrinks as it wears off) is superseded by the wobbly-edge ruling below.
+- **First slice: Mirror Floor (BBB)** (Ed, 2026-10-30, coordinator ruling on PR #1472). The cue for the trip's length is **"slight wobbly edges to the screen"**, not the proposed coloured frame.
 - **Build from what's there** (Ed): as many as possible from shaders and parameters already in the game; avoid new systems that bring bugs; take inspiration from bugs found while making the game.
 - Considered and dropped: creature sigils as ingredients, potion bottles, and ingredients with hidden traits.
 
@@ -130,7 +135,5 @@ Visual references: Qualia Research Institute's replications of psychedelic visua
 
 - Assign the 56 trips to recipes; name the six mushrooms.
 - CRT: replace Underwater, or wait for a seventh mushroom?
-- Bag size, and whether the bag survives a knockdown.
-- The trip frame: adopt it for every trip, or fix the subtle ones one by one?
 
 - **The build-cost sort is accepted as it stands** (Ed, 2026-10-11).
