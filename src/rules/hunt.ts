@@ -36,7 +36,7 @@ export function stepHunts(g: Game, t: Tuning): void {
       g.wildEntry.delete(cellKey(c.cell));
       c.hunting = undefined; c.retreat = true; c.retreatFrom = undefined; if (c.fight) c.fight.target = null;
       hunts.delete(id);
-    } else if (c.hunting === undefined || !hunter(c) || c.fleeUntil !== undefined || c.gone || (v && (at[c.hunting][0] !== c.cell[0] || at[c.hunting][1] !== c.cell[1])) || (v && stealthed(v.spells, g.herTime) && Math.hypot(v.body.x - c.x, v.body.z - c.z) > (t.spells.stealth?.range ?? 25))) { // (hidden by Stealth and out of its range: it's lost her)
+    } else if (c.hunting === undefined || !hunter(c) || c.fleeUntil !== undefined || c.gone || (v && (at[c.hunting][0] !== c.cell[0] || at[c.hunting][1] !== c.cell[1])) || (v && stealthed(v.spells, v.time ?? g.herTime) && Math.hypot(v.body.x - c.x, v.body.z - c.z) > (t.spells.stealth?.range ?? 25))) { // (hidden by Stealth and out of its range: it's lost her)
       c.hunting = undefined; hunts.delete(id); // (she's left its area: it loses interest, as before)
     }
   }
@@ -44,7 +44,7 @@ export function stepHunts(g: Game, t: Tuning): void {
   for (let i = 0; i < g.witches.length; i++) {
     const w = g.witches[i];
     if (w.body.mode !== "ground" || w.body.seated || w.body.perch || w.ko) continue; // (up on the treehouse deck: out of reach)
-    if (stealthed(w.spells, g.herTime)) continue; // (her Stealth broom: unseen, no hunt starts; rules/brooms.ts)
+    if (stealthed(w.spells, w.time ?? g.herTime)) continue; // (her Stealth broom: unseen, no hunt starts; rules/brooms.ts)
     const cell = clearableAt(g.party, g.map, w.body.x, w.body.z);
     if (!cell) continue;
     const key = `${cell[0]},${cell[1]}`;
