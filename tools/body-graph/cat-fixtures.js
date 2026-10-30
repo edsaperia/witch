@@ -12,14 +12,14 @@ export const CAT_TARGET_NOTES = {
 };
 export function catCaptureGenome(base) {
   if (!CAT_CAPTURE_IDS.includes(base.id)) throw new Error(`Not a cat fixture: ${base.id}`);
-  const options = base.id === "cat" ? { head: { earRoot: [0, -.25, .45], earAngle: [0, .5], earDimensions: { height: .95, width: 1.15 }, skullY: .9, skullZ: 1.2, jowl: 1.3 } } : {};
+  const options = base.id === "cat" ? { head: { earShape: "triangle", earRoot: [.5, -.22, .28], earAngle: [0, .25], earDimensions: { height: 1.55, width: 1.15 }, skullY: .9, skullZ: 1.2, jowl: 1.3 } } : {};
   const out = felineGraphGenome(base, options);
   if (base.id === "cat") {
     // Yankee cats-3: keep the cub's original skull/cheeks; the broad adult
     // changes made it all head. Ear changes still apply at every level.
     out.levels ??= {};
     const baby = out.levels[0] ?? {};
-    out.levels[0] = { ...baby, head: { ...baby.head, skullY: base.head.skullY ?? 1, skullZ: base.head.skullZ ?? 1, jowl: base.head.jowl ?? (base.head.cheeks ? 1.35 : 1) } };
+    out.levels[0] = { ...baby, head: { ...baby.head, earRoot: [0, -.25, .22], earDimensions: { height: .7, width: .6 }, skullY: base.head.skullY ?? 1, skullZ: base.head.skullZ ?? 1, jowl: base.head.jowl ?? (base.head.cheeks ? 1.35 : 1) } };
   }
   if (base.id === "snowleopard") {
     out.coat.regions = {

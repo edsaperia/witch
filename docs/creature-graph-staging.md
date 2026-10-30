@@ -219,6 +219,25 @@ and fewer larger head/leg spots. These are unscored until cloud review.
 Snow-leopard tail shape/markings, coat colour, feline articulation and the other
 cats' anatomy remain unfinished; no family plateau or completion is claimed.
 
+Cats-4 review (6514498715): art checks passed; sand-cat adult likeness stayed
+2.5/readability 3, while snow-leopard readability reached 4 (likeness stayed 4).
+The sand cat's leaf-shaped ear still appeared as a disc/cheek patch. Under
+6514502302, cats-5 switches only the diagnostic to `head.earShape: "triangle"`:
+straight sides and a pointed tip, with a forward/outward opening plane. Adult
+roots are [.5,-.22,.28], full dimensions 1.55×1.15 head radii, and angle [0,.25]
+adds to the existing outward lean (about 31° total). Cub ears are .7×.6 with
+their own [.0,-.25,.22] roots, and retain the original skull/cheek ratios.
+
+`earSilhouette.test.ts` first failed on all three cats-4 projections. It now
+checks the actual skull ellipsoid and triangle vertices in towards/away/top:
+both tip clearances must be at least 2 art pixels (a conservative Euclidean
+lower bound at the renderer's measured scale), projected tip angles below 80°,
+and sockets inside the skull so detached ears cannot pass. The mask's straight
+edge is tested independently. This geometry gate does not prove visual likeness
+or occlusion by other head features. Request cloud review only after it passes.
+If that next capture gains less than .5 likeness, park the sand cat for Ed's
+review and continue to the remaining cats/families, per the coordinator.
+
 Cloud command: `node tools/body-graph/cats-preview.mjs previews/body-graph/cats-1`.
 It requires a clean tracked checkout, records and verifies its served source
 SHA, and writes one PNG per cat plus `source.json` and `evidence.json`. Set

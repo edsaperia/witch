@@ -5,7 +5,7 @@ import { Model, render, v3, spotty, masks } from "./model3d.js";
 import { faceUp, JAW_FACES } from "./genome/expressions.js";
 import { textureLumps } from "./genome/texture.js";
 import { compileGraph } from "./body-graph/graph.js";
-import { quadrupedTorsoGraph, quadrupedEarSocket, wrappedRosette, regionMarking, rosetteSizing } from "./body-graph/quadruped.js";
+import { quadrupedTorsoGraph, quadrupedEarSocket, triangularEarMask, wrappedRosette, regionMarking, rosetteSizing } from "./body-graph/quadruped.js";
 import { mandiblePart } from "./body-graph/mandibles.js";
 import { elderQuad, grizzle, notch, surfaceFrom, ring, fitRing, frontPts, closed, charm, crown, drawOn, meerkatDress, sentinelHeap } from "./elders.js";
 
@@ -813,9 +813,10 @@ export function quad3d(S, level, frame, st, facing = "towards") {
     // Explicit half-dimensions in head radii decouple a broad short ear from
     // legacy earS/age scaling. Omitted fields retain the existing geometry.
     const long = E === "long", sail = E === "sail", droop = E === "small" ? -.6 : 0, eh = q.earDimensions ? hr * q.earDimensions.height / 2 : hr * .55 * k * (E === "big" ? 1.35 : long ? 2.2 : 1), ew = q.earDimensions ? hr * q.earDimensions.width / 2 : hr * .3 * (E === "big" ? 1.2 : long ? 1.35 : sail ? .8 * k : 1); // sail: a fennec's, as wide as it's tall, flared out
-    const oldDir = v3.norm([droop * .6 - (long ? .3 : .12), 1, side * (sail ? .6 : .3)]), dirE = q.earAngle ? quadrupedEarSocket(H, hr, side, oldDir, q.earRoot, q.earAngle).direction : oldDir, n = v3.norm([.55, .2, side]), across = v3.norm(v3.cross(n, dirE)); // the ear opens forward and out, towards us on the near side
-    m.flat(v3.add(base, v3.mul(dirE, eh)), across, dirE, ew, eh, masks.ear(M.BODY, M.EAR, sail ? M.BODY : M.BODY3), { group: 5 + (side > 0 ? 0 : 20), extra: long });
-    earTips.push({ tip: v3.add(base, v3.mul(dirE, eh * 1.9)), base, h: eh * 2, across, side, dir: dirE, w: ew });
+    const oldDir = v3.norm([droop * .6 - (long ? .3 : .12), 1, side * (sail ? .6 : .3)]), dirE = q.earAngle ? quadrupedEarSocket(H, hr, side, oldDir, q.earRoot, q.earAngle).direction : oldDir, n = v3.norm(q.earShape === "triangle" ? [1, 0, side * .45] : [.55, .2, side]), across = v3.norm(v3.cross(n, dirE)); // the ear opens forward and out, towards us on the near side
+    const triangle = q.earShape === "triangle", mask = triangle ? triangularEarMask : masks.ear;
+    m.flat(v3.add(base, v3.mul(dirE, eh)), across, dirE, ew, eh, mask(M.BODY, M.EAR, sail ? M.BODY : M.BODY3), { group: 5 + (side > 0 ? 0 : 20), extra: long });
+    earTips.push({ tip: v3.add(base, v3.mul(dirE, eh * (triangle ? 2 : 1.9))), base, h: eh * 2, across, side, dir: dirE, w: ew, ...(triangle ? { vertices: [v3.add(base, v3.mul(across, -ew)), v3.add(base, v3.mul(across, ew)), v3.add(base, v3.mul(dirE, eh * 2))] } : {}) });
     if (E === "tuft" && q.plume) { const a0 = v3.add(base, [0, eh * 1.3, side * .02]); m.chain([[...a0, hr * .09], [...v3.add(a0, [-hr * .2, eh * 1.4, side * .05]), hr * .1], [...v3.add(a0, [-hr * .55, eh * 2.6, side * .08]), hr * .06], [...v3.add(a0, [-hr * .95, eh * 3.3, side * .1]), hr * .015]], M.BODY3, { group: 1, extra: true }); m.ell(v3.add(a0, [-hr * .95, eh * 3.35, side * .1]), [hr * .07, hr * .07, hr * .07], M.MAGIC2, { group: 1, extra: true }); } // its ear tufts grown into long black plumes like flames, their tips alight
     else if (E === "tuft") m.seg(v3.add(base, [0, eh * 1.4, side * .02]), v3.add(base, [0, eh * 1.85, side * .04]), hr * .05, hr * .02, M.BODY3, { group: 1 });
   }

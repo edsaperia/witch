@@ -54,6 +54,15 @@ export function quadrupedEarSocket(head, radius, side, direction, root = [0, 0, 
   return { base, direction: v3.norm([a[0], a[1] * cs - a[2] * sn, a[1] * sn + a[2] * cs]) };
 }
 
+// Straight-sided ear, with a broad base and one pointed tip. Unlike the
+// legacy leaf mask this cannot grow a rounded shoulder above its base.
+export const triangularEarMask = (mat, inner, tip) => (s, t) => {
+  const u = (t + 1) / 2, half = 1 - u;
+  if (u < 0 || u > 1 || Math.abs(s) > half) return null;
+  if (u > .86) return tip;
+  return u > .12 && u < .8 && Math.abs(s) < half * .6 ? inner : mat;
+};
+
 // Ring cells follow the elliptical torso around the back and BOTH flanks.
 // A whole number of circumferential cells gives the same pattern at the seam.
 /** @param {{depth:number,width:number,pixelsPerUnit?:number|null}} bounds */
