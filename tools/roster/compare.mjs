@@ -36,6 +36,7 @@ try {
       const night = lightMode === "night";
       const light = night ? st : { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 };
       const { shade } = await import(`${root}/art/lighting.js`);
+      const { spritePixelDiff } = await import("/tools/roster/pixel-diff.js");
       const make = (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
       const rows = [], measurements = [], resolvedRecords = [];
       // Direct existing builder avoids critter's id-only cache aliasing current/proposed.
@@ -58,14 +59,7 @@ try {
           shade({ a: baked.A.getContext("2d"), n: baked.N.getContext("2d"), w: baked.w, h: baked.h }, lit, light, [], [0, 0, baked.w, baked.h]);
           return lit;
         });
-        const sameSize = sprites[0].width === sprites[1].width && sprites[0].height === sprites[1].height;
-        let pixelDiff = null;
-        if (sameSize) {
-          const a = sprites[0].getContext("2d").getImageData(0, 0, sprites[0].width, sprites[0].height).data;
-          const b = sprites[1].getContext("2d").getImageData(0, 0, sprites[1].width, sprites[1].height).data;
-          pixelDiff = 0;
-          for (let i = 0; i < a.length; i += 4) if (a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2] || a[i + 3] !== b[i + 3]) pixelDiff++;
-        }
+        const pixelDiff = spritePixelDiff(...sprites.map(s => s.getContext("2d").getImageData(0, 0, s.width, s.height)));
         measurements.push({ id, pose, facing, frame, level, pixelDiff, current: [sprites[0].width, sprites[0].height], proposed: [sprites[1].width, sprites[1].height] });
         rows.push({ label: `${pose} ${facing} frame ${frame} level ${level}`, sprites });
       }

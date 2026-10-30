@@ -25,6 +25,7 @@ export const ROSTER_PRESETS = {
     reason: "Keep the existing sentinel idle and strengthen natural dark eye patches and back bands.",
     patch: { head: { eyeK: 1.2, eyePatchPx: 2 }, look: { sentinel: { belly: { mat: "BELLY", extent: { along: [0, .8], width: .6, depth: 1 } }, tailTip: { length: .25, mat: "BODY3" } } }, palette: { over: { BODY3: [28, 23, 20], BODY2: [126, 102, 74], BELLY: [241, 229, 202] } } },
     modelCommit: "e4b77ac10557c73b19828efe7c0b98e99b6123d7",
+    legendPatch: { head: { eyePatchPx: 2 }, look: { sentinel: { belly: { mat: "BELLY", extent: { along: [0, .8], width: .6, depth: 1 } }, tailTip: { length: .25, mat: "BODY3" } } } },
     ordinaryLevels: { 0: { head: { eyeK: 1.25 }, coat: { regions: { tail: { tip: { length: .25, mat: "BODY3" } } } } }, 1: { head: { eyeK: 1.25 }, coat: { regions: { tail: { tip: { length: .25, mat: "BODY3" } } } } }, 2: { coat: { regions: { tail: { tip: { length: .25, mat: "BODY3" } } } } } },
     text: "A sandy meerkat with dark eye patches, back bands and an upright lookout pose.",
   },
