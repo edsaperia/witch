@@ -17,14 +17,14 @@ const JAGUAR_REGIONS = {
 export const ROSTER_PRESETS = {
   crocodile: {
     reason: "Flatten the existing long jaw, thicken its existing tapering tail and reveal a pale underside.",
-    patch: { head: { snout: 4.5, snoutD: .55, muzzle: true }, body: { tailK: 1.35 }, coat: { belly: true }, palette: { over: { BELLY: [174, 178, 143] } } },
-    legendPatch: { body: { tailK: 1 } },
+    patch: { head: { snout: 4.5, snoutD: .55, muzzle: true, jawCoat: false }, body: { tailK: 1.65, sprawl: .55 }, coat: { belly: true }, palette: { over: { BELLY: [210, 212, 178] } } },
+    legendPatch: { body: { tailK: 1, sprawl: .3 } },
     text: "A low crocodile with a long flat jaw, pale underside and thick tapering tail.",
   },
   crab: {
     reason: "Make both existing front pincers and the small crab's eight legs readable before its elder stage.",
     patch: {},
-    ordinaryLevels: { 0: { body: { claw: .75, small: .7, legs: .6 } }, 1: { body: { claw: 1.35, small: 1.2, legs: .75 } }, 2: { body: { claw: 2.1, small: 1.7 } } },
+    ordinaryLevels: { 0: { body: { claw: .75, small: .7, legs: .6 } }, 1: { body: { claw: 1.7, small: 1.5, legs: .9 } }, 2: { body: { claw: 2.1, small: 1.7, legs: 1.15 } } },
     text: "A broad-shelled crab with two forward pincers, stalked eyes and eight walking legs.",
   },
   meerkat: {
