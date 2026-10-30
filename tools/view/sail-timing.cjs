@@ -25,7 +25,7 @@ if (!['chart', 'api'].includes(ROUTE)) throw new Error('ROUTE must be chart or a
 const SAIL_SEED = process.env.SAIL_SEED ?? (TRACE || ROUTE === 'api' ? '424242' : null);
 const extra = new URLSearchParams(process.env.EXTRA || '');
 if (TRACE) for (const [k,v] of Object.entries({ seed: '123', world: '0', warmChart: '1', prepChart: '1', ladder: 'auto' })) if (!extra.has(k)) extra.set(k,v);
-const toolKey = key => ({ ...key, knobs: { ...key.knobs, 'tool.route': ROUTE, 'tool.trace': TRACE, 'tool.profile': process.env.PROFILE === '1' } });
+const toolKey = key => ({ ...key, knobs: { ...key.knobs, 'tool.route': ROUTE, 'tool.trace': TRACE, 'tool.probe': TRACE ? 'upload-aggregates-v1' : 'off', 'tool.profile': process.env.PROFILE === '1' } });
 let KEY = null;
 let pw; try { pw = require("playwright"); } catch { pw = require("/opt/node22/lib/node_modules/playwright"); }
 const [outArg = "previews/sail/timing", distArg] = process.argv.slice(2);
@@ -82,7 +82,7 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
       log("sailing to", ISLAND);
       const progs = () => page.evaluate(() => (window.witch.view.renderer.info.programs ?? []).map(p => `${p.name}|${p.cacheKey.length}|${p.cacheKey.slice(-40)}`)).catch(() => []);
       const before = await progs();
-      const beforeSail = await page.evaluate(() => { const s = window.witch.ladder?.state; return { at: performance.now(), quality: s ? { rung: s.rung, mode: s.mode } : null }; });
+      const beforeSail = await page.evaluate(api => { if (api) window.__travelProbe?.reset(); const s = window.witch.ladder?.state; return { at: performance.now(), quality: s ? { rung: s.rung, mode: s.mode } : null }; }, ROUTE === 'api');
       const sail = beforeSail.at; if (ROUTE === 'api') qualityBefore = beforeSail.quality;
       if (ROUTE === 'chart') await page.keyboard.press("Enter");
       else await page.evaluate(([island, seed]) => { window.__travelError = null; void window.witch.sail(island, Number(seed)).then(ok => { if (!ok) window.__travelError = 'API sail reloaded'; }, e => { window.__travelError = String(e); }); }, [ISLAND, SAIL_SEED]);
@@ -120,7 +120,7 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
         const timeline = performance.getEntriesByType('mark').filter(e => e.startTime >= from).map(e => ({ name: e.name, at: Math.round(e.startTime-s0), detail: e.detail }));
         const longTasks = window.__lt.filter(([t]) => t >= from && t < end+after).map(([t,ms]) => ({ at: Math.round(t-s0), ms: Math.round(ms), after: timeline.filter(e => e.at <= t-s0).at(-1)?.name || '' }));
         const probe = window.__travelProbe?.trace;
-        const trace = probe ? { events: probe.events.filter(e => e.at >= from).map(e => ({ ...e, at: Math.round(e.at-s0) })), dropped: probe.dropped, capabilities: probe.capabilities } : undefined;
+        const trace = probe ? { events: probe.events.filter(e => e.at >= from).map(e => ({ ...e, at: Math.round(e.at-s0) })), uploads: Object.values(probe.uploads || {}).map(g => ({ ...g, firstAt: Math.round(g.firstAt-s0), lastAt: Math.round(g.lastAt-s0), longestAt: Math.round(g.longestAt-s0) })), dropped: probe.dropped, capabilities: probe.capabilities } : undefined;
         const quality = (probe?.quality || []).filter(q => q.at >= from).map(q => ({ ...q, at: Math.round(q.at-s0) }));
         return { slices, settleParts: parts, sailMark: Math.round(sailAt - s0), marks: m, chartFrames: sum(from,s0), toDive: sum(s0, dive), diveToEnd: sum(dive, end), settle: sum(end, end + after), tasks, steps, longTasks, timeline, trace, quality, coverage: { longTasks: window.__ltSupported } };
       }, [MARKS, GAP * THR, sail, AFTER, ROUTE === 'api' ? sail : chartOpened]);

@@ -49,3 +49,13 @@ it('summarizes elapsed shader waits separately from callbacks and parallel worke
   expect(summary.shaderReadinessWait).toBe(3000);
   expect(summary.events['worker-callback:art']).toEqual({ count: 2, wallMs: 5, longestMs: 3, workerReportedMs: 500, workerReports: 2, receivedBytesEstimate: 0, cached: 1 });
 });
+it('summarizes upload aggregates by call count and individual maximum, not aggregate wall time', () => {
+  const upload = { method: 'texSubImage2D', count: 30000, wallMs: 30049, longestMs: 50, firstAt: -100, lastAt: 30048, longestAt: 20000, errors: 0 };
+  const run = { ...good(), trace: { events: [], uploads: [upload], dropped: 0 } };
+  expect(checkTravel(run).ok).toBe(true);
+  expect(summarizeTravel(run).events['upload-call:texSubImage2D']).toEqual({ count: 30000, wallMs: 30049, longestMs: 50, workerReportedMs: 0, workerReports: 0, receivedBytesEstimate: 0, cached: 0 });
+  expect(checkTravel({ ...run, trace: { ...run.trace, dropped: 1 } }).ok).toBe(false);
+  for (const change of [{ count: NaN }, { wallMs: Infinity }, { longestMs: 40000 }, { longestAt: -101 }, { errors: -1 }]) {
+    expect(checkTravel({ ...run, trace: { ...run.trace, uploads: [{ ...upload, ...change }] } }).ok).toBe(false);
+  }
+});

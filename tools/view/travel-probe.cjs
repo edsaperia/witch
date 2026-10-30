@@ -1,6 +1,6 @@
 // Opt-in browser instrumentation. No payloads, textures or game objects are retained in the trace.
 function installTravelProbe() {
-  const limit = 6000, trace = { events: [], quality: [], dropped: 0, capabilities: { workerMessages: false, uploadCalls: 0 } };
+  const limit = 6000, trace = { events: [], uploads: Object.create(null), quality: [], dropped: 0, capabilities: { workerMessages: false, uploadCalls: 0 } };
   const add = e => { if (trace.events.length < limit) trace.events.push(e); else trace.dropped++; };
   const bytes = value => {
     const seen = new Set(); let total = 0, visited = 0;
@@ -32,7 +32,16 @@ function installTravelProbe() {
   for (const C of [window.WebGLRenderingContext, window.WebGL2RenderingContext]) if (C) {
     for (const method of ['texImage2D', 'texSubImage2D', 'texImage3D', 'texSubImage3D', 'texStorage2D', 'texStorage3D', 'compressedTexImage2D']) {
       const original = C.prototype[method]; if (typeof original !== 'function' || wrapped.has(original)) continue;
-      const measured = function(...args) { const at = performance.now(); try { return original.apply(this, args); } finally { add({ kind: 'upload-call', method, at, ms: performance.now() - at }); } };
+      const measured = function(...args) {
+        const at = performance.now(); let failed = true;
+        try { const result = original.apply(this, args); failed = false; return result; }
+        finally {
+          const ms = performance.now() - at;
+          const g = trace.uploads[method] ||= { method, count: 0, wallMs: 0, longestMs: 0, firstAt: at, lastAt: at, longestAt: at, errors: 0 };
+          g.count++; g.wallMs += ms; g.lastAt = at; g.errors += failed ? 1 : 0;
+          if (ms > g.longestMs) { g.longestMs = ms; g.longestAt = at; }
+        }
+      };
       wrapped.add(measured); C.prototype[method] = measured; trace.capabilities.uploadCalls++;
     }
   }
@@ -43,6 +52,6 @@ function installTravelProbe() {
     requestAnimationFrame(sample);
   };
   requestAnimationFrame(sample);
-  window.__travelProbe = { trace, reset() { trace.events.length = 0; trace.quality.length = 0; trace.dropped = 0; last = -Infinity; } };
+  window.__travelProbe = { trace, reset() { trace.events.length = 0; for (const method of Object.keys(trace.uploads)) delete trace.uploads[method]; trace.quality.length = 0; trace.dropped = 0; last = -Infinity; } };
 }
 module.exports = { installTravelProbe };

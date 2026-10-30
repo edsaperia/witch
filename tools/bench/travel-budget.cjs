@@ -40,6 +40,12 @@ function checkTravel(run, limits = {}) {
     if (worse) failures.push(`quality fell from rung ${run.qualityBefore.rung} to ${worse.rung} during travel/grace at ${worse.at} ms`);
   }
   if (run.trace?.dropped) failures.push(`trace omitted ${run.trace.dropped} events`);
+  if (run.trace?.uploads !== undefined) {
+    if (!Array.isArray(run.trace.uploads)) failures.push('upload aggregates are invalid');
+    else for (const g of run.trace.uploads) {
+      if (!g || typeof g.method !== 'string' || !Number.isInteger(g.count) || g.count <= 0 || !finite(g.wallMs) || !finite(g.longestMs) || g.longestMs < 0 || g.wallMs < g.longestMs || !finite(g.firstAt) || !finite(g.lastAt) || !finite(g.longestAt) || g.firstAt > g.longestAt || g.longestAt > g.lastAt || !Number.isInteger(g.errors) || g.errors < 0 || g.errors > g.count) failures.push('upload aggregate measurement is invalid');
+    }
+  }
   return { ok: failures.length === 0, limits: L, failures };
 }
 
@@ -51,6 +57,11 @@ function summarizeTravel(run) {
     const key = `${e.kind}:${e.worker || e.method || ''}`, g = groups[key] ||= { count: 0, wallMs: 0, longestMs: 0, workerReportedMs: 0, workerReports: 0, receivedBytesEstimate: 0, cached: 0 };
     g.count++; g.wallMs += e.ms || 0; g.longestMs = Math.max(g.longestMs, e.ms || 0); g.receivedBytesEstimate += e.receivedBytes || 0;
     if (finite(e.workerMs)) { g.workerReports++; g.workerReportedMs += e.workerMs; } g.cached += e.cached ? 1 : 0;
+  }
+  for (const e of Array.isArray(run.trace?.uploads) ? run.trace.uploads : []) {
+    if (!e) continue;
+    const key = `upload-call:${e.method}`, g = groups[key] ||= { count: 0, wallMs: 0, longestMs: 0, workerReportedMs: 0, workerReports: 0, receivedBytesEstimate: 0, cached: 0 };
+    g.count += e.count; g.wallMs += e.wallMs; g.longestMs = Math.max(g.longestMs, e.longestMs);
   }
   const detail = name => [...(run.timeline || [])].reverse().find(e => e.name === name)?.detail ?? null;
   return { preparationToGame: span('witch:prep','witch:game'), mapPrep: detail('witch:map-prep-source'), hydration: detail('witch:map-hydrated'), shaderReadinessWait: span('witch:prep-compile0','witch:prep-compiled'), programPreparation: span('witch:prep-compiled','witch:prep-programs'), handoffAfterReady: span('chart:ready','chart:flown'), arrival: m['game:arrived'] ?? null, events: groups };
