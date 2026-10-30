@@ -175,7 +175,7 @@ function lgForm(S, { breath }) {
     if (over.nest) lgAddNest(m, [cx, G + unit * .08, 0], Math.max(rz, rx * .6) * 1.05, unit * .08, r);
     m.clipY = G;
     let scale = s, sp;
-    for (let attempt = 0; attempt < 4; attempt++) {
+    for (let attempt = 0; attempt < 2; attempt++) {
       const res = render(m, { scale, facing: o.facing });
       res.sp.origin = res.project([cx, G, 0]); // the ground under its middle, on the sprite
       res.sp.groundLine = G;

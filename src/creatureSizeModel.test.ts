@@ -1,7 +1,7 @@
 import {expect,it} from "vitest";
 import {SIZE_CLASSES,SIZE_CLASS_BY_ID,sizeMultiplier} from "../art/genome/size-ranks.js";
 import {GENOME_BY_ID} from "../art/genome/index.js";
-import {standingWitchHeight,occupiedHeight} from "../art/creature-size.js";
+import {standingWitchHeight,occupiedHeight,sizePixelRange} from "../art/creature-size.js";
 import {critter} from "../art/creatures.js";
 import {defaultStyle} from "../art/generator.js";
 import gameStyle from "../config/style.json";
@@ -24,6 +24,16 @@ it("keeps the accepted bands, full-presence legend ratio and hard real-size pair
 });
 it.each(["woodlouse","fox","tiger","cat","elephant","rhino"])("%s uses the final age target in both game facings",id=>{
   for(const level of [0,1,2,3])for(const facing of ["towards","away"]){
-    const sp=critter(id,level,0,st,facing),target=level===3?Math.ceil(Math.round(43*sizeMultiplier(id,2))*1.75):Math.round(43*sizeMultiplier(id,level));expect(occupiedHeight(sp),`${id}/${level}/${facing}`).toBe(target);
+    const sp=critter(id,level,0,st,facing),range=sizePixelRange(id,level,43),height=occupiedHeight(sp);
+    expect(height,`${id}/${level}/${facing}`).toBeGreaterThanOrEqual(range[0]);expect(height).toBeLessThanOrEqual(range[1]);
   }
 },60000);
+it("keeps every tolerance interval inside hard growth, legend and ordering bounds",()=>{
+ const ids=Object.keys(GENOME_BY_ID);
+ for(const id of ids){
+  for(let level=0;level<4;level++){const [lo,hi]=sizePixelRange(id,level,43);expect(lo).toBeLessThanOrEqual(hi);if(level)expect(lo).toBeGreaterThan(sizePixelRange(id,level-1,43)[1]);}
+  expect(sizePixelRange(id,3,43)[0]).toBeGreaterThanOrEqual(sizePixelRange(id,2,43)[1]*1.75);
+ }
+ for(const a of ids)for(const b of ids)if(SIZE_CLASS_BY_ID[a]>=SIZE_CLASS_BY_ID[b]+2)for(let level=0;level<3;level++)expect(sizePixelRange(a,level,43)[0]).toBeGreaterThan(sizePixelRange(b,level,43)[1]);
+ for(const[a,b]of[['tiger','cat'],['wolf','fox'],['fox','stoat'],['elephant','rhino']])for(let level=0;level<3;level++)expect(sizePixelRange(a,level,43)[0]).toBeGreaterThan(sizePixelRange(b,level,43)[1]);
+});

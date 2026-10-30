@@ -138,7 +138,7 @@ export function projectedInterval(q, axis) {
 // Renders a model to a Sprite `height` art pixels tall (measured over the parts not marked extra).
 // With `scale` (pixels per model unit) instead, several models share one scale.
 // With `measure`, return scale and allocated dimensions without rasterising: { s, width, height }.
-export function render(model, { height, scale, facing = "towards", yaw = YAW[facing] ?? YAW.towards, pitch = PITCH, lineGap = .12, measure = false, keepDepth = false, projected = false, samplePhaseY = 0 } = {}) {
+export function render(model, { height, scale, facing = "towards", yaw = YAW[facing] ?? YAW.towards, pitch = PITCH, lineGap = .12, measure = false, keepDepth = false, projected = false, samplePhaseY = 0, occupiedOnly = false, probePixels = null } = {}) {
   const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), spp = Math.sin(pitch);
   // model.atScale(pxPerUnit): parts that must be sized in pixels (an expression's face: genome/expressions.js), added once the scale is known
   if (model.atScale && !measure) { const f = model.atScale; model.atScale = null; f(scale ?? render(model, { height, facing, yaw, pitch, lineGap, measure: true, projected }).s); }
@@ -190,7 +190,16 @@ export function render(model, { height, scale, facing = "towards", yaw = YAW[fac
   });
   const eps = .25 / s;
   const smin = (a, b) => { const h = Math.max(k - Math.abs(a - b), 0) / k; return Math.min(a, b) - h * h * k * .25; };
-  for (let iy = 0; iy < H; iy++) for (let ix = 0; ix < W; ix++) {
+  let occupiedTop=-1,occupiedBottom=-1;
+  const queries=occupiedOnly&&probePixels?probePixels(W,H):[];
+  for (let row = 0; row < (occupiedOnly ? H*2+queries.length : H); row++) {
+    if(occupiedOnly && occupiedTop>=0 && occupiedBottom>=0 && row<H*2){if(!queries.length)break;row=H*2;}
+    if(occupiedOnly && row<H && occupiedTop>=0)continue;
+    const query=occupiedOnly&&row>=H*2?queries[row-H*2]:null;
+    const iy=query?query[1]-Math.max(0,H-1-occupiedBottom):occupiedOnly&&row>=H?H*2-row-1:row;
+    if(iy<0||iy>=H)continue;
+    for (let ix = query?query[0]:0; ix < (query?query[0]+1:W); ix++) {
+    if(ix<0||ix>=W)continue;
     const cand = tiles[Math.floor(iy / T) * TW + Math.floor(ix / T)];
     if (!cand.length) continue;
     const sx = X0 + (ix + .5 - 1) / s, su = U1 - (iy + .5) / s;
@@ -246,6 +255,13 @@ export function render(model, { height, scale, facing = "towards", yaw = YAW[fac
     if (!hitN || !hitMat) continue;
     const i = iy * W + ix; depth[i] = hitT; grp[i] = hitG;
     sp.px(ix, iy, hitMat, dot(hitN, R), -dot(hitN, U), dot(hitN, B));
+    if(occupiedOnly){if(!query){if(row<H)occupiedTop=iy;else occupiedBottom=iy;}break;}
+    }
+  }
+  if(occupiedOnly){
+    const drop=Math.max(0,H-1-occupiedBottom);
+    if(drop){for(let y=H-1;y>=0;y--)for(let x=0;x<W;x++)sp.m[y*W+x]=y>=drop?sp.m[(y-drop)*W+x]:0;}
+    return {s,sp,occupiedHeight:occupiedBottom>=occupiedTop&&occupiedTop>=0?occupiedBottom-occupiedTop+1:0};
   }
   // interior lines: where a nearer group stands in front of a clearly further one
   const lines = [];

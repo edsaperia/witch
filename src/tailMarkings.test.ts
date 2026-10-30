@@ -12,9 +12,9 @@ const bent=()=>new Model().chain([[0,0,0,.2],[-1,0,0,.2],[-1,1,0,.1]],M.BODY,{pa
 describe("optional tail region painter",()=>{
   it.each([
     // Combined age-size/approved roster baselines (6520542543/6520690688).
-    ["raccoon","b5a4467f4e30bb78ac2292c36d7c656eb7fa8d01167acdbbce74d05a024f2349"],
-    ["stoat","c0509d65e5c60d3d97302e09c0395006294c1464ba3da81955567b173ec76b34"],
-    ["jaguar","f1084b3e82b3083b95fbabe5f186100320627f7cc3e5ae08bf172649fe2c8786"],
+    ["raccoon","275d162d7a02d892c6017c20ec64d5c0ca68eadcbec73b04d8a3a0d1122d3759"],
+    ["stoat","68f49f0a85916ba65f5ffc6d53d64541d18b7ebe0a2ed2d3e1cc89e0dc2d11a6"],
+    ["jaguar","67c854bb29f1305ec035956460f489b4a0c64f47f557befb2ddf4e76f9454b52"],
   ])("pins projected-fit %s material and normal bytes with the region absent",(id,expected)=>{
     const hash=createHash("sha256");
     for(const facing of ["towards","away"]){const sp=critter(id,1,0,defaultStyle(),facing);hash.update(JSON.stringify([sp.w,sp.h]));for(const bytes of [sp.m,sp.n])hash.update(Buffer.from(bytes.buffer,bytes.byteOffset,bytes.byteLength));}

@@ -107,7 +107,7 @@ export function napForm(S, { frame = 0 } = {}) {
     // Lying down can widen the model into the camera's vertical projection
     // (especially a snail's shell). Keep the standing visible age budget after
     // deformation and breathing, using native rays rather than resampling art.
-    for (let attempt = 0; attempt < 4; attempt++) {
+    for (let attempt = 0; attempt < 2; attempt++) {
       const res = render(m, { scale, facing: o.facing });
       res.sp.origin = res.project([cx, G, cz]);
       res.sp.groundLine = G;
@@ -127,6 +127,10 @@ function crop(sp) {
   let x0 = sp.w, x1 = -1, y0 = sp.h, y1 = -1;
   for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
   if (x1 < 0) return sp;
+  // Cropping must retain enough native top margin to keep the actual ground
+  // anchor in the lower half. Do not move the world-space anchor to satisfy
+  // the crop: a low curled torso can straddle its projected ground centre.
+  if (sp.origin) y0 = Math.max(0, Math.min(y0, Math.floor(2 * sp.origin[1] - y1 - 1)));
   const W = x1 - x0 + 1, H = y1 - y0 + 1, c = new sp.constructor(W, H);
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = (y + y0) * sp.w + x + x0, j = y * W + x; c.m[j] = sp.m[i]; c.g[j] = sp.g[i]; for (let k = 0; k < 3; k++) c.n[j * 3 + k] = sp.n[i * 3 + k]; }
   for (const k of Object.keys(sp)) if (!(k in c) && !["m", "g", "n", "w", "h"].includes(k)) c[k] = sp[k];

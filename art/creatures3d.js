@@ -99,12 +99,25 @@ let VIEW = null;
 export function withView(view, f) { const was = VIEW; VIEW = view; try { return f(); } finally { VIEW = was; } }
 export const viewKey = () => VIEW ? `view${VIEW.yaw ?? ""},${VIEW.pitch ?? ""}` : "";
 const drawForm = (m, o, S, level, st) => {
+  const dressed = m.sizeBody ? { parts: m.parts, flats: m.flats, atScale: m.atScale, part: m.part, values: m.parts.map(p => ({...p})) } : null;
+  if (dressed) { m.parts = m.sizeBody.parts.slice(); m.flats = m.sizeBody.flats.slice(); }
   o = creatureSizeOptions(m, o, S, level, st);
   const decorate = sp => { const n = S.sizes.motes?.[level]; if (n) glowMotes(sp, S.plan === "owl" ? 31 : S.id.length * (S.q ? 7919 : 131), n, S.q && S.id === "snowleopard"); };
   const fitted = fitOccupiedCreature(m, o, S, level, st, decorate);
+  if (dressed) {
+    for (let i=0;i<dressed.parts.length;i++) Object.assign(dressed.parts[i],dressed.values[i]);
+    m.parts=dressed.parts; m.flats=dressed.flats; m.atScale=dressed.atScale; m.part=dressed.part;
+    fitted.sprite=null; // gear keeps the calibrated body scale, then draws on top
+  }
   o = VIEW ? { ...fitted.options, ...VIEW } : fitted.options;
-  if (FORM) return FORM(m, o, S, level);
-  const sp = render(m, o).sp; decorate(sp); return sp;
+  if (FORM) {
+    // Pose transforms move the already-built face and its anchors together.
+    // A restored dressed model must apply pixel-sized face geometry first.
+    if (m.atScale) { const atScale=m.atScale; m.atScale=null; atScale(o.scale); }
+    return FORM(m, o, S, level);
+  }
+  if (fitted.sprite && !VIEW) { fitted.sprite.sizeFit = fitted.stats; return fitted.sprite; }
+  const sp = render(m, o).sp; decorate(sp); sp.sizeFit = { ...fitted.stats, rasters: fitted.stats.rasters + 1 }; return sp;
 };
 export function withGear(gear, f) { const was = GEAR; GEAR = gear; try { return f(); } finally { GEAR = was; } }
 // A little party shoe (Ed, 2026-10-05: "yes, little party shoes"): on a foot { c, r, group, fit } in a style
@@ -131,8 +144,16 @@ export function shoe3d(m, f, style, o = {}) {
 const star = (s, t) => { const a = Math.atan2(t, s), r = Math.hypot(s, t); return r < .55 + .4 * Math.pow(Math.abs(Math.cos(a * 2.5 + Math.PI / 2)), 3); };
 const heart = (s, t) => { const x = s * 1.2, y = -t * 1.2 + .25; return Math.pow(x * x + y * y - .6, 3) - x * x * y * y * y < 0; };
 function gearUp(m) {
-  if (TEX) textureLumps(m, TEX.S, TEX.level, TEX.st); // its body's lumps (before anything's added to it)
+  if (TEX && TEX.st?.texture === 0) {
+    // Calibrate against the same textured anatomy, then draw the requested
+    // smooth surface. Toggling texture must not choose another body scale.
+    const old = m.parts.map(p => ({p,had:Object.hasOwn(p,"rough"),rough:p.rough}));
+    textureLumps(m,TEX.S,TEX.level,{...TEX.st,texture:1});
+    m.sizeBody = {parts:m.parts.map(p=>({...p})),flats:m.flats.slice()};
+    for (const {p,had,rough} of old) { if(had)p.rough=rough;else delete p.rough; }
+  } else if (TEX) textureLumps(m, TEX.S, TEX.level, TEX.st); // its body's lumps (before anything's added to it)
   const g = GEAR, A = m.anchors; if (!g) return;
+  m.sizeBody ||= {parts:m.parts.slice(),flats:m.flats.slice()};
   faceUp(m, g.face, g.faceStyle); // its expression, part of its face (genome/expressions.js)
   const was = m.part; m.part = "head"; // the collar, hat and glasses ride on the head (the live rig's head piece: genome/parts.js)
   const head = A.head, hr = head ? Math.max(...head.r) : .2;
@@ -1945,10 +1966,11 @@ export function hydra3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, m = new Model(), ph = frame ? .6 : 0, heads = (S.hydra?.heads || [1, 3, 5, 7])[level], crest = !!S.hydra?.crest, pts = [];
   for (let i = 0; i <= 10; i++) { const t = i / 10; pts.push([-.75 + t * .95, .07, Math.sin(t * Math.PI * 1.6 + ph) * .2 * (1 - t * .4), .035 + .05 * Math.sin(Math.min(1, t * 1.3) * Math.PI / 2)]); }
   m.chain(pts, M.BODY, { paint: p => p[1] < .06 ? M.BELLY : spotty([p[0] * 1.5, p[1], p[2]], 12, .28) ? M.BODY3 : undefined });
-  const root = pts[10].slice(0, 3), hr = .058; const eyes = []; // every head's eyes (the face's anchors: each head shuts its eyes asleep, frowns angry)
+  const root = pts[10].slice(0, 3), hr = .058; const eyes = [], faces = []; // each head needs its own local face axes
   // a serpent's head at `at` pointing along `dir` (mostly forward and towards us, a little down): skull, long snout, lower jaw
   // (open by `open`, its mouth dark, two fangs), a glinting eye each side, a crest of spines and side frills if draconic
   const head = (at, dir, h, open, group) => {
+    const localEyes = [];
     const d = v3.norm(dir), side = v3.norm(v3.cross(d, [0, 1, 0])), up = v3.norm(v3.cross(side, d));
     m.ell(at, [h * 1.05, h * .72, h * .8], M.BODY, { dir: d, group, paint: p => v3.dot(v3.sub(p, at), up) > h * .45 ? M.BODY3 : undefined }); // its brow darker
     const sn = v3.add(at, v3.add(v3.mul(d, h * 1.5), v3.mul(up, -h * .15)));
@@ -1958,7 +1980,8 @@ export function hydra3d(S, level, frame, st, facing = "towards") {
     if (open > .1) { m.ell(v3.lerp(sn, jc, .5), [h * .75, h * .2, h * .38], M.NOSE, { dir: v3.norm(v3.add(d, jd)), group });
       for (const s2 of [-1, 1]) { const f = v3.add(sn, v3.add(v3.mul(d, h * .7), v3.mul(side, s2 * h * .3))); m.seg(f, v3.add(f, v3.mul(up, -h * .35)), h * .07, h * .02, M.ACCENT, { group }); } }
     for (const s2 of [-1, 1]) { const e = v3.add(at, v3.add(v3.add(v3.mul(d, h * .35), v3.mul(up, h * .48)), v3.mul(side, s2 * h * .55)));
-      m.ell(e, [h * .17, h * .13, h * .17], M.PUPIL, { group: 1 }); eyes.push(e); m.ell(v3.add(e, [h * .05, h * .06, h * .09]), [h * .055, h * .055, h * .055], M.GLINT, { group: 1 }); } // a dark slit eye, a glint in it (no glow, its legend's either: ART-GUIDE §0c)
+      m.ell(e, [h * .17, h * .13, h * .17], M.PUPIL, { group: 1 }); eyes.push(e); localEyes.push(e); m.ell(v3.add(e, [h * .05, h * .06, h * .09]), [h * .055, h * .055, h * .055], M.GLINT, { group: 1 }); } // a dark slit eye, a glint in it (no glow, its legend's either: ART-GUIDE §0c)
+    faces.push({head:{c:at,r:[h,h*.8,h*.8],group},eyes:{pts:localEyes,size:h*.17}});
     m.anchors.head ||= { c: at, r: [h, h * .8, h * .8] };
     if (crest) { for (let k = 0; k < 4; k++) { const b = v3.add(at, v3.add(v3.mul(d, -h * (.1 + k * .3)), v3.mul(up, h * .7))); m.chain([[...b, h * .16], [...v3.add(b, v3.add(v3.mul(up, h * (1.2 - k * .15)), v3.mul(d, -h * .6))), h * .02]], M.BODY3, { group, extra: true }); }
       for (const s2 of [-1, 1]) m.flat(v3.add(at, v3.add(v3.mul(side, s2 * h * 1.1), v3.mul(d, -h * .45))), v3.norm(v3.add(v3.mul(side, s2), v3.mul(d, -.6))), up, h * .85, h * 1.1, masks.ear(M.BODY2, M.BODY3, M.BODY3), { group }); }
@@ -1984,6 +2007,7 @@ export function hydra3d(S, level, frame, st, facing = "towards") {
   }
   m.rig = { spine: pts.map(p => p.slice()), head: main, hr };
   m.anchors.eyes = { pts: eyes, size: hr * (legend ? 1.25 : 1.1) * .17 };
+  m.anchors.faces = faces;
   m.anchors.feet.push({ c: v3.add(pts[0].slice(0, 3), [-.02, -.01, 0]), r: .06, group: 3, tail: true }); // no feet: a tiny shoe on the tail tip
   m.anchors.neck = { c: v3.lerp(root, main, .3), r: .06, dir: v3.norm(v3.sub(main, root)) };
   m.part = "body";

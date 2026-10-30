@@ -96,7 +96,7 @@ const SPRITE_CHECKS = async ({ names, only, candidate }) => {
   const stats = sp => { let n = 0, bottom = 0; for (let i = 0; i < sp.m.length; i++) if (sp.m[i]) n++; for (let x = 0; x < sp.w; x++) if (sp.m[(sp.h - 1) * sp.w + x]) bottom++; const g = sp.anchors?.ground; if (!bottom && g && g[1] >= sp.h * 0.5 && g[1] <= sp.h + 1 && g[0] >= 0 && g[0] <= sp.w) bottom = 1; return { n, bottom, w: sp.w, h: sp.h }; };
   const pixels = f => { let n = 0; for (let i = 0; i < f.atCore.length; i++) if (f.atCore[i] <= 1) n++; return n; };
   task("species-sprites", async () => {
-    const { standingWitchHeight, occupiedHeight } = await import("/art/creature-size.js"), { SIZE_CLASS_BY_ID, sizeTargetPixels } = await import("/art/genome/size-ranks.js");
+    const { standingWitchHeight, occupiedHeight, sizePixelRange } = await import("/art/creature-size.js"), { SIZE_CLASS_BY_ID, sizeTargetPixels } = await import("/art/genome/size-ranks.js");
     const witch = standingWitchHeight(st), rankedHeights = new Map();
     for (const S of SPECIES) {
     const { connectivityRegression } = await import("/art/genome/connectivity.js");
@@ -113,7 +113,8 @@ const SPRITE_CHECKS = async ({ names, only, candidate }) => {
     // enforce rank-positioned age bands and full occupied decorative presence.
     const full = [0,1,2,3].map(level => occupiedHeight(G.critter(S.id,level,0,st))), target = [0,1,2,3].map(level => sizeTargetPixels(S.id,level,witch));
     rankedHeights.set(S.id,full);
-    res.push({what:`${S.id}: rank-positioned occupied age bands against standing witch ${witch}px`,good:full.every((h,l)=>h===target[l]),info:`target ${target.join("/")}; occupied ${full.join("/")}`});
+    // 6523246311: ±1px only inside bounds that retain bands and hard ordering.
+    res.push({what:`${S.id}: rank-positioned occupied age bands against standing witch ${witch}px (at most ±1px)`,good:full.every((h,l)=>{const [lo,hi]=sizePixelRange(S.id,l,witch);return h>=lo&&h<=hi;}),info:`target ${target.join("/")}; occupied ${full.join("/")}`});
     res.push({what:`${S.id}: strict occupied growth and legend full presence at least 1.75x adult`,good:full[0]<full[1]&&full[1]<full[2]&&full[2]<full[3]&&full[3]>=full[2]*1.75,info:full.join(" < ")});
   }
     const bad=[],clearPairs=[["tiger","cat"],["wolf","fox"],["fox","stoat"],["elephant","rhino"]];
