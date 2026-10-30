@@ -10,18 +10,18 @@ const ROSTER_SNOW_REGIONS = {
 const COOL_WHITE = { hue: .59, sat: .025, over: { BODY3: [113, 126, 143], BODY2: [168, 181, 196], BODY: [225, 231, 237], BODYL: [243, 246, 249], BELLY: [239, 243, 247] } };
 export const ROSTER_PRESETS = {
   jaguar: {
-    reason: "Review's tawny jaguar target: reveal its existing dark rosettes with golden coat paint and a pale underside.",
-    patch: { palette: { hue: .105, sat: .62, val: .77, belly: [ .11, .13, .94 ], over: { BODY3: [36, 29, 23], BODY2: [143, 100, 49], BODYL: [235, 187, 105] } }, head: { muzzle: true }, coat: { belly: true } },
-    text: "A stocky golden jaguar with dark rosettes, a broad head and a thick tail.",
+    reason: "Retain the real melanistic jaguar: black-brown coat with sheened ghost rosettes and a readable muzzle.",
+    patch: { palette: { hue: .075, sat: .2, val: .25, belly: [ .08, .18, .38 ], over: { BODY3: [27, 23, 21], BODY2: [43, 37, 33], BODYL: [90, 79, 67] } }, head: { muzzle: true }, coat: { belly: true } },
+    text: "A stocky black-brown jaguar with ghost rosettes, a broad head and a thick tail.",
   },
   polarbear: {
     reason: "Cool white fur and blue-grey coat shadows; keep the existing long neck and small head.",
-    patch: { palette: COOL_WHITE },
+    patch: { palette: { over: { BODY3: [129, 138, 145], BODY2: [185, 190, 192], BODY: [244, 241, 233], BODYL: [250, 248, 242], BELLY: [244, 241, 233] } } },
     text: "A white bear with a long neck, narrow head and broad paws.",
   },
   unicorn: {
     reason: "White coat with cool shadows; retain its existing horn and legend features.",
-    patch: { palette: COOL_WHITE },
+    patch: { palette: { over: { BODY: [235, 238, 242], BODYL: [248, 249, 251] } } },
     text: "A white woodland unicorn with a spiralling horn.",
   },
   beetle: {
@@ -41,14 +41,15 @@ export const ROSTER_PRESETS = {
   bear: {
     reason: "A black bear has no grizzly shoulder hump; retain its dark coat and bear body.",
     reference: "https://www.nps.gov/articles/bear-identification.htm",
-    patch: { body: { humpK: 0, front: 1 }, palette: { hue: .075, sat: .22, val: .28, over: { BODYL: [100, 85, 74], BODY2: [69, 58, 51], BELLY: [151, 119, 87] } } },
+    patch: { body: { humpK: 0, front: 1 }, head: { face: "dark", muzzle: true, jawCoat: false }, palette: { hue: .075, sat: .22, val: .28, over: { BODYL: [100, 85, 74], BODY2: [85, 70, 60], BELLY: [151, 119, 87] } } },
+    legendPatch: { head: { face: "dark", muzzle: true, jawCoat: false } },
     ordinaryLevels: { 0: { body: { humpK: 0, front: 1 } }, 1: { body: { humpK: 0, front: 1 } }, 2: { body: { humpK: 0, front: 1 } } },
     text: "A dark forest bear with a straight back, prominent ears and a pale muzzle.",
   },
   arcticfox: {
     reason: "Short ears and a compact winter body distinguish this fox naturally; reduce the blue cast.",
     reference: "https://www.adfg.alaska.gov/index.cfm?adfg=arcticfox.main",
-    patch: { palette: COOL_WHITE, parts: { ears: { kind: "round", size: .65 } } },
+    patch: { palette: { ...COOL_WHITE, over: { ...COOL_WHITE.over, BODY3: [90, 105, 126], BODY2: [145, 157, 174], BELLY: [245, 241, 230] } }, parts: { ears: { kind: "round", size: .65 } } },
     ordinaryLevels: { 0: { parts: { ears: { kind: "round", size: .65 } } }, 1: { parts: { ears: { kind: "round", size: .65 } } }, 2: { parts: { ears: { kind: "round", size: .65 } } } },
     text: "A compact white winter fox with short rounded ears and a dense brush tail.",
   },
