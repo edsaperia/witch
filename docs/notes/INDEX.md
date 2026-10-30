@@ -194,6 +194,8 @@ says what each note covers.
 ## [Performance](performance.md)
 
 - Ordinary-play scenery stalls
+- Travel evidence and budgets
+- Cached bare sigils
 - The sail's terrain relocation
 - The View's build in slices
 - The start's shaders
