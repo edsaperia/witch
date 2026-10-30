@@ -390,7 +390,7 @@ export interface Tuning {
   /** Faint rings of moonlight on the crowns, seen from the treetops (render/lightRings.ts; Ed, 2026-10-07). */
   /** The loading mist over the areas whose trees aren't drawn yet, rolling back out from the treehouse as each type lands
    *  (render/loadingMist.ts, render/loadingFront.ts; Ed, 2026-10-24). */
-  loadingMist?: import("../render/loadingFront").LoadingMistTuning;
+  loadingMist?: { on: boolean; layers: number; height: number; density: number; glow: number; speed: number; cap: number; soft: number; size: number; sea: number };
   lightRings?: { on: boolean; strength: number; radius: number; count: number; spacing: number; share: number; above: number; speed: number; plane: number; glory: number; gloryStrength: number; fadeNear: number; fadeFar: number };
   /** The soundsystems' sky sigils (render/hologram.ts; Ed, 2026-10-08): in place of their laser shows. */
   holograms: { on: boolean; size: number; lift: number; glyph: number; cone: number; powerUp: number; collapse: number; turn: number; bob: number; fadeFar: number };

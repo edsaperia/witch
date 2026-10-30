@@ -19,6 +19,7 @@ const TEXT = ["#studio-panel", ".corner-panel", ".legend-panel", ".boot-pop", ".
 const STATION_TYPE = "clamp(15px, 1.45vw, 26px)";
 
 export interface SettingsPageHost {
+  mutate?: (label: string, action: () => void) => void;
   input: Input; shake: ScreenShake; ladder: QualityLadder; freeze: Freeze;
   /** the context's suspend or resume (Sound.freeze): muted in the background, and while paused as ever */
   audio(on: boolean): void;
@@ -66,7 +67,10 @@ export class SettingsPage {
   }
 
   /** New settings: saved, and on to everything at once. */
-  set(s: PlayerSettings): void { setCurrentSettings(s); this.live(currentSettings()); }
+  set(s: PlayerSettings): void {
+    const action = () => { setCurrentSettings(s); this.live(currentSettings()); };
+    if (this.host.mutate) this.host.mutate("player settings", action); else action();
+  }
 
   /** Opened from the pause page (its code loaded the first time). */
   show(): void {

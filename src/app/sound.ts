@@ -19,6 +19,7 @@ import type { Game } from "../rules/game";
 import type { Tuning } from "../rules/tuning";
 import type { PlaytestLog } from "../platform/playtestLog";
 import type { MusicLab } from "./musicLab";
+import { logCaughtError } from "../platform/caughtError";
 
 export class Sound {
   audio: AudioContext | null = null;
@@ -98,7 +99,7 @@ export class Sound {
 
   /** A first press (the creator's): the context, resumed, the sound effects, and the music built (silent till play starts:
    *  Ed, 2026-10-14, its making off play's first frame, where his logs had it at a second). */
-  wake(): void { try { this.build("wake"); } catch { /* no sound yet */ } }
+  wake(): void { try { this.build("wake"); } catch (e) { logCaughtError(e, "sound wake"); } }
 
   /** The context, the music and the sound effects, as far as they're wanted and not made yet; what each took goes in the
    *  playtest log when it's slow (`?audio` timing for Ed's laptop, 2026-10-14). */
@@ -125,7 +126,7 @@ export class Sound {
 
   /** Play starts: the context, the music and the sound effects. */
   start(): void {
-    try { this.build("start"); } catch { /* no sound yet anyway */ }
+    try { this.build("start"); } catch (e) { logCaughtError(e, "sound start"); }
     if (!this.begun) { this.begun = true; this.valve.begin(performance.now() / 1000); } // (the safety valve lets the start pass: shed.ts)
   }
   private begun = false;
@@ -149,7 +150,7 @@ export class Sound {
         if (what === "sfx-nonfinite" && this.sfx) { this.sfx.dispose(); this.sfx = null; this.sfxCues = null; this.ensureSfx(); }
       },
     );
-    setInterval(() => { try { watchdog.check(); } catch { /* never let the watchdog itself stop anything */ } }, 1000);
+    setInterval(() => { try { watchdog.check(); } catch (e) { logCaughtError(e, "audio watchdog"); } }, 1000);
     const r2 = (x: number) => Math.round(x * 100) / 100;
     playtest().audioState = () => ({ state: this.audio?.state ?? "none", volume: this.music ? r2((this.music.output as GainNode).gain.value) : 0, distort: r2(this.lastMix?.distort ?? 0), distance: Math.round(Math.min(9999, this.lastMix?.distance ?? 9999)), mends: watchdog.mends.length, shed: this.valve.level, ...(this.music ? { gap: r2(this.music.stats.gap), resyncs: this.music.stats.resyncs, late: this.music.stats.late, ahead: r2(this.music.stats.ahead ?? 0) } : {}), ...(this.music?.ahead ? { drawn: this.music.ahead.drawing, bars: this.music.ahead.stats.rendered, barsLate: this.music.ahead.stats.late, barsDropped: this.music.ahead.stats.dropped, beatShifts: this.beatShifts, beatShifted: r2(this.beatShifted) } : {}) }); // (drawn ahead: the bars, docs/notes/music.md "Music ahead")
   }
