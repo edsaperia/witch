@@ -1,0 +1,35 @@
+const { chromium } = require("playwright"), path = require("path");
+const out = process.argv[2]; const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000).toFixed(0)} s]`, ...a);
+(async () => {
+  const b = await chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
+  const errs = [];
+  const mk = async n => { const c = await b.newContext({ viewport: { width: 960, height: 540 } }); const p = await c.newPage(); p.on("console", m => { if (m.type() === "error") errs.push(`${n} console.error ${m.text()}`); }); p.on("pageerror", e => errs.push(`${n} pageerror ${e.message}`)); p.on("requestfailed", r => errs.push(`${n} requestfailed ${r.url()} ${r.failure()?.errorText}`)); return p; };
+  // ordinary entry first, on an idle machine
+  const s = await mk("solo"); let ts = Date.now();
+  await s.goto("http://127.0.0.1:4178/?seed=123&quick=1");
+  const sok = await s.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 300000, polling: 500 }).then(() => true).catch(() => false);
+  log("ordinary entry ready", sok, (Date.now() - ts) / 1000, "s", await s.evaluate(() => document.getElementById("version")?.textContent));
+  await s.screenshot({ path: path.join(out, "ordinary-entry.png") }); await s.context().close();
+  for (const tryN of [1, 2]) {
+  const h = await mk("host");
+  await h.goto("http://127.0.0.1:4178/online/online.html?online=host&relay=ws%3A%2F%2Flocalhost%3A8787&seed=123&quick=1");
+  await h.waitForFunction(() => window.witchOnline?.ready && !document.getElementById("invite").hidden, null, { timeout: 240000, polling: 500 });
+  const g = await mk("guest"); ts = Date.now();
+  await g.goto(await h.evaluate(() => document.getElementById("invite").href));
+  const gok = await g.waitForFunction(() => window.witchOnline?.ready, null, { timeout: 300000, polling: 500 }).then(() => true).catch(() => false);
+  log("guest ready", gok, (Date.now() - ts) / 1000);
+  if (!gok) { log("try", tryN, "no guest"); await h.context().close(); await g.context().close(); continue; }
+  await g.screenshot({ path: path.join(out, `hl${tryN}-a-guest-before-host-leaves.png`) });
+  await h.click("#leave"); ts = Date.now();
+  const back = await g.waitForFunction(() => !location.pathname.includes("/online/"), null, { timeout: 60000, polling: 200 }).then(() => true).catch(() => false);
+  log("guest navigated home", back, (Date.now() - ts) / 1000, "s", g.url());
+  await h.context().close(); // the host has left; free its CPU
+  const solo = await g.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 420000, polling: 1000 }).then(() => true).catch(() => false);
+  log("guest's ordinary game ready", solo, (Date.now() - ts) / 1000, "s");
+  await g.screenshot({ path: path.join(out, `hl${tryN}-b-guest-home-after-host-left.png`) });
+  log("try", tryN, "return url", g.url());
+  await g.context().close();
+  }
+  log("errors", JSON.stringify(errs).slice(0, 2000));
+  await b.close();
+})();

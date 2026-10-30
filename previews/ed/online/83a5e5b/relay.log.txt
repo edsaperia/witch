@@ -1,0 +1,17 @@
+Witch relay listening { address: '127.0.0.1', family: 'IPv4', port: 8787 }
+{"event":"relay-close","connection":2,"role":"guest","rule":"join-grace","detail":"Liveness deadline","code":1006,"silenceMs":76,"joiningMs":180163,"limitMs":180000}
+{"event":"relay-close","connection":1,"role":"host","rule":"silence","detail":"Liveness deadline","code":1006,"silenceMs":5193,"joiningMs":326444,"limitMs":5000}
+{"event":"relay-close","connection":4,"role":"guest","rule":"join-grace","detail":"Liveness deadline","code":1006,"silenceMs":213,"joiningMs":180230,"limitMs":180000}
+{"event":"relay-close","connection":3,"role":"host","rule":"client-close","detail":"","code":1001,"silenceMs":543,"joiningMs":348829}
+{"event":"relay-close","connection":6,"role":"guest","rule":"join-grace","detail":"Liveness deadline","code":1006,"silenceMs":620,"joiningMs":180050,"limitMs":180000}
+{"event":"relay-close","connection":5,"role":"host","rule":"client-close","detail":"","code":1001,"silenceMs":258,"joiningMs":347358}
+{"event":"relay-close","connection":8,"role":"guest","rule":"join-grace","detail":"Liveness deadline","code":1006,"silenceMs":148,"joiningMs":180164,"limitMs":180000}
+{"event":"relay-close","connection":7,"role":"host","rule":"client-close","detail":"","code":1001,"silenceMs":753,"joiningMs":343942}
+{"event":"relay-close","connection":10,"role":"guest","rule":"join-grace","detail":"Liveness deadline","code":1006,"silenceMs":37,"joiningMs":180141,"limitMs":180000}
+{"event":"relay-close","connection":9,"role":"host","rule":"client-close","detail":"","code":1001,"silenceMs":120,"joiningMs":350212}
+{"event":"relay-close","connection":12,"role":"guest","rule":"join-grace","detail":"Liveness deadline","code":1006,"silenceMs":609,"joiningMs":180001,"limitMs":180000}
+{"event":"relay-close","connection":11,"role":"host","rule":"client-close","detail":"","code":1001,"silenceMs":476,"joiningMs":343885}
+{"event":"relay-close","connection":14,"role":"guest","rule":"join-grace","detail":"Liveness deadline","code":1006,"silenceMs":191,"joiningMs":180216,"limitMs":180000}
+{"event":"relay-close","connection":13,"role":"host","rule":"client-close","detail":"","code":1001,"silenceMs":470,"joiningMs":346571}
+{"event":"relay-close","connection":15,"role":"unassigned","rule":"protocol","detail":"Room unavailable","code":1008,"silenceMs":2,"joiningMs":7}
+{"event":"relay-close","connection":16,"role":"unassigned","rule":"protocol","detail":"Room unavailable","code":1008,"silenceMs":1,"joiningMs":17}

@@ -1,0 +1,5 @@
+[348 s] join 1 [05:49:23Z]: ready false in 300.6 s; sentHome 181.0; guest {"url":"http://127.0.0.1:4178/?quick=1&seed=574361","solo":true}; host {"status":"The relay connection ended. Leave to return home.","tick":2924,"players":1}; errors 0
+[702 s] join 2 [05:55:16Z]: ready false in 300.6 s; sentHome 181.2; guest {"url":"http://127.0.0.1:4178/?quick=1&seed=189383","solo":true}; host {"status":"Guest left · Host · dev · 83a5e5b","tick":2433,"players":1}; errors 0
+[1053 s] join 3 [06:01:07Z]: ready false in 300.6 s; sentHome 180.8; guest {"url":"http://127.0.0.1:4178/?quick=1&seed=973122","solo":true}; host {"status":"Guest left · Host · dev · 83a5e5b","tick":2602,"players":1}; errors 0
+[1402 s] join 4 [06:06:56Z]: ready false in 300.6 s; sentHome 181.1; guest {"url":"http://127.0.0.1:4178/?quick=1&seed=905503","solo":true}; host {"status":"Guest left · Host · dev · 83a5e5b","tick":2804,"players":1}; errors 0
+[1756 s] join 5 [06:12:50Z]: ready false in 300.9 s; sentHome 181.3; guest {"url":"http://127.0.0.1:4178/?quick=1&seed=53709","solo":true}; host {"status":"Guest left · Host · dev · 83a5e5b","tick":2701,"players":1}; errors 0
