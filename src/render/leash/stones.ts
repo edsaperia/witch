@@ -139,6 +139,7 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
     if (!C) {
       const col = [...V.last.values()].find(c => Math.abs(c.x - p.from!.x) < 0.5 && Math.abs(c.z - p.from!.z) < 0.5) ?? { x: p.from.x, z: p.from.z, top: 5.4, items: [] };
       V.converted.push(C = { col, at: time });
+      lv.look.magic.emit("party","eruption",col.x,col.top+3,col.z,3,1.3,1.5,950001);
     }
     const it = C.col.items.find(q => q.id === p.id), lvl = it?.level ?? Math.min(3, g.creatures[p.id]?.level ?? 0), y = it?.y ?? 0.6 + (p.from.y + 0.5) * sizeOf(lvl) * 1.15;
     const t0 = time + K.convert * (0.1 + 0.2 * hash2(p.id, 3, 91));
@@ -221,6 +222,8 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
     waving = true;
     for (let i = 0; i < nb; i++) { const f = i / nb; rootBar(SR, edge, st.x, st.z, Math.PI / 2 + f * Math.PI * 2, fill * (0.55 + 0.45 * level(i, nb)), hue(f + time * 0.15), fade); }
     if (!V.castLight) V.castLight = { x: st.x, z: st.z, rgb: hue(time * 0.3) as [number, number, number], k: fill * fade };
+    lv.look.magic.draw("party", "vortex", st.x, st.top+2, st.z, 2, 0.8, fill*fade*0.6, fill, 700001);
+    lv.look.magic.draw("party", "dome", st.x, st.top+1, st.z, 2, 0.65, fill*fade*0.35, fill, 700002);
   }
   V.wantsSpectrum = show || waving;
   if (!cs || !show) return;

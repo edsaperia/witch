@@ -3,6 +3,10 @@
 // pixel stays a crisp square.
 import { RigView, rigOn } from "./rig/rigView";
 import { CauldronView } from "./cauldronView";
+import { FxMock } from "./fxMock";
+import { fxFor } from "./fx/system";
+import { bridgeNativeObject } from "./fx/native";
+const FX_MOCK_MODE = new URLSearchParams(globalThis.location?.search ?? "").get("fxmock");
 import type { RigGear } from "./rig/rigBuild";
 import type { Creature } from "../rules/creatures";
 import { partyGearOf } from "./artBuild";
@@ -363,6 +367,10 @@ const HOUSE_TILT_EASE = 0.6;
 export class View {
   readonly renderer: THREE.WebGLRenderer;
   scene = new THREE.Scene();
+  readonly magic = fxFor(this.scene);
+  private magicBlink = -Infinity;
+  /** Stage 0 art review only; absent in ordinary play. */
+  fxMock: FxMock | null = null;
   camera: THREE.PerspectiveCamera;
   /** The far haze as it was, while the circle-bug suspects have it off (tuning suspects.haze; render/view/frameUniforms.ts). */
   hazeKept: THREE.Vector2 | null = null;
@@ -795,8 +803,11 @@ export class View {
     yield "parts";
     this.scene.add(this.grass.mesh);
     this.scene.add(this.spellFx.trail);
+    this.magic.legacyParty=(x,y,z,age)=>{this.spellFx.reset();this.spellFx.partyBurst(x,y,z,this.game.herTime-age);this.spellFx.update(this.game,this.game.herTime,y);};
     this.trail = new WitchTrail(game.tuning.trail ?? TRAIL_DEFAULT);
     this.scene.add(this.trail.mesh);
+    bridgeNativeObject(this.trail.mesh,"flightTrail");
+    bridgeNativeObject(this.spellFx.trail,"broomSpark");
     // The dancefloor's speakers: their batch comes with their art (drawSpeakers).
     this.assets.speakerArt();
     this.propBatch = new SpriteBatch(this.assets.props, this.mpp, { fade: true }).name("props");
@@ -819,9 +830,11 @@ export class View {
     yield;
     this.holograms = new SigilHolograms(t.holograms, glyphs);
     this.scene.add(this.holograms.group);
+    bridgeNativeObject(this.holograms.group,"hologram");
     yield "fireworks";
     this.fireworks = new Fireworks(SPRITE_UNIFORMS.uRes, this.mpp);
     this.scene.add(this.fireworks.mesh);
+    bridgeNativeObject(this.fireworks.mesh,"firework");
     yield "ley";
     this.island.buildLey();
     this.leyBase = M?.leyBright ?? 1;
@@ -837,6 +850,8 @@ export class View {
     this.lakeShore = new LakeShoreView(this.scene, this.mpp);
     this.swoopTrails = new SwoopTrails(game.tuning.swoopTrail ?? SWOOP_TRAIL_DEFAULT);
     this.scene.add(this.swoopTrails.mesh);
+    bridgeNativeObject(this.swoopTrails.mesh,"partySwoop");
+    bridgeNativeObject(this.markerFx.group,"runestone");
     this.inviteView = new InviteView(game);
     this.inviteView.herOffset = this.herOffset;
     // The 💌s and the invite rings hidden as the animals are, by what stands in front of them and the smoke (render/occlusion.ts;
@@ -1484,12 +1499,16 @@ export class View {
     this.assets.playing = this.game.party.spellAt !== null; // (the night playing: the art ahead of need shares the workers, render/assets.ts dispatch)
     this.ms = {}; this.lap = this.frameStart = performance.now();
     const g = this.game, t = g.tuning, P0 = poseOf(g), F = this.fly;
+    if (this.magic.galleryCamera !== null) { g.witch.mode=this.magic.galleryCamera?"treetop":"ground"; g.witch.lift=this.magic.galleryCamera?1:0; }
     // (arriving from the sea chart: the flight's shot, app/arrive.ts)
     const pose = F ? { ...P0, tx: F.tx, ty: F.ty, tz: F.tz, angle: F.angle, distance: F.distance, ...shotCamera(F) } : P0;
     this.prefetchWave();
     // Her clock (rules/slowTime.ts): she and everything of hers (her frames, blinks, trail, 💌s, sigils, the action bar) at full
     // speed, while the world (time) may run slow in a sleeping legend's circle; eased between steps as the world's is.
     const ht = Math.max(0, g.herTime - Math.max(0, g.clock.time - time) / Math.max(1e-3, g.timeScale));
+    this.magic.begin(ht, g.witch.x, g.witch.z, g);
+    this.magic.batches.mpp.value = this.mpp;
+    this.magic.batches.canopy = g.witch.lift > 0.5;
     // The scenery budget follows the real frame rate (only frames that are drawn count).
     if (draw) {
       const now = performance.now();
@@ -1559,6 +1578,8 @@ export class View {
         const live = g.party.spellAt !== null && (g.party.bootFrom === undefined || time < g.party.bootUntil);
         this.ley.ring((g.party.spellAt === null ? 0 : live ? 1 : RING_AFTER) * (1 - (g.partyOver?.ease ?? 0)), this.leyRgb ?? undefined);
         this.ley.front(time, (beatTime(g.beat, time) * t.beat.bpm) / 60, 1 - (g.partyOver?.ease ?? 0)); // its front and pulse: a pixel spark, its small light (render/sparkler.ts)
+        const tip=this.ley.pulseTip??this.ley.tip;
+        if(tip)this.magic.native("ley",tip.x,0.4,tip.z,1,920001,[tip.colour.x,tip.colour.y,tip.colour.z]);
         this.leashView.ley = this.ley; // (the rainbow wave and the analyser behind the spark stand on the line as drawn: render/leash/rainbow.ts)
       }
     }
@@ -1607,6 +1628,14 @@ export class View {
     const markerLights = drawMarkers(this, time);
     const speakerLights = drawSpeakers(this, time, pose.angle);
     this.spellFx.update(g, ht, witchHeight(w, t) + 0.6 + this.rideOff);
+    const speedForMagic=Math.hypot(w.vx,w.vz);
+    if(speedForMagic>2){this.magic.native("flightTrail",w.x,witchHeight(w,t),w.z,Math.min(1,speedForMagic/20),920002);this.magic.native("broomSpark",w.x,witchHeight(w,t),w.z,0.5,920003);}
+    const blink = g.witches[0].dash;
+    if (blink.at !== this.magicBlink && ht >= blink.at && Number.isFinite(blink.at)) {
+      this.magicBlink = blink.at;
+      this.magic.emit("moonlight", "aura", blink.fromX, 1.5, blink.fromZ, 1, 0.7, 0.5, 910001);
+      this.magic.emit("moonlight", "burst", blink.toX, 0.8, blink.toZ, 1, 0.7, 0.6, 910002);
+    }
     {
       // her trail: behind her broom, as long as she's fast, in the colour of the area under her (its creature's neon, as the
       // ley lines and runestones; home's own lavender)
@@ -1728,6 +1757,9 @@ export class View {
     this.leashView.update(ht, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop, this.witchBodyY, this.witchFeetY, this.witchFrameH);
     (this.castTag ??= new CastTag()).update(this); // (the spell's key prompt by its 🎶, drawn just now: render/castTag.ts)
     this.time("leash");
+    this.magic.finish(t.lightBudget);
+    this.stats.lights = LIGHT_UNIFORMS.uLightCount.value;
+    if (FX_MOCK_MODE) (this.fxMock ??= new FxMock(this, FX_MOCK_MODE)).update(this, ht);
     workAhead(this);
     if (this.debugCull) drawGhosts(this, time);
     if (!draw) return;
@@ -1739,9 +1771,11 @@ export class View {
     // (the cast-shadow map is the forest's: none while only the house is drawn)
     if (this.post.behind > 0) this.castMap.render(this.renderer, this.scene, this.game.witch.x, this.game.witch.z, this.castOn);
     this.occluders();
+    this.magic.hideBackdrop(this.scene);
     if (this.game.cauldron || this.cauldronLook) (this.cauldronLook ??= new CauldronView()).update(this);
     this.post.render(this.scene, this.camera);
     this.cauldronLook?.finish(this);
+    this.magic.restoreBackdrop(this.scene);
     this.occlusion.veil(); // (the smoke over the 💌s, once the frame's smoke is drawn)
     this.time("draw");
     this.drawEst += (Math.min(8, this.ms.draw) - this.drawEst) * 0.1; // (eased; a stalled frame counts for at most 8 ms)

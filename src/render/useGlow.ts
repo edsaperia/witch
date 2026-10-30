@@ -3,6 +3,7 @@
 // round, drawing a warm line on the clear pixels within `thick` of its ink, so the piece is ringed in light in the art's own pixels;
 // breathing gently. One at a time (the nearest: rules/houseRooms.ts objectAt). Drawing only.
 import * as THREE from "three";
+import { bridgeNativeObject } from "./fx/native";
 
 type V3 = { x: number; y: number; z: number };
 
@@ -46,6 +47,7 @@ export class UseGlow {
       transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide,
     });
     this.mesh = new THREE.Mesh(geo, this.mat);
+    bridgeNativeObject(this.mesh,"decorativeGlow");
     this.mesh.frustumCulled = false; this.mesh.visible = false;
   }
 

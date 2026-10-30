@@ -15,6 +15,7 @@ import { ROUTE_SAMPLES, type RouteShape } from "./routeEase";
 import { moodOf } from "./mood";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
+import { comfort } from "./comfort";
 import { gpuKind } from "./gpuLedger";
 import { drawSigil, sigilColour, LEGEND_SCALE, BOLD, BOLD_GRID, boldGlyph, LEGEND_CROWN_H, crownGlyph } from "../../art/generator.js";
 import { dormant, type Game } from "../rules/game";
@@ -292,6 +293,7 @@ export class LeashView {
   drawRingGlows(time: number): void {
     const dot = this.uv(0);
     for (const [i, q] of this.ringGlows.entries()) {
+      this.look.magic.native("ringDot",q.x,q.y,q.z,q.k,930000+i,[0.3,0.9,1]);
       const tw = 0.9 + 0.1 * Math.sin(time * 1.7 + i * 0.9);
       this.standing.add(q.x, q.y, q.z + 0.15, 1.6, dot, 0.3 * 1.5, 0.9 * 1.5, 1.5, 0.8 * q.k * tw); // the soft halo
       this.standing.add(q.x, q.y, q.z + 0.16, 0.32, dot, 0.6 * 1.8, 1.8, 1.8, 0.75 * q.k); // its bright core, for the bloom
@@ -311,6 +313,7 @@ export class LeashView {
     for (const berry of B.berries) {
       if (berry.gone) continue; // (a Harvest berry eaten)
       const p = B.bushes[berry.bush];
+      if (Math.hypot(p.x-w.x,p.z-w.z)<12) this.look.magic.draw("bloom", "aura", p.x, 0.8, p.z, 0, 0.18, 0.18, 0, 600000+berry.id);
       if (Math.abs(p.x - w.x) > near || Math.abs(p.z - w.z) > near) continue;
       const tw = 0.85 + 0.15 * Math.sin(time * 2.3 + berry.id);
       if (babyNext && berry.claimedBy === null && Math.hypot(p.x - w.x, p.z - w.z) <= reach) {
@@ -462,8 +465,9 @@ export class LeashView {
 
   /** How far to shake the camera now (metres): a legend's quake nearby. */
   shake(time: number): number {
+    if (comfort.reduceFlashing) return 0;
     const k = (time - this.shakeAt) / 0.5;
-    return k < 0 || k > 1 ? 0 : this.shakeAmp * (1 - k) * (1 - k);
+    return Math.max(this.look.magic.screenKick,k < 0 || k > 1 ? 0 : this.shakeAmp * (1 - k) * (1 - k));
   }
 
   /** The newest 💌 event already shown (a frame with no step keeps its step's events: shown once). */

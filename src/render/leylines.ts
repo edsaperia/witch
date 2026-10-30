@@ -32,6 +32,7 @@ import { curveLink, stoneWays, tightestTurn, wayThrough } from "../rules/leycurv
 import { routeOf } from "../rules/party";
 import { leyRadius } from "../rules/leyroute";
 import type { ForestMap } from "../rules/map";
+import { bridgeNativeObject } from "./fx/native";
 
 export interface LeyTuning {
   on: boolean;
@@ -417,6 +418,7 @@ export class LeyLines {
         ...(through ? { depthFunc: THREE.GreaterDepth, stencilWrite: true, stencilRef: 1, stencilFunc: THREE.EqualStencilFunc, stencilFail: THREE.KeepStencilOp, stencilZFail: THREE.KeepStencilOp, stencilZPass: THREE.KeepStencilOp } : {}),
       }));
       m.frustumCulled = false; m.renderOrder = order; m.visible = false;
+      bridgeNativeObject(m,"ley");
       return m;
     };
     // (The two ground passes draw nothing in the rainbow, the line being dots: kept, never shown.)

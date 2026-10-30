@@ -116,6 +116,7 @@ export function sigilLights(v: View, time: number, hatY: number): ForestLight[] 
     const c = g.creatures[p.id], rgb = c && neon(c.species, c);
     if (!rgb) continue;
     const pulse = 1.05 + 0.25 * Math.sin(time * 2 + p.id); // (the rune's own pulse: leash.ts; its fade-in on her clock, as its stamp is, never below 0: Bravo's dark-circle diagnosis, 2026-10-12)
+    v.magic.native("sigil",p.x,S.height,p.z,writeOn(g.herTime,p.at),940000+p.id,[rgb.x,rgb.y,rgb.z]);
     out.push({ x: p.x, y: S.height, z: p.z, reach: S.reach * (1 + c.level * 0.15), rgb, strength: S.strength * writeOn(g.herTime, p.at) * pulse });
   }
   const s = g.leash.stack, w = g.witch;
