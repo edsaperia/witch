@@ -7,7 +7,7 @@ import { openBrowser, ROOT } from "../../art/headless.mjs";
 import { CAT_CAPTURE_IDS } from "./cat-fixtures.js";
 
 const iteration = process.env.CAT_ITERATION ?? "cats-1";
-if (!/^cats-\d+$/.test(iteration)) throw new Error("CAT_ITERATION must be cats-<number>");
+if (!/^cats-\d+[a-z]?$/.test(iteration)) throw new Error("CAT_ITERATION must be cats-<number> with an optional single-letter suffix");
 const out = resolve(process.argv[2] ?? `previews/body-graph/${iteration}`);
 if (!out.startsWith(ROOT + sep)) throw new Error("Output must stay inside this checkout");
 const sha = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
