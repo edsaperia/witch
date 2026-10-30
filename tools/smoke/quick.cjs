@@ -14,6 +14,7 @@
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
+const { houseRoute, walkHouse } = require("../bench/house-route.cjs");
 let playwright;
 try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 
@@ -48,7 +49,7 @@ async function main() {
   try {
     await page.goto(`http://127.0.0.1:${port}/?creator=0&seed=123&quick=1&debug${process.env.QUICK_QUERY ? "&" + process.env.QUICK_QUERY : ""}`); // (QUICK_QUERY=a=b&c=d: more of the link, e.g. set=combat.packs.on=false for pack combat off)
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 240000, polling: 500 });
-    log("start screen ready");
+    log("game ready");
     const state = () => page.evaluate(() => { const g = window.witch.game; return { t: g.clock.time, x: g.witch.x, z: g.witch.z, mode: g.witch.mode, paused: g.clock.paused, trees: window.witch.view.stats.trees }; });
     // Hold a key for `secs` of game time (the software renderer here runs slow, capped frames).
     const hold = async (key, secs) => {
@@ -60,9 +61,8 @@ async function main() {
     };
     const canvas = await page.$("canvas#game");
     check(!!canvas, "the game's canvas is there");
-    await page.keyboard.press("Enter");
-    await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 30000 });
-    check(true, "a key press starts the game");
+    await page.waitForFunction(() => !window.witch.game.clock.paused && document.getElementById("start").style.display === "none", null, { timeout: 30000 });
+    check(true, "starts directly without a start screen or key press");
     { // (15 s: the CI runners' software renderer links a big shader program in a second or two and a busy runner stretches that to
       // 4 s and more (4 s tripped other PRs, 2026-10-26); the freeze it's here for held the page 50 to 75 s)
       const beat = await page.evaluate(() => window.__beat), budget = Number(process.env.QUICK_STALL_MS || 15000);
@@ -75,26 +75,8 @@ async function main() {
     // her, the rooms and the crown), under QUICK_HOUSE_MS: 150 ms by default, for the runners' slow software renderer (about three
     // times this cloud's), where an ordinary frame here is 3 to 45 ms; the page-thread bakes it's there to catch were 190 to 3700 ms here.
     {
-      const H = require("../../config/house/load.mjs").loadHouse(), A = ((H.turn || 0) * Math.PI) / 180;
-      const room = id => H.rooms.find(r => r.id === id), limb = (a, b) => { const c = H.corridors.find(q => q.id === `${a}-${b}`) || H.corridors.find(q => q.id === `${b}-${a}`); return c.id === `${a}-${b}` ? c.pts : [...c.pts].reverse(); };
-      const plan = [[0, 0], ...limb("terrace", "parlour"), ...limb("parlour", "bestiary"), [room("bestiary").x, room("bestiary").z], ...limb("bestiary", "parlour"), ...limb("parlour", "terrace"), ...limb("terrace", "studio"), [room("studio").x, room("studio").z]];
-      const route = plan.map(([u, v]) => [u * Math.cos(A) + v * Math.sin(A), -u * Math.sin(A) + v * Math.cos(A)]), budget = Number(process.env.QUICK_HOUSE_MS || 150);
-      const walk = await page.evaluate(route => {
-        const W = window.witch, g = W.game, b = () => g.witches[0].body, t = g.map.treehouse, idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
-        W.manual = true;
-        let f = 0, i = 0, worst = 0, at = null;
-        for (; f < 60 * 8 && b().seated; f++) W.frame({ ...idle, moveZ: -1 }, 1 / 60, false); // (off her seat)
-        for (; i < route.length && f < 60 * 120; f++) {
-          const dx = t.x + route[i][0] - b().x, dz = t.z + route[i][1] - b().z, L = Math.hypot(dx, dz);
-          if (L < (i === route.length - 1 ? 0.6 : 1.2)) { i++; continue; }
-          const ms = W.frame({ ...idle, moveX: dx / L, moveZ: dz / L }, 1 / 60, false).ms.witch || 0;
-          if (ms > worst) { worst = ms; at = [+(b().x - t.x).toFixed(1), +(b().z - t.z).toFixed(1)]; }
-        }
-        const got = i === route.length;
-        g.witches[0].body = { ...b(), x: t.x, z: t.z, vx: 0, vz: 0, perch: true, mode: "ground", lift: 0, seated: false }; // (back on the Terrace for the rise)
-        W.manual = false;
-        return { got, worst, at, frames: f };
-      }, route);
+      const route = houseRoute(require("../../config/house/load.mjs").loadHouse()), budget = Number(process.env.QUICK_HOUSE_MS || 150);
+      const walk = await page.evaluate(walkHouse, { route });
       check(walk.got && walk.worst < budget, `walks the house (Terrace, Parlour, Bestiary, Studio: ${walk.got ? "all the way" : "stopped short"}, ${walk.frames} frames), no frame's drawing in it over ${budget} ms (the longest ${walk.worst.toFixed(1)} ms, at ${JSON.stringify(walk.at)} on the plan)`);
     }
     // She starts at her decks on the treehouse's Terrace, 22 m up (rules/treehouse.ts): up off it, out over the forest (south,
