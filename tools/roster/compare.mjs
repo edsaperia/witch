@@ -3,11 +3,16 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { openBrowser } from "../../art/headless.mjs";
+import { ROSTER_PRESETS } from "../../art/roster/presets.js";
 const [out = "previews/ed/roster", only = "bear,arcticfox,snowleopard,beetle"] = process.argv.slice(2);
 mkdirSync(out, { recursive: true });
 const sha = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
 const modelSha = process.env.ROSTER_MODEL_SHA || "";
 if (modelSha && !/^[0-9a-f]{40}$/.test(modelSha)) throw Error("ROSTER_MODEL_SHA must be an exact commit");
+for (const id of only.split(",")) if (ROSTER_PRESETS[id]?.modelCommit) {
+  try { execFileSync("git", ["merge-base", "--is-ancestor", ROSTER_PRESETS[id].modelCommit, modelSha || sha], { stdio: "pipe" }); }
+  catch { throw Error(`${id} requires model ${ROSTER_PRESETS[id].modelCommit} or a descendant; prepare that exact snapshot before capturing`); }
+}
 const b = await openBrowser();
 try {
   await b.page.goto(b.base + "/art/headless-blank.html");

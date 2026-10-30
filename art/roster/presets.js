@@ -1,6 +1,11 @@
 // Roster review, Ed 2026-10-30: real-animal likeness before distinctness.
 // Isolated data for the existing speciesOf/quad3d interface, not a second engine.
 // No production import. Each species requires an explicit opt-in; defaults are off.
+const ROSTER_SNOW_REGIONS = {
+  torso: { kind: "rosettes", k: 4.5, density: .55, inner: .2, outer: .43, mat: "BODY3", centreMat: "BODYL" },
+  head: { kind: "spots", k: 14, density: .6, radius: .32, mat: "BODY3" },
+  legs: { kind: "spots", k: 14, density: .6, radius: .33, mat: "BODY3" },
+};
 export const ROSTER_PRESETS = {
   beetle: {
     reason: "Ordinary stag-beetle wing cases and jaws are dark natural materials; reserve ember fissures for the elder.",
@@ -32,11 +37,10 @@ export const ROSTER_PRESETS = {
     reason: "Replace generic spots with broken rosettes while keeping its existing long thick ringed tail.",
     reference: "https://zoo.sandiegozoo.org/animals/snow-leopard",
     ordinaryOnly: true,
-    modelCommit: "fd1a833ae69e1d5cf1d9353b89fbdda39cbab802",
-    // Iteration 3: iteration 2 still read as flecks. Use #1470's existing
-    // surface-wrapped ring painter instead of the old three-axis cells.
-    patch: { palette: { hue: .59, sat: .03 }, coat: { spots: false, rosettes: { wrap: true, k: 5, density: .55, inner: .2, outer: .43 } } },
-    ordinaryLevels: { 0: { coat: { spots: false, rosettes: { wrap: true, k: 5, density: .55, inner: .2, outer: .43 } } }, 1: { coat: { spots: false, rosettes: { wrap: true, k: 5, density: .55, inner: .2, outer: .43 } } }, 2: { coat: { spots: false, rosettes: { wrap: true, k: 5, density: .55, inner: .2, outer: .43 } } } },
+    modelCommit: "aad8b13327282d13d7d6a4e2e1b28aa2acfd6b6c",
+    // Iteration 3 uses the shared per-region painter (6513651791), not a fork.
+    patch: { palette: { hue: .59, sat: .03 }, coat: { spots: false, rosettes: false, regions: ROSTER_SNOW_REGIONS } },
+    ordinaryLevels: { 0: { coat: { spots: false, rosettes: false, regions: ROSTER_SNOW_REGIONS } }, 1: { coat: { spots: false, rosettes: false, regions: ROSTER_SNOW_REGIONS } }, 2: { coat: { spots: false, rosettes: false, regions: ROSTER_SNOW_REGIONS } } },
     text: "A smoky pale mountain cat with dark rosettes, broad paws and a long thick tail.",
   },
 };

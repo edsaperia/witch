@@ -62,7 +62,7 @@ test("ordinary corrections survive per-level overrides and restore elder anatomy
   for (const l of [0, 1, 2]) assert.equal(fox.levelQ[l].ear, "round");
   assert.equal(fox.levelQ[3].ear, "point");
   const snow = speciesOf(rosterGenome(original.snowleopard, ["snowleopard"], 2));
-  for (const l of [0, 1, 2]) { assert.equal(snow.levelQ[l].spots, false); assert.ok(snow.levelQ[l].rosettes); }
+  for (const l of [0, 1, 2]) { assert.equal(snow.levelQ[l].spots, false); assert.equal(snow.levelQ[l].regions.torso.kind, "rosettes"); assert.equal(snow.levelQ[l].regions.head.kind, "spots"); assert.equal(snow.levelQ[l].regions.legs.kind, "spots"); }
   assert.equal(snow.levelQ[3].spots, true);
   assert.equal(snow.levelQ[3].rosettes, false);
 });
