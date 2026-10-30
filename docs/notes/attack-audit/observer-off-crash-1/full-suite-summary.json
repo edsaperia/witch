@@ -1,0 +1,148 @@
+{
+  "schema": 1,
+  "instruction": 6531397699,
+  "command": "npx vitest run",
+  "workerOverride": false,
+  "isolationOverride": false,
+  "baseCommit": "20663a13845e8cf309493cf6803af1668fe59de9",
+  "testedPatchSha256": "de61138ea3b872e661fcfe5be954d52569420e07ae849adafb914519ac97e84b",
+  "rawLogSha256": "0c8cac046289efcce680d9bb7dfcbae4deab0dea79742a34e5c2e4e892b86358",
+  "exitCode": 1,
+  "start": "2026-10-30 19:16:02 UTC",
+  "durationSeconds": 977.99,
+  "files": {
+    "passed": 415,
+    "failed": 15,
+    "total": 430
+  },
+  "tests": {
+    "passed": 2702,
+    "failed": 22,
+    "total": 2724
+  },
+  "timeouts": 15,
+  "otherFailures": 7,
+  "relevantFiles": {
+    "circleSafe": "3 passed including actual caller observer-OFF regression",
+    "attackObservation": "8 passed"
+  },
+  "artLabExtraction": {
+    "rawFunctionStart": 31417,
+    "rawFunctionEnd": -1,
+    "lfFunctionStart": 31098,
+    "lfFunctionEnd": 32911
+  },
+  "failures": [
+    {
+      "name": "src/artJobFingerprints.test.ts > art job dispatcher roots and initialization safety > isolates a real creature drawing-file edit from house and retains shared packing edits",
+      "error": "Error: Test timed out in 60000ms.",
+      "category": "timeout"
+    },
+    {
+      "name": "src/creatures.test.ts > the creatures' folders (art/creatures/) > assemble cleanly: the index current, every record in its folder, no genome problems",
+      "error": "Error: Command failed: node tools/creatures.mjs check",
+      "category": "generated-text-or-art-lab-check"
+    },
+    {
+      "name": "src/creatures.test.ts > the split registries (tools/data.mjs) > flora: one file a species, the index current, none left in genomes.js, the baseline folder sound",
+      "error": "Error: Command failed: node tools/data.mjs flora check",
+      "category": "generated-text-or-art-lab-check"
+    },
+    {
+      "name": "src/creatures.test.ts > the split registries (tools/data.mjs) > areas: a folder an area with its kind line, the recipes and the original areas' flora in them, the kinds' slots whole",
+      "error": "Error: Command failed: node tools/data.mjs areas check",
+      "category": "generated-text-or-art-lab-check"
+    },
+    {
+      "name": "src/samples.test.ts > samples > are all listed, under approved licences (never NC), credited and within the size budget",
+      "error": "AssertionError: expected [ Array(1) ] to deeply equal []",
+      "category": "generated-text-or-art-lab-check"
+    },
+    {
+      "name": "src/rules/findsList.test.ts > the finds' master list > in docs/art-guide/FINDS.md is FIND_KINDS's own",
+      "error": "AssertionError: the finds have changed: UPDATE_FINDS=1 npx vitest run src/rules/findsList.test.ts: expected '### wearable: found as a bundle (8)\\r…' to be '### wearable: found as a bundle (8)\\n…' // Object.is equality",
+      "category": "generated-text-or-art-lab-check"
+    },
+    {
+      "name": "src/rules/houseGuard.test.ts > her followers while she's in the treehouse > a baby at its home spot doesn't eat the berries there (Ed, 2026-10-24), though at a real placed sigil it does",
+      "error": "Error: Test timed out in 120000ms.",
+      "category": "timeout"
+    },
+    {
+      "name": "src/rules/houseRooms.test.ts > the oak's rooms > each placeholder's E says so too (main.ts shows its line)",
+      "error": "Error: Test timed out in 60000ms.",
+      "category": "timeout"
+    },
+    {
+      "name": "src/rules/houseRooms.test.ts > the oak's rooms > the other bedrooms hold their placeholders (Ed, 2026-10-23: \"fill the other two with placeholders for now\"): a bare bed, a sheeted wardrobe and chest, crates; out of her reach, the way in from their door clear",
+      "error": "Error: Test timed out in 60000ms.",
+      "category": "timeout"
+    },
+    {
+      "name": "src/rules/knobDocs.test.ts > the knobs' words (config/knobs) > keeps config/KNOBS.md and the schema's descriptions up to date (node tools/config/schema.mjs --docs)",
+      "error": "AssertionError: after changing config/knobs/*.json or a knob, run `node tools/config/schema.mjs --add --docs` and commit config/KNOBS.md and config/schema/tuning.schema.json: expected '# Tuning knobs\\r\\n\\r\\nGenerated from …' to be '# Tuning knobs\\n\\nGenerated from `con…' // Object.is equality",
+      "category": "generated-text-or-art-lab-check"
+    },
+    {
+      "name": "src/rules/knockdownTempo.test.ts > knockdowns speed up the beat (Ed, 2026-10-07) > the next wave comes sooner, by the tempo's ratio, from the knockdowns on",
+      "error": "Error: Test timed out in 120000ms.",
+      "category": "timeout"
+    },
+    {
+      "name": "src/rules/legendShare.test.ts > legends in a share of the areas (legends.share) > puts one in legends.share of the areas (Ed, 2026-10-08: about a fifth), never home, seeded, spread so they don't clump",
+      "error": "Error: Test timed out in 60000ms.",
+      "category": "timeout"
+    },
+    {
+      "name": "src/rules/leylines.test.ts > the first ley line leaves the treehouse's front, towards the dancefloor (Ed, 2026-10-05; the oak north-west of it, 2026-10-24) > never crosses the dancefloor: on from where the boot's lap ends, round the speakers the same way (clockwise) till the objective lies out to the side, then off and round to it, smoothly, never across the boot's way down (Ed, 2026-10-06; 2026-10-29)",
+      "error": "Error: Test timed out in 60000ms.",
+      "category": "timeout"
+    },
+    {
+      "name": "src/rules/leylines.test.ts > the first ley line leaves the treehouse's front, towards the dancefloor (Ed, 2026-10-05; the oak north-west of it, 2026-10-24) > leaves the ring in a sweep no tighter than the line's own radius, like every other turn (Ed, 2026-10-23)",
+      "error": "Error: Test timed out in 60000ms.",
+      "category": "timeout"
+    },
+    {
+      "name": "src/rules/multiplayer.test.ts > several witches in one deterministic night > replays two complete seeded nights for three minutes with matching full-state hashes",
+      "error": "Error: Test timed out in 120000ms.",
+      "category": "timeout"
+    },
+    {
+      "name": "src/rules/pulseSpeed.test.ts > the ley pulse at a constant speed (Ed, 2026-10-09) > lands each wave as the pulse reaches its stone: the gap its link's length over the speed",
+      "error": "Error: Test timed out in 60000ms.",
+      "category": "timeout"
+    },
+    {
+      "name": "src/rules/rules.test.ts > fractal partition > matches the Witch Art Lab's makePartition point for point",
+      "error": "ReferenceError: makePartition is not defined",
+      "category": "generated-text-or-art-lab-check"
+    },
+    {
+      "name": "src/rules/rules.test.ts > paths, roads and railways > carry 3D pieces: railway landmarks and signals, bridges over streams; trees keep clear of them",
+      "error": "Error: Test timed out in 20000ms.",
+      "category": "timeout"
+    },
+    {
+      "name": "src/rules/rules.test.ts > the dancefloor's speakers (Ed, v160) > keep the treehouse outside their ring and the floor's clearing, over seeds",
+      "error": "Error: Test timed out in 30000ms.",
+      "category": "timeout"
+    },
+    {
+      "name": "src/rules/rules.test.ts > the home speakers start as runestones (Ed, 2026-10-06) > turn into speakers one by one as the boot reaches them, each over boot.transform, all of them by its end",
+      "error": "Error: Test timed out in 60000ms.",
+      "category": "timeout"
+    },
+    {
+      "name": "src/rules/stations.test.ts > the dressing stations by nearness > choosing a row (whole framing off), the camera zooms on the part of her it's about (camera.station.parts): each part's own aim and distance",
+      "error": "Error: Test timed out in 60000ms.",
+      "category": "timeout"
+    },
+    {
+      "name": "src/rules/treehouse.test.ts > the treehouse's house > never lands her in furniture or on a station: coming down over one, she's eased onto the nearest clear floor",
+      "error": "Error: Test timed out in 60000ms.",
+      "category": "timeout"
+    }
+  ],
+  "limits": "Full suite FAILED. No worker/isolation/timeout overrides, test suppression or whole-suite retry. Remaining failures not repaired or assumed harmless; raw log retained privately."
+}

@@ -13,6 +13,7 @@
 // an overlay's own pad loop doesn't move under the pause. Thawed, everything is as it was: the overlay open as it was left.
 import { areaUnderWitch, STEP, stepGame, type Controls, type Game } from "../rules/game";
 import { bindings } from "./bindings";
+import { textEntry } from "./inputTarget";
 
 /** Start always reaches pause, even after its configurable binding is changed or cleared. */
 export const padPauseHeld = (buttons: readonly boolean[], axes: readonly number[]): boolean => !!buttons[9] || bindings.padHeld("global.pause", buttons, axes);
@@ -31,6 +32,8 @@ body.paused :is(${PAUSE_UI.join(", ")}) { z-index: ${PAUSE_Z + 1} !important; }`
 const realPads = typeof navigator !== "undefined" && navigator.getGamepads ? navigator.getGamepads.bind(navigator) : null;
 
 export class Freeze {
+  mutate: (label: string, action: () => void) => void = (_label, action) => action();
+  advance: (game: Game, controls: Controls, dt: number) => void = stepGame;
   frozen = false;
   /** Whether the game was already paused (the start screen, the end) when it froze. */
   private wasPaused = false;
@@ -74,12 +77,13 @@ export class Freeze {
     // Before the game's own input and every overlay's (capture, and made first), so a press while frozen never starts, flies or
     // chooses anything: Esc is the pause's alone; frozen, only the pause page's own pieces have keys.
     window.addEventListener("keydown", e => {
+      if (this.frozen && textEntry(e.target) && e.code !== "Escape") return;
       if (bindings.keys("global.pause").includes(e.code) && this.ownsEsc() && (this.frozen || this.started())) {
         e.preventDefault(); e.stopImmediatePropagation();
         if (!e.repeat) this.toggle();
       }
       // While frozen . steps (and isn't also the fight-momentum debug key); otherwise it's that key.
-      else if (e.code === "Period" && this.frozen) { e.preventDefault(); e.stopImmediatePropagation(); this.step(e.shiftKey ? 10 : 1); }
+      else if (e.code === "Period" && this.frozen && !textEntry(e.target)) { e.preventDefault(); e.stopImmediatePropagation(); this.step(e.shiftKey ? 10 : 1); }
       else if (this.frozen && !(e.target as Element | null)?.closest?.(PAUSE_UI.join(","))) e.stopImmediatePropagation();
     }, { capture: true });
     // The gamepad, while frozen, the freeze's alone (pollPad's Start): every other reader of it sees none.
@@ -90,6 +94,9 @@ export class Freeze {
   retarget(game: Game, seed: number): void { this.game = game; this.seed = seed; }
 
   toggle(): void {
+    this.mutate("pause page", () => this.toggleNow());
+  }
+  private toggleNow(): void {
     if (!this.frozen && !this.started()) return;
     this.frozen = !this.frozen;
     const g = this.game;
@@ -117,7 +124,11 @@ export class Freeze {
   /** Advance exactly n fixed steps, with no controls held. */
   step(n: number): void {
     const g = this.game;
-    for (let i = 0; i < n; i++) { g.clock.paused = false; stepGame(g, STILL, STEP); g.clock.paused = true; }
+    for (let i = 0; i < n; i++) {
+      this.mutate("single step: resume", () => { g.clock.paused = false; });
+      this.advance(g, STILL, STEP);
+      this.mutate("single step: pause", () => { g.clock.paused = true; });
+    }
   }
 
   /** The real pad (everyone else sees none while frozen): the Settings page reads it (ui/settingsMenu.ts). */

@@ -1,0 +1,6 @@
+# PROPOSAL ONLY. No execution authorized. Reuse frozen #1475 cases and any existing valid results; do not duplicate dispatched work.
+timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/census.json --shard w1-census-000 --lock trained-expert-lock.json --out results/wave1/census/w1-census-000.jsonl --budget-seconds 2940
+timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/census.json --shard w1-census-001 --lock trained-expert-lock.json --out results/wave1/census/w1-census-001.jsonl --budget-seconds 2940
+timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/census.json --shard w1-census-002 --lock trained-expert-lock.json --out results/wave1/census/w1-census-002.jsonl --budget-seconds 2940
+timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/census.json --shard w1-census-003 --lock trained-expert-lock.json --out results/wave1/census/w1-census-003.jsonl --budget-seconds 2940
+timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/census.json --shard w1-census-004 --lock trained-expert-lock.json --out results/wave1/census/w1-census-004.jsonl --budget-seconds 2940
