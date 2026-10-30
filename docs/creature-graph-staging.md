@@ -132,8 +132,13 @@ yet the removal of that fallback or a complete independent body builder.
 `felineGraphGenome(base, options)` is a generic adapter, not a species registry;
 #1479 owns natural proportions and markings. `head.earRoot` offsets an ear in
 head radii, and `head.earAngle` is `[pitch, outwardSplay]` in radians.
-`coat.rosettes.wrap` projects rings around the back and both flanks; lower-body
-spots and rounded-triangular fox ears remain subsequent region/shape work.
+`coat.rosettes.wrap` projects rings around the back and both flanks.
+`coat.regions` independently defines `torso`, `head` and `legs`: `kind` is
+`rosettes`, `spots` or `none`, with `k`, `density`, `mat`, optional `centreMat`,
+ring `inner`/`outer` radii or spot `radius`. Regional patterns replace old
+all-body spots/stripes/tabby/bands for that region; natural colour/shape and
+legend features remain the roster designer's responsibility. Rounded-triangular
+fox ears remain subsequent canid shape work.
 
 Connectedness tests caught thin-profile gaps and inverted legacy baby loaf
 depths. The graph inserts interpolated stations to preserve its connectivity
@@ -141,9 +146,28 @@ invariant; it normalises non-positive legacy vertical radii and records their
 count in `model.bodyGraph.diagnostics.normalisedDepths` for review (notably the
 snow leopard baby). These are opt-in changes; no current genome is rewritten.
 
+## Cats comparison driver
+
+Cloud command: `node tools/body-graph/cats-preview.mjs previews/body-graph/cats-1`.
+It requires a clean tracked checkout, records and verifies its served source
+SHA, and writes one PNG per cat plus `source.json` and `evidence.json`. Set
+`WITCH_SHA` to require an exact full SHA. Every sheet shows all four levels in
+towards/away/top views, current and graph at the same native game art pixel
+size from tuning, with a third column of target notes. No species default is
+changed. `tools/body-graph/cat-fixtures.js` contains demonstration deltas over
+current records, explicitly not #1479's finished roster presets. The notes
+come from the relayed family requests 6513070150 and 6513242775; there is no
+claim of a new external reference source or an independent likeness score.
+
+`evidence.json` records first unique sprite construction and albedo-bake wall
+times in serial current/graph order. These include JIT/GC effects and do not
+measure gameplay frame time, GPU cost or an Intel laptop. Report that limitation
+with any cost note. Cloud rendering and independent likeness review are pending;
+publish only through `tools/shots/push.mjs` under `previews/ed/creature-graph/cats-1/`.
+
 ## Family score history
 
-- Cats: iteration 0, unscored; awaiting the first shared-model comparison and independent likeness review.
+- Cats: iteration 1, unscored; graph torso/ears/region markings implemented, cloud comparison and independent likeness review pending.
 - Bears: iteration 0, unscored; awaiting cat iteration and family comparison.
 - Deer: iteration 0, unscored; awaiting preceding family iterations.
 - Canids: iteration 0, unscored; awaiting preceding family iterations.

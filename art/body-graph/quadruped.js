@@ -1,6 +1,6 @@
 // Shared graph anatomy used by opt-in quadruped records. No species dispatch.
 import { v3 } from "../model3d.js";
-import { hash2 } from "../core.js";
+import { hash2, M } from "../core.js";
 
 // Preserve the current profile envelope as stations, allowing a flexible spine
 // without changing the head/leg family's own part code. Profile keys are the
@@ -56,14 +56,37 @@ export function quadrupedEarSocket(head, radius, side, direction, root = [0, 0, 
 
 // Ring cells follow the elliptical torso around the back and BOTH flanks.
 // A whole number of circumferential cells gives the same pattern at the seam.
-export function wrappedRosette(p, options, { centreY, depth, width, bellyY }) {
-  if (p[1] < bellyY) return false;
+function rosetteCell(p, options, { centreY, depth, width, bellyY }) {
+  if (p[1] < bellyY) return null;
   const k = options.k ?? 6, around = Math.max(6, Math.round(Math.PI * (depth + width) * k));
   const theta = Math.atan2(p[2] / width, (p[1] - centreY) / depth);
   const u = p[0] * k, v = (theta + Math.PI) / (Math.PI * 2) * around;
   const i = Math.floor(u), j = Math.floor(v), seam = ((j % around) + around) % around;
-  if (hash2(i, seam, 11) > (options.density ?? .75)) return false;
+  if (hash2(i, seam, 11) > (options.density ?? .75)) return null;
   const cx = i + .3 + hash2(i, seam, 12) * .4, cy = j + .3 + hash2(seam, i, 13) * .4;
   const d = Math.hypot(u - cx, v - cy), a = Math.atan2(v - cy, u - cx);
-  return d > (options.inner ?? .18) && d < (options.outer ?? .4) && Math.sin(a * 3 + i) > -.65;
+  return { d, angle: Math.sin(a * 3 + i) };
+}
+export function wrappedRosette(p, options, bounds) {
+  const cell = rosetteCell(p, options, bounds);
+  return !!cell && cell.d > (options.inner ?? .18) && cell.d < (options.outer ?? .4) && cell.angle > -.65;
+}
+
+// Null means the region's base coat. Defining a region replaces its older
+// all-body pattern, so torso rings cannot leak onto a head or the lower legs.
+/** @param {{centreY:number,depth:number,width:number,bellyY:number}|null} [bounds] */
+export function regionMarking(p, definition, bounds = null) {
+  if (!definition || definition.kind === "none") return null;
+  if (definition.kind === "rosettes" && bounds) {
+    const cell = rosetteCell(p, definition, bounds);
+    if (!cell) return null;
+    if (cell.d <= (definition.inner ?? .18)) return definition.centreMat ? M[definition.centreMat] ?? null : null;
+    return cell.d < (definition.outer ?? .4) && cell.angle > -.65 ? M[definition.mat || "BODY3"] ?? M.BODY3 : null;
+  }
+  if (definition.kind === "spots") {
+    const k = definition.k ?? 12, coordinates = p.map(v => v * k), cells = coordinates.map(Math.floor);
+    if (hash2(cells[0], cells[1] + cells[2] * 31, 71) > (definition.density ?? .6)) return null;
+    return Math.hypot(...coordinates.map((v, i) => v - cells[i] - .5)) < (definition.radius ?? .32) ? M[definition.mat || "BODY3"] ?? M.BODY3 : null;
+  }
+  return null;
 }

@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { quadrupedEarSocket, wrappedRosette } from "../art/body-graph/quadruped.js";
+import { quadrupedEarSocket, wrappedRosette, regionMarking } from "../art/body-graph/quadruped.js";
 import { felineGraphGenome } from "../art/body-graph/families.js";
 import { GENOME_BY_ID, speciesOf } from "../art/genome/index.js";
 import { validateGraph } from "../art/body-graph/graph.js";
 import { quad3d, withForm } from "../art/creatures3d.js";
 import { defaultStyle } from "../art/generator.js";
 import { Model } from "../art/model3d.js";
-import { Sprite } from "../art/core.js";
+import { Sprite, M } from "../art/core.js";
+import { catCaptureGenome, CAT_CAPTURE_IDS } from "../tools/body-graph/cat-fixtures.js";
 
 function capture(record: unknown, level: number, frame: number) {
   const models: Model[] = [];
@@ -37,6 +38,22 @@ describe("first shared feline graph iteration", () => {
       expect(ink).toBeGreaterThan(10);
     }
     expect(wrappedRosette([0, .4, 0], options, bounds)).toBe(false);
+  });
+  it("keeps pale ring centres, ring ink and solid regional spots separate", () => {
+    const colours = new Set(), bounds = { centreY: .7, depth: .3, width: .25, bellyY: .5 };
+    for (let i = 0; i < 100; i++) for (let j = 0; j < 40; j++) {
+      const angle = (j / 40 - .5) * Math.PI;
+      colours.add(regionMarking([i / 100, .7 + Math.cos(angle) * .3, Math.sin(angle) * .25], { kind: "rosettes", density: 1, centreMat: "BODYL" }, bounds));
+    }
+    expect(colours.has(M.BODYL)).toBe(true); expect(colours.has(M.BODY3)).toBe(true);
+    expect(regionMarking([.05, .05, .05], { kind: "spots", k: 10, density: 1 })).toBe(M.BODY3);
+    expect(regionMarking([.05, .05, .05], { kind: "none" })).toBe(null);
+    const fixture = catCaptureGenome(GENOME_BY_ID.snowleopard);
+    expect(fixture.coat.regions.torso.kind).toBe("rosettes");
+    expect(fixture.coat.regions.head.kind).toBe("spots");
+    expect(fixture.coat.regions.legs.kind).toBe("spots");
+    expect(fixture.levels[3].coat.regions).toBe(null);
+    expect(CAT_CAPTURE_IDS).toHaveLength(7);
   });
   it.each(["cat", "lynx", "lion", "tiger", "cheetah", "jaguar", "snowleopard"])("%s uses a connected graph at every level without mutating current art", id => {
     const base = GENOME_BY_ID[id], before = JSON.stringify(base), selected = felineGraphGenome(base);
