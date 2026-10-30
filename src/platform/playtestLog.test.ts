@@ -1,7 +1,13 @@
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, expect, it, vi } from "vitest";
 import type { Game } from "../rules/game";
 
 afterEach(() => { vi.unstubAllGlobals(); vi.resetModules(); });
+// Reproduce CI's isolate:false order: another test can import the log before this
+// fixture creates its window. The first test must not depend on being first in a worker.
+beforeAll(async () => { await import("./playtestLog"); });
+// Each fake browser needs a fresh module evaluation AFTER its window is installed.
+// afterEach alone misses the first file run in a shared worker with a cached import.
+beforeEach(() => { vi.resetModules(); });
 
 it("keeps the latest 20 errors with their original night context and leaves browser reporting alone", async () => {
   const target = new EventTarget(), stored = new Map<string, string>();
@@ -36,6 +42,19 @@ it("does not turn blocked storage or an unprintable rejection into another crash
   const { PlaytestLog, logCaughtError } = await import("./playtestLog");
   new PlaytestLog({ seed: 1, clock: { time: 0 }, tuning: { leyLines: { pulseSpeed: 1 } } } as Game, "dev");
   expect(() => logCaughtError({ toJSON() { throw Error("bad"); } }, "fixture")).not.toThrow();
+});
+it("starts a new page with its own ring and records errors before the first night with unknown context", async () => {
+  const target = new EventTarget(), stored = new Map<string, string>();
+  vi.stubGlobal("window", target);
+  vi.stubGlobal("localStorage", { getItem: (k: string) => stored.get(k), setItem: (k: string, v: string) => stored.set(k, v) });
+  const { PlaytestLog } = await import("./playtestLog");
+  target.dispatchEvent(Object.assign(new Event("unhandledrejection"), { reason: "before the night" }));
+  new PlaytestLog({ seed: 2, clock: { time: 7 }, tuning: { leyLines: { pulseSpeed: 1 }, map: { island: "deer" } } } as Game, "new-page");
+  target.dispatchEvent(Object.assign(new Event("error"), { error: Error("new page error"), filename: "new.js", lineno: 1, colno: 2 }));
+  const errors = JSON.parse(stored.get("witch.playtest")!)[0].errors;
+  expect(errors).toHaveLength(2);
+  expect(errors[0]).toMatchObject({ kind: "unhandledrejection", message: "before the night", t: null, island: "unknown" });
+  expect(errors[1]).toMatchObject({ kind: "error", message: "new page error", build: "new-page", t: 7, island: "deer" });
 });
 it("includes saved comments and their bundles in a readable text download", async () => {
   const { readablePlaytest } = await import("./playtestLog");

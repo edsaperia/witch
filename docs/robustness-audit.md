@@ -2,6 +2,8 @@
 
 Base: `3f7d386beb3d7147f32f6837d9144decd467b7b2`, 2026-10-30. No rules behavior or tuning changes.
 
+CI shared-module follow-up (6529978390): error listeners are installed at module evaluation, once per real page. A test worker may cache that module before a fake window exists; resetting only after tests left the first fixture without listeners, so its caught-error ring never received the dispatched browser errors. The fixture now resets before each fake-page import, with a deliberate preloaded-module regression and a separate-page/pre-night error case. Production ring retention across nights is intentional: earlier entries keep their original context and the active sink is replaced by each new night. Real reloads/tabs use separate module realms/rings; prior persisted logs are explicitly included as history, not relabelled as current-page errors. No production reset or weakened assertion was introduced.
+
 ## Catch audit
 
 `node tools/robustness/catch-audit.mjs` inventories actual catch clauses with the TypeScript parser, excluding comments, tests and string-embedded generated code. “Empty” means no statements after removing comments. The brief's roughly 98 empty catches are deliberate in most cases. Five now record unexpected failures: sound construction on wake/start, the watchdog callback, and the playtest comparability/debug-text callbacks. Two nonempty dream-art fallbacks and the sliced-build worker rejection also now record errors while preserving their original fallback. Reporting uses a lightweight hook, so drawing/worker callers do not import the log's rules graph. Workers without the page hook retain console diagnostics.
