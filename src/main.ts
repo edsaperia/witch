@@ -1251,7 +1251,7 @@ function frameBody(now: number): void {
   const step0 = performance.now();
   const recordedInput = JSON.stringify(c);
   if (recordedInput !== lastRecordedInput || game.clock.time - lastInputAt >= 1) { breadcrumbs.add(game, "input", c); lastRecordedInput = recordedInput; lastInputAt = game.clock.time; }
-  if (params.get("cauldron") === "1" && !game.cauldron) mutate("cauldron: enable", () => enableCauldron(game, homeMushroomPickups(game)));
+  if (params.get("cauldron") !== "0" && !game.cauldron) mutate("cauldron: enable", () => enableCauldron(game, homeMushroomPickups(game))); // (on by default, Ed 2026-10-30; ?cauldron=0 turns it off)
   recordedStep(game, c, fightDt(dt * (botTag?.speed ?? 1)), BUILD, () => captureRecording(game)); // Same stepGame and original controls; tape is diagnostic only.
   for (const [kind, events] of [["ko", game.koEvents], ["quest", game.questEvents], ["spell", game.combat.spells?.events ?? []]] as const) for (const event of events) { breadcrumbs.add(game, kind, event); if (kind !== "spell") notable(kind, `${kind} event`, event); }
   rumble.update(game, currentSettings(), input.device === "pad" && !document.hidden ? [freeze.pad()] : [], now);

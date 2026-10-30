@@ -87,6 +87,7 @@ For the builders, the smoke and bench runs, the repro link and the arenas.
 | switch | does | since | read in |
 |---|---|---|---|
 | `restore=comment` | Builder loader: consume the comment snapshot selected on the pause page, restoring that exact saved moment paused on the same build. | 2026-10-30 | main.ts |
+| `poolreadability=0` / `poolreadability=1` | Review-only dark-creature lighting inside the witch's light pool (1 enables it; off by default). | 2026-10-30 | render/sprites.ts |
 | `heldInputMs=<milliseconds>` | The online prototype holds the last guest movement input for this long before returning it to neutral (250 ms by default). | 2026-10-30 | platform/online/entry.ts |
 | `invite=<token>` | The online prototype reads this invitation token from the URL fragment to join the host's room. | 2026-10-30 | platform/online/entry.ts |
 | `online=host` / `online=guest` | The separate online prototype page hosts a night or joins an invitation. | 2026-10-30 | platform/online/entry.ts |
@@ -98,7 +99,7 @@ For the builders, the smoke and bench runs, the repro link and the arenas.
 | `attack=<attack as JSON>` | The Fight Arena or a debug arena tries this attack (an attack spec, as JSON) on its pack. | 2026-10-27 | app/fightArena.ts, app/gameParams.ts |
 | `audio=lite` / `audio=full` | The sound's weight for one load: lite sheds the costly parts (platform/audio/shed.ts). | 2026-10-07 | app/sound.ts |
 | `bag=starter` / `bag=quick` / `bag=far` / `bag=none` / `bag=<bag item id>` | Her bag for one load: the Satchel (the starter: base rate and reach, a little homing), the Bumbag (faster 💌s, shorter reach) or the Purse (slower, further); none, no bag. | 2026-10-29 | app/linkParams.ts |
-| `cauldron=1` | Enables the collection and kitchen preview: two home mushroom clusters, shared baskets and pot, and the temporary BBB Mirror Floor trip. | 2026-10-30 | main.ts |
+| `cauldron=0` | Mushroom collecting and the kitchen cauldron (two home mushroom clusters, shared baskets and pot, and the BBB Mirror Floor trip) are on by default; 0 turns them off. | 2026-10-30 | main.ts |
 | `cleared=<cx>_<cy>,…` | The repro link: these areas start cleared. | 2026-10-14 | app/repro.ts |
 | `debug` / `debug=cull` / `debug=shadows` / `debug=attack` | The debug overlay and the metre rulers on from the start; cull also tints whatever just appeared or vanished (pops), shadows draws every shadow a flat magenta, and attack blows on the two farthest soundsystems every 10 s (never felling one). | 2026-10-04 | app/keys.ts, app/night.ts, app/playerPick.ts, app/viewParams.ts, main.ts, render/ground.ts |
 | `decide` | Opens Ed's decisions panel (F2 too). | 2026-10-06 | main.ts, ui/decide.ts |
