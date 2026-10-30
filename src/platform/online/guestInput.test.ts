@@ -34,3 +34,11 @@ it("accepts actual cursor displacement and bounds its aim without losing directi
   expect(wireControls({ aimX: Number.MAX_VALUE, aimZ: Number.MAX_VALUE })?.aimX).toBeCloseTo(Math.SQRT1_2);
   expect(wireControls({ aimX: NaN })).toBeNull();
 });
+
+it("tolerates a frame timestamp before packet arrival and neutralizes invalid clocks without throwing", () => {
+  const input = guestInput(); input.accept({ sequence: 0, controls: { moveX: 1, dash: true } }, 100.5);
+  expect(input.sample(100)).toMatchObject({ moveX: 1, dash: true });
+  expect(input.sample(101)).toMatchObject({ moveX: 1, dash: false });
+  expect(input.sample(NaN).moveX).toBe(0);
+  expect(input.sample(350.5).moveX).toBe(0);
+});

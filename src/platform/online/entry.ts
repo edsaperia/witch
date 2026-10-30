@@ -137,7 +137,7 @@ function frame(now: number) {
   if (castWanted) { controls.castParty = true; castWanted = false; }
   if (guest) connection.sendInput({ sequence: sequence++, controls });
   else {
-    const inputs: Controls[] = guestPresent ? [controls, inputBuffer.sample(now)] : [controls];
+    const inputs: Controls[] = guestPresent ? [controls, inputBuffer.sample(performance.now())] : [controls];
     const update = replayHostStep(game, inputs, dt, ++tick);
     if (guestPresent && guestIsReady) connection.sendState({ kind: "frame", frame: update });
   }

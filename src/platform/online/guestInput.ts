@@ -43,8 +43,9 @@ export function guestInput(heldInputMs: number = ONLINE_TIMING.heldInputMs) {
       return true;
     },
     sample(now: number): Controls {
-      if (!Number.isFinite(now) || now < receivedAt) throw new Error("Invalid host clock");
-      const live = now - receivedAt < heldInputMs, result = live ? { ...current } : neutral();
+      // rAF can precede a packet received earlier in the same frame. Never throw in a frame.
+      const age = Number.isFinite(now) ? Math.max(0, now - receivedAt) : Infinity;
+      const live = age < heldInputMs, result = live ? { ...current } : neutral();
       for (const key of edges) { result[key] = live && !!pending[key]; delete pending[key]; }
       return result;
     },

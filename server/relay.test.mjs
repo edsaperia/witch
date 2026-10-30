@@ -5,7 +5,7 @@ import { WebSocket } from 'ws';
 import { createRelay } from './relay.mjs';
 
 async function fixture(t, options) {
-  const relay = createRelay(options);
+  const relay = createRelay({ log: () => {}, ...options });
   relay.http.listen(0, '127.0.0.1'); await once(relay.http, 'listening');
   t.after(() => relay.close());
   const url = `ws://127.0.0.1:${relay.http.address().port}`;
@@ -90,4 +90,45 @@ test('rejects a duplicate host and a third player', { timeout: 5000 }, async t =
   const third = await connect(), thirdClosed = once(third, 'close');
   send(third, { type: 'join', room: h.info.room, token: h.info.token });
   assert.equal((await thirdClosed)[0], 1008);
+});
+
+test('host survives bounded silence during guest loading and logs the exact deadline', { timeout: 5000 }, async t => {
+  let clock = 0;
+  const logs = [], connect = await fixture(t, { now: () => clock, checkMs: 5, log: row => logs.push(row) });
+  const h = await host(connect), accepted = message(h.ws); send(h.ws, { type: 'ready' }); await accepted;
+  const guest = await connect(), joined = message(guest), notice = message(h.ws);
+  send(guest, { type: 'join', room: h.info.room, token: h.info.token }); await joined; await notice;
+  clock = 10000;
+  // Round-trip guest input proves the host remains attached beyond the usual 5-second timeout.
+  const input = message(h.ws); send(guest, { type: 'input', payload: {} }); await input;
+  assert.equal(h.ws.readyState, WebSocket.OPEN);
+  const closed = once(h.ws, 'close'); clock = 20000; await closed;
+  await new Promise(resolve => setTimeout(resolve, 10));
+  const hostLog = logs.filter(row => row.role === 'host');
+  assert.equal(hostLog.length, 1); assert.equal(hostLog[0].rule, 'silence'); assert.equal(hostLog[0].limitMs, 20000);
+});
+
+test('normal host silence deadline resumes after guest activation', { timeout: 5000 }, async t => {
+  let clock = 0;
+  const logs = [], connect = await fixture(t, { now: () => clock, checkMs: 5, log: row => logs.push(row) });
+  const h = await host(connect), hostReady = message(h.ws); send(h.ws, { type: 'ready' }); await hostReady;
+  const guest = await connect(), joined = message(guest), notice = message(h.ws);
+  send(guest, { type: 'join', room: h.info.room, token: h.info.token }); await joined; await notice;
+  clock = 10000;
+  const accepted = message(guest), readyNotice = message(h.ws); send(guest, { type: 'ready' }); await accepted; await readyNotice;
+  send(guest, { type: 'active' }); await new Promise(resolve => setTimeout(resolve, 10));
+  const closed = once(h.ws, 'close'); clock = 15000; await closed;
+  await new Promise(resolve => setTimeout(resolve, 10));
+  assert.equal(logs.find(row => row.role === 'host').limitMs, 5000);
+});
+
+test('close logging distinguishes protocol, client close and joining-grace rules without payload secrets', { timeout: 5000 }, async t => {
+  let clock = 0;
+  const logs = [], connect = await fixture(t, { now: () => clock, checkMs: 5, log: row => logs.push(row) });
+  const bad = await connect(), badClosed = once(bad, 'close'); bad.send('secret-invalid-json'); await badClosed;
+  const client = await connect(), clientClosed = once(client, 'close'); client.close(); await clientClosed;
+  const silent = await connect(), silentClosed = once(silent, 'close'); clock = 180000; await silentClosed;
+  await new Promise(resolve => setTimeout(resolve, 10));
+  assert.deepEqual(logs.map(row => row.rule).sort(), ['client-close', 'join-grace', 'protocol']);
+  assert.equal(JSON.stringify(logs).includes('secret-invalid-json'), false);
 });
