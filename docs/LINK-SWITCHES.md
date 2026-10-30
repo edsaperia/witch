@@ -15,7 +15,7 @@ What the night is: its seed, island, world, opening, sail and her kit.
 | `arrive=1` | The night opens with the sea chart's arrival flight (a sail sets it); the boot's map isn't made ahead. | 2026-10-12 | index.html, app/night.ts, main.ts |
 | `bot=skilled` / `bot=crude` / `bot=…` | A bot plays the run (rules/bot.ts), with a seeded witch. | 2026-10-06 | main.ts |
 | `chart` / `chart=all` | Opens the sea chart page instead of the game; all shows every island. | 2026-10-11 | index.html, app/chartPage.ts |
-| `creator=0` | No character creator: the plain start card (the tools and the smoke runs). | 2026-10-05 | app/fightArena.ts, app/gameParams.ts, app/opening.ts, main.ts |
+| `creator=0` | No character creator: the plain start card (the tools and the smoke runs). | 2026-10-05 | app/fightArena.ts, app/gameParams.ts, app/nightSave.ts, app/opening.ts, main.ts |
 | `dev=0` / `dev=finds` | Hides the bedroom's dev "Player:" pick (0), or opens the finds dev panel (finds). | 2026-10-04 | app/playerPick.ts, main.ts |
 | `fightMomentum=<k>` | The creatures' momentum in a fight for this load (the debug overlay's slider; never remembered). | 2026-10-07 | app/knobs.ts |
 | `fightScale=<k>` | The fight's scale for this load (the debug overlay's slider; never remembered). | 2026-10-07 | app/knobs.ts |
@@ -37,6 +37,7 @@ What the night is: its seed, island, world, opening, sail and her kit.
 | `treetopSpeed=<m/s>` | Her treetop speed for this load only (never remembered: it changes the balance). | 2026-10-07 | app/linkParams.ts |
 | `wave=<n>` / `wave=off` | The repro link: the night brought on to wave n before play; off holds the waves where they are (as pulse=off). | 2026-10-07 | app/gameParams.ts, app/repro.ts |
 | `world=<n>` / `world=<text>` | The campaign's world seed (every island's shape) for this load. | 2026-10-11 | app/chartPage.ts, app/linkParams.ts, app/sail.ts, main.ts |
+| `resume=0` / `resume=1` | Disable night saves, or explicitly enable them on a debug or automated link. | 2026-10-29 | app/nightSave.ts |
 
 ## Looks and their costs
 

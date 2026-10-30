@@ -17,7 +17,7 @@ import { beatTime } from "../rules/beat";
 import * as THREE from "three";
 import { comfort } from "./comfort";
 import { gpuKind } from "./gpuLedger";
-import { drawSigil, sigilColour, LEGEND_SCALE, BOLD_GRID, boldGlyph, LEGEND_CROWN_H, crownGlyph } from "../../art/generator.js";
+import { drawSigil, sigilColour, LEGEND_SCALE, BOLD, BOLD_GRID, boldGlyph, LEGEND_CROWN_H, crownGlyph } from "../../art/generator.js";
 import { dormant, type Game } from "../rules/game";
 import type { Creature } from "../rules/creatures";
 
@@ -518,8 +518,10 @@ export class LeashView {
    *  not a disc); its pixels kept for the embers. `crown`, a legend's: its crown just above it (art/sigils.js LEGEND_CROWN; Ed, 2026-10-29),
    *  the sigil a little lower in the slot to make room. */
   bareSlot(species: string, crown = false): number {
-    const bold = !!this.game.tuning.leash.ranks?.bold && boldGlyph(species), key = `${species}:bare${bold ? ":bold" : ""}${crown ? ":crown" : ""}`, had = this.slots.get(key);
+    const useBold = !!this.game.tuning.leash.ranks?.bold && !!(BOLD as Record<string, unknown>)[species];
+    const key = `${species}:bare${useBold ? ":bold" : ""}${crown ? ":crown" : ""}`, had = this.slots.get(key);
     if (had !== undefined) return had;
+    const bold = useBold && boldGlyph(species);
     const s = this.nextSlot++, sh = this.nextSlot++;
     this.slots.set(key, s);
     const g = this.canvas.getContext("2d", { willReadFrequently: true })!, at = (k: number) => [(k % SLOTS) * SLOT, Math.floor(k / SLOTS) * SLOT];
