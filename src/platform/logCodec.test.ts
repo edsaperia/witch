@@ -13,7 +13,7 @@ it("uses exact frame runs/deltas and retains changing controls", () => {
   expect(decodeRecording(encodeRecording(changed))).toEqual(changed);
 });
 it("roundtrips native gzip, the explicit JSON fallback and legacy uncompressed data", async () => {
-  const value = { recording: tape(), note: "x".repeat(10000) };
+  const value = { recording: tape(), note: "🌙🦊 café".repeat(2000) };
   const gzip = await packLog(value); expect(gzip.encoding).toBe("gzip");
   expect(await unpackLog(gzip)).toEqual(value);
   const fallback = await packLog(value, false); expect(fallback.encoding).toBe("json");
