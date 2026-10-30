@@ -1,5 +1,5 @@
 {
-  "sha": "0f4181fdabe97c79e0263192c1bf2c4c7dc15c71",
+  "sha": "258baf5bdc8feded5d6c70efcb9ce443254a1c0e",
   "measurements": [
     {
       "id": "arcticfox",
@@ -514,6 +514,7 @@
       ]
     }
   ],
+  "modelSourceCommit": "258baf5bdc8feded5d6c70efcb9ce443254a1c0e",
   "lighting": "albedo",
   "style": {
     "ambientHue": 0.68,

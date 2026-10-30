@@ -1,5 +1,5 @@
 {
-  "sha": "0f4181fdabe97c79e0263192c1bf2c4c7dc15c71",
+  "sha": "258baf5bdc8feded5d6c70efcb9ce443254a1c0e",
   "measurements": [
     {
       "id": "beetle",
@@ -11,7 +11,7 @@
         29
       ],
       "proposed": [
-        40,
+        38,
         29
       ]
     },
@@ -25,6 +25,62 @@
         41
       ],
       "proposed": [
+        58,
+        41
+      ]
+    },
+    {
+      "id": "beetle",
+      "facing": "towards",
+      "frame": 0,
+      "level": 2,
+      "current": [
+        108,
+        65
+      ],
+      "proposed": [
+        96,
+        65
+      ]
+    },
+    {
+      "id": "beetle",
+      "facing": "towards",
+      "frame": 0,
+      "level": 3,
+      "current": [
+        220,
+        193
+      ],
+      "proposed": [
+        220,
+        193
+      ]
+    },
+    {
+      "id": "beetle",
+      "facing": "towards",
+      "frame": 1,
+      "level": 0,
+      "current": [
+        45,
+        30
+      ],
+      "proposed": [
+        43,
+        30
+      ]
+    },
+    {
+      "id": "beetle",
+      "facing": "towards",
+      "frame": 1,
+      "level": 1,
+      "current": [
+        72,
+        41
+      ],
+      "proposed": [
         65,
         41
       ]
@@ -32,62 +88,6 @@
     {
       "id": "beetle",
       "facing": "towards",
-      "frame": 0,
-      "level": 2,
-      "current": [
-        108,
-        65
-      ],
-      "proposed": [
-        108,
-        65
-      ]
-    },
-    {
-      "id": "beetle",
-      "facing": "towards",
-      "frame": 0,
-      "level": 3,
-      "current": [
-        220,
-        193
-      ],
-      "proposed": [
-        220,
-        193
-      ]
-    },
-    {
-      "id": "beetle",
-      "facing": "towards",
-      "frame": 1,
-      "level": 0,
-      "current": [
-        45,
-        30
-      ],
-      "proposed": [
-        45,
-        30
-      ]
-    },
-    {
-      "id": "beetle",
-      "facing": "towards",
-      "frame": 1,
-      "level": 1,
-      "current": [
-        72,
-        41
-      ],
-      "proposed": [
-        72,
-        41
-      ]
-    },
-    {
-      "id": "beetle",
-      "facing": "towards",
       "frame": 1,
       "level": 2,
       "current": [
@@ -95,7 +95,7 @@
         65
       ],
       "proposed": [
-        118,
+        106,
         65
       ]
     },
@@ -123,8 +123,8 @@
         30
       ],
       "proposed": [
-        45,
-        30
+        46,
+        31
       ]
     },
     {
@@ -137,8 +137,8 @@
         40
       ],
       "proposed": [
-        59,
-        40
+        62,
+        41
       ]
     },
     {
@@ -151,8 +151,8 @@
         63
       ],
       "proposed": [
-        91,
-        63
+        95,
+        64
       ]
     },
     {
@@ -179,8 +179,8 @@
         30
       ],
       "proposed": [
-        41,
-        30
+        40,
+        31
       ]
     },
     {
@@ -193,7 +193,7 @@
         40
       ],
       "proposed": [
-        54,
+        56,
         40
       ]
     },
@@ -207,8 +207,8 @@
         63
       ],
       "proposed": [
-        83,
-        63
+        87,
+        64
       ]
     },
     {
@@ -245,12 +245,24 @@
       "column": "proposed",
       "body": {},
       "look": {
-        "embers": false
+        "embers": false,
+        "materials": {
+          "wingCases": "SHELL",
+          "thorax": "THORAX",
+          "head": "HEAD"
+        },
+        "mandibles": {
+          "length": 0.65,
+          "width": 1.5,
+          "curve": 0.55,
+          "teeth": 1,
+          "awayTipLift": 0.16
+        }
       },
       "paletteHSV": [
-        0.06,
-        0.35,
-        0.28
+        0.04,
+        0.45,
+        0.36
       ]
     },
     {
@@ -271,12 +283,24 @@
       "column": "proposed",
       "body": {},
       "look": {
-        "embers": false
+        "embers": false,
+        "materials": {
+          "wingCases": "SHELL",
+          "thorax": "THORAX",
+          "head": "HEAD"
+        },
+        "mandibles": {
+          "length": 0.75,
+          "width": 1.7,
+          "curve": 0.6,
+          "teeth": 1,
+          "awayTipLift": 0.16
+        }
       },
       "paletteHSV": [
-        0.06,
-        0.35,
-        0.28
+        0.04,
+        0.45,
+        0.36
       ]
     },
     {
@@ -297,12 +321,24 @@
       "column": "proposed",
       "body": {},
       "look": {
-        "embers": false
+        "embers": false,
+        "materials": {
+          "wingCases": "SHELL",
+          "thorax": "THORAX",
+          "head": "HEAD"
+        },
+        "mandibles": {
+          "length": 0.8,
+          "width": 1.8,
+          "curve": 0.65,
+          "teeth": 2,
+          "awayTipLift": 0.16
+        }
       },
       "paletteHSV": [
-        0.06,
-        0.35,
-        0.28
+        0.04,
+        0.45,
+        0.36
       ]
     },
     {
@@ -323,7 +359,9 @@
       "column": "proposed",
       "body": {},
       "look": {
-        "embers": true
+        "embers": true,
+        "materials": null,
+        "mandibles": null
       },
       "paletteHSV": [
         0.02,
@@ -332,6 +370,7 @@
       ]
     }
   ],
+  "modelSourceCommit": "fd1a833ae69e1d5cf1d9353b89fbdda39cbab802",
   "lighting": "albedo",
   "style": {
     "ambientHue": 0.68,
@@ -404,5 +443,5 @@
     258,
     256
   ],
-  "selectionInterface": "isolated pre-hook genome data"
+  "selectionInterface": "shared #1470 selector"
 }
