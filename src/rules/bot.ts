@@ -27,6 +27,7 @@ import { creatureValue, sideValue } from "./power";
 import type { Controls, Game } from "./game";
 import type { Creature } from "./creatures";
 import type { Cell } from "./partition";
+import { newExpert, type ExpertParams } from "../bots/expert";
 
 import { BOT_KINDS, type BotKind } from "./botKinds";
 import { isHomeKey } from "./speakers";
@@ -39,6 +40,9 @@ const STARTER_BAG = "satchel";
 export { BOT_KINDS, type BotKind };
 
 export interface BotOptions {
+  /** Expert-only search parameters; baseline policies ignore these. */
+  expert?: Partial<ExpertParams>;
+  expertSeed?: number;
   /** Parks up to this many at the next soundsystem (skilled)... */
   guards?: number;
   /** ...keeping this many on her stack. */
@@ -158,7 +162,7 @@ export const BOT_GAME: Record<BotKind, BotOptions> = {
     guards: 3, keep: 1, feed: true, siege: true, regroup: true, blink: true, calm: true, calmRestless: true,
     knobs: { defendLead: 0, defendHold: 45, kite: 9.8, dashAt: 5.8, fireFrac: 0.95, closeFrac: 0.91, recruitRange: 926, feedMin: 4, feedRange: 535, feedWait: 20, siegeNear: 120, siegeMin: 11.8, concede: 0.73, siegeStand: 10.5, siegeSide: 1, homeWeight: 2.9, strandFar: 84, lead: 0.47, blinkLead: 0.43 },
   },
-  crude: {}, novice: {}, idle: {}, hover: {},
+  crude: {}, novice: {}, idle: {}, hover: {}, expert: {},
 };
 
 /** The skilled bot's strategies (Ed, 2026-10-06: "good play [should] involve a good balance of inviting, evolving
@@ -192,6 +196,7 @@ type Target = { cell: Cell; key: string; x: number; z: number };
 type QJob = { L: Creature; want: Creature; phase: "fetch" | "deliver"; since: number };
 
 export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
+  if (kind === "expert") return newExpert(o.expert, o.expertSeed);
   const GUARDS = o.guards ?? 3, KEEP = o.keep ?? 2, careful = kind === "skilled" || kind === "champion", K = { ...BOT_KNOBS, ...o.knobs };
   // (the careful bots answer sieges, pick up guards left stranded and blink out of blows now: bots-again, 2026-10-11, the
   // islands' minute-a-wave pace; their stand before each wave is gone. Given options keep their own say.)

@@ -1,0 +1,228 @@
+[
+  {
+    "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "wallMs": 280776,
+    "error": "TimeoutError: page.waitForFunction: Timeout 50549ms exceeded.",
+    "active": {
+      "variant": "intel-per-kind",
+      "island": "fox",
+      "phase": "sailing"
+    },
+    "note": "One serial5min hardware GL session. Same candidate runtime; baseline build substitutes exact released ground.ts/lakeLooks.ts. Single ordered pair, no cache purge, no causal speed claim. Compile wall is link-to-KHR-ready including polling delay, not compiler CPU.",
+    "rows": [
+      {
+        "variant": "intel-full",
+        "island": "fox",
+        "version": {
+          "version": "vIntel-full523-control · 615d7dc",
+          "built": "2026-10-30T10:42:48.122Z"
+        },
+        "arrivalMs": 102252.89999985695,
+        "worstFrameMs": 741.6000000000022,
+        "programs": [
+          {
+            "at": 2628.5999999046326,
+            "linkCallMs": 0.10000014305114746,
+            "parallel": true,
+            "readyAt": 85563.59999990463,
+            "id": 80,
+            "name": "",
+            "compileWallMs": 53083.799999952316,
+            "uses": [
+              {
+                "path": "scene/82:island/0:Mesh",
+                "originallyVisible": true,
+                "defines": "{\"GROUND_LAKES\":\"\"}",
+                "vertex": "2414:e97e5c7c",
+                "fragment": "67567:ccd080b1"
+              }
+            ]
+          },
+          {
+            "at": 2629.2999999523163,
+            "linkCallMs": 0.09999990463256836,
+            "parallel": true,
+            "readyAt": 110028.70000004768,
+            "id": 81,
+            "name": "",
+            "compileWallMs": 77548.20000004768,
+            "uses": [
+              {
+                "path": "scene/82:island/0:Mesh/0:Mesh",
+                "originallyVisible": false,
+                "defines": "{\"GROUND_LAKES\":\"\",\"GROUND_BEACH\":\"\"}",
+                "vertex": "2414:e97e5c7c",
+                "fragment": "67567:ccd080b1"
+              }
+            ]
+          },
+          {
+            "at": 2629.5999999046326,
+            "linkCallMs": 0,
+            "parallel": true,
+            "readyAt": 32728.700000047684,
+            "id": 82,
+            "name": "",
+            "compileWallMs": 247.90000009536743,
+            "uses": [
+              {
+                "path": "scene/82:island/1:Group/2:Mesh",
+                "originallyVisible": true,
+                "defines": "{}",
+                "vertex": "2756:e873046b",
+                "fragment": "10537:8c335283"
+              }
+            ]
+          },
+          {
+            "at": 102420.59999990463,
+            "linkCallMs": 0.2999999523162842,
+            "parallel": true,
+            "readyAt": 132496.40000009537,
+            "compileWallMs": 224.60000014305115
+          }
+        ]
+      },
+      {
+        "variant": "intel-full",
+        "island": "raven",
+        "version": {
+          "version": "vIntel-full523-control · 615d7dc",
+          "built": "2026-10-30T10:42:48.122Z"
+        },
+        "arrivalMs": 35700.799999952316,
+        "worstFrameMs": 833.3999999999942,
+        "programs": []
+      }
+    ]
+  },
+  {
+    "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "wallMs": 163387,
+    "bootMs": 22967,
+    "note": "One serial5min hardware GL session. Same candidate runtime; baseline build substitutes exact released ground.ts/lakeLooks.ts. Single ordered pair, no cache purge, no causal speed claim. Compile wall is link-to-KHR-ready including polling delay, not compiler CPU.",
+    "rows": [
+      {
+        "variant": "intel-per-kind",
+        "island": "fox",
+        "version": {
+          "version": "vIntel-per-kind · 615d7dc",
+          "built": "2026-10-30T10:42:02.981Z"
+        },
+        "arrivalMs": 58454.5,
+        "worstFrameMs": 533.2000000000007,
+        "programs": [
+          {
+            "at": 2260.5,
+            "linkCallMs": 0.09999990463256836,
+            "parallel": true,
+            "readyAt": 51431,
+            "id": 80,
+            "name": "",
+            "compileWallMs": 20855,
+            "uses": [
+              {
+                "path": "scene/82:island/0:Mesh",
+                "originallyVisible": true,
+                "defines": "{\"GROUND_LAKES\":\"\",\"GROUND_LAKE_WATER\":\"\"}",
+                "vertex": "2414:e97e5c7c",
+                "fragment": "69080:b1fcbe6f"
+              }
+            ]
+          },
+          {
+            "at": 2261.2999999523163,
+            "linkCallMs": 0,
+            "parallel": true,
+            "readyAt": 64882.200000047684,
+            "id": 81,
+            "name": "",
+            "compileWallMs": 34305.40000009537,
+            "uses": [
+              {
+                "path": "scene/82:island/0:Mesh/0:Mesh",
+                "originallyVisible": false,
+                "defines": "{\"GROUND_LAKES\":\"\",\"GROUND_LAKE_WATER\":\"\",\"GROUND_BEACH\":\"\"}",
+                "vertex": "2414:e97e5c7c",
+                "fragment": "69080:b1fcbe6f"
+              }
+            ]
+          },
+          {
+            "at": 2261.5,
+            "linkCallMs": 0,
+            "parallel": true,
+            "readyAt": 30768.5,
+            "id": 82,
+            "name": "",
+            "compileWallMs": 191.5,
+            "uses": [
+              {
+                "path": "scene/82:island/1:Group/2:Mesh",
+                "originallyVisible": true,
+                "defines": "{}",
+                "vertex": "2756:e873046b",
+                "fragment": "10537:8c335283"
+              }
+            ]
+          },
+          {
+            "at": 58570.09999990463,
+            "linkCallMs": 0.10000014305114746,
+            "parallel": true,
+            "readyAt": 87042.5,
+            "compileWallMs": 156.90000009536743
+          }
+        ]
+      },
+      {
+        "variant": "intel-per-kind",
+        "island": "raven",
+        "version": {
+          "version": "vIntel-per-kind · 615d7dc",
+          "built": "2026-10-30T10:42:02.981Z"
+        },
+        "arrivalMs": 71987.79999995232,
+        "worstFrameMs": 1316.6000000000058,
+        "programs": [
+          {
+            "at": 9773.200000047684,
+            "linkCallMs": 3.5,
+            "parallel": true,
+            "readyAt": 124503,
+            "id": 84,
+            "name": "",
+            "compileWallMs": 25592.299999952316,
+            "uses": [
+              {
+                "path": "scene/114:island/0:Mesh",
+                "originallyVisible": true,
+                "defines": "{\"GROUND_LAKES\":\"\",\"GROUND_LAKE_LAVA\":\"\"}",
+                "vertex": "2414:e97e5c7c",
+                "fragment": "69080:b1fcbe6f"
+              }
+            ]
+          },
+          {
+            "at": 9777.900000095367,
+            "linkCallMs": 0.09999990463256836,
+            "parallel": true,
+            "readyAt": 137780.5,
+            "id": 85,
+            "name": "",
+            "compileWallMs": 38865.09999990463,
+            "uses": [
+              {
+                "path": "scene/114:island/0:Mesh/0:Mesh",
+                "originallyVisible": false,
+                "defines": "{\"GROUND_LAKES\":\"\",\"GROUND_LAKE_LAVA\":\"\",\"GROUND_BEACH\":\"\"}",
+                "vertex": "2414:e97e5c7c",
+                "fragment": "69080:b1fcbe6f"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

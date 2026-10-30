@@ -21,6 +21,8 @@ const tableMask = `linear-gradient(to bottom, transparent, #000 ${TABLE_FADE.top
 let open: { wrap: HTMLDivElement; view: ChartView; raf: number; slide?: SlideIn; moon?: HTMLCanvasElement } | null = null;
 /** A table's chart sliding away (closeChart): gone once it's out, or at once if another opens meanwhile. */
 let leaving: (() => void) | null = null;
+/** The shader grace expired: do not add the remaining chart camera motion to the wait. */
+export function finishChartFlight(): void { open?.view.chart.skipFlight(); }
 
 /** What she sailed to: the island, the night's seed, the world the link gave, and the chart's flight end (none if it couldn't fly). */
 export interface Sailed { island: string; seed: number; world?: number; end?: FlightEnd }
@@ -28,7 +30,7 @@ export interface Sailed { island: string; seed: number; world?: number; end?: Fl
 /** Open the chart over the game; `onSail` with the island's link (to load) and what she sailed to (a night in place: app/sail.ts)
  *  when she sails (`o.onDepart` first, as its flight sets off: the night in place made under it, app/chartView.ts); `world`, a world the game's link gave (?world=), carried on as chart.html's links do. Does nothing if it's
  *  already open. `o.here`: the island she's on: choosing it closes the chart as Close does (then `o.onStay`), never a sail (app/sail.ts chartChoice). */
-export function openChart(onSail: (href: string, sailed: Sailed) => void, world?: number, o: { here?: ChartViewOptions["here"]; onStay?: () => void; table?: ChartViewOptions["table"]; onDepart?: (sailed: Sailed, at: FlightEnd["cam"] | null) => Promise<void> } = {}): void {
+export function openChart(onSail: (href: string, sailed: Sailed) => void, world?: number, o: { here?: ChartViewOptions["here"]; onStay?: () => void; table?: ChartViewOptions["table"]; onFly?: () => void; onLandingDue?: (dueAt: number) => void; onDepart?: (sailed: Sailed, at: FlightEnd["cam"] | null) => Promise<void> } = {}): void {
   if (open) return;
   leaving?.(); // (the last table's chart still sliding away: gone now, its chart free for this one)
   performance.mark("chart:open");
@@ -53,8 +55,10 @@ export function openChart(onSail: (href: string, sailed: Sailed) => void, world?
   const view = mountChart(host, {
     mode: "sail", world,
     onSail: (island, seed, end) => { closeChart(); onSail(sailHref(island, seed, world, location.href), { island, seed, world, end }); },
-    onFly: () => { wrap.style.inset = "0"; wrap.style.border = "0"; wrap.style.borderRadius = "0"; host.style.maskImage = host.style.webkitMaskImage = "none"; if (moon) moon.style.display = "none"; }, // (the flight fills the screen, edge to edge)
+    onFly: () => { wrap.style.inset = "0"; wrap.style.border = "0"; wrap.style.borderRadius = "0"; host.style.maskImage = host.style.webkitMaskImage = "none"; if (moon) moon.style.display = "none"; o.onFly?.(); }, // (the flight fills the screen, edge to edge)
     onDepart: o.onDepart ? (island, seed, at) => o.onDepart!({ island, seed, world }, at) : undefined, // (the next night made under the flight: main.ts)
+    onLandingDue: o.onLandingDue,
+    // onFly also initializes the shader budget before asynchronous chart-map preparation can outlast the normal flight.
     onClose: closeChart,
     here: o.here,
     onStay: () => { closeChart(); o.onStay?.(); }, // (as Close: the night held behind it goes on as it was, main.ts)

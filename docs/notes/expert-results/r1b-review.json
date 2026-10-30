@@ -1,0 +1,1118 @@
+{
+  "source": "0cd56f3b8d2c0e52af4225d025f8358a8f9df9f4",
+  "fingerprint": "daeb7d7f2b0c9d867a1be3baa0d2cde212067f271c6e97e5ad818c3aacdb252d",
+  "resultCommits": {
+    "5": "d07cc4c462cd75466776e861709b0ea5660e9c85",
+    "6": "ccd1fcd7c33711bef13b2e2a0105d5df3bd01641",
+    "7": "05d62e0e472088536373e8197789d5a45694e6bf",
+    "8": "8c5c1bf888034dcbf123e69412327ab083bbde0c"
+  },
+  "trainingOnly": true,
+  "heldOutCases": 0,
+  "distinctNightSeeds": 2,
+  "worldSeed": 0,
+  "rowsLogged": 128,
+  "uniqueEffectiveCases": 56,
+  "fullGoalRuns": 0,
+  "decision": "castMoveFrac0.85 improves only lower survival tie-breakers; not a clear primary-goal improvement or trained-lock release",
+  "shards": {
+    "5": {
+      "source": "0cd56f3b8d2c0e52af4225d025f8358a8f9df9f4",
+      "fp": "daeb7d7f2b0c9d867a1be3baa0d2cde212067f271c6e97e5ad818c3aacdb252d",
+      "complete": true,
+      "held": 0,
+      "evaluated": 2,
+      "baseline": {
+        "n": 16,
+        "wins": 4,
+        "quests": 2,
+        "allQuestRuns": 0,
+        "finds": 5,
+        "eligibleKept": 3,
+        "deliveries": 2,
+        "lost": 10,
+        "censored": 2,
+        "fullGoalRuns": 0
+      },
+      "candidate": {
+        "n": 16,
+        "wins": 4,
+        "quests": 2,
+        "allQuestRuns": 0,
+        "finds": 5,
+        "eligibleKept": 3,
+        "deliveries": 2,
+        "lost": 9,
+        "censored": 3,
+        "fullGoalRuns": 0
+      },
+      "baselineScore": [
+        4,
+        2,
+        0,
+        3,
+        5,
+        2,
+        131,
+        23053.655666743354
+      ],
+      "candidateScore": [
+        4,
+        2,
+        0,
+        3,
+        5,
+        2,
+        138,
+        26390.16600010721
+      ],
+      "accepted": true,
+      "changes": [
+        [
+          "castMoveFrac",
+          0.85
+        ]
+      ],
+      "caseDiffs": [
+        {
+          "seed": 1000,
+          "island": "home",
+          "bpm": 100,
+          "condition": "matched",
+          "base": {
+            "outcome": "won",
+            "quests": 0,
+            "find": true,
+            "kept": true,
+            "waves": 9,
+            "end": 2761.323333340882
+          },
+          "candidate": {
+            "outcome": "won",
+            "quests": 0,
+            "find": true,
+            "kept": true,
+            "waves": 9,
+            "end": 2666.2120000063383
+          }
+        },
+        {
+          "seed": 1000,
+          "island": "tiger",
+          "bpm": 100,
+          "condition": "matched",
+          "base": {
+            "outcome": "censored",
+            "quests": 0,
+            "find": true,
+            "kept": false,
+            "waves": 14,
+            "end": 4193.44400002315
+          },
+          "candidate": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 10,
+            "end": 2956.890000010039
+          }
+        },
+        {
+          "seed": 1000,
+          "island": "komodo",
+          "bpm": 100,
+          "condition": "matched",
+          "base": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 4,
+            "end": 1682.9566666654648
+          },
+          "candidate": {
+            "outcome": "censored",
+            "quests": 0,
+            "find": true,
+            "kept": false,
+            "waves": 10,
+            "end": 4185.620000023101
+          }
+        },
+        {
+          "seed": 1000,
+          "island": "home",
+          "bpm": 100,
+          "condition": "home-everything",
+          "base": {
+            "outcome": "lost",
+            "quests": 1,
+            "find": false,
+            "kept": false,
+            "waves": 14,
+            "end": 3776.0123333537863
+          },
+          "candidate": {
+            "outcome": "lost",
+            "quests": 1,
+            "find": false,
+            "kept": false,
+            "waves": 14,
+            "end": 3807.0510000208105
+          }
+        },
+        {
+          "seed": 1000,
+          "island": "home",
+          "bpm": 200,
+          "condition": "matched",
+          "base": {
+            "outcome": "won",
+            "quests": 0,
+            "find": true,
+            "kept": true,
+            "waves": 9,
+            "end": 1957.2066666652154
+          },
+          "candidate": {
+            "outcome": "won",
+            "quests": 0,
+            "find": true,
+            "kept": true,
+            "waves": 9,
+            "end": 1526.645333332274
+          }
+        },
+        {
+          "seed": 1000,
+          "island": "tiger",
+          "bpm": 200,
+          "condition": "matched",
+          "base": {
+            "outcome": "censored",
+            "quests": 0,
+            "find": true,
+            "kept": false,
+            "waves": 16,
+            "end": 2906.7859999976445
+          },
+          "candidate": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 13,
+            "end": 1878.8886666652877
+          }
+        },
+        {
+          "seed": 1000,
+          "island": "komodo",
+          "bpm": 200,
+          "condition": "matched",
+          "base": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 7,
+            "end": 1107.273333332655
+          },
+          "candidate": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": true,
+            "kept": false,
+            "waves": 13,
+            "end": 2635.512000005909
+          }
+        },
+        {
+          "seed": 1000,
+          "island": "home",
+          "bpm": 200,
+          "condition": "home-everything",
+          "base": {
+            "outcome": "lost",
+            "quests": 1,
+            "find": false,
+            "kept": false,
+            "waves": 18,
+            "end": 2501.157000004236
+          },
+          "candidate": {
+            "outcome": "lost",
+            "quests": 1,
+            "find": false,
+            "kept": false,
+            "waves": 18,
+            "end": 2575.909000005265
+          }
+        },
+        {
+          "seed": 8919,
+          "island": "home",
+          "bpm": 100,
+          "condition": "matched",
+          "base": {
+            "outcome": "won",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 7,
+            "end": 2170.9786666666937
+          },
+          "candidate": {
+            "outcome": "won",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 7,
+            "end": 2178.628666666791
+          }
+        },
+        {
+          "seed": 8919,
+          "island": "tiger",
+          "bpm": 100,
+          "condition": "matched",
+          "base": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 8,
+            "end": 3853.4620000213736
+          },
+          "candidate": {
+            "outcome": "censored",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 10,
+            "end": 4197.712000023063
+          }
+        },
+        {
+          "seed": 8919,
+          "island": "komodo",
+          "bpm": 100,
+          "condition": "matched",
+          "base": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 8,
+            "end": 3063.1613333447253
+          },
+          "candidate": {
+            "outcome": "censored",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 9,
+            "end": 4191.8590000230815
+          }
+        },
+        {
+          "seed": 8919,
+          "island": "home",
+          "bpm": 100,
+          "condition": "home-everything",
+          "base": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 8,
+            "end": 1852.5803333319773
+          },
+          "candidate": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 8,
+            "end": 1876.8636666652887
+          }
+        },
+        {
+          "seed": 8919,
+          "island": "home",
+          "bpm": 200,
+          "condition": "matched",
+          "base": {
+            "outcome": "won",
+            "quests": 0,
+            "find": true,
+            "kept": true,
+            "waves": 8,
+            "end": 1274.5653333325045
+          },
+          "candidate": {
+            "outcome": "won",
+            "quests": 0,
+            "find": true,
+            "kept": true,
+            "waves": 8,
+            "end": 1280.8189999991657
+          }
+        },
+        {
+          "seed": 8919,
+          "island": "tiger",
+          "bpm": 200,
+          "condition": "matched",
+          "base": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 9,
+            "end": 2023.5386666651564
+          },
+          "candidate": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 14,
+            "end": 2600.089333338792
+          }
+        },
+        {
+          "seed": 8919,
+          "island": "komodo",
+          "bpm": 200,
+          "condition": "matched",
+          "base": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 14,
+            "end": 2902.317666676048
+          },
+          "candidate": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 8,
+            "end": 1826.9059999986673
+          }
+        },
+        {
+          "seed": 8919,
+          "island": "home",
+          "bpm": 200,
+          "condition": "home-everything",
+          "base": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 11,
+            "end": 1355.0403333324302
+          },
+          "candidate": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 11,
+            "end": 1309.1703333324724
+          }
+        }
+      ]
+    },
+    "6": {
+      "source": "0cd56f3b8d2c0e52af4225d025f8358a8f9df9f4",
+      "fp": "daeb7d7f2b0c9d867a1be3baa0d2cde212067f271c6e97e5ad818c3aacdb252d",
+      "complete": true,
+      "held": 0,
+      "evaluated": 2,
+      "baseline": {
+        "n": 16,
+        "wins": 4,
+        "quests": 2,
+        "allQuestRuns": 0,
+        "finds": 5,
+        "eligibleKept": 3,
+        "deliveries": 2,
+        "lost": 10,
+        "censored": 2,
+        "fullGoalRuns": 0
+      },
+      "candidate": {
+        "n": 16,
+        "wins": 4,
+        "quests": 2,
+        "allQuestRuns": 0,
+        "finds": 3,
+        "eligibleKept": 2,
+        "deliveries": 2,
+        "lost": 10,
+        "censored": 2,
+        "fullGoalRuns": 0
+      },
+      "baselineScore": [
+        4,
+        2,
+        0,
+        3,
+        5,
+        2,
+        131,
+        23053.655666743354
+      ],
+      "candidateScore": [
+        4,
+        2,
+        0,
+        2,
+        3,
+        2,
+        131,
+        25053.708666751554
+      ],
+      "accepted": false,
+      "changes": [
+        [
+          "retargetSeconds",
+          5.75
+        ]
+      ],
+      "caseDiffs": [
+        {
+          "seed": 1000,
+          "island": "home",
+          "bpm": 100,
+          "condition": "matched",
+          "base": {
+            "outcome": "won",
+            "quests": 0,
+            "find": true,
+            "kept": true,
+            "waves": 9,
+            "end": 2761.323333340882
+          },
+          "candidate": {
+            "outcome": "won",
+            "quests": 0,
+            "find": true,
+            "kept": true,
+            "waves": 9,
+            "end": 2723.6786666737366
+          }
+        },
+        {
+          "seed": 1000,
+          "island": "tiger",
+          "bpm": 100,
+          "condition": "matched",
+          "base": {
+            "outcome": "censored",
+            "quests": 0,
+            "find": true,
+            "kept": false,
+            "waves": 14,
+            "end": 4193.44400002315
+          },
+          "candidate": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 11,
+            "end": 3009.0553333439893
+          }
+        },
+        {
+          "seed": 1000,
+          "island": "komodo",
+          "bpm": 100,
+          "condition": "matched",
+          "base": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 4,
+            "end": 1682.9566666654648
+          },
+          "candidate": {
+            "outcome": "censored",
+            "quests": 0,
+            "find": true,
+            "kept": false,
+            "waves": 10,
+            "end": 4189.889000023091
+          }
+        },
+        {
+          "seed": 1000,
+          "island": "home",
+          "bpm": 100,
+          "condition": "home-everything",
+          "base": {
+            "outcome": "lost",
+            "quests": 1,
+            "find": false,
+            "kept": false,
+            "waves": 14,
+            "end": 3776.0123333537863
+          },
+          "candidate": {
+            "outcome": "lost",
+            "quests": 1,
+            "find": false,
+            "kept": false,
+            "waves": 14,
+            "end": 3709.034333352934
+          }
+        },
+        {
+          "seed": 1000,
+          "island": "home",
+          "bpm": 200,
+          "condition": "matched",
+          "base": {
+            "outcome": "won",
+            "quests": 0,
+            "find": true,
+            "kept": true,
+            "waves": 9,
+            "end": 1957.2066666652154
+          },
+          "candidate": {
+            "outcome": "won",
+            "quests": 0,
+            "find": true,
+            "kept": true,
+            "waves": 9,
+            "end": 1508.67333333229
+          }
+        },
+        {
+          "seed": 1000,
+          "island": "tiger",
+          "bpm": 200,
+          "condition": "matched",
+          "base": {
+            "outcome": "censored",
+            "quests": 0,
+            "find": true,
+            "kept": false,
+            "waves": 16,
+            "end": 2906.7859999976445
+          },
+          "candidate": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 13,
+            "end": 1820.15666666534
+          }
+        },
+        {
+          "seed": 1000,
+          "island": "komodo",
+          "bpm": 200,
+          "condition": "matched",
+          "base": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 7,
+            "end": 1107.273333332655
+          },
+          "candidate": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 10,
+            "end": 2182.1000000002023
+          }
+        },
+        {
+          "seed": 1000,
+          "island": "home",
+          "bpm": 200,
+          "condition": "home-everything",
+          "base": {
+            "outcome": "lost",
+            "quests": 1,
+            "find": false,
+            "kept": false,
+            "waves": 18,
+            "end": 2501.157000004236
+          },
+          "candidate": {
+            "outcome": "lost",
+            "quests": 1,
+            "find": false,
+            "kept": false,
+            "waves": 17,
+            "end": 2339.7903333354766
+          }
+        },
+        {
+          "seed": 8919,
+          "island": "home",
+          "bpm": 100,
+          "condition": "matched",
+          "base": {
+            "outcome": "won",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 7,
+            "end": 2170.9786666666937
+          },
+          "candidate": {
+            "outcome": "won",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 8,
+            "end": 2498.790000004206
+          }
+        },
+        {
+          "seed": 8919,
+          "island": "tiger",
+          "bpm": 100,
+          "condition": "matched",
+          "base": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 8,
+            "end": 3853.4620000213736
+          },
+          "candidate": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 6,
+            "end": 3477.884000016663
+          }
+        },
+        {
+          "seed": 8919,
+          "island": "komodo",
+          "bpm": 100,
+          "condition": "matched",
+          "base": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 8,
+            "end": 3063.1613333447253
+          },
+          "candidate": {
+            "outcome": "censored",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 8,
+            "end": 4195.828000023059
+          }
+        },
+        {
+          "seed": 8919,
+          "island": "home",
+          "bpm": 100,
+          "condition": "home-everything",
+          "base": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 8,
+            "end": 1852.5803333319773
+          },
+          "candidate": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 11,
+            "end": 2504.5116666710032
+          }
+        },
+        {
+          "seed": 8919,
+          "island": "home",
+          "bpm": 200,
+          "condition": "matched",
+          "base": {
+            "outcome": "won",
+            "quests": 0,
+            "find": true,
+            "kept": true,
+            "waves": 8,
+            "end": 1274.5653333325045
+          },
+          "candidate": {
+            "outcome": "won",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 8,
+            "end": 1288.2066666658238
+          }
+        },
+        {
+          "seed": 8919,
+          "island": "komodo",
+          "bpm": 200,
+          "condition": "matched",
+          "base": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 14,
+            "end": 2902.317666676048
+          },
+          "candidate": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 8,
+            "end": 1871.4893333319592
+          }
+        },
+        {
+          "seed": 8919,
+          "island": "home",
+          "bpm": 200,
+          "condition": "home-everything",
+          "base": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 11,
+            "end": 1355.0403333324302
+          },
+          "candidate": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 14,
+            "end": 1749.7799999987367
+          }
+        }
+      ]
+    },
+    "7": {
+      "source": "0cd56f3b8d2c0e52af4225d025f8358a8f9df9f4",
+      "fp": "daeb7d7f2b0c9d867a1be3baa0d2cde212067f271c6e97e5ad818c3aacdb252d",
+      "complete": true,
+      "held": 0,
+      "evaluated": 2,
+      "baseline": {
+        "n": 16,
+        "wins": 4,
+        "quests": 2,
+        "allQuestRuns": 0,
+        "finds": 5,
+        "eligibleKept": 3,
+        "deliveries": 2,
+        "lost": 10,
+        "censored": 2,
+        "fullGoalRuns": 0
+      },
+      "candidate": {
+        "n": 16,
+        "wins": 4,
+        "quests": 0,
+        "allQuestRuns": 0,
+        "finds": 5,
+        "eligibleKept": 3,
+        "deliveries": 0,
+        "lost": 9,
+        "censored": 3,
+        "fullGoalRuns": 0
+      },
+      "baselineScore": [
+        4,
+        2,
+        0,
+        3,
+        5,
+        2,
+        131,
+        23053.655666743354
+      ],
+      "candidateScore": [
+        4,
+        0,
+        0,
+        3,
+        5,
+        0,
+        110,
+        19269.482333393036
+      ],
+      "accepted": false,
+      "changes": [
+        [
+          "exhaust",
+          3
+        ]
+      ],
+      "caseDiffs": [
+        {
+          "seed": 1000,
+          "island": "home",
+          "bpm": 100,
+          "condition": "home-everything",
+          "base": {
+            "outcome": "lost",
+            "quests": 1,
+            "find": false,
+            "kept": false,
+            "waves": 14,
+            "end": 3776.0123333537863
+          },
+          "candidate": {
+            "outcome": "censored",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 3,
+            "end": 1092.7425000040248
+          }
+        },
+        {
+          "seed": 1000,
+          "island": "home",
+          "bpm": 200,
+          "condition": "home-everything",
+          "base": {
+            "outcome": "lost",
+            "quests": 1,
+            "find": false,
+            "kept": false,
+            "waves": 18,
+            "end": 2501.157000004236
+          },
+          "candidate": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 7,
+            "end": 1077.1475000029748
+          }
+        },
+        {
+          "seed": 8919,
+          "island": "home",
+          "bpm": 100,
+          "condition": "home-everything",
+          "base": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 8,
+            "end": 1852.5803333319773
+          },
+          "candidate": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 9,
+            "end": 2120.999999999403
+          }
+        },
+        {
+          "seed": 8919,
+          "island": "home",
+          "bpm": 200,
+          "condition": "home-everything",
+          "base": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 11,
+            "end": 1355.0403333324302
+          },
+          "candidate": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 11,
+            "end": 1409.7266666657126
+          }
+        }
+      ]
+    },
+    "8": {
+      "source": "0cd56f3b8d2c0e52af4225d025f8358a8f9df9f4",
+      "fp": "daeb7d7f2b0c9d867a1be3baa0d2cde212067f271c6e97e5ad818c3aacdb252d",
+      "complete": true,
+      "held": 0,
+      "evaluated": 2,
+      "baseline": {
+        "n": 16,
+        "wins": 4,
+        "quests": 2,
+        "allQuestRuns": 0,
+        "finds": 5,
+        "eligibleKept": 3,
+        "deliveries": 2,
+        "lost": 10,
+        "censored": 2,
+        "fullGoalRuns": 0
+      },
+      "candidate": {
+        "n": 16,
+        "wins": 4,
+        "quests": 0,
+        "allQuestRuns": 0,
+        "finds": 5,
+        "eligibleKept": 3,
+        "deliveries": 0,
+        "lost": 10,
+        "censored": 2,
+        "fullGoalRuns": 0
+      },
+      "baselineScore": [
+        4,
+        2,
+        0,
+        3,
+        5,
+        2,
+        131,
+        23053.655666743354
+      ],
+      "candidateScore": [
+        4,
+        0,
+        0,
+        3,
+        5,
+        0,
+        114,
+        19827.088000050808
+      ],
+      "accepted": false,
+      "changes": [
+        [
+          "tip",
+          3
+        ]
+      ],
+      "caseDiffs": [
+        {
+          "seed": 1000,
+          "island": "home",
+          "bpm": 100,
+          "condition": "home-everything",
+          "base": {
+            "outcome": "lost",
+            "quests": 1,
+            "find": false,
+            "kept": false,
+            "waves": 14,
+            "end": 3776.0123333537863
+          },
+          "candidate": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 5,
+            "end": 1559.2339999989103
+          }
+        },
+        {
+          "seed": 1000,
+          "island": "home",
+          "bpm": 200,
+          "condition": "home-everything",
+          "base": {
+            "outcome": "lost",
+            "quests": 1,
+            "find": false,
+            "kept": false,
+            "waves": 18,
+            "end": 2501.157000004236
+          },
+          "candidate": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 8,
+            "end": 1128.7713333326358
+          }
+        },
+        {
+          "seed": 8919,
+          "island": "home",
+          "bpm": 100,
+          "condition": "home-everything",
+          "base": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 8,
+            "end": 1852.5803333319773
+          },
+          "candidate": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 9,
+            "end": 2114.140333332671
+          }
+        },
+        {
+          "seed": 8919,
+          "island": "home",
+          "bpm": 200,
+          "condition": "home-everything",
+          "base": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 11,
+            "end": 1355.0403333324302
+          },
+          "candidate": {
+            "outcome": "lost",
+            "quests": 0,
+            "find": false,
+            "kept": false,
+            "waves": 12,
+            "end": 1456.0766666656705
+          }
+        }
+      ]
+    }
+  }
+}

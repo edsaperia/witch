@@ -43,6 +43,15 @@ describe("shared party sheets", () => {
   });
 });
 
+it('requires the complete current witch atlas, not a quick preview or an old outfit, for limited landing', () => {
+  const a = Object.assign(Object.create(AssetLibrary.prototype), { home: { witch: true }, preview: {}, witchGenome: null, witchLooks: new Map([['null', {}]]) }) as AssetLibrary;
+  expect(a.fullWitchReady).toBe(false);
+  (a as unknown as { preview: unknown }).preview = null;
+  expect(a.fullWitchReady).toBe(true);
+  (a as unknown as { witchLooks: Map<string, unknown> }).witchLooks.clear();
+  expect(a.fullWitchReady).toBe(false);
+});
+
 describe("AssetLibrary.reseat (another island on the page)", () => {
   const style = loadStyle();
 
