@@ -31,10 +31,12 @@ export const ROSTER_PRESETS = {
   snowleopard: {
     reason: "Replace generic spots with broken rosettes while keeping its existing long thick ringed tail.",
     reference: "https://zoo.sandiegozoo.org/animals/snow-leopard",
-    // Iteration 2 after f822dee2 actual native-size review: eight cells per
-    // model unit collapsed into fine speckle. Fewer rings, still natural marks.
-    patch: { coat: { spots: false, rosettes: { k: 5, density: .55 } } },
-    ordinaryLevels: { 0: { coat: { spots: false, rosettes: { k: 5, density: .55 } } }, 1: { coat: { spots: false, rosettes: { k: 5, density: .55 } } }, 2: { coat: { spots: false, rosettes: { k: 5, density: .55 } } } },
+    ordinaryOnly: true,
+    modelCommit: "fd1a833ae69e1d5cf1d9353b89fbdda39cbab802",
+    // Iteration 3: iteration 2 still read as flecks. Use #1470's existing
+    // surface-wrapped ring painter instead of the old three-axis cells.
+    patch: { palette: { hue: .59, sat: .03 }, coat: { spots: false, rosettes: { wrap: true, k: 5, density: .55, inner: .2, outer: .43 } } },
+    ordinaryLevels: { 0: { coat: { spots: false, rosettes: { wrap: true, k: 5, density: .55, inner: .2, outer: .43 } } }, 1: { coat: { spots: false, rosettes: { wrap: true, k: 5, density: .55, inner: .2, outer: .43 } } }, 2: { coat: { spots: false, rosettes: { wrap: true, k: 5, density: .55, inner: .2, outer: .43 } } } },
     text: "A smoky pale mountain cat with dark rosettes, broad paws and a long thick tail.",
   },
 };

@@ -23,8 +23,8 @@ try {
       const sharedSelection = typeof G.selectedCreatureGenome === "function";
       const context = { creatureModels: `${id}:roster`, creatureVariants: createRosterVariants(G.GENOMES) };
       const paletteData = p => { const out = { ...p }; if (!out.over || !Object.keys(out.over).length) delete out.over; return JSON.stringify(out); };
-      if (id === "beetle" && (!sharedSelection || !G.M.SHELL || !G.M.THORAX || !G.M.HEAD)) throw Error(`Beetle candidate 2 needs model ${ROSTER_PRESETS.beetle.modelCommit}; prepare snapshot and set ROSTER_MODEL_SHA`);
-      if (sharedSelection && id === "beetle" && paletteData(G.selectedCreatureGenome(original, context, 3).palette) !== paletteData(original.palette)) throw Error("Shared hook needs approved per-level palette support before beetle capture");
+      if (ROSTER_PRESETS[id].modelCommit && (!sharedSelection || !G.M.SHELL || !G.M.THORAX || !G.M.HEAD)) throw Error(`${id} candidate needs model ${ROSTER_PRESETS[id].modelCommit}; prepare snapshot and set ROSTER_MODEL_SHA`);
+      if (sharedSelection && ROSTER_PRESETS[id].ordinaryOnly && paletteData(G.selectedCreatureGenome(original, context, 3).palette) !== paletteData(original.palette)) throw Error("Shared hook needs approved per-level palette support before candidate capture");
       const st = { ...G.defaultStyle(), artStyle: "bold", pixel: 3 };
       const night = lightMode === "night";
       const light = night ? st : { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 };
