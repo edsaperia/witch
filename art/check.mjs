@@ -9,6 +9,7 @@
 import { execFileSync } from "node:child_process";
 import { cpus } from "node:os";
 import { openBrowser, ROOT } from "./headless.mjs";
+import { combinedDistinctness } from "./genome/distinctness.js";
 
 let failed = 0;
 const ok = (cond, what) => { console.log(`${cond ? "ok  " : "FAIL"} ${what}`); if (!cond) failed++; };
@@ -161,11 +162,15 @@ const SPRITE_CHECKS = async ({ names, only }) => {
     }
     res.push({ what: "surface texture: every species at every level in its own surface (fur, feathers, scales, plates, shell, bristles), no poorer than untextured, a baby's softest, the same size within 1%, every material coloured", good: !bad.length, info: [...new Set(bad)].slice(0, 8).join(", ") || "ok" });
   });
-  task("silhouettes", async () => { // silhouettes (#79 stage 3): at game size (each young and adult shrunk to 24 px), no two species' shapes alike: they differ by 0.15 or more
-    // (1 - their overlap over their union, whichever way each faces)
+  task("silhouettes", async () => { // Ed, 2026-10-30: real likeness first; warn only if shape, palette, size AND pattern are close. Never fail look-alikes.
+    const { appearanceSignature, combinedDistinctness } = await import("/art/genome/distinctness.js");
     for (const level of [1, 2]) {
-      const sh = Object.fromEntries(SPECIES.map(S => [S.id, G.silhouette(G.critter(S.id, level, 0, st))])), pairs = G.silhouettePairs(sh), close = pairs.filter(p => p.d < .15);
-      res.push({ what: `silhouettes: no two species alike at ${G.SILHOUETTE_SIZE} px (${["", "young", "adult"][level]}s, every pair 0.15 apart or more)`, good: !close.length, info: (close.length ? close : pairs.slice(0, 3)).map(p => `${p.a}/${p.b} ${p.d.toFixed(2)}`).join(", ") });
+      const signatures = SPECIES.map(S => ({ id: S.id, value: appearanceSignature(G.critter(S.id, level, 0, st), G.speciesColours(S.id, st)) })), close = [];
+      for (let i = 0; i < signatures.length; i++) for (let j = i + 1; j < signatures.length; j++) {
+        const a = signatures[i], b = signatures[j], d = combinedDistinctness(a.value, b.value);
+        if (d.warn) close.push(`${a.id}/${b.id} (shape ${d.silhouette.toFixed(2)}, palette ${d.palette.toFixed(2)}, size ${d.size.toFixed(2)}, pattern ${d.pattern.toFixed(2)})`);
+      }
+      res.push({ what: `combined distinctness: silhouette, palette, size and pattern (${["", "young", "adult"][level]}s; review warning only)`, good: true, warn: close.join(", "), info: close.length ? `${close.length} close pairs; real-animal likeness takes priority` : "no pair close on all four measures" });
     }
   });
   task("growth", async () => { // growth, not scale (docs/ART-GUIDE.md 0b, the menagerie review): each level's shape against the level before it, both scaled into
@@ -1180,13 +1185,14 @@ lap("area-flora");
 // (alpha only 0, 254 for what glows, or 255); on the pixel grid (whole-pixel sizes and anchors); within its palette (at most
 // LINT_TONES colours a material: the bold style's three tones, its outline and a glint, so a gradient or a stray colour
 // fails); and a silhouette contact sheet (art/out/silhouettes.png, every species' adult squared to its box), warning of
-// look-alikes: overlap at least LINT_LOOKALIKE and about the same proportions.
+// look-alikes only when shape, palette, actual size and markings are all close.
 {
-  const LINT_TONES = 5, LINT_LOOKALIKE = .8, SIL = 24, t0 = performance.now();
+  const LINT_TONES = 5, SIL = 24, t0 = performance.now();
   await b.page.goto(b.base + "/art/headless-blank.html");
   // One unit a species (its 12 bakes), one an area (its assets), one the silhouettes, dealt out over the pages; put back in order.
   const LINT = async ({ LINT_TONES, SIL, species, areas, withSil }) => {
     const G = await import("/art/generator.js"), { AREAS: ALL_AREAS } = await import("/art/areas.js"), style = await (await fetch("/config/style.json")).json();
+    const { appearanceSignature } = await import("/art/genome/distinctness.js");
     const SPECIES = G.SPECIES.filter(S => species.includes(S.id)), AREAS = ALL_AREAS.filter(A => areas.includes(A.id));
     const st = { ...G.defaultStyle(), ...style, artStyle: "bold" }, aa = [], grid = [], pal = [];
     let n = 0;
@@ -1212,7 +1218,8 @@ lap("area-flora");
       for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
       const bw = x1 - x0 + 1, bh = y1 - y0 + 1, m = new Uint8Array(SIL * SIL);
       for (let j = 0; j < SIL; j++) for (let i = 0; i < SIL; i++) m[j * SIL + i] = sp.m[(y0 + Math.floor((j + .5) * bh / SIL)) * sp.w + x0 + Math.floor((i + .5) * bw / SIL)] ? 1 : 0;
-      return { id: S.id, m: Array.from(m), aspect: bw / bh };
+      const signature = appearanceSignature(sp, G.speciesColours(S.id, st));
+      return { id: S.id, m: Array.from(m), appearance: { ...signature, shape: Array.from(signature.shape) } };
     });
     return { n, aa, grid, pal, sil };
   };
@@ -1227,9 +1234,8 @@ lap("area-flora");
   ok(!r.pal.length, `art lint, palette: no sprite has more than ${LINT_TONES} colours a material (+2)${r.pal.length ? " — " + r.pal.slice(0, 6).join("; ") : ""}`);
   const alike = [];
   for (let a = 0; a < r.sil.length; a++) for (let c = a + 1; c < r.sil.length; c++) {
-    const A = r.sil[a], B = r.sil[c]; let i = 0, u = 0;
-    for (let k = 0; k < A.m.length; k++) { i += A.m[k] & B.m[k]; u += A.m[k] | B.m[k]; }
-    if (i / u >= LINT_LOOKALIKE && Math.min(A.aspect, B.aspect) / Math.max(A.aspect, B.aspect) >= .85) alike.push(`${A.id} ~ ${B.id} (${(i / u).toFixed(2)})`);
+    const A = r.sil[a], B = r.sil[c], d = combinedDistinctness(A.appearance, B.appearance);
+    if (d.warn) alike.push(`${A.id} ~ ${B.id} (shape ${d.silhouette.toFixed(2)}, palette ${d.palette.toFixed(2)}, size ${d.size.toFixed(2)}, pattern ${d.pattern.toFixed(2)})`);
   }
   // The contact sheet, the look-alikes framed in red.
   const { mkdirSync, writeFileSync } = await import("node:fs"), cols = 8, cell = SIL * 3 + 8, sheet = await b.page.evaluate(({ sil, alike, cols, cell, SIL }) => {
@@ -1246,7 +1252,7 @@ lap("area-flora");
   }, { sil: r.sil, alike, cols, cell, SIL });
   mkdirSync(new URL("./out/", import.meta.url), { recursive: true });
   writeFileSync(new URL("./out/silhouettes.png", import.meta.url), Buffer.from(sheet, "base64"));
-  console.log(`${alike.length ? "WARN" : "ok  "} art lint, silhouettes: ${r.sil.length} adults on art/out/silhouettes.png${alike.length ? "; look alike: " + alike.join(", ") : ", none alike"}`);
+  console.log(`${alike.length ? "WARN" : "ok  "} art lint, combined distinctness: ${r.sil.length} adults on art/out/silhouettes.png${alike.length ? "; close on shape, palette, size and pattern: " + alike.join(", ") : ", no pair close on all four measures"}`);
 }
 lap("art-lint");
 await b.close();

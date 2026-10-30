@@ -11,6 +11,9 @@ asset workers or existing species require a coordinator answer first.
 
 ## Stages
 
+0. Ed's 2026-10-30 priority: likeness before distinctness. Compare rendered
+   silhouette, coat palette, actual size and spatial markings together; a close
+   pair is a review warning only. Keep the existing growth-by-level check.
 1. Audit the current builder dispatch and provide a graph with spine stations,
    typed sockets and tapered limb families using the existing Model skin blend.
    Add diagnostic fixtures and geometry checks without a production import.
@@ -20,8 +23,12 @@ asset workers or existing species require a coordinator answer first.
 3. Add a gait clock and IK with contact, reach and loop invariants (isolated
    diagnostic implemented); review sprite strips before connecting the graph
    to the bake or live rig. This stage can be tested before animal acceptance.
-4. Migrate species only after explicit acceptance. Keep cache invalidation and
-   default switching a separate reviewed step.
+4. Per the expanded 2026-10-30 brief, design and implement the 42 quadrupeds,
+   then the 22 others in family batches without waiting for interim Ed approval.
+   Replacements stay behind per-species switches, default off. Each batch needs
+   current/new sheets at matching sizes/facings, a frame-cost note and real
+   anatomy/gait reference notes. Production activation remains Ed's decision.
+   Preserve the old default fallback until its removal is explicitly routed.
 
 ## Audit observations
 
@@ -65,7 +72,10 @@ articulated hock, turns, slopes and terrain contact are not implemented.
 
 ## Deferred work and trigger
 
-Species replacement, production bake integration and live-rig changes wait
-until the coordinator posts representative fixtures and visual acceptance on
-this branch's PR. Stage 1 is an engine diagnostic, not animal art parity or a
-completed unified generator.
+The coordinator confirmed bear/wolf/stag, then bat/snail/hydra, compared against
+their current in-game art. Family implementation may proceed under default-off
+switches; changing live defaults waits for Ed's visual acceptance. Removing an
+old builder that is still needed by a default-off switch waits for coordinator
+routing. Art checks/captures run on a cloud runner assigned by the coordinator
+for an exact SHA and command. The current graph/gait fixtures remain engine
+diagnostics, not animal art parity or a completed unified generator.
