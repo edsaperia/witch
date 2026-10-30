@@ -1,0 +1,1582 @@
+{
+  "sha": "aad8b13327282d13d7d6a4e2e1b28aa2acfd6b6c",
+  "servedSha": "aad8b13327282d13d7d6a4e2e1b28aa2acfd6b6c",
+  "fixture": "cats-1",
+  "defaultOff": true,
+  "measurements": [
+    {
+      "id": "cat",
+      "timings": [
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "towards",
+          "constructionMs": 37.19999999998254,
+          "bakeMs": 30.10000000000582,
+          "width": 31,
+          "height": 38
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "towards",
+          "constructionMs": 44.60000000000582,
+          "bakeMs": 7.599999999976717,
+          "width": 33,
+          "height": 38
+        },
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "away",
+          "constructionMs": 19.5,
+          "bakeMs": 7.2000000000116415,
+          "width": 30,
+          "height": 38
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "away",
+          "constructionMs": 51,
+          "bakeMs": 3.099999999976717,
+          "width": 31,
+          "height": 38
+        },
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "top",
+          "constructionMs": 8.200000000011642,
+          "bakeMs": 2.7999999999883585,
+          "width": 31,
+          "height": 28
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "top",
+          "constructionMs": 18.79999999998836,
+          "bakeMs": 3.5,
+          "width": 33,
+          "height": 33
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "towards",
+          "constructionMs": 40.5,
+          "bakeMs": 5,
+          "width": 57,
+          "height": 53
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "towards",
+          "constructionMs": 24.800000000017462,
+          "bakeMs": 2.6000000000058208,
+          "width": 57,
+          "height": 53
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "away",
+          "constructionMs": 22.099999999976717,
+          "bakeMs": 2.6000000000058208,
+          "width": 51,
+          "height": 51
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "away",
+          "constructionMs": 26.20000000001164,
+          "bakeMs": 2.7999999999883585,
+          "width": 52,
+          "height": 51
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "top",
+          "constructionMs": 23,
+          "bakeMs": 3.3999999999941792,
+          "width": 57,
+          "height": 44
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "top",
+          "constructionMs": 26,
+          "bakeMs": 1.5,
+          "width": 57,
+          "height": 44
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "towards",
+          "constructionMs": 95.30000000001746,
+          "bakeMs": 5.7999999999883585,
+          "width": 95,
+          "height": 85
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "towards",
+          "constructionMs": 142.60000000000582,
+          "bakeMs": 9.299999999988358,
+          "width": 96,
+          "height": 86
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "away",
+          "constructionMs": 79.70000000001164,
+          "bakeMs": 7.899999999994179,
+          "width": 85,
+          "height": 83
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "away",
+          "constructionMs": 63.5,
+          "bakeMs": 3.7999999999883585,
+          "width": 86,
+          "height": 83
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "top",
+          "constructionMs": 79.60000000000582,
+          "bakeMs": 3.3999999999941792,
+          "width": 95,
+          "height": 73
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "top",
+          "constructionMs": 88.39999999999418,
+          "bakeMs": 6.399999999994179,
+          "width": 96,
+          "height": 75
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "towards",
+          "constructionMs": 490.1000000000058,
+          "bakeMs": 23.800000000017462,
+          "width": 261,
+          "height": 234
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "towards",
+          "constructionMs": 666.5,
+          "bakeMs": 35.19999999998254,
+          "width": 261,
+          "height": 234
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "away",
+          "constructionMs": 331.8999999999942,
+          "bakeMs": 41.20000000001164,
+          "width": 241,
+          "height": 221
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "away",
+          "constructionMs": 582.2000000000116,
+          "bakeMs": 32,
+          "width": 245,
+          "height": 221
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "top",
+          "constructionMs": 399.20000000001164,
+          "bakeMs": 15.5,
+          "width": 261,
+          "height": 200
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "top",
+          "constructionMs": 633.2999999999884,
+          "bakeMs": 28,
+          "width": 261,
+          "height": 203
+        }
+      ],
+      "pixel": 3,
+      "selectedHash": "0d74e394",
+      "currentHash": "36fcddc5"
+    },
+    {
+      "id": "lynx",
+      "timings": [
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "towards",
+          "constructionMs": 14,
+          "bakeMs": 1.2000000000116415,
+          "width": 41,
+          "height": 52
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "towards",
+          "constructionMs": 22.89999999999418,
+          "bakeMs": 1.1000000000058208,
+          "width": 41,
+          "height": 52
+        },
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "away",
+          "constructionMs": 14.10000000000582,
+          "bakeMs": 1.099999999976717,
+          "width": 37,
+          "height": 52
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "away",
+          "constructionMs": 18.300000000017462,
+          "bakeMs": 1.6000000000058208,
+          "width": 37,
+          "height": 52
+        },
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "top",
+          "constructionMs": 14.799999999988358,
+          "bakeMs": 0.8999999999941792,
+          "width": 41,
+          "height": 37
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "top",
+          "constructionMs": 22.800000000017462,
+          "bakeMs": 1.1999999999825377,
+          "width": 41,
+          "height": 37
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "towards",
+          "constructionMs": 66.60000000000582,
+          "bakeMs": 1.7999999999883585,
+          "width": 77,
+          "height": 79
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "towards",
+          "constructionMs": 67.20000000001164,
+          "bakeMs": 2.2999999999883585,
+          "width": 77,
+          "height": 79
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "away",
+          "constructionMs": 50.89999999999418,
+          "bakeMs": 1.900000000023283,
+          "width": 66,
+          "height": 79
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "away",
+          "constructionMs": 48.19999999998254,
+          "bakeMs": 1.7000000000116415,
+          "width": 66,
+          "height": 79
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "top",
+          "constructionMs": 74.5,
+          "bakeMs": 1.599999999976717,
+          "width": 77,
+          "height": 61
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "top",
+          "constructionMs": 57.40000000002328,
+          "bakeMs": 1.5,
+          "width": 77,
+          "height": 61
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "towards",
+          "constructionMs": 244.19999999998254,
+          "bakeMs": 5,
+          "width": 130,
+          "height": 129
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "towards",
+          "constructionMs": 254.89999999999418,
+          "bakeMs": 5.900000000023283,
+          "width": 130,
+          "height": 129
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "away",
+          "constructionMs": 205.69999999998254,
+          "bakeMs": 4.7000000000116415,
+          "width": 111,
+          "height": 130
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "away",
+          "constructionMs": 245.29999999998836,
+          "bakeMs": 5.300000000017462,
+          "width": 111,
+          "height": 130
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "top",
+          "constructionMs": 276,
+          "bakeMs": 4.599999999976717,
+          "width": 130,
+          "height": 106
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "top",
+          "constructionMs": 274.30000000001746,
+          "bakeMs": 4.5,
+          "width": 130,
+          "height": 106
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "towards",
+          "constructionMs": 917,
+          "bakeMs": 103.19999999998254,
+          "width": 316,
+          "height": 408
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "towards",
+          "constructionMs": 1858.1000000000058,
+          "bakeMs": 31,
+          "width": 316,
+          "height": 408
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "away",
+          "constructionMs": 708.7000000000116,
+          "bakeMs": 36.19999999998254,
+          "width": 263,
+          "height": 379
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "away",
+          "constructionMs": 1385.5,
+          "bakeMs": 25,
+          "width": 265,
+          "height": 379
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "top",
+          "constructionMs": 1009.1000000000058,
+          "bakeMs": 23.70000000001164,
+          "width": 316,
+          "height": 260
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "top",
+          "constructionMs": 2042.1999999999825,
+          "bakeMs": 38.60000000000582,
+          "width": 316,
+          "height": 260
+        }
+      ],
+      "pixel": 3,
+      "selectedHash": "fa6b4bfd",
+      "currentHash": "ceea56cb"
+    },
+    {
+      "id": "lion",
+      "timings": [
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "towards",
+          "constructionMs": 100,
+          "bakeMs": 1.6999999999825377,
+          "width": 61,
+          "height": 56
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "towards",
+          "constructionMs": 65,
+          "bakeMs": 2,
+          "width": 61,
+          "height": 56
+        },
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "away",
+          "constructionMs": 37,
+          "bakeMs": 1.2000000000116415,
+          "width": 51,
+          "height": 56
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "away",
+          "constructionMs": 44.79999999998836,
+          "bakeMs": 1.3000000000174623,
+          "width": 51,
+          "height": 56
+        },
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "top",
+          "constructionMs": 49.40000000002328,
+          "bakeMs": 1.5,
+          "width": 61,
+          "height": 54
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "top",
+          "constructionMs": 59.5,
+          "bakeMs": 2.599999999976717,
+          "width": 61,
+          "height": 54
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "towards",
+          "constructionMs": 204.80000000001746,
+          "bakeMs": 7.899999999994179,
+          "width": 164,
+          "height": 107
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "towards",
+          "constructionMs": 191.5,
+          "bakeMs": 5.5,
+          "width": 164,
+          "height": 107
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "away",
+          "constructionMs": 170.89999999999418,
+          "bakeMs": 4,
+          "width": 143,
+          "height": 104
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "away",
+          "constructionMs": 146.79999999998836,
+          "bakeMs": 4.2000000000116415,
+          "width": 143,
+          "height": 104
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "top",
+          "constructionMs": 169.39999999999418,
+          "bakeMs": 5.5,
+          "width": 164,
+          "height": 123
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "top",
+          "constructionMs": 180.20000000001164,
+          "bakeMs": 5.099999999976717,
+          "width": 164,
+          "height": 123
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "towards",
+          "constructionMs": 707.7000000000116,
+          "bakeMs": 12.10000000000582,
+          "width": 253,
+          "height": 167
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "towards",
+          "constructionMs": 718.3999999999942,
+          "bakeMs": 22.5,
+          "width": 253,
+          "height": 167
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "away",
+          "constructionMs": 556.7999999999884,
+          "bakeMs": 16.10000000000582,
+          "width": 231,
+          "height": 166
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "away",
+          "constructionMs": 606.5,
+          "bakeMs": 12.39999999999418,
+          "width": 231,
+          "height": 166
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "top",
+          "constructionMs": 629,
+          "bakeMs": 12.800000000017462,
+          "width": 253,
+          "height": 190
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "top",
+          "constructionMs": 671.5999999999767,
+          "bakeMs": 12.60000000000582,
+          "width": 253,
+          "height": 190
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "towards",
+          "constructionMs": 5072.8000000000175,
+          "bakeMs": 69.39999999999418,
+          "width": 567,
+          "height": 446
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "towards",
+          "constructionMs": 5059.5,
+          "bakeMs": 66.60000000000582,
+          "width": 567,
+          "height": 446
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "away",
+          "constructionMs": 4496.599999999977,
+          "bakeMs": 65.60000000000582,
+          "width": 532,
+          "height": 419
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "away",
+          "constructionMs": 4468.3000000000175,
+          "bakeMs": 59.39999999999418,
+          "width": 532,
+          "height": 419
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "top",
+          "constructionMs": 5067,
+          "bakeMs": 70.10000000000582,
+          "width": 567,
+          "height": 442
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "top",
+          "constructionMs": 5157.100000000006,
+          "bakeMs": 110.39999999999418,
+          "width": 567,
+          "height": 442
+        }
+      ],
+      "pixel": 3,
+      "selectedHash": "9e29160d",
+      "currentHash": "ea0c0ecb"
+    },
+    {
+      "id": "tiger",
+      "timings": [
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "towards",
+          "constructionMs": 55.69999999998254,
+          "bakeMs": 2.1000000000058208,
+          "width": 59,
+          "height": 56
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "towards",
+          "constructionMs": 55.70000000001164,
+          "bakeMs": 1.8999999999941792,
+          "width": 59,
+          "height": 56
+        },
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "away",
+          "constructionMs": 39.29999999998836,
+          "bakeMs": 1.3999999999941792,
+          "width": 54,
+          "height": 56
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "away",
+          "constructionMs": 39,
+          "bakeMs": 1.5,
+          "width": 54,
+          "height": 56
+        },
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "top",
+          "constructionMs": 68.5,
+          "bakeMs": 2.1000000000058208,
+          "width": 59,
+          "height": 53
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "top",
+          "constructionMs": 48.89999999999418,
+          "bakeMs": 1.3999999999941792,
+          "width": 59,
+          "height": 53
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "towards",
+          "constructionMs": 104.60000000000582,
+          "bakeMs": 2.8999999999941792,
+          "width": 132,
+          "height": 83
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "towards",
+          "constructionMs": 104.39999999999418,
+          "bakeMs": 3.5,
+          "width": 132,
+          "height": 83
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "away",
+          "constructionMs": 84.30000000001746,
+          "bakeMs": 2.599999999976717,
+          "width": 118,
+          "height": 82
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "away",
+          "constructionMs": 83.80000000001746,
+          "bakeMs": 2.7999999999883585,
+          "width": 118,
+          "height": 82
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "top",
+          "constructionMs": 112.70000000001164,
+          "bakeMs": 4.899999999994179,
+          "width": 132,
+          "height": 99
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "top",
+          "constructionMs": 106.69999999998254,
+          "bakeMs": 3.7000000000116415,
+          "width": 132,
+          "height": 99
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "towards",
+          "constructionMs": 652.7000000000116,
+          "bakeMs": 9,
+          "width": 214,
+          "height": 141
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "towards",
+          "constructionMs": 558,
+          "bakeMs": 8.599999999976717,
+          "width": 214,
+          "height": 141
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "away",
+          "constructionMs": 437.9000000000233,
+          "bakeMs": 7.699999999982538,
+          "width": 200,
+          "height": 141
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "away",
+          "constructionMs": 436.29999999998836,
+          "bakeMs": 8.10000000000582,
+          "width": 200,
+          "height": 141
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "top",
+          "constructionMs": 488.29999999998836,
+          "bakeMs": 9.700000000011642,
+          "width": 214,
+          "height": 161
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "top",
+          "constructionMs": 525.8999999999942,
+          "bakeMs": 9.5,
+          "width": 214,
+          "height": 161
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "towards",
+          "constructionMs": 4414.899999999994,
+          "bakeMs": 61.40000000002328,
+          "width": 559,
+          "height": 355
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "towards",
+          "constructionMs": 4184.1999999999825,
+          "bakeMs": 73.5,
+          "width": 559,
+          "height": 355
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "away",
+          "constructionMs": 3837.7000000000116,
+          "bakeMs": 66.59999999997672,
+          "width": 524,
+          "height": 354
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "away",
+          "constructionMs": 3762.2000000000116,
+          "bakeMs": 132,
+          "width": 524,
+          "height": 354
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "top",
+          "constructionMs": 3737.7999999999884,
+          "bakeMs": 107.5,
+          "width": 559,
+          "height": 429
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "top",
+          "constructionMs": 3946.7000000000116,
+          "bakeMs": 130.10000000000582,
+          "width": 559,
+          "height": 429
+        }
+      ],
+      "pixel": 3,
+      "selectedHash": "346c5dbd",
+      "currentHash": "6d921613"
+    },
+    {
+      "id": "cheetah",
+      "timings": [
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "towards",
+          "constructionMs": 87.10000000000582,
+          "bakeMs": 2.8999999999941792,
+          "width": 63,
+          "height": 57
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "towards",
+          "constructionMs": 63.5,
+          "bakeMs": 2,
+          "width": 63,
+          "height": 57
+        },
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "away",
+          "constructionMs": 31.300000000017462,
+          "bakeMs": 1.6000000000058208,
+          "width": 55,
+          "height": 56
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "away",
+          "constructionMs": 30.89999999999418,
+          "bakeMs": 1.6000000000058208,
+          "width": 55,
+          "height": 56
+        },
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "top",
+          "constructionMs": 47.5,
+          "bakeMs": 1.3000000000174623,
+          "width": 63,
+          "height": 52
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "top",
+          "constructionMs": 44.59999999997672,
+          "bakeMs": 1.5,
+          "width": 63,
+          "height": 52
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "towards",
+          "constructionMs": 123,
+          "bakeMs": 6.5,
+          "width": 146,
+          "height": 105
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "towards",
+          "constructionMs": 122.80000000001746,
+          "bakeMs": 4.699999999982538,
+          "width": 146,
+          "height": 105
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "away",
+          "constructionMs": 113.70000000001164,
+          "bakeMs": 4.100000000005821,
+          "width": 142,
+          "height": 111
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "away",
+          "constructionMs": 114.89999999999418,
+          "bakeMs": 5.199999999982538,
+          "width": 142,
+          "height": 111
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "top",
+          "constructionMs": 204.40000000002328,
+          "bakeMs": 4,
+          "width": 146,
+          "height": 109
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "top",
+          "constructionMs": 130,
+          "bakeMs": 4,
+          "width": 146,
+          "height": 109
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "towards",
+          "constructionMs": 480.5,
+          "bakeMs": 13,
+          "width": 260,
+          "height": 179
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "towards",
+          "constructionMs": 528.6999999999825,
+          "bakeMs": 14.10000000000582,
+          "width": 261,
+          "height": 179
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "away",
+          "constructionMs": 436.29999999998836,
+          "bakeMs": 11.89999999999418,
+          "width": 248,
+          "height": 185
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "away",
+          "constructionMs": 462,
+          "bakeMs": 12.5,
+          "width": 248,
+          "height": 185
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "top",
+          "constructionMs": 519.2000000000116,
+          "bakeMs": 14.199999999982538,
+          "width": 260,
+          "height": 195
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "top",
+          "constructionMs": 560.3000000000175,
+          "bakeMs": 11,
+          "width": 261,
+          "height": 195
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "towards",
+          "constructionMs": 3345.7999999999884,
+          "bakeMs": 128.10000000000582,
+          "width": 673,
+          "height": 510
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "towards",
+          "constructionMs": 3134.5,
+          "bakeMs": 129.79999999998836,
+          "width": 674,
+          "height": 510
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "away",
+          "constructionMs": 3159.600000000006,
+          "bakeMs": 88.39999999999418,
+          "width": 667,
+          "height": 485
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "away",
+          "constructionMs": 3255.2000000000116,
+          "bakeMs": 92.69999999998254,
+          "width": 667,
+          "height": 485
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "top",
+          "constructionMs": 3542.8000000000175,
+          "bakeMs": 118.89999999999418,
+          "width": 673,
+          "height": 501
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "top",
+          "constructionMs": 3826.2000000000116,
+          "bakeMs": 72.09999999997672,
+          "width": 674,
+          "height": 501
+        }
+      ],
+      "pixel": 3,
+      "selectedHash": "b83670f8",
+      "currentHash": "4f363d82"
+    },
+    {
+      "id": "jaguar",
+      "timings": [
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "towards",
+          "constructionMs": 48.5,
+          "bakeMs": 2.1999999999825377,
+          "width": 54,
+          "height": 50
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "towards",
+          "constructionMs": 43.90000000002328,
+          "bakeMs": 2.2999999999883585,
+          "width": 54,
+          "height": 50
+        },
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "away",
+          "constructionMs": 32.29999999998836,
+          "bakeMs": 3.6000000000058208,
+          "width": 48,
+          "height": 49
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "away",
+          "constructionMs": 49.29999999998836,
+          "bakeMs": 2.5,
+          "width": 48,
+          "height": 49
+        },
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "top",
+          "constructionMs": 81.80000000001746,
+          "bakeMs": 2.599999999976717,
+          "width": 54,
+          "height": 48
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "top",
+          "constructionMs": 44.30000000001746,
+          "bakeMs": 1.599999999976717,
+          "width": 54,
+          "height": 48
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "towards",
+          "constructionMs": 76.80000000001746,
+          "bakeMs": 3.099999999976717,
+          "width": 119,
+          "height": 72
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "towards",
+          "constructionMs": 74.60000000000582,
+          "bakeMs": 3.2000000000116415,
+          "width": 119,
+          "height": 72
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "away",
+          "constructionMs": 57.10000000000582,
+          "bakeMs": 2.599999999976717,
+          "width": 106,
+          "height": 72
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "away",
+          "constructionMs": 66.90000000002328,
+          "bakeMs": 4,
+          "width": 106,
+          "height": 72
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "top",
+          "constructionMs": 85.30000000001746,
+          "bakeMs": 4.100000000005821,
+          "width": 119,
+          "height": 89
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "top",
+          "constructionMs": 100.19999999998254,
+          "bakeMs": 3.1000000000058208,
+          "width": 119,
+          "height": 89
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "towards",
+          "constructionMs": 432.69999999998254,
+          "bakeMs": 12.800000000017462,
+          "width": 183,
+          "height": 118
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "towards",
+          "constructionMs": 398.79999999998836,
+          "bakeMs": 7,
+          "width": 183,
+          "height": 118
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "away",
+          "constructionMs": 263.20000000001164,
+          "bakeMs": 6.7999999999883585,
+          "width": 158,
+          "height": 117
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "away",
+          "constructionMs": 267.79999999998836,
+          "bakeMs": 5.900000000023283,
+          "width": 158,
+          "height": 117
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "top",
+          "constructionMs": 359.0999999999767,
+          "bakeMs": 8.300000000017462,
+          "width": 183,
+          "height": 141
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "top",
+          "constructionMs": 351.69999999998254,
+          "bakeMs": 9.300000000017462,
+          "width": 183,
+          "height": 141
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "towards",
+          "constructionMs": 3149.3000000000175,
+          "bakeMs": 50.29999999998836,
+          "width": 524,
+          "height": 311
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "towards",
+          "constructionMs": 2893.3000000000175,
+          "bakeMs": 49.69999999998254,
+          "width": 524,
+          "height": 311
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "away",
+          "constructionMs": 2436.3000000000175,
+          "bakeMs": 66.69999999998254,
+          "width": 470,
+          "height": 309
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "away",
+          "constructionMs": 2268.9000000000233,
+          "bakeMs": 41.79999999998836,
+          "width": 470,
+          "height": 309
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "top",
+          "constructionMs": 2595.2999999999884,
+          "bakeMs": 54.79999999998836,
+          "width": 524,
+          "height": 398
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "top",
+          "constructionMs": 2578.4000000000233,
+          "bakeMs": 55,
+          "width": 524,
+          "height": 398
+        }
+      ],
+      "pixel": 3,
+      "selectedHash": "ee3ff555",
+      "currentHash": "7c2dbec9"
+    },
+    {
+      "id": "snowleopard",
+      "timings": [
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "towards",
+          "constructionMs": 29,
+          "bakeMs": 2.1000000000349246,
+          "width": 58,
+          "height": 47
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "towards",
+          "constructionMs": 34.79999999998836,
+          "bakeMs": 1.400000000023283,
+          "width": 58,
+          "height": 47
+        },
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "away",
+          "constructionMs": 19.70000000001164,
+          "bakeMs": 1.2999999999883585,
+          "width": 57,
+          "height": 47
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "away",
+          "constructionMs": 29.29999999998836,
+          "bakeMs": 1.5,
+          "width": 57,
+          "height": 47
+        },
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "top",
+          "constructionMs": 20.900000000023283,
+          "bakeMs": 1.2999999999883585,
+          "width": 58,
+          "height": 47
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "top",
+          "constructionMs": 26.70000000001164,
+          "bakeMs": 1.599999999976717,
+          "width": 58,
+          "height": 47
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "towards",
+          "constructionMs": 82.30000000004657,
+          "bakeMs": 3.3999999999650754,
+          "width": 129,
+          "height": 80
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "towards",
+          "constructionMs": 108.5,
+          "bakeMs": 4.2000000000116415,
+          "width": 133,
+          "height": 83
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "away",
+          "constructionMs": 45.09999999997672,
+          "bakeMs": 7.7000000000116415,
+          "width": 118,
+          "height": 78
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "away",
+          "constructionMs": 64.5,
+          "bakeMs": 3,
+          "width": 118,
+          "height": 78
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "top",
+          "constructionMs": 41.40000000002328,
+          "bakeMs": 3.2000000000116415,
+          "width": 129,
+          "height": 97
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "top",
+          "constructionMs": 70.79999999998836,
+          "bakeMs": 3.8999999999650754,
+          "width": 133,
+          "height": 100
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "towards",
+          "constructionMs": 221.20000000001164,
+          "bakeMs": 8.5,
+          "width": 219,
+          "height": 133
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "towards",
+          "constructionMs": 282.70000000001164,
+          "bakeMs": 11.599999999976717,
+          "width": 219,
+          "height": 133
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "away",
+          "constructionMs": 126.70000000001164,
+          "bakeMs": 7,
+          "width": 198,
+          "height": 128
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "away",
+          "constructionMs": 190.70000000001164,
+          "bakeMs": 9.799999999988358,
+          "width": 198,
+          "height": 128
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "top",
+          "constructionMs": 145.20000000001164,
+          "bakeMs": 12.200000000011642,
+          "width": 219,
+          "height": 165
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "top",
+          "constructionMs": 282,
+          "bakeMs": 9.099999999976717,
+          "width": 219,
+          "height": 165
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "towards",
+          "constructionMs": 898.2999999999884,
+          "bakeMs": 28.900000000023283,
+          "width": 328,
+          "height": 269
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "towards",
+          "constructionMs": 1702.0999999999767,
+          "bakeMs": 29.70000000001164,
+          "width": 328,
+          "height": 269
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "away",
+          "constructionMs": 806.2000000000116,
+          "bakeMs": 29.29999999998836,
+          "width": 299,
+          "height": 268
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "away",
+          "constructionMs": 1494.1999999999534,
+          "bakeMs": 27.400000000023283,
+          "width": 302,
+          "height": 268
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "top",
+          "constructionMs": 882.5999999999767,
+          "bakeMs": 30.5,
+          "width": 328,
+          "height": 268
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "top",
+          "constructionMs": 1553.9000000000233,
+          "bakeMs": 28.70000000001164,
+          "width": 328,
+          "height": 268
+        }
+      ],
+      "pixel": 3,
+      "selectedHash": "1bdc9674",
+      "currentHash": "c210acbf"
+    }
+  ],
+  "costScope": "First unique sprite construction and albedo bake wall time in a fresh page, serial current/graph order; includes JIT/GC effects. Not gameplay frame time or GPU cost.",
+  "visualAcceptance": "pending independent likeness review",
+  "targetComments": [
+    6513070150,
+    6513242775
+  ]
+}
