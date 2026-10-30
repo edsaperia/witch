@@ -1,0 +1,463 @@
+{
+  "manifest": {
+    "schema": 6,
+    "commit": "0cd56f3b8d2c0e52af4225d025f8358a8f9df9f4",
+    "fingerprint": "daeb7d7f2b0c9d867a1be3baa0d2cde212067f271c6e97e5ad818c3aacdb252d",
+    "fingerprintFormat": "lf-ordinal-v1",
+    "runtime": {
+      "node": "v22.22.0",
+      "platform": "linux",
+      "arch": "x64"
+    },
+    "execution": "cloud",
+    "trainingOnly": true,
+    "shard": "train-8",
+    "observation": "approximate fair observation",
+    "viewportAspect": "16:9",
+    "zoom": "default",
+    "canopyOcclusion": false,
+    "humanLimits": {
+      "reactionSeconds": 0.25,
+      "inputHz": 8,
+      "aimErrorMetres": 1
+    },
+    "objective": [
+      "wins",
+      "questsCompleted",
+      "allQuests",
+      "upgradeEligibleToKeep",
+      "provisionalFindsCollected",
+      "questDeliveries",
+      "nonWinWavesPassed",
+      "signedWorldSeconds"
+    ],
+    "trainSeeds": [
+      1000,
+      8919
+    ],
+    "fitnessCases": null,
+    "fitnessDigest": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+    "fromDigest": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+    "heldSeeds": [
+      158381000
+    ],
+    "heldOutPairs": [
+      {
+        "worldSeed": 0,
+        "nightSeed": 158381000
+      },
+      {
+        "worldSeed": 0,
+        "nightSeed": 158388919
+      },
+      {
+        "worldSeed": 0,
+        "nightSeed": 158396838
+      },
+      {
+        "worldSeed": 0,
+        "nightSeed": 158404757
+      },
+      {
+        "worldSeed": 0,
+        "nightSeed": 158412676
+      },
+      {
+        "worldSeed": 0,
+        "nightSeed": 158420595
+      },
+      {
+        "worldSeed": 0,
+        "nightSeed": 158428514
+      },
+      {
+        "worldSeed": 0,
+        "nightSeed": 158436433
+      },
+      {
+        "worldSeed": 0,
+        "nightSeed": 158444352
+      },
+      {
+        "worldSeed": 0,
+        "nightSeed": 158452271
+      },
+      {
+        "worldSeed": 0,
+        "nightSeed": 158460190
+      },
+      {
+        "worldSeed": 0,
+        "nightSeed": 158468109
+      },
+      {
+        "worldSeed": 0,
+        "nightSeed": 158476028
+      },
+      {
+        "worldSeed": 0,
+        "nightSeed": 158483947
+      },
+      {
+        "worldSeed": 0,
+        "nightSeed": 158491866
+      },
+      {
+        "worldSeed": 0,
+        "nightSeed": 158499785
+      },
+      {
+        "worldSeed": 0,
+        "nightSeed": 158507704
+      },
+      {
+        "worldSeed": 0,
+        "nightSeed": 158515623
+      },
+      {
+        "worldSeed": 0,
+        "nightSeed": 158523542
+      },
+      {
+        "worldSeed": 0,
+        "nightSeed": 158531461
+      },
+      {
+        "worldSeed": 0,
+        "nightSeed": 158539380
+      },
+      {
+        "worldSeed": 0,
+        "nightSeed": 158547299
+      },
+      {
+        "worldSeed": 0,
+        "nightSeed": 158555218
+      },
+      {
+        "worldSeed": 0,
+        "nightSeed": 158563137
+      },
+      {
+        "worldSeed": 0,
+        "nightSeed": 158571056
+      },
+      {
+        "worldSeed": 0,
+        "nightSeed": 158578975
+      },
+      {
+        "worldSeed": 0,
+        "nightSeed": 158586894
+      },
+      {
+        "worldSeed": 0,
+        "nightSeed": 158594813
+      },
+      {
+        "worldSeed": 0,
+        "nightSeed": 158602732
+      },
+      {
+        "worldSeed": 0,
+        "nightSeed": 158610651
+      },
+      {
+        "worldSeed": 0,
+        "nightSeed": 158618570
+      },
+      {
+        "worldSeed": 0,
+        "nightSeed": 158626489
+      }
+    ],
+    "round": 1,
+    "externalDigest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "limit": 4200,
+    "iterations": 2,
+    "searchSeed": 30000,
+    "catalogue": {
+      "bag": [
+        "satchel",
+        "bumbag",
+        "purse",
+        "tote",
+        "duffel",
+        "briefcase",
+        "clutch",
+        "messenger",
+        "backpack"
+      ],
+      "hat": [
+        "none",
+        "helmet",
+        "healing",
+        "harvest",
+        "dowsing",
+        "sentry",
+        "bramble",
+        "slingshot",
+        "gathering",
+        "mine",
+        "lullaby",
+        "cyclone",
+        "nursing",
+        "edgeseer",
+        "routeseer"
+      ],
+      "tip": [
+        null,
+        "missile",
+        "curl",
+        "horse"
+      ],
+      "chassis": [
+        null,
+        "fairing",
+        "ladder",
+        "canoe"
+      ],
+      "exhaust": [
+        null,
+        "nozzles",
+        "twigs",
+        "oar"
+      ]
+    },
+    "policySpace": [
+      [
+        "healAt",
+        1,
+        3,
+        true
+      ],
+      [
+        "healTo",
+        2,
+        5,
+        true
+      ],
+      [
+        "kite",
+        4,
+        20
+      ],
+      [
+        "dashAt",
+        2,
+        10
+      ],
+      [
+        "fireFrac",
+        0.6,
+        1
+      ],
+      [
+        "closeFrac",
+        0.4,
+        0.95
+      ],
+      [
+        "stick",
+        0,
+        500
+      ],
+      [
+        "ahead",
+        0,
+        800
+      ],
+      [
+        "homeRange",
+        40,
+        200
+      ],
+      [
+        "follow",
+        2,
+        20,
+        true
+      ],
+      [
+        "homeStand",
+        8,
+        40
+      ],
+      [
+        "castMoveFrac",
+        0.2,
+        0.9
+      ],
+      [
+        "pickRadiusFrac",
+        0.3,
+        0.9
+      ],
+      [
+        "retargetSeconds",
+        0.5,
+        6
+      ],
+      [
+        "questRange",
+        150,
+        900
+      ],
+      [
+        "questBias",
+        0,
+        800
+      ],
+      [
+        "questMax",
+        0,
+        6,
+        true
+      ]
+    ],
+    "laterIsland": "komodo (phase 5 island; Tiger is phase 4)",
+    "deferQuests": true,
+    "activeSpace": [
+      [
+        "healAt",
+        1,
+        3,
+        true
+      ],
+      [
+        "healTo",
+        2,
+        5,
+        true
+      ],
+      [
+        "kite",
+        4,
+        20
+      ],
+      [
+        "dashAt",
+        2,
+        10
+      ],
+      [
+        "fireFrac",
+        0.6,
+        1
+      ],
+      [
+        "closeFrac",
+        0.4,
+        0.95
+      ],
+      [
+        "stick",
+        0,
+        500
+      ],
+      [
+        "ahead",
+        0,
+        800
+      ],
+      [
+        "homeRange",
+        40,
+        200
+      ],
+      [
+        "follow",
+        2,
+        20,
+        true
+      ],
+      [
+        "homeStand",
+        8,
+        40
+      ],
+      [
+        "castMoveFrac",
+        0.2,
+        0.9
+      ],
+      [
+        "pickRadiusFrac",
+        0.3,
+        0.9
+      ],
+      [
+        "retargetSeconds",
+        0.5,
+        6
+      ],
+      [
+        "bag",
+        0,
+        8,
+        true
+      ],
+      [
+        "hat",
+        0,
+        14,
+        true
+      ],
+      [
+        "tip",
+        0,
+        3,
+        true
+      ],
+      [
+        "chassis",
+        0,
+        3,
+        true
+      ],
+      [
+        "exhaust",
+        0,
+        3,
+        true
+      ]
+    ]
+  },
+  "policy": {
+    "healAt": 1,
+    "healTo": 3,
+    "kite": 9,
+    "dashAt": 5,
+    "fireFrac": 0.95,
+    "closeFrac": 0.8,
+    "stick": 250,
+    "ahead": 400,
+    "homeRange": 120,
+    "follow": 10,
+    "homeStand": 22,
+    "castMoveFrac": 0.5,
+    "pickRadiusFrac": 0.6,
+    "retargetSeconds": 3,
+    "questRange": 700,
+    "questBias": 400,
+    "questMax": 1
+  },
+  "unlockedLoadout": {
+    "bag": "satchel",
+    "hat": "none",
+    "wearsHat": false,
+    "parts": []
+  },
+  "trainingObjective": [
+    4,
+    2,
+    0,
+    3,
+    5,
+    2,
+    131,
+    23053.655666743354
+  ],
+  "candidateCount": 2,
+  "heldOutEvaluated": false
+}
