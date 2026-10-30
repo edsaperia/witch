@@ -26,8 +26,10 @@ export const ROSTER_PRESETS = {
   snowleopard: {
     reason: "Replace generic spots with broken rosettes while keeping its existing long thick ringed tail.",
     reference: "https://zoo.sandiegozoo.org/animals/snow-leopard",
-    patch: { coat: { spots: false, rosettes: { k: 8, density: .7 } } },
-    ordinaryLevels: { 0: { coat: { spots: false, rosettes: { k: 7, density: .7 } } }, 1: { coat: { spots: false, rosettes: { k: 8, density: .7 } } }, 2: { coat: { spots: false, rosettes: { k: 8, density: .7 } } } },
+    // Iteration 2 after f822dee2 actual native-size review: eight cells per
+    // model unit collapsed into fine speckle. Fewer rings, still natural marks.
+    patch: { coat: { spots: false, rosettes: { k: 5, density: .55 } } },
+    ordinaryLevels: { 0: { coat: { spots: false, rosettes: { k: 5, density: .55 } } }, 1: { coat: { spots: false, rosettes: { k: 5, density: .55 } } }, 2: { coat: { spots: false, rosettes: { k: 5, density: .55 } } } },
     text: "A smoky pale mountain cat with dark rosettes, broad paws and a long thick tail.",
   },
 };
@@ -48,6 +50,16 @@ export function rosterGenome(genome, selected = [], level) {
   // The old beetle builder reads a species-wide look, so require explicit level.
   // Fail closed for callers that cannot yet supply #1470's level-aware contract.
   if (preset.ordinaryOnly && ![0, 1, 2].includes(level)) return genome;
+  return rosterVariant(genome);
+}
+
+/** Complete data record for #1470's creatureVariants[id].roster contract.
+ * This builds data only. It neither parses switches nor selects a model.
+ * levels[3].palette needs the shared per-level palette contract (6513273814).
+ */
+export function rosterVariant(genome) {
+  const preset = ROSTER_PRESETS[genome.id];
+  if (!preset) return genome;
   const result = merge(genome, preset.patch);
   result.levels = Array.from({ length: 4 }, (_, level) => {
     const original = genome.levels?.[level] || {};
@@ -59,9 +71,20 @@ export function rosterGenome(genome, selected = [], level) {
         if (section === "palette") continue;
         restore[section] = Object.fromEntries(Object.keys(patch).map(key => [key, genome[section]?.[key] ?? false]));
       }
+      if (preset.ordinaryOnly) {
+        restore.look = genome.look;
+        restore.palette = genome.palette;
+      }
       return merge(restore, original);
     }
     return merge(original, preset.ordinaryLevels?.[level] || {});
   });
   return result;
+}
+
+/** Caller transports this pack with the same plain context to page/worker/tools.
+ * Shared selectedCreatureGenome/speciesOf/genomeHash own selection and hashing.
+ */
+export function createRosterVariants(genomes) {
+  return Object.fromEntries(genomes.filter(g => ROSTER_PRESETS[g.id]).map(g => [g.id, { roster: rosterVariant(g) }]));
 }

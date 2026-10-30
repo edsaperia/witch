@@ -9,22 +9,30 @@ const sha = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).tri
 const b = await openBrowser();
 try {
   await b.page.goto(b.base + "/art/headless-blank.html");
-  for (const id of only.split(",")) for (const night of [false, true]) {
-    const result = await b.page.evaluate(async ({ id, night, sha }) => {
+  for (const id of only.split(",")) for (const lightMode of (process.env.ROSTER_LIGHTS || "studio,night").split(",")) {
+    if (!["albedo", "studio", "night"].includes(lightMode)) throw Error(`Unknown lighting ${lightMode}`);
+    const result = await b.page.evaluate(async ({ id, lightMode, sha }) => {
       const G = await import("/art/generator.js"), C = await import("/art/creatures.js"), B = await import("/art/creatures3d.js");
-      const { rosterGenome, ROSTER_PRESETS } = await import("/art/roster/presets.js");
+      const { rosterGenome, createRosterVariants, ROSTER_PRESETS } = await import("/art/roster/presets.js");
       if (!ROSTER_PRESETS[id]) throw Error(`Unknown proposed species ${id}`);
       const original = G.GENOME_BY_ID[id];
+      const sharedSelection = typeof G.selectedCreatureGenome === "function";
+      const context = { creatureModels: `${id}:roster`, creatureVariants: createRosterVariants(G.GENOMES) };
+      if (sharedSelection && id === "beetle" && JSON.stringify(G.selectedCreatureGenome(original, context, 3).palette) !== JSON.stringify(original.palette)) throw Error("Shared hook needs approved per-level palette support before beetle capture");
       const st = { ...G.defaultStyle(), artStyle: "bold", pixel: 3 };
+      const night = lightMode === "night";
       const light = night ? st : { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 };
       const { shade } = await import("/art/lighting.js");
       const make = (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
-      const rows = [], measurements = [];
+      const rows = [], measurements = [], resolvedRecords = [];
       // Direct existing builder avoids critter's id-only cache aliasing current/proposed.
       // Keep actual species id for identical texture seed; prove current matches production.
       for (const facing of ["towards", "away"]) for (const frame of [0, 1]) for (const level of [0, 1, 2, 3]) {
-        const sprites = [original, rosterGenome(original, [id], level)].map((g, column) => {
-          const S = G.speciesOf(g);
+        const sprites = [0, 1].map(column => {
+          // Once released, #1470 owns all selection. Legacy path exists only to
+          // render the explicitly-authorised pre-hook isolated data candidates.
+          const S = sharedSelection ? G.speciesOf(original, column ? context : {}, level) : G.speciesOf(column ? rosterGenome(original, [id], level) : original);
+          if (frame === 0 && facing === "towards") resolvedRecords.push({ level, column: column ? "proposed" : "current", body: { ...S.q, ...S.levelQ?.[level] }, look: S.look || null, paletteHSV: [S.hue, S.sat, S.val] });
           const sprite = B.withTexture({ S, level, st }, () => C.buildCreature(S, level, frame, st, facing));
           G.textureSprite(sprite, S, level, st, C.textureSeed(id));
           if (!column) {
@@ -32,6 +40,7 @@ try {
             if (prod.w !== sprite.w || prod.h !== sprite.h || prod.m.some((v, i) => v !== sprite.m[i]) || prod.n.some((v, i) => v !== sprite.n[i])) throw Error(`Current reference mismatch ${id}/${level}/${frame}/${facing}`);
           }
           const baked = G.bake(sprite, G.speciesColours(S, st), st, st.cOutline), lit = make(baked.w, baked.h);
+          if (lightMode === "albedo") return baked.A;
           shade({ a: baked.A.getContext("2d"), n: baked.N.getContext("2d"), w: baked.w, h: baked.h }, lit, light, [], [0, 0, baked.w, baked.h]);
           return lit;
         });
@@ -43,7 +52,7 @@ try {
       const cv = make(220 + 2 * cellW, height), ctx = cv.getContext("2d");
       ctx.fillStyle = night ? "#0c1014" : "#30383c"; ctx.fillRect(0, 0, cv.width, cv.height);
       ctx.fillStyle = "#eee"; ctx.font = "12px monospace";
-      ctx.fillText(`${id}: current / proposed — ${night ? "night" : "studio"}`, 10, 18);
+      ctx.fillText(`${id}: current / proposed — ${lightMode}`, 10, 18);
       ctx.fillText("Native baked art pixels (1x); not perspective screen capture", 10, 36);
       ctx.fillText(sha, 10, 54);
       ctx.fillText("CURRENT", 220, 80); ctx.fillText("PROPOSED (default off)", 220 + cellW, 80);
@@ -56,9 +65,9 @@ try {
       }
       const enlarged = make(cv.width * 2, cv.height * 2), ec = enlarged.getContext("2d");
       ec.imageSmoothingEnabled = false; ec.drawImage(cv, 0, 0, enlarged.width, enlarged.height);
-      return { native: cv.toDataURL(), enlarged: enlarged.toDataURL(), measurements, style: st, largestCell: [maxW, maxH] };
-    }, { id, night, sha });
-    const stem = `${out}/${id}-${night ? "night" : "studio"}`;
+      return { native: cv.toDataURL(), enlarged: enlarged.toDataURL(), measurements, resolvedRecords, lighting: lightMode, style: st, largestCell: [maxW, maxH], selectionInterface: sharedSelection ? "shared #1470 selector" : "isolated pre-hook genome data" };
+    }, { id, lightMode, sha });
+    const stem = `${out}/${id}-${lightMode}`;
     for (const key of ["native", "enlarged"]) writeFileSync(`${stem}-${key}.png`, Buffer.from(result[key].split(",")[1], "base64"));
     const { native, enlarged, ...metadata } = result;
     writeFileSync(`${stem}.json`, JSON.stringify({ sha, ...metadata }, null, 2) + "\n");

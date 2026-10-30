@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { GENOMES, speciesOf, genomeHash, genomeProblems } from "../../art/genome/index.js";
-import { rosterGenome, ROSTER_PRESETS } from "../../art/roster/presets.js";
+import { rosterGenome, rosterVariant, createRosterVariants, ROSTER_PRESETS } from "../../art/roster/presets.js";
 
 test("default-off and unknown switch preserve every production record by identity and hash", () => {
   for (const g of GENOMES) {
@@ -34,6 +34,23 @@ test("beetle requires a level-aware caller and retains the complete original fie
   assert.equal(rosterGenome(g, ["beetle"], 3), g);
   for (const level of [0, 1, 2]) assert.equal(speciesOf(rosterGenome(g, ["beetle"], level)).look.embers, false);
   assert.equal(speciesOf(rosterGenome(g, ["beetle"], 3)).look.embers, true);
+});
+
+test("shared-hook pack contains complete same-id records and explicit original elder look/palette", () => {
+  const before = JSON.stringify(GENOMES), pack = createRosterVariants(GENOMES);
+  assert.deepEqual(Object.keys(pack).sort(), Object.keys(ROSTER_PRESETS).sort());
+  for (const [id, modes] of Object.entries(pack)) {
+    const g = modes.roster;
+    assert.equal(g.id, id);
+    assert.ok(g.builder && g.template && g.palette);
+    assert.deepEqual(genomeProblems(g), []);
+  }
+  const beetle = GENOMES.find(g => g.id === "beetle");
+  assert.deepEqual(pack.beetle.roster.levels[3].palette, beetle.palette);
+  assert.deepEqual(pack.beetle.roster.levels[3].look, beetle.look);
+  assert.equal(pack.beetle.roster.look.embers, false);
+  assert.equal(rosterVariant(GENOMES.find(g => g.id === "wolf")).id, "wolf");
+  assert.equal(JSON.stringify(GENOMES), before);
 });
 
 test("ordinary corrections survive per-level overrides and restore elder anatomy", () => {
