@@ -18,7 +18,7 @@ export function sourceFingerprint(root = fileURLToPath(new URL("../..", import.m
       else if (/\.(ts|mjs|js|json)$/.test(e.name)) { hash.update(relative(root, path).replaceAll("\\", "/")); hash.update(readFileSync(path, "utf8").replace(/\r\n/g, "\n")); }
     }
   }
-  for (const dir of ["src/rules", "src/bots", "config", "art", "tools/balance"]) tree(dir);
+  for (const dir of ["src/rules", "src/bots", "src/app", "config", "art", "tools/balance"]) tree(dir);
   return hash.digest("hex");
 }
 export function modelLock(parameters, source, heldOutPairs) {

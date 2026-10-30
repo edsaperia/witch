@@ -11,7 +11,7 @@ import { arg } from "./lib.mjs";
 import { runtime } from "./report-runtime.mjs";
 import { seedAt } from "./report-core.mjs";
 import { startSearch, ask, tell, objective } from "./expert-search-core.mjs";
-import { INITIAL_POLICY, POLICY_SPACE, equipmentSpace, equipmentOf, policyOf, trainingCases } from "./expert-space.mjs";
+import { INITIAL_POLICY, POLICY_SPACE, policySpace, equipmentSpace, equipmentOf, policyOf, trainingCases } from "./expert-space.mjs";
 import { importEvaluations, canonical, modelLock, digest, readFitnessCases, validateParameters } from "./expert-contract.mjs";
 
 // A separate idle parent enforces a real wall deadline even while one synchronous
@@ -37,6 +37,7 @@ const out = resolve(arg("out", "docs/notes/expert-results/pilot"));
 const limit = positive("time", 60), iterations = positive("iterations", 3, true), trainCount = positive("train-seeds", 1, true), heldCount = positive("held-seeds", 1, true);
 const wall = positive("wall-seconds", 480), searchSeed = positive("search-seed", 1477, true);
 const execution = arg("execution", "pilot"), trainingOnly = process.argv.includes("--training-only"), shard = arg("shard", "local-pilot");
+const deferQuests = process.argv.includes("--defer-quests");
 if (!["pilot", "cloud"].includes(execution)) throw Error("Unsupported execution mode");
 if (wall > (execution === "cloud" ? 3600 : 600)) throw Error("Wall cap exceeds approved execution window");
 if (limit > 120 && execution !== "cloud") throw Error("Long training is cloud-only; pilot case limit is 120 player seconds");
@@ -55,7 +56,7 @@ function tree(dir) {
     else if (/\.(ts|mjs|js|json)$/.test(e.name)) { hash.update(relative(root, path).replaceAll("\\", "/")); hash.update(readFileSync(path, "utf8").replace(/\r\n/g, "\n")); }
   }
 }
-for (const dir of ["src/rules", "src/bots", "config", "art", "tools/balance"]) tree(dir);
+for (const dir of ["src/rules", "src/bots", "src/app", "config", "art", "tools/balance"]) tree(dir);
 const fingerprint = hash.digest("hex"), commit = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
 const r = await runtime();
 try {
@@ -89,8 +90,12 @@ try {
     }
   }
   const equipmentFor = point => equipmentOf({ ...initial, ...point }, catalogue);
-  const activeSpace = fitness ? POLICY_SPACE : [...POLICY_SPACE, ...equipmentSpace(catalogue)];
-  let checkpoint = existsSync(checkpointPath) ? JSON.parse(readFileSync(checkpointPath, "utf8")) : { manifest, search: startSearch(activeSpace, fitness ? policyOf(initial) : initial, searchSeed), evaluations: [], held: [], complete: false };
+  const policyFor = point => policyOf({ ...initial, ...point });
+  const activePolicy = policySpace(deferQuests);
+  const activeSpace = fitness ? activePolicy : [...activePolicy, ...equipmentSpace(catalogue)];
+  Object.assign(manifest, { deferQuests, activeSpace });
+  const initialPoint = Object.fromEntries(activeSpace.map(([name]) => [name, initial[name]]));
+  let checkpoint = existsSync(checkpointPath) ? JSON.parse(readFileSync(checkpointPath, "utf8")) : { manifest, search: startSearch(activeSpace, initialPoint, searchSeed), evaluations: [], held: [], complete: false };
   // Runners commit results on their result branches. Those docs-only commits
   // may resume the original source fingerprint without rewriting its provenance.
   if (checkpoint.manifest.fingerprint === fingerprint) manifest.commit = checkpoint.manifest.commit;
@@ -98,16 +103,16 @@ try {
   const save = () => { writeFileSync(checkpointPath + ".tmp", JSON.stringify(checkpoint, null, 2) + "\n"); renameSync(checkpointPath + ".tmp", checkpointPath); };
   // JSONL is a readable training/evaluation log; checkpoint is authoritative on
   // resume. Rewrite it from checkpoint after an interruption between append/save.
-  const logRows = () => [...checkpoint.evaluations.flatMap(e => e.rows.map(row => ({ schema: 1, split: "training", shard, candidate: e.candidate.id, parameters: policyOf(e.candidate.point), row }))), ...checkpoint.held.map(row => ({ schema: 1, split: "held-out", parameters: policyOf(checkpoint.search.incumbent), row }))];
+  const logRows = () => [...checkpoint.evaluations.flatMap(e => e.rows.map(row => ({ schema: 1, split: "training", shard, candidate: e.candidate.id, parameters: policyFor(e.candidate.point), row }))), ...checkpoint.held.map(row => ({ schema: 1, split: "held-out", parameters: policyFor(checkpoint.search.incumbent), row }))];
   writeFileSync(logPath, logRows().map(x => JSON.stringify(x)).join("\n") + (logRows().length ? "\n" : ""));
   save();
   const started = performance.now();
   const expired = () => (performance.now() - started) / 1000 >= wall;
   const run = (c, point, split, candidate) => {
     const caseLimit = c.limit ?? limit;
-    const cached = split === "training" ? external.find(x => canonical(x.parameters) === canonical(policyOf(point)) && x.case.limit === caseLimit && x.case.worldSeed === c.worldSeed && x.case.nightSeed === c.seed && x.case.island === c.island && x.case.bpm === c.bpm && x.case.bag === c.bag && x.case.hat === c.hat && x.case.condition === c.condition && canonical(x.case.broomPart === null ? [] : [x.case.broomPart]) === canonical(c.parts)) : null;
-    const at = performance.now(), row = cached ? structuredClone(cached.result) : r.run(c, caseLimit, { expert: policyOf(point) });
-    appendFileSync(logPath, JSON.stringify({ schema: 1, split, shard, ...(candidate !== undefined ? { candidate } : {}), parameters: policyOf(point), row }) + "\n");
+    const cached = split === "training" ? external.find(x => canonical(x.parameters) === canonical(policyFor(point)) && x.case.limit === caseLimit && x.case.worldSeed === c.worldSeed && x.case.nightSeed === c.seed && x.case.island === c.island && x.case.bpm === c.bpm && x.case.bag === c.bag && x.case.hat === c.hat && x.case.condition === c.condition && canonical(x.case.broomPart === null ? [] : [x.case.broomPart]) === canonical(c.parts)) : null;
+    const at = performance.now(), row = cached ? structuredClone(cached.result) : r.run(c, caseLimit, { expert: policyFor(point) });
+    appendFileSync(logPath, JSON.stringify({ schema: 1, split, shard, ...(candidate !== undefined ? { candidate } : {}), parameters: policyFor(point), row }) + "\n");
     process.stderr.write(`${split} ${candidate ?? "best"} ${c.condition}/${c.island}/${c.bpm}/${c.bot}: ${row.outcome}; ${cached ? "external cache; " : ""}wall ${((performance.now() - at) / 1000).toFixed(2)}s\n`);
     return row;
   };
@@ -116,7 +121,7 @@ try {
     // training cases before acceptance. Unmatched survey scores never change fitness.
     if (!checkpoint.search.pending && checkpoint.search.evaluated > 0 && checkpoint.search.evaluated <= external.length) {
       const x = external[checkpoint.search.evaluated - 1];
-      checkpoint.search.pending = { id: checkpoint.search.evaluated, point: { ...checkpoint.search.incumbent, ...x.parameters } };
+      checkpoint.search.pending = { id: checkpoint.search.evaluated, point: { ...checkpoint.search.incumbent, ...Object.fromEntries(activePolicy.map(([name]) => [name, x.parameters[name]])) } };
     }
     const candidate = ask(checkpoint.search);
     let evaluation = checkpoint.evaluations.find(e => e.candidate.id === candidate.id);
@@ -133,7 +138,7 @@ try {
     const point = checkpoint.search.incumbent;
     if (trainingOnly) {
       checkpoint.complete = true;
-      writeFileSync(resolve(out, "training-parameters.json"), JSON.stringify({ manifest, policy: policyOf(point), unlockedLoadout: equipmentFor(point), trainingObjective: checkpoint.search.score, candidateCount: iterations, heldOutEvaluated: false }, null, 2) + "\n");
+      writeFileSync(resolve(out, "training-parameters.json"), JSON.stringify({ manifest, policy: policyFor(point), unlockedLoadout: equipmentFor(point), trainingObjective: checkpoint.search.score, candidateCount: iterations, heldOutEvaluated: false }, null, 2) + "\n");
       save();
       console.log(JSON.stringify({ out, complete: true, trainingOnly: true, evaluated: iterations, heldCases: 0, wallSeconds: (performance.now() - started) / 1000 }));
       process.exitCode = 0;
@@ -142,8 +147,8 @@ try {
     for (let i = checkpoint.held.length; i < cases.length && !expired(); i++) { checkpoint.held.push(run(cases[i], point, "held-out")); save(); }
     checkpoint.complete = checkpoint.held.length === cases.length;
     if (checkpoint.complete) {
-      writeFileSync(resolve(out, "parameters.json"), JSON.stringify({ manifest, policy: policyOf(point), unlockedLoadout: equipmentFor(point), trainingObjective: checkpoint.search.score, candidateCount: iterations }, null, 2) + "\n");
-      writeFileSync(resolve(out, "model-lock.json"), JSON.stringify(modelLock(policyOf(point), fingerprint, heldOutPairs), null, 2) + "\n");
+      writeFileSync(resolve(out, "parameters.json"), JSON.stringify({ manifest, policy: policyFor(point), unlockedLoadout: equipmentFor(point), trainingObjective: checkpoint.search.score, candidateCount: iterations }, null, 2) + "\n");
+      writeFileSync(resolve(out, "model-lock.json"), JSON.stringify(modelLock(policyFor(point), fingerprint, heldOutPairs), null, 2) + "\n");
       const table = condition => {
         const rows = checkpoint.held.filter(c => c.condition === condition), groups = new Map();
         for (const c of rows) { const key = `${c.island}|${c.bpm}|${c.bot}`, group = groups.get(key) ?? []; group.push(c); groups.set(key, group); }

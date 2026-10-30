@@ -8,6 +8,7 @@ export const POLICY_SPACE = [
   ["questMax", 0, 6, true],
 ];
 export const INITIAL_POLICY = { healAt: 1, healTo: 3, kite: 9, dashAt: 5, fireFrac: 0.95, closeFrac: 0.8, stick: 250, ahead: 400, homeRange: 120, follow: 10, homeStand: 22, castMoveFrac: 0.5, pickRadiusFrac: 0.6, retargetSeconds: 3, questRange: 700, questBias: 400, questMax: 1 };
+export const policySpace = (deferQuests = false) => POLICY_SPACE.filter(([name]) => !deferQuests || !name.startsWith("quest"));
 export function equipmentSpace(catalogue) {
   return Object.entries(catalogue).map(([name, values]) => {
     if (!Array.isArray(values) || values.length < 2) throw Error(`Insufficient equipment choices: ${name}`);

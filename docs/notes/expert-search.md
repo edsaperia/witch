@@ -282,6 +282,38 @@ or a 12-player-second timeout. It preserves the observation boundary and human
 floors. This candidate needs cloud nearby tests/typecheck and same-cell
 revalidation before any claim of improved outcomes or further training.
 
+Cloud revalidation on `57aa9d40` (`b62748800465d377512517c235925f22a6826218`)
+passes typecheck, expert/docs Vitest (16 tests) and the seven pure progress/search
+tests. Expert wins home100/200 at 2763.48/1959.37 player seconds, zero KOs,
+0/2 quests, with one upgrade eligible to keep at each tempo; persistence remains
+false. Skilled still wins at 310.73/310.05, with no upgrade. The candidate's
+phase logs show expert waiting through all ten waves then spending 192/639
+world seconds on stragglers, while skilled clears early. The old trace shows
+skilled's map-wide recruitment route; expert lacks that privileged knowledge and
+prioritizes visible finds. This explains the broad route difference, not every
+second of the new candidate: there is no new candidate decision trace. The
+approved waves/survival tie-breakers maximize progress/time, including won
+runs, so search does not directly reward a faster win. Do not silently change
+that scoring order or claim search will necessarily close the speed gap.
+
+Released prototype `bf68860ab` was normally merged at `28a8d5fc`. Unlocked-home
+setup now calls its `syncHatUnlock` with explicit `hats=*` parameters, avoiding
+storage reads. Fingerprints conservatively include `src/app` as well as rules,
+bots, config, art and balance tools to bind that helper and its imports. The
+adopted diagnostic script counts/watches `sigilHeld` for casts. Old trace files
+retain their original, limited instrumentation and provenance.
+
+The next proposed bounded cloud batch uses `--defer-quests`: all three existing
+quest parameters remain fixed, including external proposals and restarts;
+quest outcomes still occupy their approved objective positions. Four independent
+search seeds propose distinct neighbours across movement/combat and legal gear.
+Each candidate uses two training nights (1000, 8919), world 0, home/Tiger/Komodo
+at 100/200 bpm plus unlocked home at both tempos: 16 cells. This widens night
+randomness, not map-world diversity. Two candidates per runner mean 32 rows each,
+128 maximum across four runners, with a hard 3300-wall-second cap and immediate
+case checkpoints. This is a modest local search, not evidence of optimal play.
+Cloud preflight and coordinator dispatch are required; no local batch is implied.
+
 ## First pilot, not trained strength
 
 Source `9be247f04e21aa8175e3d534a7a6ea904be7a250`, artifacts in

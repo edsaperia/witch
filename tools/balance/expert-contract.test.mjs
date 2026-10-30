@@ -8,8 +8,8 @@ import { createCaseRunner, modelLock, validateLock, digest, importEvaluations, i
 
 test("source fingerprints match LF and CRLF checkouts but reject changed source", () => {
   const dir = mkdtempSync(join(tmpdir(), "witch-fingerprint-")), roots = [join(dir, "lf"), join(dir, "crlf")];
-  const trees = ["src/rules", "src/bots", "config", "art", "tools/balance"];
-  const files = ["src/rules/Zoo.ts", "src/rules/alpha.ts"];
+  const trees = ["src/rules", "src/bots", "src/app", "config", "art", "tools/balance"];
+  const files = ["src/rules/Zoo.ts", "src/rules/alpha.ts", "src/app/debugUnlock.ts"];
   try {
     for (const [i, root] of roots.entries()) {
       for (const tree of trees) mkdirSync(join(root, tree), { recursive: true });
@@ -21,7 +21,7 @@ test("source fingerprints match LF and CRLF checkouts but reject changed source"
   } finally {
     for (const root of roots) {
       for (const file of files) unlinkSync(join(root, file));
-      for (const tree of ["src/rules", "src/bots", "src", "config", "art", "tools/balance", "tools"]) rmdirSync(join(root, tree));
+      for (const tree of ["src/rules", "src/bots", "src/app", "src", "config", "art", "tools/balance", "tools"]) rmdirSync(join(root, tree));
       rmdirSync(root);
     }
     rmdirSync(dir);

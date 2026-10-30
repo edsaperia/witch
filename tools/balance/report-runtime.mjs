@@ -19,6 +19,7 @@ export async function runtime() {
     const { fillTrunk } = await load("/src/rules/finds.ts");
     const { castPartySpell, heldBySpell } = await load("/src/rules/party.ts");
     const { worldAsleep } = await load("/src/rules/partyOver.ts");
+    const { syncHatUnlock } = await load("/src/app/debugUnlock.ts");
     const make = c => {
       const unlocked = c.condition === "home-everything";
       if (unlocked && c.island !== "home") throw Error("Home-everything requires home island");
@@ -26,6 +27,7 @@ export async function runtime() {
       // Explicit search cases distinguish no hat from a plain hat. Preserve legacy
       // report runs unless they explicitly provide this setup field.
       if (c.wearsHat !== undefined) g.witches[0].hat.has = c.wearsHat;
+      if (unlocked) syncHatUnlock(g.witches[0], true, new URLSearchParams("hats=*"));
       g.clock.paused = false;
       g.witches[0].body = { ...g.witches[0].body, seated: false };
       recordTempo(g.beat, g.tuning, c.bpm, 0);

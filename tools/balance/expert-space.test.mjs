@@ -1,8 +1,19 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { POLICY_SPACE, INITIAL_POLICY, equipmentSpace, equipmentOf, trainingCases, policyOf } from "./expert-space.mjs";
+import { POLICY_SPACE, INITIAL_POLICY, policySpace, equipmentSpace, equipmentOf, trainingCases, policyOf } from "./expert-space.mjs";
 import { startSearch, ask, tell } from "./expert-search-core.mjs";
 const catalogue = { bag: ["satchel", "purse"], hat: ["none", "helmet"], tip: [null, "tip-a"], chassis: [null, "body-a"], exhaust: [null, "tail-a"] };
+
+test("deferred quest search retains the fixed quest policy through mutations", () => {
+  const space = policySpace(true), initial = Object.fromEntries(space.map(([name]) => [name, INITIAL_POLICY[name]]));
+  assert.equal(space.length, POLICY_SPACE.length - 3);
+  const state = startSearch(space, initial, 1477);
+  for (let i = 0; i < 25; i++) {
+    const c = ask(state), policy = policyOf({ ...INITIAL_POLICY, ...c.point });
+    for (const name of ["questMax", "questRange", "questBias"]) assert.equal(policy[name], INITIAL_POLICY[name]);
+    tell(state, c, [0, 0, 0, 0, 0, 0, i, 0]);
+  }
+});
 
 test("all proposed equipment is one choice per legal slot and never enters matched cases", () => {
   const initial = { ...INITIAL_POLICY, ...Object.fromEntries(Object.keys(catalogue).map(k => [k, 0])) };
