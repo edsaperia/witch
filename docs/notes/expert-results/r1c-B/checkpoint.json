@@ -1,0 +1,1784 @@
+{
+  "schema": 1,
+  "manifest": {
+    "schema": 1,
+    "commit": "1ce28fd9d9f96ea2518b3d97811760ae793d2c8f",
+    "vector": "B",
+    "policy": {
+      "healAt": 1,
+      "healTo": 3,
+      "kite": 9,
+      "dashAt": 5,
+      "fireFrac": 0.95,
+      "closeFrac": 0.8,
+      "stick": 250,
+      "ahead": 400,
+      "homeRange": 120,
+      "follow": 10,
+      "homeStand": 22,
+      "castMoveFrac": 0.5,
+      "pickRadiusFrac": 0.6,
+      "retargetSeconds": 3,
+      "questRange": 700,
+      "questBias": 400,
+      "questMax": 0
+    },
+    "vectorsDigest": "cd585c99b7cca2df994814ce6097210a36274f78036dc1a95b8f5ecd6e110cac",
+    "comparison": {
+      "schema": 1,
+      "fingerprint": "d667bb6d0cb70df2250404a7df6ce9b977e230abbd40291d2a750692869ef522",
+      "runtime": {
+        "node": "v22.22.0",
+        "platform": "linux",
+        "arch": "x64"
+      },
+      "cases": [
+        {
+          "worldSeed": 0,
+          "seed": 1000,
+          "bpm": 100,
+          "island": "home",
+          "condition": "matched",
+          "bag": "satchel",
+          "hat": "none",
+          "wearsHat": false,
+          "parts": [],
+          "bot": "expert",
+          "limit": 3000
+        },
+        {
+          "worldSeed": 0,
+          "seed": 1000,
+          "bpm": 100,
+          "island": "tiger",
+          "condition": "matched",
+          "bag": "satchel",
+          "hat": "none",
+          "wearsHat": false,
+          "parts": [],
+          "bot": "expert",
+          "limit": 3000
+        },
+        {
+          "worldSeed": 0,
+          "seed": 1000,
+          "bpm": 100,
+          "island": "komodo",
+          "condition": "matched",
+          "bag": "satchel",
+          "hat": "none",
+          "wearsHat": false,
+          "parts": [],
+          "bot": "expert",
+          "limit": 3000
+        },
+        {
+          "worldSeed": 0,
+          "seed": 1000,
+          "bpm": 100,
+          "island": "home",
+          "condition": "home-everything",
+          "bag": "satchel",
+          "hat": "none",
+          "wearsHat": false,
+          "parts": [],
+          "bot": "expert",
+          "limit": 3000
+        },
+        {
+          "worldSeed": 0,
+          "seed": 1000,
+          "bpm": 200,
+          "island": "home",
+          "condition": "matched",
+          "bag": "satchel",
+          "hat": "none",
+          "wearsHat": false,
+          "parts": [],
+          "bot": "expert",
+          "limit": 3000
+        },
+        {
+          "worldSeed": 0,
+          "seed": 1000,
+          "bpm": 200,
+          "island": "tiger",
+          "condition": "matched",
+          "bag": "satchel",
+          "hat": "none",
+          "wearsHat": false,
+          "parts": [],
+          "bot": "expert",
+          "limit": 3000
+        },
+        {
+          "worldSeed": 0,
+          "seed": 1000,
+          "bpm": 200,
+          "island": "komodo",
+          "condition": "matched",
+          "bag": "satchel",
+          "hat": "none",
+          "wearsHat": false,
+          "parts": [],
+          "bot": "expert",
+          "limit": 3000
+        },
+        {
+          "worldSeed": 0,
+          "seed": 1000,
+          "bpm": 200,
+          "island": "home",
+          "condition": "home-everything",
+          "bag": "satchel",
+          "hat": "none",
+          "wearsHat": false,
+          "parts": [],
+          "bot": "expert",
+          "limit": 3000
+        },
+        {
+          "worldSeed": 0,
+          "seed": 8919,
+          "bpm": 100,
+          "island": "home",
+          "condition": "matched",
+          "bag": "satchel",
+          "hat": "none",
+          "wearsHat": false,
+          "parts": [],
+          "bot": "expert",
+          "limit": 3000
+        },
+        {
+          "worldSeed": 0,
+          "seed": 8919,
+          "bpm": 100,
+          "island": "tiger",
+          "condition": "matched",
+          "bag": "satchel",
+          "hat": "none",
+          "wearsHat": false,
+          "parts": [],
+          "bot": "expert",
+          "limit": 3000
+        },
+        {
+          "worldSeed": 0,
+          "seed": 8919,
+          "bpm": 100,
+          "island": "komodo",
+          "condition": "matched",
+          "bag": "satchel",
+          "hat": "none",
+          "wearsHat": false,
+          "parts": [],
+          "bot": "expert",
+          "limit": 3000
+        },
+        {
+          "worldSeed": 0,
+          "seed": 8919,
+          "bpm": 100,
+          "island": "home",
+          "condition": "home-everything",
+          "bag": "satchel",
+          "hat": "none",
+          "wearsHat": false,
+          "parts": [],
+          "bot": "expert",
+          "limit": 3000
+        },
+        {
+          "worldSeed": 0,
+          "seed": 8919,
+          "bpm": 200,
+          "island": "home",
+          "condition": "matched",
+          "bag": "satchel",
+          "hat": "none",
+          "wearsHat": false,
+          "parts": [],
+          "bot": "expert",
+          "limit": 3000
+        },
+        {
+          "worldSeed": 0,
+          "seed": 8919,
+          "bpm": 200,
+          "island": "tiger",
+          "condition": "matched",
+          "bag": "satchel",
+          "hat": "none",
+          "wearsHat": false,
+          "parts": [],
+          "bot": "expert",
+          "limit": 3000
+        },
+        {
+          "worldSeed": 0,
+          "seed": 8919,
+          "bpm": 200,
+          "island": "komodo",
+          "condition": "matched",
+          "bag": "satchel",
+          "hat": "none",
+          "wearsHat": false,
+          "parts": [],
+          "bot": "expert",
+          "limit": 3000
+        },
+        {
+          "worldSeed": 0,
+          "seed": 8919,
+          "bpm": 200,
+          "island": "home",
+          "condition": "home-everything",
+          "bag": "satchel",
+          "hat": "none",
+          "wearsHat": false,
+          "parts": [],
+          "bot": "expert",
+          "limit": 3000
+        }
+      ],
+      "heldOutPairs": [
+        {
+          "worldSeed": 0,
+          "nightSeed": 158381000
+        },
+        {
+          "worldSeed": 0,
+          "nightSeed": 158388919
+        },
+        {
+          "worldSeed": 0,
+          "nightSeed": 158396838
+        },
+        {
+          "worldSeed": 0,
+          "nightSeed": 158404757
+        },
+        {
+          "worldSeed": 0,
+          "nightSeed": 158412676
+        },
+        {
+          "worldSeed": 0,
+          "nightSeed": 158420595
+        },
+        {
+          "worldSeed": 0,
+          "nightSeed": 158428514
+        },
+        {
+          "worldSeed": 0,
+          "nightSeed": 158436433
+        },
+        {
+          "worldSeed": 0,
+          "nightSeed": 158444352
+        },
+        {
+          "worldSeed": 0,
+          "nightSeed": 158452271
+        },
+        {
+          "worldSeed": 0,
+          "nightSeed": 158460190
+        },
+        {
+          "worldSeed": 0,
+          "nightSeed": 158468109
+        },
+        {
+          "worldSeed": 0,
+          "nightSeed": 158476028
+        },
+        {
+          "worldSeed": 0,
+          "nightSeed": 158483947
+        },
+        {
+          "worldSeed": 0,
+          "nightSeed": 158491866
+        },
+        {
+          "worldSeed": 0,
+          "nightSeed": 158499785
+        },
+        {
+          "worldSeed": 0,
+          "nightSeed": 158507704
+        },
+        {
+          "worldSeed": 0,
+          "nightSeed": 158515623
+        },
+        {
+          "worldSeed": 0,
+          "nightSeed": 158523542
+        },
+        {
+          "worldSeed": 0,
+          "nightSeed": 158531461
+        },
+        {
+          "worldSeed": 0,
+          "nightSeed": 158539380
+        },
+        {
+          "worldSeed": 0,
+          "nightSeed": 158547299
+        },
+        {
+          "worldSeed": 0,
+          "nightSeed": 158555218
+        },
+        {
+          "worldSeed": 0,
+          "nightSeed": 158563137
+        },
+        {
+          "worldSeed": 0,
+          "nightSeed": 158571056
+        },
+        {
+          "worldSeed": 0,
+          "nightSeed": 158578975
+        },
+        {
+          "worldSeed": 0,
+          "nightSeed": 158586894
+        },
+        {
+          "worldSeed": 0,
+          "nightSeed": 158594813
+        },
+        {
+          "worldSeed": 0,
+          "nightSeed": 158602732
+        },
+        {
+          "worldSeed": 0,
+          "nightSeed": 158610651
+        },
+        {
+          "worldSeed": 0,
+          "nightSeed": 158618570
+        },
+        {
+          "worldSeed": 0,
+          "nightSeed": 158626489
+        }
+      ],
+      "objective": [
+        "wins",
+        "questsCompleted",
+        "allQuests",
+        "upgradeEligibleToKeep",
+        "provisionalFindsCollected",
+        "questDeliveries",
+        "nonWinWavesPassed",
+        "signedWorldSeconds"
+      ],
+      "observation": "approximate fair observation",
+      "humanLimits": {
+        "reactionSeconds": 0.25,
+        "inputHz": 8,
+        "aimErrorMetres": 1
+      },
+      "baselinePolicy": {
+        "healAt": 1,
+        "healTo": 3,
+        "kite": 9,
+        "dashAt": 5,
+        "fireFrac": 0.95,
+        "closeFrac": 0.8,
+        "stick": 250,
+        "ahead": 400,
+        "homeRange": 120,
+        "follow": 10,
+        "homeStand": 22,
+        "castMoveFrac": 0.5,
+        "pickRadiusFrac": 0.6,
+        "retargetSeconds": 3,
+        "questRange": 700,
+        "questBias": 400,
+        "questMax": 1
+      }
+    },
+    "comparisonDigest": "ddfb349651d632b6dbb7aa52cf45d38c54adcd7deea95ab97cf1ec3067a4ae90"
+  },
+  "baselineDigest": "20b8133c4c0d9757ef673d7b69403beb2cde424c0ccb5a628150c875c0103c38",
+  "rows": [
+    {
+      "worldSeed": 0,
+      "seed": 1000,
+      "bpm": 100,
+      "island": "home",
+      "condition": "matched",
+      "bag": "satchel",
+      "hat": "none",
+      "wearsHat": false,
+      "parts": [],
+      "bot": "expert",
+      "limit": 3000,
+      "mode": "runs",
+      "playerEnd": 2763.4833333409097,
+      "phaseNumber": 0,
+      "end": 2761.323333340882,
+      "outcome": "won",
+      "wonAt": 2761.323333340882,
+      "overAt": null,
+      "phase": "won",
+      "phases": {
+        "opening": {
+          "seconds": 306.5900000000499,
+          "completed": true
+        },
+        "waves": {
+          "seconds": 2244.3500000048202,
+          "completed": true
+        },
+        "stragglers": {
+          "seconds": 192.00000000244472,
+          "completed": true
+        },
+        "lap": {
+          "seconds": 18.383333333567407,
+          "completed": true
+        }
+      },
+      "waves": [
+        {
+          "wave": 1,
+          "at": 306.5900000000499
+        },
+        {
+          "wave": 2,
+          "at": 492.88999999988044
+        },
+        {
+          "wave": 3,
+          "at": 736.6399999996588
+        },
+        {
+          "wave": 4,
+          "at": 1027.0399999993947
+        },
+        {
+          "wave": 5,
+          "at": 1336.7733333324463
+        },
+        {
+          "wave": 6,
+          "at": 1515.0899999989508
+        },
+        {
+          "wave": 7,
+          "at": 1899.5566666652678
+        },
+        {
+          "wave": 8,
+          "at": 2077.6066666655097
+        },
+        {
+          "wave": 9,
+          "at": 2478.6566666706162
+        },
+        {
+          "wave": 10,
+          "at": 2550.94000000487
+        }
+      ],
+      "waveReached": 10,
+      "wavesPassed": 9,
+      "knockdowns": 0,
+      "rangedSeconds": 18.299999999993467,
+      "eligibleSeconds": 2483.9575000077202,
+      "islandsDiscovered": [],
+      "islandsKept": [],
+      "loanFound": {
+        "kind": "bag",
+        "item": "briefcase"
+      },
+      "loanEligibleToKeep": true,
+      "questsCompleted": 0,
+      "questsTotal": 2,
+      "allQuestsCompleted": false,
+      "upgradeFound": true,
+      "upgradeEligibleToKeep": true,
+      "upgradePersisted": false,
+      "provisionalFindsCollected": 1,
+      "questDeliveries": 0,
+      "questDeliveriesIncomplete": 0
+    },
+    {
+      "worldSeed": 0,
+      "seed": 1000,
+      "bpm": 100,
+      "island": "tiger",
+      "condition": "matched",
+      "bag": "satchel",
+      "hat": "none",
+      "wearsHat": false,
+      "parts": [],
+      "bot": "expert",
+      "limit": 3000,
+      "mode": "runs",
+      "playerEnd": 3000.000000010588,
+      "phaseNumber": 4,
+      "end": 2993.4440000105287,
+      "outcome": "censored",
+      "wonAt": null,
+      "overAt": null,
+      "phase": "waves",
+      "phases": {
+        "opening": {
+          "seconds": 427.2566666666068,
+          "completed": true
+        },
+        "waves": {
+          "seconds": 2566.187333343922,
+          "completed": false
+        }
+      },
+      "waves": [
+        {
+          "wave": 1,
+          "at": 427.2566666666068
+        },
+        {
+          "wave": 2,
+          "at": 476.8566666665617
+        },
+        {
+          "wave": 3,
+          "at": 865.1733333328752
+        },
+        {
+          "wave": 4,
+          "at": 1313.7066666658006
+        },
+        {
+          "wave": 5,
+          "at": 1664.9666666655098
+        },
+        {
+          "wave": 6,
+          "at": 1746.4166666654357
+        },
+        {
+          "wave": 7,
+          "at": 1965.2219999985705
+        },
+        {
+          "wave": 8,
+          "at": 2232.6720000008468
+        },
+        {
+          "wave": 9,
+          "at": 2398.4940000029533
+        },
+        {
+          "wave": 10,
+          "at": 2681.8106666732274
+        },
+        {
+          "wave": 11,
+          "at": 2772.4773333410485
+        },
+        {
+          "wave": 12,
+          "at": 2932.1273333430813
+        }
+      ],
+      "waveReached": 12,
+      "wavesPassed": 11,
+      "knockdowns": 2,
+      "rangedSeconds": 19.416666666837045,
+      "eligibleSeconds": 2127.282333341627,
+      "islandsDiscovered": [],
+      "islandsKept": [],
+      "loanFound": {
+        "kind": "bag",
+        "item": "briefcase"
+      },
+      "loanEligibleToKeep": false,
+      "questsCompleted": 0,
+      "questsTotal": 8,
+      "allQuestsCompleted": false,
+      "upgradeFound": true,
+      "upgradeEligibleToKeep": false,
+      "upgradePersisted": false,
+      "provisionalFindsCollected": 1,
+      "questDeliveries": 0,
+      "questDeliveriesIncomplete": 0
+    },
+    {
+      "worldSeed": 0,
+      "seed": 1000,
+      "bpm": 100,
+      "island": "komodo",
+      "condition": "matched",
+      "bag": "satchel",
+      "hat": "none",
+      "wearsHat": false,
+      "parts": [],
+      "bot": "expert",
+      "limit": 3000,
+      "mode": "runs",
+      "playerEnd": 1685.1166666654628,
+      "phaseNumber": 5,
+      "end": 1682.9566666654648,
+      "outcome": "lost",
+      "wonAt": null,
+      "overAt": 1682.9566666654648,
+      "phase": "waves",
+      "phases": {
+        "opening": {
+          "seconds": 319.10666666670517,
+          "completed": true
+        },
+        "waves": {
+          "seconds": 1363.8499999987596,
+          "completed": false
+        }
+      },
+      "waves": [
+        {
+          "wave": 1,
+          "at": 319.10666666670517
+        },
+        {
+          "wave": 2,
+          "at": 551.2566666664941
+        },
+        {
+          "wave": 3,
+          "at": 750.7233333329793
+        },
+        {
+          "wave": 4,
+          "at": 876.2066666661985
+        },
+        {
+          "wave": 5,
+          "at": 1185.523333332584
+        }
+      ],
+      "waveReached": 5,
+      "wavesPassed": 4,
+      "knockdowns": 0,
+      "rangedSeconds": 49.749999999971024,
+      "eligibleSeconds": 762.0074999993825,
+      "islandsDiscovered": [],
+      "islandsKept": [],
+      "loanFound": null,
+      "loanEligibleToKeep": false,
+      "questsCompleted": 0,
+      "questsTotal": 10,
+      "allQuestsCompleted": false,
+      "upgradeFound": false,
+      "upgradeEligibleToKeep": false,
+      "upgradePersisted": false,
+      "provisionalFindsCollected": 0,
+      "questDeliveries": 0,
+      "questDeliveriesIncomplete": 0
+    },
+    {
+      "worldSeed": 0,
+      "seed": 1000,
+      "bpm": 100,
+      "island": "home",
+      "condition": "home-everything",
+      "bag": "satchel",
+      "hat": "none",
+      "wearsHat": false,
+      "parts": [],
+      "bot": "expert",
+      "limit": 3000,
+      "mode": "runs",
+      "playerEnd": 3000.000000010588,
+      "phaseNumber": 0,
+      "end": 2996.437000010538,
+      "outcome": "censored",
+      "wonAt": null,
+      "overAt": null,
+      "phase": "waves",
+      "phases": {
+        "opening": {
+          "seconds": 306.5900000000499,
+          "completed": true
+        },
+        "waves": {
+          "seconds": 2689.8470000104885,
+          "completed": false
+        }
+      },
+      "waves": [
+        {
+          "wave": 1,
+          "at": 306.5900000000499
+        },
+        {
+          "wave": 2,
+          "at": 492.8983333332142
+        },
+        {
+          "wave": 3,
+          "at": 739.4649999996567
+        },
+        {
+          "wave": 4,
+          "at": 924.2816666661553
+        },
+        {
+          "wave": 5,
+          "at": 1388.6149999990664
+        },
+        {
+          "wave": 6,
+          "at": 1599.8483333322076
+        },
+        {
+          "wave": 7,
+          "at": 1864.3316666653004
+        },
+        {
+          "wave": 8,
+          "at": 2104.564999999187
+        },
+        {
+          "wave": 9,
+          "at": 2211.08166666721
+        },
+        {
+          "wave": 10,
+          "at": 2489.0703333374113
+        },
+        {
+          "wave": 11,
+          "at": 2925.2370000096316
+        }
+      ],
+      "waveReached": 11,
+      "wavesPassed": 10,
+      "knockdowns": 1,
+      "rangedSeconds": 13.000000000057128,
+      "eligibleSeconds": 2727.060000010363,
+      "islandsDiscovered": [
+        "crocodile"
+      ],
+      "islandsKept": [],
+      "loanFound": null,
+      "loanEligibleToKeep": false,
+      "questsCompleted": 1,
+      "questsTotal": 13,
+      "allQuestsCompleted": false,
+      "upgradeFound": false,
+      "upgradeEligibleToKeep": false,
+      "upgradePersisted": false,
+      "provisionalFindsCollected": 0,
+      "questDeliveries": 1,
+      "questDeliveriesIncomplete": 0
+    },
+    {
+      "worldSeed": 0,
+      "seed": 1000,
+      "bpm": 200,
+      "island": "home",
+      "condition": "matched",
+      "bag": "satchel",
+      "hat": "none",
+      "wearsHat": false,
+      "parts": [],
+      "bot": "expert",
+      "limit": 3000,
+      "mode": "runs",
+      "playerEnd": 1959.3666666652134,
+      "phaseNumber": 0,
+      "end": 1957.2066666652154,
+      "outcome": "won",
+      "wonAt": 1957.2066666652154,
+      "overAt": null,
+      "phase": "won",
+      "phases": {
+        "opening": {
+          "seconds": 177.67333333336688,
+          "completed": true
+        },
+        "waves": {
+          "seconds": 1122.2166666657797,
+          "completed": true
+        },
+        "stragglers": {
+          "seconds": 638.9333333327522,
+          "completed": true
+        },
+        "lap": {
+          "seconds": 18.383333333316614,
+          "completed": true
+        }
+      },
+      "waves": [
+        {
+          "wave": 1,
+          "at": 177.67333333336688
+        },
+        {
+          "wave": 2,
+          "at": 270.82333333341575
+        },
+        {
+          "wave": 3,
+          "at": 392.7066666666382
+        },
+        {
+          "wave": 4,
+          "at": 537.9066666665062
+        },
+        {
+          "wave": 5,
+          "at": 692.773333333032
+        },
+        {
+          "wave": 6,
+          "at": 781.9399999996176
+        },
+        {
+          "wave": 7,
+          "at": 974.1733333327761
+        },
+        {
+          "wave": 8,
+          "at": 1063.2066666660285
+        },
+        {
+          "wave": 9,
+          "at": 1263.7399999991794
+        },
+        {
+          "wave": 10,
+          "at": 1299.8899999991465
+        }
+      ],
+      "waveReached": 10,
+      "wavesPassed": 9,
+      "knockdowns": 0,
+      "rangedSeconds": 21.683333333333614,
+      "eligibleSeconds": 1824.490833331931,
+      "islandsDiscovered": [],
+      "islandsKept": [],
+      "loanFound": {
+        "kind": "bag",
+        "item": "briefcase"
+      },
+      "loanEligibleToKeep": true,
+      "questsCompleted": 0,
+      "questsTotal": 2,
+      "allQuestsCompleted": false,
+      "upgradeFound": true,
+      "upgradeEligibleToKeep": true,
+      "upgradePersisted": false,
+      "provisionalFindsCollected": 1,
+      "questDeliveries": 0,
+      "questDeliveriesIncomplete": 0
+    },
+    {
+      "worldSeed": 0,
+      "seed": 1000,
+      "bpm": 200,
+      "island": "tiger",
+      "condition": "matched",
+      "bag": "satchel",
+      "hat": "none",
+      "wearsHat": false,
+      "parts": [],
+      "bot": "expert",
+      "limit": 3000,
+      "mode": "runs",
+      "playerEnd": 3000.000000010588,
+      "phaseNumber": 4,
+      "end": 2997.175500010536,
+      "outcome": "censored",
+      "wonAt": null,
+      "overAt": null,
+      "phase": "waves",
+      "phases": {
+        "opening": {
+          "seconds": 238.00666666674823,
+          "completed": true
+        },
+        "waves": {
+          "seconds": 2759.168833343788,
+          "completed": false
+        }
+      },
+      "waves": [
+        {
+          "wave": 1,
+          "at": 238.00666666674823
+        },
+        {
+          "wave": 2,
+          "at": 262.80666666675637
+        },
+        {
+          "wave": 3,
+          "at": 456.97333333324644
+        },
+        {
+          "wave": 4,
+          "at": 681.2399999997092
+        },
+        {
+          "wave": 5,
+          "at": 856.8733333328828
+        },
+        {
+          "wave": 6,
+          "at": 897.6066666661791
+        },
+        {
+          "wave": 7,
+          "at": 1008.5286666660788
+        },
+        {
+          "wave": 8,
+          "at": 1145.5119999992876
+        },
+        {
+          "wave": 9,
+          "at": 1232.5173333325422
+        },
+        {
+          "wave": 10,
+          "at": 1380.9339999990739
+        },
+        {
+          "wave": 11,
+          "at": 1428.4339999990307
+        },
+        {
+          "wave": 12,
+          "at": 1512.067333332288
+        },
+        {
+          "wave": 13,
+          "at": 1608.0339999988673
+        },
+        {
+          "wave": 14,
+          "at": 1667.2673333321468
+        },
+        {
+          "wave": 15,
+          "at": 1857.3506666653072
+        },
+        {
+          "wave": 16,
+          "at": 2456.3815000036598
+        },
+        {
+          "wave": 17,
+          "at": 2885.8201666757896
+        }
+      ],
+      "waveReached": 17,
+      "wavesPassed": 16,
+      "knockdowns": 5,
+      "rangedSeconds": 70.13333333377886,
+      "eligibleSeconds": 1699.9763333382507,
+      "islandsDiscovered": [],
+      "islandsKept": [],
+      "loanFound": {
+        "kind": "bag",
+        "item": "briefcase"
+      },
+      "loanEligibleToKeep": false,
+      "questsCompleted": 0,
+      "questsTotal": 8,
+      "allQuestsCompleted": false,
+      "upgradeFound": true,
+      "upgradeEligibleToKeep": false,
+      "upgradePersisted": false,
+      "provisionalFindsCollected": 1,
+      "questDeliveries": 0,
+      "questDeliveriesIncomplete": 0
+    },
+    {
+      "worldSeed": 0,
+      "seed": 1000,
+      "bpm": 200,
+      "island": "komodo",
+      "condition": "matched",
+      "bag": "satchel",
+      "hat": "none",
+      "wearsHat": false,
+      "parts": [],
+      "bot": "expert",
+      "limit": 3000,
+      "mode": "runs",
+      "playerEnd": 1109.433333332653,
+      "phaseNumber": 5,
+      "end": 1107.273333332655,
+      "outcome": "lost",
+      "wonAt": null,
+      "overAt": 1107.273333332655,
+      "phase": "waves",
+      "phases": {
+        "opening": {
+          "seconds": 183.92333333337186,
+          "completed": true
+        },
+        "waves": {
+          "seconds": 923.3499999992832,
+          "completed": false
+        }
+      },
+      "waves": [
+        {
+          "wave": 1,
+          "at": 183.92333333337186
+        },
+        {
+          "wave": 2,
+          "at": 300.00666666672254
+        },
+        {
+          "wave": 3,
+          "at": 399.73999999996516
+        },
+        {
+          "wave": 4,
+          "at": 462.4899999999081
+        },
+        {
+          "wave": 5,
+          "at": 617.1566666664341
+        },
+        {
+          "wave": 6,
+          "at": 890.056666666186
+        },
+        {
+          "wave": 7,
+          "at": 964.5233333327849
+        },
+        {
+          "wave": 8,
+          "at": 1054.523333332703
+        }
+      ],
+      "waveReached": 8,
+      "wavesPassed": 7,
+      "knockdowns": 0,
+      "rangedSeconds": 51.53333333330235,
+      "eligibleSeconds": 163.95749999993143,
+      "islandsDiscovered": [],
+      "islandsKept": [],
+      "loanFound": null,
+      "loanEligibleToKeep": false,
+      "questsCompleted": 0,
+      "questsTotal": 10,
+      "allQuestsCompleted": false,
+      "upgradeFound": false,
+      "upgradeEligibleToKeep": false,
+      "upgradePersisted": false,
+      "provisionalFindsCollected": 0,
+      "questDeliveries": 0,
+      "questDeliveriesIncomplete": 0
+    },
+    {
+      "worldSeed": 0,
+      "seed": 1000,
+      "bpm": 200,
+      "island": "home",
+      "condition": "home-everything",
+      "bag": "satchel",
+      "hat": "none",
+      "wearsHat": false,
+      "parts": [],
+      "bot": "expert",
+      "limit": 3000,
+      "mode": "runs",
+      "playerEnd": 3000.000000010588,
+      "phaseNumber": 0,
+      "end": 2993.677000010509,
+      "outcome": "censored",
+      "wonAt": null,
+      "overAt": null,
+      "phase": "waves",
+      "phases": {
+        "opening": {
+          "seconds": 177.67333333336688,
+          "completed": true
+        },
+        "waves": {
+          "seconds": 2816.003666677142,
+          "completed": false
+        }
+      },
+      "waves": [
+        {
+          "wave": 1,
+          "at": 177.67333333336688
+        },
+        {
+          "wave": 2,
+          "at": 270.82333333341575
+        },
+        {
+          "wave": 3,
+          "at": 394.1049999999712
+        },
+        {
+          "wave": 4,
+          "at": 486.5216666665538
+        },
+        {
+          "wave": 5,
+          "at": 718.6883333330094
+        },
+        {
+          "wave": 6,
+          "at": 824.30499999958
+        },
+        {
+          "wave": 7,
+          "at": 956.5549999994597
+        },
+        {
+          "wave": 8,
+          "at": 1076.6716666660172
+        },
+        {
+          "wave": 9,
+          "at": 1129.9383333326355
+        },
+        {
+          "wave": 10,
+          "at": 1274.6883333325038
+        },
+        {
+          "wave": 11,
+          "at": 1503.6883333322955
+        },
+        {
+          "wave": 12,
+          "at": 1592.2716666655483
+        },
+        {
+          "wave": 13,
+          "at": 1652.1716666654938
+        },
+        {
+          "wave": 14,
+          "at": 1738.054999998749
+        },
+        {
+          "wave": 15,
+          "at": 1822.038333332006
+        },
+        {
+          "wave": 16,
+          "at": 2066.893666665375
+        },
+        {
+          "wave": 17,
+          "at": 2104.293666665851
+        },
+        {
+          "wave": 18,
+          "at": 2293.1436666682557
+        },
+        {
+          "wave": 19,
+          "at": 2436.510333336748
+        },
+        {
+          "wave": 20,
+          "at": 2595.7436666721087
+        },
+        {
+          "wave": 21,
+          "at": 2650.2270000061358
+        },
+        {
+          "wave": 22,
+          "at": 2692.827000006678
+        },
+        {
+          "wave": 23,
+          "at": 2870.527000008941
+        },
+        {
+          "wave": 24,
+          "at": 2919.793666676235
+        }
+      ],
+      "waveReached": 24,
+      "wavesPassed": 23,
+      "knockdowns": 1,
+      "rangedSeconds": 107.60000000123733,
+      "eligibleSeconds": 2636.7671666749084,
+      "islandsDiscovered": [
+        "crocodile"
+      ],
+      "islandsKept": [],
+      "loanFound": null,
+      "loanEligibleToKeep": false,
+      "questsCompleted": 1,
+      "questsTotal": 13,
+      "allQuestsCompleted": false,
+      "upgradeFound": false,
+      "upgradeEligibleToKeep": false,
+      "upgradePersisted": false,
+      "provisionalFindsCollected": 0,
+      "questDeliveries": 1,
+      "questDeliveriesIncomplete": 0
+    },
+    {
+      "worldSeed": 0,
+      "seed": 8919,
+      "bpm": 100,
+      "island": "home",
+      "condition": "matched",
+      "bag": "satchel",
+      "hat": "none",
+      "wearsHat": false,
+      "parts": [],
+      "bot": "expert",
+      "limit": 3000,
+      "mode": "runs",
+      "playerEnd": 2173.266666666728,
+      "phaseNumber": 0,
+      "end": 2170.9786666666937,
+      "outcome": "won",
+      "wonAt": 2170.9786666666937,
+      "overAt": null,
+      "phase": "won",
+      "phases": {
+        "opening": {
+          "seconds": 304.44000000005184,
+          "completed": true
+        },
+        "waves": {
+          "seconds": 1850.8553333331088,
+          "completed": true
+        },
+        "lap": {
+          "seconds": 15.683333333533028,
+          "completed": true
+        }
+      },
+      "waves": [
+        {
+          "wave": 1,
+          "at": 304.44000000005184
+        },
+        {
+          "wave": 2,
+          "at": 493.47333333321325
+        },
+        {
+          "wave": 3,
+          "at": 729.8233333329983
+        },
+        {
+          "wave": 4,
+          "at": 1028.0899999993937
+        },
+        {
+          "wave": 5,
+          "at": 1339.4733333324439
+        },
+        {
+          "wave": 6,
+          "at": 1513.3399999989524
+        },
+        {
+          "wave": 7,
+          "at": 1887.973333331945
+        },
+        {
+          "wave": 8,
+          "at": 2056.4066666652398
+        }
+      ],
+      "waveReached": 8,
+      "wavesPassed": 7,
+      "knockdowns": 1,
+      "rangedSeconds": 16.866666666764445,
+      "eligibleSeconds": 1994.106166666495,
+      "islandsDiscovered": [],
+      "islandsKept": [],
+      "loanFound": null,
+      "loanEligibleToKeep": false,
+      "questsCompleted": 0,
+      "questsTotal": 2,
+      "allQuestsCompleted": false,
+      "upgradeFound": false,
+      "upgradeEligibleToKeep": false,
+      "upgradePersisted": false,
+      "provisionalFindsCollected": 0,
+      "questDeliveries": 0,
+      "questDeliveriesIncomplete": 0
+    },
+    {
+      "worldSeed": 0,
+      "seed": 8919,
+      "bpm": 100,
+      "island": "tiger",
+      "condition": "matched",
+      "bag": "satchel",
+      "hat": "none",
+      "wearsHat": false,
+      "parts": [],
+      "bot": "expert",
+      "limit": 3000,
+      "mode": "runs",
+      "playerEnd": 3000.000000010588,
+      "phaseNumber": 4,
+      "end": 2997.7120000105538,
+      "outcome": "censored",
+      "wonAt": null,
+      "overAt": null,
+      "phase": "waves",
+      "phases": {
+        "opening": {
+          "seconds": 512.523333333196,
+          "completed": true
+        },
+        "waves": {
+          "seconds": 2485.1886666773576,
+          "completed": false
+        }
+      },
+      "waves": [
+        {
+          "wave": 1,
+          "at": 512.523333333196
+        },
+        {
+          "wave": 2,
+          "at": 1264.906666665845
+        },
+        {
+          "wave": 3,
+          "at": 1625.2566666655173
+        },
+        {
+          "wave": 4,
+          "at": 2074.7233333321396
+        },
+        {
+          "wave": 5,
+          "at": 2429.2620000033157
+        },
+        {
+          "wave": 6,
+          "at": 2621.628666672432
+        }
+      ],
+      "waveReached": 6,
+      "wavesPassed": 5,
+      "knockdowns": 1,
+      "rangedSeconds": 78.36666666685437,
+      "eligibleSeconds": 1624.122833339502,
+      "islandsDiscovered": [],
+      "islandsKept": [],
+      "loanFound": null,
+      "loanEligibleToKeep": false,
+      "questsCompleted": 0,
+      "questsTotal": 8,
+      "allQuestsCompleted": false,
+      "upgradeFound": false,
+      "upgradeEligibleToKeep": false,
+      "upgradePersisted": false,
+      "provisionalFindsCollected": 0,
+      "questDeliveries": 0,
+      "questDeliveriesIncomplete": 0
+    },
+    {
+      "worldSeed": 0,
+      "seed": 8919,
+      "bpm": 100,
+      "island": "komodo",
+      "condition": "matched",
+      "bag": "satchel",
+      "hat": "none",
+      "wearsHat": false,
+      "parts": [],
+      "bot": "expert",
+      "limit": 3000,
+      "mode": "runs",
+      "playerEnd": 3000.000000010588,
+      "phaseNumber": 5,
+      "end": 2997.3280000105538,
+      "outcome": "censored",
+      "wonAt": null,
+      "overAt": null,
+      "phase": "waves",
+      "phases": {
+        "opening": {
+          "seconds": 308.9340000000471,
+          "completed": true
+        },
+        "waves": {
+          "seconds": 2688.3940000105067,
+          "completed": false
+        }
+      },
+      "waves": [
+        {
+          "wave": 1,
+          "at": 308.9340000000471
+        },
+        {
+          "wave": 2,
+          "at": 441.61133333326046
+        },
+        {
+          "wave": 3,
+          "at": 719.0113333330082
+        },
+        {
+          "wave": 4,
+          "at": 1073.644666666019
+        },
+        {
+          "wave": 5,
+          "at": 1256.0613333325198
+        },
+        {
+          "wave": 6,
+          "at": 1712.727999998771
+        },
+        {
+          "wave": 7,
+          "at": 1869.9446666652948
+        },
+        {
+          "wave": 8,
+          "at": 2637.028000005966
+        },
+        {
+          "wave": 9,
+          "at": 2841.511333341903
+        }
+      ],
+      "waveReached": 9,
+      "wavesPassed": 8,
+      "knockdowns": 4,
+      "rangedSeconds": 145.6333333340666,
+      "eligibleSeconds": 487.76883333458454,
+      "islandsDiscovered": [],
+      "islandsKept": [],
+      "loanFound": null,
+      "loanEligibleToKeep": false,
+      "questsCompleted": 0,
+      "questsTotal": 10,
+      "allQuestsCompleted": false,
+      "upgradeFound": false,
+      "upgradeEligibleToKeep": false,
+      "upgradePersisted": false,
+      "provisionalFindsCollected": 0,
+      "questDeliveries": 0,
+      "questDeliveriesIncomplete": 0
+    },
+    {
+      "worldSeed": 0,
+      "seed": 8919,
+      "bpm": 100,
+      "island": "home",
+      "condition": "home-everything",
+      "bag": "satchel",
+      "hat": "none",
+      "wearsHat": false,
+      "parts": [],
+      "bot": "expert",
+      "limit": 3000,
+      "mode": "runs",
+      "playerEnd": 1977.1166666651973,
+      "phaseNumber": 0,
+      "end": 1974.8286666651998,
+      "outcome": "lost",
+      "wonAt": null,
+      "overAt": 1974.8286666651998,
+      "phase": "waves",
+      "phases": {
+        "opening": {
+          "seconds": 304.44000000005184,
+          "completed": true
+        },
+        "waves": {
+          "seconds": 1670.388666665148,
+          "completed": false
+        }
+      },
+      "waves": [
+        {
+          "wave": 1,
+          "at": 304.44000000005184
+        },
+        {
+          "wave": 2,
+          "at": 610.7953333331069
+        },
+        {
+          "wave": 3,
+          "at": 998.1953333327546
+        },
+        {
+          "wave": 4,
+          "at": 1155.0786666659453
+        },
+        {
+          "wave": 5,
+          "at": 1317.361999999131
+        },
+        {
+          "wave": 6,
+          "at": 1487.04533333231
+        },
+        {
+          "wave": 7,
+          "at": 1606.4953333322014
+        },
+        {
+          "wave": 8,
+          "at": 1765.3286666653903
+        },
+        {
+          "wave": 9,
+          "at": 1813.8786666653461
+        }
+      ],
+      "waveReached": 9,
+      "wavesPassed": 8,
+      "knockdowns": 1,
+      "rangedSeconds": 149.88333333320662,
+      "eligibleSeconds": 1296.706166665575,
+      "islandsDiscovered": [],
+      "islandsKept": [],
+      "loanFound": null,
+      "loanEligibleToKeep": false,
+      "questsCompleted": 0,
+      "questsTotal": 13,
+      "allQuestsCompleted": false,
+      "upgradeFound": false,
+      "upgradeEligibleToKeep": false,
+      "upgradePersisted": false,
+      "provisionalFindsCollected": 0,
+      "questDeliveries": 0,
+      "questDeliveriesIncomplete": 0
+    },
+    {
+      "worldSeed": 0,
+      "seed": 8919,
+      "bpm": 200,
+      "island": "home",
+      "condition": "matched",
+      "bag": "satchel",
+      "hat": "none",
+      "wearsHat": false,
+      "parts": [],
+      "bot": "expert",
+      "limit": 3000,
+      "mode": "runs",
+      "playerEnd": 1285.1333333324933,
+      "phaseNumber": 0,
+      "end": 1274.5653333325045,
+      "outcome": "won",
+      "wonAt": 1274.5653333325045,
+      "overAt": null,
+      "phase": "won",
+      "phases": {
+        "opening": {
+          "seconds": 176.5900000000327,
+          "completed": true
+        },
+        "waves": {
+          "seconds": 1079.891999999155,
+          "completed": true
+        },
+        "lap": {
+          "seconds": 18.083333333316887,
+          "completed": true
+        }
+      },
+      "waves": [
+        {
+          "wave": 1,
+          "at": 176.5900000000327
+        },
+        {
+          "wave": 2,
+          "at": 271.1066666667488
+        },
+        {
+          "wave": 3,
+          "at": 389.28999999997467
+        },
+        {
+          "wave": 4,
+          "at": 535.4286666665088
+        },
+        {
+          "wave": 5,
+          "at": 687.3219999997045
+        },
+        {
+          "wave": 6,
+          "at": 772.1386666662941
+        },
+        {
+          "wave": 7,
+          "at": 954.8819999994618
+        },
+        {
+          "wave": 8,
+          "at": 1037.0486666660538
+        },
+        {
+          "wave": 9,
+          "at": 1230.8153333325442
+        }
+      ],
+      "waveReached": 9,
+      "wavesPassed": 8,
+      "knockdowns": 1,
+      "rangedSeconds": 13.51666666665767,
+      "eligibleSeconds": 942.3944999993738,
+      "islandsDiscovered": [],
+      "islandsKept": [],
+      "loanFound": {
+        "kind": "part",
+        "item": "horse"
+      },
+      "loanEligibleToKeep": true,
+      "questsCompleted": 0,
+      "questsTotal": 2,
+      "allQuestsCompleted": false,
+      "upgradeFound": true,
+      "upgradeEligibleToKeep": true,
+      "upgradePersisted": false,
+      "provisionalFindsCollected": 1,
+      "questDeliveries": 0,
+      "questDeliveriesIncomplete": 0
+    },
+    {
+      "worldSeed": 0,
+      "seed": 8919,
+      "bpm": 200,
+      "island": "tiger",
+      "condition": "matched",
+      "bag": "satchel",
+      "hat": "none",
+      "wearsHat": false,
+      "parts": [],
+      "bot": "expert",
+      "limit": 3000,
+      "mode": "runs",
+      "playerEnd": 2052.666666665192,
+      "phaseNumber": 4,
+      "end": 2050.5066666651646,
+      "outcome": "lost",
+      "wonAt": null,
+      "overAt": 2050.5066666651646,
+      "phase": "waves",
+      "phases": {
+        "opening": {
+          "seconds": 280.6400000000735,
+          "completed": true
+        },
+        "waves": {
+          "seconds": 1769.866666665091,
+          "completed": false
+        }
+      },
+      "waves": [
+        {
+          "wave": 1,
+          "at": 280.6400000000735
+        },
+        {
+          "wave": 2,
+          "at": 656.8399999997314
+        },
+        {
+          "wave": 3,
+          "at": 837.0233333329008
+        },
+        {
+          "wave": 4,
+          "at": 1061.7566666660298
+        },
+        {
+          "wave": 5,
+          "at": 1247.6066666658608
+        },
+        {
+          "wave": 6,
+          "at": 1348.606666665769
+        },
+        {
+          "wave": 7,
+          "at": 1571.3399999988997
+        },
+        {
+          "wave": 8,
+          "at": 1869.5233333319618
+        },
+        {
+          "wave": 9,
+          "at": 1905.7233333319289
+        },
+        {
+          "wave": 10,
+          "at": 2020.3899999984912
+        }
+      ],
+      "waveReached": 10,
+      "wavesPassed": 9,
+      "knockdowns": 0,
+      "rangedSeconds": 44.266666666626406,
+      "eligibleSeconds": 1461.907499998941,
+      "islandsDiscovered": [],
+      "islandsKept": [],
+      "loanFound": null,
+      "loanEligibleToKeep": false,
+      "questsCompleted": 0,
+      "questsTotal": 8,
+      "allQuestsCompleted": false,
+      "upgradeFound": false,
+      "upgradeEligibleToKeep": false,
+      "upgradePersisted": false,
+      "provisionalFindsCollected": 0,
+      "questDeliveries": 0,
+      "questDeliveriesIncomplete": 0
+    }
+  ],
+  "wallSeconds": [
+    110.31501723099998,
+    208.75229510800003,
+    84.74775867399998,
+    370.89351669,
+    94.90399344600004,
+    254.42003379299993,
+    46.45168036200013,
+    447.5747295859999,
+    99.09948798600003,
+    176.93823567199988,
+    148.2262543899999,
+    129.69200438000004,
+    58.53550586500019,
+    120.4163519580001
+  ],
+  "complete": false,
+  "score": null,
+  "artifactDigest": "b7ec51c2cbf769f44844b4084f615217d59ad9e0f858486f94cdfacd0a968fad"
+}
