@@ -32,7 +32,7 @@ export function houseOutline(H) {
   const rooms = H.rooms.map(r => ({ id: r.id, label: r.label, x: r.x, z: r.z, r: r.r, ...(r.trunk ? { trunk: true } : { from: r.from }), ...(r.locked ? { locked: true } : {}),
     outline: ring(outline(S, { x0: r.x - r.r * 1.4, x1: r.x + r.r * 1.4, z0: r.z - r.r * 1.4, z1: r.z + r.r * 1.4 }, 0.5, (x, z) => inRoom(S, r.id, x, z) < 0))[0] ?? [] }));
   return {
-    _: "The oak treehouse's floor (tools/house/organic.mjs --outline; don't edit): metres on the house's plan, x east, z south, the Terrace's middle 0 at the map's treehouse, no turn; the floor at the tuning's treehouse.house.height. floor: the whole floor's outline (rings, the largest first; as drawn, the locked rooms in); walk: what she walks; rooms: each room's own outline; branches: each limb's middle line and width; stubs: where each branch room's limb carries on past its floor (bark: the crown's); takeoff: the Terrace's open rim (its point, its span in degrees round from east, clockwise).",
+    _: "Generated oak floor outlines in house-plan metres; do not edit the geometry. Detailed notes and decisions: docs/notes/config-history/house-outline.md.",
     floor: ring(outline(S, box, 0.5)),
     walk: ring(outline(S, box, 0.5, (x, z) => field(S, x, z, true) < 0)),
     rooms,

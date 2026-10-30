@@ -10,12 +10,13 @@ import { PART_IDS, SLOTS, bareBroom, partById, type Fitted } from "../rules/broo
 import { LOADOUT_KEY } from "./loadout";
 import { unlockAll } from "./debugUnlock";
 import { defaultBroom, newWitch } from "./defaultLook";
+import { fallbackStorage } from "./storageFallback";
 
 export const BROOM_KEY = "witch.broom";
 const GENOME_KEY = "witch.genome";
 export interface BroomSave { v: 1; found: string[]; fitted: Fitted }
 type Store = Pick<Storage, "getItem" | "setItem">;
-const storeOf = (s?: Store | null): Store | null => { try { return s ?? globalThis.localStorage ?? null; } catch { return null; } };
+const storeOf = fallbackStorage;
 
 /** Her broom as saved: the parts found (known ones only) and those fitted (a found part, in its own slot). */
 export function loadBroom(storage?: Store | null): BroomSave {

@@ -1,0 +1,7 @@
+# swarm-power config history and detailed field notes
+
+Moved from `config/swarm-power.json` on 2026-10-29 for #1459. Original notes below are preserved verbatim, including quotes and dates. They record the design when written; the config and rules remain the source of current behaviour.
+
+## Overview
+
+The swarms' simulated power (Ed, 2026-10-08: phase 1 builds on estimated numbers only; this file is for later simulations of swarms against soundsystems, party animals and bot witches; rules/swarm.ts powerOf). species: by species, then by swarm size (its young and adults together, as a string key), the power of that swarm by its number of young (index 0 all adults up to index size all young), in estimatedPower's units (Σhp × Σdps of the swarm, species strength included) so a measurement and the estimate stand in for each other; a swarm with no entry is estimated. meta (optional, top level or per species): how it was measured (rules sha, soundsystem health, defence, seeds) and a spread matching each entry. Empty: every swarm is estimated.
