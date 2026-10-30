@@ -9,12 +9,13 @@ import { Rumble } from "./platform/rumble";
 import { currentSettings } from "./app/playerSettings";
 import { wavesOver } from "./rules/win";
 import { chartOpen, closeChart, openChart, prepareChart, type Sailed } from "./ui/chartOverlay";
-import { openingWay, opensInBedroom, sailLandsInBed } from "./app/opening";
+import { openingWay, opensInBedroom, opensWithCreator, sailLandsInBed } from "./app/opening";
 import { wakeInBedroom } from "./rules/opening";
 import { endDream, startParty, startWake } from "./rules/wakeUp";
 import { wearFromStation, wornGenome } from "./rules/clothesPile";
 import { WakeCard } from "./render/wakeUp";
-import { toggleCornerPanel, closeCornerPanel } from "./ui/cornerPanel";
+import { toggleCornerPanel, closeCornerPanel, cornerPanelRoot } from "./ui/cornerPanel";
+import { MenuFocus } from "./ui/menuFocus";
 import { carryTiming, clearCarried, mark, sinceSail, timingOn, transitionTiming, watchLongTasks } from "./app/timing";
 import "./platform/tuningPreset"; // (first: ?tuning=pre-overnight writes the old balance over the config before anything reads it)
 import { FrameStats } from "./platform/frameStats";
@@ -23,7 +24,7 @@ import { musicCue } from "./rules/musicPlan";
 import { areaUnderWitch, interpolated, STEP, stepGame, type Game } from "./rules/game";
 import { TUNING, type Tuning } from "./rules/tuning";
 import { diveReach, diveTrack, handoffShot, newFlightClock, stepFlightClock, type Shot } from "./rules/arrive";
-import { nextFrame } from "./render/slices";
+import { nextFrame, runSliced } from "./render/slices";
 import { compareKey, rendererOf, sceneMode } from "./app/compareKey";
 import { debugText, machineLines, precisionLines, reproLine, reproQuery, reproState, tuningDiff } from "./app/repro";
 import { currentValue, DECISION_LIST, valuesText } from "./ui/decisions";
@@ -104,7 +105,7 @@ import { forgetArrival, type Arrival } from "./app/arrival";
 import { shotParams } from "./app/shot";
 import type { FlightEnd } from "./render/chart/seaChart";
 import { restoreGame } from "./rules/nightSnapshot";
-import { browserNightStore, captureNight, NightAutosave, savedNight, savesEnabled, type SavedNight, type NightStore } from "./app/nightSave";
+import { browserNightStore, captureNight, nightHasStarted, NightAutosave, savedNight, savesEnabled, type SavedNight, type NightStore } from "./app/nightSave";
 import { chooseSavedNight, nightSaveNotice } from "./ui/resumeNight";
 import { restoreSettingsBase } from "./app/playerSettings";
 
@@ -570,7 +571,7 @@ function botGame(kind: BotKind): void {
   });
 }
 if (botParam && BOT_KINDS.includes(botParam)) botGame(botParam);
-else if (params.get("creator") !== "0" && !bootArrival && !inBedroom) creator.show();
+else if (opensWithCreator(params, { bedroom: inBedroom, arriving: !!bootArrival, resuming: !!resumeGame })) creator.show();
 const lookBtn = document.getElementById("look-btn");
 if (lookBtn) {
   for (const ev of ["pointerdown", "pointerup", "click", "touchstart"]) lookBtn.addEventListener(ev, e => e.stopPropagation()); // (not a start)
@@ -705,7 +706,7 @@ const autosave = nightStore ? new NightAutosave(nightStore, () => {
   const n = page.night;
   if (!n || endedNights.has(n.game) || !n.flags.ready || sailing || bot || dream && !dream.over || n.arrival && !n.flags.landed || !savesEnabled(n.params, navigator.webdriver)) return null;
   // The opening, before play starts, must not replace an existing night merely because the page loaded.
-  if (startEl.style.display !== "none") return null;
+  if (!nightHasStarted(n.game, startEl.style.display === "none")) return null;
   return captureNight(n.game, { build: BUILD, params: n.params.toString(), look: page.look() as Record<string, unknown> | null, loan,
     flags: { chartRecorded: n.flags.chartRecorded, overRecorded: n.flags.overRecorded } });
 }, () => nightSaveNotice("Your night could not be saved. Keep this page open to continue playing.")) : null;
@@ -728,6 +729,7 @@ const frameStats = new FrameStats(view.renderer.getContext());
 const ladder = new QualityLadder(gpuName(view.renderer.getContext()), params);
 // The player's Settings page (app/settingsPage.ts): its settings on the live pieces now, the page itself opened from the pause page's dev menu.
 const settingsPage = new SettingsPage({ input, shake, ladder, freeze, audio: on => sound.freeze(!on), tuning: () => N().game.tuning, version: BUILD });
+const pauseFocus = new MenuFocus();
 const rumble = new Rumble();
 // ?perf=1: the performance panel (app/perfHud.ts), always on.
 const perfHud = page.perfHud = params.get("perf") === "1" ? new PerfHud(N().game, view, frameStats) : null;
@@ -978,6 +980,7 @@ async function makeSailNight(to: Sailed, arrival?: Arrival, at?: FlightEnd["cam"
 /** The night's first frames drawn at `shot` (the chart's hand-off), under the chart, until they come calm as the flight's warm-up
  *  waits for (rules/arrive.ts stepFlightClock): the heavy ones over before the dive, not at its start. */
 async function warmAt(n: Night, shot: Shot, A: NonNullable<Tuning["arrive"]>): Promise<void> {
+  await runSliced(view.heights.fillSteps(shot.tx, shot.tz), "handoff-heights");
   const c = newFlightClock();
   view.fly = shot;
   view.assets.hold(true); // (the art workers paused for them: the first draws not fighting them for the machine)
@@ -1092,6 +1095,7 @@ function frame(now: number): void {
   const raw = input.read(), openNow = chartOpen() || telescope.on || !!studio.at || !!stations.station || booth.isOpen, shutTap = !freeze.frozen && !!(raw.sigil || raw.place) && (openNow || openPrev); // (E is `place`; the pad's back, ○, and a tap `sigil`; never under the pause)
   if (shutTap) { if (booth.isOpen) booth.close(); if (stations.station) shutStation("E"); if (studio.at) studio.leave(); if (chartAt && chartOpen()) { chartAt = null; closeChart(); } } // (the telescope: its own step, below)
   const human = openNow || shutTap ? stillControls(raw) : raw;
+  telescope.device = input.device;
   if (telescope.on) { if (telescope.night !== game || game.witches[0].ko || chartOpen() || !tuning.telescope) telescope.close(); else telescope.step({ ...raw, sigil: !!(raw.sigil || raw.place) }, dt, tuning.telescope); } // (E or ○ leaves it)
   view.telescope = tuning.telescope ? telescope.look(tuning.telescope) : null;
   // The sea chart over the night (the transition review, 2026-10-19: the night ran and drew on behind it, and its art workers drew
@@ -1225,6 +1229,10 @@ function frame(now: number): void {
   // (arriving: the flight's shot on the view, every frame; landed, the night starts)
   const flying = !!arrival && !F.landed && F.ready;
   if (flying && arrival!.frame(view, game, now)) arrived();
+  // The pad on the pause page and Settings: before the chart's or the zoo's early return, so it works paused over the chart too.
+  settingsPage.update(now / 1000);
+  const corner = cornerPanelRoot(), pauseRoots = freeze.frozen && !settingsPage.open ? (corner ? [corner] : [document.getElementById("pause-sliders"), pauseBtns].filter((el): el is HTMLElement => !!el)) : [];
+  if (pauseFocus.update(pauseRoots, freeze.pad(), now / 1000, () => { if (corner) closeCornerPanel(); else freeze.toggle(); })) input.device = "pad";
   if (chartHeld || zooHeld) return; // (the sea chart or the zoo over the night: its last frame kept, nothing drawn)
   if (game.clock.paused && !freeze.frozen && !flying && now - lastDraw < 300) return;
   lastDraw = now;
@@ -1242,7 +1250,6 @@ function frame(now: number): void {
   if (!game.clock.paused) stallLog.frame({ t: game.clock.time, gap: dt * 1000, work: performance.now() - work0, step: stepMs, parts: { ...view.ms, ...outside }, mode: game.witch.mode, x: game.witch.x, z: game.witch.z, wave: game.party.wave, creatures: game.creatures.length });
   shake.apply();
   freeze.update();
-  settingsPage.update(now / 1000);
   // The overlay (app/hud.ts), four times a second.
   hud.overlay(now, overlayHead);
 }

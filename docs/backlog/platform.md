@@ -86,6 +86,7 @@ Ed: "the game is pretty playable now ... I feel like prioritising multiplayer so
 - **Difficulty:** no scaling with the number of witches: "the later maps and faster speeds get very hard, people will need friends to help them." (As 2026-10-24: waves run as normal.)
 - **Knocked down:** no helping each other up: "current design is fine for now."
 - **Music** (every player on the same beat) and **many animals** (the same rules run from one seed, inputs sent, occasional checks): "ok".
+- **Server (Ed, 2026-10-30):** Ed's Render account: one small Node WebSocket service in a `server/` folder (a room per phone number: introductions and relaying the host's and guests' messages). Free plan while building (it sleeps after about 15 minutes idle); a paid instance for playtests. Step 2 is briefed once the groundwork (#1457) and save/resume (#1455) are live (Ed: "Yes, brief it then").
 - **First steps proposed (not started):** (1) groundwork testable without a network: several witches in the rules, all randomness from the night's seed, stable IDs, a saveable night; (2) a two-witch prototype online, the host's island, joined by link; (3) the telephone, three witches, joining mid-night, dropped lines, logs from every player.
 
 ## Technical-debt cleanup (before the port)

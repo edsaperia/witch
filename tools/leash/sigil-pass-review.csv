@@ -1,0 +1,65 @@
+species,readability,distinctness,recognition,note
+arcticfox,3,2,2,round face keeps its cheek silhouette but fox family needs context
+armadillo,3,3,3,domed segmented shell reads at 16px
+badger,3,3,3,long central blaze survives reduction
+bat,3,3,2,wing scallops read though compact body resembles a heart
+bear,3,2,3,round ears and muzzle clear; marten is closest neighbour
+beaver,3,3,1,crosshatched oval reads as a racket; propose incisors
+beetle,3,3,3,wing case and six legs stay separated
+boar,2,3,3,tusks and nostrils compete at smallest size; propose simpler snout
+cat,3,3,3,ears and whiskers remain useful
+cheetah,3,3,2,running pose reads more as speed than species
+crab,3,3,3,paired claws do the identification
+crocodile,3,3,3,long toothed jaw is an effective isolated part
+dormouse,2,2,2,eye rings and ears crowded; propose closed eyes with open cheeks
+dragonfly,3,3,3,long abdomen and narrow wings unmistakable
+elephant,3,3,3,trunk remains clear between broad ears
+elk,3,3,3,palmate antlers distinguish from stag
+featheredserpent,2,3,1,serpentine body becomes a busy star at small size; future candidate if Ed wants another batch
+fennec,3,3,3,oversized ears work
+flyingsquirrel,3,3,2,membrane reads as a stretched square; memorable but needs learned association
+fox,3,2,3,pointed face works; nearby canids share cues
+frosttroll,3,2,2,horns separate it from bear though species is invented
+frostwyrm,3,2,2,horns read; close to antler family
+griffin,2,2,2,crest and hooked beak crowded; propose wing framing around beak
+hare,3,3,3,long ears survive every reference size
+hedgehog,3,3,3,spiny dome sufficient
+heron,2,3,3,beak and neck read but smallest legs break up
+hydra,3,3,3,three separate heads clear
+ibex,3,3,3,long hooked horns effective isolated part
+jaguar,3,2,2,cat face works but spots need larger sizes
+komodo,2,3,2,lizard body readable; legs intermittently disappear at smallest size
+lion,3,3,3,mane is an effective isolated feature
+lynx,3,3,3,tall tufted ears and flared cheeks work
+marten,3,2,2,closest to bear; small eyes offer limited species identity
+meerkat,3,3,3,upright posture is memorable
+mole,3,3,2,large digging paws work after association is learned
+moth,3,3,3,broad wings clear; interior bars add some clutter
+newt,2,3,2,crest reads but thin legs can fragment
+otter,2,2,2,whisker-heavy face tends toward generic mammal
+owl,3,3,3,eye rings excellent distinctive part
+penguin,3,3,3,body and flippers read
+polarbear,3,3,1,blocky whole body reads as generic quadruped; propose five-toed paw
+raccoon,3,3,3,eye mask effective
+ram,3,3,3,curled horns effective isolated part
+rattlesnake,3,3,2,coil clear but rattle needs larger reference
+raven,3,3,1,beak wedge alone looks like a fish; propose head-neck profile
+redpanda,3,3,2,striped tail distinctive but needs learned association
+rhino,3,2,3,horn survives though head detail crowded
+roe,2,2,2,short antlers compete with ears; propose broader ear separation
+salamander,3,3,2,splayed feet distinct; ordinary amphibian read
+scorpion,3,3,3,raised stinger strong isolated cue
+snail,3,3,3,shell spiral and foot both clear
+snake,3,3,3,S-curve works
+snowleopard,3,3,1,eye rings read as headphones; distinctive but weak animal association
+sphinx,3,3,2,reclining silhouette distinct; mythic identity needs context
+spider,2,3,3,eight legs readable though clustered in baby form
+squirrel,2,3,2,nested curls lose body; propose tail only
+stag,3,3,3,branched antlers strong
+stegosaurus,3,3,3,dorsal plates effective
+stoat,3,3,2,low long body reads; species specificity is limited
+tiger,3,2,3,stripes give more identity than generic cat face
+toad,3,3,3,broad head and raised eyes clear
+unicorn,2,3,2,horn competes with horse outline; propose spiralled horn only
+wolf,2,2,2,ruff and muzzle too busy; propose fewer cheek and eye marks
+woodlouse,3,3,3,segmented oval works

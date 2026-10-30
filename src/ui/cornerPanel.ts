@@ -4,6 +4,9 @@
 // its ×, Esc or the button again closes it.
 let shown: { el: HTMLDivElement; back: (() => void)[]; id: string } | null = null;
 
+/** The current panel's pad focus stays inside it rather than reaching the pause controls behind it. */
+export const cornerPanelRoot = (): HTMLElement | null => shown?.el ?? null;
+
 /** Show `nodes` in a panel titled `title` over `host`; the same `id` again closes it. */
 export function toggleCornerPanel(host: HTMLElement, id: string, title: string, nodes: HTMLElement[]): void {
   const was = shown?.id;
