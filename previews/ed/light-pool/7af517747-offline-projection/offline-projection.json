@@ -1,0 +1,63 @@
+{
+  "sha": "7af517747b22229a4d827d7c85d0de2ed6c768a2",
+  "grant": "6524837559",
+  "viewport": {
+    "width": 534,
+    "height": 300
+  },
+  "savedRenderedBase": {
+    "x": 3175.6929220307984,
+    "y": 36.61760194223779,
+    "z": 2796.100512349005
+  },
+  "actualWitchOrigin": {
+    "x": 3190.754367956137,
+    "z": 3106.559326444441
+  },
+  "savedBaseProjection": {
+    "base": {
+      "x": 228.48568071070656,
+      "y": 688.4933338765155
+    },
+    "top": {
+      "x": 228.21902477072865,
+      "y": 701.6472926385809
+    },
+    "centre": {
+      "x": 228.3523527407176,
+      "y": 695.0703132575482
+    },
+    "inside": false
+  },
+  "correctedStandingProjection": {
+    "base": {
+      "x": 266.5045325912958,
+      "y": 139.73272158608296
+    },
+    "top": {
+      "x": 266.49297527176964,
+      "y": 171.24918941422106
+    },
+    "centre": {
+      "x": 266.49875393153275,
+      "y": 155.490955500152
+    },
+    "inside": true
+  },
+  "correctedHoverProjection": {
+    "base": {
+      "x": 266.50159630156963,
+      "y": 147.73989664764036
+    },
+    "top": {
+      "x": 266.48989997492487,
+      "y": 179.63543276847207
+    },
+    "centre": {
+      "x": 266.4957481382472,
+      "y": 163.68766470805622
+    },
+    "inside": true
+  },
+  "assumptions": "Ground bend=0 per tuning; saved matrices unchanged; standing/hover bracket grounded pose. Reset view.seatK=0 ends frozen old-deck transition. Does not prove live screenshot or target visibility."
+}

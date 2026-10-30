@@ -1,0 +1,145 @@
+{
+  "sha": "7af517747b22229a4d827d7c85d0de2ed6c768a2",
+  "grant": "6524837559",
+  "frames": [],
+  "errors": [],
+  "complete": false,
+  "served": {
+    "version": "dev · 7af5177",
+    "built": "2026-10-30T14:09:00.329Z"
+  },
+  "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "lastFixture": {
+    "species": "beetle",
+    "level": 0,
+    "position": "centre",
+    "fixture": {
+      "radius": 44.41895402094715,
+      "fraction": 0.25,
+      "x": 3201.8591064613734,
+      "z": 3106.559326444441
+    },
+    "diagnostics": {
+      "origin": {
+        "x": 3201.8591064613734,
+        "z": 3106.559326444441
+      },
+      "witch": {
+        "x": 3190.754367956137,
+        "z": 3106.559326444441
+      },
+      "lightCentre": {
+        "x": 3190.754367956137,
+        "z": 3106.559326444441
+      },
+      "distance": 11.104738505236583,
+      "radius": 44.41895402094715,
+      "power": 0.95,
+      "dim": 1,
+      "falloff": 1.8,
+      "batches": [
+        {
+          "key": "beetle",
+          "count": 1,
+          "flags": [
+            {
+              "visible": true,
+              "find": 1,
+              "scenery": 0,
+              "unlit": 0
+            }
+          ]
+        }
+      ]
+    },
+    "witchProof": {
+      "count": 1,
+      "hatOnCount": 1,
+      "bareCount": 0,
+      "hat": {
+        "has": true,
+        "down": null,
+        "left": []
+      },
+      "herIdle": false,
+      "camera": {
+        "zoomStep": 3,
+        "zoom": 0.375,
+        "tx": 3190.754367956137,
+        "ty": 1.4,
+        "tz": 3106.559326444441,
+        "vx": 0,
+        "vy": 0,
+        "vz": 0,
+        "ax": 0,
+        "az": 0,
+        "lift": 0,
+        "intro": 0
+      },
+      "screen": {
+        "x": 228.3500954116942,
+        "y": 695.1816657850362,
+        "halfWidth": 7.566153697123497,
+        "halfHeight": 7.688331908520695
+      },
+      "viewport": {
+        "width": 534,
+        "height": 300
+      },
+      "projection": {
+        "projectionMatrix": [
+          3.186113381807702,
+          0,
+          0,
+          0,
+          0,
+          5.671281819617709,
+          0,
+          0,
+          0,
+          0,
+          -1.0022246941045607,
+          -1,
+          0,
+          0,
+          -2.0022246941045605,
+          0
+        ],
+        "matrixWorldInverse": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0.8480480961564261,
+          0.5299192642332048,
+          0,
+          0,
+          -0.5299192642332048,
+          0.8480480961564261,
+          0,
+          -3190.8130429003822,
+          1662.0581201579905,
+          -2724.6006030711023,
+          1
+        ],
+        "witchBase": {
+          "x": 3175.6929220307984,
+          "y": 36.61760194223779,
+          "z": 2796.100512349005
+        },
+        "witchTall": 4.333395749118396,
+        "witchFeetTop": 3.9922560837622663,
+        "rideHeight": -20.103074196475045,
+        "camRideHeight": -20.103074196475045,
+        "groundHeight": -20.103074196475045,
+        "cameraPosition": [
+          3190.8130429003822,
+          34.31312240747238,
+          3191.348970368045
+        ]
+      }
+    }
+  },
+  "failure": "Error: Witch not demonstrably visible/centred"
+}
