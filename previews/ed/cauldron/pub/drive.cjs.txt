@@ -1,0 +1,86 @@
+const http = require("http"), fs = require("fs"), path = require("path");
+const playwright = require("playwright");
+const root = "/home/user/witch/dist", out = process.argv[2];
+const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm" };
+const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000).toFixed(0)} s]`, ...a);
+function serve() { const s = http.createServer((req, res) => { const p = path.join(root, decodeURIComponent(new URL(req.url, "http://x").pathname)); const f = fs.existsSync(p) && fs.statSync(p).isDirectory() ? path.join(p, "index.html") : p; if (!f.startsWith(root) || !fs.existsSync(f)) { res.writeHead(404); res.end(); return; } res.writeHead(200, { "content-type": types[path.extname(f)] || "application/octet-stream" }); fs.createReadStream(f).pipe(res); }); return new Promise(r => s.listen(0, "127.0.0.1", () => r(s))); }
+(async () => {
+  const server = await serve(), port = server.address().port;
+  const browser = await playwright.chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
+  const page = await browser.newPage({ viewport: { width: 960, height: 540 } });
+  const errors = [];
+  page.on("pageerror", e => errors.push(`page error: ${e.message}`));
+  page.on("console", m => { if (m.type() === "error" || m.type() === "warning") errors.push(`console ${m.type()}: ${m.text()}`); });
+  let n = 0; const shot = async name => { const f = path.join(out, `${String(++n).padStart(2, "0")}-${name}.png`); await page.screenshot({ path: f }); log("shot", f); };
+  const R = {};
+  try {
+    await page.goto(`http://127.0.0.1:${port}/?cauldron=1&seed=123`);
+    await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 300000, polling: 500 });
+    R.versionText = await page.evaluate(() => [...document.querySelectorAll("body *")].filter(e => e.children.length === 0 && /\bv?\d{3,5}\b|dev|·/.test(e.textContent || "") && (e.textContent || "").length < 60).map(e => `${e.id || e.className}: ${e.textContent.trim()}`).slice(0, 10));
+    log("version text", R.versionText);
+    await shot("start-screen");
+    await page.keyboard.press("Enter");
+    await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 60000 });
+    await page.waitForFunction(() => !!window.witch.game.cauldron, null, { timeout: 120000, polling: 200 });
+    R.pickups = await page.evaluate(() => window.witch.game.cauldron.pickups.map(p => ({ ...p })));
+    log("pickups", JSON.stringify(R.pickups));
+    await shot("started");
+    const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
+    // frames: run k manual frames with controls c; draw only the last
+    const frames = (k, c = {}, drawLast = true) => page.evaluate(([k, c, d]) => { const W = window.witch; W.manual = true; const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false }; for (let i = 0; i < k; i++) W.frame({ ...idle, ...c }, 1 / 60, d && i === k - 1); return true; }, [k, c, drawLast]);
+    const st = () => page.evaluate(() => { const g = window.witch.game, W = g.witches[0], C = g.cauldron; return { t: +g.clock.time.toFixed(2), x: +W.body.x.toFixed(2), z: +W.body.z.toFixed(2), mode: W.body.mode, perch: !!W.body.perch, inv: W.mushrooms ? JSON.parse(JSON.stringify(W.mushrooms)) : null, collected: C.pickups.filter(p => p.collected).map(p => p.id), occupants: C.kitchen.occupants, brew: C.kitchen.brew && { ...C.kitchen.brew }, trip: W.cauldronTrip ? { ...W.cauldronTrip } : null, df: { x: g.map.dancefloor.x, z: g.map.dancefloor.z } }; });
+    R.wake = await page.evaluate(() => { const W = window.witch, g = W.game; W.manual = true; const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false }; let f = 0; for (; f < 60 * 30 && !g.wake?.open; f++) W.frame({ ...idle, moveX: f % 120 < 60 ? 1 : -1 }, 1 / 60, false); for (let i = 0; i < 30; i++) W.frame(idle, 1 / 60, i === 29); return { frames: f, open: !!g.wake?.open }; });
+    log("wake", JSON.stringify(R.wake)); await shot("woke-up");
+    // 1. B cluster (right of the home dancefloor): put her on the ground 4 m left of it... no: 4 m right, walk west through it
+    const B = R.pickups.filter(p => p.kind === "B"), bx = Math.max(...B.map(p => p.x)) + 9, bz = B.reduce((s, p) => s + p.z, 0) / 3;
+    await page.evaluate(([x, z]) => { const W = window.witch.game.witches[0]; W.body = { ...W.body, x, z, vx: 0, vz: 0, perch: false, seated: false, mode: "ground", lift: 0, falling: undefined }; }, [bx, bz]);
+    for (let i = 0; i < 12; i++) await frames(10);
+    await shot("B-cluster-before");
+    R.beforeB = await st(); log("beforeB", JSON.stringify(R.beforeB));
+    for (let i = 0; i < 40; i++) { const s = await st(); if (B.every(p => s.collected.includes(p.id))) break; const tgt = B.find(p => !s.collected.includes(p.id)); const dx = tgt.x - s.x, dz = tgt.z - s.z, L = Math.hypot(dx, dz) || 1; await frames(6, { moveX: dx / L, moveZ: dz / L }, i % 5 === 0); }
+    await frames(10);
+    R.afterB = await st(); log("afterB", JSON.stringify(R.afterB));
+    await shot("B-cluster-collected");
+    // 2. Kitchen: plan (-70,44), turn 0
+    const tx = await page.evaluate(() => [window.witch.game.map.treehouse.x, window.witch.game.map.treehouse.z]);
+    await page.evaluate(([x, z]) => { const W = window.witch.game.witches[0]; W.body = { ...W.body, x, z, vx: 0, vz: 0, perch: true, seated: false, mode: "ground", lift: 0, falling: undefined }; }, [tx[0] - 70, tx[1] + 42]);
+    await frames(30);
+    R.inKitchen = await st(); log("inKitchen", JSON.stringify(R.inKitchen));
+    await shot("kitchen-entered-deposited");
+    // walk to basket 1: plan x = -70 + (1-2.5)*1.8 = -72.7, z = 47
+    const target = [tx[0] - 72.7, tx[1] + 47];
+    for (let i = 0; i < 40; i++) { const s = await st(); const dx = target[0] - s.x, dz = target[1] - s.z, L = Math.hypot(dx, dz); if (L < 0.3) break; await frames(4, { moveX: dx / L, moveZ: dz / L }, false); }
+    await frames(20);
+    R.atBasket = await st(); log("atBasket", JSON.stringify(R.atBasket));
+    await shot("at-second-basket");
+    for (let u = 1; u <= 3; u++) {
+      await frames(1, { place: true }, false); await frames(u === 3 ? 6 : 15);
+      R[`use${u}`] = await st(); log(`use${u}`, JSON.stringify(R[`use${u}`]));
+      await shot(`basket-use-${u}${u === 3 ? "-smoke" : ""}`);
+    }
+    await frames(24); R.smoke2 = await st(); await shot("smoke-0.5s");
+    await frames(36); R.exit = await st(); log("exit", JSON.stringify(R.exit));
+    await shot("exit-outside");
+    await frames(150); R.trip3 = await st(); log("trip3", JSON.stringify(R.trip3)); await shot("mirror-floor-3s");
+    await frames(60, { moveX: 1 }); await frames(240); R.trip10 = await st(); await shot("mirror-floor-10s");
+    // fast-forward without drawing to 88 s of the trip
+    const toTrip = async el => { for (;;) { const s = await st(); if (!s.trip || s.trip.elapsed >= el) return s; await frames(Math.min(600, Math.ceil((el - s.trip.elapsed) * 60)), {}, false); } };
+    R.trip45 = await toTrip(45); await frames(1); await shot("mirror-floor-45s");
+    R.trip885 = await toTrip(88.5); await frames(1); R.trip885b = await st(); log("trip88.5", JSON.stringify(R.trip885b)); await shot("mirror-floor-88.5s-fading");
+    await frames(120); R.end = await st();
+    for (let i = 0; i < 6; i++) await frames(10);
+    await shot("AB-off-1");
+    await page.evaluate(() => { window.witch.game.witches[0].cauldronTrip = { kind: "mirrorFloor", elapsed: 40, duration: 90, fade: 3 }; });
+    for (let i = 0; i < 6; i++) await frames(1, {}, true);
+    await shot("AB-on-full"); R.abTrip = await st();
+    for (let i = 0; i < 3; i++) await frames(1, {}, true);
+    await shot("AB-on-full-later");
+    await page.evaluate(() => { delete window.witch.game.witches[0].cauldronTrip; });
+    for (let i = 0; i < 6; i++) await frames(1, {}, true);
+    await shot("AB-off-2"); log("end", JSON.stringify(R.end)); await shot("after-90s-ended");
+  } catch (e) { errors.push(`DRIVER: ${e.stack}`); await shot("driver-error").catch(() => {}); }
+  R.errors = errors;
+  fs.writeFileSync(path.join(out, "result.json"), JSON.stringify(R, null, 1));
+  log("errors", errors.length, errors.slice(0, 20));
+  await browser.close(); server.close();
+})();

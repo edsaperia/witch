@@ -1,0 +1,780 @@
+{
+ "versionText": [
+  ": 123",
+  "version: dev · ffb7903",
+  "finds-dev-btn: finds (dev)",
+  "n: 120",
+  "ss-stamp: dev · built 30 Oct 2026",
+  "ss-date: 30 Oct 2026",
+  "ss-date: 29 Oct 2026",
+  "ss-date: 29 Oct 2026",
+  "freeze-marker: ❚❚ paused · Esc resumes · . steps (Shift+. ten)",
+  "creator-version: dev"
+ ],
+ "pickups": [
+  {
+   "id": 0,
+   "kind": "A",
+   "x": 3199.0365718468893,
+   "z": 2830.9996306713924,
+   "collected": false
+  },
+  {
+   "id": 1,
+   "kind": "A",
+   "x": 3199.736571846889,
+   "z": 2831.5996306713923,
+   "collected": false
+  },
+  {
+   "id": 2,
+   "kind": "A",
+   "x": 3200.436571846889,
+   "z": 2830.9996306713924,
+   "collected": false
+  },
+  {
+   "id": 3,
+   "kind": "B",
+   "x": 3216.5865718468895,
+   "z": 2830.9996306713924,
+   "collected": false
+  },
+  {
+   "id": 4,
+   "kind": "B",
+   "x": 3217.2865718468893,
+   "z": 2831.5996306713923,
+   "collected": false
+  },
+  {
+   "id": 5,
+   "kind": "B",
+   "x": 3217.986571846889,
+   "z": 2830.9996306713924,
+   "collected": false
+  }
+ ],
+ "wake": {
+  "frames": 182,
+  "open": true
+ },
+ "beforeB": {
+  "t": 2.52,
+  "x": 3226.99,
+  "z": 2831.2,
+  "mode": "ground",
+  "perch": false,
+  "inv": {
+   "bag": {
+    "A": 0,
+    "B": 0,
+    "north": 0,
+    "south": 0,
+    "east": 0,
+    "west": 0
+   },
+   "baskets": {
+    "A": 0,
+    "B": 0,
+    "north": 0,
+    "south": 0,
+    "east": 0,
+    "west": 0
+   },
+   "ingredients": []
+  },
+  "collected": [],
+  "occupants": [],
+  "brew": null,
+  "trip": null,
+  "df": {
+   "x": 3208.511571846889,
+   "z": 2828.9996306713924
+  }
+ },
+ "afterB": {
+  "t": 2.99,
+  "x": 3221.22,
+  "z": 2831.09,
+  "mode": "ground",
+  "perch": false,
+  "inv": {
+   "bag": {
+    "A": 0,
+    "B": 3,
+    "north": 0,
+    "south": 0,
+    "east": 0,
+    "west": 0
+   },
+   "baskets": {
+    "A": 0,
+    "B": 0,
+    "north": 0,
+    "south": 0,
+    "east": 0,
+    "west": 0
+   },
+   "ingredients": []
+  },
+  "collected": [
+   3,
+   4,
+   5
+  ],
+  "occupants": [],
+  "brew": null,
+  "trip": null,
+  "df": {
+   "x": 3208.511571846889,
+   "z": 2828.9996306713924
+  }
+ },
+ "inKitchen": {
+  "t": 3.25,
+  "x": 3096.44,
+  "z": 2828.93,
+  "mode": "ground",
+  "perch": true,
+  "inv": {
+   "bag": {
+    "A": 0,
+    "B": 0,
+    "north": 0,
+    "south": 0,
+    "east": 0,
+    "west": 0
+   },
+   "baskets": {
+    "A": 0,
+    "B": 3,
+    "north": 0,
+    "south": 0,
+    "east": 0,
+    "west": 0
+   },
+   "ingredients": []
+  },
+  "collected": [
+   3,
+   4,
+   5
+  ],
+  "occupants": [
+   0
+  ],
+  "brew": null,
+  "trip": null,
+  "df": {
+   "x": 3208.511571846889,
+   "z": 2828.9996306713924
+  }
+ },
+ "atBasket": {
+  "t": 3.37,
+  "x": 3093.59,
+  "z": 2834.2,
+  "mode": "ground",
+  "perch": true,
+  "inv": {
+   "bag": {
+    "A": 0,
+    "B": 0,
+    "north": 0,
+    "south": 0,
+    "east": 0,
+    "west": 0
+   },
+   "baskets": {
+    "A": 0,
+    "B": 3,
+    "north": 0,
+    "south": 0,
+    "east": 0,
+    "west": 0
+   },
+   "ingredients": []
+  },
+  "collected": [
+   3,
+   4,
+   5
+  ],
+  "occupants": [
+   0
+  ],
+  "brew": null,
+  "trip": null,
+  "df": {
+   "x": 3208.511571846889,
+   "z": 2828.9996306713924
+  }
+ },
+ "use1": {
+  "t": 3.39,
+  "x": 3093.59,
+  "z": 2834.2,
+  "mode": "ground",
+  "perch": true,
+  "inv": {
+   "bag": {
+    "A": 0,
+    "B": 0,
+    "north": 0,
+    "south": 0,
+    "east": 0,
+    "west": 0
+   },
+   "baskets": {
+    "A": 0,
+    "B": 2,
+    "north": 0,
+    "south": 0,
+    "east": 0,
+    "west": 0
+   },
+   "ingredients": [
+    "B"
+   ]
+  },
+  "collected": [
+   3,
+   4,
+   5
+  ],
+  "occupants": [
+   0
+  ],
+  "brew": null,
+  "trip": null,
+  "df": {
+   "x": 3208.511571846889,
+   "z": 2828.9996306713924
+  }
+ },
+ "use2": {
+  "t": 3.42,
+  "x": 3093.59,
+  "z": 2834.2,
+  "mode": "ground",
+  "perch": true,
+  "inv": {
+   "bag": {
+    "A": 0,
+    "B": 0,
+    "north": 0,
+    "south": 0,
+    "east": 0,
+    "west": 0
+   },
+   "baskets": {
+    "A": 0,
+    "B": 1,
+    "north": 0,
+    "south": 0,
+    "east": 0,
+    "west": 0
+   },
+   "ingredients": [
+    "B",
+    "B"
+   ]
+  },
+  "collected": [
+   3,
+   4,
+   5
+  ],
+  "occupants": [
+   0
+  ],
+  "brew": null,
+  "trip": null,
+  "df": {
+   "x": 3208.511571846889,
+   "z": 2828.9996306713924
+  }
+ },
+ "use3": {
+  "t": 3.43,
+  "x": 3093.59,
+  "z": 2834.2,
+  "mode": "ground",
+  "perch": true,
+  "inv": {
+   "bag": {
+    "A": 0,
+    "B": 0,
+    "north": 0,
+    "south": 0,
+    "east": 0,
+    "west": 0
+   },
+   "baskets": {
+    "A": 0,
+    "B": 0,
+    "north": 0,
+    "south": 0,
+    "east": 0,
+    "west": 0
+   },
+   "ingredients": []
+  },
+  "collected": [
+   3,
+   4,
+   5
+  ],
+  "occupants": [
+   0
+  ],
+  "brew": {
+   "recipe": [
+    "B",
+    "B",
+    "B"
+   ],
+   "elapsed": 0.09999999999999999,
+   "recipients": [
+    0
+   ]
+  },
+  "trip": null,
+  "df": {
+   "x": 3208.511571846889,
+   "z": 2828.9996306713924
+  }
+ },
+ "smoke2": {
+  "t": 3.47,
+  "x": 3093.59,
+  "z": 2834.2,
+  "mode": "ground",
+  "perch": true,
+  "inv": {
+   "bag": {
+    "A": 0,
+    "B": 0,
+    "north": 0,
+    "south": 0,
+    "east": 0,
+    "west": 0
+   },
+   "baskets": {
+    "A": 0,
+    "B": 0,
+    "north": 0,
+    "south": 0,
+    "east": 0,
+    "west": 0
+   },
+   "ingredients": []
+  },
+  "collected": [
+   3,
+   4,
+   5
+  ],
+  "occupants": [
+   0
+  ],
+  "brew": {
+   "recipe": [
+    "B",
+    "B",
+    "B"
+   ],
+   "elapsed": 0.49999999999999994,
+   "recipients": [
+    0
+   ]
+  },
+  "trip": null,
+  "df": {
+   "x": 3208.511571846889,
+   "z": 2828.9996306713924
+  }
+ },
+ "exit": {
+  "t": 3.54,
+  "x": 3208.51,
+  "z": 2829,
+  "mode": "ground",
+  "perch": false,
+  "inv": {
+   "bag": {
+    "A": 0,
+    "B": 0,
+    "north": 0,
+    "south": 0,
+    "east": 0,
+    "west": 0
+   },
+   "baskets": {
+    "A": 0,
+    "B": 0,
+    "north": 0,
+    "south": 0,
+    "east": 0,
+    "west": 0
+   },
+   "ingredients": []
+  },
+  "collected": [
+   3,
+   4,
+   5
+  ],
+  "occupants": [],
+  "brew": null,
+  "trip": {
+   "kind": "mirrorFloor",
+   "elapsed": 0.09999999999999999,
+   "duration": 90,
+   "fade": 3
+  },
+  "df": {
+   "x": 3208.511571846889,
+   "z": 2828.9996306713924
+  }
+ },
+ "trip3": {
+  "t": 5.9,
+  "x": 3208.51,
+  "z": 2829,
+  "mode": "ground",
+  "perch": false,
+  "inv": {
+   "bag": {
+    "A": 0,
+    "B": 0,
+    "north": 0,
+    "south": 0,
+    "east": 0,
+    "west": 0
+   },
+   "baskets": {
+    "A": 0,
+    "B": 0,
+    "north": 0,
+    "south": 0,
+    "east": 0,
+    "west": 0
+   },
+   "ingredients": []
+  },
+  "collected": [
+   3,
+   4,
+   5
+  ],
+  "occupants": [],
+  "brew": null,
+  "trip": {
+   "kind": "mirrorFloor",
+   "elapsed": 2.5999999999999956,
+   "duration": 90,
+   "fade": 3
+  },
+  "df": {
+   "x": 3208.511571846889,
+   "z": 2828.9996306713924
+  }
+ },
+ "trip10": {
+  "t": 10.91,
+  "x": 3227.76,
+  "z": 2829,
+  "mode": "ground",
+  "perch": false,
+  "inv": {
+   "bag": {
+    "A": 0,
+    "B": 0,
+    "north": 0,
+    "south": 0,
+    "east": 0,
+    "west": 0
+   },
+   "baskets": {
+    "A": 0,
+    "B": 0,
+    "north": 0,
+    "south": 0,
+    "east": 0,
+    "west": 0
+   },
+   "ingredients": []
+  },
+  "collected": [
+   3,
+   4,
+   5
+  ],
+  "occupants": [],
+  "brew": null,
+  "trip": {
+   "kind": "mirrorFloor",
+   "elapsed": 7.599999999999978,
+   "duration": 90,
+   "fade": 3
+  },
+  "df": {
+   "x": 3208.511571846889,
+   "z": 2828.9996306713924
+  }
+ },
+ "trip45": {
+  "t": 48.32,
+  "x": 3227.76,
+  "z": 2829,
+  "mode": "ground",
+  "perch": false,
+  "inv": {
+   "bag": {
+    "A": 0,
+    "B": 0,
+    "north": 0,
+    "south": 0,
+    "east": 0,
+    "west": 0
+   },
+   "baskets": {
+    "A": 0,
+    "B": 0,
+    "north": 0,
+    "south": 0,
+    "east": 0,
+    "west": 0
+   },
+   "ingredients": []
+  },
+  "collected": [
+   3,
+   4,
+   5
+  ],
+  "occupants": [],
+  "brew": null,
+  "trip": {
+   "kind": "mirrorFloor",
+   "elapsed": 45.016666666665394,
+   "duration": 90,
+   "fade": 3
+  },
+  "df": {
+   "x": 3208.511571846889,
+   "z": 2828.9996306713924
+  }
+ },
+ "trip885": {
+  "t": 91.82,
+  "x": 3227.76,
+  "z": 2829,
+  "mode": "ground",
+  "perch": false,
+  "inv": {
+   "bag": {
+    "A": 0,
+    "B": 0,
+    "north": 0,
+    "south": 0,
+    "east": 0,
+    "west": 0
+   },
+   "baskets": {
+    "A": 0,
+    "B": 0,
+    "north": 0,
+    "south": 0,
+    "east": 0,
+    "west": 0
+   },
+   "ingredients": []
+  },
+  "collected": [
+   3,
+   4,
+   5
+  ],
+  "occupants": [],
+  "brew": null,
+  "trip": {
+   "kind": "mirrorFloor",
+   "elapsed": 88.51666666666293,
+   "duration": 90,
+   "fade": 3
+  },
+  "df": {
+   "x": 3208.511571846889,
+   "z": 2828.9996306713924
+  }
+ },
+ "trip885b": {
+  "t": 91.84,
+  "x": 3227.76,
+  "z": 2829,
+  "mode": "ground",
+  "perch": false,
+  "inv": {
+   "bag": {
+    "A": 0,
+    "B": 0,
+    "north": 0,
+    "south": 0,
+    "east": 0,
+    "west": 0
+   },
+   "baskets": {
+    "A": 0,
+    "B": 0,
+    "north": 0,
+    "south": 0,
+    "east": 0,
+    "west": 0
+   },
+   "ingredients": []
+  },
+  "collected": [
+   3,
+   4,
+   5
+  ],
+  "occupants": [],
+  "brew": null,
+  "trip": {
+   "kind": "mirrorFloor",
+   "elapsed": 88.5333333333296,
+   "duration": 90,
+   "fade": 3
+  },
+  "df": {
+   "x": 3208.511571846889,
+   "z": 2828.9996306713924
+  }
+ },
+ "end": {
+  "t": 93.84,
+  "x": 3227.76,
+  "z": 2829,
+  "mode": "ground",
+  "perch": false,
+  "inv": {
+   "bag": {
+    "A": 0,
+    "B": 0,
+    "north": 0,
+    "south": 0,
+    "east": 0,
+    "west": 0
+   },
+   "baskets": {
+    "A": 0,
+    "B": 0,
+    "north": 0,
+    "south": 0,
+    "east": 0,
+    "west": 0
+   },
+   "ingredients": []
+  },
+  "collected": [
+   3,
+   4,
+   5
+  ],
+  "occupants": [],
+  "brew": null,
+  "trip": null,
+  "df": {
+   "x": 3208.511571846889,
+   "z": 2828.9996306713924
+  }
+ },
+ "abTrip": {
+  "t": 94.94,
+  "x": 3227.76,
+  "z": 2829,
+  "mode": "ground",
+  "perch": false,
+  "inv": {
+   "bag": {
+    "A": 0,
+    "B": 0,
+    "north": 0,
+    "south": 0,
+    "east": 0,
+    "west": 0
+   },
+   "baskets": {
+    "A": 0,
+    "B": 0,
+    "north": 0,
+    "south": 0,
+    "east": 0,
+    "west": 0
+   },
+   "ingredients": []
+  },
+  "collected": [
+   3,
+   4,
+   5
+  ],
+  "occupants": [],
+  "brew": null,
+  "trip": {
+   "kind": "mirrorFloor",
+   "elapsed": 40.099999999999994,
+   "duration": 90,
+   "fade": 3
+  },
+  "df": {
+   "x": 3208.511571846889,
+   "z": 2828.9996306713924
+  }
+ },
+ "errors": [
+  "console warning: THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported.",
+  "console warning: stall: 17 ms (work 723, step 21.9; draw 373, heights 101, audio 92, witch 75, groundTiles 18) [Object, Object, Object, Object, Object, Object, Object, Object, Object]",
+  "console warning: stall: 1033 ms (work 163, step 4.5; witch 80, draw 37, hud 9, prefetch 9, refresh 6) []",
+  "console warning: stall: 167 ms (work 108, step 3.1; witch 34, grass+lights 24, party 18, draw 14, refresh 6) []",
+  "console warning: stall: 367 ms (work 295, step 39.4; grass+lights 162, witch 21, sky 16, prefetch 15, refresh 11) []",
+  "console warning: stall: 500 ms (work 261, step 3.3; audio 116, witch 39, draw 33, groundTiles 30, grass+lights 29) []",
+  "console warning: stall: 3150 ms (work 68, step 1.9; witch 16, draw 15, groundTiles 7, audio 7, leash 5) [Object, Object, Object]",
+  "console warning: stall: 750 ms (work 113, step 1.2; draw 42, hud 22, witch 20, grass+lights 13, party 7) [Object]",
+  "console warning: stall: 350 ms (work 604, step 5.7; draw 13, groundTiles 7, party 5, witch 5, grass+lights 3) [Object]",
+  "console warning: stall: 600 ms (work 166, step 1.4; witch 141, draw 5, grass+lights 3, refresh 3, party 2) []",
+  "console warning: stall: 167 ms (work 33, step 1.0; witch 10, draw 7, refresh 3, grass+lights 3, party 3) []",
+  "console warning: stall: 33 ms (work 43, step 0.4; draw 11, witch 10, party 6, leash 3, prefetch 3) [Object, Object]",
+  "console warning: stall: 867 ms (work 57, step 1.0; draw 19, groundTiles 9, grass+lights 9, witch 8, audio 4) []",
+  "console warning: stall: 250 ms (work 37, step 1.2; draw 11, witch 10, groundTiles 7, grass+lights 3, prefetch 1) [Object, Object]",
+  "console warning: stall: 467 ms (work 89, step 1.2; draw 24, grass+lights 23, audio 13, witch 13, prefetch 10) []",
+  "console warning: stall: 250 ms (work 156, step 1.4; witch 102, grass+lights 30, groundTiles 11, draw 7, prefetch 1) [Object]",
+  "console warning: stall: 200 ms (work 64, step 2.6; witch 22, draw 19, prefetch 7, creatures 4, uniforms 3) [Object]",
+  "console warning: stall: 367 ms (work 63, step 1.0; witch 23, grass+lights 23, draw 4, prefetch 1, groundTiles 1) []",
+  "console warning: stall: 67 ms (work 107, step 1.1; witch 43, draw 39, prefetch 14, grass+lights 6, markers 1) []",
+  "console warning: [.WebGL-0x7a40017ea00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): Running out of reserved outsideRenderPass queueSerial. ending renderPass now.",
+  "console warning: THREE.UniformsUtils: Textures of render targets cannot be cloned via cloneUniforms() or mergeUniforms().",
+  "console warning: THREE.UniformsUtils: Textures of render targets cannot be cloned via cloneUniforms() or mergeUniforms().",
+  "console warning: THREE.UniformsUtils: Textures of render targets cannot be cloned via cloneUniforms() or mergeUniforms().",
+  "console warning: THREE.UniformsUtils: Textures of render targets cannot be cloned via cloneUniforms() or mergeUniforms().",
+  "console warning: THREE.UniformsUtils: Textures of render targets cannot be cloned via cloneUniforms() or mergeUniforms().",
+  "console warning: THREE.UniformsUtils: Textures of render targets cannot be cloned via cloneUniforms() or mergeUniforms().",
+  "console warning: THREE.UniformsUtils: Textures of render targets cannot be cloned via cloneUniforms() or mergeUniforms().",
+  "console warning: THREE.UniformsUtils: Textures of render targets cannot be cloned via cloneUniforms() or mergeUniforms().",
+  "console warning: THREE.UniformsUtils: Textures of render targets cannot be cloned via cloneUniforms() or mergeUniforms().",
+  "console warning: THREE.UniformsUtils: Textures of render targets cannot be cloned via cloneUniforms() or mergeUniforms().",
+  "console warning: THREE.UniformsUtils: Textures of render targets cannot be cloned via cloneUniforms() or mergeUniforms().",
+  "console warning: THREE.UniformsUtils: Textures of render targets cannot be cloned via cloneUniforms() or mergeUniforms().",
+  "console warning: THREE.UniformsUtils: Textures of render targets cannot be cloned via cloneUniforms() or mergeUniforms().",
+  "console warning: THREE.UniformsUtils: Textures of render targets cannot be cloned via cloneUniforms() or mergeUniforms().",
+  "console warning: THREE.UniformsUtils: Textures of render targets cannot be cloned via cloneUniforms() or mergeUniforms().",
+  "console warning: THREE.UniformsUtils: Textures of render targets cannot be cloned via cloneUniforms() or mergeUniforms().",
+  "console warning: THREE.UniformsUtils: Textures of render targets cannot be cloned via cloneUniforms() or mergeUniforms().",
+  "console warning: THREE.UniformsUtils: Textures of render targets cannot be cloned via cloneUniforms() or mergeUniforms().",
+  "console warning: THREE.UniformsUtils: Textures of render targets cannot be cloned via cloneUniforms() or mergeUniforms().",
+  "console warning: THREE.UniformsUtils: Textures of render targets cannot be cloned via cloneUniforms() or mergeUniforms()."
+ ]
+}
