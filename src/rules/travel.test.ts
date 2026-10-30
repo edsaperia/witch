@@ -5,13 +5,14 @@ import { TUNING } from "./tuning";
 import { planRoute, TRAVEL, updateMode } from "./travel";
 import { setupArena } from "./arena";
 import { canEat } from "./berries";
+import { smallWorldTuning } from "../test/worlds";
 
 // Travelling and posse (Ed, 2026-10-05).
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, secs: number, each?: () => void, c: Controls = idle) => { for (let i = 0; i < Math.round(secs / STEP); i++) { stepGame(g, c, STEP); each?.(); } };
-function quiet(): Game {
+function quiet(local = false): Game {
   // Retain the multi-area route: recruits start over 300 m away, travellers cover 120–200 m and cross area borders.
-  const g = newGame(77, TUNING);
+  const g = newGame(77, local ? smallWorldTuning(TUNING, "Posse hysteresis sets one creature's distances directly and does not simulate a route.") : TUNING);
   g.clock.paused = false;
   const d = g.map.dancefloor;
   g.witch = { ...g.witch, seated: false, x: d.x, z: d.z + 20, mode: "ground", lift: 0 };
@@ -113,7 +114,7 @@ describe("travelling and posse (Ed, 2026-10-05)", () => {
   }, 120000);
 
   it("has hysteresis at the radius, and a party animal in a fight stays in her posse wherever it is", () => {
-    const g = quiet(), c = g.creatures[0], a = { x: 0, z: 0, sigil: false, ground: true }, t = 0;
+    const g = quiet(true), c = g.creatures[0], a = { x: 0, z: 0, sigil: false, ground: true }, t = 0;
     Object.assign(c, { x: R * 1.2, z: 0, travelling: false, fight: undefined, hurtAt: undefined, engagedUntil: undefined });
     expect(updateMode(c, a, g.map, t)).toBe(true); // in the posse: stays till 1.4 × out
     c.x = R * 1.5;
