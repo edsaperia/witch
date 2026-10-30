@@ -257,6 +257,31 @@ that terminates the one simulation worker. An interrupted case is replayed;
 completed cases survive. Exit code 2 means the hard budget ended with a checkpoint,
 not a completed model. Cloud training-only runs never evaluate a protected case.
 
+## Matched-home diagnostic after round one
+
+Paired cloud trace `5247329e317da6268bd2c2500278a28593c8b858` runs unchanged
+`676e8924` on world 0/night 1000, home, 100 bpm, Satchel, explicit no hat and no
+parts. Skilled wins at 310.73 player seconds; expert reaches the 600-second
+cutoff in wave 2. These are training-seed diagnostics, not held-out scores.
+
+The first policy divergence after the mandatory reaction/deck exit is local
+exploration at 2.67 seconds: skilled already has a map-derived destination;
+expert rotates its movement every input. After briefly seeing a hare at 7.2,
+expert loses it at 7.47 and orbits roughly x=3084–3136/z=2945–2997 through
+27.2, with zero invitation hits. A fair replacement must explore from observed
+positions rather than copy skilled's privileged map-wide target selection.
+
+There is also a measured arrival failure: expert labels 123.47–309.07 as
+casting at the squirrel stone, repeatedly crossing it (sampled distances
+about 0–5.2 m), while skilled's corresponding job lasts 11.3–17.08. The trace
+script's cast event uses `ctl.sigil`, not `sigilHeld`, so it does not establish
+the exact cast hold history; movement oscillation and delayed conversion are
+directly recorded. The proposed control change slows movement within 10 m of
+interaction destinations and keeps a local exploration waypoint until reached
+or a 12-player-second timeout. It preserves the observation boundary and human
+floors. This candidate needs cloud nearby tests/typecheck and same-cell
+revalidation before any claim of improved outcomes or further training.
+
 ## First pilot, not trained strength
 
 Source `9be247f04e21aa8175e3d534a7a6ea904be7a250`, artifacts in

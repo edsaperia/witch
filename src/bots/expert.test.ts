@@ -5,6 +5,37 @@ import { newExpert, EXPERT_LIMITS } from "./expert";
 import { newObserver, viewRectangle } from "./observe";
 
 describe("expert observation and human input boundary", () => {
+  it("keeps an exploration destination while no new target is seen", () => {
+    const g = newGame(1000, withTuning({ cast: { ...TUNING.cast, on: false } })), w = g.witches[0];
+    w.body = { ...w.body, seated: false, perch: false, mode: "ground" };
+    for (const c of g.creatures) c.gone = true;
+    const bot = newExpert(); bot.decide(g);
+    const directions = [];
+    for (let i = 0; i < 70; i++) {
+      g.herTime = 0.25 + i / 7.5;
+      const c = bot.decide(g); directions.push([c.moveX, c.moveZ]);
+    }
+    expect(bot.doing).toBe("looking for someone to invite");
+    expect(directions.every(([x, z]) => x > 0.99 && Math.abs(z) < 0.01)).toBe(true);
+  });
+
+  it("slows near a visible casting spot rather than crossing it at full speed", () => {
+    const g = newGame(1000, TUNING), w = g.witches[0];
+    for (const c of g.creatures) c.gone = true;
+    const observe = newObserver();
+    const stone = observe(g).stones.find(s => s.open);
+    // Locate a real visible spot without changing the observation adapter.
+    const cell = g.map.cells.find(([x, z]) => `${x},${z}` !== g.map.centreCell.join(","))!;
+    const spot = stone?.cast ?? g.map.soundsystemSpot(cell[0], cell[1]);
+    w.body = { ...w.body, seated: false, perch: false, mode: "ground", x: spot.x, z: spot.z };
+    const ready = observe(g).stones.find(s => s.open && s.ready)!;
+    w.body.x = ready.cast.x + 3; w.body.z = ready.cast.z;
+    const bot = newExpert(); bot.decide(g); g.herTime = 0.25;
+    const controls = bot.decide(g);
+    expect(bot.doing).toBe("casting at a ready stone");
+    expect(Math.hypot(controls.moveX, controls.moveZ)).toBeCloseTo(0.3);
+  });
+
   it("returns detached observations and ignores remote creature coordinates", () => {
     const g = newGame(1000, TUNING), w = g.witches[0];
     const observe = newObserver(), before = observe(g), ext = viewRectangle(g);

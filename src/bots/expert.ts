@@ -26,6 +26,7 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
   const heardDreams = new Set<number>();
   let random = seed >>> 0, nextInput = 0, controls = idle(), healing = false, target: number | null = null, retargetAt = 0, lastArea = "", patrol = 0;
   let modePending: { from: Observation["self"]["mode"]; at: number } | null = null;
+  let patrolPoint: (Point & { until: number }) | null = null;
   const bot: Bot = { kind: "expert", doing: "waiting for observations", done: { quests: [], relics: [] }, decide };
   return bot;
 
@@ -63,7 +64,9 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
     for (const s of o.stones) memory.set(s.key, { ...s, cast: { ...s.cast } });
     const go = (p: Point, stop = 3, fly = false) => {
       const d = dist(w, p);
-      if (d > stop) { c.moveX = (p.x - w.x) / d; c.moveZ = (p.z - w.z) / d; }
+      // Full-speed steering on a delayed position overshoots small pickup/cast
+      // spots indefinitely. Ease in using only the observed distance.
+      if (d > stop) { const speed = Math.min(1, d / 10); c.moveX = (p.x - w.x) / d * speed; c.moveZ = (p.z - w.z) / d * speed; }
       const want = fly && d > 45 && !w.grounded ? "treetop" : "ground";
       if ((w.mode === "ground" && want === "treetop") || (w.mode === "treetop" && want === "ground")) c.toggleMode = true;
       return d <= stop && w.mode === "ground";
@@ -148,8 +151,14 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
     const unseen = [...memory.values()].filter(s => s.open && !o.stones.some(v => v.key === s.key)).sort((a, b) => dist(w, a) - dist(w, b))[0];
     if (unseen) { bot.doing = "returning to a remembered stone"; go(unseen, 10, true); return c; }
     // Local exploration uses no map, future wave list or unseen creature positions.
-    const angle = (patrol++ % 64) / 64 * Math.PI * 2;
-    bot.doing = "looking for someone to invite"; c.moveX = Math.cos(angle); c.moveZ = Math.sin(angle);
+    // A direction rotated every input described a small closed orbit, not
+    // exploration (diagnostic-1, 7.47–27.2 s). Keep a local destination until
+    // reached, with a player-time timeout if terrain prevents reaching it.
+    if (!patrolPoint || dist(w, patrolPoint) < 10 || o.playerTime >= patrolPoint.until) {
+      const angle = patrol++ * Math.PI * (3 - Math.sqrt(5));
+      patrolPoint = { x: w.x + Math.cos(angle) * 100, z: w.z + Math.sin(angle) * 100, until: o.playerTime + 12 };
+    }
+    bot.doing = "looking for someone to invite"; go(patrolPoint, 8, true);
     return c;
   }
 }
