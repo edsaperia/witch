@@ -21,12 +21,11 @@ export const ROSTER_PRESETS = {
     legendPatch: { head: { muzzle: true, jawCoat: false } },
     text: "A grey wolf with a dark saddle, pale muzzle and long-legged woodland stride.",
   },
-  fennec: {
-    reason: "Retain sandy fur and a tiny canid body, with the existing sail ears enlarged toward head length.",
-    patch: { parts: { ears: { kind: "sail", size: 2.7 } } },
-    ordinaryLevels: { 0: { parts: { ears: { kind: "sail", size: 2.7 } } }, 1: { parts: { ears: { kind: "sail", size: 2.7 } } }, 2: { parts: { ears: { kind: "sail", size: 2.8 } } } },
-    legendPatch: { parts: { ears: { kind: "sail", size: 2.8 } } },
-    text: "A tiny sandy fennec fox with broad head-length ears and a dense brush tail.",
+  lion: {
+    reason: "Use the existing neck-and-cheek ruff to make a fuller face-framing mane rather than a flat back patch.",
+    patch: {},
+    ordinaryLevels: { 1: { features: [{ kind: "ruff", size: .13, count: 12, mat: "BODY2" }] }, 2: { features: [{ kind: "ruff", size: .4, count: 26, mat: "BODY3" }, { kind: "mane", from: .65, to: 1, height: .18, count: 10, lean: .55, mat: "BODY3" }] } },
+    text: "A tawny lion with a full dark mane around its face and chest, and a tufted tail.",
   },
   frosttroll: {
     reason: "Turn the existing hunched, shaggy troll's paint into cold fur and ice rather than moss-green.",
