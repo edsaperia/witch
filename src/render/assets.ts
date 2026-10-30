@@ -3,6 +3,7 @@
 // Sets are asked for as the witch nears them and drawn by a few Web Workers in the background;
 // where workers or OffscreenCanvas are missing, they are drawn on the page, one per frame.
 import * as Art from "../../art/generator.js";
+import { enqueueWorkerTrace, postTracedJob, cancelWorkerTrace } from "../app/workerJobTrace";
 import { atlasBytes, atlasFromPixels, placeholderAtlas, type Atlas } from "./atlas";
 import { channelAt } from "./palette";
 import type { GpuKind } from "./gpuLedger";
@@ -187,7 +188,7 @@ export class AssetLibrary {
     w.onmessage = (e: MessageEvent<Reply>) => { slot.busy = false; slot.job = undefined; this.receive(e.data); this.dispatch(); };
     w.onerror = () => { // the worker itself failed (no module workers, say): draw on the page
       this.useWorkers = false;
-      if (slot.job) this.queue.unshift(slot.job);
+      if (slot.job) { cancelWorkerTrace(slot.job, 'worker-error'); this.queue.unshift(slot.job); }
       slot.busy = false; slot.job = undefined;
     };
   }
@@ -225,6 +226,7 @@ export class AssetLibrary {
     (job as ArtJob & CacheHint).cacheKey = this.cacheKey(job);
     (job as ArtJob & { urgent?: boolean }).urgent = urgent;
     (job as Stamped).gen = this.gen;
+    enqueueWorkerTrace(job, `art:${job.kind}`, job.id, this.queue.length);
     if (home || urgent || this.promoted.has(k)) this.queue.splice(this.front, 0, job); else this.queue.push(job);
     this.dispatch();
   }
@@ -246,7 +248,7 @@ export class AssetLibrary {
       if (i < 0) break;
       slot.busy = true;
       slot.job = this.queue.splice(i, 1)[0];
-      slot.w.postMessage(slot.job);
+      postTracedJob(slot.w, slot.job, `art:${slot.job.kind}`, slot.job.id);
     }
   }
   /** One-off asks (oneOff), by their key: what each is waiting for. */
@@ -584,7 +586,7 @@ export class AssetLibrary {
     // witch immediately")
     const mine = JSON.stringify(genome ?? null);
     const stale = (q?: ArtJob) => q?.kind === "witch" && JSON.stringify(q.genome ?? null) !== mine;
-    const forget = (q: ArtJob) => { const k = this.key(q); this.inFlight.delete(k); this.promoted.delete(k); this.urgentKeys.delete(k); };
+    const forget = (q: ArtJob) => { cancelWorkerTrace(q, 'witch-look-superseded'); const k = this.key(q); this.inFlight.delete(k); this.promoted.delete(k); this.urgentKeys.delete(k); };
     this.queue = this.queue.filter(q => !stale(q) || (forget(q), false));
     // and one already drawing, if it's a whole set (seconds of a worker's time; tens in the cloud): its worker let go for another
     for (const slot of this.workers) if (stale(slot.job) && !(slot.job as { quick?: boolean }).quick) {
@@ -711,7 +713,7 @@ export class AssetLibrary {
    *  afresh as they're wanted (from the browser's store, if drawn before). */
   reseat(o: { seed: number; typeSeed: number; typeBiome?: string; treehouse: string }): void {
     this.gen++;
-    this.queue = this.queue.filter(j => !islandBound(j));
+    this.queue = this.queue.filter(j => !islandBound(j) || (cancelWorkerTrace(j, 'island-reseated'), false));
     for (const k of [...this.inFlight]) if (islandBound(k)) { this.inFlight.delete(k); this.promoted.delete(k); this.urgentKeys.delete(k); }
     const free = (a: Atlas) => { a.albedo.dispose(); a.normal.dispose(); };
     for (const a of this.types.values()) free(a.atlas);

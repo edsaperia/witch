@@ -12,6 +12,8 @@ import type { Creature } from "../rules/creatures";
 import { partyGearOf } from "./artBuild";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
+import { waitForPrograms, type ReadyProgram } from "./programReadiness";
+import { captureProgramUses, mapProgramUses } from "./programInventory";
 import { carrierOf, deckOf } from "../rules/treehouse";
 import { HOUSE_LAYER } from "./post";
 import { StationBackdrop } from "./stationBackdrop";
@@ -1082,28 +1084,42 @@ export class View {
     // play waits for them a few seconds at most, so on a GPU that compiles in parallel they're done in the Bedroom.
     const hidden: THREE.Object3D[] = [];
     const fx = this.post.fxScene; // (the smooth effects layer's own scene, and the post passes' quad: neither in the scene)
+    const telemetry = (globalThis as unknown as { __travelProbe?: { record(e: unknown): void } }).__travelProbe;
+    const originalUses = telemetry ? captureProgramUses([{ label: 'scene', root: this.scene }, ...(fx ? [{ label: 'effects', root: fx }] : [])]) : null;
     for (const sc of fx ? [this.scene, fx] : [this.scene]) sc.traverse(o => { if (!o.visible) { hidden.push(o); o.visible = true; } });
     // (and the occlusion pyramid's passes, which aren't in the scene: render/hiz.ts, built by the treehouse, where she starts)
     if (!this.hizOff && !this.hiz) this.hiz = new Hiz(this.renderer);
-    const compiled = Promise.all([this.renderer.compileAsync(this.scene, this.camera), fx && this.renderer.compileAsync(fx, this.camera), this.post.compile(), this.hiz?.ok && this.hiz.compile(this.renderer)]).catch(() => { /* (drawn as before: compiled on first use) */ });
+    const allPrograms = () => (this.renderer.info.programs ?? []) as unknown as ReadyProgram[];
+    const before = new Set(allPrograms().map(p => p.id)), groups: Record<string, number[]> = {};
+    const launch = (group: string, fn: () => unknown) => {
+      const prior = new Set(allPrograms().map(p => p.id)), result = fn();
+      groups[group] = allPrograms().filter(p => !prior.has(p.id)).map(p => p.id);
+      return result;
+    };
+    const compiled = Promise.all([launch('scene', () => this.renderer.compileAsync(this.scene, this.camera)), fx && launch('effects', () => this.renderer.compileAsync(fx, this.camera)), launch('post', () => this.post.compile()), this.hiz?.ok && launch('hiz', () => this.hiz!.compile(this.renderer))]).catch(() => { /* readiness is still checked per program below */ });
     for (const o of hidden) o.visible = false;
     performance.mark("witch:prep-compile0");
-    // Waited for till every program is ready (three asks the driver without waiting, KHR_parallel_shader_compile, every 10 ms):
-    // a cap of 4 s (Ed's laptop, 2026-10-21: reached every time) left the rest compiling, and the program logs read next waited on
-    // them, one task, 5 s with the chart frozen. A program the driver never finishes mustn't hold the start for good: 60 s.
-    // (the programs linked so far out of all of them, a loading screen's count: three's isReady, KHR_parallel_shader_compile's status)
-    const linked = () => { const all = (this.renderer.info.programs ?? []) as unknown as { isReady(): boolean }[]; this.setReadiness("compile", all.filter(p => p.isReady()).length, all.length); };
-    linked();
-    const counting = setInterval(linked, 50);
-    const t0 = performance.now(), capped = await Promise.race([compiled.then(() => false), new Promise<boolean>(r => setTimeout(() => r(true), 60000))]);
-    clearInterval(counting);
-    if (capped) console.warn(`view: the shaders weren't ready in ${Math.round(performance.now() - t0)} ms; play starts anyway`);
+    const parallel = this.renderer.extensions.has('KHR_parallel_shader_compile');
+    const usages = originalUses ? mapProgramUses(originalUses, material => (this.renderer.properties.get(material) as { currentProgram?: { id: number } }).currentProgram?.id) : undefined;
+    const record = (phase: string, pending: ReadyProgram[] = [], elapsed = 0) => {
+      const detail = { kind: 'shader-programs', phase, at: performance.now(), parallel, elapsed, groups,
+        programs: allPrograms().map(p => ({ id: p.id, name: p.name, type: p.type, ready: p.isReady(), added: !before.has(p.id), ...(usages?.[p.id] ? { sourceUses: usages[p.id] } : {}) })), pending: pending.map(p => p.id) };
+      performance.mark(`witch:shader-${phase}`, { detail });
+      telemetry?.record(detail);
+      return detail;
+    };
+    record('start');
+    // Coordinator6516109308: keep the animated chart beyond 60s; never use that mark as permission to force uniforms.
+    await waitForPrograms(allPrograms, compiled, (ready, total) => this.setReadiness('compile', ready, total), (pending, elapsed) => {
+      console.warn('view: shaders still pending; keeping the chart up', record('pending', pending, elapsed));
+    });
+    record('ready');
     performance.mark("witch:prep-compiled");
     releaseDisposals(); // (the last night's materials, kept till now: render/retire.ts)
     // three reads a program's link and compile logs on its first draw (onFirstUse), a call that waits on the GPU: 0.1 to 2 s
     // in play the first time she rises, lands or comes near something new. Read them now, at load, for every program.
     const programs = [...(this.renderer.info.programs ?? [])], v = this; // (a program's log read a step at a time: render/slices.ts)
-    await runSliced((function* () { let i = 0; for (const p of programs) { v.setReadiness("programs", i++, programs.length); p.getUniforms(); yield; } })(), "programs");
+    await runSliced((function* () { let i = 0; for (const p of programs) { v.setReadiness("programs", i++, programs.length); if (!(p as unknown as ReadyProgram).isReady()) throw new Error('shader became unfinished before uniform preparation'); p.getUniforms(); yield; } })(), "programs");
     performance.mark("witch:prep-programs");
     // And every texture the scene's materials hold uploaded now, a texture a step (three uploads each on its first draw: on Ed's
     // laptop, 2026-10-21, most of the 2 s first frame after a sail; the cloud's first frame's 5 to 7 s), so the first frame
