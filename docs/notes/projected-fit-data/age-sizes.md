@@ -1,6 +1,6 @@
 # Combined creature age-size audit
 
-The audit passed: 64 species, 1,040 cells, no unsafe target deviation, no strict-growth/legend/class-order failure and no page overflow. The measured source is `043d8fadcc2073acadedac15262e75bae7005172`; `8f8d137d8e1a347789f5d28f7acba81a1faee9d6` changes only import quoting for the Art Lab inliner, with identical native rendering.
+The audit passed: 64 species, 1,040 cells, no unsafe target deviation, no strict-growth/legend/class-order failure and no page overflow. The measured source is `043d8fadcc2073acadedac15262e75bae7005172`; `8f8d137d8e1a347789f5d28f7acba81a1faee9d6` changes only import quoting for the Art Lab inliner, with identical native rendering. The later sleeping-flyer breathing correction changes nap frames, which are excluded from this walk-atlas audit.
 
 The same three cells measured on a quiet CPU against base `909f00ae`: rhino legend towards/frame1 **1.187s versus 1.716s**, unicorn adult towards/frame0 **0.138s versus 0.206s**, hedgehog legend away/frame1 **0.545s versus 2.321s**. These are cold construction measurements, not gameplay frame times. Shared-laptop timings during the full audit include concurrent build work; they should not be compared directly to the quiet CPU sample.
 

@@ -5,7 +5,7 @@ import gameStyle from '../config/style.json';
 import tuning from '../config/tuning.json';
 import {M} from '../art/core.js';
 const st={...defaultStyle(),...gameStyle,artStyle:'bold',pixel:tuning.pixelSize};
-it.each([['snail',0],['snail',1],['hydra',1],['hydra',2],['armadillo',2],['sphinx',1]] as const)('%s age %s lies no taller than its awake form',(id,level)=>{
+it.each([['snail',0],['snail',1],['hydra',1],['hydra',2],['armadillo',2],['sphinx',1],['dragonfly',0],['dragonfly',1],['dragonfly',2],['dragonfly',3],['moth',0],['moth',1],['moth',2],['moth',3]] as const)('%s age %s lies no taller than its awake form',(id,level)=>{
  const awake=critter(id,level,0,st);
  const breaths=[0,1].map(frame=>Reflect.apply(critter,null,[id,level,frame,st,'towards',{nap:true}]) as ReturnType<typeof critter>);
  for(const nap of breaths){
