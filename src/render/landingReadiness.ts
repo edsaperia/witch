@@ -2,17 +2,23 @@ export type HomeArtKind = 'treehouse' | 'props' | 'soundsystems';
 /** Only a late landing arms these fades; normal/warm arrivals remain fully opaque. */
 export class LandingArtFade {
   private starts: Partial<Record<HomeArtKind, number>> = {};
+  private elapsed: Partial<Record<HomeArtKind, number>> = {};
+  private last: Partial<Record<HomeArtKind, number>> = {};
   arm(ready: Record<HomeArtKind, boolean>): void {
     this.starts = Object.fromEntries(Object.entries(ready).map(([kind, value]) => [kind, value ? -Infinity : Infinity]));
   }
   share(kind: HomeArtKind, ready: boolean, now: number): number {
     if (this.starts[kind] === undefined) return 1;
     if (!ready) return 0;
-    if (this.starts[kind] === Infinity) this.starts[kind] = now;
-    const k = Math.max(0, Math.min(1, (now - this.starts[kind]!) / 800));
+    if (this.starts[kind] === -Infinity) return 1;
+    if (this.starts[kind] === Infinity) { this.starts[kind] = now; this.last[kind] = now; this.elapsed[kind] = 0; }
+    // An upload/driver stall must not consume the entire visible fade between two rendered frames.
+    this.elapsed[kind] = (this.elapsed[kind] ?? 0) + Math.min(50, Math.max(0, now - (this.last[kind] ?? now)));
+    this.last[kind] = now;
+    const k = Math.min(1, this.elapsed[kind]! / 800);
     return k * k * (3 - 2 * k);
   }
-  reset(): void { this.starts = {}; }
+  reset(): void { this.starts = {}; this.elapsed = {}; this.last = {}; }
 }
 
 /** Never substitute a preview/placeholder witch, or submit her unfinished GPU program. */

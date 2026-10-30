@@ -1,5 +1,20 @@
 import { expect, it } from 'vitest';
-import { waitForPrograms } from './programReadiness';
+import { monitorProgramLink, waitForPrograms } from './programReadiness';
+
+it('detects a broken link once after completion, without status or log reads while unfinished', () => {
+  let ready = false, statusReads = 0, logReads = 0; const messages: string[] = [];
+  const p = { id: 42, program: {} as WebGLProgram, isReady: () => ready };
+  monitorProgramLink({ LINK_STATUS: 35714, getProgramParameter: () => { statusReads++; return false; }, getProgramInfoLog: () => { logReads++; return 'broken fragment'; } }, p, m => messages.push(m));
+  expect(p.isReady()).toBe(false); expect(statusReads + logReads).toBe(0);
+  ready = true; expect(p.isReady()).toBe(true); expect(p.isReady()).toBe(true);
+  expect(statusReads).toBe(1); expect(logReads).toBe(1); expect(messages[0]).toContain('broken fragment');
+});
+
+it('checks successful links after completion without reading their logs', () => {
+  let logs = 0; const p = { id: 43, program: {} as WebGLProgram, isReady: () => true };
+  monitorProgramLink({ LINK_STATUS: 35714, getProgramParameter: () => true, getProgramInfoLog: () => { logs++; return ''; } }, p, () => { throw Error('unexpected failure'); });
+  expect(p.isReady()).toBe(true); expect(logs).toBe(0);
+});
 
 it('expires a15s landing grace without reading unfinished uniforms, then finishes in the background at30s', async () => {
   let clock = 0, reads = 0;

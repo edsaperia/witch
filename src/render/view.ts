@@ -12,7 +12,7 @@ import type { Creature } from "../rules/creatures";
 import { partyGearOf } from "./artBuild";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
-import { waitForPrograms, type ReadyProgram } from "./programReadiness";
+import { monitorProgramLink, waitForPrograms, type ReadyProgram } from "./programReadiness";
 import { installShaderDrawGate, materialProgramsReady, type ShaderDrawStatus } from "./shaderDrawGate";
 import { LandingArtFade, lateLandingReady } from './landingReadiness';
 import { captureProgramUses, mapProgramUses } from "./programInventory";
@@ -383,6 +383,14 @@ export class View {
   island!: IslandLayers;
   get ground(): Ground { return this.island.ground; }
   readonly shaderDrawStatus: ShaderDrawStatus = { active: false, skipped: {}, fallback: {} };
+  private readonly monitoredPrograms = new WeakSet<ReadyProgram>();
+  private readyPrograms(): ReadyProgram[] {
+    const programs = (this.renderer.info.programs ?? []) as unknown as ReadyProgram[];
+    for (const p of programs) if (!this.monitoredPrograms.has(p)) {
+      this.monitoredPrograms.add(p); monitorProgramLink(this.renderer.getContext(), p, message => console.error(message));
+    }
+    return programs;
+  }
   private shaderEpoch = 0;
   private shaderLandingDeadline = Infinity;
   private shaderChartLanding = false;
@@ -449,6 +457,8 @@ export class View {
   }
   private dark = { k: 1, at: NaN, door: null as { x: number; z: number } | null, enclosed: false, reveal: false, uv: new THREE.Vector2() };
   private behindHouse(g: Game): void {
+    // A late landing's house-only camera layer must still submit the critical ground to its readiness gate.
+    this.ground.mesh.layers[this.shaderLandingLimited && this.shaderDrawStatus.active ? 'enable' : 'disable'](HOUSE_LAYER);
     const D = this.dark, T = g.tuning.treehouse.house?.dark, deck = deckOf(g.map, g.tuning), w = g.witch;
     const inHouse = !!T?.on && !!deck?.house?.rooms && !!w.perch && w.mode === "ground" && !this.telescope; // (on foot: rising out of it, the forest comes back as she lifts off)
     const enclosed = inHouse && !g.islandReady;
@@ -711,6 +721,9 @@ export class View {
     this.castMap = new CastShadowMap(160, t.shadows.castRes ?? 1024);
     const prec = typeof location !== "undefined" ? new URLSearchParams(location.search).get("precision") : null; // (?precision=high|medium|low: every shader's float precision, for the circle bug; three.js takes high where the GPU has it)
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: "high-performance", preserveDrawingBuffer: true, ...(prec === "high" || prec === "medium" || prec === "low" ? { precision: prec === "high" ? "highp" : prec === "medium" ? "mediump" : "lowp" } as const : {}) });
+    // Three's first-use diagnostics read driver logs synchronously (498ms in proof64c95a287).
+    // Keep diagnostics in development; production keeps KHR gating without the blocking log queries.
+    this.renderer.debug.checkShaderErrors = import.meta.env.DEV;
     // A lost and restored GL context (a GPU reset, a tab long in the background on a phone): three.js would upload every texture
     // again from its pixels, which the atlases let go once uploaded (render/atlas.ts), so the art would come back black. The
     // page reloads instead (DECISION FOR ED: a run is lost either way; nothing handled it before, and the ground's own GPU-side
@@ -964,7 +977,7 @@ export class View {
    *  forest round it are made on through the dive (`homeDone`; app/arrive.ts eases the dive if they're due in view before then). */
   async prepare(o: { sail?: boolean; dive?: (x: number, z: number) => number; track?: [number, number, number, number][] } = {}): Promise<void> {
     performance.mark("witch:prep-start");
-    if (o.sail) { this.homeDone = false; this.shaderDrawStatus.active = true; this.shaderDrawStatus.skipped = {}; this.shaderDrawStatus.fallback = {}; if (!this.shaderChartLanding) this.startLandingShaderGrace(); }
+    if (o.sail) { this.homeDone = false; this.shaderDrawStatus.active = true; this.shaderDrawStatus.skipped = {}; this.shaderDrawStatus.fallback = {}; this.shaderDrawStatus.submitted = {}; if (!this.shaderChartLanding) this.startLandingShaderGrace(); }
     this.makeLoadingMist();
     { // tonight's own trees, if drawn ahead and kept (app/landingBake.ts), for the swap before she sees the island (retype)
       const m = this.game.map, types = new Set<number>();
@@ -1140,7 +1153,7 @@ export class View {
     for (const sc of fx ? [this.scene, fx] : [this.scene]) sc.traverse(o => { if (!o.visible) { hidden.push(o); o.visible = true; } });
     // (and the occlusion pyramid's passes, which aren't in the scene: render/hiz.ts, built by the treehouse, where she starts)
     if (!this.hizOff && !this.hiz) this.hiz = new Hiz(this.renderer);
-    const allPrograms = () => (this.renderer.info.programs ?? []) as unknown as ReadyProgram[];
+    const allPrograms = () => this.readyPrograms();
     const before = new Set(allPrograms().map(p => p.id)), groups: Record<string, number[]> = {};
     const launch = (group: string, fn: () => unknown) => {
       const prior = new Set(allPrograms().map(p => p.id)), result = fn();
@@ -1601,6 +1614,8 @@ export class View {
   private floorItems: { species: string; glint: number; look: FloorLook }[] = Array.from({ length: 6 }, () => ({ species: "", glint: 0, look: FALLBACK_LOOK }));
 
   render(time: number, draw = true): void {
+    // Late art may introduce programs after compileAll's background pass has ended.
+    for (const p of this.readyPrograms()) p.isReady();
     this.assets.playing = this.game.party.spellAt !== null; // (the night playing: the art ahead of need shares the workers, render/assets.ts dispatch)
     this.ms = {}; this.lap = this.frameStart = performance.now();
     const g = this.game, t = g.tuning, P0 = poseOf(g), F = this.fly;
@@ -1835,7 +1850,7 @@ export class View {
       this.crown.uniforms.uWarmK.value = CR?.warm ?? 0; // (the house's warm light up into it, live from the pause page)
       this.crown.update(this.camera, W, plan, here, dt, hole, CR?.cutFade ?? 0, { x: w.x, y: groundHeight(w.x, w.z) + witchHeight(w, t), z: w.z }); // (her: the oak hidden when she's behind it)
       if (this.crownFar) { // (and over the horizon from far off: its picture baked the first frame there is one)
-        this.crownFar.bake(this.renderer);
+        if (!this.shaderDrawStatus.active) this.crownFar.bake(this.renderer);
         const at = g.party.spellAt;
         this.crownFar.update(this.camera, W.o, W.ex, W.ez, at === null ? 1e9 : at === undefined ? -1e9 : at, this.crown.indoors);
       }

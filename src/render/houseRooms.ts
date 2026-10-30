@@ -32,6 +32,8 @@ import { UseGlow } from "./useGlow";
 import { glyphOf, keycapCanvas, wasdCanvas, type KeycapGlyph } from "../ui/keyHint";
 import { atDecks } from "../rules/wakeUp";
 import { loadingFloorBounds } from './landingReadiness';
+import { LIGHT_UNIFORMS } from './lighting';
+import { LOADING_LIGHT_GLSL } from './loadingLight';
 import { loanFind } from "../rules/finds";
 
 type V3 = { x: number; y: number; z: number };
@@ -195,7 +197,11 @@ export class HouseRoomsView {
   private readonly spot = new Spotlight();
   // (the Ent's own floors, painted: render/houseArt.ts; a grid laid on the house's plane, an art pixel a texel)
   private readonly floor = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide }));
-  readonly loadingFloor = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ color: 0x82704d, transparent: true, depthWrite: false, side: THREE.DoubleSide }));
+  readonly loadingFloor = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.ShaderMaterial({
+    uniforms: { ...LIGHT_UNIFORMS, uLoadingOpacity: { value: 1 } }, transparent: true, depthWrite: false, side: THREE.DoubleSide,
+    vertexShader: `varying vec3 vWorld; void main() { vec4 p = modelMatrix * vec4(position, 1.0); vWorld = p.xyz; gl_Position = projectionMatrix * viewMatrix * p; }`,
+    fragmentShader: `varying vec3 vWorld; uniform float uLoadingOpacity; ${LOADING_LIGHT_GLSL} void main() { gl_FragColor = vec4(loadingLight(vec3(0.62, 0.53, 0.37), vWorld), uLoadingOpacity); }`,
+  }));
   private floorArrivalAt = -Infinity;
   private floorCompiled = true;
   private floorArt: FloorPixels | null = null;
@@ -287,7 +293,7 @@ export class HouseRoomsView {
     if (this.loadingFloor.visible) {
       const b = loadingFloorBounds([...HOUSE_ROOMS.rooms, ...HOUSE_ROOMS.corridors], d!.r), pos = this.loadingFloor.geometry.getAttribute('position') as THREE.BufferAttribute;
       [[b.x0, b.z0], [b.x1, b.z0], [b.x1, b.z1], [b.x0, b.z1]].forEach(([x, z], i) => { const p = toWorld(x, z, 0); pos.setXYZ(i, p.x, p.y, p.z); });
-      pos.needsUpdate = true; this.loadingFloor.material.opacity = 1 - share * floorShare;
+      pos.needsUpdate = true; this.loadingFloor.material.uniforms.uLoadingOpacity.value = 1 - share * floorShare;
     }
     this.mat.opacity = late ? share : 1;
     for (const p of this.parts) p.mesh.visible = shown;

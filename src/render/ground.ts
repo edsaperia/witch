@@ -19,6 +19,7 @@ import { speakerRadius } from "../rules/speakers";
 import type { Beach } from "../rules/mapShape";
 import { koiPonds, lakeKnobs } from "../rules/lakes";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
+import { LOADING_LIGHT_GLSL } from './loadingLight';
 import { FX_UNIFORMS, FX_FIELD_GLSL } from "./fx/uniforms";
 import { NATIVE_GLSL, nativeFxUniforms } from "./fx/native";
 import { LAKE_LOOKS_GLSL, lakeLookTexture, lakeLooksOf, hasForcedLakeLook } from "./lakeLooks";
@@ -744,11 +745,12 @@ export class Ground {
     this.plain = mat;
     this.loadingFallback = new THREE.ShaderMaterial({ name: 'Loading ground and lake surfaces', vertexShader: VERT, uniforms: mat.uniforms, fragmentShader: `
 varying vec3 vWorld;
+${LOADING_LIGHT_GLSL}
 uniform vec3 uTypeFloor[${TYPE_SLOTS}];
 uniform vec4 uLake, uLakeBox;
 uniform sampler2D uLakes, uLakeLooks;
 void main() {
-  vec3 c = uTypeFloor[0] * 0.65 + vec3(0.04);
+  vec3 c = max(uTypeFloor[0], vec3(0.18, 0.24, 0.15));
   vec2 uv = (vWorld.xz - uLakeBox.xy + uLake.y) * uLakeBox.zw;
   if (uLake.x > 0.0 && uv.x > 0.0 && uv.y > 0.0 && uv.x < 1.0 && uv.y < 1.0) {
     float d = texture2D(uLakes, uv).r;
@@ -756,7 +758,7 @@ void main() {
     if (d > 0.0) c = kind > 1.5 && kind < 2.5 ? vec3(0.8, 0.2, 0.04) : kind > 0.5 && kind < 1.5 ? vec3(0.55, 0.7, 0.8) : vec3(0.08, 0.27, 0.38);
     else if (d > -1.5) c = vec3(0.36, 0.4, 0.3);
   }
-  gl_FragColor = vec4(c, 1.0);
+  gl_FragColor = vec4(loadingLight(c, vWorld), 1.0);
 }` });
     this.beach = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, defines: defines(true), uniforms: mat.uniforms });
     this.mesh = new THREE.Mesh(geo, mat);

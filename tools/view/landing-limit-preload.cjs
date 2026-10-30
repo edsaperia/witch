@@ -18,6 +18,7 @@ pw.chromium.launch = async opts => {
       // sail-timing closes its page before the browser. Capture here, while the final counters still exist.
       const final = await page.evaluate(() => ({ at: performance.now(), methods: window.__landingDemo?.methods,
         unsafeUniformReads: window.__landingDemo?.unsafeUniformReads, drawStatus: window.witch?.view.shaderDrawStatus,
+        longFrames: window.__landingDemo?.longFrames, sections: window.__landingDemo?.sections,
         worstFrameMs: Math.max(0, ...(window.__landingDemo?.frames ?? []).map(f => f.ms)),
         marks: performance.getEntriesByType('mark').filter(e => e.startTime >= (window.__landingDemo?.sail ?? Infinity)).map(e => ({ name: e.name, at: e.startTime, detail: e.name === 'chart:landing-due' ? e.detail : undefined })) }));
       fs.writeFileSync(out + '-final.json', JSON.stringify(final, null, 2));
@@ -48,12 +49,12 @@ pw.chromium.launch = async opts => {
     });
     await page.addInitScript(() => {
       window.__witchShaderReadinessDelay = 30000;
-      const probe = window.__landingDemo = { methods: {}, unsafeUniformReads: 0, frames: [], sail: null };
+      const probe = window.__landingDemo = { methods: {}, unsafeUniformReads: 0, frames: [], longFrames: [], sections: {}, sail: null };
       const seen = new WeakSet(), renderers = new WeakSet(); let shot = false, previous;
       const counted = (name, fn) => function (...args) {
         if (probe.sail === null) return fn.apply(this, args);
         const start = performance.now(); try { return fn.apply(this, args); }
-        finally { const m = probe.methods[name] ||= { count: 0, longestMs: 0 }; m.count++; m.longestMs = Math.max(m.longestMs, performance.now() - start); }
+        finally { const ms = performance.now() - start, m = probe.methods[name] ||= { count: 0, longestMs: 0 }; m.count++; if (ms > m.longestMs) { m.longestMs = ms; m.at = start; if (ms > 100) m.stack = new Error().stack; } }
       };
       function frame(now) {
         const sail = performance.getEntriesByName('chart:sail').at(-1)?.startTime;
@@ -61,6 +62,15 @@ pw.chromium.launch = async opts => {
         if (previous !== undefined && probe.sail !== null) { probe.frames.push({ at: now, ms: now - previous }); if (probe.frames.length > 20000) probe.frames.shift(); } previous = now;
         const v = window.witch?.view;
         if (v) {
+          if (!v.__landingFrameProbe) {
+            v.__landingFrameProbe = true;
+            const render = v.render;
+            v.render = function (...args) { const start = performance.now(); try { return render.apply(this, args); } finally { const ms = performance.now() - start; if (probe.sail !== null && ms > 100) probe.longFrames.push({ at: start, ms, parts: { ...v.ms } }); } };
+          }
+          for (const [object, name, key] of [[v.crownFar, 'crownBake', 'bake'], [v.houseRooms, 'houseRooms', 'update'], [v.post, 'post', 'render']]) if (object && !object['__landingProbe' + key]) {
+            object['__landingProbe' + key] = true; const fn = object[key];
+            object[key] = function (...args) { const start = performance.now(); try { return fn.apply(this, args); } finally { if (probe.sail !== null) { const m = probe.sections[name] ||= { longestMs: 0, at: 0 }; const ms = performance.now() - start; if (ms > m.longestMs) { m.longestMs = ms; m.at = start; } } } };
+          }
           if (!renderers.has(v.renderer)) {
             renderers.add(v.renderer); const gl = v.renderer.getContext();
             for (const name of ['getProgramInfoLog', 'getShaderInfoLog', 'getActiveUniform', 'getUniformLocation']) gl[name] = counted(name, gl[name]);
@@ -78,6 +88,7 @@ pw.chromium.launch = async opts => {
               gpu: debug ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER),
               chartPresent: !!document.getElementById('chart-overlay'), limited: v.shaderLandingLimited, drawStatus: v.shaderDrawStatus,
               fullWitchReady: v.assets.fullWitchReady, houseShare: v.landingHouseShare,
+              ground: { id: v.ground.mesh.id, visible: v.ground.mesh.visible, layerMask: v.ground.mesh.layers.mask, behind: v.post.behind, programs: [...(v.renderer.properties.get(v.ground.mesh.material).programs?.values() ?? [])].map(p => ({ id: p.id, ready: p.isReady() })) },
               platformPresent: objects.some(o => o.name === 'Loading house platform' && o.visible),
               unsafeUniformReads: probe.unsafeUniformReads, methods: probe.methods,
               worstFrameMs: Math.max(0, ...probe.frames.filter(f => f.at >= due).map(f => f.ms)), objects,

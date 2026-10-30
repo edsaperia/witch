@@ -16,10 +16,18 @@ it('keeps warm art unchanged, fades late art after it arrives and resets between
   expect(f.share('props', true, 10)).toBe(1);
   expect(f.share('treehouse', false, 10000)).toBe(0);
   expect(f.share('treehouse', true, 10000)).toBe(0);
+  for (let now = 10050; now <= 10400; now += 50) f.share('treehouse', true, now);
   expect(f.share('treehouse', true, 10400)).toBe(0.5);
+  for (let now = 10450; now <= 10800; now += 50) f.share('treehouse', true, now);
   expect(f.share('treehouse', true, 10800)).toBe(1);
   expect(f.share('soundsystems', false, 10800)).toBe(0);
   f.reset(); expect(f.share('treehouse', true, 0)).toBe(1);
+});
+
+it('does not turn a late art upload stall into an immediate full-opacity pop', () => {
+  const f = new LandingArtFade(); f.arm({ treehouse: false, props: false, soundsystems: false });
+  expect(f.share('treehouse', true, 100)).toBe(0);
+  expect(f.share('treehouse', true, 2100)).toBeLessThan(0.02);
 });
 
 it('never leaves any configured room, corridor or terrace bound outside the temporary floor', () => {

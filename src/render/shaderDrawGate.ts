@@ -9,7 +9,7 @@ export function materialProgramsReady(value: unknown): boolean {
   return programs.length > 0 && programs.every(p => p.isReady());
 }
 
-export interface ShaderDrawStatus { active: boolean; skipped: Record<string, number>; fallback: Record<string, number> }
+export interface ShaderDrawStatus { active: boolean; skipped: Record<string, number>; fallback: Record<string, number>; submitted?: Record<string, number> }
 export function installShaderDrawGate(renderer: THREE.WebGLRenderer, status: ShaderDrawStatus, fallbackFor: (object: THREE.Object3D) => THREE.Material | null): void {
   const draw = renderer.renderBufferDirect.bind(renderer);
   renderer.renderBufferDirect = (camera, scene, geometry, material, object, group) => {
@@ -20,6 +20,10 @@ export function installShaderDrawGate(renderer: THREE.WebGLRenderer, status: Sha
         draw(camera, scene, geometry, fallback, object, group);
       } else status.skipped[label] = (status.skipped[label] ?? 0) + 1;
       return;
+    }
+    if (status.active) {
+      const label = `${object.name || object.type}#${object.id}:${material.name || material.type}`;
+      const submitted = status.submitted ??= {}; submitted[label] = (submitted[label] ?? 0) + 1;
     }
     draw(camera, scene, geometry, material, object, group);
   };
