@@ -1,23 +1,131 @@
-# Checks on every push and pull request: the tests, the type check and the build; then a quick
-# smoke test of the built game in headless Chromium (tools/smoke/quick.cjs, a few minutes). The smoke
-# job builds the game itself so it runs alongside the tests instead of after them (about 5 minutes
-# a run instead of 9).
+# One game build per tested revision; smoke, bench head and preview reuse its artifact.
+# Main publication gets priority after build; the required check still fails if build/publication fails.
 name: CI
 on:
-  # Branches with a PR are checked once, through the PR (which tests the merge); pushes run only
-  # on the shared branches. Two runs per push swamped the runners with eleven builders (2026-10-05).
   push:
-    branches: [main, claude/prototype]
+    branches:
+      - main
+      - claude/prototype
   pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - edited
 concurrency:
   group: ci-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 permissions:
   contents: read
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: List the work in flight
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require("fs");
+            const { owner, repo } = context.repo, self = context.payload.pull_request?.number;
+            const prs = await github.paginate(github.rest.pulls.list, { owner, repo, state: "open", per_page: 100 });
+            const plain = s => s.replace(/<!--.*?-->/g, "").replace(/\*\*|__|`/g, "").replace(/\[([^\]]+)\]\([^)]*\)/g, "$1").replace(/^[-*>]\s+/, "").trim();
+            const firstLine = body => (body || "").split("\n").map(plain).find(l => l && !/^(#|\||---|🤖|https?:)/.test(l)) || "";
+            const cut = (s, n) => (s.length > n ? s.slice(0, n - 1).replace(/\s+\S*$/, "") + "…" : s);
+            const items = prs.filter(p => p.number !== self && p.base.ref !== "main") // not the round roll-ups into main
+              .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at)).slice(0, 8)
+              .map(p => ({ number: p.number, title: p.title, summary: cut(firstLine(p.body), 140) }));
+            fs.writeFileSync("upcoming.generated.json", JSON.stringify(items));
+            core.info(`${items.length} items in flight`);
+      - name: Build once for this tested revision
+        run: npm run build
+        env:
+          WITCH_VERSION: ${{ github.run_number }}
+          WITCH_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: game-dist
+          path: dist
+          retention-days: 3
+          if-no-files-found: error
+  deploy:
+    if: ${{ github.ref == 'refs/heads/main' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download the shared game build
+        uses: actions/download-artifact@v4
+        with:
+          name: game-dist
+          path: dist
+      - name: Publish to gh-pages
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEST: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || '.' }}
+          MESSAGE: "Deploy ${{ github.event_name == 'pull_request' && format('PR #{0}', github.event.number) || 'main' }} at ${{ github.sha }}"
+        run: |
+          # The site stays under GitHub Pages' 1 GB (overnight, 2026-10-07: gh-pages was 605 MB, and with the Making Of's
+          # ~56 MB of pictures every preview had grown to ~60 MB): a pull request's preview leaves the Making Of out (main's
+          # has it, at /witch/making-of/) and replaces its folder rather than adding to it; main's deploy drops the
+          # folders of pull requests no longer open (the remove job below only catches the ones that close from now on).
+          if [ "$DEST" != "." ]; then rm -rf dist/making-of; else  # (from the checkout, before the cd into site/ below)
+            OPEN=" $(gh api "repos/${GITHUB_REPOSITORY}/pulls?state=open&per_page=100" --paginate --jq '.[].number' | tr '\n' ' ') "
+          fi
+          git init -q site && cd site
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          for try in 1 2 3 4 5 6 7 8 9 10; do
+            git fetch -q --depth 1 origin gh-pages && git checkout -q -B gh-pages FETCH_HEAD
+            if [ "$DEST" != "." ]; then rm -rf "$DEST"; else
+              # (only with the list in hand: an empty one keeps every folder rather than dropping them all)
+              if [[ "$OPEN" =~ [0-9] ]]; then
+                for d in pr-*; do
+                  if [ -d "$d" ] && [[ "$OPEN" != *" ${d#pr-} "* ]]; then rm -rf "$d"; fi
+                done
+              fi
+            fi
+            mkdir -p "$DEST" && cp -a ../dist/. "$DEST/" && touch "$DEST/.nojekyll"
+            git add -A
+            git diff --cached --quiet && exit 0
+            git commit -qm "$MESSAGE"
+            git push -q origin HEAD:gh-pages && exit 0
+            echo "gh-pages moved on (try $try); fetching and trying again"
+            sleep $((try * 2 + RANDOM % 5))
+          done
+          exit 1
+      - name: Comment the playable link on the PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = "<!-- witch-playable-link -->";
+            const { owner, repo } = context.repo, number = context.issue.number;
+            const url = `https://${owner}.github.io/${repo}/pr-${number}/`;
+            const body = `${marker}\nPlayable link for this PR: ${url}\n\nBuilt from ${context.payload.pull_request.head.sha.slice(0, 7)} (v${context.runNumber}); the version shows bottom right in the game. Add \`?seed=123\` to play a given map. It goes live a minute or two after this comment, once GitHub Pages has published it.`;
+            const comments = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number: number });
+            const mine = comments.find(c => c.body && c.body.includes(marker));
+            if (mine) await github.rest.issues.updateComment({ owner, repo, comment_id: mine.id, body });
+            else await github.rest.issues.createComment({ owner, repo, issue_number: number, body });
+    needs:
+      - build
+    permissions:
+      contents: write
+      pull-requests: write
   check:
     runs-on: ubuntu-latest
     steps:
+      - name: Require the build and main publication
+        if: ${{ needs.build.result != 'success' || (github.ref == 'refs/heads/main' && needs.deploy.result != 'success') }}
+        run: exit 1
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
@@ -26,12 +134,10 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run typecheck
-      - run: npm run build
-      - uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          path: dist
-          retention-days: 3
+    needs:
+      - build
+      - deploy
+    if: ${{ always() }}
   smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -44,9 +150,11 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run build
-      # Playwright isn't one of the game's dependencies: installed on its own, with its Chromium
-      # cached between runs (the system libraries it needs are installed every time).
+      - name: Download the shared game build
+        uses: actions/download-artifact@v4
+        with:
+          name: game-dist
+          path: dist
       - uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
@@ -58,12 +166,8 @@ jobs:
         run: |
           mkdir -p quick
           NODE_PATH=$PWD/.pw/node_modules QUICK_OUT=quick/quick.png node tools/smoke/quick.cjs 2>&1 | tee quick/log.txt
-      # The music: the Music Lab builds (esbuild, from the game's dependencies) and every section
-      # renders offline in headless Chromium, none silent or clipping (tools/music-lab/check.cjs).
       - name: Music check
         run: NODE_PATH=$PWD/.pw/node_modules node tools/music-lab/check.cjs
-      # The pause page over every overlay (Ed's playtest, 2026-10-23; platform/freeze.ts): each one opened, then Esc: the pause
-      # on top, keys and the pad reaching nothing under it, and back to the overlay on resume (tools/smoke/pause-on-top.cjs).
       - name: Pause over the overlays
         run: NODE_PATH=$PWD/.pw/node_modules node tools/smoke/pause-on-top.cjs dist
       - uses: actions/upload-artifact@v4
@@ -72,3 +176,70 @@ jobs:
           name: smoke-quick
           path: quick
           retention-days: 14
+    needs:
+      - build
+      - deploy
+    if: ${{ always() && needs.build.result == 'success' && (github.ref != 'refs/heads/main' || needs.deploy.result == 'success') }}
+  game-unchanged:
+    name: game unchanged (bench:quick)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      PLAYWRIGHT_VERSION: 1.56.1
+      BENCH_LAPS: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: head
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: head/package-lock.json
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ env.PLAYWRIGHT_VERSION }}
+      - run: npm install --prefix .pw --no-save --no-package-lock playwright@${{ env.PLAYWRIGHT_VERSION }}
+      - run: .pw/node_modules/.bin/playwright install --with-deps chromium
+      - name: Base
+        working-directory: base
+        run: |
+          npm ci
+          npm run build
+          rm -rf tools/bench && cp -r ../head/tools/bench tools/bench
+          NODE_PATH=$GITHUB_WORKSPACE/.pw/node_modules node tools/bench/run.mjs ../out/base --quick
+      - name: Download the shared game build
+        uses: actions/download-artifact@v4
+        with:
+          name: game-dist
+          path: head/dist
+      - name: Head
+        working-directory: head
+        run: |
+          npm ci
+          NODE_PATH=$GITHUB_WORKSPACE/.pw/node_modules node tools/bench/run.mjs ../out/head --quick
+      - name: Compare
+        shell: bash
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          set -o pipefail
+          # (a PR that means to change the game declares what and why: tools/bench/expect/<its branch>.json, tools/bench/expect.cjs)
+          EXPECT="head/tools/bench/expect/${HEAD_REF}.json"
+          NODE_PATH=$GITHUB_WORKSPACE/.pw/node_modules node head/tools/bench/compare.cjs out/base out/head $([ -f "$EXPECT" ] && echo --expect "$EXPECT") | tee out/compare.md
+      - if: always()
+        run: '[ -f out/compare.md ] && cat out/compare.md >> "$GITHUB_STEP_SUMMARY" || true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bench-quick
+          path: out
+          retention-days: 7
+    needs:
+      - build
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'claude/prototype' }}
