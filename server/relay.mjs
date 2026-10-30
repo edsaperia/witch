@@ -4,10 +4,10 @@ import { pathToFileURL } from 'node:url';
 import { WebSocketServer, WebSocket } from 'ws';
 
 /** Relay only: the host browser owns all simulation and permanent outcomes. */
-export function createRelay({ dropMs = 5000, checkMs = 250, now = Date.now } = {}) {
+export function createRelay({ dropMs = 5000, checkMs = 250, now = Date.now, build = process.env.WITCH_SHA ?? 'local-unidentified' } = {}) {
   if (!(Number.isFinite(dropMs) && Number.isFinite(checkMs) && dropMs > 0 && checkMs > 0)) throw new Error('Invalid relay timing');
   const rooms = new Map();
-  const http = createServer((_req, res) => { res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify({ service: 'witch-relay', protocol: 1 })); });
+  const http = createServer((_req, res) => { res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify({ service: 'witch-relay', protocol: 1, build })); });
   const wss = new WebSocketServer({ server: http, maxPayload: 8 * 1024 * 1024 });
   const send = (ws, message) => {
     if (ws?.readyState !== WebSocket.OPEN) return;

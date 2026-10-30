@@ -59,7 +59,7 @@ export default defineConfig({
   base: "./",
   define: { __BUILD__: JSON.stringify(sha ? `${version} · ${sha}` : version), __BUILD_DATE__: JSON.stringify(new Date().toISOString().slice(0, 10)), __UPCOMING__: JSON.stringify(upcoming), __ART_HASH__: JSON.stringify(artHash) },
   // (two pages: the game, and the sea chart: chart.html, wave 2 part C)
-  build: { target: "es2022", chunkSizeWarningLimit: 1200, rollupOptions: { input: { main: "index.html", chart: "chart.html" } } },
+  build: { target: "es2022", chunkSizeWarningLimit: 1200, rollupOptions: { input: { main: "index.html", chart: "chart.html", online: "online.html" } } },
   plugins: [artOverrides(), configNotes(), versionFile()],
   worker: { plugins: () => [artOverrides(), configNotes()] },
   // The rules tests build whole maps and play out fights and waves: CPU-bound seconds each, many more
