@@ -24,6 +24,7 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
   const queue: Observation[] = [], memory = new Map<string, Observation["stones"][number]>();
   const quests = new Map<number, Observation["quests"][number]>();
   let random = seed >>> 0, nextInput = 0, controls = idle(), healing = false, target: number | null = null, retargetAt = 0, lastArea = "", patrol = 0;
+  let modePending: { from: Observation["self"]["mode"]; at: number } | null = null;
   const bot: Bot = { kind: "expert", doing: "waiting for observations", done: { quests: [], relics: [] }, decide };
   return bot;
 
@@ -34,6 +35,13 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
     if (now.playerTime + 1e-9 < nextInput || !seen) return { ...controls, toggleMode: false, sigil: false, place: false, cycle: false, castParty: false };
     nextInput = now.playerTime + 1 / limits.inputHz;
     controls = policy(seen);
+    // Delayed feedback must acknowledge a toggle before another press. Otherwise
+    // two old "treetop" observations reverse the same landing back into a rise.
+    if (modePending && (seen.self.mode !== modePending.from || now.playerTime - modePending.at >= 2)) modePending = null;
+    if (controls.toggleMode) {
+      if (modePending) controls.toggleMode = false;
+      else modePending = { from: seen.self.mode, at: now.playerTime };
+    }
     if (controls.fire) {
       random = (Math.imul(random, 1664525) + 1013904223) >>> 0;
       const angle = random / 4294967296 * 2 * Math.PI;
@@ -113,8 +121,11 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
     const a = candidates.find(a => a.id === target);
     if (a) {
       lastArea = a.area; bot.doing = `inviting ${a.species}`;
-      if (w.mode !== "ground") { c.toggleMode = w.mode === "treetop"; return c; }
-      const d = dist(w, a); c.aimX = a.x - w.x; c.aimZ = a.z - w.z; c.fire = d < o.range * K.fireFrac;
+      const d = dist(w, a);
+      // The training-seed trace stalled descending above a lake for 100 s:
+      // descent cannot finish there. Keep steering toward the visible target.
+      if (w.mode !== "ground") { c.toggleMode = w.mode === "treetop"; c.moveX = (a.x - w.x) / (d || 1); c.moveZ = (a.z - w.z) / (d || 1); return c; }
+      c.aimX = a.x - w.x; c.aimZ = a.z - w.z; c.fire = d < o.range * K.fireFrac;
       if (d < K.kite && !a.stunned) { c.moveX = (w.x - a.x) / (d || 1); c.moveZ = (w.z - a.z) / (d || 1); c.dash = d < K.dashAt; }
       else if (d > o.range * K.closeFrac) { c.moveX = (a.x - w.x) / (d || 1); c.moveZ = (a.z - w.z) / (d || 1); }
       if (c.dash) { c.aimX = c.moveX * 10; c.aimZ = c.moveZ * 10; c.fire = false; }

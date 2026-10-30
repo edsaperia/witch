@@ -4,6 +4,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync, readdir
 import { resolve, relative } from "node:path";
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { setPriority, constants } from "node:os";
 import { fileURLToPath } from "node:url";
 import { arg } from "./lib.mjs";
@@ -13,6 +14,21 @@ import { startSearch, ask, tell, objective } from "./expert-search-core.mjs";
 import { INITIAL_POLICY, POLICY_SPACE, equipmentSpace, equipmentOf, policyOf, trainingCases } from "./expert-space.mjs";
 import { importEvaluations, canonical, modelLock, digest } from "./expert-contract.mjs";
 
+// A separate idle parent enforces a real wall deadline even while one synchronous
+// real-rules case is running. An interrupted case resumes from its last checkpoint.
+if (!process.argv.includes("--worker")) {
+  const cap = Number(arg("wall-seconds", 480));
+  const cloud = arg("execution", "pilot") === "cloud";
+  if (!Number.isFinite(cap) || cap <= 0 || cap > (cloud ? 3600 : 600)) throw Error("Invalid hard wall cap");
+  const child = spawn(process.execPath, [fileURLToPath(import.meta.url), ...process.argv.slice(2), "--worker"], { stdio: "inherit" });
+  let timedOut = false;
+  const timer = setTimeout(() => { timedOut = true; child.kill(); }, cap * 1000);
+  const code = await new Promise((resolveExit, reject) => { child.on("error", reject); child.on("exit", c => resolveExit(c)); });
+  clearTimeout(timer);
+  if (timedOut) console.error("Hard wall cap reached; completed-case checkpoints preserved; interrupted case must replay");
+  process.exit(timedOut ? 2 : code ?? 1);
+}
+
 setPriority(0, constants.priority.PRIORITY_BELOW_NORMAL);
 const positive = (name, value, integer = false) => {
   const n = Number(arg(name, value)); if (!Number.isFinite(n) || n <= 0 || (integer && !Number.isInteger(n))) throw Error(`Invalid --${name}`); return n;
@@ -20,8 +36,10 @@ const positive = (name, value, integer = false) => {
 const out = resolve(arg("out", "docs/notes/expert-results/pilot"));
 const limit = positive("time", 60), iterations = positive("iterations", 3, true), trainCount = positive("train-seeds", 1, true), heldCount = positive("held-seeds", 1, true);
 const wall = positive("wall-seconds", 480), searchSeed = positive("search-seed", 1477, true);
-if (wall > 600) throw Error("This pilot driver requires --wall-seconds <=600; get coordinator authorization before extending it");
-if (limit > 120) throw Error("Pilot case limit is 120 player seconds; obtain a full-night compute window before extending it");
+const execution = arg("execution", "pilot"), trainingOnly = process.argv.includes("--training-only"), shard = arg("shard", "local-pilot");
+if (!["pilot", "cloud"].includes(execution)) throw Error("Unsupported execution mode");
+if (wall > (execution === "cloud" ? 3600 : 600)) throw Error("Wall cap exceeds approved execution window");
+if (limit > 120 && execution !== "cloud") throw Error("Long training is cloud-only; pilot case limit is 120 player seconds");
 // Keep seed ranges disjoint even if the training count is increased.
 const protectedPairs = JSON.parse(readFileSync(resolve(arg("held-list", "docs/notes/expert-held-out-pairs.json")), "utf8"));
 if (!Array.isArray(protectedPairs) || protectedPairs.some(p => p.worldSeed !== 0 || !Number.isInteger(p.nightSeed)) || heldCount > protectedPairs.length) throw Error("Invalid/insufficient protected held-out pairs");
@@ -45,16 +63,19 @@ try {
   const heldOutPairs = protectedPairs;
   const round = positive("round", 1, true); if (![1, 2].includes(round)) throw Error("Unsupported training round");
   const externalFile = arg("external", ""), external = externalFile ? importEvaluations(externalFile, fingerprint, heldOutPairs, round) : [];
-  const manifest = { schema: 2, commit, fingerprint, observation: "approximate fair observation", viewportAspect: "16:9", zoom: "default", canopyOcclusion: false, humanLimits: { reactionSeconds: 0.25, inputHz: 8, aimErrorMetres: 1 }, objective: ["wins", "questsCompleted", "allQuests", "upgradeEligibleToKeep", "wavesPassed", "worldSeconds"], trainSeeds, heldSeeds, heldOutPairs, round, externalDigest: digest(external), limit, iterations, searchSeed, catalogue, policySpace: POLICY_SPACE, laterIsland: "komodo (phase 5 island; Tiger is phase 4)" };
+  const manifest = { schema: 3, commit, fingerprint, execution, trainingOnly, shard, observation: "approximate fair observation", viewportAspect: "16:9", zoom: "default", canopyOcclusion: false, humanLimits: { reactionSeconds: 0.25, inputHz: 8, aimErrorMetres: 1 }, objective: ["wins", "questsCompleted", "allQuests", "upgradeEligibleToKeep", "wavesPassed", "worldSeconds"], trainSeeds, heldSeeds, heldOutPairs, round, externalDigest: digest(external), limit, iterations, searchSeed, catalogue, policySpace: POLICY_SPACE, laterIsland: "komodo (phase 5 island; Tiger is phase 4)" };
   writeFileSync(resolve(out, "held-out-pairs.json"), JSON.stringify(heldOutPairs, null, 2) + "\n");
   const checkpointPath = resolve(out, "checkpoint.json"), logPath = resolve(out, "cases.jsonl");
   const initial = { ...INITIAL_POLICY, ...Object.fromEntries(Object.keys(catalogue).map(k => [k, 0])) };
   let checkpoint = existsSync(checkpointPath) ? JSON.parse(readFileSync(checkpointPath, "utf8")) : { manifest, search: startSearch([...POLICY_SPACE, ...equipmentSpace(catalogue)], initial, searchSeed), evaluations: [], held: [], complete: false };
+  // Runners commit results on their result branches. Those docs-only commits
+  // may resume the original source fingerprint without rewriting its provenance.
+  if (checkpoint.manifest.fingerprint === fingerprint) manifest.commit = checkpoint.manifest.commit;
   if (JSON.stringify(checkpoint.manifest) !== JSON.stringify(manifest)) throw Error("Manifest/source differs; use a new --out directory");
   const save = () => { writeFileSync(checkpointPath + ".tmp", JSON.stringify(checkpoint, null, 2) + "\n"); renameSync(checkpointPath + ".tmp", checkpointPath); };
   // JSONL is a readable training/evaluation log; checkpoint is authoritative on
   // resume. Rewrite it from checkpoint after an interruption between append/save.
-  const logRows = () => [...checkpoint.evaluations.flatMap(e => e.rows.map(row => ({ split: "training", candidate: e.candidate.id, row }))), ...checkpoint.held.map(row => ({ split: "held-out", row }))];
+  const logRows = () => [...checkpoint.evaluations.flatMap(e => e.rows.map(row => ({ schema: 1, split: "training", shard, candidate: e.candidate.id, parameters: policyOf(e.candidate.point), row }))), ...checkpoint.held.map(row => ({ schema: 1, split: "held-out", parameters: policyOf(checkpoint.search.incumbent), row }))];
   writeFileSync(logPath, logRows().map(x => JSON.stringify(x)).join("\n") + (logRows().length ? "\n" : ""));
   save();
   const started = performance.now();
@@ -62,7 +83,7 @@ try {
   const run = (c, point, split, candidate) => {
     const cached = split === "training" ? external.find(x => canonical(x.parameters) === canonical(policyOf(point)) && x.case.limit === limit && x.case.worldSeed === c.worldSeed && x.case.nightSeed === c.seed && x.case.island === c.island && x.case.bpm === c.bpm && x.case.bag === c.bag && x.case.hat === c.hat && x.case.condition === c.condition && canonical(x.case.broomPart === null ? [] : [x.case.broomPart]) === canonical(c.parts)) : null;
     const at = performance.now(), row = cached ? structuredClone(cached.result) : r.run(c, limit, { expert: policyOf(point) });
-    appendFileSync(logPath, JSON.stringify({ split, ...(candidate !== undefined ? { candidate } : {}), row }) + "\n");
+    appendFileSync(logPath, JSON.stringify({ schema: 1, split, shard, ...(candidate !== undefined ? { candidate } : {}), parameters: policyOf(point), row }) + "\n");
     process.stderr.write(`${split} ${candidate ?? "best"} ${c.condition}/${c.island}/${c.bpm}/${c.bot}: ${row.outcome}; ${cached ? "external cache; " : ""}wall ${((performance.now() - at) / 1000).toFixed(2)}s\n`);
     return row;
   };
@@ -86,6 +107,13 @@ try {
   }
   if (checkpoint.search.evaluated === iterations) {
     const point = checkpoint.search.incumbent;
+    if (trainingOnly) {
+      checkpoint.complete = true;
+      writeFileSync(resolve(out, "training-parameters.json"), JSON.stringify({ manifest, policy: policyOf(point), unlockedLoadout: equipmentOf(point, catalogue), trainingObjective: checkpoint.search.score, candidateCount: iterations, heldOutEvaluated: false }, null, 2) + "\n");
+      save();
+      console.log(JSON.stringify({ out, complete: true, trainingOnly: true, evaluated: iterations, heldCases: 0, wallSeconds: (performance.now() - started) / 1000 }));
+      process.exitCode = 0;
+    } else {
     const cases = trainingCases(heldSeeds, equipmentOf(point, catalogue)).flatMap(c => ["expert", "skilled", "crude"].map(bot => ({ ...c, bot })));
     for (let i = checkpoint.held.length; i < cases.length && !expired(); i++) { checkpoint.held.push(run(cases[i], point, "held-out")); save(); }
     checkpoint.complete = checkpoint.held.length === cases.length;
@@ -101,6 +129,7 @@ try {
       writeFileSync(resolve(out, "held-out.md"), `# Expert pilot: approximate fair observation\n\n${limit}-player-second cutoff; ${iterations} candidates; ${trainCount} training and ${heldCount} disjoint held-out seeds. Censored pilots do not establish strong play. Existing skilled/crude retain their privileged baseline observations.\n\n` + table("matched") + "\n" + table("home-everything"));
     }
     save();
+    }
   }
   console.log(JSON.stringify({ out, complete: checkpoint.complete, evaluated: checkpoint.search.evaluated, heldCases: checkpoint.held.length, wallSeconds: (performance.now() - started) / 1000 }));
 } finally { await r.close(); }

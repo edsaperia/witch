@@ -60,9 +60,9 @@ export async function createCaseRunner() {
       if (!["matched", "home-everything"].includes(c.condition) || (c.condition === "home-everything" && c.island !== "home")) return unsupported("Unsupported condition/island combination");
       const input = { worldSeed: c.worldSeed, seed: c.nightSeed, island: c.island, bpm: c.bpm, bag: c.bag, hat: c.hat, wearsHat: c.hat !== "none", parts: c.broomPart === null ? [] : [c.broomPart], condition: c.condition };
       if (c.kind === "run") {
-        if (!["expert", "skilled", "crude"].includes(c.bot)) return unsupported("Unsupported survey bot");
+        if (!["expert", "skilled", "crude", "sloppy"].includes(c.bot)) return unsupported("Unsupported survey bot");
         running = true;
-        return { schema: 1, status: "ok", case: c, modelSha256: lock.modelSha256, sourceFingerprint: fingerprint, parameters: lock.parameters, result: R.run({ ...input, bot: c.bot }, c.limit, { expert: lock.parameters }) };
+        return { schema: 1, status: "ok", case: c, modelSha256: lock.modelSha256, sourceFingerprint: fingerprint, parameters: lock.parameters, observation: c.bot === "expert" ? "approximate fair observation" : "privileged observation (existing baseline)", result: R.run({ ...input, bot: c.bot }, c.limit, { expert: lock.parameters }) };
       }
       if (!R.species.includes(c.species) || !Number.isInteger(c.rank) || c.rank < 0 || c.rank > 3 || (c.distance !== undefined && (!(c.distance > 0) || !Number.isFinite(c.distance)))) return unsupported("Unsupported exact fixture species/rank/distance");
       running = true;

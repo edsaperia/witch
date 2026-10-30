@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { newGame } from "../rules/game";
-import { TUNING } from "../rules/tuning";
+import { TUNING, withTuning } from "../rules/tuning";
 import { newExpert, EXPERT_LIMITS } from "./expert";
 import { newObserver, viewRectangle } from "./observe";
 
@@ -40,5 +40,33 @@ describe("expert observation and human input boundary", () => {
     expect(() => newExpert({}, 1, { ...EXPERT_LIMITS, aimErrorMetres: 0 })).toThrow();
     expect(() => newExpert({ kite: NaN })).toThrow();
     expect(() => newExpert({}, 1, {} as never)).toThrow();
+  });
+
+  it("continues toward a visible target during descent rather than hovering over water", () => {
+    const g = newGame(1000, withTuning({ cast: { ...TUNING.cast, on: false } })), w = g.witches[0];
+    w.body = { ...w.body, seated: false, perch: false, mode: "descending", lift: 0.5 };
+    const target = g.creatures.find(c => !c.boss)!;
+    for (const c of g.creatures) c.gone = true;
+    Object.assign(target, { gone: false, leashed: false, level: 1, x: w.body.x + 12, z: w.body.z });
+    const bot = newExpert(); bot.decide(g); g.herTime = 0.25;
+    const controls = bot.decide(g);
+    expect(Math.hypot(controls.moveX, controls.moveZ)).toBeGreaterThan(0.9);
+    expect(controls.toggleMode).toBe(false);
+    expect(bot.doing).toMatch(/^inviting /);
+  });
+
+  it("waits for delayed mode acknowledgement before sending a second toggle", () => {
+    const g = newGame(1000, withTuning({ cast: { ...TUNING.cast, on: false } })), w = g.witches[0];
+    w.body = { ...w.body, seated: false, perch: false, mode: "treetop", lift: 1 };
+    const target = g.creatures.find(c => !c.boss)!;
+    for (const c of g.creatures) c.gone = true;
+    Object.assign(target, { gone: false, leashed: false, level: 1, x: w.body.x + 12, z: w.body.z });
+    const bot = newExpert(); bot.decide(g);
+    g.herTime = 0.133333333333; bot.decide(g);
+    g.herTime = 0.25; expect(bot.decide(g).toggleMode).toBe(true);
+    // The engine has begun descending, but the reaction-delayed snapshot still
+    // says treetop. A second toggle here would reverse the landing.
+    w.body.mode = "descending";
+    g.herTime = 0.383333333333; expect(bot.decide(g).toggleMode).toBe(false);
   });
 });

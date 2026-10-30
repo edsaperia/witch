@@ -123,7 +123,8 @@ Each case explicitly supplies `kind` (`run`, `stun`, `ko`), `worldSeed`,
 `nightSeed`, `island`, `bpm` (80–220), `bag`, `hat`, `broomPart` (one exact part
 or null), `condition` (`matched`, meaning ordinary roster, or `home-everything`),
 and `limit` in player seconds. Runs additionally supply `bot`
-(`expert`, `skilled`, `crude`); fixtures supply `species`, `rank` (0–3) and
+(`expert`, `skilled`, `crude`, `sloppy`); sloppy maps to the existing novice and
+is labelled privileged-observation alongside skilled/crude. Fixtures supply `species`, `rank` (0–3) and
 optional `distance` (default 10 m). No unknown gear or field silently falls back.
 The ordinary-roster survey condition can use its requested equipment, unlike
 the search's own matched Satchel/no-hat/bare-broom matrix.
@@ -155,11 +156,46 @@ Pilot reproduction (one worker; at most 480 s between case boundaries):
 node tools/balance/expert-search.mjs --out docs/notes/expert-results/pilot --time 60 --iterations 3 --train-seeds 1 --held-seeds 1 --wall-seconds 480
 ```
 
-Repeat the exact command on the exact source commit to resume `checkpoint.json`.
+Repeat the exact command on the same source fingerprint to resume `checkpoint.json`.
+Results-only commits may resume without changing the original source provenance;
+changed policy/rules/tool source is refused.
 Each completed case is saved immediately; pending candidates replay identically.
 `cases.jsonl` is the readable training/held-out log; `held-out.md` separates the
-two equipment conditions. The driver currently refuses cutoffs above 120 player
-seconds or run budgets above 600 wall seconds pending longer-compute approval.
+two equipment conditions. Local pilots refuse cutoffs above 120 player seconds
+or budgets above 600 wall seconds. `--execution cloud --training-only` permits
+full-night cases and at most 3600 wall seconds, enforced by an idle parent process
+that terminates the one simulation worker. An interrupted case is replayed;
+completed cases survive. Exit code 2 means the hard budget ended with a checkpoint,
+not a completed model. Cloud training-only runs never evaluate a protected case.
+
+## First pilot, not trained strength
+
+Source `9be247f04e21aa8175e3d534a7a6ea904be7a250`, artifacts in
+`expert-results/pilot/`: three candidates, one training seed, 24 training cases,
+24 held-out comparison cases with one distinct held-out seed per cell, 60 player
+seconds each. Completed in 219.337 simulation wall seconds, 13.13 short cases/min
+(startup excluded). All three objectives tied at `[0,0,0,0,0,402.86]`; no parameter
+was demonstrated to matter. The initial policy and Satchel/no-hat/bare-broom
+loadout remained selected. Everything was censored, so this does not establish
+win strength, quest performance, gear value or a learned improvement.
+
+A separate diagnostic using training seed 1000 showed the witch remaining
+stationary while descending over a lake for more than 100 world seconds. Steering
+toward the visible target removed the stationary trace, but a second trace showed
+delayed observations repeating toggle presses and reversing the landing. The
+next source change acknowledges a mode transition before pressing again. This
+was found and corrected using training-seed traces, not held-out parameter
+selection. The first pilot belongs to its recorded old source and is not a
+trained-model lock for the corrected policy.
+
+Coordinator 6513108324 moves longer training to four cloud runners, with separate
+optimizer seeds and a shared canonical training matrix. Source/checkpoints/JSONL
+return on `claude/expert-train-<n>` and are fetched read-only. Final held-out scores
+come after candidate selection. The approved home/Satchel full-night throughput
+calibration is `node tools/balance/expert-calibrate.mjs`; its separate idle parent
+enforces a hard 600 s cap including startup and records UTC start/end times.
+It must not run during #1464's quiet trace. Coordinator 6513114429 currently
+holds all local simulation until #1464 explicitly posts browser free.
 
 The coordinator approved a single-worker below-normal-priority pilot of at most
 10 minutes, stopped before #1464's quiet trace; longer runs need a new answer
