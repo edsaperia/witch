@@ -92,6 +92,8 @@ export class Freeze {
     if (this.frozen) { this.wasPaused = g.clock.paused; g.clock.paused = true; }
     else { g.clock.paused = this.wasPaused; this.heldAtThaw = new Set([...(realPads?.() ?? [])].find(p => p)?.buttons.flatMap((b, i) => (b.pressed ? [i] : [])) ?? []); }
     document.body.classList.toggle("paused", this.frozen);
+    // (thawed, a pause-page control the pad or mouse focused lets go: it kept every key from her after, E opening nothing; pause-on-top)
+    if (!this.frozen && document.activeElement instanceof HTMLElement && document.activeElement.closest(PAUSE_UI.join(","))) document.activeElement.blur();
     this.onToggle(this.frozen);
     this.marker.style.display = this.stamp.style.display = this.frozen && !this.quiet ? "block" : "none";
   }
