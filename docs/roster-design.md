@@ -1,5 +1,67 @@
 # Creature roster design — review in progress
 
+## Closed review pass — final combined set
+
+Coordinator 6518249930 closes this pass. No more family proposals; locked species reopen only on Ed's say-so. Fennec R2 kept4/4, all16 cloud construction cells pass; dragonfly restored exactly R1 (geometry retained, R2 white-pane paint removed). Bat is R1; woodlouse is R1 plus grey baby. Model090f76fdfaa584e6c7ef31a064771ba26aa590c8 has the canonical1024-cell default audit PASS. All settings remain default off; no production import, live activation, sigil, name, rules or tuning changes.
+
+This table is authoritative over the chronological working notes below. Scores are independent reviewer L/R judgments, not objective thresholds or new builder scores. Twenty kept presets differ from Current; two additional parked experiments are preserved for review only and have NO kept verdict. Parked snow leopard/beetle still owe a same-pass baseline comparison; they are not part of the kept selection.
+
+| Species | Final kept L/R | Status |
+|---|---|---|
+| fennec | 4/4 | KEEP, locked, default off |
+| dragonfly | 4/3 | KEEP, locked, default off |
+| wolf | 4.5/4 | KEEP, locked, default off |
+| dormouse | 3.5/3 | KEEP, locked, default off |
+| bat | 4/4 | KEEP, locked, default off |
+| woodlouse | 4.5/3.5 | KEEP, locked, default off |
+| frosttroll | 3.5/4 | KEEP, locked, default off |
+| hydra | 3/2.5 | KEEP, locked, default off |
+| crocodile | 3.5/3 | KEEP, locked, default off |
+| crab | 3.5/3 | KEEP, locked, default off |
+| meerkat | 3.5/3.5 | KEEP, locked, default off |
+| flyingsquirrel | 3/3 | KEEP, locked, default off |
+| marten | 3.5/3 | KEEP, locked, default off |
+| raccoon | 4/4 | KEEP, locked, default off |
+| badger | 2.5/3 | KEEP, locked, default off |
+| stoat | 4/3.5 | KEEP, locked, default off |
+| otter | 4/3 | KEEP, locked, default off |
+| jaguar | 4/3 | KEEP, locked, default off |
+| beetle | None (historical candidate 3.5/5) | PARKED, unaccepted, default off |
+| bear | 4/3.5 | KEEP, locked, default off |
+| arcticfox | 3.5/4 | KEEP, locked, default off |
+| snowleopard | None (historical candidate 3.5/5) | PARKED, unaccepted, default off |
+
+Current restored/no active proposal: polar bear, unicorn, mole, frost wyrm, raven and lion. Every other unlisted species retains Current. Later ideas remain in the dated notes; none authorizes another iteration. Engine hook/selected-genome hashing belongs to#1470, not this roster branch. Broader gait/exact in-game ground/treetop acceptance is not established by these native baked art sheets.
+
+### Complete staged text inventory
+
+No live user-visible text changed. These are all current preset review descriptions (absent → staged); historical removed descriptions below are not active. Existing bestiary names and readable sigils remain unchanged. No gameplay/census species addition or removal to hand off to#1475.
+
+- **fennec:** A tiny sandy fennec fox with broad long ears and a dark-tipped brush tail.
+- **dragonfly:** A slender dragonfly with four long narrow wings held flat from its body.
+- **wolf:** A grey wolf with a dark saddle, pale muzzle and long-legged woodland stride.
+- **dormouse:** A small golden dormouse with rounded ears, dark eyes and a furry tail.
+- **bat:** A russet fruit bat with dark wings and a fox-like muzzle.
+- **woodlouse:** A grey woodlouse with pale segmented plate edges and fine antennae.
+- **frosttroll:** A hunched frost troll with cold shaggy fur, pale icy growths and tusks.
+- **hydra:** A many-headed green hydra with pale neck undersides and crested serpent heads.
+- **crocodile:** A low crocodile with a long flat jaw, pale underside and thick tapering tail.
+- **crab:** A broad-shelled crab with two forward pincers, stalked eyes and eight walking legs.
+- **meerkat:** A sandy meerkat with dark eye patches, back bands and an upright lookout pose.
+- **flyingsquirrel:** A grey-brown flying squirrel with a pale belly and a folded skin membrane along its flanks.
+- **marten:** A brown pine marten with a cream throat bib, rounded ears and a bushy tail.
+- **raccoon:** A grizzled-grey raccoon with a black eye mask, pale muzzle and ringed tail.
+- **badger:** A low silver-grey badger with a striped white face, dark legs and a short tail.
+- **stoat:** A long chestnut stoat with a cream underside and a black-tipped tail.
+- **otter:** A low chocolate-brown otter with a pale chin and a thick tapering tail.
+- **jaguar:** A stocky black-brown jaguar with ghost rosettes, a broad head and a thick tail.
+- **beetle:** A dark beetle with brown wing cases and antler-like jaws; its elder carries the fire.
+- **bear:** A dark forest bear with a straight back, prominent ears and a pale muzzle.
+- **arcticfox:** A compact white winter fox with short rounded ears and a dense brush tail.
+- **snowleopard:** A smoky pale mountain cat with dark rosettes, broad paws and a long thick tail.
+
+
+
 Audited round6518071539/ruling6518082526: fennec failed before capture because baby tail=puff is an ellipsoid; our base tail-tip region wrongly requested cone-chain painting there. Roster fix explicitly disables tail region at level0 (tail:null), retaining supported bushy-chain tips at1–3 and fit/ears; no generator change needed. Dragonfly3/3→4/3 KEEP, paint-only R2 lifts small pane/vein colours while retaining long narrow flat geometry/elder. Bat R1 locked4/4; R2 palette data did resolve through selector at levels0–1 (BODY2[85,83,100],BODY3[50,49,59]), but Victor found identical published pixels: restore R1, no further investigation as ruled. Woodlouse R1 plus grey baby kept4.5/3.5. Only fennec fix/dragonflyR2 go to next capture; actual both-night/albedo inspection required. Baby fennec dark tip is explicitly dropped; no ellipsoid fallback painter. This is a roster input correction, not a shared-control defect.
 
 Dark-species ruling6517666451/Victor6517661453: dormouse3/3→3.5/3 KEEP/locked (young width is furry tail, not body rescale); raven4/3→4/3 REJECT/Current restored; fruit bat4/3→4/4 KEEP with paint-only R2 allowed; woodlouse4/3→4.5/3.5 KEEP with baby-tone R2 allowed. Both albedo/night opened. R2 bat lifts membrane BODY2 and retains darker existing BODY3 finger lines at levels0–1, leaving russet BODY fur; no new lines or bone geometry. Woodlouse level0 BELLY drops toward grey so it is not a white oval. Dormouse/raven shape ideas deferred.

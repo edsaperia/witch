@@ -27,7 +27,7 @@ export const ROSTER_PRESETS = {
     reason: "Four long narrow flat wing panes through independent existing wing controls.",
     modelCommit: "090f76fdfaa584e6c7ef31a064771ba26aa590c8",
     patch: {},
-    ordinaryLevels: { 0: { body: { wingLength: 1.15, wingWidth: .55, wingAngle: 0 }, palette: { over: { BELLY: [219, 239, 247], BODY3: [118, 155, 168] } } }, 1: { body: { wingLength: 1.15, wingWidth: .55, wingAngle: 0 }, palette: { over: { BELLY: [219, 239, 247], BODY3: [118, 155, 168] } } }, 2: { body: { wingLength: 1.15, wingWidth: .55, wingAngle: 0 }, palette: { over: { BELLY: [219, 239, 247], BODY3: [118, 155, 168] } } } },
+    ordinaryLevels: { 0: { body: { wingLength: 1.15, wingWidth: .55, wingAngle: 0 } }, 1: { body: { wingLength: 1.15, wingWidth: .55, wingAngle: 0 } }, 2: { body: { wingLength: 1.15, wingWidth: .55, wingAngle: 0 } } },
     legendPatch: { body: { wingLength: 1.15, wingWidth: .55, wingAngle: 0 } },
     text: "A slender dragonfly with four long narrow wings held flat from its body.",
   },
