@@ -273,6 +273,16 @@
     "unicorn": 5,
     "polarbear": 5
   },
+  "deepeningRule": {
+    "mapsLowSpread": 3,
+    "mapsHighSpread": 5,
+    "mapLuckLowSpread": 10,
+    "mapLuckHighSpread": 30,
+    "questFractionRange": 0.25,
+    "durationRelativeRange": 0.25,
+    "equipmentRelativeTime": 0.25,
+    "censusTimeRatio": 2
+  },
   "id": "census",
   "islands": [
     "home",

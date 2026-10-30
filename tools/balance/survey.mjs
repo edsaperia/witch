@@ -1,7 +1,7 @@
 // Frozen wide/shallow survey design, cloud shards and strict result merging; never tunes game rules.
 // node tools/balance/survey.mjs design
 // node tools/balance/survey.mjs check
-// node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-000 --lock trained-expert-lock.json --out results/ladder/ladder-000.jsonl
+// timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/ladder.json --shard w1-ladder-000 --lock trained-expert-lock.json --out results/wave1/ladder/w1-ladder-000.jsonl --budget-seconds 2940
 // node tools/balance/survey.mjs merge --manifest tools/balance/surveys/ladder.json --dir results/ladder --out results/ladder.jsonl
 import { readFileSync, writeFileSync, readdirSync, mkdirSync, existsSync, appendFileSync } from "node:fs";
 import { resolve, dirname, relative } from "node:path";
@@ -36,6 +36,7 @@ export function makeDesign(cat = catalogue()) {
   const make = (id, spec) => ({ ...base, id, ...spec });
   base.requiredAdapter = "tools/balance/expert-contract.mjs";
   base.islandPhases = cat.islandPhases ?? {};
+  base.deepeningRule={mapsLowSpread:3,mapsHighSpread:5,mapLuckLowSpread:10,mapLuckHighSpread:30,questFractionRange:0.25,durationRelativeRange:0.25,equipmentRelativeTime:0.25,censusTimeRatio:2};
   const studies = [
     make("ladder", { islands: cat.islands, bots: ["sloppy", "crude", "skilled", "expert"], bpms: [100, 200], loadouts: [plain], shardKind: "island-chunks", islandChunk: 5 }),
     make("tempo", { islands: ["home", "raven", "tiger"], bots: ["expert"], bpms: Array.from({ length: 15 }, (_, i) => 80 + i * 10), loadouts: [plain], shardKind: "island-map" }),
@@ -43,11 +44,31 @@ export function makeDesign(cat = catalogue()) {
     make("census", { islands: cat.islands, islandSelection: "rank 0–2: species' own island, matched; rank 3: home, home-everything", knowledgeProfile: "natural exact rank; rank 3 sampled from home-everything boss roster, absent species/rank explicitly unsupported", bots: [], bpms: [120], species: cat.species, levels: [0, 1, 2, 3], bags: cat.bags, fixtures: ["invitation-stun-protected", "witch-knockdown-unprotected"], shardKind: "species", trueLegend: "rank 3 uses a real boss with documented awake/hostile state, not a non-boss with level overwritten" }),
     make("map-luck", { islands: ["tiger"], bots: ["expert"], bpms: [120], loadouts: [plain], maps: Array.from({ length: 30 }, (_, i) => mapPair(i)), shardKind: "map-blocks", mapChunk: 5 }),
   ];
+  return budgets(studies);
+}
+
+function budgets(studies) {
   for (const m of studies) {
-    const n = cells(m).length, s = shards(m).length, baseSeconds = m.id === "census" ? 6 : 160, contingencySeconds = m.id === "census" ? 12 : 700;
+    const n = cells(m).length, s = shards(m).length, baseSeconds = m.id === "census" ? m.wave===1?5:6 : m.wave===1?70:160, contingencySeconds = m.id === "census" ? m.wave===1?9:12 : m.wave===1?300:700;
     m.runtimeEstimate = { requestedCells:n,shards:s,basis:"12 paired preflight runs: 12294.9167 player seconds / 463.5 wall seconds = 26.5262x; wall is a one-busy-core reservation proxy, not measured CPU time",secondsPerCellBase:baseSeconds,secondsPerCellContingency:contingencySeconds,startupSecondsPerShard:60,oneCoreHoursBase:(n*baseSeconds+s*60)/3600,oneCoreHoursContingency:(n*contingencySeconds+s*60)/3600,fixtureCaveat:m.id==="census"?"No new fixture timing run: cap-normalised throughput plus unmeasured map/setup allowance; recalibrate on first cloud shard after expert training":"Cap-normalised base; contingency includes slower observed throughput plus 50% density/perception allowance; not a guarantee" };
   }
   return studies;
+}
+
+export function waveOne(full = makeDesign()) {
+  return budgets(full.map(source=>{
+    const m=structuredClone(source);m.wave=1;m.version="wide-shallow-v1-wave1";m.runCapPlayerSeconds=1800;m.fixtureCapPlayerSeconds=30;m.wallAllocationSeconds=3000;
+    m.maps=m.maps.slice(0,m.id==="map-luck"?5:1);
+    if(m.id==="equipment")m.loadoutChunk=32;
+    if(m.id==="census"){m.shardKind="species-chunks";m.speciesChunk=13;}
+    return m;
+  }));
+}
+
+export function cloudJob(m,s,manifestPath) {
+  const output=m.wave===1?`results/wave1/${m.id}`:`results/${m.id}`;
+  const cmd=`node tools/balance/survey.mjs run --manifest ${manifestPath} --shard ${s.id} --lock trained-expert-lock.json --out ${output}/${s.id}.jsonl`;
+  return {study:m.id,wave:m.wave??"full",shard:s.id,cases:s.cases.length,group:s.group,seedPairs:s.seedPairs,command:m.wave===1?`timeout --signal=INT 50m ${cmd} --budget-seconds 2940`:cmd};
 }
 
 export function cells(m) {
@@ -57,7 +78,7 @@ export function cells(m) {
       for (const species of m.species) for (const level of m.levels) for (const fixture of m.fixtures) for (const bag of fixture === "witch-knockdown-unprotected" ? ["satchel"] : m.bags) out.push({ ...p, bpm, island: level === 3 ? "home" : species, condition: level === 3 ? "home-everything" : "matched", species, level, fixture, loadout: { ...plain, id: `bag-${bag}`, bag }, mode: "fixture", observationAccess: "scripted-fixture; not human play" });
     } else for (const island of m.islands) for (const bot of m.bots) for (const loadout of m.loadouts) out.push({ ...p, bpm, island, bot, loadout, mode: "run", observationAccess: accessOf(bot) });
   }
-  return out.map(raw => { const c={...raw,phaseNumber:m.islandPhases?.[raw.island]??null}, scenarioId = digest(c); return { ...c, study: m.id, capPlayerSeconds: c.mode === "run" ? m.runCapPlayerSeconds : m.fixtureCapPlayerSeconds, scenarioId, key: `${m.id}:${scenarioId}` }; });
+  return out.map(raw => { const c={...raw,phaseNumber:m.islandPhases?.[raw.island]??null,capPlayerSeconds:raw.mode === "run" ? m.runCapPlayerSeconds : m.fixtureCapPlayerSeconds}, scenarioId = digest(c); return { ...c, study: m.id, scenarioId, key: `${m.wave===1?"wave1":"full"}:${m.id}:${scenarioId}` }; });
 }
 
 export function shards(m) {
@@ -65,13 +86,14 @@ export function shards(m) {
   for (const c of all) {
     let group;
     if (m.shardKind === "species") group = c.species;
+    else if(m.shardKind === "species-chunks")group=`species-${Math.floor(m.species.indexOf(c.species)/m.speciesChunk)}`;
     else if (m.shardKind === "map-blocks") group = `maps-${Math.floor(c.mapIndex / m.mapChunk)}`;
     else if (m.shardKind === "equipment-chunks") group = `${c.island}/map-${c.mapIndex}/gear-${Math.floor(m.loadouts.findIndex(l => l.id === c.loadout.id) / m.loadoutChunk)}`;
     else if (m.shardKind === "island-chunks") group = `map-${c.mapIndex}/islands-${Math.floor(m.islands.indexOf(c.island) / m.islandChunk)}`;
     else group = `${c.island}/map-${c.mapIndex}`;
     if (!groups.has(group)) groups.set(group, []); groups.get(group).push(c);
   }
-  return [...groups].map(([group, cases], i) => ({ id: `${m.id}-${String(i).padStart(3, "0")}`, group, mapIndices: [...new Set(cases.map(c => c.mapIndex))], seedPairs: [...new Map(cases.map(c => [c.mapIndex, mapPair(c.mapIndex)])).values()], cases }));
+  return [...groups].map(([group, cases], i) => ({ id: `${m.wave===1?"w1-":""}${m.id}-${String(i).padStart(3, "0")}`, group, mapIndices: [...new Set(cases.map(c => c.mapIndex))], seedPairs: [...new Map(cases.map(c => [c.mapIndex, mapPair(c.mapIndex)])).values()], cases }));
 }
 
 export function validateDesign(ms) {
@@ -102,6 +124,7 @@ export function contractCase(c) {
 }
 
 export function normalize(c, external, model) {
+  if (digest(external.case) !== digest(contractCase(c)) || external.modelSha256 !== model.modelSha256) throw Error("Adapter case/model mismatch");
   if (external.status === "unsupported") return { status: "unsupported", reason: external.reason };
   if (external.status !== "ok") throw Error(`Adapter execution error: ${external.reason ?? "missing status"}`);
   if (digest(external.case) !== digest(contractCase(c)) || external.modelSha256 !== model.modelSha256 || external.sourceFingerprint !== model.sourceFingerprint) throw Error("Adapter case/source/model mismatch");
@@ -142,11 +165,11 @@ export function selected(m, selection) {
   if (!selection) return all;
   if (selection.manifestHash !== digest(m) || !Array.isArray(selection.keys) || new Set(selection.keys).size !== selection.keys.length) throw Error("Invalid weak-cell selection");
   const wanted = new Set(selection.keys), picked = all.filter(c => wanted.has(c.key));
-  if (picked.length !== wanted.size || picked.some(c => c.bot !== "expert")) throw Error("Weak reruns select exact existing expert cells only");
+  if (picked.length !== wanted.size || selection.selectionKind !== "deepen" && picked.some(c => c.bot !== "expert")) throw Error("Weak reruns select exact existing expert cells only");
   return picked;
 }
 
-export function mergeData(m, datasets, selection) {
+export function mergeData(m, datasets, selection, allowPartial=false) {
   const expected = new Map(selected(m, selection).map(c => [c.key, c])), found = new Map();
   const specs = new Map(shards(m).map(s=>[s.id,s]));
   let common;
@@ -168,8 +191,10 @@ export function mergeData(m, datasets, selection) {
       found.set(row.key, row);
     }
   }
-  if (found.size !== expected.size) throw Error(`Incomplete experiment: ${found.size}/${expected.size}; missing cells are not losses`);
-  return [{ survey: { ...common, shard: "merged" } }, ...[...found.values()].sort((a, b) => a.key.localeCompare(b.key))];
+  if (!common) throw Error("No shard provenance; cannot invent an empty experiment");
+  if (found.size !== expected.size && !allowPartial) throw Error(`Incomplete experiment: ${found.size}/${expected.size}; missing cells are not losses`);
+  const missingKeys=[...expected.keys()].filter(k=>!found.has(k)).sort();
+  return [{ survey: { ...common, shard: "merged",complete:missingKeys.length===0,requestedCells:expected.size,completedCells:found.size,missingKeys } }, ...[...found.values()].sort((a, b) => a.key.localeCompare(b.key))];
 }
 
 export function report(m, data) {
@@ -178,11 +203,11 @@ export function report(m, data) {
     const c = r.case, k = [c.island, c.bot ?? `${c.species}/rank${c.level}/${c.fixture}`, c.bpm, c.loadout.id, c.bot === "expert" ? r.result.expertAudit ?? "unsupported expert" : c.observationAccess].join(" | ");
     if (!groups.has(k)) groups.set(k, []); groups.get(k).push(r.result);
   }
-  const out = [`# ${m.id}: frozen survey results`, "", "Legacy bots read privileged state; expert interpretation follows its frozen audit. Censored/unsupported cells are not losses. Kept means awarded by the night outcome; browser persistence is not simulated. Fixture progression is N/A. Screening tables are descriptive, not a tuning prescription. Times use the world clock; caps use player seconds.", "", "| island | bot / fixture | bpm | loadout | observation access | n / unsupported | won / lost / censored | quests completed / total | find found / available / kept / unresolved | fixture events / eligible | mean KO | median won / lost / event seconds |", "|---|---|---|---|---|---|---|---|---|---|---|---|"];
+  const out = [`# ${m.id}: frozen survey results${m.wave===1?" (wave 1)":""}`, "", `Coverage: ${data[0].survey.completedCells??data.length-1}/${data[0].survey.requestedCells??cells(m).length}; missing keys ${(data[0].survey.missingKeys??[]).length}. Budget-stopped/unattempted cases are infrastructure gaps, not game losses or game-time censoring.`, "", "Legacy bots read privileged state; expert interpretation follows its frozen audit. Censored/unsupported cells are not losses. Kept means awarded by the night outcome; browser persistence is not simulated. Fixture progression is N/A. Screening tables are descriptive, not a tuning prescription. Times use the world clock; caps use player seconds.", "", "| island | bot / fixture | bpm | loadout | observation access | n / unsupported | won / lost / censored | quests completed / total | find found / eligible-to-keep / unresolved / availability-unknown | fixture events / known eligible / eligibility-unknown | mean KO | median won / lost / event seconds |", "|---|---|---|---|---|---|---|---|---|---|---|---|"];
   for (const [k, rs] of groups) {
     const ok = rs.filter(r => r.status === "ok"), runs = ok.filter(r => r.quests), fs = runs.map(r => r.permanentFind);
     const median = xs => { if(!xs.length) return "—"; const s=[...xs].sort((a,b)=>a-b); return ((s[Math.floor((s.length-1)/2)]+s[Math.floor(s.length/2)])/2).toFixed(2); };
-    out.push(`| ${k} | ${rs.length} / ${rs.length - ok.length} | ${["won", "lost", "censored"].map(s => ok.filter(r => r.outcome === s).length).join(" / ")} | ${runs.length ? `${runs.reduce((s,r) => s+r.quests.completed,0)} / ${runs.reduce((s,r) => s+r.quests.total,0)}` : "N/A"} | ${runs.length ? `${fs.filter(f=>f.found).length} / ${fs.filter(f=>f.available).length} / ${fs.filter(f=>f.kept===true).length} / ${fs.filter(f=>f.kept===null).length}` : "N/A"} | ${runs.length ? "N/A" : `${ok.filter(r => r.eventObserved).length} / ${ok.filter(r => r.eligible).length}`} | ${runs.length ? (runs.reduce((s,r)=>s+r.knockdowns,0)/runs.length).toFixed(2) : "N/A"} | ${["won","lost","event"].map(s=>median(ok.filter(r=>s==="event"?r.eventObserved:r.outcome===s).map(r=>r.durationWorld))).join(" / ")} |`);
+    out.push(`| ${k} | ${rs.length} / ${rs.length - ok.length} | ${["won", "lost", "censored"].map(s => ok.filter(r => r.outcome === s).length).join(" / ")} | ${runs.length ? `${runs.reduce((s,r) => s+r.quests.completed,0)} / ${runs.reduce((s,r) => s+r.quests.total,0)}` : "N/A"} | ${runs.length ? `${fs.filter(f=>f.found).length} / ${fs.filter(f=>f.kept===true).length} / ${fs.filter(f=>f.kept===null).length} / ${fs.filter(f=>f.available===null).length}` : "N/A"} | ${runs.length ? "N/A" : `${ok.filter(r => r.eventObserved).length} / ${ok.filter(r => r.eligible===true).length} / ${ok.filter(r=>r.eligible===null).length}`} | ${runs.length ? (runs.reduce((s,r)=>s+r.knockdowns,0)/runs.length).toFixed(2) : "N/A"} | ${["won","lost","event"].map(s=>median(ok.filter(r=>s==="event"?r.eventObserved:r.outcome===s).map(r=>r.durationWorld))).join(" / ")} |`);
   }
   return out.join("\n") + "\n";
 }
@@ -206,56 +231,109 @@ export function weakCells(m, data) {
   return { manifestHash: digest(m), sourceFingerprint: data[0].survey.sourceFingerprint, sourceExpertModelHash: data[0].survey.expertModelHash, role: "round-two search feedback, never final held-out scoring", keys: keys.sort(), priorities };
 }
 
+export function deepenSelection(m,wave,data,spread,spreadManifest) {
+  const complete=(manifest,rows)=>{
+    if(rows[0]?.survey?.manifestHash!==digest(manifest)||rows[0].survey.complete!==true||rows.length!==cells(manifest).length+1)throw Error("Complete wave-one coverage required before adaptive deepening");
+  };
+  complete(wave,data);complete(spreadManifest,spread);
+  if(data[0].survey.sourceFingerprint!==spread[0].survey.sourceFingerprint||data[0].survey.expertModelHash!==spread[0].survey.expertModelHash)throw Error("Spread pilot source/model differs");
+  const rule=m.deepeningRule, luck=spread.slice(1).filter(r=>r.result.status==="ok").map(r=>r.result);
+  const fraction=r=>r.quests.total?r.quests.completed/r.quests.total:null, fractions=luck.map(fraction).filter(x=>x!==null);
+  const times=luck.map(r=>r.durationWorld).sort((a,b)=>a-b),timeSpread=times.length>0&&(times.at(-1)-times[0])/Math.max(1,times[Math.floor(times.length/2)])>=rule.durationRelativeRange;
+  const highSpread=luck.length<5||new Set(luck.map(r=>r.outcome)).size>1||new Set(luck.map(r=>`${r.permanentFind.found}/${r.permanentFind.kept}`)).size>1||fractions.length>0&&Math.max(...fractions)-Math.min(...fractions)>=rule.questFractionRange||timeSpread;
+  const signature=c=>c.mode==="fixture"?`${c.species}/${c.level}/${c.fixture}/${c.loadout.bag}`:`${c.island}/${c.bpm}/${c.loadout.id}`;
+  const flags=new Map(),flag=(c,reason)=>{const k=signature(c);if(!flags.has(k))flags.set(k,[]);if(!flags.get(k).includes(reason))flags.get(k).push(reason);};
+  const rows=data.slice(1), expert=rows.filter(r=>r.case.bot==="expert"&&r.result.status==="ok");
+  const vector=r=>`${r.outcome}/${fraction(r)}/${r.permanentFind.found}/${r.permanentFind.kept}`;
+  const gaps=[];
+  for(const row of rows){const c=row.case,r=row.result;
+    if(r.status==="unsupported"){
+      if(c.mode==="fixture"&&/natural.*rank|exact.*rank|species\/rank/i.test(r.reason))flag(c,"natural-specimen-coverage");else gaps.push({key:c.key,reason:r.reason});
+    }else if(c.mode==="fixture"){
+      if(!r.eventObserved&&r.eligible!==false)flag(c,"fixture-horizon-or-eligibility-unresolved");
+    }else if(c.bot==="expert"&&(r.outcome!=="won"||r.quests.completed<r.quests.total||r.permanentFind.available!==false&&r.permanentFind.kept!==true))flag(c,"night-or-progression-unsolved-or-unresolved");
+  }
+  if(m.id==="tempo")for(const a of expert)for(const b of expert)if(a.case.island===b.case.island&&Math.abs(a.case.bpm-b.case.bpm)===10&&vector(a.result)!==vector(b.result)){flag(a.case,"adjacent-tempo-objective-swing");flag(b.case,"adjacent-tempo-objective-swing");}
+  if(m.id==="equipment")for(const a of expert){const b=expert.find(r=>r.case.island===a.case.island&&r.case.loadout.id==="plain");if(b&&(vector(a.result)!==vector(b.result)||Math.abs(a.result.durationWorld-b.result.durationWorld)/Math.max(1,b.result.durationWorld)>=rule.equipmentRelativeTime)){flag(a.case,"paired-item-objective-or-time-spread");flag(b.case,"paired-control");}}
+  if(m.id==="ladder"){
+    for(const a of expert){const peers=rows.filter(r=>r.case.island===a.case.island&&r.case.bpm===a.case.bpm&&r.result.status==="ok");if(new Set(peers.map(r=>vector(r.result))).size>1)flag(a.case,"policy-objective-spread");}
+    for(const a of expert.filter(r=>flags.has(signature(r.case)))){const home=expert.find(r=>r.case.island==="home"&&r.case.bpm===a.case.bpm);if(home)flag(home.case,"paired-home-control");}
+  }
+  if(m.id==="census"){
+    for(const a of rows.filter(r=>r.case.fixture==="invitation-stun-protected"&&r.result.status==="ok"&&r.result.eventObserved)){
+      const peers=rows.filter(r=>r.case.species===a.case.species&&r.case.level===a.case.level&&r.case.fixture===a.case.fixture&&r.result.status==="ok"&&r.result.eventObserved), times=peers.map(r=>r.result.durationWorld);
+      if(times.length>1&&Math.max(...times)/Math.max(1/60,Math.min(...times))>=rule.censusTimeRatio)for(const r of peers)flag(r.case,"cross-bag-time-spread");
+    }
+  }
+  const n=m.id==="map-luck"?highSpread?rule.mapLuckHighSpread:rule.mapLuckLowSpread:m.id==="census"?rule.mapsHighSpread:highSpread?rule.mapsHighSpread:rule.mapsLowSpread;
+  const picked=cells(m).filter(c=>c.mapIndex<n&&(m.id==="map-luck"||flags.has(signature(c))));
+  return {selectionKind:"deepen",manifestHash:digest(m),originWaveOneHash:digest(wave),sourceFingerprint:data[0].survey.sourceFingerprint,sourceExpertModelHash:data[0].survey.expertModelHash,spreadHigh:highSpread,mapDepth:n,role:"adaptive sampling with first expert, not second model; not final held-out scoring",keys:picked.map(c=>c.key).sort(),priorities:[...flags].map(([cell,reasons])=>({cell,reasons})),adapterGaps:gaps,requestedCells:picked.length,estimatedBaseCoreHours:picked.length*(m.id==="census"?6:160)/3600};
+}
+
 const lines = p => readFileSync(resolve(ROOT, p), "utf8").trim().split("\n").filter(Boolean).map(JSON.parse);
 const save = (p, s) => { mkdirSync(dirname(resolve(ROOT, p)), { recursive: true }); writeFileSync(resolve(ROOT, p), s); };
 const arg = (name, fallback) => { const i = process.argv.indexOf(`--${name}`); return i < 0 ? fallback : process.argv[i + 1]; };
 
 async function main() {
+  const startedAt=Date.now();
   const mode = process.argv[2];
   if (mode === "design") {
-    const cat = catalogue(), ms = makeDesign(cat), counts = validateDesign(ms), commands = [];
-    for (const m of ms) {
-      save(`${HOME}/${m.id}.json`, JSON.stringify(m, null, 2) + "\n");
-      for (const s of shards(m)) commands.push({ study: m.id, shard: s.id, cases: s.cases.length, group: s.group, seedPairs: s.seedPairs, command: `node tools/balance/survey.mjs run --manifest ${HOME}/${m.id}.json --shard ${s.id} --lock trained-expert-lock.json --out results/${m.id}/${s.id}.jsonl` });
+    const cat = catalogue(), ms = makeDesign(cat);
+    for(const cohort of [ms,waveOne(ms)]){
+      const dir=cohort[0].wave===1?`${HOME}/wave1`:HOME,commands=[];
+      for (const m of cohort) {
+        save(`${dir}/${m.id}.json`, JSON.stringify(m, null, 2) + "\n");
+        for (const s of shards(m)) commands.push(cloudJob(m,s,`${dir}/${m.id}.json`));
+      }
+      save(`${dir}/cloud-shards.json`, JSON.stringify(commands, null, 2) + "\n");
+      save(`${dir}/cloud-commands.txt`, commands.map(c => `# ${c.shard}; ${c.cases} cases; world/night pairs ${c.seedPairs.map(p => `${p.world}/${p.seed}`).join(",")}\n${c.command}`).join("\n\n") + "\n");
+      console.log(JSON.stringify(validateDesign(cohort)));
     }
     save(`${HOME}/catalogue.json`, JSON.stringify(cat, null, 2) + "\n");
-    save(`${HOME}/cloud-shards.json`, JSON.stringify(commands, null, 2) + "\n");
-    save(`${HOME}/cloud-commands.txt`, commands.map(c => `# ${c.shard}; ${c.cases} cases; world/night pairs ${c.seedPairs.map(p => `${p.world}/${p.seed}`).join(",")}\n${c.command}`).join("\n\n") + "\n");
-    console.log(JSON.stringify(counts)); return;
+    return;
   }
   if (mode === "check") {
     const ms = ["ladder", "tempo", "equipment", "census", "map-luck"].map(id => json(`${HOME}/${id}.json`));
     if (ms.some(m => m.catalogueHash !== digest(catalogue()))) throw Error("Catalogue changed; explicitly version the design before running");
     if (digest(ms) !== digest(makeDesign(catalogue()))) throw Error("Committed manifests differ from the frozen generator; regenerate/review deliberately");
-    console.log(JSON.stringify(validateDesign(ms))); return;
+    const ws=ms.map(m=>json(`${HOME}/wave1/${m.id}.json`));
+    if(digest(ws)!==digest(waveOne(ms)))throw Error("Wave-one manifests differ from generator");
+    console.log(JSON.stringify(validateDesign(ms)));console.log(JSON.stringify(validateDesign(ws))); return;
   }
-  const m = json(arg("manifest", `${HOME}/ladder.json`)), out = arg("out");
+  const m = json(arg("manifest", `${HOME}/${mode==="run"?"wave1/":""}ladder.json`)), out = arg("out");
   if (!out) throw Error("--out required");
   const selection = arg("selection") ? json(arg("selection")) : undefined;
+  if(mode==="deepen"){
+    const wave=json(arg("wave1")),data=lines(arg("data")),spread=lines(arg("spread")),sm=json(`${HOME}/wave1/map-luck.json`);
+    save(out,JSON.stringify(deepenSelection(m,wave,data,spread,sm),null,2)+"\n");return;
+  }
   if (mode === "commands") {
     const wanted = new Set(selected(m, selection).map(c => c.key));
-    const suffix = selection ? "-round2" : "", lockFile = selection ? "trained-expert-round2-lock.json" : "trained-expert-lock.json";
+    const deep=selection?.selectionKind==="deepen", suffix = selection ? deep?"-wave2":"-round2" : "", lockFile = selection&&!deep ? "trained-expert-round2-lock.json" : "trained-expert-lock.json";
     const commands = shards(m).filter(s => s.cases.some(c => wanted.has(c.key))).map(s => `node tools/balance/survey.mjs run --manifest ${arg("manifest")} --shard ${s.id} --lock ${lockFile}${selection ? ` --selection ${arg("selection")}` : ""} --out results/${m.id}${suffix}/${s.id}.jsonl`);
     save(out, commands.join("\n") + (commands.length ? "\n" : "")); console.log(`${commands.length} nonempty shard commands`); return;
   }
   if (mode === "weak") {
     const data = lines(arg("data"));
     if (data[0]?.survey?.manifestHash !== digest(m)) throw Error("Feedback source manifest differs");
-    if (data[0].survey.shard !== "merged" || data[0].survey.searchRound !== 1 || data.length !== cells(m).length + 1 || new Set(data.slice(1).map(r=>r.key)).size !== cells(m).length) throw Error("Feedback requires the complete merged first-expert cohort");
+    const expected=selected(m,selection);
+    if (data[0].survey.shard !== "merged" || data[0].survey.searchRound !== 1 || data[0].survey.complete!==true || data.length !== expected.length + 1 || new Set(data.slice(1).map(r=>r.key)).size !== expected.length) throw Error("Feedback requires the complete merged first-expert cohort");
     const chosen = weakCells(m, data); save(out, JSON.stringify(chosen, null, 2) + "\n");
     const expertRows = data.slice(1).filter(r => r.case.bot === "expert" && r.result.status === "ok");
     if (expertRows.some(r=>!r.result.expertEvaluation)) throw Error("Exact #1477 external evaluations missing");
-    save(out + ".evaluations.jsonl", expertRows.map(r => JSON.stringify(r.result.expertEvaluation)).join("\n") + "\n"); return;
+    save(out + ".evaluations.jsonl", expertRows.map(r => JSON.stringify(r.result.expertEvaluation)).join("\n") + "\n");
+    const wanted = new Set(chosen.keys);
+    save(out + ".cases.json", JSON.stringify(data.slice(1).filter(r=>wanted.has(r.key)).map(r=>contractCase(r.case)),null,2)+"\n"); return;
   }
   if (mode === "merge") {
     const dir = arg("dir"), files = readdirSync(resolve(ROOT, dir)).filter(f => f.endsWith(".jsonl")).sort();
-    const data = mergeData(m, files.map(f => lines(`${dir}/${f}`)), selection);
+    const data = mergeData(m, files.map(f => lines(`${dir}/${f}`)), selection,process.argv.includes("--allow-partial"));
     save(out, data.map(r => JSON.stringify(r)).join("\n") + "\n"); save(out + ".md", report(m, data)); return;
   }
-  if (mode !== "run") throw Error("Use design, check, commands, run, merge or weak");
+  if (mode !== "run") throw Error("Use design, check, commands, run, merge, deepen or weak");
   const lock = json(arg("lock", "trained-expert-lock.json")); validateLock(m, lock);
   const model = lock.modelLock;
-  if (selection && (lock.searchRound !== 2 || selection.sourceFingerprint !== model.sourceFingerprint)) throw Error("Weak reruns require round-two lock on unchanged source");
+  if (selection && ((selection.selectionKind==="deepen"?lock.searchRound!==1||selection.sourceExpertModelHash!==model.modelSha256:lock.searchRound!==2) || selection.sourceFingerprint !== model.sourceFingerprint)) throw Error("Selection requires the correct expert round on unchanged source");
   if (digest(catalogue()) !== m.catalogueHash) throw Error("Frozen catalogue differs");
   const head = execFileSync("git", ["rev-parse", "HEAD"], { cwd: ROOT, encoding: "utf8" }).trim();
   if (head !== lock.sourceCommit) throw Error("Cloud checkout differs from frozen source");
@@ -278,9 +356,12 @@ async function main() {
     const byKey = new Map(assigned.map(c => [c.key, c])), done = new Set();
     for (const row of prior.slice(1)) { if (!byKey.has(row.key) || done.has(row.key)) throw Error("Invalid/duplicate resumed key"); validateRow(byKey.get(row.key), row); done.add(row.key); }
     if (!existsSync(resolve(ROOT, out))) save(out, JSON.stringify(header) + "\n");
+    const budgetSeconds=Number(arg("budget-seconds",m.wave===1?2940:0));
+    if(!Number.isFinite(budgetSeconds)||budgetSeconds<0||m.wave===1&&(budgetSeconds<=0||budgetSeconds>2940))throw Error("Invalid wave-one wall budget");
     for (const c of assigned) if (!done.has(c.key)) {
+      if(budgetSeconds&&(Date.now()-startedAt)/1000>=budgetSeconds){save(out+".budget.json",JSON.stringify({reason:"wall allocation reached; not game censoring",elapsedSeconds:(Date.now()-startedAt)/1000,missingKeys:assigned.filter(x=>!done.has(x.key)).map(x=>x.key)},null,2)+"\n");break;}
       const external = await runtime.runCase(contractCase(c), structuredClone(model)), result = normalize(c, external, model), row = { key: c.key, case: c, result }; validateRow(c, row);
-      appendFileSync(resolve(ROOT, out), JSON.stringify(row) + "\n");
+      appendFileSync(resolve(ROOT, out), JSON.stringify(row) + "\n");done.add(c.key);
     }
   } finally { await runtime.close?.(); }
 }

@@ -2,9 +2,60 @@
 
 Ed approved these five studies on 2026-10-30 (coordinator comments 6512707637, 6512744240, 6512758227, 6512788396 and 6512956726 on PR #1475). **Design now; execute only after the first expert is trained. No game tuning.** Cloud Claude sessions run headless Node rules, one worker per command; no laptop survey batch or GPU/browser work. The older ~200-seed deep study remains a separate, later phase, with its existing playtest gate.
 
+**First dispatch is the 24-shard wave 1 below, not the 190-shard full envelope.** Coordinator refinement 6513283742 freezes the larger design for reference but requires a genuinely shallow first pass, roughly 20 core-hours, before selectively deepening it.
+
+## Wave 1: all axes, low depth, 20-hour worker allocation
+
+[Wave-one manifests](../../tools/balance/surveys/wave1/) keep every island, bot, tempo, item, species and age axis of the five studies. Ladder/tempo/equipment/census use just map pair i=0; map luck uses i=0..4. Full nights cap at **1800 player seconds**, fixtures at **30**. These short horizons deliberately allow censoring; they cannot establish that a later island is unwinnable. Wave-one keys include their wave/cap and cannot masquerade as 4200/60-second evaluations.
+
+| study | wave-one cells | shard grouping | shards | base core-hours incl. startup |
+|---|---:|---|---:|---:|
+| ladder | 520 | five islands × four policies × two tempos × one pair | 13 | 10.33 |
+| tempo | 45 | one island × 15 tempos × one pair | 3 | 0.93 |
+| equipment | 64 | one island × 32 loadouts × one pair | 2 | 1.28 |
+| census | 2560 | 13 species per shard (last 12), all ages/conditions × one pair | 5 | 3.64 |
+| map luck | 5 | five pairs, one expert/island/tempo/loadout | 1 | 0.11 |
+| **total** | **3194** | all five studies | **24** | **16.28** |
+
+Every exact command is in [wave1/cloud-commands.txt](../../tools/balance/surveys/wave1/cloud-commands.txt), with its seed pair and key coverage in [wave1/cloud-shards.json](../../tools/balance/surveys/wave1/cloud-shards.json). Each uses GNU `timeout --signal=INT 50m`, giving **24 × 50 min = 20 one-core worker-allocation hours**. The runner also checks a 2940-second soft wall budget between cases and checkpoints every completed case. Installation/agent/transfer overhead is outside this worker allocation. No automatic retry gets another 50 minutes: further capacity requires a new coordinator allocation.
+
+The base estimate is 70 s per full-run request and 5 s per fixture, plus one startup minute per shard, derived from the earlier throughput and shorter caps. Unconstrained slow-throughput completion could take about **59.63 core-hours**; **do not silently spend that**. If a job is stopped, preserve its completed rows and report unattempted keys as **infrastructure missingness**, never a lost/censored game or an unsupported cell. The hard allocation is a cost cap, not a promise that all planned axes finish under adverse throughput. A stopped in-flight case has no fabricated row.
+
+Normal merge requires complete requested coverage. For an explicitly budget-stopped wave, add `--allow-partial` to produce a coverage-labelled partial report and exact `missingKeys`; complete that coverage or explicitly revise the design before adaptive deepening. Example wave-one merge commands (all five are required):
+
+```
+node tools/balance/survey.mjs merge --manifest tools/balance/surveys/wave1/ladder.json --dir results/wave1/ladder --out results/wave1/ladder.jsonl --allow-partial
+node tools/balance/survey.mjs merge --manifest tools/balance/surveys/wave1/tempo.json --dir results/wave1/tempo --out results/wave1/tempo.jsonl --allow-partial
+node tools/balance/survey.mjs merge --manifest tools/balance/surveys/wave1/equipment.json --dir results/wave1/equipment --out results/wave1/equipment.jsonl --allow-partial
+node tools/balance/survey.mjs merge --manifest tools/balance/surveys/wave1/census.json --dir results/wave1/census --out results/wave1/census.jsonl --allow-partial
+node tools/balance/survey.mjs merge --manifest tools/balance/surveys/wave1/map-luck.json --dir results/wave1/map-luck --out results/wave1/map-luck.jsonl --allow-partial
+```
+
+## Wave 2: adaptive depth, still the first expert
+
+Survey **wave** is sampling depth; expert **search round** is parameter fitting. Do not confuse them. Hold the first trained expert fixed through wave 1 and adaptive wave 2. Only afterwards use weak cells for the second search and exact matched model reruns.
+
+Rules are explicit in the manifests and `deepenSelection`:
+
+1. A five-map luck pilot has high spread if supported outcomes differ, found/retention states differ, quest-fraction range is at least 0.25, or terminal-time range is at least 25% of its median. Fewer than five supported observations means spread is unresolved and uses the cautious high-depth setting. This is screening, not a statistical significance test.
+2. Mark run cells where the expert loses, is censored, leaves quests incomplete, or leaves a potentially available find unobserved/unretained. In the ladder also mark policy-objective contrasts and keep matched home controls. For tempo, mark both sides of a neighbouring 10-bpm objective swing. For equipment, retain a variant and its plain control if an objective differs or duration changes by at least 25%.
+3. Deepen marked run cells to **three pairs (i=0..2)** when pilot spread is low, **five (i=0..4)** when high/unresolved; use the full 4200-second cap. Ladder depth retains all four policies in a flagged island/tempo cell. Strong unflagged cells are not automatically expanded. Map luck itself deepens to 10 pairs if low spread or 30 if high.
+4. Census timeouts with unknown eligibility and naturally absent exact specimens are coverage/horizon candidates. Also flag a species/age's completed bag conditions if time-to-stun differs by at least 2× across bags. Deepen only flagged conditions to five pairs and 60 seconds; do not pretend Tiger's map variance predicts rare legend presence. Non-natural adapter gaps need repair, not optimizer penalties.
+5. Missing infrastructure coverage blocks automatic selection. Unsupported cases remain explicit adapter/coverage gaps. Generate a new requested-cell count and capacity estimate, then have the coordinator allocate wave-two work; there is no automatic dispatch of the full 15,975-cell envelope. If newly sampled three-map cells swing, propose further depth rather than claiming the five-map pilot calibrated every island.
+
+After complete wave-one merges, generate selections and exact selected-shard commands, once per study. Example for the ladder:
+
+```
+node tools/balance/survey.mjs deepen --manifest tools/balance/surveys/ladder.json --wave1 tools/balance/surveys/wave1/ladder.json --data results/wave1/ladder.jsonl --spread results/wave1/map-luck.jsonl --out results/ladder-wave2-selection.json
+node tools/balance/survey.mjs commands --manifest tools/balance/surveys/ladder.json --selection results/ladder-wave2-selection.json --out results/ladder-wave2-commands.txt
+node tools/balance/survey.mjs merge --manifest tools/balance/surveys/ladder.json --selection results/ladder-wave2-selection.json --dir results/ladder-wave2 --out results/ladder-wave2.jsonl
+```
+
+Repeat with tempo/equipment/census/map-luck names; `--spread` remains the wave-one map-luck dataset. Selection keys refer to full-horizon manifests and retain the first model hash. This is a horizon/depth change, not a measured expert improvement. For second-search feedback from a selected wave-two cohort, the later `weak` command must include `--selection results/ladder-wave2-selection.json`; only then compare the second model on the exact same selected keys/caps/maps.
+
 ## Exact manifests and cells
 
-The authoritative factorised manifests are [ladder](../../tools/balance/surveys/ladder.json), [tempo](../../tools/balance/surveys/tempo.json), [equipment](../../tools/balance/surveys/equipment.json), [census](../../tools/balance/surveys/census.json) and [map luck](../../tools/balance/surveys/map-luck.json). [catalogue.json](../../tools/balance/surveys/catalogue.json) freezes all 65 islands (home + 64 kinds), 64 species, nine bags, 15 built hat powers including none, and nine broom parts. Cosmetic hat variants are not separate powers.
+The authoritative **full-envelope** factorised manifests are [ladder](../../tools/balance/surveys/ladder.json), [tempo](../../tools/balance/surveys/tempo.json), [equipment](../../tools/balance/surveys/equipment.json), [census](../../tools/balance/surveys/census.json) and [map luck](../../tools/balance/surveys/map-luck.json). These bound the possible later depth, not the first dispatch. [catalogue.json](../../tools/balance/surveys/catalogue.json) freezes all 65 islands (home + 64 kinds), 64 species, nine bags, 15 built hat powers including none, and nine broom parts. Cosmetic hat variants are not separate powers.
 
 `survey.mjs` expands these exact products, hashes each scenario and proves that every requested key belongs to exactly one shard. It never imports a copied combat model. Catalogue changes require an explicitly versioned design; no automatic addition/removal at execution time.
 
@@ -127,9 +178,9 @@ node tools/balance/survey.mjs weak --manifest tools/balance/surveys/ladder.json 
 node tools/balance/survey.mjs commands --manifest tools/balance/surveys/ladder.json --selection results/ladder-weak.json --out results/ladder-round2-commands.txt
 ```
 
-The first command also writes `results/ladder-weak.json.evaluations.jsonl`: verbatim #1477 external expert evaluations, not a competing training format. Repeat `weak` for tempo/equipment/map-luck as needed. Unsupported rows are data/adapter gaps, not optimizer losses. Unknown availability or unobserved item use must be resolved or labelled, not awarded fictional objective credit.
+The first command also writes `results/ladder-weak.json.evaluations.jsonl`: verbatim #1477 external expert evaluations, not a competing training format, and `results/ladder-weak.json.cases.json`: the exact contract-case list for focused round-two training. Repeat `weak` for tempo/equipment/map-luck as needed. Unsupported rows are data/adapter gaps, not optimizer losses. Unknown availability or unobserved item use must be resolved or labelled, not awarded fictional objective credit.
 
-3. #1477 imports those rows with its **`--external … --round 2`** path. The search owner rechecks proposed parameter vectors on the canonical training matrix; cache reuse requires exact parameter/source/case/loadout/cutoff matches. Survey pairs may now inform this second search, so they are **no longer held-out scores**. Its own final held-out list never enters feedback, fitness or selection.
+3. #1477 imports those rows with its **`--external … --round 2`** path. The search owner rechecks proposed parameter vectors; cache reuse requires exact parameter/source/case/loadout/cutoff matches. The focused search also needs to consume the exported `.cases.json` as its explicit weak-cell fitness matrix: `--external` alone merely proposes vectors/reuses exact evaluations and does **not** establish that the optimizer has focused on those cells. That search-side selection is owned by #1477, not implemented by this PR. Survey pairs may now inform this second search, so they are **no longer held-out scores**. Its own final held-out list never enters feedback, fitness or selection.
 4. Freeze the second model and round-two envelope. Use the generated nonempty weak-shard commands, which carry `--selection` and write under `results/<study>-round2/`, never over round one. They retain the same scenario keys/caps/maps/loadouts but a new model hash/vector. Empty selections yield zero commands. Merge only the selected keys:
 
 ```

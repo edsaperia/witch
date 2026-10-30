@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { makeDesign, validateDesign, cells, shards, digest, mapPair, validateLock, validateRow, mergeData, weakCells, selected, catalogue, contractCase, normalize } from "./survey.mjs";
+import { makeDesign, validateDesign, cells, shards, digest, mapPair, validateLock, validateRow, mergeData, weakCells, selected, catalogue, contractCase, normalize, waveOne, deepenSelection } from "./survey.mjs";
 
 const mini = { islands: ["home", "fox"], species: ["fox"], hats: ["none", "helmet"], bags: ["satchel", "tote"], parts: ["missile"] };
 const m = { ...makeDesign(mini)[0], islands: ["home"], bots: ["expert"], bpms: [100], maps: [mapPair(0), mapPair(1)], shardKind: "island-map" };
@@ -40,6 +40,17 @@ test("untrained experts, first-round leakage and final-heldout contamination fai
   assert.throws(()=>validateLock(m,lock({heldOutPairs:[mapPair(0)]})),/Final held-out/);
 });
 
+test("wave one covers every axis in 24 budgeted shards with distinct short-horizon keys",()=>{
+  const full=makeDesign(catalogue()),ws=waveOne(full),stats=validateDesign(ws);
+  assert.deepEqual(stats.map(s=>[s.study,s.cases,s.shards]),[["ladder",520,13],["tempo",45,3],["equipment",64,2],["census",2560,5],["map-luck",5,1]]);
+  assert.equal(stats.reduce((s,r)=>s+r.cases,0),3194);
+  const jobs=JSON.parse(readFileSync(new URL("./surveys/wave1/cloud-shards.json",import.meta.url),"utf8"));
+  assert.equal(jobs.length,24);assert.equal(jobs.length*50/60,20);
+  assert.ok(jobs.every(j=>j.command.startsWith("timeout --signal=INT 50m node ")&&j.command.includes("--budget-seconds 2940")));
+  const fullKeys=new Set(full.flatMap(cells).map(c=>c.key));assert.ok(ws.flatMap(cells).every(c=>!fullKeys.has(c.key)));
+  assert.equal(ws.reduce((s,x)=>s+x.runtimeEstimate.oneCoreHoursBase,0).toFixed(2),"16.28");
+});
+
 test("case/JSONL translation follows createCaseRunner contract, preserving exact external evaluations", () => {
   const c=cells(m)[0], model=lock().modelLock, input=contractCase(c);
   assert.deepEqual(Object.keys(input).sort(),["kind","worldSeed","nightSeed","island","bpm","bag","hat","broomPart","condition","limit","bot"].sort());
@@ -48,7 +59,7 @@ test("case/JSONL translation follows createCaseRunner contract, preserving exact
   const normalized=normalize(c,external,model);
   assert.deepEqual(normalized.expertEvaluation,external);assert.equal(normalized.permanentFind.persisted,false);
   validateRow(c,{key:c.key,case:c,result:normalized});
-  const unsupported=normalize({...c,bot:"sloppy"},{status:"unsupported",reason:"Unsupported survey bot"},model);
+  const sloppy={...c,bot:"sloppy"},unsupported=normalize(sloppy,{status:"unsupported",case:contractCase(sloppy),modelSha256:model.modelSha256,reason:"Unsupported survey bot"},model);
   assert.equal(unsupported.status,"unsupported");
   const f=cells(makeDesign(mini).find(x=>x.id==="census")).find(x=>x.level===3), fc=contractCase(f);
   assert.equal(fc.condition,"home-everything");assert.equal(fc.kind,"stun");
@@ -59,10 +70,21 @@ test("merge refuses duplicates, wrong cells, missing shards, missing progression
   const ds=data(); assert.equal(mergeData(m,ds).length,3);
   assert.throws(()=>mergeData(m,[ds[0],ds[0],ds[1]]),/duplicate/);
   assert.throws(()=>mergeData(m,[ds[0]]),/Incomplete/);
+  const partial=mergeData(m,[ds[0]],undefined,true);assert.equal(partial[0].survey.complete,false);assert.equal(partial[0].survey.missingKeys.length,1);assert.equal(partial.length,2);
   const drift=data(); drift[1][0].survey.expertModelHash="e".repeat(64); assert.throws(()=>mergeData(m,drift),/mismatch/);
   const wrong=data(); wrong[0][1].case={...wrong[0][1].case,bpm:220}; assert.throws(()=>mergeData(m,wrong),/differs/);
   const progress=data(); delete progress[0][1].result.quests; assert.throws(()=>mergeData(m,progress),/quests/);
   const vector=data(); vector[0][1].result.expertParameters={kite:100}; assert.throws(()=>mergeData(m,vector),/vector/);
+});
+
+test("wave-two depth is selected from actual map-luck spread, not an automatic full matrix",()=>{
+  const full=makeDesign(mini),ws=waveOne(full),fm=full.find(x=>x.id==="tempo"),wm=ws.find(x=>x.id==="tempo"),lm=ws.find(x=>x.id==="map-luck");
+  const merged=x=>[{survey:{...meta("merged"),manifestHash:digest(x),complete:true}},...cells(x).map(c=>({key:c.key,case:c,result:good()}))];
+  const first=merged(wm),spread=merged(lm);first[1].result={...good(),outcome:"lost",permanentFind:{available:true,found:true,kept:false}};
+  const low=deepenSelection(fm,wm,first,spread,lm);assert.equal(low.mapDepth,3);assert.equal(selected(fm,low).length,6);assert.equal(low.selectionKind,"deepen");
+  spread[1].result={...good(),outcome:"lost",permanentFind:{available:true,found:true,kept:false}};
+  const high=deepenSelection(fm,wm,first,spread,lm);assert.equal(high.mapDepth,5);assert.equal(selected(fm,high).length,10);
+  first[0].survey.complete=false;assert.throws(()=>deepenSelection(fm,wm,first,spread,lm),/Complete wave-one/);
 });
 
 test("unsupported is explicit; fixture progression N/A and unresolved retention never become fake zeros", () => {
