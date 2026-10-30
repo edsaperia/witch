@@ -1,0 +1,3556 @@
+{
+  "sha": "7af517747b22229a4d827d7c85d0de2ed6c768a2",
+  "grant": "6525255282",
+  "frames": [
+    {
+      "name": "beetle-L0-centre",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.25,
+        "x": 3201.8591064613734,
+        "z": 3106.559326444441
+      },
+      "diagnostics": {
+        "origin": {
+          "x": 3201.8591064613734,
+          "z": 3106.559326444441
+        },
+        "witch": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "lightCentre": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "distance": 11.104738505236583,
+        "radius": 44.41895402094715,
+        "power": 0.95,
+        "dim": 1,
+        "falloff": 1.8,
+        "batches": [
+          {
+            "key": "beetle",
+            "count": 1,
+            "flags": [
+              {
+                "visible": true,
+                "find": 1,
+                "scenery": 0,
+                "unlit": 0
+              }
+            ]
+          }
+        ]
+      },
+      "witchProof": {
+        "count": 1,
+        "hatOnCount": 1,
+        "bareCount": 0,
+        "hat": {
+          "has": true,
+          "down": null,
+          "left": []
+        },
+        "herIdle": false,
+        "camera": {
+          "zoomStep": 3,
+          "zoom": 0.375,
+          "tx": 3190.754367956137,
+          "ty": 1.4,
+          "tz": 3106.559326444441,
+          "vx": 0,
+          "vy": 0,
+          "vz": 0,
+          "ax": 0,
+          "az": 0,
+          "lift": 0,
+          "intro": 0
+        },
+        "screen": {
+          "x": 266.49597137367414,
+          "y": 163.07890831504574,
+          "halfWidth": 22.89871215284279,
+          "halfHeight": 17.201459903880007
+        },
+        "viewport": {
+          "width": 534,
+          "height": 300
+        },
+        "projection": {
+          "projectionMatrix": [
+            3.186113381807702,
+            0,
+            0,
+            0,
+            0,
+            5.671281819617709,
+            0,
+            0,
+            0,
+            0,
+            -1.0022246941045607,
+            -1,
+            0,
+            0,
+            -2.0022246941045605,
+            0
+          ],
+          "matrixWorldInverse": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0.8480480961564261,
+            0.5299192642332048,
+            0,
+            0,
+            -0.5299192642332048,
+            0.8480480961564261,
+            0,
+            -3190.8130429003822,
+            1662.0581201579905,
+            -2724.6006030711023,
+            1
+          ],
+          "witchBase": {
+            "x": 3190.754367956137,
+            "y": -19.103074196475045,
+            "z": 3106.559326444441
+          },
+          "witchTall": 4.40625,
+          "witchFeetTop": 4.059374999999999,
+          "rideHeight": -20.103074196475045,
+          "camRideHeight": -20.103074196475045,
+          "groundHeight": -20.103074196475045,
+          "cameraPosition": [
+            3190.8130429003822,
+            34.31312240747238,
+            3191.348970368045
+          ]
+        }
+      },
+      "bounds": {
+        "pixels": 13491,
+        "x0": 1006,
+        "y0": 368,
+        "x1": 1155,
+        "y1": 493,
+        "method": "difference of target-only silhouette and SAME flagOFF normal frame; excludes naturally magenta scenery"
+      },
+      "diff": {
+        "changed": 2907,
+        "max": 62
+      },
+      "lightOffIdentical": true,
+      "fixtureScenery": "type/decor batch draws omitted equally; native dark forest ground unchanged",
+      "crops": {
+        "x": 981,
+        "y": 331,
+        "width": 200,
+        "height": 200,
+        "order": "off left / on right",
+        "scales": [
+          1,
+          3
+        ],
+        "method": "exact nearest-neighbour pixel copy offline after browser closed"
+      }
+    },
+    {
+      "name": "beetle-L0-edge",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.75,
+        "x": 3224.068583471847,
+        "z": 3106.559326444441
+      },
+      "diagnostics": {
+        "origin": {
+          "x": 3224.068583471847,
+          "z": 3106.559326444441
+        },
+        "witch": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "lightCentre": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "distance": 33.3142155157102,
+        "radius": 44.41895402094715,
+        "power": 0.95,
+        "dim": 1,
+        "falloff": 1.8,
+        "batches": [
+          {
+            "key": "beetle",
+            "count": 1,
+            "flags": [
+              {
+                "visible": true,
+                "find": 1,
+                "scenery": 0,
+                "unlit": 0
+              }
+            ]
+          }
+        ]
+      },
+      "witchProof": {
+        "count": 1,
+        "hatOnCount": 1,
+        "bareCount": 0,
+        "hat": {
+          "has": true,
+          "down": null,
+          "left": []
+        },
+        "herIdle": false,
+        "camera": {
+          "zoomStep": 3,
+          "zoom": 0.375,
+          "tx": 3190.754367956137,
+          "ty": 1.4,
+          "tz": 3106.559326444441,
+          "vx": 0,
+          "vy": 0,
+          "vz": 0,
+          "ax": 0,
+          "az": 0,
+          "lift": 0,
+          "intro": 0
+        },
+        "screen": {
+          "x": 266.49597137367414,
+          "y": 163.07890831504574,
+          "halfWidth": 22.89871215284279,
+          "halfHeight": 17.201459903880007
+        },
+        "viewport": {
+          "width": 534,
+          "height": 300
+        },
+        "projection": {
+          "projectionMatrix": [
+            3.186113381807702,
+            0,
+            0,
+            0,
+            0,
+            5.671281819617709,
+            0,
+            0,
+            0,
+            0,
+            -1.0022246941045607,
+            -1,
+            0,
+            0,
+            -2.0022246941045605,
+            0
+          ],
+          "matrixWorldInverse": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0.8480480961564261,
+            0.5299192642332048,
+            0,
+            0,
+            -0.5299192642332048,
+            0.8480480961564261,
+            0,
+            -3190.8130429003822,
+            1662.0581201579905,
+            -2724.6006030711023,
+            1
+          ],
+          "witchBase": {
+            "x": 3190.754367956137,
+            "y": -19.103074196475045,
+            "z": 3106.559326444441
+          },
+          "witchTall": 4.40625,
+          "witchFeetTop": 4.059374999999999,
+          "rideHeight": -20.103074196475045,
+          "camRideHeight": -20.103074196475045,
+          "groundHeight": -20.103074196475045,
+          "cameraPosition": [
+            3190.8130429003822,
+            34.31312240747238,
+            3191.348970368045
+          ]
+        }
+      },
+      "bounds": {
+        "pixels": 0,
+        "x0": 1600,
+        "y0": 900,
+        "x1": -1,
+        "y1": -1,
+        "method": "difference of target-only silhouette and SAME flagOFF normal frame; excludes naturally magenta scenery"
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true,
+      "fixtureScenery": "type/decor batch draws omitted equally; native dark forest ground unchanged",
+      "crops": {
+        "valid": false,
+        "reason": "No target silhouette difference; no crop or visibility pass"
+      }
+    },
+    {
+      "name": "beetle-L0-outside",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 1.3,
+        "x": 3248.499008183368,
+        "z": 3106.559326444441
+      },
+      "diagnostics": {
+        "origin": {
+          "x": 3248.499008183368,
+          "z": 3106.559326444441
+        },
+        "witch": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "lightCentre": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "distance": 57.74464022723123,
+        "radius": 44.8,
+        "power": 0.95,
+        "dim": 1,
+        "falloff": 1.8,
+        "batches": [
+          {
+            "key": "beetle",
+            "count": 1,
+            "flags": [
+              {
+                "visible": true,
+                "find": 1,
+                "scenery": 0,
+                "unlit": 0
+              }
+            ]
+          }
+        ]
+      },
+      "witchProof": {
+        "count": 1,
+        "hatOnCount": 1,
+        "bareCount": 0,
+        "hat": {
+          "has": true,
+          "down": null,
+          "left": []
+        },
+        "herIdle": false,
+        "camera": {
+          "zoomStep": 3,
+          "zoom": 0.375,
+          "tx": 3219.626688069752,
+          "ty": 1.4,
+          "tz": 3106.559326444441,
+          "vx": 0,
+          "vy": 0,
+          "vz": 0,
+          "ax": 0,
+          "az": 0,
+          "lift": 0,
+          "intro": 0
+        },
+        "screen": {
+          "x": 20.53240589403209,
+          "y": 154.9705854010873,
+          "halfWidth": 22.624348882311992,
+          "halfHeight": 17.0127186069481
+        },
+        "viewport": {
+          "width": 534,
+          "height": 300
+        },
+        "projection": {
+          "projectionMatrix": [
+            3.186113381807702,
+            0,
+            0,
+            0,
+            0,
+            5.671281819617709,
+            0,
+            0,
+            0,
+            0,
+            -1.0022246941045607,
+            -1,
+            0,
+            0,
+            -2.0022246941045605,
+            0
+          ],
+          "matrixWorldInverse": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0.8480480961564261,
+            0.5299192642332048,
+            0,
+            0,
+            -0.5299192642332048,
+            0.8480480961564261,
+            0,
+            -3219.613116416099,
+            1661.117709594212,
+            -2725.1768633491893,
+            1
+          ],
+          "witchBase": {
+            "x": 3190.754367956137,
+            "y": -19.103074196475045,
+            "z": 3106.559326444441
+          },
+          "witchTall": 4.40625,
+          "witchFeetTop": 4.059374999999999,
+          "rideHeight": -20.103074196475045,
+          "camRideHeight": -19.015625,
+          "groundHeight": -20.103074196475045,
+          "cameraPosition": [
+            3219.6131164160984,
+            35.41600721826086,
+            3191.339325125732
+          ]
+        }
+      },
+      "bounds": {
+        "pixels": 12303,
+        "x0": 1462,
+        "y0": 398,
+        "x1": 1599,
+        "y1": 511,
+        "method": "difference of target-only silhouette and SAME flagOFF normal frame; excludes naturally magenta scenery"
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true,
+      "fixtureScenery": "type/decor batch draws omitted equally; native dark forest ground unchanged",
+      "crops": {
+        "x": 1400,
+        "y": 355,
+        "width": 200,
+        "height": 200,
+        "order": "off left / on right",
+        "scales": [
+          1,
+          3
+        ],
+        "method": "exact nearest-neighbour pixel copy offline after browser closed"
+      }
+    },
+    {
+      "name": "beetle-L1-centre",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.25,
+        "x": 3201.8591064613734,
+        "z": 3106.559326444441
+      },
+      "diagnostics": {
+        "origin": {
+          "x": 3201.8591064613734,
+          "z": 3106.559326444441
+        },
+        "witch": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "lightCentre": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "distance": 11.104738505236583,
+        "radius": 44.41895402094715,
+        "power": 0.95,
+        "dim": 1,
+        "falloff": 1.8,
+        "batches": [
+          {
+            "key": "beetle",
+            "count": 1,
+            "flags": [
+              {
+                "visible": true,
+                "find": 1,
+                "scenery": 0,
+                "unlit": 0
+              }
+            ]
+          }
+        ]
+      },
+      "witchProof": {
+        "count": 1,
+        "hatOnCount": 1,
+        "bareCount": 0,
+        "hat": {
+          "has": true,
+          "down": null,
+          "left": []
+        },
+        "herIdle": false,
+        "camera": {
+          "zoomStep": 3,
+          "zoom": 0.375,
+          "tx": 3190.754367956137,
+          "ty": 1.4,
+          "tz": 3106.559326444441,
+          "vx": 0,
+          "vy": 0,
+          "vz": 0,
+          "ax": 0,
+          "az": 0,
+          "lift": 0,
+          "intro": 0
+        },
+        "screen": {
+          "x": 266.49597137367414,
+          "y": 163.07890831504574,
+          "halfWidth": 22.89871215284279,
+          "halfHeight": 17.201459903880007
+        },
+        "viewport": {
+          "width": 534,
+          "height": 300
+        },
+        "projection": {
+          "projectionMatrix": [
+            3.186113381807702,
+            0,
+            0,
+            0,
+            0,
+            5.671281819617709,
+            0,
+            0,
+            0,
+            0,
+            -1.0022246941045607,
+            -1,
+            0,
+            0,
+            -2.0022246941045605,
+            0
+          ],
+          "matrixWorldInverse": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0.8480480961564261,
+            0.5299192642332048,
+            0,
+            0,
+            -0.5299192642332048,
+            0.8480480961564261,
+            0,
+            -3190.8130429003822,
+            1662.0581201579905,
+            -2724.6006030711023,
+            1
+          ],
+          "witchBase": {
+            "x": 3190.754367956137,
+            "y": -19.103074196475045,
+            "z": 3106.559326444441
+          },
+          "witchTall": 4.40625,
+          "witchFeetTop": 4.059374999999999,
+          "rideHeight": -20.103074196475045,
+          "camRideHeight": -20.103074196475045,
+          "groundHeight": -20.103074196475045,
+          "cameraPosition": [
+            3190.8130429003822,
+            34.31312240747238,
+            3191.348970368045
+          ]
+        }
+      },
+      "bounds": {
+        "pixels": 21357,
+        "x0": 979,
+        "y0": 350,
+        "x1": 1185,
+        "y1": 493,
+        "method": "difference of target-only silhouette and SAME flagOFF normal frame; excludes naturally magenta scenery"
+      },
+      "diff": {
+        "changed": 7659,
+        "max": 82
+      },
+      "lightOffIdentical": true,
+      "fixtureScenery": "type/decor batch draws omitted equally; native dark forest ground unchanged",
+      "crops": {
+        "x": 982,
+        "y": 322,
+        "width": 200,
+        "height": 200,
+        "order": "off left / on right",
+        "scales": [
+          1,
+          3
+        ],
+        "method": "exact nearest-neighbour pixel copy offline after browser closed"
+      }
+    },
+    {
+      "name": "beetle-L1-edge",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.75,
+        "x": 3224.068583471847,
+        "z": 3106.559326444441
+      },
+      "diagnostics": {
+        "origin": {
+          "x": 3224.068583471847,
+          "z": 3106.559326444441
+        },
+        "witch": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "lightCentre": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "distance": 33.3142155157102,
+        "radius": 44.41895402094715,
+        "power": 0.95,
+        "dim": 1,
+        "falloff": 1.8,
+        "batches": [
+          {
+            "key": "beetle",
+            "count": 1,
+            "flags": [
+              {
+                "visible": true,
+                "find": 1,
+                "scenery": 0,
+                "unlit": 0
+              }
+            ]
+          }
+        ]
+      },
+      "witchProof": {
+        "count": 1,
+        "hatOnCount": 1,
+        "bareCount": 0,
+        "hat": {
+          "has": true,
+          "down": null,
+          "left": []
+        },
+        "herIdle": false,
+        "camera": {
+          "zoomStep": 3,
+          "zoom": 0.375,
+          "tx": 3190.754367956137,
+          "ty": 1.4,
+          "tz": 3106.559326444441,
+          "vx": 0,
+          "vy": 0,
+          "vz": 0,
+          "ax": 0,
+          "az": 0,
+          "lift": 0,
+          "intro": 0
+        },
+        "screen": {
+          "x": 266.49597137367414,
+          "y": 163.07890831504574,
+          "halfWidth": 22.89871215284279,
+          "halfHeight": 17.201459903880007
+        },
+        "viewport": {
+          "width": 534,
+          "height": 300
+        },
+        "projection": {
+          "projectionMatrix": [
+            3.186113381807702,
+            0,
+            0,
+            0,
+            0,
+            5.671281819617709,
+            0,
+            0,
+            0,
+            0,
+            -1.0022246941045607,
+            -1,
+            0,
+            0,
+            -2.0022246941045605,
+            0
+          ],
+          "matrixWorldInverse": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0.8480480961564261,
+            0.5299192642332048,
+            0,
+            0,
+            -0.5299192642332048,
+            0.8480480961564261,
+            0,
+            -3190.8130429003822,
+            1662.0581201579905,
+            -2724.6006030711023,
+            1
+          ],
+          "witchBase": {
+            "x": 3190.754367956137,
+            "y": -19.103074196475045,
+            "z": 3106.559326444441
+          },
+          "witchTall": 4.40625,
+          "witchFeetTop": 4.059374999999999,
+          "rideHeight": -20.103074196475045,
+          "camRideHeight": -20.103074196475045,
+          "groundHeight": -20.103074196475045,
+          "cameraPosition": [
+            3190.8130429003822,
+            34.31312240747238,
+            3191.348970368045
+          ]
+        }
+      },
+      "bounds": {
+        "pixels": 5355,
+        "x0": 1546,
+        "y0": 344,
+        "x1": 1599,
+        "y1": 478,
+        "method": "difference of target-only silhouette and SAME flagOFF normal frame; excludes naturally magenta scenery"
+      },
+      "diff": {
+        "changed": 414,
+        "max": 6
+      },
+      "lightOffIdentical": true,
+      "fixtureScenery": "type/decor batch draws omitted equally; native dark forest ground unchanged",
+      "crops": {
+        "x": 1400,
+        "y": 311,
+        "width": 200,
+        "height": 200,
+        "order": "off left / on right",
+        "scales": [
+          1,
+          3
+        ],
+        "method": "exact nearest-neighbour pixel copy offline after browser closed"
+      }
+    },
+    {
+      "name": "beetle-L1-outside",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 1.3,
+        "x": 3248.499008183368,
+        "z": 3106.559326444441
+      },
+      "diagnostics": {
+        "origin": {
+          "x": 3248.499008183368,
+          "z": 3106.559326444441
+        },
+        "witch": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "lightCentre": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "distance": 57.74464022723123,
+        "radius": 44.8,
+        "power": 0.95,
+        "dim": 1,
+        "falloff": 1.8,
+        "batches": [
+          {
+            "key": "beetle",
+            "count": 1,
+            "flags": [
+              {
+                "visible": true,
+                "find": 1,
+                "scenery": 0,
+                "unlit": 0
+              }
+            ]
+          }
+        ]
+      },
+      "witchProof": {
+        "count": 1,
+        "hatOnCount": 1,
+        "bareCount": 0,
+        "hat": {
+          "has": true,
+          "down": null,
+          "left": []
+        },
+        "herIdle": false,
+        "camera": {
+          "zoomStep": 3,
+          "zoom": 0.375,
+          "tx": 3219.626688069752,
+          "ty": 1.4,
+          "tz": 3106.559326444441,
+          "vx": 0,
+          "vy": 0,
+          "vz": 0,
+          "ax": 0,
+          "az": 0,
+          "lift": 0,
+          "intro": 0
+        },
+        "screen": {
+          "x": 20.53240589403209,
+          "y": 154.9705854010873,
+          "halfWidth": 22.624348882311992,
+          "halfHeight": 17.0127186069481
+        },
+        "viewport": {
+          "width": 534,
+          "height": 300
+        },
+        "projection": {
+          "projectionMatrix": [
+            3.186113381807702,
+            0,
+            0,
+            0,
+            0,
+            5.671281819617709,
+            0,
+            0,
+            0,
+            0,
+            -1.0022246941045607,
+            -1,
+            0,
+            0,
+            -2.0022246941045605,
+            0
+          ],
+          "matrixWorldInverse": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0.8480480961564261,
+            0.5299192642332048,
+            0,
+            0,
+            -0.5299192642332048,
+            0.8480480961564261,
+            0,
+            -3219.613116416099,
+            1661.117709594212,
+            -2725.1768633491893,
+            1
+          ],
+          "witchBase": {
+            "x": 3190.754367956137,
+            "y": -19.103074196475045,
+            "z": 3106.559326444441
+          },
+          "witchTall": 4.40625,
+          "witchFeetTop": 4.059374999999999,
+          "rideHeight": -20.103074196475045,
+          "camRideHeight": -19.015625,
+          "groundHeight": -20.103074196475045,
+          "cameraPosition": [
+            3219.6131164160984,
+            35.41600721826086,
+            3191.339325125732
+          ]
+        }
+      },
+      "bounds": {
+        "pixels": 18171,
+        "x0": 1432,
+        "y0": 374,
+        "x1": 1599,
+        "y1": 505,
+        "method": "difference of target-only silhouette and SAME flagOFF normal frame; excludes naturally magenta scenery"
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true,
+      "fixtureScenery": "type/decor batch draws omitted equally; native dark forest ground unchanged",
+      "crops": {
+        "x": 1400,
+        "y": 340,
+        "width": 200,
+        "height": 200,
+        "order": "off left / on right",
+        "scales": [
+          1,
+          3
+        ],
+        "method": "exact nearest-neighbour pixel copy offline after browser closed"
+      }
+    },
+    {
+      "name": "beetle-L2-centre",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.25,
+        "x": 3201.8591064613734,
+        "z": 3106.559326444441
+      },
+      "diagnostics": {
+        "origin": {
+          "x": 3201.8591064613734,
+          "z": 3106.559326444441
+        },
+        "witch": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "lightCentre": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "distance": 11.104738505236583,
+        "radius": 44.41895402094715,
+        "power": 0.95,
+        "dim": 1,
+        "falloff": 1.8,
+        "batches": [
+          {
+            "key": "beetle",
+            "count": 1,
+            "flags": [
+              {
+                "visible": true,
+                "find": 1,
+                "scenery": 0,
+                "unlit": 0
+              }
+            ]
+          }
+        ]
+      },
+      "witchProof": {
+        "count": 1,
+        "hatOnCount": 1,
+        "bareCount": 0,
+        "hat": {
+          "has": true,
+          "down": null,
+          "left": []
+        },
+        "herIdle": false,
+        "camera": {
+          "zoomStep": 3,
+          "zoom": 0.375,
+          "tx": 3190.754367956137,
+          "ty": 1.4,
+          "tz": 3106.559326444441,
+          "vx": 0,
+          "vy": 0,
+          "vz": 0,
+          "ax": 0,
+          "az": 0,
+          "lift": 0,
+          "intro": 0
+        },
+        "screen": {
+          "x": 266.49597137367414,
+          "y": 163.07890831504574,
+          "halfWidth": 22.89871215284279,
+          "halfHeight": 17.201459903880007
+        },
+        "viewport": {
+          "width": 534,
+          "height": 300
+        },
+        "projection": {
+          "projectionMatrix": [
+            3.186113381807702,
+            0,
+            0,
+            0,
+            0,
+            5.671281819617709,
+            0,
+            0,
+            0,
+            0,
+            -1.0022246941045607,
+            -1,
+            0,
+            0,
+            -2.0022246941045605,
+            0
+          ],
+          "matrixWorldInverse": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0.8480480961564261,
+            0.5299192642332048,
+            0,
+            0,
+            -0.5299192642332048,
+            0.8480480961564261,
+            0,
+            -3190.8130429003822,
+            1662.0581201579905,
+            -2724.6006030711023,
+            1
+          ],
+          "witchBase": {
+            "x": 3190.754367956137,
+            "y": -19.103074196475045,
+            "z": 3106.559326444441
+          },
+          "witchTall": 4.40625,
+          "witchFeetTop": 4.059374999999999,
+          "rideHeight": -20.103074196475045,
+          "camRideHeight": -20.103074196475045,
+          "groundHeight": -20.103074196475045,
+          "cameraPosition": [
+            3190.8130429003822,
+            34.31312240747238,
+            3191.348970368045
+          ]
+        }
+      },
+      "bounds": {
+        "pixels": 38367,
+        "x0": 934,
+        "y0": 290,
+        "x1": 1227,
+        "y1": 484,
+        "method": "difference of target-only silhouette and SAME flagOFF normal frame; excludes naturally magenta scenery"
+      },
+      "diff": {
+        "changed": 15903,
+        "max": 68
+      },
+      "lightOffIdentical": true,
+      "fixtureScenery": "type/decor batch draws omitted equally; native dark forest ground unchanged",
+      "crops": {
+        "x": 981,
+        "y": 287,
+        "width": 200,
+        "height": 200,
+        "order": "off left / on right",
+        "scales": [
+          1,
+          3
+        ],
+        "method": "exact nearest-neighbour pixel copy offline after browser closed"
+      }
+    },
+    {
+      "name": "beetle-L2-edge",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.75,
+        "x": 3224.068583471847,
+        "z": 3106.559326444441
+      },
+      "diagnostics": {
+        "origin": {
+          "x": 3224.068583471847,
+          "z": 3106.559326444441
+        },
+        "witch": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "lightCentre": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "distance": 33.3142155157102,
+        "radius": 44.41895402094715,
+        "power": 0.95,
+        "dim": 1,
+        "falloff": 1.8,
+        "batches": [
+          {
+            "key": "beetle",
+            "count": 1,
+            "flags": [
+              {
+                "visible": true,
+                "find": 1,
+                "scenery": 0,
+                "unlit": 0
+              }
+            ]
+          }
+        ]
+      },
+      "witchProof": {
+        "count": 1,
+        "hatOnCount": 1,
+        "bareCount": 0,
+        "hat": {
+          "has": true,
+          "down": null,
+          "left": []
+        },
+        "herIdle": false,
+        "camera": {
+          "zoomStep": 3,
+          "zoom": 0.375,
+          "tx": 3190.754367956137,
+          "ty": 1.4,
+          "tz": 3106.559326444441,
+          "vx": 0,
+          "vy": 0,
+          "vz": 0,
+          "ax": 0,
+          "az": 0,
+          "lift": 0,
+          "intro": 0
+        },
+        "screen": {
+          "x": 266.49597137367414,
+          "y": 163.07890831504574,
+          "halfWidth": 22.89871215284279,
+          "halfHeight": 17.201459903880007
+        },
+        "viewport": {
+          "width": 534,
+          "height": 300
+        },
+        "projection": {
+          "projectionMatrix": [
+            3.186113381807702,
+            0,
+            0,
+            0,
+            0,
+            5.671281819617709,
+            0,
+            0,
+            0,
+            0,
+            -1.0022246941045607,
+            -1,
+            0,
+            0,
+            -2.0022246941045605,
+            0
+          ],
+          "matrixWorldInverse": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0.8480480961564261,
+            0.5299192642332048,
+            0,
+            0,
+            -0.5299192642332048,
+            0.8480480961564261,
+            0,
+            -3190.8130429003822,
+            1662.0581201579905,
+            -2724.6006030711023,
+            1
+          ],
+          "witchBase": {
+            "x": 3190.754367956137,
+            "y": -19.103074196475045,
+            "z": 3106.559326444441
+          },
+          "witchTall": 4.40625,
+          "witchFeetTop": 4.059374999999999,
+          "rideHeight": -20.103074196475045,
+          "camRideHeight": -20.103074196475045,
+          "groundHeight": -20.103074196475045,
+          "cameraPosition": [
+            3190.8130429003822,
+            34.31312240747238,
+            3191.348970368045
+          ]
+        }
+      },
+      "bounds": {
+        "pixels": 9432,
+        "x0": 1507,
+        "y0": 323,
+        "x1": 1599,
+        "y1": 451,
+        "method": "difference of target-only silhouette and SAME flagOFF normal frame; excludes naturally magenta scenery"
+      },
+      "diff": {
+        "changed": 1458,
+        "max": 6
+      },
+      "lightOffIdentical": true,
+      "fixtureScenery": "type/decor batch draws omitted equally; native dark forest ground unchanged",
+      "crops": {
+        "x": 1400,
+        "y": 287,
+        "width": 200,
+        "height": 200,
+        "order": "off left / on right",
+        "scales": [
+          1,
+          3
+        ],
+        "method": "exact nearest-neighbour pixel copy offline after browser closed"
+      }
+    },
+    {
+      "name": "beetle-L2-outside",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 1.3,
+        "x": 3248.499008183368,
+        "z": 3106.559326444441
+      },
+      "diagnostics": {
+        "origin": {
+          "x": 3248.499008183368,
+          "z": 3106.559326444441
+        },
+        "witch": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "lightCentre": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "distance": 57.74464022723123,
+        "radius": 44.8,
+        "power": 0.95,
+        "dim": 1,
+        "falloff": 1.8,
+        "batches": [
+          {
+            "key": "beetle",
+            "count": 1,
+            "flags": [
+              {
+                "visible": true,
+                "find": 1,
+                "scenery": 0,
+                "unlit": 0
+              }
+            ]
+          }
+        ]
+      },
+      "witchProof": {
+        "count": 1,
+        "hatOnCount": 1,
+        "bareCount": 0,
+        "hat": {
+          "has": true,
+          "down": null,
+          "left": []
+        },
+        "herIdle": false,
+        "camera": {
+          "zoomStep": 3,
+          "zoom": 0.375,
+          "tx": 3219.626688069752,
+          "ty": 1.4,
+          "tz": 3106.559326444441,
+          "vx": 0,
+          "vy": 0,
+          "vz": 0,
+          "ax": 0,
+          "az": 0,
+          "lift": 0,
+          "intro": 0
+        },
+        "screen": {
+          "x": 20.53240589403209,
+          "y": 154.9705854010873,
+          "halfWidth": 22.624348882311992,
+          "halfHeight": 17.0127186069481
+        },
+        "viewport": {
+          "width": 534,
+          "height": 300
+        },
+        "projection": {
+          "projectionMatrix": [
+            3.186113381807702,
+            0,
+            0,
+            0,
+            0,
+            5.671281819617709,
+            0,
+            0,
+            0,
+            0,
+            -1.0022246941045607,
+            -1,
+            0,
+            0,
+            -2.0022246941045605,
+            0
+          ],
+          "matrixWorldInverse": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0.8480480961564261,
+            0.5299192642332048,
+            0,
+            0,
+            -0.5299192642332048,
+            0.8480480961564261,
+            0,
+            -3219.613116416099,
+            1661.117709594212,
+            -2725.1768633491893,
+            1
+          ],
+          "witchBase": {
+            "x": 3190.754367956137,
+            "y": -19.103074196475045,
+            "z": 3106.559326444441
+          },
+          "witchTall": 4.40625,
+          "witchFeetTop": 4.059374999999999,
+          "rideHeight": -20.103074196475045,
+          "camRideHeight": -19.015625,
+          "groundHeight": -20.103074196475045,
+          "cameraPosition": [
+            3219.6131164160984,
+            35.41600721826086,
+            3191.339325125732
+          ]
+        }
+      },
+      "bounds": {
+        "pixels": 26784,
+        "x0": 1390,
+        "y0": 302,
+        "x1": 1599,
+        "y1": 511,
+        "method": "difference of target-only silhouette and SAME flagOFF normal frame; excludes naturally magenta scenery"
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true,
+      "fixtureScenery": "type/decor batch draws omitted equally; native dark forest ground unchanged",
+      "crops": {
+        "x": 1395,
+        "y": 307,
+        "width": 200,
+        "height": 200,
+        "order": "off left / on right",
+        "scales": [
+          1,
+          3
+        ],
+        "method": "exact nearest-neighbour pixel copy offline after browser closed"
+      }
+    },
+    {
+      "name": "jaguar-L2-centre",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.25,
+        "x": 3201.8591064613734,
+        "z": 3106.559326444441
+      },
+      "diagnostics": {
+        "origin": {
+          "x": 3201.8591064613734,
+          "z": 3106.559326444441
+        },
+        "witch": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "lightCentre": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "distance": 11.104738505236583,
+        "radius": 44.41895402094715,
+        "power": 0.95,
+        "dim": 1,
+        "falloff": 1.8,
+        "batches": [
+          {
+            "key": "67f684a1-af53-41b9-af56-ce5beb849a8a",
+            "count": 3,
+            "flags": [
+              {
+                "visible": true,
+                "find": 1,
+                "scenery": 0,
+                "unlit": 0
+              }
+            ]
+          },
+          {
+            "key": "67f684a1-af53-41b9-af56-ce5beb849a8a|discs",
+            "count": 60,
+            "flags": [
+              {
+                "visible": true,
+                "find": 1,
+                "scenery": 0,
+                "unlit": 0
+              }
+            ]
+          }
+        ]
+      },
+      "witchProof": {
+        "count": 1,
+        "hatOnCount": 1,
+        "bareCount": 0,
+        "hat": {
+          "has": true,
+          "down": null,
+          "left": []
+        },
+        "herIdle": false,
+        "camera": {
+          "zoomStep": 3,
+          "zoom": 0.375,
+          "tx": 3190.754367956137,
+          "ty": 1.4,
+          "tz": 3106.559326444441,
+          "vx": 0,
+          "vy": 0,
+          "vz": 0,
+          "ax": 0,
+          "az": 0,
+          "lift": 0,
+          "intro": 0
+        },
+        "screen": {
+          "x": 266.49597137367414,
+          "y": 163.07890831504574,
+          "halfWidth": 22.89871215284279,
+          "halfHeight": 17.201459903880007
+        },
+        "viewport": {
+          "width": 534,
+          "height": 300
+        },
+        "projection": {
+          "projectionMatrix": [
+            3.186113381807702,
+            0,
+            0,
+            0,
+            0,
+            5.671281819617709,
+            0,
+            0,
+            0,
+            0,
+            -1.0022246941045607,
+            -1,
+            0,
+            0,
+            -2.0022246941045605,
+            0
+          ],
+          "matrixWorldInverse": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0.8480480961564261,
+            0.5299192642332048,
+            0,
+            0,
+            -0.5299192642332048,
+            0.8480480961564261,
+            0,
+            -3190.8130429003822,
+            1662.0581201579905,
+            -2724.6006030711023,
+            1
+          ],
+          "witchBase": {
+            "x": 3190.754367956137,
+            "y": -19.103074196475045,
+            "z": 3106.559326444441
+          },
+          "witchTall": 4.40625,
+          "witchFeetTop": 4.059374999999999,
+          "rideHeight": -20.103074196475045,
+          "camRideHeight": -20.103074196475045,
+          "groundHeight": -20.103074196475045,
+          "cameraPosition": [
+            3190.8130429003822,
+            34.31312240747238,
+            3191.348970368045
+          ]
+        }
+      },
+      "bounds": {
+        "pixels": 103419,
+        "x0": 814,
+        "y0": 230,
+        "x1": 1365,
+        "y1": 529,
+        "method": "difference of target-only silhouette and SAME flagOFF normal frame; excludes naturally magenta scenery"
+      },
+      "diff": {
+        "changed": 56565,
+        "max": 80
+      },
+      "lightOffIdentical": true,
+      "fixtureScenery": "type/decor batch draws omitted equally; native dark forest ground unchanged",
+      "crops": {
+        "x": 990,
+        "y": 280,
+        "width": 200,
+        "height": 200,
+        "order": "off left / on right",
+        "scales": [
+          1,
+          3
+        ],
+        "method": "exact nearest-neighbour pixel copy offline after browser closed"
+      }
+    },
+    {
+      "name": "jaguar-L2-edge",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.75,
+        "x": 3224.068583471847,
+        "z": 3106.559326444441
+      },
+      "diagnostics": {
+        "origin": {
+          "x": 3224.068583471847,
+          "z": 3106.559326444441
+        },
+        "witch": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "lightCentre": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "distance": 33.3142155157102,
+        "radius": 44.41895402094715,
+        "power": 0.95,
+        "dim": 1,
+        "falloff": 1.8,
+        "batches": [
+          {
+            "key": "67f684a1-af53-41b9-af56-ce5beb849a8a",
+            "count": 3,
+            "flags": [
+              {
+                "visible": true,
+                "find": 1,
+                "scenery": 0,
+                "unlit": 0
+              }
+            ]
+          },
+          {
+            "key": "67f684a1-af53-41b9-af56-ce5beb849a8a|discs",
+            "count": 60,
+            "flags": [
+              {
+                "visible": true,
+                "find": 1,
+                "scenery": 0,
+                "unlit": 0
+              }
+            ]
+          }
+        ]
+      },
+      "witchProof": {
+        "count": 1,
+        "hatOnCount": 1,
+        "bareCount": 0,
+        "hat": {
+          "has": true,
+          "down": null,
+          "left": []
+        },
+        "herIdle": false,
+        "camera": {
+          "zoomStep": 3,
+          "zoom": 0.375,
+          "tx": 3190.754367956137,
+          "ty": 1.4,
+          "tz": 3106.559326444441,
+          "vx": 0,
+          "vy": 0,
+          "vz": 0,
+          "ax": 0,
+          "az": 0,
+          "lift": 0,
+          "intro": 0
+        },
+        "screen": {
+          "x": 266.49597137367414,
+          "y": 163.07890831504574,
+          "halfWidth": 22.89871215284279,
+          "halfHeight": 17.201459903880007
+        },
+        "viewport": {
+          "width": 534,
+          "height": 300
+        },
+        "projection": {
+          "projectionMatrix": [
+            3.186113381807702,
+            0,
+            0,
+            0,
+            0,
+            5.671281819617709,
+            0,
+            0,
+            0,
+            0,
+            -1.0022246941045607,
+            -1,
+            0,
+            0,
+            -2.0022246941045605,
+            0
+          ],
+          "matrixWorldInverse": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0.8480480961564261,
+            0.5299192642332048,
+            0,
+            0,
+            -0.5299192642332048,
+            0.8480480961564261,
+            0,
+            -3190.8130429003822,
+            1662.0581201579905,
+            -2724.6006030711023,
+            1
+          ],
+          "witchBase": {
+            "x": 3190.754367956137,
+            "y": -19.103074196475045,
+            "z": 3106.559326444441
+          },
+          "witchTall": 4.40625,
+          "witchFeetTop": 4.059374999999999,
+          "rideHeight": -20.103074196475045,
+          "camRideHeight": -20.103074196475045,
+          "groundHeight": -20.103074196475045,
+          "cameraPosition": [
+            3190.8130429003822,
+            34.31312240747238,
+            3191.348970368045
+          ]
+        }
+      },
+      "bounds": {
+        "pixels": 31023,
+        "x0": 1399,
+        "y0": 272,
+        "x1": 1599,
+        "y1": 517,
+        "method": "difference of target-only silhouette and SAME flagOFF normal frame; excludes naturally magenta scenery"
+      },
+      "diff": {
+        "changed": 11979,
+        "max": 15
+      },
+      "lightOffIdentical": true,
+      "fixtureScenery": "type/decor batch draws omitted equally; native dark forest ground unchanged",
+      "crops": {
+        "x": 1399,
+        "y": 295,
+        "width": 200,
+        "height": 200,
+        "order": "off left / on right",
+        "scales": [
+          1,
+          3
+        ],
+        "method": "exact nearest-neighbour pixel copy offline after browser closed"
+      }
+    },
+    {
+      "name": "jaguar-L2-outside",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 1.3,
+        "x": 3248.499008183368,
+        "z": 3106.559326444441
+      },
+      "diagnostics": {
+        "origin": {
+          "x": 3248.499008183368,
+          "z": 3106.559326444441
+        },
+        "witch": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "lightCentre": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "distance": 57.74464022723123,
+        "radius": 44.8,
+        "power": 0.95,
+        "dim": 1,
+        "falloff": 1.8,
+        "batches": [
+          {
+            "key": "67f684a1-af53-41b9-af56-ce5beb849a8a",
+            "count": 3,
+            "flags": [
+              {
+                "visible": true,
+                "find": 1,
+                "scenery": 0,
+                "unlit": 0
+              }
+            ]
+          },
+          {
+            "key": "67f684a1-af53-41b9-af56-ce5beb849a8a|discs",
+            "count": 60,
+            "flags": [
+              {
+                "visible": true,
+                "find": 1,
+                "scenery": 0,
+                "unlit": 0
+              }
+            ]
+          }
+        ]
+      },
+      "witchProof": {
+        "count": 1,
+        "hatOnCount": 1,
+        "bareCount": 0,
+        "hat": {
+          "has": true,
+          "down": null,
+          "left": []
+        },
+        "herIdle": false,
+        "camera": {
+          "zoomStep": 3,
+          "zoom": 0.375,
+          "tx": 3219.626688069752,
+          "ty": 1.4,
+          "tz": 3106.559326444441,
+          "vx": 0,
+          "vy": 0,
+          "vz": 0,
+          "ax": 0,
+          "az": 0,
+          "lift": 0,
+          "intro": 0
+        },
+        "screen": {
+          "x": 20.53240589403209,
+          "y": 154.9705854010873,
+          "halfWidth": 22.624348882311992,
+          "halfHeight": 17.0127186069481
+        },
+        "viewport": {
+          "width": 534,
+          "height": 300
+        },
+        "projection": {
+          "projectionMatrix": [
+            3.186113381807702,
+            0,
+            0,
+            0,
+            0,
+            5.671281819617709,
+            0,
+            0,
+            0,
+            0,
+            -1.0022246941045607,
+            -1,
+            0,
+            0,
+            -2.0022246941045605,
+            0
+          ],
+          "matrixWorldInverse": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0.8480480961564261,
+            0.5299192642332048,
+            0,
+            0,
+            -0.5299192642332048,
+            0.8480480961564261,
+            0,
+            -3219.613116416099,
+            1661.117709594212,
+            -2725.1768633491893,
+            1
+          ],
+          "witchBase": {
+            "x": 3190.754367956137,
+            "y": -19.103074196475045,
+            "z": 3106.559326444441
+          },
+          "witchTall": 4.40625,
+          "witchFeetTop": 4.059374999999999,
+          "rideHeight": -20.103074196475045,
+          "camRideHeight": -19.015625,
+          "groundHeight": -20.103074196475045,
+          "cameraPosition": [
+            3219.6131164160984,
+            35.41600721826086,
+            3191.339325125732
+          ]
+        }
+      },
+      "bounds": {
+        "pixels": 54918,
+        "x0": 1288,
+        "y0": 278,
+        "x1": 1599,
+        "y1": 541,
+        "method": "difference of target-only silhouette and SAME flagOFF normal frame; excludes naturally magenta scenery"
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true,
+      "fixtureScenery": "type/decor batch draws omitted equally; native dark forest ground unchanged",
+      "crops": {
+        "x": 1344,
+        "y": 310,
+        "width": 200,
+        "height": 200,
+        "order": "off left / on right",
+        "scales": [
+          1,
+          3
+        ],
+        "method": "exact nearest-neighbour pixel copy offline after browser closed"
+      }
+    },
+    {
+      "name": "mole-L2-centre",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.25,
+        "x": 3201.8591064613734,
+        "z": 3106.559326444441
+      },
+      "diagnostics": {
+        "origin": {
+          "x": 3201.8591064613734,
+          "z": 3106.559326444441
+        },
+        "witch": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "lightCentre": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "distance": 11.104738505236583,
+        "radius": 44.41895402094715,
+        "power": 0.95,
+        "dim": 1,
+        "falloff": 1.8,
+        "batches": [
+          {
+            "key": "mole",
+            "count": 1,
+            "flags": [
+              {
+                "visible": true,
+                "find": 1,
+                "scenery": 0,
+                "unlit": 0
+              }
+            ]
+          }
+        ]
+      },
+      "witchProof": {
+        "count": 1,
+        "hatOnCount": 1,
+        "bareCount": 0,
+        "hat": {
+          "has": true,
+          "down": null,
+          "left": []
+        },
+        "herIdle": false,
+        "camera": {
+          "zoomStep": 3,
+          "zoom": 0.375,
+          "tx": 3190.754367956137,
+          "ty": 1.4,
+          "tz": 3106.559326444441,
+          "vx": 0,
+          "vy": 0,
+          "vz": 0,
+          "ax": 0,
+          "az": 0,
+          "lift": 0,
+          "intro": 0
+        },
+        "screen": {
+          "x": 266.49597137367414,
+          "y": 163.07890831504574,
+          "halfWidth": 22.89871215284279,
+          "halfHeight": 17.201459903880007
+        },
+        "viewport": {
+          "width": 534,
+          "height": 300
+        },
+        "projection": {
+          "projectionMatrix": [
+            3.186113381807702,
+            0,
+            0,
+            0,
+            0,
+            5.671281819617709,
+            0,
+            0,
+            0,
+            0,
+            -1.0022246941045607,
+            -1,
+            0,
+            0,
+            -2.0022246941045605,
+            0
+          ],
+          "matrixWorldInverse": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0.8480480961564261,
+            0.5299192642332048,
+            0,
+            0,
+            -0.5299192642332048,
+            0.8480480961564261,
+            0,
+            -3190.8130429003822,
+            1662.0581201579905,
+            -2724.6006030711023,
+            1
+          ],
+          "witchBase": {
+            "x": 3190.754367956137,
+            "y": -19.103074196475045,
+            "z": 3106.559326444441
+          },
+          "witchTall": 4.40625,
+          "witchFeetTop": 4.059374999999999,
+          "rideHeight": -20.103074196475045,
+          "camRideHeight": -20.103074196475045,
+          "groundHeight": -20.103074196475045,
+          "cameraPosition": [
+            3190.8130429003822,
+            34.31312240747238,
+            3191.348970368045
+          ]
+        }
+      },
+      "bounds": {
+        "pixels": 30744,
+        "x0": 958,
+        "y0": 305,
+        "x1": 1197,
+        "y1": 493,
+        "method": "difference of target-only silhouette and SAME flagOFF normal frame; excludes naturally magenta scenery"
+      },
+      "diff": {
+        "changed": 16704,
+        "max": 62
+      },
+      "lightOffIdentical": true,
+      "fixtureScenery": "type/decor batch draws omitted equally; native dark forest ground unchanged",
+      "crops": {
+        "x": 978,
+        "y": 299,
+        "width": 200,
+        "height": 200,
+        "order": "off left / on right",
+        "scales": [
+          1,
+          3
+        ],
+        "method": "exact nearest-neighbour pixel copy offline after browser closed"
+      }
+    },
+    {
+      "name": "mole-L2-edge",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.75,
+        "x": 3224.068583471847,
+        "z": 3106.559326444441
+      },
+      "diagnostics": {
+        "origin": {
+          "x": 3224.068583471847,
+          "z": 3106.559326444441
+        },
+        "witch": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "lightCentre": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "distance": 33.3142155157102,
+        "radius": 44.41895402094715,
+        "power": 0.95,
+        "dim": 1,
+        "falloff": 1.8,
+        "batches": [
+          {
+            "key": "mole",
+            "count": 1,
+            "flags": [
+              {
+                "visible": true,
+                "find": 1,
+                "scenery": 0,
+                "unlit": 0
+              }
+            ]
+          }
+        ]
+      },
+      "witchProof": {
+        "count": 1,
+        "hatOnCount": 1,
+        "bareCount": 0,
+        "hat": {
+          "has": true,
+          "down": null,
+          "left": []
+        },
+        "herIdle": false,
+        "camera": {
+          "zoomStep": 3,
+          "zoom": 0.375,
+          "tx": 3190.754367956137,
+          "ty": 1.4,
+          "tz": 3106.559326444441,
+          "vx": 0,
+          "vy": 0,
+          "vz": 0,
+          "ax": 0,
+          "az": 0,
+          "lift": 0,
+          "intro": 0
+        },
+        "screen": {
+          "x": 266.49597137367414,
+          "y": 163.07890831504574,
+          "halfWidth": 22.89871215284279,
+          "halfHeight": 17.201459903880007
+        },
+        "viewport": {
+          "width": 534,
+          "height": 300
+        },
+        "projection": {
+          "projectionMatrix": [
+            3.186113381807702,
+            0,
+            0,
+            0,
+            0,
+            5.671281819617709,
+            0,
+            0,
+            0,
+            0,
+            -1.0022246941045607,
+            -1,
+            0,
+            0,
+            -2.0022246941045605,
+            0
+          ],
+          "matrixWorldInverse": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0.8480480961564261,
+            0.5299192642332048,
+            0,
+            0,
+            -0.5299192642332048,
+            0.8480480961564261,
+            0,
+            -3190.8130429003822,
+            1662.0581201579905,
+            -2724.6006030711023,
+            1
+          ],
+          "witchBase": {
+            "x": 3190.754367956137,
+            "y": -19.103074196475045,
+            "z": 3106.559326444441
+          },
+          "witchTall": 4.40625,
+          "witchFeetTop": 4.059374999999999,
+          "rideHeight": -20.103074196475045,
+          "camRideHeight": -20.103074196475045,
+          "groundHeight": -20.103074196475045,
+          "cameraPosition": [
+            3190.8130429003822,
+            34.31312240747238,
+            3191.348970368045
+          ]
+        }
+      },
+      "bounds": {
+        "pixels": 8514,
+        "x0": 1534,
+        "y0": 269,
+        "x1": 1599,
+        "y1": 457,
+        "method": "difference of target-only silhouette and SAME flagOFF normal frame; excludes naturally magenta scenery"
+      },
+      "diff": {
+        "changed": 1035,
+        "max": 5
+      },
+      "lightOffIdentical": true,
+      "fixtureScenery": "type/decor batch draws omitted equally; native dark forest ground unchanged",
+      "crops": {
+        "x": 1400,
+        "y": 263,
+        "width": 200,
+        "height": 200,
+        "order": "off left / on right",
+        "scales": [
+          1,
+          3
+        ],
+        "method": "exact nearest-neighbour pixel copy offline after browser closed"
+      }
+    },
+    {
+      "name": "mole-L2-outside",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 1.3,
+        "x": 3248.499008183368,
+        "z": 3106.559326444441
+      },
+      "diagnostics": {
+        "origin": {
+          "x": 3248.499008183368,
+          "z": 3106.559326444441
+        },
+        "witch": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "lightCentre": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "distance": 57.74464022723123,
+        "radius": 44.8,
+        "power": 0.95,
+        "dim": 1,
+        "falloff": 1.8,
+        "batches": [
+          {
+            "key": "mole",
+            "count": 1,
+            "flags": [
+              {
+                "visible": true,
+                "find": 1,
+                "scenery": 0,
+                "unlit": 0
+              }
+            ]
+          }
+        ]
+      },
+      "witchProof": {
+        "count": 1,
+        "hatOnCount": 1,
+        "bareCount": 0,
+        "hat": {
+          "has": true,
+          "down": null,
+          "left": []
+        },
+        "herIdle": false,
+        "camera": {
+          "zoomStep": 3,
+          "zoom": 0.375,
+          "tx": 3219.626688069752,
+          "ty": 1.4,
+          "tz": 3106.559326444441,
+          "vx": 0,
+          "vy": 0,
+          "vz": 0,
+          "ax": 0,
+          "az": 0,
+          "lift": 0,
+          "intro": 0
+        },
+        "screen": {
+          "x": 20.53240589403209,
+          "y": 154.9705854010873,
+          "halfWidth": 22.624348882311992,
+          "halfHeight": 17.0127186069481
+        },
+        "viewport": {
+          "width": 534,
+          "height": 300
+        },
+        "projection": {
+          "projectionMatrix": [
+            3.186113381807702,
+            0,
+            0,
+            0,
+            0,
+            5.671281819617709,
+            0,
+            0,
+            0,
+            0,
+            -1.0022246941045607,
+            -1,
+            0,
+            0,
+            -2.0022246941045605,
+            0
+          ],
+          "matrixWorldInverse": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0.8480480961564261,
+            0.5299192642332048,
+            0,
+            0,
+            -0.5299192642332048,
+            0.8480480961564261,
+            0,
+            -3219.613116416099,
+            1661.117709594212,
+            -2725.1768633491893,
+            1
+          ],
+          "witchBase": {
+            "x": 3190.754367956137,
+            "y": -19.103074196475045,
+            "z": 3106.559326444441
+          },
+          "witchTall": 4.40625,
+          "witchFeetTop": 4.059374999999999,
+          "rideHeight": -20.103074196475045,
+          "camRideHeight": -19.015625,
+          "groundHeight": -20.103074196475045,
+          "cameraPosition": [
+            3219.6131164160984,
+            35.41600721826086,
+            3191.339325125732
+          ]
+        }
+      },
+      "bounds": {
+        "pixels": 24849,
+        "x0": 1420,
+        "y0": 320,
+        "x1": 1599,
+        "y1": 517,
+        "method": "difference of target-only silhouette and SAME flagOFF normal frame; excludes naturally magenta scenery"
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true,
+      "fixtureScenery": "type/decor batch draws omitted equally; native dark forest ground unchanged",
+      "crops": {
+        "x": 1400,
+        "y": 319,
+        "width": 200,
+        "height": 200,
+        "order": "off left / on right",
+        "scales": [
+          1,
+          3
+        ],
+        "method": "exact nearest-neighbour pixel copy offline after browser closed"
+      }
+    },
+    {
+      "name": "stoat-L2-centre",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.25,
+        "x": 3201.8591064613734,
+        "z": 3106.559326444441
+      },
+      "diagnostics": {
+        "origin": {
+          "x": 3201.8591064613734,
+          "z": 3106.559326444441
+        },
+        "witch": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "lightCentre": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "distance": 11.104738505236583,
+        "radius": 44.41895402094715,
+        "power": 0.95,
+        "dim": 1,
+        "falloff": 1.8,
+        "batches": [
+          {
+            "key": "6b50c98b-ae93-4b82-adbf-a5ac37f38f2c",
+            "count": 3,
+            "flags": [
+              {
+                "visible": true,
+                "find": 1,
+                "scenery": 0,
+                "unlit": 0
+              }
+            ]
+          },
+          {
+            "key": "6b50c98b-ae93-4b82-adbf-a5ac37f38f2c|discs",
+            "count": 73,
+            "flags": [
+              {
+                "visible": true,
+                "find": 1,
+                "scenery": 0,
+                "unlit": 0
+              }
+            ]
+          }
+        ]
+      },
+      "witchProof": {
+        "count": 1,
+        "hatOnCount": 1,
+        "bareCount": 0,
+        "hat": {
+          "has": true,
+          "down": null,
+          "left": []
+        },
+        "herIdle": false,
+        "camera": {
+          "zoomStep": 3,
+          "zoom": 0.375,
+          "tx": 3190.754367956137,
+          "ty": 1.4,
+          "tz": 3106.559326444441,
+          "vx": 0,
+          "vy": 0,
+          "vz": 0,
+          "ax": 0,
+          "az": 0,
+          "lift": 0,
+          "intro": 0
+        },
+        "screen": {
+          "x": 266.49597137367414,
+          "y": 163.07890831504574,
+          "halfWidth": 22.89871215284279,
+          "halfHeight": 17.201459903880007
+        },
+        "viewport": {
+          "width": 534,
+          "height": 300
+        },
+        "projection": {
+          "projectionMatrix": [
+            3.186113381807702,
+            0,
+            0,
+            0,
+            0,
+            5.671281819617709,
+            0,
+            0,
+            0,
+            0,
+            -1.0022246941045607,
+            -1,
+            0,
+            0,
+            -2.0022246941045605,
+            0
+          ],
+          "matrixWorldInverse": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0.8480480961564261,
+            0.5299192642332048,
+            0,
+            0,
+            -0.5299192642332048,
+            0.8480480961564261,
+            0,
+            -3190.8130429003822,
+            1662.0581201579905,
+            -2724.6006030711023,
+            1
+          ],
+          "witchBase": {
+            "x": 3190.754367956137,
+            "y": -19.103074196475045,
+            "z": 3106.559326444441
+          },
+          "witchTall": 4.40625,
+          "witchFeetTop": 4.059374999999999,
+          "rideHeight": -20.103074196475045,
+          "camRideHeight": -20.103074196475045,
+          "groundHeight": -20.103074196475045,
+          "cameraPosition": [
+            3190.8130429003822,
+            34.31312240747238,
+            3191.348970368045
+          ]
+        }
+      },
+      "bounds": {
+        "pixels": 32877,
+        "x0": 940,
+        "y0": 344,
+        "x1": 1245,
+        "y1": 505,
+        "method": "difference of target-only silhouette and SAME flagOFF normal frame; excludes naturally magenta scenery"
+      },
+      "diff": {
+        "changed": 20520,
+        "max": 59
+      },
+      "lightOffIdentical": true,
+      "fixtureScenery": "type/decor batch draws omitted equally; native dark forest ground unchanged",
+      "crops": {
+        "x": 993,
+        "y": 325,
+        "width": 200,
+        "height": 200,
+        "order": "off left / on right",
+        "scales": [
+          1,
+          3
+        ],
+        "method": "exact nearest-neighbour pixel copy offline after browser closed"
+      }
+    },
+    {
+      "name": "stoat-L2-edge",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.75,
+        "x": 3224.068583471847,
+        "z": 3106.559326444441
+      },
+      "diagnostics": {
+        "origin": {
+          "x": 3224.068583471847,
+          "z": 3106.559326444441
+        },
+        "witch": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "lightCentre": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "distance": 33.3142155157102,
+        "radius": 44.41895402094715,
+        "power": 0.95,
+        "dim": 1,
+        "falloff": 1.8,
+        "batches": [
+          {
+            "key": "6b50c98b-ae93-4b82-adbf-a5ac37f38f2c",
+            "count": 3,
+            "flags": [
+              {
+                "visible": true,
+                "find": 1,
+                "scenery": 0,
+                "unlit": 0
+              }
+            ]
+          },
+          {
+            "key": "6b50c98b-ae93-4b82-adbf-a5ac37f38f2c|discs",
+            "count": 73,
+            "flags": [
+              {
+                "visible": true,
+                "find": 1,
+                "scenery": 0,
+                "unlit": 0
+              }
+            ]
+          }
+        ]
+      },
+      "witchProof": {
+        "count": 1,
+        "hatOnCount": 1,
+        "bareCount": 0,
+        "hat": {
+          "has": true,
+          "down": null,
+          "left": []
+        },
+        "herIdle": false,
+        "camera": {
+          "zoomStep": 3,
+          "zoom": 0.375,
+          "tx": 3190.754367956137,
+          "ty": 1.4,
+          "tz": 3106.559326444441,
+          "vx": 0,
+          "vy": 0,
+          "vz": 0,
+          "ax": 0,
+          "az": 0,
+          "lift": 0,
+          "intro": 0
+        },
+        "screen": {
+          "x": 266.49597137367414,
+          "y": 163.07890831504574,
+          "halfWidth": 22.89871215284279,
+          "halfHeight": 17.201459903880007
+        },
+        "viewport": {
+          "width": 534,
+          "height": 300
+        },
+        "projection": {
+          "projectionMatrix": [
+            3.186113381807702,
+            0,
+            0,
+            0,
+            0,
+            5.671281819617709,
+            0,
+            0,
+            0,
+            0,
+            -1.0022246941045607,
+            -1,
+            0,
+            0,
+            -2.0022246941045605,
+            0
+          ],
+          "matrixWorldInverse": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0.8480480961564261,
+            0.5299192642332048,
+            0,
+            0,
+            -0.5299192642332048,
+            0.8480480961564261,
+            0,
+            -3190.8130429003822,
+            1662.0581201579905,
+            -2724.6006030711023,
+            1
+          ],
+          "witchBase": {
+            "x": 3190.754367956137,
+            "y": -19.103074196475045,
+            "z": 3106.559326444441
+          },
+          "witchTall": 4.40625,
+          "witchFeetTop": 4.059374999999999,
+          "rideHeight": -20.103074196475045,
+          "camRideHeight": -20.103074196475045,
+          "groundHeight": -20.103074196475045,
+          "cameraPosition": [
+            3190.8130429003822,
+            34.31312240747238,
+            3191.348970368045
+          ]
+        }
+      },
+      "bounds": {
+        "pixels": 7812,
+        "x0": 1519,
+        "y0": 344,
+        "x1": 1599,
+        "y1": 484,
+        "method": "difference of target-only silhouette and SAME flagOFF normal frame; excludes naturally magenta scenery"
+      },
+      "diff": {
+        "changed": 603,
+        "max": 6
+      },
+      "lightOffIdentical": true,
+      "fixtureScenery": "type/decor batch draws omitted equally; native dark forest ground unchanged",
+      "crops": {
+        "x": 1400,
+        "y": 314,
+        "width": 200,
+        "height": 200,
+        "order": "off left / on right",
+        "scales": [
+          1,
+          3
+        ],
+        "method": "exact nearest-neighbour pixel copy offline after browser closed"
+      }
+    },
+    {
+      "name": "stoat-L2-outside",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 1.3,
+        "x": 3248.499008183368,
+        "z": 3106.559326444441
+      },
+      "diagnostics": {
+        "origin": {
+          "x": 3248.499008183368,
+          "z": 3106.559326444441
+        },
+        "witch": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "lightCentre": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "distance": 57.74464022723123,
+        "radius": 44.8,
+        "power": 0.95,
+        "dim": 1,
+        "falloff": 1.8,
+        "batches": [
+          {
+            "key": "6b50c98b-ae93-4b82-adbf-a5ac37f38f2c",
+            "count": 3,
+            "flags": [
+              {
+                "visible": true,
+                "find": 1,
+                "scenery": 0,
+                "unlit": 0
+              }
+            ]
+          },
+          {
+            "key": "6b50c98b-ae93-4b82-adbf-a5ac37f38f2c|discs",
+            "count": 73,
+            "flags": [
+              {
+                "visible": true,
+                "find": 1,
+                "scenery": 0,
+                "unlit": 0
+              }
+            ]
+          }
+        ]
+      },
+      "witchProof": {
+        "count": 1,
+        "hatOnCount": 1,
+        "bareCount": 0,
+        "hat": {
+          "has": true,
+          "down": null,
+          "left": []
+        },
+        "herIdle": false,
+        "camera": {
+          "zoomStep": 3,
+          "zoom": 0.375,
+          "tx": 3219.626688069752,
+          "ty": 1.4,
+          "tz": 3106.559326444441,
+          "vx": 0,
+          "vy": 0,
+          "vz": 0,
+          "ax": 0,
+          "az": 0,
+          "lift": 0,
+          "intro": 0
+        },
+        "screen": {
+          "x": 20.53240589403209,
+          "y": 154.9705854010873,
+          "halfWidth": 22.624348882311992,
+          "halfHeight": 17.0127186069481
+        },
+        "viewport": {
+          "width": 534,
+          "height": 300
+        },
+        "projection": {
+          "projectionMatrix": [
+            3.186113381807702,
+            0,
+            0,
+            0,
+            0,
+            5.671281819617709,
+            0,
+            0,
+            0,
+            0,
+            -1.0022246941045607,
+            -1,
+            0,
+            0,
+            -2.0022246941045605,
+            0
+          ],
+          "matrixWorldInverse": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0.8480480961564261,
+            0.5299192642332048,
+            0,
+            0,
+            -0.5299192642332048,
+            0.8480480961564261,
+            0,
+            -3219.613116416099,
+            1661.117709594212,
+            -2725.1768633491893,
+            1
+          ],
+          "witchBase": {
+            "x": 3190.754367956137,
+            "y": -19.103074196475045,
+            "z": 3106.559326444441
+          },
+          "witchTall": 4.40625,
+          "witchFeetTop": 4.059374999999999,
+          "rideHeight": -20.103074196475045,
+          "camRideHeight": -19.015625,
+          "groundHeight": -20.103074196475045,
+          "cameraPosition": [
+            3219.6131164160984,
+            35.41600721826086,
+            3191.339325125732
+          ]
+        }
+      },
+      "bounds": {
+        "pixels": 23229,
+        "x0": 1402,
+        "y0": 374,
+        "x1": 1599,
+        "y1": 523,
+        "method": "difference of target-only silhouette and SAME flagOFF normal frame; excludes naturally magenta scenery"
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true,
+      "fixtureScenery": "type/decor batch draws omitted equally; native dark forest ground unchanged",
+      "crops": {
+        "x": 1400,
+        "y": 349,
+        "width": 200,
+        "height": 200,
+        "order": "off left / on right",
+        "scales": [
+          1,
+          3
+        ],
+        "method": "exact nearest-neighbour pixel copy offline after browser closed"
+      }
+    },
+    {
+      "name": "arcticfox-L2-centre",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.25,
+        "x": 3201.8591064613734,
+        "z": 3106.559326444441
+      },
+      "diagnostics": {
+        "origin": {
+          "x": 3201.8591064613734,
+          "z": 3106.559326444441
+        },
+        "witch": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "lightCentre": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "distance": 11.104738505236583,
+        "radius": 44.41895402094715,
+        "power": 0.95,
+        "dim": 1,
+        "falloff": 1.8,
+        "batches": [
+          {
+            "key": "08f187cc-42fe-410f-8d23-6dbd661bc30f",
+            "count": 3,
+            "flags": [
+              {
+                "visible": true,
+                "find": 1,
+                "scenery": 0,
+                "unlit": 0
+              }
+            ]
+          },
+          {
+            "key": "08f187cc-42fe-410f-8d23-6dbd661bc30f|discs",
+            "count": 77,
+            "flags": [
+              {
+                "visible": true,
+                "find": 1,
+                "scenery": 0,
+                "unlit": 0
+              }
+            ]
+          }
+        ]
+      },
+      "witchProof": {
+        "count": 1,
+        "hatOnCount": 1,
+        "bareCount": 0,
+        "hat": {
+          "has": true,
+          "down": null,
+          "left": []
+        },
+        "herIdle": false,
+        "camera": {
+          "zoomStep": 3,
+          "zoom": 0.375,
+          "tx": 3190.754367956137,
+          "ty": 1.4,
+          "tz": 3106.559326444441,
+          "vx": 0,
+          "vy": 0,
+          "vz": 0,
+          "ax": 0,
+          "az": 0,
+          "lift": 0,
+          "intro": 0
+        },
+        "screen": {
+          "x": 266.49597137367414,
+          "y": 163.07890831504574,
+          "halfWidth": 22.89871215284279,
+          "halfHeight": 17.201459903880007
+        },
+        "viewport": {
+          "width": 534,
+          "height": 300
+        },
+        "projection": {
+          "projectionMatrix": [
+            3.186113381807702,
+            0,
+            0,
+            0,
+            0,
+            5.671281819617709,
+            0,
+            0,
+            0,
+            0,
+            -1.0022246941045607,
+            -1,
+            0,
+            0,
+            -2.0022246941045605,
+            0
+          ],
+          "matrixWorldInverse": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0.8480480961564261,
+            0.5299192642332048,
+            0,
+            0,
+            -0.5299192642332048,
+            0.8480480961564261,
+            0,
+            -3190.8130429003822,
+            1662.0581201579905,
+            -2724.6006030711023,
+            1
+          ],
+          "witchBase": {
+            "x": 3190.754367956137,
+            "y": -19.103074196475045,
+            "z": 3106.559326444441
+          },
+          "witchTall": 4.40625,
+          "witchFeetTop": 4.059374999999999,
+          "rideHeight": -20.103074196475045,
+          "camRideHeight": -20.103074196475045,
+          "groundHeight": -20.103074196475045,
+          "cameraPosition": [
+            3190.8130429003822,
+            34.31312240747238,
+            3191.348970368045
+          ]
+        }
+      },
+      "bounds": {
+        "pixels": 57204,
+        "x0": 850,
+        "y0": 284,
+        "x1": 1266,
+        "y1": 508,
+        "method": "difference of target-only silhouette and SAME flagOFF normal frame; excludes naturally magenta scenery"
+      },
+      "diff": {
+        "changed": 33903,
+        "max": 81
+      },
+      "lightOffIdentical": true,
+      "fixtureScenery": "type/decor batch draws omitted equally; native dark forest ground unchanged",
+      "crops": {
+        "x": 958,
+        "y": 296,
+        "width": 200,
+        "height": 200,
+        "order": "off left / on right",
+        "scales": [
+          1,
+          3
+        ],
+        "method": "exact nearest-neighbour pixel copy offline after browser closed"
+      }
+    },
+    {
+      "name": "arcticfox-L2-edge",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.75,
+        "x": 3224.068583471847,
+        "z": 3106.559326444441
+      },
+      "diagnostics": {
+        "origin": {
+          "x": 3224.068583471847,
+          "z": 3106.559326444441
+        },
+        "witch": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "lightCentre": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "distance": 33.3142155157102,
+        "radius": 44.41895402094715,
+        "power": 0.95,
+        "dim": 1,
+        "falloff": 1.8,
+        "batches": [
+          {
+            "key": "08f187cc-42fe-410f-8d23-6dbd661bc30f",
+            "count": 3,
+            "flags": [
+              {
+                "visible": true,
+                "find": 1,
+                "scenery": 0,
+                "unlit": 0
+              }
+            ]
+          },
+          {
+            "key": "08f187cc-42fe-410f-8d23-6dbd661bc30f|discs",
+            "count": 77,
+            "flags": [
+              {
+                "visible": true,
+                "find": 1,
+                "scenery": 0,
+                "unlit": 0
+              }
+            ]
+          }
+        ]
+      },
+      "witchProof": {
+        "count": 1,
+        "hatOnCount": 1,
+        "bareCount": 0,
+        "hat": {
+          "has": true,
+          "down": null,
+          "left": []
+        },
+        "herIdle": false,
+        "camera": {
+          "zoomStep": 3,
+          "zoom": 0.375,
+          "tx": 3190.754367956137,
+          "ty": 1.4,
+          "tz": 3106.559326444441,
+          "vx": 0,
+          "vy": 0,
+          "vz": 0,
+          "ax": 0,
+          "az": 0,
+          "lift": 0,
+          "intro": 0
+        },
+        "screen": {
+          "x": 266.49597137367414,
+          "y": 163.07890831504574,
+          "halfWidth": 22.89871215284279,
+          "halfHeight": 17.201459903880007
+        },
+        "viewport": {
+          "width": 534,
+          "height": 300
+        },
+        "projection": {
+          "projectionMatrix": [
+            3.186113381807702,
+            0,
+            0,
+            0,
+            0,
+            5.671281819617709,
+            0,
+            0,
+            0,
+            0,
+            -1.0022246941045607,
+            -1,
+            0,
+            0,
+            -2.0022246941045605,
+            0
+          ],
+          "matrixWorldInverse": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0.8480480961564261,
+            0.5299192642332048,
+            0,
+            0,
+            -0.5299192642332048,
+            0.8480480961564261,
+            0,
+            -3190.8130429003822,
+            1662.0581201579905,
+            -2724.6006030711023,
+            1
+          ],
+          "witchBase": {
+            "x": 3190.754367956137,
+            "y": -19.103074196475045,
+            "z": 3106.559326444441
+          },
+          "witchTall": 4.40625,
+          "witchFeetTop": 4.059374999999999,
+          "rideHeight": -20.103074196475045,
+          "camRideHeight": -20.103074196475045,
+          "groundHeight": -20.103074196475045,
+          "cameraPosition": [
+            3190.8130429003822,
+            34.31312240747238,
+            3191.348970368045
+          ]
+        }
+      },
+      "bounds": {
+        "pixels": 19701,
+        "x0": 1444,
+        "y0": 308,
+        "x1": 1599,
+        "y1": 505,
+        "method": "difference of target-only silhouette and SAME flagOFF normal frame; excludes naturally magenta scenery"
+      },
+      "diff": {
+        "changed": 4131,
+        "max": 11
+      },
+      "lightOffIdentical": true,
+      "fixtureScenery": "type/decor batch draws omitted equally; native dark forest ground unchanged",
+      "crops": {
+        "x": 1400,
+        "y": 307,
+        "width": 200,
+        "height": 200,
+        "order": "off left / on right",
+        "scales": [
+          1,
+          3
+        ],
+        "method": "exact nearest-neighbour pixel copy offline after browser closed"
+      }
+    },
+    {
+      "name": "arcticfox-L2-outside",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 1.3,
+        "x": 3248.499008183368,
+        "z": 3106.559326444441
+      },
+      "diagnostics": {
+        "origin": {
+          "x": 3248.499008183368,
+          "z": 3106.559326444441
+        },
+        "witch": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "lightCentre": {
+          "x": 3190.754367956137,
+          "z": 3106.559326444441
+        },
+        "distance": 57.74464022723123,
+        "radius": 44.8,
+        "power": 0.95,
+        "dim": 1,
+        "falloff": 1.8,
+        "batches": [
+          {
+            "key": "08f187cc-42fe-410f-8d23-6dbd661bc30f",
+            "count": 3,
+            "flags": [
+              {
+                "visible": true,
+                "find": 1,
+                "scenery": 0,
+                "unlit": 0
+              }
+            ]
+          },
+          {
+            "key": "08f187cc-42fe-410f-8d23-6dbd661bc30f|discs",
+            "count": 77,
+            "flags": [
+              {
+                "visible": true,
+                "find": 1,
+                "scenery": 0,
+                "unlit": 0
+              }
+            ]
+          }
+        ]
+      },
+      "witchProof": {
+        "count": 1,
+        "hatOnCount": 1,
+        "bareCount": 0,
+        "hat": {
+          "has": true,
+          "down": null,
+          "left": []
+        },
+        "herIdle": false,
+        "camera": {
+          "zoomStep": 3,
+          "zoom": 0.375,
+          "tx": 3219.626688069752,
+          "ty": 1.4,
+          "tz": 3106.559326444441,
+          "vx": 0,
+          "vy": 0,
+          "vz": 0,
+          "ax": 0,
+          "az": 0,
+          "lift": 0,
+          "intro": 0
+        },
+        "screen": {
+          "x": 20.53240589403209,
+          "y": 154.9705854010873,
+          "halfWidth": 22.624348882311992,
+          "halfHeight": 17.0127186069481
+        },
+        "viewport": {
+          "width": 534,
+          "height": 300
+        },
+        "projection": {
+          "projectionMatrix": [
+            3.186113381807702,
+            0,
+            0,
+            0,
+            0,
+            5.671281819617709,
+            0,
+            0,
+            0,
+            0,
+            -1.0022246941045607,
+            -1,
+            0,
+            0,
+            -2.0022246941045605,
+            0
+          ],
+          "matrixWorldInverse": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0.8480480961564261,
+            0.5299192642332048,
+            0,
+            0,
+            -0.5299192642332048,
+            0.8480480961564261,
+            0,
+            -3219.613116416099,
+            1661.117709594212,
+            -2725.1768633491893,
+            1
+          ],
+          "witchBase": {
+            "x": 3190.754367956137,
+            "y": -19.103074196475045,
+            "z": 3106.559326444441
+          },
+          "witchTall": 4.40625,
+          "witchFeetTop": 4.059374999999999,
+          "rideHeight": -20.103074196475045,
+          "camRideHeight": -19.015625,
+          "groundHeight": -20.103074196475045,
+          "cameraPosition": [
+            3219.6131164160984,
+            35.41600721826086,
+            3191.339325125732
+          ]
+        }
+      },
+      "bounds": {
+        "pixels": 39339,
+        "x0": 1324,
+        "y0": 332,
+        "x1": 1599,
+        "y1": 529,
+        "method": "difference of target-only silhouette and SAME flagOFF normal frame; excludes naturally magenta scenery"
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true,
+      "fixtureScenery": "type/decor batch draws omitted equally; native dark forest ground unchanged",
+      "crops": {
+        "x": 1362,
+        "y": 331,
+        "width": 200,
+        "height": 200,
+        "order": "off left / on right",
+        "scales": [
+          1,
+          3
+        ],
+        "method": "exact nearest-neighbour pixel copy offline after browser closed"
+      }
+    }
+  ],
+  "errors": [],
+  "complete": true,
+  "served": {
+    "version": "dev · 7af5177",
+    "built": "2026-10-30T14:09:00.329Z"
+  },
+  "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "lastFixture": {
+    "species": "arcticfox",
+    "level": 2,
+    "position": "outside",
+    "fixture": {
+      "radius": 44.41895402094715,
+      "fraction": 1.3,
+      "x": 3248.499008183368,
+      "z": 3106.559326444441
+    },
+    "diagnostics": {
+      "origin": {
+        "x": 3248.499008183368,
+        "z": 3106.559326444441
+      },
+      "witch": {
+        "x": 3190.754367956137,
+        "z": 3106.559326444441
+      },
+      "lightCentre": {
+        "x": 3190.754367956137,
+        "z": 3106.559326444441
+      },
+      "distance": 57.74464022723123,
+      "radius": 44.8,
+      "power": 0.95,
+      "dim": 1,
+      "falloff": 1.8,
+      "batches": [
+        {
+          "key": "08f187cc-42fe-410f-8d23-6dbd661bc30f",
+          "count": 3,
+          "flags": [
+            {
+              "visible": true,
+              "find": 1,
+              "scenery": 0,
+              "unlit": 0
+            }
+          ]
+        },
+        {
+          "key": "08f187cc-42fe-410f-8d23-6dbd661bc30f|discs",
+          "count": 77,
+          "flags": [
+            {
+              "visible": true,
+              "find": 1,
+              "scenery": 0,
+              "unlit": 0
+            }
+          ]
+        }
+      ]
+    },
+    "witchProof": {
+      "count": 1,
+      "hatOnCount": 1,
+      "bareCount": 0,
+      "hat": {
+        "has": true,
+        "down": null,
+        "left": []
+      },
+      "herIdle": false,
+      "camera": {
+        "zoomStep": 3,
+        "zoom": 0.375,
+        "tx": 3219.626688069752,
+        "ty": 1.4,
+        "tz": 3106.559326444441,
+        "vx": 0,
+        "vy": 0,
+        "vz": 0,
+        "ax": 0,
+        "az": 0,
+        "lift": 0,
+        "intro": 0
+      },
+      "screen": {
+        "x": 20.53240589403209,
+        "y": 154.9705854010873,
+        "halfWidth": 22.624348882311992,
+        "halfHeight": 17.0127186069481
+      },
+      "viewport": {
+        "width": 534,
+        "height": 300
+      },
+      "projection": {
+        "projectionMatrix": [
+          3.186113381807702,
+          0,
+          0,
+          0,
+          0,
+          5.671281819617709,
+          0,
+          0,
+          0,
+          0,
+          -1.0022246941045607,
+          -1,
+          0,
+          0,
+          -2.0022246941045605,
+          0
+        ],
+        "matrixWorldInverse": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0.8480480961564261,
+          0.5299192642332048,
+          0,
+          0,
+          -0.5299192642332048,
+          0.8480480961564261,
+          0,
+          -3219.613116416099,
+          1661.117709594212,
+          -2725.1768633491893,
+          1
+        ],
+        "witchBase": {
+          "x": 3190.754367956137,
+          "y": -19.103074196475045,
+          "z": 3106.559326444441
+        },
+        "witchTall": 4.40625,
+        "witchFeetTop": 4.059374999999999,
+        "rideHeight": -20.103074196475045,
+        "camRideHeight": -19.015625,
+        "groundHeight": -20.103074196475045,
+        "cameraPosition": [
+          3219.6131164160984,
+          35.41600721826086,
+          3191.339325125732
+        ]
+      }
+    }
+  },
+  "audit": {
+    "captureExitedSuccessfully": true,
+    "visibilityClaimRetracted": true,
+    "invalidCases": [
+      "beetle-L0-edge"
+    ],
+    "clippedCases": [
+      "beetle-L0-outside",
+      "beetle-L1-edge",
+      "beetle-L1-outside",
+      "beetle-L2-edge",
+      "beetle-L2-outside",
+      "jaguar-L2-edge",
+      "jaguar-L2-outside",
+      "mole-L2-edge",
+      "mole-L2-outside",
+      "stoat-L2-edge",
+      "stoat-L2-outside",
+      "arcticfox-L2-edge",
+      "arcticfox-L2-outside"
+    ],
+    "reason": "Colour-only mask was contaminated by natural magenta scene pixels; corrected offline mask-minus-off bounds. Some subjects clipped; no full21case acceptance."
+  }
+}
