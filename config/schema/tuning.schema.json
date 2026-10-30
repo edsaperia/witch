@@ -6730,10 +6730,6 @@
           "type": "number",
           "minimum": 0
         },
-        "maxTilt": {
-          "type": "number",
-          "minimum": 0
-        },
         "sweep": {
           "type": "number",
           "minimum": 0
@@ -6780,7 +6776,6 @@
         "maxCount",
         "length",
         "spread",
-        "maxTilt",
         "sweep",
         "sweepBeats",
         "openBars",
@@ -7137,34 +7132,6 @@
               ],
               "additionalProperties": false
             },
-            "light": {
-              "type": "object",
-              "properties": {
-                "reach": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "strength": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "height": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "saturate": {
-                  "type": "number",
-                  "minimum": 0
-                }
-              },
-              "required": [
-                "reach",
-                "strength",
-                "height",
-                "saturate"
-              ],
-              "additionalProperties": false
-            },
             "wisps": {
               "type": "object",
               "properties": {
@@ -7329,7 +7296,6 @@
             "clear",
             "stack",
             "ring",
-            "light",
             "wisps"
           ],
           "additionalProperties": false

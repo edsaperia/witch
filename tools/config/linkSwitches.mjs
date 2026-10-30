@@ -31,7 +31,7 @@ export function scanLinkSwitches(root = ROOT) {
   walk(join(root, "src"));
   for (const f of readdirSync(root)) if (/\.html$/.test(f)) files.push(join(root, f));
   for (const f of files) {
-    const s = readFileSync(f, "utf8"), rel = relative(root, f);
+    const s = readFileSync(f, "utf8"), rel = relative(root, f).replace(/\\/g, "/");
     for (const m of s.matchAll(READ)) if (isParams(m[1], s.slice(0, m.index))) {
       if (!out.has(m[3])) out.set(m[3], new Set());
       out.get(m[3]).add(rel);
@@ -88,7 +88,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const reg = loadRegistry(), scan = loadScan();
   function loadScan() { return scanLinkSwitches(); }
   if (process.argv.includes("--check")) {
-    const p = linkSwitchProblems(reg, scan), stale = readFileSync(join(ROOT, DOC), "utf8") !== renderLinkSwitches(reg);
+    const p = linkSwitchProblems(reg, scan), stale = readFileSync(join(ROOT, DOC), "utf8").replace(/\r\n/g, "\n") !== renderLinkSwitches(reg);
     for (const l of p) console.log(l);
     if (stale) console.log(`${DOC} is stale: run node tools/config/linkSwitches.mjs`);
     process.exitCode = p.length || stale ? 1 : 0;

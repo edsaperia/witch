@@ -1,5 +1,5 @@
 {
-  "_readme": "Each creature's character (overnight phase 3): its temperament posture and its idle quirk, drawn by the live rig (src/render/rig). posture: head [forward, up] and body (up), in the creature's model units (a body is about 1 long); quirk: what it does now and then while it stands idle (sniff, perk, stomp, thump, scratch, shake, tailflick, tailslap, stretch, howl, rise; sentinel: it sits up on its haunches as a sentinel, its own baked pose (art/creatures.js IDLE_BUILDERS), the rig standing aside); every: seconds between quirks [min, max]; for: how long one lasts (s). bounce: a happy or party creature standing about hops now and then (height m, every s). sprite: its quirk on a baked frame (the treetops, and species without a rig): hop, puff, look or shiver (the rig quirk's nearest if not given). Ed can tune any number here.",
+  "_readme": "Each species posture, idle quirk, home spot and activity preferences. Detailed notes and decisions: docs/notes/config-history/character.md.",
   "default": {"posture": {"head": [0, 0], "body": 0}, "quirk": "sniff", "every": [5, 10], "for": 1.2},
   "bounce": {"height": 0.35, "every": [2.5, 5], "for": 0.45},
   "species": {}
