@@ -19,9 +19,15 @@ export function replayStart(game: Game, build: string, tick: number): ReplayStar
   };
 }
 
-export function replayGuest(start: ReplayStart, build: string) {
+export function replayGuest(start: ReplayStart, build: string, reuse?: Game) {
   if (start.build !== build || !Number.isSafeInteger(start.tick) || start.tick < 0) throw new Error("Incompatible online night");
-  const game = restoreGame(start.snapshot), t = start.transient;
+  let game = restoreGame(start.snapshot);
+  if (reuse) {
+    if (reuse.seed !== game.seed) throw new Error("Online island changed during join");
+    const { map, forest } = reuse;
+    Object.assign(reuse, game, { map, forest }); game = reuse;
+  }
+  const t = start.transient;
   if (!t || !Number.isFinite(t.acc) || t.acc < 0 || t.acc > 1 || typeof t.paused !== "boolean" || t.witches.length !== game.witches.length) throw new Error("Invalid online handoff");
   game.acc = t.acc; game.clock.paused = t.paused; game.pending = structuredClone(t.pending);
   game.witches.forEach((w, i) => {

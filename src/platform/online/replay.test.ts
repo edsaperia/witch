@@ -20,4 +20,9 @@ it("serializes a mid-frame handoff and replays authoritative two-witch inputs id
   expect(guest.apply({ tick: 121, dt: STEP, inputs: [idle, idle] })).toBe(false);
   expect(guest.apply({ tick: 123, dt: STEP, inputs: [idle, idle] })).toBe(false);
   expect(() => replayGuest(start, "other-build")).toThrow("Incompatible");
+  const builtMap = guest.game.map, builtForest = guest.game.forest, builtGame = guest.game;
+  // A slow renderer can finish after the host advances; resync keeps its built island cache.
+  const resynced = replayGuest(JSON.parse(JSON.stringify(replayStart(host, "test-build", 121))), "test-build", builtGame);
+  expect(resynced.game).toBe(builtGame); expect(resynced.game.map).toBe(builtMap); expect(resynced.game.forest).toBe(builtForest);
+  expect(snapshotGame(resynced.game)).toEqual(snapshotGame(host));
 });

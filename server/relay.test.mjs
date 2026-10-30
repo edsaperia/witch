@@ -45,12 +45,29 @@ test('rejects wrong join tokens and guest authority escalation', { timeout: 5000
 
 test('expires silent connections and closes guest when host leaves', { timeout: 5000 }, async t => {
   let clock = 0;
-  const connect = await fixture(t, { now: () => clock, dropMs: 5000, checkMs: 5 });
+  const connect = await fixture(t, { now: () => clock, dropMs: 5000, joiningGraceMs: 5000, checkMs: 5 });
   const h = await host(connect), guest = await connect(), joined = message(guest), notice = message(h.ws);
   send(guest, { type: 'join', room: h.info.room, token: h.info.token }); await joined; await notice;
   const hostClosed = once(h.ws, 'close'), guestClosed = once(guest, 'close');
   clock = 5000;
   await hostClosed; await guestClosed;
+});
+
+test('slow joining guest survives five seconds, readiness restores normal timeout, and grace is bounded', { timeout: 5000 }, async t => {
+  let clock = 0;
+  const connect = await fixture(t, { now: () => clock, checkMs: 5 }), h = await host(connect);
+  const guest = await connect(), joined = message(guest), notice = message(h.ws);
+  send(guest, { type: 'join', room: h.info.room, token: h.info.token }); await joined; await notice;
+  clock = 6000;
+  const accepted = message(guest), readyNotice = message(h.ws);
+  send(guest, { type: 'ready' });
+  assert.equal((await accepted).type, 'ready-accepted'); assert.equal((await readyNotice).type, 'guest-ready');
+  send(guest, { type: 'active' });
+  // Ensure the active message reached the relay before advancing the fake clock.
+  await new Promise(resolve => setTimeout(resolve, 10));
+  const guestClosed = once(guest, 'close'); clock = 11000; await guestClosed;
+  assert.equal(h.ws.readyState, WebSocket.OPEN);
+  const hostClosed = once(h.ws, 'close'); clock = 180000; await hostClosed;
 });
 
 test('host departure closes guest and releases the room number', { timeout: 5000 }, async t => {

@@ -4,8 +4,8 @@ import { pathToFileURL } from 'node:url';
 import { WebSocketServer, WebSocket } from 'ws';
 
 /** Relay only: the host browser owns all simulation and permanent outcomes. */
-export function createRelay({ dropMs = 5000, checkMs = 250, now = Date.now, build = process.env.WITCH_SHA ?? 'local-unidentified' } = {}) {
-  if (!(Number.isFinite(dropMs) && Number.isFinite(checkMs) && dropMs > 0 && checkMs > 0)) throw new Error('Invalid relay timing');
+export function createRelay({ dropMs = 5000, joiningGraceMs = 180000, checkMs = 250, now = Date.now, build = process.env.WITCH_SHA ?? 'local-unidentified' } = {}) {
+  if (!(Number.isFinite(dropMs) && Number.isFinite(joiningGraceMs) && joiningGraceMs >= dropMs && Number.isFinite(checkMs) && dropMs > 0 && checkMs > 0)) throw new Error('Invalid relay timing');
   const rooms = new Map();
   const http = createServer((_req, res) => { res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify({ service: 'witch-relay', protocol: 1, build })); });
   const wss = new WebSocketServer({ server: http, maxPayload: 8 * 1024 * 1024 });
@@ -17,6 +17,7 @@ export function createRelay({ dropMs = 5000, checkMs = 250, now = Date.now, buil
   wss.on('connection', ws => {
     let room, role;
     ws.lastMessage = now();
+    ws.joinedAt = now(); ws.playable = false;
     ws.on('message', bytes => {
       let m;
       try { m = JSON.parse(bytes.toString()); } catch { ws.close(1008, 'Invalid JSON'); return; }
@@ -37,6 +38,16 @@ export function createRelay({ dropMs = 5000, checkMs = 250, now = Date.now, buil
         return;
       }
       if (m.type === 'heartbeat') return;
+      if (m.type === 'ready') {
+        if (!ws.renderReady) {
+          ws.renderReady = true;
+          if (role === 'host') ws.playable = true;
+          send(ws, { protocol: 1, type: 'ready-accepted' });
+          if (role === 'guest') send(room.host, { protocol: 1, type: 'guest-ready', player: 1 });
+        }
+        return;
+      }
+      if (m.type === 'active' && role === 'guest' && ws.renderReady) { ws.playable = true; return; }
       if (role === 'guest' && m.type === 'input') send(room.host, { protocol: 1, type: 'input', player: 1, payload: m.payload });
       else if (role === 'host' && m.type === 'state') send(room.guest, { protocol: 1, type: 'state', player: 0, payload: m.payload });
       else ws.close(1008, 'Message not permitted');
@@ -54,7 +65,7 @@ export function createRelay({ dropMs = 5000, checkMs = 250, now = Date.now, buil
     });
   });
   const timer = setInterval(() => {
-    for (const ws of wss.clients) if (now() - ws.lastMessage >= dropMs) ws.terminate();
+    for (const ws of wss.clients) if (ws.playable ? now() - ws.lastMessage >= dropMs : now() - ws.joinedAt >= joiningGraceMs) ws.terminate();
   }, checkMs);
   timer.unref();
   return {
@@ -69,6 +80,6 @@ export function createRelay({ dropMs = 5000, checkMs = 250, now = Date.now, buil
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const relay = createRelay({ dropMs: Number(process.env.WITCH_DROP_MS ?? 5000) });
+  const relay = createRelay({ dropMs: Number(process.env.WITCH_DROP_MS ?? 5000), joiningGraceMs: Number(process.env.WITCH_JOIN_GRACE_MS ?? 180000) });
   relay.http.listen(Number(process.env.PORT ?? 8787), process.env.HOST ?? '127.0.0.1', () => console.log('Witch relay listening', relay.http.address()));
 }

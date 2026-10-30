@@ -52,6 +52,8 @@ export function connectRelay(options: RelayOptions) {
   return {
     sendInput: (payload: unknown) => options.token ? send("input", payload) : false,
     sendState: (payload: unknown) => !options.token ? send("state", payload) : false,
+    sendReady: () => send("ready"),
+    sendActive: () => options.token ? send("active") : false,
     close() { if (stopped) return; stopped = true; cleanup(); ws.close(); },
   };
 }
