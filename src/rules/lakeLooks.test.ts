@@ -4,6 +4,7 @@ import { generateMap } from "./map";
 import { TUNING } from "./tuning";
 import { lakeKnobs } from "./lakes";
 
+// Keep the authored rattlesnake island in the integration case to cover its actual lake raster and compass biome.
 const K = lakeKnobs(TUNING);
 
 describe("biome lakes (rules/lakeLooks.ts)", () => {
