@@ -1,18 +1,24 @@
 import { expect, it } from 'vitest';
-import { groundDefines, groundFamily, type GroundFamily } from './groundFamily';
+import { LOOK_IDS } from '../rules/lakeLooks';
+import { groundDefines, groundFamily } from './groundFamily';
 
-it('specializes only unforced ordinary-water maps and retains lava/mixed/zoo/unknown paths', () => {
+it('selects each lake kind independently with stable combination ordering', () => {
   expect(groundFamily(false, null)).toBe('no-lakes');
-  expect(groundFamily(true, new Set(['water']))).toBe('water-only-lakes');
-  for (const looks of [new Set(['lava']), new Set(['water', 'ice']), new Set<string>(), null]) expect(groundFamily(true, looks)).toBe('full-lakes');
-  expect(groundFamily(true, new Set(['water']), true)).toBe('full-lakes');
-  expect(groundFamily(true, new Set(['water']), false, true)).toBe('full-lakes');
+  for (const look of LOOK_IDS) {
+    const family = groundFamily(true, new Set([look]));
+    expect(family).toBe(`lakes:${look}`);
+    expect(groundDefines(family, false)).toEqual({ GROUND_LAKES: '', [`GROUND_LAKE_${look.toUpperCase()}`]: '' });
+  }
+  expect(groundFamily(true, new Set(['ice', 'water']))).toBe('lakes:water,ice');
+  expect(groundDefines(groundFamily(true, new Set(['lava', 'tarn'])), true)).toEqual({ GROUND_LAKES: '', GROUND_LAKE_LAVA: '', GROUND_LAKE_TARN: '', GROUND_BEACH: '' });
 });
 
-it('has exactly six source/define combinations and preserves existing no-lake/full-lake defines', () => {
-  const families: GroundFamily[] = ['no-lakes', 'water-only-lakes', 'full-lakes'];
-  expect(new Set(families.flatMap(family => [false, true].map(beach => JSON.stringify(groundDefines(family, beach))))).size).toBe(6);
+it('retains all kinds for unknown, forced, zoo and mutable diagnostic views', () => {
+  for (const looks of [new Set(['unknown']), new Set<string>(), null]) expect(groundFamily(true, looks)).toBe('full-lakes');
+  expect(groundFamily(true, new Set(['water']), true)).toBe('full-lakes');
+  expect(groundFamily(true, new Set(['water']), false, true)).toBe('full-lakes');
+  expect(groundFamily(true, new Set(['water']), false, false, true)).toBe('full-lakes');
+  expect(Object.keys(groundDefines('full-lakes', false))).toEqual(['GROUND_LAKES', ...LOOK_IDS.map(look => `GROUND_LAKE_${look.toUpperCase()}`)]);
   expect(groundDefines('no-lakes', false)).toEqual({});
-  expect(groundDefines('full-lakes', true)).toEqual({ GROUND_LAKES: '', GROUND_BEACH: '' });
-  expect(groundDefines('water-only-lakes', false)).toEqual({ GROUND_LAKES: '', GROUND_WATER_ONLY: '' });
+  expect(groundDefines('no-lakes', true)).toEqual({ GROUND_BEACH: '' });
 });

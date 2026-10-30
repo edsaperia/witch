@@ -1,5 +1,4 @@
 {
-  "sha": "743ffda3960749a84e280e450bb3df289fc2e661",
   "world": 0,
   "nightSeed": 424242,
   "found": [],
@@ -24,14 +23,14 @@
       "looks": [
         "water"
       ],
-      "family": "water-only-lakes",
+      "family": "lakes:water",
       "plain": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": ""
+        "GROUND_LAKE_WATER": ""
       },
       "beach": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": "",
+        "GROUND_LAKE_WATER": "",
         "GROUND_BEACH": ""
       }
     },
@@ -42,14 +41,14 @@
       "looks": [
         "water"
       ],
-      "family": "water-only-lakes",
+      "family": "lakes:water",
       "plain": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": ""
+        "GROUND_LAKE_WATER": ""
       },
       "beach": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": "",
+        "GROUND_LAKE_WATER": "",
         "GROUND_BEACH": ""
       }
     },
@@ -60,14 +59,14 @@
       "looks": [
         "water"
       ],
-      "family": "water-only-lakes",
+      "family": "lakes:water",
       "plain": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": ""
+        "GROUND_LAKE_WATER": ""
       },
       "beach": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": "",
+        "GROUND_LAKE_WATER": "",
         "GROUND_BEACH": ""
       }
     },
@@ -78,14 +77,14 @@
       "looks": [
         "water"
       ],
-      "family": "water-only-lakes",
+      "family": "lakes:water",
       "plain": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": ""
+        "GROUND_LAKE_WATER": ""
       },
       "beach": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": "",
+        "GROUND_LAKE_WATER": "",
         "GROUND_BEACH": ""
       }
     },
@@ -96,14 +95,14 @@
       "looks": [
         "water"
       ],
-      "family": "water-only-lakes",
+      "family": "lakes:water",
       "plain": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": ""
+        "GROUND_LAKE_WATER": ""
       },
       "beach": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": "",
+        "GROUND_LAKE_WATER": "",
         "GROUND_BEACH": ""
       }
     },
@@ -114,14 +113,14 @@
       "looks": [
         "water"
       ],
-      "family": "water-only-lakes",
+      "family": "lakes:water",
       "plain": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": ""
+        "GROUND_LAKE_WATER": ""
       },
       "beach": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": "",
+        "GROUND_LAKE_WATER": "",
         "GROUND_BEACH": ""
       }
     },
@@ -132,14 +131,14 @@
       "looks": [
         "water"
       ],
-      "family": "water-only-lakes",
+      "family": "lakes:water",
       "plain": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": ""
+        "GROUND_LAKE_WATER": ""
       },
       "beach": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": "",
+        "GROUND_LAKE_WATER": "",
         "GROUND_BEACH": ""
       }
     },
@@ -150,14 +149,14 @@
       "looks": [
         "water"
       ],
-      "family": "water-only-lakes",
+      "family": "lakes:water",
       "plain": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": ""
+        "GROUND_LAKE_WATER": ""
       },
       "beach": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": "",
+        "GROUND_LAKE_WATER": "",
         "GROUND_BEACH": ""
       }
     },
@@ -168,14 +167,14 @@
       "looks": [
         "water"
       ],
-      "family": "water-only-lakes",
+      "family": "lakes:water",
       "plain": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": ""
+        "GROUND_LAKE_WATER": ""
       },
       "beach": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": "",
+        "GROUND_LAKE_WATER": "",
         "GROUND_BEACH": ""
       }
     },
@@ -186,14 +185,14 @@
       "looks": [
         "water"
       ],
-      "family": "water-only-lakes",
+      "family": "lakes:water",
       "plain": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": ""
+        "GROUND_LAKE_WATER": ""
       },
       "beach": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": "",
+        "GROUND_LAKE_WATER": "",
         "GROUND_BEACH": ""
       }
     },
@@ -205,12 +204,16 @@
         "lava",
         "tarn"
       ],
-      "family": "full-lakes",
+      "family": "lakes:lava,tarn",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_LAVA": "",
+        "GROUND_LAKE_TARN": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_LAVA": "",
+        "GROUND_LAKE_TARN": "",
         "GROUND_BEACH": ""
       }
     },
@@ -221,14 +224,14 @@
       "looks": [
         "water"
       ],
-      "family": "water-only-lakes",
+      "family": "lakes:water",
       "plain": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": ""
+        "GROUND_LAKE_WATER": ""
       },
       "beach": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": "",
+        "GROUND_LAKE_WATER": "",
         "GROUND_BEACH": ""
       }
     },
@@ -239,14 +242,14 @@
       "looks": [
         "water"
       ],
-      "family": "water-only-lakes",
+      "family": "lakes:water",
       "plain": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": ""
+        "GROUND_LAKE_WATER": ""
       },
       "beach": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": "",
+        "GROUND_LAKE_WATER": "",
         "GROUND_BEACH": ""
       }
     },
@@ -257,12 +260,14 @@
       "looks": [
         "lily"
       ],
-      "family": "full-lakes",
+      "family": "lakes:lily",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_LILY": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_LILY": "",
         "GROUND_BEACH": ""
       }
     },
@@ -273,14 +278,14 @@
       "looks": [
         "water"
       ],
-      "family": "water-only-lakes",
+      "family": "lakes:water",
       "plain": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": ""
+        "GROUND_LAKE_WATER": ""
       },
       "beach": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": "",
+        "GROUND_LAKE_WATER": "",
         "GROUND_BEACH": ""
       }
     },
@@ -291,12 +296,14 @@
       "looks": [
         "lava"
       ],
-      "family": "full-lakes",
+      "family": "lakes:lava",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_LAVA": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_LAVA": "",
         "GROUND_BEACH": ""
       }
     },
@@ -307,14 +314,14 @@
       "looks": [
         "water"
       ],
-      "family": "water-only-lakes",
+      "family": "lakes:water",
       "plain": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": ""
+        "GROUND_LAKE_WATER": ""
       },
       "beach": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": "",
+        "GROUND_LAKE_WATER": "",
         "GROUND_BEACH": ""
       }
     },
@@ -325,12 +332,14 @@
       "looks": [
         "sinkhole"
       ],
-      "family": "full-lakes",
+      "family": "lakes:sinkhole",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_SINKHOLE": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_SINKHOLE": "",
         "GROUND_BEACH": ""
       }
     },
@@ -341,14 +350,14 @@
       "looks": [
         "water"
       ],
-      "family": "water-only-lakes",
+      "family": "lakes:water",
       "plain": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": ""
+        "GROUND_LAKE_WATER": ""
       },
       "beach": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": "",
+        "GROUND_LAKE_WATER": "",
         "GROUND_BEACH": ""
       }
     },
@@ -359,12 +368,14 @@
       "looks": [
         "lava"
       ],
-      "family": "full-lakes",
+      "family": "lakes:lava",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_LAVA": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_LAVA": "",
         "GROUND_BEACH": ""
       }
     },
@@ -375,14 +386,14 @@
       "looks": [
         "water"
       ],
-      "family": "water-only-lakes",
+      "family": "lakes:water",
       "plain": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": ""
+        "GROUND_LAKE_WATER": ""
       },
       "beach": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": "",
+        "GROUND_LAKE_WATER": "",
         "GROUND_BEACH": ""
       }
     },
@@ -393,14 +404,14 @@
       "looks": [
         "water"
       ],
-      "family": "water-only-lakes",
+      "family": "lakes:water",
       "plain": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": ""
+        "GROUND_LAKE_WATER": ""
       },
       "beach": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": "",
+        "GROUND_LAKE_WATER": "",
         "GROUND_BEACH": ""
       }
     },
@@ -411,12 +422,14 @@
       "looks": [
         "tarn"
       ],
-      "family": "full-lakes",
+      "family": "lakes:tarn",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_TARN": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_TARN": "",
         "GROUND_BEACH": ""
       }
     },
@@ -428,12 +441,16 @@
         "lava",
         "water"
       ],
-      "family": "full-lakes",
+      "family": "lakes:water,lava",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_LAKE_LAVA": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_LAKE_LAVA": "",
         "GROUND_BEACH": ""
       }
     },
@@ -445,12 +462,16 @@
         "lava",
         "water"
       ],
-      "family": "full-lakes",
+      "family": "lakes:water,lava",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_LAKE_LAVA": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_LAKE_LAVA": "",
         "GROUND_BEACH": ""
       }
     },
@@ -461,14 +482,14 @@
       "looks": [
         "water"
       ],
-      "family": "water-only-lakes",
+      "family": "lakes:water",
       "plain": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": ""
+        "GROUND_LAKE_WATER": ""
       },
       "beach": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": "",
+        "GROUND_LAKE_WATER": "",
         "GROUND_BEACH": ""
       }
     },
@@ -479,14 +500,14 @@
       "looks": [
         "water"
       ],
-      "family": "water-only-lakes",
+      "family": "lakes:water",
       "plain": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": ""
+        "GROUND_LAKE_WATER": ""
       },
       "beach": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": "",
+        "GROUND_LAKE_WATER": "",
         "GROUND_BEACH": ""
       }
     },
@@ -497,14 +518,14 @@
       "looks": [
         "water"
       ],
-      "family": "water-only-lakes",
+      "family": "lakes:water",
       "plain": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": ""
+        "GROUND_LAKE_WATER": ""
       },
       "beach": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": "",
+        "GROUND_LAKE_WATER": "",
         "GROUND_BEACH": ""
       }
     },
@@ -515,14 +536,14 @@
       "looks": [
         "water"
       ],
-      "family": "water-only-lakes",
+      "family": "lakes:water",
       "plain": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": ""
+        "GROUND_LAKE_WATER": ""
       },
       "beach": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": "",
+        "GROUND_LAKE_WATER": "",
         "GROUND_BEACH": ""
       }
     },
@@ -533,14 +554,14 @@
       "looks": [
         "water"
       ],
-      "family": "water-only-lakes",
+      "family": "lakes:water",
       "plain": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": ""
+        "GROUND_LAKE_WATER": ""
       },
       "beach": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": "",
+        "GROUND_LAKE_WATER": "",
         "GROUND_BEACH": ""
       }
     },
@@ -552,12 +573,16 @@
         "sinkhole",
         "tar"
       ],
-      "family": "full-lakes",
+      "family": "lakes:sinkhole,tar",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_SINKHOLE": "",
+        "GROUND_LAKE_TAR": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_SINKHOLE": "",
+        "GROUND_LAKE_TAR": "",
         "GROUND_BEACH": ""
       }
     },
@@ -568,12 +593,14 @@
       "looks": [
         "tar"
       ],
-      "family": "full-lakes",
+      "family": "lakes:tar",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_TAR": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_TAR": "",
         "GROUND_BEACH": ""
       }
     },
@@ -585,12 +612,16 @@
         "ice",
         "tar"
       ],
-      "family": "full-lakes",
+      "family": "lakes:ice,tar",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_ICE": "",
+        "GROUND_LAKE_TAR": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_ICE": "",
+        "GROUND_LAKE_TAR": "",
         "GROUND_BEACH": ""
       }
     },
@@ -602,12 +633,16 @@
         "ice",
         "tarn"
       ],
-      "family": "full-lakes",
+      "family": "lakes:ice,tarn",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_ICE": "",
+        "GROUND_LAKE_TARN": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_ICE": "",
+        "GROUND_LAKE_TARN": "",
         "GROUND_BEACH": ""
       }
     },
@@ -619,12 +654,16 @@
         "lava",
         "tarn"
       ],
-      "family": "full-lakes",
+      "family": "lakes:lava,tarn",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_LAVA": "",
+        "GROUND_LAKE_TARN": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_LAVA": "",
+        "GROUND_LAKE_TARN": "",
         "GROUND_BEACH": ""
       }
     },
@@ -635,12 +674,14 @@
       "looks": [
         "lava"
       ],
-      "family": "full-lakes",
+      "family": "lakes:lava",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_LAVA": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_LAVA": "",
         "GROUND_BEACH": ""
       }
     },
@@ -651,12 +692,14 @@
       "looks": [
         "oasis"
       ],
-      "family": "full-lakes",
+      "family": "lakes:oasis",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_OASIS": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_OASIS": "",
         "GROUND_BEACH": ""
       }
     },
@@ -668,12 +711,16 @@
         "lava",
         "rust"
       ],
-      "family": "full-lakes",
+      "family": "lakes:lava,rust",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_LAVA": "",
+        "GROUND_LAKE_RUST": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_LAVA": "",
+        "GROUND_LAKE_RUST": "",
         "GROUND_BEACH": ""
       }
     },
@@ -684,14 +731,14 @@
       "looks": [
         "water"
       ],
-      "family": "water-only-lakes",
+      "family": "lakes:water",
       "plain": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": ""
+        "GROUND_LAKE_WATER": ""
       },
       "beach": {
         "GROUND_LAKES": "",
-        "GROUND_WATER_ONLY": "",
+        "GROUND_LAKE_WATER": "",
         "GROUND_BEACH": ""
       }
     },
@@ -703,12 +750,16 @@
         "oasis",
         "rust"
       ],
-      "family": "full-lakes",
+      "family": "lakes:oasis,rust",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_OASIS": "",
+        "GROUND_LAKE_RUST": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_OASIS": "",
+        "GROUND_LAKE_RUST": "",
         "GROUND_BEACH": ""
       }
     },
@@ -719,12 +770,14 @@
       "looks": [
         "lily"
       ],
-      "family": "full-lakes",
+      "family": "lakes:lily",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_LILY": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_LILY": "",
         "GROUND_BEACH": ""
       }
     },
@@ -736,12 +789,16 @@
         "lily",
         "sinkhole"
       ],
-      "family": "full-lakes",
+      "family": "lakes:sinkhole,lily",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_SINKHOLE": "",
+        "GROUND_LAKE_LILY": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_SINKHOLE": "",
+        "GROUND_LAKE_LILY": "",
         "GROUND_BEACH": ""
       }
     },
@@ -752,12 +809,14 @@
       "looks": [
         "sinkhole"
       ],
-      "family": "full-lakes",
+      "family": "lakes:sinkhole",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_SINKHOLE": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_SINKHOLE": "",
         "GROUND_BEACH": ""
       }
     },
@@ -768,12 +827,14 @@
       "looks": [
         "tar"
       ],
-      "family": "full-lakes",
+      "family": "lakes:tar",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_TAR": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_TAR": "",
         "GROUND_BEACH": ""
       }
     },
@@ -785,12 +846,16 @@
         "sinkhole",
         "tar"
       ],
-      "family": "full-lakes",
+      "family": "lakes:sinkhole,tar",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_SINKHOLE": "",
+        "GROUND_LAKE_TAR": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_SINKHOLE": "",
+        "GROUND_LAKE_TAR": "",
         "GROUND_BEACH": ""
       }
     },
@@ -801,12 +866,14 @@
       "looks": [
         "ice"
       ],
-      "family": "full-lakes",
+      "family": "lakes:ice",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_ICE": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_ICE": "",
         "GROUND_BEACH": ""
       }
     },
@@ -818,12 +885,16 @@
         "ice",
         "tarn"
       ],
-      "family": "full-lakes",
+      "family": "lakes:ice,tarn",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_ICE": "",
+        "GROUND_LAKE_TARN": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_ICE": "",
+        "GROUND_LAKE_TARN": "",
         "GROUND_BEACH": ""
       }
     },
@@ -834,12 +905,14 @@
       "looks": [
         "tarn"
       ],
-      "family": "full-lakes",
+      "family": "lakes:tarn",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_TARN": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_TARN": "",
         "GROUND_BEACH": ""
       }
     },
@@ -850,12 +923,14 @@
       "looks": [
         "tarn"
       ],
-      "family": "full-lakes",
+      "family": "lakes:tarn",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_TARN": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_TARN": "",
         "GROUND_BEACH": ""
       }
     },
@@ -866,12 +941,14 @@
       "looks": [
         "rust"
       ],
-      "family": "full-lakes",
+      "family": "lakes:rust",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_RUST": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_RUST": "",
         "GROUND_BEACH": ""
       }
     },
@@ -883,12 +960,16 @@
         "lily",
         "oasis"
       ],
-      "family": "full-lakes",
+      "family": "lakes:oasis,lily",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_OASIS": "",
+        "GROUND_LAKE_LILY": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_OASIS": "",
+        "GROUND_LAKE_LILY": "",
         "GROUND_BEACH": ""
       }
     },
@@ -899,12 +980,14 @@
       "looks": [
         "lava"
       ],
-      "family": "full-lakes",
+      "family": "lakes:lava",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_LAVA": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_LAVA": "",
         "GROUND_BEACH": ""
       }
     },
@@ -915,12 +998,14 @@
       "looks": [
         "rust"
       ],
-      "family": "full-lakes",
+      "family": "lakes:rust",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_RUST": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_RUST": "",
         "GROUND_BEACH": ""
       }
     },
@@ -931,12 +1016,14 @@
       "looks": [
         "rust"
       ],
-      "family": "full-lakes",
+      "family": "lakes:rust",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_RUST": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_RUST": "",
         "GROUND_BEACH": ""
       }
     },
@@ -947,12 +1034,14 @@
       "looks": [
         "oasis"
       ],
-      "family": "full-lakes",
+      "family": "lakes:oasis",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_OASIS": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_OASIS": "",
         "GROUND_BEACH": ""
       }
     },
@@ -963,12 +1052,14 @@
       "looks": [
         "oasis"
       ],
-      "family": "full-lakes",
+      "family": "lakes:oasis",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_OASIS": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_OASIS": "",
         "GROUND_BEACH": ""
       }
     },
@@ -980,12 +1071,16 @@
         "lily",
         "sinkhole"
       ],
-      "family": "full-lakes",
+      "family": "lakes:sinkhole,lily",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_SINKHOLE": "",
+        "GROUND_LAKE_LILY": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_SINKHOLE": "",
+        "GROUND_LAKE_LILY": "",
         "GROUND_BEACH": ""
       }
     },
@@ -996,12 +1091,14 @@
       "looks": [
         "lily"
       ],
-      "family": "full-lakes",
+      "family": "lakes:lily",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_LILY": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_LILY": "",
         "GROUND_BEACH": ""
       }
     },
@@ -1013,12 +1110,16 @@
         "sinkhole",
         "tar"
       ],
-      "family": "full-lakes",
+      "family": "lakes:sinkhole,tar",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_SINKHOLE": "",
+        "GROUND_LAKE_TAR": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_SINKHOLE": "",
+        "GROUND_LAKE_TAR": "",
         "GROUND_BEACH": ""
       }
     },
@@ -1029,12 +1130,14 @@
       "looks": [
         "lily"
       ],
-      "family": "full-lakes",
+      "family": "lakes:lily",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_LILY": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_LILY": "",
         "GROUND_BEACH": ""
       }
     },
@@ -1045,12 +1148,14 @@
       "looks": [
         "sinkhole"
       ],
-      "family": "full-lakes",
+      "family": "lakes:sinkhole",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_SINKHOLE": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_SINKHOLE": "",
         "GROUND_BEACH": ""
       }
     },
@@ -1061,12 +1166,14 @@
       "looks": [
         "tar"
       ],
-      "family": "full-lakes",
+      "family": "lakes:tar",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_TAR": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_TAR": "",
         "GROUND_BEACH": ""
       }
     },
@@ -1078,12 +1185,16 @@
         "ice",
         "tar"
       ],
-      "family": "full-lakes",
+      "family": "lakes:ice,tar",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_ICE": "",
+        "GROUND_LAKE_TAR": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_ICE": "",
+        "GROUND_LAKE_TAR": "",
         "GROUND_BEACH": ""
       }
     },
@@ -1095,19 +1206,133 @@
         "ice",
         "tar"
       ],
-      "family": "full-lakes",
+      "family": "lakes:ice,tar",
       "plain": {
-        "GROUND_LAKES": ""
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_ICE": "",
+        "GROUND_LAKE_TAR": ""
       },
       "beach": {
         "GROUND_LAKES": "",
+        "GROUND_LAKE_ICE": "",
+        "GROUND_LAKE_TAR": "",
         "GROUND_BEACH": ""
       }
     }
   ],
   "provenance": {
     "workingTreeSelector": true,
-    "selectorHash": "2ceb37cbec95f18c4dd38615982d4139012a2e062208b4749f0168bb14fcf728",
-    "note": "Generated before candidate commit, using the exact selector hash; geometry-only diagnostic matches full-map Home/Fox/Otter/Raven witnesses."
+    "selectorHash": "b634cd61ac47c039cd38121b017af047d7b60fa1153f19c878ce3ec00a65f994",
+    "note": "Normal-geometry survey completed on geometrySurveySha and matched full-map Home/Fox/Otter/Raven witnesses; per-kind reclassification uses selectorSourceHash without changing geometry.",
+    "originalSurveySelectorHash": "2ceb37cbec95f18c4dd38615982d4139012a2e062208b4749f0168bb14fcf728"
+  },
+  "geometrySurveySha": "743ffda3960749a84e280e450bb3df289fc2e661",
+  "selectorSourceHash": "b634cd61ac47c039cd38121b017af047d7b60fa1153f19c878ce3ec00a65f994",
+  "selector": "per-kind; reclassified existing complete normal-geometry survey without regenerating maps",
+  "distinctGroundPrograms": 38,
+  "combinations": {
+    "no-lakes": [
+      "home"
+    ],
+    "lakes:water": [
+      "hedgehog",
+      "squirrel",
+      "hare",
+      "fox",
+      "marten",
+      "stoat",
+      "mole",
+      "snail",
+      "dormouse",
+      "badger",
+      "boar",
+      "otter",
+      "newt",
+      "moth",
+      "toad",
+      "elk",
+      "wolf",
+      "spider",
+      "snake",
+      "cat",
+      "stag",
+      "beaver",
+      "fennec"
+    ],
+    "lakes:lava,tarn": [
+      "beetle",
+      "redpanda"
+    ],
+    "lakes:lily": [
+      "heron",
+      "crocodile",
+      "crab",
+      "elephant"
+    ],
+    "lakes:lava": [
+      "woodlouse",
+      "raven",
+      "komodo",
+      "stegosaurus"
+    ],
+    "lakes:sinkhole": [
+      "bat",
+      "tiger",
+      "jaguar"
+    ],
+    "lakes:tarn": [
+      "lynx",
+      "snowleopard",
+      "frostwyrm"
+    ],
+    "lakes:water,lava": [
+      "ram",
+      "salamander"
+    ],
+    "lakes:sinkhole,tar": [
+      "bear",
+      "roe",
+      "featheredserpent"
+    ],
+    "lakes:tar": [
+      "owl",
+      "flyingsquirrel",
+      "raccoon"
+    ],
+    "lakes:ice,tar": [
+      "arcticfox",
+      "unicorn",
+      "polarbear"
+    ],
+    "lakes:ice,tarn": [
+      "ibex",
+      "frosttroll"
+    ],
+    "lakes:oasis": [
+      "meerkat",
+      "rhino",
+      "cheetah"
+    ],
+    "lakes:lava,rust": [
+      "armadillo"
+    ],
+    "lakes:oasis,rust": [
+      "lion"
+    ],
+    "lakes:sinkhole,lily": [
+      "dragonfly",
+      "hydra"
+    ],
+    "lakes:ice": [
+      "penguin"
+    ],
+    "lakes:rust": [
+      "griffin",
+      "rattlesnake",
+      "scorpion"
+    ],
+    "lakes:oasis,lily": [
+      "sphinx"
+    ]
   }
 }

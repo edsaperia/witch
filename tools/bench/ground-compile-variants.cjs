@@ -1,5 +1,6 @@
 // Diagnostic-only candidate: never imported by the game.
 function waterOnlyDiagnosticSource(fragment, library) {
+  if (fragment.includes('GROUND_LAKE_ICE')) throw new Error('Historical water-only compile experiment superseded by per-kind shaders; use ground-family-parity.mjs');
   if (!library || fragment.split(library).length !== 2) throw new Error('lake library source shape changed');
   const guards = fragment.split('#ifndef GROUND_WATER_ONLY').length - 1;
   if (guards === 2) return fragment; // the production shader now carries these exact guards
