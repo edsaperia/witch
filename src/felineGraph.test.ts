@@ -24,8 +24,8 @@ describe("first shared feline graph iteration", () => {
       const model = capture(catCaptureGenome(GENOME_BY_ID.cat), level, 0), rig = Reflect.get(model, "rig");
       expect(rig.ears).toHaveLength(2);
       for (const ear of rig.ears) {
-        expect(ear.h / (2 * ear.w)).toBeLessThanOrEqual(.6);
-        expect(ear.base[1]).toBeCloseTo(rig.head.H[1] + rig.head.hr * .28, 10);
+        expect(ear.h / (2 * ear.w)).toBeCloseTo(.95 / 1.15, 10);
+        expect(ear.base[1]).toBeCloseTo(rig.head.H[1] + rig.head.hr * .45, 10);
         expect(Math.abs(ear.dir[2] / ear.dir[1])).toBeGreaterThan(.9);
       }
       expect(rig.ears[0].dir[2]).toBeCloseTo(-rig.ears[1].dir[2], 10);

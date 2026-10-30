@@ -12,13 +12,20 @@ export const CAT_TARGET_NOTES = {
 };
 export function catCaptureGenome(base) {
   if (!CAT_CAPTURE_IDS.includes(base.id)) throw new Error(`Not a cat fixture: ${base.id}`);
-  const options = base.id === "cat" ? { head: { earRoot: [0, -.42, .45], earAngle: [0, .5], earDimensions: { height: .6, width: 1.1 }, skullY: .9, skullZ: 1.2, jowl: 1.3 } } : {};
+  const options = base.id === "cat" ? { head: { earRoot: [0, -.25, .45], earAngle: [0, .5], earDimensions: { height: .95, width: 1.15 }, skullY: .9, skullZ: 1.2, jowl: 1.3 } } : {};
   const out = felineGraphGenome(base, options);
+  if (base.id === "cat") {
+    // Yankee cats-3: keep the cub's original skull/cheeks; the broad adult
+    // changes made it all head. Ear changes still apply at every level.
+    out.levels ??= {};
+    const baby = out.levels[0] ?? {};
+    out.levels[0] = { ...baby, head: { ...baby.head, skullY: base.head.skullY ?? 1, skullZ: base.head.skullZ ?? 1, jowl: base.head.jowl ?? (base.head.cheeks ? 1.35 : 1) } };
+  }
   if (base.id === "snowleopard") {
     out.coat.regions = {
-      torso: { kind: "rosettes", outerPx: 7, density: .55, inner: .19, outer: .4, gap: .4, xRange: [-.6, .8], flankMin: .25, centreMat: "BODYL", mat: "BODY3" },
-      head: { kind: "spots", k: 12, density: .6, radius: .3 },
-      legs: { kind: "spots", k: 10, density: .6, radius: .32 },
+      torso: { kind: "rosettes", outerPx: 7, density: .45, inner: .19, outer: .4, gap: .4, xRange: [-.85, .85], flankMin: .25, centreMat: "BODYL", mat: "BODY3" },
+      head: { kind: "spots", k: 8, density: .45, radius: .4 },
+      legs: { kind: "spots", k: 8, density: .45, radius: .4 },
     };
     // Preserve its elder's existing beads and magical story markings.
     if (out.levels?.[3]) out.levels[3].coat = { ...out.levels[3].coat, regions: null };

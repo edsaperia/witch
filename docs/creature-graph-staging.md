@@ -189,6 +189,24 @@ all four growth levels; projected readability still requires cloud review.
 The omitted-field path retains its prior ear geometry. These are diagnostic
 fixture proportions, not changes to the default roster.
 
+Cats-2 cloud review (6514068634, SHA 85ebc30d): art checks passed; adult
+snow-leopard rings measured 6–8 by 5–7 art pixels in two views. Likeness rose
+3.5→4 and readability 3→3.5. Published evidence records two baby belly-height
+corrections in each facing. Its adult first-construction timings were
+158→349 ms towards, 129→274 ms away and 140→219 ms top (current→graph);
+these serial wall times include JIT/GC and are not gameplay frame costs.
+
+Cats-3 cloud review (6514241273, SHA 71740af3): art checks passed. Sand-cat
+adult likeness rose 2→2.5, but ears became cheek smudges/nubs and the baby
+head was oversized. The geometry assertions alone did not establish a good
+silhouette. Cats-4 therefore raises roots from .28 to .45 head radii above
+centre, increases full ear dimensions from .6×1.1 to .95×1.15, retains outward
+splay, and restores the cub's original skull/cheek proportions. It also follows
+the cats-2 snow-leopard review with wider haunch coverage, lower ring density,
+and fewer larger head/leg spots. These are unscored until cloud review.
+Snow-leopard tail shape/markings, coat colour, feline articulation and the other
+cats' anatomy remain unfinished; no family plateau or completion is claimed.
+
 Cloud command: `node tools/body-graph/cats-preview.mjs previews/body-graph/cats-1`.
 It requires a clean tracked checkout, records and verifies its served source
 SHA, and writes one PNG per cat plus `source.json` and `evidence.json`. Set
