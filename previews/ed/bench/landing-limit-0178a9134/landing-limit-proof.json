@@ -1,0 +1,3463 @@
+{
+ "key": {
+  "build": "vlanding-limit-demo · 0178a91",
+  "seed": 123,
+  "world": 0,
+  "island": "home",
+  "scene": "wave 0 · house",
+  "spot": "sail-timing.cjs: home to fox",
+  "viewport": "960x540",
+  "pixelScale": "3 @1 (canvas 320x180)",
+  "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "machine": "Chrome 151 Windows · 20 cores · 16 GB · 13th Gen Intel(R) Core(TM) i9-13900H · 20 cores · win32 · node 24.18.0",
+  "knobs": {
+   "spells.hats": "",
+   "spells.bag": "satchel",
+   "?creator": "0",
+   "?timing": "1",
+   "?quick": "1",
+   "?warmChart": "0",
+   "?prepChart": "1",
+   "?ladder": "auto",
+   "tool.route": "chart",
+   "tool.targetSetup": "choose-before-outline-v1",
+   "tool.trace": false,
+   "tool.probe": "off",
+   "tool.profile": false,
+   "tool.coastFirstUse": false
+  }
+ },
+ "island": "fox",
+ "then": [],
+ "throttle": 1,
+ "size": "960x540",
+ "gap": 100,
+ "runs": [
+  {
+   "slices": [
+    {
+     "what": "setGame",
+     "ms": 2813,
+     "slices": 74,
+     "longest": 177,
+     "at": "paths"
+    },
+    {
+     "what": "warm",
+     "ms": 5615,
+     "slices": 168,
+     "longest": 9,
+     "at": "forest"
+    },
+    {
+     "what": "background-programs",
+     "ms": 50,
+     "slices": 2,
+     "longest": 35,
+     "at": ""
+    },
+    {
+     "what": "refresh",
+     "ms": 43,
+     "slices": 2,
+     "longest": 3,
+     "at": ""
+    }
+   ],
+   "settleParts": {
+    "grass+lights": 29,
+    "witch": 3735,
+    "hud": 15,
+    "leash": 51,
+    "draw": 10756,
+    "start": 23,
+    "uniforms": 28,
+    "party": 10,
+    "markers": 59,
+    "heightsAhead": 135,
+    "groundTiles": 73,
+    "refresh": 243,
+    "creatures": 10,
+    "prefetch": 2,
+    "sky": 4
+   },
+   "sailMark": 638,
+   "marks": {
+    "chart:depart": 642,
+    "chart:ready": 22265,
+    "chart:flown": 22288,
+    "chart:go": 22288,
+    "witch:prep": 1104,
+    "witch:game": 2249,
+    "witch:prep-start": 5103,
+    "witch:prep-warm": 27946,
+    "witch:prep-ground": 93005,
+    "witch:prep-home": 91536,
+    "witch:prep-idle": null,
+    "witch:prep-compile0": 5120,
+    "witch:prep-compiled": null,
+    "witch:prep-programs": null,
+    "witch:prep-textures": null,
+    "witch:prep-draws": null,
+    "witch:prep-track": 22264,
+    "witch:prep-house": 93073,
+    "sail:ready": 22265,
+    "witch:landed": null,
+    "dive:eased": null,
+    "dive:house-ready": 93074,
+    "dive:house-due": null,
+    "dive:on": null,
+    "game:arrived": 93075,
+    "opening:alarm": 93089
+   },
+   "chartFrames": {
+    "frames": 1881,
+    "longest": 142,
+    "frozen": 258,
+    "over": 2
+   },
+   "toDive": {
+    "frames": 7743,
+    "longest": 1258,
+    "frozen": 12326,
+    "over": 49
+   },
+   "diveToEnd": {
+    "frames": 0,
+    "longest": 0,
+    "frozen": 0,
+    "over": 0
+   },
+   "settle": {
+    "frames": 288,
+    "longest": 1258,
+    "frozen": 4284,
+    "over": 22
+   },
+   "tasks": [
+    {
+     "at": 93314,
+     "ms": 1260,
+     "after": "opening:alarm"
+    },
+    {
+     "at": 1104,
+     "ms": 1147,
+     "after": "witch:map-prep-source"
+    },
+    {
+     "at": 91540,
+     "ms": 863,
+     "after": "witch:prep-home"
+    },
+    {
+     "at": 22340,
+     "ms": 644,
+     "after": "witch:build-forest"
+    },
+    {
+     "at": 55,
+     "ms": 630,
+     "after": ""
+    },
+    {
+     "at": 93073,
+     "ms": 239,
+     "after": "witch:prep-house"
+    },
+    {
+     "at": 38690,
+     "ms": 179,
+     "after": "witch:prep-warm"
+    },
+    {
+     "at": 4563,
+     "ms": 176,
+     "after": "witch:build-paths"
+    }
+   ],
+   "steps": [
+    [
+     "game:reveal",
+     635
+    ],
+    [
+     "chart:sail",
+     638
+    ],
+    [
+     "chart:depart",
+     642
+    ],
+    [
+     "witch:map-prep-source",
+     1099
+    ],
+    [
+     "witch:prep",
+     1104
+    ],
+    [
+     "witch:map-hydrated",
+     1810
+    ],
+    [
+     "witch:map-prep",
+     1810
+    ],
+    [
+     "witch:game",
+     2249
+    ],
+    [
+     "witch:build-heights",
+     2326
+    ],
+    [
+     "witch:build-ground",
+     4490
+    ],
+    [
+     "witch:build-disco",
+     4491
+    ],
+    [
+     "witch:build-paths",
+     4537
+    ],
+    [
+     "witch:build-markers",
+     5073
+    ],
+    [
+     "witch:build-stones",
+     5073
+    ],
+    [
+     "witch:build-ley",
+     5079
+    ],
+    [
+     "witch:build-swap",
+     5081
+    ],
+    [
+     "witch:prep-start",
+     5103
+    ],
+    [
+     "witch:prep-compile0",
+     5120
+    ],
+    [
+     "witch:shader-start",
+     5120
+    ],
+    [
+     "chart:landing-due",
+     6244
+    ],
+    [
+     "witch:shader-landing-limit",
+     21273
+    ],
+    [
+     "witch:prep-track",
+     22264
+    ],
+    [
+     "sail:ready",
+     22265
+    ],
+    [
+     "chart:ready",
+     22265
+    ],
+    [
+     "chart:flown",
+     22288
+    ],
+    [
+     "chart:go",
+     22288
+    ],
+    [
+     "witch:build-forest",
+     22331
+    ],
+    [
+     "game:frame1",
+     22340
+    ],
+    [
+     "witch:build-carvings",
+     27946
+    ],
+    [
+     "witch:prep-warm",
+     27946
+    ],
+    [
+     "witch:shader-background-ready",
+     75601
+    ],
+    [
+     "witch:prep-home",
+     91536
+    ],
+    [
+     "witch:prep-ground",
+     93005
+    ],
+    [
+     "witch:prep-house",
+     93073
+    ],
+    [
+     "dive:house-ready",
+     93074
+    ],
+    [
+     "game:reveal",
+     93075
+    ],
+    [
+     "game:arrived",
+     93075
+    ],
+    [
+     "opening:alarm",
+     93089
+    ],
+    [
+     "island:ready",
+     93453
+    ]
+   ],
+   "longTasks": [
+    {
+     "at": -16239,
+     "ms": 53,
+     "after": ""
+    },
+    {
+     "at": -16075,
+     "ms": 149,
+     "after": "chart:mounted"
+    },
+    {
+     "at": -14792,
+     "ms": 59,
+     "after": "chart:mounted"
+    },
+    {
+     "at": -172,
+     "ms": 145,
+     "after": "chart:mounted"
+    },
+    {
+     "at": 55,
+     "ms": 630,
+     "after": "chart:island1"
+    },
+    {
+     "at": 686,
+     "ms": 79,
+     "after": "chart:depart"
+    },
+    {
+     "at": 856,
+     "ms": 171,
+     "after": "chart:depart"
+    },
+    {
+     "at": 1104,
+     "ms": 1147,
+     "after": "witch:map-prep-source"
+    },
+    {
+     "at": 2351,
+     "ms": 103,
+     "after": "witch:build-heights"
+    },
+    {
+     "at": 2909,
+     "ms": 65,
+     "after": "witch:build-heights"
+    },
+    {
+     "at": 3019,
+     "ms": 75,
+     "after": "witch:build-heights"
+    },
+    {
+     "at": 3137,
+     "ms": 65,
+     "after": "witch:build-heights"
+    },
+    {
+     "at": 3233,
+     "ms": 51,
+     "after": "witch:build-heights"
+    },
+    {
+     "at": 3322,
+     "ms": 57,
+     "after": "witch:build-heights"
+    },
+    {
+     "at": 3462,
+     "ms": 52,
+     "after": "witch:build-heights"
+    },
+    {
+     "at": 4485,
+     "ms": 51,
+     "after": "witch:build-heights"
+    },
+    {
+     "at": 4563,
+     "ms": 176,
+     "after": "witch:build-paths"
+    },
+    {
+     "at": 4742,
+     "ms": 110,
+     "after": "witch:build-paths"
+    },
+    {
+     "at": 4855,
+     "ms": 53,
+     "after": "witch:build-paths"
+    },
+    {
+     "at": 4926,
+     "ms": 66,
+     "after": "witch:build-paths"
+    },
+    {
+     "at": 5473,
+     "ms": 97,
+     "after": "witch:shader-start"
+    },
+    {
+     "at": 22266,
+     "ms": 64,
+     "after": "chart:ready"
+    },
+    {
+     "at": 22340,
+     "ms": 644,
+     "after": "witch:build-forest"
+    },
+    {
+     "at": 22999,
+     "ms": 59,
+     "after": "game:frame1"
+    },
+    {
+     "at": 33402,
+     "ms": 73,
+     "after": "witch:prep-warm"
+    },
+    {
+     "at": 33606,
+     "ms": 51,
+     "after": "witch:prep-warm"
+    },
+    {
+     "at": 33759,
+     "ms": 58,
+     "after": "witch:prep-warm"
+    },
+    {
+     "at": 33822,
+     "ms": 51,
+     "after": "witch:prep-warm"
+    },
+    {
+     "at": 33874,
+     "ms": 51,
+     "after": "witch:prep-warm"
+    },
+    {
+     "at": 36322,
+     "ms": 74,
+     "after": "witch:prep-warm"
+    },
+    {
+     "at": 36436,
+     "ms": 60,
+     "after": "witch:prep-warm"
+    },
+    {
+     "at": 38077,
+     "ms": 74,
+     "after": "witch:prep-warm"
+    },
+    {
+     "at": 38288,
+     "ms": 56,
+     "after": "witch:prep-warm"
+    },
+    {
+     "at": 38471,
+     "ms": 60,
+     "after": "witch:prep-warm"
+    },
+    {
+     "at": 38545,
+     "ms": 60,
+     "after": "witch:prep-warm"
+    },
+    {
+     "at": 38690,
+     "ms": 179,
+     "after": "witch:prep-warm"
+    },
+    {
+     "at": 38904,
+     "ms": 63,
+     "after": "witch:prep-warm"
+    },
+    {
+     "at": 39525,
+     "ms": 82,
+     "after": "witch:prep-warm"
+    },
+    {
+     "at": 39688,
+     "ms": 59,
+     "after": "witch:prep-warm"
+    },
+    {
+     "at": 42947,
+     "ms": 142,
+     "after": "witch:prep-warm"
+    },
+    {
+     "at": 91540,
+     "ms": 863,
+     "after": "witch:prep-home"
+    },
+    {
+     "at": 92422,
+     "ms": 54,
+     "after": "witch:prep-home"
+    },
+    {
+     "at": 93073,
+     "ms": 239,
+     "after": "witch:prep-house"
+    },
+    {
+     "at": 93314,
+     "ms": 1260,
+     "after": "opening:alarm"
+    },
+    {
+     "at": 94578,
+     "ms": 130,
+     "after": "island:ready"
+    },
+    {
+     "at": 94728,
+     "ms": 88,
+     "after": "island:ready"
+    },
+    {
+     "at": 94818,
+     "ms": 84,
+     "after": "island:ready"
+    },
+    {
+     "at": 94906,
+     "ms": 76,
+     "after": "island:ready"
+    },
+    {
+     "at": 94984,
+     "ms": 85,
+     "after": "island:ready"
+    },
+    {
+     "at": 95070,
+     "ms": 71,
+     "after": "island:ready"
+    },
+    {
+     "at": 95188,
+     "ms": 61,
+     "after": "island:ready"
+    },
+    {
+     "at": 95250,
+     "ms": 68,
+     "after": "island:ready"
+    },
+    {
+     "at": 95319,
+     "ms": 64,
+     "after": "island:ready"
+    },
+    {
+     "at": 95383,
+     "ms": 89,
+     "after": "island:ready"
+    },
+    {
+     "at": 95473,
+     "ms": 62,
+     "after": "island:ready"
+    },
+    {
+     "at": 95541,
+     "ms": 56,
+     "after": "island:ready"
+    },
+    {
+     "at": 95598,
+     "ms": 57,
+     "after": "island:ready"
+    },
+    {
+     "at": 95656,
+     "ms": 57,
+     "after": "island:ready"
+    },
+    {
+     "at": 95745,
+     "ms": 86,
+     "after": "island:ready"
+    },
+    {
+     "at": 95832,
+     "ms": 55,
+     "after": "island:ready"
+    },
+    {
+     "at": 95926,
+     "ms": 55,
+     "after": "island:ready"
+    },
+    {
+     "at": 96053,
+     "ms": 79,
+     "after": "island:ready"
+    },
+    {
+     "at": 96133,
+     "ms": 62,
+     "after": "island:ready"
+    },
+    {
+     "at": 96196,
+     "ms": 53,
+     "after": "island:ready"
+    },
+    {
+     "at": 96250,
+     "ms": 54,
+     "after": "island:ready"
+    },
+    {
+     "at": 96305,
+     "ms": 143,
+     "after": "island:ready"
+    },
+    {
+     "at": 96461,
+     "ms": 164,
+     "after": "island:ready"
+    },
+    {
+     "at": 96627,
+     "ms": 72,
+     "after": "island:ready"
+    },
+    {
+     "at": 96700,
+     "ms": 91,
+     "after": "island:ready"
+    },
+    {
+     "at": 96793,
+     "ms": 128,
+     "after": "island:ready"
+    },
+    {
+     "at": 96924,
+     "ms": 57,
+     "after": "island:ready"
+    },
+    {
+     "at": 96981,
+     "ms": 56,
+     "after": "island:ready"
+    },
+    {
+     "at": 97038,
+     "ms": 54,
+     "after": "island:ready"
+    },
+    {
+     "at": 97093,
+     "ms": 88,
+     "after": "island:ready"
+    },
+    {
+     "at": 97196,
+     "ms": 104,
+     "after": "island:ready"
+    },
+    {
+     "at": 97302,
+     "ms": 156,
+     "after": "island:ready"
+    },
+    {
+     "at": 97460,
+     "ms": 150,
+     "after": "island:ready"
+    },
+    {
+     "at": 97612,
+     "ms": 112,
+     "after": "island:ready"
+    },
+    {
+     "at": 97728,
+     "ms": 60,
+     "after": "island:ready"
+    },
+    {
+     "at": 97789,
+     "ms": 63,
+     "after": "island:ready"
+    },
+    {
+     "at": 97854,
+     "ms": 146,
+     "after": "island:ready"
+    },
+    {
+     "at": 98001,
+     "ms": 69,
+     "after": "island:ready"
+    },
+    {
+     "at": 98072,
+     "ms": 94,
+     "after": "island:ready"
+    },
+    {
+     "at": 98167,
+     "ms": 125,
+     "after": "island:ready"
+    },
+    {
+     "at": 98292,
+     "ms": 78,
+     "after": "island:ready"
+    },
+    {
+     "at": 98371,
+     "ms": 57,
+     "after": "island:ready"
+    },
+    {
+     "at": 98428,
+     "ms": 50,
+     "after": "island:ready"
+    },
+    {
+     "at": 98479,
+     "ms": 54,
+     "after": "island:ready"
+    },
+    {
+     "at": 98533,
+     "ms": 69,
+     "after": "island:ready"
+    },
+    {
+     "at": 98604,
+     "ms": 70,
+     "after": "island:ready"
+    },
+    {
+     "at": 98675,
+     "ms": 63,
+     "after": "island:ready"
+    },
+    {
+     "at": 98738,
+     "ms": 56,
+     "after": "island:ready"
+    },
+    {
+     "at": 98795,
+     "ms": 60,
+     "after": "island:ready"
+    },
+    {
+     "at": 98855,
+     "ms": 68,
+     "after": "island:ready"
+    },
+    {
+     "at": 98924,
+     "ms": 174,
+     "after": "island:ready"
+    },
+    {
+     "at": 99099,
+     "ms": 142,
+     "after": "island:ready"
+    },
+    {
+     "at": 99242,
+     "ms": 63,
+     "after": "island:ready"
+    },
+    {
+     "at": 99306,
+     "ms": 112,
+     "after": "island:ready"
+    },
+    {
+     "at": 99420,
+     "ms": 60,
+     "after": "island:ready"
+    },
+    {
+     "at": 99488,
+     "ms": 71,
+     "after": "island:ready"
+    },
+    {
+     "at": 99606,
+     "ms": 83,
+     "after": "island:ready"
+    },
+    {
+     "at": 99690,
+     "ms": 95,
+     "after": "island:ready"
+    },
+    {
+     "at": 99785,
+     "ms": 87,
+     "after": "island:ready"
+    },
+    {
+     "at": 99967,
+     "ms": 53,
+     "after": "island:ready"
+    },
+    {
+     "at": 100020,
+     "ms": 65,
+     "after": "island:ready"
+    },
+    {
+     "at": 100183,
+     "ms": 57,
+     "after": "island:ready"
+    },
+    {
+     "at": 100242,
+     "ms": 68,
+     "after": "island:ready"
+    },
+    {
+     "at": 100310,
+     "ms": 87,
+     "after": "island:ready"
+    },
+    {
+     "at": 100398,
+     "ms": 118,
+     "after": "island:ready"
+    },
+    {
+     "at": 100520,
+     "ms": 92,
+     "after": "island:ready"
+    },
+    {
+     "at": 100613,
+     "ms": 100,
+     "after": "island:ready"
+    },
+    {
+     "at": 100713,
+     "ms": 120,
+     "after": "island:ready"
+    },
+    {
+     "at": 100834,
+     "ms": 58,
+     "after": "island:ready"
+    },
+    {
+     "at": 100893,
+     "ms": 78,
+     "after": "island:ready"
+    },
+    {
+     "at": 100971,
+     "ms": 73,
+     "after": "island:ready"
+    },
+    {
+     "at": 101046,
+     "ms": 58,
+     "after": "island:ready"
+    },
+    {
+     "at": 101104,
+     "ms": 64,
+     "after": "island:ready"
+    },
+    {
+     "at": 101169,
+     "ms": 95,
+     "after": "island:ready"
+    },
+    {
+     "at": 101265,
+     "ms": 55,
+     "after": "island:ready"
+    },
+    {
+     "at": 101321,
+     "ms": 61,
+     "after": "island:ready"
+    },
+    {
+     "at": 101382,
+     "ms": 61,
+     "after": "island:ready"
+    },
+    {
+     "at": 101444,
+     "ms": 64,
+     "after": "island:ready"
+    },
+    {
+     "at": 101509,
+     "ms": 60,
+     "after": "island:ready"
+    },
+    {
+     "at": 101570,
+     "ms": 66,
+     "after": "island:ready"
+    },
+    {
+     "at": 101637,
+     "ms": 145,
+     "after": "island:ready"
+    },
+    {
+     "at": 101783,
+     "ms": 83,
+     "after": "island:ready"
+    },
+    {
+     "at": 101868,
+     "ms": 73,
+     "after": "island:ready"
+    },
+    {
+     "at": 101943,
+     "ms": 53,
+     "after": "island:ready"
+    },
+    {
+     "at": 101997,
+     "ms": 61,
+     "after": "island:ready"
+    },
+    {
+     "at": 102058,
+     "ms": 52,
+     "after": "island:ready"
+    },
+    {
+     "at": 102203,
+     "ms": 170,
+     "after": "island:ready"
+    },
+    {
+     "at": 102382,
+     "ms": 57,
+     "after": "island:ready"
+    },
+    {
+     "at": 102496,
+     "ms": 61,
+     "after": "island:ready"
+    },
+    {
+     "at": 102558,
+     "ms": 55,
+     "after": "island:ready"
+    },
+    {
+     "at": 102620,
+     "ms": 87,
+     "after": "island:ready"
+    },
+    {
+     "at": 102986,
+     "ms": 52,
+     "after": "island:ready"
+    },
+    {
+     "at": 103263,
+     "ms": 58,
+     "after": "island:ready"
+    },
+    {
+     "at": 103321,
+     "ms": 56,
+     "after": "island:ready"
+    },
+    {
+     "at": 103424,
+     "ms": 56,
+     "after": "island:ready"
+    },
+    {
+     "at": 103481,
+     "ms": 57,
+     "after": "island:ready"
+    },
+    {
+     "at": 103539,
+     "ms": 64,
+     "after": "island:ready"
+    },
+    {
+     "at": 103607,
+     "ms": 64,
+     "after": "island:ready"
+    },
+    {
+     "at": 103673,
+     "ms": 61,
+     "after": "island:ready"
+    },
+    {
+     "at": 103783,
+     "ms": 51,
+     "after": "island:ready"
+    },
+    {
+     "at": 104025,
+     "ms": 55,
+     "after": "island:ready"
+    },
+    {
+     "at": 104080,
+     "ms": 64,
+     "after": "island:ready"
+    },
+    {
+     "at": 104148,
+     "ms": 52,
+     "after": "island:ready"
+    },
+    {
+     "at": 104202,
+     "ms": 50,
+     "after": "island:ready"
+    },
+    {
+     "at": 104383,
+     "ms": 53,
+     "after": "island:ready"
+    },
+    {
+     "at": 104437,
+     "ms": 70,
+     "after": "island:ready"
+    },
+    {
+     "at": 104509,
+     "ms": 63,
+     "after": "island:ready"
+    },
+    {
+     "at": 104573,
+     "ms": 87,
+     "after": "island:ready"
+    },
+    {
+     "at": 104660,
+     "ms": 55,
+     "after": "island:ready"
+    },
+    {
+     "at": 104716,
+     "ms": 57,
+     "after": "island:ready"
+    },
+    {
+     "at": 104815,
+     "ms": 65,
+     "after": "island:ready"
+    },
+    {
+     "at": 104880,
+     "ms": 101,
+     "after": "island:ready"
+    },
+    {
+     "at": 104982,
+     "ms": 69,
+     "after": "island:ready"
+    },
+    {
+     "at": 105052,
+     "ms": 52,
+     "after": "island:ready"
+    },
+    {
+     "at": 105106,
+     "ms": 67,
+     "after": "island:ready"
+    },
+    {
+     "at": 105173,
+     "ms": 57,
+     "after": "island:ready"
+    },
+    {
+     "at": 105232,
+     "ms": 54,
+     "after": "island:ready"
+    },
+    {
+     "at": 105287,
+     "ms": 52,
+     "after": "island:ready"
+    },
+    {
+     "at": 105341,
+     "ms": 66,
+     "after": "island:ready"
+    },
+    {
+     "at": 105407,
+     "ms": 56,
+     "after": "island:ready"
+    },
+    {
+     "at": 105530,
+     "ms": 60,
+     "after": "island:ready"
+    },
+    {
+     "at": 105591,
+     "ms": 74,
+     "after": "island:ready"
+    },
+    {
+     "at": 105670,
+     "ms": 63,
+     "after": "island:ready"
+    },
+    {
+     "at": 105736,
+     "ms": 53,
+     "after": "island:ready"
+    },
+    {
+     "at": 105840,
+     "ms": 68,
+     "after": "island:ready"
+    },
+    {
+     "at": 105909,
+     "ms": 52,
+     "after": "island:ready"
+    },
+    {
+     "at": 105976,
+     "ms": 51,
+     "after": "island:ready"
+    },
+    {
+     "at": 106146,
+     "ms": 53,
+     "after": "island:ready"
+    },
+    {
+     "at": 106241,
+     "ms": 54,
+     "after": "island:ready"
+    },
+    {
+     "at": 106379,
+     "ms": 57,
+     "after": "island:ready"
+    },
+    {
+     "at": 106526,
+     "ms": 51,
+     "after": "island:ready"
+    },
+    {
+     "at": 106624,
+     "ms": 60,
+     "after": "island:ready"
+    },
+    {
+     "at": 106729,
+     "ms": 53,
+     "after": "island:ready"
+    },
+    {
+     "at": 106866,
+     "ms": 50,
+     "after": "island:ready"
+    },
+    {
+     "at": 106917,
+     "ms": 71,
+     "after": "island:ready"
+    },
+    {
+     "at": 106989,
+     "ms": 68,
+     "after": "island:ready"
+    },
+    {
+     "at": 107284,
+     "ms": 75,
+     "after": "island:ready"
+    },
+    {
+     "at": 107361,
+     "ms": 59,
+     "after": "island:ready"
+    },
+    {
+     "at": 107421,
+     "ms": 66,
+     "after": "island:ready"
+    },
+    {
+     "at": 107488,
+     "ms": 78,
+     "after": "island:ready"
+    },
+    {
+     "at": 107567,
+     "ms": 81,
+     "after": "island:ready"
+    },
+    {
+     "at": 107649,
+     "ms": 68,
+     "after": "island:ready"
+    },
+    {
+     "at": 107718,
+     "ms": 59,
+     "after": "island:ready"
+    },
+    {
+     "at": 107777,
+     "ms": 62,
+     "after": "island:ready"
+    },
+    {
+     "at": 107840,
+     "ms": 59,
+     "after": "island:ready"
+    },
+    {
+     "at": 107900,
+     "ms": 60,
+     "after": "island:ready"
+    },
+    {
+     "at": 107961,
+     "ms": 77,
+     "after": "island:ready"
+    },
+    {
+     "at": 108039,
+     "ms": 77,
+     "after": "island:ready"
+    },
+    {
+     "at": 108117,
+     "ms": 71,
+     "after": "island:ready"
+    },
+    {
+     "at": 108189,
+     "ms": 53,
+     "after": "island:ready"
+    },
+    {
+     "at": 108243,
+     "ms": 57,
+     "after": "island:ready"
+    },
+    {
+     "at": 108301,
+     "ms": 56,
+     "after": "island:ready"
+    },
+    {
+     "at": 108358,
+     "ms": 60,
+     "after": "island:ready"
+    },
+    {
+     "at": 108418,
+     "ms": 56,
+     "after": "island:ready"
+    },
+    {
+     "at": 108477,
+     "ms": 66,
+     "after": "island:ready"
+    },
+    {
+     "at": 108543,
+     "ms": 53,
+     "after": "island:ready"
+    },
+    {
+     "at": 108597,
+     "ms": 64,
+     "after": "island:ready"
+    },
+    {
+     "at": 108662,
+     "ms": 62,
+     "after": "island:ready"
+    },
+    {
+     "at": 108725,
+     "ms": 56,
+     "after": "island:ready"
+    },
+    {
+     "at": 108782,
+     "ms": 59,
+     "after": "island:ready"
+    },
+    {
+     "at": 108841,
+     "ms": 54,
+     "after": "island:ready"
+    },
+    {
+     "at": 108895,
+     "ms": 53,
+     "after": "island:ready"
+    },
+    {
+     "at": 108949,
+     "ms": 52,
+     "after": "island:ready"
+    },
+    {
+     "at": 109002,
+     "ms": 59,
+     "after": "island:ready"
+    },
+    {
+     "at": 109062,
+     "ms": 58,
+     "after": "island:ready"
+    },
+    {
+     "at": 109121,
+     "ms": 52,
+     "after": "island:ready"
+    },
+    {
+     "at": 109174,
+     "ms": 56,
+     "after": "island:ready"
+    },
+    {
+     "at": 109231,
+     "ms": 59,
+     "after": "island:ready"
+    },
+    {
+     "at": 109292,
+     "ms": 50,
+     "after": "island:ready"
+    },
+    {
+     "at": 109391,
+     "ms": 50,
+     "after": "island:ready"
+    },
+    {
+     "at": 109492,
+     "ms": 51,
+     "after": "island:ready"
+    },
+    {
+     "at": 109543,
+     "ms": 59,
+     "after": "island:ready"
+    },
+    {
+     "at": 109603,
+     "ms": 59,
+     "after": "island:ready"
+    },
+    {
+     "at": 109663,
+     "ms": 70,
+     "after": "island:ready"
+    },
+    {
+     "at": 109733,
+     "ms": 55,
+     "after": "island:ready"
+    },
+    {
+     "at": 109789,
+     "ms": 121,
+     "after": "island:ready"
+    },
+    {
+     "at": 109911,
+     "ms": 62,
+     "after": "island:ready"
+    },
+    {
+     "at": 109974,
+     "ms": 57,
+     "after": "island:ready"
+    },
+    {
+     "at": 110032,
+     "ms": 57,
+     "after": "island:ready"
+    },
+    {
+     "at": 110090,
+     "ms": 60,
+     "after": "island:ready"
+    },
+    {
+     "at": 110151,
+     "ms": 50,
+     "after": "island:ready"
+    },
+    {
+     "at": 110202,
+     "ms": 57,
+     "after": "island:ready"
+    },
+    {
+     "at": 110355,
+     "ms": 52,
+     "after": "island:ready"
+    },
+    {
+     "at": 110409,
+     "ms": 51,
+     "after": "island:ready"
+    },
+    {
+     "at": 110510,
+     "ms": 64,
+     "after": "island:ready"
+    },
+    {
+     "at": 110671,
+     "ms": 59,
+     "after": "island:ready"
+    },
+    {
+     "at": 110731,
+     "ms": 53,
+     "after": "island:ready"
+    },
+    {
+     "at": 110784,
+     "ms": 53,
+     "after": "island:ready"
+    },
+    {
+     "at": 111075,
+     "ms": 70,
+     "after": "island:ready"
+    },
+    {
+     "at": 111146,
+     "ms": 50,
+     "after": "island:ready"
+    },
+    {
+     "at": 111197,
+     "ms": 50,
+     "after": "island:ready"
+    },
+    {
+     "at": 111249,
+     "ms": 53,
+     "after": "island:ready"
+    },
+    {
+     "at": 111481,
+     "ms": 83,
+     "after": "island:ready"
+    },
+    {
+     "at": 111565,
+     "ms": 51,
+     "after": "island:ready"
+    },
+    {
+     "at": 111940,
+     "ms": 52,
+     "after": "island:ready"
+    },
+    {
+     "at": 112091,
+     "ms": 52,
+     "after": "island:ready"
+    },
+    {
+     "at": 112144,
+     "ms": 54,
+     "after": "island:ready"
+    },
+    {
+     "at": 112198,
+     "ms": 60,
+     "after": "island:ready"
+    },
+    {
+     "at": 112260,
+     "ms": 60,
+     "after": "island:ready"
+    },
+    {
+     "at": 112417,
+     "ms": 53,
+     "after": "island:ready"
+    },
+    {
+     "at": 112471,
+     "ms": 52,
+     "after": "island:ready"
+    },
+    {
+     "at": 112524,
+     "ms": 57,
+     "after": "island:ready"
+    },
+    {
+     "at": 112582,
+     "ms": 54,
+     "after": "island:ready"
+    },
+    {
+     "at": 112636,
+     "ms": 54,
+     "after": "island:ready"
+    },
+    {
+     "at": 112691,
+     "ms": 52,
+     "after": "island:ready"
+    },
+    {
+     "at": 112883,
+     "ms": 55,
+     "after": "island:ready"
+    },
+    {
+     "at": 112988,
+     "ms": 57,
+     "after": "island:ready"
+    },
+    {
+     "at": 113045,
+     "ms": 51,
+     "after": "island:ready"
+    }
+   ],
+   "timeline": [
+    {
+     "name": "chart:open",
+     "at": -16181,
+     "detail": null
+    },
+    {
+     "name": "chart:mounted",
+     "at": -16127,
+     "detail": null
+    },
+    {
+     "name": "chart:island1",
+     "at": -168,
+     "detail": null
+    },
+    {
+     "name": "game:reveal",
+     "at": 635,
+     "detail": null
+    },
+    {
+     "name": "chart:sail",
+     "at": 638,
+     "detail": null
+    },
+    {
+     "name": "chart:depart",
+     "at": 642,
+     "detail": null
+    },
+    {
+     "name": "witch:map-prep-source",
+     "at": 1099,
+     "detail": {
+      "seed": 424242,
+      "status": "worker",
+      "workerMs": 10827.5,
+      "hydrateMs": 0,
+      "checkMs": 3.5
+     }
+    },
+    {
+     "name": "witch:prep",
+     "at": 1104,
+     "detail": null
+    },
+    {
+     "name": "witch:map-hydrated",
+     "at": 1810,
+     "detail": {
+      "seed": 424242,
+      "ms": 705.5,
+      "workerMs": 10827.5
+     }
+    },
+    {
+     "name": "witch:map-prep",
+     "at": 1810,
+     "detail": null
+    },
+    {
+     "name": "witch:game",
+     "at": 2249,
+     "detail": null
+    },
+    {
+     "name": "witch:build-heights",
+     "at": 2326,
+     "detail": null
+    },
+    {
+     "name": "witch:build-ground",
+     "at": 4490,
+     "detail": null
+    },
+    {
+     "name": "witch:build-disco",
+     "at": 4491,
+     "detail": null
+    },
+    {
+     "name": "witch:build-paths",
+     "at": 4537,
+     "detail": null
+    },
+    {
+     "name": "witch:build-markers",
+     "at": 5073,
+     "detail": null
+    },
+    {
+     "name": "witch:build-stones",
+     "at": 5073,
+     "detail": null
+    },
+    {
+     "name": "witch:build-ley",
+     "at": 5079,
+     "detail": null
+    },
+    {
+     "name": "witch:build-swap",
+     "at": 5081,
+     "detail": null
+    },
+    {
+     "name": "witch:prep-start",
+     "at": 5103,
+     "detail": null
+    },
+    {
+     "name": "witch:prep-compile0",
+     "at": 5120,
+     "detail": null
+    },
+    {
+     "name": "witch:shader-start",
+     "at": 5120,
+     "detail": {
+      "kind": "shader-programs",
+      "phase": "start",
+      "at": 107301.20000004768,
+      "parallel": true,
+      "elapsed": 0,
+      "groups": {
+       "scene": [
+        82,
+        83,
+        84
+       ],
+       "effects": [],
+       "post": [],
+       "hiz": []
+      },
+      "programs": [
+       {
+        "id": 0,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 1,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 2,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 3,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 4,
+        "name": "Loading ground and lake surfaces",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 5,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 6,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 7,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 8,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 9,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 10,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 11,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 12,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 13,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 14,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 15,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 16,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 17,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 18,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 19,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 20,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 21,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 22,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 23,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 24,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 25,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 26,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 27,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 28,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 29,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 30,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 31,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 32,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 33,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 34,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 35,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 36,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 37,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 38,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 39,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 40,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 41,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 42,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 43,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 44,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 45,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 46,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 47,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 48,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 49,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 50,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 51,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 52,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 53,
+        "name": "",
+        "type": "SpriteMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 54,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 55,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 56,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 57,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 58,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 59,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 60,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 61,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 62,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 63,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 64,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 65,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 66,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 67,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 82,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": false,
+        "added": true
+       },
+       {
+        "id": 83,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": false,
+        "added": true
+       },
+       {
+        "id": 84,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": false,
+        "added": true
+       }
+      ],
+      "pending": []
+     }
+    },
+    {
+     "name": "chart:landing-due",
+     "at": 6244,
+     "detail": {
+      "at": 108421.59999990463,
+      "deadline": 123421.59999990463
+     }
+    },
+    {
+     "name": "witch:shader-landing-limit",
+     "at": 21273,
+     "detail": {
+      "kind": "shader-programs",
+      "phase": "landing-limit",
+      "at": 123454.09999990463,
+      "parallel": true,
+      "elapsed": 15032.400000095367,
+      "groups": {
+       "scene": [
+        82,
+        83,
+        84
+       ],
+       "effects": [],
+       "post": [],
+       "hiz": []
+      },
+      "programs": [
+       {
+        "id": 0,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 1,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 2,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 3,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 4,
+        "name": "Loading ground and lake surfaces",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 5,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 6,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 7,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 8,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 9,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 10,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 11,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 12,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 13,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 14,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 15,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 16,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 17,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 18,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 19,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 20,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 21,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 22,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 23,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 24,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 25,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 26,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 27,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 28,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 29,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 30,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 31,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 32,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 33,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 34,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 35,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 36,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 37,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 38,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 39,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 40,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 41,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 42,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 43,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 44,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 45,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 46,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 47,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 48,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 49,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 50,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 51,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 52,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 53,
+        "name": "",
+        "type": "SpriteMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 54,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 55,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 56,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 57,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 58,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 59,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 60,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 61,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 62,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 63,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 64,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 65,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 66,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 67,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 82,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": false,
+        "added": true
+       },
+       {
+        "id": 83,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": false,
+        "added": true
+       },
+       {
+        "id": 84,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": false,
+        "added": true
+       }
+      ],
+      "pending": [
+       82,
+       83,
+       84
+      ]
+     }
+    },
+    {
+     "name": "witch:prep-track",
+     "at": 22264,
+     "detail": null
+    },
+    {
+     "name": "sail:ready",
+     "at": 22265,
+     "detail": null
+    },
+    {
+     "name": "chart:ready",
+     "at": 22265,
+     "detail": null
+    },
+    {
+     "name": "chart:flown",
+     "at": 22288,
+     "detail": null
+    },
+    {
+     "name": "chart:go",
+     "at": 22288,
+     "detail": null
+    },
+    {
+     "name": "witch:build-forest",
+     "at": 22331,
+     "detail": null
+    },
+    {
+     "name": "game:frame1",
+     "at": 22340,
+     "detail": null
+    },
+    {
+     "name": "witch:build-carvings",
+     "at": 27946,
+     "detail": null
+    },
+    {
+     "name": "witch:prep-warm",
+     "at": 27946,
+     "detail": null
+    },
+    {
+     "name": "witch:shader-background-ready",
+     "at": 75601,
+     "detail": {
+      "kind": "shader-programs",
+      "phase": "background-ready",
+      "at": 177780.70000004768,
+      "parallel": true,
+      "elapsed": 0,
+      "groups": {
+       "scene": [
+        82,
+        83,
+        84
+       ],
+       "effects": [],
+       "post": [],
+       "hiz": []
+      },
+      "programs": [
+       {
+        "id": 0,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 1,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 2,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 3,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 4,
+        "name": "Loading ground and lake surfaces",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 5,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 6,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 7,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 8,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 9,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 10,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 11,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 12,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 13,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 14,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 15,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 16,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 17,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 18,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 19,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 20,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 21,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 22,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 23,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 24,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 25,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 26,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 27,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 28,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 29,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 30,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 31,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 32,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 33,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 34,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 35,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 36,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 37,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 38,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 39,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 40,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 41,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 42,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 43,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 44,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 45,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 46,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 47,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 48,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 49,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 50,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 51,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 52,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 53,
+        "name": "",
+        "type": "SpriteMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 54,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 55,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 56,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 57,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 58,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 59,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 60,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 61,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 62,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 63,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 64,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 65,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 66,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 67,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 82,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": true
+       },
+       {
+        "id": 83,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": true
+       },
+       {
+        "id": 84,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": true
+       }
+      ],
+      "pending": []
+     }
+    },
+    {
+     "name": "witch:prep-home",
+     "at": 91536,
+     "detail": null
+    },
+    {
+     "name": "witch:prep-ground",
+     "at": 93005,
+     "detail": null
+    },
+    {
+     "name": "witch:prep-house",
+     "at": 93073,
+     "detail": null
+    },
+    {
+     "name": "dive:house-ready",
+     "at": 93074,
+     "detail": null
+    },
+    {
+     "name": "game:reveal",
+     "at": 93075,
+     "detail": null
+    },
+    {
+     "name": "game:arrived",
+     "at": 93075,
+     "detail": null
+    },
+    {
+     "name": "opening:alarm",
+     "at": 93089,
+     "detail": null
+    },
+    {
+     "name": "island:ready",
+     "at": 93453,
+     "detail": null
+    }
+   ],
+   "quality": [],
+   "coverage": {
+    "longTasks": true
+   },
+   "programs": {
+    "before": 68,
+    "after": 70,
+    "made": [
+     "|313|,8519680,srgb-linear,onBeforeCompile(){}",
+     "|299|,8519680,srgb-linear,onBeforeCompile(){}",
+     "|264|,8388608,srgb-linear,onBeforeCompile(){}"
+    ]
+   },
+   "key": {
+    "build": "vlanding-limit-demo · 0178a91",
+    "seed": 424242,
+    "world": 0,
+    "island": "fox",
+    "scene": "wave 0 · house",
+    "spot": "sail-timing.cjs: arrival fox",
+    "viewport": "960x540",
+    "pixelScale": "3 @1 (canvas 320x180)",
+    "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "machine": "Chrome 151 Windows · 20 cores · 16 GB · 13th Gen Intel(R) Core(TM) i9-13900H · 20 cores · win32 · node 24.18.0",
+    "knobs": {
+     "map.island": "fox",
+     "spells.hats": "",
+     "spells.bag": "satchel",
+     "?creator": "0",
+     "?timing": "1",
+     "?quick": "1",
+     "?warmChart": "0",
+     "?prepChart": "1",
+     "?ladder": "auto",
+     "tool.route": "chart",
+     "tool.targetSetup": "choose-before-outline-v1",
+     "tool.trace": false,
+     "tool.probe": "off",
+     "tool.profile": false,
+     "tool.coastFirstUse": false
+    }
+   },
+   "route": "chart",
+   "qualityBefore": {
+    "rung": 0,
+    "mode": "auto"
+   },
+   "observationStart": -16243,
+   "prepNotes": [],
+   "summary": {
+    "preparationToGame": 1145,
+    "mapPrep": {
+     "seed": 424242,
+     "status": "worker",
+     "workerMs": 10827.5,
+     "hydrateMs": 0,
+     "checkMs": 3.5
+    },
+    "hydration": {
+     "seed": 424242,
+     "ms": 705.5,
+     "workerMs": 10827.5
+    },
+    "shaderReadinessWait": null,
+    "programPreparation": null,
+    "handoffAfterReady": 23,
+    "arrival": 93075,
+    "events": {},
+    "workerJobs": []
+   },
+   "chartWaitMs": 16243,
+   "resources": {
+    "heap": 176567916,
+    "dom": 2454,
+    "textures": 181,
+    "geometries": 153,
+    "workers": 6
+   },
+   "version": {
+    "version": "vlanding-limit-demo · 0178a91",
+    "built": "2026-10-30T11:17:44.479Z"
+   },
+   "shots": [],
+   "island": "fox",
+   "leg": "cold"
+  }
+ ]
+}
