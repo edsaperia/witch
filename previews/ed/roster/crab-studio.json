@@ -1,0 +1,466 @@
+{
+  "sha": "fc6fc4de6170a3153886dc1bce7e40cc2bfe13d1",
+  "measurements": [
+    {
+      "id": "crab",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 0,
+      "pixelDiff": 392,
+      "current": [
+        44,
+        30
+      ],
+      "proposed": [
+        47,
+        30
+      ]
+    },
+    {
+      "id": "crab",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 1,
+      "pixelDiff": 675,
+      "current": [
+        60,
+        37
+      ],
+      "proposed": [
+        64,
+        37
+      ]
+    },
+    {
+      "id": "crab",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 2,
+      "pixelDiff": 1217,
+      "current": [
+        103,
+        60
+      ],
+      "proposed": [
+        99,
+        60
+      ]
+    },
+    {
+      "id": "crab",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 3,
+      "pixelDiff": 0,
+      "current": [
+        232,
+        137
+      ],
+      "proposed": [
+        232,
+        137
+      ]
+    },
+    {
+      "id": "crab",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 0,
+      "pixelDiff": 454,
+      "current": [
+        45,
+        30
+      ],
+      "proposed": [
+        49,
+        30
+      ]
+    },
+    {
+      "id": "crab",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 1,
+      "pixelDiff": 495,
+      "current": [
+        63,
+        37
+      ],
+      "proposed": [
+        64,
+        37
+      ]
+    },
+    {
+      "id": "crab",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 2,
+      "pixelDiff": 1353,
+      "current": [
+        102,
+        60
+      ],
+      "proposed": [
+        100,
+        60
+      ]
+    },
+    {
+      "id": "crab",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 3,
+      "pixelDiff": 0,
+      "current": [
+        194,
+        135
+      ],
+      "proposed": [
+        194,
+        135
+      ]
+    },
+    {
+      "id": "crab",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 0,
+      "pixelDiff": 359,
+      "current": [
+        44,
+        30
+      ],
+      "proposed": [
+        47,
+        30
+      ]
+    },
+    {
+      "id": "crab",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 1,
+      "pixelDiff": 607,
+      "current": [
+        60,
+        37
+      ],
+      "proposed": [
+        64,
+        37
+      ]
+    },
+    {
+      "id": "crab",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 2,
+      "pixelDiff": 987,
+      "current": [
+        109,
+        60
+      ],
+      "proposed": [
+        115,
+        60
+      ]
+    },
+    {
+      "id": "crab",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 3,
+      "pixelDiff": 0,
+      "current": [
+        247,
+        134
+      ],
+      "proposed": [
+        247,
+        134
+      ]
+    },
+    {
+      "id": "crab",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 0,
+      "pixelDiff": 428,
+      "current": [
+        45,
+        30
+      ],
+      "proposed": [
+        49,
+        30
+      ]
+    },
+    {
+      "id": "crab",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 1,
+      "pixelDiff": 522,
+      "current": [
+        63,
+        37
+      ],
+      "proposed": [
+        67,
+        37
+      ]
+    },
+    {
+      "id": "crab",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 2,
+      "pixelDiff": 1024,
+      "current": [
+        114,
+        60
+      ],
+      "proposed": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "crab",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 3,
+      "pixelDiff": 0,
+      "current": [
+        302,
+        137
+      ],
+      "proposed": [
+        302,
+        137
+      ]
+    }
+  ],
+  "resolvedRecords": [
+    {
+      "level": 0,
+      "column": "current",
+      "body": {
+        "shell": 0.85,
+        "claw": 0.4,
+        "small": 0.4,
+        "stalk": 1.1,
+        "legs": 0.3
+      },
+      "look": null,
+      "paletteHSV": [
+        0.02,
+        0.62,
+        0.58
+      ]
+    },
+    {
+      "level": 0,
+      "column": "proposed",
+      "body": {
+        "shell": 0.85,
+        "claw": 0.75,
+        "small": 0.7,
+        "stalk": 1.1,
+        "legs": 0.6
+      },
+      "look": null,
+      "paletteHSV": [
+        0.02,
+        0.62,
+        0.58
+      ]
+    },
+    {
+      "level": 1,
+      "column": "current",
+      "body": {
+        "shell": 1,
+        "claw": 1,
+        "small": 0.7,
+        "stalk": 1.1,
+        "legs": 0.5
+      },
+      "look": null,
+      "paletteHSV": [
+        0.02,
+        0.62,
+        0.58
+      ]
+    },
+    {
+      "level": 1,
+      "column": "proposed",
+      "body": {
+        "shell": 1,
+        "claw": 1.35,
+        "small": 1.2,
+        "stalk": 1.1,
+        "legs": 0.75
+      },
+      "look": null,
+      "paletteHSV": [
+        0.02,
+        0.62,
+        0.58
+      ]
+    },
+    {
+      "level": 2,
+      "column": "current",
+      "body": {
+        "shell": 1,
+        "claw": 1.8,
+        "barnacles": true
+      },
+      "look": null,
+      "paletteHSV": [
+        0.02,
+        0.62,
+        0.58
+      ]
+    },
+    {
+      "level": 2,
+      "column": "proposed",
+      "body": {
+        "shell": 1,
+        "claw": 2.1,
+        "barnacles": true,
+        "small": 1.7
+      },
+      "look": null,
+      "paletteHSV": [
+        0.02,
+        0.62,
+        0.58
+      ]
+    },
+    {
+      "level": 3,
+      "column": "current",
+      "body": {
+        "shell": 1.05,
+        "claw": 3.2,
+        "barnacles": true
+      },
+      "look": null,
+      "paletteHSV": [
+        0.02,
+        0.62,
+        0.58
+      ]
+    },
+    {
+      "level": 3,
+      "column": "proposed",
+      "body": {
+        "shell": 1.05,
+        "claw": 3.2,
+        "barnacles": true
+      },
+      "look": null,
+      "paletteHSV": [
+        0.02,
+        0.62,
+        0.58
+      ]
+    }
+  ],
+  "modelSourceCommit": "e4b77ac10557c73b19828efe7c0b98e99b6123d7",
+  "lighting": "studio",
+  "style": {
+    "ambientHue": 0.68,
+    "ambient": 0.22,
+    "moon": 0.3,
+    "moonHue": 0.58,
+    "glowHue": 0.13,
+    "glowSat": 0.35,
+    "glowRadius": 110,
+    "glowPower": 1.4,
+    "bands": 3,
+    "dither": 0.35,
+    "round": 0.9,
+    "outline": "none",
+    "cOutline": "dark",
+    "shafts": 0.3,
+    "areaContrast": 0.6,
+    "sat": 0.9,
+    "leafHue": 0.3,
+    "leafVariety": 0.3,
+    "trunkHue": 0.07,
+    "groundHue": 0.27,
+    "groundVal": 0.4,
+    "pixel": 3,
+    "treeSize": 0.85,
+    "crownWidth": 3,
+    "clearing": 0.55,
+    "depth": 4,
+    "areaScale": 1,
+    "areaTypes": 64,
+    "density": 0.55,
+    "clump": 0.6,
+    "gnarl": 0.5,
+    "roots": 0.6,
+    "bark": 0.6,
+    "trees": 1,
+    "wBroad": 0.8,
+    "wFir": 0.6,
+    "wWillow": 0.5,
+    "wBirch": 0.5,
+    "wPalm": 0.3,
+    "wFlat": 0.5,
+    "bushes": 55,
+    "bushSize": 1,
+    "flowers": 0.3,
+    "cSat": 0.6,
+    "cVal": 0.85,
+    "head": 0.44,
+    "eye": 1,
+    "legs": 1,
+    "long": 1,
+    "size": 8,
+    "growth": 20,
+    "magicHue": 0.5,
+    "fur": 0.5,
+    "creatureScale": 1.5,
+    "texture": 1,
+    "texDetail": 0.3,
+    "hueShift": 0,
+    "cloakHue": 0.72,
+    "hairHue": 0.01,
+    "hatHue": 0.74,
+    "topHue": 0.13,
+    "jeansHue": 0.6,
+    "shoeHue": 0,
+    "phonesHue": 0.92,
+    "artStyle": "bold"
+  },
+  "largestCell": [
+    302,
+    137
+  ],
+  "selectionInterface": "shared #1470 selector"
+}
