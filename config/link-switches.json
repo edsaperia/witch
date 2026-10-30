@@ -1210,7 +1210,8 @@
    "group": "debug",
    "since": "2026-10-07",
    "readIn": [
-    "src/app/viewParams.ts"
+    "src/app/viewParams.ts",
+    "src/platform/online/relayClient.ts"
    ]
   },
   {

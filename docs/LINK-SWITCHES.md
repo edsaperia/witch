@@ -126,7 +126,7 @@ For the builders, the smoke and bench runs, the repro link and the arenas.
 | `precision=high` / `precision=medium` / `precision=low` | Every shader's float precision. | 2026-10-14 | render/view.ts |
 | `prepChart=1` / `prepChart=0` | The sea chart made ahead even under automation (1), or never (0). | 2026-10-19 | main.ts |
 | `quest=1` | The first quest's demo: beside the nearest sleeping legend with its dream on her stack. | 2026-10-07 | app/gameParams.ts |
-| `quick=1` | Only the art the start needs (the quick smoke and bench). | 2026-10-07 | app/viewParams.ts |
+| `quick=1` | Only the art the start needs (the quick smoke and bench). | 2026-10-07 | app/viewParams.ts, platform/online/relayClient.ts |
 | `rig=0` | Creatures as baked sprites, without the live rig. | 2026-10-05 | render/rig/rigView.ts |
 | `scenery=<m>` | A fixed scenery radius instead of the adaptive budget. | 2026-10-07 | app/viewParams.ts |
 | `set=<path>=<value>;…` | Any tuning settings for one load (the repro link's: every setting changed from the build's). | 2026-10-14 | app/linkParams.ts, app/mapPrep.ts, app/night.ts, app/sail.ts |
