@@ -1,5 +1,17 @@
 # Creature roster design — review in progress
 
+Next ranked family targets, from independent review 6513323499 (design preparation; no new candidate yet):
+
+| Species | Baseline L/R | Real-animal target | Current data vs observed defect | Bounded first change |
+|---|---|---|---|---|
+| badger | 2/3 | Low broad silver-grey body, short tail, white face with black eye stripes, dark legs/belly | `head.face=badger` and BODY3 legs already exist, but reviewer sees an olive loaf without the face | Increase existing face black/white material contrast before requesting new anatomy |
+| stoat | 3/3 | Long chestnut body, cream underside, short legs, black tail tip | Existing stoat tail and belly flags do not read in the baseline | Set chestnut/cream paint and check the existing tip material; retain long body |
+| otter | 3/3 | Chocolate coat, cream chin/throat, tiny round ears, broad tapering tail, low swimming body | Existing otter tail, whiskers and small ears are present; observed coat is sandy and swaps with marten | Darken coat while retaining readable throat, then judge current tail/body before anatomy changes |
+| marten | 3/3 | Brown coat, cream throat bib, rounded pale-edged ears, bushy tail | Belly flag exists but no localized bib reads | Request localized throat/bib paint if existing belly/muzzle regions cannot express it; avoid painting the whole animal cream |
+| raccoon | 3/3 | Grizzled grey body, bold eye mask, white brows/muzzle, fat ringed tail, high rump | Raccoon face and ringed tail already exist; baseline mask/rings fade at small sizes | Strengthen existing dark and pale tones, then check native small levels before scaling markings |
+
+Keep their related long-bodied anatomy related. These are reviewer-derived targets, not independent acceptance or a new score. Shared-fix capture remains pinned to roster4e72535637ba759455e78fec50b5378482fb0d44/modeld42523e03b77a8ff4507a5c232d5bdcf91e374e2. That checkpoint's typecheck completed exit 0.
+
 Current combined-paint checkpoint: coordinator 6515095501 supplies shared model `d42523e03b77a8ff4507a5c232d5bdcf91e374e2`. Jaguar now uses native ghost rings with a separate dark centre dot at .4 of the inner radius, 7px ordinary/14px elder ring size (baby 4px), modest ring variation and belly falloff. All keep black-brown paint and the original legend features. These values are unrendered proposals. One paired cloud capture covers jaguar, polar bear, arctic fox, unicorn and bear, with night review required for every species. Exact-model data checks now include jaguar's declared elder palette and default-off identity.
 
 Ed, 2026-10-30: **"It's more important that creatures look like their real-life counterpart than that they look distinct."** Related animals should look related. Natural markings, proportions, colour and size provide the distinctions; a similarity threshold is not a reason to distort anatomy. Legends retain animal-specific fantastic story features. The single ART-GUIDE §4 update belongs to #1470 (coordinator 6512922220 / 6512937658); this document applies that rule to the roster.
