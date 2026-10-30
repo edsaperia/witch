@@ -1,4 +1,5 @@
 import { parentPort } from 'node:worker_threads';
+import { createHash } from 'node:crypto';
 import { generateMap, prepOf, LOOKS } from '../../src/rules/map';
 import { worldOf } from '../../src/rules/rosters';
 import { routeOf } from '../../src/rules/party';
@@ -62,7 +63,14 @@ parentPort?.on('message', async job => {
         ? { kind: 'treehouse' as const, id: 'house:22:12.5:fox', style }
         : { kind: 'type' as const, id: 25, seed: 225745, style, K, biome: biomeKey('home', 0, TUNING.biomeLooks) };
       const built = stage('art.runJob', () => runJob(input, ((w: number, h: number) => new PixelCanvas(w, h)) as unknown as MakeCanvas));
-      result = { id: input.id, seed: 'seed' in input ? input.seed : undefined, biome: 'biome' in input ? input.biome : undefined, K, atlas: [built.px.width, built.px.height], backend: 'ImageData-only; no browser canvas or IDB' };
+      const hash = createHash('sha256');
+      const digest = (value: unknown): void => {
+        if (ArrayBuffer.isView(value)) { hash.update(value.constructor.name); hash.update(new Uint8Array(value.buffer, value.byteOffset, value.byteLength)); }
+        else if (value && typeof value === 'object') for (const [key, item] of Object.entries(value)) { hash.update(key); digest(item); }
+        else hash.update(JSON.stringify(value) ?? 'undefined');
+      };
+      digest(built);
+      result = { id: input.id, seed: 'seed' in input ? input.seed : undefined, biome: 'biome' in input ? input.biome : undefined, K, atlas: [built.px.width, built.px.height], resultHash: hash.digest('hex'), backend: 'ImageData-only; no browser canvas or IDB' };
     } else {
       const style = loadStyle(), id = 0, K = 2 / (style.pixel || 2);
       const built = stage('art.generateAndBake', () => typeSprites(style, job.seed, id, K, ((w: number, h: number) => new PixelCanvas(w, h)) as unknown as MakeCanvas));
