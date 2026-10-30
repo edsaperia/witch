@@ -22,8 +22,8 @@ it("keeps the accepted bands, full-presence legend ratio and hard real-size pair
   for(const [big,small]of [["tiger","cat"],["wolf","fox"],["fox","stoat"],["elephant","rhino"]])for(const level of [0,1,2])expect(Math.round(43*sizeMultiplier(big,level))).toBeGreaterThan(Math.round(43*sizeMultiplier(small,level)));
   for(const a of Object.keys(GENOME_BY_ID))for(const b of Object.keys(GENOME_BY_ID))if(SIZE_CLASS_BY_ID[a]>=SIZE_CLASS_BY_ID[b]+2)for(const level of [0,1,2])expect(Math.round(43*sizeMultiplier(a,level))).toBeGreaterThan(Math.round(43*sizeMultiplier(b,level)));
 });
-it("uses the same final age target across shapes and both game facings",()=>{
-  for(const id of ["woodlouse","fox","tiger","cat","elephant","rhino"])for(const level of [0,1,2,3])for(const facing of ["towards","away"]){
+it.each(["woodlouse","fox","tiger","cat","elephant","rhino"])("%s uses the final age target in both game facings",id=>{
+  for(const level of [0,1,2,3])for(const facing of ["towards","away"]){
     const sp=critter(id,level,0,st,facing),target=level===3?Math.ceil(Math.round(43*sizeMultiplier(id,2))*1.75):Math.round(43*sizeMultiplier(id,level));expect(occupiedHeight(sp),`${id}/${level}/${facing}`).toBe(target);
   }
 },60000);
