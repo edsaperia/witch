@@ -17,5 +17,6 @@ describe("per-kind art cache keys", () => {
     expect(artCacheKey({ kind: "beachEdge", id: "all", K: 2, style: {} } as ArtJob, "s", { beachEdge: "e" })).toBe("art-kind-v1|e|s|beachEdge:all|2");
     expect(artCacheKey({ kind: "party" } as ArtJob, "s", { party: "p" })).toBeNull();
     expect(artCacheKey(job, "s", {})).toBeNull();
+    expect(artCacheKey({ kind: "constructor", id: 0 } as unknown as ArtJob, "s", {})).toBeNull();
   });
 });

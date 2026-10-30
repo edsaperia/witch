@@ -43,10 +43,11 @@ function open(): Promise<IDBDatabase | null> {
  *  Party looks are per creature, so they aren't kept (null). The game's art (render/assets.ts) and the landing's bake ahead
  *  (app/landingBake.ts) both key by it. */
 export const artCacheKey = (j: ArtJob, styleHash: string, fingerprints = ART_KIND_HASHES): string | null => {
-  const fingerprint = fingerprints[j.kind];
   // One schema migration, no IDB clear. Unrecognized kinds miss safely rather than
   // sharing a fallback key whose incomplete dependencies could retain stale art.
-  if (j.kind === "party" || !fingerprint) return null;
+  if (j.kind === "party" || !Object.hasOwn(fingerprints, j.kind)) return null;
+  const fingerprint = fingerprints[j.kind];
+  if (typeof fingerprint !== "string" || !fingerprint) return null;
   return ["art-kind-v1", fingerprint, styleHash, j.kind + ":" + j.id, j.kind === "type" ? `${j.seed}|${j.K}${j.biome ? "|" + j.biome : ""}` : j.kind === "beachEdge" || j.kind === "lakeShore" ? `${j.K}` : ""].join("|");
 };
 
