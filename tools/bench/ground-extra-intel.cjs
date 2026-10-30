@@ -77,6 +77,8 @@ let browser, timer, stopping = false;
         const v = window.witch.view, gl = v.renderer.getContext(), d = gl.getExtension('WEBGL_debug_renderer_info');
         return { at: performance.now(), gpu: d ? gl.getParameter(d.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER), programs: v.renderer.info.programs.length, beachExists: !!v.ground.beach,
           beachOn: v.beachView.on, coastReadiness: v.ground.coastReadiness ?? null,
+          unsafeReads: window.__groundExtras.unsafeReads,
+          coastProgramIds: v.ground.beach ? [...(v.renderer.properties.get(v.ground.beach).programs?.values() ?? [])].map(p => p.id) : [],
           coastMarks: performance.getEntriesByType('mark').filter(m => m.name.startsWith('ground:coast-')).map(m => ({ name: m.name, at: m.startTime, detail: m.detail })),
           methods: window.__groundExtras.methods, links: window.__groundExtras.links.map(({ object, ...r }) => ({ ...r, readyWallMs: r.readyAt === null ? null : r.readyAt - r.at })) };
       });
@@ -100,15 +102,29 @@ let browser, timer, stopping = false;
       const result = await page.evaluate(() => {
         const v = window.witch.view, p = window.__groundExtras;
         return { at: performance.now(), coastReadiness: v.ground.coastReadiness ?? null, methods: p.methods, unsafeReads: p.unsafeReads,
+          startScreenHidden: (() => { const el = document.getElementById('start'); return !el || getComputedStyle(el).display === 'none'; })(),
+          firstFallbackAt: p.ground.find(r => r.material === 'Loading ground and lake surfaces' && r.share < 1)?.at ?? null,
+          firstFullAt: p.ground.find(r => r.beach && r.share === 1)?.at ?? null,
           coastProgramIds: [...(v.renderer.properties.get(v.ground.beach).programs?.values() ?? [])].map(p => p.id),
           links: p.links.filter(r => r.at >= p.coastAt).map(({ object, ...r }) => ({ ...r, readyWallMs: r.readyAt === null ? null : r.readyAt - r.at })),
           worstCoastFrameMs: Math.max(0, ...p.frames.filter(f => f.at >= p.coastAt).map(f => f.ms)), groundSubmissions: p.ground,
           marks: performance.getEntriesByType('mark').filter(m => m.startTime >= p.coastAt).map(m => ({ name: m.name, at: m.startTime - p.coastAt, detail: m.detail })) };
       });
-      report.rows.push({ name, version, bootWallMs: before.at, elapsedWallMs: Date.now() - started, before, coast, result, errors }); save();
+      report.rows.push({ name, version, bootWallMs: bootDemand.at, playReadyAt: before.at, elapsedWallMs: Date.now() - started, before, coast, result, errors }); save();
       if (errors.length) throw Error(errors.join('; '));
       if (!result.groundSubmissions.length) throw Error('No ground submitted at coast');
-      if (name === 'candidate' && before.beachExists) throw Error('Candidate has pre-existing coast material at boot; fresh coast-demand scenario not established (see bootDemands)');
+      if (name === 'candidate') {
+        const marks = performanceMarks(before.coastMarks, result.marks, coast.at);
+        const constructed = marks.find(m => m.name === 'ground:coast-constructed'), demand = marks.find(m => m.name === 'ground:coast-demand'), requested = marks.find(m => m.name === 'ground:coast-requested');
+        if (!constructed || constructed.detail?.beachExists !== false) throw Error('Constructor beach absence not recorded');
+        if (!demand || !requested || demand.at < constructed.at || requested.at < demand.at || !['intro-camera', 'near-coast-witch', 'intro-camera+witch'].includes(demand.detail?.trigger)) throw Error('Actual coast-demand ordering/trigger missing');
+        result.firstDemand = demand;
+        result.visibleFallbackMs = result.firstFallbackAt === null || result.firstFullAt === null ? null : result.firstFullAt - result.firstFallbackAt;
+        save();
+        if (!result.startScreenHidden) throw Error('Start card still covers proof');
+        if (result.visibleFallbackMs === null) throw Error('Only already-ready coast observed; visible fallback handover not captured');
+        if (before.unsafeReads.some(r => before.coastProgramIds.includes(r.id))) throw Error('Unfinished coast program queried before play');
+      }
       if (name === 'candidate' && result.unsafeReads.some(r => result.coastProgramIds.includes(r.id))) throw Error('Unfinished coast program queried');
       await context.close();
     }
@@ -116,3 +132,7 @@ let browser, timer, stopping = false;
   } catch (e) { report.error = String(e); save(); process.exitCode = 1; }
   finally { clearTimeout(timer); if (browser) await browser.close(); await new Promise(ok => server.close(ok)); }
 })();
+
+function performanceMarks(before, after, coastAt) {
+  return [...before, ...after.map(m => ({ ...m, at: m.at + coastAt }))].sort((a, b) => a.at - b.at);
+}

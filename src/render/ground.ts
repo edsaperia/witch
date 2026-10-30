@@ -817,6 +817,7 @@ void main() {
     fallbackTwin.name = 'Loading ground and lake surfaces'; fallbackTwin.visible = false; fallbackTwin.frustumCulled = false;
     this.mesh.add(fallbackTwin);
     this.follow((e.minX + e.maxX) / 2, (e.minZ + e.maxZ) / 2);
+    try { performance.mark('ground:coast-constructed', { detail: { seed: map.seed, beachExists: this.beach !== null } }); } catch { /* no timeline */ }
   }
 
   /** Keep the grid round (x, z), snapped to its squares so the hills don't swim. */
