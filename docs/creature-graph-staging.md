@@ -253,6 +253,24 @@ or occlusion by other head features. Request cloud review only after it passes.
 If that next capture gains less than .5 likeness, park the sand cat for Ed's
 review and continue to the remaining cats/families, per the coordinator.
 
+Cats-5 review (6514771458) scored the adult 3 (+.5) but the baby 2 (regressed):
+an eight-pixel ear fragment was separated by two background rows. The old
+projection gate did not establish actual visibility; only one ear showed in
+top. Coordinator 6514776348 supersedes the old stopping rule: the next adult
+must beat Current side-by-side or be parked; Current was independently scored
+4. Baby ears/head are to revert to Current pending adult settlement. Adult
+top-view visibility and projected edge-on aspect require further tests before
+the next capture.
+
+The requested general `species-sprites` connectivity check uses eight-neighbour
+material-mask components (diagonal contact counts). One nonempty component is
+required; all extra components fail, including single pixels and bright parts.
+No area or material exception hides an ear fragment. The report names component
+count and total detached pixels relative to the largest component. Intentional
+floating effects may therefore be exposed by this strict guard and need an
+explicit coordinator ruling; no exception has been inferred. It changes checks,
+not sprites or growth gates. Cloud execution remains pending.
+
 Cloud command: `node tools/body-graph/cats-preview.mjs previews/body-graph/cats-1`.
 It requires a clean tracked checkout, records and verifies its served source
 SHA, and writes one PNG per cat plus `source.json` and `evidence.json`. Set

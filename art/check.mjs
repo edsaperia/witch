@@ -90,9 +90,11 @@ const SPRITE_CHECKS = async ({ names, only }) => {
   const stats = sp => { let n = 0, bottom = 0; for (let i = 0; i < sp.m.length; i++) if (sp.m[i]) n++; for (let x = 0; x < sp.w; x++) if (sp.m[(sp.h - 1) * sp.w + x]) bottom++; const g = sp.anchors?.ground; if (!bottom && g && g[1] >= sp.h * 0.5 && g[1] <= sp.h + 1 && g[0] >= 0 && g[0] <= sp.w) bottom = 1; return { n, bottom, w: sp.w, h: sp.h }; };
   const pixels = f => { let n = 0; for (let i = 0; i < f.atCore.length; i++) if (f.atCore[i] <= 1) n++; return n; };
   task("species-sprites", async () => { for (const S of SPECIES) {
+    const { spriteConnectivity } = await import("/art/genome/connectivity.js");
+    const connectedStats = (sp, what) => { const c = spriteConnectivity(sp); res.push({ what: `${what}: body connected`, good: c.connected, info: `${c.components.length} components; ${c.detachedPixels} detached pixels` }); return stats(sp); };
     const hs = [];
-    for (const level of [0, 1, 2, 3]) for (const frame of [0, 1]) { const s = stats(G.critter(S.id, level, frame, st)); hs[level] = s.h; res.push({ what: `${S.id} level ${level} frame ${frame}`, good: s.n > 20 && s.bottom > 0, info: `${s.w}x${s.h}` }); }
-    { const a = stats(G.critter(S.id, 2, 0, st, "away")); res.push({ what: `${S.id} adult turned away`, good: a.n > 20 && a.bottom > 0, info: `${a.w}x${a.h}` }); }
+    for (const level of [0, 1, 2, 3]) for (const frame of [0, 1]) { const s = connectedStats(G.critter(S.id, level, frame, st), `${S.id} level ${level} frame ${frame}`); hs[level] = s.h; res.push({ what: `${S.id} level ${level} frame ${frame}`, good: s.n > 20 && s.bottom > 0, info: `${s.w}x${s.h}` }); }
+    { const a = connectedStats(G.critter(S.id, 2, 0, st, "away"), `${S.id} adult turned away`); res.push({ what: `${S.id} adult turned away`, good: a.n > 20 && a.bottom > 0, info: `${a.w}x${a.h}` }); }
     // clear steps (Ed, 2026-10-04: "the size difference should be obvious"), by body height (no antlers or wings): young at least 1.3 times the baby,
     // the adult at least 1.55 times the young, the legend at least 2.1 times the adult, so they can't drift back together
     { const bh = [0, 1, 2, 3].map(l => G.critter(S.id, l, 0, st).bodyH), r = [bh[1] / bh[0], bh[2] / bh[1], bh[3] / bh[2]];
