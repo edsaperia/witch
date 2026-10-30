@@ -109,8 +109,8 @@ import type { FlightEnd } from "./render/chart/seaChart";
 import { restoreGame } from "./rules/nightSnapshot";
 import { browserNightStore, captureNight, nightHasStarted, NightAutosave, savedNight, savesEnabled, type SavedNight, type NightStore } from "./app/nightSave";
 import { Breadcrumbs, browserCommentStore, captureComment, CommentBook, COMMENT_TOTAL, parseComment } from "./app/playtestComments";
-import { observePlaytestErrors } from "./platform/playtestLog";
-import { currentJournal, notable } from "./platform/playtestJournal";
+import { observePlaytestErrors, logCaughtError } from "./platform/playtestLog";
+import { currentJournal, journalEntry, notable } from "./platform/playtestJournal";
 import { pageMutation, recordedStep, recordingFor } from "./app/recordingHooks";
 import { replayRecording } from "./platform/inputRecording";
 import { snapshotGame } from "./rules/nightSnapshot";
@@ -811,7 +811,10 @@ const rumble = new Rumble();
 // ?perf=1: the performance panel (app/perfHud.ts), always on.
 const perfHud = page.perfHud = params.get("perf") === "1" ? new PerfHud(N().game, view, frameStats) : null;
 // Frames of 100 ms or more, with what they spent it on (Ed, 2026-10-06: occasional half-second freezes): the overlay and the playtest log.
-const stallLog = new StallLog();
+const stallLog = new StallLog(summary => {
+  journalEntry("slowframe", summary);
+  notable("warning", `Slow frames: ${summary.count}; worst gap ${summary.maxGap} ms, work ${summary.maxWork} ms`, { loading: summary.loadingCount, parts: summary.worst.parts });
+});
 // (the playtest log's hooks read the night on now, so they carry to the next night's run as they are: app/night.ts)
 N().playtest.stalls = () => stallLog.stalls;
 // What a builder needs from a screenshot of the overlay (Ed, 2026-10-14; app/repro.ts): the link that rebuilds what she saw, the
@@ -1084,6 +1087,9 @@ async function warmAt(n: Night, shot: Shot, A: NonNullable<Tuning["arrive"]>): P
       if (view.shaderLandingLimited) break;
       const t0 = performance.now();
       view.render(n.game.clock.time);
+      try {
+      stallLog.frame({ t: n.game.clock.time, gap: 0, work: performance.now() - t0, step: 0, draw: performance.now() - t0, measured: { step: false, draw: true }, parts: Object.fromEntries(Object.entries(view.ms).map(([name, ms]) => [`draw.${name}`, ms])), source: "warm-draw", loading: { phase: "handoff-warm", ready: n.flags.ready, ...view.readiness }, mode: n.game.witch.mode, x: n.game.witch.x, z: n.game.witch.z, wave: n.game.party.wave, creatures: n.game.creatures.length });
+      } catch (error) { logCaughtError(error, "warm-draw observation"); }
       if (TIMING) console.info(`sail-timing: warm frame ${Math.round(performance.now() - t0)} ms`, JSON.stringify(Object.fromEntries(Object.entries(view.ms).filter(([, v]) => v > 20).map(([k, v]) => [k, Math.round(v)]))));
       await nextFrame();
     }
@@ -1163,7 +1169,29 @@ function shutStation(why: string): void {
   stationShuts.push({ why, at: Math.round(performance.now()), frozen: freeze.frozen, station: stations.station }); if (stationShuts.length > 8) stationShuts.shift();
   stations.close();
 }
+let lastObservedFrame = 0;
+let measuredStep: number | undefined, measuredDraw: number | undefined;
+let measuredParts: Record<string, number> = {};
+function drawFrame(time: number): void {
+  const start = performance.now(), previousParts = view.ms;
+  try { view.render(time); }
+  finally {
+    measuredDraw = (measuredDraw ?? 0) + performance.now() - start;
+    if (view.ms !== previousParts) for (const [name, ms] of Object.entries(view.ms)) measuredParts[`draw.${name}`] = (measuredParts[`draw.${name}`] ?? 0) + ms;
+  }
+}
 function frame(now: number): void {
+  const start = performance.now(), gap = lastObservedFrame && !document.hidden ? now - lastObservedFrame : 0;
+  lastObservedFrame = now; measuredStep = measuredDraw = undefined; measuredParts = {};
+  const n = N(), phase = sailing ? "sailing" : landingSleep.holds(n.game) ? "landing-sleep" : !n.flags.ready ? "building" : n.arrival && !n.flags.landed ? "arrival" : "play";
+  try { frameBody(now); }
+  finally {
+    try {
+      if (!loop.manual) stallLog.frame({ t: n.game.clock.time, gap, work: performance.now() - start, step: measuredStep ?? 0, draw: measuredDraw, measured: { step: measuredStep !== undefined, draw: measuredDraw !== undefined }, parts: measuredParts, source: "raf", loading: { phase, ready: n.flags.ready, ...view.readiness }, mode: n.game.witch.mode, x: n.game.witch.x, z: n.game.witch.z, wave: n.game.party.wave, creatures: n.game.creatures.length });
+    } catch (error) { logCaughtError(error, "slow-frame observation"); }
+  }
+}
+function frameBody(now: number): void {
   requestAnimationFrame(frame);
   if (loop.manual) return;
   if (sailing) { sound.tickSail(); return; } // (the next island being made after a sail in place: nothing stepped or drawn, the sea and the wind heard)
@@ -1186,7 +1214,7 @@ function frame(now: number): void {
     } else {
       (wakeCard ??= new WakeCard()).sleep();
       if (!freeze.frozen && now - landingSnoreAt > 4500) { sound.sfx?.snore(0, 0, 0.2); landingSnoreAt = now; }
-      view.render(game.clock.time); hud.clock(); freeze.update(); return;
+      drawFrame(game.clock.time); hud.clock(); freeze.update(); return;
     }
   }
   // (the sea chart open over the game, ui/chartOverlay.ts: its keys and clicks are the chart's, hers held still)
@@ -1235,6 +1263,7 @@ function frame(now: number): void {
   // 🔇 alarm (render/alarm.ts) shows whenever she's away from them.
   if (ATTACK_DEBUG && !game.clock.paused) { const tt = game.clock.time, ph = tt % 10; if (ph < 4 && Math.floor(tt * 2) !== F.attackTick) { F.attackTick = Math.floor(tt * 2); debugBlows(game.combat.sounds, game.combat.events, game.witch.x, game.witch.z, tt); } }
   const stepMs = performance.now() - step0;
+  measuredStep = stepMs; measuredParts["update.input-and-rules"] = stepMs;
   // E at the treehouse deck's map table (rules/treehouse.ts): the sea chart over the game, to sail from at any time (Ed, 2026-10-11:
   // "Sail anytime"); mid-night that ends the night unwon: played, nothing found (app/chartSave.ts), as a loss.
   if (!bot) for (const e of game.leashEvents) if (e.kind === "house" && e.obj) useHouse(e.obj);
@@ -1325,6 +1354,7 @@ function frame(now: number): void {
     });
   }
   const outside = { playtest: audio0 - log0, audio: performance.now() - audio0 }; // (for the stall log: not the view's own parts)
+  measuredParts["update.playtest"] = outside.playtest; measuredParts["update.audio"] = outside.audio;
   // A slow audio frame's parts in the playtest log (Ed's v3668: a second of "audio" on play's first frame, 2026-10-14), a few a load
   if (outside.audio > SLOW_AUDIO && slowAudioLogged < 8) {
     slowAudioLogged++;
@@ -1350,14 +1380,13 @@ function frame(now: number): void {
   frameStats.beginGpu();
   // (a 💌 filling a ring holds the picture a few frames, a hitstop: the last frame kept, the rules running on; render/impact.ts)
   const held = holding(performance.now());
-  if (!held) interpolated(game, () => view.render(Math.max(0, game.clock.time - (1 - game.alpha) * STEP * game.timeScale))); // (the world's step is STEP x timeScale: rules/slowTime.ts)
+  if (!held) interpolated(game, () => drawFrame(Math.max(0, game.clock.time - (1 - game.alpha) * STEP * game.timeScale))); // (the world's step is STEP x timeScale: rules/slowTime.ts)
   if (!held) drew(performance.now());
   fightFrame((x, y, z) => view.screenOf(x, y, z)); // (the Fight Arena's telegraph timings, if it's on)
   frameStats.endGpu();
   aimHud.update(game, game.herTime, input.cursor, input.lastAim, startEl.style.display === "none" && !bot);
   frameStats.work(performance.now() - work0);
   perfHud?.frame(now, dt * 1000, stepMs, !game.clock.paused && !freeze.frozen);
-  if (!game.clock.paused) stallLog.frame({ t: game.clock.time, gap: dt * 1000, work: performance.now() - work0, step: stepMs, parts: { ...view.ms, ...outside }, mode: game.witch.mode, x: game.witch.x, z: game.witch.z, wave: game.party.wave, creatures: game.creatures.length });
   shake.apply();
   freeze.update();
   // The overlay (app/hud.ts), four times a second.

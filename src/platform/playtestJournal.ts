@@ -53,7 +53,7 @@ export class PlaytestJournal {
   }
   append(kind: string, payload: unknown, details?: { level?: LogLevel; message?: string; context?: LogContext; at?: number }): void {
     if (this.closing) return;
-    const level = details?.level ?? (kind === "error" ? "error" : kind.startsWith("recording:") ? "debug" : "info");
+    const level = details?.level ?? (kind === "error" ? "error" : kind === "slowframe" ? "warn" : kind.startsWith("recording:") ? "debug" : "info");
     const { record, removed } = this.records.add(level, details?.message ?? kind, payload, details?.context ?? { build: this.page.build, t: null, island: "unknown" }, details?.at);
     for (const id of removed) { this.pending.delete(id); this.removed.add(id); }
     if (record) this.pending.set(record.seq, { ...record, page: this.page.id });
