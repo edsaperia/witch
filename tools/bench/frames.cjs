@@ -12,6 +12,7 @@
 //   fight (a debug arena below the dancefloor, a wave called in). Compare a quick run only with a quick run.
 const http = require("http");
 const { pageKey } = require("./comparable.cjs");
+const { sceneState } = require("./scene-state.cjs");
 const fs = require("fs");
 const path = require("path");
 let playwright;
@@ -225,7 +226,8 @@ async function main() {
     const shot = await settle(page, path.join(out, `${s.name}.png`));
     const g = await page.evaluate(() => { const g = window.witch.game, w = g.witch; return { time: +g.clock.time.toFixed(4), x: +w.x.toFixed(3), z: +w.z.toFixed(3), mode: w.mode, seated: !!w.seated, wave: g.party.wave }; });
     const landed = await page.evaluate(() => window.__benchLanded?.at ?? []);
-    result.scenes[s.name] = { ...g, shot, landed, secs: Math.round((Date.now() - t0) / 1000), ...(times && times.length ? { work: summarise(times) } : {}) };
+    const diagnostic = s.name === "wave-fight" ? await sceneState(page) : null;
+    result.scenes[s.name] = { ...g, shot, landed, ...(diagnostic ? { diagnostic } : {}), secs: Math.round((Date.now() - t0) / 1000), ...(times && times.length ? { work: summarise(times) } : {}) };
     console.log(s.name, JSON.stringify(result.scenes[s.name]));
     await page.close();
   }
