@@ -37,3 +37,11 @@ it("does not turn blocked storage or an unprintable rejection into another crash
   new PlaytestLog({ seed: 1, clock: { time: 0 }, tuning: { leyLines: { pulseSpeed: 1 } } } as Game, "dev");
   expect(() => logCaughtError({ toJSON() { throw Error("bad"); } }, "fixture")).not.toThrow();
 });
+it("includes saved comments and their bundles in a readable text download", async () => {
+  const { readablePlaytest } = await import("./playtestLog");
+  const run = { seed: 1, build: "fixture", started: "2026-10-30", interval: 1, samples: [], comments: [{ text: "stuck", night: { fixtureState: 42 } }], journal: { text: "WARN fixture fox game=1 warning", dropped: { debug: 2 }, persistent: true } };
+  const text = readablePlaytest([run]);
+  expect(text).toContain("WITCH PLAYTEST — fixture — seed 1"); expect(text).toContain("WARN fixture fox");
+  expect(text).toContain('"text": "stuck"'); expect(text).toContain('"fixtureState": 42');
+  expect(text).toContain('"debug": 2');
+});

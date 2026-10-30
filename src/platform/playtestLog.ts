@@ -226,19 +226,33 @@ export class PlaytestLog {
     this.save();
   }
   /** Every run kept on this browser (this one included), as a JSON file to save. */
-  async download(): Promise<void> {
+  async download(format: "json" | "text" = "json"): Promise<void> {
     this.update(true); // (a sample of this moment: what Ed saw when he pressed L)
     try { const t = this.debugText?.(); if (t) { this.run.debug = t; this.save(); } } catch (e) { captureError("caught", e, "playtest debug text"); }
     const runs = readRuns(), all = runs.some(r => r.started === this.run.started) ? runs : [...runs, this.run];
     if (this.inputRecording) Object.assign(all[all.length - 1], { inputRecording: this.inputRecording() });
     if (this.comments) Object.assign(all[all.length - 1], { comments: await this.comments() });
     if (currentJournal()) Object.assign(all[all.length - 1], { journal: await currentJournal()!.download() });
-    const blob = new Blob([JSON.stringify(all, null, 1)], { type: "application/json" }), a = document.createElement("a");
+    const content = format === "text" ? readablePlaytest(all) : JSON.stringify(all, null, 1);
+    const blob = new Blob([content], { type: format === "text" ? "text/plain;charset=utf-8" : "application/json" }), a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `witch-playtest-${this.run.seed}-${this.run.started.slice(0, 16).replace(/[:T]/g, "-")}.json`;
+    a.download = `witch-playtest-${this.run.seed}-${this.run.started.slice(0, 16).replace(/[:T]/g, "-")}.${format === "text" ? "txt" : "json"}`;
     document.body.append(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }
+}
+
+/** Text is for reading; the JSON download remains the builder's validated restore format. */
+export function readablePlaytest(runs: readonly PlaytestRun[]): string {
+  return runs.map(run => {
+    const value = run as PlaytestRun & { journal?: { text?: string; dropped?: unknown; persistent?: boolean; previous?: unknown; previousMarker?: unknown }; comments?: unknown; inputRecording?: unknown };
+    const { journal, inputRecording, ...details } = value;
+    return [`WITCH PLAYTEST — ${run.build} — seed ${run.seed} — ${run.started}`,
+      "RUN DETAILS, ERRORS, SAMPLES AND SAVED COMMENTS", JSON.stringify(details, null, 2),
+      "STRUCTURED RECORDS", journal?.text ?? "No structured records in this older run.",
+      "RETENTION / PREVIOUS PAGES", JSON.stringify(journal && { persistent: journal.persistent, dropped: journal.dropped, previous: journal.previous, previousMarker: journal.previousMarker }, null, 2),
+      "INPUT RECORDING (use JSON download to restore)", JSON.stringify(inputRecording ?? null, null, 2)].join("\n\n");
+  }).join("\n\n============================================================\n\n");
 }
 
 /** Her stack as drawn (render/leash/stack.ts), top first, for the log. */
