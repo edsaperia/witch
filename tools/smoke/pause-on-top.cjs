@@ -58,7 +58,8 @@ const CASES = [
     console.log(`time ${what}: ${since(t)} (page thread: longest wait ${(r.worst / 1000).toFixed(1)} s, ${(r.held / 1000).toFixed(0)} s held in waits over 0.25 s; ${r.stalls} frames over 100 ms; art pending ${r.pending}, island ${r.ready ? "ready" : "not ready"})`);
     for (const x of r.top) console.log(`     stall ${x}`);
   };
-  await page.goto(`http://127.0.0.1:${server.address().port}/?creator=0&quick=1&seed=123&wave=off&debug`);
+  // Four-area world: pause/input shielding uses house overlays, not distant scenery or area diversity.
+  await page.goto(`http://127.0.0.1:${server.address().port}/?creator=0&quick=1&seed=123&island=4&wave=off&debug`);
   await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000, polling: 1000 });
   await page.addStyleTag({ content: "#pause-sliders { transition: none !important; }" }); // (where they rest, not mid-slide: a software GL draws a frame in seconds)
   await page.keyboard.press("Enter");

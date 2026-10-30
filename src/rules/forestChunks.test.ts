@@ -5,6 +5,7 @@ import { TUNING } from "./tuning";
 
 describe("cooperative forest queries", () => {
   let map: ReturnType<typeof generateMap>;
+  // Keep the seeded spatial regression fixture: queries at fixed world coordinates must cross multiple cache chunks.
   beforeAll(() => { map = generateMap(763086, TUNING); });
 
   it.each(["trees", "bushes"] as const)("returns the same %s, in the same order, cold and cached", kind => {

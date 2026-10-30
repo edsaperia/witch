@@ -6,6 +6,7 @@ import { cellKey } from "./party";
 import { routePopulation, type ByRoute } from "./growth";
 import { spawnCreatures } from "./creatures";
 import { generateMap } from "./map";
+import { largestWorldTuning } from "../test/worlds";
 
 describe("every wild area has at least one hostile (Ed, 2026-10-07; population.byRoute.minHostile)", () => {
   it("makes up a shortfall of young or adults with young, and no non-home area starts without one", () => {
@@ -17,7 +18,8 @@ describe("every wild area has at least one hostile (Ed, 2026-10-07; population.b
     expect(big[1] + big[2]).toBeGreaterThanOrEqual(1);
     // On a gentle first ring (start with no young, swarms of none at the first stones), every area still has one.
     const gentle = withTuning({ population: { ...TUNING.population, start: none, swarm: { ...TUNING.population.swarm, start: 0 }, byRoute: { ...TUNING.population.byRoute, minHostile: 1 } } });
-    const map = generateMap(123, gentle), all = spawnCreatures(map), home = cellKey(map.centreCell);
+    // Largest shipped world: the population minimum must hold in every area, including the full type roster.
+    const map = generateMap(123, largestWorldTuning(gentle)), all = spawnCreatures(map), home = cellKey(map.centreCell);
     for (const [cx, cy] of map.cells) {
       const key = `${cx},${cy}`;
       if (key === home) continue;

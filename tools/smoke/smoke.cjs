@@ -97,6 +97,7 @@ async function main() {
     else page = await browser.newPage({ viewport: size, deviceScaleFactor: dpr || 1, hasTouch: !!hasTouch, isMobile: !!hasTouch });
     page.on("pageerror", e => errors.push(`${name}: page error: ${e.message}`));
     page.on("console", m => { if (m.type() === "error") errors.push(`${name}: console error: ${m.text()}`); });
+    // Preserve each scenario's authored island/seed: pop, terrain, long-flight and species-specific checks depend on its geometry.
     await page.goto(`http://127.0.0.1:${port}/?creator=0&pixels=keep&${/(^|&)seed=/.test(query || "") ? (query || "").replace(/^&/, "") : `seed=${seed}${query || "&debug"}`}`); // (a run may ask for its own seed; pixels=keep: the floating checks read the atlases' pixels, which the game lets go once uploaded)
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 300000 });
     // All the art is drawn in the background after start; the software renderer here starves the

@@ -2,7 +2,9 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { generateMap, prepOf } from '../rules/map';
 import { routeOf } from '../rules/party';
 import { worldOf } from '../rules/rosters';
-import { TUNING } from '../rules/tuning';
+import { TUNING as gameTuning } from '../rules/tuning';
+import { smallWorldTuning } from '../test/worlds';
+const TUNING = smallWorldTuning(gameTuning, 'Worker prep diagnostics test keys, corruption and timing marks, independent of area count.');
 import type { PrepRecord } from './mapPrepStore';
 import * as diagnostics from './mapPrep';
 

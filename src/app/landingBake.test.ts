@@ -12,6 +12,7 @@ describe("the landing's area types drawn ahead", () => {
     expect(t.length).toBeGreaterThan(2);
   });
   it("are every area type the island's night draws, whatever its seed (its home area drawn as home's meadow)", () => {
+    // Keep each authored island roster: this checks the landing plan against that island's actual generated types.
     for (const island of ["wolf", "fox"]) {
       const want = new Set(landingTypes(island, 0)), { tuning } = tuningFromLink(new URLSearchParams({ island }));
       for (const seed of [1, 4242]) {

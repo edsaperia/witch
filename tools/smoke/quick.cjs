@@ -46,6 +46,7 @@ async function main() {
   page.on("pageerror", e => errors.push(`page error: ${e.message}`));
   page.on("console", m => { if (m.type() === "error") errors.push(`console error: ${m.text()}`); });
   try {
+    // Keep the authored playable islands: continuous flight and sailing/bed transitions exercise their actual spatial bounds.
     await page.goto(`http://127.0.0.1:${port}/?creator=0&seed=123&quick=1&debug${process.env.QUICK_QUERY ? "&" + process.env.QUICK_QUERY : ""}`); // (QUICK_QUERY=a=b&c=d: more of the link, e.g. set=combat.packs.on=false for pack combat off)
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 240000, polling: 500 });
     log("start screen ready");
