@@ -9508,6 +9508,7 @@ function paintTailParts(parts, definition, pixelsPerUnit = () => null) {
 }
 
 
+
 // ---- inlined from art/elders.js ----
 // The elder legends (Ed's elder brief, docs/ART-GUIDE.md 0c, 2026-10-13): a species' legend as the elder of its kind. It starts from the
 // animal's own nature, exaggerating its defining trait; it shows its age (grizzled, scarred, notched, weathered); it carries what
@@ -10267,6 +10268,8 @@ function profileOf(p) {
   return P;
 }
 function quad3d(S, level, frame, st, facing = "towards") {
+  const fit = S.look?.[S.id]?.fit;
+  if (fit != null && fit !== "current") throw new Error("Quadruped fit must be current or absent");
   // its evolution at this level (genome levels: its own proportions and parts, not a rescale; q.features: legend features it grows early)
   const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q, ...(S.levelQ?.[level] || {}) }, legend = level === 3, juv = level === 1, baby = level === 0, has = f => (legend && !S.levelFeatures?.[3] && S.legend.includes(f)) || (q.features || []).includes(f) || !!S.levelNamed?.[level]?.includes(f); // (an evolved legend, its genome levels[3], replaces its old legend feature)
   const feats = S.levelFeatures?.[level], elder = legend && S.elder; // (an elder legend: art/elders.js)
@@ -10638,7 +10641,15 @@ function quad3d(S, level, frame, st, facing = "towards") {
       previous?.(scale);
     };
   }
-  const sp = drawForm(m, { height: drawHeight(level, st, q.hgt), facing }, S, level);
+  let referenceScale;
+  if (fit === "current") {
+    const base = GENOME_BY_ID[S.id];
+    if (!base || base.template !== "quadruped") throw new Error("Quadruped Current fit requires a known Current quadruped");
+    const reference = speciesOf(base);
+    const measure = Object.assign((model, options) => { referenceScale = render(model, { ...options, measure: true }).s; return new Sprite(1, 1); }, { motes: false });
+    withForm(measure, () => withTexture({ S: reference, level, st }, () => quad3d(reference, level, frame, st, facing)));
+  }
+  const sp = drawForm(m, { height: drawHeight(level, st, q.hgt), facing, ...(referenceScale != null ? { scale: referenceScale } : {}) }, S, level);
   if (m.markingMetrics) sp.markingMetrics = m.markingMetrics;
   if (m.bodyGraph) sp.graphDiagnostics = m.bodyGraph.diagnostics;
   if (formMotes() && sz("motes")) glowMotes(sp, S.id.length * 7919, sz("motes"));
@@ -11750,12 +11761,14 @@ const dfWing = (mat, vein, stig, torn = 0) => (s, t) => {
 function dragonfly3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model(), q = S.levelQ?.[level] || {};
   const up = frame === 0, y = .55, span = q.wing ?? 1, tl = q.tail ?? 1;
+  const wingLength = q.wingLength ?? 1, wingWidth = q.wingWidth ?? 1;
+  if (![wingLength, wingWidth].every(v => Number.isFinite(v) && v > 0) || (q.wingAngle != null && (!Number.isFinite(q.wingAngle) || Math.abs(q.wingAngle) >= Math.PI / 2))) throw new Error("Dragonfly wing controls need positive length/width and angle within (-pi/2,pi/2)");
   const pairs = [[0, .05, .62], [1, -.06, .58]], old = has("ancient"), scar = p => old && Math.abs(Math.sin(p[0] * 41 + p[2] * 13)) < .06 ? M.BELLY : undefined;
   shadow(m, -.15, .2 * span);
   for (const side of [-1, 1]) for (const [k, dx, len] of pairs) { // the wings, straight out, flicking up and down
-    const lift = (up ? .45 : -.25) * (k ? .8 : 1), root = [dx, y + .07, side * .05], dir = v3.norm([k ? -.18 : .12, lift, side]);
+    const dxWing = k ? -.18 : .12, lift = q.wingAngle == null ? (up ? .45 : -.25) * (k ? .8 : 1) : Math.tan(q.wingAngle) * Math.hypot(dxWing, 1), root = [dx, y + .07, side * .05], dir = v3.norm([dxWing, lift, side]);
     const across = v3.norm(v3.cross(dir, [0, 1, 0]));
-    m.flat(v3.add(root, v3.mul(dir, len * span * .5)), dir, across, len * span * .5, (k ? .16 : .13) * span, dfWing(M.BELLY, M.BODY3, M.BODY3, old ? .35 : 0), { group: 10 + k * 2 + (side > 0 ? 1 : 0), extra: true });
+    m.flat(v3.add(root, v3.mul(dir, len * span * .5 * wingLength)), dir, across, len * span * .5 * wingLength, (k ? .16 : .13) * span * wingWidth, dfWing(M.BELLY, M.BODY3, M.BODY3, old ? .35 : 0), { group: 10 + k * 2 + (side > 0 ? 1 : 0), extra: true });
   }
   // the tail: ten segments, long and thin, banded, curving a little down
   for (let i = 0; i < 10; i++) { const t = i / 9, x = -.12 - t * .78 * tl, yy = y - .02 - t * t * .1; m.ell([x, yy, 0], [.05 * tl, .036 - t * .008, .036 - t * .008], i % 3 === 2 ? M.BODY3 : i % 2 ? M.BODY2 : M.BODY, { group: 3, paint: scar }); }
