@@ -2,6 +2,10 @@
 
 Base: `3f7d386beb3d7147f32f6837d9144decd467b7b2`, 2026-10-30. No rules behavior or tuning changes.
 
+Reporting-route follow-up (6531271878): the starting-save-failure test now observes `logCaughtError` itself, with the exact error/location and one-call assertion, while still executing its real implementation. A shared worker can already have the page-log sink installed, legitimately bypassing console.warn. Reporting is synchronous at this catch; waiting for the journal drain would not repair a console assertion. The test retains full rules-state equality and restores both spies in finally; no production flag/reset change is needed.
+
+Coordinator polling follow-up: trusted `COORDINATOR —`, `–` and `-` headers are recognized alongside the original colon prefix. The unmodified body still determines receipt hashes. Both paginated fetches must succeed before explicit acknowledgement can advance receipts. Missed instructions6531244653/6531271878 were read against the latest full brief, not replayed as older work; author/prefix/quoted-text regression checks cover the classifier.
+
 CI shared-module follow-up (6529978390): error listeners are installed at module evaluation, once per real page. A test worker may cache that module before a fake window exists; resetting only after tests left the first fixture without listeners, so its caught-error ring never received the dispatched browser errors. The fixture now resets before each fake-page import, with a deliberate preloaded-module regression and a separate-page/pre-night error case. Production ring retention across nights is intentional: earlier entries keep their original context and the active sink is replaced by each new night. Real reloads/tabs use separate module realms/rings; prior persisted logs are explicitly included as history, not relabelled as current-page errors. No production reset or weakened assertion was introduced.
 
 ## Catch audit

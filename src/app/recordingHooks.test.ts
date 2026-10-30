@@ -7,6 +7,7 @@ import { restoreSettingsBase } from "./playerSettings";
 import { pageMutation, recordedStep, recordingFor } from "./recordingHooks";
 import { replayRecording } from "../platform/inputRecording";
 import { captureComment, parseComment } from "./playtestComments";
+import * as diagnostics from "../platform/caughtError";
 
 const idle: Controls = { moveX: 0, moveZ: 0, zoom: 0, toggleMode: false };
 function fixture(players = 1) {
@@ -32,9 +33,15 @@ it("the page hooks keep both players, explicit mutation boundaries and a comment
 });
 it("a diagnostic starting-save failure cannot prevent or duplicate the original simulation step", () => {
   const { game, capture } = fixture(), { game: reference } = fixture();
-  const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-  const fail = () => { throw Error("fixture storage context unavailable"); };
-  recordedStep(game, idle, STEP, "test", fail); stepGame(reference, idle, STEP);
-  recordedStep(game, idle, STEP, "test", capture); stepGame(reference, idle, STEP);
-  expect(snapshotGame(game)).toEqual(snapshotGame(reference)); expect(warn).toHaveBeenCalledOnce(); warn.mockRestore();
+  // The page log may already own the diagnostic sink in a shared worker. Assert
+  // the actual reporting boundary, independently of console-vs-journal routing.
+  const report = vi.spyOn(diagnostics, "logCaughtError");
+  const warn = vi.spyOn(console, "warn").mockImplementation(() => {}); // Silence only the optional no-page fallback.
+  try {
+    const fail = () => { throw Error("fixture storage context unavailable"); };
+    recordedStep(game, idle, STEP, "test", fail); stepGame(reference, idle, STEP);
+    recordedStep(game, idle, STEP, "test", capture); stepGame(reference, idle, STEP);
+    expect(snapshotGame(game)).toEqual(snapshotGame(reference));
+    expect(report).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ message: "fixture storage context unavailable" }), "input recording unavailable");
+  } finally { report.mockRestore(); warn.mockRestore(); }
 });
