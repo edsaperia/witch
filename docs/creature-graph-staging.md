@@ -40,7 +40,8 @@ when checking skin joins. No external asset or dependency is required.
 
 The diagnostic sheet compares nearly hard joins (blend epsilon) with the
 existing .07 smooth blend at a fixed pixel scale, from both headings. It uses
-flat material colours to inspect geometry, not the production lighting or
+plain material colours and a fixed three-band light to inspect normals at
+joins, not the production lighting or
 texture bake. The three leg-family fixtures and extra-socket fixture are
 deliberately anonymous; they are not approved replacements for animal art.
 Socket offsets use model axes, not a rotating spine-local frame. Wings are

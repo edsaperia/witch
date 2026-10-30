@@ -28,7 +28,13 @@ for (let row = 0; row < fixtures.length; row++) {
     for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) {
       const material = sp.get(x, y);
       if (!material) continue;
-      const colour = material === 3 ? "#b5a58c" : "#9aabc2";
+      const i = (y * sp.w + x) * 3;
+      // Fixed screen-space light with three bands exposes normal continuity at
+      // joins. This deliberately does not imitate production night lighting.
+      const diffuse = Math.max(0, -sp.n[i] * .4 - sp.n[i + 1] * .6 + sp.n[i + 2] * .69);
+      const light = [.48, .74, 1][Math.min(2, Math.floor(diffuse * 3))];
+      const base = material === 3 ? [181, 165, 140] : [154, 171, 194];
+      const colour = `rgb(${base.map(v => Math.round(v * light)).join(",")})`;
       cells.push(`<rect x="${ox + x * scale}" y="${oy + y * scale}" width="${scale}" height="${scale}" fill="${colour}"/>`);
     }
   }
