@@ -17,6 +17,10 @@ says what each note covers.
 
 (no entries: its tools and checks only)
 
+## [Balance study follow-up](balance-study.md)
+
+(no entries: its tools and checks only)
+
 ## [Balance](balance.md)
 
 - Legacy models retained (2026-10-29, #1459, coordinator decision).
