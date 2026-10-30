@@ -8,7 +8,7 @@ import { Input } from "../input";
 import { View } from "../../render/view";
 import { prewarmArtWorkers } from "../../render/assets";
 import { gameStyle, styleFromLink, viewFromLink } from "../../app/viewParams";
-import { connectRelay, invitationLink } from "./relayClient";
+import { connectRelay, invitationLink, soloHome } from "./relayClient";
 import { guestInput, wireControls } from "./guestInput";
 import { attachGuest, detachGuest } from "./membership";
 import { localView } from "./localView";
@@ -37,7 +37,7 @@ async function prepare(source: Game, player: number) {
   const style = styleFromLink(params, game.tuning);
   view = await View.create(document.getElementById("game") as HTMLCanvasElement, presentation.game, gameStyle(style, game.tuning));
   viewFromLink(view, params);
-  view.additionalWitches = otherWitches(view, game, player);
+  otherWitches(view, game, player);
   const resize = () => view.resize(innerWidth, innerHeight);
   resize(); addEventListener("resize", resize);
   await view.prepare(); ready = true;
@@ -56,7 +56,7 @@ if (!guest) {
 
 const connection = connectRelay({ endpoint, room, token: guest ? token : undefined,
   onError: fail,
-  onClose() { if (guest) { location.href = new URL("./", location.href).href; return; } detachGuest(game); guestPresent = false; inputBuffer.clear(); setStatus("The relay connection ended. Leave to return home."); },
+  onClose() { if (guest) { location.href = soloHome(location.href); return; } detachGuest(game); guestPresent = false; inputBuffer.clear(); setStatus("The relay connection ended. Leave to return home."); },
   onMessage(m) {
     if (m.type === "hosted" && typeof m.token === "string") {
       invite.href = invitationLink(location.href, endpoint, room, m.token); invite.hidden = false;
@@ -86,7 +86,7 @@ input.aimFrom = (x, y) => ready ? view.aimAt(x, y) : null;
 const pause = () => { paused = !paused; input.release(); document.getElementById("pause")!.textContent = paused ? "Resume" : "Pause"; };
 document.getElementById("pause")!.onclick = pause;
 document.getElementById("party")!.onclick = () => { castWanted = true; };
-document.getElementById("leave")!.onclick = () => { connection.close(); location.href = new URL("./", location.href).href; };
+document.getElementById("leave")!.onclick = () => { connection.close(); location.href = soloHome(location.href); };
 addEventListener("keydown", e => { if (e.code === "Escape" && !e.repeat) pause(); });
 addEventListener("beforeunload", () => connection.close());
 let last = 0;

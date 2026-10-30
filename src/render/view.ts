@@ -360,8 +360,6 @@ const TRACK_REACH = 140, TRACK_AHEAD = 320;
 const HOUSE_TILT_EASE = 0.6;
 
 export class View {
-  /** Opt-in online prototype overlay; ordinary views leave it unset. */
-  additionalWitches?: (time: number, onTreehouse: (x: number, y: number) => { x: number; y: number; z: number }) => void;
   readonly renderer: THREE.WebGLRenderer;
   scene = new THREE.Scene();
   camera: THREE.PerspectiveCamera;
@@ -1687,7 +1685,6 @@ export class View {
     }
     this.lightRings?.update(this.camera, w.x, witchHeight(w, t) + this.rideOff, w.z, canopyShown(w), time);
     const hatTop = drawWitch(this, time, ht, onTreehouse);
-    this.additionalWitches?.(time, onTreehouse);
     this.houseRooms?.update(this, onTreehouse, ht);
     if (this.crown && (this.crown.lights !== (t.treehouse.house?.crown?.lights ?? 1) || (this.crown.crown.wrap ?? 0) !== (t.treehouse.house?.crown?.wrap ?? 0))) this.ensureCrown(this.game); // (its lights' density or their wrapping moved on the pause page: grown again)
     if (this.crown && deck) { // (the crown: in the world, or laid over the floors with her indoors: render/crown.ts)

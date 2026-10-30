@@ -63,3 +63,9 @@ export function invitationLink(page: string, endpoint: string, room: string, tok
   link.hash = new URLSearchParams({ invite: token }).toString();
   return link.href;
 }
+
+/** Production online output is nested; Vite's development page is at the root. */
+export function soloHome(page: string): string {
+  const url = new URL(page);
+  return new URL(url.pathname.endsWith("/online/online.html") ? "../" : "./", url).href;
+}

@@ -5,11 +5,12 @@ import { onRoomFloor } from "../../rules/houseRooms";
 import { groundHeight } from "../../render/height";
 import { alongRay } from "../../render/view/home";
 import { witchHeight } from "../../rules/witch";
+import { SPRITE_UNIFORMS } from "../../render/sprites";
 
 /** First prototype: uses the existing witch atlas, with no new generated art. */
 export function otherWitches(view: View, source: Game, player: number) {
   const batch = view.makeWitchBatch();
-  return (time: number, onTreehouse: (x: number, y: number) => { x: number; y: number; z: number }) => {
+  const draw = (time: number, onTreehouse: (x: number, y: number) => { x: number; y: number; z: number }) => {
     if (batch.atlas !== view.assets.witch) batch.setAtlas(view.assets.witch);
     const deck = deckOf(source.map, source.tuning), tree = view.assets.treehouse;
     batch.set(source.witches.filter(w => w.id !== player).map(W => {
@@ -33,5 +34,20 @@ export function otherWitches(view: View, source: Game, player: number) {
     material.depthTest = original.depthTest;
     if (material.transparent !== original.transparent) { material.transparent = original.transparent; material.needsUpdate = true; }
     void time;
+  };
+  // Online-only adapter: decorate this instance's player-batch update, after its camera is placed.
+  // The ordinary View module and its output bytes remain unchanged.
+  const setPlayer = view.witchBatch.set.bind(view.witchBatch);
+  view.witchBatch.set = items => {
+    setPlayer(items);
+    const T = view.assets.treehouse, f = T.atlas.frames[0], d = deckOf(source.map, source.tuning);
+    const right = SPRITE_UNIFORMS.uRight.value, up = SPRITE_UNIFORMS.uUp.value;
+    const ox = T.ent ? (T.ent.deck.x - f.w / 2) * view.mpp : 0;
+    const oy = T.ent ? (f.h - T.ent.deck.y) * view.mpp : 0;
+    const at = { x: (d?.x ?? source.map.treehouse.x) - right.x * ox - up.x * oy, y: (d?.h ?? 0) - right.y * ox - up.y * oy, z: (d?.z ?? source.map.treehouse.z) - right.z * ox - up.z * oy };
+    draw(source.clock.time, (px, py) => {
+      const dx = (px - f.w / 2) * view.mpp, dy = (f.h - py) * view.mpp;
+      return { x: at.x + right.x * dx + up.x * dy, y: at.y + right.y * dx + up.y * dy, z: at.z + right.z * dx + up.z * dy };
+    });
   };
 }

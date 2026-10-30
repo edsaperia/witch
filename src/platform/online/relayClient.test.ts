@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { connectRelay, invitationLink, type RelaySocket } from "./relayClient";
+import { connectRelay, invitationLink, soloHome, type RelaySocket } from "./relayClient";
 
 class Socket implements RelaySocket {
   readyState = 0;
@@ -37,4 +37,6 @@ it("keeps invitation secrets in fragment and requires encrypted remote transport
   const link = new URL(invitationLink("https://example.test/witch/?seed=12", "ws://localhost:8787", "1234567", "secret"));
   expect(link.searchParams.get("online")).toBe("guest"); expect(link.search).not.toContain("secret"); expect(link.hash).toBe("#invite=secret");
   expect(() => connectRelay({ endpoint: "ws://remote.test", room: "1234567", onMessage: vi.fn(), onClose: vi.fn(), onError: vi.fn() })).toThrow("requires wss");
+  expect(soloHome("https://example.test/pr-1471/online/online.html?online=guest")).toBe("https://example.test/pr-1471/");
+  expect(soloHome("http://localhost:5173/online.html?online=guest")).toBe("http://localhost:5173/");
 });
