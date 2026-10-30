@@ -100,13 +100,34 @@ export function napForm(S, { frame = 0 } = {}) {
     if (pose.curl) { const b = bounds(m); curlBody(m, pose.curl, (b.x0 + b.x1) / 2, (b.x1 - b.x0) / 2); }
     // wings wrapped round it
     if (pose.cloak) { const c = pose.cloak.c; m.ell([c[0], G + (c[1] - .3) + pose.cloak.r[1] * .9, c[2]], pose.cloak.r, M.BODY2, { group: 1, paint: p => Math.abs(Math.sin(Math.atan2(p[2], p[0] - c[0]) * 5)) > .85 ? M.BODY3 : undefined }); }
-    if (frame % 2) { const top = bounds(m).y1, k = Math.max(BREATH, 1.8 / s) / Math.max(.05, top - G); move(m, p => [p[0], G + (p[1] - G) * (1 + k), p[2]]); } // its breath: in (swelling up from the ground, its top a pixel or more higher, so the small ones breathe too)
+    if (frame % 2) {
+      const lift = Math.max(BREATH, 1.8 / s), top = bounds(m).y1, k = lift / Math.max(.05, top - G);
+      move(m, p => [p[0], G + (p[1] - G) * (1 + k), p[2]]);
+      // A flat flyer's dominant volume can merely translate under the centre
+      // transform, then crop back to identical pixels. Its resting thorax and
+      // wrapped wings must swell too, rather than only moving their centres.
+      if (S.plan === "moth" || S.plan === "dragonfly") for (const q of m.parts) {
+        if (q.extra || q.cut || ![M.BODY,M.BODY2,M.BODY3,M.BELLY].includes(q.mat)) continue;
+        if (q.type === "ell") q.r = [q.r[0],q.r[1]+lift*.5,q.r[2]];
+        else if (q.type === "cone") { q.r1 += lift*.4; q.r2 += lift*.4; }
+      }
+    } // its breath: in, visibly swelling above the ground
     const b = bounds(m), cx = (b.x0 + b.x1) / 2, cz = (b.z0 + b.z1) / 2; // (curled, its middle has moved toward the near side)
     m.clipY = G;
-    const res = render(m, { scale: s, facing: o.facing });
-    res.sp.origin = res.project([cx, G, cz]); // the ground under its middle, on the sprite
-    res.sp.groundLine = G;
-    return crop(res.sp);
+    let scale = s, sp;
+    const heightBudget = o.sizeTarget ?? null;
+    // Lying down can widen the model into the camera's vertical projection
+    // (especially a snail's shell). Keep the standing visible age budget after
+    // deformation and breathing, using native rays rather than resampling art.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const res = render(m, { scale, facing: o.facing });
+      res.sp.origin = res.project([cx, G, cz]);
+      res.sp.groundLine = G;
+      sp = crop(res.sp);
+      if (!heightBudget || sp.h <= heightBudget) break;
+      scale *= (heightBudget - .5) / sp.h;
+    }
+    return sp;
   };
   form.motes = false;
   form.fold = pose.fold ?? 0;
@@ -118,6 +139,10 @@ function crop(sp) {
   let x0 = sp.w, x1 = -1, y0 = sp.h, y1 = -1;
   for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
   if (x1 < 0) return sp;
+  // Cropping must retain enough native top margin to keep the actual ground
+  // anchor in the lower half. Do not move the world-space anchor to satisfy
+  // the crop: a low curled torso can straddle its projected ground centre.
+  if (sp.origin) y0 = Math.max(0, Math.min(y0, Math.floor(2 * sp.origin[1] - y1 - 1)));
   const W = x1 - x0 + 1, H = y1 - y0 + 1, c = new sp.constructor(W, H);
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = (y + y0) * sp.w + x + x0, j = y * W + x; c.m[j] = sp.m[i]; c.g[j] = sp.g[i]; for (let k = 0; k < 3; k++) c.n[j * 3 + k] = sp.n[i * 3 + k]; }
   for (const k of Object.keys(sp)) if (!(k in c) && !["m", "g", "n", "w", "h"].includes(k)) c[k] = sp[k];

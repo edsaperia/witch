@@ -463,10 +463,12 @@ export class AssetLibrary {
   /** Each species' genome hash (rigArt's page key), worked out once. */
   private genomeHashes = new Map<string, string>();
   rigArt(species: string, level: number, gear?: RigGear): RigArt | undefined { // gear: a party animal's, baked on (a page per species, level and gear)
-    const g = (Art.GENOME_BY_ID as Record<string, unknown>)[species];
-    if (!g) return undefined;
-    let h = this.genomeHashes.get(species);
-    if (h === undefined) this.genomeHashes.set(species, (h = Art.genomeHash(g) as string)); // (the genomes are fixed for the run: hashed once, not per creature per frame)
+    const base = (Art.GENOME_BY_ID as Record<string, unknown>)[species];
+    if (!base) return undefined;
+    const g = Art.selectedCreatureGenome(base, this.style, level);
+    const hashId = `${species}:${level}`;
+    let h = this.genomeHashes.get(hashId);
+    if (h === undefined) this.genomeHashes.set(hashId, (h = (g === base ? Art.genomeHash(base) : Art.genomeHash(base, this.style, level)) as string)); // selected genome and level, fixed for the run
     const k = `rig-${species}-${level}-${h}${gear ? "-" + rigGearKey(gear) : ""}`, a = this.rigs.get(k);
     if (a) { a.used = performance.now(); return a; }
     // Only the four-legged and the snakes have rig parts (art/genome/parts.js); a page that came back without any (a squat

@@ -2,7 +2,7 @@
 // call that draws one. Each is built in 3D (creatures3d.js, model3d.js) and seen in
 // three-quarter view from above; it faces right and the game mirrors it.
 import { M, hsv2rgb, rng } from "./core.js";
-import { GENOMES, speciesOf } from "./genome/index.js";
+import { GENOMES, GENOME_BY_ID, speciesOf, selectedCreatureGenome } from "./genome/index.js";
 import { textureSprite } from "./genome/texture.js";
 import { napForm } from "./naps.js";
 export const textureSeed = id => [...id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7) & 0xffff;
@@ -22,8 +22,14 @@ export const buildCreature = (S, level, frame, st, facing = "towards") => S.q ? 
 // The records hold each species' template, palette, proportions and parts as data (#79 stage 1);
 // speciesOf turns one into the object the builders draw from (plan, hue/sat/val, belly, legend,
 // and for the four-legged q, their proportions, and sizes, their template's size curves).
-export const SPECIES = GENOMES.map(speciesOf);
+export const SPECIES = GENOMES.map(g => speciesOf(g));
 export const SPECIES_BY_ID = Object.fromEntries(SPECIES.map(s => [s.id, s]));
+// All selected rendering goes through this hook; base tables remain immutable.
+/** @param {number|null} [level] */
+export function speciesFor(id, st, level = null) {
+  const base = GENOME_BY_ID[id];
+  return base && (st?.creatureModels || selectedCreatureGenome(base, st, level) !== base) ? speciesOf(base, st, level) : SPECIES_BY_ID[id];
+}
 export const FEATURE_NAMES = { wings: "spirit wings", mane: "a glowing mane", tails: "many tails", crystals: "crystals", tusksBig: "great tusks", antlersGlow: "glowing antlers", jackalope: "antlers", eyesRing: "a ring of eyes", moss: "a little forest on its back", starTail: "a starry tail", crown: "a crown", ribbons: "light ribbons", wingsBig: "huge glowing wings", horn: "a glowing horn", glowShell: "a glowing shell", hornsGlow: "glowing golden horns", flames: "a crest of flame", lantern: "a great lantern", sunBall: "a ball of sunlight" };
 
 // Party gear's colourways (gear in critter).
@@ -43,14 +49,20 @@ export function partyGear(seed, collarColour = true) {
   };
 }
 // sp: a species id, or a species object (a palette variant's: art/genome/palette.js).
-export function speciesColours(sp, st, gear = null) {
-  const c = baseColours(typeof sp === "string" ? SPECIES_BY_ID[sp] : sp, st);
+/**
+ * @param {number|null} [level]
+ * @returns {Record<number, number[]>}
+ */
+export function speciesColours(sp, st, gear = null, level = null) {
+  const S = typeof sp === "string" ? speciesFor(sp, st, level) : sp, c = baseColours(S, st);
+  c[M.SHELL] = c[M.BODY]; c[M.THORAX] = c[M.BODY]; c[M.HEAD] = c[M.BODY2];
+  for (const [name, rgb] of Object.entries(S.paletteOver || {})) if (M[name] && Array.isArray(rgb) && rgb.length === 3 && rgb.every(Number.isFinite)) c[M[name]] = rgb.slice();
   if (!gear) return c;
   if (gear.collar) c[M.COLLAR] = Array.isArray(gear.collar) ? gear.collar : c[M.MAGIC];
   if (gear.hat != null) { const [a, b, pom] = HAT_COLOURWAYS[gear.hat % HAT_COLOURWAYS.length]; c[M.HAT1] = a; c[M.HAT2] = b; c[M.POM] = pom; }
   if (gear.glasses) { c[M.SHADES] = [22, 18, 32]; c[M.FRAME] = gear.glasses === "heart" ? [255, 60, 110] : [255, 90, 210]; }
   if (gear.shoes) { const [shoe, sole] = SHOE_STYLES[gear.shoes] || SHOE_STYLES.sneakers; c[M.SHOE] = shoe; c[M.SOLE] = sole; if (gear.shoes === "lightup" && !gear.collar) c[M.COLLAR] = c[M.MAGIC]; } // (light-up soles glow in its neon, its collar's or its magic's)
-  if (gear.woken) { c[M.WOKEN] = [255, 40, 36]; for (const k of [M.BODY, M.BODYL, M.BODY2, M.BODY3, M.BELLY, M.ACCENT, M.EAR]) if (c[k]) c[k] = c[k].map((v, j) => Math.round(v * .72 + [30, 8, 12][j] * .1)); } // darker, a little redder
+  if (gear.woken) { c[M.WOKEN] = [255, 40, 36]; for (const k of [M.BODY, M.BODYL, M.BODY2, M.BODY3, M.BELLY, M.ACCENT, M.EAR, M.SHELL, M.THORAX, M.HEAD]) if (c[k]) c[k] = c[k].map((v, j) => Math.round(v * .72 + [30, 8, 12][j] * .1)); } // darker, a little redder
   return c;
 }
 function baseColours(s, st) {
@@ -96,8 +108,8 @@ export function walkGait(id) { return GAITS[id] ?? { frames: 2, step: 0.3 }; }
 
 export function critter(spId, level, frame, st, facing = "towards", gear = null) {
   if (facing === "away" && gear?.face) gear = { ...gear, face: null }; // (its face can't be seen from behind)
-  const S = (typeof spId === "object" ? spId : SPECIES_BY_ID[spId]) || SPECIES[0], /* (a species object: one not in the bestiary yet, art/preview.mjs genome) */ g = gear && (gear.collar || gear.hat != null || gear.glasses || gear.shoes || gear.woken || gear.nap || gear.glide || gear.idle || gear.jaw || (gear.face && gear.face !== "neutral")) ? { ...gear, faceStyle: S.face } : null;
-  const key = [S.id, level, frame, facing, ...SHAPE_KNOBS.map(k => st[k]), g ? [!!g.collar, g.hat ?? "", g.glasses || "", g.shoes || "", !!g.woken, g.face && g.face !== "neutral" ? g.face : "", g.nap ? "nap" : "", g.glide ? "glide" : "", g.idle ? "idle" : "", g.jaw ? `jaw${g.jaw}` : ""].join(",") : "", viewKey()].join("|");
+  const S = (typeof spId === "object" ? spId : speciesFor(spId, st, level)) || SPECIES[0], /* (a species object: one not in the bestiary yet, art/preview.mjs genome) */ g = gear && (gear.collar || gear.hat != null || gear.glasses || gear.shoes || gear.woken || gear.nap || gear.glide || gear.idle || gear.jaw || (gear.face && gear.face !== "neutral")) ? { ...gear, faceStyle: S.face } : null;
+  const key = [S.id, S.genomeKey || "", level, frame, facing, ...SHAPE_KNOBS.map(k => st[k]), g ? [!!g.collar, g.hat ?? "", g.glasses || "", g.shoes || "", !!g.woken, g.face && g.face !== "neutral" ? g.face : "", g.nap ? "nap" : "", g.glide ? "glide" : "", g.idle ? "idle" : "", g.jaw ? `jaw${g.jaw}` : ""].join(",") : "", viewKey()].join("|");
   let sp = cache.get(key);
   if (!sp) {
     // asleep (gear.nap: art/naps.js): lying down, eyes shut, frame its breath; its walk's first frame laid down. gliding (gear.glide): spread out in the air

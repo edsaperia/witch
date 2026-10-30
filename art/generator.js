@@ -48,9 +48,9 @@ import { LAKE_SHORE_PIECES, LAKE_SHORE_BY_ID, lakeShoreSprite, lakeShoreColours 
 import { COUNTRY, COUNTRY_BY_ID, FIND_PARTS, countrySprite, countryColours } from "./country.js";
 import { LANDMARKS, LANDMARK_BY_ID, LANDMARK_BUILDINGS, landmarkSprite, landmarkColours } from "./landmarks.js";
 import { PARTY_OBJECTS, PARTY_BY_ID, PARTY_CLASSES, PARTY_LIGHT_NEONS, PARTY_WARM, PARTY_CLUSTERS, PARTY_CLUSTER_BY_ID, partySprite, partyColours, partyPatch, BALLOON_PALETTES } from "./party.js";
-import { GENOMES, GENOME_BY_ID, TEMPLATES, TEMPLATE_IDS, speciesOf, genomeTags, genomeProblems, genomeHash } from "./genome/index.js";
+import { GENOMES, GENOME_BY_ID, TEMPLATES, TEMPLATE_IDS, speciesOf, genomeTags, genomeProblems, genomeHash, parseCreatureModels, selectedCreatureGenome } from "./genome/index.js";
 import { PALETTE_SIZE, PALETTE_ROW, PALETTE_VARIANTS, PALETTE_GLSL, bakeMask, paletteRow, paintPixels, paintMask, maskPixels, variantColours } from "./genome/palette.js";
-export { GENOMES, GENOME_BY_ID, TEMPLATES, TEMPLATE_IDS, speciesOf, genomeTags, genomeProblems, genomeHash, PALETTE_SIZE, PALETTE_ROW, PALETTE_VARIANTS, PALETTE_GLSL, bakeMask, paletteRow, paintPixels, paintMask, maskPixels, variantColours };
+export { GENOMES, GENOME_BY_ID, TEMPLATES, TEMPLATE_IDS, speciesOf, genomeTags, genomeProblems, genomeHash, parseCreatureModels, selectedCreatureGenome, PALETTE_SIZE, PALETTE_ROW, PALETTE_VARIANTS, PALETTE_GLSL, bakeMask, paletteRow, paintPixels, paintMask, maskPixels, variantColours };
 import { EXPRESSIONS, JAW_FACES, FACE_KINDS, FACE_DEFAULT, faceUp, faceProblems } from "./genome/expressions.js";
 export { EXPRESSIONS, JAW_FACES, FACE_KINDS, FACE_DEFAULT, faceUp, faceProblems };
 import { TEXTURE_KINDS, TEXTURE_DEFAULT, textureOf, textureSprite, textureLumps, textureProblems } from "./genome/texture.js";
