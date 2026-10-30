@@ -45,8 +45,10 @@ export function touch(w: CombatWorld, s: CombatState, c: Creature, damage: numbe
 }
 
 export function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: Target, damage: number, a: Attack, fx: number, fz: number, context?: AttackContext): void {
-  let observation: AttackContext = context ?? { source: from?.id ?? null, attack: null, delivery: a.delivery, phase: "damage" };
-  if (observingAttacks(s) && !observation.attack && observation.definition === undefined)
+  if (!observingAttacks(s)) { landUnobserved(w, s, from, tg, damage, a, fx, fz); return; }
+  // A stale legacy shot can have no named attack; land's shelter return must still happen first.
+  let observation: AttackContext = context ?? { source: from?.id ?? null, attack: null, delivery: a?.delivery ?? "unknown", phase: "damage" };
+  if (a && !observation.attack && observation.definition === undefined)
     observation = { ...observation, definition: JSON.stringify(Object.fromEntries(Object.entries(a).sort(([x], [y]) => x < y ? -1 : x > y ? 1 : 0)), (_key, value) => typeof value === "number" && !Number.isFinite(value) ? String(value) : value) };
   observeAttack(w, s, tg, observation, damage, () => landUnobserved(w, s, from, tg, damage, a, fx, fz, observation));
 }
