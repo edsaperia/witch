@@ -30,7 +30,10 @@ export class PanelChoice {
   /** A choice made on something still to be found: its place, till the focus moves (the panel says "Not found yet."). */
   nope: At | null = null;
 
-  constructor(public shelves: Shelf[], public g: Genome, public owned: ReadonlySet<string>, public found: ReadonlySet<string>, public fitted: Fitted | null, private ctx: ChoiceCtx) {}
+  constructor(public shelves: Shelf[], public g: Genome, public owned: ReadonlySet<string>, public found: ReadonlySet<string>, public fitted: Fitted | null, private ctx: ChoiceCtx, public awaitingDress = false) {}
+
+  /** Her saved outfit may still be in the morning pile, rather than on her. */
+  wears(item: Parameters<typeof wears>[1]): boolean { return !this.awaitingDress && wears(this.g, item); }
 
   /** The panel's lines, top to bottom (ui/stationLines.ts). */
   lines(): Line[] { return stationLines(this.shelves, { owned: new Set(this.owned), fitOn: a => this.ctx.fitOn(a, this.g), grid: s => this.ctx.grid(s) }); }
@@ -82,7 +85,7 @@ export class PanelChoice {
       const it = itemAt(s, l, col);
       if (!this.owned.has(it.id)) { this.nope = { ...this.at }; return { locked: true }; }
       this.nope = null;
-      if (wears(this.g, it)) return { locked: false };
+      if (this.wears(it)) return { locked: false };
       return this.set(wear(this.g, it) as Genome);
     }
     this.nope = null;
@@ -99,7 +102,8 @@ export class PanelChoice {
   }
 
   private set(g: Genome): Chosen {
-    if (JSON.stringify(g) === JSON.stringify(this.g)) return { locked: false };
+    if (!this.awaitingDress && JSON.stringify(g) === JSON.stringify(this.g)) return { locked: false };
+    this.awaitingDress = false;
     this.g = g;
     return { look: g, locked: false };
   }
