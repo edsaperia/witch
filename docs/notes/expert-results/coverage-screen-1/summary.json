@@ -1,0 +1,4608 @@
+{
+  "complete": true,
+  "cases": [
+    {
+      "case": {
+        "vector": "off",
+        "condition": "matched",
+        "seed": 16838,
+        "worldSeed": 0,
+        "island": "home",
+        "bpm": 100,
+        "bag": "satchel",
+        "hat": "none",
+        "wearsHat": false,
+        "parts": [],
+        "limit": 300,
+        "rememberDreamVisits": true,
+        "coverageExploration": false
+      },
+      "filename": "0-matched-off.jsonl",
+      "outcome": "censored",
+      "playerEnd": 300.0000000000558,
+      "worldEnd": 293.70000000006127,
+      "steps": 18000,
+      "controlSha256": "2a753f0fce6021be6fd7fb3f0bc23f2bdf9b981160a54f21eaa3cc16bd65c2e3",
+      "wallSeconds": 7.302,
+      "questsCompleted": 0,
+      "questsTotal": 2,
+      "terminalQuests": [
+        {
+          "id": 11,
+          "species": "mole",
+          "wants": "hedgehog",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3471.927703931354,
+          "z": 2600.141915495368,
+          "cell": [
+            19,
+            16
+          ],
+          "clearing": {
+            "cell": [
+              20,
+              15
+            ],
+            "x": 3471.927703931354,
+            "z": 2605.558875538866,
+            "r": 12.037688985550867,
+            "edge": 2.5,
+            "legend": {
+              "x": 3471.927703931354,
+              "z": 2600.141915495368
+            }
+          }
+        },
+        {
+          "id": 25,
+          "species": "marten",
+          "wants": "dormouse",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3575.2065432765107,
+          "z": 2834.618728522979,
+          "cell": [
+            20,
+            17
+          ],
+          "clearing": {
+            "cell": [
+              21,
+              17
+            ],
+            "x": 3575.2065432765107,
+            "z": 2840.489201500351,
+            "r": 13.045495505271406,
+            "edge": 2.5,
+            "legend": {
+              "x": 3575.2065432765107,
+              "z": 2834.618728522979
+            }
+          }
+        }
+      ],
+      "knownQuestIds": [],
+      "selectedQuestIds": [],
+      "selectedVisitLegendIds": [],
+      "knownQuestIdsWithCarriedOffering": [],
+      "upgradeFound": false,
+      "upgradeEligibleToKeep": false,
+      "upgradePersisted": false,
+      "endedAtWin": false,
+      "noPostWinSteps": true,
+      "seenEligibleLegends": [],
+      "learnedRequests": [],
+      "coverage": {
+        "cellMetres": 20,
+        "fullySeenCells": 164,
+        "fullySeenSquareMetres": 65600,
+        "job": null
+      },
+      "safety": {
+        "knockdowns": 0,
+        "minimumHp": 3
+      },
+      "waveReached": 0,
+      "explorationSeconds": 0
+    },
+    {
+      "case": {
+        "vector": "on",
+        "condition": "matched",
+        "seed": 16838,
+        "worldSeed": 0,
+        "island": "home",
+        "bpm": 100,
+        "bag": "satchel",
+        "hat": "none",
+        "wearsHat": false,
+        "parts": [],
+        "limit": 300,
+        "rememberDreamVisits": true,
+        "coverageExploration": true
+      },
+      "filename": "1-matched-on.jsonl",
+      "outcome": "censored",
+      "playerEnd": 300.0000000000558,
+      "worldEnd": 297.84000000005784,
+      "steps": 18000,
+      "controlSha256": "df5a93b7d94b526770595f7ef1529e8f207806df63c0f3a3a7e40e4c6a121bf0",
+      "wallSeconds": 7.006,
+      "questsCompleted": 0,
+      "questsTotal": 2,
+      "terminalQuests": [
+        {
+          "id": 11,
+          "species": "mole",
+          "wants": "hedgehog",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3471.927703931354,
+          "z": 2600.141915495368,
+          "cell": [
+            19,
+            16
+          ],
+          "clearing": {
+            "cell": [
+              20,
+              15
+            ],
+            "x": 3471.927703931354,
+            "z": 2605.558875538866,
+            "r": 12.037688985550867,
+            "edge": 2.5,
+            "legend": {
+              "x": 3471.927703931354,
+              "z": 2600.141915495368
+            }
+          }
+        },
+        {
+          "id": 25,
+          "species": "marten",
+          "wants": "dormouse",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3575.2065432765107,
+          "z": 2834.618728522979,
+          "cell": [
+            20,
+            17
+          ],
+          "clearing": {
+            "cell": [
+              21,
+              17
+            ],
+            "x": 3575.2065432765107,
+            "z": 2840.489201500351,
+            "r": 13.045495505271406,
+            "edge": 2.5,
+            "legend": {
+              "x": 3575.2065432765107,
+              "z": 2834.618728522979
+            }
+          }
+        }
+      ],
+      "knownQuestIds": [],
+      "selectedQuestIds": [],
+      "selectedVisitLegendIds": [],
+      "knownQuestIdsWithCarriedOffering": [],
+      "upgradeFound": false,
+      "upgradeEligibleToKeep": false,
+      "upgradePersisted": false,
+      "endedAtWin": false,
+      "noPostWinSteps": true,
+      "seenEligibleLegends": [],
+      "learnedRequests": [],
+      "coverage": {
+        "cellMetres": 20,
+        "fullySeenCells": 282,
+        "fullySeenSquareMetres": 112800,
+        "job": null
+      },
+      "safety": {
+        "knockdowns": 0,
+        "minimumHp": 1
+      },
+      "waveReached": 0,
+      "explorationSeconds": 25.066666666666524
+    },
+    {
+      "case": {
+        "vector": "off",
+        "condition": "home-everything",
+        "seed": 16838,
+        "worldSeed": 0,
+        "island": "home",
+        "bpm": 100,
+        "bag": "satchel",
+        "hat": "none",
+        "wearsHat": false,
+        "parts": [],
+        "limit": 300,
+        "rememberDreamVisits": true,
+        "coverageExploration": false
+      },
+      "filename": "2-home-everything-off.jsonl",
+      "outcome": "censored",
+      "playerEnd": 300.0000000000558,
+      "worldEnd": 297.84000000005784,
+      "steps": 18000,
+      "controlSha256": "57aa9eed935b9137ce1c4a2622358533fc359d534d4adb619a72bc566e31debd",
+      "wallSeconds": 12.408,
+      "questsCompleted": 0,
+      "questsTotal": 13,
+      "terminalQuests": [
+        {
+          "id": 26,
+          "species": "beetle",
+          "wants": "bat",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3467.2641608892714,
+          "z": 2036.6090055258226,
+          "cell": [
+            19,
+            12
+          ],
+          "clearing": {
+            "cell": [
+              20,
+              11
+            ],
+            "x": 3467.2641608892714,
+            "z": 2042.6054543181597,
+            "r": 13.325441760749333,
+            "edge": 2.5,
+            "legend": {
+              "x": 3467.2641608892714,
+              "z": 2036.6090055258226
+            }
+          }
+        },
+        {
+          "id": 40,
+          "species": "rattlesnake",
+          "wants": "beetle",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3696.8052543003196,
+          "z": 2117.675812969243,
+          "cell": [
+            20,
+            12
+          ],
+          "clearing": {
+            "cell": [
+              21,
+              12
+            ],
+            "x": 3696.8052543003196,
+            "z": 2121.725812969243,
+            "r": 9,
+            "edge": 2.5,
+            "legend": {
+              "x": 3696.8052543003196,
+              "z": 2117.675812969243
+            }
+          }
+        },
+        {
+          "id": 49,
+          "species": "frostwyrm",
+          "wants": "heron",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 2728.2245461396933,
+          "z": 2063.2489436560395,
+          "cell": [
+            16,
+            13
+          ],
+          "clearing": {
+            "cell": [
+              16,
+              12
+            ],
+            "x": 2728.2245461396933,
+            "z": 2080.1548980243515,
+            "r": 37.56878748513782,
+            "edge": 2.5,
+            "legend": {
+              "x": 2728.2245461396933,
+              "z": 2063.2489436560395
+            }
+          }
+        },
+        {
+          "id": 74,
+          "species": "mole",
+          "wants": "fox",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3186.272629941877,
+          "z": 1972.3027681812744,
+          "cell": [
+            18,
+            13
+          ],
+          "clearing": {
+            "cell": [
+              18,
+              11
+            ],
+            "x": 3186.272629941877,
+            "z": 1977.7197282247723,
+            "r": 12.037688985550867,
+            "edge": 2.5,
+            "legend": {
+              "x": 3186.272629941877,
+              "z": 1972.3027681812744
+            }
+          }
+        },
+        {
+          "id": 184,
+          "species": "beaver",
+          "wants": "snail",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 2622.877117266607,
+          "z": 2589.538312371065,
+          "cell": [
+            16,
+            15
+          ],
+          "clearing": {
+            "cell": [
+              16,
+              15
+            ],
+            "x": 2622.877117266607,
+            "z": 2595.559956326395,
+            "r": 13.381431011844917,
+            "edge": 2.5,
+            "legend": {
+              "x": 2622.877117266607,
+              "z": 2589.538312371065
+            }
+          }
+        },
+        {
+          "id": 272,
+          "species": "bat",
+          "wants": "lynx",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3973.537393836966,
+          "z": 2548.1978442021446,
+          "cell": [
+            22,
+            16
+          ],
+          "clearing": {
+            "cell": [
+              23,
+              15
+            ],
+            "x": 3973.537393836966,
+            "z": 2552.2478442021447,
+            "r": 9,
+            "edge": 2.5,
+            "legend": {
+              "x": 3973.537393836966,
+              "z": 2548.1978442021446
+            }
+          }
+        },
+        {
+          "id": 293,
+          "species": "redpanda",
+          "wants": "fennec",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3089.5937599356994,
+          "z": 2829.581696742466,
+          "cell": [
+            17,
+            17
+          ],
+          "clearing": {
+            "cell": [
+              17,
+              17
+            ],
+            "x": 3089.5937599356994,
+            "z": 2836.560756891531,
+            "r": 15.509022553477164,
+            "edge": 2.5,
+            "legend": {
+              "x": 3089.5937599356994,
+              "z": 2829.581696742466
+            }
+          }
+        },
+        {
+          "id": 360,
+          "species": "sphinx",
+          "wants": "tiger",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 4026.5983194456544,
+          "z": 3425.639828617378,
+          "cell": [
+            23,
+            18
+          ],
+          "clearing": {
+            "cell": [
+              23,
+              20
+            ],
+            "x": 4026.5983194456544,
+            "z": 3438.287800439871,
+            "r": 28.106604049983886,
+            "edge": 2.5,
+            "legend": {
+              "x": 4026.5983194456544,
+              "z": 3425.639828617378
+            }
+          }
+        },
+        {
+          "id": 370,
+          "species": "stag",
+          "wants": "arcticfox",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 2335.6587542123398,
+          "z": 3059.3342386964946,
+          "cell": [
+            15,
+            19
+          ],
+          "clearing": {
+            "cell": [
+              14,
+              18
+            ],
+            "x": 2335.6587542123398,
+            "z": 3069.8658168275742,
+            "r": 23.403506957954708,
+            "edge": 2.5,
+            "legend": {
+              "x": 2335.6587542123398,
+              "z": 3059.3342386964946
+            }
+          }
+        },
+        {
+          "id": 407,
+          "species": "lion",
+          "wants": "ram",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3361.75451011087,
+          "z": 3165.9500439865974,
+          "cell": [
+            20,
+            19
+          ],
+          "clearing": {
+            "cell": [
+              20,
+              19
+            ],
+            "x": 3361.75451011087,
+            "z": 3175.5125439865974,
+            "r": 21.25,
+            "edge": 2.5,
+            "legend": {
+              "x": 3361.75451011087,
+              "z": 3165.9500439865974
+            }
+          }
+        },
+        {
+          "id": 434,
+          "species": "toad",
+          "wants": "hydra",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 2767.149813757269,
+          "z": 3519.5975023196206,
+          "cell": [
+            17,
+            20
+          ],
+          "clearing": {
+            "cell": [
+              16,
+              20
+            ],
+            "x": 2767.149813757269,
+            "z": 3524.838096222167,
+            "r": 11.64576422788177,
+            "edge": 2.5,
+            "legend": {
+              "x": 2767.149813757269,
+              "z": 3519.5975023196206
+            }
+          }
+        },
+        {
+          "id": 443,
+          "species": "griffin",
+          "wants": "bear",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3193.1325128461554,
+          "z": 3617.5163085358618,
+          "cell": [
+            18,
+            20
+          ],
+          "clearing": {
+            "cell": [
+              19,
+              21
+            ],
+            "x": 3193.1325128461554,
+            "z": 3632.63340633167,
+            "r": 33.59355065735126,
+            "edge": 2.5,
+            "legend": {
+              "x": 3193.1325128461554,
+              "z": 3617.5163085358618
+            }
+          }
+        },
+        {
+          "id": 460,
+          "species": "rhino",
+          "wants": "bear",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3585.6642941585396,
+          "z": 3550.0217881952008,
+          "cell": [
+            20,
+            20
+          ],
+          "clearing": {
+            "cell": [
+              21,
+              21
+            ],
+            "x": 3585.6642941585396,
+            "z": 3559.9738775774413,
+            "r": 22.115754182756245,
+            "edge": 2.5,
+            "legend": {
+              "x": 3585.6642941585396,
+              "z": 3550.0217881952008
+            }
+          }
+        }
+      ],
+      "knownQuestIds": [],
+      "selectedQuestIds": [],
+      "selectedVisitLegendIds": [],
+      "knownQuestIdsWithCarriedOffering": [],
+      "upgradeFound": false,
+      "upgradeEligibleToKeep": false,
+      "upgradePersisted": false,
+      "endedAtWin": false,
+      "noPostWinSteps": true,
+      "seenEligibleLegends": [],
+      "learnedRequests": [],
+      "coverage": {
+        "cellMetres": 20,
+        "fullySeenCells": 175,
+        "fullySeenSquareMetres": 70000,
+        "job": null
+      },
+      "safety": {
+        "knockdowns": 0,
+        "minimumHp": 3
+      },
+      "waveReached": 0,
+      "explorationSeconds": 0
+    },
+    {
+      "case": {
+        "vector": "on",
+        "condition": "home-everything",
+        "seed": 16838,
+        "worldSeed": 0,
+        "island": "home",
+        "bpm": 100,
+        "bag": "satchel",
+        "hat": "none",
+        "wearsHat": false,
+        "parts": [],
+        "limit": 300,
+        "rememberDreamVisits": true,
+        "coverageExploration": true
+      },
+      "filename": "3-home-everything-on.jsonl",
+      "outcome": "censored",
+      "playerEnd": 300.0000000000558,
+      "worldEnd": 297.84000000005784,
+      "steps": 18000,
+      "controlSha256": "46f385d640dc5e25067d8d058bbc1eee567bb251c0b0a5288fd48845caa5a30d",
+      "wallSeconds": 13.792,
+      "questsCompleted": 0,
+      "questsTotal": 13,
+      "terminalQuests": [
+        {
+          "id": 26,
+          "species": "beetle",
+          "wants": "bat",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3467.2641608892714,
+          "z": 2036.6090055258226,
+          "cell": [
+            19,
+            12
+          ],
+          "clearing": {
+            "cell": [
+              20,
+              11
+            ],
+            "x": 3467.2641608892714,
+            "z": 2042.6054543181597,
+            "r": 13.325441760749333,
+            "edge": 2.5,
+            "legend": {
+              "x": 3467.2641608892714,
+              "z": 2036.6090055258226
+            }
+          }
+        },
+        {
+          "id": 40,
+          "species": "rattlesnake",
+          "wants": "beetle",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3696.8052543003196,
+          "z": 2117.675812969243,
+          "cell": [
+            20,
+            12
+          ],
+          "clearing": {
+            "cell": [
+              21,
+              12
+            ],
+            "x": 3696.8052543003196,
+            "z": 2121.725812969243,
+            "r": 9,
+            "edge": 2.5,
+            "legend": {
+              "x": 3696.8052543003196,
+              "z": 2117.675812969243
+            }
+          }
+        },
+        {
+          "id": 49,
+          "species": "frostwyrm",
+          "wants": "heron",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 2728.2245461396933,
+          "z": 2063.2489436560395,
+          "cell": [
+            16,
+            13
+          ],
+          "clearing": {
+            "cell": [
+              16,
+              12
+            ],
+            "x": 2728.2245461396933,
+            "z": 2080.1548980243515,
+            "r": 37.56878748513782,
+            "edge": 2.5,
+            "legend": {
+              "x": 2728.2245461396933,
+              "z": 2063.2489436560395
+            }
+          }
+        },
+        {
+          "id": 74,
+          "species": "mole",
+          "wants": "fox",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3186.272629941877,
+          "z": 1972.3027681812744,
+          "cell": [
+            18,
+            13
+          ],
+          "clearing": {
+            "cell": [
+              18,
+              11
+            ],
+            "x": 3186.272629941877,
+            "z": 1977.7197282247723,
+            "r": 12.037688985550867,
+            "edge": 2.5,
+            "legend": {
+              "x": 3186.272629941877,
+              "z": 1972.3027681812744
+            }
+          }
+        },
+        {
+          "id": 184,
+          "species": "beaver",
+          "wants": "snail",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 2622.877117266607,
+          "z": 2589.538312371065,
+          "cell": [
+            16,
+            15
+          ],
+          "clearing": {
+            "cell": [
+              16,
+              15
+            ],
+            "x": 2622.877117266607,
+            "z": 2595.559956326395,
+            "r": 13.381431011844917,
+            "edge": 2.5,
+            "legend": {
+              "x": 2622.877117266607,
+              "z": 2589.538312371065
+            }
+          }
+        },
+        {
+          "id": 272,
+          "species": "bat",
+          "wants": "lynx",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3973.537393836966,
+          "z": 2548.1978442021446,
+          "cell": [
+            22,
+            16
+          ],
+          "clearing": {
+            "cell": [
+              23,
+              15
+            ],
+            "x": 3973.537393836966,
+            "z": 2552.2478442021447,
+            "r": 9,
+            "edge": 2.5,
+            "legend": {
+              "x": 3973.537393836966,
+              "z": 2548.1978442021446
+            }
+          }
+        },
+        {
+          "id": 293,
+          "species": "redpanda",
+          "wants": "fennec",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3089.5937599356994,
+          "z": 2829.581696742466,
+          "cell": [
+            17,
+            17
+          ],
+          "clearing": {
+            "cell": [
+              17,
+              17
+            ],
+            "x": 3089.5937599356994,
+            "z": 2836.560756891531,
+            "r": 15.509022553477164,
+            "edge": 2.5,
+            "legend": {
+              "x": 3089.5937599356994,
+              "z": 2829.581696742466
+            }
+          }
+        },
+        {
+          "id": 360,
+          "species": "sphinx",
+          "wants": "tiger",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 4026.5983194456544,
+          "z": 3425.639828617378,
+          "cell": [
+            23,
+            18
+          ],
+          "clearing": {
+            "cell": [
+              23,
+              20
+            ],
+            "x": 4026.5983194456544,
+            "z": 3438.287800439871,
+            "r": 28.106604049983886,
+            "edge": 2.5,
+            "legend": {
+              "x": 4026.5983194456544,
+              "z": 3425.639828617378
+            }
+          }
+        },
+        {
+          "id": 370,
+          "species": "stag",
+          "wants": "arcticfox",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 2335.6587542123398,
+          "z": 3059.3342386964946,
+          "cell": [
+            15,
+            19
+          ],
+          "clearing": {
+            "cell": [
+              14,
+              18
+            ],
+            "x": 2335.6587542123398,
+            "z": 3069.8658168275742,
+            "r": 23.403506957954708,
+            "edge": 2.5,
+            "legend": {
+              "x": 2335.6587542123398,
+              "z": 3059.3342386964946
+            }
+          }
+        },
+        {
+          "id": 407,
+          "species": "lion",
+          "wants": "ram",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3361.75451011087,
+          "z": 3165.9500439865974,
+          "cell": [
+            20,
+            19
+          ],
+          "clearing": {
+            "cell": [
+              20,
+              19
+            ],
+            "x": 3361.75451011087,
+            "z": 3175.5125439865974,
+            "r": 21.25,
+            "edge": 2.5,
+            "legend": {
+              "x": 3361.75451011087,
+              "z": 3165.9500439865974
+            }
+          }
+        },
+        {
+          "id": 434,
+          "species": "toad",
+          "wants": "hydra",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 2767.149813757269,
+          "z": 3519.5975023196206,
+          "cell": [
+            17,
+            20
+          ],
+          "clearing": {
+            "cell": [
+              16,
+              20
+            ],
+            "x": 2767.149813757269,
+            "z": 3524.838096222167,
+            "r": 11.64576422788177,
+            "edge": 2.5,
+            "legend": {
+              "x": 2767.149813757269,
+              "z": 3519.5975023196206
+            }
+          }
+        },
+        {
+          "id": 443,
+          "species": "griffin",
+          "wants": "bear",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3193.1325128461554,
+          "z": 3617.5163085358618,
+          "cell": [
+            18,
+            20
+          ],
+          "clearing": {
+            "cell": [
+              19,
+              21
+            ],
+            "x": 3193.1325128461554,
+            "z": 3632.63340633167,
+            "r": 33.59355065735126,
+            "edge": 2.5,
+            "legend": {
+              "x": 3193.1325128461554,
+              "z": 3617.5163085358618
+            }
+          }
+        },
+        {
+          "id": 460,
+          "species": "rhino",
+          "wants": "bear",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3585.6642941585396,
+          "z": 3550.0217881952008,
+          "cell": [
+            20,
+            20
+          ],
+          "clearing": {
+            "cell": [
+              21,
+              21
+            ],
+            "x": 3585.6642941585396,
+            "z": 3559.9738775774413,
+            "r": 22.115754182756245,
+            "edge": 2.5,
+            "legend": {
+              "x": 3585.6642941585396,
+              "z": 3550.0217881952008
+            }
+          }
+        }
+      ],
+      "knownQuestIds": [],
+      "selectedQuestIds": [],
+      "selectedVisitLegendIds": [],
+      "knownQuestIdsWithCarriedOffering": [],
+      "upgradeFound": false,
+      "upgradeEligibleToKeep": false,
+      "upgradePersisted": false,
+      "endedAtWin": false,
+      "noPostWinSteps": true,
+      "seenEligibleLegends": [],
+      "learnedRequests": [],
+      "coverage": {
+        "cellMetres": 20,
+        "fullySeenCells": 253,
+        "fullySeenSquareMetres": 101200,
+        "job": null
+      },
+      "safety": {
+        "knockdowns": 0,
+        "minimumHp": 2
+      },
+      "waveReached": 0,
+      "explorationSeconds": 32.79999999999942
+    },
+    {
+      "case": {
+        "vector": "on",
+        "condition": "matched",
+        "seed": 24757,
+        "worldSeed": 0,
+        "island": "home",
+        "bpm": 100,
+        "bag": "satchel",
+        "hat": "none",
+        "wearsHat": false,
+        "parts": [],
+        "limit": 300,
+        "rememberDreamVisits": true,
+        "coverageExploration": true
+      },
+      "filename": "4-matched-on.jsonl",
+      "outcome": "censored",
+      "playerEnd": 300.0000000000558,
+      "worldEnd": 297.84000000005784,
+      "steps": 18000,
+      "controlSha256": "536ce33c29c873e451af512fde2b7cc33150103b556ea8f560be9b81522d1df1",
+      "wallSeconds": 8.128,
+      "questsCompleted": 0,
+      "questsTotal": 2,
+      "terminalQuests": [
+        {
+          "id": 18,
+          "species": "dormouse",
+          "wants": "hare",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 2890.3053104333244,
+          "z": 2748.772119774448,
+          "cell": [
+            17,
+            17
+          ],
+          "clearing": {
+            "cell": [
+              16,
+              16
+            ],
+            "x": 2890.3053104333244,
+            "z": 2752.8221197744483,
+            "r": 9,
+            "edge": 2.5,
+            "legend": {
+              "x": 2890.3053104333244,
+              "z": 2748.772119774448
+            }
+          }
+        },
+        {
+          "id": 26,
+          "species": "squirrel",
+          "wants": "hedgehog",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3575.2065432765107,
+          "z": 2835.7777060206577,
+          "cell": [
+            20,
+            17
+          ],
+          "clearing": {
+            "cell": [
+              21,
+              17
+            ],
+            "x": 3575.2065432765107,
+            "z": 2840.489201500351,
+            "r": 10.469989954874475,
+            "edge": 2.5,
+            "legend": {
+              "x": 3575.2065432765107,
+              "z": 2835.7777060206577
+            }
+          }
+        }
+      ],
+      "knownQuestIds": [],
+      "selectedQuestIds": [],
+      "selectedVisitLegendIds": [],
+      "knownQuestIdsWithCarriedOffering": [],
+      "upgradeFound": true,
+      "upgradeEligibleToKeep": false,
+      "upgradePersisted": false,
+      "endedAtWin": false,
+      "noPostWinSteps": true,
+      "seenEligibleLegends": [],
+      "learnedRequests": [],
+      "coverage": {
+        "cellMetres": 20,
+        "fullySeenCells": 204,
+        "fullySeenSquareMetres": 81600,
+        "job": null
+      },
+      "safety": {
+        "knockdowns": 0,
+        "minimumHp": 2
+      },
+      "waveReached": 1,
+      "explorationSeconds": 32.26666666666612
+    },
+    {
+      "case": {
+        "vector": "off",
+        "condition": "matched",
+        "seed": 24757,
+        "worldSeed": 0,
+        "island": "home",
+        "bpm": 100,
+        "bag": "satchel",
+        "hat": "none",
+        "wearsHat": false,
+        "parts": [],
+        "limit": 300,
+        "rememberDreamVisits": true,
+        "coverageExploration": false
+      },
+      "filename": "5-matched-off.jsonl",
+      "outcome": "censored",
+      "playerEnd": 300.0000000000558,
+      "worldEnd": 297.84000000005784,
+      "steps": 18000,
+      "controlSha256": "51a3144e778768bf7f57c1f680b36331897056f77624774858c480354faec4c5",
+      "wallSeconds": 8,
+      "questsCompleted": 0,
+      "questsTotal": 2,
+      "terminalQuests": [
+        {
+          "id": 18,
+          "species": "dormouse",
+          "wants": "hare",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 2890.3053104333244,
+          "z": 2748.772119774448,
+          "cell": [
+            17,
+            17
+          ],
+          "clearing": {
+            "cell": [
+              16,
+              16
+            ],
+            "x": 2890.3053104333244,
+            "z": 2752.8221197744483,
+            "r": 9,
+            "edge": 2.5,
+            "legend": {
+              "x": 2890.3053104333244,
+              "z": 2748.772119774448
+            }
+          }
+        },
+        {
+          "id": 26,
+          "species": "squirrel",
+          "wants": "hedgehog",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3575.2065432765107,
+          "z": 2835.7777060206577,
+          "cell": [
+            20,
+            17
+          ],
+          "clearing": {
+            "cell": [
+              21,
+              17
+            ],
+            "x": 3575.2065432765107,
+            "z": 2840.489201500351,
+            "r": 10.469989954874475,
+            "edge": 2.5,
+            "legend": {
+              "x": 3575.2065432765107,
+              "z": 2835.7777060206577
+            }
+          }
+        }
+      ],
+      "knownQuestIds": [],
+      "selectedQuestIds": [],
+      "selectedVisitLegendIds": [],
+      "knownQuestIdsWithCarriedOffering": [],
+      "upgradeFound": true,
+      "upgradeEligibleToKeep": false,
+      "upgradePersisted": false,
+      "endedAtWin": false,
+      "noPostWinSteps": true,
+      "seenEligibleLegends": [],
+      "learnedRequests": [],
+      "coverage": {
+        "cellMetres": 20,
+        "fullySeenCells": 197,
+        "fullySeenSquareMetres": 78800,
+        "job": null
+      },
+      "safety": {
+        "knockdowns": 0,
+        "minimumHp": 3
+      },
+      "waveReached": 1,
+      "explorationSeconds": 0
+    },
+    {
+      "case": {
+        "vector": "on",
+        "condition": "home-everything",
+        "seed": 24757,
+        "worldSeed": 0,
+        "island": "home",
+        "bpm": 100,
+        "bag": "satchel",
+        "hat": "none",
+        "wearsHat": false,
+        "parts": [],
+        "limit": 300,
+        "rememberDreamVisits": true,
+        "coverageExploration": true
+      },
+      "filename": "6-home-everything-on.jsonl",
+      "outcome": "censored",
+      "playerEnd": 300.0000000000558,
+      "worldEnd": 297.71200000005797,
+      "steps": 18000,
+      "controlSha256": "3e67ec8ce832e7704a7a47180ee8b6fd878ccb9e3deb21a33ec9eb0faaff10fb",
+      "wallSeconds": 11.483,
+      "questsCompleted": 0,
+      "questsTotal": 13,
+      "terminalQuests": [
+        {
+          "id": 8,
+          "species": "snake",
+          "wants": "salamander",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3460.4938850718386,
+          "z": 2031.7831947356476,
+          "cell": [
+            21,
+            11
+          ],
+          "clearing": {
+            "cell": [
+              20,
+              11
+            ],
+            "x": 3460.4938850718386,
+            "z": 2037.6331947356475,
+            "r": 13,
+            "edge": 2.5,
+            "legend": {
+              "x": 3460.4938850718386,
+              "z": 2031.7831947356476
+            }
+          }
+        },
+        {
+          "id": 29,
+          "species": "toad",
+          "wants": "frosttroll",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3705.4653254890995,
+          "z": 2102.252596293757,
+          "cell": [
+            20,
+            12
+          ],
+          "clearing": {
+            "cell": [
+              21,
+              12
+            ],
+            "x": 3705.4653254890995,
+            "z": 2107.4931901963037,
+            "r": 11.64576422788177,
+            "edge": 2.5,
+            "legend": {
+              "x": 3705.4653254890995,
+              "z": 2102.252596293757
+            }
+          }
+        },
+        {
+          "id": 77,
+          "species": "wolf",
+          "wants": "bear",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3459.81575183183,
+          "z": 2409.385931197531,
+          "cell": [
+            20,
+            13
+          ],
+          "clearing": {
+            "cell": [
+              20,
+              13
+            ],
+            "x": 3459.81575183183,
+            "z": 2419.4388012317436,
+            "r": 22.339711187138587,
+            "edge": 2.5,
+            "legend": {
+              "x": 3459.81575183183,
+              "z": 2409.385931197531
+            }
+          }
+        },
+        {
+          "id": 124,
+          "species": "dormouse",
+          "wants": "raven",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3333.6968891005195,
+          "z": 2522.0187078284257,
+          "cell": [
+            20,
+            14
+          ],
+          "clearing": {
+            "cell": [
+              20,
+              14
+            ],
+            "x": 3333.6968891005195,
+            "z": 2526.068707828426,
+            "r": 9,
+            "edge": 2.5,
+            "legend": {
+              "x": 3333.6968891005195,
+              "z": 2522.0187078284257
+            }
+          }
+        },
+        {
+          "id": 135,
+          "species": "woodlouse",
+          "wants": "komodo",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3881.9978597023,
+          "z": 2233.8042386731936,
+          "cell": [
+            21,
+            14
+          ],
+          "clearing": {
+            "cell": [
+              22,
+              13
+            ],
+            "x": 3881.9978597023,
+            "z": 2237.885855078062,
+            "r": 9.070258677484839,
+            "edge": 2.5,
+            "legend": {
+              "x": 3881.9978597023,
+              "z": 2233.8042386731936
+            }
+          }
+        },
+        {
+          "id": 174,
+          "species": "rattlesnake",
+          "wants": "cat",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 2661.194155198737,
+          "z": 2544.495751702592,
+          "cell": [
+            16,
+            15
+          ],
+          "clearing": {
+            "cell": [
+              16,
+              15
+            ],
+            "x": 2661.194155198737,
+            "z": 2548.545751702592,
+            "r": 9,
+            "edge": 2.5,
+            "legend": {
+              "x": 2661.194155198737,
+              "z": 2544.495751702592
+            }
+          }
+        },
+        {
+          "id": 179,
+          "species": "polarbear",
+          "wants": "bear",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3075.5099446739237,
+          "z": 2530.7261878993477,
+          "cell": [
+            17,
+            15
+          ],
+          "clearing": {
+            "cell": [
+              17,
+              15
+            ],
+            "x": 3075.5099446739237,
+            "z": 2541.5097176603576,
+            "r": 23.963399468910563,
+            "edge": 2.5,
+            "legend": {
+              "x": 3075.5099446739237,
+              "z": 2530.7261878993477
+            }
+          }
+        },
+        {
+          "id": 196,
+          "species": "crab",
+          "wants": "owl",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3655.0237008131207,
+          "z": 2645.683139341567,
+          "cell": [
+            21,
+            15
+          ],
+          "clearing": {
+            "cell": [
+              21,
+              15
+            ],
+            "x": 3655.0237008131207,
+            "z": 2649.3777580428623,
+            "r": 8.210263780656648,
+            "edge": 2.5,
+            "legend": {
+              "x": 3655.0237008131207,
+              "z": 2645.683139341567
+            }
+          }
+        },
+        {
+          "id": 244,
+          "species": "raccoon",
+          "wants": "griffin",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3973.537393836966,
+          "z": 2546.8560793216398,
+          "cell": [
+            22,
+            16
+          ],
+          "clearing": {
+            "cell": [
+              23,
+              15
+            ],
+            "x": 3973.537393836966,
+            "z": 2552.2478442021447,
+            "r": 11.981699734455281,
+            "edge": 2.5,
+            "legend": {
+              "x": 3973.537393836966,
+              "z": 2546.8560793216398
+            }
+          }
+        },
+        {
+          "id": 253,
+          "species": "featheredserpent",
+          "wants": "cat",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 2361.225560757859,
+          "z": 3054.2868028753337,
+          "cell": [
+            15,
+            17
+          ],
+          "clearing": {
+            "cell": [
+              14,
+              18
+            ],
+            "x": 2361.225560757859,
+            "z": 3061.9209372622167,
+            "r": 16.964743081962386,
+            "edge": 2.5,
+            "legend": {
+              "x": 2361.225560757859,
+              "z": 3054.2868028753337
+            }
+          }
+        },
+        {
+          "id": 309,
+          "species": "meerkat",
+          "wants": "snail",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3222.1206988617837,
+          "z": 3155.8113993684574,
+          "cell": [
+            19,
+            18
+          ],
+          "clearing": {
+            "cell": [
+              19,
+              18
+            ],
+            "x": 3222.1206988617837,
+            "z": 3161.505506204878,
+            "r": 12.653570747602307,
+            "edge": 2.5,
+            "legend": {
+              "x": 3222.1206988617837,
+              "z": 3155.8113993684574
+            }
+          }
+        },
+        {
+          "id": 374,
+          "species": "newt",
+          "wants": "redpanda",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3240.674792165085,
+          "z": 3235.713848264285,
+          "cell": [
+            19,
+            19
+          ],
+          "clearing": {
+            "cell": [
+              19,
+              19
+            ],
+            "x": 3240.674792165085,
+            "z": 3241.785882545601,
+            "r": 13.49340951403609,
+            "edge": 2.5,
+            "legend": {
+              "x": 3240.674792165085,
+              "z": 3235.713848264285
+            }
+          }
+        },
+        {
+          "id": 409,
+          "species": "lynx",
+          "wants": "fennec",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 2752.8229567822113,
+          "z": 3528.846237328372,
+          "cell": [
+            17,
+            20
+          ],
+          "clearing": {
+            "cell": [
+              16,
+              20
+            ],
+            "x": 2752.8229567822113,
+            "z": 3535.371784543562,
+            "r": 14.501216033756625,
+            "edge": 2.5,
+            "legend": {
+              "x": 2752.8229567822113,
+              "z": 3528.846237328372
+            }
+          }
+        }
+      ],
+      "knownQuestIds": [],
+      "selectedQuestIds": [],
+      "selectedVisitLegendIds": [],
+      "knownQuestIdsWithCarriedOffering": [],
+      "upgradeFound": false,
+      "upgradeEligibleToKeep": false,
+      "upgradePersisted": false,
+      "endedAtWin": false,
+      "noPostWinSteps": true,
+      "seenEligibleLegends": [],
+      "learnedRequests": [],
+      "coverage": {
+        "cellMetres": 20,
+        "fullySeenCells": 255,
+        "fullySeenSquareMetres": 102000,
+        "job": null
+      },
+      "safety": {
+        "knockdowns": 1,
+        "minimumHp": 0
+      },
+      "waveReached": 1,
+      "explorationSeconds": 33.1999999999994
+    },
+    {
+      "case": {
+        "vector": "off",
+        "condition": "home-everything",
+        "seed": 24757,
+        "worldSeed": 0,
+        "island": "home",
+        "bpm": 100,
+        "bag": "satchel",
+        "hat": "none",
+        "wearsHat": false,
+        "parts": [],
+        "limit": 300,
+        "rememberDreamVisits": true,
+        "coverageExploration": false
+      },
+      "filename": "7-home-everything-off.jsonl",
+      "outcome": "censored",
+      "playerEnd": 300.0000000000558,
+      "worldEnd": 297.84000000005784,
+      "steps": 18000,
+      "controlSha256": "270133bce2fde19d6be5dcfa203752d3ebd0f41b07901f625dad02118a004b53",
+      "wallSeconds": 10.402,
+      "questsCompleted": 0,
+      "questsTotal": 13,
+      "terminalQuests": [
+        {
+          "id": 8,
+          "species": "snake",
+          "wants": "salamander",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3460.4938850718386,
+          "z": 2031.7831947356476,
+          "cell": [
+            21,
+            11
+          ],
+          "clearing": {
+            "cell": [
+              20,
+              11
+            ],
+            "x": 3460.4938850718386,
+            "z": 2037.6331947356475,
+            "r": 13,
+            "edge": 2.5,
+            "legend": {
+              "x": 3460.4938850718386,
+              "z": 2031.7831947356476
+            }
+          }
+        },
+        {
+          "id": 29,
+          "species": "toad",
+          "wants": "frosttroll",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3705.4653254890995,
+          "z": 2102.252596293757,
+          "cell": [
+            20,
+            12
+          ],
+          "clearing": {
+            "cell": [
+              21,
+              12
+            ],
+            "x": 3705.4653254890995,
+            "z": 2107.4931901963037,
+            "r": 11.64576422788177,
+            "edge": 2.5,
+            "legend": {
+              "x": 3705.4653254890995,
+              "z": 2102.252596293757
+            }
+          }
+        },
+        {
+          "id": 77,
+          "species": "wolf",
+          "wants": "bear",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3459.81575183183,
+          "z": 2409.385931197531,
+          "cell": [
+            20,
+            13
+          ],
+          "clearing": {
+            "cell": [
+              20,
+              13
+            ],
+            "x": 3459.81575183183,
+            "z": 2419.4388012317436,
+            "r": 22.339711187138587,
+            "edge": 2.5,
+            "legend": {
+              "x": 3459.81575183183,
+              "z": 2409.385931197531
+            }
+          }
+        },
+        {
+          "id": 124,
+          "species": "dormouse",
+          "wants": "raven",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3333.6968891005195,
+          "z": 2522.0187078284257,
+          "cell": [
+            20,
+            14
+          ],
+          "clearing": {
+            "cell": [
+              20,
+              14
+            ],
+            "x": 3333.6968891005195,
+            "z": 2526.068707828426,
+            "r": 9,
+            "edge": 2.5,
+            "legend": {
+              "x": 3333.6968891005195,
+              "z": 2522.0187078284257
+            }
+          }
+        },
+        {
+          "id": 135,
+          "species": "woodlouse",
+          "wants": "komodo",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3881.9978597023,
+          "z": 2233.8042386731936,
+          "cell": [
+            21,
+            14
+          ],
+          "clearing": {
+            "cell": [
+              22,
+              13
+            ],
+            "x": 3881.9978597023,
+            "z": 2237.885855078062,
+            "r": 9.070258677484839,
+            "edge": 2.5,
+            "legend": {
+              "x": 3881.9978597023,
+              "z": 2233.8042386731936
+            }
+          }
+        },
+        {
+          "id": 174,
+          "species": "rattlesnake",
+          "wants": "cat",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 2661.194155198737,
+          "z": 2544.495751702592,
+          "cell": [
+            16,
+            15
+          ],
+          "clearing": {
+            "cell": [
+              16,
+              15
+            ],
+            "x": 2661.194155198737,
+            "z": 2548.545751702592,
+            "r": 9,
+            "edge": 2.5,
+            "legend": {
+              "x": 2661.194155198737,
+              "z": 2544.495751702592
+            }
+          }
+        },
+        {
+          "id": 179,
+          "species": "polarbear",
+          "wants": "bear",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3075.5099446739237,
+          "z": 2530.7261878993477,
+          "cell": [
+            17,
+            15
+          ],
+          "clearing": {
+            "cell": [
+              17,
+              15
+            ],
+            "x": 3075.5099446739237,
+            "z": 2541.5097176603576,
+            "r": 23.963399468910563,
+            "edge": 2.5,
+            "legend": {
+              "x": 3075.5099446739237,
+              "z": 2530.7261878993477
+            }
+          }
+        },
+        {
+          "id": 196,
+          "species": "crab",
+          "wants": "owl",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3655.0237008131207,
+          "z": 2645.683139341567,
+          "cell": [
+            21,
+            15
+          ],
+          "clearing": {
+            "cell": [
+              21,
+              15
+            ],
+            "x": 3655.0237008131207,
+            "z": 2649.3777580428623,
+            "r": 8.210263780656648,
+            "edge": 2.5,
+            "legend": {
+              "x": 3655.0237008131207,
+              "z": 2645.683139341567
+            }
+          }
+        },
+        {
+          "id": 244,
+          "species": "raccoon",
+          "wants": "griffin",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3973.537393836966,
+          "z": 2546.8560793216398,
+          "cell": [
+            22,
+            16
+          ],
+          "clearing": {
+            "cell": [
+              23,
+              15
+            ],
+            "x": 3973.537393836966,
+            "z": 2552.2478442021447,
+            "r": 11.981699734455281,
+            "edge": 2.5,
+            "legend": {
+              "x": 3973.537393836966,
+              "z": 2546.8560793216398
+            }
+          }
+        },
+        {
+          "id": 253,
+          "species": "featheredserpent",
+          "wants": "cat",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 2361.225560757859,
+          "z": 3054.2868028753337,
+          "cell": [
+            15,
+            17
+          ],
+          "clearing": {
+            "cell": [
+              14,
+              18
+            ],
+            "x": 2361.225560757859,
+            "z": 3061.9209372622167,
+            "r": 16.964743081962386,
+            "edge": 2.5,
+            "legend": {
+              "x": 2361.225560757859,
+              "z": 3054.2868028753337
+            }
+          }
+        },
+        {
+          "id": 309,
+          "species": "meerkat",
+          "wants": "snail",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3222.1206988617837,
+          "z": 3155.8113993684574,
+          "cell": [
+            19,
+            18
+          ],
+          "clearing": {
+            "cell": [
+              19,
+              18
+            ],
+            "x": 3222.1206988617837,
+            "z": 3161.505506204878,
+            "r": 12.653570747602307,
+            "edge": 2.5,
+            "legend": {
+              "x": 3222.1206988617837,
+              "z": 3155.8113993684574
+            }
+          }
+        },
+        {
+          "id": 374,
+          "species": "newt",
+          "wants": "redpanda",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3240.674792165085,
+          "z": 3235.713848264285,
+          "cell": [
+            19,
+            19
+          ],
+          "clearing": {
+            "cell": [
+              19,
+              19
+            ],
+            "x": 3240.674792165085,
+            "z": 3241.785882545601,
+            "r": 13.49340951403609,
+            "edge": 2.5,
+            "legend": {
+              "x": 3240.674792165085,
+              "z": 3235.713848264285
+            }
+          }
+        },
+        {
+          "id": 409,
+          "species": "lynx",
+          "wants": "fennec",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 2752.8229567822113,
+          "z": 3528.846237328372,
+          "cell": [
+            17,
+            20
+          ],
+          "clearing": {
+            "cell": [
+              16,
+              20
+            ],
+            "x": 2752.8229567822113,
+            "z": 3535.371784543562,
+            "r": 14.501216033756625,
+            "edge": 2.5,
+            "legend": {
+              "x": 2752.8229567822113,
+              "z": 3528.846237328372
+            }
+          }
+        }
+      ],
+      "knownQuestIds": [],
+      "selectedQuestIds": [],
+      "selectedVisitLegendIds": [],
+      "knownQuestIdsWithCarriedOffering": [],
+      "upgradeFound": false,
+      "upgradeEligibleToKeep": false,
+      "upgradePersisted": false,
+      "endedAtWin": false,
+      "noPostWinSteps": true,
+      "seenEligibleLegends": [],
+      "learnedRequests": [],
+      "coverage": {
+        "cellMetres": 20,
+        "fullySeenCells": 173,
+        "fullySeenSquareMetres": 69200,
+        "job": null
+      },
+      "safety": {
+        "knockdowns": 0,
+        "minimumHp": 1
+      },
+      "waveReached": 1,
+      "explorationSeconds": 0
+    },
+    {
+      "case": {
+        "vector": "off",
+        "condition": "matched",
+        "seed": 32676,
+        "worldSeed": 0,
+        "island": "home",
+        "bpm": 100,
+        "bag": "satchel",
+        "hat": "none",
+        "wearsHat": false,
+        "parts": [],
+        "limit": 300,
+        "rememberDreamVisits": true,
+        "coverageExploration": false
+      },
+      "filename": "8-matched-off.jsonl",
+      "outcome": "censored",
+      "playerEnd": 300.0000000000558,
+      "worldEnd": 297.84000000005784,
+      "steps": 18000,
+      "controlSha256": "75d735d6478bfe15635dd6cfdef1d6be77702d6146d3b95d12e51cd8c42005e1",
+      "wallSeconds": 9.176,
+      "questsCompleted": 0,
+      "questsTotal": 2,
+      "terminalQuests": [
+        {
+          "id": 23,
+          "species": "marten",
+          "wants": "stoat",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3575.2065432765107,
+          "z": 2834.618728522979,
+          "cell": [
+            20,
+            17
+          ],
+          "clearing": {
+            "cell": [
+              21,
+              17
+            ],
+            "x": 3575.2065432765107,
+            "z": 2840.489201500351,
+            "r": 13.045495505271406,
+            "edge": 2.5,
+            "legend": {
+              "x": 3575.2065432765107,
+              "z": 2834.618728522979
+            }
+          }
+        },
+        {
+          "id": 28,
+          "species": "dormouse",
+          "wants": "stoat",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 2989.6501916651478,
+          "z": 3043.7802231061532,
+          "cell": [
+            18,
+            18
+          ],
+          "clearing": {
+            "cell": [
+              17,
+              18
+            ],
+            "x": 2989.6501916651478,
+            "z": 3047.8302231061534,
+            "r": 9,
+            "edge": 2.5,
+            "legend": {
+              "x": 2989.6501916651478,
+              "z": 3043.7802231061532
+            }
+          }
+        }
+      ],
+      "knownQuestIds": [],
+      "selectedQuestIds": [],
+      "selectedVisitLegendIds": [],
+      "knownQuestIdsWithCarriedOffering": [],
+      "upgradeFound": true,
+      "upgradeEligibleToKeep": false,
+      "upgradePersisted": false,
+      "endedAtWin": false,
+      "noPostWinSteps": true,
+      "seenEligibleLegends": [],
+      "learnedRequests": [],
+      "coverage": {
+        "cellMetres": 20,
+        "fullySeenCells": 236,
+        "fullySeenSquareMetres": 94400,
+        "job": null
+      },
+      "safety": {
+        "knockdowns": 0,
+        "minimumHp": 2
+      },
+      "waveReached": 0,
+      "explorationSeconds": 0
+    },
+    {
+      "case": {
+        "vector": "on",
+        "condition": "matched",
+        "seed": 32676,
+        "worldSeed": 0,
+        "island": "home",
+        "bpm": 100,
+        "bag": "satchel",
+        "hat": "none",
+        "wearsHat": false,
+        "parts": [],
+        "limit": 300,
+        "rememberDreamVisits": true,
+        "coverageExploration": true
+      },
+      "filename": "9-matched-on.jsonl",
+      "outcome": "censored",
+      "playerEnd": 300.0000000000558,
+      "worldEnd": 297.84000000005784,
+      "steps": 18000,
+      "controlSha256": "8f8c0b29481ee0a719417d11ca345ecd75f85883540d9b880e92c5329b1cd527",
+      "wallSeconds": 6.845,
+      "questsCompleted": 0,
+      "questsTotal": 2,
+      "terminalQuests": [
+        {
+          "id": 23,
+          "species": "marten",
+          "wants": "stoat",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3575.2065432765107,
+          "z": 2834.618728522979,
+          "cell": [
+            20,
+            17
+          ],
+          "clearing": {
+            "cell": [
+              21,
+              17
+            ],
+            "x": 3575.2065432765107,
+            "z": 2840.489201500351,
+            "r": 13.045495505271406,
+            "edge": 2.5,
+            "legend": {
+              "x": 3575.2065432765107,
+              "z": 2834.618728522979
+            }
+          }
+        },
+        {
+          "id": 28,
+          "species": "dormouse",
+          "wants": "stoat",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 2989.6501916651478,
+          "z": 3043.7802231061532,
+          "cell": [
+            18,
+            18
+          ],
+          "clearing": {
+            "cell": [
+              17,
+              18
+            ],
+            "x": 2989.6501916651478,
+            "z": 3047.8302231061534,
+            "r": 9,
+            "edge": 2.5,
+            "legend": {
+              "x": 2989.6501916651478,
+              "z": 3043.7802231061532
+            }
+          }
+        }
+      ],
+      "knownQuestIds": [],
+      "selectedQuestIds": [],
+      "selectedVisitLegendIds": [],
+      "knownQuestIdsWithCarriedOffering": [],
+      "upgradeFound": true,
+      "upgradeEligibleToKeep": false,
+      "upgradePersisted": false,
+      "endedAtWin": false,
+      "noPostWinSteps": true,
+      "seenEligibleLegends": [],
+      "learnedRequests": [],
+      "coverage": {
+        "cellMetres": 20,
+        "fullySeenCells": 214,
+        "fullySeenSquareMetres": 85600,
+        "job": null
+      },
+      "safety": {
+        "knockdowns": 0,
+        "minimumHp": 3
+      },
+      "waveReached": 0,
+      "explorationSeconds": 27.06666666666641
+    },
+    {
+      "case": {
+        "vector": "off",
+        "condition": "home-everything",
+        "seed": 32676,
+        "worldSeed": 0,
+        "island": "home",
+        "bpm": 100,
+        "bag": "satchel",
+        "hat": "none",
+        "wearsHat": false,
+        "parts": [],
+        "limit": 300,
+        "rememberDreamVisits": true,
+        "coverageExploration": false
+      },
+      "filename": "10-home-everything-off.jsonl",
+      "outcome": "censored",
+      "playerEnd": 300.0000000000558,
+      "worldEnd": 75.83249999997598,
+      "steps": 18000,
+      "controlSha256": "aeedb7b2465acd40a0e54769c14a6d2e8322cf0d6319e842f6dc3198fe359f2b",
+      "wallSeconds": 10.95,
+      "questsCompleted": 0,
+      "questsTotal": 13,
+      "terminalQuests": [
+        {
+          "id": 16,
+          "species": "arcticfox",
+          "wants": "beetle",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3460.4938850718386,
+          "z": 2030.3517926306665,
+          "cell": [
+            19,
+            12
+          ],
+          "clearing": {
+            "cell": [
+              20,
+              11
+            ],
+            "x": 3460.4938850718386,
+            "z": 2037.6331947356475,
+            "r": 16.18089356662419,
+            "edge": 2.5,
+            "legend": {
+              "x": 3460.4938850718386,
+              "z": 2030.3517926306665
+            }
+          }
+        },
+        {
+          "id": 61,
+          "species": "featheredserpent",
+          "wants": "newt",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3186.272629941877,
+          "z": 1970.0855938378893,
+          "cell": [
+            19,
+            13
+          ],
+          "clearing": {
+            "cell": [
+              18,
+              11
+            ],
+            "x": 3186.272629941877,
+            "z": 1977.7197282247723,
+            "r": 16.964743081962386,
+            "edge": 2.5,
+            "legend": {
+              "x": 3186.272629941877,
+              "z": 1970.0855938378893
+            }
+          }
+        },
+        {
+          "id": 103,
+          "species": "owl",
+          "wants": "hydra",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 2762.5828464830415,
+          "z": 2400.4568617390014,
+          "cell": [
+            16,
+            14
+          ],
+          "clearing": {
+            "cell": [
+              16,
+              14
+            ],
+            "x": 2762.5828464830415,
+            "z": 2405.168357218695,
+            "r": 10.469989954874475,
+            "edge": 2.5,
+            "legend": {
+              "x": 2762.5828464830415,
+              "z": 2400.4568617390014
+            }
+          }
+        },
+        {
+          "id": 147,
+          "species": "rhino",
+          "wants": "hare",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3973.537393836966,
+          "z": 2542.2957548199042,
+          "cell": [
+            22,
+            14
+          ],
+          "clearing": {
+            "cell": [
+              23,
+              15
+            ],
+            "x": 3973.537393836966,
+            "z": 2552.2478442021447,
+            "r": 22.115754182756245,
+            "edge": 2.5,
+            "legend": {
+              "x": 3973.537393836966,
+              "z": 2542.2957548199042
+            }
+          }
+        },
+        {
+          "id": 243,
+          "species": "squirrel",
+          "wants": "armadillo",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3033.1672269071205,
+          "z": 2745.586976337825,
+          "cell": [
+            18,
+            16
+          ],
+          "clearing": {
+            "cell": [
+              18,
+              16
+            ],
+            "x": 3033.1672269071205,
+            "z": 2750.2984718175185,
+            "r": 10.469989954874475,
+            "edge": 2.5,
+            "legend": {
+              "x": 3033.1672269071205,
+              "z": 2745.586976337825
+            }
+          }
+        },
+        {
+          "id": 256,
+          "species": "frostwyrm",
+          "wants": "scorpion",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3553.7685229742824,
+          "z": 2661.6685406123497,
+          "cell": [
+            21,
+            16
+          ],
+          "clearing": {
+            "cell": [
+              21,
+              16
+            ],
+            "x": 3553.7685229742824,
+            "z": 2672.0185406123496,
+            "r": 23,
+            "edge": 2.5,
+            "legend": {
+              "x": 3553.7685229742824,
+              "z": 2661.6685406123497
+            }
+          }
+        },
+        {
+          "id": 297,
+          "species": "wolf",
+          "wants": "tiger",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3303.689483525189,
+          "z": 2843.2132584078668,
+          "cell": [
+            19,
+            17
+          ],
+          "clearing": {
+            "cell": [
+              19,
+              17
+            ],
+            "x": 3303.689483525189,
+            "z": 2849.747623930105,
+            "r": 14.520812271640082,
+            "edge": 2.5,
+            "legend": {
+              "x": 3303.689483525189,
+              "z": 2843.2132584078668
+            }
+          }
+        },
+        {
+          "id": 307,
+          "species": "raven",
+          "wants": "unicorn",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3546.9900828308237,
+          "z": 2772.823374772014,
+          "cell": [
+            21,
+            17
+          ],
+          "clearing": {
+            "cell": [
+              21,
+              17
+            ],
+            "x": 3546.9900828308237,
+            "z": 2779.500092965163,
+            "r": 14.837151540330138,
+            "edge": 2.5,
+            "legend": {
+              "x": 3546.9900828308237,
+              "z": 2772.823374772014
+            }
+          }
+        },
+        {
+          "id": 359,
+          "species": "scorpion",
+          "wants": "badger",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3712.5820470894723,
+          "z": 3093.079343334098,
+          "cell": [
+            22,
+            18
+          ],
+          "clearing": {
+            "cell": [
+              22,
+              18
+            ],
+            "x": 3712.5820470894723,
+            "z": 3097.1357645759736,
+            "r": 9.014269426389255,
+            "edge": 2.5,
+            "legend": {
+              "x": 3712.5820470894723,
+              "z": 3093.079343334098
+            }
+          }
+        },
+        {
+          "id": 398,
+          "species": "polarbear",
+          "wants": "rattlesnake",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 2988.573542270481,
+          "z": 3219.8293951211613,
+          "cell": [
+            17,
+            19
+          ],
+          "clearing": {
+            "cell": [
+              17,
+              19
+            ],
+            "x": 2988.573542270481,
+            "z": 3230.6129248821712,
+            "r": 23.963399468910563,
+            "edge": 2.5,
+            "legend": {
+              "x": 2988.573542270481,
+              "z": 3219.8293951211613
+            }
+          }
+        },
+        {
+          "id": 431,
+          "species": "dormouse",
+          "wants": "hare",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 4026.5983194456544,
+          "z": 3434.2378004398706,
+          "cell": [
+            22,
+            19
+          ],
+          "clearing": {
+            "cell": [
+              23,
+              20
+            ],
+            "x": 4026.5983194456544,
+            "z": 3438.287800439871,
+            "r": 9,
+            "edge": 2.5,
+            "legend": {
+              "x": 4026.5983194456544,
+              "z": 3434.2378004398706
+            }
+          }
+        },
+        {
+          "id": 456,
+          "species": "crocodile",
+          "wants": "dragonfly",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3194.2244387714873,
+          "z": 3621.7326024363892,
+          "cell": [
+            18,
+            20
+          ],
+          "clearing": {
+            "cell": [
+              19,
+              21
+            ],
+            "x": 3194.2244387714873,
+            "z": 3633.6499145320845,
+            "r": 26.482915768211907,
+            "edge": 2.5,
+            "legend": {
+              "x": 3194.2244387714873,
+              "z": 3621.7326024363892
+            }
+          }
+        },
+        {
+          "id": 478,
+          "species": "stegosaurus",
+          "wants": "scorpion",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3575.126010801807,
+          "z": 3527.867782743718,
+          "cell": [
+            21,
+            20
+          ],
+          "clearing": {
+            "cell": [
+              21,
+              21
+            ],
+            "x": 3575.126010801807,
+            "z": 3544.899712926995,
+            "r": 37.84873374061575,
+            "edge": 2.5,
+            "legend": {
+              "x": 3575.126010801807,
+              "z": 3527.867782743718
+            }
+          }
+        }
+      ],
+      "knownQuestIds": [
+        297
+      ],
+      "selectedQuestIds": [
+        297
+      ],
+      "selectedVisitLegendIds": [
+        297
+      ],
+      "knownQuestIdsWithCarriedOffering": [
+        297
+      ],
+      "upgradeFound": false,
+      "upgradeEligibleToKeep": false,
+      "upgradePersisted": false,
+      "endedAtWin": false,
+      "noPostWinSteps": true,
+      "seenEligibleLegends": [
+        {
+          "id": 297,
+          "observed": 16.40000000000035,
+          "consumed": 16.650000000000336
+        }
+      ],
+      "learnedRequests": [
+        {
+          "id": 297,
+          "wants": "tiger",
+          "observed": 19.066666666666865,
+          "consumed": 19.31666666666685
+        }
+      ],
+      "coverage": {
+        "cellMetres": 20,
+        "fullySeenCells": 204,
+        "fullySeenSquareMetres": 81600,
+        "job": null
+      },
+      "safety": {
+        "knockdowns": 0,
+        "minimumHp": 3
+      },
+      "waveReached": 0,
+      "explorationSeconds": 0
+    },
+    {
+      "case": {
+        "vector": "on",
+        "condition": "home-everything",
+        "seed": 32676,
+        "worldSeed": 0,
+        "island": "home",
+        "bpm": 100,
+        "bag": "satchel",
+        "hat": "none",
+        "wearsHat": false,
+        "parts": [],
+        "limit": 300,
+        "rememberDreamVisits": true,
+        "coverageExploration": true
+      },
+      "filename": "11-home-everything-on.jsonl",
+      "outcome": "censored",
+      "playerEnd": 300.0000000000558,
+      "worldEnd": 224.69250000005735,
+      "steps": 18000,
+      "controlSha256": "4ade9eb3544e48130e4936986ab129c0880ae5f6f7ede3b345153e8a16781c9e",
+      "wallSeconds": 14.309,
+      "questsCompleted": 0,
+      "questsTotal": 13,
+      "terminalQuests": [
+        {
+          "id": 16,
+          "species": "arcticfox",
+          "wants": "beetle",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3460.4938850718386,
+          "z": 2030.3517926306665,
+          "cell": [
+            19,
+            12
+          ],
+          "clearing": {
+            "cell": [
+              20,
+              11
+            ],
+            "x": 3460.4938850718386,
+            "z": 2037.6331947356475,
+            "r": 16.18089356662419,
+            "edge": 2.5,
+            "legend": {
+              "x": 3460.4938850718386,
+              "z": 2030.3517926306665
+            }
+          }
+        },
+        {
+          "id": 61,
+          "species": "featheredserpent",
+          "wants": "newt",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3186.272629941877,
+          "z": 1970.0855938378893,
+          "cell": [
+            19,
+            13
+          ],
+          "clearing": {
+            "cell": [
+              18,
+              11
+            ],
+            "x": 3186.272629941877,
+            "z": 1977.7197282247723,
+            "r": 16.964743081962386,
+            "edge": 2.5,
+            "legend": {
+              "x": 3186.272629941877,
+              "z": 1970.0855938378893
+            }
+          }
+        },
+        {
+          "id": 103,
+          "species": "owl",
+          "wants": "hydra",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 2762.5828464830415,
+          "z": 2400.4568617390014,
+          "cell": [
+            16,
+            14
+          ],
+          "clearing": {
+            "cell": [
+              16,
+              14
+            ],
+            "x": 2762.5828464830415,
+            "z": 2405.168357218695,
+            "r": 10.469989954874475,
+            "edge": 2.5,
+            "legend": {
+              "x": 2762.5828464830415,
+              "z": 2400.4568617390014
+            }
+          }
+        },
+        {
+          "id": 147,
+          "species": "rhino",
+          "wants": "hare",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3973.537393836966,
+          "z": 2542.2957548199042,
+          "cell": [
+            22,
+            14
+          ],
+          "clearing": {
+            "cell": [
+              23,
+              15
+            ],
+            "x": 3973.537393836966,
+            "z": 2552.2478442021447,
+            "r": 22.115754182756245,
+            "edge": 2.5,
+            "legend": {
+              "x": 3973.537393836966,
+              "z": 2542.2957548199042
+            }
+          }
+        },
+        {
+          "id": 243,
+          "species": "squirrel",
+          "wants": "armadillo",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3033.1672269071205,
+          "z": 2745.586976337825,
+          "cell": [
+            18,
+            16
+          ],
+          "clearing": {
+            "cell": [
+              18,
+              16
+            ],
+            "x": 3033.1672269071205,
+            "z": 2750.2984718175185,
+            "r": 10.469989954874475,
+            "edge": 2.5,
+            "legend": {
+              "x": 3033.1672269071205,
+              "z": 2745.586976337825
+            }
+          }
+        },
+        {
+          "id": 256,
+          "species": "frostwyrm",
+          "wants": "scorpion",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3553.7685229742824,
+          "z": 2661.6685406123497,
+          "cell": [
+            21,
+            16
+          ],
+          "clearing": {
+            "cell": [
+              21,
+              16
+            ],
+            "x": 3553.7685229742824,
+            "z": 2672.0185406123496,
+            "r": 23,
+            "edge": 2.5,
+            "legend": {
+              "x": 3553.7685229742824,
+              "z": 2661.6685406123497
+            }
+          }
+        },
+        {
+          "id": 297,
+          "species": "wolf",
+          "wants": "tiger",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3303.689483525189,
+          "z": 2843.2132584078668,
+          "cell": [
+            19,
+            17
+          ],
+          "clearing": {
+            "cell": [
+              19,
+              17
+            ],
+            "x": 3303.689483525189,
+            "z": 2849.747623930105,
+            "r": 14.520812271640082,
+            "edge": 2.5,
+            "legend": {
+              "x": 3303.689483525189,
+              "z": 2843.2132584078668
+            }
+          }
+        },
+        {
+          "id": 307,
+          "species": "raven",
+          "wants": "unicorn",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3546.9900828308237,
+          "z": 2772.823374772014,
+          "cell": [
+            21,
+            17
+          ],
+          "clearing": {
+            "cell": [
+              21,
+              17
+            ],
+            "x": 3546.9900828308237,
+            "z": 2779.500092965163,
+            "r": 14.837151540330138,
+            "edge": 2.5,
+            "legend": {
+              "x": 3546.9900828308237,
+              "z": 2772.823374772014
+            }
+          }
+        },
+        {
+          "id": 359,
+          "species": "scorpion",
+          "wants": "badger",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3712.5820470894723,
+          "z": 3093.079343334098,
+          "cell": [
+            22,
+            18
+          ],
+          "clearing": {
+            "cell": [
+              22,
+              18
+            ],
+            "x": 3712.5820470894723,
+            "z": 3097.1357645759736,
+            "r": 9.014269426389255,
+            "edge": 2.5,
+            "legend": {
+              "x": 3712.5820470894723,
+              "z": 3093.079343334098
+            }
+          }
+        },
+        {
+          "id": 398,
+          "species": "polarbear",
+          "wants": "rattlesnake",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 2988.573542270481,
+          "z": 3219.8293951211613,
+          "cell": [
+            17,
+            19
+          ],
+          "clearing": {
+            "cell": [
+              17,
+              19
+            ],
+            "x": 2988.573542270481,
+            "z": 3230.6129248821712,
+            "r": 23.963399468910563,
+            "edge": 2.5,
+            "legend": {
+              "x": 2988.573542270481,
+              "z": 3219.8293951211613
+            }
+          }
+        },
+        {
+          "id": 431,
+          "species": "dormouse",
+          "wants": "hare",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 4026.5983194456544,
+          "z": 3434.2378004398706,
+          "cell": [
+            22,
+            19
+          ],
+          "clearing": {
+            "cell": [
+              23,
+              20
+            ],
+            "x": 4026.5983194456544,
+            "z": 3438.287800439871,
+            "r": 9,
+            "edge": 2.5,
+            "legend": {
+              "x": 4026.5983194456544,
+              "z": 3434.2378004398706
+            }
+          }
+        },
+        {
+          "id": 456,
+          "species": "crocodile",
+          "wants": "dragonfly",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3194.2244387714873,
+          "z": 3621.7326024363892,
+          "cell": [
+            18,
+            20
+          ],
+          "clearing": {
+            "cell": [
+              19,
+              21
+            ],
+            "x": 3194.2244387714873,
+            "z": 3633.6499145320845,
+            "r": 26.482915768211907,
+            "edge": 2.5,
+            "legend": {
+              "x": 3194.2244387714873,
+              "z": 3621.7326024363892
+            }
+          }
+        },
+        {
+          "id": 478,
+          "species": "stegosaurus",
+          "wants": "scorpion",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3575.126010801807,
+          "z": 3527.867782743718,
+          "cell": [
+            21,
+            20
+          ],
+          "clearing": {
+            "cell": [
+              21,
+              21
+            ],
+            "x": 3575.126010801807,
+            "z": 3544.899712926995,
+            "r": 37.84873374061575,
+            "edge": 2.5,
+            "legend": {
+              "x": 3575.126010801807,
+              "z": 3527.867782743718
+            }
+          }
+        }
+      ],
+      "knownQuestIds": [
+        297
+      ],
+      "selectedQuestIds": [
+        297
+      ],
+      "selectedVisitLegendIds": [
+        297
+      ],
+      "knownQuestIdsWithCarriedOffering": [
+        297
+      ],
+      "upgradeFound": false,
+      "upgradeEligibleToKeep": false,
+      "upgradePersisted": false,
+      "endedAtWin": false,
+      "noPostWinSteps": true,
+      "seenEligibleLegends": [
+        {
+          "id": 297,
+          "observed": 3.866666666666658,
+          "consumed": 4.116666666666657
+        }
+      ],
+      "learnedRequests": [
+        {
+          "id": 297,
+          "wants": "tiger",
+          "observed": 5.733333333333318,
+          "consumed": 5.983333333333317
+        }
+      ],
+      "coverage": {
+        "cellMetres": 20,
+        "fullySeenCells": 339,
+        "fullySeenSquareMetres": 135600,
+        "job": null
+      },
+      "safety": {
+        "knockdowns": 0,
+        "minimumHp": 3
+      },
+      "waveReached": 0,
+      "explorationSeconds": 24.133333333333244
+    },
+    {
+      "case": {
+        "vector": "on",
+        "condition": "matched",
+        "seed": 40595,
+        "worldSeed": 0,
+        "island": "home",
+        "bpm": 100,
+        "bag": "satchel",
+        "hat": "none",
+        "wearsHat": false,
+        "parts": [],
+        "limit": 300,
+        "rememberDreamVisits": true,
+        "coverageExploration": true
+      },
+      "filename": "12-matched-on.jsonl",
+      "outcome": "censored",
+      "playerEnd": 300.0000000000558,
+      "worldEnd": 297.84000000005784,
+      "steps": 18000,
+      "controlSha256": "b3cae5fd55840899d371b03b4f32d1056e794e7734f700141dde6d8748e72713",
+      "wallSeconds": 7.159,
+      "questsCompleted": 0,
+      "questsTotal": 2,
+      "terminalQuests": [
+        {
+          "id": 3,
+          "species": "squirrel",
+          "wants": "snail",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3471.927703931354,
+          "z": 2600.8473800591723,
+          "cell": [
+            19,
+            15
+          ],
+          "clearing": {
+            "cell": [
+              20,
+              15
+            ],
+            "x": 3471.927703931354,
+            "z": 2605.558875538866,
+            "r": 10.469989954874475,
+            "edge": 2.5,
+            "legend": {
+              "x": 3471.927703931354,
+              "z": 2600.8473800591723
+            }
+          }
+        },
+        {
+          "id": 18,
+          "species": "fox",
+          "wants": "dormouse",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 2874.598223774916,
+          "z": 2725.817176861307,
+          "cell": [
+            17,
+            17
+          ],
+          "clearing": {
+            "cell": [
+              16,
+              16
+            ],
+            "x": 2874.598223774916,
+            "z": 2733.467176861307,
+            "r": 17,
+            "edge": 2.5,
+            "legend": {
+              "x": 2874.598223774916,
+              "z": 2725.817176861307
+            }
+          }
+        }
+      ],
+      "knownQuestIds": [],
+      "selectedQuestIds": [],
+      "selectedVisitLegendIds": [],
+      "knownQuestIdsWithCarriedOffering": [],
+      "upgradeFound": false,
+      "upgradeEligibleToKeep": false,
+      "upgradePersisted": false,
+      "endedAtWin": false,
+      "noPostWinSteps": true,
+      "seenEligibleLegends": [],
+      "learnedRequests": [],
+      "coverage": {
+        "cellMetres": 20,
+        "fullySeenCells": 328,
+        "fullySeenSquareMetres": 131200,
+        "job": null
+      },
+      "safety": {
+        "knockdowns": 0,
+        "minimumHp": 1
+      },
+      "waveReached": 0,
+      "explorationSeconds": 22.133333333333358
+    },
+    {
+      "case": {
+        "vector": "off",
+        "condition": "matched",
+        "seed": 40595,
+        "worldSeed": 0,
+        "island": "home",
+        "bpm": 100,
+        "bag": "satchel",
+        "hat": "none",
+        "wearsHat": false,
+        "parts": [],
+        "limit": 300,
+        "rememberDreamVisits": true,
+        "coverageExploration": false
+      },
+      "filename": "13-matched-off.jsonl",
+      "outcome": "censored",
+      "playerEnd": 300.0000000000558,
+      "worldEnd": 293.70000000006127,
+      "steps": 18000,
+      "controlSha256": "df6564df5a56e94d1a001f1703ce8e88e4ced2345b20d3d902537c483470f83d",
+      "wallSeconds": 6.181,
+      "questsCompleted": 0,
+      "questsTotal": 2,
+      "terminalQuests": [
+        {
+          "id": 3,
+          "species": "squirrel",
+          "wants": "snail",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3471.927703931354,
+          "z": 2600.8473800591723,
+          "cell": [
+            19,
+            15
+          ],
+          "clearing": {
+            "cell": [
+              20,
+              15
+            ],
+            "x": 3471.927703931354,
+            "z": 2605.558875538866,
+            "r": 10.469989954874475,
+            "edge": 2.5,
+            "legend": {
+              "x": 3471.927703931354,
+              "z": 2600.8473800591723
+            }
+          }
+        },
+        {
+          "id": 18,
+          "species": "fox",
+          "wants": "dormouse",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 2874.598223774916,
+          "z": 2725.817176861307,
+          "cell": [
+            17,
+            17
+          ],
+          "clearing": {
+            "cell": [
+              16,
+              16
+            ],
+            "x": 2874.598223774916,
+            "z": 2733.467176861307,
+            "r": 17,
+            "edge": 2.5,
+            "legend": {
+              "x": 2874.598223774916,
+              "z": 2725.817176861307
+            }
+          }
+        }
+      ],
+      "knownQuestIds": [],
+      "selectedQuestIds": [],
+      "selectedVisitLegendIds": [],
+      "knownQuestIdsWithCarriedOffering": [],
+      "upgradeFound": false,
+      "upgradeEligibleToKeep": false,
+      "upgradePersisted": false,
+      "endedAtWin": false,
+      "noPostWinSteps": true,
+      "seenEligibleLegends": [],
+      "learnedRequests": [],
+      "coverage": {
+        "cellMetres": 20,
+        "fullySeenCells": 167,
+        "fullySeenSquareMetres": 66800,
+        "job": null
+      },
+      "safety": {
+        "knockdowns": 0,
+        "minimumHp": 4
+      },
+      "waveReached": 0,
+      "explorationSeconds": 0
+    },
+    {
+      "case": {
+        "vector": "on",
+        "condition": "home-everything",
+        "seed": 40595,
+        "worldSeed": 0,
+        "island": "home",
+        "bpm": 100,
+        "bag": "satchel",
+        "hat": "none",
+        "wearsHat": false,
+        "parts": [],
+        "limit": 300,
+        "rememberDreamVisits": true,
+        "coverageExploration": true
+      },
+      "filename": "14-home-everything-on.jsonl",
+      "outcome": "censored",
+      "playerEnd": 300.0000000000558,
+      "worldEnd": 297.84000000005784,
+      "steps": 18000,
+      "controlSha256": "d95371a21b0d78f9c7c9e97c17c5c3c38e1dbb5146be639b50af8b0e3fa8ce2f",
+      "wallSeconds": 17.586,
+      "questsCompleted": 0,
+      "questsTotal": 13,
+      "terminalQuests": [
+        {
+          "id": 17,
+          "species": "squirrel",
+          "wants": "bat",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3460.4938850718386,
+          "z": 2032.921699255954,
+          "cell": [
+            19,
+            12
+          ],
+          "clearing": {
+            "cell": [
+              20,
+              11
+            ],
+            "x": 3460.4938850718386,
+            "z": 2037.6331947356475,
+            "r": 10.469989954874475,
+            "edge": 2.5,
+            "legend": {
+              "x": 3460.4938850718386,
+              "z": 2032.921699255954
+            }
+          }
+        },
+        {
+          "id": 72,
+          "species": "toad",
+          "wants": "beetle",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3186.272629941877,
+          "z": 1972.4791343222255,
+          "cell": [
+            19,
+            13
+          ],
+          "clearing": {
+            "cell": [
+              18,
+              11
+            ],
+            "x": 3186.272629941877,
+            "z": 1977.7197282247723,
+            "r": 11.64576422788177,
+            "edge": 2.5,
+            "legend": {
+              "x": 3186.272629941877,
+              "z": 1972.4791343222255
+            }
+          }
+        },
+        {
+          "id": 153,
+          "species": "spider",
+          "wants": "raven",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3886.7084032514094,
+          "z": 2239.9025135889383,
+          "cell": [
+            22,
+            14
+          ],
+          "clearing": {
+            "cell": [
+              22,
+              13
+            ],
+            "x": 3886.7084032514094,
+            "z": 2244.840765535569,
+            "r": 10.973893214734746,
+            "edge": 2.5,
+            "legend": {
+              "x": 3886.7084032514094,
+              "z": 2239.9025135889383
+            }
+          }
+        },
+        {
+          "id": 189,
+          "species": "hydra",
+          "wants": "toad",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 2621.3667601340294,
+          "z": 2606.9314324979323,
+          "cell": [
+            16,
+            15
+          ],
+          "clearing": {
+            "cell": [
+              16,
+              15
+            ],
+            "x": 2621.3667601340294,
+            "z": 2612.423978030409,
+            "r": 12.205656738837625,
+            "edge": 2.5,
+            "legend": {
+              "x": 2621.3667601340294,
+              "z": 2606.9314324979323
+            }
+          }
+        },
+        {
+          "id": 235,
+          "species": "dragonfly",
+          "wants": "spider",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 2820.6119431301595,
+          "z": 2753.007458892813,
+          "cell": [
+            16,
+            16
+          ],
+          "clearing": {
+            "cell": [
+              16,
+              16
+            ],
+            "x": 2820.6119431301595,
+            "z": 2758.6511754032476,
+            "r": 12.541592245411136,
+            "edge": 2.5,
+            "legend": {
+              "x": 2820.6119431301595,
+              "z": 2753.007458892813
+            }
+          }
+        },
+        {
+          "id": 326,
+          "species": "fox",
+          "wants": "wolf",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 2950.2587042793243,
+          "z": 2985.7362085450236,
+          "cell": [
+            17,
+            18
+          ],
+          "clearing": {
+            "cell": [
+              17,
+              18
+            ],
+            "x": 2950.2587042793243,
+            "z": 2993.3862085450237,
+            "r": 17,
+            "edge": 2.5,
+            "legend": {
+              "x": 2950.2587042793243,
+              "z": 2985.7362085450236
+            }
+          }
+        },
+        {
+          "id": 331,
+          "species": "griffin",
+          "wants": "redpanda",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3143.8743679561367,
+          "z": 3165.659326444441,
+          "cell": [
+            18,
+            18
+          ],
+          "clearing": {
+            "cell": [
+              18,
+              18
+            ],
+            "x": 3143.8743679561367,
+            "z": 3173.759326444441,
+            "r": 18,
+            "edge": 2.5,
+            "legend": {
+              "x": 3143.8743679561367,
+              "z": 3165.659326444441
+            }
+          }
+        },
+        {
+          "id": 339,
+          "species": "stag",
+          "wants": "cheetah",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3325.943529407909,
+          "z": 3052.8354090540583,
+          "cell": [
+            20,
+            18
+          ],
+          "clearing": {
+            "cell": [
+              20,
+              18
+            ],
+            "x": 3325.943529407909,
+            "z": 3063.366987185138,
+            "r": 23.403506957954708,
+            "edge": 2.5,
+            "legend": {
+              "x": 3325.943529407909,
+              "z": 3052.8354090540583
+            }
+          }
+        },
+        {
+          "id": 358,
+          "species": "moth",
+          "wants": "tiger",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3721.4489860757308,
+          "z": 3086.22960189825,
+          "cell": [
+            22,
+            18
+          ],
+          "clearing": {
+            "cell": [
+              22,
+              18
+            ],
+            "x": 3721.4489860757308,
+            "z": 3090.2796018982503,
+            "r": 9,
+            "edge": 2.5,
+            "legend": {
+              "x": 3721.4489860757308,
+              "z": 3086.22960189825
+            }
+          }
+        },
+        {
+          "id": 388,
+          "species": "flyingsquirrel",
+          "wants": "crocodile",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 2338.274547925971,
+          "z": 3081.699039435151,
+          "cell": [
+            15,
+            19
+          ],
+          "clearing": {
+            "cell": [
+              14,
+              18
+            ],
+            "x": 2338.274547925971,
+            "z": 3086.4609252408304,
+            "r": 10.581968457065646,
+            "edge": 2.5,
+            "legend": {
+              "x": 2338.274547925971,
+              "z": 3081.699039435151
+            }
+          }
+        },
+        {
+          "id": 410,
+          "species": "beaver",
+          "wants": "snail",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3254.63848866827,
+          "z": 3224.451547947043,
+          "cell": [
+            19,
+            19
+          ],
+          "clearing": {
+            "cell": [
+              19,
+              19
+            ],
+            "x": 3254.63848866827,
+            "z": 3230.473191902373,
+            "r": 13.381431011844917,
+            "edge": 2.5,
+            "legend": {
+              "x": 3254.63848866827,
+              "z": 3224.451547947043
+            }
+          }
+        },
+        {
+          "id": 428,
+          "species": "featheredserpent",
+          "wants": "raven",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 4026.5983194456544,
+          "z": 3430.653666052988,
+          "cell": [
+            22,
+            19
+          ],
+          "clearing": {
+            "cell": [
+              23,
+              20
+            ],
+            "x": 4026.5983194456544,
+            "z": 3438.287800439871,
+            "r": 16.964743081962386,
+            "edge": 2.5,
+            "legend": {
+              "x": 4026.5983194456544,
+              "z": 3430.653666052988
+            }
+          }
+        },
+        {
+          "id": 446,
+          "species": "tiger",
+          "wants": "polarbear",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3188.2010413739963,
+          "z": 3617.4395497521577,
+          "cell": [
+            18,
+            20
+          ],
+          "clearing": {
+            "cell": [
+              19,
+              21
+            ],
+            "x": 3188.2010413739963,
+            "z": 3630.868571627434,
+            "r": 29.842270833947033,
+            "edge": 2.5,
+            "legend": {
+              "x": 3188.2010413739963,
+              "z": 3617.4395497521577
+            }
+          }
+        }
+      ],
+      "knownQuestIds": [
+        339
+      ],
+      "selectedQuestIds": [
+        339
+      ],
+      "selectedVisitLegendIds": [],
+      "knownQuestIdsWithCarriedOffering": [
+        339
+      ],
+      "upgradeFound": false,
+      "upgradeEligibleToKeep": false,
+      "upgradePersisted": false,
+      "endedAtWin": false,
+      "noPostWinSteps": true,
+      "seenEligibleLegends": [
+        {
+          "id": 339,
+          "observed": 94.66666666666258,
+          "consumed": 94.91666666666256
+        },
+        {
+          "id": 410,
+          "observed": 142.5333333333389,
+          "consumed": 142.7833333333391
+        }
+      ],
+      "learnedRequests": [
+        {
+          "id": 339,
+          "wants": "cheetah",
+          "observed": 94.66666666666258,
+          "consumed": 94.91666666666256
+        }
+      ],
+      "coverage": {
+        "cellMetres": 20,
+        "fullySeenCells": 462,
+        "fullySeenSquareMetres": 184800,
+        "job": null
+      },
+      "safety": {
+        "knockdowns": 0,
+        "minimumHp": 1
+      },
+      "waveReached": 0,
+      "explorationSeconds": 31.999999999999464
+    },
+    {
+      "case": {
+        "vector": "off",
+        "condition": "home-everything",
+        "seed": 40595,
+        "worldSeed": 0,
+        "island": "home",
+        "bpm": 100,
+        "bag": "satchel",
+        "hat": "none",
+        "wearsHat": false,
+        "parts": [],
+        "limit": 300,
+        "rememberDreamVisits": true,
+        "coverageExploration": false
+      },
+      "filename": "15-home-everything-off.jsonl",
+      "outcome": "censored",
+      "playerEnd": 300.0000000000558,
+      "worldEnd": 293.70000000006127,
+      "steps": 18000,
+      "controlSha256": "dc4269448f4753c5caad0407d4fce1df79c17bc762fab815a02c23738d397698",
+      "wallSeconds": 11.847,
+      "questsCompleted": 0,
+      "questsTotal": 13,
+      "terminalQuests": [
+        {
+          "id": 17,
+          "species": "squirrel",
+          "wants": "bat",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3460.4938850718386,
+          "z": 2032.921699255954,
+          "cell": [
+            19,
+            12
+          ],
+          "clearing": {
+            "cell": [
+              20,
+              11
+            ],
+            "x": 3460.4938850718386,
+            "z": 2037.6331947356475,
+            "r": 10.469989954874475,
+            "edge": 2.5,
+            "legend": {
+              "x": 3460.4938850718386,
+              "z": 2032.921699255954
+            }
+          }
+        },
+        {
+          "id": 72,
+          "species": "toad",
+          "wants": "beetle",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3186.272629941877,
+          "z": 1972.4791343222255,
+          "cell": [
+            19,
+            13
+          ],
+          "clearing": {
+            "cell": [
+              18,
+              11
+            ],
+            "x": 3186.272629941877,
+            "z": 1977.7197282247723,
+            "r": 11.64576422788177,
+            "edge": 2.5,
+            "legend": {
+              "x": 3186.272629941877,
+              "z": 1972.4791343222255
+            }
+          }
+        },
+        {
+          "id": 153,
+          "species": "spider",
+          "wants": "raven",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3886.7084032514094,
+          "z": 2239.9025135889383,
+          "cell": [
+            22,
+            14
+          ],
+          "clearing": {
+            "cell": [
+              22,
+              13
+            ],
+            "x": 3886.7084032514094,
+            "z": 2244.840765535569,
+            "r": 10.973893214734746,
+            "edge": 2.5,
+            "legend": {
+              "x": 3886.7084032514094,
+              "z": 2239.9025135889383
+            }
+          }
+        },
+        {
+          "id": 189,
+          "species": "hydra",
+          "wants": "toad",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 2621.3667601340294,
+          "z": 2606.9314324979323,
+          "cell": [
+            16,
+            15
+          ],
+          "clearing": {
+            "cell": [
+              16,
+              15
+            ],
+            "x": 2621.3667601340294,
+            "z": 2612.423978030409,
+            "r": 12.205656738837625,
+            "edge": 2.5,
+            "legend": {
+              "x": 2621.3667601340294,
+              "z": 2606.9314324979323
+            }
+          }
+        },
+        {
+          "id": 235,
+          "species": "dragonfly",
+          "wants": "spider",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 2820.6119431301595,
+          "z": 2753.007458892813,
+          "cell": [
+            16,
+            16
+          ],
+          "clearing": {
+            "cell": [
+              16,
+              16
+            ],
+            "x": 2820.6119431301595,
+            "z": 2758.6511754032476,
+            "r": 12.541592245411136,
+            "edge": 2.5,
+            "legend": {
+              "x": 2820.6119431301595,
+              "z": 2753.007458892813
+            }
+          }
+        },
+        {
+          "id": 326,
+          "species": "fox",
+          "wants": "wolf",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 2950.2587042793243,
+          "z": 2985.7362085450236,
+          "cell": [
+            17,
+            18
+          ],
+          "clearing": {
+            "cell": [
+              17,
+              18
+            ],
+            "x": 2950.2587042793243,
+            "z": 2993.3862085450237,
+            "r": 17,
+            "edge": 2.5,
+            "legend": {
+              "x": 2950.2587042793243,
+              "z": 2985.7362085450236
+            }
+          }
+        },
+        {
+          "id": 331,
+          "species": "griffin",
+          "wants": "redpanda",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3143.8743679561367,
+          "z": 3165.659326444441,
+          "cell": [
+            18,
+            18
+          ],
+          "clearing": {
+            "cell": [
+              18,
+              18
+            ],
+            "x": 3143.8743679561367,
+            "z": 3173.759326444441,
+            "r": 18,
+            "edge": 2.5,
+            "legend": {
+              "x": 3143.8743679561367,
+              "z": 3165.659326444441
+            }
+          }
+        },
+        {
+          "id": 339,
+          "species": "stag",
+          "wants": "cheetah",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3325.943529407909,
+          "z": 3052.8354090540583,
+          "cell": [
+            20,
+            18
+          ],
+          "clearing": {
+            "cell": [
+              20,
+              18
+            ],
+            "x": 3325.943529407909,
+            "z": 3063.366987185138,
+            "r": 23.403506957954708,
+            "edge": 2.5,
+            "legend": {
+              "x": 3325.943529407909,
+              "z": 3052.8354090540583
+            }
+          }
+        },
+        {
+          "id": 358,
+          "species": "moth",
+          "wants": "tiger",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3721.4489860757308,
+          "z": 3086.22960189825,
+          "cell": [
+            22,
+            18
+          ],
+          "clearing": {
+            "cell": [
+              22,
+              18
+            ],
+            "x": 3721.4489860757308,
+            "z": 3090.2796018982503,
+            "r": 9,
+            "edge": 2.5,
+            "legend": {
+              "x": 3721.4489860757308,
+              "z": 3086.22960189825
+            }
+          }
+        },
+        {
+          "id": 388,
+          "species": "flyingsquirrel",
+          "wants": "crocodile",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 2338.274547925971,
+          "z": 3081.699039435151,
+          "cell": [
+            15,
+            19
+          ],
+          "clearing": {
+            "cell": [
+              14,
+              18
+            ],
+            "x": 2338.274547925971,
+            "z": 3086.4609252408304,
+            "r": 10.581968457065646,
+            "edge": 2.5,
+            "legend": {
+              "x": 2338.274547925971,
+              "z": 3081.699039435151
+            }
+          }
+        },
+        {
+          "id": 410,
+          "species": "beaver",
+          "wants": "snail",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3254.63848866827,
+          "z": 3224.451547947043,
+          "cell": [
+            19,
+            19
+          ],
+          "clearing": {
+            "cell": [
+              19,
+              19
+            ],
+            "x": 3254.63848866827,
+            "z": 3230.473191902373,
+            "r": 13.381431011844917,
+            "edge": 2.5,
+            "legend": {
+              "x": 3254.63848866827,
+              "z": 3224.451547947043
+            }
+          }
+        },
+        {
+          "id": 428,
+          "species": "featheredserpent",
+          "wants": "raven",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 4026.5983194456544,
+          "z": 3430.653666052988,
+          "cell": [
+            22,
+            19
+          ],
+          "clearing": {
+            "cell": [
+              23,
+              20
+            ],
+            "x": 4026.5983194456544,
+            "z": 3438.287800439871,
+            "r": 16.964743081962386,
+            "edge": 2.5,
+            "legend": {
+              "x": 4026.5983194456544,
+              "z": 3430.653666052988
+            }
+          }
+        },
+        {
+          "id": 446,
+          "species": "tiger",
+          "wants": "polarbear",
+          "done": null,
+          "open": true,
+          "questOpenFlag": true,
+          "legendState": "asleep",
+          "angry": false,
+          "gone": false,
+          "x": 3188.2010413739963,
+          "z": 3617.4395497521577,
+          "cell": [
+            18,
+            20
+          ],
+          "clearing": {
+            "cell": [
+              19,
+              21
+            ],
+            "x": 3188.2010413739963,
+            "z": 3630.868571627434,
+            "r": 29.842270833947033,
+            "edge": 2.5,
+            "legend": {
+              "x": 3188.2010413739963,
+              "z": 3617.4395497521577
+            }
+          }
+        }
+      ],
+      "knownQuestIds": [],
+      "selectedQuestIds": [],
+      "selectedVisitLegendIds": [],
+      "knownQuestIdsWithCarriedOffering": [],
+      "upgradeFound": false,
+      "upgradeEligibleToKeep": false,
+      "upgradePersisted": false,
+      "endedAtWin": false,
+      "noPostWinSteps": true,
+      "seenEligibleLegends": [],
+      "learnedRequests": [],
+      "coverage": {
+        "cellMetres": 20,
+        "fullySeenCells": 164,
+        "fullySeenSquareMetres": 65600,
+        "job": null
+      },
+      "safety": {
+        "knockdowns": 0,
+        "minimumHp": 4
+      },
+      "waveReached": 0,
+      "explorationSeconds": 0
+    }
+  ],
+  "wallSeconds": 189.356
+}
