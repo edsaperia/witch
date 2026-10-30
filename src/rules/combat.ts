@@ -23,6 +23,7 @@ import { ATTACK_LIB } from "./attacks/index";
 import { cast as castSpell, newSpells, stepSpells } from "./attacks/engine";
 import { getUp } from "./orbit";
 import { bodyReach, hittableOf, meleeExtras, reachingFurther, spellAttack, speciesSpell, spellWorld } from "./attacks/combatWorld";
+import { observeAttack } from "./attackObservation";
 import type { AttackSpec } from "./attacks/types";
 import { PACKS, stepPacks, packsOn, packKindOf, packAttack, packGate, markStrike, dodgeAim, strikingNow, ownStrike, styleOf, type Directive } from "./combat/packs";
 import { chaseAt, limitTurn, momentumOf, noteWitches } from "./momentum";
@@ -409,7 +410,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       if (f.target.kind === "creature" && !traitsOf(w.creatures[f.target.id]?.species ?? "", data).includes("flier")) { const hx = p.x - c.x, hz = p.z - c.z, hd = Math.hypot(hx, hz); if (hd > 1e-3) { L.dx = hx / hd; L.dz = hz / hd; L.left = Math.min(L.left, Math.max(0, hd - A.range * 0.5)); } }
       c.x += L.dx * step; c.z += L.dz * step; L.left -= step; c.moving = true; c.walk += dt * 12; c.facing = L.dx >= 0 ? 1 : -1;
       c.vx = L.dx * v; c.vz = L.dz * v;
-      if (L.left <= 1e-6) { f.lunge = undefined; if (Math.hypot(p.x - c.x, p.z - c.z) <= A.range * widthOf(f.target) + p.r) { land(w, s, c, f.target, atk.damage, A, c.x, c.z); if (spell) meleeExtras(w, s, f.target, spell.spec, c.x, c.z); } if (c.taunt && time < c.taunt.until && w.creatures[c.taunt.by]) f.target = { kind: "creature", id: c.taunt.by }; } // (taunted mid-lunge: its lunge done, it turns on the taunter)
+      if (L.left <= 1e-6) { f.lunge = undefined; if (Math.hypot(p.x - c.x, p.z - c.z) <= A.range * widthOf(f.target) + p.r) { const observation = { source: c.id, attack: spell?.name ?? null, delivery: "melee", phase: "damage" as const }; land(w, s, c, f.target, atk.damage, A, c.x, c.z, observation); if (spell) meleeExtras(w, s, f.target, spell.spec, c.x, c.z, c, observation); } if (c.taunt && time < c.taunt.until && w.creatures[c.taunt.by]) f.target = { kind: "creature", id: c.taunt.by }; } // (taunted mid-lunge: its lunge done, it turns on the taunter)
       continue;
     }
     // Just noticed: it turns to look a moment before it goes (combat.reaction).
@@ -471,7 +472,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         if (heavy && !was && c.charge) c.charge.home = (DA!.heavy.home * Math.PI) / 180; // (a heavy runs her down: its lane swings toward her)
         // A charge that missed (Ed, 2026-10-06: "reward skilful use of blink and accurate invitation aiming"): it stands
         // winded for fight.charge.miss seconds, stars round its head, an opening for her 💌s.
-        if (was && !c.charge && !was.struck && !was.hit?.length && (FIGHT.charge.miss ?? 0) > 0) { c.stunUntil = time + FIGHT.charge.miss!; c.vx = 0; c.vz = 0; s.events.push({ kind: "stunned", x: c.x, z: c.z, at: time, id: c.id }); }
+        if (was && !c.charge && !was.struck && !was.hit?.length && (FIGHT.charge.miss ?? 0) > 0) observeAttack(w, s, { kind: "creature", id: c.id }, { source: c.id, attack: "move:charge", delivery: "melee", phase: "self-miss" }, 0, () => { c.stunUntil = time + FIGHT.charge.miss!; c.vx = 0; c.vz = 0; s.events.push({ kind: "stunned", x: c.x, z: c.z, at: time, id: c.id }); });
         // A pair (the stags): its pack mates whose charge is ready set off with it, side by side.
         if (P.move.pair && !was && c.charge) for (const m of packs.get(c.id)?.members ?? []) if (m !== c && !m.charge && time >= (m.moveReadyAt ?? 0) && m.fight?.windupUntil === 0 && !m.fight.lunge) startCharge(m, P.move, p.x, p.z, time);
         const ram: Attack = { ...A, modifier: "knockback", knockback: 15 * S };

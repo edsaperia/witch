@@ -286,6 +286,8 @@ export interface CombatWorld {
   busy: (id: number) => boolean;
   /** A witch is hit (one point, whatever hits her), and thrown by the blow (rules/knock.ts). */
   hitWitch: (id: number, time: number, blow?: { x: number; z: number; knockback: number; rams: boolean }) => void;
+  /** Optional actual witch state for detached accepted-outcome diagnostics; absent means unknown. */
+  witchHitState?: (id: number) => import("../attackObservation").WitchHitState | null;
   /** A party animal is lost for the run. */
   loseParty: (id: number) => void;
   /** Pack combat's view of her (rules/combat/packs.ts): her last blink, her 💌s landing, her aim confused. */
