@@ -605,6 +605,7 @@
    "group": "run",
    "since": "2026-10-11",
    "readIn": [
+    "src/app/debugUnlock.ts",
     "src/app/hatSave.ts",
     "src/app/loadout.ts"
    ]

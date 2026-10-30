@@ -145,14 +145,14 @@ export class StationPanel {
   walked(): void { this.navAt = -1e9; }
 
   /** Slides `station`'s panel in (another's swapped for it) with her look, what she owns and (the Workshop's) her broom's parts. */
-  open(station: string, shelves: Shelf[], g: Genome, owned: Set<string>, banner = "", ws: WorkshopCtx | null = null): void {
+  open(station: string, shelves: Shelf[], g: Genome, owned: Set<string>, banner = "", ws: WorkshopCtx | null = null, awaitingDress = false): void {
     this.id = station; this.shelves = shelves; this.banner = banner; this.ws = ws;
     this.c = new PanelChoice(shelves, clone(g), owned, ws?.found ?? new Set(), ws ? { ...ws.fitted } : null, {
       grid: s => ({ cols: s.grid === "skin" ? SKIN_COLS : CLOTH_COLS, rows: GRID_ROWS }),
       swatch: (s, col, row) => this.swatch(s, col, row),
       palette: g2 => ({ ...classicPalette(this.st), ...g2.palette }),
       fitOn: (a, g2) => !FIT_NEEDS[a] || FIT_NEEDS[a](g2 as Genome),
-    });
+    }, awaitingDress);
     this.navAt = -1e9; this.hover = null;
     this.padChoose = true; // (the pad's use button that opened it is held: let go first, then a press chooses)
     const L = this.lines(), first = L.findIndex(l => l.kind === "items" || (l.kind === "cards" && !l.readOnly));
@@ -256,6 +256,7 @@ export class StationPanel {
     this.paint();
   }
   private change(g: Genome): void {
+    this.c.awaitingDress = false;
     this.onDress(); // (a change chosen: she twirls while it draws)
     this.g = g;
     clearTimeout(this.lookTimer); this.lookTimer = window.setTimeout(() => this.lookNow(), LOOK_AFTER);
@@ -282,13 +283,13 @@ export class StationPanel {
       if (l.shelf !== shelf) {
         if (shelf >= 0) html += shut(shelf);
         shelf = l.shelf;
-        const worn = s.slot ? partById(this.ws?.fitted[s.slot])?.name ?? "Empty" : shownItems(s).find(it => wears(this.g, it))?.name;
+        const worn = s.slot ? partById(this.ws?.fitted[s.slot])?.name ?? "Empty" : shownItems(s).find(it => this.c.wears(it))?.name;
         const note = s.always ? "every colour" : s.slot ? SLOT_ROLE[s.slot] : s.board ? "north up" : "";
         html += `<div class="sp-shelf${L[at.line]?.shelf === l.shelf ? " on" : ""}" data-shelf="${l.shelf}"><div class="sp-lab" data-card="${i}"><b>${esc(s.label)}</b>${worn ? `<span>${esc(worn)}</span>` : ""}${note ? `<em>${esc(note)}</em>` : ""}</div>`;
       }
       const f = (c: number) => at.line === i && at.col === c ? " focus" : "";
-      if (l.kind === "items" && l.item !== undefined) { const it = itemAt(s, l, 0), own = this.owned.has(it.id), on = wears(this.g, it), stat = own ? statOf(it) : ""; html += `<div class="sp-card sp-listrow${own ? "" : " locked"}${on ? " worn" : ""}${it.id === this.loaned ? " loaned" : ""}${f(0)}" data-line="${i}" data-col="0">${none(it) ? `<i class="sp-none">∅</i>` : `<span class="sp-pic" data-thumb="${this.thumbKey(it, s)}"></span>`}<span class="sp-stat"><b>${own ? esc(it.name) : "🔒"}</b>${esc(stat)}</span>${own && !none(it) && this.preview ? `<span class="sp-preview" data-preview="${esc(it.id)}"></span>` : ""}${on ? `<b class="sp-tick">✓</b>` : ""}</div>`; }
-      else if (l.kind === "items") html += `<div class="sp-row">${shownItems(s).map((it, c) => { const own = this.owned.has(it.id), stat = own ? statOf(it) : ""; return `<div class="sp-card${stat ? " sp-statcard" : ""}${own ? "" : " locked"}${wears(this.g, it) ? " worn" : ""}${it.id === this.loaned ? " loaned" : ""}${f(c)}" data-line="${i}" data-col="${c}">${none(it) ? `<i class="sp-none">∅</i>` : `<span data-thumb="${this.thumbKey(it, s)}"></span>`}${stat ? `<span class="sp-stat"><b>${esc(it.name)}</b>${esc(stat)}</span>` : ""}${wears(this.g, it) ? `<b class="sp-tick">✓</b>` : ""}${own ? "" : `<b class="sp-lock">🔒</b>`}</div>`; }).join("")}</div>`;
+      if (l.kind === "items" && l.item !== undefined) { const it = itemAt(s, l, 0), own = this.owned.has(it.id), on = this.c.wears(it), stat = own ? statOf(it) : ""; html += `<div class="sp-card sp-listrow${own ? "" : " locked"}${on ? " worn" : ""}${it.id === this.loaned ? " loaned" : ""}${f(0)}" data-line="${i}" data-col="0">${none(it) ? `<i class="sp-none">∅</i>` : `<span class="sp-pic" data-thumb="${this.thumbKey(it, s)}"></span>`}<span class="sp-stat"><b>${own ? esc(it.name) : "🔒"}</b>${esc(stat)}</span>${own && !none(it) && this.preview ? `<span class="sp-preview" data-preview="${esc(it.id)}"></span>` : ""}${on ? `<b class="sp-tick">✓</b>` : ""}</div>`; }
+      else if (l.kind === "items") html += `<div class="sp-row">${shownItems(s).map((it, c) => { const own = this.owned.has(it.id), stat = own ? statOf(it) : ""; return `<div class="sp-card${stat ? " sp-statcard" : ""}${own ? "" : " locked"}${this.c.wears(it) ? " worn" : ""}${it.id === this.loaned ? " loaned" : ""}${f(c)}" data-line="${i}" data-col="${c}">${none(it) ? `<i class="sp-none">∅</i>` : `<span data-thumb="${this.thumbKey(it, s)}"></span>`}${stat ? `<span class="sp-stat"><b>${esc(it.name)}</b>${esc(stat)}</span>` : ""}${this.c.wears(it) ? `<b class="sp-tick">✓</b>` : ""}${own ? "" : `<b class="sp-lock">🔒</b>`}</div>`; }).join("")}</div>`;
       else if (l.kind === "cards" && s.board) html += `<div class="sp-row sp-board">${Array.from({ length: l.n }, (_, c) => {
         const id = cardAt(s, l, c)!, cell = BOARD[(l.row ?? 0) * 3 + c], own = this.found_().has(id), tonight = !own && this.ws?.tonight === id;
         return `<div class="sp-cell${own ? "" : " locked"}${tonight ? " tonight" : ""}${id === this.loaned ? " loaned" : ""}${f(c)}" data-line="${i}" data-col="${c}"><small>${esc(cell.point)} · ${esc(cell.biome)}</small><span data-thumb="${this.partKey(id)}"></span><b>${own ? esc(partById(id)!.name) : "?"}</b></div>`;
@@ -299,7 +300,7 @@ export class StationPanel {
       }).join("")}</div>`;
       else if (l.kind === "chips") html += `<div class="sp-chips">${setChips(this.ws?.fitted ?? { tip: null, chassis: null, exhaust: null }).map((x, c) => `<span class="${x.whole ? "whole" : x.fitted ? "some" : ""}${f(c)}" data-line="${i}" data-col="${c}">${x.whole ? "✦ " : ""}${esc(x.name)} ${x.fitted}/${x.of} · ${esc(x.spell)}</span>`).join("")}</div>`;
       else if (l.kind === "parts") html += `<div class="sp-parts">${s.colour!.map((p, c) => `<span class="${p === this.partOf(s) ? "on" : ""}${f(c)}" data-line="${i}" data-col="${c}"><i style="background:${css(this.colourOf(p))}"></i>${esc(PART_NAMES[p] ?? p)}</span>`).join("")}</div>`;
-      else if (l.kind === "grid") { const [sc, sr] = this.chosenSwatch(s); html += `<div class="sp-grid" style="grid-template-columns:repeat(${l.n},1fr)">${Array.from({ length: l.n }, (_, c) => `<i class="${sc === c && sr === l.row ? "sel" : ""}${f(c)}" data-line="${i}" data-col="${c}" style="background:${css(this.swatch(s, c, l.row!))}"></i>`).join("")}</div>`; }
+      else if (l.kind === "grid") { const [sc, sr] = this.chosenSwatch(s); html += `<div class="sp-grid" style="grid-template-columns:repeat(${l.n},1fr)">${Array.from({ length: l.n }, (_, c) => `<i class="${!this.c.awaitingDress && sc === c && sr === l.row ? "sel" : ""}${f(c)}" data-line="${i}" data-col="${c}" style="background:${css(this.swatch(s, c, l.row!))}"></i>`).join("")}</div>`; }
       else if (l.kind === "fit") { const [lo, hi] = this.fitRange(l.axis!), on = !FIT_NEEDS[l.axis!] || FIT_NEEDS[l.axis!](this.g), v = Math.max(0, Math.min(1, (this.fitValue(l.axis!) - lo) / (hi - lo))); html += `<div class="sp-fit${on ? "" : " off"}${f(0)}" data-line="${i}" data-col="0"><span>${esc(FIT_NAMES[l.axis!] ?? l.axis!)}</span><div class="bar"><i style="left:${(v * 100).toFixed(1)}%"></i></div></div>`; }
     });
     if (shelf >= 0) html += shut(shelf);
@@ -349,7 +350,7 @@ export class StationPanel {
     let title = "", text = "", locked = false, sub = "", stats: { name: string; from: string; to: string; better: boolean | null }[] = [];
     if (l) {
       const s = this.shelves[l.shelf];
-      if (l.kind === "items") { const it = itemAt(s, l, at.col); locked = !this.owned.has(it.id); title = locked ? "🔒" : it.name; text = locked ? (this.tried(at) ? "Not found yet." : "") : (wears(this.g, it) ? "Wearing." : "Hers: choose to wear it.") + (it.stat ? ` ${it.stat[0].toUpperCase()}${it.stat.slice(1)}.` : ""); } // (a bag's 💌 stats in words: rules/bags.ts) // (a silhouette, nothing more: Ed, 2026-10-21; chosen anyway, it says it's not hers yet)
+      if (l.kind === "items") { const it = itemAt(s, l, at.col); locked = !this.owned.has(it.id); title = locked ? "🔒" : it.name; text = locked ? (this.tried(at) ? "Not found yet." : "") : (this.c.wears(it) ? "Wearing." : "Hers: choose to wear it.") + (it.stat ? ` ${it.stat[0].toUpperCase()}${it.stat.slice(1)}.` : ""); } // (a bag's 💌 stats in words: rules/bags.ts) // (a silhouette, nothing more: Ed, 2026-10-21; chosen anyway, it says it's not hers yet)
       else if (l.kind === "cards" && s.board) {
         const id = cardAt(s, l, at.col)!, cell = BOARD[(l.row ?? 0) * 3 + at.col], own = this.found_().has(id), where = `${cell.point.toLowerCase()} · ${cell.biome.toLowerCase()}`;
         if (own) { title = partById(id)!.name; text = `${where}. ${setsOf(id).map(n => `${n} set`).join(", ")}. Fit it at the bay.`; }
@@ -362,7 +363,7 @@ export class StationPanel {
         else { title = p.name; sub = `${p.slot}${setsOf(p.id).length ? ` · ${setsOf(p.id).join(", ")} set${setsOf(p.id).length > 1 ? "s" : ""}` : ""}`; stats = this.ws ? partStats(p.id, this.ws.tuning) : []; text = this.ws?.fitted[p.slot] === p.id ? "On her broom." : "Choose it to fit it."; }
       } else if (l.kind === "chips") { const x = setChips(this.ws?.fitted ?? { tip: null, chassis: null, exhaust: null })[at.col]; title = `${x.name} · ${x.spell}`; text = x.whole ? `Whole: R casts ${x.spell}.` : `${x.fitted} of its ${x.of} parts on her broom.`; }
       else if (l.kind === "parts") { const p = s.colour![at.col]; title = `Colour: ${PART_NAMES[p] ?? p}`; text = p === this.partOf(s) ? "The colours below are for this." : "Choose it to colour it below."; }
-      else if (l.kind === "grid") { const [sc, sr] = this.chosenSwatch(s); title = `${s.label}: colour`; text = sc === at.col && sr === l.row ? "Wearing." : "Every colour is hers: choose to put it on."; }
+      else if (l.kind === "grid") { const [sc, sr] = this.chosenSwatch(s); title = `${s.label}: colour`; text = !this.c.awaitingDress && sc === at.col && sr === l.row ? "Wearing." : "Every colour is hers: choose to put it on."; }
       else { const on = !FIT_NEEDS[l.axis!] || FIT_NEEDS[l.axis!](this.g); title = FIT_NAMES[l.axis!] ?? l.axis!; text = on ? "◀ ▶ or drag to change it." : "Put it on first."; }
     }
     box.className = `sp-detail${locked ? " locked" : ""}`;
@@ -444,6 +445,7 @@ function installCss(): void {
   if (cssDone) return; cssDone = true;
   const s = document.createElement("style");
   s.textContent = `
+body.paused #station-panel { visibility: hidden; }
 #station-panel { --ol: #0b0716; --gold: var(--accent, #e8b46a); position: fixed; left: 0; top: 0; bottom: 0; width: 50vw; z-index: 18; box-sizing: border-box; padding: 1.1em 1.4em 0.9em 1.4em; color: var(--ink, #e8e2f4); font: clamp(15px, 1.45vw, 26px)/1.35 ui-monospace, Menlo, Consolas, monospace; flex-direction: column; gap: .6em; user-select: none; text-shadow: -1px -1px 0 var(--ol), 1px -1px 0 var(--ol), -1px 1px 0 var(--ol), 1px 1px 0 var(--ol), 0 0 6px rgba(0,0,0,.9);
   background: linear-gradient(90deg, rgba(11,7,22,.72) 0%, rgba(11,7,22,.55) 80%, rgba(11,7,22,0) 100%); }
 #station-panel .sp-banner { color: var(--gold); font-size: .9em; }
