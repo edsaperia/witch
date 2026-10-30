@@ -9,7 +9,7 @@
 import type * as THREE from "three";
 
 /** What the bytes are for: the ledger's rows. */
-export type GpuKind = "trees" | "creatures" | "props" | "witch" | "house" | "ground" | "crown" | "effects" | "targets" | "ui" | "other" | "canvas";
+export type GpuKind = "trees" | "creatures" | "props" | "witch" | "house" | "ground" | "crown" | "effects" | "fx" | "targets" | "ui" | "other" | "canvas";
 
 // GL's numbers (WebGL 1 and 2), only those the counting needs.
 const SIZED: Record<number, number> = {

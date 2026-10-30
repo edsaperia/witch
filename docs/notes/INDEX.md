@@ -243,6 +243,7 @@ says what each note covers.
 
 ## [The view](view.md)
 
+- Magic mock (stage 0 only)
 - Pixel snap
 - Stump wisps
 - Tilt-shift

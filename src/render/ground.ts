@@ -19,6 +19,7 @@ import { speakerRadius } from "../rules/speakers";
 import type { Beach } from "../rules/mapShape";
 import { koiPonds, lakeKnobs } from "../rules/lakes";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
+import { FX_UNIFORMS, FX_FIELD_GLSL } from "./fx/uniforms";
 import { LAKE_LOOKS_GLSL, lakeLookTexture, lakeLooksOf } from "./lakeLooks";
 import { HEIGHT_GLSL, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import type { TilePixels } from "./artBuild";
@@ -121,6 +122,7 @@ uniform float uHillShade; // the hills' slopes in the light, exaggerated this mu
 uniform float uBare;  // ?bare=2: a flat grey ground with contour lines (0.5 m) and a 10 m grid
 varying vec3 vWorld;
 ${LIGHT_GLSL}
+${FX_FIELD_GLSL}
 ${HEIGHT_GLSL}
 ${VALUE_NOISE_GLSL}${BAYER_GLSL}vec3 hsv(float h, float s, float v) {
   vec3 k = clamp(abs(mod(fract(h) * 6.0 + vec3(0, 4, 2), 6.0) - 3.0) - 1.0, 0.0, 1.0);
@@ -501,7 +503,7 @@ void main() {
       if (LK > 0.5 && ld > -lakeRim(LK)) {
         vec3 lit = nightLightShaded(vec3(0.0, 1.0, 0.0), vWorld, 1.0);
         if (ld < (LK > 1.5 && LK < 2.5 ? -0.6 : 0.0)) c = lakeShore(LK, ld, p, c);
-        else { float hz; vec3 w = lakeWater(LK, ld, p, px, c, lit, hz); w = mix(w, w * 1.25 + vec3(0.06, 0.08, 0.09), lakeSigil(p) * 0.4); gl_FragColor = vec4(mix(w, haze(w, vWorld), hz), 1.0); return; }
+        else { float hz; vec3 w = lakeWater(LK, ld, p, px, c, lit, hz); w = mix(w, w * 1.25 + vec3(0.06, 0.08, 0.09), lakeSigil(p) * 0.4); w=fxTint(w,fxField(p)); gl_FragColor = vec4(mix(w, haze(w, vWorld), hz), 1.0); return; }
       } else if (ld > -2.6) {
         float lap = 0.5 + 0.5 * sin(uTime * 1.1 + vnoise(p / 30.0 + 5.0) * 6.0), front = 0.35 * lap - 0.1; // (the edge laps in and out)
         vec3 lit = nightLightShaded(vec3(0.0, 1.0, 0.0), vWorld, 1.0);
@@ -589,7 +591,7 @@ void main() {
       if (up1 < 0.5) water = rim; // the moonlit far shore
       else if (up2 < 0.5 && mod(px.x, 2.0) < 1.0) water = mix(water, rim, 0.5);
       else if (side < 0.5) water = vec3(0.07, 0.06, 0.05) * (0.6 + 0.8 * nightLight(vec3(0.0, 1.0, 0.0), vWorld)); // the muddy lip
-      gl_FragColor = vec4(haze(water, vWorld), 1.0);
+      gl_FragColor = vec4(haze(fxTint(water, fxField(p)), vWorld), 1.0);
       return;
     }
   }
@@ -627,8 +629,12 @@ void main() {
     if (mod(px.x, 10.0 / uPixel) < 1.0 || mod(px.y, 10.0 / uPixel) < 1.0) c *= 0.85;
   }
   if (shoreNear > 0.0) { moonK = mix(moonK, 1.0, shoreNear * 0.7); c = mix(c, c * vec3(0.95, 1.18, 1.0) * 1.2, shoreNear * 0.6); } // (by the sand, the woods' floor in more moonlight, greener)
+  vec4 magicGround = fxField(p);
+  c = fxTint(c, magicGround);
   vec3 light = nightLightShaded(N, vWorld, moonK);
   vec3 lit = glowPool(min(vec3(1.0), c * light * 1.25), vWorld);
+  float charge = fxExtra(p).r;
+  lit += vec3(0.1,0.15,0.22) * charge * (uFxCalm>0.5?0.5:0.65+0.15*sin(uFxTime*3.0));
   if (plazaLine + plazaHalo > 0.0) lit = mix(lit, vec3(0.36, 0.62, 0.52), plazaLine * 0.55) + vec3(0.04, 0.16, 0.11) * plazaHalo * (1.0 - plazaLine) * 0.4; // (the plaza's sigil, its own light)
   gl_FragColor = vec4(haze(lit, vWorld), 1.0); // (her pool in her light's colour)
 }
@@ -672,7 +678,7 @@ export class Ground {
     const mat = new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG, defines: defines(false),
       uniforms: {
-        ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS,
+        ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, ...FX_UNIFORMS,
         uAreas: { value: this.near.texture }, uAreasFar: { value: this.far.texture },
         uExtent: { value: this.near.extent }, uExtentFar: { value: this.far.extent },
         uAreaWin: { value: this.near.box }, uAreaWinFar: { value: this.far.box },

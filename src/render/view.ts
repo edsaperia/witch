@@ -3,6 +3,7 @@
 // pixel stays a crisp square.
 import { RigView, rigOn } from "./rig/rigView";
 import { FxMock } from "./fxMock";
+import { fxFor } from "./fx/system";
 const FX_MOCK_MODE = new URLSearchParams(globalThis.location?.search ?? "").get("fxmock");
 import type { RigGear } from "./rig/rigBuild";
 import type { Creature } from "../rules/creatures";
@@ -364,6 +365,8 @@ const HOUSE_TILT_EASE = 0.6;
 export class View {
   readonly renderer: THREE.WebGLRenderer;
   scene = new THREE.Scene();
+  readonly magic = fxFor(this.scene);
+  private magicBlink = -Infinity;
   /** Stage 0 art review only; absent in ordinary play. */
   fxMock: FxMock | null = null;
   camera: THREE.PerspectiveCamera;
@@ -1486,12 +1489,15 @@ export class View {
     this.assets.playing = this.game.party.spellAt !== null; // (the night playing: the art ahead of need shares the workers, render/assets.ts dispatch)
     this.ms = {}; this.lap = this.frameStart = performance.now();
     const g = this.game, t = g.tuning, P0 = poseOf(g), F = this.fly;
+    if (this.magic.galleryCamera !== null) { g.witch.mode=this.magic.galleryCamera?"treetop":"ground"; g.witch.lift=this.magic.galleryCamera?1:0; }
     // (arriving from the sea chart: the flight's shot, app/arrive.ts)
     const pose = F ? { ...P0, tx: F.tx, ty: F.ty, tz: F.tz, angle: F.angle, distance: F.distance, ...shotCamera(F) } : P0;
     this.prefetchWave();
     // Her clock (rules/slowTime.ts): she and everything of hers (her frames, blinks, trail, 💌s, sigils, the action bar) at full
     // speed, while the world (time) may run slow in a sleeping legend's circle; eased between steps as the world's is.
     const ht = Math.max(0, g.herTime - Math.max(0, g.clock.time - time) / Math.max(1e-3, g.timeScale));
+    this.magic.begin(ht, g.witch.x, g.witch.z, g);
+    this.magic.batches.mpp.value = this.mpp;
     // The scenery budget follows the real frame rate (only frames that are drawn count).
     if (draw) {
       const now = performance.now();
@@ -1609,6 +1615,12 @@ export class View {
     const markerLights = drawMarkers(this, time);
     const speakerLights = drawSpeakers(this, time, pose.angle);
     this.spellFx.update(g, ht, witchHeight(w, t) + 0.6 + this.rideOff);
+    const blink = g.witches[0].dash;
+    if (blink.at !== this.magicBlink && ht >= blink.at && Number.isFinite(blink.at)) {
+      this.magicBlink = blink.at;
+      this.magic.emit("moonlight", "aura", blink.fromX, 1.5, blink.fromZ, 1, 0.7, 0.5, 910001);
+      this.magic.emit("moonlight", "burst", blink.toX, 0.8, blink.toZ, 1, 0.7, 0.6, 910002);
+    }
     {
       // her trail: behind her broom, as long as she's fast, in the colour of the area under her (its creature's neon, as the
       // ley lines and runestones; home's own lavender)
@@ -1730,6 +1742,8 @@ export class View {
     this.leashView.update(ht, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop, this.witchBodyY, this.witchFeetY, this.witchFrameH);
     (this.castTag ??= new CastTag()).update(this); // (the spell's key prompt by its 🎶, drawn just now: render/castTag.ts)
     this.time("leash");
+    this.magic.finish(t.lightBudget);
+    this.stats.lights = LIGHT_UNIFORMS.uLightCount.value;
     if (FX_MOCK_MODE) (this.fxMock ??= new FxMock(this, FX_MOCK_MODE)).update(this, ht);
     workAhead(this);
     if (this.debugCull) drawGhosts(this, time);
@@ -1742,7 +1756,9 @@ export class View {
     // (the cast-shadow map is the forest's: none while only the house is drawn)
     if (this.post.behind > 0) this.castMap.render(this.renderer, this.scene, this.game.witch.x, this.game.witch.z, this.castOn);
     this.occluders();
+    this.magic.hideBackdrop(this.scene);
     this.post.render(this.scene, this.camera);
+    this.magic.restoreBackdrop(this.scene);
     this.occlusion.veil(); // (the smoke over the 💌s, once the frame's smoke is drawn)
     this.time("draw");
     this.drawEst += (Math.min(8, this.ms.draw) - this.drawEst) * 0.1; // (eased; a stalled frame counts for at most 8 ms)

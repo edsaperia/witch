@@ -801,13 +801,42 @@
    "name": "lookdemo",
    "values": [
     "telegraphs",
-    "elements"
+    "elements",
+    "fx",
+    "fx:<element>"
    ],
-   "does": "The attack looks' showcase round her.",
+   "does": "The attack looks' showcase round her; fx shows the production magic family and intensity ladder with ground and camera controls.",
    "group": "debug",
    "since": "2026-10-27",
    "readIn": [
     "src/render/leash/combat.ts"
+   ]
+  },
+  {
+   "name": "magic",
+   "values": [
+    "old",
+    "layers"
+   ],
+   "does": "Compare the old attack artwork with the layered magic effects.",
+   "group": "compare",
+   "since": "2026-10-30",
+   "readIn": [
+    "src/render/fx/system.ts"
+   ]
+  },
+  {
+   "name": "fxmock",
+   "values": [
+    "1",
+    "iso",
+    "frost"
+   ],
+   "does": "Show the original fire and frost mock for comparison with the production effects.",
+   "group": "debug",
+   "since": "2026-10-29",
+   "readIn": [
+    "src/render/view.ts"
    ]
   },
   {

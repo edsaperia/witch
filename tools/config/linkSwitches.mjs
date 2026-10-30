@@ -31,7 +31,7 @@ export function scanLinkSwitches(root = ROOT) {
   walk(join(root, "src"));
   for (const f of readdirSync(root)) if (/\.html$/.test(f)) files.push(join(root, f));
   for (const f of files) {
-    const s = readFileSync(f, "utf8"), rel = relative(root, f);
+    const s = readFileSync(f, "utf8"), rel = relative(root, f).replaceAll("\\", "/");
     for (const m of s.matchAll(READ)) if (isParams(m[1], s.slice(0, m.index))) {
       if (!out.has(m[3])) out.set(m[3], new Set());
       out.get(m[3]).add(rel);

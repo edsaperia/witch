@@ -172,7 +172,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
         const j = R ? v.assets.djGestureFrame(R.gesture, R.frame) : KO && irisOn && KO.riseUntil === undefined && ht >= atDecksFrom(KO, true) && ht < KO.inAt ? v.assets.djGestureFrame("scratch", 0) : v.assets.djFrame(beatAt(g.beat, time), casting, respawnLeft(g.witches[0].ko, ht) !== null); // (its fallback: scratching through a knockout's wait, rules/knockout.ts)
         wf = Dj.full[j]; djUpper = Dj.upper[j];
       }
-      if (typeof sp === "number" && sp !== v.castSeen) { v.castSeen = sp; v.spellFx.partyBurst(wx, wyy, wz, sp); }
+      if (typeof sp === "number" && sp !== v.castSeen) { v.castSeen = sp; v.spellFx.partyBurst(wx, wyy, wz, sp); v.magic.emit("party", "pillar", wx, wyy+5, wz, 3, 1.5, 2.4, 914); v.magic.emit("party", "dome", wx, wyy+2, wz, 3, 1, 1.8, 915); }
     }
   }
   // Knocked out (Ed, 2026-10-04): she sits slumped on the ground while her stack lets go, then

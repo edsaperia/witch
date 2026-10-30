@@ -1,0 +1,15 @@
+{
+  "levels": [0.25, 0.45, 0.65, 1],
+  "size": [0.6, 1.4],
+  "halo": [0.08, 0.25],
+  "secondaryAt": 0.5,
+  "lightCap": 6,
+  "lightEase": 0.2,
+  "lightReach": [6, 18],
+  "lightStrength": [0.2, 0.85],
+  "fieldSize": 128,
+  "fieldMetres": 200,
+  "imprintSeconds": 5,
+  "pool": 256,
+  "instances": 2048
+}

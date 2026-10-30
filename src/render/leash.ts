@@ -15,6 +15,7 @@ import { ROUTE_SAMPLES, type RouteShape } from "./routeEase";
 import { moodOf } from "./mood";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
+import { comfort } from "./comfort";
 import { gpuKind } from "./gpuLedger";
 import { drawSigil, sigilColour, LEGEND_SCALE, BOLD_GRID, boldGlyph, LEGEND_CROWN_H, crownGlyph } from "../../art/generator.js";
 import { dormant, type Game } from "../rules/game";
@@ -311,6 +312,7 @@ export class LeashView {
     for (const berry of B.berries) {
       if (berry.gone) continue; // (a Harvest berry eaten)
       const p = B.bushes[berry.bush];
+      if (Math.hypot(p.x-w.x,p.z-w.z)<12) this.look.magic.draw("bloom", "aura", p.x, 0.8, p.z, 0, 0.18, 0.18, 0, 600000+berry.id);
       if (Math.abs(p.x - w.x) > near || Math.abs(p.z - w.z) > near) continue;
       const tw = 0.85 + 0.15 * Math.sin(time * 2.3 + berry.id);
       if (babyNext && berry.claimedBy === null && Math.hypot(p.x - w.x, p.z - w.z) <= reach) {
@@ -462,6 +464,7 @@ export class LeashView {
 
   /** How far to shake the camera now (metres): a legend's quake nearby. */
   shake(time: number): number {
+    if (comfort.reduceFlashing) return 0;
     const k = (time - this.shakeAt) / 0.5;
     return k < 0 || k > 1 ? 0 : this.shakeAmp * (1 - k) * (1 - k);
   }
