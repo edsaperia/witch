@@ -1,0 +1,45 @@
+{
+  "sha": "391533d2224663615ea51e5e4c97f9335b99b911",
+  "baseline": "523b5cec0a9861aff1043f016c77fc255cbebfc7",
+  "harnessOnly": true,
+  "candidateFragmentHash": "ef9f3178ef269c8856550600019571b39fae57d31c2c55a104a64a110c1d460f",
+  "note": "Minimal ground-only fixed-camera/material fixtures. Nine synthetic single-kind fields plus real world0/seed424242 Beetle lake field (256x256 nearest-grid sample); fixed lighting/ground/coast uniforms, not whole-game screenshots. Exact RGBA, no game readiness or timing claim.",
+  "rows": [
+    {
+      "fixture": "lava",
+      "ids": [
+        2
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_LAKE_LAVA": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 405,
+      "sensitivity": [
+        {
+          "id": 2,
+          "pixels": 16440,
+          "max": 239
+        }
+      ],
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    }
+  ],
+  "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "complete": true,
+  "checkoutNote": "Uncommitted per-kind candidate on parent391533d2; candidateFragmentHash identifies tested shader. One fixture proves harness operation only."
+}

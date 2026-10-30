@@ -11,6 +11,7 @@ import { WITCH_LIGHT_GLSL, witchLightUniform } from "./witchLight";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { CAST_SHADOW_GLSL, CAST_SHADOW_UNIFORMS } from "./castShadows";
 import { Dirty } from "./dirty";
+import { FX_UNIFORMS, FX_FIELD_GLSL } from "./fx/uniforms";
 
 /** One art pixel's size in the world (metres): the sprites' scale at the tuning's pixel size. */
 export function metresPerArtPixel(t: { artPixelsPerMetre: number; pixelSize: number }): number {
@@ -19,6 +20,8 @@ export function metresPerArtPixel(t: { artPixelsPerMetre: number; pixelSize: num
 
 /** Shared by every sprite batch: the camera's right and (tilted) up, and the canopy fade. */
 export const SPRITE_UNIFORMS = {
+  /** Review experiment, Ed 2026-10-30: creatures read inside her light, camouflage outside stays unchanged. */
+  uPoolReadability: { value: new URLSearchParams(globalThis.location?.search ?? "").get("poolreadability") === "1" ? 1 : 0 },
   /** The mood's moonlight rim on characters (render/mood.ts): colour, strength (0 off). */
   uMoodRim: { value: new THREE.Vector4() },
   /** 1 when the sprites are stylised (?style=bold|ref): their outermost pixel is the style's dark outline, so the rim goes just inside it. */
@@ -155,6 +158,10 @@ varying float vSizeY;
 varying vec2 vGround; // its ground spot under this pixel: its foot, across its width (the cast shadows: render/castShadows.ts)
 ${HEIGHT_VERT_GLSL}
 ${WIND_GUST_GLSL}${PIXEL_SNAP_GLSL}${HIZ_GLSL}
+${FX_FIELD_GLSL}
+varying vec2 vFxBase;
+varying vec4 vFxPaint;
+varying vec2 vFxInfo;
 void main() {
   // Every sprite stands upright on the rolling ground (height.ts), at the lowest ground under its
   // foot (most of its width, up to 5 m either side of its base, at five points): on a slope its uphill side is planted in the
@@ -181,6 +188,11 @@ void main() {
     w += uRight * (uWind.x * iFlags.w * uv.y * uv.y * (gust * 0.9 + flutter)) * min(1.0, iSize.y / 8.0);
   }
   // With a sway mask (#34; negative sway), the quad stays put and the fragment shader moves its leaves.
+  vFxBase = iPos.xz;
+  // Every fragment of this instance reads its ground anchor: fetch once per vertex, not per leaf pixel/pass.
+  vFxPaint = fxField(iPos.xz);
+  vFxInfo = fxExtra(iPos.xz).rg;
+  if (iFlags.w != 0.0 && uFxOn > 0.5) w += uRight * (vFxInfo.g * uv.y * uv.y * 0.7);
   vSwayM = 0.0;
   if (iFlags.w < 0.0 && uWind.x > 0.0) {
     vec2 q = iPos.xz / uWind.z - vec2(0.8, 0.35) * uWind.w * uWind.y / uWind.z;
@@ -309,7 +321,7 @@ ${atlasGlsl()}
 uniform vec3 uRight, uUp, uFacing;
 uniform float uTopFade, uUnlit;
 uniform vec4 uCutout;
-uniform float uDebugCull, uIsScenery, uAppear;
+uniform float uDebugCull, uIsScenery, uAppear, uArrivalFade;
 uniform vec4 uLean;
 uniform vec4 uWitch, uOcc, uSilhouette;
 varying float vNear;
@@ -339,6 +351,7 @@ varying vec2 vLocal;
 varying float vSizeY;
 varying vec2 vGround;
 uniform float uFind; // this batch: 1 for wild creatures (eyeshine, light floor, rim)
+uniform float uPoolReadability; // default OFF; ?poolreadability=1 for the assigned review
 uniform float uRimOn; // this batch: 1 for characters (the witch, creatures): the mood's moonlight rim
 uniform vec4 uMoodRim; // the rim's colour and strength (0: none; render/mood.ts)
 uniform float uRimInset; // 1: stylised sprites, the rim one pixel in from the edge (inside the style's outline)
@@ -362,6 +375,10 @@ uniform float uEyeRange;
 uniform vec3 uTrunkFade; // metres of trunk the fade covers at most, metres per art pixel, its most share of the visible trunk
 uniform vec4 uWind;      // the wind: its time (w) sets the regions' flutter
 ${LIGHT_GLSL}
+${FX_FIELD_GLSL}
+varying vec2 vFxBase;
+varying vec4 vFxPaint;
+varying vec2 vFxInfo;
 ${CAST_SHADOW_GLSL}
 ${WITCH_LIGHT_GLSL}
 // 4x4 ordered dither, for fading the canopy in pixel-art style.
@@ -509,6 +526,13 @@ void shade() {
     }
   }
   // The witch's see-through silhouette: where she is hidden, a flat tint in her glow colour.
+  vec4 frostField = uFxVertex > 0.5 ? vFxPaint : fxField(vFxBase);
+  if (uIndexed.x > 0.5 && frostField.r > 0.0) {
+    int frostIndex = int(texture2D(uAlbedo, uvS).r * 255.0 + 0.5);
+    a.rgb = mix(a.rgb, texelFetch(uAlbedoPal, ivec2(frostIndex, 1), 0).rgb, frostField.r);
+    frostField.r = 0.0;
+  }
+  a.rgb = fxTint(a.rgb, frostField);
   if (uSilhouette.a > 0.0) { gl_FragColor = vec4(uSilhouette.rgb, uSilhouette.a); return; }
   // Things standing in front of the witch fade (smoothly) where they cover her: left out of the
   // opaque pass there and drawn in a second, see-through pass after her.
@@ -576,6 +600,20 @@ void shade() {
     float edge = 1.0 - clamp(dot(N, uFacing), 0.0, 1.0);
     col = min(vec3(1.0), col + mix(a.rgb, vec3(1.0), 0.5) * uGlowRgb * edge * max(0.0, dot(N, lv / max(d, 1e-3))) * k * look.y);
   }
+  // Separate from the established find rim: use her actual horizontal pool and its light factors.
+  // Do not recolour the paint. A minimum floor could be cancelled by the existing find rim,
+  // including on dark creatures, so add a small lift selected by the painted pixel instead.
+  if (uPoolReadability > 0.5 && uFind > 0.5 && uIsScenery < 0.5 && uGlowPower > 0.0) {
+    float radius = uGlowR * uGlowNear, distance = length((uGlowPos - vWorld).xz);
+    if (radius > 0.0 && distance < radius) {
+      float pool = pow(1.0 - distance / radius, uGlowFalloff) * min(1.0, uGlowPower) * max(0.0, uGlowDim);
+      float paint = dot(a.rgb, vec3(0.3, 0.55, 0.15));
+      // Keep the paint's relative values: normalising by luminance made the darkest shades
+      // approach one flat value. This proportional addition retains their internal shading.
+      float dark = 1.0 - smoothstep(0.35, 0.75, paint);
+      col += a.rgb * (0.6 * pool * dark);
+    }
+  }
   if (vFlags.y > 0.5 && uPartyCount > 0) {
     // Crowns over a party catch a faint glow from below, on their undersides and lower edges.
     vec3 up = vec3(0.0);
@@ -597,6 +635,7 @@ void shade() {
 void main() {
   vec2 rdx = dFdx(vUv), rdy = dFdy(vUv); // (taken here, in uniform flow: one screen pixel, one art pixel, along the sprite)
   uvDx = rdx; uvDy = rdy;
+  if (uArrivalFade < 0.999 && bayer(gl_FragCoord.xy) >= uArrivalFade) discard;
   shade();
   // A pack member hiding in its lull (render/view/creatures.ts; Ed, 2026-10-29: "like the animal becoming a shadow (dark and
   // transparent), rather than teleporting"): its own lit sprite going over to a dark, see-through shadow of itself, by its glow.
@@ -655,6 +694,12 @@ void main() {
     if ((ox < 0.5 && ix > 0.5 && thickX) || (oy < 0.5 && iy > 0.5 && thickY)) gl_FragColor.rgb = min(vec3(1.0), gl_FragColor.rgb + uMoodRim.rgb * uMoodRim.w);
   }
   // Scenery past the budget's radius fades out smoothly (alpha), from the far edge inward.
+  float fxCharge = uFxVertex > 0.5 ? vFxInfo.r : fxExtra(vFxBase).r;
+  gl_FragColor.rgb += vec3(0.08,0.12,0.18) * fxCharge * (uFxCalm>0.5?0.5:0.65+0.15*sin(uFxTime*3.0));
+  // Sparse, stationary rime glints: no flashing and no silhouette expansion.
+  float fxFrost = uFxVertex > 0.5 ? vFxPaint.r : fxField(vFxBase).r;
+  if (fxFrost>0.25 && fract(sin(dot(floor(vUv*vec2(textureSize(uAlbedo,0))),vec2(31.7,79.3)))*43758.5)>0.985)
+    gl_FragColor.rgb = mix(gl_FragColor.rgb,vec3(0.65,0.82,0.9),fxFrost*0.5);
   if (uIsScenery > 0.5) {
     float edge = vFlags.y > 0.5 ? canopyFade(vWorld) : sceneryFade(vWorld), k = edge * uAppear; // and a set just drawn fades in (a crown: out to the canopy's reach)
     if (uEdgeDither > 0.5) { if (bayer(gl_FragCoord.xy) >= edge) discard; k = uAppear; } // (the quality ladder's dithered edge: each art pixel there or not)
@@ -714,7 +759,7 @@ export class SpriteBatch {
     this.geo.setAttribute("uv", quad.getAttribute("uv"));
     this.pos = this.size = this.uvs = this.flags = this.glow = undefined as never;
     this.grow(64);
-    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, ...HEIGHT_UNIFORMS, ...HIZ_UNIFORMS, ...atlasUniforms(atlas), uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uFadePass: { value: 0 }, uHasFade: { value: opts.fade ? 1 : 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uLies: { value: opts.flat ? 1 : 0 }, ...CAST_SHADOW_UNIFORMS, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, uWitchLight: witchLightUniform(opts.witchLight), uFind: { value: opts.find ? 1 : 0 }, uRimOn: { value: opts.rim ? 1 : 0 }, uTint: opts.tint ?? { value: new THREE.Vector4(0, 0, 0, 0) }, uShadow: opts.shadow ? SHADOW_LOOK : { value: new THREE.Vector4(0, 0, 0, 0) }, uLegend: { value: opts.legend ?? new THREE.Vector4(0, 0, 0, 0) }, uSteps: { value: opts.steps ?? 0 }, uLegendFloor: { value: opts.legendFloor ?? 0 }, uLegendAwake: { value: opts.legendAwake ?? 0 }, uGlowGain: opts.glowGain ?? { value: 1 }, uAbsolute: { value: opts.absolute ? 1 : 0 }, uLie: { value: opts.lie ?? 0 }, uLean: this.leanU, ...extra });
+    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, ...HEIGHT_UNIFORMS, ...HIZ_UNIFORMS, ...atlasUniforms(atlas), uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uArrivalFade: this.arrivalFade, uFadePass: { value: 0 }, uHasFade: { value: opts.fade ? 1 : 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uLies: { value: opts.flat ? 1 : 0 }, ...CAST_SHADOW_UNIFORMS, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, uWitchLight: witchLightUniform(opts.witchLight), uFind: { value: opts.find ? 1 : 0 }, uRimOn: { value: opts.rim ? 1 : 0 }, uTint: opts.tint ?? { value: new THREE.Vector4(0, 0, 0, 0) }, uShadow: opts.shadow ? SHADOW_LOOK : { value: new THREE.Vector4(0, 0, 0, 0) }, uLegend: { value: opts.legend ?? new THREE.Vector4(0, 0, 0, 0) }, uSteps: { value: opts.steps ?? 0 }, uLegendFloor: { value: opts.legendFloor ?? 0 }, uLegendAwake: { value: opts.legendAwake ?? 0 }, uGlowGain: opts.glowGain ?? { value: 1 }, uAbsolute: { value: opts.absolute ? 1 : 0 }, uLie: { value: opts.lie ?? 0 }, uLean: this.leanU, ...extra });
     // Scenery blends where it fades out at the budget's edge. Custom blending, as three.js turns
     // normal blending off for opaque materials; it stays in the opaque pass, in its old order.
     const blend = opts.scenery ? { blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneMinusSrcAlphaFactor } : {};
@@ -751,6 +796,7 @@ export class SpriteBatch {
       sil.frustumCulled = false; sil.renderOrder = 12;
       this.meshes.push(sil); this.sil = sil;
     }
+    for (const mesh of this.meshes) Object.assign((mesh.material as THREE.ShaderMaterial).uniforms, FX_UNIFORMS);
   }
 
   /** Named, for the probes' draw-call lists (tools/bench/gpu.cjs): its meshes carry the name, the see-through one marked. */
@@ -794,6 +840,7 @@ export class SpriteBatch {
   /** Replace every instance. */
   /** Scenery batches: how far a set just drawn has faded in (0 to 1; the view eases it). */
   readonly appearU = { value: 1 };
+  readonly arrivalFade = { value: 1 };
   /** What was last set (for checks: the smoke test's floating-sprite check reads it). */
   items: SpriteInstance[] = [];
 

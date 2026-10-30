@@ -1,0 +1,382 @@
+[
+  {
+    "study": "ladder",
+    "wave": 1,
+    "shard": "w1-ladder-000",
+    "cases": 40,
+    "group": "map-0/islands-0",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/ladder.json --shard w1-ladder-000 --lock trained-expert-lock.json --out results/wave1/ladder/w1-ladder-000.jsonl --budget-seconds 2940"
+  },
+  {
+    "study": "ladder",
+    "wave": 1,
+    "shard": "w1-ladder-001",
+    "cases": 40,
+    "group": "map-0/islands-1",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/ladder.json --shard w1-ladder-001 --lock trained-expert-lock.json --out results/wave1/ladder/w1-ladder-001.jsonl --budget-seconds 2940"
+  },
+  {
+    "study": "ladder",
+    "wave": 1,
+    "shard": "w1-ladder-002",
+    "cases": 40,
+    "group": "map-0/islands-2",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/ladder.json --shard w1-ladder-002 --lock trained-expert-lock.json --out results/wave1/ladder/w1-ladder-002.jsonl --budget-seconds 2940"
+  },
+  {
+    "study": "ladder",
+    "wave": 1,
+    "shard": "w1-ladder-003",
+    "cases": 40,
+    "group": "map-0/islands-3",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/ladder.json --shard w1-ladder-003 --lock trained-expert-lock.json --out results/wave1/ladder/w1-ladder-003.jsonl --budget-seconds 2940"
+  },
+  {
+    "study": "ladder",
+    "wave": 1,
+    "shard": "w1-ladder-004",
+    "cases": 40,
+    "group": "map-0/islands-4",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/ladder.json --shard w1-ladder-004 --lock trained-expert-lock.json --out results/wave1/ladder/w1-ladder-004.jsonl --budget-seconds 2940"
+  },
+  {
+    "study": "ladder",
+    "wave": 1,
+    "shard": "w1-ladder-005",
+    "cases": 40,
+    "group": "map-0/islands-5",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/ladder.json --shard w1-ladder-005 --lock trained-expert-lock.json --out results/wave1/ladder/w1-ladder-005.jsonl --budget-seconds 2940"
+  },
+  {
+    "study": "ladder",
+    "wave": 1,
+    "shard": "w1-ladder-006",
+    "cases": 40,
+    "group": "map-0/islands-6",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/ladder.json --shard w1-ladder-006 --lock trained-expert-lock.json --out results/wave1/ladder/w1-ladder-006.jsonl --budget-seconds 2940"
+  },
+  {
+    "study": "ladder",
+    "wave": 1,
+    "shard": "w1-ladder-007",
+    "cases": 40,
+    "group": "map-0/islands-7",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/ladder.json --shard w1-ladder-007 --lock trained-expert-lock.json --out results/wave1/ladder/w1-ladder-007.jsonl --budget-seconds 2940"
+  },
+  {
+    "study": "ladder",
+    "wave": 1,
+    "shard": "w1-ladder-008",
+    "cases": 40,
+    "group": "map-0/islands-8",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/ladder.json --shard w1-ladder-008 --lock trained-expert-lock.json --out results/wave1/ladder/w1-ladder-008.jsonl --budget-seconds 2940"
+  },
+  {
+    "study": "ladder",
+    "wave": 1,
+    "shard": "w1-ladder-009",
+    "cases": 40,
+    "group": "map-0/islands-9",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/ladder.json --shard w1-ladder-009 --lock trained-expert-lock.json --out results/wave1/ladder/w1-ladder-009.jsonl --budget-seconds 2940"
+  },
+  {
+    "study": "ladder",
+    "wave": 1,
+    "shard": "w1-ladder-010",
+    "cases": 40,
+    "group": "map-0/islands-10",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/ladder.json --shard w1-ladder-010 --lock trained-expert-lock.json --out results/wave1/ladder/w1-ladder-010.jsonl --budget-seconds 2940"
+  },
+  {
+    "study": "ladder",
+    "wave": 1,
+    "shard": "w1-ladder-011",
+    "cases": 40,
+    "group": "map-0/islands-11",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/ladder.json --shard w1-ladder-011 --lock trained-expert-lock.json --out results/wave1/ladder/w1-ladder-011.jsonl --budget-seconds 2940"
+  },
+  {
+    "study": "ladder",
+    "wave": 1,
+    "shard": "w1-ladder-012",
+    "cases": 40,
+    "group": "map-0/islands-12",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/ladder.json --shard w1-ladder-012 --lock trained-expert-lock.json --out results/wave1/ladder/w1-ladder-012.jsonl --budget-seconds 2940"
+  },
+  {
+    "study": "tempo",
+    "wave": 1,
+    "shard": "w1-tempo-000",
+    "cases": 15,
+    "group": "home/map-0",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/tempo.json --shard w1-tempo-000 --lock trained-expert-lock.json --out results/wave1/tempo/w1-tempo-000.jsonl --budget-seconds 2940"
+  },
+  {
+    "study": "tempo",
+    "wave": 1,
+    "shard": "w1-tempo-001",
+    "cases": 15,
+    "group": "raven/map-0",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/tempo.json --shard w1-tempo-001 --lock trained-expert-lock.json --out results/wave1/tempo/w1-tempo-001.jsonl --budget-seconds 2940"
+  },
+  {
+    "study": "tempo",
+    "wave": 1,
+    "shard": "w1-tempo-002",
+    "cases": 15,
+    "group": "tiger/map-0",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/tempo.json --shard w1-tempo-002 --lock trained-expert-lock.json --out results/wave1/tempo/w1-tempo-002.jsonl --budget-seconds 2940"
+  },
+  {
+    "study": "equipment",
+    "wave": 1,
+    "shard": "w1-equipment-000",
+    "cases": 32,
+    "group": "home/map-0/gear-0",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/equipment.json --shard w1-equipment-000 --lock trained-expert-lock.json --out results/wave1/equipment/w1-equipment-000.jsonl --budget-seconds 2940"
+  },
+  {
+    "study": "equipment",
+    "wave": 1,
+    "shard": "w1-equipment-001",
+    "cases": 32,
+    "group": "tiger/map-0/gear-0",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/equipment.json --shard w1-equipment-001 --lock trained-expert-lock.json --out results/wave1/equipment/w1-equipment-001.jsonl --budget-seconds 2940"
+  },
+  {
+    "study": "census",
+    "wave": 1,
+    "shard": "w1-census-000",
+    "cases": 520,
+    "group": "species-0",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/census.json --shard w1-census-000 --lock trained-expert-lock.json --out results/wave1/census/w1-census-000.jsonl --budget-seconds 2940"
+  },
+  {
+    "study": "census",
+    "wave": 1,
+    "shard": "w1-census-001",
+    "cases": 520,
+    "group": "species-1",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/census.json --shard w1-census-001 --lock trained-expert-lock.json --out results/wave1/census/w1-census-001.jsonl --budget-seconds 2940"
+  },
+  {
+    "study": "census",
+    "wave": 1,
+    "shard": "w1-census-002",
+    "cases": 520,
+    "group": "species-2",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/census.json --shard w1-census-002 --lock trained-expert-lock.json --out results/wave1/census/w1-census-002.jsonl --budget-seconds 2940"
+  },
+  {
+    "study": "census",
+    "wave": 1,
+    "shard": "w1-census-003",
+    "cases": 520,
+    "group": "species-3",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/census.json --shard w1-census-003 --lock trained-expert-lock.json --out results/wave1/census/w1-census-003.jsonl --budget-seconds 2940"
+  },
+  {
+    "study": "census",
+    "wave": 1,
+    "shard": "w1-census-004",
+    "cases": 480,
+    "group": "species-4",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/census.json --shard w1-census-004 --lock trained-expert-lock.json --out results/wave1/census/w1-census-004.jsonl --budget-seconds 2940"
+  },
+  {
+    "study": "map-luck",
+    "wave": 1,
+    "shard": "w1-map-luck-000",
+    "cases": 5,
+    "group": "maps-0",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/map-luck.json --shard w1-map-luck-000 --lock trained-expert-lock.json --out results/wave1/map-luck/w1-map-luck-000.jsonl --budget-seconds 2940"
+  }
+]

@@ -3,6 +3,68 @@
  "intro": "Every `?name=value` the game reads from its link, and where it reads it. Most are read once as the page loads (`src/app/linkParams.ts` for the tuning, `src/app/gameParams.ts` for the game, `src/app/viewParams.ts` for the view, `src/main.ts` for the page); a few are read where they're used. Several can be combined: `?seed=123&wave=30&creator=0`. This page is written from `config/link-switches.json`, and a test checks that file against the code.",
  "switches": [
   {
+   "name": "poolreadability",
+   "values": [
+    "0",
+    "1"
+   ],
+   "does": "Review-only dark-creature lighting inside the witch's light pool (1 enables it; off by default).",
+   "group": "debug",
+   "since": "2026-10-30",
+   "readIn": [
+    "src/render/sprites.ts"
+   ]
+  },
+  {
+   "name": "heldInputMs",
+   "values": [
+    "<milliseconds>"
+   ],
+   "does": "The online prototype holds the last guest movement input for this long before returning it to neutral (250 ms by default).",
+   "group": "debug",
+   "since": "2026-10-30",
+   "readIn": [
+    "src/platform/online/entry.ts"
+   ]
+  },
+  {
+   "name": "invite",
+   "values": [
+    "<token>"
+   ],
+   "does": "The online prototype reads this invitation token from the URL fragment to join the host's room.",
+   "group": "debug",
+   "since": "2026-10-30",
+   "readIn": [
+    "src/platform/online/entry.ts"
+   ]
+  },
+  {
+   "name": "online",
+   "values": [
+    "host",
+    "guest"
+   ],
+   "does": "The separate online prototype page hosts a night or joins an invitation.",
+   "group": "debug",
+   "since": "2026-10-30",
+   "readIn": [
+    "src/platform/online/entry.ts"
+   ]
+  },
+  {
+   "name": "relay",
+   "values": [
+    "<WebSocket URL>"
+   ],
+   "does": "The separate online prototype page connects to this relay (ws://localhost:8787 by default).",
+   "group": "debug",
+   "since": "2026-10-30",
+   "readIn": [
+    "src/platform/online/entry.ts"
+   ]
+  },
+  {
    "name": "all",
    "values": [
     ""
@@ -271,6 +333,18 @@
    ]
   },
   {
+   "name": "cauldron",
+   "values": [
+    "0"
+   ],
+   "does": "Mushroom collecting and the kitchen cauldron (two home mushroom clusters, shared baskets and pot, and the BBB Mirror Floor trip) are on by default; 0 turns them off.",
+   "group": "debug",
+   "since": "2026-10-30",
+   "readIn": [
+    "src/main.ts"
+   ]
+  },
+  {
    "name": "chart",
    "values": [
     "",
@@ -319,8 +393,10 @@
    "readIn": [
     "src/app/fightArena.ts",
     "src/app/gameParams.ts",
+    "src/app/nightSave.ts",
     "src/app/opening.ts",
-    "src/main.ts"
+    "src/main.ts",
+    "src/render/ground.ts"
    ]
   },
   {
@@ -388,7 +464,8 @@
     "src/app/night.ts",
     "src/app/playerPick.ts",
     "src/app/viewParams.ts",
-    "src/main.ts"
+    "src/main.ts",
+    "src/render/ground.ts"
    ]
   },
   {
@@ -592,6 +669,7 @@
    "group": "run",
    "since": "2026-10-11",
    "readIn": [
+    "src/app/debugUnlock.ts",
     "src/app/hatSave.ts",
     "src/app/loadout.ts"
    ]
@@ -660,7 +738,8 @@
    "readIn": [
     "src/app/linkParams.ts",
     "src/app/sail.ts",
-    "src/main.ts"
+    "src/main.ts",
+    "src/platform/online/entry.ts"
    ]
   },
   {
@@ -801,13 +880,42 @@
    "name": "lookdemo",
    "values": [
     "telegraphs",
-    "elements"
+    "elements",
+    "fx",
+    "fx:<element>"
    ],
-   "does": "The attack looks' showcase round her.",
+   "does": "The attack looks' showcase round her; fx shows the production magic family and intensity ladder with ground and camera controls.",
    "group": "debug",
    "since": "2026-10-27",
    "readIn": [
     "src/render/leash/combat.ts"
+   ]
+  },
+  {
+   "name": "magic",
+   "values": [
+    "old",
+    "layers"
+   ],
+   "does": "Compare the old attack artwork with the layered magic effects.",
+   "group": "compare",
+   "since": "2026-10-30",
+   "readIn": [
+    "src/render/fx/system.ts"
+   ]
+  },
+  {
+   "name": "fxmock",
+   "values": [
+    "1",
+    "iso",
+    "frost"
+   ],
+   "does": "Show the original fire and frost mock for comparison with the production effects.",
+   "group": "debug",
+   "since": "2026-10-29",
+   "readIn": [
+    "src/render/view.ts"
    ]
   },
   {
@@ -1117,7 +1225,8 @@
    "group": "debug",
    "since": "2026-10-07",
    "readIn": [
-    "src/app/viewParams.ts"
+    "src/app/viewParams.ts",
+    "src/platform/online/relayClient.ts"
    ]
   },
   {
@@ -1166,10 +1275,11 @@
    "values": [
     "<S>"
    ],
-   "does": "The creator's room drawn at this scale.",
+   "does": "The creator's room drawn at this scale, or the online prototype's seven-digit room number.",
    "group": "run",
    "since": "2026-10-06",
    "readIn": [
+    "src/platform/online/entry.ts",
     "src/ui/creator.ts"
    ]
   },
@@ -1208,7 +1318,8 @@
    "since": "2026-10-04",
    "readIn": [
     "src/app/sail.ts",
-    "src/main.ts"
+    "src/main.ts",
+    "src/platform/online/entry.ts"
    ]
   },
   {
@@ -1589,6 +1700,19 @@
    "since": "2026-10-29",
    "readIn": [
     "src/app/defaultLook.ts"
+   ]
+  },
+  {
+   "name": "resume",
+   "values": [
+    "0",
+    "1"
+   ],
+   "does": "Disable night saves, or explicitly enable them on a debug or automated link.",
+   "group": "run",
+   "since": "2026-10-29",
+   "readIn": [
+    "src/app/nightSave.ts"
    ]
   }
  ],

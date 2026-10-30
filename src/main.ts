@@ -8,11 +8,12 @@ import { bindings } from "./platform/bindings";
 import { Rumble } from "./platform/rumble";
 import { currentSettings } from "./app/playerSettings";
 import { wavesOver } from "./rules/win";
-import { chartOpen, closeChart, openChart, prepareChart, type Sailed } from "./ui/chartOverlay";
-import { openingWay, opensInBedroom, sailLandsInBed } from "./app/opening";
+import { chartOpen, closeChart, openChart, prepareChart, finishChartFlight, type Sailed } from "./ui/chartOverlay";
+import { openingWay, opensInBedroom, opensWithCreator, sailLandsInBed } from "./app/opening";
 import { wakeInBedroom } from "./rules/opening";
 import { endDream, startParty, startWake } from "./rules/wakeUp";
-import { wearFromStation, wornGenome } from "./rules/clothesPile";
+import { LandingSleep } from './app/landingSleep';
+import { STATION_SLOT, wearFromStation, wornGenome } from "./rules/clothesPile";
 import { WakeCard } from "./render/wakeUp";
 import { toggleCornerPanel, closeCornerPanel, cornerPanelRoot } from "./ui/cornerPanel";
 import { MenuFocus } from "./ui/menuFocus";
@@ -22,6 +23,7 @@ import { FrameStats } from "./platform/frameStats";
 import { gpuName, QualityLadder } from "./app/ladder";
 import { musicCue } from "./rules/musicPlan";
 import { areaUnderWitch, interpolated, STEP, stepGame, type Game } from "./rules/game";
+import { enableCauldron, homeMushroomPickups } from "./rules/cauldronNight";
 import { TUNING, type Tuning } from "./rules/tuning";
 import { diveReach, diveTrack, handoffShot, newFlightClock, stepFlightClock, type Shot } from "./rules/arrive";
 import { nextFrame, runSliced } from "./render/slices";
@@ -57,7 +59,7 @@ import { FIND_KINDS, fillTrunk, findKind, loanFind, spawnFind, spawnSpot, type F
 import { fitBroom, loadBroom, migrateBroom } from "./app/broomSave";
 import { partById } from "./rules/broomParts";
 import { loadOwned } from "./app/owned";
-import { ownedToChoose, partsToChoose, setUnlockAll, unlockAll } from "./app/debugUnlock";
+import { ownedToChoose, partsToChoose, setUnlockAll, syncHatUnlock, unlockAll } from "./app/debugUnlock";
 import { defaultsText, newWitchLink } from "./app/defaultLook";
 import { foundAll, keepFound, type FindsCtx } from "./app/finds";
 import { dreamsAfter, homeOf, hatWithoutLoan, lend, loanName, lookWithoutLoan, partsWithoutLoan, settle, withLoan, type Loan } from "./app/loan";
@@ -104,6 +106,13 @@ import { hudFade, showStill } from "./app/arrive";
 import { forgetArrival, type Arrival } from "./app/arrival";
 import { shotParams } from "./app/shot";
 import type { FlightEnd } from "./render/chart/seaChart";
+import { restoreGame } from "./rules/nightSnapshot";
+import { browserNightStore, captureNight, nightHasStarted, NightAutosave, savedNight, savesEnabled, type SavedNight, type NightStore } from "./app/nightSave";
+import { chooseSavedNight, nightSaveNotice } from "./ui/resumeNight";
+import { restoreSettingsBase } from "./app/playerSettings";
+
+declare const __BUILD__: string;
+const BUILD = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
 
 performance.mark("witch:main"); // (the load's steps, for timing the arrival: witch:main, :game, :view, :ready; app/arrive.ts :landed)
 prewarmArtWorkers(); // (the art workers load their code while the night is made: render/assets.ts)
@@ -113,6 +122,28 @@ const params = new URLSearchParams(location.search);
 const mistGateOff = params.get("mistgate") === "0";
 /** The link as it came (before the boot puts its own ?seed= in): whether this load opens on the sea chart (app/opening.ts). */
 const bootLink = new URLSearchParams(location.search);
+let nightStore: NightStore | null = null, resumeSave: SavedNight | null = null, resumeGame: Game | undefined;
+if (savesEnabled(bootLink, navigator.webdriver)) {
+  try {
+    nightStore = browserNightStore(location.pathname);
+    const value = await nightStore.read(), saved = savedNight(value, BUILD, bootLink);
+    if (saved && await chooseSavedNight(saved.at)) {
+      try {
+        const restored = restoreGame(saved.game);
+        restoreSettingsBase(restored.tuning, saved.settingsBase);
+        resumeGame = restored; resumeSave = saved;
+        for (const key of [...params.keys()]) params.delete(key);
+        for (const [key, value] of new URLSearchParams(saved.params)) params.append(key, value);
+        params.delete("arrive");
+        forgetArrival();
+        document.getElementById("arrive-still")?.remove();
+        document.getElementById("arrive-landing")?.remove();
+        history.replaceState(null, "", "?" + params.toString() + location.hash);
+      } catch { nightSaveNotice("Your saved night could not be restored. Starting a new night."); }
+    } else if (saved) await nightStore.clear();
+    else if (value) nightSaveNotice("This saved night is from another version or link. Starting a new night.");
+  } catch { nightSaveNotice("Nights cannot be saved on this browser. Keep this page open to continue playing."); nightStore = null; }
+}
 // ?timing=1 (Ed, 2026-10-19): the sail's steps and the main thread's long tasks into the L log (app/timing.ts), kept for the tab.
 const TIMING = timingOn(params);
 if (TIMING) watchLongTasks();
@@ -136,16 +167,14 @@ if (bootSeed === null) {
 // opening's chart, the bedroom); a sail's arrival (&arrive=1) takes the chart's instead.
 // (the zoo: its islands' real coasts read back from the chart's cache first, a moment at most, for its map: app/zooCoasts.ts)
 if (params.has("zoo")) { const w = params.get("world"), t0 = performance.now(), r = await readZooCoasts(w ? worldSeed(w) : loadSave().world); console.info(`zoo: ${Object.keys(r.coasts).length} islands in their real shapes (${Math.round(performance.now() - t0)} ms)${r.missing.length ? `, ${r.missing.length} round till the chart makes them` : ""}`); }
-const bootMap = params.get("arrive") ? null : startBootMapPrep(bootSeed, params);
+const bootMap = resumeGame || params.get("arrive") ? null : startBootMapPrep(bootSeed, params);
 
-declare const __BUILD__: string;
-const BUILD = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
 // Brooms before parts (app/broomSave.ts; the Workshop, Ed 2026-10-23): a saved broom shape back to the Classic look and a saved
 // broom spell dropped, once, before her look is read.
 migrateBroom();
 // Her look (the character creator's, kept on this browser; else the classic witch).
-const savedLook = loadGenome();
-let lookNow = JSON.stringify(savedLook);
+const savedLook = (resumeSave?.look as ReturnType<typeof loadGenome> | null) ?? loadGenome();
+let lookNow = JSON.stringify(resumeSave?.look ?? savedLook);
 // What she has on (rules/clothesPile.ts; Ed, 2026-10-23): her look, less what's still in last night's pile while she wakes (her
 // nightie, bare feet, no hat...); shown whenever her look or the pile changes (`shownLook`: what the view was last given).
 let shownLook = "";
@@ -165,12 +194,13 @@ const N = (): Night => (page.night ?? page.last)!;
  *  here: the bedroom's progress reads it from the boot on.) */
 let sailing = false;
 // The boot's night: the link's tuning, the game, the link's switches, her hat, the playtest run, the knobs' start, the HUD.
-await startNight(page, { how: "boot", island: params.get("island") ?? "", seed: bootSeed, world: params.has("world") ? Number(params.get("world")) : undefined, params, ready: bootMap ?? undefined });
+await startNight(page, { how: "boot", island: params.get("island") ?? "", seed: bootSeed, world: params.has("world") ? Number(params.get("world")) : undefined, params, ready: bootMap ?? undefined, resume: resumeGame });
+if (resumeSave) Object.assign(N().flags, resumeSave.flags);
 const { tuning: bootTuning } = N();
 // The opening (app/opening.ts; Ed, 2026-10-23: "the first screen should be the witch waking up in her bedroom on the home island
 // instead of the map"): a plain first load is home's night, asleep in the dark while it's made, then she wakes in her bedroom
 // there (wakeFirst); ?opening=old for the old start (the character creator as the loading cover).
-const inBedroom = opensInBedroom(bootLink, bootTuning);
+const inBedroom = !resumeGame && opensInBedroom(bootLink, bootTuning);
 if (!inBedroom) (window as unknown as { witchLoading?: { cancel(): void } }).witchLoading?.cancel();
 if (N().game.map.zoo) void import("./zoo/panel").then(({ ZooPanel }) => { zooPanel = new ZooPanel(N().game); });
 // The settings as built (the tuning file's), for the debug overlay's and the playtest log's list of what's changed (app/repro.ts).
@@ -183,7 +213,7 @@ const loadTimes = { viewStart: performance.now(), view: 0, ready: 0, mapPrep: pr
 /** Her hat on or not by her look (app/night.ts). */
 const wearHat = (g: unknown) => wear(N().game, g);
 /** Tonight's find on loan till she sleeps (app/loan.ts; Ed, 2026-10-24): held here, never written; settled as she sleeps. */
-let loan: Loan | null = null;
+let loan: Loan | null = resumeSave?.loan ?? null;
 /** Her dream of a settled loan (render/dream.ts), playing over the sleep's dark; as it ends (by itself, or a key), her alarm rings
  *  in the next night's wake-up (rules/wakeUp.ts endDream), or, the night not made yet, as soon as it is. */
 let dream: DreamView | null = null, dreamAsleep = false;
@@ -292,6 +322,7 @@ requestAnimationFrame(() => setTimeout(async () => {
   startEl.classList.remove("loading");
   if (bot) start(); // (a bot game starts itself as soon as it can)
   if (inBedroom) { loading?.finish(); wakeFirst(); }
+  else if (resumeGame) { start(); soundNote(); resumeGame = undefined; resumeSave = null; }
   night.arrival?.begin(night.game); // (the camera takes over from the chart's still)
 }, 0));
 
@@ -359,6 +390,17 @@ function arrived(): void {
   N().flags.landed = true;
   document.body.classList.remove("arriving"); // (the HUD fades in)
   sound.sailing(0); // (sailed in place: the sea and the wind fade as the night's start comes in)
+  const n = N();
+  if (view.shaderLandingLimited && n.flags.inBed && !view.landingWakeReady()) {
+    startWake(n.game, n.game.herTime, { dreaming: true, mirrored: mirrored(), yesterday: true });
+    landingSleep.begin(n.game); view.landingSleeping = true; view.foot = 1; view.seatK = 0; n.game.clock.paused = true;
+    input.release(); input.clearPresses(); (wakeCard ??= new WakeCard()).sleep();
+    mark('landing:asleep'); return;
+  }
+  wakeArrival();
+}
+function wakeArrival(): void {
+  view.landingSleeping = false;
   // (landed asleep in her bed: with a loan settled, dreaming it, the alarm when it ends; else the alarm at once: rules/wakeUp.ts, render/dream.ts)
   const dd = dreamAfterDive;
   dreamAfterDive = null;
@@ -404,7 +446,7 @@ shutButton.addEventListener("pointerdown", e => { e.preventDefault(); input.touc
 document.body.append(shutButton);
 let owned: Set<string> | null = null, stillAt = 0;
 /** What the finds' keepers work on (app/finds.ts): tonight's spells and what she owns to wear, kept. */
-const findsCtx = (): FindsCtx => ({ spells: N().game.spells, owned: () => (owned ??= loadOwned((page.look() ?? creator.genome()) as Record<string, unknown>)) });
+const findsCtx = (): FindsCtx => ({ spells: N().game.spells, owned: () => (owned ??= withLoan("wearable", loadOwned((page.look() ?? creator.genome()) as Record<string, unknown>), loan)) });
 stations.onLook = g => {
   saveGenome(lookWithoutLoan(g as Record<string, unknown>, loan) as never); creator.adopt(g); // (saved without the loan: app/loan.ts)
   // (not yet dressed: a station's choice puts its piece on her, out of last night's pile: rules/clothesPile.ts; Ed, 2026-10-23)
@@ -542,7 +584,7 @@ function botGame(kind: BotKind): void {
   });
 }
 if (botParam && BOT_KINDS.includes(botParam)) botGame(botParam);
-else if (params.get("creator") !== "0" && !bootArrival && !inBedroom) creator.show();
+else if (opensWithCreator(params, { bedroom: inBedroom, arriving: !!bootArrival, resuming: !!resumeGame })) creator.show();
 const lookBtn = document.getElementById("look-btn");
 if (lookBtn) {
   for (const ev of ["pointerdown", "pointerup", "click", "touchstart"]) lookBtn.addEventListener(ev, e => e.stopPropagation()); // (not a start)
@@ -559,6 +601,7 @@ if (botBtn) {
 function start(): boolean {
   if (sailing) return false; // (the next night being made in place)
   const { game, flags, arrival } = N();
+  if (landingSleep.holds(game)) return false;
   if (!flags.ready || !game.clock.paused || freeze.frozen) return false;
   if (creator.open) return true;
   sound.start(); // (browsers keep sound off until the player presses something: the start is that press)
@@ -629,7 +672,7 @@ freeze.onToggle = on => {
   pauseLoading = true;
   void import("./ui/decide").then(({ PauseSliders }) => {
     const report = () => import("./ui/visualReport").then(({ report }) => report(reportHost()));
-    pauseSliders = new PauseSliders({ settings: () => settingsPage.show(), get tuning() { return N().game.tuning; }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive, report, musicLab: openMusicLab, audioTest: () => { window.open("audio-test/", "_blank", "noopener"); }, downloadLog: () => N().playtest.download(), unlockAll: { get: () => unlockAll(), set: on => { setUnlockAll(on); creator.hats = on ? undefined : N().game.spells.hats; } }, defaults: { text: () => defaultsText(lookWithoutLoan((page.look() ?? creator.genome()) as Record<string, unknown> | null, loan), partsWithoutLoan(N().game.witches[0].spells.parts, loan)), tryIt: () => { window.open(newWitchLink(location.href), "_blank", "noopener"); }, shown: () => N().hud.debugOn || unlockAll() }, fightArena: () => { window.open(fightLink(newFightSeed()), "_blank", "noopener"); }, finds: () => findsPanel.toggle(true), findsShown: () => N().hud.debugOn || devFinds, quality: { lines: () => ladder.lines(), options: () => ladder.options(), current: () => ladder.current(), choose: v => { ladder.choose(v); ladder.apply(N().game.tuning); } } });
+    pauseSliders = new PauseSliders({ settings: () => settingsPage.show(), get tuning() { return N().game.tuning; }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive, report, musicLab: openMusicLab, audioTest: () => { window.open("audio-test/", "_blank", "noopener"); }, downloadLog: () => N().playtest.download(), unlockAll: { get: () => unlockAll(), set: on => { setUnlockAll(on); for (const W of N().game.witches) syncHatUnlock(W, on, params); creator.hats = N().game.spells.hats; } }, defaults: { text: () => defaultsText(lookWithoutLoan((page.look() ?? creator.genome()) as Record<string, unknown> | null, loan), partsWithoutLoan(N().game.witches[0].spells.parts, loan)), tryIt: () => { window.open(newWitchLink(location.href), "_blank", "noopener"); }, shown: () => N().hud.debugOn || unlockAll() }, fightArena: () => { window.open(fightLink(newFightSeed()), "_blank", "noopener"); }, finds: () => findsPanel.toggle(true), findsShown: () => N().hud.debugOn || devFinds, quality: { lines: () => ladder.lines(), options: () => ladder.options(), current: () => ladder.current(), choose: v => { ladder.choose(v); ladder.apply(N().game.tuning); } } });
     requestAnimationFrame(() => pauseSliders!.show(freeze.frozen, creator.open)); // (a frame shut first, so it slides in)
   }, () => { // (its files replaced under it: Ed, 2026-10-14, "the menu does not appear")
     pauseLoading = false;
@@ -657,7 +700,7 @@ function dressCreator(): void {
   creator.addButton("Zoo", () => { const u = new URL(location.href); u.searchParams.set("zoo", "1"); location.href = u.toString(); });
 }
 if (bootArrival) { /* (no card, no bedroom: the still, then the flight) */ } else if (inBedroom) { /* (no card, no creator: asleep in the dark, then the wake-up: wakeFirst) */ }
-else if (params.get("creator") !== "0" && !botKind) dressCreator();
+else if (!resumeGame && params.get("creator") !== "0" && !botKind) dressCreator();
 else startEl.style.display = "";
 // Ed's decisions panel (src/ui/decide.ts, config/decisions.json): ?decide opens it, F2 opens and closes it. Its code loads
 // only then (overnight phase 2: out of the game's bundle); its knobs' choices in the link are put on as the game starts
@@ -672,9 +715,27 @@ if (params.has("decide")) decidePanel(true);
 window.addEventListener("keydown", e => { if (e.code !== "F2") return; e.preventDefault(); if (decide) decide.toggle(); else decidePanel(true); });
 document.addEventListener("visibilitychange", () => { if (document.hidden) N().flags.last = 0; });
 
+const endedNights = new WeakSet<Game>();
+const autosave = nightStore ? new NightAutosave(nightStore, () => {
+  const n = page.night;
+  if (!n || endedNights.has(n.game) || !n.flags.ready || sailing || bot || dream && !dream.over || n.arrival && !n.flags.landed || !savesEnabled(n.params, navigator.webdriver)) return null;
+  // The opening, before play starts, must not replace an existing night merely because the page loaded.
+  if (!nightHasStarted(n.game, startEl.style.display === "none")) return null;
+  return captureNight(n.game, { build: BUILD, params: n.params.toString(), look: page.look() as Record<string, unknown> | null, loan,
+    flags: { chartRecorded: n.flags.chartRecorded, overRecorded: n.flags.overRecorded } });
+}, () => nightSaveNotice("Your night could not be saved. Keep this page open to continue playing.")) : null;
+page.onNightEnd = () => { if (page.night) endedNights.add(page.night.game); void autosave?.clear(); };
+if (autosave) {
+  setInterval(() => { void autosave.save(performance.now()); }, 5000);
+  addEventListener("pagehide", () => { void autosave.save(performance.now(), true); });
+  document.addEventListener("visibilitychange", () => { if (document.hidden) void autosave.save(performance.now(), true); });
+}
+
 let lastDraw = 0;
 /** The wake-up's card and dark (render/wakeUp.ts), made the first time a night has one. */
 let wakeCard: WakeCard | null = null;
+const landingSleep = new LandingSleep<Game>();
+let landingSnoreAt = -Infinity;
 /** A plain first load asleep in the dark while home's night is made (the card kept up till she wakes: wakeFirst). */
 let bootAsleep = inBedroom;
 if (inBedroom) (wakeCard = new WakeCard()).sleep();
@@ -819,6 +880,8 @@ function chartOverNight(table?: string): void {
   const here = island ? { island, world: n.tuning.map?.world ?? 0, label: stayLabel(n.game.partyOver ? "over" : n.game.win?.phase === "won" ? "won" : "on") } : undefined;
   if (table) chartAt = table;
   openChart((href, to) => { chartAt = null; void sailFromChart(href, to); }, chartWorldArg(), { here, onDepart: departFromChart, onStay: () => console.info(`sea chart: ${island} chosen, she's there: back to the night (seed ${N().seed}, game time ${N().game.clock.time.toFixed(1)} s)`),
+    onFly: () => view.beginLandingShaders(true),
+    onLandingDue: dueAt => view.startLandingShaderGrace(dueAt),
     ...(table ? { table: { onLeave: () => { chartAt = null; closeChart(); } } } : {}) });
 }
 /** The map table's chart (Ed, 2026-10-23: "Map menu slides in from the bottom when you go near it, like the clothes stations"; since
@@ -843,6 +906,7 @@ function sailFromChart(href: string, to: Sailed): Promise<boolean> {
 }
 /** The night she's leaving recorded on the chart, unwon if it's still on (in the campaign's world only, as nightOver). */
 function recordSail(): void {
+  page.onNightEnd?.();
   // (she sleeps as she sails: tonight's loan settled, and its dream after the dive, in bed: Ed, 2026-10-24)
   dreamAfterDive = dreamsAfter("sail") ? settleLoan(N().game.win?.phase === "won") : null;
   const n = N(), W = n.tuning.map?.world ?? 0, save = loadSave();
@@ -903,7 +967,10 @@ async function sailInPlace(to: Sailed, made?: Promise<Night>): Promise<void> {
   n.flags.ready = true;
   input.clearPresses();
   sailing = false;
-  if (n.arrival) n.arrival.begin(n.game, !!made); // (the camera takes over from the chart's still, at once if it's drawn there already; it lands as a sail's does: arrived)
+  if (n.arrival) {
+    n.arrival.begin(n.game, !!made); // the camera takes over from the chart's still
+    if (view.shaderLandingLimited) n.arrival.skip(); // map/house readiness still applies; shaders add no further flight/warm-up wait
+  }
   else arrived(); // (no flight: the chart couldn't fly)
 }
 /** A sail's night made (sailInPlace, or under the chart's flight: departFromChart): the old night's music fading to the sea and the
@@ -912,6 +979,7 @@ async function sailInPlace(to: Sailed, made?: Promise<Night>): Promise<void> {
  *  the dive's own areas first, rules/arrive.ts diveReach); `at`, the chart's hand-off, its first frames drawn there ahead. */
 async function makeSailNight(to: Sailed, arrival?: Arrival, at?: FlightEnd["cam"] | null): Promise<Night> {
   if (sailFail) throw new Error("?debug=sail: the sail in place made to fail"); // (window.witch.sail's test of the fallback)
+  if (at === undefined) view.beginLandingShaders(false);
   sailing = true;
   gestured = true; // (she's played: the sound's woken already)
   sound.sailing(1);
@@ -926,8 +994,10 @@ async function makeSailNight(to: Sailed, arrival?: Arrival, at?: FlightEnd["cam"
   bedFirst(n); // (the flight in ends on her asleep in her bedroom, rules/opening.ts)
   lastDraw = 0;
   const A = n.tuning.arrive;
-  await view.prepare(A && at !== undefined ? { dive: diveReach(n.game.map, A), track: diveTrack(n.game.map, A) } : {}); // (under the chart's flight only: window.witch.sail's, the still's, waits for it all as ever)
-  if (at && A) await warmAt(n, handoffShot({ cam: at }, n.game.map), A);
+  await view.prepare({ sail: true, ...(A && at !== undefined ? { dive: diveReach(n.game.map, A), track: diveTrack(n.game.map, A) } : {}) });
+  if (at && A && !view.shaderLandingLimited) await warmAt(n, handoffShot({ cam: at }, n.game.map), A);
+  if (view.shaderLandingLimited) await view.waitForLandingWitch();
+  if (view.shaderLandingLimited) finishChartFlight();
   mark("sail:ready");
   return n;
 }
@@ -940,6 +1010,8 @@ async function warmAt(n: Night, shot: Shot, A: NonNullable<Tuning["arrive"]>): P
   view.assets.hold(true); // (the art workers paused for them: the first draws not fighting them for the machine)
   try {
     while (!stepFlightClock(c, performance.now(), A).faded) {
+      view.limitedLandingReady();
+      if (view.shaderLandingLimited) break;
       const t0 = performance.now();
       view.render(n.game.clock.time);
       if (TIMING) console.info(`sail-timing: warm frame ${Math.round(performance.now() - t0)} ms`, JSON.stringify(Object.fromEntries(Object.entries(view.ms).filter(([, v]) => v > 20).map(([k, v]) => [k, Math.round(v)]))));
@@ -952,6 +1024,7 @@ async function warmAt(n: Night, shot: Shot, A: NonNullable<Tuning["arrive"]>): P
  *  before (app/sail.ts nightHref's), quietly. */
 function newNight(how: NightWay): void {
   if (sailing) return;
+  page.onNightEnd?.();
   // (she sleeps: tonight's loan settled, won or not, and on the bed's way she dreams it: app/loan.ts, render/dream.ts)
   const settled = settleLoan(N().game.win?.phase === "won");
   dreamNext = dreamsAfter(how) ? settled : null;
@@ -1034,6 +1107,18 @@ function frame(now: number): void {
   ladder.frame(now, dt * 1000, !F.ready || game.clock.paused || freeze.frozen || document.hidden || scopeAt !== null || (!!arrival && !F.landed), tuning, frameStats.gpuTimes);
   frameStats.frame(dt * 1000);
   freeze.pollPad();
+  if (landingSleep.holds(game)) {
+    input.release(); input.clearPresses(); game.clock.paused = true;
+    updatePauseMenus(now);
+    if (!freeze.frozen && landingSleep.release(game, view.landingWakeReady())) {
+      input.release(); input.clearPresses(); mark('landing:alarm-ready'); wakeArrival();
+      F.last = now; // discard the loading interval before the first normal simulation step
+    } else {
+      (wakeCard ??= new WakeCard()).sleep();
+      if (!freeze.frozen && now - landingSnoreAt > 4500) { sound.sfx?.snore(0, 0, 0.2); landingSnoreAt = now; }
+      view.render(game.clock.time); hud.clock(); freeze.update(); return;
+    }
+  }
   // (the sea chart open over the game, ui/chartOverlay.ts: its keys and clicks are the chart's, hers held still)
   // (her room open mid-night, or the telescope: she stands still; the telescope takes her stick, keys and wheel, E leaving it)
   studio.update(bot ? null : game, !creator.open && !chartOpen() && !freeze.frozen && !telescope.on, dt, usedAt(game)); // (E at an instrument: she's at it)
@@ -1070,6 +1155,7 @@ function frame(now: number): void {
   if (c.debug) hud.setDebug(!hud.debugOn);
   view.debugReadouts = hud.debugOn;
   const step0 = performance.now();
+  if (params.get("cauldron") !== "0" && !game.cauldron) enableCauldron(game, homeMushroomPickups(game)); // (on by default, Ed 2026-10-30; ?cauldron=0 turns it off)
   stepGame(game, c, fightDt(dt * (botTag?.speed ?? 1))); // (the Fight Arena's slow motion, pause and frame at a time: app/fightArena.ts)
   rumble.update(game, currentSettings(), input.device === "pad" && !document.hidden ? [freeze.pad()] : [], now);
   // ?debug=attack: every 10 s, a few seconds of blows on the two soundsystems farthest from her (never felling one), so the
@@ -1100,7 +1186,7 @@ function frame(now: number): void {
   const station = bot || creator.open || charting ? null : stationOf(game, stations.station), shelves = station ? shelvesAt(station.id) : null;
   stations.setLoaned(loan?.id ?? null); // (its card sparkles: ui/stationPanel.ts)
   if (stations.station && station?.id !== stations.station) shutStation(`off it (${station?.id ?? "none"}${charting ? ", charting" : ""}${creator.open ? ", creator" : ""})`); // (she's somehow off it: a knockout, a new night; E closes it above)
-  if (station && shelves && station.id !== stations.station && usedAt(game) === station.id) { const g = (page.look() ?? creator.genome()) as Record<string, unknown>; stations.open(station.id, shelves, g as never, ownedToChoose(owned ??= loadOwned(g)), game.wake && firstEver && !game.wake.yesterday && station.id === "dressingTable" ? "First night · pick your look here, and at the wardrobe, cloak pegs and shoe rack" : "", shelves.some(q => q.slot || q.board) ? workshopNow() : null); }
+  if (station && shelves && station.id !== stations.station && usedAt(game) === station.id) { const g = (page.look() ?? creator.genome()) as Record<string, unknown>; stations.open(station.id, shelves, g as never, ownedToChoose(findsCtx().owned()), game.wake && firstEver && !game.wake.yesterday && station.id === "dressingTable" ? "First night · pick your look here, and at the wardrobe, cloak pegs and shoe rack" : "", shelves.some(q => q.slot || q.board) ? workshopNow() : null, !!game.wake?.pile?.includes(STATION_SLOT[station.id])); }
   else if (!shelves && stations.station) shutStation("no shelves");
   stations.update(performance.now() / 1000); booth.update(performance.now() / 1000);
   // The telescope: E at it looks (useHouse); E or ○ shuts it (its own step; Esc pauses over it); and should she somehow be off it, it shuts.
@@ -1183,9 +1269,7 @@ function frame(now: number): void {
   const flying = !!arrival && !F.landed && F.ready;
   if (flying && arrival!.frame(view, game, now)) arrived();
   // The pad on the pause page and Settings: before the chart's or the zoo's early return, so it works paused over the chart too.
-  settingsPage.update(now / 1000);
-  const corner = cornerPanelRoot(), pauseRoots = freeze.frozen && !settingsPage.open ? (corner ? [corner] : [document.getElementById("pause-sliders"), pauseBtns].filter((el): el is HTMLElement => !!el)) : [];
-  if (pauseFocus.update(pauseRoots, freeze.pad(), now / 1000, () => { if (corner) closeCornerPanel(); else freeze.toggle(); })) input.device = "pad";
+  updatePauseMenus(now);
   if (chartHeld || zooHeld) return; // (the sea chart or the zoo over the night: its last frame kept, nothing drawn)
   if (game.clock.paused && !freeze.frozen && !flying && now - lastDraw < 300) return;
   lastDraw = now;
@@ -1205,6 +1289,13 @@ function frame(now: number): void {
   freeze.update();
   // The overlay (app/hud.ts), four times a second.
   hud.overlay(now, overlayHead);
+}
+/** The pause/menu path is also live while a limited arrival holds the entire simulation asleep. */
+function updatePauseMenus(now: number): void {
+  settingsPage.update(now / 1000);
+  const corner = cornerPanelRoot(), pauseRoots = freeze.frozen && !settingsPage.open ? (corner ? [corner] : [document.getElementById('pause-sliders'), pauseBtns].filter((el): el is HTMLElement => !!el)) : [];
+  const opened = pauseRoots.length ? freeze.takeOpenPad() : undefined;
+  if (pauseFocus.update(pauseRoots, freeze.pad(), now / 1000, () => { if (corner) closeCornerPanel(); else freeze.toggle(); }, corner ? undefined : opened)) input.device = 'pad';
 }
 /** The overlay's lines (the power meter's are hud.ts's), shared with the debug info's copied text. */
 function overlayHead(): string[] {

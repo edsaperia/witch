@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { groundOf, packPixels, type AtlasPixels, type Baked, type Frame, type FrameGround } from "./artBuild";
 import { indexPlane, PALETTE_SIZE, planeBytes } from "./palette";
 import { gpuKind, type GpuKind } from "./gpuLedger";
+import { frostPalette } from "./fx/palette";
 
 export type { Baked, Frame, FrameGround };
 export { groundOf };
@@ -36,7 +37,8 @@ function texture(data: Uint8Array, w: number, h: number, red = false): THREE.Dat
 
 /** A palette's texture (its pixels kept: a kilobyte, and the CPU's readers of an atlas need it to read its indices). */
 function paletteTexture(pal: Uint8Array): THREE.DataTexture {
-  const t = new THREE.DataTexture(pal, PALETTE_SIZE, 1, THREE.RGBAFormat, THREE.UnsignedByteType);
+  // Row zero and its alpha codes stay exact; row one is the temporary frost albedo.
+  const t = new THREE.DataTexture(frostPalette(pal), PALETTE_SIZE, 2, THREE.RGBAFormat, THREE.UnsignedByteType);
   t.magFilter = t.minFilter = THREE.NearestFilter;
   t.generateMipmaps = false; t.flipY = false; t.colorSpace = THREE.NoColorSpace; t.needsUpdate = true;
   return t;
@@ -71,7 +73,7 @@ export function atlasFromPixels(p: AtlasPixels, kind: GpuKind = "props"): Atlas 
 export function atlasBytes(a: Atlas): number {
   const size = (t: THREE.DataTexture) => { const i = t.image as { width?: number; height?: number } | null; return [i?.width ?? 0, i?.height ?? 0]; };
   const [w, h] = size(a.albedo), [nw, nh] = size(a.normal);
-  return planeBytes(w, h, a.indexed.x > 0.5) + planeBytes(nw, nh, a.indexed.y > 0.5);
+  return planeBytes(w, h, a.indexed.x > 0.5) + planeBytes(nw, nh, a.indexed.y > 0.5) + (a.indexed.x > 0.5 ? 1024 : 0) + (a.indexed.y > 0.5 ? 1024 : 0);
 }
 
 /** The shaders' side of an indexed atlas: its planes' samplers (`a` the albedo, `n` the normal), their palettes and uIndexed

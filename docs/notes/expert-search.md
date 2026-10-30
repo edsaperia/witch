@@ -1,0 +1,605 @@
+# Expert search: implementation and fairness audit
+
+Guarded coverage (coordinators6521109755/6521665224, 2026-10-30) is default on
+after fixed pilot59bc20ce passed its coverage/KO gate. Explicit
+`guardedCoverageExploration:false` retains the OFF comparison. The same
+20 m footprint memory, eight100m headings and at most5s per30player seconds remain.
+Entry requires HP>=4 for the fixed four-heart loadout. Any damage, healing, KO,
+HP<4, public alarm/audible windup, or observed nonlegend nonfriendly adult (or any
+angry creature) within30m cancels/skips the job and consumes that slot. Peaceful
+sleeping legends do not count. The guard is evaluated on every consumed delayed
+snapshot even when a higher priority returns early; no same-slot resume is allowed.
+Defense, visits, requested recruitment/delivery, ready casts and stragglers retain
+priority. No hidden enemy targeting/map data, reaction/input change or tuning.
+
+The targeted old extra KO is night24757/unlocked at42.2833player seconds: an
+exploration episode started at30.3833 with HP3, later passed24.108m from a cheetah
+at32.7833 and4.146m at33.3167. These guards reject that unsafe segment, not prove
+counterfactual prevention of the later KO. Delivery repair's subsequent HP1 also
+motivates full-health entry. `--guarded-coverage-pilot` fixes4x300player seconds,
+off/on guarded coverage x matched/unlocked home100/night24757/world0, default
+questMax1/Satchel/nohat/barebroom, delivery repair and visits on, known priority off.
+Protected/reserved pairs are checked before output/Game. Preflight120s/worker360s,
+WHOLE480s, one worker, no restart. Gate: total fully-seen cells rise, neither
+condition's coverage falls, no extra KO/loss in either pair; otherwise stop with
+no tuning. Minimum HP, requests, quests, wins and finds stay separate. This is a
+guarded discovery pilot, not proof of strength, a lock, or held-out evaluation.
+The paired footprint counts were197→209 matched and173→175 unlocked (370→384
+total), all four censored300 with no requests, quests, KOs or losses. Matched
+minimumHP worsened3→2; unlocked1→1. This does not establish zero added risk or
+full-night benefit. Delivery repair/dream visits stay on; known priority stays off.
+After the FINAL, further search, pilots and balancing wait for Ed's next playtest
+and explicit canonical routing. Original search-trained/held-out strength remains
+unestablished; there is no selected model lock or persistence claim.
+
+Delivery cycling repair (coordinators6520516411/6520984212, 2026-10-30),
+default on after correctness ablation fc9bf675 passed; `questDeliveryRepair:false`
+retains the old branch only for the off ablation:
+the shared delivery branch selected the first requested ID but insisted it be at
+the bottom. With two matching tigers this generated 4097 cycles and no placement
+in both arms of result5a0d2a99, despite arrival inside wolf297's clearing.
+The repair accepts any observed bottom of the wanted species; otherwise it sends
+one cycle pulse and waits for a changed delayed carried-stack observation. It
+never mutates the stack or reads hidden creature state. Existing safety priorities
+and visit memory remain; known-quest priority and coverage remain off.
+The repair completed wolf297 at53.8667 player seconds/51.2192 world seconds,
+versus no completion in OFF, with zero KOs/losses in either120-second case.
+Minimum HP fell3→1; this validates delivery correctness, not general safety,
+full-night play or persistence. Later diagnostic modes keep the repair on.
+
+`--delivery-screen` fixes repair off/on, night32676/world0/unlockedhome100,120
+player seconds each, defaultquestMax1/Satchel/nohat/barebroom/visitsON. Protected
+and reserved pairs are rejected before output/Game. Preflight120s, worker180s,
+WHOLE300s; no restart. The manifest gate is verbatim: "Gate: OFF reproduces
+stall,ON completes actualwolf297quest by120,no addedKO/loss/contractviolation;
+otherwise stop." Actual quest completion comes only from output rule state,
+never from arrival, placement attempts or policy diagnostics. This is one bug
+correctness check, not strength, model selection or permission for another search.
+
+The known-quest screen below finished with zero actual completions in either arm;
+coordinator6520516411 accepted DO NOT PROMOTE under its unchanged point7 gate.
+It remains off without tuning. Its source/results are retained as provenance.
+
+Known-quest priority candidate (coordinator 6520033543, 2026-10-30) is opt-in
+`knownQuestPriority:true`, default off pending its fixed test. Ed ruled that
+quests finish before natural win; no game rules changed. `knownQuest.ts` remembers
+only actual delayed open requests, for at most 30 seconds without a new cue.
+A committed job delivers a carried offering, recruits/picks up a visible requested animal/sigil,
+or follows the public dream hint, ahead of optional recruitment, loot, exploration,
+casting and straggler pursuit. It never reads global quest counts, unseen legends,
+route length, allReached or internal win phase. The observer's new boolean mirrors
+the rendered disco-ball party pointer, not a precise hidden ending flag.
+
+One non-renewing 60-player-second deadline per night counts interruptions, switches
+and gaps; a .25-second release margin bounds held controls. Entry needs HP at least
+3, a fresh actionable cue and no healing/KO, damage, alarm, windup or visible
+unstunned hostile within 25 m. Safety or timeout latches priority off for the night;
+closed/angry/friendly, stale or unavailable cues release their job. Startup and
+committed dream visits keep priority. A visible party pointer releases deferral.
+Arrival or placing an offering alone never asserts learning/completion. Dream
+visits remain on, questMax1 only limits deliberate discovery, and all passive known
+requests are eligible. Coverage was dropped after its final screen's KO regression
+and remains off; its code/results below are historical provenance.
+
+There is no win button: the timed route or clearing all areas begins stragglers,
+their external neutralization begins the lap, and its home pulse wins automatically.
+Deferring the witch's optional actions cannot stop timers/allies or guarantee safety
+or all quests. `--known-quest-screen` fixes two nights 1000/32676, world0/unlocked
+home100, off/on at 600 player seconds, alternating order, default questMax1,
+Satchel/no hat/bare broom, dream visits on and coverage off. Protected/reserved pairs
+are rejected before Game construction. Parent worker480s, preflight120s, whole
+job600s; no restart. The manifest includes REPORT6520027527 point7 verbatim: only
+additional actual quest completion, every OFF win retained, no KO/loss regression,
+and every fairness/budget/safety contract passing permits separately routed later
+full-night validation. Otherwise no promotion or automatic repeat/search. Censored
+short cases cannot establish full-night win preservation. No lock or survey.
+
+Final coverage screen (coordinator 6519419386, 2026-10-30): driver/matrix only,
+with the coverage policy unchanged and still opt-in/default off. The fixed matrix
+in `expert-coverage-screen.mjs` has nights 16838, 24757, 32676 and 40595 on world0,
+matched/unlocked home100, coverage off/on, 300 player seconds: 16 cases. Arm order
+alternates by night; every paired case has identical gear/tempo/setup, with dream
+visits on. Every protected pair is checked before output or Game construction.
+Run `expert-quest-trace.mjs --coverage-screen --out <fresh-folder>
+--wall-seconds 480` under a 600 s whole-job cap including 120 s preflight. No
+resume, restart, policy tuning or seed selection is allowed. The manifest embeds
+the pre-registered decision verbatim: proceed to later full-night validation only
+if total learned requests improves, total seen does not fall, neither condition
+loses requests, and KO/loss totals do not worsen; otherwise drop the tactic, with
+no repeated parameter search. Incomplete screens have no all-seed verdict;
+compare only common complete pairs. This remains one-world discovery screening,
+not held-out fitness, statistical proof or cross-island strength.
+
+Fair coverage pilot (coordinator 6519017191, 2026-10-30): `coverage.ts` remembers
+only fully contained 20 m grid cells in consumed delayed observation rectangles.
+The observer exposes its existing approximate camera extents as detached `view`
+scalars; unknown cells have no terrain, boundary or legend information. Fixed
+eight-direction candidates 100 m away are ranked by the fraction of their
+projected footprint already observed, with heading-order ties. One held waypoint
+per 30-player-second interval gets at most 5 s, with a 0.25 s conservative control
+handoff margin. Arrival or the fixed deadline ends it; less than 2 m movement
+after 1 s abandons the heading for 30 s. Safety, active dream visits, requested
+recruitment/delivery, visible ready casting, alarms and stragglers keep priority.
+This can interrupt unrelated loot/recruitment and ordinary exploration only.
+
+Coverage is an opt-in candidate (`newExpert` option `coverageExploration:true`),
+default off pending pilot evidence; the verified dream-visit fix stays on.
+`expert-quest-trace.mjs --coverage-pilot --out <fresh-folder> --wall-seconds 360`
+fixes off/on x matched/unlocked home100, world0/night1000, 300 player seconds,
+default questMax1 and matched Satchel/no-hat/bare-broom gear. Whole cloud job cap
+is 480 s including preflight. Seen eligible legend IDs and real learned requests
+carry observation/consumption times; summaries also separate fully observed
+footprint, exploration seconds, knockdowns/minimum HP, wave reached and outcomes.
+These are censored discovery diagnostics, not full-night fitness or a new lock.
+
+Coordinator 6518764991 (2026-10-30) approved the bounded dream-visit job after
+trace result `576e7fcd`: arcticfox239 was selected for one input at 11.85 s,
+then abandoned out of view before its request was read. The expert now remembers
+an actually selected eligible legend's last observed position for at most 30
+delayed player seconds. New visible positions may refresh the destination, never
+the deadline. Healing, KO and audible dodge keep priority. A real request/closed
+cue or a visible friendly/angry legend ends the job; arrival alone never counts
+as reading. A timed-out ID is abandoned for this night so it cannot immediately
+start another 30 s job (passive observations may still teach its request).
+No hidden map/quest data or win-timing rule changes are involved.
+
+The fifth `newExpert` argument offers `rememberDreamVisits:false` solely for
+the approved off/on ablation; the default is on. This is not a searched knob.
+`expert-quest-trace.mjs --dream-visit-ablation --out <fresh-folder>
+--wall-seconds 180` fixes exactly two unlocked-home100/world0/night1000,
+Satchel/no-hat/bare-broom cases, 60 player seconds each, off then on. The outer
+cloud job must cap the complete preflight/run at 300 wall seconds. The primary
+diagnostic is whether legend239's actual fair request is learned by 60 s, not
+a win, quest completion or strength score. No automatic restart is allowed.
+After its results, fair exploration for the wholly unseen legends needs a
+separate plan and approval; it is not included in this visit fix.
+
+Diagnostic quest traces (coordinator 6517804162, 2026-10-30):
+`expert-quest-trace.mjs` runs exactly baseline versus D (`questMax:2`) on
+world 0/night 1000/home/100 bpm, matched and home-everything, Satchel/no
+hat/bare broom, 3000 player seconds. One cloud worker, 1200 s parent-enforced
+worker cap and 1500 s whole-job cap including preflight; no resume or restart.
+The optional fourth argument to `newExpert` emits detached delayed observations,
+known quests, selected quest/legend, decision branch and final controls. Its
+return value is ignored; no diagnostic world state enters the policy.
+Pure scripted-observation tests compare every control with the sink absent,
+present, and mutating its payload, for both policies. They generate no Game.
+The runner separately logs full quest-state transitions and existing rule events
+as privileged output only. Control change points plus step counts reconstruct
+the full control stream, which also has a SHA-256 checksum. Each trace stops
+at the existing first win/loss boundary or cutoff, and records all unfinished
+quests and whether they were known/selected/offered before the win. This is
+diagnosis, not new training fitness, post-win play or a behaviour change.
+
+PR #1477, coordinator brief 6512521421, addition 6512547737 and ruling
+6512668954 (2026-10-30). Work in progress; no trained expert or strong-play
+claim yet. The game rules, tuning and existing skilled baseline are unchanged.
+
+## Search contract
+
+`tools/balance/expert-search-core.mjs` implements seeded coordinate hill climbing
+with a full-space random restart every tenth candidate. It is derivative-free,
+single-process and dependency-free. Candidate proposals, the generator state,
+incumbent and its score are JSON-serializable. Checkpoint after `ask` and before
+evaluation: repeated `ask` returns the same pending candidate, and `tell` refuses
+an answer for a different candidate. The eventual driver must also checkpoint
+individual real-rules case results so a restart does not mix or skip cases.
+
+The objective compares aggregate wins, quests completed, runs with all quests
+completed, finds eligible to keep, provisional finds collected, quest deliveries,
+non-win waves passed and signed world seconds, lexicographically (coordinators
+6512758049, 6514241011 and 6515138100). Won runs contribute zero wave credit
+and negative completion seconds; lost/censored runs retain positive waves and
+survival seconds. Equal wins therefore prefer faster completion. Only the real
+quest's `done` counts as completion.
+A partial delivery is a lower-priority tie-breaker, never a completed quest.
+Quest totals include every generated quest,
+including ones the expert has not discovered. Zero quests is not an all-quest win.
+A single extra win outweighs any progress-only gain. A find is eligible when
+actually picked up and the night is won; actual app sleep/persistence is not run
+and `upgradePersisted` remains false. Tables name that distinction explicitly.
+Training and held-out case lists must be disjoint and recorded in the manifest;
+the evaluator must never select parameters using held-out scores. Censored
+short runs are pilots, not wins or evidence of full-night strength.
+
+Focused search checks:
+
+```
+node --test --test-concurrency=1 tools/balance/expert-search-core.test.mjs
+```
+
+## Existing skilled privileges
+
+These findings concern `src/rules/bot.ts` at the prepared baseline 1caeffa3c.
+They are preserved for interpreting old bot results, not changed for this PR.
+
+| Code path | Information or operation requiring an expert boundary |
+| --- | --- |
+| `inviteable`, `pickRecruit`, initialization of `legendOf` | Full-island creature population, exact kind counts, unseen legends and their live state |
+| `ahead`, defending, `stranded` | `party.next`, `afterNext`, exact wave deadline and remote standing soundsystems |
+| `siegeJob` | Remote creature siege membership and exact fighting values |
+| `threatDodge` | Attack target identities and exact `windupUntil`, charge and leap internals |
+| Feeding, relic and quest jobs | Remote berry availability, relic positions, quest targets |
+| Sigil jobs | Calls to `toBottom` mutate the leash immediately rather than emit player controls |
+
+Some global information has legitimate HUD equivalents: `winTarget` is used by
+the visible straggler pointer, and the game shows wave pointers and off-screen
+soundsystem alarms. That does not authorize unrestricted reads of all underlying
+entities or exact combat state. Each expert observation needs a specific visible
+or audible source, and stored memories must remain stale when no new observation
+is available. A radial distance filter alone is not proof of screen visibility:
+the renderer uses the camera projection, world bend, frustum and canopy.
+
+Coordinator-approved human limits are floors: reaction delay at least 0.25 player
+seconds, control updates at most 8 Hz, aim error at least 1 metre. Aim noise needs
+its own deterministic seed, never the game RNG. Only controls may affect the
+real Game. Search cannot relax these limits. Exact interpretation of visibility
+and its approved approximate adapter are described below.
+
+## Approximate observation and quest discovery
+
+Coordinator 6512711766 authorized the approximation: a 16:9 rectangle around the
+witch, sized from the standard camera distance/FOV/angle at default zoom in each
+mode. No terrain bend, canopy occlusion, camera easing, special house/circle
+framing or true projection is modelled. Results must say **approximate fair
+observation**. Actual projection integration is deferred until pilot results
+show sensitivity or the coordinator assigns it. No renderer files are changed.
+
+Only detached scalar snapshots cross into the policy, delayed by 0.25 player
+seconds; controls update at most 8 Hz. Aim error is a separately seeded 1 m
+offset per control update, never a game-RNG read. Button presses are single-step
+pulses; movement, firing and a casting hold persist between updates. The expert
+never calls `toBottom`, sets a bag, teleports or edits game state.
+
+Quest requests come from a visible ground-level legend's dream bubble within
+`dreams.range`, never a global quest journal or sleeping-legend pointer. The
+approximation treats its cycling request sigil as readable and uses the public
+eight-direction/rounded-distance hint (`dreamWay`), not the exact unseen target.
+Visible observations update quest memory; unseen memories stay stale. There is
+no intrinsically hidden quest type in `quest.ts`, but undiscovered sleeping
+legends cannot be read remotely, and a closed quest may become unavailable.
+Delivery cycles the carried stack one legal control press at a time. The find
+is observed only on foot, in the rectangle and within the renderer's 120 m limit.
+Relics are reported only when visible on the ground; an independent relic-trip
+tactic is not implemented in the first policy. Quest delivery and find collection
+are implemented; comprehensive quest completion is unverified.
+
+## Conditions and integration
+
+Matched conditions: Satchel, no hat, no broom parts; home, Tiger and a later
+island; 100 and 200 bpm. A later island will be selected from the actual designed
+roster and its phase recorded before training. Home with everything unlocked is
+a separate training/evaluation condition and result table.
+
+The baseline report harness creates default home knowledge and `fillTrunk(g,{})`.
+The app's `debugUnlock` widens legal equipment/island choices; it does not equip
+mutually exclusive items together or expand home's animal roster by itself.
+#1478 owns the unlock/hat path. Until its helper lands, the harness uses the
+built hat catalogue, all bags and each legal broom slot catalogue. Home setup
+uses `knownKinds(REAL_KINDS)` via `map.found` and `islandAreas`. Availability is
+not ownership: as with the app debug toggle, the night's find draw still uses
+an empty owned-find profile. Cosmetic clothing does not change policy mechanics.
+Explicit experiment cases set `hat.has=false` for no hat, whereas the old report
+only set the hat spell to none; legacy cases are preserved unless `wearsHat` is
+specified. New comparisons all use the explicit setup.
+
+The later island is Komodo (kind phase 4, island phase 5), later than Tiger
+(kind phase 3, island phase 4) and volcanic rather than jungle. Policy bounds
+and equipment index domains live in `tools/balance/expert-space.mjs`. The search
+does not relax human floors. Training seeds start at night 1000/world 0; protected
+held-out pairs are committed in `expert-held-out-pairs.json`. Both training rounds
+exclude every protected pair. First-round external imports additionally exclude
+the survey's world `910000+i` / night `1000+7919*(10000+i)` for i=0..29.
+
+## Survey contract and external evaluations
+
+`createCaseRunner()` in `tools/balance/expert-contract.mjs` returns
+`{runCase(case,lock), close(), fingerprint}`. Call `close()` in a finally block.
+Each case explicitly supplies `kind` (`run`, `stun`, `ko`), `worldSeed`,
+`nightSeed`, `island`, `bpm` (80–220), `bag`, `hat`, `broomPart` (one exact part
+or null), `condition` (`matched`, meaning ordinary roster, or `home-everything`),
+and `limit` in player seconds. Runs additionally supply `bot`
+(`expert`, `skilled`, `crude`, `sloppy`); sloppy maps to the existing novice and
+is labelled privileged-observation alongside skilled/crude. Fixtures supply `species`, `rank` (0–3) and
+optional `distance` (default 10 m). No unknown gear or field silently falls back.
+The ordinary-roster survey condition can use its requested equipment, unlike
+the search's own matched Satchel/no-hat/bare-broom matrix.
+
+Locks from `modelLock(parameters, sourceFingerprint, heldOutPairs)` hold schema,
+exact parameters, human floors, observation label, protected pairs and a
+canonical SHA-256 checksum. `model-lock.json` is emitted only after the complete
+training/evaluation pilot; a pilot lock is not a strong-play certificate.
+Source mismatches and unsupported cells return explicit reasons. A rank-3
+fixture selects a natural real legend; if the requested species/rank is absent,
+the fixture is unsupported rather than fabricated. Invitation-stun protects
+witch health, while KO is stationary, non-firing and unprotected; both disable
+waves and remove other creatures/allies as fixture setup, retaining real rules.
+
+One external JSONL line is an `runCase` success result plus `schema:1`:
+`{schema:1,status:"ok",sourceFingerprint,modelSha256,parameters,case,result}`.
+`result` contains the real-rules outcome, seed/loadout, quest counts, find
+eligibility and progress. Import with `--external file.jsonl --round 1|2`.
+Candidate policies are proposed from external rows, then evaluated on the same
+canonical training matrix before acceptance. An external result replaces a local
+evaluation only when source, parameters, exact case, equipment and cutoff match.
+Unmatched survey outcomes never directly change fitness. Protected pairs are
+refused, malformed JSONL is refused and a changed external digest prevents resume.
+The survey owns its manifests, sharding and merging (#1475).
+
+### Focused round two and source freeze
+
+Coordinator 6513506188 requires `--round 2 --cases weak.cases.json --from
+selected-training-parameters.json`. The reader is
+`readFitnessCases` in `tools/balance/expert-contract.mjs`: input is an array of
+contract run cases or `{ "schema": 1, "cases": [...] }`. The supplied list
+replaces the original matrix. Every case retains its exact world/night seed,
+island, BPM, bag, hat, single broom part and player-second cutoff. A source case
+for skilled/crude/sloppy explicitly projects to expert for optimization; the
+original case remains in the manifest. Duplicate cells after projection,
+unknown equipment, fixture kinds, malformed lists and any protected pair are
+refused. First-round reserved survey pairs become eligible in round two; the
+expert's own protected pairs never do.
+
+`--external` remains an exact-result cache/proposal source, not the matrix
+selector. Round two refuses to run without both `--cases` and a same-source
+`--from` model. Equipment is fixed by each supplied case, so round two searches
+policy parameters only and preserves the selected model's unlocked loadout for
+the eventual final evaluation. Case-list/model/external digests enter the resume
+manifest. `--time` remains the standard-matrix/final-evaluation cutoff; it never
+overrides a supplied fitness case's own cutoff.
+
+Source hashes normalize CRLF to LF and use ordinal filename order
+(`lf-ordinal-v1`), so equivalent Windows and Linux checkouts agree. Manifests
+record Node version, OS and architecture; exact numeric replay across unlike
+runtimes is not claimed. Changed source or runtime cannot silently resume an
+old checkpoint.
+
+### Cloud runner preflight
+
+Use the exact dispatched source SHA with Node 22 and existing dependencies
+(`npm ci`). Before a training command, run:
+
+```
+npm run typecheck
+npx vitest run src/bots/expert.test.ts tools/docs --maxWorkers=1
+node --test --test-concurrency=1 tools/balance/expert-progress.test.mjs tools/balance/expert-search-core.test.mjs tools/balance/expert-space.test.mjs tools/balance/expert-contract.test.mjs tools/balance/report.test.mjs
+node --check tools/balance/expert-search.mjs
+```
+
+If a preflight fails, report it without modifying source or training. Run only
+the assigned shard command; its hard 3300 s cap leaves five minutes of a 60-minute
+window for preserving results. Exit 2 is an incomplete checkpoint, not success.
+Commit that shard's result folder even when incomplete, on its own
+`claude/expert-train-<n>` branch. Source edits are not assigned to runners.
+Both optimizer checkpoints and JSONL must return; the builder fetches them
+read-only and compares policies on the common training matrix. No runner opens
+a browser or evaluates the protected held-out list (`--training-only`).
+
+Before cloud dispatch, the home calibration on source
+`496ab6fedf2135cd33a83925d00f09a67758ae97` ran
+2026-10-30 02:21:49.505–02:24:10.562 UTC: 141.057 s including startup,
+123.272 s of simulation. Lost after 2916 player seconds / 2913.84 world seconds;
+wave 10 reached, 9 passed, no knockdowns, quests 0/2. The briefcase find was
+picked up but was not eligible to keep after a loss. This is a single-case
+throughput result with possible coexisting unit checks, not a strength estimate.
+Its raw result is `expert-results/full-night-calibration.json`.
+
+The subsequent policy adds a deliberate visit to a sleeping legend actually
+seen, then reads its dream only after landing. `questMax` (0–6, default 1) bounds
+distinct dream visits, alongside `questRange`/`questBias`. Opportunistic dreams
+remain readable in view. This is a policy choice for cloud search, not a measured
+quality improvement; it uses no remote sleeping-legend data.
+
+### Partial-progress preparation after round one
+
+Coordinator 6514241011 approved lower-priority gradients after round one's
+0 wins / 95 losses / 1 censored result. The next objective has eight terms:
+win count, completed quest count, all-quest runs, find eligible to keep,
+provisional find pickups, unique quest deliveries, non-win waves passed, signed
+world seconds. Coordinator 6515138100 subsequently made the last two terms
+outcome-conditional: won runs get zero wave credit and negative completion
+seconds; non-wins retain the original survival rewards. Search schema 4 and
+manifest schema 6 bind this meaning; older scores are not reused.
+Tests prove that arbitrary amounts of lower progress cannot outrank any of the
+first four priorities. The old six-term checkpoints remain old-source evidence;
+they are not silently converted or resumed as eight-term checkpoints.
+
+`expert-progress.mjs` observes existing events without changing policy input or
+rules. Provisional pickup is recorded once even if the find later disappears;
+it is never called kept. A quest delivery is a requested creature's sigil placed
+in its legend's area: either the real completion event, or the rules' existing
+`outsideCircle` cue when the correct creature is brought to the area but dropped
+outside the clearing. It is counted once per legend, so repeated drops cannot
+farm the score. `questDeliveriesIncomplete` separates such incomplete arrivals
+from completed quests. Ordinary sigils and relic placements earn no delivery.
+
+This is prepared source, not a new training freeze. Coordinator 6514249008 has
+dispatched the unchanged-skilled comparison on 676e8924 to baseline-1; its result
+must be reviewed before freezing another source or making a trained lock.
+
+Pilot reproduction (one worker; at most 480 s between case boundaries):
+
+```
+node tools/balance/expert-search.mjs --out docs/notes/expert-results/pilot --time 60 --iterations 3 --train-seeds 1 --held-seeds 1 --wall-seconds 480
+```
+
+Repeat the exact command on the same source fingerprint to resume `checkpoint.json`.
+Results-only commits may resume without changing the original source provenance;
+changed policy/rules/tool source is refused.
+Each completed case is saved immediately; pending candidates replay identically.
+`cases.jsonl` is the readable training/held-out log; `held-out.md` separates the
+two equipment conditions. Local pilots refuse cutoffs above 120 player seconds
+or budgets above 600 wall seconds. `--execution cloud --training-only` permits
+full-night cases and at most 3600 wall seconds, enforced by an idle parent process
+that terminates the one simulation worker. An interrupted case is replayed;
+completed cases survive. Exit code 2 means the hard budget ended with a checkpoint,
+not a completed model. Cloud training-only runs never evaluate a protected case.
+
+## Matched-home diagnostic after round one
+
+Paired cloud trace `5247329e317da6268bd2c2500278a28593c8b858` runs unchanged
+`676e8924` on world 0/night 1000, home, 100 bpm, Satchel, explicit no hat and no
+parts. Skilled wins at 310.73 player seconds; expert reaches the 600-second
+cutoff in wave 2. These are training-seed diagnostics, not held-out scores.
+
+The first policy divergence after the mandatory reaction/deck exit is local
+exploration at 2.67 seconds: skilled already has a map-derived destination;
+expert rotates its movement every input. After briefly seeing a hare at 7.2,
+expert loses it at 7.47 and orbits roughly x=3084–3136/z=2945–2997 through
+27.2, with zero invitation hits. A fair replacement must explore from observed
+positions rather than copy skilled's privileged map-wide target selection.
+
+There is also a measured arrival failure: expert labels 123.47–309.07 as
+casting at the squirrel stone, repeatedly crossing it (sampled distances
+about 0–5.2 m), while skilled's corresponding job lasts 11.3–17.08. The trace
+script's cast event uses `ctl.sigil`, not `sigilHeld`, so it does not establish
+the exact cast hold history; movement oscillation and delayed conversion are
+directly recorded. The proposed control change slows movement within 10 m of
+interaction destinations and keeps a local exploration waypoint until reached
+or a 12-player-second timeout. It preserves the observation boundary and human
+floors. This candidate needs cloud nearby tests/typecheck and same-cell
+revalidation before any claim of improved outcomes or further training.
+
+Cloud revalidation on `57aa9d40` (`b62748800465d377512517c235925f22a6826218`)
+passes typecheck, expert/docs Vitest (16 tests) and the seven pure progress/search
+tests. Expert wins home100/200 at 2763.48/1959.37 player seconds, zero KOs,
+0/2 quests, with one upgrade eligible to keep at each tempo; persistence remains
+false. Skilled still wins at 310.73/310.05, with no upgrade. The candidate's
+phase logs show expert waiting through all ten waves then spending 192/639
+world seconds on stragglers, while skilled clears early. The old trace shows
+skilled's map-wide recruitment route; expert lacks that privileged knowledge and
+prioritizes visible finds. This explains the broad route difference, not every
+second of the new candidate: there is no new candidate decision trace. The
+old waves/survival tie-breakers maximized progress/time, including won runs.
+Coordinator 6515138100 corrected that incentive before the next dispatch:
+equally good wins now prefer fewer world seconds, while non-wins still reward
+survival. This permits search to reward speed, without evidence yet that its
+existing parameters can close the route gap.
+
+Released prototype `bf68860ab` was normally merged at `28a8d5fc`. Unlocked-home
+setup now calls its `syncHatUnlock` with explicit `hats=*` parameters, avoiding
+storage reads. Fingerprints conservatively include `src/app` as well as rules,
+bots, config, art and balance tools to bind that helper and its imports. The
+adopted diagnostic script counts/watches `sigilHeld` for casts. Old trace files
+retain their original, limited instrumentation and provenance.
+
+The next proposed bounded cloud batch uses `--defer-quests`: all three existing
+quest parameters remain fixed, including external proposals and restarts;
+quest outcomes still occupy their approved objective positions. Four independent
+search seeds propose distinct neighbours across movement/combat and legal gear.
+Each candidate uses two training nights (1000, 8919), world 0, home/Tiger/Komodo
+at 100/200 bpm plus unlocked home at both tempos: 16 cells. This widens night
+randomness, not map-world diversity. Two candidates per runner mean 32 rows each,
+128 maximum across four runners, with a hard 3300-wall-second cap and immediate
+case checkpoints. This is a modest local search, not evidence of optimal play.
+Cloud preflight and coordinator dispatch are required; no local batch is implied.
+
+All four 55-minute attempts capped after 23/23/25/26 rows. Approved unchanged-
+source checkpoint resumes then completed in about 20.5/26.2/12.9/13.6 minutes;
+all cloud preflights passed (typecheck, Vitest 16 and Node 14 tests), no held-out
+cases ran. Exact commits, separate goal counts and per-cell changes are in
+`expert-results/r1b-review.json`. Each candidate uses 16 cells but just two night
+seeds on one map world; the 128 logged rows include repeated baselines and
+matched cases unchanged by gear. There are only 56 unique effective cases.
+
+The baseline wins 4/16, completes two quests in total (no all-quest run), collects
+five provisional finds and has three eligible to keep. Casting approach fraction
+0.85 ties all those goals and improves non-win wave credit 131 to 138, so the
+optimizer accepts it only on a lower survival term. Retargeting every 5.75 seconds
+loses one eligible find; the oar exhaust and horse tip each lose both quests.
+No candidate achieves win plus all quests plus eligible find in a single run.
+Keep the casting variant as a proposal, not a clearly improved primary-goal
+model or a released lock. Actual persistence was never run.
+
+Prototype `9192b5015` was normally merged after every resume completed, at
+`5bbb80b6`. Its new rules/app/tool source invalidates the old fingerprint;
+old measurements remain old-source evidence. A fresh comparable baseline must
+be measured once on the next source before sharing it across candidate shards.
+Do not change a saved model's source label to bypass fingerprint validation.
+
+### Fixed-vector staged evaluation
+
+Coordinator 6516484538 approves one current-source baseline followed by four
+fixed-vector candidates. `expert-evaluate.mjs` runs exactly 16 training cells:
+world 0, nights 1000/8919, matched home/Tiger/Komodo at 100/200 bpm plus
+unlocked home at both tempos. All equip Satchel, no hat and a bare broom;
+unlocked home still makes every designed animal/equipment available. Cutoff is
+3000 player seconds, not a full-night guarantee. Later wins remain censored;
+anything promising needs a separate 4200-second revalidation before a lock.
+
+`expert-evaluation-vectors.json` holds baseline defaults and four single-knob
+changes: A casting approach 0.85, B quest maximum 0 (negative control), C quest
+bias 800, D quest maximum 2. These are existing approved policy parameters;
+there is no new observation, quest logic, game rule or equipment change.
+
+After cloud preflight, run the baseline first:
+
+```sh
+node tools/balance/expert-evaluate.mjs --vector baseline --out docs/notes/expert-results/r1c-baseline --wall-seconds 2400
+```
+
+It must exit 0 with `evaluation.json` complete before any candidate starts.
+Fetch its reported result commit read-only and copy the sealed baseline
+`evaluation.json` into the same path on each candidate runner. Keep game/tool
+source identical; do not merge unrelated source or edit a fingerprint. Then
+run these on four independent single-worker runners:
+
+```sh
+node tools/balance/expert-evaluate.mjs --vector A --baseline docs/notes/expert-results/r1c-baseline/evaluation.json --out docs/notes/expert-results/r1c-A --wall-seconds 2400
+node tools/balance/expert-evaluate.mjs --vector B --baseline docs/notes/expert-results/r1c-baseline/evaluation.json --out docs/notes/expert-results/r1c-B --wall-seconds 2400
+node tools/balance/expert-evaluate.mjs --vector C --baseline docs/notes/expert-results/r1c-baseline/evaluation.json --out docs/notes/expert-results/r1c-C --wall-seconds 2400
+node tools/balance/expert-evaluate.mjs --vector D --baseline docs/notes/expert-results/r1c-baseline/evaluation.json --out docs/notes/expert-results/r1c-D --wall-seconds 2400
+```
+
+Each parent enforces a hard 40-minute wall cap, including worker startup; the
+coordinator caps each whole job at 45 minutes. Workers use below-normal priority.
+Exit 2 is capped/incomplete, never success; there is no automatic restart.
+`checkpoint.json` is atomically replaced after each completed case. An approved
+resume with identical inputs retains every completed case and replays only the
+interrupted unsaved case. Result-only commits retain original source provenance.
+Completed jobs also write `evaluation.json` and `summary.json`; `cases.jsonl`
+is the readable log reconstructed from the authoritative checkpoint.
+
+`expert-evaluation-core.mjs` rejects incomplete/nondefault/tampered baselines,
+source/runtime/case/cutoff/policy mismatches, altered resume inputs and any
+protected pair. Baseline data is never used as candidate outcome data: every
+candidate runs its 16 cells once, comparing with the one shared baseline.
+Digests bind policy, source, runtime, held-out exclusions, complete case matrix
+and baseline contents. Summaries separate goal counts and identify a score
+improvement confined to lower survival terms; they never emit a model lock.
+The survey-focused `--round 2 --cases ... --from ...` search remains separate.
+
+## First pilot, not trained strength
+
+Source `9be247f04e21aa8175e3d534a7a6ea904be7a250`, artifacts in
+`expert-results/pilot/`: three candidates, one training seed, 24 training cases,
+24 held-out comparison cases with one distinct held-out seed per cell, 60 player
+seconds each. Completed in 219.337 simulation wall seconds, 13.13 short cases/min
+(startup excluded). All three objectives tied at `[0,0,0,0,0,402.86]`; no parameter
+was demonstrated to matter. The initial policy and Satchel/no-hat/bare-broom
+loadout remained selected. Everything was censored, so this does not establish
+win strength, quest performance, gear value or a learned improvement.
+
+A separate diagnostic using training seed 1000 showed the witch remaining
+stationary while descending over a lake for more than 100 world seconds. Steering
+toward the visible target removed the stationary trace, but a second trace showed
+delayed observations repeating toggle presses and reversing the landing. The
+next source change acknowledges a mode transition before pressing again. This
+was found and corrected using training-seed traces, not held-out parameter
+selection. The first pilot belongs to its recorded old source and is not a
+trained-model lock for the corrected policy.
+
+Coordinator 6513108324 moves longer training to four cloud runners, with separate
+optimizer seeds and a shared canonical training matrix. Source/checkpoints/JSONL
+return on `claude/expert-train-<n>` and are fetched read-only. Final held-out scores
+come after candidate selection. The approved home/Satchel full-night throughput
+calibration is `node tools/balance/expert-calibrate.mjs`; its separate idle parent
+enforces a hard 600 s cap including startup and records UTC start/end times.
+It must not run during #1464's quiet trace. Coordinator 6513114429 currently
+holds all local simulation until #1464 explicitly posts browser free.
+
+The coordinator approved a single-worker below-normal-priority pilot of at most
+10 minutes, stopped before #1464's quiet trace; longer runs need a new answer
+until then. `node tools/balance/expert-throughput.mjs` calibrates only four
+30-player-second home cases and labels them accordingly. It is not a full-night
+throughput estimate. No browser is needed.

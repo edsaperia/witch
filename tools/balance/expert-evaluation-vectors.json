@@ -1,0 +1,7 @@
+{
+  "baseline": {},
+  "A": { "castMoveFrac": 0.85 },
+  "B": { "questMax": 0 },
+  "C": { "questBias": 800 },
+  "D": { "questMax": 2 }
+}

@@ -17,6 +17,14 @@ says what each note covers.
 
 (no entries: its tools and checks only)
 
+## [Balance study follow-up](balance-study.md)
+
+(no entries: its tools and checks only)
+
+## [Wide, shallow balance survey — design v1](balance-survey-design.md)
+
+- First dispatch is the 24-shard wave 1 below, not the 190-shard full envelope.
+
 ## [Balance](balance.md)
 
 - Legacy models retained (2026-10-29, #1459, coordinator decision).
@@ -35,6 +43,10 @@ says what each note covers.
 - 7 species/ages can't be stunned by one witch alone.
 - Changed on 2026-10-29, live:
 - Ed's direction:
+
+## [Cauldron collection and brewing preview](cauldron.md)
+
+(no entries: its tools and checks only)
 
 ## [Config files](config.md)
 
@@ -59,6 +71,10 @@ says what each note covers.
 - Open jaw
 - Silhouette check
 - Live rig
+
+## [Expert search: implementation and fairness audit](expert-search.md)
+
+(no entries: its tools and checks only)
 
 ## [Creatures in play](gameplay.md)
 
@@ -162,6 +178,10 @@ says what each note covers.
 - Sail in place
 - Zoo
 
+## [Light-pool readability experiment](light-pool-readability.md)
+
+(no entries: its tools and checks only)
+
 ## [The Making Of](making-of.md)
 
 (no entries: its tools and checks only)
@@ -187,9 +207,17 @@ says what each note covers.
 - The alto set
 - A/B renders
 
+## [Two-browser prototype](online-prototype.md)
+
+(no entries: its tools and checks only)
+
 ## [Performance](performance.md)
 
+- Reused surface roughness (#1464, 2026-10-30):
+- Exact travel art profiles (2026-10-30, #1464):
 - Ordinary-play scenery stalls
+- Travel evidence and budgets
+- Cached bare sigils
 - The sail's terrain relocation
 - The View's build in slices
 - The start's shaders
@@ -254,6 +282,8 @@ says what each note covers.
 
 ## [The view](view.md)
 
+- Layered magic
+- Magic mock (stage 0 only)
 - Pixel snap
 - Stump wisps
 - Tilt-shift

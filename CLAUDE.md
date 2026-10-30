@@ -77,19 +77,25 @@ The rest of what builders need lives in a note an area, under `docs/notes/` (hou
 
 - [`docs/notes/run.md`](docs/notes/run.md): The run: the phases of a run, the opening and the party spell, the clock, her controls and the camera, waves, knockouts and the party's end.
 - [`docs/notes/house.md`](docs/notes/house.md): The treehouse and its house: the treehouse and its deck, arriving, the house's rooms, the station menus, the Studio, finds, the Workshop and broom parts, hats and brooms, the telescope.
+- [`docs/notes/cauldron.md`](docs/notes/cauldron.md): The gated mushroom collection, shared kitchen and Mirror Floor preview; checks and remaining scope.
 - [`docs/notes/witch-art.md`](docs/notes/witch-art.md): The witch's art: the witch generator, the party witches and their pair poses, her lean cycle.
 - [`docs/notes/world-art.md`](docs/notes/world-art.md): The world's art: area types and recipes, layouts, flora and trees, props and scenes, party objects, the dancefloor and soundsystems, paths, the art style, the pixel wind.
 - [`docs/notes/creatures.md`](docs/notes/creatures.md): Creatures' art: genomes and templates, textures and palettes, evolution kits, faces, the live rig, the sleeping legends' art.
 - [`docs/notes/island.md`](docs/notes/island.md): Islands and the journey: island growth and shape, the land, lakes, biomes and beaches, the archipelago and the sea chart, sailing in place, kinds, the zoo.
 - [`docs/notes/view.md`](docs/notes/view.md): The view: what the renderer draws over the world: tilt-shift, the ground and its hills, ley lines, the sky and moon, smoke, pops, the debug overlay and test sliders.
+- [`docs/notes/light-pool-readability.md`](docs/notes/light-pool-readability.md): Default-off creature readability inside the witch's light pool, investigation and review evidence requirements.
 - [`docs/notes/gameplay.md`](docs/notes/gameplay.md): Creatures in play: inviting, the leash and sigils, combat and sieges, creature states, the legends and their quests.
 - [`docs/notes/music.md`](docs/notes/music.md): The music: the music engine, its style, sections and arc, the singer, the labs and studio, samples.
 - [`docs/notes/sound.md`](docs/notes/sound.md): Sound effects: the synthesised sound effects, babble and whale song, the mix.
 - [`docs/notes/balance.md`](docs/notes/balance.md): Balance: the balance simulators and bots, fighting value, populations and costs, the playtest log.
 - [`docs/notes/balance-baselines.md`](docs/notes/balance-baselines.md): Balance baselines: the matched-seed, matched-bag tables from the real-rules report (v5655; one seed, no tuning).
 - [`docs/notes/balance-report-coverage.md`](docs/notes/balance-report-coverage.md): Real-rules reports: the report tool, how to rerun it, and what the old balance sims still cover.
+- [`docs/notes/expert-search.md`](docs/notes/expert-search.md): Expert search: observation limits, deterministic training, protected seeds and the survey adapter.
+- [`docs/notes/balance-study.md`](docs/notes/balance-study.md): Balance study: the follow-up on the real rules after the report tool (#1475): the matched-tempo preflight and the study's limits.
+- [`docs/notes/balance-survey-design.md`](docs/notes/balance-survey-design.md): Balance survey: the frozen five-study cloud design, first-wave limits and expert feedback gates.
 - [`docs/notes/config.md`](docs/notes/config.md): Config files: the tuning file (values only) and its schema, the knobs' words in `config/knobs/<section>.json` (what each does, Ed's decisions), the style file, the link switches registry.
 - [`docs/notes/testing.md`](docs/notes/testing.md): Testing tools: the full smoke test, proof shots.
 - [`docs/notes/art-checks.md`](docs/notes/art-checks.md): Art checks: the art generator's check, the style bible, the genome compare, the lab and export commands.
 - [`docs/notes/performance.md`](docs/notes/performance.md): Performance: the View's build in slices, the start's shaders, the stall hunt.
 - [`docs/notes/making-of.md`](docs/notes/making-of.md): The Making Of: the static site about how the game was made.
+- [`docs/notes/online-prototype.md`](docs/notes/online-prototype.md): The separate two-browser prototype: local relay, host authority, joining, checks and current limits.
