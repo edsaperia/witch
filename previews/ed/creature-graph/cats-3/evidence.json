@@ -1,0 +1,2217 @@
+{
+  "sha": "71740af30b18f624d314f9f9906a231f2f934ccf",
+  "servedSha": "71740af30b18f624d314f9f9906a231f2f934ccf",
+  "fixture": "cats-3",
+  "defaultOff": true,
+  "measurements": [
+    {
+      "id": "cat",
+      "timings": [
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "towards",
+          "constructionMs": 39.699999999953434,
+          "bakeMs": 14,
+          "width": 31,
+          "height": 38,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "towards",
+          "constructionMs": 50.300000000046566,
+          "bakeMs": 9.199999999953434,
+          "width": 43,
+          "height": 39,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "away",
+          "constructionMs": 11,
+          "bakeMs": 1.6000000000931323,
+          "width": 30,
+          "height": 38,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "away",
+          "constructionMs": 47,
+          "bakeMs": 2.7999999998137355,
+          "width": 39,
+          "height": 39,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "top",
+          "constructionMs": 13,
+          "bakeMs": 1.3999999999068677,
+          "width": 31,
+          "height": 28,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "top",
+          "constructionMs": 35.200000000186265,
+          "bakeMs": 2.7999999998137355,
+          "width": 43,
+          "height": 36,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "towards",
+          "constructionMs": 27,
+          "bakeMs": 1.7999999998137355,
+          "width": 57,
+          "height": 53,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "towards",
+          "constructionMs": 30.600000000093132,
+          "bakeMs": 3.300000000046566,
+          "width": 57,
+          "height": 53,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "away",
+          "constructionMs": 34.200000000186265,
+          "bakeMs": 2.5,
+          "width": 51,
+          "height": 51,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "away",
+          "constructionMs": 39,
+          "bakeMs": 2,
+          "width": 61,
+          "height": 52,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "top",
+          "constructionMs": 23.699999999953434,
+          "bakeMs": 2.300000000046566,
+          "width": 57,
+          "height": 44,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "top",
+          "constructionMs": 24.5,
+          "bakeMs": 1.5999999998603016,
+          "width": 57,
+          "height": 44,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "towards",
+          "constructionMs": 103,
+          "bakeMs": 5.800000000046566,
+          "width": 95,
+          "height": 85,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "towards",
+          "constructionMs": 85.60000000009313,
+          "bakeMs": 8.599999999860302,
+          "width": 96,
+          "height": 86,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "away",
+          "constructionMs": 70.9000000001397,
+          "bakeMs": 4.2999999998137355,
+          "width": 85,
+          "height": 83,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "away",
+          "constructionMs": 104.4000000001397,
+          "bakeMs": 15.699999999953434,
+          "width": 102,
+          "height": 84,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "top",
+          "constructionMs": 107.5,
+          "bakeMs": 3.800000000046566,
+          "width": 95,
+          "height": 73,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "top",
+          "constructionMs": 114.30000000004657,
+          "bakeMs": 4.699999999953434,
+          "width": 96,
+          "height": 74,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "towards",
+          "constructionMs": 415.89999999990687,
+          "bakeMs": 44.800000000046566,
+          "width": 261,
+          "height": 234,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "towards",
+          "constructionMs": 683.6999999999534,
+          "bakeMs": 28.4000000001397,
+          "width": 261,
+          "height": 234,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "away",
+          "constructionMs": 398.89999999990687,
+          "bakeMs": 35.39999999990687,
+          "width": 241,
+          "height": 221,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "away",
+          "constructionMs": 989.1999999999534,
+          "bakeMs": 47.4000000001397,
+          "width": 287,
+          "height": 227,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "top",
+          "constructionMs": 375.39999999990687,
+          "bakeMs": 16.699999999953434,
+          "width": 261,
+          "height": 200,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "top",
+          "constructionMs": 614.6999999999534,
+          "bakeMs": 15.400000000139698,
+          "width": 261,
+          "height": 200,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        }
+      ],
+      "pixel": 3,
+      "selectedHash": "20693841",
+      "currentHash": "36fcddc5"
+    },
+    {
+      "id": "lynx",
+      "timings": [
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "towards",
+          "constructionMs": 21.199999999953434,
+          "bakeMs": 1.6000000000931323,
+          "width": 41,
+          "height": 52,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "towards",
+          "constructionMs": 22,
+          "bakeMs": 1.0999999998603016,
+          "width": 39,
+          "height": 52,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 2
+          }
+        },
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "away",
+          "constructionMs": 11.800000000046566,
+          "bakeMs": 0.8999999999068677,
+          "width": 37,
+          "height": 52,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "away",
+          "constructionMs": 17.200000000186265,
+          "bakeMs": 5.199999999953434,
+          "width": 36,
+          "height": 52,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 2
+          }
+        },
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "top",
+          "constructionMs": 14.300000000046566,
+          "bakeMs": 1,
+          "width": 41,
+          "height": 37,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "top",
+          "constructionMs": 21.5999999998603,
+          "bakeMs": 0.8000000000465661,
+          "width": 39,
+          "height": 35,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 2
+          }
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "towards",
+          "constructionMs": 67.80000000004657,
+          "bakeMs": 2.5999999998603016,
+          "width": 77,
+          "height": 79,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "towards",
+          "constructionMs": 68.10000000009313,
+          "bakeMs": 1.8999999999068677,
+          "width": 77,
+          "height": 79,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "away",
+          "constructionMs": 49.9000000001397,
+          "bakeMs": 1.5999999998603016,
+          "width": 66,
+          "height": 79,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "away",
+          "constructionMs": 47.700000000186265,
+          "bakeMs": 1.7999999998137355,
+          "width": 66,
+          "height": 79,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "top",
+          "constructionMs": 63.200000000186265,
+          "bakeMs": 2,
+          "width": 77,
+          "height": 61,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "top",
+          "constructionMs": 60,
+          "bakeMs": 1.5,
+          "width": 77,
+          "height": 61,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "towards",
+          "constructionMs": 265,
+          "bakeMs": 5.199999999953434,
+          "width": 130,
+          "height": 129,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "towards",
+          "constructionMs": 258.80000000004657,
+          "bakeMs": 5,
+          "width": 130,
+          "height": 129,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "away",
+          "constructionMs": 224.9000000001397,
+          "bakeMs": 5,
+          "width": 111,
+          "height": 130,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "away",
+          "constructionMs": 221.79999999981374,
+          "bakeMs": 4.600000000093132,
+          "width": 111,
+          "height": 130,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "top",
+          "constructionMs": 326.5999999998603,
+          "bakeMs": 6.800000000046566,
+          "width": 130,
+          "height": 106,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "top",
+          "constructionMs": 315.69999999995343,
+          "bakeMs": 4.5,
+          "width": 130,
+          "height": 106,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "towards",
+          "constructionMs": 961.4000000001397,
+          "bakeMs": 49,
+          "width": 316,
+          "height": 408,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "towards",
+          "constructionMs": 1924,
+          "bakeMs": 30.5,
+          "width": 316,
+          "height": 408,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "away",
+          "constructionMs": 788.0999999998603,
+          "bakeMs": 24.5,
+          "width": 263,
+          "height": 379,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "away",
+          "constructionMs": 1569,
+          "bakeMs": 31.4000000001397,
+          "width": 265,
+          "height": 379,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "top",
+          "constructionMs": 1086.2999999998137,
+          "bakeMs": 23.100000000093132,
+          "width": 316,
+          "height": 260,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "top",
+          "constructionMs": 2096.1999999999534,
+          "bakeMs": 27,
+          "width": 316,
+          "height": 260,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        }
+      ],
+      "pixel": 3,
+      "selectedHash": "fa6b4bfd",
+      "currentHash": "ceea56cb"
+    },
+    {
+      "id": "lion",
+      "timings": [
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "towards",
+          "constructionMs": 105.89999999990687,
+          "bakeMs": 2.300000000046566,
+          "width": 61,
+          "height": 56,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "towards",
+          "constructionMs": 66.5,
+          "bakeMs": 1.6000000000931323,
+          "width": 61,
+          "height": 56,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "away",
+          "constructionMs": 32,
+          "bakeMs": 1.5,
+          "width": 51,
+          "height": 56,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "away",
+          "constructionMs": 32.800000000046566,
+          "bakeMs": 1.3999999999068677,
+          "width": 51,
+          "height": 56,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "top",
+          "constructionMs": 57.199999999953434,
+          "bakeMs": 3.2000000001862645,
+          "width": 61,
+          "height": 54,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "top",
+          "constructionMs": 62.5,
+          "bakeMs": 5.099999999860302,
+          "width": 61,
+          "height": 54,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "towards",
+          "constructionMs": 216.5,
+          "bakeMs": 4.600000000093132,
+          "width": 164,
+          "height": 107,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "towards",
+          "constructionMs": 181.89999999990687,
+          "bakeMs": 5.199999999953434,
+          "width": 164,
+          "height": 107,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "away",
+          "constructionMs": 112.29999999981374,
+          "bakeMs": 3.7000000001862645,
+          "width": 143,
+          "height": 104,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "away",
+          "constructionMs": 111,
+          "bakeMs": 4,
+          "width": 143,
+          "height": 104,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "top",
+          "constructionMs": 178.9000000001397,
+          "bakeMs": 4.899999999906868,
+          "width": 164,
+          "height": 123,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "top",
+          "constructionMs": 163.80000000004657,
+          "bakeMs": 5.800000000046566,
+          "width": 164,
+          "height": 123,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "towards",
+          "constructionMs": 739.5,
+          "bakeMs": 12.099999999860302,
+          "width": 253,
+          "height": 167,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "towards",
+          "constructionMs": 661.9000000001397,
+          "bakeMs": 12.099999999860302,
+          "width": 253,
+          "height": 167,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "away",
+          "constructionMs": 595.4000000001397,
+          "bakeMs": 10.5,
+          "width": 231,
+          "height": 166,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "away",
+          "constructionMs": 608.1999999999534,
+          "bakeMs": 11.400000000139698,
+          "width": 231,
+          "height": 166,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "top",
+          "constructionMs": 651.5,
+          "bakeMs": 20.899999999906868,
+          "width": 253,
+          "height": 190,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "top",
+          "constructionMs": 605,
+          "bakeMs": 12.199999999953434,
+          "width": 253,
+          "height": 190,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "towards",
+          "constructionMs": 5054.100000000093,
+          "bakeMs": 76.5,
+          "width": 567,
+          "height": 446,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "towards",
+          "constructionMs": 5081,
+          "bakeMs": 70.30000000004657,
+          "width": 567,
+          "height": 446,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "away",
+          "constructionMs": 4605.899999999907,
+          "bakeMs": 104.9000000001397,
+          "width": 532,
+          "height": 419,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "away",
+          "constructionMs": 4577.600000000093,
+          "bakeMs": 59.299999999813735,
+          "width": 532,
+          "height": 419,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "top",
+          "constructionMs": 5580.200000000186,
+          "bakeMs": 82,
+          "width": 567,
+          "height": 442,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "top",
+          "constructionMs": 5227.199999999721,
+          "bakeMs": 99.20000000018626,
+          "width": 567,
+          "height": 442,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        }
+      ],
+      "pixel": 3,
+      "selectedHash": "9e29160d",
+      "currentHash": "ea0c0ecb"
+    },
+    {
+      "id": "tiger",
+      "timings": [
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "towards",
+          "constructionMs": 76.09999999962747,
+          "bakeMs": 2.5,
+          "width": 59,
+          "height": 56,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "towards",
+          "constructionMs": 87.20000000018626,
+          "bakeMs": 1.7000000001862645,
+          "width": 62,
+          "height": 56,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 1
+          }
+        },
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "away",
+          "constructionMs": 41.90000000037253,
+          "bakeMs": 4.699999999720603,
+          "width": 54,
+          "height": 56,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "away",
+          "constructionMs": 39.799999999813735,
+          "bakeMs": 1.6000000000931323,
+          "width": 53,
+          "height": 56,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 1
+          }
+        },
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "top",
+          "constructionMs": 49.200000000186265,
+          "bakeMs": 5.199999999720603,
+          "width": 59,
+          "height": 53,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "top",
+          "constructionMs": 67.39999999990687,
+          "bakeMs": 2.8000000002793968,
+          "width": 62,
+          "height": 56,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 1
+          }
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "towards",
+          "constructionMs": 112.6999999997206,
+          "bakeMs": 3.3000000002793968,
+          "width": 132,
+          "height": 83,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "towards",
+          "constructionMs": 146.29999999981374,
+          "bakeMs": 3.7000000001862645,
+          "width": 132,
+          "height": 83,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "away",
+          "constructionMs": 99.89999999990687,
+          "bakeMs": 2.6999999997206032,
+          "width": 118,
+          "height": 82,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "away",
+          "constructionMs": 80.90000000037253,
+          "bakeMs": 3.099999999627471,
+          "width": 118,
+          "height": 82,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "top",
+          "constructionMs": 99.60000000009313,
+          "bakeMs": 3.3000000002793968,
+          "width": 132,
+          "height": 99,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "top",
+          "constructionMs": 99.6999999997206,
+          "bakeMs": 3.5,
+          "width": 132,
+          "height": 99,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "towards",
+          "constructionMs": 569.8999999999069,
+          "bakeMs": 9,
+          "width": 214,
+          "height": 141,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "towards",
+          "constructionMs": 628.3000000002794,
+          "bakeMs": 9.100000000093132,
+          "width": 214,
+          "height": 141,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "away",
+          "constructionMs": 641.1999999997206,
+          "bakeMs": 8.200000000186265,
+          "width": 200,
+          "height": 141,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "away",
+          "constructionMs": 499.89999999990687,
+          "bakeMs": 8.200000000186265,
+          "width": 200,
+          "height": 141,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "top",
+          "constructionMs": 657.6000000000931,
+          "bakeMs": 10,
+          "width": 214,
+          "height": 161,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "top",
+          "constructionMs": 508.70000000018626,
+          "bakeMs": 9.399999999906868,
+          "width": 214,
+          "height": 161,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "towards",
+          "constructionMs": 4371,
+          "bakeMs": 72.5,
+          "width": 559,
+          "height": 355,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "towards",
+          "constructionMs": 4601.5,
+          "bakeMs": 64.10000000009313,
+          "width": 559,
+          "height": 355,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "away",
+          "constructionMs": 3715.1999999997206,
+          "bakeMs": 62.5,
+          "width": 524,
+          "height": 354,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "away",
+          "constructionMs": 3771.5,
+          "bakeMs": 55.3000000002794,
+          "width": 524,
+          "height": 354,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "top",
+          "constructionMs": 3608,
+          "bakeMs": 70.79999999981374,
+          "width": 559,
+          "height": 429,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "top",
+          "constructionMs": 3684.899999999907,
+          "bakeMs": 72.89999999990687,
+          "width": 559,
+          "height": 429,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        }
+      ],
+      "pixel": 3,
+      "selectedHash": "346c5dbd",
+      "currentHash": "6d921613"
+    },
+    {
+      "id": "cheetah",
+      "timings": [
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "towards",
+          "constructionMs": 58.5,
+          "bakeMs": 2.7000000001862645,
+          "width": 63,
+          "height": 57,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "towards",
+          "constructionMs": 61.39999999990687,
+          "bakeMs": 2.1000000000931323,
+          "width": 63,
+          "height": 57,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "away",
+          "constructionMs": 31.200000000186265,
+          "bakeMs": 1.5,
+          "width": 55,
+          "height": 56,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "away",
+          "constructionMs": 32.6999999997206,
+          "bakeMs": 1.6000000000931323,
+          "width": 55,
+          "height": 56,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "top",
+          "constructionMs": 53.5,
+          "bakeMs": 1.2999999998137355,
+          "width": 63,
+          "height": 52,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "top",
+          "constructionMs": 41.700000000186265,
+          "bakeMs": 1.5,
+          "width": 63,
+          "height": 52,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "towards",
+          "constructionMs": 148.5,
+          "bakeMs": 7.2999999998137355,
+          "width": 146,
+          "height": 105,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "towards",
+          "constructionMs": 168.39999999990687,
+          "bakeMs": 4.7000000001862645,
+          "width": 146,
+          "height": 105,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "away",
+          "constructionMs": 154.29999999981374,
+          "bakeMs": 9.399999999906868,
+          "width": 142,
+          "height": 111,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "away",
+          "constructionMs": 138.10000000009313,
+          "bakeMs": 4.5,
+          "width": 142,
+          "height": 111,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "top",
+          "constructionMs": 126.39999999990687,
+          "bakeMs": 3.6000000000931323,
+          "width": 146,
+          "height": 109,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "top",
+          "constructionMs": 131.5,
+          "bakeMs": 3.6000000000931323,
+          "width": 146,
+          "height": 109,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "towards",
+          "constructionMs": 475.10000000009313,
+          "bakeMs": 13.799999999813735,
+          "width": 260,
+          "height": 179,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "towards",
+          "constructionMs": 494.8000000002794,
+          "bakeMs": 13.899999999906868,
+          "width": 261,
+          "height": 179,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "away",
+          "constructionMs": 472.39999999990687,
+          "bakeMs": 12,
+          "width": 248,
+          "height": 185,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "away",
+          "constructionMs": 407.70000000018626,
+          "bakeMs": 11.899999999906868,
+          "width": 248,
+          "height": 185,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "top",
+          "constructionMs": 506.29999999981374,
+          "bakeMs": 10.300000000279397,
+          "width": 260,
+          "height": 195,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "top",
+          "constructionMs": 498,
+          "bakeMs": 10.799999999813735,
+          "width": 261,
+          "height": 195,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "towards",
+          "constructionMs": 3001.7000000001863,
+          "bakeMs": 86.39999999990687,
+          "width": 673,
+          "height": 510,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "towards",
+          "constructionMs": 3061.0999999996275,
+          "bakeMs": 95.8000000002794,
+          "width": 674,
+          "height": 510,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "away",
+          "constructionMs": 2927.7999999998137,
+          "bakeMs": 80.60000000009313,
+          "width": 667,
+          "height": 485,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "away",
+          "constructionMs": 3114.2999999998137,
+          "bakeMs": 91.20000000018626,
+          "width": 667,
+          "height": 485,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "top",
+          "constructionMs": 3380.7000000001863,
+          "bakeMs": 65.59999999962747,
+          "width": 673,
+          "height": 501,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "top",
+          "constructionMs": 3410.5,
+          "bakeMs": 67,
+          "width": 674,
+          "height": 501,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        }
+      ],
+      "pixel": 3,
+      "selectedHash": "b83670f8",
+      "currentHash": "4f363d82"
+    },
+    {
+      "id": "jaguar",
+      "timings": [
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "towards",
+          "constructionMs": 59.5,
+          "bakeMs": 2.8999999999068677,
+          "width": 54,
+          "height": 50,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "towards",
+          "constructionMs": 44.8000000002794,
+          "bakeMs": 4.2999999998137355,
+          "width": 54,
+          "height": 50,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "away",
+          "constructionMs": 31.5,
+          "bakeMs": 1.2000000001862645,
+          "width": 48,
+          "height": 49,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "away",
+          "constructionMs": 29.399999999906868,
+          "bakeMs": 1.2999999998137355,
+          "width": 48,
+          "height": 49,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "top",
+          "constructionMs": 35.700000000186265,
+          "bakeMs": 1.1999999997206032,
+          "width": 54,
+          "height": 48,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "top",
+          "constructionMs": 41.5,
+          "bakeMs": 1.400000000372529,
+          "width": 54,
+          "height": 48,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "towards",
+          "constructionMs": 82.79999999981374,
+          "bakeMs": 4.100000000093132,
+          "width": 119,
+          "height": 72,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "towards",
+          "constructionMs": 84.1999999997206,
+          "bakeMs": 3,
+          "width": 119,
+          "height": 72,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "away",
+          "constructionMs": 60.40000000037253,
+          "bakeMs": 2.5,
+          "width": 106,
+          "height": 72,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "away",
+          "constructionMs": 73.89999999990687,
+          "bakeMs": 4.5,
+          "width": 106,
+          "height": 72,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "top",
+          "constructionMs": 102.89999999990687,
+          "bakeMs": 4.5,
+          "width": 119,
+          "height": 89,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "top",
+          "constructionMs": 100.10000000009313,
+          "bakeMs": 5.099999999627471,
+          "width": 119,
+          "height": 89,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "towards",
+          "constructionMs": 464.70000000018626,
+          "bakeMs": 10.700000000186265,
+          "width": 183,
+          "height": 118,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "towards",
+          "constructionMs": 466.39999999990687,
+          "bakeMs": 11.799999999813735,
+          "width": 183,
+          "height": 118,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "away",
+          "constructionMs": 249.39999999990687,
+          "bakeMs": 5.7000000001862645,
+          "width": 158,
+          "height": 117,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "away",
+          "constructionMs": 250.10000000009313,
+          "bakeMs": 5.7999999998137355,
+          "width": 158,
+          "height": 117,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "top",
+          "constructionMs": 389.20000000018626,
+          "bakeMs": 7.5,
+          "width": 183,
+          "height": 141,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "top",
+          "constructionMs": 411.10000000009313,
+          "bakeMs": 7.7999999998137355,
+          "width": 183,
+          "height": 141,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "towards",
+          "constructionMs": 2845.100000000093,
+          "bakeMs": 57.5,
+          "width": 524,
+          "height": 311,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "towards",
+          "constructionMs": 2811.7999999998137,
+          "bakeMs": 48.10000000009313,
+          "width": 524,
+          "height": 311,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "away",
+          "constructionMs": 2346.899999999907,
+          "bakeMs": 66.6999999997206,
+          "width": 470,
+          "height": 309,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "away",
+          "constructionMs": 2302.4000000003725,
+          "bakeMs": 39.89999999990687,
+          "width": 470,
+          "height": 309,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "top",
+          "constructionMs": 2569.1999999997206,
+          "bakeMs": 66.3000000002794,
+          "width": 524,
+          "height": 398,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "top",
+          "constructionMs": 2620.1999999997206,
+          "bakeMs": 53.200000000186265,
+          "width": 524,
+          "height": 398,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        }
+      ],
+      "pixel": 3,
+      "selectedHash": "ee3ff555",
+      "currentHash": "7c2dbec9"
+    },
+    {
+      "id": "snowleopard",
+      "timings": [
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "towards",
+          "constructionMs": 25,
+          "bakeMs": 3.2000000001862645,
+          "width": 58,
+          "height": 47,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "towards",
+          "constructionMs": 67.59999999962747,
+          "bakeMs": 6.300000000279397,
+          "width": 64,
+          "height": 48,
+          "markingMetrics": {
+            "pixelsPerUnit": 22.971133484475473,
+            "k": 2.625272398225768,
+            "around": 5,
+            "nominalOuterPx": 7.000000000000001
+          },
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 2
+          }
+        },
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "away",
+          "constructionMs": 19.100000000093132,
+          "bakeMs": 7.2999999998137355,
+          "width": 57,
+          "height": 47,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "away",
+          "constructionMs": 29.5,
+          "bakeMs": 1.3999999999068677,
+          "width": 56,
+          "height": 47,
+          "markingMetrics": {
+            "pixelsPerUnit": 19.898018107563175,
+            "k": 2.274059212292934,
+            "around": 4,
+            "nominalOuterPx": 7.000000000000001
+          },
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 2
+          }
+        },
+        {
+          "label": "Current",
+          "level": 0,
+          "facing": "top",
+          "constructionMs": 18.799999999813735,
+          "bakeMs": 1.8000000002793968,
+          "width": 58,
+          "height": 47,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 0,
+          "facing": "top",
+          "constructionMs": 37.10000000009313,
+          "bakeMs": 1.599999999627471,
+          "width": 64,
+          "height": 52,
+          "markingMetrics": {
+            "pixelsPerUnit": 22.971133484475473,
+            "k": 2.625272398225768,
+            "around": 5,
+            "nominalOuterPx": 7.000000000000001
+          },
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 2
+          }
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "towards",
+          "constructionMs": 54.10000000009313,
+          "bakeMs": 3.2000000001862645,
+          "width": 129,
+          "height": 80,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "towards",
+          "constructionMs": 76,
+          "bakeMs": 3.5,
+          "width": 133,
+          "height": 83,
+          "markingMetrics": {
+            "pixelsPerUnit": 41.49717010809587,
+            "k": 4.742533726639529,
+            "around": 8,
+            "nominalOuterPx": 6.999999999999999
+          },
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "away",
+          "constructionMs": 42.799999999813735,
+          "bakeMs": 2.8999999999068677,
+          "width": 118,
+          "height": 78,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "away",
+          "constructionMs": 54.60000000009313,
+          "bakeMs": 3,
+          "width": 118,
+          "height": 78,
+          "markingMetrics": {
+            "pixelsPerUnit": 36.7085401320763,
+            "k": 4.195261729380149,
+            "around": 7,
+            "nominalOuterPx": 7
+          },
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 1,
+          "facing": "top",
+          "constructionMs": 45.10000000009313,
+          "bakeMs": 3.1000000000931323,
+          "width": 129,
+          "height": 97,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 1,
+          "facing": "top",
+          "constructionMs": 68.29999999981374,
+          "bakeMs": 3.5,
+          "width": 133,
+          "height": 100,
+          "markingMetrics": {
+            "pixelsPerUnit": 41.49717010809587,
+            "k": 4.742533726639529,
+            "around": 8,
+            "nominalOuterPx": 6.999999999999999
+          },
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "towards",
+          "constructionMs": 149.89999999990687,
+          "bakeMs": 8.700000000186265,
+          "width": 219,
+          "height": 133,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "towards",
+          "constructionMs": 238.10000000009313,
+          "bakeMs": 8,
+          "width": 219,
+          "height": 133,
+          "markingMetrics": {
+            "pixelsPerUnit": 63.81982957055764,
+            "k": 7.293694808063731,
+            "around": 14,
+            "nominalOuterPx": 7
+          },
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "away",
+          "constructionMs": 116,
+          "bakeMs": 7,
+          "width": 198,
+          "height": 128,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "away",
+          "constructionMs": 184.29999999981374,
+          "bakeMs": 7.5,
+          "width": 198,
+          "height": 128,
+          "markingMetrics": {
+            "pixelsPerUnit": 57.51981943688882,
+            "k": 6.573693649930151,
+            "around": 13,
+            "nominalOuterPx": 7
+          },
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 2,
+          "facing": "top",
+          "constructionMs": 144.60000000009313,
+          "bakeMs": 8.399999999906868,
+          "width": 219,
+          "height": 165,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 2,
+          "facing": "top",
+          "constructionMs": 221,
+          "bakeMs": 8.899999999906868,
+          "width": 219,
+          "height": 165,
+          "markingMetrics": {
+            "pixelsPerUnit": 63.81982957055764,
+            "k": 7.293694808063731,
+            "around": 14,
+            "nominalOuterPx": 7
+          },
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "towards",
+          "constructionMs": 950.3000000002794,
+          "bakeMs": 28.59999999962747,
+          "width": 328,
+          "height": 269,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "towards",
+          "constructionMs": 1798.2000000001863,
+          "bakeMs": 31.299999999813735,
+          "width": 328,
+          "height": 269,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "away",
+          "constructionMs": 921.6000000000931,
+          "bakeMs": 26,
+          "width": 299,
+          "height": 268,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "away",
+          "constructionMs": 1453.7000000001863,
+          "bakeMs": 25.100000000093132,
+          "width": 302,
+          "height": 268,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        },
+        {
+          "label": "Current",
+          "level": 3,
+          "facing": "top",
+          "constructionMs": 868.8999999999069,
+          "bakeMs": 27.799999999813735,
+          "width": 328,
+          "height": 268,
+          "markingMetrics": null,
+          "graphDiagnostics": null
+        },
+        {
+          "label": "Shared graph diagnostic",
+          "level": 3,
+          "facing": "top",
+          "constructionMs": 1680.2000000001863,
+          "bakeMs": 51.40000000037253,
+          "width": 328,
+          "height": 268,
+          "markingMetrics": null,
+          "graphDiagnostics": {
+            "normalisedDepths": 0,
+            "clampedBellyHeights": 0
+          }
+        }
+      ],
+      "pixel": 3,
+      "selectedHash": "e92182ab",
+      "currentHash": "c210acbf"
+    }
+  ],
+  "costScope": "First unique sprite construction and albedo bake wall time in a fresh page, serial current/graph order; includes JIT/GC effects. Not gameplay frame time or GPU cost.",
+  "markingScope": "markingMetrics reports nominal surface diameter before projection; foreshortening/clipping and native visible ring size require image review.",
+  "visualAcceptance": "pending independent likeness review",
+  "targetComments": [
+    6513070150,
+    6513242775,
+    6513641499
+  ]
+}
