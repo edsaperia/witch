@@ -1,6 +1,9 @@
 // Diagnostic-only candidate: never imported by the game.
 function waterOnlyDiagnosticSource(fragment, library) {
   if (!library || fragment.split(library).length !== 2) throw new Error('lake library source shape changed');
+  const guards = fragment.split('#ifndef GROUND_WATER_ONLY').length - 1;
+  if (guards === 2) return fragment; // the production shader now carries these exact guards
+  if (guards) throw new Error('water-only guard source shape changed');
   const start = fragment.indexOf('      float LK =');
   const end = fragment.indexOf('} else if (ld > -2.6)', start);
   if (start < 0 || end < 0) throw new Error('lake special branch source shape changed');

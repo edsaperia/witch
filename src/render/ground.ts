@@ -21,7 +21,8 @@ import { koiPonds, lakeKnobs } from "../rules/lakes";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { FX_UNIFORMS, FX_FIELD_GLSL } from "./fx/uniforms";
 import { NATIVE_GLSL, nativeFxUniforms } from "./fx/native";
-import { LAKE_LOOKS_GLSL, lakeLookTexture, lakeLooksOf } from "./lakeLooks";
+import { LAKE_LOOKS_GLSL, lakeLookTexture, lakeLooksOf, hasForcedLakeLook } from "./lakeLooks";
+import { groundFamily, groundDefines } from "./groundFamily";
 import { HEIGHT_GLSL, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import type { TilePixels } from "./artBuild";
 import type { Style } from "./style";
@@ -131,7 +132,9 @@ ${VALUE_NOISE_GLSL}${BAYER_GLSL}vec3 hsv(float h, float s, float v) {
   return clamp(v, 0.0, 1.0) * mix(vec3(1.0), k, clamp(s, 0.0, 1.0));
 }
 #ifdef GROUND_LAKES
+#ifndef GROUND_WATER_ONLY
 ${LAKE_LOOKS_GLSL}
+#endif
 /** How much of a zoo lake's sigil is under p (0 to 1): faint, its lines wavering with the water. */
 float lakeSigil(vec2 p) {
   for (int i = 0; i < 4; i++) {
@@ -501,12 +504,15 @@ void main() {
     if (kuv.x > 0.0 && kuv.y > 0.0 && kuv.x < 1.0 && kuv.y < 1.0) {
       float ld = texture2D(uLakes, kuv).r + (vnoise(p / 5.0 + 23.0) - 0.5) * 1.4; // (+ on the water; its line wobbled a little)
       // a biome lake (Ed, 2026-10-23; render/lakeLooks.ts): its look's shore and water, the sea chart's look for it
+#ifndef GROUND_WATER_ONLY
       float LK = ld > -14.0 ? lakeLookAt(kuv) : 0.0;
       if (LK > 0.5 && ld > -lakeRim(LK)) {
         vec3 lit = nightLightShaded(vec3(0.0, 1.0, 0.0), vWorld, 1.0);
         if (ld < (LK > 1.5 && LK < 2.5 ? -0.6 : 0.0)) c = lakeShore(LK, ld, p, c);
         else { float hz; vec3 w = lakeWater(LK, ld, p, px, c, lit, hz); w = mix(w, w * 1.25 + vec3(0.06, 0.08, 0.09), lakeSigil(p) * 0.4); w=nativeFxColour(fxTint(w,fxField(p))); gl_FragColor = vec4(mix(w, haze(w, vWorld), hz), 1.0); return; }
-      } else if (ld > -2.6) {
+      } else
+#endif
+      if (ld > -2.6) {
         float lap = 0.5 + 0.5 * sin(uTime * 1.1 + vnoise(p / 30.0 + 5.0) * 6.0), front = 0.35 * lap - 0.1; // (the edge laps in and out)
         vec3 lit = nightLightShaded(vec3(0.0, 1.0, 0.0), vWorld, 1.0);
         if (ld < front) {
@@ -676,7 +682,8 @@ export class Ground {
     // The shader as two programs over one set of uniforms (the perf pass's fix C, 2026-10-23, tools/bench/ground.cjs: code a
     // pixel never runs still cost the ground a quarter to two fifths of its time on the cloud's renderer): the lakes' code only on
     // an island with lakes (fixed for the night), and the beach and sea's only in the second, drawn while the beach is on (setBeach).
-    const lakes = !!map.bounds.lakes, defines = (beach: boolean): Record<string, string> => ({ ...(lakes ? { GROUND_LAKES: "" } : {}), ...(beach ? { GROUND_BEACH: "" } : {}) });
+    const family = groundFamily(!!map.bounds.lakes, map.bounds.lakes ? lakeLooksOf(map)?.any ?? null : null, hasForcedLakeLook(), !!map.zoo?.layout);
+    const defines = (beach: boolean) => groundDefines(family, beach);
     const mat = new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG, defines: defines(false),
       uniforms: {

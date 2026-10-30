@@ -16,5 +16,6 @@ it('guards only the biome helpers and special branch, preserving ordinary water 
   const changed = waterOnlyDiagnosticSource(original, library);
   expect(changed).toContain(library); expect(changed).toContain(branch);
   expect(changed).toContain('#endif\nif (ld > -2.6) { ordinary(); }');
+  expect(waterOnlyDiagnosticSource(changed, library)).toBe(changed);
   expect(() => waterOnlyDiagnosticSource(original + library, library)).toThrow('source shape');
 });

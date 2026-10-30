@@ -1,0 +1,27 @@
+{
+  "baseline": "523b5cec0",
+  "vertexIdentical": true,
+  "fullPathTokenParity": [
+    {
+      "lakes": false,
+      "beach": false,
+      "identical": true
+    },
+    {
+      "lakes": false,
+      "beach": true,
+      "identical": true
+    },
+    {
+      "lakes": true,
+      "beach": false,
+      "identical": true
+    },
+    {
+      "lakes": true,
+      "beach": true,
+      "identical": true
+    }
+  ],
+  "pixelProof": false
+}

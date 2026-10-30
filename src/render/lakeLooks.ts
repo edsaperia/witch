@@ -18,6 +18,8 @@ function forcedLook(): LakeLook | null {
   const l = (v === "glacier" ? "ice" : v) as LakeLook | null;
   return l && LOOK_IDS.includes(l) ? l : null;
 }
+/** A valid forced look must retain the complete shader, including an explicitly forced water look. */
+export const hasForcedLakeLook = (): boolean => forcedLook() !== null;
 
 /** A map's lakes and their looks: `lake` each sample of the lakes' map's lake (-1 ashore), `looks` each lake's, and `near` each
  *  sample's look (LOOK_IDS: its lake's, or ashore the nearest lake's within RIM metres; 0 none). Made once a map. */

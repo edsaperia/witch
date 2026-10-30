@@ -1,0 +1,1113 @@
+{
+  "sha": "743ffda3960749a84e280e450bb3df289fc2e661",
+  "world": 0,
+  "nightSeed": 424242,
+  "found": [],
+  "expected": 65,
+  "geometry": "Normal LAND_STEP and smoothing; early return before entities/paths, no application source mutation",
+  "rows": [
+    {
+      "island": "home",
+      "phase": 0,
+      "lakes": false,
+      "looks": [],
+      "family": "no-lakes",
+      "plain": {},
+      "beach": {
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "hedgehog",
+      "phase": 1,
+      "lakes": true,
+      "looks": [
+        "water"
+      ],
+      "family": "water-only-lakes",
+      "plain": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "squirrel",
+      "phase": 1,
+      "lakes": true,
+      "looks": [
+        "water"
+      ],
+      "family": "water-only-lakes",
+      "plain": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "hare",
+      "phase": 1,
+      "lakes": true,
+      "looks": [
+        "water"
+      ],
+      "family": "water-only-lakes",
+      "plain": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "fox",
+      "phase": 1,
+      "lakes": true,
+      "looks": [
+        "water"
+      ],
+      "family": "water-only-lakes",
+      "plain": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "marten",
+      "phase": 1,
+      "lakes": true,
+      "looks": [
+        "water"
+      ],
+      "family": "water-only-lakes",
+      "plain": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "stoat",
+      "phase": 1,
+      "lakes": true,
+      "looks": [
+        "water"
+      ],
+      "family": "water-only-lakes",
+      "plain": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "mole",
+      "phase": 1,
+      "lakes": true,
+      "looks": [
+        "water"
+      ],
+      "family": "water-only-lakes",
+      "plain": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "snail",
+      "phase": 1,
+      "lakes": true,
+      "looks": [
+        "water"
+      ],
+      "family": "water-only-lakes",
+      "plain": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "dormouse",
+      "phase": 1,
+      "lakes": true,
+      "looks": [
+        "water"
+      ],
+      "family": "water-only-lakes",
+      "plain": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "badger",
+      "phase": 1,
+      "lakes": true,
+      "looks": [
+        "water"
+      ],
+      "family": "water-only-lakes",
+      "plain": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "beetle",
+      "phase": 4,
+      "lakes": true,
+      "looks": [
+        "lava",
+        "tarn"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "boar",
+      "phase": 2,
+      "lakes": true,
+      "looks": [
+        "water"
+      ],
+      "family": "water-only-lakes",
+      "plain": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "otter",
+      "phase": 3,
+      "lakes": true,
+      "looks": [
+        "water"
+      ],
+      "family": "water-only-lakes",
+      "plain": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "heron",
+      "phase": 3,
+      "lakes": true,
+      "looks": [
+        "lily"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "newt",
+      "phase": 2,
+      "lakes": true,
+      "looks": [
+        "water"
+      ],
+      "family": "water-only-lakes",
+      "plain": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "woodlouse",
+      "phase": 4,
+      "lakes": true,
+      "looks": [
+        "lava"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "moth",
+      "phase": 2,
+      "lakes": true,
+      "looks": [
+        "water"
+      ],
+      "family": "water-only-lakes",
+      "plain": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "bat",
+      "phase": 3,
+      "lakes": true,
+      "looks": [
+        "sinkhole"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "toad",
+      "phase": 2,
+      "lakes": true,
+      "looks": [
+        "water"
+      ],
+      "family": "water-only-lakes",
+      "plain": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "raven",
+      "phase": 3,
+      "lakes": true,
+      "looks": [
+        "lava"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "elk",
+      "phase": 3,
+      "lakes": true,
+      "looks": [
+        "water"
+      ],
+      "family": "water-only-lakes",
+      "plain": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "wolf",
+      "phase": 3,
+      "lakes": true,
+      "looks": [
+        "water"
+      ],
+      "family": "water-only-lakes",
+      "plain": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "lynx",
+      "phase": 3,
+      "lakes": true,
+      "looks": [
+        "tarn"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "ram",
+      "phase": 3,
+      "lakes": true,
+      "looks": [
+        "lava",
+        "water"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "salamander",
+      "phase": 3,
+      "lakes": true,
+      "looks": [
+        "lava",
+        "water"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "spider",
+      "phase": 3,
+      "lakes": true,
+      "looks": [
+        "water"
+      ],
+      "family": "water-only-lakes",
+      "plain": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "snake",
+      "phase": 3,
+      "lakes": true,
+      "looks": [
+        "water"
+      ],
+      "family": "water-only-lakes",
+      "plain": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "cat",
+      "phase": 3,
+      "lakes": true,
+      "looks": [
+        "water"
+      ],
+      "family": "water-only-lakes",
+      "plain": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "stag",
+      "phase": 2,
+      "lakes": true,
+      "looks": [
+        "water"
+      ],
+      "family": "water-only-lakes",
+      "plain": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "beaver",
+      "phase": 2,
+      "lakes": true,
+      "looks": [
+        "water"
+      ],
+      "family": "water-only-lakes",
+      "plain": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "bear",
+      "phase": 5,
+      "lakes": true,
+      "looks": [
+        "sinkhole",
+        "tar"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "owl",
+      "phase": 3,
+      "lakes": true,
+      "looks": [
+        "tar"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "arcticfox",
+      "phase": 4,
+      "lakes": true,
+      "looks": [
+        "ice",
+        "tar"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "ibex",
+      "phase": 4,
+      "lakes": true,
+      "looks": [
+        "ice",
+        "tarn"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "redpanda",
+      "phase": 4,
+      "lakes": true,
+      "looks": [
+        "lava",
+        "tarn"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "komodo",
+      "phase": 5,
+      "lakes": true,
+      "looks": [
+        "lava"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "meerkat",
+      "phase": 3,
+      "lakes": true,
+      "looks": [
+        "oasis"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "armadillo",
+      "phase": 4,
+      "lakes": true,
+      "looks": [
+        "lava",
+        "rust"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "fennec",
+      "phase": 3,
+      "lakes": true,
+      "looks": [
+        "water"
+      ],
+      "family": "water-only-lakes",
+      "plain": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_WATER_ONLY": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "lion",
+      "phase": 4,
+      "lakes": true,
+      "looks": [
+        "oasis",
+        "rust"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "crocodile",
+      "phase": 4,
+      "lakes": true,
+      "looks": [
+        "lily"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "dragonfly",
+      "phase": 4,
+      "lakes": true,
+      "looks": [
+        "lily",
+        "sinkhole"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "tiger",
+      "phase": 4,
+      "lakes": true,
+      "looks": [
+        "sinkhole"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "flyingsquirrel",
+      "phase": 4,
+      "lakes": true,
+      "looks": [
+        "tar"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "roe",
+      "phase": 4,
+      "lakes": true,
+      "looks": [
+        "sinkhole",
+        "tar"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "penguin",
+      "phase": 4,
+      "lakes": true,
+      "looks": [
+        "ice"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "frosttroll",
+      "phase": 5,
+      "lakes": true,
+      "looks": [
+        "ice",
+        "tarn"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "snowleopard",
+      "phase": 5,
+      "lakes": true,
+      "looks": [
+        "tarn"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "frostwyrm",
+      "phase": 5,
+      "lakes": true,
+      "looks": [
+        "tarn"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "griffin",
+      "phase": 5,
+      "lakes": true,
+      "looks": [
+        "rust"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "sphinx",
+      "phase": 5,
+      "lakes": true,
+      "looks": [
+        "lily",
+        "oasis"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "stegosaurus",
+      "phase": 5,
+      "lakes": true,
+      "looks": [
+        "lava"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "rattlesnake",
+      "phase": 4,
+      "lakes": true,
+      "looks": [
+        "rust"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "scorpion",
+      "phase": 5,
+      "lakes": true,
+      "looks": [
+        "rust"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "rhino",
+      "phase": 5,
+      "lakes": true,
+      "looks": [
+        "oasis"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "cheetah",
+      "phase": 4,
+      "lakes": true,
+      "looks": [
+        "oasis"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "hydra",
+      "phase": 5,
+      "lakes": true,
+      "looks": [
+        "lily",
+        "sinkhole"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "crab",
+      "phase": 5,
+      "lakes": true,
+      "looks": [
+        "lily"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "featheredserpent",
+      "phase": 5,
+      "lakes": true,
+      "looks": [
+        "sinkhole",
+        "tar"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "elephant",
+      "phase": 5,
+      "lakes": true,
+      "looks": [
+        "lily"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "jaguar",
+      "phase": 4,
+      "lakes": true,
+      "looks": [
+        "sinkhole"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "raccoon",
+      "phase": 3,
+      "lakes": true,
+      "looks": [
+        "tar"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "unicorn",
+      "phase": 5,
+      "lakes": true,
+      "looks": [
+        "ice",
+        "tar"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    },
+    {
+      "island": "polarbear",
+      "phase": 5,
+      "lakes": true,
+      "looks": [
+        "ice",
+        "tar"
+      ],
+      "family": "full-lakes",
+      "plain": {
+        "GROUND_LAKES": ""
+      },
+      "beach": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": ""
+      }
+    }
+  ],
+  "provenance": {
+    "workingTreeSelector": true,
+    "selectorHash": "2ceb37cbec95f18c4dd38615982d4139012a2e062208b4749f0168bb14fcf728",
+    "note": "Generated before candidate commit, using the exact selector hash; geometry-only diagnostic matches full-map Home/Fox/Otter/Raven witnesses."
+  }
+}
