@@ -186,3 +186,33 @@ Unresolved, undeclared or nonliteral dynamic edges fail closed rather than being
 silently omitted. Text fingerprints normalize CRLF and length-frame paths/bytes.
 Five focused fixtures and typecheck pass. It is not yet wired into builds or
 cache keys; its synthetic isolation test is not proof of the real house graph.
+
+## Fingerprint integration checkpoint (2026-10-30 14:10 UTC)
+
+COORDINATOR6524003465 authorized the lighting import. It now imports hsv2rgb
+directly from core.js, with its body unchanged. The same three byte comparisons
+passed afterward; 18 nearby tests passed at that import-only checkpoint.
+
+The build now derives all 34 kinds from ArtJob/runJob and injects their short
+hashes. Keys no longer contain the global ART_HASH (kept only as a diagnostic).
+Existing runtime salts and null party caching remain, unknown hashes miss, and
+the art-kind-v1 prefix causes one cold migration without clearing the database.
+The real isolation fixture changes a creature drawing function in a virtual
+source tree: its creature key changes while housePiece stays unchanged. A shared
+packing edit changes all 34 source fingerprints. No modified fixture art executes.
+
+Initialization requires finer inputs than whole-file import walks: HERON_GAIT's
+metadata can be read at load time without reading every model function's body.
+The shared component therefore binds initializer/declaration text, transitive
+references, module import order and variable/effect order separately from whole
+drawing files. Unknown guards/namespaces broaden rather than silently prune.
+Tests cover transitive initialization calls, static class effects, computed
+member names, shadowed built-ins and variable reordering. Filename maps remain
+upper bounds; affectedArtJobs compares the complete fingerprints for future tools.
+
+A preliminary generated map has 83 whole drawing files across kinds, 10 shared
+whole-file inputs (including build producers), and 2,675 conservative conditional
+initialization parts totaling 1,273,097 text bytes before hashing. This is not a
+claim that every such input changes every picture. Historical replay must measure
+the remaining global invalidation rate. Species registries are still conservative;
+there is no species-specific fingerprint table or measured loading-time claim.

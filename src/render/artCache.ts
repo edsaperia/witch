@@ -1,6 +1,6 @@
 // Drawn sprite sets kept in the browser (IndexedDB) between visits, so a reload, or a new build
 // whose art hasn't changed, starts at once instead of drawing every area's trees again. Keyed by
-// the art code's hash (ART_HASH, from vite.config.ts), the style and the set (seed and scale
+// each job kind's source fingerprint (from vite.config.ts), the style and the set (seed and scale
 // included where they matter). Safe to miss: with storage blocked, full or failing, every call
 // quietly answers nothing and the sets are drawn as before.
 import type { ArtJob, ArtResult } from "./artBuild";
@@ -15,7 +15,10 @@ export interface CacheHint { cacheKey?: string | null; /** Only if it's kept: a 
 export { islandArtSeed } from "../rules/stumps";
 
 declare const __ART_HASH__: string;
+/** Legacy diagnostic only; never a prefix on the per-kind cache keys. */
 export const ART_HASH = typeof __ART_HASH__ === "string" ? __ART_HASH__ : "dev";
+declare const __ART_KIND_HASHES__: Record<string, string>;
+export const ART_KIND_HASHES: Readonly<Record<string, string>> = typeof __ART_KIND_HASHES__ === "object" ? __ART_KIND_HASHES__ : {};
 
 // (version 2: atlases kept as palette indices, render/palette.ts; the RGBA sets of version 1 are let go as it opens)
 const DB = "witch-art", STORE = "sets", VERSION = 2;
@@ -39,7 +42,13 @@ function open(): Promise<IDBDatabase | null> {
 /** Where a set is kept between visits: the art's code, the style (its hash), the set, and for an area type its seed and scale.
  *  Party looks are per creature, so they aren't kept (null). The game's art (render/assets.ts) and the landing's bake ahead
  *  (app/landingBake.ts) both key by it. */
-export const artCacheKey = (j: ArtJob, styleHash: string): string | null => j.kind === "party" ? null : [ART_HASH, styleHash, j.kind + ":" + j.id, j.kind === "type" ? `${j.seed}|${j.K}${j.biome ? "|" + j.biome : ""}` : j.kind === "beachEdge" || j.kind === "lakeShore" ? `${j.K}` : ""].join("|");
+export const artCacheKey = (j: ArtJob, styleHash: string, fingerprints = ART_KIND_HASHES): string | null => {
+  const fingerprint = fingerprints[j.kind];
+  // One schema migration, no IDB clear. Unrecognized kinds miss safely rather than
+  // sharing a fallback key whose incomplete dependencies could retain stale art.
+  if (j.kind === "party" || !fingerprint) return null;
+  return ["art-kind-v1", fingerprint, styleHash, j.kind + ":" + j.id, j.kind === "type" ? `${j.seed}|${j.K}${j.biome ? "|" + j.biome : ""}` : j.kind === "beachEdge" || j.kind === "lakeShore" ? `${j.K}` : ""].join("|");
+};
 
 /** A set drawn before, or null. */
 export async function cacheGet(key: string): Promise<ArtResult | null> {
