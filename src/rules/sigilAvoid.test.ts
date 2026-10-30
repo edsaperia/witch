@@ -4,8 +4,11 @@ import { spawnCreatures, stepCreature, type Creature } from "./creatures";
 import { danceAt } from "./creatureStates";
 import { stepLeashed } from "./leash";
 import { floorGrid, gatherFloorSigils, onFloorSigil, setFloorSigils, type FloorSigil } from "./sigilAvoid";
-import { TUNING } from "./tuning";
+import { TUNING as FULL_TUNING } from "./tuning";
+import { smallWorldTuning } from "../test/worlds";
 import { newGame } from "./game";
+
+const TUNING = smallWorldTuning(FULL_TUNING, "Sigil avoidance samples local 10–12 m clusters and explicit placed coordinates, independent of world extent.");
 
 // Ed, 2026-10-28: "When idling or dancing, creatures should try and avoid standing on floor sigils."
 describe("creatures keep off the sigils on the floor", () => {
