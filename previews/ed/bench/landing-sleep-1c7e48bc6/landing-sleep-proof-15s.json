@@ -1,0 +1,1573 @@
+{
+  "sampleAt": 81362.79999995232,
+  "dueAt": 65548.40000009537,
+  "graceMs": 15814.5,
+  "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "chartPresent": false,
+  "limited": true,
+  "drawStatus": {
+    "active": true,
+    "skipped": {},
+    "fallback": {
+      "Mesh#347:ShaderMaterial": 1
+    },
+    "submitted": {
+      "treehouse#359:ShaderMaterial": 2,
+      "Mesh#205:ShaderMaterial": 18,
+      "Mesh#44:ShaderMaterial": 1,
+      "Mesh#177:MeshBasicMaterial": 2,
+      "treehouse (silhouette)#361:ShaderMaterial": 1,
+      "treehouse (see-through)#360:ShaderMaterial": 1,
+      "Mesh#45:ShaderMaterial": 1,
+      "treehouse (silhouette)#362:ShaderMaterial": 1,
+      "Loading house platform#56:ShaderMaterial": 1,
+      "Mesh#54:ShaderMaterial": 1,
+      "crown#67:ShaderMaterial": 1,
+      "crown#66:ShaderMaterial": 1,
+      "crown#78:ShaderMaterial": 1,
+      "crown#79:ShaderMaterial": 1,
+      "Mesh#27:ShaderMaterial": 8,
+      "Mesh#38:ShaderMaterial": 1
+    }
+  },
+  "fullWitchReady": true,
+  "houseShare": 0,
+  "sleeping": true,
+  "clock": 0,
+  "beat": "dream",
+  "zzz": true,
+  "ground": {
+    "id": 347,
+    "visible": true,
+    "layerMask": 3,
+    "behind": 0,
+    "programs": [
+      {
+        "id": 84,
+        "ready": false
+      }
+    ]
+  },
+  "platformPresent": true,
+  "unsafeUniformReads": 0,
+  "methods": {
+    "getUniforms": {
+      "count": 56,
+      "longestMs": 0.10000014305114746,
+      "at": 81315.79999995232
+    }
+  },
+  "worstFrameMs": 708.3999999999942,
+  "objects": [
+    {
+      "id": 4,
+      "name": "Magic upright layer 0",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 5,
+      "name": "Magic upright layer 1",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 6,
+      "name": "Magic upright layer 2",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 7,
+      "name": "Magic upright layer 3",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 8,
+      "name": "Magic ground layer 0",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 9,
+      "name": "Magic ground layer 1",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 10,
+      "name": "Magic ground layer 2",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 11,
+      "name": "Magic ground layer 3",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 12,
+      "name": "Magic canopy halo",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 32,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 33,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 35,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 36,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 37,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 44,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 45,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 46,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 56,
+      "name": "Loading house platform",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 55,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 57,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 58,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 59,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 60,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 61,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 62,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 54,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 53,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 141,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 142,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 143,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 144,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 145,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 146,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 147,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 148,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 149,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 150,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 151,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 152,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 153,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 154,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 155,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 156,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 157,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 158,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 159,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 160,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 161,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 162,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 163,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 164,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 165,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 166,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 167,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 168,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 169,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 170,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 171,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 172,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 173,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 174,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 175,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 176,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 177,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 178,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 179,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 180,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 181,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 182,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 183,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 184,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 185,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 186,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 187,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 188,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 189,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 190,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 191,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 192,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 193,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 194,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 195,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 196,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 197,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 198,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 199,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 200,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 201,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 202,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 203,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 204,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 63,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 64,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 65,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 67,
+      "name": "crown",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 66,
+      "name": "crown",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 68,
+      "name": "crown-landmark",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 14,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 15,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 19,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 71,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 72,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 77,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 73,
+      "name": "props",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 74,
+      "name": "props (see-through)",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 76,
+      "name": "props (silhouette)",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 75,
+      "name": "props (silhouette)",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 80,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 81,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 85,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 82,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 86,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 87,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 88,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 89,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 84,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 83,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 90,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 91,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 92,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 93,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 94,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 97,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 98,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 107,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 113,
+      "name": "soundsystems",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 117,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 126,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 136,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 137,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 139,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 138,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 140,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 250,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 251,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 253,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 252,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 254,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 347,
+      "name": "",
+      "parent": "island",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 348,
+      "name": "",
+      "parent": "",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 349,
+      "name": "Loading ground and lake surfaces",
+      "parent": "",
+      "visible": false,
+      "material": "Loading ground and lake surfaces",
+      "type": "Mesh"
+    },
+    {
+      "id": 351,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 352,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 353,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 354,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 355,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 356,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 357,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 358,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 359,
+      "name": "treehouse",
+      "parent": "island",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 360,
+      "name": "treehouse (see-through)",
+      "parent": "island",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 362,
+      "name": "treehouse (silhouette)",
+      "parent": "island",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 361,
+      "name": "treehouse (silhouette)",
+      "parent": "island",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 363,
+      "name": "markers",
+      "parent": "island",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 365,
+      "name": "",
+      "parent": "island",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 366,
+      "name": "",
+      "parent": "island",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 364,
+      "name": "",
+      "parent": "island",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 368,
+      "name": "",
+      "parent": "island",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 369,
+      "name": "",
+      "parent": "island",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 370,
+      "name": "",
+      "parent": "island",
+      "visible": false,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 405,
+      "name": "",
+      "parent": "island",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 406,
+      "name": "",
+      "parent": "island",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 407,
+      "name": "",
+      "parent": "island",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 408,
+      "name": "",
+      "parent": "island",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 409,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 410,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 412,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 411,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 413,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 414,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 415,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    },
+    {
+      "id": 416,
+      "name": "",
+      "parent": "",
+      "visible": true,
+      "material": "",
+      "type": "Mesh"
+    }
+  ],
+  "marks": [
+    {
+      "name": "chart:sail",
+      "at": 59946.5
+    },
+    {
+      "name": "chart:depart",
+      "at": 59949.200000047684
+    },
+    {
+      "name": "witch:map-prep-source",
+      "at": 60097.799999952316
+    },
+    {
+      "name": "witch:prep",
+      "at": 60102.40000009537
+    },
+    {
+      "name": "witch:map-hydrated",
+      "at": 60445.200000047684
+    },
+    {
+      "name": "witch:map-prep",
+      "at": 60445.200000047684
+    },
+    {
+      "name": "witch:game",
+      "at": 60752.799999952316
+    },
+    {
+      "name": "witch:build-heights",
+      "at": 60791.60000014305
+    },
+    {
+      "name": "witch:build-ground",
+      "at": 62349.40000009537
+    },
+    {
+      "name": "witch:build-disco",
+      "at": 62349.5
+    },
+    {
+      "name": "witch:build-paths",
+      "at": 62388.200000047684
+    },
+    {
+      "name": "witch:build-markers",
+      "at": 62937.700000047684
+    },
+    {
+      "name": "witch:build-stones",
+      "at": 62937.90000009537
+    },
+    {
+      "name": "witch:build-ley",
+      "at": 62945.799999952316
+    },
+    {
+      "name": "witch:build-swap",
+      "at": 62949.60000014305
+    },
+    {
+      "name": "witch:prep-start",
+      "at": 62967.10000014305
+    },
+    {
+      "name": "witch:prep-compile0",
+      "at": 62984.90000009537
+    },
+    {
+      "name": "witch:shader-start",
+      "at": 62985.299999952316
+    },
+    {
+      "name": "chart:landing-due",
+      "at": 65558.5,
+      "detail": {
+        "at": 65548.40000009537,
+        "deadline": 80548.40000009537
+      }
+    },
+    {
+      "name": "landing:limited",
+      "at": 80560.40000009537
+    },
+    {
+      "name": "witch:shader-landing-limit",
+      "at": 80560.79999995232
+    },
+    {
+      "name": "witch:prep-track",
+      "at": 80561.10000014305
+    },
+    {
+      "name": "sail:ready",
+      "at": 80562.40000009537
+    },
+    {
+      "name": "chart:ready",
+      "at": 80562.60000014305
+    },
+    {
+      "name": "chart:flown",
+      "at": 80590.10000014305
+    },
+    {
+      "name": "chart:go",
+      "at": 80590.10000014305
+    },
+    {
+      "name": "witch:build-forest",
+      "at": 80636.10000014305
+    },
+    {
+      "name": "game:frame1",
+      "at": 80650.79999995232
+    },
+    {
+      "name": "landing:early-land",
+      "at": 80752.29999995232
+    },
+    {
+      "name": "game:reveal",
+      "at": 80753.29999995232
+    },
+    {
+      "name": "game:arrived",
+      "at": 80753.29999995232
+    },
+    {
+      "name": "landing:asleep",
+      "at": 80758.20000004768
+    }
+  ]
+}

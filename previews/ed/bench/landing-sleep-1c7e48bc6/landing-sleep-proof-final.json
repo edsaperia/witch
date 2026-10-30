@@ -1,0 +1,544 @@
+{
+  "at": 181874.79999995232,
+  "methods": {
+    "getUniforms": {
+      "count": 1248578,
+      "longestMs": 9.599999904632568,
+      "at": 122389.60000014305
+    },
+    "getActiveUniform": {
+      "count": 299,
+      "longestMs": 0.10000014305114746,
+      "at": 105527
+    },
+    "getUniformLocation": {
+      "count": 299,
+      "longestMs": 0.5999999046325684,
+      "at": 105526.10000014305
+    }
+  },
+  "unsafeUniformReads": 0,
+  "drawStatus": {
+    "active": false,
+    "skipped": {
+      "Mesh#456:MeshBasicMaterial": 1790,
+      "Mesh#405:ShaderMaterial": 874,
+      "Mesh#407:ShaderMaterial": 874,
+      "Mesh#413:ShaderMaterial": 874,
+      "Mesh#415:ShaderMaterial": 874,
+      "Mesh#422:ShaderMaterial": 874,
+      "Mesh#424:ShaderMaterial": 874,
+      "Mesh#430:ShaderMaterial": 874,
+      "Mesh#432:ShaderMaterial": 874,
+      "Mesh#442:ShaderMaterial": 874,
+      "Mesh#444:ShaderMaterial": 874,
+      "Mesh#446:ShaderMaterial": 874,
+      "Mesh#448:ShaderMaterial": 874,
+      "stump#454:ShaderMaterial": 437,
+      "stump#455:ShaderMaterial": 437,
+      "Mesh#406:ShaderMaterial": 437,
+      "Mesh#408:ShaderMaterial": 437,
+      "Mesh#414:ShaderMaterial": 437,
+      "Mesh#416:ShaderMaterial": 437,
+      "Mesh#423:ShaderMaterial": 437,
+      "Mesh#425:ShaderMaterial": 437,
+      "Mesh#431:ShaderMaterial": 437,
+      "Mesh#433:ShaderMaterial": 437,
+      "Mesh#443:ShaderMaterial": 437,
+      "Mesh#445:ShaderMaterial": 437,
+      "Mesh#447:ShaderMaterial": 437,
+      "Mesh#449:ShaderMaterial": 437,
+      "Mesh#409:ShaderMaterial": 437,
+      "type 13#426:ShaderMaterial": 437,
+      "type 1#434:ShaderMaterial": 437,
+      "type 6#438:ShaderMaterial": 437,
+      "type 25#450:ShaderMaterial": 437,
+      "Mesh#411:ShaderMaterial": 437,
+      "type 13 (silhouette)#428:ShaderMaterial": 437,
+      "type 1 (silhouette)#436:ShaderMaterial": 437,
+      "type 6 (silhouette)#440:ShaderMaterial": 437,
+      "type 25 (silhouette)#452:ShaderMaterial": 437,
+      "Mesh#410:ShaderMaterial": 437,
+      "type 13 (see-through)#427:ShaderMaterial": 437,
+      "type 1 (see-through)#435:ShaderMaterial": 437,
+      "type 6 (see-through)#439:ShaderMaterial": 437,
+      "type 25 (see-through)#451:ShaderMaterial": 437,
+      "Mesh#412:ShaderMaterial": 437,
+      "type 13 (silhouette)#429:ShaderMaterial": 437,
+      "type 1 (silhouette)#437:ShaderMaterial": 437,
+      "type 6 (silhouette)#441:ShaderMaterial": 437,
+      "type 25 (silhouette)#453:ShaderMaterial": 437,
+      "creature fox#459:ShaderMaterial": 75,
+      "Mesh#460:ShaderMaterial": 37,
+      "Mesh#461:ShaderMaterial": 37
+    },
+    "fallback": {
+      "Mesh#347:ShaderMaterial": 2969
+    },
+    "submitted": {
+      "treehouse#359:ShaderMaterial": 5507,
+      "Mesh#205:ShaderMaterial": 45630,
+      "Mesh#44:ShaderMaterial": 2972,
+      "Mesh#177:MeshBasicMaterial": 5944,
+      "treehouse (silhouette)#361:ShaderMaterial": 2972,
+      "treehouse (see-through)#360:ShaderMaterial": 2972,
+      "Mesh#45:ShaderMaterial": 2077,
+      "treehouse (silhouette)#362:ShaderMaterial": 2972,
+      "Loading house platform#56:ShaderMaterial": 2097,
+      "Mesh#54:ShaderMaterial": 2972,
+      "crown#67:ShaderMaterial": 2972,
+      "crown#66:ShaderMaterial": 2972,
+      "crown#78:ShaderMaterial": 2972,
+      "crown#79:ShaderMaterial": 2972,
+      "Mesh#27:ShaderMaterial": 20717,
+      "Mesh#38:ShaderMaterial": 2535,
+      "Mesh#57:MeshBasicMaterial": 1790,
+      "Mesh#55:MeshBasicMaterial": 1790,
+      "Mesh#58:MeshBasicMaterial": 1790,
+      "Mesh#182:MeshBasicMaterial": 1790,
+      "Mesh#174:MeshBasicMaterial": 1790,
+      "Mesh#158:MeshBasicMaterial": 1790,
+      "Mesh#172:MeshBasicMaterial": 1790,
+      "Mesh#149:MeshBasicMaterial": 1790,
+      "Mesh#144:MeshBasicMaterial": 1790,
+      "Mesh#179:MeshBasicMaterial": 1790,
+      "Mesh#184:MeshBasicMaterial": 1790,
+      "Mesh#180:MeshBasicMaterial": 1790,
+      "Mesh#53:ShaderMaterial": 183,
+      "Mesh#181:MeshBasicMaterial": 1790,
+      "Mesh#175:MeshBasicMaterial": 1790,
+      "Mesh#176:MeshBasicMaterial": 1790,
+      "Mesh#170:MeshBasicMaterial": 1790,
+      "Mesh#169:MeshBasicMaterial": 1790,
+      "Mesh#167:MeshBasicMaterial": 1790,
+      "Mesh#166:MeshBasicMaterial": 1790,
+      "Mesh#163:MeshBasicMaterial": 1790,
+      "Mesh#171:MeshBasicMaterial": 1790,
+      "Mesh#152:MeshBasicMaterial": 1790,
+      "Mesh#160:MeshBasicMaterial": 1790,
+      "Mesh#157:MeshBasicMaterial": 1790,
+      "Mesh#162:MeshBasicMaterial": 1790,
+      "Mesh#150:MeshBasicMaterial": 1790,
+      "Mesh#161:MeshBasicMaterial": 1790,
+      "Mesh#155:MeshBasicMaterial": 1790,
+      "Mesh#146:MeshBasicMaterial": 1790,
+      "Mesh#147:MeshBasicMaterial": 1790,
+      "Mesh#178:MeshBasicMaterial": 1790,
+      "Mesh#145:MeshBasicMaterial": 1790,
+      "Mesh#62:MeshBasicMaterial": 1790,
+      "Mesh#173:MeshBasicMaterial": 1790,
+      "Mesh#59:MeshBasicMaterial": 1790,
+      "Mesh#60:MeshBasicMaterial": 1790,
+      "Mesh#141:MeshBasicMaterial": 1790,
+      "Mesh#164:MeshBasicMaterial": 1790,
+      "Mesh#154:MeshBasicMaterial": 1790,
+      "Mesh#143:MeshBasicMaterial": 1790,
+      "Mesh#183:MeshBasicMaterial": 1790,
+      "Mesh#168:MeshBasicMaterial": 1790,
+      "Mesh#159:MeshBasicMaterial": 1790,
+      "Mesh#202:MeshBasicMaterial": 1790,
+      "Mesh#198:MeshBasicMaterial": 1790,
+      "Mesh#196:MeshBasicMaterial": 1790,
+      "Mesh#201:MeshBasicMaterial": 1790,
+      "Mesh#204:MeshBasicMaterial": 1790,
+      "Mesh#197:MeshBasicMaterial": 1790,
+      "Mesh#203:MeshBasicMaterial": 1790,
+      "Mesh#200:MeshBasicMaterial": 1790,
+      "Mesh#199:MeshBasicMaterial": 1790,
+      "Mesh#151:MeshBasicMaterial": 1790,
+      "Mesh#165:MeshBasicMaterial": 1790,
+      "Mesh#156:MeshBasicMaterial": 1790,
+      "Mesh#153:MeshBasicMaterial": 1790,
+      "Mesh#148:MeshBasicMaterial": 1790,
+      "Mesh#142:MeshBasicMaterial": 1790,
+      "Mesh#185:MeshBasicMaterial": 1790,
+      "Mesh#61:MeshBasicMaterial": 1790,
+      "Mesh#77:ShaderMaterial": 437,
+      "Points#403:ShaderMaterial": 437,
+      "LineSegments#402:ShaderMaterial": 437,
+      "Mesh#126:ShaderMaterial": 437,
+      "Mesh#71:ShaderMaterial": 437,
+      "Points#16:ShaderMaterial": 437,
+      "Points#17:ShaderMaterial": 437,
+      "LineSegments#95:ShaderMaterial": 437,
+      "Points#371:ShaderMaterial": 437,
+      "Points#404:ShaderMaterial": 437,
+      "Mesh#353:ShaderMaterial": 437,
+      "Mesh#354:ShaderMaterial": 437,
+      "Mesh#355:ShaderMaterial": 437,
+      "Mesh#356:ShaderMaterial": 437,
+      "Mesh#357:ShaderMaterial": 437,
+      "Mesh#351:ShaderMaterial": 437,
+      "Mesh#358:ShaderMaterial": 437,
+      "Mesh#352:ShaderMaterial": 437,
+      "Mesh#37:ShaderMaterial": 437,
+      "Magic upright layer 0#4:ShaderMaterial": 437,
+      "Magic upright layer 1#5:ShaderMaterial": 437,
+      "Magic upright layer 2#6:ShaderMaterial": 437,
+      "Magic upright layer 3#7:ShaderMaterial": 437,
+      "Magic ground layer 0#8:ShaderMaterial": 437,
+      "Mesh#88:ShaderMaterial": 437,
+      "Magic ground layer 1#9:ShaderMaterial": 437,
+      "Magic ground layer 2#10:ShaderMaterial": 437,
+      "Magic ground layer 3#11:ShaderMaterial": 437,
+      "Mesh#89:ShaderMaterial": 437,
+      "Mesh#90:ShaderMaterial": 437,
+      "Mesh#91:ShaderMaterial": 437,
+      "Mesh#80:ShaderMaterial": 437,
+      "Mesh#81:ShaderMaterial": 437,
+      "Mesh#86:ShaderMaterial": 437,
+      "Mesh#87:ShaderMaterial": 437,
+      "Mesh#92:ShaderMaterial": 437,
+      "Mesh#93:ShaderMaterial": 437,
+      "Mesh#14:ShaderMaterial": 437,
+      "Mesh#15:ShaderMaterial": 437,
+      "Mesh#97:ShaderMaterial": 437,
+      "Mesh#98:ShaderMaterial": 437,
+      "Magic canopy halo#12:ShaderMaterial": 437,
+      "Mesh#82:ShaderMaterial": 437,
+      "Mesh#94:ShaderMaterial": 437,
+      "Mesh#84:ShaderMaterial": 437,
+      "Mesh#83:ShaderMaterial": 437,
+      "Points#106:ShaderMaterial": 437,
+      "Mesh#107:ShaderMaterial": 437,
+      "Mesh#72:ShaderMaterial": 437,
+      "Mesh#85:ShaderMaterial": 437,
+      "Mesh#364:ShaderMaterial": 437,
+      "Mesh#368:ShaderMaterial": 436,
+      "Points#367:ShaderMaterial": 436,
+      "Mesh#117:ShaderMaterial": 434,
+      "Mesh#250:ShaderMaterial": 17,
+      "Mesh#252:ShaderMaterial": 17,
+      "Mesh#251:ShaderMaterial": 17,
+      "Mesh#253:ShaderMaterial": 17,
+      "Mesh#347:ShaderMaterial": 3
+    }
+  },
+  "longFrames": [
+    {
+      "at": 80758.90000009537,
+      "ms": 582.7000000476837,
+      "parts": {
+        "start": 3.200000047683716,
+        "heights": 97.89999985694885,
+        "sky": 0.5,
+        "uniforms": 0.9000000953674316,
+        "sources": 0,
+        "party": 9.799999952316284,
+        "markers": 244.09999990463257,
+        "grass+lights": 11.300000190734863,
+        "witch": 123.59999990463257,
+        "refresh": 4.5,
+        "creatures": 1,
+        "hud": 0.2999999523162842,
+        "leash": 25.5,
+        "heightsAhead": 11.700000047683716,
+        "prefetch": 5.400000095367432,
+        "art": 0,
+        "groundTiles": 7.8999998569488525,
+        "draw": 11.400000095367432
+      }
+    },
+    {
+      "at": 103779.40000009537,
+      "ms": 665.2000000476837,
+      "parts": {
+        "start": 0.09999990463256836,
+        "heights": 0,
+        "sky": 0.10000014305114746,
+        "uniforms": 0.19999980926513672,
+        "sources": 0,
+        "party": 0.10000014305114746,
+        "markers": 1.0999999046325684,
+        "grass+lights": 0.2999999523162842,
+        "witch": 642.8000001907349,
+        "refresh": 2.6999998092651367,
+        "creatures": 0.10000014305114746,
+        "hud": 0.5999999046325684,
+        "leash": 0.7000000476837158,
+        "heightsAhead": 1.2000000476837158,
+        "prefetch": 0,
+        "art": 0,
+        "groundTiles": 0.09999990463256836,
+        "draw": 15
+      }
+    },
+    {
+      "at": 105445.10000014305,
+      "ms": 114.39999985694885,
+      "parts": {
+        "start": 2.8999998569488525,
+        "heights": 0,
+        "sky": 1.2000000476837158,
+        "uniforms": 2.700000047683716,
+        "sources": 0.2999999523162842,
+        "party": 1.5999999046325684,
+        "markers": 5.300000190734863,
+        "grass+lights": 1.0999999046325684,
+        "witch": 38.40000009536743,
+        "refresh": 0.7999999523162842,
+        "creatures": 0.8999998569488525,
+        "hud": 2.700000047683716,
+        "leash": 2.200000047683716,
+        "heightsAhead": 5.299999952316284,
+        "prefetch": 0,
+        "art": 0,
+        "groundTiles": 2.299999952316284,
+        "draw": 46.60000014305115
+      }
+    },
+    {
+      "at": 122458.10000014305,
+      "ms": 225.19999980926514,
+      "parts": {
+        "start": 0.5,
+        "heights": 0,
+        "sky": 0.09999990463256836,
+        "uniforms": 0.3000001907348633,
+        "sources": 0.09999990463256836,
+        "party": 0.20000004768371582,
+        "markers": 0.8999998569488525,
+        "grass+lights": 0.5,
+        "witch": 9,
+        "refresh": 0,
+        "creatures": 0.40000009536743164,
+        "hud": 0.09999990463256836,
+        "leash": 0.3000001907348633,
+        "heightsAhead": 1.0999999046325684,
+        "prefetch": 0,
+        "art": 0,
+        "groundTiles": 0.09999990463256836,
+        "draw": 211.5
+      }
+    },
+    {
+      "at": 130956.70000004768,
+      "ms": 288.59999990463257,
+      "parts": {
+        "start": 0.5,
+        "heights": 0,
+        "sky": 0,
+        "uniforms": 0.20000004768371582,
+        "sources": 0,
+        "party": 0.20000004768371582,
+        "markers": 0.5,
+        "grass+lights": 2.799999952316284,
+        "witch": 9.5,
+        "refresh": 0.10000014305114746,
+        "creatures": 0.2999999523162842,
+        "hud": 0.09999990463256836,
+        "leash": 0.2999999523162842,
+        "heightsAhead": 1,
+        "prefetch": 0.10000014305114746,
+        "art": 0,
+        "groundTiles": 0.09999990463256836,
+        "draw": 272.7000000476837
+      }
+    }
+  ],
+  "sections": {
+    "houseRooms": {
+      "longestMs": 640.2999999523163,
+      "at": 103783.20000004768
+    },
+    "post": {
+      "longestMs": 64.09999990463257,
+      "at": 122619.20000004768
+    },
+    "crownBake": {
+      "longestMs": 0.10000014305114746,
+      "at": 125675.29999995232
+    }
+  },
+  "worstFrameMs": 708.3999999999942,
+  "marks": [
+    {
+      "name": "chart:sail",
+      "at": 59946.5
+    },
+    {
+      "name": "chart:depart",
+      "at": 59949.200000047684
+    },
+    {
+      "name": "witch:map-prep-source",
+      "at": 60097.799999952316
+    },
+    {
+      "name": "witch:prep",
+      "at": 60102.40000009537
+    },
+    {
+      "name": "witch:map-hydrated",
+      "at": 60445.200000047684
+    },
+    {
+      "name": "witch:map-prep",
+      "at": 60445.200000047684
+    },
+    {
+      "name": "witch:game",
+      "at": 60752.799999952316
+    },
+    {
+      "name": "witch:build-heights",
+      "at": 60791.60000014305
+    },
+    {
+      "name": "witch:build-ground",
+      "at": 62349.40000009537
+    },
+    {
+      "name": "witch:build-disco",
+      "at": 62349.5
+    },
+    {
+      "name": "witch:build-paths",
+      "at": 62388.200000047684
+    },
+    {
+      "name": "witch:build-markers",
+      "at": 62937.700000047684
+    },
+    {
+      "name": "witch:build-stones",
+      "at": 62937.90000009537
+    },
+    {
+      "name": "witch:build-ley",
+      "at": 62945.799999952316
+    },
+    {
+      "name": "witch:build-swap",
+      "at": 62949.60000014305
+    },
+    {
+      "name": "witch:prep-start",
+      "at": 62967.10000014305
+    },
+    {
+      "name": "witch:prep-compile0",
+      "at": 62984.90000009537
+    },
+    {
+      "name": "witch:shader-start",
+      "at": 62985.299999952316
+    },
+    {
+      "name": "chart:landing-due",
+      "at": 65558.5,
+      "detail": {
+        "at": 65548.40000009537,
+        "deadline": 80548.40000009537
+      }
+    },
+    {
+      "name": "landing:limited",
+      "at": 80560.40000009537
+    },
+    {
+      "name": "witch:shader-landing-limit",
+      "at": 80560.79999995232
+    },
+    {
+      "name": "witch:prep-track",
+      "at": 80561.10000014305
+    },
+    {
+      "name": "sail:ready",
+      "at": 80562.40000009537
+    },
+    {
+      "name": "chart:ready",
+      "at": 80562.60000014305
+    },
+    {
+      "name": "chart:flown",
+      "at": 80590.10000014305
+    },
+    {
+      "name": "chart:go",
+      "at": 80590.10000014305
+    },
+    {
+      "name": "witch:build-forest",
+      "at": 80636.10000014305
+    },
+    {
+      "name": "game:frame1",
+      "at": 80650.79999995232
+    },
+    {
+      "name": "landing:early-land",
+      "at": 80752.29999995232
+    },
+    {
+      "name": "game:reveal",
+      "at": 80753.29999995232
+    },
+    {
+      "name": "game:arrived",
+      "at": 80753.29999995232
+    },
+    {
+      "name": "landing:asleep",
+      "at": 80758.20000004768
+    },
+    {
+      "name": "witch:build-carvings",
+      "at": 85741
+    },
+    {
+      "name": "witch:prep-warm",
+      "at": 85741.20000004768
+    },
+    {
+      "name": "witch:prep-home",
+      "at": 103775.29999995232
+    },
+    {
+      "name": "landing:house-fading",
+      "at": 104452.79999995232
+    },
+    {
+      "name": "witch:prep-ground",
+      "at": 105079.29999995232
+    },
+    {
+      "name": "witch:prep-house",
+      "at": 105165.40000009537
+    },
+    {
+      "name": "landing:house-complete",
+      "at": 105165.70000004768
+    },
+    {
+      "name": "landing:house-faded",
+      "at": 105309.10000014305
+    },
+    {
+      "name": "landing:alarm-ready",
+      "at": 105337.20000004768
+    },
+    {
+      "name": "opening:alarm",
+      "at": 105337.79999995232
+    },
+    {
+      "name": "island:ready",
+      "at": 105423.40000009537
+    },
+    {
+      "name": "opening:stretch",
+      "at": 106117.20000004768
+    },
+    {
+      "name": "opening:up",
+      "at": 109115.10000014305
+    },
+    {
+      "name": "witch:shader-background-ready",
+      "at": 122453.10000014305
+    }
+  ]
+}

@@ -1,0 +1,2554 @@
+{
+ "key": {
+  "build": "dev · 1c7e48b",
+  "seed": 123,
+  "world": 0,
+  "island": "home",
+  "scene": "wave 0 · house",
+  "spot": "sail-timing.cjs: home to fox",
+  "viewport": "960x540",
+  "pixelScale": "3 @1 (canvas 320x180)",
+  "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "machine": "Chrome 151 Windows · 20 cores · 16 GB · 13th Gen Intel(R) Core(TM) i9-13900H · 20 cores · win32 · node 24.18.0",
+  "knobs": {
+   "spells.hats": "",
+   "spells.bag": "satchel",
+   "?creator": "0",
+   "?timing": "1",
+   "?quick": "1",
+   "?warmChart": "0",
+   "?prepChart": "1",
+   "?ladder": "auto",
+   "tool.route": "chart",
+   "tool.targetSetup": "choose-before-outline-v1",
+   "tool.trace": false,
+   "tool.probe": "off",
+   "tool.profile": false,
+   "tool.coastFirstUse": false
+  }
+ },
+ "island": "fox",
+ "then": [],
+ "throttle": 1,
+ "size": "960x540",
+ "gap": 100,
+ "runs": [
+  {
+   "slices": [
+    {
+     "what": "setGame",
+     "ms": 2191,
+     "slices": 75,
+     "longest": 171,
+     "at": "paths"
+    },
+    {
+     "what": "warm",
+     "ms": 5105,
+     "slices": 131,
+     "longest": 8,
+     "at": "forest"
+    },
+    {
+     "what": "refresh",
+     "ms": 49,
+     "slices": 2,
+     "longest": 4,
+     "at": ""
+    },
+    {
+     "what": "background-programs",
+     "ms": 1,
+     "slices": 1,
+     "longest": 1,
+     "at": ""
+    }
+   ],
+   "settleParts": {
+    "start": 6,
+    "uniforms": 3,
+    "markers": 14,
+    "witch": 16913,
+    "hud": 3,
+    "leash": 31,
+    "heightsAhead": 21,
+    "groundTiles": 15,
+    "draw": 27319,
+    "grass+lights": 28,
+    "refresh": 340,
+    "creatures": 11
+   },
+   "sailMark": 624,
+   "marks": {
+    "chart:depart": 626,
+    "chart:ready": 21240,
+    "chart:flown": 21267,
+    "chart:go": 21267,
+    "witch:prep": 780,
+    "witch:game": 1430,
+    "witch:prep-start": 3644,
+    "witch:prep-warm": 26418,
+    "witch:prep-ground": 45757,
+    "witch:prep-home": 44453,
+    "witch:prep-idle": null,
+    "witch:prep-compile0": 3662,
+    "witch:prep-compiled": null,
+    "witch:prep-programs": null,
+    "witch:prep-textures": null,
+    "witch:prep-draws": null,
+    "witch:prep-track": 21238,
+    "witch:prep-house": 45843,
+    "sail:ready": 21240,
+    "witch:landed": null,
+    "dive:eased": null,
+    "dive:house-ready": null,
+    "dive:house-due": null,
+    "dive:on": null,
+    "game:arrived": 21431,
+    "opening:alarm": 46015
+   },
+   "chartFrames": {
+    "frames": 1040,
+    "longest": 75,
+    "frozen": 0,
+    "over": 0
+   },
+   "toDive": {
+    "frames": 6665,
+    "longest": 708,
+    "frozen": 4359,
+    "over": 14
+   },
+   "diveToEnd": {
+    "frames": 0,
+    "longest": 0,
+    "frozen": 0,
+    "over": 0
+   },
+   "settle": {
+    "frames": 2511,
+    "longest": 292,
+    "frozen": 1084,
+    "over": 6
+   },
+   "tasks": [
+    {
+     "at": 21328,
+     "ms": 697,
+     "after": "witch:build-forest"
+    },
+    {
+     "at": 44456,
+     "ms": 667,
+     "after": "witch:prep-home"
+    },
+    {
+     "at": 780,
+     "ms": 653,
+     "after": "witch:prep"
+    },
+    {
+     "at": 25,
+     "ms": 618,
+     "after": ""
+    },
+    {
+     "at": 71632,
+     "ms": 291,
+     "after": "witch:shader-background-ready"
+    },
+    {
+     "at": 46014,
+     "ms": 244,
+     "after": "landing:house-faded"
+    },
+    {
+     "at": 63133,
+     "ms": 227,
+     "after": "witch:shader-background-ready"
+    },
+    {
+     "at": 3096,
+     "ms": 171,
+     "after": "witch:build-paths"
+    }
+   ],
+   "steps": [
+    [
+     "game:reveal",
+     622
+    ],
+    [
+     "chart:sail",
+     624
+    ],
+    [
+     "chart:depart",
+     626
+    ],
+    [
+     "witch:map-prep-source",
+     775
+    ],
+    [
+     "witch:prep",
+     780
+    ],
+    [
+     "witch:map-hydrated",
+     1122
+    ],
+    [
+     "witch:map-prep",
+     1122
+    ],
+    [
+     "witch:game",
+     1430
+    ],
+    [
+     "witch:build-heights",
+     1469
+    ],
+    [
+     "witch:build-ground",
+     3027
+    ],
+    [
+     "witch:build-disco",
+     3027
+    ],
+    [
+     "witch:build-paths",
+     3065
+    ],
+    [
+     "witch:build-markers",
+     3615
+    ],
+    [
+     "witch:build-stones",
+     3615
+    ],
+    [
+     "witch:build-ley",
+     3623
+    ],
+    [
+     "witch:build-swap",
+     3627
+    ],
+    [
+     "witch:prep-start",
+     3644
+    ],
+    [
+     "witch:prep-compile0",
+     3662
+    ],
+    [
+     "witch:shader-start",
+     3663
+    ],
+    [
+     "chart:landing-due",
+     6236
+    ],
+    [
+     "landing:limited",
+     21238
+    ],
+    [
+     "witch:shader-landing-limit",
+     21238
+    ],
+    [
+     "witch:prep-track",
+     21238
+    ],
+    [
+     "sail:ready",
+     21240
+    ],
+    [
+     "chart:ready",
+     21240
+    ],
+    [
+     "chart:flown",
+     21267
+    ],
+    [
+     "chart:go",
+     21267
+    ],
+    [
+     "witch:build-forest",
+     21313
+    ],
+    [
+     "game:frame1",
+     21328
+    ],
+    [
+     "landing:early-land",
+     21430
+    ],
+    [
+     "game:reveal",
+     21431
+    ],
+    [
+     "game:arrived",
+     21431
+    ],
+    [
+     "landing:asleep",
+     21435
+    ],
+    [
+     "witch:build-carvings",
+     26418
+    ],
+    [
+     "witch:prep-warm",
+     26418
+    ],
+    [
+     "witch:prep-home",
+     44453
+    ],
+    [
+     "landing:house-fading",
+     45130
+    ],
+    [
+     "witch:prep-ground",
+     45757
+    ],
+    [
+     "witch:prep-house",
+     45843
+    ],
+    [
+     "landing:house-complete",
+     45843
+    ],
+    [
+     "landing:house-faded",
+     45986
+    ],
+    [
+     "landing:alarm-ready",
+     46014
+    ],
+    [
+     "opening:alarm",
+     46015
+    ],
+    [
+     "island:ready",
+     46101
+    ],
+    [
+     "opening:stretch",
+     46794
+    ],
+    [
+     "opening:up",
+     49792
+    ],
+    [
+     "witch:shader-background-ready",
+     63130
+    ]
+   ],
+   "longTasks": [
+    {
+     "at": -8842,
+     "ms": 77,
+     "after": "chart:mounted"
+    },
+    {
+     "at": -225,
+     "ms": 75,
+     "after": "chart:mounted"
+    },
+    {
+     "at": 25,
+     "ms": 618,
+     "after": "chart:island1"
+    },
+    {
+     "at": 643,
+     "ms": 52,
+     "after": "chart:depart"
+    },
+    {
+     "at": 780,
+     "ms": 653,
+     "after": "witch:map-prep-source"
+    },
+    {
+     "at": 1479,
+     "ms": 77,
+     "after": "witch:build-heights"
+    },
+    {
+     "at": 3096,
+     "ms": 171,
+     "after": "witch:build-paths"
+    },
+    {
+     "at": 3270,
+     "ms": 114,
+     "after": "witch:build-paths"
+    },
+    {
+     "at": 3387,
+     "ms": 55,
+     "after": "witch:build-paths"
+    },
+    {
+     "at": 3457,
+     "ms": 72,
+     "after": "witch:build-paths"
+    },
+    {
+     "at": 3996,
+     "ms": 97,
+     "after": "witch:shader-start"
+    },
+    {
+     "at": 4113,
+     "ms": 76,
+     "after": "witch:shader-start"
+    },
+    {
+     "at": 21242,
+     "ms": 71,
+     "after": "chart:ready"
+    },
+    {
+     "at": 21328,
+     "ms": 697,
+     "after": "witch:build-forest"
+    },
+    {
+     "at": 23434,
+     "ms": 57,
+     "after": "landing:asleep"
+    },
+    {
+     "at": 23502,
+     "ms": 125,
+     "after": "landing:asleep"
+    },
+    {
+     "at": 23655,
+     "ms": 119,
+     "after": "landing:asleep"
+    },
+    {
+     "at": 44456,
+     "ms": 667,
+     "after": "witch:prep-home"
+    },
+    {
+     "at": 45127,
+     "ms": 77,
+     "after": "witch:prep-home"
+    },
+    {
+     "at": 45209,
+     "ms": 71,
+     "after": "landing:house-fading"
+    },
+    {
+     "at": 45285,
+     "ms": 54,
+     "after": "landing:house-fading"
+    },
+    {
+     "at": 45344,
+     "ms": 58,
+     "after": "landing:house-fading"
+    },
+    {
+     "at": 46014,
+     "ms": 244,
+     "after": "landing:house-faded"
+    },
+    {
+     "at": 46258,
+     "ms": 91,
+     "after": "island:ready"
+    },
+    {
+     "at": 46355,
+     "ms": 69,
+     "after": "island:ready"
+    },
+    {
+     "at": 46426,
+     "ms": 61,
+     "after": "island:ready"
+    },
+    {
+     "at": 46538,
+     "ms": 50,
+     "after": "island:ready"
+    },
+    {
+     "at": 46589,
+     "ms": 57,
+     "after": "island:ready"
+    },
+    {
+     "at": 46695,
+     "ms": 51,
+     "after": "island:ready"
+    },
+    {
+     "at": 46792,
+     "ms": 63,
+     "after": "island:ready"
+    },
+    {
+     "at": 46948,
+     "ms": 51,
+     "after": "opening:stretch"
+    },
+    {
+     "at": 47231,
+     "ms": 52,
+     "after": "opening:stretch"
+    },
+    {
+     "at": 47283,
+     "ms": 50,
+     "after": "opening:stretch"
+    },
+    {
+     "at": 47383,
+     "ms": 51,
+     "after": "opening:stretch"
+    },
+    {
+     "at": 47524,
+     "ms": 50,
+     "after": "opening:stretch"
+    },
+    {
+     "at": 47697,
+     "ms": 51,
+     "after": "opening:stretch"
+    },
+    {
+     "at": 49261,
+     "ms": 61,
+     "after": "opening:stretch"
+    },
+    {
+     "at": 49789,
+     "ms": 80,
+     "after": "opening:stretch"
+    },
+    {
+     "at": 49870,
+     "ms": 50,
+     "after": "opening:up"
+    },
+    {
+     "at": 52363,
+     "ms": 53,
+     "after": "opening:up"
+    },
+    {
+     "at": 54194,
+     "ms": 58,
+     "after": "opening:up"
+    },
+    {
+     "at": 54253,
+     "ms": 57,
+     "after": "opening:up"
+    },
+    {
+     "at": 54396,
+     "ms": 50,
+     "after": "opening:up"
+    },
+    {
+     "at": 54816,
+     "ms": 52,
+     "after": "opening:up"
+    },
+    {
+     "at": 55383,
+     "ms": 50,
+     "after": "opening:up"
+    },
+    {
+     "at": 62466,
+     "ms": 52,
+     "after": "opening:up"
+    },
+    {
+     "at": 62908,
+     "ms": 53,
+     "after": "opening:up"
+    },
+    {
+     "at": 63040,
+     "ms": 54,
+     "after": "opening:up"
+    },
+    {
+     "at": 63133,
+     "ms": 227,
+     "after": "witch:shader-background-ready"
+    },
+    {
+     "at": 71632,
+     "ms": 291,
+     "after": "witch:shader-background-ready"
+    },
+    {
+     "at": 95315,
+     "ms": 73,
+     "after": "witch:shader-background-ready"
+    },
+    {
+     "at": 116685,
+     "ms": 61,
+     "after": "witch:shader-background-ready"
+    }
+   ],
+   "timeline": [
+    {
+     "name": "chart:open",
+     "at": -8947,
+     "detail": null
+    },
+    {
+     "name": "chart:mounted",
+     "at": -8902,
+     "detail": null
+    },
+    {
+     "name": "chart:island1",
+     "at": -216,
+     "detail": null
+    },
+    {
+     "name": "game:reveal",
+     "at": 622,
+     "detail": null
+    },
+    {
+     "name": "chart:sail",
+     "at": 624,
+     "detail": null
+    },
+    {
+     "name": "chart:depart",
+     "at": 626,
+     "detail": null
+    },
+    {
+     "name": "witch:map-prep-source",
+     "at": 775,
+     "detail": {
+      "seed": 424242,
+      "status": "worker",
+      "workerMs": 6078.299999952316,
+      "hydrateMs": 0,
+      "checkMs": 1.7999999523162842
+     }
+    },
+    {
+     "name": "witch:prep",
+     "at": 780,
+     "detail": null
+    },
+    {
+     "name": "witch:map-hydrated",
+     "at": 1122,
+     "detail": {
+      "seed": 424242,
+      "ms": 342.7000000476837,
+      "workerMs": 6078.299999952316
+     }
+    },
+    {
+     "name": "witch:map-prep",
+     "at": 1122,
+     "detail": null
+    },
+    {
+     "name": "witch:game",
+     "at": 1430,
+     "detail": null
+    },
+    {
+     "name": "witch:build-heights",
+     "at": 1469,
+     "detail": null
+    },
+    {
+     "name": "witch:build-ground",
+     "at": 3027,
+     "detail": null
+    },
+    {
+     "name": "witch:build-disco",
+     "at": 3027,
+     "detail": null
+    },
+    {
+     "name": "witch:build-paths",
+     "at": 3065,
+     "detail": null
+    },
+    {
+     "name": "witch:build-markers",
+     "at": 3615,
+     "detail": null
+    },
+    {
+     "name": "witch:build-stones",
+     "at": 3615,
+     "detail": null
+    },
+    {
+     "name": "witch:build-ley",
+     "at": 3623,
+     "detail": null
+    },
+    {
+     "name": "witch:build-swap",
+     "at": 3627,
+     "detail": null
+    },
+    {
+     "name": "witch:prep-start",
+     "at": 3644,
+     "detail": null
+    },
+    {
+     "name": "witch:prep-compile0",
+     "at": 3662,
+     "detail": null
+    },
+    {
+     "name": "witch:shader-start",
+     "at": 3663,
+     "detail": {
+      "kind": "shader-programs",
+      "phase": "start",
+      "at": 62985,
+      "parallel": true,
+      "elapsed": 0,
+      "groups": {
+       "scene": [
+        83,
+        84,
+        85
+       ],
+       "effects": [],
+       "post": [],
+       "hiz": []
+      },
+      "programs": [
+       {
+        "id": 0,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 1,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 2,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 3,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 4,
+        "name": "Loading ground and lake surfaces",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 5,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 6,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 7,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 8,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 9,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 10,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 11,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 12,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 13,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 14,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 15,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 16,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 17,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 18,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 19,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 20,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 21,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 22,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 23,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 24,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 25,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 26,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 27,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 28,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 29,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 30,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 31,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 32,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 33,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 34,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 35,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 36,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 37,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 38,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 39,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 40,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 41,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 42,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 43,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 44,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 45,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 46,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 47,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 48,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 49,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 50,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 51,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 52,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 53,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 54,
+        "name": "",
+        "type": "SpriteMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 55,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 56,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 57,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 58,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 59,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 60,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 61,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 62,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 63,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 64,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 65,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 66,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 67,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 68,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 83,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": false,
+        "added": true
+       },
+       {
+        "id": 84,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": false,
+        "added": true
+       },
+       {
+        "id": 85,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": false,
+        "added": true
+       }
+      ],
+      "pending": []
+     }
+    },
+    {
+     "name": "chart:landing-due",
+     "at": 6236,
+     "detail": {
+      "at": 65548.40000009537,
+      "deadline": 80548.40000009537
+     }
+    },
+    {
+     "name": "landing:limited",
+     "at": 21238,
+     "detail": null
+    },
+    {
+     "name": "witch:shader-landing-limit",
+     "at": 21238,
+     "detail": {
+      "kind": "shader-programs",
+      "phase": "landing-limit",
+      "at": 80560.60000014305,
+      "parallel": true,
+      "elapsed": 15012.200000047684,
+      "groups": {
+       "scene": [
+        83,
+        84,
+        85
+       ],
+       "effects": [],
+       "post": [],
+       "hiz": []
+      },
+      "programs": [
+       {
+        "id": 0,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 1,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 2,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 3,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 4,
+        "name": "Loading ground and lake surfaces",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 5,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 6,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 7,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 8,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 9,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 10,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 11,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 12,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 13,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 14,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 15,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 16,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 17,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 18,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 19,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 20,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 21,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 22,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 23,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 24,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 25,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 26,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 27,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 28,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 29,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 30,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 31,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 32,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 33,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 34,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 35,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 36,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 37,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 38,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 39,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 40,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 41,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 42,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 43,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 44,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 45,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 46,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 47,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 48,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 49,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 50,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 51,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 52,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 53,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 54,
+        "name": "",
+        "type": "SpriteMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 55,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 56,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 57,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 58,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 59,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 60,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 61,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 62,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 63,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 64,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 65,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 66,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 67,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 68,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 83,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": false,
+        "added": true
+       },
+       {
+        "id": 84,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": false,
+        "added": true
+       },
+       {
+        "id": 85,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": false,
+        "added": true
+       }
+      ],
+      "pending": [
+       83,
+       84,
+       85
+      ]
+     }
+    },
+    {
+     "name": "witch:prep-track",
+     "at": 21238,
+     "detail": null
+    },
+    {
+     "name": "sail:ready",
+     "at": 21240,
+     "detail": null
+    },
+    {
+     "name": "chart:ready",
+     "at": 21240,
+     "detail": null
+    },
+    {
+     "name": "chart:flown",
+     "at": 21267,
+     "detail": null
+    },
+    {
+     "name": "chart:go",
+     "at": 21267,
+     "detail": null
+    },
+    {
+     "name": "witch:build-forest",
+     "at": 21313,
+     "detail": null
+    },
+    {
+     "name": "game:frame1",
+     "at": 21328,
+     "detail": null
+    },
+    {
+     "name": "landing:early-land",
+     "at": 21430,
+     "detail": null
+    },
+    {
+     "name": "game:reveal",
+     "at": 21431,
+     "detail": null
+    },
+    {
+     "name": "game:arrived",
+     "at": 21431,
+     "detail": null
+    },
+    {
+     "name": "landing:asleep",
+     "at": 21435,
+     "detail": null
+    },
+    {
+     "name": "witch:build-carvings",
+     "at": 26418,
+     "detail": null
+    },
+    {
+     "name": "witch:prep-warm",
+     "at": 26418,
+     "detail": null
+    },
+    {
+     "name": "witch:prep-home",
+     "at": 44453,
+     "detail": null
+    },
+    {
+     "name": "landing:house-fading",
+     "at": 45130,
+     "detail": null
+    },
+    {
+     "name": "witch:prep-ground",
+     "at": 45757,
+     "detail": null
+    },
+    {
+     "name": "witch:prep-house",
+     "at": 45843,
+     "detail": null
+    },
+    {
+     "name": "landing:house-complete",
+     "at": 45843,
+     "detail": null
+    },
+    {
+     "name": "landing:house-faded",
+     "at": 45986,
+     "detail": null
+    },
+    {
+     "name": "landing:alarm-ready",
+     "at": 46014,
+     "detail": null
+    },
+    {
+     "name": "opening:alarm",
+     "at": 46015,
+     "detail": null
+    },
+    {
+     "name": "island:ready",
+     "at": 46101,
+     "detail": null
+    },
+    {
+     "name": "opening:stretch",
+     "at": 46794,
+     "detail": null
+    },
+    {
+     "name": "opening:up",
+     "at": 49792,
+     "detail": null
+    },
+    {
+     "name": "witch:shader-background-ready",
+     "at": 63130,
+     "detail": {
+      "kind": "shader-programs",
+      "phase": "background-ready",
+      "at": 122452.70000004768,
+      "parallel": true,
+      "elapsed": 0,
+      "groups": {
+       "scene": [
+        83,
+        84,
+        85
+       ],
+       "effects": [],
+       "post": [],
+       "hiz": []
+      },
+      "programs": [
+       {
+        "id": 0,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 1,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 2,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 3,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 4,
+        "name": "Loading ground and lake surfaces",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 5,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 6,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 7,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 8,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 9,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 10,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 11,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 12,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 13,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 14,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 15,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 16,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 17,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 18,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 19,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 20,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 21,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 22,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 23,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 24,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 25,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 26,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 27,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 28,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 29,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 30,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 31,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 32,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 33,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 34,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 35,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 36,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 37,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 38,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 39,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 40,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 41,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 42,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 43,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 44,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 45,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 46,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 47,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 48,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 49,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 50,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 51,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 52,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 53,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 54,
+        "name": "",
+        "type": "SpriteMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 55,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 56,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 57,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 58,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 59,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 60,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 61,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 62,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 63,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 64,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 65,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 66,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 67,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 68,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 83,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": true
+       },
+       {
+        "id": 84,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": true
+       },
+       {
+        "id": 85,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": true
+       }
+      ],
+      "pending": []
+     }
+    }
+   ],
+   "quality": [],
+   "coverage": {
+    "longTasks": true
+   },
+   "programs": {
+    "before": 69,
+    "after": 72,
+    "made": [
+     "|313|,8519680,srgb-linear,onBeforeCompile(){}",
+     "|299|,8519680,srgb-linear,onBeforeCompile(){}",
+     "|264|,8388608,srgb-linear,onBeforeCompile(){}",
+     "|270|,8519680,srgb-linear,onBeforeCompile(){}"
+    ]
+   },
+   "key": {
+    "build": "dev · 1c7e48b",
+    "seed": 424242,
+    "world": 0,
+    "island": "fox",
+    "scene": "wave 0 · house",
+    "spot": "sail-timing.cjs: arrival fox",
+    "viewport": "960x540",
+    "pixelScale": "3 @1 (canvas 320x180)",
+    "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "machine": "Chrome 151 Windows · 20 cores · 16 GB · 13th Gen Intel(R) Core(TM) i9-13900H · 20 cores · win32 · node 24.18.0",
+    "knobs": {
+     "map.island": "fox",
+     "spells.hats": "",
+     "spells.bag": "satchel",
+     "?creator": "0",
+     "?timing": "1",
+     "?quick": "1",
+     "?warmChart": "0",
+     "?prepChart": "1",
+     "?ladder": "auto",
+     "tool.route": "chart",
+     "tool.targetSetup": "choose-before-outline-v1",
+     "tool.trace": false,
+     "tool.probe": "off",
+     "tool.profile": false,
+     "tool.coastFirstUse": false
+    }
+   },
+   "route": "chart",
+   "qualityBefore": {
+    "rung": 0,
+    "mode": "auto"
+   },
+   "observationStart": -8962,
+   "prepNotes": [],
+   "summary": {
+    "preparationToGame": 650,
+    "mapPrep": {
+     "seed": 424242,
+     "status": "worker",
+     "workerMs": 6078.299999952316,
+     "hydrateMs": 0,
+     "checkMs": 1.7999999523162842
+    },
+    "hydration": {
+     "seed": 424242,
+     "ms": 342.7000000476837,
+     "workerMs": 6078.299999952316
+    },
+    "shaderReadinessWait": null,
+    "programPreparation": null,
+    "handoffAfterReady": 27,
+    "arrival": 21431,
+    "events": {},
+    "workerJobs": []
+   },
+   "chartWaitMs": 8962,
+   "resources": {
+    "heap": 196911083,
+    "dom": 3687,
+    "textures": 202,
+    "geometries": 162,
+    "workers": 6
+   },
+   "version": {
+    "version": "dev · 1c7e48b",
+    "built": "2026-10-30T13:12:24.420Z"
+   },
+   "shots": [],
+   "island": "fox",
+   "leg": "cold"
+  }
+ ]
+}
