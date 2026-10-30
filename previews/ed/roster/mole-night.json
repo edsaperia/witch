@@ -1,5 +1,5 @@
 {
-  "sha": "544b7b619eaac767ce4640f51c12f675c3250c4e",
+  "sha": "3a085532ca163c23675de87042c3f60e3ffda53e",
   "measurements": [
     {
       "id": "mole",
@@ -7,14 +7,14 @@
       "facing": "towards",
       "frame": 0,
       "level": 0,
-      "pixelDiff": 732,
+      "pixelDiff": 861,
       "current": [
         41,
         34
       ],
       "proposed": [
-        38,
-        33
+        36,
+        32
       ]
     },
     {
@@ -23,14 +23,14 @@
       "facing": "towards",
       "frame": 0,
       "level": 1,
-      "pixelDiff": 1038,
+      "pixelDiff": 1242,
       "current": [
         53,
         45
       ],
       "proposed": [
-        50,
-        44
+        48,
+        42
       ]
     },
     {
@@ -39,14 +39,14 @@
       "facing": "towards",
       "frame": 0,
       "level": 2,
-      "pixelDiff": 1784,
+      "pixelDiff": 2068,
       "current": [
         78,
         71
       ],
       "proposed": [
-        78,
-        70
+        76,
+        68
       ]
     },
     {
@@ -55,7 +55,7 @@
       "facing": "towards",
       "frame": 0,
       "level": 3,
-      "pixelDiff": 4813,
+      "pixelDiff": 7184,
       "current": [
         193,
         162
@@ -71,10 +71,138 @@
       "facing": "towards",
       "frame": 1,
       "level": 0,
-      "pixelDiff": 793,
+      "pixelDiff": 913,
       "current": [
         44,
         34
+      ],
+      "proposed": [
+        38,
+        32
+      ]
+    },
+    {
+      "id": "mole",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 1,
+      "pixelDiff": 1308,
+      "current": [
+        57,
+        45
+      ],
+      "proposed": [
+        51,
+        42
+      ]
+    },
+    {
+      "id": "mole",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 2,
+      "pixelDiff": 2284,
+      "current": [
+        81,
+        71
+      ],
+      "proposed": [
+        76,
+        68
+      ]
+    },
+    {
+      "id": "mole",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 3,
+      "pixelDiff": 7517,
+      "current": [
+        203,
+        162
+      ],
+      "proposed": [
+        203,
+        162
+      ]
+    },
+    {
+      "id": "mole",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 0,
+      "pixelDiff": 884,
+      "current": [
+        46,
+        35
+      ],
+      "proposed": [
+        43,
+        33
+      ]
+    },
+    {
+      "id": "mole",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 1,
+      "pixelDiff": 1277,
+      "current": [
+        58,
+        45
+      ],
+      "proposed": [
+        52,
+        43
+      ]
+    },
+    {
+      "id": "mole",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 2,
+      "pixelDiff": 2251,
+      "current": [
+        81,
+        71
+      ],
+      "proposed": [
+        76,
+        68
+      ]
+    },
+    {
+      "id": "mole",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 3,
+      "pixelDiff": 7623,
+      "current": [
+        228,
+        163
+      ],
+      "proposed": [
+        228,
+        163
+      ]
+    },
+    {
+      "id": "mole",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 0,
+      "pixelDiff": 974,
+      "current": [
+        45,
+        35
       ],
       "proposed": [
         40,
@@ -84,145 +212,17 @@
     {
       "id": "mole",
       "pose": "walk",
-      "facing": "towards",
-      "frame": 1,
-      "level": 1,
-      "pixelDiff": 1059,
-      "current": [
-        57,
-        45
-      ],
-      "proposed": [
-        54,
-        44
-      ]
-    },
-    {
-      "id": "mole",
-      "pose": "walk",
-      "facing": "towards",
-      "frame": 1,
-      "level": 2,
-      "pixelDiff": 1936,
-      "current": [
-        81,
-        71
-      ],
-      "proposed": [
-        80,
-        70
-      ]
-    },
-    {
-      "id": "mole",
-      "pose": "walk",
-      "facing": "towards",
-      "frame": 1,
-      "level": 3,
-      "pixelDiff": 4987,
-      "current": [
-        203,
-        162
-      ],
-      "proposed": [
-        203,
-        162
-      ]
-    },
-    {
-      "id": "mole",
-      "pose": "walk",
-      "facing": "away",
-      "frame": 0,
-      "level": 0,
-      "pixelDiff": 792,
-      "current": [
-        46,
-        35
-      ],
-      "proposed": [
-        43,
-        34
-      ]
-    },
-    {
-      "id": "mole",
-      "pose": "walk",
-      "facing": "away",
-      "frame": 0,
-      "level": 1,
-      "pixelDiff": 1021,
-      "current": [
-        58,
-        45
-      ],
-      "proposed": [
-        56,
-        44
-      ]
-    },
-    {
-      "id": "mole",
-      "pose": "walk",
-      "facing": "away",
-      "frame": 0,
-      "level": 2,
-      "pixelDiff": 1797,
-      "current": [
-        81,
-        71
-      ],
-      "proposed": [
-        80,
-        70
-      ]
-    },
-    {
-      "id": "mole",
-      "pose": "walk",
-      "facing": "away",
-      "frame": 0,
-      "level": 3,
-      "pixelDiff": 5563,
-      "current": [
-        228,
-        163
-      ],
-      "proposed": [
-        228,
-        163
-      ]
-    },
-    {
-      "id": "mole",
-      "pose": "walk",
-      "facing": "away",
-      "frame": 1,
-      "level": 0,
-      "pixelDiff": 835,
-      "current": [
-        45,
-        35
-      ],
-      "proposed": [
-        42,
-        34
-      ]
-    },
-    {
-      "id": "mole",
-      "pose": "walk",
       "facing": "away",
       "frame": 1,
       "level": 1,
-      "pixelDiff": 1005,
+      "pixelDiff": 1205,
       "current": [
         55,
         45
       ],
       "proposed": [
-        53,
-        44
+        50,
+        43
       ]
     },
     {
@@ -231,14 +231,14 @@
       "facing": "away",
       "frame": 1,
       "level": 2,
-      "pixelDiff": 1703,
+      "pixelDiff": 1998,
       "current": [
         78,
         71
       ],
       "proposed": [
-        78,
-        70
+        76,
+        68
       ]
     },
     {
@@ -247,7 +247,7 @@
       "facing": "away",
       "frame": 1,
       "level": 3,
-      "pixelDiff": 5540,
+      "pixelDiff": 7489,
       "current": [
         218,
         163
@@ -276,11 +276,11 @@
       "body": {},
       "look": {
         "mole": {
-          "bodyDepth": 1.25,
-          "bodyLength": 1.2,
-          "snoutProjection": 1.35,
-          "forepawSpread": 1.2,
-          "forepawSize": 1.25
+          "bodyDepth": 1.65,
+          "bodyLength": 1.7,
+          "snoutProjection": 1.8,
+          "forepawSpread": 1.55,
+          "forepawSize": 1.65
         }
       },
       "paletteHSV": [
@@ -306,11 +306,11 @@
       "body": {},
       "look": {
         "mole": {
-          "bodyDepth": 1.25,
-          "bodyLength": 1.2,
-          "snoutProjection": 1.35,
-          "forepawSpread": 1.2,
-          "forepawSize": 1.25
+          "bodyDepth": 1.65,
+          "bodyLength": 1.7,
+          "snoutProjection": 1.8,
+          "forepawSpread": 1.55,
+          "forepawSize": 1.65
         }
       },
       "paletteHSV": [
@@ -336,11 +336,11 @@
       "body": {},
       "look": {
         "mole": {
-          "bodyDepth": 1.25,
-          "bodyLength": 1.2,
-          "snoutProjection": 1.35,
-          "forepawSpread": 1.2,
-          "forepawSize": 1.25
+          "bodyDepth": 1.65,
+          "bodyLength": 1.7,
+          "snoutProjection": 1.8,
+          "forepawSpread": 1.55,
+          "forepawSize": 1.65
         }
       },
       "paletteHSV": [
