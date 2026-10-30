@@ -16,7 +16,7 @@ const ARRAYS = { Float64Array, Float32Array, Int32Array, Uint32Array, Int16Array
 const MAX_NODES = 500_000, MAX_VALUES = 5_000_000;
 const invalid = (): never => { throw new Error("This saved night is incomplete or incompatible."); };
 
-function encode(root: unknown): Graph {
+function encode(root: unknown, witches: ReadonlySet<object>): Graph {
   const nodes: Node[] = [], seen = new Map<object, number>();
   function value(x: unknown): Value {
     if (x === undefined) return { special: "undefined" };
@@ -38,7 +38,7 @@ function encode(root: unknown): Graph {
       node.kind = kind; node.values = Array.from(x as unknown as ArrayLike<number>, value);
     } else {
       if (Object.getPrototypeOf(x) !== Object.prototype && Object.getPrototypeOf(x) !== null) return invalid();
-      node.keys = Object.keys(x);
+      node.keys = Object.keys(x).filter(k => !witches.has(x) || k !== "pending");
       if (node.keys.some(k => BAD_KEYS.has(k))) return invalid();
       node.values = node.keys.map(k => k === "events" ? value([]) : value((x as Record<string, unknown>)[k]));
     }
@@ -97,7 +97,7 @@ function decode(input: unknown): unknown {
 export function snapshotGame(game: Game): NightSnapshot {
   const state: Record<string, unknown> = {};
   for (const key of Object.keys(game)) if (!OMIT.has(key)) state[key] = (game as unknown as Record<string, unknown>)[key];
-  return { version: 1, seed: game.seed, tuning: JSON.parse(JSON.stringify(game.tuning)) as Tuning, state: encode(state) };
+  return { version: 1, seed: game.seed, tuning: JSON.parse(JSON.stringify(game.tuning)) as Tuning, state: encode(state, new Set(game.witches)) };
 }
 
 /** Restore only within the same game build (checked by the app's save envelope). Throws before handing a bad night to play. */
@@ -127,6 +127,7 @@ export function restoreGame(input: unknown): Game {
   });
   // Resume awaits a player gesture. No held control, pending press or stale interpolation can fire.
   game.clock.paused = true;
+  if (game.witches.length > 1) for (const W of game.witches) { W.pending = {}; W.paused = true; }
   game.acc = 0; game.alpha = 1; game.pending = {};
   game.prev = { witches: game.witches.map(w => ({ x: w.body.x, z: w.body.z, lift: w.body.lift })), creatures: new Float64Array(game.creatures.flatMap(c => [c.x, c.z])), camera: { ...game.camera } };
   game.koEvents = []; game.questEvents = []; game.waveEvents = []; game.leashEvents = [];
