@@ -1,7 +1,7 @@
 import {witchSprite} from "./witch.js";
 import {render} from "./model3d.js";
 import {sizeTargetPixels,SIZE_CLASSES,SIZE_CLASS_BY_ID} from "./genome/size-ranks.js";
-import {rng,uni} from './core.js';
+import {rng,uni} from "./core.js";
 export function sizePixelRange(id,level,witch){
  const target=sizeTargetPixels(id,level,witch);
  if(level===3)return [target,target+1]; // protects 1.75x even when the adult reaches its upper bound
