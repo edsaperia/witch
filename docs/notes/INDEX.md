@@ -80,6 +80,7 @@ says what each note covers.
 
 - Attack target identity
 - Sheltered attack effects
+- Momentum class selection
 - Talk / invite
 - Bubble sight
 - Babies on her leash
