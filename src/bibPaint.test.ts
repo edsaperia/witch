@@ -11,9 +11,10 @@ import type {Style} from "./render/style";
 
 const definition={kind:"bib",mat:"BELLY",extent:{along:[-.8,.95],width:1,depth:1.5}};
 describe("localized shared throat/chest bib paint",()=>{
-  it("retains pre-change marten pixels and normal bytes with the field absent",()=>{
+  it("pins projected-fit marten pixels and normal bytes with the field absent",()=>{
     const hash=createHash("sha256");for(const facing of ["towards","away"]){const sp=critter("marten",1,0,defaultStyle(),facing);hash.update(JSON.stringify([sp.w,sp.h]));for(const bytes of [sp.m,sp.n])hash.update(Buffer.from(bytes.buffer,bytes.byteOffset,bytes.byteLength));}
-    expect(hash.digest("hex")).toBe("470e2f660e90f3a2d578b40a630c2b8c0397c656b30930f472ad802d2a7e93f1");
+    // Projected-fit baseline (6519883775); the optional bib remains absent.
+    expect(hash.digest("hex")).toBe("099b513138feba58161616f5a48f59963718e94c399be9bf079c15ff47342a54");
   });
   it("bounds the shared paint to the underside of the neck and local chest",()=>{
     expect(regionMarking([.4,.5,0],definition)).toBe(M.BELLY);

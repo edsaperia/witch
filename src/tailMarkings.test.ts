@@ -11,10 +11,11 @@ import type {Style} from "./render/style";
 const bent=()=>new Model().chain([[0,0,0,.2],[-1,0,0,.2],[-1,1,0,.1]],M.BODY,{paint:()=>M.MAGIC});
 describe("optional tail region painter",()=>{
   it.each([
-    ["raccoon","1bb27034adccd0a29d41c5046961dec07ed32d797dd0936a301e6244f1e6108b"],
-    ["stoat","4f580cd9e5609d44b1f1e6220a2fae09f570eafa6ed840b9e66658a92a1e13b8"],
-    ["jaguar","7e370412b6415eb9d1df29556f5634a45c4afadbd2eb4c03c89ee221259a8535"],
-  ])("keeps pre-change %s material and normal bytes with the region absent",(id,expected)=>{
+    // Projected-fit baselines (6519883775); optional tail regions remain absent.
+    ["raccoon","f26a9b408f80d7a4b716cb0833f99d3bc87d587da872272a712d6ebbefb9023a"],
+    ["stoat","aae4b65e698c2990204fd6aaac95385dd6b0996a0818d3674c6d5a7111b91058"],
+    ["jaguar","dffe51be7f19d7dd26c19d001ca67d2d5c008a896d4b0db0876dcde1d804a10b"],
+  ])("pins projected-fit %s material and normal bytes with the region absent",(id,expected)=>{
     const hash=createHash("sha256");
     for(const facing of ["towards","away"]){const sp=critter(id,1,0,defaultStyle(),facing);hash.update(JSON.stringify([sp.w,sp.h]));for(const bytes of [sp.m,sp.n])hash.update(Buffer.from(bytes.buffer,bytes.byteOffset,bytes.byteLength));}
     expect(hash.digest("hex")).toBe(expected);

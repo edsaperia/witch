@@ -8,11 +8,12 @@ import type {Style} from "./render/style";
 const current=defaultStyle();
 function selected(id:string,edit:(g:any)=>void){const g=structuredClone(GENOME_BY_ID[id]);edit(g);return {...current,creatureModels:`${id}:roster`,creatureVariants:{[id]:{roster:g}}} as unknown as Style;}
 function digest(id:string,level:number,idle=false,style=current){const h=createHash("sha256");for(const facing of ["towards","away"]){const sp=Reflect.apply(critter,null,[id,level,0,style,facing,idle?{idle:true}:null]);h.update(JSON.stringify([sp.w,sp.h]));for(const bytes of [sp.m,sp.n])h.update(Buffer.from(bytes.buffer,bytes.byteOffset,bytes.byteLength));}return h.digest("hex");}
-it("preserves existing material and normal bytes in all four affected forms",()=>{
-  expect(digest("mole",2)).toBe("eb3ff5d44762dc22e804e9e75b496b46cfe806e7e169803a835c3bef83811157");
-  expect(digest("flyingsquirrel",2)).toBe("f4c22a1700d8f476de8c2803c983d4fc9cc14a07be7167917d105f9f954a21c3");
-  expect(digest("meerkat",1)).toBe("293e0e26163079bea7cca7ba1dde108217c32aed96d8a4d48672ac51b55190e2");
-  expect(digest("meerkat",1,true)).toBe("8dc5e67bd41a2129f945ffd042ef5a4787ecb26b92552704722db3fca7f24f97");
+it("pins projected-fit material and normal bytes with all optional controls absent",()=>{
+  // Re-pinned for Ed's approved global projected fit (6519883775), pending art review.
+  expect(digest("mole",2)).toBe("b2b8ed76db8b0e3c3e41dac46a25fd703bf69a6ab4a3d6ba6d1d6dd4975924ef");
+  expect(digest("flyingsquirrel",2)).toBe("08613cbddfb4fa198a222d0c044389c496ccf26e835891a63e8bbb15a611d4f0");
+  expect(digest("meerkat",1)).toBe("b68664cf7fe8fd8f4bc8ec864499ebc1a2420dd12756fd0a0bf9d648b139bf29");
+  expect(digest("meerkat",1,true)).toBe("7e9f36dfd9b1d3ab95d516592b55a290d027bf9c626883e838bb425ef70fafb5");
 });
 it("changes each mole control independently while explicit unit values preserve Current",()=>{
   const keys=["bodyDepth","bodyLength","snoutProjection","forepawSpread","forepawSize"];
