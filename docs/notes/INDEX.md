@@ -218,6 +218,7 @@ says what each note covers.
 
 ## [Performance](performance.md)
 
+- House route profiling
 - Startup bundle baseline
 - Slow-frame summaries
 - Reused surface roughness (#1464, 2026-10-30):

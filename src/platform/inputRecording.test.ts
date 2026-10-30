@@ -1,5 +1,5 @@
 import { expect, it, vi } from "vitest";
-import { newGame, STEP, type Controls } from "../rules/game";
+import { newGame, stepGame, STEP, type Controls } from "../rules/game";
 import { TUNING } from "../rules/tuning";
 import { snapshotGame } from "../rules/nightSnapshot";
 import { captureNight } from "../app/nightSave";
@@ -93,4 +93,14 @@ it("keeps deferred records owned by their original game after another night can 
     expect(owners).toEqual([{ build: "test", t: game.clock.time, island: "fox" }]);
     expect(vi.getTimerCount()).toBe(0);
   } finally { vi.useRealTimers(); }
+});
+it("labels an explicitly disabled profile tape incomplete and preserves its simulation actions without journal writes", () => {
+  const { game } = fixture(), { game: reference } = fixture();
+  const persist = vi.fn();
+  const recorder = new InputRecorder(game, "test", () => captureNight(game, { build: "test", params: "", look: null, loan: null, flags: { chartRecorded: false, overRecorded: false } }), persist, false);
+  recorder.step(idle, STEP);
+  stepGame(reference, idle, STEP);
+  expect(snapshotGame(game)).toEqual(snapshotGame(reference));
+  expect(recorder.export()).toMatchObject({ complete: false, events: [], failure: "Input recording disabled by recording=0 for profiling" });
+  expect(persist).not.toHaveBeenCalled();
 });

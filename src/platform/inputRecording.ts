@@ -71,10 +71,11 @@ export class InputRecorder {
   private nested = 0;
   private readonly start: Omit<LocalStart, "snapshot">;
   private readonly startingSave: SavedNight;
-  constructor(private game: Game, private build: string, capture: () => SavedNight, private persist?: (kind: string, payload: unknown, context: { build: string; t: number; island: string }) => void) {
+  constructor(private game: Game, private build: string, capture: () => SavedNight, private persist?: (kind: string, payload: unknown, context: { build: string; t: number; island: string }) => void, enabled = true) {
     this.startingSave = capture();
     const { snapshot: _snapshot, ...start } = localStart(game, build, 0); this.start = start;
     this.size = bytes(this.startingSave) + bytes(start);
+    if (!enabled) { this.complete = false; this.failure = "Input recording disabled by recording=0 for profiling"; this.persist = undefined; return; }
     this.record("recording:start", { version: 1, build, seed: game.seed, startingSave: this.startingSave, start });
     if (this.size > MAX_BYTES) this.fail("Starting save exceeds the input recording limit");
   }

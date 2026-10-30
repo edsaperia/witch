@@ -1,5 +1,6 @@
 // Incremental, per-page journal. A committed IDB transaction survives reload; an in-flight write cannot be guaranteed after a hard kill.
 import { LogRecords, readableRecords, recordBytes, type LogRecord, type LogLevel } from "./logRecords";
+import { RECORD_INPUTS } from "./diagnosticMode";
 export interface LogContext { build: string; t: number | null; island: string }
 export interface NotableEvent extends LogContext { at: number; kind: string; message: string; data?: unknown }
 export interface JournalEntry extends LogRecord { page: string }
@@ -175,6 +176,7 @@ export function journalEntry(kind: string, payload: unknown, owner?: LogContext)
 }
 export function currentJournal(): PlaytestJournal | undefined { return active; }
 export function beginBrowserJournal(build: string): PlaytestJournal | undefined {
+  if (!RECORD_INPUTS) return undefined;
   if (active || typeof window === "undefined" || typeof location === "undefined") return active;
   context = () => ({ build, t: null, island: "unknown" });
   let id: string;
