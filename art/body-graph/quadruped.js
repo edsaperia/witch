@@ -56,32 +56,44 @@ export function quadrupedEarSocket(head, radius, side, direction, root = [0, 0, 
 
 // Ring cells follow the elliptical torso around the back and BOTH flanks.
 // A whole number of circumferential cells gives the same pattern at the seam.
-function rosetteCell(p, options, { centreY, depth, width, bellyY }) {
+/** @param {{depth:number,width:number,pixelsPerUnit?:number|null}} bounds */
+export function rosetteSizing(options, bounds) {
+  const { depth, width } = bounds, pixelsPerUnit = bounds.pixelsPerUnit ?? null;
+  if (options.outerPx !== undefined && (!Number.isFinite(options.outerPx) || options.outerPx <= 0)) throw new Error("Rosette outerPx must be positive");
+  const native = options.outerPx && pixelsPerUnit > 0;
+  const outer = options.outer ?? .4, k = native ? outer * 2 * pixelsPerUnit / options.outerPx : options.k ?? 6;
+  return { k, around: Math.max(native ? 1 : 6, Math.round(Math.PI * (depth + width) * k)), nominalOuterPx: pixelsPerUnit > 0 ? outer * 2 / k * pixelsPerUnit : null };
+}
+function rosetteCell(p, options, bounds) {
+  const { centreY, depth, width, bellyY, len } = bounds;
   if (p[1] < bellyY) return null;
-  const k = options.k ?? 6, around = Math.max(6, Math.round(Math.PI * (depth + width) * k));
+  if (options.xRange && len && (p[0] / len < options.xRange[0] || p[0] / len > options.xRange[1])) return null;
+  if (options.flankMin && Math.abs(p[2]) / width < options.flankMin) return null;
+  const { k, around } = rosetteSizing(options, bounds);
   const theta = Math.atan2(p[2] / width, (p[1] - centreY) / depth);
   const u = p[0] * k, v = (theta + Math.PI) / (Math.PI * 2) * around;
   const i = Math.floor(u), j = Math.floor(v), seam = ((j % around) + around) % around;
   if (hash2(i, seam, 11) > (options.density ?? .75)) return null;
   const cx = i + .3 + hash2(i, seam, 12) * .4, cy = j + .3 + hash2(seam, i, 13) * .4;
   const d = Math.hypot(u - cx, v - cy), a = Math.atan2(v - cy, u - cx);
-  return { d, angle: Math.sin(a * 3 + i) };
+  return { d, angle: a, phase: i, rotation: hash2(i, seam, 74) * Math.PI * 2 };
 }
 export function wrappedRosette(p, options, bounds) {
   const cell = rosetteCell(p, options, bounds);
-  return !!cell && cell.d > (options.inner ?? .18) && cell.d < (options.outer ?? .4) && cell.angle > -.65;
+  return !!cell && cell.d > (options.inner ?? .18) && cell.d < (options.outer ?? .4) && Math.sin(cell.angle * 3 + cell.phase) > -.65;
 }
 
 // Null means the region's base coat. Defining a region replaces its older
 // all-body pattern, so torso rings cannot leak onto a head or the lower legs.
-/** @param {{centreY:number,depth:number,width:number,bellyY:number}|null} [bounds] */
+/** @param {{centreY:number,depth:number,width:number,bellyY:number,len?:number,pixelsPerUnit?:number|null}|null} [bounds] */
 export function regionMarking(p, definition, bounds = null) {
   if (!definition || definition.kind === "none") return null;
   if (definition.kind === "rosettes" && bounds) {
     const cell = rosetteCell(p, definition, bounds);
     if (!cell) return null;
     if (cell.d <= (definition.inner ?? .18)) return definition.centreMat ? M[definition.centreMat] ?? null : null;
-    return cell.d < (definition.outer ?? .4) && cell.angle > -.65 ? M[definition.mat || "BODY3"] ?? M.BODY3 : null;
+    const outsideGap = Math.cos(cell.angle - cell.rotation) < Math.cos(definition.gap ?? .4);
+    return cell.d < (definition.outer ?? .4) && outsideGap ? M[definition.mat || "BODY3"] ?? M.BODY3 : null;
   }
   if (definition.kind === "spots") {
     const k = definition.k ?? 12, coordinates = p.map(v => v * k), cells = coordinates.map(Math.floor);

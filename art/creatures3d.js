@@ -5,7 +5,7 @@ import { Model, render, v3, spotty, masks } from "./model3d.js";
 import { faceUp, JAW_FACES } from "./genome/expressions.js";
 import { textureLumps } from "./genome/texture.js";
 import { compileGraph } from "./body-graph/graph.js";
-import { quadrupedTorsoGraph, quadrupedEarSocket, wrappedRosette, regionMarking } from "./body-graph/quadruped.js";
+import { quadrupedTorsoGraph, quadrupedEarSocket, wrappedRosette, regionMarking, rosetteSizing } from "./body-graph/quadruped.js";
 import { mandiblePart } from "./body-graph/mandibles.js";
 import { elderQuad, grizzle, notch, surfaceFrom, ring, fitRing, frontPts, closed, charm, crown, drawOn, meerkatDress, sentinelHeap } from "./elders.js";
 
@@ -553,11 +553,16 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   const m = new Model();
   const hr = q.hr * sz("head") * (st.head / .44) ** .5, len = q.len * sz("len") * st.long;
   const legK = sz("legK");
-  const bob = frame ? -.04 : 0, top = 1 + bob, chest = q.chest * sz("chestDeep") * sz("chestBig") / legK + bob, tuck = q.tuck * sz("tuck") / legK + bob; // a big one's deeper chest and belly
+  const bob = frame ? -.04 : 0, top = 1 + bob, rawChest = q.chest * sz("chestDeep") * sz("chestBig") / legK + bob, rawTuck = q.tuck * sz("tuck") / legK + bob; // a big one's deeper chest and belly
+  // Only the new graph corrects an inverted torso: retain the genome's own
+  // belly ratio without short-leg division, rather than put belly above back.
+  const chest = q.graph && rawChest >= top ? Math.min(top - .12, q.chest * sz("chestDeep") * sz("chestBig") + bob) : rawChest;
+  const tuck = q.graph && rawTuck >= top ? Math.min(top - .12, q.tuck * sz("tuck") + bob) : rawTuck;
   const bw = q.bw * sz("body") * (q.legW > 1.2 ? 1.15 : 1), lw = .06 * q.legW * sz("limbA") * sz("limbB");
   const hump = q.back === "hump" ? q.hump ?? .1 * (q.humpK ?? 1) : 0, arch = q.back === "arch" ? .1 * (q.archK ?? 1) : 0, front = q.front ?? 1; // front: a heavier front (an adult boar's)
   // ---- markings, painted by where a point is on the body ----
   const bellyY = chest + .12;
+  let markingScale = null; // assigned by Model.atScale before any paint callback is sampled
   // rosettes (a jaguar's): broken rings over its back and flanks, none on its belly; on a black coat only a shade darker (faint in the light);
   // ripple: each ring shifted along the body by the frame, so they ripple like light on water as it moves
   const rosetteAt = p => { const R = q.rosettes, k = R.k ?? 8, u = p[0] * k, v = p[1] * k, w = p[2] * k * .6, i = Math.floor(u), j = Math.floor(v), l = Math.floor(w); if (p[1] < chest + .06 || hash2(i, j + l * 31, 11) > (R.density ?? .7)) return false; const cx = i + .3 + hash2(i, j, 12) * .4 + (R.ripple ? Math.sin(v * 1.7 + frame * 2.2) * R.ripple : 0), cy = j + .3 + hash2(j, i, 13) * .4, d = Math.hypot(u - cx, v - cy), a = Math.atan2(v - cy, u - cx); return d > .2 && d < .36 && Math.sin(a * 3 + i) > -.55; };
@@ -572,7 +577,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
     if (q.harness && (Math.abs(p[0] - len * .32) < .045 || (p[0] > len * .9 && p[1] < top - .12))) return M.FLOWER; // the girth strap and the breastplate of an old gold harness
     if (q.belly && p[1] < bellyY && p[0] > -len * .5) return M.BELLY;
     if (q.regions?.torso) {
-      const mark = regionMarking(p, q.regions.torso, { centreY: (top + chest) / 2, depth: Math.max(.04, Math.abs(top - chest) / 2), width: bw, bellyY: chest + .06 });
+      const mark = regionMarking(p, q.regions.torso, { centreY: (top + chest) / 2, depth: Math.max(.04, Math.abs(top - chest) / 2), width: bw, bellyY: chest + .06, len, pixelsPerUnit: markingScale });
       if (mark !== null) return mark;
     }
     if (!q.regions?.torso && q.stripes && stripeAt(p)) return M[q.stripes.mat || "BODY3"];
@@ -611,6 +616,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   const P = profileOf(q.profile), wAt = k => P ? P[k].w : 1;
   if (q.graph) {
     const graph = quadrupedTorsoGraph(loaves, len, P, q.graph.flex ?? 0, frame);
+    graph.diagnostics.clampedBellyHeights = Number(chest !== rawChest) + Number(tuck !== rawTuck);
     const torso = compileGraph(graph).model;
     for (const part of torso.parts) m.parts.push({ ...part, paint: paintBody });
     m.bodyGraph = graph;
@@ -882,7 +888,17 @@ export function quad3d(S, level, frame, st, facing = "towards") {
     m.part = was;
   }
   gearUp(m);
+  if (q.regions?.torso?.outerPx) {
+    const previous = m.atScale;
+    m.atScale = scale => {
+      markingScale = scale;
+      m.markingMetrics = { pixelsPerUnit: scale, ...rosetteSizing(q.regions.torso, { depth: Math.max(.04, Math.abs(top - chest) / 2), width: bw, pixelsPerUnit: scale }) };
+      previous?.(scale);
+    };
+  }
   const sp = drawForm(m, { height: drawHeight(level, st, q.hgt), facing }, S, level);
+  if (m.markingMetrics) sp.markingMetrics = m.markingMetrics;
+  if (m.bodyGraph) sp.graphDiagnostics = m.bodyGraph.diagnostics;
   if (formMotes() && sz("motes")) glowMotes(sp, S.id.length * 7919, sz("motes"));
   return sp;
 }

@@ -140,11 +140,36 @@ all-body spots/stripes/tabby/bands for that region; natural colour/shape and
 legend features remain the roster designer's responsibility. Rounded-triangular
 fox ears remain subsequent canid shape work.
 
+Native-ring extension (coordinator 6513641499): `torso.outerPx` sets the nominal
+ring outer diameter in art pixels (the diagnostic uses 7, targeting the requested
+5–8 px range). The renderer's `atScale` callback supplies actual pixels per model
+unit, including rig-piece capture; it does not assume one world-space frequency
+works at every growth level. `torso.xRange` limits forward/back position as
+fractions of the body's `len`, and `flankMin` is minimum absolute side offset
+divided by body width. The diagnostic uses `[-.6,.8]` and `.25` to retain shoulder
+and flank marks while excluding the rump and centre spine. `gap` is a single
+opening's half-angle in radians, rotated deterministically per ring; the regional
+rings no longer use three repeated breaks that can resemble speckle. `centreMat`
+keeps the pale centre separate from the dark rim.
+
+`markingMetrics` records nominal, unprojected size and scale in capture evidence.
+It is not a measurement of visible ring bounds: projection, clipping and surface
+orientation still need cloud image review. Current art has none of these fields
+and follows its existing path.
+
 Connectedness tests caught thin-profile gaps and inverted legacy baby loaf
 depths. The graph inserts interpolated stations to preserve its connectivity
 invariant; it normalises non-positive legacy vertical radii and records their
 count in `model.bodyGraph.diagnostics.normalisedDepths` for review (notably the
 snow leopard baby). These are opt-in changes; no current genome is rewritten.
+
+The native-marking follow-up also checks that a graph's belly is below its back.
+When the legacy short-leg division inverts those heights (the snow leopard baby
+is a reproduced case), the graph uses the genome's own un-divided belly ratio,
+bounded to positive depth, for torso AND leg attachment. The current builder
+path retains its old values. `clampedBellyHeights` and `normalisedDepths` are
+recorded as `graphDiagnostics` in the capture evidence; no visual acceptance of
+that correction is claimed before cloud review.
 
 ## Cats comparison driver
 

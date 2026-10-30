@@ -6,14 +6,16 @@ import { resolve, relative, sep } from "node:path";
 import { openBrowser, ROOT } from "../../art/headless.mjs";
 import { CAT_CAPTURE_IDS } from "./cat-fixtures.js";
 
-const out = resolve(process.argv[2] ?? "previews/body-graph/cats-1");
+const iteration = process.env.CAT_ITERATION ?? "cats-1";
+if (!/^cats-\d+$/.test(iteration)) throw new Error("CAT_ITERATION must be cats-<number>");
+const out = resolve(process.argv[2] ?? `previews/body-graph/${iteration}`);
 if (!out.startsWith(ROOT + sep)) throw new Error("Output must stay inside this checkout");
 const sha = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
 execFileSync("git", ["diff", "--quiet"]);
 execFileSync("git", ["diff", "--cached", "--quiet"]);
 if (process.env.WITCH_SHA && process.env.WITCH_SHA !== sha) throw new Error("Expected checkout SHA differs from HEAD");
 mkdirSync(out, { recursive: true });
-writeFileSync(resolve(out, "source.json"), JSON.stringify({ sha, fixture: "cats-1", targetComments: [6513070150, 6513242775] }) + "\n");
+writeFileSync(resolve(out, "source.json"), JSON.stringify({ sha, fixture: iteration, targetComments: [6513070150, 6513242775, 6513641499] }) + "\n");
 const source = "/" + relative(ROOT, resolve(out, "source.json")).split(sep).join("/");
 const b = await openBrowser(), measurements = [];
 try {
@@ -36,7 +38,7 @@ try {
           const sp = facing === "top" ? G.withView({ yaw: .6, pitch: Math.PI / 2 }, draw) : draw();
           const constructionMs = performance.now() - start, bakeStart = performance.now();
           const baked = G.bake(sp, G.speciesColours(id, context, null, level), context, context.cOutline);
-          timings.push({ label, level, facing, constructionMs, bakeMs: performance.now() - bakeStart, width: sp.w, height: sp.h });
+          timings.push({ label, level, facing, constructionMs, bakeMs: performance.now() - bakeStart, width: sp.w, height: sp.h, markingMetrics: sp.markingMetrics ?? null, graphDiagnostics: sp.graphDiagnostics ?? null });
           pair.push(baked.A);
         }
         rows.push({ level, facing, pair, height: Math.max(...pair.map(p => p.height)) + 32 });
@@ -78,5 +80,5 @@ try {
     console.log(`wrote ${id}.png`);
   }
   if (b.errors.length) throw new Error(b.errors.join("\n"));
-  writeFileSync(resolve(out, "evidence.json"), JSON.stringify({ sha, servedSha: served, fixture: "cats-1", defaultOff: true, measurements, costScope: "First unique sprite construction and albedo bake wall time in a fresh page, serial current/graph order; includes JIT/GC effects. Not gameplay frame time or GPU cost.", visualAcceptance: "pending independent likeness review", targetComments: [6513070150,6513242775] }, null, 2) + "\n");
+  writeFileSync(resolve(out, "evidence.json"), JSON.stringify({ sha, servedSha: served, fixture: iteration, defaultOff: true, measurements, costScope: "First unique sprite construction and albedo bake wall time in a fresh page, serial current/graph order; includes JIT/GC effects. Not gameplay frame time or GPU cost.", markingScope: "markingMetrics reports nominal surface diameter before projection; foreshortening/clipping and native visible ring size require image review.", visualAcceptance: "pending independent likeness review", targetComments: [6513070150,6513242775,6513641499] }, null, 2) + "\n");
 } finally { await b.close(); }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { quadrupedEarSocket, wrappedRosette, regionMarking } from "../art/body-graph/quadruped.js";
+import { quadrupedEarSocket, wrappedRosette, regionMarking, rosetteSizing } from "../art/body-graph/quadruped.js";
 import { felineGraphGenome } from "../art/body-graph/families.js";
 import { GENOME_BY_ID, speciesOf } from "../art/genome/index.js";
 import { validateGraph } from "../art/body-graph/graph.js";
@@ -8,6 +8,8 @@ import { defaultStyle } from "../art/generator.js";
 import { Model } from "../art/model3d.js";
 import { Sprite, M } from "../art/core.js";
 import { catCaptureGenome, CAT_CAPTURE_IDS } from "../tools/body-graph/cat-fixtures.js";
+import { critter } from "../art/creatures.js";
+import type { Style } from "./render/style";
 
 function capture(record: unknown, level: number, frame: number) {
   const models: Model[] = [];
@@ -54,6 +56,34 @@ describe("first shared feline graph iteration", () => {
     expect(fixture.coat.regions.legs.kind).toBe("spots");
     expect(fixture.levels[3].coat.regions).toBe(null);
     expect(CAT_CAPTURE_IDS).toHaveLength(7);
+  });
+  it("uses actual bake scale for native ring size and excludes spine/rump outside the region", () => {
+    const definition = { kind: "rosettes", outerPx: 7, density: 1, outer: .4, xRange: [-.6, .8], flankMin: .25 };
+    for (const pixelsPerUnit of [10, 20, 50, 150]) {
+      const sizing = rosetteSizing(definition, { depth: .3, width: .25, pixelsPerUnit });
+      expect(sizing.nominalOuterPx).toBeCloseTo(7, 10);
+      expect(sizing.k).toBeGreaterThan(0);
+    }
+    const bounds = { centreY: .7, depth: .3, width: .25, bellyY: .5, len: 1, pixelsPerUnit: 30 };
+    for (let x = -.5; x <= .8; x += .01) expect(regionMarking([x, 1, 0], definition, bounds)).toBe(null);
+    for (let z = -.25; z <= .25; z += .01) expect(regionMarking([-1, .7, z], definition, bounds)).toBe(null);
+    expect(() => rosetteSizing({ outerPx: -1 }, bounds)).toThrow(/outerPx/);
+  });
+  it("sets native marking scale through the real renderer callback", () => {
+    const style = { ...defaultStyle(), pixel: 3 } as Style;
+    style.creatureModels = "snowleopard:graph";
+    style.creatureVariants = { snowleopard: { graph: catCaptureGenome(GENOME_BY_ID.snowleopard) } };
+    const sp = critter("snowleopard", 1, 0, style);
+    expect(sp).toHaveProperty("markingMetrics");
+    expect(Reflect.get(sp, "markingMetrics").nominalOuterPx).toBeCloseTo(7, 10);
+    expect(sp).toHaveProperty("markingMetrics.pixelsPerUnit");
+  });
+  it("keeps an opt-in baby's belly below its back even with inverted legacy ratios", () => {
+    const model = capture(catCaptureGenome(GENOME_BY_ID.snowleopard), 0, 0), rig = Reflect.get(model, "rig");
+    expect(rig.chest).toBeLessThan(rig.top);
+    expect(rig.tuck).toBeLessThan(rig.top);
+    const current = Reflect.get(capture(GENOME_BY_ID.snowleopard, 0, 0), "rig");
+    expect(current.chest).toBeGreaterThanOrEqual(current.top); // legacy path deliberately retained
   });
   it.each(["cat", "lynx", "lion", "tiger", "cheetah", "jaguar", "snowleopard"])("%s uses a connected graph at every level without mutating current art", id => {
     const base = GENOME_BY_ID[id], before = JSON.stringify(base), selected = felineGraphGenome(base);

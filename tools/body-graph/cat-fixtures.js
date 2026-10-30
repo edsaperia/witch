@@ -16,7 +16,7 @@ export function catCaptureGenome(base) {
   const out = felineGraphGenome(base, options);
   if (base.id === "snowleopard") {
     out.coat.regions = {
-      torso: { kind: "rosettes", k: 5, density: .55, inner: .19, outer: .4, centreMat: "BODYL", mat: "BODY3" },
+      torso: { kind: "rosettes", outerPx: 7, density: .55, inner: .19, outer: .4, gap: .4, xRange: [-.6, .8], flankMin: .25, centreMat: "BODYL", mat: "BODY3" },
       head: { kind: "spots", k: 12, density: .6, radius: .3 },
       legs: { kind: "spots", k: 10, density: .6, radius: .32 },
     };
