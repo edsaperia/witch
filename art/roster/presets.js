@@ -19,7 +19,7 @@ export const ROSTER_PRESETS = {
     reason: "Long broad ears at Current body scale, sandy fur and a dark tail tip through shared controls.",
     modelCommit: "090f76fdfaa584e6c7ef31a064771ba26aa590c8",
     patch: { look: { fennec: { fit: "current" } }, head: { earDimensions: { height: 2.7, width: 1.8 } }, parts: { ears: { kind: "sail", size: 2.7 } }, coat: { regions: { tail: { tip: { length: .2, mat: "NOSE" } } } } },
-    ordinaryLevels: { 0: { parts: { ears: { kind: "sail", size: 2.7 } } }, 1: { parts: { ears: { kind: "sail", size: 2.7 } } }, 2: { parts: { ears: { kind: "sail", size: 2.8 } } } },
+    ordinaryLevels: { 0: { parts: { ears: { kind: "sail", size: 2.7 } }, coat: { regions: { tail: null } } }, 1: { parts: { ears: { kind: "sail", size: 2.7 } } }, 2: { parts: { ears: { kind: "sail", size: 2.8 } } } },
     legendPatch: { look: { fennec: { fit: "current" } }, head: { earDimensions: { height: 2.7, width: 1.8 } }, parts: { ears: { kind: "sail", size: 2.8 } }, coat: { regions: { tail: { tip: { length: .2, mat: "NOSE" } } } } },
     text: "A tiny sandy fennec fox with broad long ears and a dark-tipped brush tail.",
   },
@@ -27,7 +27,7 @@ export const ROSTER_PRESETS = {
     reason: "Four long narrow flat wing panes through independent existing wing controls.",
     modelCommit: "090f76fdfaa584e6c7ef31a064771ba26aa590c8",
     patch: {},
-    ordinaryLevels: { 0: { body: { wingLength: 1.15, wingWidth: .55, wingAngle: 0 } }, 1: { body: { wingLength: 1.15, wingWidth: .55, wingAngle: 0 } }, 2: { body: { wingLength: 1.15, wingWidth: .55, wingAngle: 0 } } },
+    ordinaryLevels: { 0: { body: { wingLength: 1.15, wingWidth: .55, wingAngle: 0 }, palette: { over: { BELLY: [219, 239, 247], BODY3: [118, 155, 168] } } }, 1: { body: { wingLength: 1.15, wingWidth: .55, wingAngle: 0 }, palette: { over: { BELLY: [219, 239, 247], BODY3: [118, 155, 168] } } }, 2: { body: { wingLength: 1.15, wingWidth: .55, wingAngle: 0 }, palette: { over: { BELLY: [219, 239, 247], BODY3: [118, 155, 168] } } } },
     legendPatch: { body: { wingLength: 1.15, wingWidth: .55, wingAngle: 0 } },
     text: "A slender dragonfly with four long narrow wings held flat from its body.",
   },
@@ -46,7 +46,6 @@ export const ROSTER_PRESETS = {
   bat: {
     reason: "Keep the fruit bat's russet fur while lifting dark wing tones to preserve its flying silhouette.",
     patch: { palette: { over: { BODYL: [128, 101, 76], BODY2: [64, 62, 76], BODY3: [44, 43, 50] } } },
-    ordinaryLevels: { 0: { palette: { over: { BODY2: [85, 83, 100], BODY3: [50, 49, 59] } } }, 1: { palette: { over: { BODY2: [85, 83, 100], BODY3: [50, 49, 59] } } } },
     text: "A russet fruit bat with dark wings and a fox-like muzzle.",
   },
   woodlouse: {
