@@ -1,0 +1,14 @@
+{
+  "heads": {
+    "old": "a3bd2127b39045d72edb0635906545b82aad6542",
+    "new": "97ea61ce70e5f504459b8121107926768eb3e6a5"
+  },
+  "grantComment": "6522791463",
+  "startedAt": "2026-10-30T12:27:41.333Z",
+  "finishedAt": "2026-10-30T12:29:57.593Z",
+  "elapsedMs": 136260,
+  "code": 0,
+  "signal": null,
+  "timedOut": false,
+  "cleanup": "Browser/page/server closed in finally"
+}

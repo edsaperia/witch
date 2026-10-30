@@ -1,0 +1,241 @@
+{
+  "heads": {
+    "old": "a3bd2127b39045d72edb0635906545b82aad6542",
+    "new": "97ea61ce70e5f504459b8121107926768eb3e6a5"
+  },
+  "grantComment": "6522791463",
+  "startedAt": "2026-10-30T12:27:42.022Z",
+  "viewport": [
+    1600,
+    900
+  ],
+  "seed": 123,
+  "zoom": 2,
+  "quick": true,
+  "crop": {
+    "x": 320,
+    "y": 250,
+    "width": 960,
+    "height": 450
+  },
+  "scale2x": "nearest-neighbour pixels from the SAME native screenshot, no rerender",
+  "families": [
+    "bloom",
+    "wood",
+    "party",
+    "shadow",
+    "fire"
+  ],
+  "builds": {
+    "old": {
+      "version": "dev · a3bd212",
+      "built": "2026-10-30T12:08:50.355Z"
+    },
+    "new": {
+      "version": "dev · 97ea61c",
+      "built": "2026-10-30T11:47:02.088Z"
+    }
+  },
+  "scenes": {
+    "old": {
+      "shot": {
+        "ok": true,
+        "say": "in Bluebell glade",
+        "x": 3190.754367956137,
+        "z": 3106.559326444441,
+        "scene": "area:bluebell-glade"
+      },
+      "camera": {
+        "zoomStep": 3,
+        "zoom": 0.375,
+        "tx": 3190.754367956137,
+        "ty": 1.4,
+        "tz": 3106.559326444441,
+        "vx": 0,
+        "vy": 0,
+        "vz": 0,
+        "ax": 0,
+        "az": 0,
+        "lift": 0,
+        "pull": 0,
+        "intro": 0,
+        "coast": 0,
+        "gaze": 0,
+        "seaBehind": 0.569416652176196
+      }
+    },
+    "new": {
+      "shot": {
+        "ok": true,
+        "say": "in Bluebell glade",
+        "x": 3190.754367956137,
+        "z": 3106.559326444441,
+        "scene": "area:bluebell-glade"
+      },
+      "camera": {
+        "zoomStep": 3,
+        "zoom": 0.375,
+        "tx": 3190.754367956137,
+        "ty": 1.4,
+        "tz": 3106.559326444441,
+        "vx": 0,
+        "vy": 0,
+        "vz": 0,
+        "ax": 0,
+        "az": 0,
+        "lift": 0,
+        "pull": 0,
+        "intro": 0,
+        "coast": 0,
+        "gaze": 0,
+        "seaBehind": 0.569416652176196
+      }
+    }
+  },
+  "frames": [
+    {
+      "key": "old",
+      "element": "bloom",
+      "mode": "forest",
+      "name": "old-bloom-forest",
+      "sha": "a3bd2127b39045d72edb0635906545b82aad6542"
+    },
+    {
+      "key": "old",
+      "element": "bloom",
+      "mode": "iso",
+      "name": "old-bloom-iso",
+      "sha": "a3bd2127b39045d72edb0635906545b82aad6542"
+    },
+    {
+      "key": "old",
+      "element": "wood",
+      "mode": "forest",
+      "name": "old-wood-forest",
+      "sha": "a3bd2127b39045d72edb0635906545b82aad6542"
+    },
+    {
+      "key": "old",
+      "element": "wood",
+      "mode": "iso",
+      "name": "old-wood-iso",
+      "sha": "a3bd2127b39045d72edb0635906545b82aad6542"
+    },
+    {
+      "key": "old",
+      "element": "party",
+      "mode": "forest",
+      "name": "old-party-forest",
+      "sha": "a3bd2127b39045d72edb0635906545b82aad6542"
+    },
+    {
+      "key": "old",
+      "element": "party",
+      "mode": "iso",
+      "name": "old-party-iso",
+      "sha": "a3bd2127b39045d72edb0635906545b82aad6542"
+    },
+    {
+      "key": "old",
+      "element": "shadow",
+      "mode": "forest",
+      "name": "old-shadow-forest",
+      "sha": "a3bd2127b39045d72edb0635906545b82aad6542"
+    },
+    {
+      "key": "old",
+      "element": "shadow",
+      "mode": "iso",
+      "name": "old-shadow-iso",
+      "sha": "a3bd2127b39045d72edb0635906545b82aad6542"
+    },
+    {
+      "key": "old",
+      "element": "fire",
+      "mode": "forest",
+      "name": "old-fire-forest",
+      "sha": "a3bd2127b39045d72edb0635906545b82aad6542"
+    },
+    {
+      "key": "old",
+      "element": "fire",
+      "mode": "iso",
+      "name": "old-fire-iso",
+      "sha": "a3bd2127b39045d72edb0635906545b82aad6542"
+    },
+    {
+      "key": "new",
+      "element": "bloom",
+      "mode": "forest",
+      "name": "new-bloom-forest",
+      "sha": "97ea61ce70e5f504459b8121107926768eb3e6a5"
+    },
+    {
+      "key": "new",
+      "element": "bloom",
+      "mode": "iso",
+      "name": "new-bloom-iso",
+      "sha": "97ea61ce70e5f504459b8121107926768eb3e6a5"
+    },
+    {
+      "key": "new",
+      "element": "wood",
+      "mode": "forest",
+      "name": "new-wood-forest",
+      "sha": "97ea61ce70e5f504459b8121107926768eb3e6a5"
+    },
+    {
+      "key": "new",
+      "element": "wood",
+      "mode": "iso",
+      "name": "new-wood-iso",
+      "sha": "97ea61ce70e5f504459b8121107926768eb3e6a5"
+    },
+    {
+      "key": "new",
+      "element": "party",
+      "mode": "forest",
+      "name": "new-party-forest",
+      "sha": "97ea61ce70e5f504459b8121107926768eb3e6a5"
+    },
+    {
+      "key": "new",
+      "element": "party",
+      "mode": "iso",
+      "name": "new-party-iso",
+      "sha": "97ea61ce70e5f504459b8121107926768eb3e6a5"
+    },
+    {
+      "key": "new",
+      "element": "shadow",
+      "mode": "forest",
+      "name": "new-shadow-forest",
+      "sha": "97ea61ce70e5f504459b8121107926768eb3e6a5"
+    },
+    {
+      "key": "new",
+      "element": "shadow",
+      "mode": "iso",
+      "name": "new-shadow-iso",
+      "sha": "97ea61ce70e5f504459b8121107926768eb3e6a5"
+    },
+    {
+      "key": "new",
+      "element": "fire",
+      "mode": "forest",
+      "name": "new-fire-forest",
+      "sha": "97ea61ce70e5f504459b8121107926768eb3e6a5"
+    },
+    {
+      "key": "new",
+      "element": "fire",
+      "mode": "iso",
+      "name": "new-fire-iso",
+      "sha": "97ea61ce70e5f504459b8121107926768eb3e6a5"
+    }
+  ],
+  "errors": [],
+  "complete": true,
+  "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "finishedAt": "2026-10-30T12:29:56.326Z"
+}
