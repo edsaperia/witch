@@ -9,7 +9,7 @@ describe("expert observation and human input boundary", () => {
     const g = newGame(1000, withTuning({ cast: { ...TUNING.cast, on: false } })), w = g.witches[0];
     w.body = { ...w.body, seated: false, perch: false, mode: "ground" };
     for (const c of g.creatures) c.gone = true;
-    const bot = newExpert(); bot.decide(g);
+    const bot = newExpert({}, 1, EXPERT_LIMITS, undefined, { guardedCoverageExploration: false }); bot.decide(g);
     const directions = [];
     for (let i = 0; i < 70; i++) {
       g.herTime = 0.25 + i / 7.5;

@@ -1,7 +1,8 @@
 # Expert search: implementation and fairness audit
 
-Guarded coverage candidate (coordinator6521109755, 2026-10-30), opt-in
-`guardedCoverageExploration:true`, default off pending the fixed pilot. The same
+Guarded coverage (coordinators6521109755/6521665224, 2026-10-30) is default on
+after fixed pilot59bc20ce passed its coverage/KO gate. Explicit
+`guardedCoverageExploration:false` retains the OFF comparison. The same
 20 m footprint memory, eight100m headings and at most5s per30player seconds remain.
 Entry requires HP>=4 for the fixed four-heart loadout. Any damage, healing, KO,
 HP<4, public alarm/audible windup, or observed nonlegend nonfriendly adult (or any
@@ -23,6 +24,13 @@ WHOLE480s, one worker, no restart. Gate: total fully-seen cells rise, neither
 condition's coverage falls, no extra KO/loss in either pair; otherwise stop with
 no tuning. Minimum HP, requests, quests, wins and finds stay separate. This is a
 guarded discovery pilot, not proof of strength, a lock, or held-out evaluation.
+The paired footprint counts were197→209 matched and173→175 unlocked (370→384
+total), all four censored300 with no requests, quests, KOs or losses. Matched
+minimumHP worsened3→2; unlocked1→1. This does not establish zero added risk or
+full-night benefit. Delivery repair/dream visits stay on; known priority stays off.
+After the FINAL, further search, pilots and balancing wait for Ed's next playtest
+and explicit canonical routing. Original search-trained/held-out strength remains
+unestablished; there is no selected model lock or persistence claim.
 
 Delivery cycling repair (coordinators6520516411/6520984212, 2026-10-30),
 default on after correctness ablation fc9bf675 passed; `questDeliveryRepair:false`

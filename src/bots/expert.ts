@@ -46,7 +46,7 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
   let visitingLegend: number | null = null;
   const rememberDreamVisits = options.rememberDreamVisits !== false, abandonedVisits = new Set<number>();
   let dreamVisit: (Point & { id: number; until: number }) | null = null;
-  const coverage = newCoverage(), guardedCoverage = options.guardedCoverageExploration === true, coverageEnabled = options.coverageExploration === true || guardedCoverage;
+  const coverage = newCoverage(), guardedCoverage = options.guardedCoverageExploration !== false, coverageEnabled = options.coverageExploration === true || guardedCoverage;
   const coverageGuard = newCoverageGuard();
   // Candidate stays opt-in until the coordinator disposes of the fixed test.
   const questJob = newKnownQuestJob(options.knownQuestPriority === true);

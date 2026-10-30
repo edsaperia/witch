@@ -36,12 +36,12 @@ const fixtures = Array.from({ length: 960 }, (_, i) => {
 });
 for (const questMax of [1, 2]) for (const coverageExploration of [false, true]) for (const knownQuestPriority of [false, true]) for (const questDeliveryRepair of [false, true]) test(`diagnostic output preserves every control, questMax=${questMax}, coverage=${coverageExploration}, questJob=${knownQuestPriority}, delivery=${questDeliveryRepair}`, () => {
   const events: ExpertTrace[] = [];
-  const plain = newExpert({ questMax }, 123, EXPERT_LIMITS, undefined, { coverageExploration, knownQuestPriority, questDeliveryRepair }), logged = newExpert({ questMax }, 123, EXPERT_LIMITS, e => events.push(e), { coverageExploration, knownQuestPriority, questDeliveryRepair });
+  const plain = newExpert({ questMax }, 123, EXPERT_LIMITS, undefined, { coverageExploration, knownQuestPriority, questDeliveryRepair, guardedCoverageExploration:false }), logged = newExpert({ questMax }, 123, EXPERT_LIMITS, e => events.push(e), { coverageExploration, knownQuestPriority, questDeliveryRepair, guardedCoverageExploration:false });
   const mutating = newExpert({ questMax }, 123, EXPERT_LIMITS, e => {
     e.controls.moveX = 999; e.observation.self.hp = -999; e.knownQuests.length = 0; e.heardDreams.push(999);
     e.questJob.id = 999; e.questJob.deadline = -999;
     e.deliverySelection.pending = "mutated";
-  }, { coverageExploration, knownQuestPriority, questDeliveryRepair });
+  }, { coverageExploration, knownQuestPriority, questDeliveryRepair, guardedCoverageExploration:false });
   for (const fixture of fixtures) {
     const g = { fixture } as unknown as Game, expected = plain.decide(g);
     expect(logged.decide(g)).toEqual(expected); expect(mutating.decide(g)).toEqual(expected);
@@ -56,7 +56,7 @@ for (const questMax of [1, 2]) for (const coverageExploration of [false, true]) 
 const legend = () => ({ id: 9, species: "fox", level: 3, boss: true, friendly: false, angry: false,
   stunned: false, area: "1,1", rune: null, x: 30, z: 0 });
 function visitScript(rememberDreamVisits: boolean, change: (o: Observation, t: number) => void, end = 6) {
-  const events: ExpertTrace[] = [], bot = newExpert({}, 123, EXPERT_LIMITS, e => events.push(e), { rememberDreamVisits });
+  const events: ExpertTrace[] = [], bot = newExpert({}, 123, EXPERT_LIMITS, e => events.push(e), { rememberDreamVisits, guardedCoverageExploration:false });
   for (let i = 0; i <= end * 60; i++) {
     const o = observation(), t = i / 60; o.playerTime = t; o.worldTime = t;
     o.next = { x: -100, z: 0 }; if (t < .5) o.creatures = [legend()]; change(o, t);
@@ -109,7 +109,7 @@ for (const interrupted of [false, true]) test(`the 30-second deadline cannot ren
 
 function coverageScript(change: (o: Observation) => void, enabled = true, end = 2) {
   const events: ExpertTrace[] = [], durations = new Map<number, number>();
-  const bot = newExpert({}, 1, EXPERT_LIMITS, e => events.push(e), { coverageExploration: enabled });
+  const bot = newExpert({}, 1, EXPERT_LIMITS, e => events.push(e), { coverageExploration: enabled, guardedCoverageExploration:false });
   for (let i = 0; i < end * 60; i++) {
     const o = observation(); o.playerTime = i / 60; o.worldTime = o.playerTime; o.self.x = o.playerTime * 10;
     change(o); bot.decide({ fixture: o } as unknown as Game);
@@ -144,7 +144,7 @@ test("scheduled coverage stays under five seconds per thirty-second interval at 
 });
 
 function questScript(enabled: boolean, change: (o: Observation, t: number) => void, end = 3) {
-  const events: ExpertTrace[] = [], bot = newExpert({questMax:0},123,EXPERT_LIMITS,e=>events.push(e),{knownQuestPriority:enabled});
+  const events: ExpertTrace[] = [], bot = newExpert({questMax:0},123,EXPERT_LIMITS,e=>events.push(e),{knownQuestPriority:enabled,guardedCoverageExploration:false});
   for(let i=0;i<=end*60;i++) {
     const o=observation();o.playerTime=i/60;o.worldTime=o.playerTime;o.self.hp=4;
     o.quests=[{id:9,wants:"hare",open:true,delivery:{x:100,z:0},hint:{x:200,z:0}}];
@@ -207,7 +207,7 @@ test("a requested recruit's visible sigil is picked up before following its drea
 });
 
 function offeringScript(repaired:boolean|undefined,change:(o:Observation,t:number)=>void) {
-  const events:ExpertTrace[]=[],bot=newExpert({},1,EXPERT_LIMITS,e=>events.push(e),{questDeliveryRepair:repaired});
+  const events:ExpertTrace[]=[],bot=newExpert({},1,EXPERT_LIMITS,e=>events.push(e),{questDeliveryRepair:repaired,guardedCoverageExploration:false});
   for(let i=0;i<=3*60;i++){
     const o=observation();o.playerTime=i/60;o.worldTime=o.playerTime;
     o.quests=[{id:297,wants:"tiger",open:true,delivery:{x:0,z:0},hint:null}];
@@ -248,8 +248,8 @@ test("healing and KO keep precedence while a cycle acknowledgement is outstandin
   expect(events.find(e=>e.observation.playerTime>=2.1)?.controls.sigil).toBe(true);
 });
 
-function guardedScript(change:(o:Observation,t:number)=>void,end=3){
-  const events:ExpertTrace[]=[],bot=newExpert({},1,EXPERT_LIMITS,e=>events.push(e),{guardedCoverageExploration:true});
+function guardedScript(change:(o:Observation,t:number)=>void,end=3,enabled?:boolean){
+  const events:ExpertTrace[]=[],bot=newExpert({},1,EXPERT_LIMITS,e=>events.push(e),{guardedCoverageExploration:enabled});
   for(let i=0;i<end*60;i++){const o=observation();o.playerTime=i/60;o.worldTime=o.playerTime;o.self.hp=4;o.self.x=o.playerTime*10;change(o,o.playerTime);bot.decide({fixture:o} as unknown as Game);}
   return events;
 }
@@ -258,6 +258,13 @@ test("guarded coverage cancels on the delayed danger cue and never resumes that 
   expect(events.some(e=>e.doing==="exploring a less-seen direction")).toBe(true);
   expect(events.filter(e=>e.observation.playerTime>=1).every(e=>e.doing!=="exploring a less-seen direction")).toBe(true);
   expect(events.find(e=>e.observation.playerTime>=1)?.coverage.job).toBeNull();
+});
+test("the selected default matches explicit guarded-on controls through safe and unsafe observations",()=>{
+  const change=(o:Observation,t:number)=>{if(t>=1&&t<2)o.windups=[{x:o.self.x+20,z:0}];};
+  const on=guardedScript(change,35,true),defaulted=guardedScript(change,35,undefined),off=guardedScript(change,35,false);
+  expect(defaulted.map(e=>e.controls)).toEqual(on.map(e=>e.controls));
+  expect(defaulted.some(e=>e.doing==="exploring a less-seen direction")).toBe(true);
+  expect(off.every(e=>e.doing!=="exploring a less-seen direction")).toBe(true);
 });
 test("guarded coverage keeps visits, delivery, requested recruitment and ready casts above it",()=>{
   const cases:((o:Observation)=>void)[]=[o=>{o.creatures=[legend()];},o=>{o.stones=[{key:"1,1",x:0,z:0,cast:{x:0,z:0},ready:true,open:true}];},o=>{o.quests=[{id:9,wants:"hare",open:true,delivery:{x:100,z:0},hint:null}];o.carried=[{id:10,species:"hare",level:1}];},o=>{o.quests=[{id:9,wants:"hare",open:true,delivery:{x:100,z:0},hint:null}];o.creatures=[{...legend(),id:10,boss:false,level:1,species:"hare",x:o.self.x+40}];}];
