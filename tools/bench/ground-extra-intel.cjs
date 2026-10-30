@@ -65,9 +65,19 @@ let browser, timer, stopping = false;
       const expected = name === 'baseline' ? process.env.BASE_SHA : process.env.EXPECT_SHA;
       if (!version.version.includes(expected.slice(0, 7))) throw Error(`servedSHA mismatch: ${version.version}`);
       await page.waitForFunction(() => window.witch?.ready, null, { timeout: 150000 });
+      const bootDemand = await page.evaluate(() => {
+        const v = window.witch.view;
+        return { at: performance.now(), beachExists: !!v.ground.beach, beachOn: v.beachView.on, coastReadiness: v.ground.coastReadiness ?? null, fly: v.fly ? { x: v.fly.tx, z: v.fly.tz } : null,
+          coastMarks: performance.getEntriesByType('mark').filter(m => m.name.startsWith('ground:coast-')).map(m => ({ name: m.name, at: m.startTime, detail: m.detail })) };
+      });
+      (report.bootDemands ??= []).push({ name, version, ...bootDemand }); save();
+      await page.keyboard.press('Space');
+      await page.waitForFunction(() => { const el = document.getElementById('start'); return !el || getComputedStyle(el).display === 'none'; }, null, { timeout: 10000 });
       const before = await page.evaluate(() => {
         const v = window.witch.view, gl = v.renderer.getContext(), d = gl.getExtension('WEBGL_debug_renderer_info');
         return { at: performance.now(), gpu: d ? gl.getParameter(d.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER), programs: v.renderer.info.programs.length, beachExists: !!v.ground.beach,
+          beachOn: v.beachView.on, coastReadiness: v.ground.coastReadiness ?? null,
+          coastMarks: performance.getEntriesByType('mark').filter(m => m.name.startsWith('ground:coast-')).map(m => ({ name: m.name, at: m.startTime, detail: m.detail })),
           methods: window.__groundExtras.methods, links: window.__groundExtras.links.map(({ object, ...r }) => ({ ...r, readyWallMs: r.readyAt === null ? null : r.readyAt - r.at })) };
       });
       if (!/Intel/i.test(before.gpu) || /SwiftShader/i.test(before.gpu)) throw Error(`not Intel hardware: ${before.gpu}`);
@@ -83,6 +93,7 @@ let browser, timer, stopping = false;
         return { at: p.coastAt, point };
       });
       await page.waitForFunction(() => window.witch.view.beachView.on, null, { timeout: 10000 });
+      if (await page.evaluate(() => { const el = document.getElementById('start'); return el && getComputedStyle(el).display !== 'none'; })) throw Error('Start screen covers coast capture');
       if (name === 'candidate') await page.screenshot({ path: `${out}-${name}-first.png` });
       await page.waitForFunction(() => { const g = window.witch.view.ground; return 'GROUND_BEACH' in (g.mesh.material.defines || {}) && (!g.coastReadiness || g.coastReadiness.share === 1); }, null, { timeout: 65000 });
       await page.screenshot({ path: `${out}-${name}-ready.png` });
@@ -97,7 +108,7 @@ let browser, timer, stopping = false;
       report.rows.push({ name, version, bootWallMs: before.at, elapsedWallMs: Date.now() - started, before, coast, result, errors }); save();
       if (errors.length) throw Error(errors.join('; '));
       if (!result.groundSubmissions.length) throw Error('No ground submitted at coast');
-      if (name === 'candidate' && before.beachExists) throw Error('Candidate beach material existed before coast demand');
+      if (name === 'candidate' && before.beachExists) throw Error('Candidate has pre-existing coast material at boot; fresh coast-demand scenario not established (see bootDemands)');
       if (name === 'candidate' && result.unsafeReads.some(r => result.coastProgramIds.includes(r.id))) throw Error('Unfinished coast program queried');
       await context.close();
     }
