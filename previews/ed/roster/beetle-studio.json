@@ -1,5 +1,5 @@
 {
-  "sha": "768bdcea794387e644229023d8a9ca94e23944ae",
+  "sha": "d20d84874fe69a4bdbe4f5844ab3f515df5e87f0",
   "measurements": [
     {
       "id": "beetle",
@@ -291,8 +291,8 @@
         },
         "mandibles": {
           "length": 0.75,
-          "width": 1.2,
-          "curve": 0.3,
+          "width": 1.1,
+          "curve": 0.22,
           "teeth": 1,
           "awayTipLift": 0.16
         }
@@ -372,7 +372,7 @@
       ]
     }
   ],
-  "modelSourceCommit": "85ebc30df9f7ab373bc2e4552acc2fb197e36b69",
+  "modelSourceCommit": "78a01882c53f7e6ae749a6638c8257389e998672",
   "lighting": "studio",
   "style": {
     "ambientHue": 0.68,
