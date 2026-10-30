@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { nightHasStarted, NightAutosave, savedNight, savesEnabled, type NightStore, type SavedNight } from "./nightSave";
-import { newGame, stepGame, STEP } from "../rules/game";
+import { newGame as fullGame, stepGame, STEP } from "../rules/game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Autosave eligibility depends on leaving one bed, independent of distant areas or creature diversity.");
 import { TUNING } from "../rules/tuning";
 import { wakeInBedroom } from "../rules/opening";
 import { startWake, WAKE_DEFAULT } from "../rules/wakeUp";

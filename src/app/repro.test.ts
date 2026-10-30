@@ -1,7 +1,9 @@
 // The debug overlay's repro link (app/repro.ts): what changed is listed, ?set= puts it back, and the link rebuilds the game as it was.
 import { describe, expect, it } from "vitest";
 import { applyRepro, applySet, browserOs, debugText, reproLine, reproQuery, reproState, setText, tuningDiff } from "./repro";
-import { newGame } from "../rules/game";
+import { newGame as fullGame } from "../rules/game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Repro links restore local coordinates, wave state and settings; nine cells cover the tested three waves.");
 import { TUNING } from "../rules/tuning";
 
 const clone = <T>(o: T): T => JSON.parse(JSON.stringify(o));
