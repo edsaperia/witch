@@ -8,6 +8,12 @@ Ordinary direct play should not download or construct a rare screen until that s
 
 Sequencing fence: COORDINATOR6534496683 approves milestones1–2 in new modules/tests now. Do not edit main.ts or pause/input routing while1494(save slots) and1495(input stack) ship together. Wait for the coordinator's explicit live-release instruction, then merge prototype before integrating screens; adapt the ownership hook to1495's actual input stack, not the old routing. This fence does not prevent baseline/source analysis or the isolated loading seam.
 
+Value gate: COORDINATOR6534636102 accepts the baseline but requires a per-group generated/gzip estimate of modules actually leaving the initial graph, and retained shared dependencies, before milestone3. If the saving is small, report it for a continue/redirect ruling rather than splitting for its own sake. Milestone2 may continue meanwhile.
+
+## Loading seam, not integrated
+
+`src/app/lazyScreen.ts` caches only a loaded module, never constructs a screen for a cancelled request. The host reserves an input lease synchronously in the original gesture (including audio wake/held-input release when appropriate), supplies current night/entry validity, loading/failure UI, and show/hide callbacks. Duplicate current opens share one request/import; stale success or rejection cannot display UI over a new night. Closing or failure releases only that request's lease, leaving a distinct pause owner's claim intact. The adapter must close immediately on owner/night changes and integrate with1495's actual input stack after the fence lifts. No global listeners, DOM, gameplay import or simulation write exists in this seam. Six deferred-promise tests cover current/cancelled/stale success, stale failure, retry, partial-mount cleanup and separate pause ownership. Browser behavior and real input-stack integration are not claimed by these contract tests.
+
 ## Baseline recorded before screen integration
 
 `docs/rare-screens-startup-before.json` records source347988785d2413ed5a6ca4e474230aae1ec55907 (the plan-only commit; runtime code is unchanged from0389ac1e). `WITCH_SHA` names347988785, WITCH_VERSION is unset, Vite uses `--sourcemap --manifest`; the installed root dependency runtime is used read-only. Build PASS in4m13s on this laptop, with existing circular/large-chunk warnings. Build duration is not game boot time. No browser was opened.
