@@ -18,6 +18,7 @@ export const ROSTER_PRESETS = {
   crocodile: {
     reason: "Flatten the existing long jaw, thicken its existing tapering tail and reveal a pale underside.",
     patch: { head: { snout: 4.5, snoutD: .55, muzzle: true }, body: { tailK: 1.35 }, coat: { belly: true }, palette: { over: { BELLY: [174, 178, 143] } } },
+    legendPatch: { body: { tailK: 1 } },
     text: "A low crocodile with a long flat jaw, pale underside and thick tapering tail.",
   },
   crab: {
