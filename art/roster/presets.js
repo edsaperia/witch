@@ -9,6 +9,11 @@ const ROSTER_SNOW_REGIONS = {
 // One staged white ramp shared by pale mammals; no production palette mutation.
 const COOL_WHITE = { hue: .59, sat: .025, over: { BODY3: [113, 126, 143], BODY2: [168, 181, 196], BODY: [225, 231, 237], BODYL: [243, 246, 249], BELLY: [239, 243, 247] } };
 export const ROSTER_PRESETS = {
+  jaguar: {
+    reason: "Review's tawny jaguar target: reveal its existing dark rosettes with golden coat paint and a pale underside.",
+    patch: { palette: { hue: .105, sat: .62, val: .77, belly: [ .11, .13, .94 ], over: { BODY3: [36, 29, 23], BODY2: [143, 100, 49], BODYL: [235, 187, 105] } }, head: { muzzle: true }, coat: { belly: true } },
+    text: "A stocky golden jaguar with dark rosettes, a broad head and a thick tail.",
+  },
   polarbear: {
     reason: "Cool white fur and blue-grey coat shadows; keep the existing long neck and small head.",
     patch: { palette: COOL_WHITE },
