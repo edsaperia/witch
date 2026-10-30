@@ -6,6 +6,7 @@ Backlog (Ed, 2026-10-09 to 10-10). **Not built yet; don't build without Ed's go.
 
 - **Six kinds of mushroom** (Ed), in various shapes and colours. Every ingredient is a mushroom.
 - She **picks them up by walking over them**, into a **hidden bag**: not in her stack, not shown in the UI.
+- **Unlimited bag; nothing is lost on knockout** (Ed, 2026-10-30, cauldron builder chat: "bag capacity is unlimited, nothing is lost on knockout").
 - Where they grow: two temperate kinds at home from the start, one kind per biome direction on phase-3-and-beyond islands; a kind found once grows at home from then on (journey.md).
 - After the party's over she can still collect mushrooms and brew, so players explore trips without time pressure.
 
@@ -130,7 +131,6 @@ Visual references: Qualia Research Institute's replications of psychedelic visua
 
 - Assign the 56 trips to recipes; name the six mushrooms.
 - CRT: replace Underwater, or wait for a seventh mushroom?
-- Bag size, and whether the bag survives a knockdown.
 - The trip frame: adopt it for every trip, or fix the subtle ones one by one?
 
 - **The build-cost sort is accepted as it stands** (Ed, 2026-10-11).

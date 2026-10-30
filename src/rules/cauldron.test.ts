@@ -27,20 +27,20 @@ describe("commutative mushroom recipes", () => {
 });
 
 describe("hidden bag and kitchen baskets", () => {
-  it("collects up to an explicitly supplied capacity and transfers each kind without loss", () => {
+  it("collects without a capacity limit and transfers each kind without loss", () => {
     const inventory = newCauldronInventory();
-    for (const kind of MUSHROOM_KINDS) expect(collectMushroom(inventory, kind, 6)).toBe(true);
-    expect(collectMushroom(inventory, "A", 6)).toBe(false);
+    for (const kind of MUSHROOM_KINDS) collectMushroom(inventory, kind);
+    for (let i = 0; i < 10000; i++) collectMushroom(inventory, "A");
     depositMushrooms(inventory);
     for (const kind of MUSHROOM_KINDS) {
       expect(inventory.bag[kind]).toBe(0);
-      expect(inventory.baskets[kind]).toBe(1);
+      expect(inventory.baskets[kind]).toBe(kind === "A" ? 10001 : 1);
     }
     depositMushrooms(inventory);
-    expect(inventory.baskets.A).toBe(1);
-    expect(collectMushroom(inventory, "A", 6)).toBe(true);
+    expect(inventory.baskets.A).toBe(10001);
+    collectMushroom(inventory, "A");
     depositMushrooms(inventory);
-    expect(inventory.baskets.A).toBe(2);
+    expect(inventory.baskets.A).toBe(10002);
   });
 
   it("uses one per press and brews on exactly the third, then starts a fresh brew", () => {
@@ -62,18 +62,10 @@ describe("hidden bag and kitchen baskets", () => {
 
   it("keeps separately allocated witch inventories independent", () => {
     const a = newCauldronInventory(), b = newCauldronInventory();
-    collectMushroom(a, "B", 1);
+    collectMushroom(a, "B");
     depositMushrooms(a);
     addIngredient(a, "B");
     expect(b).toEqual(newCauldronInventory());
   });
 
-  it("rejects invalid capacities without changing the bag", () => {
-    const inventory = newCauldronInventory();
-    for (const capacity of [-1, 1.5, NaN, Infinity]) {
-      expect(() => collectMushroom(inventory, "A", capacity)).toThrow(RangeError);
-    }
-    expect(collectMushroom(inventory, "A", 0)).toBe(false);
-    expect(inventory).toEqual(newCauldronInventory());
-  });
 });

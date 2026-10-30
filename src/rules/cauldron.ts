@@ -34,13 +34,9 @@ export function newCauldronInventory(): CauldronInventory {
   return { bag: emptyMushrooms(), baskets: emptyMushrooms(), ingredients: [] };
 }
 
-/** Capacity is supplied by the caller: no default until Ed rules on bag size. */
-export function collectMushroom(inventory: CauldronInventory, kind: MushroomKind, capacity: number): boolean {
-  if (!Number.isSafeInteger(capacity) || capacity < 0) throw new RangeError("Invalid mushroom capacity");
-  const held = MUSHROOM_KINDS.reduce((sum, k) => sum + inventory.bag[k], 0);
-  if (held >= capacity) return false;
+/** Ed, 2026-10-30: unlimited bag; nothing is lost on knockout. */
+export function collectMushroom(inventory: CauldronInventory, kind: MushroomKind): void {
   inventory.bag[kind]++;
-  return true;
 }
 
 /** Entering the kitchen empties the hidden bag into the six matching baskets. */
