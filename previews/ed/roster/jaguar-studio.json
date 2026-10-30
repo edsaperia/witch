@@ -1,0 +1,988 @@
+{
+  "sha": "4e72535637ba759455e78fec50b5378482fb0d44",
+  "measurements": [
+    {
+      "id": "jaguar",
+      "facing": "towards",
+      "frame": 0,
+      "level": 0,
+      "current": [
+        54,
+        50
+      ],
+      "proposed": [
+        54,
+        50
+      ]
+    },
+    {
+      "id": "jaguar",
+      "facing": "towards",
+      "frame": 0,
+      "level": 1,
+      "current": [
+        119,
+        72
+      ],
+      "proposed": [
+        119,
+        72
+      ]
+    },
+    {
+      "id": "jaguar",
+      "facing": "towards",
+      "frame": 0,
+      "level": 2,
+      "current": [
+        183,
+        118
+      ],
+      "proposed": [
+        183,
+        118
+      ]
+    },
+    {
+      "id": "jaguar",
+      "facing": "towards",
+      "frame": 0,
+      "level": 3,
+      "current": [
+        524,
+        311
+      ],
+      "proposed": [
+        524,
+        311
+      ]
+    },
+    {
+      "id": "jaguar",
+      "facing": "towards",
+      "frame": 1,
+      "level": 0,
+      "current": [
+        57,
+        50
+      ],
+      "proposed": [
+        57,
+        50
+      ]
+    },
+    {
+      "id": "jaguar",
+      "facing": "towards",
+      "frame": 1,
+      "level": 1,
+      "current": [
+        133,
+        73
+      ],
+      "proposed": [
+        133,
+        73
+      ]
+    },
+    {
+      "id": "jaguar",
+      "facing": "towards",
+      "frame": 1,
+      "level": 2,
+      "current": [
+        201,
+        119
+      ],
+      "proposed": [
+        201,
+        119
+      ]
+    },
+    {
+      "id": "jaguar",
+      "facing": "towards",
+      "frame": 1,
+      "level": 3,
+      "current": [
+        573,
+        313
+      ],
+      "proposed": [
+        573,
+        313
+      ]
+    },
+    {
+      "id": "jaguar",
+      "facing": "away",
+      "frame": 0,
+      "level": 0,
+      "current": [
+        48,
+        49
+      ],
+      "proposed": [
+        48,
+        49
+      ]
+    },
+    {
+      "id": "jaguar",
+      "facing": "away",
+      "frame": 0,
+      "level": 1,
+      "current": [
+        106,
+        72
+      ],
+      "proposed": [
+        106,
+        72
+      ]
+    },
+    {
+      "id": "jaguar",
+      "facing": "away",
+      "frame": 0,
+      "level": 2,
+      "current": [
+        158,
+        117
+      ],
+      "proposed": [
+        158,
+        117
+      ]
+    },
+    {
+      "id": "jaguar",
+      "facing": "away",
+      "frame": 0,
+      "level": 3,
+      "current": [
+        470,
+        309
+      ],
+      "proposed": [
+        470,
+        309
+      ]
+    },
+    {
+      "id": "jaguar",
+      "facing": "away",
+      "frame": 1,
+      "level": 0,
+      "current": [
+        52,
+        49
+      ],
+      "proposed": [
+        52,
+        49
+      ]
+    },
+    {
+      "id": "jaguar",
+      "facing": "away",
+      "frame": 1,
+      "level": 1,
+      "current": [
+        110,
+        72
+      ],
+      "proposed": [
+        110,
+        72
+      ]
+    },
+    {
+      "id": "jaguar",
+      "facing": "away",
+      "frame": 1,
+      "level": 2,
+      "current": [
+        162,
+        117
+      ],
+      "proposed": [
+        162,
+        117
+      ]
+    },
+    {
+      "id": "jaguar",
+      "facing": "away",
+      "frame": 1,
+      "level": 3,
+      "current": [
+        481,
+        309
+      ],
+      "proposed": [
+        481,
+        309
+      ]
+    }
+  ],
+  "resolvedRecords": [
+    {
+      "level": 0,
+      "column": "current",
+      "body": {
+        "hgt": 0.95,
+        "len": 0.6,
+        "chest": 0.46,
+        "tuck": 0.52,
+        "neck": 0.26,
+        "neckAng": 0.5,
+        "neckW": 0.48,
+        "hr": 0.33,
+        "legW": 1.45,
+        "bw": 0.3,
+        "profile": {
+          "shoulder": {
+            "w": 1.18,
+            "d": 1.05
+          },
+          "ribcage": {
+            "w": 1.06
+          },
+          "waist": {
+            "w": 0.8,
+            "d": 0.9
+          },
+          "loin": {
+            "w": 0.86,
+            "d": 0.95
+          },
+          "hip": {
+            "w": 0.96
+          }
+        },
+        "spine": {
+          "ribcage": -0.04,
+          "waist": -0.048,
+          "loin": -0.038,
+          "hip": -0.015
+        },
+        "snout": 0.5,
+        "snoutD": 0.8,
+        "snoutTaper": 0.82,
+        "cheeks": true,
+        "whiskers": true,
+        "eyeK": 1.1,
+        "rosettes": {
+          "k": 6,
+          "density": 0.8
+        },
+        "ear": "round",
+        "earS": 0.95,
+        "tail": "jaguar",
+        "paw": "paw"
+      },
+      "look": null,
+      "paletteHSV": [
+        0.7,
+        0.16,
+        0.3
+      ]
+    },
+    {
+      "level": 0,
+      "column": "proposed",
+      "body": {
+        "hgt": 0.95,
+        "len": 0.6,
+        "chest": 0.46,
+        "tuck": 0.52,
+        "neck": 0.26,
+        "neckAng": 0.5,
+        "neckW": 0.48,
+        "hr": 0.33,
+        "legW": 1.45,
+        "bw": 0.3,
+        "profile": {
+          "shoulder": {
+            "w": 1.18,
+            "d": 1.05
+          },
+          "ribcage": {
+            "w": 1.06
+          },
+          "waist": {
+            "w": 0.8,
+            "d": 0.9
+          },
+          "loin": {
+            "w": 0.86,
+            "d": 0.95
+          },
+          "hip": {
+            "w": 0.96
+          }
+        },
+        "spine": {
+          "ribcage": -0.04,
+          "waist": -0.048,
+          "loin": -0.038,
+          "hip": -0.015
+        },
+        "snout": 0.5,
+        "snoutD": 0.8,
+        "snoutTaper": 0.82,
+        "cheeks": true,
+        "whiskers": true,
+        "eyeK": 1.1,
+        "muzzle": true,
+        "rosettes": false,
+        "belly": true,
+        "regions": {
+          "torso": {
+            "kind": "rosettes",
+            "outerPx": 4,
+            "density": 0.65,
+            "inner": 0.23,
+            "outer": 0.43,
+            "sizeVariation": 0.18,
+            "closedFraction": 0.65,
+            "gapRange": [
+              0,
+              0.45
+            ],
+            "filledFraction": 0.08,
+            "centreDotRadius": 0.4,
+            "centreDotMat": "BODY3",
+            "mat": "BODY3",
+            "xRange": [
+              -1.2,
+              0.9
+            ],
+            "densityFalloff": [
+              {
+                "axis": "y",
+                "from": 0,
+                "to": -1,
+                "min": 0.15
+              }
+            ]
+          },
+          "head": {
+            "kind": "spots",
+            "k": 12,
+            "density": 0.45,
+            "radius": 0.4,
+            "mat": "BODY3"
+          },
+          "legs": {
+            "kind": "spots",
+            "k": 12,
+            "density": 0.5,
+            "radius": 0.4,
+            "mat": "BODY3"
+          }
+        },
+        "ear": "round",
+        "earS": 0.95,
+        "tail": "jaguar",
+        "paw": "paw"
+      },
+      "look": null,
+      "paletteHSV": [
+        0.075,
+        0.2,
+        0.25
+      ]
+    },
+    {
+      "level": 1,
+      "column": "current",
+      "body": {
+        "hgt": 0.95,
+        "len": 0.86,
+        "chest": 0.5,
+        "tuck": 0.52,
+        "neck": 0.26,
+        "neckAng": 0.5,
+        "neckW": 0.48,
+        "hr": 0.29,
+        "legW": 1.1,
+        "bw": 0.3,
+        "profile": {
+          "shoulder": {
+            "w": 1.18,
+            "d": 1.05
+          },
+          "ribcage": {
+            "w": 1.06
+          },
+          "waist": {
+            "w": 0.8,
+            "d": 0.9
+          },
+          "loin": {
+            "w": 0.86,
+            "d": 0.95
+          },
+          "hip": {
+            "w": 0.96
+          }
+        },
+        "spine": {
+          "ribcage": -0.04,
+          "waist": -0.048,
+          "loin": -0.038,
+          "hip": -0.015
+        },
+        "snout": 0.5,
+        "snoutD": 0.8,
+        "snoutTaper": 0.82,
+        "cheeks": true,
+        "whiskers": true,
+        "eyeK": 1.1,
+        "rosettes": {
+          "k": 8,
+          "density": 0.75
+        },
+        "ear": "round",
+        "earS": 0.7,
+        "tail": "jaguar",
+        "paw": "paw"
+      },
+      "look": null,
+      "paletteHSV": [
+        0.7,
+        0.16,
+        0.3
+      ]
+    },
+    {
+      "level": 1,
+      "column": "proposed",
+      "body": {
+        "hgt": 0.95,
+        "len": 0.86,
+        "chest": 0.5,
+        "tuck": 0.52,
+        "neck": 0.26,
+        "neckAng": 0.5,
+        "neckW": 0.48,
+        "hr": 0.29,
+        "legW": 1.1,
+        "bw": 0.3,
+        "profile": {
+          "shoulder": {
+            "w": 1.18,
+            "d": 1.05
+          },
+          "ribcage": {
+            "w": 1.06
+          },
+          "waist": {
+            "w": 0.8,
+            "d": 0.9
+          },
+          "loin": {
+            "w": 0.86,
+            "d": 0.95
+          },
+          "hip": {
+            "w": 0.96
+          }
+        },
+        "spine": {
+          "ribcage": -0.04,
+          "waist": -0.048,
+          "loin": -0.038,
+          "hip": -0.015
+        },
+        "snout": 0.5,
+        "snoutD": 0.8,
+        "snoutTaper": 0.82,
+        "cheeks": true,
+        "whiskers": true,
+        "eyeK": 1.1,
+        "muzzle": true,
+        "rosettes": false,
+        "belly": true,
+        "regions": {
+          "torso": {
+            "kind": "rosettes",
+            "outerPx": 7,
+            "density": 0.65,
+            "inner": 0.23,
+            "outer": 0.43,
+            "sizeVariation": 0.18,
+            "closedFraction": 0.65,
+            "gapRange": [
+              0,
+              0.45
+            ],
+            "filledFraction": 0.08,
+            "centreDotRadius": 0.4,
+            "centreDotMat": "BODY3",
+            "mat": "BODY3",
+            "xRange": [
+              -1.2,
+              0.9
+            ],
+            "densityFalloff": [
+              {
+                "axis": "y",
+                "from": 0,
+                "to": -1,
+                "min": 0.15
+              }
+            ]
+          },
+          "head": {
+            "kind": "spots",
+            "k": 12,
+            "density": 0.45,
+            "radius": 0.4,
+            "mat": "BODY3"
+          },
+          "legs": {
+            "kind": "spots",
+            "k": 12,
+            "density": 0.5,
+            "radius": 0.4,
+            "mat": "BODY3"
+          }
+        },
+        "ear": "round",
+        "earS": 0.7,
+        "tail": "jaguar",
+        "paw": "paw"
+      },
+      "look": null,
+      "paletteHSV": [
+        0.075,
+        0.2,
+        0.25
+      ]
+    },
+    {
+      "level": 2,
+      "column": "current",
+      "body": {
+        "hgt": 0.95,
+        "len": 0.74,
+        "chest": 0.42,
+        "tuck": 0.52,
+        "neck": 0.26,
+        "neckAng": 0.5,
+        "neckW": 0.48,
+        "hr": 0.4,
+        "legW": 1.4,
+        "bw": 0.33,
+        "profile": {
+          "shoulder": {
+            "w": 1.18,
+            "d": 1.05
+          },
+          "ribcage": {
+            "w": 1.06
+          },
+          "waist": {
+            "w": 0.8,
+            "d": 0.9
+          },
+          "loin": {
+            "w": 0.86,
+            "d": 0.95
+          },
+          "hip": {
+            "w": 0.96
+          }
+        },
+        "spine": {
+          "ribcage": -0.04,
+          "waist": -0.048,
+          "loin": -0.038,
+          "hip": -0.015
+        },
+        "snout": 0.5,
+        "snoutD": 0.88,
+        "snoutTaper": 0.82,
+        "cheeks": true,
+        "whiskers": true,
+        "eyeK": 1.1,
+        "rosettes": {
+          "k": 8,
+          "density": 0.75
+        },
+        "ear": "round",
+        "earS": 0.7,
+        "tail": "jaguar",
+        "paw": "paw",
+        "front": 1.08
+      },
+      "look": null,
+      "paletteHSV": [
+        0.7,
+        0.16,
+        0.3
+      ]
+    },
+    {
+      "level": 2,
+      "column": "proposed",
+      "body": {
+        "hgt": 0.95,
+        "len": 0.74,
+        "chest": 0.42,
+        "tuck": 0.52,
+        "neck": 0.26,
+        "neckAng": 0.5,
+        "neckW": 0.48,
+        "hr": 0.4,
+        "legW": 1.4,
+        "bw": 0.33,
+        "profile": {
+          "shoulder": {
+            "w": 1.18,
+            "d": 1.05
+          },
+          "ribcage": {
+            "w": 1.06
+          },
+          "waist": {
+            "w": 0.8,
+            "d": 0.9
+          },
+          "loin": {
+            "w": 0.86,
+            "d": 0.95
+          },
+          "hip": {
+            "w": 0.96
+          }
+        },
+        "spine": {
+          "ribcage": -0.04,
+          "waist": -0.048,
+          "loin": -0.038,
+          "hip": -0.015
+        },
+        "snout": 0.5,
+        "snoutD": 0.88,
+        "snoutTaper": 0.82,
+        "cheeks": true,
+        "whiskers": true,
+        "eyeK": 1.1,
+        "muzzle": true,
+        "rosettes": false,
+        "belly": true,
+        "regions": {
+          "torso": {
+            "kind": "rosettes",
+            "outerPx": 7,
+            "density": 0.65,
+            "inner": 0.23,
+            "outer": 0.43,
+            "sizeVariation": 0.18,
+            "closedFraction": 0.65,
+            "gapRange": [
+              0,
+              0.45
+            ],
+            "filledFraction": 0.08,
+            "centreDotRadius": 0.4,
+            "centreDotMat": "BODY3",
+            "mat": "BODY3",
+            "xRange": [
+              -1.2,
+              0.9
+            ],
+            "densityFalloff": [
+              {
+                "axis": "y",
+                "from": 0,
+                "to": -1,
+                "min": 0.15
+              }
+            ]
+          },
+          "head": {
+            "kind": "spots",
+            "k": 12,
+            "density": 0.45,
+            "radius": 0.4,
+            "mat": "BODY3"
+          },
+          "legs": {
+            "kind": "spots",
+            "k": 12,
+            "density": 0.5,
+            "radius": 0.4,
+            "mat": "BODY3"
+          }
+        },
+        "ear": "round",
+        "earS": 0.7,
+        "tail": "jaguar",
+        "paw": "paw",
+        "front": 1.08
+      },
+      "look": null,
+      "paletteHSV": [
+        0.075,
+        0.2,
+        0.25
+      ]
+    },
+    {
+      "level": 3,
+      "column": "current",
+      "body": {
+        "hgt": 1.08,
+        "len": 0.9,
+        "chest": 0.46,
+        "tuck": 0.52,
+        "neck": 0.26,
+        "neckAng": 0.5,
+        "neckW": 0.48,
+        "hr": 0.4,
+        "legW": 1.55,
+        "bw": 0.34,
+        "profile": {
+          "shoulder": {
+            "w": 1.18,
+            "d": 1.05
+          },
+          "ribcage": {
+            "w": 1.06
+          },
+          "waist": {
+            "w": 0.8,
+            "d": 0.9
+          },
+          "loin": {
+            "w": 0.86,
+            "d": 0.95
+          },
+          "hip": {
+            "w": 0.96
+          }
+        },
+        "spine": {
+          "ribcage": -0.04,
+          "waist": -0.048,
+          "loin": -0.038,
+          "hip": -0.015
+        },
+        "snout": 0.5,
+        "snoutD": 1.15,
+        "snoutTaper": 0.95,
+        "cheeks": true,
+        "whiskers": true,
+        "eyeK": 1.1,
+        "rosettes": {
+          "k": 8,
+          "density": 0.85,
+          "mat": "BODYL",
+          "ripple": 0.18
+        },
+        "ear": "round",
+        "earS": 0.7,
+        "tail": "jaguar",
+        "paw": "paw",
+        "front": 1.15,
+        "jaw": 1.5,
+        "muzzle": true,
+        "scars": 3
+      },
+      "look": null,
+      "paletteHSV": [
+        0.7,
+        0.16,
+        0.3
+      ]
+    },
+    {
+      "level": 3,
+      "column": "proposed",
+      "body": {
+        "hgt": 1.08,
+        "len": 0.9,
+        "chest": 0.46,
+        "tuck": 0.52,
+        "neck": 0.26,
+        "neckAng": 0.5,
+        "neckW": 0.48,
+        "hr": 0.4,
+        "legW": 1.55,
+        "bw": 0.34,
+        "profile": {
+          "shoulder": {
+            "w": 1.18,
+            "d": 1.05
+          },
+          "ribcage": {
+            "w": 1.06
+          },
+          "waist": {
+            "w": 0.8,
+            "d": 0.9
+          },
+          "loin": {
+            "w": 0.86,
+            "d": 0.95
+          },
+          "hip": {
+            "w": 0.96
+          }
+        },
+        "spine": {
+          "ribcage": -0.04,
+          "waist": -0.048,
+          "loin": -0.038,
+          "hip": -0.015
+        },
+        "snout": 0.5,
+        "snoutD": 1.15,
+        "snoutTaper": 0.95,
+        "cheeks": true,
+        "whiskers": true,
+        "eyeK": 1.1,
+        "muzzle": true,
+        "rosettes": false,
+        "belly": true,
+        "regions": {
+          "torso": {
+            "kind": "rosettes",
+            "outerPx": 14,
+            "density": 0.65,
+            "inner": 0.23,
+            "outer": 0.43,
+            "sizeVariation": 0.18,
+            "closedFraction": 0.65,
+            "gapRange": [
+              0,
+              0.45
+            ],
+            "filledFraction": 0.08,
+            "centreDotRadius": 0.4,
+            "centreDotMat": "BODY3",
+            "mat": "BODY3",
+            "xRange": [
+              -1.2,
+              0.9
+            ],
+            "densityFalloff": [
+              {
+                "axis": "y",
+                "from": 0,
+                "to": -1,
+                "min": 0.15
+              }
+            ]
+          },
+          "head": {
+            "kind": "spots",
+            "k": 12,
+            "density": 0.45,
+            "radius": 0.4,
+            "mat": "BODY3"
+          },
+          "legs": {
+            "kind": "spots",
+            "k": 12,
+            "density": 0.5,
+            "radius": 0.4,
+            "mat": "BODY3"
+          }
+        },
+        "ear": "round",
+        "earS": 0.7,
+        "tail": "jaguar",
+        "paw": "paw",
+        "front": 1.15,
+        "jaw": 1.5,
+        "scars": 3
+      },
+      "look": {},
+      "paletteHSV": [
+        0.075,
+        0.2,
+        0.25
+      ]
+    }
+  ],
+  "modelSourceCommit": "d42523e03b77a8ff4507a5c232d5bdcf91e374e2",
+  "lighting": "studio",
+  "style": {
+    "ambientHue": 0.68,
+    "ambient": 0.22,
+    "moon": 0.3,
+    "moonHue": 0.58,
+    "glowHue": 0.13,
+    "glowSat": 0.35,
+    "glowRadius": 110,
+    "glowPower": 1.4,
+    "bands": 3,
+    "dither": 0.35,
+    "round": 0.9,
+    "outline": "none",
+    "cOutline": "dark",
+    "shafts": 0.3,
+    "areaContrast": 0.6,
+    "sat": 0.9,
+    "leafHue": 0.3,
+    "leafVariety": 0.3,
+    "trunkHue": 0.07,
+    "groundHue": 0.27,
+    "groundVal": 0.4,
+    "pixel": 3,
+    "treeSize": 0.85,
+    "crownWidth": 3,
+    "clearing": 0.55,
+    "depth": 4,
+    "areaScale": 1,
+    "areaTypes": 64,
+    "density": 0.55,
+    "clump": 0.6,
+    "gnarl": 0.5,
+    "roots": 0.6,
+    "bark": 0.6,
+    "trees": 1,
+    "wBroad": 0.8,
+    "wFir": 0.6,
+    "wWillow": 0.5,
+    "wBirch": 0.5,
+    "wPalm": 0.3,
+    "wFlat": 0.5,
+    "bushes": 55,
+    "bushSize": 1,
+    "flowers": 0.3,
+    "cSat": 0.6,
+    "cVal": 0.85,
+    "head": 0.44,
+    "eye": 1,
+    "legs": 1,
+    "long": 1,
+    "size": 8,
+    "growth": 20,
+    "magicHue": 0.5,
+    "fur": 0.5,
+    "creatureScale": 1.5,
+    "texture": 1,
+    "texDetail": 0.3,
+    "hueShift": 0,
+    "cloakHue": 0.72,
+    "hairHue": 0.01,
+    "hatHue": 0.74,
+    "topHue": 0.13,
+    "jeansHue": 0.6,
+    "shoeHue": 0,
+    "phonesHue": 0.92,
+    "artStyle": "bold"
+  },
+  "largestCell": [
+    573,
+    313
+  ],
+  "selectionInterface": "shared #1470 selector"
+}

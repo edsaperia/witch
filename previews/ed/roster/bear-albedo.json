@@ -1,5 +1,5 @@
 {
-  "sha": "697443fa1ac85dc9f437670ad3380069f40e06c8",
+  "sha": "4e72535637ba759455e78fec50b5378482fb0d44",
   "measurements": [
     {
       "id": "bear",
@@ -285,7 +285,8 @@
         "snoutD": 0.8,
         "snoutTaper": 0.8,
         "muzzle": true,
-        "jawCoat": true,
+        "jawCoat": false,
+        "face": "dark",
         "shaggy": true,
         "ear": "round",
         "earS": 1.3,
@@ -357,7 +358,8 @@
         "snoutD": 0.72,
         "snoutTaper": 0.8,
         "muzzle": true,
-        "jawCoat": true,
+        "jawCoat": false,
+        "face": "dark",
         "shaggy": true,
         "ear": "round",
         "earS": 1.1,
@@ -429,7 +431,8 @@
         "snoutD": 0.72,
         "snoutTaper": 0.8,
         "muzzle": true,
-        "jawCoat": true,
+        "jawCoat": false,
+        "face": "dark",
         "shaggy": true,
         "ear": "round",
         "earS": 1.15,
@@ -501,7 +504,8 @@
         "snoutD": 0.72,
         "snoutTaper": 0.8,
         "muzzle": true,
-        "jawCoat": true,
+        "jawCoat": false,
+        "face": "dark",
         "shaggy": true,
         "ear": "round",
         "earS": 1.15,
@@ -516,7 +520,7 @@
       ]
     }
   ],
-  "modelSourceCommit": "84976b88a3ed48cf83ab3bebc981a17952464945",
+  "modelSourceCommit": "d42523e03b77a8ff4507a5c232d5bdcf91e374e2",
   "lighting": "albedo",
   "style": {
     "ambientHue": 0.68,
