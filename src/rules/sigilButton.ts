@@ -25,7 +25,8 @@ import { questOutside, questPlaced } from "./quest";
 import { onAreaDone } from "./leylines";
 import { isInside } from "./mapShape";
 import { cellKey, clearArea } from "./party";
-import { castingStone, looseAt, looseNear, stepCast } from "./stoneStacks";
+import { castOn, castingStone, looseAt, looseNear, stepCast, stoneNear } from "./stoneStacks";
+import { atDecks } from "./wakeUp";
 
 /** A legend's circle flashing: a sigil or relic put down outside its clearing (the leash's outsideCircle event). */
 /** How far in from the coast (m) a scattering baby stays (rules/leash.ts land). */
@@ -135,8 +136,10 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
   g.leash.events.push(...relicEvents);
   // Held with nothing to do (no sigil, relic, rune or hat picked up or put down, nothing refused), on the ground: her hat goes
   // down at her feet (rules/hat.ts putHat).
-  const idle = pressed && !stone && !g.leash.events.some(e => e.at === ht && e.kind !== "invited" && e.kind !== "befriended" && e.kind !== "cancelled");
-  if (putHat(W.hat, idle, !!(c.hatHold ?? c.sigilHeld) && onFoot && !stone, g.witch.x, g.witch.z, ht, t.leash.hatHold))
+  // Use at an unready stump still belongs to the stump. Entering its ground also cancels an idle hold begun outside.
+  const useTarget = onFoot && (atDecks(g) || (castOn(t) && !!stoneNear(g, g.witch.x, g.witch.z, 0, false)));
+  const idle = pressed && !stone && !useTarget && !g.leash.events.some(e => e.at === ht && e.kind !== "invited" && e.kind !== "befriended" && e.kind !== "cancelled");
+  if (putHat(W.hat, idle, !!(c.hatHold ?? c.sigilHeld) && onFoot && !stone && !useTarget, g.witch.x, g.witch.z, ht, t.leash.hatHold))
     g.leash.events.push({ kind: "hatPut", id: W.id, x: g.witch.x, z: g.witch.z, at: ht });
   // A happy creature's rune near her on the ground comes to her (Ed's playtest, 2026-10-06: "Floor sigils of happy creatures ... are
   // difficult to pick up"): its creature trots over (leash.runePull), so she needn't stop dead on it.

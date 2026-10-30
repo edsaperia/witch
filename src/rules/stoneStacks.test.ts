@@ -104,6 +104,18 @@ describe("runestone stacks (Ed, 2026-10-28)", () => {
 });
 
 describe("the soundsystem spell (Ed, 2026-10-28)", () => {
+  it("holding Use at a hostile, unready stump never puts her hat down, including an idle hold begun elsewhere", () => {
+    const g = game(), a = area(g), W = g.witches[0];
+    at(g, a, true);
+    expect(castReady(g, a.key)).toBe(false);
+    expect(castingStone(g, W)).toBeNull();
+    W.hat.hold = g.herTime - 10;
+    run(g, TUNING.leash.hatHold! + .1, { ...hold, sigil: true, hatHold: true });
+    expect(W.hat.down).toBeNull();
+    expect(W.hat.hold).toBeUndefined();
+    expect(W.casting ?? null).toBeNull();
+  });
+
   it("held at the stone for cast.time converts it: a soundsystem, its babies friends, every friend sigil scattered loose round it", () => {
     const g = game(), a = area(g), W = g.witches[0];
     at(g, a);

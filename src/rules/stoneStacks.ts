@@ -120,8 +120,9 @@ export function pastCasting(g: Game, cell: Cell, x: number, z: number): number {
 }
 
 /** The stone she'd cast at from (x, z): her area's (a legend area's pair's), if it has a stack, is ready to cast (castReady) and
- *  she's within `reach` m of its casting ground (pastCasting: 0, on it). Its x, z the stone's own. */
-export function stoneNear(g: Game, x: number, z: number, reach: number): { key: string; cell: Cell; x: number; z: number } | null {
+ *  she's within `reach` m of its casting ground (pastCasting: 0, on it). Its x, z the stone's own.
+ *  `requireReady` false also finds hostile stones: Use belongs to them even before she can cast. */
+export function stoneNear(g: Game, x: number, z: number, reach: number, requireReady = true): { key: string; cell: Cell; x: number; z: number } | null {
   // (her area's stone, or a neighbour's: a stone can stand near its area's edge, and a step either way of the line mustn't lose it)
   const here = g.map.cellSafe(x, z).cell, keys = [keyOf(here), ...(g.map.neighbours.get(keyOf(here)) ?? [])];
   let best: { key: string; cell: Cell; x: number; z: number } | null = null, bd = reach;
@@ -129,7 +130,7 @@ export function stoneNear(g: Game, x: number, z: number, reach: number): { key: 
     const [cx, cy] = k.split(",").map(Number), cell = g.map.areaOf ? g.map.areaOf([cx, cy]) : ([cx, cy] as Cell), key = keyOf(cell);
     if (!g.map.playable(cell[0], cell[1]) || !stoneOpen(g, key)) continue;
     const d = pastCasting(g, cell, x, z);
-    if (d <= bd && castReady(g, key)) { const s = g.map.soundsystemSpot(cell[0], cell[1]); bd = d; best = { key, cell, x: s.x, z: s.z }; }
+    if (d <= bd && (!requireReady || castReady(g, key))) { const s = g.map.soundsystemSpot(cell[0], cell[1]); bd = d; best = { key, cell, x: s.x, z: s.z }; }
   }
   return best;
 }
