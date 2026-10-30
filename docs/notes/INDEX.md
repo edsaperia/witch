@@ -178,6 +178,10 @@ says what each note covers.
 - Sail in place
 - Zoo
 
+## [Light-pool readability experiment](light-pool-readability.md)
+
+(no entries: its tools and checks only)
+
 ## [The Making Of](making-of.md)
 
 (no entries: its tools and checks only)

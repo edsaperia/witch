@@ -20,6 +20,8 @@ export function metresPerArtPixel(t: { artPixelsPerMetre: number; pixelSize: num
 
 /** Shared by every sprite batch: the camera's right and (tilted) up, and the canopy fade. */
 export const SPRITE_UNIFORMS = {
+  /** Review experiment, Ed 2026-10-30: creatures read inside her light, camouflage outside stays unchanged. */
+  uPoolReadability: { value: new URLSearchParams(globalThis.location?.search ?? "").get("poolreadability") === "1" ? 1 : 0 },
   /** The mood's moonlight rim on characters (render/mood.ts): colour, strength (0 off). */
   uMoodRim: { value: new THREE.Vector4() },
   /** 1 when the sprites are stylised (?style=bold|ref): their outermost pixel is the style's dark outline, so the rim goes just inside it. */
@@ -349,6 +351,7 @@ varying vec2 vLocal;
 varying float vSizeY;
 varying vec2 vGround;
 uniform float uFind; // this batch: 1 for wild creatures (eyeshine, light floor, rim)
+uniform float uPoolReadability; // default OFF; ?poolreadability=1 for the assigned review
 uniform float uRimOn; // this batch: 1 for characters (the witch, creatures): the mood's moonlight rim
 uniform vec4 uMoodRim; // the rim's colour and strength (0: none; render/mood.ts)
 uniform float uRimInset; // 1: stylised sprites, the rim one pixel in from the edge (inside the style's outline)
@@ -596,6 +599,20 @@ void shade() {
     float d = length(lv), k = 1.0 - smoothstep(uGlowR * 0.5, uGlowR * 1.8, d);
     float edge = 1.0 - clamp(dot(N, uFacing), 0.0, 1.0);
     col = min(vec3(1.0), col + mix(a.rgb, vec3(1.0), 0.5) * uGlowRgb * edge * max(0.0, dot(N, lv / max(d, 1e-3))) * k * look.y);
+  }
+  // Separate from the established find rim: use her actual horizontal pool and its light factors.
+  // Do not recolour the paint. A minimum floor could be cancelled by the existing find rim,
+  // including on dark creatures, so add a small lift selected by the painted pixel instead.
+  if (uPoolReadability > 0.5 && uFind > 0.5 && uIsScenery < 0.5 && uGlowPower > 0.0) {
+    float radius = uGlowR * uGlowNear, distance = length((uGlowPos - vWorld).xz);
+    if (radius > 0.0 && distance < radius) {
+      float pool = pow(1.0 - distance / radius, uGlowFalloff) * min(1.0, uGlowPower) * max(0.0, uGlowDim);
+      float paint = dot(a.rgb, vec3(0.3, 0.55, 0.15));
+      // Keep the paint's relative values: normalising by luminance made the darkest shades
+      // approach one flat value. This proportional addition retains their internal shading.
+      float dark = 1.0 - smoothstep(0.35, 0.75, paint);
+      col += a.rgb * (0.6 * pool * dark);
+    }
   }
   if (vFlags.y > 0.5 && uPartyCount > 0) {
     // Crowns over a party catch a faint glow from below, on their undersides and lower edges.
