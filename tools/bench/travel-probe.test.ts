@@ -1,4 +1,4 @@
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
 import { createRequire } from 'node:module';
 import { runInNewContext } from 'node:vm';
 const { installTravelProbe } = createRequire(import.meta.url)('../view/travel-probe.cjs');
@@ -40,6 +40,19 @@ it('preserves upload return values and thrown errors while recording the call', 
   const trace = context.__travelProbe.trace;
   expect(trace.events).toHaveLength(0);
   expect(trace.uploads.texImage2D).toEqual({ method: 'texImage2D', count: 2, wallMs: 2, longestMs: 1, firstAt: 0, lastAt: 2, longestAt: 0, errors: 1 });
+});
+it('records native worker errors without replacing handlers or retaining event payloads', () => {
+  class NativeWorker {
+    listeners = new Map<string, (e: unknown) => void>();
+    set onmessage(_handler: unknown) {}
+    addEventListener(type: string, handler: (e: unknown) => void) { this.listeners.set(type, handler); }
+  }
+  const context: any = { Worker: NativeWorker, performance: { now: () => 1 }, requestAnimationFrame: () => {} }; context.window = context;
+  runInNewContext(`(${installTravelProbe.toString()})()`, context);
+  const worker = new context.Worker('chartOutlines.worker.js'), preventDefault = vi.fn();
+  worker.listeners.get('error')({ message: 'startup failed', data: new Uint8Array(100), preventDefault });
+  expect(context.__travelProbe.trace.events[0]).toEqual({ kind: 'worker-error', worker: 'chart', at: 1, ms: 0, message: 'startup failed' });
+  expect(preventDefault).not.toHaveBeenCalled();
 });
 
 it('retains every upload count and slowest call beyond the old cap, leaving room for late worker events', () => {

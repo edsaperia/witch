@@ -10,14 +10,18 @@ function snapshotFailure() {
 }
 async function collectFailure(page, context, timeout = 1500) {
   if (!page) return { ...context, diagnosticError: 'no page created' };
-  let timer;
-  try {
-    const snapshot = await Promise.race([
-      page.evaluate(snapshotFailure),
-      new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('failure snapshot timed out')), timeout); }),
-    ]);
-    return { ...context, ...snapshot };
-  } catch (e) { return { ...context, diagnosticError: String(e) }; }
-  finally { clearTimeout(timer); }
+  const capture = async read => {
+    let timer;
+    try { return await Promise.race([Promise.resolve().then(read), new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('failure snapshot timed out')), timeout); })]); }
+    catch (e) { return { diagnosticError: String(e) }; }
+    finally { clearTimeout(timer); }
+  };
+  let workers = [];
+  try { workers = page.workers?.() || []; } catch { /* page already closed */ }
+  const [snapshot, ...states] = await Promise.all([
+    capture(() => page.evaluate(snapshotFailure)),
+    ...workers.map(async worker => ({ url: worker.url(), ...await capture(() => worker.evaluate(() => ({ handlerInstalled: typeof self.onmessage === 'function', marks: performance.getEntriesByType('mark').slice(-16).map(e => ({ name: e.name, at: Math.round(e.startTime) })) }))) })),
+  ]);
+  return { ...context, ...snapshot, workers: states };
 }
 module.exports = { snapshotFailure, collectFailure };

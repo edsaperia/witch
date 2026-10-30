@@ -19,3 +19,15 @@ it('bounds diagnostics when the failed page no longer responds', async () => {
   await vi.advanceTimersByTimeAsync(1500);
   expect((await pending).diagnosticError).toContain('timed out'); expect(vi.getTimerCount()).toBe(0);
 });
+it('retains page evidence when an individual worker is unresponsive', async () => {
+  vi.useFakeTimers();
+  const page = { evaluate: async () => ({ ready: true, chart: { islands: [] } }), workers: () => [
+    { url: () => 'artWorker.js', evaluate: async () => ({ handlerInstalled: true, marks: [] }) },
+    { url: () => 'chartWorker.js', evaluate: () => new Promise(() => {}) },
+  ] };
+  const pending = collectFailure(page, { phase: 'chart outlines' });
+  await vi.advanceTimersByTimeAsync(1500);
+  const result = await pending;
+  expect(result.ready).toBe(true); expect(result.workers[0].handlerInstalled).toBe(true);
+  expect(result.workers[1].url).toBe('chartWorker.js'); expect(result.workers[1].diagnosticError).toContain('timed out'); expect(vi.getTimerCount()).toBe(0);
+});

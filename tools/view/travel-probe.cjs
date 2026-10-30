@@ -16,7 +16,11 @@ function installTravelProbe() {
   const message = NativeWorker && Object.getOwnPropertyDescriptor(NativeWorker.prototype, 'onmessage');
   trace.capabilities.workerMessages = !!message?.set;
   if (NativeWorker && message?.set) window.Worker = class extends NativeWorker {
-    constructor(url, options) { super(url, options); const name = String(url).split('/').pop(); this._travelWorker = /mapPrep/.test(name) ? 'map' : /artWorker/.test(name) ? 'art' : /chartOutlines/.test(name) ? 'chart' : name; }
+    constructor(url, options) {
+      super(url, options); const name = String(url).split('/').pop(); this._travelWorker = /mapPrep/.test(name) ? 'map' : /artWorker/.test(name) ? 'art' : /chartOutlines/.test(name) ? 'chart' : name;
+      // Observe errors without replacing the game's handler or preventing their normal dispatch.
+      for (const type of ['error', 'messageerror']) this.addEventListener?.(type, e => add({ kind: `worker-${type}`, worker: this._travelWorker, at: performance.now(), ms: 0, message: String(e.message || type).slice(0, 1500) }));
+    }
     postMessage(...args) { const at = performance.now(); try { return super.postMessage(...args); } finally { add({ kind: 'worker-send', worker: this._travelWorker, at, ms: performance.now() - at, job: args[0]?.kind, jobSeed: args[0]?.seed }); } }
     get onmessage() { return this._travelHandler ?? null; }
     set onmessage(handler) {
