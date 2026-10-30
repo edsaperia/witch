@@ -16,7 +16,7 @@ Backlog (Ed, 2026-10-09 to 10-10). **Not built yet; don't build without Ed's go.
 - Coming in with a full bag, her mushrooms **jump out of her into their baskets**.
 - Near a basket, it **lights up and trembles**; **E throws one in**.
 - **Partial ingredients stay in the pot** when she leaves; she can return and finish it (Ed, 2026-10-30, coordinator ruling on PR #1472).
-- **Co-op has shared baskets and one shared pot in the host's treehouse** (Ed, 2026-10-30, coordinator ruling on PR #1472). Who takes the resulting trip remains to be confirmed.
+- **Co-op has shared baskets and one shared pot in the host's treehouse** (Ed, 2026-10-30, coordinator ruling on PR #1472). **Everyone standing in the kitchen when the shared brew completes takes the trip together; witches elsewhere stay normal** (Ed, 2026-10-30, subsequent coordinator ruling on PR #1472).
 - **Three in = a brew, at once** (no use button, no bottle): the cauldron bubbles, colourful bubbles pour out, the room fills with smoke, and a second later she staggers outside and the world is... different.
 - The kitchen travels with the Ent, so brewing works on any island. Rooms visited during the party slow time and add their own music (journey.md).
 
@@ -134,6 +134,5 @@ Visual references: Qualia Research Institute's replications of psychedelic visua
 
 - Assign the 56 trips to recipes; name the six mushrooms.
 - CRT: replace Underwater, or wait for a seventh mushroom?
-- Who takes the trip when a shared brew completes (proposed: the witch who adds the third ingredient; awaiting Ed's confirmation).
 
 - **The build-cost sort is accepted as it stands** (Ed, 2026-10-11).
