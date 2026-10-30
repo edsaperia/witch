@@ -1,5 +1,5 @@
 {
-  "sha": "e75a98186793c72edb79038c25648a2e91488718",
+  "sha": "1fab1afedd48a20ebf7c7822fee353347f02fb1e",
   "measurements": [
     {
       "id": "dragonfly",
@@ -7,7 +7,7 @@
       "facing": "towards",
       "frame": 0,
       "level": 0,
-      "pixelDiff": 178,
+      "pixelDiff": 237,
       "occupiedBounds": [
         {
           "column": "current",
@@ -45,7 +45,7 @@
       "facing": "towards",
       "frame": 0,
       "level": 1,
-      "pixelDiff": 475,
+      "pixelDiff": 582,
       "occupiedBounds": [
         {
           "column": "current",
@@ -83,7 +83,7 @@
       "facing": "towards",
       "frame": 0,
       "level": 2,
-      "pixelDiff": 1213,
+      "pixelDiff": 1523,
       "occupiedBounds": [
         {
           "column": "current",
@@ -159,7 +159,7 @@
       "facing": "towards",
       "frame": 1,
       "level": 0,
-      "pixelDiff": 181,
+      "pixelDiff": 231,
       "occupiedBounds": [
         {
           "column": "current",
@@ -197,7 +197,7 @@
       "facing": "towards",
       "frame": 1,
       "level": 1,
-      "pixelDiff": 290,
+      "pixelDiff": 452,
       "occupiedBounds": [
         {
           "column": "current",
@@ -235,7 +235,7 @@
       "facing": "towards",
       "frame": 1,
       "level": 2,
-      "pixelDiff": 1021,
+      "pixelDiff": 1401,
       "occupiedBounds": [
         {
           "column": "current",
@@ -311,7 +311,7 @@
       "facing": "away",
       "frame": 0,
       "level": 0,
-      "pixelDiff": 200,
+      "pixelDiff": 230,
       "occupiedBounds": [
         {
           "column": "current",
@@ -349,7 +349,7 @@
       "facing": "away",
       "frame": 0,
       "level": 1,
-      "pixelDiff": 363,
+      "pixelDiff": 463,
       "occupiedBounds": [
         {
           "column": "current",
@@ -387,7 +387,7 @@
       "facing": "away",
       "frame": 0,
       "level": 2,
-      "pixelDiff": 1075,
+      "pixelDiff": 1360,
       "occupiedBounds": [
         {
           "column": "current",
@@ -463,7 +463,7 @@
       "facing": "away",
       "frame": 1,
       "level": 0,
-      "pixelDiff": 230,
+      "pixelDiff": 243,
       "occupiedBounds": [
         {
           "column": "current",
@@ -501,7 +501,7 @@
       "facing": "away",
       "frame": 1,
       "level": 1,
-      "pixelDiff": 351,
+      "pixelDiff": 456,
       "occupiedBounds": [
         {
           "column": "current",
@@ -539,7 +539,7 @@
       "facing": "away",
       "frame": 1,
       "level": 2,
-      "pixelDiff": 861,
+      "pixelDiff": 1192,
       "occupiedBounds": [
         {
           "column": "current",

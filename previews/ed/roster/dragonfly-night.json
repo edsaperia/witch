@@ -1,5 +1,5 @@
 {
-  "sha": "e75a98186793c72edb79038c25648a2e91488718",
+  "sha": "1fab1afedd48a20ebf7c7822fee353347f02fb1e",
   "measurements": [
     {
       "id": "dragonfly",
@@ -45,7 +45,7 @@
       "facing": "towards",
       "frame": 0,
       "level": 1,
-      "pixelDiff": 762,
+      "pixelDiff": 869,
       "occupiedBounds": [
         {
           "column": "current",
@@ -159,7 +159,7 @@
       "facing": "towards",
       "frame": 1,
       "level": 0,
-      "pixelDiff": 302,
+      "pixelDiff": 350,
       "occupiedBounds": [
         {
           "column": "current",
@@ -235,7 +235,7 @@
       "facing": "towards",
       "frame": 1,
       "level": 2,
-      "pixelDiff": 2144,
+      "pixelDiff": 2456,
       "occupiedBounds": [
         {
           "column": "current",
@@ -311,7 +311,7 @@
       "facing": "away",
       "frame": 0,
       "level": 0,
-      "pixelDiff": 346,
+      "pixelDiff": 347,
       "occupiedBounds": [
         {
           "column": "current",
@@ -463,7 +463,7 @@
       "facing": "away",
       "frame": 1,
       "level": 0,
-      "pixelDiff": 328,
+      "pixelDiff": 341,
       "occupiedBounds": [
         {
           "column": "current",
@@ -501,7 +501,7 @@
       "facing": "away",
       "frame": 1,
       "level": 1,
-      "pixelDiff": 613,
+      "pixelDiff": 718,
       "occupiedBounds": [
         {
           "column": "current",

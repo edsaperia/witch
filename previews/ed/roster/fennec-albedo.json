@@ -1,5 +1,5 @@
 {
-  "sha": "b905b9e9c68d016c2f783d09aede00b37cf596f0",
+  "sha": "1fab1afedd48a20ebf7c7822fee353347f02fb1e",
   "measurements": [
     {
       "id": "fennec",
@@ -7,7 +7,7 @@
       "facing": "towards",
       "frame": 0,
       "level": 0,
-      "pixelDiff": 183,
+      "pixelDiff": 131,
       "occupiedBounds": [
         {
           "column": "current",
@@ -22,12 +22,12 @@
         {
           "column": "proposed",
           "bounds": [
-            6,
             4,
+            6,
             19,
-            32
+            31
           ],
-          "occupiedPixels": 165
+          "occupiedPixels": 184
         }
       ],
       "current": [
@@ -35,8 +35,8 @@
         33
       ],
       "proposed": [
-        29,
-        33
+        27,
+        32
       ]
     },
     {
@@ -45,7 +45,7 @@
       "facing": "towards",
       "frame": 0,
       "level": 1,
-      "pixelDiff": 838,
+      "pixelDiff": 496,
       "occupiedBounds": [
         {
           "column": "current",
@@ -60,12 +60,12 @@
         {
           "column": "proposed",
           "bounds": [
-            4,
-            7,
-            53,
-            45
+            5,
+            6,
+            59,
+            49
           ],
-          "occupiedPixels": 616
+          "occupiedPixels": 782
         }
       ],
       "current": [
@@ -73,8 +73,8 @@
         46
       ],
       "proposed": [
-        60,
-        46
+        66,
+        50
       ]
     },
     {
@@ -83,7 +83,7 @@
       "facing": "towards",
       "frame": 0,
       "level": 2,
-      "pixelDiff": 2174,
+      "pixelDiff": 861,
       "occupiedBounds": [
         {
           "column": "current",
@@ -98,12 +98,12 @@
         {
           "column": "proposed",
           "bounds": [
-            6,
-            6,
-            82,
-            73
+            7,
+            9,
+            91,
+            79
           ],
-          "occupiedPixels": 1608
+          "occupiedPixels": 2044
         }
       ],
       "current": [
@@ -111,8 +111,8 @@
         74
       ],
       "proposed": [
-        91,
-        74
+        100,
+        80
       ]
     },
     {
@@ -121,7 +121,7 @@
       "facing": "towards",
       "frame": 0,
       "level": 3,
-      "pixelDiff": 7238,
+      "pixelDiff": 1673,
       "occupiedBounds": [
         {
           "column": "current",
@@ -136,12 +136,12 @@
         {
           "column": "proposed",
           "bounds": [
+            16,
             15,
-            12,
-            215,
+            222,
             169
           ],
-          "occupiedPixels": 10729
+          "occupiedPixels": 11501
         }
       ],
       "current": [
@@ -149,7 +149,7 @@
         170
       ],
       "proposed": [
-        230,
+        235,
         170
       ]
     },
@@ -159,7 +159,7 @@
       "facing": "towards",
       "frame": 1,
       "level": 0,
-      "pixelDiff": 164,
+      "pixelDiff": 149,
       "occupiedBounds": [
         {
           "column": "current",
@@ -174,12 +174,12 @@
         {
           "column": "proposed",
           "bounds": [
-            7,
-            4,
+            6,
+            6,
             20,
-            32
+            31
           ],
-          "occupiedPixels": 176
+          "occupiedPixels": 205
         }
       ],
       "current": [
@@ -187,8 +187,8 @@
         33
       ],
       "proposed": [
-        31,
-        33
+        28,
+        32
       ]
     },
     {
@@ -197,7 +197,7 @@
       "facing": "towards",
       "frame": 1,
       "level": 1,
-      "pixelDiff": 1090,
+      "pixelDiff": 417,
       "occupiedBounds": [
         {
           "column": "current",
@@ -213,11 +213,11 @@
           "column": "proposed",
           "bounds": [
             5,
-            9,
-            58,
-            45
+            8,
+            65,
+            50
           ],
-          "occupiedPixels": 710
+          "occupiedPixels": 930
         }
       ],
       "current": [
@@ -225,8 +225,8 @@
         46
       ],
       "proposed": [
-        65,
-        46
+        72,
+        51
       ]
     },
     {
@@ -235,7 +235,7 @@
       "facing": "towards",
       "frame": 1,
       "level": 2,
-      "pixelDiff": 2544,
+      "pixelDiff": 998,
       "occupiedBounds": [
         {
           "column": "current",
@@ -250,12 +250,12 @@
         {
           "column": "proposed",
           "bounds": [
-            7,
-            9,
-            88,
-            73
+            8,
+            8,
+            99,
+            79
           ],
-          "occupiedPixels": 1826
+          "occupiedPixels": 2348
         }
       ],
       "current": [
@@ -263,8 +263,8 @@
         74
       ],
       "proposed": [
-        97,
-        74
+        108,
+        80
       ]
     },
     {
@@ -273,7 +273,7 @@
       "facing": "towards",
       "frame": 1,
       "level": 3,
-      "pixelDiff": 8648,
+      "pixelDiff": 2508,
       "occupiedBounds": [
         {
           "column": "current",
@@ -288,12 +288,12 @@
         {
           "column": "proposed",
           "bounds": [
-            16,
-            12,
-            232,
+            17,
+            17,
+            240,
             169
           ],
-          "occupiedPixels": 12247
+          "occupiedPixels": 13180
         }
       ],
       "current": [
@@ -301,7 +301,7 @@
         170
       ],
       "proposed": [
-        248,
+        254,
         170
       ]
     },
@@ -311,7 +311,7 @@
       "facing": "away",
       "frame": 0,
       "level": 0,
-      "pixelDiff": 157,
+      "pixelDiff": 117,
       "occupiedBounds": [
         {
           "column": "current",
@@ -326,12 +326,12 @@
         {
           "column": "proposed",
           "bounds": [
-            7,
+            6,
             5,
-            19,
-            32
+            18,
+            31
           ],
-          "occupiedPixels": 171
+          "occupiedPixels": 190
         }
       ],
       "current": [
@@ -339,8 +339,8 @@
         33
       ],
       "proposed": [
-        29,
-        33
+        27,
+        32
       ]
     },
     {
@@ -349,7 +349,7 @@
       "facing": "away",
       "frame": 0,
       "level": 1,
-      "pixelDiff": 558,
+      "pixelDiff": 365,
       "occupiedBounds": [
         {
           "column": "current",
@@ -364,12 +364,12 @@
         {
           "column": "proposed",
           "bounds": [
-            4,
-            6,
-            48,
-            45
+            5,
+            7,
+            52,
+            48
           ],
-          "occupiedPixels": 530
+          "occupiedPixels": 648
         }
       ],
       "current": [
@@ -377,8 +377,8 @@
         46
       ],
       "proposed": [
-        54,
-        46
+        59,
+        49
       ]
     },
     {
@@ -387,7 +387,7 @@
       "facing": "away",
       "frame": 0,
       "level": 2,
-      "pixelDiff": 1356,
+      "pixelDiff": 539,
       "occupiedBounds": [
         {
           "column": "current",
@@ -402,12 +402,12 @@
         {
           "column": "proposed",
           "bounds": [
-            6,
             7,
-            74,
-            72
+            9,
+            82,
+            78
           ],
-          "occupiedPixels": 1398
+          "occupiedPixels": 1728
         }
       ],
       "current": [
@@ -415,8 +415,8 @@
         74
       ],
       "proposed": [
-        83,
-        73
+        90,
+        79
       ]
     },
     {
@@ -425,7 +425,7 @@
       "facing": "away",
       "frame": 0,
       "level": 3,
-      "pixelDiff": 3979,
+      "pixelDiff": 1486,
       "occupiedBounds": [
         {
           "column": "current",
@@ -440,12 +440,12 @@
         {
           "column": "proposed",
           "bounds": [
-            13,
-            13,
-            189,
+            14,
+            15,
+            194,
             168
           ],
-          "occupiedPixels": 8607
+          "occupiedPixels": 9200
         }
       ],
       "current": [
@@ -453,7 +453,7 @@
         169
       ],
       "proposed": [
-        203,
+        206,
         169
       ]
     },
@@ -463,7 +463,7 @@
       "facing": "away",
       "frame": 1,
       "level": 0,
-      "pixelDiff": 175,
+      "pixelDiff": 142,
       "occupiedBounds": [
         {
           "column": "current",
@@ -478,12 +478,12 @@
         {
           "column": "proposed",
           "bounds": [
-            6,
+            4,
             5,
             19,
-            32
+            31
           ],
-          "occupiedPixels": 178
+          "occupiedPixels": 202
         }
       ],
       "current": [
@@ -491,8 +491,8 @@
         33
       ],
       "proposed": [
-        29,
-        33
+        27,
+        32
       ]
     },
     {
@@ -501,7 +501,7 @@
       "facing": "away",
       "frame": 1,
       "level": 1,
-      "pixelDiff": 591,
+      "pixelDiff": 418,
       "occupiedBounds": [
         {
           "column": "current",
@@ -516,12 +516,12 @@
         {
           "column": "proposed",
           "bounds": [
-            4,
-            6,
-            49,
-            45
+            5,
+            8,
+            54,
+            49
           ],
-          "occupiedPixels": 547
+          "occupiedPixels": 683
         }
       ],
       "current": [
@@ -529,8 +529,8 @@
         46
       ],
       "proposed": [
-        56,
-        46
+        61,
+        50
       ]
     },
     {
@@ -539,7 +539,7 @@
       "facing": "away",
       "frame": 1,
       "level": 2,
-      "pixelDiff": 1450,
+      "pixelDiff": 590,
       "occupiedBounds": [
         {
           "column": "current",
@@ -554,12 +554,12 @@
         {
           "column": "proposed",
           "bounds": [
-            6,
-            8,
-            75,
-            72
+            7,
+            10,
+            83,
+            78
           ],
-          "occupiedPixels": 1446
+          "occupiedPixels": 1808
         }
       ],
       "current": [
@@ -567,8 +567,8 @@
         74
       ],
       "proposed": [
-        84,
-        73
+        92,
+        79
       ]
     },
     {
@@ -577,7 +577,7 @@
       "facing": "away",
       "frame": 1,
       "level": 3,
-      "pixelDiff": 4067,
+      "pixelDiff": 2426,
       "occupiedBounds": [
         {
           "column": "current",
@@ -593,11 +593,11 @@
           "column": "proposed",
           "bounds": [
             14,
-            15,
-            192,
+            18,
+            197,
             168
           ],
-          "occupiedPixels": 8874
+          "occupiedPixels": 9493
         }
       ],
       "current": [
@@ -605,7 +605,7 @@
         169
       ],
       "proposed": [
-        206,
+        209,
         169
       ]
     }
@@ -692,13 +692,24 @@
         "snoutD": 0.42,
         "snoutTaper": 0.5,
         "eyeK": 1.5,
+        "earDimensions": {
+          "height": 2.7,
+          "width": 1.8
+        },
         "belly": true,
+        "regions": {
+          "tail": null
+        },
         "ear": "sail",
         "earS": 2.7,
         "tail": "puff",
         "paw": "paw"
       },
-      "look": null,
+      "look": {
+        "fennec": {
+          "fit": "current"
+        }
+      },
       "paletteHSV": [
         0.1,
         0.32,
@@ -786,13 +797,29 @@
         "snoutD": 0.42,
         "snoutTaper": 0.5,
         "eyeK": 1.35,
+        "earDimensions": {
+          "height": 2.7,
+          "width": 1.8
+        },
         "belly": true,
+        "regions": {
+          "tail": {
+            "tip": {
+              "length": 0.2,
+              "mat": "NOSE"
+            }
+          }
+        },
         "ear": "sail",
         "earS": 2.7,
         "tail": "bushy",
         "paw": "paw"
       },
-      "look": null,
+      "look": {
+        "fennec": {
+          "fit": "current"
+        }
+      },
       "paletteHSV": [
         0.1,
         0.32,
@@ -880,13 +907,29 @@
         "snoutD": 0.42,
         "snoutTaper": 0.5,
         "eyeK": 1.35,
+        "earDimensions": {
+          "height": 2.7,
+          "width": 1.8
+        },
         "belly": true,
+        "regions": {
+          "tail": {
+            "tip": {
+              "length": 0.2,
+              "mat": "NOSE"
+            }
+          }
+        },
         "ear": "sail",
         "earS": 2.8,
         "tail": "bushy",
         "paw": "paw"
       },
-      "look": null,
+      "look": {
+        "fennec": {
+          "fit": "current"
+        }
+      },
       "paletteHSV": [
         0.1,
         0.32,
@@ -977,7 +1020,19 @@
         "snoutD": 0.42,
         "snoutTaper": 0.5,
         "eyeK": 1.35,
+        "earDimensions": {
+          "height": 2.7,
+          "width": 1.8
+        },
         "belly": true,
+        "regions": {
+          "tail": {
+            "tip": {
+              "length": 0.2,
+              "mat": "NOSE"
+            }
+          }
+        },
         "ear": "sail",
         "earS": 2.8,
         "tail": "bushy",
@@ -986,7 +1041,11 @@
         "eyeGlow": true,
         "beads": true
       },
-      "look": null,
+      "look": {
+        "fennec": {
+          "fit": "current"
+        }
+      },
       "paletteHSV": [
         0.1,
         0.32,
@@ -994,7 +1053,7 @@
       ]
     }
   ],
-  "modelSourceCommit": "e8fea579c78b032809a82c297c1623c379c62459",
+  "modelSourceCommit": "090f76fdfaa584e6c7ef31a064771ba26aa590c8",
   "lighting": "albedo",
   "style": {
     "ambientHue": 0.68,
@@ -1064,7 +1123,7 @@
     "artStyle": "bold"
   },
   "largestCell": [
-    253,
+    254,
     170
   ],
   "selectionInterface": "shared #1470 selector"
