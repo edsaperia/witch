@@ -608,9 +608,10 @@ void shade() {
     if (radius > 0.0 && distance < radius) {
       float pool = pow(1.0 - distance / radius, uGlowFalloff) * min(1.0, uGlowPower) * max(0.0, uGlowDim);
       float paint = dot(a.rgb, vec3(0.3, 0.55, 0.15));
-      // Black paint has no recoverable hue; leave it black rather than inventing a colour.
+      // Keep the paint's relative values: normalising by luminance made the darkest shades
+      // approach one flat value. This proportional addition retains their internal shading.
       float dark = 1.0 - smoothstep(0.35, 0.75, paint);
-      if (paint > 0.001) col += a.rgb / paint * (0.18 * pool * dark);
+      col += a.rgb * (0.6 * pool * dark);
     }
   }
   if (vFlags.y > 0.5 && uPartyCount > 0) {
