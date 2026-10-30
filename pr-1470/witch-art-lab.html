@@ -2097,10 +2097,10 @@ function projectedInterval(q, axis) {
 // Renders a model to a Sprite `height` art pixels tall (measured over the parts not marked extra).
 // With `scale` (pixels per model unit) instead, several models share one scale.
 // With `measure`, return scale and allocated dimensions without rasterising: { s, width, height }.
-function render(model, { height, scale, facing = "towards", yaw = YAW[facing] ?? YAW.towards, pitch = PITCH, lineGap = .12, measure = false, keepDepth = false } = {}) {
+function render(model, { height, scale, facing = "towards", yaw = YAW[facing] ?? YAW.towards, pitch = PITCH, lineGap = .12, measure = false, keepDepth = false, projected = false, samplePhaseY = 0 } = {}) {
   const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), spp = Math.sin(pitch);
   // model.atScale(pxPerUnit): parts that must be sized in pixels (an expression's face: genome/expressions.js), added once the scale is known
-  if (model.atScale && !measure) { const f = model.atScale; model.atScale = null; f(scale ?? render(model, { height, facing, yaw, pitch, lineGap, measure: true }).s); }
+  if (model.atScale && !measure) { const f = model.atScale; model.atScale = null; f(scale ?? render(model, { height, facing, yaw, pitch, lineGap, measure: true, projected }).s); }
   const toWorld = p => [p[0] * cy - p[2] * sy, p[1], p[0] * sy + p[2] * cy];
   const toModel = p => [p[0] * cy + p[2] * sy, p[1], -p[0] * sy + p[2] * cy];
   const D = [0, -spp, -cp], U = [0, cp, -spp], R = [1, 0, 0], B = [0, spp, cp];
@@ -2114,7 +2114,10 @@ function render(model, { height, scale, facing = "towards", yaw = YAW[facing] ??
   });
   const flats = model.flats.map(f => { const c = toWorld(f.c), u = toWorld(f.u), v = toWorld(f.v); return { ...f, cw: c, uw: u, vw: v, nw: norm(cross(u, v)), bc: c, br: Math.hypot(f.su, f.sv) }; });
   const all = [...parts, ...flats];
-  const bounds = q => { const x = projectedInterval(q, R), u = projectedInterval(q, U), pad = q.uw ? 0 : k; return [x[0] - pad, x[1] + pad, u[0] - pad, u[1] + pad]; };
+  const bounds = q => {
+    if (!projected) { const sx = dot(q.bc, R), su = dot(q.bc, U), e = q.br + (q.uw ? 0 : k); return [sx - e, sx + e, su - e, su + e]; }
+    const x = projectedInterval(q, R), u = projectedInterval(q, U), pad = q.uw ? 0 : k; return [x[0] - pad, x[1] + pad, u[0] - pad, u[1] + pad];
+  };
   for (const q of all) [q.x0, q.x1, q.u0, q.u1] = bounds(q);
   const body = all.filter(q => !q.extra && !q.cut);
   const u0b = Math.min(...body.map(q => q.u0 + (q.uw ? 0 : k))), u1b = Math.max(...body.map(q => q.u1 - (q.uw ? 0 : k)));
@@ -2129,8 +2132,12 @@ function render(model, { height, scale, facing = "towards", yaw = YAW[facing] ??
     const X0b = Math.min(...body.map(q => q.x0)), U1b = Math.max(...body.map(q => q.u1));
     X0 = X0b - Math.ceil((X0b - X0) * s - 1e-9) / s; U1 = U1b + Math.ceil((U1 - U1b) * s - 1e-9) / s;
   }
+  // Creature-only subpixel sample phase breaks symmetric two-row jumps when
+  // an exact native occupied target lies between them. World anchors still
+  // use this same affine projection and ground-row placement below.
+  if (projected && samplePhaseY) { U0 += samplePhaseY / s; U1 += samplePhaseY / s; }
   const W = Math.ceil((X1 - X0) * s) + 4, H = Math.ceil((U1 - U0) * s) + 2;
-  if (measure) return { s, width: W, height: H };
+  if (measure) return { s, width: W, height: H, projectedWidth: X1 - X0, projectedHeight: U1 - U0 };
   const sp = new Sprite(W, H);
   const depth = new Float32Array(W * H).fill(Infinity), grp = new Int16Array(W * H).fill(-1);
   // which parts can touch each 8 x 8 tile of pixels
@@ -8895,6 +8902,270 @@ function textureProblems(id, t) {
 // ---- inlined from art/genome/selection.js ----
 // One explicit per-species selection, shared by page, worker and capture tools.
 // No window/location/global registry: transport the same plain style data.
+
+// ---- inlined from art/roster/presets.js ----
+// Roster review, Ed 2026-10-30: real-animal likeness before distinctness.
+// Isolated data for the existing speciesOf/quad3d interface, not a second engine.
+// No production import. Each species requires an explicit opt-in; defaults are off.
+const ROSTER_SNOW_REGIONS = {
+  torso: { kind: "rosettes", outerPx: 8, density: .55, inner: .22, outer: .43, sizeVariation: .15, closedFraction: .25, filledFraction: .2, gapRange: [0, .65], densityFalloff: [{ axis: "x", from: .2, to: 1, min: .2 }, { axis: "y", from: 0, to: -1, min: 0 }], xRange: [-1.2, .9], flankMin: .2, mat: "BODY3", centreMat: "BODYL" },
+  head: { kind: "spots", k: 14, density: .5, radius: .43, mat: "BODY3" },
+  legs: { kind: "spots", k: 14, density: .5, radius: .43, mat: "BODY3" },
+};
+// One staged white ramp shared by pale mammals; no production palette mutation.
+const COOL_WHITE = { hue: .59, sat: .025, over: { BODY3: [113, 126, 143], BODY2: [168, 181, 196], BODY: [225, 231, 237], BODYL: [243, 246, 249], BELLY: [239, 243, 247] } };
+const JAGUAR_REGIONS = {
+  tail: { kind: "spots", k: 14, density: .65, radius: .4, mat: "BODY3" },
+  torso: { kind: "rosettes", outerPx: 7, density: .6, inner: .23, outer: .43, sizeVariation: .28, closedFraction: .65, gapRange: [0, .45], filledFraction: .08, centreDotRadius: .4, centreDotMat: "BODY3", mat: "BODY3", xRange: [-1.2, .9], densityFalloff: [{ axis: "y", from: 0, to: -1, min: .15 }, { axis: "x", from: .1, to: 1, min: .45 }] },
+  head: { kind: "spots", k: 12, density: .45, radius: .4, mat: "BODY3" },
+  legs: { kind: "spots", k: 12, density: .5, radius: .4, mat: "BODY3" },
+};
+const ROSTER_PRESETS = {
+  fennec: {
+    reason: "Long broad ears at Current body scale, sandy fur and a dark tail tip through shared controls.",
+    modelCommit: "090f76fdfaa584e6c7ef31a064771ba26aa590c8",
+    patch: { look: { fennec: { fit: "current" } }, head: { earDimensions: { height: 2.7, width: 1.8 } }, parts: { ears: { kind: "sail", size: 2.7 } }, coat: { regions: { tail: { tip: { length: .2, mat: "NOSE" } } } } },
+    ordinaryLevels: { 0: { parts: { ears: { kind: "sail", size: 2.7 } }, coat: { regions: { tail: null } } }, 1: { parts: { ears: { kind: "sail", size: 2.7 } } }, 2: { parts: { ears: { kind: "sail", size: 2.8 } } } },
+    legendPatch: { look: { fennec: { fit: "current" } }, head: { earDimensions: { height: 2.7, width: 1.8 } }, parts: { ears: { kind: "sail", size: 2.8 } }, coat: { regions: { tail: { tip: { length: .2, mat: "NOSE" } } } } },
+    text: "A tiny sandy fennec fox with broad long ears and a dark-tipped brush tail.",
+  },
+  dragonfly: {
+    reason: "Four long narrow flat wing panes through independent existing wing controls.",
+    modelCommit: "090f76fdfaa584e6c7ef31a064771ba26aa590c8",
+    patch: {},
+    ordinaryLevels: { 0: { body: { wingLength: 1.15, wingWidth: .55, wingAngle: 0 } }, 1: { body: { wingLength: 1.15, wingWidth: .55, wingAngle: 0 } }, 2: { body: { wingLength: 1.15, wingWidth: .55, wingAngle: 0 } } },
+    legendPatch: { body: { wingLength: 1.15, wingWidth: .55, wingAngle: 0 } },
+    text: "A slender dragonfly with four long narrow wings held flat from its body.",
+  },
+  wolf: {
+    reason: "Grey coat, dark existing saddle and pale muzzle retain the shared wolf anatomy while avoiding a sandy coyote reading.",
+    patch: { head: { muzzle: true, jawCoat: false }, palette: { hue: .6, sat: .035, val: .6, over: { BODY: [145, 148, 149], BODY2: [71, 77, 81], BODY3: [40, 46, 49], BODYL: [184, 188, 189], BELLY: [220, 219, 209] } } },
+    legendPatch: { head: { muzzle: true, jawCoat: false } },
+    text: "A grey wolf with a dark saddle, pale muzzle and long-legged woodland stride.",
+  },
+  dormouse: {
+    reason: "Let the existing furry dormouse tail read on the young animal instead of a thin mouse tail.",
+    patch: { palette: { sat: .48 } },
+    ordinaryLevels: { 1: { parts: { tail: "dormouse" }, body: { tailK: 1.25 } }, 2: { body: { tailK: 1.3 } } },
+    text: "A small golden dormouse with rounded ears, dark eyes and a furry tail.",
+  },
+  bat: {
+    reason: "Keep the fruit bat's russet fur while lifting dark wing tones to preserve its flying silhouette.",
+    patch: { palette: { over: { BODYL: [128, 101, 76], BODY2: [64, 62, 76], BODY3: [44, 43, 50] } } },
+    text: "A russet fruit bat with dark wings and a fox-like muzzle.",
+  },
+  woodlouse: {
+    reason: "Pale existing plate rims separate the segmented grey body without changing its shell builder.",
+    patch: { palette: { over: { BODYL: [150, 157, 168], BODY2: [82, 89, 94], BODY3: [40, 48, 52], ACCENT: [172, 180, 188], BELLY: [196, 204, 210] } } },
+    ordinaryLevels: { 0: { palette: { over: { BELLY: [133, 143, 153] } } } },
+    text: "A grey woodlouse with pale segmented plate edges and fine antennae.",
+  },
+  frosttroll: {
+    reason: "Turn the existing hunched, shaggy troll's paint into cold fur and ice rather than moss-green.",
+    patch: { palette: { hue: .57, sat: .12, val: .72, over: { BODY: [164, 188, 205], BODY2: [110, 136, 157], BODY3: [68, 91, 113], BELLY: [223, 233, 239], LEAF: [160, 205, 222], LEAF2: [204, 234, 244], LEAF3: [112, 163, 190] } } },
+    text: "A hunched frost troll with cold shaggy fur, pale icy growths and tusks.",
+  },
+  hydra: {
+    reason: "Separate the existing dark heads and necks with lighter green shade and underside tones.",
+    patch: { palette: { hue: .4, sat: .28, val: .42, over: { BODY2: [109, 141, 116], BODY3: [35, 55, 44], BELLY: [156, 178, 143], BODYL: [124, 157, 129] } } },
+    text: "A many-headed green hydra with pale neck undersides and crested serpent heads.",
+  },
+  crocodile: {
+    reason: "Flatten the existing long jaw, thicken its existing tapering tail and reveal a pale underside.",
+    patch: { head: { snout: 4.5, snoutD: .55, muzzle: true }, body: { tailK: 1.35 }, coat: { belly: true }, palette: { over: { BELLY: [174, 178, 143] } } },
+    legendPatch: { body: { tailK: 1 } },
+    text: "A low crocodile with a long flat jaw, pale underside and thick tapering tail.",
+  },
+  crab: {
+    reason: "Make both existing front pincers and the small crab's eight legs readable before its elder stage.",
+    patch: {},
+    ordinaryLevels: { 0: { body: { claw: .75, small: .7, legs: .6 } }, 1: { body: { claw: 1.35, small: 1.2, legs: .75 } }, 2: { body: { claw: 2.1, small: 1.7 } } },
+    text: "A broad-shelled crab with two forward pincers, stalked eyes and eight walking legs.",
+  },
+  meerkat: {
+    reason: "Keep the existing sentinel idle and strengthen natural dark eye patches and back bands.",
+    patch: { head: { eyeK: 1.2, eyePatchPx: 2 }, look: { sentinel: { belly: { mat: "BELLY", extent: { along: [0, .8], width: .6, depth: 1 } }, tailTip: { length: .25, mat: "BODY3" } } }, palette: { over: { BODY3: [28, 23, 20], BODY2: [126, 102, 74], BELLY: [241, 229, 202] } } },
+    modelCommit: "e4b77ac10557c73b19828efe7c0b98e99b6123d7",
+    legendPatch: { head: { eyePatchPx: 2 }, look: { sentinel: { belly: { mat: "BELLY", extent: { along: [0, .8], width: .6, depth: 1 } }, tailTip: { length: .25, mat: "BODY3" } } } },
+    ordinaryLevels: { 0: { head: { eyeK: 1.25 }, coat: { regions: { tail: { tip: { length: .25, mat: "BODY3" } } } } }, 1: { head: { eyeK: 1.25 }, coat: { regions: { tail: { tip: { length: .25, mat: "BODY3" } } } } }, 2: { coat: { regions: { tail: { tip: { length: .25, mat: "BODY3" } } } } } },
+    text: "A sandy meerkat with dark eye patches, back bands and an upright lookout pose.",
+  },
+  flyingsquirrel: {
+    reason: "Make the existing ground-level patagium read as a folded membrane on a grey-brown squirrel.",
+    patch: { palette: { hue: .07, sat: .16, val: .46, over: { BELLY: [246, 244, 237] } } },
+    modelCommit: "e4b77ac10557c73b19828efe7c0b98e99b6123d7",
+    ordinaryLevels: { 0: { head: { eyeK: 1.7 }, features: [{ kind: "patagium", spread: .55 }] }, 1: { head: { eyeK: 1.7 }, features: [{ kind: "patagium", spread: .6 }] }, 2: { head: { eyeK: 1.7 }, features: [{ kind: "patagium", spread: .9, groundSkirt: .65, mat: "BODYL", rim: "BELLY" }] } },
+    legendPatch: { features: [{ kind: "patagium", spread: 1.25, groundSkirt: .65, mat: "BODYL", rim: "MAGIC2", stars: true }, { kind: "moss", count: 6, size: .09 }] },
+    text: "A grey-brown flying squirrel with a pale belly and a folded skin membrane along its flanks.",
+  },
+  marten: {
+    reason: "A localized cream throat bib and dark legs on the existing brown pine-marten body.",
+    ordinaryOnly: true,
+    modelCommit: "10c8c9bd910c917c52001e07eb688c73ebd3417e",
+    patch: { coat: { belly: false, bib: { mat: "BELLY", extent: { along: [-.8, .95], width: 1, depth: 1.5 } }, legMat: "BODY3" }, palette: { over: { BELLY: [239, 219, 174], BODY3: [45, 31, 25] } } },
+    legendPatch: { coat: { bib: null } },
+    text: "A brown pine marten with a cream throat bib, rounded ears and a bushy tail.",
+  },
+  raccoon: {
+    reason: "Strengthen the existing eye mask and tail rings against neutral grizzled-grey fur.",
+    patch: { palette: { hue: .6, sat: .025, val: .56, over: { BODY: [142, 145, 148], BODY2: [96, 99, 102], BODY3: [28, 27, 29], BODYL: [180, 181, 183], BELLY: [241, 240, 233] } } },
+    modelCommit: "629e4c45d72e14508541d6ae780f50931b7d7c80",
+    ordinaryLevels: { 0: { palette: { over: { BODY3: [10, 10, 12], BELLY: [253, 252, 246], BODY: [165, 167, 169] } } }, 1: { palette: { over: { BODY3: [10, 10, 12], BELLY: [253, 252, 246], BODY: [165, 167, 169] } }, coat: { regions: { tail: { kind: "rings", count: 4, width: .5, mat: "BODY3", tip: { length: .15, mat: "BODY3" } } } } }, 2: { coat: { regions: { tail: { kind: "rings", count: 4, width: .5, mat: "BODY3", tip: { length: .15, mat: "BODY3" } } } } } },
+    text: "A grizzled-grey raccoon with a black eye mask, pale muzzle and ringed tail.",
+  },
+  badger: {
+    reason: "Make the existing badger face stripes and black legs read against silver-grey fur.",
+    patch: { head: { blaze: 1 }, palette: { hue: .61, sat: .035, val: .55, over: { BODY: [140, 142, 145], BODY2: [25, 26, 28], BODY3: [18, 18, 19], BELLY: [245, 244, 238], BODYL: [180, 183, 186] } } },
+    ordinaryLevels: { 2: { head: { blaze: .85 } } },
+    legendPatch: { head: { blaze: .6 } },
+    text: "A low silver-grey badger with a striped white face, dark legs and a short tail.",
+  },
+  stoat: {
+    reason: "Chestnut back, cream underside and the existing black-tipped stoat tail.",
+    omitLegendFeatures: ["darken"],
+    modelCommit: "629e4c45d72e14508541d6ae780f50931b7d7c80",
+    ordinaryLevels: { 0: { coat: { regions: { tail: { tip: { length: .25, mat: "BODY3" } } } } }, 1: { coat: { regions: { tail: { tip: { length: .25, mat: "BODY3" } } } } }, 2: { coat: { regions: { tail: { tip: { length: .25, mat: "BODY3" } } } } } },
+    patch: { head: { muzzle: true, jawCoat: false }, palette: { hue: .065, sat: .4, val: .78, belly: [.11, .12, .98], over: { BODY3: [36, 27, 23], BODYL: [222, 170, 120], BELLY: [250, 242, 222] } } },
+    legendPatch: { head: { muzzle: true, jawCoat: false } },
+    text: "A long chestnut stoat with a cream underside and a black-tipped tail.",
+  },
+  otter: {
+    reason: "Chocolate coat and pale chin distinguish its existing low body and broad tapering tail naturally.",
+    patch: { palette: { hue: .065, sat: .4, val: .35, belly: [.10, .18, .72], over: { BELLY: [180, 162, 135], BODYL: [123, 96, 75] } } },
+    text: "A low chocolate-brown otter with a pale chin and a thick tapering tail.",
+  },
+  jaguar: {
+    reason: "Retain the real melanistic jaguar: black-brown coat with sheened ghost rosettes and a readable muzzle.",
+    ordinaryOnly: true,
+    modelCommit: "629e4c45d72e14508541d6ae780f50931b7d7c80",
+    legendInheritsBase: true,
+    legendPatch: { coat: { regions: { ...JAGUAR_REGIONS, torso: { ...JAGUAR_REGIONS.torso, outerPx: 14 } } } },
+    patch: { palette: { hue: .075, sat: .2, val: .29, belly: [ .08, .18, .46 ], over: { BODY3: [27, 23, 21], BODY2: [75, 65, 54], BODYL: [116, 101, 84] } }, head: { face: "dark", muzzle: true, jawCoat: false }, coat: { belly: true, rosettes: false, regions: JAGUAR_REGIONS } },
+    ordinaryLevels: { 0: { coat: { rosettes: false, regions: { ...JAGUAR_REGIONS, torso: { ...JAGUAR_REGIONS.torso, outerPx: 4 } } } }, 1: { coat: { rosettes: false } }, 2: { coat: { rosettes: false } } },
+    text: "A stocky black-brown jaguar with ghost rosettes, a broad head and a thick tail.",
+  },
+  beetle: {
+    reason: "Ordinary stag-beetle wing cases and jaws are dark natural materials; reserve ember fissures for the elder.",
+    reference: "https://www.nhm.ac.uk/discover/stag-beetles.html",
+    ordinaryOnly: true,
+    modelCommit: "fd1a833ae69e1d5cf1d9353b89fbdda39cbab802",
+    patch: {
+      palette: { hue: .04, sat: .45, val: .36, over: { SHELL: [155, 81, 46], THORAX: [38, 27, 23], HEAD: [32, 23, 20], BODY3: [64, 35, 23] } },
+      look: { embers: false, materials: { wingCases: "SHELL", thorax: "THORAX", head: "HEAD" }, mandibles: { length: .8, width: 1.3, curve: .28, teeth: 2, awayTipLift: .16 } },
+    },
+    ordinaryLevels: { 0: { palette: { over: { SHELL: [185, 102, 60] } }, look: { mandibles: { length: .65, width: 1.1, curve: .3, teeth: 1, awayTipLift: .16 } } }, 1: { look: { mandibles: { length: .75, width: 1.1, curve: .22, teeth: 1, awayTipLift: .16 } } } },
+    // Explicit coordinator-approved exception to unchanged elder paint (6513867872).
+    legendPatch: { palette: { over: { SHELL: [143, 69, 36], THORAX: null, HEAD: null, BODY3: null, BODY: [88, 53, 35] } }, look: { materials: { wingCases: "SHELL" } } },
+    text: "A dark beetle with brown wing cases and antler-like jaws; its elder carries the fire.",
+  },
+  bear: {
+    reason: "A black bear has no grizzly shoulder hump; retain its dark coat and bear body.",
+    reference: "https://www.nps.gov/articles/bear-identification.htm",
+    patch: { body: { humpK: 0, front: 1 }, head: { face: "dark", muzzle: true, jawCoat: false }, palette: { hue: .075, sat: .22, val: .28, over: { BODYL: [100, 85, 74], BODY2: [85, 70, 60], BELLY: [151, 119, 87] } } },
+    legendPatch: { head: { face: "dark", muzzle: true, jawCoat: false } },
+    ordinaryLevels: { 0: { body: { humpK: 0, front: 1 } }, 1: { body: { humpK: 0, front: 1 } }, 2: { body: { humpK: 0, front: 1 } } },
+    text: "A dark forest bear with a straight back, prominent ears and a pale muzzle.",
+  },
+  arcticfox: {
+    reason: "Short ears and a compact winter body distinguish this fox naturally; reduce the blue cast.",
+    reference: "https://www.adfg.alaska.gov/index.cfm?adfg=arcticfox.main",
+    patch: { palette: { ...COOL_WHITE, over: { ...COOL_WHITE.over, BODY3: [90, 105, 126], BODY2: [145, 157, 174], BELLY: [245, 241, 230] } }, parts: { ears: { kind: "round", size: .65 } } },
+    ordinaryLevels: { 0: { parts: { ears: { kind: "round", size: .65 } } }, 1: { parts: { ears: { kind: "round", size: .65 } } }, 2: { parts: { ears: { kind: "round", size: .65 } } } },
+    text: "A compact white winter fox with short rounded ears and a dense brush tail.",
+  },
+  snowleopard: {
+    reason: "Replace generic spots with broken rosettes while keeping its existing long thick ringed tail.",
+    reference: "https://zoo.sandiegozoo.org/animals/snow-leopard",
+    ordinaryOnly: true,
+    modelCommit: "84976b88a3ed48cf83ab3bebc981a17952464945",
+    legendInheritsBase: true,
+    legendPatch: { coat: { regions: { ...ROSTER_SNOW_REGIONS, torso: { ...ROSTER_SNOW_REGIONS.torso, outerPx: 14 } } } },
+    // Iteration 4: native rings and the same grey/markings grown into its elder.
+    patch: { palette: { hue: .59, sat: .03 }, coat: { spots: false, rosettes: false, regions: ROSTER_SNOW_REGIONS } },
+    ordinaryLevels: { 0: { coat: { spots: false, rosettes: false, regions: { torso: { kind: "none" }, head: { kind: "none" }, legs: { kind: "none" } } } }, 1: { coat: { spots: false, rosettes: false, regions: { ...ROSTER_SNOW_REGIONS, torso: { ...ROSTER_SNOW_REGIONS.torso, outerPx: 7, density: .7 }, head: { kind: "spots", k: 12, density: .65, radius: .48, mat: "BODY3" }, legs: { kind: "spots", k: 12, density: .65, radius: .46, mat: "BODY3" } } } }, 2: { coat: { spots: false, rosettes: false, regions: ROSTER_SNOW_REGIONS } } },
+    text: "A smoky pale mountain cat with dark rosettes, broad paws and a long thick tail.",
+  },
+};
+
+function merge(a, b) {
+  const out = { ...a };
+  for (const [key, value] of Object.entries(b)) out[key] = value && typeof value === "object" && !Array.isArray(value) ? merge(a?.[key] || {}, value) : value;
+  return out;
+}
+
+/** The switch is deliberately per species. Unknown selections fail closed.
+ * Legends keep original anatomy/features. Palette is species-wide in this interface;
+ * arctic fox's neutral white also applies to its elder (still a white fox).
+ */
+function rosterGenome(genome, selected = [], level) {
+  const preset = selected.includes(genome.id) && ROSTER_PRESETS[genome.id];
+  if (!preset) return genome;
+  // The old beetle builder reads a species-wide look, so require explicit level.
+  // Fail closed for callers that cannot yet supply #1470's level-aware contract.
+  if (preset.ordinaryOnly && ![0, 1, 2].includes(level)) return genome;
+  return rosterVariant(genome);
+}
+
+/** Complete data record for #1470's creatureVariants[id].roster contract.
+ * This builds data only. It neither parses switches nor selects a model.
+ * levels[3].palette needs the shared per-level palette contract (6513273814).
+ */
+function rosterVariant(genome) {
+  const preset = ROSTER_PRESETS[genome.id];
+  if (!preset) return genome;
+  const result = merge(genome, preset.patch);
+  result.levels = Array.from({ length: 4 }, (_, level) => {
+    const original = genome.levels?.[level] || {};
+    if (level === 3) {
+      // speciesOf does not support per-level palette; ordinary coat/body/parts changes
+      // are restored for legends using the existing level interface.
+      const restore = {};
+      for (const [section, patch] of Object.entries(preset.patch)) {
+        if (section === "palette") continue;
+        restore[section] = Object.fromEntries(Object.keys(patch).map(key => [key, genome[section]?.[key] ?? false]));
+      }
+      if (preset.ordinaryOnly) {
+        restore.look = { ...Object.fromEntries(Object.keys(preset.patch.look || {}).map(key => [key, genome.look?.[key] ?? null])), ...genome.look };
+        // Null clears newly added material overrides in the shared merge contract.
+        restore.palette = { ...genome.palette, over: genome.palette.over || null };
+      }
+      const elder = merge(restore, original);
+      if (preset.legendInheritsBase) elder.coat = merge(merge(genome.coat || {}, original.coat || {}), preset.patch.coat || {});
+      // Old production ignored level palettes. Its snow-leopard record carries
+      // an unused level-3 .9/.07 palette; do not let that overwrite the actual
+      // original base palette while restoring the selected review elder.
+      if (preset.ordinaryOnly) elder.palette = expectedRosterLegendPalette(genome);
+      const selectedElder = merge(elder, { ...preset.legendPatch, palette: elder.palette });
+      if (preset.omitLegendFeatures) selectedElder.features = (selectedElder.features || []).filter(f => !preset.omitLegendFeatures.includes(f.kind));
+      return selectedElder;
+    }
+    return merge(original, preset.ordinaryLevels?.[level] || {});
+  });
+  return result;
+}
+
+/** Caller transports this pack with the same plain context to page/worker/tools.
+ * Shared selectedCreatureGenome/speciesOf/genomeHash own selection and hashing.
+ */
+function createRosterVariants(genomes) {
+  return Object.fromEntries(genomes.filter(g => ROSTER_PRESETS[g.id]).map(g => [g.id, { roster: rosterVariant(g) }]));
+}
+
+/** Exact declared elder palette: original unless an explicit review target says otherwise. */
+function expectedRosterLegendPalette(genome) {
+  const preset = ROSTER_PRESETS[genome.id], base = preset?.legendInheritsBase ? merge(genome.palette, preset.patch.palette || {}) : genome.palette;
+  return merge({ ...base, over: base.over || null }, preset?.legendPatch?.palette || {});
+}
+
+
+// Ed's 6520690688 release set; parked candidates are intentionally absent.
+const DEFAULT_ROSTER_IDS = ["fennec","dragonfly","wolf","dormouse","bat","woodlouse","frosttroll","hydra","crocodile","crab","meerkat","flyingsquirrel","marten","raccoon","badger","stoat","otter","jaguar","bear","arcticfox"];
+const canonicalGenomes = new WeakSet(GENOMES), defaults = new WeakMap();
+function defaultGenome(base, level) {
+  if (!canonicalGenomes.has(base) || !DEFAULT_ROSTER_IDS.includes(base.id)) return base;
+  if (!defaults.has(base)) defaults.set(base,rosterVariant(base)); // exact level-aware pack used by the final review
+  return defaults.get(base);
+}
 function parseCreatureModels(raw) {
   const out = Object.create(null);
   if (typeof raw !== "string") return out;
@@ -8911,14 +9182,18 @@ function parseCreatureModels(raw) {
 /** @param {number|null} [level] */
 function selectedCreatureGenome(base, context = {}, level = null) {
   if (level !== null && (!Number.isInteger(level) || level < 0 || level > 3)) throw new Error("Creature selection level must be 0..3");
-  if (!context?.creatureModels) return base;
-  const mode = parseCreatureModels(context.creatureModels)[base.id];
-  if (!mode || mode === "current") return base;
-  const variants = context.creatureVariants;
-  if (!variants || !Object.hasOwn(variants, base.id)) return base;
-  const family = variants[base.id];
-  if (!family || typeof family !== "object" || !Object.hasOwn(family, mode)) return base;
-  const selected = family[mode];
+  const mode = parseCreatureModels(context?.creatureModels)[base.id];
+  if (mode === "current") return base;
+  let selected;
+  if (!mode) selected = defaultGenome(base,level);
+  else {
+    const variants = context.creatureVariants;
+    if (!variants || !Object.hasOwn(variants, base.id)) return base;
+    const family = variants[base.id];
+    if (!family || typeof family !== "object" || !Object.hasOwn(family, mode)) return base;
+    selected = family[mode];
+  }
+  if (!mode && selected === base) return base; // untouched Current keeps its historical level-palette behaviour
   if (!selected || selected.id !== base.id || !selected.template || !selected.builder || !selected.palette) throw new Error(`Invalid selected creature genome: ${base.id}:${mode}`);
   const look = level === null ? null : selected.levels?.[level]?.look;
   const palette = level === null ? null : selected.levels?.[level]?.palette;
@@ -8957,7 +9232,7 @@ function speciesOf(g, context = {}, level = null) {
   S.sizes = { ...TEMPLATES[g.template].sizes, ...g.sizes };
   S.face = { ...TEMPLATES[g.template].face, ...g.face }; // its expressions' shapes (expressions.js)
   S.texture = { ...TEMPLATES[g.template].texture, ...g.texture }; // its surface: fur, feathers, scales... (texture.js)
-  S.genomeKey = genomeHash(g, {}, level); // selected record and level; separates same-id preview variants in the sprite cache
+  S.genomeKey = genomeHash(g, { creatureModels: `${g.id}:current` }, level); // hash the already-resolved record; never re-apply default roster selection
   // its evolution (the evolution kit): each level's own proportions, parts and features, over its own
   // levels: { 0..3: { body, head, coat, parts, features } } (or an array of four, any null) — what changes at a level beyond its
   // size curves (docs/art-guide/EVOLUTIONS.md, #121's convention): merged over the species' own for that level only (S.levelQ),
@@ -9541,6 +9816,106 @@ function paintTailParts(parts, definition, pixelsPerUnit = () => null) {
 
 
 
+// ---- inlined from art/creature-size.js ----
+
+
+// ---- inlined from art/genome/size-ranks.js ----
+// Coordinator 6520208158 (2026-10-30): broad adult body-mass classes,
+// overlapping species share ranks; fantastical placements are design choices.
+// These ordinal starter classes are art direction, not measured mass estimates.
+const SIZE_CLASSES = [
+  ["woodlouse", "snail", "moth", "dragonfly", "beetle", "scorpion"],
+  ["newt", "salamander", "dormouse", "toad", "crab", "spider"],
+  ["mole", "stoat", "squirrel", "flyingsquirrel"],
+  ["hedgehog", "meerkat", "fennec", "marten", "owl", "raven", "heron", "rattlesnake", "bat"],
+  ["cat", "arcticfox", "hare", "armadillo"],
+  ["fox", "badger", "otter", "raccoon", "redpanda"],
+  ["lynx", "beaver", "roe", "penguin", "snake"],
+  ["wolf", "cheetah", "snowleopard", "jaguar", "ibex", "ram", "boar", "komodo"],
+  ["tiger", "lion", "stag", "sphinx", "griffin"],
+  ["bear", "polarbear", "elk", "crocodile", "unicorn", "featheredserpent"],
+  ["rhino", "frosttroll", "hydra", "frostwyrm"],
+  ["elephant", "stegosaurus"],
+];
+const DESIGN_SIZE_RANKS = new Set(["sphinx", "griffin", "unicorn", "featheredserpent", "frosttroll", "hydra", "frostwyrm", "stegosaurus"]);
+const SIZE_CLASS_BY_ID = Object.fromEntries(SIZE_CLASSES.flatMap((ids,rank)=>ids.map(id=>[id,rank])));
+function sizeMultiplier(id, level) {
+  const rank=SIZE_CLASS_BY_ID[id];
+  if(rank==null)throw new Error(`No creature size class: ${id}`);
+  const r=rank/(SIZE_CLASSES.length-1);
+  const baby=r<=.9?.75+.2*r:.93+2.7*(r-.9),adult=1.8+1.2*r;
+  return level===0?baby:level===1?1.1+.4*r:level===2?adult:adult*1.75;
+}
+function sizeTargetPixels(id,level,witchHeight) {
+  const adult=Math.round(witchHeight*sizeMultiplier(id,2));
+  return level===3?Math.ceil(adult*1.75):Math.round(witchHeight*sizeMultiplier(id,level));
+}
+
+
+const witchReferences=new Map();
+function standingWitchHeight(st) {
+  const key=JSON.stringify([st.size,st.growth,st.pixel]);
+  if(!witchReferences.has(key)){
+    const sp=witchSprite(st,{pose:"stand"});let top=sp.h,bottom=-1;
+    for(let y=0;y<sp.h;y++)for(let x=0;x<sp.w;x++)if(sp.m[y*sp.w+x]){top=Math.min(top,y);bottom=Math.max(bottom,y);}
+    witchReferences.set(key,Math.max(1,bottom-top+1));
+  }
+  return witchReferences.get(key);
+}
+
+// One final-size model for every creature builder. Projected support supplies
+// an initial scale; the raster fit below targets occupied pixels, including
+// decorative extras, rather than blank padding. Pins cannot exceed the band.
+function creatureSizeOptions(model, options, S, level, st) {
+  const target=sizeTargetPixels(S.id,level,standingWitchHeight(st));
+  const unit=render(model,{...options,scale:1,measure:true,projected:true});
+  // measure's integer dimensions would lose subpixel support, so use its span.
+  const span=unit.projectedHeight;
+  const scale=Math.max(1e-6,(target-2-1e-9)/Math.max(1e-6,span));
+  return {...options,scale,sizeTarget:target,projected:true};
+}
+
+function occupiedHeight(sp) {
+  let top=sp.h,bottom=-1;
+  for(let y=0;y<sp.h;y++)for(let x=0;x<sp.w;x++)if(sp.m[y*sp.w+x]){top=Math.min(top,y);bottom=Math.max(bottom,y);}
+  return Math.max(0,bottom-top+1);
+}
+const fittedScales=new Map();
+function fitOccupiedCreature(model,options,S,level,st,decorate) {
+  const key=JSON.stringify([S,level,st,model.parts,model.flats,options.facing]);
+  const cached=fittedScales.get(key);
+  if(cached!=null)return {options:{...options,...cached}};
+  const atScale=model.atScale,parts=model.parts.slice(),flats=model.flats.slice(),partState=parts.map(p=>({...p})),part=model.part;
+  const reset=()=>{model.parts=parts.slice();model.flats=flats.slice();model.part=part;for(let i=0;i<parts.length;i++)Object.assign(parts[i],partState[i]);model.atScale=atScale;};
+  let scale=options.scale,lo=null,hi=null,best=null;
+  for(let attempt=0;attempt<8;attempt++){
+    reset();
+    const sp=render(model,{...options,scale}).sp;decorate(sp);
+    const height=occupiedHeight(sp),error=Math.abs(height-options.sizeTarget);
+    if(!best||error<best.error)best={scale,height,error,samplePhaseY:0};
+    if(!error)break;
+    if(height<options.sizeTarget)lo=scale;else hi=scale;
+    scale=lo!=null&&hi!=null?(lo+hi)/2:scale*options.sizeTarget/Math.max(1,height);
+  }
+  if(best.error)for(const samplePhaseY of [.125,.25,.375,.5,.625,.75,.875]){
+    reset();const sp=render(model,{...options,scale:best.scale,samplePhaseY}).sp;decorate(sp);
+    const height=occupiedHeight(sp),error=Math.abs(height-options.sizeTarget);
+    if(error<best.error)best={scale:best.scale,height,error,samplePhaseY};
+    if(!error)break;
+  }
+  if(best.error)for(const multiplier of [.99,1.01,.98,1.02]){
+    reset();const candidateScale=best.scale*multiplier,sp=render(model,{...options,scale:candidateScale,samplePhaseY:0}).sp;decorate(sp);
+    const height=occupiedHeight(sp),error=Math.abs(height-options.sizeTarget);
+    if(error<best.error)best={scale:candidateScale,height,error,samplePhaseY:0};
+    if(!error)break;
+  }
+  if(fittedScales.size>=128)fittedScales.delete(fittedScales.keys().next().value);
+  fittedScales.set(key,{scale:best.scale,samplePhaseY:best.samplePhaseY});
+  reset();if(atScale){model.atScale=null;atScale(best.scale);}
+  return {options:{...options,scale:best.scale,samplePhaseY:best.samplePhaseY}};
+}
+
+
 // ---- inlined from art/elders.js ----
 // The elder legends (Ed's elder brief, docs/ART-GUIDE.md 0c, 2026-10-13): a species' legend as the elder of its kind. It starts from the
 // animal's own nature, exaggerating its defining trait; it shows its age (grizzled, scarred, notched, weathered); it carries what
@@ -9773,9 +10148,21 @@ const ADULT_SCALE = 1.65, LEGEND_OVER_ADULT = 2.2;
 const LEVEL_SCALE = st => [1, Math.sqrt(st.growth), Math.sqrt(st.growth) * ADULT_SCALE, st.growth];
 const height3d = (level, st, hgt = 1) => Math.round(st.size * LEVEL_SCALE(st)[Math.max(0, Math.min(3, level))] * (2 / (st.pixel || 2)) * 1.9 * hgt);
 
-const glowMotes = (sp, seed, n = 9) => { // a few glowing motes around a legend (9) or an adult (3)
+const glowMotes = (sp, seed, n = 9, stable = false) => { // a few glowing motes around a legend (9) or an adult (3)
   const r = rng(seed);
   for (let i = 0; i < n; i++) {
+    if (stable) { // 6520413047: snow-leopard diagnostic, keep the intended count separated in the new size grid
+      const radius = i % 3 === 0 ? 1 : 0;
+      for (let attempt = 0; attempt < 64; attempt++) {
+        const x = Math.floor(uni(r, 2, sp.w - 2)), y = Math.floor(uni(r, 2, sp.h * .6));
+        let clear = x - radius >= 0 && x + radius < sp.w && y - radius >= 0 && y + radius < sp.h;
+        for (let dy = -radius - 1; dy <= radius + 1 && clear; dy++) for (let dx = -radius - 1; dx <= radius + 1; dx++) if (sp.get(x + dx, y + dy)) { clear = false; break; }
+        if (!clear) continue;
+        sp.px(x, y, M.MAGIC2); if (radius) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) sp.px(x + dx, y + dy, M.MAGIC);
+        break;
+      }
+      continue;
+    }
     const x = Math.floor(uni(r, 2, sp.w - 2)), y = Math.floor(uni(r, 2, sp.h * .6));
     if (sp.get(x, y) || sp.get(x + 1, y) || sp.get(x - 1, y) || sp.get(x, y + 1) || sp.get(x, y - 1)) continue;
     sp.px(x, y, M.MAGIC2); if (i % 3 === 0) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) sp.px(x + dx, y + dy, M.MAGIC);
@@ -9835,7 +10222,14 @@ function spineOf(s) {
 let VIEW = null;
 function withView(view, f) { const was = VIEW; VIEW = view; try { return f(); } finally { VIEW = was; } }
 const viewKey = () => VIEW ? `view${VIEW.yaw ?? ""},${VIEW.pitch ?? ""}` : "";
-const drawForm = (m, o, S, level) => { if (VIEW) o = { ...o, scale: o.scale ?? render(m, { ...o, measure: true }).s, ...VIEW }; return FORM ? FORM(m, o, S, level) : render(m, o).sp; }, formMotes = () => !FORM || FORM.motes;
+const drawForm = (m, o, S, level, st) => {
+  o = creatureSizeOptions(m, o, S, level, st);
+  const decorate = sp => { const n = S.sizes.motes?.[level]; if (n) glowMotes(sp, S.plan === "owl" ? 31 : S.id.length * (S.q ? 7919 : 131), n, S.q && S.id === "snowleopard"); };
+  const fitted = fitOccupiedCreature(m, o, S, level, st, decorate);
+  o = VIEW ? { ...fitted.options, ...VIEW } : fitted.options;
+  if (FORM) return FORM(m, o, S, level);
+  const sp = render(m, o).sp; decorate(sp); return sp;
+};
 function withGear(gear, f) { const was = GEAR; GEAR = gear; try { return f(); } finally { GEAR = was; } }
 // A little party shoe (Ed, 2026-10-05: "yes, little party shoes"): on a foot { c, r, group, fit } in a style
 // (SHOE_STYLES: sneakers, glitter, platform, heels, boots, lightup), fitted to the foot: "hoof" (narrow and
@@ -10677,14 +11071,13 @@ function quad3d(S, level, frame, st, facing = "towards") {
   if (fit === "current") {
     const base = GENOME_BY_ID[S.id];
     if (!base || base.template !== "quadruped") throw new Error("Quadruped Current fit requires a known Current quadruped");
-    const reference = speciesOf(base);
+    const reference = speciesOf(base, { creatureModels: `${S.id}:current` });
     const measure = Object.assign((model, options) => { referenceScale = render(model, { ...options, measure: true }).s; return new Sprite(1, 1); }, { motes: false });
     withForm(measure, () => withTexture({ S: reference, level, st }, () => quad3d(reference, level, frame, st, facing)));
   }
-  const sp = drawForm(m, { height: drawHeight(level, st, q.hgt), facing, ...(referenceScale != null ? { scale: referenceScale } : {}) }, S, level);
+  const sp = drawForm(m, { height: drawHeight(level, st, q.hgt), facing, ...(referenceScale != null ? { scale: referenceScale } : {}) }, S, level, st);
   if (m.markingMetrics) sp.markingMetrics = m.markingMetrics;
   if (m.bodyGraph) sp.graphDiagnostics = m.bodyGraph.diagnostics;
-  if (formMotes() && sz("motes")) glowMotes(sp, S.id.length * 7919, sz("motes"));
   return sp;
 }
 
@@ -10876,8 +11269,7 @@ function owl3d(S, level, frame, st, facing = "towards") {
   m.anchors.neck = { c: [0, hy - hr * .75, 0], r: hr * .85, dir: [0, 1, 0] };
   if (S.sizes.build[level] !== 1) beef(m, S.sizes.build[level]);
   gearUp(m);
-  const sp = drawForm(m, { height: drawHeight(level, st, .95), facing }, S, level);
-  if (formMotes() && S.sizes.motes[level]) glowMotes(sp, 31, S.sizes.motes[level]);
+  const sp = drawForm(m, { height: drawHeight(level, st, .95), facing }, S, level, st);
   return sp;
 }
 
@@ -10929,8 +11321,7 @@ function finish(m, S, level, st, k, facing, ref = null, scaleOverride = null) {
   // ref: a model in the walk's first pose, its scale taken for every frame (a cycle's frames at one scale, not each fitted to its own height)
   let scale = scaleOverride ?? undefined;
   if (ref) { if (S.sizes.build[level] !== 1) beef(ref, S.sizes.build[level]); scale = render(ref, { height: drawHeight(level, st, k), facing, measure: true }).s; }
-  const sp = drawForm(m, { height: drawHeight(level, st, k), facing, scale }, S, level);
-  if (formMotes() && S.sizes.motes[level]) glowMotes(sp, S.id.length * 131, S.sizes.motes[level]);
+  const sp = drawForm(m, { height: drawHeight(level, st, k), facing, scale }, S, level, st);
   return sp;
 }
 const crown3d = (m, c, w) => { m.ell(c, [w, w * .35, w], M.MAGIC, { group: 95, extra: true, paint: p => p[1] > c[1] ? M.MAGIC2 : undefined }); for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2; m.ell(v3.add(c, [Math.cos(a) * w * .8, w * .55, Math.sin(a) * w * .8]), [w * .38, w * .12, w * .12], M.MAGIC, { dir: [0, 1, 0], up: [1, 0, 0], group: 96, extra: true }); } };
@@ -11909,7 +12300,7 @@ const SPECIES_BY_ID = Object.fromEntries(SPECIES.map(s => [s.id, s]));
 /** @param {number|null} [level] */
 function speciesFor(id, st, level = null) {
   const base = GENOME_BY_ID[id];
-  return base && selectedCreatureGenome(base, st, level) !== base ? speciesOf(base, st, level) : SPECIES_BY_ID[id];
+  return base && (st?.creatureModels || selectedCreatureGenome(base, st, level) !== base) ? speciesOf(base, st, level) : SPECIES_BY_ID[id];
 }
 const FEATURE_NAMES = { wings: "spirit wings", mane: "a glowing mane", tails: "many tails", crystals: "crystals", tusksBig: "great tusks", antlersGlow: "glowing antlers", jackalope: "antlers", eyesRing: "a ring of eyes", moss: "a little forest on its back", starTail: "a starry tail", crown: "a crown", ribbons: "light ribbons", wingsBig: "huge glowing wings", horn: "a glowing horn", glowShell: "a glowing shell", hornsGlow: "glowing golden horns", flames: "a crest of flame", lantern: "a great lantern", sunBall: "a ball of sunlight" };
 
@@ -19772,11 +20163,11 @@ function rigProject(p, h, s) {
 // { woken: true }, the enraged look's red eyes.
 function rigCapture(id, level, st, face = null, gear = null) {
   const S = speciesFor(id, st, level); let got = null;
-  const form = (m, o) => { got = { m, height: o.height }; return new Sprite(1, 1); };
+  const form = (m, o) => { got = { m, height: o.height, scale: o.scale }; return new Sprite(1, 1); };
   form.motes = false; form.rig = true;
   const g = face || gear ? { ...gear, shoes: null, face, faceStyle: S.face } : null;
   withTexture({ S, level, st }, () => withGear(g, () => withForm(form, () => buildCreature(S, level, 0, st, "towards"))));
-  const s = render(got.m, { height: got.height, measure: true }).s, f = got.m.atScale;
+  const s = got.scale ?? render(got.m, { height: got.height, measure: true, projected: true }).s, f = got.m.atScale;
   if (f) { got.m.atScale = null; f(s); }
   if (gear?.woken) for (const q of got.m.parts) if (q.mat === M.EYE || q.mat === M.IRIS || q.mat === M.PUPIL) q.mat = M.WOKEN; // enraged: angry glowing eyes (as critter's woken look)
   return { m: got.m, s };
@@ -19786,7 +20177,7 @@ function rigCapture(id, level, st, face = null, gear = null) {
 function rigShoe(leg, style, s, st) {
   const m = new Model(), lw = leg.r[2] / .9;
   shoe3d(m, { c: [0, 0, 0], r: Math.max(leg.fl, lw * 1.1), group: 2, fit: leg.hoof ? "hoof" : "paw" }, style, { extra: false });
-  return RIG_HEADINGS.map(h => { const r = render(m, { scale: s, yaw: h }), [px, py] = r.project([0, 0, 0]); return rigCropped(r.sp, px, py); });
+  return RIG_HEADINGS.map(h => { const r = render(m, { scale: s, yaw: h, projected: true }), [px, py] = r.project([0, 0, 0]); return rigCropped(r.sp, px, py); });
 }
 // Its head piece in each expression but neutral (the head piece itself): { angry, happy, dazed }, a legend's asleep, and a snouted four-legged one's open jaw (bite, yawn).
 function rigFaces(id, level, st, pivot, s, gear) {
@@ -19816,14 +20207,14 @@ function rigCropped(sp, px, py) {
 function rigPiece(m, labels, pivot, s, tex = null) {
   const sub = rigPick(m, labels);
   if (!sub.parts.length && !sub.flats.length) return null;
-  return RIG_HEADINGS.map(h => { const r = render(sub, { scale: s, yaw: h }), [px, py] = r.project(pivot); if (tex) textureSprite(r.sp, tex.S, tex.level, tex.st, textureSeed(tex.S.id)); return rigCropped(r.sp, px, py); });
+  return RIG_HEADINGS.map(h => { const r = render(sub, { scale: s, yaw: h, projected: true }), [px, py] = r.project(pivot); if (tex) textureSprite(r.sp, tex.S, tex.level, tex.st, textureSeed(tex.S.id)); return rigCropped(r.sp, px, py); });
 }
 // A disc: a ball of a material, r pixels across its radius, lit as a sphere (a serpent's body) or,
 // rod, as a slice of an upright limb: its normals tilted neither up nor down, so discs strung down a
 // leg shade as one smooth limb rather than a string of beads (Ed, 2026-10-05: "the legs do look segmented").
 function rigDisc(r, mat, s, paint, rod = false) {
   const m = new Model(); m.ell([0, 0, 0], [r / s, r / s, r / s], mat, { paint });
-  const res = render(m, { scale: s }), [px, py] = res.project([0, 0, 0]);
+  const res = render(m, { scale: s, projected: true }), [px, py] = res.project([0, 0, 0]);
   // (a rod's normal by its column alone, as a cylinder's: the sphere's own, flattened, swung sideways at each disc's top and
   // bottom, so a leg of overlapping discs shaded in dark bands at every disc: Ed's banded legs in the twiggy forest), jittered a
   // little pixel by pixel so the shading's steps break up like a coat rather than run down the leg in lines
