@@ -55,7 +55,15 @@ try {
           shade({ a: baked.A.getContext("2d"), n: baked.N.getContext("2d"), w: baked.w, h: baked.h }, lit, light, [], [0, 0, baked.w, baked.h]);
           return lit;
         });
-        measurements.push({ id, facing, frame, level, current: [sprites[0].width, sprites[0].height], proposed: [sprites[1].width, sprites[1].height] });
+        const sameSize = sprites[0].width === sprites[1].width && sprites[0].height === sprites[1].height;
+        let pixelDiff = null;
+        if (sameSize) {
+          const a = sprites[0].getContext("2d").getImageData(0, 0, sprites[0].width, sprites[0].height).data;
+          const b = sprites[1].getContext("2d").getImageData(0, 0, sprites[1].width, sprites[1].height).data;
+          pixelDiff = 0;
+          for (let i = 0; i < a.length; i += 4) if (a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2] || a[i + 3] !== b[i + 3]) pixelDiff++;
+        }
+        measurements.push({ id, facing, frame, level, pixelDiff, current: [sprites[0].width, sprites[0].height], proposed: [sprites[1].width, sprites[1].height] });
         rows.push({ label: `${facing} frame ${frame} level ${level}`, sprites });
       }
       const maxW = Math.max(...rows.flatMap(r => r.sprites.map(s => s.width))), maxH = Math.max(...rows.flatMap(r => r.sprites.map(s => s.height)));
