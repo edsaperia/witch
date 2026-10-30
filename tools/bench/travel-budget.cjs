@@ -3,20 +3,38 @@ const DEFAULTS = { task: 1000, frame: 1000, slice: 100, settle: 2000 };
 const finite = x => typeof x === 'number' && Number.isFinite(x);
 function checkTravel(run, limits = {}) {
   const L = { ...DEFAULTS, ...limits }, failures = [], m = run.marks || {};
+  const tasks = Array.isArray(run.longTasks) ? run.longTasks : null;
+  const slices = Array.isArray(run.slices) ? run.slices : null;
+  const phases = run.route === 'api' ? ['toDive','diveToEnd','settle'] : ['chartFrames','toDive','diveToEnd','settle'];
+  if (run.route !== undefined && !['api','chart'].includes(run.route)) failures.push('unsupported travel route');
   for (const k of ['task','frame','slice','settle']) if (!finite(L[k]) || L[k] < 0 || (k !== 'settle' && L[k] === 0)) failures.push(`invalid ${k} limit`);
-  if (!finite(m['game:arrived'])) failures.push('arrival was not recorded');
-  if (run.route !== 'api') {
-    if (!finite(m['chart:ready']) || !finite(m['chart:flown'])) failures.push('chart readiness/handoff was not recorded');
-    else if (m['chart:flown'] < m['chart:ready']) failures.push(`chart handed over ${m['chart:ready'] - m['chart:flown']} ms before readiness`);
-    if (!(run.slices || []).some(s => s.what === 'handoff-heights')) failures.push('handoff terrain slices were not recorded');
+  if (!tasks || (!tasks.length && run.coverage?.longTasks !== true)) failures.push('long-task coverage is missing or unsupported');
+  if (!slices?.length) failures.push('sliced-build measurements are missing');
+  for (const phase of phases) {
+    const p = run[phase];
+    if (!p || !Number.isInteger(p.frames) || p.frames <= 0 || !finite(p.longest) || p.longest < 0) failures.push(`${phase} frame measurements are missing or invalid`);
   }
-  for (const task of run.longTasks || run.tasks || []) if (task.ms > L.task) failures.push(`task ${task.ms} ms exceeds ${L.task} ms at ${task.at} (${task.after || 'unattributed'})`);
-  for (const s of run.slices || []) if (s.longest > L.slice) failures.push(`slice ${s.what}/${s.at || ''}: ${s.longest} ms exceeds ${L.slice} ms`);
-  for (const phase of ['chartFrames', 'toDive', 'diveToEnd', 'settle']) if (run[phase]?.longest > L.frame) failures.push(`${phase} frame ${run[phase].longest} ms exceeds ${L.frame} ms`);
+  if (!finite(m['game:arrived']) || m['game:arrived'] < 0) failures.push('arrival was not recorded');
+  if (run.route !== 'api') {
+    if (!finite(m['chart:ready']) || m['chart:ready'] < 0 || !finite(m['chart:flown']) || m['chart:flown'] < 0) failures.push('chart readiness/handoff was not recorded');
+    else if (m['chart:flown'] < m['chart:ready']) failures.push(`chart handed over ${m['chart:ready'] - m['chart:flown']} ms before readiness`);
+    if (!(slices || []).some(s => s.what === 'handoff-heights')) failures.push('handoff terrain slices were not recorded');
+  }
+  for (const task of tasks || []) {
+    if (!task || !finite(task.at) || !finite(task.ms) || task.ms < 0) failures.push('invalid long-task measurement');
+    else if (task.ms > L.task) failures.push(`task ${task.ms} ms exceeds ${L.task} ms at ${task.at} (${task.after || 'unattributed'})`);
+  }
+  for (const s of slices || []) {
+    if (!s || typeof s.what !== 'string' || !finite(s.ms) || s.ms < 0 || !Number.isInteger(s.slices) || s.slices <= 0 || !finite(s.longest) || s.longest < 0) failures.push('invalid sliced-build measurement');
+    else if (s.longest > L.slice) failures.push(`slice ${s.what}/${s.at || ''}: ${s.longest} ms exceeds ${L.slice} ms`);
+  }
+  for (const phase of phases) if (run[phase]?.longest > L.frame) failures.push(`${phase} frame ${run[phase].longest} ms exceeds ${L.frame} ms`);
   const end = m['game:arrived'];
-  const quality = run.quality || [];
-  if (!run.qualityBefore || run.qualityBefore.mode !== 'auto' || !quality.length || quality.some(q => q.mode !== 'auto')) failures.push('automatic quality was not observed; use ladder=auto');
+  const quality = Array.isArray(run.quality) ? run.quality : [];
+  const rung = r => Number.isInteger(r) && r >= 0;
+  if (!run.qualityBefore || !rung(run.qualityBefore.rung) || run.qualityBefore.mode !== 'auto' || !quality.length || quality.some(q => !q || !finite(q.at) || !rung(q.rung) || q.mode !== 'auto')) failures.push('automatic quality was not observed or is invalid; use ladder=auto');
   else if (finite(end)) {
+    if (!quality.some(q => q.at >= (run.observationStart ?? 0) && q.at <= end)) failures.push('quality was not sampled during travel');
     if (!quality.some(q => q.at >= end + L.settle)) failures.push(`quality observation ends before the ${L.settle} ms arrival grace period`);
     const worse = quality.find(q => q.at >= (run.observationStart ?? 0) && q.at <= end + L.settle && q.rung > run.qualityBefore.rung);
     if (worse) failures.push(`quality fell from rung ${run.qualityBefore.rung} to ${worse.rung} during travel/grace at ${worse.at} ms`);

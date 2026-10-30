@@ -52,7 +52,7 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
       await page.addInitScript(() => {
         try { localStorage.setItem("witch.chart.sailAnywhere", "1"); } catch { /* */ }
         window.__f = []; window.__parts = []; const f = t => { window.__f.push(t); const ms = window.witch?.view?.ms; if (ms) { const e = Object.entries(ms).filter(([, v]) => v > 2); if (e.reduce((p, [, v]) => p + v, 0) > 20) window.__parts.push({ t, parts: e }); } requestAnimationFrame(f); }; requestAnimationFrame(f); // (the view's own work by part, on frames it passed 20 ms)
-        window.__lt = []; try { new PerformanceObserver(l => { for (const e of l.getEntries()) window.__lt.push([e.startTime, e.duration]); }).observe({ type: "longtask", buffered: true }); } catch { /* */ }
+        window.__lt = []; window.__ltSupported = false; try { if (!PerformanceObserver.supportedEntryTypes || PerformanceObserver.supportedEntryTypes.includes('longtask')) { new PerformanceObserver(l => { for (const e of l.getEntries()) window.__lt.push([e.startTime, e.duration]); }).observe({ type: "longtask", buffered: true }); window.__ltSupported = true; } } catch { /* */ }
       });
       if (TRACE) await page.addInitScript(installTravelProbe);
       if (THR > 1) { const cdp = await page.context().newCDPSession(page); await cdp.send("Emulation.setCPUThrottlingRate", { rate: THR }); }
@@ -70,7 +70,7 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
       const prepNoteStart = prepNotes.length;
       log(ROUTE === 'chart' ? "ready; opening the chart" : 'ready; direct API sail');
       const observation = await page.evaluate(() => { window.__travelProbe?.reset(); window.__travelOldSlices = new Set(window.witch.slices); const s = window.witch.ladder?.state; return { at: performance.now(), quality: s ? { rung: s.rung, mode: s.mode } : null }; });
-      const chartOpened = observation.at, qualityBefore = observation.quality;
+      const chartOpened = observation.at; let qualityBefore = observation.quality;
       const cdp = await page.context().newCDPSession(page);
       if (process.env.PROFILE === '1') { await cdp.send('Profiler.enable'); await cdp.send('Profiler.start'); }
       if (ROUTE === 'chart') {
@@ -82,7 +82,8 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
       log("sailing to", ISLAND);
       const progs = () => page.evaluate(() => (window.witch.view.renderer.info.programs ?? []).map(p => `${p.name}|${p.cacheKey.length}|${p.cacheKey.slice(-40)}`)).catch(() => []);
       const before = await progs();
-      const sail = await page.evaluate(() => performance.now());
+      const beforeSail = await page.evaluate(() => { const s = window.witch.ladder?.state; return { at: performance.now(), quality: s ? { rung: s.rung, mode: s.mode } : null }; });
+      const sail = beforeSail.at; if (ROUTE === 'api') qualityBefore = beforeSail.quality;
       if (ROUTE === 'chart') await page.keyboard.press("Enter");
       else await page.evaluate(([island, seed]) => { window.__travelError = null; void window.witch.sail(island, Number(seed)).then(ok => { if (!ok) window.__travelError = 'API sail reloaded'; }, e => { window.__travelError = String(e); }); }, [ISLAND, SAIL_SEED]);
       const shots = [];
@@ -119,18 +120,19 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
         const timeline = performance.getEntriesByType('mark').filter(e => e.startTime >= from).map(e => ({ name: e.name, at: Math.round(e.startTime-s0), detail: e.detail }));
         const longTasks = window.__lt.filter(([t]) => t >= from && t < end+after).map(([t,ms]) => ({ at: Math.round(t-s0), ms: Math.round(ms), after: timeline.filter(e => e.at <= t-s0).at(-1)?.name || '' }));
         const probe = window.__travelProbe?.trace;
-        const trace = probe ? { events: probe.events.map(e => ({ ...e, at: Math.round(e.at-s0) })), dropped: probe.dropped, capabilities: probe.capabilities } : undefined;
-        const quality = (probe?.quality || []).map(q => ({ ...q, at: Math.round(q.at-s0) }));
-        return { slices, settleParts: parts, sailMark: Math.round(sailAt - s0), marks: m, chartFrames: sum(from,s0), toDive: sum(s0, dive), diveToEnd: sum(dive, end), settle: sum(end, end + after), tasks, steps, longTasks, timeline, trace, quality };
-      }, [MARKS, GAP * THR, sail, AFTER, chartOpened]);
+        const trace = probe ? { events: probe.events.filter(e => e.at >= from).map(e => ({ ...e, at: Math.round(e.at-s0) })), dropped: probe.dropped, capabilities: probe.capabilities } : undefined;
+        const quality = (probe?.quality || []).filter(q => q.at >= from).map(q => ({ ...q, at: Math.round(q.at-s0) }));
+        return { slices, settleParts: parts, sailMark: Math.round(sailAt - s0), marks: m, chartFrames: sum(from,s0), toDive: sum(s0, dive), diveToEnd: sum(dive, end), settle: sum(end, end + after), tasks, steps, longTasks, timeline, trace, quality, coverage: { longTasks: window.__ltSupported } };
+      }, [MARKS, GAP * THR, sail, AFTER, ROUTE === 'api' ? sail : chartOpened]);
       const after = await progs(); r.programs = { before: before.length, after: after.length, made: after.filter(x => !before.includes(x)) }; // (the shader programs this sail made anew)
       r.key = toolKey(await pageKey(page, { spot: `sail-timing.cjs: arrival ${ISLAND}` }));
-      r.route = ROUTE; r.qualityBefore = qualityBefore; r.observationStart = Math.round(chartOpened-sail);
+      r.route = ROUTE; r.qualityBefore = qualityBefore; r.observationStart = ROUTE === 'api' ? 0 : Math.round(chartOpened-sail);
+      if (ROUTE === 'api') delete r.chartFrames;
       r.prepNotes = prepNotes.slice(prepNoteStart);
       if (TRACE && r.key.seed !== Number(SAIL_SEED)) throw new Error(`requested seed ${SAIL_SEED}, got ${r.key.seed}; trace is not comparable`);
       r.summary = summarizeTravel(r);
       if (process.env.BUDGET === '1') { r.budget = checkTravel(r, { task: Number(process.env.MAX_TASK_MS || 1000)*THR, frame: Number(process.env.MAX_FRAME_MS || 1000)*THR, slice: Number(process.env.MAX_SLICE_MS || 100)*THR }); if (!r.budget.ok) code = 1; log('budget', r.budget); }
-      r.chartWaitMs = Math.round(sail - chartOpened);
+      r.chartWaitMs = ROUTE === 'chart' ? Math.round(sail - chartOpened) : null;
       r.resources = await page.evaluate(() => { const v = window.witch.view; return { heap: performance.memory?.usedJSHeapSize, dom: document.getElementsByTagName('*').length, textures: v.renderer.info.memory.textures, geometries: v.renderer.info.memory.geometries }; });
       r.resources.workers = page.workers().length;
       r.version = version;
