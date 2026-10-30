@@ -12,6 +12,7 @@ import { inviteCreature } from "./leash";
 // (these test the areas clearing by themselves and the runes at the feet: the game as it was, ?cast=0, rules/stoneStacks.ts)
 const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } }, cast: { ...TUNING.cast, on: false } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
+// Retain full radius maps: clearing/sliver and grove/rim population ratios, multi-area sieges and >400 m recruits need their extent.
 // Each area's sleeping legend lies in a small circular clearing of its own (Ed, 2026-10-06), near its top.
 describe("legend clearings", () => {
   for (const seed of [1, 123, 4242, 90210]) {
