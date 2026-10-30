@@ -1,5 +1,5 @@
 // Diagnostic only. Never launch this on the laptop: an allocated cloud runner must
-// set CLOUD_RIG=1. One browser at a time, five cold runs/config, fourteen-minute cap.
+// set CLOUD_RIG=1. One browser at a time; RUNS=1 is the cloud correctness check.
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
@@ -9,7 +9,10 @@ import { frameRows, summarizeRuns, markdown } from "./house-profile-summary.mjs"
 const require = createRequire(import.meta.url);
 const { PHASES, COLUMNS, houseRoute, walkHouse } = require("./house-route.cjs");
 if (process.env.CLOUD_RIG !== "1") throw Error("Requires an allocated cloud runner and CLOUD_RIG=1; no laptop browser run");
-const out = path.resolve(process.argv[2] ?? "previews/house-profile"), N = 5;
+const out = path.resolve(process.argv[2] ?? "previews/house-profile"), N = Number(process.env.RUNS ?? 5), capSeconds = Number(process.env.CAP_SECONDS ?? 830);
+if (!Number.isInteger(N) || N < 1 || N > 5) throw Error("RUNS must be an integer from 1 to 5");
+if (!Number.isInteger(capSeconds) || capSeconds < 30 || capSeconds > 830) throw Error("CAP_SECONDS must be an integer from 30 to 830");
+const traceCategories = "-*,v8.gc,disabled-by-default-v8.gc,blink.user_timing";
 const configs = [
   { name: "as-built", root: path.resolve(process.env.DIST ?? "dist"), sha: process.env.EXPECTED_SHA, query: "" },
   { name: "recording-off", root: path.resolve(process.env.DIST ?? "dist"), sha: process.env.EXPECTED_SHA, query: "&recording=0" },
@@ -22,11 +25,11 @@ for (const c of configs) {
 }
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 fs.mkdirSync(out, { recursive: true });
-const result = { complete: false, repetitions: N, configs, viewport: "960x540", seed: 123, route: houseRoute(loadHouse()), groups: {}, runs: [] };
-const deadline = Date.now() + 14 * 60_000 - 10_000;
+const result = { complete: false, repetitions: N, capSeconds, traceWindow: "house walk only", traceCategories, configs, viewport: "960x540", seed: 123, route: houseRoute(loadHouse()), groups: {}, runs: [] };
+const deadline = Date.now() + capSeconds * 1000;
 let activeBrowser, activeServer, expired = false;
 const cap = setTimeout(() => { expired = true; void activeBrowser?.close().catch(() => {}); activeServer?.close(); }, deadline - Date.now());
-const remaining = max => { const left = deadline - Date.now(); if (expired || left <= 0) throw Error("Fourteen-minute profile cap reached"); return Math.max(1, Math.min(max, left)); };
+const remaining = max => { const left = deadline - Date.now(); if (expired || left <= 0) throw Error(`Profile cap ${capSeconds}s reached`); return Math.max(1, Math.min(max, left)); };
 const write = () => {
   result.groups = Object.fromEntries(configs.map(c => [c.name, result.runs.filter(r => r.config === c.name)]).filter(([, runs]) => runs.length).map(([name, runs]) => [name, summarizeRuns(runs)]));
   fs.writeFileSync(path.join(out, "summary.json"), JSON.stringify(result, null, 2) + "\n");
@@ -59,7 +62,6 @@ try {
       page.on("pageerror", e => errors.push(e.message));
       page.on("console", m => { if (m.type() === "error") errors.push(m.text()); });
       await cdp.send("Profiler.enable"); await cdp.send("Profiler.setSamplingInterval", { interval: 500 }); await cdp.send("Profiler.start");
-      await cdp.send("Tracing.start", { categories: "v8,disabled-by-default-v8.gc,blink.user_timing,devtools.timeline", transferMode: "ReportEvents" });
       const origin = `http://127.0.0.1:${activeServer.address().port}`;
       await page.goto(`${origin}/?creator=0&seed=123&quick=1&debug${config.query}`, { timeout: remaining(240_000) });
       const served = await page.evaluate(async () => (await fetch("version.json", { cache: "no-store" })).json());
@@ -71,6 +73,9 @@ try {
       if (usedStartKey) await page.keyboard.press("Enter");
       await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: remaining(30_000) });
       const start = { ...await page.evaluate(() => ({ time: window.witch.game.clock.time, herTime: window.witch.game.herTime, pendingArt: window.witch.view.assets.pending, islandReady: window.witch.game.islandReady, mode: window.witch.game.witch.mode, x: window.witch.game.witch.x, z: window.witch.game.witch.z, userAgent: navigator.userAgent, cores: navigator.hardwareConcurrency })), usedStartKey };
+      // Exclude boot and broad V8/devtools events: only GC and the walk anchor
+      // belong in this trace. Keep the separate CPU profile covering startup.
+      await cdp.send("Tracing.start", { categories: traceCategories, transferMode: "ReportEvents" });
       const walk = await page.evaluate(walkHouse, { route: result.route, profile: true, phases: PHASES });
       const { profile } = await cdp.send("Profiler.stop"); await cdp.send("Tracing.end"); await traceDone;
       const prefix = `${config.name}-${repeat}`;
@@ -78,7 +83,7 @@ try {
       fs.writeFileSync(path.join(out, `${prefix}.trace.json`), JSON.stringify({ traceEvents: events, dropped: traceDropped }));
       if (errors.length || traceDropped) throw Error(`${prefix}: page errors ${JSON.stringify(errors)}, omitted trace events ${traceDropped}`);
       const measured = frameRows(walk, COLUMNS, events);
-      result.runs.push({ config: config.name, sha: config.sha, repeat, start, frames: walk.frames, smokeMax: walk.worst, smokeAt: walk.at, rows: measured.rows, gc: measured.gc, profile: `${prefix}.cpuprofile`, trace: `${prefix}.trace.json` });
+      result.runs.push({ config: config.name, sha: config.sha, repeat, start, frames: walk.frames, smokeMax: walk.worst, smokeAt: walk.at, rows: measured.rows, gc: measured.gc, traceEvents: events.length, traceDropped, profile: `${prefix}.cpuprofile`, trace: `${prefix}.trace.json` });
       write(); console.log(`${prefix}: ${walk.frames} route frames; witch max ${walk.worst.toFixed(3)} ms`);
     } finally { await activeBrowser.close().catch(() => {}); activeBrowser = undefined; await new Promise(resolve => activeServer.close(resolve)); activeServer = undefined; }
   }

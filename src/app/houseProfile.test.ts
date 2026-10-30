@@ -42,6 +42,7 @@ it("reports measured quantiles and five slowest phase splits, and rejects missin
   const group = summarizeRuns([{ repeat: 1, frames: 1, rows: measured.rows }]);
   expect(group.top5[0].frame).toBe(7); expect(group.phases.witch.median).toBe(3);
   expect(markdown({ complete: false, groups: { candidate: group } })).toContain("| candidate | 1 | 1 | 3.000");
+  expect(markdown({ complete: true, repetitions: 1, capSeconds: 230, groups: { candidate: group } })).toContain("Cap: 230 seconds. 1 fresh-browser runs per configuration.");
   expect(() => frameRows({ ...walk, samples: [1] }, COLUMNS, [])).toThrow();
   const missing = [...walk.samples]; missing[COLUMNS.indexOf("witchStart")] = NaN;
   expect(() => frameRows({ ...walk, samples: missing }, COLUMNS, [{ name: "house-profile-walk-start", ph: "R", pid: 1, tid: 2, ts: 100_000 }])).toThrow(/Missing measured/);

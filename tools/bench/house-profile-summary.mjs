@@ -45,7 +45,7 @@ export function summarizeRuns(runs) {
   return { runs: runs.length, phases, top5: [...frames].sort((a, b) => b.witch - a.witch).slice(0, 5), perRun: runs.map(r => ({ repeat: r.repeat, smokeRouteIterations: r.frames, sampledFramesIncludingSeat: r.rows.length, phases: Object.fromEntries(["step", "render", "witch", "gcWitch"].map(k => [k, distribution(r.rows.filter(f => f.section === 1).map(f => f[k]))])) })) };
 }
 export function markdown(result) {
-  const lines = ["# Same-route house profile", "", `Complete: ${result.complete}. Cap: 14 minutes. Five fresh-browser runs per configuration. Profiling overhead is included; this is not an uninstrumented smoke replacement.`, "", "| configuration | runs | samples | witch max ms | p99 ms | median ms |", "|---|---:|---:|---:|---:|---:|"];
+  const lines = ["# Same-route house profile", "", `Complete: ${result.complete}. Cap: ${result.capSeconds ?? 830} seconds. ${result.repetitions ?? 5} fresh-browser runs per configuration. Profiling overhead is included; this is not an uninstrumented smoke replacement.`, "", "| configuration | runs | samples | witch max ms | p99 ms | median ms |", "|---|---:|---:|---:|---:|---:|"];
   for (const [name, group] of Object.entries(result.groups)) {
     const w = group.phases.witch;
     lines.push(`| ${name} | ${group.runs} | ${w.count} | ${w.max.toFixed(3)} | ${w.p99.toFixed(3)} | ${w.median.toFixed(3)} |`);
