@@ -1,9 +1,9 @@
 // Cloud runner only. Matched source-model sheets, not exact in-game screenshots.
-// node tools/roster/compare.mjs previews/ed/roster [bear,arcticfox,snowleopard]
+// node tools/roster/compare.mjs previews/ed/roster [bear,arcticfox,snowleopard,beetle]
 import { mkdirSync, writeFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { openBrowser } from "../../art/headless.mjs";
-const [out = "previews/ed/roster", only = "bear,arcticfox,snowleopard"] = process.argv.slice(2);
+const [out = "previews/ed/roster", only = "bear,arcticfox,snowleopard,beetle"] = process.argv.slice(2);
 mkdirSync(out, { recursive: true });
 const sha = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
 const b = await openBrowser();
@@ -14,7 +14,7 @@ try {
       const G = await import("/art/generator.js"), C = await import("/art/creatures.js"), B = await import("/art/creatures3d.js");
       const { rosterGenome, ROSTER_PRESETS } = await import("/art/roster/presets.js");
       if (!ROSTER_PRESETS[id]) throw Error(`Unknown proposed species ${id}`);
-      const original = G.GENOME_BY_ID[id], proposed = rosterGenome(original, [id]);
+      const original = G.GENOME_BY_ID[id];
       const st = { ...G.defaultStyle(), artStyle: "bold", pixel: 3 };
       const light = night ? st : { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 };
       const { shade } = await import("/art/lighting.js");
@@ -23,7 +23,7 @@ try {
       // Direct existing builder avoids critter's id-only cache aliasing current/proposed.
       // Keep actual species id for identical texture seed; prove current matches production.
       for (const facing of ["towards", "away"]) for (const frame of [0, 1]) for (const level of [0, 1, 2, 3]) {
-        const sprites = [original, proposed].map((g, column) => {
+        const sprites = [original, rosterGenome(original, [id], level)].map((g, column) => {
           const S = G.speciesOf(g);
           const sprite = B.withTexture({ S, level, st }, () => C.buildCreature(S, level, frame, st, facing));
           G.textureSprite(sprite, S, level, st, C.textureSeed(id));

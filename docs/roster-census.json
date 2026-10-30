@@ -1,5 +1,5 @@
 {
-  "sourceCommit": "d8e7dbb044601c8c6eb0669ae3fc852996a92eb1",
+  "sourceCommit": "3abd821a17109670906e36f986e797ffd4c8be3a",
   "world": 0,
   "builders": {
     "armadillo": [
@@ -867,9 +867,9 @@
       },
       "assessment": {
         "naturalCue": "dark wing cases; stag-beetle jaws; ember fissures are fictional",
-        "likeness": "Priority conflict: ordinary Fire beetle has invented ember markings",
+        "likeness": "Revise ordinary ember fissures; coordinator approved real stag-beetle candidate",
         "quality": "Source inspection only; current rendered quality unverified",
-        "gap": "Ask whether intentionally fantastic species; do not silently rename"
+        "gap": "Preset D; elder retains fire; Fire beetle versus stag beetle naming left for Ed"
       },
       "sources": [
         "art/creatures/beetle/genome.js",

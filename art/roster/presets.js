@@ -2,6 +2,13 @@
 // Isolated data for the existing speciesOf/quad3d interface, not a second engine.
 // No production import. Each species requires an explicit opt-in; defaults are off.
 export const ROSTER_PRESETS = {
+  beetle: {
+    reason: "Ordinary stag-beetle wing cases and jaws are dark natural materials; reserve ember fissures for the elder.",
+    reference: "https://www.nhm.ac.uk/discover/stag-beetles.html",
+    ordinaryOnly: true,
+    patch: { palette: { hue: .06, sat: .35, val: .28, accent: [.06, .35, .3] }, look: { embers: false } },
+    text: "A dark beetle with brown wing cases and antler-like jaws; its elder carries the fire.",
+  },
   bear: {
     reason: "A black bear has no grizzly shoulder hump; retain its dark coat and bear body.",
     reference: "https://www.nps.gov/articles/bear-identification.htm",
@@ -35,9 +42,12 @@ function merge(a, b) {
  * Legends keep original anatomy/features. Palette is species-wide in this interface;
  * arctic fox's neutral white also applies to its elder (still a white fox).
  */
-export function rosterGenome(genome, selected = []) {
+export function rosterGenome(genome, selected = [], level) {
   const preset = selected.includes(genome.id) && ROSTER_PRESETS[genome.id];
   if (!preset) return genome;
+  // The old beetle builder reads a species-wide look, so require explicit level.
+  // Fail closed for callers that cannot yet supply #1470's level-aware contract.
+  if (preset.ordinaryOnly && ![0, 1, 2].includes(level)) return genome;
   const result = merge(genome, preset.patch);
   result.levels = Array.from({ length: 4 }, (_, level) => {
     const original = genome.levels?.[level] || {};

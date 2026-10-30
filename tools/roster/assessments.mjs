@@ -28,7 +28,7 @@ export const ASSESSMENTS = {
   bat: ["brown membrane wings; fox-like muzzle; fruit-bat ears", "Fruit-bat flag is present; wing anatomy unverified", "Flight membrane must read from both headings"],
   bear: ["dark coat; pale muzzle; flat back; prominent ears", "Revise: hump/front-heavy base conflicts with Black bear name", "Keep related to polar bear; preset B"],
   beaver: ["brown compact rodent; flat paddle tail; incisors", "Specific tail and teeth are encoded", "Check paddle and incisors; not a duplicate otter"],
-  beetle: ["dark wing cases; stag-beetle jaws; ember fissures are fictional", "Priority conflict: ordinary Fire beetle has invented ember markings", "Ask whether intentionally fantastic species; do not silently rename"],
+  beetle: ["dark wing cases; stag-beetle jaws; ember fissures are fictional", "Revise ordinary ember fissures; coordinator approved real stag-beetle candidate", "Preset D; elder retains fire; Fire beetle versus stag beetle naming left for Ed"],
   boar: ["brown bristles; long snout; low head; tusks", "Natural cues encoded; humpK 1.6 merits visual review", "Check realistic shoulder mass versus old exaggeration"],
   cat: ["pale sand; small short limbs; broad head; large low ears; ringed tail", "Partial: sand coat/broad head present; tall point ears need review", "Low ear placement lacks preset interface; do not substitute fennec ears"],
   cheetah: ["tan solid spots; tear lines; slim long legs; small head", "Specific natural cues encoded; archK 1.8 may overstate back", "Render before changing; similarity to other cats is acceptable"],

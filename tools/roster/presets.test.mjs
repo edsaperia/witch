@@ -14,7 +14,7 @@ test("default-off and unknown switch preserve every production record by identit
 test("opt-in changes only selected genomes, has valid sockets, and leaves source records untouched", () => {
   const before = JSON.stringify(GENOMES);
   for (const id of Object.keys(ROSTER_PRESETS)) for (const g of GENOMES) {
-    const selected = rosterGenome(g, [id]);
+    const selected = rosterGenome(g, [id], 2);
     if (g.id !== id) assert.equal(selected, g);
     else {
       assert.notEqual(genomeHash(selected), genomeHash(g));
@@ -26,6 +26,14 @@ test("opt-in changes only selected genomes, has valid sockets, and leaves source
     }
   }
   assert.equal(JSON.stringify(GENOMES), before);
+});
+
+test("beetle requires a level-aware caller and retains the complete original fiery elder", () => {
+  const g = GENOMES.find(g => g.id === "beetle");
+  assert.equal(rosterGenome(g, ["beetle"]), g);
+  assert.equal(rosterGenome(g, ["beetle"], 3), g);
+  for (const level of [0, 1, 2]) assert.equal(speciesOf(rosterGenome(g, ["beetle"], level)).look.embers, false);
+  assert.equal(speciesOf(rosterGenome(g, ["beetle"], 3)).look.embers, true);
 });
 
 test("ordinary corrections survive per-level overrides and restore elder anatomy", () => {

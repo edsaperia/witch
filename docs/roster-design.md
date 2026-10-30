@@ -14,15 +14,16 @@ Keep all 64 species and their gameplay roles. **No additions, merges, area moves
 
 The family groupings in the census organise shared design work; they are not all taxonomic families. In particular, red panda, raccoon and meerkat are separate carnivoran lineages, and bat, hare and armadillo are not relatives merely because they appear under other mammals.
 
-### Bounded first implementation: three per-species review presets
+### Bounded implementation: four per-species review presets
 
 | Species | Proposed change and first reason | Secondary readability / area reason | Existing interface and limits |
 |---|---|---|---|
 | Black bear | Remove ordinary-level shoulder hump and excess front mass: a real black bear lacks a grizzly hump. | Dark coat, pale muzzle and prominent ears remain; shares bear body naturally with polar bear. Cold-rainforest identity stays. | `body.humpK=0`, `front=1` at levels 0–2; elder keeps original fantastic anatomy. |
 | Arctic fox | Short rounded ears instead of the pointed, large juvenile ears; neutralise blue coat cast for the white winter morph. | Compact white fox remains related to russet fox and sandy fennec; no forced unique silhouette. Snowfield fit is already good. | Existing round-ear part and species palette; white palette also reaches elder because the old interface has no effective level palette. Summer/blue morphs are not added. |
 | Snow leopard | Broken rosettes replace generic spots. | Pale coat, broad paws and long thick ringed tail already distinguish the mountain cat naturally from black jaguar/tiger/cheetah. | Existing rosette painter; initial frequency/density are review parameters, not zoological measurements. Elder retains original coat pattern/story. |
+| Fire beetle (name retained) | Remove invented ordinary ember fissures; dark brown wing cases and dark head/jaws follow a real stag beetle. Coordinator authorised this candidate in 6513102826. | Log-pile habitat already fits deadwood beetles; keep its existing mandible glyph. Fire remains the elder's story. | Existing beetle builder and `look.embers`; wrapper requires explicit level and returns complete original at level 3. Integration awaits level-aware shared hook. |
 
-Presets are real genome data in `art/roster/presets.js`, processed through the existing `speciesOf`/`quad3d` model. They are not illustrative mockups and are not a new engine. `rosterGenome(g, [])` returns the exact original object; opt-in names are individual species IDs. Nothing imports this module in production yet. #1470 owns the shared selection hook, switch spelling and selected-genome hashing; connect to that accepted interface once supplied, rather than adding a competing hook.
+Presets are real genome data in `art/roster/presets.js`, processed through the existing `speciesOf`/`quad3d` or beetle model. They are not illustrative mockups and are not a new engine. `rosterGenome(g, [], level)` returns the exact original object; opt-in names are individual species IDs. The beetle candidate also fails closed without explicit level, since the current species-wide `look` interface cannot itself restore elder fire. Nothing imports this module in production yet. #1470 owns the shared selection hook, switch spelling and selected-genome hashing; connect to that accepted interface once supplied, rather than adding a competing hook.
 
 Each proposed change requires matched current/proposed sheets: all four levels, two headings, both walking frames, studio and night; native baked art pixels plus a labelled enlargement. The unchanged counterpart is rendered in the same process with identical style, frame, heading and lighting. Include related unchanged family members. Native bake size is not the same as perspective-projected screen size: exact ground/treetop screenshots must additionally use the accepted in-game switch and a verified build SHA. Until then, game-size acceptance remains pending.
 
@@ -37,6 +38,7 @@ Each proposed change requires matched current/proposed sheets: all four levels, 
 7. [British Deer Society roe identification](https://bds.org.uk/wp-content/uploads/2024/07/Roe_Leaflet_web.pdf): small antlers typically three points per side, large ears and prominent pale rump. [British Wildlife Centre's animals](https://britishwildlifecentre.co.uk/planyourvisit/animals/roe-deer/) also show seasonal coat differences and spotted young. These support a shorter roe antler target, not a new species.
 8. [Washington Fish & Wildlife moose](https://wdfw.wa.gov/species-habitats/species/alces-alces): broad palmate adult antlers, long muzzle, long legs and throat bell. [Missouri Conservation elk](https://mdc.mo.gov/discover-nature/field-guide/elk) documents the different wapiti antler form. This explains the naming ambiguity without resolving it on Ed's behalf.
 9. [Smithsonian fennec](https://www.nationalzoo.si.edu/animals/fennec-fox): cream/fawn coat, white underside, bushy black-tipped tail and very large ears on the smallest canid. Ear size is a real trait; it should not be exaggerated further to distinguish the fox family.
+10. [Natural History Museum stag-beetle account](https://www.nhm.ac.uk/discover/stag-beetles.html), including its beetle curators' observations, and [PTES stag-beetle field identification](https://stagbeetles.ptes.org/stag-beetles-in-woodlands/): antler-like male jaws, dark head/thorax, often chestnut wing cases and association with decaying wood. The existing model can remove fictitious ember paint and use brown material; exact material separation/jaw curvature remain visual-review targets, not a claim of perfect Lucanus cervus anatomy.
 
 ## Family targets for generator iterations
 
@@ -72,7 +74,7 @@ Mustelids: badger, marten, otter, stoat share elongated bodies, with natural bla
 
 ## Decisions/questions routed separately to coordinator
 
-1. Fire beetle's ordinary ember fissures conflict with literal animal likeness unless this is an intentionally fantastic species; determine that before replacing/renaming its ordinary design. No gameplay change implemented.
+1. **Ed review choice: ordinary “Fire beetle” versus “stag beetle” intent/name.** Current comparison has ember fissures at every level; candidate has a natural dark stag-beetle ordinary body and a fiery elder. Coordinator authorised the recommended candidate in 6513102826; the name is unchanged. Present both pictures to Ed. No gameplay change implemented.
 2. Intended species/common names for elk, elephant, rhino, penguin, newt and python must be settled before correcting species-dependent anatomy or seasonal markings. The audit identifies ambiguity rather than inventing an answer.
 3. No gameplay-role proposal is needed for these three art changes. If a later add/merge is wanted, it requires a separate role/population/area decision; this PR must not change the balance harness.
 
@@ -83,6 +85,7 @@ Production bestiary names/descriptions and sigils are unchanged so far. Review d
 - Black bear: “A dark forest bear with a straight back, prominent ears and a pale muzzle.”
 - Arctic fox: “A compact white winter fox with short rounded ears and a dense brush tail.”
 - Snow leopard: “A smoky pale mountain cat with dark rosettes, broad paws and a long thick tail.”
+- Fire beetle: “A dark beetle with brown wing cases and antler-like jaws; its elder carries the fire.”
 
 These are staged review text, not activated player text. Integrate with the selected bestiary display when #1470's switch interface exists. Keep every bold glyph; review existing small arctic-fox glyph already uses rounded ears. New body similarity does not justify changing readable sigils.
 
