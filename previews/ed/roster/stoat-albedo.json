@@ -1,11 +1,13 @@
 {
-  "sha": "0d122c61b893e0e8d66fa84508b9b1ec68d19c79",
+  "sha": "4badb78ac02b04e7c7ab8a548a404da5d7fd5507",
   "measurements": [
     {
       "id": "stoat",
+      "pose": "walk",
       "facing": "towards",
       "frame": 0,
       "level": 0,
+      "pixelDiff": 361,
       "current": [
         39,
         28
@@ -17,9 +19,11 @@
     },
     {
       "id": "stoat",
+      "pose": "walk",
       "facing": "towards",
       "frame": 0,
       "level": 1,
+      "pixelDiff": 565,
       "current": [
         45,
         37
@@ -31,9 +35,11 @@
     },
     {
       "id": "stoat",
+      "pose": "walk",
       "facing": "towards",
       "frame": 0,
       "level": 2,
+      "pixelDiff": 1298,
       "current": [
         85,
         56
@@ -45,9 +51,11 @@
     },
     {
       "id": "stoat",
+      "pose": "walk",
       "facing": "towards",
       "frame": 0,
       "level": 3,
+      "pixelDiff": 9690,
       "current": [
         249,
         159
@@ -59,9 +67,11 @@
     },
     {
       "id": "stoat",
+      "pose": "walk",
       "facing": "towards",
       "frame": 1,
       "level": 0,
+      "pixelDiff": 398,
       "current": [
         41,
         28
@@ -73,9 +83,11 @@
     },
     {
       "id": "stoat",
+      "pose": "walk",
       "facing": "towards",
       "frame": 1,
       "level": 1,
+      "pixelDiff": 627,
       "current": [
         48,
         37
@@ -87,9 +99,11 @@
     },
     {
       "id": "stoat",
+      "pose": "walk",
       "facing": "towards",
       "frame": 1,
       "level": 2,
+      "pixelDiff": 1407,
       "current": [
         89,
         56
@@ -101,9 +115,11 @@
     },
     {
       "id": "stoat",
+      "pose": "walk",
       "facing": "towards",
       "frame": 1,
       "level": 3,
+      "pixelDiff": 10386,
       "current": [
         259,
         160
@@ -115,9 +131,11 @@
     },
     {
       "id": "stoat",
+      "pose": "walk",
       "facing": "away",
       "frame": 0,
       "level": 0,
+      "pixelDiff": 270,
       "current": [
         33,
         28
@@ -129,9 +147,11 @@
     },
     {
       "id": "stoat",
+      "pose": "walk",
       "facing": "away",
       "frame": 0,
       "level": 1,
+      "pixelDiff": 561,
       "current": [
         45,
         37
@@ -143,9 +163,11 @@
     },
     {
       "id": "stoat",
+      "pose": "walk",
       "facing": "away",
       "frame": 0,
       "level": 2,
+      "pixelDiff": 1215,
       "current": [
         83,
         55
@@ -157,9 +179,11 @@
     },
     {
       "id": "stoat",
+      "pose": "walk",
       "facing": "away",
       "frame": 0,
       "level": 3,
+      "pixelDiff": 9746,
       "current": [
         248,
         159
@@ -171,9 +195,11 @@
     },
     {
       "id": "stoat",
+      "pose": "walk",
       "facing": "away",
       "frame": 1,
       "level": 0,
+      "pixelDiff": 290,
       "current": [
         34,
         28
@@ -185,9 +211,11 @@
     },
     {
       "id": "stoat",
+      "pose": "walk",
       "facing": "away",
       "frame": 1,
       "level": 1,
+      "pixelDiff": 593,
       "current": [
         46,
         37
@@ -199,9 +227,11 @@
     },
     {
       "id": "stoat",
+      "pose": "walk",
       "facing": "away",
       "frame": 1,
       "level": 2,
+      "pixelDiff": 1253,
       "current": [
         84,
         56
@@ -213,9 +243,11 @@
     },
     {
       "id": "stoat",
+      "pose": "walk",
       "facing": "away",
       "frame": 1,
       "level": 3,
+      "pixelDiff": 9924,
       "current": [
         252,
         159
@@ -300,7 +332,15 @@
         "ear": "round",
         "earS": 0.6,
         "tail": "stoat",
-        "paw": "paw"
+        "paw": "paw",
+        "regions": {
+          "tail": {
+            "tip": {
+              "length": 0.25,
+              "mat": "BODY3"
+            }
+          }
+        }
       },
       "look": null,
       "paletteHSV": [
@@ -384,7 +424,15 @@
         "earS": 0.6,
         "tail": "stoat",
         "paw": "paw",
-        "tailL": 0.7
+        "tailL": 0.7,
+        "regions": {
+          "tail": {
+            "tip": {
+              "length": 0.25,
+              "mat": "BODY3"
+            }
+          }
+        }
       },
       "look": null,
       "paletteHSV": [
@@ -466,7 +514,15 @@
         "ear": "round",
         "earS": 0.6,
         "tail": "stoat",
-        "paw": "paw"
+        "paw": "paw",
+        "regions": {
+          "tail": {
+            "tip": {
+              "length": 0.25,
+              "mat": "BODY3"
+            }
+          }
+        }
       },
       "look": null,
       "paletteHSV": [
@@ -558,7 +614,7 @@
       ]
     }
   ],
-  "modelSourceCommit": "10c8c9bd910c917c52001e07eb688c73ebd3417e",
+  "modelSourceCommit": "e4b77ac10557c73b19828efe7c0b98e99b6123d7",
   "lighting": "albedo",
   "style": {
     "ambientHue": 0.68,

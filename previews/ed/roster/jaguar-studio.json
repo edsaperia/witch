@@ -1,11 +1,13 @@
 {
-  "sha": "ca42327ba343708d6b43e7a88d7291d66b1fdae9",
+  "sha": "4badb78ac02b04e7c7ab8a548a404da5d7fd5507",
   "measurements": [
     {
       "id": "jaguar",
+      "pose": "walk",
       "facing": "towards",
       "frame": 0,
       "level": 0,
+      "pixelDiff": 1156,
       "current": [
         54,
         50
@@ -17,9 +19,11 @@
     },
     {
       "id": "jaguar",
+      "pose": "walk",
       "facing": "towards",
       "frame": 0,
       "level": 1,
+      "pixelDiff": 2677,
       "current": [
         119,
         72
@@ -31,9 +35,11 @@
     },
     {
       "id": "jaguar",
+      "pose": "walk",
       "facing": "towards",
       "frame": 0,
       "level": 2,
+      "pixelDiff": 7846,
       "current": [
         183,
         118
@@ -45,9 +51,11 @@
     },
     {
       "id": "jaguar",
+      "pose": "walk",
       "facing": "towards",
       "frame": 0,
       "level": 3,
+      "pixelDiff": 52445,
       "current": [
         524,
         311
@@ -59,9 +67,11 @@
     },
     {
       "id": "jaguar",
+      "pose": "walk",
       "facing": "towards",
       "frame": 1,
       "level": 0,
+      "pixelDiff": 1358,
       "current": [
         57,
         50
@@ -73,9 +83,11 @@
     },
     {
       "id": "jaguar",
+      "pose": "walk",
       "facing": "towards",
       "frame": 1,
       "level": 1,
+      "pixelDiff": 3215,
       "current": [
         133,
         73
@@ -87,9 +99,11 @@
     },
     {
       "id": "jaguar",
+      "pose": "walk",
       "facing": "towards",
       "frame": 1,
       "level": 2,
+      "pixelDiff": 9483,
       "current": [
         201,
         119
@@ -101,9 +115,11 @@
     },
     {
       "id": "jaguar",
+      "pose": "walk",
       "facing": "towards",
       "frame": 1,
       "level": 3,
+      "pixelDiff": 61819,
       "current": [
         573,
         313
@@ -115,9 +131,11 @@
     },
     {
       "id": "jaguar",
+      "pose": "walk",
       "facing": "away",
       "frame": 0,
       "level": 0,
+      "pixelDiff": 1006,
       "current": [
         48,
         49
@@ -129,9 +147,11 @@
     },
     {
       "id": "jaguar",
+      "pose": "walk",
       "facing": "away",
       "frame": 0,
       "level": 1,
+      "pixelDiff": 2189,
       "current": [
         106,
         72
@@ -143,9 +163,11 @@
     },
     {
       "id": "jaguar",
+      "pose": "walk",
       "facing": "away",
       "frame": 0,
       "level": 2,
+      "pixelDiff": 6127,
       "current": [
         158,
         117
@@ -157,9 +179,11 @@
     },
     {
       "id": "jaguar",
+      "pose": "walk",
       "facing": "away",
       "frame": 0,
       "level": 3,
+      "pixelDiff": 43301,
       "current": [
         470,
         309
@@ -171,9 +195,11 @@
     },
     {
       "id": "jaguar",
+      "pose": "walk",
       "facing": "away",
       "frame": 1,
       "level": 0,
+      "pixelDiff": 1062,
       "current": [
         52,
         49
@@ -185,9 +211,11 @@
     },
     {
       "id": "jaguar",
+      "pose": "walk",
       "facing": "away",
       "frame": 1,
       "level": 1,
+      "pixelDiff": 2314,
       "current": [
         110,
         72
@@ -199,9 +227,11 @@
     },
     {
       "id": "jaguar",
+      "pose": "walk",
       "facing": "away",
       "frame": 1,
       "level": 2,
+      "pixelDiff": 6466,
       "current": [
         162,
         117
@@ -213,9 +243,11 @@
     },
     {
       "id": "jaguar",
+      "pose": "walk",
       "facing": "away",
       "frame": 1,
       "level": 3,
+      "pixelDiff": 45796,
       "current": [
         481,
         309
@@ -341,6 +373,13 @@
         "rosettes": false,
         "belly": true,
         "regions": {
+          "tail": {
+            "kind": "spots",
+            "k": 14,
+            "density": 0.65,
+            "radius": 0.4,
+            "mat": "BODY3"
+          },
           "torso": {
             "kind": "rosettes",
             "outerPx": 4,
@@ -517,6 +556,13 @@
         "rosettes": false,
         "belly": true,
         "regions": {
+          "tail": {
+            "kind": "spots",
+            "k": 14,
+            "density": 0.65,
+            "radius": 0.4,
+            "mat": "BODY3"
+          },
           "torso": {
             "kind": "rosettes",
             "outerPx": 7,
@@ -694,6 +740,13 @@
         "rosettes": false,
         "belly": true,
         "regions": {
+          "tail": {
+            "kind": "spots",
+            "k": 14,
+            "density": 0.65,
+            "radius": 0.4,
+            "mat": "BODY3"
+          },
           "torso": {
             "kind": "rosettes",
             "outerPx": 7,
@@ -877,6 +930,13 @@
         "rosettes": false,
         "belly": true,
         "regions": {
+          "tail": {
+            "kind": "spots",
+            "k": 14,
+            "density": 0.65,
+            "radius": 0.4,
+            "mat": "BODY3"
+          },
           "torso": {
             "kind": "rosettes",
             "outerPx": 14,
@@ -943,7 +1003,7 @@
       ]
     }
   ],
-  "modelSourceCommit": "d42523e03b77a8ff4507a5c232d5bdcf91e374e2",
+  "modelSourceCommit": "e4b77ac10557c73b19828efe7c0b98e99b6123d7",
   "lighting": "studio",
   "style": {
     "ambientHue": 0.68,

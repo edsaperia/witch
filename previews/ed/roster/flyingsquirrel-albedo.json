@@ -1,5 +1,5 @@
 {
-  "sha": "f720f368016ea0986f6dfd310761637e981c808e",
+  "sha": "4badb78ac02b04e7c7ab8a548a404da5d7fd5507",
   "measurements": [
     {
       "id": "flyingsquirrel",
@@ -7,7 +7,7 @@
       "facing": "towards",
       "frame": 0,
       "level": 0,
-      "pixelDiff": 347,
+      "pixelDiff": 367,
       "current": [
         36,
         28
@@ -23,7 +23,7 @@
       "facing": "towards",
       "frame": 0,
       "level": 1,
-      "pixelDiff": 641,
+      "pixelDiff": 648,
       "current": [
         49,
         39
@@ -39,7 +39,7 @@
       "facing": "towards",
       "frame": 0,
       "level": 2,
-      "pixelDiff": 1603,
+      "pixelDiff": 1651,
       "current": [
         80,
         63
@@ -55,7 +55,7 @@
       "facing": "towards",
       "frame": 0,
       "level": 3,
-      "pixelDiff": 7040,
+      "pixelDiff": 7298,
       "current": [
         184,
         144
@@ -71,13 +71,13 @@
       "facing": "towards",
       "frame": 1,
       "level": 0,
-      "pixelDiff": 401,
+      "pixelDiff": null,
       "current": [
         39,
         29
       ],
       "proposed": [
-        39,
+        40,
         29
       ]
     },
@@ -87,7 +87,7 @@
       "facing": "towards",
       "frame": 1,
       "level": 1,
-      "pixelDiff": 707,
+      "pixelDiff": 715,
       "current": [
         52,
         40
@@ -103,7 +103,7 @@
       "facing": "towards",
       "frame": 1,
       "level": 2,
-      "pixelDiff": 1771,
+      "pixelDiff": 1799,
       "current": [
         85,
         63
@@ -119,7 +119,7 @@
       "facing": "towards",
       "frame": 1,
       "level": 3,
-      "pixelDiff": 7525,
+      "pixelDiff": 7631,
       "current": [
         194,
         144
@@ -135,13 +135,13 @@
       "facing": "away",
       "frame": 0,
       "level": 0,
-      "pixelDiff": 302,
+      "pixelDiff": null,
       "current": [
         31,
         28
       ],
       "proposed": [
-        31,
+        32,
         28
       ]
     },
@@ -183,7 +183,7 @@
       "facing": "away",
       "frame": 0,
       "level": 3,
-      "pixelDiff": 9390,
+      "pixelDiff": 9737,
       "current": [
         208,
         145
@@ -199,13 +199,13 @@
       "facing": "away",
       "frame": 1,
       "level": 0,
-      "pixelDiff": 305,
+      "pixelDiff": null,
       "current": [
         32,
         28
       ],
       "proposed": [
-        32,
+        33,
         28
       ]
     },
@@ -215,7 +215,7 @@
       "facing": "away",
       "frame": 1,
       "level": 1,
-      "pixelDiff": 648,
+      "pixelDiff": 656,
       "current": [
         50,
         40
@@ -231,7 +231,7 @@
       "facing": "away",
       "frame": 1,
       "level": 2,
-      "pixelDiff": 1792,
+      "pixelDiff": 1819,
       "current": [
         85,
         63
@@ -247,7 +247,7 @@
       "facing": "away",
       "frame": 1,
       "level": 3,
-      "pixelDiff": 9716,
+      "pixelDiff": 9919,
       "current": [
         214,
         145
@@ -309,7 +309,7 @@
         "snout": 0.4,
         "snoutD": 0.65,
         "whiskers": true,
-        "eyeK": 1.5,
+        "eyeK": 1.7,
         "belly": true,
         "ear": "round",
         "earS": 0.9,
@@ -374,7 +374,7 @@
         "snout": 0.4,
         "snoutD": 0.65,
         "whiskers": true,
-        "eyeK": 1.45,
+        "eyeK": 1.7,
         "belly": true,
         "ear": "round",
         "earS": 0.9,
@@ -439,7 +439,7 @@
         "snout": 0.4,
         "snoutD": 0.65,
         "whiskers": true,
-        "eyeK": 1.45,
+        "eyeK": 1.7,
         "belly": true,
         "ear": "round",
         "earS": 0.9,
@@ -526,7 +526,7 @@
       ]
     }
   ],
-  "modelSourceCommit": "10c8c9bd910c917c52001e07eb688c73ebd3417e",
+  "modelSourceCommit": "e4b77ac10557c73b19828efe7c0b98e99b6123d7",
   "lighting": "albedo",
   "style": {
     "ambientHue": 0.68,

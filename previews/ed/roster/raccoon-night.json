@@ -1,8 +1,9 @@
 {
-  "sha": "462b975beee9981a45ce451fd88018893cd8d625",
+  "sha": "4badb78ac02b04e7c7ab8a548a404da5d7fd5507",
   "measurements": [
     {
       "id": "raccoon",
+      "pose": "walk",
       "facing": "towards",
       "frame": 0,
       "level": 0,
@@ -18,6 +19,7 @@
     },
     {
       "id": "raccoon",
+      "pose": "walk",
       "facing": "towards",
       "frame": 0,
       "level": 1,
@@ -33,6 +35,7 @@
     },
     {
       "id": "raccoon",
+      "pose": "walk",
       "facing": "towards",
       "frame": 0,
       "level": 2,
@@ -48,6 +51,7 @@
     },
     {
       "id": "raccoon",
+      "pose": "walk",
       "facing": "towards",
       "frame": 0,
       "level": 3,
@@ -63,6 +67,7 @@
     },
     {
       "id": "raccoon",
+      "pose": "walk",
       "facing": "towards",
       "frame": 1,
       "level": 0,
@@ -78,10 +83,11 @@
     },
     {
       "id": "raccoon",
+      "pose": "walk",
       "facing": "towards",
       "frame": 1,
       "level": 1,
-      "pixelDiff": 1308,
+      "pixelDiff": 1309,
       "current": [
         75,
         49
@@ -93,6 +99,7 @@
     },
     {
       "id": "raccoon",
+      "pose": "walk",
       "facing": "towards",
       "frame": 1,
       "level": 2,
@@ -108,6 +115,7 @@
     },
     {
       "id": "raccoon",
+      "pose": "walk",
       "facing": "towards",
       "frame": 1,
       "level": 3,
@@ -123,6 +131,7 @@
     },
     {
       "id": "raccoon",
+      "pose": "walk",
       "facing": "away",
       "frame": 0,
       "level": 0,
@@ -138,10 +147,11 @@
     },
     {
       "id": "raccoon",
+      "pose": "walk",
       "facing": "away",
       "frame": 0,
       "level": 1,
-      "pixelDiff": 938,
+      "pixelDiff": 939,
       "current": [
         61,
         48
@@ -153,6 +163,7 @@
     },
     {
       "id": "raccoon",
+      "pose": "walk",
       "facing": "away",
       "frame": 0,
       "level": 2,
@@ -168,6 +179,7 @@
     },
     {
       "id": "raccoon",
+      "pose": "walk",
       "facing": "away",
       "frame": 0,
       "level": 3,
@@ -183,6 +195,7 @@
     },
     {
       "id": "raccoon",
+      "pose": "walk",
       "facing": "away",
       "frame": 1,
       "level": 0,
@@ -198,10 +211,11 @@
     },
     {
       "id": "raccoon",
+      "pose": "walk",
       "facing": "away",
       "frame": 1,
       "level": 1,
-      "pixelDiff": 963,
+      "pixelDiff": 964,
       "current": [
         64,
         49
@@ -213,6 +227,7 @@
     },
     {
       "id": "raccoon",
+      "pose": "walk",
       "facing": "away",
       "frame": 1,
       "level": 2,
@@ -228,6 +243,7 @@
     },
     {
       "id": "raccoon",
+      "pose": "walk",
       "facing": "away",
       "frame": 1,
       "level": 3,
@@ -406,6 +422,18 @@
           "hip": {
             "w": 0.9
           }
+        },
+        "regions": {
+          "tail": {
+            "kind": "rings",
+            "count": 4,
+            "width": 0.5,
+            "mat": "BODY3",
+            "tip": {
+              "length": 0.15,
+              "mat": "BODY3"
+            }
+          }
         }
       },
       "look": null,
@@ -509,6 +537,18 @@
           },
           "hip": {
             "w": 1
+          }
+        },
+        "regions": {
+          "tail": {
+            "kind": "rings",
+            "count": 4,
+            "width": 0.5,
+            "mat": "BODY3",
+            "tip": {
+              "length": 0.15,
+              "mat": "BODY3"
+            }
           }
         }
       },
@@ -586,7 +626,7 @@
       ]
     }
   ],
-  "modelSourceCommit": "10c8c9bd910c917c52001e07eb688c73ebd3417e",
+  "modelSourceCommit": "e4b77ac10557c73b19828efe7c0b98e99b6123d7",
   "lighting": "night",
   "style": {
     "ambientHue": 0.68,
