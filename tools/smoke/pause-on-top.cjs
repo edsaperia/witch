@@ -118,7 +118,10 @@ const CASES = [
     await page.evaluate(() => { window.__pad = null; }); await page.waitForTimeout(300);
     check(await paused(), `${C.id}: the pad's d-pad didn't unpause it`);
     // (the pad's B is the pause page's Back, #1456: it resumes, and that press is the resume and nothing else, so what's under stays)
-    await page.evaluate(() => { window.__pad = [1]; }); await page.waitForTimeout(700);
+    // (held till a frame has read it, up to 20 s: a software GL's frames here can take seconds, and a short tap falls between them)
+    await page.evaluate(() => { window.__pad = [1]; });
+    try { await page.waitForFunction(() => !document.body.classList.contains("paused"), null, { timeout: 20000, polling: 100 }); } catch { /* checked below */ }
+    await page.waitForTimeout(300);
     await page.evaluate(() => { window.__pad = null; }); await page.waitForTimeout(300);
     check(!(await paused()), `${C.id}: the pad's B resumes`);
     check(await isOpen(), `${C.id}: the pad's B didn't also shut the overlay under the pause`);
