@@ -177,3 +177,12 @@ House lighting still imports hsv2rgb through the omnibus generator facade.
 QUESTION6523616809 requests its one-line direct import from core.js; no lighting
 or generator edit has been made pending that additional scope route. Fingerprint
 implementation and the complete history replay remain outstanding.
+
+`tools/artDependencies.ts` now supplies the pure graph/hash foundation for those
+steps. Given explicit roots, it follows runtime imports/re-exports, preserves
+whole-module initialization dependencies, skips type-only edges, handles cycles
+and declared virtual binary inputs, and exports the reverse file-to-jobs map.
+Unresolved, undeclared or nonliteral dynamic edges fail closed rather than being
+silently omitted. Text fingerprints normalize CRLF and length-frame paths/bytes.
+Five focused fixtures and typecheck pass. It is not yet wired into builds or
+cache keys; its synthetic isolation test is not proof of the real house graph.
