@@ -21,7 +21,7 @@ describe("shared CI game build", () => {
   });
   it("cannot report a green required check when its prerequisite build failed", () => {
     expect(jobs.check.needs).toContain("build");
-    expect(jobs.check.if).toContain("always()");
+    expect(jobs.check.if).toContain("!cancelled()");
     expect(jobs.check.steps[0]).toMatchObject({ run: "exit 1" });
     expect(jobs.check.steps[0].if).toContain("needs.build.result != 'success'");
   });
@@ -51,5 +51,11 @@ describe("shared CI game build", () => {
     expect(jobs["large-world"].steps.some((s: any) => s.run?.includes("tools/smoke/large-world.cjs"))).toBe(true);
     expect(jobs["large-world"].steps.find((s: any) => s.uses === "actions/download-artifact@v4").with.name).toBe("game-dist");
     expect(jobs["large-world"]["timeout-minutes"]).toBe(20);
+  });
+  it("allows cancellation of stale consumer jobs rather than always keeping them alive", () => {
+    for (const name of ["check", "smoke", "large-world"]) {
+      expect(jobs[name].if).toContain("!cancelled()");
+      expect(jobs[name].if).not.toContain("always()");
+    }
   });
 });

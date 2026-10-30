@@ -148,7 +148,7 @@ jobs:
     needs:
       - build
       - deploy
-    if: ${{ always() }}
+    if: ${{ !cancelled() }}
   smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -190,13 +190,13 @@ jobs:
     needs:
       - build
       - deploy
-    if: ${{ always() && needs.build.result == 'success' && (github.ref != 'refs/heads/main' || needs.deploy.result == 'success') }}
+    if: ${{ !cancelled() && needs.build.result == 'success' && (github.ref != 'refs/heads/main' || needs.deploy.result == 'success') }}
   large-world:
     name: largest shipped world art
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: [build, deploy]
-    if: ${{ always() && needs.build.result == 'success' && (github.ref != 'refs/heads/main' || needs.deploy.result == 'success') }}
+    if: ${{ !cancelled() && needs.build.result == 'success' && (github.ref != 'refs/heads/main' || needs.deploy.result == 'success') }}
     env:
       PLAYWRIGHT_VERSION: 1.56.1
     steps:

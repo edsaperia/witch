@@ -7,6 +7,13 @@ import { startWake, WAKE_DEFAULT } from "../rules/wakeUp";
 
 const saved = (): SavedNight => ({ version: 1, build: "test", at: 123, params: "seed=123&island=wolf&world=42", look: null, loan: null,
   flags: { chartRecorded: false, overRecorded: false }, settingsBase: { voices: {}, shake: 1, legendFlash: 1 }, game: { version: 1, seed: 123, tuning: {} as never, state: { root: null, nodes: [] } } });
+it("treats a build-counter jump as the same exact-build boundary as any update", () => {
+  const old = { ...saved(), build: "v5955 · old" };
+  expect(savedNight(old, "v5955 · old", new URLSearchParams())).toBe(old);
+  expect(savedNight(old, "v6322 · new", new URLSearchParams())).toBeNull();
+  const next = { ...old, build: "v6322 · new" };
+  expect(savedNight(next, "v6322 · new", new URLSearchParams())).toBe(next);
+});
 const memory = () => {
   let value: unknown;
   const store: NightStore = { read: async () => value, write: async n => { value = n; }, clear: async () => { value = undefined; } };

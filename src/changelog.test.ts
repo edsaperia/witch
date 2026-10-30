@@ -3,6 +3,10 @@ import { describe, expect, it } from "vitest";
 import { CHANGELOG, CHANGELOG_VERSIONS, collectChangelog, groupChangelog } from "./changelog";
 
 describe("the changelog (config/changelog/: a frozen archive and one fragment per change)", () => {
+  it("groups and sorts version gaps without assuming a consecutive workflow counter", () => {
+    const got = collectChangelog({ "old.json": { version: 5955, items: ["old"] }, "new.json": { version: 6322, items: ["new"] } });
+    expect(got).toEqual([{ version: 6322, items: ["new"] }, { version: 5955, items: ["old"] }]);
+  });
   it("collects the archive and the fragments, the current build's first, then newest version first", () => {
     const versions = CHANGELOG.map(e => e.version);
     expect(versions.filter(v => v === null).length).toBeLessThanOrEqual(1);
