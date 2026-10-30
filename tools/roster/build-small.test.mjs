@@ -39,7 +39,7 @@ for (const level of [2, 3]) {
   const differs = a.w !== b.w || a.h !== b.h || a.m.some((v, i) => v !== b.m[i]) || a.n.some((v, i) => v !== b.n[i]);
   console.log(`groundSkirt isolation L${level}: ${differs ? "construction changes; visual visibility still requires review" : "IDENTICAL construction, shared control defect"}`);
 }
-console.log(`PASS: ${count} meerkat level/pose/frame/facing builds; mole controls and groundSkirt resolved`);
+console.log(`PASS: ${count} meerkat level/pose/frame/facing builds; selected optional controls checked`);
 if (pack.fennec) {
   let fennecBuilds = 0;
   for (let level = 0; level < 4; level++) {
