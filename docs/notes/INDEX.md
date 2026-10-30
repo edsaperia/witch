@@ -254,6 +254,7 @@ says what each note covers.
 
 ## [The view](view.md)
 
+- Layered magic
 - Magic mock (stage 0 only)
 - Pixel snap
 - Stump wisps

@@ -23,7 +23,7 @@ void main(){
   if(overBend(onGround(iPos))<0.5)gl_Position=vec4(2.0,2.0,2.0,1.0);
 }`;
 const FRAG=/* glsl */ `
-uniform sampler2D uFxRamp;uniform float uFxTime,uLayer,uCalm,uSecondary,uDistort;
+uniform sampler2D uFxRamp;uniform float uFxTime,uLayer,uCalm,uSecondary,uDistort;uniform vec2 uHalo;
 varying vec2 vP;varying vec4 vData,vCol;varying vec3 vWorld;varying float vGrid;
 ${LIGHT_GLSL}
 float hash(vec2 q){return fract(sin(dot(q,vec2(127.1,311.7)))*43758.5453);}
@@ -62,7 +62,7 @@ void main(){
   vec3 rgb;float a=1.0;
   if(uLayer<0.5){rgb=ramp(0.0).rgb;a=(1.0-smoothstep(0.7,1.4,d))*0.65;}
   else if(uLayer<1.5){if(d>0.95)discard;rgb=ramp(d<0.28?3.0:d<0.5?2.0:d<0.75?1.0:0.0).rgb;}
-  else if(uLayer<2.5){a=(1.0-smoothstep(0.15,1.6,d))*(0.12+strength*0.12);if(hash(floor(p*24.0))>a*3.0)discard;rgb=ramp(1.0).rgb;a=min(a,uCalm>0.5?0.12:0.24);}
+  else if(uLayer<2.5){a=(1.0-smoothstep(0.15,1.6,d))*mix(uHalo.x,uHalo.y,strength);if(hash(floor(p*24.0))>a*3.0)discard;rgb=ramp(1.0).rgb;a=min(a,uCalm>0.5?0.12:0.24);}
   else { // rising embers, stepped shards, curling drops, forks, dust and petals in one fixed instance pool
     vec2 cell=floor(flow*24.0);float spark=hash(cell);
     bool detail=uSecondary>0.5 && strength>${settings.secondaryAt} && abs(sin(angle*4.0+time+r*9.0))<0.08 && r>0.45 && r<0.8;
@@ -87,7 +87,7 @@ export class FxBatches {
     const ramp=gpuKind(new THREE.DataTexture(data,5,ELEMENT_KEYS.length),"fx");ramp.minFilter=ramp.magFilter=THREE.NearestFilter;ramp.needsUpdate=true;
     for(let flat=0;flat<2;flat++)for(let layer=0;layer<4;layer++){
       const mat=new THREE.ShaderMaterial({vertexShader:VERT,fragmentShader:FRAG,uniforms:{...LIGHT_UNIFORMS,...HEIGHT_UNIFORMS,
-        uRight:SPRITE_UNIFORMS.uRight,uUp:SPRITE_UNIFORMS.uUp,uRes:SPRITE_UNIFORMS.uRes,uMpp:this.mpp,uFxRamp:{value:ramp},uFlat:{value:flat},uLayer:{value:layer},uFxTime:this.time,uCalm:this.calm,uSecondary:this.secondary,uDistort:this.distort},
+        uRight:SPRITE_UNIFORMS.uRight,uUp:SPRITE_UNIFORMS.uUp,uRes:SPRITE_UNIFORMS.uRes,uMpp:this.mpp,uHalo:{value:new THREE.Vector2(...settings.halo as [number,number])},uFxRamp:{value:ramp},uFlat:{value:flat},uLayer:{value:layer},uFxTime:this.time,uCalm:this.calm,uSecondary:this.secondary,uDistort:this.distort},
         transparent:true,depthWrite:false,blending:layer>=2?THREE.AdditiveBlending:THREE.NormalBlending});
       const batch=new Instances(mat);batch.mesh.name=`Magic ${flat?"ground":"upright"} layer ${layer}`;
       // White warning marks (2.97) are composited after every new layer.

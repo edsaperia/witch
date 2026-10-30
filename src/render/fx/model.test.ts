@@ -1,8 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { ATTACK_LOOK } from "../../rules/attackLook";
+import { validate, type Schema } from "../../rules/schema";
+import elementSchema from "../../../config/schema/fx-elements.schema.json";
+import formSchema from "../../../config/schema/fx-forms.schema.json";
 import { elements, forms, settings, ImprintField, intensityOf, lightScore, IMPRINTS } from "./model";
 describe("magic language and temporary scenery field",()=>{
   it("covers every existing element and form with distinct ramps and movement",()=>{
+    expect(validate(elements,elementSchema as Schema)).toEqual([]);
+    expect(validate(forms,formSchema as Schema)).toEqual([]);
     for(const name of Object.keys(ATTACK_LOOK.elements))expect(elements).toHaveProperty(name);
     expect(new Set(Object.values(forms).map(f=>f.id)).size).toBe(Object.keys(forms).length);
     for(const el of Object.values(elements)){

@@ -22,6 +22,7 @@ export class MagicFx {
   captureTime:number|null=null;
   galleryDark=false;
   galleryCamera:boolean|null=null;
+  galleryVisible=true;
   private panel:HTMLElement|null=null;
   private hidden:{object:THREE.Object3D;visible:boolean}[]=[];
   private background:THREE.Scene["background"]=null;
@@ -54,7 +55,7 @@ export class MagicFx {
     this.stats.instances++;
     // An airborne effect has a real ground anchor even when its core is above the canopy.
     if(!f.ground){this.data[0]=forms.zone.id;this.batches.add(x,0,z,Math.min(diameter*0.75,12),this.data,alpha*0.18,true,tint,false);}
-    if(form!=="aura" || intensity>0.3)this.light(`${key}:${form}:${seed}`,x,y,z,key,intensity,alpha,tint);
+    this.light(`${key}:${form}:${seed}`,x,y,z,key,intensity,alpha,tint);
     if(FX_QUALITY.imprints && (form==="burst" || form==="zone" || form==="eruption" || form==="beam" || form==="projectile")) {
       this.field.stamp(x,z,Math.max(2,Math.min(18,diameter*0.6)),el.imprint as Imprint,intensity*alpha*(form==="projectile"?0.25:1));
     }
@@ -112,6 +113,7 @@ export class MagicFx {
       if(Math.hypot(l.x-this.cx,l.z-this.cz)<l.reach+30)this.selected.push(l);
     }
     this.selected.sort((a,b)=>b.score-a.score);
+    if(!this.enabled)this.selected.length=0;
     const U=LIGHT_UNIFORMS,limit=Math.max(0,Math.min(MAX_LIGHTS,Math.floor(budget)));
     const cap=Math.min(FX_QUALITY.lightCap,settings.lightCap,limit),n=Math.min(cap,this.selected.length);
     // At least budget-cap slots stay available to the world's existing lights. Strongest nearby effects take the last n.
@@ -126,6 +128,7 @@ export class MagicFx {
   /** The same production layers, not a second mock implementation. One element's complete family and intensity ladder. */
   gallery(element:string,x:number,z:number,time:number):void {
     this.galleryPanel(element);
+    if(!this.galleryVisible)return;
     const phase=((this.galleryTime??time)%4)/4;
     const family=FORM_KEYS.slice(this.galleryPage*4,this.galleryPage*4+4);
     family.forEach((form,col)=>[0.25,0.6,1].forEach((intensity,row)=>{

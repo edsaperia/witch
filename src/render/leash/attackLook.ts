@@ -171,7 +171,7 @@ export class AttackLook {
     const e = this.el(d), P = this.colours(d), pw = spellPower(d.level) * size, solid = this.solid(d), t = this.tinted(d);
     const n = Math.round(this.cfg.particles.impact * pw), fall = FALLS[e.impact] ?? 0;
     // the flash and its light (every element)
-    if (k < 0.25 && !comfort.reduceFlashing) this.put(this.glow, `flash${Math.min(2, Math.floor(k * 12))}`, x, y, z, Math.max(1, Math.round(pw)), 1 - k * 3, P[3]);
+    if (d.level >= 3 && k < 0.25 && !comfort.reduceFlashing) this.put(this.glow, `flash${Math.min(2, Math.floor(k * 12))}`, x, y, z, Math.max(1, Math.round(pw)), 1 - k * 3, P[3]);
     this.glow.add(x, y, z, 3.2 * pw * (0.6 + k), this.uv("dot"), P[1][0], P[1][1], P[1][2], (comfort.reduceFlashing ? 0.3 : 0.7) * (1 - k) * (1 - k));
     // its shock ring, on the ground, in its bright colour (two for the ring element, moonlight's)
     const rings = e.impact === "ring" ? 2 : 1;
@@ -213,7 +213,7 @@ export class AttackLook {
       this.magic.draw(d.el, "beam", x0+(x1-x0)*k, y, z0+(z1-z0)*k, d.level, Math.max(0.65,width)*(1+Math.abs(z1-z0)/Math.max(1,length)*0.35), fade*0.65, (time+k)%1, seed+i, d.tint);
     }
     const e = this.el(d), P = this.colours(d), t = this.tinted(d), solid = this.solid(d), pw = spellPower(d.level);
-    const dx = x1 - x0, dz = z1 - z0, L = Math.hypot(dx, dz) || 1, ux = dx / L, uz = dz / L, fl = 0.8 + 0.2 * Math.sin(time * 37 + seed);
+    const dx = x1 - x0, dz = z1 - z0, L = Math.hypot(dx, dz) || 1, ux = dx / L, uz = dz / L, fl = comfort.reduceFlashing ? 1 : 0.9 + 0.1 * Math.sin(time * 3 + seed);
     for (let s = 0.4; s < L; s += 0.6) this.glow.add(x0 + ux * s, y, z0 + uz * s, Math.max(0.7, width) * 1.1, this.uv("dot"), P[1][0], P[1][1], P[1][2], 0.16 * fl * fade);
     for (let s = 0.3; s < L; s += K / PPM) this.glow.add(x0 + ux * s, y, z0 + uz * s, K / PPM, this.uv("px"), P[3][0], P[3][1], P[3][2], 0.8 * fade); // (its hot core, an art pixel thin)
     const step = (this.px(this.name(d, "beam.0.0")) * 0.55 * K) / PPM, scroll = (time * 6) % step, beam = e.beam, ft = Math.floor(time * 10);
