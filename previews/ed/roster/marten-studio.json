@@ -1,0 +1,617 @@
+{
+  "sha": "17fae2df465f6bb3af0a172039f408264cc42c97",
+  "measurements": [
+    {
+      "id": "marten",
+      "facing": "towards",
+      "frame": 0,
+      "level": 0,
+      "current": [
+        52,
+        38
+      ],
+      "proposed": [
+        52,
+        38
+      ]
+    },
+    {
+      "id": "marten",
+      "facing": "towards",
+      "frame": 0,
+      "level": 1,
+      "current": [
+        69,
+        52
+      ],
+      "proposed": [
+        69,
+        52
+      ]
+    },
+    {
+      "id": "marten",
+      "facing": "towards",
+      "frame": 0,
+      "level": 2,
+      "current": [
+        116,
+        84
+      ],
+      "proposed": [
+        116,
+        84
+      ]
+    },
+    {
+      "id": "marten",
+      "facing": "towards",
+      "frame": 0,
+      "level": 3,
+      "current": [
+        267,
+        193
+      ],
+      "proposed": [
+        267,
+        193
+      ]
+    },
+    {
+      "id": "marten",
+      "facing": "towards",
+      "frame": 1,
+      "level": 0,
+      "current": [
+        56,
+        38
+      ],
+      "proposed": [
+        56,
+        38
+      ]
+    },
+    {
+      "id": "marten",
+      "facing": "towards",
+      "frame": 1,
+      "level": 1,
+      "current": [
+        74,
+        52
+      ],
+      "proposed": [
+        74,
+        52
+      ]
+    },
+    {
+      "id": "marten",
+      "facing": "towards",
+      "frame": 1,
+      "level": 2,
+      "current": [
+        122,
+        84
+      ],
+      "proposed": [
+        122,
+        84
+      ]
+    },
+    {
+      "id": "marten",
+      "facing": "towards",
+      "frame": 1,
+      "level": 3,
+      "current": [
+        282,
+        199
+      ],
+      "proposed": [
+        282,
+        199
+      ]
+    },
+    {
+      "id": "marten",
+      "facing": "away",
+      "frame": 0,
+      "level": 0,
+      "current": [
+        55,
+        38
+      ],
+      "proposed": [
+        55,
+        38
+      ]
+    },
+    {
+      "id": "marten",
+      "facing": "away",
+      "frame": 0,
+      "level": 1,
+      "current": [
+        83,
+        52
+      ],
+      "proposed": [
+        83,
+        52
+      ]
+    },
+    {
+      "id": "marten",
+      "facing": "away",
+      "frame": 0,
+      "level": 2,
+      "current": [
+        154,
+        85
+      ],
+      "proposed": [
+        154,
+        85
+      ]
+    },
+    {
+      "id": "marten",
+      "facing": "away",
+      "frame": 0,
+      "level": 3,
+      "current": [
+        401,
+        198
+      ],
+      "proposed": [
+        401,
+        198
+      ]
+    },
+    {
+      "id": "marten",
+      "facing": "away",
+      "frame": 1,
+      "level": 0,
+      "current": [
+        57,
+        38
+      ],
+      "proposed": [
+        57,
+        38
+      ]
+    },
+    {
+      "id": "marten",
+      "facing": "away",
+      "frame": 1,
+      "level": 1,
+      "current": [
+        85,
+        52
+      ],
+      "proposed": [
+        85,
+        52
+      ]
+    },
+    {
+      "id": "marten",
+      "facing": "away",
+      "frame": 1,
+      "level": 2,
+      "current": [
+        156,
+        86
+      ],
+      "proposed": [
+        156,
+        86
+      ]
+    },
+    {
+      "id": "marten",
+      "facing": "away",
+      "frame": 1,
+      "level": 3,
+      "current": [
+        407,
+        198
+      ],
+      "proposed": [
+        407,
+        198
+      ]
+    }
+  ],
+  "resolvedRecords": [
+    {
+      "level": 0,
+      "column": "current",
+      "body": {
+        "hgt": 0.68,
+        "len": 0.78,
+        "chest": 0.35,
+        "tuck": 0.42,
+        "neck": 0.3,
+        "neckAng": 0.55,
+        "neckW": 0.35,
+        "hr": 0.25,
+        "legW": 0.85,
+        "back": "arch",
+        "snout": 0.65,
+        "snoutD": 0.6,
+        "belly": true,
+        "ear": "round",
+        "earS": 1.3,
+        "tail": "marten",
+        "paw": "paw",
+        "tailK": 0.6
+      },
+      "look": null,
+      "paletteHSV": [
+        0.07,
+        0.6,
+        0.45
+      ]
+    },
+    {
+      "level": 0,
+      "column": "proposed",
+      "body": {
+        "hgt": 0.68,
+        "len": 0.78,
+        "chest": 0.35,
+        "tuck": 0.42,
+        "neck": 0.3,
+        "neckAng": 0.55,
+        "neckW": 0.35,
+        "hr": 0.25,
+        "legW": 0.85,
+        "back": "arch",
+        "snout": 0.65,
+        "snoutD": 0.6,
+        "belly": false,
+        "bib": {
+          "mat": "BELLY",
+          "extent": {
+            "along": [
+              -0.8,
+              0.95
+            ],
+            "width": 1,
+            "depth": 1.5
+          }
+        },
+        "legMat": 25,
+        "ear": "round",
+        "earS": 1.3,
+        "tail": "marten",
+        "paw": "paw",
+        "tailK": 0.6
+      },
+      "look": null,
+      "paletteHSV": [
+        0.07,
+        0.6,
+        0.45
+      ]
+    },
+    {
+      "level": 1,
+      "column": "current",
+      "body": {
+        "hgt": 0.68,
+        "len": 0.7,
+        "chest": 0.35,
+        "tuck": 0.42,
+        "neck": 0.3,
+        "neckAng": 0.55,
+        "neckW": 0.35,
+        "hr": 0.25,
+        "legW": 0.85,
+        "back": "arch",
+        "snout": 0.65,
+        "snoutD": 0.6,
+        "belly": true,
+        "ear": "round",
+        "earS": 1.3,
+        "tail": "marten",
+        "paw": "paw",
+        "tailK": 0.7,
+        "tailL": 0.8
+      },
+      "look": null,
+      "paletteHSV": [
+        0.07,
+        0.6,
+        0.45
+      ]
+    },
+    {
+      "level": 1,
+      "column": "proposed",
+      "body": {
+        "hgt": 0.68,
+        "len": 0.7,
+        "chest": 0.35,
+        "tuck": 0.42,
+        "neck": 0.3,
+        "neckAng": 0.55,
+        "neckW": 0.35,
+        "hr": 0.25,
+        "legW": 0.85,
+        "back": "arch",
+        "snout": 0.65,
+        "snoutD": 0.6,
+        "belly": false,
+        "bib": {
+          "mat": "BELLY",
+          "extent": {
+            "along": [
+              -0.8,
+              0.95
+            ],
+            "width": 1,
+            "depth": 1.5
+          }
+        },
+        "legMat": 25,
+        "ear": "round",
+        "earS": 1.3,
+        "tail": "marten",
+        "paw": "paw",
+        "tailK": 0.7,
+        "tailL": 0.8
+      },
+      "look": null,
+      "paletteHSV": [
+        0.07,
+        0.6,
+        0.45
+      ]
+    },
+    {
+      "level": 2,
+      "column": "current",
+      "body": {
+        "hgt": 0.68,
+        "len": 0.78,
+        "chest": 0.4,
+        "tuck": 0.42,
+        "neck": 0.3,
+        "neckAng": 0.55,
+        "neckW": 0.35,
+        "hr": 0.25,
+        "legW": 0.85,
+        "back": "arch",
+        "snout": 0.65,
+        "snoutD": 0.6,
+        "belly": true,
+        "ear": "round",
+        "earS": 1.3,
+        "tail": "marten",
+        "paw": "paw",
+        "tailK": 1.4,
+        "profile": {
+          "shoulder": {
+            "w": 1.12,
+            "d": 1.08
+          },
+          "waist": {
+            "w": 0.82,
+            "d": 0.88
+          }
+        }
+      },
+      "look": null,
+      "paletteHSV": [
+        0.07,
+        0.6,
+        0.45
+      ]
+    },
+    {
+      "level": 2,
+      "column": "proposed",
+      "body": {
+        "hgt": 0.68,
+        "len": 0.78,
+        "chest": 0.4,
+        "tuck": 0.42,
+        "neck": 0.3,
+        "neckAng": 0.55,
+        "neckW": 0.35,
+        "hr": 0.25,
+        "legW": 0.85,
+        "back": "arch",
+        "snout": 0.65,
+        "snoutD": 0.6,
+        "belly": false,
+        "bib": {
+          "mat": "BELLY",
+          "extent": {
+            "along": [
+              -0.8,
+              0.95
+            ],
+            "width": 1,
+            "depth": 1.5
+          }
+        },
+        "legMat": 25,
+        "ear": "round",
+        "earS": 1.3,
+        "tail": "marten",
+        "paw": "paw",
+        "tailK": 1.4,
+        "profile": {
+          "shoulder": {
+            "w": 1.12,
+            "d": 1.08
+          },
+          "waist": {
+            "w": 0.82,
+            "d": 0.88
+          }
+        }
+      },
+      "look": null,
+      "paletteHSV": [
+        0.07,
+        0.6,
+        0.45
+      ]
+    },
+    {
+      "level": 3,
+      "column": "current",
+      "body": {
+        "hgt": 0.68,
+        "len": 0.78,
+        "chest": 0.35,
+        "tuck": 0.42,
+        "neck": 0.3,
+        "neckAng": 0.55,
+        "neckW": 0.35,
+        "hr": 0.25,
+        "legW": 0.85,
+        "back": "arch",
+        "snout": 0.65,
+        "snoutD": 0.6,
+        "belly": true,
+        "ear": "round",
+        "earS": 1.3,
+        "tail": "marten",
+        "paw": "paw",
+        "tailK": 1.7,
+        "tailL": 1.07
+      },
+      "look": null,
+      "paletteHSV": [
+        0.07,
+        0.6,
+        0.45
+      ]
+    },
+    {
+      "level": 3,
+      "column": "proposed",
+      "body": {
+        "hgt": 0.68,
+        "len": 0.78,
+        "chest": 0.35,
+        "tuck": 0.42,
+        "neck": 0.3,
+        "neckAng": 0.55,
+        "neckW": 0.35,
+        "hr": 0.25,
+        "legW": 0.85,
+        "back": "arch",
+        "snout": 0.65,
+        "snoutD": 0.6,
+        "belly": false,
+        "bib": {
+          "mat": "BELLY",
+          "extent": {
+            "along": [
+              -0.8,
+              0.95
+            ],
+            "width": 1,
+            "depth": 1.5
+          }
+        },
+        "legMat": 25,
+        "ear": "round",
+        "earS": 1.3,
+        "tail": "marten",
+        "paw": "paw",
+        "tailK": 1.7,
+        "tailL": 1.07
+      },
+      "look": {},
+      "paletteHSV": [
+        0.07,
+        0.6,
+        0.45
+      ]
+    }
+  ],
+  "modelSourceCommit": "10c8c9bd910c917c52001e07eb688c73ebd3417e",
+  "lighting": "studio",
+  "style": {
+    "ambientHue": 0.68,
+    "ambient": 0.22,
+    "moon": 0.3,
+    "moonHue": 0.58,
+    "glowHue": 0.13,
+    "glowSat": 0.35,
+    "glowRadius": 110,
+    "glowPower": 1.4,
+    "bands": 3,
+    "dither": 0.35,
+    "round": 0.9,
+    "outline": "none",
+    "cOutline": "dark",
+    "shafts": 0.3,
+    "areaContrast": 0.6,
+    "sat": 0.9,
+    "leafHue": 0.3,
+    "leafVariety": 0.3,
+    "trunkHue": 0.07,
+    "groundHue": 0.27,
+    "groundVal": 0.4,
+    "pixel": 3,
+    "treeSize": 0.85,
+    "crownWidth": 3,
+    "clearing": 0.55,
+    "depth": 4,
+    "areaScale": 1,
+    "areaTypes": 64,
+    "density": 0.55,
+    "clump": 0.6,
+    "gnarl": 0.5,
+    "roots": 0.6,
+    "bark": 0.6,
+    "trees": 1,
+    "wBroad": 0.8,
+    "wFir": 0.6,
+    "wWillow": 0.5,
+    "wBirch": 0.5,
+    "wPalm": 0.3,
+    "wFlat": 0.5,
+    "bushes": 55,
+    "bushSize": 1,
+    "flowers": 0.3,
+    "cSat": 0.6,
+    "cVal": 0.85,
+    "head": 0.44,
+    "eye": 1,
+    "legs": 1,
+    "long": 1,
+    "size": 8,
+    "growth": 20,
+    "magicHue": 0.5,
+    "fur": 0.5,
+    "creatureScale": 1.5,
+    "texture": 1,
+    "texDetail": 0.3,
+    "hueShift": 0,
+    "cloakHue": 0.72,
+    "hairHue": 0.01,
+    "hatHue": 0.74,
+    "topHue": 0.13,
+    "jeansHue": 0.6,
+    "shoeHue": 0,
+    "phonesHue": 0.92,
+    "artStyle": "bold"
+  },
+  "largestCell": [
+    407,
+    199
+  ],
+  "selectionInterface": "shared #1470 selector"
+}

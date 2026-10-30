@@ -1,5 +1,5 @@
 {
-  "sha": "ca42327ba343708d6b43e7a88d7291d66b1fdae9",
+  "sha": "17fae2df465f6bb3af0a172039f408264cc42c97",
   "measurements": [
     {
       "id": "stoat",
@@ -303,8 +303,8 @@
       "look": null,
       "paletteHSV": [
         0.065,
-        0.55,
-        0.56
+        0.45,
+        0.68
       ]
     },
     {
@@ -385,8 +385,8 @@
       "look": null,
       "paletteHSV": [
         0.065,
-        0.55,
-        0.56
+        0.45,
+        0.68
       ]
     },
     {
@@ -465,8 +465,8 @@
       "look": null,
       "paletteHSV": [
         0.065,
-        0.55,
-        0.56
+        0.45,
+        0.68
       ]
     },
     {
@@ -545,12 +545,12 @@
       "look": null,
       "paletteHSV": [
         0.065,
-        0.55,
-        0.56
+        0.45,
+        0.68
       ]
     }
   ],
-  "modelSourceCommit": "d42523e03b77a8ff4507a5c232d5bdcf91e374e2",
+  "modelSourceCommit": "10c8c9bd910c917c52001e07eb688c73ebd3417e",
   "lighting": "albedo",
   "style": {
     "ambientHue": 0.68,

@@ -1,5 +1,5 @@
 {
-  "sha": "ca42327ba343708d6b43e7a88d7291d66b1fdae9",
+  "sha": "17fae2df465f6bb3af0a172039f408264cc42c97",
   "measurements": [
     {
       "id": "badger",
@@ -328,13 +328,13 @@
         "brow": 0.7,
         "jaw": 0.7,
         "face": "badger",
+        "blaze": 1.6,
         "shaggy": true,
         "legMat": 25,
         "ear": "round",
         "earS": 0.7,
         "tail": "stub",
-        "paw": "paw",
-        "blaze": 1.6
+        "paw": "paw"
       },
       "look": null,
       "paletteHSV": [
@@ -444,13 +444,13 @@
         "brow": 0.7,
         "jaw": 0.7,
         "face": "badger",
+        "blaze": 1.3,
         "shaggy": true,
         "legMat": 25,
         "ear": "round",
         "earS": 0.7,
         "tail": "stub",
-        "paw": "paw",
-        "blaze": 1.3
+        "paw": "paw"
       },
       "look": null,
       "paletteHSV": [
@@ -560,13 +560,13 @@
         "brow": 0.7,
         "jaw": 0.7,
         "face": "badger",
+        "blaze": 0.85,
         "shaggy": true,
         "legMat": 25,
         "ear": "round",
         "earS": 0.7,
         "tail": "stub",
-        "paw": "paw",
-        "blaze": 1.8
+        "paw": "paw"
       },
       "look": null,
       "paletteHSV": [
@@ -676,13 +676,13 @@
         "brow": 0.7,
         "jaw": 0.7,
         "face": "badger",
+        "blaze": 0.85,
         "shaggy": true,
         "legMat": 25,
         "ear": "round",
         "earS": 0.7,
         "tail": "stub",
-        "paw": "paw",
-        "blaze": 1.6
+        "paw": "paw"
       },
       "look": null,
       "paletteHSV": [
@@ -692,7 +692,7 @@
       ]
     }
   ],
-  "modelSourceCommit": "d42523e03b77a8ff4507a5c232d5bdcf91e374e2",
+  "modelSourceCommit": "10c8c9bd910c917c52001e07eb688c73ebd3417e",
   "lighting": "albedo",
   "style": {
     "ambientHue": 0.68,
