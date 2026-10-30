@@ -15,9 +15,11 @@ an answer for a different candidate. The eventual driver must also checkpoint
 individual real-rules case results so a restart does not mix or skip cases.
 
 The objective compares aggregate wins, quests completed, runs with all quests
-completed, finds eligible to keep, waves passed and survival world seconds,
-lexicographically (coordinator 6512758049). Partial quest progress earns zero:
-only the real quest's `done` counts. Quest totals include every generated quest,
+completed, finds eligible to keep, provisional finds collected, quest deliveries,
+waves passed and survival world seconds, lexicographically (coordinators
+6512758049 and 6514241011). Only the real quest's `done` counts as completion.
+A partial delivery is a lower-priority tie-breaker, never a completed quest.
+Quest totals include every generated quest,
 including ones the expert has not discovered. Zero quests is not an all-quest win.
 A single extra win outweighs any progress-only gain. A find is eligible when
 actually picked up and the night is won; actual app sleep/persistence is not run
@@ -186,7 +188,7 @@ Use the exact dispatched source SHA with Node 22 and existing dependencies
 ```
 npm run typecheck
 npx vitest run src/bots/expert.test.ts tools/docs --maxWorkers=1
-node --test --test-concurrency=1 tools/balance/expert-search-core.test.mjs tools/balance/expert-space.test.mjs tools/balance/expert-contract.test.mjs tools/balance/report.test.mjs
+node --test --test-concurrency=1 tools/balance/expert-progress.test.mjs tools/balance/expert-search-core.test.mjs tools/balance/expert-space.test.mjs tools/balance/expert-contract.test.mjs tools/balance/report.test.mjs
 node --check tools/balance/expert-search.mjs
 ```
 
@@ -213,6 +215,29 @@ seen, then reads its dream only after landing. `questMax` (0–6, default 1) bou
 distinct dream visits, alongside `questRange`/`questBias`. Opportunistic dreams
 remain readable in view. This is a policy choice for cloud search, not a measured
 quality improvement; it uses no remote sleeping-legend data.
+
+### Partial-progress preparation after round one
+
+Coordinator 6514241011 approved lower-priority gradients after round one's
+0 wins / 95 losses / 1 censored result. The next objective has eight terms:
+win count, completed quest count, all-quest runs, find eligible to keep,
+provisional find pickups, unique quest deliveries, waves passed, world seconds.
+Tests prove that arbitrary amounts of lower progress cannot outrank any of the
+first four priorities. The old six-term checkpoints remain old-source evidence;
+they are not silently converted or resumed as eight-term checkpoints.
+
+`expert-progress.mjs` observes existing events without changing policy input or
+rules. Provisional pickup is recorded once even if the find later disappears;
+it is never called kept. A quest delivery is a requested creature's sigil placed
+in its legend's area: either the real completion event, or the rules' existing
+`outsideCircle` cue when the correct creature is brought to the area but dropped
+outside the clearing. It is counted once per legend, so repeated drops cannot
+farm the score. `questDeliveriesIncomplete` separates such incomplete arrivals
+from completed quests. Ordinary sigils and relic placements earn no delivery.
+
+This is prepared source, not a new training freeze. Coordinator 6514249008 has
+dispatched the unchanged-skilled comparison on 676e8924 to baseline-1; its result
+must be reviewed before freezing another source or making a trained lock.
 
 Pilot reproduction (one worker; at most 480 s between case boundaries):
 

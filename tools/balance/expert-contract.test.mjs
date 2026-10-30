@@ -61,7 +61,7 @@ test("weak-case fitness lists preserve exact settings and exclude held-out pairs
 test("external rows cannot leak held-out pairs or first-round reserved survey pairs", () => {
   const dir = mkdtempSync(join(tmpdir(), "witch-expert-")), file = join(dir, "rows.jsonl");
   const c = { kind: "run", worldSeed: 1, nightSeed: 2, island: "home", bpm: 100, bag: "satchel", hat: "none", broomPart: null, bot: "expert" };
-  const row = { schema: 1, status: "ok", sourceFingerprint: "fp", parameters: INITIAL_POLICY, case: c, result: { seed: 2, worldSeed: 1, island: "home", bpm: 100, bag: "satchel", hat: "none", parts: [], bot: "expert", outcome: "censored", questsCompleted: 0, questsTotal: 1, upgradeEligibleToKeep: false, wavesPassed: 0, end: 1 } };
+  const row = { schema: 1, status: "ok", sourceFingerprint: "fp", parameters: INITIAL_POLICY, case: c, result: { seed: 2, worldSeed: 1, island: "home", bpm: 100, bag: "satchel", hat: "none", parts: [], bot: "expert", outcome: "censored", questsCompleted: 0, questsTotal: 1, upgradeEligibleToKeep: false, provisionalFindsCollected: 0, questDeliveries: 0, wavesPassed: 0, end: 1 } };
   try {
     writeFileSync(file, JSON.stringify(row) + "\n");
     assert.equal(importEvaluations(file, "fp", [], 1).length, 1);

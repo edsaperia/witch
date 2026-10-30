@@ -1,6 +1,7 @@
 // Real-rule runner and isolated invitation fixtures for report.mjs; no simulated combat model.
 import { openRules } from "./lib.mjs";
 import { observer, phaseOf, rangedTargeted } from "./report-core.mjs";
+import { progressObserver } from "./expert-progress.mjs";
 
 export async function runtime() {
   const { load, close } = await openRules();
@@ -32,16 +33,18 @@ export async function runtime() {
       return g;
     };
     function run(c, limit, options = {}) {
-      const g = make(c), brain = newBot(c.bot === "sloppy" ? "novice" : c.bot, { expertSeed: c.seed ^ 0x1477, ...options, bag: c.bag }), seen = observer();
+      const g = make(c), brain = newBot(c.bot === "sloppy" ? "novice" : c.bot, { expertSeed: c.seed ^ 0x1477, ...options, bag: c.bag }), seen = observer(), progress = progressObserver();
+      progress.step(g);
       for (let i = 0; i < Math.ceil(limit / STEP); i++) {
         const dt = Math.min(STEP, limit - i * STEP), before = { phase: phaseOf(g), wave: g.party.wave, time: g.clock.time };
         const exposed = rangedTargeted(g, attackOf);
         stepGame(g, brain.decide(g), dt);
+        progress.step(g);
         seen.step(before, g, g.clock.time - before.time, exposed);
         if (g.partyOver || g.win?.wonAt !== undefined) break;
       }
       const quests = g.creatures.filter(q => q.boss && q.quest), questsCompleted = quests.filter(q => q.quest.done !== undefined).length;
-      return { ...c, mode: "runs", playerEnd: g.herTime, phaseNumber: c.island === "home" ? 0 : KINDS[c.island].phase + 1, ...seen.finish(g), questsCompleted, questsTotal: quests.length, allQuestsCompleted: quests.length > 0 && questsCompleted === quests.length, upgradeFound: !!g.trunk?.found, upgradeEligibleToKeep: !!g.trunk?.found && g.win?.wonAt !== undefined, upgradePersisted: false };
+      return { ...c, mode: "runs", playerEnd: g.herTime, phaseNumber: c.island === "home" ? 0 : KINDS[c.island].phase + 1, ...seen.finish(g), questsCompleted, questsTotal: quests.length, allQuestsCompleted: quests.length > 0 && questsCompleted === quests.length, upgradeFound: !!g.trunk?.found, upgradeEligibleToKeep: !!g.trunk?.found && g.win?.wonAt !== undefined, upgradePersisted: false, ...progress.finish() };
     }
     function stun(c, limit, distance) {
       const g = make(c), w = g.witches[0], d = g.map.dancefloor;

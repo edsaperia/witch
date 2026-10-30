@@ -1,6 +1,6 @@
 // Deterministic, evaluation-independent coordinate search. The real-rules driver owns
 // observation, cases and scoring; this module never imports or modifies game rules.
-export const SEARCH_SCHEMA = 2;
+export const SEARCH_SCHEMA = 3;
 
 export function validateSpace(space) {
   const names = new Set();
@@ -26,19 +26,22 @@ export function startSearch(space, initial, seed = 1) {
 }
 
 // Ed's objective: wins, completed quests, all quests, find eligible to keep,
-// then wave passage and survival. Actual app persistence is not simulated.
+// then provisional finds, quest deliveries, waves and survival. Partial progress
+// never outranks the completed goals. Actual app persistence is not simulated.
 // No finite progress/survival improvement can outweigh a win.
 export function objective(rows) {
   if (!rows.length) throw Error("No objective cases");
   return rows.reduce((s, r) => {
     if (!["won", "lost", "censored"].includes(r.outcome) || !Number.isFinite(r.wavesPassed) || r.wavesPassed < 0 || !Number.isFinite(r.end) || r.end < 0) throw Error("Invalid objective row");
     if (!Number.isInteger(r.questsCompleted) || !Number.isInteger(r.questsTotal) || r.questsCompleted < 0 || r.questsCompleted > r.questsTotal || typeof r.upgradeEligibleToKeep !== "boolean") throw Error("Missing quest/find objective fields");
-    return [s[0] + Number(r.outcome === "won"), s[1] + r.questsCompleted, s[2] + Number(r.questsTotal > 0 && r.questsCompleted === r.questsTotal), s[3] + Number(r.upgradeEligibleToKeep), s[4] + r.wavesPassed, s[5] + r.end];
-  }, [0, 0, 0, 0, 0, 0]);
+    if (![0, 1].includes(r.provisionalFindsCollected) || !Number.isInteger(r.questDeliveries) || r.questDeliveries < 0 || r.questDeliveries > r.questsTotal) throw Error("Missing/invalid partial-progress fields");
+    if (r.upgradeEligibleToKeep && (r.outcome !== "won" || r.provisionalFindsCollected !== 1)) throw Error("Kept-find eligibility requires a won pickup");
+    return [s[0] + Number(r.outcome === "won"), s[1] + r.questsCompleted, s[2] + Number(r.questsTotal > 0 && r.questsCompleted === r.questsTotal), s[3] + Number(r.upgradeEligibleToKeep), s[4] + r.provisionalFindsCollected, s[5] + r.questDeliveries, s[6] + r.wavesPassed, s[7] + r.end];
+  }, [0, 0, 0, 0, 0, 0, 0, 0]);
 }
 
 export function better(a, b) {
-  if (!Array.isArray(a) || a.length !== 6 || !a.every(Number.isFinite) || (b !== null && (!Array.isArray(b) || b.length !== 6 || !b.every(Number.isFinite)))) throw Error("Invalid objective");
+  if (!Array.isArray(a) || a.length !== 8 || !a.every(Number.isFinite) || (b !== null && (!Array.isArray(b) || b.length !== 8 || !b.every(Number.isFinite)))) throw Error("Invalid objective");
   if (b === null) return true;
   for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i] > b[i];
   return false;

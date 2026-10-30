@@ -17,7 +17,7 @@ test("all proposed equipment is one choice per legal slot and never enters match
       if (row.condition === "matched") { assert.equal(row.bag, "satchel"); assert.equal(row.hat, "none"); assert.equal(row.wearsHat, false); assert.deepEqual(row.parts, []); }
       else { assert.equal(row.island, "home"); assert.equal(row.bag, equipment.bag); assert.deepEqual(row.parts, equipment.parts); }
     }
-    tell(state, c, [0, 0, 0, 0, i, 0]);
+    tell(state, c, [0, 0, 0, 0, 0, 0, i, 0]);
   }
   assert.throws(() => equipmentOf({ ...initial, hat: 100 }, catalogue));
 });
