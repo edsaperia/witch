@@ -119,6 +119,8 @@ export class AssetLibrary {
   /** The start's own art (fast start (b)): which of it has arrived from the art workers. Play waits for it (prepare's whenIdle). */
   readonly home = { witch: false, props: false, soundsystems: false, treehouse: false };
   get homeReady(): boolean { const h = this.home; return h.witch && h.props && h.soundsystems && h.treehouse; }
+  /** A quick outfit preview is drawn art, but is not the complete witch required for a limited landing. */
+  get fullWitchReady(): boolean { return this.home.witch && this.preview === null && this.witchLooks.has(JSON.stringify(this.witchGenome ?? null)); }
   /** Resolves once the start's own art has arrived (her frames, the light props, the soundsystems, the treehouse). */
   homeArt(): Promise<void> {
     return new Promise(resolve => { const check = () => { if (this.homeReady) resolve(); else { this.work(50); setTimeout(check, 30); } }; check(); });

@@ -382,7 +382,8 @@
     "src/app/gameParams.ts",
     "src/app/nightSave.ts",
     "src/app/opening.ts",
-    "src/main.ts"
+    "src/main.ts",
+    "src/render/ground.ts"
    ]
   },
   {
@@ -450,7 +451,8 @@
     "src/app/night.ts",
     "src/app/playerPick.ts",
     "src/app/viewParams.ts",
-    "src/main.ts"
+    "src/main.ts",
+    "src/render/ground.ts"
    ]
   },
   {

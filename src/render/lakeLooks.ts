@@ -18,6 +18,8 @@ function forcedLook(): LakeLook | null {
   const l = (v === "glacier" ? "ice" : v) as LakeLook | null;
   return l && LOOK_IDS.includes(l) ? l : null;
 }
+/** A valid forced look must retain the complete shader, including an explicitly forced water look. */
+export const hasForcedLakeLook = (): boolean => forcedLook() !== null;
 
 /** A map's lakes and their looks: `lake` each sample of the lakes' map's lake (-1 ashore), `looks` each lake's, and `near` each
  *  sample's look (LOOK_IDS: its lake's, or ashore the nearest lake's within RIM metres; 0 none). Made once a map. */
@@ -76,6 +78,7 @@ export function steamVents(k: LakeLooks, spacing = 28, inward = 9): Float32Array
 export const LAKE_LOOKS_GLSL = /* glsl */ `
 uniform sampler2D uLakeLooks; // each sample's look (LOOK_IDS), on the lakes' map's grid (render/lakeLooks.ts lakeLookTexture)
 // cells(q): the nearest and second-nearest of a jittered grid's points (distances), the nearest's id, and its bearing from q
+#if defined(GROUND_LAKE_LAVA) || defined(GROUND_LAKE_OASIS) || defined(GROUND_LAKE_SINKHOLE) || defined(GROUND_LAKE_TARN) || defined(GROUND_LAKE_TAR) || defined(GROUND_LAKE_LILY)
 vec4 cells(vec2 q) {
   vec2 i = floor(q), f = fract(q); float d1 = 9.0, d2 = 9.0, id = 0.0, an = 0.0;
   for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++) {
@@ -84,26 +87,48 @@ vec4 cells(vec2 q) {
   }
   return vec4(sqrt(d1), sqrt(d2), id, an);
 }
+#endif
+#if defined(GROUND_LAKE_SINKHOLE)
 float lakeAt(vec2 q) { return texture2D(uLakes, (q - uLakeBox.xy + uLake.y) * uLakeBox.zw).r; }
+#endif
 float lakeLookAt(vec2 kuv) { return floor(texture2D(uLakeLooks, kuv).r * 255.0 + 0.5); }
 // how far round its shore each look reaches (m)
 float lakeRim(float L) { return L < 0.5 ? 2.6 : L < 1.5 ? 6.0 : L < 2.5 ? 7.0 : L < 3.5 ? 8.0 : L < 4.5 ? 5.0 : L < 5.5 ? 6.0 : L < 6.5 ? 5.0 : L < 7.5 ? 10.0 : 6.0; }
 // the shore: the area's floor c turned to the look's, toward the water (k 0 at the rim's edge, 1 at the water)
 vec3 lakeShore(float L, float ld, vec2 p, vec3 c) {
   float k = smoothstep(-lakeRim(L), 0.0, ld), n = vnoise(p / 1.3), n2 = vnoise(p / 4.0 + 7.0);
+#ifdef GROUND_LAKE_ICE
   if (L < 1.5) return mix(c, vec3(0.74, 0.8, 0.86) * (0.9 + 0.15 * n), clamp(k * 1.3 - 0.3 + (n2 - 0.5) * 0.6, 0.0, 0.95)); // frost and old snow
+#endif
+#ifdef GROUND_LAKE_LAVA
   if (L < 2.5) { vec3 s = mix(vec3(0.09, 0.075, 0.07), vec3(0.17, 0.12, 0.1), n); if (n > 0.86 && k > 0.5) s = vec3(0.5, 0.12, 0.03); return mix(c, s, clamp(k * 1.4 - 0.1 + (n2 - 0.5) * 0.5, 0.0, 1.0)); } // scorched ground, embers
+#endif
+#ifdef GROUND_LAKE_OASIS
   if (L < 3.5) { vec3 s = mix(vec3(0.8, 0.7, 0.5), vec3(0.9, 0.8, 0.58), n); vec3 g = mix(vec3(0.2, 0.4, 0.14), vec3(0.3, 0.5, 0.18), n); float gr = smoothstep(0.45, 0.2, k) * step(0.45, n2); return mix(c, mix(s, g, gr), clamp(k * 1.6, 0.0, 1.0)); } // sand, a green fringe
+#endif
+#ifdef GROUND_LAKE_SINKHOLE
   if (L < 4.5) { vec3 s = mix(vec3(0.14, 0.26, 0.1), vec3(0.24, 0.34, 0.16), n); if (k > 0.82) s = mix(vec3(0.28, 0.27, 0.24), vec3(0.18, 0.18, 0.16), n); return mix(c, s, clamp(k * 1.5, 0.0, 1.0)); } // jungle up to a rock lip
+#endif
+#ifdef GROUND_LAKE_TARN
   if (L < 5.5) { vec4 v = cells(p / 0.7); vec3 s = mix(vec3(0.42, 0.44, 0.46), vec3(0.58, 0.6, 0.62), v.z) * (v.y - v.x < 0.08 ? 0.6 : 1.0); return mix(c, s, clamp(k * 1.5 + (n2 - 0.5) * 0.5, 0.0, 1.0)); } // grey scree
+#endif
+#ifdef GROUND_LAKE_TAR
   if (L < 6.5) { vec3 s = mix(vec3(0.05, 0.045, 0.04), vec3(0.12, 0.1, 0.08), n); if (fract(n * 13.0) < 0.06) s = vec3(0.3, 0.3, 0.32); return mix(c, s, clamp(k * 1.5 + (n2 - 0.5) * 0.6, 0.0, 1.0)); } // black, sticky, glossy specks
+#endif
+#ifdef GROUND_LAKE_RUST
   if (L < 7.5) { // a hot spring's travertine: pale terraces stepping down to it, orange-brown runoff streaking them (Mammoth Hot Springs)
     float st = fract(ld / 2.2 + (vnoise(p / 3.0) - 0.5) * 0.5); vec3 s = mix(vec3(0.84, 0.8, 0.72), vec3(0.94, 0.9, 0.82), n) * (st > 0.85 ? 1.12 : st < 0.2 ? 0.78 : 1.0);
     float run = vnoise(vec2(p.x * 0.9 + p.y * 0.3, ld * 0.35) + 3.0); if (run > 0.55) s = mix(s, mix(vec3(0.72, 0.4, 0.16), vec3(0.55, 0.3, 0.14), n), smoothstep(0.55, 0.75, run) * (0.4 + 0.6 * k));
     return mix(c, s, clamp(k * 1.3 + (n2 - 0.5) * 0.4, 0.0, 1.0)); }
+#endif
+#ifdef GROUND_LAKE_LILY
   vec3 s = mix(vec3(0.16, 0.3, 0.1), vec3(0.32, 0.42, 0.16), step(0.5, vnoise(vec2(p.x * 3.0, p.y * 0.4)))); return mix(c, s, clamp(k * 1.5, 0.0, 1.0)); // reeds
+#else
+  return c;
+#endif
 }
 // the moon's glint and a star or two on a surface of reflection R (gloss: how sharp)
+#if defined(GROUND_LAKE_OASIS) || defined(GROUND_LAKE_SINKHOLE) || defined(GROUND_LAKE_TARN) || defined(GROUND_LAKE_TAR) || defined(GROUND_LAKE_RUST) || defined(GROUND_LAKE_LILY)
 vec3 lakeGlint(vec3 col, vec3 R, float gloss) {
   vec3 moon = normalize(vec3(uMoonDir.x, uMoonDir.y, -abs(uMoonDir.z)));
   float spec = dot(R, moon);
@@ -114,6 +139,7 @@ vec3 lakeGlint(vec3 col, vec3 R, float gloss) {
   if (hs > 1.0 - 0.003 * gloss) col += vec3(0.4, 0.44, 0.52) * gloss * (0.55 + 0.45 * sin(uTime * 2.3 + hs * 90.0));
   return col;
 }
+#endif
 // the water: the colour drawn (lit, before the haze), and how much haze it takes
 vec3 lakeWater(float L, float ld, vec2 p, vec2 px, vec3 c, vec3 lit, out float hz) {
   vec3 V = normalize(cameraPosition - vec3(p.x, vWorld.y, p.y));
@@ -121,12 +147,15 @@ vec3 lakeWater(float L, float ld, vec2 p, vec2 px, vec3 c, vec3 lit, out float h
   vec3 R = reflect(-V, normalize(vec3(rip.x * 0.03, 1.0, rip.y * 0.06)));
   float lum = dot(lit, vec3(0.33));
   hz = 0.6;
+#ifdef GROUND_LAKE_ICE
   if (L < 1.5) { // the glacier's foot (the mesh stands on it): snow and blue ice, crevassed
     float n = vnoise(p / 2.5), cr = abs(vnoise(p / vec2(9.0, 3.0) + 5.0) - 0.5);
     vec3 a = mix(vec3(0.7, 0.8, 0.88), vec3(0.42, 0.62, 0.78), smoothstep(0.3, 0.7, n));
     if (cr < 0.035) a = vec3(0.12, 0.26, 0.42);
     return a * lit * 0.6;
   }
+#endif
+#ifdef GROUND_LAKE_LAVA
   if (L < 2.5) { // lava: a black crust broken into plates, molten in the cracks and along the shore, pulsing
     vec2 q = p / 5.5 + vec2(uTime * 0.025, uTime * 0.015);
     vec4 v = cells(q + (vec2(vnoise(p / 7.0), vnoise(p / 7.0 + 9.0)) - 0.5) * 0.6);
@@ -141,6 +170,8 @@ vec3 lakeWater(float L, float ld, vec2 p, vec2 px, vec3 c, vec3 lit, out float h
     hz = 0.2;
     return mix(crust, glow, smoothstep(0.05, 0.3, hot));
   }
+#endif
+#ifdef GROUND_LAKE_OASIS
   if (L < 3.5) { // an oasis: clear, turquoise over sand in the shallows, deep blue in the middle, caustics on the sand
     float deep = smoothstep(0.0, 22.0, ld + (vnoise(p / 6.0 + 41.0) - 0.5) * 6.0);
     vec4 v = cells(p / 1.6 + vec2(uTime * 0.12, uTime * 0.07));
@@ -149,6 +180,8 @@ vec3 lakeWater(float L, float ld, vec2 p, vec2 px, vec3 c, vec3 lit, out float h
     vec3 col = mix(sand * vec3(0.6, 0.95, 0.9), w, 0.35 + 0.65 * deep);
     return lakeGlint(col, R, 1.0);
   }
+#endif
+#ifdef GROUND_LAKE_SINKHOLE
   if (L < 4.5) { // a sinkhole (a jungle tiankeng): sheer walls dropping to a dark pool far below, the far wall seen down the shaft
     const float D = 26.0;
     vec3 S = vec3(p.x, vWorld.y, p.y), dir = normalize(S - cameraPosition);
@@ -180,6 +213,8 @@ vec3 lakeWater(float L, float ld, vec2 p, vec2 px, vec3 c, vec3 lit, out float h
     hz = 0.3;
     return col;
   }
+#endif
+#ifdef GROUND_LAKE_TARN
   if (L < 5.5) { // a glacial tarn: milky turquoise meltwater crowded with ice (Ed, 2026-10-23: "bigger and more ice chunks"), thickest at its edge
     float deep = smoothstep(0.0, 10.0, ld), edge = 1.0 - smoothstep(2.0, 30.0, ld);
     vec3 col = mix(vec3(0.24, 0.5, 0.5), vec3(0.13, 0.34, 0.38), deep) * (0.6 + lum * 0.9);
@@ -192,6 +227,8 @@ vec3 lakeWater(float L, float ld, vec2 p, vec2 px, vec3 c, vec3 lit, out float h
     else if (r > 0.0 && d < r + 0.12) col *= 0.6;
     return col;
   }
+#endif
+#ifdef GROUND_LAKE_TAR
   if (L < 6.5) { // a tar pit: glossy black, slow bubbles, oil-slick rainbows
     vec3 col = vec3(0.02, 0.018, 0.022);
     float n = vnoise(p / 7.0 + uTime * 0.01), band = abs(fract(n * 3.0 + vnoise(p / 2.0) * 0.3) - 0.5);
@@ -202,6 +239,8 @@ vec3 lakeWater(float L, float ld, vec2 p, vec2 px, vec3 c, vec3 lit, out float h
     if (v.z > 0.4 && ph < 0.2 && v.x < 0.1) col = vec3(0.16, 0.15, 0.15); // (and its dome)
     return lakeGlint(col, R, 1.6);
   }
+#endif
+#ifdef GROUND_LAKE_RUST
   if (L < 7.5) { // a hot spring (Ed, 2026-10-23: "more like Yellowstone hot springs"; Grand Prismatic): a deep blue eye ringed by
     // pale green, yellow, orange and rust mats out to its shore, rings wobbling, mottled; steam drifting over the hot middle
     float lv = ld + (vnoise(p / 6.0) - 0.5) * 2.5, mot = 0.9 + 0.2 * vnoise(p / 1.4);
@@ -213,6 +252,8 @@ vec3 lakeWater(float L, float ld, vec2 p, vec2 px, vec3 c, vec3 lit, out float h
     col = mix(col, vec3(0.62, 0.66, 0.7) * (0.45 + lum), wisp * 0.45);
     return col;
   }
+#endif
+#ifdef GROUND_LAKE_LILY
   // a lily pond: dark water under giant lily pads, a few flowers
   vec3 col = lakeGlint(vec3(0.03, 0.07, 0.05) * (0.6 + lum), R, 0.8);
   vec4 v = cells(p / 5.0);
@@ -225,6 +266,9 @@ vec3 lakeWater(float L, float ld, vec2 p, vec2 px, vec3 c, vec3 lit, out float h
     if (v.z > 0.8 && v.x < 0.08) col = v.x < 0.04 ? vec3(1.0, 0.85, 0.35) : vec3(0.98, 0.6, 0.78) * (0.7 + lum); // (a flower, faintly bright)
   } else if (v.z > 0.4 && v.x < r + 0.04 && v.x >= r) col *= 0.6;
   return col;
+#else
+  return c;
+#endif
 }
 `;
 
