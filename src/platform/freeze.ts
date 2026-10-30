@@ -32,6 +32,8 @@ body.paused :is(${PAUSE_UI.join(", ")}) { z-index: ${PAUSE_Z + 1} !important; }`
 const realPads = typeof navigator !== "undefined" && navigator.getGamepads ? navigator.getGamepads.bind(navigator) : null;
 
 export class Freeze {
+  mutate: (label: string, action: () => void) => void = (_label, action) => action();
+  advance: (game: Game, controls: Controls, dt: number) => void = stepGame;
   frozen = false;
   /** Whether the game was already paused (the start screen, the end) when it froze. */
   private wasPaused = false;
@@ -92,6 +94,9 @@ export class Freeze {
   retarget(game: Game, seed: number): void { this.game = game; this.seed = seed; }
 
   toggle(): void {
+    this.mutate("pause page", () => this.toggleNow());
+  }
+  private toggleNow(): void {
     if (!this.frozen && !this.started()) return;
     this.frozen = !this.frozen;
     const g = this.game;
@@ -119,7 +124,11 @@ export class Freeze {
   /** Advance exactly n fixed steps, with no controls held. */
   step(n: number): void {
     const g = this.game;
-    for (let i = 0; i < n; i++) { g.clock.paused = false; stepGame(g, STILL, STEP); g.clock.paused = true; }
+    for (let i = 0; i < n; i++) {
+      this.mutate("single step: resume", () => { g.clock.paused = false; });
+      this.advance(g, STILL, STEP);
+      this.mutate("single step: pause", () => { g.clock.paused = true; });
+    }
   }
 
   /** The real pad (everyone else sees none while frozen): the Settings page reads it (ui/settingsMenu.ts). */

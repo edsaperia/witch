@@ -12,6 +12,7 @@ import { saveSetting } from "../app/settings";
 import { devVolume } from "../app/playerSettings";
 import { commentControls } from "./playtestComment";
 export interface DecideHost { saveComment?: (text: string) => Promise<string>; restoreComment?: (file: File) => Promise<void> }
+export interface DecideHost { mutate?: (label: string, action: () => void) => void }
 export * from "./decisions";
 
 /** What the panel needs from the game. */
@@ -118,6 +119,10 @@ export class DecidePanel {
 /** Put a choice into the game, and keep it in the URL: a knob live on the running game (reloading for one the game reads only as
  *  it starts), a URL switch live where the game can take it, else by reloading with it. The decisions panel's and the pause page's. */
 export function applyDecision(host: DecideHost, d: Decision, v: string | number | boolean): void {
+  if (host.mutate) { host.mutate(`tuning: ${d.id}`, () => applyDecisionNow(host, d, v)); return; }
+  applyDecisionNow(host, d, v);
+}
+function applyDecisionNow(host: DecideHost, d: Decision, v: string | number | boolean): void {
   const url = new URL(location.href), isDefault = v === d.default;
   if (d.apply.knob) {
     setKnob(host.tuning, d.apply.knob, v);

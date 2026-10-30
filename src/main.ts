@@ -22,7 +22,7 @@ import "./platform/tuningPreset"; // (first: ?tuning=pre-overnight writes the ol
 import { FrameStats } from "./platform/frameStats";
 import { gpuName, QualityLadder } from "./app/ladder";
 import { musicCue } from "./rules/musicPlan";
-import { areaUnderWitch, interpolated, STEP, stepGame, type Game } from "./rules/game";
+import { areaUnderWitch, interpolated, STEP, type Game } from "./rules/game";
 import { enableCauldron, homeMushroomPickups } from "./rules/cauldronNight";
 import { TUNING, type Tuning } from "./rules/tuning";
 import { diveReach, diveTrack, handoffShot, newFlightClock, stepFlightClock, type Shot } from "./rules/arrive";
@@ -110,6 +110,9 @@ import { restoreGame } from "./rules/nightSnapshot";
 import { browserNightStore, captureNight, nightHasStarted, NightAutosave, savedNight, savesEnabled, type SavedNight, type NightStore } from "./app/nightSave";
 import { Breadcrumbs, browserCommentStore, captureComment, CommentBook, COMMENT_TOTAL, parseComment } from "./app/playtestComments";
 import { observePlaytestErrors } from "./platform/playtestLog";
+import { pageMutation, recordedStep, recordingFor } from "./app/recordingHooks";
+import { replayRecording } from "./platform/inputRecording";
+import { snapshotGame } from "./rules/nightSnapshot";
 import { chooseSavedNight, nightSaveNotice } from "./ui/resumeNight";
 import { restoreSettingsBase } from "./app/playerSettings";
 
@@ -195,6 +198,12 @@ function showLook(): void {
 const page: Page = { night: null, build: BUILD, look: () => (lookNow ? JSON.parse(lookNow) : savedLook) };
 /** The night on now (while the next is made after a sail in place, the one just ended: app/night.ts endNight). */
 const N = (): Night => (page.night ?? page.last)!;
+function mutate<T>(label: string, action: () => T): T { return pageMutation(N().game, label, action); }
+function captureRecording(game: Game): SavedNight {
+  const n = N();
+  return captureNight(game, { build: BUILD, params: n.params.toString(), look: page.look() as Record<string, unknown> | null, loan,
+    flags: { chartRecorded: n.flags.chartRecorded, overRecorded: n.flags.overRecorded } });
+}
 /** The next night being made in place (a sail, another way to a new night, or ?debug=sail's swap): the frame loop holds still. (Up
  *  here: the bedroom's progress reads it from the boot on.) */
 let sailing = false;
@@ -216,7 +225,7 @@ const style = styleFromLink(params, bootTuning); // (app/viewParams.ts)
 /** Load timings (ms since the page started): the view built (the page's own sprites drawn), ready to play. */
 const loadTimes = { viewStart: performance.now(), view: 0, ready: 0, mapPrep: prepUsed === "worker" ? 1 : prepUsed === "stale" ? -1 : prepUsed === "unsound" ? -2 : prepUsed === "failed" ? -3 : 0, mapPrepMs: Math.round(hydrateMs) }; // (mapPrep: the map made from the worker's prep, 1; one there for another night, -1; unsound, -2; failed to hydrate, -3. mapPrepMs: the hydrate's own time)
 /** Her hat on or not by her look (app/night.ts). */
-const wearHat = (g: unknown) => wear(N().game, g);
+const wearHat = (g: unknown) => mutate("dressing: hat", () => wear(N().game, g));
 /** Tonight's find on loan till she sleeps (app/loan.ts; Ed, 2026-10-24): held here, never written; settled as she sleeps. */
 let loan: Loan | null = resumeSave?.loan ?? null;
 /** Her dream of a settled loan (render/dream.ts), playing over the sleep's dark; as it ends (by itself, or a key), her alarm rings
@@ -230,6 +239,7 @@ let dreamAfterDive: { loan: Loan; won: boolean } | null = null;
 /** The broom parts she has tonight: those she's found, and a part on loan. */
 const partsNow = (): Set<string> => withLoan("part", new Set(loadBroom().found), loan);
 const view = page.view = await View.create(canvas, N().game, gameStyle(style, bootTuning), savedLook); // (built a frame's budget at a time: the bedroom's frames go on meanwhile, render/slices.ts)
+view.mutateRules = (game, label, action) => pageMutation(game, label, action);
 // The loading screen (src/loading.js, src/ui/loadingScreen.js), up since the first paint: given the view for its count of the art
 // and the shaders; gone at once for a start with no wake-up in the bedroom, its supernova into the bedroom's alarm otherwise (below).
 const loading = (window as unknown as { witchLoading?: { view: unknown; finish(): void; cancel(): void } }).witchLoading;
@@ -252,7 +262,7 @@ if (params.get("playtest") === "download") setTimeout(() => N().playtest.downloa
 
 // The debug knobs: the fight's scale, speed and momentum, the treetop speed (app/knobs.ts): their keys, and their live setters
 // for the pause page's sliders and the decisions panel (by the link's param); their start is the night's.
-const knobLive = setupKnobs(N);
+const knobLive = setupKnobs(N, mutate);
 
 // Auto-talk (Ed's playtest, 2026-10-04: a new player wanted to turn it off): T, or a click
 // on its slot, turns it on or off (remembered on this browser); off, she talks while Shift is held.
@@ -336,6 +346,8 @@ const sound = page.sound = new Sound(bootTuning, N().musicStyle, N().seed);
 sound.leyLink = () => view.ley.currentLink(); // (the pulse's fizz heard where the line is drawn)
 // The freeze (Esc, gamepad Start, the ❚❚ button): a true still for screenshots, . steps (platform/freeze.ts).
 const freeze = page.freeze = new Freeze(N().game, N().seed, BUILD);
+freeze.mutate = mutate;
+freeze.advance = (game, controls, dt) => recordedStep(game, controls, dt, BUILD, () => captureRecording(game));
 freeze.started = () => (startEl.style.display === "none" || creator.open) && !studio.at; // (in the bedroom too: Ed, 2026-10-14, "Can we pause from the bedroom?")
 freeze.ownsEsc = () => !bot && !document.querySelector("#settings-page.open"); // (the Settings page's Esc is its own: it closes, the pause page stays) // (the bot game's Esc is its way back to the start screen: ui/botGame.ts)
 
@@ -385,12 +397,18 @@ if (bootArrival) bootArrival.onReveal = revealArt;
  *  sailLandsInBed): her in her bedroom, the camera settled on her there, so the flight's last shot is her room (app/arrive.ts end). Not
  *  under ?opening=old, or without the house's rooms: then her decks as before, and no dream after the dive. */
 function bedFirst(n: Night): void {
+  pageMutation(n.game, "wake: bed arrival", () => bedFirstNow(n));
+}
+function bedFirstNow(n: Night): void {
   n.flags.inBed = sailLandsInBed(n.params, n.tuning) && wakeInBedroom(n.game);
   if (!n.flags.inBed) dreamAfterDive = null;
 }
 /** It's landed: in her bed, she wakes as after the bed (the one wake-up, every morning: Ed, 2026-10-26, in place of his decision 10's shorter one), dreaming
  *  first of a find on loan; at her decks (?opening=old), the night starts, the party spell cast, as the bedroom's scroll would. */
 function arrived(): void {
+  mutate("house: arrival", arrivedNow);
+}
+function arrivedNow(): void {
   logTiming(); clearCarried(); // (?timing=1: the whole sail, from the chart to her decks)
   N().flags.landed = true;
   document.body.classList.remove("arriving"); // (the HUD fades in)
@@ -404,7 +422,8 @@ function arrived(): void {
   }
   wakeArrival();
 }
-function wakeArrival(): void {
+function wakeArrival(): void { mutate("wake: arrival", wakeArrivalNow); }
+function wakeArrivalNow(): void {
   view.landingSleeping = false;
   // (landed asleep in her bed: with a loan settled, dreaming it, the alarm when it ends; else the alarm at once: rules/wakeUp.ts, render/dream.ts)
   const dd = dreamAfterDive;
@@ -425,7 +444,7 @@ creator.version = typeof __BUILD__ === "string" ? __BUILD__.split(" ")[0] : "dev
 (window as unknown as { __creator: Creator }).__creator = creator; // (the creator's smoke scripts read her place in the room)
 // Her hat's spell (rules/spells.ts, app/loadout.ts): the creator's Hat box chooses it from the hats she owns, kept on this browser.
 creator.loadout = { hat: N().game.spells.hat }; creator.hats = unlockAll() ? undefined : N().game.spells.hats; // (the pause page's Unlock everything: every hat, app/debugUnlock.ts)
-creator.onLoadout = l => { const { game } = N(); changeLoadout(game.witches[0], l.hat); saveLoadout({ hat: hatWithoutLoan(game.spells.hat, loan) as typeof game.spells.hat }); wearHat(page.look()); }; // (a loaned hat never saved: app/loan.ts; a hat swapped while hers lies elsewhere leaves that one lying: rules/hatSpells.ts)
+creator.onLoadout = l => mutate("dressing: loadout", () => { const { game } = N(); changeLoadout(game.witches[0], l.hat); saveLoadout({ hat: hatWithoutLoan(game.spells.hat, loan) as typeof game.spells.hat }); wearHat(page.look()); }); // (a loaned hat never saved: app/loan.ts; a hat swapped while hers lies elsewhere leaves that one lying: rules/hatSpells.ts)
 // Her room mid-night from the treehouse's rooms (rules/houseRooms.ts; Ed, 2026-10-19): E at a dressing station, the bags or the broom
 // stand opens it at only that station's choices (config/house/), the world running on at the house's tenth; its way out brings
 // her back where she stood, in her new look and broom: any hat lying about staying where it lies (Ed, 2026-10-12). They are the only
@@ -452,24 +471,24 @@ document.body.append(shutButton);
 let owned: Set<string> | null = null, stillAt = 0;
 /** What the finds' keepers work on (app/finds.ts): tonight's spells and what she owns to wear, kept. */
 const findsCtx = (): FindsCtx => ({ spells: N().game.spells, owned: () => (owned ??= withLoan("wearable", loadOwned((page.look() ?? creator.genome()) as Record<string, unknown>), loan)) });
-stations.onLook = g => {
+stations.onLook = g => mutate("dressing: station look and bag", () => {
   saveGenome(lookWithoutLoan(g as Record<string, unknown>, loan) as never); creator.adopt(g); // (saved without the loan: app/loan.ts)
   // (not yet dressed: a station's choice puts its piece on her, out of last night's pile: rules/clothesPile.ts; Ed, 2026-10-23)
   const w = N().game.wake; if (w && stations.station) wearFromStation(w, stations.station);
   if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); wearHat(g); setBag(N().game.witches[0].spells, bagOf(g as Record<string, unknown>)); } // (her bag's 💌 stats follow the bag she wears: rules/bags.ts)
   showLook();
-};
+});
 stations.onBack = () => shutStation("back"); // (menu.back, E by default: platform/bindings.ts; the pad's, circle, comes through padControls)
 // Her DJ booth at the decks (Ed, 2026-10-29; ui/djBooth.ts): E there opens it (the wake-up's "booth" event); "Get this party started"
 // closes it and starts the party at the record's bpm (rules/wakeUp.ts startParty), the record remembered for next time.
 const booth = new DjBooth();
 booth.onBack = () => booth.close();
-booth.onStart = r => { chooseRecord(r.id); booth.close(); startParty(N().game, r.bpm); };
+booth.onStart = r => mutate("house: DJ party start", () => { chooseRecord(r.id); booth.close(); startParty(N().game, r.bpm); });
 stations.onChange = () => { const { game } = N(); view.turnUntil = game.herTime + 0.8; };
 stations.onDress = () => { view.spin = spinStep(view.spin, N().game.herTime); }; // (Ed, 2026-10-26: she twirls while her new look draws)
 // The Workshop's bay (Ed, 2026-10-23; docs/backlog/workshop.md): a part chosen goes on her broom at once, mid-night too (its stats
 // and its set's spell with it: rules/spells.ts setParts), and is kept on this browser for the nights after (app/broomSave.ts).
-stations.onFit = f => { const { game } = N(); setParts(game.witches[0].spells, f); fitBroom(partsWithoutLoan(f, loan)); }; // (kept without a part on loan: app/loan.ts)
+stations.onFit = f => mutate("dressing: broom fitting", () => { const { game } = N(); setParts(game.witches[0].spells, f); fitBroom(partsWithoutLoan(f, loan)); }); // (kept without a part on loan: app/loan.ts)
 /** What the Workshop's stations show (ui/stationPanel.ts): the parts found, her broom, tonight's part to find, her tuning. */
 const workshopNow = (): WorkshopCtx => { const { game, tuning } = N(), t = game.trunk; return { found: partsToChoose(partsNow()), fitted: game.witches[0].spells.parts, tonight: t && t.kind === "part" && !t.found ? t.item : null, tuning }; };
 /** Tonight's find taken (the "found" event): on loan till she sleeps (app/loan.ts), hers to wear or use at once, never written. */
@@ -498,6 +517,9 @@ function stepGuide(now: number): void {
  *  has on of it with it); not, gone back to the sky, what she has on of it back to what she had before. What her dream shows, or
  *  null with nothing on loan. */
 function settleLoan(won: boolean): { loan: Loan; won: boolean } | null {
+  return mutate("finds: settle loan", () => settleLoanNow(won));
+}
+function settleLoanNow(won: boolean): { loan: Loan; won: boolean } | null {
   const l = loan, { game } = N();
   if (!l) return null;
   loan = null;
@@ -516,7 +538,7 @@ function startDream(s: { loan: Loan; won: boolean }, veil = false): void {
   const of = { item: s.loan.id, name: loanName(s.loan), piece: findKind(s.loan.kind).piece(s.loan.id), won: s.won, home: homeOf(s.loan, id => stationsShowing(shelfOf(id)?.id ?? "")) };
   dream = new DreamView(of, dreamArt(of, view.assets.style), veil, herHead).play(veil && params.has("shot"));
   dreamAsleep = !veil; // (asleep: its end rings the next night's alarm; shown over a night, ?dream= or the dev panel, nothing)
-  dream.onOver = () => { const n = page.night; if (dreamAsleep && n?.game.wake) endDream(n.game, n.game.herTime); };
+  dream.onOver = () => { const n = page.night; if (dreamAsleep && n?.game.wake) mutate("wake: dream dismissed", () => endDream(n.game, n.game.herTime)); };
   (window as unknown as { __dream?: DreamView }).__dream = dream; // (the shot tools draw it at a time: tools/loan/dream-shots.cjs)
 }
 /** Her head's top on the page (CSS px) as last drawn (render/view/witch.ts herHead), for her dream's cloud to rise from; null
@@ -532,7 +554,7 @@ const loanIcon = new LoanIcon();
 let zooPaused = false, zooHeld = false;
 // (the night under it held as under the sea chart: nothing drawn, its art workers stopped, so the zoo's own page, a whole second
 // game, has the machine; tools/zoo/perf.cjs)
-const zoo = new ZooOverlay(domZooHost(on => { const { clock } = N().game; if (on) { zooPaused = clock.paused; clock.paused = true; } else clock.paused = zooPaused; zooHeld = on; view.assets.hold(on || chartHeld); input.clearPresses(); }), zooUrl(location.href));
+const zoo = new ZooOverlay(domZooHost(on => mutate("house: zoo pause", () => { const { clock } = N().game; if (on) { zooPaused = clock.paused; clock.paused = true; } else clock.paused = zooPaused; zooHeld = on; view.assets.hold(on || chartHeld); input.clearPresses(); })), zooUrl(location.href));
 // The telescope in the crow's nest (Ed, 2026-10-21; app/telescope.ts, rules/telescope.ts): E at it looks through it (Ed's
 // playtest, 2026-10-26, in place of 2026-10-23's "opens when you walk up to it"; look around with the aiming keys), full screen,
 // the night running on at the house's tenth while she stands still, WASD and the left stick looking round too (Ed, 2026-10-26:
@@ -553,14 +575,14 @@ telescope.onChange = on => {
   fit();
   input.clearPresses();
 };
-const useHouse = (obj: string): void => {
+const useHouse = (obj: string): void => mutate("house: use", () => {
   const { game, tuning, flags: { chartRecorded, overRecorded } } = N();
   if (obj === "slept") { if (!chartRecorded && !overRecorded) nightOver(tuning.map?.island ?? "", { won: false }, undefined, tuning.map?.world ?? 0); setTimeout(() => newNight("bed"), 0); return; } // (the sea chart: played, as the afterparty records it; then a new seed: app/newForest.ts; after this frame, in place)
   const o = HOUSE_ROOMS.objects.find(q => q.id === obj);
   if (!o || creator.open || game.witches[0].ko) return;
   if (o.use.kind === "zoo") zoo.open(); // (a station's E and an instrument's: their panels, below in the frame and app/studio.ts)
   else if (o.use.kind === "telescope" && tuning.telescope && !telescope.on) { scopeAt = o.id; telescope.open(game, tuning.telescope); }
-};
+});
 creator.progress = () => { const a = view.assets; return { done: a.done, total: a.done + a.pending, ready: !sailing && N().flags.ready }; }; // (a new night in place: not till it's made)
 // (its room's ambience plays while it's open: overnight, 2026-10-06)
 creator.onGesture = () => sound.wake();
@@ -611,7 +633,7 @@ function start(): boolean {
   if (creator.open) return true;
   sound.start(); // (browsers keep sound off until the player presses something: the start is that press)
   if (!arrival) revealArt(); // (play starting from behind the bedroom or the start screen: the island not seen till now)
-  game.clock.paused = false;
+  mutate("start play", () => { game.clock.paused = false; });
   startEl.style.display = "none";
   input.clearPresses();
   return true;
@@ -677,7 +699,7 @@ freeze.onToggle = on => {
   pauseLoading = true;
   void import("./ui/decide").then(({ PauseSliders }) => {
     const report = () => import("./ui/visualReport").then(({ report }) => report(reportHost()));
-    pauseSliders = new PauseSliders({ saveComment, restoreComment, settings: () => settingsPage.show(), get tuning() { return N().game.tuning; }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive, report, musicLab: openMusicLab, audioTest: () => { window.open("audio-test/", "_blank", "noopener"); }, downloadLog: () => N().playtest.download(), unlockAll: { get: () => unlockAll(), set: on => { setUnlockAll(on); for (const W of N().game.witches) syncHatUnlock(W, on, params); creator.hats = N().game.spells.hats; } }, defaults: { text: () => defaultsText(lookWithoutLoan((page.look() ?? creator.genome()) as Record<string, unknown> | null, loan), partsWithoutLoan(N().game.witches[0].spells.parts, loan)), tryIt: () => { window.open(newWitchLink(location.href), "_blank", "noopener"); }, shown: () => N().hud.debugOn || unlockAll() }, fightArena: () => { window.open(fightLink(newFightSeed()), "_blank", "noopener"); }, finds: () => findsPanel.toggle(true), findsShown: () => N().hud.debugOn || devFinds, quality: { lines: () => ladder.lines(), options: () => ladder.options(), current: () => ladder.current(), choose: v => { ladder.choose(v); ladder.apply(N().game.tuning); } } });
+    pauseSliders = new PauseSliders({ mutate, saveComment, restoreComment, settings: () => settingsPage.show(), get tuning() { return N().game.tuning; }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive, report, musicLab: openMusicLab, audioTest: () => { window.open("audio-test/", "_blank", "noopener"); }, downloadLog: () => N().playtest.download(), unlockAll: { get: () => unlockAll(), set: on => mutate("debug: unlock all", () => { setUnlockAll(on); for (const W of N().game.witches) syncHatUnlock(W, on, params); creator.hats = N().game.spells.hats; }) }, defaults: { text: () => defaultsText(lookWithoutLoan((page.look() ?? creator.genome()) as Record<string, unknown> | null, loan), partsWithoutLoan(N().game.witches[0].spells.parts, loan)), tryIt: () => { window.open(newWitchLink(location.href), "_blank", "noopener"); }, shown: () => N().hud.debugOn || unlockAll() }, fightArena: () => { window.open(fightLink(newFightSeed()), "_blank", "noopener"); }, finds: () => findsPanel.toggle(true), findsShown: () => N().hud.debugOn || devFinds, quality: { lines: () => ladder.lines(), options: () => ladder.options(), current: () => ladder.current(), choose: v => { ladder.choose(v); ladder.apply(N().game.tuning); } } });
     requestAnimationFrame(() => pauseSliders!.show(freeze.frozen, creator.open)); // (a frame shut first, so it slides in)
   }, () => { // (its files replaced under it: Ed, 2026-10-14, "the menu does not appear")
     pauseLoading = false;
@@ -714,7 +736,7 @@ let decide: DecidePanel | null = null, decideLoading = false;
 const decidePanel = (open: boolean) => {
   if (decide || decideLoading) return;
   decideLoading = true;
-  void import("./ui/decide").then(({ DecidePanel }) => { decide = new DecidePanel({ get tuning() { return N().game.tuning; }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive }, open); });
+  void import("./ui/decide").then(({ DecidePanel }) => { decide = new DecidePanel({ mutate, get tuning() { return N().game.tuning; }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive }, open); });
 };
 if (params.has("decide")) decidePanel(true);
 window.addEventListener("keydown", e => { if (e.code !== "F2") return; e.preventDefault(); if (decide) decide.toggle(); else decidePanel(true); });
@@ -727,15 +749,17 @@ let lastRecordedInput = "", lastInputAt = -Infinity;
 async function saveComment(text: string): Promise<string> {
   const n = N();
   const comment = captureComment(n.game, text, { build: BUILD, params: n.params.toString(), look: page.look() as Record<string, unknown> | null, loan,
-    flags: { chartRecorded: n.flags.chartRecorded, overRecorded: n.flags.overRecorded } }, repro.link(), Object.fromEntries(repro.changed()), breadcrumbs.recent(n.game));
+    flags: { chartRecorded: n.flags.chartRecorded, overRecorded: n.flags.overRecorded } }, repro.link(), Object.fromEntries(repro.changed()), breadcrumbs.recent(n.game), Date.now(), recordingFor(n.game, BUILD, () => captureRecording(n.game)).export());
   const kept = await commentBook.add(comment);
-  return kept ? "Comment and saved moment kept in the playtest log." : "Comment kept on this page only: browser storage is unavailable. Download the log before closing.";
+  const status = kept ? "Comment and saved moment kept in the playtest log." : "Comment kept on this page only: browser storage is unavailable. Download the log before closing.";
+  return comment.recording?.complete ? status : `${status} Exact input replay is incomplete: ${comment.recording?.failure ?? "unavailable"}.`;
 }
 async function restoreComment(file: File): Promise<void> {
   if (file.size > COMMENT_TOTAL + 8 * 1024 * 1024) throw Error("This log file is too large.");
   const comment = parseComment(await file.text(), BUILD);
   // Validate the full graph before writing or navigating. Importing JSON never executes code.
-  restoreGame(comment.night.game);
+  const replayed = comment.recording ? replayRecording(comment.recording, BUILD) : restoreGame(comment.night.game);
+  if (JSON.stringify(snapshotGame(replayed)) !== JSON.stringify(comment.night.game)) throw Error("Input replay differs from the saved comment moment. The log is kept; report this replay failure.");
   await browserNightStore(location.pathname + ":comment-restore").write(comment.night);
   const url = new URL(location.href); url.search = "?restore=comment&resume=1"; location.href = url.toString();
 }
@@ -767,7 +791,8 @@ const frameStats = new FrameStats(view.renderer.getContext());
  *  are over budget and back up while there's room, remembered for this device; ?ladder=off or ?ladder=<n> to hold it. */
 const ladder = new QualityLadder(gpuName(view.renderer.getContext()), params);
 // The player's Settings page (app/settingsPage.ts): its settings on the live pieces now, the page itself opened from the pause page's dev menu.
-const settingsPage = new SettingsPage({ input, shake, ladder, freeze, audio: on => sound.freeze(!on), tuning: () => N().game.tuning, version: BUILD });
+const settingsPage = new SettingsPage({ mutate, input, shake, ladder, freeze, audio: on => sound.freeze(!on), tuning: () => N().game.tuning, version: BUILD });
+ladder.mutate = mutate;
 const pauseFocus = new MenuFocus();
 const rumble = new Rumble();
 // ?perf=1: the performance panel (app/perfHud.ts), always on.
@@ -801,6 +826,9 @@ const repro = (() => {
 // rules/finds.ts spawnSpot, spawnFind): a kind's item, or tonight's own find (kind null), on clear ground a few metres in front
 // of her, as tonight's find: the constellation, the telescope and E at it go by it, and taking it is the real claim.
 function spawnHere(kind: FindKindId | null, item: string | null): string {
+  return mutate("debug: spawn find", () => spawnHereNow(kind, item));
+}
+function spawnHereNow(kind: FindKindId | null, item: string | null): string {
   const g = N().game, at = spawnSpot(g);
   if (!at) return "no clear ground within 12 m of her (in the treehouse? step out onto the island)";
   if (kind && item) return spawnFind(g, kind, item, at) ? `${kind} ${item} spawned ${Math.round(Math.hypot(at.x - g.witch.x, at.z - g.witch.z))} m from her` : `no ${kind} ${item}`;
@@ -816,6 +844,7 @@ const findsPanel = new FindsPanel(() => { view.partsFound = partsNow(); return f
   keep: () => { const s = settleLoan(true); if (s) startDream(s, true); },
   back: () => { const s = settleLoan(false); if (s) startDream(s, true); },
 });
+findsPanel.mutate = action => mutate("debug: finds changes", action);
 // ?dream=won:hat:sentry (or lost:wearable:top-cape, ...): her dream of such a loan over the night, at once, its own dark under it
 // (for a look at it; under ?shot= it's drawn only when asked, window.__dream.draw(seconds): tools/loan/dream-shots.cjs).
 { const [v, k, ...r] = (params.get("dream") ?? "").split(":"), id = r.join(":");
@@ -831,6 +860,7 @@ document.getElementById("copy-debug")?.addEventListener("click", e => {
 });
 N().playtest.debugInfo = () => ({ link: repro.link(), machine: repro.machine().map(l => l.slice(7)), changed: Object.fromEntries(repro.changed()) });
 N().playtest.comments = () => commentBook.all();
+N().playtest.inputRecording = () => recordingFor(N().game, BUILD, () => captureRecording(N().game)).export();
 N().playtest.debugText = () => repro.full();
 // The pause page's Report (ui/visualReport.ts): the frame drawn with each neutral pair, where they differ, the GPU, her place, the
 // camera and the repro link. window.__neutralCheck: the same pairs' numbers for the smoke test (tools/smoke/smoke.cjs "neutral").
@@ -965,6 +995,9 @@ const sawMirror = (): void => { try { localStorage.setItem(MIRROR_KEY, "1"); } c
  *  drawing on behind her while she dresses and walks down: rules/wakeUp.ts), she wakes in her bedroom in the treehouse
  *  (rules/opening.ts), the one wake-up, as every morning. Without the house's rooms, the old start. */
 function wakeFirst(): void {
+  mutate("wake: first morning", wakeFirstNow);
+}
+function wakeFirstNow(): void {
   const n = N();
   bootAsleep = false;
   firstEver = !wokenBefore();
@@ -1134,7 +1167,7 @@ function frame(now: number): void {
   if (landingSleep.holds(game)) {
     input.release(); input.clearPresses(); game.clock.paused = true;
     updatePauseMenus(now);
-    if (!freeze.frozen && landingSleep.release(game, view.landingWakeReady())) {
+    if (!freeze.frozen && view.landingWakeReady() && mutate("wake: landing release", () => landingSleep.release(game, true))) {
       input.release(); input.clearPresses(); mark('landing:alarm-ready'); wakeArrival();
       F.last = now; // discard the loading interval before the first normal simulation step
     } else {
@@ -1164,7 +1197,7 @@ function frame(now: number): void {
   // on, so the chart's islands and the next island's art drawn ahead got what was left): while it's open the night is paused,
   // nothing is drawn (the canvas keeps its last frame), and no new art is handed to the workers; closed, all as it was.
   const charting = chartOpen();
-  if (charting !== chartHeld) { chartHeld = charting; view.assets.hold(charting); if (charting) { chartWasPaused = game.clock.paused; game.clock.paused = true; } else game.clock.paused = chartWasPaused; }
+  if (charting !== chartHeld) mutate("house: chart pause", () => { chartHeld = charting; view.assets.hold(charting); if (charting) { chartWasPaused = game.clock.paused; game.clock.paused = true; } else game.clock.paused = chartWasPaused; });
   // A bot game: the bot's controls, not hers (the camera's zoom and the debug key still hers).
   const c: typeof human = bot ? { ...bot.decide(game), zoom: human.zoom, debug: human.debug, toggleAutoTalk: false } : human;
   if (bot) botTag?.update(bot.doing);
@@ -1181,8 +1214,8 @@ function frame(now: number): void {
   const step0 = performance.now();
   const recordedInput = JSON.stringify(c);
   if (recordedInput !== lastRecordedInput || game.clock.time - lastInputAt >= 1) { breadcrumbs.add(game, "input", c); lastRecordedInput = recordedInput; lastInputAt = game.clock.time; }
-  if (params.get("cauldron") === "1" && !game.cauldron) enableCauldron(game, homeMushroomPickups(game));
-  stepGame(game, c, fightDt(dt * (botTag?.speed ?? 1))); // (the Fight Arena's slow motion, pause and frame at a time: app/fightArena.ts)
+  if (params.get("cauldron") === "1" && !game.cauldron) mutate("cauldron: enable", () => enableCauldron(game, homeMushroomPickups(game)));
+  recordedStep(game, c, fightDt(dt * (botTag?.speed ?? 1)), BUILD, () => captureRecording(game)); // Same stepGame and original controls; tape is diagnostic only.
   for (const [kind, events] of [["ko", game.koEvents], ["quest", game.questEvents], ["spell", game.combat.spells?.events ?? []]] as const) for (const event of events) breadcrumbs.add(game, kind, event);
   rumble.update(game, currentSettings(), input.device === "pad" && !document.hidden ? [freeze.pad()] : [], now);
   // ?debug=attack: every 10 s, a few seconds of blows on the two soundsystems farthest from her (never felling one), so the
@@ -1195,9 +1228,9 @@ function frame(now: number): void {
   // Tonight's find (rules/finds.ts): the night's one draw over everything she hasn't found, a wearable (the trunk) or a broom part
   // (a wreck), made once a night; taken, it's hers for the night, on loan till she sleeps (app/loan.ts; Ed, 2026-10-24): to wear
   // or use at once, never saved unless the night's won.
-  if (game.trunk && game.trunk.item === null) fillTrunk(game, foundAll(findsCtx()));
+  if (game.trunk && game.trunk.item === null) mutate("finds: fill trunk", () => fillTrunk(game, foundAll(findsCtx())));
   for (const e of game.leashEvents) if (e.kind === "found" && e.obj && e.find) {
-    lendFind(e.find, e.obj);
+    mutate("finds: loan", () => lendFind(e.find!, e.obj!));
     if (e.find === "part") hud.found(`found: ${partById(e.obj)?.name.toLowerCase() ?? e.obj} · at the Workshop`); // (not fitted: the bay fits it)
     else if (e.find === "hat") hud.found(`found: the ${hatSpell(e.obj)?.name.toLowerCase() ?? e.obj} hat · on the hats' floor`); // (the rules laid it there: rules/houseRooms.ts addFloorHat)
     else { const it = itemById(e.obj), at = stationsShowing(shelfOf(e.obj)?.id ?? "")[0], where = HOUSE_ROOMS.objects.find(q => q.id === at)?.label.toLowerCase(); hud.found(`found: ${it?.name.toLowerCase() ?? e.obj}${where ? ` · at the ${where}` : ""}`); }
@@ -1230,7 +1263,7 @@ function frame(now: number): void {
   showLook(); // (what she has on: last night's pile as it stands, rules/clothesPile.ts)
   // Her dream of tonight's loan (render/dream.ts): a key the rules took (the pad's too) ends it; ended, the alarm rings (endDream).
   if (dream && dreamAsleep) {
-    if (game.wake?.beat === "dream" && dream.over) endDream(game, game.herTime);
+    if (game.wake?.beat === "dream" && dream.over) mutate("wake: dream complete", () => endDream(game, game.herTime));
     else if (game.wake && game.wake.beat !== "dream" && !dream.over) dream.end();
   }
   if (dream && !dream.canvas.isConnected) dream = null;
@@ -1347,7 +1380,7 @@ requestAnimationFrame(frame);
 
 
 // For the smoke test, the tools and for poking at in the console (app/hooks.ts).
-installHooks({ night: N, view, sound, meter, shake, frameStats, ladder, loadTimes, loop });
+installHooks({ night: N, view, sound, meter, shake, frameStats, ladder, loadTimes, loop, advance: (game, controls, dt) => recordedStep(game, controls, dt, BUILD, () => captureRecording(game)) });
 // witch.take(kind, item): tonight's find taken where she stands, as E at it takes it (the kind's claim, the hats' floor, the loan):
 // for the tools (tools/loan/shots.cjs) to look at a night with a find on loan without walking to it.
 (window as unknown as { witch: Record<string, unknown> }).witch.compareKey = keyNow;
@@ -1417,3 +1450,11 @@ if (params.get("debug") === "sail") (window as unknown as { witch: Record<string
   const world = chartWorldArg(), end = o.end === null ? undefined : o.end ?? { cam: { x: 0, z: 700, height: 260, pitch: 0.45, fov: 40, speed: 60 }, still: "" };
   return sailFromChart(sailHref(island, seed, world, location.href), { island, seed, world, end });
 };
+// Known synchronous console mutations use declared boundaries too. Arbitrary direct writes to witch.game remain detectable replay failures.
+{
+  const hooks = (window as unknown as { witch: Record<string, unknown> }).witch;
+  for (const name of ["arena", "arenaAttack", "shot", "guest", "lose", "rainbow", "hit", "take", "wakeUp", "dream"]) {
+    const action = hooks[name];
+    if (typeof action === "function") hooks[name] = (...args: unknown[]) => mutate(`debug: ${name}`, () => Reflect.apply(action, hooks, args));
+  }
+}

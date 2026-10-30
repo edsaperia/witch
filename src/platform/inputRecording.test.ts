@@ -19,6 +19,7 @@ it("records a scripted fractional-frame run, retains local aim/zoom/framing, and
   recorder.step({ ...idle, toggleMode: true, aimX: 12.25, aimZ: -3.75, zoom: 1, framing: true, framePart: "hat" }, STEP * 0.4);
   for (let i = 0; i < 60; i++) recorder.step({ ...idle, moveX: 1, moveZ: i % 2 ? 1 : 0, aimX: 25, aimZ: -4, zoom: i === 9 ? -1 : 0, fire: i > 20 }, STEP);
   recorder.mutate("settings: music volume", () => { game.tuning.music.volume = 0.2; });
+  recorder.mutate("view: opening camera anchor", () => { game.introFocus = { x: 3, y: 4, z: 5 }; });
   for (let i = 0; i < 30; i++) recorder.step({ ...idle, moveZ: -1 }, STEP);
   recorder.mutate("pause", () => { game.clock.paused = true; });
   const tape = JSON.parse(JSON.stringify(recorder.export()));
@@ -37,4 +38,5 @@ it("rejects divergence before a labelled checkpoint instead of using it to repai
 it("rejects executable/nested controls without changing the wire default or normalizing local aim", () => {
   expect(localControls({ ...idle, aimX: 200, aimZ: -100 })).toMatchObject({ aimX: 200, aimZ: -100 });
   expect(localControls({ ...idle, rune: () => null })).toBeNull(); expect(localControls({ ...idle, aimX: NaN })).toBeNull();
+  expect(localControls({ ...idle, fire: "yes" })).toBeNull(); expect(localControls({ ...idle, rune: "not a function" })).toBeNull();
 });

@@ -369,6 +369,8 @@ const TRACK_REACH = 140, TRACK_AHEAD = 320;
 const HOUSE_TILT_EASE = 0.6;
 
 export class View {
+  /** Diagnostic boundary for the renderer's opening camera anchor; no change when no recorder is attached. */
+  mutateRules: (game: Game, label: string, action: () => void) => void = (_game, _label, action) => action();
   readonly renderer: THREE.WebGLRenderer;
   scene = new THREE.Scene();
   readonly magic = fxFor(this.scene);

@@ -1,6 +1,7 @@
 // Ed, 2026-10-30: a paused comment saves the actual moment, not only a seed/link approximation.
 import { captureNight, savedNight, type SavedNight } from "./nightSave";
 import type { Game } from "../rules/game";
+import type { InputRecording } from "../platform/inputRecording";
 
 export const COMMENT_TEXT = 2000, COMMENT_BYTES = 8 * 1024 * 1024, COMMENT_TOTAL = 32 * 1024 * 1024, COMMENT_COUNT = 8;
 export interface Breadcrumb { at: number; t: number; island: string; kind: string; data: unknown }
@@ -8,6 +9,7 @@ export interface PlaytestComment {
   version: 1; id: string; at: number; text: string; build: string; repro: string;
   t: number; island: string; wave: number; witch: { x: number; z: number; hp: number };
   changed: Record<string, unknown>; breadcrumbs: Breadcrumb[]; night: SavedNight;
+  recording?: InputRecording;
 }
 const bytes = (v: unknown) => new TextEncoder().encode(JSON.stringify(v)).byteLength;
 export class Breadcrumbs {
@@ -24,12 +26,12 @@ export class Breadcrumbs {
   }
   recent(game: Game): Breadcrumb[] { return this.game !== game ? [] : structuredClone(this.rows.filter(r => r.island === (game.tuning.map?.island || "home") && r.t >= game.clock.time - 30 && r.t <= game.clock.time)); }
 }
-export function captureComment(game: Game, text: string, context: Parameters<typeof captureNight>[1], repro: string, changed: Record<string, unknown>, breadcrumbs: Breadcrumb[], at = Date.now()): PlaytestComment {
+export function captureComment(game: Game, text: string, context: Parameters<typeof captureNight>[1], repro: string, changed: Record<string, unknown>, breadcrumbs: Breadcrumb[], at = Date.now(), recording?: InputRecording): PlaytestComment {
   if (!text.trim() || text.length > COMMENT_TEXT) throw Error(`Write a comment of 1–${COMMENT_TEXT} characters.`);
   const comment: PlaytestComment = { version: 1, id: `${at}-${crypto.randomUUID()}`, at, text: text.trim(), build: context.build, repro,
     t: game.clock.time, island: game.tuning.map?.island || "home", wave: game.party.wave,
     witch: { x: game.witch.x, z: game.witch.z, hp: game.witches[0].health.hp },
-    changed: structuredClone(changed), breadcrumbs: structuredClone(breadcrumbs), night: captureNight(game, context, at) };
+    changed: structuredClone(changed), breadcrumbs: structuredClone(breadcrumbs), night: captureNight(game, context, at), ...(recording ? { recording } : {}) };
   if (bytes(comment) > COMMENT_BYTES) throw Error("This moment is too large to save as a comment. Download the log and report this limit.");
   return comment;
 }

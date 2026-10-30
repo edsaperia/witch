@@ -101,6 +101,7 @@ function readRuns(): PlaytestRun[] {
 
 export class PlaytestLog {
   comments?: () => Promise<unknown[]>;
+  inputRecording?: () => unknown;
   private run: PlaytestRun;
   private next = EVERY;
   /** The sound as it is now, for each sample (main.ts sets it). */
@@ -212,6 +213,7 @@ export class PlaytestLog {
     this.update(true); // (a sample of this moment: what Ed saw when he pressed L)
     try { const t = this.debugText?.(); if (t) { this.run.debug = t; this.save(); } } catch (e) { captureError("caught", e, "playtest debug text"); }
     const runs = readRuns(), all = runs.some(r => r.started === this.run.started) ? runs : [...runs, this.run];
+    if (this.inputRecording) Object.assign(all[all.length - 1], { inputRecording: this.inputRecording() });
     if (this.comments) Object.assign(all[all.length - 1], { comments: await this.comments() });
     const blob = new Blob([JSON.stringify(all, null, 1)], { type: "application/json" }), a = document.createElement("a");
     a.href = URL.createObjectURL(blob);

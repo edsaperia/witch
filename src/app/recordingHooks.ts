@@ -1,0 +1,21 @@
+// Page-owned mutations are explicit replay boundaries. No rules module imports this hook.
+import { InputRecorder } from "../platform/inputRecording";
+import type { Controls, Game } from "../rules/game";
+import type { SavedNight } from "./nightSave";
+import { stepGame } from "../rules/game";
+import { logCaughtError } from "../platform/caughtError";
+const recorders = new WeakMap<Game, InputRecorder>();
+const unavailable = new WeakSet<Game>();
+export function recordingFor(game: Game, build: string, capture: () => SavedNight): InputRecorder {
+  let r = recorders.get(game); if (!r) { r = new InputRecorder(game, build, capture); recorders.set(game, r); } return r;
+}
+export function pageMutation<T>(game: Game, label: string, action: () => T): T {
+  const r = recorders.get(game); return r ? r.mutate(label, action) : action();
+}
+export function recordedStep(game: Game, controls: Controls | readonly Controls[], dt: number, build: string, capture: () => SavedNight): void {
+  if (unavailable.has(game)) { stepGame(game, controls, dt); return; }
+  let recorder: InputRecorder;
+  try { recorder = recordingFor(game, build, capture); }
+  catch (e) { unavailable.add(game); logCaughtError(e, "input recording unavailable"); stepGame(game, controls, dt); return; }
+  recorder.step(controls, dt);
+}
