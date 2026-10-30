@@ -79,6 +79,7 @@ says what each note covers.
 ## [Creatures in play](gameplay.md)
 
 - Attack target identity
+- Sheltered attack effects
 - Talk / invite
 - Bubble sight
 - Babies on her leash

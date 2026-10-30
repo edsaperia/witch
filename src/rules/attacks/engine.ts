@@ -35,7 +35,7 @@ export interface SpellWorld {
   /** A beat's length (s), for volleys. */
   beat?: number;
   /** Move this along by a force (m/s for dt: away from (fx, fz), or toward it when push < 0): a force field, a lure. */
-  force?(target: Hittable, fx: number, fz: number, push: number, dt: number): void;
+  force?(target: Hittable, fx: number, fz: number, push: number, dt: number, source?: number): void;
   /** Whether a caster is still winding up this cast (not stunned, gone or off its target): a cast it isn't is dropped at its release. */
   stillCasting?(source: number, cast: number): boolean;
   /** A caster's packmates (its own kind on its own side, awake, not itself) within r of (x, z), nearest first; absent: none (attack.pack
@@ -259,7 +259,7 @@ function pushAround(W: SpellWorld, a: AttackSpec, cx: number, cz: number, r: num
   for (const t of W.near(cx, cz, R)) {
     if (Math.hypot(t.x - cx, t.z - cz) > R + t.r || t.kind === "sound" || (t.kind === "creature" && t.id === source)) continue;
     if (who === "foes" ? !W.hostile(side, t, species, source) : who === "others" ? t.kind !== "creature" : false) continue;
-    W.force(t, cx, cz, F.push, dt);
+    W.force(t, cx, cz, F.push, dt, source);
   }
 }
 
@@ -681,7 +681,7 @@ function stepBody(S: SpellState, W: SpellWorld, lib: Library, b: Body, time: num
   moveBody(b, a, age, dt, W);
   if (a.pack?.amplify && b.amp < a.pack.amplify.max && W.packmates) amplify(S, W, b, time);
   // (a lure draws her in while she's within its reach; a body with a force field pushes whoever's round it)
-  if (b.kind === "lure" && W.force) for (const t of W.near(b.x, b.z, a.body?.reach ?? 8)) if (t.kind === "witch" && W.hostile(b.side, t, b.species, b.source) && Math.hypot(t.x - b.x, t.z - b.z) <= (a.body?.reach ?? 8)) W.force(t, b.x, b.z, -(a.body?.pull ?? 4), dt);
+  if (b.kind === "lure" && W.force) for (const t of W.near(b.x, b.z, a.body?.reach ?? 8)) if (t.kind === "witch" && W.hostile(b.side, t, b.species, b.source) && Math.hypot(t.x - b.x, t.z - b.z) <= (a.body?.reach ?? 8)) W.force(t, b.x, b.z, -(a.body?.pull ?? 4), dt, b.source);
   if (a.force) pushAround(W, a, b.x, b.z, b.radius * 4, b.side, b.species, b.source, dt);
   if (b.locked && !S.locks.has(b.id)) {
     S.locks.add(b.id);

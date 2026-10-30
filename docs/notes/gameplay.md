@@ -1,6 +1,7 @@
 # Creatures in play
 
 - **Attack target identity** (PR1480 audit): the grammar engine tracks hit targets by kind and typed ID, so witch0 and creature0 do not suppress each other's piercing, area or chain hits. Numeric and string IDs remain distinct; lingering zones and beams still damage each witch only once. Audit inventory, evidence and staged repair plan: `docs/plans/attack-system-audit.md`.
+- **Sheltered attack effects** (PR1480 audit): the grammar adapter rejects outside damage, effect-only touches, melee extras and forced movement when the existing shelter check protects her. The shelter's own legend remains exempt. Force callbacks receive the attack's source ID so that exemption survives lures and force fields; missing attackers remain outside sources. No legend range or visibility rule changes.
 
 Part of Witch's notes (CLAUDE.md is the index): inviting, the leash and sigils, combat and sieges, creature states, the legends and their quests. Moved here from CLAUDE.md as it stood (housekeeping, Ed 2026-10-23: a note an area, so pull requests add to their own area's file, not one shared file); every rule kept. Add to this file, not CLAUDE.md, when you change this area.
 

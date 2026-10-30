@@ -6,7 +6,7 @@ import type { Creature, Level } from "../creatures";
 import { foes, huntsWitch } from "../creatureStates";
 import { attackNamed, type Attack, type CombatData, type CombatState, type CombatWorld, type Delivery, type Target } from "../combat/data";
 import { land } from "../combat/hits";
-import { sideOf, targetable, type Grid } from "../combat/targeting";
+import { sheltered, sideOf, targetable, type Grid } from "../combat/targeting";
 import { strengthOf } from "../combat/data";
 import { withBase, type Library } from "./parse";
 import { speciesAttack } from "./species";
@@ -64,11 +64,18 @@ export function speciesSpell(c: Creature, data: CombatData, floor?: number): { n
 }
 
 /** A melee attack's blow landed (the fight's lunge): the rest of its effect (a stun, a root, a pull, a burn) on what it hit. */
-export function meleeExtras(w: CombatWorld, s: CombatState, tg: Target, spec: AttackSpec, fx: number, fz: number): void {
+export function meleeExtras(w: CombatWorld, s: CombatState, tg: Target, spec: AttackSpec, fx: number, fz: number, from: Creature | null): void {
   const e = spec.hit?.effect, t = hittableOf(w, s, tg);
-  if (!e || !t) return;
+  if (!e || !t || shelteredTouch(w, t, from)) return;
   const { knockback: _k, slow: _s, ...rest } = e;
   if (Object.keys(rest).length) effects(w, s, t, rest, null, fx, fz);
+}
+
+/** The same shelter exception as land, for effect-only touches and forced movement too. */
+function shelteredTouch(w: CombatWorld, t: Hittable, from: Creature | null): boolean {
+  if (t.kind !== "witch") return false;
+  const v = w.witches.find(v => v.id === t.id);
+  return !!v && sheltered(v, from);
 }
 
 /** How a body's hit counts against the fight's counters (a flier dodging melee, armour turning shots, lobs and beams, a swarm
@@ -127,6 +134,7 @@ export function spellWorld(w: CombatWorld, s: CombatState, grid: Grid, seed: num
     },
     harm(t, damage, effect, fx, fz, source, attack, body) {
       const from = w.creatures[source] ?? null, tg: Target = t.kind === "creature" ? { kind: "creature", id: t.id as number } : t.kind === "witch" ? { kind: "witch", id: t.id as number } : { kind: "sound", key: t.id as string };
+      if (shelteredTouch(w, t, from)) return;
       // (a blow lands as any does, a named attack today's runtime knows as itself, any other by its knockback or slow; whatever else its
       // effect does (and all of it, on a touch with no damage: a slowing puddle on her doesn't cost her a hit) after it)
       let done: keyof Effect | null = null;
@@ -137,7 +145,8 @@ export function spellWorld(w: CombatWorld, s: CombatState, grid: Grid, seed: num
       }
       if (effect) effects(w, s, t, effect, done, fx, fz);
     },
-    force(t, fx, fz, push, dt) {
+    force(t, fx, fz, push, dt, source) {
+      if (shelteredTouch(w, t, source === undefined ? null : w.creatures[source] ?? null)) return;
       const dx = t.x - fx, dz = t.z - fz, d = Math.hypot(dx, dz) || 1, step = push * dt, k = push < 0 ? Math.max(step, -(d - 0.5)) / d : step / d; // (a pull stops short of its middle)
       if (t.kind === "creature") { const c = w.creatures[t.id as number]; if (c && !c.gone && !c.boss) { c.x += dx * k; c.z += dz * k; } }
       else if (t.kind === "witch") w.nudgeWitch?.(t.id as number, dx * k, dz * k);

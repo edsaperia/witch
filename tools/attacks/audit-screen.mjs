@@ -56,7 +56,7 @@ const w = { creatures: [], witches, time: 0, t: TUNING, asleep: () => false, hit
 w.creatures[1] = { id: 1, species: 'wolf', level: 2, x: 0, z: 0 };
 const livePort = spellWorld(w, newCombat(), { near: () => [] }, 5, COMBAT);
 livePort.harm(target('witch', 0), 1, { stun: 0.2, slow: { mult: 0.5, time: 1 } }, 0, 0, 1, 'audit:shelter', 'bolt');
-diagnostics.shelterEffects = { ...spy, portHasBlocked: typeof livePort.blocked === 'function', note: 'Actual spellWorld harm adapter: shelter blocks land but effects are called separately.' };
+diagnostics.shelterEffects = { ...spy, portHasBlocked: typeof livePort.blocked === 'function', note: 'Actual spellWorld harm adapter; records damage and effect callbacks for an outside attack on a sheltered witch.' };
 for (const species of Object.keys(SPECIES_ATTACKS)) {
   if (classOf(species, TUNING) === 'heavy') continue;
   const base = momentumOf(species, TUNING);
