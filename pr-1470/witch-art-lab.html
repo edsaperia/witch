@@ -9420,10 +9420,22 @@ function napForm(S, { frame = 0 } = {}) {
     if (pose.curl) { const b = bounds(m); curlBody(m, pose.curl, (b.x0 + b.x1) / 2, (b.x1 - b.x0) / 2); }
     // wings wrapped round it
     if (pose.cloak) { const c = pose.cloak.c; m.ell([c[0], G + (c[1] - .3) + pose.cloak.r[1] * .9, c[2]], pose.cloak.r, M.BODY2, { group: 1, paint: p => Math.abs(Math.sin(Math.atan2(p[2], p[0] - c[0]) * 5)) > .85 ? M.BODY3 : undefined }); }
-    if (frame % 2) { const top = bounds(m).y1, k = Math.max(BREATH, 1.8 / s) / Math.max(.05, top - G); move(m, p => [p[0], G + (p[1] - G) * (1 + k), p[2]]); } // its breath: in (swelling up from the ground, its top a pixel or more higher, so the small ones breathe too)
+    if (frame % 2) {
+      const lift = Math.max(BREATH, 1.8 / s), top = bounds(m).y1, k = lift / Math.max(.05, top - G);
+      move(m, p => [p[0], G + (p[1] - G) * (1 + k), p[2]]);
+      // A flat flyer's dominant volume can merely translate under the centre
+      // transform, then crop back to identical pixels. Its resting thorax and
+      // wrapped wings must swell too, rather than only moving their centres.
+      if (S.plan === "moth" || S.plan === "dragonfly") for (const q of m.parts) {
+        if (q.extra || q.cut || ![M.BODY,M.BODY2,M.BODY3,M.BELLY].includes(q.mat)) continue;
+        if (q.type === "ell") q.r = [q.r[0],q.r[1]+lift*.5,q.r[2]];
+        else if (q.type === "cone") { q.r1 += lift*.4; q.r2 += lift*.4; }
+      }
+    } // its breath: in, visibly swelling above the ground
     const b = bounds(m), cx = (b.x0 + b.x1) / 2, cz = (b.z0 + b.z1) / 2; // (curled, its middle has moved toward the near side)
     m.clipY = G;
     let scale = s, sp;
+    const heightBudget = o.sizeTarget ?? null;
     // Lying down can widen the model into the camera's vertical projection
     // (especially a snail's shell). Keep the standing visible age budget after
     // deformation and breathing, using native rays rather than resampling art.
@@ -9432,8 +9444,8 @@ function napForm(S, { frame = 0 } = {}) {
       res.sp.origin = res.project([cx, G, cz]);
       res.sp.groundLine = G;
       sp = crop(res.sp);
-      if (!o.sizeTarget || sp.h <= o.sizeTarget) break;
-      scale *= (o.sizeTarget - .5) / sp.h;
+      if (!heightBudget || sp.h <= heightBudget) break;
+      scale *= (heightBudget - .5) / sp.h;
     }
     return sp;
   };
