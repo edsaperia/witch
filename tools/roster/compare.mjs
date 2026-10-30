@@ -8,6 +8,8 @@ const [out = "previews/ed/roster", only = "bear,arcticfox,snowleopard,beetle"] =
 mkdirSync(out, { recursive: true });
 const sha = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
 const modelSha = process.env.ROSTER_MODEL_SHA || "";
+const poses = (process.env.ROSTER_POSES || "walk").split(",");
+if (poses.some(p => !["walk", "idle"].includes(p))) throw Error("ROSTER_POSES supports walk,idle");
 if (modelSha && !/^[0-9a-f]{40}$/.test(modelSha)) throw Error("ROSTER_MODEL_SHA must be an exact commit");
 for (const id of only.split(",")) if (ROSTER_PRESETS[id]?.modelCommit) {
   try { execFileSync("git", ["merge-base", "--is-ancestor", ROSTER_PRESETS[id].modelCommit, modelSha || sha], { stdio: "pipe" }); }
@@ -18,7 +20,7 @@ try {
   await b.page.goto(b.base + "/art/headless-blank.html");
   for (const id of only.split(",")) for (const lightMode of (process.env.ROSTER_LIGHTS || "studio,night").split(",")) {
     if (!["albedo", "studio", "night"].includes(lightMode)) throw Error(`Unknown lighting ${lightMode}`);
-    const result = await b.page.evaluate(async ({ id, lightMode, sha, modelSha }) => {
+    const result = await b.page.evaluate(async ({ id, lightMode, sha, modelSha, poses }) => {
       const root = modelSha ? `/previews/roster-model-${modelSha}` : "";
       const G = await import(`${root}/art/generator.js`), C = await import(`${root}/art/creatures.js`), B = await import(`${root}/art/creatures3d.js`);
       const production = modelSha ? await import("/art/creatures.js") : C;
@@ -38,16 +40,17 @@ try {
       const rows = [], measurements = [], resolvedRecords = [];
       // Direct existing builder avoids critter's id-only cache aliasing current/proposed.
       // Keep actual species id for identical texture seed; prove current matches production.
-      for (const facing of ["towards", "away"]) for (const frame of [0, 1]) for (const level of [0, 1, 2, 3]) {
+      for (const pose of poses) for (const facing of ["towards", "away"]) for (const frame of [0, 1]) for (const level of [0, 1, 2, 3]) {
+        if (pose === "idle" && !C.IDLE_BUILDERS?.[G.speciesOf(original).idle]) continue;
         const sprites = [0, 1].map(column => {
           // Once released, #1470 owns all selection. Legacy path exists only to
           // render the explicitly-authorised pre-hook isolated data candidates.
           const S = sharedSelection ? G.speciesOf(original, column ? context : {}, level) : G.speciesOf(column ? rosterGenome(original, [id], level) : original);
           if (frame === 0 && facing === "towards") resolvedRecords.push({ level, column: column ? "proposed" : "current", body: { ...S.q, ...S.levelQ?.[level] }, look: S.look || null, paletteHSV: [S.hue, S.sat, S.val] });
-          const sprite = B.withTexture({ S, level, st }, () => C.buildCreature(S, level, frame, st, facing));
+          const sprite = B.withTexture({ S, level, st }, () => pose === "idle" ? C.IDLE_BUILDERS[S.idle](S, level, frame, st, facing) : C.buildCreature(S, level, frame, st, facing));
           G.textureSprite(sprite, S, level, st, C.textureSeed(id));
           if (!column) {
-            const prod = production.critter(id, level, frame, st, facing);
+            const prod = production.critter(id, level, frame, st, facing, pose === "idle" ? { idle: true } : null);
             if (prod.w !== sprite.w || prod.h !== sprite.h || prod.m.some((v, i) => v !== sprite.m[i]) || prod.n.some((v, i) => v !== sprite.n[i])) throw Error(`Current reference mismatch ${id}/${level}/${frame}/${facing}`);
           }
           const baked = G.bake(sprite, G.speciesColours(S, st), st, st.cOutline), lit = make(baked.w, baked.h);
@@ -63,8 +66,8 @@ try {
           pixelDiff = 0;
           for (let i = 0; i < a.length; i += 4) if (a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2] || a[i + 3] !== b[i + 3]) pixelDiff++;
         }
-        measurements.push({ id, facing, frame, level, pixelDiff, current: [sprites[0].width, sprites[0].height], proposed: [sprites[1].width, sprites[1].height] });
-        rows.push({ label: `${facing} frame ${frame} level ${level}`, sprites });
+        measurements.push({ id, pose, facing, frame, level, pixelDiff, current: [sprites[0].width, sprites[0].height], proposed: [sprites[1].width, sprites[1].height] });
+        rows.push({ label: `${pose} ${facing} frame ${frame} level ${level}`, sprites });
       }
       const maxW = Math.max(...rows.flatMap(r => r.sprites.map(s => s.width))), maxH = Math.max(...rows.flatMap(r => r.sprites.map(s => s.height)));
       const cellW = maxW + 16, height = rows.reduce((h, r) => h + Math.max(...r.sprites.map(s => s.height)) + 28, 100);
@@ -86,7 +89,7 @@ try {
       const enlarged = make(cv.width * 2, cv.height * 2), ec = enlarged.getContext("2d");
       ec.imageSmoothingEnabled = false; ec.drawImage(cv, 0, 0, enlarged.width, enlarged.height);
       return { native: cv.toDataURL(), enlarged: enlarged.toDataURL(), measurements, resolvedRecords, modelSourceCommit: modelSha || sha, lighting: lightMode, style: st, largestCell: [maxW, maxH], selectionInterface: sharedSelection ? "shared #1470 selector" : "isolated pre-hook genome data" };
-    }, { id, lightMode, sha, modelSha });
+    }, { id, lightMode, sha, modelSha, poses });
     const stem = `${out}/${id}-${lightMode}`;
     for (const key of ["native", "enlarged"]) writeFileSync(`${stem}-${key}.png`, Buffer.from(result[key].split(",")[1], "base64"));
     const { native, enlarged, ...metadata } = result;

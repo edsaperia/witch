@@ -14,6 +14,17 @@ const JAGUAR_REGIONS = {
   legs: { kind: "spots", k: 12, density: .5, radius: .4, mat: "BODY3" },
 };
 export const ROSTER_PRESETS = {
+  meerkat: {
+    reason: "Keep the existing sentinel idle and strengthen natural dark eye patches and back bands.",
+    patch: { palette: { over: { BODY3: [38, 29, 24], BODY2: [112, 88, 60], BELLY: [226, 210, 178] } } },
+    text: "A sandy meerkat with dark eye patches, back bands and an upright lookout pose.",
+  },
+  flyingsquirrel: {
+    reason: "Make the existing ground-level patagium read as a folded membrane on a grey-brown squirrel.",
+    patch: { palette: { hue: .07, sat: .16, val: .46, over: { BELLY: [229, 225, 215] } } },
+    ordinaryLevels: { 0: { features: [{ kind: "patagium", spread: .55 }] }, 1: { features: [{ kind: "patagium", spread: .6 }] }, 2: { features: [{ kind: "patagium", spread: .9 }] } },
+    text: "A grey-brown flying squirrel with a pale belly and a folded skin membrane along its flanks.",
+  },
   marten: {
     reason: "A localized cream throat bib and dark legs on the existing brown pine-marten body.",
     ordinaryOnly: true,
