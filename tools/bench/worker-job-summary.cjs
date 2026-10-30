@@ -3,7 +3,9 @@ function summarizeWorkerJobs(trace) {
   const byId = new Map();
   for (const e of [...(trace?.events || []), ...(trace?.activeJobs || [])]) {
     if (e.kind !== 'worker-job' || !e.jobId) continue;
-    const old = byId.get(e.jobId) || {}, row = { ...old, ...e };
+    const old = byId.get(e.jobId) || {};
+    if (old.phase === 'end' || old.phase === 'cancel') continue;
+    const row = { ...old, ...e };
     if (e.phase === 'cancel' && !e.interruptedStage && old.phase === 'stage-start') { row.interruptedStage = old.stage; row.interruptedStageElapsedMs = Math.max(0, (e.endedEpochMs ?? e.atEpochMs) - old.stageStartEpochMs); }
     if (e.phase === 'stage-start' && e.stage?.startsWith('compute:') && old.computeStartEpochMs === undefined) row.computeStartEpochMs = e.stageStartEpochMs;
     byId.set(e.jobId, row);
@@ -20,6 +22,7 @@ function summarizeWorkerJobs(trace) {
       interruptedStage: e.interruptedStage ?? null, interruptedStageElapsedMs: e.interruptedStageElapsedMs ?? null,
       computeWallMs: sum(e.stages, 'compute:'), cacheWallMs: sum(e.stages, 'cache-'), stages: e.stages || {},
       currentStage, currentStageElapsedMs: currentStage && Number.isFinite(trace?.capturedEpochMs) ? Math.max(0, trace.capturedEpochMs - e.stageStartEpochMs) : null,
+      currentStageDurationConfirmed: currentStage ? false : null, // open-stage age can include undelivered end packets
       waitingForStartMs: !ended && started === null && Number.isFinite(trace?.capturedEpochMs) ? Math.max(0, trace.capturedEpochMs - e.enqueuedEpochMs) : null,
     };
   }).sort((a, b) => a.enqueuedEpochMs - b.enqueuedEpochMs);

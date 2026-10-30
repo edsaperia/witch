@@ -72,6 +72,24 @@ it('consumes diagnostic packets, preserves active jobs across reset and closes t
   expect(context.__travelProbe.trace.events[0]).toMatchObject({ phase: 'cancel', status: 'worker-terminated', interruptedStage: 'cache-read', interruptedStageElapsedMs: 20 });
   worker.handler({ data: { actualResult: 7 } }); expect(handler).toHaveBeenCalledTimes(1);
 });
+it('streams job metadata to the host across recorder resets without requiring a final page snapshot', async () => {
+  const batches: any[] = []; let interval: unknown;
+  const context: any = { __travelRecordBatch: async (p: unknown) => { batches.push(p); }, setInterval: (fn: unknown) => { interval = fn; }, performance: { timeOrigin: 1000, now: () => 50 }, requestAnimationFrame: () => {} }; context.window = context;
+  runInNewContext(`(${installTravelProbe.toString()})()`, context);
+  context.__travelProbe.record({ kind: 'worker-job', jobId: 'one', jobKind: 'art:type', id: 17, phase: 'enqueue', at: 40, enqueuedEpochMs: 1040 });
+  context.__travelProbe.reset(); await context.__travelProbe.flush();
+  expect(typeof interval).toBe('function'); expect(batches).toHaveLength(1);
+  expect(batches[0]).toMatchObject({ sequence: 1, atEpochMs: 1050, backlog: 0, events: [{ jobId: 'one', atEpochMs: 1040, id: 17 }] });
+});
+it('retains initial job records if the host binding is installed after the probe init script', async () => {
+  const batches: any[] = [];
+  const context: any = { setInterval: () => {}, performance: { timeOrigin: 1000, now: () => 50 }, requestAnimationFrame: () => {} }; context.window = context;
+  runInNewContext(`(${installTravelProbe.toString()})({ stream: true })`, context);
+  context.__travelProbe.record({ kind: 'worker-job', jobId: 'early', jobKind: 'map-prep', id: 42, phase: 'enqueue', at: 40 });
+  await context.__travelProbe.flush(); expect(batches).toHaveLength(0);
+  context.__travelRecordBatch = async (packet: unknown) => { batches.push(packet); };
+  await context.__travelProbe.flush(); expect(batches[0].events[0].jobId).toBe('early');
+});
 
 it('retains every upload count and slowest call beyond the old cap, leaving room for late worker events', () => {
   let now = 0;

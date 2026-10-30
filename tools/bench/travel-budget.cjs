@@ -41,7 +41,7 @@ function checkTravel(run, limits = {}) {
     if (worse) failures.push(`quality fell from rung ${run.qualityBefore.rung} to ${worse.rung} during travel/grace at ${worse.at} ms`);
   }
   if (run.trace?.dropped) failures.push(`trace omitted ${run.trace.dropped} events`);
-  if (run.key?.knobs?.['tool.probe'] === 'worker-jobs-v1' && (run.trace?.capabilities?.workerJobs !== 1 || ![...(run.trace?.events || []), ...(run.trace?.activeJobs || [])].some(e => e?.kind === 'worker-job' && e.jobId))) failures.push('worker-job timing protocol was not observed');
+  if (run.key?.knobs?.['tool.probe']?.startsWith('worker-jobs-') && (run.trace?.capabilities?.workerJobs !== 1 || ![...(run.trace?.events || []), ...(run.trace?.activeJobs || [])].some(e => e?.kind === 'worker-job' && e.jobId))) failures.push('worker-job timing protocol was not observed');
   if (run.trace?.uploads !== undefined) {
     if (!Array.isArray(run.trace.uploads)) failures.push('upload aggregates are invalid');
     else for (const g of run.trace.uploads) {

@@ -13,5 +13,5 @@ it('keeps queue, compute and cache wall spans separate across different time ori
 });
 it('retains a pending cache operation at failure without pretending it completed', () => {
   const row = summarizeWorkerJobs({ events: [], capturedEpochMs: 5000, activeJobs: [{ kind: 'worker-job', jobId: 'home', jobKind: 'chart:detail', id: 'home', phase: 'stage-start', stage: 'cache-read', enqueuedEpochMs: 1000, startedEpochMs: 1100, stageStartEpochMs: 1200, stages: {} }] })[0];
-  expect(row).toMatchObject({ complete: false, currentStage: 'cache-read', currentStageElapsedMs: 3800, cacheWallMs: 0, queueBeforeStartMs: 100 });
+  expect(row).toMatchObject({ complete: false, currentStage: 'cache-read', currentStageElapsedMs: 3800, currentStageDurationConfirmed: false, cacheWallMs: 0, queueBeforeStartMs: 100 });
 });

@@ -22,13 +22,13 @@ const { installTravelProbe } = require('./travel-probe.cjs');
 const { checkTravel, summarizeTravel } = require('../bench/travel-budget.cjs');
 const { collectFailure } = require('./travel-failure.cjs');
 const { prepareChartTarget } = require('./chart-target.cjs');
-const { summarizeWorkerJobs } = require('../bench/worker-job-summary.cjs');
+const { createWorkerCheckpoint, attachWorkerCheckpoint } = require('./worker-checkpoint.cjs');
 const TRACE = process.env.TRACE === '1' || process.env.BUDGET === '1', ROUTE = process.env.ROUTE || 'chart';
 if (!['chart', 'api'].includes(ROUTE)) throw new Error('ROUTE must be chart or api');
 const SAIL_SEED = process.env.SAIL_SEED ?? (TRACE || ROUTE === 'api' ? '424242' : null);
 const extra = new URLSearchParams(process.env.EXTRA || '');
 if (TRACE) for (const [k,v] of Object.entries({ seed: '123', world: '0', warmChart: '1', prepChart: '1', ladder: 'auto' })) if (!extra.has(k)) extra.set(k,v);
-const toolKey = key => ({ ...key, knobs: { ...key.knobs, 'tool.route': ROUTE, 'tool.targetSetup': ROUTE === 'chart' ? 'choose-before-outline-v1' : 'api', 'tool.trace': TRACE, 'tool.probe': TRACE ? 'worker-jobs-v1' : 'off', 'tool.profile': process.env.PROFILE === '1' } });
+const toolKey = key => ({ ...key, knobs: { ...key.knobs, 'tool.route': ROUTE, 'tool.targetSetup': ROUTE === 'chart' ? 'choose-before-outline-v1' : 'api', 'tool.trace': TRACE, 'tool.probe': TRACE ? 'worker-jobs-v2-host' : 'off', 'tool.profile': process.env.PROFILE === '1' } });
 let KEY = null;
 let pw; try { pw = require("playwright"); } catch { pw = require("/opt/node22/lib/node_modules/playwright"); }
 const [outArg = "previews/sail/timing", distArg] = process.argv.slice(2);
@@ -45,12 +45,18 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
   await new Promise(r => server.listen(0, "127.0.0.1", r));
   const browser = await pw.chromium.launch({ executablePath: process.env.CHROMIUM, args: process.env.GPU === 'hardware' ? [] : ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
   const errors = [], warnings = [], runs = [];
-  let activePage = null, activeIsland = ISLAND0, phase = 'boot';
+  let activePage = null, activeIsland = ISLAND0, phase = 'boot', checkpoint = null;
   let code = 0;
   try {
     for (let run = 0; run < RUNS; run++) {
       const page = await browser.newPage({ viewport: { width: W, height: H } });
       activePage = page; phase = 'boot';
+      if (TRACE) {
+        const file = `${out}-${run}-worker-jobs.jsonl`; fs.writeFileSync(file, '');
+        const pageCheckpoint = createWorkerCheckpoint(packet => fs.appendFileSync(file, JSON.stringify(packet) + '\n'));
+        checkpoint = pageCheckpoint;
+        await page.exposeFunction('__travelRecordBatch', packet => pageCheckpoint.accept(packet));
+      }
       const prepNotes = [];
       page.on("pageerror", e => errors.push(e.message));
       page.on("console", m => { const t = m.text(); if (['warning','error'].includes(m.type()) && warnings.length < 100) warnings.push({ type: m.type(), text: t.slice(0, 1500) }); if (t.startsWith('map prep:')) prepNotes.push(t); if (t.startsWith("sail-timing:") || t.startsWith("arrival:")) log(t); });
@@ -59,7 +65,7 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
         window.__f = []; window.__parts = []; const f = t => { window.__f.push(t); const ms = window.witch?.view?.ms; if (ms) { const e = Object.entries(ms).filter(([, v]) => v > 2); if (e.reduce((p, [, v]) => p + v, 0) > 20) window.__parts.push({ t, parts: e }); } requestAnimationFrame(f); }; requestAnimationFrame(f); // (the view's own work by part, on frames it passed 20 ms)
         window.__lt = []; window.__ltSupported = false; try { if (!PerformanceObserver.supportedEntryTypes || PerformanceObserver.supportedEntryTypes.includes('longtask')) { new PerformanceObserver(l => { for (const e of l.getEntries()) window.__lt.push([e.startTime, e.duration]); }).observe({ type: "longtask", buffered: true }); window.__ltSupported = true; } } catch { /* */ }
       });
-      if (TRACE) await page.addInitScript(installTravelProbe);
+      if (TRACE) await page.addInitScript(installTravelProbe, { stream: true });
       if (THR > 1) { const cdp = await page.context().newCDPSession(page); await cdp.send("Emulation.setCPUThrottlingRate", { rate: THR }); }
       const link = `http://127.0.0.1:${server.address().port}/?creator=0&timing=1&${extra}`;
       log(`run ${run + 1}: loading`, link.replace(/^http:\/\/[^/]+/, ""), THR > 1 ? `(CPU ×${THR})` : "");
@@ -152,7 +158,7 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
     }
     fs.writeFileSync(out + ".json", JSON.stringify({ key: KEY, island: ISLAND0, then: THEN, throttle: THR, size: `${W}x${H}`, gap: GAP, runs }, null, 1));
     log("written", out + ".json");
-  } catch (e) { console.error(e); code = 1; const failure = await collectFailure(activePage, { phase, island: activeIsland }); failure.workerJobs = summarizeWorkerJobs(failure.probe); fs.writeFileSync(out+'.json', JSON.stringify({ key: KEY, route: ROUTE, runs, error: String(e), pageErrors: errors, warnings, failure }, null, 1)); } finally { await browser.close(); server.close(); }
+  } catch (e) { console.error(e); code = 1; const failure = attachWorkerCheckpoint(await collectFailure(activePage, { phase, island: activeIsland }), checkpoint?.snapshot()); fs.writeFileSync(out+'.json', JSON.stringify({ key: KEY, route: ROUTE, runs, error: String(e), pageErrors: errors, warnings, failure }, null, 1)); } finally { await browser.close(); server.close(); }
   if (errors.length) { console.error("page errors:\n" + errors.join("\n")); code = 1; }
   process.exit(code);
 })();

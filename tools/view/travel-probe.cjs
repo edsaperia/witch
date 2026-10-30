@@ -1,13 +1,29 @@
 // Opt-in browser instrumentation. No payloads, textures or game objects are retained in the trace.
-function installTravelProbe() {
+function installTravelProbe(options = {}) {
   const limit = 6000, trace = { events: [], uploads: Object.create(null), activeJobs: Object.create(null), quality: [], dropped: 0, capabilities: { workerMessages: false, uploadCalls: 0 } };
   const add = e => { if (trace.events.length < limit) trace.events.push(e); else trace.dropped++; };
+  const bridge = options.stream === true || typeof window.__travelRecordBatch === 'function', hostQueue = [];
+  let sending = false, hostSequence = 0, transportDropped = 0;
+  const flush = async () => {
+    if (!bridge || typeof window.__travelRecordBatch !== 'function' || sending || !hostQueue.length) return;
+    sending = true; const events = hostQueue.splice(0, 256);
+    try { await window.__travelRecordBatch({ sequence: ++hostSequence, atEpochMs: performance.timeOrigin + performance.now(), backlog: hostQueue.length, transportDropped, events }); }
+    catch { transportDropped += events.length; trace.dropped += events.length; }
+    finally { sending = false; }
+  };
+  if (bridge) setInterval(flush, 250);
   let activeCount = 0, activeIncomplete = false;
+  const closedJobs = new Set();
   const record = e => {
     if (e.kind === 'worker-job' && e.jobId) {
+      if (bridge) {
+        if (hostQueue.length < limit) hostQueue.push({ ...e, atEpochMs: e.atEpochMs ?? performance.timeOrigin + e.at });
+        else { transportDropped++; trace.dropped++; }
+      }
       trace.capabilities.workerJobs = 1;
       const old = trace.activeJobs[e.jobId];
-      if (e.phase === 'end' || e.phase === 'cancel') { if (old) { delete trace.activeJobs[e.jobId]; activeCount--; } }
+      if (e.phase === 'end' || e.phase === 'cancel') { if (closedJobs.size < limit) closedJobs.add(e.jobId); else { activeIncomplete = true; trace.dropped++; } if (old) { delete trace.activeJobs[e.jobId]; activeCount--; } }
+      else if (closedJobs.has(e.jobId)) { /* retain the raw late packet, but never resurrect a cancelled job */ }
       else if (old || activeCount < limit) { trace.activeJobs[e.jobId] = { ...old, ...e }; if (!old) activeCount++; }
       else { activeIncomplete = true; trace.dropped++; }
     }
@@ -80,6 +96,6 @@ function installTravelProbe() {
     requestAnimationFrame(sample);
   };
   requestAnimationFrame(sample);
-  window.__travelProbe = { trace, record, reset() { trace.events.length = 0; for (const method of Object.keys(trace.uploads)) delete trace.uploads[method]; trace.quality.length = 0; trace.dropped = activeIncomplete ? 1 : 0; last = -Infinity; } };
+  window.__travelProbe = { trace, record, flush, reset() { trace.events.length = 0; for (const method of Object.keys(trace.uploads)) delete trace.uploads[method]; trace.quality.length = 0; trace.dropped = transportDropped + (activeIncomplete ? 1 : 0); last = -Infinity; } };
 }
 module.exports = { installTravelProbe };
