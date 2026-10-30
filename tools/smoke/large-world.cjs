@@ -18,10 +18,14 @@ const server=http.createServer((req,res)=>{let file=path.resolve(dist,'.'+decode
  const query=new URLSearchParams({island:fixture.island,world:String(fixture.world),seed:String(fixture.seed),found:fixture.found.join(','),quick:'1',creator:'0',wave:'off'});
  await page.goto(`http://127.0.0.1:${server.address().port}/?${query}`);
  await page.waitForFunction(()=>window.witch?.ready,null,{timeout:300000});await page.evaluate(()=>{window.witch.manual=true;});
+ const version=JSON.parse(fs.readFileSync(path.join(dist,'version.json'),'utf8'));
+ const served=await page.evaluate(async()=>({version:await(await fetch('version.json',{cache:'no-store'})).json(),build:window.witch.compareKey().build}));
+ evidence.version=served;
+ if(served.version.version!==version.version||served.build!==version.version||!process.env.EXPECTED_SHA||!version.version.includes(process.env.EXPECTED_SHA.slice(0,7)))throw Error('Shared artifact served SHA does not match the assigned revision');
  if(await page.evaluate(()=>window.witch.game.clock.paused))await page.keyboard.press('Enter');
  const world=await page.evaluate(()=>{const w=window.witch,g=w.game,m=g.map,byType=new Map();for(const [x,z]of m.cells){const type=m.typeOf(x,z);if(!byType.has(type))byType.set(type,{type,id:w.areaTypeId(type),...m.siteOf(x,z)});}return{island:g.tuning.map.island,seed:g.seed,cells:m.cells.length,types:[...byType.values()].sort((a,b)=>a.type-b.type)};});
  evidence.world=world;
- if(world.island!==fixture.island||world.cells<fixture.areas||world.types.length<fixture.areaKinds)throw Error('Largest-world fixture did not load');
+ if(world.seed!==fixture.seed||world.island!==fixture.island||world.cells<fixture.areas||world.types.length<fixture.areaKinds)throw Error('Largest-world fixture did not load');
  const n=Math.min(12,world.types.length),sites=Array.from({length:n},(_,i)=>world.types[Math.floor(i*(world.types.length-1)/Math.max(1,n-1))]);
  const loaded=new Set(),drawn=new Set();
  for(const site of sites){const start=Date.now();

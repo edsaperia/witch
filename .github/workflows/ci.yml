@@ -217,6 +217,8 @@ jobs:
       - run: npm install --prefix .pw --no-save --no-package-lock playwright@${{ env.PLAYWRIGHT_VERSION }}
       - run: .pw/node_modules/.bin/playwright install --with-deps chromium
       - name: Load and draw diverse art on the largest shipped world
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: NODE_PATH=$PWD/.pw/node_modules node tools/smoke/large-world.cjs
       - if: always()
         uses: actions/upload-artifact@v4
