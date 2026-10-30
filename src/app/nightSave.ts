@@ -22,6 +22,11 @@ export interface NightStore {
   clear(): Promise<void>;
 }
 
+/** Hiding the loading card also happens while she is still asleep: wait until she's up before saving. */
+export function nightHasStarted(game: Pick<Game, "wake">, startScreenHidden: boolean): boolean {
+  return startScreenHidden && (!game.wake || game.wake.open);
+}
+
 /** Debug/reproduction links never read or replace a player's night, unless explicitly requested. */
 export function savesEnabled(params: URLSearchParams, automated = false): boolean {
   if (params.get("resume") === "0") return false;

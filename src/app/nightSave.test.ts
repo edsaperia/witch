@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { NightAutosave, savedNight, savesEnabled, type NightStore, type SavedNight } from "./nightSave";
+import { nightHasStarted, NightAutosave, savedNight, savesEnabled, type NightStore, type SavedNight } from "./nightSave";
+import { newGame, stepGame, STEP } from "../rules/game";
+import { TUNING } from "../rules/tuning";
+import { wakeInBedroom } from "../rules/opening";
+import { startWake, WAKE_DEFAULT } from "../rules/wakeUp";
 
 const saved = (): SavedNight => ({ version: 1, build: "test", at: 123, params: "seed=123&island=wolf&world=42", look: null, loan: null,
   flags: { chartRecorded: false, overRecorded: false }, settingsBase: { voices: {}, shake: 1, legendFlash: 1 }, game: { version: 1, seed: 123, tuning: {} as never, state: { root: null, nodes: [] } } });
@@ -10,6 +14,29 @@ const memory = () => {
 };
 
 describe("resumable night storage", () => {
+  it("doesn't offer a new night until she gets out of bed, even with the loading card hidden", async () => {
+    const tuning = structuredClone(TUNING); tuning.map!.islandAreas = 10;
+    const game = newGame(123, tuning), store = memory();
+    expect(wakeInBedroom(game)).toBe(true);
+    expect(startWake(game, game.herTime, {})).toBe(true);
+    game.clock.paused = false;
+    const a = new NightAutosave(store, () => nightHasStarted(game, true) ? saved() : null, () => {});
+    const idle = { moveX: 0, moveZ: 0, zoom: 0, toggleMode: false };
+    for (let i = 0; i < Math.ceil(6 / STEP); i++) stepGame(game, idle, STEP);
+    expect(game.wake!.beat).toBe("alarm");
+    expect(await a.save(6000, true)).toBe(false);
+    expect(await store.read()).toBeUndefined();
+    stepGame(game, { ...idle, moveX: 1 }, STEP);
+    expect(game.wake!.beat).toBe("stretch");
+    expect(await a.save(6001, true)).toBe(false);
+    for (let i = 0; i < Math.ceil((WAKE_DEFAULT.stretch + 0.1) / STEP); i++) stepGame(game, idle, STEP);
+    expect(game.wake!.open).toBe(true);
+    expect(await a.save(10000, true)).toBe(true);
+    expect(await store.read()).toBeDefined();
+    expect(nightHasStarted({}, false)).toBe(false); // the old start card still gates its night
+    expect(nightHasStarted({}, true)).toBe(true); // the old opening has no wake-up
+    await a.clear(); expect(await store.read()).toBeUndefined();
+  });
   it("keeps build and explicit night identity; a plain game link can resume a later island", () => {
     const n = saved();
     expect(savedNight(n, "test", new URLSearchParams())).toBe(n);
