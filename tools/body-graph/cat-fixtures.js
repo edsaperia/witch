@@ -14,6 +14,15 @@ export function catCaptureGenome(base) {
   if (!CAT_CAPTURE_IDS.includes(base.id)) throw new Error(`Not a cat fixture: ${base.id}`);
   const options = base.id === "cat" ? { head: { earShape: "triangle", earRoot: [.15, -.06, .15], earAngle: [0, .5], earNormal: [1, .35, .15], earDepth: .8, earDimensions: { height: 1.15, width: 1.15 }, skullY: .9, skullZ: 1.2, jowl: 1.3 } } : {};
   const out = felineGraphGenome(base, options);
+  if (base.id === "cheetah") {
+    // Keep this legend's existing wind flames on their established rest shape.
+    // The experimental bend moves skin under separately anchored effect planes,
+    // detaching a flame in frame 0. Shared graph stays enabled; animated effect
+    // attachment is unfinished, so do not imply this legend has the new gait.
+    out.levels ??= {};
+    const legend = out.levels[3] ?? {};
+    out.levels[3] = { ...legend, body: { ...legend.body, graph: { ...out.body.graph, flex: 0 } } };
+  }
   if (base.id === "cat") {
     // Coordinator 6514776348: freeze the cub on Current until the adult is
     // settled. Nulls explicitly undo the diagnostic's inherited controls.

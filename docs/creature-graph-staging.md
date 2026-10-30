@@ -338,12 +338,29 @@ publish only through `tools/shots/push.mjs` under `previews/ed/creature-graph/ca
 
 ## Family score history
 
-- Cats: iteration 1, unscored; graph torso/ears/region markings implemented, cloud comparison and independent likeness review pending.
+- Cats: iteration 6. Sand-cat adult kept default-off at L3.5/R3.5 over Current L2/R3, baby at pixel parity; no more sand-cat iteration. Snow leopard L4/R4 at iteration 4. Other cats retain earlier scores; family/gait work unfinished. Full seven-sheet cats-6b cloud publication remains required.
 - Bears: iteration 0, unscored; awaiting cat iteration and family comparison.
 - Deer: iteration 0, unscored; awaiting preceding family iterations.
 - Canids: iteration 0, unscored; awaiting preceding family iterations.
 
 ## Deferred work and trigger
+
+Cats-6 ruling (6515251528, review 6515240240): this is a sand cat, so the
+ordinary-cat Current L4 reference does not apply. Keep the accepted candidate
+default-off and stop iterating it. Notes for Ed: ears remain somewhat upright
+and domestic-sized, one hidden in away, neither reading in top. Local geometry
+visibility tests did not establish those visual readings.
+
+The seven-sheet run stopped on the cheetah legend: a new 1,128px detached
+component, all MAGIC/MAGIC2, at [244,48]–[272,112]. Its CPU component mask
+identifies it as the first wind-flame wisp, not a body piece. The experimental
+torso bend moves skin under separately anchored effect planes. The narrow fix
+keeps only this legend's graph on its established rest shape
+(`levels[3].body.graph.flex:0`), with the shared graph still enabled. This does
+not claim a new gait for that legend. Re-enable bending only when moving effect
+attachment passes the unchanged paired guard. No guard tolerance or material
+exclusion changes; sand-cat data stays fixed. The nearby test compares both
+towards frames against the same Current cells; cloud capture covers all facings.
 
 The coordinator confirmed bear/wolf/stag, then bat/snail/hydra, compared against
 their current in-game art. Family implementation may proceed under default-off
