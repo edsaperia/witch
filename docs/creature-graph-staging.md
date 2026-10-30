@@ -184,6 +184,17 @@ no new rotation/position controls were added. All new fields remain absent
 from fixtures and production records. The original painter byte hash remains
 unchanged; filled endpoints/share and composable falloffs have nearby tests.
 
+Optional jaguar centre dots (6514884453): `centreDotRadius` is a fraction of
+the ring's inner radius, in [0,1); zero disables the dot. `centreDotMat` accepts
+a material name or integer palette index 1–63; omitted material uses the ring's
+`mat` (default BODY3). Dot size shares the existing seeded cell centre and
+size-variation scale. The annulus between dot and inner ring edge retains
+`centreMat` or the base coat, so a valid dot cannot touch the ring. Filled cells
+remain solid and take precedence over the dot. No fixture enables these fields;
+absent/zero radius retains the pre-change painter byte hash. Nearby tests cover
+named/index materials, the clear gap, deterministic variable sizes and invalid
+radius/material bounds.
+
 Connectedness tests caught thin-profile gaps and inverted legacy baby loaf
 depths. The graph inserts interpolated stations to preserve its connectivity
 invariant; it normalises non-positive legacy vertical radii and records their

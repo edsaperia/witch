@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { regionMarking, wrappedRosette, rosetteCellVariation, rosetteDensityMultiplier } from "../art/body-graph/quadruped.js";
+import { regionMarking, wrappedRosette, rosetteCellVariation, rosetteDensityMultiplier, rosetteCentreMaterial } from "../art/body-graph/quadruped.js";
 import { M } from "../art/core.js";
 
 function painterBytes(extra = {}) {
@@ -22,6 +22,23 @@ describe("seeded regional rosette variation", () => {
     expect(digest(painterBytes())).toBe("e765eff27ef822a0f0a2deabb00692d626a9d32a48bb370cc4021eb691463e91");
     expect(digest(painterBytes({ sizeVariation: 0, closedFraction: 0, filledFraction: 0, gapRange: [.4, .4] }))).toBe(digest(painterBytes()));
     expect(digest(painterBytes({ densityFalloff: { axis:"x",from:0,to:1,min:1 } }))).toBe(digest(painterBytes()));
+    expect(digest(painterBytes({ centreDotRadius:0 }))).toBe(digest(painterBytes()));
+  });
+  it("keeps centre dots separated from the ring and accepts material names or indices",()=>{
+    const definition={inner:.2,centreDotRadius:.5,centreDotMat:"NOSE",centreMat:"BODYL"};
+    expect(rosetteCentreMaterial(.05,definition)).toBe(M.NOSE);
+    expect(rosetteCentreMaterial(.05,{...definition,centreDotMat:M.NOSE})).toBe(M.NOSE);
+    expect(rosetteCentreMaterial(.15,definition)).toBe(M.BODYL);
+    expect(rosetteCentreMaterial(.2,definition)).toBe(M.BODYL);
+    expect(rosetteCentreMaterial(.1999,{...definition,centreDotRadius:.99})).toBe(M.BODYL);
+    expect(rosetteCentreMaterial(.15,{...definition,centreMat:undefined})).toBe(null);
+    const options={centreDotRadius:.5,centreDotMat:"NOSE",sizeVariation:.15};
+    const bytes=painterBytes(options);
+    expect(bytes.filter((v,i)=>i%2===0&&v===M.NOSE).length).toBeGreaterThan(0);
+    expect(digest(bytes)).toBe(digest(painterBytes(options)));
+    expect(painterBytes({...options,filledFraction:1}).filter((v,i)=>i%2===0&&v===M.NOSE)).toHaveLength(0);
+    for(const radius of [-.1,1,NaN])expect(()=>rosetteCentreMaterial(0,{centreDotRadius:radius})).toThrow(/centreDotRadius/);
+    for(const mat of ["missing",0,64,1.5])expect(()=>rosetteCentreMaterial(0,{centreDotRadius:.5,centreDotMat:mat})).toThrow(/centreDotMat/);
   });
   it("fills a stable share of complete cells with solid ink rather than pale centres", () => {
     let filled=0;

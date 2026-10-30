@@ -136,6 +136,19 @@ export function wrappedRosette(p, options, bounds) {
   return !!cell && cell.d > (options.inner ?? .18) && cell.d < (options.outer ?? .4) && Math.sin(cell.angle * 3 + cell.phase) > -.65;
 }
 
+export function rosetteCentreMaterial(d, definition) {
+  if (definition.centreDotRadius !== undefined) {
+    const fraction = definition.centreDotRadius;
+    if (!Number.isFinite(fraction) || fraction < 0 || fraction >= 1) throw new Error("Rosette centreDotRadius must be in [0,1)");
+    if (fraction > 0 && d < (definition.inner ?? .18) * fraction) {
+      const value = definition.centreDotMat ?? definition.mat ?? "BODY3", mat = typeof value === "string" ? M[value] : value;
+      if (!Number.isInteger(mat) || mat <= 0 || mat >= 64) throw new Error("Rosette centreDotMat must name a material or palette index 1..63");
+      return mat;
+    }
+  }
+  return definition.centreMat ? M[definition.centreMat] ?? null : null;
+}
+
 // Null means the region's base coat. Defining a region replaces its older
 // all-body pattern, so torso rings cannot leak onto a head or the lower legs.
 /** @param {{centreY:number,depth:number,width:number,bellyY:number,len?:number,pixelsPerUnit?:number|null}|null} [bounds] */
@@ -147,11 +160,11 @@ export function regionMarking(p, definition, bounds = null) {
     if (definition.sizeVariation !== undefined || definition.closedFraction !== undefined || definition.gapRange !== undefined || definition.filledFraction !== undefined) {
       const variation = rosetteCellVariation(definition, cell.phase, cell.seam), d = cell.d / variation.scale;
       if (variation.filled) return d < (definition.outer ?? .4) ? M[definition.mat || "BODY3"] ?? M.BODY3 : null;
-      if (d <= (definition.inner ?? .18)) return definition.centreMat ? M[definition.centreMat] ?? null : null;
+      if (d <= (definition.inner ?? .18)) return rosetteCentreMaterial(d, definition);
       const outsideGap = variation.closed || Math.cos(cell.angle - cell.rotation) < Math.cos(variation.gap);
       return d < (definition.outer ?? .4) && outsideGap ? M[definition.mat || "BODY3"] ?? M.BODY3 : null;
     }
-    if (cell.d <= (definition.inner ?? .18)) return definition.centreMat ? M[definition.centreMat] ?? null : null;
+    if (cell.d <= (definition.inner ?? .18)) return rosetteCentreMaterial(cell.d, definition);
     const outsideGap = Math.cos(cell.angle - cell.rotation) < Math.cos(definition.gap ?? .4);
     return cell.d < (definition.outer ?? .4) && outsideGap ? M[definition.mat || "BODY3"] ?? M.BODY3 : null;
   }
