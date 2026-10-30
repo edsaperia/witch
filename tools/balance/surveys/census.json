@@ -1,0 +1,459 @@
+{
+  "version": "wide-shallow-v1",
+  "catalogueHash": "0b5b3c75583b7c0523b2515f23f680998087e19b4ee55ae87db2870ecaf85db7",
+  "maps": [
+    {
+      "mapIndex": 0,
+      "world": 910000,
+      "seed": 79191000
+    },
+    {
+      "mapIndex": 1,
+      "world": 910001,
+      "seed": 79198919
+    },
+    {
+      "mapIndex": 2,
+      "world": 910002,
+      "seed": 79206838
+    },
+    {
+      "mapIndex": 3,
+      "world": 910003,
+      "seed": 79214757
+    },
+    {
+      "mapIndex": 4,
+      "world": 910004,
+      "seed": 79222676
+    }
+  ],
+  "runCapPlayerSeconds": 4200,
+  "fixtureCapPlayerSeconds": 60,
+  "fixedStep": 0.016666666666666666,
+  "commonLoadout": {
+    "id": "plain",
+    "bag": "satchel",
+    "hat": "none",
+    "parts": []
+  },
+  "knowledgeProfile": "natural exact rank; rank 3 sampled from home-everything boss roster, absent species/rank explicitly unsupported",
+  "ownedFinds": {},
+  "equipmentOwnership": "virtual equipped benchmark gear; same empty-owned find pool in every cell, not a natural campaign inventory",
+  "legacyOptions": "newBot(kind,{bag}); unchanged default policy; no quest capability inferred from its score",
+  "gate": "expert trained; cloud execution only; coordinator allocates runners",
+  "evaluationReservation": [
+    {
+      "mapIndex": 0,
+      "world": 910000,
+      "seed": 79191000
+    },
+    {
+      "mapIndex": 1,
+      "world": 910001,
+      "seed": 79198919
+    },
+    {
+      "mapIndex": 2,
+      "world": 910002,
+      "seed": 79206838
+    },
+    {
+      "mapIndex": 3,
+      "world": 910003,
+      "seed": 79214757
+    },
+    {
+      "mapIndex": 4,
+      "world": 910004,
+      "seed": 79222676
+    },
+    {
+      "mapIndex": 5,
+      "world": 910005,
+      "seed": 79230595
+    },
+    {
+      "mapIndex": 6,
+      "world": 910006,
+      "seed": 79238514
+    },
+    {
+      "mapIndex": 7,
+      "world": 910007,
+      "seed": 79246433
+    },
+    {
+      "mapIndex": 8,
+      "world": 910008,
+      "seed": 79254352
+    },
+    {
+      "mapIndex": 9,
+      "world": 910009,
+      "seed": 79262271
+    },
+    {
+      "mapIndex": 10,
+      "world": 910010,
+      "seed": 79270190
+    },
+    {
+      "mapIndex": 11,
+      "world": 910011,
+      "seed": 79278109
+    },
+    {
+      "mapIndex": 12,
+      "world": 910012,
+      "seed": 79286028
+    },
+    {
+      "mapIndex": 13,
+      "world": 910013,
+      "seed": 79293947
+    },
+    {
+      "mapIndex": 14,
+      "world": 910014,
+      "seed": 79301866
+    },
+    {
+      "mapIndex": 15,
+      "world": 910015,
+      "seed": 79309785
+    },
+    {
+      "mapIndex": 16,
+      "world": 910016,
+      "seed": 79317704
+    },
+    {
+      "mapIndex": 17,
+      "world": 910017,
+      "seed": 79325623
+    },
+    {
+      "mapIndex": 18,
+      "world": 910018,
+      "seed": 79333542
+    },
+    {
+      "mapIndex": 19,
+      "world": 910019,
+      "seed": 79341461
+    },
+    {
+      "mapIndex": 20,
+      "world": 910020,
+      "seed": 79349380
+    },
+    {
+      "mapIndex": 21,
+      "world": 910021,
+      "seed": 79357299
+    },
+    {
+      "mapIndex": 22,
+      "world": 910022,
+      "seed": 79365218
+    },
+    {
+      "mapIndex": 23,
+      "world": 910023,
+      "seed": 79373137
+    },
+    {
+      "mapIndex": 24,
+      "world": 910024,
+      "seed": 79381056
+    },
+    {
+      "mapIndex": 25,
+      "world": 910025,
+      "seed": 79388975
+    },
+    {
+      "mapIndex": 26,
+      "world": 910026,
+      "seed": 79396894
+    },
+    {
+      "mapIndex": 27,
+      "world": 910027,
+      "seed": 79404813
+    },
+    {
+      "mapIndex": 28,
+      "world": 910028,
+      "seed": 79412732
+    },
+    {
+      "mapIndex": 29,
+      "world": 910029,
+      "seed": 79420651
+    }
+  ],
+  "evaluationRole": "excluded from first search; reusable as second-search feedback; NEVER final expert held-out scores",
+  "requiredAdapter": "tools/balance/expert-contract.mjs",
+  "outcomes": {
+    "run": {
+      "won": "game win.wonAt recorded",
+      "lost": "partyOver recorded",
+      "censored": "cap reached without either terminal event"
+    },
+    "progression": "quests completed/total; permanentFind available/found/kept, kept null while retention unresolved; kept means awarded by night outcome, not app persistence",
+    "fixture": "eventObserved or right-censored at cap; eligibility separate, progression N/A, never invent a win for witch knockout",
+    "errors": "failed or explicitly unsupported cells, never losses or censored observations"
+  },
+  "islandPhases": {
+    "home": 0,
+    "hedgehog": 1,
+    "squirrel": 1,
+    "hare": 1,
+    "fox": 1,
+    "marten": 1,
+    "stoat": 1,
+    "mole": 1,
+    "snail": 1,
+    "dormouse": 1,
+    "badger": 1,
+    "beetle": 4,
+    "boar": 2,
+    "otter": 3,
+    "heron": 3,
+    "newt": 2,
+    "woodlouse": 4,
+    "moth": 2,
+    "bat": 3,
+    "toad": 2,
+    "raven": 3,
+    "elk": 3,
+    "wolf": 3,
+    "lynx": 3,
+    "ram": 3,
+    "salamander": 3,
+    "spider": 3,
+    "snake": 3,
+    "cat": 3,
+    "stag": 2,
+    "beaver": 2,
+    "bear": 5,
+    "owl": 3,
+    "arcticfox": 4,
+    "ibex": 4,
+    "redpanda": 4,
+    "komodo": 5,
+    "meerkat": 3,
+    "armadillo": 4,
+    "fennec": 3,
+    "lion": 4,
+    "crocodile": 4,
+    "dragonfly": 4,
+    "tiger": 4,
+    "flyingsquirrel": 4,
+    "roe": 4,
+    "penguin": 4,
+    "frosttroll": 5,
+    "snowleopard": 5,
+    "frostwyrm": 5,
+    "griffin": 5,
+    "sphinx": 5,
+    "stegosaurus": 5,
+    "rattlesnake": 4,
+    "scorpion": 5,
+    "rhino": 5,
+    "cheetah": 4,
+    "hydra": 5,
+    "crab": 5,
+    "featheredserpent": 5,
+    "elephant": 5,
+    "jaguar": 4,
+    "raccoon": 3,
+    "unicorn": 5,
+    "polarbear": 5
+  },
+  "deepeningRule": {
+    "mapsLowSpread": 3,
+    "mapsHighSpread": 5,
+    "mapLuckLowSpread": 10,
+    "mapLuckHighSpread": 30,
+    "questFractionRange": 0.25,
+    "durationRelativeRange": 0.25,
+    "equipmentRelativeTime": 0.25,
+    "censusTimeRatio": 2
+  },
+  "id": "census",
+  "islands": [
+    "home",
+    "hedgehog",
+    "squirrel",
+    "hare",
+    "fox",
+    "marten",
+    "stoat",
+    "mole",
+    "snail",
+    "dormouse",
+    "badger",
+    "beetle",
+    "boar",
+    "otter",
+    "heron",
+    "newt",
+    "woodlouse",
+    "moth",
+    "bat",
+    "toad",
+    "raven",
+    "elk",
+    "wolf",
+    "lynx",
+    "ram",
+    "salamander",
+    "spider",
+    "snake",
+    "cat",
+    "stag",
+    "beaver",
+    "bear",
+    "owl",
+    "arcticfox",
+    "ibex",
+    "redpanda",
+    "komodo",
+    "meerkat",
+    "armadillo",
+    "fennec",
+    "lion",
+    "crocodile",
+    "dragonfly",
+    "tiger",
+    "flyingsquirrel",
+    "roe",
+    "penguin",
+    "frosttroll",
+    "snowleopard",
+    "frostwyrm",
+    "griffin",
+    "sphinx",
+    "stegosaurus",
+    "rattlesnake",
+    "scorpion",
+    "rhino",
+    "cheetah",
+    "hydra",
+    "crab",
+    "featheredserpent",
+    "elephant",
+    "jaguar",
+    "raccoon",
+    "unicorn",
+    "polarbear"
+  ],
+  "islandSelection": "rank 0–2: species' own island, matched; rank 3: home, home-everything",
+  "bots": [],
+  "bpms": [
+    120
+  ],
+  "species": [
+    "arcticfox",
+    "armadillo",
+    "badger",
+    "bat",
+    "bear",
+    "beaver",
+    "beetle",
+    "boar",
+    "cat",
+    "cheetah",
+    "crab",
+    "crocodile",
+    "dormouse",
+    "dragonfly",
+    "elephant",
+    "elk",
+    "featheredserpent",
+    "fennec",
+    "flyingsquirrel",
+    "fox",
+    "frosttroll",
+    "frostwyrm",
+    "griffin",
+    "hare",
+    "hedgehog",
+    "heron",
+    "hydra",
+    "ibex",
+    "jaguar",
+    "komodo",
+    "lion",
+    "lynx",
+    "marten",
+    "meerkat",
+    "mole",
+    "moth",
+    "newt",
+    "otter",
+    "owl",
+    "penguin",
+    "polarbear",
+    "raccoon",
+    "ram",
+    "rattlesnake",
+    "raven",
+    "redpanda",
+    "rhino",
+    "roe",
+    "salamander",
+    "scorpion",
+    "snail",
+    "snake",
+    "snowleopard",
+    "sphinx",
+    "spider",
+    "squirrel",
+    "stag",
+    "stegosaurus",
+    "stoat",
+    "tiger",
+    "toad",
+    "unicorn",
+    "wolf",
+    "woodlouse"
+  ],
+  "levels": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "bags": [
+    "satchel",
+    "bumbag",
+    "purse",
+    "tote",
+    "duffel",
+    "briefcase",
+    "clutch",
+    "messenger",
+    "backpack"
+  ],
+  "fixtures": [
+    "invitation-stun-protected",
+    "witch-knockdown-unprotected"
+  ],
+  "shardKind": "species",
+  "trueLegend": "rank 3 uses a real boss with documented awake/hostile state, not a non-boss with level overwritten",
+  "runtimeEstimate": {
+    "requestedCells": 12800,
+    "shards": 64,
+    "basis": "12 paired preflight runs: 12294.9167 player seconds / 463.5 wall seconds = 26.5262x; wall is a one-busy-core reservation proxy, not measured CPU time",
+    "secondsPerCellBase": 6,
+    "secondsPerCellContingency": 12,
+    "startupSecondsPerShard": 60,
+    "oneCoreHoursBase": 22.4,
+    "oneCoreHoursContingency": 43.733333333333334,
+    "fixtureCaveat": "No new fixture timing run: cap-normalised throughput plus unmeasured map/setup allowance; recalibrate on first cloud shard after expert training"
+  }
+}

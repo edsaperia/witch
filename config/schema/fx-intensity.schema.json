@@ -1,0 +1,19 @@
+{
+  "type": "object", "additionalProperties": false,
+  "required": ["levels", "size", "halo", "secondaryAt", "lightCap", "lightEase", "lightReach", "lightStrength", "fieldSize", "fieldMetres", "imprintSeconds", "pool", "instances"],
+  "properties": {
+    "levels": { "type": "array", "minItems": 4, "maxItems": 4, "items": { "type": "number", "minimum": 0, "maximum": 1 } },
+    "size": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "number", "minimum": 0.1, "maximum": 5 } },
+    "halo": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "number", "minimum": 0, "maximum": 0.3 } },
+    "secondaryAt": { "type": "number", "minimum": 0, "maximum": 1 },
+    "lightCap": { "type": "number", "minimum": 0, "maximum": 6 },
+    "lightEase": { "type": "number", "minimum": 0.15, "maximum": 1 },
+    "lightReach": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "number", "minimum": 0, "maximum": 50 } },
+    "lightStrength": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "number", "minimum": 0, "maximum": 1 } },
+    "fieldSize": { "type": "number", "enum": [128] },
+    "fieldMetres": { "type": "number", "minimum": 100, "maximum": 400 },
+    "imprintSeconds": { "type": "number", "minimum": 0.5, "maximum": 8 },
+    "pool": { "type": "number", "minimum": 1, "maximum": 256 },
+    "instances": { "type": "number", "minimum": 64, "maximum": 2048 }
+  }
+}
