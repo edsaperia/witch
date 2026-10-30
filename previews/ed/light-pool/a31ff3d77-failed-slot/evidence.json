@@ -1,0 +1,153 @@
+{
+  "sha": "a31ff3d77423a20bb3bd505502173ce882f2e50f",
+  "grant": "6524151067",
+  "frames": [
+    {
+      "name": "beetle-L0-centre",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.15,
+        "x": 3197.417211059279,
+        "z": 3106.559326444441
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true
+    },
+    {
+      "name": "beetle-L0-edge",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.85,
+        "x": 3228.510478873942,
+        "z": 3106.559326444441
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true
+    },
+    {
+      "name": "beetle-L0-outside",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 1.25,
+        "x": 3246.2780604823206,
+        "z": 3106.559326444441
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true
+    },
+    {
+      "name": "beetle-L1-centre",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.15,
+        "x": 3197.417211059279,
+        "z": 3106.559326444441
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true
+    },
+    {
+      "name": "beetle-L1-edge",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.85,
+        "x": 3228.510478873942,
+        "z": 3106.559326444441
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true
+    },
+    {
+      "name": "beetle-L1-outside",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 1.25,
+        "x": 3246.2780604823206,
+        "z": 3106.559326444441
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true
+    },
+    {
+      "name": "beetle-L2-centre",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.15,
+        "x": 3197.417211059279,
+        "z": 3106.559326444441
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true
+    },
+    {
+      "name": "beetle-L2-edge",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.85,
+        "x": 3228.510478873942,
+        "z": 3106.559326444441
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true
+    },
+    {
+      "name": "beetle-L2-outside",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 1.25,
+        "x": 3246.2780604823206,
+        "z": 3106.559326444441
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true
+    },
+    {
+      "name": "blackjaguar-L2-centre",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.15,
+        "x": 3197.417211059279,
+        "z": 3106.559326444441
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true
+    }
+  ],
+  "errors": [],
+  "complete": false,
+  "served": {
+    "version": "dev · a31ff3d",
+    "built": "2026-10-30T13:01:20.434Z"
+  },
+  "failure": "Error: page.evaluate: TypeError: Cannot read properties of undefined (reading 'hue')\n    at Fw (http://127.0.0.1:50570/assets/finds-CV3ckrmc.js:1:470675)\n    at jI (http://127.0.0.1:50570/assets/finds-CV3ckrmc.js:1:470021)\n    at yo (http://127.0.0.1:50570/assets/mapPrep-DLlkKgOo.js:279:128941)\n    at q2 (http://127.0.0.1:50570/assets/mapPrep-DLlkKgOo.js:279:141701)\n    at wG.work (http://127.0.0.1:50570/assets/main-CXKyfcu9.js:375:30641)\n    at KJ (http://127.0.0.1:50570/assets/main-CXKyfcu9.js:2760:81971)\n    at Gu.render (http://127.0.0.1:50570/assets/main-CXKyfcu9.js:2762:48069)\n    at Object.frame (http://127.0.0.1:50570/assets/main-CXKyfcu9.js:3050:15785)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:29)\n    at UtilityScript.evaluate (<anonymous>:313:16)"
+}
