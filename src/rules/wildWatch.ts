@@ -31,12 +31,12 @@ export function stepWildWatch(g: Game, t: Tuning): void {
   const W = t.wildWatch, time = g.clock.time;
   if (!W?.on) { if (g.wildEntry.size) g.wildEntry.clear(); return; }
   const home = cellKey(g.map.centreCell);
-  let here: string | null = null, here2: string | null = null; // (the areas a witch is on the ground in this step: one or two players)
+  const here = new Set<string>(); // (every occupied area, including three witches on separate islands)
   for (const w of g.witches) {
     if (w.body.mode !== "ground" || w.body.seated || w.body.perch || w.ko) continue; // (up on the treehouse deck: not in any area)
-    if (stealthed(w.spells, g.herTime)) continue; // (her Stealth broom: unseen, nothing notices her; rules/brooms.ts)
+    if (stealthed(w.spells, w.time ?? g.herTime)) continue; // (her Stealth broom: unseen, nothing notices her; rules/brooms.ts)
     const k = cellKey(areaCellAt(g.map, w.body.x, w.body.z)), e = g.wildEntry.get(k);
-    if (here === null) here = k; else here2 = k;
+    here.add(k);
     if (e) { e.last = time; continue; }
     if (k === home || g.party.areas.has(k) || g.friendly.has(k)) continue;
     let F = 0;
@@ -45,7 +45,7 @@ export function stepWildWatch(g: Game, t: Tuning): void {
   }
   for (const [k, e] of g.wildEntry) {
     // Left before they've made up their minds: they settle back down (Ed: "have time to run away").
-    if (time < e.until && k !== here && k !== here2) {
+    if (time < e.until && !here.has(k)) {
       for (const c of g.creatures) if (c.watchUntil !== undefined && c.watchUntil > time && cellKey(c.cell) === k) c.watchUntil = undefined;
       g.wildEntry.delete(k);
     } else if (time - e.last > W.forget) g.wildEntry.delete(k);

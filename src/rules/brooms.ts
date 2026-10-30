@@ -64,4 +64,4 @@ export function groundPound(g: Game, W: Witch, t: Tuning): boolean {
 }
 
 /** Stealth: whether witch i is hidden from the wild now (her Stealth broom, and nothing she did lately has given her away). */
-export const hiddenWitch = (g: Game, i: number): boolean => { const W = g.witches[i]; return !!W && stealthed(W.spells, g.herTime); };
+export const hiddenWitch = (g: Game, i: number): boolean => { const W = g.witches[i]; return !!W && stealthed(W.spells, W.time ?? g.herTime); };
