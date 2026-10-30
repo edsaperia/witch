@@ -14,7 +14,7 @@ describe("shared CI game build", () => {
   it("has every built-game consumer download the one artifact", () => {
     const upload = jobs.build.steps.find((s: any) => s.uses === "actions/upload-artifact@v4");
     expect(upload.with).toMatchObject({ name: "game-dist", path: "dist", "if-no-files-found": "error" });
-    for (const [job, dest] of [["smoke", "dist"], ["deploy", "dist"], ["game-unchanged", "head/dist"]]) {
+    for (const [job, dest] of [["smoke", "dist"], ["large-world", "dist"], ["deploy", "dist"], ["game-unchanged", "head/dist"]]) {
       expect(jobs[job].needs).toContain("build");
       expect(jobs[job].steps.find((s: any) => s.uses === "actions/download-artifact@v4").with).toEqual({ name: "game-dist", path: dest });
     }
@@ -46,5 +46,10 @@ describe("shared CI game build", () => {
     const art = workflow("art-check");
     expect(art.jobs.art.steps.some((s: any) => /npm run build/.test(s.run ?? ""))).toBe(false);
     expect(art.jobs.art.needs).toBeUndefined();
+  });
+  it("keeps real largest-world drawing coverage separate from small unit worlds", () => {
+    expect(jobs["large-world"].steps.some((s: any) => s.run?.includes("tools/smoke/large-world.cjs"))).toBe(true);
+    expect(jobs["large-world"].steps.find((s: any) => s.uses === "actions/download-artifact@v4").with.name).toBe("game-dist");
+    expect(jobs["large-world"]["timeout-minutes"]).toBe(20);
   });
 });

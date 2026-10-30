@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { bootSpeaker, newGame } from "../../rules/game";
+import { bootSpeaker, newGame as fullGame } from "../../rules/game";
+import { smallWorld } from "../../test/worlds";
+const newGame = smallWorld(fullGame, "Local cue routing and injected nearby events require a few actors, not a full island.");
 import { TUNING } from "../../rules/tuning";
 import type { Sfx } from "./sfx";
 import { SfxCues } from "./sfxCues";

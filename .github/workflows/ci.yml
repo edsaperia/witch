@@ -191,6 +191,40 @@ jobs:
       - build
       - deploy
     if: ${{ always() && needs.build.result == 'success' && (github.ref != 'refs/heads/main' || needs.deploy.result == 'success') }}
+  large-world:
+    name: largest shipped world art
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [build, deploy]
+    if: ${{ always() && needs.build.result == 'success' && (github.ref != 'refs/heads/main' || needs.deploy.result == 'success') }}
+    env:
+      PLAYWRIGHT_VERSION: 1.56.1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: game-dist
+          path: dist
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ env.PLAYWRIGHT_VERSION }}
+      - run: npm install --prefix .pw --no-save --no-package-lock playwright@${{ env.PLAYWRIGHT_VERSION }}
+      - run: .pw/node_modules/.bin/playwright install --with-deps chromium
+      - name: Load and draw diverse art on the largest shipped world
+        run: NODE_PATH=$PWD/.pw/node_modules node tools/smoke/large-world.cjs
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: largest-world-art
+          path: large-world/evidence.json
+          if-no-files-found: ignore
+          retention-days: 14
   game-unchanged:
     name: game unchanged (bench:quick)
     runs-on: ubuntu-latest

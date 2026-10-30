@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { newGame } from "../../rules/game";
+import { newGame as fullGame } from "../../rules/game";
+import { smallWorld } from "../../test/worlds";
+const newGame = smallWorld(fullGame, "Pulse-tip sound attenuation is measured over local distances, independent of total area count.");
 import { leyPulse } from "../../rules/leypulse";
 import { TUNING } from "../../rules/tuning";
 import type { Sfx } from "./sfx";
