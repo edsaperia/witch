@@ -50,13 +50,15 @@ Members: sand cat, cheetah, black jaguar, lion, lynx, snow leopard, tiger. Use o
 
 Known model request: ear root position/angle independent of ear size, and rosette placement that remains natural across flank/top views. Do not enlarge a face or crest to beat another cat's silhouette score. Current/proposed snow leopard preset is the first concrete marking target; other cat items are inspection targets, not silently implemented changes.
 
-Score history: **baseline unscored → candidate 1 speckle → candidate 2 still flecks (Victor) → candidate 3 better grey/head-leg spots but small mottling (Victor) → native-ring candidate 4 pending; numeric all-roster scores pending.**
+Score history: **baseline unscored → candidate 1 speckle → candidate 2 still flecks (Victor) → candidate 3 better grey/head-leg spots but small mottling (Victor) → native-ring candidate 4 about 3/5 → candidate 5 at d20d84874 3.5/5 (Victor 6514454837); numeric all-roster scores pending.**
 
 ### Bears — second iteration target
 
 Members: black bear, polar bear. Shared plantigrade bear body and flat feet. Black bear: straight back without shoulder hump, prominent ears, tan muzzle; retain dark variant. Polar bear: longer neck, small ears, broad paws, white coat; existing neck/head differentiation is useful. Do not use a generic huge hump to differentiate them. Preserve original elder story anatomy pending review. Walking target: weight on flat soles, not canine raised heels. First preset removes ordinary black-bear hump. Reference: NPS above; exact polar-bear proportion changes await reference/visual review.
 
 Score history: **baseline unscored → candidate 1 source correction applies but visible effect slight; independent scores/graph iteration pending.**
+
+Victor iteration 5 (6514454837): beetle remains 3.5/5, unchanged from its prior reviewed candidate. Coordinator 6514458416 stops jaw/tooth pixel chasing and asks for paint-only night readability plus an elder hue nudge. The next staged batch raises ordinary wing-case material values (baby separately), warms the elder case and reduces underside red contrast; it does not thin geometry or add lighting. Young snow-leopard torso rings grow from 6 to 7 native pixels with density .7; head/leg spots become slightly larger and darker to test away-view readability. These are unrendered proposals until the next cloud review. The shared marking painter already has seeded per-cell rotation and modest position jitter; further lattice breakup, filled spots and density falloff are routed to #1470 via 6514506299. No shared engine edits here. Preserve the night blue-light ruling. If the next review gains less than half a point, park these two and move to the next family.
 
 ### Deer — third iteration target
 
