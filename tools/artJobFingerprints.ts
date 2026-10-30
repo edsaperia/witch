@@ -100,6 +100,10 @@ export function artJobFingerprints(tree: SourceTree, options: ArtFingerprintOpti
     return m;
   };
   const fullCache = new Map<string, string[]>();
+  const declarationText = (node: ts.Node, ast: ts.SourceFile): string =>
+    ts.isVariableDeclaration(node) && ts.isVariableDeclarationList(node.parent)
+      ? `declaration-flags:${node.parent.flags}:` + node.getText(ast)
+      : node.getText(ast);
   const inputPart = (file: string): string => {
     const bytes = Buffer.from(tree.read(file));
     return /\.(?:[cm]?[jt]sx?|json)$/.test(file) ? "text:" + bytes.toString("utf8").replaceAll("\r\n", "\n") : "binary:" + bytes.toString("base64");
@@ -134,7 +138,7 @@ export function artJobFingerprints(tree: SourceTree, options: ArtFingerprintOpti
     if (imported) { visitBinding(imported.file, imported.name, out, seen); return; }
     if (exported && (exported.file !== file || exported.name !== name)) { visitBinding(exported.file, exported.name, out, seen); return; }
     if (definition) {
-      if (initializationContext) initializationParts[file + "#binding:" + name] = { file, source: definition.getText(m.ast) };
+      if (initializationContext) initializationParts[file + "#binding:" + name] = { file, source: declarationText(definition, m.ast) };
       references(file, definition, out, seen); return;
     }
     // Star exports and namespace escapes preserve complete module initialization.
@@ -194,10 +198,10 @@ export function artJobFingerprints(tree: SourceTree, options: ArtFingerprintOpti
       if (ts.isVariableStatement(s)) {
         // Even inert variable declarations can affect an initializer's reads when
         // reordered (notably var hoisting), so retain their relative positions.
-        for (const d of s.declarationList.declarations) order.push("binding:" + names(d.name).join(","));
+        for (const d of s.declarationList.declarations) order.push(`binding-flags:${s.declarationList.flags}:` + names(d.name).join(","));
         for (const d of s.declarationList.declarations) if (d.initializer && !inert(d.initializer)) {
           const key = "init:" + names(d.name).join(",");
-          initializationParts[file + "#" + key] = { file, source: d.getText(m.ast) };
+          initializationParts[file + "#" + key] = { file, source: declarationText(d, m.ast) };
           initialization.add(file); references(file, d.initializer, initialization, initializationSeen);
         }
       } else {

@@ -216,3 +216,10 @@ initialization parts totaling 1,273,097 text bytes before hashing. This is not a
 claim that every such input changes every picture. Historical replay must measure
 the remaining global invalidation rate. Species registries are still conservative;
 there is no species-specific fingerprint table or measured loading-time claim.
+
+Final review added declaration-list flags to shared inputs: var/let/const can
+produce different results in cyclic initialization even if a caught temporal-
+dead-zone read lets both versions complete. The regression fixture is analyzed,
+not executed as art. Typecheck and all 35 nearby tests pass with this guard.
+The full source-history replay is rerun against this corrected source; earlier
+5a175d200 results are superseded, not relabeled as the new implementation.

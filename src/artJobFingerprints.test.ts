@@ -90,6 +90,17 @@ describe("art job dispatcher roots and initialization safety", () => {
     const crlf = Object.fromEntries(Object.entries(s).map(([f, text]) => [f, text.replaceAll("\n", "\r\n")]));
     expect(artJobFingerprints(fixture(crlf), {}, "dispatch.ts").fingerprints).toEqual(before.fingerprints);
   });
+  it("binds declaration kind when a cyclic initializer catches the temporal dead zone", () => {
+    const s: Record<string, string> = sources();
+    s["house.ts"] = "export function house(){return globalThis.frameMode;}";
+    s["creature.ts"] = 'import {probe} from "./probe"; export const registered=probe(); export var frame=1; export function creature(){return frame;}';
+    s["probe.ts"] = 'import {frame} from "./creature"; export function probe(){try{globalThis.frameMode=typeof frame;}catch{globalThis.frameMode="tdz";}return 1;}';
+    const before = artJobFingerprints(fixture(s), {}, "dispatch.ts");
+    s["creature.ts"] = s["creature.ts"].replace("export var frame", "export let frame");
+    const after = artJobFingerprints(fixture(s), {}, "dispatch.ts");
+    expect(after.fingerprints.house).not.toBe(before.fingerprints.house);
+    expect(after.fingerprints.creature).not.toBe(before.fingerprints.creature);
+  });
   it("isolates a real creature drawing-file edit from house and retains shared packing edits", () => {
     const tree = diskTree("."), options = { virtual: { "virtual:art-overrides": [] } };
     const before = artJobFingerprints(tree, options);
