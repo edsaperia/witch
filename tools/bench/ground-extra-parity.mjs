@@ -1,5 +1,6 @@
 // Canonical cloud only: SHARD=0 SHARDS=8 CLOUD_RIG=1 EXPECT_SHA=<head> node tools/bench/ground-extra-parity.mjs <out>
 // Every shard has a13min deadline; all8 shards cover256 extra masks, plain/beach, plus diagnostic and sensitivity controls.
+// DRY_ROW=0 selects one draw comparison from a shard; a dry run is never full-shard/matrix proof.
 import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
@@ -40,8 +41,12 @@ for (const extra of extras) {
 }
 for (const name of ['forced-full', 'zoo-full', 'debug-full']) rows.push({ name, ids: [0, 2], extras, defines: { GROUND_SPECIALIZED: '', ...Object.fromEntries(['WATER', 'ICE', 'LAVA', 'OASIS', 'SINKHOLE', 'TARN', 'TAR', 'RUST', 'LILY'].map(k => [`GROUND_LAKE_${k}`, ''])), ...Object.fromEntries(extras.map(k => [`GROUND_${k}`, ''])) } });
 const selected = rows.filter((_, i) => i % shards === shard);
+const comparisons = selected.flatMap(fixture => [false, true].map(beach => ({ fixture, beach })));
+const dryRow = process.env.DRY_ROW === undefined ? null : Number(process.env.DRY_ROW);
+if (dryRow !== null && (!Number.isInteger(dryRow) || dryRow < 0 || dryRow >= comparisons.length)) throw Error('Invalid dry row');
+const planned = dryRow === null ? comparisons : [comparisons[dryRow]];
 const hash = s => createHash('sha256').update(s.VERT + s.FRAG + (s.BEACH_FRAG ?? '')).digest('hex');
-const report = { sha, baselineSha, shard, shards, baselineSourceHash: hash(baseline), candidateSourceHash: hash(candidate), expectedRows: selected.length * 2, totalMatrixRows: rows.length * 2, rows: [], complete: false };
+const report = { sha, baselineSha, shard, shards, baselineSourceHash: hash(baseline), candidateSourceHash: hash(candidate), expectedRows: planned.length, totalMatrixRows: rows.length * 2, dryRun: dryRow !== null, rows: [], complete: false };
 const save = () => fs.writeFileSync(path.join(out, 'results.json'), JSON.stringify(report, null, 2)); save();
 if (prepareOnly) { report.preparationOnly = true; report.fixtures = selected.map(f => f.name); save(); console.log(JSON.stringify({ preparationOnly: true, shaderBundlesBuilt: true, selectedRows: report.expectedRows, totalMatrixRows: report.totalMatrixRows })); process.exit(0); }
 let pw; try { pw = require(process.env.PLAYWRIGHT_MODULE || 'playwright'); } catch { pw = require('/opt/node22/lib/node_modules/playwright'); }
@@ -59,7 +64,7 @@ try {
   page.on('pageerror', e => errors.push(String(e))); page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
   await page.goto(`http://127.0.0.1:${server.address().port}/art/headless-blank.html`);
   report.gpu = await page.evaluate(async () => { const T = await import('/node_modules/three/build/three.module.js'); const r = window.groundParityRenderer = new T.WebGLRenderer({ antialias: false }); r.setSize(192, 192); const gl = r.getContext(), d = gl.getExtension('WEBGL_debug_renderer_info'); return d ? gl.getParameter(d.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER); }); save();
-  for (const fixture of selected) for (const beach of [false, true]) {
+  for (const { fixture, beach } of planned) {
     const row = await page.evaluate(async payload => (await import('/tools/bench/ground-parity-scene.mjs')).compareGround(payload), { baseline, candidate, fixture, beach });
     report.rows.push(row); save(); console.log(JSON.stringify(row));
     if (errors.length) throw Error(errors.join('; '));

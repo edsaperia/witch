@@ -1,4 +1,13 @@
 // Minimal material fixture: no game, workers, art, animation, or whole-game readiness.
+// A water-only program deliberately never samples lake-look IDs. Remove the
+// region's distance field instead of switching it to a compiled-out look.
+export function lakeKindAblation(distances, looks, id) {
+  if (distances.length !== looks.length) throw Error('lake field size mismatch');
+  const changed = distances.slice(); let found = false;
+  for (let i = 0; i < changed.length; i++) if (looks[i] === id) { changed[i] = -1000; found = true; }
+  if (!found) throw Error(`lake kind ${id} absent from fixture`);
+  return changed;
+}
 export async function compareGround({ baseline, candidate, fixture, beach }) {
   const T = await import('/node_modules/three/build/three.module.js');
   const renderer = window.groundParityRenderer;
@@ -100,7 +109,7 @@ export async function compareGround({ baseline, candidate, fixture, beach }) {
     const before = read(control), after = read(mine), repeat = read(mine), baseRepeat = read(control);
     const colors = new Set(); for (let i = 0; i < before.length; i += 4) colors.add(`${before[i]},${before[i + 1]},${before[i + 2]}`);
     if (colors.size < 3) throw Error('blank/flat fixture');
-    // Ensure the removed code would affect these pixels: changing the lake look must change the reference picture.
+    // Require visible feature coverage; ablation controls are never parity rows.
     let sensitivity = null, extraSensitivity = null;
     if (fixture.sensitiveExtra) {
       const key = fixture.sensitiveExtra, [name, component] = key === 'KOI' ? ['uKoi', 'z'] : extraSwitches[key];
@@ -112,14 +121,16 @@ export async function compareGround({ baseline, candidate, fixture, beach }) {
       if (!extraSensitivity.pixels) throw Error(`ground extra ${key} not exercised`);
     }
     if (fixture.ids.length) {
-      const pixels = uniforms.uLakeLooks.value.image.data, original = pixels.slice(); sensitivity = [];
+      const texture = uniforms.uLakes.value, original = texture.image.data;
+      const looks = uniforms.uLakeLooks.value.image.data; sensitivity = [];
       for (const id of fixture.ids) {
-        for (let i = 0; i < pixels.length; i++) pixels[i] = original[i] === id ? (id === 2 ? 1 : 2) : original[i];
-        uniforms.uLakeLooks.value.needsUpdate = true;
-        const changed = diff(before, read(control)); sensitivity.push({ id, ...changed });
+        texture.image.data = lakeKindAblation(original, looks, id); texture.needsUpdate = true;
+        let changed;
+        try { changed = diff(before, read(control)); }
+        finally { texture.image.data = original; texture.needsUpdate = true; }
+        sensitivity.push({ id, method: 'distance-field-ablation', ...changed });
         if (!changed.pixels) throw Error(`lake kind ${id} not exercised`);
       }
-      pixels.set(original); uniforms.uLakeLooks.value.needsUpdate = true;
     }
     const debug = gl.getExtension('WEBGL_debug_renderer_info');
     return { fixture: fixture.name, ids: fixture.ids, mode: beach ? 'beach' : 'plain', defines: mine.defines,
