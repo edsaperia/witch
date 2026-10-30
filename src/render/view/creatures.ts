@@ -156,7 +156,7 @@ export function drawCreatures(v: View, time = 0): void {
     if (g.map.zoo?.layout && !v.assets.hasCreature(c.species)) v.assets.hurryCreature(c.species); // (the zoo: on screen, ahead of all its islands' art asked ahead)
     // Invited creatures are party animals: their party gear once it's drawn (the wild look till then).
     // Happy ones (issue #87) in party clothes without the collar; legends never dressed up (render/looks.ts).
-    const look = lookOf(c), party = look === "leashed" && !c.boss ? v.assets.partyArt(c.species, c.id, sigilColour(c.species)) : look === "happy" ? v.assets.happyArt(c.species, c.id) : undefined;
+    const look = lookOf(c), party = look === "leashed" && !c.boss ? v.assets.partyArt(c.species, c.id, sigilColour(c.species), c.level) : look === "happy" ? v.assets.happyArt(c.species, c.id, c.level) : undefined;
     // Enraged by a wave (besieging, marching on): angry red eyes, and it can't be invited (Ed's playtest).
     const woken = !party && c.enraged ? v.assets.wokenArt(c.species) : undefined;
     // A sleeping area legend (Ed, 2026-10-04: "ancient creatures, half sunken into the ground,
@@ -193,7 +193,7 @@ export function drawCreatures(v: View, time = 0): void {
     const napped = asleepArt ?? idlePose;
     // Gliding (Profile.glide: the flying squirrel's roam and its pounce, Ed 2026-10-12): in the air, spread out, its membrane taut; the rig leaves it to the baked frames.
     const glided = !napped && !st && !!c.leap && time >= c.leap.at && !!glideOf(c.species) ? v.assets.glideArt(c.species) : undefined;
-    const art = glided ?? napped ?? party ?? woken ?? slept ?? faced ?? v.assets.creatureArt(c.species), key = glided ? keyOf("glide", c.species) : idlePose && !asleepArt ? keyOf("idle", c.species) : napped ? (party ? keyOf(keyOf(look === "happy" ? "nap-happy" : "nap-party", c.species), c.id) : keyOf("nap", c.species)) : party ? keyOf(keyOf(look === "happy" ? "happy" : "party", c.species), c.id) : slept ? keyOf("sleep", c.species) : sleeping ? keyOf("sunk", c.species) : woken ? keyOf("woken", c.species) : faced ? keyOf((FACE_KEY[face] ??= `face-${face}`), c.species) : c.species;
+    const art = glided ?? napped ?? party ?? woken ?? slept ?? faced ?? v.assets.creatureArt(c.species), key = glided ? keyOf("glide", c.species) : idlePose && !asleepArt ? keyOf("idle", c.species) : napped ? (party ? keyOf(keyOf(look === "happy" ? "nap-happy" : "nap-party", c.species), c.id) : keyOf("nap", c.species)) : party ? party.key! : slept ? keyOf("sleep", c.species) : sleeping ? keyOf("sunk", c.species) : woken ? keyOf("woken", c.species) : faced ? keyOf((FACE_KEY[face] ??= `face-${face}`), c.species) : c.species;
     if (!art) continue;
     const lk = hide ? keyOf("shadow", key) : c.boss && !c.leashed && g.tuning.wildLegends.seen ? keyOf("legend", key) : key; // (a wild legend in a batch of its own: its rim and its light in steps; one hiding, in a shadow batch)
     if (lk !== key) legendKeys.set(lk, c.species);

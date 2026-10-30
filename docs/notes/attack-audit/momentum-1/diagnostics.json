@@ -1,0 +1,167 @@
+{
+  "idCollision": {
+    "piercingSameId": {
+      "contacts": 2,
+      "firstContact": 0.6666666666666666,
+      "hits": [
+        {
+          "at": 0.6666666666666666,
+          "kind": "witch",
+          "id": 0,
+          "damage": 1
+        },
+        {
+          "at": 0.6666666666666666,
+          "kind": "creature",
+          "id": 0,
+          "damage": 1
+        }
+      ],
+      "cue": 0,
+      "response": null,
+      "events": {
+        "cast": 1,
+        "telegraph": 1,
+        "release": 1,
+        "fire": 1,
+        "hit": 2,
+        "expire": 1
+      },
+      "capped": 0
+    },
+    "piercingDistinctId": {
+      "contacts": 2,
+      "firstContact": 0.6666666666666666,
+      "hits": [
+        {
+          "at": 0.6666666666666666,
+          "kind": "witch",
+          "id": 0,
+          "damage": 1
+        },
+        {
+          "at": 0.6666666666666666,
+          "kind": "creature",
+          "id": 2,
+          "damage": 1
+        }
+      ],
+      "cue": 0,
+      "response": null,
+      "events": {
+        "cast": 1,
+        "telegraph": 1,
+        "release": 1,
+        "fire": 1,
+        "hit": 2,
+        "expire": 1
+      },
+      "capped": 0
+    },
+    "areaSameId": {
+      "contacts": 2,
+      "firstContact": 0.5,
+      "hits": [
+        {
+          "at": 0.5,
+          "kind": "witch",
+          "id": 0,
+          "damage": 1
+        },
+        {
+          "at": 0.5,
+          "kind": "creature",
+          "id": 0,
+          "damage": 1
+        }
+      ],
+      "cue": 0,
+      "response": null,
+      "events": {
+        "cast": 1,
+        "telegraph": 1,
+        "release": 1,
+        "zone": 1,
+        "hit": 2,
+        "fire": 1
+      },
+      "capped": 0
+    },
+    "areaDistinctId": {
+      "contacts": 2,
+      "firstContact": 0.5,
+      "hits": [
+        {
+          "at": 0.5,
+          "kind": "witch",
+          "id": 0,
+          "damage": 1
+        },
+        {
+          "at": 0.5,
+          "kind": "creature",
+          "id": 2,
+          "damage": 1
+        }
+      ],
+      "cue": 0,
+      "response": null,
+      "events": {
+        "cast": 1,
+        "telegraph": 1,
+        "release": 1,
+        "zone": 1,
+        "hit": 2,
+        "fire": 1
+      },
+      "capped": 0
+    }
+  },
+  "blockedPort": {
+    "withWall": {
+      "contacts": 0,
+      "firstContact": null,
+      "hits": [],
+      "cue": 0,
+      "response": null,
+      "events": {
+        "cast": 1,
+        "telegraph": 1,
+        "release": 1,
+        "fire": 1,
+        "expire": 1
+      },
+      "capped": 0
+    },
+    "withoutWall": {
+      "contacts": 1,
+      "firstContact": 0.8666666666666667,
+      "hits": [
+        {
+          "at": 0.8666666666666667,
+          "kind": "witch",
+          "id": 0,
+          "damage": 1
+        }
+      ],
+      "cue": 0,
+      "response": null,
+      "events": {
+        "cast": 1,
+        "telegraph": 1,
+        "release": 1,
+        "fire": 1,
+        "hit": 1,
+        "expire": 1
+      },
+      "capped": 0
+    }
+  },
+  "shelterEffects": {
+    "hit": 0,
+    "stun": 0,
+    "slow": 0,
+    "portHasBlocked": false,
+    "note": "Actual spellWorld harm adapter; records damage and effect callbacks for an outside attack on a sheltered witch."
+  }
+}

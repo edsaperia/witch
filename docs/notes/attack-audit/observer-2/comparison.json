@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "manifest": {
+    "schema": 2,
+    "sourceHead": "06b30e891f666fba0d369d90ad0cd4ffbfce0c7d",
+    "sourceSha256": "ef6770961c1d4ab3af8c365be1fa2bbd377de02f28b716218e9779bf19bd5812",
+    "sourceFiles": 1396,
+    "node": "v24.18.0",
+    "platform": "win32",
+    "startedAt": "2026-10-30T18:47:16.308Z",
+    "wholeJobCapMs": 120000,
+    "mutatesRuleInputs": false,
+    "oneWorker": true,
+    "finished": true,
+    "exitCode": 0,
+    "error": null,
+    "elapsedMs": 4626
+  },
+  "baseline": {
+    "schema": 2,
+    "sourceHead": "d14756377951ef21780f8cc25d70313feb893f3e",
+    "sourceSha256": "aa25ac6e8c3141d78ec0f64a292ec0439f34d738bf737c35393c9c762d973395",
+    "sourceFiles": 1396,
+    "node": "v24.18.0",
+    "platform": "win32",
+    "startedAt": "2026-10-30T18:40:01.059Z",
+    "wholeJobCapMs": 120000,
+    "mutatesRuleInputs": false,
+    "oneWorker": true,
+    "finished": true,
+    "exitCode": 0,
+    "error": null,
+    "elapsedMs": 5671
+  },
+  "records": 75,
+  "unnamedWithExactDefinition": 47,
+  "unattributedDefinitions": 0,
+  "unknownDamageAttempts": 0,
+  "packDigestsMatch": true,
+  "witchHealthActionsBlinksKOMatch": true,
+  "globalCoverageClaim": false
+}

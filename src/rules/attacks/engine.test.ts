@@ -31,6 +31,23 @@ const fire = (spec: AttackSpec, targets: Hittable[], until: number, seed = 7) =>
   return { S, ...w };
 };
 
+it.each(["piercing", "area", "chain"])("keeps witch and creature identities separate for %s hits", mode => {
+  const targets: Hittable[] = [her(4, 0, 0), { kind: "creature", id: 0, x: mode === "chain" ? 8 : 4, z: 0, r: 0.3, side: "party" }];
+  const spec: AttackSpec = mode === "area"
+    ? { cast: { windup: 0 }, body: { kind: "area" }, area: { r: 3, at: "target" } }
+    : { cast: { windup: 0 }, speed: { v: 20 }, ...(mode === "chain" ? { pack: { chain: { n: 1, range: 6 } } } : { life: { pierce: 1 } }) };
+  const result = fire(spec, targets, 2);
+  expect(result.hits).toHaveLength(2);
+  expect(result.hits.every(hit => hit.damage === 10)).toBe(true);
+});
+
+it.each(["zone", "beam"])("keeps numeric and string witch IDs distinct while %s damage remains once per witch", mode => {
+  const spec: AttackSpec = { cast: { windup: 0 }, body: { kind: mode as "zone" | "beam" }, area: { at: "target" },
+    ...(mode === "zone" ? { zone: { r: 3, time: 1, tick: 0.2 } } : { beam: { length: 10, width: 3, duration: 1, tick: 0.2 } }) };
+  const result = fire(spec, [her(4, 0, 0), her(4, 0, "0")], 2);
+  expect(result.hits.filter(hit => hit.damage > 0).map(hit => hit.id)).toEqual([0, "0"]);
+});
+
 describe("the attacks' engine: bodies", () => {
   it("flies a plain bolt from its release at its speed, hitting her once", () => {
     const { hits, S } = fire({ cast: { windup: 0.5 }, speed: { v: 20 } }, [her(10, 0)], 2);
