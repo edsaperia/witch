@@ -1234,7 +1234,8 @@ function frame(now: number): void {
   // The pad on the pause page and Settings: before the chart's or the zoo's early return, so it works paused over the chart too.
   settingsPage.update(now / 1000);
   const corner = cornerPanelRoot(), pauseRoots = freeze.frozen && !settingsPage.open ? (corner ? [corner] : [document.getElementById("pause-sliders"), pauseBtns].filter((el): el is HTMLElement => !!el)) : [];
-  if (pauseFocus.update(pauseRoots, freeze.pad(), now / 1000, () => { if (corner) closeCornerPanel(); else freeze.toggle(); })) input.device = "pad";
+  const opened = pauseRoots.length ? freeze.takeOpenPad() : undefined; // (the pause page's first frame: primed with what was held at Esc/Start)
+  if (pauseFocus.update(pauseRoots, freeze.pad(), now / 1000, () => { if (corner) closeCornerPanel(); else freeze.toggle(); }, corner ? undefined : opened)) input.device = "pad";
   if (chartHeld || zooHeld) return; // (the sea chart or the zoo over the night: its last frame kept, nothing drawn)
   if (game.clock.paused && !freeze.frozen && !flying && now - lastDraw < 300) return;
   lastDraw = now;
