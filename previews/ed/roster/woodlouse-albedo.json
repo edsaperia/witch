@@ -1,0 +1,827 @@
+{
+  "sha": "dc564acf06ebac9d169bdc2636ded927c9db1626",
+  "measurements": [
+    {
+      "id": "woodlouse",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 0,
+      "pixelDiff": 213,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            3,
+            12,
+            26,
+            24
+          ],
+          "occupiedPixels": 179
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            3,
+            12,
+            26,
+            24
+          ],
+          "occupiedPixels": 179
+        }
+      ],
+      "current": [
+        32,
+        25
+      ],
+      "proposed": [
+        32,
+        25
+      ]
+    },
+    {
+      "id": "woodlouse",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 1,
+      "pixelDiff": 267,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            3,
+            15,
+            39,
+            32
+          ],
+          "occupiedPixels": 351
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            3,
+            15,
+            39,
+            32
+          ],
+          "occupiedPixels": 351
+        }
+      ],
+      "current": [
+        46,
+        33
+      ],
+      "proposed": [
+        46,
+        33
+      ]
+    },
+    {
+      "id": "woodlouse",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 2,
+      "pixelDiff": 500,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            2,
+            5,
+            65,
+            51
+          ],
+          "occupiedPixels": 786
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            2,
+            5,
+            65,
+            51
+          ],
+          "occupiedPixels": 786
+        }
+      ],
+      "current": [
+        72,
+        52
+      ],
+      "proposed": [
+        72,
+        52
+      ]
+    },
+    {
+      "id": "woodlouse",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 3,
+      "pixelDiff": 3801,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            4,
+            9,
+            176,
+            119
+          ],
+          "occupiedPixels": 5991
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            4,
+            9,
+            176,
+            119
+          ],
+          "occupiedPixels": 5991
+        }
+      ],
+      "current": [
+        189,
+        120
+      ],
+      "proposed": [
+        189,
+        120
+      ]
+    },
+    {
+      "id": "woodlouse",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 0,
+      "pixelDiff": 208,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            3,
+            12,
+            26,
+            24
+          ],
+          "occupiedPixels": 175
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            3,
+            12,
+            26,
+            24
+          ],
+          "occupiedPixels": 175
+        }
+      ],
+      "current": [
+        31,
+        25
+      ],
+      "proposed": [
+        31,
+        25
+      ]
+    },
+    {
+      "id": "woodlouse",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 1,
+      "pixelDiff": 262,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            4,
+            15,
+            39,
+            32
+          ],
+          "occupiedPixels": 351
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            4,
+            15,
+            39,
+            32
+          ],
+          "occupiedPixels": 351
+        }
+      ],
+      "current": [
+        46,
+        33
+      ],
+      "proposed": [
+        46,
+        33
+      ]
+    },
+    {
+      "id": "woodlouse",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 2,
+      "pixelDiff": 494,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            2,
+            5,
+            65,
+            51
+          ],
+          "occupiedPixels": 785
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            2,
+            5,
+            65,
+            51
+          ],
+          "occupiedPixels": 785
+        }
+      ],
+      "current": [
+        72,
+        52
+      ],
+      "proposed": [
+        72,
+        52
+      ]
+    },
+    {
+      "id": "woodlouse",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 3,
+      "pixelDiff": 3802,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            4,
+            9,
+            176,
+            119
+          ],
+          "occupiedPixels": 5990
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            4,
+            9,
+            176,
+            119
+          ],
+          "occupiedPixels": 5990
+        }
+      ],
+      "current": [
+        189,
+        120
+      ],
+      "proposed": [
+        189,
+        120
+      ]
+    },
+    {
+      "id": "woodlouse",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 0,
+      "pixelDiff": 223,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            3,
+            10,
+            26,
+            24
+          ],
+          "occupiedPixels": 178
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            3,
+            10,
+            26,
+            24
+          ],
+          "occupiedPixels": 178
+        }
+      ],
+      "current": [
+        32,
+        25
+      ],
+      "proposed": [
+        32,
+        25
+      ]
+    },
+    {
+      "id": "woodlouse",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 1,
+      "pixelDiff": 283,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            3,
+            11,
+            39,
+            32
+          ],
+          "occupiedPixels": 349
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            3,
+            11,
+            39,
+            32
+          ],
+          "occupiedPixels": 349
+        }
+      ],
+      "current": [
+        46,
+        33
+      ],
+      "proposed": [
+        46,
+        33
+      ]
+    },
+    {
+      "id": "woodlouse",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 2,
+      "pixelDiff": 501,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            2,
+            5,
+            64,
+            53
+          ],
+          "occupiedPixels": 816
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            2,
+            5,
+            64,
+            53
+          ],
+          "occupiedPixels": 816
+        }
+      ],
+      "current": [
+        72,
+        54
+      ],
+      "proposed": [
+        72,
+        54
+      ]
+    },
+    {
+      "id": "woodlouse",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 3,
+      "pixelDiff": 4111,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            4,
+            10,
+            176,
+            142
+          ],
+          "occupiedPixels": 6178
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            4,
+            10,
+            176,
+            142
+          ],
+          "occupiedPixels": 6178
+        }
+      ],
+      "current": [
+        189,
+        143
+      ],
+      "proposed": [
+        189,
+        143
+      ]
+    },
+    {
+      "id": "woodlouse",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 0,
+      "pixelDiff": 217,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            3,
+            10,
+            25,
+            24
+          ],
+          "occupiedPixels": 177
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            3,
+            10,
+            25,
+            24
+          ],
+          "occupiedPixels": 177
+        }
+      ],
+      "current": [
+        31,
+        25
+      ],
+      "proposed": [
+        31,
+        25
+      ]
+    },
+    {
+      "id": "woodlouse",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 1,
+      "pixelDiff": 278,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            4,
+            11,
+            39,
+            32
+          ],
+          "occupiedPixels": 346
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            4,
+            11,
+            39,
+            32
+          ],
+          "occupiedPixels": 346
+        }
+      ],
+      "current": [
+        46,
+        33
+      ],
+      "proposed": [
+        46,
+        33
+      ]
+    },
+    {
+      "id": "woodlouse",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 2,
+      "pixelDiff": 502,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            2,
+            5,
+            64,
+            53
+          ],
+          "occupiedPixels": 819
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            2,
+            5,
+            64,
+            53
+          ],
+          "occupiedPixels": 819
+        }
+      ],
+      "current": [
+        72,
+        54
+      ],
+      "proposed": [
+        72,
+        54
+      ]
+    },
+    {
+      "id": "woodlouse",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 3,
+      "pixelDiff": 4089,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            4,
+            10,
+            176,
+            142
+          ],
+          "occupiedPixels": 6171
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            4,
+            10,
+            176,
+            142
+          ],
+          "occupiedPixels": 6171
+        }
+      ],
+      "current": [
+        189,
+        143
+      ],
+      "proposed": [
+        189,
+        143
+      ]
+    }
+  ],
+  "resolvedRecords": [
+    {
+      "level": 0,
+      "column": "current",
+      "body": {
+        "plates": 5,
+        "pale": true,
+        "feelers": 0.6
+      },
+      "look": null,
+      "paletteHSV": [
+        0.65,
+        0.12,
+        0.45
+      ]
+    },
+    {
+      "level": 0,
+      "column": "proposed",
+      "body": {
+        "plates": 5,
+        "pale": true,
+        "feelers": 0.6
+      },
+      "look": null,
+      "paletteHSV": [
+        0.65,
+        0.12,
+        0.45
+      ]
+    },
+    {
+      "level": 1,
+      "column": "current",
+      "body": {
+        "plates": 7,
+        "rim": true,
+        "feelers": 1
+      },
+      "look": null,
+      "paletteHSV": [
+        0.65,
+        0.12,
+        0.45
+      ]
+    },
+    {
+      "level": 1,
+      "column": "proposed",
+      "body": {
+        "plates": 7,
+        "rim": true,
+        "feelers": 1
+      },
+      "look": null,
+      "paletteHSV": [
+        0.65,
+        0.12,
+        0.45
+      ]
+    },
+    {
+      "level": 2,
+      "column": "current",
+      "body": {
+        "plates": 10,
+        "rim": true,
+        "flecks": true,
+        "feelers": 1.35,
+        "jointed": true,
+        "tailSpikes": true
+      },
+      "look": null,
+      "paletteHSV": [
+        0.65,
+        0.12,
+        0.45
+      ]
+    },
+    {
+      "level": 2,
+      "column": "proposed",
+      "body": {
+        "plates": 10,
+        "rim": true,
+        "flecks": true,
+        "feelers": 1.35,
+        "jointed": true,
+        "tailSpikes": true
+      },
+      "look": null,
+      "paletteHSV": [
+        0.65,
+        0.12,
+        0.45
+      ]
+    },
+    {
+      "level": 3,
+      "column": "current",
+      "body": {
+        "plates": 10,
+        "rim": true,
+        "flecks": true,
+        "feelers": 2,
+        "jointed": true,
+        "tailSpikes": true,
+        "shields": true,
+        "house": true,
+        "leaves": true
+      },
+      "look": null,
+      "paletteHSV": [
+        0.65,
+        0.12,
+        0.45
+      ]
+    },
+    {
+      "level": 3,
+      "column": "proposed",
+      "body": {
+        "plates": 10,
+        "rim": true,
+        "flecks": true,
+        "feelers": 2,
+        "jointed": true,
+        "tailSpikes": true,
+        "shields": true,
+        "house": true,
+        "leaves": true
+      },
+      "look": null,
+      "paletteHSV": [
+        0.65,
+        0.12,
+        0.45
+      ]
+    }
+  ],
+  "modelSourceCommit": "e8fea579c78b032809a82c297c1623c379c62459",
+  "lighting": "albedo",
+  "style": {
+    "ambientHue": 0.68,
+    "ambient": 0.22,
+    "moon": 0.3,
+    "moonHue": 0.58,
+    "glowHue": 0.13,
+    "glowSat": 0.35,
+    "glowRadius": 110,
+    "glowPower": 1.4,
+    "bands": 3,
+    "dither": 0.35,
+    "round": 0.9,
+    "outline": "none",
+    "cOutline": "dark",
+    "shafts": 0.3,
+    "areaContrast": 0.6,
+    "sat": 0.9,
+    "leafHue": 0.3,
+    "leafVariety": 0.3,
+    "trunkHue": 0.07,
+    "groundHue": 0.27,
+    "groundVal": 0.4,
+    "pixel": 3,
+    "treeSize": 0.85,
+    "crownWidth": 3,
+    "clearing": 0.55,
+    "depth": 4,
+    "areaScale": 1,
+    "areaTypes": 64,
+    "density": 0.55,
+    "clump": 0.6,
+    "gnarl": 0.5,
+    "roots": 0.6,
+    "bark": 0.6,
+    "trees": 1,
+    "wBroad": 0.8,
+    "wFir": 0.6,
+    "wWillow": 0.5,
+    "wBirch": 0.5,
+    "wPalm": 0.3,
+    "wFlat": 0.5,
+    "bushes": 55,
+    "bushSize": 1,
+    "flowers": 0.3,
+    "cSat": 0.6,
+    "cVal": 0.85,
+    "head": 0.44,
+    "eye": 1,
+    "legs": 1,
+    "long": 1,
+    "size": 8,
+    "growth": 20,
+    "magicHue": 0.5,
+    "fur": 0.5,
+    "creatureScale": 1.5,
+    "texture": 1,
+    "texDetail": 0.3,
+    "hueShift": 0,
+    "cloakHue": 0.72,
+    "hairHue": 0.01,
+    "hatHue": 0.74,
+    "topHue": 0.13,
+    "jeansHue": 0.6,
+    "shoeHue": 0,
+    "phonesHue": 0.92,
+    "artStyle": "bold"
+  },
+  "largestCell": [
+    189,
+    143
+  ],
+  "selectionInterface": "shared #1470 selector"
+}

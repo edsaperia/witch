@@ -1,0 +1,793 @@
+{
+  "sha": "dc564acf06ebac9d169bdc2636ded927c9db1626",
+  "measurements": [
+    {
+      "id": "bat",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 0,
+      "pixelDiff": 85,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            4,
+            9,
+            23,
+            30
+          ],
+          "occupiedPixels": 151
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            4,
+            9,
+            23,
+            30
+          ],
+          "occupiedPixels": 151
+        }
+      ],
+      "current": [
+        32,
+        31
+      ],
+      "proposed": [
+        32,
+        31
+      ]
+    },
+    {
+      "id": "bat",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 1,
+      "pixelDiff": 139,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            5,
+            9,
+            33,
+            40
+          ],
+          "occupiedPixels": 274
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            5,
+            9,
+            33,
+            40
+          ],
+          "occupiedPixels": 274
+        }
+      ],
+      "current": [
+        42,
+        41
+      ],
+      "proposed": [
+        42,
+        41
+      ]
+    },
+    {
+      "id": "bat",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 2,
+      "pixelDiff": 323,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            6,
+            12,
+            52,
+            66
+          ],
+          "occupiedPixels": 761
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            6,
+            12,
+            52,
+            66
+          ],
+          "occupiedPixels": 761
+        }
+      ],
+      "current": [
+        65,
+        67
+      ],
+      "proposed": [
+        65,
+        67
+      ]
+    },
+    {
+      "id": "bat",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 3,
+      "pixelDiff": 1595,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            6,
+            7,
+            131,
+            155
+          ],
+          "occupiedPixels": 4570
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            6,
+            7,
+            131,
+            155
+          ],
+          "occupiedPixels": 4570
+        }
+      ],
+      "current": [
+        147,
+        156
+      ],
+      "proposed": [
+        147,
+        156
+      ]
+    },
+    {
+      "id": "bat",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 0,
+      "pixelDiff": 73,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            4,
+            11,
+            26,
+            29
+          ],
+          "occupiedPixels": 185
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            4,
+            11,
+            26,
+            29
+          ],
+          "occupiedPixels": 185
+        }
+      ],
+      "current": [
+        34,
+        30
+      ],
+      "proposed": [
+        34,
+        30
+      ]
+    },
+    {
+      "id": "bat",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 1,
+      "pixelDiff": 131,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            5,
+            13,
+            36,
+            39
+          ],
+          "occupiedPixels": 332
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            5,
+            13,
+            36,
+            39
+          ],
+          "occupiedPixels": 332
+        }
+      ],
+      "current": [
+        45,
+        40
+      ],
+      "proposed": [
+        45,
+        40
+      ]
+    },
+    {
+      "id": "bat",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 2,
+      "pixelDiff": 325,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            7,
+            12,
+            58,
+            66
+          ],
+          "occupiedPixels": 932
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            7,
+            12,
+            58,
+            66
+          ],
+          "occupiedPixels": 932
+        }
+      ],
+      "current": [
+        72,
+        67
+      ],
+      "proposed": [
+        72,
+        67
+      ]
+    },
+    {
+      "id": "bat",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 3,
+      "pixelDiff": 1567,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            7,
+            8,
+            151,
+            184
+          ],
+          "occupiedPixels": 5982
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            7,
+            8,
+            151,
+            184
+          ],
+          "occupiedPixels": 5982
+        }
+      ],
+      "current": [
+        169,
+        185
+      ],
+      "proposed": [
+        169,
+        185
+      ]
+    },
+    {
+      "id": "bat",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 0,
+      "pixelDiff": 209,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            3,
+            7,
+            25,
+            30
+          ],
+          "occupiedPixels": 265
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            3,
+            7,
+            25,
+            30
+          ],
+          "occupiedPixels": 265
+        }
+      ],
+      "current": [
+        33,
+        31
+      ],
+      "proposed": [
+        33,
+        31
+      ]
+    },
+    {
+      "id": "bat",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 1,
+      "pixelDiff": 362,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            4,
+            8,
+            34,
+            40
+          ],
+          "occupiedPixels": 478
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            4,
+            8,
+            34,
+            40
+          ],
+          "occupiedPixels": 478
+        }
+      ],
+      "current": [
+        43,
+        41
+      ],
+      "proposed": [
+        43,
+        41
+      ]
+    },
+    {
+      "id": "bat",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 2,
+      "pixelDiff": 906,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            5,
+            13,
+            55,
+            67
+          ],
+          "occupiedPixels": 1295
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            5,
+            13,
+            55,
+            67
+          ],
+          "occupiedPixels": 1295
+        }
+      ],
+      "current": [
+        67,
+        68
+      ],
+      "proposed": [
+        67,
+        68
+      ]
+    },
+    {
+      "id": "bat",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 3,
+      "pixelDiff": 4815,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            7,
+            7,
+            136,
+            163
+          ],
+          "occupiedPixels": 7792
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            7,
+            7,
+            136,
+            163
+          ],
+          "occupiedPixels": 7792
+        }
+      ],
+      "current": [
+        153,
+        164
+      ],
+      "proposed": [
+        153,
+        164
+      ]
+    },
+    {
+      "id": "bat",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 0,
+      "pixelDiff": 225,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            4,
+            8,
+            27,
+            28
+          ],
+          "occupiedPixels": 268
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            4,
+            8,
+            27,
+            28
+          ],
+          "occupiedPixels": 268
+        }
+      ],
+      "current": [
+        34,
+        29
+      ],
+      "proposed": [
+        34,
+        29
+      ]
+    },
+    {
+      "id": "bat",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 1,
+      "pixelDiff": 425,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            5,
+            9,
+            38,
+            38
+          ],
+          "occupiedPixels": 496
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            5,
+            9,
+            38,
+            38
+          ],
+          "occupiedPixels": 496
+        }
+      ],
+      "current": [
+        45,
+        39
+      ],
+      "proposed": [
+        45,
+        39
+      ]
+    },
+    {
+      "id": "bat",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 2,
+      "pixelDiff": 1126,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            7,
+            12,
+            64,
+            64
+          ],
+          "occupiedPixels": 1422
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            7,
+            12,
+            64,
+            64
+          ],
+          "occupiedPixels": 1422
+        }
+      ],
+      "current": [
+        73,
+        65
+      ],
+      "proposed": [
+        73,
+        65
+      ]
+    },
+    {
+      "id": "bat",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 3,
+      "pixelDiff": 5951,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            7,
+            8,
+            153,
+            189
+          ],
+          "occupiedPixels": 9212
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            7,
+            8,
+            153,
+            189
+          ],
+          "occupiedPixels": 9212
+        }
+      ],
+      "current": [
+        171,
+        190
+      ],
+      "proposed": [
+        171,
+        190
+      ]
+    }
+  ],
+  "resolvedRecords": [
+    {
+      "level": 0,
+      "column": "current",
+      "body": {},
+      "look": {
+        "fruit": true
+      },
+      "paletteHSV": [
+        0.06,
+        0.5,
+        0.36
+      ]
+    },
+    {
+      "level": 0,
+      "column": "proposed",
+      "body": {},
+      "look": {
+        "fruit": true
+      },
+      "paletteHSV": [
+        0.06,
+        0.5,
+        0.36
+      ]
+    },
+    {
+      "level": 1,
+      "column": "current",
+      "body": {},
+      "look": {
+        "fruit": true
+      },
+      "paletteHSV": [
+        0.06,
+        0.5,
+        0.36
+      ]
+    },
+    {
+      "level": 1,
+      "column": "proposed",
+      "body": {},
+      "look": {
+        "fruit": true
+      },
+      "paletteHSV": [
+        0.06,
+        0.5,
+        0.36
+      ]
+    },
+    {
+      "level": 2,
+      "column": "current",
+      "body": {},
+      "look": {
+        "fruit": true
+      },
+      "paletteHSV": [
+        0.06,
+        0.5,
+        0.36
+      ]
+    },
+    {
+      "level": 2,
+      "column": "proposed",
+      "body": {},
+      "look": {
+        "fruit": true
+      },
+      "paletteHSV": [
+        0.06,
+        0.5,
+        0.36
+      ]
+    },
+    {
+      "level": 3,
+      "column": "current",
+      "body": {},
+      "look": {
+        "fruit": true
+      },
+      "paletteHSV": [
+        0.06,
+        0.5,
+        0.36
+      ]
+    },
+    {
+      "level": 3,
+      "column": "proposed",
+      "body": {},
+      "look": {
+        "fruit": true
+      },
+      "paletteHSV": [
+        0.06,
+        0.5,
+        0.36
+      ]
+    }
+  ],
+  "modelSourceCommit": "e8fea579c78b032809a82c297c1623c379c62459",
+  "lighting": "night",
+  "style": {
+    "ambientHue": 0.68,
+    "ambient": 0.22,
+    "moon": 0.3,
+    "moonHue": 0.58,
+    "glowHue": 0.13,
+    "glowSat": 0.35,
+    "glowRadius": 110,
+    "glowPower": 1.4,
+    "bands": 3,
+    "dither": 0.35,
+    "round": 0.9,
+    "outline": "none",
+    "cOutline": "dark",
+    "shafts": 0.3,
+    "areaContrast": 0.6,
+    "sat": 0.9,
+    "leafHue": 0.3,
+    "leafVariety": 0.3,
+    "trunkHue": 0.07,
+    "groundHue": 0.27,
+    "groundVal": 0.4,
+    "pixel": 3,
+    "treeSize": 0.85,
+    "crownWidth": 3,
+    "clearing": 0.55,
+    "depth": 4,
+    "areaScale": 1,
+    "areaTypes": 64,
+    "density": 0.55,
+    "clump": 0.6,
+    "gnarl": 0.5,
+    "roots": 0.6,
+    "bark": 0.6,
+    "trees": 1,
+    "wBroad": 0.8,
+    "wFir": 0.6,
+    "wWillow": 0.5,
+    "wBirch": 0.5,
+    "wPalm": 0.3,
+    "wFlat": 0.5,
+    "bushes": 55,
+    "bushSize": 1,
+    "flowers": 0.3,
+    "cSat": 0.6,
+    "cVal": 0.85,
+    "head": 0.44,
+    "eye": 1,
+    "legs": 1,
+    "long": 1,
+    "size": 8,
+    "growth": 20,
+    "magicHue": 0.5,
+    "fur": 0.5,
+    "creatureScale": 1.5,
+    "texture": 1,
+    "texDetail": 0.3,
+    "hueShift": 0,
+    "cloakHue": 0.72,
+    "hairHue": 0.01,
+    "hatHue": 0.74,
+    "topHue": 0.13,
+    "jeansHue": 0.6,
+    "shoeHue": 0,
+    "phonesHue": 0.92,
+    "artStyle": "bold"
+  },
+  "largestCell": [
+    171,
+    190
+  ],
+  "selectionInterface": "shared #1470 selector"
+}
