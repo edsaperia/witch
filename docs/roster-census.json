@@ -1,0 +1,6659 @@
+{
+  "sourceCommit": "d8e7dbb044601c8c6eb0669ae3fc852996a92eb1",
+  "world": 0,
+  "builders": {
+    "armadillo": [
+      "armadillo"
+    ],
+    "bat": [
+      "bat"
+    ],
+    "beetle": [
+      "beetle"
+    ],
+    "crab": [
+      "crab"
+    ],
+    "dragonfly": [
+      "dragonfly"
+    ],
+    "hedgehog": [
+      "hedgehog"
+    ],
+    "heron": [
+      "heron"
+    ],
+    "hydra": [
+      "hydra"
+    ],
+    "mole": [
+      "mole"
+    ],
+    "moth": [
+      "moth"
+    ],
+    "owl": [
+      "owl"
+    ],
+    "penguin": [
+      "penguin"
+    ],
+    "quad": [
+      "arcticfox",
+      "badger",
+      "bear",
+      "beaver",
+      "boar",
+      "cat",
+      "cheetah",
+      "crocodile",
+      "dormouse",
+      "elephant",
+      "elk",
+      "fennec",
+      "flyingsquirrel",
+      "fox",
+      "frostwyrm",
+      "griffin",
+      "hare",
+      "ibex",
+      "jaguar",
+      "komodo",
+      "lion",
+      "lynx",
+      "marten",
+      "meerkat",
+      "newt",
+      "otter",
+      "polarbear",
+      "raccoon",
+      "ram",
+      "redpanda",
+      "rhino",
+      "roe",
+      "salamander",
+      "snowleopard",
+      "sphinx",
+      "squirrel",
+      "stag",
+      "stegosaurus",
+      "stoat",
+      "tiger",
+      "unicorn",
+      "wolf"
+    ],
+    "quetzal": [
+      "featheredserpent"
+    ],
+    "rattlesnake": [
+      "rattlesnake"
+    ],
+    "raven": [
+      "raven"
+    ],
+    "scorpion": [
+      "scorpion"
+    ],
+    "snail": [
+      "snail"
+    ],
+    "snake": [
+      "snake"
+    ],
+    "spider": [
+      "spider"
+    ],
+    "toad": [
+      "toad"
+    ],
+    "troll": [
+      "frosttroll"
+    ],
+    "woodlouse": [
+      "woodlouse"
+    ]
+  },
+  "dispatch": [
+    [
+      "owl",
+      "owl3d"
+    ],
+    [
+      "hedgehog",
+      "hedgehog3d"
+    ],
+    [
+      "toad",
+      "toad3d"
+    ],
+    [
+      "troll",
+      "troll3d"
+    ],
+    [
+      "raven",
+      "raven3d"
+    ],
+    [
+      "heron",
+      "heron3d"
+    ],
+    [
+      "bat",
+      "bat3d"
+    ],
+    [
+      "mole",
+      "mole3d"
+    ],
+    [
+      "armadillo",
+      "armadillo3d"
+    ],
+    [
+      "beetle",
+      "beetle3d"
+    ],
+    [
+      "scarab",
+      "scarab3d"
+    ],
+    [
+      "snail",
+      "snail3d"
+    ],
+    [
+      "woodlouse",
+      "woodlouse3d"
+    ],
+    [
+      "snake",
+      "snake3d"
+    ],
+    [
+      "hydra",
+      "hydra3d"
+    ],
+    [
+      "moth",
+      "moth3d"
+    ],
+    [
+      "spider",
+      "spider3d"
+    ],
+    [
+      "dragonfly",
+      "dragonfly3d"
+    ],
+    [
+      "crab",
+      "crab3d"
+    ],
+    [
+      "rattlesnake",
+      "rattlesnake3d"
+    ],
+    [
+      "scorpion",
+      "scorpion3d"
+    ],
+    [
+      "penguin",
+      "penguin3d"
+    ],
+    [
+      "quetzal",
+      "quetzal3d"
+    ]
+  ],
+  "unused": [
+    [
+      "scarab",
+      "scarab3d"
+    ]
+  ],
+  "species": [
+    {
+      "id": "arcticfox",
+      "name": "Arctic fox",
+      "family": "canids",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 17,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 1,
+        "traits": [],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "snow bolt",
+        "legend": true
+      },
+      "areaIds": [
+        "snowfield"
+      ],
+      "biome": "cold",
+      "introducedPhase": 3,
+      "ownIslandPhase": 4,
+      "world0Islands": [
+        "beetle",
+        "elk",
+        "wolf",
+        "bear",
+        "owl",
+        "arcticfox",
+        "ibex",
+        "redpanda",
+        "flyingsquirrel",
+        "roe",
+        "frosttroll",
+        "snowleopard",
+        "frostwyrm",
+        "featheredserpent",
+        "jaguar",
+        "unicorn"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.59,
+        "sat": 0.16,
+        "val": 0.96,
+        "belly": "white"
+      },
+      "modelProportions": {
+        "hgt": 0.68,
+        "len": 0.56,
+        "chest": 0.46,
+        "tuck": 0.54,
+        "neck": 0.24,
+        "neckAng": 0.62,
+        "neckW": 0.4,
+        "hr": 0.27,
+        "legW": 1
+      },
+      "parts": {
+        "ears": {
+          "kind": "point",
+          "size": 0.8
+        },
+        "tail": "bushy",
+        "feet": "paw"
+      },
+      "coat": {
+        "belly": true
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 8,
+        "boldStrokes": 8,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): small round ears on a round fluffy face, its ruff in tufts"
+      },
+      "assessment": {
+        "naturalCue": "white winter coat; small compact fox; short rounded ears; dense tail",
+        "likeness": "Revise: pointed ears and .16 saturation weaken winter likeness",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Compare with fox/fennec as one related family; preset A"
+      },
+      "sources": [
+        "art/creatures/arcticfox/genome.js",
+        "art/creatures/arcticfox/creature.js",
+        "art/creatures/arcticfox/bold.js",
+        "art/areas/snowfield/kind.json"
+      ]
+    },
+    {
+      "id": "armadillo",
+      "name": "Armadillo",
+      "family": "otherMammals",
+      "builder": "armadillo",
+      "role": {
+        "fastRunner": false,
+        "speed": 10,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 1,
+        "traits": [],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": null,
+        "legend": true
+      },
+      "areaIds": [
+        "scrub-wash"
+      ],
+      "biome": "badlands",
+      "introducedPhase": 3,
+      "ownIslandPhase": 4,
+      "world0Islands": [
+        "woodlouse",
+        "spider",
+        "ibex",
+        "komodo",
+        "meerkat",
+        "armadillo",
+        "dragonfly",
+        "penguin",
+        "frosttroll",
+        "frostwyrm",
+        "griffin",
+        "rattlesnake",
+        "scorpion",
+        "rhino"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.06,
+        "sat": 0.22,
+        "val": 0.58
+      },
+      "modelProportions": null,
+      "parts": null,
+      "coat": null,
+      "look": null,
+      "sigil": {
+        "thinStrokes": 10,
+        "boldStrokes": 9,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): side on: the dome of its shell banded across, its long snout and upright ear"
+      },
+      "assessment": {
+        "naturalCue": "grey-brown armour; low body; banded shell",
+        "likeness": "Dedicated builder; anatomy needs rendered inspection",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Check armour segments and feet; no merge proposed"
+      },
+      "sources": [
+        "art/creatures/armadillo/genome.js",
+        "art/creatures/armadillo/creature.js",
+        "art/creatures/armadillo/bold.js",
+        "art/areas/scrub-wash/kind.json"
+      ]
+    },
+    {
+      "id": "badger",
+      "name": "Badger",
+      "family": "mustelids",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 12,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 2,
+        "traits": [],
+        "packMelee": [
+          null,
+          "maul",
+          "maul"
+        ],
+        "packRanged": "stone shard",
+        "legend": true
+      },
+      "areaIds": [
+        "wispy-forest"
+      ],
+      "biome": "temperate",
+      "introducedPhase": 0,
+      "ownIslandPhase": 1,
+      "world0Islands": [
+        "hedgehog",
+        "badger",
+        "newt",
+        "moth",
+        "toad",
+        "raven",
+        "cat",
+        "beaver",
+        "ibex",
+        "armadillo",
+        "fennec",
+        "crocodile",
+        "rattlesnake",
+        "scorpion"
+      ],
+      "homeAtStart": true,
+      "paletteHSV": {
+        "hue": 0.65,
+        "sat": 0.08,
+        "val": 0.45
+      },
+      "modelProportions": {
+        "stance": "flat",
+        "hgt": 0.5,
+        "len": 0.82,
+        "chest": 0.18,
+        "tuck": 0.2,
+        "neck": 0.2,
+        "neckAng": -0.22,
+        "neckW": 0.55,
+        "hr": 0.25,
+        "legW": 1.4,
+        "bw": 0.38,
+        "profile": {
+          "shoulder": {
+            "w": 1.3,
+            "d": 1.08
+          },
+          "ribcage": {
+            "w": 1.18
+          },
+          "waist": {
+            "w": 0.82,
+            "d": 0.9
+          },
+          "loin": {
+            "w": 0.9,
+            "d": 0.95
+          },
+          "hip": {
+            "w": 1
+          }
+        }
+      },
+      "parts": {
+        "ears": {
+          "kind": "round",
+          "size": 0.7
+        },
+        "tail": "stub",
+        "feet": "paw"
+      },
+      "coat": {
+        "shaggy": true,
+        "legMat": "BODY3"
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 8,
+        "boldStrokes": 6,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the two dark stripes down its long white face"
+      },
+      "assessment": {
+        "naturalCue": "grey low broad body; black-and-white striped face",
+        "likeness": "Strong encoded cue: badger face and flat stance",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Check face blaze at game size; compare mustelid family"
+      },
+      "sources": [
+        "art/creatures/badger/genome.js",
+        "art/creatures/badger/creature.js",
+        "art/creatures/badger/bold.js",
+        "art/areas/wispy-forest/kind.json"
+      ]
+    },
+    {
+      "id": "bat",
+      "name": "Fruit bat",
+      "family": "otherMammals",
+      "builder": "bat",
+      "role": {
+        "fastRunner": false,
+        "speed": 19,
+        "rangedFlag": true,
+        "kite": false,
+        "attacks": [
+          null,
+          "screech",
+          "bigscreech",
+          "quake"
+        ],
+        "strength": 0.75,
+        "traits": [
+          "flier",
+          "swarm"
+        ],
+        "packMelee": [
+          null,
+          "screech",
+          "bigscreech"
+        ],
+        "packRanged": "screech bolt",
+        "legend": true
+      },
+      "areaIds": [
+        "jungle-cave"
+      ],
+      "biome": "jungle",
+      "introducedPhase": 2,
+      "ownIslandPhase": 3,
+      "world0Islands": [
+        "otter",
+        "bat",
+        "tiger",
+        "flyingsquirrel",
+        "sphinx",
+        "hydra",
+        "crab",
+        "elephant",
+        "jaguar",
+        "raccoon",
+        "polarbear"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.06,
+        "sat": 0.5,
+        "val": 0.36,
+        "belly": [
+          0.1,
+          0.62,
+          0.78
+        ]
+      },
+      "modelProportions": null,
+      "parts": null,
+      "coat": null,
+      "look": {
+        "fruit": true
+      },
+      "sigil": {
+        "thinStrokes": 11,
+        "boldStrokes": 8,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the fruit bat: a fox's face with big eyes, its broad wings spread"
+      },
+      "assessment": {
+        "naturalCue": "brown membrane wings; fox-like muzzle; fruit-bat ears",
+        "likeness": "Fruit-bat flag is present; wing anatomy unverified",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Flight membrane must read from both headings"
+      },
+      "sources": [
+        "art/creatures/bat/genome.js",
+        "art/creatures/bat/creature.js",
+        "art/creatures/bat/bold.js",
+        "art/areas/jungle-cave/kind.json"
+      ]
+    },
+    {
+      "id": "bear",
+      "name": "Black bear",
+      "family": "bears",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 13,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "swipe",
+          "bigswipe",
+          "quake"
+        ],
+        "strength": 2,
+        "traits": [
+          "heavy"
+        ],
+        "packMelee": [
+          null,
+          "swipe",
+          "bigswipe"
+        ],
+        "packRanged": null,
+        "legend": true
+      },
+      "areaIds": [
+        "berry-thicket"
+      ],
+      "biome": "cold rainforest",
+      "introducedPhase": 4,
+      "ownIslandPhase": 5,
+      "world0Islands": [
+        "bear",
+        "flyingsquirrel",
+        "roe",
+        "frosttroll",
+        "frostwyrm",
+        "hydra",
+        "featheredserpent",
+        "elephant",
+        "jaguar",
+        "unicorn",
+        "polarbear"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.7,
+        "sat": 0.12,
+        "val": 0.2,
+        "belly": [
+          0.08,
+          0.4,
+          0.62
+        ]
+      },
+      "modelProportions": {
+        "stance": "flat",
+        "hgt": 1.25,
+        "len": 0.74,
+        "chest": 0.4,
+        "tuck": 0.46,
+        "neck": 0.22,
+        "neckAng": 0.1,
+        "neckW": 0.6,
+        "hr": 0.36,
+        "legW": 1.75,
+        "back": "hump",
+        "front": 1.4,
+        "humpK": 1.1,
+        "bw": 0.34
+      },
+      "parts": {
+        "ears": {
+          "kind": "round",
+          "size": 1.15
+        },
+        "tail": "stub",
+        "feet": "paw"
+      },
+      "coat": {
+        "shaggy": true
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 7,
+        "boldStrokes": 9,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the round ears and the round muzzle with its nose"
+      },
+      "assessment": {
+        "naturalCue": "dark coat; pale muzzle; flat back; prominent ears",
+        "likeness": "Revise: hump/front-heavy base conflicts with Black bear name",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Keep related to polar bear; preset B"
+      },
+      "sources": [
+        "art/creatures/bear/genome.js",
+        "art/creatures/bear/creature.js",
+        "art/creatures/bear/bold.js",
+        "art/areas/berry-thicket/kind.json"
+      ]
+    },
+    {
+      "id": "beaver",
+      "name": "Beaver",
+      "family": "rodents",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 12,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 2,
+        "traits": [],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "wood chip",
+        "legend": true
+      },
+      "areaIds": [
+        "beaver-pond"
+      ],
+      "biome": "temperate",
+      "introducedPhase": 1,
+      "ownIslandPhase": 2,
+      "world0Islands": [
+        "mole",
+        "moth",
+        "lynx",
+        "ram",
+        "spider",
+        "beaver",
+        "bear",
+        "owl",
+        "arcticfox",
+        "komodo",
+        "meerkat",
+        "penguin",
+        "frosttroll",
+        "snowleopard",
+        "frostwyrm",
+        "griffin",
+        "stegosaurus",
+        "scorpion",
+        "rhino",
+        "unicorn"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.06,
+        "sat": 0.6,
+        "val": 0.45
+      },
+      "modelProportions": {
+        "stance": "flat",
+        "hgt": 0.66,
+        "len": 0.62,
+        "chest": 0.34,
+        "tuck": 0.3,
+        "neck": 0.18,
+        "neckAng": 0.35,
+        "neckW": 0.6,
+        "hr": 0.3,
+        "legW": 1.25,
+        "back": "hump"
+      },
+      "parts": {
+        "ears": {
+          "kind": "round",
+          "size": 0.45
+        },
+        "tail": "flat",
+        "feet": "paw"
+      },
+      "coat": null,
+      "look": null,
+      "sigil": {
+        "thinStrokes": 8,
+        "boldStrokes": 2,
+        "description": "Ed's approved option, 2026-10-29: the two great incisors, separated by dark space."
+      },
+      "assessment": {
+        "naturalCue": "brown compact rodent; flat paddle tail; incisors",
+        "likeness": "Specific tail and teeth are encoded",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Check paddle and incisors; not a duplicate otter"
+      },
+      "sources": [
+        "art/creatures/beaver/genome.js",
+        "art/creatures/beaver/creature.js",
+        "art/creatures/beaver/bold.js",
+        "art/areas/beaver-pond/kind.json"
+      ]
+    },
+    {
+      "id": "beetle",
+      "name": "Fire beetle",
+      "family": "arthropods",
+      "builder": "beetle",
+      "role": {
+        "fastRunner": false,
+        "speed": 12,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 0.75,
+        "traits": [
+          "armoured"
+        ],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": null,
+        "legend": true
+      },
+      "areaIds": [
+        "log-pile"
+      ],
+      "biome": "volcanic",
+      "introducedPhase": 3,
+      "ownIslandPhase": 4,
+      "world0Islands": [
+        "beetle",
+        "woodlouse",
+        "raven",
+        "ram",
+        "salamander",
+        "redpanda",
+        "komodo",
+        "armadillo",
+        "penguin",
+        "frostwyrm",
+        "stegosaurus",
+        "rhino"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.02,
+        "sat": 0.25,
+        "val": 0.2,
+        "accent": [
+          0.05,
+          0.92,
+          1
+        ],
+        "magic": 0.05
+      },
+      "modelProportions": null,
+      "parts": null,
+      "coat": null,
+      "look": {
+        "embers": true
+      },
+      "sigil": {
+        "thinStrokes": 13,
+        "boldStrokes": 12,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): from above: the great antler mandibles over its split wing cases"
+      },
+      "assessment": {
+        "naturalCue": "dark wing cases; stag-beetle jaws; ember fissures are fictional",
+        "likeness": "Priority conflict: ordinary Fire beetle has invented ember markings",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Ask whether intentionally fantastic species; do not silently rename"
+      },
+      "sources": [
+        "art/creatures/beetle/genome.js",
+        "art/creatures/beetle/creature.js",
+        "art/creatures/beetle/bold.js",
+        "art/areas/log-pile/kind.json"
+      ]
+    },
+    {
+      "id": "boar",
+      "name": "Boar",
+      "family": "suids",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 14,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 2,
+        "traits": [
+          "heavy"
+        ],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": null,
+        "legend": true
+      },
+      "areaIds": [
+        "grassland"
+      ],
+      "biome": "temperate",
+      "introducedPhase": 1,
+      "ownIslandPhase": 2,
+      "world0Islands": [
+        "squirrel",
+        "dormouse",
+        "boar",
+        "otter",
+        "bat",
+        "wolf",
+        "stag",
+        "bear",
+        "owl",
+        "arcticfox",
+        "flyingsquirrel",
+        "snowleopard",
+        "frostwyrm",
+        "jaguar",
+        "raccoon",
+        "unicorn",
+        "polarbear"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.07,
+        "sat": 0.62,
+        "val": 0.5
+      },
+      "modelProportions": {
+        "len": 0.72,
+        "chest": 0.38,
+        "tuck": 0.5,
+        "neck": 0.2,
+        "neckAng": -0.2,
+        "neckW": 0.55,
+        "hr": 0.27,
+        "legW": 0.9,
+        "back": "hump",
+        "front": 1.18,
+        "humpK": 1.6,
+        "spine": {
+          "shoulder": 0.1,
+          "ribcage": 0.09,
+          "waist": 0.07,
+          "loin": 0.05,
+          "hip": 0.02
+        }
+      },
+      "parts": {
+        "ears": {
+          "kind": "small",
+          "size": 0.8
+        },
+        "tail": "thin",
+        "feet": "hoof",
+        "tusks": true
+      },
+      "coat": {
+        "ridge": true
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 14,
+        "boldStrokes": 10,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the great tusks curving up out of its snout"
+      },
+      "assessment": {
+        "naturalCue": "brown bristles; long snout; low head; tusks",
+        "likeness": "Natural cues encoded; humpK 1.6 merits visual review",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Check realistic shoulder mass versus old exaggeration"
+      },
+      "sources": [
+        "art/creatures/boar/genome.js",
+        "art/creatures/boar/creature.js",
+        "art/creatures/boar/bold.js",
+        "art/areas/grassland/kind.json"
+      ]
+    },
+    {
+      "id": "cat",
+      "name": "Sand cat",
+      "family": "cats",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 15,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 1,
+        "traits": [],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "hiss bolt",
+        "legend": true
+      },
+      "areaIds": [
+        "meadow"
+      ],
+      "biome": "hot",
+      "introducedPhase": 2,
+      "ownIslandPhase": 3,
+      "world0Islands": [
+        "otter",
+        "spider",
+        "snake",
+        "cat",
+        "komodo",
+        "meerkat",
+        "fennec",
+        "sphinx",
+        "rattlesnake",
+        "cheetah"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.1,
+        "sat": 0.32,
+        "val": 0.78,
+        "belly": "white",
+        "magic": 0.13
+      },
+      "modelProportions": {
+        "hgt": 0.7,
+        "len": 0.68,
+        "chest": 0.4,
+        "tuck": 0.48,
+        "neck": 0.2,
+        "neckAng": 0.75,
+        "neckW": 0.36,
+        "hr": 0.32,
+        "legW": 0.58
+      },
+      "parts": {
+        "ears": {
+          "kind": "point",
+          "size": 1.7
+        },
+        "tail": "stoat",
+        "feet": "paw"
+      },
+      "coat": {
+        "belly": true,
+        "tabby": {
+          "n": 9,
+          "w": 0.14,
+          "mat": "BODY2"
+        },
+        "socks": 0.2
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 14,
+        "boldStrokes": 9,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the whiskers, under pointed ears on a round head"
+      },
+      "assessment": {
+        "naturalCue": "pale sand; small short limbs; broad head; large low ears; ringed tail",
+        "likeness": "Partial: sand coat/broad head present; tall point ears need review",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Low ear placement lacks preset interface; do not substitute fennec ears"
+      },
+      "sources": [
+        "art/creatures/cat/genome.js",
+        "art/creatures/cat/creature.js",
+        "art/creatures/cat/bold.js",
+        "art/areas/meadow/kind.json"
+      ]
+    },
+    {
+      "id": "cheetah",
+      "name": "Cheetah",
+      "family": "cats",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 26,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 1,
+        "traits": [
+          "nimble"
+        ],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "dust bolt",
+        "legend": true
+      },
+      "areaIds": [
+        "plains"
+      ],
+      "biome": "hot",
+      "introducedPhase": 3,
+      "ownIslandPhase": 4,
+      "world0Islands": [
+        "heron",
+        "armadillo",
+        "fennec",
+        "lion",
+        "crocodile",
+        "dragonfly",
+        "tiger",
+        "griffin",
+        "sphinx",
+        "rattlesnake",
+        "rhino",
+        "cheetah",
+        "jaguar"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.1,
+        "sat": 0.6,
+        "val": 0.84,
+        "belly": "white",
+        "magic": 0.13
+      },
+      "modelProportions": {
+        "hgt": 1.4,
+        "len": 0.66,
+        "chest": 0.47,
+        "tuck": 0.86,
+        "neck": 0.36,
+        "neckAng": 0.5,
+        "neckW": 0.24,
+        "hr": 0.17,
+        "legW": 0.58,
+        "bw": 0.17,
+        "back": "arch",
+        "archK": 1.8,
+        "profile": {
+          "shoulder": {
+            "w": 1.25,
+            "d": 1.08
+          },
+          "ribcage": {
+            "w": 1.1
+          },
+          "waist": {
+            "w": 0.68,
+            "d": 0.8
+          },
+          "loin": {
+            "w": 0.78,
+            "d": 0.9
+          },
+          "hip": {
+            "w": 0.95
+          }
+        },
+        "spine": {
+          "ribcage": -0.04,
+          "waist": -0.05,
+          "loin": -0.045,
+          "hip": -0.015
+        }
+      },
+      "parts": {
+        "ears": {
+          "kind": "round",
+          "size": 0.5
+        },
+        "tail": "ringed",
+        "feet": "paw"
+      },
+      "coat": {
+        "belly": true,
+        "spots": "solid"
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 8,
+        "boldStrokes": 8,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): side on at full stretch: the long thin body, small head and long tail"
+      },
+      "assessment": {
+        "naturalCue": "tan solid spots; tear lines; slim long legs; small head",
+        "likeness": "Specific natural cues encoded; archK 1.8 may overstate back",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Render before changing; similarity to other cats is acceptable"
+      },
+      "sources": [
+        "art/creatures/cheetah/genome.js",
+        "art/creatures/cheetah/creature.js",
+        "art/creatures/cheetah/bold.js",
+        "art/areas/plains/kind.json"
+      ]
+    },
+    {
+      "id": "crab",
+      "name": "Crab",
+      "family": "arthropods",
+      "builder": "crab",
+      "role": {
+        "fastRunner": false,
+        "speed": 14,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 0.75,
+        "traits": [],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": null,
+        "legend": true
+      },
+      "areaIds": [
+        "mudflat"
+      ],
+      "biome": "mangrove swamp",
+      "introducedPhase": 4,
+      "ownIslandPhase": 5,
+      "world0Islands": [
+        "crocodile",
+        "dragonfly",
+        "griffin",
+        "rhino",
+        "cheetah",
+        "crab"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.02,
+        "sat": 0.62,
+        "val": 0.58
+      },
+      "modelProportions": null,
+      "parts": null,
+      "coat": null,
+      "look": null,
+      "sigil": {
+        "thinStrokes": 14,
+        "boldStrokes": 10,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): front on: a broad shell, eyes up on stalks, one great claw"
+      },
+      "assessment": {
+        "naturalCue": "rust-brown carapace; lateral legs; two claws",
+        "likeness": "Dedicated builder; colour is plausible, species unspecified",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Check limb count and lateral posture"
+      },
+      "sources": [
+        "art/creatures/crab/genome.js",
+        "art/creatures/crab/creature.js",
+        "art/creatures/crab/bold.js",
+        "art/areas/mudflat/kind.json"
+      ]
+    },
+    {
+      "id": "crocodile",
+      "name": "Crocodile",
+      "family": "reptiles",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 10,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 1,
+        "traits": [],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "water jet",
+        "legend": true
+      },
+      "areaIds": [
+        "mangrove"
+      ],
+      "biome": "mangrove swamp",
+      "introducedPhase": 3,
+      "ownIslandPhase": 4,
+      "world0Islands": [
+        "beetle",
+        "heron",
+        "armadillo",
+        "lion",
+        "crocodile",
+        "sphinx",
+        "rattlesnake",
+        "scorpion",
+        "hydra",
+        "crab"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.2,
+        "sat": 0.35,
+        "val": 0.32
+      },
+      "modelProportions": {
+        "stance": "sprawl",
+        "sprawl": 0.3,
+        "hgt": 0.72,
+        "len": 2.1,
+        "chest": 0.05,
+        "tuck": 0.05,
+        "neck": 0.12,
+        "neckAng": -0.08,
+        "neckW": 0.75,
+        "hr": 0.3,
+        "legW": 1.5,
+        "bw": 0.55
+      },
+      "parts": {
+        "ears": {
+          "kind": "none"
+        },
+        "tail": "croc",
+        "feet": "paw"
+      },
+      "coat": {},
+      "look": null,
+      "sigil": {
+        "thinStrokes": 12,
+        "boldStrokes": 5,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): side on, snapping: its long jaws open wide, lined with teeth"
+      },
+      "assessment": {
+        "naturalCue": "olive low long body; broad flattened snout; muscular tail",
+        "likeness": "Specific jaw/sprawl/tail encoded",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Check snout length 4 visually; no invented silhouette separation"
+      },
+      "sources": [
+        "art/creatures/crocodile/genome.js",
+        "art/creatures/crocodile/creature.js",
+        "art/creatures/crocodile/bold.js",
+        "art/areas/mangrove/kind.json"
+      ]
+    },
+    {
+      "id": "dormouse",
+      "name": "Dormouse",
+      "family": "rodents",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 13,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 0.75,
+        "traits": [
+          "nimble"
+        ],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "nut bolt",
+        "legend": true
+      },
+      "areaIds": [
+        "honeysuckle-tangle"
+      ],
+      "biome": "temperate",
+      "introducedPhase": 0,
+      "ownIslandPhase": 1,
+      "world0Islands": [
+        "squirrel",
+        "marten",
+        "dormouse",
+        "boar",
+        "otter",
+        "bat",
+        "toad",
+        "elk",
+        "snake",
+        "stag",
+        "bear",
+        "owl",
+        "fennec",
+        "crocodile",
+        "dragonfly",
+        "tiger",
+        "penguin",
+        "frosttroll",
+        "frostwyrm",
+        "hydra",
+        "crab",
+        "raccoon",
+        "polarbear"
+      ],
+      "homeAtStart": true,
+      "paletteHSV": {
+        "hue": 0.09,
+        "sat": 0.6,
+        "val": 0.75,
+        "belly": "white"
+      },
+      "modelProportions": {
+        "hgt": 0.38,
+        "len": 0.45,
+        "chest": 0.35,
+        "tuck": 0.38,
+        "neck": 0.15,
+        "neckAng": 0.6,
+        "neckW": 0.4,
+        "hr": 0.34,
+        "legW": 0.8,
+        "back": "arch"
+      },
+      "parts": {
+        "ears": {
+          "kind": "round",
+          "size": 0.85
+        },
+        "tail": "dormouse",
+        "feet": "paw"
+      },
+      "coat": {
+        "belly": true
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 4,
+        "boldStrokes": 10,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the big round ears and the big dark eyes"
+      },
+      "assessment": {
+        "naturalCue": "gold-brown small rodent; round ears; furry tail",
+        "likeness": "Plausible encoded body; tail previously changed for distinction",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Compare real dormouse tail before retaining anti-squirrel distortion"
+      },
+      "sources": [
+        "art/creatures/dormouse/genome.js",
+        "art/creatures/dormouse/creature.js",
+        "art/creatures/dormouse/bold.js",
+        "art/areas/honeysuckle-tangle/kind.json"
+      ]
+    },
+    {
+      "id": "dragonfly",
+      "name": "Dragonfly",
+      "family": "arthropods",
+      "builder": "dragonfly",
+      "role": {
+        "fastRunner": false,
+        "speed": 20,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 0.75,
+        "traits": [],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "water drop",
+        "legend": true
+      },
+      "areaIds": [
+        "mangrove-pools"
+      ],
+      "biome": "mangrove swamp",
+      "introducedPhase": 3,
+      "ownIslandPhase": 4,
+      "world0Islands": [
+        "otter",
+        "snake",
+        "lion",
+        "crocodile",
+        "dragonfly",
+        "tiger",
+        "roe",
+        "griffin",
+        "sphinx",
+        "stegosaurus",
+        "rattlesnake",
+        "rhino",
+        "cheetah",
+        "hydra",
+        "elephant",
+        "jaguar"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.5,
+        "sat": 0.62,
+        "val": 0.62
+      },
+      "modelProportions": null,
+      "parts": null,
+      "coat": null,
+      "look": null,
+      "sigil": {
+        "thinStrokes": 9,
+        "boldStrokes": 6,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): from above: the long thin tail and the two pairs of long wings out straight"
+      },
+      "assessment": {
+        "naturalCue": "slender abdomen; four membranous wings; large eyes",
+        "likeness": "Dedicated builder; blue-green palette is plausible",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Check four wings and six legs; species unspecified"
+      },
+      "sources": [
+        "art/creatures/dragonfly/genome.js",
+        "art/creatures/dragonfly/creature.js",
+        "art/creatures/dragonfly/bold.js",
+        "art/areas/mangrove-pools/kind.json"
+      ]
+    },
+    {
+      "id": "elephant",
+      "name": "Elephant",
+      "family": "otherMammals",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 13,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "slam",
+          "bigslam",
+          "quake"
+        ],
+        "strength": 2,
+        "traits": [
+          "heavy"
+        ],
+        "packMelee": [
+          null,
+          "swipe",
+          "bigswipe"
+        ],
+        "packRanged": null,
+        "legend": true
+      },
+      "areaIds": [
+        "temple-jungle"
+      ],
+      "biome": "jungle",
+      "introducedPhase": 4,
+      "ownIslandPhase": 5,
+      "world0Islands": [
+        "dragonfly",
+        "tiger",
+        "frosttroll",
+        "rhino",
+        "hydra",
+        "crab",
+        "featheredserpent",
+        "elephant",
+        "jaguar"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.62,
+        "sat": 0.22,
+        "val": 0.5,
+        "flower": [
+          168,
+          32,
+          44
+        ]
+      },
+      "modelProportions": {
+        "hgt": 1.9,
+        "len": 0.95,
+        "chest": 0.58,
+        "tuck": 0.62,
+        "neck": 0.2,
+        "neckAng": 0.15,
+        "neckW": 0.75,
+        "hr": 0.5,
+        "legW": 2.1,
+        "bw": 0.3,
+        "back": "arch",
+        "front": 1.05
+      },
+      "parts": {
+        "ears": {
+          "kind": "fan",
+          "size": 1
+        },
+        "tail": "thin",
+        "feet": "paw",
+        "tusks": true
+      },
+      "coat": null,
+      "look": null,
+      "sigil": {
+        "thinStrokes": 8,
+        "boldStrokes": 8,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the two great fan ears either side of its trunk"
+      },
+      "assessment": {
+        "naturalCue": "grey massive body; trunk; fan ears; tusks",
+        "likeness": "Natural parts encoded; species unresolved",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Jungle/African-style ear mismatch needs intended species ruling"
+      },
+      "sources": [
+        "art/creatures/elephant/genome.js",
+        "art/creatures/elephant/creature.js",
+        "art/creatures/elephant/bold.js",
+        "art/areas/temple-jungle/kind.json"
+      ]
+    },
+    {
+      "id": "elk",
+      "name": "Elk",
+      "family": "deer",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 15,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 2,
+        "traits": [
+          "heavy"
+        ],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "gust of breath",
+        "legend": true
+      },
+      "areaIds": [
+        "tundra-bog"
+      ],
+      "biome": "cold",
+      "introducedPhase": 2,
+      "ownIslandPhase": 3,
+      "world0Islands": [
+        "woodlouse",
+        "elk",
+        "wolf",
+        "lynx",
+        "ram",
+        "salamander",
+        "snake",
+        "bear",
+        "owl",
+        "ibex",
+        "komodo",
+        "stegosaurus",
+        "elephant",
+        "raccoon",
+        "unicorn",
+        "polarbear"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.07,
+        "sat": 0.55,
+        "val": 0.38
+      },
+      "modelProportions": {
+        "hgt": 1.4,
+        "len": 0.68,
+        "chest": 0.6,
+        "tuck": 0.66,
+        "neck": 0.45,
+        "neckAng": 0.75,
+        "neckW": 0.42,
+        "hr": 0.24,
+        "legW": 0.9,
+        "back": "hump",
+        "profile": {
+          "shoulder": {
+            "w": 1.15,
+            "d": 1.1
+          },
+          "ribcage": {
+            "w": 1.1
+          },
+          "waist": {
+            "w": 0.78,
+            "d": 0.86
+          },
+          "loin": {
+            "w": 0.85,
+            "d": 0.94
+          },
+          "hip": {
+            "w": 0.95
+          }
+        },
+        "spine": {
+          "shoulder": 0.05,
+          "ribcage": 0.03
+        }
+      },
+      "parts": {
+        "ears": {
+          "kind": "point",
+          "size": 0.9
+        },
+        "tail": "stub",
+        "feet": "hoof",
+        "antlers": "palm"
+      },
+      "coat": {
+        "shaggy": true
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 8,
+        "boldStrokes": 6,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the broad palmate antlers like open hands, the long overhanging nose"
+      },
+      "assessment": {
+        "naturalCue": "dark tall deer; long muzzle; palmate antlers",
+        "likeness": "Naming ambiguous: body cues suggest Eurasian elk/moose",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Clarify bestiary name; do not replace palms with wapiti tines"
+      },
+      "sources": [
+        "art/creatures/elk/genome.js",
+        "art/creatures/elk/creature.js",
+        "art/creatures/elk/bold.js",
+        "art/areas/tundra-bog/kind.json"
+      ]
+    },
+    {
+      "id": "featheredserpent",
+      "name": "Feathered serpent",
+      "family": "fantastic",
+      "builder": "quetzal",
+      "role": {
+        "fastRunner": false,
+        "speed": 15,
+        "rangedFlag": true,
+        "kite": false,
+        "attacks": [
+          null,
+          "spit",
+          "longspit",
+          "legendNova"
+        ],
+        "strength": 2,
+        "traits": [
+          "heavy"
+        ],
+        "packMelee": [
+          null,
+          "nip",
+          "nip"
+        ],
+        "packRanged": "venom spit",
+        "legend": true
+      },
+      "areaIds": [
+        "step-pyramid"
+      ],
+      "biome": "jungle",
+      "introducedPhase": 4,
+      "ownIslandPhase": 5,
+      "world0Islands": [
+        "bear",
+        "tiger",
+        "roe",
+        "stegosaurus",
+        "hydra",
+        "featheredserpent",
+        "elephant",
+        "jaguar",
+        "unicorn",
+        "polarbear"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.39,
+        "sat": 0.62,
+        "val": 0.58,
+        "belly": "yellow",
+        "accent": [
+          0.13,
+          0.82,
+          0.96
+        ],
+        "magic": 0.48,
+        "flower": [
+          232,
+          46,
+          58
+        ]
+      },
+      "modelProportions": null,
+      "parts": null,
+      "coat": null,
+      "look": null,
+      "sigil": {
+        "thinStrokes": 10,
+        "boldStrokes": 3,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the fan of feathers round its head"
+      },
+      "assessment": {
+        "naturalCue": "green feathered serpent; gold/red accents",
+        "likeness": "Fantastic kind: real-animal likeness not literal",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Keep story features; inspect wing/serpent read"
+      },
+      "sources": [
+        "art/creatures/featheredserpent/genome.js",
+        "art/creatures/featheredserpent/creature.js",
+        "art/creatures/featheredserpent/bold.js",
+        "art/areas/step-pyramid/kind.json"
+      ]
+    },
+    {
+      "id": "fennec",
+      "name": "Fennec fox",
+      "family": "canids",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 19,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 0.75,
+        "traits": [],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "sand bolt",
+        "legend": true
+      },
+      "areaIds": [
+        "erg"
+      ],
+      "biome": "hot",
+      "introducedPhase": 2,
+      "ownIslandPhase": 3,
+      "world0Islands": [
+        "otter",
+        "heron",
+        "newt",
+        "salamander",
+        "spider",
+        "snake",
+        "cat",
+        "meerkat",
+        "fennec",
+        "lion",
+        "crocodile",
+        "dragonfly",
+        "rattlesnake",
+        "scorpion",
+        "cheetah",
+        "hydra",
+        "crab"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.1,
+        "sat": 0.32,
+        "val": 0.93,
+        "belly": "white",
+        "ear": [
+          0.97,
+          0.32,
+          0.9
+        ],
+        "magic": 0.12
+      },
+      "modelProportions": {
+        "hgt": 0.62,
+        "len": 0.55,
+        "chest": 0.4,
+        "tuck": 0.48,
+        "neck": 0.28,
+        "neckAng": 0.78,
+        "neckW": 0.3,
+        "hr": 0.28,
+        "legW": 0.7,
+        "profile": {
+          "shoulder": {
+            "w": 1.1,
+            "d": 1.04
+          },
+          "waist": {
+            "w": 0.78,
+            "d": 0.88
+          },
+          "loin": {
+            "w": 0.85,
+            "d": 0.95
+          },
+          "hip": {
+            "w": 0.92
+          }
+        }
+      },
+      "parts": {
+        "ears": {
+          "kind": "sail",
+          "size": 2
+        },
+        "tail": "bushy",
+        "feet": "paw"
+      },
+      "coat": {
+        "belly": true
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 9,
+        "boldStrokes": 6,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): ears far bigger than its face, flaring out wide over a small pointed face"
+      },
+      "assessment": {
+        "naturalCue": "pale sand small fox; naturally very large ears",
+        "likeness": "Natural family cue encoded; sail ears size 2 needs review",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Compare with short-eared arctic fox without widening gap artificially"
+      },
+      "sources": [
+        "art/creatures/fennec/genome.js",
+        "art/creatures/fennec/creature.js",
+        "art/creatures/fennec/bold.js",
+        "art/areas/erg/kind.json"
+      ]
+    },
+    {
+      "id": "flyingsquirrel",
+      "name": "Flying squirrel",
+      "family": "rodents",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 16,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 0.75,
+        "traits": [],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "acorn bolt",
+        "legend": true
+      },
+      "areaIds": [
+        "mistwood"
+      ],
+      "biome": "cold rainforest",
+      "introducedPhase": 3,
+      "ownIslandPhase": 4,
+      "world0Islands": [
+        "elk",
+        "owl",
+        "arcticfox",
+        "ibex",
+        "redpanda",
+        "crocodile",
+        "tiger",
+        "flyingsquirrel",
+        "roe",
+        "penguin",
+        "frosttroll",
+        "snowleopard",
+        "crab",
+        "featheredserpent",
+        "jaguar",
+        "unicorn"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.06,
+        "sat": 0.3,
+        "val": 0.42,
+        "belly": "white"
+      },
+      "modelProportions": {
+        "hgt": 0.5,
+        "len": 0.5,
+        "chest": 0.32,
+        "tuck": 0.36,
+        "neck": 0.16,
+        "neckAng": 0.75,
+        "neckW": 0.38,
+        "hr": 0.33,
+        "legW": 0.7,
+        "haunch": 1.1,
+        "back": "arch"
+      },
+      "parts": {
+        "ears": {
+          "kind": "round",
+          "size": 0.9
+        },
+        "tail": "glider",
+        "feet": "paw"
+      },
+      "coat": {
+        "belly": true
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 12,
+        "boldStrokes": 3,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): from below, gliding: its skin stretched square between its four legs"
+      },
+      "assessment": {
+        "naturalCue": "brown-grey small squirrel; gliding membrane; flattened tail",
+        "likeness": "Tail encoded; membrane must be checked at ordinary levels",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Check patagium visibility before adding another glider"
+      },
+      "sources": [
+        "art/creatures/flyingsquirrel/genome.js",
+        "art/creatures/flyingsquirrel/creature.js",
+        "art/creatures/flyingsquirrel/bold.js",
+        "art/areas/mistwood/kind.json"
+      ]
+    },
+    {
+      "id": "fox",
+      "name": "Fox",
+      "family": "canids",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 18,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 1,
+        "traits": [],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "fox-fire",
+        "legend": true
+      },
+      "areaIds": [
+        "old-oaks"
+      ],
+      "biome": "temperate",
+      "introducedPhase": 0,
+      "ownIslandPhase": 1,
+      "world0Islands": [
+        "hare",
+        "fox",
+        "mole",
+        "dormouse",
+        "badger",
+        "beetle",
+        "boar",
+        "moth",
+        "toad",
+        "raven",
+        "elk",
+        "lynx",
+        "salamander",
+        "spider",
+        "beaver",
+        "arcticfox",
+        "redpanda",
+        "komodo",
+        "roe",
+        "scorpion",
+        "polarbear"
+      ],
+      "homeAtStart": true,
+      "paletteHSV": {
+        "hue": 0.06,
+        "sat": 0.8,
+        "val": 0.9,
+        "belly": "white",
+        "flower": [
+          190,
+          40,
+          34
+        ]
+      },
+      "modelProportions": {
+        "hgt": 0.8,
+        "len": 0.62,
+        "chest": 0.4,
+        "tuck": 0.5,
+        "neck": 0.3,
+        "neckAng": 0.7,
+        "neckW": 0.32,
+        "hr": 0.24,
+        "legW": 0.9,
+        "profile": {
+          "shoulder": {
+            "w": 1.1,
+            "d": 1.05
+          },
+          "ribcage": {
+            "w": 1.02
+          },
+          "waist": {
+            "w": 0.75,
+            "d": 0.85
+          },
+          "loin": {
+            "w": 0.82,
+            "d": 0.92
+          },
+          "hip": {
+            "w": 0.9
+          }
+        }
+      },
+      "parts": {
+        "ears": {
+          "kind": "point",
+          "size": 1.35
+        },
+        "tail": "bushy",
+        "feet": "paw"
+      },
+      "coat": {
+        "belly": true,
+        "socks": 0.3
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 8,
+        "boldStrokes": 6,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the tall pointed ears and the wide cheeks narrowing to a sharp muzzle"
+      },
+      "assessment": {
+        "naturalCue": "russet fox; black socks; pale underside; brush tail",
+        "likeness": "Natural family cues encoded",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Check tail-tip white and fox proportions at game size"
+      },
+      "sources": [
+        "art/creatures/fox/genome.js",
+        "art/creatures/fox/creature.js",
+        "art/creatures/fox/bold.js",
+        "art/areas/old-oaks/kind.json"
+      ]
+    },
+    {
+      "id": "frosttroll",
+      "name": "Frost troll",
+      "family": "fantastic",
+      "builder": "troll",
+      "role": {
+        "fastRunner": false,
+        "speed": 12,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "slam",
+          "bigslam",
+          "quake"
+        ],
+        "strength": 1,
+        "traits": [
+          "heavy"
+        ],
+        "packMelee": [
+          null,
+          "swipe",
+          "bigswipe"
+        ],
+        "packRanged": null,
+        "legend": true
+      },
+      "areaIds": [
+        "trollwood"
+      ],
+      "biome": "cold",
+      "introducedPhase": 4,
+      "ownIslandPhase": 5,
+      "world0Islands": [
+        "bear",
+        "arcticfox",
+        "ibex",
+        "komodo",
+        "penguin",
+        "frosttroll",
+        "snowleopard",
+        "frostwyrm",
+        "featheredserpent",
+        "unicorn"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.55,
+        "sat": 0.12,
+        "val": 0.58,
+        "belly": "white",
+        "ear": [
+          0.98,
+          0.42,
+          0.9
+        ]
+      },
+      "modelProportions": {
+        "hr": 0.24,
+        "bw": 0.42,
+        "hunch": 1
+      },
+      "parts": null,
+      "coat": null,
+      "look": null,
+      "sigil": {
+        "thinStrokes": 10,
+        "boldStrokes": 10,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the great bulb of a nose and the tusks jutting up from its jaw"
+      },
+      "assessment": {
+        "naturalCue": "pale shaggy humanoid; beard; hunch",
+        "likeness": "Fantastic kind",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "No real-animal distortion correction required"
+      },
+      "sources": [
+        "art/creatures/frosttroll/genome.js",
+        "art/creatures/frosttroll/creature.js",
+        "art/creatures/frosttroll/bold.js",
+        "art/areas/trollwood/kind.json"
+      ]
+    },
+    {
+      "id": "frostwyrm",
+      "name": "Frost wyrm",
+      "family": "fantastic",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 14,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "swipe",
+          "bigswipe",
+          "legendNova"
+        ],
+        "strength": 2,
+        "traits": [
+          "heavy"
+        ],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "frost beam",
+        "legend": true
+      },
+      "areaIds": [
+        "frostcave"
+      ],
+      "biome": "mountains and glaciers",
+      "introducedPhase": 4,
+      "ownIslandPhase": 5,
+      "world0Islands": [
+        "beetle",
+        "redpanda",
+        "frosttroll",
+        "snowleopard",
+        "frostwyrm",
+        "stegosaurus",
+        "scorpion",
+        "rhino",
+        "crab",
+        "elephant",
+        "unicorn",
+        "polarbear"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.6,
+        "sat": 0.55,
+        "val": 0.9,
+        "belly": "white",
+        "accent": [
+          0.55,
+          0.1,
+          0.98
+        ],
+        "magic": 0.52,
+        "flower": [
+          232,
+          184,
+          72
+        ]
+      },
+      "modelProportions": {
+        "hgt": 1.4,
+        "len": 0.95,
+        "chest": 0.52,
+        "tuck": 0.56,
+        "neck": 0.7,
+        "neckAng": 0.95,
+        "neckW": 0.3,
+        "hr": 0.21,
+        "legW": 1,
+        "bw": 0.27
+      },
+      "parts": {
+        "ears": {
+          "kind": "none"
+        },
+        "tail": "otter",
+        "feet": "paw",
+        "horns": "twist"
+      },
+      "coat": {
+        "belly": true,
+        "ridge": 1.4,
+        "ridgeMat": "BELLY"
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 10,
+        "boldStrokes": 10,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the long snout between great swept-back horns, an icicle beard"
+      },
+      "assessment": {
+        "naturalCue": "icy long-necked quadruped; horns; ridge",
+        "likeness": "Fantastic kind",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Keep story identity; compare against unicorn/griffin only for reading"
+      },
+      "sources": [
+        "art/creatures/frostwyrm/genome.js",
+        "art/creatures/frostwyrm/creature.js",
+        "art/creatures/frostwyrm/bold.js",
+        "art/areas/frostcave/kind.json"
+      ]
+    },
+    {
+      "id": "griffin",
+      "name": "Griffin",
+      "family": "fantastic",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 17,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 2,
+        "traits": [
+          "heavy"
+        ],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "feather bolt",
+        "legend": true
+      },
+      "areaIds": [
+        "eyrie"
+      ],
+      "biome": "badlands",
+      "introducedPhase": 4,
+      "ownIslandPhase": 5,
+      "world0Islands": [
+        "komodo",
+        "armadillo",
+        "lion",
+        "griffin",
+        "sphinx",
+        "rattlesnake",
+        "scorpion",
+        "rhino",
+        "crab"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.08,
+        "sat": 0.5,
+        "val": 0.72,
+        "belly": "white",
+        "accent": [
+          0.12,
+          0.75,
+          0.95
+        ],
+        "magic": 0.12,
+        "flower": [
+          226,
+          176,
+          64
+        ]
+      },
+      "modelProportions": {
+        "hgt": 1.5,
+        "len": 0.72,
+        "chest": 0.55,
+        "tuck": 0.66,
+        "neck": 0.32,
+        "neckAng": 0.75,
+        "neckW": 0.4,
+        "hr": 0.25,
+        "legW": 1.05,
+        "bw": 0.28
+      },
+      "parts": {
+        "ears": {
+          "kind": "tuft",
+          "size": 0.9
+        },
+        "tail": "tuft",
+        "feet": "paw"
+      },
+      "coat": {
+        "belly": true
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 8,
+        "boldStrokes": 5,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the eagle's head with its hooked beak and swept crest"
+      },
+      "assessment": {
+        "naturalCue": "lion body; eagle beak and wings; tufted tail",
+        "likeness": "Fantastic hybrid",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Check eagle forelimb/wing story rather than real-species literalism"
+      },
+      "sources": [
+        "art/creatures/griffin/genome.js",
+        "art/creatures/griffin/creature.js",
+        "art/creatures/griffin/bold.js",
+        "art/areas/eyrie/kind.json"
+      ]
+    },
+    {
+      "id": "hare",
+      "name": "Hare",
+      "family": "otherMammals",
+      "builder": "quad",
+      "role": {
+        "fastRunner": true,
+        "speed": 20,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 1,
+        "traits": [
+          "nimble"
+        ],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "moon-dust bolt",
+        "legend": true
+      },
+      "areaIds": [
+        "bluebell-glade"
+      ],
+      "biome": "temperate",
+      "introducedPhase": 0,
+      "ownIslandPhase": 1,
+      "world0Islands": [
+        "hare",
+        "marten",
+        "stoat",
+        "mole",
+        "dormouse",
+        "woodlouse",
+        "bat",
+        "toad",
+        "raven",
+        "elk",
+        "wolf",
+        "beaver",
+        "bear",
+        "arcticfox",
+        "ibex",
+        "frosttroll",
+        "frostwyrm",
+        "stegosaurus",
+        "raccoon",
+        "unicorn",
+        "polarbear"
+      ],
+      "homeAtStart": true,
+      "paletteHSV": {
+        "hue": 0.08,
+        "sat": 0.4,
+        "val": 0.72
+      },
+      "modelProportions": {
+        "hgt": 0.72,
+        "len": 0.5,
+        "chest": 0.4,
+        "tuck": 0.45,
+        "neck": 0.2,
+        "neckAng": 0.9,
+        "neckW": 0.35,
+        "hr": 0.27,
+        "legW": 0.85,
+        "haunch": 1.35,
+        "hindFoot": 1.6,
+        "back": "arch"
+      },
+      "parts": {
+        "ears": {
+          "kind": "long",
+          "size": 2.4
+        },
+        "tail": "puff",
+        "feet": "paw"
+      },
+      "coat": {
+        "belly": true
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 9,
+        "boldStrokes": 5,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the long upright ears"
+      },
+      "assessment": {
+        "naturalCue": "brown long-eared lagomorph; strong hind feet; short tail",
+        "likeness": "Natural cues encoded; ear size 2.4 needs image review",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Check ears and haunches against animal, not silhouette score"
+      },
+      "sources": [
+        "art/creatures/hare/genome.js",
+        "art/creatures/hare/creature.js",
+        "art/creatures/hare/bold.js",
+        "art/areas/bluebell-glade/kind.json"
+      ]
+    },
+    {
+      "id": "hedgehog",
+      "name": "Hedgehog",
+      "family": "otherMammals",
+      "builder": "hedgehog",
+      "role": {
+        "fastRunner": false,
+        "speed": 10,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 0.75,
+        "traits": [
+          "armoured"
+        ],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "spine fan",
+        "legend": true
+      },
+      "areaIds": [
+        "hazel-forest"
+      ],
+      "biome": "temperate",
+      "introducedPhase": 0,
+      "ownIslandPhase": 1,
+      "world0Islands": [
+        "hedgehog",
+        "fox",
+        "stoat",
+        "mole",
+        "snail",
+        "badger",
+        "beetle",
+        "otter",
+        "heron",
+        "newt",
+        "woodlouse",
+        "moth",
+        "lynx",
+        "spider",
+        "cat",
+        "stag",
+        "beaver",
+        "ibex",
+        "meerkat",
+        "armadillo",
+        "lion",
+        "dragonfly",
+        "griffin",
+        "rattlesnake",
+        "scorpion",
+        "cheetah",
+        "hydra",
+        "crab",
+        "elephant"
+      ],
+      "homeAtStart": true,
+      "paletteHSV": {
+        "hue": 0.08,
+        "sat": 0.4,
+        "val": 0.5,
+        "flower": [
+          200,
+          44,
+          40
+        ]
+      },
+      "modelProportions": null,
+      "parts": null,
+      "coat": null,
+      "look": null,
+      "sigil": {
+        "thinStrokes": 6,
+        "boldStrokes": 4,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): side on: the dome of spines, its pointed snout"
+      },
+      "assessment": {
+        "naturalCue": "brown spines; low body; pointed muzzle",
+        "likeness": "Dedicated builder; natural key feature",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Check spines form coat rather than giant spikes"
+      },
+      "sources": [
+        "art/creatures/hedgehog/genome.js",
+        "art/creatures/hedgehog/creature.js",
+        "art/creatures/hedgehog/bold.js",
+        "art/areas/hazel-forest/kind.json"
+      ]
+    },
+    {
+      "id": "heron",
+      "name": "Heron",
+      "family": "birds",
+      "builder": "heron",
+      "role": {
+        "fastRunner": false,
+        "speed": 13,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 1,
+        "traits": [],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "water jet",
+        "legend": true
+      },
+      "areaIds": [
+        "mangrove-heronry"
+      ],
+      "biome": "mangrove swamp",
+      "introducedPhase": 2,
+      "ownIslandPhase": 3,
+      "world0Islands": [
+        "otter",
+        "heron",
+        "bat",
+        "snake",
+        "cat",
+        "owl",
+        "meerkat",
+        "lion",
+        "tiger",
+        "roe",
+        "rhino",
+        "cheetah",
+        "hydra",
+        "crab",
+        "jaguar"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.6,
+        "sat": 0.08,
+        "val": 0.62
+      },
+      "modelProportions": null,
+      "parts": null,
+      "coat": null,
+      "look": null,
+      "sigil": {
+        "thinStrokes": 8,
+        "boldStrokes": 5,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): standing: the dagger bill, the S of its neck, the long legs"
+      },
+      "assessment": {
+        "naturalCue": "grey long legs; long neck; spear bill",
+        "likeness": "Dedicated builder; plausible generic heron",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Check neck and gait; no new species proposed"
+      },
+      "sources": [
+        "art/creatures/heron/genome.js",
+        "art/creatures/heron/creature.js",
+        "art/creatures/heron/bold.js",
+        "art/areas/mangrove-heronry/kind.json"
+      ]
+    },
+    {
+      "id": "hydra",
+      "name": "Hydra",
+      "family": "fantastic",
+      "builder": "hydra",
+      "role": {
+        "fastRunner": false,
+        "speed": 9,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 2,
+        "traits": [],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "head spit",
+        "legend": true
+      },
+      "areaIds": [
+        "drowned-wood"
+      ],
+      "biome": "mangrove swamp",
+      "introducedPhase": 4,
+      "ownIslandPhase": 5,
+      "world0Islands": [
+        "bear",
+        "crocodile",
+        "dragonfly",
+        "tiger",
+        "snowleopard",
+        "griffin",
+        "sphinx",
+        "rhino",
+        "hydra",
+        "crab",
+        "featheredserpent",
+        "elephant",
+        "unicorn"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.4,
+        "sat": 0.35,
+        "val": 0.3
+      },
+      "modelProportions": null,
+      "parts": null,
+      "coat": null,
+      "look": null,
+      "sigil": {
+        "thinStrokes": 9,
+        "boldStrokes": 7,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): three serpent necks rising from one body, each with its head"
+      },
+      "assessment": {
+        "naturalCue": "green multiheaded serpent",
+        "likeness": "Fantastic kind",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Multiple heads are story feature; preserve"
+      },
+      "sources": [
+        "art/creatures/hydra/genome.js",
+        "art/creatures/hydra/creature.js",
+        "art/creatures/hydra/bold.js",
+        "art/areas/drowned-wood/kind.json"
+      ]
+    },
+    {
+      "id": "ibex",
+      "name": "Ibex",
+      "family": "caprines",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 15,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 1,
+        "traits": [],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "dislodged stone",
+        "legend": true
+      },
+      "areaIds": [
+        "crags"
+      ],
+      "biome": "mountains and glaciers",
+      "introducedPhase": 3,
+      "ownIslandPhase": 4,
+      "world0Islands": [
+        "beetle",
+        "wolf",
+        "lynx",
+        "bear",
+        "arcticfox",
+        "ibex",
+        "redpanda",
+        "flyingsquirrel",
+        "roe",
+        "snowleopard",
+        "frostwyrm",
+        "polarbear"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.08,
+        "sat": 0.32,
+        "val": 0.58,
+        "belly": "white"
+      },
+      "modelProportions": {
+        "hgt": 0.92,
+        "len": 0.6,
+        "chest": 0.5,
+        "tuck": 0.5,
+        "neck": 0.26,
+        "neckAng": 0.78,
+        "neckW": 0.48,
+        "hr": 0.25,
+        "legW": 0.8
+      },
+      "parts": {
+        "ears": {
+          "kind": "small",
+          "size": 0.8
+        },
+        "tail": "stub",
+        "feet": "hoof",
+        "horns": "twist"
+      },
+      "coat": {
+        "belly": true,
+        "legMat": "BODY3"
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 12,
+        "boldStrokes": 5,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the great horns sweeping up and back in long arcs over a long goat's face, a beard"
+      },
+      "assessment": {
+        "naturalCue": "brown mountain goat; swept ridged horns; cloven hooves",
+        "likeness": "Twisted horn interface may not represent backward sweep naturally",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Needs horn inspection; avoid generic spiral horns"
+      },
+      "sources": [
+        "art/creatures/ibex/genome.js",
+        "art/creatures/ibex/creature.js",
+        "art/creatures/ibex/bold.js",
+        "art/areas/crags/kind.json"
+      ]
+    },
+    {
+      "id": "jaguar",
+      "name": "Black jaguar",
+      "family": "cats",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 16,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "swipe",
+          "bigswipe",
+          "legendCharge"
+        ],
+        "strength": 1,
+        "traits": [],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "jaguar bolt",
+        "legend": true
+      },
+      "areaIds": [
+        "river-jungle"
+      ],
+      "biome": "jungle",
+      "introducedPhase": 3,
+      "ownIslandPhase": 4,
+      "world0Islands": [
+        "bat",
+        "bear",
+        "arcticfox",
+        "ibex",
+        "komodo",
+        "crocodile",
+        "tiger",
+        "flyingsquirrel",
+        "cheetah",
+        "featheredserpent",
+        "jaguar",
+        "raccoon",
+        "polarbear"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.7,
+        "sat": 0.16,
+        "val": 0.3,
+        "flower": [
+          60,
+          176,
+          132
+        ]
+      },
+      "modelProportions": {
+        "hgt": 0.95,
+        "len": 0.84,
+        "chest": 0.46,
+        "tuck": 0.52,
+        "neck": 0.26,
+        "neckAng": 0.5,
+        "neckW": 0.48,
+        "hr": 0.29,
+        "legW": 1.25,
+        "bw": 0.3,
+        "profile": {
+          "shoulder": {
+            "w": 1.18,
+            "d": 1.05
+          },
+          "ribcage": {
+            "w": 1.06
+          },
+          "waist": {
+            "w": 0.8,
+            "d": 0.9
+          },
+          "loin": {
+            "w": 0.86,
+            "d": 0.95
+          },
+          "hip": {
+            "w": 0.96
+          }
+        },
+        "spine": {
+          "ribcage": -0.04,
+          "waist": -0.048,
+          "loin": -0.038,
+          "hip": -0.015
+        }
+      },
+      "parts": {
+        "ears": {
+          "kind": "round",
+          "size": 0.7
+        },
+        "tail": "jaguar",
+        "feet": "paw"
+      },
+      "coat": {
+        "rosettes": {
+          "k": 8,
+          "density": 0.75
+        }
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 10,
+        "boldStrokes": 10,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): a cat's head with one rosette on its brow: a broken ring round a spot"
+      },
+      "assessment": {
+        "naturalCue": "black melanistic coat; faint rosettes; broad head; muscular body",
+        "likeness": "Specific natural variant encoded",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Preserve black jaguar; check oversized adult head motivated by distinction"
+      },
+      "sources": [
+        "art/creatures/jaguar/genome.js",
+        "art/creatures/jaguar/creature.js",
+        "art/creatures/jaguar/bold.js",
+        "art/areas/river-jungle/kind.json"
+      ]
+    },
+    {
+      "id": "komodo",
+      "name": "Komodo dragon",
+      "family": "reptiles",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 10,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 1,
+        "traits": [],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "venom spit",
+        "legend": true
+      },
+      "areaIds": [
+        "dragon-scrub"
+      ],
+      "biome": "volcanic",
+      "introducedPhase": 4,
+      "ownIslandPhase": 5,
+      "world0Islands": [
+        "beetle",
+        "woodlouse",
+        "redpanda",
+        "komodo",
+        "frosttroll",
+        "snowleopard",
+        "frostwyrm",
+        "griffin",
+        "sphinx",
+        "stegosaurus",
+        "scorpion"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.09,
+        "sat": 0.3,
+        "val": 0.36,
+        "belly": "yellow"
+      },
+      "modelProportions": {
+        "hgt": 0.62,
+        "len": 1.3,
+        "chest": 0.26,
+        "tuck": 0.22,
+        "neck": 0.66,
+        "neckAng": 0.22,
+        "neckW": 0.3,
+        "hr": 0.22,
+        "legW": 1.6,
+        "bw": 0.4,
+        "brisket": 0,
+        "profile": {
+          "shoulder": {
+            "d": 0.8
+          },
+          "ribcage": {
+            "d": 0.92
+          }
+        }
+      },
+      "parts": {
+        "ears": {
+          "kind": "none"
+        },
+        "tail": "monitor",
+        "feet": "paw"
+      },
+      "coat": {
+        "belly": true
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 12,
+        "boldStrokes": 6,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): side on: the heavy head with its long forked tongue flicking out"
+      },
+      "assessment": {
+        "naturalCue": "grey-brown long monitor; neck; forked tongue; muscular tail",
+        "likeness": "Natural monitor features encoded",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Check stance: base lacks explicit sprawl despite lizard identity"
+      },
+      "sources": [
+        "art/creatures/komodo/genome.js",
+        "art/creatures/komodo/creature.js",
+        "art/creatures/komodo/bold.js",
+        "art/areas/dragon-scrub/kind.json"
+      ]
+    },
+    {
+      "id": "lion",
+      "name": "Lion",
+      "family": "cats",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 15,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "swipe",
+          "bigswipe",
+          "legendCharge"
+        ],
+        "strength": 2,
+        "traits": [
+          "heavy"
+        ],
+        "packMelee": [
+          null,
+          "swipe",
+          "bigswipe"
+        ],
+        "packRanged": "roar bolt",
+        "legend": true
+      },
+      "areaIds": [
+        "savanna"
+      ],
+      "biome": "hot",
+      "introducedPhase": 3,
+      "ownIslandPhase": 4,
+      "world0Islands": [
+        "woodlouse",
+        "cat",
+        "lion",
+        "crocodile",
+        "tiger",
+        "griffin",
+        "sphinx",
+        "stegosaurus",
+        "rattlesnake",
+        "rhino",
+        "cheetah",
+        "hydra",
+        "crab",
+        "jaguar"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.075,
+        "sat": 0.58,
+        "val": 0.66,
+        "belly": "white",
+        "magic": 0.09
+      },
+      "modelProportions": {
+        "hgt": 1.4,
+        "len": 0.78,
+        "chest": 0.6,
+        "tuck": 0.7,
+        "neck": 0.3,
+        "neckAng": 0.55,
+        "neckW": 0.44,
+        "hr": 0.25,
+        "legW": 1.05,
+        "bw": 0.27,
+        "profile": {
+          "shoulder": {
+            "w": 1.2,
+            "d": 1.06
+          },
+          "ribcage": {
+            "w": 1.08
+          },
+          "waist": {
+            "w": 0.78,
+            "d": 0.88
+          },
+          "loin": {
+            "w": 0.85,
+            "d": 0.94
+          },
+          "hip": {
+            "w": 0.95
+          }
+        },
+        "spine": {
+          "ribcage": -0.04,
+          "waist": -0.05,
+          "loin": -0.04,
+          "hip": -0.015
+        }
+      },
+      "parts": {
+        "ears": {
+          "kind": "round",
+          "size": 0.7
+        },
+        "tail": "tuft",
+        "feet": "paw"
+      },
+      "coat": {
+        "belly": true
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 17,
+        "boldStrokes": 4,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the great mane in rays round a calm face"
+      },
+      "assessment": {
+        "naturalCue": "tawny muscular cat; mane in adult male; tufted tail",
+        "likeness": "Natural base encoded; level mane needs visual review",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Related cats may share body; no new silhouette needed"
+      },
+      "sources": [
+        "art/creatures/lion/genome.js",
+        "art/creatures/lion/creature.js",
+        "art/creatures/lion/bold.js",
+        "art/areas/savanna/kind.json"
+      ]
+    },
+    {
+      "id": "lynx",
+      "name": "Lynx",
+      "family": "cats",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 16,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 1,
+        "traits": [],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "shriek bolt",
+        "legend": true
+      },
+      "areaIds": [
+        "rocky-slope"
+      ],
+      "biome": "mountains and glaciers",
+      "introducedPhase": 2,
+      "ownIslandPhase": 3,
+      "world0Islands": [
+        "woodlouse",
+        "raven",
+        "elk",
+        "wolf",
+        "lynx",
+        "salamander",
+        "ibex",
+        "redpanda",
+        "tiger",
+        "roe",
+        "frostwyrm",
+        "scorpion",
+        "crab",
+        "jaguar",
+        "raccoon",
+        "polarbear"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.09,
+        "sat": 0.45,
+        "val": 0.75
+      },
+      "modelProportions": {
+        "hgt": 1.08,
+        "len": 0.5,
+        "chest": 0.56,
+        "tuck": 0.62,
+        "neck": 0.25,
+        "neckAng": 0.8,
+        "neckW": 0.4,
+        "hr": 0.27,
+        "legW": 0.95
+      },
+      "parts": {
+        "ears": {
+          "kind": "tuft",
+          "size": 1.5
+        },
+        "tail": "bob",
+        "feet": "paw"
+      },
+      "coat": {
+        "belly": true,
+        "spots": true
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 10,
+        "boldStrokes": 10,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the tall tufted ears and the flared cheek ruff"
+      },
+      "assessment": {
+        "naturalCue": "warm spotted coat; ear tufts; short bobtail; broad paws",
+        "likeness": "Natural features encoded",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Inspect tuft size 1.5; do not enlarge for separation"
+      },
+      "sources": [
+        "art/creatures/lynx/genome.js",
+        "art/creatures/lynx/creature.js",
+        "art/creatures/lynx/bold.js",
+        "art/areas/rocky-slope/kind.json"
+      ]
+    },
+    {
+      "id": "marten",
+      "name": "Pine marten",
+      "family": "mustelids",
+      "builder": "quad",
+      "role": {
+        "fastRunner": true,
+        "speed": 17,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 1,
+        "traits": [],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "ember bolt",
+        "legend": true
+      },
+      "areaIds": [
+        "old-pinewood"
+      ],
+      "biome": "temperate",
+      "introducedPhase": 0,
+      "ownIslandPhase": 1,
+      "world0Islands": [
+        "squirrel",
+        "fox",
+        "marten",
+        "boar",
+        "toad",
+        "raven",
+        "wolf",
+        "ram",
+        "stag",
+        "arcticfox",
+        "redpanda",
+        "flyingsquirrel",
+        "penguin",
+        "snowleopard",
+        "sphinx",
+        "featheredserpent",
+        "unicorn",
+        "polarbear"
+      ],
+      "homeAtStart": true,
+      "paletteHSV": {
+        "hue": 0.07,
+        "sat": 0.6,
+        "val": 0.45
+      },
+      "modelProportions": {
+        "hgt": 0.68,
+        "len": 0.78,
+        "chest": 0.35,
+        "tuck": 0.42,
+        "neck": 0.3,
+        "neckAng": 0.55,
+        "neckW": 0.35,
+        "hr": 0.25,
+        "legW": 0.85,
+        "back": "arch"
+      },
+      "parts": {
+        "ears": {
+          "kind": "round",
+          "size": 1.3
+        },
+        "tail": "marten",
+        "feet": "paw"
+      },
+      "coat": {
+        "belly": true
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 8,
+        "boldStrokes": 10,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): round ears high on a pointed face, the pale bib under its chin"
+      },
+      "assessment": {
+        "naturalCue": "brown long mustelid; pale throat bib; bushy tail",
+        "likeness": "Family body and tail encoded",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Check bib extent versus full pale underside"
+      },
+      "sources": [
+        "art/creatures/marten/genome.js",
+        "art/creatures/marten/creature.js",
+        "art/creatures/marten/bold.js",
+        "art/areas/old-pinewood/kind.json"
+      ]
+    },
+    {
+      "id": "meerkat",
+      "name": "Meerkat",
+      "family": "otherCarnivorans",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 18,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 1,
+        "traits": [],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "sand bolt",
+        "legend": true
+      },
+      "areaIds": [
+        "warren"
+      ],
+      "biome": "badlands",
+      "introducedPhase": 2,
+      "ownIslandPhase": 3,
+      "world0Islands": [
+        "heron",
+        "woodlouse",
+        "salamander",
+        "spider",
+        "meerkat",
+        "armadillo",
+        "fennec",
+        "penguin",
+        "griffin",
+        "sphinx",
+        "scorpion",
+        "rhino",
+        "hydra",
+        "unicorn"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.09,
+        "sat": 0.35,
+        "val": 0.72,
+        "belly": "white",
+        "flower": [
+          168,
+          76,
+          50
+        ]
+      },
+      "modelProportions": {
+        "hgt": 0.8,
+        "len": 0.62,
+        "chest": 0.44,
+        "tuck": 0.5,
+        "neck": 0.34,
+        "neckAng": 0.75,
+        "neckW": 0.26,
+        "hr": 0.2,
+        "legW": 0.55,
+        "bw": 0.2,
+        "back": "arch"
+      },
+      "parts": {
+        "ears": {
+          "kind": "round",
+          "size": 0.45
+        },
+        "tail": "meerkat",
+        "feet": "paw"
+      },
+      "coat": {
+        "belly": true,
+        "bands": {
+          "n": 5,
+          "mat": "BODY2"
+        }
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 8,
+        "boldStrokes": 7,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): standing tall on watch, its paws at its chest"
+      },
+      "assessment": {
+        "naturalCue": "sandy slender mongoose; eye mask; back bars; thin tail",
+        "likeness": "Specific natural features and sentinel idle encoded",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Do not treat as mustelid despite shared low body"
+      },
+      "sources": [
+        "art/creatures/meerkat/genome.js",
+        "art/creatures/meerkat/creature.js",
+        "art/creatures/meerkat/bold.js",
+        "art/areas/warren/kind.json"
+      ]
+    },
+    {
+      "id": "mole",
+      "name": "Mole",
+      "family": "otherMammals",
+      "builder": "mole",
+      "role": {
+        "fastRunner": false,
+        "speed": 13,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "upheaval",
+          "bigupheaval",
+          "quake"
+        ],
+        "strength": 0.75,
+        "traits": [
+          "burrower"
+        ],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "earth bolt",
+        "legend": true
+      },
+      "areaIds": [
+        "fern-forest"
+      ],
+      "biome": "temperate",
+      "introducedPhase": 0,
+      "ownIslandPhase": 1,
+      "world0Islands": [
+        "hare",
+        "fox",
+        "mole",
+        "badger",
+        "beetle",
+        "heron",
+        "newt",
+        "woodlouse",
+        "moth",
+        "toad",
+        "raven",
+        "lynx",
+        "ram",
+        "salamander",
+        "spider",
+        "cat",
+        "beaver",
+        "ibex",
+        "armadillo",
+        "penguin",
+        "frosttroll",
+        "frostwyrm",
+        "stegosaurus"
+      ],
+      "homeAtStart": true,
+      "paletteHSV": {
+        "hue": 0.7,
+        "sat": 0.15,
+        "val": 0.32,
+        "flower": [
+          70,
+          190,
+          150
+        ]
+      },
+      "modelProportions": null,
+      "parts": null,
+      "coat": null,
+      "look": null,
+      "sigil": {
+        "thinStrokes": 13,
+        "boldStrokes": 14,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the two broad clawed digging hands beside its long snout"
+      },
+      "assessment": {
+        "naturalCue": "dark velvety low body; broad digging forefeet; small eyes",
+        "likeness": "Dedicated builder; defining feet require image review",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Check forefeet rather than inventing crest"
+      },
+      "sources": [
+        "art/creatures/mole/genome.js",
+        "art/creatures/mole/creature.js",
+        "art/creatures/mole/bold.js",
+        "art/areas/fern-forest/kind.json"
+      ]
+    },
+    {
+      "id": "moth",
+      "name": "Swallowtail",
+      "family": "arthropods",
+      "builder": "moth",
+      "role": {
+        "fastRunner": false,
+        "speed": 15,
+        "rangedFlag": true,
+        "kite": false,
+        "attacks": [
+          null,
+          "spit",
+          "barb",
+          "quake"
+        ],
+        "strength": 0.75,
+        "traits": [
+          "flier",
+          "swarm"
+        ],
+        "packMelee": [],
+        "packRanged": "dust bolt",
+        "legend": true
+      },
+      "areaIds": [
+        "heath"
+      ],
+      "biome": "temperate",
+      "introducedPhase": 1,
+      "ownIslandPhase": 2,
+      "world0Islands": [
+        "hedgehog",
+        "badger",
+        "beetle",
+        "heron",
+        "newt",
+        "moth",
+        "ram",
+        "salamander",
+        "spider",
+        "beaver",
+        "komodo",
+        "meerkat",
+        "armadillo",
+        "fennec",
+        "lion",
+        "griffin",
+        "hydra"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.13,
+        "sat": 0.72,
+        "val": 0.95,
+        "accent": [
+          0.6,
+          0.7,
+          0.9
+        ]
+      },
+      "modelProportions": null,
+      "parts": null,
+      "coat": null,
+      "look": {
+        "butterfly": true
+      },
+      "sigil": {
+        "thinStrokes": 13,
+        "boldStrokes": 9,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the swallowtail: broad forewings and the long tails on its hind wings"
+      },
+      "assessment": {
+        "naturalCue": "yellow-black swallowtail butterfly; hindwing tails",
+        "likeness": "Current name is Swallowtail; butterfly flag present",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Legacy id moth is not an extra moth species; verify wing markings"
+      },
+      "sources": [
+        "art/creatures/moth/genome.js",
+        "art/creatures/moth/creature.js",
+        "art/creatures/moth/bold.js",
+        "art/areas/heath/kind.json"
+      ]
+    },
+    {
+      "id": "newt",
+      "name": "Newt",
+      "family": "amphibians",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 11,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 0.75,
+        "traits": [],
+        "packMelee": [],
+        "packRanged": "spit",
+        "legend": true
+      },
+      "areaIds": [
+        "fen"
+      ],
+      "biome": "temperate",
+      "introducedPhase": 1,
+      "ownIslandPhase": 2,
+      "world0Islands": [
+        "snail",
+        "boar",
+        "otter",
+        "heron",
+        "newt",
+        "moth",
+        "bat",
+        "snake",
+        "cat",
+        "stag",
+        "beaver",
+        "bear",
+        "owl",
+        "meerkat",
+        "fennec",
+        "lion",
+        "tiger",
+        "roe",
+        "stegosaurus",
+        "rattlesnake",
+        "crab",
+        "jaguar",
+        "raccoon"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.08,
+        "sat": 0.55,
+        "val": 0.35,
+        "belly": "yellow"
+      },
+      "modelProportions": {
+        "stance": "sprawl",
+        "hgt": 0.4,
+        "len": 1.1,
+        "chest": 0.1,
+        "tuck": 0.1,
+        "neck": 0.14,
+        "neckAng": 0.1,
+        "neckW": 0.45,
+        "hr": 0.28,
+        "legW": 0.6,
+        "bw": 0.22
+      },
+      "parts": {
+        "ears": {
+          "kind": "none"
+        },
+        "tail": "newt",
+        "feet": "paw"
+      },
+      "coat": {
+        "spots": true,
+        "spotMat": "belly",
+        "ridge": 2.4
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 7,
+        "boldStrokes": 5,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): side on: the wavy crest running along its back and tail"
+      },
+      "assessment": {
+        "naturalCue": "brown small amphibian; orange underside; flattened tail; seasonal crest",
+        "likeness": "Crest ridge 2.4 may exaggerate a real breeding feature",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Species/sex/season unspecified; ask before choosing crest extent"
+      },
+      "sources": [
+        "art/creatures/newt/genome.js",
+        "art/creatures/newt/creature.js",
+        "art/creatures/newt/bold.js",
+        "art/areas/fen/kind.json"
+      ]
+    },
+    {
+      "id": "otter",
+      "name": "Smooth-coated otter",
+      "family": "mustelids",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 17,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 1,
+        "traits": [
+          "nimble"
+        ],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "water bolt",
+        "legend": true
+      },
+      "areaIds": [
+        "mangrove-channel"
+      ],
+      "biome": "mangrove swamp",
+      "introducedPhase": 2,
+      "ownIslandPhase": 3,
+      "world0Islands": [
+        "otter",
+        "heron",
+        "bat",
+        "cat",
+        "stag",
+        "lion",
+        "crocodile",
+        "dragonfly",
+        "tiger",
+        "sphinx",
+        "cheetah",
+        "crab",
+        "featheredserpent",
+        "elephant",
+        "raccoon"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.08,
+        "sat": 0.42,
+        "val": 0.6,
+        "belly": [
+          0.11,
+          0.22,
+          0.9
+        ]
+      },
+      "modelProportions": {
+        "stance": "flat",
+        "hgt": 0.46,
+        "len": 1.3,
+        "chest": 0.3,
+        "tuck": 0.26,
+        "neck": 0.4,
+        "neckAng": 0.5,
+        "neckW": 0.6,
+        "hr": 0.27,
+        "legW": 1.2,
+        "back": "arch"
+      },
+      "parts": {
+        "ears": {
+          "kind": "round",
+          "size": 0.32
+        },
+        "tail": "otter",
+        "feet": "paw"
+      },
+      "coat": {
+        "belly": true
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 12,
+        "boldStrokes": 11,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): its whiskered head up out of the water"
+      },
+      "assessment": {
+        "naturalCue": "brown long body; pale throat; small ears; tapered swimming tail",
+        "likeness": "Specific smooth-coated identity encoded",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Check belly lightness and tail against beaver"
+      },
+      "sources": [
+        "art/creatures/otter/genome.js",
+        "art/creatures/otter/creature.js",
+        "art/creatures/otter/bold.js",
+        "art/areas/mangrove-channel/kind.json"
+      ]
+    },
+    {
+      "id": "owl",
+      "name": "Spotted owl",
+      "family": "birds",
+      "builder": "owl",
+      "role": {
+        "fastRunner": false,
+        "speed": 16,
+        "rangedFlag": true,
+        "kite": false,
+        "attacks": [
+          null,
+          "lob",
+          "biglob",
+          "quake"
+        ],
+        "strength": 1,
+        "traits": [
+          "flier"
+        ],
+        "packMelee": [
+          null,
+          "nip",
+          "nip"
+        ],
+        "packRanged": "lob",
+        "legend": true
+      },
+      "areaIds": [
+        "stone-shrine"
+      ],
+      "biome": "cold rainforest",
+      "introducedPhase": 2,
+      "ownIslandPhase": 3,
+      "world0Islands": [
+        "boar",
+        "bat",
+        "elk",
+        "lynx",
+        "snake",
+        "bear",
+        "owl",
+        "redpanda",
+        "tiger",
+        "roe",
+        "penguin",
+        "stegosaurus",
+        "featheredserpent",
+        "elephant",
+        "jaguar",
+        "raccoon",
+        "unicorn",
+        "polarbear"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.07,
+        "sat": 0.5,
+        "val": 0.38,
+        "belly": [
+          0.1,
+          0.12,
+          0.9
+        ]
+      },
+      "modelProportions": null,
+      "parts": null,
+      "coat": null,
+      "look": null,
+      "sigil": {
+        "thinStrokes": 7,
+        "boldStrokes": 4,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the spotted owl: the two great eye rings in its round face, the hooked beak"
+      },
+      "assessment": {
+        "naturalCue": "brown-white spots; face disc; rounded wings",
+        "likeness": "Spotted owl named; generic owl builder may retain ear tufts",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Check tuft-free real owl anatomy; avoid owl-family generic mix"
+      },
+      "sources": [
+        "art/creatures/owl/genome.js",
+        "art/creatures/owl/creature.js",
+        "art/creatures/owl/bold.js",
+        "art/areas/stone-shrine/kind.json"
+      ]
+    },
+    {
+      "id": "penguin",
+      "name": "Penguin",
+      "family": "birds",
+      "builder": "penguin",
+      "role": {
+        "fastRunner": false,
+        "speed": 9,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 1,
+        "traits": [],
+        "packMelee": [
+          null,
+          "nip",
+          "nip"
+        ],
+        "packRanged": "ice pellet",
+        "legend": true
+      },
+      "areaIds": [
+        "rookery"
+      ],
+      "biome": "cold",
+      "introducedPhase": 3,
+      "ownIslandPhase": 4,
+      "world0Islands": [
+        "beetle",
+        "bear",
+        "arcticfox",
+        "ibex",
+        "redpanda",
+        "crocodile",
+        "dragonfly",
+        "flyingsquirrel",
+        "penguin",
+        "frosttroll",
+        "snowleopard",
+        "featheredserpent"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.62,
+        "sat": 0.2,
+        "val": 0.2,
+        "belly": "white",
+        "flower": [
+          242,
+          150,
+          38
+        ]
+      },
+      "modelProportions": null,
+      "parts": null,
+      "coat": null,
+      "look": null,
+      "sigil": {
+        "thinStrokes": 10,
+        "boldStrokes": 5,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the white belly in its black coat, the flippers out"
+      },
+      "assessment": {
+        "naturalCue": "dark back; white front; flippers; upright stance",
+        "likeness": "Natural generic penguin builder",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Species unspecified; orange details need species choice"
+      },
+      "sources": [
+        "art/creatures/penguin/genome.js",
+        "art/creatures/penguin/creature.js",
+        "art/creatures/penguin/bold.js",
+        "art/areas/rookery/kind.json"
+      ]
+    },
+    {
+      "id": "polarbear",
+      "name": "Polar bear",
+      "family": "bears",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 14,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 2,
+        "traits": [],
+        "packMelee": [
+          null,
+          "swipe",
+          "bigswipe"
+        ],
+        "packRanged": null,
+        "legend": true
+      },
+      "areaIds": [
+        "packice"
+      ],
+      "biome": "cold",
+      "introducedPhase": 4,
+      "ownIslandPhase": 5,
+      "world0Islands": [
+        "bear",
+        "arcticfox",
+        "ibex",
+        "komodo",
+        "flyingsquirrel",
+        "penguin",
+        "frosttroll",
+        "frostwyrm",
+        "featheredserpent",
+        "elephant",
+        "polarbear"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.14,
+        "sat": 0.05,
+        "val": 0.9
+      },
+      "modelProportions": {
+        "hgt": 1.25,
+        "len": 0.9,
+        "chest": 0.38,
+        "tuck": 0.42,
+        "neck": 0.34,
+        "neckAng": 0.02,
+        "neckW": 0.55,
+        "hr": 0.3,
+        "legW": 1.8,
+        "bw": 0.36
+      },
+      "parts": {
+        "ears": {
+          "kind": "small",
+          "size": 0.8
+        },
+        "tail": "stub",
+        "feet": "paw"
+      },
+      "coat": {
+        "shaggy": true
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 6,
+        "boldStrokes": 6,
+        "description": "Ed's approved option, 2026-10-29: the bear's five-toed paw print."
+      },
+      "assessment": {
+        "naturalCue": "white large bear; long neck; small ears; broad paws",
+        "likeness": "Specific related-bear proportions encoded",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Keep white versus dark bear distinction natural; no new bear required"
+      },
+      "sources": [
+        "art/creatures/polarbear/genome.js",
+        "art/creatures/polarbear/creature.js",
+        "art/creatures/polarbear/bold.js",
+        "art/areas/packice/kind.json"
+      ]
+    },
+    {
+      "id": "raccoon",
+      "name": "Raccoon",
+      "family": "otherCarnivorans",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 15,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 1,
+        "traits": [],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "thrown stone",
+        "legend": true
+      },
+      "areaIds": [
+        "mossy-creek"
+      ],
+      "biome": "cold rainforest",
+      "introducedPhase": 2,
+      "ownIslandPhase": 3,
+      "world0Islands": [
+        "bat",
+        "elk",
+        "wolf",
+        "salamander",
+        "snake",
+        "owl",
+        "dragonfly",
+        "flyingsquirrel",
+        "roe",
+        "frosttroll",
+        "sphinx",
+        "rhino",
+        "featheredserpent",
+        "elephant",
+        "jaguar",
+        "raccoon",
+        "polarbear"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.62,
+        "sat": 0.07,
+        "val": 0.55,
+        "flower": [
+          196,
+          58,
+          44
+        ]
+      },
+      "modelProportions": {
+        "hgt": 0.62,
+        "len": 0.6,
+        "chest": 0.36,
+        "tuck": 0.4,
+        "neck": 0.2,
+        "neckAng": 0.45,
+        "neckW": 0.45,
+        "hr": 0.28,
+        "legW": 0.95,
+        "back": "arch"
+      },
+      "parts": {
+        "ears": {
+          "kind": "round",
+          "size": 0.95
+        },
+        "tail": "ringed",
+        "feet": "paw"
+      },
+      "coat": {
+        "legMat": "BODY3",
+        "shaggy": true
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 8,
+        "boldStrokes": 9,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the black bandit mask across its eyes"
+      },
+      "assessment": {
+        "naturalCue": "grey coat; black eye mask; ringed tail; dexterous forefeet",
+        "likeness": "Natural mask and ringed tail encoded",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Inspect forefeet; red panda is related visually but a different family"
+      },
+      "sources": [
+        "art/creatures/raccoon/genome.js",
+        "art/creatures/raccoon/creature.js",
+        "art/creatures/raccoon/bold.js",
+        "art/areas/mossy-creek/kind.json"
+      ]
+    },
+    {
+      "id": "ram",
+      "name": "Ram",
+      "family": "caprines",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 14,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 2,
+        "traits": [],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "dislodged stone",
+        "legend": true
+      },
+      "areaIds": [
+        "tangly-forest"
+      ],
+      "biome": "volcanic",
+      "introducedPhase": 2,
+      "ownIslandPhase": 3,
+      "world0Islands": [
+        "beetle",
+        "woodlouse",
+        "raven",
+        "elk",
+        "wolf",
+        "lynx",
+        "ram",
+        "spider",
+        "beaver",
+        "redpanda",
+        "komodo",
+        "meerkat",
+        "frosttroll",
+        "snowleopard",
+        "stegosaurus",
+        "scorpion",
+        "rhino"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.1,
+        "sat": 0.12,
+        "val": 0.88,
+        "flower": [
+          196,
+          36,
+          52
+        ],
+        "accent": [
+          0.08,
+          0.32,
+          0.5
+        ]
+      },
+      "modelProportions": {
+        "hgt": 0.95,
+        "len": 0.62,
+        "chest": 0.44,
+        "tuck": 0.48,
+        "neck": 0.2,
+        "neckAng": 0.9,
+        "neckW": 0.5,
+        "hr": 0.25,
+        "legW": 0.62
+      },
+      "parts": {
+        "ears": {
+          "kind": "small",
+          "size": 0.7
+        },
+        "tail": "stub",
+        "feet": "hoof",
+        "horns": "curl"
+      },
+      "coat": {
+        "wool": true
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 7,
+        "boldStrokes": 6,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the great horns curling round beside a long face"
+      },
+      "assessment": {
+        "naturalCue": "pale wool; dark face/feet; curled horns",
+        "likeness": "Natural domestic sheep type encoded",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Not a mountain-goat duplicate; keep real curl/sweep contrast"
+      },
+      "sources": [
+        "art/creatures/ram/genome.js",
+        "art/creatures/ram/creature.js",
+        "art/creatures/ram/bold.js",
+        "art/areas/tangly-forest/kind.json"
+      ]
+    },
+    {
+      "id": "rattlesnake",
+      "name": "Rattlesnake",
+      "family": "reptiles",
+      "builder": "rattlesnake",
+      "role": {
+        "fastRunner": false,
+        "speed": 13,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 0.75,
+        "traits": [],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "venom spit",
+        "legend": true
+      },
+      "areaIds": [
+        "cactus-flats"
+      ],
+      "biome": "badlands",
+      "introducedPhase": 3,
+      "ownIslandPhase": 4,
+      "world0Islands": [
+        "beetle",
+        "woodlouse",
+        "spider",
+        "cat",
+        "redpanda",
+        "meerkat",
+        "armadillo",
+        "fennec",
+        "lion",
+        "dragonfly",
+        "snowleopard",
+        "sphinx",
+        "stegosaurus",
+        "rattlesnake",
+        "scorpion",
+        "rhino",
+        "cheetah"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.08,
+        "sat": 0.38,
+        "val": 0.68
+      },
+      "modelProportions": null,
+      "parts": null,
+      "coat": null,
+      "look": null,
+      "sigil": {
+        "thinStrokes": 8,
+        "boldStrokes": 7,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the rattle held up behind its coil in three buttons"
+      },
+      "assessment": {
+        "naturalCue": "tan patterned snake; terminal rattle; broad head",
+        "likeness": "Dedicated natural body plan",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Check diamond/band pattern and rattle at game size"
+      },
+      "sources": [
+        "art/creatures/rattlesnake/genome.js",
+        "art/creatures/rattlesnake/creature.js",
+        "art/creatures/rattlesnake/bold.js",
+        "art/areas/cactus-flats/kind.json"
+      ]
+    },
+    {
+      "id": "raven",
+      "name": "Raven",
+      "family": "birds",
+      "builder": "raven",
+      "role": {
+        "fastRunner": false,
+        "speed": 19,
+        "rangedFlag": true,
+        "kite": true,
+        "attacks": [
+          null,
+          "longspit",
+          "longbarb",
+          "quake"
+        ],
+        "strength": 1,
+        "traits": [
+          "flier"
+        ],
+        "packMelee": [
+          null,
+          "nip",
+          "nip"
+        ],
+        "packRanged": "spit and barb",
+        "legend": true
+      },
+      "areaIds": [
+        "deadwood"
+      ],
+      "biome": "mountains and glaciers",
+      "introducedPhase": 2,
+      "ownIslandPhase": 3,
+      "world0Islands": [
+        "beetle",
+        "woodlouse",
+        "raven",
+        "wolf",
+        "lynx",
+        "ram",
+        "salamander",
+        "owl",
+        "redpanda",
+        "meerkat",
+        "lion",
+        "penguin",
+        "frostwyrm",
+        "stegosaurus",
+        "rattlesnake"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.68,
+        "sat": 0.35,
+        "val": 0.3
+      },
+      "modelProportions": null,
+      "parts": null,
+      "coat": null,
+      "look": null,
+      "sigil": {
+        "thinStrokes": 5,
+        "boldStrokes": 4,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): side on: the great heavy beak"
+      },
+      "assessment": {
+        "naturalCue": "black bird; heavy bill; wedge tail",
+        "likeness": "Dark palette and dedicated builder",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Check bill/tail rather than colouring a generic bird purple"
+      },
+      "sources": [
+        "art/creatures/raven/genome.js",
+        "art/creatures/raven/creature.js",
+        "art/creatures/raven/bold.js",
+        "art/areas/deadwood/kind.json"
+      ]
+    },
+    {
+      "id": "redpanda",
+      "name": "Red panda",
+      "family": "otherCarnivorans",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 14,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 1,
+        "traits": [],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "ember bolt",
+        "legend": true
+      },
+      "areaIds": [
+        "misty-terraces"
+      ],
+      "biome": "mountains and glaciers",
+      "introducedPhase": 3,
+      "ownIslandPhase": 4,
+      "world0Islands": [
+        "beetle",
+        "raven",
+        "lynx",
+        "ram",
+        "arcticfox",
+        "redpanda",
+        "komodo",
+        "armadillo",
+        "flyingsquirrel",
+        "frosttroll",
+        "snowleopard",
+        "frostwyrm",
+        "griffin",
+        "stegosaurus"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.03,
+        "sat": 0.8,
+        "val": 0.62,
+        "belly": "white"
+      },
+      "modelProportions": {
+        "hgt": 0.62,
+        "len": 0.6,
+        "chest": 0.3,
+        "tuck": 0.36,
+        "neck": 0.2,
+        "neckAng": 0.6,
+        "neckW": 0.42,
+        "hr": 0.32,
+        "legW": 0.9,
+        "back": "arch"
+      },
+      "parts": {
+        "ears": {
+          "kind": "round",
+          "size": 1.2
+        },
+        "tail": "panda",
+        "feet": "paw"
+      },
+      "coat": {
+        "legMat": "BODY3"
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 13,
+        "boldStrokes": 6,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): its long bushy tail in rings"
+      },
+      "assessment": {
+        "naturalCue": "rust coat; white face markings; dark limbs; ringed bushy tail",
+        "likeness": "Natural identifying parts encoded",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Inspect mask and black underside; not a bear"
+      },
+      "sources": [
+        "art/creatures/redpanda/genome.js",
+        "art/creatures/redpanda/creature.js",
+        "art/creatures/redpanda/bold.js",
+        "art/areas/misty-terraces/kind.json"
+      ]
+    },
+    {
+      "id": "rhino",
+      "name": "Rhino",
+      "family": "otherMammals",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 13,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 2,
+        "traits": [],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "dust bolt",
+        "legend": true
+      },
+      "areaIds": [
+        "bushveld"
+      ],
+      "biome": "hot",
+      "introducedPhase": 4,
+      "ownIslandPhase": 5,
+      "world0Islands": [
+        "komodo",
+        "lion",
+        "griffin",
+        "stegosaurus",
+        "rattlesnake",
+        "scorpion",
+        "rhino",
+        "cheetah",
+        "hydra",
+        "crab",
+        "featheredserpent"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.58,
+        "sat": 0.05,
+        "val": 0.46
+      },
+      "modelProportions": {
+        "hgt": 1.15,
+        "len": 0.98,
+        "chest": 0.42,
+        "tuck": 0.44,
+        "neck": 0.3,
+        "neckAng": -0.42,
+        "neckW": 0.75,
+        "hr": 0.34,
+        "legW": 2.1,
+        "back": "hump",
+        "front": 1.15,
+        "humpK": 1.4,
+        "bw": 0.48,
+        "profile": {
+          "shoulder": {
+            "w": 1.18,
+            "d": 1.1
+          },
+          "ribcage": {
+            "w": 1.1,
+            "d": 1.04
+          },
+          "waist": {
+            "w": 0.94,
+            "d": 0.96
+          },
+          "loin": {
+            "w": 0.98
+          },
+          "hip": {
+            "w": 1.04
+          }
+        }
+      },
+      "parts": {
+        "ears": {
+          "kind": "small",
+          "size": 1
+        },
+        "tail": "thin",
+        "feet": "hoof"
+      },
+      "coat": {
+        "folds": [
+          -0.55,
+          0.35
+        ]
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 9,
+        "boldStrokes": 8,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): front on: the great horn rising from its nose up past its brow"
+      },
+      "assessment": {
+        "naturalCue": "grey heavy body; nasal horn; skin folds",
+        "likeness": "Natural parts; horn 2.2 may be exaggerated",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Species unspecified: avoid mixing Indian folds/African horns"
+      },
+      "sources": [
+        "art/creatures/rhino/genome.js",
+        "art/creatures/rhino/creature.js",
+        "art/creatures/rhino/bold.js",
+        "art/areas/bushveld/kind.json"
+      ]
+    },
+    {
+      "id": "roe",
+      "name": "Roe deer",
+      "family": "deer",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 18,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 1,
+        "traits": [],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "bolt of light",
+        "legend": true
+      },
+      "areaIds": [
+        "mossy-dell"
+      ],
+      "biome": "cold rainforest",
+      "introducedPhase": 3,
+      "ownIslandPhase": 4,
+      "world0Islands": [
+        "bat",
+        "bear",
+        "dragonfly",
+        "tiger",
+        "flyingsquirrel",
+        "roe",
+        "sphinx",
+        "featheredserpent",
+        "elephant",
+        "jaguar",
+        "raccoon",
+        "unicorn"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.055,
+        "sat": 0.62,
+        "val": 0.66,
+        "belly": "white"
+      },
+      "modelProportions": {
+        "hgt": 1,
+        "len": 0.52,
+        "chest": 0.36,
+        "tuck": 0.54,
+        "neck": 0.42,
+        "neckAng": 0.9,
+        "neckW": 0.28,
+        "hr": 0.23,
+        "legW": 0.55,
+        "profile": {
+          "shoulder": {
+            "w": 1.12,
+            "d": 1.08
+          },
+          "ribcage": {
+            "w": 1.05
+          },
+          "waist": {
+            "w": 0.72,
+            "d": 0.84
+          },
+          "loin": {
+            "w": 0.8,
+            "d": 0.92
+          },
+          "hip": {
+            "w": 0.95
+          }
+        }
+      },
+      "parts": {
+        "ears": {
+          "kind": "big",
+          "size": 1.15
+        },
+        "tail": "bob",
+        "feet": "hoof",
+        "antlers": "branch"
+      },
+      "coat": {
+        "belly": true,
+        "spots": "young",
+        "rump": true
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 14,
+        "boldStrokes": 10,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): a slim deer's face with its big ears and its short spiked antlers"
+      },
+      "assessment": {
+        "naturalCue": "small reddish deer; pale rump; short three-point antlers",
+        "likeness": "Natural family cues; generic branch antler may overbranch",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Check short antlers; retain relation to stag/elk"
+      },
+      "sources": [
+        "art/creatures/roe/genome.js",
+        "art/creatures/roe/creature.js",
+        "art/creatures/roe/bold.js",
+        "art/areas/mossy-dell/kind.json"
+      ]
+    },
+    {
+      "id": "salamander",
+      "name": "Salamander",
+      "family": "amphibians",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 12,
+        "rangedFlag": true,
+        "kite": false,
+        "attacks": [
+          null,
+          "beam",
+          "widebeam",
+          "quake"
+        ],
+        "strength": 0.75,
+        "traits": [],
+        "packMelee": [],
+        "packRanged": "fire beam",
+        "legend": true
+      },
+      "areaIds": [
+        "ravine"
+      ],
+      "biome": "volcanic",
+      "introducedPhase": 2,
+      "ownIslandPhase": 3,
+      "world0Islands": [
+        "beetle",
+        "woodlouse",
+        "raven",
+        "wolf",
+        "ram",
+        "salamander",
+        "spider",
+        "cat",
+        "ibex",
+        "komodo",
+        "meerkat",
+        "armadillo",
+        "fennec",
+        "snowleopard",
+        "stegosaurus",
+        "rhino"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.1,
+        "sat": 0.1,
+        "val": 0.22,
+        "belly": "yellow",
+        "magic": 0.05
+      },
+      "modelProportions": {
+        "stance": "sprawl",
+        "hgt": 0.4,
+        "len": 0.95,
+        "chest": 0.16,
+        "tuck": 0.16,
+        "neck": 0.1,
+        "neckAng": -0.05,
+        "neckW": 0.6,
+        "hr": 0.29,
+        "legW": 1.45,
+        "bw": 0.36
+      },
+      "parts": {
+        "ears": {
+          "kind": "none"
+        },
+        "tail": "salamander",
+        "feet": "paw"
+      },
+      "coat": {
+        "spots": true,
+        "spotMat": "belly"
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 13,
+        "boldStrokes": 9,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): from above: a plump spotted body, splayed legs and a curling tail"
+      },
+      "assessment": {
+        "naturalCue": "black body; yellow warning patches; low sprawling legs",
+        "likeness": "Fire-salamander-like coat and sprawl encoded",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Ordinary markings natural; legend coals are allowed story feature"
+      },
+      "sources": [
+        "art/creatures/salamander/genome.js",
+        "art/creatures/salamander/creature.js",
+        "art/creatures/salamander/bold.js",
+        "art/areas/ravine/kind.json"
+      ]
+    },
+    {
+      "id": "scorpion",
+      "name": "Scorpion",
+      "family": "arthropods",
+      "builder": "scorpion",
+      "role": {
+        "fastRunner": false,
+        "speed": 13,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 0.75,
+        "traits": [],
+        "packMelee": [],
+        "packRanged": "venom bolt",
+        "legend": true
+      },
+      "areaIds": [
+        "red-canyon"
+      ],
+      "biome": "badlands",
+      "introducedPhase": 4,
+      "ownIslandPhase": 5,
+      "world0Islands": [
+        "woodlouse",
+        "komodo",
+        "armadillo",
+        "snowleopard",
+        "frostwyrm",
+        "griffin",
+        "sphinx",
+        "stegosaurus",
+        "rattlesnake",
+        "scorpion",
+        "rhino"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.06,
+        "sat": 0.5,
+        "val": 0.48,
+        "magic": 0.47
+      },
+      "modelProportions": null,
+      "parts": null,
+      "coat": null,
+      "look": null,
+      "sigil": {
+        "thinStrokes": 16,
+        "boldStrokes": 8,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): side on: the tail arched high over its back to the sting"
+      },
+      "assessment": {
+        "naturalCue": "brown segmented arachnid; pincers; curved sting tail",
+        "likeness": "Dedicated natural body plan",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Check eight legs plus pincers; blue fluorescence only if lit appropriately"
+      },
+      "sources": [
+        "art/creatures/scorpion/genome.js",
+        "art/creatures/scorpion/creature.js",
+        "art/creatures/scorpion/bold.js",
+        "art/areas/red-canyon/kind.json"
+      ]
+    },
+    {
+      "id": "snail",
+      "name": "Snail",
+      "family": "molluscs",
+      "builder": "snail",
+      "role": {
+        "fastRunner": false,
+        "speed": 6,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 0.75,
+        "traits": [
+          "armoured"
+        ],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": null,
+        "legend": true
+      },
+      "areaIds": [
+        "muddy-forest"
+      ],
+      "biome": "temperate",
+      "introducedPhase": 0,
+      "ownIslandPhase": 1,
+      "world0Islands": [
+        "hedgehog",
+        "snail",
+        "otter",
+        "heron",
+        "newt",
+        "bat",
+        "toad",
+        "snake",
+        "cat",
+        "stag",
+        "bear",
+        "fennec",
+        "lion",
+        "crocodile",
+        "dragonfly",
+        "griffin",
+        "sphinx",
+        "rattlesnake",
+        "scorpion",
+        "rhino",
+        "cheetah",
+        "hydra",
+        "crab",
+        "elephant",
+        "unicorn"
+      ],
+      "homeAtStart": true,
+      "paletteHSV": {
+        "hue": 0.08,
+        "sat": 0.45,
+        "val": 0.55
+      },
+      "modelProportions": null,
+      "parts": null,
+      "coat": null,
+      "look": null,
+      "sigil": {
+        "thinStrokes": 6,
+        "boldStrokes": 6,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the spiral shell on its foot, two eye stalks"
+      },
+      "assessment": {
+        "naturalCue": "brown spiral shell; soft foot; tentacles",
+        "likeness": "Dedicated natural body plan",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Ordinary shell must remain plausible; legend tower is separate"
+      },
+      "sources": [
+        "art/creatures/snail/genome.js",
+        "art/creatures/snail/creature.js",
+        "art/creatures/snail/bold.js",
+        "art/areas/muddy-forest/kind.json"
+      ]
+    },
+    {
+      "id": "snake",
+      "name": "Jungle python",
+      "family": "reptiles",
+      "builder": "snake",
+      "role": {
+        "fastRunner": false,
+        "speed": 14,
+        "rangedFlag": true,
+        "kite": false,
+        "attacks": [
+          null,
+          "spit",
+          "barb",
+          "quake"
+        ],
+        "strength": 1,
+        "traits": [],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "venom spit",
+        "legend": true
+      },
+      "areaIds": [
+        "jungle-understory"
+      ],
+      "biome": "jungle",
+      "introducedPhase": 2,
+      "ownIslandPhase": 3,
+      "world0Islands": [
+        "otter",
+        "heron",
+        "bat",
+        "elk",
+        "snake",
+        "bear",
+        "owl",
+        "fennec",
+        "hydra",
+        "featheredserpent",
+        "elephant",
+        "unicorn",
+        "polarbear"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.37,
+        "sat": 0.75,
+        "val": 0.5,
+        "belly": "yellow"
+      },
+      "modelProportions": null,
+      "parts": null,
+      "coat": null,
+      "look": {
+        "python": true
+      },
+      "sigil": {
+        "thinStrokes": 6,
+        "boldStrokes": 4,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): its body in an S, its head raised and its forked tongue out"
+      },
+      "assessment": {
+        "naturalCue": "green jungle python; white flecks; long coiled body",
+        "likeness": "Plausible green-python reference, life stage unspecified",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Species choice needed before revising juvenile colours"
+      },
+      "sources": [
+        "art/creatures/snake/genome.js",
+        "art/creatures/snake/creature.js",
+        "art/creatures/snake/bold.js",
+        "art/areas/jungle-understory/kind.json"
+      ]
+    },
+    {
+      "id": "snowleopard",
+      "name": "Snow leopard",
+      "family": "cats",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 17,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 1,
+        "traits": [],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "snow bolt",
+        "legend": true
+      },
+      "areaIds": [
+        "icefall"
+      ],
+      "biome": "mountains and glaciers",
+      "introducedPhase": 4,
+      "ownIslandPhase": 5,
+      "world0Islands": [
+        "ibex",
+        "redpanda",
+        "komodo",
+        "penguin",
+        "frosttroll",
+        "snowleopard",
+        "stegosaurus",
+        "scorpion",
+        "unicorn",
+        "polarbear"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.12,
+        "sat": 0.1,
+        "val": 0.82,
+        "belly": "white"
+      },
+      "modelProportions": {
+        "hgt": 0.94,
+        "len": 0.66,
+        "chest": 0.6,
+        "tuck": 0.64,
+        "neck": 0.26,
+        "neckAng": 0.55,
+        "neckW": 0.44,
+        "hr": 0.27,
+        "legW": 1.15,
+        "pawK": 1.35,
+        "tailK": 1.35
+      },
+      "parts": {
+        "ears": {
+          "kind": "round",
+          "size": 0.7
+        },
+        "tail": "banner",
+        "feet": "paw"
+      },
+      "coat": {
+        "belly": true,
+        "spots": true
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 9,
+        "boldStrokes": 5,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the long thick tail curled round it"
+      },
+      "assessment": {
+        "naturalCue": "smoky pale coat; broken rosettes; small ears; thick long tail",
+        "likeness": "Revise: generic spots lack characteristic rosettes",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Keep related-cat body; preset C"
+      },
+      "sources": [
+        "art/creatures/snowleopard/genome.js",
+        "art/creatures/snowleopard/creature.js",
+        "art/creatures/snowleopard/bold.js",
+        "art/areas/icefall/kind.json"
+      ]
+    },
+    {
+      "id": "sphinx",
+      "name": "Sphinx",
+      "family": "fantastic",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 13,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "screech",
+          "bigscreech",
+          "legendBeam"
+        ],
+        "strength": 2,
+        "traits": [
+          "heavy"
+        ],
+        "packMelee": [
+          null,
+          "screech",
+          "bigscreech"
+        ],
+        "packRanged": "sun bolt",
+        "legend": true
+      },
+      "areaIds": [
+        "desert-ruin"
+      ],
+      "biome": "hot",
+      "introducedPhase": 4,
+      "ownIslandPhase": 5,
+      "world0Islands": [
+        "komodo",
+        "lion",
+        "crocodile",
+        "griffin",
+        "sphinx",
+        "scorpion",
+        "rhino",
+        "cheetah",
+        "hydra",
+        "crab",
+        "elephant"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.105,
+        "sat": 0.44,
+        "val": 0.8,
+        "accent": [
+          0.12,
+          0.72,
+          0.92
+        ],
+        "magic": 0.13,
+        "flower": [
+          228,
+          182,
+          62
+        ]
+      },
+      "modelProportions": {
+        "hgt": 1.45,
+        "len": 0.82,
+        "chest": 0.56,
+        "tuck": 0.74,
+        "neck": 0.34,
+        "neckAng": 0.82,
+        "neckW": 0.42,
+        "hr": 0.26,
+        "legW": 1.05,
+        "bw": 0.26,
+        "profile": {
+          "shoulder": {
+            "w": 1.12,
+            "d": 1.04
+          },
+          "waist": {
+            "w": 0.82,
+            "d": 0.9
+          },
+          "hip": {
+            "w": 0.95
+          }
+        },
+        "spine": {
+          "ribcage": -0.03,
+          "waist": -0.04,
+          "loin": -0.03
+        }
+      },
+      "parts": {
+        "ears": {
+          "kind": "round",
+          "size": 0.45
+        },
+        "tail": "tuft",
+        "feet": "paw"
+      },
+      "coat": {
+        "belly": true
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 7,
+        "boldStrokes": 4,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): side on: a lion lying with its paws out, its headcloth's flap falling behind its head"
+      },
+      "assessment": {
+        "naturalCue": "sandy lion body; humanlike face; headcloth",
+        "likeness": "Fantastic hybrid",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Keep Egyptian story; no literal animal requirement"
+      },
+      "sources": [
+        "art/creatures/sphinx/genome.js",
+        "art/creatures/sphinx/creature.js",
+        "art/creatures/sphinx/bold.js",
+        "art/areas/desert-ruin/kind.json"
+      ]
+    },
+    {
+      "id": "spider",
+      "name": "Tarantula",
+      "family": "arthropods",
+      "builder": "spider",
+      "role": {
+        "fastRunner": false,
+        "speed": 15,
+        "rangedFlag": true,
+        "kite": false,
+        "attacks": [
+          null,
+          "web",
+          "bigweb",
+          "quake"
+        ],
+        "strength": 0.75,
+        "traits": [],
+        "packMelee": [],
+        "packRanged": "web shot",
+        "legend": true
+      },
+      "areaIds": [
+        "thorn-scrub"
+      ],
+      "biome": "badlands",
+      "introducedPhase": 2,
+      "ownIslandPhase": 3,
+      "world0Islands": [
+        "woodlouse",
+        "moth",
+        "raven",
+        "wolf",
+        "lynx",
+        "ram",
+        "salamander",
+        "spider",
+        "cat",
+        "komodo",
+        "meerkat",
+        "armadillo",
+        "penguin",
+        "snowleopard",
+        "griffin",
+        "rattlesnake",
+        "scorpion",
+        "cheetah"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.05,
+        "sat": 0.3,
+        "val": 0.24,
+        "accent": [
+          0.06,
+          0.8,
+          0.88
+        ]
+      },
+      "modelProportions": null,
+      "parts": null,
+      "coat": null,
+      "look": {
+        "tarantula": true
+      },
+      "sigil": {
+        "thinStrokes": 10,
+        "boldStrokes": 10,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the tarantula: its big furry abdomen and thick bent legs"
+      },
+      "assessment": {
+        "naturalCue": "dark hairy tarantula; warm leg bands; eight legs",
+        "likeness": "Tarantula flag; banded species unspecified",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Natural orange-kneed species plausible; inspect bands before rejecting"
+      },
+      "sources": [
+        "art/creatures/spider/genome.js",
+        "art/creatures/spider/creature.js",
+        "art/creatures/spider/bold.js",
+        "art/areas/thorn-scrub/kind.json"
+      ]
+    },
+    {
+      "id": "squirrel",
+      "name": "Squirrel",
+      "family": "rodents",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 18,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 1,
+        "traits": [
+          "nimble"
+        ],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "acorn bolts",
+        "legend": true
+      },
+      "areaIds": [
+        "twiggy-forest"
+      ],
+      "biome": "temperate",
+      "introducedPhase": 0,
+      "ownIslandPhase": 1,
+      "world0Islands": [
+        "squirrel",
+        "hare",
+        "marten",
+        "stoat",
+        "snail",
+        "dormouse",
+        "boar",
+        "heron",
+        "newt",
+        "lynx",
+        "ram",
+        "stag",
+        "bear",
+        "owl",
+        "arcticfox",
+        "dragonfly",
+        "roe",
+        "frosttroll",
+        "sphinx",
+        "crab",
+        "featheredserpent",
+        "elephant",
+        "jaguar",
+        "raccoon",
+        "unicorn",
+        "polarbear"
+      ],
+      "homeAtStart": true,
+      "paletteHSV": {
+        "hue": 0.03,
+        "sat": 0.75,
+        "val": 0.75,
+        "belly": "white"
+      },
+      "modelProportions": {
+        "hgt": 0.55,
+        "len": 0.45,
+        "chest": 0.35,
+        "tuck": 0.4,
+        "neck": 0.2,
+        "neckAng": 0.9,
+        "neckW": 0.35,
+        "hr": 0.3,
+        "legW": 0.8,
+        "haunch": 1.3,
+        "back": "arch"
+      },
+      "parts": {
+        "ears": {
+          "kind": "tuft",
+          "size": 1.1
+        },
+        "tail": "squirrel",
+        "feet": "paw"
+      },
+      "coat": {
+        "belly": true
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 8,
+        "boldStrokes": 2,
+        "description": "Ed's approved option, 2026-10-29: the spiral tail alone, its tip sweeping out below."
+      },
+      "assessment": {
+        "naturalCue": "russet rodent; tufted ears; large bushy tail",
+        "likeness": "Red-squirrel-like features encoded",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Keep related to flying squirrel; avoid artificial tail distinction"
+      },
+      "sources": [
+        "art/creatures/squirrel/genome.js",
+        "art/creatures/squirrel/creature.js",
+        "art/creatures/squirrel/bold.js",
+        "art/areas/twiggy-forest/kind.json"
+      ]
+    },
+    {
+      "id": "stag",
+      "name": "Stag",
+      "family": "deer",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 16,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 2,
+        "traits": [
+          "heavy"
+        ],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "antler light",
+        "legend": true
+      },
+      "areaIds": [
+        "ancient"
+      ],
+      "biome": "temperate",
+      "introducedPhase": 1,
+      "ownIslandPhase": 2,
+      "world0Islands": [
+        "stoat",
+        "boar",
+        "otter",
+        "heron",
+        "newt",
+        "bat",
+        "toad",
+        "snake",
+        "cat",
+        "stag",
+        "bear",
+        "fennec",
+        "crocodile",
+        "dragonfly",
+        "roe",
+        "sphinx",
+        "rattlesnake",
+        "rhino",
+        "cheetah",
+        "hydra",
+        "crab",
+        "featheredserpent",
+        "elephant",
+        "raccoon"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.08,
+        "sat": 0.5,
+        "val": 0.7
+      },
+      "modelProportions": {
+        "hgt": 1.3,
+        "len": 0.6,
+        "chest": 0.6,
+        "tuck": 0.7,
+        "neck": 0.55,
+        "neckAng": 0.95,
+        "neckW": 0.32,
+        "hr": 0.2,
+        "legW": 0.75,
+        "profile": {
+          "shoulder": {
+            "w": 1.15,
+            "d": 1.1
+          },
+          "ribcage": {
+            "w": 1.08
+          },
+          "waist": {
+            "w": 0.72,
+            "d": 0.82
+          },
+          "loin": {
+            "w": 0.8,
+            "d": 0.9
+          },
+          "hip": {
+            "w": 0.95
+          }
+        },
+        "spine": {
+          "shoulder": 0.04,
+          "ribcage": 0.025
+        }
+      },
+      "parts": {
+        "ears": {
+          "kind": "point",
+          "size": 1.1
+        },
+        "tail": "deer",
+        "feet": "hoof",
+        "antlers": "branch"
+      },
+      "coat": {
+        "belly": true,
+        "spots": "young",
+        "rump": true
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 13,
+        "boldStrokes": 10,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the great branching antlers over a slim face"
+      },
+      "assessment": {
+        "naturalCue": "reddish large deer; branching antlers; pale rump",
+        "likeness": "Natural red-deer-like cues encoded",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Check antlers and young spotting; shared deer body welcome"
+      },
+      "sources": [
+        "art/creatures/stag/genome.js",
+        "art/creatures/stag/creature.js",
+        "art/creatures/stag/bold.js",
+        "art/areas/ancient/kind.json"
+      ]
+    },
+    {
+      "id": "stegosaurus",
+      "name": "Stegosaurus",
+      "family": "extinct",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 11,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 2,
+        "traits": [],
+        "packMelee": [
+          null,
+          "swipe",
+          "bigswipe"
+        ],
+        "packRanged": "thrown stone",
+        "legend": true
+      },
+      "areaIds": [
+        "cinder-slopes"
+      ],
+      "biome": "volcanic",
+      "introducedPhase": 4,
+      "ownIslandPhase": 5,
+      "world0Islands": [
+        "beetle",
+        "woodlouse",
+        "komodo",
+        "armadillo",
+        "frosttroll",
+        "snowleopard",
+        "griffin",
+        "stegosaurus",
+        "scorpion",
+        "hydra",
+        "polarbear"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.27,
+        "sat": 0.28,
+        "val": 0.38,
+        "belly": "white",
+        "flower": [
+          214,
+          92,
+          48
+        ]
+      },
+      "modelProportions": {
+        "hgt": 1.36,
+        "len": 1.05,
+        "chest": 0.38,
+        "tuck": 0.45,
+        "neck": 0.5,
+        "neckAng": -0.15,
+        "neckW": 0.26,
+        "hr": 0.12,
+        "legW": 1.6,
+        "haunch": 1.5,
+        "hindFoot": 1.2,
+        "back": "arch",
+        "bw": 0.36,
+        "profile": {
+          "shoulder": {
+            "w": 0.82,
+            "d": 0.9
+          },
+          "ribcage": {
+            "w": 1.05,
+            "d": 1.12
+          },
+          "waist": {
+            "w": 1.08,
+            "d": 1.1
+          },
+          "loin": {
+            "w": 1.06,
+            "d": 1.05
+          },
+          "hip": {
+            "w": 1.12,
+            "d": 1.02
+          }
+        },
+        "spine": {
+          "shoulder": -0.02,
+          "ribcage": 0.02,
+          "waist": 0.05,
+          "loin": 0.07,
+          "hip": 0.05
+        }
+      },
+      "parts": {
+        "ears": {
+          "kind": "none"
+        },
+        "tail": "stego",
+        "feet": "paw"
+      },
+      "coat": {
+        "belly": true,
+        "spots": true,
+        "spotMat": "BODY2"
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 7,
+        "boldStrokes": 5,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): side on: the zigzag of plates along its arched back, the spiked tail"
+      },
+      "assessment": {
+        "naturalCue": "large hindquarters; small head; back plates; tail spikes",
+        "likeness": "Extinct real animal; anatomy assessable but colour is speculative",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Do not label speculative green colour as fossil-backed fact"
+      },
+      "sources": [
+        "art/creatures/stegosaurus/genome.js",
+        "art/creatures/stegosaurus/creature.js",
+        "art/creatures/stegosaurus/bold.js",
+        "art/areas/cinder-slopes/kind.json"
+      ]
+    },
+    {
+      "id": "stoat",
+      "name": "Stoat",
+      "family": "mustelids",
+      "builder": "quad",
+      "role": {
+        "fastRunner": true,
+        "speed": 19,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 1,
+        "traits": [
+          "nimble"
+        ],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "dart of light",
+        "legend": true
+      },
+      "areaIds": [
+        "alder-forest"
+      ],
+      "biome": "temperate",
+      "introducedPhase": 0,
+      "ownIslandPhase": 1,
+      "world0Islands": [
+        "hedgehog",
+        "squirrel",
+        "stoat",
+        "snail",
+        "boar",
+        "newt",
+        "moth",
+        "elk",
+        "stag",
+        "fennec",
+        "crocodile",
+        "dragonfly",
+        "tiger",
+        "flyingsquirrel",
+        "roe",
+        "griffin",
+        "sphinx",
+        "cheetah",
+        "crab",
+        "featheredserpent",
+        "elephant",
+        "unicorn"
+      ],
+      "homeAtStart": true,
+      "paletteHSV": {
+        "hue": 0.1,
+        "sat": 0.25,
+        "val": 0.92
+      },
+      "modelProportions": {
+        "hgt": 0.48,
+        "len": 1.05,
+        "chest": 0.3,
+        "tuck": 0.33,
+        "neck": 0.85,
+        "neckAng": 0.55,
+        "neckW": 0.2,
+        "hr": 0.25,
+        "legW": 0.8,
+        "back": "arch",
+        "brisket": 0,
+        "profile": {
+          "shoulder": {
+            "w": 0.9,
+            "d": 0.8
+          },
+          "ribcage": {
+            "d": 0.9
+          }
+        }
+      },
+      "parts": {
+        "ears": {
+          "kind": "round",
+          "size": 0.6
+        },
+        "tail": "stoat",
+        "feet": "paw"
+      },
+      "coat": {
+        "belly": true
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 6,
+        "boldStrokes": 8,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): side on: its long slinking body, short legs, the black tip of its tail"
+      },
+      "assessment": {
+        "naturalCue": "slender long mustelid; white winter coat; black tail tip",
+        "likeness": "Winter coat plausible; season differs from green alder area",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Keep black tip; no forced recolour solely for habitat palette"
+      },
+      "sources": [
+        "art/creatures/stoat/genome.js",
+        "art/creatures/stoat/creature.js",
+        "art/creatures/stoat/bold.js",
+        "art/areas/alder-forest/kind.json"
+      ]
+    },
+    {
+      "id": "tiger",
+      "name": "Tiger",
+      "family": "cats",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 17,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "swipe",
+          "bigswipe",
+          "legendCharge"
+        ],
+        "strength": 2,
+        "traits": [
+          "heavy"
+        ],
+        "packMelee": [
+          null,
+          "swipe",
+          "bigswipe"
+        ],
+        "packRanged": "growl bolt",
+        "legend": true
+      },
+      "areaIds": [
+        "bamboo-jungle"
+      ],
+      "biome": "jungle",
+      "introducedPhase": 3,
+      "ownIslandPhase": 4,
+      "world0Islands": [
+        "otter",
+        "snake",
+        "bear",
+        "arcticfox",
+        "lion",
+        "crocodile",
+        "tiger",
+        "flyingsquirrel",
+        "griffin",
+        "sphinx",
+        "cheetah",
+        "hydra",
+        "featheredserpent",
+        "elephant"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.065,
+        "sat": 0.85,
+        "val": 0.9,
+        "belly": "white",
+        "flower": [
+          214,
+          48,
+          58
+        ]
+      },
+      "modelProportions": {
+        "hgt": 1.1,
+        "len": 0.86,
+        "chest": 0.5,
+        "tuck": 0.56,
+        "neck": 0.28,
+        "neckAng": 0.5,
+        "neckW": 0.52,
+        "hr": 0.3,
+        "legW": 1.3,
+        "bw": 0.32,
+        "profile": {
+          "shoulder": {
+            "w": 1.18,
+            "d": 1.05
+          },
+          "ribcage": {
+            "w": 1.08
+          },
+          "waist": {
+            "w": 0.8,
+            "d": 0.9
+          },
+          "loin": {
+            "w": 0.86,
+            "d": 0.95
+          },
+          "hip": {
+            "w": 0.96
+          }
+        },
+        "spine": {
+          "ribcage": -0.04,
+          "waist": -0.048,
+          "loin": -0.038,
+          "hip": -0.015
+        }
+      },
+      "parts": {
+        "ears": {
+          "kind": "round",
+          "size": 0.75
+        },
+        "tail": "tiger",
+        "feet": "paw"
+      },
+      "coat": {
+        "belly": true,
+        "stripes": {
+          "n": 11,
+          "w": 0.3
+        }
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 14,
+        "boldStrokes": 13,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the stripes across its brow and cheeks"
+      },
+      "assessment": {
+        "naturalCue": "orange cat; dark stripes; pale underside; long tail",
+        "likeness": "Natural cues encoded",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Compare cat proportions and stripe read; no added anatomy"
+      },
+      "sources": [
+        "art/creatures/tiger/genome.js",
+        "art/creatures/tiger/creature.js",
+        "art/creatures/tiger/bold.js",
+        "art/areas/bamboo-jungle/kind.json"
+      ]
+    },
+    {
+      "id": "toad",
+      "name": "Toad",
+      "family": "amphibians",
+      "builder": "toad",
+      "role": {
+        "fastRunner": false,
+        "speed": 12,
+        "rangedFlag": true,
+        "kite": false,
+        "attacks": [
+          null,
+          "slam",
+          "bigslam",
+          "quake"
+        ],
+        "strength": 0.75,
+        "traits": [],
+        "packMelee": [
+          null,
+          "nip",
+          "nip"
+        ],
+        "packRanged": "spore lob",
+        "legend": true
+      },
+      "areaIds": [
+        "wetland"
+      ],
+      "biome": "temperate",
+      "introducedPhase": 1,
+      "ownIslandPhase": 2,
+      "world0Islands": [
+        "hare",
+        "fox",
+        "marten",
+        "boar",
+        "moth",
+        "toad",
+        "raven",
+        "elk",
+        "wolf",
+        "ram",
+        "salamander",
+        "beaver",
+        "arcticfox",
+        "redpanda",
+        "komodo",
+        "flyingsquirrel",
+        "penguin",
+        "snowleopard",
+        "frostwyrm",
+        "polarbear"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.2,
+        "sat": 0.5,
+        "val": 0.55
+      },
+      "modelProportions": null,
+      "parts": null,
+      "coat": null,
+      "look": null,
+      "sigil": {
+        "thinStrokes": 7,
+        "boldStrokes": 8,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the bulging eyes on top of its wide flat head, its wide mouth"
+      },
+      "assessment": {
+        "naturalCue": "olive squat amphibian; warty body; short legs",
+        "likeness": "Dedicated natural body plan",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Inspect warts and proportions versus frog; species unspecified"
+      },
+      "sources": [
+        "art/creatures/toad/genome.js",
+        "art/creatures/toad/creature.js",
+        "art/creatures/toad/bold.js",
+        "art/areas/wetland/kind.json"
+      ]
+    },
+    {
+      "id": "unicorn",
+      "name": "Unicorn",
+      "family": "fantastic",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 16,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 1,
+        "traits": [],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "horn bolt",
+        "legend": true
+      },
+      "areaIds": [
+        "moonpool-glade"
+      ],
+      "biome": "cold rainforest",
+      "introducedPhase": 4,
+      "ownIslandPhase": 5,
+      "world0Islands": [
+        "arcticfox",
+        "flyingsquirrel",
+        "roe",
+        "frosttroll",
+        "snowleopard",
+        "frostwyrm",
+        "hydra",
+        "featheredserpent",
+        "elephant",
+        "unicorn",
+        "polarbear"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.6,
+        "sat": 0.05,
+        "val": 0.95,
+        "magic": 0.13
+      },
+      "modelProportions": {
+        "hgt": 1.42,
+        "len": 0.7,
+        "chest": 0.64,
+        "tuck": 0.72,
+        "neck": 1,
+        "neckAng": 1.05,
+        "neckW": 0.3,
+        "hr": 0.215,
+        "legW": 0.7,
+        "bw": 0.28,
+        "withers": 0.09,
+        "croup": 0.06,
+        "profile": {
+          "shoulder": {
+            "w": 1.08,
+            "d": 1.1
+          },
+          "ribcage": {
+            "w": 1.02
+          },
+          "waist": {
+            "w": 0.8,
+            "d": 0.86
+          },
+          "loin": {
+            "w": 0.88,
+            "d": 0.92
+          },
+          "hip": {
+            "w": 1
+          }
+        }
+      },
+      "parts": {
+        "ears": {
+          "kind": "point",
+          "size": 0.8
+        },
+        "tail": "brush",
+        "feet": "hoof",
+        "horns": "single"
+      },
+      "coat": {
+        "socks": 0.25,
+        "legMat": "BELLY",
+        "maneHair": {
+          "mat": "BODY3"
+        }
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 5,
+        "boldStrokes": 4,
+        "description": "Ed's approved option, 2026-10-29: only the spiralled horn; open bands, no hat brim."
+      },
+      "assessment": {
+        "naturalCue": "white horse; single horn; mane and hoofs",
+        "likeness": "Fantastic kind with horse base",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Keep horse likeness plus authorised horn story"
+      },
+      "sources": [
+        "art/creatures/unicorn/genome.js",
+        "art/creatures/unicorn/creature.js",
+        "art/creatures/unicorn/bold.js",
+        "art/areas/moonpool-glade/kind.json"
+      ]
+    },
+    {
+      "id": "wolf",
+      "name": "Wolf",
+      "family": "canids",
+      "builder": "quad",
+      "role": {
+        "fastRunner": false,
+        "speed": 17,
+        "rangedFlag": false,
+        "kite": false,
+        "attacks": [
+          null,
+          "nip",
+          "maul",
+          "quake"
+        ],
+        "strength": 1,
+        "traits": [],
+        "packMelee": [
+          null,
+          "nip",
+          "maul"
+        ],
+        "packRanged": "frost breath",
+        "legend": true
+      },
+      "areaIds": [
+        "snowy-taiga"
+      ],
+      "biome": "cold",
+      "introducedPhase": 2,
+      "ownIslandPhase": 3,
+      "world0Islands": [
+        "beetle",
+        "toad",
+        "raven",
+        "elk",
+        "wolf",
+        "lynx",
+        "ram",
+        "spider",
+        "snake",
+        "owl",
+        "arcticfox",
+        "ibex",
+        "armadillo",
+        "flyingsquirrel",
+        "roe",
+        "penguin",
+        "frosttroll",
+        "snowleopard",
+        "frostwyrm",
+        "scorpion",
+        "unicorn"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.08,
+        "sat": 0.2,
+        "val": 0.72
+      },
+      "modelProportions": {
+        "hgt": 1.12,
+        "len": 0.66,
+        "chest": 0.46,
+        "tuck": 0.66,
+        "neck": 0.34,
+        "neckAng": 0.62,
+        "neckW": 0.4,
+        "hr": 0.25,
+        "legW": 1.05,
+        "profile": {
+          "shoulder": {
+            "w": 1.12,
+            "d": 1.08
+          },
+          "ribcage": {
+            "w": 1.04
+          },
+          "waist": {
+            "w": 0.74,
+            "d": 0.82
+          },
+          "loin": {
+            "w": 0.8,
+            "d": 0.9
+          },
+          "hip": {
+            "w": 0.9
+          }
+        },
+        "spine": {
+          "ribcage": -0.025,
+          "waist": -0.035,
+          "loin": -0.025
+        }
+      },
+      "parts": {
+        "ears": {
+          "kind": "point",
+          "size": 1.05
+        },
+        "tail": "brush",
+        "feet": "paw"
+      },
+      "coat": {
+        "belly": true,
+        "saddle": true
+      },
+      "look": null,
+      "sigil": {
+        "thinStrokes": 6,
+        "boldStrokes": 5,
+        "description": "Ed's approved option, 2026-10-29: cleaner cheeks, pointed ears and a long muzzle."
+      },
+      "assessment": {
+        "naturalCue": "grey-brown canid; saddle; upright ears; brush tail",
+        "likeness": "Natural family proportions encoded",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Compare fox family; do not exaggerate muzzle/ears to separate"
+      },
+      "sources": [
+        "art/creatures/wolf/genome.js",
+        "art/creatures/wolf/creature.js",
+        "art/creatures/wolf/bold.js",
+        "art/areas/snowy-taiga/kind.json"
+      ]
+    },
+    {
+      "id": "woodlouse",
+      "name": "Woodlouse",
+      "family": "arthropods",
+      "builder": "woodlouse",
+      "role": {
+        "fastRunner": false,
+        "speed": 9,
+        "rangedFlag": true,
+        "kite": false,
+        "attacks": [
+          null,
+          "spit",
+          "barb",
+          "quake"
+        ],
+        "strength": 0.75,
+        "traits": [
+          "armoured"
+        ],
+        "packMelee": [
+          null,
+          "nip",
+          "nip"
+        ],
+        "packRanged": null,
+        "legend": true
+      },
+      "areaIds": [
+        "moor"
+      ],
+      "biome": "volcanic",
+      "introducedPhase": 3,
+      "ownIslandPhase": 4,
+      "world0Islands": [
+        "woodlouse",
+        "salamander",
+        "ibex",
+        "redpanda",
+        "armadillo",
+        "lion",
+        "penguin",
+        "frostwyrm",
+        "griffin",
+        "stegosaurus"
+      ],
+      "homeAtStart": false,
+      "paletteHSV": {
+        "hue": 0.65,
+        "sat": 0.12,
+        "val": 0.45
+      },
+      "modelProportions": null,
+      "parts": null,
+      "coat": null,
+      "look": null,
+      "sigil": {
+        "thinStrokes": 13,
+        "boldStrokes": 6,
+        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): from above: its oval shell in bands of plates"
+      },
+      "assessment": {
+        "naturalCue": "grey segmented terrestrial crustacean; low plates; many legs",
+        "likeness": "Dedicated natural body plan",
+        "quality": "Source inspection only; current rendered quality unverified",
+        "gap": "Check seven leg pairs and antennae; legend fortress is allowed"
+      },
+      "sources": [
+        "art/creatures/woodlouse/genome.js",
+        "art/creatures/woodlouse/creature.js",
+        "art/creatures/woodlouse/bold.js",
+        "art/areas/moor/kind.json"
+      ]
+    }
+  ]
+}
