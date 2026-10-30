@@ -15,17 +15,25 @@ const JAGUAR_REGIONS = {
   legs: { kind: "spots", k: 12, density: .5, radius: .4, mat: "BODY3" },
 };
 export const ROSTER_PRESETS = {
+  mole: {
+    reason: "A deeper velvet barrel, projecting snout and broad forward digging paws using the existing mole parts.",
+    modelCommit: "e4b77ac10557c73b19828efe7c0b98e99b6123d7",
+    patch: { look: { mole: { bodyDepth: 1.25, bodyLength: 1.2, snoutProjection: 1.35, forepawSpread: 1.2, forepawSize: 1.25 } }, palette: { hue: .64, sat: .06, val: .38 } },
+    text: "A velvet-grey mole with a pointed snout and broad spade-like digging paws.",
+  },
   meerkat: {
     reason: "Keep the existing sentinel idle and strengthen natural dark eye patches and back bands.",
-    patch: { head: { eyeK: 1.2 }, palette: { over: { BODY3: [28, 23, 20], BODY2: [126, 102, 74], BELLY: [241, 229, 202] } } },
-    modelCommit: "629e4c45d72e14508541d6ae780f50931b7d7c80",
+    patch: { head: { eyeK: 1.2, eyePatchPx: 2 }, look: { sentinel: { belly: { mat: "BELLY", extent: { along: [0, .8], width: .6, depth: 1 } }, tailTip: { length: .25, mat: "BODY3" } } }, palette: { over: { BODY3: [28, 23, 20], BODY2: [126, 102, 74], BELLY: [241, 229, 202] } } },
+    modelCommit: "e4b77ac10557c73b19828efe7c0b98e99b6123d7",
     ordinaryLevels: { 0: { head: { eyeK: 1.25 }, coat: { regions: { tail: { tip: { length: .25, mat: "BODY3" } } } } }, 1: { head: { eyeK: 1.25 }, coat: { regions: { tail: { tip: { length: .25, mat: "BODY3" } } } } }, 2: { coat: { regions: { tail: { tip: { length: .25, mat: "BODY3" } } } } } },
     text: "A sandy meerkat with dark eye patches, back bands and an upright lookout pose.",
   },
   flyingsquirrel: {
     reason: "Make the existing ground-level patagium read as a folded membrane on a grey-brown squirrel.",
     patch: { palette: { hue: .07, sat: .16, val: .46, over: { BELLY: [246, 244, 237] } } },
-    ordinaryLevels: { 0: { head: { eyeK: 1.7 }, features: [{ kind: "patagium", spread: .55 }] }, 1: { head: { eyeK: 1.7 }, features: [{ kind: "patagium", spread: .6 }] }, 2: { head: { eyeK: 1.7 }, features: [{ kind: "patagium", spread: .9 }] } },
+    modelCommit: "e4b77ac10557c73b19828efe7c0b98e99b6123d7",
+    ordinaryLevels: { 0: { head: { eyeK: 1.7 }, features: [{ kind: "patagium", spread: .55 }] }, 1: { head: { eyeK: 1.7 }, features: [{ kind: "patagium", spread: .6 }] }, 2: { head: { eyeK: 1.7 }, features: [{ kind: "patagium", spread: .9, groundSkirt: .65, mat: "BODYL", rim: "BELLY" }] } },
+    legendPatch: { features: [{ kind: "patagium", spread: 1.25, groundSkirt: .65, mat: "BODYL", rim: "MAGIC2", stars: true }, { kind: "moss", count: 6, size: .09 }] },
     text: "A grey-brown flying squirrel with a pale belly and a folded skin membrane along its flanks.",
   },
   marten: {

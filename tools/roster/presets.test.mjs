@@ -21,7 +21,7 @@ test("opt-in changes only selected genomes, has valid sockets, and leaves source
       assert.deepEqual(genomeProblems(selected), []);
       assert.equal(speciesOf(selected).id, g.id);
       const omitted = ROSTER_PRESETS[g.id].omitLegendFeatures;
-      assert.deepEqual(selected.levels[3].features, omitted ? (g.levels?.[3]?.features || []).filter(f => !omitted.includes(f.kind)) : g.levels?.[3]?.features);
+      assert.deepEqual(selected.levels[3].features, ROSTER_PRESETS[g.id].legendPatch?.features || (omitted ? (g.levels?.[3]?.features || []).filter(f => !omitted.includes(f.kind)) : g.levels?.[3]?.features));
       assert.equal(selected.name, g.name);
       assert.equal(selected.builder, g.builder);
     }
