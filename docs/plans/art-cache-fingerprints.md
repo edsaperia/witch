@@ -141,3 +141,31 @@ path screen finds 294 reachable commits and 74 first-parent transitions touching
 the current global hash's input pattern. This is not yet a historical fingerprint
 replay: it uses the current input pattern, not each revision's hashing code, and
 must not be reported as measured warm-cache reuse or deployed-build invalidations.
+
+## Mechanical separation checkpoint (2026-10-30 13:10 UTC)
+
+COORDINATOR6523415432 authorized direct imports and whole-helper moves. Helpers
+now live in packing, look, creature, area, world and metadata modules; the old
+artBuild exports remain available. Small primitive re-export modules preserve
+the `Art.name` calls while naming their defining source modules directly.
+No art/generator.js, model data, scheduling or arrival-readiness edits were made.
+
+Before/after runJob captures with an ImageData-only backend (no browser) compare
+the entire serialized result byte for byte, not just the atlas dimensions:
+
+| Fixed job | Bytes | SHA256, before = after |
+| --- | ---: | --- |
+| housePiece, teaTable, ppm8, pitch0.7 | 6,175 | c665bbb9f37bd30884c93ccacb5f683c13b42521ca11d94ec9d9ae3726e06571 |
+| creature, fox | 5,950,648 | 80b876ffe82157e01246245f9e6385e6c212d4f116020a42ab748784c2519f30 |
+| type0, seed424242, K1 | 3,385,244 | 061d36313018b5bc8240a0f088c60904789a05c7e733bfd20ac3fb29ae335b9f |
+
+These are deterministic equivalence fixtures, not browser-rendering or timing
+claims. Typecheck and 13 nearby homeArt/artHash/palette/slices tests passed.
+The first restricted test attempt failed during temporary-file rename before
+loading tests; the authorized rerun passed. Initial unused-import errors were
+removed before the passing typecheck.
+
+House lighting still imports hsv2rgb through the omnibus generator facade.
+QUESTION6523616809 requests its one-line direct import from core.js; no lighting
+or generator edit has been made pending that additional scope route. Fingerprint
+implementation and the complete history replay remain outstanding.
