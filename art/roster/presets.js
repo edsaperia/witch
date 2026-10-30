@@ -31,16 +31,16 @@ export const ROSTER_PRESETS = {
   },
   badger: {
     reason: "Make the existing badger face stripes and black legs read against silver-grey fur.",
-    patch: { head: { blaze: 1 }, palette: { hue: .61, sat: .035, val: .55, over: { BODY: [140, 142, 145], BODY2: [45, 46, 47], BODY3: [25, 25, 25], BELLY: [245, 244, 238], BODYL: [180, 183, 186] } } },
+    patch: { head: { blaze: 1 }, palette: { hue: .61, sat: .035, val: .55, over: { BODY: [140, 142, 145], BODY2: [25, 26, 28], BODY3: [18, 18, 19], BELLY: [245, 244, 238], BODYL: [180, 183, 186] } } },
     ordinaryLevels: { 2: { head: { blaze: .85 } } },
-    legendPatch: { head: { blaze: .6 }, palette: { over: { BODY2: [25, 26, 28], BODY3: [18, 18, 19] } } },
+    legendPatch: { head: { blaze: .6 } },
     text: "A low silver-grey badger with a striped white face, dark legs and a short tail.",
   },
   stoat: {
     reason: "Chestnut back, cream underside and the existing black-tipped stoat tail.",
     omitLegendFeatures: ["darken"],
     patch: { head: { muzzle: true, jawCoat: false }, palette: { hue: .065, sat: .4, val: .78, belly: [.11, .12, .98], over: { BODY3: [36, 27, 23], BODYL: [222, 170, 120], BELLY: [250, 242, 222] } } },
-    legendPatch: { head: { muzzle: true, jawCoat: false }, palette: { over: { BELLY: [250, 242, 222] } } },
+    legendPatch: { head: { muzzle: true, jawCoat: false } },
     text: "A long chestnut stoat with a cream underside and a black-tipped tail.",
   },
   otter: {
