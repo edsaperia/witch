@@ -4,7 +4,7 @@
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),cp=require('node:child_process');
 let pw;try{pw=require(process.env.PLAYWRIGHT_MODULE||'playwright');}catch{pw=require('/opt/node22/lib/node_modules/playwright');}
 const out=path.resolve(process.argv[2]||'previews/magic-budget'),root=path.resolve(process.env.DIST||'dist');
-const samples=Number(process.env.SAMPLES||20),types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.ogg':'audio/ogg','.png':'image/png','.woff2':'font/woff2'};
+const samples=Number(process.env.SAMPLES||80),types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.ogg':'audio/ogg','.png':'image/png','.woff2':'font/woff2'};
 (async()=>{
   fs.mkdirSync(out,{recursive:true});const head=cp.execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
   const build=JSON.parse(fs.readFileSync(path.join(root,'version.json'),'utf8'));
@@ -22,12 +22,14 @@ const samples=Number(process.env.SAMPLES||20),types={'.html':'text/html','.js':'
     if(await page.evaluate(()=>window.witch.game.clock.paused)){await page.keyboard.press('Enter');await page.waitForFunction(()=>!window.witch.game.clock.paused,null,{timeout:60000});}
     await page.waitForFunction(()=>getComputedStyle(document.getElementById('start')).display==='none',null,{timeout:60000});
     const frame=async(n,draw=true)=>page.evaluate(({n,draw})=>{const w=window.witch;for(let i=0;i<n;i++)w.frame({moveX:0,moveZ:0,toggleMode:false,zoom:0},1/60,draw&&i===n-1);},{n,draw});
-    for(let i=0;i<8;i++){await frame(10);await page.waitForFunction(()=>window.witch.view.assets.pending===0,null,{timeout:600000});if(result.errors.length)throw Error(result.errors.join('\n'));}
+    for(let i=0;i<16;i++){await frame(15);await page.waitForFunction(()=>window.witch.view.assets.pending===0,null,{timeout:600000});if(result.errors.length)throw Error(result.errors.join('\n'));}
     result.fixture=await page.evaluate(()=>{const w=window.witch,g=w.game;return {clock:g.clock.time,creatures:g.creatures.filter(c=>!c.gone&&Math.hypot(c.x-g.witch.x,c.z-g.witch.z)<45).length,spells:g.combat.spells?.bodies?.length??null,camera:g.camera,quality:w.ladder?.state};});
     result.fixture.invulnerableForSustainedMeasurement=true;
     if(result.fixture.creatures<12)throw Error('Busy-fight fixture has fewer than 12 nearby creatures');
     await page.evaluate(()=>{
       const w=window.witch,m=w.view.magic,finish=m.finish.bind(m);window.__fxBudget={profile:'fire',low:false,baseTime:w.game.herTime+1};
+      // Freeze one real fight state without replaying its one-shot hit/cast events at every measurement draw.
+      for(const a of [w.game.combat.events,w.game.combat.spells?.events,w.game.waveEvents,w.game.leash.events])if(Array.isArray(a))a.length=0;
       m.finish=function(budget){const s=window.__fxBudget,wx=w.game.witch.x,wz=w.game.witch.z;
         if(s.profile!=='none')for(let i=0;i<12;i++){
           const type=s.profile==='all'?['fire','frost','party','beam'][i%4]:s.profile;
@@ -37,37 +39,50 @@ const samples=Number(process.env.SAMPLES||20),types={'.html':'text/html','.js':'
         }finish(budget);
       };
     });
-    for(const name of ['fire','frost','party','beam','all','frost-low','all-low']){
+    for(const name of ['fire','frost','party','beam','all','frost-low','all-low','frost-fragment']){
       console.log('budget',name);
       const row=await page.evaluate(async({name,samples})=>{
         const w=window.witch,v=w.view,m=v.magic,s=window.__fxBudget,gl=v.renderer.getContext(),ext=gl.getExtension('EXT_disjoint_timer_query_webgl2'),debug=gl.getExtension('WEBGL_debug_renderer_info');
         const renderer=debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER);
         if(/swiftshader|software|llvmpipe/i.test(renderer))throw Error('Hardware required: '+renderer);
         if(!ext)throw Error('Hardware timer queries unavailable');
-        s.profile=name.replace('-low','');s.low=name.endsWith('-low');m.reset();
+        s.profile=name.replace('-low','').replace('-fragment','');s.low=name.endsWith('-low');m.reset();
+        m.fieldUniforms.uFxVertex.value=name.endsWith('-fragment')?0:1;
         Object.assign(m.quality,{distortion:!s.low,imprints:!s.low,secondary:!s.low,lightCap:s.low?2:6,particles:s.low?0.5:1});
         const input={moveX:0,moveZ:0,toggleMode:false,zoom:0};
-        for(let i=0;i<15;i++){m.captureTime=s.baseTime+i/60;w.frame(input,0,true);}
+        const render=()=>v.render(w.game.clock.time,true);
+        for(let i=0;i<15;i++){m.captureTime=s.baseTime+i/60;render();}
         m.captureTime=s.baseTime+0.25;
         const rows=[];
         for(let i=0;i<samples;i++){
-          m.enabled=i%2===1;for(let warm=0;warm<2;warm++)w.frame(input,0,true);
-          const q=gl.createQuery();gl.beginQuery(ext.TIME_ELAPSED_EXT,q);const t=performance.now();w.frame(input,0,true);const cpuMs=performance.now()-t;gl.endQuery(ext.TIME_ELAPSED_EXT);gl.flush();
+          // ABBA cancels first-order frequency/temperature drift; each adjacent pair contains off and on.
+          m.enabled=i%4===1||i%4===2;for(let warm=0;warm<2;warm++)render();
+          const q=gl.createQuery();gl.beginQuery(ext.TIME_ELAPSED_EXT,q);const t=performance.now();render();const cpuMs=performance.now()-t;gl.endQuery(ext.TIME_ELAPSED_EXT);gl.flush();
           const deadline=performance.now()+60000;while(!gl.getQueryParameter(q,gl.QUERY_RESULT_AVAILABLE)&&performance.now()<deadline)await new Promise(r=>setTimeout(r,10));
           const ready=gl.getQueryParameter(q,gl.QUERY_RESULT_AVAILABLE),disjoint=gl.getParameter(ext.GPU_DISJOINT_EXT);
           rows.push({enabled:m.enabled,gpuMs:ready&&!disjoint?gl.getQueryParameter(q,gl.QUERY_RESULT)/1e6:null,cpuMs,ready,disjoint,lights:m.stats.lights,totalLights:v.stats.lights});gl.deleteQuery(q);
         }
-        m.enabled=true;return {renderer,samples:rows};
+        m.enabled=true;render();return {renderer,samples:rows};
       },{name,samples});
       if(result.errors.length)throw Error(result.errors.join('\n'));
       const median=a=>{a.sort((a,b)=>a-b);return(a[(a.length-1)>>1]+a[a.length>>1])/2;};
       const off=row.samples.filter(r=>!r.enabled&&r.gpuMs!==null).map(r=>r.gpuMs),on=row.samples.filter(r=>r.enabled&&r.gpuMs!==null).map(r=>r.gpuMs);
-      const delta=median(on)-median(off),limit=name.startsWith('all')?1.5:0.6;
-      result.variants[name]={...row,baselineMedian:median(off),effectsMedian:median(on),delta,limit,pass:off.length===samples/2&&on.length===samples/2&&delta<=limit};
+      const pairs=[];for(let i=0;i<row.samples.length;i+=2){const a=row.samples[i],b=row.samples[i+1];if(a.gpuMs!==null&&b.gpuMs!==null)pairs.push(a.enabled?a.gpuMs-b.gpuMs:b.gpuMs-a.gpuMs);}
+      const delta=median(pairs),limit=name.startsWith('all')?1.5:0.6;
+      result.variants[name]={...row,metric:'median of adjacent paired on-minus-off GPU times, ABBA order',pairedDeltas:pairs,baselineMedian:median(off),effectsMedian:median(on),differenceOfMedians:median(on)-median(off),delta,limit,diagnostic:name.endsWith('-fragment'),pass:off.length===samples/2&&on.length===samples/2&&delta<=limit};
       await page.screenshot({path:path.join(out,`${name}.png`)});
       fs.writeFileSync(path.join(out,'budget.json'),JSON.stringify(result,null,2));
     }
-    result.pass=Object.values(result.variants).every(v=>v.pass)&&result.variants['all-low'].delta<result.variants.all.delta&&result.variants['frost-low'].delta<result.variants.frost.delta;
+    // Same state, same field: moving a constant per-instance sample must preserve the picture.
+    await page.evaluate(()=>{const m=window.witch.view.magic;m.enabled=true;m.fieldUniforms.uFxVertex.value=0;window.witch.view.render(window.witch.game.clock.time,true);});
+    const reference=await page.screenshot({path:path.join(out,'frost-fragment-reference.png')});
+    await page.evaluate(()=>{const m=window.witch.view.magic;m.fieldUniforms.uFxVertex.value=1;window.witch.view.render(window.witch.game.clock.time,true);});
+    const vertex=await page.screenshot({path:path.join(out,'frost-vertex-reference.png')});
+    result.pixelProof=await page.evaluate(async({a,b})=>{
+      const read=async(src)=>{const im=new Image();im.src='data:image/png;base64,'+src;await im.decode();const c=document.createElement('canvas');c.width=im.width;c.height=im.height;const x=c.getContext('2d');x.drawImage(im,0,0);return x.getImageData(0,0,c.width,c.height).data;};
+      const x=await read(a),y=await read(b);let changed=0,max=0;for(let i=0;i<x.length;i+=4){const d=Math.max(Math.abs(x[i]-y[i]),Math.abs(x[i+1]-y[i+1]),Math.abs(x[i+2]-y[i+2]));max=Math.max(max,d);if(d>2)changed++;}return {changedOver2:changed,maxDifference:max,pass:changed<=100};
+    },{a:reference.toString('base64'),b:vertex.toString('base64')});
+    result.pass=Object.values(result.variants).filter(v=>!v.diagnostic).every(v=>v.pass)&&result.pixelProof.pass&&result.variants['all-low'].delta<result.variants.all.delta&&result.variants['frost-low'].delta<result.variants.frost.delta;
     if(!result.pass)process.exitCode=1;
   }finally{fs.writeFileSync(path.join(out,'budget.json'),JSON.stringify(result,null,2));await browser.close();server.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
