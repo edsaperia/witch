@@ -1,0 +1,627 @@
+{
+  "sha": "ca42327ba343708d6b43e7a88d7291d66b1fdae9",
+  "measurements": [
+    {
+      "id": "stoat",
+      "facing": "towards",
+      "frame": 0,
+      "level": 0,
+      "current": [
+        39,
+        28
+      ],
+      "proposed": [
+        39,
+        28
+      ]
+    },
+    {
+      "id": "stoat",
+      "facing": "towards",
+      "frame": 0,
+      "level": 1,
+      "current": [
+        45,
+        37
+      ],
+      "proposed": [
+        45,
+        37
+      ]
+    },
+    {
+      "id": "stoat",
+      "facing": "towards",
+      "frame": 0,
+      "level": 2,
+      "current": [
+        85,
+        56
+      ],
+      "proposed": [
+        85,
+        56
+      ]
+    },
+    {
+      "id": "stoat",
+      "facing": "towards",
+      "frame": 0,
+      "level": 3,
+      "current": [
+        249,
+        159
+      ],
+      "proposed": [
+        249,
+        159
+      ]
+    },
+    {
+      "id": "stoat",
+      "facing": "towards",
+      "frame": 1,
+      "level": 0,
+      "current": [
+        41,
+        28
+      ],
+      "proposed": [
+        41,
+        28
+      ]
+    },
+    {
+      "id": "stoat",
+      "facing": "towards",
+      "frame": 1,
+      "level": 1,
+      "current": [
+        48,
+        37
+      ],
+      "proposed": [
+        48,
+        37
+      ]
+    },
+    {
+      "id": "stoat",
+      "facing": "towards",
+      "frame": 1,
+      "level": 2,
+      "current": [
+        89,
+        56
+      ],
+      "proposed": [
+        89,
+        56
+      ]
+    },
+    {
+      "id": "stoat",
+      "facing": "towards",
+      "frame": 1,
+      "level": 3,
+      "current": [
+        259,
+        160
+      ],
+      "proposed": [
+        259,
+        160
+      ]
+    },
+    {
+      "id": "stoat",
+      "facing": "away",
+      "frame": 0,
+      "level": 0,
+      "current": [
+        33,
+        28
+      ],
+      "proposed": [
+        33,
+        28
+      ]
+    },
+    {
+      "id": "stoat",
+      "facing": "away",
+      "frame": 0,
+      "level": 1,
+      "current": [
+        45,
+        37
+      ],
+      "proposed": [
+        45,
+        37
+      ]
+    },
+    {
+      "id": "stoat",
+      "facing": "away",
+      "frame": 0,
+      "level": 2,
+      "current": [
+        83,
+        55
+      ],
+      "proposed": [
+        83,
+        55
+      ]
+    },
+    {
+      "id": "stoat",
+      "facing": "away",
+      "frame": 0,
+      "level": 3,
+      "current": [
+        248,
+        159
+      ],
+      "proposed": [
+        248,
+        159
+      ]
+    },
+    {
+      "id": "stoat",
+      "facing": "away",
+      "frame": 1,
+      "level": 0,
+      "current": [
+        34,
+        28
+      ],
+      "proposed": [
+        34,
+        28
+      ]
+    },
+    {
+      "id": "stoat",
+      "facing": "away",
+      "frame": 1,
+      "level": 1,
+      "current": [
+        46,
+        37
+      ],
+      "proposed": [
+        46,
+        37
+      ]
+    },
+    {
+      "id": "stoat",
+      "facing": "away",
+      "frame": 1,
+      "level": 2,
+      "current": [
+        84,
+        56
+      ],
+      "proposed": [
+        84,
+        56
+      ]
+    },
+    {
+      "id": "stoat",
+      "facing": "away",
+      "frame": 1,
+      "level": 3,
+      "current": [
+        252,
+        159
+      ],
+      "proposed": [
+        252,
+        159
+      ]
+    }
+  ],
+  "resolvedRecords": [
+    {
+      "level": 0,
+      "column": "current",
+      "body": {
+        "hgt": 0.48,
+        "len": 1.05,
+        "chest": 0.3,
+        "tuck": 0.33,
+        "neck": 0.85,
+        "neckAng": 0.55,
+        "neckW": 0.2,
+        "hr": 0.25,
+        "legW": 0.8,
+        "back": "arch",
+        "brisket": 0,
+        "profile": {
+          "shoulder": {
+            "w": 0.9,
+            "d": 0.8
+          },
+          "ribcage": {
+            "d": 0.9
+          }
+        },
+        "snout": 0.6,
+        "snoutD": 0.6,
+        "whiskers": true,
+        "belly": true,
+        "ear": "round",
+        "earS": 0.6,
+        "tail": "stoat",
+        "paw": "paw"
+      },
+      "look": null,
+      "paletteHSV": [
+        0.1,
+        0.25,
+        0.92
+      ]
+    },
+    {
+      "level": 0,
+      "column": "proposed",
+      "body": {
+        "hgt": 0.48,
+        "len": 1.05,
+        "chest": 0.3,
+        "tuck": 0.33,
+        "neck": 0.85,
+        "neckAng": 0.55,
+        "neckW": 0.2,
+        "hr": 0.25,
+        "legW": 0.8,
+        "back": "arch",
+        "brisket": 0,
+        "profile": {
+          "shoulder": {
+            "w": 0.9,
+            "d": 0.8
+          },
+          "ribcage": {
+            "d": 0.9
+          }
+        },
+        "snout": 0.6,
+        "snoutD": 0.6,
+        "whiskers": true,
+        "belly": true,
+        "ear": "round",
+        "earS": 0.6,
+        "tail": "stoat",
+        "paw": "paw"
+      },
+      "look": null,
+      "paletteHSV": [
+        0.065,
+        0.55,
+        0.56
+      ]
+    },
+    {
+      "level": 1,
+      "column": "current",
+      "body": {
+        "hgt": 0.48,
+        "len": 0.7,
+        "chest": 0.3,
+        "tuck": 0.33,
+        "neck": 0.34,
+        "neckAng": 0.55,
+        "neckW": 0.2,
+        "hr": 0.31,
+        "legW": 0.9,
+        "back": "arch",
+        "brisket": 0,
+        "profile": {
+          "shoulder": {
+            "w": 0.9,
+            "d": 0.8
+          },
+          "ribcage": {
+            "d": 0.9
+          }
+        },
+        "snout": 0.48,
+        "snoutD": 0.6,
+        "whiskers": true,
+        "belly": true,
+        "ear": "round",
+        "earS": 0.6,
+        "tail": "stoat",
+        "paw": "paw",
+        "tailL": 0.7
+      },
+      "look": null,
+      "paletteHSV": [
+        0.1,
+        0.25,
+        0.92
+      ]
+    },
+    {
+      "level": 1,
+      "column": "proposed",
+      "body": {
+        "hgt": 0.48,
+        "len": 0.7,
+        "chest": 0.3,
+        "tuck": 0.33,
+        "neck": 0.34,
+        "neckAng": 0.55,
+        "neckW": 0.2,
+        "hr": 0.31,
+        "legW": 0.9,
+        "back": "arch",
+        "brisket": 0,
+        "profile": {
+          "shoulder": {
+            "w": 0.9,
+            "d": 0.8
+          },
+          "ribcage": {
+            "d": 0.9
+          }
+        },
+        "snout": 0.48,
+        "snoutD": 0.6,
+        "whiskers": true,
+        "belly": true,
+        "ear": "round",
+        "earS": 0.6,
+        "tail": "stoat",
+        "paw": "paw",
+        "tailL": 0.7
+      },
+      "look": null,
+      "paletteHSV": [
+        0.065,
+        0.55,
+        0.56
+      ]
+    },
+    {
+      "level": 2,
+      "column": "current",
+      "body": {
+        "hgt": 0.44,
+        "len": 1.15,
+        "chest": 0.3,
+        "tuck": 0.33,
+        "neck": 0.92,
+        "neckAng": 0.55,
+        "neckW": 0.2,
+        "hr": 0.25,
+        "legW": 0.8,
+        "back": "arch",
+        "brisket": 0,
+        "profile": {
+          "shoulder": {
+            "w": 0.9,
+            "d": 0.8
+          },
+          "ribcage": {
+            "d": 0.9
+          }
+        },
+        "snout": 0.6,
+        "snoutD": 0.6,
+        "whiskers": true,
+        "belly": true,
+        "ear": "round",
+        "earS": 0.6,
+        "tail": "stoat",
+        "paw": "paw"
+      },
+      "look": null,
+      "paletteHSV": [
+        0.1,
+        0.25,
+        0.92
+      ]
+    },
+    {
+      "level": 2,
+      "column": "proposed",
+      "body": {
+        "hgt": 0.44,
+        "len": 1.15,
+        "chest": 0.3,
+        "tuck": 0.33,
+        "neck": 0.92,
+        "neckAng": 0.55,
+        "neckW": 0.2,
+        "hr": 0.25,
+        "legW": 0.8,
+        "back": "arch",
+        "brisket": 0,
+        "profile": {
+          "shoulder": {
+            "w": 0.9,
+            "d": 0.8
+          },
+          "ribcage": {
+            "d": 0.9
+          }
+        },
+        "snout": 0.6,
+        "snoutD": 0.6,
+        "whiskers": true,
+        "belly": true,
+        "ear": "round",
+        "earS": 0.6,
+        "tail": "stoat",
+        "paw": "paw"
+      },
+      "look": null,
+      "paletteHSV": [
+        0.065,
+        0.55,
+        0.56
+      ]
+    },
+    {
+      "level": 3,
+      "column": "current",
+      "body": {
+        "hgt": 0.56,
+        "len": 1.2,
+        "chest": 0.3,
+        "tuck": 0.33,
+        "neck": 0.92,
+        "neckAng": 0.55,
+        "neckW": 0.2,
+        "hr": 0.25,
+        "legW": 0.8,
+        "back": "arch",
+        "brisket": 0,
+        "profile": {
+          "shoulder": {
+            "w": 0.9,
+            "d": 0.8
+          },
+          "ribcage": {
+            "d": 0.9
+          }
+        },
+        "snout": 0.6,
+        "snoutD": 0.6,
+        "whiskers": true,
+        "belly": true,
+        "ear": "round",
+        "earS": 0.6,
+        "tail": "stoat",
+        "paw": "paw"
+      },
+      "look": null,
+      "paletteHSV": [
+        0.1,
+        0.25,
+        0.92
+      ]
+    },
+    {
+      "level": 3,
+      "column": "proposed",
+      "body": {
+        "hgt": 0.56,
+        "len": 1.2,
+        "chest": 0.3,
+        "tuck": 0.33,
+        "neck": 0.92,
+        "neckAng": 0.55,
+        "neckW": 0.2,
+        "hr": 0.25,
+        "legW": 0.8,
+        "back": "arch",
+        "brisket": 0,
+        "profile": {
+          "shoulder": {
+            "w": 0.9,
+            "d": 0.8
+          },
+          "ribcage": {
+            "d": 0.9
+          }
+        },
+        "snout": 0.6,
+        "snoutD": 0.6,
+        "whiskers": true,
+        "belly": true,
+        "ear": "round",
+        "earS": 0.6,
+        "tail": "stoat",
+        "paw": "paw"
+      },
+      "look": null,
+      "paletteHSV": [
+        0.065,
+        0.55,
+        0.56
+      ]
+    }
+  ],
+  "modelSourceCommit": "d42523e03b77a8ff4507a5c232d5bdcf91e374e2",
+  "lighting": "albedo",
+  "style": {
+    "ambientHue": 0.68,
+    "ambient": 0.22,
+    "moon": 0.3,
+    "moonHue": 0.58,
+    "glowHue": 0.13,
+    "glowSat": 0.35,
+    "glowRadius": 110,
+    "glowPower": 1.4,
+    "bands": 3,
+    "dither": 0.35,
+    "round": 0.9,
+    "outline": "none",
+    "cOutline": "dark",
+    "shafts": 0.3,
+    "areaContrast": 0.6,
+    "sat": 0.9,
+    "leafHue": 0.3,
+    "leafVariety": 0.3,
+    "trunkHue": 0.07,
+    "groundHue": 0.27,
+    "groundVal": 0.4,
+    "pixel": 3,
+    "treeSize": 0.85,
+    "crownWidth": 3,
+    "clearing": 0.55,
+    "depth": 4,
+    "areaScale": 1,
+    "areaTypes": 64,
+    "density": 0.55,
+    "clump": 0.6,
+    "gnarl": 0.5,
+    "roots": 0.6,
+    "bark": 0.6,
+    "trees": 1,
+    "wBroad": 0.8,
+    "wFir": 0.6,
+    "wWillow": 0.5,
+    "wBirch": 0.5,
+    "wPalm": 0.3,
+    "wFlat": 0.5,
+    "bushes": 55,
+    "bushSize": 1,
+    "flowers": 0.3,
+    "cSat": 0.6,
+    "cVal": 0.85,
+    "head": 0.44,
+    "eye": 1,
+    "legs": 1,
+    "long": 1,
+    "size": 8,
+    "growth": 20,
+    "magicHue": 0.5,
+    "fur": 0.5,
+    "creatureScale": 1.5,
+    "texture": 1,
+    "texDetail": 0.3,
+    "hueShift": 0,
+    "cloakHue": 0.72,
+    "hairHue": 0.01,
+    "hatHue": 0.74,
+    "topHue": 0.13,
+    "jeansHue": 0.6,
+    "shoeHue": 0,
+    "phonesHue": 0.92,
+    "artStyle": "bold"
+  },
+  "largestCell": [
+    259,
+    160
+  ],
+  "selectionInterface": "shared #1470 selector"
+}

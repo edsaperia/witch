@@ -1,5 +1,5 @@
 {
-  "sha": "4e72535637ba759455e78fec50b5378482fb0d44",
+  "sha": "ca42327ba343708d6b43e7a88d7291d66b1fdae9",
   "measurements": [
     {
       "id": "jaguar",
@@ -335,17 +335,19 @@
         "cheeks": true,
         "whiskers": true,
         "eyeK": 1.1,
+        "face": "dark",
         "muzzle": true,
+        "jawCoat": false,
         "rosettes": false,
         "belly": true,
         "regions": {
           "torso": {
             "kind": "rosettes",
             "outerPx": 4,
-            "density": 0.65,
+            "density": 0.6,
             "inner": 0.23,
             "outer": 0.43,
-            "sizeVariation": 0.18,
+            "sizeVariation": 0.28,
             "closedFraction": 0.65,
             "gapRange": [
               0,
@@ -365,6 +367,12 @@
                 "from": 0,
                 "to": -1,
                 "min": 0.15
+              },
+              {
+                "axis": "x",
+                "from": 0.1,
+                "to": 1,
+                "min": 0.45
               }
             ]
           },
@@ -392,7 +400,7 @@
       "paletteHSV": [
         0.075,
         0.2,
-        0.25
+        0.29
       ]
     },
     {
@@ -503,17 +511,19 @@
         "cheeks": true,
         "whiskers": true,
         "eyeK": 1.1,
+        "face": "dark",
         "muzzle": true,
+        "jawCoat": false,
         "rosettes": false,
         "belly": true,
         "regions": {
           "torso": {
             "kind": "rosettes",
             "outerPx": 7,
-            "density": 0.65,
+            "density": 0.6,
             "inner": 0.23,
             "outer": 0.43,
-            "sizeVariation": 0.18,
+            "sizeVariation": 0.28,
             "closedFraction": 0.65,
             "gapRange": [
               0,
@@ -533,6 +543,12 @@
                 "from": 0,
                 "to": -1,
                 "min": 0.15
+              },
+              {
+                "axis": "x",
+                "from": 0.1,
+                "to": 1,
+                "min": 0.45
               }
             ]
           },
@@ -560,7 +576,7 @@
       "paletteHSV": [
         0.075,
         0.2,
-        0.25
+        0.29
       ]
     },
     {
@@ -672,17 +688,19 @@
         "cheeks": true,
         "whiskers": true,
         "eyeK": 1.1,
+        "face": "dark",
         "muzzle": true,
+        "jawCoat": false,
         "rosettes": false,
         "belly": true,
         "regions": {
           "torso": {
             "kind": "rosettes",
             "outerPx": 7,
-            "density": 0.65,
+            "density": 0.6,
             "inner": 0.23,
             "outer": 0.43,
-            "sizeVariation": 0.18,
+            "sizeVariation": 0.28,
             "closedFraction": 0.65,
             "gapRange": [
               0,
@@ -702,6 +720,12 @@
                 "from": 0,
                 "to": -1,
                 "min": 0.15
+              },
+              {
+                "axis": "x",
+                "from": 0.1,
+                "to": 1,
+                "min": 0.45
               }
             ]
           },
@@ -730,7 +754,7 @@
       "paletteHSV": [
         0.075,
         0.2,
-        0.25
+        0.29
       ]
     },
     {
@@ -847,17 +871,19 @@
         "cheeks": true,
         "whiskers": true,
         "eyeK": 1.1,
+        "face": false,
         "muzzle": true,
+        "jawCoat": false,
         "rosettes": false,
         "belly": true,
         "regions": {
           "torso": {
             "kind": "rosettes",
             "outerPx": 14,
-            "density": 0.65,
+            "density": 0.6,
             "inner": 0.23,
             "outer": 0.43,
-            "sizeVariation": 0.18,
+            "sizeVariation": 0.28,
             "closedFraction": 0.65,
             "gapRange": [
               0,
@@ -877,6 +903,12 @@
                 "from": 0,
                 "to": -1,
                 "min": 0.15
+              },
+              {
+                "axis": "x",
+                "from": 0.1,
+                "to": 1,
+                "min": 0.45
               }
             ]
           },
@@ -907,7 +939,7 @@
       "paletteHSV": [
         0.075,
         0.2,
-        0.25
+        0.29
       ]
     }
   ],
