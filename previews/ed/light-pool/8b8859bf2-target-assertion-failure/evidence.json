@@ -1,0 +1,13 @@
+{
+  "sha": "8b8859bf2262b4e611ba4a858785ed544a34ef28",
+  "grant": "6524525987",
+  "frames": [],
+  "errors": [],
+  "complete": false,
+  "served": {
+    "version": "dev · 8b8859b",
+    "built": "2026-10-30T13:51:03.449Z"
+  },
+  "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "failure": "Error: No active target batch"
+}
