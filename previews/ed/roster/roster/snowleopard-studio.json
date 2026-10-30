@@ -1,0 +1,300 @@
+{
+  "sha": "f822dee280076d6416c37ecda90c5b071f66190d",
+  "measurements": [
+    {
+      "id": "snowleopard",
+      "facing": "towards",
+      "frame": 0,
+      "level": 0,
+      "current": [
+        58,
+        47
+      ],
+      "proposed": [
+        58,
+        47
+      ]
+    },
+    {
+      "id": "snowleopard",
+      "facing": "towards",
+      "frame": 0,
+      "level": 1,
+      "current": [
+        129,
+        80
+      ],
+      "proposed": [
+        129,
+        80
+      ]
+    },
+    {
+      "id": "snowleopard",
+      "facing": "towards",
+      "frame": 0,
+      "level": 2,
+      "current": [
+        219,
+        133
+      ],
+      "proposed": [
+        219,
+        133
+      ]
+    },
+    {
+      "id": "snowleopard",
+      "facing": "towards",
+      "frame": 0,
+      "level": 3,
+      "current": [
+        328,
+        269
+      ],
+      "proposed": [
+        328,
+        269
+      ]
+    },
+    {
+      "id": "snowleopard",
+      "facing": "towards",
+      "frame": 1,
+      "level": 0,
+      "current": [
+        63,
+        48
+      ],
+      "proposed": [
+        63,
+        48
+      ]
+    },
+    {
+      "id": "snowleopard",
+      "facing": "towards",
+      "frame": 1,
+      "level": 1,
+      "current": [
+        145,
+        84
+      ],
+      "proposed": [
+        145,
+        84
+      ]
+    },
+    {
+      "id": "snowleopard",
+      "facing": "towards",
+      "frame": 1,
+      "level": 2,
+      "current": [
+        244,
+        138
+      ],
+      "proposed": [
+        244,
+        138
+      ]
+    },
+    {
+      "id": "snowleopard",
+      "facing": "towards",
+      "frame": 1,
+      "level": 3,
+      "current": [
+        362,
+        271
+      ],
+      "proposed": [
+        362,
+        271
+      ]
+    },
+    {
+      "id": "snowleopard",
+      "facing": "away",
+      "frame": 0,
+      "level": 0,
+      "current": [
+        57,
+        47
+      ],
+      "proposed": [
+        57,
+        47
+      ]
+    },
+    {
+      "id": "snowleopard",
+      "facing": "away",
+      "frame": 0,
+      "level": 1,
+      "current": [
+        118,
+        78
+      ],
+      "proposed": [
+        118,
+        78
+      ]
+    },
+    {
+      "id": "snowleopard",
+      "facing": "away",
+      "frame": 0,
+      "level": 2,
+      "current": [
+        198,
+        128
+      ],
+      "proposed": [
+        198,
+        128
+      ]
+    },
+    {
+      "id": "snowleopard",
+      "facing": "away",
+      "frame": 0,
+      "level": 3,
+      "current": [
+        299,
+        268
+      ],
+      "proposed": [
+        299,
+        268
+      ]
+    },
+    {
+      "id": "snowleopard",
+      "facing": "away",
+      "frame": 1,
+      "level": 0,
+      "current": [
+        59,
+        47
+      ],
+      "proposed": [
+        59,
+        47
+      ]
+    },
+    {
+      "id": "snowleopard",
+      "facing": "away",
+      "frame": 1,
+      "level": 1,
+      "current": [
+        124,
+        79
+      ],
+      "proposed": [
+        124,
+        79
+      ]
+    },
+    {
+      "id": "snowleopard",
+      "facing": "away",
+      "frame": 1,
+      "level": 2,
+      "current": [
+        207,
+        130
+      ],
+      "proposed": [
+        207,
+        130
+      ]
+    },
+    {
+      "id": "snowleopard",
+      "facing": "away",
+      "frame": 1,
+      "level": 3,
+      "current": [
+        325,
+        269
+      ],
+      "proposed": [
+        325,
+        269
+      ]
+    }
+  ],
+  "style": {
+    "ambientHue": 0.68,
+    "ambient": 0.22,
+    "moon": 0.3,
+    "moonHue": 0.58,
+    "glowHue": 0.13,
+    "glowSat": 0.35,
+    "glowRadius": 110,
+    "glowPower": 1.4,
+    "bands": 3,
+    "dither": 0.35,
+    "round": 0.9,
+    "outline": "none",
+    "cOutline": "dark",
+    "shafts": 0.3,
+    "areaContrast": 0.6,
+    "sat": 0.9,
+    "leafHue": 0.3,
+    "leafVariety": 0.3,
+    "trunkHue": 0.07,
+    "groundHue": 0.27,
+    "groundVal": 0.4,
+    "pixel": 3,
+    "treeSize": 0.85,
+    "crownWidth": 3,
+    "clearing": 0.55,
+    "depth": 4,
+    "areaScale": 1,
+    "areaTypes": 64,
+    "density": 0.55,
+    "clump": 0.6,
+    "gnarl": 0.5,
+    "roots": 0.6,
+    "bark": 0.6,
+    "trees": 1,
+    "wBroad": 0.8,
+    "wFir": 0.6,
+    "wWillow": 0.5,
+    "wBirch": 0.5,
+    "wPalm": 0.3,
+    "wFlat": 0.5,
+    "bushes": 55,
+    "bushSize": 1,
+    "flowers": 0.3,
+    "cSat": 0.6,
+    "cVal": 0.85,
+    "head": 0.44,
+    "eye": 1,
+    "legs": 1,
+    "long": 1,
+    "size": 8,
+    "growth": 20,
+    "magicHue": 0.5,
+    "fur": 0.5,
+    "creatureScale": 1.5,
+    "texture": 1,
+    "texDetail": 0.3,
+    "hueShift": 0,
+    "cloakHue": 0.72,
+    "hairHue": 0.01,
+    "hatHue": 0.74,
+    "topHue": 0.13,
+    "jeansHue": 0.6,
+    "shoeHue": 0,
+    "phonesHue": 0.92,
+    "artStyle": "bold"
+  },
+  "largestCell": [
+    362,
+    271
+  ]
+}
