@@ -1,9 +1,10 @@
 // Ed's decisions panel (src/ui/decide.ts): config/decisions.json is sound (each entry's control, default and target real), and
 // a confirmed choice makes the issue link and line the coordinator reads.
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { TUNING } from "../rules/tuning";
 import { applyKnobParams, byPr, changedIn, currentValue, decisionLine, DECISION_LIST, groupOf, issueUrl, keyOf, knobAt, knobParam, openGroups, parseValue, saveOpenGroups, setKnob, swatchCss, valuesText } from "./decide";
 import { hsv2rgb } from "../../art/core.js";
+import { slotStorage } from "../app/saveSlots";
 
 /** The URL switches the game reads (src/main.ts, app/linkParams.ts), and their values (a slider's: any number). */
 const PARAMS: Record<string, string[]> = { style: ["bold", "ref"], fightScale: [], fightSpeed: [], fightMomentum: [], treetopSpeed: [], areaSize: [] };
@@ -87,14 +88,22 @@ describe("the decisions panel", () => {
       expect(openGroups().size).toBe(0);
       saveOpenGroups(new Set([groupOf(DECISION_LIST[0])]));
       expect([...openGroups()]).toEqual([groupOf(DECISION_LIST[0])]);
-      store.set("witch.pauseOpen", "not json");
+      slotStorage.setItem("witch.pauseOpen", "not json"); // Corrupt the active slot, not the preserved legacy copy.
       expect(openGroups().size).toBe(0);
     } finally { (globalThis as { localStorage?: unknown }).localStorage = was; }
-    expect(openGroups().size).toBe(0); // (no storage at all: folded, no throw)
     const [a, b] = DECISION_LIST, values = new Map<string, unknown>([[a.id, a.default], [b.id, b.default]]);
     expect(changedIn([a, b], values)).toBe(0);
     values.set(b.id, b.control.type === "toggle" ? !b.default : "changed");
     expect(changedIn([a, b], values)).toBe(1);
+  });
+  it("starts folded on a fresh page without browser storage, without carrying another page's memory fallback", async () => {
+    const was = (globalThis as { localStorage?: unknown }).localStorage;
+    try {
+      (globalThis as { localStorage?: unknown }).localStorage = undefined;
+      vi.resetModules(); // A new page has fresh adapter memory; restoring a backing object is not a page reload.
+      const fresh = await import("./decisions");
+      expect(fresh.openGroups().size).toBe(0);
+    } finally { (globalThis as { localStorage?: unknown }).localStorage = was; }
   });
   it("draws a colour's swatch as the light takes it (the Hidden witch group's glow; Ed, 2026-10-26)", () => {
     for (const [h, sv] of [[0.08, 0.55], [0.6, 1], [0.33, 0], [0.95, 0.3]]) expect(swatchCss(h, sv)).toBe(`rgb(${hsv2rgb(h, sv, 1).join(", ")})`);

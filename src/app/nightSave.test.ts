@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { nightHasStarted, NightAutosave, savedNight, savesEnabled, type NightStore, type SavedNight } from "./nightSave";
+import { captureNight, nightHasStarted, NightAutosave, savedNight, savesEnabled, type NightStore, type SavedNight } from "./nightSave";
+import { applySettings, DEFAULTS } from "./playerSettings";
+import { restoreGame, snapshotGame } from "../rules/nightSnapshot";
 import { newGame, stepGame, STEP } from "../rules/game";
 import { TUNING } from "../rules/tuning";
 import { wakeInBedroom } from "../rules/opening";
@@ -14,6 +16,16 @@ const memory = () => {
 };
 
 describe("resumable night storage", () => {
+  it("restores an actual captured game across build numbers while rejecting unknown formats", () => {
+    const tuning = structuredClone(TUNING); tuning.map!.islandAreas = 10;
+    applySettings(DEFAULTS, tuning);
+    const game = newGame(123, tuning); game.clock.paused = true;
+    const n = captureNight(game, { build: "old build", params: "seed=123", look: null, loan: null, flags: { chartRecorded: false, overRecorded: false } });
+    const accepted = savedNight(n, "new build", new URLSearchParams());
+    expect(accepted).toBe(n);
+    expect(snapshotGame(restoreGame(accepted!.game))).toEqual(n.game);
+    expect(savedNight({ ...n, game: { ...n.game, version: 2 } }, "new build", new URLSearchParams())).toBeNull();
+  });
   it("doesn't offer a new night until she gets out of bed, even with the loading card hidden", async () => {
     const tuning = structuredClone(TUNING); tuning.map!.islandAreas = 10;
     const game = newGame(123, tuning), store = memory();
@@ -37,12 +49,12 @@ describe("resumable night storage", () => {
     expect(nightHasStarted({}, true)).toBe(true); // the old opening has no wake-up
     await a.clear(); expect(await store.read()).toBeUndefined();
   });
-  it("keeps build and explicit night identity; a plain game link can resume a later island", () => {
+  it("keeps format and explicit night identity across builds; a plain game link can resume a later island", () => {
     const n = saved();
     expect(savedNight(n, "test", new URLSearchParams())).toBe(n);
     expect(savedNight(n, "test", new URLSearchParams(n.params))).toBe(n);
     for (const p of ["seed=124", "island=home", "world=43"]) expect(savedNight(n, "test", new URLSearchParams(p))).toBeNull();
-    expect(savedNight(n, "new-build", new URLSearchParams())).toBeNull();
+    expect(savedNight(n, "new-build", new URLSearchParams())).toBe(n);
     for (const bad of [null, {}, { ...n, version: 2 }, { ...n, at: NaN }, { ...n, flags: {} }, { ...n, loan: { id: "x" } }]) expect(savedNight(bad, "test", new URLSearchParams())).toBeNull();
   });
 
@@ -75,5 +87,16 @@ describe("resumable night storage", () => {
   it("doesn't create a checkpoint while no playable night is active", async () => {
     const store = memory(), a = new NightAutosave(store, () => null, () => {});
     expect(await a.save(0)).toBe(false); expect(await store.read()).toBeUndefined();
+  });
+  it("flush waits for an active checkpoint then writes the latest state before a slot exit", async () => {
+    let finish!: () => void, writes = 0;
+    const store = memory();
+    store.write = async () => { writes++; if (writes === 1) await new Promise<void>(r => { finish = r; }); };
+    const a = new NightAutosave(store, saved, () => {});
+    const active = a.save(0), flushed = a.flush(1);
+    expect(writes).toBe(1); finish();
+    expect(await active).toBe(true); expect(await flushed).toBe(true); expect(writes).toBe(2);
+    const empty = new NightAutosave(memory(), () => null, () => {});
+    expect(await empty.flush(0)).toBe(true);
   });
 });

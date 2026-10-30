@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { slotStorage } from "./saveSlots";
 import { UNLOCK_KEY, ownedToChoose, partsToChoose, setUnlockAll, syncHatUnlock, unlockAll } from "./debugUnlock";
 import { BROOM_KEY, fitBroom, loadBroom } from "./broomSave";
 import { ITEMS } from "../rules/wardrobe";
@@ -27,8 +28,8 @@ describe("Unlock everything (the pause page's debug switch)", () => {
       expect(floor.filter(Boolean)).toEqual(HAT_SPELLS.filter(h => h.built && !["none", "helmet", "harvest"].includes(h.id)).map(h => h.id));
       syncHatUnlock(W, true); // Repeated grants never duplicate hats already out.
       expect(floor.filter(h => h === "harvest" || h === "helmet")).toEqual([]);
-      expect(s.m.get("witch.hats")).toBe('["healing"]');
-      s.setItem("witch.hats", JSON.stringify(["healing", "sentry"])); // A real find while debug is on stays hers.
+      expect(slotStorage.getItem("witch.hats")).toBe('["healing"]');
+      slotStorage.setItem("witch.hats", JSON.stringify(["healing", "sentry"])); // A real find while debug is on stays hers.
       syncHatUnlock(W, false);
       expect(floor.filter(Boolean)).toEqual(["healing", "sentry"]);
       expect(W.spells.hat).toBe("helmet");
@@ -78,7 +79,7 @@ describe("Unlock everything (the pause page's debug switch)", () => {
       setUnlockAll(true);
       const fitted = { ...loadBroom().fitted, [slot]: id };
       expect(fitBroom(fitted).fitted[slot]).toBe(id);
-      expect(JSON.parse(s.m.get(BROOM_KEY)!).found).toEqual([]);
+      expect(JSON.parse(slotStorage.getItem(BROOM_KEY)!).found).toEqual([]);
       setUnlockAll(false);
       expect(loadBroom().fitted[slot]).toBeNull(); // (off: the normal rules from the next load)
       expect(loadBroom().found).toEqual([]);

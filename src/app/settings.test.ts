@@ -4,10 +4,11 @@ import { afterEach, describe, expect, it } from "vitest";
 import { applySavedSettings, carryKnobs, saveSetting } from "./settings";
 import { DECISION_LIST, knobAt, setKnob } from "../ui/decisions";
 import { TUNING } from "../rules/tuning";
+import { slotStorage } from "./saveSlots";
 
 const store = new Map<string, string>();
 (globalThis as { localStorage?: unknown }).localStorage ??= { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v), removeItem: (k: string) => void store.delete(k) };
-afterEach(() => localStorage.removeItem("witch.settings"));
+afterEach(() => slotStorage.removeItem("witch.settings"));
 
 describe("the remembered settings", () => {
   const wave = DECISION_LIST.find(d => d.id === "waveSpeed")!;
@@ -17,7 +18,7 @@ describe("the remembered settings", () => {
     const t = JSON.parse(JSON.stringify(TUNING)) as typeof TUNING;
     expect(applySavedSettings(t)).toContain("waveSpeed"); expect(t.leyLines.pulseSpeed).toBe(2.5);
     saveSetting(wave, 1);
-    expect(localStorage.getItem("witch.settings")).toBe("{}");
+    expect(slotStorage.getItem("witch.settings")).toBe("{}");
   });
   it("leave a knob the link sets alone", () => {
     saveSetting(wave, 3);

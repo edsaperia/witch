@@ -21,7 +21,11 @@ if (!off) {
 function knobs() {
   const k = { ...built };
   let saved = {};
-  try { saved = JSON.parse(localStorage.getItem("witch.settings") || "{}"); } catch { /* storage blocked: as built */ }
+  try {
+    const index = JSON.parse(localStorage.getItem("witch.saves.v1") || "null");
+    const key = index?.version === 1 && /^s[1-9][0-9]*$/.test(index.active) ? `witch.save.${index.active}.witch.settings` : "witch.settings";
+    saved = JSON.parse(localStorage.getItem(key) || "{}");
+  } catch { /* storage blocked: as built */ }
   for (const d of decisions) {
     const v = saved[d.id];
     if (typeof v === "number" && v >= d.control.min && v <= d.control.max) k[d.apply.knob.slice("loading.".length)] = v;
