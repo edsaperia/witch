@@ -9,8 +9,17 @@ says what each note covers.
 - Style bible
 - Bold sigils
 
+## [Balance baselines — v5655 rules](balance-baselines.md)
+
+(no entries: its tools and checks only)
+
+## [Real-rules reports and legacy coverage](balance-report-coverage.md)
+
+(no entries: its tools and checks only)
+
 ## [Balance](balance.md)
 
+- Legacy models retained (2026-10-29, #1459, coordinator decision).
 - Fighting value (F)
 - Population growth
 - Strength
@@ -21,6 +30,11 @@ says what each note covers.
 - Playtest log
 - Balance simulator
 - Bot / bot game
+- Bags:
+- Lone shooters
+- 7 species/ages can't be stunned by one witch alone.
+- Changed on 2026-10-29, live:
+- Ed's direction:
 
 ## [Config files](config.md)
 
@@ -175,6 +189,8 @@ says what each note covers.
 
 ## [Performance](performance.md)
 
+- Ordinary-play scenery stalls
+- The sail's terrain relocation
 - The View's build in slices
 - The start's shaders
 - The stall hunt
@@ -273,7 +289,7 @@ says what each note covers.
 ## [The world's art](world-art.md)
 
 - Area type
-- Wall objects, small objects, big objects, set piece
+- Wall objects, small objects, big objects (legacy set pieces)
 - Layout
 - Area blend
 - Modern relics
@@ -300,7 +316,7 @@ says what each note covers.
 - Prop generator
 - Great stump
 - Stone keep-clear zone
-- Set-piece generator
+- Set-piece generator (legacy art)
 - Area recipe
 - Area folder
 - Snow crowns

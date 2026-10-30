@@ -3,10 +3,11 @@
 // starts over"): the hats a browser had before (every one, free for testing) aren't carried. Storage blocked: this run only.
 import { HAT_FINDS } from "../rules/finds";
 import { newWitch } from "./defaultLook";
+import { fallbackStorage } from "./storageFallback";
 
 export const HATS_KEY = "witch.hats";
 type Store = Pick<Storage, "getItem" | "setItem">;
-const storeOf = (s?: Store | null): Store | null => { try { return s ?? globalThis.localStorage ?? null; } catch { return null; } };
+const storeOf = fallbackStorage;
 
 /** The spell hats she has found (known ones only). */
 export function loadHats(storage?: Store | null): string[] {
@@ -19,6 +20,11 @@ export function hatFound(id: string, storage?: Store | null): string[] {
   if (HAT_FINDS.includes(id) && !hats.includes(id)) hats.push(id);
   if (!newWitch()) try { storeOf(storage)?.setItem(HATS_KEY, JSON.stringify([...hats].sort())); } catch { /* storage blocked: this run only */ }
   return loadHats(storage);
+}
+/** A hat let go by the finds dev control; use the same page fallback as discoveries. */
+export function hatDropped(id: string, storage?: Store | null): void {
+  if (newWitch()) return;
+  try { storeOf(storage).setItem(HATS_KEY, JSON.stringify(loadHats(storage).filter(h => h !== id))); } catch { /* this page only */ }
 }
 /** This load's hats: ?hats=all (every one) or ?hats=a,b for one load (tools, links), else her save; the hat she'd wear (?hat=)
  *  counts as hers. As the tuning's spells.hats: "*" every one, else a comma list. */

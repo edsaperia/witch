@@ -37,9 +37,10 @@ export class Input {
   get cursor(): { x: number; y: number } | null { return this.pointer; }
   /** The ground under the cursor from her at the last read (metres), or null. */
   lastAim: { x: number; z: number } | null = null;
-  private mouseDown = false;
-  private mouseClicked = false;
-  /** The middle and right buttons pressed over the game since the last read (the left's is mouseDown and mouseClicked). */
+  private mouseHeld = new Set<string>();
+  /** The last pointer identifies touch's compatibility mouse events, which aren't mouse input. */
+  private mousePointer = true;
+  /** Mouse buttons pressed over the game since the last read, even if released before that read. */
   private mousePressed = new Set<string>();
   /** The mouse wheel over the game since the last read, in pixels (down: zoom out). */
   private wheel = 0;
@@ -61,30 +62,31 @@ export class Input {
     target.addEventListener("keyup", e => this.keys.delete(e.code), { capture: true });
     target.addEventListener("blur", () => this.release());
     if (typeof document !== "undefined") document.addEventListener("visibilitychange", () => { if (document.hidden) this.release(); });
-    // The mouse: where the cursor is, and the left button over the game (not its panels and buttons).
-    target.addEventListener("pointermove", e => { if (e.pointerType === "mouse") this.pointer = { x: e.clientX, y: e.clientY }; });
+    // Mouse buttons use mousedown/up: a chorded press/release doesn't always emit pointerdown/up.
+    // Pointer events still distinguish real mouse input from a touch's compatibility mouse events.
+    target.addEventListener("pointermove", e => { if (e.pointerType === "mouse") { this.pointer = { x: e.clientX, y: e.clientY }; this.device = "keys"; } });
     target.addEventListener("pointerdown", e => {
       this.device = e.pointerType === "touch" ? "touch" : "keys";
-      if (e.pointerType !== "mouse" || e.button !== 0 || (e.target as HTMLElement | null)?.tagName !== "CANVAS") return;
-      this.pointer = { x: e.clientX, y: e.clientY };
-      if (this.onAny?.()) return;
-      this.mouseDown = true; this.mouseClicked = true;
+      this.mousePointer = e.pointerType === "mouse";
     });
-    target.addEventListener("pointerup", e => { if (e.pointerType === "mouse" && e.button === 0) this.mouseDown = false; });
-    // The middle and right buttons (the right dodges), over the game only, without its menu. A mousedown, not a pointerdown, so it
-    // still counts while the left button is held (a chorded press fires no pointerdown).
     const onCanvas = (e: Event) => (e.target as HTMLElement | null)?.tagName === "CANVAS";
     target.addEventListener("mousedown", e => {
-      if ((e.button !== 1 && e.button !== 2) || !onCanvas(e)) return;
+      if (!this.mousePointer || !MOUSE_NAMES[e.button] || !onCanvas(e)) return;
       e.preventDefault();
+      this.pointer = { x: e.clientX, y: e.clientY };
       if (this.onAny?.()) return;
+      this.mouseHeld.add(MOUSE_NAMES[e.button]);
       this.mousePressed.add(MOUSE_NAMES[e.button]);
     });
+    // Capture releases even over a panel that takes the event, so no held action sticks afterwards.
+    target.addEventListener("mouseup", e => { this.mouseHeld.delete(MOUSE_NAMES[e.button]); }, { capture: true });
+    target.addEventListener("pointercancel", e => { if (e.pointerType === "mouse") this.release(); });
     target.addEventListener("contextmenu", e => { if (onCanvas(e)) e.preventDefault(); });
     // The wheel zooms (Ed, 2026-10-06), over the game only (not the creator's sliders or the panels),
     // without scrolling the page: a step a notch (about 100 px), a trackpad's small deltas adding up.
     target.addEventListener("wheel", e => {
       if (!onCanvas(e)) return;
+      this.device = "keys";
       e.preventDefault();
       this.wheel += e.deltaY * (e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? 400 : 1);
     }, { passive: false });
@@ -101,20 +103,20 @@ export class Input {
   /** Let go of everything held and not yet read (a menu or overlay that takes the keys opening or closing, the page losing focus or
    *  hidden): a key-up it took, or one lost behind a frame, can't leave her walking. A key still down presses again. */
   release(): void {
-    this.keys.clear(); this.mouseDown = false; this.mouseClicked = false;
+    this.keys.clear(); this.mouseHeld.clear();
     this.clearPresses();
   }
 
   /** This frame's controls; button presses are reported once. */
   read(): Controls & { debug: boolean; toggleAutoTalk: boolean } {
     const B = bindings;
-    // the mouse: the left button held or clicked since the last read, the others pressed, the wheel's notches (a step a notch, about
+    // the mouse: each button held or pressed since the last read, the wheel's notches (a step a notch, about
     // 100 px, at most one a frame, a trackpad's small deltas adding up; the camera eases between steps)
     let notch = "";
     if (Math.abs(this.wheel) >= 90) { notch = this.wheel > 0 ? "wheelDown" : "wheelUp"; this.wheel -= Math.sign(this.wheel) * 100; if (Math.abs(this.wheel) > 200) this.wheel = Math.sign(this.wheel) * 200; }
-    const k = (id: ActionId) => (B.keys(id).some(c => this.keys.has(c)) || (this.mouseDown && B.mouse(id).includes("left")) ? 1 : 0);
-    const p = (id: ActionId) => B.keys(id).some(c => this.pressed.has(c)) || B.mouse(id).some(m => (m === "left" && this.mouseClicked) || this.mousePressed.has(m) || m === notch);
-    const nextWave = p("game.nextWave") || this.touch.nextWave, pauseWaves = p("game.pauseWaves") || this.touch.pauseWaves, cycleSpeakers = p("game.cycleSpeakers");
+    const k = (id: ActionId) => (B.keys(id).some(c => this.keys.has(c)) || B.mouse(id).some(m => this.mouseHeld.has(m)) ? 1 : 0);
+    const p = (id: ActionId) => B.keys(id).some(c => this.pressed.has(c)) || B.mouse(id).some(m => this.mousePressed.has(m) || m === notch);
+    let nextWave = p("game.nextWave") || this.touch.nextWave, pauseWaves = p("game.pauseWaves") || this.touch.pauseWaves, cycleSpeakers = p("game.cycleSpeakers");
     this.touch.nextWave = false; this.touch.pauseWaves = false;
     let moveX = k("game.moveRight") - k("game.moveLeft");
     let moveZ = k("game.moveDown") - k("game.moveUp");
@@ -125,15 +127,13 @@ export class Input {
     const place = p("game.use"); let cycle = p("game.cycleNext"), cycleBack = p("game.cyclePrev"), hat = p("game.hat");
     // Use held: a run (rules/leash.ts), and, with nothing to do, her hat (rules/hat.ts putHat); the pad's use only the run (its hat is its own button).
     let hatHold = k("game.use") > 0, sigilHeld = hatHold;
-    const inviteNearest = p("game.inviteNearest"), feedNearest = p("game.feedNearest"), happyNearest = p("game.happyNearest");
+    let inviteNearest = p("game.inviteNearest"), feedNearest = p("game.feedNearest"), happyNearest = p("game.happyNearest");
     // The 💌: fire with the mouse button or 1 (held, or a click since the last read); aim at the cursor.
     let fire = k("game.invite") > 0 || p("game.invite");
-    this.mouseClicked = false; this.mousePressed.clear();
     const cursorAim = this.pointer && this.aimFrom ? this.aimFrom(this.pointer.x, this.pointer.y) : null;
     this.lastAim = cursorAim;
     let aimX = cursorAim?.x ?? 0, aimZ = cursorAim?.z ?? 0;
-    if (this.talkMode === "toggle" && p("game.talk")) this.talkOn = !this.talkOn; else if (this.talkMode === "hold") this.talkOn = false; // (Talk toggled: a press each way)
-    this.pressed.clear();
+    let talkPressed = p("game.talk"), talkDown = k("game.talk") > 0, toggleAutoTalk = p("game.autoTalk") || this.touch.autoTalk === true;
 
     // Gamepads: the first one connected with any input.
     const pads = typeof navigator !== "undefined" && navigator.getGamepads ? navigator.getGamepads() : [];
@@ -156,6 +156,9 @@ export class Input {
       if (P.dash) dash = true;
       if (P.aim) { aimX = P.aim.x; aimZ = P.aim.z; }
       if (P.fire) fire = true;
+      talkPressed ||= P.talkPressed; talkDown ||= P.talkHeld; toggleAutoTalk ||= P.toggleAutoTalk;
+      nextWave ||= P.nextWave; pauseWaves ||= P.pauseWaves; cycleSpeakers ||= P.cycleSpeakers;
+      inviteNearest ||= P.inviteNearest; feedNearest ||= P.feedNearest; happyNearest ||= P.happyNearest;
       this.padPrev = pad.buttons.map(b => b.pressed); this.padPrevAxes = [...pad.axes];
       break;
     }
@@ -174,7 +177,10 @@ export class Input {
 
     const len = Math.hypot(moveX, moveZ);
     if (len > 1) { moveX /= len; moveZ /= len; }
-    const toggleAutoTalk = p("game.autoTalk") || this.touch.autoTalk === true, talkHeld = this.talkMode === "toggle" ? this.talkOn : k("game.talk") > 0;
+    if (this.talkMode === "toggle" && talkPressed) this.talkOn = !this.talkOn; else if (this.talkMode === "hold") this.talkOn = false;
+    const talkHeld = this.talkMode === "toggle" ? this.talkOn : talkDown;
+    // Every action must read the same edges before any are consumed (including Talk and Auto-talk).
+    this.pressed.clear(); this.mousePressed.clear();
     this.touch.autoTalk = false;
     return { moveX, moveZ, toggleMode, zoom: Math.sign(zoom), place, cycle, cycleBack, debug, nextWave, pauseWaves, cycleSpeakers, sigil, sigilHeld, hatHold, hat, inviteNearest, happyNearest, spell, feedNearest, dash, toggleAutoTalk, talkHeld, fire, aimX, aimZ };
   }
@@ -188,7 +194,8 @@ export class Input {
  *  (ui/stationLines.ts panelPad, the telescope's look), she standing still (main.ts stillControls). */
 export function padControls(buttons: readonly boolean[], axes: readonly number[], prev: readonly boolean[], consumed: boolean, menu: boolean, prevAxes: readonly number[] = [], B: Bindings = bindings) {
   const pressed = (id: ActionId) => !consumed && B.padPressed(id, buttons, axes, prev, prevAxes), v = (id: ActionId) => B.padValue(id, buttons, axes);
-  const out = { moveX: 0, moveZ: 0, zoom: 0, toggleMode: false, debug: false, sigil: false, sigilHeld: false, hat: false, spell: false, cycle: false, cycleBack: false, dash: false, fire: false, aim: null as { x: number; z: number } | null };
+  const out = { moveX: 0, moveZ: 0, zoom: 0, toggleMode: false, debug: false, sigil: false, sigilHeld: false, hat: false, spell: false, cycle: false, cycleBack: false, dash: false, fire: false, aim: null as { x: number; z: number } | null,
+    talkHeld: false, talkPressed: false, toggleAutoTalk: false, nextWave: false, pauseWaves: false, cycleSpeakers: false, inviteNearest: false, feedNearest: false, happyNearest: false };
   if (menu) {
     out.sigil = pressed("menu.back");
     out.zoom = (pressed("menu.zoomOut") ? 1 : 0) - (pressed("menu.zoomIn") ? 1 : 0);
@@ -205,5 +212,8 @@ export function padControls(buttons: readonly boolean[], axes: readonly number[]
   const rx = v("game.aimRight") - v("game.aimLeft"), rz = v("game.aimDown") - v("game.aimUp"), l = Math.hypot(rx, rz);
   if (l > 0.15) { const s = Math.min(1, l) / l; out.aim = { x: rx * s * 20, z: rz * s * 20 }; } // (as a point 20 m out that way: the dash reads a cursor's ground point)
   out.fire = B.padHeld("game.invite", buttons, axes);
+  out.talkHeld = B.padHeld("game.talk", buttons, axes); out.talkPressed = pressed("game.talk"); out.toggleAutoTalk = pressed("game.autoTalk");
+  out.nextWave = pressed("game.nextWave"); out.pauseWaves = pressed("game.pauseWaves"); out.cycleSpeakers = pressed("game.cycleSpeakers");
+  out.inviteNearest = pressed("game.inviteNearest"); out.feedNearest = pressed("game.feedNearest"); out.happyNearest = pressed("game.happyNearest");
   return out;
 }

@@ -1,0 +1,7 @@
+# studio config history and detailed field notes
+
+Moved from `config/studio.json` on 2026-10-29 for #1459. Original notes below are preserved verbatim, including quotes and dates. They record the design when written; the config and rules remain the source of current behaviour.
+
+## Overview
+
+The treehouse Studio's instruments (Ed, 2026-10-23: "The studio has a drumkit (top left), modular synth setup (top right), microphone (middle, spotlit). They open menus when you go near that let you 'play them'"; the mock, previews/ed/studio-instruments on claude/ed-shots; rules/studio.ts, app/studio.ts, ui/studioPanel.ts). The loop: the Studio's own, at its own tempo (bpm, min to max, step a press), never the night's music (Ed: "the Studio is quiet ... she plays over a click or loop of its own at its own tempo"), shared by every player at the Studio; its styles in turn; level its share of the Studio's volume. root: the instruments' key (MIDI of the middle row's first note) and scale (every key in it: no wrong notes). Each instrument's sounds, chosen by 5 to 9: the drum kit's kits (each pad's patch; a pad left out plays the house kit's), the synth's patches and the mic's voices, all the music style's patches or this file's own (patches, over the style's). start: the sounds hers from the start (all of them for now; the rest will be finds, Ed: "instruments and sounds become finds"). Her notes are never snapped to the loop (Ed, 2026-10-23: "never ... exactly when pressed").

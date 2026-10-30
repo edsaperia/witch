@@ -377,11 +377,12 @@ export interface DecorPiece { id: string; family: string; bot: number; top: numb
 /** A floor tile's pixels: albedo and normal map, w x h. */
 export interface TilePixels { albedo: Uint8Array; normal: Uint8Array; w: number; h: number }
 /** A stump to bake: its species (art/props/stumps.js STUMP_GENOMES), seed and the angle it's seen from (radians). */
-export interface StumpSpec { species: string; seed: number; yaw: number; /** fitted to this area type (its id: its main tree's bark, its ground) */ area?: string; /** in this biome (art/flora/biomes.js key) */ biome?: string }
+export type { StumpSpec } from "../rules/stumps";
+import type { StumpSpec } from "../rules/stumps";
 /** A baked stump: the ground under its middle and its cut's middle on the sprite (art pixels from its top-left), the cut's height
  *  and the trunk's radius (m). */
 /** A stump spec's id: its art job's, and its key in the asset library. */
-export const stumpId = (s: StumpSpec): string => `${s.species}:${s.area ?? ""}:${s.seed}:${s.yaw.toFixed(3)}:${s.biome ?? ""}`;
+export const stumpId = (s: StumpSpec): string => `${s.species}:${s.area ?? ""}:${s.seed}:${s.yaw.toFixed(3)}:${s.biome ?? ""}${s.irregular ? `:i${s.irregular}` : ""}`;
 export interface StumpArt { origin: { x: number; y: number }; top: { x: number; y: number }; height: number; radius: number; /** The root area's outline: its radius (art pixels) at even angles round the rings' middle, from east towards the camera (art/props/stumps.js ROOT_ANGLES). */ roots: number[]; /** Metres over the ground a metre of the sprite's height reaches, as the art's camera saw it: it lies on the ground by this. */ depth: number }
 export interface ArtResult { /** The dancefloor's looks (kind disco). */ disco?: { base: CanvasPixels; lit: CanvasPixels; pitch: number; size: number; gridOrigin: number; rimOuter: number; radius: number }; /** The runestones' heights, in order (kind stones). */ stones?: number[]; /** The stumps' ground points and cuts (kind stumps), in order. */ stumps?: StumpArt[]; /** The sea creatures' frames' origins (kind sea). */ sea?: { x: number; y: number }[]; /** The beach's edge of the woods: its palms' frames (crown, trunk) and its shrubs' and grass clumps'. */ beachEdge?: BeachEdgeArt; /** The biome lakes' shore dressing. */ lakeShore?: LakeShoreArt; /** A sleeping legend's ground line in each frame: rows from its top (the art's origin). */ ground?: number[]; /** And how far its body's middle (the origin) lies right of the frame's middle, pixels. */ centre?: number[]; /** The live rig's parts (#79): their joints and pieces. */ rig?: RigMeta; px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[]; pieces?: PathPieceArt[]; relics?: RelicArt[]; beach?: BeachArt; layouts?: RelicLayouts; speakers?: SpeakerArt; scenes?: SceneArt; witch?: PartyWitchArt; party?: PartyArt; /** Our witch's poses (render/homeArt.ts). */ ours?: WitchArt; /** The treehouse's anchors. */ treehouse?: TreehouseArt; /** A generated soundsystem's origins and projector tops. */ ss?: SoundsystemGenArt; /** A treehouse piece's picture (kinds housePiece and workshopPic; null: nothing to draw). */ housePiece?: PiecePixels | null; /** The crown's clearing over a floor (kind crownMask). */ mask?: Uint8Array }
 
@@ -641,7 +642,7 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
     const sprites: Baked[] = [], stumps: StumpArt[] = [];
     for (const s of job.kind === "stump" ? [job.stump] : job.stumps) {
       const def = s.area ? (Art.AREA_BY_ID as Record<string, unknown>)[s.area] ?? null : null, st = s.biome ? ({ ...job.style, biome: s.biome } as unknown as Style) : job.style;
-      const p = (Art.stumpPiece as unknown as (sp: string, o: object, def: unknown, st: Style) => { sp: unknown; colours: unknown; origin: { x: number; y: number }; top: { x: number; y: number }; roots: number[]; depth: number; variant: { height: number }; metres: { radius: number } })(s.species, { seed: s.seed, yaw: s.yaw }, def, st);
+      const p = (Art.stumpPiece as unknown as (sp: string, o: object, def: unknown, st: Style) => { sp: unknown; colours: unknown; origin: { x: number; y: number }; top: { x: number; y: number }; roots: number[]; depth: number; variant: { height: number }; metres: { radius: number } })(s.species, { seed: s.seed, yaw: s.yaw, irregular: s.irregular ?? 0 }, def, st);
       sprites.push(Art.bake(p.sp, p.colours, st, "none", mk) as Baked); stumps.push({ origin: p.origin, top: p.top, height: p.variant.height, radius: p.metres.radius, roots: p.roots, depth: p.depth });
     }
     return { px: packPixels(sprites, job.kind === "stump" ? 512 : 2048), stumps };

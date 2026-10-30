@@ -31,6 +31,6 @@ describe("the link switches (config/link-switches.json)", () => {
   });
 
   it("writes docs/LINK-SWITCHES.md from it (node tools/config/linkSwitches.mjs)", () => {
-    expect(readFileSync(join(ROOT, DOC), "utf8")).toBe(renderLinkSwitches(reg));
+    expect(readFileSync(join(ROOT, DOC), "utf8").replace(/\r\n/g, "\n")).toBe(renderLinkSwitches(reg));
   });
 });

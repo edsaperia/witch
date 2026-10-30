@@ -2502,7 +2502,7 @@ The dancefloor ring's lasers [1]: a single beam from each playing speaker, at mo
 
 Each playing soundsystem's laser show, its beams fanning and sweeping in time with the music.
 
-Each playing soundsystem's laser show: bursts of blockBars bars, on about duty of the time (seeded per soundsystem), up to maxCount beams stepping on the bars, fanned over spread degrees (no beam tilting more than maxTilt from straight up), swinging sweep degrees once every sweepBeats beats (slow, like searchlights), opening and closing the fan every openBars bars, length metres tall, opacity 0-1, fading in over fadeIn and out over fadeOut seconds, and fading with distance from fadeNear to fadeFar metres. Glow only: no light, nothing from the light budget.
+Each playing soundsystem's laser show: bursts of blockBars bars, on about duty of the time (seeded per soundsystem), up to maxCount beams stepping on the bars, fanned over spread degrees, swinging sweep degrees once every sweepBeats beats (slow, like searchlights), opening and closing the fan every openBars bars, length metres tall, opacity 0-1, fading in over fadeIn and out over fadeOut seconds, and fading with distance from fadeNear to fadeFar metres. Glow only: no light, nothing from the light budget.
 
 | knob | type | range |
 |---|---|---|
@@ -2510,7 +2510,6 @@ Each playing soundsystem's laser show: bursts of blockBars bars, on about duty o
 | `lasers.maxCount` | number | 0 to … |
 | `lasers.length` | number | 0 to … |
 | `lasers.spread` | number | 0 to … |
-| `lasers.maxTilt` | number | 0 to … |
 | `lasers.sweep` | number | 0 to … |
 | `lasers.sweepBeats` | number | 0 to … |
 | `lasers.openBars` | number | 0 to … |
@@ -2586,6 +2585,9 @@ Spawn markers (Ed, v147): a rune stone on every spot where a soundsystem will co
   1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
 - **`runeMarkers.awake.moteRise`**: How high (m) an awake runestone's motes rise before they fade.
   1. the coordinator, 2026-10-29: "Given current settings, the motes from sigils don't do much" (Ed, relayed; the art director's motes pass, #1398 (tools/shot/motes.cjs measures them))
+- **`runeMarkers.stump.irregular`**: How irregular each great stump grows, from 0 (round and even, as first drawn) to 1.
+  1. Ed, 2026-10-29: "The trunk shape and rings are a bit even, can they be more irregular? (I have mostly been looking on the home island)" (via the coordinator (art/props/stumps.js))
+  At 1: a wobblier cut with knuckles of wood, maybe a flattened side or a notch, its heart off the middle, its rings unevenly spaced and wavering, sometimes a long split; seeded per stump. The cut where she casts follows it.
 - **`runeMarkers.stump.wisps`**: A wild stump's will-o'-the-wisps, drifting round its clearing before its soundsystem, in place of its own light.
   1. Ed, 2026-10-29: "pre-soundsystem stump area lighting should change to be more like eerie moonlight; maybe it can be lit by a mix of blue/green/white wisps or something like that, that move around the stump area? Remove the current lighting. Decide on something and make it, no need for me to review." (via the coordinator; the art director's design (render/stumpWisps.ts))
 - **`runeMarkers.stump.wisps.on`**: The wild stumps' wisps on or off.
@@ -2603,6 +2605,10 @@ Spawn markers (Ed, v147): a rune stone on every spot where a soundsystem will co
 - **`runeMarkers.stump.wisps.breathe`**: How much the wisps swell brighter and dimmer, slowly (0 steady; steady anyway with reduce flashing).
 - **`runeMarkers.stump.wisps.bright`**: How bright a wisp's mote is drawn.
 - **`runeMarkers.stump.wisps.trail`**: How many fading motes trail behind each wisp.
+- **`runeMarkers.stump.wisps.size`**: How big (m) a wisp's glow is.
+  1. Ed, 2026-10-29: "I can see the trunk area wisps from far away and they look like big squares." (via the coordinator (render/markers.ts motePoints))
+  A soft round point that shrinks with the world as it's seen from farther, dimming once it's under a pixel (absent: 4 of the picture's pixels at every zoom, as first drawn).
+- **`runeMarkers.stump.wisps.fade`**: The distances from her (m) over which a stump's wisps and their light fade out: all within the first, none past the second.
 - **`runeMarkers.stump.wisps.fill`**: The wild clearing's own dim teal moonlight over the stump's middle.
   1. Ed, 2026-10-29: "the overall lighting palette should be an eerie blue/green; this is to contrast with the bright and warm post-soundsystem lighting"
 - **`runeMarkers.stump.wisps.fill.colour`**: The clearing's moonlight colour (0-255).
@@ -2637,6 +2643,7 @@ Spawn markers (Ed, v147): a rune stone on every spot where a soundsystem will co
 | `runeMarkers.flare.light` | number | 0 to … |
 | `runeMarkers.stump.on` | boolean |  |
 | `runeMarkers.stump.variants` | number | 0 to … |
+| `runeMarkers.stump.irregular` | number | 0 to … |
 | `runeMarkers.stump.clear` | number | 0 to … |
 | `runeMarkers.stump.stack` | number | 0 to … |
 | `runeMarkers.stump.ring.inner` | number | 0 to … |
@@ -2648,10 +2655,6 @@ Spawn markers (Ed, v147): a rune stone on every spot where a soundsystem will co
 | `runeMarkers.stump.ring.light.height` | number | 0 to … |
 | `runeMarkers.stump.ring.wave.hold` | number | 0 to … |
 | `runeMarkers.stump.ring.wave.fade` | number | 0 to … |
-| `runeMarkers.stump.light.reach` | number | 0 to … |
-| `runeMarkers.stump.light.strength` | number | 0 to … |
-| `runeMarkers.stump.light.height` | number | 0 to … |
-| `runeMarkers.stump.light.saturate` | number | 0 to … |
 | `runeMarkers.stump.wisps.on` | boolean |  |
 | `runeMarkers.stump.wisps.count` | number | 0 to … |
 | `runeMarkers.stump.wisps.colours` | array of array |  |
@@ -2667,6 +2670,8 @@ Spawn markers (Ed, v147): a rune stone on every spot where a soundsystem will co
 | `runeMarkers.stump.wisps.breathe` | number | 0 to … |
 | `runeMarkers.stump.wisps.bright` | number | 0 to … |
 | `runeMarkers.stump.wisps.trail` | number | 0 to … |
+| `runeMarkers.stump.wisps.size` | number | 0 to … |
+| `runeMarkers.stump.wisps.fade` | array of number |  |
 | `runeMarkers.stump.wisps.fill.colour` | array of number |  |
 | `runeMarkers.stump.wisps.fill.reach` | number | 0 to … |
 | `runeMarkers.stump.wisps.fill.strength` | number | 0 to … |

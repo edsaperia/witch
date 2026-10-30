@@ -11,6 +11,7 @@ import { cellKey, spreadWave } from "./party";
 import { befriend, hasRune, stateOf } from "./creatureStates";
 import { castingStone, castOf, castProgress, castReady, castShown, castSpot, stoneStack } from "./stoneStacks";
 import { hexCell } from "./leash";
+import { CUT_ANGLES, cutRadius, stumpCutOf } from "./stumps";
 
 const still: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const hold: Controls = { ...still, sigilHeld: true };
@@ -170,8 +171,27 @@ describe("the soundsystem spell (Ed, 2026-10-28)", () => {
     at(g, a);
     g.witch = { ...g.witch, x: a.stone.x + 0.5, z: a.stone.z + 0.5 };
     expect(castingStone(g, W)?.key).toBe(a.key);
-    g.witch = { ...g.witch, x: a.stone.x, z: a.stone.z + C.spot };
-    expect(castingStone(g, W)).toBeNull();
+    // (anywhere on the cut, Ed, 2026-10-29: "The area in which I can cast the soundsystem spell should be the whole trunk. (cut part,
+    // not the roots)": just inside its outline all round, not just past it, nor out on the roots)
+    const cut = stumpCutOf(T, g.map, a.cell)!;
+    expect(cut.length).toBe(CUT_ANGLES);
+    for (let i = 0; i < 16; i++) {
+      const ang = (i / 16) * Math.PI * 2, ux = Math.cos(ang), uz = Math.sin(ang), r = cutRadius(cut, ux, uz);
+      expect(r, "a cut metres across").toBeGreaterThan(2);
+      for (const [d, on] of [[r - 0.3, true], [r + 0.3, false], [r + 4, false]] as const) {
+        g.witch = { ...g.witch, x: a.stone.x + ux * d, z: a.stone.z + uz * d };
+        expect(castingStone(g, W)?.key ?? null, `${i}: ${d.toFixed(1)} m out, its edge ${r.toFixed(1)}`).toBe(on ? a.key : null);
+      }
+    }
+  });
+
+  it("grows the great stumps' cuts irregular (runeMarkers.stump.irregular; Ed, 2026-10-29: \"can they be more irregular?\"), each its own", () => {
+    const at = (irregular: number) => withTuning({ cast: { ...BUILT.cast, on: true }, runeMarkers: { ...BUILT.runeMarkers, stump: { ...BUILT.runeMarkers.stump!, on: true, irregular } } });
+    const g = game(123, at(0)), a = area(g), even = stumpCutOf(at(0), g.map, a.cell)!, odd = stumpCutOf(at(1), g.map, a.cell)!;
+    expect(stumpCutOf(at(1), g.map, a.cell)).toEqual(odd); // (the same each time)
+    expect(odd.some((r, i) => Math.abs(r - even[i]) > 0.15)).toBe(true);
+    const spread = (c: number[]) => { const m = c.reduce((p, q) => p + q, 0) / c.length; return Math.sqrt(c.reduce((p, q) => p + (q - m) ** 2, 0) / c.length) / m; };
+    expect(spread(odd)).toBeGreaterThan(spread(even) * 0.8);
   });
 
   it("drains while she's away, and resumes from where it has drained to", () => {

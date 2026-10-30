@@ -46,9 +46,9 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
         await page.screenshot({ path: path.join(out, `${NAME}-${view}-${n}.png`), timeout: 300000 });
         // the wisps on and off at this moment (a build without them: its stump light on and off instead, runeMarkers.stump.light)
         const on = await lum();
-        const had = await page.evaluate(() => { const S = window.witch.tuning.runeMarkers.stump, k = { w: S.wisps?.on, s: S.light.strength }; if (S.wisps) S.wisps.on = false; S.light.strength = 0; return k; });
+        const had = await page.evaluate(() => { const S = window.witch.tuning.runeMarkers.stump, k = { w: S.wisps?.on, s: S.light?.strength }; if (S.wisps) S.wisps.on = false; if (S.light) S.light.strength = 0; return k; });
         const off = await lum();
-        await page.evaluate(k => { const S = window.witch.tuning.runeMarkers.stump; if (S.wisps) S.wisps.on = k.w; S.light.strength = k.s; }, had);
+        await page.evaluate(k => { const S = window.witch.tuning.runeMarkers.stump; if (S.wisps) S.wisps.on = k.w; if (S.light) S.light.strength = k.s; }, had);
         for (let i = 0; i < on.length; i += 4) { const dr = on[i] - off[i], dg = on[i + 1] - off[i + 1], db = on[i + 2] - off[i + 2], d = (0.2126 * dr + 0.7152 * dg + 0.0722 * db) / 255; if (d > 0) sum.energy += d / MOMENTS; if (d > 0.02) { sum.px += 1 / MOMENTS; sum.r += dr; sum.g += dg; sum.b += db; } }
       }
       const n = Math.max(1, sum.r + sum.g + sum.b);

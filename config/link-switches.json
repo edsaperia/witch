@@ -1,5 +1,5 @@
 {
- "_": "Every ?name=value the game reads from its link (Ed, 2026-10-28: \"Reformat prose into data where you can\"). Each: name; values (\"\" for the bare switch); does, in one plain sentence; group (run, view, debug, compare: brings back how something was before, to compare); since (the date it is first seen read where it's read now, from git; the oldest are the 2026-10-07 survey's); readIn (written by tools/config/linkSwitches.mjs from the code: don't edit); decision (Ed's, if any). docs/LINK-SWITCHES.md is written from this; src/linkSwitches.test.ts checks it against the code.",
+ "_": "Registry of every supported link switch, its purpose, readers and status. Detailed notes and decisions: docs/notes/config-history/link-switches.md.",
  "intro": "Every `?name=value` the game reads from its link, and where it reads it. Most are read once as the page loads (`src/app/linkParams.ts` for the tuning, `src/app/gameParams.ts` for the game, `src/app/viewParams.ts` for the view, `src/main.ts` for the page); a few are read where they're used. Several can be combined: `?seed=123&wave=30&creator=0`. This page is written from `config/link-switches.json`, and a test checks that file against the code.",
  "switches": [
   {

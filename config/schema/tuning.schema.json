@@ -6730,10 +6730,6 @@
           "type": "number",
           "minimum": 0
         },
-        "maxTilt": {
-          "type": "number",
-          "minimum": 0
-        },
         "sweep": {
           "type": "number",
           "minimum": 0
@@ -6780,7 +6776,6 @@
         "maxCount",
         "length",
         "spread",
-        "maxTilt",
         "sweep",
         "sweepBeats",
         "openBars",
@@ -7053,6 +7048,11 @@
               "type": "number",
               "minimum": 0
             },
+            "irregular": {
+              "type": "number",
+              "minimum": 0,
+              "description": "How irregular each great stump grows, from 0 (round and even, as first drawn) to 1."
+            },
             "clear": {
               "type": "number",
               "minimum": 0
@@ -7129,34 +7129,6 @@
                 "glow",
                 "light",
                 "wave"
-              ],
-              "additionalProperties": false
-            },
-            "light": {
-              "type": "object",
-              "properties": {
-                "reach": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "strength": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "height": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "saturate": {
-                  "type": "number",
-                  "minimum": 0
-                }
-              },
-              "required": [
-                "reach",
-                "strength",
-                "height",
-                "saturate"
               ],
               "additionalProperties": false
             },
@@ -7243,6 +7215,19 @@
                   "minimum": 0,
                   "description": "How many fading motes trail behind each wisp."
                 },
+                "size": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How big (m) a wisp's glow is."
+                },
+                "fade": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "description": "The distances from her (m) over which a stump's wisps and their light fade out: all within the first, none past the second."
+                },
                 "fill": {
                   "type": "object",
                   "properties": {
@@ -7296,6 +7281,8 @@
                 "breathe",
                 "bright",
                 "trail",
+                "size",
+                "fade",
                 "fill"
               ],
               "additionalProperties": false,
@@ -7305,10 +7292,10 @@
           "required": [
             "on",
             "variants",
+            "irregular",
             "clear",
             "stack",
             "ring",
-            "light",
             "wisps"
           ],
           "additionalProperties": false

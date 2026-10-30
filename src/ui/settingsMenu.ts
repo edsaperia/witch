@@ -9,7 +9,7 @@ import jacquard from "./fonts/Jacquard24.woff2?url";
 import { DEFAULTS, padGlyphs, type PlayerSettings } from "../app/playerSettings";
 import { PadNav, firstRow, keyInput, navigate, stepChoice, stepSlider, type NavInput, type NavRow, type NavState } from "./settingsNav";
 import { DEFAULTS as ACTIONS, bindings, keysName, type ActionId } from "../platform/bindings";
-import { SLOTS, assign, clashes, inputName, inputsOf, padIdle, padPress, withSlot, type Device } from "./rebind";
+import { SLOTS, assign, clashes, clearSlot, inputName, inputsOf, padIdle, padPress, withSlot, type Device } from "./rebind";
 
 /** What the page needs of the game. */
 export interface SettingsHost {
@@ -104,6 +104,7 @@ export class SettingsMenu {
   private pad = new PadNav();
   private screens: string[] | null = null;
   private status = "";
+  private bindingNote: { id: ActionId; text: string } | null = null;
   /** the input last used: the hints at the foot follow it */
   private mode: "pad" | "keys" | "mouse" = "keys";
   /** the Controls tab: the device whose bindings it shows, the slot focused on a binding's row, a slot listening, a clash asked */
@@ -164,7 +165,7 @@ export class SettingsMenu {
 
   get open(): boolean { return this.el.classList.contains("open"); }
   show(): void {
-    this.el.classList.add("open"); this.status = ""; this.listen = this.clash = null;
+    this.el.classList.add("open"); this.status = ""; this.bindingNote = null; this.listen = this.clash = null;
     this.device = this.host.pad() ? "pad" : "keys";
     this.el.tabIndex = -1; this.el.focus({ preventScroll: true }); // (the keys' target inside it: the freeze lets only the pause page's own pieces have keys)
     const rows = this.tabs()[this.state.tab];
@@ -205,7 +206,7 @@ export class SettingsMenu {
     const bind = this.tabs()[this.state.tab][this.state.row]?.kind === "bind";
     if (action.kind === "step" && bind) this.slot = Math.max(0, Math.min(SLOTS - 1, this.slot + action.dir));
     else if (action.kind === "step") this.step(action.id, action.dir);
-    else if (action.kind === "reset" && bind) { bindings.reset(action.id as ActionId); this.status = `${ACTION_NAME.get(action.id as ActionId)} back to its default.`; }
+    else if (action.kind === "reset" && bind) { this.bindingNote = null; bindings.reset(action.id as ActionId); this.status = `${ACTION_NAME.get(action.id as ActionId)} back to its default.`; }
     else if (action.kind === "reset" && action.id === "device") { /* (a view, not a setting) */ }
     else if (action.kind === "reset") this.setValue(action.id, (DEFAULTS as unknown as Record<string, unknown>)[action.id]);
     else if (action.kind === "press" && bind) { this.startListening(action.id as ActionId); return; }
@@ -239,6 +240,7 @@ export class SettingsMenu {
       ],
       [
         { id: "reduceFlashing", kind: "toggle", label: "Reduce flashing", sub: "warnings, hits" },
+        { id: "rumble", kind: "toggle", label: "Gamepad rumble", sub: "short feedback", note: "Off with Reduce flashing too. Only on pads that support vibration." },
         { id: "talk", kind: "choice", label: "Talk", sub: keysName("game.talk"), options: ["hold", "toggle"] },
         { id: "textSize", kind: "choice", label: "Text size", sub: "menus, hints", options: ["1", "1.25", "1.5"] },
       ],
@@ -280,6 +282,7 @@ export class SettingsMenu {
   }
   /** The tab's things back to their defaults: on Controls every binding and the pad's names; elsewhere that tab's settings. */
   private resetAll(): void {
+    this.bindingNote = null;
     const ids = this.tabs()[this.state.tab].map(r => r.id), d = DEFAULTS as unknown as Record<string, unknown>;
     if (this.state.tab === 0) bindings.resetAll();
     this.host.set({ ...this.host.get(), ...Object.fromEntries(ids.filter(id => id in d).map(id => [id, d[id]])) });
@@ -289,6 +292,7 @@ export class SettingsMenu {
   // ---- the Controls tab: listening for a slot's new input, and a clash ----
 
   private startListening(id: ActionId): void {
+    this.bindingNote = null;
     this.listen = { id, slot: this.slot, device: this.device, armed: false, until: 0 };
     this.el.focus({ preventScroll: true });
     this.status = this.device === "pad" ? `Press a button or push a stick for ${ACTION_NAME.get(id)} · wait ${PAD_WAIT} s to cancel` : `Press a key or a mouse button for ${ACTION_NAME.get(id)} · Esc cancels · Delete empties it`;
@@ -302,7 +306,8 @@ export class SettingsMenu {
     if (code === "Delete") {
       const next = withSlot(bindings.get(l.id), "keys", l.slot, null);
       if (l.id === "global.pause" && !next.keys?.length) { this.stopListening("Pause keeps a key (or you couldn't reach this page)."); return; }
-      bindings.set(l.id, next); this.stopListening(); return;
+      if (!clearSlot(bindings, l.id, "keys", l.slot)) { this.bindingNote = { id: l.id, text: "needs at least one button" }; this.stopListening(); return; }
+      this.stopListening(); return;
     }
     this.offer(`key:${code}`);
   }
@@ -326,7 +331,10 @@ export class SettingsMenu {
   }
   private decide(how: "swap" | "both" | "cancel"): void {
     const c = this.clash!; this.clash = null;
-    if (how !== "cancel") assign(bindings, c.id, c.device, c.slot, c.input, how);
+    if (how !== "cancel") {
+      const blocked = assign(bindings, c.id, c.device, c.slot, c.input, how);
+      if (blocked) { this.bindingNote = { id: c.id, text: `${ACTION_NAME.get(blocked)} needs at least one button` }; }
+    }
     this.render();
   }
 
@@ -349,7 +357,7 @@ export class SettingsMenu {
           return `<span class="slot ${wait ? "wait" : ""} ${!inp && !wait ? "none" : ""} ${focus && this.slot === k ? "on" : ""}" data-slot="${k}">${text}</span>`;
         }).join("");
         const sh = shared.get(id), others = sh ? [...new Set(sh)].map(o => ACTION_NAME.get(o)).join(", ") : "";
-        return `${head}<div class="row ${focus ? "focus" : ""}" data-row="${i}" data-id="${id}"><span class="lab">${r.label}${sh ? `<span class="shared">shared with ${others}</span>` : ""}</span>${slots}</div>`;
+        return `${head}<div class="row ${focus ? "focus" : ""}" data-row="${i}" data-id="${id}"><span class="lab">${r.label}${sh ? `<span class="shared">shared with ${others}</span>` : ""}</span>${slots}</div>${this.bindingNote?.id === id ? `<div class="note">${this.bindingNote.text}</div>` : ""}`;
       }
       const v = this.value(r.id);
       let ctl = "";
