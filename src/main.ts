@@ -108,6 +108,8 @@ import { shotParams } from "./app/shot";
 import type { FlightEnd } from "./render/chart/seaChart";
 import { restoreGame } from "./rules/nightSnapshot";
 import { browserNightStore, captureNight, nightHasStarted, NightAutosave, savedNight, savesEnabled, type SavedNight, type NightStore } from "./app/nightSave";
+import { Breadcrumbs, browserCommentStore, captureComment, CommentBook, COMMENT_TOTAL, parseComment } from "./app/playtestComments";
+import { observePlaytestErrors } from "./platform/playtestLog";
 import { chooseSavedNight, nightSaveNotice } from "./ui/resumeNight";
 import { restoreSettingsBase } from "./app/playerSettings";
 
@@ -122,16 +124,19 @@ const params = new URLSearchParams(location.search);
 const mistGateOff = params.get("mistgate") === "0";
 /** The link as it came (before the boot puts its own ?seed= in): whether this load opens on the sea chart (app/opening.ts). */
 const bootLink = new URLSearchParams(location.search);
+const restoringComment = params.get("restore") === "comment";
 let nightStore: NightStore | null = null, resumeSave: SavedNight | null = null, resumeGame: Game | undefined;
 if (savesEnabled(bootLink, navigator.webdriver)) {
   try {
     nightStore = browserNightStore(location.pathname);
-    const value = await nightStore.read(), saved = savedNight(value, BUILD, bootLink);
-    if (saved && await chooseSavedNight(saved.at)) {
+    const source = restoringComment ? browserNightStore(location.pathname + ":comment-restore") : nightStore;
+    const value = await source.read(), saved = savedNight(value, BUILD, bootLink);
+    if (saved && (restoringComment || await chooseSavedNight(saved.at))) {
       try {
         const restored = restoreGame(saved.game);
         restoreSettingsBase(restored.tuning, saved.settingsBase);
         resumeGame = restored; resumeSave = saved;
+        if (restoringComment) await source.clear();
         for (const key of [...params.keys()]) params.delete(key);
         for (const [key, value] of new URLSearchParams(saved.params)) params.append(key, value);
         params.delete("arrive");
@@ -322,7 +327,7 @@ requestAnimationFrame(() => setTimeout(async () => {
   startEl.classList.remove("loading");
   if (bot) start(); // (a bot game starts itself as soon as it can)
   if (inBedroom) { loading?.finish(); wakeFirst(); }
-  else if (resumeGame) { start(); soundNote(); resumeGame = undefined; resumeSave = null; }
+  else if (resumeGame) { start(); if (restoringComment && !freeze.frozen) freeze.toggle(); soundNote(); resumeGame = undefined; resumeSave = null; }
   night.arrival?.begin(night.game); // (the camera takes over from the chart's still)
 }, 0));
 
@@ -672,7 +677,7 @@ freeze.onToggle = on => {
   pauseLoading = true;
   void import("./ui/decide").then(({ PauseSliders }) => {
     const report = () => import("./ui/visualReport").then(({ report }) => report(reportHost()));
-    pauseSliders = new PauseSliders({ settings: () => settingsPage.show(), get tuning() { return N().game.tuning; }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive, report, musicLab: openMusicLab, audioTest: () => { window.open("audio-test/", "_blank", "noopener"); }, downloadLog: () => N().playtest.download(), unlockAll: { get: () => unlockAll(), set: on => { setUnlockAll(on); for (const W of N().game.witches) syncHatUnlock(W, on, params); creator.hats = N().game.spells.hats; } }, defaults: { text: () => defaultsText(lookWithoutLoan((page.look() ?? creator.genome()) as Record<string, unknown> | null, loan), partsWithoutLoan(N().game.witches[0].spells.parts, loan)), tryIt: () => { window.open(newWitchLink(location.href), "_blank", "noopener"); }, shown: () => N().hud.debugOn || unlockAll() }, fightArena: () => { window.open(fightLink(newFightSeed()), "_blank", "noopener"); }, finds: () => findsPanel.toggle(true), findsShown: () => N().hud.debugOn || devFinds, quality: { lines: () => ladder.lines(), options: () => ladder.options(), current: () => ladder.current(), choose: v => { ladder.choose(v); ladder.apply(N().game.tuning); } } });
+    pauseSliders = new PauseSliders({ saveComment, restoreComment, settings: () => settingsPage.show(), get tuning() { return N().game.tuning; }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive, report, musicLab: openMusicLab, audioTest: () => { window.open("audio-test/", "_blank", "noopener"); }, downloadLog: () => N().playtest.download(), unlockAll: { get: () => unlockAll(), set: on => { setUnlockAll(on); for (const W of N().game.witches) syncHatUnlock(W, on, params); creator.hats = N().game.spells.hats; } }, defaults: { text: () => defaultsText(lookWithoutLoan((page.look() ?? creator.genome()) as Record<string, unknown> | null, loan), partsWithoutLoan(N().game.witches[0].spells.parts, loan)), tryIt: () => { window.open(newWitchLink(location.href), "_blank", "noopener"); }, shown: () => N().hud.debugOn || unlockAll() }, fightArena: () => { window.open(fightLink(newFightSeed()), "_blank", "noopener"); }, finds: () => findsPanel.toggle(true), findsShown: () => N().hud.debugOn || devFinds, quality: { lines: () => ladder.lines(), options: () => ladder.options(), current: () => ladder.current(), choose: v => { ladder.choose(v); ladder.apply(N().game.tuning); } } });
     requestAnimationFrame(() => pauseSliders!.show(freeze.frozen, creator.open)); // (a frame shut first, so it slides in)
   }, () => { // (its files replaced under it: Ed, 2026-10-14, "the menu does not appear")
     pauseLoading = false;
@@ -716,6 +721,24 @@ window.addEventListener("keydown", e => { if (e.code !== "F2") return; e.prevent
 document.addEventListener("visibilitychange", () => { if (document.hidden) N().flags.last = 0; });
 
 const endedNights = new WeakSet<Game>();
+const commentBook = new CommentBook(browserCommentStore()), breadcrumbs = new Breadcrumbs();
+observePlaytestErrors(error => breadcrumbs.add(N().game, "error", error));
+let lastRecordedInput = "", lastInputAt = -Infinity;
+async function saveComment(text: string): Promise<string> {
+  const n = N();
+  const comment = captureComment(n.game, text, { build: BUILD, params: n.params.toString(), look: page.look() as Record<string, unknown> | null, loan,
+    flags: { chartRecorded: n.flags.chartRecorded, overRecorded: n.flags.overRecorded } }, repro.link(), Object.fromEntries(repro.changed()), breadcrumbs.recent(n.game));
+  const kept = await commentBook.add(comment);
+  return kept ? "Comment and saved moment kept in the playtest log." : "Comment kept on this page only: browser storage is unavailable. Download the log before closing.";
+}
+async function restoreComment(file: File): Promise<void> {
+  if (file.size > COMMENT_TOTAL + 8 * 1024 * 1024) throw Error("This log file is too large.");
+  const comment = parseComment(await file.text(), BUILD);
+  // Validate the full graph before writing or navigating. Importing JSON never executes code.
+  restoreGame(comment.night.game);
+  await browserNightStore(location.pathname + ":comment-restore").write(comment.night);
+  const url = new URL(location.href); url.search = "?restore=comment&resume=1"; location.href = url.toString();
+}
 const autosave = nightStore ? new NightAutosave(nightStore, () => {
   const n = page.night;
   if (!n || endedNights.has(n.game) || !n.flags.ready || sailing || bot || dream && !dream.over || n.arrival && !n.flags.landed || !savesEnabled(n.params, navigator.webdriver)) return null;
@@ -807,6 +830,7 @@ document.getElementById("copy-debug")?.addEventListener("click", e => {
   void navigator.clipboard?.writeText(text).then(() => { b.textContent = "copied"; }, () => { b.textContent = "copy failed: see console"; console.log(text); }).finally(() => setTimeout(() => { b.textContent = "copy debug info"; }, 1500));
 });
 N().playtest.debugInfo = () => ({ link: repro.link(), machine: repro.machine().map(l => l.slice(7)), changed: Object.fromEntries(repro.changed()) });
+N().playtest.comments = () => commentBook.all();
 N().playtest.debugText = () => repro.full();
 // The pause page's Report (ui/visualReport.ts): the frame drawn with each neutral pair, where they differ, the GPU, her place, the
 // camera and the repro link. window.__neutralCheck: the same pairs' numbers for the smoke test (tools/smoke/smoke.cjs "neutral").
@@ -1155,8 +1179,11 @@ function frame(now: number): void {
   if (c.debug) hud.setDebug(!hud.debugOn);
   view.debugReadouts = hud.debugOn;
   const step0 = performance.now();
+  const recordedInput = JSON.stringify(c);
+  if (recordedInput !== lastRecordedInput || game.clock.time - lastInputAt >= 1) { breadcrumbs.add(game, "input", c); lastRecordedInput = recordedInput; lastInputAt = game.clock.time; }
   if (params.get("cauldron") === "1" && !game.cauldron) enableCauldron(game, homeMushroomPickups(game));
   stepGame(game, c, fightDt(dt * (botTag?.speed ?? 1))); // (the Fight Arena's slow motion, pause and frame at a time: app/fightArena.ts)
+  for (const [kind, events] of [["ko", game.koEvents], ["quest", game.questEvents], ["spell", game.combat.spells?.events ?? []]] as const) for (const event of events) breadcrumbs.add(game, kind, event);
   rumble.update(game, currentSettings(), input.device === "pad" && !document.hidden ? [freeze.pad()] : [], now);
   // ?debug=attack: every 10 s, a few seconds of blows on the two soundsystems farthest from her (never felling one), so the
   // 🔇 alarm (render/alarm.ts) shows whenever she's away from them.

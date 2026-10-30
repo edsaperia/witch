@@ -86,6 +86,7 @@ For the builders, the smoke and bench runs, the repro link and the arenas.
 
 | switch | does | since | read in |
 |---|---|---|---|
+| `restore=comment` | Builder loader: consume the comment snapshot selected on the pause page, restoring that exact saved moment paused on the same build. | 2026-10-30 | main.ts |
 | `heldInputMs=<milliseconds>` | The online prototype holds the last guest movement input for this long before returning it to neutral (250 ms by default). | 2026-10-30 | platform/online/entry.ts |
 | `invite=<token>` | The online prototype reads this invitation token from the URL fragment to join the host's room. | 2026-10-30 | platform/online/entry.ts |
 | `online=host` / `online=guest` | The separate online prototype page hosts a night or joins an invitation. | 2026-10-30 | platform/online/entry.ts |
