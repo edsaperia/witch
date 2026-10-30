@@ -1,4 +1,5 @@
 import { expect, it } from "vitest";
+import { createHash } from "node:crypto";
 import { attackObserverErrors, observeAttacks, type AttackOutcome, type WitchHitState } from "./attackObservation";
 import { COMBAT, newCombat, type CombatWorld } from "./combat/data";
 import { spellWorld } from "./attacks/combatWorld";
@@ -88,7 +89,12 @@ it("leaves actual Game state, cues, events and RNG identical even if a diagnosti
     g.byArea = null;
     const outcomes: Readonly<AttackOutcome>[] = [];
     if (enabled) observeAttacks(g.combat, row => { outcomes.push(row); Object.assign(row, { source: -999 }); });
-    for (let i = 0; i < 12 / STEP; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, STEP);
+    const trajectory = createHash("sha256");
+    for (let i = 0; i < 12 / STEP; i++) {
+      stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, STEP);
+      trajectory.update(JSON.stringify({ events: g.combat.events, spells: g.combat.spells,
+        witches: g.witches.map(w => [w.health.hp, w.body.x, w.body.z, w.dash.at, w.dash.until, !!w.ko]) }));
+    }
     const seen = new WeakMap<object, number>(); let reference = 0;
     const state = JSON.stringify(g, function (key, value) {
       if (this === g.forest && key === "buildMs") return undefined; // wall-clock performance counter, not rule state
@@ -99,7 +105,7 @@ it("leaves actual Game state, cues, events and RNG identical even if a diagnosti
       if (value instanceof Set) return { set: [...value] };
       return value;
     });
-    return { state, rng: g.creatures.map(c => c.rand()), outcomes, errors: attackObserverErrors(g.combat) };
+    return { state, trajectory: trajectory.digest("hex"), rng: g.creatures.map(c => c.rand()), outcomes, errors: attackObserverErrors(g.combat) };
   }
   const off = run(false), on = run(true);
   if (on.state !== off.state) {
@@ -107,6 +113,7 @@ it("leaves actual Game state, cues, events and RNG identical even if a diagnosti
     throw Error(`State differs at ${at}: OFF ${off.state.slice(Math.max(0, at - 60), at + 90)} ON ${on.state.slice(Math.max(0, at - 60), at + 90)}`);
   }
   expect(on.rng).toEqual(off.rng);
+  expect(on.trajectory).toBe(off.trajectory);
   expect(on.outcomes.length).toBeGreaterThan(0); expect(on.errors).toBe(on.outcomes.length);
   expect(on.outcomes.some(row => row.targetKind === "witch" && row.damageAccepted && row.healthLost === 1)).toBe(true);
   expect(on.outcomes.every(Object.isFrozen)).toBe(true);
