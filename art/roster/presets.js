@@ -6,7 +6,12 @@ export const ROSTER_PRESETS = {
     reason: "Ordinary stag-beetle wing cases and jaws are dark natural materials; reserve ember fissures for the elder.",
     reference: "https://www.nhm.ac.uk/discover/stag-beetles.html",
     ordinaryOnly: true,
-    patch: { palette: { hue: .06, sat: .35, val: .28, accent: [.06, .35, .3] }, look: { embers: false } },
+    modelCommit: "fd1a833ae69e1d5cf1d9353b89fbdda39cbab802",
+    patch: {
+      palette: { hue: .04, sat: .45, val: .36, over: { SHELL: [125, 58, 30], THORAX: [38, 27, 23], HEAD: [32, 23, 20] } },
+      look: { embers: false, materials: { wingCases: "SHELL", thorax: "THORAX", head: "HEAD" }, mandibles: { length: .8, width: 1.8, curve: .65, teeth: 2, awayTipLift: .16 } },
+    },
+    ordinaryLevels: { 0: { look: { mandibles: { length: .65, width: 1.5, curve: .55, teeth: 1, awayTipLift: .16 } } }, 1: { look: { mandibles: { length: .75, width: 1.7, curve: .6, teeth: 1, awayTipLift: .16 } } } },
     text: "A dark beetle with brown wing cases and antler-like jaws; its elder carries the fire.",
   },
   bear: {
@@ -72,8 +77,9 @@ export function rosterVariant(genome) {
         restore[section] = Object.fromEntries(Object.keys(patch).map(key => [key, genome[section]?.[key] ?? false]));
       }
       if (preset.ordinaryOnly) {
-        restore.look = genome.look;
-        restore.palette = genome.palette;
+        restore.look = { ...Object.fromEntries(Object.keys(preset.patch.look || {}).map(key => [key, genome.look?.[key] ?? null])), ...genome.look };
+        // Null clears newly added material overrides in the shared merge contract.
+        restore.palette = { ...genome.palette, over: genome.palette.over || null };
       }
       return merge(restore, original);
     }

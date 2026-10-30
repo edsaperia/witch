@@ -46,8 +46,8 @@ test("shared-hook pack contains complete same-id records and explicit original e
     assert.deepEqual(genomeProblems(g), []);
   }
   const beetle = GENOMES.find(g => g.id === "beetle");
-  assert.deepEqual(pack.beetle.roster.levels[3].palette, beetle.palette);
-  assert.deepEqual(pack.beetle.roster.levels[3].look, beetle.look);
+  assert.deepEqual(pack.beetle.roster.levels[3].palette, { ...beetle.palette, over: null });
+  assert.deepEqual(pack.beetle.roster.levels[3].look, { ...beetle.look, materials: null, mandibles: null });
   assert.equal(pack.beetle.roster.look.embers, false);
   assert.equal(rosterVariant(GENOMES.find(g => g.id === "wolf")).id, "wolf");
   assert.equal(JSON.stringify(GENOMES), before);
