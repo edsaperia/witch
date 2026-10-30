@@ -8859,13 +8859,49 @@ function textureProblems(id, t) {
 }
 
 
+// ---- inlined from art/genome/selection.js ----
+// One explicit per-species selection, shared by page, worker and capture tools.
+// No window/location/global registry: transport the same plain style data.
+function parseCreatureModels(raw) {
+  const out = Object.create(null);
+  if (typeof raw !== "string") return out;
+  for (const token of raw.split(",")) {
+    const match = /^([a-z][a-z0-9_-]*):([a-z][a-z0-9_-]*)$/.exec(token.trim());
+    if (match) out[match[1]] = match[2];
+  }
+  return out;
+}
+
+// creatureVariants[id][mode] is a COMPLETE genome, not a partial patch.
+// Unavailable modes keep today's record and cache identity; invalid selected
+// records fail clearly rather than silently drawing a different animal.
+/** @param {number|null} [level] */
+function selectedCreatureGenome(base, context = {}, level = null) {
+  if (level !== null && (!Number.isInteger(level) || level < 0 || level > 3)) throw new Error("Creature selection level must be 0..3");
+  if (!context?.creatureModels) return base;
+  const mode = parseCreatureModels(context.creatureModels)[base.id];
+  if (!mode || mode === "current") return base;
+  const variants = context.creatureVariants;
+  if (!variants || !Object.hasOwn(variants, base.id)) return base;
+  const family = variants[base.id];
+  if (!family || typeof family !== "object" || !Object.hasOwn(family, mode)) return base;
+  const selected = family[mode];
+  if (!selected || selected.id !== base.id || !selected.template || !selected.builder || !selected.palette) throw new Error(`Invalid selected creature genome: ${base.id}:${mode}`);
+  const look = level === null ? null : selected.levels?.[level]?.look;
+  return look ? { ...selected, look: { ...selected.look, ...look } } : selected;
+}
+
+
+
 
 const GENOME_BY_ID = Object.fromEntries(GENOMES.map(g => [g.id, g]));
 
 // The builder's species object, as art/creatures.js always had it: id, name, plan, hue, sat, val,
 // belly, legend, sizes (its template's size curves, any of the species' own over them), and for
 // the four-legged q (their proportions and parts in one bag).
-function speciesOf(g) {
+/** @param {number|null} [level] */
+function speciesOf(g, context = {}, level = null) {
+  g = selectedCreatureGenome(g, context, level);
   const S = { id: g.id, name: g.name, plan: g.builder, hue: g.palette.hue, sat: g.palette.sat, val: g.palette.val, legend: g.legend || [] };
   if (g.palette.belly) S.belly = g.palette.belly;
   if (g.elder) S.elder = g.elder; // its legend as the elder of its kind (art/elders.js): { kind, tail, ears, eye }
@@ -8886,6 +8922,7 @@ function speciesOf(g) {
   S.sizes = { ...TEMPLATES[g.template].sizes, ...g.sizes };
   S.face = { ...TEMPLATES[g.template].face, ...g.face }; // its expressions' shapes (expressions.js)
   S.texture = { ...TEMPLATES[g.template].texture, ...g.texture }; // its surface: fur, feathers, scales... (texture.js)
+  S.genomeKey = genomeHash(g, {}, level); // selected record and level; separates same-id preview variants in the sprite cache
   // its evolution (the evolution kit): each level's own proportions, parts and features, over its own
   // levels: { 0..3: { body, head, coat, parts, features } } (or an array of four, any null) — what changes at a level beyond its
   // size curves (docs/art-guide/EVOLUTIONS.md, #121's convention): merged over the species' own for that level only (S.levelQ),
@@ -8942,9 +8979,11 @@ function genomeProblems(g) {
 // A record's hash (FNV-1a over its canonical JSON, keys sorted): the bake cache's key (#79 stage 4),
 // with the style's own version beside it.
 const genomeCanon = v => Array.isArray(v) ? "[" + v.map(genomeCanon).join(",") + "]" : v && typeof v === "object" ? "{" + Object.keys(v).sort().filter(k => v[k] !== undefined).map(k => JSON.stringify(k) + ":" + genomeCanon(v[k])).join(",") + "}" : JSON.stringify(v);
-function genomeHash(g) {
+/** @param {number|null} [level] */
+function genomeHash(g, context = {}, level = null) {
+  g = selectedCreatureGenome(g, context, level);
   let h = 0x811c9dc5;
-  const s = genomeCanon(g);
+  const s = genomeCanon(level === null ? g : { genome: g, level });
   for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); }
   return (h >>> 0).toString(16).padStart(8, "0");
 }
@@ -11356,8 +11395,14 @@ const buildCreature = (S, level, frame, st, facing = "towards") => S.q ? quad3d(
 // The records hold each species' template, palette, proportions and parts as data (#79 stage 1);
 // speciesOf turns one into the object the builders draw from (plan, hue/sat/val, belly, legend,
 // and for the four-legged q, their proportions, and sizes, their template's size curves).
-const SPECIES = GENOMES.map(speciesOf);
+const SPECIES = GENOMES.map(g => speciesOf(g));
 const SPECIES_BY_ID = Object.fromEntries(SPECIES.map(s => [s.id, s]));
+// All selected rendering goes through this hook; base tables remain immutable.
+/** @param {number|null} [level] */
+function speciesFor(id, st, level = null) {
+  const base = GENOME_BY_ID[id];
+  return base && selectedCreatureGenome(base, st, level) !== base ? speciesOf(base, st, level) : SPECIES_BY_ID[id];
+}
 const FEATURE_NAMES = { wings: "spirit wings", mane: "a glowing mane", tails: "many tails", crystals: "crystals", tusksBig: "great tusks", antlersGlow: "glowing antlers", jackalope: "antlers", eyesRing: "a ring of eyes", moss: "a little forest on its back", starTail: "a starry tail", crown: "a crown", ribbons: "light ribbons", wingsBig: "huge glowing wings", horn: "a glowing horn", glowShell: "a glowing shell", hornsGlow: "glowing golden horns", flames: "a crest of flame", lantern: "a great lantern", sunBall: "a ball of sunlight" };
 
 // Party gear's colourways (gear in critter).
@@ -11378,7 +11423,7 @@ function partyGear(seed, collarColour = true) {
 }
 // sp: a species id, or a species object (a palette variant's: art/genome/palette.js).
 function speciesColours(sp, st, gear = null) {
-  const c = baseColours(typeof sp === "string" ? SPECIES_BY_ID[sp] : sp, st);
+  const c = baseColours(typeof sp === "string" ? speciesFor(sp, st) : sp, st);
   if (!gear) return c;
   if (gear.collar) c[M.COLLAR] = Array.isArray(gear.collar) ? gear.collar : c[M.MAGIC];
   if (gear.hat != null) { const [a, b, pom] = HAT_COLOURWAYS[gear.hat % HAT_COLOURWAYS.length]; c[M.HAT1] = a; c[M.HAT2] = b; c[M.POM] = pom; }
@@ -11430,8 +11475,8 @@ function walkGait(id) { return GAITS[id] ?? { frames: 2, step: 0.3 }; }
 
 function critter(spId, level, frame, st, facing = "towards", gear = null) {
   if (facing === "away" && gear?.face) gear = { ...gear, face: null }; // (its face can't be seen from behind)
-  const S = (typeof spId === "object" ? spId : SPECIES_BY_ID[spId]) || SPECIES[0], /* (a species object: one not in the bestiary yet, art/preview.mjs genome) */ g = gear && (gear.collar || gear.hat != null || gear.glasses || gear.shoes || gear.woken || gear.nap || gear.glide || gear.idle || gear.jaw || (gear.face && gear.face !== "neutral")) ? { ...gear, faceStyle: S.face } : null;
-  const key = [S.id, level, frame, facing, ...SHAPE_KNOBS.map(k => st[k]), g ? [!!g.collar, g.hat ?? "", g.glasses || "", g.shoes || "", !!g.woken, g.face && g.face !== "neutral" ? g.face : "", g.nap ? "nap" : "", g.glide ? "glide" : "", g.idle ? "idle" : "", g.jaw ? `jaw${g.jaw}` : ""].join(",") : "", viewKey()].join("|");
+  const S = (typeof spId === "object" ? spId : speciesFor(spId, st, level)) || SPECIES[0], /* (a species object: one not in the bestiary yet, art/preview.mjs genome) */ g = gear && (gear.collar || gear.hat != null || gear.glasses || gear.shoes || gear.woken || gear.nap || gear.glide || gear.idle || gear.jaw || (gear.face && gear.face !== "neutral")) ? { ...gear, faceStyle: S.face } : null;
+  const key = [S.id, S.genomeKey || "", level, frame, facing, ...SHAPE_KNOBS.map(k => st[k]), g ? [!!g.collar, g.hat ?? "", g.glasses || "", g.shoes || "", !!g.woken, g.face && g.face !== "neutral" ? g.face : "", g.nap ? "nap" : "", g.glide ? "glide" : "", g.idle ? "idle" : "", g.jaw ? `jaw${g.jaw}` : ""].join(",") : "", viewKey()].join("|");
   let sp = cache.get(key);
   if (!sp) {
     // asleep (gear.nap: art/naps.js): lying down, eyes shut, frame its breath; its walk's first frame laid down. gliding (gear.glide): spread out in the air
@@ -19167,7 +19212,7 @@ const PALETTE_VARIANTS = {
 };
 // A species' colours in a variant (a PALETTE_VARIANTS key or { hue, sat, val, belly }), gear as speciesColours.
 function variantColours(id, st, variant, gear = null) {
-  const S = SPECIES_BY_ID[id], v = typeof variant === "string" ? PALETTE_VARIANTS[variant] : variant;
+  const S = speciesFor(id, st), v = typeof variant === "string" ? PALETTE_VARIANTS[variant] : variant;
   if (!v) return speciesColours(id, st, gear);
   return speciesColours({ ...S, hue: v.hue, sat: v.sat, val: v.val, belly: v.belly ?? S.belly }, st, gear);
 }
@@ -19211,7 +19256,7 @@ function rigProject(p, h, s) {
 // (collar, hat, glasses: they ride on the head piece; shoes are their own piece, rigShoe), or
 // { woken: true }, the enraged look's red eyes.
 function rigCapture(id, level, st, face = null, gear = null) {
-  const S = SPECIES_BY_ID[id]; let got = null;
+  const S = speciesFor(id, st, level); let got = null;
   const form = (m, o) => { got = { m, height: o.height }; return new Sprite(1, 1); };
   form.motes = false; form.rig = true;
   const g = face || gear ? { ...gear, shoes: null, face, faceStyle: S.face } : null;
@@ -19230,9 +19275,9 @@ function rigShoe(leg, style, s, st) {
 }
 // Its head piece in each expression but neutral (the head piece itself): { angry, happy, dazed }, a legend's asleep, and a snouted four-legged one's open jaw (bite, yawn).
 function rigFaces(id, level, st, pivot, s, gear) {
-  const out = {};
-  for (const face of EXPRESSIONS) if (face !== "neutral" && (face !== "asleep" || level === 3)) out[face] = rigPiece(rigCapture(id, level, st, face, gear).m, ["head"], pivot, s, { S: SPECIES_BY_ID[id], level, st });
-  if (SPECIES_BY_ID[id]?.plan === "quad" && !SPECIES_BY_ID[id]?.q?.beak) for (const face of Object.keys(JAW_FACES)) out[face] = rigPiece(rigCapture(id, level, st, face, gear).m, ["head"], pivot, s, { S: SPECIES_BY_ID[id], level, st }); // (the open jaw: a bite, a roar, a yawn; the snouted four-legged ones)
+  const out = {}, S = speciesFor(id, st, level);
+  for (const face of EXPRESSIONS) if (face !== "neutral" && (face !== "asleep" || level === 3)) out[face] = rigPiece(rigCapture(id, level, st, face, gear).m, ["head"], pivot, s, { S, level, st });
+  if (S?.plan === "quad" && !S?.q?.beak) for (const face of Object.keys(JAW_FACES)) out[face] = rigPiece(rigCapture(id, level, st, face, gear).m, ["head"], pivot, s, { S, level, st }); // (the open jaw: a bite, a roar, a yawn; the snouted four-legged ones)
   return out;
 }
 // A model of only the primitives labelled with one of `labels`.
@@ -19277,7 +19322,7 @@ function rigDisc(r, mat, s, paint, rod = false) {
 // head { nb, H }, tail (its base) for the four-legged; spine [[x, y, z, r]...] and head for a serpent.
 // gear (optional): a party animal's (art/creatures.js partyGear: collar, hat, glasses, shoes), baked on (shoes as pieces.shoe).
 function rigParts(id, level, st, gear = null) {
-  const S = SPECIES_BY_ID[id], tpl = S.q ? "quadruped" : S.plan === "snake" ? "serpent" : null;
+  const S = speciesFor(id, st, level), tpl = S.q ? "quadruped" : S.plan === "snake" ? "serpent" : null;
   if (!tpl) return null;
   const { m, s } = rigCapture(id, level, st, null, gear), R = m.rig, discs = {};
   const radii = list => [...new Set(list.map(r => Math.max(1, Math.round(r * s))))].sort((a, b) => a - b);
@@ -19287,11 +19332,11 @@ function rigParts(id, level, st, gear = null) {
     for (const l of R.legs) discSet(l.mat, legR);
     const hoof = R.legs.find(l => l.hoof); if (hoof) discSet(M.NOSE, radii(R.legs.map(l => l.fl * .9)));
     else discSet(R.legs[0].mat, radii(R.legs.map(l => l.fl * .9)));
-    return { id, level, template: tpl, s, joints: { legs: R.legs, head: R.head, tail: R.tail, top: R.top, len: R.len, bw: R.bw }, discs, pieces: { shoe: gear?.shoes && !gear.woken ? rigShoe(R.legs[0], gear.shoes, s, st) : null, torso: rigPiece(m, ["body"], [0, 0, 0], s, { S: SPECIES_BY_ID[id], level, st }), head: rigPiece(m, ["head"], R.head.nb, s, { S: SPECIES_BY_ID[id], level, st }), tail: rigPiece(m, ["tail"], R.tail, s, { S: SPECIES_BY_ID[id], level, st }) }, faces: rigFaces(id, level, st, R.head.nb, s, gear) };
+    return { id, level, template: tpl, s, joints: { legs: R.legs, head: R.head, tail: R.tail, top: R.top, len: R.len, bw: R.bw }, discs, pieces: { shoe: gear?.shoes && !gear.woken ? rigShoe(R.legs[0], gear.shoes, s, st) : null, torso: rigPiece(m, ["body"], [0, 0, 0], s, { S, level, st }), head: rigPiece(m, ["head"], R.head.nb, s, { S, level, st }), tail: rigPiece(m, ["tail"], R.tail, s, { S, level, st }) }, faces: rigFaces(id, level, st, R.head.nb, s, gear) };
   }
   // a serpent: its head baked, its body discs (speckled like its coat) by the spine's radii
   discSet(M.BODY, radii(R.spine.map(p => p[3])), p => spotty([p[0] * 1.5, p[1], p[2]], 14, .3) ? M.BODY3 : undefined);
-  return { id, level, template: tpl, s, joints: { spine: R.spine, head: R.head, hr: R.hr }, discs, pieces: { head: rigPiece(m, ["head"], R.head, s, { S: SPECIES_BY_ID[id], level, st }), wings: rigPiece(m, ["body"].filter(() => m.parts.some(q => q.part === "body" && q.extra)), [0, .2, 0], s, { S: SPECIES_BY_ID[id], level, st }) }, faces: rigFaces(id, level, st, R.head, s, gear) };
+  return { id, level, template: tpl, s, joints: { spine: R.spine, head: R.head, hr: R.hr }, discs, pieces: { head: rigPiece(m, ["head"], R.head, s, { S, level, st }), wings: rigPiece(m, ["body"].filter(() => m.parts.some(q => q.part === "body" && q.extra)), [0, .2, 0], s, { S, level, st }) }, faces: rigFaces(id, level, st, R.head, s, gear) };
 }
 
 
@@ -19545,7 +19590,7 @@ function lgCrop(sp) {
 // One form of a species' legend: { sp, colours } (sp.origin: the ground under its middle). Only
 // asleep for now (Ed, 2026-10-04: "no waking sequence yet, just the sleeping form").
 function legendForm(id, st, { state = "asleep", frame = 0, facing = "towards" } = {}) {
-  const S = SPECIES_BY_ID[id], pose = LEGEND_POSES[id];
+  const S = speciesFor(id, st, 3), pose = LEGEND_POSES[id];
   if (!S || !pose) throw new Error(`no sleeping legend for ${id}`);
   if (!LEGEND_STATES.includes(state)) throw new Error(`no ${state} legend yet`);
   const sp = lgCrop(withForm(lgForm(S, { breath: frame % 2 ? .025 : 0 }), () => buildCreature(S, 3, 0, st, facing)));
