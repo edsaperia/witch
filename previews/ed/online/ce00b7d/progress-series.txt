@@ -1,0 +1,440 @@
+JOIN 1 ready=true 253.6s
+1	0	connecting	Connecting…
+4	5	view-create:start	Connecting…
+7	21	view-create:start	Connecting…
+12	129	view-create:waiting	Joining… drawing the island
+15	131	view-create:waiting	Joining… drawing the island
+18	135	view-create:waiting	Joining… drawing the island
+22	139	view-create:waiting	Joining… drawing the island
+25	141	view-create:waiting	Joining… drawing the island
+28	145	view-create:waiting	Joining… drawing the island
+32	150	view-create:waiting	Joining… drawing the island
+35	154	view-create:waiting	Joining… drawing the island
+38	160	view-create:waiting	Joining… drawing the island
+42	165	view-create:waiting	Joining… drawing the island
+45	171	view-create:waiting	Joining… drawing the island
+48	177	view-create:waiting	Joining… drawing the island
+51	184	view-create:waiting	Joining… drawing the island
+55	190	view-create:waiting	Joining… drawing the island
+58	196	view-create:waiting	Joining… drawing the island
+61	202	view-create:waiting	Joining… drawing the island
+65	206	view-create:waiting	Joining… drawing the island
+68	210	view-create:waiting	Joining… drawing the island
+71	214	view-create:waiting	Joining… drawing the island
+75	219	view-create:waiting	Joining… drawing the island
+78	223	view-create:waiting	Joining… drawing the island
+82	229	view-create:waiting	Joining… drawing the island
+85	233	view-create:waiting	Joining… drawing the island
+88	236	view-create:waiting	Joining… drawing the island
+91	240	view-create:waiting	Joining… drawing the island
+95	244	view-create:waiting	Joining… drawing the island
+99	248	view-create:waiting	Joining… drawing the island
+103	252	view-create:waiting	Joining… drawing the island
+107	256	view-create:waiting	Joining… drawing the island
+110	260	view-create:waiting	Joining… drawing the island
+113	265	view-create:waiting	Joining… drawing the island
+116	270	view-create:waiting	Joining… drawing the island
+119	274	view-create:waiting	Joining… drawing the island
+122	283	view-create:waiting	Joining… drawing the island
+125	361	view-prepare:waiting	Joining… preparing the view (0%)
+130	361	view-prepare:waiting	Joining… preparing the view (0%)
+133	362	view-prepare:waiting	Joining… preparing the view (0%)
+136	363	view-prepare:waiting	Joining… preparing the view (0%)
+139	363	view-prepare:waiting	Joining… preparing the view (0%)
+142	363	view-prepare:waiting	Joining… preparing the view (0%)
+145	363	view-prepare:waiting	Joining… preparing the view (0%)
+148	363	view-prepare:waiting	Joining… preparing the view (0%)
+151	363	view-prepare:waiting	Joining… preparing the view (0%)
+154	363	view-prepare:waiting	Joining… preparing the view (0%)
+157	363	view-prepare:waiting	Joining… preparing the view (0%)
+160	363	view-prepare:waiting	Joining… preparing the view (0%)
+163	363	view-prepare:waiting	Joining… preparing the view (0%)
+166	363	view-prepare:waiting	Joining… preparing the view (0%)
+169	363	view-prepare:waiting	Joining… preparing the view (0%)
+172	363	view-prepare:waiting	Joining… preparing the view (0%)
+175	363	view-prepare:waiting	Joining… preparing the view (0%)
+178	363	view-prepare:waiting	Joining… preparing the view (0%)
+181	363	view-prepare:waiting	Joining… preparing the view (0%)
+184	363	view-prepare:waiting	Joining… preparing the view (0%)
+187	364	view-prepare:waiting	Joining… preparing the view (0%)
+190	365	view-prepare:waiting	Joining… preparing the view (0%)
+193	365	view-prepare:waiting	Joining… preparing the view (0%)
+196	366	view-prepare:waiting	Joining… preparing the view (0%)
+201	366	view-prepare:waiting	Joining… preparing the view (0%)
+205	367	view-prepare:waiting	Joining… preparing the view (21%)
+208	368	view-prepare:waiting	Joining… preparing the view (23%)
+211	369	view-prepare:waiting	Joining… preparing the view (25%)
+214	370	view-prepare:waiting	Joining… preparing the view (28%)
+218	370	view-prepare:waiting	Joining… preparing the view (28%)
+222	371	view-prepare:waiting	Joining… preparing the view (30%)
+226	372	view-prepare:waiting	Joining… preparing the view (33%)
+229	372	view-prepare:waiting	Joining… preparing the view (33%)
+234	373	view-prepare:waiting	Joining… preparing the view (35%)
+251	374	view-prepare:waiting	Joining… preparing the view (70%)
+STAGES {"start-snapshot:received":781,"replay-restore:start":815,"replay-restore:done":3999,"prepare:invoke":4001,"view-create:start":4003,"view-create:done":123046,"view-prepare:start":123433}
+LOADING LINES
++0.8s online loading start-snapshot:received {tick: 2, acc: 0.00003333333333772198}
++0.8s online loading replay-restore:start 
++4.0s online loading replay-restore:done 
++4.0s online loading prepare:invoke 
++4.0s online loading view-create:start 
++123.1s online loading view-create:done [Object]
++123.4s online loading view-prepare:start 
++250.9s online loading view-prepare:done 
++250.9s online loading prepare:resolved 
++251.1s online loading sync-replay:start {tick: 2013, acc: 0.009200000000237095}
++252.7s online loading sync-replay:done 
++252.7s online loading join:synchronized {tick: 2013}
+
+JOIN 2 ready=true 261.2s
+1	0	connecting	Connecting…
+4	5	view-create:start	Connecting…
+7	40	view-create:start	Connecting…
+11	129	view-create:waiting	Joining… drawing the island
+15	131	view-create:waiting	Joining… drawing the island
+19	135	view-create:waiting	Joining… drawing the island
+23	138	view-create:waiting	Joining… drawing the island
+27	141	view-create:waiting	Joining… drawing the island
+31	144	view-create:waiting	Joining… drawing the island
+34	148	view-create:waiting	Joining… drawing the island
+37	152	view-create:waiting	Joining… drawing the island
+40	158	view-create:waiting	Joining… drawing the island
+44	163	view-create:waiting	Joining… drawing the island
+48	167	view-create:waiting	Joining… drawing the island
+51	172	view-create:waiting	Joining… drawing the island
+54	177	view-create:waiting	Joining… drawing the island
+57	183	view-create:waiting	Joining… drawing the island
+61	189	view-create:waiting	Joining… drawing the island
+64	195	view-create:waiting	Joining… drawing the island
+68	200	view-create:waiting	Joining… drawing the island
+72	205	view-create:waiting	Joining… drawing the island
+75	209	view-create:waiting	Joining… drawing the island
+79	213	view-create:waiting	Joining… drawing the island
+82	217	view-create:waiting	Joining… drawing the island
+86	221	view-create:waiting	Joining… drawing the island
+90	225	view-create:waiting	Joining… drawing the island
+93	230	view-create:waiting	Joining… drawing the island
+96	234	view-create:waiting	Joining… drawing the island
+99	237	view-create:waiting	Joining… drawing the island
+103	240	view-create:waiting	Joining… drawing the island
+107	244	view-create:waiting	Joining… drawing the island
+110	248	view-create:waiting	Joining… drawing the island
+114	251	view-create:waiting	Joining… drawing the island
+117	255	view-create:waiting	Joining… drawing the island
+120	260	view-create:waiting	Joining… drawing the island
+124	264	view-create:waiting	Joining… drawing the island
+127	268	view-create:waiting	Joining… drawing the island
+130	272	view-create:waiting	Joining… drawing the island
+133	276	view-create:waiting	Joining… drawing the island
+136	360	view-prepare:start	Joining… drawing the island
+147	360	view-prepare:start	Joining… drawing the island
+150	362	view-prepare:waiting	Joining… preparing the view (0%)
+153	362	view-prepare:waiting	Joining… preparing the view (0%)
+156	362	view-prepare:waiting	Joining… preparing the view (0%)
+159	362	view-prepare:waiting	Joining… preparing the view (0%)
+162	362	view-prepare:waiting	Joining… preparing the view (0%)
+165	362	view-prepare:waiting	Joining… preparing the view (0%)
+168	362	view-prepare:waiting	Joining… preparing the view (0%)
+171	362	view-prepare:waiting	Joining… preparing the view (0%)
+174	362	view-prepare:waiting	Joining… preparing the view (0%)
+177	362	view-prepare:waiting	Joining… preparing the view (0%)
+180	362	view-prepare:waiting	Joining… preparing the view (0%)
+183	362	view-prepare:waiting	Joining… preparing the view (0%)
+186	362	view-prepare:waiting	Joining… preparing the view (0%)
+189	362	view-prepare:waiting	Joining… preparing the view (0%)
+192	362	view-prepare:waiting	Joining… preparing the view (0%)
+195	362	view-prepare:waiting	Joining… preparing the view (0%)
+198	362	view-prepare:waiting	Joining… preparing the view (0%)
+201	363	view-prepare:waiting	Joining… preparing the view (0%)
+204	363	view-prepare:waiting	Joining… preparing the view (0%)
+207	364	view-prepare:waiting	Joining… preparing the view (0%)
+210	365	view-prepare:waiting	Joining… preparing the view (0%)
+213	365	view-prepare:waiting	Joining… preparing the view (0%)
+216	366	view-prepare:waiting	Joining… preparing the view (21%)
+220	366	view-prepare:waiting	Joining… preparing the view (21%)
+224	367	view-prepare:waiting	Joining… preparing the view (23%)
+227	368	view-prepare:waiting	Joining… preparing the view (25%)
+231	369	view-prepare:waiting	Joining… preparing the view (28%)
+234	369	view-prepare:waiting	Joining… preparing the view (28%)
+237	370	view-prepare:waiting	Joining… preparing the view (31%)
+243	370	view-prepare:waiting	Joining… preparing the view (31%)
+255	371	view-prepare:waiting	Joining… preparing the view (69%)
+258	377	join:synchronized	Guest · dev · ce00b7d
+STAGES {"start-snapshot:received":977,"replay-restore:start":995,"replay-restore:done":4283,"prepare:invoke":4286,"view-create:start":4288,"view-create:done":135050,"view-prepare:start":135664,"view-prepare:done":255380,"prepare:resolved":255385,"sync-replay:start":255752,"sync-replay:done":257274,"join:synchronized":257276}
+LOADING LINES
++1.0s online loading start-snapshot:received {tick: 5, acc: 0.016599999999998654}
++1.0s online loading replay-restore:start 
++4.3s online loading replay-restore:done 
++4.3s online loading prepare:invoke 
++4.3s online loading view-create:start 
++135.1s online loading view-create:done [Object]
++135.7s online loading view-prepare:start 
++255.4s online loading view-prepare:done 
++255.4s online loading prepare:resolved 
++255.8s online loading sync-replay:start {tick: 1927, acc: 0.007599999999977673}
++257.3s online loading sync-replay:done 
++257.3s online loading join:synchronized {tick: 1927}
+
+JOIN 3 ready=true 250.4s
+1	0	connecting	Connecting…
+5	5	view-create:start	Connecting…
+9	128	view-create:start	Connecting…
+13	131	view-create:waiting	Joining… drawing the island
+17	134	view-create:waiting	Joining… drawing the island
+20	138	view-create:waiting	Joining… drawing the island
+25	142	view-create:waiting	Joining… drawing the island
+28	146	view-create:waiting	Joining… drawing the island
+31	150	view-create:waiting	Joining… drawing the island
+35	156	view-create:waiting	Joining… drawing the island
+38	161	view-create:waiting	Joining… drawing the island
+41	165	view-create:waiting	Joining… drawing the island
+44	170	view-create:waiting	Joining… drawing the island
+47	175	view-create:waiting	Joining… drawing the island
+51	182	view-create:waiting	Joining… drawing the island
+54	188	view-create:waiting	Joining… drawing the island
+57	194	view-create:waiting	Joining… drawing the island
+61	200	view-create:waiting	Joining… drawing the island
+64	204	view-create:waiting	Joining… drawing the island
+68	209	view-create:waiting	Joining… drawing the island
+71	213	view-create:waiting	Joining… drawing the island
+74	217	view-create:waiting	Joining… drawing the island
+78	220	view-create:waiting	Joining… drawing the island
+82	226	view-create:waiting	Joining… drawing the island
+85	230	view-create:waiting	Joining… drawing the island
+88	233	view-create:waiting	Joining… drawing the island
+91	236	view-create:waiting	Joining… drawing the island
+95	240	view-create:waiting	Joining… drawing the island
+99	244	view-create:waiting	Joining… drawing the island
+103	247	view-create:waiting	Joining… drawing the island
+106	251	view-create:waiting	Joining… drawing the island
+109	255	view-create:waiting	Joining… drawing the island
+112	260	view-create:waiting	Joining… drawing the island
+115	264	view-create:waiting	Joining… drawing the island
+119	269	view-create:waiting	Joining… drawing the island
+122	273	view-create:waiting	Joining… drawing the island
+126	358	view-prepare:start	Joining… drawing the island
+129	358	view-prepare:start	Joining… drawing the island
+133	359	view-prepare:waiting	Joining… preparing the view (0%)
+136	360	view-prepare:waiting	Joining… preparing the view (0%)
+139	361	view-prepare:waiting	Joining… preparing the view (0%)
+142	361	view-prepare:waiting	Joining… preparing the view (0%)
+145	361	view-prepare:waiting	Joining… preparing the view (0%)
+148	361	view-prepare:waiting	Joining… preparing the view (0%)
+151	361	view-prepare:waiting	Joining… preparing the view (0%)
+154	361	view-prepare:waiting	Joining… preparing the view (0%)
+157	361	view-prepare:waiting	Joining… preparing the view (0%)
+160	361	view-prepare:waiting	Joining… preparing the view (0%)
+163	361	view-prepare:waiting	Joining… preparing the view (0%)
+166	361	view-prepare:waiting	Joining… preparing the view (0%)
+169	361	view-prepare:waiting	Joining… preparing the view (0%)
+172	361	view-prepare:waiting	Joining… preparing the view (0%)
+175	361	view-prepare:waiting	Joining… preparing the view (0%)
+178	361	view-prepare:waiting	Joining… preparing the view (0%)
+181	361	view-prepare:waiting	Joining… preparing the view (0%)
+184	361	view-prepare:waiting	Joining… preparing the view (0%)
+187	361	view-prepare:waiting	Joining… preparing the view (0%)
+190	362	view-prepare:waiting	Joining… preparing the view (0%)
+193	362	view-prepare:waiting	Joining… preparing the view (0%)
+196	363	view-prepare:waiting	Joining… preparing the view (0%)
+199	364	view-prepare:waiting	Joining… preparing the view (0%)
+202	364	view-prepare:waiting	Joining… preparing the view (0%)
+206	365	view-prepare:waiting	Joining… preparing the view (21%)
+209	365	view-prepare:waiting	Joining… preparing the view (21%)
+212	366	view-prepare:waiting	Joining… preparing the view (23%)
+215	367	view-prepare:waiting	Joining… preparing the view (25%)
+219	367	view-prepare:waiting	Joining… preparing the view (25%)
+222	368	view-prepare:waiting	Joining… preparing the view (27%)
+225	369	view-prepare:waiting	Joining… preparing the view (30%)
+229	369	view-prepare:waiting	Joining… preparing the view (30%)
+235	370	view-prepare:waiting	Joining… preparing the view (33%)
+247	371	view-prepare:waiting	Joining… preparing the view (72%)
+STAGES {"start-snapshot:received":695,"replay-restore:start":710,"replay-restore:done":3527,"prepare:invoke":3528,"view-create:start":3529,"view-create:done":124971,"view-prepare:start":125495}
+LOADING LINES
++0.7s online loading start-snapshot:received {tick: 4, acc: 0.000033333333330491655}
++0.7s online loading replay-restore:start 
++3.5s online loading replay-restore:done 
++3.5s online loading prepare:invoke 
++3.5s online loading view-create:start 
++125.0s online loading view-create:done [Object]
++125.5s online loading view-prepare:start 
++247.7s online loading view-prepare:done 
++247.7s online loading prepare:resolved 
++248.0s online loading sync-replay:start {tick: 1998, acc: 0.006999999999868743}
++249.0s online loading sync-replay:done 
++249.0s online loading join:synchronized {tick: 1998}
+
+JOIN 4 ready=true 251s
+1	0	connecting	Connecting…
+4	5	view-create:start	Connecting…
+7	46	view-create:start	Connecting…
+12	130	view-create:waiting	Joining… drawing the island
+15	132	view-create:waiting	Joining… drawing the island
+19	135	view-create:waiting	Joining… drawing the island
+22	139	view-create:waiting	Joining… drawing the island
+26	143	view-create:waiting	Joining… drawing the island
+30	148	view-create:waiting	Joining… drawing the island
+34	152	view-create:waiting	Joining… drawing the island
+38	157	view-create:waiting	Joining… drawing the island
+41	162	view-create:waiting	Joining… drawing the island
+44	167	view-create:waiting	Joining… drawing the island
+47	173	view-create:waiting	Joining… drawing the island
+51	179	view-create:waiting	Joining… drawing the island
+54	185	view-create:waiting	Joining… drawing the island
+57	191	view-create:waiting	Joining… drawing the island
+60	197	view-create:waiting	Joining… drawing the island
+64	201	view-create:waiting	Joining… drawing the island
+67	206	view-create:waiting	Joining… drawing the island
+71	211	view-create:waiting	Joining… drawing the island
+74	215	view-create:waiting	Joining… drawing the island
+77	219	view-create:waiting	Joining… drawing the island
+81	221	view-create:waiting	Joining… drawing the island
+85	226	view-create:waiting	Joining… drawing the island
+88	230	view-create:waiting	Joining… drawing the island
+92	233	view-create:waiting	Joining… drawing the island
+95	237	view-create:waiting	Joining… drawing the island
+99	241	view-create:waiting	Joining… drawing the island
+103	245	view-create:waiting	Joining… drawing the island
+106	249	view-create:waiting	Joining… drawing the island
+110	254	view-create:waiting	Joining… drawing the island
+113	258	view-create:waiting	Joining… drawing the island
+116	262	view-create:waiting	Joining… drawing the island
+119	267	view-create:waiting	Joining… drawing the island
+122	271	view-create:waiting	Joining… drawing the island
+126	275	view-create:waiting	Joining… drawing the island
+129	359	view-prepare:start	Joining… drawing the island
+132	360	view-prepare:waiting	Joining… preparing the view (0%)
+140	360	view-prepare:waiting	Joining… preparing the view (0%)
+143	361	view-prepare:waiting	Joining… preparing the view (0%)
+146	362	view-prepare:waiting	Joining… preparing the view (0%)
+149	362	view-prepare:waiting	Joining… preparing the view (0%)
+152	362	view-prepare:waiting	Joining… preparing the view (0%)
+155	362	view-prepare:waiting	Joining… preparing the view (0%)
+158	362	view-prepare:waiting	Joining… preparing the view (0%)
+161	362	view-prepare:waiting	Joining… preparing the view (0%)
+164	362	view-prepare:waiting	Joining… preparing the view (0%)
+167	362	view-prepare:waiting	Joining… preparing the view (0%)
+170	362	view-prepare:waiting	Joining… preparing the view (0%)
+173	362	view-prepare:waiting	Joining… preparing the view (0%)
+176	362	view-prepare:waiting	Joining… preparing the view (0%)
+179	362	view-prepare:waiting	Joining… preparing the view (0%)
+182	362	view-prepare:waiting	Joining… preparing the view (0%)
+185	362	view-prepare:waiting	Joining… preparing the view (0%)
+188	362	view-prepare:waiting	Joining… preparing the view (0%)
+191	363	view-prepare:waiting	Joining… preparing the view (0%)
+194	364	view-prepare:waiting	Joining… preparing the view (0%)
+197	364	view-prepare:waiting	Joining… preparing the view (0%)
+200	365	view-prepare:waiting	Joining… preparing the view (0%)
+203	365	view-prepare:waiting	Joining… preparing the view (0%)
+206	366	view-prepare:waiting	Joining… preparing the view (0%)
+210	366	view-prepare:waiting	Joining… preparing the view (0%)
+213	367	view-prepare:waiting	Joining… preparing the view (22%)
+216	368	view-prepare:waiting	Joining… preparing the view (24%)
+220	369	view-prepare:waiting	Joining… preparing the view (28%)
+223	369	view-prepare:waiting	Joining… preparing the view (28%)
+226	370	view-prepare:waiting	Joining… preparing the view (30%)
+229	371	view-prepare:waiting	Joining… preparing the view (33%)
+235	371	view-prepare:waiting	Joining… preparing the view (33%)
+242	372	view-prepare:waiting	Joining… preparing the view (69%)
+245	373	view-prepare:waiting	Joining… preparing the view (80%)
+248	373	view-prepare:waiting	Joining… preparing the view (80%)
+STAGES {"start-snapshot:received":828,"replay-restore:start":859,"replay-restore:done":3700,"prepare:invoke":3702,"view-create:start":3702,"view-create:done":128213,"view-prepare:start":128746}
+LOADING LINES
++0.9s online loading start-snapshot:received {tick: 2, acc: 0.00003333333333772198}
++0.9s online loading replay-restore:start 
++3.7s online loading replay-restore:done 
++3.7s online loading prepare:invoke 
++3.7s online loading view-create:start 
++128.2s online loading view-create:done [Object]
++128.8s online loading view-prepare:start 
++248.4s online loading view-prepare:done 
++248.4s online loading prepare:resolved 
++248.8s online loading sync-replay:start {tick: 2041, acc: 0.008066666666871246}
++249.8s online loading sync-replay:done 
++249.9s online loading join:synchronized {tick: 2041}
+
+JOIN 5 ready=true 248.3s
+1	0	connecting	Connecting…
+5	5	view-create:start	Connecting…
+8	28	view-create:start	Connecting…
+12	129	view-create:waiting	Joining… drawing the island
+16	131	view-create:waiting	Joining… drawing the island
+20	135	view-create:waiting	Joining… drawing the island
+23	139	view-create:waiting	Joining… drawing the island
+26	142	view-create:waiting	Joining… drawing the island
+29	146	view-create:waiting	Joining… drawing the island
+33	151	view-create:waiting	Joining… drawing the island
+36	156	view-create:waiting	Joining… drawing the island
+39	160	view-create:waiting	Joining… drawing the island
+42	164	view-create:waiting	Joining… drawing the island
+46	171	view-create:waiting	Joining… drawing the island
+49	177	view-create:waiting	Joining… drawing the island
+52	183	view-create:waiting	Joining… drawing the island
+56	189	view-create:waiting	Joining… drawing the island
+59	194	view-create:waiting	Joining… drawing the island
+62	199	view-create:waiting	Joining… drawing the island
+65	203	view-create:waiting	Joining… drawing the island
+68	208	view-create:waiting	Joining… drawing the island
+71	212	view-create:waiting	Joining… drawing the island
+75	217	view-create:waiting	Joining… drawing the island
+80	222	view-create:waiting	Joining… drawing the island
+83	227	view-create:waiting	Joining… drawing the island
+87	231	view-create:waiting	Joining… drawing the island
+90	235	view-create:waiting	Joining… drawing the island
+94	238	view-create:waiting	Joining… drawing the island
+97	242	view-create:waiting	Joining… drawing the island
+102	246	view-create:waiting	Joining… drawing the island
+105	249	view-create:waiting	Joining… drawing the island
+108	253	view-create:waiting	Joining… drawing the island
+112	258	view-create:waiting	Joining… drawing the island
+115	262	view-create:waiting	Joining… drawing the island
+119	267	view-create:waiting	Joining… drawing the island
+122	272	view-create:waiting	Joining… drawing the island
+126	277	view-create:waiting	Joining… drawing the island
+129	360	view-prepare:start	Joining… drawing the island
+135	361	view-prepare:waiting	Joining… preparing the view (0%)
+138	362	view-prepare:waiting	Joining… preparing the view (0%)
+141	363	view-prepare:waiting	Joining… preparing the view (0%)
+144	363	view-prepare:waiting	Joining… preparing the view (0%)
+147	363	view-prepare:waiting	Joining… preparing the view (0%)
+150	363	view-prepare:waiting	Joining… preparing the view (0%)
+153	363	view-prepare:waiting	Joining… preparing the view (0%)
+156	363	view-prepare:waiting	Joining… preparing the view (0%)
+159	363	view-prepare:waiting	Joining… preparing the view (0%)
+162	363	view-prepare:waiting	Joining… preparing the view (0%)
+165	363	view-prepare:waiting	Joining… preparing the view (0%)
+168	363	view-prepare:waiting	Joining… preparing the view (0%)
+171	363	view-prepare:waiting	Joining… preparing the view (0%)
+174	363	view-prepare:waiting	Joining… preparing the view (0%)
+177	363	view-prepare:waiting	Joining… preparing the view (0%)
+180	363	view-prepare:waiting	Joining… preparing the view (0%)
+183	363	view-prepare:waiting	Joining… preparing the view (0%)
+186	364	view-prepare:waiting	Joining… preparing the view (0%)
+189	364	view-prepare:waiting	Joining… preparing the view (0%)
+192	365	view-prepare:waiting	Joining… preparing the view (0%)
+195	366	view-prepare:waiting	Joining… preparing the view (0%)
+198	366	view-prepare:waiting	Joining… preparing the view (0%)
+201	366	view-prepare:waiting	Joining… preparing the view (0%)
+204	367	view-prepare:waiting	Joining… preparing the view (21%)
+208	368	view-prepare:waiting	Joining… preparing the view (23%)
+211	369	view-prepare:waiting	Joining… preparing the view (25%)
+215	369	view-prepare:waiting	Joining… preparing the view (25%)
+218	370	view-prepare:waiting	Joining… preparing the view (27%)
+221	371	view-prepare:waiting	Joining… preparing the view (30%)
+224	371	view-prepare:waiting	Joining… preparing the view (30%)
+227	372	view-prepare:waiting	Joining… preparing the view (32%)
+232	372	view-prepare:waiting	Joining… preparing the view (32%)
+245	373	view-prepare:waiting	Joining… preparing the view (69%)
+STAGES {"start-snapshot:received":1539,"replay-restore:start":1566,"replay-restore:done":4832,"prepare:invoke":4833,"view-create:start":4833,"view-create:done":127105,"view-prepare:start":127569}
+LOADING LINES
++1.6s online loading start-snapshot:received {tick: 5, acc: 0.00003333333333779137}
++1.6s online loading replay-restore:start 
++4.8s online loading replay-restore:done 
++4.8s online loading prepare:invoke 
++4.8s online loading view-create:start 
++127.1s online loading view-create:done [Object]
++127.6s online loading view-prepare:start 
++245.6s online loading view-prepare:done 
++245.6s online loading prepare:resolved 
++245.9s online loading sync-replay:start {tick: 1945, acc: 0.00866666666681034}
++247.5s online loading sync-replay:done 
++247.5s online loading join:synchronized {tick: 1945}

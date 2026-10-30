@@ -1,0 +1,11 @@
+Witch relay listening { address: '127.0.0.1', family: 'IPv4', port: 8787 }
+{"event":"relay-close","connection":1,"role":"host","rule":"client-close","detail":"","code":1005,"silenceMs":30,"progressSilenceMs":275713,"progress":356,"joiningMs":324569}
+{"event":"relay-close","connection":2,"role":"guest","rule":"host-left","detail":"Host left","code":1001,"silenceMs":215,"progressSilenceMs":21189,"progress":379,"joiningMs":273234}
+{"event":"relay-close","connection":3,"role":"host","rule":"client-close","detail":"","code":1005,"silenceMs":27,"progressSilenceMs":264732,"progress":355,"joiningMs":309667}
+{"event":"relay-close","connection":4,"role":"guest","rule":"host-left","detail":"Host left","code":1001,"silenceMs":86,"progressSilenceMs":5427,"progress":376,"joiningMs":261844}
+{"event":"relay-close","connection":5,"role":"host","rule":"client-close","detail":"","code":1005,"silenceMs":28,"progressSilenceMs":255410,"progress":354,"joiningMs":295798}
+{"event":"relay-close","connection":6,"role":"guest","rule":"host-left","detail":"Host left","code":1001,"silenceMs":79,"progressSilenceMs":4281,"progress":376,"joiningMs":252684}
+{"event":"relay-close","connection":7,"role":"host","rule":"client-close","detail":"","code":1005,"silenceMs":49,"progressSilenceMs":255329,"progress":354,"joiningMs":298971}
+{"event":"relay-close","connection":8,"role":"guest","rule":"host-left","detail":"Host left","code":1001,"silenceMs":42,"progressSilenceMs":3945,"progress":377,"joiningMs":253122}
+{"event":"relay-close","connection":9,"role":"host","rule":"client-close","detail":"","code":1005,"silenceMs":60,"progressSilenceMs":253169,"progress":355,"joiningMs":299350}
+{"event":"relay-close","connection":10,"role":"guest","rule":"host-left","detail":"Host left","code":1001,"silenceMs":119,"progressSilenceMs":4069,"progress":378,"joiningMs":250706}

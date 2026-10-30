@@ -1,0 +1,17 @@
+[07:31:22Z +55s] join 1 host build dev · ce00b7d
+[07:35:35Z +309s] join 1: ready true in 253.6s; create 119s prepare nulls; progress {"first":0,"last":374,"samples":72,"longestNoAdvanceS":51}; host pacing {"frames":2025,"fps":8,"median":100,"p95":267,"max":10466,"over1s":7}; sentHome null; failure null; errors 0
+[07:35:53Z +326s] input check {"woke":true,"w1":3.37,"w0":0}
+[07:36:38Z +372s] host leave {"back":true,"url":"http://127.0.0.1:4178/?quick=1&seed=770233","backSecs":2.5,"soloReady":true,"soloSecs":43.8}
+[07:37:37Z +430s] join 2 host build dev · ce00b7d
+[07:41:59Z +692s] join 2: ready true in 261.2s; create 130.8s prepare 119.7s; progress {"first":0,"last":377,"samples":73,"longestNoAdvanceS":51}; host pacing {"frames":1947,"fps":7.5,"median":100,"p95":300,"max":6566,"over1s":4}; sentHome null; failure null; errors 0
+[07:42:40Z +733s] host leave {"back":true,"url":"http://127.0.0.1:4178/?quick=1&seed=60312","backSecs":1.5,"soloReady":true,"soloSecs":40.1}
+[07:43:33Z +786s] join 3 host build dev · ce00b7d
+[07:47:43Z +1036s] join 3: ready true in 250.4s; create 121.4s prepare nulls; progress {"first":0,"last":371,"samples":72,"longestNoAdvanceS":51}; host pacing {"frames":2008,"fps":8,"median":100,"p95":283,"max":6833,"over1s":3}; sentHome null; failure null; errors 0
+[07:48:30Z +1083s] host leave {"back":true,"url":"http://127.0.0.1:4178/?quick=1&seed=691168","backSecs":2.2,"soloReady":true,"soloSecs":44.9}
+[07:49:24Z +1137s] join 4 host build dev · ce00b7d
+[07:53:35Z +1388s] join 4: ready true in 251s; create 124.5s prepare nulls; progress {"first":0,"last":373,"samples":73,"longestNoAdvanceS":45}; host pacing {"frames":2055,"fps":8.2,"median":100,"p95":267,"max":5483,"over1s":7}; sentHome null; failure null; errors 0
+[07:54:23Z +1436s] host leave {"back":true,"url":"http://127.0.0.1:4178/?quick=1","backSecs":1,"soloReady":true,"soloSecs":45.3}
+[07:55:19Z +1492s] join 5 host build dev · ce00b7d
+[07:59:28Z +1741s] join 5: ready true in 248.3s; create 122.3s prepare nulls; progress {"first":0,"last":373,"samples":71,"longestNoAdvanceS":45}; host pacing {"frames":1954,"fps":7.9,"median":100,"p95":267,"max":11700,"over1s":2}; sentHome null; failure null; errors 0
+[08:00:16Z +1789s] host leave {"back":true,"url":"http://127.0.0.1:4178/?quick=1&seed=872476","backSecs":1.8,"soloReady":true,"soloSecs":45.3}
+DONE

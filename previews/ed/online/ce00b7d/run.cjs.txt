@@ -1,0 +1,70 @@
+const fs = require("fs"), path = require("path"), { chromium } = require("playwright");
+const out = process.argv[2], N = 5;
+const t00 = Date.now(), log = (...a) => console.log(`[${new Date().toISOString().slice(11, 19)}Z +${((Date.now() - t00) / 1000).toFixed(0)}s]`, ...a);
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const HOST = "http://127.0.0.1:4178/online/online.html?online=host&relay=ws%3A%2F%2Flocalhost%3A8787&seed=123&quick=1";
+(async () => {
+  const b = await chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
+  const rows = [];
+  for (let i = 1; i <= N; i++) {
+    const row = { join: i, errors: [], loadingLines: [], progress: [] };
+    const mk = async n => { const c = await b.newContext({ viewport: { width: 960, height: 540 } }); const p = await c.newPage();
+      p.on("console", m => { const t = m.text(); if (m.type() === "error") row.errors.push(`${n} console.error: ${t}`); if (/online loading/.test(t) && n === "guest" && !/waiting|progress/.test(t)) row.loadingLines.push(`+${((Date.now() - row.t0) / 1000).toFixed(1)}s ${t.slice(0, 160)}`); });
+      p.on("pageerror", e => row.errors.push(`${n} pageerror: ${e.message}`)); return p; };
+    const h = await mk("host");
+    await h.goto(HOST);
+    await h.waitForFunction(() => window.witchOnline?.ready && !document.getElementById("invite").hidden, null, { timeout: 240000, polling: 500 });
+    // cheap frame-pacing recorder on the host (deltas only)
+    await h.evaluate(() => { window.__fd = []; let last = 0; const f = t => { if (last) window.__fd.push([Date.now(), t - last]); last = t; requestAnimationFrame(f); }; requestAnimationFrame(f); });
+    row.hostBuild = await h.evaluate(() => window.witchOnline.build); log(`join ${i} host build`, row.hostBuild);
+    const inv = await h.evaluate(() => document.getElementById("invite").href);
+    const g = await mk("guest"); row.t0 = Date.now(); row.startedUTC = new Date(row.t0).toISOString();
+    let left = null; g.on("framenavigated", f => { if (f === g.mainFrame() && !f.url().includes("/online/")) left ??= { at: +((Date.now() - row.t0) / 1000).toFixed(1), url: f.url() }; });
+    await g.goto(inv);
+    let polling = true;
+    const poller = (async () => { while (polling) { try { const v = await g.evaluate(() => window.witchOnline && location.pathname.includes("/online/") ? { failure: window.witchOnline.failure, progress: window.witchOnline.loading.progress, stage: window.witchOnline.loading.stage, status: document.getElementById("status")?.textContent, log: window.witchOnline.loading.log.filter(l => !/waiting|progress/.test(l.stage)).map(l => [l.at, l.stage]) } : null); if (v) { row.progress.push([+((Date.now() - row.t0) / 1000).toFixed(0), v.progress, v.stage, v.status]); row.lastPoll = v; } } catch {} await wait(3000); } })();
+    row.ready = await g.waitForFunction(() => window.witchOnline?.ready, null, { timeout: 630000, polling: 250 }).then(() => true).catch(() => false);
+    polling = false; await poller;
+    row.secs = +((Date.now() - row.t0) / 1000).toFixed(1); row.sentHome = left;
+    const st = Object.fromEntries((row.lastPoll?.log || []).map(([at, s]) => [s, at]));
+    row.stageMs = st;
+    row.viewCreate = st["view-create:done"] && st["view-create:start"] ? +((st["view-create:done"] - st["view-create:start"]) / 1000).toFixed(1) : null;
+    row.viewPrepare = st["view-prepare:done"] && st["view-prepare:start"] ? +((st["view-prepare:done"] - st["view-prepare:start"]) / 1000).toFixed(1) : null;
+    // host frame pacing during the guest's loading window
+    const fd = await h.evaluate(([a, z]) => window.__fd.filter(([t]) => t >= a && t <= z).map(([, d]) => d), [row.t0, Date.now()]);
+    fd.sort((x, y) => x - y); const q = p => fd.length ? +fd[Math.min(fd.length - 1, Math.floor(p * fd.length))].toFixed(0) : null;
+    row.hostPacing = { frames: fd.length, fps: +(fd.length / row.secs).toFixed(1), median: q(0.5), p95: q(0.95), max: fd.length ? +fd[fd.length - 1].toFixed(0) : null, over1s: fd.filter(d => d > 1000).length };
+    const pr = row.progress.map(p => p[1]); let maxGap = 0, lastChange = 0; for (let k = 1; k < row.progress.length; k++) if (pr[k] !== pr[k - 1]) { maxGap = Math.max(maxGap, row.progress[k][0] - lastChange); lastChange = row.progress[k][0]; }
+    row.progressSummary = { first: pr[0], last: pr[pr.length - 1], samples: pr.length, longestNoAdvanceS: maxGap };
+    log(`join ${i}: ready ${row.ready} in ${row.secs}s; create ${row.viewCreate}s prepare ${row.viewPrepare}s; progress ${JSON.stringify(row.progressSummary)}; host pacing ${JSON.stringify(row.hostPacing)}; sentHome ${JSON.stringify(left)}; failure ${row.lastPoll?.failure}; errors ${row.errors.length}`);
+    if (row.ready) {
+      await g.screenshot({ path: path.join(out, `j${i}-a-guest-ready.png`) }); await h.screenshot({ path: path.join(out, `j${i}-a-host.png`) });
+      row.guestBuild = await g.evaluate(() => window.witchOnline.build); row.players = { host: await h.evaluate(() => window.witchOnline.players.length), guest: await g.evaluate(() => window.witchOnline.players.length) };
+      if (i === 1) { // quick input check
+        const P = () => h.evaluate(() => window.witchOnline.players);
+        await g.bringToFront(); const w0 = (await P())[1]; await g.keyboard.down("KeyD"); let woke = false; for (let k = 0; k < 60 && !woke; k++) { await wait(500); const w = (await P())[1]; woke = Math.hypot(w.x - w0.x, w.z - w0.z) > 0.3; } await g.keyboard.up("KeyD"); await wait(1200);
+        const p0 = await P(); await g.keyboard.down("KeyA"); await wait(2000); await g.keyboard.up("KeyA"); await wait(1200); const p1 = await P();
+        row.input = { woke, w1: +Math.hypot(p1[1].x - p0[1].x, p1[1].z - p0[1].z).toFixed(2), w0: +Math.hypot(p1[0].x - p0[0].x, p1[0].z - p0[0].z).toFixed(3) };
+        log("input check", JSON.stringify(row.input));
+        await g.screenshot({ path: path.join(out, `j${i}-b-guest-after-move.png`) }); await h.screenshot({ path: path.join(out, `j${i}-b-host-after-move.png`) });
+      }
+      // REAL host departure
+      const tl = Date.now(); await h.click("#leave");
+      const back = await g.waitForFunction(() => !location.pathname.includes("/online/"), null, { timeout: 60000, polling: 200 }).then(() => true).catch(() => false);
+      const url = g.url(), tb = +((Date.now() - tl) / 1000).toFixed(1);
+      await h.context().close();
+      const solo = back && await g.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 300000, polling: 500 }).then(() => true).catch(() => false);
+      row.hostLeave = { back, url, backSecs: tb, soloReady: solo, soloSecs: +((Date.now() - tl) / 1000).toFixed(1) };
+      log("host leave", JSON.stringify(row.hostLeave));
+      await g.screenshot({ path: path.join(out, `j${i}-c-guest-home-after-host-left.png`) });
+      await g.context().close();
+    } else {
+      await g.screenshot({ path: path.join(out, `j${i}-x-guest-failed.png`) }).catch(() => {}); await h.screenshot({ path: path.join(out, `j${i}-x-host.png`) }).catch(() => {});
+      await g.context().close(); await h.context().close();
+    }
+    rows.push(row);
+    fs.writeFileSync(path.join(out, "runs.json"), JSON.stringify(rows, null, 1));
+    await wait(1500);
+  }
+  await b.close();
+})();
