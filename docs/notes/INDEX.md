@@ -40,6 +40,10 @@ says what each note covers.
 - Changed on 2026-10-29, live:
 - Ed's direction:
 
+## [Cauldron collection and brewing preview](cauldron.md)
+
+(no entries: its tools and checks only)
+
 ## [Config files](config.md)
 
 - Tuning file

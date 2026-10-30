@@ -77,6 +77,7 @@ The rest of what builders need lives in a note an area, under `docs/notes/` (hou
 
 - [`docs/notes/run.md`](docs/notes/run.md): The run: the phases of a run, the opening and the party spell, the clock, her controls and the camera, waves, knockouts and the party's end.
 - [`docs/notes/house.md`](docs/notes/house.md): The treehouse and its house: the treehouse and its deck, arriving, the house's rooms, the station menus, the Studio, finds, the Workshop and broom parts, hats and brooms, the telescope.
+- [`docs/notes/cauldron.md`](docs/notes/cauldron.md): The gated mushroom collection, shared kitchen and Mirror Floor preview; checks and remaining scope.
 - [`docs/notes/witch-art.md`](docs/notes/witch-art.md): The witch's art: the witch generator, the party witches and their pair poses, her lean cycle.
 - [`docs/notes/world-art.md`](docs/notes/world-art.md): The world's art: area types and recipes, layouts, flora and trees, props and scenes, party objects, the dancefloor and soundsystems, paths, the art style, the pixel wind.
 - [`docs/notes/creatures.md`](docs/notes/creatures.md): Creatures' art: genomes and templates, textures and palettes, evolution kits, faces, the live rig, the sleeping legends' art.
