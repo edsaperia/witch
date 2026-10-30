@@ -10,6 +10,7 @@ import { DEFAULTS, padGlyphs, type PlayerSettings } from "../app/playerSettings"
 import { PadNav, firstRow, keyInput, navigate, stepChoice, stepSlider, type NavInput, type NavRow, type NavState } from "./settingsNav";
 import { DEFAULTS as ACTIONS, bindings, keysName, type ActionId } from "../platform/bindings";
 import { SLOTS, assign, clashes, clearSlot, inputName, inputsOf, padIdle, padPress, withSlot, type Device } from "./rebind";
+import type { SavesHost } from "../app/saveSlots";
 
 /** What the page needs of the game. */
 export interface SettingsHost {
@@ -25,6 +26,7 @@ export interface SettingsHost {
   /** the real pad (the freeze hides it from everyone else while paused) */
   pad(): Gamepad | null;
   version: string;
+  saves?: SavesHost;
 }
 
 type Row = NavRow & { label: string; sub?: string; note?: string; /** a heading over it */ group?: string };
@@ -36,8 +38,9 @@ interface Clash { id: ActionId; slot: number; device: Device; input: string; oth
 const ACTION_NAME = new Map(ACTIONS.map(a => [a.id, a.name]));
 /** How long the pad's listening waits (s): every button can be bound, so waiting is its cancel. */
 const PAD_WAIT = 6;
-const TAB_NAMES = ["Controls", "Sound", "Display", "Accessibility", "What's new"];
+const TAB_NAMES = ["Controls", "Sound", "Display", "Accessibility", "What's new", "Saves"];
 const NEWS_TAB = 4;
+const SAVES_TAB = 5;
 const escape = (text: string): string => text.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 
@@ -107,6 +110,7 @@ const CSS = `
 export class SettingsMenu {
   readonly el = document.createElement("div");
   private state: NavState = { tab: 1, row: 0 };
+  private switchingSave = false;
   private pad = new PadNav();
   private screens: string[] | null = null;
   private status = "";
@@ -220,7 +224,7 @@ export class SettingsMenu {
     else if (action.kind === "step") this.step(action.id, action.dir);
     else if (action.kind === "reset" && bind) { this.bindingNote = null; bindings.reset(action.id as ActionId); this.status = `${ACTION_NAME.get(action.id as ActionId)} back to its default.`; }
     else if (action.kind === "reset" && action.id === "device") { /* (a view, not a setting) */ }
-    else if (action.kind === "reset") this.setValue(action.id, (DEFAULTS as unknown as Record<string, unknown>)[action.id]);
+    else if (action.kind === "reset" && this.state.tab !== SAVES_TAB) this.setValue(action.id, (DEFAULTS as unknown as Record<string, unknown>)[action.id]);
     else if (action.kind === "press" && bind) { this.startListening(action.id as ActionId); return; }
     else if (action.kind === "press") void this.press(action.id);
     this.render();
@@ -274,6 +278,11 @@ export class SettingsMenu {
         ...this.newsChanges().map((item, i): Row => ({ id: `news-${i}`, kind: "button", label: item.change.title ?? "Update notes" })),
         { id: "news-more", kind: "button", label: this.news?.busy || this.newsLoading || !this.news && !this.newsImportError ? "Loading update notes…" : this.news?.error || this.newsImportError ? "Try again" : "Load more", hidden: this.news?.done },
       ],
+      [
+        ...(this.host.saves?.list() ?? []).map((slot): Row => ({ id: `save:${slot.id}`, kind: "button", label: `${slot.name}${slot.id === this.host.saves?.active() ? " · Current" : ""}`,
+          sub: `${slot.island ?? "New night"} · ${slot.nights === undefined ? "Earlier nights not counted" : `${slot.nights} night${slot.nights === 1 ? "" : "s"} recorded`} · ${new Date(slot.updated).toLocaleString()}` })),
+        { id: "save:new", kind: "button", label: "New save", sub: "Start with fresh progress and default settings", hidden: !this.host.saves },
+      ],
     ];
   }
 
@@ -304,6 +313,16 @@ export class SettingsMenu {
     this.render();
   }
   private async press(id: string): Promise<void> {
+    if (id.startsWith("save:") && this.host.saves) {
+      if (this.switchingSave) return;
+      const slot = id.slice(5);
+      if (slot === this.host.saves.active()) { this.status = "This is your current save."; this.render(); return; }
+      this.switchingSave = true; this.status = "Saving your night…"; this.render();
+      try { this.status = await this.host.saves.choose(slot === "new" ? null : slot) ?? "Opening save…"; }
+      catch (error) { console.warn("[saves] Could not switch save", error); this.status = "The save could not be opened. Your current night is still here."; }
+      finally { this.switchingSave = false; this.render(); }
+      return;
+    }
     if (id === "news-more") { if (this.news) await this.news.more(); else this.ensureNews(); return; }
     if (id === "fullscreen") {
       const err = await this.host.setFullscreen(!this.host.fullscreen(), this.host.get().screen);
@@ -313,7 +332,7 @@ export class SettingsMenu {
   }
   /** The tab's things back to their defaults: on Controls every binding and the pad's names; elsewhere that tab's settings. */
   private resetAll(): void {
-    if (this.state.tab === NEWS_TAB) return;
+    if (this.state.tab === NEWS_TAB || this.state.tab === SAVES_TAB) return;
     this.bindingNote = null;
     const ids = this.tabs()[this.state.tab].map(r => r.id), d = DEFAULTS as unknown as Record<string, unknown>;
     if (this.state.tab === 0) bindings.resetAll();
@@ -388,6 +407,7 @@ export class SettingsMenu {
         const item = newsItems[i], version = item.version === null ? this.host.version : `v${item.version}`;
         return `<article class="row news-entry ${i === this.state.row ? "focus" : ""}" data-row="${i}"><h2>${escape(version)}${item.change.title ? ` · ${escape(item.change.title)}` : ""}</h2>${item.date ? `<small>${escape(item.date)}</small>` : ""}<ul>${item.change.items.map(text => `<li>${escape(text)}</li>`).join("")}</ul></article>`;
       }
+      if (this.state.tab === SAVES_TAB) return `<div class="row ${i === this.state.row ? "focus" : ""}" data-row="${i}" aria-disabled="${this.switchingSave}"><span class="lab">${escape(r.label)}${r.sub ? `<small>${escape(r.sub)}</small>` : ""}</span><span class="btn">${r.id === "save:new" ? "Create" : "Open"}</span></div>`;
       const head = r.group === "play" ? `<div class="group">In play</div>` : r.group === "menu" ? `<div class="group">In menus<small>a station, the sea chart, the telescope, the Studio · this page keeps its own: arrows, Enter, Esc</small></div>` : "";
       if (r.kind === "bind") {
         const id = r.id as ActionId, list = inputsOf(bindings.get(id), this.device), focus = i === this.state.row, l = this.listen;
@@ -411,16 +431,16 @@ export class SettingsMenu {
       <div class="why">${c.choices.includes("swap") ? `Swap: ${c.others.map(o => ACTION_NAME.get(o)).join(" and ")} takes ${inputsOf(bindings.get(c.id), c.device)[c.slot] ? inputName(inputsOf(bindings.get(c.id), c.device)[c.slot], xbox) : "nothing"} instead. ` : ""}Use both: one press does both.</div>
       <div class="btns">${c.choices.map((h, k) => `<span data-clash="${k}" class="${k === c.focus ? "on" : ""}">${word(h)}</span>`).join("")}</div></div></div>` : "";
     const foot = pad
-      ? `<span>${g("✕", "A")}choose</span><span>${g("○", "B")}back</span><span>${g("L1", "LB")}${g("R1", "RB")}tabs</span>${this.state.tab === NEWS_TAB ? "" : `<span>${g("△", "Y")}reset</span>`}`
+      ? `<span>${g("✕", "A")}choose</span><span>${g("○", "B")}back</span><span>${g("L1", "LB")}${g("R1", "RB")}tabs</span>${(this.state.tab === NEWS_TAB || this.state.tab === SAVES_TAB) ? "" : `<span>${g("△", "Y")}reset</span>`}`
       : this.mode === "keys"
-        ? `<span><span class="key">↑↓</span><span class="key">←→</span></span><span><span class="key">Enter</span>choose</span><span><span class="key">Esc</span>back</span><span><span class="key">Q</span><span class="key">E</span>tabs</span>${this.state.tab === NEWS_TAB ? "" : `<span><span class="key">Del</span>reset</span>`}`
+        ? `<span><span class="key">↑↓</span><span class="key">←→</span></span><span><span class="key">Enter</span>choose</span><span><span class="key">Esc</span>back</span><span><span class="key">Q</span><span class="key">E</span>tabs</span>${(this.state.tab === NEWS_TAB || this.state.tab === SAVES_TAB) ? "" : `<span><span class="key">Del</span>reset</span>`}`
         : `<span>click to choose · right click: back</span>`;
     this.el.innerHTML = `<div class="win cut"><div class="in">
       <div class="title"><h1>Settings</h1><span class="ver">Witch · ${this.host.version}</span></div>
       <div class="tabs">${pad ? `<span class="bump">${g("L1", "LB")}</span>` : ""}${TAB_NAMES.map((t, i) => `<button type="button" data-tab="${i}" class="${i === this.state.tab ? "on" : ""}">${t}</button>`).join("")}${pad ? `<span class="bump">${g("R1", "RB")}</span>` : ""}</div>
       <div class="body">${rowHtml}${this.state.tab === NEWS_TAB && this.news?.done ? `<div class="group">${this.news.entries.length ? "All update notes loaded." : "No update notes yet."}</div>` : ""}</div>
       <div class="status">${this.state.tab === NEWS_TAB ? this.news?.error || this.newsImportError ? "Update notes couldn't load. Try again." : "Left/right or Page Up/Down scrolls the notes." : this.status}</div>
-      <div class="foot">${foot}<span class="sp"></span>${this.state.tab === NEWS_TAB ? "" : `<button type="button" data-act="resetAll">Reset tab</button>`}<button type="button" data-act="done">Done</button></div>
+      <div class="foot">${foot}<span class="sp"></span>${(this.state.tab === NEWS_TAB || this.state.tab === SAVES_TAB) ? "" : `<button type="button" data-act="resetAll">Reset tab</button>`}<button type="button" data-act="done">Done</button></div>
     </div>${clash}</div>`;
     this.el.querySelector(".row.focus")?.scrollIntoView({ block: "nearest" });
   }

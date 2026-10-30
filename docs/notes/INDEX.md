@@ -284,6 +284,7 @@ says what each note covers.
 - Save slot storage
 - Single-save migration
 - Slot switching
+- Compatible nights
 - Save format guards
 
 ## [Sound effects](sound.md)

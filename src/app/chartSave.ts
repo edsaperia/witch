@@ -1,3 +1,4 @@
+import { slotStorage } from "./saveSlots";
 // The sea chart's save (wave 2, part C; Ed, 2026-10-10/11, docs/backlog/journey.md "The world and the sea chart"): what she's
 // found, kept in this browser. An island appears on the chart when its legend's quest is done in a night that's then won (Ed,
 // 2026-10-18: g.islandsTonight, rules/win.ts found; winning alone finds none, and a lost night keeps none), each found from the island she set out from (a
@@ -33,7 +34,7 @@ export function worldSeed(text?: string | null): number {
 }
 
 type Store = Pick<Storage, "getItem" | "setItem" | "removeItem">;
-const storeOf = (s?: Store | null): Store | null => { try { return s ?? globalThis.localStorage ?? null; } catch { return null; } };
+const storeOf = (s?: Store | null): Store | null => { try { return s ?? slotStorage ?? null; } catch { return null; } };
 const strings = (xs: unknown): string[] => (Array.isArray(xs) ? xs.filter((x): x is string => typeof x === "string") : []);
 
 /** The save in this browser (an empty one if there's none, it's unreadable, or storage is blocked); unknown kinds dropped. */

@@ -1,3 +1,4 @@
+import { browserSaveSlots, slotStorage, switchSave } from "./app/saveSlots";
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
 import { drew, holding } from "./render/impact";
 import { spinStep } from "./render/spin";
@@ -112,7 +113,7 @@ import { currentJournal, journalEntry, notable } from "./platform/playtestJourna
 import { pageMutation, pageFocus, recordedStep, recordingFor } from "./app/recordingHooks";
 import { replayRecording } from "./platform/inputRecording";
 import { snapshotGame } from "./rules/nightSnapshot";
-import { chooseSavedNight, nightSaveNotice } from "./ui/resumeNight";
+import { nightSaveNotice } from "./ui/resumeNight";
 import { restoreSettingsBase } from "./app/playerSettings";
 
 declare const __BUILD__: string;
@@ -127,13 +128,14 @@ const mistGateOff = params.get("mistgate") === "0";
 /** The link as it came (before the boot puts its own ?seed= in): whether this load opens on the sea chart (app/opening.ts). */
 const bootLink = new URLSearchParams(location.search);
 const restoringComment = params.get("restore") === "comment";
+const bootSlot = browserSaveSlots().active();
 let nightStore: NightStore | null = null, resumeSave: SavedNight | null = null, resumeGame: Game | undefined;
 if (savesEnabled(bootLink, navigator.webdriver)) {
   try {
-    nightStore = browserNightStore(location.pathname);
+    nightStore = browserNightStore(browserSaveSlots().nightKey(location.pathname));
     const source = restoringComment ? browserNightStore(location.pathname + ":comment-restore") : nightStore;
     const value = await source.read(), saved = savedNight(value, BUILD, bootLink);
-    if (saved && (restoringComment || await chooseSavedNight(saved.at))) {
+    if (saved) {
       try {
         const restored = restoreGame(saved.game);
         restoreSettingsBase(restored.tuning, saved.settingsBase);
@@ -146,10 +148,9 @@ if (savesEnabled(bootLink, navigator.webdriver)) {
         document.getElementById("arrive-still")?.remove();
         document.getElementById("arrive-landing")?.remove();
         history.replaceState(null, "", "?" + params.toString() + location.hash);
-      } catch { nightSaveNotice("Your saved night could not be restored. Starting a new night."); }
-    } else if (saved) await nightStore.clear();
-    else if (value) nightSaveNotice("This saved night is from another version or link. Starting a new night.");
-  } catch { nightSaveNotice("Nights cannot be saved on this browser. Keep this page open to continue playing."); nightStore = null; }
+      } catch (error) { nightStore = null; logCaughtError(error, "save slot: saved night kept after restore failure"); nightSaveNotice("Your saved night could not be restored. It has been kept; this new night will not replace it."); }
+    } else if (value) { nightStore = null; logCaughtError(new Error("Incompatible format or explicit link"), "save slot: saved night kept"); nightSaveNotice("This saved night has another format or island. It has been kept; this new night will not replace it."); }
+  } catch (error) { logCaughtError(error, "save slot: read night"); nightSaveNotice("Nights cannot be saved on this browser. Keep this page open to continue playing."); nightStore = null; }
 }
 // ?timing=1 (Ed, 2026-10-19): the sail's steps and the main thread's long tasks into the L log (app/timing.ts), kept for the tab.
 const TIMING = timingOn(params);
@@ -266,10 +267,10 @@ const knobLive = setupKnobs(N, mutate);
 // Auto-talk (Ed's playtest, 2026-10-04: a new player wanted to turn it off): T, or a click
 // on its slot, turns it on or off (remembered on this browser); off, she talks while Shift is held.
 let autoTalk = true;
-try { if (localStorage.getItem("witch.autotalk") === "off") autoTalk = false; } catch { /* storage blocked: on */ }
+try { if (slotStorage.getItem("witch.autotalk") === "off") autoTalk = false; } catch { /* storage blocked: on */ }
 const setAutoTalk = (on: boolean) => {
   autoTalk = on;
-  try { localStorage.setItem("witch.autotalk", on ? "on" : "off"); } catch { /* fine */ }
+  try { slotStorage.setItem("witch.autotalk", on ? "on" : "off"); } catch { /* fine */ }
 };
 
 document.getElementById("version")!.textContent = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
@@ -771,15 +772,17 @@ async function restoreComment(file: File): Promise<void> {
   await browserNightStore(location.pathname + ":comment-restore").write(comment.night);
   const url = new URL(location.href); url.search = "?restore=comment&resume=1"; location.href = url.toString();
 }
+let nightWriteReported = false;
 const autosave = nightStore ? new NightAutosave(nightStore, () => {
   const n = page.night;
   if (!n || endedNights.has(n.game) || !n.flags.ready || sailing || bot || dream && !dream.over || n.arrival && !n.flags.landed || !savesEnabled(n.params, navigator.webdriver)) return null;
   // The opening, before play starts, must not replace an existing night merely because the page loaded.
   if (!nightHasStarted(n.game, startedNights.has(n.game))) return null;
+  browserSaveSlots().summary(n.game.tuning.map?.island ?? "home", false, bootSlot);
   return captureNight(n.game, { build: BUILD, params: n.params.toString(), look: page.look() as Record<string, unknown> | null, loan,
     flags: { chartRecorded: n.flags.chartRecorded, overRecorded: n.flags.overRecorded } });
-}, () => nightSaveNotice("Your night could not be saved. Keep this page open to continue playing.")) : null;
-page.onNightEnd = () => { if (page.night) endedNights.add(page.night.game); void autosave?.clear(); };
+}, error => { if (!nightWriteReported) { nightWriteReported = true; logCaughtError(error, "save slot: write night"); } nightSaveNotice("Your night could not be saved. Keep this page open to continue playing."); }) : null;
+page.onNightEnd = () => { if (page.night && !endedNights.has(page.night.game)) { endedNights.add(page.night.game); browserSaveSlots().summary(page.night.game.tuning.map?.island ?? "home", true, bootSlot); } void autosave?.clear(); };
 if (autosave) {
   setInterval(() => { void autosave.save(performance.now()); }, 5000);
   addEventListener("pagehide", () => { void autosave.save(performance.now(), true); });
@@ -799,7 +802,10 @@ const frameStats = new FrameStats(view.renderer.getContext());
  *  are over budget and back up while there's room, remembered for this device; ?ladder=off or ?ladder=<n> to hold it. */
 const ladder = new QualityLadder(gpuName(view.renderer.getContext()), params);
 // The player's Settings page (app/settingsPage.ts): its settings on the live pieces now, the page itself opened from the pause page's dev menu.
-const settingsPage = new SettingsPage({ mutate, input, shake, ladder, freeze, audio: on => sound.freeze(!on), tuning: () => N().game.tuning, version: BUILD });
+const settingsPage = new SettingsPage({ mutate, input, shake, ladder, freeze, audio: on => sound.freeze(!on), tuning: () => N().game.tuning, version: BUILD,
+  saves: { list: () => browserSaveSlots().list(), active: () => bootSlot, choose: id =>
+    switchSave(browserSaveSlots(), () => autosave?.flush(performance.now()) ?? Promise.resolve(true), () => { forgetArrival(); location.assign(location.pathname); }, id) },
+});
 ladder.mutate = mutate;
 const pauseFocus = new MenuFocus();
 const rumble = new Rumble();
@@ -995,13 +1001,13 @@ function departFromChart(to: Sailed, at: FlightEnd["cam"] | null): Promise<void>
  *  "First night" banner (`firstEver`, read as the page's first wake-up starts). The wake-up itself is one for every morning since Ed,
  *  2026-10-26, replacing his decision 4's shorter one on later loads. */
 const WOKEN_KEY = "witch.woken";
-const wokenBefore = (): boolean => { try { return localStorage.getItem(WOKEN_KEY) === "1"; } catch { return false; } };
-const woke = (): void => { try { localStorage.setItem(WOKEN_KEY, "1"); } catch { /* storage blocked: her first morning again next time */ } };
+const wokenBefore = (): boolean => { try { return slotStorage.getItem(WOKEN_KEY) === "1"; } catch { return false; } };
+const woke = (): void => { try { slotStorage.setItem(WOKEN_KEY, "1"); } catch { /* storage blocked: her first morning again next time */ } };
 let firstEver = false;
 /** Whether she's come to the dressing table before, ever (its first visit marked once: rules/wakeUp.ts `mirror`). */
 const MIRROR_KEY = "witch.mirrored";
-const mirrored = (): boolean => { try { return localStorage.getItem(MIRROR_KEY) === "1"; } catch { return false; } };
-const sawMirror = (): void => { try { localStorage.setItem(MIRROR_KEY, "1"); } catch { /* storage blocked: marked again next time */ } };
+const mirrored = (): boolean => { try { return slotStorage.getItem(MIRROR_KEY) === "1"; } catch { return false; } };
+const sawMirror = (): void => { try { slotStorage.setItem(MIRROR_KEY, "1"); } catch { /* storage blocked: marked again next time */ } };
 /** The opening's wake-up on a plain first load (app/opening.ts opensInBedroom): home's night made (its start's art drawn, the rest
  *  drawing on behind her while she dresses and walks down: rules/wakeUp.ts), she wakes in her bedroom in the treehouse
  *  (rules/opening.ts), the one wake-up, as every morning. Without the house's rooms, the old start. */

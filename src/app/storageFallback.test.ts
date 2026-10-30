@@ -42,6 +42,10 @@ it("plays with no accessible browser storage, keeping failed writes in this page
     const store = fallbackStorage();
     expect(() => store.setItem("test.missing", "choice")).toThrow();
     expect(fallbackStorage().getItem("test.missing")).toBe("choice");
-    expect(warn).toHaveBeenCalledTimes(1);
+    const warnings = warn.mock.calls.length;
+    expect(warnings).toBeGreaterThan(0);
+    expect(() => store.setItem("test.missing", "new choice")).toThrow();
+    expect(fallbackStorage().getItem("test.missing")).toBe("new choice");
+    expect(warn.mock.calls).toHaveLength(warnings); // Failed keys are logged once, never on every autosave.
   } finally { vi.unstubAllGlobals(); warn.mockRestore(); }
 });
