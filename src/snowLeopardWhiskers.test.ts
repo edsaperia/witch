@@ -16,7 +16,7 @@ describe("snow leopard subpixel whisker attachment",()=>{
   it("pins projected-fit Current material and normal bytes with the control absent",()=>{
     const hash=createHash("sha256");for(const facing of ["towards","away","top"]){const sp=draw(current,0,facing);hash.update(JSON.stringify([sp.w,sp.h]));for(const bytes of [sp.m,sp.n])hash.update(Buffer.from(bytes.buffer,bytes.byteOffset,bytes.byteLength));}
     // Projected-fit baseline (6519883775), rather than the superseded sphere-fit grid.
-    expect(hash.digest("hex")).toBe("83c7c9c671613e2fa241025a9b7f6fe8b5c89063db26956087cf3313cdb78a2a");
+    expect(hash.digest("hex")).toBe("44c8b0080d589fdc63692869654307f569528dbea10d226c5f99f251fb5ecd2c");
   });
   it("keeps top-view attachment non-worsening with the pixel floor on the projected grid",()=>{
     const baseline=draw(current,0,"top"),before=connectivityRegression(baseline,draw(context(0),0,"top")),after=connectivityRegression(baseline,draw(context(),0,"top"));

@@ -12,9 +12,9 @@ const bent=()=>new Model().chain([[0,0,0,.2],[-1,0,0,.2],[-1,1,0,.1]],M.BODY,{pa
 describe("optional tail region painter",()=>{
   it.each([
     // Projected-fit baselines (6519883775); optional tail regions remain absent.
-    ["raccoon","f26a9b408f80d7a4b716cb0833f99d3bc87d587da872272a712d6ebbefb9023a"],
-    ["stoat","aae4b65e698c2990204fd6aaac95385dd6b0996a0818d3674c6d5a7111b91058"],
-    ["jaguar","dffe51be7f19d7dd26c19d001ca67d2d5c008a896d4b0db0876dcde1d804a10b"],
+    ["raccoon","73313a64fa2bde738f4f4ecc2425077bc64a0f88dbdd8ed4165d9c5fec44a8a0"],
+    ["stoat","b4cef55ee5c3fdd70db5d5f4bedcebc252c123fa2e1f981dc201cb42a1067a60"],
+    ["jaguar","3f66363a99f6537d25e714d9341d26ee4cba1e76eb8c1e3a5d708cefc21d196c"],
   ])("pins projected-fit %s material and normal bytes with the region absent",(id,expected)=>{
     const hash=createHash("sha256");
     for(const facing of ["towards","away"]){const sp=critter(id,1,0,defaultStyle(),facing);hash.update(JSON.stringify([sp.w,sp.h]));for(const bytes of [sp.m,sp.n])hash.update(Buffer.from(bytes.buffer,bytes.byteOffset,bytes.byteLength));}

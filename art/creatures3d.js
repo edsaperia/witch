@@ -9,6 +9,7 @@ import { quadrupedTorsoGraph, quadrupedEarSocket, triangularEarMask, triangularE
 import { mandiblePart } from "./body-graph/mandibles.js";
 import { paintTailParts } from "./body-graph/tail-markings.js";
 import { GENOME_BY_ID, speciesOf } from "./genome/index.js";
+import { creatureSizeOptions, fitOccupiedCreature } from "./creature-size.js";
 import { elderQuad, grizzle, notch, surfaceFrom, ring, fitRing, frontPts, closed, charm, crown, drawOn, meerkatDress, sentinelHeap } from "./elders.js";
 
 // Levels (Ed): 0 baby, 1 young, 2 adult, 3 legend.
@@ -23,9 +24,21 @@ export const ADULT_SCALE = 1.65, LEGEND_OVER_ADULT = 2.2;
 const LEVEL_SCALE = st => [1, Math.sqrt(st.growth), Math.sqrt(st.growth) * ADULT_SCALE, st.growth];
 export const height3d = (level, st, hgt = 1) => Math.round(st.size * LEVEL_SCALE(st)[Math.max(0, Math.min(3, level))] * (2 / (st.pixel || 2)) * 1.9 * hgt);
 
-const glowMotes = (sp, seed, n = 9) => { // a few glowing motes around a legend (9) or an adult (3)
+export const glowMotes = (sp, seed, n = 9, stable = false) => { // a few glowing motes around a legend (9) or an adult (3)
   const r = rng(seed);
   for (let i = 0; i < n; i++) {
+    if (stable) { // 6520413047: snow-leopard diagnostic, keep the intended count separated in the new size grid
+      const radius = i % 3 === 0 ? 1 : 0;
+      for (let attempt = 0; attempt < 64; attempt++) {
+        const x = Math.floor(uni(r, 2, sp.w - 2)), y = Math.floor(uni(r, 2, sp.h * .6));
+        let clear = x - radius >= 0 && x + radius < sp.w && y - radius >= 0 && y + radius < sp.h;
+        for (let dy = -radius - 1; dy <= radius + 1 && clear; dy++) for (let dx = -radius - 1; dx <= radius + 1; dx++) if (sp.get(x + dx, y + dy)) { clear = false; break; }
+        if (!clear) continue;
+        sp.px(x, y, M.MAGIC2); if (radius) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) sp.px(x + dx, y + dy, M.MAGIC);
+        break;
+      }
+      continue;
+    }
     const x = Math.floor(uni(r, 2, sp.w - 2)), y = Math.floor(uni(r, 2, sp.h * .6));
     if (sp.get(x, y) || sp.get(x + 1, y) || sp.get(x - 1, y) || sp.get(x, y + 1) || sp.get(x, y - 1)) continue;
     sp.px(x, y, M.MAGIC2); if (i % 3 === 0) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) sp.px(x + dx, y + dy, M.MAGIC);
@@ -85,7 +98,15 @@ function spineOf(s) {
 let VIEW = null;
 export function withView(view, f) { const was = VIEW; VIEW = view; try { return f(); } finally { VIEW = was; } }
 export const viewKey = () => VIEW ? `view${VIEW.yaw ?? ""},${VIEW.pitch ?? ""}` : "";
-const drawForm = (m, o, S, level) => { if (VIEW) o = { ...o, scale: o.scale ?? render(m, { ...o, measure: true }).s, ...VIEW }; return FORM ? FORM(m, o, S, level) : render(m, o).sp; }, formMotes = () => !FORM || FORM.motes;
+const drawForm = (m, o, S, level, st) => {
+  o = creatureSizeOptions(m, o, S, level, st);
+  const decorate = sp => { const n = S.sizes.motes?.[level]; if (n) glowMotes(sp, S.plan === "owl" ? 31 : S.id.length * (S.q ? 7919 : 131), n, S.q && S.id === "snowleopard"); };
+  const fitted = fitOccupiedCreature(m, o, S, level, st, decorate);
+  o = VIEW ? { ...fitted.options, ...VIEW } : fitted.options;
+  if (FORM) return FORM(m, o, S, level);
+  if (!VIEW && fitted.sp) return fitted.sp;
+  const sp = render(m, o).sp; decorate(sp); return sp;
+};
 export function withGear(gear, f) { const was = GEAR; GEAR = gear; try { return f(); } finally { GEAR = was; } }
 // A little party shoe (Ed, 2026-10-05: "yes, little party shoes"): on a foot { c, r, group, fit } in a style
 // (SHOE_STYLES: sneakers, glitter, platform, heels, boots, lightup), fitted to the foot: "hoof" (narrow and
@@ -931,10 +952,9 @@ export function quad3d(S, level, frame, st, facing = "towards") {
     const measure = Object.assign((model, options) => { referenceScale = render(model, { ...options, measure: true }).s; return new Sprite(1, 1); }, { motes: false });
     withForm(measure, () => withTexture({ S: reference, level, st }, () => quad3d(reference, level, frame, st, facing)));
   }
-  const sp = drawForm(m, { height: drawHeight(level, st, q.hgt), facing, ...(referenceScale != null ? { scale: referenceScale } : {}) }, S, level);
+  const sp = drawForm(m, { height: drawHeight(level, st, q.hgt), facing, ...(referenceScale != null ? { scale: referenceScale } : {}) }, S, level, st);
   if (m.markingMetrics) sp.markingMetrics = m.markingMetrics;
   if (m.bodyGraph) sp.graphDiagnostics = m.bodyGraph.diagnostics;
-  if (formMotes() && sz("motes")) glowMotes(sp, S.id.length * 7919, sz("motes"));
   return sp;
 }
 
@@ -1126,8 +1146,7 @@ export function owl3d(S, level, frame, st, facing = "towards") {
   m.anchors.neck = { c: [0, hy - hr * .75, 0], r: hr * .85, dir: [0, 1, 0] };
   if (S.sizes.build[level] !== 1) beef(m, S.sizes.build[level]);
   gearUp(m);
-  const sp = drawForm(m, { height: drawHeight(level, st, .95), facing }, S, level);
-  if (formMotes() && S.sizes.motes[level]) glowMotes(sp, 31, S.sizes.motes[level]);
+  const sp = drawForm(m, { height: drawHeight(level, st, .95), facing }, S, level, st);
   return sp;
 }
 
@@ -1179,8 +1198,7 @@ function finish(m, S, level, st, k, facing, ref = null, scaleOverride = null) {
   // ref: a model in the walk's first pose, its scale taken for every frame (a cycle's frames at one scale, not each fitted to its own height)
   let scale = scaleOverride ?? undefined;
   if (ref) { if (S.sizes.build[level] !== 1) beef(ref, S.sizes.build[level]); scale = render(ref, { height: drawHeight(level, st, k), facing, measure: true }).s; }
-  const sp = drawForm(m, { height: drawHeight(level, st, k), facing, scale }, S, level);
-  if (formMotes() && S.sizes.motes[level]) glowMotes(sp, S.id.length * 131, S.sizes.motes[level]);
+  const sp = drawForm(m, { height: drawHeight(level, st, k), facing, scale }, S, level, st);
   return sp;
 }
 const crown3d = (m, c, w) => { m.ell(c, [w, w * .35, w], M.MAGIC, { group: 95, extra: true, paint: p => p[1] > c[1] ? M.MAGIC2 : undefined }); for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2; m.ell(v3.add(c, [Math.cos(a) * w * .8, w * .55, Math.sin(a) * w * .8]), [w * .38, w * .12, w * .12], M.MAGIC, { dir: [0, 1, 0], up: [1, 0, 0], group: 96, extra: true }); } };

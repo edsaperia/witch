@@ -95,7 +95,10 @@ const SPRITE_CHECKS = async ({ names, only, candidate }) => {
   // the game stands her by her `ground` anchor and lays her shadow there), that anchor in the sprite's lower part, its bottom row her ground's)
   const stats = sp => { let n = 0, bottom = 0; for (let i = 0; i < sp.m.length; i++) if (sp.m[i]) n++; for (let x = 0; x < sp.w; x++) if (sp.m[(sp.h - 1) * sp.w + x]) bottom++; const g = sp.anchors?.ground; if (!bottom && g && g[1] >= sp.h * 0.5 && g[1] <= sp.h + 1 && g[0] >= 0 && g[0] <= sp.w) bottom = 1; return { n, bottom, w: sp.w, h: sp.h }; };
   const pixels = f => { let n = 0; for (let i = 0; i < f.atCore.length; i++) if (f.atCore[i] <= 1) n++; return n; };
-  task("species-sprites", async () => { for (const S of SPECIES) {
+  task("species-sprites", async () => {
+    const { standingWitchHeight, occupiedHeight } = await import("/art/creature-size.js"), { SIZE_CLASS_BY_ID, sizeTargetPixels } = await import("/art/genome/size-ranks.js");
+    const witch = standingWitchHeight(st), rankedHeights = new Map();
+    for (const S of SPECIES) {
     const { connectivityRegression } = await import("/art/genome/connectivity.js");
     const connectedStats = (level, frame, facing, what) => {
       const sp = G.critter(S.id, level, frame, st, facing), current = G.critter(S.id, level, frame, currentStyle, facing), comparison = connectivityRegression(current, sp);
@@ -106,13 +109,22 @@ const SPRITE_CHECKS = async ({ names, only, candidate }) => {
     const hs = [];
     for (const level of [0, 1, 2, 3]) for (const frame of [0, 1]) { const s = connectedStats(level, frame, "towards", `${S.id} level ${level} frame ${frame}`); hs[level] = s.h; res.push({ what: `${S.id} level ${level} frame ${frame}`, good: s.n > 20 && s.bottom > 0, info: `${s.w}x${s.h}` }); }
     { const a = connectedStats(2, 0, "away", `${S.id} adult turned away`); res.push({ what: `${S.id} adult turned away`, good: a.n > 20 && a.bottom > 0, info: `${a.w}x${a.h}` }); }
-    // clear steps (Ed, 2026-10-04: "the size difference should be obvious"), by body height (no antlers or wings): young at least 1.3 times the baby,
-    // the adult at least 1.55 times the young, the legend at least 2.1 times the adult, so they can't drift back together
-    { const bh = [0, 1, 2, 3].map(l => G.critter(S.id, l, 0, st).bodyH), r = [bh[1] / bh[0], bh[2] / bh[1], bh[3] / bh[2]];
-      res.push({ what: `${S.id}: baby < young < adult < legend, in clear steps (young 1.3+ times the baby, adult 1.55+ times the young, legend 2.1+ times the adult)`, good: hs[3] > hs[2] && hs[2] > hs[1] && hs[1] > hs[0] && r[0] >= 1.3 && r[1] >= 1.55 && r[2] >= 2.1, info: bh.join(" < ") + " (" + r.map(x => x.toFixed(2)).join(", ") + ")" }); }
-    // (the elephant, the biggest creature in the game, has its own allowance: 2.6 to 3.6 times the witch, over the elk's)
-    if (["wolf", "boar", "stag", "bear", "elk", "lynx", "elephant", "stegosaurus"].includes(S.id)) { const w = G.witchSprite(st).bodyH, k = G.critter(S.id, 2, 0, st).bodyH / w, c = st.creatureScale || 1, lo = (S.id === "elephant" ? 2.6 : 1.45) * c, hi = (S.id === "elephant" ? 3.6 : ["elk", "stag", "stegosaurus"].includes(S.id) ? 2.5 : 2.1) * c; res.push({ what: `${S.id}: an adult clearly bigger than the witch (${lo.toFixed(2)} to ${hi.toFixed(2)} times, body without antlers; the elk and stag stand taller; 1.45 to 2.1 before creatureScale ${c})`, good: k >= lo && k <= hi, info: k.toFixed(2) }); }
-  } });
+    // 6520501406/6520542543 explicitly supersede the old BODY-height ratios:
+    // enforce rank-positioned age bands and full occupied decorative presence.
+    const full = [0,1,2,3].map(level => occupiedHeight(G.critter(S.id,level,0,st))), target = [0,1,2,3].map(level => sizeTargetPixels(S.id,level,witch));
+    rankedHeights.set(S.id,full);
+    res.push({what:`${S.id}: rank-positioned occupied age bands against standing witch ${witch}px`,good:full.every((h,l)=>h===target[l]),info:`target ${target.join("/")}; occupied ${full.join("/")}`});
+    res.push({what:`${S.id}: strict occupied growth and legend full presence at least 1.75x adult`,good:full[0]<full[1]&&full[1]<full[2]&&full[2]<full[3]&&full[3]>=full[2]*1.75,info:full.join(" < ")});
+  }
+    const bad=[],clearPairs=[["tiger","cat"],["wolf","fox"],["fox","stoat"],["elephant","rhino"]];
+    for(const a of SPECIES)for(const b of SPECIES)if(SIZE_CLASS_BY_ID[a.id]>=SIZE_CLASS_BY_ID[b.id]+2||clearPairs.some(([big,small])=>big===a.id&&small===b.id))for(const level of [0,1,2])if(rankedHeights.get(a.id)[level]<=rankedHeights.get(b.id)[level])bad.push(`${a.id} <= ${b.id} at ${level}`);
+    res.push({what:"within-age hard clear-order pairs and every mass-class gap of two or more",good:!bad.length,info:bad.join(", ")||"all ordered"});
+    for(const level of [0,1,2,3]){
+      const groups=new Map();for(const S of SPECIES){const h=rankedHeights.get(S.id)[level],ids=groups.get(h)||[];ids.push(S.id);groups.set(h,ids);}
+      const ties=[...groups].filter(([,ids])=>ids.length>1).map(([h,ids])=>`${h}px:${ids.join("/")}`);
+      res.push({what:`age ${level}: native-pixel ties (allowed for nearby ranks)`,good:true,info:ties.join("; ")||"none"});
+    }
+  });
   task("genomes-masks", async () => { // creature genomes (#79 stage 1): every species a record on a known template, its parts allowed by its sockets, none clashing,
     // its hash its own; the builders' species are the records' (speciesOf)
     // (--only: the selected species' records, each hash its own among all of them; the count of records against species only on a full run)

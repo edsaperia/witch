@@ -34,11 +34,11 @@ export function rigProject(p, h, s) {
 // { woken: true }, the enraged look's red eyes.
 function rigCapture(id, level, st, face = null, gear = null) {
   const S = speciesFor(id, st, level); let got = null;
-  const form = (m, o) => { got = { m, height: o.height }; return new Sprite(1, 1); };
+  const form = (m, o) => { got = { m, height: o.height, scale: o.scale }; return new Sprite(1, 1); };
   form.motes = false; form.rig = true;
   const g = face || gear ? { ...gear, shoes: null, face, faceStyle: S.face } : null;
   withTexture({ S, level, st }, () => withGear(g, () => withForm(form, () => buildCreature(S, level, 0, st, "towards"))));
-  const s = render(got.m, { height: got.height, measure: true }).s, f = got.m.atScale;
+  const s = got.scale ?? render(got.m, { height: got.height, measure: true, projected: true }).s, f = got.m.atScale;
   if (f) { got.m.atScale = null; f(s); }
   if (gear?.woken) for (const q of got.m.parts) if (q.mat === M.EYE || q.mat === M.IRIS || q.mat === M.PUPIL) q.mat = M.WOKEN; // enraged: angry glowing eyes (as critter's woken look)
   return { m: got.m, s };
@@ -48,7 +48,7 @@ function rigCapture(id, level, st, face = null, gear = null) {
 function rigShoe(leg, style, s, st) {
   const m = new Model(), lw = leg.r[2] / .9;
   shoe3d(m, { c: [0, 0, 0], r: Math.max(leg.fl, lw * 1.1), group: 2, fit: leg.hoof ? "hoof" : "paw" }, style, { extra: false });
-  return RIG_HEADINGS.map(h => { const r = render(m, { scale: s, yaw: h }), [px, py] = r.project([0, 0, 0]); return rigCropped(r.sp, px, py); });
+  return RIG_HEADINGS.map(h => { const r = render(m, { scale: s, yaw: h, projected: true }), [px, py] = r.project([0, 0, 0]); return rigCropped(r.sp, px, py); });
 }
 // Its head piece in each expression but neutral (the head piece itself): { angry, happy, dazed }, a legend's asleep, and a snouted four-legged one's open jaw (bite, yawn).
 function rigFaces(id, level, st, pivot, s, gear) {
@@ -78,14 +78,14 @@ function rigCropped(sp, px, py) {
 function rigPiece(m, labels, pivot, s, tex = null) {
   const sub = rigPick(m, labels);
   if (!sub.parts.length && !sub.flats.length) return null;
-  return RIG_HEADINGS.map(h => { const r = render(sub, { scale: s, yaw: h }), [px, py] = r.project(pivot); if (tex) textureSprite(r.sp, tex.S, tex.level, tex.st, textureSeed(tex.S.id)); return rigCropped(r.sp, px, py); });
+  return RIG_HEADINGS.map(h => { const r = render(sub, { scale: s, yaw: h, projected: true }), [px, py] = r.project(pivot); if (tex) textureSprite(r.sp, tex.S, tex.level, tex.st, textureSeed(tex.S.id)); return rigCropped(r.sp, px, py); });
 }
 // A disc: a ball of a material, r pixels across its radius, lit as a sphere (a serpent's body) or,
 // rod, as a slice of an upright limb: its normals tilted neither up nor down, so discs strung down a
 // leg shade as one smooth limb rather than a string of beads (Ed, 2026-10-05: "the legs do look segmented").
 function rigDisc(r, mat, s, paint, rod = false) {
   const m = new Model(); m.ell([0, 0, 0], [r / s, r / s, r / s], mat, { paint });
-  const res = render(m, { scale: s }), [px, py] = res.project([0, 0, 0]);
+  const res = render(m, { scale: s, projected: true }), [px, py] = res.project([0, 0, 0]);
   // (a rod's normal by its column alone, as a cylinder's: the sphere's own, flattened, swung sideways at each disc's top and
   // bottom, so a leg of overlapping discs shaded in dark bands at every disc: Ed's banded legs in the twiggy forest), jittered a
   // little pixel by pixel so the shading's steps break up like a coat rather than run down the leg in lines

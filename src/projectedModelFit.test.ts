@@ -7,7 +7,7 @@ it("uses exact ellipsoid support instead of its largest radius",()=>{
   expect(projectedInterval(q,[0,1,0])).toEqual([.8,1.2]);
   const axis=[Math.SQRT1_2,Math.SQRT1_2,0],radius=Math.hypot(3*axis[0],.2*axis[1]);
   expect(projectedInterval(q,axis)[1]).toBeCloseTo(Math.SQRT1_2+radius,12);
-  const options={height:40,yaw:0,pitch:0,measure:true};
+  const options={height:40,yaw:0,pitch:0,measure:true,projected:true};
   expect(render(m,options).s).toBeCloseTo(100,10);
 });
 it("bounds rounded boxes, tapered cones and roughness conservatively",()=>{
@@ -25,7 +25,7 @@ it("fits skew plane coordinates using the same dual basis as ray clipping",()=>{
 });
 it("retains extras exclusion, explicit scale, projection and ground-row placement",()=>{
   const m=new Model().ell([0,.3,0],[.5,.3,.2],M.BODY);
-  const options={height:40,yaw:0,pitch:0,measure:true},s=render(m,options).s;
+  const options={height:40,yaw:0,pitch:0,measure:true,projected:true},s=render(m,options).s;
   m.ell([0,2,0],[.1,.3,.1],M.MAGIC,{extra:true});
   expect(render(m,options).s).toBe(s);
   const fixed={...options,measure:false,scale:50},result=render(m,fixed),sp=result.sp!;

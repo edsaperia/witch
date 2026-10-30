@@ -138,10 +138,10 @@ export function projectedInterval(q, axis) {
 // Renders a model to a Sprite `height` art pixels tall (measured over the parts not marked extra).
 // With `scale` (pixels per model unit) instead, several models share one scale.
 // With `measure`, return scale and allocated dimensions without rasterising: { s, width, height }.
-export function render(model, { height, scale, facing = "towards", yaw = YAW[facing] ?? YAW.towards, pitch = PITCH, lineGap = .12, measure = false, keepDepth = false } = {}) {
+export function render(model, { height, scale, facing = "towards", yaw = YAW[facing] ?? YAW.towards, pitch = PITCH, lineGap = .12, measure = false, keepDepth = false, projected = false } = {}) {
   const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), spp = Math.sin(pitch);
   // model.atScale(pxPerUnit): parts that must be sized in pixels (an expression's face: genome/expressions.js), added once the scale is known
-  if (model.atScale && !measure) { const f = model.atScale; model.atScale = null; f(scale ?? render(model, { height, facing, yaw, pitch, lineGap, measure: true }).s); }
+  if (model.atScale && !measure) { const f = model.atScale; model.atScale = null; f(scale ?? render(model, { height, facing, yaw, pitch, lineGap, measure: true, projected }).s); }
   const toWorld = p => [p[0] * cy - p[2] * sy, p[1], p[0] * sy + p[2] * cy];
   const toModel = p => [p[0] * cy + p[2] * sy, p[1], -p[0] * sy + p[2] * cy];
   const D = [0, -spp, -cp], U = [0, cp, -spp], R = [1, 0, 0], B = [0, spp, cp];
@@ -155,7 +155,10 @@ export function render(model, { height, scale, facing = "towards", yaw = YAW[fac
   });
   const flats = model.flats.map(f => { const c = toWorld(f.c), u = toWorld(f.u), v = toWorld(f.v); return { ...f, cw: c, uw: u, vw: v, nw: norm(cross(u, v)), bc: c, br: Math.hypot(f.su, f.sv) }; });
   const all = [...parts, ...flats];
-  const bounds = q => { const x = projectedInterval(q, R), u = projectedInterval(q, U), pad = q.uw ? 0 : k; return [x[0] - pad, x[1] + pad, u[0] - pad, u[1] + pad]; };
+  const bounds = q => {
+    if (!projected) { const sx = dot(q.bc, R), su = dot(q.bc, U), e = q.br + (q.uw ? 0 : k); return [sx - e, sx + e, su - e, su + e]; }
+    const x = projectedInterval(q, R), u = projectedInterval(q, U), pad = q.uw ? 0 : k; return [x[0] - pad, x[1] + pad, u[0] - pad, u[1] + pad];
+  };
   for (const q of all) [q.x0, q.x1, q.u0, q.u1] = bounds(q);
   const body = all.filter(q => !q.extra && !q.cut);
   const u0b = Math.min(...body.map(q => q.u0 + (q.uw ? 0 : k))), u1b = Math.max(...body.map(q => q.u1 - (q.uw ? 0 : k)));
@@ -171,7 +174,7 @@ export function render(model, { height, scale, facing = "towards", yaw = YAW[fac
     X0 = X0b - Math.ceil((X0b - X0) * s - 1e-9) / s; U1 = U1b + Math.ceil((U1 - U1b) * s - 1e-9) / s;
   }
   const W = Math.ceil((X1 - X0) * s) + 4, H = Math.ceil((U1 - U0) * s) + 2;
-  if (measure) return { s, width: W, height: H };
+  if (measure) return { s, width: W, height: H, projectedWidth: X1 - X0, projectedHeight: U1 - U0 };
   const sp = new Sprite(W, H);
   const depth = new Float32Array(W * H).fill(Infinity), grp = new Int16Array(W * H).fill(-1);
   // which parts can touch each 8 x 8 tile of pixels

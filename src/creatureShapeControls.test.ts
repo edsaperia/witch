@@ -10,10 +10,10 @@ function selected(id:string,edit:(g:any)=>void){const g=structuredClone(GENOME_B
 function digest(id:string,level:number,idle=false,style=current){const h=createHash("sha256");for(const facing of ["towards","away"]){const sp=Reflect.apply(critter,null,[id,level,0,style,facing,idle?{idle:true}:null]);h.update(JSON.stringify([sp.w,sp.h]));for(const bytes of [sp.m,sp.n])h.update(Buffer.from(bytes.buffer,bytes.byteOffset,bytes.byteLength));}return h.digest("hex");}
 it("pins projected-fit material and normal bytes with all optional controls absent",()=>{
   // Re-pinned for Ed's approved global projected fit (6519883775), pending art review.
-  expect(digest("mole",2)).toBe("b2b8ed76db8b0e3c3e41dac46a25fd703bf69a6ab4a3d6ba6d1d6dd4975924ef");
-  expect(digest("flyingsquirrel",2)).toBe("08613cbddfb4fa198a222d0c044389c496ccf26e835891a63e8bbb15a611d4f0");
-  expect(digest("meerkat",1)).toBe("b68664cf7fe8fd8f4bc8ec864499ebc1a2420dd12756fd0a0bf9d648b139bf29");
-  expect(digest("meerkat",1,true)).toBe("7e9f36dfd9b1d3ab95d516592b55a290d027bf9c626883e838bb425ef70fafb5");
+  expect(digest("mole",2)).toBe("929ed89599e60eb90cba174f526851b4a8f7c2c94f6f7c910639ad10858bb284");
+  expect(digest("flyingsquirrel",2)).toBe("c265b2fe9bb64b3267b0b4b8ba083ce9f376c6e21e221487128ce75cc23d96cf");
+  expect(digest("meerkat",1)).toBe("f4279aa500cc01a55d45281f23c50913c90ed91b882ffecc8c966374f0ee2a52");
+  expect(digest("meerkat",1,true)).toBe("4cb9ea9173c40f0df945e54e3b4cb104db78551de6e6cd8ab8715c9e42d79f28");
 });
 it("changes each mole control independently while explicit unit values preserve Current",()=>{
   const keys=["bodyDepth","bodyLength","snoutProjection","forepawSpread","forepawSize"];

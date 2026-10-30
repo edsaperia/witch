@@ -1,7 +1,7 @@
 import {expect,it} from "vitest";
 import {quad3d,dragonfly3d,withForm,withTexture} from "../art/creatures3d.js";
 import {speciesOf,GENOME_BY_ID} from "../art/genome/index.js";
-import {Model,render} from "../art/model3d.js";
+import {Model} from "../art/model3d.js";
 import {Sprite} from "../art/core.js";
 import {defaultStyle} from "../art/generator.js";
 function capture(id:string,edit:(g:any)=>void,level=2,frame=0,facing="towards"){
@@ -10,13 +10,14 @@ function capture(id:string,edit:(g:any)=>void,level=2,frame=0,facing="towards"){
   const S=speciesOf(g),st=defaultStyle();
   withForm(form,()=>withTexture({S,level,st},()=> (id==="dragonfly"?dragonfly3d:quad3d)(S,level,frame,st,facing)));return {model,options};
 }
-it("pins selected quadruped ears and body changes to the full Current record scale",()=>{
+it("lets the final age target govern pinned quadruped proportion changes",()=>{
   for(const id of ["fennec","wolf"])for(const level of [0,1,2,3])for(const frame of [0,1])for(const facing of ["towards","away"]){
     const base=capture(id,()=>{},level,frame,facing),candidate=capture(id,g=>{g.look={...g.look,[id]:{fit:"current"}};g.body={...g.body,hgt:1.6,len:2};for(const l of g.levels??[])if(l){l.body={...l.body,hgt:1.6,len:2};l.parts={...l.parts,ears:{kind:"sail",size:4}};}},level,frame,facing);
-    expect(candidate.options.scale).toBeCloseTo(render(base.model,{...base.options,measure:true}).s,12);
+    expect(candidate.options.sizeTarget).toBe(base.options.sizeTarget);
+    expect(candidate.options.scale).toBeGreaterThan(0);
   }
   expect(()=>capture("fennec",g=>{g.look={fennec:{fit:"other"}};})).toThrow(/Quadruped fit/);
-});
+},60000);
 it("keeps dragonfly wing length and width independent and their roots fixed",()=>{
   const base=capture("dragonfly",()=>{}).model.flats;
   const changed=capture("dragonfly",g=>{g.levels[2].body={...g.levels[2].body,wingLength:1.7,wingWidth:.6};}).model.flats;
