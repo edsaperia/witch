@@ -2,9 +2,9 @@
 // Isolated data for the existing speciesOf/quad3d interface, not a second engine.
 // No production import. Each species requires an explicit opt-in; defaults are off.
 const ROSTER_SNOW_REGIONS = {
-  torso: { kind: "rosettes", outerPx: 8, density: .45, inner: .22, outer: .43, xRange: [-.85, .85], flankMin: .2, mat: "BODY3", centreMat: "BODYL" },
-  head: { kind: "spots", k: 14, density: .6, radius: .32, mat: "BODY3" },
-  legs: { kind: "spots", k: 14, density: .6, radius: .33, mat: "BODY3" },
+  torso: { kind: "rosettes", outerPx: 8, density: .45, inner: .22, outer: .43, xRange: [-1.2, .9], flankMin: .2, mat: "BODY3", centreMat: "BODYL" },
+  head: { kind: "spots", k: 14, density: .5, radius: .43, mat: "BODY3" },
+  legs: { kind: "spots", k: 14, density: .5, radius: .43, mat: "BODY3" },
 };
 export const ROSTER_PRESETS = {
   beetle: {

@@ -8,7 +8,7 @@ const path = "previews/roster-pr1479-watch.json";
 const previous = existsSync(path) ? JSON.parse(readFileSync(path, "utf8")) : { comments: {} };
 const api = endpoint => JSON.parse(execFileSync("gh", ["api", endpoint, "--paginate", "--slurp"], { encoding: "utf8", maxBuffer: 16 * 1024 * 1024 }));
 const pr = api("repos/edsaperia/witch/pulls/1479")[0];
-const comments = api("repos/edsaperia/witch/issues/1479/comments").flat().filter(c => c.user?.login === "edsaperia" && /^COORDINATOR:/m.test(c.body));
+const comments = api("repos/edsaperia/witch/issues/1479/comments?per_page=100").flat().filter(c => c.user?.login === "edsaperia" && /^COORDINATOR:/m.test(c.body));
 const records = comments.map(c => ({ id: c.id, updatedAt: c.updated_at, bodyHash: createHash("sha256").update(c.body).digest("hex"), body: c.body }));
 const exact = process.argv.indexOf("--ack"), through = process.argv.indexOf("--ack-through");
 const ids = exact >= 0 ? new Set((process.argv[exact + 1] || "").split(",").map(Number)) : new Set();
