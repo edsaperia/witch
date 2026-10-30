@@ -1,5 +1,5 @@
 {
- "_": "The balance as it stood before the overnight programme (claude/prototype 818c7ae, 2026-10-07 00:26 UTC): ?tuning=pre-overnight plays these numbers (src/platform/tuningPreset.ts): the tuning file`s balance knobs, combat.json and states.json. Values only; never edit.",
+ "_": "Archived balance values from prototype 818c7ae (2026-10-07); do not edit the values. Detailed notes and decisions: docs/notes/config-history/presets-pre-overnight.md.",
  "tuning": {
   "population": {
    "start": {
