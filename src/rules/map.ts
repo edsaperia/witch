@@ -21,6 +21,7 @@ const frontOf = (t: { x: number; z: number }, d: { x: number; z: number }, clear
 export const treehouseDistance = (t: Tuning) => speakerRadius(t) + t.dancefloor.speakers.footprint + t.treehouse.gap + t.treehouse.clear;
 import { PathNetwork } from "./paths";
 import { knownPathGeometry, rememberPathGeometry, pathGeometryProblem, type PathGeometry } from "./pathGeometry";
+import { knownHeightPrep, rememberHeightPrep, heightPrepProblem, type HeightPrep } from "./heightSamples";
 import { routeOf } from "./party";
 import { dealAlongRoute, matchLegendAreas } from "./deal";
 import { beachOf, isInside, makeCoast, type Bounds } from "./mapShape";
@@ -282,13 +283,13 @@ export function islandLand(island: Island, tuning: Tuning, step = 16): { land: L
 /** The heavy, pure parts of a map's making as plain data (Ed, 2026-10-19, the sailing's option 4: app/mapPrep.ts makes them in a
  *  worker while the chart flies and carries them to the game's page): which areas touch which (in their order: the map's own
  *  iteration order), the land and lakes maps, and the ley line's route (rules/leyroute.ts). generateMap given them makes the same map, without their work. */
-export interface MapPrep { neighbours: [string, string[]][]; land: LandData | null; lakes: LandData | null; route: LeyRoute | null; pathGeometry?: PathGeometry }
+export interface MapPrep { neighbours: [string, string[]][]; land: LandData | null; lakes: LandData | null; route: LeyRoute | null; pathGeometry?: PathGeometry; heightSamples?: HeightPrep }
 
 const landData = (L: LandMap | undefined): LandData | null => (L ? { x0: L.x0, z0: L.z0, step: L.step, cols: L.cols, rows: L.rows, dist: L.dist, seg: L.seg, loops: L.loops, segLoop: L.segLoop, segAt: L.segAt, box: L.box } : null);
 /** A map's prep (see MapPrep): to make the same map again quickly, on another thread or page. */
 export function prepOf(map: ForestMap): MapPrep {
   const b = map.bounds;
-  return { neighbours: [...map.neighbours].map(([k, v]) => [k, [...v]]), land: landData(b.land), lakes: landData(b.lakes), route: knownRoute(map) ?? null, ...(knownPathGeometry(map) ? { pathGeometry: knownPathGeometry(map) } : {}) };
+  return { neighbours: [...map.neighbours].map(([k, v]) => [k, [...v]]), land: landData(b.land), lakes: landData(b.lakes), route: knownRoute(map) ?? null, ...(knownPathGeometry(map) ? { pathGeometry: knownPathGeometry(map) } : {}), ...(knownHeightPrep(map) ? { heightSamples: knownHeightPrep(map) } : {}) };
 }
 
 /** What's wrong with a prep, if anything (a record from another build's code, cut short, or not a prep at all): its shapes checked
@@ -311,6 +312,7 @@ export function prepProblem(p: unknown): string | null {
   const bad = land(q.land, "land") ?? land(q.lakes, "lakes");
   if (bad) return bad;
   if (q.pathGeometry !== undefined) { const bad = pathGeometryProblem(q.pathGeometry); if (bad) return bad; }
+  if (q.heightSamples !== undefined) { const bad = heightPrepProblem(q.heightSamples); if (bad) return bad; }
   if (q.route && !(Array.isArray(q.route.order) && Array.isArray(q.route.stones) && Array.isArray(q.route.links) && q.route.order.length === q.route.stones.length)) return "route";
   return null;
 }
@@ -321,6 +323,7 @@ export function prepProblem(p: unknown): string | null {
 export const hydrateMap = (seed: number, tuning: Tuning, prep: MapPrep): ForestMap => {
   const map = generateMap(seed, tuning, undefined, prep);
   if (prep.pathGeometry && !pathGeometryProblem(prep.pathGeometry)) rememberPathGeometry(map, prep.pathGeometry);
+  if (prep.heightSamples && !heightPrepProblem(prep.heightSamples)) rememberHeightPrep(map, prep.heightSamples);
   return map;
 };
 
