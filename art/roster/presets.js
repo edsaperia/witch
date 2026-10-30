@@ -9,6 +9,7 @@ const ROSTER_SNOW_REGIONS = {
 // One staged white ramp shared by pale mammals; no production palette mutation.
 const COOL_WHITE = { hue: .59, sat: .025, over: { BODY3: [113, 126, 143], BODY2: [168, 181, 196], BODY: [225, 231, 237], BODYL: [243, 246, 249], BELLY: [239, 243, 247] } };
 const JAGUAR_REGIONS = {
+  tail: { kind: "spots", k: 14, density: .65, radius: .4, mat: "BODY3" },
   torso: { kind: "rosettes", outerPx: 7, density: .6, inner: .23, outer: .43, sizeVariation: .28, closedFraction: .65, gapRange: [0, .45], filledFraction: .08, centreDotRadius: .4, centreDotMat: "BODY3", mat: "BODY3", xRange: [-1.2, .9], densityFalloff: [{ axis: "y", from: 0, to: -1, min: .15 }, { axis: "x", from: .1, to: 1, min: .45 }] },
   head: { kind: "spots", k: 12, density: .45, radius: .4, mat: "BODY3" },
   legs: { kind: "spots", k: 12, density: .5, radius: .4, mat: "BODY3" },
@@ -17,7 +18,8 @@ export const ROSTER_PRESETS = {
   meerkat: {
     reason: "Keep the existing sentinel idle and strengthen natural dark eye patches and back bands.",
     patch: { head: { eyeK: 1.2 }, palette: { over: { BODY3: [28, 23, 20], BODY2: [126, 102, 74], BELLY: [241, 229, 202] } } },
-    ordinaryLevels: { 0: { head: { eyeK: 1.25 } }, 1: { head: { eyeK: 1.25 } } },
+    modelCommit: "629e4c45d72e14508541d6ae780f50931b7d7c80",
+    ordinaryLevels: { 0: { head: { eyeK: 1.25 }, coat: { regions: { tail: { tip: { length: .25, mat: "BODY3" } } } } }, 1: { head: { eyeK: 1.25 }, coat: { regions: { tail: { tip: { length: .25, mat: "BODY3" } } } } }, 2: { coat: { regions: { tail: { tip: { length: .25, mat: "BODY3" } } } } } },
     text: "A sandy meerkat with dark eye patches, back bands and an upright lookout pose.",
   },
   flyingsquirrel: {
@@ -37,7 +39,8 @@ export const ROSTER_PRESETS = {
   raccoon: {
     reason: "Strengthen the existing eye mask and tail rings against neutral grizzled-grey fur.",
     patch: { palette: { hue: .6, sat: .025, val: .56, over: { BODY: [142, 145, 148], BODY2: [96, 99, 102], BODY3: [28, 27, 29], BODYL: [180, 181, 183], BELLY: [241, 240, 233] } } },
-    ordinaryLevels: { 0: { palette: { over: { BODY3: [10, 10, 12], BELLY: [253, 252, 246], BODY: [165, 167, 169] } } }, 1: { palette: { over: { BODY3: [10, 10, 12], BELLY: [253, 252, 246], BODY: [165, 167, 169] } } } },
+    modelCommit: "629e4c45d72e14508541d6ae780f50931b7d7c80",
+    ordinaryLevels: { 0: { palette: { over: { BODY3: [10, 10, 12], BELLY: [253, 252, 246], BODY: [165, 167, 169] } } }, 1: { palette: { over: { BODY3: [10, 10, 12], BELLY: [253, 252, 246], BODY: [165, 167, 169] } }, coat: { regions: { tail: { kind: "rings", count: 4, width: .5, mat: "BODY3", tip: { length: .15, mat: "BODY3" } } } } }, 2: { coat: { regions: { tail: { kind: "rings", count: 4, width: .5, mat: "BODY3", tip: { length: .15, mat: "BODY3" } } } } } },
     text: "A grizzled-grey raccoon with a black eye mask, pale muzzle and ringed tail.",
   },
   badger: {
@@ -50,6 +53,8 @@ export const ROSTER_PRESETS = {
   stoat: {
     reason: "Chestnut back, cream underside and the existing black-tipped stoat tail.",
     omitLegendFeatures: ["darken"],
+    modelCommit: "629e4c45d72e14508541d6ae780f50931b7d7c80",
+    ordinaryLevels: { 0: { coat: { regions: { tail: { tip: { length: .25, mat: "BODY3" } } } } }, 1: { coat: { regions: { tail: { tip: { length: .25, mat: "BODY3" } } } } }, 2: { coat: { regions: { tail: { tip: { length: .25, mat: "BODY3" } } } } } },
     patch: { head: { muzzle: true, jawCoat: false }, palette: { hue: .065, sat: .4, val: .78, belly: [.11, .12, .98], over: { BODY3: [36, 27, 23], BODYL: [222, 170, 120], BELLY: [250, 242, 222] } } },
     legendPatch: { head: { muzzle: true, jawCoat: false } },
     text: "A long chestnut stoat with a cream underside and a black-tipped tail.",
@@ -62,7 +67,7 @@ export const ROSTER_PRESETS = {
   jaguar: {
     reason: "Retain the real melanistic jaguar: black-brown coat with sheened ghost rosettes and a readable muzzle.",
     ordinaryOnly: true,
-    modelCommit: "d42523e03b77a8ff4507a5c232d5bdcf91e374e2",
+    modelCommit: "629e4c45d72e14508541d6ae780f50931b7d7c80",
     legendInheritsBase: true,
     legendPatch: { coat: { regions: { ...JAGUAR_REGIONS, torso: { ...JAGUAR_REGIONS.torso, outerPx: 14 } } } },
     patch: { palette: { hue: .075, sat: .2, val: .29, belly: [ .08, .18, .46 ], over: { BODY3: [27, 23, 21], BODY2: [75, 65, 54], BODYL: [116, 101, 84] } }, head: { face: "dark", muzzle: true, jawCoat: false }, coat: { belly: true, rosettes: false, regions: JAGUAR_REGIONS } },
