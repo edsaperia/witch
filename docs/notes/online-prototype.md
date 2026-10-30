@@ -5,9 +5,9 @@ Assigned slice (Ed, 2026-10-30): two players on the host's island, joined by lin
 ## Authority and public boundaries
 
 - The host owns the authoritative `Game`, tuning, seed and fixed-step clock. A guest cannot provide a replacement island or successful unlocks.
-- A connection assigns the guest stable witch ID 1; the host is ID 0. Exactly two witches are created before the night starts. Joining mid-night and reconnecting are excluded.
+- A connection assigns the guest stable witch ID 1; the host is ID 0. The host runs normally and the guest joins mid-night (coordinator ruling, 2026-10-30). Creating/removing the guest actor waits for the rules/app integration gate.
 - The guest sends versioned input envelopes with session ID, player ID and monotonically increasing sequence number. The host binds player ID to the connection, rejects wrong-session/version/duplicate messages, and records accepted inputs against host ticks.
-- The host advances one complete two-witch input array per fixed step. Input arrival must never advance the simulation directly. Missing guest input, input expiry and disconnect policy need explicit agreement before implementation; continuing held movement indefinitely is unacceptable.
+- The host advances one complete two-witch input array per fixed step. Input arrival never advances the simulation directly. Held guest input expires at 250 ms, then becomes neutral; one-shot presses must be consumed once rather than leased. Five seconds without a message drops a line. Both timings are knobs. Heartbeats keep a connection alive but must not extend held movement.
 - The host sends an initial full snapshot and numbered authoritative updates. Snapshot serialization uses `nightSnapshot.ts`, not a second serializer. Prototype bandwidth is measured before choosing full snapshots versus nearby-state deltas.
 - Guest presentation reads its assigned witch for camera, controls, menus and audio. It must not swap the authoritative `g.witch` alias, which rules and existing host-facing helpers depend on.
 - Successful permanent unlock descriptors come from the host's existing `sharedNightProgress`; applying them to each browser's own permanent collection is a separate reviewed integration. Guest sessions must not overwrite the guest's saved solo night.
@@ -18,12 +18,12 @@ Keep envelope validation, tick input assembly and session state separate from th
 
 These checks prove protocol and replication behavior only. The acceptance gate for the slice is two browser pages: host creates a session, guest opens its link, each controls its own visible witch, each camera follows its own witch, the shared world agrees, and solo entry still works. Browser checks must identify the served commit. A screenshot is not a human social playtest.
 
-## Coordinator decisions required
+## Coordinator ruling (2026-10-30, comment 6512299207)
 
-1. Transport and staging: recommended first milestone is an explicitly local WebSocket service with no external deployment, account or cost; an online staging service and its ownership require separate approval. Alternatively use WebRTC with an introductions service and relay arrangements; that adds service dependencies before the first two-browser check. No transport dependency has been added.
-2. File ownership: this branch proposes owning new `src/platform/online/` protocol/session/transport modules and their nearby tests. Before integration, coordinate ownership of `src/main.ts`, local-player lookup in renderer/camera/audio, and `src/app/nightSave.ts` with #1455 and the coordinator.
-3. Startup and failure behavior: agree a minimal create/join surface, when both players start, bounded input expiry and what the prototype does when a connection drops. Telephone/address book, three players, mid-night joins and reconnect are deferred until a new brief explicitly includes them.
+1. WebSocket, host-authoritative. Small Node relay in `server/`, one room per phone number, local first. Ed chose his Render account for later hosting; Ed creates that service. No external deployment or account action by this branch.
+2. Owned files: `server/`, `src/platform/online/`, this note. Main/render/camera/audio/save integration waits until #1455 and #1457 are released on `claude/prototype`; the coordinator will confirm. Keep hooks narrow around active station/effects builders.
+3. No start lobby: guest joins the running host. Dropped-line consequences follow platform.md: guest returns home, leashed creatures stay happy, hat falls. These game consequences are not implemented by the relay.
 
 ## Current status
 
-Architecture contract only. No networking runtime, service, dependency, visible UI or persistence changes. The next independent work is envelope validation and deterministic loopback tests; browser integration waits for the coordinator decisions above.
+Local relay and input-lease seams are implemented with nearby tests. See `server/README.md` for running it and the wire contract. No game hooks, visible UI or persistence changes. Two real loopback clients test routing and liveness; this is not two-browser gameplay, two-process rules determinism or snapshot replication. Browser integration waits for the release gate above. Reconnect, telephone UI and three players remain outside this milestone; mid-night joining is now explicitly included by the ruling.
