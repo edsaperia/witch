@@ -2,7 +2,7 @@
 // Isolated data for the existing speciesOf/quad3d interface, not a second engine.
 // No production import. Each species requires an explicit opt-in; defaults are off.
 const ROSTER_SNOW_REGIONS = {
-  torso: { kind: "rosettes", outerPx: 8, density: .45, inner: .22, outer: .43, xRange: [-1.2, .9], flankMin: .2, mat: "BODY3", centreMat: "BODYL" },
+  torso: { kind: "rosettes", outerPx: 8, density: .55, inner: .22, outer: .43, xRange: [-1.2, .9], flankMin: .2, mat: "BODY3", centreMat: "BODYL" },
   head: { kind: "spots", k: 14, density: .5, radius: .43, mat: "BODY3" },
   legs: { kind: "spots", k: 14, density: .5, radius: .43, mat: "BODY3" },
 };
@@ -13,12 +13,12 @@ export const ROSTER_PRESETS = {
     ordinaryOnly: true,
     modelCommit: "fd1a833ae69e1d5cf1d9353b89fbdda39cbab802",
     patch: {
-      palette: { hue: .04, sat: .45, val: .36, over: { SHELL: [125, 58, 30], THORAX: [38, 27, 23], HEAD: [32, 23, 20] } },
+      palette: { hue: .04, sat: .45, val: .36, over: { SHELL: [125, 58, 30], THORAX: [38, 27, 23], HEAD: [32, 23, 20], BODY3: [64, 35, 23] } },
       look: { embers: false, materials: { wingCases: "SHELL", thorax: "THORAX", head: "HEAD" }, mandibles: { length: .8, width: 1.3, curve: .28, teeth: 2, awayTipLift: .16 } },
     },
-    ordinaryLevels: { 0: { palette: { over: { SHELL: [148, 73, 35] } }, look: { mandibles: { length: .65, width: 1.1, curve: .3, teeth: 1, awayTipLift: .16 } } }, 1: { look: { mandibles: { length: .75, width: 1.2, curve: .3, teeth: 1, awayTipLift: .16 } } } },
+    ordinaryLevels: { 0: { palette: { over: { SHELL: [163, 82, 41] } }, look: { mandibles: { length: .65, width: 1.1, curve: .3, teeth: 1, awayTipLift: .16 } } }, 1: { look: { mandibles: { length: .75, width: 1.1, curve: .22, teeth: 1, awayTipLift: .16 } } } },
     // Explicit coordinator-approved exception to unchanged elder paint (6513867872).
-    legendPatch: { palette: { over: { SHELL: [97, 45, 25], THORAX: null, HEAD: null, BODY3: null } }, look: { materials: { wingCases: "SHELL" } } },
+    legendPatch: { palette: { over: { SHELL: [125, 58, 30], THORAX: null, HEAD: null, BODY3: null, BODY: [82, 45, 27] } }, look: { materials: { wingCases: "SHELL" } } },
     text: "A dark beetle with brown wing cases and antler-like jaws; its elder carries the fire.",
   },
   bear: {
@@ -44,7 +44,7 @@ export const ROSTER_PRESETS = {
     legendPatch: { coat: { regions: { ...ROSTER_SNOW_REGIONS, torso: { ...ROSTER_SNOW_REGIONS.torso, outerPx: 14 } } } },
     // Iteration 4: native rings and the same grey/markings grown into its elder.
     patch: { palette: { hue: .59, sat: .03 }, coat: { spots: false, rosettes: false, regions: ROSTER_SNOW_REGIONS } },
-    ordinaryLevels: { 0: { coat: { spots: false, rosettes: false, regions: { torso: { kind: "none" }, head: { kind: "none" }, legs: { kind: "none" } } } }, 1: { coat: { spots: false, rosettes: false, regions: { ...ROSTER_SNOW_REGIONS, torso: { ...ROSTER_SNOW_REGIONS.torso, outerPx: 6 } } } }, 2: { coat: { spots: false, rosettes: false, regions: ROSTER_SNOW_REGIONS } } },
+    ordinaryLevels: { 0: { coat: { spots: false, rosettes: false, regions: { torso: { kind: "none" }, head: { kind: "none" }, legs: { kind: "none" } } } }, 1: { coat: { spots: false, rosettes: false, regions: { ...ROSTER_SNOW_REGIONS, torso: { ...ROSTER_SNOW_REGIONS.torso, outerPx: 6 }, head: { kind: "spots", k: 12, density: .55, radius: .46, mat: "BODY2" }, legs: { kind: "spots", k: 12, density: .55, radius: .43, mat: "BODY2" } } } }, 2: { coat: { spots: false, rosettes: false, regions: ROSTER_SNOW_REGIONS } } },
     text: "A smoky pale mountain cat with dark rosettes, broad paws and a long thick tail.",
   },
 };
