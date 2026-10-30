@@ -127,13 +127,24 @@ jobs:
         if: ${{ needs.build.result != 'success' || (github.ref == 'refs/heads/main' && needs.deploy.result != 'success') }}
         run: exit 1
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm test
+      - name: Full or related unit tests
+        run: node tools/ci/run-unit.mjs
       - run: npm run typecheck
+      - name: Unit selection and wall-clock evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-selection
+          path: ci-unit-results.json
+          if-no-files-found: ignore
+          retention-days: 14
     needs:
       - build
       - deploy
