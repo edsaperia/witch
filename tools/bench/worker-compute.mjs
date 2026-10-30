@@ -31,7 +31,7 @@ const hooks = { name: 'diagnostic-chart-stages', setup(b) {
   });
 } };
 await build({ entryPoints: ['tools/bench/worker-compute-entry.ts'], outfile: bundle, bundle: true, platform: 'node', format: 'cjs', sourcemap: true, plugins: [hooks], logLevel: 'warning' });
-const jobs = [{ kind: 'map' }, { kind: 'chart', island: 'home', across: 150 }, { kind: 'chart', island: 'home', across: 420 }, { kind: 'chart', island: 'fox', across: 420 }, { kind: 'art', seed: 225745 }, { kind: 'art', seed: 305895 }].filter(j => !process.env.ONLY || j.kind === process.env.ONLY);
+const jobs = (process.env.ONLY === 'travel-art' ? [{ kind: 'travel-art', house: true }, { kind: 'travel-art', house: false }] : [{ kind: 'map' }, { kind: 'chart', island: 'home', across: 150 }, { kind: 'chart', island: 'home', across: 420 }, { kind: 'chart', island: 'fox', across: 420 }, { kind: 'art', seed: 225745 }, { kind: 'art', seed: 305895 }].filter(j => !process.env.ONLY || j.kind === process.env.ONLY));
 if (!jobs.length) throw new Error('no matching compute case');
 const report = { sha: execFileSync('git', ['rev-parse','HEAD'], { encoding: 'utf8' }).trim(), bundleHash: createHash('sha256').update(fs.readFileSync(bundle)).digest('hex'), node: process.version, cpus: os.cpus().length, memoryGB: os.totalmem() / 2**30, deadlineMs: limit, notes: 'Cold isolated Node workers; no IndexedDB/GPU/browser. Chart stage totals are nested, not additive. Art areaType0 is representative because prior trace omitted job IDs; pixel backend differs from browser canvas.', runs: [] };
 for (const [index, job] of jobs.entries()) {

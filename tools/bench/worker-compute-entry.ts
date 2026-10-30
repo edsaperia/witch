@@ -3,8 +3,9 @@ import { generateMap, prepOf, LOOKS } from '../../src/rules/map';
 import { worldOf } from '../../src/rules/rosters';
 import { routeOf } from '../../src/rules/party';
 import { TUNING } from '../../src/rules/tuning';
+import { biomeKey } from '../../src/rules/lakeLooks';
 import { loadStyle } from '../../src/render/style';
-import { typeSprites, packPixels, type MakeCanvas } from '../../src/render/artBuild';
+import { typeSprites, packPixels, runJob, type MakeCanvas } from '../../src/render/artBuild';
 
 const stages: Record<string, { count: number; ms: number }> = {};
 function stage<T>(name: string, fn: () => T): T {
@@ -55,6 +56,13 @@ parentPort?.on('message', async job => {
       const { make } = await import('../../src/app/chartOutlines.worker');
       const outline = make(job.island, 0, [], 32, job.across);
       result = { island: job.island, across: job.across, cols: outline?.ground.cols, rows: outline?.ground.rows };
+    } else if (job.kind === 'travel-art') {
+      const style = loadStyle(), K = 2 / TUNING.pixelSize;
+      const input = job.house
+        ? { kind: 'treehouse' as const, id: 'house:22:12.5:fox', style }
+        : { kind: 'type' as const, id: 25, seed: 225745, style, K, biome: biomeKey('home', 0, TUNING.biomeLooks) };
+      const built = stage('art.runJob', () => runJob(input, ((w: number, h: number) => new PixelCanvas(w, h)) as unknown as MakeCanvas));
+      result = { id: input.id, seed: 'seed' in input ? input.seed : undefined, biome: 'biome' in input ? input.biome : undefined, K, atlas: [built.px.width, built.px.height], backend: 'ImageData-only; no browser canvas or IDB' };
     } else {
       const style = loadStyle(), id = 0, K = 2 / (style.pixel || 2);
       const built = stage('art.generateAndBake', () => typeSprites(style, job.seed, id, K, ((w: number, h: number) => new PixelCanvas(w, h)) as unknown as MakeCanvas));
