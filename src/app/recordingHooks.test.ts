@@ -4,7 +4,7 @@ import { snapshotGame } from "../rules/nightSnapshot";
 import { TUNING } from "../rules/tuning";
 import { captureNight } from "./nightSave";
 import { restoreSettingsBase } from "./playerSettings";
-import { pageMutation, recordedStep, recordingFor } from "./recordingHooks";
+import { pageMutation, pageFocus, recordedStep, recordingFor } from "./recordingHooks";
 import { replayRecording } from "../platform/inputRecording";
 import { captureComment, parseComment } from "./playtestComments";
 import * as diagnostics from "../platform/caughtError";
@@ -22,6 +22,7 @@ it("the page hooks keep both players, explicit mutation boundaries and a comment
   for (let i = 0; i < 40; i++) recordedStep(game, [{ ...idle, moveX: 1, aimX: 17, aimZ: 4 }, { ...idle, moveZ: -1, zoom: i === 4 ? 1 : 0 }], STEP, "test", capture);
   pageMutation(game, "finds: loan", () => { game.friendly.add("loan fixture"); });
   pageMutation(game, "settings: volume", () => { game.tuning.music.volume = 0.4; });
+  pageFocus(game, { x: 3, y: 4, z: 5 });
   for (let i = 0; i < 20; i++) recordedStep(game, [idle, { ...idle, moveZ: 1 }], STEP * 0.6, "test", capture);
   pageMutation(game, "pause", () => { game.clock.paused = true; });
   const tape = recordingFor(game, "test", capture).export();

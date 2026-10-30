@@ -46,6 +46,42 @@ it("rejects executable/nested controls without changing the wire default or norm
   expect(localControls({ ...idle, rune: () => null })).toBeNull(); expect(localControls({ ...idle, aimX: NaN })).toBeNull();
   expect(localControls({ ...idle, fire: "yes" })).toBeNull(); expect(localControls({ ...idle, rune: "not a function" })).toBeNull();
 });
+it("replays the intro seat ease-off and changing camera anchors without render-path world snapshots", async () => {
+  const streamed: { event: unknown }[] = [];
+  const { game, recorder } = fixture((kind, payload) => { if (kind === "recording:event") streamed.push(payload as { event: unknown }); });
+  recorder.mutate("opening: starting seat", () => { game.witch.seated = true; });
+  expect(game.witch.seated).toBe(true);
+  for (let i = 0; i < 40; i++) {
+    recorder.step({ ...idle, moveZ: -1 }, STEP); // Original input leaves the starting seat while the view eases its camera anchor.
+    const stringify = vi.spyOn(JSON, "stringify"), clone = vi.spyOn(globalThis, "structuredClone");
+    try {
+      const focus = { x: i, y: 2, z: 3 }; recorder.setFocus(focus); focus.x = -100;
+      // Only tiny anchor events are encoded: no snapshot, full-game JSON or clone.
+      expect(stringify.mock.calls.every(([event]) => event?.kind === "focus")).toBe(true);
+      expect(clone).not.toHaveBeenCalled();
+    } finally { stringify.mockRestore(); clone.mockRestore(); }
+    // Mutating a renderer's borrowed object cannot change the retained input.
+    game.introFocus!.x = i;
+  }
+  recorder.mutate("pause", () => { game.clock.paused = true; });
+  expect(game.witch.seated).toBeFalsy(); // The rules clear the optional flag on leaving the seat.
+  const tape = recorder.export();
+  expect(tape.events.filter(e => e.kind === "focus")).toHaveLength(40);
+  expect(streamed.map(row => row.event)).toEqual(tape.events);
+  const decoded = await unpackLog(await packLog({ recording: tape })) as { recording: InputRecording };
+  expect(decoded.recording).toEqual(tape);
+  expect(snapshotGame(replayRecording(decoded.recording, "test"))).toEqual(snapshotGame(game));
+  const wrong = structuredClone(tape), focus = wrong.events.find(e => e.kind === "focus")!;
+  if (focus.kind === "focus") focus.tick++;
+  expect(() => replayRecording(wrong, "test")).toThrow(/before camera anchor/);
+  const wrongAnchor = structuredClone(tape), anchor = wrongAnchor.events.find(e => e.kind === "focus")!;
+  if (anchor.kind === "focus") anchor.before = { x: 999, y: 2, z: 3 };
+  expect(() => replayRecording(wrongAnchor, "test")).toThrow(/before camera anchor/);
+  // Camera events cannot repair unrelated, undeclared world mutations.
+  game.witches[0].health.hp -= 1;
+  recorder.setFocus({ x: 90, y: 2, z: 3 });
+  expect(() => replayRecording(recorder.export(), "test")).toThrow(/target moment/);
+});
 it("retains unchanged frames without hot-path serialization/cloning, drains bounded journal batches and exports the exact ordered stream", () => {
   vi.useFakeTimers();
   try {

@@ -31,10 +31,14 @@ type LocalStart = ReplayStart & { focus?: Game["introFocus"] };
 const localStart = (game: Game, build: string, tick: number): LocalStart => ({ ...replayStart(game, build, tick), focus: structuredClone(game.introFocus) });
 export type RecordedEvent =
   | { kind: "frame"; fromStep: number; toStep: number; frame: ReplayFrame; focus?: Game["introFocus"] }
+  | { kind: "focus"; step: number; tick: number; before?: Game["introFocus"]; after?: Game["introFocus"] }
   | { kind: "checkpoint"; label: string; step: number; before: LocalStart; after: LocalStart };
 type FrameEvent = Extract<RecordedEvent, { kind: "frame" }>;
 interface FrameRun { first: FrameEvent; count: number; delta: number; serialized: number; sent: number }
-type RetainedEvent = FrameRun | Extract<RecordedEvent, { kind: "checkpoint" }>;
+type RetainedEvent = FrameRun | Exclude<RecordedEvent, FrameEvent>;
+const copyFocus = (focus: Game["introFocus"]): Game["introFocus"] => focus && ({ x: focus.x, y: focus.y, z: focus.z });
+const sameFocus = (a: Game["introFocus"], b: Game["introFocus"]): boolean => a === undefined ? b === undefined : !!b && a.x === b.x && a.y === b.y && a.z === b.z;
+const validFocus = (v: Game["introFocus"]): boolean => v === undefined || !!v && [v.x, v.y, v.z].every(Number.isFinite);
 const neutral: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const integerWidth = (n: number): number => n < 10 ? 1 : Math.floor(Math.log10(n)) + 1;
 /** Compare borrowed controls without allocating entries/copies on every unchanged frame. */
@@ -152,7 +156,16 @@ export class InputRecorder {
     // stepGame itself clamps dt to MAX_STEP, including bot/fight-speed frames. Keep the effective value used by the same rules.
     this.append({ kind: "frame", fromStep, toStep: simulationStep(this.game), frame: { tick, dt: Math.min(MAX_STEP, Math.max(0, dt)), inputs: inputs as Controls[] }, focus });
   }
-  /** Checkpoints are declared before a page mutation, never invented after a failed comparison. Nested changes share one boundary. */
+  /** A local render input changes three numbers, not the world; retain its exact ordered boundary. */
+  setFocus(focus: Game["introFocus"]): void {
+    const before = this.game.introFocus;
+    if (this.complete && !this.nested && !sameFocus(before, focus)) {
+      if (!validFocus(focus)) this.fail("A camera anchor could not be represented losslessly");
+      else this.append({ kind: "focus", step: simulationStep(this.game), tick: this.tick, before: copyFocus(before), after: copyFocus(focus) });
+    }
+    this.game.introFocus = focus;
+  }
+  /** Checkpoints are declared before page mutations. Nested changes share one strict whole-game boundary. */
   mutate<T>(label: string, action: () => T): T {
     if (this.nested || !this.complete) return action();
     let before: LocalStart;
@@ -189,6 +202,9 @@ export function replayRecording(recording: InputRecording, build: string): Game 
       if (event.focus !== undefined && (!event.focus || ![event.focus.x, event.focus.y, event.focus.z].every(Number.isFinite))) throw Error("Invalid recorded camera anchor");
       replay.game.introFocus = structuredClone(event.focus);
       if (simulationStep(replay.game) !== event.fromStep || !replay.apply(event.frame) || simulationStep(replay.game) !== event.toStep) throw Error("Input replay simulation-step mismatch");
+    } else if (event.kind === "focus") {
+      if (event.tick !== replay.tick || event.step !== simulationStep(replay.game) || !validFocus(event.before) || !validFocus(event.after) || !sameFocus(replay.game.introFocus, event.before)) throw Error("Input replay diverged before camera anchor");
+      replay.game.introFocus = copyFocus(event.after);
     } else if (event.kind === "checkpoint") {
       if (typeof event.label !== "string" || !event.label || simulationStep(replay.game) !== event.step || !equal(localStart(replay.game, build, replay.tick), event.before)) throw Error(`Input replay diverged before checkpoint: ${event.label}`);
       if (event.after.tick !== replay.tick || event.after.build !== build || event.after.snapshot.seed !== recording.seed) throw Error("Invalid checkpoint boundary");

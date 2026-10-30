@@ -14,6 +14,10 @@ export function recordingFor(game: Game, build: string, capture: (game: Game) =>
 export function pageMutation<T>(game: Game, label: string, action: () => T): T {
   const r = recorders.get(game); return r ? r.mutate(label, action) : action();
 }
+/** The renderer changes only this local input: never snapshot the world to record three numbers. */
+export function pageFocus(game: Game, focus: Game["introFocus"]): void {
+  const r = recorders.get(game); if (r) r.setFocus(focus); else game.introFocus = focus;
+}
 export function recordedStep(game: Game, controls: Controls | readonly Controls[], dt: number, build: string, capture: (game: Game) => SavedNight): void {
   if (!RECORD_INPUTS || unavailable.has(game)) { stepGame(game, controls, dt); return; }
   let recorder: InputRecorder;

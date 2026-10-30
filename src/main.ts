@@ -109,7 +109,7 @@ import { Breadcrumbs, browserCommentStore, captureComment, CommentBook, parseCom
 import { LOG_EXPANDED_BYTES } from "./platform/logCodec";
 import { observePlaytestErrors, logCaughtError } from "./platform/playtestLog";
 import { currentJournal, journalEntry, notable } from "./platform/playtestJournal";
-import { pageMutation, recordedStep, recordingFor } from "./app/recordingHooks";
+import { pageMutation, pageFocus, recordedStep, recordingFor } from "./app/recordingHooks";
 import { replayRecording } from "./platform/inputRecording";
 import { snapshotGame } from "./rules/nightSnapshot";
 import { chooseSavedNight, nightSaveNotice } from "./ui/resumeNight";
@@ -238,7 +238,7 @@ let dreamAfterDive: { loan: Loan; won: boolean } | null = null;
 /** The broom parts she has tonight: those she's found, and a part on loan. */
 const partsNow = (): Set<string> => withLoan("part", new Set(loadBroom().found), loan);
 const view = page.view = await View.create(canvas, N().game, gameStyle(style, bootTuning), savedLook); // (built a frame's budget at a time: the bedroom's frames go on meanwhile, render/slices.ts)
-view.mutateRules = (game, label, action) => pageMutation(game, label, action);
+view.setIntroFocus = pageFocus;
 // The loading screen (src/loading.js, src/ui/loadingScreen.js), up since the first paint: given the view for its count of the art
 // and the shaders; gone at once for a start with no wake-up in the bedroom, its supernova into the bedroom's alarm otherwise (below).
 const loading = (window as unknown as { witchLoading?: { view: unknown; finish(): void; cancel(): void } }).witchLoading;

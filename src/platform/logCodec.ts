@@ -25,7 +25,7 @@ function recordingEstimate(encoded: EncodedRecording): number {
   if (!encoded.header || encoded.header.version !== 1 || !Array.isArray(encoded.events) || encoded.events.length > EVENTS) throw Error("Invalid input runs");
   let count = 0, size = jsonBytes(encoded.header) + 32;
   for (const event of encoded.events) {
-    if (event.kind === "checkpoint") { count++; size += jsonBytes(event) + 1; }
+    if (event.kind === "checkpoint" || event.kind === "focus") { count++; size += jsonBytes(event) + 1; }
     else if (event.kind === "frames") {
       const { first, delta, count: n } = event;
       if (!Number.isSafeInteger(n) || n < 1 || n > EVENTS || !Number.isSafeInteger(delta) || delta < 0 || !first || first.kind !== "frame" || !first.frame || ![first.fromStep, first.toStep, first.frame.tick, first.fromStep + n * delta, first.frame.tick + n].every(Number.isSafeInteger) || first.toStep - first.fromStep !== delta || !Number.isFinite(first.frame.dt) || !Array.isArray(first.frame.inputs) || first.frame.inputs.length > 64) throw Error("Invalid frame run");
@@ -39,7 +39,7 @@ export function decodeRecording(encoded: EncodedRecording): InputRecording {
   recordingEstimate(encoded);
   const events: RecordedEvent[] = [];
   for (const event of encoded.events) {
-    if (event.kind === "checkpoint") events.push(event);
+    if (event.kind === "checkpoint" || event.kind === "focus") events.push(event);
     else for (let i = 0; i < event.count; i++) events.push({ ...event.first, fromStep: event.first.fromStep + i * event.delta, toStep: event.first.toStep + i * event.delta, frame: { ...event.first.frame, tick: event.first.frame.tick + i } });
   }
   return { ...encoded.header, events };

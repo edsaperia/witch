@@ -148,7 +148,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
     v.leashView.seatAt = seat; // (where she sparkles back in after a knockout)
     const cam = deckSeat ? { ...deckSeat, y: deck!.h + 1.2 } : onTreehouse(T.camera.x, T.camera.y); // (the rules' heights: the camera stands it on the smoothed ground)
     const focus = { x: cam.x, y: cam.y, z: cam.z };
-    if (!g.introFocus || g.introFocus.x !== focus.x || g.introFocus.y !== focus.y || g.introFocus.z !== focus.z) v.mutateRules(g, "view: opening camera anchor", () => { g.introFocus = focus; });
+    if (!g.introFocus || g.introFocus.x !== focus.x || g.introFocus.y !== focus.y || g.introFocus.z !== focus.z) v.setIntroFocus(g, focus);
     else g.introFocus = focus; // same values, same original per-frame assignment
     // (a touch nearer the camera than the house, along the ray to it, so she lands on the seat's own pixel: render/view/home.ts; on the
     // oak, as far along the ray as its floor under her seat is drawn, render/houseRooms.ts, and that touch more, so the floor's behind her)
