@@ -21,11 +21,26 @@ export const ROSTER_PRESETS = {
     legendPatch: { head: { muzzle: true, jawCoat: false } },
     text: "A grey wolf with a dark saddle, pale muzzle and long-legged woodland stride.",
   },
-  lion: {
-    reason: "Use the existing neck-and-cheek ruff to make a fuller face-framing mane rather than a flat back patch.",
-    patch: {},
-    ordinaryLevels: { 1: { features: [{ kind: "ruff", size: .13, count: 12, mat: "BODY2" }] }, 2: { features: [{ kind: "ruff", size: .4, count: 26, mat: "BODY3" }, { kind: "mane", from: .65, to: 1, height: .18, count: 10, lean: .55, mat: "BODY3" }] } },
-    text: "A tawny lion with a full dark mane around its face and chest, and a tufted tail.",
+  dormouse: {
+    reason: "Let the existing furry dormouse tail read on the young animal instead of a thin mouse tail.",
+    patch: { palette: { sat: .48 } },
+    ordinaryLevels: { 1: { parts: { tail: "dormouse" }, body: { tailK: 1.25 } }, 2: { body: { tailK: 1.3 } } },
+    text: "A small golden dormouse with rounded ears, dark eyes and a furry tail.",
+  },
+  raven: {
+    reason: "Lift existing feather highlights and beak paint so the black bird survives small-size shadow.",
+    patch: { palette: { over: { BODYL: [100, 103, 130], BODY2: [65, 67, 76], BODY3: [33, 34, 43], ACCENT: [77, 76, 80] } } },
+    text: "A black raven with blue-violet feather sheen and a heavy dark-grey beak.",
+  },
+  bat: {
+    reason: "Keep the fruit bat's russet fur while lifting dark wing tones to preserve its flying silhouette.",
+    patch: { palette: { over: { BODYL: [128, 101, 76], BODY2: [64, 62, 76], BODY3: [44, 43, 50] } } },
+    text: "A russet fruit bat with dark wings and a fox-like muzzle.",
+  },
+  woodlouse: {
+    reason: "Pale existing plate rims separate the segmented grey body without changing its shell builder.",
+    patch: { palette: { over: { BODYL: [150, 157, 168], BODY2: [82, 89, 94], BODY3: [40, 48, 52], ACCENT: [172, 180, 188], BELLY: [196, 204, 210] } } },
+    text: "A grey woodlouse with pale segmented plate edges and fine antennae.",
   },
   frosttroll: {
     reason: "Turn the existing hunched, shaggy troll's paint into cold fur and ice rather than moss-green.",
