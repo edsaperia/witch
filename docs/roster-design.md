@@ -1,5 +1,7 @@
 # Creature roster design — review in progress
 
+Current combined-paint checkpoint: coordinator 6515095501 supplies shared model `d42523e03b77a8ff4507a5c232d5bdcf91e374e2`. Jaguar now uses native ghost rings with a separate dark centre dot at .4 of the inner radius, 7px ordinary/14px elder ring size (baby 4px), modest ring variation and belly falloff. All keep black-brown paint and the original legend features. These values are unrendered proposals. One paired cloud capture covers jaguar, polar bear, arctic fox, unicorn and bear, with night review required for every species. Exact-model data checks now include jaguar's declared elder palette and default-off identity.
+
 Ed, 2026-10-30: **"It's more important that creatures look like their real-life counterpart than that they look distinct."** Related animals should look related. Natural markings, proportions, colour and size provide the distinctions; a similarity threshold is not a reason to distort anatomy. Legends retain animal-specific fantastic story features. The single ART-GUIDE §4 update belongs to #1470 (coordinator 6512922220 / 6512937658); this document applies that rule to the roster.
 
 ## Evidence and scope

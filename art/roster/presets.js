@@ -8,10 +8,20 @@ const ROSTER_SNOW_REGIONS = {
 };
 // One staged white ramp shared by pale mammals; no production palette mutation.
 const COOL_WHITE = { hue: .59, sat: .025, over: { BODY3: [113, 126, 143], BODY2: [168, 181, 196], BODY: [225, 231, 237], BODYL: [243, 246, 249], BELLY: [239, 243, 247] } };
+const JAGUAR_REGIONS = {
+  torso: { kind: "rosettes", outerPx: 7, density: .65, inner: .23, outer: .43, sizeVariation: .18, closedFraction: .65, gapRange: [0, .45], filledFraction: .08, centreDotRadius: .4, centreDotMat: "BODY3", mat: "BODY3", xRange: [-1.2, .9], densityFalloff: [{ axis: "y", from: 0, to: -1, min: .15 }] },
+  head: { kind: "spots", k: 12, density: .45, radius: .4, mat: "BODY3" },
+  legs: { kind: "spots", k: 12, density: .5, radius: .4, mat: "BODY3" },
+};
 export const ROSTER_PRESETS = {
   jaguar: {
     reason: "Retain the real melanistic jaguar: black-brown coat with sheened ghost rosettes and a readable muzzle.",
-    patch: { palette: { hue: .075, sat: .2, val: .25, belly: [ .08, .18, .38 ], over: { BODY3: [27, 23, 21], BODY2: [43, 37, 33], BODYL: [90, 79, 67] } }, head: { muzzle: true }, coat: { belly: true } },
+    ordinaryOnly: true,
+    modelCommit: "d42523e03b77a8ff4507a5c232d5bdcf91e374e2",
+    legendInheritsBase: true,
+    legendPatch: { coat: { regions: { ...JAGUAR_REGIONS, torso: { ...JAGUAR_REGIONS.torso, outerPx: 14 } } } },
+    patch: { palette: { hue: .075, sat: .2, val: .25, belly: [ .08, .18, .38 ], over: { BODY3: [27, 23, 21], BODY2: [43, 37, 33], BODYL: [90, 79, 67] } }, head: { muzzle: true }, coat: { belly: true, rosettes: false, regions: JAGUAR_REGIONS } },
+    ordinaryLevels: { 0: { coat: { rosettes: false, regions: { ...JAGUAR_REGIONS, torso: { ...JAGUAR_REGIONS.torso, outerPx: 4 } } } }, 1: { coat: { rosettes: false } }, 2: { coat: { rosettes: false } } },
     text: "A stocky black-brown jaguar with ghost rosettes, a broad head and a thick tail.",
   },
   polarbear: {

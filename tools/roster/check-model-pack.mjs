@@ -9,7 +9,7 @@ const root = resolve("previews", `roster-model-${sha}`, "art");
 const G = await import(pathToFileURL(resolve(root, "genome/index.js")).href);
 const pack = createRosterVariants(G.GENOMES);
 const clean = p => { const out = { ...p }; if (!out.over || !Object.keys(out.over).length) delete out.over; return out; };
-for (const id of ["beetle", "snowleopard"]) {
+for (const id of ["beetle", "snowleopard", "jaguar"]) {
   const original = G.GENOME_BY_ID[id], context = { creatureModels: `${id}:roster`, creatureVariants: pack };
   assert.equal(JSON.stringify(clean(G.selectedCreatureGenome(original, context, 3).palette)), JSON.stringify(clean(expectedRosterLegendPalette(original))), `${id} elder palette (same strict comparison as capture)`);
   assert.equal(G.selectedCreatureGenome(original, {}).palette, original.palette);
