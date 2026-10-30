@@ -23,12 +23,13 @@ const { checkTravel, summarizeTravel } = require('../bench/travel-budget.cjs');
 const { collectFailure } = require('./travel-failure.cjs');
 const { prepareChartTarget } = require('./chart-target.cjs');
 const { createWorkerCheckpoint, attachWorkerCheckpoint } = require('./worker-checkpoint.cjs');
+const { checkCoastFirstUse } = require('./coast-first-use.cjs');
 const TRACE = process.env.TRACE === '1' || process.env.BUDGET === '1', ROUTE = process.env.ROUTE || 'chart';
 if (!['chart', 'api'].includes(ROUTE)) throw new Error('ROUTE must be chart or api');
 const SAIL_SEED = process.env.SAIL_SEED ?? (TRACE || ROUTE === 'api' ? '424242' : null);
 const extra = new URLSearchParams(process.env.EXTRA || '');
 if (TRACE) for (const [k,v] of Object.entries({ seed: '123', world: '0', warmChart: '1', prepChart: '1', ladder: 'auto' })) if (!extra.has(k)) extra.set(k,v);
-const toolKey = key => ({ ...key, knobs: { ...key.knobs, 'tool.route': ROUTE, 'tool.targetSetup': ROUTE === 'chart' ? 'choose-before-outline-v1' : 'api', 'tool.trace': TRACE, 'tool.probe': TRACE ? 'worker-jobs-v2-host' : 'off', 'tool.profile': process.env.PROFILE === '1' } });
+const toolKey = key => ({ ...key, knobs: { ...key.knobs, 'tool.route': ROUTE, 'tool.targetSetup': ROUTE === 'chart' ? 'choose-before-outline-v1' : 'api', 'tool.trace': TRACE, 'tool.probe': TRACE ? 'worker-jobs-v2-host' : 'off', 'tool.profile': process.env.PROFILE === '1', 'tool.coastFirstUse': process.env.COAST_FIRST_USE === '1' } });
 let KEY = null;
 let pw; try { pw = require("playwright"); } catch { pw = require("/opt/node22/lib/node_modules/playwright"); }
 const [outArg = "previews/sail/timing", distArg] = process.argv.slice(2);
@@ -150,6 +151,12 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
       r.resources.workers = page.workers().length;
       r.version = version;
       r.shots = shots; r.island = ISLAND; r.leg = leg ? "warm" : "cold";
+      if (process.env.COAST_FIRST_USE === '1') {
+        phase = 'coast-first-use';
+        try { r.coastFirstUse = await checkCoastFirstUse(page); if (!r.coastFirstUse.activated || !r.coastFirstUse.actualBeachMaterial) code = 1; }
+        catch (error) { r.coastFirstUse = { error: String(error) }; code = 1; }
+        log('coast first use', r.coastFirstUse);
+      }
       runs.push(r);
       fs.writeFileSync(out + ".json", JSON.stringify({ key: KEY, island: ISLAND0, then: THEN, throttle: THR, size: `${W}x${H}`, gap: GAP, runs }, null, 1));
       log(JSON.stringify({ island: ISLAND, leg: r.leg, marks: r.marks, toDive: r.toDive, diveToEnd: r.diveToEnd, settle: r.settle, settleParts: r.settleParts, programs: { ...r.programs, made: r.programs.made.length }, slices: r.slices, tasks: r.tasks }));
