@@ -466,6 +466,17 @@ export class Forest {
       for (const p of this.chunk(cache, make, ci, cj)) if (Math.abs(p.x - x) <= radius && Math.abs(p.z - z) <= radius) out.push(p);
     return out;
   }
+  /** The same query and chunk order as gather, yielding between chunks so a view can budget
+   *  cold queries too. Eager callers keep gather; generation and the shared caches are unchanged. */
+  private *gatherChunks<T extends { x: number; z: number }>(cache: Map<string, T[]>, make: (ci: number, cj: number) => T[], x: number, z: number, radius: number): Generator<T[], void, void> {
+    this.centre = { x, z };
+    this.evict(cache);
+    for (const [ci, cj] of this.chunks(x, z, radius)) {
+      const out: T[] = [];
+      for (const p of this.chunk(cache, make, ci, cj)) if (Math.abs(p.x - x) <= radius && Math.abs(p.z - z) <= radius) out.push(p);
+      yield out;
+    }
+  }
   private kinds(): [Map<string, { x: number; z: number }[]>, (ci: number, cj: number) => { x: number; z: number }[]][] {
     const m = this.map;
     return [[this.trees, (i, j) => treesInChunk(m, i, j)], [this.bushes, (i, j) => bushesInChunk(m, i, j)],
@@ -515,8 +526,14 @@ export class Forest {
   treesNear(x: number, z: number, radius: number): Plant[] {
     return this.gather(this.trees, (i, j) => treesInChunk(this.map, i, j), x, z, radius);
   }
+  treesNearChunks(x: number, z: number, radius: number): Generator<Plant[], void, void> {
+    return this.gatherChunks(this.trees, (i, j) => treesInChunk(this.map, i, j), x, z, radius);
+  }
   bushesNear(x: number, z: number, radius: number): Plant[] {
     return this.gather(this.bushes, (i, j) => bushesInChunk(this.map, i, j), x, z, radius);
+  }
+  bushesNearChunks(x: number, z: number, radius: number): Generator<Plant[], void, void> {
+    return this.gatherChunks(this.bushes, (i, j) => bushesInChunk(this.map, i, j), x, z, radius);
   }
   lightsNear(x: number, z: number, radius: number): LightSource[] {
     return this.gather(this.lights, (i, j) => lightsInChunk(this.map, i, j), x, z, radius);

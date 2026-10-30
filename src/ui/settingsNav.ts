@@ -3,6 +3,8 @@
 // acts on it (a toggle flips, a choice steps on, a button presses), back closes, the tab keys step the tab, reset puts the row back to
 // its default. No drawing and no events here: an input in, the new focus and what to do out.
 
+import { bindings, type ActionId } from "../platform/bindings";
+
 export type RowKind = "slider" | "toggle" | "choice" | "button" | "bind";
 export interface NavRow { id: string; kind: RowKind; /** a choice's options */ options?: readonly string[]; /** hidden: skipped by the focus */ hidden?: boolean }
 export interface NavState { tab: number; row: number }
@@ -87,6 +89,19 @@ export class PadNav {
     if (buttons[4]) want.add("tabPrev");
     if (buttons[5]) want.add("tabNext");
     if (buttons[3]) want.add("reset");
+    return this.presses(want, now);
+  }
+
+  /** Ordinary menus follow remaps; only Settings uses read()'s fixed recovery layout. */
+  readBound(buttons: readonly boolean[], axes: readonly number[], now: number): NavInput[] {
+    const want = new Set<NavInput>();
+    for (const input of ["up", "down", "left", "right", "choose", "back", "tabPrev", "tabNext"] as const) {
+      if (bindings.padHeld(`menu.${input}` as ActionId, buttons, axes)) want.add(input);
+    }
+    return this.presses(want, now);
+  }
+
+  private presses(want: Set<NavInput>, now: number): NavInput[] {
     const out: NavInput[] = [];
     for (const k of [...this.held.keys()]) if (!want.has(k)) this.held.delete(k);
     for (const k of want) {

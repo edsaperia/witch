@@ -14,6 +14,9 @@
 import { areaUnderWitch, STEP, stepGame, type Controls, type Game } from "../rules/game";
 import { bindings } from "./bindings";
 
+/** Start always reaches pause, even after its configurable binding is changed or cleared. */
+export const padPauseHeld = (buttons: readonly boolean[], axes: readonly number[]): boolean => !!buttons[9] || bindings.padHeld("global.pause", buttons, axes);
+
 const STILL: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 /** The pause page's own pieces: above the shield while frozen, and the only things keys and the mouse reach then (its test
  *  sliders, its Controls / What's new / Options buttons and their panel, the Music Lab, the new-build notice, the freeze's stamp). */
@@ -32,6 +35,9 @@ export class Freeze {
   /** Whether the game was already paused (the start screen, the end) when it froze. */
   private wasPaused = false;
   private padPrev = false;
+  /** The pad's buttons held as the pause ended, hidden from every reader until let go: the press that resumed (the pause page's
+   *  Back, ui/menuFocus.ts) is the resume and nothing else, not a fresh press to the chart or a station under it (pause-on-top). */
+  private heldAtThaw = new Set<number>();
   private readonly marker = document.createElement("div");
   private readonly stamp = document.createElement("pre");
   private readonly copy = document.createElement("button");
@@ -73,7 +79,7 @@ export class Freeze {
       else if (this.frozen && !(e.target as Element | null)?.closest?.(PAUSE_UI.join(","))) e.stopImmediatePropagation();
     }, { capture: true });
     // The gamepad, while frozen, the freeze's alone (pollPad's Start): every other reader of it sees none.
-    if (realPads) Object.defineProperty(navigator, "getGamepads", { configurable: true, writable: true, value: () => (this.frozen ? [] : realPads()) });
+    if (realPads) Object.defineProperty(navigator, "getGamepads", { configurable: true, writable: true, value: () => (this.frozen ? [] : this.thawed(realPads())) });
   }
 
   /** A new night on the same page (app/night.ts): its game and seed from here on. */
@@ -84,10 +90,24 @@ export class Freeze {
     this.frozen = !this.frozen;
     const g = this.game;
     if (this.frozen) { this.wasPaused = g.clock.paused; g.clock.paused = true; }
-    else g.clock.paused = this.wasPaused;
+    else { g.clock.paused = this.wasPaused; this.heldAtThaw = new Set([...(realPads?.() ?? [])].find(p => p)?.buttons.flatMap((b, i) => (b.pressed ? [i] : [])) ?? []); }
     document.body.classList.toggle("paused", this.frozen);
+    // (thawed, a pause-page control the pad or mouse focused lets go: it kept every key from her after, E opening nothing; pause-on-top)
+    if (!this.frozen && document.activeElement instanceof HTMLElement && document.activeElement.closest(PAUSE_UI.join(","))) document.activeElement.blur();
     this.onToggle(this.frozen);
     this.marker.style.display = this.stamp.style.display = this.frozen && !this.quiet ? "block" : "none";
+  }
+
+  /** The pads as every other reader sees them: the buttons held at the thaw read as up until they're let go. */
+  private thawed(pads: (Gamepad | null)[]): (Gamepad | null)[] {
+    if (!this.heldAtThaw.size) return pads;
+    const pad = [...pads].find(p => p);
+    if (!pad) { this.heldAtThaw.clear(); return pads; }
+    for (const i of [...this.heldAtThaw]) if (!pad.buttons[i]?.pressed) this.heldAtThaw.delete(i);
+    if (!this.heldAtThaw.size) return pads;
+    const up = { pressed: false, touched: false, value: 0 } as GamepadButton;
+    const masked = { connected: pad.connected, id: pad.id, index: pad.index, mapping: pad.mapping, timestamp: pad.timestamp, axes: pad.axes, vibrationActuator: pad.vibrationActuator, buttons: pad.buttons.map((b, i) => (this.heldAtThaw.has(i) ? up : b)) } as unknown as Gamepad;
+    return [...pads].map(p => (p === pad ? masked : p));
   }
 
   /** Advance exactly n fixed steps, with no controls held. */
@@ -101,7 +121,7 @@ export class Freeze {
 
   /** The pad's pause (Options, standard button 9: platform/bindings.ts global.pause) toggles, read once a frame. */
   pollPad(): void {
-    const pad = [...(realPads?.() ?? [])].find(p => p), down = !!pad && bindings.padHeld("global.pause", pad.buttons.map(b => b.pressed), pad.axes);
+    const pad = [...(realPads?.() ?? [])].find(p => p), down = !!pad && padPauseHeld(pad.buttons.map(b => b.pressed), pad.axes);
     if (down && !this.padPrev) this.toggle();
     this.padPrev = down;
   }
