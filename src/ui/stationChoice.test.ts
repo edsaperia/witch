@@ -36,6 +36,28 @@ function walk(p: PanelChoice): number {
 }
 
 describe("a station panel: moving only moves the focus, choosing changes her (Ed, 2026-10-28)", () => {
+  it("every morning clothing station dresses her when its unchanged default is chosen", () => {
+    for (const station of ["wardrobe", "cloakPegs", "shoeRack", "bags"]) {
+      const p = panel(station);
+      p.awaitingDress = true;
+      const before = JSON.stringify(p.g);
+      const L = p.lines();
+      const line = L.findIndex(l => l.kind === "items" && Array.from({ length: l.n }, (_, col) => itemAt(p.shelves[l.shelf], l, col)).some(it => wears(p.g, it)));
+      const l = L[line];
+      expect(l, station).toBeDefined();
+      const col = Array.from({ length: l.n }, (_, i) => i).find(i => wears(p.g, itemAt(p.shelves[l.shelf], l, i)))!;
+      const item = itemAt(p.shelves[l.shelf], l, col);
+      p.focus(line, col);
+      expect(p.wears(item), station).toBe(false);
+      expect(JSON.stringify(p.g)).toBe(before);
+      expect(p.choose().look, station).toBeDefined(); // the page receives the dressing callback even with an unchanged saved outfit
+      expect(p.awaitingDress, station).toBe(false);
+      expect(p.wears(item), station).toBe(true);
+      expect(JSON.stringify(p.g)).toBe(before);
+      expect(p.choose().look, station).toBeUndefined();
+    }
+  });
+
   it("at every station, moving through every place never changes her look or her broom", () => {
     for (const st of STATIONS) {
       const p = panel(st), look = JSON.stringify(p.g), broom = JSON.stringify(p.fitted);
@@ -43,6 +65,20 @@ describe("a station panel: moving only moves the focus, choosing changes her (Ed
       expect(steps, st).toBeGreaterThan(0);
       expect(JSON.stringify(p.g), st).toBe(look);
       expect(JSON.stringify(p.fitted), st).toBe(broom);
+    }
+  });
+
+  it("choosing an unchanged colour also dresses her, including a shoe rack with no item row", () => {
+    for (const station of ["wardrobe", "cloakPegs", "shoeRack", "bags"]) {
+      const p = panel(station, false), L = p.lines(), line = L.findIndex(l => l.kind === "grid"), l = L[line];
+      p.focus(line, 0);
+      p.g.palette = { ...p.g.palette, [p.partOf(p.shelves[l.shelf])]: ctx.swatch(p.shelves[l.shelf], 0, l.row!) };
+      const before = JSON.stringify(p.g);
+      p.awaitingDress = true;
+      expect(p.choose().look, station).toBeDefined();
+      expect(JSON.stringify(p.g), station).toBe(before);
+      expect(p.awaitingDress, station).toBe(false);
+      expect(p.choose().look, station).toBeUndefined();
     }
   });
 
