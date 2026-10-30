@@ -472,3 +472,15 @@ Coordinator requests 6516050444 and 6516100269 use the existing builders. No Cur
 - Sentinel `look.sentinel.tailTip:{length:.2,mat:"BODY3"}` uses the shared tail-chain tip painter, with length a fraction of the existing path. Walking tails use `coat.regions.tail` separately. Neither control replaces anatomy or adds another builder.
 
 These interfaces enable roster fitting; they do not establish likeness or activation approval. The accepted cats-6c cloud checkpoint stays frozen at `76a7c703ac8deb01956a32552307814a6da4e5a3`.
+
+## Mole reference fitting and independent proportions
+
+Coordinator approval 6516824828 (2026-10-30) reopens a default-off mole round. `look.mole.fit:"current"` measures a reference with all `look.mole` controls removed, retaining the same species size curves, elder, level, frame, facing, style, gear and texture context. The candidate uses that pixels-per-model-unit scale. It does not force a fixed final pixel height or change global fitting; growth can make a larger sprite. With inherited size curves changed, this is the inherited reference, not a promise to recover the live Current scale.
+
+Independent fields in `look.mole`:
+
+- `bodyVerticalDepth` and `bodyWidth`: positive multipliers for y and z respectively, each falling back to legacy `bodyDepth` (then 1). Vertical depth retains the barrel bottom; use `bodyVerticalDepth:1.65,bodyWidth:1` for a deeper, non-widened barrel.
+- `snoutThickness`: positive multiplier, default 1, for snout and nose vertical/lateral radii. `snoutForward` and `snoutLift`: finite offsets in model x/y units, default 0, moving both snout and nose. Existing `snoutProjection` remains length.
+- `forepawForward`: finite model-x offset, default 0. `forepawLength`, `forepawWidth`, `forepawThickness`: positive multipliers, default 1, for each existing hand's x/z/y radii. Claw forward reach follows length, lateral spacing follows width, vertical thickness follows thickness; their established forward orientation remains. These combine with earlier overall size/spread controls.
+
+Numeric diagnostic starting values, not a likeness-approved preset: `{fit:"current",bodyVerticalDepth:1.65,bodyWidth:1,bodyLength:1.7,snoutProjection:1.8,snoutThickness:1.3,snoutForward:.05,snoutLift:.04,forepawSpread:1.15,forepawSize:1,forepawForward:.12,forepawLength:1.3,forepawWidth:1.5,forepawThickness:.6}`. Frame-0 adult towards occupied bounds grow from 62×40 to 104×61 at unchanged scale 43.308 px/unit; away 66×33 to 104×49. New controls do not change the builder or activate any Current record. Anatomy, attachment and likeness still require the coordinator's visual round.
