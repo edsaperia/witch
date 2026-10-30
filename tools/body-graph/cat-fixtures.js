@@ -12,7 +12,7 @@ export const CAT_TARGET_NOTES = {
 };
 export function catCaptureGenome(base) {
   if (!CAT_CAPTURE_IDS.includes(base.id)) throw new Error(`Not a cat fixture: ${base.id}`);
-  const options = base.id === "cat" ? { head: { earRoot: [0, -.2, .12], earAngle: [0, .24] } } : {};
+  const options = base.id === "cat" ? { head: { earRoot: [0, -.42, .45], earAngle: [0, .5], earDimensions: { height: .6, width: 1.1 }, skullY: .9, skullZ: 1.2, jowl: 1.3 } } : {};
   const out = felineGraphGenome(base, options);
   if (base.id === "snowleopard") {
     out.coat.regions = {

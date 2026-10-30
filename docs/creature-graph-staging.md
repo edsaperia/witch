@@ -173,6 +173,22 @@ that correction is claimed before cloud review.
 
 ## Cats comparison driver
 
+Cats-1 independent review (Yankee, comment 6513855670): likeness scores
+current → graph were sand cat 2→2, snow leopard 3→3.5, jaguar 3→3.5,
+lion 3→3, tiger 4→4, cheetah 4→4 and lynx 3→3. The conservative torso-envelope
+conversion retains existing limb/foot families and does not yet deliver the
+requested flexible feline gait. Small pixel differences are not evidence of
+an anatomy improvement.
+
+Cats-3 ear follow-up adds `head.earDimensions: {height,width}` as full dimensions
+in head radii, independent of the old ear length and age multipliers. The sand
+cat diagnostic uses height .6, width 1.1, low roots at .28 head radii above
+centre, mirrored outward directions near 45 degrees, a wider/flatter skull and
+fuller cheeks. Geometry tests inspect both ear bases, widths and directions at
+all four growth levels; projected readability still requires cloud review.
+The omitted-field path retains its prior ear geometry. These are diagnostic
+fixture proportions, not changes to the default roster.
+
 Cloud command: `node tools/body-graph/cats-preview.mjs previews/body-graph/cats-1`.
 It requires a clean tracked checkout, records and verifies its served source
 SHA, and writes one PNG per cat plus `source.json` and `evidence.json`. Set
