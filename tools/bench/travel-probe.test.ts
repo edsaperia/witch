@@ -1,4 +1,4 @@
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
 import { createRequire } from 'node:module';
 import { runInNewContext } from 'node:vm';
 const { installTravelProbe } = createRequire(import.meta.url)('../view/travel-probe.cjs');
@@ -37,5 +37,85 @@ it('preserves upload return values and thrown errors while recording the call', 
   const context: any = { WebGL2RenderingContext: GL, performance: { now: () => now++ }, requestAnimationFrame: () => {} }; context.window = context;
   runInNewContext(`(${installTravelProbe.toString()})()`, context);
   const gl = new GL(); expect(gl.texImage2D(3)).toBe(3); expect(() => gl.texImage2D(-1)).toThrow('driver');
-  expect(context.__travelProbe.trace.events.map((e: any) => e.method)).toEqual(['texImage2D', 'texImage2D']);
+  const trace = context.__travelProbe.trace;
+  expect(trace.events).toHaveLength(0);
+  expect(trace.uploads.texImage2D).toEqual({ method: 'texImage2D', count: 2, wallMs: 2, longestMs: 1, firstAt: 0, lastAt: 2, longestAt: 0, errors: 1 });
+});
+it('records native worker errors without replacing handlers or retaining event payloads', () => {
+  class NativeWorker {
+    listeners = new Map<string, (e: unknown) => void>();
+    set onmessage(_handler: unknown) {}
+    addEventListener(type: string, handler: (e: unknown) => void) { this.listeners.set(type, handler); }
+  }
+  const context: any = { Worker: NativeWorker, performance: { now: () => 1 }, requestAnimationFrame: () => {} }; context.window = context;
+  runInNewContext(`(${installTravelProbe.toString()})()`, context);
+  const worker = new context.Worker('chartOutlines.worker.js'), preventDefault = vi.fn();
+  worker.listeners.get('error')({ message: 'startup failed', data: new Uint8Array(100), preventDefault });
+  expect(context.__travelProbe.trace.events[0]).toEqual({ kind: 'worker-error', worker: 'chart', at: 1, ms: 0, message: 'startup failed' });
+  expect(preventDefault).not.toHaveBeenCalled();
+});
+it('consumes diagnostic packets, preserves active jobs across reset and closes them on termination', () => {
+  class NativeWorker {
+    handler: any;
+    set onmessage(fn: any) { this.handler = fn; }
+    terminate() {}
+  }
+  let now = 50;
+  const context: any = { Worker: NativeWorker, performance: { timeOrigin: 1000, now: () => now }, requestAnimationFrame: () => {} }; context.window = context;
+  runInNewContext(`(${installTravelProbe.toString()})()`, context);
+  const worker = new context.Worker('chartOutlines.worker.js'), handler = vi.fn(); worker.onmessage = handler;
+  worker.handler({ data: { __witchJobTraceEvent: { jobId: 'one', jobKind: 'chart:detail', id: 'home', workerIndex: worker._travelWorkerIndex, phase: 'stage-start', stage: 'cache-read', stageStartEpochMs: 1040, atEpochMs: 1040 } } });
+  expect(handler).not.toHaveBeenCalled(); expect(context.__travelProbe.trace.events[0].at).toBe(40);
+  context.__travelProbe.reset(); expect(Object.keys(context.__travelProbe.trace.activeJobs)).toEqual(['one']);
+  now = 60; worker.terminate();
+  expect(Object.keys(context.__travelProbe.trace.activeJobs)).toHaveLength(0);
+  expect(context.__travelProbe.trace.events[0]).toMatchObject({ phase: 'cancel', status: 'worker-terminated', interruptedStage: 'cache-read', interruptedStageElapsedMs: 20 });
+  worker.handler({ data: { actualResult: 7 } }); expect(handler).toHaveBeenCalledTimes(1);
+});
+it('streams job metadata to the host across recorder resets without requiring a final page snapshot', async () => {
+  const batches: any[] = []; let interval: unknown;
+  const context: any = { __travelRecordBatch: async (p: unknown) => { batches.push(p); }, setInterval: (fn: unknown) => { interval = fn; }, performance: { timeOrigin: 1000, now: () => 50 }, requestAnimationFrame: () => {} }; context.window = context;
+  runInNewContext(`(${installTravelProbe.toString()})()`, context);
+  context.__travelProbe.record({ kind: 'worker-job', jobId: 'one', jobKind: 'art:type', id: 17, phase: 'enqueue', at: 40, enqueuedEpochMs: 1040 });
+  context.__travelProbe.reset(); await context.__travelProbe.flush();
+  expect(typeof interval).toBe('function'); expect(batches).toHaveLength(1);
+  expect(batches[0]).toMatchObject({ sequence: 1, atEpochMs: 1050, backlog: 0, events: [{ jobId: 'one', atEpochMs: 1040, id: 17 }] });
+});
+it('retains initial job records if the host binding is installed after the probe init script', async () => {
+  const batches: any[] = [];
+  const context: any = { setInterval: () => {}, performance: { timeOrigin: 1000, now: () => 50 }, requestAnimationFrame: () => {} }; context.window = context;
+  runInNewContext(`(${installTravelProbe.toString()})({ stream: true })`, context);
+  context.__travelProbe.record({ kind: 'worker-job', jobId: 'early', jobKind: 'map-prep', id: 42, phase: 'enqueue', at: 40 });
+  await context.__travelProbe.flush(); expect(batches).toHaveLength(0);
+  context.__travelRecordBatch = async (packet: unknown) => { batches.push(packet); };
+  await context.__travelProbe.flush(); expect(batches[0].events[0].jobId).toBe('early');
+});
+
+it('retains every upload count and slowest call beyond the old cap, leaving room for late worker events', () => {
+  let now = 0;
+  class GL {
+    texSubImage2D(ms: number, payload: unknown) { expect(this).toBe(gl); expect(payload).toBe(pixels); now += ms; return payload; }
+    texStorage2D() { now += 2; }
+  }
+  class NativeWorker {
+    handler: unknown;
+    set onmessage(fn: unknown) { this.handler = fn; }
+    postMessage() { now++; }
+  }
+  const context: any = { WebGL2RenderingContext: GL, Worker: NativeWorker, performance: { now: () => now }, ArrayBuffer, requestAnimationFrame: () => {} }; context.window = context;
+  runInNewContext(`(${installTravelProbe.toString()})()`, context);
+  const gl = new GL(), pixels = new Uint8Array(8);
+  for (let i = 0; i < 30000; i++) expect(gl.texSubImage2D(i === 20000 ? 50 : 1, pixels)).toBe(pixels);
+  gl.texStorage2D();
+  const worker = new context.Worker('http://local/artWorker.js'); worker.postMessage();
+  const trace = context.__travelProbe.trace;
+  expect(trace.dropped).toBe(0);
+  expect(trace.events).toHaveLength(1); expect(trace.events[0].kind).toBe('worker-send');
+  expect(Object.keys(trace.uploads)).toHaveLength(2);
+  expect(trace.uploads.texSubImage2D).toEqual({ method: 'texSubImage2D', count: 30000, wallMs: 30049, longestMs: 50, firstAt: 0, lastAt: 30048, longestAt: 20000, errors: 0 });
+  expect(trace.uploads.texSubImage2D.pixels).toBeUndefined();
+  context.__travelProbe.reset();
+  expect(Object.keys(trace.uploads)).toHaveLength(0); expect(trace.events).toHaveLength(0); expect(trace.dropped).toBe(0);
+  gl.texSubImage2D(3, pixels);
+  expect(trace.uploads.texSubImage2D.count).toBe(1); expect(trace.uploads.texSubImage2D.wallMs).toBe(3);
 });

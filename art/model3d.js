@@ -47,7 +47,7 @@ function sdRoundBox(p, q) { // half-sizes q.h along q.axes, edges rounded by q.r
 // hewn, uneven surfaces: a small bumpiness from a few crossed waves
 const rough = (p, a) => a * (Math.sin(p[0] * 23 + p[1] * 7) * Math.sin(p[1] * 19 - p[2] * 11) + .5 * Math.sin(p[2] * 41 + p[0] * 29));
 const sdf0 = (q, p) => q.type === "ell" ? sdEllipsoid(sub(p, q.cw), q) : q.type === "box" ? sdRoundBox(sub(p, q.cw), q) : sdRoundCone(sub(p, q.aw), q);
-const sdf = (q, p) => q.rough ? sdf0(q, p) + rough(p, q.rough) : sdf0(q, p);
+const sdf = (q, p, wave) => q.rough ? sdf0(q, p) + (wave === undefined ? rough(p, q.rough) : q.rough * wave) : sdf0(q, p);
 
 // A part's signed distance at a model-space point (unturned: Model.field, groupField).
 function sdModel(q, p) {
@@ -177,7 +177,15 @@ export function render(model, { height, scale, facing = "towards", yaw = YAW[fac
     if (vol.length) {
       // group the candidates; the field is a smooth union within a group, a hard union across
       const groups = new Map(); for (const q of vol) { let g = groups.get(q.group); if (!g) groups.set(q.group, g = []); g.push(q); }
-      const gfield = (qs, p) => { let d = Infinity; for (const q of qs) if (!q.cut) d = d === Infinity ? sdf(q, p) : smin(d, sdf(q, p)); for (const q of qs) if (q.cut) d = Math.max(d, -sdf(q, p)); if (clipY > -Infinity) d = Math.max(d, clipY - p[1]); return d; };
+      const gfield = (qs, p) => {
+        let d = Infinity, wave;
+        // Every primitive samples the same world point; only its roughness amplitude differs.
+        const distance = q => { if (q.rough && wave === undefined) wave = rough(p, 1); return sdf(q, p, wave); };
+        for (const q of qs) if (!q.cut) d = d === Infinity ? distance(q) : smin(d, distance(q));
+        for (const q of qs) if (q.cut) d = Math.max(d, -distance(q));
+        if (clipY > -Infinity) d = Math.max(d, clipY - p[1]);
+        return d;
+      };
       let t = Math.max(0, tmin);
       for (let step = 0; step < 96 && t < tmax; step++) {
         const p = v3.add(O, v3.mul(D, t));

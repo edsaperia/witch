@@ -1,0 +1,144 @@
+{
+  "base": "27d144657",
+  "before": {
+    "sha": "27d144657b8e08710967c28dcc72d255060a04b6",
+    "bundleHash": "dff195fcfcca5167a5e3e97b03334bb46d57e0b3fcf8e235ff263522ffe7c8c6",
+    "node": "v24.18.0",
+    "cpus": 20,
+    "memoryGB": 15.630355834960938,
+    "deadlineMs": 10000,
+    "notes": "Cold isolated Node workers; no IndexedDB/GPU/browser. Chart stage totals are nested, not additive. Art areaType0 is representative because prior trace omitted job IDs; pixel backend differs from browser canvas.",
+    "runs": [
+      {
+        "job": {
+          "kind": "travel-art",
+          "house": true
+        },
+        "ok": true,
+        "elapsedMs": 7098.2974,
+        "stages": {
+          "art.pixelCopies": {
+            "count": 205,
+            "ms": 172.79340000000775
+          },
+          "art.runJob": {
+            "count": 1,
+            "ms": 7091.9038
+          }
+        },
+        "result": {
+          "id": "house:22:12.5:fox",
+          "K": 0.6666666666666666,
+          "atlas": [
+            1949,
+            286
+          ],
+          "resultHash": "1f4df8f6baea8186f99ea6b7131241f61a002c6b64975b6b2940195db927ae66",
+          "backend": "ImageData-only; no browser canvas or IDB"
+        },
+        "profileWindowsPathsRepaired": true
+      },
+      {
+        "job": {
+          "kind": "travel-art",
+          "house": false
+        },
+        "ok": true,
+        "elapsedMs": 1211.4012000000002,
+        "stages": {
+          "art.pixelCopies": {
+            "count": 251,
+            "ms": 357.1937000000071
+          },
+          "art.runJob": {
+            "count": 1,
+            "ms": 1204.5857999999998
+          }
+        },
+        "result": {
+          "id": 25,
+          "seed": 225745,
+          "K": 0.6666666666666666,
+          "atlas": [
+            1884,
+            501
+          ],
+          "resultHash": "292f4186789f5ac7c68ab126f0a4c0fd90dda7e6664c54960d5cfe3a91f70293",
+          "backend": "ImageData-only; no browser canvas or IDB"
+        },
+        "profileWindowsPathsRepaired": true
+      }
+    ]
+  },
+  "after": {
+    "sha": "27d144657b8e08710967c28dcc72d255060a04b6",
+    "bundleHash": "85d9f9606b8bbfc0eb9ea026ed2b2dc0439787a9f729b59a85604a61775a4583",
+    "node": "v24.18.0",
+    "cpus": 20,
+    "memoryGB": 15.630355834960938,
+    "deadlineMs": 10000,
+    "notes": "Cold isolated Node workers; no IndexedDB/GPU/browser. Chart stage totals are nested, not additive. Art areaType0 is representative because prior trace omitted job IDs; pixel backend differs from browser canvas.",
+    "runs": [
+      {
+        "job": {
+          "kind": "travel-art",
+          "house": true
+        },
+        "ok": true,
+        "elapsedMs": 6202.9937,
+        "stages": {
+          "art.pixelCopies": {
+            "count": 205,
+            "ms": 133.56530000000748
+          },
+          "art.runJob": {
+            "count": 1,
+            "ms": 6196.2195
+          }
+        },
+        "result": {
+          "id": "house:22:12.5:fox",
+          "K": 0.6666666666666666,
+          "atlas": [
+            1949,
+            286
+          ],
+          "resultHash": "1f4df8f6baea8186f99ea6b7131241f61a002c6b64975b6b2940195db927ae66",
+          "backend": "ImageData-only; no browser canvas or IDB"
+        },
+        "profileWindowsPathsRepaired": true
+      },
+      {
+        "job": {
+          "kind": "travel-art",
+          "house": false
+        },
+        "ok": true,
+        "elapsedMs": 986.9117000000006,
+        "stages": {
+          "art.pixelCopies": {
+            "count": 251,
+            "ms": 275.52620000000843
+          },
+          "art.runJob": {
+            "count": 1,
+            "ms": 982.3298999999997
+          }
+        },
+        "result": {
+          "id": 25,
+          "seed": 225745,
+          "K": 0.6666666666666666,
+          "atlas": [
+            1884,
+            501
+          ],
+          "resultHash": "292f4186789f5ac7c68ab126f0a4c0fd90dda7e6664c54960d5cfe3a91f70293",
+          "backend": "ImageData-only; no browser canvas or IDB"
+        },
+        "profileWindowsPathsRepaired": true
+      }
+    ]
+  },
+  "note": "Single cold serial before/after; full result typed-array bytes plus metadata hashes match. Not proof of browser speed. Art check pending serial slot."
+}

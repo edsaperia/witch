@@ -1,0 +1,241 @@
+{
+  "sha": "bef277ebab1cb0b0c055d964bb38a79b3383d576",
+  "bundleHash": "22db0c7bde16e0d8e5fe6ad45bf87e7b4b93b7954b27f60f1ed0f6eb72e18370",
+  "node": "v24.18.0",
+  "cpus": 20,
+  "memoryGB": 15.630355834960938,
+  "deadlineMs": 10000,
+  "notes": "Cold isolated Node workers; no IndexedDB/GPU/browser. Chart stage totals are nested, not additive. Art areaType0 is representative because prior trace omitted job IDs; pixel backend differs from browser canvas.",
+  "runs": [
+    {
+      "job": {
+        "kind": "map"
+      },
+      "ok": true,
+      "elapsedMs": 577.5049999999999,
+      "stages": {
+        "map.archipelago": {
+          "count": 1,
+          "ms": 277.6432
+        },
+        "map.generate": {
+          "count": 1,
+          "ms": 295.7251
+        },
+        "map.route": {
+          "count": 1,
+          "ms": 0.021700000000009823
+        },
+        "map.prepRecord": {
+          "count": 1,
+          "ms": 0.4378000000000384
+        },
+        "map.structuredClone": {
+          "count": 1,
+          "ms": 3.594000000000051
+        }
+      },
+      "result": {
+        "seed": 424242,
+        "world": 0,
+        "island": "fox",
+        "found": []
+      },
+      "profileWindowsPathsRepaired": true
+    },
+    {
+      "job": {
+        "kind": "chart",
+        "island": "home",
+        "across": 150
+      },
+      "ok": true,
+      "elapsedMs": 1355.6615,
+      "stages": {
+        "chart.map": {
+          "count": 1,
+          "ms": 285.5785000000001
+        },
+        "chart.ground": {
+          "count": 1,
+          "ms": 28.059600000000046
+        },
+        "chart.sigils": {
+          "count": 3,
+          "ms": 722.2634999999998
+        },
+        "chart.mesh": {
+          "count": 1,
+          "ms": 19.753499999999804
+        },
+        "chart.outline": {
+          "count": 1,
+          "ms": 775.3889999999999
+        },
+        "chart.total": {
+          "count": 1,
+          "ms": 1354.4633
+        }
+      },
+      "result": {
+        "island": "home",
+        "across": 150,
+        "cols": 150,
+        "rows": 151
+      },
+      "profileWindowsPathsRepaired": true
+    },
+    {
+      "job": {
+        "kind": "chart",
+        "island": "home",
+        "across": 420
+      },
+      "ok": true,
+      "elapsedMs": 3864.9303999999997,
+      "stages": {
+        "chart.map": {
+          "count": 1,
+          "ms": 533.6950999999999
+        },
+        "chart.ground": {
+          "count": 1,
+          "ms": 356.4815000000003
+        },
+        "chart.sigils": {
+          "count": 3,
+          "ms": 2502.3079
+        },
+        "chart.mesh": {
+          "count": 1,
+          "ms": 174.39199999999983
+        },
+        "chart.outline": {
+          "count": 1,
+          "ms": 3047.789
+        },
+        "chart.total": {
+          "count": 1,
+          "ms": 3863.1403999999998
+        }
+      },
+      "result": {
+        "island": "home",
+        "across": 420,
+        "cols": 417,
+        "rows": 421
+      },
+      "profileWindowsPathsRepaired": true
+    },
+    {
+      "job": {
+        "kind": "chart",
+        "island": "fox",
+        "across": 420
+      },
+      "ok": true,
+      "elapsedMs": 3166.126699999999,
+      "stages": {
+        "chart.map": {
+          "count": 1,
+          "ms": 948.4280000000008
+        },
+        "chart.ground": {
+          "count": 1,
+          "ms": 380.5020000000004
+        },
+        "chart.sigils": {
+          "count": 3,
+          "ms": 404.78159999999843
+        },
+        "chart.mesh": {
+          "count": 1,
+          "ms": 168.4434000000001
+        },
+        "chart.outline": {
+          "count": 1,
+          "ms": 972.0738999999994
+        },
+        "chart.total": {
+          "count": 1,
+          "ms": 3162.0262000000002
+        }
+      },
+      "result": {
+        "island": "fox",
+        "across": 420,
+        "cols": 421,
+        "rows": 387
+      },
+      "profileWindowsPathsRepaired": true
+    },
+    {
+      "job": {
+        "kind": "art",
+        "seed": 225745
+      },
+      "ok": true,
+      "elapsedMs": 1590.9535000000014,
+      "stages": {
+        "art.pixelCopies": {
+          "count": 271,
+          "ms": 188.96230000000287
+        },
+        "art.generateAndBake": {
+          "count": 1,
+          "ms": 1486.2904999999992
+        },
+        "art.packAndPalette": {
+          "count": 1,
+          "ms": 104.0617000000002
+        }
+      },
+      "result": {
+        "representative": true,
+        "seed": 225745,
+        "areaType": "moor",
+        "K": 0.6666666666666666,
+        "sprites": 34,
+        "atlas": [
+          1991,
+          255
+        ]
+      },
+      "profileWindowsPathsRepaired": true
+    },
+    {
+      "job": {
+        "kind": "art",
+        "seed": 305895
+      },
+      "ok": true,
+      "elapsedMs": 1510.583200000001,
+      "stages": {
+        "art.pixelCopies": {
+          "count": 271,
+          "ms": 179.92099999998754
+        },
+        "art.generateAndBake": {
+          "count": 1,
+          "ms": 1408.5415999999987
+        },
+        "art.packAndPalette": {
+          "count": 1,
+          "ms": 101.68920000000071
+        }
+      },
+      "result": {
+        "representative": true,
+        "seed": 305895,
+        "areaType": "moor",
+        "K": 0.6666666666666666,
+        "sprites": 34,
+        "atlas": [
+          1991,
+          255
+        ]
+      },
+      "profileWindowsPathsRepaired": true
+    }
+  ]
+}

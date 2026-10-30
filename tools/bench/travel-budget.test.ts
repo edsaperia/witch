@@ -3,6 +3,12 @@ import { createRequire } from 'node:module';
 const { checkTravel, checkTrace, summarizeTravel } = createRequire(import.meta.url)('./travel-budget.cjs');
 const good = () => ({ marks: { 'chart:ready': 900, 'chart:flown': 1000, 'game:arrived': 2000 }, qualityBefore: { mode: 'auto', rung: 0 }, quality: [{ at: 0, mode: 'auto', rung: 0 }, { at: 4000, mode: 'auto', rung: 0 }], longTasks: [{ at: 10, ms: 80 }], slices: [{ what: 'handoff-heights', ms: 50, slices: 3, longest: 18 }], chartFrames: { frames: 30, longest: 50 }, toDive: { frames: 60, longest: 90 }, diveToEnd: { frames: 60, longest: 30 }, settle: { frames: 120, longest: 16 } });
 it('passes a complete, smooth trip without a quality downgrade', () => expect(checkTravel(good()).ok).toBe(true));
+it('requires job protocol evidence for the new job-instrumented trace format', () => {
+  const run = { ...good(), key: { knobs: { 'tool.probe': 'worker-jobs-v1' } } };
+  expect(checkTravel(run).ok).toBe(false);
+  expect(checkTravel({ ...run, trace: { capabilities: { workerJobs: 1 } } }).ok).toBe(false);
+  expect(checkTravel({ ...run, trace: { capabilities: { workerJobs: 1 }, events: [{ kind: 'worker-job', jobId: 'observed' }] } }).ok).toBe(true);
+});
 it('rejects an unmeasured API trip instead of counting missing telemetry as zero', () => {
   expect(checkTravel({ route: 'api', marks: { 'game:arrived': 2000 }, qualityBefore: good().qualityBefore, quality: good().quality }).ok).toBe(false);
 });
@@ -48,4 +54,14 @@ it('summarizes elapsed shader waits separately from callbacks and parallel worke
   const summary = summarizeTravel({ marks: { 'witch:prep-compile0': 100, 'witch:prep-compiled': 3100 }, trace: { events: [{ kind: 'worker-callback', worker: 'art', ms: 3, workerMs: 500, cached: false }, { kind: 'worker-callback', worker: 'art', ms: 2, workerMs: 0, cached: true }] } });
   expect(summary.shaderReadinessWait).toBe(3000);
   expect(summary.events['worker-callback:art']).toEqual({ count: 2, wallMs: 5, longestMs: 3, workerReportedMs: 500, workerReports: 2, receivedBytesEstimate: 0, cached: 1 });
+});
+it('summarizes upload aggregates by call count and individual maximum, not aggregate wall time', () => {
+  const upload = { method: 'texSubImage2D', count: 30000, wallMs: 30049, longestMs: 50, firstAt: -100, lastAt: 30048, longestAt: 20000, errors: 0 };
+  const run = { ...good(), trace: { events: [], uploads: [upload], dropped: 0 } };
+  expect(checkTravel(run).ok).toBe(true);
+  expect(summarizeTravel(run).events['upload-call:texSubImage2D']).toEqual({ count: 30000, wallMs: 30049, longestMs: 50, workerReportedMs: 0, workerReports: 0, receivedBytesEstimate: 0, cached: 0 });
+  expect(checkTravel({ ...run, trace: { ...run.trace, dropped: 1 } }).ok).toBe(false);
+  for (const change of [{ count: NaN }, { wallMs: Infinity }, { longestMs: 40000 }, { longestAt: -101 }, { errors: -1 }]) {
+    expect(checkTravel({ ...run, trace: { ...run.trace, uploads: [{ ...upload, ...change }] } }).ok).toBe(false);
+  }
 });

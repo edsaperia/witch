@@ -6,6 +6,7 @@
 // IndexedDB under the build, the seed and the tuning. The page, landing (&arrive=1), takes them if they match and makes the map
 // from them (the same map: src/rules/mapPrep.test.ts); if none is ready, or it doesn't match, it makes the map as before.
 import { generateMap, hydrateMap, prepProblem, type ForestMap, type MapPrep } from "../rules/map";
+import { postTracedJob } from "./workerJobTrace";
 import { rememberWorld } from "../rules/rosters";
 import type { Tuning } from "../rules/tuning";
 import { hashText } from "../render/artCache";
@@ -96,7 +97,7 @@ function prepInWorker(seed: number, tuning: Tuning, send: boolean, keep = true):
     worker = new Worker(new URL("./mapPrep.worker.ts", import.meta.url), { type: "module" });
     worker.onmessage = (e: MessageEvent<{ ok: boolean; rec?: PrepRecord }>) => { finish(e.data.rec ?? e.data.ok); worker?.terminate(); worker = null; };
     worker.onerror = () => { finish(null); worker?.terminate(); worker = null; };
-    worker.postMessage({ key: prepKey(seed, tuning), seed, tuning, send, noKeep: !keep } satisfies PrepAsk);
+    postTracedJob(worker, { key: prepKey(seed, tuning), seed, tuning, send, noKeep: !keep } satisfies PrepAsk, 'map-prep', seed);
   } catch { finish(null); }
   return { done, stop() { worker?.terminate(); worker = null; finish(null); } };
 }
