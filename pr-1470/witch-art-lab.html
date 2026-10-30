@@ -2097,7 +2097,7 @@ function projectedInterval(q, axis) {
 // Renders a model to a Sprite `height` art pixels tall (measured over the parts not marked extra).
 // With `scale` (pixels per model unit) instead, several models share one scale.
 // With `measure`, return scale and allocated dimensions without rasterising: { s, width, height }.
-function render(model, { height, scale, facing = "towards", yaw = YAW[facing] ?? YAW.towards, pitch = PITCH, lineGap = .12, measure = false, keepDepth = false, projected = false, samplePhaseY = 0 } = {}) {
+function render(model, { height, scale, facing = "towards", yaw = YAW[facing] ?? YAW.towards, pitch = PITCH, lineGap = .12, measure = false, keepDepth = false, projected = false, samplePhaseY = 0, occupiedOnly = false, probePixels = null } = {}) {
   const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), spp = Math.sin(pitch);
   // model.atScale(pxPerUnit): parts that must be sized in pixels (an expression's face: genome/expressions.js), added once the scale is known
   if (model.atScale && !measure) { const f = model.atScale; model.atScale = null; f(scale ?? render(model, { height, facing, yaw, pitch, lineGap, measure: true, projected }).s); }
@@ -2149,7 +2149,16 @@ function render(model, { height, scale, facing = "towards", yaw = YAW[facing] ??
   });
   const eps = .25 / s;
   const smin = (a, b) => { const h = Math.max(k - Math.abs(a - b), 0) / k; return Math.min(a, b) - h * h * k * .25; };
-  for (let iy = 0; iy < H; iy++) for (let ix = 0; ix < W; ix++) {
+  let occupiedTop=-1,occupiedBottom=-1;
+  const queries=occupiedOnly&&probePixels?probePixels(W,H):[];
+  for (let row = 0; row < (occupiedOnly ? H*2+queries.length : H); row++) {
+    if(occupiedOnly && occupiedTop>=0 && occupiedBottom>=0 && row<H*2){if(!queries.length)break;row=H*2;}
+    if(occupiedOnly && row<H && occupiedTop>=0)continue;
+    const query=occupiedOnly&&row>=H*2?queries[row-H*2]:null;
+    const iy=query?query[1]-Math.max(0,H-1-occupiedBottom):occupiedOnly&&row>=H?H*2-row-1:row;
+    if(iy<0||iy>=H)continue;
+    for (let ix = query?query[0]:0; ix < (query?query[0]+1:W); ix++) {
+    if(ix<0||ix>=W)continue;
     const cand = tiles[Math.floor(iy / T) * TW + Math.floor(ix / T)];
     if (!cand.length) continue;
     const sx = X0 + (ix + .5 - 1) / s, su = U1 - (iy + .5) / s;
@@ -2205,6 +2214,13 @@ function render(model, { height, scale, facing = "towards", yaw = YAW[facing] ??
     if (!hitN || !hitMat) continue;
     const i = iy * W + ix; depth[i] = hitT; grp[i] = hitG;
     sp.px(ix, iy, hitMat, dot(hitN, R), -dot(hitN, U), dot(hitN, B));
+    if(occupiedOnly){if(!query){if(row<H)occupiedTop=iy;else occupiedBottom=iy;}break;}
+    }
+  }
+  if(occupiedOnly){
+    const drop=Math.max(0,H-1-occupiedBottom);
+    if(drop){for(let y=H-1;y>=0;y--)for(let x=0;x<W;x++)sp.m[y*W+x]=y>=drop?sp.m[(y-drop)*W+x]:0;}
+    return {s,sp,occupiedHeight:occupiedBottom>=occupiedTop&&occupiedTop>=0?occupiedBottom-occupiedTop+1:0};
   }
   // interior lines: where a nearer group stands in front of a clearly further one
   const lines = [];
@@ -8696,8 +8712,8 @@ const FACE_DEFAULT = { brow: "bar", happy: "arc", dazed: "x" };
 const faceEyeMats = new Set([M.EYE, M.IRIS, M.PUPIL, M.GLINT, M.MAGIC2]);
 
 // Out of the head along dir until the point is no deeper than `keep` inside the model.
-function faceSurface(m, p, dir, keep) {
-  for (let i = 0; i < 80 && m.field(p) < -keep; i++) p = v3.add(p, v3.mul(dir, keep * .25 + .002));
+function faceSurface(m, p, dir, keep, group) {
+  for (let i = 0; i < 80 && (group == null ? m.field(p) : m.groupField(group, p)) < -keep; i++) p = v3.add(p, v3.mul(dir, keep * .25 + .002));
   return p;
 }
 
@@ -8708,11 +8724,13 @@ function faceUp(m, face, style = FACE_DEFAULT) {
   const A = m.anchors, head = A.head, eyes = A.eyes;
   face = JAW_FACES[face]?.face ?? face;
   if (!face || face === "neutral" || !head || !eyes || eyes.pts.length < 1) return;
-  m.atScale = P => faceDraw(m, face, { ...FACE_DEFAULT, ...style }, 1 / P);
+  m.atScale = P => {
+    for (const anchors of A.faces ?? [A]) faceDraw(m, face, { ...FACE_DEFAULT, ...style }, 1 / P, anchors);
+  };
 }
 
-function faceDraw(m, face, st, u) { // u: one pixel, in model units
-  const A = m.anchors, head = A.head, eyes = A.eyes, E = Math.max(eyes.size, u * 1.6); // the eye's radius, never under a pixel and a half
+function faceDraw(m, face, st, u, A = m.anchors) { // u: one pixel, in model units
+  const head = A.head, eyes = A.eyes, E = Math.max(eyes.size, u * 1.6); // the eye's radius, never under a pixel and a half
   const mid = eyes.pts.reduce((a, e) => v3.add(a, v3.mul(e, 1 / eyes.pts.length)), [0, 0, 0]);
   const fwd = unitVec(v3.sub(mid, head.c)), up = unitVec(v3.sub([0, 1, 0], v3.mul(fwd, v3.dot([0, 1, 0], fwd) * .6)));
   // the eyes' own parts: the ellipsoids sitting on each anchor
@@ -8723,7 +8741,7 @@ function faceDraw(m, face, st, u) { // u: one pixel, in model units
   const across = e => eyes.pts.length > 1 ? unitVec(v3.sub(e, mid)) : unitVec(v3.cross(fwd, up)); // out to the side, away from the middle
   for (const e of eyes.pts) {
     const out = unitVec(v3.sub(e, head.c)), a = across(e), mat = eyeMat(e);
-    const at = (x, y, keep = line * .5) => faceSurface(m, v3.add(v3.add(e, v3.mul(a, x * E)), v3.mul(up, y * E)), out, keep);
+    const at = (x, y, keep = line * .5) => faceSurface(m, v3.add(v3.add(e, v3.mul(a, x * E)), v3.mul(up, y * E)), out, keep, head.group);
     // ---- the eyes ----
     if (face === "angry") for (const q of m.parts) if (near(q, e)) q.r = [q.r[0], q.r[1] * .62, q.r[2]]; // narrowed
     if (face === "happy") {
@@ -9409,7 +9427,7 @@ function napForm(S, { frame = 0 } = {}) {
     // Lying down can widen the model into the camera's vertical projection
     // (especially a snail's shell). Keep the standing visible age budget after
     // deformation and breathing, using native rays rather than resampling art.
-    for (let attempt = 0; attempt < 4; attempt++) {
+    for (let attempt = 0; attempt < 2; attempt++) {
       const res = render(m, { scale, facing: o.facing });
       res.sp.origin = res.project([cx, G, cz]);
       res.sp.groundLine = G;
@@ -9429,6 +9447,10 @@ function crop(sp) {
   let x0 = sp.w, x1 = -1, y0 = sp.h, y1 = -1;
   for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
   if (x1 < 0) return sp;
+  // Cropping must retain enough native top margin to keep the actual ground
+  // anchor in the lower half. Do not move the world-space anchor to satisfy
+  // the crop: a low curled torso can straddle its projected ground centre.
+  if (sp.origin) y0 = Math.max(0, Math.min(y0, Math.floor(2 * sp.origin[1] - y1 - 1)));
   const W = x1 - x0 + 1, H = y1 - y0 + 1, c = new sp.constructor(W, H);
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = (y + y0) * sp.w + x + x0, j = y * W + x; c.m[j] = sp.m[i]; c.g[j] = sp.g[i]; for (let k = 0; k < 3; k++) c.n[j * 3 + k] = sp.n[i * 3 + k]; }
   for (const k of Object.keys(sp)) if (!(k in c) && !["m", "g", "n", "w", "h"].includes(k)) c[k] = sp[k];
@@ -9861,6 +9883,15 @@ function sizeTargetPixels(id,level,witchHeight) {
 }
 
 
+
+function sizePixelRange(id,level,witch){
+ const target=sizeTargetPixels(id,level,witch);
+ if(level===3)return [target,target+1]; // protects 1.75x even when the adult reaches its upper bound
+ const band=[[.75,1.2],[1.1,1.5],[1.8,3]][level],rank=SIZE_CLASS_BY_ID[id];
+ const lowerClass=rank>=2?sizeTargetPixels(SIZE_CLASSES[rank-2][0],level,witch)+1:0;
+ return [Math.max(target-1,Math.round(witch*band[0]),lowerClass),Math.min(target,Math.round(witch*band[1]))];
+}
+
 const witchReferences=new Map();
 function standingWitchHeight(st) {
   const key=JSON.stringify([st.size,st.growth,st.pixel]);
@@ -9891,37 +9922,62 @@ function occupiedHeight(sp) {
 }
 const fittedScales=new Map();
 function fitOccupiedCreature(model,options,S,level,st,decorate) {
+  const stats={rasters:0,probes:0};
+  const draw=(model,opts)=>{stats[opts.occupiedOnly?"probes":"rasters"]++;return render(model,opts);};
   const key=JSON.stringify([S,level,st,model.parts,model.flats,options.facing]);
   const cached=fittedScales.get(key);
-  if(cached!=null)return {options:{...options,...cached}};
+  if(cached!=null)return {options:{...options,...cached},stats};
   const atScale=model.atScale,parts=model.parts.slice(),flats=model.flats.slice(),partState=parts.map(p=>({...p})),part=model.part;
   const reset=()=>{model.parts=parts.slice();model.flats=flats.slice();model.part=part;for(let i=0;i<parts.length;i++)Object.assign(parts[i],partState[i]);model.atScale=atScale;};
-  let scale=options.scale,lo=null,hi=null,best=null;
-  for(let attempt=0;attempt<8;attempt++){
+  if(!(S.id==='snowleopard'&&S.sizes.motes?.[level])){
+    const range=sizePixelRange(S.id,level,standingWitchHeight(st));let scale=options.scale,lo=null,hi=null,best=null;
+    const probePixels=(W,H)=>{
+      const r=rng(S.plan==='owl'?31:S.id.length*(S.q?7919:131)),points=[];
+      for(let i=0;i<(S.sizes.motes?.[level]??0);i++){
+        const x=Math.floor(uni(r,2,W-2)),y=Math.floor(uni(r,2,H*.6));
+        for(const[dx,dy]of[[0,0],[1,0],[-1,0],[0,1],[0,-1]])points.push([x+dx,y+dy]);
+      }
+      return points;
+    };
+    const probe=opts=>{const result=draw(model,{...opts,occupiedOnly:true,probePixels});decorate(result.sp);return occupiedHeight(result.sp);};
+    for(let attempt=0;attempt<8;attempt++){
+      reset();const height=probe({...options,scale}),error=Math.max(range[0]-height,height-range[1],0);
+      if(!best||error<best.error)best={scale,height,error,samplePhaseY:0};if(!error)break;
+      if(height<range[0])lo=scale;else hi=scale;
+      scale=lo!=null&&hi!=null?(lo+hi)/2:scale*options.sizeTarget/Math.max(1,height);
+    }
+    if(best.error)for(const phase of[.125,.25,.375,.5,.625,.75,.875]){
+      reset();const height=probe({...options,scale:best.scale,samplePhaseY:phase}),error=Math.max(range[0]-height,height-range[1],0);
+      if(error<best.error)best={scale:best.scale,height,error,samplePhaseY:phase};if(!error)break;
+    }
+    if(best.error)for(const multiplier of[.99,1.01,.98,1.02]){
+      reset();const candidate=best.scale*multiplier,height=probe({...options,scale:candidate,samplePhaseY:0}),error=Math.max(range[0]-height,height-range[1],0);
+      if(error<best.error)best={scale:candidate,height,error,samplePhaseY:0};if(!error)break;
+    }
+    reset();const sp=draw(model,{...options,scale:best.scale,samplePhaseY:best.samplePhaseY}).sp;decorate(sp);
+    return {options:{...options,scale:best.scale,samplePhaseY:best.samplePhaseY},sprite:sp,stats};
+  }
+  const range=sizePixelRange(S.id,level,standingWitchHeight(st)),observations=[];
+  let scale=options.scale,best=null,samplePhaseY=0;
+  for(let attempt=0;attempt<3;attempt++){
     reset();
-    const sp=render(model,{...options,scale}).sp;decorate(sp);
-    const height=occupiedHeight(sp),error=Math.abs(height-options.sizeTarget);
-    if(!best||error<best.error)best={scale,height,error,samplePhaseY:0};
+    const sp=draw(model,{...options,scale,samplePhaseY}).sp;decorate(sp);
+    const height=occupiedHeight(sp),error=Math.max(range[0]-height,height-range[1],0);
+    if(!best||error<best.error)best={scale,height,error,samplePhaseY,sp};
+    observations.push({scale,height});
     if(!error)break;
-    if(height<options.sizeTarget)lo=scale;else hi=scale;
-    scale=lo!=null&&hi!=null?(lo+hi)/2:scale*options.sizeTarget/Math.max(1,height);
-  }
-  if(best.error)for(const samplePhaseY of [.125,.25,.375,.5,.625,.75,.875]){
-    reset();const sp=render(model,{...options,scale:best.scale,samplePhaseY}).sp;decorate(sp);
-    const height=occupiedHeight(sp),error=Math.abs(height-options.sizeTarget);
-    if(error<best.error)best={scale:best.scale,height,error,samplePhaseY};
-    if(!error)break;
-  }
-  if(best.error)for(const multiplier of [.99,1.01,.98,1.02]){
-    reset();const candidateScale=best.scale*multiplier,sp=render(model,{...options,scale:candidateScale,samplePhaseY:0}).sp;decorate(sp);
-    const height=occupiedHeight(sp),error=Math.abs(height-options.sizeTarget);
-    if(error<best.error)best={scale:candidateScale,height,error,samplePhaseY:0};
-    if(!error)break;
+    if(attempt===0)scale*= (options.sizeTarget-.5)/Math.max(1,height);
+    else {
+      const a=observations[0],b=observations[1],slope=(b.height-a.height)/(b.scale-a.scale);
+      const candidate=Number.isFinite(slope)&&slope>0?scale+(options.sizeTarget-.5-height)/slope:scale*options.sizeTarget/Math.max(1,height);
+      const damped=Math.abs(options.sizeTarget-height)<=2?scale+(candidate-scale)*.5:candidate;
+      scale=Math.max(scale*.85,Math.min(scale*1.15,damped));samplePhaseY=range[0]===range[1]?.125:0;
+    }
   }
   if(fittedScales.size>=128)fittedScales.delete(fittedScales.keys().next().value);
   fittedScales.set(key,{scale:best.scale,samplePhaseY:best.samplePhaseY});
   reset();if(atScale){model.atScale=null;atScale(best.scale);}
-  return {options:{...options,scale:best.scale,samplePhaseY:best.samplePhaseY}};
+  return {options:{...options,scale:best.scale,samplePhaseY:best.samplePhaseY},sprite:best.sp,stats};
 }
 
 
@@ -10232,12 +10288,25 @@ let VIEW = null;
 function withView(view, f) { const was = VIEW; VIEW = view; try { return f(); } finally { VIEW = was; } }
 const viewKey = () => VIEW ? `view${VIEW.yaw ?? ""},${VIEW.pitch ?? ""}` : "";
 const drawForm = (m, o, S, level, st) => {
+  const dressed = m.sizeBody ? { parts: m.parts, flats: m.flats, atScale: m.atScale, part: m.part, values: m.parts.map(p => ({...p})) } : null;
+  if (dressed) { m.parts = m.sizeBody.parts.slice(); m.flats = m.sizeBody.flats.slice(); }
   o = creatureSizeOptions(m, o, S, level, st);
   const decorate = sp => { const n = S.sizes.motes?.[level]; if (n) glowMotes(sp, S.plan === "owl" ? 31 : S.id.length * (S.q ? 7919 : 131), n, S.q && S.id === "snowleopard"); };
   const fitted = fitOccupiedCreature(m, o, S, level, st, decorate);
+  if (dressed) {
+    for (let i=0;i<dressed.parts.length;i++) Object.assign(dressed.parts[i],dressed.values[i]);
+    m.parts=dressed.parts; m.flats=dressed.flats; m.atScale=dressed.atScale; m.part=dressed.part;
+    fitted.sprite=null; // gear keeps the calibrated body scale, then draws on top
+  }
   o = VIEW ? { ...fitted.options, ...VIEW } : fitted.options;
-  if (FORM) return FORM(m, o, S, level);
-  const sp = render(m, o).sp; decorate(sp); return sp;
+  if (FORM) {
+    // Pose transforms move the already-built face and its anchors together.
+    // A restored dressed model must apply pixel-sized face geometry first.
+    if (m.atScale) { const atScale=m.atScale; m.atScale=null; atScale(o.scale); }
+    return FORM(m, o, S, level);
+  }
+  if (fitted.sprite && !VIEW) { fitted.sprite.sizeFit = fitted.stats; return fitted.sprite; }
+  const sp = render(m, o).sp; decorate(sp); sp.sizeFit = { ...fitted.stats, rasters: fitted.stats.rasters + 1 }; return sp;
 };
 function withGear(gear, f) { const was = GEAR; GEAR = gear; try { return f(); } finally { GEAR = was; } }
 // A little party shoe (Ed, 2026-10-05: "yes, little party shoes"): on a foot { c, r, group, fit } in a style
@@ -10264,8 +10333,16 @@ function shoe3d(m, f, style, o = {}) {
 const star = (s, t) => { const a = Math.atan2(t, s), r = Math.hypot(s, t); return r < .55 + .4 * Math.pow(Math.abs(Math.cos(a * 2.5 + Math.PI / 2)), 3); };
 const heart = (s, t) => { const x = s * 1.2, y = -t * 1.2 + .25; return Math.pow(x * x + y * y - .6, 3) - x * x * y * y * y < 0; };
 function gearUp(m) {
-  if (TEX) textureLumps(m, TEX.S, TEX.level, TEX.st); // its body's lumps (before anything's added to it)
+  if (TEX && TEX.st?.texture === 0) {
+    // Calibrate against the same textured anatomy, then draw the requested
+    // smooth surface. Toggling texture must not choose another body scale.
+    const old = m.parts.map(p => ({p,had:Object.hasOwn(p,"rough"),rough:p.rough}));
+    textureLumps(m,TEX.S,TEX.level,{...TEX.st,texture:1});
+    m.sizeBody = {parts:m.parts.map(p=>({...p})),flats:m.flats.slice()};
+    for (const {p,had,rough} of old) { if(had)p.rough=rough;else delete p.rough; }
+  } else if (TEX) textureLumps(m, TEX.S, TEX.level, TEX.st); // its body's lumps (before anything's added to it)
   const g = GEAR, A = m.anchors; if (!g) return;
+  m.sizeBody ||= {parts:m.parts.slice(),flats:m.flats.slice()};
   faceUp(m, g.face, g.faceStyle); // its expression, part of its face (genome/expressions.js)
   const was = m.part; m.part = "head"; // the collar, hat and glasses ride on the head (the live rig's head piece: genome/parts.js)
   const head = A.head, hr = head ? Math.max(...head.r) : .2;
@@ -12078,10 +12155,11 @@ function hydra3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, m = new Model(), ph = frame ? .6 : 0, heads = (S.hydra?.heads || [1, 3, 5, 7])[level], crest = !!S.hydra?.crest, pts = [];
   for (let i = 0; i <= 10; i++) { const t = i / 10; pts.push([-.75 + t * .95, .07, Math.sin(t * Math.PI * 1.6 + ph) * .2 * (1 - t * .4), .035 + .05 * Math.sin(Math.min(1, t * 1.3) * Math.PI / 2)]); }
   m.chain(pts, M.BODY, { paint: p => p[1] < .06 ? M.BELLY : spotty([p[0] * 1.5, p[1], p[2]], 12, .28) ? M.BODY3 : undefined });
-  const root = pts[10].slice(0, 3), hr = .058; const eyes = []; // every head's eyes (the face's anchors: each head shuts its eyes asleep, frowns angry)
+  const root = pts[10].slice(0, 3), hr = .058; const eyes = [], faces = []; // each head needs its own local face axes
   // a serpent's head at `at` pointing along `dir` (mostly forward and towards us, a little down): skull, long snout, lower jaw
   // (open by `open`, its mouth dark, two fangs), a glinting eye each side, a crest of spines and side frills if draconic
   const head = (at, dir, h, open, group) => {
+    const localEyes = [];
     const d = v3.norm(dir), side = v3.norm(v3.cross(d, [0, 1, 0])), up = v3.norm(v3.cross(side, d));
     m.ell(at, [h * 1.05, h * .72, h * .8], M.BODY, { dir: d, group, paint: p => v3.dot(v3.sub(p, at), up) > h * .45 ? M.BODY3 : undefined }); // its brow darker
     const sn = v3.add(at, v3.add(v3.mul(d, h * 1.5), v3.mul(up, -h * .15)));
@@ -12091,7 +12169,8 @@ function hydra3d(S, level, frame, st, facing = "towards") {
     if (open > .1) { m.ell(v3.lerp(sn, jc, .5), [h * .75, h * .2, h * .38], M.NOSE, { dir: v3.norm(v3.add(d, jd)), group });
       for (const s2 of [-1, 1]) { const f = v3.add(sn, v3.add(v3.mul(d, h * .7), v3.mul(side, s2 * h * .3))); m.seg(f, v3.add(f, v3.mul(up, -h * .35)), h * .07, h * .02, M.ACCENT, { group }); } }
     for (const s2 of [-1, 1]) { const e = v3.add(at, v3.add(v3.add(v3.mul(d, h * .35), v3.mul(up, h * .48)), v3.mul(side, s2 * h * .55)));
-      m.ell(e, [h * .17, h * .13, h * .17], M.PUPIL, { group: 1 }); eyes.push(e); m.ell(v3.add(e, [h * .05, h * .06, h * .09]), [h * .055, h * .055, h * .055], M.GLINT, { group: 1 }); } // a dark slit eye, a glint in it (no glow, its legend's either: ART-GUIDE §0c)
+      m.ell(e, [h * .17, h * .13, h * .17], M.PUPIL, { group: 1 }); eyes.push(e); localEyes.push(e); m.ell(v3.add(e, [h * .05, h * .06, h * .09]), [h * .055, h * .055, h * .055], M.GLINT, { group: 1 }); } // a dark slit eye, a glint in it (no glow, its legend's either: ART-GUIDE §0c)
+    faces.push({head:{c:at,r:[h,h*.8,h*.8],group},eyes:{pts:localEyes,size:h*.17}});
     m.anchors.head ||= { c: at, r: [h, h * .8, h * .8] };
     if (crest) { for (let k = 0; k < 4; k++) { const b = v3.add(at, v3.add(v3.mul(d, -h * (.1 + k * .3)), v3.mul(up, h * .7))); m.chain([[...b, h * .16], [...v3.add(b, v3.add(v3.mul(up, h * (1.2 - k * .15)), v3.mul(d, -h * .6))), h * .02]], M.BODY3, { group, extra: true }); }
       for (const s2 of [-1, 1]) m.flat(v3.add(at, v3.add(v3.mul(side, s2 * h * 1.1), v3.mul(d, -h * .45))), v3.norm(v3.add(v3.mul(side, s2), v3.mul(d, -.6))), up, h * .85, h * 1.1, masks.ear(M.BODY2, M.BODY3, M.BODY3), { group }); }
@@ -12117,6 +12196,7 @@ function hydra3d(S, level, frame, st, facing = "towards") {
   }
   m.rig = { spine: pts.map(p => p.slice()), head: main, hr };
   m.anchors.eyes = { pts: eyes, size: hr * (legend ? 1.25 : 1.1) * .17 };
+  m.anchors.faces = faces;
   m.anchors.feet.push({ c: v3.add(pts[0].slice(0, 3), [-.02, -.01, 0]), r: .06, group: 3, tail: true }); // no feet: a tiny shoe on the tail tip
   m.anchors.neck = { c: v3.lerp(root, main, .3), r: .06, dir: v3.norm(v3.sub(main, root)) };
   m.part = "body";
@@ -20418,7 +20498,7 @@ function lgMove(m, f) {
 function lgForm(S, { breath }) {
   const pose = LEGEND_POSES[S.id], over = pose.over;
   const form = (m, o) => {
-    const s = render(m, { ...o, measure: true }).s; // the awake legend's scale
+    const standing = render(m, { ...o, measure: true }), s = standing.s; // the awake legend's scale and allocated height
     const r = rng(S.id.length * 977 + 31);
     lgGroup = 200;
     // the ground line it sleeps sunk to
@@ -20480,10 +20560,17 @@ function lgForm(S, { breath }) {
     for (let i = 0; i < (over.stones || 0); i++) lgAddStone(m, v3.add(round(i * 3 + 1), [0, unit * .02, 0]), unit * uni(r, .1, .2), r);
     if (over.nest) lgAddNest(m, [cx, G + unit * .08, 0], Math.max(rz, rx * .6) * 1.05, unit * .08, r);
     m.clipY = G;
-    const res = render(m, { scale: s, facing: o.facing });
-    res.sp.origin = res.project([cx, G, 0]); // the ground under its middle, on the sprite
-    res.sp.groundLine = G;
-    return res.sp;
+    let scale = s, sp;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const res = render(m, { scale, facing: o.facing });
+      res.sp.origin = res.project([cx, G, 0]); // the ground under its middle, on the sprite
+      res.sp.groundLine = G;
+      sp = res.sp;
+      const height = lgCrop(sp).h;
+      if (!o.sizeTarget || height <= standing.height) break;
+      scale *= (standing.height - .5) / height;
+    }
+    return sp;
   };
   form.motes = false;
   form.fold = pose.fold ?? 0; // (a builder that can fold itself up asleep reads it: the heron's neck laid back onto its shoulders)
