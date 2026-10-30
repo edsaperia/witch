@@ -17,16 +17,16 @@ if (process.argv.includes("--worker")) {
     process.stdout.write(JSON.stringify({ status: "completed", startUTC, endUTC: new Date().toISOString(), simulationWallSeconds: (performance.now() - at) / 1000, row }));
   } finally { await R.close(); }
 } else {
-  const startUTC = new Date().toISOString(), started = performance.now();
+  const startUTC = new Date(performance.timeOrigin).toISOString();
   console.error(`Calibration started ${startUTC}; single worker, below-normal priority, hard 600 s cap`);
   const child = spawn(process.execPath, [fileURLToPath(import.meta.url), "--worker"], { stdio: ["ignore", "pipe", "inherit"] });
   let output = "", timedOut = false;
   child.stdout.on("data", chunk => { output += chunk; });
-  const timer = setTimeout(() => { timedOut = true; child.kill(); }, 600000);
+  const timer = setTimeout(() => { timedOut = true; child.kill(); }, Math.max(0, 600000 - performance.now()));
   const code = await new Promise((done, reject) => { child.on("error", reject); child.on("close", done); });
   clearTimeout(timer);
   const result = timedOut ? { status: "hard-wall-cutoff", completedCase: false } : code === 0 ? JSON.parse(output) : { status: "error", exitCode: code, output };
-  const record = { ...result, processStartUTC: startUTC, processEndUTC: new Date().toISOString(), totalWallSeconds: (performance.now() - started) / 1000, hardCapSeconds: 600 };
+  const record = { ...result, processStartUTC: startUTC, processEndUTC: new Date().toISOString(), totalWallSeconds: performance.now() / 1000, hardCapSeconds: 600 };
   const out = resolve(arg("out", "docs/notes/expert-results/full-night-calibration.json"));
   mkdirSync(dirname(out), { recursive: true }); writeFileSync(out, JSON.stringify(record, null, 2) + "\n");
   console.log(JSON.stringify(record));

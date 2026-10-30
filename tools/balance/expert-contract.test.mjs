@@ -45,6 +45,10 @@ test("runCase uses exact seeds/loadout/tempo and rejects unsupported cells", asy
     assert.equal(a.result.wearsHat, false); assert.deepEqual(a.result.parts, []);
     assert.equal((await r.runCase({ ...c, hat: "not-a-hat" }, lock)).status, "unsupported");
     assert.equal((await r.runCase({ ...c, broomPart: "not-a-part" }, lock)).status, "unsupported");
+    const sloppy = await r.runCase({ ...c, bot: "sloppy" }, lock);
+    assert.equal(sloppy.status, "ok");
+    assert.equal(sloppy.result.bot, "sloppy");
+    assert.match(sloppy.observation, /privileged observation/);
     const fixture = await r.runCase({ ...c, kind: "stun", species: "fox", rank: 3, limit: 0.5 }, lock);
     if (fixture.status === "ok") { assert.equal(fixture.result.actualBoss, true); assert.equal(fixture.result.actualRank, 3); }
     else assert.match(fixture.reason, /Exact natural species\/rank absent/);

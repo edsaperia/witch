@@ -54,15 +54,17 @@ export function newObserver() {
     const next = nextCell ? g.map.soundsystemSpot(nextCell[0], nextCell[1]) : null;
     const straggler = winTarget(g); // The public straggler pointer, not a full entity.
     const quests: Observation["quests"] = [];
-    if (b.mode === "ground" && !b.perch) for (const c of g.creatures) {
-      if (!c.boss || c.gone || !c.quest || !visible(c) || Math.hypot(c.x - b.x, c.z - b.z) > t.dreams.range) continue;
+    const dreamers = g.creatures.filter(c => c.boss && !c.gone && c.quest && visible(c) && Math.hypot(c.x - b.x, c.z - b.z) <= t.dreams.range).sort((a, c) => Math.hypot(a.x - b.x, a.z - b.z) - Math.hypot(c.x - b.x, c.z - b.z)).slice(0, 4);
+    if (b.mode === "ground" && !b.perch) for (const c of dreamers) {
+      const open = questOpen(g.party, c);
       const clearing = g.map.legendClearing?.(c.cell[0], c.cell[1]);
-      const destination = dreamStone(g.map, c.quest.species, b.x, b.z);
+      const destination = open ? dreamStone(g.map, c.quest!.species, b.x, b.z) : null;
       const way = destination ? dreamWay(b, destination) : null;
       // The bubble gives eight-way direction and rounded distance, not an exact
       // unseen target coordinate. The approximation treats its cycling sigil as readable.
-      const metres = way ? Math.round(way.metres / 10) * 10 : 0, angle = way ? way.point * Math.PI / 4 : 0;
-      quests.push({ id: c.id, wants: c.quest.species, open: questOpen(g.party, c), delivery: clearing ? { x: clearing.x, z: clearing.z } : { x: c.x + 4, z: c.z + 4 }, hint: way ? { x: b.x + Math.sin(angle) * metres, z: b.z - Math.cos(angle) * metres } : null });
+      const precision = way && way.metres >= 1000 ? 100 : 10;
+      const metres = way && way.metres > 20 ? Math.round(way.metres / precision) * precision : 0, angle = way ? way.point * Math.PI / 4 : 0;
+      quests.push({ id: c.id, wants: open ? c.quest!.species : "", open, delivery: clearing ? { x: clearing.x, z: clearing.z } : { x: c.x + 4, z: c.z + 4 }, hint: way ? { x: b.x + Math.sin(angle) * metres, z: b.z - Math.cos(angle) * metres } : null });
     }
     return {
       playerTime: g.herTime, worldTime: time,

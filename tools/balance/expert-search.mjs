@@ -22,7 +22,7 @@ if (!process.argv.includes("--worker")) {
   if (!Number.isFinite(cap) || cap <= 0 || cap > (cloud ? 3600 : 600)) throw Error("Invalid hard wall cap");
   const child = spawn(process.execPath, [fileURLToPath(import.meta.url), ...process.argv.slice(2), "--worker"], { stdio: "inherit" });
   let timedOut = false;
-  const timer = setTimeout(() => { timedOut = true; child.kill(); }, cap * 1000);
+  const timer = setTimeout(() => { timedOut = true; child.kill(); }, Math.max(0, cap * 1000 - performance.now()));
   const code = await new Promise((resolveExit, reject) => { child.on("error", reject); child.on("exit", c => resolveExit(c)); });
   clearTimeout(timer);
   if (timedOut) console.error("Hard wall cap reached; completed-case checkpoints preserved; interrupted case must replay");

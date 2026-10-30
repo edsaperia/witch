@@ -69,4 +69,14 @@ describe("expert observation and human input boundary", () => {
     w.body.mode = "descending";
     g.herTime = 0.383333333333; expect(bot.decide(g).toggleMode).toBe(false);
   });
+
+  it("does not reveal the requested species behind a closed dream bubble", () => {
+    const g = newGame(1000, TUNING), w = g.witches[0], legend = g.creatures.find(c => c.boss && c.quest)!;
+    w.body = { ...w.body, seated: false, perch: false, mode: "ground", x: legend.x, z: legend.z };
+    legend.questOpen = false;
+    const observe = newObserver(), before = observe(g);
+    expect(before.quests.find(q => q.id === legend.id)?.wants).toBe("");
+    legend.quest!.species = "unobservable-request";
+    expect(observe(g)).toEqual(before);
+  });
 });
