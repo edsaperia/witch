@@ -1,0 +1,2676 @@
+[
+  {
+    "species": "badger",
+    "note": "a shoulder-barge lunge that knocks her back",
+    "body": "melee",
+    "pattern": "single",
+    "style": "melee+single+knockback",
+    "range": 2.5,
+    "adultRange": 2.75,
+    "windup": 0.6,
+    "cooldown": 1.8,
+    "tell": {
+      "pose": "crouch"
+    },
+    "telegraph": "flash",
+    "youngWarning": 0.6,
+    "adultWarning": 0.6,
+    "rawWarning": 0.6,
+    "firstOwnWarning": 0.6,
+    "hit": {
+      "effect": {
+        "knockback": 7
+      }
+    },
+    "paths": [],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "dormouse",
+    "note": "a quick seed flicked straight at her",
+    "body": "bolt",
+    "pattern": "single",
+    "style": "bolt+single",
+    "range": 20,
+    "adultRange": 22,
+    "windup": 0.6,
+    "cooldown": 1.8,
+    "tell": null,
+    "telegraph": "lane",
+    "youngWarning": 0.6,
+    "adultWarning": 0.6,
+    "rawWarning": 0.6,
+    "firstOwnWarning": 0.6,
+    "hit": {},
+    "paths": [],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "fox",
+    "note": "a foxfire wisp curving in",
+    "body": "bolt",
+    "pattern": "single",
+    "style": "bolt+single+curve",
+    "range": 18,
+    "adultRange": 19.8,
+    "windup": 0.6,
+    "cooldown": 1.8,
+    "tell": {
+      "pose": "glow",
+      "glow": 0.5
+    },
+    "telegraph": "lane",
+    "youngWarning": 0.6,
+    "adultWarning": 0.6,
+    "rawWarning": 0.6,
+    "firstOwnWarning": 0.6,
+    "hit": {},
+    "paths": [
+      {
+        "curve": 30
+      }
+    ],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "hare",
+    "note": "a stamp: the ground jolts round it",
+    "body": "area",
+    "pattern": "single",
+    "style": "area+single",
+    "range": 3,
+    "adultRange": 3.3,
+    "windup": 0.6,
+    "cooldown": 1.8,
+    "tell": {
+      "pose": "stamp"
+    },
+    "telegraph": "ring",
+    "youngWarning": 0.6,
+    "adultWarning": 0.6,
+    "rawWarning": 0.6,
+    "firstOwnWarning": 0.6,
+    "hit": {
+      "damage": 0.8
+    },
+    "paths": [],
+    "area": {
+      "r": 4
+    },
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "hedgehog",
+    "note": "a ring of quills, short reach",
+    "body": "bolt",
+    "pattern": "ring",
+    "style": "bolt+ring",
+    "range": 6,
+    "adultRange": 6.6,
+    "windup": 0.7,
+    "cooldown": 2.2,
+    "tell": {
+      "pose": "spread"
+    },
+    "telegraph": "lane",
+    "youngWarning": 0.7,
+    "adultWarning": 0.7,
+    "rawWarning": 0.7,
+    "firstOwnWarning": 0.7,
+    "hit": {
+      "damage": 0.5
+    },
+    "paths": [],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "marten",
+    "note": "two pinecones thrown in quick succession",
+    "body": "bolt",
+    "pattern": "burst",
+    "style": "bolt+burst",
+    "range": 18,
+    "adultRange": 19.8,
+    "windup": 0.6,
+    "cooldown": 2,
+    "tell": null,
+    "telegraph": "lane",
+    "youngWarning": 0.6,
+    "adultWarning": 0.6,
+    "rawWarning": 0.6,
+    "firstOwnWarning": 0.6,
+    "hit": {
+      "damage": 0.6
+    },
+    "paths": [],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "mole",
+    "note": "the ground heaves up where she stood",
+    "body": "area",
+    "pattern": "single",
+    "style": "area+single+target",
+    "range": 20,
+    "adultRange": 22,
+    "windup": 0.9,
+    "cooldown": 2.4,
+    "tell": {
+      "pose": "stamp"
+    },
+    "telegraph": "ring",
+    "youngWarning": 0.9,
+    "adultWarning": 0.9,
+    "rawWarning": 0.9,
+    "firstOwnWarning": 0.9,
+    "hit": {},
+    "paths": [],
+    "area": {
+      "r": 3,
+      "at": "target"
+    },
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "snail",
+    "note": "a slime patch round it that slows",
+    "body": "zone",
+    "pattern": "single",
+    "style": "zone+single+slow",
+    "range": 4,
+    "adultRange": 4.4,
+    "windup": 0.8,
+    "cooldown": 3,
+    "tell": null,
+    "telegraph": "ring",
+    "youngWarning": 0.8,
+    "adultWarning": 0.8,
+    "rawWarning": 0.8,
+    "firstOwnWarning": 0.8,
+    "hit": {
+      "effect": {
+        "slow": {
+          "mult": 0.6,
+          "time": 1
+        }
+      }
+    },
+    "paths": [],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "squirrel",
+    "note": "an acorn lobbed onto where she stands",
+    "body": "lob",
+    "pattern": "single",
+    "style": "lob+single",
+    "range": 22,
+    "adultRange": 24.2,
+    "windup": 0.6,
+    "cooldown": 2,
+    "tell": null,
+    "telegraph": "landing",
+    "youngWarning": 1.6,
+    "adultWarning": 1.6,
+    "rawWarning": 1.6,
+    "firstOwnWarning": 1.6,
+    "hit": {},
+    "paths": [],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 1.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "stoat",
+    "note": "the fastest, longest lunge at home",
+    "body": "melee",
+    "pattern": "single",
+    "style": "melee+single",
+    "range": 2,
+    "adultRange": 2.2,
+    "windup": 0.5,
+    "cooldown": 1.4,
+    "tell": {
+      "pose": "coil"
+    },
+    "telegraph": "flash",
+    "youngWarning": 0.5,
+    "adultWarning": 0.5,
+    "rawWarning": 0.5,
+    "firstOwnWarning": 0.5,
+    "hit": {},
+    "paths": [],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "beaver",
+    "note": "three logs rolled at her side by side",
+    "body": "runner",
+    "pattern": "wall",
+    "style": "runner+wall+knockback",
+    "range": 16,
+    "adultRange": 17.6,
+    "windup": 0.8,
+    "cooldown": 2.6,
+    "tell": {
+      "pose": "rear"
+    },
+    "telegraph": "lane",
+    "youngWarning": 0.8,
+    "adultWarning": 0.8,
+    "rawWarning": 0.8,
+    "firstOwnWarning": 0.8,
+    "hit": {
+      "damage": 0.6,
+      "effect": {
+        "knockback": 5
+      }
+    },
+    "paths": [],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "boar",
+    "note": "a goring sweep in an arc in front",
+    "body": "area",
+    "pattern": "single",
+    "style": "area+single+cone+knockback",
+    "range": 3,
+    "adultRange": 3.3,
+    "windup": 0.7,
+    "cooldown": 2,
+    "tell": {
+      "pose": "crouch"
+    },
+    "telegraph": "ring",
+    "youngWarning": 0.7,
+    "adultWarning": 0.7,
+    "rawWarning": 0.7,
+    "firstOwnWarning": 0.7,
+    "hit": {
+      "effect": {
+        "knockback": 9
+      }
+    },
+    "paths": [],
+    "area": {
+      "shape": "cone",
+      "r": 4.5,
+      "angle": 70
+    },
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "moth",
+    "note": "a fluttering puff of dust that slows",
+    "body": "bolt",
+    "pattern": "single",
+    "style": "bolt+single+slow+wave",
+    "range": 24,
+    "adultRange": 26.4,
+    "windup": 0.7,
+    "cooldown": 2.2,
+    "tell": {
+      "pose": "spread",
+      "glow": 0.5
+    },
+    "telegraph": "lane",
+    "youngWarning": 0.7,
+    "adultWarning": 0.7,
+    "rawWarning": 0.7,
+    "firstOwnWarning": 0.7,
+    "hit": {
+      "effect": {
+        "slow": {
+          "mult": 0.6,
+          "time": 1.5
+        }
+      }
+    },
+    "paths": [
+      {
+        "wave": {
+          "amp": 1.5,
+          "freq": 1.5
+        }
+      }
+    ],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "newt",
+    "note": "a slime streak that passes through and slows",
+    "body": "bolt",
+    "pattern": "single",
+    "style": "bolt+single+slow",
+    "range": 18,
+    "adultRange": 19.8,
+    "windup": 0.7,
+    "cooldown": 2.2,
+    "tell": null,
+    "telegraph": "lane",
+    "youngWarning": 0.7,
+    "adultWarning": 0.7,
+    "rawWarning": 0.7,
+    "firstOwnWarning": 0.7,
+    "hit": {
+      "effect": {
+        "slow": {
+          "mult": 0.7,
+          "time": 1.5
+        }
+      }
+    },
+    "paths": [],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "stag",
+    "note": "stamps marching out in a line toward her",
+    "body": "area",
+    "pattern": "single",
+    "style": "area+single+line+knockback",
+    "range": 10,
+    "adultRange": 11,
+    "windup": 0.8,
+    "cooldown": 2.4,
+    "tell": {
+      "pose": "rear"
+    },
+    "telegraph": "ring",
+    "youngWarning": 0.8,
+    "adultWarning": 0.8,
+    "rawWarning": 0.8,
+    "firstOwnWarning": 0.8,
+    "hit": {
+      "damage": 0.5,
+      "effect": {
+        "knockback": 6
+      }
+    },
+    "paths": [],
+    "area": {
+      "shape": "line",
+      "n": 4,
+      "r": 1.8,
+      "spacing": 2.5,
+      "delay": 0.15
+    },
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "toad",
+    "note": "a hop-splash lob that bounces once",
+    "body": "lob",
+    "pattern": "single",
+    "style": "lob+single+bounce",
+    "range": 20,
+    "adultRange": 22,
+    "windup": 0.7,
+    "cooldown": 2.2,
+    "tell": {
+      "pose": "crouch"
+    },
+    "telegraph": "landing",
+    "youngWarning": 1.5,
+    "adultWarning": 1.5,
+    "rawWarning": 1.5,
+    "firstOwnWarning": 1.5,
+    "hit": {
+      "damage": 0.6
+    },
+    "paths": [],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 1.4
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "elk",
+    "note": "a frost stamp: a ring spreading out that knocks back",
+    "body": "area",
+    "pattern": "single",
+    "style": "area+single+ring+knockback+grow",
+    "range": 6,
+    "adultRange": 6.6,
+    "windup": 0.8,
+    "cooldown": 2.6,
+    "tell": {
+      "pose": "stamp"
+    },
+    "telegraph": "ring",
+    "youngWarning": 0.8,
+    "adultWarning": 0.8,
+    "rawWarning": 0.8,
+    "firstOwnWarning": 0.8,
+    "hit": {
+      "effect": {
+        "knockback": 6
+      }
+    },
+    "paths": [],
+    "area": {
+      "shape": "ring",
+      "r": 9,
+      "width": 1.5,
+      "grow": 12
+    },
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "wolf",
+    "note": "a frost bite lunge that slows and knocks back",
+    "body": "melee",
+    "pattern": "single",
+    "style": "melee+single+slow+knockback",
+    "range": 2,
+    "adultRange": 2.2,
+    "windup": 0.55,
+    "cooldown": 1.6,
+    "tell": {
+      "pose": "crouch"
+    },
+    "telegraph": "flash",
+    "youngWarning": 0.55,
+    "adultWarning": 0.55,
+    "rawWarning": 0.55,
+    "firstOwnWarning": 0.55,
+    "hit": {
+      "effect": {
+        "slow": {
+          "mult": 0.6,
+          "time": 1.5
+        },
+        "knockback": 5
+      }
+    },
+    "paths": [],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "owl",
+    "note": "a silent feather homing in, speeding up",
+    "body": "bolt",
+    "pattern": "single",
+    "style": "bolt+single+accel+home",
+    "range": 26,
+    "adultRange": 28.6,
+    "windup": 0.8,
+    "cooldown": 2.6,
+    "tell": {
+      "pose": "spread",
+      "glow": 0.6
+    },
+    "telegraph": "lane",
+    "youngWarning": 0.8,
+    "adultWarning": 0.8,
+    "rawWarning": 0.8,
+    "firstOwnWarning": 0.8,
+    "hit": {},
+    "paths": [
+      {
+        "home": {
+          "turn": 60,
+          "after": 0.3,
+          "giveUp": 4
+        }
+      }
+    ],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "raccoon",
+    "note": "a junk can thrown out and coming back",
+    "body": "bolt",
+    "pattern": "single",
+    "style": "bolt+single+boomerang",
+    "range": 18,
+    "adultRange": 19.8,
+    "windup": 0.7,
+    "cooldown": 2.4,
+    "tell": null,
+    "telegraph": "lane",
+    "youngWarning": 0.7,
+    "adultWarning": 0.7,
+    "rawWarning": 0.7,
+    "firstOwnWarning": 0.7,
+    "hit": {
+      "damage": 0.6
+    },
+    "paths": [
+      {
+        "boomerang": {
+          "out": 14
+        }
+      }
+    ],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "cat",
+    "note": "three short claw slashes in a fan",
+    "body": "bolt",
+    "pattern": "fan",
+    "style": "bolt+fan",
+    "range": 6,
+    "adultRange": 6.6,
+    "windup": 0.6,
+    "cooldown": 1.8,
+    "tell": {
+      "pose": "crouch"
+    },
+    "telegraph": "lane",
+    "youngWarning": 0.6,
+    "adultWarning": 0.6,
+    "rawWarning": 0.6,
+    "firstOwnWarning": 0.6,
+    "hit": {
+      "damage": 0.5
+    },
+    "paths": [],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "fennec",
+    "note": "a sweeping spray of sand, slowing as it goes",
+    "body": "bolt",
+    "pattern": "spray",
+    "style": "bolt+spray+decel",
+    "range": 10,
+    "adultRange": 11,
+    "windup": 0.6,
+    "cooldown": 2,
+    "tell": {
+      "pose": "stamp"
+    },
+    "telegraph": "lane",
+    "youngWarning": 0.6,
+    "adultWarning": 0.6,
+    "rawWarning": 0.6,
+    "firstOwnWarning": 0.6,
+    "hit": {
+      "damage": 0.35
+    },
+    "paths": [],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "bat",
+    "note": "a screech: a ring spreading out that slows",
+    "body": "area",
+    "pattern": "single",
+    "style": "area+single+ring+slow+grow",
+    "range": 4,
+    "adultRange": 4.4,
+    "windup": 0.6,
+    "cooldown": 1.8,
+    "tell": {
+      "pose": "spread"
+    },
+    "telegraph": "ring",
+    "youngWarning": 0.6,
+    "adultWarning": 0.6,
+    "rawWarning": 0.6,
+    "firstOwnWarning": 0.6,
+    "hit": {
+      "damage": 0.8,
+      "effect": {
+        "slow": {
+          "mult": 0.7,
+          "time": 1
+        }
+      }
+    },
+    "paths": [],
+    "area": {
+      "shape": "ring",
+      "r": 7,
+      "width": 1.5,
+      "grow": 14
+    },
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "snake",
+    "note": "a curving, weaving venom spit that slows",
+    "body": "bolt",
+    "pattern": "single",
+    "style": "bolt+single+slow+curve+wave",
+    "range": 18,
+    "adultRange": 19.8,
+    "windup": 0.7,
+    "cooldown": 2.2,
+    "tell": {
+      "pose": "coil"
+    },
+    "telegraph": "lane",
+    "youngWarning": 0.7,
+    "adultWarning": 0.7,
+    "rawWarning": 0.7,
+    "firstOwnWarning": 0.7,
+    "hit": {
+      "effect": {
+        "slow": {
+          "mult": 0.6,
+          "time": 2
+        }
+      }
+    },
+    "paths": [
+      {
+        "curve": 35
+      },
+      {
+        "wave": {
+          "amp": 0.8,
+          "freq": 2
+        }
+      }
+    ],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "heron",
+    "note": "a beak-spear that speeds up and pierces",
+    "body": "bolt",
+    "pattern": "single",
+    "style": "bolt+single+accel",
+    "range": 26,
+    "adultRange": 28.6,
+    "windup": 0.8,
+    "cooldown": 2.4,
+    "tell": {
+      "pose": "rear"
+    },
+    "telegraph": "lane",
+    "youngWarning": 0.8,
+    "adultWarning": 0.8,
+    "rawWarning": 0.8,
+    "firstOwnWarning": 0.8,
+    "hit": {},
+    "paths": [],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "otter",
+    "note": "a skimming pebble, bouncing twice",
+    "body": "lob",
+    "pattern": "single",
+    "style": "lob+single+bounce",
+    "range": 20,
+    "adultRange": 22,
+    "windup": 0.6,
+    "cooldown": 2,
+    "tell": null,
+    "telegraph": "landing",
+    "youngWarning": 1.2,
+    "adultWarning": 1.2,
+    "rawWarning": 1.2,
+    "firstOwnWarning": 1.2,
+    "hit": {
+      "damage": 0.5
+    },
+    "paths": [],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 1.2
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "lynx",
+    "note": "a pouncing lunge that stuns",
+    "body": "melee",
+    "pattern": "single",
+    "style": "melee+single+stun+knockback",
+    "range": 2.5,
+    "adultRange": 2.75,
+    "windup": 0.6,
+    "cooldown": 2,
+    "tell": {
+      "pose": "coil"
+    },
+    "telegraph": "flash",
+    "youngWarning": 0.6,
+    "adultWarning": 0.6,
+    "rawWarning": 0.6,
+    "firstOwnWarning": 0.6,
+    "hit": {
+      "effect": {
+        "stun": 0.3,
+        "knockback": 4
+      }
+    },
+    "paths": [],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "raven",
+    "note": "two curving feathers relayed through its packmate",
+    "body": "bolt",
+    "pattern": "fan",
+    "style": "bolt+fan+curve+relay",
+    "range": 28,
+    "adultRange": 30.8,
+    "windup": 0.8,
+    "cooldown": 2.6,
+    "tell": {
+      "pose": "spread"
+    },
+    "telegraph": "lane",
+    "youngWarning": 0.8,
+    "adultWarning": 0.8,
+    "rawWarning": 0.8,
+    "firstOwnWarning": 0.8,
+    "hit": {
+      "damage": 0.6
+    },
+    "paths": [
+      {
+        "curve": -25
+      }
+    ],
+    "area": null,
+    "beam": null,
+    "pack": {
+      "relay": {
+        "n": 1
+      }
+    },
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "ram",
+    "note": "a headbutt lunge that throws and stuns",
+    "body": "melee",
+    "pattern": "single",
+    "style": "melee+single+knockback+stun",
+    "range": 2.5,
+    "adultRange": 2.75,
+    "windup": 0.7,
+    "cooldown": 2,
+    "tell": {
+      "pose": "crouch"
+    },
+    "telegraph": "flash",
+    "youngWarning": 0.7,
+    "adultWarning": 0.7,
+    "rawWarning": 0.7,
+    "firstOwnWarning": 0.7,
+    "hit": {
+      "effect": {
+        "knockback": 12,
+        "stun": 0.25
+      }
+    },
+    "paths": [],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "salamander",
+    "note": "a short fire breath sweeping across, burning creatures",
+    "body": "beam",
+    "pattern": "single",
+    "style": "beam+single+burn",
+    "range": 14,
+    "adultRange": 15.4,
+    "windup": 0.8,
+    "cooldown": 3,
+    "tell": {
+      "pose": "glow",
+      "glow": 0.8
+    },
+    "telegraph": "beamLine",
+    "youngWarning": 0.8,
+    "adultWarning": 0.8,
+    "rawWarning": 0.8,
+    "firstOwnWarning": 0.8,
+    "hit": {
+      "effect": {
+        "burn": {
+          "dps": 1,
+          "time": 2
+        }
+      }
+    },
+    "paths": [],
+    "area": null,
+    "beam": {
+      "length": 14,
+      "width": 1.5,
+      "duration": 0.8,
+      "tick": 0.2,
+      "sweep": 30
+    },
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "beam",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 3.4000000000000004
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "meerkat",
+    "note": "three pebbles arcing in quick succession",
+    "body": "bolt",
+    "pattern": "burst",
+    "style": "bolt+burst+arc",
+    "range": 20,
+    "adultRange": 22,
+    "windup": 0.6,
+    "cooldown": 2.2,
+    "tell": {
+      "pose": "rear"
+    },
+    "telegraph": "lane",
+    "youngWarning": 0.6,
+    "adultWarning": 0.6,
+    "rawWarning": 0.6,
+    "firstOwnWarning": 0.6,
+    "hit": {
+      "damage": 0.4
+    },
+    "paths": [
+      {
+        "arc": {
+          "height": 2
+        }
+      }
+    ],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "spider",
+    "note": "a web shot that roots, leaving a web patch",
+    "body": "bolt",
+    "pattern": "single",
+    "style": "bolt+single+root+expire",
+    "range": 20,
+    "adultRange": 22,
+    "windup": 0.7,
+    "cooldown": 2.6,
+    "tell": {
+      "pose": "rear"
+    },
+    "telegraph": "lane",
+    "youngWarning": 0.45,
+    "adultWarning": 0.45,
+    "rawWarning": 0.45,
+    "firstOwnWarning": 0.7,
+    "hit": {
+      "damage": 0.7,
+      "effect": {
+        "root": 0.5
+      }
+    },
+    "paths": [],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [
+      "expire"
+    ],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.45
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "arcticfox",
+    "note": "a frost shard that bursts into three where it ends",
+    "body": "bolt",
+    "pattern": "single",
+    "style": "bolt+single+expire",
+    "range": 18,
+    "adultRange": 19.8,
+    "windup": 0.7,
+    "cooldown": 2.4,
+    "tell": {
+      "pose": "crouch"
+    },
+    "telegraph": "lane",
+    "youngWarning": 0.45,
+    "adultWarning": 0.45,
+    "rawWarning": 0.45,
+    "firstOwnWarning": 0.7,
+    "hit": {
+      "damage": 0.6
+    },
+    "paths": [],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [
+      "expire"
+    ],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.45
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "penguin",
+    "note": "a belly-slide that slows to a stop on an ice patch",
+    "body": "runner",
+    "pattern": "single",
+    "style": "runner+single+decel+expire",
+    "range": 14,
+    "adultRange": 15.4,
+    "windup": 0.7,
+    "cooldown": 2.6,
+    "tell": {
+      "pose": "crouch"
+    },
+    "telegraph": "lane",
+    "youngWarning": 0.45,
+    "adultWarning": 0.45,
+    "rawWarning": 0.45,
+    "firstOwnWarning": 0.7,
+    "hit": {
+      "damage": 0.7
+    },
+    "paths": [],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [
+      "expire"
+    ],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.45
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "flyingsquirrel",
+    "note": "an acorn that scatters four splinters where it lands",
+    "body": "lob",
+    "pattern": "single",
+    "style": "lob+single+land",
+    "range": 22,
+    "adultRange": 24.2,
+    "windup": 0.7,
+    "cooldown": 2.6,
+    "tell": null,
+    "telegraph": "landing",
+    "youngWarning": 0.45,
+    "adultWarning": 0.45,
+    "rawWarning": 0.45,
+    "firstOwnWarning": 1.7,
+    "hit": {
+      "damage": 0.6
+    },
+    "paths": [],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [
+      "land"
+    ],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.45
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "roe",
+    "note": "kicks in a cross round where she stood",
+    "body": "area",
+    "pattern": "single",
+    "style": "area+single+cross+target+knockback",
+    "range": 12,
+    "adultRange": 13.2,
+    "windup": 0.8,
+    "cooldown": 2.6,
+    "tell": {
+      "pose": "stamp"
+    },
+    "telegraph": "ring",
+    "youngWarning": 0.8,
+    "adultWarning": 0.8,
+    "rawWarning": 0.8,
+    "firstOwnWarning": 0.8,
+    "hit": {
+      "damage": 0.4,
+      "effect": {
+        "knockback": 5
+      }
+    },
+    "paths": [],
+    "area": {
+      "shape": "cross",
+      "n": 2,
+      "r": 1.6,
+      "spacing": 2.5,
+      "delay": 0.2,
+      "at": "target"
+    },
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "cheetah",
+    "note": "a dust devil accelerating at her, leaving dust",
+    "body": "runner",
+    "pattern": "single",
+    "style": "runner+single+accel+expire",
+    "range": 18,
+    "adultRange": 19.8,
+    "windup": 0.6,
+    "cooldown": 2.2,
+    "tell": {
+      "pose": "crouch"
+    },
+    "telegraph": "lane",
+    "youngWarning": 0.45,
+    "adultWarning": 0.45,
+    "rawWarning": 0.45,
+    "firstOwnWarning": 0.6,
+    "hit": {
+      "damage": 0.7
+    },
+    "paths": [],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [
+      "expire"
+    ],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.45
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "lion",
+    "note": "a roar: a wide cone that throws and stuns",
+    "body": "area",
+    "pattern": "single",
+    "style": "area+single+cone+knockback+stun",
+    "range": 6,
+    "adultRange": 6.6,
+    "windup": 0.9,
+    "cooldown": 3,
+    "tell": {
+      "pose": "rear"
+    },
+    "telegraph": "ring",
+    "youngWarning": 0.9,
+    "adultWarning": 0.9,
+    "rawWarning": 0.9,
+    "firstOwnWarning": 0.9,
+    "hit": {
+      "effect": {
+        "knockback": 8,
+        "stun": 0.3
+      }
+    },
+    "paths": [],
+    "area": {
+      "shape": "cone",
+      "r": 9,
+      "angle": 60
+    },
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "jaguar",
+    "note": "a long-telegraphed pounce onto where she stood",
+    "body": "area",
+    "pattern": "single",
+    "style": "area+single+target+knockback",
+    "range": 14,
+    "adultRange": 15.4,
+    "windup": 0.9,
+    "cooldown": 2.4,
+    "tell": {
+      "pose": "coil"
+    },
+    "telegraph": "ring",
+    "youngWarning": 0.9,
+    "adultWarning": 0.9,
+    "rawWarning": 0.9,
+    "firstOwnWarning": 0.9,
+    "hit": {
+      "effect": {
+        "knockback": 6
+      }
+    },
+    "paths": [],
+    "area": {
+      "r": 2.5,
+      "at": "target"
+    },
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "tiger",
+    "note": "three raking slashes in a wide fan that pierce",
+    "body": "bolt",
+    "pattern": "fan",
+    "style": "bolt+fan+knockback",
+    "range": 7,
+    "adultRange": 7.7,
+    "windup": 0.75,
+    "cooldown": 2.2,
+    "tell": {
+      "pose": "rear"
+    },
+    "telegraph": "lane",
+    "youngWarning": 0.75,
+    "adultWarning": 0.75,
+    "rawWarning": 0.75,
+    "firstOwnWarning": 0.75,
+    "hit": {
+      "damage": 0.5,
+      "effect": {
+        "knockback": 4
+      }
+    },
+    "paths": [],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "crocodile",
+    "note": "a whirlpool that drags her in while it bites",
+    "body": "zone",
+    "pattern": "single",
+    "style": "zone+single+force",
+    "range": 8,
+    "adultRange": 8.8,
+    "windup": 0.9,
+    "cooldown": 3,
+    "tell": {
+      "pose": "crouch"
+    },
+    "telegraph": "ring",
+    "youngWarning": 0.9,
+    "adultWarning": 0.9,
+    "rawWarning": 0.9,
+    "firstOwnWarning": 0.9,
+    "hit": {
+      "damage": 0.8
+    },
+    "paths": [],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "dragonfly",
+    "note": "a weaving spark that chains from foe to foe",
+    "body": "bolt",
+    "pattern": "single",
+    "style": "bolt+single+wave+chain",
+    "range": 22,
+    "adultRange": 24.2,
+    "windup": 0.7,
+    "cooldown": 2.4,
+    "tell": {
+      "pose": "glow",
+      "glow": 0.6
+    },
+    "telegraph": "lane",
+    "youngWarning": 0.7,
+    "adultWarning": 0.7,
+    "rawWarning": 0.7,
+    "firstOwnWarning": 0.7,
+    "hit": {
+      "damage": 0.6
+    },
+    "paths": [
+      {
+        "wave": {
+          "amp": 1,
+          "freq": 2.5
+        }
+      }
+    ],
+    "area": null,
+    "beam": null,
+    "pack": {
+      "chain": {
+        "n": 2,
+        "range": 9
+      }
+    },
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "ibex",
+    "note": "a rockfall marching out in a line",
+    "body": "area",
+    "pattern": "single",
+    "style": "area+single+line+knockback",
+    "range": 16,
+    "adultRange": 17.6,
+    "windup": 0.9,
+    "cooldown": 2.8,
+    "tell": {
+      "pose": "stamp"
+    },
+    "telegraph": "ring",
+    "youngWarning": 0.9,
+    "adultWarning": 0.9,
+    "rawWarning": 0.9,
+    "firstOwnWarning": 0.9,
+    "hit": {
+      "damage": 0.4,
+      "effect": {
+        "knockback": 6
+      }
+    },
+    "paths": [],
+    "area": {
+      "shape": "line",
+      "n": 5,
+      "r": 1.8,
+      "spacing": 3,
+      "delay": 0.18
+    },
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "redpanda",
+    "note": "a leaf thrown out swaying and coming back",
+    "body": "bolt",
+    "pattern": "single",
+    "style": "bolt+single+boomerang+wave",
+    "range": 18,
+    "adultRange": 19.8,
+    "windup": 0.7,
+    "cooldown": 2.4,
+    "tell": null,
+    "telegraph": "lane",
+    "youngWarning": 0.7,
+    "adultWarning": 0.7,
+    "rawWarning": 0.7,
+    "firstOwnWarning": 0.7,
+    "hit": {
+      "damage": 0.5
+    },
+    "paths": [
+      {
+        "boomerang": {
+          "out": 12
+        }
+      },
+      {
+        "wave": {
+          "amp": 1.2,
+          "freq": 1.2
+        }
+      }
+    ],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "beetle",
+    "note": "a dung bomb laid at her feet: a blast and a ring of embers",
+    "body": "mine",
+    "pattern": "single",
+    "style": "mine+single+hit",
+    "range": 16,
+    "adultRange": 17.6,
+    "windup": 0.7,
+    "cooldown": 3,
+    "tell": {
+      "pose": "rear"
+    },
+    "telegraph": "arming",
+    "youngWarning": 1.25,
+    "adultWarning": 1.25,
+    "rawWarning": 1.25,
+    "firstOwnWarning": 1.5,
+    "hit": {
+      "damage": 0.7
+    },
+    "paths": [],
+    "area": {
+      "r": 3
+    },
+    "beam": null,
+    "pack": null,
+    "children": [
+      "hit"
+    ],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 1.25
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "woodlouse",
+    "note": "a stop-and-go roll, re-aiming at each stop",
+    "body": "runner",
+    "pattern": "single",
+    "style": "runner+single+knockback+stopGo",
+    "range": 16,
+    "adultRange": 17.6,
+    "windup": 0.8,
+    "cooldown": 2.6,
+    "tell": {
+      "pose": "coil"
+    },
+    "telegraph": "lane",
+    "youngWarning": 0.8,
+    "adultWarning": 0.8,
+    "rawWarning": 0.8,
+    "firstOwnWarning": 0.8,
+    "hit": {
+      "effect": {
+        "knockback": 7
+      }
+    },
+    "paths": [],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "armadillo",
+    "note": "a roll that bursts into pebbles at its end",
+    "body": "runner",
+    "pattern": "single",
+    "style": "runner+single+knockback+expire",
+    "range": 18,
+    "adultRange": 19.8,
+    "windup": 0.8,
+    "cooldown": 2.6,
+    "tell": {
+      "pose": "coil"
+    },
+    "telegraph": "lane",
+    "youngWarning": 0.45,
+    "adultWarning": 0.45,
+    "rawWarning": 0.45,
+    "firstOwnWarning": 0.8,
+    "hit": {
+      "damage": 0.7,
+      "effect": {
+        "knockback": 5
+      }
+    },
+    "paths": [],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [
+      "expire"
+    ],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.45
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "rattlesnake",
+    "note": "two venom traps laid round her",
+    "body": "mine",
+    "pattern": "fan",
+    "style": "mine+fan+slow",
+    "range": 16,
+    "adultRange": 17.6,
+    "windup": 0.7,
+    "cooldown": 3,
+    "tell": {
+      "pose": "coil"
+    },
+    "telegraph": "arming",
+    "youngWarning": 1.4,
+    "adultWarning": 1.4,
+    "rawWarning": 1.4,
+    "firstOwnWarning": 1.4,
+    "hit": {
+      "damage": 0.6,
+      "effect": {
+        "slow": {
+          "mult": 0.5,
+          "time": 2
+        }
+      }
+    },
+    "paths": [],
+    "area": {
+      "r": 2.5
+    },
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 1.2999999999999998
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "griffin",
+    "note": "a dive that lands as a gust: a ring of curving feathers",
+    "body": "lob",
+    "pattern": "single",
+    "style": "lob+single+knockback+land",
+    "range": 26,
+    "adultRange": 28.6,
+    "windup": 0.9,
+    "cooldown": 3.2,
+    "tell": {
+      "pose": "spread",
+      "glow": 0.6
+    },
+    "telegraph": "landing",
+    "youngWarning": 0.45,
+    "adultWarning": 0.45,
+    "rawWarning": 0.45,
+    "firstOwnWarning": 2.1,
+    "hit": {
+      "damage": 0.6,
+      "effect": {
+        "knockback": 6
+      }
+    },
+    "paths": [],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [
+      "land"
+    ],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.45
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "scorpion",
+    "note": "a sting that sticks, then bursts a venom cloud",
+    "body": "bolt",
+    "pattern": "single",
+    "style": "bolt+single+slow+timer+stick",
+    "range": 18,
+    "adultRange": 19.8,
+    "windup": 0.8,
+    "cooldown": 3,
+    "tell": {
+      "pose": "rear"
+    },
+    "telegraph": "lane",
+    "youngWarning": 0.8,
+    "adultWarning": 0.8,
+    "rawWarning": 0.8,
+    "firstOwnWarning": 0.8,
+    "hit": {
+      "damage": 0.3,
+      "effect": {
+        "slow": {
+          "mult": 0.7,
+          "time": 1.5
+        }
+      }
+    },
+    "paths": [],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [
+      "timer"
+    ],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "frosttroll",
+    "note": "three frost rings spreading out one after another",
+    "body": "area",
+    "pattern": "single",
+    "style": "area+single+ring+slow+grow",
+    "range": 6,
+    "adultRange": 6.6,
+    "windup": 1,
+    "cooldown": 3.4,
+    "tell": {
+      "pose": "stamp"
+    },
+    "telegraph": "ring",
+    "youngWarning": 1,
+    "adultWarning": 1,
+    "rawWarning": 1,
+    "firstOwnWarning": 1,
+    "hit": {
+      "damage": 0.4,
+      "allies": {
+        "effects": [
+          "slow"
+        ]
+      },
+      "effect": {
+        "slow": {
+          "mult": 0.5,
+          "time": 1.5
+        }
+      }
+    },
+    "paths": [],
+    "area": {
+      "shape": "ring",
+      "r": 10,
+      "width": 1.5,
+      "grow": 10,
+      "waves": 3,
+      "gap": 0.6
+    },
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "polarbear",
+    "note": "icicles raining round where she stood",
+    "body": "area",
+    "pattern": "single",
+    "style": "area+single+target+rain",
+    "range": 22,
+    "adultRange": 24.2,
+    "windup": 1,
+    "cooldown": 3.6,
+    "tell": {
+      "pose": "rear"
+    },
+    "telegraph": "ring",
+    "youngWarning": 0.8,
+    "adultWarning": 0.8,
+    "rawWarning": 0.8,
+    "firstOwnWarning": 0.8,
+    "hit": {
+      "damage": 0.3
+    },
+    "paths": [],
+    "area": {
+      "r": 1.8,
+      "rain": {
+        "n": 7,
+        "r": 6,
+        "time": 1.2
+      },
+      "at": "target"
+    },
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.8
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "bear",
+    "note": "a huge swat in a wide arc",
+    "body": "area",
+    "pattern": "single",
+    "style": "area+single+cone+knockback",
+    "range": 4,
+    "adultRange": 4.4,
+    "windup": 0.9,
+    "cooldown": 3,
+    "tell": {
+      "pose": "rear"
+    },
+    "telegraph": "ring",
+    "youngWarning": 0.9,
+    "adultWarning": 0.9,
+    "rawWarning": 0.9,
+    "firstOwnWarning": 0.9,
+    "hit": {
+      "damage": 0.8,
+      "allies": {
+        "effects": [
+          "knockback"
+        ]
+      },
+      "effect": {
+        "knockback": 10
+      }
+    },
+    "paths": [],
+    "area": {
+      "shape": "cone",
+      "r": 6,
+      "angle": 100
+    },
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "unicorn",
+    "note": "a rainbow strung between two unicorns",
+    "body": "beam",
+    "pattern": "single",
+    "style": "beam+single+slow+tether",
+    "range": 22,
+    "adultRange": 24.2,
+    "windup": 0.8,
+    "cooldown": 3.4,
+    "tell": {
+      "pose": "glow",
+      "glow": 1
+    },
+    "telegraph": "tetherLine",
+    "youngWarning": 1.25,
+    "adultWarning": 1.25,
+    "rawWarning": 1.25,
+    "firstOwnWarning": 1.25,
+    "hit": {
+      "effect": {
+        "slow": {
+          "mult": 0.6,
+          "time": 1
+        }
+      }
+    },
+    "paths": [],
+    "area": null,
+    "beam": {
+      "tick": 0.25
+    },
+    "pack": {
+      "tether": {
+        "time": 2.5,
+        "width": 1.5
+      }
+    },
+    "children": [],
+    "legend": {
+      "body": "beam",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 3.4000000000000004
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "rhino",
+    "note": "a stampede: two charging runners with a gap to slip through",
+    "body": "runner",
+    "pattern": "wall",
+    "style": "runner+wall+knockback+accel",
+    "range": 18,
+    "adultRange": 19.8,
+    "windup": 0.9,
+    "cooldown": 3.2,
+    "tell": {
+      "pose": "crouch"
+    },
+    "telegraph": "lane",
+    "youngWarning": 0.9,
+    "adultWarning": 0.9,
+    "rawWarning": 0.9,
+    "firstOwnWarning": 0.9,
+    "hit": {
+      "damage": 0.6,
+      "allies": {
+        "effects": [
+          "knockback"
+        ]
+      },
+      "effect": {
+        "knockback": 9
+      }
+    },
+    "paths": [],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "sphinx",
+    "note": "a golden gaze beam that charges, then tracks her",
+    "body": "beam",
+    "pattern": "single",
+    "style": "beam+single+stun",
+    "range": 22,
+    "adultRange": 24.2,
+    "windup": 0.8,
+    "cooldown": 3.6,
+    "tell": {
+      "pose": "glow",
+      "glow": 1
+    },
+    "telegraph": "beamLine",
+    "youngWarning": 1.4,
+    "adultWarning": 1.4,
+    "rawWarning": 1.4,
+    "firstOwnWarning": 1.4,
+    "hit": {
+      "effect": {
+        "stun": 0.2
+      }
+    },
+    "paths": [],
+    "area": null,
+    "beam": {
+      "length": 22,
+      "width": 1.5,
+      "duration": 1.6,
+      "tick": 0.2,
+      "track": 25,
+      "charge": 0.6
+    },
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "beam",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 3.4000000000000004
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "elephant",
+    "note": "two great stomp rings that throw",
+    "body": "area",
+    "pattern": "single",
+    "style": "area+single+ring+knockback+grow",
+    "range": 6,
+    "adultRange": 6.6,
+    "windup": 1,
+    "cooldown": 3.4,
+    "tell": {
+      "pose": "stamp"
+    },
+    "telegraph": "ring",
+    "youngWarning": 1,
+    "adultWarning": 1,
+    "rawWarning": 1,
+    "firstOwnWarning": 1,
+    "hit": {
+      "damage": 0.6,
+      "allies": {
+        "effects": [
+          "knockback"
+        ]
+      },
+      "effect": {
+        "knockback": 8
+      }
+    },
+    "paths": [],
+    "area": {
+      "shape": "ring",
+      "r": 11,
+      "width": 2,
+      "grow": 9,
+      "waves": 2,
+      "gap": 0.8
+    },
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "featheredserpent",
+    "note": "six feathers spiralling out",
+    "body": "bolt",
+    "pattern": "ring",
+    "style": "bolt+ring+spiral",
+    "range": 18,
+    "adultRange": 19.8,
+    "windup": 0.9,
+    "cooldown": 3.2,
+    "tell": {
+      "pose": "spread",
+      "glow": 0.8
+    },
+    "telegraph": "lane",
+    "youngWarning": 0.9,
+    "adultWarning": 0.9,
+    "rawWarning": 0.9,
+    "firstOwnWarning": 0.9,
+    "hit": {
+      "damage": 0.3
+    },
+    "paths": [
+      {
+        "spiral": {
+          "rate": 90,
+          "grow": 6
+        }
+      }
+    ],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "crab",
+    "note": "three crabs mark a triangle and the water inside erupts",
+    "body": "area",
+    "pattern": "single",
+    "style": "area+single+knockback+triangulate",
+    "range": 16,
+    "adultRange": 17.6,
+    "windup": 0.7,
+    "cooldown": 3.4,
+    "tell": {
+      "pose": "spread"
+    },
+    "telegraph": "ring",
+    "youngWarning": 1.5,
+    "adultWarning": 1.5,
+    "rawWarning": 1.5,
+    "firstOwnWarning": 1.5,
+    "hit": {
+      "effect": {
+        "knockback": 6
+      }
+    },
+    "paths": [],
+    "area": null,
+    "beam": null,
+    "pack": {
+      "triangulate": {
+        "delay": 0.8,
+        "r": 18
+      }
+    },
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "hydra",
+    "note": "three heads spit homing venom that leaves pools",
+    "body": "bolt",
+    "pattern": "fan",
+    "style": "bolt+fan+home+expire",
+    "range": 20,
+    "adultRange": 22,
+    "windup": 0.9,
+    "cooldown": 3.2,
+    "tell": {
+      "pose": "rear",
+      "glow": 0.6
+    },
+    "telegraph": "lane",
+    "youngWarning": 0.45,
+    "adultWarning": 0.45,
+    "rawWarning": 0.45,
+    "firstOwnWarning": 0.9,
+    "hit": {
+      "damage": 0.35
+    },
+    "paths": [
+      {
+        "home": {
+          "turn": 40,
+          "after": 0.4,
+          "giveUp": 4
+        }
+      }
+    ],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [
+      "expire"
+    ],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.45
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "frostwyrm",
+    "note": "a frost breath sweeping wide after a charge",
+    "body": "beam",
+    "pattern": "single",
+    "style": "beam+single+slow",
+    "range": 20,
+    "adultRange": 22,
+    "windup": 0.9,
+    "cooldown": 3.6,
+    "tell": {
+      "pose": "rear",
+      "glow": 1
+    },
+    "telegraph": "beamLine",
+    "youngWarning": 1.3,
+    "adultWarning": 1.3,
+    "rawWarning": 1.3,
+    "firstOwnWarning": 1.3,
+    "hit": {
+      "effect": {
+        "slow": {
+          "mult": 0.5,
+          "time": 1.5
+        }
+      }
+    },
+    "paths": [],
+    "area": null,
+    "beam": {
+      "length": 20,
+      "width": 2,
+      "duration": 1.4,
+      "tick": 0.2,
+      "sweep": 45,
+      "charge": 0.4
+    },
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "beam",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 3.4000000000000004
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "snowleopard",
+    "note": "frost bursts in a cross round where she stood",
+    "body": "area",
+    "pattern": "single",
+    "style": "area+single+cross+target+slow",
+    "range": 18,
+    "adultRange": 19.8,
+    "windup": 0.8,
+    "cooldown": 3,
+    "tell": {
+      "pose": "coil"
+    },
+    "telegraph": "ring",
+    "youngWarning": 0.8,
+    "adultWarning": 0.8,
+    "rawWarning": 0.8,
+    "firstOwnWarning": 0.8,
+    "hit": {
+      "damage": 0.35,
+      "effect": {
+        "slow": {
+          "mult": 0.6,
+          "time": 1
+        }
+      }
+    },
+    "paths": [],
+    "area": {
+      "shape": "cross",
+      "n": 3,
+      "r": 1.6,
+      "spacing": 3,
+      "delay": 0.15,
+      "at": "target"
+    },
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "komodo",
+    "note": "a weaving venom bolt that burns and leaves a pool",
+    "body": "bolt",
+    "pattern": "single",
+    "style": "bolt+single+burn+slow+wave+hit",
+    "range": 16,
+    "adultRange": 17.6,
+    "windup": 0.8,
+    "cooldown": 3,
+    "tell": {
+      "pose": "coil"
+    },
+    "telegraph": "lane",
+    "youngWarning": 0.45,
+    "adultWarning": 0.45,
+    "rawWarning": 0.45,
+    "firstOwnWarning": 0.8,
+    "hit": {
+      "damage": 0.6,
+      "effect": {
+        "burn": {
+          "dps": 0.8,
+          "time": 3
+        },
+        "slow": {
+          "mult": 0.6,
+          "time": 2
+        }
+      }
+    },
+    "paths": [
+      {
+        "wave": {
+          "amp": 1,
+          "freq": 2
+        }
+      }
+    ],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [
+      "hit"
+    ],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.45
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  },
+  {
+    "species": "stegosaurus",
+    "note": "a spray of tail spikes swept round",
+    "body": "bolt",
+    "pattern": "spray",
+    "style": "bolt+spray+knockback",
+    "range": 10,
+    "adultRange": 11,
+    "windup": 0.9,
+    "cooldown": 3.4,
+    "tell": {
+      "pose": "spread"
+    },
+    "telegraph": "lane",
+    "youngWarning": 0.9,
+    "adultWarning": 0.9,
+    "rawWarning": 0.9,
+    "firstOwnWarning": 0.9,
+    "hit": {
+      "damage": 0.25,
+      "effect": {
+        "knockback": 4
+      }
+    },
+    "paths": [],
+    "area": null,
+    "beam": null,
+    "pack": null,
+    "children": [],
+    "legend": {
+      "body": "lob",
+      "range": 420,
+      "windup": 2.2,
+      "cooldown": 15,
+      "warning": 0.6
+    },
+    "parseErrors": [],
+    "adultParseErrors": []
+  }
+]

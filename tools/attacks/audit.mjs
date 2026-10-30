@@ -13,7 +13,7 @@ const head = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).tr
 const files = execFileSync('git', ['ls-files', 'src/rules', 'config', 'tools/attacks/audit.mjs', 'tools/attacks/audit-screen.mjs', 'package-lock.json'], { encoding: 'utf8' }).trim().split('\n').filter(Boolean).sort();
 const hash = createHash('sha256');
 for (const f of files) { const b = readFileSync(f); hash.update(`${Buffer.byteLength(f)}:${f}${b.length}:`); hash.update(b); }
-const manifest = { schema: 1, sourceHead: head, sourceSha256: hash.digest('hex'), sourceFiles: files.length, node: process.version, platform: process.platform, startedAt: new Date(start).toISOString(), wholeJobCapMs: 120000, ruleChanges: false, oneWorker: true, finished: false };
+const manifest = { schema: 1, sourceHead: head, sourceSha256: hash.digest('hex'), sourceFiles: files.length, node: process.version, platform: process.platform, startedAt: new Date(start).toISOString(), wholeJobCapMs: 120000, mutatesRuleInputs: false, oneWorker: true, finished: false };
 const save = () => writeFileSync(join(out, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
 save();
 const runtime = resolve(`.attack-audit-runtime-${randomUUID()}.mjs`);
