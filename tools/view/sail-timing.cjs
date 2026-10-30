@@ -20,6 +20,7 @@ const http = require("http"), fs = require("fs"), path = require("path");
 const { pageKey } = require("../bench/comparable.cjs"); // (the result's comparability key: tools/bench/comparable.cjs)
 const { installTravelProbe } = require('./travel-probe.cjs');
 const { checkTravel, summarizeTravel } = require('../bench/travel-budget.cjs');
+const { collectFailure } = require('./travel-failure.cjs');
 const TRACE = process.env.TRACE === '1' || process.env.BUDGET === '1', ROUTE = process.env.ROUTE || 'chart';
 if (!['chart', 'api'].includes(ROUTE)) throw new Error('ROUTE must be chart or api');
 const SAIL_SEED = process.env.SAIL_SEED ?? (TRACE || ROUTE === 'api' ? '424242' : null);
@@ -41,14 +42,16 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
   const server = http.createServer((req, res) => { const p = path.join(root, decodeURIComponent(new URL(req.url, "http://x").pathname)), f = fs.existsSync(p) && fs.statSync(p).isDirectory() ? path.join(p, "index.html") : p; if (!f.startsWith(root) || !fs.existsSync(f)) { res.writeHead(404); res.end(); return; } res.writeHead(200, { "Content-Type": types[path.extname(f)] || "application/octet-stream" }); fs.createReadStream(f).pipe(res); });
   await new Promise(r => server.listen(0, "127.0.0.1", r));
   const browser = await pw.chromium.launch({ executablePath: process.env.CHROMIUM, args: process.env.GPU === 'hardware' ? [] : ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
-  const errors = [], runs = [];
+  const errors = [], warnings = [], runs = [];
+  let activePage = null, activeIsland = ISLAND0, phase = 'boot';
   let code = 0;
   try {
     for (let run = 0; run < RUNS; run++) {
       const page = await browser.newPage({ viewport: { width: W, height: H } });
+      activePage = page; phase = 'boot';
       const prepNotes = [];
       page.on("pageerror", e => errors.push(e.message));
-      page.on("console", m => { const t = m.text(); if (t.startsWith('map prep:')) prepNotes.push(t); if (t.startsWith("sail-timing:") || t.startsWith("arrival:")) log(t); });
+      page.on("console", m => { const t = m.text(); if (['warning','error'].includes(m.type()) && warnings.length < 100) warnings.push({ type: m.type(), text: t.slice(0, 1500) }); if (t.startsWith('map prep:')) prepNotes.push(t); if (t.startsWith("sail-timing:") || t.startsWith("arrival:")) log(t); });
       await page.addInitScript(() => {
         try { localStorage.setItem("witch.chart.sailAnywhere", "1"); } catch { /* */ }
         window.__f = []; window.__parts = []; const f = t => { window.__f.push(t); const ms = window.witch?.view?.ms; if (ms) { const e = Object.entries(ms).filter(([, v]) => v > 2); if (e.reduce((p, [, v]) => p + v, 0) > 20) window.__parts.push({ t, parts: e }); } requestAnimationFrame(f); }; requestAnimationFrame(f); // (the view's own work by part, on frames it passed 20 ms)
@@ -66,6 +69,7 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
       KEY ??= toolKey(await pageKey(page, { spot: `sail-timing.cjs: home to ${ISLAND0}` }));
       await page.waitForTimeout(3000);
       for (const [leg, ISLAND] of [ISLAND0, ...THEN].entries()) { // (THEN: on the same page after, warm: its art, programs and workers the last island's)
+      activeIsland = ISLAND;
       if (leg) await page.waitForTimeout(5000);
       const prepNoteStart = prepNotes.length;
       log(ROUTE === 'chart' ? "ready; opening the chart" : 'ready; direct API sail');
@@ -74,12 +78,15 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
       const cdp = await page.context().newCDPSession(page);
       if (process.env.PROFILE === '1') { await cdp.send('Profiler.enable'); await cdp.send('Profiler.start'); }
       if (ROUTE === 'chart') {
+      phase = 'chart outlines';
       await page.evaluate(() => window.witch.chart());
       await page.waitForFunction(i => { const c = window.chart; return c && c.islands && c.islands().find(x => x.id === i && x.outline); }, ISLAND, { timeout: TRACE ? 120000 : 600000, polling: 250 });
       await page.waitForTimeout(1500);
+      phase = 'chart selection';
       await page.evaluate(async ([i, seed]) => { const random = Math.random; if (seed != null) Math.random = () => Number(seed) / 1000000; try { window.chart.choose(i); await new Promise(r => setTimeout(r, 1500)); } finally { Math.random = random; } }, [ISLAND, SAIL_SEED]);
       }
       log("sailing to", ISLAND);
+      phase = 'sailing';
       const progs = () => page.evaluate(() => (window.witch.view.renderer.info.programs ?? []).map(p => `${p.name}|${p.cacheKey.length}|${p.cacheKey.slice(-40)}`)).catch(() => []);
       const before = await progs();
       const beforeSail = await page.evaluate(api => { if (api) window.__travelProbe?.reset(); const s = window.witch.ladder?.state; return { at: performance.now(), quality: s ? { rung: s.rung, mode: s.mode } : null }; }, ROUTE === 'api');
@@ -102,6 +109,7 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
         } else { if (done) { landed = true; break; } if (i && i % 60 === 0) log('still travelling', await page.evaluate(() => ({ marks: performance.getEntriesByType('mark').slice(-6).map(e => e.name), house: window.witch.view.homeDone, ready: window.witch.ready }))); await page.waitForTimeout(500); }
       }
       if (!landed) throw new Error(`arrival timed out after ${process.env.TIMEOUT || 300000} ms on ${ISLAND}`);
+      phase = 'settling';
       await page.waitForTimeout(AFTER);
       if (process.env.PROFILE === '1') { const { profile } = await cdp.send('Profiler.stop'); fs.writeFileSync(`${out}-${run}-${leg}.cpuprofile`, JSON.stringify(profile)); }
       const r = await page.evaluate(([names, gap, s0, after, from]) => {
@@ -145,7 +153,7 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
     }
     fs.writeFileSync(out + ".json", JSON.stringify({ key: KEY, island: ISLAND0, then: THEN, throttle: THR, size: `${W}x${H}`, gap: GAP, runs }, null, 1));
     log("written", out + ".json");
-  } catch (e) { console.error(e); code = 1; fs.writeFileSync(out+'.json', JSON.stringify({ key: KEY, route: ROUTE, runs, error: String(e) }, null, 1)); } finally { await browser.close(); server.close(); }
+  } catch (e) { console.error(e); code = 1; const failure = await collectFailure(activePage, { phase, island: activeIsland }); fs.writeFileSync(out+'.json', JSON.stringify({ key: KEY, route: ROUTE, runs, error: String(e), pageErrors: errors, warnings, failure }, null, 1)); } finally { await browser.close(); server.close(); }
   if (errors.length) { console.error("page errors:\n" + errors.join("\n")); code = 1; }
   process.exit(code);
 })();
