@@ -9405,10 +9405,19 @@ function napForm(S, { frame = 0 } = {}) {
     if (frame % 2) { const top = bounds(m).y1, k = Math.max(BREATH, 1.8 / s) / Math.max(.05, top - G); move(m, p => [p[0], G + (p[1] - G) * (1 + k), p[2]]); } // its breath: in (swelling up from the ground, its top a pixel or more higher, so the small ones breathe too)
     const b = bounds(m), cx = (b.x0 + b.x1) / 2, cz = (b.z0 + b.z1) / 2; // (curled, its middle has moved toward the near side)
     m.clipY = G;
-    const res = render(m, { scale: s, facing: o.facing });
-    res.sp.origin = res.project([cx, G, cz]); // the ground under its middle, on the sprite
-    res.sp.groundLine = G;
-    return crop(res.sp);
+    let scale = s, sp;
+    // Lying down can widen the model into the camera's vertical projection
+    // (especially a snail's shell). Keep the standing visible age budget after
+    // deformation and breathing, using native rays rather than resampling art.
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const res = render(m, { scale, facing: o.facing });
+      res.sp.origin = res.project([cx, G, cz]);
+      res.sp.groundLine = G;
+      sp = crop(res.sp);
+      if (!o.sizeTarget || sp.h <= o.sizeTarget) break;
+      scale *= (o.sizeTarget - .5) / sp.h;
+    }
+    return sp;
   };
   form.motes = false;
   form.fold = pose.fold ?? 0;
