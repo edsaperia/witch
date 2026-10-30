@@ -1,3 +1,4 @@
+import { slotStorage } from "./saveSlots";
 // The pause page's debug switch, "Unlock everything" (Ed, 2026-10-29: "I need a debug toggle to allow me to select anything (outfits,
 // bags, brooms, islands) on the pause menu"): while it's on, every wardrobe item and bag (the shelves' own lists, config/wardrobe.json,
 // so a new bag shows with no change here), every broom part, every spell hat and every island on the sea chart can be chosen, whatever
@@ -14,7 +15,7 @@ import { hatsFrom } from "./hatSave";
 
 export const UNLOCK_KEY = "witch.debug.unlockAll";
 type Store = Pick<Storage, "getItem" | "setItem" | "removeItem">;
-const storeOf = (s?: Store | null): Store | null => { try { return s ?? globalThis.localStorage ?? null; } catch { return null; } };
+const storeOf = (s?: Store | null): Store | null => { try { return s ?? slotStorage ?? null; } catch { return null; } };
 
 /** Whether the switch is on (off when storage is blocked or spoilt). */
 export function unlockAll(storage?: Store | null): boolean {

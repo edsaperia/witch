@@ -100,7 +100,7 @@ export function snapshotGame(game: Game): NightSnapshot {
   return { version: 1, seed: game.seed, tuning: JSON.parse(JSON.stringify(game.tuning)) as Tuning, state: encode(state, new Set(game.witches)) };
 }
 
-/** Restore only within the same game build (checked by the app's save envelope). Throws before handing a bad night to play. */
+/** Restore matching save formats across builds. Throws before handing a bad night to play. */
 export function restoreGame(input: unknown): Game {
   if (!input || typeof input !== "object") return invalid();
   const snapshot = input as NightSnapshot;
@@ -111,7 +111,7 @@ export function restoreGame(input: unknown): Game {
   if (!Array.isArray(state.witches) || state.witches.length < 1 || state.witches.length > 3 || !Array.isArray(state.creatures) || !state.clock || !state.party || !(state.friendly instanceof Set) || !(state.wildEntry instanceof Map)) return invalid();
   const tuning = JSON.parse(JSON.stringify(snapshot.tuning)) as Tuning;
   const game = newGame(snapshot.seed, tuning, state.witches.length);
-  // A same-build save has every non-optional field made by newGame. Extra fields are allowed only
+  // A compatible save has every non-optional field made by newGame. Extra fields are allowed only
   // if they belong to Game (optional fields aren't all present on a new night).
   for (const key of Object.keys(game)) if (!OMIT.has(key) && !Object.hasOwn(state, key)) return invalid();
   if (Object.keys(state).some(key => !Object.hasOwn(game, key) && !OPTIONAL.has(key))) return invalid();

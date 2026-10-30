@@ -1,3 +1,4 @@
+import { slotStorage } from "./saveSlots";
 // Settings remembered on this browser (Ed, 2026-10-14: the music and sound effects volumes, "to start with, being able to control
 // music and sfx volume separately"): the pause page's entries flagged `persist` (config/decisions/*.json, the pinned Volume group)
 // keep their last value in localStorage witch.settings and take it again as the game loads, their tuning knob set before the
@@ -8,7 +9,7 @@ const KEY = "witch.settings";
 export type Saved = Record<string, string | number | boolean>;
 
 export function loadSettings(): Saved {
-  try { const t = localStorage.getItem(KEY); return t ? (JSON.parse(t) as Saved) : {}; } catch { return {}; }
+  try { const t = slotStorage.getItem(KEY); return t ? (JSON.parse(t) as Saved) : {}; } catch { return {}; }
 }
 
 /** A persisted entry's new value kept (its built default forgets it); any other entry is left alone. */
@@ -16,7 +17,7 @@ export function saveSetting(d: Decision, v: string | number | boolean): void {
   if (!d.persist) return;
   const s = loadSettings();
   if (v === d.default) delete s[d.id]; else s[d.id] = v;
-  try { localStorage.setItem(KEY, JSON.stringify(s)); } catch { /* storage blocked: this load only */ }
+  try { slotStorage.setItem(KEY, JSON.stringify(s)); } catch { /* storage blocked: this load only */ }
 }
 
 /** The saved values on to their knobs (as the game loads, before the game and the sound are made), but for the knobs in `skip`

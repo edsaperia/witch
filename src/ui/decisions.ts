@@ -1,3 +1,4 @@
+import { slotStorage } from "../app/saveSlots";
 // The decisions as data (config/decisions.json) and their knobs (the tuning paths, the URL's d_<id>): what the game needs as it
 // starts, apart from the panel itself (ui/decide.ts), so the panel can load only when it's opened (?decide, F2).
 import DECISIONS from "../../config/decisions.json";
@@ -65,8 +66,8 @@ export const changedIn = (list: readonly Decision[], values: ReadonlyMap<string,
 /** The pause page's groups the player left open (Ed, 2026-10-26: "grouped by their title with the ability to fold, and start
  *  folded"): every group starts folded, those opened remembered on this browser (localStorage witch.pauseOpen) so a reload keeps them. */
 const OPEN_KEY = "witch.pauseOpen";
-export const openGroups = (): Set<string> => { try { const t = localStorage.getItem(OPEN_KEY), a = t ? JSON.parse(t) : []; return new Set(Array.isArray(a) ? a.filter(x => typeof x === "string") : []); } catch { return new Set(); } };
-export const saveOpenGroups = (open: ReadonlySet<string>): void => { try { localStorage.setItem(OPEN_KEY, JSON.stringify([...open])); } catch { /* storage blocked: this load only */ } };
+export const openGroups = (): Set<string> => { try { const t = slotStorage.getItem(OPEN_KEY), a = t ? JSON.parse(t) : []; return new Set(Array.isArray(a) ? a.filter(x => typeof x === "string") : []); } catch { return new Set(); } };
+export const saveOpenGroups = (open: ReadonlySet<string>): void => { try { slotStorage.setItem(OPEN_KEY, JSON.stringify([...open])); } catch { /* storage blocked: this load only */ } };
 /** What it changes, as Ed would name it to a builder: the tuning key, or the URL switch. */
 export const keyOf = (d: Decision): string => d.apply.knob ?? `?${d.apply.param}`;
 
