@@ -27,7 +27,16 @@ test("completed priorities dominate every lower partial-progress reward", () => 
     assert.equal(better(a, b), true);
   }
   assert.equal(better([0, 0, 0, 0, 0, 0, 2, 9], [0, 0, 0, 0, 0, 0, 2, 9]), false);
-  assert.deepEqual(objective([{ outcome: "won", questsCompleted: 1, questsTotal: 1, upgradeEligibleToKeep: true, provisionalFindsCollected: 1, questDeliveries: 1, wavesPassed: 3, end: 10 }, { outcome: "censored", questsCompleted: 0, questsTotal: 2, upgradeEligibleToKeep: false, provisionalFindsCollected: 1, questDeliveries: 1, wavesPassed: 1, end: 20 }]), [1, 1, 1, 1, 2, 2, 4, 30]);
+  assert.deepEqual(objective([{ outcome: "won", questsCompleted: 1, questsTotal: 1, upgradeEligibleToKeep: true, provisionalFindsCollected: 1, questDeliveries: 1, wavesPassed: 3, end: 10 }, { outcome: "censored", questsCompleted: 0, questsTotal: 2, upgradeEligibleToKeep: false, provisionalFindsCollected: 1, questDeliveries: 1, wavesPassed: 1, end: 20 }]), [1, 1, 1, 1, 2, 2, 1, 10]);
+});
+
+test("equal wins prefer faster completion while non-wins prefer longer survival", () => {
+  const row = { outcome: "won", questsCompleted: 0, questsTotal: 2, upgradeEligibleToKeep: false, provisionalFindsCollected: 0, questDeliveries: 0, wavesPassed: 0, end: 100 };
+  assert.equal(better(objective([row]), objective([{ ...row, wavesPassed: 9, end: 1000 }])), true);
+  for (const outcome of ["lost", "censored"]) {
+    assert.equal(better(objective([{ ...row, outcome, end: 1000 }]), objective([{ ...row, outcome }])), true);
+    assert.equal(better(objective([{ ...row, outcome, wavesPassed: 2 }]), objective([{ ...row, outcome, wavesPassed: 1, end: 1000 }])), true);
+  }
 });
 
 test("invalid domains, results and mismatched checkpoint replies are refused", () => {

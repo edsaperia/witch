@@ -16,8 +16,11 @@ individual real-rules case results so a restart does not mix or skip cases.
 
 The objective compares aggregate wins, quests completed, runs with all quests
 completed, finds eligible to keep, provisional finds collected, quest deliveries,
-waves passed and survival world seconds, lexicographically (coordinators
-6512758049 and 6514241011). Only the real quest's `done` counts as completion.
+non-win waves passed and signed world seconds, lexicographically (coordinators
+6512758049, 6514241011 and 6515138100). Won runs contribute zero wave credit
+and negative completion seconds; lost/censored runs retain positive waves and
+survival seconds. Equal wins therefore prefer faster completion. Only the real
+quest's `done` counts as completion.
 A partial delivery is a lower-priority tie-breaker, never a completed quest.
 Quest totals include every generated quest,
 including ones the expert has not discovered. Zero quests is not an all-quest win.
@@ -221,7 +224,11 @@ quality improvement; it uses no remote sleeping-legend data.
 Coordinator 6514241011 approved lower-priority gradients after round one's
 0 wins / 95 losses / 1 censored result. The next objective has eight terms:
 win count, completed quest count, all-quest runs, find eligible to keep,
-provisional find pickups, unique quest deliveries, waves passed, world seconds.
+provisional find pickups, unique quest deliveries, non-win waves passed, signed
+world seconds. Coordinator 6515138100 subsequently made the last two terms
+outcome-conditional: won runs get zero wave credit and negative completion
+seconds; non-wins retain the original survival rewards. Search schema 4 and
+manifest schema 6 bind this meaning; older scores are not reused.
 Tests prove that arbitrary amounts of lower progress cannot outrank any of the
 first four priorities. The old six-term checkpoints remain old-source evidence;
 they are not silently converted or resumed as eight-term checkpoints.
@@ -292,9 +299,11 @@ world seconds on stragglers, while skilled clears early. The old trace shows
 skilled's map-wide recruitment route; expert lacks that privileged knowledge and
 prioritizes visible finds. This explains the broad route difference, not every
 second of the new candidate: there is no new candidate decision trace. The
-approved waves/survival tie-breakers maximize progress/time, including won
-runs, so search does not directly reward a faster win. Do not silently change
-that scoring order or claim search will necessarily close the speed gap.
+old waves/survival tie-breakers maximized progress/time, including won runs.
+Coordinator 6515138100 corrected that incentive before the next dispatch:
+equally good wins now prefer fewer world seconds, while non-wins still reward
+survival. This permits search to reward speed, without evidence yet that its
+existing parameters can close the route gap.
 
 Released prototype `bf68860ab` was normally merged at `28a8d5fc`. Unlocked-home
 setup now calls its `syncHatUnlock` with explicit `hats=*` parameters, avoiding

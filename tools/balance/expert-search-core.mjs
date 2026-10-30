@@ -1,6 +1,6 @@
 // Deterministic, evaluation-independent coordinate search. The real-rules driver owns
 // observation, cases and scoring; this module never imports or modifies game rules.
-export const SEARCH_SCHEMA = 3;
+export const SEARCH_SCHEMA = 4;
 
 export function validateSpace(space) {
   const names = new Set();
@@ -26,7 +26,9 @@ export function startSearch(space, initial, seed = 1) {
 }
 
 // Ed's objective: wins, completed quests, all quests, find eligible to keep,
-// then provisional finds, quest deliveries, waves and survival. Partial progress
+// then provisional finds, quest deliveries, non-win waves and signed time.
+// Coordinator 6515138100: wins prefer fewer seconds; non-wins prefer survival.
+// Won waves contribute zero, so delaying a win never earns wave credit. Partial progress
 // never outranks the completed goals. Actual app persistence is not simulated.
 // No finite progress/survival improvement can outweigh a win.
 export function objective(rows) {
@@ -36,7 +38,8 @@ export function objective(rows) {
     if (!Number.isInteger(r.questsCompleted) || !Number.isInteger(r.questsTotal) || r.questsCompleted < 0 || r.questsCompleted > r.questsTotal || typeof r.upgradeEligibleToKeep !== "boolean") throw Error("Missing quest/find objective fields");
     if (![0, 1].includes(r.provisionalFindsCollected) || !Number.isInteger(r.questDeliveries) || r.questDeliveries < 0 || r.questDeliveries > r.questsTotal) throw Error("Missing/invalid partial-progress fields");
     if (r.upgradeEligibleToKeep && (r.outcome !== "won" || r.provisionalFindsCollected !== 1)) throw Error("Kept-find eligibility requires a won pickup");
-    return [s[0] + Number(r.outcome === "won"), s[1] + r.questsCompleted, s[2] + Number(r.questsTotal > 0 && r.questsCompleted === r.questsTotal), s[3] + Number(r.upgradeEligibleToKeep), s[4] + r.provisionalFindsCollected, s[5] + r.questDeliveries, s[6] + r.wavesPassed, s[7] + r.end];
+    const won = r.outcome === "won";
+    return [s[0] + Number(won), s[1] + r.questsCompleted, s[2] + Number(r.questsTotal > 0 && r.questsCompleted === r.questsTotal), s[3] + Number(r.upgradeEligibleToKeep), s[4] + r.provisionalFindsCollected, s[5] + r.questDeliveries, s[6] + (won ? 0 : r.wavesPassed), s[7] + (won ? -r.end : r.end)];
   }, [0, 0, 0, 0, 0, 0, 0, 0]);
 }
 
