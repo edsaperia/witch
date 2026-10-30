@@ -12,6 +12,8 @@ type Burst={element:string;form:FxForm;x:number;y:number;z:number;level:number;s
 const SYSTEMS=new WeakMap<THREE.Scene,MagicFx>();
 export function fxFor(scene:THREE.Scene):MagicFx {let fx=SYSTEMS.get(scene);if(!fx){fx=new MagicFx(scene);SYSTEMS.set(scene,fx);}return fx;}
 export class MagicFx {
+  readonly quality=FX_QUALITY;
+  readonly fieldUniforms=FX_UNIFORMS;
   readonly batches:FxBatches;
   readonly field=new ImprintField();
   readonly stats={lights:0,requests:0,instances:0,fieldBytes:settings.fieldSize**2*8};

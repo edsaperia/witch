@@ -9,11 +9,12 @@ export const FX_UNIFORMS = {
   uFxField: {value:texture()}, uFxExtra: {value:texture()},
   uFxBox:{value:new THREE.Vector4(0,0,settings.fieldMetres,settings.fieldSize)},
   uFxOn:{value:0}, uFxTime:{value:0}, uFxCalm:{value:0},
+  uFxVertex:{value:1},
 };
 export const FX_FIELD_GLSL = /* glsl */ `
 uniform sampler2D uFxField, uFxExtra;
 uniform vec4 uFxBox;
-uniform float uFxOn, uFxTime, uFxCalm;
+uniform float uFxOn, uFxTime, uFxCalm, uFxVertex;
 vec4 fxField(vec2 p) {
   if(uFxOn<0.5 || any(lessThan(p,uFxBox.xy)) || any(greaterThanEqual(p,uFxBox.xy+uFxBox.z)))return vec4(0.0);
   return texture2D(uFxField,(floor(p/(uFxBox.z/uFxBox.w))+0.5)/uFxBox.w);
