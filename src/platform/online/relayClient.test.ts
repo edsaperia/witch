@@ -39,4 +39,5 @@ it("keeps invitation secrets in fragment and requires encrypted remote transport
   expect(() => connectRelay({ endpoint: "ws://remote.test", room: "1234567", onMessage: vi.fn(), onClose: vi.fn(), onError: vi.fn() })).toThrow("requires wss");
   expect(soloHome("https://example.test/pr-1471/online/online.html?online=guest")).toBe("https://example.test/pr-1471/");
   expect(soloHome("http://localhost:5173/online.html?online=guest")).toBe("http://localhost:5173/");
+  expect(soloHome("https://example.test/pr-1471/online/online.html?online=guest&quick=1&seed=999&room=1234567#invite=secret")).toBe("https://example.test/pr-1471/?quick=1");
 });

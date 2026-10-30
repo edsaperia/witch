@@ -69,5 +69,8 @@ export function invitationLink(page: string, endpoint: string, room: string, tok
 /** Production online output is nested; Vite's development page is at the root. */
 export function soloHome(page: string): string {
   const url = new URL(page);
-  return new URL(url.pathname.endsWith("/online/online.html") ? "../" : "./", url).href;
+  const home = new URL(url.pathname.endsWith("/online/online.html") ? "../" : "./", url);
+  // Keep only this builder's reduced-art test mode, never the host's seed/room/invitation.
+  if (url.searchParams.get("quick") === "1") home.searchParams.set("quick", "1");
+  return home.href;
 }

@@ -16,6 +16,8 @@ import { otherWitches } from "./otherWitches";
 import { replayGuest, replayHostStep, replayStart, type ReplayFrame, type ReplayStart } from "./replay";
 import { snapshotGame } from "../../rules/nightSnapshot";
 import { sliceLog } from "../../render/slices";
+import { prepareJoin } from "./joinPreparation";
+import { sessionDeparture } from "./departure";
 
 declare const __BUILD__: string;
 const build = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
@@ -29,6 +31,8 @@ let game: Game, presentation: ReturnType<typeof localView>, view: View;
 let replica: ReturnType<typeof replayGuest> | undefined, tick = 0, sequence = 0, ready = false, paused = false, castWanted = false, stopped = false;
 let guestPresent = false, guestIsReady = false, prepared = false, synchronized = false, failure: string | null = null;
 let loadingStage = "connecting";
+let joining = false, frameRequest = 0;
+const loadingMonitors = new Set<ReturnType<typeof setInterval>>();
 const loadingLog: { at: number; stage: string; detail?: unknown }[] = [];
 const trace = (stage: string, detail?: unknown) => {
   loadingStage = stage; loadingLog.push({ at: Math.round(performance.now()), stage, detail });
@@ -37,10 +41,10 @@ const trace = (stage: string, detail?: unknown) => {
 };
 const inputBuffer = guestInput(heldMs);
 const setStatus = (text: string) => { status.textContent = text; };
-const fail = (error: Error) => { failure = error.message; setStatus(error.message); };
+const fail = (error: Error) => { failure = error.message; trace("failure", { message: error.message, stack: error.stack }); setStatus(error.message); };
 prewarmArtWorkers();
 
-async function prepare(source: Game, player: number) {
+async function prepare(source: Game, player: number, signal?: AbortSignal) {
   trace("view-create:start");
   let phase = "view-create";
   const monitor = setInterval(() => {
@@ -52,10 +56,14 @@ async function prepare(source: Game, player: number) {
       workers: a?.workers?.map(w => ({ busy: w.busy, job: w.job ? { kind: w.job.kind, id: w.job.id } : null })), urgent: a?.urgentKeys ? [...a.urgentKeys].slice(0, 8) : [],
       timings: view?.assets.timings.slice(-8), typeLog: view ? [...view.assets.typeLog].slice(-8) : [], slices: sliceLog.slice(-3) });
   }, 5000);
+  loadingMonitors.add(monitor);
+  const clearMonitor = () => { clearInterval(monitor); loadingMonitors.delete(monitor); };
+  signal?.addEventListener("abort", clearMonitor, { once: true });
   game = source; presentation = localView(game, player);
   const style = styleFromLink(params, game.tuning);
   try { view = await View.create(document.getElementById("game") as HTMLCanvasElement, presentation.game, gameStyle(style, game.tuning)); }
-  catch (error) { clearInterval(monitor); throw error; }
+  catch (error) { clearMonitor(); throw error; }
+  signal?.throwIfAborted();
   trace("view-create:done", sliceLog.map(s => ({ what: s.what, ms: s.ms, longestAt: s.longestAt })));
   viewFromLink(view, params);
   otherWitches(view, game, player);
@@ -63,7 +71,8 @@ async function prepare(source: Game, player: number) {
   resize(); addEventListener("resize", resize);
   trace("view-prepare:start");
   phase = "view-prepare";
-  try { await view.prepare(); } finally { clearInterval(monitor); }
+  try { await view.prepare(); } finally { clearMonitor(); }
+  signal?.throwIfAborted();
   trace("view-prepare:done"); prepared = true;
   connection.sendReady();
   if (!guest) { ready = true; setStatus(`Host · ${build}`); }
@@ -82,7 +91,7 @@ if (!guest) {
 
 const connection = connectRelay({ endpoint, room, token: guest ? token : undefined,
   onError: fail,
-  onClose() { if (guest) { location.href = soloHome(location.href); return; } detachGuest(game); guestPresent = guestIsReady = false; inputBuffer.clear(); setStatus("The relay connection ended. Leave to return home."); },
+  onClose() { if (guest) { returnHome(); return; } detachGuest(game); guestPresent = guestIsReady = false; inputBuffer.clear(); setStatus("The relay connection ended. Leave to return home."); },
   onMessage(m) {
     if (m.type === "hosted" && typeof m.token === "string") {
       invite.href = invitationLink(location.href, endpoint, room, m.token); invite.hidden = false;
@@ -103,12 +112,15 @@ const connection = connectRelay({ endpoint, room, token: guest ? token : undefin
       detachGuest(game); guestPresent = guestIsReady = false; inputBuffer.clear(); setStatus(`Guest left · Host · ${build}`);
     } else if (m.type === "state" && guest && m.player === 0) {
       const payload = m.payload as { kind?: string; start?: ReplayStart; frame?: ReplayFrame };
-      if (payload?.kind === "start" && payload.start && !replica) {
-        trace("start-snapshot:received");
-        replica = replayGuest(payload.start, build);
-        void prepare(replica.game, 1).catch(fail);
+      if (payload?.kind === "start" && payload.start && !replica && !joining) {
+        joining = true;
+        const start = payload.start;
+        trace("start-snapshot:received", { tick: start.tick, acc: start.transient?.acc });
+        void prepareJoin({ restore: () => { replica = replayGuest(start, build); return replica.game; }, prepare: (g, signal) => prepare(g, 1, signal), trace, fail });
       } else if (payload?.kind === "start" && payload.start && replica && prepared) {
+        trace("sync-replay:start", { tick: payload.start.tick, acc: payload.start.transient?.acc });
         replica = replayGuest(payload.start, build, game);
+        trace("sync-replay:done");
         connection.sendActive();
         synchronized = ready = true; trace("join:synchronized", { tick: replica.tick });
         setStatus(`Guest · ${build}`);
@@ -119,16 +131,28 @@ const connection = connectRelay({ endpoint, room, token: guest ? token : undefin
   },
 });
 const input = new Input();
+let cleaned = false;
+const cleanup = () => {
+  if (cleaned) return; cleaned = true;
+  stopped = true; ready = false; cancelAnimationFrame(frameRequest); input.release();
+  for (const timer of loadingMonitors) clearInterval(timer); loadingMonitors.clear();
+  connection.close();
+  // Only this page's instance-owned resources; no shared worker implementation is changed.
+  const workers = (view?.assets as unknown as { workers?: { w: Worker }[] } | undefined)?.workers ?? [];
+  for (const { w } of workers) w.terminate();
+  view?.renderer.dispose();
+};
+const returnHome = sessionDeparture(cleanup, () => { location.replace(soloHome(location.href)); });
 input.aimFrom = (x, y) => ready ? view.aimAt(x, y) : null;
 const pause = () => { paused = !paused; input.release(); document.getElementById("pause")!.textContent = paused ? "Resume" : "Pause"; };
 document.getElementById("pause")!.onclick = pause;
 document.getElementById("party")!.onclick = () => { castWanted = true; };
-document.getElementById("leave")!.onclick = () => { connection.close(); location.href = soloHome(location.href); };
+document.getElementById("leave")!.onclick = returnHome;
 addEventListener("keydown", e => { if (e.code === "Escape" && !e.repeat) pause(); });
-addEventListener("beforeunload", () => connection.close());
+addEventListener("beforeunload", cleanup);
 let last = 0;
 function frame(now: number) {
-  requestAnimationFrame(frame);
+  frameRequest = requestAnimationFrame(frame);
   const dt = Math.min(0.1, last ? (now - last) / 1000 : 0); last = now;
   if (!ready || stopped || failure) return;
   const raw = input.read(), controls = wireControls(raw)!;
@@ -144,7 +168,7 @@ function frame(now: number) {
   presentation.update(dt, raw.zoom);
   view.render(game.clock.time);
 }
-requestAnimationFrame(frame);
+frameRequest = requestAnimationFrame(frame);
 // Read-only bounded-check seam; does not replace either player's controls.
 Object.assign(window, { witchOnline: {
   build, role: guest ? "guest" : "host",

@@ -26,3 +26,16 @@ it("serializes a mid-frame handoff and replays authoritative two-witch inputs id
   expect(resynced.game).toBe(builtGame); expect(resynced.game.map).toBe(builtMap); expect(resynced.game.forest).toBe(builtForest);
   expect(snapshotGame(resynced.game)).toEqual(snapshotGame(host));
 });
+
+it("accepts the real fixed-step accumulator's tiny negative boundary remainder", () => {
+  const tuning = structuredClone(TUNING); tuning.map!.island = "home"; tuning.map!.islandAreas = 4;
+  const host = newGame(123, tuning, 2); host.clock.paused = false;
+  const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
+  replayHostStep(host, [idle, idle], STEP - 5e-10, 1);
+  expect(host.acc).toBeLessThan(0);
+  const guest = replayGuest(JSON.parse(JSON.stringify(replayStart(host, "boundary", 1))), "boundary");
+  expect(guest.game.acc).toBe(host.acc);
+  const frame = replayHostStep(host, [idle, idle], STEP, 2);
+  expect(guest.apply(frame)).toBe(true);
+  expect(snapshotGame(guest.game)).toEqual(snapshotGame(host));
+});

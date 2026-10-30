@@ -28,7 +28,9 @@ export function replayGuest(start: ReplayStart, build: string, reuse?: Game) {
     Object.assign(reuse, game, { map, forest }); game = reuse;
   }
   const t = start.transient;
-  if (!t || !Number.isFinite(t.acc) || t.acc < 0 || t.acc > 1 || typeof t.paused !== "boolean" || t.witches.length !== game.witches.length) throw new Error("Invalid online handoff");
+  // stepGame consumes a fixed step within 1e-9 of its boundary, leaving a tiny negative remainder.
+  // Preserve that exact remainder; rejecting it intermittently rejects a legitimate host snapshot.
+  if (!t || !Number.isFinite(t.acc) || t.acc < -1e-9 || t.acc > 1 || typeof t.paused !== "boolean" || t.witches.length !== game.witches.length) throw new Error("Invalid online handoff");
   game.acc = t.acc; game.clock.paused = t.paused; game.pending = structuredClone(t.pending);
   game.witches.forEach((w, i) => {
     if (t.witches[i].paused === undefined) delete w.paused; else w.paused = t.witches[i].paused;
