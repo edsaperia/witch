@@ -133,3 +133,11 @@ this task. Runtime fingerprint implementation has not started.
 The repository reports shallow history. The 1,451 reachable commits and 29
 first-parent commits above are provisional counts, pending a boundary audit;
 they must not be presented as a complete replay of the supplied 956-commit sample.
+
+After fetching history since 2026-10-22T00:00Z, the same pinned base/window has
+1,456 reachable commits and 304 first-parent transitions. Its reachable shallow
+boundaries are on October 22, before the requested window. A preliminary changed-
+path screen finds 294 reachable commits and 74 first-parent transitions touching
+the current global hash's input pattern. This is not yet a historical fingerprint
+replay: it uses the current input pattern, not each revision's hashing code, and
+must not be reported as measured warm-cache reuse or deployed-build invalidations.
