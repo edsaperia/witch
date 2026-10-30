@@ -1,0 +1,151 @@
+JOIN 1 ready=true 150.2s sentHome=null 2026-10-30T04:41:05.979Z
++0.7s online loading start-snapshot:received 
++2.3s online loading view-create:start 
++7.5s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++12.8s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++17.8s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++22.5s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++27.4s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++32.4s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++37.6s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++42.4s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++47.8s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++52.9s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++58.0s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++62.6s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++67.4s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++71.9s online loading view-create:done [Object]
++72.3s online loading view-prepare:start 
++72.3s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 12, home: Object, queue: Array(8)}
++77.3s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 188, home: Object, queue: Array(8)}
++82.3s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 179, home: Object, queue: Array(8)}
++87.3s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 167, home: Object, queue: Array(8)}
++92.3s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 138, home: Object, queue: Array(8)}
++97.3s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 118, home: Object, queue: Array(8)}
++102.3s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 86, home: Object, queue: Array(8)}
++107.3s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 15, home: Object, queue: Array(8)}
++112.3s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 14, home: Object, queue: Array(8)}
++117.3s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 11, home: Object, queue: Array(8)}
++122.3s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 10, home: Object, queue: Array(8)}
++127.3s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 14, home: Object, queue: Array(8)}
++132.5s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 14, home: Object, queue: Array(8)}
++137.8s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 12, home: Object, queue: Array(8)}
++142.4s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 11, home: Object, queue: Array(8)}
++148.9s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 11, home: Object, queue: Array(8)}
++149.1s online loading view-prepare:done 
++149.9s online loading join:synchronized {tick: 2113}
+
+JOIN 2 ready=true 150.3s sentHome=null 2026-10-30T04:44:04.851Z
++0.6s online loading start-snapshot:received 
++2.4s online loading view-create:start 
++8.1s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++13.4s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++17.6s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++22.5s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++27.8s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++32.5s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++37.7s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++43.2s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++47.5s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++52.5s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++58.2s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++63.0s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++67.5s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++72.9s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++77.4s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++77.6s online loading view-create:done [Object]
++78.0s online loading view-prepare:start 
++82.7s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 188, home: Object, queue: Array(8)}
++87.4s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 179, home: Object, queue: Array(8)}
++92.4s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 160, home: Object, queue: Array(8)}
++97.4s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 126, home: Object, queue: Array(8)}
++102.4s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 106, home: Object, queue: Array(8)}
++107.4s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 73, home: Object, queue: Array(8)}
++112.4s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 15, home: Object, queue: Array(8)}
++117.4s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 13, home: Object, queue: Array(8)}
++122.4s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 11, home: Object, queue: Array(8)}
++128.0s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 14, home: Object, queue: Array(8)}
++133.0s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 14, home: Object, queue: Array(8)}
++138.1s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 14, home: Object, queue: Array(8)}
++142.9s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 12, home: Object, queue: Array(8)}
++148.7s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 12, home: Object, queue: Array(8)}
++149.0s online loading view-prepare:done 
++149.9s online loading join:synchronized {tick: 2062}
+
+JOIN 3 ready=true 148.7s sentHome=null 2026-10-30T04:47:03.267Z
++0.7s online loading start-snapshot:received 
++2.4s online loading view-create:start 
++7.4s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++12.5s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++17.8s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++22.6s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++27.7s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++32.4s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++38.0s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++42.5s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++47.7s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++53.3s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++58.1s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++62.8s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++67.7s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++72.7s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++73.4s online loading view-create:done [Object]
++73.8s online loading view-prepare:start 
++78.5s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 187, home: Object, queue: Array(8)}
++82.4s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 179, home: Object, queue: Array(8)}
++87.4s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 161, home: Object, queue: Array(8)}
++92.4s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 126, home: Object, queue: Array(8)}
++97.4s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 108, home: Object, queue: Array(8)}
++102.4s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 73, home: Object, queue: Array(8)}
++107.4s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 14, home: Object, queue: Array(8)}
++112.4s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 12, home: Object, queue: Array(8)}
++117.4s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 10, home: Object, queue: Array(8)}
++123.0s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 14, home: Object, queue: Array(8)}
++127.5s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 14, home: Object, queue: Array(8)}
++132.7s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 13, home: Object, queue: Array(8)}
++137.5s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 11, home: Object, queue: Array(8)}
++147.2s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 11, home: Object, queue: Array(8)}
++147.6s online loading view-prepare:done 
++148.4s online loading join:synchronized {tick: 2068}
+
+JOIN 4 ready=true 158.5s sentHome=null 2026-10-30T04:49:59.235Z
++0.6s online loading start-snapshot:received 
++2.3s online loading view-create:start 
++7.7s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++13.4s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++18.0s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++22.4s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++27.6s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++32.7s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++37.7s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++42.7s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++47.4s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++52.6s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++57.9s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++63.0s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++68.1s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++73.0s online loading view-create:waiting {marks: Array(6), readiness: null, pending: undefined, home: null, queue: undefined}
++76.1s online loading view-create:done [Object]
++76.4s online loading view-prepare:start 
++77.4s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 1, home: Object, queue: Array(0)}
++84.2s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 185, home: Object, queue: Array(8)}
++87.3s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 179, home: Object, queue: Array(8)}
++92.3s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 167, home: Object, queue: Array(8)}
++97.3s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 136, home: Object, queue: Array(8)}
++102.3s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 118, home: Object, queue: Array(8)}
++107.3s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 96, home: Object, queue: Array(8)}
++112.3s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 62, home: Object, queue: Array(8)}
++117.3s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 14, home: Object, queue: Array(8)}
++122.3s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 11, home: Object, queue: Array(8)}
++127.3s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 10, home: Object, queue: Array(8)}
++133.6s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 14, home: Object, queue: Array(8)}
++137.5s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 14, home: Object, queue: Array(8)}
++142.4s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 14, home: Object, queue: Array(8)}
++148.1s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 11, home: Object, queue: Array(8)}
++153.9s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 11, home: Object, queue: Array(8)}
++157.3s online loading view-prepare:waiting {marks: Array(6), readiness: Object, pending: 11, home: Object, queue: Array(8)}
++157.4s online loading view-prepare:done 
++158.3s online loading join:synchronized {tick: 2112}
+
+JOIN 5 ready=false 300.6s sentHome=180.5 2026-10-30T04:53:08.243Z
++0.6s online loading start-snapshot:received 

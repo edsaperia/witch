@@ -1,0 +1,5 @@
+Witch relay listening { address: '127.0.0.1', family: 'IPv4', port: 8787 }
+{"event":"relay-close","connection":2,"role":"guest","rule":"join-grace","detail":"Liveness deadline","code":1006,"silenceMs":2040,"joiningMs":180096,"limitMs":180000}
+{"event":"relay-close","connection":1,"role":"host","rule":"client-close","detail":"","code":1001,"silenceMs":230,"joiningMs":338553}
+{"event":"relay-close","connection":4,"role":"guest","rule":"join-grace","detail":"Liveness deadline","code":1006,"silenceMs":1633,"joiningMs":180103,"limitMs":180000}
+{"event":"relay-close","connection":3,"role":"host","rule":"client-close","detail":"","code":1001,"silenceMs":460,"joiningMs":339677}

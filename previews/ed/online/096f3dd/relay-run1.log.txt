@@ -1,0 +1,16 @@
+Witch relay listening { address: '127.0.0.1', family: 'IPv4', port: 8787 }
+{"event":"relay-close","connection":2,"role":"guest","rule":"client-close","detail":"","code":1001,"silenceMs":117,"joiningMs":151540}
+{"event":"relay-close","connection":1,"role":"host","rule":"client-close","detail":"","code":1001,"silenceMs":288,"joiningMs":175136}
+{"event":"relay-close","connection":4,"role":"guest","rule":"client-close","detail":"","code":1001,"silenceMs":60,"joiningMs":150579}
+{"event":"relay-close","connection":3,"role":"host","rule":"client-close","detail":"","code":1001,"silenceMs":237,"joiningMs":174749}
+{"event":"relay-close","connection":6,"role":"guest","rule":"client-close","detail":"","code":1001,"silenceMs":128,"joiningMs":148368}
+{"event":"relay-close","connection":5,"role":"host","rule":"client-close","detail":"","code":1001,"silenceMs":477,"joiningMs":173532}
+{"event":"relay-close","connection":8,"role":"guest","rule":"client-close","detail":"","code":1001,"silenceMs":152,"joiningMs":158196}
+{"event":"relay-close","connection":7,"role":"host","rule":"client-close","detail":"","code":1001,"silenceMs":418,"joiningMs":182467}
+{"event":"relay-close","connection":10,"role":"guest","rule":"join-grace","detail":"Liveness deadline","code":1006,"silenceMs":40,"joiningMs":180044,"limitMs":180000}
+{"event":"relay-close","connection":9,"role":"host","rule":"client-close","detail":"","code":1001,"silenceMs":58,"joiningMs":331101}
+{"event":"relay-close","connection":11,"role":"host","rule":"client-close","detail":"","code":1001,"silenceMs":107,"joiningMs":193371}
+{"event":"relay-close","connection":12,"role":"guest","rule":"host-left","detail":"Host left","code":1001,"silenceMs":108,"joiningMs":162496}
+{"event":"relay-close","connection":14,"role":"guest","rule":"client-close","detail":"","code":1005,"silenceMs":26,"joiningMs":177232}
+{"event":"relay-close","connection":13,"role":"host","rule":"client-close","detail":"","code":1005,"silenceMs":16,"joiningMs":385020}
+{"event":"relay-close","connection":15,"role":"guest","rule":"host-left","detail":"Host left","code":1001,"silenceMs":18,"joiningMs":172339}

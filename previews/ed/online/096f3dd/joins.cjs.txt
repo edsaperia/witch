@@ -1,0 +1,30 @@
+const fs = require("fs"), path = require("path"), { chromium } = require("playwright");
+const out = process.argv[2], N = Number(process.argv[3] || 5);
+const t00 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t00) / 1000).toFixed(0)} s]`, ...a);
+(async () => {
+  const b = await chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
+  const rows = [];
+  for (let i = 1; i <= N; i++) {
+    const row = { join: i, errors: [], loadingLines: [] };
+    const mk = async n => { const c = await b.newContext({ viewport: { width: 960, height: 540 } }); const p = await c.newPage(); p.on("console", m => { const t = m.text(); if (m.type() === "error") row.errors.push(`${n} console.error: ${t}`); if (/online loading/.test(t) && n === "guest") row.loadingLines.push(`+${((Date.now() - row.t0 || 0) / 1000).toFixed(1)}s ${t.slice(0, 200)}`); }); p.on("pageerror", e => row.errors.push(`${n} pageerror: ${e.message}`)); return p; };
+    const h = await mk("host");
+    await h.goto("http://127.0.0.1:4178/online/online.html?online=host&relay=ws%3A%2F%2Flocalhost%3A8787&seed=123&quick=1");
+    await h.waitForFunction(() => window.witchOnline?.ready && !document.getElementById("invite").hidden, null, { timeout: 240000, polling: 500 });
+    const inv = await h.evaluate(() => document.getElementById("invite").href);
+    const g = await mk("guest"); row.t0 = Date.now();
+    let left = null; g.on("framenavigated", f => { if (f === g.mainFrame() && !f.url().includes("/online/")) left ??= ((Date.now() - row.t0) / 1000).toFixed(1); });
+    await g.goto(inv);
+    row.ready = await g.waitForFunction(() => window.witchOnline?.ready, null, { timeout: 300000, polling: 250 }).then(() => true).catch(() => false);
+    row.secs = +((Date.now() - row.t0) / 1000).toFixed(1); row.sentHomeAt = left; row.startedUTC = new Date(row.t0).toISOString(); row.endedUTC = new Date().toISOString();
+    row.guest = await g.evaluate(() => window.witchOnline ? { status: document.getElementById("status")?.textContent, tick: window.witchOnline.tick, failure: window.witchOnline.failure, loading: window.witchOnline.loading, players: window.witchOnline.players.length } : { url: location.href.replace(/invite=[^&]+/, "invite=T"), solo: !!window.witch }).catch(e => ({ evalError: e.message }));
+    row.host = await h.evaluate(() => ({ status: document.getElementById("status").textContent, tick: window.witchOnline.tick, players: window.witchOnline.players.length }));
+    log(`join ${i} [${new Date(row.t0).toISOString().slice(11,19)}Z]: ready ${row.ready} in ${row.secs} s; sentHome ${left}; guest ${JSON.stringify({ ...row.guest, loading: row.guest.loading && { stage: row.guest.loading.stage, prepared: row.guest.loading.prepared, synchronized: row.guest.loading.synchronized } })}; host ${JSON.stringify(row.host)}; errors ${row.errors.length}`);
+    if (i === 1 || !row.ready) { await h.screenshot({ path: path.join(out, `join${i}-host.png`) }); await g.screenshot({ path: path.join(out, `join${i}-guest.png`) }); }
+    if (row.ready) row.guest.loading = { stage: row.guest.loading.stage, prepared: row.guest.loading.prepared, synchronized: row.guest.loading.synchronized, logLen: row.guest.loading.log.length, log: row.guest.loading.log.map(l => `${l.at} ${l.stage}`) };
+    rows.push(row);
+    await g.context().close(); await h.context().close();
+    await new Promise(r => setTimeout(r, 1500));
+  }
+  fs.writeFileSync(path.join(out, "joins.json"), JSON.stringify(rows, null, 1));
+  await b.close();
+})();

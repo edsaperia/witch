@@ -1,0 +1,31 @@
+[25 s] host {"ready":true,"build":"dev · 096f3dd","role":"host","tick":2,"players":[{"id":0,"x":3160.7087183662898,"z":2720.746777190793}],"failure":null,"status":"Host · dev · 096f3dd"}
+[26 s] shot ashots/01-host-ready.png
+[30 s] PASS host keeps running before a guest joins (tick 7 → 80 in 4 s, 1 witch)
+[30 s] invite http://127.0.0.1:4178/online/online.html?online=guest&relay=ws%3A%2F%2Flocalhost%3A8787&seed=123&quick=1&room=3656031#invite=<token>
+[166 s] guest ready after 136.394
+[168 s] host {"ready":true,"build":"dev · 096f3dd","role":"host","tick":2162,"players":[{"id":0,"x":3160.7087183662898,"z":2720.746777190793,"paused":false},{"id":1,"x":3160.7087183662898,"z":2720.746777190793,"paused":false}],"failure":null,"status":"Host · dev · 096f3dd"}
+[168 s] guest {"ready":true,"build":"dev · 096f3dd","role":"guest","tick":2162,"players":[{"id":0,"x":3160.7087183662898,"z":2720.746777190793,"paused":false},{"id":1,"x":3160.7087183662898,"z":2720.746777190793,"paused":false}],"failure":null,"status":"Guest · dev · 096f3dd"}
+[168 s] PASS handshake and mid-night attach (guest joined at host tick ≥80; host 2 witches, guest 2; guest tick 2162; failures null/null)
+[169 s] shot ashots/02-host-after-join.png
+[170 s] shot ashots/03-guest-after-join.png
+[173 s] PASS complete state matches at matched authoritative tick 2181 (identical snapshots, 448463 chars)
+[180 s] guest woke true
+[180 s] shot ashots/04-guest-awake.png
+[183 s] PASS guest input moves witch 1 only (witch 1 moved 8.37 m, witch 0 0.000 m)
+[184 s] shot ashots/05-host-after-guest-moved.png
+[184 s] shot ashots/06-guest-after-guest-moved.png
+[188 s] release baseline ms 405
+[193 s] PASS missing guest input goes neutral (key-release stop baseline 405 ms; moving before the guest page froze: true; witch 1's last movement 546 ms after the guest's last chance to send, expected ≈250 ms + latency + slowdown; the guest frozen 2504 ms)
+[198 s] PASS cursor moves and fire on both pages: no null-control exception (0 matching errors; failures null/null)
+[204 s] shot ashots/07-host-both-paused.png
+[205 s] shot ashots/08-guest-both-paused.png
+[207 s] PASS the world stops only when both pause (host paused: world 14.19→14.33, paused flags [true,false]; both: 14.35→14.35, [true,true]; both resumed: 14.42→14.55)
+[212 s] PASS guest leaving keeps the world intact (host witches 1, status "Guest left · Host · dev · 096f3dd"; creatures 40→40, happy 0→0 — note: no happy creatures or placed sigils were set up, so that part is not exercised; host ticking 2594→2617; guest went to http://127.0.0.1:4178/?seed=480335)
+[214 s] shot ashots/09-host-after-guest-left.png
+[385 s] guest2 {"ready":true,"build":"dev · 096f3dd","role":"guest","tick":4580,"players":[{"id":0,"x":3160.7087183662898,"z":2720.746777190793,"paused":false},{"id":1,"x":3160.7087183662898,"z":2720.746777190793,"paused":false}],"failure":null,"status":"Guest · dev · 096f3dd"}
+[386 s] shot ashots/10-guest2-joined.png
+[697 s] FAIL host leaving returns the guest to the normal game (guest now at http://127.0.0.1:4178/?seed=203042; ordinary game ready false)
+[721 s] shot ashots/11-guest2-returned-home.png
+[842 s] DRIVER page.evaluate: Target page, context or browser has been closed
+    at /tmp/claude-0/-home-user-witch/0d548b8a-0656-537d-b576-63f846372a2d/scratchpad/online3/drive.cjs:125:28
+[842 s] errors {"host":[],"guest":[],"guest2":[],"solo":[]}

@@ -1,0 +1,176 @@
+{
+ "checks": [
+  "PASS host keeps running before a guest joins (tick 7 → 80 in 4 s, 1 witch)",
+  "PASS handshake and mid-night attach (guest joined at host tick ≥80; host 2 witches, guest 2; guest tick 2162; failures null/null)",
+  "PASS complete state matches at matched authoritative tick 2181 (identical snapshots, 448463 chars)",
+  "PASS guest input moves witch 1 only (witch 1 moved 8.37 m, witch 0 0.000 m)",
+  "PASS missing guest input goes neutral (key-release stop baseline 405 ms; moving before the guest page froze: true; witch 1's last movement 546 ms after the guest's last chance to send, expected ≈250 ms + latency + slowdown; the guest frozen 2504 ms)",
+  "PASS cursor moves and fire on both pages: no null-control exception (0 matching errors; failures null/null)",
+  "PASS the world stops only when both pause (host paused: world 14.19→14.33, paused flags [true,false]; both: 14.35→14.35, [true,true]; both resumed: 14.42→14.55)",
+  "PASS guest leaving keeps the world intact (host witches 1, status \"Guest left · Host · dev · 096f3dd\"; creatures 40→40, happy 0→0 — note: no happy creatures or placed sigils were set up, so that part is not exercised; host ticking 2594→2617; guest went to http://127.0.0.1:4178/?seed=480335)",
+  "FAIL host leaving returns the guest to the normal game (guest now at http://127.0.0.1:4178/?seed=203042; ordinary game ready false)"
+ ],
+ "errors": {
+  "host": [],
+  "guest": [],
+  "guest2": [],
+  "solo": []
+ },
+ "hostBuild": "dev · 096f3dd",
+ "stateKeys": [
+  "version",
+  "seed",
+  "tuning",
+  "state"
+ ],
+ "invite": "http://127.0.0.1:4178/online/online.html?online=guest&relay=ws%3A%2F%2Flocalhost%3A8787&seed=123&quick=1&room=3656031#invite=<token>",
+ "guestReadySecs": 136.394,
+ "guestBuild": "dev · 096f3dd",
+ "matchedDiffs": [],
+ "guestWoke": true,
+ "inputMove": {
+  "before": [
+   {
+    "id": 0,
+    "x": 3160.7087183662898,
+    "z": 2720.746777190793,
+    "paused": false
+   },
+   {
+    "id": 1,
+    "x": 3161.9837183652585,
+    "z": 2716.746777190793,
+    "paused": false
+   }
+  ],
+  "after": [
+   {
+    "id": 0,
+    "x": 3160.7087183662898,
+    "z": 2720.746777190793,
+    "paused": false
+   },
+   {
+    "id": 1,
+    "x": 3153.608718367314,
+    "z": 2716.746777190793,
+    "paused": false
+   }
+  ]
+ },
+ "follow": {
+  "host": {
+   "ready": true,
+   "build": "dev · 096f3dd",
+   "role": "host",
+   "tick": 2282,
+   "players": [
+    {
+     "id": 0,
+     "x": 3160.7087183662898,
+     "z": 2720.746777190793,
+     "paused": false
+    },
+    {
+     "id": 1,
+     "x": 3153.6087183662876,
+     "z": 2716.746777190793,
+     "paused": false
+    }
+   ],
+   "failure": null,
+   "status": "Host · dev · 096f3dd"
+  },
+  "guest": {
+   "ready": true,
+   "build": "dev · 096f3dd",
+   "role": "guest",
+   "tick": 2282,
+   "players": [
+    {
+     "id": 0,
+     "x": 3160.7087183662898,
+     "z": 2720.746777190793,
+     "paused": false
+    },
+    {
+     "id": 1,
+     "x": 3153.6087183662876,
+     "z": 2716.746777190793,
+     "paused": false
+    }
+   ],
+   "failure": null,
+   "status": "Guest · dev · 096f3dd"
+  }
+ },
+ "releaseBaseline": 405,
+ "neutral": {
+  "blockAt": 1793336724682,
+  "unblock": 1793336727186,
+  "lastMove": 1793336725228,
+  "frames": 44
+ },
+ "pause": {
+  "c1": {
+   "clock": 14.187500000001403,
+   "tick": 2444,
+   "paused": [
+    true,
+    false
+   ]
+  },
+  "c2": {
+   "clock": 14.332500000001426,
+   "tick": 2463,
+   "paused": [
+    true,
+    false
+   ]
+  },
+  "c3": {
+   "clock": 14.347500000001428,
+   "tick": 2472,
+   "paused": [
+    true,
+    true
+   ]
+  },
+  "c4": {
+   "clock": 14.347500000001428,
+   "tick": 2494,
+   "paused": [
+    true,
+    true
+   ]
+  },
+  "c5": {
+   "clock": 14.420833333334773,
+   "tick": 2512,
+   "paused": [
+    false,
+    false
+   ]
+  },
+  "c6": {
+   "clock": 14.54750000000146,
+   "tick": 2529,
+   "paused": [
+    false,
+    false
+   ]
+  }
+ },
+ "leave": {
+  "before": {
+   "creatures": 40,
+   "happy": 0
+  },
+  "after": {
+   "creatures": 40,
+   "happy": 0
+  },
+  "guestUrl": "http://127.0.0.1:4178/?seed=480335"
+ },
+ "driverError": "page.evaluate: Target page, context or browser has been closed\n    at /tmp/claude-0/-home-user-witch/0d548b8a-0656-537d-b576-63f846372a2d/scratchpad/online3/drive.cjs:125:28"
+}
