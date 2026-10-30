@@ -223,3 +223,14 @@ dead-zone read lets both versions complete. The regression fixture is analyzed,
 not executed as art. Typecheck and all 35 nearby tests pass with this guard.
 The full source-history replay is rerun against this corrected source; earlier
 5a175d200 results are superseded, not relabeled as the new implementation.
+
+## Completed replay and delivery
+
+The corrected replay completed all 1,456 reachable / 304 first-parent transitions
+with zero unsupported cases, bound to 395a07f91. Its engine digest still matches
+delivery source after the cache-consumer guard. The final matched counts, shared
+input sizes and limitations are in
+[the result notes](../notes/art-cache-fingerprints/README.md), alongside the
+current dependency map and complete historical rows. House savings are modest;
+these source counts establish neither storage hit rates nor loading-time gains.
+The three follow-ups in COORDINATOR6525574257 start after this milestone lands.
