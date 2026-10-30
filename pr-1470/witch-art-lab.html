@@ -10880,11 +10880,11 @@ const eyesOn = (m, c, r, dirs, size, mat, group = 1) => {
   m.anchors.head ||= { c, r }; m.anchors.eyes ||= { pts: dirs.map(d => Model.surface(c, r, v3.norm(d))), size };
 };
 const shadow = (m, x, w) => m.ell([x, .005, 0], [w, .005, w * .6], M.NOSE, { group: 0 }); // a flyer's shadow on the ground
-function finish(m, S, level, st, k, facing, ref = null) {
+function finish(m, S, level, st, k, facing, ref = null, scaleOverride = null) {
   if (S.sizes.build[level] !== 1) beef(m, S.sizes.build[level]); // the adult's and legend's heavier build (its template's size curve)
   gearUp(m);
   // ref: a model in the walk's first pose, its scale taken for every frame (a cycle's frames at one scale, not each fitted to its own height)
-  let scale;
+  let scale = scaleOverride ?? undefined;
   if (ref) { if (S.sizes.build[level] !== 1) beef(ref, S.sizes.build[level]); scale = render(ref, { height: drawHeight(level, st, k), facing, measure: true }).s; }
   const sp = drawForm(m, { height: drawHeight(level, st, k), facing, scale }, S, level);
   if (formMotes() && S.sizes.motes[level]) glowMotes(sp, S.id.length * 131, S.sizes.motes[level]);
@@ -11190,20 +11190,25 @@ function mole3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, m = new Model(), f = frame ? .03 : 0;
   const look = S.look?.mole ?? {}, depth = look.bodyDepth ?? 1, length = look.bodyLength ?? 1, snout = look.snoutProjection ?? 1, pawSpread = look.forepawSpread ?? 1, pawSize = look.forepawSize ?? 1;
   if (![depth, length, snout, pawSpread, pawSize].every(v => Number.isFinite(v) && v > 0)) throw new Error("Mole shape multipliers must be finite and positive");
+  const vertical = look.bodyVerticalDepth ?? depth, width = look.bodyWidth ?? depth, snoutThickness = look.snoutThickness ?? 1;
+  const pawLength = look.forepawLength ?? 1, pawWidth = look.forepawWidth ?? 1, pawThickness = look.forepawThickness ?? 1;
+  const snoutForward = look.snoutForward ?? 0, snoutLift = look.snoutLift ?? 0, pawForward = look.forepawForward ?? 0;
+  if (![vertical, width, snoutThickness, pawLength, pawWidth, pawThickness].every(v => Number.isFinite(v) && v > 0) || ![snoutForward, snoutLift, pawForward].every(Number.isFinite)) throw new Error("Mole independent shape values need positive multipliers and finite offsets");
+  if (look.fit != null && look.fit !== "current") throw new Error("Mole fit must be current or absent");
   // growing up (the menagerie review 2d): a pup still pink and bare, round as a bean, its snout short and its hands small; a
   // young mole in its first velvet, longer, the spade hands coming in; then the adult's long barrel and huge hands (and its legend's)
-  const g = Math.min(level, 2), L = [.56, .82, 1][g] * length, Hk = [.5, .78, 1][g], Sn = [.55, .8, 1][g] * snout, baseDepth = .25 * [1.08, 1.02, 1][g], lift = baseDepth * (depth - 1), cy = .26 + lift, R = [.6 * L, baseDepth * depth, .33 * [1.02, 1, 1][g] * depth];
+  const g = Math.min(level, 2), L = [.56, .82, 1][g] * length, Hk = [.5, .78, 1][g], Sn = [.55, .8, 1][g] * snout, baseDepth = .25 * [1.08, 1.02, 1][g], lift = baseDepth * (vertical - 1), cy = .26 + lift, R = [.6 * L, baseDepth * vertical, .33 * [1.02, 1, 1][g] * width];
   const coat = g === 0 ? M.SKIN : M.BODY, back = g === 0 ? M.SKIN : M.BODY2;
   m.seg([-R[0] + .02, .16 + lift, 0], [-R[0] - .1, .1 + lift, 0], .04, .02, M.SKIN, { group: 3 });
   for (const side of [-1, 1]) { const d = (frame ? 1 : -1) * side * .06, x = -.3 * L + d; m.ell([x, .05, side * .2], [.07, .04, .05], M.SKIN, { group: side > 0 ? 6 : 2 }); m.anchors.feet.push({ c: [x, .05, side * .2], r: .07, group: side > 0 ? 6 : 2 }); } // (its back feet stepping, against its hands)
   m.ell([0, cy, 0], R, coat, { paint: p => p[1] > .4 + lift ? back : g === 1 && p[1] < .14 + lift ? M.SKIN : undefined }); // signature: a long low barrel with huge spade hands
-  const nx = R[0] + .04; m.ell([nx, .22 + lift, 0], [.26 * Sn, .07, .07], M.SKIN, { dir: [1, -.15, 0], group: 1 });
-  m.ell([nx + .25 * Sn, .18 + lift, 0], [.04, .05, .06], M.NOSE, { group: 1 });
+  const nx = R[0] + .04 + snoutForward; m.ell([nx, .22 + lift + snoutLift, 0], [.26 * Sn, .07 * snoutThickness, .07 * snoutThickness], M.SKIN, { dir: [1, -.15, 0], group: 1 });
+  m.ell([nx + .25 * Sn, .18 + lift + snoutLift, 0], [.04, .05 * snoutThickness, .06 * snoutThickness], M.NOSE, { group: 1 });
   const elder = legend && S.elder, hk = (elder ? 1.55 : 1) * Hk * pawSize; // (the elder's huge hands; a pup's and a young one's small)
   for (const side of [-1, 1]) { // spade hands, turned out, clawed
-    const h = [.38 * L + (frame ? -1 : 1) * side * .06, .12 * (elder ? 1.25 : 1) - (side > 0 ? f : 0), side * (.42 - (1 - Hk) * .18) * (elder ? 1.12 : 1) * pawSpread]; // (its spade hands paddling, one ahead, then the other)
-    m.ell(h, [.19 * hk, .05 * (elder ? 1.55 : 1) * pawSize, .17 * hk], M.SKIN, { group: side > 0 ? 7 : 2, axes: [[1, 0, 0], [0, 1, 0], [0, 0, 1]], paint: elder ? p => spotty(p, 40, .2) ? M.EAR : undefined : undefined });
-    for (let k = 0; k < 4; k++) { const cb = v3.add(h, [.2 * hk, -.01, side * (k - 1.5) * .07 * hk]); m.ell(cb, [.07 * hk, .02 * hk, .02 * hk], M.ACCENT, { group: side > 0 ? 7 : 2 });
+    const h = [.38 * L + (frame ? -1 : 1) * side * .06 + pawForward, .12 * (elder ? 1.25 : 1) - (side > 0 ? f : 0), side * (.42 - (1 - Hk) * .18) * (elder ? 1.12 : 1) * pawSpread]; // (its spade hands paddling, one ahead, then the other)
+    m.ell(h, [.19 * hk * pawLength, .05 * (elder ? 1.55 : 1) * pawSize * pawThickness, .17 * hk * pawWidth], M.SKIN, { group: side > 0 ? 7 : 2, axes: [[1, 0, 0], [0, 1, 0], [0, 0, 1]], paint: elder ? p => spotty(p, 40, .2) ? M.EAR : undefined : undefined });
+    for (let k = 0; k < 4; k++) { const cb = v3.add(h, [.2 * hk * pawLength, -.01, side * (k - 1.5) * .07 * hk * pawWidth]); m.ell(cb, [.07 * hk * pawLength, .02 * hk * pawThickness, .02 * hk], M.ACCENT, { group: side > 0 ? 7 : 2 });
       if (elder) { m.ell(v3.add(cb, [.06 * hk, -.004, 0]), [.05 * hk, .032 * hk, .032 * hk], M.WOOD, { group: 140, extra: true }); if (k === 1 || (side > 0 && k === 3)) m.ell(v3.add(cb, [-.03 * hk, 0, 0]), [.012, .03 * hk, .03 * hk], M.WOOD, { group: 141, extra: true }); } } // gold-capped claws, rings on its fingers
     if (elder && side > 0) { const top = v3.add(h, [.3 * hk, .0, .05]), lan = v3.add(top, [.06, -.0, .06]); m.seg(v3.add(top, [0, .05, 0]), v3.add(lan, [0, .2, 0]), .012, .012, M.TRUNK, { group: 142, extra: true }); m.box(v3.add(lan, [0, .07, 0]), [.1, .13, .1], M.WOOD, { group: 142, extra: true, round: .015, paint: p => Math.abs(p[1] - lan[1] - .07) < .09 && (Math.abs(p[0] - lan[0]) < .075 || Math.abs(p[2] - lan[2]) < .075) ? M.GLOW : undefined }); m.ell(v3.add(lan, [0, .22, 0]), [.06, .035, .06], M.WOOD, { group: 142, extra: true }); } // a dim lantern hung off a claw
   }
@@ -11218,7 +11223,15 @@ function mole3d(S, level, frame, st, facing = "towards") {
       m.chain([[...b, .035], [...mid, .026], [...t, .01]], M.TRUNK, o); if (i % 2 === 0) m.box(v3.add(mid, [0, .005, 0]), [.045, .05, .038], i === 2 ? M.GLOW : i === 4 ? M.GLINT : M.FLOWER, { ...o, dir: [d[0] * .5, 1, d[2] * .5], round: .004, rough: .004 }); }
     ring(m, base, [0, 1, 0], .15, .03, M.TRUNK, o);
   } else if (legend) crown3d(m, [.15 * length, .62 + lift * 2, 0], .15);
-  return finish(m, S, level, st, .55, facing);
+  let referenceScale = null;
+  if (look.fit === "current") {
+    // Local reference fit: same level/frame/style/facing and inherited texture/gear,
+    // with only mole shape controls removed. The reference is measured, never drawn.
+    const reference = { ...S, look: { ...S.look, mole: {} } };
+    const measure = Object.assign((model, options) => { referenceScale = render(model, { ...options, measure: true }).s; return new Sprite(1, 1); }, { motes: false });
+    withForm(measure, () => mole3d(reference, level, frame, st, facing));
+  }
+  return finish(m, S, level, st, .55, facing, null, referenceScale);
 }
 
 // The badlands' meerkat's sentinel (Ed, 2026-10-12: "the meerkat scurries on all fours as a rigged four-legger and sits up as a
