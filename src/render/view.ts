@@ -13,6 +13,7 @@ import { partyGearOf } from "./artBuild";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
 import { waitForPrograms, type ReadyProgram } from "./programReadiness";
+import { captureProgramUses, mapProgramUses } from "./programInventory";
 import { carrierOf, deckOf } from "../rules/treehouse";
 import { HOUSE_LAYER } from "./post";
 import { StationBackdrop } from "./stationBackdrop";
@@ -1083,6 +1084,8 @@ export class View {
     // play waits for them a few seconds at most, so on a GPU that compiles in parallel they're done in the Bedroom.
     const hidden: THREE.Object3D[] = [];
     const fx = this.post.fxScene; // (the smooth effects layer's own scene, and the post passes' quad: neither in the scene)
+    const telemetry = (globalThis as unknown as { __travelProbe?: { record(e: unknown): void } }).__travelProbe;
+    const originalUses = telemetry ? captureProgramUses([{ label: 'scene', root: this.scene }, ...(fx ? [{ label: 'effects', root: fx }] : [])]) : null;
     for (const sc of fx ? [this.scene, fx] : [this.scene]) sc.traverse(o => { if (!o.visible) { hidden.push(o); o.visible = true; } });
     // (and the occlusion pyramid's passes, which aren't in the scene: render/hiz.ts, built by the treehouse, where she starts)
     if (!this.hizOff && !this.hiz) this.hiz = new Hiz(this.renderer);
@@ -1097,11 +1100,12 @@ export class View {
     for (const o of hidden) o.visible = false;
     performance.mark("witch:prep-compile0");
     const parallel = this.renderer.extensions.has('KHR_parallel_shader_compile');
+    const usages = originalUses ? mapProgramUses(originalUses, material => (this.renderer.properties.get(material) as { currentProgram?: { id: number } }).currentProgram?.id) : undefined;
     const record = (phase: string, pending: ReadyProgram[] = [], elapsed = 0) => {
       const detail = { kind: 'shader-programs', phase, at: performance.now(), parallel, elapsed, groups,
-        programs: allPrograms().map(p => ({ id: p.id, name: p.name, type: p.type, ready: p.isReady(), added: !before.has(p.id) })), pending: pending.map(p => p.id) };
+        programs: allPrograms().map(p => ({ id: p.id, name: p.name, type: p.type, ready: p.isReady(), added: !before.has(p.id), ...(usages?.[p.id] ? { sourceUses: usages[p.id] } : {}) })), pending: pending.map(p => p.id) };
       performance.mark(`witch:shader-${phase}`, { detail });
-      (globalThis as unknown as { __travelProbe?: { record(e: unknown): void } }).__travelProbe?.record(detail);
+      telemetry?.record(detail);
       return detail;
     };
     record('start');
