@@ -53,7 +53,7 @@ test('expires silent connections and closes guest when host leaves', { timeout: 
   await hostClosed; await guestClosed;
 });
 
-test('slow joining guest survives five seconds, readiness restores normal timeout, and grace is bounded', { timeout: 5000 }, async t => {
+test('slow joining guest survives five seconds, readiness restores normal timeout, and stalled host expires', { timeout: 5000 }, async t => {
   let clock = 0;
   const connect = await fixture(t, { now: () => clock, checkMs: 5 }), h = await host(connect);
   const guest = await connect(), joined = message(guest), notice = message(h.ws);
@@ -68,6 +68,39 @@ test('slow joining guest survives five seconds, readiness restores normal timeou
   const guestClosed = once(guest, 'close'); clock = 11000; await guestClosed;
   assert.equal(h.ws.readyState, WebSocket.OPEN);
   const hostClosed = once(h.ws, 'close'); clock = 180000; await hostClosed;
+});
+
+test('advancing loading survives the former grace, repeated progress stalls, and absolute cap remains', { timeout: 5000 }, async t => {
+  let clock = 0;
+  const logs = [], connect = await fixture(t, { now: () => clock, checkMs: 5, log: row => logs.push(row) });
+  const h = await host(connect), guest = await connect(), joined = message(guest), notice = message(h.ws);
+  send(guest, { type: 'join', room: h.info.room, token: h.info.token }); await joined; await notice;
+  for (let n = 1; n <= 11; n++) {
+    clock = n * 50000;
+    send(h.ws, { type: 'progress', payload: n }); send(guest, { type: 'progress', payload: n });
+    const roundtrip = message(h.ws); send(guest, { type: 'input', payload: {} }); await roundtrip;
+    assert.equal(guest.readyState, WebSocket.OPEN);
+  }
+  // A heartbeat and replayed sequence cannot renew progress.
+  clock = 599000;
+  send(h.ws, { type: 'heartbeat' }); send(guest, { type: 'progress', payload: 11 });
+  await new Promise(resolve => setTimeout(resolve, 10));
+  const closed = once(guest, 'close'); clock = 600000; await closed;
+  await new Promise(resolve => setTimeout(resolve, 10));
+  assert.equal(logs.find(row => row.role === 'host').rule, 'join-cap');
+});
+
+test('heartbeats and repeated progress cannot hide a loading stall', { timeout: 5000 }, async t => {
+  let clock = 0;
+  const logs = [], connect = await fixture(t, { now: () => clock, checkMs: 5, log: row => logs.push(row) });
+  const h = await host(connect);
+  send(h.ws, { type: 'progress', payload: 1 });
+  await new Promise(resolve => setTimeout(resolve, 10));
+  clock = 59000; send(h.ws, { type: 'heartbeat' }); send(h.ws, { type: 'progress', payload: 1 });
+  await new Promise(resolve => setTimeout(resolve, 10));
+  const closed = once(h.ws, 'close'); clock = 60000; await closed;
+  await new Promise(resolve => setTimeout(resolve, 10));
+  assert.equal(logs[0].rule, 'join-stall'); assert.equal(logs[0].limitMs, 60000);
 });
 
 test('host departure closes guest and releases the room number', { timeout: 5000 }, async t => {
@@ -129,6 +162,6 @@ test('close logging distinguishes protocol, client close and joining-grace rules
   const client = await connect(), clientClosed = once(client, 'close'); client.close(); await clientClosed;
   const silent = await connect(), silentClosed = once(silent, 'close'); clock = 180000; await silentClosed;
   await new Promise(resolve => setTimeout(resolve, 10));
-  assert.deepEqual(logs.map(row => row.rule).sort(), ['client-close', 'join-grace', 'protocol']);
+  assert.deepEqual(logs.map(row => row.rule).sort(), ['client-close', 'join-stall', 'protocol']);
   assert.equal(JSON.stringify(logs).includes('secret-invalid-json'), false);
 });

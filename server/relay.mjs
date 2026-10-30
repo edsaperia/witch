@@ -4,8 +4,8 @@ import { pathToFileURL } from 'node:url';
 import { WebSocketServer, WebSocket } from 'ws';
 
 /** Relay only: the host browser owns all simulation and permanent outcomes. */
-export function createRelay({ dropMs = 5000, joiningGraceMs = 180000, hostJoiningDropMs = 20000, checkMs = 250, now = Date.now, log = line => console.info(JSON.stringify(line)), build = process.env.WITCH_SHA ?? 'local-unidentified' } = {}) {
-  if (!(Number.isFinite(dropMs) && Number.isFinite(joiningGraceMs) && joiningGraceMs >= dropMs && Number.isFinite(hostJoiningDropMs) && hostJoiningDropMs >= dropMs && Number.isFinite(checkMs) && dropMs > 0 && checkMs > 0)) throw new Error('Invalid relay timing');
+export function createRelay({ dropMs = 5000, joiningGraceMs = 600000, joiningStallMs = 60000, hostJoiningDropMs = 20000, checkMs = 250, now = Date.now, log = line => console.info(JSON.stringify(line)), build = process.env.WITCH_SHA ?? 'local-unidentified' } = {}) {
+  if (!(Number.isFinite(dropMs) && Number.isFinite(joiningGraceMs) && joiningGraceMs >= dropMs && Number.isFinite(joiningStallMs) && joiningStallMs > 0 && Number.isFinite(hostJoiningDropMs) && hostJoiningDropMs >= dropMs && Number.isFinite(checkMs) && dropMs > 0 && checkMs > 0)) throw new Error('Invalid relay timing');
   const rooms = new Map();
   const http = createServer((_req, res) => { res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify({ service: 'witch-relay', protocol: 1, build })); });
   const wss = new WebSocketServer({ server: http, maxPayload: 8 * 1024 * 1024 });
@@ -23,7 +23,7 @@ export function createRelay({ dropMs = 5000, joiningGraceMs = 180000, hostJoinin
     let room, role;
     ws.connectionNumber = ++connectionNumber;
     ws.lastMessage = now();
-    ws.joinedAt = now(); ws.playable = false;
+    ws.joinedAt = ws.advancedAt = now(); ws.progress = -1; ws.playable = false;
     ws.on('message', bytes => {
       let m;
       try { m = JSON.parse(bytes.toString()); } catch { stop(ws, 'protocol', 1008, 'Invalid JSON'); return; }
@@ -45,6 +45,10 @@ export function createRelay({ dropMs = 5000, joiningGraceMs = 180000, hostJoinin
         return;
       }
       if (m.type === 'heartbeat') return;
+      if (m.type === 'progress' && Number.isSafeInteger(m.payload) && m.payload >= 0) {
+        if (!ws.playable && m.payload > ws.progress) { ws.progress = m.payload; ws.advancedAt = now(); }
+        return;
+      }
       if (m.type === 'ready') {
         if (!ws.renderReady) {
           ws.renderReady = true;
@@ -61,7 +65,7 @@ export function createRelay({ dropMs = 5000, joiningGraceMs = 180000, hostJoinin
     });
     ws.on('error', () => { ws.closeRule ??= 'socket-error'; });
     ws.on('close', code => {
-      log({ event: 'relay-close', connection: ws.connectionNumber, role: role ?? 'unassigned', rule: ws.closeRule ?? 'client-close', detail: ws.closeDetail ?? '', code, silenceMs: now() - ws.lastMessage, joiningMs: now() - ws.joinedAt, limitMs: ws.closeLimit });
+      log({ event: 'relay-close', connection: ws.connectionNumber, role: role ?? 'unassigned', rule: ws.closeRule ?? 'client-close', detail: ws.closeDetail ?? '', code, silenceMs: now() - ws.lastMessage, progressSilenceMs: now() - ws.advancedAt, progress: ws.progress, joiningMs: now() - ws.joinedAt, limitMs: ws.closeLimit });
       if (!room) return;
       if (role === 'host') {
         rooms.delete(room.number);
@@ -76,9 +80,11 @@ export function createRelay({ dropMs = 5000, joiningGraceMs = 180000, hostJoinin
   const timer = setInterval(() => {
     for (const ws of wss.clients) {
       const joiningGuest = ws.onlineRole === 'host' && ws.onlineRoom?.guest && !ws.onlineRoom.guest.playable;
-      const limit = ws.playable ? (joiningGuest ? hostJoiningDropMs : dropMs) : joiningGraceMs;
-      const elapsed = ws.playable ? now() - ws.lastMessage : now() - ws.joinedAt;
-      if (elapsed >= limit) { ws.closeLimit = limit; stop(ws, ws.playable ? 'silence' : 'join-grace', 1001, 'Liveness deadline', true); }
+      let limit, elapsed, rule;
+      if (ws.playable) { limit = joiningGuest ? hostJoiningDropMs : dropMs; elapsed = now() - ws.lastMessage; rule = 'silence'; }
+      else if (now() - ws.joinedAt >= joiningGraceMs) { limit = joiningGraceMs; elapsed = now() - ws.joinedAt; rule = 'join-cap'; }
+      else { limit = joiningStallMs; elapsed = Math.max(now() - ws.advancedAt, now() - ws.lastMessage); rule = 'join-stall'; }
+      if (elapsed >= limit) { ws.closeLimit = limit; stop(ws, rule, 1001, rule === 'join-stall' ? 'Loading stalled' : 'Liveness deadline', true); }
     }
   }, checkMs);
   timer.unref();
@@ -94,6 +100,6 @@ export function createRelay({ dropMs = 5000, joiningGraceMs = 180000, hostJoinin
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const relay = createRelay({ dropMs: Number(process.env.WITCH_DROP_MS ?? 5000), joiningGraceMs: Number(process.env.WITCH_JOIN_GRACE_MS ?? 180000), hostJoiningDropMs: Number(process.env.WITCH_HOST_JOIN_DROP_MS ?? 20000) });
+  const relay = createRelay({ dropMs: Number(process.env.WITCH_DROP_MS ?? 5000), joiningGraceMs: Number(process.env.WITCH_JOIN_GRACE_MS ?? 600000), joiningStallMs: Number(process.env.WITCH_JOIN_STALL_MS ?? 60000), hostJoiningDropMs: Number(process.env.WITCH_HOST_JOIN_DROP_MS ?? 20000) });
   relay.http.listen(Number(process.env.PORT ?? 8787), process.env.HOST ?? '127.0.0.1', () => console.log('Witch relay listening', relay.http.address()));
 }

@@ -3,15 +3,24 @@ interface JoinPreparation<T> {
   prepare(value: T, signal: AbortSignal): Promise<void>;
   trace(stage: string, detail?: unknown): void;
   fail(error: Error): void;
-  timeoutMs?: number;
+  progress?(): number;
+  stallMs?: number;
+  absoluteMs?: number;
 }
 
 /** Every rejection and a never-settling async preparation get an attributed, bounded outcome. */
 export async function prepareJoin<T>(options: JoinPreparation<T>): Promise<boolean> {
   const controller = new AbortController();
-  let phase = "replay-restore", timer: ReturnType<typeof setTimeout> | undefined;
+  let phase = "replay-restore", timer: ReturnType<typeof setInterval> | undefined;
+  const started = Date.now();
+  let advancedAt = started, progress = options.progress?.() ?? 0;
   const deadline = new Promise<never>((_resolve, reject) => {
-    timer = setTimeout(() => reject(new Error(`Guest joining timed out during ${phase}`)), options.timeoutMs ?? 175000);
+    timer = setInterval(() => {
+      const current = options.progress?.() ?? 0, now = Date.now();
+      if (Number.isSafeInteger(current) && current > progress) { progress = current; advancedAt = now; }
+      if (now - started >= (options.absoluteMs ?? 600000)) reject(new Error(`Guest joining reached its maximum wait during ${phase}`));
+      else if (now - advancedAt >= (options.stallMs ?? 60000)) reject(new Error(`Guest joining stalled during ${phase}`));
+    }, Math.min(1000, options.stallMs ?? 60000, options.absoluteMs ?? 600000));
   });
   const task = async () => {
     options.trace("replay-restore:start");
@@ -27,5 +36,5 @@ export async function prepareJoin<T>(options: JoinPreparation<T>): Promise<boole
     const error = value instanceof Error ? value : new Error(String(value));
     options.trace(`${phase}:failed`, { message: error.message, stack: error.stack });
     options.fail(error); return false;
-  } finally { clearTimeout(timer); }
+  } finally { clearInterval(timer); }
 }

@@ -32,9 +32,11 @@ let replica: ReturnType<typeof replayGuest> | undefined, tick = 0, sequence = 0,
 let guestPresent = false, guestIsReady = false, prepared = false, synchronized = false, failure: string | null = null;
 let loadingStage = "connecting";
 let joining = false, frameRequest = 0;
+let loadingProgress = 0, reportProgress = () => {};
 const loadingMonitors = new Set<ReturnType<typeof setInterval>>();
 const loadingLog: { at: number; stage: string; detail?: unknown }[] = [];
 const trace = (stage: string, detail?: unknown) => {
+  if (!stage.endsWith(":waiting") && stage !== loadingStage) { loadingProgress++; reportProgress(); }
   loadingStage = stage; loadingLog.push({ at: Math.round(performance.now()), stage, detail });
   if (loadingLog.length > 120) loadingLog.shift();
   console.info("online loading", stage, detail ?? "");
@@ -47,7 +49,16 @@ prewarmArtWorkers();
 async function prepare(source: Game, player: number, signal?: AbortSignal) {
   trace("view-create:start");
   let phase = "view-create";
+  let lastProgress = "";
   const monitor = setInterval(() => {
+    const buildMarks = performance.getEntriesByType("mark").filter(m => m.name.startsWith("witch:prep-") || m.name.startsWith("witch:build-"));
+    // Only completed work or new build stages advance the lease; repeating a waiting log does not.
+    const progress = JSON.stringify([buildMarks.length, view?.readiness, view?.assets.home, view?.assets.timings.length,
+      view ? [...view.assets.typeLog].filter(([, value]) => value.landed !== undefined).length : 0]);
+    if (progress !== lastProgress) {
+      lastProgress = progress; loadingProgress++; reportProgress();
+      setStatus(phase === "view-create" ? "Joining… drawing the island" : `Joining… preparing the view (${Math.round((view?.readiness.share ?? 0) * 100)}%)`);
+    }
     const marks = performance.getEntriesByType("mark").filter(m => m.name.startsWith("witch:prep-") || m.name.startsWith("witch:build-")).slice(-6).map(m => ({ name: m.name, at: Math.round(m.startTime) }));
     // Read-only queue evidence; worker scheduling remains owned by the travel/performance work.
     const a = view?.assets as unknown as { queue?: { kind: string; id: unknown }[]; workers?: { busy: boolean; job?: { kind: string; id: unknown } }[]; urgentKeys?: Set<string> } | undefined;
@@ -116,7 +127,7 @@ const connection = connectRelay({ endpoint, room, token: guest ? token : undefin
         joining = true;
         const start = payload.start;
         trace("start-snapshot:received", { tick: start.tick, acc: start.transient?.acc });
-        void prepareJoin({ restore: () => { replica = replayGuest(start, build); return replica.game; }, prepare: (g, signal) => prepare(g, 1, signal), trace, fail });
+        void prepareJoin({ restore: () => { replica = replayGuest(start, build); return replica.game; }, prepare: (g, signal) => prepare(g, 1, signal), progress: () => loadingProgress, trace, fail });
       } else if (payload?.kind === "start" && payload.start && replica && prepared) {
         trace("sync-replay:start", { tick: payload.start.tick, acc: payload.start.transient?.acc });
         replica = replayGuest(payload.start, build, game);
@@ -130,6 +141,7 @@ const connection = connectRelay({ endpoint, room, token: guest ? token : undefin
     }
   },
 });
+reportProgress = () => { connection.sendProgress(loadingProgress); };
 const input = new Input();
 let cleaned = false;
 const cleanup = () => {
@@ -176,5 +188,5 @@ Object.assign(window, { witchOnline: {
   get state() { return ready ? snapshotGame(game) : null; },
   get players() { return ready ? game.witches.map(w => ({ id: w.id, x: w.body.x, z: w.body.z, paused: w.paused })) : []; },
   get failure() { return failure; },
-  get loading() { return { stage: loadingStage, prepared, synchronized, log: [...loadingLog] }; },
+  get loading() { return { stage: loadingStage, progress: loadingProgress, prepared, synchronized, log: [...loadingLog] }; },
 } });
