@@ -12,7 +12,7 @@ const samples=Number(process.env.SAMPLES||80),types={'.html':'text/html','.js':'
   const server=http.createServer((req,res)=>{const p=path.resolve(root,'.'+new URL(req.url,'http://x').pathname),f=p===root?path.join(root,'index.html'):p;if(p!==root&&!p.startsWith(root+path.sep)){res.writeHead(403);res.end();return;}fs.readFile(f,(e,b)=>{res.writeHead(e?404:200,{'content-type':types[path.extname(f)]||'application/octet-stream'});res.end(e?'':b);});});
   await new Promise(r=>server.listen(0,'127.0.0.1',r));
   const browser=await pw.chromium.launch({args:['--use-gl=angle','--use-angle=d3d11','--ignore-gpu-blocklist']});
-  const result={head,build,viewport:[1600,900],errors:[],variants:{}};
+  const result={head,build,startedAt:new Date().toISOString(),viewport:[1600,900],errors:[],variants:{},contention:'Background expert training may overlap; no quiet-machine claim'};
   try{
     const page=await browser.newPage({viewport:{width:1600,height:900}});
     page.on('pageerror',e=>result.errors.push(String(e)));page.on('console',m=>{if(m.type()==='error')result.errors.push(m.text());});
@@ -23,6 +23,11 @@ const samples=Number(process.env.SAMPLES||80),types={'.html':'text/html','.js':'
     await page.waitForFunction(()=>getComputedStyle(document.getElementById('start')).display==='none',null,{timeout:60000});
     const frame=async(n,draw=true)=>page.evaluate(({n,draw})=>{const w=window.witch;for(let i=0;i<n;i++)w.frame({moveX:0,moveZ:0,toggleMode:false,zoom:0},1/60,draw&&i===n-1);},{n,draw});
     for(let i=0;i<16;i++){await frame(15);await page.waitForFunction(()=>window.witch.view.assets.pending===0,null,{timeout:600000});if(result.errors.length)throw Error(result.errors.join('\n'));}
+    const active=()=>page.evaluate(()=>{const g=window.witch.game,s=g.combat.spells;return {clock:g.clock.time,casts:s?.casts??0,bodies:s?.bodies.filter(b=>b.alive).length??0,beams:s?.beams.length??0,zones:s?.zones.length??0,telegraphs:s?.telegraphs.length??0};});
+    let combat=await active();
+    for(let i=0;i<48&&combat.bodies+combat.beams+combat.zones<4;i++){await frame(10);combat=await active();}
+    result.combat=combat;
+    if(combat.bodies+combat.beams+combat.zones<4)throw Error('Busy-fight fixture has fewer than four active grammar attacks: '+JSON.stringify(combat));
     result.fixture=await page.evaluate(()=>{const w=window.witch,g=w.game;return {clock:g.clock.time,creatures:g.creatures.filter(c=>!c.gone&&Math.hypot(c.x-g.witch.x,c.z-g.witch.z)<45).length,spells:g.combat.spells?.bodies?.length??null,camera:g.camera,quality:w.ladder?.state};});
     result.fixture.invulnerableForSustainedMeasurement=true;
     if(result.fixture.creatures<12)throw Error('Busy-fight fixture has fewer than 12 nearby creatures');
@@ -42,6 +47,7 @@ const samples=Number(process.env.SAMPLES||80),types={'.html':'text/html','.js':'
     for(const name of ['fire','frost','party','beam','all','frost-low','all-low','frost-fragment']){
       console.log('budget',name);
       const row=await page.evaluate(async({name,samples})=>{
+        const startedAt=new Date().toISOString();
         const w=window.witch,v=w.view,m=v.magic,s=window.__fxBudget,gl=v.renderer.getContext(),ext=gl.getExtension('EXT_disjoint_timer_query_webgl2'),debug=gl.getExtension('WEBGL_debug_renderer_info');
         const renderer=debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER);
         if(/swiftshader|software|llvmpipe/i.test(renderer))throw Error('Hardware required: '+renderer);
@@ -62,7 +68,7 @@ const samples=Number(process.env.SAMPLES||80),types={'.html':'text/html','.js':'
           const ready=gl.getQueryParameter(q,gl.QUERY_RESULT_AVAILABLE),disjoint=gl.getParameter(ext.GPU_DISJOINT_EXT);
           rows.push({enabled:m.enabled,gpuMs:ready&&!disjoint?gl.getQueryParameter(q,gl.QUERY_RESULT)/1e6:null,cpuMs,ready,disjoint,lights:m.stats.lights,totalLights:v.stats.lights});gl.deleteQuery(q);
         }
-        m.enabled=true;render();return {renderer,samples:rows};
+        m.enabled=true;render();return {renderer,startedAt,finishedAt:new Date().toISOString(),samples:rows};
       },{name,samples});
       if(result.errors.length)throw Error(result.errors.join('\n'));
       const median=a=>{a.sort((a,b)=>a-b);return(a[(a.length-1)>>1]+a[a.length>>1])/2;};
@@ -84,5 +90,5 @@ const samples=Number(process.env.SAMPLES||80),types={'.html':'text/html','.js':'
     },{a:reference.toString('base64'),b:vertex.toString('base64')});
     result.pass=Object.values(result.variants).filter(v=>!v.diagnostic).every(v=>v.pass)&&result.pixelProof.pass&&result.variants['all-low'].delta<result.variants.all.delta&&result.variants['frost-low'].delta<result.variants.frost.delta;
     if(!result.pass)process.exitCode=1;
-  }finally{fs.writeFileSync(path.join(out,'budget.json'),JSON.stringify(result,null,2));await browser.close();server.close();}
+  }finally{result.finishedAt=new Date().toISOString();fs.writeFileSync(path.join(out,'budget.json'),JSON.stringify(result,null,2));await browser.close();server.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
