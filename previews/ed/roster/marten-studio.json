@@ -1,5 +1,5 @@
 {
-  "sha": "17fae2df465f6bb3af0a172039f408264cc42c97",
+  "sha": "0d122c61b893e0e8d66fa84508b9b1ec68d19c79",
   "measurements": [
     {
       "id": "marten",
@@ -513,17 +513,7 @@
         "snout": 0.65,
         "snoutD": 0.6,
         "belly": false,
-        "bib": {
-          "mat": "BELLY",
-          "extent": {
-            "along": [
-              -0.8,
-              0.95
-            ],
-            "width": 1,
-            "depth": 1.5
-          }
-        },
+        "bib": null,
         "legMat": 25,
         "ear": "round",
         "earS": 1.3,

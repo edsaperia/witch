@@ -1,5 +1,5 @@
 {
-  "sha": "17fae2df465f6bb3af0a172039f408264cc42c97",
+  "sha": "0d122c61b893e0e8d66fa84508b9b1ec68d19c79",
   "measurements": [
     {
       "id": "stoat",
@@ -294,6 +294,8 @@
         "snout": 0.6,
         "snoutD": 0.6,
         "whiskers": true,
+        "muzzle": true,
+        "jawCoat": false,
         "belly": true,
         "ear": "round",
         "earS": 0.6,
@@ -303,8 +305,8 @@
       "look": null,
       "paletteHSV": [
         0.065,
-        0.45,
-        0.68
+        0.4,
+        0.78
       ]
     },
     {
@@ -375,6 +377,8 @@
         "snout": 0.48,
         "snoutD": 0.6,
         "whiskers": true,
+        "muzzle": true,
+        "jawCoat": false,
         "belly": true,
         "ear": "round",
         "earS": 0.6,
@@ -385,8 +389,8 @@
       "look": null,
       "paletteHSV": [
         0.065,
-        0.45,
-        0.68
+        0.4,
+        0.78
       ]
     },
     {
@@ -456,6 +460,8 @@
         "snout": 0.6,
         "snoutD": 0.6,
         "whiskers": true,
+        "muzzle": true,
+        "jawCoat": false,
         "belly": true,
         "ear": "round",
         "earS": 0.6,
@@ -465,8 +471,8 @@
       "look": null,
       "paletteHSV": [
         0.065,
-        0.45,
-        0.68
+        0.4,
+        0.78
       ]
     },
     {
@@ -536,6 +542,8 @@
         "snout": 0.6,
         "snoutD": 0.6,
         "whiskers": true,
+        "muzzle": true,
+        "jawCoat": false,
         "belly": true,
         "ear": "round",
         "earS": 0.6,
@@ -545,8 +553,8 @@
       "look": null,
       "paletteHSV": [
         0.065,
-        0.45,
-        0.68
+        0.4,
+        0.78
       ]
     }
   ],
