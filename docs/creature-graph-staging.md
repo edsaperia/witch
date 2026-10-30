@@ -157,6 +157,18 @@ It is not a measurement of visible ring bounds: projection, clipping and surface
 orientation still need cloud image review. Current art has none of these fields
 and follows its existing path.
 
+Optional regional ring variation (coordinator 6514299985) uses
+`coat.regions.torso.sizeVariation` in [0,1), `closedFraction` in [0,1], and
+`gapRange: [min,max]` in radians, ordered within [0,π]. For example `.15`, `.25`,
+`[0,.65]` scales each ring's outer diameter and pale centre by a deterministic
+factor in [.85,1.15], draws about a quarter closed, and varies the remaining
+openings. Seeds derive from the existing longitudinal/circumferential cell
+identity; cell positions, density and rotations stay fixed. No fixture enables
+these controls yet. With all fields absent the old branch executes unchanged;
+the pre-change dense painter byte hash is pinned in `rosettePainter.test.ts`
+across four scales, back/flanks/belly and wrapped/regional patterns. This is a
+CPU painter comparison, not a newly captured image or a visual acceptance claim.
+
 Connectedness tests caught thin-profile gaps and inverted legacy baby loaf
 depths. The graph inserts interpolated stations to preserve its connectivity
 invariant; it normalises non-positive legacy vertical radii and records their
