@@ -206,7 +206,7 @@ test("a requested recruit's visible sigil is picked up before following its drea
   expect(at(2.5).questJob.deadline).toBe(at(.5).questJob.deadline);
 });
 
-function offeringScript(repaired:boolean,change:(o:Observation,t:number)=>void) {
+function offeringScript(repaired:boolean|undefined,change:(o:Observation,t:number)=>void) {
   const events:ExpertTrace[]=[],bot=newExpert({},1,EXPERT_LIMITS,e=>events.push(e),{questDeliveryRepair:repaired});
   for(let i=0;i<=3*60;i++){
     const o=observation();o.playerTime=i/60;o.worldTime=o.playerTime;
@@ -220,6 +220,7 @@ test("the duplicate-tiger delivery regression places either matching bottom rath
   for(const reverse of [false,true]){
     const change=(o:Observation)=>{if(reverse)o.carried.reverse();};
     const off=offeringScript(false,change),on=offeringScript(true,change);
+    expect(offeringScript(undefined,change).map(e=>e.controls)).toEqual(on.map(e=>e.controls));
     expect(off.every(e=>e.controls.cycle&&!e.controls.sigil)).toBe(true);
     expect(on.every(e=>e.controls.sigil&&!e.controls.cycle)).toBe(true);
     expect(on.every(e=>!e.questJob.enabled)).toBe(true);

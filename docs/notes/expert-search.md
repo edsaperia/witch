@@ -1,7 +1,8 @@
 # Expert search: implementation and fairness audit
 
-Delivery cycling repair (coordinator6520516411, 2026-10-30), opt-in
-`questDeliveryRepair:true`, default off pending its correctness ablation:
+Delivery cycling repair (coordinators6520516411/6520984212, 2026-10-30),
+default on after correctness ablation fc9bf675 passed; `questDeliveryRepair:false`
+retains the old branch only for the off ablation:
 the shared delivery branch selected the first requested ID but insisted it be at
 the bottom. With two matching tigers this generated 4097 cycles and no placement
 in both arms of result5a0d2a99, despite arrival inside wolf297's clearing.
@@ -9,6 +10,10 @@ The repair accepts any observed bottom of the wanted species; otherwise it sends
 one cycle pulse and waits for a changed delayed carried-stack observation. It
 never mutates the stack or reads hidden creature state. Existing safety priorities
 and visit memory remain; known-quest priority and coverage remain off.
+The repair completed wolf297 at53.8667 player seconds/51.2192 world seconds,
+versus no completion in OFF, with zero KOs/losses in either120-second case.
+Minimum HP fell3→1; this validates delivery correctness, not general safety,
+full-night play or persistence. Later diagnostic modes keep the repair on.
 
 `--delivery-screen` fixes repair off/on, night32676/world0/unlockedhome100,120
 player seconds each, defaultquestMax1/Satchel/nohat/barebroom/visitsON. Protected

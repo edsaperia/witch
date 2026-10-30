@@ -47,7 +47,7 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
   const coverage = newCoverage(), coverageEnabled = options.coverageExploration === true;
   // Candidate stays opt-in until the coordinator disposes of the fixed test.
   const questJob = newKnownQuestJob(options.knownQuestPriority === true);
-  const deliverySelection = newQuestOffering(), deliveryRepair = options.questDeliveryRepair === true;
+  const deliverySelection = newQuestOffering(), deliveryRepair = options.questDeliveryRepair !== false;
   const bot: Bot = { kind: "expert", doing: "waiting for observations", done: { quests: [], relics: [] }, decide };
   return bot;
 

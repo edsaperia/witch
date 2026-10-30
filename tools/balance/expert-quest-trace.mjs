@@ -52,7 +52,7 @@ const manifest = { schema: 1, diagnosticOnly: true, startedUtc: new Date().toISO
   ...(coverageScreen ? { preRegisteredDecisionRule: COVERAGE_SCREEN_DECISION, incompleteRule: "No all-seed verdict; common complete pairs only; no restart" } : {}),
   knownQuestScreen, knownQuestPriorityDefault: false,
   ...(knownQuestScreen ? { preRegisteredDecisionRule: KNOWN_QUEST_SCREEN_DECISION, incompleteRule: "Common complete pairs only; no promotion from incomplete screen; no restart" } : {}),
-  deliveryScreen, questDeliveryRepairDefault: false,
+  deliveryScreen, questDeliveryRepairDefault: true,
   ...(deliveryScreen ? { preRegisteredDecisionRule: DELIVERY_SCREEN_GATE, incompleteRule: "Incomplete is not a passing correctness check; no restart" } : {}),
   stop: `first wonAt, partyOver, or ${limit} player seconds; no post-win extension`,
   cases };
@@ -97,7 +97,7 @@ try {
       // These sets name selected visits/available offerings, not proof of arrival or delivery.
       for (const q of event.knownQuests) if (event.observation.carried.some(a => a.species === q.wants)) offered.add(q.id);
       emit({ ev: "decision", step, ...event });
-    }, { rememberDreamVisits: ablation ? c.vector === "on" : true, coverageExploration: coveragePilot && c.vector === "on", knownQuestPriority: knownQuestScreen && c.vector === "on", questDeliveryRepair: deliveryScreen && c.vector === "on" });
+    }, { rememberDreamVisits: ablation ? c.vector === "on" : true, coverageExploration: coveragePilot && c.vector === "on", knownQuestPriority: knownQuestScreen && c.vector === "on", questDeliveryRepair: deliveryScreen ? c.vector === "on" : true });
     const quests = () => g.creatures.filter(q => q.boss && q.quest).map(q => ({ id: q.id, species: q.species, wants: q.quest.species,
       done: q.quest.done ?? null, open: questOpen(g.party, q), questOpenFlag: q.questOpen ?? null,
       legendState: q.legendState ?? null, angry: !!q.enraged, gone: !!q.gone, x: q.x, z: q.z, cell: q.cell,
@@ -109,7 +109,7 @@ try {
       const s = state(), key = JSON.stringify(s);
       if (force || key !== lastState) { emit({ ev: "privilegedStateOutputOnly", step, playerTime: g.herTime, worldTime: g.clock.time, ...s }); lastState = key; }
     };
-    emit({ ev: "setup", case: c, policy, rememberDreamVisits: ablation ? c.vector === "on" : true, coverageExploration: coveragePilot && c.vector === "on", knownQuestPriority: knownQuestScreen && c.vector === "on", questDeliveryRepair: deliveryScreen && c.vector === "on", STEP, limit, seed: c.seed ^ 0x1477, diagnosticOnly: true }); snapshot(true);
+    emit({ ev: "setup", case: c, policy, rememberDreamVisits: ablation ? c.vector === "on" : true, coverageExploration: coveragePilot && c.vector === "on", knownQuestPriority: knownQuestScreen && c.vector === "on", questDeliveryRepair: deliveryScreen ? c.vector === "on" : true, STEP, limit, seed: c.seed ^ 0x1477, diagnosticOnly: true }); snapshot(true);
     const started = Date.now();
     for (; step < Math.ceil(limit / STEP); step++) {
       const controls = brain.decide(g), serial = JSON.stringify(controls);
