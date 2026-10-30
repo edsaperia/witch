@@ -30,10 +30,11 @@ export function momentumOf(species: string, t: Tuning): Resolved | null {
   if (!M?.on) return null;
   let cache = caches.get(M.classes);
   if (!cache) caches.set(M.classes, (cache = new Map()));
-  const key = `${species}|${M.turn}|${M.delay}|${M.chaseLead}|${M.strikeLead}`;
+  const cls = classOf(species, t);
+  const key = `${species}|${cls}|${M.turn}|${M.delay}|${M.chaseLead}|${M.strikeLead}`;
   let r = cache.get(key);
   if (!r) {
-    const own = profileOf(species)?.momentum ?? {}, base = { ...M.classes[classOf(species, t)], ...own };
+    const own = profileOf(species)?.momentum ?? {}, base = { ...M.classes[cls], ...own };
     r = { turn: ((base.turn * Math.PI) / 180) * M.turn, k: base.k, delay: Math.max(0, base.delay * M.delay), chaseLead: (base.chaseLead ?? 0) + M.chaseLead, strikeLead: (base.strikeLead ?? 1) * M.strikeLead };
     if (cache.size > 512) cache.clear();
     cache.set(key, r);

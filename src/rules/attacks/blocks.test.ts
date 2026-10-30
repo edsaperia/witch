@@ -12,7 +12,7 @@ type Hit = { id: number | string; damage: number; effect?: Effect; at: number };
 
 /** A pretend world: the caster is creature 1 of side "wild"; targets stand where put (their side decides foe or ally); forces recorded. */
 function world(targets: Hittable[]) {
-  const hits: Hit[] = [], forces: { id: number | string; push: number }[] = [];
+  const hits: Hit[] = [], forces: { id: number | string; push: number; source?: number }[] = [];
   let now = 0;
   const caster = { kind: "creature" as const, id: 1, x: 0, z: 0, r: 0.5, side: "wild", species: "wolf" };
   const W: SpellWorld = {
@@ -21,7 +21,7 @@ function world(targets: Hittable[]) {
     hostile: (side, t) => t.side !== side,
     harm: (t, damage, effect) => { hits.push({ id: t.id, damage, effect, at: now }); },
     where: (kind, id) => (kind === "creature" && id === 1 ? caster : targets.find(t => t.kind === kind && t.id === id) ?? null),
-    force: (t, _fx, _fz, push) => { forces.push({ id: t.id, push }); },
+    force: (t, _fx, _fz, push, _dt, source) => { forces.push({ id: t.id, push, source }); },
   };
   const tick = (S: SpellState, until: number, each?: (t: number) => void) => { for (let t = STEP; t <= until + 1e-9; t += STEP) { now = t; each?.(t); stepSpells(S, W, {}, t, STEP); } };
   return { W, hits, forces, tick };
@@ -119,12 +119,14 @@ describe("traps, forces, burns and turrets", () => {
     expect(readability(seed, {}).warning).toBeCloseTo(1.2); // (what it sows warned of by its countdown from when it's laid)
     const lure = fire({ cast: { windup: 0 }, body: { kind: "lure", reach: 10, pull: 5 }, speed: { v: 2 }, life: { range: 8 } }, [her(6, 0)], 1);
     expect(lure.forces.length).toBeGreaterThan(10); expect(lure.forces.every(f => f.push === -5)).toBe(true);
+    expect(lure.forces.every(f => f.source === 1)).toBe(true);
   });
   it("pushes whoever its force says: everyone, or only its foes", () => {
     const wind = (who: "all" | "others" | "foes") => fire({ cast: { windup: 0 }, body: { kind: "zone" }, zone: { r: 6, time: 1 }, hit: { damage: 0 }, force: { push: 8, who } }, [her(2, 0), foe(2, 0, 2), ally(3, 0, -2)], 0.5).forces;
     expect(new Set(wind("all").map(f => f.id))).toEqual(new Set(["her", 2, 3]));
     expect(new Set(wind("others").map(f => f.id))).toEqual(new Set([2, 3]));
     expect(new Set(wind("foes").map(f => f.id))).toEqual(new Set(["her", 2]));
+    expect(wind("all").every(f => f.source === 1)).toBe(true);
   });
   it("burns a creature over time, and lets a turret cast its shots in turn, each warned of", () => {
     const burn = fire({ cast: { windup: 0 }, body: { kind: "area" }, area: { r: 4 }, hit: { damage: 0.1, effect: { burn: { dps: 4, time: 2 } } } }, [foe(5, 2, 0)], 3);
