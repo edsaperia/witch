@@ -917,6 +917,9 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     },
     slowWitch: (id, until, mult) => { const w = g.witches[id]; if (w) { w.slowUntil = Math.max(w.slowUntil ?? 0, until); w.slowMult = Math.min(mult, w.slowUntil > until ? w.slowMult ?? 1 : 1); } },
     hitWitch: (id, at, blow) => hitWitch(g, id, at, t, blow),
+    witchHitState: id => { const W = g.witches[id]; return W ? { hp: W.health.hp, hurtAt: W.health.hurtAt,
+      down: !!W.ko, dashing: dashing(W.dash, witchTime(g, W)), damageEnabled: !worldAsleep(g) && !won(g), stunUntil: W.knock?.stunUntil ?? 0,
+      slowUntil: W.slowUntil ?? 0, slowMult: W.slowMult ?? 1, x: W.body.x, z: W.body.z, kx: W.knock?.kx ?? 0, kz: W.knock?.kz ?? 0 } : null; },
     // (an attack in the grammar's effects on her, without a hit: a blink dodges them, as a blow; rules/attacks/combatWorld.ts)
     throwWitch: (id, x, z, metres) => { const W = g.witches[id], at = W ? witchTime(g, W) : g.herTime; if (!W || W.ko || dashing(W.dash, at) || g.partyOver) return; knockWitch((W.knock ??= newKnock()), W.body, { x, z, knockback: 0, rams: false, metres }, at, t); },
     stunWitch: (id, until) => { const W = g.witches[id]; if (!W || W.ko || dashing(W.dash, witchTime(g, W)) || g.partyOver) return; const k = (W.knock ??= newKnock()); k.stunUntil = Math.max(k.stunUntil, witchTime(g, W) + (until - g.clock.time)); },

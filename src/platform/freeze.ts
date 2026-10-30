@@ -13,6 +13,8 @@
 // an overlay's own pad loop doesn't move under the pause. Thawed, everything is as it was: the overlay open as it was left.
 import { areaUnderWitch, STEP, stepGame, type Controls, type Game } from "../rules/game";
 import { bindings } from "./bindings";
+import { textEntry } from "./inputTarget";
+import { inputStack, type InputLayer } from "./inputStack";
 
 /** Start always reaches pause, even after its configurable binding is changed or cleared. */
 export const padPauseHeld = (buttons: readonly boolean[], axes: readonly number[]): boolean => !!buttons[9] || bindings.padHeld("global.pause", buttons, axes);
@@ -31,7 +33,16 @@ body.paused :is(${PAUSE_UI.join(", ")}) { z-index: ${PAUSE_Z + 1} !important; }`
 const realPads = typeof navigator !== "undefined" && navigator.getGamepads ? navigator.getGamepads.bind(navigator) : null;
 
 export class Freeze {
+  mutate: (label: string, action: () => void) => void = (_label, action) => action();
+  advance: (game: Game, controls: Controls, dt: number) => void = stepGame;
   frozen = false;
+  private readonly layer: InputLayer = {
+    id: "pause",
+    // Native pause controls keep browser defaults (typing, slider arrows, Enter clicks) without propagating to game/panels.
+    // Settings retains its window key handler until its separately released migration.
+    acceptsKey: e => !!(e.target as Element | null)?.closest?.("#settings-page"),
+    key: e => e.type === "keydown" && this.shortcut(e),
+  };
   /** Whether the game was already paused (the start screen, the end) when it froze. */
   private wasPaused = false;
   private padPrev = false;
@@ -73,28 +84,45 @@ export class Freeze {
     document.body.append(this.marker, this.stamp, shield);
     // Before the game's own input and every overlay's (capture, and made first), so a press while frozen never starts, flies or
     // chooses anything: Esc is the pause's alone; frozen, only the pause page's own pieces have keys.
-    window.addEventListener("keydown", e => {
-      if (bindings.keys("global.pause").includes(e.code) && this.ownsEsc() && (this.frozen || this.started())) {
-        e.preventDefault(); e.stopImmediatePropagation();
-        if (!e.repeat) this.toggle();
-      }
-      // While frozen . steps (and isn't also the fight-momentum debug key); otherwise it's that key.
-      else if (e.code === "Period" && this.frozen) { e.preventDefault(); e.stopImmediatePropagation(); this.step(e.shiftKey ? 10 : 1); }
-      else if (this.frozen && !(e.target as Element | null)?.closest?.(PAUSE_UI.join(","))) e.stopImmediatePropagation();
-    }, { capture: true });
+    const key = (e: KeyboardEvent) => {
+      // Track the opening press before push(), so its repeats cannot close the new owner.
+      if (inputStack.key(e) || !inputStack.top && e.type === "keydown" && this.shortcut(e)) e.stopImmediatePropagation();
+    };
+    window.addEventListener("keydown", key, { capture: true });
+    window.addEventListener("keyup", key, { capture: true });
+    window.addEventListener("blur", () => inputStack.release());
+    document.addEventListener("visibilitychange", () => { if (document.hidden) inputStack.release(); });
     // The gamepad, while frozen, the freeze's alone (pollPad's Start): every other reader of it sees none.
-    if (realPads) Object.defineProperty(navigator, "getGamepads", { configurable: true, writable: true, value: () => (this.frozen ? [] : this.thawed(realPads())) });
+    if (realPads) Object.defineProperty(navigator, "getGamepads", { configurable: true, writable: true, value: () => (inputStack.owns(null) ? this.thawed(realPads()) : []) });
+  }
+
+  /** Pause shortcuts belong to this layer; Settings and Studio retain their existing exceptions. */
+  private shortcut(e: KeyboardEvent): boolean {
+    if (this.frozen && textEntry(e.target) && e.code !== "Escape") return false;
+    if (bindings.keys("global.pause").includes(e.code) && this.ownsEsc() && (this.frozen || this.started())) {
+      e.preventDefault();
+      if (!e.repeat) this.toggle();
+      return true;
+    }
+    if (e.code === "Period" && this.frozen && !textEntry(e.target)) {
+      e.preventDefault(); this.step(e.shiftKey ? 10 : 1); return true;
+    }
+    return false;
   }
 
   /** A new night on the same page (app/night.ts): its game and seed from here on. */
   retarget(game: Game, seed: number): void { this.game = game; this.seed = seed; }
 
   toggle(): void {
+    this.mutate("pause page", () => this.toggleNow());
+  }
+  private toggleNow(): void {
     if (!this.frozen && !this.started()) return;
     this.frozen = !this.frozen;
     const g = this.game;
     if (this.frozen) { this.wasPaused = g.clock.paused; g.clock.paused = true; this.openPad = this.pad()?.buttons.map(b => b.pressed) ?? []; }
     else { this.openPad = null; g.clock.paused = this.wasPaused; this.heldAtThaw = new Set([...(realPads?.() ?? [])].find(p => p)?.buttons.flatMap((b, i) => (b.pressed ? [i] : [])) ?? []); }
+    if (this.frozen) inputStack.push(this.layer); else inputStack.remove(this.layer);
     document.body.classList.toggle("paused", this.frozen);
     // (thawed, a pause-page control the pad or mouse focused lets go: it kept every key from her after, E opening nothing; pause-on-top)
     if (!this.frozen && document.activeElement instanceof HTMLElement && document.activeElement.closest(PAUSE_UI.join(","))) document.activeElement.blur();
@@ -117,11 +145,18 @@ export class Freeze {
   /** Advance exactly n fixed steps, with no controls held. */
   step(n: number): void {
     const g = this.game;
-    for (let i = 0; i < n; i++) { g.clock.paused = false; stepGame(g, STILL, STEP); g.clock.paused = true; }
+    for (let i = 0; i < n; i++) {
+      this.mutate("single step: resume", () => { g.clock.paused = false; });
+      this.advance(g, STILL, STEP);
+      this.mutate("single step: pause", () => { g.clock.paused = true; });
+    }
   }
 
-  /** The real pad (everyone else sees none while frozen): the Settings page reads it (ui/settingsMenu.ts). */
-  pad(): Gamepad | null { return [...(realPads?.() ?? [])].find(p => p) ?? null; }
+  /** Pause and its legacy Settings child read the real pad only while this layer owns it (or before opening). */
+  pad(): Gamepad | null {
+    if (!inputStack.owns(null) && !inputStack.owns(this.layer)) return null;
+    return [...(realPads?.() ?? [])].find(p => p) ?? null;
+  }
 
   /** The buttons held as the pause began, once (the pause page's first frame), then undefined. */
   takeOpenPad(): boolean[] | undefined { const o = this.openPad ?? undefined; this.openPad = null; return o; }

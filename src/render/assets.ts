@@ -12,6 +12,8 @@ import { creatureFrame, walkGait, runJob, stumpId, type StumpArt, type StumpSpec
 import type { Style } from "./style";
 import { artCacheKey, cachePut, hashText, type CacheHint } from "./artCache";
 import { rigGearKey, type RigGear, type RigMeta } from "./rig/rigBuild";
+import { partyGearOf } from "./creatureArt";
+import { partySheetKey, partySheetFrame } from "./partySheet";
 import { trunkCut } from "./trunkCut";
 
 export interface TypeArt {
@@ -20,6 +22,8 @@ export interface TypeArt {
    *  frame's height from its top (the trunk fades out below it in ground mode, Ed v149). */
   cut: Map<number, number>;
 }
+/** Shared party sheet identity includes its outfit and current age. */
+export interface CreatureArt { key?: string }
 export interface RelicSet { atlas: Atlas; byId: Record<string, RelicArt>; modern: RelicArt[]; layouts: RelicLayouts }
 export interface DecorArt { atlas: Atlas; pieces: DecorPiece[]; families: Record<string, DecorPiece[]>; /** the island biome it was drawn in (none: temperate) */ biome?: string }
 export interface CreatureArt { atlas: Atlas; frame: (level: number, frame: number, away?: boolean) => number; /** Its walk (art/creatures.js walkGait): frames in the cycle, and how far it moves between them (a share of its width). */ walk?: { frames: number; step: number }; /** A sleeping legend's ground line in each frame (rows from its top): drawn with that row on the ground. */ ground?: number[]; /** And how far its body's middle lies right of the frame's middle in each frame (pixels): drawn with its middle on its place. */ centre?: number[] }
@@ -389,6 +393,8 @@ export class AssetLibrary {
     } else if (r.job.kind === "sleep") this.creatures.set(r.job.id, { atlas, frame: (_level, f) => f % 2, ground: r.result.ground, centre: r.result.centre });
     else if (r.job.kind === "nap") this.creatures.set(r.job.id, { atlas, frame: napFrame, ground: r.result.ground, centre: r.result.centre });
     else if (r.job.kind === "glide") this.creatures.set(r.job.id, { atlas, frame: napFrame });
+    else if (r.job.kind === "party") { const G = walkGait(r.job.species);
+      this.creatures.set(r.job.id, { atlas, key: r.job.id, frame: (_l, f, away) => partySheetFrame(f, away, G.frames), walk: G }); }
     else { const G = walkGait("species" in r.job ? r.job.species : r.job.id); // (its walk's frames: a party look's, woken or a face's are its species')
       this.creatures.set(r.job.id, { atlas, frame: (l: number, f: number, away?: boolean) => creatureFrame(l, f, away, G.frames), walk: G }); }
     this.inFlight.delete(this.key(r.job)); this.promoted.delete(this.key(r.job)); this.urgentKeys.delete(this.key(r.job));
@@ -549,15 +555,15 @@ export class AssetLibrary {
     return a;
   }
   /** An invited creature's party look (its gear seeded by its id), or undefined (and asked for). */
-  partyArt(species: string, id: number, colour: number[]): CreatureArt | undefined {
-    const k = `party-${species}-${id}`, a = this.creatures.get(k); // (the species in the key: an id is a creature only within one map)
-    if (!a) this.ask({ kind: "party", id: k, species, seed: id, colour, style: this.style });
+  partyArt(species: string, id: number, colour: number[], level: number): CreatureArt | undefined {
+    const gear = partyGearOf(id, colour), k = partySheetKey(species, level, gear), a = this.creatures.get(k);
+    if (!a) this.ask({ kind: "party", id: k, species, level, gear, style: this.style });
     return a;
   }
   /** A happy creature's look (issue #87): party clothes, no glowing collar; or undefined (and asked for). */
-  happyArt(species: string, id: number): CreatureArt | undefined {
-    const k = `happy-${species}-${id}`, a = this.creatures.get(k);
-    if (!a) this.ask({ kind: "party", id: k, species, seed: id, colour: null, style: this.style });
+  happyArt(species: string, id: number, level: number): CreatureArt | undefined {
+    const gear = partyGearOf(id, null), k = partySheetKey(species, level, gear), a = this.creatures.get(k);
+    if (!a) this.ask({ kind: "party", id: k, species, level, gear, style: this.style });
     return a;
   }
   /** The party objects' art (#38), or undefined (and asked for). */

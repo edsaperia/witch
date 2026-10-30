@@ -1,3 +1,4 @@
+import { slotStorage } from "../app/saveSlots";
 // The character creator (Ed, 2026-10-05: "Our witch should be generated too. Then we can have a
 // character creator at the start of the game where she is in her house and you can tweak the sliders
 // to change her outfit!"). She stands in her treehouse room, big, hovering and standing, redrawn live
@@ -38,14 +39,14 @@ export function loadGenome(): Genome | null {
   const fresh = () => defaultGenome() as Genome | null;
   if (newWitch()) return fresh();
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = slotStorage.getItem(KEY);
     if (!raw) return fresh();
     const g = upgrade(JSON.parse(raw)); // a save from before round 2 gets the new fields as hers
     g.palette = snapPalette(g.palette); // (a save from the rainbow pickers' days: each colour to its nearest swatch)
     return (Art.witchGenomeProblems as (g: unknown) => string[])(g).length ? fresh() : g;
   } catch { return fresh(); }
 }
-export function saveGenome(g: Genome): void { if (newWitch()) return; try { localStorage.setItem(KEY, JSON.stringify(g)); } catch { /* storage blocked: this run only */ } }
+export function saveGenome(g: Genome): void { if (newWitch()) return; try { slotStorage.setItem(KEY, JSON.stringify(g)); } catch { /* storage blocked: this run only */ } }
 
 /** Where an axis lives in the genome: hatHeight is hat.height, broom is broom.kind, broomLength is
  *  broom.length, bristles is broom.bristles, hair is hair; a new axis follows the same pattern. */
@@ -132,8 +133,8 @@ const css = ([h, s, v]: number[]) => { const [r, g, b] = (Art.hsv2rgb as (h: num
 
 /** The open box, kept on this browser (localStorage witch.creator.box); at first, the hat. "" for none. */
 const BOX_KEY = "witch.creator.box";
-function openBox(): string { try { const v = localStorage.getItem(BOX_KEY); if (v !== null) return v; } catch { /* storage blocked */ } return "hat"; }
-function saveOpenBox(id: string): void { try { localStorage.setItem(BOX_KEY, id); } catch { /* storage blocked: this run only */ } }
+function openBox(): string { try { const v = slotStorage.getItem(BOX_KEY); if (v !== null) return v; } catch { /* storage blocked */ } return "hat"; }
+function saveOpenBox(id: string): void { try { slotStorage.setItem(BOX_KEY, id); } catch { /* storage blocked: this run only */ } }
 
 /** The night round the treehouse, behind the room: deep blue in steps, stars, and the giant tree's leaves at the edges,
  *  painted small (one art pixel per pixel) and shown big. */

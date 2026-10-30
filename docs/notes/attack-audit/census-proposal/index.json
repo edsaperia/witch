@@ -1,0 +1,163 @@
+{
+  "schema": 1,
+  "status": "PROPOSAL_ONLY_NOT_DISPATCHED",
+  "executionGate": "Canonical opens balancing after Ed playtest and explicitly routes these cloud shards; existing source/model/adapter/protected-pair gates must also pass. Never rebind an old trained lock.",
+  "manifestPath": "tools/balance/surveys/wave1/census.json",
+  "manifestHash": "f28e2b627fa3bb0e5c9197ef243a59f0714d7ab7caf07581599c280c77a91a92",
+  "cases": 2560,
+  "shards": 5,
+  "youngAdultInvitationCases": 1152,
+  "species": [
+    "arcticfox",
+    "armadillo",
+    "badger",
+    "bat",
+    "bear",
+    "beaver",
+    "beetle",
+    "boar",
+    "cat",
+    "cheetah",
+    "crab",
+    "crocodile",
+    "dormouse",
+    "dragonfly",
+    "elephant",
+    "elk",
+    "featheredserpent",
+    "fennec",
+    "flyingsquirrel",
+    "fox",
+    "frosttroll",
+    "frostwyrm",
+    "griffin",
+    "hare",
+    "hedgehog",
+    "heron",
+    "hydra",
+    "ibex",
+    "jaguar",
+    "komodo",
+    "lion",
+    "lynx",
+    "marten",
+    "meerkat",
+    "mole",
+    "moth",
+    "newt",
+    "otter",
+    "owl",
+    "penguin",
+    "polarbear",
+    "raccoon",
+    "ram",
+    "rattlesnake",
+    "raven",
+    "redpanda",
+    "rhino",
+    "roe",
+    "salamander",
+    "scorpion",
+    "snail",
+    "snake",
+    "snowleopard",
+    "sphinx",
+    "spider",
+    "squirrel",
+    "stag",
+    "stegosaurus",
+    "stoat",
+    "tiger",
+    "toad",
+    "unicorn",
+    "wolf",
+    "woodlouse"
+  ],
+  "bags": [
+    "satchel",
+    "bumbag",
+    "purse",
+    "tote",
+    "duffel",
+    "briefcase",
+    "clutch",
+    "messenger",
+    "backpack"
+  ],
+  "bpms": [
+    120
+  ],
+  "levels": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "groups": [
+    {
+      "id": "w1-census-000",
+      "file": "w1-census-000.cases.json",
+      "cases": 520,
+      "seedPairs": [
+        {
+          "mapIndex": 0,
+          "world": 910000,
+          "seed": 79191000
+        }
+      ],
+      "keysHash": "df2c108e668de89e9e2531ead7e536755e7155ab3acbe8ce6cc2dd9c5ed127b5"
+    },
+    {
+      "id": "w1-census-001",
+      "file": "w1-census-001.cases.json",
+      "cases": 520,
+      "seedPairs": [
+        {
+          "mapIndex": 0,
+          "world": 910000,
+          "seed": 79191000
+        }
+      ],
+      "keysHash": "99457394a01156461fb25c08555de5d2392e465a7aadb9e44d1e491030293e73"
+    },
+    {
+      "id": "w1-census-002",
+      "file": "w1-census-002.cases.json",
+      "cases": 520,
+      "seedPairs": [
+        {
+          "mapIndex": 0,
+          "world": 910000,
+          "seed": 79191000
+        }
+      ],
+      "keysHash": "185a6eb5d9acc07a2d6ec9d48607a2e0a249fee33c5dba2e1efed305a7fb2717"
+    },
+    {
+      "id": "w1-census-003",
+      "file": "w1-census-003.cases.json",
+      "cases": 520,
+      "seedPairs": [
+        {
+          "mapIndex": 0,
+          "world": 910000,
+          "seed": 79191000
+        }
+      ],
+      "keysHash": "332ccf08795913dd3d736361f058cd13d35cafbf7f26da5570781b79a7feb01f"
+    },
+    {
+      "id": "w1-census-004",
+      "file": "w1-census-004.cases.json",
+      "cases": 480,
+      "seedPairs": [
+        {
+          "mapIndex": 0,
+          "world": 910000,
+          "seed": 79191000
+        }
+      ],
+      "keysHash": "ec439e0b684cd9e693392b16dcb6a6fc45b375e8ec8857aa9bcac656066dd6a7"
+    }
+  ]
+}

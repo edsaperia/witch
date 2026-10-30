@@ -27,6 +27,11 @@ says what each note covers.
 
 ## [Balance](balance.md)
 
+- Compressed log bundles
+- Structured log records
+- Log recovery
+- Input recording
+- Paused playtest comments
 - Legacy models retained (2026-10-29, #1459, coordinator decision).
 - Fighting value (F)
 - Population growth
@@ -78,6 +83,10 @@ says what each note covers.
 
 ## [Creatures in play](gameplay.md)
 
+- Attack target identity
+- Sheltered attack effects
+- Momentum class selection
+- Accepted attack outcomes
 - Talk / invite
 - Bubble sight
 - Babies on her leash
@@ -213,6 +222,9 @@ says what each note covers.
 
 ## [Performance](performance.md)
 
+- House route profiling
+- Startup bundle baseline
+- Slow-frame summaries
 - Reused surface roughness (#1464, 2026-10-30):
 - Exact travel art profiles (2026-10-30, #1464):
 - Ordinary-play scenery stalls
@@ -233,6 +245,8 @@ says what each note covers.
 
 ## [The run](run.md)
 
+- What's new in Settings
+- Direct play after loading
 - The phases of a run
 - Bedroom
 - Loading screen
@@ -268,6 +282,14 @@ says what each note covers.
 - Resting 💌s
 - Aim reticle
 - Action bar
+
+## [Save slots](save-slots.md)
+
+- Save slot storage
+- Single-save migration
+- Slot switching
+- Compatible nights
+- Save format guards
 
 ## [Sound effects](sound.md)
 

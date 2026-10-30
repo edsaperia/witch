@@ -5,6 +5,8 @@
 // budget at a time, giving the page its frames between, so the same steps happen in the same order (three.js breaks draw-order
 // ties by creation order: nothing is made in another order, only later).
 
+import { logCaughtError } from "../platform/caughtError";
+
 /** A build's steps; `T` what it makes. */
 export type Steps<T = void> = Generator<string | void | Wait<unknown> | Later<unknown>, T, void>;
 
@@ -80,7 +82,7 @@ async function waitOrHere<T>(w: { wait: () => Promise<T>; here: () => T }): Prom
   let late: ReturnType<typeof setTimeout> | undefined;
   const timeUp = new Promise<"late">(res => { late = setTimeout(() => res("late"), WAIT_MS); });
   try { const r = await Promise.race([w.wait(), timeUp]); return r === "late" ? w.here() : r as T; }
-  catch { return w.here(); }
+  catch (e) { logCaughtError(e, "sliced build worker fallback"); return w.here(); }
   finally { clearTimeout(late); }
 }
 

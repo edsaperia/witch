@@ -1,13 +1,24 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({ cacheGet: vi.fn(), cachePut: vi.fn(), runJob: vi.fn(), putPrep: vi.fn() }));
-vi.mock('../render/artCache', () => ({ cacheGet: mocks.cacheGet, cachePut: mocks.cachePut }));
-vi.mock('../render/artBuild', () => ({ runJob: mocks.runJob, transferables: () => [] }));
-vi.mock('../rules/map', () => ({ generateMap: () => ({}), prepOf: () => ({ prep: true }) }));
-vi.mock('../rules/rosters', () => ({ worldOf: () => ({ world: true }) }));
-vi.mock('../rules/party', () => ({ routeOf: () => ({ route: true }) }));
-vi.mock('./mapPrepStore', () => ({ putPrep: mocks.putPrep }));
-beforeEach(() => { vi.resetModules(); vi.clearAllMocks(); mocks.cacheGet.mockResolvedValue(null); mocks.cachePut.mockResolvedValue(undefined); mocks.runJob.mockReturnValue({ px: { output: true } }); mocks.putPrep.mockResolvedValue(true); });
-afterEach(() => vi.unstubAllGlobals());
+beforeEach(() => {
+  vi.resetModules(); vi.clearAllMocks();
+  // Mock the worker's actual dependencies after the lazy storage/transfer split.
+  vi.doMock('../render/artCacheStorage', () => ({ cacheGet: mocks.cacheGet, cachePut: mocks.cachePut }));
+  vi.doMock('../render/artTransfer', () => ({ transferables: () => [] }));
+  vi.doMock('../render/artBuild', () => ({ runJob: mocks.runJob }));
+  vi.doMock('../rules/map', () => ({ generateMap: () => ({}), prepOf: () => ({ prep: true }) }));
+  vi.doMock('../rules/rosters', () => ({ worldOf: () => ({ world: true }) }));
+  vi.doMock('../rules/party', () => ({ routeOf: () => ({ route: true }) }));
+  vi.doMock('./mapPrepStore', () => ({ putPrep: mocks.putPrep }));
+  mocks.cacheGet.mockResolvedValue(null); mocks.cachePut.mockResolvedValue(undefined);
+  mocks.runJob.mockReturnValue({ px: { output: true } }); mocks.putPrep.mockResolvedValue(true);
+});
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.doUnmock('../render/artCacheStorage'); vi.doUnmock('../render/artTransfer'); vi.doUnmock('../render/artBuild');
+  vi.doUnmock('../rules/map'); vi.doUnmock('../rules/rosters'); vi.doUnmock('../rules/party'); vi.doUnmock('./mapPrepStore');
+  vi.resetModules();
+});
 const meta = { jobId: 'one', jobKind: 'art:type', id: 17, workerIndex: 2, queueDepth: 3, enqueuedEpochMs: performance.timeOrigin + performance.now() };
 it('sends only the original art result when diagnostics are off', async () => {
   const scope: any = { postMessage: vi.fn() }; vi.stubGlobal('self', scope);

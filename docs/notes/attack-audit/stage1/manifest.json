@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "sourceHead": "0cbe778cadc13083766994a9cc61f680442827fc",
+  "sourceSha256": "58ac9ce1b9075b32d5e902ea5b0d2fd4e72c379dafa9e42687654108f7b9a6cd",
+  "sourceFiles": 1392,
+  "node": "v24.18.0",
+  "platform": "win32",
+  "startedAt": "2026-10-30T17:27:59.996Z",
+  "wholeJobCapMs": 120000,
+  "ruleChanges": false,
+  "oneWorker": true,
+  "finished": true,
+  "exitCode": 0,
+  "error": null,
+  "elapsedMs": 6292
+}

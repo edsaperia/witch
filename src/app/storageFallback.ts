@@ -1,4 +1,5 @@
 // Failed writes belong to this page and this storage object, never to another tab or test store.
+import { slotStorage } from "./saveSlots";
 export interface Store { getItem(k: string): string | null; setItem(k: string, v: string): void }
 const wrappers = new WeakMap<Store, Store>();
 const missing = makeStore(null);
@@ -32,7 +33,7 @@ function makeStore(store: Store | null): Store {
 
 /** Explicit null means no persistence; omitted means this browser's storage, even if accessing it throws. */
 export function fallbackStorage(store?: Store | null): Store {
-  if (store === undefined) try { store = globalThis.localStorage ?? null; } catch { store = null; }
+  if (store === undefined) store = slotStorage;
   if (!store) return missing;
   let wrapper = wrappers.get(store);
   if (!wrapper) { wrapper = makeStore(store); wrappers.set(store, wrapper); }

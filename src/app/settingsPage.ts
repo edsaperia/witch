@@ -11,6 +11,7 @@ import type { ScreenShake } from "./shake";
 import type { QualityLadder } from "./ladder";
 import type { Freeze } from "../platform/freeze";
 import type { SettingsMenu } from "../ui/settingsMenu";
+import type { SavesHost } from "./saveSlots";
 
 /** The page's text panels text size scales (CSS zoom; Chrome, Safari and Firefox 126 on). */
 const TEXT = ["#studio-panel", ".corner-panel", ".legend-panel", ".boot-pop", ".loss-pop", "#sound-note", "#pause-btns", "#settings-page .win"];
@@ -19,11 +20,13 @@ const TEXT = ["#studio-panel", ".corner-panel", ".legend-panel", ".boot-pop", ".
 const STATION_TYPE = "clamp(15px, 1.45vw, 26px)";
 
 export interface SettingsPageHost {
+  mutate?: (label: string, action: () => void) => void;
   input: Input; shake: ScreenShake; ladder: QualityLadder; freeze: Freeze;
   /** the context's suspend or resume (Sound.freeze): muted in the background, and while paused as ever */
   audio(on: boolean): void;
   tuning(): object;
   version: string;
+  saves?: SavesHost;
 }
 
 type ScreenDetails = { screens: { label?: string }[] };
@@ -66,7 +69,10 @@ export class SettingsPage {
   }
 
   /** New settings: saved, and on to everything at once. */
-  set(s: PlayerSettings): void { setCurrentSettings(s); this.live(currentSettings()); }
+  set(s: PlayerSettings): void {
+    const action = () => { setCurrentSettings(s); this.live(currentSettings()); };
+    if (this.host.mutate) this.host.mutate("player settings", action); else action();
+  }
 
   /** Opened from the pause page (its code loaded the first time). */
   show(): void {
@@ -75,7 +81,7 @@ export class SettingsPage {
     this.loading = true;
     void import("../ui/settingsMenu").then(({ SettingsMenu }) => {
       this.menu = new SettingsMenu({
-        get: () => currentSettings(), set: s => this.set(s), version: this.host.version,
+        get: () => currentSettings(), set: s => this.set(s), version: this.host.version, saves: this.host.saves,
         fullscreen: () => !!document.fullscreenElement,
         setFullscreen: async (on, screen) => {
           try {
