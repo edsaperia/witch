@@ -22,6 +22,7 @@ import { FrameStats } from "./platform/frameStats";
 import { gpuName, QualityLadder } from "./app/ladder";
 import { musicCue } from "./rules/musicPlan";
 import { areaUnderWitch, interpolated, STEP, stepGame, type Game } from "./rules/game";
+import { enableCauldron, homeMushroomPickups } from "./rules/cauldronNight";
 import { TUNING, type Tuning } from "./rules/tuning";
 import { diveReach, diveTrack, handoffShot, newFlightClock, stepFlightClock, type Shot } from "./rules/arrive";
 import { nextFrame, runSliced } from "./render/slices";
@@ -1117,6 +1118,7 @@ function frame(now: number): void {
   if (c.debug) hud.setDebug(!hud.debugOn);
   view.debugReadouts = hud.debugOn;
   const step0 = performance.now();
+  if (params.get("cauldron") === "1" && !game.cauldron) enableCauldron(game, homeMushroomPickups(game));
   stepGame(game, c, fightDt(dt * (botTag?.speed ?? 1))); // (the Fight Arena's slow motion, pause and frame at a time: app/fightArena.ts)
   rumble.update(game, currentSettings(), input.device === "pad" && !document.hidden ? [freeze.pad()] : [], now);
   // ?debug=attack: every 10 s, a few seconds of blows on the two soundsystems farthest from her (never felling one), so the
