@@ -87,7 +87,12 @@ export function rosterVariant(genome) {
         // Null clears newly added material overrides in the shared merge contract.
         restore.palette = { ...genome.palette, over: genome.palette.over || null };
       }
-      return merge(restore, original);
+      const elder = merge(restore, original);
+      // Old production ignored level palettes. Its snow-leopard record carries
+      // an unused level-3 .9/.07 palette; do not let that overwrite the actual
+      // original base palette while restoring the selected review elder.
+      if (preset.ordinaryOnly) elder.palette = { ...genome.palette, over: genome.palette.over || null };
+      return elder;
     }
     return merge(original, preset.ordinaryLevels?.[level] || {});
   });
