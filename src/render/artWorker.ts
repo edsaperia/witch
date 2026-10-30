@@ -5,19 +5,22 @@
 // was a 30 to 70 ms write on the page's thread, and the garbage collector's 30 to 50 ms after it).
 import { runJob, transferables, type ArtJob } from "./artBuild";
 import { cacheGet, cachePut, type CacheHint } from "./artCache";
+import { beginWorkerTrace, traceSync, traceAsync } from "../app/workerJobTrace";
 
 const mk = (w: number, h: number) => new OffscreenCanvas(w, h);
 const post = (m: unknown, t: Transferable[] = []) => (self as unknown as Worker).postMessage(m, t);
 
 self.onmessage = async (e: MessageEvent<ArtJob & CacheHint>) => {
   const job = e.data, key = job.cacheKey ?? null;
+  const trace = beginWorkerTrace(job);
+  const reply = (m: unknown, transfers: Transferable[] = [], status = 'done') => { trace?.finish(status); post(m, transfers); };
   try {
-    if (key) { const hit = await cacheGet(key); if (hit?.px) { post({ job, result: hit, ms: 0, cached: true }, transferables(hit)); return; } }
-    if (job.cacheOnly) { post({ job, miss: true }); return; } // (only if it's kept: render/assets.ts tonight)
-    const t0 = performance.now(), result = runJob(job, mk), ms = performance.now() - t0;
-    if (key) await cachePut(key, result); // (copied as it's put, before its buffers are sent on)
-    post({ job, result, ms }, transferables(result));
+    if (key) { const hit = await traceAsync(trace, 'cache-read', () => cacheGet(key)); if (hit?.px) { reply({ job, result: hit, ms: 0, cached: true }, transferables(hit), 'cached'); return; } }
+    if (job.cacheOnly) { reply({ job, miss: true }, [], 'cache-miss'); return; } // (only if it's kept: render/assets.ts tonight)
+    const t0 = performance.now(), result = traceSync(trace, 'compute:art', () => runJob(job, mk)), ms = performance.now() - t0;
+    if (key) await traceAsync(trace, 'cache-write', () => cachePut(key, result)); // (copied as it's put, before its buffers are sent on)
+    reply({ job, result, ms }, transferables(result));
   } catch (err) {
-    post({ job, error: String(err) });
+    reply({ job, error: String(err) }, [], 'error');
   }
 };
