@@ -1,5 +1,5 @@
 {
-  "sha": "bc573badd963b4b913aba2fa617930ad27db3e6d",
+  "sha": "768bdcea794387e644229023d8a9ca94e23944ae",
   "measurements": [
     {
       "id": "beetle",
@@ -372,7 +372,7 @@
       ]
     }
   ],
-  "modelSourceCommit": "aad8b13327282d13d7d6a4e2e1b28aa2acfd6b6c",
+  "modelSourceCommit": "85ebc30df9f7ab373bc2e4552acc2fb197e36b69",
   "lighting": "studio",
   "style": {
     "ambientHue": 0.68,
