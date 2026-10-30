@@ -981,6 +981,7 @@ async function makeSailNight(to: Sailed, arrival?: Arrival, at?: FlightEnd["cam"
   const A = n.tuning.arrive;
   await view.prepare({ sail: true, ...(A && at !== undefined ? { dive: diveReach(n.game.map, A), track: diveTrack(n.game.map, A) } : {}) });
   if (at && A && !view.shaderLandingLimited) await warmAt(n, handoffShot({ cam: at }, n.game.map), A);
+  if (view.shaderLandingLimited) await view.waitForLandingWitch();
   if (view.shaderLandingLimited) finishChartFlight();
   mark("sail:ready");
   return n;
@@ -994,6 +995,8 @@ async function warmAt(n: Night, shot: Shot, A: NonNullable<Tuning["arrive"]>): P
   view.assets.hold(true); // (the art workers paused for them: the first draws not fighting them for the machine)
   try {
     while (!stepFlightClock(c, performance.now(), A).faded) {
+      view.limitedLandingReady();
+      if (view.shaderLandingLimited) break;
       const t0 = performance.now();
       view.render(n.game.clock.time);
       if (TIMING) console.info(`sail-timing: warm frame ${Math.round(performance.now() - t0)} ms`, JSON.stringify(Object.fromEntries(Object.entries(view.ms).filter(([, v]) => v > 20).map(([k, v]) => [k, Math.round(v)]))));

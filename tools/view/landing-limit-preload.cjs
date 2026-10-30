@@ -27,10 +27,13 @@ pw.chromium.launch = async opts => {
       const failures = [];
       if (!shot || !fs.existsSync(out + '-15s.png')) failures.push('missing15.5s capture');
       if (shot?.chartPresent) failures.push('chart still covering scene at15.5s');
+      if (!shot?.fullWitchReady) failures.push('full witch missing at15.5s');
+      if (!shot?.platformPresent) failures.push('platform stand-in missing at15.5s');
       if (!shot?.limited || !Object.keys(shot?.drawStatus?.fallback ?? {}).length) failures.push('no visible fallback submission at15.5s');
       if (!(shot?.graceMs >= 15000 && shot.graceMs <= 16000)) failures.push('capture outside15–16s');
       if (!(arrival !== undefined && due !== undefined && arrival - due <= 16000)) failures.push('arrival later than16s after due');
       if (!final.marks.some(m => m.name === 'witch:shader-background-ready')) failures.push('background-ready not observed');
+      if (!final.marks.some(m => m.name === 'landing:house-complete')) failures.push('house completion not observed');
       if (final.unsafeUniformReads || !Object.keys(final.methods ?? {}).length) failures.push('unsafe/missing uniform counters');
       for (const [name, m] of Object.entries(final.methods ?? {})) if (m.longestMs > 100) failures.push(`${name} exceeded100ms`);
       // This is deliberately stricter than attributing a long frame to shaders: don't hide an unclassified stall.
@@ -74,6 +77,8 @@ pw.chromium.launch = async opts => {
             void window.__landingSnapshot({ sampleAt: performance.now(), dueAt: due, graceMs: performance.now() - due,
               gpu: debug ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER),
               chartPresent: !!document.getElementById('chart-overlay'), limited: v.shaderLandingLimited, drawStatus: v.shaderDrawStatus,
+              fullWitchReady: v.assets.fullWitchReady, houseShare: v.landingHouseShare,
+              platformPresent: objects.some(o => o.name === 'Loading house platform' && o.visible),
               unsafeUniformReads: probe.unsafeUniformReads, methods: probe.methods,
               worstFrameMs: Math.max(0, ...probe.frames.filter(f => f.at >= due).map(f => f.ms)), objects,
               marks: performance.getEntriesByType('mark').filter(e => e.startTime >= probe.sail).map(e => ({ name: e.name, at: e.startTime, detail: e.name === 'chart:landing-due' ? e.detail : undefined })) });
