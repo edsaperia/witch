@@ -9,19 +9,24 @@ import { createServer } from 'node:http';
 import { createHash } from 'node:crypto';
 import { build } from 'esbuild';
 const require = createRequire(import.meta.url), prepare = process.env.PREPARE_ONLY === '1', nodeDry = process.env.NODE_DRY === '1';
+const profileHydrate = process.env.PROFILE_HYDRATE === '1', seedWorld = process.env.COLD_WORLD !== '1';
 const root = process.cwd(), base = path.resolve(process.env.BASE_DIR || ''), out = path.resolve(process.argv[2] || '../travel-perf-2-state/map-prep-intel');
 const shaAt = dir => execFileSync('git', ['-C', dir, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
 const sha = shaAt(root), baseSha = shaAt(base);
 if (sha !== process.env.EXPECT_SHA || baseSha !== process.env.BASE_SHA) throw Error('Exact prepared checkout SHAs required');
 if (!prepare && !nodeDry && process.env.INTEL_SLOT !== 'granted') throw Error('Current explicit serial Intel slot required');
-if (!prepare) for (const dir of [root, base]) execFileSync('git', ['-C', dir, 'diff', '--exit-code', 'HEAD', '--', 'src', 'art', 'config', 'tools/bench/map-prep-intel.mjs']);
+if (!prepare && !nodeDry && !seedWorld) throw Error('Cold-world mode is a Node diagnostic, not the real application protocol');
+if (!prepare) for (const dir of [root, base]) execFileSync('git', ['-C', dir, 'diff', '--exit-code', 'HEAD', '--', 'src', 'art', 'config', ...(!nodeDry ? ['tools/bench/map-prep-intel.mjs'] : [])]);
 fs.mkdirSync(out, { recursive: true });
 const report = { sha, baseSha, preparationOnly: prepare, complete: false, rows: [], sources: {}, note: 'Actual mapPrep worker followed by checked map hydration, Forest, HeightField and pure path-ribbon consumption. Fixed Home/Fox, seed424242, world0. No game boot, art bakes, uploads, coast or travel-speed claim. One ordered pair, no cache purge.' };
 const save = () => fs.writeFileSync(path.join(out, 'results.json'), JSON.stringify(report, null, 2));
+report.profileHydrate = profileHydrate; report.worldInstalledBeforeHydration = seedWorld;
+report.harnessSourceHash = createHash('sha256').update(fs.readFileSync(new URL(import.meta.url))).digest('hex');
 const main = `
 import {generateMap,hydrateMap,prepProblem} from './src/rules/map';
 import {Forest} from './src/rules/forest';
 import {TUNING} from './src/rules/tuning';
+import {rememberWorld} from './src/rules/rosters';
 import {HeightField} from './src/render/height';
 import {__pathGeometry} from './src/render/paths';
 import {WebGLRenderer} from 'three';
@@ -39,21 +44,48 @@ globalThis.__mapPrepBench={
     const workerWallMs=performance.now()-start;
     if(rec.key!==key)throw Error('wrong worker record');
     let at=performance.now();const bad=prepProblem(rec.prep);if(bad)throw Error('invalid worker prep:'+bad);const checkMs=performance.now()-at;
-    at=performance.now();const map=hydrateMap(seed,tuning,rec.prep),hydrateMs=performance.now()-at;
+    at=performance.now();if(__BENCH_SEED_WORLD__)rememberWorld(rec.arch);const worldInstallMs=performance.now()-at;
+    globalThis.__benchMapPhases=[];
+    at=performance.now();const map=hydrateMap(seed,tuning,rec.prep),hydrateMs=performance.now()-at,mapPhases=globalThis.__benchMapPhases;
     at=performance.now();const forest=new Forest(map),forestMs=performance.now()-at;
     const c=tuning.camera,pitch=Math.min(c.ground.angleIn,c.ground.angleOut,c.treetop.angleIn,c.treetop.angleOut),hills={...tuning.ground.hills,maxSlope:Math.tan(pitch*Math.PI/180)};
     at=performance.now();const height=new HeightField(map,forest,hills);let heightSteps=0;for(const _ of height.fillSteps(map.start.x,map.start.z))heightSteps++;const heightMs=performance.now()-at;
     at=performance.now();const steps=__pathGeometry(map);let geometry;for(;;){const n=steps.next();if(n.done){geometry=n.value;break;}}const pathMs=performance.now()-at;
     const heightHash=await hash(new Uint8Array(height.texture.image.data.buffer)),pathHash=await hash(new TextEncoder().encode(JSON.stringify([...geometry.quads])));
-    const row={island,seed,build,workerWallMs,workerComputeMs:rec.ms,checkMs,hydrateMs,forestMs,heightMs,pathMs,consumerCpuMs:checkMs+hydrateMs+forestMs+heightMs+pathMs,heightSteps,heightPrepSource:height.prepSource??null,pathPrepared:!!rec.prep.pathGeometry,heightPrepared:!!rec.prep.heightSamples,heightHash,pathHash,pathGroups:geometry.quads.size};height.dispose();return row;
+    const mapHash=await hash(new TextEncoder().encode(JSON.stringify({cells:map.cells,types:map.cells.map(([x,z])=>map.typeOf(x,z)),grounds:map.grounds,scenes:map.scenes,legendClearings:map.legendClearings,lines:map.paths.lines,pieces:map.paths.pieces,junctions:map.paths.junctions,spots:map.cells.map(([x,z])=>[map.soundsystemSpot(x,z),map.setPieceSpot(x,z)])})));
+    const row={island,seed,build,workerWallMs,workerComputeMs:rec.ms,checkMs,worldInstallMs,hydrateMs,mapPhases,forestMs,heightMs,pathMs,consumerCpuMs:checkMs+worldInstallMs+hydrateMs+forestMs+heightMs+pathMs,heightSteps,heightPrepSource:height.prepSource??null,pathPrepared:!!rec.prep.pathGeometry,heightPrepared:!!rec.prep.heightSamples,heightHash,pathHash,mapHash,pathGroups:geometry.quads.size};height.dispose();return row;
   }
 };
 `;
 for (const [name, dir] of [['baseline', base], ['candidate', root]]) {
   const folder = path.join(out, name); fs.mkdirSync(folder, { recursive: true });
+  report.sources[name] = {};
   const plugins = [{ name: 'bench-only-exports', setup(b) {
     b.onResolve({ filter: /^virtual:art-overrides$/ }, () => ({ path: 'empty', namespace: 'bench' }));
     b.onLoad({ filter: /.*/, namespace: 'bench' }, () => ({ contents: 'export default {};', loader: 'js' }));
+    if (profileHydrate) b.onLoad({ filter: /[\\/]rules[\\/]map\.ts$/ }, a => {
+      const original = fs.readFileSync(a.path, 'utf8'); let text = original;
+      const replace = (anchor, value) => { if (text.split(anchor).length !== 2) throw Error('map profiling seam changed: ' + anchor); text = text.replace(anchor, value); };
+      replace('  const A = tuning.areaSize * tuning.areaScale;', `  const __started = performance.now(); let __last = __started;
+  const __events = ((globalThis as unknown as {__benchMapPhases?: unknown[]}).__benchMapPhases ??= []);
+  const __stamp = (stage: string) => { const at = performance.now(); __events.push({kind:'stage',stage,seed:runSeed,prepared:!!prep,only:!!only,ms:at-__last}); __last=at; };
+  function __span<T>(stage: string, fn: () => T): T { const at=performance.now(); try{return fn();}finally{__events.push({kind:'span',stage,seed:runSeed,prepared:!!prep,only:!!only,ms:performance.now()-at});} }
+  const A = tuning.areaSize * tuning.areaScale;`);
+      replace('  const neighbours = prep ?', "  __stamp('shape-and-partition');\n  const neighbours = prep ?");
+      replace('  const legendAreas = new Map<string, string>()', "  __stamp('area-growth-and-types');\n  const legendAreas = new Map<string, string>()");
+      replace('  let land: LandMap | undefined, lakes: LandMap | undefined;', "  __stamp('legend-slot-layout');\n  let land: LandMap | undefined, lakes: LandMap | undefined;");
+      replace('  const lakeShore = lakeKnobs(tuning).shore', "  __stamp('land-topology-and-hydrate');\n  const lakeShore = lakeKnobs(tuning).shore");
+      replace('  const treehouse = { x: centre.x', "  __stamp('pre-treehouse-layout');\n  const treehouse = { x: centre.x");
+      replace('  const bounds: Bounds = land', "  __stamp('treehouse-bounds');\n  const bounds: Bounds = land");
+      replace('  map.paths = new PathNetwork(map);', "  __stamp('layout-before-paths');\n  map.paths = __span('paths:world', () => new PathNetwork(map));\n  __stamp('paths-world-block');");
+      replace('dealAlongRoute(deck, kindOfType, own, runSeed, d => legendsOf(d).slotOf.size)', "__span('deal-scoring', () => dealAlongRoute(deck, kindOfType, own, runSeed, d => legendsOf(d).slotOf.size))");
+      replace('    map.paths = new PathNetwork(map, (cx, cy) => AREA_TYPES[before.get(cellKey(cx, cy)) ?? typeOf(cx, cy)].wet);', "    __stamp('deal-and-legend-matching');\n    map.paths = __span('paths:dealt', () => new PathNetwork(map, (cx, cy) => AREA_TYPES[before.get(cellKey(cx, cy)) ?? typeOf(cx, cy)].wet));\n    __stamp('paths-dealt-block');");
+      replace('  const G = tuning.grounds, usedGrounds = new Set<string>();', "  __stamp('deal-end');\n  const G = tuning.grounds, usedGrounds = new Set<string>();");
+      replace('  map.paths.placePieces();', "  __stamp('placements');\n  __span('path-pieces', () => map.paths.placePieces());\n  __stamp('path-pieces-block');\n  __events.push({kind:'total',stage:'generateMap',seed:runSeed,prepared:!!prep,only:!!only,ms:performance.now()-__started});");
+      report.sources[name].mapOriginalHash = createHash('sha256').update(original).digest('hex');
+      report.sources[name].mapInstrumentedHash = createHash('sha256').update(text).digest('hex');
+      return { contents: text, loader: 'ts', resolveDir: path.dirname(a.path) };
+    });
     b.onLoad({ filter: /[\\/]render[\\/]paths\.ts$/ }, a => {
       let text = fs.readFileSync(a.path, 'utf8'), extra;
       const start = text.indexOf('    const net = map.paths, seed = map.seed;', text.indexOf('static *prep(')), end = text.indexOf('    const colours = Art.pathColours(style)', start);
@@ -63,11 +95,11 @@ for (const [name, dir] of [['baseline', base], ['candidate', root]]) {
       return { contents: text + extra, loader: 'ts', resolveDir: path.dirname(a.path) };
     });
   } }];
-  const options = { bundle: true, platform: 'browser', format: 'esm', logLevel: 'warning', plugins, define: { __BUILD__: JSON.stringify(name === 'baseline' ? baseSha : sha), __ART_HASH__: JSON.stringify('map-prep-cpu-fixture') } };
+  const options = { bundle: true, platform: 'browser', format: 'esm', logLevel: 'warning', plugins, define: { __BUILD__: JSON.stringify(name === 'baseline' ? baseSha : sha), __ART_HASH__: JSON.stringify('map-prep-cpu-fixture'), __BENCH_SEED_WORLD__: JSON.stringify(seedWorld) } };
   await build({ ...options, stdin: { contents: main, resolveDir: dir, loader: 'ts' }, outfile: path.join(folder, 'main.js') });
   await build({ ...options, entryPoints: [path.join(dir, 'src/app/mapPrep.worker.ts')], outfile: path.join(folder, 'worker.js') });
   fs.writeFileSync(path.join(folder, 'index.html'), '<!doctype html><meta charset="utf-8"><script type="module" src="./main.js"></script>');
-  report.sources[name] = Object.fromEntries(['main.js', 'worker.js'].map(f => [f, createHash('sha256').update(fs.readFileSync(path.join(folder, f))).digest('hex')]));
+  Object.assign(report.sources[name], Object.fromEntries(['main.js', 'worker.js'].map(f => [f, createHash('sha256').update(fs.readFileSync(path.join(folder, f))).digest('hex')])));
 }
 save();
 if (prepare) { console.log(JSON.stringify({ preparationOnly: true, sha, baseSha, bundles: 4 })); process.exit(0); }
@@ -92,7 +124,7 @@ if (nodeDry) {
         if (name === 'candidate' && (!row.pathPrepared || !row.heightPrepared || row.heightPrepSource !== 'worker' || row.heightSteps !== 0)) throw Error('Node dry candidate did not consume worker prep');
       }
     }
-    for (const island of ['home', 'fox']) { const rows = report.rows.filter(r => r.island === island); if (rows[0].heightHash !== rows[1].heightHash || rows[0].pathHash !== rows[1].pathHash) throw Error('Node dry data mismatch: ' + island); }
+    for (const island of ['home', 'fox']) { const rows = report.rows.filter(r => r.island === island); if (rows[0].heightHash !== rows[1].heightHash || rows[0].pathHash !== rows[1].pathHash || rows[0].mapHash !== rows[1].mapHash) throw Error('Node dry data mismatch: ' + island); }
     report.complete = true;
   } catch (e) { report.error = String(e); throw e; }
   finally { globalThis.Worker = previous; await Promise.all(closing); report.cpuOnly = true; report.note += ' NODE_DRY validates Node worker/data paths only; no browser, GPU or Intel timing proof.'; save(); }
@@ -130,7 +162,7 @@ try {
     }
     await context.close();
   }
-  for (const island of ['home', 'fox']) { const rows = report.rows.filter(r => r.island === island); if (rows[0].heightHash !== rows[1].heightHash || rows[0].pathHash !== rows[1].pathHash) throw Error('Prepared/sync data mismatch: ' + island); }
+  for (const island of ['home', 'fox']) { const rows = report.rows.filter(r => r.island === island); if (rows[0].heightHash !== rows[1].heightHash || rows[0].pathHash !== rows[1].pathHash || rows[0].mapHash !== rows[1].mapHash) throw Error('Prepared/sync data mismatch: ' + island); }
   report.complete = true;
 } catch (e) { report.error = String(e); process.exitCode = 1; }
 finally {
