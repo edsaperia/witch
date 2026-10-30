@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { newInvites, stepInvites, type Affection } from "./invites";
 import { TUNING, withTuning } from "./tuning";
 import { STEP, newGame, stepGame } from "./game";
+import { smallWorldTuning } from "../test/worlds";
 import type { Creature } from "./creatures";
 
 const her = { x: 0, z: 0, facing: 1 };
@@ -66,7 +67,7 @@ describe("the 💌 invite (issue #87)", () => {
   });
 
   it("in the game: only on the ground and off her seat, and no proximity chat when on", () => {
-    const g = newGame(77, TUNING);
+    const g = newGame(77, smallWorldTuning(TUNING, "Ground/seat firing gates need one witch and no world-scale geometry."));
     g.clock.paused = false;
     const W = g.witches[0];
     stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, fire: true, aimX: 1, aimZ: 0 }, STEP);
@@ -81,6 +82,7 @@ describe("the 💌 invite (issue #87)", () => {
   });
 
   it("flies straight through trees and scenery: only animals stop a 💌 (Ed, 2026-10-05)", () => {
+    // Keep the radius fixture: this regression finds a real tree in the original 120 m-offset, 60 m-radius forest window.
     const g = newGame(77, TUNING);
     g.clock.paused = false;
     const d = g.map.dancefloor, tree = g.forest.treesNear(d.x + 120, d.z + 120, 60)[0];
