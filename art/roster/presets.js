@@ -15,11 +15,16 @@ const JAGUAR_REGIONS = {
   legs: { kind: "spots", k: 12, density: .5, radius: .4, mat: "BODY3" },
 };
 export const ROSTER_PRESETS = {
-  mole: {
-    reason: "A deeper velvet barrel, projecting snout and broad forward digging paws using the existing mole parts.",
-    modelCommit: "e4b77ac10557c73b19828efe7c0b98e99b6123d7",
-    patch: { look: { mole: { bodyDepth: 1.65, bodyLength: 1.7, snoutProjection: 1.8, forepawSpread: 1.55, forepawSize: 1.65 } }, palette: { hue: .64, sat: .06, val: .38, over: { BODY: [65, 66, 69], BODY2: [47, 49, 53], BODYL: [89, 92, 96], SKIN: [228, 166, 157], NOSE: [220, 145, 139] } } },
-    text: "A velvet-grey mole with a pointed snout and broad spade-like digging paws.",
+  crocodile: {
+    reason: "Flatten the existing long jaw, thicken its existing tapering tail and reveal a pale underside.",
+    patch: { head: { snout: 4.5, snoutD: .55, muzzle: true }, body: { tailK: 1.35 }, coat: { belly: true }, palette: { over: { BELLY: [174, 178, 143] } } },
+    text: "A low crocodile with a long flat jaw, pale underside and thick tapering tail.",
+  },
+  crab: {
+    reason: "Make both existing front pincers and the small crab's eight legs readable before its elder stage.",
+    patch: {},
+    ordinaryLevels: { 0: { body: { claw: .75, small: .7, legs: .6 } }, 1: { body: { claw: 1.35, small: 1.2, legs: .75 } }, 2: { body: { claw: 2.1, small: 1.7 } } },
+    text: "A broad-shelled crab with two forward pincers, stalked eyes and eight walking legs.",
   },
   meerkat: {
     reason: "Keep the existing sentinel idle and strengthen natural dark eye patches and back bands.",

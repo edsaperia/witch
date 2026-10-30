@@ -21,7 +21,7 @@ for (let level = 0; level < 4; level++) {
     assert.ok(sprite.w > 0 && sprite.h > 0 && sprite.m.some(Boolean)); count++;
   }
 }
-for (let level = 0; level < 3; level++) {
+for (let level = 0; pack.mole && level < 3; level++) {
   const s = G.speciesOf(G.GENOME_BY_ID.mole, context("mole"), level);
   assert.ok(Object.values(s.look.mole).every(v => Number.isFinite(v) && v > 0 && v !== 1));
   const build = S => B.withTexture({ S, level, st }, () => C.buildCreature(S, level, 0, st, "towards"));
