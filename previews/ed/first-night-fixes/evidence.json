@@ -1,0 +1,204 @@
+{
+  "local": true,
+  "expected": "6e001612a7f005a958b131ff59a430c4d5889fd6",
+  "version": {
+    "version": "dev · 6e00161",
+    "built": "2026-10-30T01:27:02.593Z"
+  },
+  "viewport": [
+    1280,
+    720
+  ],
+  "fixture": "Quick-art shot; wakeUp(false), alarm/stretch marked up; debug positioning only. Actual keys/click/pad choose through the live station panel. Indoor forest disabled as pause smoke does. Stump health made invulnerable. Not a human walkthrough.",
+  "checks": [
+    {
+      "ok": true,
+      "what": "served version matches built commit",
+      "data": {
+        "version": "dev · 6e00161",
+        "built": "2026-10-30T01:27:02.593Z"
+      }
+    },
+    {
+      "ok": true,
+      "what": "wardrobe: saved default is not falsely marked worn",
+      "data": {
+        "pile": [
+          "top",
+          "shoes",
+          "cloak",
+          "hat",
+          "bits"
+        ],
+        "detail": "Velvet jacket\n\nHers: choose to wear it.",
+        "ticks": 0,
+        "selected": 0
+      }
+    },
+    {
+      "ok": true,
+      "what": "wardrobe: unchanged default chosen with Space dresses its piece"
+    },
+    {
+      "ok": true,
+      "what": "shoeRack: saved default is not falsely marked worn",
+      "data": {
+        "pile": [
+          "shoes",
+          "cloak",
+          "hat",
+          "bits"
+        ],
+        "detail": "Shoes: colour\n\nEvery colour is hers: choose to put it on.",
+        "ticks": 0,
+        "selected": 0
+      }
+    },
+    {
+      "ok": true,
+      "what": "shoeRack: unchanged default chosen with Space dresses its piece"
+    },
+    {
+      "ok": true,
+      "what": "bags: saved default is not falsely marked worn",
+      "data": {
+        "pile": [
+          "cloak",
+          "hat",
+          "bits"
+        ],
+        "detail": "Satchel\n\nHers: choose to wear it. Steady throws, a little homing.",
+        "ticks": 0,
+        "selected": 0
+      }
+    },
+    {
+      "ok": true,
+      "what": "bags: unchanged default chosen with pad dresses its piece"
+    },
+    {
+      "ok": true,
+      "what": "cloakPegs: saved default is not falsely marked worn",
+      "data": {
+        "pile": [
+          "cloak",
+          "hat"
+        ],
+        "detail": "Short cloak\n\nHers: choose to wear it.",
+        "ticks": 0,
+        "selected": 0
+      }
+    },
+    {
+      "ok": true,
+      "what": "cloakPegs: unchanged default chosen with click dresses its piece"
+    },
+    {
+      "ok": true,
+      "what": "pause hides station text while retaining station",
+      "data": {
+        "visibility": "hidden",
+        "id": "cloakPegs"
+      }
+    },
+    {
+      "ok": true,
+      "what": "resume restores station and focus"
+    },
+    {
+      "ok": true,
+      "what": "invisible distances are also hidden from accessibility",
+      "data": [
+        {
+          "text": "74 m",
+          "opacity": "0",
+          "visibility": "hidden",
+          "display": "block"
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "what": "distance capture is at actual dressing-table use position",
+      "data": {
+        "use": "dressingTable",
+        "x": 3149.7287183662897,
+        "z": 2720.966777190793,
+        "hat": {
+          "x": 3198.7087183662898,
+          "z": 2776.196777190793,
+          "at": 0.4333333333333333
+        }
+      }
+    },
+    {
+      "ok": true,
+      "what": "Use held at hostile unready stump keeps hat on and does not cast",
+      "data": {
+        "stump": {
+          "cell": [
+            19,
+            15
+          ],
+          "p": {
+            "x": 3334.582481607672,
+            "z": 2612.460695691486
+          },
+          "hold": 0.5
+        },
+        "hat": {
+          "down": null,
+          "casting": null
+        }
+      }
+    },
+    {
+      "ok": true,
+      "what": "no page/console errors",
+      "data": []
+    }
+  ],
+  "errors": [],
+  "warnings": [
+    "THREE.WebGLProgram: Program Info Log: (160,12-86): warning X3595: gradient instruction used in a loop with varying iteration; partial derivatives may have undefined value\n(238,1): warning X4000: use of potentially uninitialized variable (f_areaAt)\n\n\n\u0000",
+    "THREE.WebGLProgram: Program Info Log: (217,12-86): warning X3595: gradient instruction used in a loop with varying iteration; partial derivatives may have undefined value\n(217,12-86): warning X3595: gradient instruction used in a loop with varying iteration; partial derivatives may have undefined value\n\n\n\u0000",
+    "THREE.WebGLProgram: Program Info Log: (217,12-86): warning X3595: gradient instruction used in a loop with varying iteration; partial derivatives may have undefined value\n(217,12-86): warning X3595: gradient instruction used in a loop with varying iteration; partial derivatives may have undefined value\n\n\n\u0000",
+    "THREE.WebGLProgram: Program Info Log: (187,13-25): warning X3577: value cannot be NaN, isnan() may not be necessary.  /Gis may force isnan() to be performed\n\n\n\u0000",
+    "stall: 133 ms (work 265, step 100.1; audio 76, draw 28, witch 26, leash 14, grass+lights 6) [Object, Object, Object, Object, Object, Object, Object]",
+    "stall: 750 ms (work 67, step 7.5; draw 18, witch 17, leash 9, grass+lights 3, party 3) []",
+    "stall: 83 ms (work 51, step 2.2; draw 18, witch 10, leash 6, grass+lights 4, party 3) [Object, Object]",
+    "stall: 50 ms (work 105, step 3.7; witch 29, heights 26, draw 11, hud 8, leash 8) []",
+    "stall: 150 ms (work 57, step 5.4; witch 16, draw 10, leash 7, grass+lights 3, party 3) [Object]",
+    "stall: 100 ms (work 55, step 4.5; witch 19, draw 10, leash 6, grass+lights 4, refresh 3) []",
+    "stall: 83 ms (work 72, step 3.9; witch 16, heights 13, draw 11, leash 6, audio 6) [Object]",
+    "stall: 83 ms (work 47, step 4.0; witch 15, draw 10, leash 6, grass+lights 3, party 2) [Object]",
+    "stall: 83 ms (work 162, step 3.4; witch 24, draw 9, leash 6, party 3, grass+lights 3) []",
+    "THREE.UniformsUtils: Textures of render targets cannot be cloned via cloneUniforms() or mergeUniforms().",
+    "THREE.UniformsUtils: Textures of render targets cannot be cloned via cloneUniforms() or mergeUniforms()."
+  ],
+  "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "distanceUse": {
+    "use": "dressingTable",
+    "x": 3149.7287183662897,
+    "z": 2720.966777190793,
+    "hat": {
+      "x": 3198.7087183662898,
+      "z": 2776.196777190793,
+      "at": 0.4333333333333333
+    }
+  },
+  "passed": true,
+  "processExit": 0,
+  "browserClosed": true,
+  "visualReview": {
+    "frames": [
+      "01-default-before.png",
+      "01-default-after.png",
+      "02-paused-station.png",
+      "03-unready-stump-hat.png",
+      "04-dressing-table-distance.png"
+    ],
+    "inspected": true,
+    "notes": "Before/after visibly changes nightie to saved jacket; paused station text absent; stump and dressing-table use cue rendered. A sliver of the offscreen pause quality control/debug footer remains at the left edge after resume in later frames; observed, not fixed in this scoped PR."
+  }
+}
