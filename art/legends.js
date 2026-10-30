@@ -10,7 +10,7 @@
 import { M, rng, uni, vnoise, hsv2rgb, bake, defaultCanvas, Sprite } from "./core.js";
 import { render, v3, spotty } from "./model3d.js";
 import { withForm, backTree3d } from "./creatures3d.js";
-import { SPECIES_BY_ID, speciesColours, buildCreature } from "./creatures.js";
+import { speciesFor, speciesColours, buildCreature } from "./creatures.js";
 import { AREAS } from "./areas.js";
 import { decorColours, rockTint } from "./decor.js";
 import { CREATURE_LEGENDS } from "./creatures/index.js";
@@ -199,7 +199,7 @@ function lgCrop(sp) {
 // One form of a species' legend: { sp, colours } (sp.origin: the ground under its middle). Only
 // asleep for now (Ed, 2026-10-04: "no waking sequence yet, just the sleeping form").
 export function legendForm(id, st, { state = "asleep", frame = 0, facing = "towards" } = {}) {
-  const S = SPECIES_BY_ID[id], pose = LEGEND_POSES[id];
+  const S = speciesFor(id, st, 3), pose = LEGEND_POSES[id];
   if (!S || !pose) throw new Error(`no sleeping legend for ${id}`);
   if (!LEGEND_STATES.includes(state)) throw new Error(`no ${state} legend yet`);
   const sp = lgCrop(withForm(lgForm(S, { breath: frame % 2 ? .025 : 0 }), () => buildCreature(S, 3, 0, st, facing)));

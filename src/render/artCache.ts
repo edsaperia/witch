@@ -4,6 +4,7 @@
 // included where they matter). Safe to miss: with storage blocked, full or failing, every call
 // quietly answers nothing and the sets are drawn as before.
 import type { ArtJob, ArtResult } from "./artBuild";
+import { GENOME_BY_ID, genomeHash, selectedCreatureGenome } from "../../art/genome/index.js";
 
 /** A job's cache key, carried with it to the art worker, which keeps the cache (render/artWorker.ts); null: not kept. */
 export interface CacheHint { cacheKey?: string | null; /** Only if it's kept: a set not kept comes back `miss`, not drawn. */ cacheOnly?: boolean }
@@ -39,7 +40,13 @@ function open(): Promise<IDBDatabase | null> {
 /** Where a set is kept between visits: the art's code, the style (its hash), the set, and for an area type its seed and scale.
  *  Party looks are per creature, so they aren't kept (null). The game's art (render/assets.ts) and the landing's bake ahead
  *  (app/landingBake.ts) both key by it. */
-export const artCacheKey = (j: ArtJob, styleHash: string): string | null => j.kind === "party" ? null : [ART_HASH, styleHash, j.kind + ":" + j.id, j.kind === "type" ? `${j.seed}|${j.K}${j.biome ? "|" + j.biome : ""}` : j.kind === "beachEdge" || j.kind === "lakeShore" ? `${j.K}` : ""].join("|");
+export const artCacheKey = (j: ArtJob, styleHash: string): string | null => {
+  if (j.kind === "party") return null;
+  const species = j.kind === "creature" ? j.id : "species" in j ? j.species : null;
+  const base = species ? GENOME_BY_ID[species] : null;
+  const selectedKey = base && selectedCreatureGenome(base, j.style) !== base ? `|genome:${genomeHash(base, j.style, j.kind === "rig" ? j.level : null)}` : "";
+  return [ART_HASH, styleHash, j.kind + ":" + j.id, j.kind === "type" ? `${j.seed}|${j.K}${j.biome ? "|" + j.biome : ""}` : j.kind === "beachEdge" || j.kind === "lakeShore" ? `${j.K}` : ""].join("|") + selectedKey;
+};
 
 /** A set drawn before, or null. */
 export async function cacheGet(key: string): Promise<ArtResult | null> {

@@ -70,6 +70,45 @@ lengths. These are straight-line diagnostic gaits with fixed settings, not
 animal-specific animation. Digitigrade legs still have two segments: a true
 articulated hock, turns, slopes and terrain contact are not implemented.
 
+## Shared selection API
+
+`?creatureModels=bear:graph,wolf:roster` selects records per species; the older
+`?creatures=1.5` remains the numeric scale switch. Omission, `id:current`, an
+unknown id or an unavailable variant retains the current record and hash.
+The URL selects a mode; it does not install records or promise that a graph
+replacement exists yet.
+
+The common context is plain serialized style data:
+`creatureModels` is the selector string and `creatureVariants[id][mode]` is a
+complete genome record with the same id. #1479 supplies its roster records
+through that context; graph batches supply graph records through the same
+slot. There is no global mutable variant registry, and variants have no effect
+without an explicit selector. Capture callers can construct this context
+directly; a future built-in pack loader must supply the records to the game
+style as well as the selector. Do not create a second selection mechanism.
+
+Exports from `art/genome/index.js` (also `art/generator.js`):
+`parseCreatureModels(raw)`, `selectedCreatureGenome(base, context, level)`,
+`speciesOf(base, context, level)` and `genomeHash(base, context, level)`. Level
+is optional (`null` for the complete selected record), otherwise 0 through 3;
+it overlays `levels[level].look` onto `look`. Thus an explicit false at levels
+0 through 2 can suppress embers while level 3 retains the original look.
+`genomeHash` with a level includes that level and the resolved selected record.
+Internally `speciesFor(id, style, level)` applies the same selection for sprites, palettes, rig
+pieces, faces and sleeping legends. The selected record's hash separates the
+same-id in-memory sprite cache, rig page identity and persisted creature jobs.
+The style/selection is fixed for a run and carried unchanged in worker jobs;
+JSON round-trip tests cover parity without reading page or worker locations.
+Current base tables are never mutated. Existing production builders remain
+the default fallback.
+
+## Family score history
+
+- Cats: iteration 0, unscored; awaiting the first shared-model comparison and independent likeness review.
+- Bears: iteration 0, unscored; awaiting cat iteration and family comparison.
+- Deer: iteration 0, unscored; awaiting preceding family iterations.
+- Canids: iteration 0, unscored; awaiting preceding family iterations.
+
 ## Deferred work and trigger
 
 The coordinator confirmed bear/wolf/stag, then bat/snail/hydra, compared against

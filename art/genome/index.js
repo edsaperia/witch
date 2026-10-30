@@ -6,13 +6,17 @@ import { GENOMES } from "./species.js";
 import { TEMPLATES, TEMPLATE_IDS } from "./templates.js";
 import { faceProblems } from "./expressions.js";
 import { textureProblems } from "./texture.js";
+import { parseCreatureModels, selectedCreatureGenome } from "./selection.js";
+export { parseCreatureModels, selectedCreatureGenome };
 export { GENOMES, TEMPLATES, TEMPLATE_IDS };
 export const GENOME_BY_ID = Object.fromEntries(GENOMES.map(g => [g.id, g]));
 
 // The builder's species object, as art/creatures.js always had it: id, name, plan, hue, sat, val,
 // belly, legend, sizes (its template's size curves, any of the species' own over them), and for
 // the four-legged q (their proportions and parts in one bag).
-export function speciesOf(g) {
+/** @param {number|null} [level] */
+export function speciesOf(g, context = {}, level = null) {
+  g = selectedCreatureGenome(g, context, level);
   const S = { id: g.id, name: g.name, plan: g.builder, hue: g.palette.hue, sat: g.palette.sat, val: g.palette.val, legend: g.legend || [] };
   if (g.palette.belly) S.belly = g.palette.belly;
   if (g.elder) S.elder = g.elder; // its legend as the elder of its kind (art/elders.js): { kind, tail, ears, eye }
@@ -33,6 +37,7 @@ export function speciesOf(g) {
   S.sizes = { ...TEMPLATES[g.template].sizes, ...g.sizes };
   S.face = { ...TEMPLATES[g.template].face, ...g.face }; // its expressions' shapes (expressions.js)
   S.texture = { ...TEMPLATES[g.template].texture, ...g.texture }; // its surface: fur, feathers, scales... (texture.js)
+  S.genomeKey = genomeHash(g, {}, level); // selected record and level; separates same-id preview variants in the sprite cache
   // its evolution (the evolution kit): each level's own proportions, parts and features, over its own
   // levels: { 0..3: { body, head, coat, parts, features } } (or an array of four, any null) — what changes at a level beyond its
   // size curves (docs/art-guide/EVOLUTIONS.md, #121's convention): merged over the species' own for that level only (S.levelQ),
@@ -89,9 +94,11 @@ export function genomeProblems(g) {
 // A record's hash (FNV-1a over its canonical JSON, keys sorted): the bake cache's key (#79 stage 4),
 // with the style's own version beside it.
 const genomeCanon = v => Array.isArray(v) ? "[" + v.map(genomeCanon).join(",") + "]" : v && typeof v === "object" ? "{" + Object.keys(v).sort().filter(k => v[k] !== undefined).map(k => JSON.stringify(k) + ":" + genomeCanon(v[k])).join(",") + "}" : JSON.stringify(v);
-export function genomeHash(g) {
+/** @param {number|null} [level] */
+export function genomeHash(g, context = {}, level = null) {
+  g = selectedCreatureGenome(g, context, level);
   let h = 0x811c9dc5;
-  const s = genomeCanon(g);
+  const s = genomeCanon(level === null ? g : { genome: g, level });
   for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); }
   return (h >>> 0).toString(16).padStart(8, "0");
 }

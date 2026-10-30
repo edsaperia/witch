@@ -8,7 +8,7 @@
 // ACCENT for horns and hooves) worked out from one colour, plus its fixed eyes, nose and magic; a
 // variant swaps the coat for one of the curated PALETTE_VARIANTS (or any hue, sat, val).
 import { M, EMISSIVE } from "../core.js";
-import { SPECIES_BY_ID, speciesColours } from "../creatures.js";
+import { speciesFor, speciesColours } from "../creatures.js";
 
 export const PALETTE_SIZE = 64, PALETTE_ROW = PALETTE_SIZE * 2; // materials 0..63 (M goes to 51); a row is their colours, then their outline colours
 const OUTLINE_DARK = [22, 18, 30];
@@ -94,7 +94,7 @@ export const PALETTE_VARIANTS = {
 };
 // A species' colours in a variant (a PALETTE_VARIANTS key or { hue, sat, val, belly }), gear as speciesColours.
 export function variantColours(id, st, variant, gear = null) {
-  const S = SPECIES_BY_ID[id], v = typeof variant === "string" ? PALETTE_VARIANTS[variant] : variant;
+  const S = speciesFor(id, st), v = typeof variant === "string" ? PALETTE_VARIANTS[variant] : variant;
   if (!v) return speciesColours(id, st, gear);
   return speciesColours({ ...S, hue: v.hue, sat: v.sat, val: v.val, belly: v.belly ?? S.belly }, st, gear);
 }

@@ -10,7 +10,7 @@ import { Model, render, spotty, PITCH } from "../model3d.js";
 import { withForm, withGear, withTexture, shoe3d } from "../creatures3d.js";
 import { textureSprite } from "./texture.js";
 import { EXPRESSIONS, JAW_FACES } from "./expressions.js";
-import { SPECIES_BY_ID, buildCreature, textureSeed } from "../creatures.js";
+import { speciesFor, buildCreature, textureSeed } from "../creatures.js";
 
 export const RIG_HEADINGS = [-Math.PI / 2, -Math.PI / 4, 0, Math.PI / 4, Math.PI / 2];
 export const RIG_TEMPLATES = { quadruped: "quad", serpent: "snake" }; // the templates the pilot rigs (and their builder)
@@ -33,7 +33,7 @@ export function rigProject(p, h, s) {
 // (collar, hat, glasses: they ride on the head piece; shoes are their own piece, rigShoe), or
 // { woken: true }, the enraged look's red eyes.
 function rigCapture(id, level, st, face = null, gear = null) {
-  const S = SPECIES_BY_ID[id]; let got = null;
+  const S = speciesFor(id, st, level); let got = null;
   const form = (m, o) => { got = { m, height: o.height }; return new Sprite(1, 1); };
   form.motes = false; form.rig = true;
   const g = face || gear ? { ...gear, shoes: null, face, faceStyle: S.face } : null;
@@ -52,9 +52,9 @@ function rigShoe(leg, style, s, st) {
 }
 // Its head piece in each expression but neutral (the head piece itself): { angry, happy, dazed }, a legend's asleep, and a snouted four-legged one's open jaw (bite, yawn).
 function rigFaces(id, level, st, pivot, s, gear) {
-  const out = {};
-  for (const face of EXPRESSIONS) if (face !== "neutral" && (face !== "asleep" || level === 3)) out[face] = rigPiece(rigCapture(id, level, st, face, gear).m, ["head"], pivot, s, { S: SPECIES_BY_ID[id], level, st });
-  if (SPECIES_BY_ID[id]?.plan === "quad" && !SPECIES_BY_ID[id]?.q?.beak) for (const face of Object.keys(JAW_FACES)) out[face] = rigPiece(rigCapture(id, level, st, face, gear).m, ["head"], pivot, s, { S: SPECIES_BY_ID[id], level, st }); // (the open jaw: a bite, a roar, a yawn; the snouted four-legged ones)
+  const out = {}, S = speciesFor(id, st, level);
+  for (const face of EXPRESSIONS) if (face !== "neutral" && (face !== "asleep" || level === 3)) out[face] = rigPiece(rigCapture(id, level, st, face, gear).m, ["head"], pivot, s, { S, level, st });
+  if (S?.plan === "quad" && !S?.q?.beak) for (const face of Object.keys(JAW_FACES)) out[face] = rigPiece(rigCapture(id, level, st, face, gear).m, ["head"], pivot, s, { S, level, st }); // (the open jaw: a bite, a roar, a yawn; the snouted four-legged ones)
   return out;
 }
 // A model of only the primitives labelled with one of `labels`.
@@ -99,7 +99,7 @@ function rigDisc(r, mat, s, paint, rod = false) {
 // head { nb, H }, tail (its base) for the four-legged; spine [[x, y, z, r]...] and head for a serpent.
 // gear (optional): a party animal's (art/creatures.js partyGear: collar, hat, glasses, shoes), baked on (shoes as pieces.shoe).
 export function rigParts(id, level, st, gear = null) {
-  const S = SPECIES_BY_ID[id], tpl = S.q ? "quadruped" : S.plan === "snake" ? "serpent" : null;
+  const S = speciesFor(id, st, level), tpl = S.q ? "quadruped" : S.plan === "snake" ? "serpent" : null;
   if (!tpl) return null;
   const { m, s } = rigCapture(id, level, st, null, gear), R = m.rig, discs = {};
   const radii = list => [...new Set(list.map(r => Math.max(1, Math.round(r * s))))].sort((a, b) => a - b);
@@ -109,9 +109,9 @@ export function rigParts(id, level, st, gear = null) {
     for (const l of R.legs) discSet(l.mat, legR);
     const hoof = R.legs.find(l => l.hoof); if (hoof) discSet(M.NOSE, radii(R.legs.map(l => l.fl * .9)));
     else discSet(R.legs[0].mat, radii(R.legs.map(l => l.fl * .9)));
-    return { id, level, template: tpl, s, joints: { legs: R.legs, head: R.head, tail: R.tail, top: R.top, len: R.len, bw: R.bw }, discs, pieces: { shoe: gear?.shoes && !gear.woken ? rigShoe(R.legs[0], gear.shoes, s, st) : null, torso: rigPiece(m, ["body"], [0, 0, 0], s, { S: SPECIES_BY_ID[id], level, st }), head: rigPiece(m, ["head"], R.head.nb, s, { S: SPECIES_BY_ID[id], level, st }), tail: rigPiece(m, ["tail"], R.tail, s, { S: SPECIES_BY_ID[id], level, st }) }, faces: rigFaces(id, level, st, R.head.nb, s, gear) };
+    return { id, level, template: tpl, s, joints: { legs: R.legs, head: R.head, tail: R.tail, top: R.top, len: R.len, bw: R.bw }, discs, pieces: { shoe: gear?.shoes && !gear.woken ? rigShoe(R.legs[0], gear.shoes, s, st) : null, torso: rigPiece(m, ["body"], [0, 0, 0], s, { S, level, st }), head: rigPiece(m, ["head"], R.head.nb, s, { S, level, st }), tail: rigPiece(m, ["tail"], R.tail, s, { S, level, st }) }, faces: rigFaces(id, level, st, R.head.nb, s, gear) };
   }
   // a serpent: its head baked, its body discs (speckled like its coat) by the spine's radii
   discSet(M.BODY, radii(R.spine.map(p => p[3])), p => spotty([p[0] * 1.5, p[1], p[2]], 14, .3) ? M.BODY3 : undefined);
-  return { id, level, template: tpl, s, joints: { spine: R.spine, head: R.head, hr: R.hr }, discs, pieces: { head: rigPiece(m, ["head"], R.head, s, { S: SPECIES_BY_ID[id], level, st }), wings: rigPiece(m, ["body"].filter(() => m.parts.some(q => q.part === "body" && q.extra)), [0, .2, 0], s, { S: SPECIES_BY_ID[id], level, st }) }, faces: rigFaces(id, level, st, R.head, s, gear) };
+  return { id, level, template: tpl, s, joints: { spine: R.spine, head: R.head, hr: R.hr }, discs, pieces: { head: rigPiece(m, ["head"], R.head, s, { S, level, st }), wings: rigPiece(m, ["body"].filter(() => m.parts.some(q => q.part === "body" && q.extra)), [0, .2, 0], s, { S, level, st }) }, faces: rigFaces(id, level, st, R.head, s, gear) };
 }
