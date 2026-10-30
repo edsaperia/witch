@@ -8,6 +8,8 @@ import { stackOrder } from "../rules/leash";
 import type { Game } from "../rules/game";
 import type { Stall } from "./stallLog";
 import type { CompareKey } from "../app/compareKey";
+import { setCaughtErrorSink } from "./caughtError";
+export { logCaughtError } from "./caughtError";
 
 /** Ed, 2026-10-30: keep the last 20 crashes in the L log, including failures before play starts. */
 export interface PlaytestError { kind: "error" | "unhandledrejection" | "caught"; message: string; stack: string; build: string; t: number | null; island: string; where?: string }
@@ -22,7 +24,7 @@ function errorText(value: unknown): { message: string; stack: string } {
   } catch { return { message: "Unprintable error", stack: "Unprintable error" }; }
 }
 /** For recoverable failures that must remain visible without interrupting their existing fallback. */
-export function logCaughtError(value: unknown, where: string): void { captureError("caught", value, where); }
+setCaughtErrorSink((value, where) => captureError("caught", value, where));
 function captureError(kind: PlaytestError["kind"], value: unknown, where?: string): void {
   const error = { kind, ...errorText(value), ...(where ? { where } : {}) };
   if (errorSink) errorSink(error);
@@ -118,7 +120,7 @@ export class PlaytestLog {
       const entry: PlaytestError = { ...error, build, t: game.clock.time, island: game.tuning.map?.island || "home" };
       errors.push(entry);
       if (errors.length > 20) errors.shift();
-      this.save();
+      this.save(false); // A failing diagnostic callback must not recursively fail the error handler.
     };
   }
   /** Call once a frame: takes a sample whenever another logEvery seconds of game time have gone. */
@@ -141,7 +143,7 @@ export class PlaytestLog {
       view: (v => (v && pressed ? { ...v, pressed: true } : v))(this.viewState?.()),
       scene: this.sceneState?.(),
     });
-    try { const k = this.keyState?.(); if (k) this.run.key = k; } catch { /* the log goes on without it */ }
+    try { const k = this.keyState?.(); if (k) this.run.key = k; } catch (e) { captureError("caught", e, "playtest comparability key"); }
     const D = this.debugInfo?.();
     if (D) { this.run.machine = D.machine; this.run.changed = D.changed; this.run.samples[this.run.samples.length - 1].link = D.link; } // (each sample's link: where she was then)
     this.save();
@@ -150,10 +152,10 @@ export class PlaytestLog {
   timing(t: unknown): void { this.run.timing = t; this.save(); }
   /** The stall log's stalls, kept with the run (main.ts sets it). */
   stalls: (() => Stall[]) | null = null;
-  private save(): void {
+  private save(includeStalls = true): void {
     // Snapshot: a later night's errors must not mutate an already saved run.
     this.run.errors = errors.map(e => ({ ...e }));
-    if (this.stalls) this.run.stalls = this.stalls().slice();
+    if (includeStalls && this.stalls) this.run.stalls = this.stalls().slice();
     try {
       const runs = readRuns().filter(r => r.started !== this.run.started);
       runs.push(this.run);
@@ -204,7 +206,7 @@ export class PlaytestLog {
   /** Every run kept on this browser (this one included), as a JSON file to save. */
   download(): void {
     this.update(true); // (a sample of this moment: what Ed saw when he pressed L)
-    try { const t = this.debugText?.(); if (t) { this.run.debug = t; this.save(); } } catch { /* the rest is still worth saving */ }
+    try { const t = this.debugText?.(); if (t) { this.run.debug = t; this.save(); } } catch (e) { captureError("caught", e, "playtest debug text"); }
     const runs = readRuns(), all = runs.some(r => r.started === this.run.started) ? runs : [...runs, this.run];
     const blob = new Blob([JSON.stringify(all, null, 1)], { type: "application/json" }), a = document.createElement("a");
     a.href = URL.createObjectURL(blob);

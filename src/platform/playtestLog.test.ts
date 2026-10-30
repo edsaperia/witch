@@ -9,7 +9,8 @@ it("keeps the latest 20 errors with their original night context and leaves brow
   vi.stubGlobal("localStorage", { getItem: (k: string) => stored.get(k), setItem: (k: string, v: string) => stored.set(k, v) });
   const { PlaytestLog, logCaughtError } = await import("./playtestLog");
   const game = (island: string, time: number) => ({ seed: time, clock: { time }, tuning: { leyLines: { pulseSpeed: 1 }, map: { island } } }) as Game;
-  new PlaytestLog(game("fox", 12), "build-a");
+  const first = new PlaytestLog(game("fox", 12), "build-a");
+  first.stalls = () => { throw Error("broken diagnostic"); };
   for (let i = 0; i < 21; i++) logCaughtError(new Error(`caught-${i}`), "fixture");
   let run = JSON.parse(stored.get("witch.playtest")!)[0];
   expect(run.errors).toHaveLength(20);
