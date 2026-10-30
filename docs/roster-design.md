@@ -1,5 +1,9 @@
 # Creature roster design — review in progress
 
+Latest paired review 6515341816, accepted by 6515344884: black jaguar CURRENT2/2→candidate3.5/2.5 KEEP; arctic fox3/4→3.5/4 KEEP; bear4/3→4/3.5 KEEP. Polar bear4/4→4/4 and unicorn5/5→5/5 REJECT/no gain: both presets removed, original records selected unchanged. All five albedo and night sheets inspected. These KEEP verdicts remain default-off candidates for Ed, not live activation. Jaguar gets one final pass: stronger existing highlight ramp/lighter muzzle and face, more ring-size variation and longitudinal density falloff; a true gloss band and spotted tail are not supported by the current shared interface and must be routed to #1470, not simulated by another painter. Badger, stoat and otter first paint candidates are staged from the target table; their anatomy remains original. New staged text: “A low silver-grey badger with a striped white face, dark legs and a short tail.”; “A long chestnut stoat with a cream underside and a black-tipped tail.”; “A low chocolate-brown otter with a pale chin and a thick tapering tail.” Removed polar/unicorn staged descriptions are historical proposals only, absent from current preset inventory.
+
+After this capture completed, normally merged exact released prototype `9192b5015ef13e0e4d44f73d040c2f5d063554b2` at merge `ff51c0f3aeada046457662fb6011bd19028d75ce` with no conflicts. An attempted fetch used shorthand `prototype`, which is not a remote ref; the instructed exact commit was already available and merged successfully. Coordinator6515374018 explains the prior game-unchanged bench's 0.39% wave-fight pixel delta as stale base drift; no expected-difference exemption added. New CI result remains to be checked after push.
+
 Next ranked family targets, from independent review 6513323499 (design preparation; no new candidate yet):
 
 | Species | Baseline L/R | Real-animal target | Current data vs observed defect | Bounded first change |

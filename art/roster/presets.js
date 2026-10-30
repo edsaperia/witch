@@ -9,30 +9,35 @@ const ROSTER_SNOW_REGIONS = {
 // One staged white ramp shared by pale mammals; no production palette mutation.
 const COOL_WHITE = { hue: .59, sat: .025, over: { BODY3: [113, 126, 143], BODY2: [168, 181, 196], BODY: [225, 231, 237], BODYL: [243, 246, 249], BELLY: [239, 243, 247] } };
 const JAGUAR_REGIONS = {
-  torso: { kind: "rosettes", outerPx: 7, density: .65, inner: .23, outer: .43, sizeVariation: .18, closedFraction: .65, gapRange: [0, .45], filledFraction: .08, centreDotRadius: .4, centreDotMat: "BODY3", mat: "BODY3", xRange: [-1.2, .9], densityFalloff: [{ axis: "y", from: 0, to: -1, min: .15 }] },
+  torso: { kind: "rosettes", outerPx: 7, density: .6, inner: .23, outer: .43, sizeVariation: .28, closedFraction: .65, gapRange: [0, .45], filledFraction: .08, centreDotRadius: .4, centreDotMat: "BODY3", mat: "BODY3", xRange: [-1.2, .9], densityFalloff: [{ axis: "y", from: 0, to: -1, min: .15 }, { axis: "x", from: .1, to: 1, min: .45 }] },
   head: { kind: "spots", k: 12, density: .45, radius: .4, mat: "BODY3" },
   legs: { kind: "spots", k: 12, density: .5, radius: .4, mat: "BODY3" },
 };
 export const ROSTER_PRESETS = {
+  badger: {
+    reason: "Make the existing badger face stripes and black legs read against silver-grey fur.",
+    patch: { palette: { hue: .61, sat: .035, val: .55, over: { BODY3: [30, 29, 29], BELLY: [238, 237, 232], BODYL: [172, 175, 178] } } },
+    text: "A low silver-grey badger with a striped white face, dark legs and a short tail.",
+  },
+  stoat: {
+    reason: "Chestnut back, cream underside and the existing black-tipped stoat tail.",
+    patch: { palette: { hue: .065, sat: .55, val: .56, belly: [.11, .16, .92], over: { BODY3: [36, 27, 23], BELLY: [235, 224, 200] } } },
+    text: "A long chestnut stoat with a cream underside and a black-tipped tail.",
+  },
+  otter: {
+    reason: "Chocolate coat and pale chin distinguish its existing low body and broad tapering tail naturally.",
+    patch: { palette: { hue: .065, sat: .4, val: .35, belly: [.10, .18, .72], over: { BELLY: [180, 162, 135], BODYL: [123, 96, 75] } } },
+    text: "A low chocolate-brown otter with a pale chin and a thick tapering tail.",
+  },
   jaguar: {
     reason: "Retain the real melanistic jaguar: black-brown coat with sheened ghost rosettes and a readable muzzle.",
     ordinaryOnly: true,
     modelCommit: "d42523e03b77a8ff4507a5c232d5bdcf91e374e2",
     legendInheritsBase: true,
     legendPatch: { coat: { regions: { ...JAGUAR_REGIONS, torso: { ...JAGUAR_REGIONS.torso, outerPx: 14 } } } },
-    patch: { palette: { hue: .075, sat: .2, val: .25, belly: [ .08, .18, .38 ], over: { BODY3: [27, 23, 21], BODY2: [43, 37, 33], BODYL: [90, 79, 67] } }, head: { muzzle: true }, coat: { belly: true, rosettes: false, regions: JAGUAR_REGIONS } },
+    patch: { palette: { hue: .075, sat: .2, val: .29, belly: [ .08, .18, .46 ], over: { BODY3: [27, 23, 21], BODY2: [75, 65, 54], BODYL: [116, 101, 84] } }, head: { face: "dark", muzzle: true, jawCoat: false }, coat: { belly: true, rosettes: false, regions: JAGUAR_REGIONS } },
     ordinaryLevels: { 0: { coat: { rosettes: false, regions: { ...JAGUAR_REGIONS, torso: { ...JAGUAR_REGIONS.torso, outerPx: 4 } } } }, 1: { coat: { rosettes: false } }, 2: { coat: { rosettes: false } } },
     text: "A stocky black-brown jaguar with ghost rosettes, a broad head and a thick tail.",
-  },
-  polarbear: {
-    reason: "Cool white fur and blue-grey coat shadows; keep the existing long neck and small head.",
-    patch: { palette: { over: { BODY3: [129, 138, 145], BODY2: [185, 190, 192], BODY: [244, 241, 233], BODYL: [250, 248, 242], BELLY: [244, 241, 233] } } },
-    text: "A white bear with a long neck, narrow head and broad paws.",
-  },
-  unicorn: {
-    reason: "White coat with cool shadows; retain its existing horn and legend features.",
-    patch: { palette: { over: { BODY: [235, 238, 242], BODYL: [248, 249, 251] } } },
-    text: "A white woodland unicorn with a spiralling horn.",
   },
   beetle: {
     reason: "Ordinary stag-beetle wing cases and jaws are dark natural materials; reserve ember fissures for the elder.",
