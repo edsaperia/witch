@@ -22,14 +22,14 @@ try {
       const root = modelSha ? `/previews/roster-model-${modelSha}` : "";
       const G = await import(`${root}/art/generator.js`), C = await import(`${root}/art/creatures.js`), B = await import(`${root}/art/creatures3d.js`);
       const production = modelSha ? await import("/art/creatures.js") : C;
-      const { rosterGenome, createRosterVariants, ROSTER_PRESETS } = await import("/art/roster/presets.js");
+      const { rosterGenome, createRosterVariants, expectedRosterLegendPalette, ROSTER_PRESETS } = await import("/art/roster/presets.js");
       if (!ROSTER_PRESETS[id]) throw Error(`Unknown proposed species ${id}`);
       const original = G.GENOME_BY_ID[id];
       const sharedSelection = typeof G.selectedCreatureGenome === "function";
       const context = { creatureModels: `${id}:roster`, creatureVariants: createRosterVariants(G.GENOMES) };
       const paletteData = p => { const out = { ...p }; if (!out.over || !Object.keys(out.over).length) delete out.over; return JSON.stringify(out); };
       if (ROSTER_PRESETS[id].modelCommit && (!sharedSelection || !G.M.SHELL || !G.M.THORAX || !G.M.HEAD)) throw Error(`${id} candidate needs model ${ROSTER_PRESETS[id].modelCommit}; prepare snapshot and set ROSTER_MODEL_SHA`);
-      if (sharedSelection && ROSTER_PRESETS[id].ordinaryOnly && paletteData(G.selectedCreatureGenome(original, context, 3).palette) !== paletteData(original.palette)) throw Error("Shared hook needs approved per-level palette support before candidate capture");
+      if (sharedSelection && ROSTER_PRESETS[id].ordinaryOnly && paletteData(G.selectedCreatureGenome(original, context, 3).palette) !== paletteData(expectedRosterLegendPalette(original))) throw Error("Selected elder palette differs from its declared review target");
       const st = { ...G.defaultStyle(), artStyle: "bold", pixel: 3 };
       const night = lightMode === "night";
       const light = night ? st : { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 };

@@ -14,9 +14,11 @@ export const ROSTER_PRESETS = {
     modelCommit: "fd1a833ae69e1d5cf1d9353b89fbdda39cbab802",
     patch: {
       palette: { hue: .04, sat: .45, val: .36, over: { SHELL: [125, 58, 30], THORAX: [38, 27, 23], HEAD: [32, 23, 20] } },
-      look: { embers: false, materials: { wingCases: "SHELL", thorax: "THORAX", head: "HEAD" }, mandibles: { length: .8, width: 1.8, curve: .65, teeth: 2, awayTipLift: .16 } },
+      look: { embers: false, materials: { wingCases: "SHELL", thorax: "THORAX", head: "HEAD" }, mandibles: { length: .8, width: 1.3, curve: .28, teeth: 2, awayTipLift: .16 } },
     },
-    ordinaryLevels: { 0: { look: { mandibles: { length: .65, width: 1.5, curve: .55, teeth: 1, awayTipLift: .16 } } }, 1: { look: { mandibles: { length: .75, width: 1.7, curve: .6, teeth: 1, awayTipLift: .16 } } } },
+    ordinaryLevels: { 0: { palette: { over: { SHELL: [148, 73, 35] } }, look: { mandibles: { length: .65, width: 1.1, curve: .3, teeth: 1, awayTipLift: .16 } } }, 1: { look: { mandibles: { length: .75, width: 1.2, curve: .3, teeth: 1, awayTipLift: .16 } } } },
+    // Explicit coordinator-approved exception to unchanged elder paint (6513867872).
+    legendPatch: { palette: { over: { SHELL: [97, 45, 25], THORAX: null, HEAD: null, BODY3: null } }, look: { materials: { wingCases: "SHELL" } } },
     text: "A dark beetle with brown wing cases and antler-like jaws; its elder carries the fire.",
   },
   bear: {
@@ -91,8 +93,8 @@ export function rosterVariant(genome) {
       // Old production ignored level palettes. Its snow-leopard record carries
       // an unused level-3 .9/.07 palette; do not let that overwrite the actual
       // original base palette while restoring the selected review elder.
-      if (preset.ordinaryOnly) elder.palette = { ...genome.palette, over: genome.palette.over || null };
-      return elder;
+      if (preset.ordinaryOnly) elder.palette = expectedRosterLegendPalette(genome);
+      return merge(elder, preset.legendPatch ? { look: preset.legendPatch.look || {} } : {});
     }
     return merge(original, preset.ordinaryLevels?.[level] || {});
   });
@@ -104,4 +106,9 @@ export function rosterVariant(genome) {
  */
 export function createRosterVariants(genomes) {
   return Object.fromEntries(genomes.filter(g => ROSTER_PRESETS[g.id]).map(g => [g.id, { roster: rosterVariant(g) }]));
+}
+
+/** Exact declared elder palette: original unless an explicit review target says otherwise. */
+export function expectedRosterLegendPalette(genome) {
+  return merge({ ...genome.palette, over: genome.palette.over || null }, ROSTER_PRESETS[genome.id]?.legendPatch?.palette || {});
 }

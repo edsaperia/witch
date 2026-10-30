@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { GENOMES, speciesOf, genomeHash, genomeProblems } from "../../art/genome/index.js";
-import { rosterGenome, rosterVariant, createRosterVariants, ROSTER_PRESETS } from "../../art/roster/presets.js";
+import { rosterGenome, rosterVariant, createRosterVariants, expectedRosterLegendPalette, ROSTER_PRESETS } from "../../art/roster/presets.js";
 
 test("default-off and unknown switch preserve every production record by identity and hash", () => {
   for (const g of GENOMES) {
@@ -28,7 +28,7 @@ test("opt-in changes only selected genomes, has valid sockets, and leaves source
   assert.equal(JSON.stringify(GENOMES), before);
 });
 
-test("beetle requires a level-aware caller and retains the complete original fiery elder", () => {
+test("legacy beetle resolver requires level and keeps its original elder fallback", () => {
   const g = GENOMES.find(g => g.id === "beetle");
   assert.equal(rosterGenome(g, ["beetle"]), g);
   assert.equal(rosterGenome(g, ["beetle"], 3), g);
@@ -36,7 +36,7 @@ test("beetle requires a level-aware caller and retains the complete original fie
   assert.equal(speciesOf(rosterGenome(g, ["beetle"], 3)).look.embers, true);
 });
 
-test("shared-hook pack contains complete same-id records and explicit original elder look/palette", () => {
+test("shared-hook pack contains complete same-id records and explicit declared elder targets", () => {
   const before = JSON.stringify(GENOMES), pack = createRosterVariants(GENOMES);
   assert.deepEqual(Object.keys(pack).sort(), Object.keys(ROSTER_PRESETS).sort());
   for (const [id, modes] of Object.entries(pack)) {
@@ -46,8 +46,8 @@ test("shared-hook pack contains complete same-id records and explicit original e
     assert.deepEqual(genomeProblems(g), []);
   }
   const beetle = GENOMES.find(g => g.id === "beetle");
-  assert.deepEqual(pack.beetle.roster.levels[3].palette, { ...beetle.palette, over: null });
-  assert.deepEqual(pack.beetle.roster.levels[3].look, { ...beetle.look, materials: null, mandibles: null });
+  assert.deepEqual(pack.beetle.roster.levels[3].palette, expectedRosterLegendPalette(beetle));
+  assert.deepEqual(pack.beetle.roster.levels[3].look, { ...beetle.look, materials: { wingCases: "SHELL" }, mandibles: null });
   assert.equal(pack.beetle.roster.look.embers, false);
   const snow = GENOMES.find(g => g.id === "snowleopard");
   assert.deepEqual(pack.snowleopard.roster.levels[3].palette, { ...snow.palette, over: null });
