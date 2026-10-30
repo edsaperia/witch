@@ -16,21 +16,27 @@ for (const g of GENOMES) (builders[g.builder] ??= []).push(g.id);
 console.log(JSON.stringify({ species: GENOMES.length, builders }, null, 2));
 const fixtures = ["plantigrade", "digitigrade", "hoof"].map(id => [id, quadrupedFixture(id)]);
 if (!gait) fixtures.push(["extra sockets (placeholders)", socketFixture()]);
-const cells = [], columns = gait ? 8 : 4, cellW = gait ? 180 : 300, cellH = 220;
+const cells = [], columns = gait ? 8 : 4, cellW = 300, cellH = 240;
 for (let row = 0; row < fixtures.length; row++) {
   const [label, graph] = fixtures[row];
   for (let col = 0; col < columns; col++) {
     const facing = gait || col < 2 ? "towards" : "away", smooth = gait || col % 2 === 1;
     // Epsilon is required by the existing blend formula's divisor.
     const { model } = gait ? poseGraph(graph, col / columns * .16 / .65) : compileGraph(graph, { blend: smooth ? .07 : 1e-6 });
-    const sp = render(model, { scale: 32, facing }).sp;
-    const scale = 3, ox = col * cellW + Math.floor((cellW - sp.w * scale) / 2), oy = row * cellH + 50;
+    const rendered = render(model, { scale: 32, facing }), sp = rendered.sp;
+    // Align the projected model origin, not each sprite's changing bounds:
+    // otherwise changing leg poses can masquerade as a bouncing torso.
+    const scale = 3, origin = rendered.project([0, 0, 0]);
+    const ox = col * cellW + cellW / 2 - Math.round(origin[0] * scale);
+    const oy = (row + 1) * cellH - 35 - Math.round(origin[1] * scale);
     cells.push(`<text x="${col * cellW + 10}" y="${row * cellH + 23}">${label}</text>`);
     const caption = gait ? `gait phase ${col / columns}` : `${facing}: ${smooth ? "smooth skin .07" : "hard join diagnostic"}`;
     cells.push(`<text x="${col * cellW + 10}" y="${row * cellH + 42}">${caption}</text>`);
     for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) {
       const material = sp.get(x, y);
       if (!material) continue;
+      const px = ox + x * scale, py = oy + y * scale;
+      if (px < col * cellW || px + scale > (col + 1) * cellW || py < row * cellH + 48 || py + scale > (row + 1) * cellH) throw new Error(`Diagnostic cell clips: ${label} ${caption}`);
       const i = (y * sp.w + x) * 3;
       // Fixed screen-space light with three bands exposes normal continuity at
       // joins. This deliberately does not imitate production night lighting.
@@ -38,7 +44,7 @@ for (let row = 0; row < fixtures.length; row++) {
       const light = [.48, .74, 1][Math.min(2, Math.floor(diffuse * 3))];
       const base = material === 3 ? [181, 165, 140] : [154, 171, 194];
       const colour = `rgb(${base.map(v => Math.round(v * light)).join(",")})`;
-      cells.push(`<rect x="${ox + x * scale}" y="${oy + y * scale}" width="${scale}" height="${scale}" fill="${colour}"/>`);
+      cells.push(`<rect x="${px}" y="${py}" width="${scale}" height="${scale}" fill="${colour}"/>`);
     }
   }
 }
