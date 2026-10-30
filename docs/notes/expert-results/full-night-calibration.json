@@ -1,0 +1,104 @@
+{
+  "status": "completed",
+  "startUTC": "2026-10-30T02:21:50.028Z",
+  "endUTC": "2026-10-30T02:24:10.092Z",
+  "simulationWallSeconds": 123.2718971,
+  "row": {
+    "seed": 1000,
+    "worldSeed": 0,
+    "island": "home",
+    "condition": "matched",
+    "bpm": 100,
+    "bag": "satchel",
+    "hat": "none",
+    "wearsHat": false,
+    "parts": [],
+    "bot": "expert",
+    "mode": "runs",
+    "playerEnd": 2916.0000000095183,
+    "phaseNumber": 0,
+    "end": 2913.8400000094907,
+    "outcome": "lost",
+    "wonAt": null,
+    "overAt": 2913.8400000094907,
+    "phase": "stragglers",
+    "phases": {
+      "opening": {
+        "seconds": 306.5900000000499,
+        "completed": true
+      },
+      "waves": {
+        "seconds": 2244.3500000048202,
+        "completed": true
+      },
+      "stragglers": {
+        "seconds": 362.9000000046208,
+        "completed": false
+      }
+    },
+    "waves": [
+      {
+        "wave": 1,
+        "at": 306.5900000000499
+      },
+      {
+        "wave": 2,
+        "at": 492.88999999988044
+      },
+      {
+        "wave": 3,
+        "at": 736.6399999996588
+      },
+      {
+        "wave": 4,
+        "at": 1027.0399999993947
+      },
+      {
+        "wave": 5,
+        "at": 1336.7733333324463
+      },
+      {
+        "wave": 6,
+        "at": 1515.0899999989508
+      },
+      {
+        "wave": 7,
+        "at": 1899.5566666652678
+      },
+      {
+        "wave": 8,
+        "at": 2077.6066666655097
+      },
+      {
+        "wave": 9,
+        "at": 2478.6566666706162
+      },
+      {
+        "wave": 10,
+        "at": 2550.94000000487
+      }
+    ],
+    "waveReached": 10,
+    "wavesPassed": 9,
+    "knockdowns": 0,
+    "rangedSeconds": 46.999999999986066,
+    "eligibleSeconds": 2808.124166675532,
+    "islandsDiscovered": [],
+    "islandsKept": [],
+    "loanFound": {
+      "kind": "bag",
+      "item": "briefcase"
+    },
+    "loanEligibleToKeep": false,
+    "questsCompleted": 0,
+    "questsTotal": 2,
+    "allQuestsCompleted": false,
+    "upgradeFound": true,
+    "upgradeEligibleToKeep": false,
+    "upgradePersisted": false
+  },
+  "processStartUTC": "2026-10-30T02:21:49.505Z",
+  "processEndUTC": "2026-10-30T02:24:10.562Z",
+  "totalWallSeconds": 141.05738029999998,
+  "hardCapSeconds": 600
+}

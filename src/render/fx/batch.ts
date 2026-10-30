@@ -36,6 +36,7 @@ float hash(vec2 q){return fract(sin(dot(q,vec2(127.1,311.7)))*43758.5453);}
 vec4 ramp(float tone){return texelFetch(uFxRamp,ivec2(int(clamp(tone,0.0,3.0)),int(vData.y+0.5)),0);}
 void main(){
   float strength=vData.z,phase=vData.w,form=vData.x;
+  bool beam=form>1.5 && form<2.5;
   float motion=ramp(0.0).a*255.0;
   vec2 p=(floor((vP*0.5+0.5)*vGrid)+0.5)/vGrid*2.0-1.0;
   float time=floor(uFxTime*6.0)/6.0;
@@ -53,7 +54,8 @@ void main(){
   if(form>10.5)d=max(abs(p.y)*3.0,abs(p.x)*1.1);
   else if(form<0.5 || form>9.5)d=length(p*vec2(1.1,1.3));
   else if(form<1.5)d=r/(0.65+sin(angle*7.0-time)*0.07+phase*0.15);
-  else if(form<2.5)d=max(abs(p.y)*3.0,abs(p.x)*1.1);
+  // Broader, longer visible core inside the same authored beam quad; endpoints and draw cost stay bounded.
+  else if(form<2.5)d=max(abs(p.y)*1.25,abs(p.x)*0.82);
   else if(form<3.5)d=max(abs(r-(0.55+phase*0.25))*5.0,r*0.9);
   else if(form<4.5)d=abs(length(p*vec2(1.0,0.85))-0.62)*6.0;
   else if(form<5.5)d=max(abs(p.x)/(0.15+(1.0-p.y)*0.2),abs(p.y)*1.1);
@@ -61,14 +63,22 @@ void main(){
   else if(form<7.5)d=abs(length(p*vec2(1.0,0.8))-0.75)*7.0;
   else if(form<8.5)d=abs(r-0.6)*8.0;
   else d=max(abs(p.x)/(0.25+(1.0-p.y)*0.25),abs(p.y))*1.15;
-  if(motion<0.5)d+=sin(p.x*15.0+time*2.0)*0.08*(p.y+1.0);
-  else if(motion<1.5)d+=abs(sin(angle*6.0))*0.17;
-  else if(motion>3.5 && motion<4.5)d+=step(0.5,n)*0.18;
+  // Family turbulence must not eat the beam's endpoints (notably fire's E-W segment).
+  if(!beam){
+    if(motion<0.5)d+=sin(p.x*15.0+time*2.0)*0.08*(p.y+1.0);
+    else if(motion<1.5)d+=abs(sin(angle*6.0))*0.17;
+    else if(motion>3.5 && motion<4.5)d+=step(0.5,n)*0.18;
+  }
   d+=(n-0.5)*0.12;
   if(uDistort>0.5 && strength>0.85)d+=sin(p.y*18.0+time*2.0)*0.035;
   vec3 rgb;float a=1.0;
   if(uLayer<0.5){a=(1.0-smoothstep(0.7,1.4,d))*0.65;if(a<0.01)discard;rgb=ramp(0.0).rgb*(uSecondary>0.5?clamp(nightLight(vec3(0.0,1.0,0.0),vWorld),vec3(0.2),vec3(1.25)):vec3(0.65));}
-  else if(uLayer<1.5){if(d>0.95)discard;rgb=ramp(d<0.28?3.0:d<0.5?2.0:d<0.75?1.0:0.0).rgb;}
+  else if(uLayer<1.5){
+    if(d>0.95)discard;
+    // A pale family-coloured core and a thin dark border separate from mid-green forest by value.
+    if(beam)rgb=d>0.8?ramp(0.0).rgb*0.18:ramp(d<0.55?3.0:2.0).rgb;
+    else rgb=ramp(d<0.28?3.0:d<0.5?2.0:d<0.75?1.0:0.0).rgb;
+  }
   else if(uLayer<2.5){a=(1.0-smoothstep(0.15,1.6,d))*mix(uHalo.x,uHalo.y,strength);if(hash(floor(p*24.0))>a*3.0)discard;rgb=ramp(1.0).rgb;a=min(a,uCalm>0.5?0.12:0.24);}
   else { // rising embers, stepped shards, curling drops, forks, dust and petals in one fixed instance pool
     vec2 cell=floor(flow*24.0);float spark=hash(cell);

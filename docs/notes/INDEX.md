@@ -72,6 +72,10 @@ says what each note covers.
 - Silhouette check
 - Live rig
 
+## [Expert search: implementation and fairness audit](expert-search.md)
+
+(no entries: its tools and checks only)
+
 ## [Creatures in play](gameplay.md)
 
 - Talk / invite
