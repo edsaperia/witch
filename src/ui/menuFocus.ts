@@ -35,12 +35,14 @@ export class MenuFocus {
     document.head.append(style);
   }
 
-  /** A changed panel is primed with the held buttons, so opening it never also activates its first control. */
-  update(roots: HTMLElement[], pad: Gamepad | null, now: number, back: () => void): boolean {
+  /** A changed panel is primed with the held buttons, so opening it never also activates its first control; `opened`, the
+   *  buttons held when it was opened (the pause: platform/freeze.ts takeOpenPad), primes it with those instead, so a press
+   *  made between the opening and this frame (a slow frame's seconds) still counts. */
+  update(roots: HTMLElement[], pad: Gamepad | null, now: number, back: () => void, opened?: readonly boolean[]): boolean {
     const changed = roots.length !== this.roots.length || roots.some((r, i) => r !== this.roots[i]);
-    if (changed) { this.clearFocus(); this.roots = roots; this.nav = new PadNav(); }
+    if (changed) { this.clearFocus(); this.roots = roots; this.nav = new PadNav(); if (opened) this.nav.readBound(opened, pad?.axes ?? [], now); }
     const moves = this.nav.readBound(pad?.buttons.map(b => b.pressed) ?? [], pad?.axes ?? [], now);
-    if (changed || !roots.length || !pad) return false;
+    if (changed && !opened || !roots.length || !pad) return false;
     const controls = roots.flatMap(root => [...root.querySelectorAll<HTMLElement>("button, a[href], input[type=range], input[type=checkbox], select")]).filter(el => !el.matches(":disabled") && !!el.getClientRects().length);
     if (this.focused && !controls.includes(this.focused)) this.clearFocus();
     for (const move of moves) {

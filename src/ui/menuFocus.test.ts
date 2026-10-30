@@ -46,3 +46,17 @@ it("opening a panel with choose held does not click through; hidden and disabled
   nav.update([textPanel], pad(13), 6.5, back);
   expect(textPanel.scrollTop).toBe(200);
 });
+
+it("a press made after the pause began but before its first frame still counts; the opening press itself does not", () => {
+  // (the pause-on-top B flake, 2026-10-30: a slow frame came 3 s after Esc, B already down, and the page took it for its opening press)
+  vi.stubGlobal("document", { createElement: () => ({}), head: { append() {} } });
+  const root = { querySelectorAll: () => [] } as unknown as HTMLElement;
+  const pad = (button: number) => ({ buttons: Array.from({ length: 17 }, (_, i) => ({ pressed: i === button })), axes: [0, 0] }) as unknown as Gamepad;
+  const none = Array.from({ length: 17 }, () => false), withB = none.map((_, i) => i === 1);
+  const late = vi.fn(); new MenuFocus().update([root], pad(1), 0, late, none); // (Esc with nothing held; B down by the first frame)
+  expect(late).toHaveBeenCalledOnce();
+  const opening = vi.fn(), held = new MenuFocus(); held.update([root], pad(1), 0, opening, withB); held.update([root], pad(1), 1, opening); // (B held as it opened)
+  expect(opening).not.toHaveBeenCalled();
+  const unknown = vi.fn(); new MenuFocus().update([root], pad(1), 0, unknown); // (no record of the opening: primed with what's held, as before)
+  expect(unknown).not.toHaveBeenCalled();
+});

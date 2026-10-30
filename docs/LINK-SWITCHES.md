@@ -93,6 +93,7 @@ For the builders, the smoke and bench runs, the repro link and the arenas.
 | `attack=<attack as JSON>` | The Fight Arena or a debug arena tries this attack (an attack spec, as JSON) on its pack. | 2026-10-27 | app/fightArena.ts, app/gameParams.ts |
 | `audio=lite` / `audio=full` | The sound's weight for one load: lite sheds the costly parts (platform/audio/shed.ts). | 2026-10-07 | app/sound.ts |
 | `bag=starter` / `bag=quick` / `bag=far` / `bag=none` / `bag=<bag item id>` | Her bag for one load: the Satchel (the starter: base rate and reach, a little homing), the Bumbag (faster 💌s, shorter reach) or the Purse (slower, further); none, no bag. | 2026-10-29 | app/linkParams.ts |
+| `cauldron=1` | Enables the collection and kitchen preview: two home mushroom clusters, shared baskets and pot, and the temporary BBB Mirror Floor trip. | 2026-10-30 | main.ts |
 | `cleared=<cx>_<cy>,…` | The repro link: these areas start cleared. | 2026-10-14 | app/repro.ts |
 | `debug` / `debug=cull` / `debug=shadows` / `debug=attack` | The debug overlay and the metre rulers on from the start; cull also tints whatever just appeared or vanished (pops), shadows draws every shadow a flat magenta, and attack blows on the two farthest soundsystems every 10 s (never felling one). | 2026-10-04 | app/keys.ts, app/night.ts, app/playerPick.ts, app/viewParams.ts, main.ts |
 | `decide` | Opens Ed's decisions panel (F2 too). | 2026-10-06 | main.ts, ui/decide.ts |
@@ -104,7 +105,8 @@ For the builders, the smoke and bench runs, the repro link and the arenas.
 | `kit=full` | Her kit stays full while the party spell waits (otherwise she starts with a fresh kit). | 2026-10-26 | app/gameParams.ts |
 | `latency=<category>` / `latency=<seconds>` | The audio output buffer for one load: a latency category or seconds. | 2026-10-07 | app/sound.ts |
 | `loadmist=1` / `loadmist=0` | The loading mist (render/loadingMist.ts) on or off for this load, whatever the tuning and `quick=1` say (it's off under `quick=1`). | 2026-10-24 | app/viewParams.ts |
-| `lookdemo=telegraphs` / `lookdemo=elements` | The attack looks' showcase round her. | 2026-10-27 | render/leash/combat.ts |
+| `lookdemo=telegraphs` / `lookdemo=elements` / `lookdemo=fx` / `lookdemo=fx:<element>` | The attack looks' showcase round her; fx shows the production magic family and intensity ladder with ground and camera controls. | 2026-10-27 | render/leash/combat.ts |
+| `fxmock=1` / `fxmock=iso` / `fxmock=frost` | Show the original fire and frost mock for comparison with the production effects. | 2026-10-29 | render/view.ts |
 | `micCheck=1` | Also listens to the microphone for dropouts after the game (debug only). | 2026-10-06 | main.ts |
 | `mistgate=0` | The bedroom's curtains and door don't wait for the island's art, so she can go out while it's still drawing. | 2026-10-24 | main.ts |
 | `mode=treetop` | The repro link: with at=, she starts in the treetops. | 2026-10-14 | app/repro.ts |
@@ -149,6 +151,7 @@ Each brings back how something was before a change, to compare against what repl
 | `cut=pixel` / `cut=whole` | The canopy cut away round her pixel by pixel, or each crown whole (performance suspects). | 2026-10-14 | app/linkParams.ts |
 | `hiz=0` | The depth-pyramid culling off, to compare. | 2026-10-23 | render/view.ts |
 | `look=old` | Fights drawn with the old attack look, not the attack looks and elements. | 2026-10-27 | render/leash/combat.ts |
+| `magic=old` / `magic=layers` | Compare the old attack artwork with the layered magic effects. | 2026-10-30 | render/fx/system.ts |
 | `moonbeams=on` | The moonbeams (off by default). *Decision: Kept when the other compare switches were retired (2026-10-07).* | 2026-10-07 | app/linkParams.ts |
 | `occ=off` | The occlusion fade (what's in front of her drawn see-through) off. | 2026-10-13 | app/linkParams.ts |
 | `seedepth=off` | The see-through pass doesn't write depth, as before. | 2026-10-13 | render/sprites.ts |
