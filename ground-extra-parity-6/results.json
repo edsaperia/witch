@@ -1,0 +1,14 @@
+{
+  "sha": "71fcf5fa07fd9aa8c627abe9230ea137e8efd96d",
+  "baselineSha": "5e51a00c470d84deec3b8f2ca05d04e45ef771b7",
+  "shard": 6,
+  "shards": 8,
+  "baselineSourceHash": "f15dab0aee26008ff3877d3e6158d5c58074c146c1574b9de9e3d05ffb8f7f4a",
+  "candidateSourceHash": "2745f258329878277f3e7a1fb99711e3c1e36342a6d05484d390ac67e7e478b7",
+  "expectedRows": 66,
+  "totalMatrixRows": 534,
+  "rows": [],
+  "complete": false,
+  "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "error": "Error: page.evaluate: Error: lake kind 0 not exercised\n    at Module.compareGround (http://127.0.0.1:39567/tools/bench/ground-parity-scene.mjs:120:36)\n    at async <anonymous>:337:30"
+}
