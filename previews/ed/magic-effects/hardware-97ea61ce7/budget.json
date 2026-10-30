@@ -1,0 +1,1805 @@
+{
+  "head": "97ea61ce70e5f504459b8121107926768eb3e6a5",
+  "build": {
+    "version": "dev · 97ea61c",
+    "built": "2026-10-30T11:47:02.088Z"
+  },
+  "startedAt": "2026-10-30T12:00:37.836Z",
+  "viewport": [
+    1600,
+    900
+  ],
+  "errors": [],
+  "variants": {
+    "fire": {
+      "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "startedAt": "2026-10-30T12:03:35.889Z",
+      "finishedAt": "2026-10-30T12:03:37.852Z",
+      "samples": [
+        {
+          "enabled": false,
+          "gpuMs": 6.6725,
+          "cpuMs": 15.600000143051147,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 7.679791,
+          "cpuMs": 22.600000143051147,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": true,
+          "gpuMs": 7.685625,
+          "cpuMs": 14.400000095367432,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": false,
+          "gpuMs": 6.872656,
+          "cpuMs": 10.200000047683716,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": false,
+          "gpuMs": 6.854218,
+          "cpuMs": 12.099999904632568,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 8.035677,
+          "cpuMs": 14,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": true,
+          "gpuMs": 8.095208,
+          "cpuMs": 11.599999904632568,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": false,
+          "gpuMs": 6.918854,
+          "cpuMs": 16.09999990463257,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": false,
+          "gpuMs": 7.60276,
+          "cpuMs": 10.799999952316284,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 7.705885,
+          "cpuMs": 14.799999952316284,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": true,
+          "gpuMs": 7.514479,
+          "cpuMs": 13.399999856948853,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": false,
+          "gpuMs": 7.261979,
+          "cpuMs": 14.799999952316284,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": false,
+          "gpuMs": 10.149947,
+          "cpuMs": 15.700000047683716,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 11.142708,
+          "cpuMs": 15.800000190734863,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": true,
+          "gpuMs": 8.276302,
+          "cpuMs": 18.09999990463257,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": false,
+          "gpuMs": 10.639322,
+          "cpuMs": 18.700000047683716,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": false,
+          "gpuMs": 10.749843,
+          "cpuMs": 23.100000143051147,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 8.588333,
+          "cpuMs": 15.399999856948853,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": true,
+          "gpuMs": 10.611718,
+          "cpuMs": 21.699999809265137,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": false,
+          "gpuMs": 11.656041,
+          "cpuMs": 16.699999809265137,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        }
+      ],
+      "metric": "median of adjacent paired on-minus-off GPU times, ABBA order",
+      "pairedDeltas": [
+        -2.3630200000000006,
+        -2.16151,
+        -1.0443230000000003,
+        0.10312500000000036,
+        0.2524999999999995,
+        0.8129689999999998,
+        0.9927610000000016,
+        1.0072909999999995,
+        1.176354,
+        1.1814589999999994
+      ],
+      "baselineMedian": 7.4323695,
+      "effectsMedian": 8.0654425,
+      "differenceOfMedians": 0.6330729999999996,
+      "delta": 0.5327344999999997,
+      "limit": 0.6,
+      "diagnostic": false,
+      "pass": true
+    },
+    "frost": {
+      "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "startedAt": "2026-10-30T12:03:38.181Z",
+      "finishedAt": "2026-10-30T12:03:40.616Z",
+      "samples": [
+        {
+          "enabled": false,
+          "gpuMs": 14.58151,
+          "cpuMs": 22,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 4.85625,
+          "cpuMs": 30.799999952316284,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": true,
+          "gpuMs": 4.834479,
+          "cpuMs": 27.200000047683716,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": false,
+          "gpuMs": 4.875,
+          "cpuMs": 21.100000143051147,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": false,
+          "gpuMs": 4.645625,
+          "cpuMs": 23.199999809265137,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 6.278593,
+          "cpuMs": 26.899999856948853,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": true,
+          "gpuMs": 5.606354,
+          "cpuMs": 24.799999952316284,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": false,
+          "gpuMs": 4.876406,
+          "cpuMs": 28.5,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": false,
+          "gpuMs": 4.970104,
+          "cpuMs": 37.10000014305115,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 11.032083,
+          "cpuMs": 27.90000009536743,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": true,
+          "gpuMs": 5.87927,
+          "cpuMs": 18.90000009536743,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": false,
+          "gpuMs": 5.99052,
+          "cpuMs": 21.799999952316284,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": false,
+          "gpuMs": 4.250312,
+          "cpuMs": 18.600000143051147,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 4.322083,
+          "cpuMs": 25.899999856948853,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": true,
+          "gpuMs": 6.432552,
+          "cpuMs": 20.700000047683716,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": false,
+          "gpuMs": 6.441197,
+          "cpuMs": 27.299999952316284,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": false,
+          "gpuMs": 4.685885,
+          "cpuMs": 27.800000190734863,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 6.712604,
+          "cpuMs": 28.09999990463257,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": true,
+          "gpuMs": 5.452604,
+          "cpuMs": 19.600000143051147,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": false,
+          "gpuMs": 4.48375,
+          "cpuMs": 15.400000095367432,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        }
+      ],
+      "metric": "median of adjacent paired on-minus-off GPU times, ABBA order",
+      "pairedDeltas": [
+        -9.725259999999999,
+        -0.11125000000000007,
+        -0.04052100000000003,
+        -0.00864499999999957,
+        0.07177100000000003,
+        0.7299479999999994,
+        0.9688540000000003,
+        1.632968,
+        2.026719,
+        6.061979
+      ],
+      "baselineMedian": 4.875703,
+      "effectsMedian": 5.742812,
+      "differenceOfMedians": 0.8671090000000001,
+      "delta": 0.4008594999999997,
+      "limit": 0.6,
+      "diagnostic": false,
+      "pass": true
+    },
+    "party": {
+      "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "startedAt": "2026-10-30T12:03:40.848Z",
+      "finishedAt": "2026-10-30T12:03:42.679Z",
+      "samples": [
+        {
+          "enabled": false,
+          "gpuMs": 8.039895,
+          "cpuMs": 12.400000095367432,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 8.677343,
+          "cpuMs": 16.90000009536743,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": true,
+          "gpuMs": 12.526197,
+          "cpuMs": 19.199999809265137,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": false,
+          "gpuMs": 7.087552,
+          "cpuMs": 19.40000009536743,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": false,
+          "gpuMs": 7.709322,
+          "cpuMs": 17.59999990463257,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 5.608958,
+          "cpuMs": 16.899999856948853,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": true,
+          "gpuMs": 5.679687,
+          "cpuMs": 12.799999952316284,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": false,
+          "gpuMs": 5.37302,
+          "cpuMs": 11.400000095367432,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": false,
+          "gpuMs": 6.198229,
+          "cpuMs": 11.400000095367432,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 6.76875,
+          "cpuMs": 18.899999856948853,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": true,
+          "gpuMs": 6.951927,
+          "cpuMs": 11.800000190734863,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": false,
+          "gpuMs": 7.000625,
+          "cpuMs": 11.400000095367432,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": false,
+          "gpuMs": 6.818802,
+          "cpuMs": 12.200000047683716,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 7.347447,
+          "cpuMs": 15.600000143051147,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": true,
+          "gpuMs": 9.217135,
+          "cpuMs": 14,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": false,
+          "gpuMs": 9.29677,
+          "cpuMs": 11.799999952316284,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": false,
+          "gpuMs": 6.92651,
+          "cpuMs": 16.299999952316284,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 9.94802,
+          "cpuMs": 12.799999952316284,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": true,
+          "gpuMs": 7.350468,
+          "cpuMs": 17.899999856948853,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": false,
+          "gpuMs": 6.731979,
+          "cpuMs": 12.299999952316284,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        }
+      ],
+      "metric": "median of adjacent paired on-minus-off GPU times, ABBA order",
+      "pairedDeltas": [
+        -2.100364,
+        -0.07963499999999968,
+        -0.04869799999999991,
+        0.306667,
+        0.528645,
+        0.5705209999999994,
+        0.6184890000000003,
+        0.6374480000000009,
+        3.0215099999999993,
+        5.438645
+      ],
+      "baselineMedian": 6.9635675,
+      "effectsMedian": 7.3489575,
+      "differenceOfMedians": 0.3853900000000001,
+      "delta": 0.5495829999999997,
+      "limit": 0.6,
+      "diagnostic": false,
+      "pass": true
+    },
+    "beam": {
+      "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "startedAt": "2026-10-30T12:03:42.928Z",
+      "finishedAt": "2026-10-30T12:03:44.757Z",
+      "samples": [
+        {
+          "enabled": false,
+          "gpuMs": 4.903177,
+          "cpuMs": 26.799999952316284,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 5.289687,
+          "cpuMs": 28.09999990463257,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": true,
+          "gpuMs": 5.233958,
+          "cpuMs": 19.799999952316284,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": false,
+          "gpuMs": 5.74276,
+          "cpuMs": 13.5,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": false,
+          "gpuMs": 5.83026,
+          "cpuMs": 17.200000047683716,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 6.01,
+          "cpuMs": 13.400000095367432,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": true,
+          "gpuMs": 5.942708,
+          "cpuMs": 15,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": false,
+          "gpuMs": 6.168593,
+          "cpuMs": 13.700000047683716,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": false,
+          "gpuMs": 6.245572,
+          "cpuMs": 13.5,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 6.593854,
+          "cpuMs": 20.90000009536743,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": true,
+          "gpuMs": 6.83151,
+          "cpuMs": 15.5,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": false,
+          "gpuMs": 6.811354,
+          "cpuMs": 13.599999904632568,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": false,
+          "gpuMs": 7.167708,
+          "cpuMs": 15.5,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 7.328072,
+          "cpuMs": 19.5,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": true,
+          "gpuMs": 8.17802,
+          "cpuMs": 14.5,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": false,
+          "gpuMs": 7.715104,
+          "cpuMs": 12.200000047683716,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": false,
+          "gpuMs": 7.735052,
+          "cpuMs": 12.199999809265137,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 8.598541,
+          "cpuMs": 25,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": true,
+          "gpuMs": 8.360156,
+          "cpuMs": 23.200000047683716,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": false,
+          "gpuMs": 8.097135,
+          "cpuMs": 20.700000047683716,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        }
+      ],
+      "metric": "median of adjacent paired on-minus-off GPU times, ABBA order",
+      "pairedDeltas": [
+        -0.5088019999999993,
+        -0.22588500000000078,
+        0.020156000000000063,
+        0.1603639999999995,
+        0.1797399999999998,
+        0.26302100000000017,
+        0.3482820000000002,
+        0.38650999999999947,
+        0.4629159999999999,
+        0.8634890000000013
+      ],
+      "baselineMedian": 6.528463,
+      "effectsMedian": 6.712682,
+      "differenceOfMedians": 0.1842189999999997,
+      "delta": 0.22138049999999998,
+      "limit": 0.6,
+      "diagnostic": false,
+      "pass": true
+    },
+    "all": {
+      "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "startedAt": "2026-10-30T12:03:45.022Z",
+      "finishedAt": "2026-10-30T12:03:46.770Z",
+      "samples": [
+        {
+          "enabled": false,
+          "gpuMs": 3.440729,
+          "cpuMs": 10.700000047683716,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 3.345677,
+          "cpuMs": 14.399999856948853,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": true,
+          "gpuMs": 3.28875,
+          "cpuMs": 12.5,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": false,
+          "gpuMs": 3.535885,
+          "cpuMs": 13.299999952316284,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": false,
+          "gpuMs": 3.739531,
+          "cpuMs": 13,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 3.976875,
+          "cpuMs": 15.799999952316284,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": true,
+          "gpuMs": 4.436197,
+          "cpuMs": 14.299999952316284,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": false,
+          "gpuMs": 4.050677,
+          "cpuMs": 13.799999952316284,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": false,
+          "gpuMs": 4.74875,
+          "cpuMs": 23.200000047683716,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 4.780156,
+          "cpuMs": 21.299999952316284,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": true,
+          "gpuMs": 12.979166,
+          "cpuMs": 18.09999990463257,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": false,
+          "gpuMs": 10.890208,
+          "cpuMs": 29.700000047683716,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": false,
+          "gpuMs": 3.467812,
+          "cpuMs": 17.5,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 3.625104,
+          "cpuMs": 16.200000047683716,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": true,
+          "gpuMs": 3.851458,
+          "cpuMs": 18,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": false,
+          "gpuMs": 4.187343,
+          "cpuMs": 19.200000047683716,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": false,
+          "gpuMs": 4.06677,
+          "cpuMs": 18.399999856948853,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 4.284583,
+          "cpuMs": 18.700000047683716,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": true,
+          "gpuMs": 5.265885,
+          "cpuMs": 21.899999856948853,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": false,
+          "gpuMs": 5.238593,
+          "cpuMs": 19.09999990463257,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        }
+      ],
+      "metric": "median of adjacent paired on-minus-off GPU times, ABBA order",
+      "pairedDeltas": [
+        -0.3358850000000002,
+        -0.2471350000000001,
+        -0.09505200000000036,
+        0.027292000000000094,
+        0.0314059999999996,
+        0.157292,
+        0.2178129999999996,
+        0.23734400000000022,
+        0.38551999999999964,
+        2.088958
+      ],
+      "baselineMedian": 4.0587235,
+      "effectsMedian": 4.130729,
+      "differenceOfMedians": 0.0720054999999995,
+      "delta": 0.0943489999999998,
+      "limit": 1.5,
+      "diagnostic": false,
+      "pass": true
+    },
+    "frost-low": {
+      "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "startedAt": "2026-10-30T12:03:47.122Z",
+      "finishedAt": "2026-10-30T12:03:48.893Z",
+      "samples": [
+        {
+          "enabled": false,
+          "gpuMs": 7.730156,
+          "cpuMs": 24.799999952316284,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 7.74552,
+          "cpuMs": 14.700000047683716,
+          "ready": true,
+          "disjoint": false,
+          "lights": 2,
+          "totalLights": 19
+        },
+        {
+          "enabled": true,
+          "gpuMs": 7.842083,
+          "cpuMs": 11.400000095367432,
+          "ready": true,
+          "disjoint": false,
+          "lights": 2,
+          "totalLights": 19
+        },
+        {
+          "enabled": false,
+          "gpuMs": 7.482239,
+          "cpuMs": 15.299999952316284,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": false,
+          "gpuMs": 7.516927,
+          "cpuMs": 15.5,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 7.804322,
+          "cpuMs": 15,
+          "ready": true,
+          "disjoint": false,
+          "lights": 2,
+          "totalLights": 19
+        },
+        {
+          "enabled": true,
+          "gpuMs": 7.81901,
+          "cpuMs": 12.799999952316284,
+          "ready": true,
+          "disjoint": false,
+          "lights": 2,
+          "totalLights": 19
+        },
+        {
+          "enabled": false,
+          "gpuMs": 7.575677,
+          "cpuMs": 14.599999904632568,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": false,
+          "gpuMs": 7.542343,
+          "cpuMs": 14.299999952316284,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 8.008437,
+          "cpuMs": 11.5,
+          "ready": true,
+          "disjoint": false,
+          "lights": 2,
+          "totalLights": 19
+        },
+        {
+          "enabled": true,
+          "gpuMs": 8.016979,
+          "cpuMs": 13.600000143051147,
+          "ready": true,
+          "disjoint": false,
+          "lights": 2,
+          "totalLights": 19
+        },
+        {
+          "enabled": false,
+          "gpuMs": 7.766822,
+          "cpuMs": 14.299999952316284,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": false,
+          "gpuMs": 7.734062,
+          "cpuMs": 10.399999856948853,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 9.033333,
+          "cpuMs": 18.399999856948853,
+          "ready": true,
+          "disjoint": false,
+          "lights": 2,
+          "totalLights": 19
+        },
+        {
+          "enabled": true,
+          "gpuMs": 7.908072,
+          "cpuMs": 10.5,
+          "ready": true,
+          "disjoint": false,
+          "lights": 2,
+          "totalLights": 19
+        },
+        {
+          "enabled": false,
+          "gpuMs": 7.532968,
+          "cpuMs": 11.200000047683716,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": false,
+          "gpuMs": 7.502135,
+          "cpuMs": 11.099999904632568,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 7.884739,
+          "cpuMs": 12.5,
+          "ready": true,
+          "disjoint": false,
+          "lights": 2,
+          "totalLights": 19
+        },
+        {
+          "enabled": true,
+          "gpuMs": 7.900572,
+          "cpuMs": 10.599999904632568,
+          "ready": true,
+          "disjoint": false,
+          "lights": 2,
+          "totalLights": 19
+        },
+        {
+          "enabled": false,
+          "gpuMs": 7.543489,
+          "cpuMs": 13,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        }
+      ],
+      "metric": "median of adjacent paired on-minus-off GPU times, ABBA order",
+      "pairedDeltas": [
+        0.015363999999999933,
+        0.2433329999999998,
+        0.25015699999999885,
+        0.28739500000000007,
+        0.35708300000000026,
+        0.35984399999999983,
+        0.37510399999999944,
+        0.3826039999999997,
+        0.4660940000000009,
+        1.299271000000001
+      ],
+      "baselineMedian": 7.542916,
+      "effectsMedian": 7.8926555,
+      "differenceOfMedians": 0.3497395000000001,
+      "delta": 0.35846350000000005,
+      "limit": 0.6,
+      "diagnostic": false,
+      "pass": true
+    },
+    "all-low": {
+      "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "startedAt": "2026-10-30T12:03:49.170Z",
+      "finishedAt": "2026-10-30T12:03:50.886Z",
+      "samples": [
+        {
+          "enabled": false,
+          "gpuMs": 8.644479,
+          "cpuMs": 11.099999904632568,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 4.613958,
+          "cpuMs": 16.799999952316284,
+          "ready": true,
+          "disjoint": false,
+          "lights": 2,
+          "totalLights": 19
+        },
+        {
+          "enabled": true,
+          "gpuMs": 4.602552,
+          "cpuMs": 14.399999856948853,
+          "ready": true,
+          "disjoint": false,
+          "lights": 2,
+          "totalLights": 19
+        },
+        {
+          "enabled": false,
+          "gpuMs": 5.43151,
+          "cpuMs": 16.40000009536743,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": false,
+          "gpuMs": 5.201614,
+          "cpuMs": 14.400000095367432,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 5.331666,
+          "cpuMs": 18.40000009536743,
+          "ready": true,
+          "disjoint": false,
+          "lights": 2,
+          "totalLights": 19
+        },
+        {
+          "enabled": true,
+          "gpuMs": 5.218541,
+          "cpuMs": 11.600000143051147,
+          "ready": true,
+          "disjoint": false,
+          "lights": 2,
+          "totalLights": 19
+        },
+        {
+          "enabled": false,
+          "gpuMs": 5.99302,
+          "cpuMs": 11.099999904632568,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": false,
+          "gpuMs": 5.75125,
+          "cpuMs": 16.100000143051147,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 5.739583,
+          "cpuMs": 12.5,
+          "ready": true,
+          "disjoint": false,
+          "lights": 2,
+          "totalLights": 19
+        },
+        {
+          "enabled": true,
+          "gpuMs": 5.752083,
+          "cpuMs": 17.5,
+          "ready": true,
+          "disjoint": false,
+          "lights": 2,
+          "totalLights": 19
+        },
+        {
+          "enabled": false,
+          "gpuMs": 6.125729,
+          "cpuMs": 16.299999952316284,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": false,
+          "gpuMs": 6.074375,
+          "cpuMs": 8.699999809265137,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 6.229635,
+          "cpuMs": 15.299999952316284,
+          "ready": true,
+          "disjoint": false,
+          "lights": 2,
+          "totalLights": 19
+        },
+        {
+          "enabled": true,
+          "gpuMs": 6.966562,
+          "cpuMs": 14,
+          "ready": true,
+          "disjoint": false,
+          "lights": 2,
+          "totalLights": 19
+        },
+        {
+          "enabled": false,
+          "gpuMs": 6.704166,
+          "cpuMs": 11.900000095367432,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": false,
+          "gpuMs": 6.789791,
+          "cpuMs": 13.5,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 7.772187,
+          "cpuMs": 13.599999904632568,
+          "ready": true,
+          "disjoint": false,
+          "lights": 2,
+          "totalLights": 19
+        },
+        {
+          "enabled": true,
+          "gpuMs": 7.708125,
+          "cpuMs": 10.5,
+          "ready": true,
+          "disjoint": false,
+          "lights": 2,
+          "totalLights": 19
+        },
+        {
+          "enabled": false,
+          "gpuMs": 7.708125,
+          "cpuMs": 10.5,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        }
+      ],
+      "metric": "median of adjacent paired on-minus-off GPU times, ABBA order",
+      "pairedDeltas": [
+        -4.030521,
+        -0.8289580000000001,
+        -0.7744789999999995,
+        -0.3736459999999999,
+        -0.011667000000000094,
+        0,
+        0.13005200000000006,
+        0.15526000000000018,
+        0.26239599999999985,
+        0.9823959999999996
+      ],
+      "baselineMedian": 6.100052,
+      "effectsMedian": 5.745832999999999,
+      "differenceOfMedians": -0.3542190000000005,
+      "delta": -0.005833500000000047,
+      "limit": 1.5,
+      "diagnostic": false,
+      "pass": true
+    },
+    "frost-fragment": {
+      "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "startedAt": "2026-10-30T12:03:51.173Z",
+      "finishedAt": "2026-10-30T12:03:52.938Z",
+      "samples": [
+        {
+          "enabled": false,
+          "gpuMs": 7.930104,
+          "cpuMs": 10.600000143051147,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 9.719739,
+          "cpuMs": 17.59999990463257,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": true,
+          "gpuMs": 6.084739,
+          "cpuMs": 12.5,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": false,
+          "gpuMs": 5.867447,
+          "cpuMs": 8.599999904632568,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": false,
+          "gpuMs": 5.750156,
+          "cpuMs": 12.299999952316284,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 6.732239,
+          "cpuMs": 11.600000143051147,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": true,
+          "gpuMs": 6.679166,
+          "cpuMs": 14.5,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": false,
+          "gpuMs": 6.163281,
+          "cpuMs": 11,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": false,
+          "gpuMs": 6.936875,
+          "cpuMs": 11.800000190734863,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 7.581302,
+          "cpuMs": 14.5,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": true,
+          "gpuMs": 7.473437,
+          "cpuMs": 14.300000190734863,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": false,
+          "gpuMs": 7.592031,
+          "cpuMs": 15.100000143051147,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": false,
+          "gpuMs": 7.802864,
+          "cpuMs": 13.700000047683716,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 8.48,
+          "cpuMs": 12.899999856948853,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": true,
+          "gpuMs": 9.329583,
+          "cpuMs": 18.799999952316284,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": false,
+          "gpuMs": 8.569375,
+          "cpuMs": 14.699999809265137,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": false,
+          "gpuMs": 8.71177,
+          "cpuMs": 12.5,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        },
+        {
+          "enabled": true,
+          "gpuMs": 6.587916,
+          "cpuMs": 15.200000047683716,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": true,
+          "gpuMs": 6.515677,
+          "cpuMs": 15.800000190734863,
+          "ready": true,
+          "disjoint": false,
+          "lights": 6,
+          "totalLights": 20
+        },
+        {
+          "enabled": false,
+          "gpuMs": 6.001875,
+          "cpuMs": 11.799999952316284,
+          "ready": true,
+          "disjoint": false,
+          "lights": 0,
+          "totalLights": 17
+        }
+      ],
+      "metric": "median of adjacent paired on-minus-off GPU times, ABBA order",
+      "pairedDeltas": [
+        -2.1238539999999997,
+        -0.11859400000000075,
+        0.2172919999999996,
+        0.5138020000000001,
+        0.5158850000000008,
+        0.6444270000000003,
+        0.6771360000000008,
+        0.7602079999999987,
+        0.9820830000000003,
+        1.7896350000000005
+      ],
+      "baselineMedian": 7.264453,
+      "effectsMedian": 7.102838,
+      "differenceOfMedians": -0.1616149999999994,
+      "delta": 0.5801560000000006,
+      "limit": 0.6,
+      "diagnostic": true,
+      "pass": true
+    }
+  },
+  "contention": "Background expert training may overlap; no quiet-machine claim",
+  "attackFixture": {
+    "seed": 123,
+    "pack": "fox*8@2,wolf*8@2,owl*8@2",
+    "attack": {
+      "cast": {
+        "range": 45,
+        "windup": 0.9,
+        "cooldown": 2.5
+      },
+      "emit": {
+        "pattern": "fan",
+        "n": 6,
+        "angle": 60
+      },
+      "body": {
+        "kind": "bolt",
+        "radius": 0.6,
+        "element": "fire"
+      },
+      "speed": {
+        "v": 12
+      },
+      "life": {
+        "range": 50
+      },
+      "hit": {
+        "damage": 0.1
+      }
+    }
+  },
+  "combat": {
+    "clock": 3.999499999999991,
+    "casts": 3,
+    "bodies": 18,
+    "beams": 0,
+    "zones": 0,
+    "telegraphs": 6
+  },
+  "fixture": {
+    "clock": 3.999499999999991,
+    "creatures": 24,
+    "spells": 18,
+    "camera": {
+      "zoomStep": 3,
+      "zoom": 0.375,
+      "tx": 3208.511571846889,
+      "ty": 1.4000000000091937,
+      "tz": 2866.4996306713924,
+      "vx": 0,
+      "vy": -7.13230791934003e-11,
+      "vz": 0,
+      "ax": 0,
+      "az": 0,
+      "lift": 0,
+      "pull": 0,
+      "intro": 0,
+      "coast": 0,
+      "gaze": 0,
+      "seaBehind": 0.8528667697587705
+    },
+    "quality": {
+      "rung": 0,
+      "loaded": 0,
+      "mode": "off",
+      "slow": 0,
+      "roomy": 0,
+      "since": 75.83020000000002,
+      "last": null,
+      "dir": 0,
+      "reversals": [],
+      "locked": false,
+      "cost": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "left": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "leftAt": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "t": 75.83020000000002
+    },
+    "invulnerableForSustainedMeasurement": true
+  },
+  "pixelProof": {
+    "changedOver2": 0,
+    "maxDifference": 0,
+    "pass": true
+  },
+  "pass": true,
+  "finishedAt": "2026-10-30T12:03:54.011Z"
+}

@@ -1,0 +1,11 @@
+{
+  "head": "97ea61ce70e5f504459b8121107926768eb3e6a5",
+  "grantComment": "6522085904",
+  "startedAt": "2026-10-30T12:00:37.165Z",
+  "finishedAt": "2026-10-30T12:03:54.867Z",
+  "elapsedMs": 197702,
+  "code": 0,
+  "signal": null,
+  "timedOut": false,
+  "cleanup": "Budget tool finally closes owned browser and listener"
+}
