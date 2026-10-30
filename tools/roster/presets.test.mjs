@@ -50,7 +50,9 @@ test("shared-hook pack contains complete same-id records and explicit declared e
   assert.deepEqual(pack.beetle.roster.levels[3].look, { ...beetle.look, materials: { wingCases: "SHELL" }, mandibles: null });
   assert.equal(pack.beetle.roster.look.embers, false);
   const snow = GENOMES.find(g => g.id === "snowleopard");
-  assert.deepEqual(pack.snowleopard.roster.levels[3].palette, { ...snow.palette, over: null });
+  assert.deepEqual(pack.snowleopard.roster.levels[3].palette, expectedRosterLegendPalette(snow));
+  assert.equal(pack.snowleopard.roster.levels[3].palette.hue, pack.snowleopard.roster.palette.hue);
+  assert.equal(pack.snowleopard.roster.levels[3].coat.regions.torso.outerPx, 14);
   assert.equal(rosterVariant(GENOMES.find(g => g.id === "wolf")).id, "wolf");
   assert.equal(JSON.stringify(GENOMES), before);
 });
@@ -64,7 +66,8 @@ test("ordinary corrections survive per-level overrides and restore elder anatomy
   for (const l of [0, 1, 2]) assert.equal(fox.levelQ[l].ear, "round");
   assert.equal(fox.levelQ[3].ear, "point");
   const snow = speciesOf(rosterGenome(original.snowleopard, ["snowleopard"], 2));
-  for (const l of [0, 1, 2]) { assert.equal(snow.levelQ[l].spots, false); assert.equal(snow.levelQ[l].regions.torso.kind, "rosettes"); assert.equal(snow.levelQ[l].regions.head.kind, "spots"); assert.equal(snow.levelQ[l].regions.legs.kind, "spots"); }
-  assert.equal(snow.levelQ[3].spots, true);
+  assert.equal(snow.levelQ[0].regions.torso.kind, "none");
+  for (const l of [1, 2, 3]) { assert.equal(snow.levelQ[l].spots, false); assert.equal(snow.levelQ[l].regions.torso.kind, "rosettes"); assert.equal(snow.levelQ[l].regions.head.kind, "spots"); assert.equal(snow.levelQ[l].regions.legs.kind, "spots"); }
+  assert.deepEqual(snow.levelFeatures[3], speciesOf(original.snowleopard).levelFeatures[3]);
   assert.equal(snow.levelQ[3].rosettes, false);
 });

@@ -2,7 +2,7 @@
 // Isolated data for the existing speciesOf/quad3d interface, not a second engine.
 // No production import. Each species requires an explicit opt-in; defaults are off.
 const ROSTER_SNOW_REGIONS = {
-  torso: { kind: "rosettes", k: 4.5, density: .55, inner: .2, outer: .43, mat: "BODY3", centreMat: "BODYL" },
+  torso: { kind: "rosettes", outerPx: 8, density: .45, inner: .22, outer: .43, xRange: [-.85, .85], flankMin: .2, mat: "BODY3", centreMat: "BODYL" },
   head: { kind: "spots", k: 14, density: .6, radius: .32, mat: "BODY3" },
   legs: { kind: "spots", k: 14, density: .6, radius: .33, mat: "BODY3" },
 };
@@ -39,10 +39,12 @@ export const ROSTER_PRESETS = {
     reason: "Replace generic spots with broken rosettes while keeping its existing long thick ringed tail.",
     reference: "https://zoo.sandiegozoo.org/animals/snow-leopard",
     ordinaryOnly: true,
-    modelCommit: "aad8b13327282d13d7d6a4e2e1b28aa2acfd6b6c",
-    // Iteration 3 uses the shared per-region painter (6513651791), not a fork.
+    modelCommit: "85ebc30df9f7ab373bc2e4552acc2fb197e36b69",
+    legendInheritsBase: true,
+    legendPatch: { coat: { regions: { ...ROSTER_SNOW_REGIONS, torso: { ...ROSTER_SNOW_REGIONS.torso, outerPx: 14 } } } },
+    // Iteration 4: native rings and the same grey/markings grown into its elder.
     patch: { palette: { hue: .59, sat: .03 }, coat: { spots: false, rosettes: false, regions: ROSTER_SNOW_REGIONS } },
-    ordinaryLevels: { 0: { coat: { spots: false, rosettes: false, regions: ROSTER_SNOW_REGIONS } }, 1: { coat: { spots: false, rosettes: false, regions: ROSTER_SNOW_REGIONS } }, 2: { coat: { spots: false, rosettes: false, regions: ROSTER_SNOW_REGIONS } } },
+    ordinaryLevels: { 0: { coat: { spots: false, rosettes: false, regions: { torso: { kind: "none" }, head: { kind: "none" }, legs: { kind: "none" } } } }, 1: { coat: { spots: false, rosettes: false, regions: { ...ROSTER_SNOW_REGIONS, torso: { ...ROSTER_SNOW_REGIONS.torso, outerPx: 6 } } } }, 2: { coat: { spots: false, rosettes: false, regions: ROSTER_SNOW_REGIONS } } },
     text: "A smoky pale mountain cat with dark rosettes, broad paws and a long thick tail.",
   },
 };
@@ -90,11 +92,12 @@ export function rosterVariant(genome) {
         restore.palette = { ...genome.palette, over: genome.palette.over || null };
       }
       const elder = merge(restore, original);
+      if (preset.legendInheritsBase) elder.coat = merge(merge(genome.coat || {}, original.coat || {}), preset.patch.coat || {});
       // Old production ignored level palettes. Its snow-leopard record carries
       // an unused level-3 .9/.07 palette; do not let that overwrite the actual
       // original base palette while restoring the selected review elder.
       if (preset.ordinaryOnly) elder.palette = expectedRosterLegendPalette(genome);
-      return merge(elder, preset.legendPatch ? { look: preset.legendPatch.look || {} } : {});
+      return merge(elder, { ...preset.legendPatch, palette: elder.palette });
     }
     return merge(original, preset.ordinaryLevels?.[level] || {});
   });
@@ -110,5 +113,6 @@ export function createRosterVariants(genomes) {
 
 /** Exact declared elder palette: original unless an explicit review target says otherwise. */
 export function expectedRosterLegendPalette(genome) {
-  return merge({ ...genome.palette, over: genome.palette.over || null }, ROSTER_PRESETS[genome.id]?.legendPatch?.palette || {});
+  const preset = ROSTER_PRESETS[genome.id], base = preset?.legendInheritsBase ? merge(genome.palette, preset.patch.palette || {}) : genome.palette;
+  return merge({ ...base, over: base.over || null }, preset?.legendPatch?.palette || {});
 }
