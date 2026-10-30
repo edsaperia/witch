@@ -15,6 +15,19 @@ const JAGUAR_REGIONS = {
   legs: { kind: "spots", k: 12, density: .5, radius: .4, mat: "BODY3" },
 };
 export const ROSTER_PRESETS = {
+  wolf: {
+    reason: "Grey coat, dark existing saddle and pale muzzle retain the shared wolf anatomy while avoiding a sandy coyote reading.",
+    patch: { head: { muzzle: true, jawCoat: false }, palette: { hue: .6, sat: .035, val: .6, over: { BODY: [145, 148, 149], BODY2: [71, 77, 81], BODY3: [40, 46, 49], BODYL: [184, 188, 189], BELLY: [220, 219, 209] } } },
+    legendPatch: { head: { muzzle: true, jawCoat: false } },
+    text: "A grey wolf with a dark saddle, pale muzzle and long-legged woodland stride.",
+  },
+  fennec: {
+    reason: "Retain sandy fur and a tiny canid body, with the existing sail ears enlarged toward head length.",
+    patch: { parts: { ears: { kind: "sail", size: 2.7 } } },
+    ordinaryLevels: { 0: { parts: { ears: { kind: "sail", size: 2.7 } } }, 1: { parts: { ears: { kind: "sail", size: 2.7 } } }, 2: { parts: { ears: { kind: "sail", size: 2.8 } } } },
+    legendPatch: { parts: { ears: { kind: "sail", size: 2.8 } } },
+    text: "A tiny sandy fennec fox with broad head-length ears and a dense brush tail.",
+  },
   frosttroll: {
     reason: "Turn the existing hunched, shaggy troll's paint into cold fur and ice rather than moss-green.",
     patch: { palette: { hue: .57, sat: .12, val: .72, over: { BODY: [164, 188, 205], BODY2: [110, 136, 157], BODY3: [68, 91, 113], BELLY: [223, 233, 239], LEAF: [160, 205, 222], LEAF2: [204, 234, 244], LEAF3: [112, 163, 190] } } },
