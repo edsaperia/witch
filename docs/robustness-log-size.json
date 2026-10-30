@@ -1,0 +1,48 @@
+{
+  "command": "node tools/robustness/measure-log.mjs previews/robustness-log-size-flight.json",
+  "sourceSha": "4146284d0637700f5fd35ceb692691afac9709a0",
+  "sourceDirtyAtStart": false,
+  "label": "Synthetic ten-minute player-clock fixture; not Ed's observed typical night",
+  "seed": 123,
+  "mapIslandAreas": 4,
+  "frames": 36000,
+  "simulatedHerSeconds": 599.999999999783,
+  "gameSeconds": 75.54699999994735,
+  "wave": 0,
+  "partyOver": false,
+  "tapeComplete": true,
+  "replayEqual": true,
+  "commentStoreReloadEqual": true,
+  "decodedLogEqual": true,
+  "elapsedMs": 52836,
+  "bytes": {
+    "rawTape": 9687594,
+    "deltaTape": 2057150,
+    "rawLog": 19714963,
+    "deltaLog": 4454075,
+    "nativeGzip": 580247,
+    "encodedLogWithBase64Envelope": 773737,
+    "rawComment": 10027260,
+    "encodedCommentStore": 417332
+  },
+  "encoding": "gzip",
+  "representativeNightStillRequired": true,
+  "limits": [
+    "One witch, one seed, a small map and two declared setting/pause checkpoints.",
+    "Includes one full comment and a separately exported copy of its tape; no generated error/sample/journal history.",
+    "Ten minutes is the fixed-step player clock; deck/legend slowdown left the world clock at 75.547 seconds and wave zero.",
+    "Node rules/replay/compression duration is not browser startup or runtime overhead."
+  ],
+  "earlierGroundControlCase": {
+    "sourceSha": "429844cd20bec593b77b7ee80a583211cee9815d",
+    "sourceDirtyAtStart": false,
+    "frames": 36000,
+    "simulatedHerSeconds": 599.999999999783,
+    "gameSeconds": 60.23249999996146,
+    "wave": 0,
+    "tapeComplete": true,
+    "replayEqual": true,
+    "elapsedMs": 44375,
+    "bytes": { "rawTape": 9686886, "deltaTape": 2056442, "rawLog": 19713541, "deltaLog": 4452653, "nativeGzip": 582879, "encodedLogWithBase64Envelope": 777245, "rawComment": 10026546, "encodedCommentStore": 419300 }
+  }
+}

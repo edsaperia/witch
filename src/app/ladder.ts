@@ -18,6 +18,7 @@ const KEY = "witch.ladder";
 interface Base { keep: number; wind: boolean; trunks: string; edge: boolean; hard: boolean }
 
 export class QualityLadder {
+  mutate: (label: string, action: () => void) => void = (_label, action) => action();
   state: LadderState;
   /** The last window's cost (ms a frame) and whether it was the GPU's time. */
   ms = NaN;
@@ -66,6 +67,7 @@ export class QualityLadder {
     const sig = RUNGS.map((_, i) => (inEffect(this.state, i) ? 1 : 0)).join("");
     if (sig === this.applied) return;
     this.applied = sig;
+    this.mutate("automatic quality tuning", () => {
     FX_QUALITY.distortion = !on("fxDistort");
     FX_QUALITY.imprints = !on("fxImprints");
     FX_QUALITY.secondary = !on("fxSecondary");
@@ -76,6 +78,7 @@ export class QualityLadder {
     t.treeCap.keep = on("squeeze") ? Math.min(b.keep, SQUEEZE_KEEP) : b.keep;
     t.wind.on = on("still") ? false : b.wind;
     if (t.shadows.trunks) t.shadows.trunks.mode = on("still") ? "off" : b.trunks;
+    });
   }
 
   /** The pause page's lines: where it is, why, and what waits for the next load. */

@@ -3,6 +3,31 @@
  "intro": "Every `?name=value` the game reads from its link, and where it reads it. Most are read once as the page loads (`src/app/linkParams.ts` for the tuning, `src/app/gameParams.ts` for the game, `src/app/viewParams.ts` for the view, `src/main.ts` for the page); a few are read where they're used. Several can be combined: `?seed=123&wave=30&creator=0`. This page is written from `config/link-switches.json`, and a test checks that file against the code.",
  "switches": [
   {
+   "name": "recording",
+   "values": [
+    "0",
+    "1"
+   ],
+   "does": "Profile-only: 0 disables input recording and incremental log journalling; ordinary games keep both enabled.",
+   "group": "debug",
+   "since": "2026-10-30",
+   "readIn": [
+    "src/platform/diagnosticMode.ts"
+   ]
+  },
+  {
+   "name": "restore",
+   "values": [
+    "comment"
+   ],
+   "does": "Builder loader: consume the comment snapshot selected on the pause page, restoring that exact saved moment paused on the same build.",
+   "group": "debug",
+   "since": "2026-10-30",
+   "readIn": [
+    "src/main.ts"
+   ]
+  },
+  {
    "name": "poolreadability",
    "values": [
     "0",

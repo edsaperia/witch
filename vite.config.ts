@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { availableParallelism } from "node:os";
 import { readPng } from "./tools/overrides/png";
 import { artHash as artHashOf, artFingerprintMap, overrideFiles as overridesAt } from "./tools/artHash";
+import { changelogBatches } from "./tools/changelogBatches";
 
 // base "./": the same build works at the site's root and under /pr-<number>/.
 // The build's version, shown in the corner: the Pages workflow sets these; local builds say "dev".
@@ -61,7 +62,7 @@ export default defineConfig({
   define: { __BUILD__: JSON.stringify(sha ? `${version} · ${sha}` : version), __BUILD_DATE__: JSON.stringify(new Date().toISOString().slice(0, 10)), __UPCOMING__: JSON.stringify(upcoming), __ART_HASH__: JSON.stringify(artHash), __ART_KIND_HASHES__: JSON.stringify(artKindHashes) },
   // (two pages: the game, and the sea chart: chart.html, wave 2 part C)
   build: { target: "es2022", chunkSizeWarningLimit: 1200, rollupOptions: { input: { main: "index.html", chart: "chart.html" } } },
-  plugins: [artOverrides(), configNotes(), versionFile()],
+  plugins: [artOverrides(), configNotes(), versionFile(), changelogBatches()],
   worker: { format: "es", plugins: () => [artOverrides(), configNotes()] },
   // The rules tests build whole maps and play out fights and waves: CPU-bound seconds each, many more
   // under load (a smoke run or CI's busy runners), so vitest's 5 s default made them time out at random.
