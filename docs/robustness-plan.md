@@ -14,3 +14,9 @@ Ed requests a “What's new” settings tab. Reuse the settings page's navigatio
 Measure a production build with sourcemaps before splitting modules: entry and transitive initial chunks, raw/compressed download sizes, and module contributors. Then inspect Creator, Studio, Zoo, DJ booth and telescope for dynamic loading at their actual entry points. Preserve synchronous gameplay state and input ownership; show existing loading feedback while a panel loads. Keep art drawing modules in workers or lazy chunks, respecting the art-fingerprint builder's ownership. Compare the same build options after changes. Boot time requires a coordinated browser run; source size/build duration alone will not be called boot time. Request the exact-SHA measurement through the coordinator, with no local browser run.
 
 Validation: typecheck and nearby tests. Full suites/smokes remain the coordinator's. Each bounded milestone is committed and pushed. No release or live activation by this builder.
+
+## Crash capture milestone
+
+The playtest log observes page errors and unhandled promise rejections without suppressing browser reporting. A page-wide ring keeps the latest 20 records across nights, preserving each record's original build, game time and island. Errors before log initialization retain the build and explicitly unknown time/island. Each active-night capture saves immediately; blocked storage remains quiet. `logCaughtError` is the entry point for the pending empty-catch audit. The audit and rules/startup work remain in progress.
+
+Validation: `npm run typecheck` passed; `npx vitest run src/platform/playtestLog.test.ts` passed two tests (ring rollover, context across nights, both global events, rejection serialization and blocked storage). The first restricted test attempt could not rename Vitest's temporary cache file; the ordinary-permissions retry passed.

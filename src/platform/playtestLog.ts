@@ -9,6 +9,34 @@ import type { Game } from "../rules/game";
 import type { Stall } from "./stallLog";
 import type { CompareKey } from "../app/compareKey";
 
+/** Ed, 2026-10-30: keep the last 20 crashes in the L log, including failures before play starts. */
+export interface PlaytestError { kind: "error" | "unhandledrejection" | "caught"; message: string; stack: string; build: string; t: number | null; island: string; where?: string }
+const errors: PlaytestError[] = [];
+declare const __BUILD__: string;
+let errorSink: ((error: Omit<PlaytestError, "build" | "t" | "island">) => void) | undefined;
+function errorText(value: unknown): { message: string; stack: string } {
+  try {
+    if (value instanceof Error) return { message: value.message, stack: value.stack ?? value.message };
+    const message = typeof value === "string" ? value : JSON.stringify(value) ?? String(value);
+    return { message, stack: message };
+  } catch { return { message: "Unprintable error", stack: "Unprintable error" }; }
+}
+/** For recoverable failures that must remain visible without interrupting their existing fallback. */
+export function logCaughtError(value: unknown, where: string): void { captureError("caught", value, where); }
+function captureError(kind: PlaytestError["kind"], value: unknown, where?: string): void {
+  const error = { kind, ...errorText(value), ...(where ? { where } : {}) };
+  if (errorSink) errorSink(error);
+  else {
+    errors.push({ ...error, build: typeof __BUILD__ === "string" ? __BUILD__ : "dev", t: null, island: "unknown" });
+    if (errors.length > 20) errors.shift();
+  }
+}
+// Observe without cancelling the browser's normal reporting. One pair per page, never per night.
+if (typeof window !== "undefined") {
+  window.addEventListener("error", e => captureError("error", e.error ?? e.message, `${e.filename}:${e.lineno}:${e.colno}`));
+  window.addEventListener("unhandledrejection", e => captureError("unhandledrejection", e.reason));
+}
+
 /** A measured silence (outputMeter.ts): game time, how long (s), where she was, the mix's intended volume and the master's
  *  gain, the context's state and clock, the level it came back at (dBFS), and the nearest stall (its page time's distance, s, and its length, ms). */
 export interface OutputSilence { t: number; dur: number; x: number; z: number; area: string; mode: string; mix: number; gain: number; state: string; clock: number; back: number; stall?: { off: number; ms: number }; /** Why, as far as the clock can tell (outputMeter.ts ClockWatch): "game" (the clock ran true: the game stopped sending), or "clock" (the audio clock was slow then: the device or the browser under-ran). */ cause?: "game" | "clock" }
@@ -59,6 +87,7 @@ export interface PlaytestSample {
 export interface PlaytestRun { seed: number; build: string; started: string; /** What this run was, where, on what and with what (app/compareKey.ts; Ed, 2026-10-26: "only compare like with like"), as last sampled: tools/playtest/compare.mjs refuses two runs whose keys differ in more than what's tested. */ key?: CompareKey; /** ?timing=1: the transition's steps, wall ms from the first, and the long tasks (app/timing.ts). */ timing?: unknown; /** The machine (app/repro.ts machineLines): GPU, WebGL, browser, OS, screen, canvas. */ machine?: string[]; /** Every setting changed from the build's (tuning path: value), as last sampled. */ changed?: Record<string, unknown>; /** The overlay's "copy debug info" text as the log was saved. */ debug?: string; /** The waves' pace: the ley pulse's speed (m/s, 0 off) since 2026-10-09; seconds between waves before. */ interval: number; samples: PlaytestSample[]; /** The fight's scale and speed whenever they were set (Ed's live knobs). */ fight?: { t: number; scale: number; speed: number; momentum?: number }[]; /** Area size (metres), treetop speed (m/s) and the map's areas a side whenever they were set (Ed, 2026-10-05). */ world?: { t: number; areaSize: number; treetopSpeed: number; mapAreas: number }[]; /** The audio watchdog's mends (round 13: the music stopping): what, at what game time. */ audio?: { t: number; what: string }[]; /** The last frames of 100 ms or more (platform/stallLog.ts), with what they spent it on. */ stalls?: Stall[]; /** The measured output silent while the music should be heard (platform/audio/outputMeter.ts), over 0.3 s each. */ silences?: OutputSilence[]; /** The mic check's episodes (?micCheck=1): dropouts after the game, and the mic hearing what the output didn't send. */ mic?: MicLogged[]; /** A sail in place that went wrong (app/sail.ts: the page loaded anew instead), what was thrown. */ sails?: { t: number; what: string }[]; /** The GPU's own trouble (render/view/gpuBudget.ts): an out-of-memory error, the GL context lost, the night reloaded after it. */ gpu?: { t: number; what: string; mb?: number }[] }
 
 const KEY = "witch.playtest", KEEP = 8, EVERY = 10;
+export interface PlaytestRun { errors?: PlaytestError[] }
 const round = (x: number) => Math.round(x * 10) / 10;
 
 function readRuns(): PlaytestRun[] {
@@ -85,6 +114,12 @@ export class PlaytestLog {
   debugText?: () => string;
   constructor(private game: Game, build: string) {
     this.run = { seed: game.seed, build, started: new Date().toISOString(), interval: game.tuning.leyLines.pulseSpeed, samples: [] };
+    errorSink = error => {
+      const entry: PlaytestError = { ...error, build, t: game.clock.time, island: game.tuning.map?.island || "home" };
+      errors.push(entry);
+      if (errors.length > 20) errors.shift();
+      this.save();
+    };
   }
   /** Call once a frame: takes a sample whenever another logEvery seconds of game time have gone. */
   update(pressed = false): void {
@@ -116,6 +151,8 @@ export class PlaytestLog {
   /** The stall log's stalls, kept with the run (main.ts sets it). */
   stalls: (() => Stall[]) | null = null;
   private save(): void {
+    // Snapshot: a later night's errors must not mutate an already saved run.
+    this.run.errors = errors.map(e => ({ ...e }));
     if (this.stalls) this.run.stalls = this.stalls().slice();
     try {
       const runs = readRuns().filter(r => r.started !== this.run.started);
