@@ -9,5 +9,6 @@
   "dome": { "id": 7, "size": 6, "ground": false },
   "trap": { "id": 8, "size": 2, "ground": true },
   "eruption": { "id": 9, "size": 5, "ground": false },
-  "lob": { "id": 10, "size": 2.2, "ground": false }
+  "lob": { "id": 10, "size": 2.2, "ground": false },
+  "trail": { "id": 11, "size": 1.1, "ground": false }
 }

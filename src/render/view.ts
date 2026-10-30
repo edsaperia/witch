@@ -4,6 +4,7 @@
 import { RigView, rigOn } from "./rig/rigView";
 import { FxMock } from "./fxMock";
 import { fxFor } from "./fx/system";
+import { bridgeNativeObject } from "./fx/native";
 const FX_MOCK_MODE = new URLSearchParams(globalThis.location?.search ?? "").get("fxmock");
 import type { RigGear } from "./rig/rigBuild";
 import type { Creature } from "../rules/creatures";
@@ -800,8 +801,11 @@ export class View {
     yield "parts";
     this.scene.add(this.grass.mesh);
     this.scene.add(this.spellFx.trail);
+    this.magic.legacyParty=(x,y,z,age)=>{this.spellFx.reset();this.spellFx.partyBurst(x,y,z,this.game.herTime-age);this.spellFx.update(this.game,this.game.herTime,y);};
     this.trail = new WitchTrail(game.tuning.trail ?? TRAIL_DEFAULT);
     this.scene.add(this.trail.mesh);
+    bridgeNativeObject(this.trail.mesh,"flightTrail");
+    bridgeNativeObject(this.spellFx.trail,"broomSpark");
     // The dancefloor's speakers: their batch comes with their art (drawSpeakers).
     this.assets.speakerArt();
     this.propBatch = new SpriteBatch(this.assets.props, this.mpp, { fade: true }).name("props");
@@ -824,9 +828,11 @@ export class View {
     yield;
     this.holograms = new SigilHolograms(t.holograms, glyphs);
     this.scene.add(this.holograms.group);
+    bridgeNativeObject(this.holograms.group,"hologram");
     yield "fireworks";
     this.fireworks = new Fireworks(SPRITE_UNIFORMS.uRes, this.mpp);
     this.scene.add(this.fireworks.mesh);
+    bridgeNativeObject(this.fireworks.mesh,"firework");
     yield "ley";
     this.island.buildLey();
     this.leyBase = M?.leyBright ?? 1;
@@ -842,6 +848,8 @@ export class View {
     this.lakeShore = new LakeShoreView(this.scene, this.mpp);
     this.swoopTrails = new SwoopTrails(game.tuning.swoopTrail ?? SWOOP_TRAIL_DEFAULT);
     this.scene.add(this.swoopTrails.mesh);
+    bridgeNativeObject(this.swoopTrails.mesh,"partySwoop");
+    bridgeNativeObject(this.markerFx.group,"runestone");
     this.inviteView = new InviteView(game);
     this.inviteView.herOffset = this.herOffset;
     // The 💌s and the invite rings hidden as the animals are, by what stands in front of them and the smoke (render/occlusion.ts;
@@ -1498,6 +1506,7 @@ export class View {
     const ht = Math.max(0, g.herTime - Math.max(0, g.clock.time - time) / Math.max(1e-3, g.timeScale));
     this.magic.begin(ht, g.witch.x, g.witch.z, g);
     this.magic.batches.mpp.value = this.mpp;
+    this.magic.batches.canopy = g.witch.lift > 0.5;
     // The scenery budget follows the real frame rate (only frames that are drawn count).
     if (draw) {
       const now = performance.now();
@@ -1567,6 +1576,8 @@ export class View {
         const live = g.party.spellAt !== null && (g.party.bootFrom === undefined || time < g.party.bootUntil);
         this.ley.ring((g.party.spellAt === null ? 0 : live ? 1 : RING_AFTER) * (1 - (g.partyOver?.ease ?? 0)), this.leyRgb ?? undefined);
         this.ley.front(time, (beatTime(g.beat, time) * t.beat.bpm) / 60, 1 - (g.partyOver?.ease ?? 0)); // its front and pulse: a pixel spark, its small light (render/sparkler.ts)
+        const tip=this.ley.pulseTip??this.ley.tip;
+        if(tip)this.magic.native("ley",tip.x,0.4,tip.z,1,920001,[tip.colour.x,tip.colour.y,tip.colour.z]);
         this.leashView.ley = this.ley; // (the rainbow wave and the analyser behind the spark stand on the line as drawn: render/leash/rainbow.ts)
       }
     }
@@ -1615,6 +1626,8 @@ export class View {
     const markerLights = drawMarkers(this, time);
     const speakerLights = drawSpeakers(this, time, pose.angle);
     this.spellFx.update(g, ht, witchHeight(w, t) + 0.6 + this.rideOff);
+    const speedForMagic=Math.hypot(w.vx,w.vz);
+    if(speedForMagic>2){this.magic.native("flightTrail",w.x,witchHeight(w,t),w.z,Math.min(1,speedForMagic/20),920002);this.magic.native("broomSpark",w.x,witchHeight(w,t),w.z,0.5,920003);}
     const blink = g.witches[0].dash;
     if (blink.at !== this.magicBlink && ht >= blink.at && Number.isFinite(blink.at)) {
       this.magicBlink = blink.at;

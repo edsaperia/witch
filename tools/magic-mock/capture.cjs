@@ -6,6 +6,7 @@ const { execFileSync } = require('node:child_process');
 let playwright; try { playwright = require(process.env.PLAYWRIGHT_MODULE||'playwright'); } catch { playwright = require('/opt/node22/lib/node_modules/playwright'); }
 const root = path.resolve(process.env.DIST || 'dist'), out = path.resolve(process.argv[2] || 'previews/magic-mock');
 const production=process.env.FX_PRODUCTION==='1';
+const review=process.env.FX_REVIEW==='1';
 const modes=production?(process.env.FX_ELEMENTS||Object.keys(JSON.parse(fs.readFileSync(path.resolve('config/fx/elements.json'),'utf8'))).join(',')).split(','):['1','iso','frost'];
 const types = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.png':'image/png','.ogg':'audio/ogg','.woff2':'font/woff2'};
 (async()=>{
@@ -65,13 +66,19 @@ const types = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.j
       if(!production&&mode==='frost') await page.waitForFunction(()=>window.witch.view.fxMock.tree,null,{timeout:60000});
       const state=await page.evaluate(production=>({version:document.title,camera:window.witch.game.camera,lights:window.witch.view.stats.lights,effectLights:production?window.witch.view.magic.stats.lights:window.witch.view.fxMock.lightsUsed,budget:window.witch.game.tuning.lightBudget,treeReady:production?null:!!window.witch.view.fxMock.tree}),production);
       evidence.modes[mode]={state};
+      if(production){
+        await page.evaluate(()=>{window.witch.view.magic.enabled=false;window.witch.view.magic.galleryPage=0;});
+        await frame(1.5);await frame(1.5);
+        await page.screenshot({path:path.join(out,`${mode}-before.png`),timeout:300000});
+        await page.evaluate(()=>{window.witch.view.magic.enabled=true;});
+      }
       for(const [label,time] of (production?[['forms-1',1.5],['forms-2',1.5],['forms-3',1.5],['iso',1.5]]:[['active',1.5],['thaw',5],['clear',7]])) {
         if(production)await page.evaluate(label=>{window.witch.view.magic.galleryPage=label==='iso'?3:Number(label.slice(-1))-1;},label);
         await frame(time); await page.screenshot({path:path.join(out,`${mode}-${label}.png`),timeout:300000});
       }
       if(production){await page.evaluate(()=>{window.witch.view.magic.galleryPage=0;});await frame(1.5);}
       // Compare exactly the same frozen simulation/time with the mock hidden/visible.
-      const timingWanted=!production||['fire','frost','party'].includes(mode);
+      const timingWanted=!production||review||['fire','frost','party'].includes(mode);
       evidence.modes[mode].timing=timingWanted?await page.evaluate(async({production,samples})=>{
         const w=window.witch,v=w.view,gl=v.renderer.getContext(),ext=gl.getExtension('EXT_disjoint_timer_query_webgl2');
         const fx=production?v.magic:v.fxMock;
@@ -97,7 +104,7 @@ const types = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.j
         await page.evaluate(()=>{window.witch.view.magic.galleryPage=3;window.witch.view.magic.galleryDark=true;});
         await frame(1.5);
         const beamOn=await page.screenshot({path:path.join(out,`${mode}-iso-dark.png`),timeout:300000});
-        await page.evaluate(()=>{window.witch.view.magic.enabled=false;});await frame(1.5);
+        await page.evaluate(()=>{window.witch.view.magic.enabled=false;window.witch.view.magic.galleryLegacyVisible=false;});await frame(1.5);
         const beamOff=await page.screenshot({timeout:300000});
         const beamPixels=await page.evaluate(async({on,off})=>{
           const pixels=async(src)=>{const img=new Image();img.src='data:image/png;base64,'+src;await img.decode();const c=document.createElement('canvas');c.width=img.width;c.height=img.height;const ctx=c.getContext('2d');ctx.drawImage(img,0,0);return {data:ctx.getImageData(0,0,c.width,c.height).data,width:c.width,height:c.height};};
@@ -107,10 +114,18 @@ const types = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.j
         },{on:beamOn.toString('base64'),off:beamOff.toString('base64')});
         evidence.modes[mode].beamPixels=beamPixels;
         if(beamPixels<50)throw Error(`Beam visibility regression: only ${beamPixels} changed dark-background pixels`);
-        await page.evaluate(()=>{window.witch.view.magic.enabled=true;});
+        await page.evaluate(()=>{window.witch.view.magic.enabled=true;window.witch.view.magic.galleryLegacyVisible=true;});
         await page.evaluate(()=>{window.witch.view.magic.galleryPage=0;window.witch.view.magic.galleryDark=true;});
         await frame(1.5);await page.screenshot({path:path.join(out,`${mode}-dark.png`),timeout:300000});
         await page.evaluate(()=>{window.witch.view.magic.galleryDark=false;});
+        if(review){
+          for(const enabled of [false,true]){
+            await page.evaluate(enabled=>{const m=window.witch.view.magic;m.enabled=enabled;m.galleryVisible=true;m.galleryLegacyVisible=true;},enabled);
+            const jpeg=[];
+            for(let i=0;i<Number(process.env.FX_CLIP_FRAMES||12);i++){await frame(i/6);jpeg.push(await page.screenshot({type:'jpeg',quality:85,timeout:300000}));}
+            execFileSync(process.env.FFMPEG_BINARY||'ffmpeg',['-y','-f','image2pipe','-r','6','-c:v','mjpeg','-i','pipe:0','-c:v','libvpx','-pix_fmt','yuv420p',path.join(out,`${mode}-${enabled?'after':'before'}.webm`)],{input:Buffer.concat(jpeg),stdio:['pipe','ignore','pipe']});
+          }
+        }
         if(mode!=='fire'&&mode!=='frost'&&mode!=='party'){
           fs.writeFileSync(path.join(out,'evidence.json'),JSON.stringify({...evidence,errors},null,2));continue;
         }

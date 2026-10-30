@@ -1,0 +1,4 @@
+{
+  "distortion": { "mode": "silhouette", "backgroundRefraction": false, "reason": "Keep telegraph and identity-glyph pixels fixed; ripple the effect silhouette rather than the whole scene." },
+  "screen": { "shakeCap": 0.18, "seconds": 0.5, "minimumIntensity": 0.85, "fullScreenFlash": false, "reason": "Signature spells and legend blows can shake gently; no new full-screen flash, and reduce flashing disables the response." }
+}

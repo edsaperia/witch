@@ -3,7 +3,7 @@
   "additionalProperties": {
     "type": "object", "required": ["id", "size", "ground"], "additionalProperties": false,
     "properties": {
-      "id": { "type": "number", "minimum": 0, "maximum": 10 },
+      "id": { "type": "number", "minimum": 0, "maximum": 11 },
       "size": { "type": "number", "minimum": 0.1, "maximum": 20 },
       "ground": { "type": "boolean" }
     }

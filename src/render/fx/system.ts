@@ -6,6 +6,8 @@ import { FX_UNIFORMS } from "./uniforms";
 import { LIGHT_UNIFORMS, MAX_LIGHTS } from "../lighting";
 import { groundHeight } from "../height";
 import { comfort } from "../comfort";
+import { native, NATIVE_ON, type NativeFx } from "./native";
+import layerPolicy from "../../../config/fx/layers.json";
 export const FX_QUALITY = { distortion:true, imprints:true, secondary:true, lightCap:settings.lightCap, particles:1 };
 type Light={x:number;y:number;z:number;reach:number;rgb:THREE.Vector3;strength:number;target:number;seen:number;score:number;fade:number};
 type Burst={element:string;form:FxForm;x:number;y:number;z:number;level:number;size:number;at:number;life:number;seed:number};
@@ -25,6 +27,8 @@ export class MagicFx {
   galleryDark=false;
   galleryCamera:boolean|null=null;
   galleryVisible=true;
+  galleryLegacyVisible=true;
+  legacyParty:((x:number,y:number,z:number,age:number)=>void)|null=null;
   private panel:HTMLElement|null=null;
   private hidden:{object:THREE.Object3D;visible:boolean}[]=[];
   private background:THREE.Scene["background"]=null;
@@ -34,11 +38,13 @@ export class MagicFx {
   private selected:Light[]=[];
   private owner:object|null=null;
   private time=0;private dt=0;private cx=0;private cz=0;
+  private screenAt=-Infinity;private screenStrength=0;
   constructor(scene:THREE.Scene){this.batches=new FxBatches(scene);}
   begin(time:number,x:number,z:number,owner:object):void {
     time=this.captureTime??time;
     if(this.owner!==owner || time<this.time){this.reset();this.owner=owner;this.time=time;}
     this.dt=Math.max(0,time-this.time);this.time=time;this.cx=x;this.cz=z;
+    NATIVE_ON.value=this.enabled?1:0;
     this.field.move(x,z);this.field.decay(this.dt);
     this.batches.begin(time,comfort.reduceFlashing);
     this.batches.secondary.value=FX_QUALITY.secondary?1:0;this.batches.distort.value=FX_QUALITY.distortion&&!comfort.reduceFlashing?1:0;
@@ -46,12 +52,18 @@ export class MagicFx {
     FX_UNIFORMS.uFxTime.value=time;FX_UNIFORMS.uFxCalm.value=comfort.reduceFlashing?1:0;
     this.stats.instances=0;
   }
-  reset():void {this.field.reset();this.lights.clear();this.bursts.length=0;}
+  reset():void {this.field.reset();this.lights.clear();this.bursts.length=0;this.screenAt=-Infinity;this.screenStrength=0;}
+  get screenKick():number {
+    if(!this.enabled||comfort.reduceFlashing)return 0;
+    const phase=Math.max(0,(this.time-this.screenAt)/layerPolicy.screen.seconds);
+    return phase>=1?0:Math.min(layerPolicy.screen.shakeCap,this.screenStrength)*(1-phase)**2;
+  }
   draw(element:string,form:FxForm,x:number,y:number,z:number,level:number,size=1,alpha=1,phase=0,seed=0,tint:readonly number[]|null=null,intensity=intensityOf(level)):void {
     if(!this.enabled || !(alpha>0.01) || Math.hypot(x-this.cx,z-this.cz)>140)return;
     const key=fxElement(element),el=elements[key],f=forms[form];
     const pixel=this.batches.mpp.value;
     const diameter=Math.max(pixel,Math.round(f.size*size*mixIntensity(settings.size,intensity)/pixel)*pixel);
+    if(intensity>=layerPolicy.screen.minimumIntensity&&(form==="burst"||form==="eruption")&&phase<0.15){this.screenAt=this.time;this.screenStrength=layerPolicy.screen.shakeCap*alpha;}
     this.data[0]=f.id;this.data[1]=ELEMENT_KEYS.indexOf(key);this.data[2]=intensity;this.data[3]=phase;
     this.batches.add(x,y,z,diameter,this.data,alpha,f.ground,tint,FX_QUALITY.particles>0.5 || (seed&1)===0);
     this.stats.instances++;
@@ -65,6 +77,16 @@ export class MagicFx {
   emit(element:string,form:FxForm,x:number,y:number,z:number,level:number,size=1,life=1.2,seed=0):void {
     if(this.bursts.length>=settings.pool)this.bursts.shift();
     this.bursts.push({element,form,x,y,z,level,size,at:this.time,life,seed});
+    if(level>=3&&size>=1){this.screenAt=this.time;this.screenStrength=layerPolicy.screen.shakeCap;}
+  }
+  native(feature:NativeFx,x:number,y:number,z:number,amount=1,seed=0,tint:readonly number[]|null=null):void{
+    if(!this.enabled||amount<=0.01||Math.hypot(x-this.cx,z-this.cz)>80)return;
+    const d=native[feature],key=fxElement(d.element);
+    if(d.light>0)this.light(`native:${feature}:${seed}`,x,y,z,key,d.intensity,Math.min(1,amount)*d.light,tint);
+    if(d.anchor>0){
+      this.data[0]=forms.zone.id;this.data[1]=ELEMENT_KEYS.indexOf(key);this.data[2]=d.intensity;this.data[3]=0;
+      this.batches.add(x,0,z,Math.min(5,forms[d.form as FxForm].size*1.5),this.data,d.anchor*Math.min(1,amount),true,tint,false);
+    }
   }
   beam(element:string,x0:number,z0:number,x1:number,z1:number,y:number,width:number,level:number,alpha:number,seed:number,tint:readonly number[]|null=null,intensity=intensityOf(level)):void {
     const length=Math.hypot(x1-x0,z1-z0);if(!this.enabled || length<0.01 || alpha<=0.01)return;
@@ -80,6 +102,13 @@ export class MagicFx {
       if(FX_QUALITY.imprints)this.field.stamp(px,pz,Math.max(2,width*1.5),elements[key].imprint as Imprint,intensity*alpha);
     }
     this.stats.instances++;
+  }
+  ribbon(element:string,x:number,y:number,z:number,vx:number,vy:number,vz:number,level:number,seed:number,tint:readonly number[]|null=null,intensity=intensityOf(level)):void{
+    const speed=Math.hypot(vx,vz);if(!this.enabled||speed<0.1)return;
+    const life=Math.min(0.32,8/speed),length=speed*life,key=fxElement(element);
+    this.data[0]=forms.trail.id;this.data[1]=ELEMENT_KEYS.indexOf(key);this.data[2]=intensity;this.data[3]=vy*life;
+    this.batches.beam(x-vx*life/2,y-vy*life/2,z-vz*life/2,length,Math.atan2(vz,vx),0.55*mixIntensity(settings.size,intensity),this.data,0.6,tint);
+    if(FX_QUALITY.imprints&&(seed&3)===0)this.field.stamp(x-vx*life,z-vz*life,2,elements[key].imprint as Imprint,0.15*intensity);
   }
   private light(id:string,x:number,y:number,z:number,element:keyof typeof elements,intensity:number,alpha:number,tint:readonly number[]|null):void {
     let light=this.lights.get(id);
@@ -157,6 +186,7 @@ export class MagicFx {
     family.forEach((form,col)=>[0.25,0.6,1].forEach((intensity,row)=>{
       const xx=x+(col-1.5)*10,zz=z+(row-1)*12;
       if(form==="beam"){this.beam(this.galleryElement??element,xx-3,zz,xx+3,zz,1.5,1.4,2,0.8,col*3+row,null,intensity);return;}
+      if(form==="trail"){this.ribbon(this.galleryElement??element,xx+3,2,zz,20,0,0,2,col*3+row,null,intensity);return;}
       this.draw(this.galleryElement??element,form,xx,forms[form].ground?0:form==="pillar"?5:2,zz,2,1,0.7,phase,col*3+row,null,intensity);
     }));
   }

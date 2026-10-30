@@ -293,6 +293,7 @@ export class LeashView {
   drawRingGlows(time: number): void {
     const dot = this.uv(0);
     for (const [i, q] of this.ringGlows.entries()) {
+      this.look.magic.native("ringDot",q.x,q.y,q.z,q.k,930000+i,[0.3,0.9,1]);
       const tw = 0.9 + 0.1 * Math.sin(time * 1.7 + i * 0.9);
       this.standing.add(q.x, q.y, q.z + 0.15, 1.6, dot, 0.3 * 1.5, 0.9 * 1.5, 1.5, 0.8 * q.k * tw); // the soft halo
       this.standing.add(q.x, q.y, q.z + 0.16, 0.32, dot, 0.6 * 1.8, 1.8, 1.8, 0.75 * q.k); // its bright core, for the bloom
@@ -466,7 +467,7 @@ export class LeashView {
   shake(time: number): number {
     if (comfort.reduceFlashing) return 0;
     const k = (time - this.shakeAt) / 0.5;
-    return k < 0 || k > 1 ? 0 : this.shakeAmp * (1 - k) * (1 - k);
+    return Math.max(this.look.magic.screenKick,k < 0 || k > 1 ? 0 : this.shakeAmp * (1 - k) * (1 - k));
   }
 
   /** The newest 💌 event already shown (a frame with no step keeps its step's events: shown once). */

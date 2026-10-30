@@ -6,6 +6,12 @@ import { FX_UNIFORMS } from "./uniforms";
 import { comfort } from "../comfort";
 afterEach(()=>{FX_QUALITY.lightCap=6;FX_QUALITY.imprints=true;comfort.reduceFlashing=false;});
 describe("production magic lifecycle",()=>{
+  it("caps signature screen response and disables it with reduce flashing",()=>{
+    const fx=new MagicFx(new THREE.Scene()),owner={};fx.begin(0,0,0,owner);
+    fx.emit("party","pillar",0,4,0,3,1.5);expect(fx.screenKick).toBeLessThanOrEqual(0.18);
+    expect(fx.screenKick).toBeGreaterThan(0);comfort.reduceFlashing=true;expect(fx.screenKick).toBe(0);
+    comfort.reduceFlashing=false;fx.begin(1,0,0,owner);expect(fx.screenKick).toBe(0);
+  });
   it("bounds lights, eases in, respects world reservation and fades completely",()=>{
     const fx=new MagicFx(new THREE.Scene()),owner={};
     fx.begin(0,0,0,owner);

@@ -20,6 +20,7 @@ import type { Beach } from "../rules/mapShape";
 import { koiPonds, lakeKnobs } from "../rules/lakes";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { FX_UNIFORMS, FX_FIELD_GLSL } from "./fx/uniforms";
+import { NATIVE_GLSL, nativeFxUniforms } from "./fx/native";
 import { LAKE_LOOKS_GLSL, lakeLookTexture, lakeLooksOf } from "./lakeLooks";
 import { HEIGHT_GLSL, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import type { TilePixels } from "./artBuild";
@@ -123,6 +124,7 @@ uniform float uBare;  // ?bare=2: a flat grey ground with contour lines (0.5 m) 
 varying vec3 vWorld;
 ${LIGHT_GLSL}
 ${FX_FIELD_GLSL}
+${NATIVE_GLSL}
 ${HEIGHT_GLSL}
 ${VALUE_NOISE_GLSL}${BAYER_GLSL}vec3 hsv(float h, float s, float v) {
   vec3 k = clamp(abs(mod(fract(h) * 6.0 + vec3(0, 4, 2), 6.0) - 3.0) - 1.0, 0.0, 1.0);
@@ -503,7 +505,7 @@ void main() {
       if (LK > 0.5 && ld > -lakeRim(LK)) {
         vec3 lit = nightLightShaded(vec3(0.0, 1.0, 0.0), vWorld, 1.0);
         if (ld < (LK > 1.5 && LK < 2.5 ? -0.6 : 0.0)) c = lakeShore(LK, ld, p, c);
-        else { float hz; vec3 w = lakeWater(LK, ld, p, px, c, lit, hz); w = mix(w, w * 1.25 + vec3(0.06, 0.08, 0.09), lakeSigil(p) * 0.4); w=fxTint(w,fxField(p)); gl_FragColor = vec4(mix(w, haze(w, vWorld), hz), 1.0); return; }
+        else { float hz; vec3 w = lakeWater(LK, ld, p, px, c, lit, hz); w = mix(w, w * 1.25 + vec3(0.06, 0.08, 0.09), lakeSigil(p) * 0.4); w=nativeFxColour(fxTint(w,fxField(p))); gl_FragColor = vec4(mix(w, haze(w, vWorld), hz), 1.0); return; }
       } else if (ld > -2.6) {
         float lap = 0.5 + 0.5 * sin(uTime * 1.1 + vnoise(p / 30.0 + 5.0) * 6.0), front = 0.35 * lap - 0.1; // (the edge laps in and out)
         vec3 lit = nightLightShaded(vec3(0.0, 1.0, 0.0), vWorld, 1.0);
@@ -591,7 +593,7 @@ void main() {
       if (up1 < 0.5) water = rim; // the moonlit far shore
       else if (up2 < 0.5 && mod(px.x, 2.0) < 1.0) water = mix(water, rim, 0.5);
       else if (side < 0.5) water = vec3(0.07, 0.06, 0.05) * (0.6 + 0.8 * nightLight(vec3(0.0, 1.0, 0.0), vWorld)); // the muddy lip
-      gl_FragColor = vec4(haze(fxTint(water, fxField(p)), vWorld), 1.0);
+      gl_FragColor = vec4(haze(nativeFxColour(fxTint(water, fxField(p))), vWorld), 1.0);
       return;
     }
   }
@@ -678,7 +680,7 @@ export class Ground {
     const mat = new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG, defines: defines(false),
       uniforms: {
-        ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, ...FX_UNIFORMS,
+        ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, ...FX_UNIFORMS, ...nativeFxUniforms("lake"),
         uAreas: { value: this.near.texture }, uAreasFar: { value: this.far.texture },
         uExtent: { value: this.near.extent }, uExtentFar: { value: this.far.extent },
         uAreaWin: { value: this.near.box }, uAreaWinFar: { value: this.far.box },
