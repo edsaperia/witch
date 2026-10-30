@@ -97,7 +97,7 @@ export class BeachView {
     if (!b) return false;
     const seen = !!fly && b.intoSand(fly.x, fly.z) >= -fly.reach;
     if (b.intoSand(w.x, w.z) < -(g.tuning.beach?.shown ?? 0) && !seen) { this.leave(); this.gazing = false; return false; }
-    if (!this.on) { if (!this.ground.setBeach(b)) return false; this.on = true; this.assets.partyWitchArt(null); } // (her lying-down art asked for ahead)
+    if (!this.on) { this.on = true; this.ground.setBeach(b); this.assets.partyWitchArt(null); } // (her lying-down art asked for ahead)
     this.ground.sandGrain(g.tuning.beach?.grain ?? 0); // (live: the pause page's slider)
     if (g.map.zoo) return false; // (the zoo's edge is a band of water pouring off the disc, render/zooFences.ts ZooFall: no woods' edge, decorations, dolphins or kraken)
     this.edge.update(b, this.assets.beachEdgeArt(), w.x, w.z, g.tuning.beach?.decor?.clear);
@@ -185,7 +185,6 @@ export class BeachView {
 
   /** She's gone from the beach: the sand and sea off, the witches' sprites and the hearts let go. */
   private leave(): void {
-    this.ground.beachReadiness.leave();
     if (!this.on) return;
     this.on = false;
     this.together = -1;

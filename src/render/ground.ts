@@ -5,7 +5,6 @@
 // Which area each spot belongs to comes from a data texture filled in small tiles near the
 // camera (working the partition out for the whole map at once takes seconds on a phone).
 import * as THREE from "three";
-import { DeferredBeach } from "./deferredBeach";
 import { gpuKind } from "./gpuLedger";
 import { BAYER_GLSL, VALUE_NOISE_GLSL } from "./shaders";
 import { CARVING_SIZE, carvingMask } from "./legendCarving";
@@ -736,7 +735,6 @@ export class Ground {
     const twin = new THREE.Mesh(geo, this.beach);
     twin.visible = false; twin.frustumCulled = false;
     this.mesh.add(twin);
-    this.travelBeachTwin = lakes ? twin : null;
     this.follow((e.minX + e.maxX) / 2, (e.minZ + e.maxZ) / 2);
   }
 
@@ -795,18 +793,10 @@ export class Ground {
   /** The beach and the sea (render/beach.ts): drawn only while given one (she's near the edge). */
   /** Where the sky draws the moon (rules/moon.ts x, a fraction across) and the picture's width (px): the sea's moon road under it. */
   moonRoad(x: number, widthPx: number, up: boolean): void { ((this.mesh.material as THREE.ShaderMaterial).uniforms.uMoonRoad.value as THREE.Vector3).set(x, widthPx, up ? 1 : 0); }
-  readonly beachReadiness = new DeferredBeach(phase => {
-    const detail = { kind: 'beach-shader', phase, at: performance.now() };
-    performance.mark(`witch:beach-${phase}`, { detail });
-    (globalThis as unknown as { __travelProbe?: { record(e: unknown): void } }).__travelProbe?.record(detail);
-  });
-  /** Only the measured lakes+beach variant; every other pass retains its arrival gate. */
-  readonly travelBeachTwin: THREE.Mesh | null;
-  setBeach(b: Beach | null): boolean {
-    if (b && !this.beachReadiness.use()) return false;
+  setBeach(b: Beach | null): void {
     const u = (this.mesh.material as THREE.ShaderMaterial).uniforms, v = u.uBeach.value as THREE.Vector4;
     this.mesh.material = b ? this.beach : this.plain;
-    if (!b) { this.beachReadiness.leave(); v.set(0, 0, 0, 0); return true; }
+    if (!b) { v.set(0, 0, 0, 0); return; }
     const L = b.land;
     if (this.landFor !== b) {
       // (the land map's distances, the sand's widths and the way to the coast, as a half-float texture eased between its samples)
@@ -821,7 +811,6 @@ export class Ground {
     u.uLand.value = this.landTex;
     (u.uLandBox.value as THREE.Vector4).set(L.x0, L.z0, 1 / (L.step * L.cols), 1 / (L.step * L.rows));
     v.set(1, b.out, L.step / 2, v.w);
-    return true;
   }
   /** The sand's grain: how far each of its art pixels is lightened or darkened, at random (the tuning's beach.grain). */
   sandGrain(k: number): void { ((this.mesh.material as THREE.ShaderMaterial).uniforms.uBeach.value as THREE.Vector4).w = k; }
@@ -903,7 +892,6 @@ export class Ground {
   }
 
   dispose(): void {
-    this.beachReadiness.cancel();
     const u = (this.mesh.material as THREE.ShaderMaterial).uniforms;
     for (const k of ["uDiscoBase", "uDiscoLit", "uLakes", "uLakeLooks"]) (u[k]?.value as THREE.Texture | null)?.dispose();
     this.near.dispose(); this.far.dispose(); this.landTex?.dispose(); this.floors.dispose(); this.carve.dispose(); this.lakeCarve.dispose(); this.plazaSigil.dispose(); this.discoTiles.dispose();

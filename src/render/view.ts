@@ -14,7 +14,6 @@ import { beatTime } from "../rules/beat";
 import * as THREE from "three";
 import { waitForPrograms, type ReadyProgram } from "./programReadiness";
 import { captureProgramUses, mapProgramUses } from "./programInventory";
-import { prepareDeferredBeach } from "./deferredBeach";
 import { carrierOf, deckOf } from "../rules/treehouse";
 import { HOUSE_LAYER } from "./post";
 import { StationBackdrop } from "./stationBackdrop";
@@ -1097,38 +1096,21 @@ export class View {
       groups[group] = allPrograms().filter(p => !prior.has(p.id)).map(p => p.id);
       return result;
     };
-    const ground = this.ground, beachTwin = ground.travelBeachTwin;
-    // Three.compile traverses invisible meshes too: detach just the measured, never-drawn beach twin for this call.
-    const deferred = beachTwin && ground.mesh.material !== beachTwin.material ? beachTwin : null;
-    if (deferred) { ground.beachReadiness.begin(); ground.mesh.remove(deferred); }
-    let compiled: Promise<unknown[]>;
-    try {
-      compiled = Promise.all([launch('scene', () => this.renderer.compileAsync(this.scene, this.camera)), fx && launch('effects', () => this.renderer.compileAsync(fx, this.camera)), launch('post', () => this.post.compile()), this.hiz?.ok && launch('hiz', () => this.hiz!.compile(this.renderer))]).catch(() => []);
-    } finally { if (deferred) ground.mesh.add(deferred); }
-    let deferredId: number | undefined;
-    if (deferred) {
-      const background = Promise.resolve(launch('beach-background', () => this.renderer.compileAsync(deferred, this.camera, this.scene)));
-      const program = (this.renderer.properties.get(deferred.material as THREE.Material) as { currentProgram?: ReadyProgram & { getUniforms(): unknown } }).currentProgram;
-      if (program) {
-        deferredId = program.id;
-        void prepareDeferredBeach(program, background, ground.beachReadiness).catch(error => console.warn('view: background beach shader failed', error));
-      } else console.warn('view: background beach shader has no program; keeping current ground');
-    }
-    const arrivalPrograms = () => allPrograms().filter(p => p.id !== deferredId);
+    const compiled = Promise.all([launch('scene', () => this.renderer.compileAsync(this.scene, this.camera)), fx && launch('effects', () => this.renderer.compileAsync(fx, this.camera)), launch('post', () => this.post.compile()), this.hiz?.ok && launch('hiz', () => this.hiz!.compile(this.renderer))]).catch(() => { /* readiness is still checked per program below */ });
     for (const o of hidden) o.visible = false;
     performance.mark("witch:prep-compile0");
     const parallel = this.renderer.extensions.has('KHR_parallel_shader_compile');
     const usages = originalUses ? mapProgramUses(originalUses, material => (this.renderer.properties.get(material) as { currentProgram?: { id: number } }).currentProgram?.id) : undefined;
     const record = (phase: string, pending: ReadyProgram[] = [], elapsed = 0) => {
       const detail = { kind: 'shader-programs', phase, at: performance.now(), parallel, elapsed, groups,
-        programs: allPrograms().map(p => ({ id: p.id, name: p.name, type: p.type, ready: p.isReady(), added: !before.has(p.id), deferred: p.id === deferredId, ...(usages?.[p.id] ? { sourceUses: usages[p.id] } : {}) })), pending: pending.map(p => p.id) };
+        programs: allPrograms().map(p => ({ id: p.id, name: p.name, type: p.type, ready: p.isReady(), added: !before.has(p.id), ...(usages?.[p.id] ? { sourceUses: usages[p.id] } : {}) })), pending: pending.map(p => p.id) };
       performance.mark(`witch:shader-${phase}`, { detail });
       telemetry?.record(detail);
       return detail;
     };
     record('start');
     // Coordinator6516109308: keep the animated chart beyond 60s; never use that mark as permission to force uniforms.
-    await waitForPrograms(arrivalPrograms, compiled, (ready, total) => this.setReadiness('compile', ready, total), (pending, elapsed) => {
+    await waitForPrograms(allPrograms, compiled, (ready, total) => this.setReadiness('compile', ready, total), (pending, elapsed) => {
       console.warn('view: shaders still pending; keeping the chart up', record('pending', pending, elapsed));
     });
     record('ready');
@@ -1136,7 +1118,7 @@ export class View {
     releaseDisposals(); // (the last night's materials, kept till now: render/retire.ts)
     // three reads a program's link and compile logs on its first draw (onFirstUse), a call that waits on the GPU: 0.1 to 2 s
     // in play the first time she rises, lands or comes near something new. Read them now, at load, for every program.
-    const programs = (this.renderer.info.programs ?? []).filter(p => p.id !== deferredId), v = this; // the background beach owns its guarded uniform read
+    const programs = [...(this.renderer.info.programs ?? [])], v = this; // (a program's log read a step at a time: render/slices.ts)
     await runSliced((function* () { let i = 0; for (const p of programs) { v.setReadiness("programs", i++, programs.length); if (!(p as unknown as ReadyProgram).isReady()) throw new Error('shader became unfinished before uniform preparation'); p.getUniforms(); yield; } })(), "programs");
     performance.mark("witch:prep-programs");
     // And every texture the scene's materials hold uploaded now, a texture a step (three uploads each on its first draw: on Ed's
@@ -1148,7 +1130,7 @@ export class View {
     await runSliced((function* () { let i = 0; for (const t of textures) { v.setReadiness("textures", i++, textures.size); if ((t as THREE.Texture & { image?: unknown }).image) R.initTexture(t); yield; } })(), "textures");
     performance.mark("witch:prep-textures");
     this.setReadiness("draws", 0, 1);
-    await this.warmDraws(deferred);
+    await this.warmDraws();
     performance.mark("witch:prep-draws");
     this.setReadiness("gpu", 0, 1);
     await this.gpuCaughtUp();
@@ -1176,7 +1158,7 @@ export class View {
    *  of each program and target does the driver's own work then (Ed's laptop, 2026-10-21: 5 s on the first load's first frame
    *  and 2 s after a sail; the cloud's software renderer, 6 s of it in the first post pass), so play's first frame finds it done.
    *  Its last pass goes into a target, not the canvas; the targets are their own size again after. */
-  private async warmDraws(deferred: THREE.Object3D | null = null): Promise<void> {
+  private async warmDraws(): Promise<void> {
     const w = this.width, h = this.height, k = Math.max(w, h) / 16, ww = Math.max(1, Math.round(w / k)), hh = Math.max(1, Math.round(h / k)), v = this;
     this.post.resize(ww, hh, ww, hh);
     await runSliced((function* () {
@@ -1187,7 +1169,6 @@ export class View {
       const R = v.renderer, seen = new Set<string>(), one: THREE.Object3D[] = [], was = new Map<THREE.Object3D, boolean>();
       v.scene.traverse(o => {
         was.set(o, o.visible);
-        if (o === deferred) return; // this optional pass keeps its guarded first use outside arrival warm draws
         const mats = ([] as THREE.Material[]).concat((o as THREE.Mesh).material ?? []);
         for (const m of mats) {
           const pr = (R.properties.get(m) as { currentProgram?: { id: number } }).currentProgram;
