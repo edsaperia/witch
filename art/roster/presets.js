@@ -15,23 +15,31 @@ const JAGUAR_REGIONS = {
   legs: { kind: "spots", k: 12, density: .5, radius: .4, mat: "BODY3" },
 };
 export const ROSTER_PRESETS = {
-  mole: {
-    reason: "One fit-corrected trial: a deeper narrow cylinder and projecting pink snout and spades while keeping the mole small.",
-    modelCommit: "e8fea579c78b032809a82c297c1623c379c62459",
-    patch: { look: { mole: { fit: "current", bodyVerticalDepth: 1.4, bodyWidth: 1, bodyLength: 1.25, snoutProjection: 1.5, snoutThickness: 1.2, snoutForward: .04, snoutLift: .03, forepawSpread: 1.15, forepawSize: 1, forepawForward: .1, forepawLength: 1.25, forepawWidth: 1.4, forepawThickness: .65 } }, palette: { hue: .64, sat: .06, val: .38, over: { BODY: [65, 66, 69], BODY2: [47, 49, 53], BODYL: [89, 92, 96], SKIN: [228, 166, 157], NOSE: [220, 145, 139] } } },
-    legendPatch: { look: { mole: null } },
-    text: "A velvet-grey mole with a pointed pink snout and broad digging paws.",
+  frosttroll: {
+    reason: "Turn the existing hunched, shaggy troll's paint into cold fur and ice rather than moss-green.",
+    patch: { palette: { hue: .57, sat: .12, val: .72, over: { BODY: [164, 188, 205], BODY2: [110, 136, 157], BODY3: [68, 91, 113], BELLY: [223, 233, 239], LEAF: [160, 205, 222], LEAF2: [204, 234, 244], LEAF3: [112, 163, 190] } } },
+    text: "A hunched frost troll with cold shaggy fur, pale icy growths and tusks.",
+  },
+  frostwyrm: {
+    reason: "Ice-white and blue-grey paint makes the existing horned, ridged wyrm read as frost.",
+    patch: { palette: { hue: .57, sat: .16, val: .85, over: { BODY: [185, 212, 231], BODY2: [120, 158, 187], BODY3: [73, 111, 145], BODYL: [226, 239, 247], BELLY: [235, 244, 248], ACCENT: [205, 229, 243] } } },
+    text: "An ice-blue wyrm with pale ridges, twisting horns and a frost-white underside.",
+  },
+  hydra: {
+    reason: "Separate the existing dark heads and necks with lighter green shade and underside tones.",
+    patch: { palette: { hue: .4, sat: .28, val: .42, over: { BODY2: [109, 141, 116], BODY3: [35, 55, 44], BELLY: [156, 178, 143], BODYL: [124, 157, 129] } } },
+    text: "A many-headed green hydra with pale neck undersides and crested serpent heads.",
   },
   crocodile: {
     reason: "Flatten the existing long jaw, thicken its existing tapering tail and reveal a pale underside.",
-    patch: { head: { snout: 4.5, snoutD: .55, muzzle: true, jawCoat: false }, body: { tailK: 1.65, sprawl: .55 }, coat: { belly: true }, palette: { over: { BELLY: [210, 212, 178] } } },
-    legendPatch: { body: { tailK: 1, sprawl: .3 } },
+    patch: { head: { snout: 4.5, snoutD: .55, muzzle: true }, body: { tailK: 1.35 }, coat: { belly: true }, palette: { over: { BELLY: [174, 178, 143] } } },
+    legendPatch: { body: { tailK: 1 } },
     text: "A low crocodile with a long flat jaw, pale underside and thick tapering tail.",
   },
   crab: {
     reason: "Make both existing front pincers and the small crab's eight legs readable before its elder stage.",
     patch: {},
-    ordinaryLevels: { 0: { body: { claw: .75, small: .7, legs: .6 } }, 1: { body: { claw: 1.7, small: 1.5, legs: .9 } }, 2: { body: { claw: 2.1, small: 1.7, legs: 1.15 } } },
+    ordinaryLevels: { 0: { body: { claw: .75, small: .7, legs: .6 } }, 1: { body: { claw: 1.35, small: 1.2, legs: .75 } }, 2: { body: { claw: 2.1, small: 1.7 } } },
     text: "A broad-shelled crab with two forward pincers, stalked eyes and eight walking legs.",
   },
   meerkat: {
