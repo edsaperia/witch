@@ -6,14 +6,16 @@ export async function waitForPrograms(
   pending: (programs: ReadyProgram[], elapsed: number) => void,
   pause: () => Promise<void> = () => new Promise(resolve => setTimeout(resolve, 50)),
   now: () => number = () => performance.now(),
-): Promise<void> {
+  until: () => number = () => Infinity,
+): Promise<boolean> {
   let settled = false, warned = false;
   void compiled.then(() => { settled = true; }, () => { settled = true; });
   const start = now();
   for (;;) {
     const all = programs(), waiting = all.filter(p => !p.isReady());
     progress(all.length - waiting.length, all.length);
-    if (settled && waiting.length === 0) return;
+    if (settled && waiting.length === 0) return true;
+    if (now() >= until()) return false;
     if (!warned && now() - start >= 60000) { warned = true; pending(waiting, now() - start); }
     await pause();
   }

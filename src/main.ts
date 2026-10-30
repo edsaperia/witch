@@ -8,7 +8,7 @@ import { bindings } from "./platform/bindings";
 import { Rumble } from "./platform/rumble";
 import { currentSettings } from "./app/playerSettings";
 import { wavesOver } from "./rules/win";
-import { chartOpen, closeChart, openChart, prepareChart, type Sailed } from "./ui/chartOverlay";
+import { chartOpen, closeChart, openChart, prepareChart, finishChartFlight, type Sailed } from "./ui/chartOverlay";
 import { openingWay, opensInBedroom, opensWithCreator, sailLandsInBed } from "./app/opening";
 import { wakeInBedroom } from "./rules/opening";
 import { endDream, startParty, startWake } from "./rules/wakeUp";
@@ -865,6 +865,8 @@ function chartOverNight(table?: string): void {
   const here = island ? { island, world: n.tuning.map?.world ?? 0, label: stayLabel(n.game.partyOver ? "over" : n.game.win?.phase === "won" ? "won" : "on") } : undefined;
   if (table) chartAt = table;
   openChart((href, to) => { chartAt = null; void sailFromChart(href, to); }, chartWorldArg(), { here, onDepart: departFromChart, onStay: () => console.info(`sea chart: ${island} chosen, she's there: back to the night (seed ${N().seed}, game time ${N().game.clock.time.toFixed(1)} s)`),
+    onFly: () => view.beginLandingShaders(true),
+    onLandingDue: dueAt => view.startLandingShaderGrace(dueAt),
     ...(table ? { table: { onLeave: () => { chartAt = null; closeChart(); } } } : {}) });
 }
 /** The map table's chart (Ed, 2026-10-23: "Map menu slides in from the bottom when you go near it, like the clothes stations"; since
@@ -950,7 +952,10 @@ async function sailInPlace(to: Sailed, made?: Promise<Night>): Promise<void> {
   n.flags.ready = true;
   input.clearPresses();
   sailing = false;
-  if (n.arrival) n.arrival.begin(n.game, !!made); // (the camera takes over from the chart's still, at once if it's drawn there already; it lands as a sail's does: arrived)
+  if (n.arrival) {
+    n.arrival.begin(n.game, !!made); // the camera takes over from the chart's still
+    if (view.shaderLandingLimited) n.arrival.skip(); // map/house readiness still applies; shaders add no further flight/warm-up wait
+  }
   else arrived(); // (no flight: the chart couldn't fly)
 }
 /** A sail's night made (sailInPlace, or under the chart's flight: departFromChart): the old night's music fading to the sea and the
@@ -959,6 +964,7 @@ async function sailInPlace(to: Sailed, made?: Promise<Night>): Promise<void> {
  *  the dive's own areas first, rules/arrive.ts diveReach); `at`, the chart's hand-off, its first frames drawn there ahead. */
 async function makeSailNight(to: Sailed, arrival?: Arrival, at?: FlightEnd["cam"] | null): Promise<Night> {
   if (sailFail) throw new Error("?debug=sail: the sail in place made to fail"); // (window.witch.sail's test of the fallback)
+  if (at === undefined) view.beginLandingShaders(false);
   sailing = true;
   gestured = true; // (she's played: the sound's woken already)
   sound.sailing(1);
@@ -973,8 +979,9 @@ async function makeSailNight(to: Sailed, arrival?: Arrival, at?: FlightEnd["cam"
   bedFirst(n); // (the flight in ends on her asleep in her bedroom, rules/opening.ts)
   lastDraw = 0;
   const A = n.tuning.arrive;
-  await view.prepare(A && at !== undefined ? { dive: diveReach(n.game.map, A), track: diveTrack(n.game.map, A) } : {}); // (under the chart's flight only: window.witch.sail's, the still's, waits for it all as ever)
-  if (at && A) await warmAt(n, handoffShot({ cam: at }, n.game.map), A);
+  await view.prepare({ sail: true, ...(A && at !== undefined ? { dive: diveReach(n.game.map, A), track: diveTrack(n.game.map, A) } : {}) });
+  if (at && A && !view.shaderLandingLimited) await warmAt(n, handoffShot({ cam: at }, n.game.map), A);
+  if (view.shaderLandingLimited) finishChartFlight();
   mark("sail:ready");
   return n;
 }

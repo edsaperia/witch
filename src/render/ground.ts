@@ -655,6 +655,8 @@ void main() {
 
 export class Ground {
   readonly mesh: THREE.Mesh;
+  /** Always compiled at boot and retained across islands; no expensive lighting, effects, or individual lake bodies. */
+  readonly loadingFallback: THREE.ShaderMaterial;
   /** The area texture's two windows round her (render/areaWindow.ts): the near one, and the far one for the telescope. */
   private near: AreaWindow;
   private far: AreaWindow;
@@ -740,6 +742,22 @@ export class Ground {
       if (Math.abs(P.getZ(i)) >= REACH - 0.01) P.setZ(i, Math.sign(P.getZ(i)) * SKIRT);
     }
     this.plain = mat;
+    this.loadingFallback = new THREE.ShaderMaterial({ name: 'Loading ground and lake surfaces', vertexShader: VERT, uniforms: mat.uniforms, fragmentShader: `
+varying vec3 vWorld;
+uniform vec3 uTypeFloor[${TYPE_SLOTS}];
+uniform vec4 uLake, uLakeBox;
+uniform sampler2D uLakes, uLakeLooks;
+void main() {
+  vec3 c = uTypeFloor[0] * 0.65 + vec3(0.04);
+  vec2 uv = (vWorld.xz - uLakeBox.xy + uLake.y) * uLakeBox.zw;
+  if (uLake.x > 0.0 && uv.x > 0.0 && uv.y > 0.0 && uv.x < 1.0 && uv.y < 1.0) {
+    float d = texture2D(uLakes, uv).r;
+    float kind = floor(texture2D(uLakeLooks, uv).r * 255.0 + 0.5);
+    if (d > 0.0) c = kind > 1.5 && kind < 2.5 ? vec3(0.8, 0.2, 0.04) : kind > 0.5 && kind < 1.5 ? vec3(0.55, 0.7, 0.8) : vec3(0.08, 0.27, 0.38);
+    else if (d > -1.5) c = vec3(0.36, 0.4, 0.3);
+  }
+  gl_FragColor = vec4(c, 1.0);
+}` });
     this.beach = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, defines: defines(true), uniforms: mat.uniforms });
     this.mesh = new THREE.Mesh(geo, mat);
     this.mesh.frustumCulled = false;
@@ -747,6 +765,9 @@ export class Ground {
     const twin = new THREE.Mesh(geo, this.beach);
     twin.visible = false; twin.frustumCulled = false;
     this.mesh.add(twin);
+    const fallbackTwin = new THREE.Mesh(geo, this.loadingFallback);
+    fallbackTwin.name = 'Loading ground and lake surfaces'; fallbackTwin.visible = false; fallbackTwin.frustumCulled = false;
+    this.mesh.add(fallbackTwin);
     this.follow((e.minX + e.maxX) / 2, (e.minZ + e.maxZ) / 2);
   }
 
@@ -907,7 +928,7 @@ export class Ground {
     const u = (this.mesh.material as THREE.ShaderMaterial).uniforms;
     for (const k of ["uDiscoBase", "uDiscoLit", "uLakes", "uLakeLooks"]) (u[k]?.value as THREE.Texture | null)?.dispose();
     this.near.dispose(); this.far.dispose(); this.landTex?.dispose(); this.floors.dispose(); this.carve.dispose(); this.lakeCarve.dispose(); this.plazaSigil.dispose(); this.discoTiles.dispose();
-    this.mesh.geometry.dispose(); this.plain.dispose(); this.beach.dispose();
+    this.mesh.geometry.dispose(); this.plain.dispose(); this.beach.dispose(); this.loadingFallback.dispose();
   }
 }
 

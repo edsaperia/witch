@@ -314,13 +314,13 @@ void main() {
 /** A sail's flight (fly): its legs' ends (the camera's focus, distance and tilt, in chart units) and their seconds; how far in. */
 interface Flight { id: string; t: number; keys: { x: number; z: number; dist: number; pitch: number; at: number; ease: (u: number) => number }[]; done: (end: FlightEnd) => void; speed: number; floor: THREE.Group; size: number;
   /** the flight's own pace (1 its seconds), eased down while `hold` says the game isn't ready, and the wall's seconds since it set off */
-  rate: number; wall: number; held?: boolean; hold?: FlyOptions["hold"]; slow: FlyOptions["slow"] }
+  rate: number; wall: number; wallStart: number; held?: boolean; hold?: FlyOptions["hold"]; slow: FlyOptions["slow"]; landingDue?: () => void; dueNotified?: boolean }
 /** A sail's flight's options (Ed, 2026-10-24, the sail's transition: "we can make the zoom into chart as slow as we need to so that
  *  the transition to the dive is smooth"): `hold` true while the next night isn't ready for the dive (its ground, the house, the
  *  shaders: main.ts), the flight easing down to `slow.rate` of its pace from the end of its glide in, for at most `slow.cap` seconds
  *  of the wall's (then approaching at full pace, but never handing off before ready), its pace easing over `slow.ease` seconds each way; `sea` metres: the hand-off that far out to sea
  *  off the south coast (negative: inland, as the first flight's 40), its camera `dist` metres back and tilted `pitchDeg` down. */
-export interface FlyOptions { hold?: () => boolean; slow?: { rate: number; ease: number; cap: number }; sea?: number; dist?: number; pitchDeg?: number }
+export interface FlyOptions { hold?: () => boolean; landingDue?: (dueAt: number) => void; slow?: { rate: number; ease: number; cap: number }; sea?: number; dist?: number; pitchDeg?: number }
 const smoothstep = (u: number) => u * u * (3 - 2 * u), easeIn = (u: number) => u * u;
 /** The flight: the glide to frame the island (s), the swoop down and round to the sea off its south coast (s), then the run on north
  *  (s) `onward` metres, ending looking down just `inland` of the shore below its dancefloor (the camera `dist` m back, tilted `pitchDeg` down:
@@ -682,7 +682,8 @@ const waterMat = (w: { deep: THREE.Color; pale: THREE.Color }, opaque: number) =
     const disc = new THREE.Mesh(new THREE.CircleGeometry(1, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.9, 0.5, 1.2), transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false }));
     const halo = new THREE.Mesh(new THREE.PlaneGeometry(5, 5).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: this.glow, color: new THREE.Color(0.7, 0.4, 1), transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false }));
     floor.add(disc, halo); floor.position.y = y + 0.05; floor.scale.setScalar(22 * K); i.group.add(floor);
-    this.flight = { id, t: 0, keys, done, speed: (FLY.onward * 2) / FLY.run, floor, size: i.size ?? 1, rate: 1, wall: 0, hold: o.hold, slow: o.slow };
+    const wallStart = performance.now();
+    this.flight = { id, t: 0, keys, done, speed: (FLY.onward * 2) / FLY.run, floor, size: i.size ?? 1, rate: 1, wall: 0, wallStart, hold: o.hold, slow: o.slow, landingDue: () => o.landingDue?.(wallStart + keys.at(-1)!.at * 1000) };
     return true;
   }
 
@@ -720,7 +721,7 @@ const waterMat = (w: { deep: THREE.Color; pale: THREE.Color }, opaque: number) =
   private flyFrame(dt: number, time: number): void {
     const f = this.flight!, i = this.isles.get(f.id)!, end = f.keys.at(-1)!.at;
     // (its pace: down to slow.rate from the end of the glide in while the game isn't ready, for at most slow.cap seconds; eased)
-    stepChartFlight(f, dt, f.keys[1].at, end);
+    stepChartFlight(f, dt, f.keys[1].at, end, (performance.now() - f.wallStart) / 1000);
     let n = 1; while (n < f.keys.length - 1 && f.t > f.keys[n].at) n++;
     const a = f.keys[n - 1], b = f.keys[n], u = b.ease(Math.min(1, Math.max(0, (f.t - a.at) / (b.at - a.at))));
     const L = (p: number, q: number) => p + (q - p) * u;

@@ -13,6 +13,7 @@ import { partyGearOf } from "./artBuild";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
 import { waitForPrograms, type ReadyProgram } from "./programReadiness";
+import { installShaderDrawGate, type ShaderDrawStatus } from "./shaderDrawGate";
 import { captureProgramUses, mapProgramUses } from "./programInventory";
 import { carrierOf, deckOf } from "../rules/treehouse";
 import { HOUSE_LAYER } from "./post";
@@ -380,6 +381,17 @@ export class View {
    *  dancefloor, the treehouse, the minimap and the map table; the View's names for them below are its. */
   island!: IslandLayers;
   get ground(): Ground { return this.island.ground; }
+  readonly shaderDrawStatus: ShaderDrawStatus = { active: false, skipped: {}, fallback: {} };
+  private shaderEpoch = 0;
+  private shaderLandingDeadline = Infinity;
+  private shaderChartLanding = false;
+  shaderLandingLimited = false;
+  beginLandingShaders(chart: boolean): void { this.shaderEpoch++; this.shaderLandingDeadline = Infinity; this.shaderChartLanding = chart; this.shaderLandingLimited = false; }
+  startLandingShaderGrace(at = performance.now()): void {
+    if (this.shaderLandingDeadline !== Infinity) return;
+    this.shaderLandingDeadline = at + 15000;
+    performance.mark('chart:landing-due', { detail: { at, deadline: this.shaderLandingDeadline } });
+  }
   /** The rolling ground (height.ts): drawn only, the rules stay flat. */
   get heights(): HeightField { return this.island.heights; }
   /** The night sky that shows over the bend, in treetop mode. */
@@ -686,6 +698,7 @@ export class View {
     this.ledger = new GpuLedger(this.renderer.getContext(), () => canvas.width * canvas.height * 12); // (the canvas's back and front buffers and its depth: preserveDrawingBuffer)
     canvas.addEventListener("webglcontextlost", () => { this.ledger.reset(); this.onGpuEvent?.("context lost"); });
     this.renderer.setPixelRatio(1);
+    installShaderDrawGate(this.renderer, this.shaderDrawStatus, object => object === this.island?.ground.mesh ? this.ground.loadingFallback : null);
     this.renderer.info.autoReset = false; // count every pass of a frame, reset in render()
     this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace; // colours are the art's own sRGB values, untouched
     this.mpp = metresPerArtPixel(t);
@@ -927,8 +940,9 @@ export class View {
    *  (rules/arrive.ts diveReach): the area types drawn in that order, nearest first, under the loading mist; and the start waits only
    *  for the shaders (the hand-off's own ground is drawn by its first frames, main.ts warmAt): the house's art, the ground and the
    *  forest round it are made on through the dive (`homeDone`; app/arrive.ts eases the dive if they're due in view before then). */
-  async prepare(o: { dive?: (x: number, z: number) => number; track?: [number, number, number, number][] } = {}): Promise<void> {
+  async prepare(o: { sail?: boolean; dive?: (x: number, z: number) => number; track?: [number, number, number, number][] } = {}): Promise<void> {
     performance.mark("witch:prep-start");
+    if (o.sail) { this.shaderDrawStatus.active = true; this.shaderDrawStatus.skipped = {}; this.shaderDrawStatus.fallback = {}; }
     this.makeLoadingMist();
     { // tonight's own trees, if drawn ahead and kept (app/landingBake.ts), for the swap before she sees the island (retype)
       const m = this.game.map, types = new Set<number>();
@@ -950,7 +964,7 @@ export class View {
       this.homeDone = false;
       this.prepared = true;
       this.askIsland(near); // (the workers drawing the dive's areas while the shaders link)
-      await this.compileAll();
+      await this.compileAll(o.sail);
       // The ground where the dive first sees the island (Ed, 2026-10-24: the dive's view needs the ground; Echo's island black through
       // the descent, its tiles not drawn yet): the first TRACK_AHEAD metres of its track in from the sea, TRACK_REACH each side, a few
       // tiles a frame under the chart; the rest of it as the dive goes, the view's own each frame (render/view/ahead.ts).
@@ -977,7 +991,7 @@ export class View {
     this.render(0, false);
     await runSliced(refreshSteps(this), "refresh"); // (refresh(this, true), a slice at a time)
     this.prepared = true;
-    await this.compileAll();
+    await this.compileAll(o.sail);
     this.askIsland(near);
     this.homeDone = true;
   }
@@ -1072,7 +1086,9 @@ export class View {
   }
 
   /** Every shader the scene holds compiled, and their programs' logs read, ahead of their first draw (prepare). */
-  private async compileAll(): Promise<void> {
+  private async compileAll(allowPartial = false): Promise<void> {
+    const epoch = ++this.shaderEpoch;
+    if (allowPartial && !this.shaderChartLanding) this.startLandingShaderGrace();
     this.setReadiness("compile", 0, 1);
     // Every shader the scene holds compiled now, in the Bedroom, not on the first frame each is drawn (overnight phase 2: ten
     // programs compiled mid-run before, a hitch each: on the first steps, the first rise and the first waves; after, one).
@@ -1097,6 +1113,14 @@ export class View {
       return result;
     };
     const compiled = Promise.all([launch('scene', () => this.renderer.compileAsync(this.scene, this.camera)), fx && launch('effects', () => this.renderer.compileAsync(fx, this.camera)), launch('post', () => this.post.compile()), this.hiz?.ok && launch('hiz', () => this.hiz!.compile(this.renderer))]).catch(() => { /* readiness is still checked per program below */ });
+    // Diagnostic only: delay newly introduced sail programs, never the boot-warmed fallback/platform/witch programs.
+    const delay = allowPartial ? Math.max(0, Number((globalThis as unknown as { __witchShaderReadinessDelay?: number }).__witchShaderReadinessDelay) || 0) : 0;
+    if (delay) {
+      const due = performance.now() + Math.min(delay, 60000);
+      for (const p of allPrograms()) if (!before.has(p.id)) {
+        const ready = p.isReady.bind(p); p.isReady = () => performance.now() >= due && ready();
+      }
+    }
     for (const o of hidden) o.visible = false;
     performance.mark("witch:prep-compile0");
     const parallel = this.renderer.extensions.has('KHR_parallel_shader_compile');
@@ -1109,10 +1133,31 @@ export class View {
       return detail;
     };
     record('start');
-    // Coordinator6516109308: keep the animated chart beyond 60s; never use that mark as permission to force uniforms.
-    await waitForPrograms(allPrograms, compiled, (ready, total) => this.setReadiness('compile', ready, total), (pending, elapsed) => {
+    // Ed6520617385: a sail may land after its15s grace; unfinished programs must never force a uniform read or draw.
+    const complete = await waitForPrograms(allPrograms, compiled, (ready, total) => this.setReadiness('compile', ready, total), (pending, elapsed) => {
       console.warn('view: shaders still pending; keeping the chart up', record('pending', pending, elapsed));
-    });
+    }, undefined, undefined, () => allowPartial ? this.shaderLandingDeadline : Infinity);
+    if (!complete) {
+      this.shaderLandingLimited = true;
+      record('landing-limit', allPrograms().filter(p => !p.isReady()), performance.now() - this.shaderLandingDeadline + 15000);
+      void (async () => {
+        await waitForPrograms(allPrograms, compiled, () => {}, () => {}, undefined, undefined, () => epoch === this.shaderEpoch ? Infinity : -Infinity);
+        if (epoch !== this.shaderEpoch) return;
+        const programs = [...(this.renderer.info.programs ?? [])];
+        await runSliced((function* (view: View) {
+          for (const p of programs) {
+            if (epoch !== view.shaderEpoch) return;
+            if ((p as unknown as ReadyProgram).isReady()) p.getUniforms();
+            yield;
+          }
+        })(this), 'background-programs');
+        if (epoch !== this.shaderEpoch) return;
+        record('background-ready'); this.shaderDrawStatus.active = false; releaseDisposals();
+      })().catch(error => console.error('background shader readiness failed; retaining safe fallback', error));
+      this.setReadiness('ready', 1, 1);
+      return; // no unfinished uniform reads, warm draws, uploads or GPU fence on the landing path
+    }
+    this.shaderDrawStatus.active = false;
     record('ready');
     performance.mark("witch:prep-compiled");
     releaseDisposals(); // (the last night's materials, kept till now: render/retire.ts)
@@ -1220,6 +1265,7 @@ export class View {
     return runSliced(this.setGameSteps(game), "setGame", budgetMs);
   }
   private *setGameSteps(game: Game): Steps {
+    this.shaderEpoch++; // a previous island's background completion cannot release this island's gate
     const t = game.tuning, old = this.island;
     // The last night's: the scenery's rebuild under way, the creatures' caches, the candles; its area types' batches and their
     // shadows, and its soundsystems' (their atlases the art's: freed once, by reseat).
