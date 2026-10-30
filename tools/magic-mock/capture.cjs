@@ -22,13 +22,19 @@ const types = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.j
   await new Promise(r=>server.listen(0,'127.0.0.1',r));
   const browser=await playwright.chromium.launch({args:process.env.FX_GPU==='hardware'?['--use-gl=angle','--use-angle=d3d11','--ignore-gpu-blocklist']:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist']});
   const errors=[], evidence={commit,build,modes:{}};
+  let productionPage=null;
   try {
     for(const mode of modes) {
-      const page=await browser.newPage({viewport:{width:1600,height:900}});
-      page.on('pageerror',e=>errors.push(String(e)));
-      page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
+      const fresh=!productionPage;
+      const page=productionPage||await browser.newPage({viewport:{width:1600,height:900}});
+      if(production)productionPage=page;
+      if(fresh){page.on('pageerror',e=>errors.push(String(e)));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});}
       const query=production?`lookdemo=fx:${mode}`:`fxmock=${mode}`;
-      await page.goto(`http://127.0.0.1:${server.address().port}/?shot=area:bluebell-glade&seed=123&zoom=2&ladder=off&${query}`);
+      if(fresh)await page.goto(`http://127.0.0.1:${server.address().port}/?shot=area:bluebell-glade&seed=123&zoom=2&ladder=off&${query}`);
+      else {
+        await page.getByLabel('Magic element').selectOption(mode);
+        await page.evaluate(()=>{const m=window.witch.view.magic;m.reset();m.galleryVisible=true;m.galleryDark=false;m.enabled=true;m.galleryPage=0;});
+      }
       const served=await page.evaluate(async()=>fetch('version.json',{cache:'no-store'}).then(r=>r.json()));
       if(served.version!==build.version)throw Error('Server build identity mismatch');
       await page.waitForFunction(()=>window.witch?.ready,null,{timeout:600000});
@@ -49,7 +55,8 @@ const types = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.j
         if(production){w.view.magic.captureTime=time;w.view.magic.galleryTime=time;}
         w.frame({moveX:0,moveZ:0,toggleMode:false,zoom:0},1/60,true);
       },{time,production});
-      for(let i=0;i<30;i++) {
+      const warm=Number(process.env.FX_WARM||(production?(fresh?12:2):30));
+      for(let i=0;i<warm;i++) {
         await frame(1+i/60);
         if(errors.length)throw Error(errors.join('\n'));
         await page.waitForFunction(()=>window.witch.view.assets.pending===0,null,{timeout:600000});
@@ -64,14 +71,15 @@ const types = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.j
       }
       if(production){await page.evaluate(()=>{window.witch.view.magic.galleryPage=0;});await frame(1.5);}
       // Compare exactly the same frozen simulation/time with the mock hidden/visible.
-      evidence.modes[mode].timing=await page.evaluate(async(production)=>{
+      const timingWanted=!production||['fire','frost','party'].includes(mode);
+      evidence.modes[mode].timing=timingWanted?await page.evaluate(async({production,samples})=>{
         const w=window.witch,v=w.view,gl=v.renderer.getContext(),ext=gl.getExtension('EXT_disjoint_timer_query_webgl2');
         const fx=production?v.magic:v.fxMock;
         const debug=gl.getExtension('WEBGL_debug_renderer_info');
         const renderer=debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER);
         if(!ext)return {renderer,gpuMs:null,reason:'EXT_disjoint_timer_query_webgl2 unavailable'};
         const result={renderer,samples:[]};
-        for(const enabled of Array.from({length:20},(_,i)=>i%2===1)) {
+        for(const enabled of Array.from({length:samples},(_,i)=>i%2===1)) {
           fx.enabled=enabled;if(production){fx.captureTime=1.5;fx.galleryTime=1.5;}else fx.time=1.5;
           for(let i=0;i<2;i++)w.frame({moveX:0,moveZ:0,toggleMode:false,zoom:0},0,true);
           const q=gl.createQuery();gl.beginQuery(ext.TIME_ELAPSED_EXT,q);
@@ -84,7 +92,7 @@ const types = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.j
           gl.deleteQuery(q);
         }
         fx.enabled=true;return result;
-      },production);
+      },{production,samples:Number(process.env.FX_SAMPLES||(process.env.FX_GPU==='hardware'?20:4))}):{gpuMs:null,reason:'Timing sampled on fire, frost and party; this element has visual coverage only'};
       if(production){
         await page.evaluate(()=>{window.witch.view.magic.galleryPage=3;window.witch.view.magic.galleryDark=true;});
         await frame(1.5);
@@ -103,7 +111,9 @@ const types = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.j
         await page.evaluate(()=>{window.witch.view.magic.galleryPage=0;window.witch.view.magic.galleryDark=true;});
         await frame(1.5);await page.screenshot({path:path.join(out,`${mode}-dark.png`),timeout:300000});
         await page.evaluate(()=>{window.witch.view.magic.galleryDark=false;});
-        if(mode!=='fire'&&mode!=='frost'&&mode!=='party'){await page.close();continue;}
+        if(mode!=='fire'&&mode!=='frost'&&mode!=='party'){
+          fs.writeFileSync(path.join(out,'evidence.json'),JSON.stringify({...evidence,errors},null,2));continue;
+        }
       }
       let frostTree=null;
       if(production&&mode==='frost'){
@@ -131,7 +141,7 @@ const types = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.j
         }
       }
       execFileSync(process.env.FFMPEG_BINARY||'ffmpeg',['-y','-f','image2pipe','-r','6','-c:v','mjpeg','-i','pipe:0','-c:v','libvpx','-pix_fmt','yuv420p',path.join(out,`${mode}-cycle.webm`)],{input:Buffer.concat(jpeg),stdio:['pipe','ignore','pipe']});
-      await page.close();
+      if(!production)await page.close();
       fs.writeFileSync(path.join(out,'evidence.json'),JSON.stringify({...evidence,errors},null,2));
     }
     evidence.errors=errors;fs.writeFileSync(path.join(out,'evidence.json'),JSON.stringify(evidence,null,2));
