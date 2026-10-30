@@ -2,15 +2,22 @@
 // game and the Witch Art Lab cut the same forest from the same seed.
 
 /** A small fast seeded generator (mulberry32): returns numbers in [0, 1). */
+const RNG_STATES = new WeakMap<() => number, () => number>();
+
+/** The cursor of one of our seeded streams, for a night's snapshot; foreign functions aren't saveable. */
+export const rngState = (random: () => number): number | undefined => RNG_STATES.get(random)?.();
+
 export function rng(seed: number): () => number {
   let a = seed >>> 0;
-  return () => {
+  const random = () => {
     a = (a + 0x6d2b79f5) >>> 0;
     let t = a;
     t = Math.imul(t ^ (t >>> 15), t | 1);
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
+  RNG_STATES.set(random, () => a);
+  return random;
 }
 
 /** A hash of two integers and a seed, in [0, 1). */

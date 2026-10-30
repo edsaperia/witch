@@ -41,6 +41,7 @@ export function calmRingAt(g: Game, x: number, z: number): Ring | null {
 export function slowTarget(g: Game): number {
   const S = g.tuning.legendCircle?.slow, w = g.witch;
   if (!S || S.on === false || S.scale >= 1) return 1;
+  if (g.witches.length > 1) return g.witches.every(W => W.body.mode === "ground" && !!W.body.perch) ? S.scale : 1;
   if (w.mode !== "ground" || w.seated || g.witches[0].ko) return 1;
   if (w.perch) return S.scale;
   return calmRingAt(g, w.x, w.z) ? S.scale : 1;

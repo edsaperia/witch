@@ -2,7 +2,8 @@
 // stack, friends above enemies; no auto-clearing; she converts a stone by holding the sigil button at it (a hit stops it, it drains
 // while she's away), or a wave does; either way its friend sigils scatter round it, loose for anyone; a legend's tethers her.
 import { describe, expect, it } from "vitest";
-import { affectionOf, loseSoundsystem, newGame, stepGame, type Controls, type Game } from "./game";
+import { affectionOf, loseSoundsystem, newGame, newWitchPlayer, stepGame, type Controls, type Game } from "./game";
+import { stepSigilButton } from "./sigilButton";
 import { TUNING as BUILT, withTuning } from "./tuning";
 
 /** The tuning with the stacks on (they ship off till their view lands: ?cast=1). */
@@ -104,6 +105,17 @@ describe("runestone stacks (Ed, 2026-10-28)", () => {
 });
 
 describe("the soundsystem spell (Ed, 2026-10-28)", () => {
+  it("an unready stump reserves Use for a second witch at her own position", () => {
+    const g = game(), a = area(g), p = castSpot(a.stone, TUNING);
+    const W = newWitchPlayer(1, p.x, p.z, TUNING, false);
+    W.body.perch = undefined; g.witches.push(W); W.hat.hold = 0;
+    expect(castReady(g, a.key)).toBe(false);
+    stepSigilButton(g, { ...hold, hatHold: true }, W, TUNING, 2, 1 / 60, [], () => false, 1 / 60);
+    expect(W.hat.down).toBeNull();
+    expect(W.hat.hold).toBeUndefined();
+    expect(W.leash.events.some(e => e.kind === "hatPut")).toBe(false);
+  });
+
   it("holding Use at a hostile, unready stump never puts her hat down, including an idle hold begun elsewhere", () => {
     const g = game(), a = area(g), W = g.witches[0];
     at(g, a, true);
