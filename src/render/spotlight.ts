@@ -3,6 +3,7 @@
 // foot. Cheap for Ed's Intel UHD: one quad in the furniture's own plane, added over what's under it (no light, no shadow map), its
 // cone and pool worked out in the shader on whole art pixels and in four steps of brightness, so it reads as pixel art.
 import * as THREE from "three";
+import { bridgeNativeObject } from "./fx/native";
 
 type V3 = { x: number; y: number; z: number };
 
@@ -48,6 +49,7 @@ export class Spotlight {
       uniforms: { uSpot: { value: new THREE.Vector2() }, uR: { value: new THREE.Vector2() }, uTop: { value: 1 }, uColour: { value: COLOUR }, uStrength: { value: STRENGTH } },
     });
     this.mesh = new THREE.Mesh(geo, this.mat);
+    bridgeNativeObject(this.mesh,"decorativeGlow");
     this.mesh.frustumCulled = false; this.mesh.visible = false;
   }
 

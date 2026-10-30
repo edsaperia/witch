@@ -4,6 +4,8 @@ Menu recovery (#1456, coordinator decision 2026-10-29): Settings refuses to clea
 
 Gamepad menus (#1456, 2026-10-29): ordinary menus, including pause and its Controls / What's new / Options panels, follow the configured Choose and Back bindings. Settings alone retains the fixed ✕ choose / ○ back recovery layout. Start always pauses regardless of its remap. Back on the pause page resumes, and that press is the resume and nothing else (the frozen pad reads as none to the game, so platform/freeze.ts hides the buttons held at the resume from every reader until they're let go; pause-on-top checks it, the coordinator 2026-10-29). The pause page takes the pad over the sea chart and the zoo too. The existing pause controls can be focused with directions or shoulders, choose activates, and left/right adjust sliders and choices; hidden and disabled controls are skipped and a held opening press cannot click through. The chart and telescope readouts follow the last device and the current remaps. The legacy character creator remains outside this work: normal bedroom, sail and bed routes bypass it; URL switches and fallback/dev routes retain it. The zoo retains its in-world exits, with no parent-side ○ close.
 
+Pause page's first frame (2026-10-30, the pause-on-top B flake): the pause page's pad menu is primed with the buttons held as the pause began (`platform/freeze.ts` takeOpenPad), not those held by its first frame, so a Back pressed after Esc but before a slow first frame (seconds on a software GL) resumes instead of being taken for the opening press.
+
 Screen selection in Settings is offered only when the browser implements `getScreenDetails`; checking support does not request permission.
 
 ## Multiplayer rules groundwork (2026-10-29, PR #1457)
