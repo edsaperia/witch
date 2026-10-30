@@ -601,15 +601,16 @@ void shade() {
     col = min(vec3(1.0), col + mix(a.rgb, vec3(1.0), 0.5) * uGlowRgb * edge * max(0.0, dot(N, lv / max(d, 1e-3))) * k * look.y);
   }
   // Separate from the established find rim: use her actual horizontal pool and its light factors.
-  // Do not recolour the paint; raise only dim pixels toward a floor in their own hue.
+  // Do not recolour the paint. A minimum floor could be cancelled by the existing find rim,
+  // including on dark creatures, so add a small lift selected by the painted pixel instead.
   if (uPoolReadability > 0.5 && uFind > 0.5 && uIsScenery < 0.5 && uGlowPower > 0.0) {
     float radius = uGlowR * uGlowNear, distance = length((uGlowPos - vWorld).xz);
     if (radius > 0.0 && distance < radius) {
       float pool = pow(1.0 - distance / radius, uGlowFalloff) * min(1.0, uGlowPower) * max(0.0, uGlowDim);
-      float value = dot(col, vec3(0.3, 0.55, 0.15));
       float paint = dot(a.rgb, vec3(0.3, 0.55, 0.15));
       // Black paint has no recoverable hue; leave it black rather than inventing a colour.
-      if (paint > 0.001) col += a.rgb / paint * max(0.0, 0.16 * pool - value);
+      float dark = 1.0 - smoothstep(0.35, 0.75, paint);
+      if (paint > 0.001) col += a.rgb / paint * (0.18 * pool * dark);
     }
   }
   if (vFlags.y > 0.5 && uPartyCount > 0) {
