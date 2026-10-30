@@ -335,9 +335,9 @@
   {
    "name": "cauldron",
    "values": [
-    "1"
+    "0"
    ],
-   "does": "Enables the collection and kitchen preview: two home mushroom clusters, shared baskets and pot, and the temporary BBB Mirror Floor trip.",
+   "does": "Mushroom collecting and the kitchen cauldron (two home mushroom clusters, shared baskets and pot, and the BBB Mirror Floor trip) are on by default; 0 turns them off.",
    "group": "debug",
    "since": "2026-10-30",
    "readIn": [

@@ -1155,7 +1155,7 @@ function frame(now: number): void {
   if (c.debug) hud.setDebug(!hud.debugOn);
   view.debugReadouts = hud.debugOn;
   const step0 = performance.now();
-  if (params.get("cauldron") === "1" && !game.cauldron) enableCauldron(game, homeMushroomPickups(game));
+  if (params.get("cauldron") !== "0" && !game.cauldron) enableCauldron(game, homeMushroomPickups(game)); // (on by default, Ed 2026-10-30; ?cauldron=0 turns it off)
   stepGame(game, c, fightDt(dt * (botTag?.speed ?? 1))); // (the Fight Arena's slow motion, pause and frame at a time: app/fightArena.ts)
   rumble.update(game, currentSettings(), input.device === "pad" && !document.hidden ? [freeze.pad()] : [], now);
   // ?debug=attack: every 10 s, a few seconds of blows on the two soundsystems farthest from her (never felling one), so the
