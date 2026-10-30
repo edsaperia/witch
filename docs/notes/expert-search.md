@@ -323,6 +323,29 @@ randomness, not map-world diversity. Two candidates per runner mean 32 rows each
 case checkpoints. This is a modest local search, not evidence of optimal play.
 Cloud preflight and coordinator dispatch are required; no local batch is implied.
 
+All four 55-minute attempts capped after 23/23/25/26 rows. Approved unchanged-
+source checkpoint resumes then completed in about 20.5/26.2/12.9/13.6 minutes;
+all cloud preflights passed (typecheck, Vitest 16 and Node 14 tests), no held-out
+cases ran. Exact commits, separate goal counts and per-cell changes are in
+`expert-results/r1b-review.json`. Each candidate uses 16 cells but just two night
+seeds on one map world; the 128 logged rows include repeated baselines and
+matched cases unchanged by gear. There are only 56 unique effective cases.
+
+The baseline wins 4/16, completes two quests in total (no all-quest run), collects
+five provisional finds and has three eligible to keep. Casting approach fraction
+0.85 ties all those goals and improves non-win wave credit 131 to 138, so the
+optimizer accepts it only on a lower survival term. Retargeting every 5.75 seconds
+loses one eligible find; the oar exhaust and horse tip each lose both quests.
+No candidate achieves win plus all quests plus eligible find in a single run.
+Keep the casting variant as a proposal, not a clearly improved primary-goal
+model or a released lock. Actual persistence was never run.
+
+Prototype `9192b5015` was normally merged after every resume completed, at
+`5bbb80b6`. Its new rules/app/tool source invalidates the old fingerprint;
+old measurements remain old-source evidence. A fresh comparable baseline must
+be measured once on the next source before sharing it across candidate shards.
+Do not change a saved model's source label to bypass fingerprint validation.
+
 ## First pilot, not trained strength
 
 Source `9be247f04e21aa8175e3d534a7a6ea904be7a250`, artifacts in
