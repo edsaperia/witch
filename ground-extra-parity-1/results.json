@@ -1,0 +1,2777 @@
+{
+  "sha": "832fd07bdd09cdcf6e1f4502f62c827493da5956",
+  "baselineSha": "5e51a00c470d84deec3b8f2ca05d04e45ef771b7",
+  "shard": 1,
+  "shards": 8,
+  "baselineSourceHash": "f15dab0aee26008ff3877d3e6158d5c58074c146c1574b9de9e3d05ffb8f7f4a",
+  "candidateSourceHash": "2745f258329878277f3e7a1fb99711e3c1e36342a6d05484d390ac67e7e478b7",
+  "expectedRows": 68,
+  "totalMatrixRows": 534,
+  "dryRun": false,
+  "rows": [
+    {
+      "fixture": "extras-1",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 480,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12666,
+          "max": 97
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-1",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 970,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12668,
+          "max": 97
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-9",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_PAVEMENT": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 1151,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12704,
+          "max": 102
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-9",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_PAVEMENT": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 1844,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12686,
+          "max": 102
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-17",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_LEGENDS": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 782,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12662,
+          "max": 120
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-17",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_LEGENDS": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 1251,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12664,
+          "max": 120
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-25",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_PAVEMENT": "",
+        "GROUND_LEGENDS": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 1448,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12700,
+          "max": 120
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-25",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_PAVEMENT": "",
+        "GROUND_LEGENDS": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 2122,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12682,
+          "max": 120
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-33",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_LEGEND_FLOOR": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 480,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12666,
+          "max": 97
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-33",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_LEGEND_FLOOR": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 970,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12668,
+          "max": 97
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-41",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_PAVEMENT": "",
+        "GROUND_LEGEND_FLOOR": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 1151,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12704,
+          "max": 102
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-41",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_PAVEMENT": "",
+        "GROUND_LEGEND_FLOOR": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 1844,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12686,
+          "max": 102
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-49",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_LEGENDS": "",
+        "GROUND_LEGEND_FLOOR": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 1659,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12657,
+          "max": 120
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-49",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_LEGENDS": "",
+        "GROUND_LEGEND_FLOOR": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 2114,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12659,
+          "max": 120
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-57",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_PAVEMENT": "",
+        "GROUND_LEGENDS": "",
+        "GROUND_LEGEND_FLOOR": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 2274,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12695,
+          "max": 120
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-57",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_PAVEMENT": "",
+        "GROUND_LEGENDS": "",
+        "GROUND_LEGEND_FLOOR": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 2923,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12677,
+          "max": 120
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-65",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_KOI": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 502,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12666,
+          "max": 172
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-65",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_KOI": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 992,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12668,
+          "max": 172
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-73",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_PAVEMENT": "",
+        "GROUND_KOI": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 1173,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12704,
+          "max": 172
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-73",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_PAVEMENT": "",
+        "GROUND_KOI": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 1866,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12686,
+          "max": 172
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-81",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_LEGENDS": "",
+        "GROUND_KOI": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 804,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12662,
+          "max": 172
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-81",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_LEGENDS": "",
+        "GROUND_KOI": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 1273,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12664,
+          "max": 172
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-89",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_PAVEMENT": "",
+        "GROUND_LEGENDS": "",
+        "GROUND_KOI": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 1470,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12700,
+          "max": 172
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-89",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_PAVEMENT": "",
+        "GROUND_LEGENDS": "",
+        "GROUND_KOI": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 2144,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12682,
+          "max": 172
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-97",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_LEGEND_FLOOR": "",
+        "GROUND_KOI": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 502,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12666,
+          "max": 172
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-97",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_LEGEND_FLOOR": "",
+        "GROUND_KOI": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 992,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12668,
+          "max": 172
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-105",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_PAVEMENT": "",
+        "GROUND_LEGEND_FLOOR": "",
+        "GROUND_KOI": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 1173,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12704,
+          "max": 172
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-105",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_PAVEMENT": "",
+        "GROUND_LEGEND_FLOOR": "",
+        "GROUND_KOI": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 1866,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12686,
+          "max": 172
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-113",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_LEGENDS": "",
+        "GROUND_LEGEND_FLOOR": "",
+        "GROUND_KOI": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 1681,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12657,
+          "max": 172
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-113",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_LEGENDS": "",
+        "GROUND_LEGEND_FLOOR": "",
+        "GROUND_KOI": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 2136,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12659,
+          "max": 172
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-121",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_PAVEMENT": "",
+        "GROUND_LEGENDS": "",
+        "GROUND_LEGEND_FLOOR": "",
+        "GROUND_KOI": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 2296,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12695,
+          "max": 172
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-121",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_PAVEMENT": "",
+        "GROUND_LEGENDS": "",
+        "GROUND_LEGEND_FLOOR": "",
+        "GROUND_KOI": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 2945,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12677,
+          "max": 172
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-129",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 425,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 10024,
+          "max": 98
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-129",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 965,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 10024,
+          "max": 102
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-137",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_PAVEMENT": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 765,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 10024,
+          "max": 105
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-137",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_PAVEMENT": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 1304,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 10024,
+          "max": 111
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-145",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_LEGENDS": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 504,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 10024,
+          "max": 98
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-145",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_LEGENDS": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 1044,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 10024,
+          "max": 102
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-153",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_PAVEMENT": "",
+        "GROUND_LEGENDS": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 840,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 10024,
+          "max": 105
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-153",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_PAVEMENT": "",
+        "GROUND_LEGENDS": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 1379,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 10024,
+          "max": 111
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-161",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_LEGEND_FLOOR": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 425,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 10024,
+          "max": 98
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-161",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_LEGEND_FLOOR": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 965,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 10024,
+          "max": 102
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-169",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_PAVEMENT": "",
+        "GROUND_LEGEND_FLOOR": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 765,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 10024,
+          "max": 105
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-169",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_PAVEMENT": "",
+        "GROUND_LEGEND_FLOOR": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 1304,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 10024,
+          "max": 111
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-177",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_LEGENDS": "",
+        "GROUND_LEGEND_FLOOR": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 720,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 10024,
+          "max": 100
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-177",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_LEGENDS": "",
+        "GROUND_LEGEND_FLOOR": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 1260,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 10024,
+          "max": 102
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-185",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_PAVEMENT": "",
+        "GROUND_LEGENDS": "",
+        "GROUND_LEGEND_FLOOR": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 1032,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 10024,
+          "max": 105
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-185",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_PAVEMENT": "",
+        "GROUND_LEGENDS": "",
+        "GROUND_LEGEND_FLOOR": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 1571,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 10024,
+          "max": 111
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-193",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_KOI": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 447,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 10024,
+          "max": 98
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-193",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_KOI": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 987,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 10024,
+          "max": 102
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-201",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_PAVEMENT": "",
+        "GROUND_KOI": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 787,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 10024,
+          "max": 105
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-201",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_PAVEMENT": "",
+        "GROUND_KOI": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 1326,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 10024,
+          "max": 111
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-209",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_LEGENDS": "",
+        "GROUND_KOI": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 526,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 10024,
+          "max": 98
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-209",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_LEGENDS": "",
+        "GROUND_KOI": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 1066,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 10024,
+          "max": 102
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-217",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_PAVEMENT": "",
+        "GROUND_LEGENDS": "",
+        "GROUND_KOI": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 862,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 10024,
+          "max": 105
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-217",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_PAVEMENT": "",
+        "GROUND_LEGENDS": "",
+        "GROUND_KOI": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 1401,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 10024,
+          "max": 111
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-225",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_LEGEND_FLOOR": "",
+        "GROUND_KOI": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 447,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 10024,
+          "max": 98
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-225",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_LEGEND_FLOOR": "",
+        "GROUND_KOI": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 987,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 10024,
+          "max": 102
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-233",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_PAVEMENT": "",
+        "GROUND_LEGEND_FLOOR": "",
+        "GROUND_KOI": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 787,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 10024,
+          "max": 105
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-233",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_PAVEMENT": "",
+        "GROUND_LEGEND_FLOOR": "",
+        "GROUND_KOI": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 1326,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 10024,
+          "max": 111
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-241",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_LEGENDS": "",
+        "GROUND_LEGEND_FLOOR": "",
+        "GROUND_KOI": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 742,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 10024,
+          "max": 100
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-241",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_LEGENDS": "",
+        "GROUND_LEGEND_FLOOR": "",
+        "GROUND_KOI": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 1282,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 10024,
+          "max": 102
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-249",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_PAVEMENT": "",
+        "GROUND_LEGENDS": "",
+        "GROUND_LEGEND_FLOOR": "",
+        "GROUND_KOI": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 1054,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 10024,
+          "max": 105
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "extras-249",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_PAVEMENT": "",
+        "GROUND_LEGENDS": "",
+        "GROUND_LEGEND_FLOOR": "",
+        "GROUND_KOI": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 1593,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 10024,
+          "max": 111
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "sensitivity-ZOO_PLAZA",
+      "ids": [
+        0
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_PLAZA": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 877,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12669,
+          "max": 97
+        }
+      ],
+      "extraSensitivity": {
+        "feature": "ZOO_PLAZA",
+        "pixels": 2972,
+        "max": 90
+      },
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "sensitivity-ZOO_PLAZA",
+      "ids": [
+        0
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_ZOO_PLAZA": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 1412,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 12671,
+          "max": 97
+        }
+      ],
+      "extraSensitivity": {
+        "feature": "ZOO_PLAZA",
+        "pixels": 2972,
+        "max": 90
+      },
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "zoo-full",
+      "ids": [
+        0,
+        2
+      ],
+      "mode": "plain",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_LAKE_ICE": "",
+        "GROUND_LAKE_LAVA": "",
+        "GROUND_LAKE_OASIS": "",
+        "GROUND_LAKE_SINKHOLE": "",
+        "GROUND_LAKE_TARN": "",
+        "GROUND_LAKE_TAR": "",
+        "GROUND_LAKE_RUST": "",
+        "GROUND_LAKE_LILY": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_ZOO_PLAZA": "",
+        "GROUND_DANCEFLOOR": "",
+        "GROUND_PAVEMENT": "",
+        "GROUND_LEGENDS": "",
+        "GROUND_LEGEND_FLOOR": "",
+        "GROUND_KOI": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 1217,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 5013,
+          "max": 105
+        },
+        {
+          "id": 2,
+          "method": "distance-field-ablation",
+          "pixels": 5347,
+          "max": 167
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    },
+    {
+      "fixture": "zoo-full",
+      "ids": [
+        0,
+        2
+      ],
+      "mode": "beach",
+      "defines": {
+        "GROUND_LAKES": "",
+        "GROUND_BEACH": "",
+        "GROUND_SPECIALIZED": "",
+        "GROUND_LAKE_WATER": "",
+        "GROUND_LAKE_ICE": "",
+        "GROUND_LAKE_LAVA": "",
+        "GROUND_LAKE_OASIS": "",
+        "GROUND_LAKE_SINKHOLE": "",
+        "GROUND_LAKE_TARN": "",
+        "GROUND_LAKE_TAR": "",
+        "GROUND_LAKE_RUST": "",
+        "GROUND_LAKE_LILY": "",
+        "GROUND_ZOO_STREET": "",
+        "GROUND_ZOO_PLAZA": "",
+        "GROUND_DANCEFLOOR": "",
+        "GROUND_PAVEMENT": "",
+        "GROUND_LEGENDS": "",
+        "GROUND_LEGEND_FLOOR": "",
+        "GROUND_KOI": "",
+        "GROUND_BARE": ""
+      },
+      "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "parallel": false,
+      "sampledColors": 1721,
+      "sensitivity": [
+        {
+          "id": 0,
+          "method": "distance-field-ablation",
+          "pixels": 5013,
+          "max": 105
+        },
+        {
+          "id": 2,
+          "method": "distance-field-ablation",
+          "pixels": 5347,
+          "max": 167
+        }
+      ],
+      "extraSensitivity": null,
+      "parity": {
+        "pixels": 0,
+        "max": 0
+      },
+      "currentDrift": {
+        "pixels": 0,
+        "max": 0
+      },
+      "baselineDrift": {
+        "pixels": 0,
+        "max": 0
+      }
+    }
+  ],
+  "complete": true,
+  "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+}
