@@ -2,20 +2,22 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ArtResult } from "./artBuild";
 
 const mocks = vi.hoisted(() => ({ get: vi.fn(), put: vi.fn(), load: vi.fn(), run: vi.fn(), post: vi.fn() }));
-vi.mock("./artCacheStorage", () => ({ cacheGet: mocks.get, cachePut: mocks.put }));
-vi.mock("./artBuild", () => { mocks.load(); return { runJob: mocks.run }; });
 const result = () => ({ px: { albedo: new Uint8Array(4), normal: new Uint8Array(4) } }) as ArtResult;
 let worker: { postMessage: typeof mocks.post; onmessage: (event: MessageEvent) => Promise<void> };
 const send = (extra = {}) => worker.onmessage(new MessageEvent("message", { data: { kind: "type", id: 0, cacheKey: "key", ...extra } }));
 
 beforeEach(async () => {
   vi.resetModules(); vi.clearAllMocks();
+  vi.doMock("./artCacheStorage", () => ({ cacheGet: mocks.get, cachePut: mocks.put }));
+  vi.doMock("./artBuild", () => { mocks.load(); return { runJob: mocks.run }; });
   mocks.get.mockResolvedValue(null); mocks.put.mockResolvedValue(undefined); mocks.run.mockImplementation(result);
   worker = { postMessage: mocks.post, onmessage: async () => {} };
   vi.stubGlobal("self", worker);
   await import("./artWorker");
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals(); vi.doUnmock("./artCacheStorage"); vi.doUnmock("./artBuild"); vi.resetModules();
+});
 
 describe("cache-first art worker", () => {
   it("returns a hit with its buffers before loading any drawing code", async () => {
