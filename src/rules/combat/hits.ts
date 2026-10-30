@@ -10,7 +10,7 @@ import { FIGHT } from "../movement";
 import { type Attack, type CombatData, COMBAT, counterOf, type Target, type CombatState, stunWorth, type CombatWorld } from "./data";
 import { targetable, sideOf, truce, guardOf, sheltered, inviting, Grid } from "./targeting";
 import { coverOf } from "./packs";
-import { observeAttack, type AttackContext } from "../attackObservation";
+import { observeAttack, observingAttacks, type AttackContext } from "../attackObservation";
 
 let D: CombatData = COMBAT; // (the data stepCombat was given, for land)
 /** stepCombat hands land the data it was given. */
@@ -45,7 +45,9 @@ export function touch(w: CombatWorld, s: CombatState, c: Creature, damage: numbe
 }
 
 export function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: Target, damage: number, a: Attack, fx: number, fz: number, context?: AttackContext): void {
-  const observation = context ?? { source: from?.id ?? null, attack: null, delivery: a.delivery, phase: "damage" as const };
+  let observation: AttackContext = context ?? { source: from?.id ?? null, attack: null, delivery: a.delivery, phase: "damage" };
+  if (observingAttacks(s) && !observation.attack && observation.definition === undefined)
+    observation = { ...observation, definition: JSON.stringify(Object.fromEntries(Object.entries(a).sort(([x], [y]) => x < y ? -1 : x > y ? 1 : 0)), (_key, value) => typeof value === "number" && !Number.isFinite(value) ? String(value) : value) };
   observeAttack(w, s, tg, observation, damage, () => landUnobserved(w, s, from, tg, damage, a, fx, fz, observation));
 }
 

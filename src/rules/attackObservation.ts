@@ -10,6 +10,7 @@ export interface WitchHitState {
 export interface AttackContext {
   source: number | null; attack: string | null; delivery: string;
   phase: "contact" | "damage" | "effect" | "self-miss";
+  definition?: string;
   cast?: number; body?: number; zone?: number; beam?: number;
 }
 export interface AttackOutcome extends AttackContext {
@@ -28,6 +29,7 @@ export function observeAttacks(state: CombatState, callback: Observer): () => vo
   return () => { if (observers.get(state) === entry) observers.delete(state); };
 }
 export const attackObserverErrors = (state: CombatState): number => observers.get(state)?.errors ?? 0;
+export const observingAttacks = (state: CombatState): boolean => observers.has(state);
 
 function snapshot(w: CombatWorld, tg: Target) {
   if (tg.kind === "witch") {
@@ -72,7 +74,7 @@ export function observeAttack(w: CombatWorld, state: CombatState, target: Target
     movementChanged = after.x !== before.x || after.z !== before.z || after.kx !== before.kx || after.kz !== before.kz;
   }
   const outcome: Readonly<AttackOutcome> = Object.freeze({ source: context.source, attack: context.attack,
-    delivery: context.delivery, phase: context.phase, cast: context.cast, body: context.body, zone: context.zone, beam: context.beam,
+    delivery: context.delivery, phase: context.phase, definition: context.definition, cast: context.cast, body: context.body, zone: context.zone, beam: context.beam,
     time: w.time, targetKind: target.kind,
     targetId: target.kind === "sound" ? target.key : target.id, damageRequested: damage,
     damageAccepted, healthLost, orbitAdded, stunApplied, damageDodged, slowApplied, movementChanged, sheltered: protectedByShelter });

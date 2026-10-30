@@ -84,8 +84,8 @@ const arenaRows = [];
 function acceptedSummary(outcomes) {
   const groups = {};
   for (const row of outcomes) {
-    const key = JSON.stringify([row.attack, row.source, row.targetKind]);
-    const group = groups[key] ??= { attack: row.attack, source: row.source, targetKind: row.targetKind, attempts: 0, acceptedDamage: 0,
+    const key = JSON.stringify([row.attack, row.definition, row.delivery, row.source, row.targetKind]);
+    const group = groups[key] ??= { attack: row.attack, definition: row.definition ?? null, delivery: row.delivery, source: row.source, targetKind: row.targetKind, attempts: 0, acceptedDamage: 0,
       unknownDamage: 0, damageDodges: 0, unknownDodge: 0, stunUpdates: 0, selfMisses: 0, selfStunUpdates: 0, unknownStun: 0, healthLost: 0, orbitAdded: 0 };
     group.attempts++;
     if (row.damageAccepted === true) group.acceptedDamage++;

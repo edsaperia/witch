@@ -2,6 +2,7 @@ import { expect, it } from "vitest";
 import { createHash } from "node:crypto";
 import { attackObserverErrors, observeAttacks, type AttackOutcome, type WitchHitState } from "./attackObservation";
 import { COMBAT, newCombat, type CombatWorld } from "./combat/data";
+import { land } from "./combat/hits";
 import { spellWorld } from "./attacks/combatWorld";
 import { cast, newSpells, stepSpells, type Hittable } from "./attacks/engine";
 import { TUNING } from "./tuning";
@@ -42,6 +43,16 @@ it("keeps unknown callback-only outcomes null and sheltered rejection distinct f
   expect(p.rows[1]).toMatchObject({ sheltered: true, damageAccepted: false, healthLost: null, damageDodged: null });
 });
 
+it("retains exact legacy parameters without guessing a named attack", () => {
+  const p = port();
+  const attack = { delivery: "shot" as const, range: 4, windup: 0.5, cooldown: 2, modifier: "none" as const };
+  land(p.w, p.s, p.w.creatures[1], { kind: "witch", id: 0 }, 1, attack, 0, 0);
+  land(p.w, p.s, p.w.creatures[1], { kind: "witch", id: 0 }, 1, { ...attack, range: 8 }, 0, 0);
+  expect(p.rows.map(row => row.attack)).toEqual([null, null]);
+  expect(p.rows.map(row => JSON.parse(row.definition!).range)).toEqual([4, 8]);
+  expect(p.rows.every(row => row.damageAccepted && row.delivery === "shot")).toBe(true);
+});
+
 it("forwards the engine's cast and body identity without changing its hit events", () => {
   const p = port(), S = newSpells(5);
   const id = cast(S, p.W, { cast: { windup: 0.5 }, speed: { v: 20 }, life: { range: 10 } }, "engine-fixture",
@@ -71,6 +82,7 @@ it("measures accepted orbit fill and separates a missed charge's self-stun", () 
   observeAttacks(g.combat, row => rows.push(row));
   for (let i = 0; i < 20 / STEP; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, STEP);
   expect(rows.some(row => row.targetKind === "creature" && row.damageAccepted && (row.orbitAdded ?? 0) > 0)).toBe(true);
+  expect(rows.filter(row => row.attack === null).every(row => typeof row.definition === "string")).toBe(true);
   expect(rows.some(row => row.phase === "self-miss" && row.stunApplied && row.source === row.targetId)).toBe(true);
   const p = port(); p.w.creatures = g.creatures; p.w.time = g.clock.time;
   const target = g.creatures[g.arena!.ids[0]];
