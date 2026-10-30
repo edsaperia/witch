@@ -21,12 +21,13 @@ const { pageKey } = require("../bench/comparable.cjs"); // (the result's compara
 const { installTravelProbe } = require('./travel-probe.cjs');
 const { checkTravel, summarizeTravel } = require('../bench/travel-budget.cjs');
 const { collectFailure } = require('./travel-failure.cjs');
+const { prepareChartTarget } = require('./chart-target.cjs');
 const TRACE = process.env.TRACE === '1' || process.env.BUDGET === '1', ROUTE = process.env.ROUTE || 'chart';
 if (!['chart', 'api'].includes(ROUTE)) throw new Error('ROUTE must be chart or api');
 const SAIL_SEED = process.env.SAIL_SEED ?? (TRACE || ROUTE === 'api' ? '424242' : null);
 const extra = new URLSearchParams(process.env.EXTRA || '');
 if (TRACE) for (const [k,v] of Object.entries({ seed: '123', world: '0', warmChart: '1', prepChart: '1', ladder: 'auto' })) if (!extra.has(k)) extra.set(k,v);
-const toolKey = key => ({ ...key, knobs: { ...key.knobs, 'tool.route': ROUTE, 'tool.trace': TRACE, 'tool.probe': TRACE ? 'upload-aggregates-v1' : 'off', 'tool.profile': process.env.PROFILE === '1' } });
+const toolKey = key => ({ ...key, knobs: { ...key.knobs, 'tool.route': ROUTE, 'tool.targetSetup': ROUTE === 'chart' ? 'choose-before-outline-v1' : 'api', 'tool.trace': TRACE, 'tool.probe': TRACE ? 'upload-aggregates-v1' : 'off', 'tool.profile': process.env.PROFILE === '1' } });
 let KEY = null;
 let pw; try { pw = require("playwright"); } catch { pw = require("/opt/node22/lib/node_modules/playwright"); }
 const [outArg = "previews/sail/timing", distArg] = process.argv.slice(2);
@@ -80,10 +81,7 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
       if (ROUTE === 'chart') {
       phase = 'chart outlines';
       await page.evaluate(() => window.witch.chart());
-      await page.waitForFunction(i => { const c = window.chart; return c && c.islands && c.islands().find(x => x.id === i && x.outline); }, ISLAND, { timeout: TRACE ? 120000 : 600000, polling: 250 });
-      await page.waitForTimeout(1500);
-      phase = 'chart selection';
-      await page.evaluate(async ([i, seed]) => { const random = Math.random; if (seed != null) Math.random = () => Number(seed) / 1000000; try { window.chart.choose(i); await new Promise(r => setTimeout(r, 1500)); } finally { Math.random = random; } }, [ISLAND, SAIL_SEED]);
+      await prepareChartTarget(page, ISLAND, SAIL_SEED, TRACE ? 120000 : 600000, value => { phase = value; });
       }
       log("sailing to", ISLAND);
       phase = 'sailing';
