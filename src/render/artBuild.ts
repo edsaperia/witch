@@ -252,6 +252,4 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   return { px: packPixels(sprites), layout, floor: { albedo: new Uint8Array(pixels(floor.A, floor.w, floor.h)), normal: new Uint8Array(pixels(floor.N, floor.w, floor.h)), w: floor.w, h: floor.h } };
 }
 
-/** The buffers a result can hand over to the page without copying. */
-export const transferables = (r: ArtResult): ArrayBuffer[] =>
-  [r.px.albedo.buffer, r.px.normal.buffer, ...(r.px.albedoPal ? [r.px.albedoPal.buffer] : []), ...(r.px.normalPal ? [r.px.normalPal.buffer] : []), ...(r.floor ? [r.floor.albedo.buffer, r.floor.normal.buffer] : []), ...(r.disco ? [r.disco.base.px.buffer, r.disco.lit.px.buffer] : []), ...(r.housePiece ? [r.housePiece.px.buffer] : []), ...(r.mask ? [r.mask.buffer] : [])] as ArrayBuffer[];
+export { transferables } from "./artTransfer";

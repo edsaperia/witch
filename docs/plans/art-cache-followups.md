@@ -4,7 +4,8 @@ COORDINATOR6526799842 accepts fingerprint FINAL3b2f96be and explicitly opens
 these milestones now, without waiting for release. This branch starts at exact
 3b2f96beb3f1b27d1371c9838387615cc9169132 and preserves that accepted work.
 
-1. Cache-first worker: src/render/artWorker.ts, a small transfer-buffer helper,
+1. Cache-first worker: src/render/artWorker.ts, storage-only artCacheStorage.ts
+   with artCache.ts re-exports, a small transfer-buffer helper,
    its artBuild re-export, nearby worker tests and an own changelog fragment.
    Read IndexedDB before importing artBuild. Cache-only misses never import it;
    drawing misses share one lazy import, preserving replies, buffers and tracing.
