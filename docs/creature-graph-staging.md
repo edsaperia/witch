@@ -17,8 +17,9 @@ asset workers or existing species require a coordinator answer first.
 2. Review representative animal comparisons and agree acceptance with the
    coordinator: proposed bear (flat feet), wolf (raised heels), stag (hooves),
    then bat, snail and hydra to challenge the graph beyond four-legged bodies.
-3. Add a gait clock and IK with contact, reach and loop invariants; review sprite
-   strips before connecting the graph to the bake or live rig.
+3. Add a gait clock and IK with contact, reach and loop invariants (isolated
+   diagnostic implemented); review sprite strips before connecting the graph
+   to the bake or live rig. This stage can be tested before animal acceptance.
 4. Migrate species only after explicit acceptance. Keep cache invalidation and
    default switching a separate reviewed step.
 
@@ -41,12 +42,26 @@ when checking skin joins. No external asset or dependency is required.
 The diagnostic sheet compares nearly hard joins (blend epsilon) with the
 existing .07 smooth blend at a fixed pixel scale, from both headings. It uses
 plain material colours and a fixed three-band light to inspect normals at
-joins, not the production lighting or
-texture bake. The three leg-family fixtures and extra-socket fixture are
+joins, not the production lighting or texture bake. The three leg-family
+fixtures and extra-socket fixture are
 deliberately anonymous; they are not approved replacements for animal art.
 Socket offsets use model axes, not a rotating spine-local frame. Wings are
-volumes only; membranes, feathers, neck chains, articulation and gait are later
+volumes only; membranes, feathers, neck chains and full articulation are later
 stages. The torso primitive parity test is exact; species parity is unclaimed.
+
+## Gait diagnostic
+
+`node tools/body-graph/diagnostics.mjs --gait` writes an eight-frame strip for
+each leg family to `previews/body-graph-gait.svg`. A signed travel distance
+drives the phase; stance travel cancels the body's forward travel, swing uses
+smoothstep and squared-sine lift, and opposite diagonal legs share a phase.
+The three-dimensional two-bone solver preserves bone lengths, handles parallel
+bend hints and coincident targets, clamps impossible reaches and reports them
+as unreachable (never as planted contact). Tests sample every fixture leg
+through the cycle and check stance contact, reach, loop continuity and exact
+lengths. These are straight-line diagnostic gaits with fixed settings, not
+animal-specific animation. Digitigrade legs still have two segments: a true
+articulated hock, turns, slopes and terrain contact are not implemented.
 
 ## Deferred work and trigger
 

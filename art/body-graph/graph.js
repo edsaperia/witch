@@ -44,6 +44,7 @@ export function validateGraph(graph) {
     if (s.kind === "leg") {
       assert(Object.hasOwn(LEG_FAMILIES, s.family), `${s.id}: unknown leg family`);
       assert(vec(s.foot) && positive(s.radius), `${s.id}: foot and positive radius required`);
+      assert(s.phase == null || Number.isFinite(s.phase), `${s.id}: finite gait offset required`);
     } else if (s.kind === "tail") {
       assert(Array.isArray(s.points) && s.points.length >= 2, `${s.id}: tail needs at least two points`);
       for (const p of s.points) assert(Array.isArray(p) && p.length === 4 && p.every(Number.isFinite) && positive(p[3]), `${s.id}: tail points are [x,y,z,radius]`);

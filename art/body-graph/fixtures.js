@@ -19,6 +19,7 @@ export function quadrupedFixture(family = "digitigrade") {
   for (const [station, x] of [["shoulder", .48], ["hip", -.48]]) for (const side of [-1, 1]) graph.sockets.push({
     id: `${station}-${side < 0 ? "far" : "near"}`, station, offset: [0, -.12, side * .23], kind: "leg", family,
     foot: [x + (station === "hip" ? .08 : 0), LEG_FAMILIES[family].foot[1], side * .27], radius: .11,
+    phase: (station === "shoulder") === (side > 0) ? 0 : .5,
   });
   return graph;
 }

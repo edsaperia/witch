@@ -3,6 +3,7 @@ import { compileGraph, validateGraph } from "../art/body-graph/graph.js";
 import { quadrupedFixture, socketFixture } from "../art/body-graph/fixtures.js";
 import { Model, render } from "../art/model3d.js";
 import { M } from "../art/core.js";
+import { gaitPhase, solveLeg, sampleLeg, poseGraph } from "../art/body-graph/gait.js";
 
 describe("experimental creature body graph", () => {
   it.each(["plantigrade", "digitigrade", "hoof"])("%s has continuous skin, tapered limbs and grounded feet", family => {
@@ -68,5 +69,60 @@ describe("experimental creature body graph", () => {
     expect(() => validateGraph(bad)).toThrow(/positive radii/);
     const duplicate = quadrupedFixture(); duplicate.sockets.push(duplicate.sockets[0]);
     expect(() => validateGraph(duplicate)).toThrow(/unique socket/);
+  });
+});
+
+describe("experimental body graph gait", () => {
+  const distance = (a: number[], b: number[]) => Math.hypot(...a.map((v, i) => v - b[i]));
+
+  it("keeps both bone lengths for reachable, clamped and singular targets", () => {
+    for (const target of [[.2, -.7, .1], [0, -10, 0], [0, 0, 0], [1, 0, 0]]) {
+      for (const lengths of [[.4, .4], [.4, .2]]) {
+        const pose = solveLeg([0, 0, 0], target, lengths[0], lengths[1]);
+        expect(distance(pose.root, pose.knee)).toBeCloseTo(lengths[0], 7);
+        expect(distance(pose.knee, pose.end)).toBeCloseTo(lengths[1], 7);
+        expect([...pose.knee, ...pose.end].every(Number.isFinite)).toBe(true);
+      }
+    }
+    expect(solveLeg([0, 0, 0], [0, -10, 0], .4, .4).reachable).toBe(false);
+  });
+
+  it("is periodic in signed travel and has stationary planted feet in world space", () => {
+    const { legs } = compileGraph(quadrupedFixture());
+    const stride = .16, duty = .65, cycleDistance = stride / duty;
+    expect(gaitPhase(-cycleDistance)).toBeCloseTo(0, 10);
+    for (const travel of [.01, .03, .05]) {
+      const a = sampleLeg(legs[0], gaitPhase(travel), { stride, duty });
+      const b = sampleLeg(legs[0], gaitPhase(travel + .005), { stride, duty });
+      expect(a.planted && b.planted).toBe(true);
+      expect(travel + a.end[0]).toBeCloseTo(travel + .005 + b.end[0], 9);
+      expect(a.end[1]).toBeCloseTo(legs[0].end[1], 9);
+      expect(gaitPhase(travel + cycleDistance)).toBeCloseTo(gaitPhase(travel), 9);
+    }
+  });
+
+  it.each(["plantigrade", "digitigrade", "hoof"])("%s loops continuously and never claims unreachable contact", family => {
+    const graph = quadrupedFixture(family), before = JSON.stringify(graph);
+    const { legs } = compileGraph(graph);
+    for (const leg of legs) {
+      for (let k = 0; k <= 100; k++) {
+        const p = sampleLeg(leg, k / 100);
+        expect(p.reachable).toBe(true);
+        expect(p.end[1]).toBeGreaterThanOrEqual(leg.end[1] - 1e-9);
+      }
+      for (const boundary of [0, .65, 1]) {
+        const a = sampleLeg(leg, boundary - 1e-7), b = sampleLeg(leg, boundary + 1e-7);
+        expect(distance(a.end, b.end)).toBeLessThan(1e-5);
+      }
+    }
+    const start = poseGraph(graph, 0), end = poseGraph(graph, .16 / .65);
+    expect(start.model.parts).toEqual(end.model.parts);
+    expect(JSON.stringify(graph)).toBe(before);
+  });
+
+  it("rejects invalid clocks and solver inputs", () => {
+    expect(() => gaitPhase(Infinity)).toThrow(/finite travel/);
+    expect(() => gaitPhase(1, { duty: 1 })).toThrow(/invalid stride/);
+    expect(() => solveLeg([0, 0, 0], [0, 1, 0], 0, 1)).toThrow(/positive bone/);
   });
 });
