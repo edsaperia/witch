@@ -107,3 +107,29 @@ required overlap to the coordinator before changing that owner's area.
 Post this plan on the new draft PR before implementation, and flag any required
 ownership overlap before touching that owner's files. No expected hit-rate number
 is claimed before the dependency map and replay run.
+
+## Initial dependency audit (2026-10-30 12:22 UTC)
+
+At pinned base 909f00ae, runtime import closures contain 636 files for artBuild,
+homeArt and rigBuild, 594 for housePieces, 565 for islandArt, and 397 for
+art/creatures.js. housePieces imports the generator facade solely for bake;
+the facade also initializes creature registries. homeArt and rigBuild import
+helpers back from artBuild, creating cross-family cycles.
+
+A syntax-only experiment exposed just the housePiece or creature branch of
+runJob to the existing esbuild bundler, retaining its normal side-effect rules.
+The resulting house bundle still contains contributions from 538 source files,
+including 322 creature files; creature retains 531 files, also including those
+322 creature files. No generated art or game code was executed. These counts
+are dependency measurements, not production bundle sizes or a cache-hit claim.
+
+This rules out treating ordinary import closure or routine tree shaking as a
+useful family split. It also rules out silently treating imported initialization
+as irrelevant. The coordinator must route the required ownership overlap before
+mechanical import/helper separation in artBuild/homeArt/islandArt/rigBuild or
+housePieces. Drawing algorithms, models and arrival scheduling remain outside
+this task. Runtime fingerprint implementation has not started.
+
+The repository reports shallow history. The 1,451 reachable commits and 29
+first-parent commits above are provisional counts, pending a boundary audit;
+they must not be presented as a complete replay of the supplied 956-commit sample.
