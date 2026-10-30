@@ -1,0 +1,851 @@
+{
+  "sha": "deec54685e92dffbbec48b63c68aaf5fbebfe4ec",
+  "measurements": [
+    {
+      "id": "frosttroll",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 0,
+      "pixelDiff": 1026,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            4,
+            10,
+            39,
+            56
+          ],
+          "occupiedPixels": 1062
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            4,
+            10,
+            39,
+            56
+          ],
+          "occupiedPixels": 1062
+        }
+      ],
+      "current": [
+        47,
+        57
+      ],
+      "proposed": [
+        47,
+        57
+      ]
+    },
+    {
+      "id": "frosttroll",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 1,
+      "pixelDiff": 2601,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            10,
+            15,
+            63,
+            83
+          ],
+          "occupiedPixels": 2705
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            10,
+            15,
+            63,
+            83
+          ],
+          "occupiedPixels": 2705
+        }
+      ],
+      "current": [
+        76,
+        84
+      ],
+      "proposed": [
+        76,
+        84
+      ]
+    },
+    {
+      "id": "frosttroll",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 2,
+      "pixelDiff": 6855,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            19,
+            6,
+            115,
+            129
+          ],
+          "occupiedPixels": 7187
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            19,
+            6,
+            115,
+            129
+          ],
+          "occupiedPixels": 7187
+        }
+      ],
+      "current": [
+        127,
+        130
+      ],
+      "proposed": [
+        127,
+        130
+      ]
+    },
+    {
+      "id": "frosttroll",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 3,
+      "pixelDiff": 17059,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            36,
+            4,
+            245,
+            289
+          ],
+          "occupiedPixels": 32780
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            36,
+            4,
+            245,
+            289
+          ],
+          "occupiedPixels": 32780
+        }
+      ],
+      "current": [
+        252,
+        290
+      ],
+      "proposed": [
+        252,
+        290
+      ]
+    },
+    {
+      "id": "frosttroll",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 0,
+      "pixelDiff": 975,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            4,
+            10,
+            38,
+            55
+          ],
+          "occupiedPixels": 1010
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            4,
+            10,
+            38,
+            55
+          ],
+          "occupiedPixels": 1010
+        }
+      ],
+      "current": [
+        45,
+        56
+      ],
+      "proposed": [
+        45,
+        56
+      ]
+    },
+    {
+      "id": "frosttroll",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 1,
+      "pixelDiff": 2490,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            9,
+            14,
+            63,
+            82
+          ],
+          "occupiedPixels": 2548
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            9,
+            14,
+            63,
+            82
+          ],
+          "occupiedPixels": 2548
+        }
+      ],
+      "current": [
+        75,
+        83
+      ],
+      "proposed": [
+        75,
+        83
+      ]
+    },
+    {
+      "id": "frosttroll",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 2,
+      "pixelDiff": 7384,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            18,
+            6,
+            121,
+            130
+          ],
+          "occupiedPixels": 7712
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            18,
+            6,
+            121,
+            130
+          ],
+          "occupiedPixels": 7712
+        }
+      ],
+      "current": [
+        134,
+        131
+      ],
+      "proposed": [
+        134,
+        131
+      ]
+    },
+    {
+      "id": "frosttroll",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 3,
+      "pixelDiff": 18058,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            34,
+            4,
+            257,
+            290
+          ],
+          "occupiedPixels": 34704
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            34,
+            4,
+            257,
+            290
+          ],
+          "occupiedPixels": 34704
+        }
+      ],
+      "current": [
+        265,
+        291
+      ],
+      "proposed": [
+        265,
+        291
+      ]
+    },
+    {
+      "id": "frosttroll",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 0,
+      "pixelDiff": 650,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            3,
+            11,
+            29,
+            52
+          ],
+          "occupiedPixels": 649
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            3,
+            11,
+            29,
+            52
+          ],
+          "occupiedPixels": 649
+        }
+      ],
+      "current": [
+        36,
+        53
+      ],
+      "proposed": [
+        36,
+        53
+      ]
+    },
+    {
+      "id": "frosttroll",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 1,
+      "pixelDiff": 1581,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            6,
+            13,
+            45,
+            77
+          ],
+          "occupiedPixels": 1569
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            6,
+            13,
+            45,
+            77
+          ],
+          "occupiedPixels": 1569
+        }
+      ],
+      "current": [
+        53,
+        78
+      ],
+      "proposed": [
+        53,
+        78
+      ]
+    },
+    {
+      "id": "frosttroll",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 2,
+      "pixelDiff": 4454,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            13,
+            6,
+            82,
+            127
+          ],
+          "occupiedPixels": 4736
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            13,
+            6,
+            82,
+            127
+          ],
+          "occupiedPixels": 4736
+        }
+      ],
+      "current": [
+        91,
+        128
+      ],
+      "proposed": [
+        91,
+        128
+      ]
+    },
+    {
+      "id": "frosttroll",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 3,
+      "pixelDiff": 12329,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            12,
+            4,
+            237,
+            290
+          ],
+          "occupiedPixels": 31064
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            12,
+            4,
+            237,
+            290
+          ],
+          "occupiedPixels": 31064
+        }
+      ],
+      "current": [
+        244,
+        291
+      ],
+      "proposed": [
+        244,
+        291
+      ]
+    },
+    {
+      "id": "frosttroll",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 0,
+      "pixelDiff": 646,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            3,
+            11,
+            29,
+            52
+          ],
+          "occupiedPixels": 643
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            3,
+            11,
+            29,
+            52
+          ],
+          "occupiedPixels": 643
+        }
+      ],
+      "current": [
+        35,
+        53
+      ],
+      "proposed": [
+        35,
+        53
+      ]
+    },
+    {
+      "id": "frosttroll",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 1,
+      "pixelDiff": 1541,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            6,
+            13,
+            45,
+            77
+          ],
+          "occupiedPixels": 1528
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            6,
+            13,
+            45,
+            77
+          ],
+          "occupiedPixels": 1528
+        }
+      ],
+      "current": [
+        53,
+        78
+      ],
+      "proposed": [
+        53,
+        78
+      ]
+    },
+    {
+      "id": "frosttroll",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 2,
+      "pixelDiff": 4343,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            13,
+            6,
+            82,
+            127
+          ],
+          "occupiedPixels": 4628
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            13,
+            6,
+            82,
+            127
+          ],
+          "occupiedPixels": 4628
+        }
+      ],
+      "current": [
+        91,
+        128
+      ],
+      "proposed": [
+        91,
+        128
+      ]
+    },
+    {
+      "id": "frosttroll",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 3,
+      "pixelDiff": 12284,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            12,
+            4,
+            237,
+            290
+          ],
+          "occupiedPixels": 30379
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            12,
+            4,
+            237,
+            290
+          ],
+          "occupiedPixels": 30379
+        }
+      ],
+      "current": [
+        244,
+        291
+      ],
+      "proposed": [
+        244,
+        291
+      ]
+    }
+  ],
+  "resolvedRecords": [
+    {
+      "level": 0,
+      "column": "current",
+      "body": {
+        "hr": 0.3,
+        "bw": 0.34,
+        "hunch": 0.5,
+        "reach": 0.35,
+        "nose": 1.1,
+        "beard": 0,
+        "eyeK": 1.35,
+        "tooth": true
+      },
+      "look": null,
+      "paletteHSV": [
+        0.55,
+        0.12,
+        0.58
+      ]
+    },
+    {
+      "level": 0,
+      "column": "proposed",
+      "body": {
+        "hr": 0.3,
+        "bw": 0.34,
+        "hunch": 0.5,
+        "reach": 0.35,
+        "nose": 1.1,
+        "beard": 0,
+        "eyeK": 1.35,
+        "tooth": true
+      },
+      "look": null,
+      "paletteHSV": [
+        0.57,
+        0.12,
+        0.72
+      ]
+    },
+    {
+      "level": 1,
+      "column": "current",
+      "body": {
+        "hr": 0.26,
+        "bw": 0.38,
+        "hunch": 0.8,
+        "reach": 0.7,
+        "beard": 0.45,
+        "eyeK": 1.15,
+        "tusks": 0.7,
+        "moss": 3
+      },
+      "look": null,
+      "paletteHSV": [
+        0.55,
+        0.12,
+        0.58
+      ]
+    },
+    {
+      "level": 1,
+      "column": "proposed",
+      "body": {
+        "hr": 0.26,
+        "bw": 0.38,
+        "hunch": 0.8,
+        "reach": 0.7,
+        "beard": 0.45,
+        "eyeK": 1.15,
+        "tusks": 0.7,
+        "moss": 3
+      },
+      "look": null,
+      "paletteHSV": [
+        0.57,
+        0.12,
+        0.72
+      ]
+    },
+    {
+      "level": 2,
+      "column": "current",
+      "body": {
+        "beard": 1,
+        "tusks": 1,
+        "moss": 7,
+        "mossK": 1.6
+      },
+      "look": null,
+      "paletteHSV": [
+        0.55,
+        0.12,
+        0.58
+      ]
+    },
+    {
+      "level": 2,
+      "column": "proposed",
+      "body": {
+        "beard": 1,
+        "tusks": 1,
+        "moss": 7,
+        "mossK": 1.6
+      },
+      "look": null,
+      "paletteHSV": [
+        0.57,
+        0.12,
+        0.72
+      ]
+    },
+    {
+      "level": 3,
+      "column": "current",
+      "body": {
+        "hr": 0.25,
+        "bw": 0.46,
+        "hunch": 1.3,
+        "nose": 1.3,
+        "beard": 1.6,
+        "eyeK": 0.9,
+        "lids": true,
+        "tusks": 1.2,
+        "moss": 9,
+        "mossK": 1.4,
+        "stone": 0.48,
+        "beads": true,
+        "boulder": 1.4
+      },
+      "look": null,
+      "paletteHSV": [
+        0.55,
+        0.12,
+        0.58
+      ]
+    },
+    {
+      "level": 3,
+      "column": "proposed",
+      "body": {
+        "hr": 0.25,
+        "bw": 0.46,
+        "hunch": 1.3,
+        "nose": 1.3,
+        "beard": 1.6,
+        "eyeK": 0.9,
+        "lids": true,
+        "tusks": 1.2,
+        "moss": 9,
+        "mossK": 1.4,
+        "stone": 0.48,
+        "beads": true,
+        "boulder": 1.4
+      },
+      "look": null,
+      "paletteHSV": [
+        0.57,
+        0.12,
+        0.72
+      ]
+    }
+  ],
+  "modelSourceCommit": "e8fea579c78b032809a82c297c1623c379c62459",
+  "lighting": "night",
+  "style": {
+    "ambientHue": 0.68,
+    "ambient": 0.22,
+    "moon": 0.3,
+    "moonHue": 0.58,
+    "glowHue": 0.13,
+    "glowSat": 0.35,
+    "glowRadius": 110,
+    "glowPower": 1.4,
+    "bands": 3,
+    "dither": 0.35,
+    "round": 0.9,
+    "outline": "none",
+    "cOutline": "dark",
+    "shafts": 0.3,
+    "areaContrast": 0.6,
+    "sat": 0.9,
+    "leafHue": 0.3,
+    "leafVariety": 0.3,
+    "trunkHue": 0.07,
+    "groundHue": 0.27,
+    "groundVal": 0.4,
+    "pixel": 3,
+    "treeSize": 0.85,
+    "crownWidth": 3,
+    "clearing": 0.55,
+    "depth": 4,
+    "areaScale": 1,
+    "areaTypes": 64,
+    "density": 0.55,
+    "clump": 0.6,
+    "gnarl": 0.5,
+    "roots": 0.6,
+    "bark": 0.6,
+    "trees": 1,
+    "wBroad": 0.8,
+    "wFir": 0.6,
+    "wWillow": 0.5,
+    "wBirch": 0.5,
+    "wPalm": 0.3,
+    "wFlat": 0.5,
+    "bushes": 55,
+    "bushSize": 1,
+    "flowers": 0.3,
+    "cSat": 0.6,
+    "cVal": 0.85,
+    "head": 0.44,
+    "eye": 1,
+    "legs": 1,
+    "long": 1,
+    "size": 8,
+    "growth": 20,
+    "magicHue": 0.5,
+    "fur": 0.5,
+    "creatureScale": 1.5,
+    "texture": 1,
+    "texDetail": 0.3,
+    "hueShift": 0,
+    "cloakHue": 0.72,
+    "hairHue": 0.01,
+    "hatHue": 0.74,
+    "topHue": 0.13,
+    "jeansHue": 0.6,
+    "shoeHue": 0,
+    "phonesHue": 0.92,
+    "artStyle": "bold"
+  },
+  "largestCell": [
+    265,
+    291
+  ],
+  "selectionInterface": "shared #1470 selector"
+}

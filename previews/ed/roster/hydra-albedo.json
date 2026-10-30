@@ -1,0 +1,777 @@
+{
+  "sha": "deec54685e92dffbbec48b63c68aaf5fbebfe4ec",
+  "measurements": [
+    {
+      "id": "hydra",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 0,
+      "pixelDiff": 344,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            5,
+            8,
+            40,
+            30
+          ],
+          "occupiedPixels": 283
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            5,
+            8,
+            40,
+            30
+          ],
+          "occupiedPixels": 283
+        }
+      ],
+      "current": [
+        47,
+        31
+      ],
+      "proposed": [
+        47,
+        31
+      ]
+    },
+    {
+      "id": "hydra",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 1,
+      "pixelDiff": 518,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            5,
+            11,
+            55,
+            40
+          ],
+          "occupiedPixels": 433
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            5,
+            11,
+            55,
+            40
+          ],
+          "occupiedPixels": 433
+        }
+      ],
+      "current": [
+        62,
+        41
+      ],
+      "proposed": [
+        62,
+        41
+      ]
+    },
+    {
+      "id": "hydra",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 2,
+      "pixelDiff": 1656,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            9,
+            12,
+            94,
+            65
+          ],
+          "occupiedPixels": 1554
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            9,
+            12,
+            94,
+            65
+          ],
+          "occupiedPixels": 1554
+        }
+      ],
+      "current": [
+        102,
+        66
+      ],
+      "proposed": [
+        102,
+        66
+      ]
+    },
+    {
+      "id": "hydra",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 3,
+      "pixelDiff": 6811,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            15,
+            22,
+            191,
+            148
+          ],
+          "occupiedPixels": 6897
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            15,
+            22,
+            191,
+            148
+          ],
+          "occupiedPixels": 6897
+        }
+      ],
+      "current": [
+        196,
+        149
+      ],
+      "proposed": [
+        196,
+        149
+      ]
+    },
+    {
+      "id": "hydra",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 0,
+      "pixelDiff": 346,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            4,
+            8,
+            42,
+            30
+          ],
+          "occupiedPixels": 279
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            4,
+            8,
+            42,
+            30
+          ],
+          "occupiedPixels": 279
+        }
+      ],
+      "current": [
+        49,
+        31
+      ],
+      "proposed": [
+        49,
+        31
+      ]
+    },
+    {
+      "id": "hydra",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 1,
+      "pixelDiff": 548,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            5,
+            11,
+            58,
+            40
+          ],
+          "occupiedPixels": 465
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            5,
+            11,
+            58,
+            40
+          ],
+          "occupiedPixels": 465
+        }
+      ],
+      "current": [
+        65,
+        41
+      ],
+      "proposed": [
+        65,
+        41
+      ]
+    },
+    {
+      "id": "hydra",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 2,
+      "pixelDiff": 1640,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            8,
+            12,
+            96,
+            65
+          ],
+          "occupiedPixels": 1548
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            8,
+            12,
+            96,
+            65
+          ],
+          "occupiedPixels": 1548
+        }
+      ],
+      "current": [
+        104,
+        66
+      ],
+      "proposed": [
+        104,
+        66
+      ]
+    },
+    {
+      "id": "hydra",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 3,
+      "pixelDiff": 6535,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            13,
+            21,
+            191,
+            147
+          ],
+          "occupiedPixels": 6639
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            13,
+            21,
+            191,
+            147
+          ],
+          "occupiedPixels": 6639
+        }
+      ],
+      "current": [
+        196,
+        148
+      ],
+      "proposed": [
+        196,
+        148
+      ]
+    },
+    {
+      "id": "hydra",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 0,
+      "pixelDiff": 158,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            2,
+            5,
+            24,
+            27
+          ],
+          "occupiedPixels": 111
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            2,
+            5,
+            24,
+            27
+          ],
+          "occupiedPixels": 111
+        }
+      ],
+      "current": [
+        29,
+        28
+      ],
+      "proposed": [
+        29,
+        28
+      ]
+    },
+    {
+      "id": "hydra",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 1,
+      "pixelDiff": 352,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            3,
+            6,
+            34,
+            35
+          ],
+          "occupiedPixels": 251
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            3,
+            6,
+            34,
+            35
+          ],
+          "occupiedPixels": 251
+        }
+      ],
+      "current": [
+        40,
+        36
+      ],
+      "proposed": [
+        40,
+        36
+      ]
+    },
+    {
+      "id": "hydra",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 2,
+      "pixelDiff": 1073,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            4,
+            10,
+            57,
+            59
+          ],
+          "occupiedPixels": 917
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            4,
+            10,
+            57,
+            59
+          ],
+          "occupiedPixels": 917
+        }
+      ],
+      "current": [
+        64,
+        60
+      ],
+      "proposed": [
+        64,
+        60
+      ]
+    },
+    {
+      "id": "hydra",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 3,
+      "pixelDiff": 5890,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            8,
+            19,
+            147,
+            135
+          ],
+          "occupiedPixels": 5941
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            8,
+            19,
+            147,
+            135
+          ],
+          "occupiedPixels": 5941
+        }
+      ],
+      "current": [
+        151,
+        136
+      ],
+      "proposed": [
+        151,
+        136
+      ]
+    },
+    {
+      "id": "hydra",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 0,
+      "pixelDiff": 150,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            2,
+            5,
+            23,
+            27
+          ],
+          "occupiedPixels": 107
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            2,
+            5,
+            23,
+            27
+          ],
+          "occupiedPixels": 107
+        }
+      ],
+      "current": [
+        29,
+        28
+      ],
+      "proposed": [
+        29,
+        28
+      ]
+    },
+    {
+      "id": "hydra",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 1,
+      "pixelDiff": 351,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            3,
+            6,
+            33,
+            35
+          ],
+          "occupiedPixels": 249
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            3,
+            6,
+            33,
+            35
+          ],
+          "occupiedPixels": 249
+        }
+      ],
+      "current": [
+        38,
+        36
+      ],
+      "proposed": [
+        38,
+        36
+      ]
+    },
+    {
+      "id": "hydra",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 2,
+      "pixelDiff": 1061,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            4,
+            10,
+            56,
+            59
+          ],
+          "occupiedPixels": 919
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            4,
+            10,
+            56,
+            59
+          ],
+          "occupiedPixels": 919
+        }
+      ],
+      "current": [
+        63,
+        60
+      ],
+      "proposed": [
+        63,
+        60
+      ]
+    },
+    {
+      "id": "hydra",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 3,
+      "pixelDiff": 5830,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            8,
+            19,
+            144,
+            135
+          ],
+          "occupiedPixels": 5898
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            8,
+            19,
+            144,
+            135
+          ],
+          "occupiedPixels": 5898
+        }
+      ],
+      "current": [
+        148,
+        136
+      ],
+      "proposed": [
+        148,
+        136
+      ]
+    }
+  ],
+  "resolvedRecords": [
+    {
+      "level": 0,
+      "column": "current",
+      "body": {},
+      "look": null,
+      "paletteHSV": [
+        0.4,
+        0.35,
+        0.3
+      ]
+    },
+    {
+      "level": 0,
+      "column": "proposed",
+      "body": {},
+      "look": null,
+      "paletteHSV": [
+        0.4,
+        0.28,
+        0.42
+      ]
+    },
+    {
+      "level": 1,
+      "column": "current",
+      "body": {},
+      "look": null,
+      "paletteHSV": [
+        0.4,
+        0.35,
+        0.3
+      ]
+    },
+    {
+      "level": 1,
+      "column": "proposed",
+      "body": {},
+      "look": null,
+      "paletteHSV": [
+        0.4,
+        0.28,
+        0.42
+      ]
+    },
+    {
+      "level": 2,
+      "column": "current",
+      "body": {},
+      "look": null,
+      "paletteHSV": [
+        0.4,
+        0.35,
+        0.3
+      ]
+    },
+    {
+      "level": 2,
+      "column": "proposed",
+      "body": {},
+      "look": null,
+      "paletteHSV": [
+        0.4,
+        0.28,
+        0.42
+      ]
+    },
+    {
+      "level": 3,
+      "column": "current",
+      "body": {},
+      "look": null,
+      "paletteHSV": [
+        0.4,
+        0.35,
+        0.3
+      ]
+    },
+    {
+      "level": 3,
+      "column": "proposed",
+      "body": {},
+      "look": null,
+      "paletteHSV": [
+        0.4,
+        0.28,
+        0.42
+      ]
+    }
+  ],
+  "modelSourceCommit": "e8fea579c78b032809a82c297c1623c379c62459",
+  "lighting": "albedo",
+  "style": {
+    "ambientHue": 0.68,
+    "ambient": 0.22,
+    "moon": 0.3,
+    "moonHue": 0.58,
+    "glowHue": 0.13,
+    "glowSat": 0.35,
+    "glowRadius": 110,
+    "glowPower": 1.4,
+    "bands": 3,
+    "dither": 0.35,
+    "round": 0.9,
+    "outline": "none",
+    "cOutline": "dark",
+    "shafts": 0.3,
+    "areaContrast": 0.6,
+    "sat": 0.9,
+    "leafHue": 0.3,
+    "leafVariety": 0.3,
+    "trunkHue": 0.07,
+    "groundHue": 0.27,
+    "groundVal": 0.4,
+    "pixel": 3,
+    "treeSize": 0.85,
+    "crownWidth": 3,
+    "clearing": 0.55,
+    "depth": 4,
+    "areaScale": 1,
+    "areaTypes": 64,
+    "density": 0.55,
+    "clump": 0.6,
+    "gnarl": 0.5,
+    "roots": 0.6,
+    "bark": 0.6,
+    "trees": 1,
+    "wBroad": 0.8,
+    "wFir": 0.6,
+    "wWillow": 0.5,
+    "wBirch": 0.5,
+    "wPalm": 0.3,
+    "wFlat": 0.5,
+    "bushes": 55,
+    "bushSize": 1,
+    "flowers": 0.3,
+    "cSat": 0.6,
+    "cVal": 0.85,
+    "head": 0.44,
+    "eye": 1,
+    "legs": 1,
+    "long": 1,
+    "size": 8,
+    "growth": 20,
+    "magicHue": 0.5,
+    "fur": 0.5,
+    "creatureScale": 1.5,
+    "texture": 1,
+    "texDetail": 0.3,
+    "hueShift": 0,
+    "cloakHue": 0.72,
+    "hairHue": 0.01,
+    "hatHue": 0.74,
+    "topHue": 0.13,
+    "jeansHue": 0.6,
+    "shoeHue": 0,
+    "phonesHue": 0.92,
+    "artStyle": "bold"
+  },
+  "largestCell": [
+    196,
+    149
+  ],
+  "selectionInterface": "shared #1470 selector"
+}
