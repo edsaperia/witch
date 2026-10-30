@@ -31,6 +31,9 @@ export function catCaptureGenome(base) {
     out.levels[0] = { ...baby, body: { ...baby.body, graph: null }, head: { ...base.head, ...baby.head, earShape: null, earRoot: null, earAngle: null, earNormal: null, earDepth: null, earDimensions: null, skullY: base.head.skullY ?? 1, skullZ: base.head.skullZ ?? 1, jowl: base.head.jowl ?? (base.head.cheeks ? 1.35 : 1) } };
   }
   if (base.id === "snowleopard") {
+    out.levels ??= {};
+    const adult = out.levels[2] ?? {};
+    out.levels[2] = { ...adult, head: { ...adult.head, whiskerMinPx: 1.5 } };
     out.coat.regions = {
       torso: { kind: "rosettes", outerPx: 7, density: .45, inner: .19, outer: .4, gap: .4, xRange: [-.85, .85], flankMin: .25, centreMat: "BODYL", mat: "BODY3" },
       head: { kind: "spots", k: 8, density: .45, radius: .4 },

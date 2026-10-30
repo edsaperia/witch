@@ -371,7 +371,7 @@ publish only through `tools/shots/push.mjs` under `previews/ed/creature-graph/ca
 
 ## Family score history
 
-- Cats: iteration 6. Sand-cat adult kept default-off at L3.5/R3.5 over Current L2/R3, baby at pixel parity; no more sand-cat iteration. Snow leopard L4/R4 at iteration 4. Other cats retain earlier scores; family/gait work unfinished. Full seven-sheet cats-6b cloud publication remains required.
+- Cats: iteration 6. Sand-cat adult kept default-off at L3.5/R3.5 over Current L2/R3, baby at pixel parity; no more sand-cat iteration. Snow leopard L4/R4 at iteration 4. Other cats retain earlier scores; family/gait work unfinished. Full seven-sheet publication awaits cats-6c; cats-6b stopped on a snow-leopard whisker fragment.
 - Bears: iteration 0, unscored; awaiting cat iteration and family comparison.
 - Deer: iteration 0, unscored; awaiting preceding family iterations.
 - Canids: iteration 0, unscored; awaiting preceding family iterations.
@@ -394,6 +394,25 @@ not claim a new gait for that legend. Re-enable bending only when moving effect
 attachment passes the unchanged paired guard. No guard tolerance or material
 exclusion changes; sand-cat data stays fixed. The nearby test compares both
 towards frames against the same Current cells; cloud capture covers all facings.
+
+Yankee's cats-6b report 6515736192 verified the cheetah legend in both frames
+and every facing: identical attachment counts and zero differing legend pixels.
+The full set still did not publish: the snow-leopard adult top had a new 3px
+BELLY whisker fragment at [189,162]–[189,164]. Per 6515739376, the repair uses
+optional `head.whiskerMinPx`, a minimum diameter in native art pixels for
+existing whisker segments. It is finite/nonnegative; zero or absent retains
+the original radii. The existing measured-scale callback applies the floor,
+including rig capture, without adding whiskers to a species or changing babies.
+Only the diagnostic snow-leopard level 2 enables 1.5; Current records and the
+kept sand cat remain unchanged.
+
+CPU masks reproduce the old failure at floor 0: top has four components/9
+detached pixels vs Current three/6. At floor 1.5, the fragment joins the body:
+three/6. The towards BELLY speck also joins (candidate three/6 vs Current
+four/7). Tests check both adult frames in towards/away/top against the unchanged
+paired guard and pin Current's material/normal byte hash. No tolerance or
+material exception was added. The full seven-sheet cats-6c cloud run is the
+remaining publication gate; painter tests are not a new likeness score.
 
 The coordinator confirmed bear/wolf/stag, then bat/snail/hydra, compared against
 their current in-game art. Family implementation may proceed under default-off

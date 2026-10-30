@@ -549,6 +549,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   // its evolution at this level (genome levels: its own proportions and parts, not a rescale; q.features: legend features it grows early)
   const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q, ...(S.levelQ?.[level] || {}) }, legend = level === 3, juv = level === 1, baby = level === 0, has = f => (legend && !S.levelFeatures?.[3] && S.legend.includes(f)) || (q.features || []).includes(f) || !!S.levelNamed?.[level]?.includes(f); // (an evolved legend, its genome levels[3], replaces its old legend feature)
   const feats = S.levelFeatures?.[level], elder = legend && S.elder; // (an elder legend: art/elders.js)
+  if (q.whiskerMinPx != null && (!Number.isFinite(q.whiskerMinPx) || q.whiskerMinPx < 0)) throw new Error("whiskerMinPx must be finite and nonnegative");
   const sz = k => S.sizes[k][level]; // its template's size curves (art/genome/templates.js): baby, young, adult, legend
   const m = new Model();
   const hr = q.hr * sz("head") * (st.head / .44) ** .5, len = q.len * sz("len") * st.long;
@@ -775,6 +776,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   // snout with the mouth's line along it; and whiskers (q.whiskers) as a few pale lines off the muzzle. Knobs q.brow, q.jowl, q.jaw
   // (their size, 1 as built, 0 none), softer on a baby; the jaw only on a snouted head (not a beak's).
   const browK = (q.brow ?? 1) * (baby ? .55 : 1) * (q.beak ? .5 : 1), jowlK = (q.jowl ?? (q.cheeks ? 1.35 : 1)) * (baby ? .7 : 1), jawK = q.beak || (q.flatJaw && q.jawLine) ? 0 : (q.jaw ?? 1) * (baby ? .7 : 1); // (a flat jaw with its own jaw line draws no generic jaw)
+  const whiskerParts = [];
   if (browK) m.ell([H[0] + hr * .42, H[1] + hr * .46, 0], [hr * .4, hr * .2 * browK, hr * .78], M.BODY, { group: 1, dir: [1, .35, 0], paint: headPaint });
   if (jowlK) for (const side of [-1, 1]) m.ell([H[0] + hr * .3, H[1] - hr * .3, side * hr * .66], [hr * .5, hr * .36 * jowlK, hr * .3 * jowlK], M.BODY, { group: 1, paint: headPaint });
   if (jawK) {
@@ -801,7 +803,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
         }
       }
     }
-    if (q.whiskers && !baby) for (const side of [-1, 1]) for (let w = 0; w < 3; w++) { const b = lifted([sn[0] + L * .35, sn[1] - Dm * .15 + (w - 1) * Dm * .18, side * Dm * .75]), d = v3.norm([.35, (w - 1) * .25 - .1, side]); m.seg(b, v3.add(b, v3.mul(d, hr * (.55 + .12 * (w % 2)))), hr * .018, hr * .006, M.BELLY, { group: 30 + w + (side > 0 ? 0 : 3), extra: true }); }
+    if (q.whiskers && !baby) for (const side of [-1, 1]) for (let w = 0; w < 3; w++) { const b = lifted([sn[0] + L * .35, sn[1] - Dm * .15 + (w - 1) * Dm * .18, side * Dm * .75]), d = v3.norm([.35, (w - 1) * .25 - .1, side]); m.seg(b, v3.add(b, v3.mul(d, hr * (.55 + .12 * (w % 2)))), hr * .018, hr * .006, M.BELLY, { group: 30 + w + (side > 0 ? 0 : 3), extra: true }); if (q.whiskerMinPx) whiskerParts.push(m.parts.at(-1)); }
   }
   m.anchors.head = { c: H, r: HR, top: [H[0] - hr * .1, H[1] + hr * .82, 0] };
   m.anchors.eyes = { pts: [-1, 1].map(side => Model.surface(H, HR, v3.norm([.75, .32, side * .62]))), size: hr * .16 * (q.eyeK || 1) * sz("eye") };
@@ -902,6 +904,10 @@ export function quad3d(S, level, frame, st, facing = "towards") {
     m.part = was;
   }
   gearUp(m);
+  if (q.whiskerMinPx && whiskerParts.length) {
+    const previous = m.atScale;
+    m.atScale = scale => { previous?.(scale); const radius = q.whiskerMinPx / (2 * scale); for (const part of whiskerParts) { part.r1 = Math.max(part.r1, radius); part.r2 = Math.max(part.r2, radius); } };
+  }
   if (q.regions?.torso?.outerPx) {
     const previous = m.atScale;
     m.atScale = scale => {
