@@ -1,0 +1,166 @@
+{
+  "sha": "8308346aaa488b7a015f08fc60a01cb939c2aa79",
+  "purpose": "Current baseline only, native art pixels, studio, towards; not an in-game capture or full multi-heading acceptance",
+  "sheets": [
+    {
+      "file": "previews/ed/roster/catalogue/baseline-01.png",
+      "ids": [
+        "arcticfox",
+        "armadillo",
+        "badger",
+        "bat",
+        "bear",
+        "beaver",
+        "beetle",
+        "boar"
+      ],
+      "arguments": [
+        "art/preview.mjs",
+        "lineup",
+        "arcticfox,armadillo,badger,bat,bear,beaver,beetle,boar",
+        "previews/ed/roster/catalogue/baseline-01.png",
+        "1"
+      ]
+    },
+    {
+      "file": "previews/ed/roster/catalogue/baseline-02.png",
+      "ids": [
+        "cat",
+        "cheetah",
+        "crab",
+        "crocodile",
+        "dormouse",
+        "dragonfly",
+        "elephant",
+        "elk"
+      ],
+      "arguments": [
+        "art/preview.mjs",
+        "lineup",
+        "cat,cheetah,crab,crocodile,dormouse,dragonfly,elephant,elk",
+        "previews/ed/roster/catalogue/baseline-02.png",
+        "1"
+      ]
+    },
+    {
+      "file": "previews/ed/roster/catalogue/baseline-03.png",
+      "ids": [
+        "featheredserpent",
+        "fennec",
+        "flyingsquirrel",
+        "fox",
+        "frosttroll",
+        "frostwyrm",
+        "griffin",
+        "hare"
+      ],
+      "arguments": [
+        "art/preview.mjs",
+        "lineup",
+        "featheredserpent,fennec,flyingsquirrel,fox,frosttroll,frostwyrm,griffin,hare",
+        "previews/ed/roster/catalogue/baseline-03.png",
+        "1"
+      ]
+    },
+    {
+      "file": "previews/ed/roster/catalogue/baseline-04.png",
+      "ids": [
+        "hedgehog",
+        "heron",
+        "hydra",
+        "ibex",
+        "jaguar",
+        "komodo",
+        "lion",
+        "lynx"
+      ],
+      "arguments": [
+        "art/preview.mjs",
+        "lineup",
+        "hedgehog,heron,hydra,ibex,jaguar,komodo,lion,lynx",
+        "previews/ed/roster/catalogue/baseline-04.png",
+        "1"
+      ]
+    },
+    {
+      "file": "previews/ed/roster/catalogue/baseline-05.png",
+      "ids": [
+        "marten",
+        "meerkat",
+        "mole",
+        "moth",
+        "newt",
+        "otter",
+        "owl",
+        "penguin"
+      ],
+      "arguments": [
+        "art/preview.mjs",
+        "lineup",
+        "marten,meerkat,mole,moth,newt,otter,owl,penguin",
+        "previews/ed/roster/catalogue/baseline-05.png",
+        "1"
+      ]
+    },
+    {
+      "file": "previews/ed/roster/catalogue/baseline-06.png",
+      "ids": [
+        "polarbear",
+        "raccoon",
+        "ram",
+        "rattlesnake",
+        "raven",
+        "redpanda",
+        "rhino",
+        "roe"
+      ],
+      "arguments": [
+        "art/preview.mjs",
+        "lineup",
+        "polarbear,raccoon,ram,rattlesnake,raven,redpanda,rhino,roe",
+        "previews/ed/roster/catalogue/baseline-06.png",
+        "1"
+      ]
+    },
+    {
+      "file": "previews/ed/roster/catalogue/baseline-07.png",
+      "ids": [
+        "salamander",
+        "scorpion",
+        "snail",
+        "snake",
+        "snowleopard",
+        "sphinx",
+        "spider",
+        "squirrel"
+      ],
+      "arguments": [
+        "art/preview.mjs",
+        "lineup",
+        "salamander,scorpion,snail,snake,snowleopard,sphinx,spider,squirrel",
+        "previews/ed/roster/catalogue/baseline-07.png",
+        "1"
+      ]
+    },
+    {
+      "file": "previews/ed/roster/catalogue/baseline-08.png",
+      "ids": [
+        "stag",
+        "stegosaurus",
+        "stoat",
+        "tiger",
+        "toad",
+        "unicorn",
+        "wolf",
+        "woodlouse"
+      ],
+      "arguments": [
+        "art/preview.mjs",
+        "lineup",
+        "stag,stegosaurus,stoat,tiger,toad,unicorn,wolf,woodlouse",
+        "previews/ed/roster/catalogue/baseline-08.png",
+        "1"
+      ]
+    }
+  ]
+}
