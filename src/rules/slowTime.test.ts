@@ -13,6 +13,7 @@ const S = TUNING.legendCircle!.slow;
 
 /** A game under way (the party spell cast), the witch on the ground in the middle of a sleeping legend's circle. */
 function inCircle(): { g: Game; ring: Ring } {
+  // Keep the spatial fixture: the timing contrast needs a live creature 160–250 m away and a witch moved 500 m from the circle.
   const g = newGame(123, TUNING);
   g.clock.paused = false; g.party.spellAt = -100;
   g.clearedAt = Infinity; // (no area clears: this empties areas by hand; rules/clear.ts)
