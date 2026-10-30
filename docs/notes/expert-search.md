@@ -346,6 +346,58 @@ old measurements remain old-source evidence. A fresh comparable baseline must
 be measured once on the next source before sharing it across candidate shards.
 Do not change a saved model's source label to bypass fingerprint validation.
 
+### Fixed-vector staged evaluation
+
+Coordinator 6516484538 approves one current-source baseline followed by four
+fixed-vector candidates. `expert-evaluate.mjs` runs exactly 16 training cells:
+world 0, nights 1000/8919, matched home/Tiger/Komodo at 100/200 bpm plus
+unlocked home at both tempos. All equip Satchel, no hat and a bare broom;
+unlocked home still makes every designed animal/equipment available. Cutoff is
+3000 player seconds, not a full-night guarantee. Later wins remain censored;
+anything promising needs a separate 4200-second revalidation before a lock.
+
+`expert-evaluation-vectors.json` holds baseline defaults and four single-knob
+changes: A casting approach 0.85, B quest maximum 0 (negative control), C quest
+bias 800, D quest maximum 2. These are existing approved policy parameters;
+there is no new observation, quest logic, game rule or equipment change.
+
+After cloud preflight, run the baseline first:
+
+```sh
+node tools/balance/expert-evaluate.mjs --vector baseline --out docs/notes/expert-results/r1c-baseline --wall-seconds 2400
+```
+
+It must exit 0 with `evaluation.json` complete before any candidate starts.
+Fetch its reported result commit read-only and copy the sealed baseline
+`evaluation.json` into the same path on each candidate runner. Keep game/tool
+source identical; do not merge unrelated source or edit a fingerprint. Then
+run these on four independent single-worker runners:
+
+```sh
+node tools/balance/expert-evaluate.mjs --vector A --baseline docs/notes/expert-results/r1c-baseline/evaluation.json --out docs/notes/expert-results/r1c-A --wall-seconds 2400
+node tools/balance/expert-evaluate.mjs --vector B --baseline docs/notes/expert-results/r1c-baseline/evaluation.json --out docs/notes/expert-results/r1c-B --wall-seconds 2400
+node tools/balance/expert-evaluate.mjs --vector C --baseline docs/notes/expert-results/r1c-baseline/evaluation.json --out docs/notes/expert-results/r1c-C --wall-seconds 2400
+node tools/balance/expert-evaluate.mjs --vector D --baseline docs/notes/expert-results/r1c-baseline/evaluation.json --out docs/notes/expert-results/r1c-D --wall-seconds 2400
+```
+
+Each parent enforces a hard 40-minute wall cap, including worker startup; the
+coordinator caps each whole job at 45 minutes. Workers use below-normal priority.
+Exit 2 is capped/incomplete, never success; there is no automatic restart.
+`checkpoint.json` is atomically replaced after each completed case. An approved
+resume with identical inputs retains every completed case and replays only the
+interrupted unsaved case. Result-only commits retain original source provenance.
+Completed jobs also write `evaluation.json` and `summary.json`; `cases.jsonl`
+is the readable log reconstructed from the authoritative checkpoint.
+
+`expert-evaluation-core.mjs` rejects incomplete/nondefault/tampered baselines,
+source/runtime/case/cutoff/policy mismatches, altered resume inputs and any
+protected pair. Baseline data is never used as candidate outcome data: every
+candidate runs its 16 cells once, comparing with the one shared baseline.
+Digests bind policy, source, runtime, held-out exclusions, complete case matrix
+and baseline contents. Summaries separate goal counts and identify a score
+improvement confined to lower survival terms; they never emit a model lock.
+The survey-focused `--round 2 --cases ... --from ...` search remains separate.
+
 ## First pilot, not trained strength
 
 Source `9be247f04e21aa8175e3d534a7a6ea904be7a250`, artifacts in
