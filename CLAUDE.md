@@ -88,6 +88,7 @@ The rest of what builders need lives in a note an area, under `docs/notes/` (hou
 - [`docs/notes/balance.md`](docs/notes/balance.md): Balance: the balance simulators and bots, fighting value, populations and costs, the playtest log.
 - [`docs/notes/balance-baselines.md`](docs/notes/balance-baselines.md): Balance baselines: the matched-seed, matched-bag tables from the real-rules report (v5655; one seed, no tuning).
 - [`docs/notes/balance-report-coverage.md`](docs/notes/balance-report-coverage.md): Real-rules reports: the report tool, how to rerun it, and what the old balance sims still cover.
+- [`docs/notes/balance-study.md`](docs/notes/balance-study.md): Balance study: the follow-up on the real rules after the report tool (#1475): the matched-tempo preflight and the study's limits.
 - [`docs/notes/config.md`](docs/notes/config.md): Config files: the tuning file (values only) and its schema, the knobs' words in `config/knobs/<section>.json` (what each does, Ed's decisions), the style file, the link switches registry.
 - [`docs/notes/testing.md`](docs/notes/testing.md): Testing tools: the full smoke test, proof shots.
 - [`docs/notes/art-checks.md`](docs/notes/art-checks.md): Art checks: the art generator's check, the style bible, the genome compare, the lab and export commands.
