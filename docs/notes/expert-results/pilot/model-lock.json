@@ -1,0 +1,159 @@
+{
+  "schema": 1,
+  "sourceFingerprint": "3f09ce33f7722fd28952c5bf2c2d89f2579d5cf187e04489b6d69ff29b6d360e",
+  "parameters": {
+    "healAt": 1,
+    "healTo": 3,
+    "kite": 9,
+    "dashAt": 5,
+    "fireFrac": 0.95,
+    "closeFrac": 0.8,
+    "stick": 250,
+    "ahead": 400,
+    "homeRange": 120,
+    "follow": 10,
+    "homeStand": 22,
+    "castMoveFrac": 0.5,
+    "pickRadiusFrac": 0.6,
+    "retargetSeconds": 3,
+    "questRange": 700,
+    "questBias": 400
+  },
+  "heldOutPairs": [
+    {
+      "worldSeed": 0,
+      "nightSeed": 158381000
+    },
+    {
+      "worldSeed": 0,
+      "nightSeed": 158388919
+    },
+    {
+      "worldSeed": 0,
+      "nightSeed": 158396838
+    },
+    {
+      "worldSeed": 0,
+      "nightSeed": 158404757
+    },
+    {
+      "worldSeed": 0,
+      "nightSeed": 158412676
+    },
+    {
+      "worldSeed": 0,
+      "nightSeed": 158420595
+    },
+    {
+      "worldSeed": 0,
+      "nightSeed": 158428514
+    },
+    {
+      "worldSeed": 0,
+      "nightSeed": 158436433
+    },
+    {
+      "worldSeed": 0,
+      "nightSeed": 158444352
+    },
+    {
+      "worldSeed": 0,
+      "nightSeed": 158452271
+    },
+    {
+      "worldSeed": 0,
+      "nightSeed": 158460190
+    },
+    {
+      "worldSeed": 0,
+      "nightSeed": 158468109
+    },
+    {
+      "worldSeed": 0,
+      "nightSeed": 158476028
+    },
+    {
+      "worldSeed": 0,
+      "nightSeed": 158483947
+    },
+    {
+      "worldSeed": 0,
+      "nightSeed": 158491866
+    },
+    {
+      "worldSeed": 0,
+      "nightSeed": 158499785
+    },
+    {
+      "worldSeed": 0,
+      "nightSeed": 158507704
+    },
+    {
+      "worldSeed": 0,
+      "nightSeed": 158515623
+    },
+    {
+      "worldSeed": 0,
+      "nightSeed": 158523542
+    },
+    {
+      "worldSeed": 0,
+      "nightSeed": 158531461
+    },
+    {
+      "worldSeed": 0,
+      "nightSeed": 158539380
+    },
+    {
+      "worldSeed": 0,
+      "nightSeed": 158547299
+    },
+    {
+      "worldSeed": 0,
+      "nightSeed": 158555218
+    },
+    {
+      "worldSeed": 0,
+      "nightSeed": 158563137
+    },
+    {
+      "worldSeed": 0,
+      "nightSeed": 158571056
+    },
+    {
+      "worldSeed": 0,
+      "nightSeed": 158578975
+    },
+    {
+      "worldSeed": 0,
+      "nightSeed": 158586894
+    },
+    {
+      "worldSeed": 0,
+      "nightSeed": 158594813
+    },
+    {
+      "worldSeed": 0,
+      "nightSeed": 158602732
+    },
+    {
+      "worldSeed": 0,
+      "nightSeed": 158610651
+    },
+    {
+      "worldSeed": 0,
+      "nightSeed": 158618570
+    },
+    {
+      "worldSeed": 0,
+      "nightSeed": 158626489
+    }
+  ],
+  "observation": "approximate fair observation",
+  "humanLimits": {
+    "reactionSeconds": 0.25,
+    "inputHz": 8,
+    "aimErrorMetres": 1
+  },
+  "modelSha256": "8239b9ed24dcb24567fe8243fa3ec1c8664cbb5998655566c12d0a8d92450c0a"
+}

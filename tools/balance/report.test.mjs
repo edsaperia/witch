@@ -40,6 +40,9 @@ test("real-rules replay is deterministic across interleaved bots and bags", asyn
     const first = r.run(c, 30);
     r.run({ ...c, bot: "skilled", bag: "purse", bpm: 200 }, 5);
     assert.deepEqual(r.run(c, 30), first);
+    const expertCase = { ...c, bot: "expert", hat: "none", wearsHat: false, parts: [] };
+    const expert = r.run(expertCase, 5);
+    assert.deepEqual(r.run(expertCase, 5), expert);
     assert.equal(first.outcome, "censored");
     assert.ok(Math.abs(Object.values(first.phases).reduce((s, p) => s + p.seconds, 0) - first.end) < 1e-8);
     const stun = { seed: 1000, bpm: 100, bag: "tote", species: "fox", level: 1 };
