@@ -13,7 +13,7 @@ const observation = (): Observation => ({ playerTime: 0, worldTime: 0,
   view: { halfWidth: 40, halfDepth: 40 },
   self: { x: 0, z: 0, mode: "ground", hp: 3, ko: false, seated: false, perched: false, grounded: false },
   range: 30, pickRadius: 4, spacing: 4, castRadius: 5, castBlocked: false, waiting: false, home: { x: 0, z: 0 },
-  carried: [], creatures: [], stones: [], loose: [], placed: [], next: null, straggler: null,
+  carried: [], creatures: [], stones: [], loose: [], placed: [], next: null, straggler: null, victoryPointer: false,
   legends: [], alarms: [], windups: [], quests: [], find: null, relics: [] });
 const fixtures = Array.from({ length: 960 }, (_, i) => {
   const o = observation(); o.playerTime = i / 60; o.worldTime = i / 60;
@@ -34,12 +34,13 @@ const fixtures = Array.from({ length: 960 }, (_, i) => {
   if (phase === 14) o.self.mode = "treetop";
   return o;
 });
-for (const questMax of [1, 2]) for (const coverageExploration of [false, true]) test(`diagnostic output preserves every control, questMax=${questMax}, coverage=${coverageExploration}`, () => {
+for (const questMax of [1, 2]) for (const coverageExploration of [false, true]) for (const knownQuestPriority of [false, true]) test(`diagnostic output preserves every control, questMax=${questMax}, coverage=${coverageExploration}, questJob=${knownQuestPriority}`, () => {
   const events: ExpertTrace[] = [];
-  const plain = newExpert({ questMax }, 123, EXPERT_LIMITS, undefined, { coverageExploration }), logged = newExpert({ questMax }, 123, EXPERT_LIMITS, e => events.push(e), { coverageExploration });
+  const plain = newExpert({ questMax }, 123, EXPERT_LIMITS, undefined, { coverageExploration, knownQuestPriority }), logged = newExpert({ questMax }, 123, EXPERT_LIMITS, e => events.push(e), { coverageExploration, knownQuestPriority });
   const mutating = newExpert({ questMax }, 123, EXPERT_LIMITS, e => {
     e.controls.moveX = 999; e.observation.self.hp = -999; e.knownQuests.length = 0; e.heardDreams.push(999);
-  }, { coverageExploration });
+    e.questJob.id = 999; e.questJob.deadline = -999;
+  }, { coverageExploration, knownQuestPriority });
   for (const fixture of fixtures) {
     const g = { fixture } as unknown as Game, expected = plain.decide(g);
     expect(logged.decide(g)).toEqual(expected); expect(mutating.decide(g)).toEqual(expected);
@@ -139,4 +140,67 @@ test("scheduled coverage stays under five seconds per thirty-second interval at 
   expect(durations.size).toBe(4);
   expect([...durations.values()].every(t => t <= 5 + 1e-9)).toBe(true);
   expect(events.every(e => e.playerTime - e.observation.playerTime >= .25 - 1e-9)).toBe(true);
+});
+
+function questScript(enabled: boolean, change: (o: Observation, t: number) => void, end = 3) {
+  const events: ExpertTrace[] = [], bot = newExpert({questMax:0},123,EXPERT_LIMITS,e=>events.push(e),{knownQuestPriority:enabled});
+  for(let i=0;i<=end*60;i++) {
+    const o=observation();o.playerTime=i/60;o.worldTime=o.playerTime;o.self.hp=4;
+    o.quests=[{id:9,wants:"hare",open:true,delivery:{x:100,z:0},hint:{x:200,z:0}}];
+    o.stones=[{key:"1,1",x:0,z:0,open:true,ready:true,cast:{x:0,z:0}}];
+    o.loose=[{id:3,x:-2,z:0}];change(o,o.playerTime);bot.decide({fixture:o} as unknown as Game);
+  }
+  return events;
+}
+test("known requests beyond questMax preempt optional loot/cast and recruit only the requested animal",()=>{
+  const change=(o:Observation)=>{o.creatures=[{...legend(),id:10,boss:false,level:1,species:"hare",x:20},{...legend(),id:11,boss:false,level:1,species:"fox",x:2}];};
+  const on=questScript(true,change),off=questScript(false,change);
+  expect(on.every(e=>e.doing==="inviting hare")).toBe(true);expect(on.some(e=>e.controls.fire)).toBe(true);
+  expect(on.every(e=>!e.controls.place&&!e.controls.sigilHeld)).toBe(true);
+  expect(off.every(e=>e.doing==="gathering a sigil")).toBe(true);
+  expect(on.every(e=>e.questJob.id===9)).toBe(true);
+});
+test("known-quest hints precede straggler pursuit, and a safety abort restores baseline controls",()=>{
+  const change=(o:Observation,t:number)=>{o.loose=[];o.straggler={x:-100,z:0};if(t>=1)o.alarms=[{x:-40,z:0}];};
+  const on=questScript(true,change),off=questScript(false,change);
+  expect(on.find(e=>e.observation.playerTime>=.5)?.doing).toBe("following a known quest's dream hint");
+  for(let i=0;i<on.length;i++)if(on[i].observation.playerTime>=1){expect(on[i].questJob.released).toBe(true);expect(on[i].controls).toEqual(off[i].controls);}
+});
+test("actual offering placement does not claim completion; a closed cue releases the job",()=>{
+  const events=questScript(true,(o,t)=>{o.carried=[{id:10,species:"hare",level:1}];o.self.x=100;if(t>=1)o.quests=[{id:9,wants:"",open:false,delivery:{x:100,z:0},hint:null}];});
+  const delivery=events.find(e=>e.observation.playerTime>=.5)!;
+  expect(delivery.doing).toBe("bringing a requested sigil to a legend");expect(delivery.controls.sigil).toBe(true);
+  expect(delivery.knownQuests.map(q=>q.id)).toEqual([9]);
+  const closed=events.find(e=>e.observation.playerTime>=1)!;expect(closed.questJob.id).toBeNull();expect(closed.knownQuests).toEqual([]);
+});
+
+test("real reaction/input cadence releases held quest controls before sixty seconds and never restarts",()=>{
+  const on=questScript(true,o=>{o.loose=[];},63),off=questScript(false,o=>{o.loose=[];},63);
+  const first=on.find(e=>e.questJob.id!==null)!;
+  const released=on.find(e=>e.questJob.released)!;
+  expect(released.playerTime-first.playerTime).toBeLessThanOrEqual(60);
+  expect(released.questJob.reason).toBe("timeout");
+  for(let i=0;i<on.length;i++)if(on[i].playerTime>=released.playerTime){
+    expect(on[i].questJob.id).toBeNull();expect(on[i].controls).toEqual(off[i].controls);
+  }
+});
+
+test("stale requests release optional casting even while remembered by the ordinary policy",()=>{
+  const events=questScript(true,(o,t)=>{o.loose=[];if(t>.5)o.quests=[];},32);
+  expect(events.find(e=>e.observation.playerTime>=2)!.doing).toBe("following a known quest's dream hint");
+  const stale=events.find(e=>e.observation.playerTime>=31)!;
+  expect(stale.questJob.id).toBeNull();expect(stale.controls.sigilHeld).toBe(true);
+  expect(stale.knownQuests.map(q=>q.id)).toEqual([9]);
+});
+
+test("a requested recruit's visible sigil is picked up before following its dream hint",()=>{
+  const events=questScript(true,(o,t)=>{
+    o.creatures=[{...legend(),id:10,boss:false,level:1,species:"hare",x:2,rune:t>=1?{x:2,z:0}:null}];
+    if(t>=2){o.creatures=[];o.carried=[{id:10,species:"hare",level:1}];}
+  });
+  const at=(t:number)=>events.find(e=>e.observation.playerTime>=t)!;
+  expect(at(.5).doing).toBe("inviting hare");expect(at(1.5).controls.place).toBe(true);
+  expect(at(1.5).questJob.reason).toBe("pickup");
+  expect(at(2.5).doing).toBe("bringing a requested sigil to a legend");
+  expect(at(2.5).questJob.deadline).toBe(at(.5).questJob.deadline);
 });

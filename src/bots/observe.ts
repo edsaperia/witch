@@ -7,7 +7,7 @@ import { castOf, castOn, castReady, castSpot, stoneOpen } from "../rules/stoneSt
 import { stateOf, hasRune } from "../rules/creatureStates";
 import { runeOffset } from "../rules/runeOffset";
 import { bagTuning } from "../rules/bags";
-import { winTarget } from "../rules/win";
+import { winTarget, winPulse, won } from "../rules/win";
 import { pointerShown } from "../rules/leypulse";
 import { questOpen, dreamStone, dreamWay } from "../rules/dream";
 import { ALARM_DEFAULTS, newAlarms, shownAlarms, stepAlarms } from "../rules/alarms";
@@ -21,7 +21,7 @@ export interface Observation {
   range: number; pickRadius: number; spacing: number; castRadius: number; castBlocked: boolean; waiting: boolean; home: Point;
   carried: { id: number; species: string; level: number }[];
   creatures: SeenCreature[]; stones: SeenStone[]; loose: (Point & { id: number })[]; placed: Point[];
-  next: Point | null; straggler: Point | null; legends: Point[]; alarms: Point[]; windups: Point[];
+  next: Point | null; straggler: Point | null; victoryPointer: boolean; legends: Point[]; alarms: Point[]; windups: Point[];
   quests: { id: number; wants: string; open: boolean; delivery: Point; hint: Point | null }[];
   find: Point | null; relics: Point[];
 }
@@ -80,6 +80,9 @@ export function newObserver() {
       creatures, stones, loose: g.loose.filter(p => !p.legend && visible(p)).map(p => ({ id: p.id, x: p.x, z: p.z })),
       placed: w.leash.placed.filter(visible).map(p => ({ x: p.x, z: p.z })),
       next: next ? { x: next.x, z: next.z } : null, straggler: straggler ? { x: straggler.x, z: straggler.z } : null,
+      // Exactly the visible disco-ball pointer gate in render/view/pointers.ts
+      // partyPointer, not the internal phase, route length or enemy count.
+      victoryPointer: !!winPulse(g) || (won(g) && !g.win?.settled),
       // Same public awake-legend pointer gate as render/view/pointers.ts.
       legends: g.win?.wonAt !== undefined ? [] : g.creatures.filter(c => c.boss && !c.gone && c.legendState && c.legendState !== "asleep").map(c => ({ x: c.x, z: c.z })),
       alarms: shownAlarms(alarms, A).map(a => ({ x: a.x, z: a.z })),

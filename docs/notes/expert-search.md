@@ -1,5 +1,39 @@
 # Expert search: implementation and fairness audit
 
+Known-quest priority candidate (coordinator 6520033543, 2026-10-30) is opt-in
+`knownQuestPriority:true`, default off pending its fixed test. Ed ruled that
+quests finish before natural win; no game rules changed. `knownQuest.ts` remembers
+only actual delayed open requests, for at most 30 seconds without a new cue.
+A committed job delivers a carried offering, recruits/picks up a visible requested animal/sigil,
+or follows the public dream hint, ahead of optional recruitment, loot, exploration,
+casting and straggler pursuit. It never reads global quest counts, unseen legends,
+route length, allReached or internal win phase. The observer's new boolean mirrors
+the rendered disco-ball party pointer, not a precise hidden ending flag.
+
+One non-renewing 60-player-second deadline per night counts interruptions, switches
+and gaps; a .25-second release margin bounds held controls. Entry needs HP at least
+3, a fresh actionable cue and no healing/KO, damage, alarm, windup or visible
+unstunned hostile within 25 m. Safety or timeout latches priority off for the night;
+closed/angry/friendly, stale or unavailable cues release their job. Startup and
+committed dream visits keep priority. A visible party pointer releases deferral.
+Arrival or placing an offering alone never asserts learning/completion. Dream
+visits remain on, questMax1 only limits deliberate discovery, and all passive known
+requests are eligible. Coverage was dropped after its final screen's KO regression
+and remains off; its code/results below are historical provenance.
+
+There is no win button: the timed route or clearing all areas begins stragglers,
+their external neutralization begins the lap, and its home pulse wins automatically.
+Deferring the witch's optional actions cannot stop timers/allies or guarantee safety
+or all quests. `--known-quest-screen` fixes two nights 1000/32676, world0/unlocked
+home100, off/on at 600 player seconds, alternating order, default questMax1,
+Satchel/no hat/bare broom, dream visits on and coverage off. Protected/reserved pairs
+are rejected before Game construction. Parent worker480s, preflight120s, whole
+job600s; no restart. The manifest includes REPORT6520027527 point7 verbatim: only
+additional actual quest completion, every OFF win retained, no KO/loss regression,
+and every fairness/budget/safety contract passing permits separately routed later
+full-night validation. Otherwise no promotion or automatic repeat/search. Censored
+short cases cannot establish full-night win preservation. No lock or survey.
+
 Final coverage screen (coordinator 6519419386, 2026-10-30): driver/matrix only,
 with the coverage policy unchanged and still opt-in/default off. The fixed matrix
 in `expert-coverage-screen.mjs` has nights 16838, 24757, 32676 and 40595 on world0,

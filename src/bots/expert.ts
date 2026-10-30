@@ -4,6 +4,7 @@ import type { Bot } from "../rules/bot";
 import type { Controls, Game } from "../rules/game";
 import { newObserver, type Observation, type Point } from "./observe";
 import { newCoverage } from "./coverage";
+import { newKnownQuestJob } from "./knownQuest";
 
 export const EXPERT_DEFAULTS = {
   healAt: 1, healTo: 3, kite: 9, dashAt: 5, fireFrac: 0.95, closeFrac: 0.8,
@@ -14,13 +15,14 @@ export const EXPERT_DEFAULTS = {
 export type ExpertParams = typeof EXPERT_DEFAULTS;
 export const EXPERT_LIMITS = { reactionSeconds: 0.25, inputHz: 8, aimErrorMetres: 1 };
 export interface HumanLimits { reactionSeconds: number; inputHz: number; aimErrorMetres: number }
-export interface ExpertOptions { rememberDreamVisits?: boolean; coverageExploration?: boolean }
+export interface ExpertOptions { rememberDreamVisits?: boolean; coverageExploration?: boolean; knownQuestPriority?: boolean }
 // Output only: detached copies, emitted after choosing controls. Never read back.
 export interface ExpertTrace {
   playerTime: number; observation: Observation; doing: string; controls: Controls;
   knownQuests: Observation["quests"]; heardDreams: number[]; selectedQuest: number | null; visitingLegend: number | null;
   dreamVisit: (Point & { id: number; until: number }) | null;
   coverage: ReturnType<ReturnType<typeof newCoverage>["snapshot"]>;
+  questJob: ReturnType<ReturnType<typeof newKnownQuestJob>["snapshot"]>;
 }
 
 const idle = (): Controls => ({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 });
@@ -41,6 +43,8 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
   const rememberDreamVisits = options.rememberDreamVisits !== false, abandonedVisits = new Set<number>();
   let dreamVisit: (Point & { id: number; until: number }) | null = null;
   const coverage = newCoverage(), coverageEnabled = options.coverageExploration === true;
+  // Candidate stays opt-in until the coordinator disposes of the fixed test.
+  const questJob = newKnownQuestJob(options.knownQuestPriority === true);
   const bot: Bot = { kind: "expert", doing: "waiting for observations", done: { quests: [], relics: [] }, decide };
   return bot;
 
@@ -66,7 +70,7 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
       controls.aimZ = (controls.aimZ ?? 0) + Math.sin(angle) * limits.aimErrorMetres;
     }
     if (trace && observed) trace(structuredClone({ playerTime: now.playerTime, observation: observed,
-      doing: bot.doing, controls, knownQuests: [...quests.values()], heardDreams: [...heardDreams], selectedQuest, visitingLegend, dreamVisit, coverage: coverage.snapshot() }));
+      doing: bot.doing, controls, knownQuests: [...quests.values()], heardDreams: [...heardDreams], selectedQuest, visitingLegend, dreamVisit, coverage: coverage.snapshot(), questJob: questJob.snapshot() }));
     return { ...controls };
   }
 
@@ -84,6 +88,7 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
       else if (o.quests.some(q => q.id === dreamVisit!.id) || visible?.friendly || visible?.angry) dreamVisit = null;
       else if (visible) { dreamVisit.x = visible.x; dreamVisit.z = visible.z; }
     }
+    const job = questJob.update(o, w.hp >= K.healTo ? false : healing || w.hp <= K.healAt, !!dreamVisit, K.questRange);
     const putDown = () => {
       const near = o.placed.find(p => dist(w, p) < Math.max(o.pickRadius, o.spacing) * 1.1);
       if (!near) c.sigil = true;
@@ -117,8 +122,8 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
       c.moveX = -dz / d; c.moveZ = dx / d; c.dash = true; c.aimX = c.moveX * 10; c.aimZ = c.moveZ * 10;
       bot.doing = "dodging an audible wind-up"; return c;
     }
-    if (o.find) { bot.doing = "collecting tonight's find"; if (go(o.find, o.pickRadius * K.pickRadiusFrac)) c.place = true; return c; }
-    const quest = [...quests.values()].filter(q => dist(w, q.delivery) <= K.questRange).sort((a, b) => dist(w, a.delivery) - dist(w, b.delivery))[0];
+    if (o.find && !job) { bot.doing = "collecting tonight's find"; if (go(o.find, o.pickRadius * K.pickRadiusFrac)) c.place = true; return c; }
+    const quest = job?.quest ?? [...quests.values()].filter(q => dist(w, q.delivery) <= K.questRange).sort((a, b) => dist(w, a.delivery) - dist(w, b.delivery))[0];
     selectedQuest = quest?.id ?? null;
     const offering = quest ? o.carried.find(a => a.species === quest.wants) : null;
     if (quest && offering) {
@@ -144,6 +149,12 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
       if (go({ x: sleeper.x + 4, z: sleeper.z + 4 }, 6, true)) heardDreams.add(sleeper.id);
       return c;
     }
+    if (job?.kind === "pickup" && job.pickup) {
+      bot.doing = "gathering a sigil"; if (go(job.pickup, o.pickRadius * K.pickRadiusFrac)) c.place = true; return c;
+    }
+    if (job?.kind === "hint" && job.quest.hint) {
+      bot.doing = "following a known quest's dream hint"; go(job.quest.hint, 10, true); return c;
+    }
     // The candidate may interrupt only lower-priority ordinary work. Missing
     // cells are unobserved, not known walkable terrain. No map query is made.
     const requestedVisible = quest && o.creatures.some(a => !a.boss && !a.friendly && !a.rune && a.species === quest.wants);
@@ -152,23 +163,23 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
       if (point) { bot.doing = "exploring a less-seen direction"; go(point, 10, true); return c; }
     }
     const loot = [...o.loose, ...o.creatures.flatMap(a => a.rune ? [a.rune] : [])].sort((a, b) => dist(w, a) - dist(w, b))[0];
-    if (loot && dist(w, loot) < 25) {
+    if (!job && loot && dist(w, loot) < 25) {
       bot.doing = "gathering a sigil";
       if (go(loot, o.pickRadius * K.pickRadiusFrac)) c.place = true;
       return c;
     }
-    if (o.carried.length > K.follow && dist(w, o.home) < K.homeRange) {
+    if (!job && o.carried.length > K.follow && dist(w, o.home) < K.homeRange) {
       bot.doing = "posting guards at home";
       if (go({ x: o.home.x, z: o.home.z + K.homeStand }, 8, true)) putDown();
       return c;
     }
     const ready = o.stones.filter(s => s.open && s.ready).sort((a, b) => dist(w, a) - dist(w, b))[0];
-    if (ready) {
+    if (!job && ready) {
       bot.doing = "casting at a ready stone";
       if (go(ready.cast, o.castRadius * K.castMoveFrac)) c.sigilHeld = !o.castBlocked;
       return c;
     }
-    const candidates = o.creatures.filter(a => !a.boss && !a.friendly && !a.rune && (a.level > 0 || a.species === quest?.wants));
+    const candidates = o.creatures.filter(a => !a.boss && !a.friendly && !a.rune && (job ? a.id === job.creatureId : a.level > 0 || a.species === quest?.wants));
     const score = (a: typeof candidates[number]) => dist(w, a) - (a.area === lastArea ? K.stick : 0) - (o.next && dist(a, o.next) < 100 ? K.ahead : 0) - (a.species === quest?.wants ? K.questBias : 0);
     if (o.playerTime >= retargetAt || !candidates.some(a => a.id === target)) {
       target = [...candidates].sort((a, b) => score(a) - score(b) || a.id - b.id)[0]?.id ?? null;
