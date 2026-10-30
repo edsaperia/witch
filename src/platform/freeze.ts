@@ -38,6 +38,10 @@ export class Freeze {
   /** The pad's buttons held as the pause ended, hidden from every reader until let go: the press that resumed (the pause page's
    *  Back, ui/menuFocus.ts) is the resume and nothing else, not a fresh press to the chart or a station under it (pause-on-top). */
   private heldAtThaw = new Set<number>();
+  /** The pad's buttons held as the pause began, for the pause page's first frame (ui/menuFocus.ts primes on these, not on what's
+   *  held by then): a slow frame can come seconds after Esc, and a B pressed in between is a press, not the one that opened the
+   *  page (the pause-on-top B flake, 2026-10-30: the first paused frame 3 s after Esc, B already down, swallowed). Taken once. */
+  private openPad: boolean[] | null = null;
   private readonly marker = document.createElement("div");
   private readonly stamp = document.createElement("pre");
   private readonly copy = document.createElement("button");
@@ -89,8 +93,8 @@ export class Freeze {
     if (!this.frozen && !this.started()) return;
     this.frozen = !this.frozen;
     const g = this.game;
-    if (this.frozen) { this.wasPaused = g.clock.paused; g.clock.paused = true; }
-    else { g.clock.paused = this.wasPaused; this.heldAtThaw = new Set([...(realPads?.() ?? [])].find(p => p)?.buttons.flatMap((b, i) => (b.pressed ? [i] : [])) ?? []); }
+    if (this.frozen) { this.wasPaused = g.clock.paused; g.clock.paused = true; this.openPad = this.pad()?.buttons.map(b => b.pressed) ?? []; }
+    else { this.openPad = null; g.clock.paused = this.wasPaused; this.heldAtThaw = new Set([...(realPads?.() ?? [])].find(p => p)?.buttons.flatMap((b, i) => (b.pressed ? [i] : [])) ?? []); }
     document.body.classList.toggle("paused", this.frozen);
     // (thawed, a pause-page control the pad or mouse focused lets go: it kept every key from her after, E opening nothing; pause-on-top)
     if (!this.frozen && document.activeElement instanceof HTMLElement && document.activeElement.closest(PAUSE_UI.join(","))) document.activeElement.blur();
@@ -118,6 +122,9 @@ export class Freeze {
 
   /** The real pad (everyone else sees none while frozen): the Settings page reads it (ui/settingsMenu.ts). */
   pad(): Gamepad | null { return [...(realPads?.() ?? [])].find(p => p) ?? null; }
+
+  /** The buttons held as the pause began, once (the pause page's first frame), then undefined. */
+  takeOpenPad(): boolean[] | undefined { const o = this.openPad ?? undefined; this.openPad = null; return o; }
 
   /** The pad's pause (Options, standard button 9: platform/bindings.ts global.pause) toggles, read once a frame. */
   pollPad(): void {
