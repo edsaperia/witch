@@ -6,7 +6,9 @@ import { setupArena } from '../../src/rules/arena.ts';
 import { TUNING } from '../../src/rules/tuning.ts';
 import { newCombat, COMBAT } from '../../src/rules/combat/data.ts';
 import { spellWorld } from '../../src/rules/attacks/combatWorld.ts';
-import { SPECIES_ATTACKS, speciesAttack, adultOf } from '../../src/rules/attacks/species.ts';
+import { SPECIES_ATTACKS, speciesAttack, adultOf, legendAttack } from '../../src/rules/attacks/species.ts';
+import { LEGENDS } from '../../src/rules/legends.ts';
+import { newObserver } from '../../src/bots/observe.ts';
 import { cast, newSpells, stepSpells, readability, ownWarning, telegraphKind, parseAttack } from '../../src/rules/attacks/index.ts';
 import { classOf, momentumOf } from '../../src/rules/momentum.ts';
 
@@ -15,7 +17,8 @@ const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false }
 const style = a => [a.body?.kind ?? 'bolt', a.emit?.pattern ?? 'single', a.area?.shape ?? '', a.area?.at ?? '', ...Object.keys(a.hit?.effect ?? {}), a.area?.rain ? 'rain' : '', a.area?.grow ? 'grow' : '', a.speed?.profile ?? '', ...(a.path ?? []).map(t => Object.keys(t)[0]), ...Object.keys(a.pack ?? {}), ...Object.keys(a.on ?? {}), a.force ? 'force' : '', a.life?.bounce ? 'bounce' : '', a.life?.stick ? 'stick' : ''].filter(Boolean).join('+');
 const rows = Object.entries(SPECIES_ATTACKS).map(([species, raw]) => {
   const young = speciesAttack(species, 1), adult = speciesAttack(species, 2);
-  return { species, note: raw.note, body: raw.body?.kind ?? 'bolt', pattern: raw.emit?.pattern ?? 'single', style: style(raw), range: young.cast?.range ?? 20, adultRange: adult.cast?.range ?? 20, windup: young.cast?.windup ?? 0.6, cooldown: young.cast?.cooldown ?? 2, tell: raw.cast?.tell ?? null, telegraph: telegraphKind(young), youngWarning: readability(young, {}).warning, adultWarning: readability(adult, {}).warning, rawWarning: readability(raw, {}).warning, firstOwnWarning: ownWarning(young, false), hit: raw.hit ?? {}, paths: raw.path ?? [], area: raw.area ?? null, beam: raw.beam ?? null, pack: raw.pack ?? null, children: Object.keys(raw.on ?? {}), parseErrors: parseAttack(raw, {}, { strict: true }).errors, adultParseErrors: parseAttack(adultOf(raw), {}, { strict: true }).errors };
+  const L = LEGENDS.attack, legend = legendAttack(species, { range: L.range, windup: L.windup, interval: L.interval, flight: L.lobFlight, radius: L.lobRadius });
+  return { species, note: raw.note, body: raw.body?.kind ?? 'bolt', pattern: raw.emit?.pattern ?? 'single', style: style(raw), range: young.cast?.range ?? 20, adultRange: adult.cast?.range ?? 20, windup: young.cast?.windup ?? 0.6, cooldown: young.cast?.cooldown ?? 2, tell: raw.cast?.tell ?? null, telegraph: telegraphKind(young), youngWarning: readability(young, {}).warning, adultWarning: readability(adult, {}).warning, rawWarning: readability(raw, {}).warning, firstOwnWarning: ownWarning(young, false), hit: raw.hit ?? {}, paths: raw.path ?? [], area: raw.area ?? null, beam: raw.beam ?? null, pack: raw.pack ?? null, children: Object.keys(raw.on ?? {}), legend: { body: legend.body.kind, range: legend.cast.range, windup: legend.cast.windup, cooldown: legend.cast.cooldown, warning: readability(legend, {}).warning }, parseErrors: parseAttack(raw, {}, { strict: true }).errors, adultParseErrors: parseAttack(adultOf(raw), {}, { strict: true }).errors };
 });
 save('species.json', rows);
 
@@ -80,6 +83,7 @@ const arenaRows = [];
 for (const fixture of cases) {
   const began = performance.now(), g = newGame(fixture.seed, TUNING);
   g.clock.paused = false; g.party.paused = true; setupArena(g, fixture.spec);
+  g.witches[0].body.mode = 'treetop'; g.witches[0].body.lift = 1;
   const ids = g.arena.ids, first = ids.filter(id => g.creatures[id].leashed), second = ids.filter(id => !g.creatures[id].leashed);
   // Isolate the arena as the existing arena tests do; no health/stun/damage tuning.
   const arenaSet = new Set(ids); for (const c of g.creatures) if (!arenaSet.has(c.id)) c.gone = true;
@@ -99,8 +103,35 @@ for (const fixture of cases) {
     if (completed === null && (!alive(first).length || !alive(second).length)) completed = { atWorldSeconds: g.clock.time, winner: alive(first).length ? 'party' : alive(second).length ? 'wild' : 'neither', definition: 'first side with no active non-dazed/non-running members, not conversion or persistence' };
   }
   const final = ids.map(id => { const c = g.creatures[id]; return { id, species: c.species, level: c.level, x: +c.x.toFixed(6), z: +c.z.toFixed(6), dazed: !!c.dazed, ranOff: !!c.ranOff, gone: !!c.gone, affection: c.affection ?? 0, drops: c.drops ?? 0 }; });
-  const record = { ...fixture, playerSeconds: 20, worldSeconds: g.clock.time, executionMs: performance.now() - began, completed, censored: completed === null, events, byAttack: Object.values(byAttack), final, digest: createHash('sha256').update(JSON.stringify({ final, events, byAttack })).digest('hex'), limits: 'No visual/readability judgement. Engine hit contacts are not accepted damage; effective hits/dodges/stuns lack per-attack attribution and are null. Expired-body misses exclude live bodies/zones/beams. Single-seed examples do not rank general strength.' };
+  const record = { ...fixture, requestedStepSeconds: 20, worldSeconds: g.clock.time, witchMode: g.witches[0].body.mode, executionMs: performance.now() - began, completed, censored: completed === null, events, byAttack: Object.values(byAttack), final, digest: createHash('sha256').update(JSON.stringify({ final, events, byAttack })).digest('hex'), limits: 'Witch stays treetop to avoid distracting the pack-v-pack fight. No visual/readability judgement. Engine hit contacts are not accepted damage; effective hits/dodges/stuns lack per-attack attribution and are null. Expired-body misses exclude live bodies/zones/beams. Single-seed examples do not rank general strength.' };
   arenaRows.push(record); appendFileSync(join(out, 'arena.jsonl'), JSON.stringify(record) + '\n');
   console.log(JSON.stringify({ case: fixture.id, executionMs: record.executionMs, digest: record.digest, completed }));
+}
+const witchRows = [];
+for (const species of ['wolf', 'cat']) for (const delayed of [false, true]) {
+  const g = newGame(5, TUNING); g.clock.paused = false; g.party.paused = true; setupArena(g, `pack-${species}`, { wildOnly: true });
+  const ids = new Set(g.arena.ids); for (const c of g.creatures) if (!ids.has(c.id)) c.gone = true; g.byArea = null;
+  const observe = newObserver(), queue = [], actions = [];
+  let control = idle, nextInput = 0, nextDash = 0, acceptedHits = 0, attempts = 0, blinks = 0, kos = 0, beforeKo = false, lastAt = g.witches[0].dash.at;
+  for (let frame = 0; frame < 12 / STEP; frame++) {
+    const player = frame * STEP;
+    if (player + 1e-9 >= nextInput) {
+      nextInput += 0.125; queue.push({ at: player, observation: observe(g) });
+      let consumed;
+      while (queue.length && queue[0].at <= player - 0.25 + 1e-9) consumed = queue.shift();
+      const o = consumed?.observation, cue = o?.windups[0]; control = idle;
+      if (delayed && o && cue && player >= nextDash && !o.self.ko) {
+        const dx = o.self.x - cue.x, dz = o.self.z - cue.z, d = Math.hypot(dx, dz) || 1;
+        control = { ...idle, moveX: -dz / d, moveZ: dx / d, dash: true }; attempts++; nextDash = player + 1;
+        actions.push({ atPlayerSeconds: player, consumedAt: consumed.at, delay: player - consumed.at, cue, self: o.self });
+      }
+    }
+    const before = g.witches[0].health.hp; stepGame(g, control, STEP);
+    const W = g.witches[0]; acceptedHits += Math.max(0, before - W.health.hp);
+    if (W.dash.at !== lastAt) { blinks++; lastAt = W.dash.at; }
+    if (W.ko && !beforeKo) kos++; beforeKo = !!W.ko;
+  }
+  const record = { species, seed: 5, delayedPolicy: delayed, requestedStepSeconds: 12, worldSeconds: g.clock.time, acceptedHealthLost: acceptedHits, koEntries: kos, dashAttempts: attempts, acceptedBlinks: blinks, actions, inputInterval: 0.125, reactionDelay: 0.25, observation: 'Existing expert approximate default-camera rectangle without occlusion plus public HUD/audio cues; policy uses delayed self and windup positions only.', limits: 'One fixed sidestep policy, no aiming or invitation. A failure is not proof that no dodge works; not a trained-bot or win-strength claim.' };
+  witchRows.push(record); appendFileSync(join(out, 'witch-arena.jsonl'), JSON.stringify(record) + '\n');
 }
 save('summary.json', { species: rows.length, minimumYoungWarning: Math.min(...rows.map(r => r.youngWarning)), minimumAdultWarning: Math.min(...rows.map(r => r.adultWarning)), parseErrors: rows.reduce((n, r) => n + r.parseErrors.length + r.adultParseErrors.length, 0), engineReactionAssessed: fairness.filter(r => r.assessed).length, engineReactionStillContactAfterBlink: fairness.filter(r => r.assessed && r.dodgingContacts > 0).map(r => r.species), arenaCases: arenaRows.length, repeatedCaseMatches: arenaRows[0].digest === arenaRows[3].digest, reactionBudget: { reaction: 0.25, inputInterval: 0.125, worstQuantizedPlusStep: 0.25 + 0.125 + STEP }, limits: ['No general dodge guarantee', 'No arena dominance ranking from three small paired matches', 'No invisible-source or real terrain proof from flat engine fixtures', 'No current validation of seven impossible solo stuns; historical protected-health cutoff is not impossibility'] });
