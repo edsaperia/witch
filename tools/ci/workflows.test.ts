@@ -14,7 +14,7 @@ describe("shared CI game build", () => {
   it("has every built-game consumer download the one artifact", () => {
     const upload = jobs.build.steps.find((s: any) => s.uses === "actions/upload-artifact@v4");
     expect(upload.with).toMatchObject({ name: "game-dist", path: "dist", "if-no-files-found": "error" });
-    for (const [job, dest] of [["smoke", "dist"], ["large-world", "dist"], ["deploy", "dist"], ["game-unchanged", "head/dist"]]) {
+    for (const [job, dest] of [["smoke", "dist"], ["large-world", "dist"], ["deploy", "dist"], ["preview", "dist"], ["game-unchanged", "head/dist"]]) {
       expect(jobs[job].needs).toContain("build");
       expect(jobs[job].steps.find((s: any) => s.uses === "actions/download-artifact@v4").with).toEqual({ name: "game-dist", path: dest });
     }
@@ -28,12 +28,24 @@ describe("shared CI game build", () => {
   it("gives main publication priority without publishing prototype pushes or forks", () => {
     expect(jobs.deploy.if).toContain("github.ref == 'refs/heads/main'");
     expect(jobs.deploy.if).not.toContain("github.event_name == 'push'");
-    expect(jobs.deploy.if).toContain("head.repo.full_name == github.repository");
+    expect(jobs.deploy.if).toBe("${{ github.ref == 'refs/heads/main' }}");
+    expect(jobs.preview.if).toContain("github.event_name == 'pull_request'");
+    expect(jobs.preview.if).toContain("head.repo.full_name == github.repository");
     expect(jobs.check.needs).toContain("deploy");
     expect(jobs.smoke.needs).toContain("deploy");
     expect(jobs.smoke.if).toContain("github.ref != 'refs/heads/main' || needs.deploy.result == 'success'");
     expect(ci.permissions).toEqual({ contents: "read" });
     expect(jobs.deploy.permissions).toEqual({ contents: "write", "pull-requests": "write" });
+    expect(jobs.preview.permissions).toEqual(jobs.deploy.permissions);
+  });
+  it("runs PR preview alongside checks while only main publication gates them", () => {
+    expect(jobs.preview.needs).toEqual(["build"]);
+    expect(jobs.preview.steps).toEqual(jobs.deploy.steps);
+    for (const name of ["check", "smoke", "large-world"]) {
+      expect(jobs[name].needs).toContain("deploy");
+      expect(jobs[name].needs).not.toContain("preview");
+      expect(jobs[name].if).toContain("!cancelled()");
+    }
   });
   it("keeps closed-PR cleanup independent and removes the duplicate benchmark workflow", () => {
     const pages = workflow("pages");
