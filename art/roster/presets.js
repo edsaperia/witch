@@ -15,6 +15,22 @@ const JAGUAR_REGIONS = {
   legs: { kind: "spots", k: 12, density: .5, radius: .4, mat: "BODY3" },
 };
 export const ROSTER_PRESETS = {
+  fennec: {
+    reason: "Long broad ears at Current body scale, sandy fur and a dark tail tip through shared controls.",
+    modelCommit: "090f76fdfaa584e6c7ef31a064771ba26aa590c8",
+    patch: { look: { fennec: { fit: "current" } }, head: { earDimensions: { height: 2.7, width: 1.8 } }, parts: { ears: { kind: "sail", size: 2.7 } }, coat: { regions: { tail: { tip: { length: .2, mat: "NOSE" } } } } },
+    ordinaryLevels: { 0: { parts: { ears: { kind: "sail", size: 2.7 } } }, 1: { parts: { ears: { kind: "sail", size: 2.7 } } }, 2: { parts: { ears: { kind: "sail", size: 2.8 } } } },
+    legendPatch: { look: { fennec: { fit: "current" } }, head: { earDimensions: { height: 2.7, width: 1.8 } }, parts: { ears: { kind: "sail", size: 2.8 } }, coat: { regions: { tail: { tip: { length: .2, mat: "NOSE" } } } } },
+    text: "A tiny sandy fennec fox with broad long ears and a dark-tipped brush tail.",
+  },
+  dragonfly: {
+    reason: "Four long narrow flat wing panes through independent existing wing controls.",
+    modelCommit: "090f76fdfaa584e6c7ef31a064771ba26aa590c8",
+    patch: {},
+    ordinaryLevels: { 0: { body: { wingLength: 1.15, wingWidth: .55, wingAngle: 0 } }, 1: { body: { wingLength: 1.15, wingWidth: .55, wingAngle: 0 } }, 2: { body: { wingLength: 1.15, wingWidth: .55, wingAngle: 0 } } },
+    legendPatch: { body: { wingLength: 1.15, wingWidth: .55, wingAngle: 0 } },
+    text: "A slender dragonfly with four long narrow wings held flat from its body.",
+  },
   wolf: {
     reason: "Grey coat, dark existing saddle and pale muzzle retain the shared wolf anatomy while avoiding a sandy coyote reading.",
     patch: { head: { muzzle: true, jawCoat: false }, palette: { hue: .6, sat: .035, val: .6, over: { BODY: [145, 148, 149], BODY2: [71, 77, 81], BODY3: [40, 46, 49], BODYL: [184, 188, 189], BELLY: [220, 219, 209] } } },
@@ -27,19 +43,16 @@ export const ROSTER_PRESETS = {
     ordinaryLevels: { 1: { parts: { tail: "dormouse" }, body: { tailK: 1.25 } }, 2: { body: { tailK: 1.3 } } },
     text: "A small golden dormouse with rounded ears, dark eyes and a furry tail.",
   },
-  raven: {
-    reason: "Lift existing feather highlights and beak paint so the black bird survives small-size shadow.",
-    patch: { palette: { over: { BODYL: [100, 103, 130], BODY2: [65, 67, 76], BODY3: [33, 34, 43], ACCENT: [77, 76, 80] } } },
-    text: "A black raven with blue-violet feather sheen and a heavy dark-grey beak.",
-  },
   bat: {
     reason: "Keep the fruit bat's russet fur while lifting dark wing tones to preserve its flying silhouette.",
     patch: { palette: { over: { BODYL: [128, 101, 76], BODY2: [64, 62, 76], BODY3: [44, 43, 50] } } },
+    ordinaryLevels: { 0: { palette: { over: { BODY2: [85, 83, 100], BODY3: [50, 49, 59] } } }, 1: { palette: { over: { BODY2: [85, 83, 100], BODY3: [50, 49, 59] } } } },
     text: "A russet fruit bat with dark wings and a fox-like muzzle.",
   },
   woodlouse: {
     reason: "Pale existing plate rims separate the segmented grey body without changing its shell builder.",
     patch: { palette: { over: { BODYL: [150, 157, 168], BODY2: [82, 89, 94], BODY3: [40, 48, 52], ACCENT: [172, 180, 188], BELLY: [196, 204, 210] } } },
+    ordinaryLevels: { 0: { palette: { over: { BELLY: [133, 143, 153] } } } },
     text: "A grey woodlouse with pale segmented plate edges and fine antennae.",
   },
   frosttroll: {
