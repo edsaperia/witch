@@ -1,11 +1,12 @@
 {
-  "sha": "0d122c61b893e0e8d66fa84508b9b1ec68d19c79",
+  "sha": "462b975beee9981a45ce451fd88018893cd8d625",
   "measurements": [
     {
       "id": "raccoon",
       "facing": "towards",
       "frame": 0,
       "level": 0,
+      "pixelDiff": 597,
       "current": [
         42,
         35
@@ -20,6 +21,7 @@
       "facing": "towards",
       "frame": 0,
       "level": 1,
+      "pixelDiff": 1130,
       "current": [
         66,
         49
@@ -34,6 +36,7 @@
       "facing": "towards",
       "frame": 0,
       "level": 2,
+      "pixelDiff": 3130,
       "current": [
         111,
         78
@@ -48,6 +51,7 @@
       "facing": "towards",
       "frame": 0,
       "level": 3,
+      "pixelDiff": 12452,
       "current": [
         260,
         179
@@ -62,6 +66,7 @@
       "facing": "towards",
       "frame": 1,
       "level": 0,
+      "pixelDiff": 731,
       "current": [
         47,
         35
@@ -76,6 +81,7 @@
       "facing": "towards",
       "frame": 1,
       "level": 1,
+      "pixelDiff": 1386,
       "current": [
         75,
         49
@@ -90,6 +96,7 @@
       "facing": "towards",
       "frame": 1,
       "level": 2,
+      "pixelDiff": 3735,
       "current": [
         122,
         78
@@ -104,6 +111,7 @@
       "facing": "towards",
       "frame": 1,
       "level": 3,
+      "pixelDiff": 14708,
       "current": [
         287,
         180
@@ -118,6 +126,7 @@
       "facing": "away",
       "frame": 0,
       "level": 0,
+      "pixelDiff": 470,
       "current": [
         36,
         35
@@ -132,6 +141,7 @@
       "facing": "away",
       "frame": 0,
       "level": 1,
+      "pixelDiff": 989,
       "current": [
         61,
         48
@@ -146,6 +156,7 @@
       "facing": "away",
       "frame": 0,
       "level": 2,
+      "pixelDiff": 2836,
       "current": [
         105,
         77
@@ -160,6 +171,7 @@
       "facing": "away",
       "frame": 0,
       "level": 3,
+      "pixelDiff": 12229,
       "current": [
         248,
         190
@@ -174,6 +186,7 @@
       "facing": "away",
       "frame": 1,
       "level": 0,
+      "pixelDiff": 476,
       "current": [
         38,
         35
@@ -188,6 +201,7 @@
       "facing": "away",
       "frame": 1,
       "level": 1,
+      "pixelDiff": 1013,
       "current": [
         64,
         49
@@ -202,6 +216,7 @@
       "facing": "away",
       "frame": 1,
       "level": 2,
+      "pixelDiff": 2944,
       "current": [
         107,
         77
@@ -216,6 +231,7 @@
       "facing": "away",
       "frame": 1,
       "level": 3,
+      "pixelDiff": 12629,
       "current": [
         253,
         188

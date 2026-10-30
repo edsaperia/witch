@@ -1,11 +1,12 @@
 {
-  "sha": "0d122c61b893e0e8d66fa84508b9b1ec68d19c79",
+  "sha": "462b975beee9981a45ce451fd88018893cd8d625",
   "measurements": [
     {
       "id": "marten",
       "facing": "towards",
       "frame": 0,
       "level": 0,
+      "pixelDiff": 239,
       "current": [
         52,
         38
@@ -20,6 +21,7 @@
       "facing": "towards",
       "frame": 0,
       "level": 1,
+      "pixelDiff": 286,
       "current": [
         69,
         52
@@ -34,6 +36,7 @@
       "facing": "towards",
       "frame": 0,
       "level": 2,
+      "pixelDiff": 781,
       "current": [
         116,
         84
@@ -48,6 +51,7 @@
       "facing": "towards",
       "frame": 0,
       "level": 3,
+      "pixelDiff": 0,
       "current": [
         267,
         193
@@ -62,6 +66,7 @@
       "facing": "towards",
       "frame": 1,
       "level": 0,
+      "pixelDiff": 259,
       "current": [
         56,
         38
@@ -76,6 +81,7 @@
       "facing": "towards",
       "frame": 1,
       "level": 1,
+      "pixelDiff": 298,
       "current": [
         74,
         52
@@ -90,6 +96,7 @@
       "facing": "towards",
       "frame": 1,
       "level": 2,
+      "pixelDiff": 816,
       "current": [
         122,
         84
@@ -104,6 +111,7 @@
       "facing": "towards",
       "frame": 1,
       "level": 3,
+      "pixelDiff": 0,
       "current": [
         282,
         199
@@ -118,6 +126,7 @@
       "facing": "away",
       "frame": 0,
       "level": 0,
+      "pixelDiff": 251,
       "current": [
         55,
         38
@@ -132,6 +141,7 @@
       "facing": "away",
       "frame": 0,
       "level": 1,
+      "pixelDiff": 327,
       "current": [
         83,
         52
@@ -146,6 +156,7 @@
       "facing": "away",
       "frame": 0,
       "level": 2,
+      "pixelDiff": 1157,
       "current": [
         154,
         85
@@ -160,6 +171,7 @@
       "facing": "away",
       "frame": 0,
       "level": 3,
+      "pixelDiff": 0,
       "current": [
         401,
         198
@@ -174,6 +186,7 @@
       "facing": "away",
       "frame": 1,
       "level": 0,
+      "pixelDiff": 268,
       "current": [
         57,
         38
@@ -188,6 +201,7 @@
       "facing": "away",
       "frame": 1,
       "level": 1,
+      "pixelDiff": 315,
       "current": [
         85,
         52
@@ -202,6 +216,7 @@
       "facing": "away",
       "frame": 1,
       "level": 2,
+      "pixelDiff": 1194,
       "current": [
         156,
         86
@@ -216,6 +231,7 @@
       "facing": "away",
       "frame": 1,
       "level": 3,
+      "pixelDiff": 0,
       "current": [
         407,
         198
@@ -512,9 +528,9 @@
         "back": "arch",
         "snout": 0.65,
         "snoutD": 0.6,
-        "belly": false,
+        "belly": true,
         "bib": null,
-        "legMat": 25,
+        "legMat": false,
         "ear": "round",
         "earS": 1.3,
         "tail": "marten",
