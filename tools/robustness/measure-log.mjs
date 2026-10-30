@@ -25,7 +25,7 @@ try {
   const frames = Math.round(600 / STEP), start = performance.now();
   for (let i = 0; i < frames; i++) {
     const direction = Math.floor(i / 120) % 4;
-    recorder.step({ moveX: direction === 0 ? 1 : direction === 2 ? -1 : 0, moveZ: direction === 1 ? 1 : direction === 3 ? -1 : 0, zoom: 0, toggleMode: false, aimX: 12.25, aimZ: -3.75, castParty: i === 0, fire: i % 300 < 30 }, STEP);
+    recorder.step({ moveX: direction === 0 ? 1 : direction === 2 ? -1 : 0, moveZ: direction === 1 ? 1 : direction === 3 ? -1 : 0, zoom: 0, toggleMode: i === 0, aimX: 12.25, aimZ: -3.75, castParty: i === 0, fire: i % 300 < 30 }, STEP);
     if (i === Math.floor(frames / 2)) recorder.mutate("fixture: music setting", () => { game.tuning.music.volume = 0.2; });
   }
   recorder.mutate("fixture: pause", () => { game.clock.paused = true; });
