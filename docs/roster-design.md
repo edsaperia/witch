@@ -50,25 +50,25 @@ Members: sand cat, cheetah, black jaguar, lion, lynx, snow leopard, tiger. Use o
 
 Known model request: ear root position/angle independent of ear size, and rosette placement that remains natural across flank/top views. Do not enlarge a face or crest to beat another cat's silhouette score. Current/proposed snow leopard preset is the first concrete marking target; other cat items are inspection targets, not silently implemented changes.
 
-Score history: **baseline — unscored; no independent rendered review received.**
+Score history: **baseline unscored → snow-leopard candidate 1 fine speckle (builder rejects) → candidate 2 fewer rings, capture pending; independent scores pending.**
 
 ### Bears — second iteration target
 
 Members: black bear, polar bear. Shared plantigrade bear body and flat feet. Black bear: straight back without shoulder hump, prominent ears, tan muzzle; retain dark variant. Polar bear: longer neck, small ears, broad paws, white coat; existing neck/head differentiation is useful. Do not use a generic huge hump to differentiate them. Preserve original elder story anatomy pending review. Walking target: weight on flat soles, not canine raised heels. First preset removes ordinary black-bear hump. Reference: NPS above; exact polar-bear proportion changes await reference/visual review.
 
-Score history: **baseline — unscored; no independent rendered review received.**
+Score history: **baseline unscored → candidate 1 source correction applies but visible effect slight; independent scores/graph iteration pending.**
 
 ### Deer — third iteration target
 
 Members: roe deer, stag, elk. Related hoofed body with naturally different scale, neck and antlers. Roe: small body, short antlers, pale rump. Stag: larger red-deer-like form and branched antlers. Current `elk` has palmate antlers and long muzzle: in British usage this can mean moose; settle intended common name before “correcting” it into a wapiti. Current generic branch antlers may overbranch roe deer; inspect first. Walking target: hoof contact and long-limbed deer posture without changing rules speed. No deer preset yet; pictures and intended-species answer trigger the next bounded implementation.
 
-Score history: **baseline — unscored; no independent rendered review received.**
+Score history: **baseline unscored → builder sees overbranched ordinary roe antlers; independent scores/model iteration pending.**
 
 ### Canids — fourth iteration target
 
 Members: wolf, fox, arctic fox, fennec. All share canid anatomy. Wolf larger and deeper-chested; red fox slim, russet with dark socks and brush; arctic fox compact with short rounded ears and dense white winter coat; fennec small, sand-coloured with naturally large ears. Existing arctic juvenile ear-size overrides undermine the compact-ear target and are explicitly overridden by the preset. Do not force further silhouette separation. Walking target: raised-heel canid stance and foot contact; compare with bears' flat feet. Reference: Alaska agency above. Fennec proportions need separate references before alteration.
 
-Score history: **baseline — unscored; no independent rendered review received.**
+Score history: **baseline unscored → arctic-fox candidate 1 removes spikes but weakens ear cue; independent scores/rounded-triangle model pending.**
 
 ### Remaining families
 
@@ -100,7 +100,7 @@ For #1475 via coordinator: census remains 64; no species/class/role additions. D
 
 | Item | Why deferred | Trigger | Where |
 |---|---|---|---|
-| Production default-off hook integration | #1470 owns hook/cache keys | Coordinator posts exact exported interface and commit | art/roster/presets.js; #1479 |
+| Production default-off hook integration | #1470 owns hook/cache keys; complete pack adapter already prepared | Coordinator confirms #1470 release into prototype containing look/palette level contract | art/roster/presets.js; #1479 |
 | Exact game-size ground/treetop screenshots | Cloud-only captures and hook needed | Accepted switch commit and cloud runner result available | tools/roster/; previews/ed/roster |
 | Cat ear roots and anatomical gait | No accepted graph feature interface yet | #1470 posts interface and first matched family captures | Family target notes above |
 | Independent likeness scores and iteration | No actual review yet | Coordinator's independent reviewer posts species findings | Score history per family above |
@@ -115,6 +115,7 @@ At implementation commit `f822dee280076d6416c37ecda90c5b071f66190d`: three prese
 Cloud comparison and `node art/check.mjs --only bear,arcticfox,snowleopard --no-lab` requested on that exact SHA in PR comment 6513060204; coordinator assigned Whiskey in 6513069962. Since the three presets are currently isolated, that standard art check checks **default production art**, not the candidate presets. Candidate sheets and data validation are additional evidence; candidate art-check integration must use #1470's accepted selection hook.
 
 At beetle implementation `6183c511f000c326651e2e73fed751c62b1075e1`, all four preset tests pass and the post-merge typecheck passes. Released prototype `08b4213a43f2eb3c4484cd0e0f83adb7a325673c` was incorporated by normal merge as requested in 6513113895. Beetle-only cloud capture/check requested in 6513180762; full baseline census remains pinned to `8308346aaa488b7a015f08fc60a01cb939c2aa79` in 6513131000. Earlier matched images remain valid for their recorded source commits; no claim that they depict newer generator work.
+At `0f4181fdabe97c79e0263192c1bf2c4c7dc15c71`, five preset tests, tool syntax, all-64 visual-note coverage, census generation, diff whitespace and `npm run typecheck` pass. CI smoke on earlier `1febcf909` failed only `Pause over the overlays` → `finds-dev: the pad's B resumes` (run 40989989947, job 123849798068); coordinator identified that pause flake and instructed no roster-unrelated action (6513399515), exact log reported in 6513447830. This is not an all-CI-green claim.
 
 For the remaining visual census, `node tools/roster/catalogue.mjs` delegates eight bounded groups of eight species to the standard lineup renderer. Each includes all four levels and the witch at native baked art scale, towards, in studio lighting; its manifest records species IDs and exact source SHA. Those baseline sheets will support actual art-quality notes for all 64 after cloud review, not substitute for matched/night/in-game acceptance of proposed changes.
 
