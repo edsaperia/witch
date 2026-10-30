@@ -1,0 +1,16 @@
+{
+  "scope": "Fixed living-wood upright geometry only; no browser performance or pixel acceptance",
+  "uprights": 3283,
+  "planQuadSha256": "aac893ea3a4d27f6927de21a0309486a9647f892eb7f75f91dc0a1056b54b74d",
+  "fixedSeedPlacedQuads": [
+    { "seed": 123, "old": "3d20840d37b8417d1dcbb56cd5c72e3d136fdd5b13cb3c30f0cfb880b0c56a2c", "new": "3d20840d37b8417d1dcbb56cd5c72e3d136fdd5b13cb3c30f0cfb880b0c56a2c" },
+    { "seed": 165272, "old": "a5adc9ef4674a21182e9915bf6c245e0abf00cf04ceeac6c8903b18d99feaa82", "new": "a5adc9ef4674a21182e9915bf6c245e0abf00cf04ceeac6c8903b18d99feaa82" }
+  ],
+  "mainBundle": {
+    "before": { "file": "main-CACGRzNM.js", "raw": 1495917, "gzip9": 543237 },
+    "after": { "file": "main-CU_03lIF.js", "raw": 1609480, "gzip9": 563693 },
+    "deltaGzip9": 20456,
+    "method": "Production Vite build with sourcemap and manifest, gzip level9 per main file. Before rebuilt source0389; own branch has the same runtime before this change plus unused seam/tools/docs. Before WITCH_SHA=0389ac1e..., after default dev label: small build-label difference included. Static estimate, not HTTP/boot measurement."
+  },
+  "pending": ["coordinator cloud house-shot pixel parity", "cold-prep duration and long-task comparison", "first30 and full-route p99", "paired current prototype integration after1509"]
+}

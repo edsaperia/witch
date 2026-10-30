@@ -16,7 +16,8 @@ import { deckOf, type Deck } from "../rules/treehouse";
 import { fromPlan, toPlan, HOUSE_ROOMS, hatsOnFloor, hatSlots, hatToTake, objectAt, type HouseObject } from "../rules/houseRooms";
 import { groundHeight } from "./height";
 import { alongRay } from "./view/home";
-import { standing, type FloorPixels } from "./houseArt";
+import type { FloorPixels } from "./houseArt";
+import houseStanding from "virtual:house-standing";
 import { paintFloorOff } from "./houseFloor";
 import type { PlanMap } from "./crown";
 import { bakePieceHere, furnitureState, furnitureStates, pieceArt, standing as facing, DRAWN_ELSEWHERE, FURNITURE, type FurnitureArt } from "./houseFurniture";
@@ -57,7 +58,7 @@ const inOrder = (q: Quad[]) => q.sort((a, b) => a.layer - b.layer || a.depth - b
  *  objects' boxes. */
 function buildQuads(): Quad[] {
   const q: Quad[] = [];
-  for (const u of standing(HOUSE_ROOMS)) q.push(quad(u.p, u.rgb, u.layer));
+  for (const u of houseStanding) q.push(quad(u.p, u.rgb, u.layer));
   objects(q);
   return inOrder(q);
 }
