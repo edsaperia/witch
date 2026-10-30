@@ -1,4 +1,4 @@
-// A resumable night belongs to this build and this game's URL path (PR previews stay separate).
+// A resumable night belongs to a format and a slot/path, independent of its build number.
 // IndexedDB keeps the large rules snapshot off localStorage's small, synchronous quota.
 import { snapshotGame, type NightSnapshot } from "../rules/nightSnapshot";
 import type { Game } from "../rules/game";
@@ -36,10 +36,10 @@ export function savesEnabled(params: URLSearchParams, automated = false): boolea
 }
 
 /** An explicit link to another night keeps its meaning; a plain game link may resume any saved island. */
-export function savedNight(value: unknown, build: string, link: URLSearchParams): SavedNight | null {
+export function savedNight(value: unknown, _build: string, link: URLSearchParams): SavedNight | null {
   if (!value || typeof value !== "object") return null;
   const n = value as SavedNight;
-  if (n.version !== 1 || n.build !== build || !Number.isFinite(n.at) || typeof n.params !== "string" ||
+  if (n.version !== 1 || typeof n.build !== "string" || !Number.isFinite(n.at) || typeof n.params !== "string" ||
       !n.game || n.game.version !== 1 || !Number.isFinite(n.game.seed) || !n.game.tuning || !n.game.state ||
       !n.flags || typeof n.flags.chartRecorded !== "boolean" || typeof n.flags.overRecorded !== "boolean" || !n.settingsBase ||
       (n.look !== null && (!n.look || typeof n.look !== "object" || Array.isArray(n.look))) ||
@@ -91,19 +91,25 @@ export class NightAutosave {
   private last = -Infinity;
   private busy = false;
   private generation = 0;
+  private settled: Promise<void> = Promise.resolve();
   constructor(private store: NightStore, private capture: () => SavedNight | null, private failed: (error: unknown) => void) {}
-  async save(now: number, force = false): Promise<boolean> {
+  async save(now: number, force = false, allowEmpty = false): Promise<boolean> {
     if (this.busy || (!force && now - this.last < 5000)) return false;
     this.last = now; this.busy = true;
+    let release!: () => void;
+    this.settled = new Promise<void>(resolve => { release = resolve; });
     const generation = this.generation;
     try {
       const value = this.capture();
-      if (!value || generation !== this.generation) return false;
+      if (!value) return allowEmpty;
+      if (generation !== this.generation) return false;
       await this.store.write(value);
       return generation === this.generation;
     } catch (e) { this.failed(e); return false; }
-    finally { this.busy = false; }
+    finally { this.busy = false; release(); }
   }
+  /** Await an in-flight autosave, then capture the final paused state before leaving its slot. */
+  async flush(now: number): Promise<boolean> { await this.settled; return this.save(now, true, true); }
   async clear(): Promise<void> {
     this.generation++;
     try { await this.store.clear(); } catch (e) { this.failed(e); }

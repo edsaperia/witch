@@ -11,6 +11,7 @@ import type { ScreenShake } from "./shake";
 import type { QualityLadder } from "./ladder";
 import type { Freeze } from "../platform/freeze";
 import type { SettingsMenu } from "../ui/settingsMenu";
+import type { SavesHost } from "./saveSlots";
 
 /** The page's text panels text size scales (CSS zoom; Chrome, Safari and Firefox 126 on). */
 const TEXT = ["#studio-panel", ".corner-panel", ".legend-panel", ".boot-pop", ".loss-pop", "#sound-note", "#pause-btns", "#settings-page .win"];
@@ -25,6 +26,7 @@ export interface SettingsPageHost {
   audio(on: boolean): void;
   tuning(): object;
   version: string;
+  saves?: SavesHost;
 }
 
 type ScreenDetails = { screens: { label?: string }[] };
@@ -79,7 +81,7 @@ export class SettingsPage {
     this.loading = true;
     void import("../ui/settingsMenu").then(({ SettingsMenu }) => {
       this.menu = new SettingsMenu({
-        get: () => currentSettings(), set: s => this.set(s), version: this.host.version,
+        get: () => currentSettings(), set: s => this.set(s), version: this.host.version, saves: this.host.saves,
         fullscreen: () => !!document.fullscreenElement,
         setFullscreen: async (on, screen) => {
           try {

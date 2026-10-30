@@ -1,10 +1,11 @@
+import { slotStorage } from "./saveSlots";
 // What guidance keeps on this browser (localStorage witch.guide; rules/guidance.ts): the new things in the treehouse she hasn't
 // been to yet. Storage blocked: this run only. (A save from before 2026-10-26 also has chartSeen, the islands seen on the chart: unread.)
 import { emptyGuide, type GuideSave, type NewThing } from "../rules/guidance";
 
 export const GUIDE_KEY = "witch.guide";
 type Store = Pick<Storage, "getItem" | "setItem">;
-const storeOf = (s?: Store | null): Store | null => { try { return s ?? globalThis.localStorage ?? null; } catch { return null; } };
+const storeOf = (s?: Store | null): Store | null => { try { return s ?? slotStorage ?? null; } catch { return null; } };
 const KINDS = ["hat", "part", "wearable"];
 
 export function loadGuide(storage?: Store | null): GuideSave {

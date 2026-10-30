@@ -3,6 +3,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { TUNING } from "../rules/tuning";
 import { FORGOTTEN_KEYS, islandFromLink, tuningFromLink, worldFromLink } from "./linkParams";
+import { SLOT_INDEX } from "./saveSlots";
 
 /** A browser's localStorage, as Ed's was: the world and the fight remembered from an earlier load. */
 function fakeStorage(items: Record<string, string>) {
@@ -45,7 +46,7 @@ describe("the link's world (src/app/linkParams.ts)", () => {
     expect(tuning.areaScale).toBeCloseTo(TUNING.areaScale, 9);
     expect(tuning.treetopSpeed).toBe(TUNING.treetopSpeed);
     for (const k of FORGOTTEN_KEYS) expect(f.m.has(k), k).toBe(false);
-    expect(f.writes).toEqual([]);
+    expect(f.writes.filter(key => key !== SLOT_INDEX)).toEqual([]); // Slot metadata is not remembered rule tuning.
     expect(f.m.get("witch.volume")).toBe("0.4"); // (a per-viewer convenience that doesn't change the rules stays)
   });
   it("takes the world from the link alone, for that load only", () => {
@@ -55,7 +56,7 @@ describe("the link's world (src/app/linkParams.ts)", () => {
     expect(tuning.mapAreas).toBe(14);
     expect(tuning.map?.radius).toBeCloseTo(14 / Math.sqrt(Math.PI), 9);
     expect(tuning.treetopSpeed).toBe(90);
-    expect(f.writes).toEqual([]);
+    expect(f.writes.filter(key => key !== SLOT_INDEX)).toEqual([]);
     expect(tuningFromLink(new URLSearchParams()).tuning.mapAreas).toBe(TUNING.mapAreas); // (the next load, without it, is the default)
   });
   it("clamps the link's values", () => {
