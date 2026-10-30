@@ -296,6 +296,8 @@ export class StoneIndicator {
     this.shown = a;
     const o = `${(a * this.opacity).toFixed(2)}`;
     this.cue.canvas.style.opacity = o; this.cue.label.style.opacity = o;
+    // Opacity alone leaves invisible distance labels in the accessibility tree (first morning, #1469).
+    this.cue.canvas.style.visibility = this.cue.label.style.visibility = o === "0.00" ? "hidden" : "visible";
   }
 
   /** Point at the next waking stone at (x, z), its area's creature `species` and neon (rgb 0-1);

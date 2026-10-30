@@ -68,6 +68,20 @@ describe("a station panel: moving only moves the focus, choosing changes her (Ed
     }
   });
 
+  it("choosing an unchanged colour also dresses her, including a shoe rack with no item row", () => {
+    for (const station of ["wardrobe", "cloakPegs", "shoeRack", "bags"]) {
+      const p = panel(station, false), L = p.lines(), line = L.findIndex(l => l.kind === "grid"), l = L[line];
+      p.focus(line, 0);
+      p.g.palette = { ...p.g.palette, [p.partOf(p.shelves[l.shelf])]: ctx.swatch(p.shelves[l.shelf], 0, l.row!) };
+      const before = JSON.stringify(p.g);
+      p.awaitingDress = true;
+      expect(p.choose().look, station).toBeDefined();
+      expect(JSON.stringify(p.g), station).toBe(before);
+      expect(p.awaitingDress, station).toBe(false);
+      expect(p.choose().look, station).toBeUndefined();
+    }
+  });
+
   it("choosing an item she owns and isn't wearing puts it on; choosing again changes nothing more", () => {
     let tried = 0;
     for (const st of STATIONS) {
