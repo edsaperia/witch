@@ -3,6 +3,7 @@
 // growth spurt: every animal following her an adult at once; Ed, 2026-10-18), else the leash's own (put a sigil down, pick one up, a happy creature's rune;
 // rules/leash.ts); and a happy creature's rune near her trotting over to her. Then, after the 💌s, a sigil put down in
 // a legend's clearing finishing its quest (rules/quest.ts).
+import { wakeOf } from "./wakeUp";
 import { atZooExit } from "./zoo";
 import { needsBag, takeBroom, takeInvites } from "./kit";
 import { atMapTable, deckOf } from "./treehouse";
@@ -60,45 +61,45 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
   let sigil = !!c.sigil && !W.ko, place = !!c.place && !W.ko;
   // On the treehouse deck (rules/treehouse.ts) nothing goes down or comes up: there's nothing of hers up there. E at the map
   // table opens the sea chart (Ed, 2026-10-11: "The world map is in the centre").
-  const perched = !!g.witch.perch, deck = perched ? deckOf(g.map, t) : null;
+  const perched = !!W.body.perch, deck = perched ? deckOf(g.map, t) : null;
   if (perched) {
-    const inHouse = !!deck?.house?.rooms && g.witch.mode === "ground" && !g.witch.seated && !W.ko, x = g.witch.x, z = g.witch.z;
+    const inHouse = !!deck?.house?.rooms && W.body.mode === "ground" && !W.body.seated && !W.ko, x = W.body.x, z = W.body.z;
     // In the house's rooms (rules/houseRooms.ts; Ed, 2026-10-19): E at an object uses it (main.ts opens what it opens); the hats'
     // floor's hats are picked up and put down; E held at the bed fills its ring, and full, she sleeps: the night's over.
     const at = inHouse ? objectAt(deck!, x, z) : null;
-    if ((sigil || place) && deck && g.witch.mode === "ground" && !g.witch.seated && atMapTable(deck, x, z)) relicEvents.push({ kind: "chart", id: W.id, x: deck.x, z: deck.z, at: ht });
+    if ((sigil || place) && deck && W.body.mode === "ground" && !W.body.seated && atMapTable(deck, x, z)) relicEvents.push({ kind: "chart", id: W.id, x: deck.x, z: deck.z, at: ht });
     else if ((sigil || place) && at && at.use.kind === "hats") { const e = useHats(W, deck!, x, z, ht, t.leash.runeRadius); if (e) relicEvents.push(e); }
     else if ((sigil || place) && at && at.use.kind !== "bed" && at.use.kind !== "scenery") {
       // her night's kit (rules/kit.ts): E at the invitations desk, tonight's invitations; at the lathe, a broom
       if (at.use.kind === "invites" && needsBag(W)) relicEvents.push({ kind: "needBag", id: W.id, x: deck!.x + at.x, z: deck!.z + at.z, at: ht, obj: at.id }); // (no bag to carry them: the desk says so, rules/kit.ts NEED_BAG)
       else if (at.use.kind === "invites" ? takeInvites(W) : at.id === "lathe" && takeBroom(g, W)) relicEvents.push({ kind: "kit", id: W.id, x: deck!.x + at.x, z: deck!.z + at.z, at: ht, obj: at.use.kind === "invites" ? "invites" : "broom" });
       relicEvents.push({ kind: "house", id: W.id, x: deck!.x + at.x, z: deck!.z + at.z, at: ht, obj: at.id });
-      if (at.id === "dressingTable" && g.wake) g.wake.styled = true; // (her skin and hair seen to: the first morning's first step, rules/guidance.ts)
+      const waking = wakeOf(g, W); if (at.id === "dressingTable" && waking) waking.styled = true; // (her skin and hair seen to: the first morning's first step, rules/guidance.ts)
     }
-    if ((inHouse || W.house) && stepBed(W, at?.use.kind === "bed", !!c.sigilHeld && inHouse, ht).slept) relicEvents.push({ kind: "house", id: W.id, x, z, at: ht, obj: "slept" });
+    if ((inHouse || W.house) && stepBed(W, at?.use.kind === "bed", !!c.sigilHeld && inHouse, ht).slept && g.witches.every(w => w.house?.slept)) relicEvents.push({ kind: "house", id: W.id, x, z, at: ht, obj: "slept" });
     sigil = false; place = false;
   } else if (W.house?.bedFrom !== undefined) delete W.house.bedFrom;
   // E at the zoo's little treehouse takes her out of the zoo (Ed, 2026-10-26; rules/zoo.ts atZooExit; app/zooExit.ts does the leaving).
-  if (!perched && (sigil || place) && g.map.zoo?.layout && atZooExit(g.map, g.witch)) { g.zooExit ??= ht; sigil = false; place = false; }
-  const onFoot = g.witch.mode === "ground" && !g.witch.seated && !perched && !W.ko;
-  const pressed = (sigil || place) && g.witch.mode === "ground" && !g.witch.seated;
+  if (!perched && (sigil || place) && g.map.zoo?.layout && atZooExit(g.map, W.body)) { g.zooExit ??= ht; sigil = false; place = false; }
+  const onFoot = W.body.mode === "ground" && !W.body.seated && !perched && !W.ko;
+  const pressed = (sigil || place) && W.body.mode === "ground" && !W.body.seated;
   // Her hat first (rules/hat.ts): lying on a sigil or a relic's, the press picks up the hat, and the next the sigil.
   // Bare-headed by another hat of hers left lying (Ed, 2026-10-12), she puts that one on, and its spell is hers.
   // The hat button (the pad's triangle, Ed 2026-10-15: "her hat is placed and picked up with triangle"): the same pick-up, else,
   // wearing it, her hat goes down at her feet at once.
   const hatPress = !!c.hat && onFoot;
-  const worn = (sigil || place || hatPress) && g.witch.mode === "ground" ? hatButton(W.hat, g.witch.x, g.witch.z, t.leash.runeRadius, W.spells.hat) : null;
+  const worn = (sigil || place || hatPress) && W.body.mode === "ground" ? hatButton(W.hat, W.body.x, W.body.z, t.leash.runeRadius, W.spells.hat) : null;
   if (worn !== null) {
     if (worn !== W.spells.hat) setLoadout(W.spells, worn);
     sigil = false; place = false;
-    relicEvents.push({ kind: "hatPicked", id: W.id, x: g.witch.x, z: g.witch.z, at: ht }); // (after the leash's step, which starts its events afresh)
+    relicEvents.push({ kind: "hatPicked", id: W.id, x: W.body.x, z: W.body.z, at: ht }); // (after the leash's step, which starts its events afresh)
   } else if (hatPress && wearing(W.hat)) {
-    W.hat.down = { x: g.witch.x, z: g.witch.z, at: ht }; delete W.hat.hold;
-    relicEvents.push({ kind: "hatPut", id: W.id, x: g.witch.x, z: g.witch.z, at: ht });
+    W.hat.down = { x: W.body.x, z: W.body.z, at: ht }; delete W.hat.hold;
+    relicEvents.push({ kind: "hatPut", id: W.id, x: W.body.x, z: W.body.z, at: ht });
   }
   // Tonight's find (rules/finds.ts; Ed, 2026-10-21): the travel trunk, or a wreck (Ed, 2026-10-23); E at it while the party's on
   // takes what's in it, hers for the night (on loan till she sleeps: app/loan.ts; the kind's claim, if it has one: a broom part waits at the Workshop, not fitted).
-  const trunk = (sigil || place) && onFoot && !worldAsleep(g) ? trunkAt(g.trunk, g.witch.x, g.witch.z) : null; // (not there in the world asleep: the afterparty, or before the party, Ed 2026-10-26)
+  const trunk = (sigil || place) && onFoot && !worldAsleep(g) ? trunkAt(g.trunk, W.body.x, W.body.z) : null; // (not there in the world asleep: the afterparty, or before the party, Ed 2026-10-26)
   if (trunk) {
     trunk.found = true; sigil = false; place = false;
     findKind(trunk.kind).claim?.(W.spells, trunk.item!);
@@ -116,42 +117,46 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
   // A run (rules/leash.ts, Ed 2026-10-15): the button held since a press that picked up keeps picking up (a lying relic's sigil too);
   // held since one that put down, nothing here (the leash puts the next down as she enters an empty hex).
   const held = !!c.sigilHeld && onFoot && !stone, run = held && t.leash.runs !== false ? W.leash.run?.kind : undefined;
-  if ((sigil || place) && g.witch.mode === "ground" && !run) {
+  if ((sigil || place) && W.body.mode === "ground" && !run) {
     // A flask's sigil under her (Ed, 2026-10-18: "All flasks give growth spurt (all creatures following you become adults)"):
     // drunk on the spot, not carried. Every animal following her (on her stack, not parked at a sigil) younger than an adult
     // becomes one at once; with none to grow, nothing happens but the refusal's sound, and the flask stays where it lies.
-    const f = flaskUnder(relicsOut(g), g.witch.x, g.witch.z, t.leash.runeRadius);
+    const f = flaskUnder(relicsOut(g), W.body.x, W.body.z, t.leash.runeRadius);
     if (f) {
       sigil = false; place = false;
       const grown = growthSpurt(g.berries, g.creatures, W.leash.stack, g.clock.time);
-      if (grown > 0) { Object.assign(f, { state: "used", x: g.witch.x, z: g.witch.z }); relicEvents.push({ kind: "flaskDrunk", id: f.id, x: g.witch.x, z: g.witch.z, at: ht }); }
-      else relicEvents.push({ kind: "fizzled", id: f.id, x: g.witch.x, z: g.witch.z, at: ht });
+      if (grown > 0) { Object.assign(f, { state: "used", x: W.body.x, z: W.body.z }); relicEvents.push({ kind: "flaskDrunk", id: f.id, x: W.body.x, z: W.body.z, at: ht }); }
+      else relicEvents.push({ kind: "fizzled", id: f.id, x: W.body.x, z: W.body.z, at: ht });
     }
   }
-  stepLeash(g.leash, g.creatures, { sigil, place, held, cycle: !!c.cycle && !W.ko, cycleBack: !!c.cycleBack && !W.ko, rune: (x, z, r) => runeNear(g.creatures, x, z, r, g.clock.time, undefined, k => runeOffset(k, t)), dropRelic: (id, x, z) => Object.assign(g.relics[id], { state: "dropped", sx: x, sz: z }), inviteNearest: c.inviteNearest, barred: (x, z) => sigilBarred(g, x, z, t) || looseAt(g.loose, x, z, t),
+  const sharedPlaced = g.witches.length > 1 ? {
+    sigils: g.witches.flatMap(w => w === W ? [] : w.leash.placed),
+    take(id: number) { for (const w of g.witches) if (w !== W) { const i = w.leash.placed.findIndex(p => p.id === id); if (i >= 0) w.leash.placed.splice(i, 1); } },
+  } : undefined;
+  stepLeash(W.leash, g.creatures, { sigil, place, held, sharedPlaced, cycle: !!c.cycle && !W.ko, cycleBack: !!c.cycleBack && !W.ko, rune: (x, z, r) => runeNear(g.creatures, x, z, r, g.clock.time, undefined, k => runeOffset(k, t)), dropRelic: (id, x, z) => Object.assign(g.relics[id], { state: "dropped", sx: x, sz: z }), inviteNearest: c.inviteNearest, barred: (x, z) => sigilBarred(g, x, z, t) || looseAt(g.loose, x, z, t),
     loose: (x, z, r) => { const i = looseNear(g.loose, x, z, r); if (i < 0) return null; const p = g.loose[i], L = g.creatures[p.id]; return { id: p.id, x: p.x, z: p.z, ...(p.legend ? { tether: Math.hypot(p.x - L.x, p.z - L.z) } : {}) }; },
     takeLoose: id => { g.loose = g.loose.filter(p => p.id !== id); g.creatures[id].loose = undefined; },
-    dropTether: (id, x, z) => { g.loose.push({ id, x, z, at: g.clock.time, legend: true }); g.creatures[id].loose = true; }, land: (x, z) => isInside(g.map.bounds, x, z, BABY_COAST), talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, g.witch, g.witch.mode === "ground" && !perched && !W.ko, ht, hdt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling, guards);
-  g.leash.events.push(...relicEvents);
+    dropTether: (id, x, z) => { g.loose.push({ id, x, z, at: g.clock.time, legend: true }); g.creatures[id].loose = true; }, land: (x, z) => isInside(g.map.bounds, x, z, BABY_COAST), talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, W.body, W.body.mode === "ground" && !perched && !W.ko, ht, hdt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling, guards);
+  W.leash.events.push(...relicEvents);
   // Held with nothing to do (no sigil, relic, rune or hat picked up or put down, nothing refused), on the ground: her hat goes
   // down at her feet (rules/hat.ts putHat).
-  const idle = pressed && !stone && !g.leash.events.some(e => e.at === ht && e.kind !== "invited" && e.kind !== "befriended" && e.kind !== "cancelled");
-  if (putHat(W.hat, idle, !!(c.hatHold ?? c.sigilHeld) && onFoot && !stone, g.witch.x, g.witch.z, ht, t.leash.hatHold))
-    g.leash.events.push({ kind: "hatPut", id: W.id, x: g.witch.x, z: g.witch.z, at: ht });
+  const idle = pressed && !stone && !W.leash.events.some(e => e.at === ht && e.kind !== "invited" && e.kind !== "befriended" && e.kind !== "cancelled");
+  if (putHat(W.hat, idle, !!(c.hatHold ?? c.sigilHeld) && onFoot && !stone, W.body.x, W.body.z, ht, t.leash.hatHold))
+    W.leash.events.push({ kind: "hatPut", id: W.id, x: W.body.x, z: W.body.z, at: ht });
   // A happy creature's rune near her on the ground comes to her (Ed's playtest, 2026-10-06: "Floor sigils of happy creatures ... are
   // difficult to pick up"): its creature trots over (leash.runePull), so she needn't stop dead on it.
-  if (g.witch.mode === "ground" && !g.witch.seated && !perched && !W.ko) pullRune(g, t, step);
+  if (W.body.mode === "ground" && !W.body.seated && !perched && !W.ko) pullRune(g, t, step, W);
 }
 
 /** A sigil put down this step in a sleeping legend's clearing finishes its quest: only the drop does (Ed, 2026-10-19: "The reward should
  *  be given when the sigil is placed, not when the animal enters the circle"; her animal of its kind walking in does nothing). */
-export function questsFromPlaced(g: Game, ht: number): void {
+export function questsFromPlaced(g: Game, ht: number, W: Witch = g.witches[0]): void {
   if (worldAsleep(g) || g.map.zoo) return; // (no quests once the party's over, Ed 2026-10-18, nor before it, nor in the zoo: Ed, 2026-10-26)
   // A sigil put down in a wild area whose legend dreams of that creature: the quest is done.
-  for (const e of g.leash.events.slice()) if (e.kind === "placed" && e.at === ht) {
+  for (const e of W.leash.events.slice()) if (e.kind === "placed" && e.at === ht) {
     const ids = (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id)), L = questPlaced(g.map, g.creatures, ids, g.friendly, k => g.party.areas.has(k), e.id, e.x, e.z, g.clock.time);
     // (the right creature, but outside its legend's clearing: a gentle cue, and nothing happens)
-    if (!L) { const O = questOutside(g.map, g.creatures, ids, k => g.party.areas.has(k), e.id, e.x, e.z); if (O) g.leash.events.push(outsideCircle(g, O)); }
+    if (!L) { const O = questOutside(g.map, g.creatures, ids, k => g.party.areas.has(k), e.id, e.x, e.z); if (O) W.leash.events.push(outsideCircle(g, O)); }
     if (L) questDone(g, L, e.id);
   }
 }
@@ -182,13 +187,13 @@ export function befriendArea(g: Game, key: string): void {
 /** The nearest happy creature with its rune within leash.runePull.radius of her walks toward her, till its rune is leash.runePull.stop
  *  from her. It heads for the spot that puts its rune at her feet (its rune's offset north of her: rules/runeOffset.ts), from any side (Ed, 2026-10-12: "Pull from
  *  any side"): where the straight way there passes her or one of her followers, it goes round them, on its own side. */
-export function pullRune(g: Game, t: Tuning, fixed: number): void {
-  const P = t.leash.runePull, w = g.witch, c = runeNear(g.creatures, w.x, w.z, P.radius, g.clock.time, undefined, k => runeOffset(k, t));
+export function pullRune(g: Game, t: Tuning, fixed: number, W: Witch = g.witches[0]): void {
+  const P = t.leash.runePull, w = W.body, c = runeNear(g.creatures, w.x, w.z, P.radius, g.clock.time, undefined, k => runeOffset(k, t));
   if (!c || c.fight?.target) return;
   const south = runeOffset(c, t);
   const gx = w.x, gz = w.z - south, d = Math.hypot(gx - c.x, gz - c.z); // (it walks so its rune, south of it, comes to her)
   if (d <= P.stop) return;
-  const [tx, tz] = roundAbout(g, c, gx, gz, d), ex = tx - c.x, ez = tz - c.z, e = Math.hypot(ex, ez) || 1;
+  const [tx, tz] = roundAbout(g, c, gx, gz, d, W), ex = tx - c.x, ez = tz - c.z, e = Math.hypot(ex, ez) || 1;
   const step = Math.min(e === d ? d - P.stop : e, P.speed * fixed * g.timeScale);
   c.x += (ex / e) * step; c.z += (ez / e) * step; c.tx = c.x; c.tz = c.z;
   if (Math.abs(ex) > 0.02) c.facing = ex > 0 ? 1 : -1;
@@ -198,8 +203,8 @@ export function pullRune(g: Game, t: Tuning, fixed: number): void {
 /** Where a pulled creature at c heads for its goal (gx, gz), d away: the goal, or, when the straight way passes within reach of her
  *  or one of her followers (the leashed near her), a waypoint beside the first of them in the way, on the side the creature is
  *  already on, far enough out to clear it (re-chosen every step, so it walks round). */
-function roundAbout(g: Game, c: Creature, gx: number, gz: number, d: number): [number, number] {
-  const w = g.witch, ux = (gx - c.x) / d, uz = (gz - c.z) / d, mine = spaceRadius(c);
+function roundAbout(g: Game, c: Creature, gx: number, gz: number, d: number, W: Witch): [number, number] {
+  const w = W.body, ux = (gx - c.x) / d, uz = (gz - c.z) / d, mine = spaceRadius(c);
   let best: { t: number; ox: number; oz: number; r: number; side: number } | null = null;
   const test = (ox: number, oz: number, r: number) => {
     const rx = ox - c.x, rz = oz - c.z, t = rx * ux + rz * uz, side = rx * uz - rz * ux; // along the way, and across it (+: on its left)

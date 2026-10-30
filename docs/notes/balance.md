@@ -41,4 +41,6 @@ The coordinator's ruling on PR #1463 (2026-10-29): ranged exposure is **actual r
 
 ## Playtest logs
 
+The follow-up [balance study](balance-study.md) records a same-source 100/200-bpm, longer-horizon preflight on home/Tiger, with its raw evidence and limits. It leaves the v5655 baseline intact; the larger matched study's scope is a coordinator decision on PR #1475.
+
 Ed's logs (the pause page's **Download log**) are kept on `claude/ed-shots` under `previews/ed/playtests/`; each file holds several sessions, newest last.
