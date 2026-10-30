@@ -16,6 +16,7 @@ const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTal
 const run = (g: Game, secs: number, first: Controls = idle, each?: () => void) => { for (let i = 0; i < Math.round(secs / STEP); i++) { stepGame(g, i === 0 ? first : idle, STEP); each?.(); } };
 /** The witch on the ground beside a sleeping legend, everything else round it gone but one of its kind. */
 function beside(kin = true, t: Tuning = NO_SLOW): { g: Game; L: Creature; mate: Creature | null } {
+  // Retain >300 m recruits, 700 m neighbouring-legend exclusion and the second relic for the long-range combat fixtures.
   const g = newGame(123, t);
   g.clock.paused = false; g.party.paused = true;
   g.clearedAt = Infinity; // (no area clears: this empties areas by hand; rules/clear.ts)
@@ -375,6 +376,7 @@ describe("an awake legend with nothing in reach (balance, 2026-10-06)", () => {
 
 describe("legends going back to sleep (Ed, 2026-10-06)", () => {
   it("look for their kind every legends.check seconds (5), each on its own beat, not all on one frame", () => {
+    // Retain the full dealt legend population to check that independent looks do not bunch on one frame.
     expect(LEGENDS.check).toBe(5);
     const g = newGame(123, NO_SLOW), ids = g.creatures.filter(c => c.boss).map(c => c.id).slice(0, 40);
     for (const c of g.creatures) if (!c.boss) c.gone = true; // (none of anyone's kind anywhere: each turns restless on its first look)
