@@ -10,7 +10,9 @@ import { openRules } from "./lib.mjs";
 import { sourceFingerprint } from "./expert-contract.mjs";
 
 const arg = (key, fallback) => { const i = process.argv.indexOf(`--${key}`); return i < 0 ? fallback : process.argv[i + 1]; };
-const cap = Number(arg("wall-seconds", 1200)), output = arg("out", "");
+const ablation = process.argv.includes("--dream-visit-ablation"), limit = ablation ? 60 : 3000;
+const cap = Number(arg("wall-seconds", ablation ? 180 : 1200)), output = arg("out", "");
+if (ablation && cap > 180) throw Error("Dream-visit ablation worker must fit180s; whole job300s including preflight");
 if (!output || !Number.isFinite(cap) || cap <= 0 || cap > 1200) throw Error("Supply fresh --out and --wall-seconds <=1200; whole job <=1500 including preflight");
 if (!process.argv.includes("--worker")) {
   const child = spawn(process.execPath, [fileURLToPath(import.meta.url), ...process.argv.slice(2), "--worker"], { stdio: "inherit" });
@@ -32,9 +34,10 @@ const manifest = { schema: 1, diagnosticOnly: true, startedUtc: new Date().toISO
   fingerprint: sourceFingerprint(root), previousSource: "1ce28fd9d9f96ea2518b3d97811760ae793d2c8f",
   runtime: { node: process.version, platform: process.platform, arch: process.arch },
   observation: "approximate fair observation", reactionSeconds: .25, inputHz: 8, aimErrorMetres: 1,
-  limit: 3000, workerWallSeconds: cap, wholeJobWallSeconds: 1500, heldCases: 0, noRestart: true,
-  stop: "first wonAt, partyOver, or 3000 player seconds; no post-win extension",
-  cases: ["matched", "home-everything"].flatMap(condition => ["baseline", "D"].map(vector => ({ vector, condition, seed: 1000, worldSeed: 0, island: "home", bpm: 100, bag: "satchel", hat: "none", wearsHat: false, parts: [] }))) };
+  limit, workerWallSeconds: cap, wholeJobWallSeconds: ablation ? 300 : 1500, heldCases: 0, noRestart: true,
+  dreamVisitAblation: ablation, rememberDreamVisitsDefault: true,
+  stop: `first wonAt, partyOver, or ${limit} player seconds; no post-win extension`,
+  cases: (ablation ? ["home-everything"] : ["matched", "home-everything"]).flatMap(condition => (ablation ? ["off", "on"] : ["baseline", "D"]).map(vector => ({ vector, condition, seed: 1000, worldSeed: 0, island: "home", bpm: 100, bag: "satchel", hat: "none", wearsHat: false, parts: [] }))) };
 writeFileSync(resolve(out, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
 const { load, close } = await openRules();
 const summaries = [], began = Date.now();
@@ -70,7 +73,7 @@ try {
       // These sets name selected visits/available offerings, not proof of arrival or delivery.
       for (const q of event.knownQuests) if (event.observation.carried.some(a => a.species === q.wants)) offered.add(q.id);
       emit({ ev: "decision", step, ...event });
-    });
+    }, { rememberDreamVisits: ablation ? c.vector === "on" : true });
     const quests = () => g.creatures.filter(q => q.boss && q.quest).map(q => ({ id: q.id, species: q.species, wants: q.quest.species,
       done: q.quest.done ?? null, open: questOpen(g.party, q), questOpenFlag: q.questOpen ?? null,
       legendState: q.legendState ?? null, angry: !!q.enraged, gone: !!q.gone, x: q.x, z: q.z, cell: q.cell,
@@ -82,14 +85,14 @@ try {
       const s = state(), key = JSON.stringify(s);
       if (force || key !== lastState) { emit({ ev: "privilegedStateOutputOnly", step, playerTime: g.herTime, worldTime: g.clock.time, ...s }); lastState = key; }
     };
-    emit({ ev: "setup", case: c, policy, STEP, limit: 3000, seed: c.seed ^ 0x1477, diagnosticOnly: true }); snapshot(true);
+    emit({ ev: "setup", case: c, policy, rememberDreamVisits: ablation ? c.vector === "on" : true, STEP, limit, seed: c.seed ^ 0x1477, diagnosticOnly: true }); snapshot(true);
     const started = Date.now();
-    for (; step < Math.ceil(3000 / STEP); step++) {
+    for (; step < Math.ceil(limit / STEP); step++) {
       const controls = brain.decide(g), serial = JSON.stringify(controls);
       hash.update(`${step}:${serial}\n`);
       // Change points plus step count reconstruct the complete held-control stream.
       if (serial !== lastControl) { emit({ ev: "controls", step, playerTime: g.herTime, controls }); lastControl = serial; }
-      stepGame(g, controls, Math.min(STEP, 3000 - step * STEP));
+      stepGame(g, controls, Math.min(STEP, limit - step * STEP));
       for (const [kind, events] of [["quest", g.questEvents], ["leash", g.leashEvents], ["invite", w.invites.events], ["ko", g.koEvents]])
         for (const event of events) emit({ ev: "ruleEventOutputOnly", kind, step, playerTime: g.herTime, worldTime: g.clock.time, event });
       snapshot(false);
@@ -102,9 +105,10 @@ try {
       knownQuestIds: [...known], selectedQuestIds: [...selected], selectedVisitLegendIds: [...visited],
       knownQuestIdsWithCarriedOffering: [...offered], upgradeFound: !!g.trunk?.found,
       upgradeEligibleToKeep: !!g.trunk?.found && g.win?.wonAt !== undefined, upgradePersisted: false,
-      endedAtWin: g.win?.wonAt !== undefined, noPostWinSteps: true };
+      endedAtWin: g.win?.wonAt !== undefined, noPostWinSteps: true,
+      ...(ablation ? { rememberDreamVisits: c.vector === "on", diagnosticLegend239RequestLearned: known.has(239) } : {}) };
     emit({ ev: "end", ...summary }); summaries.push(summary);
-    writeFileSync(resolve(out, "summary.json"), JSON.stringify({ complete: summaries.length === 4, cases: summaries, wallSeconds: (Date.now() - began) / 1000 }, null, 2) + "\n");
-    console.error(`${index + 1}/4 ${c.condition}/${c.vector}: ${outcome}, ${summary.questsCompleted}/${summary.questsTotal} quests`);
+    writeFileSync(resolve(out, "summary.json"), JSON.stringify({ complete: summaries.length === manifest.cases.length, cases: summaries, wallSeconds: (Date.now() - began) / 1000 }, null, 2) + "\n");
+    console.error(`${index + 1}/${manifest.cases.length} ${c.condition}/${c.vector}: ${outcome}, ${summary.questsCompleted}/${summary.questsTotal} quests`);
   }
 } finally { await close(); }

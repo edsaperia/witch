@@ -49,3 +49,57 @@ for (const questMax of [1, 2]) test(`diagnostic output preserves every control, 
   expect(events.some(e => e.controls.fire)).toBe(true);
   expect(events.some(e => e.doing === "bringing a requested sigil to a legend")).toBe(true);
 });
+
+const legend = () => ({ id: 9, species: "fox", level: 3, boss: true, friendly: false, angry: false,
+  stunned: false, area: "1,1", rune: null, x: 30, z: 0 });
+function visitScript(rememberDreamVisits: boolean, change: (o: Observation, t: number) => void, end = 6) {
+  const events: ExpertTrace[] = [], bot = newExpert({}, 123, EXPERT_LIMITS, e => events.push(e), { rememberDreamVisits });
+  for (let i = 0; i <= end * 60; i++) {
+    const o = observation(), t = i / 60; o.playerTime = t; o.worldTime = t;
+    o.next = { x: -100, z: 0 }; if (t < .5) o.creatures = [legend()]; change(o, t);
+    bot.decide({ fixture: o } as unknown as Game);
+  }
+  return events;
+}
+test("a selected dream visit remembers only its observed position after it leaves view", () => {
+  const on = visitScript(true, () => {}), off = visitScript(false, () => {});
+  const at2 = (events: ExpertTrace[]) => events.find(e => e.observation.playerTime >= 2)!;
+  expect(at2(on).observation.creatures).toEqual([]);
+  expect(at2(on).dreamVisit).toEqual({ id: 9, x: 30, z: 0, until: 30 });
+  expect(at2(on).visitingLegend).toBe(9); expect(at2(on).controls.moveX).toBeGreaterThan(0);
+  expect(at2(off).visitingLegend).toBeNull(); expect(at2(off).controls.moveX).toBeLessThan(0);
+});
+for (const open of [true, false]) test(`arrival alone never marks a dream read; real ${open ? "open" : "closed"} cue releases job`, () => {
+  const events = visitScript(true, (o, t) => {
+    if (t >= 1) { o.self.x = 34; o.self.z = 4; }
+    if (t >= 3) o.quests = [{ id: 9, wants: open ? "hare" : "", open, delivery: { x: 34, z: 4 }, hint: null }];
+  });
+  const arrived = events.find(e => e.observation.playerTime >= 2)!;
+  expect(arrived.visitingLegend).toBe(9); expect(arrived.heardDreams).toEqual([]);
+  const read = events.find(e => e.observation.playerTime >= 3)!;
+  expect(read.dreamVisit).toBeNull(); expect(read.heardDreams).toContain(9);
+  expect(read.knownQuests.map(q => q.id)).toEqual(open ? [9] : []);
+});
+test("healing, KO and audible dodge interrupt the visit without replacing its destination", () => {
+  const events = visitScript(true, (o, t) => {
+    if (t >= 1 && t < 2) o.self.hp = 1;
+    if (t >= 2 && t < 3) o.self.ko = true;
+    if (t >= 3 && t < 4) o.windups = [{ x: 2, z: 0 }];
+  });
+  for (const [t, doing] of [[1.2, "rising to heal"], [2.2, "recovering"], [3.2, "dodging an audible wind-up"]] as const) {
+    const e = events.find(e => e.observation.playerTime >= t)!;
+    expect(e.doing).toBe(doing); expect(e.dreamVisit?.id).toBe(9); expect(e.dreamVisit?.until).toBe(30);
+  }
+  expect(events.find(e => e.observation.playerTime >= 4.2)!.visitingLegend).toBe(9);
+});
+for (const interrupted of [false, true]) test(`the 30-second deadline cannot renew or restart, interrupted=${interrupted}`, () => {
+  const events = visitScript(true, (o, t) => {
+    o.creatures = [{ ...legend(), x: t > 1 ? 40 : 30 }];
+    if (interrupted && t >= 1 && t < 31) o.self.ko = true;
+  }, 32);
+  expect(events.filter(e => e.dreamVisit).every(e => e.dreamVisit!.until === 30)).toBe(true);
+  const expired = events.filter(e => e.observation.playerTime >= 30);
+  expect(expired.length).toBeGreaterThan(1);
+  expect(expired.every(e => e.dreamVisit === null && e.visitingLegend === null)).toBe(true);
+  expect(expired.at(-1)!.heardDreams).toEqual([]);
+});

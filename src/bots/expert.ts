@@ -13,16 +13,18 @@ export const EXPERT_DEFAULTS = {
 export type ExpertParams = typeof EXPERT_DEFAULTS;
 export const EXPERT_LIMITS = { reactionSeconds: 0.25, inputHz: 8, aimErrorMetres: 1 };
 export interface HumanLimits { reactionSeconds: number; inputHz: number; aimErrorMetres: number }
+export interface ExpertOptions { rememberDreamVisits?: boolean }
 // Output only: detached copies, emitted after choosing controls. Never read back.
 export interface ExpertTrace {
   playerTime: number; observation: Observation; doing: string; controls: Controls;
   knownQuests: Observation["quests"]; heardDreams: number[]; selectedQuest: number | null; visitingLegend: number | null;
+  dreamVisit: (Point & { id: number; until: number }) | null;
 }
 
 const idle = (): Controls => ({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 });
 const dist = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.z - b.z);
 
-export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: HumanLimits = EXPERT_LIMITS, trace?: (event: ExpertTrace) => void): Bot {
+export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: HumanLimits = EXPERT_LIMITS, trace?: (event: ExpertTrace) => void, options: ExpertOptions = {}): Bot {
   if (limits.reactionSeconds < 0.25 || limits.inputHz > 8 || limits.inputHz <= 0 || limits.aimErrorMetres < 1 || ![limits.reactionSeconds, limits.inputHz, limits.aimErrorMetres].every(Number.isFinite)) throw Error("Expert human limits below approved floors");
   const K = { ...EXPERT_DEFAULTS, ...params }, observe = newObserver();
   if (!Object.values(K).every(Number.isFinite)) throw Error("Invalid expert parameters");
@@ -34,6 +36,8 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
   let patrolPoint: (Point & { until: number }) | null = null;
   let selectedQuest: number | null = null;
   let visitingLegend: number | null = null;
+  const rememberDreamVisits = options.rememberDreamVisits !== false, abandonedVisits = new Set<number>();
+  let dreamVisit: (Point & { id: number; until: number }) | null = null;
   const bot: Bot = { kind: "expert", doing: "waiting for observations", done: { quests: [], relics: [] }, decide };
   return bot;
 
@@ -59,7 +63,7 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
       controls.aimZ = (controls.aimZ ?? 0) + Math.sin(angle) * limits.aimErrorMetres;
     }
     if (trace && observed) trace(structuredClone({ playerTime: now.playerTime, observation: observed,
-      doing: bot.doing, controls, knownQuests: [...quests.values()], heardDreams: [...heardDreams], selectedQuest, visitingLegend }));
+      doing: bot.doing, controls, knownQuests: [...quests.values()], heardDreams: [...heardDreams], selectedQuest, visitingLegend, dreamVisit }));
     return { ...controls };
   }
 
@@ -68,6 +72,14 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
     visitingLegend = null;
     const c = idle(), w = o.self;
     for (const q of o.quests) { heardDreams.add(q.id); if (q.open) quests.set(q.id, structuredClone(q)); else quests.delete(q.id); }
+    if (dreamVisit) {
+      const visible = o.creatures.find(a => a.id === dreamVisit!.id);
+      // Deadline uses delayed player time and never extends, including while
+      // safety actions interrupt. Timed-out IDs cannot instantly start again.
+      if (o.playerTime >= dreamVisit.until) { abandonedVisits.add(dreamVisit.id); dreamVisit = null; }
+      else if (o.quests.some(q => q.id === dreamVisit!.id) || visible?.friendly || visible?.angry) dreamVisit = null;
+      else if (visible) { dreamVisit.x = visible.x; dreamVisit.z = visible.z; }
+    }
     const putDown = () => {
       const near = o.placed.find(p => dist(w, p) < Math.max(o.pickRadius, o.spacing) * 1.1);
       if (!near) c.sigil = true;
@@ -114,8 +126,15 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
     }
     // Learning a quest needs a visit: sleeping legends have no remote quest
     // pointer. Only approach one actually seen, then read its ground-level dream.
-    const sleeper = !quests.size && heardDreams.size < K.questMax ? o.creatures.filter(a => a.boss && !a.friendly && !a.angry && !heardDreams.has(a.id) && dist(w, a) <= K.questRange).sort((a, b) => dist(w, a) - dist(w, b))[0] : null;
-    if (sleeper) {
+    const sleeper = !quests.size && heardDreams.size < K.questMax ? o.creatures.filter(a => a.boss && !a.friendly && !a.angry && !heardDreams.has(a.id) && (!rememberDreamVisits || !abandonedVisits.has(a.id)) && dist(w, a) <= K.questRange).sort((a, b) => dist(w, a) - dist(w, b))[0] : null;
+    if (rememberDreamVisits && !dreamVisit && sleeper) dreamVisit = { id: sleeper.id, x: sleeper.x, z: sleeper.z, until: o.playerTime + 30 };
+    if (rememberDreamVisits && dreamVisit) {
+      visitingLegend = dreamVisit.id;
+      bot.doing = "visiting a visible legend's dream";
+      go({ x: dreamVisit.x + 4, z: dreamVisit.z + 4 }, 6, true);
+      return c; // Arrival alone is not evidence that a request was read.
+    }
+    if (!rememberDreamVisits && sleeper) {
       visitingLegend = sleeper.id;
       bot.doing = "visiting a visible legend's dream";
       if (go({ x: sleeper.x + 4, z: sleeper.z + 4 }, 6, true)) heardDreams.add(sleeper.id);

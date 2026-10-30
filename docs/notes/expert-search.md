@@ -1,5 +1,27 @@
 # Expert search: implementation and fairness audit
 
+Coordinator 6518764991 (2026-10-30) approved the bounded dream-visit job after
+trace result `576e7fcd`: arcticfox239 was selected for one input at 11.85 s,
+then abandoned out of view before its request was read. The expert now remembers
+an actually selected eligible legend's last observed position for at most 30
+delayed player seconds. New visible positions may refresh the destination, never
+the deadline. Healing, KO and audible dodge keep priority. A real request/closed
+cue or a visible friendly/angry legend ends the job; arrival alone never counts
+as reading. A timed-out ID is abandoned for this night so it cannot immediately
+start another 30 s job (passive observations may still teach its request).
+No hidden map/quest data or win-timing rule changes are involved.
+
+The fifth `newExpert` argument offers `rememberDreamVisits:false` solely for
+the approved off/on ablation; the default is on. This is not a searched knob.
+`expert-quest-trace.mjs --dream-visit-ablation --out <fresh-folder>
+--wall-seconds 180` fixes exactly two unlocked-home100/world0/night1000,
+Satchel/no-hat/bare-broom cases, 60 player seconds each, off then on. The outer
+cloud job must cap the complete preflight/run at 300 wall seconds. The primary
+diagnostic is whether legend239's actual fair request is learned by 60 s, not
+a win, quest completion or strength score. No automatic restart is allowed.
+After its results, fair exploration for the wholly unseen legends needs a
+separate plan and approval; it is not included in this visit fix.
+
 Diagnostic quest traces (coordinator 6517804162, 2026-10-30):
 `expert-quest-trace.mjs` runs exactly baseline versus D (`questMax:2`) on
 world 0/night 1000/home/100 bpm, matched and home-everything, Satchel/no
