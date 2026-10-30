@@ -1,0 +1,605 @@
+{
+  "commit": "8cd150c29c9390c4fa5e2ce31e067fdad8abd274",
+  "build": {
+    "version": "dev · 8cd150c",
+    "built": "2026-10-30T01:13:56.763Z"
+  },
+  "modes": {
+    "fire": {
+      "state": {
+        "version": "Coven Rush",
+        "camera": {
+          "zoomStep": 3,
+          "zoom": 0.375,
+          "tx": 3190.754367956137,
+          "ty": 1.4,
+          "tz": 3106.559326444441,
+          "vx": 0,
+          "vy": 0,
+          "vz": 0,
+          "ax": 0,
+          "az": 0,
+          "lift": 0,
+          "pull": 0,
+          "intro": 0,
+          "coast": 0,
+          "gaze": 0,
+          "seaBehind": 0.569416652176196
+        },
+        "lights": 20,
+        "effectLights": 6,
+        "budget": 20,
+        "treeReady": null
+      },
+      "timing": {
+        "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "samples": [
+          {
+            "enabled": false,
+            "gpuMs": 10.94026,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 10.902239,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 9.419114,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 11.69427,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 10.382968,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 11.480937,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 11.446406,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 10.209166,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 9.997291,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 12.083854,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 9.379375,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 12.775468,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 10.240104,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 10.785572,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 12.083802,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 10.748489,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 13.687343,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 11.007083,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 12.624947,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 12.679687,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          }
+        ]
+      }
+    },
+    "frost": {
+      "state": {
+        "version": "Coven Rush",
+        "camera": {
+          "zoomStep": 3,
+          "zoom": 0.375,
+          "tx": 3190.754367956137,
+          "ty": 1.4,
+          "tz": 3106.559326444441,
+          "vx": 0,
+          "vy": 0,
+          "vz": 0,
+          "ax": 0,
+          "az": 0,
+          "lift": 0,
+          "pull": 0,
+          "intro": 0,
+          "coast": 0,
+          "gaze": 0,
+          "seaBehind": 0.569416652176196
+        },
+        "lights": 20,
+        "effectLights": 6,
+        "budget": 20,
+        "treeReady": null
+      },
+      "timing": {
+        "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "samples": [
+          {
+            "enabled": false,
+            "gpuMs": 12.123541,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 19.030468,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 26.301197,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 15.931406,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 12.203281,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 12.751614,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 13.655416,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 16.047656,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 11.267604,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 11.463281,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 13.23052,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 11.544739,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 10.94578,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 17.369427,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 16.12875,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 12.70427,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 13.9425,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 19.978489,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 16.49177,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 19.5125,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          }
+        ]
+      },
+      "frostTree": {
+        "x": 3182.425910089053,
+        "z": 3088.2695047176157,
+        "type": 29,
+        "samples": [
+          {
+            "time": 1.5,
+            "amount": 0.8076810948988971
+          },
+          {
+            "time": 4.5,
+            "amount": 0.20768109489889705
+          },
+          {
+            "time": 7.5,
+            "amount": 0
+          }
+        ]
+      }
+    },
+    "party": {
+      "state": {
+        "version": "Coven Rush",
+        "camera": {
+          "zoomStep": 3,
+          "zoom": 0.375,
+          "tx": 3190.754367956137,
+          "ty": 1.4,
+          "tz": 3106.559326444441,
+          "vx": 0,
+          "vy": 0,
+          "vz": 0,
+          "ax": 0,
+          "az": 0,
+          "lift": 0,
+          "pull": 0,
+          "intro": 0,
+          "coast": 0,
+          "gaze": 0,
+          "seaBehind": 0.569416652176196
+        },
+        "lights": 20,
+        "effectLights": 6,
+        "budget": 20,
+        "treeReady": null
+      },
+      "timing": {
+        "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "samples": [
+          {
+            "enabled": false,
+            "gpuMs": 10.760572,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 11.045833,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 10.067135,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 11.059322,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 10.708802,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 11.15276,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 11.27302,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 11.11052,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 11.268854,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 12.401406,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 10.129531,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 11.397968,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 9.187239,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 10.032552,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 10.420208,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 13.375676,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 14.718593,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 14.892239,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          },
+          {
+            "enabled": false,
+            "gpuMs": 9.518125,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 0,
+            "totalLights": 15
+          },
+          {
+            "enabled": true,
+            "gpuMs": 10.514843,
+            "disjoint": false,
+            "ready": true,
+            "effectLights": 6,
+            "totalLights": 20
+          }
+        ]
+      }
+    }
+  },
+  "errors": []
+}
