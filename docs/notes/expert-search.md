@@ -1,5 +1,27 @@
 # Expert search: implementation and fairness audit
 
+Fair coverage pilot (coordinator 6519017191, 2026-10-30): `coverage.ts` remembers
+only fully contained 20 m grid cells in consumed delayed observation rectangles.
+The observer exposes its existing approximate camera extents as detached `view`
+scalars; unknown cells have no terrain, boundary or legend information. Fixed
+eight-direction candidates 100 m away are ranked by the fraction of their
+projected footprint already observed, with heading-order ties. One held waypoint
+per 30-player-second interval gets at most 5 s, with a 0.25 s conservative control
+handoff margin. Arrival or the fixed deadline ends it; less than 2 m movement
+after 1 s abandons the heading for 30 s. Safety, active dream visits, requested
+recruitment/delivery, visible ready casting, alarms and stragglers keep priority.
+This can interrupt unrelated loot/recruitment and ordinary exploration only.
+
+Coverage is an opt-in candidate (`newExpert` option `coverageExploration:true`),
+default off pending pilot evidence; the verified dream-visit fix stays on.
+`expert-quest-trace.mjs --coverage-pilot --out <fresh-folder> --wall-seconds 360`
+fixes off/on x matched/unlocked home100, world0/night1000, 300 player seconds,
+default questMax1 and matched Satchel/no-hat/bare-broom gear. Whole cloud job cap
+is 480 s including preflight. Seen eligible legend IDs and real learned requests
+carry observation/consumption times; summaries also separate fully observed
+footprint, exploration seconds, knockdowns/minimum HP, wave reached and outcomes.
+These are censored discovery diagnostics, not full-night fitness or a new lock.
+
 Coordinator 6518764991 (2026-10-30) approved the bounded dream-visit job after
 trace result `576e7fcd`: arcticfox239 was selected for one input at 11.85 s,
 then abandoned out of view before its request was read. The expert now remembers

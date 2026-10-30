@@ -3,6 +3,7 @@
 import type { Bot } from "../rules/bot";
 import type { Controls, Game } from "../rules/game";
 import { newObserver, type Observation, type Point } from "./observe";
+import { newCoverage } from "./coverage";
 
 export const EXPERT_DEFAULTS = {
   healAt: 1, healTo: 3, kite: 9, dashAt: 5, fireFrac: 0.95, closeFrac: 0.8,
@@ -13,12 +14,13 @@ export const EXPERT_DEFAULTS = {
 export type ExpertParams = typeof EXPERT_DEFAULTS;
 export const EXPERT_LIMITS = { reactionSeconds: 0.25, inputHz: 8, aimErrorMetres: 1 };
 export interface HumanLimits { reactionSeconds: number; inputHz: number; aimErrorMetres: number }
-export interface ExpertOptions { rememberDreamVisits?: boolean }
+export interface ExpertOptions { rememberDreamVisits?: boolean; coverageExploration?: boolean }
 // Output only: detached copies, emitted after choosing controls. Never read back.
 export interface ExpertTrace {
   playerTime: number; observation: Observation; doing: string; controls: Controls;
   knownQuests: Observation["quests"]; heardDreams: number[]; selectedQuest: number | null; visitingLegend: number | null;
   dreamVisit: (Point & { id: number; until: number }) | null;
+  coverage: ReturnType<ReturnType<typeof newCoverage>["snapshot"]>;
 }
 
 const idle = (): Controls => ({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 });
@@ -38,6 +40,7 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
   let visitingLegend: number | null = null;
   const rememberDreamVisits = options.rememberDreamVisits !== false, abandonedVisits = new Set<number>();
   let dreamVisit: (Point & { id: number; until: number }) | null = null;
+  const coverage = newCoverage(), coverageEnabled = options.coverageExploration === true;
   const bot: Bot = { kind: "expert", doing: "waiting for observations", done: { quests: [], relics: [] }, decide };
   return bot;
 
@@ -63,11 +66,12 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
       controls.aimZ = (controls.aimZ ?? 0) + Math.sin(angle) * limits.aimErrorMetres;
     }
     if (trace && observed) trace(structuredClone({ playerTime: now.playerTime, observation: observed,
-      doing: bot.doing, controls, knownQuests: [...quests.values()], heardDreams: [...heardDreams], selectedQuest, visitingLegend, dreamVisit }));
+      doing: bot.doing, controls, knownQuests: [...quests.values()], heardDreams: [...heardDreams], selectedQuest, visitingLegend, dreamVisit, coverage: coverage.snapshot() }));
     return { ...controls };
   }
 
   function policy(o: Observation): Controls {
+    coverage.observe(o);
     selectedQuest = null;
     visitingLegend = null;
     const c = idle(), w = o.self;
@@ -139,6 +143,13 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
       bot.doing = "visiting a visible legend's dream";
       if (go({ x: sleeper.x + 4, z: sleeper.z + 4 }, 6, true)) heardDreams.add(sleeper.id);
       return c;
+    }
+    // The candidate may interrupt only lower-priority ordinary work. Missing
+    // cells are unobserved, not known walkable terrain. No map query is made.
+    const requestedVisible = quest && o.creatures.some(a => !a.boss && !a.friendly && !a.rune && a.species === quest.wants);
+    if (coverageEnabled && !requestedVisible && !o.stones.some(s => s.open && s.ready) && !o.alarms.length && !o.straggler) {
+      const point = coverage.waypoint(o);
+      if (point) { bot.doing = "exploring a less-seen direction"; go(point, 10, true); return c; }
     }
     const loot = [...o.loose, ...o.creatures.flatMap(a => a.rune ? [a.rune] : [])].sort((a, b) => dist(w, a) - dist(w, b))[0];
     if (loot && dist(w, loot) < 25) {

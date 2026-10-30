@@ -16,6 +16,7 @@ export interface Point { x: number; z: number }
 export interface SeenCreature extends Point { id: number; species: string; level: number; boss: boolean; friendly: boolean; angry: boolean; stunned: boolean; area: string; rune: Point | null }
 export interface SeenStone extends Point { key: string; open: boolean; ready: boolean; cast: Point }
 export interface Observation {
+  view: { halfWidth: number; halfDepth: number };
   playerTime: number; worldTime: number; self: Point & { mode: Game["witches"][number]["body"]["mode"]; hp: number; ko: boolean; seated: boolean; perched: boolean; grounded: boolean };
   range: number; pickRadius: number; spacing: number; castRadius: number; castBlocked: boolean; waiting: boolean; home: Point;
   carried: { id: number; species: string; level: number }[];
@@ -67,6 +68,7 @@ export function newObserver() {
       quests.push({ id: c.id, wants: open ? c.quest!.species : "", open, delivery: clearing ? { x: clearing.x, z: clearing.z } : { x: c.x + 4, z: c.z + 4 }, hint: way ? { x: b.x + Math.sin(angle) * metres, z: b.z - Math.cos(angle) * metres } : null });
     }
     return {
+      view: { ...ext },
       playerTime: g.herTime, worldTime: time,
       self: { x: b.x, z: b.z, mode: b.mode, hp: w.health.hp, ko: !!w.ko, seated: !!b.seated, perched: !!b.perch,
         grounded: w.leash.stack.some(id => g.creatures[id].level >= 2) },

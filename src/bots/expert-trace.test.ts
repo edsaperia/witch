@@ -10,6 +10,7 @@ vi.hoisted(() => vi.resetModules());
 vi.mock("./observe", () => ({ newObserver: () => (g: { fixture: Observation }) => structuredClone(g.fixture) }));
 afterAll(() => { vi.doUnmock("./observe"); vi.resetModules(); });
 const observation = (): Observation => ({ playerTime: 0, worldTime: 0,
+  view: { halfWidth: 40, halfDepth: 40 },
   self: { x: 0, z: 0, mode: "ground", hp: 3, ko: false, seated: false, perched: false, grounded: false },
   range: 30, pickRadius: 4, spacing: 4, castRadius: 5, castBlocked: false, waiting: false, home: { x: 0, z: 0 },
   carried: [], creatures: [], stones: [], loose: [], placed: [], next: null, straggler: null,
@@ -33,12 +34,12 @@ const fixtures = Array.from({ length: 960 }, (_, i) => {
   if (phase === 14) o.self.mode = "treetop";
   return o;
 });
-for (const questMax of [1, 2]) test(`diagnostic output preserves every control, questMax=${questMax}`, () => {
+for (const questMax of [1, 2]) for (const coverageExploration of [false, true]) test(`diagnostic output preserves every control, questMax=${questMax}, coverage=${coverageExploration}`, () => {
   const events: ExpertTrace[] = [];
-  const plain = newExpert({ questMax }, 123), logged = newExpert({ questMax }, 123, EXPERT_LIMITS, e => events.push(e));
+  const plain = newExpert({ questMax }, 123, EXPERT_LIMITS, undefined, { coverageExploration }), logged = newExpert({ questMax }, 123, EXPERT_LIMITS, e => events.push(e), { coverageExploration });
   const mutating = newExpert({ questMax }, 123, EXPERT_LIMITS, e => {
     e.controls.moveX = 999; e.observation.self.hp = -999; e.knownQuests.length = 0; e.heardDreams.push(999);
-  });
+  }, { coverageExploration });
   for (const fixture of fixtures) {
     const g = { fixture } as unknown as Game, expected = plain.decide(g);
     expect(logged.decide(g)).toEqual(expected); expect(mutating.decide(g)).toEqual(expected);
@@ -102,4 +103,40 @@ for (const interrupted of [false, true]) test(`the 30-second deadline cannot ren
   expect(expired.length).toBeGreaterThan(1);
   expect(expired.every(e => e.dreamVisit === null && e.visitingLegend === null)).toBe(true);
   expect(expired.at(-1)!.heardDreams).toEqual([]);
+});
+
+function coverageScript(change: (o: Observation) => void, enabled = true, end = 2) {
+  const events: ExpertTrace[] = [], durations = new Map<number, number>();
+  const bot = newExpert({}, 1, EXPERT_LIMITS, e => events.push(e), { coverageExploration: enabled });
+  for (let i = 0; i < end * 60; i++) {
+    const o = observation(); o.playerTime = i / 60; o.worldTime = o.playerTime; o.self.x = o.playerTime * 10;
+    change(o); bot.decide({ fixture: o } as unknown as Game);
+    if (bot.doing === "exploring a less-seen direction") { const epoch = Math.floor(o.playerTime / 30); durations.set(epoch, (durations.get(epoch) ?? 0) + 1 / 60); }
+  }
+  return { events, durations };
+}
+test("scheduled coverage can preempt ordinary loot but respects every higher priority", () => {
+  const loot = (o: Observation) => { o.loose = [{ id: 1, x: o.self.x + 2, z: 0 }]; };
+  expect(coverageScript(loot).events.some(e => e.doing === "exploring a less-seen direction")).toBe(true);
+  expect(coverageScript(loot, false).events.every(e => e.doing === "gathering a sigil")).toBe(true);
+  const priorities: [string, (o: Observation) => void][] = [
+    ["recovering", o => { o.self.ko = true; }],
+    ["rising to heal", o => { o.self.hp = 1; }],
+    ["dodging an audible wind-up", o => { o.windups = [{ x: o.self.x + 2, z: 0 }]; }],
+    ["visiting a visible legend's dream", o => { o.creatures = [legend()]; }],
+    ["casting at a ready stone", o => { o.stones = [{ key: "1,1", x: 0, z: 0, open: true, ready: true, cast: { x: 0, z: 0 } }]; }],
+    ["bringing a requested sigil to a legend", o => { o.quests = [{ id: 9, wants: "hare", open: true, delivery: { x: 100, z: 0 }, hint: null }]; o.carried = [{ id: 10, species: "hare", level: 1 }]; }],
+    ["inviting hare", o => { o.quests = [{ id: 9, wants: "hare", open: true, delivery: { x: 100, z: 0 }, hint: null }]; o.creatures = [{ ...legend(), id: 10, species: "hare", boss: false, level: 1 }]; }],
+  ];
+  for (const [doing, change] of priorities) {
+    const { events } = coverageScript(change);
+    expect(events.some(e => e.doing === doing), doing).toBe(true);
+    expect(events.some(e => e.doing === "exploring a less-seen direction"), doing).toBe(false);
+  }
+});
+test("scheduled coverage stays under five seconds per thirty-second interval at real input cadence", () => {
+  const { events, durations } = coverageScript(() => {}, true, 95);
+  expect(durations.size).toBe(4);
+  expect([...durations.values()].every(t => t <= 5 + 1e-9)).toBe(true);
+  expect(events.every(e => e.playerTime - e.observation.playerTime >= .25 - 1e-9)).toBe(true);
 });
