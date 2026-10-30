@@ -1,0 +1,307 @@
+{
+  "sha": "a31ff3d77423a20bb3bd505502173ce882f2e50f",
+  "grant": "6524241556",
+  "frames": [
+    {
+      "name": "beetle-L0-centre",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.15,
+        "x": 3197.417211059279,
+        "z": 3106.559326444441
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true
+    },
+    {
+      "name": "beetle-L0-edge",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.85,
+        "x": 3228.510478873942,
+        "z": 3106.559326444441
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true
+    },
+    {
+      "name": "beetle-L0-outside",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 1.25,
+        "x": 3246.2780604823206,
+        "z": 3106.559326444441
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true
+    },
+    {
+      "name": "beetle-L1-centre",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.15,
+        "x": 3197.417211059279,
+        "z": 3106.559326444441
+      },
+      "diff": {
+        "changed": 2700,
+        "max": 40
+      },
+      "lightOffIdentical": true
+    },
+    {
+      "name": "beetle-L1-edge",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.85,
+        "x": 3228.510478873942,
+        "z": 3106.559326444441
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true
+    },
+    {
+      "name": "beetle-L1-outside",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 1.25,
+        "x": 3246.2780604823206,
+        "z": 3106.559326444441
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true
+    },
+    {
+      "name": "beetle-L2-centre",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.15,
+        "x": 3197.417211059279,
+        "z": 3106.559326444441
+      },
+      "diff": {
+        "changed": 3924,
+        "max": 25
+      },
+      "lightOffIdentical": true
+    },
+    {
+      "name": "beetle-L2-edge",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.85,
+        "x": 3228.510478873942,
+        "z": 3106.559326444441
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true
+    },
+    {
+      "name": "beetle-L2-outside",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 1.25,
+        "x": 3246.2780604823206,
+        "z": 3106.559326444441
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true
+    },
+    {
+      "name": "jaguar-L2-centre",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.15,
+        "x": 3197.417211059279,
+        "z": 3106.559326444441
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true
+    },
+    {
+      "name": "jaguar-L2-edge",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.85,
+        "x": 3228.510478873942,
+        "z": 3106.559326444441
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true
+    },
+    {
+      "name": "jaguar-L2-outside",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 1.25,
+        "x": 3246.2780604823206,
+        "z": 3106.559326444441
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true
+    },
+    {
+      "name": "mole-L2-centre",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.15,
+        "x": 3197.417211059279,
+        "z": 3106.559326444441
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true
+    },
+    {
+      "name": "mole-L2-edge",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.85,
+        "x": 3228.510478873942,
+        "z": 3106.559326444441
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true
+    },
+    {
+      "name": "mole-L2-outside",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 1.25,
+        "x": 3246.2780604823206,
+        "z": 3106.559326444441
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true
+    },
+    {
+      "name": "stoat-L2-centre",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.15,
+        "x": 3197.417211059279,
+        "z": 3106.559326444441
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true
+    },
+    {
+      "name": "stoat-L2-edge",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.85,
+        "x": 3228.510478873942,
+        "z": 3106.559326444441
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true
+    },
+    {
+      "name": "stoat-L2-outside",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 1.25,
+        "x": 3246.2780604823206,
+        "z": 3106.559326444441
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true
+    },
+    {
+      "name": "arcticfox-L2-centre",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.15,
+        "x": 3197.417211059279,
+        "z": 3106.559326444441
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true
+    },
+    {
+      "name": "arcticfox-L2-edge",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 0.85,
+        "x": 3228.510478873942,
+        "z": 3106.559326444441
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true
+    },
+    {
+      "name": "arcticfox-L2-outside",
+      "fixture": {
+        "radius": 44.41895402094715,
+        "fraction": 1.25,
+        "x": 3246.2780604823206,
+        "z": 3106.559326444441
+      },
+      "diff": {
+        "changed": 0,
+        "max": 0
+      },
+      "lightOffIdentical": true
+    }
+  ],
+  "errors": [],
+  "complete": true,
+  "served": {
+    "version": "dev · a31ff3d",
+    "built": "2026-10-30T13:01:20.434Z"
+  },
+  "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+}
