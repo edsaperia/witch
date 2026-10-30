@@ -10,6 +10,7 @@ import { metresToLinks, pulseRouteMetres, routeLengths } from "../rules/leypulse
 import { speakerCircle } from "../rules/departure";
 import * as THREE from "three";
 
+// Retain full seeded routes: geometry spans every stone, departure bearings and boot/route overlap are asserted in metres.
 /** A real game booted by 10 s, the ley pulse setting off then (Ed, 2026-10-09: "Pure constant speed"). */
 const g0 = newGame(123, TUNING), map = g0.map, v = TUNING.leyLines.pulseSpeed;
 const party = (paused = false): PartyState => {
