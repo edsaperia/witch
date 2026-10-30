@@ -9298,7 +9298,20 @@ function rosetteCell(p, options, bounds) {
   if (hash2(i, seam, 11) > (options.density ?? .75)) return null;
   const cx = i + .3 + hash2(i, seam, 12) * .4, cy = j + .3 + hash2(seam, i, 13) * .4;
   const d = Math.hypot(u - cx, v - cy), a = Math.atan2(v - cy, u - cx);
-  return { d, angle: a, phase: i, rotation: hash2(i, seam, 74) * Math.PI * 2 };
+  return { d, angle: a, phase: i, seam, rotation: hash2(i, seam, 74) * Math.PI * 2 };
+}
+// Keep cell position/density/rotation seeds unchanged. Variation changes the
+// ring within its cell, never the cell lattice or the neighbouring identities.
+function rosetteCellVariation(options, i, seam) {
+  const variation = options.sizeVariation ?? 0, fraction = options.closedFraction ?? 0, range = options.gapRange;
+  if (!Number.isFinite(variation) || variation < 0 || variation >= 1) throw new Error("Rosette sizeVariation must be in [0,1)");
+  if (!Number.isFinite(fraction) || fraction < 0 || fraction > 1) throw new Error("Rosette closedFraction must be in [0,1]");
+  if (range !== undefined && (!Array.isArray(range) || range.length !== 2 || !range.every(Number.isFinite) || range[0] < 0 || range[1] > Math.PI || range[0] > range[1])) throw new Error("Rosette gapRange must be ordered radians in [0,pi]");
+  return {
+    scale: 1 + (hash2(i, seam, 75) * 2 - 1) * variation,
+    closed: fraction === 1 || hash2(i, seam, 76) < fraction,
+    gap: range ? range[0] + hash2(i, seam, 77) * (range[1] - range[0]) : options.gap ?? .4,
+  };
 }
 function wrappedRosette(p, options, bounds) {
   const cell = rosetteCell(p, options, bounds);
@@ -9313,6 +9326,12 @@ function regionMarking(p, definition, bounds = null) {
   if (definition.kind === "rosettes" && bounds) {
     const cell = rosetteCell(p, definition, bounds);
     if (!cell) return null;
+    if (definition.sizeVariation !== undefined || definition.closedFraction !== undefined || definition.gapRange !== undefined) {
+      const variation = rosetteCellVariation(definition, cell.phase, cell.seam), d = cell.d / variation.scale;
+      if (d <= (definition.inner ?? .18)) return definition.centreMat ? M[definition.centreMat] ?? null : null;
+      const outsideGap = variation.closed || Math.cos(cell.angle - cell.rotation) < Math.cos(variation.gap);
+      return d < (definition.outer ?? .4) && outsideGap ? M[definition.mat || "BODY3"] ?? M.BODY3 : null;
+    }
     if (cell.d <= (definition.inner ?? .18)) return definition.centreMat ? M[definition.centreMat] ?? null : null;
     const outsideGap = Math.cos(cell.angle - cell.rotation) < Math.cos(definition.gap ?? .4);
     return cell.d < (definition.outer ?? .4) && outsideGap ? M[definition.mat || "BODY3"] ?? M.BODY3 : null;
