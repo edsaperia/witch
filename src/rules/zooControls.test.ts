@@ -5,6 +5,7 @@ import { TUNING, type Tuning } from "./tuning";
 import { blockCreatures, setZooMood, zooAdd, zooBlockAt, zooCount, zooMood, zooRemove, zooSleep } from "./zooControls";
 
 const zooTuning = (): Tuning => ({ ...TUNING, map: { ...TUNING.map!, shape: "zoo", island: "", islandAreas: 0 } });
+// Keep the authored zoo layout: block lookup and controls require its gallery cells, not a generic small island.
 
 describe("the zoo's block bar (rules/zooControls.ts)", () => {
   const g = newGame(7, zooTuning()), Z = g.map.zoo!;
