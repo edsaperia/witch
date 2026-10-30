@@ -40,3 +40,15 @@ for (const level of [2, 3]) {
   console.log(`groundSkirt isolation L${level}: ${differs ? "construction changes; visual visibility still requires review" : "IDENTICAL construction, shared control defect"}`);
 }
 console.log(`PASS: ${count} meerkat level/pose/frame/facing builds; mole controls and groundSkirt resolved`);
+if (pack.fennec) {
+  let fennecBuilds = 0;
+  for (let level = 0; level < 4; level++) {
+    const s = G.speciesOf(G.GENOME_BY_ID.fennec, context("fennec"), level);
+    if (level === 0) assert.equal(({ ...s.q, ...s.levelQ?.[level] }).regions.tail, null, "puff tail marking disabled");
+    for (const facing of ["towards", "away"]) for (const frame of [0, 1]) {
+      const sprite = B.withTexture({ S: s, level, st }, () => C.buildCreature(s, level, frame, st, facing));
+      assert.ok(sprite.w > 0 && sprite.h > 0 && sprite.m.some(Boolean)); fennecBuilds++;
+    }
+  }
+  console.log(`PASS: ${fennecBuilds} fennec level/frame/facing builds; puff marking disabled`);
+}
