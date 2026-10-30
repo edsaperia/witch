@@ -6,6 +6,11 @@
 // (the character creator as the loading cover), ?opening=bedroom forces the wake-up.
 export type OpeningWay = "bedroom" | "old";
 
+/** A restored night has already passed its opening, even when its link normally shows the creator. */
+export function opensWithCreator(link: URLSearchParams, state: { bedroom: boolean; arriving: boolean; resuming: boolean }): boolean {
+  return !state.resuming && !state.bedroom && !state.arriving && link.get("creator") !== "0";
+}
+
 /** The way this load opens: the link's ?opening=bedroom|old (chart, its old name, as bedroom), else the tuning's opening.bedroom. */
 export function openingWay(params: URLSearchParams, tuning: { opening?: { bedroom?: boolean } }): OpeningWay {
   const p = params.get("opening");
