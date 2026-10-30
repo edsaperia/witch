@@ -1,0 +1,4435 @@
+{
+ "key": {
+  "build": "dev · 64c95a2",
+  "seed": 123,
+  "world": 0,
+  "island": "home",
+  "scene": "wave 0 · house",
+  "spot": "sail-timing.cjs: home to fox",
+  "viewport": "960x540",
+  "pixelScale": "3 @1 (canvas 320x180)",
+  "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "machine": "Chrome 151 Windows · 20 cores · 16 GB · 13th Gen Intel(R) Core(TM) i9-13900H · 20 cores · win32 · node 24.18.0",
+  "knobs": {
+   "spells.hats": "",
+   "spells.bag": "satchel",
+   "?creator": "0",
+   "?timing": "1",
+   "?quick": "1",
+   "?warmChart": "0",
+   "?prepChart": "1",
+   "?ladder": "auto",
+   "tool.route": "chart",
+   "tool.targetSetup": "choose-before-outline-v1",
+   "tool.trace": false,
+   "tool.probe": "off",
+   "tool.profile": false,
+   "tool.coastFirstUse": false
+  }
+ },
+ "route": "chart",
+ "runs": [
+  {
+   "slices": [
+    {
+     "what": "setGame",
+     "ms": 3931,
+     "slices": 91,
+     "longest": 274,
+     "at": "paths"
+    },
+    {
+     "what": "warm",
+     "ms": 15443,
+     "slices": 262,
+     "longest": 26,
+     "at": "forest"
+    },
+    {
+     "what": "background-programs",
+     "ms": 34,
+     "slices": 2,
+     "longest": 11,
+     "at": ""
+    },
+    {
+     "what": "refresh",
+     "ms": 61,
+     "slices": 2,
+     "longest": 3,
+     "at": ""
+    }
+   ],
+   "settleParts": {
+    "start": 94,
+    "heights": 220,
+    "party": 223,
+    "markers": 869,
+    "grass+lights": 315,
+    "witch": 7738,
+    "refresh": 388,
+    "creatures": 6,
+    "leash": 118,
+    "heightsAhead": 769,
+    "prefetch": 313,
+    "groundTiles": 693,
+    "draw": 12220,
+    "uniforms": 6,
+    "sky": 5,
+    "hud": 7
+   },
+   "sailMark": 596,
+   "marks": {
+    "chart:depart": 600,
+    "chart:ready": 21213,
+    "chart:flown": 21247,
+    "chart:go": 21247,
+    "witch:prep": 906,
+    "witch:game": 2435,
+    "witch:prep-start": 6420,
+    "witch:prep-warm": 36745,
+    "witch:prep-ground": 101563,
+    "witch:prep-home": 99301,
+    "witch:prep-idle": null,
+    "witch:prep-compile0": 6451,
+    "witch:prep-compiled": null,
+    "witch:prep-programs": null,
+    "witch:prep-textures": null,
+    "witch:prep-draws": null,
+    "witch:prep-track": 21210,
+    "witch:prep-house": 101690,
+    "sail:ready": 21212,
+    "witch:landed": null,
+    "dive:eased": null,
+    "dive:house-ready": null,
+    "dive:house-due": null,
+    "dive:on": null,
+    "game:arrived": 21554,
+    "opening:alarm": 21559
+   },
+   "chartFrames": {
+    "frames": 2099,
+    "longest": 125,
+    "frozen": 125,
+    "over": 1
+   },
+   "toDive": {
+    "frames": 4490,
+    "longest": 1542,
+    "frozen": 11600,
+    "over": 39
+   },
+   "diveToEnd": {
+    "frames": 0,
+    "longest": 0,
+    "frozen": 0,
+    "over": 0
+   },
+   "settle": {
+    "frames": 2691,
+    "longest": 1433,
+    "frozen": 7759,
+    "over": 29
+   },
+   "tasks": [
+    {
+     "at": 905,
+     "ms": 1532,
+     "after": "witch:map-prep-source"
+    },
+    {
+     "at": 21319,
+     "ms": 1414,
+     "after": "witch:build-forest"
+    },
+    {
+     "at": 99305,
+     "ms": 1002,
+     "after": "witch:prep-home"
+    },
+    {
+     "at": 44,
+     "ms": 608,
+     "after": ""
+    },
+    {
+     "at": 91646,
+     "ms": 547,
+     "after": "witch:shader-background-ready"
+    },
+    {
+     "at": 22754,
+     "ms": 545,
+     "after": "opening:alarm"
+    },
+    {
+     "at": 91205,
+     "ms": 409,
+     "after": "witch:shader-background-ready"
+    },
+    {
+     "at": 5631,
+     "ms": 274,
+     "after": "witch:build-paths"
+    }
+   ],
+   "steps": [
+    [
+     "game:reveal",
+     593
+    ],
+    [
+     "chart:sail",
+     596
+    ],
+    [
+     "chart:depart",
+     600
+    ],
+    [
+     "witch:map-prep-source",
+     896
+    ],
+    [
+     "witch:prep",
+     906
+    ],
+    [
+     "witch:map-hydrated",
+     1891
+    ],
+    [
+     "witch:map-prep",
+     1891
+    ],
+    [
+     "witch:game",
+     2435
+    ],
+    [
+     "witch:build-heights",
+     2514
+    ],
+    [
+     "witch:build-ground",
+     5472
+    ],
+    [
+     "witch:build-disco",
+     5472
+    ],
+    [
+     "witch:build-paths",
+     5586
+    ],
+    [
+     "chart:landing-due",
+     6261
+    ],
+    [
+     "witch:build-markers",
+     6374
+    ],
+    [
+     "witch:build-stones",
+     6374
+    ],
+    [
+     "witch:build-ley",
+     6381
+    ],
+    [
+     "witch:build-swap",
+     6384
+    ],
+    [
+     "witch:prep-start",
+     6420
+    ],
+    [
+     "witch:prep-compile0",
+     6451
+    ],
+    [
+     "witch:shader-start",
+     6451
+    ],
+    [
+     "landing:limited",
+     21209
+    ],
+    [
+     "witch:shader-landing-limit",
+     21209
+    ],
+    [
+     "witch:prep-track",
+     21210
+    ],
+    [
+     "sail:ready",
+     21212
+    ],
+    [
+     "chart:ready",
+     21213
+    ],
+    [
+     "chart:flown",
+     21247
+    ],
+    [
+     "chart:go",
+     21247
+    ],
+    [
+     "witch:build-forest",
+     21302
+    ],
+    [
+     "game:frame1",
+     21320
+    ],
+    [
+     "landing:early-land",
+     21553
+    ],
+    [
+     "game:reveal",
+     21554
+    ],
+    [
+     "game:arrived",
+     21554
+    ],
+    [
+     "opening:alarm",
+     21559
+    ],
+    [
+     "island:ready",
+     23072
+    ],
+    [
+     "witch:build-carvings",
+     36745
+    ],
+    [
+     "witch:prep-warm",
+     36745
+    ],
+    [
+     "witch:shader-background-ready",
+     91201
+    ],
+    [
+     "witch:prep-home",
+     99301
+    ],
+    [
+     "landing:house-fading",
+     100323
+    ],
+    [
+     "landing:house-faded",
+     100323
+    ],
+    [
+     "witch:prep-ground",
+     101563
+    ],
+    [
+     "witch:prep-house",
+     101690
+    ],
+    [
+     "landing:house-complete",
+     101691
+    ]
+   ],
+   "longTasks": [
+    {
+     "at": -17854,
+     "ms": 79,
+     "after": "chart:mounted"
+    },
+    {
+     "at": -16568,
+     "ms": 50,
+     "after": "chart:mounted"
+    },
+    {
+     "at": -181,
+     "ms": 127,
+     "after": "chart:mounted"
+    },
+    {
+     "at": 44,
+     "ms": 608,
+     "after": "chart:island1"
+    },
+    {
+     "at": 653,
+     "ms": 81,
+     "after": "chart:depart"
+    },
+    {
+     "at": 905,
+     "ms": 1532,
+     "after": "witch:map-prep-source"
+    },
+    {
+     "at": 2550,
+     "ms": 146,
+     "after": "witch:build-heights"
+    },
+    {
+     "at": 2748,
+     "ms": 63,
+     "after": "witch:build-heights"
+    },
+    {
+     "at": 3041,
+     "ms": 52,
+     "after": "witch:build-heights"
+    },
+    {
+     "at": 3700,
+     "ms": 51,
+     "after": "witch:build-heights"
+    },
+    {
+     "at": 3879,
+     "ms": 52,
+     "after": "witch:build-heights"
+    },
+    {
+     "at": 4662,
+     "ms": 61,
+     "after": "witch:build-heights"
+    },
+    {
+     "at": 5467,
+     "ms": 119,
+     "after": "witch:build-heights"
+    },
+    {
+     "at": 5631,
+     "ms": 274,
+     "after": "witch:build-paths"
+    },
+    {
+     "at": 5908,
+     "ms": 160,
+     "after": "witch:build-paths"
+    },
+    {
+     "at": 6071,
+     "ms": 74,
+     "after": "witch:build-paths"
+    },
+    {
+     "at": 6169,
+     "ms": 90,
+     "after": "witch:build-paths"
+    },
+    {
+     "at": 6303,
+     "ms": 59,
+     "after": "chart:landing-due"
+    },
+    {
+     "at": 6379,
+     "ms": 72,
+     "after": "witch:build-stones"
+    },
+    {
+     "at": 6464,
+     "ms": 67,
+     "after": "witch:shader-start"
+    },
+    {
+     "at": 6540,
+     "ms": 223,
+     "after": "witch:shader-start"
+    },
+    {
+     "at": 6815,
+     "ms": 146,
+     "after": "witch:shader-start"
+    },
+    {
+     "at": 21213,
+     "ms": 88,
+     "after": "chart:ready"
+    },
+    {
+     "at": 21319,
+     "ms": 1414,
+     "after": "witch:build-forest"
+    },
+    {
+     "at": 22754,
+     "ms": 545,
+     "after": "opening:alarm"
+    },
+    {
+     "at": 23320,
+     "ms": 151,
+     "after": "island:ready"
+    },
+    {
+     "at": 23487,
+     "ms": 117,
+     "after": "island:ready"
+    },
+    {
+     "at": 23616,
+     "ms": 89,
+     "after": "island:ready"
+    },
+    {
+     "at": 23718,
+     "ms": 80,
+     "after": "island:ready"
+    },
+    {
+     "at": 23814,
+     "ms": 97,
+     "after": "island:ready"
+    },
+    {
+     "at": 23932,
+     "ms": 100,
+     "after": "island:ready"
+    },
+    {
+     "at": 24084,
+     "ms": 78,
+     "after": "island:ready"
+    },
+    {
+     "at": 24185,
+     "ms": 87,
+     "after": "island:ready"
+    },
+    {
+     "at": 24286,
+     "ms": 66,
+     "after": "island:ready"
+    },
+    {
+     "at": 24373,
+     "ms": 84,
+     "after": "island:ready"
+    },
+    {
+     "at": 24475,
+     "ms": 73,
+     "after": "island:ready"
+    },
+    {
+     "at": 24563,
+     "ms": 71,
+     "after": "island:ready"
+    },
+    {
+     "at": 24651,
+     "ms": 80,
+     "after": "island:ready"
+    },
+    {
+     "at": 24753,
+     "ms": 87,
+     "after": "island:ready"
+    },
+    {
+     "at": 24854,
+     "ms": 79,
+     "after": "island:ready"
+    },
+    {
+     "at": 24946,
+     "ms": 70,
+     "after": "island:ready"
+    },
+    {
+     "at": 25028,
+     "ms": 57,
+     "after": "island:ready"
+    },
+    {
+     "at": 25097,
+     "ms": 63,
+     "after": "island:ready"
+    },
+    {
+     "at": 25173,
+     "ms": 53,
+     "after": "island:ready"
+    },
+    {
+     "at": 25350,
+     "ms": 52,
+     "after": "island:ready"
+    },
+    {
+     "at": 25413,
+     "ms": 54,
+     "after": "island:ready"
+    },
+    {
+     "at": 25477,
+     "ms": 53,
+     "after": "island:ready"
+    },
+    {
+     "at": 25544,
+     "ms": 64,
+     "after": "island:ready"
+    },
+    {
+     "at": 25618,
+     "ms": 50,
+     "after": "island:ready"
+    },
+    {
+     "at": 25680,
+     "ms": 61,
+     "after": "island:ready"
+    },
+    {
+     "at": 25758,
+     "ms": 52,
+     "after": "island:ready"
+    },
+    {
+     "at": 36462,
+     "ms": 61,
+     "after": "island:ready"
+    },
+    {
+     "at": 38353,
+     "ms": 52,
+     "after": "witch:prep-warm"
+    },
+    {
+     "at": 40311,
+     "ms": 108,
+     "after": "witch:prep-warm"
+    },
+    {
+     "at": 40422,
+     "ms": 107,
+     "after": "witch:prep-warm"
+    },
+    {
+     "at": 40531,
+     "ms": 123,
+     "after": "witch:prep-warm"
+    },
+    {
+     "at": 40655,
+     "ms": 204,
+     "after": "witch:prep-warm"
+    },
+    {
+     "at": 43137,
+     "ms": 50,
+     "after": "witch:prep-warm"
+    },
+    {
+     "at": 68565,
+     "ms": 55,
+     "after": "witch:prep-warm"
+    },
+    {
+     "at": 73635,
+     "ms": 55,
+     "after": "witch:prep-warm"
+    },
+    {
+     "at": 78705,
+     "ms": 51,
+     "after": "witch:prep-warm"
+    },
+    {
+     "at": 83827,
+     "ms": 53,
+     "after": "witch:prep-warm"
+    },
+    {
+     "at": 88920,
+     "ms": 71,
+     "after": "witch:prep-warm"
+    },
+    {
+     "at": 89602,
+     "ms": 67,
+     "after": "witch:prep-warm"
+    },
+    {
+     "at": 90967,
+     "ms": 109,
+     "after": "witch:prep-warm"
+    },
+    {
+     "at": 91205,
+     "ms": 409,
+     "after": "witch:shader-background-ready"
+    },
+    {
+     "at": 91646,
+     "ms": 547,
+     "after": "witch:shader-background-ready"
+    },
+    {
+     "at": 92630,
+     "ms": 112,
+     "after": "witch:shader-background-ready"
+    },
+    {
+     "at": 93324,
+     "ms": 261,
+     "after": "witch:shader-background-ready"
+    },
+    {
+     "at": 93632,
+     "ms": 161,
+     "after": "witch:shader-background-ready"
+    },
+    {
+     "at": 97107,
+     "ms": 54,
+     "after": "witch:shader-background-ready"
+    },
+    {
+     "at": 97635,
+     "ms": 57,
+     "after": "witch:shader-background-ready"
+    },
+    {
+     "at": 98454,
+     "ms": 121,
+     "after": "witch:shader-background-ready"
+    },
+    {
+     "at": 99305,
+     "ms": 1002,
+     "after": "witch:prep-home"
+    },
+    {
+     "at": 100314,
+     "ms": 78,
+     "after": "witch:prep-home"
+    },
+    {
+     "at": 100436,
+     "ms": 69,
+     "after": "landing:house-faded"
+    },
+    {
+     "at": 100510,
+     "ms": 54,
+     "after": "landing:house-faded"
+    },
+    {
+     "at": 100578,
+     "ms": 60,
+     "after": "landing:house-faded"
+    },
+    {
+     "at": 100644,
+     "ms": 59,
+     "after": "landing:house-faded"
+    },
+    {
+     "at": 100733,
+     "ms": 67,
+     "after": "landing:house-faded"
+    },
+    {
+     "at": 100874,
+     "ms": 58,
+     "after": "landing:house-faded"
+    },
+    {
+     "at": 100938,
+     "ms": 54,
+     "after": "landing:house-faded"
+    },
+    {
+     "at": 101016,
+     "ms": 58,
+     "after": "landing:house-faded"
+    },
+    {
+     "at": 101083,
+     "ms": 63,
+     "after": "landing:house-faded"
+    },
+    {
+     "at": 101151,
+     "ms": 55,
+     "after": "landing:house-faded"
+    },
+    {
+     "at": 101216,
+     "ms": 58,
+     "after": "landing:house-faded"
+    },
+    {
+     "at": 101278,
+     "ms": 69,
+     "after": "landing:house-faded"
+    },
+    {
+     "at": 101362,
+     "ms": 62,
+     "after": "landing:house-faded"
+    },
+    {
+     "at": 101429,
+     "ms": 62,
+     "after": "landing:house-faded"
+    },
+    {
+     "at": 101501,
+     "ms": 57,
+     "after": "landing:house-faded"
+    },
+    {
+     "at": 101563,
+     "ms": 63,
+     "after": "witch:prep-ground"
+    },
+    {
+     "at": 101691,
+     "ms": 62,
+     "after": "witch:prep-house"
+    },
+    {
+     "at": 101754,
+     "ms": 56,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 101816,
+     "ms": 57,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 101932,
+     "ms": 50,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 101982,
+     "ms": 56,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 102040,
+     "ms": 59,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 102192,
+     "ms": 71,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 102264,
+     "ms": 72,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 102336,
+     "ms": 69,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 102406,
+     "ms": 63,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 102471,
+     "ms": 65,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 102537,
+     "ms": 56,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 102602,
+     "ms": 56,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 102659,
+     "ms": 59,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 102720,
+     "ms": 79,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 102813,
+     "ms": 64,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 102878,
+     "ms": 86,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 102964,
+     "ms": 68,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 103044,
+     "ms": 61,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 103106,
+     "ms": 56,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 103175,
+     "ms": 60,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 103237,
+     "ms": 59,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 103297,
+     "ms": 59,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 103362,
+     "ms": 74,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 103436,
+     "ms": 59,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 103496,
+     "ms": 62,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 103562,
+     "ms": 56,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 103619,
+     "ms": 63,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 103686,
+     "ms": 70,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 103757,
+     "ms": 68,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 103826,
+     "ms": 68,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 103897,
+     "ms": 71,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 103969,
+     "ms": 61,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 104031,
+     "ms": 58,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 104093,
+     "ms": 57,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 104150,
+     "ms": 65,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 104219,
+     "ms": 68,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 104288,
+     "ms": 65,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 104355,
+     "ms": 62,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 104425,
+     "ms": 67,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 104494,
+     "ms": 55,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 104549,
+     "ms": 60,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 104612,
+     "ms": 64,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 104785,
+     "ms": 61,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 104848,
+     "ms": 51,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 104948,
+     "ms": 51,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 105048,
+     "ms": 50,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 105098,
+     "ms": 52,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 105163,
+     "ms": 57,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 105221,
+     "ms": 55,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 105277,
+     "ms": 60,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 105347,
+     "ms": 57,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 105406,
+     "ms": 61,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 105467,
+     "ms": 50,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 105523,
+     "ms": 54,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 105578,
+     "ms": 57,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 105643,
+     "ms": 53,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 105697,
+     "ms": 59,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 105760,
+     "ms": 53,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 105814,
+     "ms": 55,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 105874,
+     "ms": 53,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 105929,
+     "ms": 60,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 106040,
+     "ms": 55,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 106096,
+     "ms": 60,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 106161,
+     "ms": 56,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 106218,
+     "ms": 52,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 106271,
+     "ms": 66,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 106345,
+     "ms": 58,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 106403,
+     "ms": 50,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 106466,
+     "ms": 57,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 106524,
+     "ms": 54,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 106579,
+     "ms": 54,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 106639,
+     "ms": 52,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 106745,
+     "ms": 59,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 106809,
+     "ms": 53,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 106920,
+     "ms": 59,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 106980,
+     "ms": 53,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 107040,
+     "ms": 59,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 107153,
+     "ms": 52,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 107545,
+     "ms": 51,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 107691,
+     "ms": 51,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 107844,
+     "ms": 56,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 107902,
+     "ms": 54,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 107960,
+     "ms": 60,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 108062,
+     "ms": 51,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 108118,
+     "ms": 55,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 108174,
+     "ms": 55,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 108231,
+     "ms": 63,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 108303,
+     "ms": 77,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 108381,
+     "ms": 66,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 108448,
+     "ms": 50,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 108505,
+     "ms": 53,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 108559,
+     "ms": 55,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 108667,
+     "ms": 55,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 108723,
+     "ms": 54,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 108777,
+     "ms": 61,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 108851,
+     "ms": 55,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 108909,
+     "ms": 68,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 108977,
+     "ms": 56,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 109037,
+     "ms": 53,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 109144,
+     "ms": 51,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 109196,
+     "ms": 58,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 109320,
+     "ms": 55,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 109428,
+     "ms": 50,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 109480,
+     "ms": 58,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 109543,
+     "ms": 50,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 109593,
+     "ms": 58,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 109652,
+     "ms": 55,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 109720,
+     "ms": 57,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 109778,
+     "ms": 53,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 109847,
+     "ms": 56,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 109904,
+     "ms": 83,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 109988,
+     "ms": 52,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 110054,
+     "ms": 55,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 110110,
+     "ms": 63,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 110177,
+     "ms": 54,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 110334,
+     "ms": 53,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 110480,
+     "ms": 63,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 110600,
+     "ms": 89,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 110689,
+     "ms": 52,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 110801,
+     "ms": 57,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 110859,
+     "ms": 55,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 110929,
+     "ms": 57,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 110987,
+     "ms": 60,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 111075,
+     "ms": 54,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 111130,
+     "ms": 54,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 111191,
+     "ms": 58,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 111250,
+     "ms": 52,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 111303,
+     "ms": 53,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 111426,
+     "ms": 50,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 111478,
+     "ms": 56,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 111553,
+     "ms": 53,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 111607,
+     "ms": 64,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 111687,
+     "ms": 61,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 111749,
+     "ms": 52,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 111801,
+     "ms": 51,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 111867,
+     "ms": 54,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 111921,
+     "ms": 59,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 111981,
+     "ms": 56,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 112040,
+     "ms": 59,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 112100,
+     "ms": 272,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 112373,
+     "ms": 125,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 112513,
+     "ms": 58,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 112572,
+     "ms": 67,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 112661,
+     "ms": 73,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 112735,
+     "ms": 53,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 112789,
+     "ms": 69,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 112872,
+     "ms": 51,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 112924,
+     "ms": 51,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 113004,
+     "ms": 50,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 113236,
+     "ms": 59,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 113295,
+     "ms": 56,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 113354,
+     "ms": 60,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 113415,
+     "ms": 53,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 113468,
+     "ms": 51,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 113522,
+     "ms": 60,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 113584,
+     "ms": 50,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 113691,
+     "ms": 58,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 113750,
+     "ms": 69,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 113820,
+     "ms": 62,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 113885,
+     "ms": 57,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 113944,
+     "ms": 63,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 114017,
+     "ms": 52,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 114071,
+     "ms": 60,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 114136,
+     "ms": 56,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 114193,
+     "ms": 54,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 114251,
+     "ms": 59,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 114311,
+     "ms": 58,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 114369,
+     "ms": 78,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 114455,
+     "ms": 74,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 114531,
+     "ms": 60,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 114593,
+     "ms": 54,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 114653,
+     "ms": 62,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 114715,
+     "ms": 57,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 114773,
+     "ms": 58,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 114884,
+     "ms": 53,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 114938,
+     "ms": 82,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 115023,
+     "ms": 66,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 115090,
+     "ms": 54,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 115198,
+     "ms": 57,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 115255,
+     "ms": 51,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 115314,
+     "ms": 60,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 115376,
+     "ms": 57,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 115435,
+     "ms": 55,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 115493,
+     "ms": 59,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 115554,
+     "ms": 56,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 115610,
+     "ms": 59,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 115685,
+     "ms": 64,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 115750,
+     "ms": 56,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 115809,
+     "ms": 73,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 115883,
+     "ms": 61,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 115996,
+     "ms": 55,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 116052,
+     "ms": 54,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 116107,
+     "ms": 102,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 116209,
+     "ms": 115,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 116329,
+     "ms": 62,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 116391,
+     "ms": 64,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 116461,
+     "ms": 61,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 116524,
+     "ms": 54,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 116578,
+     "ms": 60,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 116793,
+     "ms": 67,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 116861,
+     "ms": 62,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 116923,
+     "ms": 65,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 116992,
+     "ms": 52,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 117045,
+     "ms": 58,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 117165,
+     "ms": 63,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 117229,
+     "ms": 59,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 117289,
+     "ms": 56,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 117350,
+     "ms": 56,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 117407,
+     "ms": 53,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 117461,
+     "ms": 59,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 117523,
+     "ms": 51,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 117575,
+     "ms": 54,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 117633,
+     "ms": 60,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 117747,
+     "ms": 54,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 117803,
+     "ms": 54,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 117857,
+     "ms": 53,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 117923,
+     "ms": 60,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 117984,
+     "ms": 61,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 118046,
+     "ms": 52,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 118105,
+     "ms": 51,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 118157,
+     "ms": 66,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 118224,
+     "ms": 57,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 118285,
+     "ms": 63,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 118349,
+     "ms": 57,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 118408,
+     "ms": 54,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 118463,
+     "ms": 52,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 118519,
+     "ms": 53,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 118675,
+     "ms": 50,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 118726,
+     "ms": 51,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 119091,
+     "ms": 52,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 119339,
+     "ms": 56,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 119397,
+     "ms": 52,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 119628,
+     "ms": 53,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 119681,
+     "ms": 50,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 119732,
+     "ms": 50,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 119788,
+     "ms": 59,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 119896,
+     "ms": 55,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 119955,
+     "ms": 51,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 120007,
+     "ms": 51,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 120059,
+     "ms": 55,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 120118,
+     "ms": 113,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 120232,
+     "ms": 93,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 120327,
+     "ms": 59,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 120386,
+     "ms": 53,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 120444,
+     "ms": 58,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 120576,
+     "ms": 68,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 120645,
+     "ms": 58,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 120708,
+     "ms": 58,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 120767,
+     "ms": 59,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 120827,
+     "ms": 65,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 120896,
+     "ms": 55,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 120998,
+     "ms": 59,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 121059,
+     "ms": 58,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 121120,
+     "ms": 50,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 121175,
+     "ms": 53,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 121322,
+     "ms": 52,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 121375,
+     "ms": 61,
+     "after": "landing:house-complete"
+    },
+    {
+     "at": 121436,
+     "ms": 53,
+     "after": "landing:house-complete"
+    }
+   ],
+   "timeline": [
+    {
+     "name": "chart:open",
+     "at": -17968,
+     "detail": null
+    },
+    {
+     "name": "chart:mounted",
+     "at": -17918,
+     "detail": null
+    },
+    {
+     "name": "chart:island1",
+     "at": -176,
+     "detail": null
+    },
+    {
+     "name": "game:reveal",
+     "at": 593,
+     "detail": null
+    },
+    {
+     "name": "chart:sail",
+     "at": 596,
+     "detail": null
+    },
+    {
+     "name": "chart:depart",
+     "at": 600,
+     "detail": null
+    },
+    {
+     "name": "witch:map-prep-source",
+     "at": 896,
+     "detail": {
+      "seed": 424242,
+      "status": "worker",
+      "workerMs": 12667.099999904633,
+      "hydrateMs": 0,
+      "checkMs": 2.5
+     }
+    },
+    {
+     "name": "witch:prep",
+     "at": 906,
+     "detail": null
+    },
+    {
+     "name": "witch:map-hydrated",
+     "at": 1891,
+     "detail": {
+      "seed": 424242,
+      "ms": 984.1999998092651,
+      "workerMs": 12667.099999904633
+     }
+    },
+    {
+     "name": "witch:map-prep",
+     "at": 1891,
+     "detail": null
+    },
+    {
+     "name": "witch:game",
+     "at": 2435,
+     "detail": null
+    },
+    {
+     "name": "witch:build-heights",
+     "at": 2514,
+     "detail": null
+    },
+    {
+     "name": "witch:build-ground",
+     "at": 5472,
+     "detail": null
+    },
+    {
+     "name": "witch:build-disco",
+     "at": 5472,
+     "detail": null
+    },
+    {
+     "name": "witch:build-paths",
+     "at": 5586,
+     "detail": null
+    },
+    {
+     "name": "chart:landing-due",
+     "at": 6261,
+     "detail": {
+      "at": 118768.09999990463,
+      "deadline": 133768.09999990463
+     }
+    },
+    {
+     "name": "witch:build-markers",
+     "at": 6374,
+     "detail": null
+    },
+    {
+     "name": "witch:build-stones",
+     "at": 6374,
+     "detail": null
+    },
+    {
+     "name": "witch:build-ley",
+     "at": 6381,
+     "detail": null
+    },
+    {
+     "name": "witch:build-swap",
+     "at": 6384,
+     "detail": null
+    },
+    {
+     "name": "witch:prep-start",
+     "at": 6420,
+     "detail": null
+    },
+    {
+     "name": "witch:prep-compile0",
+     "at": 6451,
+     "detail": null
+    },
+    {
+     "name": "witch:shader-start",
+     "at": 6451,
+     "detail": {
+      "kind": "shader-programs",
+      "phase": "start",
+      "at": 119020.89999985695,
+      "parallel": true,
+      "elapsed": 0,
+      "groups": {
+       "scene": [
+        84,
+        85,
+        86,
+        87,
+        88
+       ],
+       "effects": [],
+       "post": [],
+       "hiz": []
+      },
+      "programs": [
+       {
+        "id": 0,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 1,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 2,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 3,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 4,
+        "name": "Loading ground and lake surfaces",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 5,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 6,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 7,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 8,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 9,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 10,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 11,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 12,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 13,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 14,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 15,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 16,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 17,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 18,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 19,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 20,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 21,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 22,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 23,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 24,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 25,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 26,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 27,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 28,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 29,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 30,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 31,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 32,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 33,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 34,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 35,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 36,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 37,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 38,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 39,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 40,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 41,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 42,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 43,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 44,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 45,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 46,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 47,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 48,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 49,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 50,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 51,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 52,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 53,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 54,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 55,
+        "name": "",
+        "type": "SpriteMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 56,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 57,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 58,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 59,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 60,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 61,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 62,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 63,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 64,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 65,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 66,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 67,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 68,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 69,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 84,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": false,
+        "added": true
+       },
+       {
+        "id": 85,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": false,
+        "added": true
+       },
+       {
+        "id": 86,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": false,
+        "added": true
+       },
+       {
+        "id": 87,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": false,
+        "added": true
+       },
+       {
+        "id": 88,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": false,
+        "added": true
+       }
+      ],
+      "pending": []
+     }
+    },
+    {
+     "name": "landing:limited",
+     "at": 21209,
+     "detail": null
+    },
+    {
+     "name": "witch:shader-landing-limit",
+     "at": 21209,
+     "detail": {
+      "kind": "shader-programs",
+      "phase": "landing-limit",
+      "at": 133778.69999980927,
+      "parallel": true,
+      "elapsed": 15010.5,
+      "groups": {
+       "scene": [
+        84,
+        85,
+        86,
+        87,
+        88
+       ],
+       "effects": [],
+       "post": [],
+       "hiz": []
+      },
+      "programs": [
+       {
+        "id": 0,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 1,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 2,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 3,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 4,
+        "name": "Loading ground and lake surfaces",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 5,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 6,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 7,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 8,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 9,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 10,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 11,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 12,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 13,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 14,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 15,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 16,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 17,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 18,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 19,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 20,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 21,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 22,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 23,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 24,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 25,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 26,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 27,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 28,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 29,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 30,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 31,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 32,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 33,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 34,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 35,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 36,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 37,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 38,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 39,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 40,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 41,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 42,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 43,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 44,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 45,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 46,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 47,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 48,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 49,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 50,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 51,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 52,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 53,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 54,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 55,
+        "name": "",
+        "type": "SpriteMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 56,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 57,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 58,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 59,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 60,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 61,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 62,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 63,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 64,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 65,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 66,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 67,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 68,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 69,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 84,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": false,
+        "added": true
+       },
+       {
+        "id": 85,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": false,
+        "added": true
+       },
+       {
+        "id": 86,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": false,
+        "added": true
+       },
+       {
+        "id": 87,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": false,
+        "added": true
+       },
+       {
+        "id": 88,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": false,
+        "added": true
+       }
+      ],
+      "pending": [
+       84,
+       85,
+       86,
+       87,
+       88
+      ]
+     }
+    },
+    {
+     "name": "witch:prep-track",
+     "at": 21210,
+     "detail": null
+    },
+    {
+     "name": "sail:ready",
+     "at": 21212,
+     "detail": null
+    },
+    {
+     "name": "chart:ready",
+     "at": 21213,
+     "detail": null
+    },
+    {
+     "name": "chart:flown",
+     "at": 21247,
+     "detail": null
+    },
+    {
+     "name": "chart:go",
+     "at": 21247,
+     "detail": null
+    },
+    {
+     "name": "witch:build-forest",
+     "at": 21302,
+     "detail": null
+    },
+    {
+     "name": "game:frame1",
+     "at": 21320,
+     "detail": null
+    },
+    {
+     "name": "landing:early-land",
+     "at": 21553,
+     "detail": null
+    },
+    {
+     "name": "game:reveal",
+     "at": 21554,
+     "detail": null
+    },
+    {
+     "name": "game:arrived",
+     "at": 21554,
+     "detail": null
+    },
+    {
+     "name": "opening:alarm",
+     "at": 21559,
+     "detail": null
+    },
+    {
+     "name": "island:ready",
+     "at": 23072,
+     "detail": null
+    },
+    {
+     "name": "witch:build-carvings",
+     "at": 36745,
+     "detail": null
+    },
+    {
+     "name": "witch:prep-warm",
+     "at": 36745,
+     "detail": null
+    },
+    {
+     "name": "witch:shader-background-ready",
+     "at": 91201,
+     "detail": {
+      "kind": "shader-programs",
+      "phase": "background-ready",
+      "at": 203770.29999995232,
+      "parallel": true,
+      "elapsed": 0,
+      "groups": {
+       "scene": [
+        84,
+        85,
+        86,
+        87,
+        88
+       ],
+       "effects": [],
+       "post": [],
+       "hiz": []
+      },
+      "programs": [
+       {
+        "id": 0,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 1,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 2,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 3,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 4,
+        "name": "Loading ground and lake surfaces",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 5,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 6,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 7,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 8,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 9,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 10,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 11,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 12,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 13,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 14,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 15,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 16,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 17,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 18,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 19,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 20,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 21,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 22,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 23,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 24,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 25,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 26,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 27,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 28,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 29,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 30,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 31,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 32,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 33,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 34,
+        "name": "",
+        "type": "MeshBasicMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 35,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 36,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 37,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 38,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 39,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 40,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 41,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 42,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 43,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 44,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 45,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 46,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 47,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 48,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 49,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 50,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 51,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 52,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 53,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 54,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 55,
+        "name": "",
+        "type": "SpriteMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 56,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 57,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 58,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 59,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 60,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 61,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 62,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 63,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 64,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 65,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 66,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 67,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 68,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 69,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": false
+       },
+       {
+        "id": 84,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": true
+       },
+       {
+        "id": 85,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": true
+       },
+       {
+        "id": 86,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": true
+       },
+       {
+        "id": 87,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": true
+       },
+       {
+        "id": 88,
+        "name": "",
+        "type": "ShaderMaterial",
+        "ready": true,
+        "added": true
+       }
+      ],
+      "pending": []
+     }
+    },
+    {
+     "name": "witch:prep-home",
+     "at": 99301,
+     "detail": null
+    },
+    {
+     "name": "landing:house-fading",
+     "at": 100323,
+     "detail": null
+    },
+    {
+     "name": "landing:house-faded",
+     "at": 100323,
+     "detail": null
+    },
+    {
+     "name": "witch:prep-ground",
+     "at": 101563,
+     "detail": null
+    },
+    {
+     "name": "witch:prep-house",
+     "at": 101690,
+     "detail": null
+    },
+    {
+     "name": "landing:house-complete",
+     "at": 101691,
+     "detail": null
+    }
+   ],
+   "quality": [],
+   "coverage": {
+    "longTasks": true
+   },
+   "programs": {
+    "before": 70,
+    "after": 75,
+    "made": [
+     "|313|,8519680,srgb-linear,onBeforeCompile(){}",
+     "|299|,8519680,srgb-linear,onBeforeCompile(){}",
+     "|264|,8388608,srgb-linear,onBeforeCompile(){}",
+     "|270|,8519680,srgb-linear,onBeforeCompile(){}"
+    ]
+   },
+   "key": {
+    "build": "dev · 64c95a2",
+    "seed": 424242,
+    "world": 0,
+    "island": "fox",
+    "scene": "wave 0 · house",
+    "spot": "sail-timing.cjs: arrival fox",
+    "viewport": "960x540",
+    "pixelScale": "3 @1 (canvas 320x180)",
+    "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "machine": "Chrome 151 Windows · 20 cores · 16 GB · 13th Gen Intel(R) Core(TM) i9-13900H · 20 cores · win32 · node 24.18.0",
+    "knobs": {
+     "map.island": "fox",
+     "spells.hats": "",
+     "spells.bag": "satchel",
+     "?creator": "0",
+     "?timing": "1",
+     "?quick": "1",
+     "?warmChart": "0",
+     "?prepChart": "1",
+     "?ladder": "auto",
+     "tool.route": "chart",
+     "tool.targetSetup": "choose-before-outline-v1",
+     "tool.trace": false,
+     "tool.probe": "off",
+     "tool.profile": false,
+     "tool.coastFirstUse": false
+    }
+   },
+   "route": "chart",
+   "qualityBefore": {
+    "rung": 0,
+    "mode": "auto"
+   },
+   "observationStart": -17986,
+   "prepNotes": [],
+   "summary": {
+    "preparationToGame": 1529,
+    "mapPrep": {
+     "seed": 424242,
+     "status": "worker",
+     "workerMs": 12667.099999904633,
+     "hydrateMs": 0,
+     "checkMs": 2.5
+    },
+    "hydration": {
+     "seed": 424242,
+     "ms": 984.1999998092651,
+     "workerMs": 12667.099999904633
+    },
+    "shaderReadinessWait": null,
+    "programPreparation": null,
+    "handoffAfterReady": 34,
+    "arrival": 21554,
+    "events": {},
+    "workerJobs": []
+   },
+   "chartWaitMs": 17986,
+   "resources": {
+    "heap": 179532592,
+    "dom": 2457,
+    "textures": 183,
+    "geometries": 155,
+    "workers": 6
+   },
+   "version": {
+    "version": "dev · 64c95a2",
+    "built": "2026-10-30T12:35:29.649Z"
+   },
+   "shots": [],
+   "island": "fox",
+   "leg": "cold"
+  }
+ ],
+ "error": "Error: landing proof failed: no visible fallback submission at15.5s; capture outside15–16s; getProgramInfoLog exceeded100ms; frame over100ms in the grace/capture window",
+ "pageErrors": [],
+ "warnings": [
+  {
+   "type": "error",
+   "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  },
+  {
+   "type": "warning",
+   "text": "THREE.WebGLProgram: Program Info Log: (169,12-86): warning X3595: gradient instruction used in a loop with varying iteration; partial derivatives may have undefined value\n(247,1): warning X4000: use of potentially uninitialized variable (f_areaAt)\n\n\n\u0000"
+  },
+  {
+   "type": "warning",
+   "text": "THREE.WebGLProgram: Program Info Log: (231,12-86): warning X3595: gradient instruction used in a loop with varying iteration; partial derivatives may have undefined value\n(231,12-86): warning X3595: gradient instruction used in a loop with varying iteration; partial derivatives may have undefined value\n\n\n\u0000"
+  },
+  {
+   "type": "warning",
+   "text": "THREE.WebGLProgram: Program Info Log: (231,12-86): warning X3595: gradient instruction used in a loop with varying iteration; partial derivatives may have undefined value\n(231,12-86): warning X3595: gradient instruction used in a loop with varying iteration; partial derivatives may have undefined value\n\n\n\u0000"
+  },
+  {
+   "type": "warning",
+   "text": "THREE.WebGLProgram: Program Info Log: (187,13-25): warning X3577: value cannot be NaN, isnan() may not be necessary.  /Gis may force isnan() to be performed\n\n\n\u0000"
+  },
+  {
+   "type": "warning",
+   "text": "THREE.WebGLProgram: Program Info Log: (85,12-86): warning X3595: gradient instruction used in a loop with varying iteration; partial derivatives may have undefined value\n\n\n\u0000"
+  },
+  {
+   "type": "warning",
+   "text": "THREE.WebGLProgram: Program Info Log: (187,13-25): warning X3577: value cannot be NaN, isnan() may not be necessary.  /Gis may force isnan() to be performed\n\n\n\u0000"
+  },
+  {
+   "type": "error",
+   "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 0 ms (work 1390, step 0.0; markers 519, audio 224, heights 220, witch 217, leash 63) [Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object]"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 1433 ms (work 507, step 288.0; draw 45, audio 39, start 32, heightsAhead 24, grass+lights 17) []"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 567 ms (work 147, step 14.7; grass+lights 28, heightsAhead 23, start 23, draw 16, markers 9) []"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 175 ms (work 114, step 17.2; start 23, heightsAhead 20, draw 17, markers 7, prefetch 7) []"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 133 ms (work 84, step 17.9; draw 15, prefetch 11, markers 7, heightsAhead 6, grass+lights 5) [Object]"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 100 ms (work 74, step 13.6; draw 12, prefetch 8, heightsAhead 6, markers 6, grass+lights 6) [Object]"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 92 ms (work 93, step 11.8; draw 21, prefetch 14, markers 8, groundTiles 7, leash 5) [Object]"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 117 ms (work 94, step 16.5; prefetch 16, draw 13, refresh 7, markers 7, heightsAhead 6) [Object]"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 117 ms (work 75, step 12.6; draw 15, prefetch 10, markers 8, grass+lights 4, groundTiles 4) []"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 133 ms (work 83, step 10.9; draw 14, prefetch 11, markers 8, heightsAhead 6, grass+lights 5) []"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 108 ms (work 61, step 4.4; draw 15, prefetch 6, grass+lights 5, markers 5, heightsAhead 4) [Object]"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 75 ms (work 80, step 8.9; draw 16, markers 9, party 8, prefetch 7, heightsAhead 6) [Object]"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 108 ms (work 70, step 10.8; draw 15, prefetch 10, grass+lights 5, witch 5, markers 4) [Object]"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 92 ms (work 66, step 4.7; prefetch 11, markers 10, draw 7, heightsAhead 6, grass+lights 5) [Object]"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 100 ms (work 85, step 10.3; markers 15, draw 14, prefetch 9, heightsAhead 6, grass+lights 5) [Object]"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 109 ms (work 74, step 8.1; draw 14, prefetch 10, markers 9, heightsAhead 6, groundTiles 5) []"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 75 ms (work 61, step 6.4; draw 11, markers 10, prefetch 8, grass+lights 4, refresh 4) [Object]"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 117 ms (work 102, step 34.6; draw 24, groundTiles 17, audio 6, markers 6, leash 6) []"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 117 ms (work 114, step 54.4; draw 16, groundTiles 15, leash 6, grass+lights 6, party 6) []"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 125 ms (work 202, step 167.5; draw 13, witch 6, groundTiles 4, heightsAhead 2, leash 1) []"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 200 ms (work 25, step 2.9; draw 10, witch 3, heightsAhead 2, groundTiles 2, leash 1) [Object]"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 75 ms (work 21, step 2.5; draw 11, witch 2, groundTiles 2, heightsAhead 1) [Object, Object]"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 33 ms (work 27, step 2.4; draw 12, witch 4, groundTiles 2, party 1, start 1) [Object]"
+  },
+  {
+   "type": "warning",
+   "text": "THREE.WebGLProgram: Program Info Log: (177,12-86): warning X3595: gradient instruction used in a loop with varying iteration; partial derivatives may have undefined value\n(255,1): warning X4000: use of potentially uninitialized variable (f_areaAt)\n\n\n\u0000"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 8 ms (work 107, step 0.0; draw 97, witch 2, heightsAhead 2, start 1, grass+lights 1) []"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 117 ms (work 22, step 3.7; draw 9, witch 3, heightsAhead 1) []"
+  },
+  {
+   "type": "warning",
+   "text": "THREE.WebGLProgram: Program Info Log: (243,1): warning X4000: use of potentially uninitialized variable (f_areaAt)\n\n\n\u0000"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 50 ms (work 405, step 1.5; draw 395, witch 2, start 2) [Object]"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 417 ms (work 544, step 2.3; draw 533, witch 3, heightsAhead 2) []"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 584 ms (work 26, step 4.7; draw 10, witch 3, grass+lights 1) []"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 50 ms (work 22, step 2.6; draw 10, witch 2, grass+lights 1, heightsAhead 1) [Object]"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 25 ms (work 23, step 1.1; draw 15, witch 2, heightsAhead 1) [Object]"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 17 ms (work 27, step 1.0; draw 15, witch 3, grass+lights 1, start 1) [Object]"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 58 ms (work 257, step 229.7; draw 10, witch 4, heightsAhead 2, start 1, grass+lights 1) []"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 258 ms (work 24, step 4.3; draw 11, witch 2, heightsAhead 1) []"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 192 ms (work 23, step 4.9; draw 8, witch 2, heightsAhead 2, start 1, grass+lights 1) []"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 33 ms (work 23, step 1.9; draw 10, witch 3, heightsAhead 2, grass+lights 1, start 1) [Object]"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 42 ms (work 27, step 2.6; draw 14, heightsAhead 2, witch 2, grass+lights 1) [Object]"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 133 ms (work 35, step 5.6; draw 15, witch 3, heightsAhead 2, start 1, grass+lights 1) []"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 25 ms (work 23, step 1.3; draw 11, heightsAhead 2, witch 2, start 1) [Object]"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 59 ms (work 25, step 1.8; draw 13, witch 3, heightsAhead 2, leash 1) [Object]"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 208 ms (work 25, step 6.0; draw 7, witch 4, grass+lights 1) []"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 17 ms (work 32, step 1.2; draw 19, witch 3, heightsAhead 2, markers 2, grass+lights 1) [Object]"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 42 ms (work 995, step 1.0; witch 903, draw 23, hud 5, refresh 3, markers 2) []"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 1017 ms (work 73, step 3.6; witch 30, draw 23, refresh 3, hud 2, heightsAhead 2) []"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 108 ms (work 51, step 4.2; draw 23, witch 13, refresh 2, groundTiles 2, audio 1) []"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 75 ms (work 58, step 2.3; draw 29, witch 15, refresh 3, heightsAhead 2, groundTiles 2) [Object]"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 67 ms (work 65, step 3.1; draw 33, witch 15, refresh 3, groundTiles 3, heightsAhead 2) [Object]"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 133 ms (work 64, step 8.9; draw 28, witch 17, groundTiles 2, heightsAhead 1, grass+lights 1) []"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 58 ms (work 56, step 3.0; draw 26, witch 18, grass+lights 1, groundTiles 1, start 1) [Object]"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 108 ms (work 45, step 2.2; draw 24, witch 13, heightsAhead 2) []"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 100 ms (work 51, step 3.8; draw 19, witch 19, heightsAhead 2, start 1, grass+lights 1) []"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 50 ms (work 46, step 2.7; witch 17, draw 16, heightsAhead 2, grass+lights 1, leash 1) [Object]"
+  },
+  {
+   "type": "warning",
+   "text": "audio watchdog: music-silent"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 59 ms (work 122, step 2.6; audio 60, draw 30, witch 21, markers 1, heightsAhead 1) []"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 400 ms (work 54, step 5.3; draw 23, witch 17, heightsAhead 2, leash 1) []"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 100 ms (work 52, step 3.9; draw 19, witch 19, markers 1, heightsAhead 1, grass+lights 1) [Object]"
+  },
+  {
+   "type": "warning",
+   "text": "audio: the output silent for 0.48 s while the music should be heard"
+  },
+  {
+   "type": "warning",
+   "text": "audio: shed 1 (beds off): 4 under-runs in 5 s"
+  },
+  {
+   "type": "warning",
+   "text": "audio: the output silent for 0.49 s while the music should be heard"
+  },
+  {
+   "type": "warning",
+   "text": "audio watchdog: music-silent"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 50 ms (work 112, step 3.7; audio 56, draw 30, witch 17, heightsAhead 1) []"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 217 ms (work 59, step 5.6; draw 25, witch 20, grass+lights 1, start 1, heightsAhead 1) []"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 67 ms (work 59, step 3.4; draw 29, witch 17, heightsAhead 2, markers 1, grass+lights 1) [Object]"
+  },
+  {
+   "type": "warning",
+   "text": "audio: the output silent for 0.45 s while the music should be heard"
+  },
+  {
+   "type": "warning",
+   "text": "audio: the output silent for 0.47 s while the music should be heard"
+  },
+  {
+   "type": "warning",
+   "text": "audio: the output silent for 0.32 s while the music should be heard"
+  },
+  {
+   "type": "warning",
+   "text": "audio watchdog: music-silent"
+  },
+  {
+   "type": "warning",
+   "text": "audio: the output silent for 0.44 s while the music should be heard"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 208 ms (work 57, step 5.5; draw 26, witch 16, heightsAhead 2, start 1, grass+lights 1) []"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 50 ms (work 56, step 3.6; draw 24, witch 18, heightsAhead 2, grass+lights 2, audio 1) [Object]"
+  },
+  {
+   "type": "warning",
+   "text": "audio: the output silent for 0.38 s while the music should be heard"
+  },
+  {
+   "type": "warning",
+   "text": "audio: the output silent for 0.37 s while the music should be heard"
+  },
+  {
+   "type": "warning",
+   "text": "audio: the output silent for 0.40 s while the music should be heard"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 200 ms (work 118, step 4.9; playtest 58, draw 26, witch 20, heightsAhead 2, markers 1) []"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 125 ms (work 45, step 4.1; draw 19, witch 14, heightsAhead 2) []"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 58 ms (work 48, step 2.6; draw 20, witch 20) [Object]"
+  },
+  {
+   "type": "warning",
+   "text": "stall: 50 ms (work 46, step 2.9; draw 21, witch 13, heightsAhead 2, grass+lights 1) [Object]"
+  }
+ ],
+ "failure": {
+  "phase": "settling",
+  "island": "fox",
+  "diagnosticError": "Error: page.evaluate: Target page, context or browser has been closed",
+  "workers": [],
+  "workerJobEvidence": "no-job-evidence",
+  "workerJobs": []
+ }
+}

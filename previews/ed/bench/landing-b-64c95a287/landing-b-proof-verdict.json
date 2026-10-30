@@ -1,0 +1,9 @@
+{
+  "ok": false,
+  "failures": [
+    "no visible fallback submission at15.5s",
+    "capture outside15–16s",
+    "getProgramInfoLog exceeded100ms",
+    "frame over100ms in the grace/capture window"
+  ]
+}

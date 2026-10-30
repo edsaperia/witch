@@ -1,0 +1,263 @@
+{
+  "at": 237263.09999990463,
+  "methods": {
+    "getUniforms": {
+      "count": 398838,
+      "longestMs": 75
+    },
+    "getProgramInfoLog": {
+      "count": 7,
+      "longestMs": 498
+    },
+    "getShaderInfoLog": {
+      "count": 14,
+      "longestMs": 5.6000001430511475
+    },
+    "getActiveUniform": {
+      "count": 368,
+      "longestMs": 0.5999999046325684
+    },
+    "getUniformLocation": {
+      "count": 368,
+      "longestMs": 0.39999985694885254
+    }
+  },
+  "unsafeUniformReads": 0,
+  "drawStatus": {
+    "active": false,
+    "skipped": {
+      "crown#78:ShaderMaterial": 509,
+      "crown#79:ShaderMaterial": 509,
+      "Mesh#364:ShaderMaterial": 4342,
+      "Mesh#366:ShaderMaterial": 4342,
+      "Mesh#372:ShaderMaterial": 4342,
+      "Mesh#374:ShaderMaterial": 4342,
+      "Mesh#365:ShaderMaterial": 2171,
+      "Mesh#367:ShaderMaterial": 2171,
+      "Mesh#373:ShaderMaterial": 2171,
+      "Mesh#375:ShaderMaterial": 2171,
+      "Mesh#368:ShaderMaterial": 2171,
+      "Mesh#332:ShaderMaterial": 254,
+      "Mesh#370:ShaderMaterial": 2171,
+      "Mesh#369:ShaderMaterial": 2171,
+      "Mesh#371:ShaderMaterial": 2171,
+      "stump#378:ShaderMaterial": 799,
+      "Mesh#379:ShaderMaterial": 1596,
+      "Mesh#381:ShaderMaterial": 1596,
+      "Mesh#380:ShaderMaterial": 798,
+      "Mesh#382:ShaderMaterial": 798,
+      "type 1#383:ShaderMaterial": 798,
+      "type 1 (silhouette)#385:ShaderMaterial": 798,
+      "type 1 (see-through)#384:ShaderMaterial": 798,
+      "type 1 (silhouette)#386:ShaderMaterial": 798,
+      "Mesh#387:ShaderMaterial": 1572,
+      "Mesh#389:ShaderMaterial": 1572,
+      "Mesh#388:ShaderMaterial": 786,
+      "Mesh#390:ShaderMaterial": 786,
+      "type 6#391:ShaderMaterial": 786,
+      "type 6 (silhouette)#393:ShaderMaterial": 786,
+      "type 6 (see-through)#392:ShaderMaterial": 786,
+      "type 6 (silhouette)#394:ShaderMaterial": 786,
+      "Mesh#395:ShaderMaterial": 1570,
+      "Mesh#397:ShaderMaterial": 1570,
+      "Mesh#396:ShaderMaterial": 785,
+      "Mesh#398:ShaderMaterial": 785,
+      "type 25#399:ShaderMaterial": 784,
+      "type 25 (silhouette)#401:ShaderMaterial": 784,
+      "type 25 (see-through)#400:ShaderMaterial": 784,
+      "type 25 (silhouette)#402:ShaderMaterial": 784,
+      "stump#403:ShaderMaterial": 687,
+      "Mesh#404:ShaderMaterial": 41,
+      "Mesh#406:ShaderMaterial": 41,
+      "Mesh#405:ShaderMaterial": 41,
+      "Mesh#407:ShaderMaterial": 41,
+      "Mesh#409:ShaderMaterial": 18,
+      "Mesh#410:ShaderMaterial": 14,
+      "Mesh#412:ShaderMaterial": 14,
+      "Mesh#411:ShaderMaterial": 7,
+      "Mesh#413:ShaderMaterial": 7,
+      "type 13#414:ShaderMaterial": 6,
+      "type 13 (silhouette)#416:ShaderMaterial": 6,
+      "type 13 (see-through)#415:ShaderMaterial": 6,
+      "type 13 (silhouette)#417:ShaderMaterial": 6
+    },
+    "fallback": {
+      "Mesh#326:ShaderMaterial": 2167
+    }
+  },
+  "worstFrameMs": 1541.6000000000058,
+  "marks": [
+    {
+      "name": "chart:sail",
+      "at": 113165.59999990463
+    },
+    {
+      "name": "chart:depart",
+      "at": 113169.29999995232
+    },
+    {
+      "name": "witch:map-prep-source",
+      "at": 113465.5
+    },
+    {
+      "name": "witch:prep",
+      "at": 113475.59999990463
+    },
+    {
+      "name": "witch:map-hydrated",
+      "at": 114460.29999995232
+    },
+    {
+      "name": "witch:map-prep",
+      "at": 114460.39999985695
+    },
+    {
+      "name": "witch:game",
+      "at": 115004.39999985695
+    },
+    {
+      "name": "witch:build-heights",
+      "at": 115083.79999995232
+    },
+    {
+      "name": "witch:build-ground",
+      "at": 118041.59999990463
+    },
+    {
+      "name": "witch:build-disco",
+      "at": 118042
+    },
+    {
+      "name": "witch:build-paths",
+      "at": 118155.89999985695
+    },
+    {
+      "name": "chart:landing-due",
+      "at": 118830.29999995232,
+      "detail": {
+        "at": 118768.09999990463,
+        "deadline": 133768.09999990463
+      }
+    },
+    {
+      "name": "witch:build-markers",
+      "at": 118943.69999980927
+    },
+    {
+      "name": "witch:build-stones",
+      "at": 118944
+    },
+    {
+      "name": "witch:build-ley",
+      "at": 118950.39999985695
+    },
+    {
+      "name": "witch:build-swap",
+      "at": 118953.79999995232
+    },
+    {
+      "name": "witch:prep-start",
+      "at": 118990.19999980927
+    },
+    {
+      "name": "witch:prep-compile0",
+      "at": 119020.79999995232
+    },
+    {
+      "name": "witch:shader-start",
+      "at": 119021.19999980927
+    },
+    {
+      "name": "landing:limited",
+      "at": 133778.39999985695
+    },
+    {
+      "name": "witch:shader-landing-limit",
+      "at": 133778.79999995232
+    },
+    {
+      "name": "witch:prep-track",
+      "at": 133779.79999995232
+    },
+    {
+      "name": "sail:ready",
+      "at": 133782.19999980927
+    },
+    {
+      "name": "chart:ready",
+      "at": 133782.29999995232
+    },
+    {
+      "name": "chart:flown",
+      "at": 133816.69999980927
+    },
+    {
+      "name": "chart:go",
+      "at": 133816.79999995232
+    },
+    {
+      "name": "witch:build-forest",
+      "at": 133872.09999990463
+    },
+    {
+      "name": "game:frame1",
+      "at": 133889.59999990463
+    },
+    {
+      "name": "landing:early-land",
+      "at": 134122.29999995232
+    },
+    {
+      "name": "game:reveal",
+      "at": 134123.39999985695
+    },
+    {
+      "name": "game:arrived",
+      "at": 134123.39999985695
+    },
+    {
+      "name": "opening:alarm",
+      "at": 134129.19999980927
+    },
+    {
+      "name": "island:ready",
+      "at": 135641.59999990463
+    },
+    {
+      "name": "witch:build-carvings",
+      "at": 149314.69999980927
+    },
+    {
+      "name": "witch:prep-warm",
+      "at": 149315
+    },
+    {
+      "name": "witch:shader-background-ready",
+      "at": 203770.59999990463
+    },
+    {
+      "name": "witch:prep-home",
+      "at": 211871
+    },
+    {
+      "name": "landing:house-fading",
+      "at": 212893.19999980927
+    },
+    {
+      "name": "landing:house-faded",
+      "at": 212893.19999980927
+    },
+    {
+      "name": "witch:prep-ground",
+      "at": 214132.79999995232
+    },
+    {
+      "name": "witch:prep-house",
+      "at": 214260.09999990463
+    },
+    {
+      "name": "landing:house-complete",
+      "at": 214260.39999985695
+    }
+  ]
+}
