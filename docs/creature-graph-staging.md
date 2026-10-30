@@ -169,6 +169,21 @@ the pre-change dense painter byte hash is pinned in `rosettePainter.test.ts`
 across four scales, back/flanks/belly and wrapped/regional patterns. This is a
 CPU painter comparison, not a newly captured image or a visual acceptance claim.
 
+Second optional painter controls (6514506100): `filledFraction` in [0,1]
+selects seeded cells to paint as solid `mat` discs instead of rings (including
+their centres). `densityFalloff: {axis,from,to,min}` multiplies density by a
+clamped linear ramp, 1 at `from` and `min` at `to`; reversed endpoints are
+supported. `min` must be in [0,1]. Axes are x (longitudinal cell centre/body len,
+positive toward the neck), y (elliptical height: -1 belly, +1 back), or z
+(absolute side fraction: 0 spine, 1 flank). A list of ramp objects multiplies
+them, e.g. neck `{axis:"x",from:.2,to:1,min:.2}` plus belly
+`{axis:"y",from:0,to:-1,min:0}`. Coordinates are evaluated at the seeded cell
+centre so the ramp removes complete rings rather than eroding them into specks.
+Rotation already spans 2π per cell and position already has seeded jitter;
+no new rotation/position controls were added. All new fields remain absent
+from fixtures and production records. The original painter byte hash remains
+unchanged; filled endpoints/share and composable falloffs have nearby tests.
+
 Connectedness tests caught thin-profile gaps and inverted legacy baby loaf
 depths. The graph inserts interpolated stations to preserve its connectivity
 invariant; it normalises non-positive legacy vertical radii and records their

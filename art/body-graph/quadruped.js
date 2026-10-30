@@ -82,21 +82,42 @@ function rosetteCell(p, options, bounds) {
   const theta = Math.atan2(p[2] / width, (p[1] - centreY) / depth);
   const u = p[0] * k, v = (theta + Math.PI) / (Math.PI * 2) * around;
   const i = Math.floor(u), j = Math.floor(v), seam = ((j % around) + around) % around;
-  if (hash2(i, seam, 11) > (options.density ?? .75)) return null;
   const cx = i + .3 + hash2(i, seam, 12) * .4, cy = j + .3 + hash2(seam, i, 13) * .4;
+  let density = options.density ?? .75;
+  if (options.densityFalloff !== undefined) {
+    const angle = cy / around * Math.PI * 2 - Math.PI;
+    density *= rosetteDensityMultiplier(options.densityFalloff, { x: cx / k / (len || 1), y: Math.cos(angle), z: Math.abs(Math.sin(angle)) });
+    if (density <= 0) return null;
+  }
+  if (hash2(i, seam, 11) > density) return null;
   const d = Math.hypot(u - cx, v - cy), a = Math.atan2(v - cy, u - cx);
   return { d, angle: a, phase: i, seam, rotation: hash2(i, seam, 74) * Math.PI * 2 };
+}
+// Coordinates are evaluated at the seeded cell centre, not each paint sample:
+// falloff drops whole rings rather than eroding a ring into partial speckles.
+export function rosetteDensityMultiplier(falloff, coordinates) {
+  const fields = Array.isArray(falloff) ? falloff : [falloff];
+  let multiplier = 1;
+  for (const field of fields) {
+    if (!field || !["x", "y", "z"].includes(field.axis) || !Number.isFinite(field.from) || !Number.isFinite(field.to) || field.from === field.to || !Number.isFinite(field.min) || field.min < 0 || field.min > 1) throw new Error("Rosette densityFalloff needs axis x/y/z, distinct finite from/to and min in [0,1]");
+    const t = Math.max(0, Math.min(1, (coordinates[field.axis] - field.from) / (field.to - field.from)));
+    multiplier *= 1 + (field.min - 1) * t;
+  }
+  return multiplier;
 }
 // Keep cell position/density/rotation seeds unchanged. Variation changes the
 // ring within its cell, never the cell lattice or the neighbouring identities.
 export function rosetteCellVariation(options, i, seam) {
   const variation = options.sizeVariation ?? 0, fraction = options.closedFraction ?? 0, range = options.gapRange;
+  const filled = options.filledFraction ?? 0;
   if (!Number.isFinite(variation) || variation < 0 || variation >= 1) throw new Error("Rosette sizeVariation must be in [0,1)");
   if (!Number.isFinite(fraction) || fraction < 0 || fraction > 1) throw new Error("Rosette closedFraction must be in [0,1]");
+  if (!Number.isFinite(filled) || filled < 0 || filled > 1) throw new Error("Rosette filledFraction must be in [0,1]");
   if (range !== undefined && (!Array.isArray(range) || range.length !== 2 || !range.every(Number.isFinite) || range[0] < 0 || range[1] > Math.PI || range[0] > range[1])) throw new Error("Rosette gapRange must be ordered radians in [0,pi]");
   return {
     scale: 1 + (hash2(i, seam, 75) * 2 - 1) * variation,
     closed: fraction === 1 || hash2(i, seam, 76) < fraction,
+    filled: filled === 1 || hash2(i, seam, 78) < filled,
     gap: range ? range[0] + hash2(i, seam, 77) * (range[1] - range[0]) : options.gap ?? .4,
   };
 }
@@ -113,8 +134,9 @@ export function regionMarking(p, definition, bounds = null) {
   if (definition.kind === "rosettes" && bounds) {
     const cell = rosetteCell(p, definition, bounds);
     if (!cell) return null;
-    if (definition.sizeVariation !== undefined || definition.closedFraction !== undefined || definition.gapRange !== undefined) {
+    if (definition.sizeVariation !== undefined || definition.closedFraction !== undefined || definition.gapRange !== undefined || definition.filledFraction !== undefined) {
       const variation = rosetteCellVariation(definition, cell.phase, cell.seam), d = cell.d / variation.scale;
+      if (variation.filled) return d < (definition.outer ?? .4) ? M[definition.mat || "BODY3"] ?? M.BODY3 : null;
       if (d <= (definition.inner ?? .18)) return definition.centreMat ? M[definition.centreMat] ?? null : null;
       const outsideGap = variation.closed || Math.cos(cell.angle - cell.rotation) < Math.cos(variation.gap);
       return d < (definition.outer ?? .4) && outsideGap ? M[definition.mat || "BODY3"] ?? M.BODY3 : null;

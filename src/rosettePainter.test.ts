@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { regionMarking, wrappedRosette, rosetteCellVariation } from "../art/body-graph/quadruped.js";
+import { regionMarking, wrappedRosette, rosetteCellVariation, rosetteDensityMultiplier } from "../art/body-graph/quadruped.js";
+import { M } from "../art/core.js";
 
 function painterBytes(extra = {}) {
   const values: number[] = [];
@@ -19,7 +20,34 @@ describe("seeded regional rosette variation", () => {
     // Recorded at 067d2a225 before the variation implementation: four scales,
     // both flanks/back/belly, old wrapped pattern and native regional rings.
     expect(digest(painterBytes())).toBe("e765eff27ef822a0f0a2deabb00692d626a9d32a48bb370cc4021eb691463e91");
-    expect(digest(painterBytes({ sizeVariation: 0, closedFraction: 0, gapRange: [.4, .4] }))).toBe(digest(painterBytes()));
+    expect(digest(painterBytes({ sizeVariation: 0, closedFraction: 0, filledFraction: 0, gapRange: [.4, .4] }))).toBe(digest(painterBytes()));
+    expect(digest(painterBytes({ densityFalloff: { axis:"x",from:0,to:1,min:1 } }))).toBe(digest(painterBytes()));
+  });
+  it("fills a stable share of complete cells with solid ink rather than pale centres", () => {
+    let filled=0;
+    for(let i=-50;i<50;i++)for(let j=0;j<20;j++)filled+=Number(rosetteCellVariation({filledFraction:.3},i,j).filled);
+    expect(filled/2000).toBeGreaterThan(.25);expect(filled/2000).toBeLessThan(.35);
+    expect(rosetteCellVariation({filledFraction:0},0,0).filled).toBe(false);
+    expect(rosetteCellVariation({filledFraction:1},0,0).filled).toBe(true);
+    const solid=painterBytes({filledFraction:1}), normal=painterBytes();
+    // Even entries are regional materials; odd entries are the legacy boolean.
+    expect(solid.filter((v,i)=>i%2===0&&v===M.BODYL)).toHaveLength(0);
+    expect(normal.filter((v,i)=>i%2===0&&v===M.BODYL).length).toBeGreaterThan(0);
+    expect(solid.filter((v,i)=>i%2===0&&v===M.BODY3).length).toBeGreaterThan(normal.filter((v,i)=>i%2===0&&v===M.BODY3).length);
+  });
+  it("fades whole cells toward the belly and neck with clamped, composable ramps", () => {
+    const neck={axis:"x",from:.2,to:1,min:.2}, belly={axis:"y",from:0,to:-1,min:0};
+    expect(rosetteDensityMultiplier(neck,{x:0,y:0,z:0})).toBe(1);
+    expect(rosetteDensityMultiplier(neck,{x:2,y:0,z:0})).toBeCloseTo(.2);
+    expect(rosetteDensityMultiplier(neck,{x:.6,y:0,z:0})).toBeCloseTo(.6);
+    expect(rosetteDensityMultiplier([neck,belly],{x:.6,y:-.5,z:0})).toBeCloseTo(.3);
+    expect(rosetteDensityMultiplier(belly,{x:0,y:-1,z:0})).toBe(0);
+    const faded=painterBytes({densityFalloff:[neck,belly]});
+    expect(digest(faded)).toBe(digest(painterBytes({densityFalloff:[neck,belly]})));
+    const ink=(v:Uint8Array)=>v.filter((x,i)=>i%2===0&&x!==255).length;
+    expect(ink(faded)).toBeLessThan(ink(painterBytes()));
+    expect(ink(painterBytes({densityFalloff:{axis:"y",from:-2,to:-1,min:0}}))).toBe(0);
+    for(const field of [{axis:"w",from:0,to:1,min:0},{axis:"x",from:0,to:0,min:0},{axis:"y",from:0,to:1,min:-1}])expect(()=>rosetteDensityMultiplier(field,{x:0,y:0,z:0})).toThrow(/densityFalloff/);
   });
   it("varies size and gap within bounds with a reproducible closed-ring share", () => {
     const options = { sizeVariation: .15, closedFraction: .25, gapRange: [0, .65] }, scales = new Set(), gaps = new Set();
@@ -43,7 +71,7 @@ describe("seeded regional rosette variation", () => {
     expect(shut.filter(v => v !== 255).length).toBeGreaterThan(open.filter(v => v !== 255).length);
   });
   it("rejects invalid bounds instead of emitting unstable patterns", () => {
-    for (const options of [{ sizeVariation: -1 }, { sizeVariation: 1 }, { closedFraction: 2 }, { closedFraction: NaN }, { gapRange: [.8, .1] }, { gapRange: [0, 4] }]) {
+    for (const options of [{ sizeVariation: -1 }, { sizeVariation: 1 }, { closedFraction: 2 }, { closedFraction: NaN }, {filledFraction:-1}, {filledFraction:1.1}, { gapRange: [.8, .1] }, { gapRange: [0, 4] }]) {
       expect(() => rosetteCellVariation(options, 1, 2)).toThrow(/Rosette/);
     }
   });
