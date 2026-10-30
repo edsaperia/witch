@@ -10,6 +10,7 @@ import { polylinesMeet, segmentsMeet, crossings } from "./crossing";
 import { CROSSING_RULES, CURVE_WORK, crossingPairs, meetPoint, overHome, routeShape, spiralOrder, withinCrossingRules } from "./leyroute";
 import { TIP_PACE } from "./leypulse";
 
+// Keep the full radius seed matrix: crossing separation, spiral drift and historical slow-seed curve budgets depend on route extent and density.
 describe("lines meeting", () => {
   it("counts crossing, touching and doubling back, not two links joined at their stone", () => {
     expect(segmentsMeet([0, 0], [10, 10], [0, 10], [10, 0])).toBe(true); // crossing
