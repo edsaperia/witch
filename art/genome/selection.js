@@ -26,5 +26,6 @@ export function selectedCreatureGenome(base, context = {}, level = null) {
   const selected = family[mode];
   if (!selected || selected.id !== base.id || !selected.template || !selected.builder || !selected.palette) throw new Error(`Invalid selected creature genome: ${base.id}:${mode}`);
   const look = level === null ? null : selected.levels?.[level]?.look;
-  return look ? { ...selected, look: { ...selected.look, ...look } } : selected;
+  const palette = level === null ? null : selected.levels?.[level]?.palette;
+  return look || palette ? { ...selected, ...(look ? { look: { ...selected.look, ...look } } : {}), ...(palette ? { palette: { ...selected.palette, ...palette, ...(palette.over ? { over: { ...selected.palette.over, ...palette.over } } : {}) } } : {}) } : selected;
 }

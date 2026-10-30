@@ -49,14 +49,20 @@ export function partyGear(seed, collarColour = true) {
   };
 }
 // sp: a species id, or a species object (a palette variant's: art/genome/palette.js).
-export function speciesColours(sp, st, gear = null) {
-  const c = baseColours(typeof sp === "string" ? speciesFor(sp, st) : sp, st);
+/**
+ * @param {number|null} [level]
+ * @returns {Record<number, number[]>}
+ */
+export function speciesColours(sp, st, gear = null, level = null) {
+  const S = typeof sp === "string" ? speciesFor(sp, st, level) : sp, c = baseColours(S, st);
+  c[M.SHELL] = c[M.BODY]; c[M.THORAX] = c[M.BODY]; c[M.HEAD] = c[M.BODY2];
+  for (const [name, rgb] of Object.entries(S.paletteOver || {})) if (M[name] && Array.isArray(rgb) && rgb.length === 3 && rgb.every(Number.isFinite)) c[M[name]] = rgb.slice();
   if (!gear) return c;
   if (gear.collar) c[M.COLLAR] = Array.isArray(gear.collar) ? gear.collar : c[M.MAGIC];
   if (gear.hat != null) { const [a, b, pom] = HAT_COLOURWAYS[gear.hat % HAT_COLOURWAYS.length]; c[M.HAT1] = a; c[M.HAT2] = b; c[M.POM] = pom; }
   if (gear.glasses) { c[M.SHADES] = [22, 18, 32]; c[M.FRAME] = gear.glasses === "heart" ? [255, 60, 110] : [255, 90, 210]; }
   if (gear.shoes) { const [shoe, sole] = SHOE_STYLES[gear.shoes] || SHOE_STYLES.sneakers; c[M.SHOE] = shoe; c[M.SOLE] = sole; if (gear.shoes === "lightup" && !gear.collar) c[M.COLLAR] = c[M.MAGIC]; } // (light-up soles glow in its neon, its collar's or its magic's)
-  if (gear.woken) { c[M.WOKEN] = [255, 40, 36]; for (const k of [M.BODY, M.BODYL, M.BODY2, M.BODY3, M.BELLY, M.ACCENT, M.EAR]) if (c[k]) c[k] = c[k].map((v, j) => Math.round(v * .72 + [30, 8, 12][j] * .1)); } // darker, a little redder
+  if (gear.woken) { c[M.WOKEN] = [255, 40, 36]; for (const k of [M.BODY, M.BODYL, M.BODY2, M.BODY3, M.BELLY, M.ACCENT, M.EAR, M.SHELL, M.THORAX, M.HEAD]) if (c[k]) c[k] = c[k].map((v, j) => Math.round(v * .72 + [30, 8, 12][j] * .1)); } // darker, a little redder
   return c;
 }
 function baseColours(s, st) {

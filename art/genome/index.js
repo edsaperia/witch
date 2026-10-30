@@ -19,6 +19,7 @@ export function speciesOf(g, context = {}, level = null) {
   g = selectedCreatureGenome(g, context, level);
   const S = { id: g.id, name: g.name, plan: g.builder, hue: g.palette.hue, sat: g.palette.sat, val: g.palette.val, legend: g.legend || [] };
   if (g.palette.belly) S.belly = g.palette.belly;
+  if (g.palette.over) S.paletteOver = g.palette.over;
   if (g.elder) S.elder = g.elder; // its legend as the elder of its kind (art/elders.js): { kind, tail, ears, eye }
   if (g.palette.accent) S.accent = g.palette.accent; // its horns', hooves', beak's and claws' own colour [h, s, v]
   if (g.idle) S.idle = g.idle; // its idle pose (art/creatures.js IDLE_BUILDERS: the meerkat sat up as a sentinel)

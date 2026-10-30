@@ -208,7 +208,7 @@ export function legendForm(id, st, { state = "asleep", frame = 0, facing = "towa
 
 // Its colours asleep: its own weathered toward its area's stone, and the area's moss, earth and leaves.
 export function legendColours(id, st) {
-  const a = legendArea(id), [, fh, fs, fv] = a.floor, base = speciesColours(id, st), d = decorColours(st, rockTint(a));
+  const a = legendArea(id), [, fh, fs, fv] = a.floor, base = speciesColours(id, st, null, 3), d = decorColours(st, rockTint(a));
   const mix = (x, y, t) => x.map((v, i) => Math.round(v + (y[i] - v) * t));
   const stoneT = .62, stone = d[M.STONE], dark = d[M.STONED];
   const c = { ...base };

@@ -91,7 +91,8 @@ Exports from `art/genome/index.js` (also `art/generator.js`):
 `parseCreatureModels(raw)`, `selectedCreatureGenome(base, context, level)`,
 `speciesOf(base, context, level)` and `genomeHash(base, context, level)`. Level
 is optional (`null` for the complete selected record), otherwise 0 through 3;
-it overlays `levels[level].look` onto `look`. Thus an explicit false at levels
+it overlays `levels[level].look` onto `look` and `levels[level].palette` onto
+`palette` (including merging the material `over` map). Thus an explicit false at levels
 0 through 2 can suppress embers while level 3 retains the original look.
 `genomeHash` with a level includes that level and the resolved selected record.
 Internally `speciesFor(id, style, level)` applies the same selection for sprites, palettes, rig
@@ -101,6 +102,44 @@ The style/selection is fixed for a run and carried unchanged in worker jobs;
 JSON round-trip tests cover parity without reading page or worker locations.
 Current base tables are never mutated. Existing production builders remain
 the default fallback.
+
+Palette consumers pass their level too: `speciesColours(id, style, gear,
+level)` and `variantColours(id, style, variant, gear, level)`. Worker bakes,
+party/nap frames, rig palettes and sleeping legends pass this through, so a
+young palette patch does not recolour the legend. The original three-argument
+palette call remains valid when no per-level palette is needed.
+
+## Shared part controls
+
+Beetle controls (requested through coordinator 6513333254):
+
+- `look.mandibles`: `length` and `width` are positive multipliers; `curve` is
+  0 to 1 inward bend; `teeth` is 1 or 2; `awayTipLift` is extra away-view tip
+  height as a share of jaw length (default .16 in the opt-in part). The old jaw
+  code is unchanged when the object is absent. Rendered tip visibility still
+  needs cloud review; geometry lift alone is not proof of legibility.
+- `look.materials`: `{ wingCases: "SHELL", thorax: "THORAX", head: "HEAD" }`
+  gives separate normal-lit palette slots 57, 58 and 59 (all below the existing
+  64-slot limit). Omission keeps BODY, BODY, BODY2 exactly as before.
+- `palette.over`: RGB triples by material name, e.g. `SHELL`, `THORAX`, `HEAD`.
+  Per-level `palette.over` overrides merge with the selected record's own map.
+  The new slots default to the original coat colours and are not emissive.
+
+Cats iteration 1 uses `body.graph: { family: "feline", flex: .02 }` to compile
+the existing torso envelope into shared spine stations. Head, leg, tail and
+legend part families are reused from the common quadruped model; this is not
+yet the removal of that fallback or a complete independent body builder.
+`felineGraphGenome(base, options)` is a generic adapter, not a species registry;
+#1479 owns natural proportions and markings. `head.earRoot` offsets an ear in
+head radii, and `head.earAngle` is `[pitch, outwardSplay]` in radians.
+`coat.rosettes.wrap` projects rings around the back and both flanks; lower-body
+spots and rounded-triangular fox ears remain subsequent region/shape work.
+
+Connectedness tests caught thin-profile gaps and inverted legacy baby loaf
+depths. The graph inserts interpolated stations to preserve its connectivity
+invariant; it normalises non-positive legacy vertical radii and records their
+count in `model.bodyGraph.diagnostics.normalisedDepths` for review (notably the
+snow leopard baby). These are opt-in changes; no current genome is rewritten.
 
 ## Family score history
 

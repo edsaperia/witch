@@ -4,6 +4,9 @@ import { M, rng, uni, hash2 } from "./core.js";
 import { Model, render, v3, spotty, masks } from "./model3d.js";
 import { faceUp, JAW_FACES } from "./genome/expressions.js";
 import { textureLumps } from "./genome/texture.js";
+import { compileGraph } from "./body-graph/graph.js";
+import { quadrupedTorsoGraph, quadrupedEarSocket, wrappedRosette } from "./body-graph/quadruped.js";
+import { mandiblePart } from "./body-graph/mandibles.js";
 import { elderQuad, grizzle, notch, surfaceFrom, ring, fitRing, frontPts, closed, charm, crown, drawOn, meerkatDress, sentinelHeap } from "./elders.js";
 
 // Levels (Ed): 0 baby, 1 young, 2 adult, 3 legend.
@@ -569,7 +572,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
     if (q.harness && (Math.abs(p[0] - len * .32) < .045 || (p[0] > len * .9 && p[1] < top - .12))) return M.FLOWER; // the girth strap and the breastplate of an old gold harness
     if (q.belly && p[1] < bellyY && p[0] > -len * .5) return M.BELLY;
     if (q.stripes && stripeAt(p)) return M[q.stripes.mat || "BODY3"];
-    if (q.rosettes && rosetteAt(p)) return M[q.rosettes.mat || "BODY3"];
+    if (q.rosettes && (q.rosettes.wrap ? wrappedRosette(p, q.rosettes, { centreY: (top + chest) / 2, depth: (top - chest) / 2, width: bw, bellyY: chest + .06 }) : rosetteAt(p))) return M[q.rosettes.mat || "BODY3"];
     if (q.saddle && p[1] > top - .18 && p[0] < len * .55) return M.BODY2;
     if (q.scarred && p[2] > bw * .5 && p[1] > chest + .05 && Math.abs(((p[0] * 2.2 + p[1] * 1.6) % .55 + .55) % .55 - .1) < .025 && Math.sin(p[0] * 7) > -.2) return M.BELLY; // old pale scars raked across its flank (an elder's)
     if (q.coals && p[1] > chest + .02) { const k = 4.4, cx = p[0] * k, cz = p[2] * k, cy = p[1] * k; if (spotty(p, k, .42)) { const d = Math.hypot(cx - Math.floor(cx) - .5, cy - Math.floor(cy) - .5, cz - Math.floor(cz) - .5); if (d < .24) return M.MAGIC2; if (d < .4) return M.BELLY; } } // its warning spots grown large and glowing like coals (a salamander legend's: the legend audit's ★, Ed 2026-10-13)
@@ -602,7 +605,12 @@ export function quad3d(S, level, frame, st, facing = "towards") {
     [[0, (top + (chest + tuck) / 2) / 2 + .02 - loin, 0], [len * .6, (top - (chest + tuck) / 2) / 2, bw * .9]], // the middle
   ];
   const P = profileOf(q.profile), wAt = k => P ? P[k].w : 1;
-  if (!P) for (const [c, r] of loaves) m.ell(c, r, M.BODY, { paint: paintBody });
+  if (q.graph) {
+    const graph = quadrupedTorsoGraph(loaves, len, P, q.graph.flex ?? 0, frame);
+    const torso = compileGraph(graph).model;
+    for (const part of torso.parts) m.parts.push({ ...part, paint: paintBody });
+    m.bodyGraph = graph;
+  } else if (!P) for (const [c, r] of loaves) m.ell(c, r, M.BODY, { paint: paintBody });
   else {
     const envelope = x => { let w = 0, t = -Infinity, b = Infinity; for (const [c, r] of loaves) { const u = (x - c[0]) / r[0]; if (Math.abs(u) >= 1) continue; const f = Math.sqrt(1 - u * u); w = Math.max(w, r[2] * f); t = Math.max(t, c[1] + r[1] * f); b = Math.min(b, c[1] - r[1] * f); } return { w, t, b }; }; // the loaves at x: their widest, their back, their belly
     const AT = [-.5, -.25, 0, .25, .48], K = ["hip", "loin", "waist", "ribcage", "shoulder"], station = u => { // the profile between its stations, straight lines, held past the ends
@@ -787,12 +795,12 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   // ears
   const earTips = []; // each ear's tip (for the elder kit's earrings)
   for (const side of [-1, 1]) {
-    const E = q.ear, base = [H[0] - hr * .15, H[1] + hr * .7, side * hr * .5], k = q.earS * sz("ear") * (q.ear === "long" ? .62 / (baby ? sz("head") : 1) : 1); // (long ears don't grow with a baby's big head: a leveret's are short for its head, and its young must stand clear above it)
+    const E = q.ear, base = q.earRoot ? quadrupedEarSocket(H, hr, side, [0, 1, 0], q.earRoot).base : [H[0] - hr * .15, H[1] + hr * .7, side * hr * .5], k = q.earS * sz("ear") * (q.ear === "long" ? .62 / (baby ? sz("head") : 1) : 1); // (long ears don't grow with a baby's big head: a leveret's are short for its head, and its young must stand clear above it)
     if (E === "none" || elder?.ears) continue;
     if (E === "fan") { const c = [H[0] - hr * .55, H[1] - hr * .12, side * hr * .82], d = [hr * .46 * k, hr * .62 * k, hr * .07]; m.ell(c, d, M.BODY2, { group: 5 + (side > 0 ? 0 : 20), dir: [1, .25, 0], paint: p => Math.hypot((p[0] - c[0]) / d[0], (p[1] - c[1]) / d[1]) > .8 ? M.BODY3 : undefined }); continue; } // an elephant's: a great flat fan against the side of its head, its edge ragged and darker
     if (E === "round") { m.ell(base, [hr * .22, hr * .25 * k, hr * .1], M.BODY, { group: elder ? 9 : 1, paint: p => p[0] > base[0] + hr * .02 ? M.EAR : undefined }); continue; }
     const long = E === "long", sail = E === "sail", droop = E === "small" ? -.6 : 0, eh = hr * .55 * k * (E === "big" ? 1.35 : long ? 2.2 : 1), ew = hr * .3 * (E === "big" ? 1.2 : long ? 1.35 : sail ? .8 * k : 1); // sail: a fennec's, as wide as it's tall, flared out
-    const dirE = v3.norm([droop * .6 - (long ? .3 : .12), 1, side * (sail ? .6 : .3)]), n = v3.norm([.55, .2, side]), across = v3.norm(v3.cross(n, dirE)); // the ear opens forward and out, towards us on the near side
+    const oldDir = v3.norm([droop * .6 - (long ? .3 : .12), 1, side * (sail ? .6 : .3)]), dirE = q.earAngle ? quadrupedEarSocket(H, hr, side, oldDir, q.earRoot, q.earAngle).direction : oldDir, n = v3.norm([.55, .2, side]), across = v3.norm(v3.cross(n, dirE)); // the ear opens forward and out, towards us on the near side
     m.flat(v3.add(base, v3.mul(dirE, eh)), across, dirE, ew, eh, masks.ear(M.BODY, M.EAR, sail ? M.BODY : M.BODY3), { group: 5 + (side > 0 ? 0 : 20), extra: long });
     earTips.push({ tip: v3.add(base, v3.mul(dirE, eh * 1.9)), base, h: eh * 2, across, side, dir: dirE, w: ew });
     if (E === "tuft" && q.plume) { const a0 = v3.add(base, [0, eh * 1.3, side * .02]); m.chain([[...a0, hr * .09], [...v3.add(a0, [-hr * .2, eh * 1.4, side * .05]), hr * .1], [...v3.add(a0, [-hr * .55, eh * 2.6, side * .08]), hr * .06], [...v3.add(a0, [-hr * .95, eh * 3.3, side * .1]), hr * .015]], M.BODY3, { group: 1, extra: true }); m.ell(v3.add(a0, [-hr * .95, eh * 3.35, side * .1]), [hr * .07, hr * .07, hr * .07], M.MAGIC2, { group: 1, extra: true }); } // its ear tufts grown into long black plumes like flames, their tips alight
@@ -1528,17 +1536,26 @@ export function armadillo3d(S, level, frame, st, facing = "towards") {
 
 export function beetle3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model();
+  const materials = S.look?.materials, casesMat = M[materials?.wingCases] ?? M.BODY, thoraxMat = M[materials?.thorax] ?? M.BODY, headMat = M[materials?.head] ?? M.BODY2;
   for (const side of [-1, 1]) for (let i = 0; i < 3; i++) { // six jointed legs, alternating
     const x = .25 - i * .25, ph = (i + (side > 0 ? 1 : 0) + frame) % 2 ? .06 : -.06, base = [x, .22, side * .2];
     m.chain([[...base, .03], [x + ph + (1 - i) * .06, .32, side * .42, .025], [x + ph * 1.5 + (1 - i) * .15, .02, side * .55, .015]], side > 0 ? M.BODY2 : M.BODY3, { group: side > 0 ? 7 : 2 });
   }
   const ember = S.look?.embers ? p => p[1] > .4 && (Math.abs(Math.abs(p[2]) - .1) < .022 || Math.abs(Math.sin(p[0] * 15 + Math.sin(p[2] * 13 + p[1] * 6) * 1.6)) < .09 * Math.min(1, (p[1] - .38) * 6)) : null; // (the fire beetle's ember markings: a band down each wing case and cracks across them)
-  m.ell([-.12, .34, 0], [.46, .24, .32], M.BODY, { paint: p => Math.abs(p[2]) < .018 && p[1] > .4 ? M.LINE : ember && ember(p) ? M.ACCENT : has("antlers") && Math.abs(Math.sin(p[0] * 31 + p[2] * 13)) < .04 && p[1] > .38 ? M.BELLY : p[1] > .5 && p[2] > .05 && p[2] < .17 ? M.BELLY : undefined });
-  m.ell([.38, .33, 0], [.16, .16, .26], M.BODY, { group: 1, paint: ember ? p => p[1] > .4 && Math.abs(p[2]) < .05 ? M.ACCENT : undefined : undefined });
+  m.ell([-.12, .34, 0], [.46, .24, .32], casesMat, { paint: p => Math.abs(p[2]) < .018 && p[1] > .4 ? M.LINE : ember && ember(p) ? M.ACCENT : has("antlers") && Math.abs(Math.sin(p[0] * 31 + p[2] * 13)) < .04 && p[1] > .38 ? M.BELLY : p[1] > .5 && p[2] > .05 && p[2] < .17 ? M.BELLY : undefined });
+  m.ell([.38, .33, 0], [.16, .16, .26], thoraxMat, { group: 1, paint: ember ? p => p[1] > .4 && Math.abs(p[2]) < .05 ? M.ACCENT : undefined : undefined });
   const hc = [.56, .3, 0];
-  m.ell(hc, [.1, .1, .17], M.BODY2, { group: 1 });
+  m.ell(hc, [.1, .1, .17], headMat, { group: 1 });
   const jl = [.3, .7, .95, 1.0][level] * (has("horn") ? 1.3 : 1), jm = has("horn") ? M.MAGIC : M.BODY3;
-  if (!has("antlers")) for (const side of [-1, 1]) { const b = v3.add(hc, [.08, .02, side * .1]), e = v3.add(b, [jl * .7, jl * .45, side * jl * .15]), t = v3.add(e, [jl * .25, -jl * .12, -side * jl * .12]); m.chain([[...b, .045], [...e, .035], [...t, .015]], jm, { group: 8 + (side > 0 ? 1 : 0) }); m.seg(v3.lerp(b, e, .55), v3.add(v3.lerp(b, e, .55), [.0, jl * .22, 0]), .02, .008, jm, { group: 8 }); }
+  if (!has("antlers") && S.look?.mandibles) {
+    m.anchors.mandibleTips = [];
+    for (const side of [-1, 1]) {
+      const jaw = mandiblePart(hc, side, jl, S.look.mandibles, facing), group = 8 + (side > 0 ? 1 : 0);
+      m.chain(jaw.points, jm, { group, part: "mandible" });
+      for (const tooth of jaw.teeth) m.seg(tooth.start, tooth.end, tooth.radius, tooth.radius * .3, jm, { group, part: "mandible" });
+      m.anchors.mandibleTips.push(jaw.tip);
+    }
+  } else if (!has("antlers")) for (const side of [-1, 1]) { const b = v3.add(hc, [.08, .02, side * .1]), e = v3.add(b, [jl * .7, jl * .45, side * jl * .15]), t = v3.add(e, [jl * .25, -jl * .12, -side * jl * .12]); m.chain([[...b, .045], [...e, .035], [...t, .015]], jm, { group: 8 + (side > 0 ? 1 : 0) }); m.seg(v3.lerp(b, e, .55), v3.add(v3.lerp(b, e, .55), [.0, jl * .22, 0]), .02, .008, jm, { group: 8 }); }
   if (has("antlers")) for (const side of [-1, 1]) { // (the legend audit's ★, Ed 2026-10-13) its jaws grown into a stag's branching antlers, rising and curving in, every tine tipped with a glow
     const b = v3.add(hc, [.08, .04, side * .1]), pts = [[...b, .05]];
     for (let i = 1; i <= 6; i++) { const t = i / 6; pts.push([b[0] + .25 * t - .15 * t * t, b[1] + 1.05 * t, b[2] + side * .55 * Math.sin(t * 1.4), .04 * (1 - t * .7)]); }

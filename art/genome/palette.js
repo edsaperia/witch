@@ -93,8 +93,9 @@ export const PALETTE_VARIANTS = {
   ash: { name: "Ash", hue: .6, sat: .04, val: .55 },
 };
 // A species' colours in a variant (a PALETTE_VARIANTS key or { hue, sat, val, belly }), gear as speciesColours.
-export function variantColours(id, st, variant, gear = null) {
-  const S = speciesFor(id, st), v = typeof variant === "string" ? PALETTE_VARIANTS[variant] : variant;
-  if (!v) return speciesColours(id, st, gear);
-  return speciesColours({ ...S, hue: v.hue, sat: v.sat, val: v.val, belly: v.belly ?? S.belly }, st, gear);
+/** @param {number|null} [level] */
+export function variantColours(id, st, variant, gear = null, level = null) {
+  const S = speciesFor(id, st, level), v = typeof variant === "string" ? PALETTE_VARIANTS[variant] : variant;
+  if (!v) return speciesColours(id, st, gear, level);
+  return speciesColours({ ...S, hue: v.hue, sat: v.sat, val: v.val, belly: v.belly ?? S.belly }, st, gear, level);
 }

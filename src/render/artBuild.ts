@@ -160,7 +160,7 @@ export function creatureSprites(st: Style, species: string, mk: MakeCanvas, gear
     const hand = overrideFor(species, poseName(level, f, facing === "away")); // (a hand-drawn frame: art/overrides, as it is)
     if (hand) { out.push(bakeOverride(hand, mk)); continue; }
     const sp = Art.critter(species, level, f, st, facing, gear as null) as { m: ArrayLike<number> };
-    const b = Art.bake(sp, Art.speciesColours(species, st, gear as null), st, st.cOutline, mk) as Baked;
+    const b = Art.bake(sp, Art.speciesColours(species, st, gear as null, level), st, st.cOutline, mk) as Baked;
     if (!gear || Object.keys(gear).every(k => k === "face")) b.eyes = eyeMask(sp.m); // (an expression alone keeps the find-in-the-dark eyes)
     b.head = headPoint(sp.m, b.w, b.h);
     out.push(b);
@@ -693,7 +693,7 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
     const gear = (job.idle ? { idle: true } : { ...(job.dressed ? partyGearOf(job.dressed.seed, job.dressed.colour) : {}), nap: true }) as unknown as null;
     for (let level = 0; level < 4; level++) for (let f = 0; f < 2; f++) {
       const sp = Art.critter(job.species, level, f, job.style, "towards", gear) as { origin?: number[]; h: number; w: number; m: ArrayLike<number> };
-      const b = Art.bake(sp, Art.speciesColours(job.species, job.style, gear), job.style, job.style.cOutline, mk) as Baked; b.head = headPoint(sp.m, b.w, b.h); sprites.push(b);
+      const b = Art.bake(sp, Art.speciesColours(job.species, job.style, gear, level), job.style, job.style.cOutline, mk) as Baked; b.head = headPoint(sp.m, b.w, b.h); sprites.push(b);
       ground.push(sp.origin ? sp.origin[1] : sp.h); centre.push(sp.origin ? sp.origin[0] - sp.w / 2 : 0);
     }
     return { px: packPixels(sprites, 2048), ground, centre };
@@ -703,7 +703,7 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
     const sprites: Baked[] = [], gear = { glide: true } as unknown as null;
     for (let level = 0; level < 4; level++) for (let f = 0; f < 2; f++) {
       const sp = Art.critter(job.species, level, f, job.style, "towards", gear) as { origin?: number[]; h: number; w: number; m: ArrayLike<number> };
-      const b = Art.bake(sp, Art.speciesColours(job.species, job.style, gear), job.style, job.style.cOutline, mk) as Baked; b.head = headPoint(sp.m, b.w, b.h); sprites.push(b);
+      const b = Art.bake(sp, Art.speciesColours(job.species, job.style, gear, level), job.style, job.style.cOutline, mk) as Baked; b.head = headPoint(sp.m, b.w, b.h); sprites.push(b);
     }
     return { px: packPixels(sprites, 2048) };
   }
