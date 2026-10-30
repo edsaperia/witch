@@ -2,6 +2,7 @@
 // (window size / pixel size) and stretched with nearest-neighbour by the browser, so every art
 // pixel stays a crisp square.
 import { RigView, rigOn } from "./rig/rigView";
+import { CauldronView } from "./cauldronView";
 import type { RigGear } from "./rig/rigBuild";
 import type { Creature } from "../rules/creatures";
 import { partyGearOf } from "./artBuild";
@@ -460,6 +461,7 @@ export class View {
   entDeckDrawn(): { x: number; y: number; z: number } | null { return entDeckDrawn(this); }
   /** The treehouse's placeholder rooms (render/houseRooms.ts), with the house's rooms on. */
   houseRooms: HouseRoomsView | null = null;
+  private cauldronLook: CauldronView | null = null;
   /** The zoo's little treehouse's "exit" prompt (render/zooExit.ts), made in the zoo. */
   zooExitTag: ZooExitTag | null = null;
   /** The spell's key prompt by its 🎶 (render/castTag.ts), made the first frame. */
@@ -1737,7 +1739,9 @@ export class View {
     // (the cast-shadow map is the forest's: none while only the house is drawn)
     if (this.post.behind > 0) this.castMap.render(this.renderer, this.scene, this.game.witch.x, this.game.witch.z, this.castOn);
     this.occluders();
+    if (this.game.cauldron || this.cauldronLook) (this.cauldronLook ??= new CauldronView()).update(this);
     this.post.render(this.scene, this.camera);
+    this.cauldronLook?.finish(this);
     this.occlusion.veil(); // (the smoke over the 💌s, once the frame's smoke is drawn)
     this.time("draw");
     this.drawEst += (Math.min(8, this.ms.draw) - this.drawEst) * 0.1; // (eased; a stalled frame counts for at most 8 ms)

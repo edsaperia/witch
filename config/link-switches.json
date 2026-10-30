@@ -271,6 +271,18 @@
    ]
   },
   {
+   "name": "cauldron",
+   "values": [
+    "1"
+   ],
+   "does": "Enables the collection and kitchen preview: two home mushroom clusters, shared baskets and pot, and the temporary BBB Mirror Floor trip.",
+   "group": "debug",
+   "since": "2026-10-30",
+   "readIn": [
+    "src/main.ts"
+   ]
+  },
+  {
    "name": "chart",
    "values": [
     "",
