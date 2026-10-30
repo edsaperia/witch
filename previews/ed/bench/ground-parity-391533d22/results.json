@@ -1,0 +1,20 @@
+{
+  "sha": "391533d2224663615ea51e5e4c97f9335b99b911",
+  "baseline": "523b5cec0a9861aff1043f016c77fc255cbebfc7",
+  "stamp": {
+    "version": "vground-parity · 391533d",
+    "built": "2026-10-30T10:11:35.876Z"
+  },
+  "baselineFragmentHash": "305b1e3377eb127af75d955cb9e3972d1461ede5021b3e65546aa421c8775764",
+  "note": "Exact RGBA ground-only back-to-back comparison in one frozen scene, baseline/current uniforms shared. No timing/whole-scene claim.",
+  "rows": [
+    {
+      "fixture": {
+        "island": "home",
+        "force": "",
+        "expected": "no-lakes"
+      },
+      "error": "TimeoutError: page.waitForFunction: Timeout 180000ms exceeded."
+    }
+  ]
+}
