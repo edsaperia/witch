@@ -1,5 +1,5 @@
 {
-  "sha": "fc6fc4de6170a3153886dc1bce7e40cc2bfe13d1",
+  "sha": "e0ad3a1e40d92f5f17b8cf81619ebc0f84cb147a",
   "measurements": [
     {
       "id": "crocodile",
@@ -7,13 +7,35 @@
       "facing": "towards",
       "frame": 0,
       "level": 0,
-      "pixelDiff": 653,
+      "pixelDiff": 740,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            3,
+            8,
+            86,
+            38
+          ],
+          "occupiedPixels": 972
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            4,
+            7,
+            80,
+            38
+          ],
+          "occupiedPixels": 911
+        }
+      ],
       "current": [
         92,
         39
       ],
       "proposed": [
-        90,
+        86,
         39
       ]
     },
@@ -23,73 +45,31 @@
       "facing": "towards",
       "frame": 0,
       "level": 1,
-      "pixelDiff": 724,
+      "pixelDiff": 815,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            4,
+            17,
+            116,
+            53
+          ],
+          "occupiedPixels": 1288
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            5,
+            13,
+            114,
+            52
+          ],
+          "occupiedPixels": 1359
+        }
+      ],
       "current": [
         123,
-        54
-      ],
-      "proposed": [
-        123,
-        53
-      ]
-    },
-    {
-      "id": "crocodile",
-      "pose": "walk",
-      "facing": "towards",
-      "frame": 0,
-      "level": 2,
-      "pixelDiff": 1443,
-      "current": [
-        202,
-        87
-      ],
-      "proposed": [
-        203,
-        87
-      ]
-    },
-    {
-      "id": "crocodile",
-      "pose": "walk",
-      "facing": "towards",
-      "frame": 0,
-      "level": 3,
-      "pixelDiff": 377,
-      "current": [
-        467,
-        199
-      ],
-      "proposed": [
-        467,
-        199
-      ]
-    },
-    {
-      "id": "crocodile",
-      "pose": "walk",
-      "facing": "towards",
-      "frame": 1,
-      "level": 0,
-      "pixelDiff": 638,
-      "current": [
-        91,
-        39
-      ],
-      "proposed": [
-        88,
-        39
-      ]
-    },
-    {
-      "id": "crocodile",
-      "pose": "walk",
-      "facing": "towards",
-      "frame": 1,
-      "level": 1,
-      "pixelDiff": 579,
-      "current": [
-        120,
         54
       ],
       "proposed": [
@@ -101,15 +81,189 @@
       "id": "crocodile",
       "pose": "walk",
       "facing": "towards",
+      "frame": 0,
+      "level": 2,
+      "pixelDiff": 2053,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            6,
+            10,
+            193,
+            86
+          ],
+          "occupiedPixels": 3668
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            7,
+            10,
+            191,
+            86
+          ],
+          "occupiedPixels": 3882
+        }
+      ],
+      "current": [
+        202,
+        87
+      ],
+      "proposed": [
+        200,
+        87
+      ]
+    },
+    {
+      "id": "crocodile",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 3,
+      "pixelDiff": 377,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            12,
+            18,
+            451,
+            198
+          ],
+          "occupiedPixels": 20638
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            12,
+            18,
+            451,
+            198
+          ],
+          "occupiedPixels": 20638
+        }
+      ],
+      "current": [
+        467,
+        199
+      ],
+      "proposed": [
+        467,
+        199
+      ]
+    },
+    {
+      "id": "crocodile",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 0,
+      "pixelDiff": 630,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            3,
+            10,
+            85,
+            38
+          ],
+          "occupiedPixels": 952
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            4,
+            8,
+            80,
+            38
+          ],
+          "occupiedPixels": 915
+        }
+      ],
+      "current": [
+        91,
+        39
+      ],
+      "proposed": [
+        86,
+        39
+      ]
+    },
+    {
+      "id": "crocodile",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 1,
+      "pixelDiff": 814,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            4,
+            18,
+            114,
+            53
+          ],
+          "occupiedPixels": 1226
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            4,
+            16,
+            113,
+            52
+          ],
+          "occupiedPixels": 1322
+        }
+      ],
+      "current": [
+        120,
+        54
+      ],
+      "proposed": [
+        119,
+        53
+      ]
+    },
+    {
+      "id": "crocodile",
+      "pose": "walk",
+      "facing": "towards",
       "frame": 1,
       "level": 2,
-      "pixelDiff": 1107,
+      "pixelDiff": 2081,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            6,
+            10,
+            189,
+            86
+          ],
+          "occupiedPixels": 3529
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            7,
+            10,
+            189,
+            86
+          ],
+          "occupiedPixels": 3776
+        }
+      ],
       "current": [
         198,
         87
       ],
       "proposed": [
-        201,
+        197,
         87
       ]
     },
@@ -120,6 +274,28 @@
       "frame": 1,
       "level": 3,
       "pixelDiff": 372,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            12,
+            18,
+            444,
+            198
+          ],
+          "occupiedPixels": 19933
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            12,
+            18,
+            444,
+            198
+          ],
+          "occupiedPixels": 19933
+        }
+      ],
       "current": [
         460,
         199
@@ -135,13 +311,35 @@
       "facing": "away",
       "frame": 0,
       "level": 0,
-      "pixelDiff": 232,
+      "pixelDiff": 317,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            3,
+            10,
+            63,
+            38
+          ],
+          "occupiedPixels": 542
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            3,
+            11,
+            62,
+            38
+          ],
+          "occupiedPixels": 564
+        }
+      ],
       "current": [
         68,
         39
       ],
       "proposed": [
-        68,
+        67,
         39
       ]
     },
@@ -151,13 +349,35 @@
       "facing": "away",
       "frame": 0,
       "level": 1,
-      "pixelDiff": 557,
+      "pixelDiff": 579,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            4,
+            14,
+            93,
+            52
+          ],
+          "occupiedPixels": 846
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            4,
+            15,
+            92,
+            52
+          ],
+          "occupiedPixels": 901
+        }
+      ],
       "current": [
         99,
         53
       ],
       "proposed": [
-        98,
+        97,
         53
       ]
     },
@@ -167,13 +387,35 @@
       "facing": "away",
       "frame": 0,
       "level": 2,
-      "pixelDiff": 877,
+      "pixelDiff": 1196,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            5,
+            10,
+            153,
+            85
+          ],
+          "occupiedPixels": 2352
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            6,
+            10,
+            151,
+            85
+          ],
+          "occupiedPixels": 2482
+        }
+      ],
       "current": [
         161,
         86
       ],
       "proposed": [
-        159,
+        158,
         86
       ]
     },
@@ -184,6 +426,28 @@
       "frame": 0,
       "level": 3,
       "pixelDiff": 168,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            9,
+            18,
+            360,
+            197
+          ],
+          "occupiedPixels": 13183
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            9,
+            18,
+            360,
+            197
+          ],
+          "occupiedPixels": 13183
+        }
+      ],
       "current": [
         374,
         198
@@ -199,7 +463,29 @@
       "facing": "away",
       "frame": 1,
       "level": 0,
-      "pixelDiff": 235,
+      "pixelDiff": 314,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            3,
+            10,
+            64,
+            38
+          ],
+          "occupiedPixels": 556
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            3,
+            11,
+            63,
+            38
+          ],
+          "occupiedPixels": 586
+        }
+      ],
       "current": [
         70,
         39
@@ -215,7 +501,29 @@
       "facing": "away",
       "frame": 1,
       "level": 1,
-      "pixelDiff": 356,
+      "pixelDiff": 497,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            3,
+            15,
+            95,
+            52
+          ],
+          "occupiedPixels": 874
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            4,
+            15,
+            93,
+            52
+          ],
+          "occupiedPixels": 933
+        }
+      ],
       "current": [
         101,
         53
@@ -231,13 +539,35 @@
       "facing": "away",
       "frame": 1,
       "level": 2,
-      "pixelDiff": 921,
+      "pixelDiff": 1305,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            5,
+            10,
+            156,
+            85
+          ],
+          "occupiedPixels": 2417
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            6,
+            10,
+            153,
+            85
+          ],
+          "occupiedPixels": 2542
+        }
+      ],
       "current": [
         164,
         86
       ],
       "proposed": [
-        162,
+        161,
         86
       ]
     },
@@ -248,6 +578,28 @@
       "frame": 1,
       "level": 3,
       "pixelDiff": 167,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            10,
+            18,
+            365,
+            197
+          ],
+          "occupiedPixels": 13509
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            10,
+            18,
+            365,
+            197
+          ],
+          "occupiedPixels": 13509
+        }
+      ],
       "current": [
         379,
         198
@@ -300,7 +652,7 @@
       "column": "proposed",
       "body": {
         "stance": "sprawl",
-        "sprawl": 0.3,
+        "sprawl": 0.55,
         "hgt": 0.72,
         "len": 2.1,
         "chest": 0.05,
@@ -311,7 +663,7 @@
         "hr": 0.3,
         "legW": 1.5,
         "bw": 0.55,
-        "tailK": 1.35,
+        "tailK": 1.65,
         "snout": 4.5,
         "snoutD": 0.55,
         "snoutTaper": 0.9,
@@ -322,6 +674,7 @@
         "skullZ": 1.5,
         "eyeK": 1.15,
         "muzzle": true,
+        "jawCoat": false,
         "belly": true,
         "ear": "none",
         "tail": "croc",
@@ -375,7 +728,7 @@
       "column": "proposed",
       "body": {
         "stance": "sprawl",
-        "sprawl": 0.3,
+        "sprawl": 0.55,
         "hgt": 0.72,
         "len": 2.1,
         "chest": 0.05,
@@ -386,7 +739,7 @@
         "hr": 0.3,
         "legW": 1.5,
         "bw": 0.55,
-        "tailK": 1.35,
+        "tailK": 1.65,
         "snout": 4.5,
         "snoutD": 0.55,
         "snoutTaper": 0.9,
@@ -397,6 +750,7 @@
         "skullZ": 1.5,
         "eyeK": 1.15,
         "muzzle": true,
+        "jawCoat": false,
         "belly": true,
         "ear": "none",
         "tail": "croc",
@@ -450,7 +804,7 @@
       "column": "proposed",
       "body": {
         "stance": "sprawl",
-        "sprawl": 0.3,
+        "sprawl": 0.55,
         "hgt": 0.72,
         "len": 2.1,
         "chest": 0.05,
@@ -461,7 +815,7 @@
         "hr": 0.3,
         "legW": 1.5,
         "bw": 0.55,
-        "tailK": 1.35,
+        "tailK": 1.65,
         "snout": 4.5,
         "snoutD": 0.55,
         "snoutTaper": 0.9,
@@ -472,6 +826,7 @@
         "skullZ": 1.5,
         "eyeK": 1.15,
         "muzzle": true,
+        "jawCoat": false,
         "belly": true,
         "ear": "none",
         "tail": "croc",
@@ -547,6 +902,7 @@
         "skullZ": 1.5,
         "eyeK": 1.15,
         "muzzle": false,
+        "jawCoat": false,
         "belly": false,
         "ear": "none",
         "tail": "croc",

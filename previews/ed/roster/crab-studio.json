@@ -1,5 +1,5 @@
 {
-  "sha": "fc6fc4de6170a3153886dc1bce7e40cc2bfe13d1",
+  "sha": "e0ad3a1e40d92f5f17b8cf81619ebc0f84cb147a",
   "measurements": [
     {
       "id": "crab",
@@ -8,6 +8,28 @@
       "frame": 0,
       "level": 0,
       "pixelDiff": 392,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            6,
+            12,
+            34,
+            29
+          ],
+          "occupiedPixels": 286
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            7,
+            10,
+            38,
+            29
+          ],
+          "occupiedPixels": 306
+        }
+      ],
       "current": [
         44,
         30
@@ -23,7 +45,29 @@
       "facing": "towards",
       "frame": 0,
       "level": 1,
-      "pixelDiff": 675,
+      "pixelDiff": 705,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            8,
+            11,
+            49,
+            36
+          ],
+          "occupiedPixels": 503
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            5,
+            9,
+            53,
+            36
+          ],
+          "occupiedPixels": 555
+        }
+      ],
       "current": [
         60,
         37
@@ -39,13 +83,35 @@
       "facing": "towards",
       "frame": 0,
       "level": 2,
-      "pixelDiff": 1217,
+      "pixelDiff": 941,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            14,
+            3,
+            87,
+            59
+          ],
+          "occupiedPixels": 1515
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            9,
+            3,
+            86,
+            59
+          ],
+          "occupiedPixels": 1522
+        }
+      ],
       "current": [
         103,
         60
       ],
       "proposed": [
-        99,
+        101,
         60
       ]
     },
@@ -56,6 +122,28 @@
       "frame": 0,
       "level": 3,
       "pixelDiff": 0,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            12,
+            6,
+            222,
+            136
+          ],
+          "occupiedPixels": 8993
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            12,
+            6,
+            222,
+            136
+          ],
+          "occupiedPixels": 8993
+        }
+      ],
       "current": [
         232,
         137
@@ -72,6 +160,28 @@
       "frame": 1,
       "level": 0,
       "pixelDiff": 454,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            5,
+            11,
+            35,
+            29
+          ],
+          "occupiedPixels": 288
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            6,
+            9,
+            39,
+            29
+          ],
+          "occupiedPixels": 335
+        }
+      ],
       "current": [
         45,
         30
@@ -87,7 +197,29 @@
       "facing": "towards",
       "frame": 1,
       "level": 1,
-      "pixelDiff": 495,
+      "pixelDiff": 632,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            6,
+            10,
+            51,
+            36
+          ],
+          "occupiedPixels": 546
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            5,
+            11,
+            54,
+            36
+          ],
+          "occupiedPixels": 539
+        }
+      ],
       "current": [
         63,
         37
@@ -103,13 +235,35 @@
       "facing": "towards",
       "frame": 1,
       "level": 2,
-      "pixelDiff": 1353,
+      "pixelDiff": 1125,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            13,
+            3,
+            87,
+            59
+          ],
+          "occupiedPixels": 1493
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            7,
+            3,
+            85,
+            59
+          ],
+          "occupiedPixels": 1424
+        }
+      ],
       "current": [
         102,
         60
       ],
       "proposed": [
-        100,
+        99,
         60
       ]
     },
@@ -120,6 +274,28 @@
       "frame": 1,
       "level": 3,
       "pixelDiff": 0,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            10,
+            6,
+            185,
+            134
+          ],
+          "occupiedPixels": 6601
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            10,
+            6,
+            185,
+            134
+          ],
+          "occupiedPixels": 6601
+        }
+      ],
       "current": [
         194,
         135
@@ -136,6 +312,28 @@
       "frame": 0,
       "level": 0,
       "pixelDiff": 359,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            6,
+            12,
+            34,
+            29
+          ],
+          "occupiedPixels": 282
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            6,
+            10,
+            37,
+            29
+          ],
+          "occupiedPixels": 308
+        }
+      ],
       "current": [
         44,
         30
@@ -151,13 +349,35 @@
       "facing": "away",
       "frame": 0,
       "level": 1,
-      "pixelDiff": 607,
+      "pixelDiff": 775,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            8,
+            11,
+            51,
+            36
+          ],
+          "occupiedPixels": 511
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            8,
+            9,
+            59,
+            36
+          ],
+          "occupiedPixels": 569
+        }
+      ],
       "current": [
         60,
         37
       ],
       "proposed": [
-        64,
+        67,
         37
       ]
     },
@@ -167,13 +387,35 @@
       "facing": "away",
       "frame": 0,
       "level": 2,
-      "pixelDiff": 987,
+      "pixelDiff": 1230,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            12,
+            3,
+            98,
+            59
+          ],
+          "occupiedPixels": 1608
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            12,
+            3,
+            102,
+            59
+          ],
+          "occupiedPixels": 1687
+        }
+      ],
       "current": [
         109,
         60
       ],
       "proposed": [
-        115,
+        114,
         60
       ]
     },
@@ -184,6 +426,28 @@
       "frame": 0,
       "level": 3,
       "pixelDiff": 0,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            13,
+            6,
+            236,
+            133
+          ],
+          "occupiedPixels": 7705
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            13,
+            6,
+            236,
+            133
+          ],
+          "occupiedPixels": 7705
+        }
+      ],
       "current": [
         247,
         134
@@ -200,6 +464,28 @@
       "frame": 1,
       "level": 0,
       "pixelDiff": 428,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            7,
+            11,
+            37,
+            29
+          ],
+          "occupiedPixels": 294
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            7,
+            9,
+            41,
+            29
+          ],
+          "occupiedPixels": 335
+        }
+      ],
       "current": [
         45,
         30
@@ -215,13 +501,35 @@
       "facing": "away",
       "frame": 1,
       "level": 1,
-      "pixelDiff": 522,
+      "pixelDiff": 712,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            8,
+            10,
+            55,
+            36
+          ],
+          "occupiedPixels": 559
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            8,
+            10,
+            60,
+            36
+          ],
+          "occupiedPixels": 568
+        }
+      ],
       "current": [
         63,
         37
       ],
       "proposed": [
-        67,
+        69,
         37
       ]
     },
@@ -231,13 +539,35 @@
       "facing": "away",
       "frame": 1,
       "level": 2,
-      "pixelDiff": 1024,
+      "pixelDiff": 1007,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            12,
+            3,
+            102,
+            59
+          ],
+          "occupiedPixels": 1673
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            12,
+            3,
+            105,
+            59
+          ],
+          "occupiedPixels": 1708
+        }
+      ],
       "current": [
         114,
         60
       ],
       "proposed": [
-        120,
+        117,
         60
       ]
     },
@@ -248,6 +578,28 @@
       "frame": 1,
       "level": 3,
       "pixelDiff": 0,
+      "occupiedBounds": [
+        {
+          "column": "current",
+          "bounds": [
+            15,
+            6,
+            289,
+            136
+          ],
+          "occupiedPixels": 11111
+        },
+        {
+          "column": "proposed",
+          "bounds": [
+            15,
+            6,
+            289,
+            136
+          ],
+          "occupiedPixels": 11111
+        }
+      ],
       "current": [
         302,
         137
@@ -315,10 +667,10 @@
       "column": "proposed",
       "body": {
         "shell": 1,
-        "claw": 1.35,
-        "small": 1.2,
+        "claw": 1.7,
+        "small": 1.5,
         "stalk": 1.1,
-        "legs": 0.75
+        "legs": 0.9
       },
       "look": null,
       "paletteHSV": [
@@ -349,7 +701,8 @@
         "shell": 1,
         "claw": 2.1,
         "barnacles": true,
-        "small": 1.7
+        "small": 1.7,
+        "legs": 1.15
       },
       "look": null,
       "paletteHSV": [
