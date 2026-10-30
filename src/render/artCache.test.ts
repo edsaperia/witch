@@ -13,7 +13,7 @@ describe("per-kind art cache keys", () => {
     expect(artCacheKey(job, "new-style", hashes)).not.toBe(before);
     for (const changed of [{ seed: 43 }, { K: 2 }, { biome: "fen" }]) expect(artCacheKey({ ...job, ...changed } as ArtJob, "style", hashes)).not.toBe(before);
   });
-  it("preserves edge scale, nonpersistent party and safe unknown-kind misses", () => {
+  it("preserves edge scale, invalid party misses and safe unknown-kind misses", () => {
     expect(artCacheKey({ kind: "beachEdge", id: "all", K: 2, style: {} } as ArtJob, "s", { beachEdge: "e" })).toBe("art-kind-v1|e|s|beachEdge:all|2");
     expect(artCacheKey({ kind: "party" } as ArtJob, "s", { party: "p" })).toBeNull();
     expect(artCacheKey(job, "s", {})).toBeNull();

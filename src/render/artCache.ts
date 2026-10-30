@@ -4,6 +4,7 @@
 // included where they matter). Safe to miss: with storage blocked, full or failing, every call
 // quietly answers nothing and the sets are drawn as before.
 import type { ArtJob } from "./artBuild";
+import { partySheetKey } from "./partySheet";
 export { cacheGet, cachePut } from "./artCacheStorage";
 
 /** A job's cache key, carried with it to the art worker, which keeps the cache (render/artWorker.ts); null: not kept. */
@@ -22,14 +23,18 @@ declare const __ART_KIND_HASHES__: Record<string, string>;
 export const ART_KIND_HASHES: Readonly<Record<string, string>> = typeof __ART_KIND_HASHES__ === "object" ? __ART_KIND_HASHES__ : {};
 
 /** Where a set is kept between visits: the art's code, the style (its hash), the set, and for an area type its seed and scale.
- *  Party looks are per creature, so they aren't kept (null). The game's art (render/assets.ts) and the landing's bake ahead
+ *  Party looks use species, outfit and current age. The game's art (render/assets.ts) and the landing's bake ahead
  *  (app/landingBake.ts) both key by it. */
 export const artCacheKey = (j: ArtJob, styleHash: string, fingerprints = ART_KIND_HASHES): string | null => {
   // One schema migration, no IDB clear. Unrecognized kinds miss safely rather than
   // sharing a fallback key whose incomplete dependencies could retain stale art.
-  if (j.kind === "party" || !Object.hasOwn(fingerprints, j.kind)) return null;
+  if (!Object.hasOwn(fingerprints, j.kind)) return null;
   const fingerprint = fingerprints[j.kind];
   if (typeof fingerprint !== "string" || !fingerprint) return null;
+  if (j.kind === "party") {
+    if (!Number.isInteger(j.level) || j.level < 0 || j.level > 3 || !j.gear) return null;
+    return ["art-kind-v1", fingerprint, styleHash, partySheetKey(j.species, j.level, j.gear)].join("|");
+  }
   return ["art-kind-v1", fingerprint, styleHash, j.kind + ":" + j.id, j.kind === "type" ? `${j.seed}|${j.K}${j.biome ? "|" + j.biome : ""}` : j.kind === "beachEdge" || j.kind === "lakeShore" ? `${j.K}` : ""].join("|");
 };
 
