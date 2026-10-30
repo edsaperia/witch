@@ -6,6 +6,7 @@ import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING } from "./tuning";
 import { legendRings, type Ring } from "./slowTime";
 
+// Keep the radius world: the ring fixture borrows six attackers more than 400 m away after clearing its surrounding 200 m.
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, secs: number) => { for (let i = 0; i < Math.round(secs / STEP); i++) stepGame(g, idle, STEP); };
 

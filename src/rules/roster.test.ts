@@ -9,6 +9,7 @@ import { newGame, stepGame, STEP, type Controls } from "./game";
 import { homeKinds, islandOf, knownKinds } from "./rosters";
 import { AREA_TYPES } from "./map";
 
+// Keep authored campaign/island sizes: each whole-night assertion checks that roster and its growth, including home's ten-to-eleven transition.
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 
 /** A whole night headless on `island` (home with `found` islands, or a kind's): every wave brought on (so every area wakes and
