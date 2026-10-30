@@ -15,7 +15,8 @@ import { localView } from "./localView";
 import { otherWitches } from "./otherWitches";
 import { replayGuest, replayHostStep, replayStart, type ReplayFrame, type ReplayStart } from "./replay";
 import { snapshotGame } from "../../rules/nightSnapshot";
-import { sliceLog } from "../../render/slices";
+import { nextFrame, runSliced, sliceLog, type Steps } from "../../render/slices";
+import { buildProgress } from "./buildProgress";
 import { prepareJoin } from "./joinPreparation";
 import { sessionDeparture } from "./departure";
 
@@ -72,7 +73,13 @@ async function prepare(source: Game, player: number, signal?: AbortSignal) {
   signal?.addEventListener("abort", clearMonitor, { once: true });
   game = source; presentation = localView(game, player);
   const style = styleFromLink(params, game.tuning);
-  try { view = await View.create(document.getElementById("game") as HTMLCanvasElement, presentation.game, gameStyle(style, game.tuning)); }
+  try {
+    // Same construction/order/budget as View.create, observing this instance's completed build steps.
+    await nextFrame();
+    view = new View(document.getElementById("game") as HTMLCanvasElement, presentation.game, gameStyle(style, game.tuning), null, true);
+    const steps = (view as unknown as { build(): Steps }).build();
+    await runSliced(buildProgress(steps, () => { loadingProgress++; reportProgress(); }), "view", 8);
+  }
   catch (error) { clearMonitor(); throw error; }
   signal?.throwIfAborted();
   trace("view-create:done", sliceLog.map(s => ({ what: s.what, ms: s.ms, longestAt: s.longestAt })));

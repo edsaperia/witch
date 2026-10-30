@@ -64,6 +64,8 @@ Return home already navigated to a new document, not a solo game inside the old 
 
 ## Progress-based joining (6516585372)
 
+The online entry mirrors View.create's constructor, next-frame turn and eight-millisecond sliced build, wrapping only this instance's build generator to report completed named **and unnamed** work steps. This matters when tuft/atlas packing advances for a long time under one stage name. Wait objects and build order are preserved. No shared renderer file or scheduling policy changes; the private build accessor is an explicit compatibility dependency to review if View.create changes.
+
 Rerun 4 at 83a5e5b6 failed all seven joins: restore completed in 3–5 seconds, but View creation took 115–137 seconds and the remaining preparation crossed the fixed 175/180-second ceilings. The refused-invitation return path reached solo readiness twice, around 47 seconds; a real host departure remains untested.
 
 The fixed local ceiling is replaced with a 60-second interval without advancing loading work and a 600-second absolute cap. The relay uses the same stall/cap defaults (`WITCH_JOIN_STALL_MS` and `WITCH_JOIN_GRACE_MS`); periodic heartbeats alone and repeated or decreasing progress sequences do not renew loading. Build marks, shader readiness, home-art completion and landed art advance progress. Waiting logs, elapsed time and queue churn do not. Ordinary activated play retains the five-second silence timeout and 250ms input lease. A loading host retains its existing 20-second allowance while a guest joins. Nearby tests cover advancing loads past the former ceiling, a never-settling load, repeated progress, the absolute cap and later activation deadlines.
