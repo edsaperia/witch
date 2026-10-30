@@ -1,5 +1,21 @@
 # Expert search: implementation and fairness audit
 
+Final coverage screen (coordinator 6519419386, 2026-10-30): driver/matrix only,
+with the coverage policy unchanged and still opt-in/default off. The fixed matrix
+in `expert-coverage-screen.mjs` has nights 16838, 24757, 32676 and 40595 on world0,
+matched/unlocked home100, coverage off/on, 300 player seconds: 16 cases. Arm order
+alternates by night; every paired case has identical gear/tempo/setup, with dream
+visits on. Every protected pair is checked before output or Game construction.
+Run `expert-quest-trace.mjs --coverage-screen --out <fresh-folder>
+--wall-seconds 480` under a 600 s whole-job cap including 120 s preflight. No
+resume, restart, policy tuning or seed selection is allowed. The manifest embeds
+the pre-registered decision verbatim: proceed to later full-night validation only
+if total learned requests improves, total seen does not fall, neither condition
+loses requests, and KO/loss totals do not worsen; otherwise drop the tactic, with
+no repeated parameter search. Incomplete screens have no all-seed verdict;
+compare only common complete pairs. This remains one-world discovery screening,
+not held-out fitness, statistical proof or cross-island strength.
+
 Fair coverage pilot (coordinator 6519017191, 2026-10-30): `coverage.ts` remembers
 only fully contained 20 m grid cells in consumed delayed observation rectangles.
 The observer exposes its existing approximate camera extents as detached `view`
