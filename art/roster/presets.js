@@ -14,6 +14,14 @@ const JAGUAR_REGIONS = {
   legs: { kind: "spots", k: 12, density: .5, radius: .4, mat: "BODY3" },
 };
 export const ROSTER_PRESETS = {
+  marten: {
+    reason: "A localized cream throat bib and dark legs on the existing brown pine-marten body.",
+    ordinaryOnly: true,
+    modelCommit: "10c8c9bd910c917c52001e07eb688c73ebd3417e",
+    legendInheritsBase: true,
+    patch: { coat: { belly: false, bib: { mat: "BELLY", extent: { along: [-.8, .95], width: 1, depth: 1.5 } }, legMat: "BODY3" }, palette: { over: { BELLY: [239, 219, 174], EAR: [203, 185, 149], BODY3: [45, 31, 25] } } },
+    text: "A brown pine marten with a cream throat bib, rounded ears and a bushy tail.",
+  },
   raccoon: {
     reason: "Strengthen the existing eye mask and tail rings against neutral grizzled-grey fur.",
     patch: { palette: { hue: .6, sat: .025, val: .56, over: { BODY: [142, 145, 148], BODY2: [96, 99, 102], BODY3: [28, 27, 29], BODYL: [180, 181, 183], BELLY: [241, 240, 233] } } },
