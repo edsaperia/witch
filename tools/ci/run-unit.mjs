@@ -20,9 +20,10 @@ export function selectedTests(scope, list, root = process.cwd()) {
   } catch (error) { return { ...scope, mode: "full", reason: `related selection failed: ${error.message}`, tests: [] }; }
 }
 
-export function runTests(selection, run) {
+export function runTests(selection, run, githubActions = false) {
   // No passWithNoTests and no fallback after a genuine test failure.
-  return run(["run", ...selection.tests, "--maxWorkers=1"]);
+  // Preserve CI's existing vite.config worker count; the builder's local invocation stays single-worker.
+  return run(["run", ...selection.tests, ...(githubActions ? [] : ["--maxWorkers=1"])]);
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === fs.realpathSync(process.argv[1])) {
@@ -35,8 +36,9 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === fs.realpathSync(proces
   const selection = selectedTests(scope, base => execFileSync(process.execPath, [cli, "list", `--changed=${base}`, "--filesOnly", "--json", "--maxWorkers=1"], { encoding: "utf8", maxBuffer: 32e6 }));
   const selectionMs = performance.now() - start;
   console.log(`Unit tests: ${selection.mode}; ${selection.reason}; ${selection.tests.length || "all"} files`);
-  const testsAt = performance.now(), result = runTests(selection, args => spawnSync(process.execPath, [cli, ...args], { stdio: "inherit" }));
-  const report = { ...selection, selectionMs, testMs: performance.now() - testsAt, totalMs: performance.now() - start, status: result.status, signal: result.signal, error: result.error?.message };
+  const githubActions = process.env.GITHUB_ACTIONS === "true";
+  const testsAt = performance.now(), result = runTests(selection, args => spawnSync(process.execPath, [cli, ...args], { stdio: "inherit" }), githubActions);
+  const report = { ...selection, workers: githubActions ? "existing Vitest config" : 1, selectionMs, testMs: performance.now() - testsAt, totalMs: performance.now() - start, status: result.status, signal: result.signal, error: result.error?.message };
   fs.writeFileSync("ci-unit-results.json", JSON.stringify(report, null, 2) + "\n");
   if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `Unit tests: **${selection.mode}** (${selection.reason}); selection ${(selectionMs / 1000).toFixed(2)}s, tests ${(report.testMs / 1000).toFixed(2)}s, exit ${result.status ?? result.signal ?? "error"}.\n`);
   process.exitCode = result.status ?? 1;

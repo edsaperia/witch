@@ -5,7 +5,7 @@ import { runTests, selectedTests } from "./run-unit.mjs";
 
 const scope = { mode: "related", base: "abc", reason: "small PR" }, file = path.resolve("src/render/character.test.ts");
 describe("CI related-test execution safety", () => {
-  it("runs exactly the resolved related files once with one worker", () => {
+  it("locally runs exactly the resolved related files once with one worker", () => {
     const selection = selectedTests(scope, () => JSON.stringify([{ file }, { file }]));
     expect(selection.tests).toEqual(["src/render/character.test.ts"]);
     const run = vi.fn(() => ({ status: 0 }));
@@ -29,5 +29,10 @@ describe("CI related-test execution safety", () => {
     runTests(selection, run);
     expect(list).not.toHaveBeenCalled();
     expect(run).toHaveBeenCalledExactlyOnceWith(["run", "--maxWorkers=1"]);
+  });
+  it.each([{ tests: [] }, { tests: ["src/render/character.test.ts"] }])("CI keeps its configured parallelism for $tests", ({ tests }) => {
+    const run = vi.fn(() => ({ status: 0 }));
+    runTests({ tests }, run, true);
+    expect(run).toHaveBeenCalledExactlyOnceWith(["run", ...tests]);
   });
 });
