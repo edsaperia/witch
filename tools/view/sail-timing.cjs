@@ -22,12 +22,13 @@ const { installTravelProbe } = require('./travel-probe.cjs');
 const { checkTravel, summarizeTravel } = require('../bench/travel-budget.cjs');
 const { collectFailure } = require('./travel-failure.cjs');
 const { prepareChartTarget } = require('./chart-target.cjs');
+const { summarizeWorkerJobs } = require('../bench/worker-job-summary.cjs');
 const TRACE = process.env.TRACE === '1' || process.env.BUDGET === '1', ROUTE = process.env.ROUTE || 'chart';
 if (!['chart', 'api'].includes(ROUTE)) throw new Error('ROUTE must be chart or api');
 const SAIL_SEED = process.env.SAIL_SEED ?? (TRACE || ROUTE === 'api' ? '424242' : null);
 const extra = new URLSearchParams(process.env.EXTRA || '');
 if (TRACE) for (const [k,v] of Object.entries({ seed: '123', world: '0', warmChart: '1', prepChart: '1', ladder: 'auto' })) if (!extra.has(k)) extra.set(k,v);
-const toolKey = key => ({ ...key, knobs: { ...key.knobs, 'tool.route': ROUTE, 'tool.targetSetup': ROUTE === 'chart' ? 'choose-before-outline-v1' : 'api', 'tool.trace': TRACE, 'tool.probe': TRACE ? 'upload-aggregates-v1' : 'off', 'tool.profile': process.env.PROFILE === '1' } });
+const toolKey = key => ({ ...key, knobs: { ...key.knobs, 'tool.route': ROUTE, 'tool.targetSetup': ROUTE === 'chart' ? 'choose-before-outline-v1' : 'api', 'tool.trace': TRACE, 'tool.probe': TRACE ? 'worker-jobs-v1' : 'off', 'tool.profile': process.env.PROFILE === '1' } });
 let KEY = null;
 let pw; try { pw = require("playwright"); } catch { pw = require("/opt/node22/lib/node_modules/playwright"); }
 const [outArg = "previews/sail/timing", distArg] = process.argv.slice(2);
@@ -126,7 +127,7 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
         const timeline = performance.getEntriesByType('mark').filter(e => e.startTime >= from).map(e => ({ name: e.name, at: Math.round(e.startTime-s0), detail: e.detail }));
         const longTasks = window.__lt.filter(([t]) => t >= from && t < end+after).map(([t,ms]) => ({ at: Math.round(t-s0), ms: Math.round(ms), after: timeline.filter(e => e.at <= t-s0).at(-1)?.name || '' }));
         const probe = window.__travelProbe?.trace;
-        const trace = probe ? { events: probe.events.filter(e => e.at >= from).map(e => ({ ...e, at: Math.round(e.at-s0) })), uploads: Object.values(probe.uploads || {}).map(g => ({ ...g, firstAt: Math.round(g.firstAt-s0), lastAt: Math.round(g.lastAt-s0), longestAt: Math.round(g.longestAt-s0) })), dropped: probe.dropped, capabilities: probe.capabilities } : undefined;
+        const trace = probe ? { events: probe.events.filter(e => e.at >= from).map(e => ({ ...e, at: Math.round(e.at-s0) })), capturedEpochMs: performance.timeOrigin + performance.now(), activeJobs: Object.values(probe.activeJobs || {}).map(j => ({ ...j })), uploads: Object.values(probe.uploads || {}).map(g => ({ ...g, firstAt: Math.round(g.firstAt-s0), lastAt: Math.round(g.lastAt-s0), longestAt: Math.round(g.longestAt-s0) })), dropped: probe.dropped, capabilities: probe.capabilities } : undefined;
         const quality = (probe?.quality || []).filter(q => q.at >= from).map(q => ({ ...q, at: Math.round(q.at-s0) }));
         return { slices, settleParts: parts, sailMark: Math.round(sailAt - s0), marks: m, chartFrames: sum(from,s0), toDive: sum(s0, dive), diveToEnd: sum(dive, end), settle: sum(end, end + after), tasks, steps, longTasks, timeline, trace, quality, coverage: { longTasks: window.__ltSupported } };
       }, [MARKS, GAP * THR, sail, AFTER, ROUTE === 'api' ? sail : chartOpened]);
@@ -151,7 +152,7 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
     }
     fs.writeFileSync(out + ".json", JSON.stringify({ key: KEY, island: ISLAND0, then: THEN, throttle: THR, size: `${W}x${H}`, gap: GAP, runs }, null, 1));
     log("written", out + ".json");
-  } catch (e) { console.error(e); code = 1; const failure = await collectFailure(activePage, { phase, island: activeIsland }); fs.writeFileSync(out+'.json', JSON.stringify({ key: KEY, route: ROUTE, runs, error: String(e), pageErrors: errors, warnings, failure }, null, 1)); } finally { await browser.close(); server.close(); }
+  } catch (e) { console.error(e); code = 1; const failure = await collectFailure(activePage, { phase, island: activeIsland }); failure.workerJobs = summarizeWorkerJobs(failure.probe); fs.writeFileSync(out+'.json', JSON.stringify({ key: KEY, route: ROUTE, runs, error: String(e), pageErrors: errors, warnings, failure }, null, 1)); } finally { await browser.close(); server.close(); }
   if (errors.length) { console.error("page errors:\n" + errors.join("\n")); code = 1; }
   process.exit(code);
 })();

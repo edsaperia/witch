@@ -3,6 +3,12 @@ import { createRequire } from 'node:module';
 const { checkTravel, checkTrace, summarizeTravel } = createRequire(import.meta.url)('./travel-budget.cjs');
 const good = () => ({ marks: { 'chart:ready': 900, 'chart:flown': 1000, 'game:arrived': 2000 }, qualityBefore: { mode: 'auto', rung: 0 }, quality: [{ at: 0, mode: 'auto', rung: 0 }, { at: 4000, mode: 'auto', rung: 0 }], longTasks: [{ at: 10, ms: 80 }], slices: [{ what: 'handoff-heights', ms: 50, slices: 3, longest: 18 }], chartFrames: { frames: 30, longest: 50 }, toDive: { frames: 60, longest: 90 }, diveToEnd: { frames: 60, longest: 30 }, settle: { frames: 120, longest: 16 } });
 it('passes a complete, smooth trip without a quality downgrade', () => expect(checkTravel(good()).ok).toBe(true));
+it('requires job protocol evidence for the new job-instrumented trace format', () => {
+  const run = { ...good(), key: { knobs: { 'tool.probe': 'worker-jobs-v1' } } };
+  expect(checkTravel(run).ok).toBe(false);
+  expect(checkTravel({ ...run, trace: { capabilities: { workerJobs: 1 } } }).ok).toBe(false);
+  expect(checkTravel({ ...run, trace: { capabilities: { workerJobs: 1 }, events: [{ kind: 'worker-job', jobId: 'observed' }] } }).ok).toBe(true);
+});
 it('rejects an unmeasured API trip instead of counting missing telemetry as zero', () => {
   expect(checkTravel({ route: 'api', marks: { 'game:arrived': 2000 }, qualityBefore: good().qualityBefore, quality: good().quality }).ok).toBe(false);
 });

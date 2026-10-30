@@ -5,7 +5,7 @@ function snapshotFailure() {
     ready: window.witch?.ready ?? null,
     chart: chart ? { selected: chart.chart?.selected ?? null, islands: (chart.islands?.() || []).map(i => ({ id: i.id, outline: !!i.outline, sail: !!i.sail })) } : null,
     marks: performance.getEntriesByType('mark').slice(-32).map(e => ({ name: e.name, at: Math.round(e.startTime) })),
-    probe: trace ? { dropped: trace.dropped, workerEvents: trace.events.length, lastWorkerEvents: trace.events.slice(-32).map(e => ({ ...e })), uploads: Object.values(trace.uploads || {}).map(g => ({ ...g })) } : null,
+    probe: trace ? { dropped: trace.dropped, capabilities: trace.capabilities, capturedEpochMs: performance.timeOrigin + performance.now(), activeJobs: Object.values(trace.activeJobs || {}).map(j => ({ ...j })), workerEvents: trace.events.length, events: trace.events.map(e => ({ ...e })), lastWorkerEvents: trace.events.slice(-32).map(e => ({ ...e })), uploads: Object.values(trace.uploads || {}).map(g => ({ ...g })) } : null,
   };
 }
 async function collectFailure(page, context, timeout = 1500) {

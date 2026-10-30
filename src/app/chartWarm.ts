@@ -6,6 +6,7 @@
 import { islandOf, KIND_NAMES } from "../rules/rosters";
 import { islandAt } from "./chartLayout";
 import type { OutlineAsk, WarmNote } from "./chartOutlines.worker";
+import { postTracedJob } from "./workerJobTrace";
 
 /** The outlines' land sampled every so many metres: the chart's pixels are far coarser. */
 export const OUTLINE_STEP = 32;
@@ -49,7 +50,8 @@ export function warmChart(world: number, found: string[], done?: (made: number, 
     done?.(e.data.made, e.data.kept);
   };
   w.onerror = () => { w.terminate(); running = null; };
-  w.postMessage({ world, found, ids: chartIslandIds(world), step: OUTLINE_STEP, warm: true } satisfies OutlineAsk);
+  const ids = chartIslandIds(world);
+  postTracedJob(w, { world, found, ids, step: OUTLINE_STEP, warm: true } satisfies OutlineAsk, 'chart:request', 'warm', ids.length);
 }
 
 /** Stop making them (the chart has opened and makes its own). */

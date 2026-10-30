@@ -54,6 +54,24 @@ it('records native worker errors without replacing handlers or retaining event p
   expect(context.__travelProbe.trace.events[0]).toEqual({ kind: 'worker-error', worker: 'chart', at: 1, ms: 0, message: 'startup failed' });
   expect(preventDefault).not.toHaveBeenCalled();
 });
+it('consumes diagnostic packets, preserves active jobs across reset and closes them on termination', () => {
+  class NativeWorker {
+    handler: any;
+    set onmessage(fn: any) { this.handler = fn; }
+    terminate() {}
+  }
+  let now = 50;
+  const context: any = { Worker: NativeWorker, performance: { timeOrigin: 1000, now: () => now }, requestAnimationFrame: () => {} }; context.window = context;
+  runInNewContext(`(${installTravelProbe.toString()})()`, context);
+  const worker = new context.Worker('chartOutlines.worker.js'), handler = vi.fn(); worker.onmessage = handler;
+  worker.handler({ data: { __witchJobTraceEvent: { jobId: 'one', jobKind: 'chart:detail', id: 'home', workerIndex: worker._travelWorkerIndex, phase: 'stage-start', stage: 'cache-read', stageStartEpochMs: 1040, atEpochMs: 1040 } } });
+  expect(handler).not.toHaveBeenCalled(); expect(context.__travelProbe.trace.events[0].at).toBe(40);
+  context.__travelProbe.reset(); expect(Object.keys(context.__travelProbe.trace.activeJobs)).toEqual(['one']);
+  now = 60; worker.terminate();
+  expect(Object.keys(context.__travelProbe.trace.activeJobs)).toHaveLength(0);
+  expect(context.__travelProbe.trace.events[0]).toMatchObject({ phase: 'cancel', status: 'worker-terminated', interruptedStage: 'cache-read', interruptedStageElapsedMs: 20 });
+  worker.handler({ data: { actualResult: 7 } }); expect(handler).toHaveBeenCalledTimes(1);
+});
 
 it('retains every upload count and slowest call beyond the old cap, leaving room for late worker events', () => {
   let now = 0;

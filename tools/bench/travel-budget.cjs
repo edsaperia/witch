@@ -1,5 +1,6 @@
 // Pure checks for tools/view/sail-timing.cjs and saved sail traces. Times are milliseconds from the sail request.
 const DEFAULTS = { task: 1000, frame: 1000, slice: 100, settle: 2000 };
+const { summarizeWorkerJobs } = require('./worker-job-summary.cjs');
 const finite = x => typeof x === 'number' && Number.isFinite(x);
 function checkTravel(run, limits = {}) {
   const L = { ...DEFAULTS, ...limits }, failures = [], m = run.marks || {};
@@ -40,6 +41,7 @@ function checkTravel(run, limits = {}) {
     if (worse) failures.push(`quality fell from rung ${run.qualityBefore.rung} to ${worse.rung} during travel/grace at ${worse.at} ms`);
   }
   if (run.trace?.dropped) failures.push(`trace omitted ${run.trace.dropped} events`);
+  if (run.key?.knobs?.['tool.probe'] === 'worker-jobs-v1' && (run.trace?.capabilities?.workerJobs !== 1 || ![...(run.trace?.events || []), ...(run.trace?.activeJobs || [])].some(e => e?.kind === 'worker-job' && e.jobId))) failures.push('worker-job timing protocol was not observed');
   if (run.trace?.uploads !== undefined) {
     if (!Array.isArray(run.trace.uploads)) failures.push('upload aggregates are invalid');
     else for (const g of run.trace.uploads) {
@@ -54,6 +56,7 @@ function summarizeTravel(run) {
   const m = run.marks || {}, span = (a,b) => finite(m[a]) && finite(m[b]) ? m[b] - m[a] : null;
   const events = run.trace?.events || [], groups = {};
   for (const e of events) {
+    if (e.kind === 'worker-job') continue; // stage/queue spans have their own table, not callback CPU totals
     const key = `${e.kind}:${e.worker || e.method || ''}`, g = groups[key] ||= { count: 0, wallMs: 0, longestMs: 0, workerReportedMs: 0, workerReports: 0, receivedBytesEstimate: 0, cached: 0 };
     g.count++; g.wallMs += e.ms || 0; g.longestMs = Math.max(g.longestMs, e.ms || 0); g.receivedBytesEstimate += e.receivedBytes || 0;
     if (finite(e.workerMs)) { g.workerReports++; g.workerReportedMs += e.workerMs; } g.cached += e.cached ? 1 : 0;
@@ -64,7 +67,7 @@ function summarizeTravel(run) {
     g.count += e.count; g.wallMs += e.wallMs; g.longestMs = Math.max(g.longestMs, e.longestMs);
   }
   const detail = name => [...(run.timeline || [])].reverse().find(e => e.name === name)?.detail ?? null;
-  return { preparationToGame: span('witch:prep','witch:game'), mapPrep: detail('witch:map-prep-source'), hydration: detail('witch:map-hydrated'), shaderReadinessWait: span('witch:prep-compile0','witch:prep-compiled'), programPreparation: span('witch:prep-compiled','witch:prep-programs'), handoffAfterReady: span('chart:ready','chart:flown'), arrival: m['game:arrived'] ?? null, events: groups };
+  return { preparationToGame: span('witch:prep','witch:game'), mapPrep: detail('witch:map-prep-source'), hydration: detail('witch:map-hydrated'), shaderReadinessWait: span('witch:prep-compile0','witch:prep-compiled'), programPreparation: span('witch:prep-compiled','witch:prep-programs'), handoffAfterReady: span('chart:ready','chart:flown'), arrival: m['game:arrived'] ?? null, events: groups, workerJobs: summarizeWorkerJobs(run.trace) };
 }
 function checkTrace(data) {
   const runs = (data.runs || [data]).map(run => ({ island: run.island, key: run.key, budget: checkTravel(run, run.budget?.limits), summary: summarizeTravel(run) }));
