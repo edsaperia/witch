@@ -48,7 +48,7 @@ async function main() {
   try {
     await page.goto(`http://127.0.0.1:${port}/?creator=0&seed=123&quick=1&debug${process.env.QUICK_QUERY ? "&" + process.env.QUICK_QUERY : ""}`); // (QUICK_QUERY=a=b&c=d: more of the link, e.g. set=combat.packs.on=false for pack combat off)
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 240000, polling: 500 });
-    log("start screen ready");
+    log("game ready");
     const state = () => page.evaluate(() => { const g = window.witch.game; return { t: g.clock.time, x: g.witch.x, z: g.witch.z, mode: g.witch.mode, paused: g.clock.paused, trees: window.witch.view.stats.trees }; });
     // Hold a key for `secs` of game time (the software renderer here runs slow, capped frames).
     const hold = async (key, secs) => {
@@ -60,9 +60,8 @@ async function main() {
     };
     const canvas = await page.$("canvas#game");
     check(!!canvas, "the game's canvas is there");
-    await page.keyboard.press("Enter");
-    await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 30000 });
-    check(true, "a key press starts the game");
+    await page.waitForFunction(() => !window.witch.game.clock.paused && document.getElementById("start").style.display === "none", null, { timeout: 30000 });
+    check(true, "starts directly without a start screen or key press");
     { // (15 s: the CI runners' software renderer links a big shader program in a second or two and a busy runner stretches that to
       // 4 s and more (4 s tripped other PRs, 2026-10-26); the freeze it's here for held the page 50 to 75 s)
       const beat = await page.evaluate(() => window.__beat), budget = Number(process.env.QUICK_STALL_MS || 15000);

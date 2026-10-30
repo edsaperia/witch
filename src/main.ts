@@ -9,7 +9,7 @@ import { Rumble } from "./platform/rumble";
 import { currentSettings } from "./app/playerSettings";
 import { wavesOver } from "./rules/win";
 import { chartOpen, closeChart, openChart, prepareChart, finishChartFlight, type Sailed } from "./ui/chartOverlay";
-import { openingWay, opensInBedroom, opensWithCreator, sailLandsInBed } from "./app/opening";
+import { openingWay, opensDirectly, opensInBedroom, opensWithCreator, sailLandsInBed } from "./app/opening";
 import { wakeInBedroom } from "./rules/opening";
 import { endDream, startParty, startWake } from "./rules/wakeUp";
 import { LandingSleep } from './app/landingSleep';
@@ -35,10 +35,7 @@ import { parseSeed } from "./rules/map";
 import { Input } from "./platform/input";
 import { View } from "./render/view";
 import { prewarmArtWorkers } from "./render/assets";
-import { CHANGELOG_VERSIONS } from "./changelog";
-import { setupStartScreen, startOnGesture } from "./ui/startScreen";
 import { AimHud } from "./render/aimhud";
-import { UPCOMING } from "./ui/upcoming";
 import { StallLog } from "./platform/stallLog";
 import { Freeze } from "./platform/freeze";
 import { StudioPlayer } from "./app/studio";
@@ -276,16 +273,13 @@ const setAutoTalk = (on: boolean) => {
 };
 
 document.getElementById("version")!.textContent = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
-// The start screen, full screen: What's new in this build (config/changelog/) and what's coming up
-// (the open pull requests, listed at deploy time), the controls below (src/ui/startScreen.ts).
-declare const __BUILD_DATE__: string;
-setupStartScreen({
-  el: document.getElementById("start")!, build: typeof __BUILD__ === "string" ? __BUILD__.split(" ")[0] : "dev",
-  builtOn: typeof __BUILD_DATE__ === "string" ? __BUILD_DATE__ : new Date().toISOString().slice(0, 10), versions: CHANGELOG_VERSIONS, upcoming: UPCOMING,
-});
+// The old card remains only as a hidden home for the Controls/Options nodes borrowed by menus.
+// Ed, 2026-10-30: no start screen and no eager update notes.
 const seedEl = document.getElementById("seed")!;
 seedEl.innerHTML = `seed <a href="?seed=${N().seed}">${N().seed}</a>`;
 const startEl = document.getElementById("start")!;
+const startedNights = new WeakSet<Game>();
+startEl.style.display = "none";
 // The controls list as bound now (ui/controlsText.ts; Ed, 2026-10-28: a remap shows everywhere), again on a change (the list moves into
 // the creator's and the pause page's tabs: the element itself kept).
 { const keysEl = startEl.querySelector<HTMLElement>(".keys"); if (keysEl) { fillControls(keysEl); bindings.onChange(() => fillControls(keysEl)); } }
@@ -337,9 +331,11 @@ requestAnimationFrame(() => setTimeout(async () => {
   loadTimes.ready = performance.now();
   performance.mark("witch:ready");
   startEl.classList.remove("loading");
-  if (bot) start(); // (a bot game starts itself as soon as it can)
   if (inBedroom) { loading?.finish(); wakeFirst(); }
-  else if (resumeGame) { start(); if (restoringComment && !freeze.frozen) freeze.toggle(); soundNote(); resumeGame = undefined; resumeSave = null; }
+  else if (opensDirectly(params, { bedroom: inBedroom, arriving: !!night.arrival, resuming: !!resumeGame, bot: botKind ? bot ? "ready" : "loading" : "off" })) {
+    startDirect();
+    if (resumeGame) { if (restoringComment && !freeze.frozen) freeze.toggle(); resumeGame = undefined; resumeSave = null; }
+  }
   night.arrival?.begin(night.game); // (the camera takes over from the chart's still)
 }, 0));
 
@@ -366,11 +362,12 @@ if (bootArrival) {
 }
 let gestured = false;
 const soundNote = () => {
+  if (document.getElementById("sound-note")) return;
   const el = document.createElement("div");
   el.id = "sound-note"; el.textContent = "🔊 press any key for sound";
   el.style.cssText = "position:fixed;left:50%;bottom:72px;transform:translateX(-50%);z-index:30;font:13px ui-monospace,monospace;color:#e8e2f4;background:rgba(10,9,22,.7);border:1px solid #3a2f5c;border-radius:6px;padding:6px 12px;pointer-events:none";
   document.body.append(el);
-  const go = () => { sound.wake(); el.remove(); removeEventListener("keydown", go); removeEventListener("pointerdown", go); };
+  const go = () => { gestured = true; sound.wake(); el.remove(); removeEventListener("keydown", go); removeEventListener("pointerdown", go); };
   addEventListener("keydown", go); addEventListener("pointerdown", go);
 };
 /** Any key or tap skips an arrival's flight (once a page: the boot's arrival, or the first sail in place). */
@@ -609,7 +606,7 @@ function botGame(kind: BotKind): void {
   void Promise.all([import("./rules/bot"), import("./ui/botGame")]).then(([{ BOT_GAME, newBot }, { BotTag }]) => {
     bot = newBot(kind, BOT_GAME[kind]); // (the skilled one questing, bringing relics and feeding: rules/bot.ts BOT_GAME)
     botTag = new BotTag(kind, () => newNight("bot")); // (back to the start: a night in place on this link without ?bot)
-    if (N().flags.ready) start(); // (else the forest's ready starts it)
+    if (N().flags.ready) startDirect(); // (else the forest's ready starts it)
   });
 }
 if (botParam && BOT_KINDS.includes(botParam)) botGame(botParam);
@@ -636,10 +633,12 @@ function start(): boolean {
   sound.start(); // (browsers keep sound off until the player presses something: the start is that press)
   if (!arrival) revealArt(); // (play starting from behind the bedroom or the start screen: the island not seen till now)
   mutate("start play", () => { game.clock.paused = false; });
+  startedNights.add(game);
   startEl.style.display = "none";
   input.clearPresses();
   return true;
 }
+function startDirect(): void { if (start() && !gestured) soundNote(); }
 input.onAny = () => (N().arrival && !N().flags.landed ? true : start()); // (arriving: a key skips the flight, app/arrive.ts; the landing starts it)
 // The audio watchdog (app/sound.ts).
 sound.watch(() => !N().game.clock.paused && !freeze.frozen && !document.hidden && !mutedAway(), () => N().game.speakerBoot.some(t => t !== null), () => N().playtest);
@@ -665,7 +664,7 @@ freeze.onStamp = text => pauseSliders?.setStamp(text);
 // bedroom and on the pause page, and when a menu's code has been replaced under it.
 const newBuild = new NewBuildNotice(BUILD, document.getElementById("new-build"));
 let menuGone = false;
-/** Controls, What's new and Options on the pause page (the opening, Ed's decision 3: "Controls are taught in the bedroom and kept in
+/** Controls and Options on the pause page (the opening, Ed's decision 3: "Controls are taught in the bedroom and kept in
  *  the pause menu"; Ed, 2026-10-23, the chart's corner gone with the chart-first start): where the creator's tabs were never set up,
  *  buttons while paused show the start card's keys, its What's new and the screen shake's option (ui/cornerPanel.ts, borrowed and
  *  put back). */
@@ -675,8 +674,8 @@ function pauseControls(on: boolean): void {
   if (!pauseBtns) {
     pauseBtns = document.createElement("div");
     pauseBtns.id = "pause-btns"; pauseBtns.style.cssText = "position:fixed;right:12px;top:12px;z-index:61;display:flex;gap:8px";
-    const keys = startEl.querySelector<HTMLElement>(".keys"), news = startEl.querySelector<HTMLElement>(".ss-body");
-    for (const [label, id, title, el] of [["❔ Controls", "controls", "CONTROLS", keys], ["📜 What's new", "news", "WHAT'S NEW", news], ["⚙ Options", "options", "OPTIONS", shakeEl]] as const) {
+    const keys = startEl.querySelector<HTMLElement>(".keys");
+    for (const [label, id, title, el] of [["❔ Controls", "controls", "CONTROLS", keys], ["⚙ Options", "options", "OPTIONS", shakeEl]] as const) {
       if (!el) continue;
       const b = document.createElement("button");
       b.type = "button"; b.textContent = label;
@@ -710,28 +709,23 @@ freeze.onToggle = on => {
   });
 
 };
-startOnGesture(startEl, start); // a click or a tap starts; a touch that drags scrolls the text
 // Screen shake when she's hit, and the camera's sub-pixel glide (app/shake.ts).
 const shake = page.shake = new ScreenShake(N().game, bootTuning, view, canvas, params), shakeEl = shake.option;
-// No start card before her room (Ed, 2026-10-06: "There is something before the bedroom… can we skip it and go straight to
-// the bedroom?"): with the character creator the page opens straight into it, and the card's contents live in its tabs
-// (❔ Controls, also the ? key; 📜 What's new; ⚙ Options: the screen shake; the waves' pace is the top right's dropdown). The card itself shows only for a
-// run without the creator (?creator=0: the tools and smoke runs, "press any key") or a bot game while the forest grows.
+// Ed, 2026-10-30: the retired card is hidden on every route. Controls and Options remain available in existing menus;
+// update notes move to the lazy Settings tab. The normal bedroom/legacy creator retain their own opening actions.
 /** The creator's tabs and its Zoo button, once a page (at the boot, or a night in place that opens the bedroom after a load that didn't). */
 let dressed = false;
 function dressCreator(): void {
   if (dressed) return;
   dressed = true;
-  const keys = startEl.querySelector<HTMLElement>(".keys"), news = startEl.querySelector<HTMLElement>(".ss-body");
+  const keys = startEl.querySelector<HTMLElement>(".keys");
   if (keys) creator.addTab("controls", "❔ Controls", [keys]);
-  if (news) creator.addTab("news", "📜 What's new", [news]);
   if (shakeEl) creator.addTab("options", "⚙ Options", [shakeEl]);
   // The zoo (Ed, 2026-10-13: ?zoo, "plus a Zoo button"): every creature in its own block, out of a run.
   creator.addButton("Zoo", () => { const u = new URL(location.href); u.searchParams.set("zoo", "1"); location.href = u.toString(); });
 }
 if (bootArrival) { /* (no card, no bedroom: the still, then the flight) */ } else if (inBedroom) { /* (no card, no creator: asleep in the dark, then the wake-up: wakeFirst) */ }
 else if (!resumeGame && params.get("creator") !== "0" && !botKind) dressCreator();
-else startEl.style.display = "";
 // Ed's decisions panel (src/ui/decide.ts, config/decisions.json): ?decide opens it, F2 opens and closes it. Its code loads
 // only then (overnight phase 2: out of the game's bundle); its knobs' choices in the link are put on as the game starts
 // (ui/decisions.ts, app/linkParams.ts).
@@ -781,7 +775,7 @@ const autosave = nightStore ? new NightAutosave(nightStore, () => {
   const n = page.night;
   if (!n || endedNights.has(n.game) || !n.flags.ready || sailing || bot || dream && !dream.over || n.arrival && !n.flags.landed || !savesEnabled(n.params, navigator.webdriver)) return null;
   // The opening, before play starts, must not replace an existing night merely because the page loaded.
-  if (!nightHasStarted(n.game, startEl.style.display === "none")) return null;
+  if (!nightHasStarted(n.game, startedNights.has(n.game))) return null;
   return captureNight(n.game, { build: BUILD, params: n.params.toString(), look: page.look() as Record<string, unknown> | null, loan,
     flags: { chartRecorded: n.flags.chartRecorded, overRecorded: n.flags.overRecorded } });
 }, () => nightSaveNotice("Your night could not be saved. Keep this page open to continue playing.")) : null;
@@ -1133,7 +1127,7 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   const wakes = spec.how === "bed" && openingWay(spec.params, N().tuning) === "bedroom";
   const room = !wakes && spec.params.get("creator") !== "0";
   startEl.classList.add("loading");
-  startEl.style.display = room || wakes ? "none" : ""; // (the start card only for a run without the creator, as at the boot)
+  startEl.style.display = "none";
   if (room) { dressCreator(); creator.show(); }
   if (wakes) (wakeCard ??= new WakeCard()).sleep();
   if (wakes && dreamNext) startDream(dreamNext);
@@ -1148,6 +1142,7 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   input.clearPresses();
   sailing = false;
   if (wakes && wakeInBedroom(n.game) && startWake(n.game, n.game.herTime, { dreaming: !!dream && !dream.over, mirrored: mirrored(), yesterday: true })) { mark("opening:bed"); start(); } // (after the bed: last night's clothes in their pile)
+  else if (!room && !wakes) startDirect();
 }
 /** The bot game left (its exit in place): the bot and its tag gone, her own look back (the creator's, as a fresh page has it). */
 function leaveBot(): void {
@@ -1349,7 +1344,7 @@ function frameBody(now: number): void {
     meter.read(performance.now(), sound.musicExpected());
     const shedS = Math.floor(performance.now() / 1000);
     if (shedS !== lastShedS) { lastShedS = shedS; const cw = meter.clockWatch, why = sound.shedCheck(shedS, cw.underruns, cw.drift); if (why) { playtest.audio(why); console.warn(`audio: ${why}`); } }
-    if (micWanted && !meter.mic && startEl.style.display === "none") meter.startMic(e => {
+    if (micWanted && !meter.mic && startedNights.has(game)) meter.startMic(e => {
       const pageS = performance.now() / 1000;
       N().playtest.mic({ kind: e.kind, t: Math.round(N().game.clock.time * 10) / 10, dur: Math.round(e.dur * 100) / 100, outDb: e.outDb, micDb: e.micDb, lag: Math.round(e.lag * 1000), stall: nearestStall(pageS) });
     });
@@ -1385,7 +1380,7 @@ function frameBody(now: number): void {
   if (!held) drew(performance.now());
   fightFrame((x, y, z) => view.screenOf(x, y, z)); // (the Fight Arena's telegraph timings, if it's on)
   frameStats.endGpu();
-  aimHud.update(game, game.herTime, input.cursor, input.lastAim, startEl.style.display === "none" && !bot);
+  aimHud.update(game, game.herTime, input.cursor, input.lastAim, startedNights.has(game) && !bot);
   frameStats.work(performance.now() - work0);
   perfHud?.frame(now, dt * 1000, stepMs, !game.clock.paused && !freeze.frozen);
   shake.apply();

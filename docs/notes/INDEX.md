@@ -235,6 +235,7 @@ says what each note covers.
 
 ## [The run](run.md)
 
+- Direct play after loading
 - The phases of a run
 - Bedroom
 - Loading screen
