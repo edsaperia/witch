@@ -17,6 +17,7 @@ it("keeps the latest 20 errors with their original night context and leaves brow
   expect(run.errors[0].message).toBe("caught-1");
   expect(run.errors[19]).toMatchObject({ kind: "caught", message: "caught-20", build: "build-a", t: 12, island: "fox", where: "fixture" });
   expect(run.errors[19].stack).toContain("playtestLog.test.ts");
+  expect(run.errors[19].trail.at(-1)).toMatchObject({ kind: "error", build: "build-a", t: 12, island: "fox", message: "caught-20" });
   new PlaytestLog(game("bear", 3), "build-b");
   const rejection = Object.assign(new Event("unhandledrejection", { cancelable: true }), { reason: "rejected string" });
   expect(target.dispatchEvent(rejection)).toBe(true);

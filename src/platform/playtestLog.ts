@@ -9,12 +9,22 @@ import type { Game } from "../rules/game";
 import type { Stall } from "./stallLog";
 import type { CompareKey } from "../app/compareKey";
 import { setCaughtErrorSink } from "./caughtError";
+import { beginBrowserJournal, currentJournal, journalEntry, notable, recentNotables, setLogContext, type NotableEvent } from "./playtestJournal";
 export { logCaughtError } from "./caughtError";
 
 /** Ed, 2026-10-30: keep the last 20 crashes in the L log, including failures before play starts. */
-export interface PlaytestError { kind: "error" | "unhandledrejection" | "caught"; message: string; stack: string; build: string; t: number | null; island: string; where?: string }
+export interface PlaytestError { kind: "error" | "unhandledrejection" | "caught"; message: string; stack: string; build: string; t: number | null; island: string; where?: string; trail?: NotableEvent[] }
 const errors: PlaytestError[] = [];
 declare const __BUILD__: string;
+beginBrowserJournal(typeof __BUILD__ === "string" ? __BUILD__ : "dev");
+// Keep the browser's warning output intact; storage failures themselves never use this path.
+if (currentJournal()) {
+  const warn = console.warn;
+  console.warn = (...args: unknown[]) => {
+    try { notable("warning", args.map(value => errorText(value).message).join(" ").slice(0, 1000)); } catch { /* Diagnostics cannot suppress a warning. */ }
+    warn.apply(console, args);
+  };
+}
 let errorSink: ((error: Omit<PlaytestError, "build" | "t" | "island">) => void) | undefined;
 let errorObserver: ((error: Omit<PlaytestError, "build" | "t" | "island">) => void) | undefined;
 export function observePlaytestErrors(observer: typeof errorObserver): void { errorObserver = observer; }
@@ -28,7 +38,10 @@ function errorText(value: unknown): { message: string; stack: string } {
 /** For recoverable failures that must remain visible without interrupting their existing fallback. */
 setCaughtErrorSink((value, where) => captureError("caught", value, where));
 function captureError(kind: PlaytestError["kind"], value: unknown, where?: string): void {
-  const error = { kind, ...errorText(value), ...(where ? { where } : {}) };
+  const detail = errorText(value);
+  notable("error", detail.message, { kind, where });
+  const error = { kind, ...detail, ...(where ? { where } : {}), trail: recentNotables() };
+  journalEntry("error", error);
   errorObserver?.(error);
   if (errorSink) errorSink(error);
   else {
@@ -121,6 +134,9 @@ export class PlaytestLog {
   debugText?: () => string;
   constructor(private game: Game, build: string) {
     this.run = { seed: game.seed, build, started: new Date().toISOString(), interval: game.tuning.leyLines.pulseSpeed, samples: [] };
+    setLogContext(() => ({ build, t: game.clock.time, island: game.tuning.map?.island || "home" }));
+    notable("arrival", "Night opened", { seed: game.seed });
+    journalEntry("run:start", this.run);
     errorSink = error => {
       const entry: PlaytestError = { ...error, build, t: game.clock.time, island: game.tuning.map?.island || "home" };
       errors.push(entry);
@@ -160,6 +176,7 @@ export class PlaytestLog {
   private save(includeStalls = true): void {
     // Snapshot: a later night's errors must not mutate an already saved run.
     this.run.errors = errors.map(e => ({ ...e }));
+    journalEntry("run:update", { seed: this.run.seed, started: this.run.started, sample: this.run.samples.at(-1), errors: this.run.errors });
     if (includeStalls && this.stalls) this.run.stalls = this.stalls().slice();
     try {
       const runs = readRuns().filter(r => r.started !== this.run.started);
@@ -215,6 +232,7 @@ export class PlaytestLog {
     const runs = readRuns(), all = runs.some(r => r.started === this.run.started) ? runs : [...runs, this.run];
     if (this.inputRecording) Object.assign(all[all.length - 1], { inputRecording: this.inputRecording() });
     if (this.comments) Object.assign(all[all.length - 1], { comments: await this.comments() });
+    if (currentJournal()) Object.assign(all[all.length - 1], { journal: await currentJournal()!.download() });
     const blob = new Blob([JSON.stringify(all, null, 1)], { type: "application/json" }), a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = `witch-playtest-${this.run.seed}-${this.run.started.slice(0, 16).replace(/[:T]/g, "-")}.json`;

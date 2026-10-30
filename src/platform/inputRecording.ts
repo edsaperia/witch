@@ -47,18 +47,21 @@ export class InputRecorder {
   private nested = 0;
   private readonly start: Omit<LocalStart, "snapshot">;
   private readonly startingSave: SavedNight;
-  constructor(private game: Game, private build: string, capture: () => SavedNight) {
+  constructor(private game: Game, private build: string, capture: () => SavedNight, private persist?: (kind: string, payload: unknown) => void) {
     this.startingSave = capture();
     const { snapshot: _snapshot, ...start } = localStart(game, build, 0); this.start = start;
     this.size = bytes(this.startingSave) + bytes(start);
+    this.record("recording:start", { version: 1, build, seed: game.seed, startingSave: this.startingSave, start });
     if (this.size > MAX_BYTES) this.fail("Starting save exceeds the input recording limit");
   }
-  private fail(message: string): void { this.complete = false; this.failure ??= message; }
+  private record(kind: string, payload: unknown): void { try { this.persist?.(kind, payload); } catch { /* Logging cannot change a simulation step. */ } }
+  private fail(message: string): void { this.complete = false; this.failure ??= message; this.record("recording:incomplete", { message }); }
   private append(event: RecordedEvent): void {
     if (!this.complete) return;
     this.size += bytes(event);
     if (this.events.length >= MAX_EVENTS || this.size > MAX_BYTES) { this.fail("Input recording reached its retention limit"); return; }
     this.events.push(event);
+    this.record("recording:event", { seed: this.game.seed, event });
   }
   /** Record the actual caller's controls, then run the unchanged stepGame implementation with its original arguments. */
   step(controls: Controls | readonly Controls[], dt: number): void {

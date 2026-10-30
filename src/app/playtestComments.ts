@@ -2,6 +2,7 @@
 import { captureNight, savedNight, type SavedNight } from "./nightSave";
 import type { Game } from "../rules/game";
 import type { InputRecording } from "../platform/inputRecording";
+import { recentNotables, type NotableEvent } from "../platform/playtestJournal";
 
 export const COMMENT_TEXT = 2000, COMMENT_BYTES = 8 * 1024 * 1024, COMMENT_TOTAL = 32 * 1024 * 1024, COMMENT_COUNT = 8;
 export interface Breadcrumb { at: number; t: number; island: string; kind: string; data: unknown }
@@ -10,6 +11,7 @@ export interface PlaytestComment {
   t: number; island: string; wave: number; witch: { x: number; z: number; hp: number };
   changed: Record<string, unknown>; breadcrumbs: Breadcrumb[]; night: SavedNight;
   recording?: InputRecording;
+  trail?: NotableEvent[];
 }
 const bytes = (v: unknown) => new TextEncoder().encode(JSON.stringify(v)).byteLength;
 export class Breadcrumbs {
@@ -31,7 +33,7 @@ export function captureComment(game: Game, text: string, context: Parameters<typ
   const comment: PlaytestComment = { version: 1, id: `${at}-${crypto.randomUUID()}`, at, text: text.trim(), build: context.build, repro,
     t: game.clock.time, island: game.tuning.map?.island || "home", wave: game.party.wave,
     witch: { x: game.witch.x, z: game.witch.z, hp: game.witches[0].health.hp },
-    changed: structuredClone(changed), breadcrumbs: structuredClone(breadcrumbs), night: captureNight(game, context, at), ...(recording ? { recording } : {}) };
+    changed: structuredClone(changed), breadcrumbs: structuredClone(breadcrumbs), trail: recentNotables(), night: captureNight(game, context, at), ...(recording ? { recording } : {}) };
   if (bytes(comment) > COMMENT_BYTES) throw Error("This moment is too large to save as a comment. Download the log and report this limit.");
   return comment;
 }

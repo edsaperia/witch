@@ -4,6 +4,7 @@ import { TUNING } from "../rules/tuning";
 import { restoreGame, snapshotGame } from "../rules/nightSnapshot";
 import { restoreSettingsBase } from "./playerSettings";
 import { Breadcrumbs, captureComment, CommentBook, COMMENT_BYTES, COMMENT_COUNT, parseComment, type PlaytestComment } from "./playtestComments";
+import { notable } from "../platform/playtestJournal";
 
 function fixture() {
   const t = structuredClone(TUNING); t.map!.islandAreas = 10;
@@ -19,8 +20,10 @@ describe("paused playtest comments", () => {
   it("roundtrips the actual played moment and continues from the same random/state cursor", () => {
     const { game, context } = fixture(), trail = new Breadcrumbs();
     trail.add(game, "input", { moveX: 1 });
+    notable("quest", "Quest fixture");
     const c = captureComment(game, "She is stuck here", context, "?seed=123&at=1,2", { "music.volume": 0.2 }, trail.recent(game), 1234);
     const selected = parseComment(JSON.stringify([{ comments: [c] }]), "fixture");
+    expect(selected.trail?.at(-1)?.message).toBe("Quest fixture");
     const restored = restoreGame(selected.night.game);
     expect(snapshotGame(restored)).toEqual(snapshotGame(game));
     expect(selected).toMatchObject({ at: 1234, text: "She is stuck here", build: "fixture", t: game.clock.time, wave: game.party.wave, witch: { x: game.witch.x, z: game.witch.z, hp: game.witches[0].health.hp } });

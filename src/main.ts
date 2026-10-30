@@ -110,6 +110,7 @@ import { restoreGame } from "./rules/nightSnapshot";
 import { browserNightStore, captureNight, nightHasStarted, NightAutosave, savedNight, savesEnabled, type SavedNight, type NightStore } from "./app/nightSave";
 import { Breadcrumbs, browserCommentStore, captureComment, CommentBook, COMMENT_TOTAL, parseComment } from "./app/playtestComments";
 import { observePlaytestErrors } from "./platform/playtestLog";
+import { currentJournal, notable } from "./platform/playtestJournal";
 import { pageMutation, recordedStep, recordingFor } from "./app/recordingHooks";
 import { replayRecording } from "./platform/inputRecording";
 import { snapshotGame } from "./rules/nightSnapshot";
@@ -687,6 +688,7 @@ function pauseControls(on: boolean): void {
   pauseBtns.style.display = "";
 }
 freeze.onToggle = on => {
+  notable("screen", on ? "Paused" : "Resumed");
   input.clearPresses(); // (a press not yet read as she pauses or resumes is dropped: an E pending under the pause closed a station's panel there, the pause check's broom bay on a slow runner)
   settingsPage.gate(); // (suspended while paused, and muted in the background if so set: app/settingsPage.ts)
   if (!on) settingsPage.close();
@@ -744,6 +746,17 @@ document.addEventListener("visibilitychange", () => { if (document.hidden) N().f
 
 const endedNights = new WeakSet<Game>();
 const commentBook = new CommentBook(browserCommentStore()), breadcrumbs = new Breadcrumbs();
+void currentJournal()?.ready.then(({ unexpected, persistent }) => {
+  if (!unexpected && persistent) return;
+  const notice = document.createElement("div"), download = document.createElement("button"), dismiss = document.createElement("button");
+  notice.setAttribute("role", "status");
+  for (const type of ["keydown", "keyup", "pointerdown", "pointerup", "click", "wheel"]) notice.addEventListener(type, event => event.stopPropagation());
+  notice.style.cssText = "position:fixed;bottom:12px;left:12px;z-index:10000;max-width:420px;padding:12px;background:#171324;color:#fff;border-radius:8px;font:14px sans-serif";
+  notice.append(document.createTextNode(unexpected ? "previous session ended unexpectedly — log kept" : "Logs are kept on this page only: browser storage is unavailable."));
+  download.textContent = "Download log"; download.onclick = () => { void N().playtest.download(); };
+  dismiss.textContent = "Dismiss"; dismiss.onclick = () => notice.remove();
+  notice.append(download, dismiss); document.body.append(notice);
+});
 observePlaytestErrors(error => breadcrumbs.add(N().game, "error", error));
 let lastRecordedInput = "", lastInputAt = -Infinity;
 async function saveComment(text: string): Promise<string> {
@@ -1182,7 +1195,7 @@ function frame(now: number): void {
   // (a menu or overlay that takes the keys opening or closing, the Studio's, the chart, the telescope, the creator or the zoo:
   // everything held let go, so a key-up it took doesn't leave her walking after; Ed's playtest of v4515, the Studio's mic)
   const takes = `${studio.at}|${chartOpen()}|${telescope.on}|${creator.open}|${zoo.isOpen}|${stations.station}`;
-  if (takes !== keysTaken) { keysTaken = takes; input.release(); }
+  if (takes !== keysTaken) { keysTaken = takes; input.release(); notable("screen", "Active screen changed", { studio: studio.at, chart: chartOpen(), telescope: telescope.on, creator: creator.open, zoo: zoo.isOpen, station: stations.station }); }
   // While a station's panel, the map table's chart, the telescope or an instrument is open she stands still, the movement keys its
   // buttons (Ed, 2026-10-26: "walking away shouldn't work - then we can use the movement keys as buttons in the menus"), and the use
   // button (E; the pad's back, ○, since Ed's layout of 2026-10-28; a tap on touch) closes it: that press is the close and nothing else, even when the thing
@@ -1216,7 +1229,7 @@ function frame(now: number): void {
   if (recordedInput !== lastRecordedInput || game.clock.time - lastInputAt >= 1) { breadcrumbs.add(game, "input", c); lastRecordedInput = recordedInput; lastInputAt = game.clock.time; }
   if (params.get("cauldron") === "1" && !game.cauldron) mutate("cauldron: enable", () => enableCauldron(game, homeMushroomPickups(game)));
   recordedStep(game, c, fightDt(dt * (botTag?.speed ?? 1)), BUILD, () => captureRecording(game)); // Same stepGame and original controls; tape is diagnostic only.
-  for (const [kind, events] of [["ko", game.koEvents], ["quest", game.questEvents], ["spell", game.combat.spells?.events ?? []]] as const) for (const event of events) breadcrumbs.add(game, kind, event);
+  for (const [kind, events] of [["ko", game.koEvents], ["quest", game.questEvents], ["spell", game.combat.spells?.events ?? []]] as const) for (const event of events) { breadcrumbs.add(game, kind, event); if (kind !== "spell") notable(kind, `${kind} event`, event); }
   rumble.update(game, currentSettings(), input.device === "pad" && !document.hidden ? [freeze.pad()] : [], now);
   // ?debug=attack: every 10 s, a few seconds of blows on the two soundsystems farthest from her (never felling one), so the
   // 🔇 alarm (render/alarm.ts) shows whenever she's away from them.

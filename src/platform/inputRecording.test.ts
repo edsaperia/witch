@@ -6,16 +6,17 @@ import { captureNight } from "../app/nightSave";
 import { restoreSettingsBase } from "../app/playerSettings";
 import { InputRecorder, localControls, replayRecording } from "./inputRecording";
 
-function fixture() {
+function fixture(persist?: (kind: string, payload: unknown) => void) {
   const t = structuredClone(TUNING); t.map!.islandAreas = 4;
   const game = newGame(123, t); game.clock.paused = false;
   restoreSettingsBase(game.tuning, { voices: {}, shake: 1, legendFlash: 1 });
   const capture = () => captureNight(game, { build: "test", params: "seed=123", look: null, loan: null, flags: { chartRecorded: false, overRecorded: false } });
-  return { game, recorder: new InputRecorder(game, "test", capture) };
+  return { game, recorder: new InputRecorder(game, "test", capture, persist) };
 }
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 it("records a scripted fractional-frame run, retains local aim/zoom/framing, and replays to the identical paused moment", () => {
-  const { game, recorder } = fixture();
+  const streamed: { kind: string; payload: unknown }[] = [];
+  const { game, recorder } = fixture((kind, payload) => streamed.push({ kind, payload: structuredClone(payload) }));
   recorder.step({ ...idle, toggleMode: true, aimX: 12.25, aimZ: -3.75, zoom: 1, framing: true, framePart: "hat" }, STEP * 0.4);
   for (let i = 0; i < 60; i++) recorder.step({ ...idle, moveX: 1, moveZ: i % 2 ? 1 : 0, aimX: 25, aimZ: -4, zoom: i === 9 ? -1 : 0, fire: i > 20 }, STEP);
   recorder.mutate("settings: music volume", () => { game.tuning.music.volume = 0.2; });
@@ -23,6 +24,8 @@ it("records a scripted fractional-frame run, retains local aim/zoom/framing, and
   for (let i = 0; i < 30; i++) recorder.step({ ...idle, moveZ: -1 }, STEP);
   recorder.mutate("pause", () => { game.clock.paused = true; });
   const tape = JSON.parse(JSON.stringify(recorder.export()));
+  expect(streamed[0]).toMatchObject({ kind: "recording:start", payload: { build: "test", seed: 123, startingSave: tape.startingSave } });
+  expect(streamed.slice(1).map(row => (row.payload as { event: unknown }).event)).toEqual(tape.events);
   const first = tape.events[0]; expect(first.frame.inputs[0]).toMatchObject({ aimX: 12.25, aimZ: -3.75, zoom: 1, framing: true, framePart: "hat" });
   expect(first.fromStep).toBe(0); expect(first.toStep).toBe(0);
   const replayed = replayRecording(tape, "test");
