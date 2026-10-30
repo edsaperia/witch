@@ -1,5 +1,29 @@
 # Expert search: implementation and fairness audit
 
+Guarded coverage candidate (coordinator6521109755, 2026-10-30), opt-in
+`guardedCoverageExploration:true`, default off pending the fixed pilot. The same
+20 m footprint memory, eight100m headings and at most5s per30player seconds remain.
+Entry requires HP>=4 for the fixed four-heart loadout. Any damage, healing, KO,
+HP<4, public alarm/audible windup, or observed nonlegend nonfriendly adult (or any
+angry creature) within30m cancels/skips the job and consumes that slot. Peaceful
+sleeping legends do not count. The guard is evaluated on every consumed delayed
+snapshot even when a higher priority returns early; no same-slot resume is allowed.
+Defense, visits, requested recruitment/delivery, ready casts and stragglers retain
+priority. No hidden enemy targeting/map data, reaction/input change or tuning.
+
+The targeted old extra KO is night24757/unlocked at42.2833player seconds: an
+exploration episode started at30.3833 with HP3, later passed24.108m from a cheetah
+at32.7833 and4.146m at33.3167. These guards reject that unsafe segment, not prove
+counterfactual prevention of the later KO. Delivery repair's subsequent HP1 also
+motivates full-health entry. `--guarded-coverage-pilot` fixes4x300player seconds,
+off/on guarded coverage x matched/unlocked home100/night24757/world0, default
+questMax1/Satchel/nohat/barebroom, delivery repair and visits on, known priority off.
+Protected/reserved pairs are checked before output/Game. Preflight120s/worker360s,
+WHOLE480s, one worker, no restart. Gate: total fully-seen cells rise, neither
+condition's coverage falls, no extra KO/loss in either pair; otherwise stop with
+no tuning. Minimum HP, requests, quests, wins and finds stay separate. This is a
+guarded discovery pilot, not proof of strength, a lock, or held-out evaluation.
+
 Delivery cycling repair (coordinators6520516411/6520984212, 2026-10-30),
 default on after correctness ablation fc9bf675 passed; `questDeliveryRepair:false`
 retains the old branch only for the off ablation:

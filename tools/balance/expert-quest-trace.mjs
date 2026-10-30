@@ -11,16 +11,19 @@ import { sourceFingerprint } from "./expert-contract.mjs";
 import { finalCoverageCases, COVERAGE_SCREEN_LIMITS, COVERAGE_SCREEN_DECISION } from "./expert-coverage-screen.mjs";
 import { knownQuestCases, KNOWN_QUEST_SCREEN_LIMITS, KNOWN_QUEST_SCREEN_DECISION } from "./expert-known-quest-screen.mjs";
 import { deliveryCases, DELIVERY_SCREEN_LIMITS, DELIVERY_SCREEN_GATE } from "./expert-delivery-screen.mjs";
+import { guardedCoverageCases, GUARDED_COVERAGE_LIMITS, GUARDED_COVERAGE_GATE } from "./expert-guarded-coverage-screen.mjs";
 
 const arg = (key, fallback) => { const i = process.argv.indexOf(`--${key}`); return i < 0 ? fallback : process.argv[i + 1]; };
 const coverageScreen = process.argv.includes("--coverage-screen");
 const knownQuestScreen = process.argv.includes("--known-quest-screen");
 const deliveryScreen = process.argv.includes("--delivery-screen");
-if (["--coverage-screen", "--coverage-pilot", "--dream-visit-ablation", "--known-quest-screen", "--delivery-screen"].filter(f => process.argv.includes(f)).length > 1) throw Error("Select exactly one diagnostic mode");
+const guardedCoveragePilot = process.argv.includes("--guarded-coverage-pilot");
+if (["--coverage-screen", "--coverage-pilot", "--dream-visit-ablation", "--known-quest-screen", "--delivery-screen", "--guarded-coverage-pilot"].filter(f => process.argv.includes(f)).length > 1) throw Error("Select exactly one diagnostic mode");
 if (coverageScreen && process.argv.includes("--coverage-pilot")) throw Error("Select exactly one coverage mode");
-const ablation = process.argv.includes("--dream-visit-ablation"), coveragePilot = process.argv.includes("--coverage-pilot") || coverageScreen, limit = deliveryScreen ? DELIVERY_SCREEN_LIMITS.playerSeconds : knownQuestScreen ? KNOWN_QUEST_SCREEN_LIMITS.playerSeconds : coveragePilot ? 300 : ablation ? 60 : 3000;
+const ablation = process.argv.includes("--dream-visit-ablation"), coveragePilot = process.argv.includes("--coverage-pilot") || coverageScreen, limit = guardedCoveragePilot ? GUARDED_COVERAGE_LIMITS.playerSeconds : deliveryScreen ? DELIVERY_SCREEN_LIMITS.playerSeconds : knownQuestScreen ? KNOWN_QUEST_SCREEN_LIMITS.playerSeconds : coveragePilot ? 300 : ablation ? 60 : 3000;
 if (ablation && coveragePilot) throw Error("Select exactly one diagnostic mode");
-const cap = Number(arg("wall-seconds", deliveryScreen ? DELIVERY_SCREEN_LIMITS.workerSeconds : knownQuestScreen ? KNOWN_QUEST_SCREEN_LIMITS.workerSeconds : coverageScreen ? COVERAGE_SCREEN_LIMITS.workerSeconds : coveragePilot ? 360 : ablation ? 180 : 1200)), output = arg("out", "");
+const cap = Number(arg("wall-seconds", guardedCoveragePilot ? GUARDED_COVERAGE_LIMITS.workerSeconds : deliveryScreen ? DELIVERY_SCREEN_LIMITS.workerSeconds : knownQuestScreen ? KNOWN_QUEST_SCREEN_LIMITS.workerSeconds : coverageScreen ? COVERAGE_SCREEN_LIMITS.workerSeconds : coveragePilot ? 360 : ablation ? 180 : 1200)), output = arg("out", "");
+if (guardedCoveragePilot && cap > GUARDED_COVERAGE_LIMITS.workerSeconds) throw Error("Guarded coverage worker exceeds360s; whole job480s including preflight");
 if (deliveryScreen && cap > DELIVERY_SCREEN_LIMITS.workerSeconds) throw Error("Delivery worker exceeds180s; whole job300s including preflight");
 if (knownQuestScreen && cap > KNOWN_QUEST_SCREEN_LIMITS.workerSeconds) throw Error("Known-quest worker exceeds480s; whole job600s including preflight");
 if (coveragePilot && cap > (coverageScreen ? COVERAGE_SCREEN_LIMITS.workerSeconds : 360)) throw Error("Coverage worker exceeds approved mode budget");
@@ -40,20 +43,22 @@ setPriority(0, constants.priority.PRIORITY_BELOW_NORMAL);
 const root = fileURLToPath(new URL("../..", import.meta.url)), out = resolve(output);
 if (existsSync(out)) throw Error("Diagnostic output must be fresh; no resume/overwrite");
 const protectedPairs = JSON.parse(readFileSync(resolve(root, "docs/notes/expert-held-out-pairs.json"), "utf8"));
-const cases = deliveryScreen ? deliveryCases(protectedPairs) : knownQuestScreen ? knownQuestCases(protectedPairs) : coverageScreen ? finalCoverageCases(protectedPairs) : (ablation ? ["home-everything"] : ["matched", "home-everything"]).flatMap(condition => (ablation || coveragePilot ? ["off", "on"] : ["baseline", "D"]).map(vector => ({ vector, condition, seed: 1000, worldSeed: 0, island: "home", bpm: 100, bag: "satchel", hat: "none", wearsHat: false, parts: [] })));
+const cases = guardedCoveragePilot ? guardedCoverageCases(protectedPairs) : deliveryScreen ? deliveryCases(protectedPairs) : knownQuestScreen ? knownQuestCases(protectedPairs) : coverageScreen ? finalCoverageCases(protectedPairs) : (ablation ? ["home-everything"] : ["matched", "home-everything"]).flatMap(condition => (ablation || coveragePilot ? ["off", "on"] : ["baseline", "D"]).map(vector => ({ vector, condition, seed: 1000, worldSeed: 0, island: "home", bpm: 100, bag: "satchel", hat: "none", wearsHat: false, parts: [] })));
 if (cases.some(c => protectedPairs.some(p => p.worldSeed === c.worldSeed && p.nightSeed === c.seed))) throw Error("Diagnostic pair is protected");
 mkdirSync(out, { recursive: true });
 const manifest = { schema: 1, diagnosticOnly: true, startedUtc: new Date().toISOString(), sourceCommit: execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim(),
   fingerprint: sourceFingerprint(root), previousSource: "1ce28fd9d9f96ea2518b3d97811760ae793d2c8f",
   runtime: { node: process.version, platform: process.platform, arch: process.arch },
   observation: "approximate fair observation", reactionSeconds: .25, inputHz: 8, aimErrorMetres: 1,
-  limit, workerWallSeconds: cap, wholeJobWallSeconds: deliveryScreen ? DELIVERY_SCREEN_LIMITS.wholeJobSeconds : knownQuestScreen ? KNOWN_QUEST_SCREEN_LIMITS.wholeJobSeconds : coverageScreen ? COVERAGE_SCREEN_LIMITS.wholeJobSeconds : coveragePilot ? 480 : ablation ? 300 : 1500, heldCases: 0, noRestart: true,
+  limit, workerWallSeconds: cap, wholeJobWallSeconds: guardedCoveragePilot ? GUARDED_COVERAGE_LIMITS.wholeJobSeconds : deliveryScreen ? DELIVERY_SCREEN_LIMITS.wholeJobSeconds : knownQuestScreen ? KNOWN_QUEST_SCREEN_LIMITS.wholeJobSeconds : coverageScreen ? COVERAGE_SCREEN_LIMITS.wholeJobSeconds : coveragePilot ? 480 : ablation ? 300 : 1500, heldCases: 0, noRestart: true,
   dreamVisitAblation: ablation, coveragePilot, coverageScreen, rememberDreamVisitsDefault: true, coverageDefault: false,
   ...(coverageScreen ? { preRegisteredDecisionRule: COVERAGE_SCREEN_DECISION, incompleteRule: "No all-seed verdict; common complete pairs only; no restart" } : {}),
   knownQuestScreen, knownQuestPriorityDefault: false,
   ...(knownQuestScreen ? { preRegisteredDecisionRule: KNOWN_QUEST_SCREEN_DECISION, incompleteRule: "Common complete pairs only; no promotion from incomplete screen; no restart" } : {}),
   deliveryScreen, questDeliveryRepairDefault: true,
   ...(deliveryScreen ? { preRegisteredDecisionRule: DELIVERY_SCREEN_GATE, incompleteRule: "Incomplete is not a passing correctness check; no restart" } : {}),
+  guardedCoveragePilot, guardedCoverageDefault: false,
+  ...(guardedCoveragePilot ? { preRegisteredDecisionRule: GUARDED_COVERAGE_GATE, incompleteRule: "Common complete pairs only; no all-condition verdict from incomplete run; no restart" } : {}),
   stop: `first wonAt, partyOver, or ${limit} player seconds; no post-win extension`,
   cases };
 writeFileSync(resolve(out, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
@@ -97,7 +102,7 @@ try {
       // These sets name selected visits/available offerings, not proof of arrival or delivery.
       for (const q of event.knownQuests) if (event.observation.carried.some(a => a.species === q.wants)) offered.add(q.id);
       emit({ ev: "decision", step, ...event });
-    }, { rememberDreamVisits: ablation ? c.vector === "on" : true, coverageExploration: coveragePilot && c.vector === "on", knownQuestPriority: knownQuestScreen && c.vector === "on", questDeliveryRepair: deliveryScreen ? c.vector === "on" : true });
+    }, { rememberDreamVisits: ablation ? c.vector === "on" : true, coverageExploration: coveragePilot && c.vector === "on", guardedCoverageExploration: guardedCoveragePilot && c.vector === "on", knownQuestPriority: knownQuestScreen && c.vector === "on", questDeliveryRepair: deliveryScreen ? c.vector === "on" : true });
     const quests = () => g.creatures.filter(q => q.boss && q.quest).map(q => ({ id: q.id, species: q.species, wants: q.quest.species,
       done: q.quest.done ?? null, open: questOpen(g.party, q), questOpenFlag: q.questOpen ?? null,
       legendState: q.legendState ?? null, angry: !!q.enraged, gone: !!q.gone, x: q.x, z: q.z, cell: q.cell,
@@ -109,7 +114,7 @@ try {
       const s = state(), key = JSON.stringify(s);
       if (force || key !== lastState) { emit({ ev: "privilegedStateOutputOnly", step, playerTime: g.herTime, worldTime: g.clock.time, ...s }); lastState = key; }
     };
-    emit({ ev: "setup", case: c, policy, rememberDreamVisits: ablation ? c.vector === "on" : true, coverageExploration: coveragePilot && c.vector === "on", knownQuestPriority: knownQuestScreen && c.vector === "on", questDeliveryRepair: deliveryScreen ? c.vector === "on" : true, STEP, limit, seed: c.seed ^ 0x1477, diagnosticOnly: true }); snapshot(true);
+    emit({ ev: "setup", case: c, policy, rememberDreamVisits: ablation ? c.vector === "on" : true, coverageExploration: coveragePilot && c.vector === "on", guardedCoverageExploration: guardedCoveragePilot && c.vector === "on", knownQuestPriority: knownQuestScreen && c.vector === "on", questDeliveryRepair: deliveryScreen ? c.vector === "on" : true, STEP, limit, seed: c.seed ^ 0x1477, diagnosticOnly: true }); snapshot(true);
     const started = Date.now();
     for (; step < Math.ceil(limit / STEP); step++) {
       const controls = brain.decide(g), serial = JSON.stringify(controls);

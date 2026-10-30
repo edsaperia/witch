@@ -247,3 +247,27 @@ test("healing and KO keep precedence while a cycle acknowledgement is outstandin
   expect(events.filter(e=>e.controls.cycle).length).toBe(1);
   expect(events.find(e=>e.observation.playerTime>=2.1)?.controls.sigil).toBe(true);
 });
+
+function guardedScript(change:(o:Observation,t:number)=>void,end=3){
+  const events:ExpertTrace[]=[],bot=newExpert({},1,EXPERT_LIMITS,e=>events.push(e),{guardedCoverageExploration:true});
+  for(let i=0;i<end*60;i++){const o=observation();o.playerTime=i/60;o.worldTime=o.playerTime;o.self.hp=4;o.self.x=o.playerTime*10;change(o,o.playerTime);bot.decide({fixture:o} as unknown as Game);}
+  return events;
+}
+test("guarded coverage cancels on the delayed danger cue and never resumes that slot",()=>{
+  const events=guardedScript((o,t)=>{if(t>=1&&t<2)o.creatures=[{...legend(),id:10,boss:false,level:1,species:"cheetah",x:o.self.x+24}];});
+  expect(events.some(e=>e.doing==="exploring a less-seen direction")).toBe(true);
+  expect(events.filter(e=>e.observation.playerTime>=1).every(e=>e.doing!=="exploring a less-seen direction")).toBe(true);
+  expect(events.find(e=>e.observation.playerTime>=1)?.coverage.job).toBeNull();
+});
+test("guarded coverage keeps visits, delivery, requested recruitment and ready casts above it",()=>{
+  const cases:((o:Observation)=>void)[]=[o=>{o.creatures=[legend()];},o=>{o.stones=[{key:"1,1",x:0,z:0,cast:{x:0,z:0},ready:true,open:true}];},o=>{o.quests=[{id:9,wants:"hare",open:true,delivery:{x:100,z:0},hint:null}];o.carried=[{id:10,species:"hare",level:1}];},o=>{o.quests=[{id:9,wants:"hare",open:true,delivery:{x:100,z:0},hint:null}];o.creatures=[{...legend(),id:10,boss:false,level:1,species:"hare",x:o.self.x+40}];}];
+  for(const change of cases)expect(guardedScript(change).every(e=>e.doing!=="exploring a less-seen direction")).toBe(true);
+});
+test("guarded coverage remains under five seconds per slot with actual delayed input cadence",()=>{
+  const events=guardedScript(()=>{},95),bySlot=new Map<number,number>();for(const e of events)if(e.doing==="exploring a less-seen direction"){const k=Math.floor(e.observation.playerTime/30);bySlot.set(k,(bySlot.get(k)??0)+8/60);}
+  expect(bySlot.size).toBe(4);expect([...bySlot.values()].every(t=>t<=5)).toBe(true);
+});
+test("guard diagnostics cannot change controls even when the output copy is mutated",()=>{
+  const events:ExpertTrace[]=[],plain=newExpert({},1,EXPERT_LIMITS,undefined,{guardedCoverageExploration:true}),logged=newExpert({},1,EXPERT_LIMITS,e=>{events.push(e);e.coverageGuard.reason="mutated";e.coverage.epochUsed=999;e.controls.moveX=999;},{guardedCoverageExploration:true});
+  for(let i=0;i<2400;i++){const o=observation();o.playerTime=i/60;o.worldTime=o.playerTime;o.self.hp=4;o.self.x=o.playerTime*10;if(o.playerTime>=1&&o.playerTime<2)o.windups=[{x:o.self.x+20,z:0}];const g={fixture:o} as unknown as Game;const expected=plain.decide(g);expect(logged.decide(g)).toEqual(expected);}expect(events.some(e=>e.doing==="exploring a less-seen direction")).toBe(true);
+});

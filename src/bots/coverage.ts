@@ -40,7 +40,8 @@ export function newCoverage() {
       }
       return job ? { x: job.x, z: job.z } : null;
     },
-    snapshot() { return { cellMetres: CELL, fullySeenCells: seen.size, fullySeenSquareMetres: seen.size * CELL * CELL,
+    cancelUnsafe(o: Observation) { job = null; epochUsed = Math.floor(o.playerTime / PERIOD); },
+    snapshot() { return { cellMetres: CELL, fullySeenCells: seen.size, fullySeenSquareMetres: seen.size * CELL * CELL, epochUsed,
       job: job ? { x: job.x, z: job.z, until: job.until, heading: job.heading } : null }; },
   };
 }
