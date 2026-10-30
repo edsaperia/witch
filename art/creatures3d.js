@@ -5,7 +5,7 @@ import { Model, render, v3, spotty, masks } from "./model3d.js";
 import { faceUp, JAW_FACES } from "./genome/expressions.js";
 import { textureLumps } from "./genome/texture.js";
 import { compileGraph } from "./body-graph/graph.js";
-import { quadrupedTorsoGraph, quadrupedEarSocket, triangularEarMask, triangularEarFaces, wrappedRosette, regionMarking, rosetteSizing } from "./body-graph/quadruped.js";
+import { quadrupedTorsoGraph, quadrupedEarSocket, triangularEarMask, triangularEarFaces, wrappedRosette, regionMarking, rosetteSizing, bibCoordinates } from "./body-graph/quadruped.js";
 import { mandiblePart } from "./body-graph/mandibles.js";
 import { elderQuad, grizzle, notch, surfaceFrom, ring, fitRing, frontPts, closed, charm, crown, drawOn, meerkatDress, sentinelHeap } from "./elders.js";
 
@@ -563,6 +563,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   // ---- markings, painted by where a point is on the body ----
   const bellyY = chest + .12;
   let markingScale = null; // assigned by Model.atScale before any paint callback is sampled
+  let bibAt = null; // neck frame is assigned before any paint callback runs
   // rosettes (a jaguar's): broken rings over its back and flanks, none on its belly; on a black coat only a shade darker (faint in the light);
   // ripple: each ring shifted along the body by the frame, so they ripple like light on water as it moves
   const rosetteAt = p => { const R = q.rosettes, k = R.k ?? 8, u = p[0] * k, v = p[1] * k, w = p[2] * k * .6, i = Math.floor(u), j = Math.floor(v), l = Math.floor(w); if (p[1] < chest + .06 || hash2(i, j + l * 31, 11) > (R.density ?? .7)) return false; const cx = i + .3 + hash2(i, j, 12) * .4 + (R.ripple ? Math.sin(v * 1.7 + frame * 2.2) * R.ripple : 0), cy = j + .3 + hash2(j, i, 13) * .4, d = Math.hypot(u - cx, v - cy), a = Math.atan2(v - cy, u - cx); return d > .2 && d < .36 && Math.sin(a * 3 + i) > -.55; };
@@ -575,6 +576,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
     const sc = scarAt(p); if (sc) return sc;
     if (q.hoard && p[1] < (chest + top) / 2 && spotty(p, 34, .14)) return M.FLOWER; // its hoard frozen into its underside: coins and cups in the ice of its belly
     if (q.harness && (Math.abs(p[0] - len * .32) < .045 || (p[0] > len * .9 && p[1] < top - .12))) return M.FLOWER; // the girth strap and the breastplate of an old gold harness
+    if (bibAt) { const bib = bibAt(p); if (bib !== null) return bib; }
     if (q.belly && p[1] < bellyY && p[0] > -len * .5) return M.BELLY;
     if (q.regions?.torso) {
       const mark = regionMarking(p, q.regions.torso, { centreY: (top + chest) / 2, depth: Math.max(.04, Math.abs(top - chest) / 2), width: bw, bellyY: chest + .06, len, pixelsPerUnit: markingScale });
@@ -697,7 +699,12 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   // ---- neck and head, turned towards us ----
   m.part = "head"; // the neck, head, ears, eyes, horns, antlers and tusks: one piece, hung from the neck's base
   const nb = [len * .82, top - .12, 0], H = [nb[0] + Math.cos(q.neckAng) * q.neck * .9, nb[1] + Math.sin(q.neckAng) * q.neck * .9 + sz("headLift"), 0];
-  const neckPaint = p => q.belly && p[1] < (nb[1] + H[1]) / 2 - .05 ? M.BELLY : q.face === "dark" ? M.BODY2 : undefined;
+  if (q.bib) {
+    const definition = { ...q.bib, kind: "bib" }, width = q.neckW * sz("neckBase");
+    regionMarking([0, 0, 0], definition); // validate once before rendering
+    bibAt = p => regionMarking(bibCoordinates(p, nb, H, width), definition);
+  }
+  const neckPaint = p => { const bib = bibAt?.(p); return bib != null ? bib : q.belly && p[1] < (nb[1] + H[1]) / 2 - .05 ? M.BELLY : q.face === "dark" ? M.BODY2 : undefined; };
   m.seg(nb, H, q.neckW * .55 * sz("neckBase"), q.neckW * .42 * sz("neckTop"), M.BODY, { paint: neckPaint });
   // the nape: a crest along the top of the neck, from the withers to the back of the skull, so the head hangs from the neck rather
   // than being pierced by it; and the throat under it (q.nape, q.throat: their fullness, 1 as built; 0 none)

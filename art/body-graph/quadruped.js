@@ -149,11 +149,27 @@ export function rosetteCentreMaterial(d, definition) {
   return definition.centreMat ? M[definition.centreMat] ?? null : null;
 }
 
+// Existing neck endpoints define this paint frame; no new body primitive.
+// x runs along the neck, y toward its underside/front, z across its width.
+export function bibCoordinates(p, base, head, neckWidth) {
+  const axis = v3.sub(head, base), length = Math.hypot(...axis);
+  if (length <= 1e-6 || !(neckWidth > 0)) throw new Error("Bib needs a nonzero neck axis and positive width");
+  const direction = v3.mul(axis, 1 / length), underside = [direction[1], -direction[0], 0], delta = v3.sub(p, base);
+  return [v3.dot(delta, direction) / length, v3.dot(delta, underside) / neckWidth, delta[2] / neckWidth];
+}
+
 // Null means the region's base coat. Defining a region replaces its older
 // all-body pattern, so torso rings cannot leak onto a head or the lower legs.
 /** @param {{centreY:number,depth:number,width:number,bellyY:number,len?:number,pixelsPerUnit?:number|null}|null} [bounds] */
 export function regionMarking(p, definition, bounds = null) {
   if (!definition || definition.kind === "none") return null;
+  if (definition.kind === "bib") {
+    const extent = definition.extent, along = extent?.along, width = extent?.width, depth = extent?.depth;
+    if (!Array.isArray(along) || along.length !== 2 || !along.every(Number.isFinite) || along[0] < -1 || along[1] > 1 || along[0] >= along[1] || !Number.isFinite(width) || width <= 0 || width > 2 || !Number.isFinite(depth) || depth <= 0 || depth > 2) throw new Error("Bib extent needs ordered along in [-1,1], width/depth in (0,2]");
+    const mat = typeof definition.mat === "number" ? definition.mat : M[definition.mat ?? "BELLY"];
+    if (!Number.isInteger(mat) || mat <= 0 || mat >= 64) throw new Error("Bib material must name a material or palette index 1..63");
+    return p[0] >= along[0] && p[0] <= along[1] && p[1] >= 0 && p[1] <= depth && Math.abs(p[2]) <= width ? mat : null;
+  }
   if (definition.kind === "rosettes" && bounds) {
     const cell = rosetteCell(p, definition, bounds);
     if (!cell) return null;

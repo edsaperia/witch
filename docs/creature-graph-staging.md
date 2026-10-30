@@ -211,6 +211,39 @@ that correction is claimed before cloud review.
 
 ## Cats comparison driver
 
+### Localized throat/chest bib (6515555442)
+
+No existing general coat field isolates this mark: `coat.belly` covers the
+underside and `head.muzzle` the chin; the elder marten's shield is story art.
+New optional `coat.bib` uses the existing `regionMarking` paint path on the
+torso and ventral neck, without changing anatomy or painting the head/chin:
+
+```js
+coat: {
+  belly: false,
+  bib: {
+    mat: "BELLY",
+    extent: { along: [-.8, .95], width: 1, depth: 1.5 }
+  }
+}
+```
+
+The existing neck endpoints supply the frame: `along` is an ordered interval
+within [-1,1], 0 at the shoulder/neck base, 1 at the head/neck endpoint;
+negative values extend onto the upper chest. `width` is the half-span across
+the neck and `depth` the maximum ventral/front distance from its axis, both in
+the builder's scaled neck-width units and bounded to (0,2]. The back of the
+neck is excluded. `mat` accepts a named material or palette index 1–63,
+default BELLY. Palette colour remains supplied by existing palette controls.
+`coat.belly` stays independent: explicitly set it false when a localized bib
+should replace a pale whole underside. A level's `bib:null` disables the mark.
+
+No Current genome enables the field. Tests pin the pre-change marten material
+and normal byte hash, exercise the bounds, and verify a visible selected bib
+with a brown centre underside and identical geometry/normals. Visual
+likeness is not asserted by these painter tests. Tail work is held behind this
+priority request, with its draft retained in the builder's local work folder.
+
 Cats-1 independent review (Yankee, comment 6513855670): likeness scores
 current → graph were sand cat 2→2, snow leopard 3→3.5, jaguar 3→3.5,
 lion 3→3, tiger 4→4, cheetah 4→4 and lynx 3→3. The conservative torso-envelope
