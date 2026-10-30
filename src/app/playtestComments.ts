@@ -3,8 +3,10 @@ import { captureNight, savedNight, type SavedNight } from "./nightSave";
 import type { Game } from "../rules/game";
 import type { InputRecording } from "../platform/inputRecording";
 import { recentNotables, type NotableEvent } from "../platform/playtestJournal";
+import { jsonBytes, LOG_EXPANDED_BYTES, packLog, unpackLog, type PackedLog } from "../platform/logCodec";
 
-export const COMMENT_TEXT = 2000, COMMENT_BYTES = 8 * 1024 * 1024, COMMENT_TOTAL = 32 * 1024 * 1024, COMMENT_COUNT = 8;
+export const COMMENT_TEXT = 2000, COMMENT_BYTES = 32 * 1024 * 1024, COMMENT_TOTAL = 64 * 1024 * 1024, COMMENT_COUNT = 8;
+export const COMMENT_PACKED_BYTES = 8 * 1024 * 1024, COMMENT_PACKED_TOTAL = 32 * 1024 * 1024;
 export interface Breadcrumb { at: number; t: number; island: string; kind: string; data: unknown }
 export interface PlaytestComment {
   version: 1; id: string; at: number; text: string; build: string; repro: string;
@@ -39,12 +41,44 @@ export function captureComment(game: Game, text: string, context: Parameters<typ
 }
 /** A builder may select an individual bundle or a Download log file; the latter restores its latest comment. */
 export function parseComment(text: string, build: string): PlaytestComment {
-  if (new TextEncoder().encode(text).byteLength > COMMENT_TOTAL + 8 * 1024 * 1024) throw Error("This log file is too large.");
+  if (new TextEncoder().encode(text).byteLength > LOG_EXPANDED_BYTES) throw Error("This log file is too large.");
   const raw: unknown = JSON.parse(text);
+  return selectComment(raw, build);
+}
+function selectComment(raw: unknown, build: string): PlaytestComment {
   const candidates: unknown[] = Array.isArray(raw) ? raw.flatMap(r => r && typeof r === "object" && Array.isArray(r.comments) ? r.comments : []) : [raw];
   const c = candidates.sort((a, b) => Number((a as PlaytestComment)?.at ?? 0) - Number((b as PlaytestComment)?.at ?? 0)).at(-1) as PlaytestComment | undefined;
   if (!c || c.version !== 1 || c.build !== build || typeof c.text !== "string" || c.text.length > COMMENT_TEXT || typeof c.repro !== "string" || !Number.isFinite(c.at) || !savedNight(c.night, build, new URLSearchParams()) || bytes(c) > COMMENT_BYTES) throw Error("No valid comment for this build. Open the build named in the log, then restore it there.");
   return c;
+}
+export async function parseCommentFile(text: string, build: string): Promise<PlaytestComment> {
+  if (new TextEncoder().encode(text).byteLength > LOG_EXPANDED_BYTES) throw Error("This log file is too large.");
+  return selectComment(await unpackLog(JSON.parse(text)), build);
+}
+interface StoredComments { format: "witch-comments/v1"; bundles: PackedLog[] }
+export async function encodeStoredComments(rows: PlaytestComment[]): Promise<StoredComments> {
+  const bundles: PackedLog[] = [];
+  for (const row of rows) {
+    const bundle = await packLog(row);
+    if (jsonBytes(bundle) > COMMENT_PACKED_BYTES) throw Error("This compressed comment exceeds its size limit");
+    bundles.push(bundle);
+  }
+  const result: StoredComments = { format: "witch-comments/v1", bundles };
+  if (jsonBytes(result) > COMMENT_PACKED_TOTAL) throw Error("Compressed comments exceed their storage limit");
+  return result;
+}
+export async function decodeStoredComments(value: unknown): Promise<PlaytestComment[]> {
+  if (Array.isArray(value)) return value as PlaytestComment[]; // Existing uncompressed session rows.
+  const stored = value as StoredComments;
+  if (!stored || stored.format !== "witch-comments/v1" || !Array.isArray(stored.bundles) || stored.bundles.length > COMMENT_COUNT || jsonBytes(stored) > COMMENT_PACKED_TOTAL) throw Error("Invalid stored comments");
+  const rows: PlaytestComment[] = [];
+  for (const bundle of stored.bundles) {
+    if (jsonBytes(bundle) > COMMENT_PACKED_BYTES) throw Error("Stored comment exceeds its size limit");
+    const row = await unpackLog(bundle) as PlaytestComment;
+    rows.push(selectComment(row, row?.build));
+    if (jsonBytes(rows) > COMMENT_TOTAL) throw Error("Expanded comments exceed their storage limit");
+  }
+  return rows;
 }
 export interface CommentStore { read(): Promise<PlaytestComment[]>; write(rows: PlaytestComment[]): Promise<void> }
 export class CommentBook {
@@ -83,13 +117,13 @@ export function browserCommentStore(): CommentStore {
       r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error); r.onblocked = () => reject(Error("Comment storage busy"));
     } catch (e) { reject(e); }
   });
-  const act = async (mode: IDBTransactionMode, write?: PlaytestComment[]) => {
+  const act = async (mode: IDBTransactionMode, write?: StoredComments) => {
     const d = await db;
-    return new Promise<PlaytestComment[]>((resolve, reject) => {
+    return new Promise<unknown>((resolve, reject) => {
       const tx = d.transaction("sessions", mode), store = tx.objectStore("sessions"), r = write ? store.put(write, key) : store.get(key);
       tx.oncomplete = () => resolve(write ?? r.result?.rows ?? r.result ?? []);
       tx.onerror = tx.onabort = () => reject(tx.error ?? r.error);
     });
   };
-  return { read: () => act("readonly"), write: async rows => { await act("readwrite", rows); } };
+  return { read: async () => decodeStoredComments(await act("readonly")), write: async rows => { await act("readwrite", await encodeStoredComments(rows)); } };
 }

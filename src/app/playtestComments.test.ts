@@ -3,7 +3,8 @@ import { newGame, stepGame, STEP } from "../rules/game";
 import { TUNING } from "../rules/tuning";
 import { restoreGame, snapshotGame } from "../rules/nightSnapshot";
 import { restoreSettingsBase } from "./playerSettings";
-import { Breadcrumbs, captureComment, CommentBook, COMMENT_BYTES, COMMENT_COUNT, parseComment, type PlaytestComment } from "./playtestComments";
+import { Breadcrumbs, captureComment, CommentBook, COMMENT_BYTES, COMMENT_COUNT, parseComment, parseCommentFile, encodeStoredComments, decodeStoredComments, type PlaytestComment } from "./playtestComments";
+import { packLog } from "../platform/logCodec";
 import { notable } from "../platform/playtestJournal";
 
 function fixture() {
@@ -17,12 +18,14 @@ function fixture() {
 }
 
 describe("paused playtest comments", () => {
-  it("roundtrips the actual played moment and continues from the same random/state cursor", () => {
+  it("roundtrips the actual played moment and continues from the same random/state cursor", async () => {
     const { game, context } = fixture(), trail = new Breadcrumbs();
     trail.add(game, "input", { moveX: 1 });
     notable("quest", "Quest fixture");
     const c = captureComment(game, "She is stuck here", context, "?seed=123&at=1,2", { "music.volume": 0.2 }, trail.recent(game), 1234);
     const selected = parseComment(JSON.stringify([{ comments: [c] }]), "fixture");
+    expect(await decodeStoredComments(await encodeStoredComments([c]))).toEqual([c]);
+    expect(await parseCommentFile(JSON.stringify(await packLog([{ comments: [c] }])), "fixture")).toEqual(selected);
     expect(selected.trail?.at(-1)?.message).toBe("Quest fixture");
     const restored = restoreGame(selected.night.game);
     expect(snapshotGame(restored)).toEqual(snapshotGame(game));

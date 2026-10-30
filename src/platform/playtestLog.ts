@@ -10,6 +10,7 @@ import type { Stall } from "./stallLog";
 import type { CompareKey } from "../app/compareKey";
 import { setCaughtErrorSink } from "./caughtError";
 import { beginBrowserJournal, currentJournal, journalEntry, notable, recentNotables, setLogContext, type NotableEvent } from "./playtestJournal";
+import { packLog } from "./logCodec";
 export { logCaughtError } from "./caughtError";
 
 /** Ed, 2026-10-30: keep the last 20 crashes in the L log, including failures before play starts. */
@@ -233,7 +234,7 @@ export class PlaytestLog {
     if (this.inputRecording) Object.assign(all[all.length - 1], { inputRecording: this.inputRecording() });
     if (this.comments) Object.assign(all[all.length - 1], { comments: await this.comments() });
     if (currentJournal()) Object.assign(all[all.length - 1], { journal: await currentJournal()!.download() });
-    const content = format === "text" ? readablePlaytest(all) : JSON.stringify(all, null, 1);
+    const content = format === "text" ? readablePlaytest(all) : JSON.stringify(await packLog(all));
     const blob = new Blob([content], { type: format === "text" ? "text/plain;charset=utf-8" : "application/json" }), a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = `witch-playtest-${this.run.seed}-${this.run.started.slice(0, 16).replace(/[:T]/g, "-")}.${format === "text" ? "txt" : "json"}`;

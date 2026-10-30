@@ -108,7 +108,8 @@ import { shotParams } from "./app/shot";
 import type { FlightEnd } from "./render/chart/seaChart";
 import { restoreGame } from "./rules/nightSnapshot";
 import { browserNightStore, captureNight, nightHasStarted, NightAutosave, savedNight, savesEnabled, type SavedNight, type NightStore } from "./app/nightSave";
-import { Breadcrumbs, browserCommentStore, captureComment, CommentBook, COMMENT_TOTAL, parseComment } from "./app/playtestComments";
+import { Breadcrumbs, browserCommentStore, captureComment, CommentBook, parseCommentFile } from "./app/playtestComments";
+import { LOG_EXPANDED_BYTES } from "./platform/logCodec";
 import { observePlaytestErrors, logCaughtError } from "./platform/playtestLog";
 import { currentJournal, journalEntry, notable } from "./platform/playtestJournal";
 import { pageMutation, recordedStep, recordingFor } from "./app/recordingHooks";
@@ -768,8 +769,8 @@ async function saveComment(text: string): Promise<string> {
   return comment.recording?.complete ? status : `${status} Exact input replay is incomplete: ${comment.recording?.failure ?? "unavailable"}.`;
 }
 async function restoreComment(file: File): Promise<void> {
-  if (file.size > COMMENT_TOTAL + 8 * 1024 * 1024) throw Error("This log file is too large.");
-  const comment = parseComment(await file.text(), BUILD);
+  if (file.size > LOG_EXPANDED_BYTES) throw Error("This log file is too large.");
+  const comment = await parseCommentFile(await file.text(), BUILD);
   // Validate the full graph before writing or navigating. Importing JSON never executes code.
   const replayed = comment.recording ? replayRecording(comment.recording, BUILD) : restoreGame(comment.night.game);
   if (JSON.stringify(snapshotGame(replayed)) !== JSON.stringify(comment.night.game)) throw Error("Input replay differs from the saved comment moment. The log is kept; report this replay failure.");

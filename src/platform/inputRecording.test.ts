@@ -4,7 +4,8 @@ import { TUNING } from "../rules/tuning";
 import { snapshotGame } from "../rules/nightSnapshot";
 import { captureNight } from "../app/nightSave";
 import { restoreSettingsBase } from "../app/playerSettings";
-import { InputRecorder, localControls, replayRecording } from "./inputRecording";
+import { InputRecorder, localControls, replayRecording, type InputRecording } from "./inputRecording";
+import { packLog, unpackLog } from "./logCodec";
 
 function fixture(persist?: (kind: string, payload: unknown) => void) {
   const t = structuredClone(TUNING); t.map!.islandAreas = 4;
@@ -14,7 +15,7 @@ function fixture(persist?: (kind: string, payload: unknown) => void) {
   return { game, recorder: new InputRecorder(game, "test", capture, persist) };
 }
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
-it("records a scripted fractional-frame run, retains local aim/zoom/framing, and replays to the identical paused moment", () => {
+it("records a scripted fractional-frame run, retains local aim/zoom/framing, and replays to the identical paused moment", async () => {
   const streamed: { kind: string; payload: unknown }[] = [];
   const { game, recorder } = fixture((kind, payload) => streamed.push({ kind, payload: structuredClone(payload) }));
   recorder.step({ ...idle, toggleMode: true, aimX: 12.25, aimZ: -3.75, zoom: 1, framing: true, framePart: "hat" }, STEP * 0.4);
@@ -28,7 +29,9 @@ it("records a scripted fractional-frame run, retains local aim/zoom/framing, and
   expect(streamed.slice(1).map(row => (row.payload as { event: unknown }).event)).toEqual(tape.events);
   const first = tape.events[0]; expect(first.frame.inputs[0]).toMatchObject({ aimX: 12.25, aimZ: -3.75, zoom: 1, framing: true, framePart: "hat" });
   expect(first.fromStep).toBe(0); expect(first.toStep).toBe(0);
-  const replayed = replayRecording(tape, "test");
+  const decoded = await unpackLog(await packLog({ recording: tape })) as { recording: InputRecording };
+  expect(decoded.recording).toEqual(tape);
+  const replayed = replayRecording(decoded.recording, "test");
   expect(snapshotGame(replayed)).toEqual(snapshotGame(game)); expect(replayed.acc).toBe(game.acc); expect(replayed.pending).toEqual(game.pending);
   expect(() => replayRecording(tape, "other")).toThrow();
 });
