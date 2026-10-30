@@ -1,0 +1,57 @@
+{
+  "sha": "8b8859bf2262b4e611ba4a858785ed544a34ef28",
+  "grant": "6524618092",
+  "frames": [],
+  "errors": [],
+  "complete": false,
+  "served": {
+    "version": "dev · 8b8859b",
+    "built": "2026-10-30T13:51:03.449Z"
+  },
+  "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "lastFixture": {
+    "species": "beetle",
+    "level": 0,
+    "position": "centre",
+    "fixture": {
+      "radius": 44.41895402094715,
+      "fraction": 0.25,
+      "x": 3201.8591064613734,
+      "z": 3106.559326444441
+    },
+    "diagnostics": {
+      "origin": {
+        "x": 3201.8591064613734,
+        "z": 3106.559326444441
+      },
+      "witch": {
+        "x": 3190.754367956137,
+        "z": 3106.559326444441
+      },
+      "lightCentre": {
+        "x": 3190.754367956137,
+        "z": 3106.559326444441
+      },
+      "distance": 11.104738505236583,
+      "radius": 44.41895402094715,
+      "power": 0.95,
+      "dim": 1,
+      "falloff": 1.8,
+      "batches": [
+        {
+          "key": "beetle",
+          "count": 1,
+          "flags": [
+            {
+              "visible": true,
+              "find": 1,
+              "scenery": 0,
+              "unlit": 0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "failure": "Error: Witch not demonstrably visible/centred"
+}
