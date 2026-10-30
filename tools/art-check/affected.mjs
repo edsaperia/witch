@@ -40,8 +40,25 @@ export function taskDispatcher(text) {
   helpers[0] = 'const st = G.defaultStyle(), res = [];';
   const preamble = helpers.join('\n').replace(/only \? G\.SPECIES\.filter\([^;]+? : G\.SPECIES/g, 'G.SPECIES')
     .replace(/only \? G\.AREAS\.filter\([^;]+? : G\.AREAS/g, 'G.AREAS');
-  const source = `import * as G from '../../art/generator.js';\nconst only = null;\n${preamble}\nexport type ArtJob = ${tasks.map(t => `{kind:${JSON.stringify(t.name)}}`).join('|')};\nexport function runJob(job:ArtJob){\n${tasks.map(t => `if(job.kind===${JSON.stringify(t.name)})return (${t.source})();`).join('\n')}\n}`
+  let source = `import * as G from '../../art/generator.js';\nconst only = null;\n${preamble}\nexport type ArtJob = ${tasks.map(t => `{kind:${JSON.stringify(t.name)}}`).join('|')};\nexport function runJob(job:ArtJob){\n${tasks.map(t => `if(job.kind===${JSON.stringify(t.name)})return (${t.source})();`).join('\n')}\n}`
     .replace(/import\((["'])\/(art|src)\//g, 'import($1../../$2/');
+  // Callback-local dynamic imports are namespace escapes: bind their complete
+  // runtime closure to that task, rather than relying on initializer-only edges.
+  const generated = ts.createSourceFile(DISPATCHER, source, ts.ScriptTarget.Latest, true);
+  if (generated.parseDiagnostics.length) throw Error('Unparseable check adapter');
+  const imports = new Map(), edits = [];
+  const dynamic = n => {
+    if (ts.isCallExpression(n) && n.expression.kind === ts.SyntaxKind.ImportKeyword) {
+      const spec = n.arguments[0];
+      if (!spec || !ts.isStringLiteral(spec) || !/^\.\.\/\.\.\/(art|src)\//.test(spec.text)) throw Error('Unknown task dynamic import');
+      if (!imports.has(spec.text)) imports.set(spec.text, `_checkImport${imports.size}`);
+      edits.push({ start: n.getStart(generated), end: n.end, text: `Promise.resolve(${imports.get(spec.text)})` });
+    }
+    ts.forEachChild(n, dynamic);
+  };
+  dynamic(generated);
+  for (const e of edits.sort((a, b) => b.start - a.start)) source = source.slice(0, e.start) + e.text + source.slice(e.end);
+  source = [...imports].map(([spec, name]) => `import * as ${name} from ${JSON.stringify(spec)};`).join('\n') + '\n' + source;
   return { source, names: tasks.map(t => t.name) };
 }
 

@@ -23,3 +23,24 @@ these milestones now, without waiting for release. This branch starts at exact
 Each milestone gets its own REPORT and typecheck/nearby tests. Full suite,
 browser checks and full art checks remain coordinator-owned. No measured
 one-second saving is claimed without measurement. No direct builder messages.
+
+## Implementation checkpoint
+
+Cache-first source is pushed, including storage-only and transfer helpers so
+cache hits do not pull the seed helper's art dependencies into the worker.
+QUESTION6526943853 still awaits canonical routing for only Vite worker.format
+`es`; CI confirms its current `iife` format rejects the dynamic drawing chunk.
+No Vite edit has been made before routing.
+
+Affected-check milestone5770dcdae derives all57 sprite tasks and retains auxiliary
+checks/labs separately. A final audit converts callback-local dynamic imports to
+conservative whole-module roots in the analysis adapter. The production
+fingerprint engine and accepted PR1487 history artifacts remain untouched.
+Successful results alone are cached; unknown layouts run the full check.
+
+Party milestone1311c9dce shares outfit/age keys, current-age frames and atlas/view
+batches. Related caller src/render/view/creatures.ts now passes current age.
+Ordinary creature sheets, dressed naps, rigs and outfit selection retain their
+existing behavior. All43 combined nearby checks passed; the subsequent dynamic
+import regression and typecheck also passed. No browser/full art check was run
+locally. This is a checkpoint, not FINAL: the Vite routing gate remains open.

@@ -51,6 +51,7 @@ describe("affected art checks", () => {
       if (f === file) return Buffer.from(source + (edit === file ? "\n//shared checker edit\n" : ""));
       const bytes = disk.read(f);
       if (f !== edit) return bytes;
+      if (edit === "art/flora/variants.js") return Buffer.from(Buffer.from(bytes).toString("utf8") + "\n//dynamic module drawing edit\n");
       const text = Buffer.from(bytes).toString("utf8"), ast = ts.createSourceFile(f, text, ts.ScriptTarget.Latest, true);
       const fn = ast.statements.find(n => ts.isFunctionDeclaration(n) && n.name?.text === "quad3d");
       if (!fn || !ts.isFunctionDeclaration(fn) || !fn.body) throw Error("drawing fixture missing");
@@ -61,6 +62,8 @@ describe("affected art checks", () => {
     const affected = affectedArtJobs(before, after);
     expect(affected).toContain("species-sprites");
     expect(affected.length).toBeLessThan(Object.keys(before.fingerprints).length);
+    const dynamic = artJobFingerprints(tree("art/flora/variants.js"), {}, file);
+    expect(affectedArtJobs(before, dynamic)).toContain("tree-species");
     const shared = artJobFingerprints(tree(file), {}, file);
     expect(affectedArtJobs(before, shared)).toEqual(Object.keys(before.fingerprints).sort());
     for (const [name, files] of Object.entries(before.dependencies.jobs)) for (const f of files)

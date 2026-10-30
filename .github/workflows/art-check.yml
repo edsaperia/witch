@@ -33,7 +33,7 @@ jobs:
           path: .art-check-results
           key: art-results-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: art-results-v1-${{ runner.os }}-
-      # What to run: the paths the pull request changes, against its base (the push to prototype runs it all).
+      # Match successful input hashes on ordinary PRs; shared pushes/releases run all.
       - name: Scope
         id: scope
         shell: bash
