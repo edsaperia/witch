@@ -104,7 +104,6 @@ const drawForm = (m, o, S, level, st) => {
   const fitted = fitOccupiedCreature(m, o, S, level, st, decorate);
   o = VIEW ? { ...fitted.options, ...VIEW } : fitted.options;
   if (FORM) return FORM(m, o, S, level);
-  if (!VIEW && fitted.sp) return fitted.sp;
   const sp = render(m, o).sp; decorate(sp); return sp;
 };
 export function withGear(gear, f) { const was = GEAR; GEAR = gear; try { return f(); } finally { GEAR = was; } }
@@ -948,7 +947,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   if (fit === "current") {
     const base = GENOME_BY_ID[S.id];
     if (!base || base.template !== "quadruped") throw new Error("Quadruped Current fit requires a known Current quadruped");
-    const reference = speciesOf(base);
+    const reference = speciesOf(base, { creatureModels: `${S.id}:current` });
     const measure = Object.assign((model, options) => { referenceScale = render(model, { ...options, measure: true }).s; return new Sprite(1, 1); }, { motes: false });
     withForm(measure, () => withTexture({ S: reference, level, st }, () => quad3d(reference, level, frame, st, facing)));
   }

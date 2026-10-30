@@ -138,7 +138,7 @@ export function projectedInterval(q, axis) {
 // Renders a model to a Sprite `height` art pixels tall (measured over the parts not marked extra).
 // With `scale` (pixels per model unit) instead, several models share one scale.
 // With `measure`, return scale and allocated dimensions without rasterising: { s, width, height }.
-export function render(model, { height, scale, facing = "towards", yaw = YAW[facing] ?? YAW.towards, pitch = PITCH, lineGap = .12, measure = false, keepDepth = false, projected = false } = {}) {
+export function render(model, { height, scale, facing = "towards", yaw = YAW[facing] ?? YAW.towards, pitch = PITCH, lineGap = .12, measure = false, keepDepth = false, projected = false, samplePhaseY = 0 } = {}) {
   const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), spp = Math.sin(pitch);
   // model.atScale(pxPerUnit): parts that must be sized in pixels (an expression's face: genome/expressions.js), added once the scale is known
   if (model.atScale && !measure) { const f = model.atScale; model.atScale = null; f(scale ?? render(model, { height, facing, yaw, pitch, lineGap, measure: true, projected }).s); }
@@ -173,6 +173,10 @@ export function render(model, { height, scale, facing = "towards", yaw = YAW[fac
     const X0b = Math.min(...body.map(q => q.x0)), U1b = Math.max(...body.map(q => q.u1));
     X0 = X0b - Math.ceil((X0b - X0) * s - 1e-9) / s; U1 = U1b + Math.ceil((U1 - U1b) * s - 1e-9) / s;
   }
+  // Creature-only subpixel sample phase breaks symmetric two-row jumps when
+  // an exact native occupied target lies between them. World anchors still
+  // use this same affine projection and ground-row placement below.
+  if (projected && samplePhaseY) { U0 += samplePhaseY / s; U1 += samplePhaseY / s; }
   const W = Math.ceil((X1 - X0) * s) + 4, H = Math.ceil((U1 - U0) * s) + 2;
   if (measure) return { s, width: W, height: H, projectedWidth: X1 - X0, projectedHeight: U1 - U0 };
   const sp = new Sprite(W, H);

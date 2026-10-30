@@ -13,9 +13,9 @@ export function standingWitchHeight(st) {
   return witchReferences.get(key);
 }
 
-// One final-size model for every creature builder. Full projected allocation
-// includes decorative extras; padding is included in the integer target, as in
-// the sprite's on-screen rectangle. Pins cannot push it outside its age band.
+// One final-size model for every creature builder. Projected support supplies
+// an initial scale; the raster fit below targets occupied pixels, including
+// decorative extras, rather than blank padding. Pins cannot exceed the band.
 export function creatureSizeOptions(model, options, S, level, st) {
   const target=sizeTargetPixels(S.id,level,standingWitchHeight(st));
   const unit=render(model,{...options,scale:1,measure:true,projected:true});
@@ -34,7 +34,7 @@ const fittedScales=new Map();
 export function fitOccupiedCreature(model,options,S,level,st,decorate) {
   const key=JSON.stringify([S,level,st,model.parts,model.flats,options.facing]);
   const cached=fittedScales.get(key);
-  if(cached!=null)return {options:{...options,scale:cached}};
+  if(cached!=null)return {options:{...options,...cached}};
   const atScale=model.atScale,parts=model.parts.slice(),flats=model.flats.slice(),partState=parts.map(p=>({...p})),part=model.part;
   const reset=()=>{model.parts=parts.slice();model.flats=flats.slice();model.part=part;for(let i=0;i<parts.length;i++)Object.assign(parts[i],partState[i]);model.atScale=atScale;};
   let scale=options.scale,lo=null,hi=null,best=null;
@@ -42,13 +42,25 @@ export function fitOccupiedCreature(model,options,S,level,st,decorate) {
     reset();
     const sp=render(model,{...options,scale}).sp;decorate(sp);
     const height=occupiedHeight(sp),error=Math.abs(height-options.sizeTarget);
-    if(!best||error<best.error)best={sp,scale,height,error};
+    if(!best||error<best.error)best={scale,height,error,samplePhaseY:0};
     if(!error)break;
     if(height<options.sizeTarget)lo=scale;else hi=scale;
     scale=lo!=null&&hi!=null?(lo+hi)/2:scale*options.sizeTarget/Math.max(1,height);
   }
+  if(best.error)for(const samplePhaseY of [.125,.25,.375,.5,.625,.75,.875]){
+    reset();const sp=render(model,{...options,scale:best.scale,samplePhaseY}).sp;decorate(sp);
+    const height=occupiedHeight(sp),error=Math.abs(height-options.sizeTarget);
+    if(error<best.error)best={scale:best.scale,height,error,samplePhaseY};
+    if(!error)break;
+  }
+  if(best.error)for(const multiplier of [.99,1.01,.98,1.02]){
+    reset();const candidateScale=best.scale*multiplier,sp=render(model,{...options,scale:candidateScale,samplePhaseY:0}).sp;decorate(sp);
+    const height=occupiedHeight(sp),error=Math.abs(height-options.sizeTarget);
+    if(error<best.error)best={scale:candidateScale,height,error,samplePhaseY:0};
+    if(!error)break;
+  }
   if(fittedScales.size>=128)fittedScales.delete(fittedScales.keys().next().value);
-  fittedScales.set(key,best.scale);
+  fittedScales.set(key,{scale:best.scale,samplePhaseY:best.samplePhaseY});
   reset();if(atScale){model.atScale=null;atScale(best.scale);}
-  return {options:{...options,scale:best.scale},sp:best.sp};
+  return {options:{...options,scale:best.scale,samplePhaseY:best.samplePhaseY}};
 }

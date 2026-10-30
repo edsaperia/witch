@@ -5,15 +5,15 @@ import {defaultStyle} from "../art/generator.js";
 import {GENOME_BY_ID} from "../art/genome/index.js";
 import type {Style} from "./render/style";
 
-const current=defaultStyle();
+const current={...defaultStyle(),creatureModels:"flyingsquirrel:current,meerkat:current"};
 function selected(id:string,edit:(g:any)=>void){const g=structuredClone(GENOME_BY_ID[id]);edit(g);return {...current,creatureModels:`${id}:roster`,creatureVariants:{[id]:{roster:g}}} as unknown as Style;}
-function digest(id:string,level:number,idle=false,style=current){const h=createHash("sha256");for(const facing of ["towards","away"]){const sp=Reflect.apply(critter,null,[id,level,0,style,facing,idle?{idle:true}:null]);h.update(JSON.stringify([sp.w,sp.h]));for(const bytes of [sp.m,sp.n])h.update(Buffer.from(bytes.buffer,bytes.byteOffset,bytes.byteLength));}return h.digest("hex");}
+function digest(id:string,level:number,idle=false,style:object=current){const h=createHash("sha256");for(const facing of ["towards","away"]){const sp=Reflect.apply(critter,null,[id,level,0,style,facing,idle?{idle:true}:null]);h.update(JSON.stringify([sp.w,sp.h]));for(const bytes of [sp.m,sp.n])h.update(Buffer.from(bytes.buffer,bytes.byteOffset,bytes.byteLength));}return h.digest("hex");}
 it("pins projected-fit material and normal bytes with all optional controls absent",()=>{
-  // Re-pinned for Ed's approved global projected fit (6519883775), pending art review.
+  // Combined occupied age sizing and twenty approved defaults (6520542543/6520690688), pending art review.
   expect(digest("mole",2)).toBe("929ed89599e60eb90cba174f526851b4a8f7c2c94f6f7c910639ad10858bb284");
-  expect(digest("flyingsquirrel",2)).toBe("c265b2fe9bb64b3267b0b4b8ba083ce9f376c6e21e221487128ce75cc23d96cf");
-  expect(digest("meerkat",1)).toBe("f4279aa500cc01a55d45281f23c50913c90ed91b882ffecc8c966374f0ee2a52");
-  expect(digest("meerkat",1,true)).toBe("4cb9ea9173c40f0df945e54e3b4cb104db78551de6e6cd8ab8715c9e42d79f28");
+  expect(digest("flyingsquirrel",2,false,defaultStyle())).toBe("09768a12a7120d5807d41ac04717c9a0dfcb220a7bb55f4e21bb1c8c05839d7d");
+  expect(digest("meerkat",1,false,defaultStyle())).toBe("2ad36eabd8661ad2e9825641942b1d4411f504a8e8c4d18f50359fff66b1259d");
+  expect(digest("meerkat",1,true,defaultStyle())).toBe("8e63b0f8c8051a87cc7c5c2733d15718365887e2f6bdd34d94937a1e449339ef");
 });
 it("changes each mole control independently while explicit unit values preserve Current",()=>{
   const keys=["bodyDepth","bodyLength","snoutProjection","forepawSpread","forepawSize"];

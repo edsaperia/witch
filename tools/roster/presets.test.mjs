@@ -17,7 +17,7 @@ test("opt-in changes only selected genomes, has valid sockets, and leaves source
     const selected = rosterGenome(g, [id], 2);
     if (g.id !== id) assert.equal(selected, g);
     else {
-      assert.notEqual(genomeHash(selected), genomeHash(g));
+      assert.notEqual(genomeHash(selected), genomeHash(g,{creatureModels:`${g.id}:current`}));
       assert.deepEqual(genomeProblems(selected), []);
       assert.equal(speciesOf(selected).id, g.id);
       const omitted = ROSTER_PRESETS[g.id].omitLegendFeatures;

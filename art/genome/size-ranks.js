@@ -2,10 +2,10 @@
 // overlapping species share ranks; fantastical placements are design choices.
 // These ordinal starter classes are art direction, not measured mass estimates.
 export const SIZE_CLASSES = [
-  ["woodlouse", "snail", "moth", "dragonfly", "beetle", "spider", "scorpion"],
-  ["newt", "salamander", "bat", "dormouse", "toad", "crab"],
+  ["woodlouse", "snail", "moth", "dragonfly", "beetle", "scorpion"],
+  ["newt", "salamander", "dormouse", "toad", "crab", "spider"],
   ["mole", "stoat", "squirrel", "flyingsquirrel"],
-  ["hedgehog", "meerkat", "fennec", "marten", "owl", "raven", "heron", "rattlesnake"],
+  ["hedgehog", "meerkat", "fennec", "marten", "owl", "raven", "heron", "rattlesnake", "bat"],
   ["cat", "arcticfox", "hare", "armadillo"],
   ["fox", "badger", "otter", "raccoon", "redpanda"],
   ["lynx", "beaver", "roe", "penguin", "snake"],

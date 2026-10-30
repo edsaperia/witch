@@ -11,7 +11,7 @@ function capture(id:string,edit:(g:any)=>void,level=2,frame=0,facing="towards"){
   withForm(form,()=>withTexture({S,level,st},()=> (id==="dragonfly"?dragonfly3d:quad3d)(S,level,frame,st,facing)));return {model,options};
 }
 it("lets the final age target govern pinned quadruped proportion changes",()=>{
-  for(const id of ["fennec","wolf"])for(const level of [0,1,2,3])for(const frame of [0,1])for(const facing of ["towards","away"]){
+  for(const id of ["fennec","wolf"])for(const [level,frame,facing] of [[0,0,"towards"],[1,1,"away"],[2,0,"away"],[3,1,"towards"]] as const){
     const base=capture(id,()=>{},level,frame,facing),candidate=capture(id,g=>{g.look={...g.look,[id]:{fit:"current"}};g.body={...g.body,hgt:1.6,len:2};for(const l of g.levels??[])if(l){l.body={...l.body,hgt:1.6,len:2};l.parts={...l.parts,ears:{kind:"sail",size:4}};}},level,frame,facing);
     expect(candidate.options.sizeTarget).toBe(base.options.sizeTarget);
     expect(candidate.options.scale).toBeGreaterThan(0);

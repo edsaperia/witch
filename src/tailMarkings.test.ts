@@ -11,10 +11,10 @@ import type {Style} from "./render/style";
 const bent=()=>new Model().chain([[0,0,0,.2],[-1,0,0,.2],[-1,1,0,.1]],M.BODY,{paint:()=>M.MAGIC});
 describe("optional tail region painter",()=>{
   it.each([
-    // Projected-fit baselines (6519883775); optional tail regions remain absent.
-    ["raccoon","73313a64fa2bde738f4f4ecc2425077bc64a0f88dbdd8ed4165d9c5fec44a8a0"],
-    ["stoat","b4cef55ee5c3fdd70db5d5f4bedcebc252c123fa2e1f981dc201cb42a1067a60"],
-    ["jaguar","3f66363a99f6537d25e714d9341d26ee4cba1e76eb8c1e3a5d708cefc21d196c"],
+    // Combined age-size/approved roster baselines (6520542543/6520690688).
+    ["raccoon","b5a4467f4e30bb78ac2292c36d7c656eb7fa8d01167acdbbce74d05a024f2349"],
+    ["stoat","c0509d65e5c60d3d97302e09c0395006294c1464ba3da81955567b173ec76b34"],
+    ["jaguar","f1084b3e82b3083b95fbabe5f186100320627f7cc3e5ae08bf172649fe2c8786"],
   ])("pins projected-fit %s material and normal bytes with the region absent",(id,expected)=>{
     const hash=createHash("sha256");
     for(const facing of ["towards","away"]){const sp=critter(id,1,0,defaultStyle(),facing);hash.update(JSON.stringify([sp.w,sp.h]));for(const bytes of [sp.m,sp.n])hash.update(Buffer.from(bytes.buffer,bytes.byteOffset,bytes.byteLength));}
@@ -45,7 +45,7 @@ describe("optional tail region painter",()=>{
     const record=structuredClone(GENOME_BY_ID.raccoon),before=JSON.stringify(GENOME_BY_ID.raccoon);
     Reflect.set(record,"coat",{...Reflect.get(record,"coat"),regions:{tail:{kind:"rings",count:5,width:.5,mat:"BODY3",tip:{length:.2,mat:"BODY2"}}}});
     const style={...defaultStyle(),creatureModels:"raccoon:roster",creatureVariants:{raccoon:{roster:record}}} as unknown as Style;
-    const a=critter("raccoon",1,0,defaultStyle()),b=critter("raccoon",1,0,style);
+    const a=critter("raccoon",1,0,{...defaultStyle(),creatureModels:"raccoon:current"}),b=critter("raccoon",1,0,style);
     expect([b.w,b.h]).toEqual([a.w,a.h]);expect(b.n).toEqual(a.n);
     let changed=0;for(let i=0;i<a.m.length;i++)changed+=Number(a.m[i]!==b.m[i]);expect(changed).toBeGreaterThan(0);
     expect(JSON.stringify(GENOME_BY_ID.raccoon)).toBe(before);

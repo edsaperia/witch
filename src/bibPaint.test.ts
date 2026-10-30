@@ -13,8 +13,8 @@ const definition={kind:"bib",mat:"BELLY",extent:{along:[-.8,.95],width:1,depth:1
 describe("localized shared throat/chest bib paint",()=>{
   it("pins projected-fit marten pixels and normal bytes with the field absent",()=>{
     const hash=createHash("sha256");for(const facing of ["towards","away"]){const sp=critter("marten",1,0,defaultStyle(),facing);hash.update(JSON.stringify([sp.w,sp.h]));for(const bytes of [sp.m,sp.n])hash.update(Buffer.from(bytes.buffer,bytes.byteOffset,bytes.byteLength));}
-    // Projected-fit baseline (6519883775); the optional bib remains absent.
-    expect(hash.digest("hex")).toBe("22a10e0e590d0131f22046b97125ba11a3e2be6a6c1b3592aa5073ea2850dc82");
+    // Combined age-size/approved roster baseline (6520542543/6520690688).
+    expect(hash.digest("hex")).toBe("b28424c23895d230aa16e85711725ba968fcc185c9e1389eef7e9ecbdbcff734");
   });
   it("bounds the shared paint to the underside of the neck and local chest",()=>{
     expect(regionMarking([.4,.5,0],definition)).toBe(M.BELLY);

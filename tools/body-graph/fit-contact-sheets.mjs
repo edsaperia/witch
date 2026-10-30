@@ -18,7 +18,8 @@ try{
  const ids=await b.page.evaluate(async()=>Object.keys((await import("/art/generator.js")).GENOME_BY_ID));
  for(const id of ids){
   const result=await b.page.evaluate(async({id,sha})=>{
-   const G=await import("/art/generator.js"),{shade}=await import("/art/lighting.js");
+   const G=await import("/art/generator.js"),{shade}=await import("/art/lighting.js"),selection=await import("/art/genome/selection.js");
+   const status=(selection.DEFAULT_ROSTER_IDS??[]).includes(id)?"redesigned":"current";
    const st={...G.defaultStyle(),...await(await fetch("/config/style.json")).json(),artStyle:"bold",pixel:(await(await fetch("/config/tuning.json")).json()).pixelSize};
    const rows=[],times=[];
    for(const level of [0,1,2,3])for(const facing of ["towards","away"])for(let frame=0;frame<G.walkGait(id).frames;frame++){
@@ -29,11 +30,11 @@ try{
     rows.push({level,facing,frame,albedo:baked.A,night,h:sp.h+26});times.push({level,facing,frame,width:sp.w,height:sp.h,constructionMs:made-start,bakeMs:done-made});
    }
    const width=Math.max(...rows.map(r=>r.albedo.width))+24,height=48+rows.reduce((s,r)=>s+r.h,0);if(width>8192||height>16384)throw new Error(`Contact sheet budget exceeded: ${id}`);
-   const sheets={};for(const mode of ["albedo","night"]){const c=document.createElement("canvas");c.width=width;c.height=height;const ctx=c.getContext("2d");ctx.imageSmoothingEnabled=false;ctx.fillStyle=mode==="night"?"#12141f":"#292633";ctx.fillRect(0,0,width,height);ctx.fillStyle="#eee";ctx.font="12px sans-serif";ctx.fillText(`${id} ${mode} ${sha.slice(0,12)} — native pixels`,8,18);let y=48;for(const r of rows){ctx.fillText(`L${r.level} ${r.facing} frame${r.frame} ${r.albedo.width}×${r.albedo.height}`,8,y+12);ctx.drawImage(r[mode],12,y+22);y+=r.h;}sheets[mode]=c.toDataURL("image/png").split(",")[1];}
-   return {sheets,times};
+   const sheets={};for(const mode of ["albedo","night"]){const c=document.createElement("canvas");c.width=width;c.height=height;const ctx=c.getContext("2d");ctx.imageSmoothingEnabled=false;ctx.fillStyle=mode==="night"?"#12141f":"#292633";ctx.fillRect(0,0,width,height);ctx.fillStyle="#eee";ctx.font="12px sans-serif";ctx.fillText(`${id} ${status} ${mode} ${sha.slice(0,12)} — native pixels`,8,18);let y=48;for(const r of rows){ctx.fillText(`L${r.level} ${r.facing} frame${r.frame} ${r.albedo.width}×${r.albedo.height}`,8,y+12);ctx.drawImage(r[mode],12,y+22);y+=r.h;}sheets[mode]=c.toDataURL("image/png").split(",")[1];}
+   return {sheets,times,status};
   },{id,sha});
   for(const [mode,data]of Object.entries(result.sheets))writeFileSync(resolve(out,`${id}-${mode}.png`),Buffer.from(data,"base64"));
-  metadata.push({id,times:result.times});console.log(id);
+  metadata.push({id,status:result.status,times:result.times});console.log(id);
  }
  if(b.errors.length)throw new Error(b.errors.join("\n"));
  writeFileSync(resolve(out,"evidence.json"),JSON.stringify({sha,servedSha:served,species:ids.length,cells:metadata.reduce((s,r)=>s+r.times.length,0),metadata},null,2));

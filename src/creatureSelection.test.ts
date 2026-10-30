@@ -20,19 +20,19 @@ function fixture() {
   return { base, variant, style };
 }
 
-describe("one default-off creature selection hook", () => {
+describe("one creature selection hook with the approved roster defaults", () => {
   it("selects individual species explicitly and ignores malformed tokens", () => {
     expect({ ...parseCreatureModels("bear:graph,wolf:roster,bad token,bear:current") }).toEqual({ bear: "current", wolf: "roster" });
     const { base, variant, style } = fixture();
     expect(selectedCreatureGenome(base, style)).toBe(variant);
-    expect(selectedCreatureGenome(GENOME_BY_ID.wolf, style)).toBe(GENOME_BY_ID.wolf);
+    expect(selectedCreatureGenome(GENOME_BY_ID.wolf, style)).not.toBe(GENOME_BY_ID.wolf);
     expect(speciesOf(base, style)).toHaveProperty("q.len", 1.6);
   });
-  it("keeps current records and hash for absent, current and unavailable choices", () => {
+  it("keeps Current records and hash for explicit current and unavailable choices", () => {
     const { base, style } = fixture();
-    for (const context of [{}, { ...style, creatureModels: "" }, { ...style, creatureModels: "bear:current" }, { creatureModels: "bear:graph" }]) {
+    for (const context of [{ ...style, creatureModels: "bear:current" }, { creatureModels: "bear:graph" }]) {
       expect(selectedCreatureGenome(base, context)).toBe(base);
-      expect(genomeHash(base, context)).toBe(genomeHash(base));
+      expect(genomeHash(base, context)).toBe(genomeHash(base,{creatureModels:"bear:current"}));
     }
   });
   it("hashes selected content and keeps base/other records immutable", () => {
@@ -98,7 +98,7 @@ describe("one default-off creature selection hook", () => {
     expect(speciesOf(base, style, 3)).toHaveProperty("look.embers", true);
     expect(speciesOf(base, style, 0)).toHaveProperty("genomeKey", genomeHash(base, style, 0));
     expect(genomeHash(base, style, 0)).not.toBe(genomeHash(base, style, 1));
-    expect(selectedCreatureGenome(base, { ...style, creatureModels: "" }, 0)).toBe(base);
+    expect(selectedCreatureGenome(base, { ...style, creatureModels: "" }, 0)).not.toBe(base);
     expect(() => selectedCreatureGenome(base, style, 4)).toThrow(/level/);
   });
 });

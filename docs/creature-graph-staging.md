@@ -1,7 +1,9 @@
 # Creature graph staging
 
-Authorised by Ed on 2026-10-30, routed through issue #1453. Experimental only;
-the production builders, genomes, baked assets and live rig keep their defaults.
+Initially authorised by Ed on 2026-10-30 through issue #1453 as an additive experiment.
+Later coordinator instructions expanded this PR to creature-only age sizing and
+the twenty approved roster defaults (6520542543 and 6520690688). The historical
+stages below describe the experiment; current scope is in `docs/notes/creatures.md`.
 
 ## Ownership
 

@@ -38,7 +38,7 @@ export function speciesOf(g, context = {}, level = null) {
   S.sizes = { ...TEMPLATES[g.template].sizes, ...g.sizes };
   S.face = { ...TEMPLATES[g.template].face, ...g.face }; // its expressions' shapes (expressions.js)
   S.texture = { ...TEMPLATES[g.template].texture, ...g.texture }; // its surface: fur, feathers, scales... (texture.js)
-  S.genomeKey = genomeHash(g, {}, level); // selected record and level; separates same-id preview variants in the sprite cache
+  S.genomeKey = genomeHash(g, { creatureModels: `${g.id}:current` }, level); // hash the already-resolved record; never re-apply default roster selection
   // its evolution (the evolution kit): each level's own proportions, parts and features, over its own
   // levels: { 0..3: { body, head, coat, parts, features } } (or an array of four, any null) — what changes at a level beyond its
   // size curves (docs/art-guide/EVOLUTIONS.md, #121's convention): merged over the species' own for that level only (S.levelQ),

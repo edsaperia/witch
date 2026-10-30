@@ -28,7 +28,7 @@ export const SPECIES_BY_ID = Object.fromEntries(SPECIES.map(s => [s.id, s]));
 /** @param {number|null} [level] */
 export function speciesFor(id, st, level = null) {
   const base = GENOME_BY_ID[id];
-  return base && selectedCreatureGenome(base, st, level) !== base ? speciesOf(base, st, level) : SPECIES_BY_ID[id];
+  return base && (st?.creatureModels || selectedCreatureGenome(base, st, level) !== base) ? speciesOf(base, st, level) : SPECIES_BY_ID[id];
 }
 export const FEATURE_NAMES = { wings: "spirit wings", mane: "a glowing mane", tails: "many tails", crystals: "crystals", tusksBig: "great tusks", antlersGlow: "glowing antlers", jackalope: "antlers", eyesRing: "a ring of eyes", moss: "a little forest on its back", starTail: "a starry tail", crown: "a crown", ribbons: "light ribbons", wingsBig: "huge glowing wings", horn: "a glowing horn", glowShell: "a glowing shell", hornsGlow: "glowing golden horns", flames: "a crest of flame", lantern: "a great lantern", sunBall: "a ball of sunlight" };
 

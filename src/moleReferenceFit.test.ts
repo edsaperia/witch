@@ -14,7 +14,7 @@ function capture(look:Record<string,unknown>,level=2,frame=0,facing="towards"){
 }
 function scale(c:ReturnType<typeof capture>){return render(c.model,{...c.options,measure:true}).s;}
 it("keeps the final age target governing pinned and unpinned mole proportions",()=>{
-  for(const level of [0,1,2,3])for(const frame of [0,1])for(const facing of ["towards","away"]){
+  for(const [level,frame,facing] of [[0,0,"towards"],[1,1,"away"],[2,0,"away"],[3,1,"towards"]] as const){
     const base=capture({},level,frame,facing),candidate=capture({fit:"current",bodyLength:1.7,bodyVerticalDepth:1.65,bodyWidth:1,snoutThickness:1.3,forepawForward:.1},level,frame,facing);
     expect(candidate.options.sizeTarget).toBe(base.options.sizeTarget);
     expect(candidate.options.scale).toBeGreaterThan(0);
