@@ -1,5 +1,25 @@
 # Testing tools
 
+### Largest-world sleep-cell failure (A7 audit, 2026-10-30)
+
+PR #1496 exposed a failure using the largest shipped home world: game seed `123`, world `0`, shape seed `1063814361`, all 64 found kinds (64 roster areas plus home). Newt `#18` sleeps at a point whose `cellSafe` cell is `21,12`, while its assigned `c.cell` is `21,11`. The unchanged first assertion in `src/rules/asleepBeforeParty.test.ts` fails when that file uses `largestWorldTuning(TUNING)`; the other seven sleep cases passed. Root cause (initial placement versus the sleep transition) is not yet established.
+
+Reproduce without a browser or production changes: `node tools/ci/sleep-cell-repro.mjs`. Exit `1` reports every mismatched creature in before-party and lost-night states. The focused assertion command is `npx vitest run src/rules/asleepBeforeParty.test.ts --testNamePattern "every creature asleep in its own area" --maxWorkers=1` after substituting the largest-world fixture; the PR retains the original fixture by coordinator instruction `6528047220`. Raw focused failure and the fixture patch are retained in this builder's work folder.
+
+The diagnostic finds the same 14 mismatches in both states:
+
+| Species and IDs | Assigned cell | Actual cell |
+|---|---|---|
+| newt 18, 19 | 21,11 | 21,12 |
+| snowleopard 34, 35 | 19,12 | 20,11 |
+| fennec 86, 87 | 18,13 | 18,11 |
+| squirrel 164, 165 | 22,14 | 22,13 |
+| lion 185, 186 | 15,15 | 13,14 |
+| polarbear 454, 455 | 19,20 | 19,21 |
+| moth 485, 486 | 22,20 | 21,21 |
+
+After the A7 audit completes, the assigned follow-up is `codex/sleep-cell-fix` from then-current `claude/prototype`: post a root-cause PLAN before any code, make only this bug's permitted rules change, and add the largest-world regression with every assertion intact. Further largest-world rules failures found by this audit belong in this note rather than weakening tests.
+
 Part of Witch's notes (CLAUDE.md is the index): the full smoke test, proof shots. Moved here from CLAUDE.md as it stood (housekeeping, Ed 2026-10-23: a note an area, so pull requests add to their own area's file, not one shared file); every rule kept. Add to this file, not CLAUDE.md, when you change this area.
 
 Not in CI, run by builders before a FINAL: `npm run build && npm run smoke`, a headless Chromium smoke test (`tools/smoke/smoke.cjs`, Playwright from the machine's global install; never `playwright install`) that flies both modes on the laptop and phone layouts, drives the touch controls, flies a path through every zoom step in both modes failing on any pop (anything appearing or vanishing in clear view), flies full-speed straight lines in both modes at Ed's window sizes (1900×1240 at DPR 1, 2000×1076 at DPR 2) failing on any pop or any sprite instance set but not drawn (`view.stats.dropped`), flies a 10 s full boost north over the treetops frame by frame at a fixed 1/60 s (`window.witch.frame`) failing if its frames' own work (rules and view, `view.ms` by part) passes 22 ms at p99 or 40 ms at worst, runs four party waves, and saves screenshots to `previews/` (`RECORD=1` also saves `previews/flight.webm`). Checks that fail on `claude/prototype` itself for a known reason are listed in `KNOWN` at the top of `tools/smoke/smoke.cjs`, each with its issue (today the cloud's frame-time budgets, #310; the scenery rebuild at full boost, 35–135 ms frames, #1325; the pop checks under its 1–2 s software-rendered frames, #311; and the vanish flights at Ed's window sizes, which take tens of seconds a frame in software and so fly only on a real GPU, `SMOKE_GPU=1`, #1090): they're reported apart (`known: N`) and don't fail the run, and one that starts passing says so, to come off the list. Keep the list small and honest, so a red full smoke means something new.
