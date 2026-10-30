@@ -2,7 +2,7 @@
 // Isolated data for the existing speciesOf/quad3d interface, not a second engine.
 // No production import. Each species requires an explicit opt-in; defaults are off.
 const ROSTER_SNOW_REGIONS = {
-  torso: { kind: "rosettes", outerPx: 8, density: .55, inner: .22, outer: .43, xRange: [-1.2, .9], flankMin: .2, mat: "BODY3", centreMat: "BODYL" },
+  torso: { kind: "rosettes", outerPx: 8, density: .55, inner: .22, outer: .43, sizeVariation: .15, closedFraction: .25, gapRange: [0, .65], xRange: [-1.2, .9], flankMin: .2, mat: "BODY3", centreMat: "BODYL" },
   head: { kind: "spots", k: 14, density: .5, radius: .43, mat: "BODY3" },
   legs: { kind: "spots", k: 14, density: .5, radius: .43, mat: "BODY3" },
 };
@@ -39,7 +39,7 @@ export const ROSTER_PRESETS = {
     reason: "Replace generic spots with broken rosettes while keeping its existing long thick ringed tail.",
     reference: "https://zoo.sandiegozoo.org/animals/snow-leopard",
     ordinaryOnly: true,
-    modelCommit: "85ebc30df9f7ab373bc2e4552acc2fb197e36b69",
+    modelCommit: "78a01882c53f7e6ae749a6638c8257389e998672",
     legendInheritsBase: true,
     legendPatch: { coat: { regions: { ...ROSTER_SNOW_REGIONS, torso: { ...ROSTER_SNOW_REGIONS.torso, outerPx: 14 } } } },
     // Iteration 4: native rings and the same grey/markings grown into its elder.
