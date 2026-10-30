@@ -83,6 +83,10 @@ says what each note covers.
 
 ## [Creatures in play](gameplay.md)
 
+- Attack target identity
+- Sheltered attack effects
+- Momentum class selection
+- Accepted attack outcomes
 - Talk / invite
 - Bubble sight
 - Babies on her leash
@@ -278,6 +282,14 @@ says what each note covers.
 - Resting 💌s
 - Aim reticle
 - Action bar
+
+## [Save slots](save-slots.md)
+
+- Save slot storage
+- Single-save migration
+- Slot switching
+- Compatible nights
+- Save format guards
 
 ## [Sound effects](sound.md)
 

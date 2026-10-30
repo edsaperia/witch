@@ -71,8 +71,8 @@ export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: 
   | { kind: "glide"; id: string; species: string; style: Style }
   | { kind: "nap"; id: string; species: string; style: Style; /** its idle pose instead (art/creatures.js IDLE_BUILDERS: the meerkat sat up as a sentinel), each level in its 2 frames */ idle?: boolean; /** a party animal's (or a happy one's) own gear, by its seed and collar colour (null: none), worn asleep */ dressed?: { seed: number; colour: number[] | null } }
   | { kind: "face"; id: string; species: string; face: string; style: Style }
-  /** A party animal: an invited creature in its party gear (seeded by its id: collar in its sigil colour, maybe a hat, sunglasses, shoes). */
-  | { kind: "party"; id: string; species: string; seed: number; /** the collar's colour; null: no collar (happy, issue #87) */ colour: number[] | null; style: Style }
+  /** One current age in an outfit selected by the creature's seed, shared by identical looks. */
+  | { kind: "party"; id: string; species: string; level: number; gear: RigGear; style: Style }
   /** Every decoration (ruins in both conditions, rocks, freak trees), split as trees are. */
   | { kind: "decor"; id: string; style: Style; /** the island's biome key (its look over the rocks, ruins and freak trees); id is the same, or "all" */ biome?: string }
   /** The beach's edge of the woods (render/beach.ts): palms (split as trees are), beach shrubs and grass clumps, each with its sway mask. */
@@ -245,13 +245,12 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "woken") return { px: packPixels(creatureSprites(job.style, job.species, mk, { woken: true, face: "angry" }), 2048) };
   if (job.kind === "face") return { px: packPixels(creatureSprites(job.style, job.species, mk, { face: job.face }), 2048) };
   if (job.kind === "party") {
-    const gear = { ...partyGearOf(job.seed, job.colour), face: "happy" }; // (both smiling)
-    return { px: packPixels(creatureSprites(job.style, job.species, mk, gear), 2048) };
+    if (!Number.isInteger(job.level) || job.level < 0 || job.level > 3) throw new Error("Invalid party sheet age");
+    const gear = { ...job.gear, face: "happy" }; // (both smiling)
+    return { px: packPixels(creatureSprites(job.style, job.species, mk, gear, job.level), 2048) };
   }
   const { sprites, layout, floor } = typeSprites(job.biome && !job.style.biome ? ({ ...job.style, biome: job.biome } as unknown as Style) : job.style, job.seed, job.id, job.K, mk); // (the island's biome over its areas' trees and props; ?biome= over it)
   return { px: packPixels(sprites), layout, floor: { albedo: new Uint8Array(pixels(floor.A, floor.w, floor.h)), normal: new Uint8Array(pixels(floor.N, floor.w, floor.h)), w: floor.w, h: floor.h } };
 }
 
-/** The buffers a result can hand over to the page without copying. */
-export const transferables = (r: ArtResult): ArrayBuffer[] =>
-  [r.px.albedo.buffer, r.px.normal.buffer, ...(r.px.albedoPal ? [r.px.albedoPal.buffer] : []), ...(r.px.normalPal ? [r.px.normalPal.buffer] : []), ...(r.floor ? [r.floor.albedo.buffer, r.floor.normal.buffer] : []), ...(r.disco ? [r.disco.base.px.buffer, r.disco.lit.px.buffer] : []), ...(r.housePiece ? [r.housePiece.px.buffer] : []), ...(r.mask ? [r.mask.buffer] : [])] as ArrayBuffer[];
+export { transferables } from "./artTransfer";

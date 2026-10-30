@@ -5,12 +5,43 @@ import { describe, expect, it } from "vitest";
 import { AssetLibrary, islandBound } from "./assets";
 import { loadStyle } from "./style";
 import type { ArtJob, ArtResult } from "./artBuild";
+import { partyGearOf } from "./creatureArt";
+import { partySheetKey } from "./partySheet";
 
 type Lib = { queue: (ArtJob & { gen?: number })[]; inFlight: Set<string>; receive(r: { job: ArtJob; result?: ArtResult }): void };
 const inner = (a: AssetLibrary) => a as unknown as Lib;
 /** A type set's result, as an art worker hands it back: one transparent pixel, no trees. */
 const typeResult = (): ArtResult => ({ px: { width: 1, height: 1, albedo: new Uint8ClampedArray(4), normal: new Uint8ClampedArray(4), frames: [] }, layout: { big: [] } } as unknown as ArtResult);
 const typeJob = (a: AssetLibrary, id: number) => inner(a).queue.find(j => j.kind === "type" && j.id === id)!;
+
+describe("shared party sheets", () => {
+  it("queues one sheet for matching outfits, receives its age-local frames, and requests a new sheet on growth", () => {
+    const colour = [1, 0, 1], seen = new Map<string, number>();
+    let pair: [number, number] | undefined;
+    for (let id = 0; id < 512 && !pair; id++) {
+      const key = partySheetKey("fox", 2, partyGearOf(id, colour)), before = seen.get(key);
+      if (before !== undefined) pair = [before, id]; else seen.set(key, id);
+    }
+    expect(pair).toBeDefined();
+    const [aId, bId] = pair!, a = new AssetLibrary(loadStyle(), 11, 4);
+    expect(a.partyArt("fox", aId, colour, 2)).toBeUndefined();
+    expect(a.partyArt("fox", bId, colour, 2)).toBeUndefined();
+    const jobs = inner(a).queue.filter(j => j.kind === "party"); expect(jobs).toHaveLength(1);
+    const job = jobs[0];
+    if (job.kind !== "party") throw Error("party job missing");
+    expect(job.level).toBe(2); expect(job.gear).toEqual(partyGearOf(aId, colour));
+    inner(a).receive({ job, result: typeResult() });
+    const first = a.partyArt("fox", aId, colour, 2), second = a.partyArt("fox", bId, colour, 2);
+    expect(first).toBeDefined(); expect(second).toBe(first); expect(first!.key).toBe(job.id);
+    const n = first!.walk!.frames;
+    expect(first!.frame(2, 0)).toBe(0); expect(first!.frame(2, 0, true)).toBe(n);
+    expect(a.partyArt("fox", aId, colour, 1)).toBeUndefined();
+    expect(inner(a).queue.some(j => j.kind === "party" && j.level === 1 && j.id !== job.id)).toBe(true);
+    a.happyArt("fox", aId, 2);
+    expect(inner(a).queue.some(j => j.kind === "party" && j.gear.collar === null && j.id !== job.id)).toBe(true);
+    first!.atlas.albedo.dispose(); first!.atlas.normal.dispose();
+  });
+});
 
 it('requires the complete current witch atlas, not a quick preview or an old outfit, for limited landing', () => {
   const a = Object.assign(Object.create(AssetLibrary.prototype), { home: { witch: true }, preview: {}, witchGenome: null, witchLooks: new Map([['null', {}]]) }) as AssetLibrary;

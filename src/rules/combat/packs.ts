@@ -16,6 +16,7 @@
 // pack engages from that move's reach, reachOf); a kiter's strike is its shot, never a lunge; the slime trail runs on; and while it
 // waits its turn its kind's tactic places it (the wolves' surround: rules/combat.ts).
 import raw from "../../../config/packs.json";
+import { observeAttack } from "../attackObservation";
 import { sectionOf } from "../creatureConfig";
 import { type Creature, type Level } from "../creatures";
 import { foes, huntsWitch } from "../creatureStates";
@@ -529,7 +530,7 @@ function special(s: CombatState, w: CombatWorld, pw: PackWorld, st: PackState, K
         const turn = fought && fought.leashed && !fought.boss && !fought.mind ? fought : w.active.filter(o => o.leashed && !o.gone && !o.boss && o.level > 0 && !o.mind && d(o) <= Rr).sort((a, b) => d(a) - d(b))[0];
         if (turn && v) { turn.mind = { until: time + T, of: owner }; s.events.push({ kind: "packMind", x: turn.x, z: turn.z, at: time, id: turn.id }); }
         else if (v && tg.kind === "witch" && healthy.some(m => Math.hypot(m.x - v.x, m.z - v.z) <= Rr)) pw.confuse?.(owner, time + T, ((sp.drift ?? 30) * Math.PI) / 180);
-      } else if (tg.kind === "creature") { const o = w.creatures[tg.id]; if (o && !o.boss) { o.stunUntil = Math.max(o.stunUntil ?? 0, time + data.hers.stun); if (o.fight) o.fight.windupUntil = 0; s.events.push({ kind: "stunned", x: o.x, z: o.z, at: time, id: o.id }); } }
+      } else if (tg.kind === "creature") { const o = w.creatures[tg.id]; if (o && !o.boss) observeAttack(w, s, tg, { source: by.id, attack: "pack:mind", delivery: "special", phase: "effect" }, 0, () => { o.stunUntil = Math.max(o.stunUntil ?? 0, time + data.hers.stun); if (o.fight) o.fight.windupUntil = 0; s.events.push({ kind: "stunned", x: o.x, z: o.z, at: time, id: o.id }); }); }
       break;
     }
     case "decoy": (s.decoys ??= []).push({ id: by.id, until: time + T, r: Rr, side }); break; // (the raccoon waving: her 💌s in its way go to it: rules/game.ts)

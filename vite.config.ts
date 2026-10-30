@@ -64,7 +64,7 @@ export default defineConfig({
   // (two pages: the game, and the sea chart: chart.html, wave 2 part C)
   build: { target: "es2022", chunkSizeWarningLimit: 1200, rollupOptions: { input: { main: "index.html", chart: "chart.html" } } },
   plugins: [artOverrides(), configNotes(), versionFile(), changelogBatches(), houseStanding()],
-  worker: { plugins: () => [artOverrides(), configNotes()] },
+  worker: { format: "es", plugins: () => [artOverrides(), configNotes()] },
   // The rules tests build whole maps and play out fights and waves: CPU-bound seconds each, many more
   // under load (a smoke run or CI's busy runners), so vitest's 5 s default made them time out at random.
   // One generous limit for all (a hung test still fails, after a minute).
