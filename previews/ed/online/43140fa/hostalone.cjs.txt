@@ -1,0 +1,14 @@
+const { chromium } = require("playwright");
+(async () => {
+  const b = await chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
+  const p = await (await b.newContext({ viewport: { width: 960, height: 540 } })).newPage();
+  const t0 = Date.now(); let wsOpen = null, wsClosed = null;
+  p.on("websocket", ws => { wsOpen = (Date.now() - t0) / 1000; ws.on("close", () => { wsClosed = (Date.now() - t0) / 1000; console.log("ws closed at", wsClosed, "s after load; opened at", wsOpen); }); });
+  p.on("pageerror", e => console.log("pageerror", e.message));
+  await p.goto("http://127.0.0.1:4178/online/online.html?online=host&relay=ws%3A%2F%2Flocalhost%3A8787&seed=123&quick=1");
+  await p.waitForFunction(() => window.witchOnline?.ready, null, { timeout: 240000, polling: 500 });
+  console.log("host ready at", (Date.now() - t0) / 1000);
+  while ((Date.now() - t0) / 1000 < 230 && wsClosed === null) await new Promise(r => setTimeout(r, 2000));
+  console.log("end", (Date.now() - t0) / 1000, "closed", wsClosed, "status", await p.evaluate(() => document.getElementById("status").textContent));
+  await b.close();
+})();
