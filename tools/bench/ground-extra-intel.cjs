@@ -11,13 +11,17 @@ fs.mkdirSync(path.dirname(out), { recursive: true });
 const pw = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const report = { baselineSha: process.env.BASE_SHA, candidateSha: process.env.EXPECT_SHA, rows: [], note: 'One ordered baseline/candidate pair, fresh contexts, no OS shader-cache purge. Static normal-game coast visit, no simulation advancement; not a travel speedup benchmark. Screenshots can perturb timing.' };
 const save = () => fs.writeFileSync(out + '.json', JSON.stringify(report, null, 2));
+report.httpFailures = [];
 const server = http.createServer((req, res) => {
-  const parts = new URL(req.url, 'http://x').pathname.split('/').filter(Boolean), root = builds[parts.shift()];
-  if (!root) { res.writeHead(404); return res.end(); }
+  const pathname = new URL(req.url, 'http://x').pathname;
+  // A browser's optional tab icon is not a game resource; the fixture has none.
+  if (pathname === '/favicon.ico') { res.writeHead(204); return res.end(); }
+  const parts = pathname.split('/').filter(Boolean), root = builds[parts.shift()];
+  if (!root) { report.httpFailures.push({ url: req.url, status: 404 }); res.writeHead(404); return res.end(); }
   let file = path.resolve(root, parts.map(decodeURIComponent).join('/'));
   if (file !== root && !file.startsWith(root + path.sep)) { res.writeHead(403); return res.end(); }
   if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, 'index.html');
-  try { res.setHeader('Content-Type', ({ '.js': 'text/javascript', '.html': 'text/html', '.css': 'text/css', '.json': 'application/json', '.wasm': 'application/wasm' })[path.extname(file)] || 'application/octet-stream'); res.end(fs.readFileSync(file)); } catch { res.writeHead(404); res.end(); }
+  try { res.setHeader('Content-Type', ({ '.js': 'text/javascript', '.html': 'text/html', '.css': 'text/css', '.json': 'application/json', '.wasm': 'application/wasm' })[path.extname(file)] || 'application/octet-stream'); res.end(fs.readFileSync(file)); } catch { report.httpFailures.push({ url: req.url, status: 404 }); res.writeHead(404); res.end(); }
 });
 function probe() {
   const p = window.__groundExtras = { links: [], methods: {}, frames: [], ground: [], unsafeReads: [], coastAt: null }, seen = new WeakSet();
@@ -54,7 +58,8 @@ let browser, timer, stopping = false;
     for (const name of ['baseline', 'candidate']) {
       if (stopping) break;
       const context = await browser.newContext({ viewport: { width: 960, height: 540 } }), page = await context.newPage(), started = Date.now(), errors = [];
-      page.on('pageerror', e => errors.push(String(e))); page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); }); await page.addInitScript(probe);
+      page.on('pageerror', e => errors.push(String(e))); page.on('console', m => { if (m.type() === 'error') errors.push(`${m.text()} ${JSON.stringify(m.location())}`); });
+      page.on('response', r => { if (r.status() >= 400) errors.push(`HTTP ${r.status()} ${r.url()}`); }); await page.addInitScript(probe);
       await page.goto(`http://127.0.0.1:${server.address().port}/${name}/?creator=0&quick=1&seed=424242&world=0&warmChart=0&prepChart=0&ladder=off`);
       const version = await page.evaluate(async () => (await fetch('./version.json', { cache: 'no-store' })).json());
       const expected = name === 'baseline' ? process.env.BASE_SHA : process.env.EXPECT_SHA;
