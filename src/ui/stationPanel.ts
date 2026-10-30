@@ -300,7 +300,7 @@ export class StationPanel {
       }).join("")}</div>`;
       else if (l.kind === "chips") html += `<div class="sp-chips">${setChips(this.ws?.fitted ?? { tip: null, chassis: null, exhaust: null }).map((x, c) => `<span class="${x.whole ? "whole" : x.fitted ? "some" : ""}${f(c)}" data-line="${i}" data-col="${c}">${x.whole ? "✦ " : ""}${esc(x.name)} ${x.fitted}/${x.of} · ${esc(x.spell)}</span>`).join("")}</div>`;
       else if (l.kind === "parts") html += `<div class="sp-parts">${s.colour!.map((p, c) => `<span class="${p === this.partOf(s) ? "on" : ""}${f(c)}" data-line="${i}" data-col="${c}"><i style="background:${css(this.colourOf(p))}"></i>${esc(PART_NAMES[p] ?? p)}</span>`).join("")}</div>`;
-      else if (l.kind === "grid") { const [sc, sr] = this.chosenSwatch(s); html += `<div class="sp-grid" style="grid-template-columns:repeat(${l.n},1fr)">${Array.from({ length: l.n }, (_, c) => `<i class="${sc === c && sr === l.row ? "sel" : ""}${f(c)}" data-line="${i}" data-col="${c}" style="background:${css(this.swatch(s, c, l.row!))}"></i>`).join("")}</div>`; }
+      else if (l.kind === "grid") { const [sc, sr] = this.chosenSwatch(s); html += `<div class="sp-grid" style="grid-template-columns:repeat(${l.n},1fr)">${Array.from({ length: l.n }, (_, c) => `<i class="${!this.c.awaitingDress && sc === c && sr === l.row ? "sel" : ""}${f(c)}" data-line="${i}" data-col="${c}" style="background:${css(this.swatch(s, c, l.row!))}"></i>`).join("")}</div>`; }
       else if (l.kind === "fit") { const [lo, hi] = this.fitRange(l.axis!), on = !FIT_NEEDS[l.axis!] || FIT_NEEDS[l.axis!](this.g), v = Math.max(0, Math.min(1, (this.fitValue(l.axis!) - lo) / (hi - lo))); html += `<div class="sp-fit${on ? "" : " off"}${f(0)}" data-line="${i}" data-col="0"><span>${esc(FIT_NAMES[l.axis!] ?? l.axis!)}</span><div class="bar"><i style="left:${(v * 100).toFixed(1)}%"></i></div></div>`; }
     });
     if (shelf >= 0) html += shut(shelf);
@@ -363,7 +363,7 @@ export class StationPanel {
         else { title = p.name; sub = `${p.slot}${setsOf(p.id).length ? ` · ${setsOf(p.id).join(", ")} set${setsOf(p.id).length > 1 ? "s" : ""}` : ""}`; stats = this.ws ? partStats(p.id, this.ws.tuning) : []; text = this.ws?.fitted[p.slot] === p.id ? "On her broom." : "Choose it to fit it."; }
       } else if (l.kind === "chips") { const x = setChips(this.ws?.fitted ?? { tip: null, chassis: null, exhaust: null })[at.col]; title = `${x.name} · ${x.spell}`; text = x.whole ? `Whole: R casts ${x.spell}.` : `${x.fitted} of its ${x.of} parts on her broom.`; }
       else if (l.kind === "parts") { const p = s.colour![at.col]; title = `Colour: ${PART_NAMES[p] ?? p}`; text = p === this.partOf(s) ? "The colours below are for this." : "Choose it to colour it below."; }
-      else if (l.kind === "grid") { const [sc, sr] = this.chosenSwatch(s); title = `${s.label}: colour`; text = sc === at.col && sr === l.row ? "Wearing." : "Every colour is hers: choose to put it on."; }
+      else if (l.kind === "grid") { const [sc, sr] = this.chosenSwatch(s); title = `${s.label}: colour`; text = !this.c.awaitingDress && sc === at.col && sr === l.row ? "Wearing." : "Every colour is hers: choose to put it on."; }
       else { const on = !FIT_NEEDS[l.axis!] || FIT_NEEDS[l.axis!](this.g); title = FIT_NAMES[l.axis!] ?? l.axis!; text = on ? "◀ ▶ or drag to change it." : "Put it on first."; }
     }
     box.className = `sp-detail${locked ? " locked" : ""}`;
