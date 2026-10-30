@@ -1,5 +1,5 @@
 {
-  "sha": "e0ad3a1e40d92f5f17b8cf81619ebc0f84cb147a",
+  "sha": "5426e4fb32ef5e5f508a0759707cf71d1ff8a96f",
   "measurements": [
     {
       "id": "crocodile",
@@ -916,7 +916,7 @@
       ]
     }
   ],
-  "modelSourceCommit": "e4b77ac10557c73b19828efe7c0b98e99b6123d7",
+  "modelSourceCommit": "e8fea579c78b032809a82c297c1623c379c62459",
   "lighting": "studio",
   "style": {
     "ambientHue": 0.68,
