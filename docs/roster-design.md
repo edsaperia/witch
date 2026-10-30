@@ -1,5 +1,46 @@
 # Creature roster design — review in progress
 
+## Level style guide — Ed, 2026-10-30
+
+Recorded from [coordinator ruling 6520120798](https://github.com/edsaperia/witch/pull/1479#issuecomment-6520120798):
+
+> “Youths should be quite natural looking. The adult can have some fantastic or magical features (glowing, exaggerated body parts like teeth, etc). The legend can be very fantastical.”
+
+- **Level 0, baby / level 1, young:** natural-looking juveniles; real-animal proportions, coat, markings and movement remain the primary reference. Juvenile cuteness or growth differences do not require fantasy decoration.
+- **Level 2, adult:** a recognizable real-animal base, allowing some fantastic or magical features such as glow or exaggerated teeth/claws. “Can” permits these features; a natural adult is not automatically a failed design or an instruction to add glow.
+- **Level 3, legend:** may be very fantastical and should be much larger and more imposing than its adult, through features and decoration as well as size. Scars, age or jewellery alone do not establish an imposing transformation.
+
+For inherently fantastic species (frost troll and hydra), retain the creature's identity; “natural-looking” concerns a coherent youthful body and restrained presentation, not turning a hydra into a single-headed real animal. This is an interpretation for Ed's review, not a new species decision. This guide refines the earlier likeness-first brief across levels. The current pass remains CLOSED: documentation/analysis only, no preset changes, captures, new families or reopened locks.
+
+### Assessment of the 20 kept species against the guide
+
+This is a builder assessment from the existing paired reviews and frozen genome/elder definitions, not a new independent likeness review. No new images were captured. The earlier scores measure likeness/readability, not this new age-style axis. Existing source features identify intent; they do not prove visibility or adult-to-legend scale at the game camera. “Fits” below means the recorded forms support the intended progression; any unmeasured claim of “much larger” remains for Ed's review.
+
+| Kept species | Adult reading | Legend reading / assessment |
+|---|---|---|
+| Fennec | Natural sandy fox; large ears are real anatomy, not magic. | Mask/glowing eyes, mane wisps and beads provide a clear fantastic step. Fits the arc. |
+| Dragonfly | Natural four-pane insect; plain adult is permissible. | Enlarged ancient form/eyes are encoded, but the review chiefly established wing likeness. Risk of “just a larger insect”; imposing fantasy read not established. |
+| Wolf | Recognizable grey wolf with exaggerated ridge/mane. | Glow, frost, ruff and howl features give a clear supernatural step. Fits. |
+| Dormouse | Natural small rodent with the characteristic furry tail. | Huge wrapped tail supplies exaggeration, but the sleepy elder remains gentle. Risk of insufficiently imposing legend, not excessive adult fantasy. |
+| Fruit bat | Natural russet fruit bat with readable wing membranes. | Giant ribbed ears and sonar rings clearly distinguish the legend. Fits. |
+| Woodlouse | Recognizable segmented animal with exaggerated armour/spikes. | Shields, house and foliage make a much more fantastic form. Fits; ordinary plate contrast remains natural. |
+| Frost troll | Already mythical, but coherent shaggy body/tusks/icy paint. | Greater hunch, beard, stone/boulder and moss mass support an imposing elder. Fits; pale beard/chest separation is a readability issue. |
+| Hydra | Multiple adult heads are intrinsically highly fantastic. | More heads, severed/regrown necks and ornament provide escalation in source; visually the heads still bunch. Highest risk of adult/legend spectacle merging, not evidence that the adult must lose its defining heads. |
+| Crocodile | Natural long-jawed reptile; adult is comparatively plain. | Stone-tower back ridge, eyeglint and snout ornaments give a clear fantastic step. Broadly fits; adult subtlety is allowed. |
+| Crab | Recognizable crab with exaggerated pincers. | Giant claw, reef and wave features clearly escalate it. Fits; tiny ordinary pincers remain a readability limitation. |
+| Meerkat | Natural sentinel/scurrying animal; eye patches are natural markings. | Headdress, sun-disc, lantern/watchtower presentation gives a clear mythic elder. Fits. |
+| Flying squirrel | Natural grey-brown animal; unseen folded membrane is a likeness gap, not a lack of adult magic. | Starred/glowing patagium, eye glow and larger tail encode fantasy. Arc fits in intent; invisible membrane limits confidence in the visible legendary effect. |
+| Pine marten | Natural brown animal and cream bib; comparatively plain adult, which is allowed. | Shield and amber pendant turn it into an armoured elder. Clear identity change, but degree of imposing scale needs Ed's judgment; elder stays exactly Current. |
+| Raccoon | Natural mask and ringed tail. | Crown and a lifetime of stolen trinkets give a clear thief-king legend. Fits. |
+| Badger | Natural low animal plus somewhat exaggerated claws/back fur. | Glowing chalk-figure stripes/swirl and torc clearly distinguish the legend. Fits; the prominent ornaments are appropriate here, not a reason to remove them. |
+| Stoat | Natural chestnut stoat, now with a dark tail tip. | Grizzle, worn ear, garland and earrings read chiefly as an old adorned stoat. Strong candidate for “legend too plain/not imposing enough”; no change authorized. |
+| Otter | Natural low chocolate otter with a pale chin. | Pearl/ribbon story features add magic, but existing review did not establish an imposing transformation. Restrained-legend risk. |
+| Black jaguar | Natural melanistic cat with ghost rosettes; comparatively plain adult is allowed. | Larger heavy jaw, garland and claws add age/story, but still read mainly as a larger decorated cat. Restrained-legend risk. |
+| Bear | Natural dark bear with a pale muzzle; adult is comparatively plain. | Enlarged shoulders/claws, moss, throat bells and scars give a forest-elder escalation. Broadly fits; magnitude versus adult is not newly measured. |
+| Arctic fox | Natural white fox with a ruff. | Larger frosted ruff, plume and beads are encoded; the earlier review still describes a white fox. Restrained-legend risk unless frost/scale makes the imposing step clear to Ed. |
+
+**Review summary:** the clearest existing stage arcs are fennec, wolf, fruit bat, woodlouse, frost troll, crocodile, crab, meerkat, raccoon, badger and bear. Marten and flying squirrel have the right encoded arc with visibility/imposing-scale caveats. Legends most worth Ed checking for insufficient impact are stoat, black jaguar, otter, arctic fox, dormouse and dragonfly. Hydra needs a clearer visible adult/legend separation because the crowded adult heads already deliver much of its spectacle. No kept adult is demonstrated to be excessively magical under this permissive rule; hydra is the specific stage-separation risk. Several adults remain very natural, which is allowed and does not authorize a new magic pass. Parked snow leopard/beetle are outside these 20 and have not been reassessed here.
+
 ## Closed review pass — final combined set
 
 Coordinator 6518249930 closes this pass. No more family proposals; locked species reopen only on Ed's say-so. Fennec R2 kept4/4, all16 cloud construction cells pass; dragonfly restored exactly R1 (geometry retained, R2 white-pane paint removed). Bat is R1; woodlouse is R1 plus grey baby. Model090f76fdfaa584e6c7ef31a064771ba26aa590c8 has the canonical1024-cell default audit PASS. All settings remain default off; no production import, live activation, sigil, name, rules or tuning changes.
