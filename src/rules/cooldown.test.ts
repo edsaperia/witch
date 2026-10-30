@@ -1,7 +1,9 @@
 // One cooldown for her dodge and her take-off (Ed, 2026-10-15: "One trail, one cooldown ... Its length shows one shared
 // cooldown counter for dodge and take-off (the two contribute different amounts to it)"; rules/cooldown.ts).
 import { describe, expect, it } from "vitest";
-import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { newGame as fullGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Dodge and take-off cooldown timing needs only local open ground, independent of area count.");
 import { TUNING, withTuning, type Tuning } from "./tuning";
 import { coolCharge, coolReady, coolShare, coolSpend, newCool, stepCool } from "./cooldown";
 

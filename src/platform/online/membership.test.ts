@@ -5,6 +5,7 @@ import { attachGuest, detachGuest } from "./membership";
 import { bedside } from "../../rules/opening";
 
 it("joins a running night in the approved bedroom without resetting world or host", () => {
+  // Four-area home fixture: enough for bedroom joins and two creatures, independent of distant area count.
   const tuning = structuredClone(TUNING); tuning.map!.island = "home"; tuning.map!.islandAreas = 4;
   const game = newGame(123, tuning), host = game.witches[0], body = host.body;
   game.herTime = 123; game.clock.time = 100; game.pending = { dash: true };
