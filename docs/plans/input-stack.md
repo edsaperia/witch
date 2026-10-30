@@ -13,3 +13,25 @@ Part 1, the **input stack** (A3):
 Part 2, **after Part 1** (A4): split `render/view.ts` (1,812 lines, 131 imports) into registered drawing parts, each with update and dispose, so new visuals add a file instead of editing view.ts. Do the same for whatever is left of main.ts.
 
 PLAN first. Typecheck plus nearby tests; smoke and pause-on-top run on the release check.
+
+## PR #1495: stack foundation, then pause only
+
+Plan acknowledged 2026-10-30: introduce `platform/inputStack.ts`, then move only
+pause onto it. The core gives keyboard/gamepad ownership to the exact top
+registration; lower layers never receive a closing event. Keys held across an
+ownership change are quarantined until released, and focus loss clears physical
+key tracking. A target predicate preserves native controls within the top layer.
+
+Coordinator comment 6528928146 approves the boundary: this PR owns the new core
+and tests, then `platform/freeze.ts` and pause-on-top assertions; no `main.ts` or
+`settingsMenu.ts` edits. Freeze migration waits until PR #1493 lands on
+`claude/prototype` and the coordinator gives the handoff, then merges prototype
+normally. Preserve its `textEntry` guard and `mutate` / `advance` replay hooks;
+the future command candidates in `docs/robustness-plan.md` remain documentation,
+not a second replay path. No other panel migration or view/main split here.
+
+Foundation checks cover exact top ownership, target filtering, one-shot close
+routing, held keys on open/close, duplicate registration/lower-layer removal,
+and lost keyup on blur. Pause integration and browser release checks remain
+pending at this foundation milestone. The coordinator runs the browser checks;
+this builder has no browser allocation.
