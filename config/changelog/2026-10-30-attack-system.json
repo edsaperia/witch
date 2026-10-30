@@ -1,0 +1,6 @@
+{
+  "version": null,
+  "items": [
+    "Animal attacks no longer skip a creature just because it shares a number with a witch."
+  ]
+}

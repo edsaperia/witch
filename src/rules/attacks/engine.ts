@@ -222,6 +222,9 @@ function cellsOf(a: AttackSpec, cx: number, cz: number, heading: number): { x: n
 
 // ---- hitting ----
 
+/** IDs are local to a target kind; preserve numeric versus string IDs as well. */
+const targetKey = (t: Hittable): string => JSON.stringify([t.kind, t.id]);
+
 /** One thing an attack reaches: a foe takes its damage and effect; another animal (an ally) only hit.allies' share and the effects it
  *  names (none of either: untouched); her, by a zone or a beam, damaged only the first time (`once`). A burn is the engine's own.
  *  Whether it touched a foe or landed anything on an ally. */
@@ -236,7 +239,7 @@ function strike(S: SpellState, W: SpellWorld, a: AttackSpec, t: Hittable, damage
     effect = effect ? (Object.fromEntries(Object.entries(effect).filter(([k]) => keep.has(k as never))) as Effect) : undefined;
     if (effect && !Object.keys(effect).length) effect = undefined;
   }
-  if (once && t.kind === "witch") { if (once.includes(t.id)) dmg = 0; else if (dmg > 0) once.push(t.id); }
+  if (once && t.kind === "witch") { const key = targetKey(t); if (once.includes(key)) dmg = 0; else if (dmg > 0) once.push(key); }
   if (effect?.burn && t.kind === "creature") {
     const i = slot(S.burns, CAPS.burns);
     if (i >= 0) S.burns[i] = { alive: true, target: t, dps: effect.burn.dps, until: time + effect.burn.time, next: time + 0.5, source, name };
@@ -694,9 +697,9 @@ function stepBody(S: SpellState, W: SpellWorld, lib: Library, b: Body, time: num
     } else { end(S, W, lib, b, time, "expire"); return; }
   }
   if (b.y < 1.2) for (const t of W.near(b.x, b.z, b.radius + 2)) {
-    if (b.hits.includes(t.id) || Math.hypot(t.x - b.x, t.z - b.z) > b.radius + t.r) continue;
+    if (b.hits.includes(targetKey(t)) || Math.hypot(t.x - b.x, t.z - b.z) > b.radius + t.r) continue;
     if (!strike(S, W, a, t, b.damage * (H.damage ?? 1), b.x - b.hx, b.z - b.hz, b.side, b.species, b.source, b.name, time, undefined, { body: b.id })) continue;
-    b.hits.push(t.id);
+    b.hits.push(targetKey(t));
     for (const c of a.on?.hit ?? []) child(S, W, lib, b, c, time, "hit", { x: t.x, z: t.z });
     if (b.chain > 0 && W.hostile(b.side, t, b.species, b.source) && chainOn(S, W, b, t, time)) return;
     if (a.life?.stick) { b.stuck = { kind: t.kind, id: t.id, dx: b.x - t.x, dz: b.z - t.z }; return; }
@@ -759,7 +762,7 @@ function chainOn(S: SpellState, W: SpellWorld, b: Body, from: Hittable, time: nu
   let next: Hittable | null = null, best = Infinity;
   for (const t of W.near(from.x, from.z, C.range)) {
     const d = Math.hypot(t.x - from.x, t.z - from.z);
-    if (d > C.range || d >= best || b.hits.includes(t.id) || t.kind === "sound" || !W.hostile(b.side, t, b.species, b.source)) continue;
+    if (d > C.range || d >= best || b.hits.includes(targetKey(t)) || t.kind === "sound" || !W.hostile(b.side, t, b.species, b.source)) continue;
     next = { ...t }; best = d;
   }
   if (!next) return false;
@@ -819,7 +822,7 @@ function stepZone(S: SpellState, W: SpellWorld, z: Zone, time: number, dt: numbe
   if (z.attack.force) pushAround(W, z.attack, z.x, z.z, z.r, z.side, z.species, z.source, dt);
   if (z.once) {
     // (an area strikes everything in it once; an expanding ring whatever its edge passes over, once each)
-    for (const t of W.near(z.x, z.z, z.r + 2)) if (!z.hit.includes(t.id) && inZone(z, t.x, t.z, t.r, time)) { z.hit.push(t.id); strike(S, W, z.attack, t, z.damage, z.x, z.z, z.side, z.species, z.source, z.name, time, undefined, { zone: z.id }); }
+    for (const t of W.near(z.x, z.z, z.r + 2)) if (!z.hit.includes(targetKey(t)) && inZone(z, t.x, t.z, t.r, time)) { z.hit.push(targetKey(t)); strike(S, W, z.attack, t, z.damage, z.x, z.z, z.side, z.species, z.source, z.name, time, undefined, { zone: z.id }); }
     if (time >= z.until) z.alive = false;
     return;
   }

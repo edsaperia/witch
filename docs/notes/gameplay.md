@@ -1,5 +1,7 @@
 # Creatures in play
 
+- **Attack target identity** (PR1480 audit): the grammar engine tracks hit targets by kind and typed ID, so witch0 and creature0 do not suppress each other's piercing, area or chain hits. Numeric and string IDs remain distinct; lingering zones and beams still damage each witch only once. Audit inventory, evidence and staged repair plan: `docs/plans/attack-system-audit.md`.
+
 Part of Witch's notes (CLAUDE.md is the index): inviting, the leash and sigils, combat and sieges, creature states, the legends and their quests. Moved here from CLAUDE.md as it stood (housekeeping, Ed 2026-10-23: a note an area, so pull requests add to their own area's file, not one shared file); every rule kept. Add to this file, not CLAUDE.md, when you change this area.
 
 - **Talk / invite**: inviting is by 💌s (issue #87; `invites`, `src/rules/invites.ts`): on the ground she throws them at the cursor (left click or 1), one at a time; each that lands fills the creature's meter (`invites.hits`, by level), and full, a wild one is happy (healed to full) and its sigil drops as a rune at its feet, which she picks up (E) to leash it. Wild legends can't be invited. The old proximity talk (on the ground she talked by herself, no button: Ed, v244; emoji bubbles taking turns for its talk time, babies 3 s, young 6 s, adults 12 s; `invite.talkRange`, `invite.cancelDistance`, `invite.talkTime`) runs only with `invites.on: false`.
