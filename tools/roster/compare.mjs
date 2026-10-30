@@ -43,6 +43,7 @@ try {
       // Keep actual species id for identical texture seed; prove current matches production.
       for (const pose of poses) for (const facing of ["towards", "away"]) for (const frame of [0, 1]) for (const level of [0, 1, 2, 3]) {
         if (pose === "idle" && !C.IDLE_BUILDERS?.[G.speciesOf(original).idle]) continue;
+        const occupiedBounds = [];
         const sprites = [0, 1].map(column => {
           // Once released, #1470 owns all selection. Legacy path exists only to
           // render the explicitly-authorised pre-hook isolated data candidates.
@@ -50,6 +51,9 @@ try {
           if (frame === 0 && facing === "towards") resolvedRecords.push({ level, column: column ? "proposed" : "current", body: { ...S.q, ...S.levelQ?.[level] }, look: S.look || null, paletteHSV: [S.hue, S.sat, S.val] });
           const sprite = B.withTexture({ S, level, st }, () => pose === "idle" ? C.IDLE_BUILDERS[S.idle](S, level, frame, st, facing) : C.buildCreature(S, level, frame, st, facing));
           G.textureSprite(sprite, S, level, st, C.textureSeed(id));
+          let minX = sprite.w, minY = sprite.h, maxX = -1, maxY = -1, occupiedPixels = 0;
+          sprite.m.forEach((mat, i) => { if (mat) { const x = i % sprite.w, y = Math.floor(i / sprite.w); minX = Math.min(minX, x); minY = Math.min(minY, y); maxX = Math.max(maxX, x); maxY = Math.max(maxY, y); occupiedPixels++; } });
+          occupiedBounds.push({ column: column ? "proposed" : "current", bounds: [minX, minY, maxX, maxY], occupiedPixels });
           if (!column) {
             const prod = production.critter(id, level, frame, st, facing, pose === "idle" ? { idle: true } : null);
             if (prod.w !== sprite.w || prod.h !== sprite.h || prod.m.some((v, i) => v !== sprite.m[i]) || prod.n.some((v, i) => v !== sprite.n[i])) throw Error(`Current reference mismatch ${id}/${level}/${frame}/${facing}`);
@@ -60,7 +64,7 @@ try {
           return lit;
         });
         const pixelDiff = spritePixelDiff(...sprites.map(s => s.getContext("2d").getImageData(0, 0, s.width, s.height)));
-        measurements.push({ id, pose, facing, frame, level, pixelDiff, current: [sprites[0].width, sprites[0].height], proposed: [sprites[1].width, sprites[1].height] });
+        measurements.push({ id, pose, facing, frame, level, pixelDiff, occupiedBounds, current: [sprites[0].width, sprites[0].height], proposed: [sprites[1].width, sprites[1].height] });
         rows.push({ label: `${pose} ${facing} frame ${frame} level ${level}`, sprites });
       }
       const maxW = Math.max(...rows.flatMap(r => r.sprites.map(s => s.width))), maxH = Math.max(...rows.flatMap(r => r.sprites.map(s => s.height)));
