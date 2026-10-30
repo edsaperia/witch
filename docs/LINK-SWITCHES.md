@@ -22,14 +22,14 @@ What the night is: its seed, island, world, opening, sail and her kit.
 | `fightSpeed=<k>` | The fight's speed for this load (the debug overlay's slider; never remembered). | 2026-10-07 | app/knobs.ts |
 | `hat=<id>` / `hat=none` | She wears this hat for one load (and owns it for that load). | 2026-10-11 | app/debugUnlock.ts, app/hatSave.ts, app/loadout.ts |
 | `hats=all` / `hats=<id>,…` | These hats are hers for one load, instead of her save. | 2026-10-23 | app/hatSave.ts |
-| `island=<kind>` / `island=home` / `island=<n>` | Play this kind's island, home, or a random island of n areas. | 2026-10-11 | app/linkParams.ts, app/sail.ts, main.ts |
+| `island=<kind>` / `island=home` / `island=<n>` | Play this kind's island, home, or a random island of n areas. | 2026-10-11 | app/linkParams.ts, app/sail.ts, main.ts, platform/online/entry.ts |
 | `mapAreas=<n>` | How many areas the map has, for this load only (never remembered). | 2026-10-07 | app/linkParams.ts |
 | `opening=old` / `opening=chart` | The first load's start: `old`, the bedroom as the loading cover (the creator); `chart`, the new opening's sea chart (the default since 2026-10-21, the tuning's `opening.chart`). A link naming a seed or island wakes her in her bedroom too (Ed, 2026-10-25); one starting a bot game or the zoo, or with `creator=0`, keeps the old start anyway; the tools that drive the old start (the creator, the start card) put `opening=old` in their links. *Decision: The sea chart opening is the default (2026-10-21).* | 2026-10-20 | app/opening.ts |
 | `phase=0` / `phase=1` / `phase=2` / `phase=3` / `phase=4` / `phase=5` | An island of that phase's shape, of random area types. | 2026-10-11 | app/linkParams.ts |
 | `pulse=<m/s>` / `pulse=off` | How fast the ley pulse spreads the party, for one load; off holds the waves where they are. | 2026-10-09 | app/gameParams.ts |
-| `room=<S>` | The creator's room drawn at this scale. | 2026-10-06 | ui/creator.ts |
+| `room=<S>` | The creator's room drawn at this scale, or the online prototype's seven-digit room number. | 2026-10-06 | platform/online/entry.ts, ui/creator.ts |
 | `sail=inplace` / `sail=reload` | How a sail starts the next night: in place, or by loading the island's link. | 2026-10-20 | app/sail.ts |
-| `seed=<n>` | The run's seed (a random one is put in the link when it's missing). | 2026-10-04 | app/sail.ts, main.ts |
+| `seed=<n>` | The run's seed (a random one is put in the link when it's missing). | 2026-10-04 | app/sail.ts, main.ts, platform/online/entry.ts |
 | `shake=0` | No screen shake (else the start screen's choice). | 2026-10-07 | app/shake.ts |
 | `shape=square` / `shape=circle` | The map's shape (circle, the default since 2026-10-06). *Decision: Circle is the default (2026-10-06).* | 2026-10-07 | app/linkParams.ts |
 | `slow=0` / `slow=<k>` | Legend circles slowing time: off, or another speed (0 < k < 1). | 2026-10-07 | app/linkParams.ts |
@@ -86,6 +86,10 @@ For the builders, the smoke and bench runs, the repro link and the arenas.
 
 | switch | does | since | read in |
 |---|---|---|---|
+| `heldInputMs=<milliseconds>` | The online prototype holds the last guest movement input for this long before returning it to neutral (250 ms by default). | 2026-10-30 | platform/online/entry.ts |
+| `invite=<token>` | The online prototype reads this invitation token from the URL fragment to join the host's room. | 2026-10-30 | platform/online/entry.ts |
+| `online=host` / `online=guest` | The separate online prototype page hosts a night or joins an invitation. | 2026-10-30 | platform/online/entry.ts |
+| `relay=<WebSocket URL>` | The separate online prototype page connects to this relay (ws://localhost:8787 by default). | 2026-10-30 | platform/online/entry.ts |
 | `all` | With ?zoo, every island counts as found (the map's see-all); on the sea chart page, every island is shown. | 2026-10-11 | app/chartPage.ts, app/linkParams.ts |
 | `arena=wolf*4@2,beetle*3` | A fight below the dancefloor, no waves; J sets it up again. | 2026-10-07 | app/gameParams.ts |
 | `artdelay=<s>` | Each area type's trees drawn ahead of need held back to land one every that many seconds, to watch the loading mist roll away. | 2026-10-24 | app/viewParams.ts |

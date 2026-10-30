@@ -2,7 +2,7 @@
 
 From `server/`, run `npm ci` then `node relay.mjs`. Default address: `ws://127.0.0.1:8787`. This is a local service, with no game-page integration yet. `npm test` exercises real loopback WebSocket connections and closes the service afterwards.
 
-Knobs: `PORT` (8787), `HOST` (127.0.0.1), `WITCH_DROP_MS` (5000). A future Render Web Service can use its supplied PORT and HOST=0.0.0.0, but no deployment or account setup is part of this milestone. TLS belongs to that later hosting setup. Do not expose the local prototype publicly as a production service.
+Knobs: `PORT` (8787), `HOST` (127.0.0.1), `WITCH_DROP_MS` (5000), `WITCH_JOIN_GRACE_MS` (180000). Joining connections have an absolute grace deadline; heartbeat traffic cannot extend it. Renderer readiness triggers a fresh current-night snapshot, and the guest reports active only after applying it; normal silence timeout starts then. A future Render Web Service can use its supplied PORT and HOST=0.0.0.0, but no deployment or account setup is part of this milestone. TLS belongs to that later hosting setup. Do not expose the local prototype publicly as a production service.
 
 Every JSON message carries `protocol: 1`. A host sends `{type: "host", room: "1234567"}` and receives `hosted` with a random invitation token and player 0. A guest sends `{type: "join", room, token}` and receives `joined` with player 1; the host receives `guest-joined`. Room numbers have seven digits. The invitation token is required: knowing the number alone is insufficient. No room list is exposed.
 

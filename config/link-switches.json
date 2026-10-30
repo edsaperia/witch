@@ -3,6 +3,55 @@
  "intro": "Every `?name=value` the game reads from its link, and where it reads it. Most are read once as the page loads (`src/app/linkParams.ts` for the tuning, `src/app/gameParams.ts` for the game, `src/app/viewParams.ts` for the view, `src/main.ts` for the page); a few are read where they're used. Several can be combined: `?seed=123&wave=30&creator=0`. This page is written from `config/link-switches.json`, and a test checks that file against the code.",
  "switches": [
   {
+   "name": "heldInputMs",
+   "values": [
+    "<milliseconds>"
+   ],
+   "does": "The online prototype holds the last guest movement input for this long before returning it to neutral (250 ms by default).",
+   "group": "debug",
+   "since": "2026-10-30",
+   "readIn": [
+    "src/platform/online/entry.ts"
+   ]
+  },
+  {
+   "name": "invite",
+   "values": [
+    "<token>"
+   ],
+   "does": "The online prototype reads this invitation token from the URL fragment to join the host's room.",
+   "group": "debug",
+   "since": "2026-10-30",
+   "readIn": [
+    "src/platform/online/entry.ts"
+   ]
+  },
+  {
+   "name": "online",
+   "values": [
+    "host",
+    "guest"
+   ],
+   "does": "The separate online prototype page hosts a night or joins an invitation.",
+   "group": "debug",
+   "since": "2026-10-30",
+   "readIn": [
+    "src/platform/online/entry.ts"
+   ]
+  },
+  {
+   "name": "relay",
+   "values": [
+    "<WebSocket URL>"
+   ],
+   "does": "The separate online prototype page connects to this relay (ws://localhost:8787 by default).",
+   "group": "debug",
+   "since": "2026-10-30",
+   "readIn": [
+    "src/platform/online/entry.ts"
+   ]
+  },
+  {
    "name": "all",
    "values": [
     ""
@@ -662,7 +711,8 @@
    "readIn": [
     "src/app/linkParams.ts",
     "src/app/sail.ts",
-    "src/main.ts"
+    "src/main.ts",
+    "src/platform/online/entry.ts"
    ]
   },
   {
@@ -1168,10 +1218,11 @@
    "values": [
     "<S>"
    ],
-   "does": "The creator's room drawn at this scale.",
+   "does": "The creator's room drawn at this scale, or the online prototype's seven-digit room number.",
    "group": "run",
    "since": "2026-10-06",
    "readIn": [
+    "src/platform/online/entry.ts",
     "src/ui/creator.ts"
    ]
   },
@@ -1210,7 +1261,8 @@
    "since": "2026-10-04",
    "readIn": [
     "src/app/sail.ts",
-    "src/main.ts"
+    "src/main.ts",
+    "src/platform/online/entry.ts"
    ]
   },
   {

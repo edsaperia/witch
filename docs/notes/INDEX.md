@@ -191,6 +191,10 @@ says what each note covers.
 - The alto set
 - A/B renders
 
+## [Two-browser prototype](online-prototype.md)
+
+(no entries: its tools and checks only)
+
 ## [Performance](performance.md)
 
 - Ordinary-play scenery stalls
