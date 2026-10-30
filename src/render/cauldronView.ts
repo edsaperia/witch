@@ -13,6 +13,7 @@ import type { Drawn } from "./housePieces";
 import { bendPoint, groundHeight } from "./height";
 import { glyphOf } from "../ui/keyHint";
 import type { View } from "./view";
+import { cauldronMaterial, mirrorGroundLight, mirrorSpriteMaterial } from "./cauldronMaterials";
 
 const VERT = `varying vec2 vUv; void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}`;
 const FRAG = `uniform sampler2D picture; uniform float strength,time; varying vec2 vUv;
@@ -181,14 +182,14 @@ export class CauldronView {
       this.ground.mesh.material = this.ground.original; this.ground.trip.dispose(); this.ground = null;
     }
     if (this.amount > 0 && !this.ground && mesh.material instanceof THREE.ShaderMaterial) {
-      const original = mesh.material, trip = original.clone();
-      trip.uniforms = { ...original.uniforms, cauldronStrength: { value: this.amount } };
-      trip.fragmentShader = "uniform float cauldronStrength;\n" + original.fragmentShader.replace("void main()", "void cauldronGround()")
-        + "\nvoid main(){cauldronGround();gl_FragColor.rgb*=mix(1.,.38,cauldronStrength);}";
+      const original = mesh.material, trip = cauldronMaterial(original);
+      trip.uniforms.cauldronGroundLight = { value: mirrorGroundLight(this.amount) };
+      trip.fragmentShader = "uniform float cauldronGroundLight;\n" + original.fragmentShader.replace("void main()", "void cauldronGround()")
+        + "\nvoid main(){cauldronGround();gl_FragColor.rgb*=cauldronGroundLight;}";
       this.ground = { mesh, original, trip };
     }
     if (this.ground) {
-      this.ground.trip.uniforms.cauldronStrength.value = this.amount;
+      this.ground.trip.uniforms.cauldronGroundLight.value = mirrorGroundLight(this.amount);
       mesh.material = this.amount > 0 ? this.ground.trip : this.ground.original;
     }
   }
@@ -203,10 +204,7 @@ export class CauldronView {
       seen.add(object);
       let reflected = this.reflections.get(object);
       if (!reflected) {
-        const material = source.clone();
-        material.fragmentShader = "uniform float cauldronStrength;\n" + source.fragmentShader.replace("void main()", "void cauldronShade()")
-          + "\nvoid main(){cauldronShade();gl_FragColor.rgb*=.48;gl_FragColor.a*=.55*cauldronStrength;}";
-        material.depthTest = false; material.depthWrite = false; material.transparent = true; material.side = THREE.DoubleSide;
+        const material = mirrorSpriteMaterial(source);
         const mesh = new THREE.Mesh(object.geometry, material); mesh.userData.cauldronReflection = true;
         mesh.frustumCulled = false; mesh.renderOrder = -.1; mesh.matrixAutoUpdate = false;
         reflected = { mesh, source, up: { value: new THREE.Vector3() }, strength: { value: this.amount } };
