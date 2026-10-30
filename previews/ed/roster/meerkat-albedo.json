@@ -1,0 +1,1341 @@
+{
+  "sha": "f720f368016ea0986f6dfd310761637e981c808e",
+  "measurements": [
+    {
+      "id": "meerkat",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 0,
+      "pixelDiff": 242,
+      "current": [
+        46,
+        42
+      ],
+      "proposed": [
+        46,
+        42
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 1,
+      "pixelDiff": 482,
+      "current": [
+        66,
+        61
+      ],
+      "proposed": [
+        66,
+        61
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 2,
+      "pixelDiff": 1489,
+      "current": [
+        116,
+        100
+      ],
+      "proposed": [
+        116,
+        100
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 3,
+      "pixelDiff": 5375,
+      "current": [
+        270,
+        231
+      ],
+      "proposed": [
+        270,
+        231
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 0,
+      "pixelDiff": 301,
+      "current": [
+        49,
+        42
+      ],
+      "proposed": [
+        49,
+        42
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 1,
+      "pixelDiff": 525,
+      "current": [
+        68,
+        61
+      ],
+      "proposed": [
+        68,
+        61
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 2,
+      "pixelDiff": 1675,
+      "current": [
+        123,
+        100
+      ],
+      "proposed": [
+        123,
+        100
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 3,
+      "pixelDiff": 5917,
+      "current": [
+        287,
+        232
+      ],
+      "proposed": [
+        287,
+        232
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 0,
+      "pixelDiff": 188,
+      "current": [
+        41,
+        41
+      ],
+      "proposed": [
+        41,
+        41
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 1,
+      "pixelDiff": 519,
+      "current": [
+        70,
+        61
+      ],
+      "proposed": [
+        70,
+        61
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 2,
+      "pixelDiff": 1626,
+      "current": [
+        123,
+        100
+      ],
+      "proposed": [
+        123,
+        100
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 3,
+      "pixelDiff": 5894,
+      "current": [
+        292,
+        232
+      ],
+      "proposed": [
+        292,
+        232
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 0,
+      "pixelDiff": 227,
+      "current": [
+        43,
+        41
+      ],
+      "proposed": [
+        43,
+        41
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 1,
+      "pixelDiff": 595,
+      "current": [
+        73,
+        62
+      ],
+      "proposed": [
+        73,
+        62
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 2,
+      "pixelDiff": 1716,
+      "current": [
+        127,
+        100
+      ],
+      "proposed": [
+        127,
+        100
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 3,
+      "pixelDiff": 6579,
+      "current": [
+        300,
+        233
+      ],
+      "proposed": [
+        300,
+        233
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "idle",
+      "facing": "towards",
+      "frame": 0,
+      "level": 0,
+      "pixelDiff": 410,
+      "current": [
+        54,
+        54
+      ],
+      "proposed": [
+        54,
+        54
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "idle",
+      "facing": "towards",
+      "frame": 0,
+      "level": 1,
+      "pixelDiff": 857,
+      "current": [
+        78,
+        80
+      ],
+      "proposed": [
+        78,
+        80
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "idle",
+      "facing": "towards",
+      "frame": 0,
+      "level": 2,
+      "pixelDiff": 2434,
+      "current": [
+        131,
+        131
+      ],
+      "proposed": [
+        131,
+        131
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "idle",
+      "facing": "towards",
+      "frame": 0,
+      "level": 3,
+      "pixelDiff": 9594,
+      "current": [
+        335,
+        422
+      ],
+      "proposed": [
+        335,
+        422
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "idle",
+      "facing": "towards",
+      "frame": 1,
+      "level": 0,
+      "pixelDiff": 415,
+      "current": [
+        55,
+        54
+      ],
+      "proposed": [
+        55,
+        54
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "idle",
+      "facing": "towards",
+      "frame": 1,
+      "level": 1,
+      "pixelDiff": 864,
+      "current": [
+        81,
+        80
+      ],
+      "proposed": [
+        81,
+        80
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "idle",
+      "facing": "towards",
+      "frame": 1,
+      "level": 2,
+      "pixelDiff": 2442,
+      "current": [
+        135,
+        131
+      ],
+      "proposed": [
+        135,
+        131
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "idle",
+      "facing": "towards",
+      "frame": 1,
+      "level": 3,
+      "pixelDiff": 9224,
+      "current": [
+        344,
+        423
+      ],
+      "proposed": [
+        344,
+        423
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "idle",
+      "facing": "away",
+      "frame": 0,
+      "level": 0,
+      "pixelDiff": 234,
+      "current": [
+        43,
+        53
+      ],
+      "proposed": [
+        43,
+        53
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "idle",
+      "facing": "away",
+      "frame": 0,
+      "level": 1,
+      "pixelDiff": 480,
+      "current": [
+        63,
+        78
+      ],
+      "proposed": [
+        63,
+        78
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "idle",
+      "facing": "away",
+      "frame": 0,
+      "level": 2,
+      "pixelDiff": 1355,
+      "current": [
+        107,
+        129
+      ],
+      "proposed": [
+        107,
+        129
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "idle",
+      "facing": "away",
+      "frame": 0,
+      "level": 3,
+      "pixelDiff": 5212,
+      "current": [
+        317,
+        421
+      ],
+      "proposed": [
+        317,
+        421
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "idle",
+      "facing": "away",
+      "frame": 1,
+      "level": 0,
+      "pixelDiff": 236,
+      "current": [
+        44,
+        53
+      ],
+      "proposed": [
+        44,
+        53
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "idle",
+      "facing": "away",
+      "frame": 1,
+      "level": 1,
+      "pixelDiff": 501,
+      "current": [
+        65,
+        79
+      ],
+      "proposed": [
+        65,
+        79
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "idle",
+      "facing": "away",
+      "frame": 1,
+      "level": 2,
+      "pixelDiff": 1469,
+      "current": [
+        110,
+        129
+      ],
+      "proposed": [
+        110,
+        129
+      ]
+    },
+    {
+      "id": "meerkat",
+      "pose": "idle",
+      "facing": "away",
+      "frame": 1,
+      "level": 3,
+      "pixelDiff": 5081,
+      "current": [
+        325,
+        421
+      ],
+      "proposed": [
+        325,
+        421
+      ]
+    }
+  ],
+  "resolvedRecords": [
+    {
+      "level": 0,
+      "column": "current",
+      "body": {
+        "hgt": 0.8,
+        "len": 0.62,
+        "chest": 0.44,
+        "tuck": 0.5,
+        "neck": 0.34,
+        "neckAng": 0.75,
+        "neckW": 0.26,
+        "hr": 0.2,
+        "legW": 0.55,
+        "bw": 0.2,
+        "back": "arch",
+        "snout": 0.8,
+        "snoutD": 0.45,
+        "snoutTaper": 0.4,
+        "face": "meerkat",
+        "whiskers": true,
+        "belly": true,
+        "bands": {
+          "n": 5,
+          "mat": "BODY2"
+        },
+        "ear": "round",
+        "earS": 0.45,
+        "tail": "meerkat",
+        "paw": "paw"
+      },
+      "look": null,
+      "paletteHSV": [
+        0.09,
+        0.35,
+        0.72
+      ]
+    },
+    {
+      "level": 0,
+      "column": "proposed",
+      "body": {
+        "hgt": 0.8,
+        "len": 0.62,
+        "chest": 0.44,
+        "tuck": 0.5,
+        "neck": 0.34,
+        "neckAng": 0.75,
+        "neckW": 0.26,
+        "hr": 0.2,
+        "legW": 0.55,
+        "bw": 0.2,
+        "back": "arch",
+        "snout": 0.8,
+        "snoutD": 0.45,
+        "snoutTaper": 0.4,
+        "face": "meerkat",
+        "whiskers": true,
+        "belly": true,
+        "bands": {
+          "n": 5,
+          "mat": "BODY2"
+        },
+        "ear": "round",
+        "earS": 0.45,
+        "tail": "meerkat",
+        "paw": "paw"
+      },
+      "look": null,
+      "paletteHSV": [
+        0.09,
+        0.35,
+        0.72
+      ]
+    },
+    {
+      "level": 1,
+      "column": "current",
+      "body": {
+        "hgt": 0.8,
+        "len": 0.521,
+        "chest": 0.52,
+        "tuck": 0.56,
+        "neck": 0.34,
+        "neckAng": 0.75,
+        "neckW": 0.221,
+        "hr": 0.184,
+        "legW": 0.396,
+        "bw": 0.2,
+        "back": "arch",
+        "snout": 0.8,
+        "snoutD": 0.45,
+        "snoutTaper": 0.4,
+        "face": "meerkat",
+        "whiskers": true,
+        "belly": true,
+        "bands": {
+          "n": 5,
+          "mat": "BODY2"
+        },
+        "ear": "round",
+        "earS": 0.45,
+        "tail": "meerkat",
+        "paw": "paw",
+        "profile": {
+          "shoulder": {
+            "w": 0.86,
+            "d": 0.86
+          },
+          "ribcage": {
+            "w": 0.9
+          },
+          "waist": {
+            "w": 0.74,
+            "d": 0.8
+          },
+          "loin": {
+            "w": 0.85,
+            "d": 0.9
+          },
+          "hip": {
+            "w": 0.9
+          }
+        }
+      },
+      "look": null,
+      "paletteHSV": [
+        0.09,
+        0.35,
+        0.72
+      ]
+    },
+    {
+      "level": 1,
+      "column": "proposed",
+      "body": {
+        "hgt": 0.8,
+        "len": 0.521,
+        "chest": 0.52,
+        "tuck": 0.56,
+        "neck": 0.34,
+        "neckAng": 0.75,
+        "neckW": 0.221,
+        "hr": 0.184,
+        "legW": 0.396,
+        "bw": 0.2,
+        "back": "arch",
+        "snout": 0.8,
+        "snoutD": 0.45,
+        "snoutTaper": 0.4,
+        "face": "meerkat",
+        "whiskers": true,
+        "belly": true,
+        "bands": {
+          "n": 5,
+          "mat": "BODY2"
+        },
+        "ear": "round",
+        "earS": 0.45,
+        "tail": "meerkat",
+        "paw": "paw",
+        "profile": {
+          "shoulder": {
+            "w": 0.86,
+            "d": 0.86
+          },
+          "ribcage": {
+            "w": 0.9
+          },
+          "waist": {
+            "w": 0.74,
+            "d": 0.8
+          },
+          "loin": {
+            "w": 0.85,
+            "d": 0.9
+          },
+          "hip": {
+            "w": 0.9
+          }
+        }
+      },
+      "look": null,
+      "paletteHSV": [
+        0.09,
+        0.35,
+        0.72
+      ]
+    },
+    {
+      "level": 2,
+      "column": "current",
+      "body": {
+        "hgt": 0.8,
+        "len": 0.62,
+        "chest": 0.39,
+        "tuck": 0.48,
+        "neck": 0.34,
+        "neckAng": 0.75,
+        "neckW": 0.26,
+        "hr": 0.2,
+        "legW": 0.55,
+        "bw": 0.2,
+        "back": "arch",
+        "snout": 0.8,
+        "snoutD": 0.45,
+        "snoutTaper": 0.4,
+        "face": "meerkat",
+        "whiskers": true,
+        "belly": true,
+        "bands": {
+          "n": 5,
+          "mat": "BODY2"
+        },
+        "ear": "round",
+        "earS": 0.45,
+        "tail": "meerkat",
+        "paw": "paw",
+        "profile": {
+          "shoulder": {
+            "w": 1.22,
+            "d": 1.16
+          },
+          "ribcage": {
+            "w": 1.08
+          },
+          "waist": {
+            "w": 0.78,
+            "d": 0.88
+          },
+          "loin": {
+            "w": 0.88
+          },
+          "hip": {
+            "w": 0.98
+          }
+        }
+      },
+      "look": null,
+      "paletteHSV": [
+        0.09,
+        0.35,
+        0.72
+      ]
+    },
+    {
+      "level": 2,
+      "column": "proposed",
+      "body": {
+        "hgt": 0.8,
+        "len": 0.62,
+        "chest": 0.39,
+        "tuck": 0.48,
+        "neck": 0.34,
+        "neckAng": 0.75,
+        "neckW": 0.26,
+        "hr": 0.2,
+        "legW": 0.55,
+        "bw": 0.2,
+        "back": "arch",
+        "snout": 0.8,
+        "snoutD": 0.45,
+        "snoutTaper": 0.4,
+        "face": "meerkat",
+        "whiskers": true,
+        "belly": true,
+        "bands": {
+          "n": 5,
+          "mat": "BODY2"
+        },
+        "ear": "round",
+        "earS": 0.45,
+        "tail": "meerkat",
+        "paw": "paw",
+        "profile": {
+          "shoulder": {
+            "w": 1.22,
+            "d": 1.16
+          },
+          "ribcage": {
+            "w": 1.08
+          },
+          "waist": {
+            "w": 0.78,
+            "d": 0.88
+          },
+          "loin": {
+            "w": 0.88
+          },
+          "hip": {
+            "w": 0.98
+          }
+        }
+      },
+      "look": null,
+      "paletteHSV": [
+        0.09,
+        0.35,
+        0.72
+      ]
+    },
+    {
+      "level": 3,
+      "column": "current",
+      "body": {
+        "hgt": 0.8,
+        "len": 0.62,
+        "chest": 0.44,
+        "tuck": 0.5,
+        "neck": 0.34,
+        "neckAng": 0.75,
+        "neckW": 0.26,
+        "hr": 0.2,
+        "legW": 0.55,
+        "bw": 0.2,
+        "back": "arch",
+        "snout": 0.8,
+        "snoutD": 0.45,
+        "snoutTaper": 0.4,
+        "face": "meerkat",
+        "whiskers": true,
+        "belly": true,
+        "bands": {
+          "n": 5,
+          "mat": "BODY2"
+        },
+        "ear": "round",
+        "earS": 0.45,
+        "tail": "meerkat",
+        "paw": "paw"
+      },
+      "look": null,
+      "paletteHSV": [
+        0.09,
+        0.35,
+        0.72
+      ]
+    },
+    {
+      "level": 3,
+      "column": "proposed",
+      "body": {
+        "hgt": 0.8,
+        "len": 0.62,
+        "chest": 0.44,
+        "tuck": 0.5,
+        "neck": 0.34,
+        "neckAng": 0.75,
+        "neckW": 0.26,
+        "hr": 0.2,
+        "legW": 0.55,
+        "bw": 0.2,
+        "back": "arch",
+        "snout": 0.8,
+        "snoutD": 0.45,
+        "snoutTaper": 0.4,
+        "face": "meerkat",
+        "whiskers": true,
+        "belly": true,
+        "bands": {
+          "n": 5,
+          "mat": "BODY2"
+        },
+        "ear": "round",
+        "earS": 0.45,
+        "tail": "meerkat",
+        "paw": "paw"
+      },
+      "look": null,
+      "paletteHSV": [
+        0.09,
+        0.35,
+        0.72
+      ]
+    },
+    {
+      "level": 0,
+      "column": "current",
+      "body": {
+        "hgt": 0.8,
+        "len": 0.62,
+        "chest": 0.44,
+        "tuck": 0.5,
+        "neck": 0.34,
+        "neckAng": 0.75,
+        "neckW": 0.26,
+        "hr": 0.2,
+        "legW": 0.55,
+        "bw": 0.2,
+        "back": "arch",
+        "snout": 0.8,
+        "snoutD": 0.45,
+        "snoutTaper": 0.4,
+        "face": "meerkat",
+        "whiskers": true,
+        "belly": true,
+        "bands": {
+          "n": 5,
+          "mat": "BODY2"
+        },
+        "ear": "round",
+        "earS": 0.45,
+        "tail": "meerkat",
+        "paw": "paw"
+      },
+      "look": null,
+      "paletteHSV": [
+        0.09,
+        0.35,
+        0.72
+      ]
+    },
+    {
+      "level": 0,
+      "column": "proposed",
+      "body": {
+        "hgt": 0.8,
+        "len": 0.62,
+        "chest": 0.44,
+        "tuck": 0.5,
+        "neck": 0.34,
+        "neckAng": 0.75,
+        "neckW": 0.26,
+        "hr": 0.2,
+        "legW": 0.55,
+        "bw": 0.2,
+        "back": "arch",
+        "snout": 0.8,
+        "snoutD": 0.45,
+        "snoutTaper": 0.4,
+        "face": "meerkat",
+        "whiskers": true,
+        "belly": true,
+        "bands": {
+          "n": 5,
+          "mat": "BODY2"
+        },
+        "ear": "round",
+        "earS": 0.45,
+        "tail": "meerkat",
+        "paw": "paw"
+      },
+      "look": null,
+      "paletteHSV": [
+        0.09,
+        0.35,
+        0.72
+      ]
+    },
+    {
+      "level": 1,
+      "column": "current",
+      "body": {
+        "hgt": 0.8,
+        "len": 0.521,
+        "chest": 0.52,
+        "tuck": 0.56,
+        "neck": 0.34,
+        "neckAng": 0.75,
+        "neckW": 0.221,
+        "hr": 0.184,
+        "legW": 0.396,
+        "bw": 0.2,
+        "back": "arch",
+        "snout": 0.8,
+        "snoutD": 0.45,
+        "snoutTaper": 0.4,
+        "face": "meerkat",
+        "whiskers": true,
+        "belly": true,
+        "bands": {
+          "n": 5,
+          "mat": "BODY2"
+        },
+        "ear": "round",
+        "earS": 0.45,
+        "tail": "meerkat",
+        "paw": "paw",
+        "profile": {
+          "shoulder": {
+            "w": 0.86,
+            "d": 0.86
+          },
+          "ribcage": {
+            "w": 0.9
+          },
+          "waist": {
+            "w": 0.74,
+            "d": 0.8
+          },
+          "loin": {
+            "w": 0.85,
+            "d": 0.9
+          },
+          "hip": {
+            "w": 0.9
+          }
+        }
+      },
+      "look": null,
+      "paletteHSV": [
+        0.09,
+        0.35,
+        0.72
+      ]
+    },
+    {
+      "level": 1,
+      "column": "proposed",
+      "body": {
+        "hgt": 0.8,
+        "len": 0.521,
+        "chest": 0.52,
+        "tuck": 0.56,
+        "neck": 0.34,
+        "neckAng": 0.75,
+        "neckW": 0.221,
+        "hr": 0.184,
+        "legW": 0.396,
+        "bw": 0.2,
+        "back": "arch",
+        "snout": 0.8,
+        "snoutD": 0.45,
+        "snoutTaper": 0.4,
+        "face": "meerkat",
+        "whiskers": true,
+        "belly": true,
+        "bands": {
+          "n": 5,
+          "mat": "BODY2"
+        },
+        "ear": "round",
+        "earS": 0.45,
+        "tail": "meerkat",
+        "paw": "paw",
+        "profile": {
+          "shoulder": {
+            "w": 0.86,
+            "d": 0.86
+          },
+          "ribcage": {
+            "w": 0.9
+          },
+          "waist": {
+            "w": 0.74,
+            "d": 0.8
+          },
+          "loin": {
+            "w": 0.85,
+            "d": 0.9
+          },
+          "hip": {
+            "w": 0.9
+          }
+        }
+      },
+      "look": null,
+      "paletteHSV": [
+        0.09,
+        0.35,
+        0.72
+      ]
+    },
+    {
+      "level": 2,
+      "column": "current",
+      "body": {
+        "hgt": 0.8,
+        "len": 0.62,
+        "chest": 0.39,
+        "tuck": 0.48,
+        "neck": 0.34,
+        "neckAng": 0.75,
+        "neckW": 0.26,
+        "hr": 0.2,
+        "legW": 0.55,
+        "bw": 0.2,
+        "back": "arch",
+        "snout": 0.8,
+        "snoutD": 0.45,
+        "snoutTaper": 0.4,
+        "face": "meerkat",
+        "whiskers": true,
+        "belly": true,
+        "bands": {
+          "n": 5,
+          "mat": "BODY2"
+        },
+        "ear": "round",
+        "earS": 0.45,
+        "tail": "meerkat",
+        "paw": "paw",
+        "profile": {
+          "shoulder": {
+            "w": 1.22,
+            "d": 1.16
+          },
+          "ribcage": {
+            "w": 1.08
+          },
+          "waist": {
+            "w": 0.78,
+            "d": 0.88
+          },
+          "loin": {
+            "w": 0.88
+          },
+          "hip": {
+            "w": 0.98
+          }
+        }
+      },
+      "look": null,
+      "paletteHSV": [
+        0.09,
+        0.35,
+        0.72
+      ]
+    },
+    {
+      "level": 2,
+      "column": "proposed",
+      "body": {
+        "hgt": 0.8,
+        "len": 0.62,
+        "chest": 0.39,
+        "tuck": 0.48,
+        "neck": 0.34,
+        "neckAng": 0.75,
+        "neckW": 0.26,
+        "hr": 0.2,
+        "legW": 0.55,
+        "bw": 0.2,
+        "back": "arch",
+        "snout": 0.8,
+        "snoutD": 0.45,
+        "snoutTaper": 0.4,
+        "face": "meerkat",
+        "whiskers": true,
+        "belly": true,
+        "bands": {
+          "n": 5,
+          "mat": "BODY2"
+        },
+        "ear": "round",
+        "earS": 0.45,
+        "tail": "meerkat",
+        "paw": "paw",
+        "profile": {
+          "shoulder": {
+            "w": 1.22,
+            "d": 1.16
+          },
+          "ribcage": {
+            "w": 1.08
+          },
+          "waist": {
+            "w": 0.78,
+            "d": 0.88
+          },
+          "loin": {
+            "w": 0.88
+          },
+          "hip": {
+            "w": 0.98
+          }
+        }
+      },
+      "look": null,
+      "paletteHSV": [
+        0.09,
+        0.35,
+        0.72
+      ]
+    },
+    {
+      "level": 3,
+      "column": "current",
+      "body": {
+        "hgt": 0.8,
+        "len": 0.62,
+        "chest": 0.44,
+        "tuck": 0.5,
+        "neck": 0.34,
+        "neckAng": 0.75,
+        "neckW": 0.26,
+        "hr": 0.2,
+        "legW": 0.55,
+        "bw": 0.2,
+        "back": "arch",
+        "snout": 0.8,
+        "snoutD": 0.45,
+        "snoutTaper": 0.4,
+        "face": "meerkat",
+        "whiskers": true,
+        "belly": true,
+        "bands": {
+          "n": 5,
+          "mat": "BODY2"
+        },
+        "ear": "round",
+        "earS": 0.45,
+        "tail": "meerkat",
+        "paw": "paw"
+      },
+      "look": null,
+      "paletteHSV": [
+        0.09,
+        0.35,
+        0.72
+      ]
+    },
+    {
+      "level": 3,
+      "column": "proposed",
+      "body": {
+        "hgt": 0.8,
+        "len": 0.62,
+        "chest": 0.44,
+        "tuck": 0.5,
+        "neck": 0.34,
+        "neckAng": 0.75,
+        "neckW": 0.26,
+        "hr": 0.2,
+        "legW": 0.55,
+        "bw": 0.2,
+        "back": "arch",
+        "snout": 0.8,
+        "snoutD": 0.45,
+        "snoutTaper": 0.4,
+        "face": "meerkat",
+        "whiskers": true,
+        "belly": true,
+        "bands": {
+          "n": 5,
+          "mat": "BODY2"
+        },
+        "ear": "round",
+        "earS": 0.45,
+        "tail": "meerkat",
+        "paw": "paw"
+      },
+      "look": null,
+      "paletteHSV": [
+        0.09,
+        0.35,
+        0.72
+      ]
+    }
+  ],
+  "modelSourceCommit": "10c8c9bd910c917c52001e07eb688c73ebd3417e",
+  "lighting": "albedo",
+  "style": {
+    "ambientHue": 0.68,
+    "ambient": 0.22,
+    "moon": 0.3,
+    "moonHue": 0.58,
+    "glowHue": 0.13,
+    "glowSat": 0.35,
+    "glowRadius": 110,
+    "glowPower": 1.4,
+    "bands": 3,
+    "dither": 0.35,
+    "round": 0.9,
+    "outline": "none",
+    "cOutline": "dark",
+    "shafts": 0.3,
+    "areaContrast": 0.6,
+    "sat": 0.9,
+    "leafHue": 0.3,
+    "leafVariety": 0.3,
+    "trunkHue": 0.07,
+    "groundHue": 0.27,
+    "groundVal": 0.4,
+    "pixel": 3,
+    "treeSize": 0.85,
+    "crownWidth": 3,
+    "clearing": 0.55,
+    "depth": 4,
+    "areaScale": 1,
+    "areaTypes": 64,
+    "density": 0.55,
+    "clump": 0.6,
+    "gnarl": 0.5,
+    "roots": 0.6,
+    "bark": 0.6,
+    "trees": 1,
+    "wBroad": 0.8,
+    "wFir": 0.6,
+    "wWillow": 0.5,
+    "wBirch": 0.5,
+    "wPalm": 0.3,
+    "wFlat": 0.5,
+    "bushes": 55,
+    "bushSize": 1,
+    "flowers": 0.3,
+    "cSat": 0.6,
+    "cVal": 0.85,
+    "head": 0.44,
+    "eye": 1,
+    "legs": 1,
+    "long": 1,
+    "size": 8,
+    "growth": 20,
+    "magicHue": 0.5,
+    "fur": 0.5,
+    "creatureScale": 1.5,
+    "texture": 1,
+    "texDetail": 0.3,
+    "hueShift": 0,
+    "cloakHue": 0.72,
+    "hairHue": 0.01,
+    "hatHue": 0.74,
+    "topHue": 0.13,
+    "jeansHue": 0.6,
+    "shoeHue": 0,
+    "phonesHue": 0.92,
+    "artStyle": "bold"
+  },
+  "largestCell": [
+    344,
+    423
+  ],
+  "selectionInterface": "shared #1470 selector"
+}

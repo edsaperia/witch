@@ -1,0 +1,603 @@
+{
+  "sha": "f720f368016ea0986f6dfd310761637e981c808e",
+  "measurements": [
+    {
+      "id": "flyingsquirrel",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 0,
+      "pixelDiff": 343,
+      "current": [
+        36,
+        28
+      ],
+      "proposed": [
+        36,
+        28
+      ]
+    },
+    {
+      "id": "flyingsquirrel",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 1,
+      "pixelDiff": 632,
+      "current": [
+        49,
+        39
+      ],
+      "proposed": [
+        49,
+        39
+      ]
+    },
+    {
+      "id": "flyingsquirrel",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 2,
+      "pixelDiff": 1580,
+      "current": [
+        80,
+        63
+      ],
+      "proposed": [
+        80,
+        63
+      ]
+    },
+    {
+      "id": "flyingsquirrel",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 0,
+      "level": 3,
+      "pixelDiff": 6942,
+      "current": [
+        184,
+        144
+      ],
+      "proposed": [
+        184,
+        144
+      ]
+    },
+    {
+      "id": "flyingsquirrel",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 0,
+      "pixelDiff": 399,
+      "current": [
+        39,
+        29
+      ],
+      "proposed": [
+        39,
+        29
+      ]
+    },
+    {
+      "id": "flyingsquirrel",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 1,
+      "pixelDiff": 694,
+      "current": [
+        52,
+        40
+      ],
+      "proposed": [
+        52,
+        40
+      ]
+    },
+    {
+      "id": "flyingsquirrel",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 2,
+      "pixelDiff": 1743,
+      "current": [
+        85,
+        63
+      ],
+      "proposed": [
+        85,
+        63
+      ]
+    },
+    {
+      "id": "flyingsquirrel",
+      "pose": "walk",
+      "facing": "towards",
+      "frame": 1,
+      "level": 3,
+      "pixelDiff": 7435,
+      "current": [
+        194,
+        144
+      ],
+      "proposed": [
+        194,
+        144
+      ]
+    },
+    {
+      "id": "flyingsquirrel",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 0,
+      "pixelDiff": 298,
+      "current": [
+        31,
+        28
+      ],
+      "proposed": [
+        31,
+        28
+      ]
+    },
+    {
+      "id": "flyingsquirrel",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 1,
+      "pixelDiff": 635,
+      "current": [
+        48,
+        39
+      ],
+      "proposed": [
+        48,
+        39
+      ]
+    },
+    {
+      "id": "flyingsquirrel",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 2,
+      "pixelDiff": null,
+      "current": [
+        83,
+        63
+      ],
+      "proposed": [
+        83,
+        64
+      ]
+    },
+    {
+      "id": "flyingsquirrel",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 0,
+      "level": 3,
+      "pixelDiff": 9292,
+      "current": [
+        208,
+        145
+      ],
+      "proposed": [
+        208,
+        145
+      ]
+    },
+    {
+      "id": "flyingsquirrel",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 0,
+      "pixelDiff": 302,
+      "current": [
+        32,
+        28
+      ],
+      "proposed": [
+        32,
+        28
+      ]
+    },
+    {
+      "id": "flyingsquirrel",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 1,
+      "pixelDiff": 643,
+      "current": [
+        50,
+        40
+      ],
+      "proposed": [
+        50,
+        40
+      ]
+    },
+    {
+      "id": "flyingsquirrel",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 2,
+      "pixelDiff": 1766,
+      "current": [
+        85,
+        63
+      ],
+      "proposed": [
+        85,
+        63
+      ]
+    },
+    {
+      "id": "flyingsquirrel",
+      "pose": "walk",
+      "facing": "away",
+      "frame": 1,
+      "level": 3,
+      "pixelDiff": 9611,
+      "current": [
+        214,
+        145
+      ],
+      "proposed": [
+        214,
+        145
+      ]
+    }
+  ],
+  "resolvedRecords": [
+    {
+      "level": 0,
+      "column": "current",
+      "body": {
+        "hgt": 0.5,
+        "len": 0.5,
+        "chest": 0.32,
+        "tuck": 0.36,
+        "neck": 0.16,
+        "neckAng": 0.75,
+        "neckW": 0.38,
+        "hr": 0.33,
+        "legW": 0.7,
+        "haunch": 1.1,
+        "back": "arch",
+        "snout": 0.4,
+        "snoutD": 0.65,
+        "whiskers": true,
+        "eyeK": 1.5,
+        "belly": true,
+        "ear": "round",
+        "earS": 0.9,
+        "tail": "glider",
+        "paw": "paw"
+      },
+      "look": null,
+      "paletteHSV": [
+        0.06,
+        0.3,
+        0.42
+      ]
+    },
+    {
+      "level": 0,
+      "column": "proposed",
+      "body": {
+        "hgt": 0.5,
+        "len": 0.5,
+        "chest": 0.32,
+        "tuck": 0.36,
+        "neck": 0.16,
+        "neckAng": 0.75,
+        "neckW": 0.38,
+        "hr": 0.33,
+        "legW": 0.7,
+        "haunch": 1.1,
+        "back": "arch",
+        "snout": 0.4,
+        "snoutD": 0.65,
+        "whiskers": true,
+        "eyeK": 1.5,
+        "belly": true,
+        "ear": "round",
+        "earS": 0.9,
+        "tail": "glider",
+        "paw": "paw"
+      },
+      "look": null,
+      "paletteHSV": [
+        0.07,
+        0.16,
+        0.46
+      ]
+    },
+    {
+      "level": 1,
+      "column": "current",
+      "body": {
+        "hgt": 0.5,
+        "len": 0.5,
+        "chest": 0.32,
+        "tuck": 0.36,
+        "neck": 0.16,
+        "neckAng": 0.75,
+        "neckW": 0.38,
+        "hr": 0.33,
+        "legW": 0.7,
+        "haunch": 1.1,
+        "back": "arch",
+        "snout": 0.4,
+        "snoutD": 0.65,
+        "whiskers": true,
+        "eyeK": 1.45,
+        "belly": true,
+        "ear": "round",
+        "earS": 0.9,
+        "tail": "glider",
+        "paw": "paw",
+        "tailL": 0.75
+      },
+      "look": null,
+      "paletteHSV": [
+        0.06,
+        0.3,
+        0.42
+      ]
+    },
+    {
+      "level": 1,
+      "column": "proposed",
+      "body": {
+        "hgt": 0.5,
+        "len": 0.5,
+        "chest": 0.32,
+        "tuck": 0.36,
+        "neck": 0.16,
+        "neckAng": 0.75,
+        "neckW": 0.38,
+        "hr": 0.33,
+        "legW": 0.7,
+        "haunch": 1.1,
+        "back": "arch",
+        "snout": 0.4,
+        "snoutD": 0.65,
+        "whiskers": true,
+        "eyeK": 1.45,
+        "belly": true,
+        "ear": "round",
+        "earS": 0.9,
+        "tail": "glider",
+        "paw": "paw",
+        "tailL": 0.75
+      },
+      "look": null,
+      "paletteHSV": [
+        0.07,
+        0.16,
+        0.46
+      ]
+    },
+    {
+      "level": 2,
+      "column": "current",
+      "body": {
+        "hgt": 0.5,
+        "len": 0.5,
+        "chest": 0.32,
+        "tuck": 0.36,
+        "neck": 0.16,
+        "neckAng": 0.75,
+        "neckW": 0.38,
+        "hr": 0.33,
+        "legW": 0.7,
+        "haunch": 1.1,
+        "back": "arch",
+        "snout": 0.4,
+        "snoutD": 0.65,
+        "whiskers": true,
+        "eyeK": 1.45,
+        "belly": true,
+        "ear": "round",
+        "earS": 0.9,
+        "tail": "glider",
+        "paw": "paw"
+      },
+      "look": null,
+      "paletteHSV": [
+        0.06,
+        0.3,
+        0.42
+      ]
+    },
+    {
+      "level": 2,
+      "column": "proposed",
+      "body": {
+        "hgt": 0.5,
+        "len": 0.5,
+        "chest": 0.32,
+        "tuck": 0.36,
+        "neck": 0.16,
+        "neckAng": 0.75,
+        "neckW": 0.38,
+        "hr": 0.33,
+        "legW": 0.7,
+        "haunch": 1.1,
+        "back": "arch",
+        "snout": 0.4,
+        "snoutD": 0.65,
+        "whiskers": true,
+        "eyeK": 1.45,
+        "belly": true,
+        "ear": "round",
+        "earS": 0.9,
+        "tail": "glider",
+        "paw": "paw"
+      },
+      "look": null,
+      "paletteHSV": [
+        0.07,
+        0.16,
+        0.46
+      ]
+    },
+    {
+      "level": 3,
+      "column": "current",
+      "body": {
+        "hgt": 0.5,
+        "len": 0.5,
+        "chest": 0.32,
+        "tuck": 0.36,
+        "neck": 0.16,
+        "neckAng": 0.75,
+        "neckW": 0.38,
+        "hr": 0.33,
+        "legW": 0.7,
+        "haunch": 1.1,
+        "back": "arch",
+        "snout": 0.4,
+        "snoutD": 0.65,
+        "whiskers": true,
+        "eyeK": 1.45,
+        "belly": true,
+        "ear": "round",
+        "earS": 0.9,
+        "tail": "glider",
+        "paw": "paw",
+        "tailL": 1.35,
+        "tailK": 1.5,
+        "eyeGlow": true,
+        "frost": true
+      },
+      "look": null,
+      "paletteHSV": [
+        0.06,
+        0.3,
+        0.42
+      ]
+    },
+    {
+      "level": 3,
+      "column": "proposed",
+      "body": {
+        "hgt": 0.5,
+        "len": 0.5,
+        "chest": 0.32,
+        "tuck": 0.36,
+        "neck": 0.16,
+        "neckAng": 0.75,
+        "neckW": 0.38,
+        "hr": 0.33,
+        "legW": 0.7,
+        "haunch": 1.1,
+        "back": "arch",
+        "snout": 0.4,
+        "snoutD": 0.65,
+        "whiskers": true,
+        "eyeK": 1.45,
+        "belly": true,
+        "ear": "round",
+        "earS": 0.9,
+        "tail": "glider",
+        "paw": "paw",
+        "tailL": 1.35,
+        "tailK": 1.5,
+        "eyeGlow": true,
+        "frost": true
+      },
+      "look": null,
+      "paletteHSV": [
+        0.07,
+        0.16,
+        0.46
+      ]
+    }
+  ],
+  "modelSourceCommit": "10c8c9bd910c917c52001e07eb688c73ebd3417e",
+  "lighting": "night",
+  "style": {
+    "ambientHue": 0.68,
+    "ambient": 0.22,
+    "moon": 0.3,
+    "moonHue": 0.58,
+    "glowHue": 0.13,
+    "glowSat": 0.35,
+    "glowRadius": 110,
+    "glowPower": 1.4,
+    "bands": 3,
+    "dither": 0.35,
+    "round": 0.9,
+    "outline": "none",
+    "cOutline": "dark",
+    "shafts": 0.3,
+    "areaContrast": 0.6,
+    "sat": 0.9,
+    "leafHue": 0.3,
+    "leafVariety": 0.3,
+    "trunkHue": 0.07,
+    "groundHue": 0.27,
+    "groundVal": 0.4,
+    "pixel": 3,
+    "treeSize": 0.85,
+    "crownWidth": 3,
+    "clearing": 0.55,
+    "depth": 4,
+    "areaScale": 1,
+    "areaTypes": 64,
+    "density": 0.55,
+    "clump": 0.6,
+    "gnarl": 0.5,
+    "roots": 0.6,
+    "bark": 0.6,
+    "trees": 1,
+    "wBroad": 0.8,
+    "wFir": 0.6,
+    "wWillow": 0.5,
+    "wBirch": 0.5,
+    "wPalm": 0.3,
+    "wFlat": 0.5,
+    "bushes": 55,
+    "bushSize": 1,
+    "flowers": 0.3,
+    "cSat": 0.6,
+    "cVal": 0.85,
+    "head": 0.44,
+    "eye": 1,
+    "legs": 1,
+    "long": 1,
+    "size": 8,
+    "growth": 20,
+    "magicHue": 0.5,
+    "fur": 0.5,
+    "creatureScale": 1.5,
+    "texture": 1,
+    "texDetail": 0.3,
+    "hueShift": 0,
+    "cloakHue": 0.72,
+    "hairHue": 0.01,
+    "hatHue": 0.74,
+    "topHue": 0.13,
+    "jeansHue": 0.6,
+    "shoeHue": 0,
+    "phonesHue": 0.92,
+    "artStyle": "bold"
+  },
+  "largestCell": [
+    214,
+    145
+  ],
+  "selectionInterface": "shared #1470 selector"
+}
