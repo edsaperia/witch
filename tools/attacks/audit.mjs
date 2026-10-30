@@ -20,7 +20,7 @@ const runtime = resolve(`.attack-audit-runtime-${randomUUID()}.mjs`);
 try {
   await build({ entryPoints: ['tools/attacks/audit-screen.mjs'], bundle: true, platform: 'node', format: 'esm', outfile: runtime, logLevel: 'error' });
   const remaining = Math.max(1, 120000 - (Date.now() - start));
-  const result = spawnSync(process.execPath, [runtime, out], { cwd: root, stdio: 'inherit', timeout: remaining });
+  const result = spawnSync(process.execPath, [runtime, out, ...(process.argv.includes('--witch-only') ? ['--witch-only'] : [])], { cwd: root, stdio: 'inherit', timeout: remaining });
   Object.assign(manifest, { exitCode: result.status, error: result.error?.message ?? null, elapsedMs: Date.now() - start, finished: result.status === 0 });
   if (result.status !== 0) process.exitCode = result.status ?? 124;
 } catch (error) { manifest.error = String(error); process.exitCode = 1; }

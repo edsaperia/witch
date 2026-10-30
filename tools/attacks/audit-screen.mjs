@@ -80,7 +80,7 @@ const cases = [
   { id: 'wolves-ravens-repeat', seed: 5, spec: 'wolf*3@2,raven*3@2' },
 ];
 const arenaRows = [];
-for (const fixture of cases) {
+for (const fixture of process.argv.includes('--witch-only') ? [] : cases) {
   const began = performance.now(), g = newGame(fixture.seed, TUNING);
   g.clock.paused = false; g.party.paused = true; setupArena(g, fixture.spec);
   g.witches[0].body.mode = 'treetop'; g.witches[0].body.lift = 1;
@@ -111,12 +111,12 @@ const witchRows = [];
 for (const species of ['wolf', 'cat']) for (const delayed of [false, true]) {
   const g = newGame(5, TUNING); g.clock.paused = false; g.party.paused = true; setupArena(g, `pack-${species}`, { wildOnly: true });
   const ids = new Set(g.arena.ids); for (const c of g.creatures) if (!ids.has(c.id)) c.gone = true; g.byArea = null;
-  const observe = newObserver(), queue = [], actions = [];
+  const observe = newObserver(), queue = [], actions = [], inputTimes = [];
   let control = idle, nextInput = 0, nextDash = 0, acceptedHits = 0, attempts = 0, blinks = 0, kos = 0, beforeKo = false, lastAt = g.witches[0].dash.at;
   for (let frame = 0; frame < 12 / STEP; frame++) {
     const player = frame * STEP;
     if (player + 1e-9 >= nextInput) {
-      nextInput += 0.125; queue.push({ at: player, observation: observe(g) });
+      nextInput = player + 0.125; inputTimes.push(player); queue.push({ at: player, observation: observe(g) });
       let consumed;
       while (queue.length && queue[0].at <= player - 0.25 + 1e-9) consumed = queue.shift();
       const o = consumed?.observation, cue = o?.windups[0]; control = idle;
@@ -128,10 +128,10 @@ for (const species of ['wolf', 'cat']) for (const delayed of [false, true]) {
     }
     const before = g.witches[0].health.hp; stepGame(g, control, STEP);
     const W = g.witches[0]; acceptedHits += Math.max(0, before - W.health.hp);
-    if (W.dash.at !== lastAt) { blinks++; lastAt = W.dash.at; }
+    if (W.dash.at !== lastAt && Number.isFinite(W.dash.at)) blinks++; lastAt = W.dash.at;
     if (W.ko && !beforeKo) kos++; beforeKo = !!W.ko;
   }
-  const record = { species, seed: 5, delayedPolicy: delayed, requestedStepSeconds: 12, worldSeconds: g.clock.time, acceptedHealthLost: acceptedHits, koEntries: kos, dashAttempts: attempts, acceptedBlinks: blinks, actions, inputInterval: 0.125, reactionDelay: 0.25, observation: 'Existing expert approximate default-camera rectangle without occlusion plus public HUD/audio cues; policy uses delayed self and windup positions only.', limits: 'One fixed sidestep policy, no aiming or invitation. A failure is not proof that no dodge works; not a trained-bot or win-strength claim.' };
+  const record = { species, seed: 5, delayedPolicy: delayed, requestedStepSeconds: 12, worldSeconds: g.clock.time, acceptedHealthLost: acceptedHits, koEntries: kos, dashAttempts: attempts, acceptedBlinks: blinks, actions, inputIntervalMinimum: 0.125, actualMinimumInputGap: Math.min(...inputTimes.slice(1).map((t, i) => t - inputTimes[i])), reactionDelay: 0.25, observation: 'Existing expert approximate default-camera rectangle without occlusion plus public HUD/audio cues; policy uses delayed self and windup positions only.', limits: 'One fixed sidestep policy, no aiming or invitation. A failure is not proof that no dodge works; not a trained-bot or win-strength claim.' };
   witchRows.push(record); appendFileSync(join(out, 'witch-arena.jsonl'), JSON.stringify(record) + '\n');
 }
-save('summary.json', { species: rows.length, minimumYoungWarning: Math.min(...rows.map(r => r.youngWarning)), minimumAdultWarning: Math.min(...rows.map(r => r.adultWarning)), parseErrors: rows.reduce((n, r) => n + r.parseErrors.length + r.adultParseErrors.length, 0), engineReactionAssessed: fairness.filter(r => r.assessed).length, engineReactionStillContactAfterBlink: fairness.filter(r => r.assessed && r.dodgingContacts > 0).map(r => r.species), arenaCases: arenaRows.length, repeatedCaseMatches: arenaRows[0].digest === arenaRows[3].digest, reactionBudget: { reaction: 0.25, inputInterval: 0.125, worstQuantizedPlusStep: 0.25 + 0.125 + STEP }, limits: ['No general dodge guarantee', 'No arena dominance ranking from three small paired matches', 'No invisible-source or real terrain proof from flat engine fixtures', 'No current validation of seven impossible solo stuns; historical protected-health cutoff is not impossibility'] });
+save('summary.json', { species: rows.length, minimumYoungWarning: Math.min(...rows.map(r => r.youngWarning)), minimumAdultWarning: Math.min(...rows.map(r => r.adultWarning)), parseErrors: rows.reduce((n, r) => n + r.parseErrors.length + r.adultParseErrors.length, 0), engineReactionAssessed: fairness.filter(r => r.assessed).length, engineReactionStillContactAfterBlink: fairness.filter(r => r.assessed && r.dodgingContacts > 0).map(r => r.species), arenaCases: arenaRows.length, repeatedCaseMatches: arenaRows.length === 4 ? arenaRows[0].digest === arenaRows[3].digest : null, reactionBudget: { reaction: 0.25, inputInterval: 0.125, worstQuantizedPlusStep: 0.25 + 0.125 + STEP }, limits: ['No general dodge guarantee', 'No arena dominance ranking from three small paired matches', 'No invisible-source or real terrain proof from flat engine fixtures', 'No current validation of seven impossible solo stuns; historical protected-health cutoff is not impossibility'] });
