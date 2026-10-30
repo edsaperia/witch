@@ -1,5 +1,9 @@
 # The treehouse and its house
 
+Morning station fixes (#1469, 2026-10-30): `PanelChoice.awaitingDress` distinguishes the saved outfit from pieces still in `wake.pile`. The wardrobe, shoes, cloak and bags show no wearing tick until a choice puts their piece on; choosing an unchanged default still sends the look callback once. Selecting colours follows the same rule. While paused the station panel is hidden, retaining its choice and focus for resume; Esc still pauses rather than closing it.
+
+The first-morning dressing-table “75 m” report (#1469) came from the accessibility reading, with no distance visible in the original screenshot. Her hat is on the hats' floor about 74 m from the table's use position (seed 123); its pointer fades fully while indoors, but opacity alone left its distance in the accessibility tree. Fully faded `StoneIndicator` elements now also use `visibility: hidden`; world distances and the guidance pin's existing no-label behavior are unchanged.
+
 Broom parts, found hats and record choices retain failed storage writes in this page through `app/storageFallback.ts`, so a station's next read keeps the choice. Hat removal through the finds dev control uses the same layer. The fallback is isolated by storage object; a successful retry clears it. Browser console warnings name each affected key once per page. Reloading cannot retain changes the browser refused to save. Player settings use the same fallback; save-session ownership remains separate.
 
 Part of Witch's notes (CLAUDE.md is the index): the treehouse and its deck, arriving, the house's rooms, the station menus, the Studio, finds, the Workshop and broom parts, hats and brooms, the telescope. Moved here from CLAUDE.md as it stood (housekeeping, Ed 2026-10-23: a note an area, so pull requests add to their own area's file, not one shared file); every rule kept. Add to this file, not CLAUDE.md, when you change this area.
