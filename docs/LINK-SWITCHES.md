@@ -20,7 +20,7 @@ What the night is: its seed, island, world, opening, sail and her kit.
 | `fightMomentum=<k>` | The creatures' momentum in a fight for this load (the debug overlay's slider; never remembered). | 2026-10-07 | app/knobs.ts |
 | `fightScale=<k>` | The fight's scale for this load (the debug overlay's slider; never remembered). | 2026-10-07 | app/knobs.ts |
 | `fightSpeed=<k>` | The fight's speed for this load (the debug overlay's slider; never remembered). | 2026-10-07 | app/knobs.ts |
-| `hat=<id>` / `hat=none` | She wears this hat for one load (and owns it for that load). | 2026-10-11 | app/hatSave.ts, app/loadout.ts |
+| `hat=<id>` / `hat=none` | She wears this hat for one load (and owns it for that load). | 2026-10-11 | app/debugUnlock.ts, app/hatSave.ts, app/loadout.ts |
 | `hats=all` / `hats=<id>,…` | These hats are hers for one load, instead of her save. | 2026-10-23 | app/hatSave.ts |
 | `island=<kind>` / `island=home` / `island=<n>` | Play this kind's island, home, or a random island of n areas. | 2026-10-11 | app/linkParams.ts, app/sail.ts, main.ts |
 | `mapAreas=<n>` | How many areas the map has, for this load only (never remembered). | 2026-10-07 | app/linkParams.ts |

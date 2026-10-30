@@ -1,5 +1,24 @@
-import { describe, expect, it } from "vitest";
-import { arrowPixels, screenAngle } from "./indicator";
+import { describe, expect, it, vi } from "vitest";
+import { arrowPixels, screenAngle, StoneIndicator } from "./indicator";
+
+describe("a fully faded pointer", () => {
+  it("hides its distance from accessibility as well as sight, then restores it when visible", () => {
+    const elements: { style: Record<string, string> }[] = [];
+    vi.stubGlobal("document", { createElement: () => {
+      const el = { style: {}, getContext: () => ({ createImageData: (w: number, h: number) => ({ data: new Uint8ClampedArray(w * h * 4) }) }) };
+      elements.push(el); return el;
+    } });
+    try {
+      const pointer = new StoneIndicator({ append: () => {} } as unknown as HTMLElement);
+      pointer.fade(0);
+      expect(elements.map(e => e.style.visibility)).toEqual(["hidden", "hidden"]);
+      pointer.fade(.5);
+      expect(elements.map(e => e.style.visibility)).toEqual(["visible", "visible"]);
+      pointer.fade(0);
+      expect(elements.map(e => e.style.visibility)).toEqual(["hidden", "hidden"]);
+    } finally { vi.unstubAllGlobals(); }
+  });
+});
 
 describe("the next-stone cue's arrow (Ed, v183: it pointed the wrong way)", () => {
   // Where the stone lies from the middle of the view, in the view's own terms (x right, y up):
