@@ -172,7 +172,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
         const j = R ? v.assets.djGestureFrame(R.gesture, R.frame) : KO && irisOn && KO.riseUntil === undefined && ht >= atDecksFrom(KO, true) && ht < KO.inAt ? v.assets.djGestureFrame("scratch", 0) : v.assets.djFrame(beatAt(g.beat, time), casting, respawnLeft(g.witches[0].ko, ht) !== null); // (its fallback: scratching through a knockout's wait, rules/knockout.ts)
         wf = Dj.full[j]; djUpper = Dj.upper[j];
       }
-      if (typeof sp === "number" && sp !== v.castSeen) { v.castSeen = sp; v.spellFx.partyBurst(wx, wyy, wz, sp); }
+      if (typeof sp === "number" && sp !== v.castSeen) { v.castSeen = sp; v.spellFx.partyBurst(wx, wyy, wz, sp); v.magic.emit("party", "pillar", wx, wyy+5, wz, 3, 1.5, 2.4, 914); v.magic.emit("party", "dome", wx, wyy+2, wz, 3, 1, 1.8, 915); }
     }
   }
   // Knocked out (Ed, 2026-10-04): she sits slumped on the ground while her stack lets go, then
@@ -215,6 +215,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   const wsink = wg ? (wframe.h - wg.y) * v.mpp : 0, wside = wg ? (wg.x - wframe.w / 2) * v.mpp * (wflip ? -1 : 1) : 0;
   v.partyWitchView.update(g, time, (x, z, ww, hh) => inView(v, x, z, ww, hh, 4));
   v.swoopTrails.update(g.partyWitches.list, time);
+  for(const p of g.partyWitches.list)if(p.state==="floor"&&p.activity==="swoop"&&p.y>0.05)v.magic.native("partySwoop",p.x,p.y,p.z,Math.min(1,p.y/3),960000+p.id);
   setOverlayTilt(t.tiltShift, w.lift, v.canvas.clientHeight || window.innerHeight, v.height, v.houseTilt(g)); // (the DOM overlays blurred as the world: render/overlayTilt.ts)
   v.partyWitchView.bubbles(g, time, v.camera, v.canvas.clientWidth || window.innerWidth, v.canvas.clientHeight || window.innerHeight);
   const onBeach = v.beachView.update(g, time, (x, z, ww, hh) => inView(v, x, z, ww, hh, 4), v.camera, v.canvas.clientWidth || window.innerWidth, v.canvas.clientHeight || window.innerHeight, v.fly ? { x: v.fly.tx, z: v.fly.tz, reach: g.tuning.haze.far } : undefined); // (a sail's dive in over the sea: the sea drawn)

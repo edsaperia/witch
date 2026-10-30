@@ -1,0 +1,13 @@
+{
+  "flightTrail": { "element": "party", "form": "beam", "intensity": 0.45, "preserveHue": true, "light": 0.12, "anchor": 0.08 },
+  "partySwoop": { "element": "party", "form": "beam", "intensity": 0.65, "preserveHue": true, "light": 0.08, "anchor": 0.04 },
+  "broomSpark": { "element": "party", "form": "projectile", "intensity": 0.25, "preserveHue": true, "light": 0.04, "anchor": 0.02 },
+  "sigil": { "element": "moonlight", "form": "aura", "intensity": 0.45, "preserveHue": true, "light": 0, "anchor": 0.06 },
+  "ringDot": { "element": "water", "form": "aura", "intensity": 0.25, "preserveHue": true, "light": 0.05, "anchor": 0.02 },
+  "runestone": { "element": "moonlight", "form": "pillar", "intensity": 0.65, "preserveHue": true, "light": 0, "anchor": 0 },
+  "ley": { "element": "party", "form": "beam", "intensity": 0.65, "preserveHue": true, "light": 0.14, "anchor": 0.08 },
+  "hologram": { "element": "moonlight", "form": "dome", "intensity": 0.65, "preserveHue": true, "light": 0, "anchor": 0 },
+  "lake": { "element": "water", "form": "zone", "intensity": 0.45, "preserveHue": true, "light": 0, "anchor": 0 },
+  "firework": { "element": "party", "form": "burst", "intensity": 1, "preserveHue": true, "light": 0, "anchor": 0 },
+  "decorativeGlow": { "element": "moonlight", "form": "aura", "intensity": 0.45, "preserveHue": true, "light": 0, "anchor": 0 }
+}

@@ -1,0 +1,71 @@
+# w1-ladder-000; 40 cases; world/night pairs 910000/79191000
+timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/ladder.json --shard w1-ladder-000 --lock trained-expert-lock.json --out results/wave1/ladder/w1-ladder-000.jsonl --budget-seconds 2940
+
+# w1-ladder-001; 40 cases; world/night pairs 910000/79191000
+timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/ladder.json --shard w1-ladder-001 --lock trained-expert-lock.json --out results/wave1/ladder/w1-ladder-001.jsonl --budget-seconds 2940
+
+# w1-ladder-002; 40 cases; world/night pairs 910000/79191000
+timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/ladder.json --shard w1-ladder-002 --lock trained-expert-lock.json --out results/wave1/ladder/w1-ladder-002.jsonl --budget-seconds 2940
+
+# w1-ladder-003; 40 cases; world/night pairs 910000/79191000
+timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/ladder.json --shard w1-ladder-003 --lock trained-expert-lock.json --out results/wave1/ladder/w1-ladder-003.jsonl --budget-seconds 2940
+
+# w1-ladder-004; 40 cases; world/night pairs 910000/79191000
+timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/ladder.json --shard w1-ladder-004 --lock trained-expert-lock.json --out results/wave1/ladder/w1-ladder-004.jsonl --budget-seconds 2940
+
+# w1-ladder-005; 40 cases; world/night pairs 910000/79191000
+timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/ladder.json --shard w1-ladder-005 --lock trained-expert-lock.json --out results/wave1/ladder/w1-ladder-005.jsonl --budget-seconds 2940
+
+# w1-ladder-006; 40 cases; world/night pairs 910000/79191000
+timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/ladder.json --shard w1-ladder-006 --lock trained-expert-lock.json --out results/wave1/ladder/w1-ladder-006.jsonl --budget-seconds 2940
+
+# w1-ladder-007; 40 cases; world/night pairs 910000/79191000
+timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/ladder.json --shard w1-ladder-007 --lock trained-expert-lock.json --out results/wave1/ladder/w1-ladder-007.jsonl --budget-seconds 2940
+
+# w1-ladder-008; 40 cases; world/night pairs 910000/79191000
+timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/ladder.json --shard w1-ladder-008 --lock trained-expert-lock.json --out results/wave1/ladder/w1-ladder-008.jsonl --budget-seconds 2940
+
+# w1-ladder-009; 40 cases; world/night pairs 910000/79191000
+timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/ladder.json --shard w1-ladder-009 --lock trained-expert-lock.json --out results/wave1/ladder/w1-ladder-009.jsonl --budget-seconds 2940
+
+# w1-ladder-010; 40 cases; world/night pairs 910000/79191000
+timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/ladder.json --shard w1-ladder-010 --lock trained-expert-lock.json --out results/wave1/ladder/w1-ladder-010.jsonl --budget-seconds 2940
+
+# w1-ladder-011; 40 cases; world/night pairs 910000/79191000
+timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/ladder.json --shard w1-ladder-011 --lock trained-expert-lock.json --out results/wave1/ladder/w1-ladder-011.jsonl --budget-seconds 2940
+
+# w1-ladder-012; 40 cases; world/night pairs 910000/79191000
+timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/ladder.json --shard w1-ladder-012 --lock trained-expert-lock.json --out results/wave1/ladder/w1-ladder-012.jsonl --budget-seconds 2940
+
+# w1-tempo-000; 15 cases; world/night pairs 910000/79191000
+timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/tempo.json --shard w1-tempo-000 --lock trained-expert-lock.json --out results/wave1/tempo/w1-tempo-000.jsonl --budget-seconds 2940
+
+# w1-tempo-001; 15 cases; world/night pairs 910000/79191000
+timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/tempo.json --shard w1-tempo-001 --lock trained-expert-lock.json --out results/wave1/tempo/w1-tempo-001.jsonl --budget-seconds 2940
+
+# w1-tempo-002; 15 cases; world/night pairs 910000/79191000
+timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/tempo.json --shard w1-tempo-002 --lock trained-expert-lock.json --out results/wave1/tempo/w1-tempo-002.jsonl --budget-seconds 2940
+
+# w1-equipment-000; 32 cases; world/night pairs 910000/79191000
+timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/equipment.json --shard w1-equipment-000 --lock trained-expert-lock.json --out results/wave1/equipment/w1-equipment-000.jsonl --budget-seconds 2940
+
+# w1-equipment-001; 32 cases; world/night pairs 910000/79191000
+timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/equipment.json --shard w1-equipment-001 --lock trained-expert-lock.json --out results/wave1/equipment/w1-equipment-001.jsonl --budget-seconds 2940
+
+# w1-census-000; 520 cases; world/night pairs 910000/79191000
+timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/census.json --shard w1-census-000 --lock trained-expert-lock.json --out results/wave1/census/w1-census-000.jsonl --budget-seconds 2940
+
+# w1-census-001; 520 cases; world/night pairs 910000/79191000
+timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/census.json --shard w1-census-001 --lock trained-expert-lock.json --out results/wave1/census/w1-census-001.jsonl --budget-seconds 2940
+
+# w1-census-002; 520 cases; world/night pairs 910000/79191000
+timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/census.json --shard w1-census-002 --lock trained-expert-lock.json --out results/wave1/census/w1-census-002.jsonl --budget-seconds 2940
+
+# w1-census-003; 520 cases; world/night pairs 910000/79191000
+timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/census.json --shard w1-census-003 --lock trained-expert-lock.json --out results/wave1/census/w1-census-003.jsonl --budget-seconds 2940
+
+# w1-census-004; 480 cases; world/night pairs 910000/79191000
+timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/census.json --shard w1-census-004 --lock trained-expert-lock.json --out results/wave1/census/w1-census-004.jsonl --budget-seconds 2940
+
+# w1-map-luck-000; 5 cases; world/night pairs 910000/79191000,910001/79198919,910002/79206838,910003/79214757,910004/79222676
+timeout --signal=INT 50m node tools/balance/survey.mjs run --manifest tools/balance/surveys/wave1/map-luck.json --shard w1-map-luck-000 --lock trained-expert-lock.json --out results/wave1/map-luck/w1-map-luck-000.jsonl --budget-seconds 2940
