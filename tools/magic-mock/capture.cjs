@@ -58,10 +58,11 @@ const types = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.j
       if(!production&&mode==='frost') await page.waitForFunction(()=>window.witch.view.fxMock.tree,null,{timeout:60000});
       const state=await page.evaluate(production=>({version:document.title,camera:window.witch.game.camera,lights:window.witch.view.stats.lights,effectLights:production?window.witch.view.magic.stats.lights:window.witch.view.fxMock.lightsUsed,budget:window.witch.game.tuning.lightBudget,treeReady:production?null:!!window.witch.view.fxMock.tree}),production);
       evidence.modes[mode]={state};
-      for(const [label,time] of (production?[['forms-1',1.5],['forms-2',1.5],['forms-3',1.5]]:[['active',1.5],['thaw',5],['clear',7]])) {
-        if(production)await page.evaluate(label=>{window.witch.view.magic.galleryPage=Number(label.slice(-1))-1;},label);
+      for(const [label,time] of (production?[['forms-1',1.5],['forms-2',1.5],['forms-3',1.5],['iso',1.5]]:[['active',1.5],['thaw',5],['clear',7]])) {
+        if(production)await page.evaluate(label=>{window.witch.view.magic.galleryPage=label==='iso'?3:Number(label.slice(-1))-1;},label);
         await frame(time); await page.screenshot({path:path.join(out,`${mode}-${label}.png`),timeout:300000});
       }
+      if(production){await page.evaluate(()=>{window.witch.view.magic.galleryPage=0;});await frame(1.5);}
       // Compare exactly the same frozen simulation/time with the mock hidden/visible.
       evidence.modes[mode].timing=await page.evaluate(async(production)=>{
         const w=window.witch,v=w.view,gl=v.renderer.getContext(),ext=gl.getExtension('EXT_disjoint_timer_query_webgl2');
@@ -70,7 +71,7 @@ const types = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.j
         const renderer=debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER);
         if(!ext)return {renderer,gpuMs:null,reason:'EXT_disjoint_timer_query_webgl2 unavailable'};
         const result={renderer,samples:[]};
-        for(const enabled of [false,true,false,true]) {
+        for(const enabled of Array.from({length:20},(_,i)=>i%2===1)) {
           fx.enabled=enabled;if(production){fx.captureTime=1.5;fx.galleryTime=1.5;}else fx.time=1.5;
           for(let i=0;i<2;i++)w.frame({moveX:0,moveZ:0,toggleMode:false,zoom:0},0,true);
           const q=gl.createQuery();gl.beginQuery(ext.TIME_ELAPSED_EXT,q);

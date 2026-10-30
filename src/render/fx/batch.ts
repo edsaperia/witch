@@ -9,22 +9,27 @@ import { ELEMENT_KEYS, elements, settings } from "./model";
 const VERT=/* glsl */ `
 uniform vec3 uRight,uUp;
 uniform float uFlat,uMpp;uniform vec2 uRes;
-attribute vec3 iPos; attribute float iSize; attribute vec4 iUv,iCol;
-varying vec2 vP; varying vec4 vData,vCol; varying vec3 vWorld;varying float vGrid;
+attribute vec3 iPos; attribute float iSize,iDraw,iShine; attribute vec4 iUv,iCol;
+varying vec2 vP; varying vec4 vData,vCol; varying vec3 vWorld;varying vec2 vGrid;
 ${HEIGHT_VERT_GLSL}
 ${PIXEL_SNAP_GLSL}
 void main(){
   vP=uv*2.0-1.0;vData=iUv;vCol=iCol;
-  vGrid=max(1.0,floor(iSize/uMpp+0.5));
+  vGrid=vec2(max(1.0,floor(iSize/uMpp+0.5)));
   vec2 p=position.xy;
   vec3 w=uFlat>0.5?onGround(iPos+vec3(p.x*iSize,0.06,-p.y*iSize)):onGround(iPos)+uRight*p.x*iSize+uUp*p.y*iSize;
+  if(iUv.x>1.5 && iUv.x<2.5 && iDraw<0.0){
+    vec2 direction=vec2(cos(iShine),sin(iShine)),side=vec2(-direction.y,direction.x);
+    vec2 q=direction*p.x*(-iDraw)+side*p.y*iSize;
+    w=onGround(iPos+vec3(q.x,0.0,q.y));vGrid=vec2(max(1.0,floor(-iDraw/uMpp+0.5)),vGrid.y);
+  }
   vWorld=w;gl_Position=clipOf(w);
   if(uFlat<0.5)gl_Position.xy+=pixelSnap(clipOf(onGround(iPos)))*gl_Position.w;
   if(overBend(onGround(iPos))<0.5)gl_Position=vec4(2.0,2.0,2.0,1.0);
 }`;
 const FRAG=/* glsl */ `
 uniform sampler2D uFxRamp;uniform float uFxTime,uLayer,uCalm,uSecondary,uDistort;uniform vec2 uHalo;
-varying vec2 vP;varying vec4 vData,vCol;varying vec3 vWorld;varying float vGrid;
+varying vec2 vP;varying vec4 vData,vCol;varying vec3 vWorld;varying vec2 vGrid;
 ${LIGHT_GLSL}
 float hash(vec2 q){return fract(sin(dot(q,vec2(127.1,311.7)))*43758.5453);}
 vec4 ramp(float tone){return texelFetch(uFxRamp,ivec2(int(clamp(tone,0.0,3.0)),int(vData.y+0.5)),0);}
@@ -46,7 +51,7 @@ void main(){
   float r=length(p),angle=atan(p.y,p.x),d;
   if(form<0.5 || form>9.5)d=length(p*vec2(1.1,1.3));
   else if(form<1.5)d=r/(0.65+sin(angle*7.0-time)*0.07+phase*0.15);
-  else if(form<2.5)d=max(abs(p.y)*1.1,abs(p.x)*4.0);
+  else if(form<2.5)d=max(abs(p.y)*3.0,abs(p.x)*1.1);
   else if(form<3.5)d=max(abs(r-(0.55+phase*0.25))*5.0,r*0.9);
   else if(form<4.5)d=abs(length(p*vec2(1.0,0.85))-0.62)*6.0;
   else if(form<5.5)d=max(abs(p.x)/(0.15+(1.0-p.y)*0.2),abs(p.y)*1.1);
@@ -97,8 +102,14 @@ export class FxBatches {
   begin(time:number,calm:boolean):void {this.time.value=time;this.calm.value=calm?1:0;this.count=0;for(const b of this.layers)b.begin();}
   add(x:number,y:number,z:number,size:number,data:number[],alpha:number,ground:boolean,tint:readonly number[]|null=null,particles=true):void {
     for(let layer=0;layer<(particles?4:3);layer++){
-      if(this.count>=settings.instances)return;this.count++;
+      if(layer!==1){if(this.count>=settings.instances)continue;this.count++;}
       this.layers[(ground?4:0)+layer].add(x,y,z,size*(layer===0?1.12:layer===2?1.45:1),data,tint?.[0]??1,tint?.[1]??1,tint?.[2]??1,alpha);
+    }
+  }
+  beam(x:number,y:number,z:number,length:number,heading:number,width:number,data:number[],alpha:number,tint:readonly number[]|null):void {
+    for(let layer=0;layer<4;layer++){
+      if(layer!==1){if(this.count>=settings.instances)continue;this.count++;}
+      this.layers[layer].add(x,y,z,width*(layer===0?1.12:layer===2?1.45:1),data,tint?.[0]??1,tint?.[1]??1,tint?.[2]??1,alpha,-length,false,heading);
     }
   }
   end():void {for(const b of this.layers)b.end();}

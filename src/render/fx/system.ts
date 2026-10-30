@@ -56,13 +56,28 @@ export class MagicFx {
     // An airborne effect has a real ground anchor even when its core is above the canopy.
     if(!f.ground){this.data[0]=forms.zone.id;this.batches.add(x,0,z,Math.min(diameter*0.75,12),this.data,alpha*0.18,true,tint,false);}
     this.light(`${key}:${form}:${seed}`,x,y,z,key,intensity,alpha,tint);
-    if(FX_QUALITY.imprints && (form==="burst" || form==="zone" || form==="eruption" || form==="beam" || form==="projectile")) {
+    if(FX_QUALITY.imprints && (form==="burst" || form==="zone" || form==="eruption" || form==="beam" || form==="projectile" || form==="vortex" || form==="pillar")) {
       this.field.stamp(x,z,Math.max(2,Math.min(18,diameter*0.6)),el.imprint as Imprint,intensity*alpha*(form==="projectile"?0.25:1));
     }
   }
   emit(element:string,form:FxForm,x:number,y:number,z:number,level:number,size=1,life=1.2,seed=0):void {
     if(this.bursts.length>=settings.pool)this.bursts.shift();
     this.bursts.push({element,form,x,y,z,level,size,at:this.time,life,seed});
+  }
+  beam(element:string,x0:number,z0:number,x1:number,z1:number,y:number,width:number,level:number,alpha:number,seed:number,tint:readonly number[]|null=null,intensity=intensityOf(level)):void {
+    const length=Math.hypot(x1-x0,z1-z0);if(!this.enabled || length<0.01 || alpha<=0.01)return;
+    const key=fxElement(element),x=(x0+x1)/2,z=(z0+z1)/2;
+    if(Math.hypot(x-this.cx,z-this.cz)>140+length/2)return;
+    this.data[0]=forms.beam.id;this.data[1]=ELEMENT_KEYS.indexOf(key);this.data[2]=intensity;this.data[3]=this.time%1;
+    const north=Math.abs(z1-z0)/length;
+    this.batches.beam(x,y,z,length,Math.atan2(z1-z0,x1-x0),Math.max(width,this.batches.mpp.value*3)*(1+north*0.35),this.data,alpha,tint);
+    const n=Math.min(8,Math.max(1,Math.ceil(length/4)));
+    for(let i=0;i<=n;i++){
+      const px=x0+(x1-x0)*i/n,pz=z0+(z1-z0)*i/n;
+      this.light(`${key}:beam:${seed}:${i}`,px,y,pz,key,intensity,alpha,tint);
+      if(FX_QUALITY.imprints)this.field.stamp(px,pz,Math.max(2,width*1.5),elements[key].imprint as Imprint,intensity*alpha);
+    }
+    this.stats.instances++;
   }
   private light(id:string,x:number,y:number,z:number,element:keyof typeof elements,intensity:number,alpha:number,tint:readonly number[]|null):void {
     let light=this.lights.get(id);
@@ -130,9 +145,16 @@ export class MagicFx {
     this.galleryPanel(element);
     if(!this.galleryVisible)return;
     const phase=((this.galleryTime??time)%4)/4;
+    if(this.galleryPage===3){
+      const el=this.galleryElement??element;
+      this.beam(el,x-13,z,x-3,z,1.5,1.4,2,0.8,880001);
+      this.beam(el,x+8,z-5,x+8,z+5,1.5,1.4,2,0.8,880002);
+      return;
+    }
     const family=FORM_KEYS.slice(this.galleryPage*4,this.galleryPage*4+4);
     family.forEach((form,col)=>[0.25,0.6,1].forEach((intensity,row)=>{
       const xx=x+(col-1.5)*10,zz=z+(row-1)*12;
+      if(form==="beam"){this.beam(this.galleryElement??element,xx-3,zz,xx+3,zz,1.5,1.4,2,0.8,col*3+row,null,intensity);return;}
       this.draw(this.galleryElement??element,form,xx,forms[form].ground?0:form==="pillar"?5:2,zz,2,1,0.7,phase,col*3+row,null,intensity);
     }));
   }
@@ -145,6 +167,7 @@ export class MagicFx {
     select.value=fxElement(element);select.onchange=()=>{this.galleryElement=select.value;};p.append(select);
     const pages=document.createElement("select");pages.setAttribute("aria-label","Magic forms");
     for(let i=0;i<3;i++){const o=document.createElement("option");o.value=String(i);o.textContent=FORM_KEYS.slice(i*4,i*4+4).join(" / ");pages.append(o);}
+    const iso=document.createElement("option");iso.value="3";iso.textContent="Equal E–W / N–S beams";pages.append(iso);
     pages.onchange=()=>{this.galleryPage=Number(pages.value);};p.append(pages);
     const button=(label:string,action:()=>void)=>{const b=document.createElement("button");b.textContent=label;b.onclick=action;p.append(b);return b;};
     const pause=button("Pause",()=>{this.galleryTime=this.galleryTime===null?this.time:null;pause.textContent=this.galleryTime===null?"Pause":"Play";});

@@ -206,12 +206,7 @@ export class AttackLook {
   /** A beam from (x0, z0) to (x1, z1), width wide: a hot core line, its element's beads strung along it (scrolling, licking,
    *  forking, dripping its way), a glow as wide as it hurts, a flare at its mouth and sparks where it ends. */
   beam(d: Dress, x0: number, z0: number, x1: number, z1: number, y: number, width: number, time: number, seed: number, fade = 1): void {
-    const length = Math.hypot(x1-x0, z1-z0), count = Math.min(48, Math.max(1, Math.ceil(length / 1.4)));
-    for (let i=0;i<=count;i++) {
-      const k=i/count;
-      // The N-S beam's projected length is shorter: overlap wider cores instead of stretching the hit shape.
-      this.magic.draw(d.el, "beam", x0+(x1-x0)*k, y, z0+(z1-z0)*k, d.level, Math.max(0.65,width)*(1+Math.abs(z1-z0)/Math.max(1,length)*0.35), fade*0.65, (time+k)%1, seed+i, d.tint);
-    }
+    this.magic.beam(d.el, x0, z0, x1, z1, y, width, d.level, fade*0.65, seed, d.tint);
     const e = this.el(d), P = this.colours(d), t = this.tinted(d), solid = this.solid(d), pw = spellPower(d.level);
     const dx = x1 - x0, dz = z1 - z0, L = Math.hypot(dx, dz) || 1, ux = dx / L, uz = dz / L, fl = comfort.reduceFlashing ? 1 : 0.9 + 0.1 * Math.sin(time * 3 + seed);
     for (let s = 0.4; s < L; s += 0.6) this.glow.add(x0 + ux * s, y, z0 + uz * s, Math.max(0.7, width) * 1.1, this.uv("dot"), P[1][0], P[1][1], P[1][2], 0.16 * fl * fade);
