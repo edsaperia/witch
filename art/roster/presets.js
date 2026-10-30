@@ -20,11 +20,6 @@ export const ROSTER_PRESETS = {
     patch: { palette: { hue: .57, sat: .12, val: .72, over: { BODY: [164, 188, 205], BODY2: [110, 136, 157], BODY3: [68, 91, 113], BELLY: [223, 233, 239], LEAF: [160, 205, 222], LEAF2: [204, 234, 244], LEAF3: [112, 163, 190] } } },
     text: "A hunched frost troll with cold shaggy fur, pale icy growths and tusks.",
   },
-  frostwyrm: {
-    reason: "Ice-white and blue-grey paint makes the existing horned, ridged wyrm read as frost.",
-    patch: { palette: { hue: .57, sat: .16, val: .85, over: { BODY: [185, 212, 231], BODY2: [120, 158, 187], BODY3: [73, 111, 145], BODYL: [226, 239, 247], BELLY: [235, 244, 248], ACCENT: [205, 229, 243] } } },
-    text: "An ice-blue wyrm with pale ridges, twisting horns and a frost-white underside.",
-  },
   hydra: {
     reason: "Separate the existing dark heads and necks with lighter green shade and underside tones.",
     patch: { palette: { hue: .4, sat: .28, val: .42, over: { BODY2: [109, 141, 116], BODY3: [35, 55, 44], BELLY: [156, 178, 143], BODYL: [124, 157, 129] } } },
