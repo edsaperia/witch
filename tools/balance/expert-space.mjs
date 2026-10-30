@@ -5,8 +5,9 @@ export const POLICY_SPACE = [
   ["homeRange", 40, 200], ["follow", 2, 20, true], ["homeStand", 8, 40],
   ["castMoveFrac", 0.2, 0.9], ["pickRadiusFrac", 0.3, 0.9], ["retargetSeconds", 0.5, 6],
   ["questRange", 150, 900], ["questBias", 0, 800],
+  ["questMax", 0, 6, true],
 ];
-export const INITIAL_POLICY = { healAt: 1, healTo: 3, kite: 9, dashAt: 5, fireFrac: 0.95, closeFrac: 0.8, stick: 250, ahead: 400, homeRange: 120, follow: 10, homeStand: 22, castMoveFrac: 0.5, pickRadiusFrac: 0.6, retargetSeconds: 3, questRange: 700, questBias: 400 };
+export const INITIAL_POLICY = { healAt: 1, healTo: 3, kite: 9, dashAt: 5, fireFrac: 0.95, closeFrac: 0.8, stick: 250, ahead: 400, homeRange: 120, follow: 10, homeStand: 22, castMoveFrac: 0.5, pickRadiusFrac: 0.6, retargetSeconds: 3, questRange: 700, questBias: 400, questMax: 1 };
 export function equipmentSpace(catalogue) {
   return Object.entries(catalogue).map(([name, values]) => {
     if (!Array.isArray(values) || values.length < 2) throw Error(`Insufficient equipment choices: ${name}`);

@@ -12,7 +12,7 @@ import { runtime } from "./report-runtime.mjs";
 import { seedAt } from "./report-core.mjs";
 import { startSearch, ask, tell, objective } from "./expert-search-core.mjs";
 import { INITIAL_POLICY, POLICY_SPACE, equipmentSpace, equipmentOf, policyOf, trainingCases } from "./expert-space.mjs";
-import { importEvaluations, canonical, modelLock, digest } from "./expert-contract.mjs";
+import { importEvaluations, canonical, modelLock, digest, readFitnessCases, validateParameters } from "./expert-contract.mjs";
 
 // A separate idle parent enforces a real wall deadline even while one synchronous
 // real-rules case is running. An interrupted case resumes from its last checkpoint.
@@ -49,10 +49,10 @@ if (trainCount > 10000) throw Error("Training seed range reserved above index 99
 mkdirSync(out, { recursive: true });
 const root = fileURLToPath(new URL("../..", import.meta.url)), hash = createHash("sha256");
 function tree(dir) {
-  for (const e of readdirSync(resolve(root, dir), { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+  for (const e of readdirSync(resolve(root, dir), { withFileTypes: true }).sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0)) {
     const path = resolve(root, dir, e.name);
     if (e.isDirectory()) tree(relative(root, path));
-    else if (/\.(ts|mjs|js|json)$/.test(e.name)) { hash.update(relative(root, path).replaceAll("\\", "/")); hash.update(readFileSync(path)); }
+    else if (/\.(ts|mjs|js|json)$/.test(e.name)) { hash.update(relative(root, path).replaceAll("\\", "/")); hash.update(readFileSync(path, "utf8").replace(/\r\n/g, "\n")); }
   }
 }
 for (const dir of ["src/rules", "src/bots", "config", "art", "tools/balance"]) tree(dir);
@@ -62,12 +62,35 @@ try {
   const catalogue = { bag: r.bags, hat: r.hats, ...r.parts };
   const heldOutPairs = protectedPairs;
   const round = positive("round", 1, true); if (![1, 2].includes(round)) throw Error("Unsupported training round");
+  const caseFile = arg("cases", "");
+  if (round === 2 && !caseFile) throw Error("Focused round 2 requires --cases; --external alone does not define its fitness matrix");
+  const fitness = caseFile ? readFitnessCases(caseFile, catalogue, r.islands, heldOutPairs, round) : null;
+  const fromFile = arg("from", ""), from = fromFile ? JSON.parse(readFileSync(fromFile, "utf8")) : null;
+  if (round === 2 && !fromFile) throw Error("Focused round 2 requires --from for its selected round-one model");
+  if (from) {
+    if (from.manifest?.fingerprint !== fingerprint) throw Error("Initial trained model source differs");
+    validateParameters(from.policy);
+  }
   const externalFile = arg("external", ""), external = externalFile ? importEvaluations(externalFile, fingerprint, heldOutPairs, round) : [];
-  const manifest = { schema: 3, commit, fingerprint, execution, trainingOnly, shard, observation: "approximate fair observation", viewportAspect: "16:9", zoom: "default", canopyOcclusion: false, humanLimits: { reactionSeconds: 0.25, inputHz: 8, aimErrorMetres: 1 }, objective: ["wins", "questsCompleted", "allQuests", "upgradeEligibleToKeep", "wavesPassed", "worldSeconds"], trainSeeds, heldSeeds, heldOutPairs, round, externalDigest: digest(external), limit, iterations, searchSeed, catalogue, policySpace: POLICY_SPACE, laterIsland: "komodo (phase 5 island; Tiger is phase 4)" };
+  const manifest = { schema: 4, commit, fingerprint, fingerprintFormat: "lf-ordinal-v1", runtime: { node: process.version, platform: process.platform, arch: process.arch }, execution, trainingOnly, shard, observation: "approximate fair observation", viewportAspect: "16:9", zoom: "default", canopyOcclusion: false, humanLimits: { reactionSeconds: 0.25, inputHz: 8, aimErrorMetres: 1 }, objective: ["wins", "questsCompleted", "allQuests", "upgradeEligibleToKeep", "wavesPassed", "worldSeconds"], trainSeeds: fitness ? null : trainSeeds, fitnessCases: fitness, fitnessDigest: digest(fitness), fromDigest: digest(from), heldSeeds, heldOutPairs, round, externalDigest: digest(external), limit, iterations, searchSeed, catalogue, policySpace: POLICY_SPACE, laterIsland: "komodo (phase 5 island; Tiger is phase 4)" };
   writeFileSync(resolve(out, "held-out-pairs.json"), JSON.stringify(heldOutPairs, null, 2) + "\n");
   const checkpointPath = resolve(out, "checkpoint.json"), logPath = resolve(out, "cases.jsonl");
-  const initial = { ...INITIAL_POLICY, ...Object.fromEntries(Object.keys(catalogue).map(k => [k, 0])) };
-  let checkpoint = existsSync(checkpointPath) ? JSON.parse(readFileSync(checkpointPath, "utf8")) : { manifest, search: startSearch([...POLICY_SPACE, ...equipmentSpace(catalogue)], initial, searchSeed), evaluations: [], held: [], complete: false };
+  const initial = { ...(from?.policy ?? INITIAL_POLICY), ...Object.fromEntries(Object.keys(catalogue).map(k => [k, 0])) };
+  if (from) {
+    const gear = from.unlockedLoadout;
+    if (!gear || !Array.isArray(gear.parts)) throw Error("Initial model requires explicit unlocked loadout");
+    if (gear.wearsHat !== (gear.hat !== "none")) throw Error("Initial model hat-presence flag differs from its equipped hat");
+    for (const name of ["bag", "hat"]) { initial[name] = catalogue[name].indexOf(gear[name]); if (initial[name] < 0) throw Error(`Unknown initial ${name}`); }
+    const used = new Set();
+    for (const part of gear.parts) {
+      const slot = ["tip", "chassis", "exhaust"].find(k => catalogue[k].includes(part));
+      if (!slot || used.has(slot)) throw Error("Initial model has unknown/conflicting broom parts");
+      initial[slot] = catalogue[slot].indexOf(part); used.add(slot);
+    }
+  }
+  const equipmentFor = point => equipmentOf({ ...initial, ...point }, catalogue);
+  const activeSpace = fitness ? POLICY_SPACE : [...POLICY_SPACE, ...equipmentSpace(catalogue)];
+  let checkpoint = existsSync(checkpointPath) ? JSON.parse(readFileSync(checkpointPath, "utf8")) : { manifest, search: startSearch(activeSpace, fitness ? policyOf(initial) : initial, searchSeed), evaluations: [], held: [], complete: false };
   // Runners commit results on their result branches. Those docs-only commits
   // may resume the original source fingerprint without rewriting its provenance.
   if (checkpoint.manifest.fingerprint === fingerprint) manifest.commit = checkpoint.manifest.commit;
@@ -81,8 +104,9 @@ try {
   const started = performance.now();
   const expired = () => (performance.now() - started) / 1000 >= wall;
   const run = (c, point, split, candidate) => {
-    const cached = split === "training" ? external.find(x => canonical(x.parameters) === canonical(policyOf(point)) && x.case.limit === limit && x.case.worldSeed === c.worldSeed && x.case.nightSeed === c.seed && x.case.island === c.island && x.case.bpm === c.bpm && x.case.bag === c.bag && x.case.hat === c.hat && x.case.condition === c.condition && canonical(x.case.broomPart === null ? [] : [x.case.broomPart]) === canonical(c.parts)) : null;
-    const at = performance.now(), row = cached ? structuredClone(cached.result) : r.run(c, limit, { expert: policyOf(point) });
+    const caseLimit = c.limit ?? limit;
+    const cached = split === "training" ? external.find(x => canonical(x.parameters) === canonical(policyOf(point)) && x.case.limit === caseLimit && x.case.worldSeed === c.worldSeed && x.case.nightSeed === c.seed && x.case.island === c.island && x.case.bpm === c.bpm && x.case.bag === c.bag && x.case.hat === c.hat && x.case.condition === c.condition && canonical(x.case.broomPart === null ? [] : [x.case.broomPart]) === canonical(c.parts)) : null;
+    const at = performance.now(), row = cached ? structuredClone(cached.result) : r.run(c, caseLimit, { expert: policyOf(point) });
     appendFileSync(logPath, JSON.stringify({ schema: 1, split, shard, ...(candidate !== undefined ? { candidate } : {}), parameters: policyOf(point), row }) + "\n");
     process.stderr.write(`${split} ${candidate ?? "best"} ${c.condition}/${c.island}/${c.bpm}/${c.bot}: ${row.outcome}; ${cached ? "external cache; " : ""}wall ${((performance.now() - at) / 1000).toFixed(2)}s\n`);
     return row;
@@ -98,7 +122,7 @@ try {
     let evaluation = checkpoint.evaluations.find(e => e.candidate.id === candidate.id);
     if (!evaluation) { evaluation = { candidate, rows: [] }; checkpoint.evaluations.push(evaluation); }
     save();
-    const cases = trainingCases(trainSeeds, equipmentOf(candidate.point, catalogue));
+    const cases = fitness ? fitness.map(({ expert: c }) => ({ worldSeed: c.worldSeed, seed: c.nightSeed, bpm: c.bpm, island: c.island, condition: c.condition, bag: c.bag, hat: c.hat, wearsHat: c.hat !== "none", parts: c.broomPart === null ? [] : [c.broomPart], limit: c.limit, bot: "expert" })) : trainingCases(trainSeeds, equipmentFor(candidate.point));
     for (let i = evaluation.rows.length; i < cases.length && !expired(); i++) {
       evaluation.rows.push(run({ ...cases[i], bot: "expert" }, candidate.point, "training", candidate.id)); save();
     }
@@ -109,16 +133,16 @@ try {
     const point = checkpoint.search.incumbent;
     if (trainingOnly) {
       checkpoint.complete = true;
-      writeFileSync(resolve(out, "training-parameters.json"), JSON.stringify({ manifest, policy: policyOf(point), unlockedLoadout: equipmentOf(point, catalogue), trainingObjective: checkpoint.search.score, candidateCount: iterations, heldOutEvaluated: false }, null, 2) + "\n");
+      writeFileSync(resolve(out, "training-parameters.json"), JSON.stringify({ manifest, policy: policyOf(point), unlockedLoadout: equipmentFor(point), trainingObjective: checkpoint.search.score, candidateCount: iterations, heldOutEvaluated: false }, null, 2) + "\n");
       save();
       console.log(JSON.stringify({ out, complete: true, trainingOnly: true, evaluated: iterations, heldCases: 0, wallSeconds: (performance.now() - started) / 1000 }));
       process.exitCode = 0;
     } else {
-    const cases = trainingCases(heldSeeds, equipmentOf(point, catalogue)).flatMap(c => ["expert", "skilled", "crude"].map(bot => ({ ...c, bot })));
+    const cases = trainingCases(heldSeeds, equipmentFor(point)).flatMap(c => ["expert", "skilled", "crude"].map(bot => ({ ...c, bot })));
     for (let i = checkpoint.held.length; i < cases.length && !expired(); i++) { checkpoint.held.push(run(cases[i], point, "held-out")); save(); }
     checkpoint.complete = checkpoint.held.length === cases.length;
     if (checkpoint.complete) {
-      writeFileSync(resolve(out, "parameters.json"), JSON.stringify({ manifest, policy: policyOf(point), unlockedLoadout: equipmentOf(point, catalogue), trainingObjective: checkpoint.search.score, candidateCount: iterations }, null, 2) + "\n");
+      writeFileSync(resolve(out, "parameters.json"), JSON.stringify({ manifest, policy: policyOf(point), unlockedLoadout: equipmentFor(point), trainingObjective: checkpoint.search.score, candidateCount: iterations }, null, 2) + "\n");
       writeFileSync(resolve(out, "model-lock.json"), JSON.stringify(modelLock(policyOf(point), fingerprint, heldOutPairs), null, 2) + "\n");
       const table = condition => {
         const rows = checkpoint.held.filter(c => c.condition === condition), groups = new Map();

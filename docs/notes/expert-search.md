@@ -150,6 +150,70 @@ Unmatched survey outcomes never directly change fitness. Protected pairs are
 refused, malformed JSONL is refused and a changed external digest prevents resume.
 The survey owns its manifests, sharding and merging (#1475).
 
+### Focused round two and source freeze
+
+Coordinator 6513506188 requires `--round 2 --cases weak.cases.json --from
+selected-training-parameters.json`. The reader is
+`readFitnessCases` in `tools/balance/expert-contract.mjs`: input is an array of
+contract run cases or `{ "schema": 1, "cases": [...] }`. The supplied list
+replaces the original matrix. Every case retains its exact world/night seed,
+island, BPM, bag, hat, single broom part and player-second cutoff. A source case
+for skilled/crude/sloppy explicitly projects to expert for optimization; the
+original case remains in the manifest. Duplicate cells after projection,
+unknown equipment, fixture kinds, malformed lists and any protected pair are
+refused. First-round reserved survey pairs become eligible in round two; the
+expert's own protected pairs never do.
+
+`--external` remains an exact-result cache/proposal source, not the matrix
+selector. Round two refuses to run without both `--cases` and a same-source
+`--from` model. Equipment is fixed by each supplied case, so round two searches
+policy parameters only and preserves the selected model's unlocked loadout for
+the eventual final evaluation. Case-list/model/external digests enter the resume
+manifest. `--time` remains the standard-matrix/final-evaluation cutoff; it never
+overrides a supplied fitness case's own cutoff.
+
+Source hashes normalize CRLF to LF and use ordinal filename order
+(`lf-ordinal-v1`), so equivalent Windows and Linux checkouts agree. Manifests
+record Node version, OS and architecture; exact numeric replay across unlike
+runtimes is not claimed. Changed source or runtime cannot silently resume an
+old checkpoint.
+
+### Cloud runner preflight
+
+Use the exact dispatched source SHA with Node 22 and existing dependencies
+(`npm ci`). Before a training command, run:
+
+```
+npm run typecheck
+npx vitest run src/bots/expert.test.ts tools/docs --maxWorkers=1
+node --test --test-concurrency=1 tools/balance/expert-search-core.test.mjs tools/balance/expert-space.test.mjs tools/balance/expert-contract.test.mjs tools/balance/report.test.mjs
+node --check tools/balance/expert-search.mjs
+```
+
+If a preflight fails, report it without modifying source or training. Run only
+the assigned shard command; its hard 3300 s cap leaves five minutes of a 60-minute
+window for preserving results. Exit 2 is an incomplete checkpoint, not success.
+Commit that shard's result folder even when incomplete, on its own
+`claude/expert-train-<n>` branch. Source edits are not assigned to runners.
+Both optimizer checkpoints and JSONL must return; the builder fetches them
+read-only and compares policies on the common training matrix. No runner opens
+a browser or evaluates the protected held-out list (`--training-only`).
+
+Before cloud dispatch, the home calibration on source
+`496ab6fedf2135cd33a83925d00f09a67758ae97` ran
+2026-10-30 02:21:49.505–02:24:10.562 UTC: 141.057 s including startup,
+123.272 s of simulation. Lost after 2916 player seconds / 2913.84 world seconds;
+wave 10 reached, 9 passed, no knockdowns, quests 0/2. The briefcase find was
+picked up but was not eligible to keep after a loss. This is a single-case
+throughput result with possible coexisting unit checks, not a strength estimate.
+Its raw result is `expert-results/full-night-calibration.json`.
+
+The subsequent policy adds a deliberate visit to a sleeping legend actually
+seen, then reads its dream only after landing. `questMax` (0–6, default 1) bounds
+distinct dream visits, alongside `questRange`/`questBias`. Opportunistic dreams
+remain readable in view. This is a policy choice for cloud search, not a measured
+quality improvement; it uses no remote sleeping-legend data.
+
 Pilot reproduction (one worker; at most 480 s between case boundaries):
 
 ```

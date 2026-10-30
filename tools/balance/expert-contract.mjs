@@ -9,13 +9,13 @@ import { objective } from "./expert-search-core.mjs";
 
 export const canonical = value => JSON.stringify(value, (_, v) => v && typeof v === "object" && !Array.isArray(v) ? Object.fromEntries(Object.keys(v).sort().map(k => [k, v[k]])) : v);
 export const digest = value => createHash("sha256").update(canonical(value)).digest("hex");
-export function sourceFingerprint() {
-  const root = fileURLToPath(new URL("../..", import.meta.url)), hash = createHash("sha256");
+export function sourceFingerprint(root = fileURLToPath(new URL("../..", import.meta.url))) {
+  const hash = createHash("sha256");
   function tree(dir) {
-    for (const e of readdirSync(resolve(root, dir), { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+    for (const e of readdirSync(resolve(root, dir), { withFileTypes: true }).sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0)) {
       const path = resolve(root, dir, e.name);
       if (e.isDirectory()) tree(relative(root, path));
-      else if (/\.(ts|mjs|js|json)$/.test(e.name)) { hash.update(relative(root, path).replaceAll("\\", "/")); hash.update(readFileSync(path)); }
+      else if (/\.(ts|mjs|js|json)$/.test(e.name)) { hash.update(relative(root, path).replaceAll("\\", "/")); hash.update(readFileSync(path, "utf8").replace(/\r\n/g, "\n")); }
     }
   }
   for (const dir of ["src/rules", "src/bots", "config", "art", "tools/balance"]) tree(dir);
@@ -41,6 +41,30 @@ export function validateLock(lock, fingerprint) {
 }
 export const pairKey = c => `${c.worldSeed}/${c.nightSeed ?? c.seed}`;
 export const isSurveyReserved = c => Array.from({ length: 30 }, (_, i) => `${910000 + i}/${1000 + 7919 * (10000 + i)}`).includes(pairKey(c));
+
+// Survey selection owns the list; the search owns how an expert is evaluated on
+// it. Supplied cells replace the original matrix, never merely supplement a cache.
+export function readFitnessCases(file, catalogue, islands, heldOutPairs, round) {
+  if (![1, 2].includes(round)) throw Error("Unsupported fitness round");
+  const input = JSON.parse(readFileSync(file, "utf8"));
+  const cases = Array.isArray(input) ? input : input?.schema === 1 ? input.cases : null;
+  if (!Array.isArray(cases) || !cases.length) throw Error("Fitness list must be a nonempty case array or {schema:1,cases:[...]}");
+  const held = new Set(heldOutPairs.map(pairKey)), seen = new Set();
+  return cases.map(c => {
+    const allowed = ["kind", "worldSeed", "nightSeed", "island", "bpm", "bag", "hat", "broomPart", "bot", "condition", "limit"];
+    if (!c || Object.keys(c).some(k => !allowed.includes(k)) || c.kind !== "run") throw Error("Fitness matrix supports exact contract run cases only");
+    if (!Number.isInteger(c.worldSeed) || !Number.isInteger(c.nightSeed) || c.worldSeed < 0 || c.nightSeed < 0 || !Number.isFinite(c.bpm) || c.bpm < 80 || c.bpm > 220 || !(c.limit > 0) || !Number.isFinite(c.limit)) throw Error("Invalid fitness seeds/tempo/cutoff");
+    if (!islands.includes(c.island) || !catalogue.bag.includes(c.bag) || !catalogue.hat.includes(c.hat) || (c.broomPart !== null && ![...catalogue.tip, ...catalogue.chassis, ...catalogue.exhaust].includes(c.broomPart))) throw Error("Unknown exact fitness island/equipment");
+    if (!["matched", "home-everything"].includes(c.condition) || (c.condition === "home-everything" && c.island !== "home") || !["expert", "skilled", "crude", "sloppy"].includes(c.bot)) throw Error("Unsupported fitness condition/bot");
+    if (held.has(pairKey(c)) || (round === 1 && isSurveyReserved(c))) throw Error("Fitness matrix intersects protected seed pairs");
+    // A weak cell from any survey baseline is a challenge for the expert. Record
+    // this projection explicitly; no baseline bot is optimized by its parameters.
+    const normalized = { ...c, bot: "expert" }, key = canonical(normalized);
+    if (seen.has(key)) throw Error("Duplicate fitness cell after expert projection");
+    seen.add(key);
+    return { original: c, expert: normalized };
+  });
+}
 
 export async function createCaseRunner() {
   const R = await runtime(), fingerprint = sourceFingerprint();
@@ -76,6 +100,7 @@ export async function createCaseRunner() {
 // External rows propose parameter vectors and cache exact evaluations. Never
 // optimize on held-out pairs; first-round survey pairs are also excluded.
 export function importEvaluations(file, fingerprint, heldOutPairs, round = 1) {
+  if (![1, 2].includes(round)) throw Error("Unsupported external-evaluation round");
   const held = new Set(heldOutPairs.map(pairKey)), rows = readFileSync(file, "utf8").trim().split("\n").filter(Boolean).map(JSON.parse);
   for (const r of rows) {
     if (r.schema !== 1 || r.status !== "ok" || r.sourceFingerprint !== fingerprint || r.case?.kind !== "run" || r.case?.bot !== "expert") throw Error("External row schema/source/kind differs");

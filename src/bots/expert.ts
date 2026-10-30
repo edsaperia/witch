@@ -8,7 +8,7 @@ export const EXPERT_DEFAULTS = {
   healAt: 1, healTo: 3, kite: 9, dashAt: 5, fireFrac: 0.95, closeFrac: 0.8,
   stick: 250, ahead: 400, homeRange: 120, follow: 10,
   homeStand: 22, castMoveFrac: 0.5, pickRadiusFrac: 0.6, retargetSeconds: 3,
-  questRange: 700, questBias: 400,
+  questRange: 700, questBias: 400, questMax: 1,
 };
 export type ExpertParams = typeof EXPERT_DEFAULTS;
 export const EXPERT_LIMITS = { reactionSeconds: 0.25, inputHz: 8, aimErrorMetres: 1 };
@@ -23,6 +23,7 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
   if (!Object.values(K).every(Number.isFinite)) throw Error("Invalid expert parameters");
   const queue: Observation[] = [], memory = new Map<string, Observation["stones"][number]>();
   const quests = new Map<number, Observation["quests"][number]>();
+  const heardDreams = new Set<number>();
   let random = seed >>> 0, nextInput = 0, controls = idle(), healing = false, target: number | null = null, retargetAt = 0, lastArea = "", patrol = 0;
   let modePending: { from: Observation["self"]["mode"]; at: number } | null = null;
   const bot: Bot = { kind: "expert", doing: "waiting for observations", done: { quests: [], relics: [] }, decide };
@@ -53,7 +54,7 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
 
   function policy(o: Observation): Controls {
     const c = idle(), w = o.self;
-    for (const q of o.quests) { if (q.open) quests.set(q.id, structuredClone(q)); else quests.delete(q.id); }
+    for (const q of o.quests) { heardDreams.add(q.id); if (q.open) quests.set(q.id, structuredClone(q)); else quests.delete(q.id); }
     const putDown = () => {
       const near = o.placed.find(p => dist(w, p) < Math.max(o.pickRadius, o.spacing) * 1.1);
       if (!near) c.sigil = true;
@@ -93,6 +94,14 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
       if (go(quest.delivery, 3, true)) {
         if (o.carried[o.carried.length - 1]?.id === offering.id) putDown(); else c.cycle = true;
       }
+      return c;
+    }
+    // Learning a quest needs a visit: sleeping legends have no remote quest
+    // pointer. Only approach one actually seen, then read its ground-level dream.
+    const sleeper = !quests.size && heardDreams.size < K.questMax ? o.creatures.filter(a => a.boss && !a.friendly && !a.angry && !heardDreams.has(a.id) && dist(w, a) <= K.questRange).sort((a, b) => dist(w, a) - dist(w, b))[0] : null;
+    if (sleeper) {
+      bot.doing = "visiting a visible legend's dream";
+      if (go({ x: sleeper.x + 4, z: sleeper.z + 4 }, 6, true)) heardDreams.add(sleeper.id);
       return c;
     }
     const loot = [...o.loose, ...o.creatures.flatMap(a => a.rune ? [a.rune] : [])].sort((a, b) => dist(w, a) - dist(w, b))[0];

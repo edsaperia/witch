@@ -40,7 +40,7 @@ export function newObserver() {
     const visible = (p: Point) => Math.abs(p.x - b.x) <= ext.halfWidth && Math.abs(p.z - b.z) <= ext.halfDepth;
     const creatures: SeenCreature[] = g.creatures.filter(c => !c.gone && !c.leashed && visible(c)).map(c => ({
       id: c.id, species: c.species, level: c.level, x: c.x, z: c.z, boss: !!c.boss,
-      friendly: stateOf(c) === "happy", angry: !!c.enraged, stunned: !!c.dazed, area: cellKey(c.cell),
+      friendly: stateOf(c) === "happy" || c.legendState === "happy", angry: !!c.enraged || c.legendState === "angry", stunned: !!c.dazed, area: cellKey(c.cell),
       rune: hasRune(c, time) ? { x: c.x, z: c.z + runeOffset(c, t) } : null,
     }));
     const stones: SeenStone[] = [];

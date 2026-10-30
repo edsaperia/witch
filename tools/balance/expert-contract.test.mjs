@@ -1,10 +1,32 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, writeFileSync, unlinkSync, rmdirSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, unlinkSync, rmdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { INITIAL_POLICY } from "./expert-space.mjs";
-import { createCaseRunner, modelLock, validateLock, digest, importEvaluations, isSurveyReserved } from "./expert-contract.mjs";
+import { createCaseRunner, modelLock, validateLock, digest, importEvaluations, isSurveyReserved, sourceFingerprint, readFitnessCases } from "./expert-contract.mjs";
+
+test("source fingerprints match LF and CRLF checkouts but reject changed source", () => {
+  const dir = mkdtempSync(join(tmpdir(), "witch-fingerprint-")), roots = [join(dir, "lf"), join(dir, "crlf")];
+  const trees = ["src/rules", "src/bots", "config", "art", "tools/balance"];
+  const files = ["src/rules/Zoo.ts", "src/rules/alpha.ts"];
+  try {
+    for (const [i, root] of roots.entries()) {
+      for (const tree of trees) mkdirSync(join(root, tree), { recursive: true });
+      for (const file of files) writeFileSync(join(root, file), `export const label = 'fox 🦊';${i ? "\r\n" : "\n"}`);
+    }
+    assert.equal(sourceFingerprint(roots[0]), sourceFingerprint(roots[1]));
+    writeFileSync(join(roots[1], files[0]), "export const changed = 1;\r\n");
+    assert.notEqual(sourceFingerprint(roots[0]), sourceFingerprint(roots[1]));
+  } finally {
+    for (const root of roots) {
+      for (const file of files) unlinkSync(join(root, file));
+      for (const tree of ["src/rules", "src/bots", "src", "config", "art", "tools/balance", "tools"]) rmdirSync(join(root, tree));
+      rmdirSync(root);
+    }
+    rmdirSync(dir);
+  }
+});
 
 test("locks protect source, parameters and human floors; canonical hashes ignore key order", () => {
   const lock = modelLock(INITIAL_POLICY, "source-a", [{ worldSeed: 0, nightSeed: 20 }]);
@@ -14,6 +36,26 @@ test("locks protect source, parameters and human floors; canonical hashes ignore
   assert.throws(() => validateLock({ ...lock, parameters: { ...INITIAL_POLICY, kite: 1 } }, "source-a"));
   assert.equal(isSurveyReserved({ worldSeed: 910000, nightSeed: 1000 + 7919 * 10000 }), true);
   assert.equal(isSurveyReserved({ worldSeed: 0, nightSeed: 1000 }), false);
+});
+
+test("weak-case fitness lists preserve exact settings and exclude held-out pairs in both rounds", () => {
+  const dir = mkdtempSync(join(tmpdir(), "witch-fitness-")), file = join(dir, "weak.cases.json");
+  const catalogue = { bag: ["satchel"], hat: ["none", "helmet"], tip: [null, "tip-a"], chassis: [null], exhaust: [null] };
+  const c = { kind: "run", worldSeed: 910000, nightSeed: 1000 + 7919 * 10000, island: "home", bpm: 91, bag: "satchel", hat: "helmet", broomPart: "tip-a", bot: "sloppy", condition: "matched", limit: 4200 };
+  try {
+    writeFileSync(file, JSON.stringify({ schema: 1, cases: [c] }));
+    assert.throws(() => readFitnessCases(file, catalogue, ["home"], [], 1));
+    const rows = readFitnessCases(file, catalogue, ["home"], [], 2);
+    assert.equal(rows.length, 1); assert.deepEqual(rows[0].original, c);
+    assert.deepEqual(rows[0].expert, { ...c, bot: "expert" });
+    for (const round of [1, 2]) assert.throws(() => readFitnessCases(file, catalogue, ["home"], [{ worldSeed: c.worldSeed, nightSeed: c.nightSeed }], round));
+    writeFileSync(file, JSON.stringify([c, { ...c, bot: "expert" }]));
+    assert.throws(() => readFitnessCases(file, catalogue, ["home"], [], 2), /Duplicate/);
+    writeFileSync(file, JSON.stringify([{ ...c, broomPart: "missing" }]));
+    assert.throws(() => readFitnessCases(file, catalogue, ["home"], [], 2), /equipment/);
+    writeFileSync(file, JSON.stringify([{ ...c, limit: 0 }]));
+    assert.throws(() => readFitnessCases(file, catalogue, ["home"], [], 2), /cutoff/);
+  } finally { unlinkSync(file); rmdirSync(dir); }
 });
 
 test("external rows cannot leak held-out pairs or first-round reserved survey pairs", () => {

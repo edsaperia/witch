@@ -79,4 +79,18 @@ describe("expert observation and human input boundary", () => {
     legend.quest!.species = "unobservable-request";
     expect(observe(g)).toEqual(before);
   });
+
+  it("can visit a seen sleeping legend without reading its quest from the treetops", () => {
+    const g = newGame(1000, withTuning({ cast: { ...TUNING.cast, on: false } })), w = g.witches[0];
+    w.body = { ...w.body, seated: false, perch: false, mode: "treetop", lift: 1 };
+    const legend = g.creatures.find(c => c.boss && c.quest)!;
+    for (const c of g.creatures) if (c !== legend) c.gone = true;
+    Object.assign(legend, { x: w.body.x + 20, z: w.body.z, legendState: "asleep", enraged: false });
+    expect(newObserver()(g).quests).toEqual([]);
+    const bot = newExpert(); bot.decide(g); g.herTime = 0.25;
+    const c = bot.decide(g);
+    expect(bot.doing).toBe("visiting a visible legend's dream");
+    expect(c.toggleMode).toBe(true);
+    expect(Math.hypot(c.moveX, c.moveZ)).toBeGreaterThan(0.9);
+  });
 });

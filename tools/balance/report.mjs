@@ -41,15 +41,15 @@ if (mode === "report") {
     const root = fileURLToPath(new URL("../..", import.meta.url));
     const hash = createHash("sha256");
     function addTree(dir) {
-      for (const e of readdirSync(resolve(root, dir), { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+      for (const e of readdirSync(resolve(root, dir), { withFileTypes: true }).sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0)) {
         const path = resolve(root, dir, e.name);
         if (e.isDirectory()) addTree(relative(root, path));
-        else if (/\.(ts|mjs|js|json)$/.test(e.name)) { hash.update(relative(root, path).replaceAll("\\", "/")); hash.update(readFileSync(path)); }
+        else if (/\.(ts|mjs|js|json)$/.test(e.name)) { hash.update(relative(root, path).replaceAll("\\", "/")); hash.update(readFileSync(path, "utf8").replace(/\r\n/g, "\n")); }
       }
     }
     for (const dir of ["src/rules", "src/bots", "config", "art", "tools/balance"]) addTree(dir);
     const commit = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
-    const manifest = { schema: SCHEMA, mode, commit, build: arg("build", "local source (no published version asserted)"), fingerprint: hash.digest("hex"), step: R.STEP, limit, distance, seeds, bags, bpms, ...(mode === "runs" ? { bots, islands } : { species, levels }), loadout: { hat: "none", broomParts: [], ownedFinds: {} } };
+    const manifest = { schema: SCHEMA, mode, commit, build: arg("build", "local source (no published version asserted)"), fingerprint: hash.digest("hex"), fingerprintFormat: "lf-ordinal-v1", step: R.STEP, limit, distance, seeds, bags, bpms, ...(mode === "runs" ? { bots, islands } : { species, levels }), loadout: { hat: "none", broomParts: [], ownedFinds: {} } };
     if (records.length && JSON.stringify(records[0].manifest) !== JSON.stringify(manifest)) throw Error("Experiment manifest differs; choose a new --out file. Existing results preserved.");
     if (!records.length) appendFileSync(file, JSON.stringify({ manifest }) + "\n");
     const rows = records.slice(1), done = new Set(rows.map(caseKey));
