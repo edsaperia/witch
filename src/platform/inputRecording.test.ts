@@ -1,4 +1,4 @@
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import { newGame, STEP, type Controls } from "../rules/game";
 import { TUNING } from "../rules/tuning";
 import { snapshotGame } from "../rules/nightSnapshot";
@@ -7,7 +7,7 @@ import { restoreSettingsBase } from "../app/playerSettings";
 import { InputRecorder, localControls, replayRecording, type InputRecording } from "./inputRecording";
 import { packLog, unpackLog } from "./logCodec";
 
-function fixture(persist?: (kind: string, payload: unknown) => void) {
+function fixture(persist?: (kind: string, payload: unknown, context: { build: string; t: number; island: string }) => void) {
   const t = structuredClone(TUNING); t.map!.islandAreas = 4;
   const game = newGame(123, t); game.clock.paused = false;
   restoreSettingsBase(game.tuning, { voices: {}, shake: 1, legendFlash: 1 });
@@ -45,4 +45,52 @@ it("rejects executable/nested controls without changing the wire default or norm
   expect(localControls({ ...idle, aimX: 200, aimZ: -100 })).toMatchObject({ aimX: 200, aimZ: -100 });
   expect(localControls({ ...idle, rune: () => null })).toBeNull(); expect(localControls({ ...idle, aimX: NaN })).toBeNull();
   expect(localControls({ ...idle, fire: "yes" })).toBeNull(); expect(localControls({ ...idle, rune: "not a function" })).toBeNull();
+});
+it("retains unchanged frames without hot-path serialization/cloning, drains bounded journal batches and exports the exact ordered stream", () => {
+  vi.useFakeTimers();
+  try {
+    const streamed: { kind: string; payload: unknown }[] = [];
+    const { game, recorder } = fixture((kind, payload) => streamed.push({ kind, payload: structuredClone(payload) }));
+    recorder.step(idle, STEP);
+    const stringify = vi.spyOn(JSON, "stringify"), clone = vi.spyOn(globalThis, "structuredClone");
+    for (let i = 0; i < 300; i++) recorder.step(idle, STEP);
+    expect(stringify).not.toHaveBeenCalled(); expect(clone).not.toHaveBeenCalled();
+    stringify.mockRestore(); clone.mockRestore();
+    expect(streamed).toHaveLength(1); // start only: diagnostic encoding waits until the simulation task yields.
+    vi.advanceTimersByTime(100);
+    expect(streamed.filter(row => row.kind === "recording:event")).toHaveLength(128);
+    // Grow a partly drained run, then seal it with a checkpoint. Neither its old
+    // prefix nor the transition can be lost or journalled twice.
+    for (let i = 0; i < 10; i++) recorder.step({ ...idle }, STEP);
+    recorder.mutate("pause", () => { game.clock.paused = true; });
+    const tape = recorder.export();
+    expect(tape.events.filter(event => event.kind === "frame")).toHaveLength(311);
+    expect(streamed.slice(1).map(row => (row.payload as { event: unknown }).event)).toEqual(tape.events);
+    expect(snapshotGame(replayRecording(tape, "test"))).toEqual(snapshotGame(game));
+    expect(vi.getTimerCount()).toBe(0);
+  } finally { vi.restoreAllMocks(); vi.useRealTimers(); }
+});
+it("still enforces the raw expanded byte/event cap when a long unchanged run is compact in memory", () => {
+  const { recorder } = fixture();
+  for (let i = 0; i < 120_001; i++) recorder.step(idle, 0);
+  const tape = recorder.export();
+  expect(tape.complete).toBe(false); expect(tape.failure).toMatch(/retention limit/);
+  expect(tape.events.length).toBeLessThanOrEqual(120_000);
+  const retainedBytes = new TextEncoder().encode(JSON.stringify(tape.startingSave)).length
+    + new TextEncoder().encode(JSON.stringify(tape.start)).length
+    + tape.events.reduce((sum, event) => sum + new TextEncoder().encode(JSON.stringify(event)).length, 0);
+  expect(retainedBytes).toBeLessThanOrEqual(16 * 1024 * 1024);
+});
+it("keeps deferred records owned by their original game after another night can become current", () => {
+  vi.useFakeTimers();
+  try {
+    const owners: { build: string; t: number; island: string }[] = [];
+    const { game, recorder } = fixture((kind, _payload, owner) => { if (kind === "recording:event") owners.push(owner); });
+    game.tuning.map!.island = "fox";
+    recorder.step(idle, STEP);
+    const other = fixture(); other.game.tuning.map!.island = "bear"; other.game.clock.time = 900;
+    vi.advanceTimersByTime(100);
+    expect(owners).toEqual([{ build: "test", t: game.clock.time, island: "fox" }]);
+    expect(vi.getTimerCount()).toBe(0);
+  } finally { vi.useRealTimers(); }
 });

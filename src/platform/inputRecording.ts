@@ -32,6 +32,27 @@ const localStart = (game: Game, build: string, tick: number): LocalStart => ({ .
 export type RecordedEvent =
   | { kind: "frame"; fromStep: number; toStep: number; frame: ReplayFrame; focus?: Game["introFocus"] }
   | { kind: "checkpoint"; label: string; step: number; before: LocalStart; after: LocalStart };
+type FrameEvent = Extract<RecordedEvent, { kind: "frame" }>;
+interface FrameRun { first: FrameEvent; count: number; delta: number; serialized: number; sent: number }
+type RetainedEvent = FrameRun | Extract<RecordedEvent, { kind: "checkpoint" }>;
+const neutral: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
+const integerWidth = (n: number): number => n < 10 ? 1 : Math.floor(Math.log10(n)) + 1;
+/** Compare borrowed controls without allocating entries/copies on every unchanged frame. */
+function sameControls(value: Controls, saved: Controls): boolean {
+  let count = 0, previous = 0, own = 0;
+  for (const key in value) if (Object.hasOwn(value, key)) {
+    if (++own > 64 || key.length > 64 || key === "__proto__" || key === "constructor" || key === "prototype") return false;
+    if ((value as unknown as Record<string, unknown>)[key] === undefined) continue;
+    if ((value as unknown as Record<string, unknown>)[key] !== (saved as unknown as Record<string, unknown>)[key]) return false;
+    count++;
+  }
+  for (const key in saved) if (Object.hasOwn(saved, key)) previous++;
+  return count === previous;
+}
+function expandFrame(run: FrameRun, index: number): FrameEvent {
+  const first = run.first, fromStep = first.fromStep + index * run.delta;
+  return { ...first, fromStep, toStep: fromStep + run.delta, frame: { ...first.frame, tick: first.frame.tick + index } };
+}
 export interface InputRecording {
   version: 1; build: string; seed: number; startingSave: SavedNight;
   start: Omit<LocalStart, "snapshot">; events: RecordedEvent[]; target: LocalStart;
@@ -40,33 +61,89 @@ export interface InputRecording {
 
 export class InputRecorder {
   private tick = 0;
-  private events: RecordedEvent[] = [];
+  private events: RetainedEvent[] = [];
+  private eventCount = 0;
+  private journalIndex = 0;
+  private journalTimer?: ReturnType<typeof setTimeout>;
   private size: number;
   private complete = true;
   private failure?: string;
   private nested = 0;
   private readonly start: Omit<LocalStart, "snapshot">;
   private readonly startingSave: SavedNight;
-  constructor(private game: Game, private build: string, capture: () => SavedNight, private persist?: (kind: string, payload: unknown) => void) {
+  constructor(private game: Game, private build: string, capture: () => SavedNight, private persist?: (kind: string, payload: unknown, context: { build: string; t: number; island: string }) => void) {
     this.startingSave = capture();
     const { snapshot: _snapshot, ...start } = localStart(game, build, 0); this.start = start;
     this.size = bytes(this.startingSave) + bytes(start);
     this.record("recording:start", { version: 1, build, seed: game.seed, startingSave: this.startingSave, start });
     if (this.size > MAX_BYTES) this.fail("Starting save exceeds the input recording limit");
   }
-  private record(kind: string, payload: unknown): void { try { this.persist?.(kind, payload); } catch { /* Logging cannot change a simulation step. */ } }
+  private record(kind: string, payload: unknown): void {
+    try { this.persist?.(kind, payload, { build: this.build, t: this.game.clock.time, island: this.game.tuning.map?.island || "home" }); }
+    catch { /* Logging cannot change a simulation step. */ }
+  }
   private fail(message: string): void { this.complete = false; this.failure ??= message; this.record("recording:incomplete", { message }); }
   private append(event: RecordedEvent): void {
     if (!this.complete) return;
     this.size += bytes(event);
-    if (this.events.length >= MAX_EVENTS || this.size > MAX_BYTES) { this.fail("Input recording reached its retention limit"); return; }
-    this.events.push(event);
-    this.record("recording:event", { seed: this.game.seed, event });
+    if (this.eventCount >= MAX_EVENTS || this.size > MAX_BYTES) { this.fail("Input recording reached its retention limit"); return; }
+    this.eventCount++;
+    this.events.push(event.kind === "frame" ? { first: event, count: 1, delta: event.toStep - event.fromStep, serialized: bytes(event), sent: 0 } : event);
+    this.scheduleJournal();
+  }
+  private scheduleJournal(): void {
+    if (!this.persist || this.journalTimer !== undefined) return;
+    this.journalTimer = setTimeout(() => { this.journalTimer = undefined; this.flushJournal(128); }, 100);
+  }
+  /** Encoding/cloning/storage work is outside the simulation task, in bounded batches.
+   * Export explicitly drains it so a user-requested download contains every event. */
+  private flushJournal(limit = Infinity): void {
+    if (this.journalTimer !== undefined) { clearTimeout(this.journalTimer); this.journalTimer = undefined; }
+    if (!this.persist) return;
+    while (this.journalIndex < this.events.length && limit > 0) {
+      const item = this.events[this.journalIndex];
+      if ("first" in item) {
+        while (item.sent < item.count && limit-- > 0) this.record("recording:event", { seed: this.game.seed, event: expandFrame(item, item.sent++) });
+        // The last run can grow before the next flush: keep its cursor until sealed.
+        if (item.sent < item.count || this.journalIndex === this.events.length - 1) break;
+      } else { this.record("recording:event", { seed: this.game.seed, event: item }); limit--; }
+      this.journalIndex++;
+    }
+    const last = this.events[this.journalIndex];
+    if (last && (!("first" in last) || last.sent < last.count || this.journalIndex < this.events.length - 1)) this.scheduleJournal();
   }
   /** Record the actual caller's controls, then run the unchanged stepGame implementation with its original arguments. */
   step(controls: Controls | readonly Controls[], dt: number): void {
+    if (!this.complete) { stepGame(this.game, controls, dt); return; }
+    const last = this.events.at(-1), run = last && "first" in last ? last : undefined;
+    const effective = Math.min(MAX_STEP, Math.max(0, dt)), fromStep = simulationStep(this.game), tick = this.tick + 1;
+    const focusNow = this.game.introFocus, focusWas = run?.first.focus;
+    let same = !!run && Number.isFinite(dt) && run.first.frame.dt === effective && run.first.frame.inputs.length === this.game.witches.length && (!Array.isArray(controls) || controls.length === run.first.frame.inputs.length)
+      && (focusNow === undefined ? focusWas === undefined : !!focusWas && focusNow.x === focusWas.x && focusNow.y === focusWas.y && focusNow.z === focusWas.z);
+    if (same) for (let i = 0; i < this.game.witches.length; i++) {
+      const input = Array.isArray(controls) ? controls[i] : i ? neutral : controls as Controls;
+      if (!input || !sameControls(input, run!.first.frame.inputs[i])) { same = false; break; }
+    }
+    if (same && fromStep === run!.first.fromStep + run!.count * run!.delta) {
+      this.tick = tick;
+      try { stepGame(this.game, controls, dt); }
+      catch (error) { this.fail("A recorded simulation frame threw before completion"); throw error; }
+      const toStep = simulationStep(this.game);
+      if (toStep - fromStep === run!.delta) {
+        // Exact expanded JSON byte accounting: only these integer widths change.
+        this.size += run!.serialized + integerWidth(tick) + integerWidth(fromStep) + integerWidth(toStep)
+          - integerWidth(run!.first.frame.tick) - integerWidth(run!.first.fromStep) - integerWidth(run!.first.toStep);
+        if (this.eventCount >= MAX_EVENTS || this.size > MAX_BYTES) this.fail("Input recording reached its retention limit");
+        else { run!.count++; this.eventCount++; this.scheduleJournal(); }
+        return;
+      }
+      // Fractional frames can cross a different number of fixed steps with the same
+      // controls/dt. Preserve that boundary; never run the simulation a second time.
+      this.append({ ...run!.first, fromStep, toStep, frame: { ...run!.first.frame, tick } });
+      return;
+    }
     const inputs = (Array.isArray(controls) ? controls : this.game.witches.map((_, i) => i ? { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false } : controls as Controls)).map(localControls);
-    const fromStep = simulationStep(this.game), tick = ++this.tick;
+    this.tick = tick;
     const focus = structuredClone(this.game.introFocus); // The renderer's camera anchor is a local per-frame input, omitted by disk saves.
     if (inputs.some(c => c === null) || !Number.isFinite(dt)) this.fail("An input could not be represented losslessly");
     try { stepGame(this.game, controls, dt); }
@@ -90,8 +167,10 @@ export class InputRecorder {
     }
   }
   export(): InputRecording {
+    this.flushJournal();
+    const events = this.events.flatMap<RecordedEvent>(item => "first" in item ? Array.from({ length: item.count }, (_, i) => expandFrame(item, i)) : [item]);
     return structuredClone({ version: 1, build: this.build, seed: this.game.seed, startingSave: this.startingSave, start: this.start,
-      events: this.events, target: localStart(this.game, this.build, this.tick), complete: this.complete, ...(this.failure ? { failure: this.failure } : {}) });
+      events, target: localStart(this.game, this.build, this.tick), complete: this.complete, ...(this.failure ? { failure: this.failure } : {}) });
   }
 }
 

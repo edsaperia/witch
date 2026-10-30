@@ -345,7 +345,7 @@ sound.leyLink = () => view.ley.currentLink(); // (the pulse's fizz heard where t
 // The freeze (Esc, gamepad Start, the ❚❚ button): a true still for screenshots, . steps (platform/freeze.ts).
 const freeze = page.freeze = new Freeze(N().game, N().seed, BUILD);
 freeze.mutate = mutate;
-freeze.advance = (game, controls, dt) => recordedStep(game, controls, dt, BUILD, () => captureRecording(game));
+freeze.advance = (game, controls, dt) => recordedStep(game, controls, dt, BUILD, captureRecording);
 freeze.started = () => (startEl.style.display === "none" || creator.open) && !studio.at; // (in the bedroom too: Ed, 2026-10-14, "Can we pause from the bedroom?")
 freeze.ownsEsc = () => !bot && !document.querySelector("#settings-page.open"); // (the Settings page's Esc is its own: it closes, the pause page stays) // (the bot game's Esc is its way back to the start screen: ui/botGame.ts)
 
@@ -757,7 +757,7 @@ let lastRecordedInput = "", lastInputAt = -Infinity;
 async function saveComment(text: string): Promise<string> {
   const n = N();
   const comment = captureComment(n.game, text, { build: BUILD, params: n.params.toString(), look: page.look() as Record<string, unknown> | null, loan,
-    flags: { chartRecorded: n.flags.chartRecorded, overRecorded: n.flags.overRecorded } }, repro.link(), Object.fromEntries(repro.changed()), breadcrumbs.recent(n.game), Date.now(), recordingFor(n.game, BUILD, () => captureRecording(n.game)).export());
+    flags: { chartRecorded: n.flags.chartRecorded, overRecorded: n.flags.overRecorded } }, repro.link(), Object.fromEntries(repro.changed()), breadcrumbs.recent(n.game), Date.now(), recordingFor(n.game, BUILD, captureRecording).export());
   const kept = await commentBook.add(comment);
   const status = kept ? "Comment and saved moment kept in the playtest log." : "Comment kept on this page only: browser storage is unavailable. Download the log before closing.";
   return comment.recording?.complete ? status : `${status} Exact input replay is incomplete: ${comment.recording?.failure ?? "unavailable"}.`;
@@ -871,7 +871,7 @@ document.getElementById("copy-debug")?.addEventListener("click", e => {
 });
 N().playtest.debugInfo = () => ({ link: repro.link(), machine: repro.machine().map(l => l.slice(7)), changed: Object.fromEntries(repro.changed()) });
 N().playtest.comments = () => commentBook.all();
-N().playtest.inputRecording = () => recordingFor(N().game, BUILD, () => captureRecording(N().game)).export();
+N().playtest.inputRecording = () => recordingFor(N().game, BUILD, captureRecording).export();
 N().playtest.debugText = () => repro.full();
 // The pause page's Report (ui/visualReport.ts): the frame drawn with each neutral pair, where they differ, the GPU, her place, the
 // camera and the repro link. window.__neutralCheck: the same pairs' numbers for the smoke test (tools/smoke/smoke.cjs "neutral").
@@ -1252,7 +1252,7 @@ function frameBody(now: number): void {
   const recordedInput = JSON.stringify(c);
   if (recordedInput !== lastRecordedInput || game.clock.time - lastInputAt >= 1) { breadcrumbs.add(game, "input", c); lastRecordedInput = recordedInput; lastInputAt = game.clock.time; }
   if (params.get("cauldron") !== "0" && !game.cauldron) mutate("cauldron: enable", () => enableCauldron(game, homeMushroomPickups(game))); // (on by default, Ed 2026-10-30; ?cauldron=0 turns it off)
-  recordedStep(game, c, fightDt(dt * (botTag?.speed ?? 1)), BUILD, () => captureRecording(game)); // Same stepGame and original controls; tape is diagnostic only.
+  recordedStep(game, c, fightDt(dt * (botTag?.speed ?? 1)), BUILD, captureRecording); // Same stepGame and original controls; tape is diagnostic only.
   for (const [kind, events] of [["ko", game.koEvents], ["quest", game.questEvents], ["spell", game.combat.spells?.events ?? []]] as const) for (const event of events) { breadcrumbs.add(game, kind, event); if (kind !== "spell") notable(kind, `${kind} event`, event); }
   rumble.update(game, currentSettings(), input.device === "pad" && !document.hidden ? [freeze.pad()] : [], now);
   // ?debug=attack: every 10 s, a few seconds of blows on the two soundsystems farthest from her (never felling one), so the
@@ -1418,7 +1418,7 @@ requestAnimationFrame(frame);
 
 
 // For the smoke test, the tools and for poking at in the console (app/hooks.ts).
-installHooks({ night: N, view, sound, meter, shake, frameStats, ladder, loadTimes, loop, advance: (game, controls, dt) => recordedStep(game, controls, dt, BUILD, () => captureRecording(game)) });
+installHooks({ night: N, view, sound, meter, shake, frameStats, ladder, loadTimes, loop, advance: (game, controls, dt) => recordedStep(game, controls, dt, BUILD, captureRecording) });
 // witch.take(kind, item): tonight's find taken where she stands, as E at it takes it (the kind's claim, the hats' floor, the loan):
 // for the tools (tools/loan/shots.cjs) to look at a night with a find on loan without walking to it.
 (window as unknown as { witch: Record<string, unknown> }).witch.compareKey = keyNow;

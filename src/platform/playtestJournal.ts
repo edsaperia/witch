@@ -168,8 +168,8 @@ export function notable(kind: string, message: string, data?: unknown): void {
   const event = { ...at, at: Date.now(), kind, message: message.slice(0, 1000), ...(data === undefined ? {} : { data: safeData(data) }) };
   trail.push(event); if (trail.length > 50) trail.shift(); active?.notable(event);
 }
-export function journalEntry(kind: string, payload: unknown): void {
-  let at: LogContext; try { at = context(); } catch { at = { build: "dev", t: null, island: "unknown" }; }
+export function journalEntry(kind: string, payload: unknown, owner?: LogContext): void {
+  let at: LogContext; try { at = owner ?? context(); } catch { at = { build: "dev", t: null, island: "unknown" }; }
   const message = kind === "error" && payload && typeof payload === "object" && "message" in payload && typeof payload.message === "string" ? payload.message : kind;
   active?.append(kind, payload, { context: at, message });
 }
