@@ -1,0 +1,4062 @@
+[
+  {
+    "study": "ladder",
+    "shard": "ladder-000",
+    "cases": 40,
+    "group": "map-0/islands-0",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-000 --lock trained-expert-lock.json --out results/ladder/ladder-000.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-001",
+    "cases": 40,
+    "group": "map-0/islands-1",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-001 --lock trained-expert-lock.json --out results/ladder/ladder-001.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-002",
+    "cases": 40,
+    "group": "map-0/islands-2",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-002 --lock trained-expert-lock.json --out results/ladder/ladder-002.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-003",
+    "cases": 40,
+    "group": "map-0/islands-3",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-003 --lock trained-expert-lock.json --out results/ladder/ladder-003.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-004",
+    "cases": 40,
+    "group": "map-0/islands-4",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-004 --lock trained-expert-lock.json --out results/ladder/ladder-004.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-005",
+    "cases": 40,
+    "group": "map-0/islands-5",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-005 --lock trained-expert-lock.json --out results/ladder/ladder-005.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-006",
+    "cases": 40,
+    "group": "map-0/islands-6",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-006 --lock trained-expert-lock.json --out results/ladder/ladder-006.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-007",
+    "cases": 40,
+    "group": "map-0/islands-7",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-007 --lock trained-expert-lock.json --out results/ladder/ladder-007.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-008",
+    "cases": 40,
+    "group": "map-0/islands-8",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-008 --lock trained-expert-lock.json --out results/ladder/ladder-008.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-009",
+    "cases": 40,
+    "group": "map-0/islands-9",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-009 --lock trained-expert-lock.json --out results/ladder/ladder-009.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-010",
+    "cases": 40,
+    "group": "map-0/islands-10",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-010 --lock trained-expert-lock.json --out results/ladder/ladder-010.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-011",
+    "cases": 40,
+    "group": "map-0/islands-11",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-011 --lock trained-expert-lock.json --out results/ladder/ladder-011.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-012",
+    "cases": 40,
+    "group": "map-0/islands-12",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-012 --lock trained-expert-lock.json --out results/ladder/ladder-012.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-013",
+    "cases": 40,
+    "group": "map-1/islands-0",
+    "seedPairs": [
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-013 --lock trained-expert-lock.json --out results/ladder/ladder-013.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-014",
+    "cases": 40,
+    "group": "map-1/islands-1",
+    "seedPairs": [
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-014 --lock trained-expert-lock.json --out results/ladder/ladder-014.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-015",
+    "cases": 40,
+    "group": "map-1/islands-2",
+    "seedPairs": [
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-015 --lock trained-expert-lock.json --out results/ladder/ladder-015.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-016",
+    "cases": 40,
+    "group": "map-1/islands-3",
+    "seedPairs": [
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-016 --lock trained-expert-lock.json --out results/ladder/ladder-016.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-017",
+    "cases": 40,
+    "group": "map-1/islands-4",
+    "seedPairs": [
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-017 --lock trained-expert-lock.json --out results/ladder/ladder-017.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-018",
+    "cases": 40,
+    "group": "map-1/islands-5",
+    "seedPairs": [
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-018 --lock trained-expert-lock.json --out results/ladder/ladder-018.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-019",
+    "cases": 40,
+    "group": "map-1/islands-6",
+    "seedPairs": [
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-019 --lock trained-expert-lock.json --out results/ladder/ladder-019.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-020",
+    "cases": 40,
+    "group": "map-1/islands-7",
+    "seedPairs": [
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-020 --lock trained-expert-lock.json --out results/ladder/ladder-020.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-021",
+    "cases": 40,
+    "group": "map-1/islands-8",
+    "seedPairs": [
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-021 --lock trained-expert-lock.json --out results/ladder/ladder-021.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-022",
+    "cases": 40,
+    "group": "map-1/islands-9",
+    "seedPairs": [
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-022 --lock trained-expert-lock.json --out results/ladder/ladder-022.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-023",
+    "cases": 40,
+    "group": "map-1/islands-10",
+    "seedPairs": [
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-023 --lock trained-expert-lock.json --out results/ladder/ladder-023.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-024",
+    "cases": 40,
+    "group": "map-1/islands-11",
+    "seedPairs": [
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-024 --lock trained-expert-lock.json --out results/ladder/ladder-024.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-025",
+    "cases": 40,
+    "group": "map-1/islands-12",
+    "seedPairs": [
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-025 --lock trained-expert-lock.json --out results/ladder/ladder-025.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-026",
+    "cases": 40,
+    "group": "map-2/islands-0",
+    "seedPairs": [
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-026 --lock trained-expert-lock.json --out results/ladder/ladder-026.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-027",
+    "cases": 40,
+    "group": "map-2/islands-1",
+    "seedPairs": [
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-027 --lock trained-expert-lock.json --out results/ladder/ladder-027.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-028",
+    "cases": 40,
+    "group": "map-2/islands-2",
+    "seedPairs": [
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-028 --lock trained-expert-lock.json --out results/ladder/ladder-028.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-029",
+    "cases": 40,
+    "group": "map-2/islands-3",
+    "seedPairs": [
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-029 --lock trained-expert-lock.json --out results/ladder/ladder-029.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-030",
+    "cases": 40,
+    "group": "map-2/islands-4",
+    "seedPairs": [
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-030 --lock trained-expert-lock.json --out results/ladder/ladder-030.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-031",
+    "cases": 40,
+    "group": "map-2/islands-5",
+    "seedPairs": [
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-031 --lock trained-expert-lock.json --out results/ladder/ladder-031.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-032",
+    "cases": 40,
+    "group": "map-2/islands-6",
+    "seedPairs": [
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-032 --lock trained-expert-lock.json --out results/ladder/ladder-032.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-033",
+    "cases": 40,
+    "group": "map-2/islands-7",
+    "seedPairs": [
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-033 --lock trained-expert-lock.json --out results/ladder/ladder-033.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-034",
+    "cases": 40,
+    "group": "map-2/islands-8",
+    "seedPairs": [
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-034 --lock trained-expert-lock.json --out results/ladder/ladder-034.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-035",
+    "cases": 40,
+    "group": "map-2/islands-9",
+    "seedPairs": [
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-035 --lock trained-expert-lock.json --out results/ladder/ladder-035.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-036",
+    "cases": 40,
+    "group": "map-2/islands-10",
+    "seedPairs": [
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-036 --lock trained-expert-lock.json --out results/ladder/ladder-036.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-037",
+    "cases": 40,
+    "group": "map-2/islands-11",
+    "seedPairs": [
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-037 --lock trained-expert-lock.json --out results/ladder/ladder-037.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-038",
+    "cases": 40,
+    "group": "map-2/islands-12",
+    "seedPairs": [
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-038 --lock trained-expert-lock.json --out results/ladder/ladder-038.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-039",
+    "cases": 40,
+    "group": "map-3/islands-0",
+    "seedPairs": [
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-039 --lock trained-expert-lock.json --out results/ladder/ladder-039.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-040",
+    "cases": 40,
+    "group": "map-3/islands-1",
+    "seedPairs": [
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-040 --lock trained-expert-lock.json --out results/ladder/ladder-040.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-041",
+    "cases": 40,
+    "group": "map-3/islands-2",
+    "seedPairs": [
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-041 --lock trained-expert-lock.json --out results/ladder/ladder-041.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-042",
+    "cases": 40,
+    "group": "map-3/islands-3",
+    "seedPairs": [
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-042 --lock trained-expert-lock.json --out results/ladder/ladder-042.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-043",
+    "cases": 40,
+    "group": "map-3/islands-4",
+    "seedPairs": [
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-043 --lock trained-expert-lock.json --out results/ladder/ladder-043.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-044",
+    "cases": 40,
+    "group": "map-3/islands-5",
+    "seedPairs": [
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-044 --lock trained-expert-lock.json --out results/ladder/ladder-044.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-045",
+    "cases": 40,
+    "group": "map-3/islands-6",
+    "seedPairs": [
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-045 --lock trained-expert-lock.json --out results/ladder/ladder-045.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-046",
+    "cases": 40,
+    "group": "map-3/islands-7",
+    "seedPairs": [
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-046 --lock trained-expert-lock.json --out results/ladder/ladder-046.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-047",
+    "cases": 40,
+    "group": "map-3/islands-8",
+    "seedPairs": [
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-047 --lock trained-expert-lock.json --out results/ladder/ladder-047.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-048",
+    "cases": 40,
+    "group": "map-3/islands-9",
+    "seedPairs": [
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-048 --lock trained-expert-lock.json --out results/ladder/ladder-048.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-049",
+    "cases": 40,
+    "group": "map-3/islands-10",
+    "seedPairs": [
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-049 --lock trained-expert-lock.json --out results/ladder/ladder-049.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-050",
+    "cases": 40,
+    "group": "map-3/islands-11",
+    "seedPairs": [
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-050 --lock trained-expert-lock.json --out results/ladder/ladder-050.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-051",
+    "cases": 40,
+    "group": "map-3/islands-12",
+    "seedPairs": [
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-051 --lock trained-expert-lock.json --out results/ladder/ladder-051.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-052",
+    "cases": 40,
+    "group": "map-4/islands-0",
+    "seedPairs": [
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-052 --lock trained-expert-lock.json --out results/ladder/ladder-052.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-053",
+    "cases": 40,
+    "group": "map-4/islands-1",
+    "seedPairs": [
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-053 --lock trained-expert-lock.json --out results/ladder/ladder-053.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-054",
+    "cases": 40,
+    "group": "map-4/islands-2",
+    "seedPairs": [
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-054 --lock trained-expert-lock.json --out results/ladder/ladder-054.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-055",
+    "cases": 40,
+    "group": "map-4/islands-3",
+    "seedPairs": [
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-055 --lock trained-expert-lock.json --out results/ladder/ladder-055.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-056",
+    "cases": 40,
+    "group": "map-4/islands-4",
+    "seedPairs": [
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-056 --lock trained-expert-lock.json --out results/ladder/ladder-056.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-057",
+    "cases": 40,
+    "group": "map-4/islands-5",
+    "seedPairs": [
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-057 --lock trained-expert-lock.json --out results/ladder/ladder-057.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-058",
+    "cases": 40,
+    "group": "map-4/islands-6",
+    "seedPairs": [
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-058 --lock trained-expert-lock.json --out results/ladder/ladder-058.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-059",
+    "cases": 40,
+    "group": "map-4/islands-7",
+    "seedPairs": [
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-059 --lock trained-expert-lock.json --out results/ladder/ladder-059.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-060",
+    "cases": 40,
+    "group": "map-4/islands-8",
+    "seedPairs": [
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-060 --lock trained-expert-lock.json --out results/ladder/ladder-060.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-061",
+    "cases": 40,
+    "group": "map-4/islands-9",
+    "seedPairs": [
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-061 --lock trained-expert-lock.json --out results/ladder/ladder-061.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-062",
+    "cases": 40,
+    "group": "map-4/islands-10",
+    "seedPairs": [
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-062 --lock trained-expert-lock.json --out results/ladder/ladder-062.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-063",
+    "cases": 40,
+    "group": "map-4/islands-11",
+    "seedPairs": [
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-063 --lock trained-expert-lock.json --out results/ladder/ladder-063.jsonl"
+  },
+  {
+    "study": "ladder",
+    "shard": "ladder-064",
+    "cases": 40,
+    "group": "map-4/islands-12",
+    "seedPairs": [
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/ladder.json --shard ladder-064 --lock trained-expert-lock.json --out results/ladder/ladder-064.jsonl"
+  },
+  {
+    "study": "tempo",
+    "shard": "tempo-000",
+    "cases": 15,
+    "group": "home/map-0",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/tempo.json --shard tempo-000 --lock trained-expert-lock.json --out results/tempo/tempo-000.jsonl"
+  },
+  {
+    "study": "tempo",
+    "shard": "tempo-001",
+    "cases": 15,
+    "group": "raven/map-0",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/tempo.json --shard tempo-001 --lock trained-expert-lock.json --out results/tempo/tempo-001.jsonl"
+  },
+  {
+    "study": "tempo",
+    "shard": "tempo-002",
+    "cases": 15,
+    "group": "tiger/map-0",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/tempo.json --shard tempo-002 --lock trained-expert-lock.json --out results/tempo/tempo-002.jsonl"
+  },
+  {
+    "study": "tempo",
+    "shard": "tempo-003",
+    "cases": 15,
+    "group": "home/map-1",
+    "seedPairs": [
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/tempo.json --shard tempo-003 --lock trained-expert-lock.json --out results/tempo/tempo-003.jsonl"
+  },
+  {
+    "study": "tempo",
+    "shard": "tempo-004",
+    "cases": 15,
+    "group": "raven/map-1",
+    "seedPairs": [
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/tempo.json --shard tempo-004 --lock trained-expert-lock.json --out results/tempo/tempo-004.jsonl"
+  },
+  {
+    "study": "tempo",
+    "shard": "tempo-005",
+    "cases": 15,
+    "group": "tiger/map-1",
+    "seedPairs": [
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/tempo.json --shard tempo-005 --lock trained-expert-lock.json --out results/tempo/tempo-005.jsonl"
+  },
+  {
+    "study": "tempo",
+    "shard": "tempo-006",
+    "cases": 15,
+    "group": "home/map-2",
+    "seedPairs": [
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/tempo.json --shard tempo-006 --lock trained-expert-lock.json --out results/tempo/tempo-006.jsonl"
+  },
+  {
+    "study": "tempo",
+    "shard": "tempo-007",
+    "cases": 15,
+    "group": "raven/map-2",
+    "seedPairs": [
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/tempo.json --shard tempo-007 --lock trained-expert-lock.json --out results/tempo/tempo-007.jsonl"
+  },
+  {
+    "study": "tempo",
+    "shard": "tempo-008",
+    "cases": 15,
+    "group": "tiger/map-2",
+    "seedPairs": [
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/tempo.json --shard tempo-008 --lock trained-expert-lock.json --out results/tempo/tempo-008.jsonl"
+  },
+  {
+    "study": "tempo",
+    "shard": "tempo-009",
+    "cases": 15,
+    "group": "home/map-3",
+    "seedPairs": [
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/tempo.json --shard tempo-009 --lock trained-expert-lock.json --out results/tempo/tempo-009.jsonl"
+  },
+  {
+    "study": "tempo",
+    "shard": "tempo-010",
+    "cases": 15,
+    "group": "raven/map-3",
+    "seedPairs": [
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/tempo.json --shard tempo-010 --lock trained-expert-lock.json --out results/tempo/tempo-010.jsonl"
+  },
+  {
+    "study": "tempo",
+    "shard": "tempo-011",
+    "cases": 15,
+    "group": "tiger/map-3",
+    "seedPairs": [
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/tempo.json --shard tempo-011 --lock trained-expert-lock.json --out results/tempo/tempo-011.jsonl"
+  },
+  {
+    "study": "tempo",
+    "shard": "tempo-012",
+    "cases": 15,
+    "group": "home/map-4",
+    "seedPairs": [
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/tempo.json --shard tempo-012 --lock trained-expert-lock.json --out results/tempo/tempo-012.jsonl"
+  },
+  {
+    "study": "tempo",
+    "shard": "tempo-013",
+    "cases": 15,
+    "group": "raven/map-4",
+    "seedPairs": [
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/tempo.json --shard tempo-013 --lock trained-expert-lock.json --out results/tempo/tempo-013.jsonl"
+  },
+  {
+    "study": "tempo",
+    "shard": "tempo-014",
+    "cases": 15,
+    "group": "tiger/map-4",
+    "seedPairs": [
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/tempo.json --shard tempo-014 --lock trained-expert-lock.json --out results/tempo/tempo-014.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-000",
+    "cases": 8,
+    "group": "home/map-0/gear-0",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-000 --lock trained-expert-lock.json --out results/equipment/equipment-000.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-001",
+    "cases": 8,
+    "group": "home/map-0/gear-1",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-001 --lock trained-expert-lock.json --out results/equipment/equipment-001.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-002",
+    "cases": 8,
+    "group": "home/map-0/gear-2",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-002 --lock trained-expert-lock.json --out results/equipment/equipment-002.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-003",
+    "cases": 8,
+    "group": "home/map-0/gear-3",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-003 --lock trained-expert-lock.json --out results/equipment/equipment-003.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-004",
+    "cases": 8,
+    "group": "tiger/map-0/gear-0",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-004 --lock trained-expert-lock.json --out results/equipment/equipment-004.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-005",
+    "cases": 8,
+    "group": "tiger/map-0/gear-1",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-005 --lock trained-expert-lock.json --out results/equipment/equipment-005.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-006",
+    "cases": 8,
+    "group": "tiger/map-0/gear-2",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-006 --lock trained-expert-lock.json --out results/equipment/equipment-006.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-007",
+    "cases": 8,
+    "group": "tiger/map-0/gear-3",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-007 --lock trained-expert-lock.json --out results/equipment/equipment-007.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-008",
+    "cases": 8,
+    "group": "home/map-1/gear-0",
+    "seedPairs": [
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-008 --lock trained-expert-lock.json --out results/equipment/equipment-008.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-009",
+    "cases": 8,
+    "group": "home/map-1/gear-1",
+    "seedPairs": [
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-009 --lock trained-expert-lock.json --out results/equipment/equipment-009.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-010",
+    "cases": 8,
+    "group": "home/map-1/gear-2",
+    "seedPairs": [
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-010 --lock trained-expert-lock.json --out results/equipment/equipment-010.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-011",
+    "cases": 8,
+    "group": "home/map-1/gear-3",
+    "seedPairs": [
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-011 --lock trained-expert-lock.json --out results/equipment/equipment-011.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-012",
+    "cases": 8,
+    "group": "tiger/map-1/gear-0",
+    "seedPairs": [
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-012 --lock trained-expert-lock.json --out results/equipment/equipment-012.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-013",
+    "cases": 8,
+    "group": "tiger/map-1/gear-1",
+    "seedPairs": [
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-013 --lock trained-expert-lock.json --out results/equipment/equipment-013.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-014",
+    "cases": 8,
+    "group": "tiger/map-1/gear-2",
+    "seedPairs": [
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-014 --lock trained-expert-lock.json --out results/equipment/equipment-014.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-015",
+    "cases": 8,
+    "group": "tiger/map-1/gear-3",
+    "seedPairs": [
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-015 --lock trained-expert-lock.json --out results/equipment/equipment-015.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-016",
+    "cases": 8,
+    "group": "home/map-2/gear-0",
+    "seedPairs": [
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-016 --lock trained-expert-lock.json --out results/equipment/equipment-016.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-017",
+    "cases": 8,
+    "group": "home/map-2/gear-1",
+    "seedPairs": [
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-017 --lock trained-expert-lock.json --out results/equipment/equipment-017.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-018",
+    "cases": 8,
+    "group": "home/map-2/gear-2",
+    "seedPairs": [
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-018 --lock trained-expert-lock.json --out results/equipment/equipment-018.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-019",
+    "cases": 8,
+    "group": "home/map-2/gear-3",
+    "seedPairs": [
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-019 --lock trained-expert-lock.json --out results/equipment/equipment-019.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-020",
+    "cases": 8,
+    "group": "tiger/map-2/gear-0",
+    "seedPairs": [
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-020 --lock trained-expert-lock.json --out results/equipment/equipment-020.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-021",
+    "cases": 8,
+    "group": "tiger/map-2/gear-1",
+    "seedPairs": [
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-021 --lock trained-expert-lock.json --out results/equipment/equipment-021.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-022",
+    "cases": 8,
+    "group": "tiger/map-2/gear-2",
+    "seedPairs": [
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-022 --lock trained-expert-lock.json --out results/equipment/equipment-022.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-023",
+    "cases": 8,
+    "group": "tiger/map-2/gear-3",
+    "seedPairs": [
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-023 --lock trained-expert-lock.json --out results/equipment/equipment-023.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-024",
+    "cases": 8,
+    "group": "home/map-3/gear-0",
+    "seedPairs": [
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-024 --lock trained-expert-lock.json --out results/equipment/equipment-024.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-025",
+    "cases": 8,
+    "group": "home/map-3/gear-1",
+    "seedPairs": [
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-025 --lock trained-expert-lock.json --out results/equipment/equipment-025.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-026",
+    "cases": 8,
+    "group": "home/map-3/gear-2",
+    "seedPairs": [
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-026 --lock trained-expert-lock.json --out results/equipment/equipment-026.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-027",
+    "cases": 8,
+    "group": "home/map-3/gear-3",
+    "seedPairs": [
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-027 --lock trained-expert-lock.json --out results/equipment/equipment-027.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-028",
+    "cases": 8,
+    "group": "tiger/map-3/gear-0",
+    "seedPairs": [
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-028 --lock trained-expert-lock.json --out results/equipment/equipment-028.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-029",
+    "cases": 8,
+    "group": "tiger/map-3/gear-1",
+    "seedPairs": [
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-029 --lock trained-expert-lock.json --out results/equipment/equipment-029.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-030",
+    "cases": 8,
+    "group": "tiger/map-3/gear-2",
+    "seedPairs": [
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-030 --lock trained-expert-lock.json --out results/equipment/equipment-030.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-031",
+    "cases": 8,
+    "group": "tiger/map-3/gear-3",
+    "seedPairs": [
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-031 --lock trained-expert-lock.json --out results/equipment/equipment-031.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-032",
+    "cases": 8,
+    "group": "home/map-4/gear-0",
+    "seedPairs": [
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-032 --lock trained-expert-lock.json --out results/equipment/equipment-032.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-033",
+    "cases": 8,
+    "group": "home/map-4/gear-1",
+    "seedPairs": [
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-033 --lock trained-expert-lock.json --out results/equipment/equipment-033.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-034",
+    "cases": 8,
+    "group": "home/map-4/gear-2",
+    "seedPairs": [
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-034 --lock trained-expert-lock.json --out results/equipment/equipment-034.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-035",
+    "cases": 8,
+    "group": "home/map-4/gear-3",
+    "seedPairs": [
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-035 --lock trained-expert-lock.json --out results/equipment/equipment-035.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-036",
+    "cases": 8,
+    "group": "tiger/map-4/gear-0",
+    "seedPairs": [
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-036 --lock trained-expert-lock.json --out results/equipment/equipment-036.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-037",
+    "cases": 8,
+    "group": "tiger/map-4/gear-1",
+    "seedPairs": [
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-037 --lock trained-expert-lock.json --out results/equipment/equipment-037.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-038",
+    "cases": 8,
+    "group": "tiger/map-4/gear-2",
+    "seedPairs": [
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-038 --lock trained-expert-lock.json --out results/equipment/equipment-038.jsonl"
+  },
+  {
+    "study": "equipment",
+    "shard": "equipment-039",
+    "cases": 8,
+    "group": "tiger/map-4/gear-3",
+    "seedPairs": [
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/equipment.json --shard equipment-039 --lock trained-expert-lock.json --out results/equipment/equipment-039.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-000",
+    "cases": 200,
+    "group": "arcticfox",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-000 --lock trained-expert-lock.json --out results/census/census-000.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-001",
+    "cases": 200,
+    "group": "armadillo",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-001 --lock trained-expert-lock.json --out results/census/census-001.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-002",
+    "cases": 200,
+    "group": "badger",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-002 --lock trained-expert-lock.json --out results/census/census-002.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-003",
+    "cases": 200,
+    "group": "bat",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-003 --lock trained-expert-lock.json --out results/census/census-003.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-004",
+    "cases": 200,
+    "group": "bear",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-004 --lock trained-expert-lock.json --out results/census/census-004.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-005",
+    "cases": 200,
+    "group": "beaver",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-005 --lock trained-expert-lock.json --out results/census/census-005.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-006",
+    "cases": 200,
+    "group": "beetle",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-006 --lock trained-expert-lock.json --out results/census/census-006.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-007",
+    "cases": 200,
+    "group": "boar",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-007 --lock trained-expert-lock.json --out results/census/census-007.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-008",
+    "cases": 200,
+    "group": "cat",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-008 --lock trained-expert-lock.json --out results/census/census-008.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-009",
+    "cases": 200,
+    "group": "cheetah",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-009 --lock trained-expert-lock.json --out results/census/census-009.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-010",
+    "cases": 200,
+    "group": "crab",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-010 --lock trained-expert-lock.json --out results/census/census-010.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-011",
+    "cases": 200,
+    "group": "crocodile",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-011 --lock trained-expert-lock.json --out results/census/census-011.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-012",
+    "cases": 200,
+    "group": "dormouse",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-012 --lock trained-expert-lock.json --out results/census/census-012.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-013",
+    "cases": 200,
+    "group": "dragonfly",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-013 --lock trained-expert-lock.json --out results/census/census-013.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-014",
+    "cases": 200,
+    "group": "elephant",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-014 --lock trained-expert-lock.json --out results/census/census-014.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-015",
+    "cases": 200,
+    "group": "elk",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-015 --lock trained-expert-lock.json --out results/census/census-015.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-016",
+    "cases": 200,
+    "group": "featheredserpent",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-016 --lock trained-expert-lock.json --out results/census/census-016.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-017",
+    "cases": 200,
+    "group": "fennec",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-017 --lock trained-expert-lock.json --out results/census/census-017.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-018",
+    "cases": 200,
+    "group": "flyingsquirrel",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-018 --lock trained-expert-lock.json --out results/census/census-018.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-019",
+    "cases": 200,
+    "group": "fox",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-019 --lock trained-expert-lock.json --out results/census/census-019.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-020",
+    "cases": 200,
+    "group": "frosttroll",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-020 --lock trained-expert-lock.json --out results/census/census-020.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-021",
+    "cases": 200,
+    "group": "frostwyrm",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-021 --lock trained-expert-lock.json --out results/census/census-021.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-022",
+    "cases": 200,
+    "group": "griffin",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-022 --lock trained-expert-lock.json --out results/census/census-022.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-023",
+    "cases": 200,
+    "group": "hare",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-023 --lock trained-expert-lock.json --out results/census/census-023.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-024",
+    "cases": 200,
+    "group": "hedgehog",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-024 --lock trained-expert-lock.json --out results/census/census-024.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-025",
+    "cases": 200,
+    "group": "heron",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-025 --lock trained-expert-lock.json --out results/census/census-025.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-026",
+    "cases": 200,
+    "group": "hydra",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-026 --lock trained-expert-lock.json --out results/census/census-026.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-027",
+    "cases": 200,
+    "group": "ibex",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-027 --lock trained-expert-lock.json --out results/census/census-027.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-028",
+    "cases": 200,
+    "group": "jaguar",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-028 --lock trained-expert-lock.json --out results/census/census-028.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-029",
+    "cases": 200,
+    "group": "komodo",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-029 --lock trained-expert-lock.json --out results/census/census-029.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-030",
+    "cases": 200,
+    "group": "lion",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-030 --lock trained-expert-lock.json --out results/census/census-030.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-031",
+    "cases": 200,
+    "group": "lynx",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-031 --lock trained-expert-lock.json --out results/census/census-031.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-032",
+    "cases": 200,
+    "group": "marten",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-032 --lock trained-expert-lock.json --out results/census/census-032.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-033",
+    "cases": 200,
+    "group": "meerkat",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-033 --lock trained-expert-lock.json --out results/census/census-033.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-034",
+    "cases": 200,
+    "group": "mole",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-034 --lock trained-expert-lock.json --out results/census/census-034.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-035",
+    "cases": 200,
+    "group": "moth",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-035 --lock trained-expert-lock.json --out results/census/census-035.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-036",
+    "cases": 200,
+    "group": "newt",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-036 --lock trained-expert-lock.json --out results/census/census-036.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-037",
+    "cases": 200,
+    "group": "otter",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-037 --lock trained-expert-lock.json --out results/census/census-037.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-038",
+    "cases": 200,
+    "group": "owl",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-038 --lock trained-expert-lock.json --out results/census/census-038.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-039",
+    "cases": 200,
+    "group": "penguin",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-039 --lock trained-expert-lock.json --out results/census/census-039.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-040",
+    "cases": 200,
+    "group": "polarbear",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-040 --lock trained-expert-lock.json --out results/census/census-040.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-041",
+    "cases": 200,
+    "group": "raccoon",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-041 --lock trained-expert-lock.json --out results/census/census-041.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-042",
+    "cases": 200,
+    "group": "ram",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-042 --lock trained-expert-lock.json --out results/census/census-042.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-043",
+    "cases": 200,
+    "group": "rattlesnake",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-043 --lock trained-expert-lock.json --out results/census/census-043.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-044",
+    "cases": 200,
+    "group": "raven",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-044 --lock trained-expert-lock.json --out results/census/census-044.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-045",
+    "cases": 200,
+    "group": "redpanda",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-045 --lock trained-expert-lock.json --out results/census/census-045.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-046",
+    "cases": 200,
+    "group": "rhino",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-046 --lock trained-expert-lock.json --out results/census/census-046.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-047",
+    "cases": 200,
+    "group": "roe",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-047 --lock trained-expert-lock.json --out results/census/census-047.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-048",
+    "cases": 200,
+    "group": "salamander",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-048 --lock trained-expert-lock.json --out results/census/census-048.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-049",
+    "cases": 200,
+    "group": "scorpion",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-049 --lock trained-expert-lock.json --out results/census/census-049.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-050",
+    "cases": 200,
+    "group": "snail",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-050 --lock trained-expert-lock.json --out results/census/census-050.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-051",
+    "cases": 200,
+    "group": "snake",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-051 --lock trained-expert-lock.json --out results/census/census-051.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-052",
+    "cases": 200,
+    "group": "snowleopard",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-052 --lock trained-expert-lock.json --out results/census/census-052.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-053",
+    "cases": 200,
+    "group": "sphinx",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-053 --lock trained-expert-lock.json --out results/census/census-053.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-054",
+    "cases": 200,
+    "group": "spider",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-054 --lock trained-expert-lock.json --out results/census/census-054.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-055",
+    "cases": 200,
+    "group": "squirrel",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-055 --lock trained-expert-lock.json --out results/census/census-055.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-056",
+    "cases": 200,
+    "group": "stag",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-056 --lock trained-expert-lock.json --out results/census/census-056.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-057",
+    "cases": 200,
+    "group": "stegosaurus",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-057 --lock trained-expert-lock.json --out results/census/census-057.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-058",
+    "cases": 200,
+    "group": "stoat",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-058 --lock trained-expert-lock.json --out results/census/census-058.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-059",
+    "cases": 200,
+    "group": "tiger",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-059 --lock trained-expert-lock.json --out results/census/census-059.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-060",
+    "cases": 200,
+    "group": "toad",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-060 --lock trained-expert-lock.json --out results/census/census-060.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-061",
+    "cases": 200,
+    "group": "unicorn",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-061 --lock trained-expert-lock.json --out results/census/census-061.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-062",
+    "cases": 200,
+    "group": "wolf",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-062 --lock trained-expert-lock.json --out results/census/census-062.jsonl"
+  },
+  {
+    "study": "census",
+    "shard": "census-063",
+    "cases": 200,
+    "group": "woodlouse",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/census.json --shard census-063 --lock trained-expert-lock.json --out results/census/census-063.jsonl"
+  },
+  {
+    "study": "map-luck",
+    "shard": "map-luck-000",
+    "cases": 5,
+    "group": "maps-0",
+    "seedPairs": [
+      {
+        "mapIndex": 0,
+        "world": 910000,
+        "seed": 79191000
+      },
+      {
+        "mapIndex": 1,
+        "world": 910001,
+        "seed": 79198919
+      },
+      {
+        "mapIndex": 2,
+        "world": 910002,
+        "seed": 79206838
+      },
+      {
+        "mapIndex": 3,
+        "world": 910003,
+        "seed": 79214757
+      },
+      {
+        "mapIndex": 4,
+        "world": 910004,
+        "seed": 79222676
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/map-luck.json --shard map-luck-000 --lock trained-expert-lock.json --out results/map-luck/map-luck-000.jsonl"
+  },
+  {
+    "study": "map-luck",
+    "shard": "map-luck-001",
+    "cases": 5,
+    "group": "maps-1",
+    "seedPairs": [
+      {
+        "mapIndex": 5,
+        "world": 910005,
+        "seed": 79230595
+      },
+      {
+        "mapIndex": 6,
+        "world": 910006,
+        "seed": 79238514
+      },
+      {
+        "mapIndex": 7,
+        "world": 910007,
+        "seed": 79246433
+      },
+      {
+        "mapIndex": 8,
+        "world": 910008,
+        "seed": 79254352
+      },
+      {
+        "mapIndex": 9,
+        "world": 910009,
+        "seed": 79262271
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/map-luck.json --shard map-luck-001 --lock trained-expert-lock.json --out results/map-luck/map-luck-001.jsonl"
+  },
+  {
+    "study": "map-luck",
+    "shard": "map-luck-002",
+    "cases": 5,
+    "group": "maps-2",
+    "seedPairs": [
+      {
+        "mapIndex": 10,
+        "world": 910010,
+        "seed": 79270190
+      },
+      {
+        "mapIndex": 11,
+        "world": 910011,
+        "seed": 79278109
+      },
+      {
+        "mapIndex": 12,
+        "world": 910012,
+        "seed": 79286028
+      },
+      {
+        "mapIndex": 13,
+        "world": 910013,
+        "seed": 79293947
+      },
+      {
+        "mapIndex": 14,
+        "world": 910014,
+        "seed": 79301866
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/map-luck.json --shard map-luck-002 --lock trained-expert-lock.json --out results/map-luck/map-luck-002.jsonl"
+  },
+  {
+    "study": "map-luck",
+    "shard": "map-luck-003",
+    "cases": 5,
+    "group": "maps-3",
+    "seedPairs": [
+      {
+        "mapIndex": 15,
+        "world": 910015,
+        "seed": 79309785
+      },
+      {
+        "mapIndex": 16,
+        "world": 910016,
+        "seed": 79317704
+      },
+      {
+        "mapIndex": 17,
+        "world": 910017,
+        "seed": 79325623
+      },
+      {
+        "mapIndex": 18,
+        "world": 910018,
+        "seed": 79333542
+      },
+      {
+        "mapIndex": 19,
+        "world": 910019,
+        "seed": 79341461
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/map-luck.json --shard map-luck-003 --lock trained-expert-lock.json --out results/map-luck/map-luck-003.jsonl"
+  },
+  {
+    "study": "map-luck",
+    "shard": "map-luck-004",
+    "cases": 5,
+    "group": "maps-4",
+    "seedPairs": [
+      {
+        "mapIndex": 20,
+        "world": 910020,
+        "seed": 79349380
+      },
+      {
+        "mapIndex": 21,
+        "world": 910021,
+        "seed": 79357299
+      },
+      {
+        "mapIndex": 22,
+        "world": 910022,
+        "seed": 79365218
+      },
+      {
+        "mapIndex": 23,
+        "world": 910023,
+        "seed": 79373137
+      },
+      {
+        "mapIndex": 24,
+        "world": 910024,
+        "seed": 79381056
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/map-luck.json --shard map-luck-004 --lock trained-expert-lock.json --out results/map-luck/map-luck-004.jsonl"
+  },
+  {
+    "study": "map-luck",
+    "shard": "map-luck-005",
+    "cases": 5,
+    "group": "maps-5",
+    "seedPairs": [
+      {
+        "mapIndex": 25,
+        "world": 910025,
+        "seed": 79388975
+      },
+      {
+        "mapIndex": 26,
+        "world": 910026,
+        "seed": 79396894
+      },
+      {
+        "mapIndex": 27,
+        "world": 910027,
+        "seed": 79404813
+      },
+      {
+        "mapIndex": 28,
+        "world": 910028,
+        "seed": 79412732
+      },
+      {
+        "mapIndex": 29,
+        "world": 910029,
+        "seed": 79420651
+      }
+    ],
+    "command": "node tools/balance/survey.mjs run --manifest tools/balance/surveys/map-luck.json --shard map-luck-005 --lock trained-expert-lock.json --out results/map-luck/map-luck-005.jsonl"
+  }
+]
