@@ -492,6 +492,7 @@ const M = {
   BROW: 52,
   BODYL: 53,   // the lifted top tone of a creature's coat (genome/texture.js)
   NIGHT: 54, NIGHT2: 55, MOUTH: 56, // MOUTH: the inside of an open mouth, a warm red-brown (creatures3d.js quad3d). NIGHT: a night sky's deep blue and a lighter one (the elder snail's starry shell, art/elders.js)
+  SHELL: 57, THORAX: 58, HEAD: 59, // independently coloured insect surfaces, opt-in through look.materials
     // a creature's expression's brows: dark ink on a light coat, pale on a dark one (genome/expressions.js)
 };
 // These glow: drawn at full colour by the lighting pass, whatever the light.
@@ -8888,7 +8889,8 @@ function selectedCreatureGenome(base, context = {}, level = null) {
   const selected = family[mode];
   if (!selected || selected.id !== base.id || !selected.template || !selected.builder || !selected.palette) throw new Error(`Invalid selected creature genome: ${base.id}:${mode}`);
   const look = level === null ? null : selected.levels?.[level]?.look;
-  return look ? { ...selected, look: { ...selected.look, ...look } } : selected;
+  const palette = level === null ? null : selected.levels?.[level]?.palette;
+  return look || palette ? { ...selected, ...(look ? { look: { ...selected.look, ...look } } : {}), ...(palette ? { palette: { ...selected.palette, ...palette, ...(palette.over ? { over: { ...selected.palette.over, ...palette.over } } : {}) } } : {}) } : selected;
 }
 
 
@@ -8904,6 +8906,7 @@ function speciesOf(g, context = {}, level = null) {
   g = selectedCreatureGenome(g, context, level);
   const S = { id: g.id, name: g.name, plan: g.builder, hue: g.palette.hue, sat: g.palette.sat, val: g.palette.val, legend: g.legend || [] };
   if (g.palette.belly) S.belly = g.palette.belly;
+  if (g.palette.over) S.paletteOver = g.palette.over;
   if (g.elder) S.elder = g.elder; // its legend as the elder of its kind (art/elders.js): { kind, tail, ears, eye }
   if (g.palette.accent) S.accent = g.palette.accent; // its horns', hooves', beak's and claws' own colour [h, s, v]
   if (g.idle) S.idle = g.idle; // its idle pose (art/creatures.js IDLE_BUILDERS: the meerkat sat up as a sentinel)
@@ -9124,6 +9127,192 @@ const textureSeed = id => [...id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) 
 // Units: the shoulder is about 1 high; x forward, y up, z towards the near side.
 
 
+
+
+// ---- inlined from art/body-graph/graph.js ----
+// Experimental model-space graph. No production imports: migration requires visual review.
+// x forward, y up, z across, matching model3d. Socket offsets use model axes;
+// rotating spine frames and attaching sockets to other sockets are future work.
+
+
+const LEG_FAMILIES = Object.freeze({
+  plantigrade: { knee: .48, bend: .12, foot: [.16, .07, .11] },
+  digitigrade: { knee: .55, bend: -.16, foot: [.12, .06, .08] },
+  hoof: { knee: .5, bend: .08, foot: [.08, .09, .07] },
+});
+const KINDS = new Set(["head", "leg", "wing", "tail", "shell"]);
+const vec = p => Array.isArray(p) && p.length === 3 && p.every(Number.isFinite);
+const positive = n => Number.isFinite(n) && n > 0;
+const radii = r => vec(r) && r.every(positive);
+const distance = (a, b) => Math.hypot(...v3.sub(a, b));
+const assert = (ok, message) => { if (!ok) throw new Error(`Body graph: ${message}`); };
+
+// Reject malformed inputs before creating a partial model. Station order is the
+// spine chain order, not an x sort: a curved chain may turn back on itself.
+function validateGraph(graph) {
+  assert(graph && Array.isArray(graph.spine) && graph.spine.length >= 2, "at least two spine stations required");
+  assert(positive(graph.blend ?? .07), "blend must be positive");
+  const ids = new Set();
+  for (const s of graph.spine) {
+    assert(typeof s.id === "string" && s.id.length > 0 && !ids.has(s.id), "unique station ids required");
+    assert(vec(s.at) && radii(s.r), `${s.id}: finite position and positive radii required`);
+    ids.add(s.id);
+  }
+  for (let i = 1; i < graph.spine.length; i++) {
+    const a = graph.spine[i - 1], b = graph.spine[i];
+    assert(distance(a.at, b.at) > 1e-6, `${b.id}: coincident spine stations`);
+    // A conservative inscribed-sphere overlap guarantees continuous skin even
+    // when station widths/depths differ. Wider spacing needs extra stations.
+    assert(distance(a.at, b.at) < Math.min(...a.r) + Math.min(...b.r), `${b.id}: disconnected spine; insert a station`);
+  }
+  const sockets = new Set();
+  assert(Array.isArray(graph.sockets), "sockets array required");
+  for (const s of graph.sockets) {
+    assert(typeof s.id === "string" && s.id.length > 0 && !sockets.has(s.id), "unique socket ids required");
+    assert(ids.has(s.station) && vec(s.offset), `${s.id}: known station and finite offset required`);
+    assert(KINDS.has(s.kind), `${s.id}: unknown socket kind`);
+    sockets.add(s.id);
+    if (s.kind === "leg") {
+      assert(Object.hasOwn(LEG_FAMILIES, s.family), `${s.id}: unknown leg family`);
+      assert(vec(s.foot) && positive(s.radius), `${s.id}: foot and positive radius required`);
+      assert(s.phase == null || Number.isFinite(s.phase), `${s.id}: finite gait offset required`);
+    } else if (s.kind === "tail") {
+      assert(Array.isArray(s.points) && s.points.length >= 2, `${s.id}: tail needs at least two points`);
+      for (const p of s.points) assert(Array.isArray(p) && p.length === 4 && p.every(Number.isFinite) && positive(p[3]), `${s.id}: tail points are [x,y,z,radius]`);
+    } else assert(radii(s.r), `${s.id}: positive part radii required`);
+  }
+  return graph;
+}
+
+// The graph compiles into the same primitives as the current builders. Skin
+// shares group 1; shells and wings deliberately retain their separate creases.
+// Limb landmarks are returned separately so a later gait/IK stage can pose them.
+function compileGraph(graph, { blend = graph.blend ?? .07 } = {}) {
+  validateGraph({ ...graph, blend });
+  const model = new Model({ blend }), stations = new Map(graph.spine.map(s => [s.id, s]));
+  const sockets = {}, legs = [];
+  for (const s of graph.spine) model.ell(s.at.slice(), s.r.slice(), M.BODY, { part: "body" });
+  for (const [index, s] of graph.sockets.entries()) {
+    const root = v3.add(stations.get(s.station).at, s.offset);
+    sockets[s.id] = root;
+    const options = { part: s.id, group: s.kind === "shell" || s.kind === "wing" ? index + 2 : 1 };
+    if (s.kind === "leg") {
+      const f = LEG_FAMILIES[s.family], end = s.foot.slice();
+      assert(distance(root, end) > s.radius * 2, `${s.id}: leg too short`);
+      const knee = v3.add(v3.lerp(root, end, f.knee), [f.bend, 0, 0]);
+      model.chain([[...root, s.radius], [...knee, s.radius * .72], [...end, s.radius * .45]], M.BODY, options);
+      const footR = f.foot.slice(), foot = [end[0] + footR[0] * .35, footR[1], end[2]];
+      // Diagnostic fixtures stand on y=0; do not silently snap arbitrary feet.
+      assert(Math.abs(end[1] - footR[1]) < 1e-8, `${s.id}: foot centre must match family ground height`);
+      model.ell(foot, footR, s.family === "hoof" ? M.ACCENT : M.BODY, options);
+      model.anchors.feet.push({ c: foot, r: footR[0], group: options.group, fit: s.family === "hoof" ? "hoof" : "paw" });
+      legs.push({ id: s.id, family: s.family, root, knee, end, radii: [s.radius, s.radius * .72, s.radius * .45] });
+    } else if (s.kind === "tail") {
+      const pts = s.points.map(p => [...v3.add(root, p.slice(0, 3)), p[3]]);
+      assert(distance(pts[0].slice(0, 3), root) < 1e-8, `${s.id}: tail must begin at socket`);
+      for (let i = 1; i < pts.length; i++) assert(distance(pts[i - 1].slice(0, 3), pts[i].slice(0, 3)) > Math.abs(pts[i - 1][3] - pts[i][3]), `${s.id}: degenerate tapered segment`);
+      model.chain(pts, M.BODY, options);
+    } else {
+      model.ell(root, s.r.slice(), s.kind === "shell" ? M.ACCENT : M.BODY, options);
+    }
+  }
+  return { model, sockets, legs };
+}
+
+
+// ---- inlined from art/body-graph/quadruped.js ----
+// Shared graph anatomy used by opt-in quadruped records. No species dispatch.
+
+
+// Preserve the current profile envelope as stations, allowing a flexible spine
+// without changing the head/leg family's own part code. Profile keys are the
+// existing genome stations, not a new set of species-specific proportions.
+function quadrupedTorsoGraph(loaves, len, profile, flex = 0, frame = 0) {
+  const normalisedDepths = loaves.filter(([, r]) => r[1] <= 0).length;
+  // Some legacy baby ratios invert a loaf's vertical radius. The graph cannot
+  // contain negative radii: retain its centre, use the magnitude and flag it
+  // for the family review rather than dropping the entire torso.
+  const volumes = loaves.map(([c, r]) => [c, [r[0], Math.max(.04, Math.abs(r[1])), r[2]]]);
+  const positions = [-.5, -.25, 0, .25, .48], keys = ["hip", "loin", "waist", "ribcage", "shoulder"];
+  const at = u => {
+    if (!profile) return { w: 1, d: 1 };
+    if (u <= positions[0]) return profile.hip;
+    if (u >= positions[4]) return profile.shoulder;
+    const i = positions.findIndex((x, i) => i < 4 && u <= positions[i + 1]);
+    const t = (u - positions[i]) / (positions[i + 1] - positions[i]), a = profile[keys[i]], b = profile[keys[i + 1]];
+    return { w: a.w + (b.w - a.w) * t, d: a.d + (b.d - a.d) * t };
+  };
+  const spine = [];
+  for (let index = 0; index < 19; index++) {
+    const u = -.82 + index * .09, x = u * len;
+    let width = 0, top = -Infinity, bottom = Infinity;
+    for (const [c, r] of volumes) {
+      const t = (x - c[0]) / r[0];
+      if (Math.abs(t) >= 1) continue;
+      const k = Math.sqrt(1 - t * t);
+      width = Math.max(width, r[2] * k); top = Math.max(top, c[1] + r[1] * k); bottom = Math.min(bottom, c[1] - r[1] * k);
+    }
+    const p = at(u), depth = (top - bottom) * p.d;
+    if (width <= 0 || depth <= 0) continue;
+    const bend = flex * Math.sin(index / 18 * Math.PI) * (frame ? 1 : -1);
+    const next = { id: `torso-${index}`, at: [x, top - depth / 2 + bend, 0], r: [len * .2, depth / 2, width * p.w] };
+    const previous = spine.at(-1);
+    if (previous) {
+      const smallest = Math.min(...previous.r, ...next.r), gap = Math.hypot(...v3.sub(next.at, previous.at));
+      const steps = Math.max(1, Math.ceil(gap / (smallest * 1.5)));
+      for (let step = 1; step < steps; step++) spine.push({ id: `torso-${index}-join-${step}`, at: v3.lerp(previous.at, next.at, step / steps), r: previous.r.map((v, i) => v + (next.r[i] - v) * step / steps) });
+    }
+    spine.push(next);
+  }
+  return { blend: .07, spine, sockets: [], diagnostics: { normalisedDepths } };
+}
+
+// Root offsets are in head radii; angle is [pitch, outward splay] in radians.
+// Mirroring is geometric, so a low ear remains low on both sides of the head.
+function quadrupedEarSocket(head, radius, side, direction, root = [0, 0, 0], angle = [0, 0]) {
+  const base = [head[0] + radius * (-.15 + root[0]), head[1] + radius * (.7 + root[1]), side * radius * (.5 + root[2])];
+  const [pitch, splay] = angle, [x, y, z] = direction, c = Math.cos(pitch), s = Math.sin(pitch);
+  const a = [x * c - y * s, x * s + y * c, z], cs = Math.cos(splay), sn = Math.sin(splay) * side;
+  return { base, direction: v3.norm([a[0], a[1] * cs - a[2] * sn, a[1] * sn + a[2] * cs]) };
+}
+
+// Ring cells follow the elliptical torso around the back and BOTH flanks.
+// A whole number of circumferential cells gives the same pattern at the seam.
+function wrappedRosette(p, options, { centreY, depth, width, bellyY }) {
+  if (p[1] < bellyY) return false;
+  const k = options.k ?? 6, around = Math.max(6, Math.round(Math.PI * (depth + width) * k));
+  const theta = Math.atan2(p[2] / width, (p[1] - centreY) / depth);
+  const u = p[0] * k, v = (theta + Math.PI) / (Math.PI * 2) * around;
+  const i = Math.floor(u), j = Math.floor(v), seam = ((j % around) + around) % around;
+  if (hash2(i, seam, 11) > (options.density ?? .75)) return false;
+  const cx = i + .3 + hash2(i, seam, 12) * .4, cy = j + .3 + hash2(seam, i, 13) * .4;
+  const d = Math.hypot(u - cx, v - cy), a = Math.atan2(v - cy, u - cx);
+  return d > (options.inner ?? .18) && d < (options.outer ?? .4) && Math.sin(a * 3 + i) > -.65;
+}
+
+
+// ---- inlined from art/body-graph/mandibles.js ----
+// Shared curved mandible part. Geometry controls are data, not species cases.
+
+function mandiblePart(head, side, nominalLength, options, facing) {
+  const length = options.length ?? 1, width = options.width ?? 1, curve = options.curve ?? .5, lift = options.awayTipLift ?? .16;
+  if (![length, width, curve, lift].every(Number.isFinite) || length <= 0 || width <= 0 || curve < 0 || curve > 1 || lift < 0) throw new Error("Invalid mandible dimensions");
+  const L = nominalLength * length, root = v3.add(head, [.08, .02, side * .1]);
+  const middle = v3.add(root, [L * .62, L * .5, side * L * .22]);
+  const tip = [root[0] + L * .95, root[1] + L * (.2 + (facing === "away" ? lift : 0)), side * Math.max(.012, .1 - L * curve * .3)];
+  const radius = Math.min(.045 * width, L * .22), points = [];
+  for (let k = 0; k <= 7; k++) {
+    const t = k / 7, a = v3.lerp(root, middle, t), b = v3.lerp(middle, tip, t);
+    points.push([...v3.lerp(a, b, t), radius * (1 - .78 * t)]);
+  }
+  const count = options.teeth ?? 1, teeth = [];
+  if (!Number.isInteger(count) || count < 1 || count > 2) throw new Error("Mandibles require one or two teeth");
+  for (let k = 0; k < count; k++) {
+    const p = points[count === 1 ? 3 : 2 + k * 2].slice(0, 3);
+    teeth.push({ start: p, end: v3.add(p, [L * .02, L * .07, -side * L * .12]), radius: Math.min(.018 * width, L * .04) });
+  }
+  return { points, teeth, tip };
+}
 
 
 // ---- inlined from art/elders.js ----
@@ -9909,7 +10098,7 @@ function quad3d(S, level, frame, st, facing = "towards") {
     if (q.harness && (Math.abs(p[0] - len * .32) < .045 || (p[0] > len * .9 && p[1] < top - .12))) return M.FLOWER; // the girth strap and the breastplate of an old gold harness
     if (q.belly && p[1] < bellyY && p[0] > -len * .5) return M.BELLY;
     if (q.stripes && stripeAt(p)) return M[q.stripes.mat || "BODY3"];
-    if (q.rosettes && rosetteAt(p)) return M[q.rosettes.mat || "BODY3"];
+    if (q.rosettes && (q.rosettes.wrap ? wrappedRosette(p, q.rosettes, { centreY: (top + chest) / 2, depth: (top - chest) / 2, width: bw, bellyY: chest + .06 }) : rosetteAt(p))) return M[q.rosettes.mat || "BODY3"];
     if (q.saddle && p[1] > top - .18 && p[0] < len * .55) return M.BODY2;
     if (q.scarred && p[2] > bw * .5 && p[1] > chest + .05 && Math.abs(((p[0] * 2.2 + p[1] * 1.6) % .55 + .55) % .55 - .1) < .025 && Math.sin(p[0] * 7) > -.2) return M.BELLY; // old pale scars raked across its flank (an elder's)
     if (q.coals && p[1] > chest + .02) { const k = 4.4, cx = p[0] * k, cz = p[2] * k, cy = p[1] * k; if (spotty(p, k, .42)) { const d = Math.hypot(cx - Math.floor(cx) - .5, cy - Math.floor(cy) - .5, cz - Math.floor(cz) - .5); if (d < .24) return M.MAGIC2; if (d < .4) return M.BELLY; } } // its warning spots grown large and glowing like coals (a salamander legend's: the legend audit's ★, Ed 2026-10-13)
@@ -9942,7 +10131,12 @@ function quad3d(S, level, frame, st, facing = "towards") {
     [[0, (top + (chest + tuck) / 2) / 2 + .02 - loin, 0], [len * .6, (top - (chest + tuck) / 2) / 2, bw * .9]], // the middle
   ];
   const P = profileOf(q.profile), wAt = k => P ? P[k].w : 1;
-  if (!P) for (const [c, r] of loaves) m.ell(c, r, M.BODY, { paint: paintBody });
+  if (q.graph) {
+    const graph = quadrupedTorsoGraph(loaves, len, P, q.graph.flex ?? 0, frame);
+    const torso = compileGraph(graph).model;
+    for (const part of torso.parts) m.parts.push({ ...part, paint: paintBody });
+    m.bodyGraph = graph;
+  } else if (!P) for (const [c, r] of loaves) m.ell(c, r, M.BODY, { paint: paintBody });
   else {
     const envelope = x => { let w = 0, t = -Infinity, b = Infinity; for (const [c, r] of loaves) { const u = (x - c[0]) / r[0]; if (Math.abs(u) >= 1) continue; const f = Math.sqrt(1 - u * u); w = Math.max(w, r[2] * f); t = Math.max(t, c[1] + r[1] * f); b = Math.min(b, c[1] - r[1] * f); } return { w, t, b }; }; // the loaves at x: their widest, their back, their belly
     const AT = [-.5, -.25, 0, .25, .48], K = ["hip", "loin", "waist", "ribcage", "shoulder"], station = u => { // the profile between its stations, straight lines, held past the ends
@@ -10127,12 +10321,12 @@ function quad3d(S, level, frame, st, facing = "towards") {
   // ears
   const earTips = []; // each ear's tip (for the elder kit's earrings)
   for (const side of [-1, 1]) {
-    const E = q.ear, base = [H[0] - hr * .15, H[1] + hr * .7, side * hr * .5], k = q.earS * sz("ear") * (q.ear === "long" ? .62 / (baby ? sz("head") : 1) : 1); // (long ears don't grow with a baby's big head: a leveret's are short for its head, and its young must stand clear above it)
+    const E = q.ear, base = q.earRoot ? quadrupedEarSocket(H, hr, side, [0, 1, 0], q.earRoot).base : [H[0] - hr * .15, H[1] + hr * .7, side * hr * .5], k = q.earS * sz("ear") * (q.ear === "long" ? .62 / (baby ? sz("head") : 1) : 1); // (long ears don't grow with a baby's big head: a leveret's are short for its head, and its young must stand clear above it)
     if (E === "none" || elder?.ears) continue;
     if (E === "fan") { const c = [H[0] - hr * .55, H[1] - hr * .12, side * hr * .82], d = [hr * .46 * k, hr * .62 * k, hr * .07]; m.ell(c, d, M.BODY2, { group: 5 + (side > 0 ? 0 : 20), dir: [1, .25, 0], paint: p => Math.hypot((p[0] - c[0]) / d[0], (p[1] - c[1]) / d[1]) > .8 ? M.BODY3 : undefined }); continue; } // an elephant's: a great flat fan against the side of its head, its edge ragged and darker
     if (E === "round") { m.ell(base, [hr * .22, hr * .25 * k, hr * .1], M.BODY, { group: elder ? 9 : 1, paint: p => p[0] > base[0] + hr * .02 ? M.EAR : undefined }); continue; }
     const long = E === "long", sail = E === "sail", droop = E === "small" ? -.6 : 0, eh = hr * .55 * k * (E === "big" ? 1.35 : long ? 2.2 : 1), ew = hr * .3 * (E === "big" ? 1.2 : long ? 1.35 : sail ? .8 * k : 1); // sail: a fennec's, as wide as it's tall, flared out
-    const dirE = v3.norm([droop * .6 - (long ? .3 : .12), 1, side * (sail ? .6 : .3)]), n = v3.norm([.55, .2, side]), across = v3.norm(v3.cross(n, dirE)); // the ear opens forward and out, towards us on the near side
+    const oldDir = v3.norm([droop * .6 - (long ? .3 : .12), 1, side * (sail ? .6 : .3)]), dirE = q.earAngle ? quadrupedEarSocket(H, hr, side, oldDir, q.earRoot, q.earAngle).direction : oldDir, n = v3.norm([.55, .2, side]), across = v3.norm(v3.cross(n, dirE)); // the ear opens forward and out, towards us on the near side
     m.flat(v3.add(base, v3.mul(dirE, eh)), across, dirE, ew, eh, masks.ear(M.BODY, M.EAR, sail ? M.BODY : M.BODY3), { group: 5 + (side > 0 ? 0 : 20), extra: long });
     earTips.push({ tip: v3.add(base, v3.mul(dirE, eh * 1.9)), base, h: eh * 2, across, side, dir: dirE, w: ew });
     if (E === "tuft" && q.plume) { const a0 = v3.add(base, [0, eh * 1.3, side * .02]); m.chain([[...a0, hr * .09], [...v3.add(a0, [-hr * .2, eh * 1.4, side * .05]), hr * .1], [...v3.add(a0, [-hr * .55, eh * 2.6, side * .08]), hr * .06], [...v3.add(a0, [-hr * .95, eh * 3.3, side * .1]), hr * .015]], M.BODY3, { group: 1, extra: true }); m.ell(v3.add(a0, [-hr * .95, eh * 3.35, side * .1]), [hr * .07, hr * .07, hr * .07], M.MAGIC2, { group: 1, extra: true }); } // its ear tufts grown into long black plumes like flames, their tips alight
@@ -10868,17 +11062,26 @@ function armadillo3d(S, level, frame, st, facing = "towards") {
 
 function beetle3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model();
+  const materials = S.look?.materials, casesMat = M[materials?.wingCases] ?? M.BODY, thoraxMat = M[materials?.thorax] ?? M.BODY, headMat = M[materials?.head] ?? M.BODY2;
   for (const side of [-1, 1]) for (let i = 0; i < 3; i++) { // six jointed legs, alternating
     const x = .25 - i * .25, ph = (i + (side > 0 ? 1 : 0) + frame) % 2 ? .06 : -.06, base = [x, .22, side * .2];
     m.chain([[...base, .03], [x + ph + (1 - i) * .06, .32, side * .42, .025], [x + ph * 1.5 + (1 - i) * .15, .02, side * .55, .015]], side > 0 ? M.BODY2 : M.BODY3, { group: side > 0 ? 7 : 2 });
   }
   const ember = S.look?.embers ? p => p[1] > .4 && (Math.abs(Math.abs(p[2]) - .1) < .022 || Math.abs(Math.sin(p[0] * 15 + Math.sin(p[2] * 13 + p[1] * 6) * 1.6)) < .09 * Math.min(1, (p[1] - .38) * 6)) : null; // (the fire beetle's ember markings: a band down each wing case and cracks across them)
-  m.ell([-.12, .34, 0], [.46, .24, .32], M.BODY, { paint: p => Math.abs(p[2]) < .018 && p[1] > .4 ? M.LINE : ember && ember(p) ? M.ACCENT : has("antlers") && Math.abs(Math.sin(p[0] * 31 + p[2] * 13)) < .04 && p[1] > .38 ? M.BELLY : p[1] > .5 && p[2] > .05 && p[2] < .17 ? M.BELLY : undefined });
-  m.ell([.38, .33, 0], [.16, .16, .26], M.BODY, { group: 1, paint: ember ? p => p[1] > .4 && Math.abs(p[2]) < .05 ? M.ACCENT : undefined : undefined });
+  m.ell([-.12, .34, 0], [.46, .24, .32], casesMat, { paint: p => Math.abs(p[2]) < .018 && p[1] > .4 ? M.LINE : ember && ember(p) ? M.ACCENT : has("antlers") && Math.abs(Math.sin(p[0] * 31 + p[2] * 13)) < .04 && p[1] > .38 ? M.BELLY : p[1] > .5 && p[2] > .05 && p[2] < .17 ? M.BELLY : undefined });
+  m.ell([.38, .33, 0], [.16, .16, .26], thoraxMat, { group: 1, paint: ember ? p => p[1] > .4 && Math.abs(p[2]) < .05 ? M.ACCENT : undefined : undefined });
   const hc = [.56, .3, 0];
-  m.ell(hc, [.1, .1, .17], M.BODY2, { group: 1 });
+  m.ell(hc, [.1, .1, .17], headMat, { group: 1 });
   const jl = [.3, .7, .95, 1.0][level] * (has("horn") ? 1.3 : 1), jm = has("horn") ? M.MAGIC : M.BODY3;
-  if (!has("antlers")) for (const side of [-1, 1]) { const b = v3.add(hc, [.08, .02, side * .1]), e = v3.add(b, [jl * .7, jl * .45, side * jl * .15]), t = v3.add(e, [jl * .25, -jl * .12, -side * jl * .12]); m.chain([[...b, .045], [...e, .035], [...t, .015]], jm, { group: 8 + (side > 0 ? 1 : 0) }); m.seg(v3.lerp(b, e, .55), v3.add(v3.lerp(b, e, .55), [.0, jl * .22, 0]), .02, .008, jm, { group: 8 }); }
+  if (!has("antlers") && S.look?.mandibles) {
+    m.anchors.mandibleTips = [];
+    for (const side of [-1, 1]) {
+      const jaw = mandiblePart(hc, side, jl, S.look.mandibles, facing), group = 8 + (side > 0 ? 1 : 0);
+      m.chain(jaw.points, jm, { group, part: "mandible" });
+      for (const tooth of jaw.teeth) m.seg(tooth.start, tooth.end, tooth.radius, tooth.radius * .3, jm, { group, part: "mandible" });
+      m.anchors.mandibleTips.push(jaw.tip);
+    }
+  } else if (!has("antlers")) for (const side of [-1, 1]) { const b = v3.add(hc, [.08, .02, side * .1]), e = v3.add(b, [jl * .7, jl * .45, side * jl * .15]), t = v3.add(e, [jl * .25, -jl * .12, -side * jl * .12]); m.chain([[...b, .045], [...e, .035], [...t, .015]], jm, { group: 8 + (side > 0 ? 1 : 0) }); m.seg(v3.lerp(b, e, .55), v3.add(v3.lerp(b, e, .55), [.0, jl * .22, 0]), .02, .008, jm, { group: 8 }); }
   if (has("antlers")) for (const side of [-1, 1]) { // (the legend audit's ★, Ed 2026-10-13) its jaws grown into a stag's branching antlers, rising and curving in, every tine tipped with a glow
     const b = v3.add(hc, [.08, .04, side * .1]), pts = [[...b, .05]];
     for (let i = 1; i <= 6; i++) { const t = i / 6; pts.push([b[0] + .25 * t - .15 * t * t, b[1] + 1.05 * t, b[2] + side * .55 * Math.sin(t * 1.4), .04 * (1 - t * .7)]); }
@@ -11422,14 +11625,20 @@ function partyGear(seed, collarColour = true) {
   };
 }
 // sp: a species id, or a species object (a palette variant's: art/genome/palette.js).
-function speciesColours(sp, st, gear = null) {
-  const c = baseColours(typeof sp === "string" ? speciesFor(sp, st) : sp, st);
+/**
+ * @param {number|null} [level]
+ * @returns {Record<number, number[]>}
+ */
+function speciesColours(sp, st, gear = null, level = null) {
+  const S = typeof sp === "string" ? speciesFor(sp, st, level) : sp, c = baseColours(S, st);
+  c[M.SHELL] = c[M.BODY]; c[M.THORAX] = c[M.BODY]; c[M.HEAD] = c[M.BODY2];
+  for (const [name, rgb] of Object.entries(S.paletteOver || {})) if (M[name] && Array.isArray(rgb) && rgb.length === 3 && rgb.every(Number.isFinite)) c[M[name]] = rgb.slice();
   if (!gear) return c;
   if (gear.collar) c[M.COLLAR] = Array.isArray(gear.collar) ? gear.collar : c[M.MAGIC];
   if (gear.hat != null) { const [a, b, pom] = HAT_COLOURWAYS[gear.hat % HAT_COLOURWAYS.length]; c[M.HAT1] = a; c[M.HAT2] = b; c[M.POM] = pom; }
   if (gear.glasses) { c[M.SHADES] = [22, 18, 32]; c[M.FRAME] = gear.glasses === "heart" ? [255, 60, 110] : [255, 90, 210]; }
   if (gear.shoes) { const [shoe, sole] = SHOE_STYLES[gear.shoes] || SHOE_STYLES.sneakers; c[M.SHOE] = shoe; c[M.SOLE] = sole; if (gear.shoes === "lightup" && !gear.collar) c[M.COLLAR] = c[M.MAGIC]; } // (light-up soles glow in its neon, its collar's or its magic's)
-  if (gear.woken) { c[M.WOKEN] = [255, 40, 36]; for (const k of [M.BODY, M.BODYL, M.BODY2, M.BODY3, M.BELLY, M.ACCENT, M.EAR]) if (c[k]) c[k] = c[k].map((v, j) => Math.round(v * .72 + [30, 8, 12][j] * .1)); } // darker, a little redder
+  if (gear.woken) { c[M.WOKEN] = [255, 40, 36]; for (const k of [M.BODY, M.BODYL, M.BODY2, M.BODY3, M.BELLY, M.ACCENT, M.EAR, M.SHELL, M.THORAX, M.HEAD]) if (c[k]) c[k] = c[k].map((v, j) => Math.round(v * .72 + [30, 8, 12][j] * .1)); } // darker, a little redder
   return c;
 }
 function baseColours(s, st) {
@@ -19211,10 +19420,11 @@ const PALETTE_VARIANTS = {
   ash: { name: "Ash", hue: .6, sat: .04, val: .55 },
 };
 // A species' colours in a variant (a PALETTE_VARIANTS key or { hue, sat, val, belly }), gear as speciesColours.
-function variantColours(id, st, variant, gear = null) {
-  const S = speciesFor(id, st), v = typeof variant === "string" ? PALETTE_VARIANTS[variant] : variant;
-  if (!v) return speciesColours(id, st, gear);
-  return speciesColours({ ...S, hue: v.hue, sat: v.sat, val: v.val, belly: v.belly ?? S.belly }, st, gear);
+/** @param {number|null} [level] */
+function variantColours(id, st, variant, gear = null, level = null) {
+  const S = speciesFor(id, st, level), v = typeof variant === "string" ? PALETTE_VARIANTS[variant] : variant;
+  if (!v) return speciesColours(id, st, gear, level);
+  return speciesColours({ ...S, hue: v.hue, sat: v.sat, val: v.val, belly: v.belly ?? S.belly }, st, gear, level);
 }
 
 
@@ -19599,7 +19809,7 @@ function legendForm(id, st, { state = "asleep", frame = 0, facing = "towards" } 
 
 // Its colours asleep: its own weathered toward its area's stone, and the area's moss, earth and leaves.
 function legendColours(id, st) {
-  const a = legendArea(id), [, fh, fs, fv] = a.floor, base = speciesColours(id, st), d = decorColours(st, rockTint(a));
+  const a = legendArea(id), [, fh, fs, fv] = a.floor, base = speciesColours(id, st, null, 3), d = decorColours(st, rockTint(a));
   const mix = (x, y, t) => x.map((v, i) => Math.round(v + (y[i] - v) * t));
   const stoneT = .62, stone = d[M.STONE], dark = d[M.STONED];
   const c = { ...base };
