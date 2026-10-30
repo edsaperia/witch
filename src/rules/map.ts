@@ -20,6 +20,7 @@ const frontOf = (t: { x: number; z: number }, d: { x: number; z: number }, clear
  *  the dance floor, outside the speaker ring"): past the ring's outer edge by gap, plus its footprint. */
 export const treehouseDistance = (t: Tuning) => speakerRadius(t) + t.dancefloor.speakers.footprint + t.treehouse.gap + t.treehouse.clear;
 import { PathNetwork } from "./paths";
+import { knownPathGeometry, rememberPathGeometry, pathGeometryProblem, type PathGeometry } from "./pathGeometry";
 import { routeOf } from "./party";
 import { dealAlongRoute, matchLegendAreas } from "./deal";
 import { beachOf, isInside, makeCoast, type Bounds } from "./mapShape";
@@ -281,13 +282,13 @@ export function islandLand(island: Island, tuning: Tuning, step = 16): { land: L
 /** The heavy, pure parts of a map's making as plain data (Ed, 2026-10-19, the sailing's option 4: app/mapPrep.ts makes them in a
  *  worker while the chart flies and carries them to the game's page): which areas touch which (in their order: the map's own
  *  iteration order), the land and lakes maps, and the ley line's route (rules/leyroute.ts). generateMap given them makes the same map, without their work. */
-export interface MapPrep { neighbours: [string, string[]][]; land: LandData | null; lakes: LandData | null; route: LeyRoute | null }
+export interface MapPrep { neighbours: [string, string[]][]; land: LandData | null; lakes: LandData | null; route: LeyRoute | null; pathGeometry?: PathGeometry }
 
 const landData = (L: LandMap | undefined): LandData | null => (L ? { x0: L.x0, z0: L.z0, step: L.step, cols: L.cols, rows: L.rows, dist: L.dist, seg: L.seg, loops: L.loops, segLoop: L.segLoop, segAt: L.segAt, box: L.box } : null);
 /** A map's prep (see MapPrep): to make the same map again quickly, on another thread or page. */
 export function prepOf(map: ForestMap): MapPrep {
   const b = map.bounds;
-  return { neighbours: [...map.neighbours].map(([k, v]) => [k, [...v]]), land: landData(b.land), lakes: landData(b.lakes), route: knownRoute(map) ?? null };
+  return { neighbours: [...map.neighbours].map(([k, v]) => [k, [...v]]), land: landData(b.land), lakes: landData(b.lakes), route: knownRoute(map) ?? null, ...(knownPathGeometry(map) ? { pathGeometry: knownPathGeometry(map) } : {}) };
 }
 
 /** What's wrong with a prep, if anything (a record from another build's code, cut short, or not a prep at all): its shapes checked
@@ -309,6 +310,7 @@ export function prepProblem(p: unknown): string | null {
   if (q.land === undefined || q.lakes === undefined || q.route === undefined) return "parts missing";
   const bad = land(q.land, "land") ?? land(q.lakes, "lakes");
   if (bad) return bad;
+  if (q.pathGeometry !== undefined) { const bad = pathGeometryProblem(q.pathGeometry); if (bad) return bad; }
   if (q.route && !(Array.isArray(q.route.order) && Array.isArray(q.route.stones) && Array.isArray(q.route.links) && q.route.order.length === q.route.stones.length)) return "route";
   return null;
 }
@@ -316,7 +318,11 @@ export function prepProblem(p: unknown): string | null {
 /** A map from its ready parts (a worker's prep: app/mapPrep.ts): the map generateMap(seed, tuning) makes, without their work
  *  (src/rules/mapPrep.test.ts). The seam a night started in place takes (docs/plans/sail-without-reload.md, startNight; or
  *  newGame's prep). */
-export const hydrateMap = (seed: number, tuning: Tuning, prep: MapPrep): ForestMap => generateMap(seed, tuning, undefined, prep);
+export const hydrateMap = (seed: number, tuning: Tuning, prep: MapPrep): ForestMap => {
+  const map = generateMap(seed, tuning, undefined, prep);
+  if (prep.pathGeometry && !pathGeometryProblem(prep.pathGeometry)) rememberPathGeometry(map, prep.pathGeometry);
+  return map;
+};
 
 export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: number; island: Island }, prep?: MapPrep): ForestMap {
   const A = tuning.areaSize * tuning.areaScale;
