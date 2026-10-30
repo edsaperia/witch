@@ -1,0 +1,12 @@
+{
+  "seed": 123,
+  "pack": "fox*8@2,wolf*8@2,owl*8@2",
+  "attack": {
+    "cast": { "range": 45, "windup": 0.9, "cooldown": 2.5 },
+    "emit": { "pattern": "fan", "n": 6, "angle": 60 },
+    "body": { "kind": "bolt", "radius": 0.6, "element": "fire" },
+    "speed": { "v": 12 },
+    "life": { "range": 50 },
+    "hit": { "damage": 0.1 }
+  }
+}

@@ -5,6 +5,7 @@ const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),
 let pw;try{pw=require(process.env.PLAYWRIGHT_MODULE||'playwright');}catch{pw=require('/opt/node22/lib/node_modules/playwright');}
 const out=path.resolve(process.argv[2]||'previews/magic-budget'),root=path.resolve(process.env.DIST||'dist');
 const samples=Number(process.env.SAMPLES||80),types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.ogg':'audio/ogg','.png':'image/png','.woff2':'font/woff2'};
+const fixture=require('./fight-fixture.json');
 (async()=>{
   fs.mkdirSync(out,{recursive:true});const head=cp.execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
   const build=JSON.parse(fs.readFileSync(path.join(root,'version.json'),'utf8'));
@@ -16,7 +17,9 @@ const samples=Number(process.env.SAMPLES||80),types={'.html':'text/html','.js':'
   try{
     const page=await browser.newPage({viewport:{width:1600,height:900}});
     page.on('pageerror',e=>result.errors.push(String(e)));page.on('console',m=>{if(m.type()==='error')result.errors.push(m.text());});
-    await page.goto(`http://127.0.0.1:${server.address().port}/?fight=123&pack=fox*8@2,wolf*8@2,owl*8@2&seed=123&creator=0&spell=auto&ladder=off`);
+    const query=new URLSearchParams({fight:String(fixture.seed),pack:fixture.pack,attack:JSON.stringify(fixture.attack),seed:String(fixture.seed),creator:'0',spell:'auto',ladder:'off'});
+    result.attackFixture=fixture;
+    await page.goto(`http://127.0.0.1:${server.address().port}/?${query}`);
     await page.waitForFunction(()=>window.witch?.ready,null,{timeout:600000});
     await page.evaluate(()=>{window.witch.manual=true;window.witch.game.witches[0].health.hurtAt=Infinity;});
     if(await page.evaluate(()=>window.witch.game.clock.paused)){await page.keyboard.press('Enter');await page.waitForFunction(()=>!window.witch.game.clock.paused,null,{timeout:60000});}
@@ -90,5 +93,6 @@ const samples=Number(process.env.SAMPLES||80),types={'.html':'text/html','.js':'
     },{a:reference.toString('base64'),b:vertex.toString('base64')});
     result.pass=Object.values(result.variants).filter(v=>!v.diagnostic).every(v=>v.pass)&&result.pixelProof.pass&&result.variants['all-low'].delta<result.variants.all.delta&&result.variants['frost-low'].delta<result.variants.frost.delta;
     if(!result.pass)process.exitCode=1;
-  }finally{result.finishedAt=new Date().toISOString();fs.writeFileSync(path.join(out,'budget.json'),JSON.stringify(result,null,2));await browser.close();server.close();}
+  }catch(error){result.pass=false;result.failure=String(error);throw error;}
+  finally{result.finishedAt=new Date().toISOString();fs.writeFileSync(path.join(out,'budget.json'),JSON.stringify(result,null,2));await browser.close();server.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
