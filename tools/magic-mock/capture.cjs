@@ -86,6 +86,20 @@ const types = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.j
         fx.enabled=true;return result;
       },production);
       if(production){
+        await page.evaluate(()=>{window.witch.view.magic.galleryPage=3;window.witch.view.magic.galleryDark=true;});
+        await frame(1.5);
+        const beamOn=await page.screenshot({path:path.join(out,`${mode}-iso-dark.png`),timeout:300000});
+        await page.evaluate(()=>{window.witch.view.magic.enabled=false;});await frame(1.5);
+        const beamOff=await page.screenshot({timeout:300000});
+        const beamPixels=await page.evaluate(async({on,off})=>{
+          const pixels=async(src)=>{const img=new Image();img.src='data:image/png;base64,'+src;await img.decode();const c=document.createElement('canvas');c.width=img.width;c.height=img.height;const ctx=c.getContext('2d');ctx.drawImage(img,0,0);return {data:ctx.getImageData(0,0,c.width,c.height).data,width:c.width,height:c.height};};
+          const a=await pixels(on),b=await pixels(off);let changed=0;
+          for(let y=110;y<a.height-30;y++)for(let x=0;x<a.width;x++){const k=(y*a.width+x)*4;if(Math.max(Math.abs(a.data[k]-b.data[k]),Math.abs(a.data[k+1]-b.data[k+1]),Math.abs(a.data[k+2]-b.data[k+2]))>20)changed++;}
+          return changed;
+        },{on:beamOn.toString('base64'),off:beamOff.toString('base64')});
+        evidence.modes[mode].beamPixels=beamPixels;
+        if(beamPixels<50)throw Error(`Beam visibility regression: only ${beamPixels} changed dark-background pixels`);
+        await page.evaluate(()=>{window.witch.view.magic.enabled=true;});
         await page.evaluate(()=>{window.witch.view.magic.galleryPage=0;window.witch.view.magic.galleryDark=true;});
         await frame(1.5);await page.screenshot({path:path.join(out,`${mode}-dark.png`),timeout:300000});
         await page.evaluate(()=>{window.witch.view.magic.galleryDark=false;});

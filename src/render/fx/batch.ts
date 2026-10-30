@@ -20,7 +20,8 @@ void main(){
   vec3 w=uFlat>0.5?onGround(iPos+vec3(p.x*iSize,0.06,-p.y*iSize)):onGround(iPos)+uRight*p.x*iSize+uUp*p.y*iSize;
   if(iUv.x>1.5 && iUv.x<2.5 && iDraw<0.0){
     vec2 direction=vec2(cos(iShine),sin(iShine)),side=vec2(-direction.y,direction.x);
-    vec2 q=direction*p.x*(-iDraw)+side*p.y*iSize;
+    // The quad's top edge points north, matching the ground layers' front-face winding (+Y).
+    vec2 q=direction*p.x*(-iDraw)-side*p.y*iSize;
     w=onGround(iPos+vec3(q.x,0.0,q.y));vGrid=vec2(max(1.0,floor(-iDraw/uMpp+0.5)),vGrid.y);
   }
   vWorld=w;gl_Position=clipOf(w);
