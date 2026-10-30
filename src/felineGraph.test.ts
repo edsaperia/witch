@@ -19,14 +19,22 @@ function capture(record: unknown, level: number, frame: number) {
 }
 
 describe("first shared feline graph iteration", () => {
-  it("gives both sand-cat ears short broad geometry at every growth level", () => {
-    for (const level of [0, 1, 2, 3]) {
+  it("retains the Current sand-cat baby pixels and normals in both facings", () => {
+    const style={...defaultStyle(),creatureModels:"cat:graph",creatureVariants:{cat:{graph:catCaptureGenome(GENOME_BY_ID.cat)}}} as unknown as Style;
+    for(const facing of ["towards","away"]) {
+      const current=critter("cat",0,0,defaultStyle(),facing), selected=critter("cat",0,0,style,facing);
+      expect([selected.w,selected.h]).toEqual([current.w,current.h]);
+      expect(selected.m).toEqual(current.m);expect(selected.n).toEqual(current.n);
+    }
+  });
+  it("gives both non-baby sand-cat ears mirrored geometry", () => {
+    for (const level of [1, 2, 3]) {
       const model = capture(catCaptureGenome(GENOME_BY_ID.cat), level, 0), rig = Reflect.get(model, "rig");
       expect(rig.ears).toHaveLength(2);
       for (const ear of rig.ears) {
-        expect(ear.h / (2 * ear.w)).toBeCloseTo(level === 0 ? .7 / .6 : 1.55 / 1.15, 10);
-        expect(ear.base[1]).toBeCloseTo(rig.head.H[1] + rig.head.hr * (level === 0 ? .45 : .48), 10);
-        expect(Math.abs(ear.dir[2] / ear.dir[1])).toBeGreaterThan(.57);
+        expect(ear.h / (2 * ear.w)).toBeCloseTo(1, 10);
+        expect(ear.base[1]).toBeCloseTo(rig.head.H[1] + rig.head.hr * .64, 10);
+        expect(Math.abs(ear.dir[2] / ear.dir[1])).toBeCloseTo(Math.tan(.5), 10);
       }
       expect(rig.ears[0].dir[2]).toBeCloseTo(-rig.ears[1].dir[2], 10);
       expect(rig.ears[0].base[2]).toBeCloseTo(-rig.ears[1].base[2], 10);

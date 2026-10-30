@@ -262,14 +262,51 @@ must beat Current side-by-side or be parked; Current was independently scored
 top-view visibility and projected edge-on aspect require further tests before
 the next capture.
 
-The requested general `species-sprites` connectivity check uses eight-neighbour
+The initial general `species-sprites` connectivity check used eight-neighbour
 material-mask components (diagonal contact counts). One nonempty component is
 required; all extra components fail, including single pixels and bright parts.
 No area or material exception hides an ear fragment. The report names component
 count and total detached pixels relative to the largest component. Intentional
 floating effects may therefore be exposed by this strict guard and need an
 explicit coordinator ruling; no exception has been inferred. It changes checks,
-not sprites or growth gates. Cloud execution remains pending.
+not sprites or growth gates. Yankee's cloud run failed 47/63 Current cells;
+coordinator 6515005294 superseded the absolute failure rule.
+
+Cats-6 candidate: the baby is frozen on Current (its material pixels, normals
+and bounds match in both normal facings; the final game-style check also covers
+top). Adult ears have equal 1.15×1.15 dimensions, roots [.15,-.06,.15], and
+absolute triangle splay .5 radians. Triangle angles now start from vertical;
+legacy leaf angles retain the previous baseline lean. Optional `head.earNormal`
+sets a mirrored opening-plane normal (diagnostic [1,.35,.15]); `earDepth` in
+head radii (diagnostic .8) creates four straight triangular faces meeting at
+one tip, instead of an edge-on sheet. Omitted depth retains the flat triangle.
+All controls remain absent from Current records.
+
+The extended test uses actual game style and CPU renderer output, tagging one
+ear at a time to require at least four visible pixels per ear in towards,
+away and top. Both normal views must have visible ear height/width <1.2.
+The earlier 2 art-pixel conservative tip clearance, <80° projected angle and
+root-attachment gates remain. These gates first reproduced the flat ear's
+aspect failure; the volume now passes them. Candidate baby/adult attachment regression
+is checked in all three facings, not inferred from socket coordinates. Cloud
+side-by-side scoring still decides whether this round beats Current; otherwise
+park the sand cat as instructed.
+
+Current attachment counts now remain report-only. A candidate fails only if it
+adds a detached component or exceeds Current's detached-pixel count by more
+than 3, in the same species/level/frame/view. No material exclusions were added.
+`art/check.mjs --candidate <selection.json> --tasks species-sprites` accepts the
+existing `{creatureModels,creatureVariants}` serialized context and runs paired
+checks with shared render knobs. Without that flag, Current counts never fail
+attachment checks. Existing nonempty/standing/growth gates are unchanged.
+The cats capture driver also compares each actual selected sprite to Current
+and records the paired counts; a regression stops capture. Its connectivity
+work is excluded from construction/bake timings.
+
+Ed review-pack note from Yankee 6515000945: large Current detached totals are
+cheetah L3f0 9,120 px, L3f1 7,567 px; jaguar L3f0 2,911 px; lynx L3f1 812 px.
+These are pre-existing counts, not a ruling that the art is defective. Legend
+effects may intentionally be separate; Ed can inspect the linked cloud evidence.
 
 Cloud command: `node tools/body-graph/cats-preview.mjs previews/body-graph/cats-1`.
 It requires a clean tracked checkout, records and verifies its served source

@@ -62,6 +62,16 @@ export const triangularEarMask = (mat, inner, tip) => (s, t) => {
   if (u > .86) return tip;
   return u > .12 && u < .8 && Math.abs(s) < half * .6 ? inner : mat;
 };
+// Four straight triangular faces form a pointed cup. Depth prevents a flat
+// sheet from collapsing into a one-pixel spike in an edge-on camera view.
+export function triangularEarFaces(base, direction, across, width, height, depth) {
+  const normal = v3.norm(v3.cross(direction, across)), tip = v3.add(base, v3.mul(direction, height));
+  return [[normal, depth / 2, across, width / 2], [v3.mul(normal, -1), depth / 2, across, width / 2],
+    [across, width / 2, normal, depth / 2], [v3.mul(across, -1), width / 2, normal, depth / 2]].map(([axis, offset, u, su]) => {
+      const edge = v3.add(base, v3.mul(axis, offset)), delta = v3.sub(tip, edge), sv = Math.hypot(...delta) / 2;
+      return { c: v3.lerp(edge, tip, .5), u, v: v3.norm(delta), su, sv };
+    });
+}
 
 // Ring cells follow the elliptical torso around the back and BOTH flanks.
 // A whole number of circumferential cells gives the same pattern at the seam.

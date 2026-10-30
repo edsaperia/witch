@@ -25,20 +25,25 @@ try {
   for (const id of CAT_CAPTURE_IDS) {
     const result = await b.page.evaluate(async id => {
       const G = await import("/art/generator.js"), F = await import("/tools/body-graph/cat-fixtures.js");
+      const { connectivityRegression } = await import("/art/genome/connectivity.js");
       const style = await (await fetch("/config/style.json")).json(), tuning = await (await fetch("/config/tuning.json")).json();
       const st = { ...G.defaultStyle(), ...style, artStyle: "bold", pixel: tuning.pixelSize };
       const base = G.GENOME_BY_ID[id], variant = F.catCaptureGenome(base);
       const selected = { ...st, creatureModels: `${id}:graph`, creatureVariants: { [id]: { graph: variant } } };
       const rows = [], timings = [];
       for (const level of [0, 1, 2, 3]) for (const facing of ["towards", "away", "top"]) {
-        const pair = [];
+        const pair = []; let currentSprite = null;
         for (const [label, context] of [["Current", st], ["Shared graph diagnostic", selected]]) {
           const start = performance.now();
           const draw = () => G.critter(id, level, 0, context, facing === "top" ? "towards" : facing);
           const sp = facing === "top" ? G.withView({ yaw: .6, pitch: Math.PI / 2 }, draw) : draw();
-          const constructionMs = performance.now() - start, bakeStart = performance.now();
+          const constructionMs = performance.now() - start;
+          const attachment = currentSprite ? connectivityRegression(currentSprite, sp) : null;
+          if (attachment && !attachment.good) throw new Error(`${id} level ${level} ${facing}: attachment regression ${JSON.stringify(attachment)}`);
+          if (!currentSprite) currentSprite = sp;
+          const bakeStart = performance.now();
           const baked = G.bake(sp, G.speciesColours(id, context, null, level), context, context.cOutline);
-          timings.push({ label, level, facing, constructionMs, bakeMs: performance.now() - bakeStart, width: sp.w, height: sp.h, markingMetrics: sp.markingMetrics ?? null, graphDiagnostics: sp.graphDiagnostics ?? null });
+          timings.push({ label, level, facing, constructionMs, bakeMs: performance.now() - bakeStart, width: sp.w, height: sp.h, markingMetrics: sp.markingMetrics ?? null, graphDiagnostics: sp.graphDiagnostics ?? null, attachment });
           pair.push(baked.A);
         }
         rows.push({ level, facing, pair, height: Math.max(...pair.map(p => p.height)) + 32 });

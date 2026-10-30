@@ -20,3 +20,12 @@ export function spriteConnectivity(sp) {
   components.sort((a, b) => b - a);
   return { connected: components.length === 1, components, detachedPixels: components.slice(1).reduce((sum, n) => sum + n, 0) };
 }
+
+// Compare the same species/level/frame/view against Current. Absolute counts
+// remain evidence, not a verdict about deliberate effects in the shipped art.
+export function connectivityRegression(current, candidate, pixelTolerance = 3) {
+  if (!Number.isInteger(pixelTolerance) || pixelTolerance < 0) throw new Error("Connectivity pixel tolerance must be a nonnegative integer");
+  const baseline = spriteConnectivity(current), selected = spriteConnectivity(candidate);
+  return { good: selected.components.length <= baseline.components.length && selected.detachedPixels <= baseline.detachedPixels + pixelTolerance,
+    current: baseline, candidate: selected, pixelTolerance };
+}
