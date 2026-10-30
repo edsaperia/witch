@@ -199,6 +199,10 @@ says what each note covers.
 - The alto set
 - A/B renders
 
+## [Two-browser prototype](online-prototype.md)
+
+(no entries: its tools and checks only)
+
 ## [Performance](performance.md)
 
 - Reused surface roughness (#1464, 2026-10-30):

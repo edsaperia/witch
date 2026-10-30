@@ -96,3 +96,4 @@ The rest of what builders need lives in a note an area, under `docs/notes/` (hou
 - [`docs/notes/art-checks.md`](docs/notes/art-checks.md): Art checks: the art generator's check, the style bible, the genome compare, the lab and export commands.
 - [`docs/notes/performance.md`](docs/notes/performance.md): Performance: the View's build in slices, the start's shaders, the stall hunt.
 - [`docs/notes/making-of.md`](docs/notes/making-of.md): The Making Of: the static site about how the game was made.
+- [`docs/notes/online-prototype.md`](docs/notes/online-prototype.md): The separate two-browser prototype: local relay, host authority, joining, checks and current limits.
