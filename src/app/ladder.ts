@@ -6,6 +6,7 @@
 // can pin it (ui/decide.ts quality).
 import { clampRung, inEffect, loadEffects, newLadder, pending, RUNGS, setMode, stepLadder, type LadderState } from "../rules/ladder";
 import type { Tuning } from "../rules/tuning";
+import { FX_QUALITY } from "../render/fx/system";
 
 /** A frame's budget (ms): 60 fps; at the steady-30 rung, 30. */
 const BUDGET = 1000 / 60, BUDGET30 = 1000 / 30;
@@ -65,6 +66,11 @@ export class QualityLadder {
     const sig = RUNGS.map((_, i) => (inEffect(this.state, i) ? 1 : 0)).join("");
     if (sig === this.applied) return;
     this.applied = sig;
+    FX_QUALITY.distortion = !on("fxDistort");
+    FX_QUALITY.imprints = !on("fxImprints");
+    FX_QUALITY.secondary = !on("fxSecondary");
+    FX_QUALITY.lightCap = on("fxLights") ? 2 : 6;
+    FX_QUALITY.particles = on("fxParticles") ? 0.5 : 1;
     flag(t.scenery, "edgeDither", on("farDither") || b.edge);
     flag(t.canopyCutout, "hard", on("hardCut") || b.hard);
     t.treeCap.keep = on("squeeze") ? Math.min(b.keep, SQUEEZE_KEEP) : b.keep;

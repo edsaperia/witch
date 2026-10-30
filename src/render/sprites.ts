@@ -11,6 +11,7 @@ import { WITCH_LIGHT_GLSL, witchLightUniform } from "./witchLight";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { CAST_SHADOW_GLSL, CAST_SHADOW_UNIFORMS } from "./castShadows";
 import { Dirty } from "./dirty";
+import { FX_UNIFORMS, FX_FIELD_GLSL } from "./fx/uniforms";
 
 /** One art pixel's size in the world (metres): the sprites' scale at the tuning's pixel size. */
 export function metresPerArtPixel(t: { artPixelsPerMetre: number; pixelSize: number }): number {
@@ -155,6 +156,10 @@ varying float vSizeY;
 varying vec2 vGround; // its ground spot under this pixel: its foot, across its width (the cast shadows: render/castShadows.ts)
 ${HEIGHT_VERT_GLSL}
 ${WIND_GUST_GLSL}${PIXEL_SNAP_GLSL}${HIZ_GLSL}
+${FX_FIELD_GLSL}
+varying vec2 vFxBase;
+varying vec4 vFxPaint;
+varying vec2 vFxInfo;
 void main() {
   // Every sprite stands upright on the rolling ground (height.ts), at the lowest ground under its
   // foot (most of its width, up to 5 m either side of its base, at five points): on a slope its uphill side is planted in the
@@ -181,6 +186,11 @@ void main() {
     w += uRight * (uWind.x * iFlags.w * uv.y * uv.y * (gust * 0.9 + flutter)) * min(1.0, iSize.y / 8.0);
   }
   // With a sway mask (#34; negative sway), the quad stays put and the fragment shader moves its leaves.
+  vFxBase = iPos.xz;
+  // Every fragment of this instance reads its ground anchor: fetch once per vertex, not per leaf pixel/pass.
+  vFxPaint = fxField(iPos.xz);
+  vFxInfo = fxExtra(iPos.xz).rg;
+  if (iFlags.w != 0.0 && uFxOn > 0.5) w += uRight * (vFxInfo.g * uv.y * uv.y * 0.7);
   vSwayM = 0.0;
   if (iFlags.w < 0.0 && uWind.x > 0.0) {
     vec2 q = iPos.xz / uWind.z - vec2(0.8, 0.35) * uWind.w * uWind.y / uWind.z;
@@ -362,6 +372,10 @@ uniform float uEyeRange;
 uniform vec3 uTrunkFade; // metres of trunk the fade covers at most, metres per art pixel, its most share of the visible trunk
 uniform vec4 uWind;      // the wind: its time (w) sets the regions' flutter
 ${LIGHT_GLSL}
+${FX_FIELD_GLSL}
+varying vec2 vFxBase;
+varying vec4 vFxPaint;
+varying vec2 vFxInfo;
 ${CAST_SHADOW_GLSL}
 ${WITCH_LIGHT_GLSL}
 // 4x4 ordered dither, for fading the canopy in pixel-art style.
@@ -509,6 +523,13 @@ void shade() {
     }
   }
   // The witch's see-through silhouette: where she is hidden, a flat tint in her glow colour.
+  vec4 frostField = uFxVertex > 0.5 ? vFxPaint : fxField(vFxBase);
+  if (uIndexed.x > 0.5 && frostField.r > 0.0) {
+    int frostIndex = int(texture2D(uAlbedo, uvS).r * 255.0 + 0.5);
+    a.rgb = mix(a.rgb, texelFetch(uAlbedoPal, ivec2(frostIndex, 1), 0).rgb, frostField.r);
+    frostField.r = 0.0;
+  }
+  a.rgb = fxTint(a.rgb, frostField);
   if (uSilhouette.a > 0.0) { gl_FragColor = vec4(uSilhouette.rgb, uSilhouette.a); return; }
   // Things standing in front of the witch fade (smoothly) where they cover her: left out of the
   // opaque pass there and drawn in a second, see-through pass after her.
@@ -655,6 +676,12 @@ void main() {
     if ((ox < 0.5 && ix > 0.5 && thickX) || (oy < 0.5 && iy > 0.5 && thickY)) gl_FragColor.rgb = min(vec3(1.0), gl_FragColor.rgb + uMoodRim.rgb * uMoodRim.w);
   }
   // Scenery past the budget's radius fades out smoothly (alpha), from the far edge inward.
+  float fxCharge = uFxVertex > 0.5 ? vFxInfo.r : fxExtra(vFxBase).r;
+  gl_FragColor.rgb += vec3(0.08,0.12,0.18) * fxCharge * (uFxCalm>0.5?0.5:0.65+0.15*sin(uFxTime*3.0));
+  // Sparse, stationary rime glints: no flashing and no silhouette expansion.
+  float fxFrost = uFxVertex > 0.5 ? vFxPaint.r : fxField(vFxBase).r;
+  if (fxFrost>0.25 && fract(sin(dot(floor(vUv*vec2(textureSize(uAlbedo,0))),vec2(31.7,79.3)))*43758.5)>0.985)
+    gl_FragColor.rgb = mix(gl_FragColor.rgb,vec3(0.65,0.82,0.9),fxFrost*0.5);
   if (uIsScenery > 0.5) {
     float edge = vFlags.y > 0.5 ? canopyFade(vWorld) : sceneryFade(vWorld), k = edge * uAppear; // and a set just drawn fades in (a crown: out to the canopy's reach)
     if (uEdgeDither > 0.5) { if (bayer(gl_FragCoord.xy) >= edge) discard; k = uAppear; } // (the quality ladder's dithered edge: each art pixel there or not)
@@ -751,6 +778,7 @@ export class SpriteBatch {
       sil.frustumCulled = false; sil.renderOrder = 12;
       this.meshes.push(sil); this.sil = sil;
     }
+    for (const mesh of this.meshes) Object.assign((mesh.material as THREE.ShaderMaterial).uniforms, FX_UNIFORMS);
   }
 
   /** Named, for the probes' draw-call lists (tools/bench/gpu.cjs): its meshes carry the name, the see-through one marked. */
