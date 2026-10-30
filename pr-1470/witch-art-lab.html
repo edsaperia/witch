@@ -9439,6 +9439,75 @@ function mandiblePart(head, side, nominalLength, options, facing) {
 }
 
 
+// ---- inlined from art/body-graph/tail-markings.js ----
+
+
+
+const material = value => {
+  const mat = typeof value === "string" ? M[value] : value;
+  if (!Number.isInteger(mat) || mat <= 0 || mat >= 64) throw new Error("Tail material must name a material or palette index 1..63");
+  return mat;
+};
+
+// The first contiguous cone chain is the main tail. Tufts and other secondary
+// primitives use its coordinates too, without changing any geometry.
+function tailPath(parts) {
+  const path = []; let length = 0, previousU = null;
+  for (const part of parts) {
+    if (part.type !== "cone" || (path.length && Math.hypot(...v3.sub(part.a, path.at(-1).b)) > 1e-6)) break;
+    const delta = v3.sub(part.b, part.a), size = Math.hypot(...delta);
+    if (size < 1e-8) continue;
+    const tangent = v3.mul(delta, 1 / size), seed = Math.abs(tangent[1]) < .9 ? [0, 1, 0] : [1, 0, 0];
+    let u = previousU ? v3.sub(previousU, v3.mul(tangent, v3.dot(previousU, tangent))) : v3.cross(tangent, seed);
+    if (Math.hypot(...u) < 1e-6) u = v3.cross(tangent, seed);
+    u = v3.norm(u); previousU = u;
+    path.push({ a: part.a, b: part.b, tangent, u, v: v3.cross(tangent, u), start: length, length: size, r1: part.r1, r2: part.r2 });
+    length += size;
+  }
+  return { segments: path, length };
+}
+
+function tailCoordinates(p, path) {
+  let best = null, nearest = Infinity;
+  for (const segment of path.segments) {
+    const along = Math.max(0, Math.min(segment.length, v3.dot(v3.sub(p, segment.a), segment.tangent)));
+    const delta = v3.sub(p, v3.add(segment.a, v3.mul(segment.tangent, along))), distance = v3.dot(delta, delta);
+    if (distance >= nearest) continue;
+    nearest = distance;
+    best = { distance: segment.start + along, t: (segment.start + along) / path.length,
+      radius: segment.r1 + (segment.r2 - segment.r1) * along / segment.length,
+      y: v3.dot(delta, segment.u), z: v3.dot(delta, segment.v) };
+  }
+  return best;
+}
+
+/** @param {()=>number|null} [pixelsPerUnit] */
+function paintTailParts(parts, definition, pixelsPerUnit = () => null) {
+  if (!definition) return null;
+  const kind = definition.kind ?? "none", path = tailPath(parts);
+  if (!["none", "rings", "spots", "rosettes"].includes(kind)) throw new Error("Tail marking kind must be none/rings/spots/rosettes");
+  const count = definition.count ?? 6, width = definition.width ?? .35;
+  if (kind === "rings" && (!Number.isInteger(count) || count <= 0 || !Number.isFinite(width) || width < 0 || width > 1)) throw new Error("Tail rings need a positive count and width in [0,1]");
+  const ringMat = kind === "rings" ? material(definition.mat ?? "BODY3") : null;
+  const tip = definition.tip;
+  if (tip && (!Number.isFinite(tip.length) || tip.length < 0 || tip.length > 1)) throw new Error("Tail tip length must be in [0,1]");
+  const tipMat = tip ? material(tip.mat ?? "BODY3") : null;
+  if (!path.length) throw new Error("Tail markings require a main cone chain");
+  const paint = p => {
+    const coordinate = tailCoordinates(p, path);
+    if (!coordinate) return null;
+    if (tip?.length > 0 && coordinate.t >= 1 - tip.length) return tipMat;
+    if (kind === "rings") return (coordinate.t * count) % 1 < width ? ringMat : null;
+    if (kind === "none") return null;
+    const radius = Math.max(.001, coordinate.radius);
+    return regionMarking([coordinate.distance, coordinate.y, coordinate.z], definition,
+      { centreY: 0, depth: radius, width: radius, bellyY: -Infinity, len: path.length, pixelsPerUnit: pixelsPerUnit() });
+  };
+  for (const part of parts) part.paint = paint;
+  return { path, paint };
+}
+
+
 // ---- inlined from art/elders.js ----
 // The elder legends (Ed's elder brief, docs/ART-GUIDE.md 0c, 2026-10-13): a species' legend as the elder of its kind. It starts from the
 // animal's own nature, exaggerating its defining trait; it shows its age (grizzled, scarred, notched, weathered); it carries what
@@ -10486,7 +10555,7 @@ function quad3d(S, level, frame, st, facing = "towards") {
   // ---- tail ----
   const tb = [-len * 1.05, top - .1 + arch * .5, 0], tw = frame ? .04 : -.02;
   m.part = "tail"; m.rig.head = { nb, H, hr }; m.rig.tail = tb;
-  if (!elder?.tail && !has("tails") && !feats?.some(f => f.kind === "tails" && f.replace)) tail3d(m, has("starTail") ? "star" : q.tail, tb, len, top, tw, q.tailL ?? 1, q.tailK ?? 1);
+  if (!elder?.tail && !has("tails") && !feats?.some(f => f.kind === "tails" && f.replace)) tail3d(m, has("starTail") ? "star" : q.tail, tb, len, top, tw, q.tailL ?? 1, q.tailK ?? 1, q.regions?.tail, () => markingScale);
   m.part = "head";
   // ---- horns, antlers, tusks ----
   const hornTips = [];
@@ -10558,11 +10627,11 @@ function quad3d(S, level, frame, st, facing = "towards") {
     const previous = m.atScale;
     m.atScale = scale => { previous?.(scale); const radius = q.whiskerMinPx / (2 * scale); for (const part of whiskerParts) { part.r1 = Math.max(part.r1, radius); part.r2 = Math.max(part.r2, radius); } };
   }
-  if (q.regions?.torso?.outerPx) {
+  if (q.regions?.torso?.outerPx || q.regions?.tail?.outerPx) {
     const previous = m.atScale;
     m.atScale = scale => {
       markingScale = scale;
-      m.markingMetrics = { pixelsPerUnit: scale, ...rosetteSizing(q.regions.torso, { depth: Math.max(.04, Math.abs(top - chest) / 2), width: bw, pixelsPerUnit: scale }) };
+      if (q.regions?.torso?.outerPx) m.markingMetrics = { pixelsPerUnit: scale, ...rosetteSizing(q.regions.torso, { depth: Math.max(.04, Math.abs(top - chest) / 2), width: bw, pixelsPerUnit: scale }) };
       previous?.(scale);
     };
   }
@@ -10642,7 +10711,8 @@ function grownTail(m, tb, k, w) {
 }
 // k, w: its tail's length and thickness, 1 as built (body.tailL, body.tailK: a young one's shorter, an old one's bushier, a snow
 // leopard's thick), scaled from its root, whatever its kind.
-function tail3d(m0, kind, tb, len, top, tw, k = 1, w = 1) {
+function tail3d(m0, kind, tb, len, top, tw, k = 1, w = 1, marking = null, pixelsPerUnit = () => null) {
+  const firstPart = m0.parts.length;
   const m = k === 1 && w === 1 ? m0 : grownTail(m0, tb, k, w);
   const o = { group: 3 }, X = k => -len * k;
   if (kind === "brush") m.chain([[...tb, .1], [X(1.3), top - .25 + tw, 0, .15], [X(1.4), top - .55, 0, .14], [X(1.35), .38 + tw, 0, .09]], M.BODY, { ...o, paint: p => p[1] < .32 ? M.BODY3 : undefined });
@@ -10692,6 +10762,7 @@ function tail3d(m0, kind, tb, len, top, tw, k = 1, w = 1) {
   else if (kind === "glider") { m.seg(tb, [X(1.2), top - .12 + tw, 0], .09, .1, M.BODY, o); m.ell([X(1.65), top - .16 + tw * .7, 0], [.5, .06, .2], M.BODY, { ...o, dir: [1, .12, 0], paint: p => p[0] < X(1.95) ? M.BODY3 : Math.abs(p[2]) > .13 ? M.BODY2 : undefined }); } // a flying squirrel's: flat and feathered either side, held level behind (its rudder in a glide), its tip dark
   else if (kind === "ringed") m.chain([[...tb, .1], [X(1.05) - .3, top - .1 + tw, 0, .15], [X(1.05) - .7, top - .25 + tw, 0, .15], [X(1.05) - .95, top - .4 + tw, 0, .09]], M.BODY, { ...o, paint: p => Math.floor(-p[0] * 7) % 2 || p[0] < X(1.05) - .85 ? M.BODY3 : undefined }); // thick, held low, ringed in black, its tip black (the raccoon's)
   else if (kind === "thin") { m.chain([[...tb, .04], [X(1.1), top - .3, 0, .03], [X(1.12) + tw, top - .55, 0, .025]], M.BODY, o); m.ell([X(1.12) + tw, top - .62, 0], [.04, .07, .04], M.BODY3, o); }
+  if (marking) paintTailParts(m0.parts.slice(firstPart), marking, pixelsPerUnit);
 }
 
 function antlers3d(m, q, b, side, size, has) { // size: its antler size curve at this level (the template's)
