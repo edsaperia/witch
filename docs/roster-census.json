@@ -1,5 +1,5 @@
 {
-  "sourceCommit": "3abd821a17109670906e36f986e797ffd4c8be3a",
+  "sourceCommit": "6183c511f000c326651e2e73fed751c62b1075e1",
   "world": 0,
   "builders": {
     "armadillo": [
@@ -295,9 +295,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "cyan",
         "thinStrokes": 8,
         "boldStrokes": 8,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): small round ears on a round fluffy face, its ruff in tufts"
+        "description": "small round ears on a round fluffy face, its ruff in tufts"
       },
       "assessment": {
         "naturalCue": "white winter coat; small compact fox; short rounded ears; dense tail",
@@ -371,9 +372,10 @@
       "coat": null,
       "look": null,
       "sigil": {
+        "neon": "lemon",
         "thinStrokes": 10,
         "boldStrokes": 9,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): side on: the dome of its shell banded across, its long snout and upright ear"
+        "description": "side on: the dome of its shell banded across, its long snout and upright ear"
       },
       "assessment": {
         "naturalCue": "grey-brown armour; low body; banded shell",
@@ -489,9 +491,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "pink",
         "thinStrokes": 8,
         "boldStrokes": 6,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the two dark stripes down its long white face"
+        "description": "the two dark stripes down its long white face"
       },
       "assessment": {
         "naturalCue": "grey low broad body; black-and-white striped face",
@@ -572,9 +575,10 @@
         "fruit": true
       },
       "sigil": {
+        "neon": "pink",
         "thinStrokes": 11,
         "boldStrokes": 8,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the fruit bat: a fox's face with big eyes, its broad wings spread"
+        "description": "the fruit bat: a fox's face with big eyes, its broad wings spread"
       },
       "assessment": {
         "naturalCue": "brown membrane wings; fox-like muzzle; fruit-bat ears",
@@ -676,9 +680,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "orange",
         "thinStrokes": 7,
         "boldStrokes": 9,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the round ears and the round muzzle with its nose"
+        "description": "the round ears and the round muzzle with its nose"
       },
       "assessment": {
         "naturalCue": "dark coat; pale muzzle; flat back; prominent ears",
@@ -777,9 +782,10 @@
       "coat": null,
       "look": null,
       "sigil": {
+        "neon": "acid",
         "thinStrokes": 8,
         "boldStrokes": 2,
-        "description": "Ed's approved option, 2026-10-29: the two great incisors, separated by dark space."
+        "description": "See bold glyph source"
       },
       "assessment": {
         "naturalCue": "brown compact rodent; flat paddle tail; incisors",
@@ -861,9 +867,10 @@
         "embers": true
       },
       "sigil": {
+        "neon": "violet",
         "thinStrokes": 13,
         "boldStrokes": 12,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): from above: the great antler mandibles over its split wing cases"
+        "description": "from above: the great antler mandibles over its split wing cases"
       },
       "assessment": {
         "naturalCue": "dark wing cases; stag-beetle jaws; ember fissures are fictional",
@@ -971,9 +978,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "cyan",
         "thinStrokes": 14,
         "boldStrokes": 10,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the great tusks curving up out of its snout"
+        "description": "the great tusks curving up out of its snout"
       },
       "assessment": {
         "naturalCue": "brown bristles; long snout; low head; tusks",
@@ -1070,9 +1078,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "mint",
         "thinStrokes": 14,
         "boldStrokes": 9,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the whiskers, under pointed ears on a round head"
+        "description": "the whiskers, under pointed ears on a round head"
       },
       "assessment": {
         "naturalCue": "pale sand; small short limbs; broad head; large low ears; ringed tail",
@@ -1198,9 +1207,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "magenta",
         "thinStrokes": 8,
         "boldStrokes": 8,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): side on at full stretch: the long thin body, small head and long tail"
+        "description": "side on at full stretch: the long thin body, small head and long tail"
       },
       "assessment": {
         "naturalCue": "tan solid spots; tear lines; slim long legs; small head",
@@ -1266,9 +1276,10 @@
       "coat": null,
       "look": null,
       "sigil": {
+        "neon": "red",
         "thinStrokes": 14,
         "boldStrokes": 10,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): front on: a broad shell, eyes up on stalks, one great claw"
+        "description": "front on: a broad shell, eyes up on stalks, one great claw"
       },
       "assessment": {
         "naturalCue": "rust-brown carapace; lateral legs; two claws",
@@ -1357,9 +1368,10 @@
       "coat": {},
       "look": null,
       "sigil": {
+        "neon": "mint",
         "thinStrokes": 12,
         "boldStrokes": 5,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): side on, snapping: its long jaws open wide, lined with teeth"
+        "description": "side on, snapping: its long jaws open wide, lined with teeth"
       },
       "assessment": {
         "naturalCue": "olive low long body; broad flattened snout; muscular tail",
@@ -1465,9 +1477,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "magenta",
         "thinStrokes": 4,
         "boldStrokes": 10,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the big round ears and the big dark eyes"
+        "description": "the big round ears and the big dark eyes"
       },
       "assessment": {
         "naturalCue": "gold-brown small rodent; round ears; furry tail",
@@ -1543,9 +1556,10 @@
       "coat": null,
       "look": null,
       "sigil": {
+        "neon": "cyan",
         "thinStrokes": 9,
         "boldStrokes": 6,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): from above: the long thin tail and the two pairs of long wings out straight"
+        "description": "from above: the long thin tail and the two pairs of long wings out straight"
       },
       "assessment": {
         "naturalCue": "slender abdomen; four membranous wings; large eyes",
@@ -1642,9 +1656,10 @@
       "coat": null,
       "look": null,
       "sigil": {
+        "neon": "magenta",
         "thinStrokes": 8,
         "boldStrokes": 8,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the two great fan ears either side of its trunk"
+        "description": "the two great fan ears either side of its trunk"
       },
       "assessment": {
         "naturalCue": "grey massive body; trunk; fan ears; tusks",
@@ -1767,9 +1782,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "blue",
         "thinStrokes": 8,
         "boldStrokes": 6,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the broad palmate antlers like open hands, the long overhanging nose"
+        "description": "the broad palmate antlers like open hands, the long overhanging nose"
       },
       "assessment": {
         "naturalCue": "dark tall deer; long muzzle; palmate antlers",
@@ -1853,9 +1869,10 @@
       "coat": null,
       "look": null,
       "sigil": {
+        "neon": "acid",
         "thinStrokes": 10,
         "boldStrokes": 3,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the fan of feathers round its head"
+        "description": "the fan of feathers round its head"
       },
       "assessment": {
         "naturalCue": "green feathered serpent; gold/red accents",
@@ -1975,9 +1992,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "orange",
         "thinStrokes": 9,
         "boldStrokes": 6,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): ears far bigger than its face, flaring out wide over a small pointed face"
+        "description": "ears far bigger than its face, flaring out wide over a small pointed face"
       },
       "assessment": {
         "naturalCue": "pale sand small fox; naturally very large ears",
@@ -2075,9 +2093,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "violet",
         "thinStrokes": 12,
         "boldStrokes": 3,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): from below, gliding: its skin stretched square between its four legs"
+        "description": "from below, gliding: its skin stretched square between its four legs"
       },
       "assessment": {
         "naturalCue": "brown-grey small squirrel; gliding membrane; flattened tail",
@@ -2204,9 +2223,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "violet",
         "thinStrokes": 8,
         "boldStrokes": 6,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the tall pointed ears and the wide cheeks narrowing to a sharp muzzle"
+        "description": "the tall pointed ears and the wide cheeks narrowing to a sharp muzzle"
       },
       "assessment": {
         "naturalCue": "russet fox; black socks; pale underside; brush tail",
@@ -2288,9 +2308,10 @@
       "coat": null,
       "look": null,
       "sigil": {
+        "neon": "mint",
         "thinStrokes": 10,
         "boldStrokes": 10,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the great bulb of a nose and the tusks jutting up from its jaw"
+        "description": "the great bulb of a nose and the tusks jutting up from its jaw"
       },
       "assessment": {
         "naturalCue": "pale shaggy humanoid; beard; hunch",
@@ -2398,9 +2419,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "cyan",
         "thinStrokes": 10,
         "boldStrokes": 10,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the long snout between great swept-back horns, an icicle beard"
+        "description": "the long snout between great swept-back horns, an icicle beard"
       },
       "assessment": {
         "naturalCue": "icy long-necked quadruped; horns; ridge",
@@ -2503,9 +2525,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "red",
         "thinStrokes": 8,
         "boldStrokes": 5,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the eagle's head with its hooked beak and swept crest"
+        "description": "the eagle's head with its hooked beak and swept crest"
       },
       "assessment": {
         "naturalCue": "lion body; eagle beak and wings; tufted tail",
@@ -2610,9 +2633,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "acid",
         "thinStrokes": 9,
         "boldStrokes": 5,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the long upright ears"
+        "description": "the long upright ears"
       },
       "assessment": {
         "naturalCue": "brown long-eared lagomorph; strong hind feet; short tail",
@@ -2708,9 +2732,10 @@
       "coat": null,
       "look": null,
       "sigil": {
+        "neon": "red",
         "thinStrokes": 6,
         "boldStrokes": 4,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): side on: the dome of spines, its pointed snout"
+        "description": "side on: the dome of spines, its pointed snout"
       },
       "assessment": {
         "naturalCue": "brown spines; low body; pointed muzzle",
@@ -2785,9 +2810,10 @@
       "coat": null,
       "look": null,
       "sigil": {
+        "neon": "blue",
         "thinStrokes": 8,
         "boldStrokes": 5,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): standing: the dagger bill, the S of its neck, the long legs"
+        "description": "standing: the dagger bill, the S of its neck, the long legs"
       },
       "assessment": {
         "naturalCue": "grey long legs; long neck; spear bill",
@@ -2860,9 +2886,10 @@
       "coat": null,
       "look": null,
       "sigil": {
+        "neon": "violet",
         "thinStrokes": 9,
         "boldStrokes": 7,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): three serpent necks rising from one body, each with its head"
+        "description": "three serpent necks rising from one body, each with its head"
       },
       "assessment": {
         "naturalCue": "green multiheaded serpent",
@@ -2956,9 +2983,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "orange",
         "thinStrokes": 12,
         "boldStrokes": 5,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the great horns sweeping up and back in long arcs over a long goat's face, a beard"
+        "description": "the great horns sweeping up and back in long arcs over a long goat's face, a beard"
       },
       "assessment": {
         "naturalCue": "brown mountain goat; swept ridged horns; cloven hooves",
@@ -3085,9 +3113,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "mint",
         "thinStrokes": 10,
         "boldStrokes": 10,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): a cat's head with one rosette on its brow: a broken ring round a spot"
+        "description": "a cat's head with one rosette on its brow: a broken ring round a spot"
       },
       "assessment": {
         "naturalCue": "black melanistic coat; faint rosettes; broad head; muscular body",
@@ -3187,9 +3216,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "orange",
         "thinStrokes": 12,
         "boldStrokes": 6,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): side on: the heavy head with its long forked tongue flicking out"
+        "description": "side on: the heavy head with its long forked tongue flicking out"
       },
       "assessment": {
         "naturalCue": "grey-brown long monitor; neck; forked tongue; muscular tail",
@@ -3313,9 +3343,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "lemon",
         "thinStrokes": 17,
         "boldStrokes": 4,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the great mane in rays round a calm face"
+        "description": "the great mane in rays round a calm face"
       },
       "assessment": {
         "naturalCue": "tawny muscular cat; mane in adult male; tufted tail",
@@ -3411,9 +3442,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "mint",
         "thinStrokes": 10,
         "boldStrokes": 10,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the tall tufted ears and the flared cheek ruff"
+        "description": "the tall tufted ears and the flared cheek ruff"
       },
       "assessment": {
         "naturalCue": "warm spotted coat; ear tufts; short bobtail; broad paws",
@@ -3511,9 +3543,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "lemon",
         "thinStrokes": 8,
         "boldStrokes": 10,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): round ears high on a pointed face, the pale bib under its chin"
+        "description": "round ears high on a pointed face, the pale bib under its chin"
       },
       "assessment": {
         "naturalCue": "brown long mustelid; pale throat bib; bushy tail",
@@ -3618,9 +3651,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "orange",
         "thinStrokes": 8,
         "boldStrokes": 7,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): standing tall on watch, its paws at its chest"
+        "description": "standing tall on watch, its paws at its chest"
       },
       "assessment": {
         "naturalCue": "sandy slender mongoose; eye mask; back bars; thin tail",
@@ -3710,9 +3744,10 @@
       "coat": null,
       "look": null,
       "sigil": {
+        "neon": "cyan",
         "thinStrokes": 13,
         "boldStrokes": 14,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the two broad clawed digging hands beside its long snout"
+        "description": "the two broad clawed digging hands beside its long snout"
       },
       "assessment": {
         "naturalCue": "dark velvety low body; broad digging forefeet; small eyes",
@@ -3795,9 +3830,10 @@
         "butterfly": true
       },
       "sigil": {
+        "neon": "orange",
         "thinStrokes": 13,
         "boldStrokes": 9,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the swallowtail: broad forewings and the long tails on its hind wings"
+        "description": "the swallowtail: broad forewings and the long tails on its hind wings"
       },
       "assessment": {
         "naturalCue": "yellow-black swallowtail butterfly; hindwing tails",
@@ -3899,9 +3935,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "acid",
         "thinStrokes": 7,
         "boldStrokes": 5,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): side on: the wavy crest running along its back and tail"
+        "description": "side on: the wavy crest running along its back and tail"
       },
       "assessment": {
         "naturalCue": "brown small amphibian; orange underside; flattened tail; seasonal crest",
@@ -4004,9 +4041,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "red",
         "thinStrokes": 12,
         "boldStrokes": 11,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): its whiskered head up out of the water"
+        "description": "its whiskered head up out of the water"
       },
       "assessment": {
         "naturalCue": "brown long body; pale throat; small ears; tapered swimming tail",
@@ -4091,9 +4129,10 @@
       "coat": null,
       "look": null,
       "sigil": {
+        "neon": "violet",
         "thinStrokes": 7,
         "boldStrokes": 4,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the spotted owl: the two great eye rings in its round face, the hooked beak"
+        "description": "the spotted owl: the two great eye rings in its round face, the hooked beak"
       },
       "assessment": {
         "naturalCue": "brown-white spots; face disc; rounded wings",
@@ -4171,9 +4210,10 @@
       "coat": null,
       "look": null,
       "sigil": {
+        "neon": "blue",
         "thinStrokes": 10,
         "boldStrokes": 5,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the white belly in its black coat, the flippers out"
+        "description": "the white belly in its black coat, the flippers out"
       },
       "assessment": {
         "naturalCue": "dark back; white front; flippers; upright stance",
@@ -4264,9 +4304,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "cyan",
         "thinStrokes": 6,
         "boldStrokes": 6,
-        "description": "Ed's approved option, 2026-10-29: the bear's five-toed paw print."
+        "description": "See bold glyph source"
       },
       "assessment": {
         "naturalCue": "white large bear; long neck; small ears; broad paws",
@@ -4369,9 +4410,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "cyan",
         "thinStrokes": 8,
         "boldStrokes": 9,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the black bandit mask across its eyes"
+        "description": "the black bandit mask across its eyes"
       },
       "assessment": {
         "naturalCue": "grey coat; black eye mask; ringed tail; dexterous forefeet",
@@ -4478,9 +4520,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "orange",
         "thinStrokes": 7,
         "boldStrokes": 6,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the great horns curling round beside a long face"
+        "description": "the great horns curling round beside a long face"
       },
       "assessment": {
         "naturalCue": "pale wool; dark face/feet; curled horns",
@@ -4557,9 +4600,10 @@
       "coat": null,
       "look": null,
       "sigil": {
+        "neon": "lemon",
         "thinStrokes": 8,
         "boldStrokes": 7,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the rattle held up behind its coil in three buttons"
+        "description": "the rattle held up behind its coil in three buttons"
       },
       "assessment": {
         "naturalCue": "tan patterned snake; terminal rattle; broad head",
@@ -4636,9 +4680,10 @@
       "coat": null,
       "look": null,
       "sigil": {
+        "neon": "magenta",
         "thinStrokes": 5,
         "boldStrokes": 4,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): side on: the great heavy beak"
+        "description": "side on: the great heavy beak"
       },
       "assessment": {
         "naturalCue": "black bird; heavy bill; wedge tail",
@@ -4733,9 +4778,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "red",
         "thinStrokes": 13,
         "boldStrokes": 6,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): its long bushy tail in rings"
+        "description": "its long bushy tail in rings"
       },
       "assessment": {
         "naturalCue": "rust coat; white face markings; dark limbs; ringed bushy tail",
@@ -4852,9 +4898,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "violet",
         "thinStrokes": 9,
         "boldStrokes": 8,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): front on: the great horn rising from its nose up past its brow"
+        "description": "front on: the great horn rising from its nose up past its brow"
       },
       "assessment": {
         "naturalCue": "grey heavy body; nasal horn; skin folds",
@@ -4969,9 +5016,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "orange",
         "thinStrokes": 14,
         "boldStrokes": 10,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): a slim deer's face with its big ears and its short spiked antlers"
+        "description": "a slim deer's face with its big ears and its short spiked antlers"
       },
       "assessment": {
         "naturalCue": "small reddish deer; pale rump; short three-point antlers",
@@ -5066,9 +5114,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "red",
         "thinStrokes": 13,
         "boldStrokes": 9,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): from above: a plump spotted body, splayed legs and a curling tail"
+        "description": "from above: a plump spotted body, splayed legs and a curling tail"
       },
       "assessment": {
         "naturalCue": "black body; yellow warning patches; low sprawling legs",
@@ -5136,9 +5185,10 @@
       "coat": null,
       "look": null,
       "sigil": {
+        "neon": "mint",
         "thinStrokes": 16,
         "boldStrokes": 8,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): side on: the tail arched high over its back to the sting"
+        "description": "side on: the tail arched high over its back to the sting"
       },
       "assessment": {
         "naturalCue": "brown segmented arachnid; pincers; curved sting tail",
@@ -5225,9 +5275,10 @@
       "coat": null,
       "look": null,
       "sigil": {
+        "neon": "acid",
         "thinStrokes": 6,
         "boldStrokes": 6,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the spiral shell on its foot, two eye stalks"
+        "description": "the spiral shell on its foot, two eye stalks"
       },
       "assessment": {
         "naturalCue": "brown spiral shell; soft foot; tentacles",
@@ -5303,9 +5354,10 @@
         "python": true
       },
       "sigil": {
+        "neon": "cyan",
         "thinStrokes": 6,
         "boldStrokes": 4,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): its body in an S, its head raised and its forked tongue out"
+        "description": "its body in an S, its head raised and its forked tongue out"
       },
       "assessment": {
         "naturalCue": "green jungle python; white flecks; long coiled body",
@@ -5398,9 +5450,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "violet",
         "thinStrokes": 9,
         "boldStrokes": 5,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the long thick tail curled round it"
+        "description": "the long thick tail curled round it"
       },
       "assessment": {
         "naturalCue": "smoky pale coat; broken rosettes; small ears; thick long tail",
@@ -5522,9 +5575,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "pink",
         "thinStrokes": 7,
         "boldStrokes": 4,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): side on: a lion lying with its paws out, its headcloth's flap falling behind its head"
+        "description": "side on: a lion lying with its paws out, its headcloth's flap falling behind its head"
       },
       "assessment": {
         "naturalCue": "sandy lion body; humanlike face; headcloth",
@@ -5605,9 +5659,10 @@
         "tarantula": true
       },
       "sigil": {
+        "neon": "blue",
         "thinStrokes": 10,
         "boldStrokes": 10,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the tarantula: its big furry abdomen and thick bent legs"
+        "description": "the tarantula: its big furry abdomen and thick bent legs"
       },
       "assessment": {
         "naturalCue": "dark hairy tarantula; warm leg bands; eight legs",
@@ -5717,9 +5772,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "mint",
         "thinStrokes": 8,
         "boldStrokes": 2,
-        "description": "Ed's approved option, 2026-10-29: the spiral tail alone, its tip sweeping out below."
+        "description": "See bold glyph source"
       },
       "assessment": {
         "naturalCue": "russet rodent; tufted ears; large bushy tail",
@@ -5851,9 +5907,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "magenta",
         "thinStrokes": 13,
         "boldStrokes": 10,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the great branching antlers over a slim face"
+        "description": "the great branching antlers over a slim face"
       },
       "assessment": {
         "naturalCue": "reddish large deer; branching antlers; pale rump",
@@ -5983,9 +6040,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "red",
         "thinStrokes": 7,
         "boldStrokes": 5,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): side on: the zigzag of plates along its arched back, the spiked tail"
+        "description": "side on: the zigzag of plates along its arched back, the spiked tail"
       },
       "assessment": {
         "naturalCue": "large hindquarters; small head; back plates; tail spikes",
@@ -6099,9 +6157,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "pink",
         "thinStrokes": 6,
         "boldStrokes": 8,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): side on: its long slinking body, short legs, the black tip of its tail"
+        "description": "side on: its long slinking body, short legs, the black tip of its tail"
       },
       "assessment": {
         "naturalCue": "slender long mustelid; white winter coat; black tail tip",
@@ -6233,9 +6292,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "orange",
         "thinStrokes": 14,
         "boldStrokes": 13,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the stripes across its brow and cheeks"
+        "description": "the stripes across its brow and cheeks"
       },
       "assessment": {
         "naturalCue": "orange cat; dark stripes; pale underside; long tail",
@@ -6315,9 +6375,10 @@
       "coat": null,
       "look": null,
       "sigil": {
+        "neon": "lemon",
         "thinStrokes": 7,
         "boldStrokes": 8,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): the bulging eyes on top of its wide flat head, its wide mouth"
+        "description": "the bulging eyes on top of its wide flat head, its wide mouth"
       },
       "assessment": {
         "naturalCue": "olive squat amphibian; warty body; short legs",
@@ -6436,9 +6497,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "violet",
         "thinStrokes": 5,
         "boldStrokes": 4,
-        "description": "Ed's approved option, 2026-10-29: only the spiralled horn; open bands, no hat brim."
+        "description": "See bold glyph source"
       },
       "assessment": {
         "naturalCue": "white horse; single horn; mane and hoofs",
@@ -6564,9 +6626,10 @@
       },
       "look": null,
       "sigil": {
+        "neon": "blue",
         "thinStrokes": 6,
         "boldStrokes": 5,
-        "description": "Ed's approved option, 2026-10-29: cleaner cheeks, pointed ears and a long muzzle."
+        "description": "See bold glyph source"
       },
       "assessment": {
         "naturalCue": "grey-brown canid; saddle; upright ears; brush tail",
@@ -6638,9 +6701,10 @@
       "coat": null,
       "look": null,
       "sigil": {
+        "neon": "lemon",
         "thinStrokes": 13,
         "boldStrokes": 6,
-        "description": "bold (stacks, runes, pointers: art/sigils.js BOLD): from above: its oval shell in bands of plates"
+        "description": "from above: its oval shell in bands of plates"
       },
       "assessment": {
         "naturalCue": "grey segmented terrestrial crustacean; low plates; many legs",

@@ -3,7 +3,7 @@ import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { createServer } from "vite";
 import { GENOMES } from "../../art/genome/index.js";
-import { CREATURE_CONFIGS, CREATURE_BOLD, CREATURE_SIGILS } from "../../art/creatures/index.js";
+import { CREATURE_CONFIGS, CREATURE_BOLD, CREATURE_SIGILS, CREATURE_NEONS } from "../../art/creatures/index.js";
 import { AREAS } from "../../art/areas.js";
 import { ASSESSMENTS, FAMILIES } from "./assessments.mjs";
 
@@ -23,14 +23,15 @@ try {
     const c = CREATURE_CONFIGS[g.id], areas = AREAS.filter(a => a.creature === g.id), kind = R.KINDS[g.id];
     if (!c || !areas.length || !kind || !CREATURE_BOLD[g.id] || !CREATURE_SIGILS[g.id]) throw Error(`Incomplete species: ${g.id}`);
     const [cue, likeness, gap] = ASSESSMENTS[g.id];
-    const bold = readFileSync(`art/creatures/${g.id}/bold.js`, "utf8").split(/\r?\n/).filter(l => l.startsWith("//")).join(" ").replace(/^\/\/\s*/, "");
+    const boldSource = readFileSync(`art/creatures/${g.id}/bold.js`, "utf8");
+    const bold = boldSource.match(/BOLD\):\s*([^\r\n]+)/)?.[1] || "See bold glyph source";
     return {
       id: g.id, name: g.name, family: familyOf(g.id)[0][0], builder: g.builder,
       role: { fastRunner: tuning.creatureSpeeds.fast.includes(g.id), speed: c.movement?.speed, rangedFlag: COMBAT.ranged.includes(g.id), kite: COMBAT.kite.species.includes(g.id), attacks: COMBAT.bySpecies[g.id] ?? (COMBAT.ranged.includes(g.id) ? COMBAT.byLevel.ranged : COMBAT.byLevel.melee), strength: strengthOf(g.id), traits: c.traits || [], packMelee: c.pack?.melee?.attacks || [], packRanged: c.pack?.ranged?.name || null, legend: true },
       areaIds: areas.map(a => a.id), biome: kind.biome, introducedPhase: kind.phase,
       ownIslandPhase: kind.phase + 1, world0Islands: islands.filter(i => i.roster.some(r => r.kind === g.id)).map(i => i.kind), homeAtStart: R.homeKinds().includes(g.id),
       paletteHSV: g.palette, modelProportions: g.body || null, parts: g.parts || null, coat: g.coat || null, look: g.look || null,
-      sigil: { thinStrokes: CREATURE_SIGILS[g.id].length, boldStrokes: CREATURE_BOLD[g.id].length, description: bold },
+      sigil: { neon: CREATURE_NEONS[g.id], thinStrokes: CREATURE_SIGILS[g.id].length, boldStrokes: CREATURE_BOLD[g.id].length, description: bold },
       assessment: { naturalCue: cue, likeness, quality: "Source inspection only; current rendered quality unverified", gap },
       sources: [`art/creatures/${g.id}/genome.js`, `art/creatures/${g.id}/creature.js`, `art/creatures/${g.id}/bold.js`, ...areas.map(a => `art/areas/${a.id}/kind.json`)],
     };
@@ -49,12 +50,13 @@ const lines = [
   "Every species can be a legend (level 3). Fighter/ranged/runner are overlapping behaviours, not mutually exclusive species classes. The table lists the current pack attacks separately from the legacy ranged flag; a false flag does not mean no ranged attack. Runner means tuning.creatureSpeeds.fast, not a claim that the creature has no attack. Full attack/speed/trait facts are in roster-census.json.", "",
   "Islands lists every island containing that species in **world 0**, computed by islandOf, plus whether home initially contains it. Other campaign worlds change rosters; any discovered kind can later join home. Areas are its own recipe IDs, not a claim that the animal lives on only its namesake island. Phase is introduction / own island. Sources: [rosters](../src/rules/rosters.ts), [kinds](../src/rules/kinds.ts), [speed tuning](../config/tuning.json), [combat defaults](../config/combat.json).", "",
   "## All species", "",
-  "| Species / source | Gameplay facts | Islands (world 0); biome; phase | Areas | Family | Likeness first (assessment) | Natural colour / relative size / pattern / feature (assessment) | Sigil facts | Current art quality | Gaps / duplicates (assessment) |",
+  "| Species / source / encoded art facts | Gameplay facts | Islands (world 0); biome; phase | Areas | Family | Likeness first (assessment) | Natural colour / relative size / pattern / feature (assessment) | Sigil facts | Current art quality | Gaps / duplicates (assessment) |",
   "|---|---|---|---|---|---|---|---|---|---|",
 ];
 for (const r of rows) {
   const role = `${r.role.fastRunner ? "fast runner; " : ""}fighter; pack melee ${r.role.packMelee.filter(Boolean).join(", ") || "none"}; pack ranged ${r.role.packRanged || "none"}; legacy ranged=${r.role.rangedFlag}; legend`;
-  lines.push("| " + [ `[${r.name} (${r.id})](../${r.sources[0]})`, role, `${r.world0Islands.join(", ")}${r.homeAtStart ? "; home initially" : ""}; ${r.biome}; ${r.introducedPhase}/${r.ownIslandPhase}`, r.areaIds.map(id => `[${id}](../art/areas/${id}/kind.json)`).join(", "), r.family, r.assessment.likeness, r.assessment.naturalCue, `[bold ${r.sigil.boldStrokes} strokes](../art/creatures/${r.id}/bold.js); thin ${r.sigil.thinStrokes}`, r.assessment.quality, r.assessment.gap ].map(escape).join(" | ") + " |");
+  const encoded = `builder ${r.builder}; HSV ${[r.paletteHSV.hue, r.paletteHSV.sat, r.paletteHSV.val].join("/")}; model hgt ${r.modelProportions?.hgt ?? "builder default"}, len ${r.modelProportions?.len ?? "builder default"}`;
+  lines.push("| " + [ `[${r.name} (${r.id})](../${r.sources[0]}); ${encoded}`, role, `${r.world0Islands.join(", ")}${r.homeAtStart ? "; home initially" : ""}; ${r.biome}; ${r.introducedPhase}/${r.ownIslandPhase}`, r.areaIds.map(id => `[${id}](../art/areas/${id}/kind.json)`).join(", "), r.family, r.assessment.likeness, r.assessment.naturalCue, `[bold ${r.sigil.boldStrokes} strokes](../art/creatures/${r.id}/bold.js): ${r.sigil.description}; thin ${r.sigil.thinStrokes}; ${r.sigil.neon}`, r.assessment.quality, r.assessment.gap ].map(escape).join(" | ") + " |");
 }
 lines.push("", "## Active builders (from code)", "", ...Object.entries(builders).map(([b, ids]) => `- **${b} (${ids.length})**: ${ids.join(", ")}.`), "");
 mkdirSync("docs", { recursive: true });
