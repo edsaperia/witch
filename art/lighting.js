@@ -1,7 +1,7 @@
 // Witch lighting: the deferred pass that lights baked sprites at night.
 // `tgt` holds an albedo and a normal canvas ({a, n} 2D contexts, w, h); `out` is the canvas
 // the lit image is written to. Twilight, moonlight and point lights, in steps (light bands).
-import { hsv2rgb } from "./generator.js";
+import { hsv2rgb } from "./core.js";
 
 export function shade(tgt, out, st, lights, rect, K = 2 / (st.pixel || 2)) { // K: world scale, 2 / pixel size
   const [rx, ry, rw, rh] = rect || [0, 0, tgt.w, tgt.h];

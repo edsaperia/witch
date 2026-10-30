@@ -27,6 +27,11 @@ says what each note covers.
 
 ## [Balance](balance.md)
 
+- Compressed log bundles
+- Structured log records
+- Log recovery
+- Input recording
+- Paused playtest comments
 - Legacy models retained (2026-10-29, #1459, coordinator decision).
 - Fighting value (F)
 - Population growth
@@ -178,6 +183,10 @@ says what each note covers.
 - Sail in place
 - Zoo
 
+## [Light-pool readability experiment](light-pool-readability.md)
+
+(no entries: its tools and checks only)
+
 ## [The Making Of](making-of.md)
 
 (no entries: its tools and checks only)
@@ -209,6 +218,9 @@ says what each note covers.
 
 ## [Performance](performance.md)
 
+- House route profiling
+- Startup bundle baseline
+- Slow-frame summaries
 - Reused surface roughness (#1464, 2026-10-30):
 - Exact travel art profiles (2026-10-30, #1464):
 - Ordinary-play scenery stalls
@@ -229,6 +241,8 @@ says what each note covers.
 
 ## [The run](run.md)
 
+- What's new in Settings
+- Direct play after loading
 - The phases of a run
 - Bedroom
 - Loading screen

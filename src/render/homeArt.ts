@@ -2,8 +2,9 @@
 // soundsystems and the treehouse. They were drawn on the page while the view was being built, before anything showed (some
 // 60% of that time); as jobs they're drawn off the page, alongside the forest, and kept in the browser's store like the
 // rest. The same drawing as before, so the same pictures.
-import * as Art from "../../art/generator.js";
-import { groundOf, witchLookOf, type Baked, type FrameGround, type MakeCanvas } from "./artBuild";
+import * as Art from "./homeArt.primitives";
+import { groundOf, witchLookOf } from "./artLook";
+import type { Baked, FrameGround, MakeCanvas } from "./artBuild";
 import type { Style } from "./style";
 import { HOUSE_CONFIG as HOUSE_PLAN } from "../rules/houseConfig";
 

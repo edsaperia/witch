@@ -1,4 +1,5 @@
-// The art's hash (vite.config.ts's __ART_HASH__, src/render/artCache.ts): what the drawn sprite sets depend on, so browsers
+// Legacy global hash for diagnostics/comparison. Production cache keys now use artFingerprintMap below.
+// The art's old hash (vite.config.ts's __ART_HASH__): what the drawn sprite sets depended on, so browsers
 // keep drawn sets under it and a build that changes none of it reuses them. Every .js and .json under art/, its subfolders
 // too (art/genome, art/flora, art/props, art/recipes...: it read art/'s top level only, so an edit down there kept the old
 // hash and players their stale drawn art), without art/out (the exports) and art/overrides (its PNGs hashed apart); then
@@ -6,6 +7,8 @@
 import { createHash } from "node:crypto";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { diskTree } from "./artDependencies";
+import { artJobFingerprints, type ArtFingerprintResult } from "./artJobFingerprints";
 
 /** Besides art/: how sets are packed, the map's places, and the area types' numbers. */
 export const ART_EXTRA = ["src/render/artBuild.ts", "src/render/homeArt.ts", "src/rules/map.ts", "src/rules/random.ts", "config/area-types.json"];
@@ -38,4 +41,12 @@ export function overrideFiles(root: string): string[] {
 export function artHash(root = "."): string {
   const files = [...filesUnder(root, "art"), ...ART_EXTRA], pngs = overrideFiles(root);
   return createHash("sha1").update(files.map(f => f + "\n" + readFileSync(join(root, f), "utf8")).join("\n")).update(pngs.join("\n")).update(Buffer.concat(pngs.map(f => readFileSync(join(root, f))))).digest("hex").slice(0, 12);
+}
+
+/** Build-time map; browsers receive only its short per-kind hashes, never the analyzer. */
+export function artFingerprintMap(root = "."): ArtFingerprintResult {
+  return artJobFingerprints(diskTree(root), {
+    virtual: { "virtual:art-overrides": overrideFiles(root) },
+    buildInputs: ["tools/artHash.ts", "tools/artDependencies.ts", "tools/artJobFingerprints.ts", "tools/overrides/png.ts", "src/render/artCache.ts", "vite.config.ts"],
+  });
 }

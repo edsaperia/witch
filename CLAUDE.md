@@ -84,6 +84,7 @@ The rest of what builders need lives in a note an area, under `docs/notes/` (hou
 - [`docs/notes/creatures.md`](docs/notes/creatures.md): Creatures' art: genomes and templates, textures and palettes, evolution kits, faces, the live rig, the sleeping legends' art.
 - [`docs/notes/island.md`](docs/notes/island.md): Islands and the journey: island growth and shape, the land, lakes, biomes and beaches, the archipelago and the sea chart, sailing in place, kinds, the zoo.
 - [`docs/notes/view.md`](docs/notes/view.md): The view: what the renderer draws over the world: tilt-shift, the ground and its hills, ley lines, the sky and moon, smoke, pops, the debug overlay and test sliders.
+- [`docs/notes/light-pool-readability.md`](docs/notes/light-pool-readability.md): Default-off creature readability inside the witch's light pool, investigation and review evidence requirements.
 - [`docs/notes/gameplay.md`](docs/notes/gameplay.md): Creatures in play: inviting, the leash and sigils, combat and sieges, creature states, the legends and their quests.
 - [`docs/notes/music.md`](docs/notes/music.md): The music: the music engine, its style, sections and arc, the singer, the labs and studio, samples.
 - [`docs/notes/sound.md`](docs/notes/sound.md): Sound effects: the synthesised sound effects, babble and whale song, the mix.

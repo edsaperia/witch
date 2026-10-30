@@ -5,34 +5,20 @@
 // (assets: partyArt with or without the collar), and so are the faces (expression below); the 💢 and the daze
 // stars are marks drawn over the sprite.
 import * as THREE from "three";
-import type { Game } from "../rules/game";
 import type { Creature, CreatureState } from "../rules/creatures";
-import { LEGEND } from "../rules/creatures";
-import { cellKey } from "../rules/party";
+import type { Game } from "../rules/game";
+import { lookOf } from "../rules/creatureCues";
+export { isHappy, lookOf, dances, type Look } from "../rules/creatureCues";
 import { placed, shownOverBend } from "./height";
 import { stunned } from "../rules/knock";
 import { witchHeight } from "../rules/witch";
 import type { Tuning } from "../rules/tuning";
 import { bubbleScale } from "./bubbles";
 
-export type Look = CreatureState | "legend";
 
 /** The state machine's fields (issue #87), read if present; today's flags otherwise. */
 type WithState = Creature & { state?: CreatureState; dazedUntil?: number };
 
-export function isHappy(c: Creature): boolean {
-  const s = (c as WithState).state;
-  if (s) return s === "happy";
-  return !c.leashed && !!c.friendly; // (today: a quest-done area's creatures)
-}
-
-export function lookOf(c: Creature): Look {
-  if (c.boss || c.level === LEGEND) return c.leashed ? "leashed" : c.enraged ? "enraged" : "legend";
-  const s = (c as WithState).state;
-  if (s === "leashed" || c.leashed) return "leashed";
-  if (s === "enraged" || c.enraged) return "enraged";
-  return isHappy(c) ? "happy" : "wild";
-}
 
 /** Enraged creatures' red tint (Ed, 2026-10-05: "a red tint so that they're easy to tell apart"):
  *  one uniform shared by every enraged batch, set from tuning looks.enragedTint each frame (amount 0: off). */
@@ -64,11 +50,6 @@ export function expression(c: Creature, time: number): Expression {
 export const isDazed = (c: Creature, time: number) => ((c as WithState).dazedUntil ?? -Infinity) > time;
 
 /** Whether it dances on the beat: party animals, and happy ones in an area with a soundsystem. */
-export function dances(g: Game, c: Creature): boolean {
-  if (c.asleep) return false; // (asleep: the party's over, rules/partyOver.ts)
-  if (c.leashed || c.partyLegend) return true; // (a party legend dances where it stands: the Easter egg)
-  return lookOf(c) === "happy" && g.party.areas.has(cellKey(c.cell)) && !g.combat.ruined.has(cellKey(c.cell)) && !c.fight;
-}
 
 /** A tiny pixel canvas as a texture. */
 function pixels(w: number, h: number, draw: (x: CanvasRenderingContext2D) => void): THREE.CanvasTexture {
