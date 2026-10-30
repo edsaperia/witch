@@ -27,3 +27,10 @@ it("rejects invalid axes without consuming sequence and excludes host debug/call
   expect(c).not.toHaveProperty("nextWave"); expect(c).not.toHaveProperty("sharedPlaced");
   input.clear(); expect(input.sample(1).moveX).toBe(0);
 });
+
+it("accepts actual cursor displacement and bounds its aim without losing direction", () => {
+  const c = wireControls({ aimX: 30, aimZ: 40 });
+  expect(c?.aimX).toBeCloseTo(0.6); expect(c?.aimZ).toBeCloseTo(0.8);
+  expect(wireControls({ aimX: Number.MAX_VALUE, aimZ: Number.MAX_VALUE })?.aimX).toBeCloseTo(Math.SQRT1_2);
+  expect(wireControls({ aimX: NaN })).toBeNull();
+});

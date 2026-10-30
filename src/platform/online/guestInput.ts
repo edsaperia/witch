@@ -3,7 +3,7 @@ import { ONLINE_TIMING } from "./inputLease";
 
 const edges = ["toggleMode", "sigil", "place", "hat", "cycle", "cycleBack", "spell", "castParty", "dash"] as const;
 const held = ["fire", "sigilHeld", "hatHold", "held", "autoTalk", "talkHeld", "pausePage"] as const;
-const axes = ["moveX", "moveZ", "aimX", "aimZ"] as const;
+const axes = ["moveX", "moveZ"] as const;
 const neutral = (): Controls => ({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false });
 
 /** Copy an explicit wire allowlist: no debug commands, callbacks, world state or player ID. */
@@ -14,6 +14,12 @@ export function wireControls(input: unknown): Controls | null {
     if (typeof value[key] !== "number" || !Number.isFinite(value[key]) || Math.abs(value[key]) > 1) return null;
     result[key] = value[key];
   }
+  // Cursor aim is a world-space displacement (View.aimAt), unlike movement's unit axes.
+  const aim = [value.aimX ?? 0, value.aimZ ?? 0];
+  if (aim.some(n => typeof n !== "number" || !Number.isFinite(n))) return null;
+  const [x, z] = aim as number[], scale = Math.max(1, Math.abs(x), Math.abs(z));
+  const length = Math.max(1, Math.hypot(x / scale, z / scale));
+  result.aimX = x / scale / length; result.aimZ = z / scale / length;
   for (const key of [...edges, ...held]) if (value[key] !== undefined) {
     if (typeof value[key] !== "boolean") return null;
     result[key] = value[key];
