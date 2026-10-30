@@ -5,7 +5,7 @@
   "moonlight": { "ramp": ["#302749", "#7774b8", "#c4c3eb", "#f6efff"], "contrast": "#94cfed", "motion": 3, "imprint": "charge", "sound": "light" },
   "storm": { "ramp": ["#22254e", "#525fbd", "#91c3f1", "#f2faff"], "contrast": "#e6bf78", "motion": 4, "imprint": "charge", "sound": "storm" },
   "earth": { "ramp": ["#30221d", "#81532d", "#ce9b55", "#f3d9a4"], "contrast": "#95b88b", "motion": 5, "imprint": "push", "sound": "earth" },
-  "shadow": { "ramp": ["#100d1c", "#392746", "#8e5f9e", "#d7abdf"], "contrast": "#b9a2d3", "motion": 6, "imprint": "scorch", "sound": "void" },
+  "shadow": { "ramp": ["#20192f", "#674878", "#b289c1", "#f1d8f5"], "contrast": "#b9a2d3", "motion": 6, "imprint": "scorch", "sound": "void" },
   "bloom": { "ramp": ["#273426", "#518551", "#d895b6", "#f6dddc"], "contrast": "#b1d97d", "motion": 7, "imprint": "bloom", "sound": "nature" },
   "water": { "ramp": ["#173646", "#28799c", "#6fc9db", "#dbf6ee"], "contrast": "#b5dce5", "motion": 2, "imprint": "wet", "sound": "water" },
   "sand": { "ramp": ["#41302c", "#9b7142", "#dcb67a", "#f4e1b2"], "contrast": "#bba38c", "motion": 5, "imprint": "push", "sound": "earth" },

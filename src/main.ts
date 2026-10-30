@@ -8,10 +8,11 @@ import { bindings } from "./platform/bindings";
 import { Rumble } from "./platform/rumble";
 import { currentSettings } from "./app/playerSettings";
 import { wavesOver } from "./rules/win";
-import { chartOpen, closeChart, openChart, prepareChart, type Sailed } from "./ui/chartOverlay";
+import { chartOpen, closeChart, openChart, prepareChart, finishChartFlight, type Sailed } from "./ui/chartOverlay";
 import { openingWay, opensInBedroom, opensWithCreator, sailLandsInBed } from "./app/opening";
 import { wakeInBedroom } from "./rules/opening";
 import { endDream, startParty, startWake } from "./rules/wakeUp";
+import { LandingSleep } from './app/landingSleep';
 import { STATION_SLOT, wearFromStation, wornGenome } from "./rules/clothesPile";
 import { WakeCard } from "./render/wakeUp";
 import { toggleCornerPanel, closeCornerPanel, cornerPanelRoot } from "./ui/cornerPanel";
@@ -389,6 +390,17 @@ function arrived(): void {
   N().flags.landed = true;
   document.body.classList.remove("arriving"); // (the HUD fades in)
   sound.sailing(0); // (sailed in place: the sea and the wind fade as the night's start comes in)
+  const n = N();
+  if (view.shaderLandingLimited && n.flags.inBed && !view.landingWakeReady()) {
+    startWake(n.game, n.game.herTime, { dreaming: true, mirrored: mirrored(), yesterday: true });
+    landingSleep.begin(n.game); view.landingSleeping = true; view.foot = 1; view.seatK = 0; n.game.clock.paused = true;
+    input.release(); input.clearPresses(); (wakeCard ??= new WakeCard()).sleep();
+    mark('landing:asleep'); return;
+  }
+  wakeArrival();
+}
+function wakeArrival(): void {
+  view.landingSleeping = false;
   // (landed asleep in her bed: with a loan settled, dreaming it, the alarm when it ends; else the alarm at once: rules/wakeUp.ts, render/dream.ts)
   const dd = dreamAfterDive;
   dreamAfterDive = null;
@@ -589,6 +601,7 @@ if (botBtn) {
 function start(): boolean {
   if (sailing) return false; // (the next night being made in place)
   const { game, flags, arrival } = N();
+  if (landingSleep.holds(game)) return false;
   if (!flags.ready || !game.clock.paused || freeze.frozen) return false;
   if (creator.open) return true;
   sound.start(); // (browsers keep sound off until the player presses something: the start is that press)
@@ -721,6 +734,8 @@ if (autosave) {
 let lastDraw = 0;
 /** The wake-up's card and dark (render/wakeUp.ts), made the first time a night has one. */
 let wakeCard: WakeCard | null = null;
+const landingSleep = new LandingSleep<Game>();
+let landingSnoreAt = -Infinity;
 /** A plain first load asleep in the dark while home's night is made (the card kept up till she wakes: wakeFirst). */
 let bootAsleep = inBedroom;
 if (inBedroom) (wakeCard = new WakeCard()).sleep();
@@ -865,6 +880,8 @@ function chartOverNight(table?: string): void {
   const here = island ? { island, world: n.tuning.map?.world ?? 0, label: stayLabel(n.game.partyOver ? "over" : n.game.win?.phase === "won" ? "won" : "on") } : undefined;
   if (table) chartAt = table;
   openChart((href, to) => { chartAt = null; void sailFromChart(href, to); }, chartWorldArg(), { here, onDepart: departFromChart, onStay: () => console.info(`sea chart: ${island} chosen, she's there: back to the night (seed ${N().seed}, game time ${N().game.clock.time.toFixed(1)} s)`),
+    onFly: () => view.beginLandingShaders(true),
+    onLandingDue: dueAt => view.startLandingShaderGrace(dueAt),
     ...(table ? { table: { onLeave: () => { chartAt = null; closeChart(); } } } : {}) });
 }
 /** The map table's chart (Ed, 2026-10-23: "Map menu slides in from the bottom when you go near it, like the clothes stations"; since
@@ -950,7 +967,10 @@ async function sailInPlace(to: Sailed, made?: Promise<Night>): Promise<void> {
   n.flags.ready = true;
   input.clearPresses();
   sailing = false;
-  if (n.arrival) n.arrival.begin(n.game, !!made); // (the camera takes over from the chart's still, at once if it's drawn there already; it lands as a sail's does: arrived)
+  if (n.arrival) {
+    n.arrival.begin(n.game, !!made); // the camera takes over from the chart's still
+    if (view.shaderLandingLimited) n.arrival.skip(); // map/house readiness still applies; shaders add no further flight/warm-up wait
+  }
   else arrived(); // (no flight: the chart couldn't fly)
 }
 /** A sail's night made (sailInPlace, or under the chart's flight: departFromChart): the old night's music fading to the sea and the
@@ -959,6 +979,7 @@ async function sailInPlace(to: Sailed, made?: Promise<Night>): Promise<void> {
  *  the dive's own areas first, rules/arrive.ts diveReach); `at`, the chart's hand-off, its first frames drawn there ahead. */
 async function makeSailNight(to: Sailed, arrival?: Arrival, at?: FlightEnd["cam"] | null): Promise<Night> {
   if (sailFail) throw new Error("?debug=sail: the sail in place made to fail"); // (window.witch.sail's test of the fallback)
+  if (at === undefined) view.beginLandingShaders(false);
   sailing = true;
   gestured = true; // (she's played: the sound's woken already)
   sound.sailing(1);
@@ -973,8 +994,10 @@ async function makeSailNight(to: Sailed, arrival?: Arrival, at?: FlightEnd["cam"
   bedFirst(n); // (the flight in ends on her asleep in her bedroom, rules/opening.ts)
   lastDraw = 0;
   const A = n.tuning.arrive;
-  await view.prepare(A && at !== undefined ? { dive: diveReach(n.game.map, A), track: diveTrack(n.game.map, A) } : {}); // (under the chart's flight only: window.witch.sail's, the still's, waits for it all as ever)
-  if (at && A) await warmAt(n, handoffShot({ cam: at }, n.game.map), A);
+  await view.prepare({ sail: true, ...(A && at !== undefined ? { dive: diveReach(n.game.map, A), track: diveTrack(n.game.map, A) } : {}) });
+  if (at && A && !view.shaderLandingLimited) await warmAt(n, handoffShot({ cam: at }, n.game.map), A);
+  if (view.shaderLandingLimited) await view.waitForLandingWitch();
+  if (view.shaderLandingLimited) finishChartFlight();
   mark("sail:ready");
   return n;
 }
@@ -987,6 +1010,8 @@ async function warmAt(n: Night, shot: Shot, A: NonNullable<Tuning["arrive"]>): P
   view.assets.hold(true); // (the art workers paused for them: the first draws not fighting them for the machine)
   try {
     while (!stepFlightClock(c, performance.now(), A).faded) {
+      view.limitedLandingReady();
+      if (view.shaderLandingLimited) break;
       const t0 = performance.now();
       view.render(n.game.clock.time);
       if (TIMING) console.info(`sail-timing: warm frame ${Math.round(performance.now() - t0)} ms`, JSON.stringify(Object.fromEntries(Object.entries(view.ms).filter(([, v]) => v > 20).map(([k, v]) => [k, Math.round(v)]))));
@@ -1082,6 +1107,18 @@ function frame(now: number): void {
   ladder.frame(now, dt * 1000, !F.ready || game.clock.paused || freeze.frozen || document.hidden || scopeAt !== null || (!!arrival && !F.landed), tuning, frameStats.gpuTimes);
   frameStats.frame(dt * 1000);
   freeze.pollPad();
+  if (landingSleep.holds(game)) {
+    input.release(); input.clearPresses(); game.clock.paused = true;
+    updatePauseMenus(now);
+    if (!freeze.frozen && landingSleep.release(game, view.landingWakeReady())) {
+      input.release(); input.clearPresses(); mark('landing:alarm-ready'); wakeArrival();
+      F.last = now; // discard the loading interval before the first normal simulation step
+    } else {
+      (wakeCard ??= new WakeCard()).sleep();
+      if (!freeze.frozen && now - landingSnoreAt > 4500) { sound.sfx?.snore(0, 0, 0.2); landingSnoreAt = now; }
+      view.render(game.clock.time); hud.clock(); freeze.update(); return;
+    }
+  }
   // (the sea chart open over the game, ui/chartOverlay.ts: its keys and clicks are the chart's, hers held still)
   // (her room open mid-night, or the telescope: she stands still; the telescope takes her stick, keys and wheel, E leaving it)
   studio.update(bot ? null : game, !creator.open && !chartOpen() && !freeze.frozen && !telescope.on, dt, usedAt(game)); // (E at an instrument: she's at it)
@@ -1118,7 +1155,7 @@ function frame(now: number): void {
   if (c.debug) hud.setDebug(!hud.debugOn);
   view.debugReadouts = hud.debugOn;
   const step0 = performance.now();
-  if (params.get("cauldron") === "1" && !game.cauldron) enableCauldron(game, homeMushroomPickups(game));
+  if (params.get("cauldron") !== "0" && !game.cauldron) enableCauldron(game, homeMushroomPickups(game)); // (on by default, Ed 2026-10-30; ?cauldron=0 turns it off)
   stepGame(game, c, fightDt(dt * (botTag?.speed ?? 1))); // (the Fight Arena's slow motion, pause and frame at a time: app/fightArena.ts)
   rumble.update(game, currentSettings(), input.device === "pad" && !document.hidden ? [freeze.pad()] : [], now);
   // ?debug=attack: every 10 s, a few seconds of blows on the two soundsystems farthest from her (never felling one), so the
@@ -1232,10 +1269,7 @@ function frame(now: number): void {
   const flying = !!arrival && !F.landed && F.ready;
   if (flying && arrival!.frame(view, game, now)) arrived();
   // The pad on the pause page and Settings: before the chart's or the zoo's early return, so it works paused over the chart too.
-  settingsPage.update(now / 1000);
-  const corner = cornerPanelRoot(), pauseRoots = freeze.frozen && !settingsPage.open ? (corner ? [corner] : [document.getElementById("pause-sliders"), pauseBtns].filter((el): el is HTMLElement => !!el)) : [];
-  const opened = pauseRoots.length ? freeze.takeOpenPad() : undefined; // (the pause page's first frame: primed with what was held at Esc/Start)
-  if (pauseFocus.update(pauseRoots, freeze.pad(), now / 1000, () => { if (corner) closeCornerPanel(); else freeze.toggle(); }, corner ? undefined : opened)) input.device = "pad";
+  updatePauseMenus(now);
   if (chartHeld || zooHeld) return; // (the sea chart or the zoo over the night: its last frame kept, nothing drawn)
   if (game.clock.paused && !freeze.frozen && !flying && now - lastDraw < 300) return;
   lastDraw = now;
@@ -1255,6 +1289,13 @@ function frame(now: number): void {
   freeze.update();
   // The overlay (app/hud.ts), four times a second.
   hud.overlay(now, overlayHead);
+}
+/** The pause/menu path is also live while a limited arrival holds the entire simulation asleep. */
+function updatePauseMenus(now: number): void {
+  settingsPage.update(now / 1000);
+  const corner = cornerPanelRoot(), pauseRoots = freeze.frozen && !settingsPage.open ? (corner ? [corner] : [document.getElementById('pause-sliders'), pauseBtns].filter((el): el is HTMLElement => !!el)) : [];
+  const opened = pauseRoots.length ? freeze.takeOpenPad() : undefined;
+  if (pauseFocus.update(pauseRoots, freeze.pad(), now / 1000, () => { if (corner) closeCornerPanel(); else freeze.toggle(); }, corner ? undefined : opened)) input.device = 'pad';
 }
 /** The overlay's lines (the power meter's are hud.ts's), shared with the debug info's copied text. */
 function overlayHead(): string[] {

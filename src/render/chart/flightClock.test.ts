@@ -2,6 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { stepChartFlight, type ChartFlightClock } from './flightClock';
 
 describe('the chart keeps animating until its night is ready', () => {
+  it('starts landing grace once at the normal wall-clock end, even when animation dt is clamped', () => {
+    let due = 0;
+    const f: ChartFlightClock = { t: 2, rate: 0.2, wall: 0, hold: () => true, landingDue: () => due++ };
+    stepChartFlight(f, 0.1, 2, 9, 8.9); expect(due).toBe(0);
+    stepChartFlight(f, 0.1, 2, 9, 9); expect(due).toBe(1);
+    stepChartFlight(f, 0.1, 2, 9, 30); expect(due).toBe(1);
+    expect(f.t).toBeLessThan(9); expect(f.wall).toBe(30);
+  });
   it('does not hand over to a still when the slowdown cap expires before preparation finishes', () => {
     let ready = false;
     const f: ChartFlightClock = { t: 0, rate: 1, wall: 0, hold: () => !ready, slow: { rate: 0.2, ease: 0.5, cap: 24 } };

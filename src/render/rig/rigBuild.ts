@@ -1,9 +1,10 @@
 // The live rig's sprites (#79 stage 4): one species at one level baked as parts (art/genome/parts.js)
 // and packed into an atlas page, with the joints the rig strings them on. Runs in an art worker
 // like every other set (artBuild.ts runJob), so baking a legend's parts never stalls a frame.
-import * as Art from "../../../art/generator.js";
+import * as Art from "./rigBuild.primitives";
 import { rigParts } from "../../../art/genome/parts.js";
-import { packPixels, type AtlasPixels, type Baked, type MakeCanvas } from "../artBuild";
+import { packPixels } from "../artPacking";
+import type { AtlasPixels, Baked, MakeCanvas } from "../artBuild";
 import type { Style } from "../style";
 
 /** A creature's expression (art/genome/expressions.js; the view's expression(c), render/looks.ts in #89). */

@@ -20,6 +20,8 @@ export function metresPerArtPixel(t: { artPixelsPerMetre: number; pixelSize: num
 
 /** Shared by every sprite batch: the camera's right and (tilted) up, and the canopy fade. */
 export const SPRITE_UNIFORMS = {
+  /** Review experiment, Ed 2026-10-30: creatures read inside her light, camouflage outside stays unchanged. */
+  uPoolReadability: { value: new URLSearchParams(globalThis.location?.search ?? "").get("poolreadability") === "1" ? 1 : 0 },
   /** The mood's moonlight rim on characters (render/mood.ts): colour, strength (0 off). */
   uMoodRim: { value: new THREE.Vector4() },
   /** 1 when the sprites are stylised (?style=bold|ref): their outermost pixel is the style's dark outline, so the rim goes just inside it. */
@@ -319,7 +321,7 @@ ${atlasGlsl()}
 uniform vec3 uRight, uUp, uFacing;
 uniform float uTopFade, uUnlit;
 uniform vec4 uCutout;
-uniform float uDebugCull, uIsScenery, uAppear;
+uniform float uDebugCull, uIsScenery, uAppear, uArrivalFade;
 uniform vec4 uLean;
 uniform vec4 uWitch, uOcc, uSilhouette;
 varying float vNear;
@@ -349,6 +351,7 @@ varying vec2 vLocal;
 varying float vSizeY;
 varying vec2 vGround;
 uniform float uFind; // this batch: 1 for wild creatures (eyeshine, light floor, rim)
+uniform float uPoolReadability; // default OFF; ?poolreadability=1 for the assigned review
 uniform float uRimOn; // this batch: 1 for characters (the witch, creatures): the mood's moonlight rim
 uniform vec4 uMoodRim; // the rim's colour and strength (0: none; render/mood.ts)
 uniform float uRimInset; // 1: stylised sprites, the rim one pixel in from the edge (inside the style's outline)
@@ -597,6 +600,20 @@ void shade() {
     float edge = 1.0 - clamp(dot(N, uFacing), 0.0, 1.0);
     col = min(vec3(1.0), col + mix(a.rgb, vec3(1.0), 0.5) * uGlowRgb * edge * max(0.0, dot(N, lv / max(d, 1e-3))) * k * look.y);
   }
+  // Separate from the established find rim: use her actual horizontal pool and its light factors.
+  // Do not recolour the paint. A minimum floor could be cancelled by the existing find rim,
+  // including on dark creatures, so add a small lift selected by the painted pixel instead.
+  if (uPoolReadability > 0.5 && uFind > 0.5 && uIsScenery < 0.5 && uGlowPower > 0.0) {
+    float radius = uGlowR * uGlowNear, distance = length((uGlowPos - vWorld).xz);
+    if (radius > 0.0 && distance < radius) {
+      float pool = pow(1.0 - distance / radius, uGlowFalloff) * min(1.0, uGlowPower) * max(0.0, uGlowDim);
+      float paint = dot(a.rgb, vec3(0.3, 0.55, 0.15));
+      // Keep the paint's relative values: normalising by luminance made the darkest shades
+      // approach one flat value. This proportional addition retains their internal shading.
+      float dark = 1.0 - smoothstep(0.35, 0.75, paint);
+      col += a.rgb * (0.6 * pool * dark);
+    }
+  }
   if (vFlags.y > 0.5 && uPartyCount > 0) {
     // Crowns over a party catch a faint glow from below, on their undersides and lower edges.
     vec3 up = vec3(0.0);
@@ -618,6 +635,7 @@ void shade() {
 void main() {
   vec2 rdx = dFdx(vUv), rdy = dFdy(vUv); // (taken here, in uniform flow: one screen pixel, one art pixel, along the sprite)
   uvDx = rdx; uvDy = rdy;
+  if (uArrivalFade < 0.999 && bayer(gl_FragCoord.xy) >= uArrivalFade) discard;
   shade();
   // A pack member hiding in its lull (render/view/creatures.ts; Ed, 2026-10-29: "like the animal becoming a shadow (dark and
   // transparent), rather than teleporting"): its own lit sprite going over to a dark, see-through shadow of itself, by its glow.
@@ -741,7 +759,7 @@ export class SpriteBatch {
     this.geo.setAttribute("uv", quad.getAttribute("uv"));
     this.pos = this.size = this.uvs = this.flags = this.glow = undefined as never;
     this.grow(64);
-    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, ...HEIGHT_UNIFORMS, ...HIZ_UNIFORMS, ...atlasUniforms(atlas), uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uFadePass: { value: 0 }, uHasFade: { value: opts.fade ? 1 : 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uLies: { value: opts.flat ? 1 : 0 }, ...CAST_SHADOW_UNIFORMS, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, uWitchLight: witchLightUniform(opts.witchLight), uFind: { value: opts.find ? 1 : 0 }, uRimOn: { value: opts.rim ? 1 : 0 }, uTint: opts.tint ?? { value: new THREE.Vector4(0, 0, 0, 0) }, uShadow: opts.shadow ? SHADOW_LOOK : { value: new THREE.Vector4(0, 0, 0, 0) }, uLegend: { value: opts.legend ?? new THREE.Vector4(0, 0, 0, 0) }, uSteps: { value: opts.steps ?? 0 }, uLegendFloor: { value: opts.legendFloor ?? 0 }, uLegendAwake: { value: opts.legendAwake ?? 0 }, uGlowGain: opts.glowGain ?? { value: 1 }, uAbsolute: { value: opts.absolute ? 1 : 0 }, uLie: { value: opts.lie ?? 0 }, uLean: this.leanU, ...extra });
+    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, ...HEIGHT_UNIFORMS, ...HIZ_UNIFORMS, ...atlasUniforms(atlas), uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uArrivalFade: this.arrivalFade, uFadePass: { value: 0 }, uHasFade: { value: opts.fade ? 1 : 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uLies: { value: opts.flat ? 1 : 0 }, ...CAST_SHADOW_UNIFORMS, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, uWitchLight: witchLightUniform(opts.witchLight), uFind: { value: opts.find ? 1 : 0 }, uRimOn: { value: opts.rim ? 1 : 0 }, uTint: opts.tint ?? { value: new THREE.Vector4(0, 0, 0, 0) }, uShadow: opts.shadow ? SHADOW_LOOK : { value: new THREE.Vector4(0, 0, 0, 0) }, uLegend: { value: opts.legend ?? new THREE.Vector4(0, 0, 0, 0) }, uSteps: { value: opts.steps ?? 0 }, uLegendFloor: { value: opts.legendFloor ?? 0 }, uLegendAwake: { value: opts.legendAwake ?? 0 }, uGlowGain: opts.glowGain ?? { value: 1 }, uAbsolute: { value: opts.absolute ? 1 : 0 }, uLie: { value: opts.lie ?? 0 }, uLean: this.leanU, ...extra });
     // Scenery blends where it fades out at the budget's edge. Custom blending, as three.js turns
     // normal blending off for opaque materials; it stays in the opaque pass, in its old order.
     const blend = opts.scenery ? { blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneMinusSrcAlphaFactor } : {};
@@ -822,6 +840,7 @@ export class SpriteBatch {
   /** Replace every instance. */
   /** Scenery batches: how far a set just drawn has faded in (0 to 1; the view eases it). */
   readonly appearU = { value: 1 };
+  readonly arrivalFade = { value: 1 };
   /** What was last set (for checks: the smoke test's floating-sprite check reads it). */
   items: SpriteInstance[] = [];
 

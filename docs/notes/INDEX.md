@@ -72,6 +72,10 @@ says what each note covers.
 - Silhouette check
 - Live rig
 
+## [Expert search: implementation and fairness audit](expert-search.md)
+
+(no entries: its tools and checks only)
+
 ## [Creatures in play](gameplay.md)
 
 - Talk / invite
@@ -174,6 +178,10 @@ says what each note covers.
 - Sail in place
 - Zoo
 
+## [Light-pool readability experiment](light-pool-readability.md)
+
+(no entries: its tools and checks only)
+
 ## [The Making Of](making-of.md)
 
 (no entries: its tools and checks only)
@@ -198,6 +206,10 @@ says what each note covers.
 - Voices
 - The alto set
 - A/B renders
+
+## [Two-browser prototype](online-prototype.md)
+
+(no entries: its tools and checks only)
 
 ## [Performance](performance.md)
 

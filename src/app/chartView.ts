@@ -59,6 +59,7 @@ export interface ChartViewOptions {
    *  first frames to be drawn there ahead); resolves once it's ready for the dive. The flight slows to wait for it (seaChart.ts
    *  FlyOptions, the tuning's arrive.hold), then `onSail` as ever. */
   onDepart?: (island: string, seed: number, at: FlightEnd["cam"] | null) => Promise<void>;
+  onLandingDue?: (dueAt: number) => void;
   /** Look and sail modes: a Close button and Esc. */
   onClose?: () => void;
   /** Sail mode over a night (the map table's, the cards'): the island she's on, and its button's words ("Back to the party"):
@@ -264,7 +265,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     performance.mark("chart:sail");
     bakeFor(id); // (sailing straight there: drawn through the flight)
     const early = !!opts.onDepart && !!opts.onSail && chart.flightEnd(id!, dive) !== null;
-    const hold = early ? { hold: () => departed?.island !== id || !departed.ready, slow: TUNING.arrive?.hold } : {};
+    const hold = early ? { hold: () => departed?.island !== id || !departed.ready, slow: TUNING.arrive?.hold, landingDue: opts.onLandingDue } : {};
     if (!chart.fly(id!, end => { writeArrival(id!, w, end); void go(id!, end); }, { ...dive, ...hold })) { void go(id!); return; }
     if (early) void depart(id!);
     root.classList.add("flying");

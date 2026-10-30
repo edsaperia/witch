@@ -12,7 +12,9 @@ import type { Creature } from "../rules/creatures";
 import { partyGearOf } from "./artBuild";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
-import { waitForPrograms, type ReadyProgram } from "./programReadiness";
+import { monitorProgramLink, waitForPrograms, type ReadyProgram } from "./programReadiness";
+import { installShaderDrawGate, materialProgramsReady, type ShaderDrawStatus } from "./shaderDrawGate";
+import { LandingArtFade, lateLandingReady } from './landingReadiness';
 import { captureProgramUses, mapProgramUses } from "./programInventory";
 import { carrierOf, deckOf } from "../rules/treehouse";
 import { HOUSE_LAYER } from "./post";
@@ -380,6 +382,53 @@ export class View {
    *  dancefloor, the treehouse, the minimap and the map table; the View's names for them below are its. */
   island!: IslandLayers;
   get ground(): Ground { return this.island.ground; }
+  readonly shaderDrawStatus: ShaderDrawStatus = { active: false, skipped: {}, fallback: {} };
+  private readonly monitoredPrograms = new WeakSet<ReadyProgram>();
+  private readyPrograms(): ReadyProgram[] {
+    const programs = (this.renderer.info.programs ?? []) as unknown as ReadyProgram[];
+    for (const p of programs) if (!this.monitoredPrograms.has(p)) {
+      this.monitoredPrograms.add(p); monitorProgramLink(this.renderer.getContext(), p, message => console.error(message));
+    }
+    return programs;
+  }
+  private shaderEpoch = 0;
+  private shaderLandingDeadline = Infinity;
+  private shaderChartLanding = false;
+  shaderLandingLimited = false;
+  private landingFades = new LandingArtFade();
+  landingHouseShare = 1;
+  landingSleeping = false;
+  landingWakeReady(): boolean {
+    const A = this.assets;
+    return A.fullWitchReady && A.home.treehouse && this.treehouseBatch.atlas === A.treehouse.atlas && this.landingHouseShare === 1 &&
+      [...this.witchBatch.meshes, ...this.treehouseBatch.meshes].every(o => ([] as THREE.Material[]).concat((o as THREE.Mesh).material ?? []).every(m => materialProgramsReady(this.renderer.properties.get(m)))) &&
+      !!this.houseRooms?.landingReady(this.renderer);
+  }
+  beginLandingShaders(chart: boolean): void { this.shaderEpoch++; this.shaderLandingDeadline = Infinity; this.shaderChartLanding = chart; this.shaderLandingLimited = false; this.landingSleeping = false; this.landingFades.reset(); this.landingHouseShare = 1; }
+  private armLimitedLanding(): void {
+    if (this.shaderLandingLimited) return;
+    this.shaderLandingLimited = true; this.landingFades.arm(this.assets.home);
+    performance.mark('landing:limited');
+  }
+  limitedLandingReady(now = performance.now()): boolean {
+    const expired = now >= this.shaderLandingDeadline;
+    if (expired && !this.homeDone) this.armLimitedLanding();
+    if (!this.shaderLandingLimited) return false;
+    if (this.shaderLandingLimited && this.assets.fullWitchReady) this.swapHomeArt();
+    const programs = this.witchBatch.meshes.every(o => ([] as THREE.Material[]).concat((o as THREE.Mesh).material ?? []).every(m => materialProgramsReady(this.renderer.properties.get(m))));
+    return lateLandingReady(this.shaderLandingLimited, this.assets.fullWitchReady, programs);
+  }
+  async waitForLandingWitch(): Promise<void> {
+    if (this.limitedLandingReady()) return;
+    performance.mark('landing:witch-wait');
+    while (!this.limitedLandingReady()) { this.assets.work(4); await nextFrame(); }
+    performance.mark('landing:witch-ready');
+  }
+  startLandingShaderGrace(at = performance.now()): void {
+    if (this.shaderLandingDeadline !== Infinity) return;
+    this.shaderLandingDeadline = at + 15000;
+    performance.mark('chart:landing-due', { detail: { at, deadline: this.shaderLandingDeadline } });
+  }
   /** The rolling ground (height.ts): drawn only, the rules stay flat. */
   get heights(): HeightField { return this.island.heights; }
   /** The night sky that shows over the bend, in treetop mode. */
@@ -415,6 +464,8 @@ export class View {
   }
   private dark = { k: 1, at: NaN, door: null as { x: number; z: number } | null, enclosed: false, reveal: false, uv: new THREE.Vector2() };
   private behindHouse(g: Game): void {
+    // A late landing's house-only camera layer must still submit the critical ground to its readiness gate.
+    this.ground.mesh.layers[this.shaderLandingLimited && this.shaderDrawStatus.active ? 'enable' : 'disable'](HOUSE_LAYER);
     const D = this.dark, T = g.tuning.treehouse.house?.dark, deck = deckOf(g.map, g.tuning), w = g.witch;
     const inHouse = !!T?.on && !!deck?.house?.rooms && !!w.perch && w.mode === "ground" && !this.telescope; // (on foot: rising out of it, the forest comes back as she lifts off)
     const enclosed = inHouse && !g.islandReady;
@@ -677,6 +728,9 @@ export class View {
     this.castMap = new CastShadowMap(160, t.shadows.castRes ?? 1024);
     const prec = typeof location !== "undefined" ? new URLSearchParams(location.search).get("precision") : null; // (?precision=high|medium|low: every shader's float precision, for the circle bug; three.js takes high where the GPU has it)
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: "high-performance", preserveDrawingBuffer: true, ...(prec === "high" || prec === "medium" || prec === "low" ? { precision: prec === "high" ? "highp" : prec === "medium" ? "mediump" : "lowp" } as const : {}) });
+    // Three's first-use diagnostics read driver logs synchronously (498ms in proof64c95a287).
+    // Keep diagnostics in development; production keeps KHR gating without the blocking log queries.
+    this.renderer.debug.checkShaderErrors = import.meta.env.DEV;
     // A lost and restored GL context (a GPU reset, a tab long in the background on a phone): three.js would upload every texture
     // again from its pixels, which the atlases let go once uploaded (render/atlas.ts), so the art would come back black. The
     // page reloads instead (DECISION FOR ED: a run is lost either way; nothing handled it before, and the ground's own GPU-side
@@ -686,6 +740,7 @@ export class View {
     this.ledger = new GpuLedger(this.renderer.getContext(), () => canvas.width * canvas.height * 12); // (the canvas's back and front buffers and its depth: preserveDrawingBuffer)
     canvas.addEventListener("webglcontextlost", () => { this.ledger.reset(); this.onGpuEvent?.("context lost"); });
     this.renderer.setPixelRatio(1);
+    installShaderDrawGate(this.renderer, this.shaderDrawStatus, object => object === this.island?.ground.mesh ? this.ground.loadingFallback : null);
     this.renderer.info.autoReset = false; // count every pass of a frame, reset in render()
     this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace; // colours are the art's own sRGB values, untouched
     this.mpp = metresPerArtPixel(t);
@@ -927,8 +982,9 @@ export class View {
    *  (rules/arrive.ts diveReach): the area types drawn in that order, nearest first, under the loading mist; and the start waits only
    *  for the shaders (the hand-off's own ground is drawn by its first frames, main.ts warmAt): the house's art, the ground and the
    *  forest round it are made on through the dive (`homeDone`; app/arrive.ts eases the dive if they're due in view before then). */
-  async prepare(o: { dive?: (x: number, z: number) => number; track?: [number, number, number, number][] } = {}): Promise<void> {
+  async prepare(o: { sail?: boolean; dive?: (x: number, z: number) => number; track?: [number, number, number, number][] } = {}): Promise<void> {
     performance.mark("witch:prep-start");
+    if (o.sail) { this.homeDone = false; this.shaderDrawStatus.active = true; this.shaderDrawStatus.skipped = {}; this.shaderDrawStatus.fallback = {}; this.shaderDrawStatus.submitted = {}; if (!this.shaderChartLanding) this.startLandingShaderGrace(); }
     this.makeLoadingMist();
     { // tonight's own trees, if drawn ahead and kept (app/landingBake.ts), for the swap before she sees the island (retype)
       const m = this.game.map, types = new Set<number>();
@@ -950,17 +1006,18 @@ export class View {
       this.homeDone = false;
       this.prepared = true;
       this.askIsland(near); // (the workers drawing the dive's areas while the shaders link)
-      await this.compileAll();
+      await this.compileAll(o.sail);
       // The ground where the dive first sees the island (Ed, 2026-10-24: the dive's view needs the ground; Echo's island black through
       // the descent, its tiles not drawn yet): the first TRACK_AHEAD metres of its track in from the sea, TRACK_REACH each side, a few
       // tiles a frame under the chart; the rest of it as the dive goes, the view's own each frame (render/view/ahead.ts).
       const leg = o.track?.[0];
-      if (leg) {
+      if (leg && !this.shaderLandingLimited) {
         const [x0, z0] = leg, r = { minX: x0 - TRACK_REACH, maxX: x0 + TRACK_REACH, minZ: z0 - TRACK_AHEAD, maxZ: z0 + TRACK_REACH };
         while (this.ground.fill(this.renderer, r, x0, z0, 6) > 0) await nextFrame();
       }
       performance.mark("witch:prep-track");
-      void this.buildHome().catch(e => { console.error("the house's start after a sail went wrong", e); }).finally(() => { this.homeDone = true; });
+      const homeEpoch = this.shaderEpoch;
+      void this.buildHome(homeEpoch).catch(e => { console.error("the house's start after a sail went wrong", e); }).finally(() => { if (homeEpoch === this.shaderEpoch) { this.homeDone = true; performance.mark('landing:house-complete'); } });
       return;
     }
     await runSliced(this.warmSteps(), "warm"); // (the first frame's own lazy work made ahead, a slice at a time)
@@ -970,14 +1027,22 @@ export class View {
     { const rect = viewRect(this, this.game.tuning.haze.near, 20), w = this.game.witch; // (the ground round the start, a few tiles a frame: render/slices.ts)
       while (this.ground.fill(this.renderer, rect, w.x, w.z, 6) > 0) await nextFrame(); }
     performance.mark("witch:prep-ground");
-    await this.assets.homeArt(); // (the start's own art, drawn by the art workers: play never starts without her, home or the soundsystems)
+    if (o.sail) {
+      while (!this.assets.homeReady && performance.now() < this.shaderLandingDeadline) { this.assets.work(4); await nextFrame(); }
+      if (!this.assets.homeReady) {
+        this.armLimitedLanding(); this.prepared = true; await this.compileAll(true);
+        const homeEpoch = this.shaderEpoch;
+        void this.buildHome(homeEpoch).catch(e => { console.error("the house's start after a sail went wrong", e); }).finally(() => { if (homeEpoch === this.shaderEpoch) { this.homeDone = true; performance.mark('landing:house-complete'); } });
+        this.askIsland(near); return;
+      }
+    } else await this.assets.homeArt(); // initial boot still waits for all home art
     performance.mark("witch:prep-home");
     await this.assets.whenIdle(true); // (what the view asked for as needed now; the scenery kits and creatures draw on and fade in: the first-load hunt, 2026-10-20, half the cold load)
     performance.mark("witch:prep-idle");
     this.render(0, false);
     await runSliced(refreshSteps(this), "refresh"); // (refresh(this, true), a slice at a time)
     this.prepared = true;
-    await this.compileAll();
+    await this.compileAll(o.sail);
     this.askIsland(near);
     this.homeDone = true;
   }
@@ -1005,15 +1070,19 @@ export class View {
 
   /** A sail's house made through the dive (prepare's `dive`): the forest round it, its art (drawn by the art workers, not on the
    *  page: the dive's frames go on), the ground round it, a few tiles a frame, and the view's batches made again with it. */
-  private async buildHome(): Promise<void> {
-    await runSliced(this.warmSteps(), "warm");
+  private async buildHome(epoch = this.shaderEpoch): Promise<void> {
+    const steps = this.warmSteps(), view = this;
+    await runSliced((function* (): Steps { while (epoch === view.shaderEpoch) { const step = steps.next(); if (step.done) return; yield step.value; } })(), "warm");
+    if (epoch !== this.shaderEpoch) return;
     performance.mark("witch:prep-warm");
-    while (!this.assets.homeReady) { this.assets.work(4); await nextFrame(); } // (its jobs sent to the workers a little a frame, under the chart too)
+    while (!this.assets.homeReady) { if (epoch !== this.shaderEpoch) return; this.assets.work(4); await nextFrame(); } // existing dispatch policy unchanged
     performance.mark("witch:prep-home");
     { const w = this.game.witch, R = this.game.tuning.haze.near + 20, r = { minX: w.x - R, maxX: w.x + R, minZ: w.z - R, maxZ: w.z + R }; // (round her, not the dive's view)
-      while (this.ground.fill(this.renderer, r, w.x, w.z, 3) > 0) await nextFrame(); }
+      while (epoch === this.shaderEpoch && this.ground.fill(this.renderer, r, w.x, w.z, 3) > 0) await nextFrame(); }
+    if (epoch !== this.shaderEpoch) return;
     performance.mark("witch:prep-ground");
-    await runSliced(refreshSteps(this), "refresh");
+    const refresh = refreshSteps(this);
+    await runSliced((function* (): Steps { while (epoch === view.shaderEpoch) { const step = refresh.next(); if (step.done) return; yield step.value; } })(), "refresh");
     performance.mark("witch:prep-house");
   }
 
@@ -1072,7 +1141,9 @@ export class View {
   }
 
   /** Every shader the scene holds compiled, and their programs' logs read, ahead of their first draw (prepare). */
-  private async compileAll(): Promise<void> {
+  private async compileAll(allowPartial = false): Promise<void> {
+    const epoch = ++this.shaderEpoch;
+    if (allowPartial && !this.shaderChartLanding) this.startLandingShaderGrace();
     this.setReadiness("compile", 0, 1);
     // Every shader the scene holds compiled now, in the Bedroom, not on the first frame each is drawn (overnight phase 2: ten
     // programs compiled mid-run before, a hitch each: on the first steps, the first rise and the first waves; after, one).
@@ -1089,7 +1160,7 @@ export class View {
     for (const sc of fx ? [this.scene, fx] : [this.scene]) sc.traverse(o => { if (!o.visible) { hidden.push(o); o.visible = true; } });
     // (and the occlusion pyramid's passes, which aren't in the scene: render/hiz.ts, built by the treehouse, where she starts)
     if (!this.hizOff && !this.hiz) this.hiz = new Hiz(this.renderer);
-    const allPrograms = () => (this.renderer.info.programs ?? []) as unknown as ReadyProgram[];
+    const allPrograms = () => this.readyPrograms();
     const before = new Set(allPrograms().map(p => p.id)), groups: Record<string, number[]> = {};
     const launch = (group: string, fn: () => unknown) => {
       const prior = new Set(allPrograms().map(p => p.id)), result = fn();
@@ -1097,6 +1168,14 @@ export class View {
       return result;
     };
     const compiled = Promise.all([launch('scene', () => this.renderer.compileAsync(this.scene, this.camera)), fx && launch('effects', () => this.renderer.compileAsync(fx, this.camera)), launch('post', () => this.post.compile()), this.hiz?.ok && launch('hiz', () => this.hiz!.compile(this.renderer))]).catch(() => { /* readiness is still checked per program below */ });
+    // Diagnostic only: delay newly introduced sail programs, never the boot-warmed fallback/platform/witch programs.
+    const delay = allowPartial ? Math.max(0, Number((globalThis as unknown as { __witchShaderReadinessDelay?: number }).__witchShaderReadinessDelay) || 0) : 0;
+    if (delay) {
+      const due = performance.now() + Math.min(delay, 60000);
+      for (const p of allPrograms()) if (!before.has(p.id)) {
+        const ready = p.isReady.bind(p); p.isReady = () => performance.now() >= due && ready();
+      }
+    }
     for (const o of hidden) o.visible = false;
     performance.mark("witch:prep-compile0");
     const parallel = this.renderer.extensions.has('KHR_parallel_shader_compile');
@@ -1109,10 +1188,31 @@ export class View {
       return detail;
     };
     record('start');
-    // Coordinator6516109308: keep the animated chart beyond 60s; never use that mark as permission to force uniforms.
-    await waitForPrograms(allPrograms, compiled, (ready, total) => this.setReadiness('compile', ready, total), (pending, elapsed) => {
+    // Ed6520617385: a sail may land after its15s grace; unfinished programs must never force a uniform read or draw.
+    const complete = await waitForPrograms(allPrograms, compiled, (ready, total) => this.setReadiness('compile', ready, total), (pending, elapsed) => {
       console.warn('view: shaders still pending; keeping the chart up', record('pending', pending, elapsed));
-    });
+    }, undefined, undefined, () => allowPartial ? this.shaderLandingDeadline : Infinity);
+    if (!complete) {
+      this.armLimitedLanding();
+      record('landing-limit', allPrograms().filter(p => !p.isReady()), performance.now() - this.shaderLandingDeadline + 15000);
+      void (async () => {
+        await waitForPrograms(allPrograms, compiled, () => {}, () => {}, undefined, undefined, () => epoch === this.shaderEpoch ? Infinity : -Infinity);
+        if (epoch !== this.shaderEpoch) return;
+        const programs = [...(this.renderer.info.programs ?? [])];
+        await runSliced((function* (view: View) {
+          for (const p of programs) {
+            if (epoch !== view.shaderEpoch) return;
+            if ((p as unknown as ReadyProgram).isReady()) p.getUniforms();
+            yield;
+          }
+        })(this), 'background-programs');
+        if (epoch !== this.shaderEpoch) return;
+        record('background-ready'); this.shaderDrawStatus.active = false; releaseDisposals();
+      })().catch(error => console.error('background shader readiness failed; retaining safe fallback', error));
+      this.setReadiness('ready', 1, 1);
+      return; // no unfinished uniform reads, warm draws, uploads or GPU fence on the landing path
+    }
+    this.shaderDrawStatus.active = false;
     record('ready');
     performance.mark("witch:prep-compiled");
     releaseDisposals(); // (the last night's materials, kept till now: render/retire.ts)
@@ -1220,6 +1320,7 @@ export class View {
     return runSliced(this.setGameSteps(game), "setGame", budgetMs);
   }
   private *setGameSteps(game: Game): Steps {
+    this.shaderEpoch++; // a previous island's background completion cannot release this island's gate
     const t = game.tuning, old = this.island;
     // The last night's: the scenery's rebuild under way, the creatures' caches, the candles; its area types' batches and their
     // shadows, and its soundsystems' (their atlases the art's: freed once, by reseat).
@@ -1442,6 +1543,14 @@ export class View {
   /** The start's own art, drawn by the art workers (fast start (b)): each batch built on a stand-in takes its set once it arrives. */
   private swapHomeArt(): void {
     const A = this.assets;
+    const now = performance.now();
+    const previousHouseShare = this.landingHouseShare;
+    this.landingHouseShare = this.landingFades.share('treehouse', A.home.treehouse, now);
+    if (this.shaderLandingLimited && previousHouseShare === 0 && this.landingHouseShare > 0) performance.mark('landing:house-fading');
+    if (this.shaderLandingLimited && previousHouseShare < 1 && this.landingHouseShare === 1) performance.mark('landing:house-faded');
+    this.treehouseBatch.arrivalFade.value = this.landingHouseShare;
+    this.propBatch.arrivalFade.value = this.landingFades.share('props', A.home.props, now);
+    this.soundBatch.arrivalFade.value = this.landingFades.share('soundsystems', A.home.soundsystems, now);
     if (!this.spin) { // (a twirl's in the clothes she had: render/spin.ts)
       if (this.witchBatch.atlas !== A.witch) this.witchBatch.setAtlas(A.witch);
       if (this.bareBatch && this.bareBatch.atlas !== A.witchBare()) this.bareBatch.setAtlas(A.witchBare());
@@ -1512,6 +1621,8 @@ export class View {
   private floorItems: { species: string; glint: number; look: FloorLook }[] = Array.from({ length: 6 }, () => ({ species: "", glint: 0, look: FALLBACK_LOOK }));
 
   render(time: number, draw = true): void {
+    // Late art may introduce programs after compileAll's background pass has ended.
+    for (const p of this.readyPrograms()) p.isReady();
     this.assets.playing = this.game.party.spellAt !== null; // (the night playing: the art ahead of need shares the workers, render/assets.ts dispatch)
     this.ms = {}; this.lap = this.frameStart = performance.now();
     const g = this.game, t = g.tuning, P0 = poseOf(g), F = this.fly;
@@ -1746,7 +1857,7 @@ export class View {
       this.crown.uniforms.uWarmK.value = CR?.warm ?? 0; // (the house's warm light up into it, live from the pause page)
       this.crown.update(this.camera, W, plan, here, dt, hole, CR?.cutFade ?? 0, { x: w.x, y: groundHeight(w.x, w.z) + witchHeight(w, t), z: w.z }); // (her: the oak hidden when she's behind it)
       if (this.crownFar) { // (and over the horizon from far off: its picture baked the first frame there is one)
-        this.crownFar.bake(this.renderer);
+        if (!this.shaderDrawStatus.active) this.crownFar.bake(this.renderer);
         const at = g.party.spellAt;
         this.crownFar.update(this.camera, W.o, W.ex, W.ez, at === null ? 1e9 : at === undefined ? -1e9 : at, this.crown.indoors);
       }

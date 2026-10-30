@@ -1,0 +1,129 @@
+{
+  "runtimeBaseline": "523b5cec0",
+  "scope": "Ground feature-define families, not every Three renderer-state combination",
+  "world": 0,
+  "seed": 424242,
+  "existingVariants": 4,
+  "proposedVariants": 6,
+  "witnesses": [
+    {
+      "island": "home",
+      "phase": 0,
+      "lakes": false,
+      "zoo": false,
+      "looks": []
+    },
+    {
+      "island": "fox",
+      "phase": 1,
+      "lakes": true,
+      "zoo": false,
+      "looks": [
+        "water"
+      ],
+      "lakeCount": 1
+    },
+    {
+      "island": "otter",
+      "phase": 3,
+      "lakes": true,
+      "zoo": false,
+      "looks": [
+        "water"
+      ],
+      "lakeCount": 1
+    },
+    {
+      "island": "raven",
+      "phase": 3,
+      "lakes": true,
+      "zoo": false,
+      "looks": [
+        "lava"
+      ],
+      "lakeCount": 1
+    }
+  ],
+  "metadata": {
+    "designedKinds": 64,
+    "totalKinds": 64,
+    "waterOnlyBiomeEligible": [
+      "hedgehog",
+      "squirrel",
+      "hare",
+      "fox",
+      "marten",
+      "stoat",
+      "mole",
+      "snail",
+      "dormouse",
+      "badger",
+      "boar",
+      "newt",
+      "moth",
+      "toad",
+      "stag",
+      "beaver"
+    ],
+    "specialLookEligible": [
+      "otter",
+      "heron",
+      "bat",
+      "raven",
+      "elk",
+      "wolf",
+      "lynx",
+      "ram",
+      "salamander",
+      "spider",
+      "snake",
+      "cat",
+      "owl",
+      "meerkat",
+      "fennec",
+      "raccoon",
+      "beetle",
+      "woodlouse",
+      "arcticfox",
+      "ibex",
+      "redpanda",
+      "armadillo",
+      "lion",
+      "crocodile",
+      "dragonfly",
+      "tiger",
+      "flyingsquirrel",
+      "roe",
+      "penguin",
+      "rattlesnake",
+      "cheetah",
+      "jaguar",
+      "bear",
+      "komodo",
+      "frosttroll",
+      "snowleopard",
+      "frostwyrm",
+      "griffin",
+      "sphinx",
+      "stegosaurus",
+      "scorpion",
+      "rhino",
+      "hydra",
+      "crab",
+      "featheredserpent",
+      "elephant",
+      "unicorn",
+      "polarbear"
+    ],
+    "note": "Biome eligibility is not actual per-map lake classification; full64-map generation exceeded60s and was not claimed complete."
+  },
+  "retention": {
+    "arrival": "Only current scene ground/plain+beach and shared passes are warmed",
+    "sameClass": "Old/new overlap can reuse same programs",
+    "crossClass": "New water-only/full split adds2 program cache misses on crossing; old pair can be disposed after readiness; return may compile again",
+    "globalCache": "No persistent keepalive for every ground family"
+  },
+  "cloudCompileCosts": null,
+  "cloudStatus": "Benchmark prepared, not run; coordinator allocation requested",
+  "applicationShaderChanged": false
+}
