@@ -60,3 +60,24 @@ it("a press made after the pause began but before its first frame still counts; 
   const unknown = vi.fn(); new MenuFocus().update([root], pad(1), 0, unknown); // (no record of the opening: primed with what's held, as before)
   expect(unknown).not.toHaveBeenCalled();
 });
+
+it("a fresh pause snapshot resets old Back history even if no frame saw the menu close", () => {
+  vi.stubGlobal("document", { createElement: () => ({}), head: { append() {} } });
+  const root = { querySelectorAll: () => [] } as unknown as HTMLElement;
+  const pad = (button: number) => ({ buttons: Array.from({ length: 17 }, (_, i) => ({ pressed: i === button })), axes: [0, 0] }) as unknown as Gamepad;
+  const none = Array<boolean>(17).fill(false), withB = none.map((_, i) => i === 1);
+  const nav = new MenuFocus(), back = vi.fn();
+  nav.update([root], pad(-1), 0, back, none);
+  nav.update([root], pad(1), 1, back);
+  expect(back).toHaveBeenCalledTimes(1);
+  // Resume, release B and reopen with Esc between menu frames. By the next frame B is down again.
+  nav.update([root], pad(1), 10, back, none);
+  expect(back).toHaveBeenCalledTimes(2);
+  // A B already held at a subsequent opening is still suppressed, however late the frame.
+  nav.update([root], pad(1), 20, back, withB);
+  nav.update([root], pad(1), 30, back);
+  expect(back).toHaveBeenCalledTimes(2);
+  nav.update([root], pad(-1), 31, back);
+  nav.update([root], pad(1), 32, back);
+  expect(back).toHaveBeenCalledTimes(3);
+});

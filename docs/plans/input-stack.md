@@ -35,3 +35,18 @@ routing, held keys on open/close, duplicate registration/lower-layer removal,
 and lost keyup on blur. Pause integration and browser release checks remain
 pending at this foundation milestone. The coordinator runs the browser checks;
 this builder has no browser allocation.
+
+Handoff received in COORDINATOR6533896127 after robustness shipped as v6031;
+prototype merged normally. COORDINATOR6533986583 approved the bounded
+`ui/menuFocus.ts` session-reset fix after its new regression failed on the old
+code (expected two Back calls, received one). COORDINATOR6534004220 approved
+exactly `input.clearPresses()` to `input.release()` in `freeze.onToggle`, with a
+held-key pause/resume tape equality test. These are the only main/menu-focus
+boundary expansions; Settings, bindings storage and save-slot work stay outside.
+
+Pause milestone implemented: final affected checks pass (20 tests across stack,
+Freeze integration/text entry, menu focus and changelog), plus typecheck and
+pause-on-top script syntax. The earlier nearby input/recording run passed 35
+tests. Release browser assertions are prepared but not run by this builder;
+native-control behavior and the intermittent CI symptom await the coordinator's
+combined release check. No further panel migration begins on this PR.
