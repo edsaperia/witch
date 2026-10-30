@@ -65,9 +65,9 @@ export async function compareGround({ baseline, candidate, fixture, beach }) {
     set('uDiscoTiles', image(32, 32, () => [180, 220, 160, 85]));
     set('uPave', 12, enabled.has('PAVEMENT') ? 25 : 0, 2, 3); set('uPave2', 1, 0.2, 0.3, 18);
     set('uPaveStone', 0.5, 0.48, 0.43); set('uPaveDark', 0.22, 0.24, 0.25); set('uPaveMoss', 0.13, 0.28, 0.12); set('uPaveGrout', 0.09, 0.08, 0.07);
-    // Packed area byte 1 decodes to look 0. The dedicated street probe must
-    // match that look; keep other fixtures identical to the completed shards.
-    set('uZooStreet', enabled.has('ZOO_STREET') ? 1 : 0, fixture.sensitiveExtra === 'ZOO_STREET' ? 0 : 1, 5, 0);
+    // Packed area byte 1 decodes to look 0. Match every selected street to
+    // that look so all mask combinations exercise streets alongside extras.
+    set('uZooStreet', enabled.has('ZOO_STREET') ? 1 : 0, 0, 5, 0);
     set('uZooPlaza', -25, -24, 15, enabled.has('ZOO_PLAZA') ? 1 : 0);
     set('uPlazaSigil', image(64, 64, (x, y) => { const p = x % 11 < 2 || y % 13 < 2 ? 255 : 0; return [p, p, p, 255]; }));
     set('uLegendRingCount', enabled.has('LEGENDS') ? 1 : 0); uniforms.uLegendRings.value[0].set(25, -24, 17, 5);
