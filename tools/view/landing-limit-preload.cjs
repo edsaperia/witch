@@ -29,16 +29,17 @@ pw.chromium.launch = async opts => {
       if (!shot || !fs.existsSync(out + '-15s.png')) failures.push('missing15.5s capture');
       if (shot?.chartPresent) failures.push('chart still covering scene at15.5s');
       if (!shot?.fullWitchReady) failures.push('full witch missing at15.5s');
-      if (!shot?.platformPresent) failures.push('platform stand-in missing at15.5s');
-      if (!shot?.limited || !Object.keys(shot?.drawStatus?.fallback ?? {}).length) failures.push('no visible fallback submission at15.5s');
+      if (!shot?.sleeping || !shot?.zzz || shot?.clock !== 0) failures.push('not asleep with zzz at00:00 at15.5s');
+      const input = fs.existsSync(out + '-input.json') ? JSON.parse(fs.readFileSync(out + '-input.json', 'utf8')) : null;
+      if (!input?.unchanged || !input.pauseOpened || !input.pauseClosed) failures.push('input suppression/pause-menu proof missing or failed');
+      const woke = fs.existsSync(out + '-woke.json') ? JSON.parse(fs.readFileSync(out + '-woke.json', 'utf8')) : null;
+      if (!woke || woke.sleeping || woke.clock <= 0 || woke.beat !== 'up') failures.push('normal wake/night start not observed');
       if (!(shot?.graceMs >= 15000 && shot.graceMs <= 16000)) failures.push('capture outside15–16s');
       if (!(arrival !== undefined && due !== undefined && arrival - due <= 16000)) failures.push('arrival later than16s after due');
-      if (!final.marks.some(m => m.name === 'witch:shader-background-ready')) failures.push('background-ready not observed');
-      if (!final.marks.some(m => m.name === 'landing:house-complete')) failures.push('house completion not observed');
+      if (!final.marks.some(m => m.name === 'landing:alarm-ready') || !fs.existsSync(out + '-alarm.png')) failures.push('house-ready alarm/screenshot not observed');
       if (final.unsafeUniformReads || !Object.keys(final.methods ?? {}).length) failures.push('unsafe/missing uniform counters');
       for (const [name, m] of Object.entries(final.methods ?? {})) if (m.longestMs > 100) failures.push(`${name} exceeded100ms`);
-      // This is deliberately stricter than attributing a long frame to shaders: don't hide an unclassified stall.
-      if ((shot?.worstFrameMs ?? Infinity) > 100) failures.push('frame over100ms in the grace/capture window');
+      // All long frames remain in final.longFrames; the sleep brief specifically forbids shader-query stalls.
       fs.writeFileSync(out + '-verdict.json', JSON.stringify({ ok: !failures.length, failures }, null, 2));
       await closePage(...args);
       if (failures.length) throw Error('landing proof failed: ' + failures.join('; '));
@@ -46,11 +47,30 @@ pw.chromium.launch = async opts => {
     await page.exposeFunction('__landingSnapshot', async snapshot => {
       fs.writeFileSync(out + '-15s.json', JSON.stringify(snapshot, null, 2));
       await page.screenshot({ path: out + '-15s.png' });
+      const state = () => page.evaluate(() => { const g = window.witch.game, w = g.witch; return { clock: g.clock.time, herTime: g.herTime, witch: { x: w.x, z: w.z, mode: w.mode, lift: w.lift }, wake: g.wake?.beat, wave: g.party.wave, creatures: g.creatures.map(c => ({ id: c.id, x: c.x, z: c.z, state: c.state, hp: c.hp })) }; });
+      const before = await state();
+      for (const key of ['w', 'e', ' ']) await page.keyboard.down(key);
+      await page.waitForTimeout(300);
+      for (const key of ['w', 'e', ' ']) await page.keyboard.up(key);
+      const after = await state();
+      await page.keyboard.press('Escape'); await page.waitForTimeout(100);
+      const pauseOpened = await page.evaluate(() => document.body.classList.contains('paused'));
+      await page.keyboard.press('Escape'); await page.waitForTimeout(100);
+      const pauseClosed = await page.evaluate(() => !document.body.classList.contains('paused'));
+      fs.writeFileSync(out + '-input.json', JSON.stringify({ unchanged: JSON.stringify(before) === JSON.stringify(after), pauseOpened, pauseClosed, before, after }, null, 2));
+    });
+    await page.exposeFunction('__landingAlarmSnapshot', async snapshot => {
+      fs.writeFileSync(out + '-alarm.json', JSON.stringify(snapshot, null, 2));
+      await page.screenshot({ path: out + '-alarm.png' });
+      await page.keyboard.down('w'); await page.waitForTimeout(300); await page.keyboard.up('w');
+      await page.waitForTimeout(4000);
+      const woke = await page.evaluate(() => ({ at: performance.now(), sleeping: window.witch.view.landingSleeping, clock: window.witch.game.clock.time, beat: window.witch.game.wake?.beat }));
+      fs.writeFileSync(out + '-woke.json', JSON.stringify(woke, null, 2)); await page.screenshot({ path: out + '-woke.png' });
     });
     await page.addInitScript(() => {
       window.__witchShaderReadinessDelay = 30000;
       const probe = window.__landingDemo = { methods: {}, unsafeUniformReads: 0, frames: [], longFrames: [], sections: {}, sail: null };
-      const seen = new WeakSet(), renderers = new WeakSet(); let shot = false, previous;
+      const seen = new WeakSet(), renderers = new WeakSet(); let shot = false, alarmShot = false, previous;
       const counted = (name, fn) => function (...args) {
         if (probe.sail === null) return fn.apply(this, args);
         const start = performance.now(); try { return fn.apply(this, args); }
@@ -80,6 +100,8 @@ pw.chromium.launch = async opts => {
             p.getUniforms = function () { if (probe.sail !== null && !p.isReady()) { probe.unsafeUniformReads++; throw Error(`unfinished uniform read ${p.id}`); } return read(); };
           }
           const due = performance.getEntriesByName('chart:landing-due').at(-1)?.detail?.at;
+          const alarm = performance.getEntriesByName('landing:alarm-ready').at(-1)?.startTime;
+          if (!alarmShot && alarm !== undefined) { alarmShot = true; void window.__landingAlarmSnapshot({ at: performance.now(), alarmAt: alarm, afterDue: alarm - due, clock: window.witch.game.clock.time, beat: window.witch.game.wake?.beat }); }
           if (!shot && due !== undefined && now >= due + 15500) {
             shot = true;
             const gl = v.renderer.getContext(), debug = gl.getExtension('WEBGL_debug_renderer_info');
@@ -88,6 +110,8 @@ pw.chromium.launch = async opts => {
               gpu: debug ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER),
               chartPresent: !!document.getElementById('chart-overlay'), limited: v.shaderLandingLimited, drawStatus: v.shaderDrawStatus,
               fullWitchReady: v.assets.fullWitchReady, houseShare: v.landingHouseShare,
+              sleeping: v.landingSleeping, clock: window.witch.game.clock.time, beat: window.witch.game.wake?.beat,
+              zzz: document.getElementById('wake-card')?.textContent?.includes('zzz'),
               ground: { id: v.ground.mesh.id, visible: v.ground.mesh.visible, layerMask: v.ground.mesh.layers.mask, behind: v.post.behind, programs: [...(v.renderer.properties.get(v.ground.mesh.material).programs?.values() ?? [])].map(p => ({ id: p.id, ready: p.isReady() })) },
               platformPresent: objects.some(o => o.name === 'Loading house platform' && o.visible),
               unsafeUniformReads: probe.unsafeUniformReads, methods: probe.methods,

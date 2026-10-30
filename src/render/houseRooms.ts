@@ -34,6 +34,7 @@ import { atDecks } from "../rules/wakeUp";
 import { loadingFloorBounds } from './landingReadiness';
 import { LIGHT_UNIFORMS } from './lighting';
 import { LOADING_LIGHT_GLSL } from './loadingLight';
+import { materialProgramsReady } from './shaderDrawGate';
 import { loanFind } from "../rules/finds";
 
 type V3 = { x: number; y: number; z: number };
@@ -259,6 +260,13 @@ export class HouseRoomsView {
     this.hub = -1; this.quads = []; this.hatsKey = ""; this.said = null; this.box.style.display = "none";
     for (const p of this.parts) p.mesh.visible = false;
   }
+  /** The actual floor and bed, not optional props/ground/detail programs. */
+  landingReady(renderer: THREE.WebGLRenderer): boolean {
+    const bed = HOUSE_ROOMS.objects.find(o => o.use.kind === 'bed');
+    const piece = [...this.pieces.values()].find(p => p.id === bed?.id && p.mesh.visible);
+    return !!(this.floorArt && this.floorCompiled && this.floor.visible && piece &&
+      [this.floor, this.terraceFloor, piece.mesh, ...this.parts.map(p => p.mesh).filter(o => o.visible)].every(o => materialProgramsReady(renderer.properties.get(o.material))));
+  }
   /** Off the page (an island whose treehouse has no rooms): its meshes' geometry and material let go, its labels taken off. */
   dispose(): void {
     this.loadingFloor.geometry.dispose(); this.loadingFloor.material.dispose();
@@ -303,7 +311,26 @@ export class HouseRoomsView {
     if (!shown) {
       this.box.style.display = "none"; this.plan = null; this.sparkle?.draw([], 0, 1); v.usePrompt.id = "";
       for (const el of [this.ring, this.wakeL, this.wakeR, ...this.labels.map(l => l.el)]) el.style.display = 'none';
-      if (late && d?.house?.rooms && w.perch) {
+      if (v.landingSleeping && d?.house?.rooms) {
+        // Retain the boot's already-drawn bed while the next house atlas is still absent.
+        const bed = HOUSE_ROOMS.objects.find(o => o.use.kind === 'bed'), M = v.camera.matrixWorld.elements;
+        let used = false;
+        for (const { id, art, mesh, pos } of this.pieces.values()) {
+          mesh.visible = !used && id === bed?.id;
+          if (!mesh.visible || !bed) continue;
+          used = true; this.furniture.visible = true;
+          mesh.userData.loadingOrder ??= mesh.renderOrder; mesh.renderOrder = 9.99;
+          (mesh.material as THREE.MeshBasicMaterial).opacity = 1;
+          const anchor = world(bed.x, bed.z, 0);
+          [[-art.ox, -art.oy], [art.w - art.ox, -art.oy], [art.w - art.ox, art.h - art.oy], [-art.ox, art.h - art.oy]].forEach(([dx, dy], i) => {
+            const x = dx * v.mpp, y = -dy * v.mpp;
+            pos[i * 3] = anchor.x + M[0] * x + M[4] * y;
+            pos[i * 3 + 1] = anchor.y + M[1] * x + M[5] * y;
+            pos[i * 3 + 2] = anchor.z + M[2] * x + M[6] * y;
+          });
+          (mesh.geometry.getAttribute('position') as THREE.BufferAttribute).needsUpdate = true;
+        }
+      } else if (late && d?.house?.rooms && w.perch) {
         const at = objectAt(d, w.x, w.z);
         if (at && at.use.kind !== 'scenery') {
           const p = toWorld(at.x, at.z, 1.5), s = v.v3.set(p.x, p.y, p.z).project(v.camera), cv = v.canvas.getBoundingClientRect();
@@ -436,6 +463,7 @@ export class HouseRoomsView {
     let glowed = false;
     const now = performance.now() / 1000;
     for (const [k, { art, mesh, pos, id, x, z }] of this.pieces) {
+      if (mesh.userData.loadingOrder !== undefined) { mesh.renderOrder = mesh.userData.loadingOrder; delete mesh.userData.loadingOrder; }
       const o = HOUSE_ROOMS.objects.find(q => q.id === id);
       // (a piece in another state than now's, hidden, unless now's isn't in yet: the last one shown stays till it is; a room's dressing always)
       const cur = o ? pieceKey(o) : k;

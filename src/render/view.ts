@@ -397,7 +397,14 @@ export class View {
   shaderLandingLimited = false;
   private landingFades = new LandingArtFade();
   landingHouseShare = 1;
-  beginLandingShaders(chart: boolean): void { this.shaderEpoch++; this.shaderLandingDeadline = Infinity; this.shaderChartLanding = chart; this.shaderLandingLimited = false; this.landingFades.reset(); this.landingHouseShare = 1; }
+  landingSleeping = false;
+  landingWakeReady(): boolean {
+    const A = this.assets;
+    return A.fullWitchReady && A.home.treehouse && this.treehouseBatch.atlas === A.treehouse.atlas && this.landingHouseShare === 1 &&
+      [...this.witchBatch.meshes, ...this.treehouseBatch.meshes].every(o => ([] as THREE.Material[]).concat((o as THREE.Mesh).material ?? []).every(m => materialProgramsReady(this.renderer.properties.get(m)))) &&
+      !!this.houseRooms?.landingReady(this.renderer);
+  }
+  beginLandingShaders(chart: boolean): void { this.shaderEpoch++; this.shaderLandingDeadline = Infinity; this.shaderChartLanding = chart; this.shaderLandingLimited = false; this.landingSleeping = false; this.landingFades.reset(); this.landingHouseShare = 1; }
   private armLimitedLanding(): void {
     if (this.shaderLandingLimited) return;
     this.shaderLandingLimited = true; this.landingFades.arm(this.assets.home);
