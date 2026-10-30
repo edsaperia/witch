@@ -10,6 +10,7 @@ import { canEat } from "./berries";
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, secs: number, each?: () => void, c: Controls = idle) => { for (let i = 0; i < Math.round(secs / STEP); i++) { stepGame(g, c, STEP); each?.(); } };
 function quiet(): Game {
+  // Retain the multi-area route: recruits start over 300 m away, travellers cover 120–200 m and cross area borders.
   const g = newGame(77, TUNING);
   g.clock.paused = false;
   const d = g.map.dancefloor;
