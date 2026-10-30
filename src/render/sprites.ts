@@ -517,7 +517,6 @@ void shade() {
   }
   // The witch's see-through silhouette: where she is hidden, a flat tint in her glow colour.
   vec4 frostField = fxField(vFxBase);
-  float fxFrost = frostField.r;
   if (uIndexed.x > 0.5 && frostField.r > 0.0) {
     int frostIndex = int(texture2D(uAlbedo, uvS).r * 255.0 + 0.5);
     a.rgb = mix(a.rgb, texelFetch(uAlbedoPal, ivec2(frostIndex, 1), 0).rgb, frostField.r);
@@ -673,7 +672,8 @@ void main() {
   float fxCharge = fxExtra(vFxBase).r;
   gl_FragColor.rgb += vec3(0.08,0.12,0.18) * fxCharge * (uFxCalm>0.5?0.5:0.65+0.15*sin(uFxTime*3.0));
   // Sparse, stationary rime glints: no flashing and no silhouette expansion.
-  if (fxFrost>0.25 && fract(sin(dot(floor(uvS*vec2(textureSize(uAlbedo,0))),vec2(31.7,79.3)))*43758.5)>0.985)
+  float fxFrost = fxField(vFxBase).r;
+  if (fxFrost>0.25 && fract(sin(dot(floor(vUv*vec2(textureSize(uAlbedo,0))),vec2(31.7,79.3)))*43758.5)>0.985)
     gl_FragColor.rgb = mix(gl_FragColor.rgb,vec3(0.65,0.82,0.9),fxFrost*0.5);
   if (uIsScenery > 0.5) {
     float edge = vFlags.y > 0.5 ? canopyFade(vWorld) : sceneryFade(vWorld), k = edge * uAppear; // and a set just drawn fades in (a crown: out to the canopy's reach)

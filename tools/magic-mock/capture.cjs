@@ -51,6 +51,7 @@ const types = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.j
       },{time,production});
       for(let i=0;i<30;i++) {
         await frame(1+i/60);
+        if(errors.length)throw Error(errors.join('\n'));
         await page.waitForFunction(()=>window.witch.view.assets.pending===0,null,{timeout:600000});
       }
       await page.waitForFunction(production?()=>window.witch.view.magic:()=>window.witch.view.fxMock,null,{timeout:60000});
@@ -120,5 +121,5 @@ const types = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.j
     }
     evidence.errors=errors;fs.writeFileSync(path.join(out,'evidence.json'),JSON.stringify(evidence,null,2));
     if(errors.length)throw Error(errors.join('\n'));
-  } finally {await browser.close();server.close();}
+  } finally {fs.writeFileSync(path.join(out,'evidence.json'),JSON.stringify({...evidence,errors},null,2));await browser.close();server.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
