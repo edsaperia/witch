@@ -10,6 +10,7 @@ import { newGame } from "./game";
 import { TUNING } from "./tuning";
 
 const style = styleJson as unknown as MusicStyle;
+// Keep the explicit 10–64-wave matrix and ten-area authored home integration: curated selection, palette progression and final climax depend on night size.
 const SIZES = [10, 20, 30, 40, 50, 64];
 const nights = (): NightSet[] => SIZES.flatMap(w => [1, 7, 42].flatMap(seed => ["", "fox", "home"].map(island => planNight(style, { seed, island, waves: w }))));
 
