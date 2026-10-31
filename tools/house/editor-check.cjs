@@ -38,6 +38,7 @@ if (!url || !expected || !/^[a-f0-9]{40}$/.test(expected)) throw Error('Provide 
     const bad = structuredClone(layout); bad.objects[0].x = 'bad'; await page.fill('#settings', JSON.stringify(bad)); await page.click('#apply'); assert.match(await page.textContent('#status'), /Could not apply/); assert.equal(Number(await page.inputValue('#rotation')), 45);
     await page.click('#undo'); assert.equal(Number(await page.inputValue('#rotation')), 0);
     await page.click('#redo'); assert.equal(Number(await page.inputValue('#rotation')), 45);
+    await page.locator('#camera[data-pending="0"]').waitFor();
     await page.screenshot({ path: path.join(output, 'moved-station.png'), timeout: 60000 });
     const storage = await page.evaluate(() => Object.keys(localStorage)); assert.equal(storage.length, 0, 'Editor wrote browser save data');
     assert.deepEqual(errors, []);

@@ -20,6 +20,8 @@ document.body.innerHTML = `<header><div><span class="eyebrow">WITCH · AUTHORING
 <section class="view"><div class="caption"><h2>Camera view · 24°</h2><span>Game floor, walls and furniture art · grey labelled blocks for decks / clothes pile</span></div><canvas id="camera" aria-label="Camera preview of the same layout"></canvas></section></div></main>`;
 const get = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
 const room = get<HTMLSelectElement>("room"), object = get<HTMLSelectElement>("object"), plan = get<HTMLCanvasElement>("plan"), camera = get<HTMLCanvasElement>("camera"), settings = get<HTMLTextAreaElement>("settings");
+let pendingBakes = 0;
+const pending = (delta: number) => { pendingBakes += delta; camera.dataset.pending = String(pendingBakes); };
 const status = (s: string) => { get("status").textContent = s; };
 for (const r of HOUSE_ROOMS.rooms) room.add(new Option(r.label, r.id));
 function list(): void {
@@ -42,7 +44,12 @@ function draw(): void {
 }
 function changed(): void { draw(); status("Layout changed. Copy settings to keep it; the game has not been changed."); }
 function edit(action: () => void): void { history.save(); action(); changed(); void bakeSelected(); }
-async function bakeSelected(): Promise<void> { if (!ready) return; await new Promise<void>(r => requestAnimationFrame(() => r())); preview.bake(items.find(o => o.id === selected)!, pose()); draw(); }
+async function bakeSelected(): Promise<void> {
+  if (!ready) return;
+  pending(1);
+  try { await new Promise<void>(r => requestAnimationFrame(() => r())); preview.bake(items.find(o => o.id === selected)!, pose()); draw(); }
+  finally { pending(-1); }
+}
 room.onchange = () => { list(); draw(); };
 object.onchange = () => { selected = object.value; draw(); void bakeSelected(); };
 for (const key of ["x", "z", "rotation"] as const) get<HTMLInputElement>(key).onchange = () => {
@@ -91,7 +98,9 @@ window.addEventListener("keydown", e => { if ((e.target as HTMLElement)?.matches
 new ResizeObserver(draw).observe(get("plan").parentElement!);
 list(); draw();
 async function bakeAll(): Promise<void> {
-  for (const p of history.value.objects) { preview.bake(items.find(o => o.id === p.id)!, p); draw(); await new Promise<void>(r => requestAnimationFrame(() => r())); }
+  pending(1);
+  try { for (const p of history.value.objects) { preview.bake(items.find(o => o.id === p.id)!, p); draw(); await new Promise<void>(r => requestAnimationFrame(() => r())); } }
+  finally { pending(-1); }
 }
 void preview.prepare(status).then(async () => {
   for (const room of HOUSE_ROOMS.rooms) { preview.bakeRoom(room.id); await new Promise<void>(r => requestAnimationFrame(() => r())); }
