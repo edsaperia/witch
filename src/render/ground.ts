@@ -17,13 +17,13 @@ import { HOME_LOOK, LOOKS } from "../rules/map";
 import { ZOO_CONFIG } from "../rules/zoo";
 import { speakerRadius } from "../rules/speakers";
 import type { Beach } from "../rules/mapShape";
-import { koiPonds, lakeKnobs } from "../rules/lakes";
+import { lakeKnobs } from "../rules/lakes";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { LOADING_LIGHT_GLSL } from './loadingLight';
 import { FX_UNIFORMS, FX_FIELD_GLSL } from "./fx/uniforms";
 import { NATIVE_GLSL, nativeFxUniforms } from "./fx/native";
-import { LAKE_LOOKS_GLSL, lakeLookTexture, lakeLooksOf, hasForcedLakeLook } from "./lakeLooks";
-import { groundExtras, groundFamily, groundDefines } from "./groundFamily";
+import { LAKE_LOOKS_GLSL, lakeLookTexture, lakeLooksOf } from "./lakeLooks";
+import { groundKoi, groundPavementRadius, groundProgramDefines } from './groundRecipe';
 import { CoastReadiness } from './coastReadiness';
 import { THERMAL_UNIFORMS, THERMAL_GLSL } from './thermalVision';
 import { materialProgramsReady } from './shaderDrawGate';
@@ -708,7 +708,12 @@ void main() {
 /** At full share this is the exact ground shader; the added dither only runs during coast handover. */
 const BEACH_FRAG = FRAG.replaceAll('void main() {', 'uniform float uCoastAppear;\nvoid main() {\n  if (uCoastAppear < 0.999 && bayer4(gl_FragCoord.xy) >= uCoastAppear) discard;');
 
+/** Both real ground and precompile use this factory; no substitute shader or custom cache key. */
+export const groundProgramMaterial = (defines: Record<string, string>, uniforms: Record<string, THREE.IUniform>) =>
+  new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: 'GROUND_BEACH' in defines ? BEACH_FRAG : FRAG, defines, uniforms: 'GROUND_BEACH' in defines ? {uCoastAppear:{value:0},...uniforms} : uniforms });
+
 export class Ground {
+  get programMaterial(): THREE.ShaderMaterial { return this.plain; }
   readonly mesh: THREE.Mesh;
   /** Always compiled at boot and retained across islands; no expensive lighting, effects, or individual lake bodies. */
   readonly loadingFallback: THREE.ShaderMaterial;
@@ -749,19 +754,12 @@ export class Ground {
     const disco = discoLooks(made);
     const lakes = lakeUniforms(map, lakeKnobs(map.tuning).koi, koiScale(st, metresPerPixel)), pavement = paving(map, disco);
     const params = typeof location === 'undefined' ? new URLSearchParams() : new URLSearchParams(location.search);
-    const mutable = hasForcedLakeLook() || params.has('debug') || params.get('creator') === '1';
-    const extras = groundExtras({ zoo: !!map.zoo?.layout, dancefloor: !map.zoo?.layout && map.dancefloor.radius > 0,
-      pavement: !map.zoo?.layout && pavement.uPave.value.y > 0, legends: map.legendClearings.length > 0,
-      legendFloor: !!map.tuning.legendClearing.floor?.on, koi: (lakes.uKoi.value as THREE.Vector4[]).some(k => k.z > 0), bare: (map.tuning.bare ?? 0) > 1.5 }, mutable);
     // The shader as two programs over one set of uniforms (the perf pass's fix C, 2026-10-23, tools/bench/ground.cjs: code a
     // pixel never runs still cost the ground a quarter to two fifths of its time on the cloud's renderer): the lakes' code only on
     // an island with lakes (fixed for the night), and the beach and sea's only in the second, drawn while the beach is on (setBeach).
-    const family = groundFamily(!!map.bounds.lakes, map.bounds.lakes ? lakeLooksOf(map)?.any ?? null : null, hasForcedLakeLook(), !!map.zoo?.layout, typeof location !== 'undefined' && (new URLSearchParams(location.search).has('debug') || new URLSearchParams(location.search).get('creator') === '1'));
-    const defines = (beach: boolean) => groundDefines(family, beach, extras);
+    const defines = (beach: boolean) => groundProgramDefines(map, params, beach);
     this.beachDefines = defines(true);
-    const mat = new THREE.ShaderMaterial({
-      vertexShader: VERT, fragmentShader: FRAG, defines: defines(false),
-      uniforms: {
+    const mat = groundProgramMaterial(defines(false), {
         ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, ...FX_UNIFORMS, ...nativeFxUniforms("lake"),
         uPotionSky: { value: 0 }, ...THERMAL_UNIFORMS,
         uAreas: { value: this.near.texture }, uAreasFar: { value: this.far.texture },
@@ -801,7 +799,6 @@ export class Ground {
         uBare: { value: map.tuning.bare ?? 0 }, uHillShade: { value: map.tuning.ground.hills.shade ?? 1 },
         uRelief: { value: new THREE.Vector3(map.tuning.ground.relief.strength, map.tuning.ground.relief.scale, map.tuning.ground.relief.shade) },
         uBlend: { value: (B => (B.on ? new THREE.Vector4(B.warp, B.fine, B.band, B.dither ? 1 : 0) : new THREE.Vector4()))(map.tuning.groundBlend) },
-      },
     });
     const geo = new THREE.PlaneGeometry(REACH * 2, REACH * 2, (REACH * 2) / GRID, (REACH * 2) / GRID);
     geo.rotateX(-Math.PI / 2);
@@ -931,7 +928,7 @@ void main() {
     this.coastReadiness.request(!!b, performance.now());
     if (!b) { this.mesh.material = this.plain; if (this.coastSurface) this.coastSurface.visible = false; v.set(0, 0, 0, 0); return; }
     if (!this.beach) {
-      this.beach = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: BEACH_FRAG, defines: { ...this.beachDefines, ...('POTION_SKY' in this.plain.defines ? { POTION_SKY: '' } : {}), ...('THERMAL_VISION' in this.plain.defines ? { THERMAL_VISION: '' } : {}) }, uniforms: { ...u, uCoastAppear: { value: 0 } } });
+      this.beach = groundProgramMaterial({ ...this.beachDefines, ...('POTION_SKY' in this.plain.defines ? { POTION_SKY: '' } : {}), ...('THERMAL_VISION' in this.plain.defines ? { THERMAL_VISION: '' } : {}) },{ ...u, uCoastAppear: { value: 0 } });
       // A coast first appearing mid-trip inherits the floor's blend before its first draw.
       this.beach.blending = this.plain.blending; this.beach.blendSrc = this.plain.blendSrc; this.beach.blendDst = this.plain.blendDst;
       this.coastSurface = new THREE.Mesh(this.mesh.geometry, this.beach);
@@ -1065,9 +1062,9 @@ void main() {
 /** The plaza round the floor (tuning dancefloor.paving), in the rim's stone (art/dancefloor.js DISCO_LOOK). */
 function paving(map: ForestMap, disco: { tileM: number; pitch: number; rimOuter: number }) {
   const t = map.tuning, P = t.dancefloor.paving, L = Art.DISCO_LOOK as Record<string, number[]>, rgb = (c: number[]) => new THREE.Vector3(c[0] / 255, c[1] / 255, c[2] / 255);
-  const inner = (disco.rimOuter * disco.tileM) / disco.pitch, R = speakerRadius(t), outer = R + t.dancefloor.speakers.footprint + P.beyond;
+  const inner = (disco.rimOuter * disco.tileM) / disco.pitch, R = speakerRadius(t);
   return {
-    uPave: { value: new THREE.Vector4(inner, P.on ? outer : 0, P.course, P.stone) },
+    uPave: { value: new THREE.Vector4(inner, groundPavementRadius(map), P.course, P.stone) },
     uPave2: { value: new THREE.Vector4(P.ragged, P.missing, P.moss, R) },
     uZooStreet: { value: new THREE.Vector4(map.zoo?.layout ? 1 : 0, HOME_LOOK, ZOO_CONFIG.lip ?? 110, 0) }, // (the zoo laid out like the chart: its streets in this stone, its edge's lip)
     uPaveStone: { value: rgb(L.rim) }, uPaveDark: { value: rgb(L.rimDark) }, uPaveMoss: { value: rgb(L.moss) }, uPaveGrout: { value: rgb(L.grout) },
@@ -1118,8 +1115,8 @@ function lakeUniforms(map: ForestMap, share: number, koiSize: number): Record<st
   const koi = { value: Array.from({ length: 8 }, () => new THREE.Vector4()) };
   if (!L) return { uLake: { value: new THREE.Vector4() }, uLakeBox: { value: new THREE.Vector4() }, uLakes: { value: null }, uLakeLooks: { value: null }, uKoi: koi, uKoiSize: { value: koiSize } };
   // (koi only in the plain water: render/lakeLooks.ts, the biome lakes' looks)
-  const K = lakeLooksOf(map)!, plain = (x: number, z: number) => { const c = Math.round((x - L.x0) / L.step), r = Math.round((z - L.z0) / L.step); return c < 0 || r < 0 || c >= L.cols || r >= L.rows || K.near[r * L.cols + c] === 0; };
-  koiPonds(bounds, map.seed, share).filter(k => plain(k.x, k.z)).slice(0, 8).forEach((k, i) => koi.value[i].set(k.x, k.z, k.r, k.seed + k.count / 10));
+  const K = lakeLooksOf(map)!;
+  groundKoi(map, share).forEach((k, i) => koi.value[i].set(k.x, k.z, k.r, k.seed + k.count / 10));
   const N = L.cols * L.rows, data = new Uint16Array(N), h = THREE.DataUtils.toHalfFloat;
   for (let k = 0; k < N; k++) data[k] = h(Math.max(-60, Math.min(60, L.dist[k])));
   const t = gpuKind(new THREE.DataTexture(data, L.cols, L.rows, THREE.RedFormat, THREE.HalfFloatType), "ground");

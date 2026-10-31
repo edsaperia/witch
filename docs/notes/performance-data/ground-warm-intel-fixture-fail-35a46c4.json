@@ -1,0 +1,43 @@
+{
+  "sha": "35a46c47a4499f5df6a90407b5419ce9a295a7f6",
+  "grant": "ed-0900-6541415345",
+  "precedingRelease": "a30c885755b2667fc060aa644b2ae71ecab51252",
+  "version": {
+    "version": "dev · 35a46c4",
+    "built": "2026-10-31T09:04:11.884Z"
+  },
+  "timeoutScale": 1,
+  "budgetMs": 420000,
+  "startedAt": "2026-10-31T10:02:43.195Z",
+  "errors": [],
+  "cpu": [
+    {
+      "at": "2026-10-31T10:02:44.225Z",
+      "percent": 31.690793000926064
+    },
+    {
+      "at": "2026-10-31T10:03:00.104Z",
+      "percent": 79.97912421094487
+    },
+    {
+      "at": "2026-10-31T10:03:10.124Z",
+      "percent": 62.96548702721121
+    },
+    {
+      "at": "2026-10-31T10:03:17.783Z",
+      "percent": 27.617788226075035
+    }
+  ],
+  "complete": false,
+  "status": "FAIL",
+  "note": "Single candidate lifecycle/cache-identity probe. No boot/travel speedup inference; no OS shader-cache purge. Historical666.7ms frame is not a gate.",
+  "served": {
+    "version": "dev · 35a46c4",
+    "built": "2026-10-31T09:04:11.884Z"
+  },
+  "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "parallel": true,
+  "error": "page.evaluate: Error: no room Parlour (rooms: dining, terrace, parlour, boudoir, bedroom, turret, workshop, kitchen, cloakroom, studio, solarium, bestiary, bedroom2, bedroom3)\n    at eval (eval at evaluate (:290:30), <anonymous>:1:67)\n    at UtilityScript.evaluate (<anonymous>:292:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at inside (C:\\Users\\edsap\\Documents\\Codex\\2026-10-29\\witch-island-performance\\work\\travel-perf-3\\tools\\bench\\ground-warm.mjs:45:30)\n    at C:\\Users\\edsap\\Documents\\Codex\\2026-10-29\\witch-island-performance\\work\\travel-perf-3\\tools\\bench\\ground-warm.mjs:48:9",
+  "timingsContaminated": true,
+  "endedAt": "2026-10-31T10:03:17.783Z"
+}

@@ -433,7 +433,7 @@
     "src/app/nightSave.ts",
     "src/app/opening.ts",
     "src/main.ts",
-    "src/render/ground.ts"
+    "src/render/groundRecipe.ts"
    ]
   },
   {
@@ -502,7 +502,7 @@
     "src/app/playerPick.ts",
     "src/app/viewParams.ts",
     "src/main.ts",
-    "src/render/ground.ts"
+    "src/render/groundRecipe.ts"
    ]
   },
   {
@@ -1201,6 +1201,19 @@
    "since": "2026-10-14",
    "readIn": [
     "src/render/view.ts"
+   ]
+  },
+  {
+   "name": "precompileGround",
+   "values": [
+    "1",
+    "0"
+   ],
+   "does": "Precompile reachable islands' ground programs while in the treehouse or map (default on); 0 disables it for comparison.",
+   "group": "debug",
+   "since": "2026-10-31",
+   "readIn": [
+    "src/app/groundWarm.ts"
    ]
   },
   {

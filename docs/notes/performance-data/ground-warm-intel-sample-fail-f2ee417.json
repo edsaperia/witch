@@ -1,0 +1,5148 @@
+{
+  "sha": "f2ee4179b7e0d570b37fde758f928351c71dfae9",
+  "grant": "ed-1335-slot3",
+  "precedingRelease": "003eb8cc0fad18014fe1d8430784d649fc5e4a0d",
+  "version": {
+    "version": "dev · f2ee417",
+    "built": "2026-10-31T13:40:16.859Z"
+  },
+  "timeoutScale": 1,
+  "budgetMs": 420000,
+  "startedAt": "2026-10-31T13:45:10.012Z",
+  "errors": [],
+  "cpu": [
+    {
+      "at": "2026-10-31T13:45:11.050Z",
+      "percent": 10.13085052843483
+    },
+    {
+      "at": "2026-10-31T13:45:22.844Z",
+      "percent": 77.44675233233586
+    },
+    {
+      "at": "2026-10-31T13:45:32.741Z",
+      "percent": 69.33300395256917
+    },
+    {
+      "at": "2026-10-31T13:45:42.982Z",
+      "percent": 99.86205628103734
+    },
+    {
+      "at": "2026-10-31T13:45:52.787Z",
+      "percent": 70.75760568945081
+    },
+    {
+      "at": "2026-10-31T13:46:02.793Z",
+      "percent": 41.70306748466258
+    },
+    {
+      "at": "2026-10-31T13:46:12.798Z",
+      "percent": 34.535178327811344
+    },
+    {
+      "at": "2026-10-31T13:46:13.648Z",
+      "percent": 14.53646477132262
+    }
+  ],
+  "complete": false,
+  "status": "FAIL",
+  "note": "Single candidate lifecycle/cache-identity probe. No boot/travel speedup inference; no OS shader-cache purge. Historical666.7ms frame is not a gate.",
+  "served": {
+    "version": "dev · f2ee417",
+    "built": "2026-10-31T13:40:16.859Z"
+  },
+  "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "parallel": true,
+  "stages": [
+    {
+      "stage": "descriptor-active",
+      "at": 24177.199999999255,
+      "paused": false,
+      "chartOpen": false,
+      "warm": {
+        "enabled": true,
+        "eligible": true,
+        "targets": [
+          "hedgehog",
+          "squirrel"
+        ],
+        "preparing": true,
+        "prepared": false,
+        "active": false,
+        "retained": 0
+      },
+      "body": {
+        "perch": true,
+        "mode": "ground"
+      },
+      "marks": [
+        {
+          "name": "ground:warm-prepare",
+          "at": 20485.89999999851,
+          "detail": {
+            "id": "hedgehog",
+            "seed": 814361,
+            "world": 0
+          }
+        }
+      ]
+    },
+    {
+      "stage": "descriptor-exit",
+      "at": 24753.099999997765,
+      "paused": false,
+      "chartOpen": false,
+      "warm": {
+        "enabled": true,
+        "eligible": false,
+        "targets": [
+          "hedgehog",
+          "squirrel"
+        ],
+        "preparing": false,
+        "prepared": false,
+        "active": false,
+        "retained": 0
+      },
+      "body": {
+        "perch": false,
+        "mode": "ground"
+      },
+      "marks": [
+        {
+          "name": "ground:warm-prepare",
+          "at": 20485.89999999851,
+          "detail": {
+            "id": "hedgehog",
+            "seed": 814361,
+            "world": 0
+          }
+        }
+      ]
+    },
+    {
+      "stage": "gpu-active",
+      "at": 27428.199999999255,
+      "paused": false,
+      "chartOpen": true,
+      "warm": {
+        "enabled": true,
+        "eligible": true,
+        "targets": [
+          "hedgehog",
+          "squirrel"
+        ],
+        "preparing": false,
+        "prepared": false,
+        "active": true,
+        "retained": 0
+      },
+      "body": {
+        "perch": false,
+        "mode": "ground"
+      },
+      "marks": [
+        {
+          "name": "ground:warm-prepare",
+          "at": 20485.89999999851,
+          "detail": {
+            "id": "hedgehog",
+            "seed": 814361,
+            "world": 0
+          }
+        },
+        {
+          "name": "ground:warm-prepare",
+          "at": 24903.099999997765,
+          "detail": {
+            "id": "hedgehog",
+            "seed": 814361,
+            "world": 0
+          }
+        },
+        {
+          "name": "ground:warm-submit",
+          "at": 27424.699999999255,
+          "detail": {
+            "programs": [
+              81
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "stage": "gpu-exit",
+      "at": 28373.89999999851,
+      "paused": false,
+      "chartOpen": false,
+      "warm": {
+        "enabled": true,
+        "eligible": false,
+        "targets": [
+          "hedgehog",
+          "squirrel"
+        ],
+        "preparing": false,
+        "prepared": false,
+        "active": true,
+        "retained": 0
+      },
+      "body": {
+        "perch": false,
+        "mode": "ground"
+      },
+      "marks": [
+        {
+          "name": "ground:warm-prepare",
+          "at": 20485.89999999851,
+          "detail": {
+            "id": "hedgehog",
+            "seed": 814361,
+            "world": 0
+          }
+        },
+        {
+          "name": "ground:warm-prepare",
+          "at": 24903.099999997765,
+          "detail": {
+            "id": "hedgehog",
+            "seed": 814361,
+            "world": 0
+          }
+        },
+        {
+          "name": "ground:warm-submit",
+          "at": 27424.699999999255,
+          "detail": {
+            "programs": [
+              81
+            ]
+          }
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27429.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27438.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27446.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27464.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27471.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27483.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27486.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27492.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27500.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27505,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27515.199999999255,
+          "detail": {}
+        }
+      ]
+    },
+    {
+      "stage": "treehouse-reentry",
+      "at": 28624.300000000745,
+      "paused": false,
+      "chartOpen": false,
+      "warm": {
+        "enabled": true,
+        "eligible": true,
+        "targets": [
+          "hedgehog",
+          "squirrel"
+        ],
+        "preparing": false,
+        "prepared": false,
+        "active": true,
+        "retained": 0
+      },
+      "body": {
+        "perch": true,
+        "mode": "ground"
+      },
+      "marks": [
+        {
+          "name": "ground:warm-prepare",
+          "at": 20485.89999999851,
+          "detail": {
+            "id": "hedgehog",
+            "seed": 814361,
+            "world": 0
+          }
+        },
+        {
+          "name": "ground:warm-prepare",
+          "at": 24903.099999997765,
+          "detail": {
+            "id": "hedgehog",
+            "seed": 814361,
+            "world": 0
+          }
+        },
+        {
+          "name": "ground:warm-submit",
+          "at": 27424.699999999255,
+          "detail": {
+            "programs": [
+              81
+            ]
+          }
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27429.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27438.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27446.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27464.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27471.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27483.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27486.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27492.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27500.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27505,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27515.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 28417.599999997765,
+          "detail": {}
+        }
+      ]
+    },
+    {
+      "stage": "retained",
+      "at": 42838.800000000745,
+      "paused": false,
+      "chartOpen": false,
+      "warm": {
+        "enabled": true,
+        "eligible": true,
+        "targets": [
+          "hedgehog",
+          "squirrel"
+        ],
+        "preparing": true,
+        "prepared": false,
+        "active": false,
+        "retained": 1
+      },
+      "body": {
+        "perch": true,
+        "mode": "ground"
+      },
+      "marks": [
+        {
+          "name": "ground:warm-prepare",
+          "at": 20485.89999999851,
+          "detail": {
+            "id": "hedgehog",
+            "seed": 814361,
+            "world": 0
+          }
+        },
+        {
+          "name": "ground:warm-prepare",
+          "at": 24903.099999997765,
+          "detail": {
+            "id": "hedgehog",
+            "seed": 814361,
+            "world": 0
+          }
+        },
+        {
+          "name": "ground:warm-submit",
+          "at": 27424.699999999255,
+          "detail": {
+            "programs": [
+              81
+            ]
+          }
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27429.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27438.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27446.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27464.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27471.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27483.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27486.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27492.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27500.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27505,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27515.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 28417.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 28638.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 28753.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 28796.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 28875.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 28923,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 28963.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 29017.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 29071.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 29168,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 29373.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 29475.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 29548.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 29659.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 29740.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 29777.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 29811.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 29856.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 29893.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 29927.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 29959.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30001,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30035.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30069.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30101.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30130.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30164.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30198.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30233.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30262.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30292.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30326.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30363.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30400.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30431.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30459,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30491.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30522,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30554.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30590.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30621.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30655.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30689.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30719.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30754.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30783.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30824.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30853,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30894.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30927.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30956,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30985.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31018.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31045.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31073.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31097.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31134,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31168.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31209.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31252.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31288.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31319.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31358.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31396.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31427.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31462.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31493.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31522.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31550.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31585.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31614.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31654.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31692.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31733.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31762.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31793.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31825.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31858.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31891.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31925.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31961.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31994.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32028.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32063.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32093.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32135.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32173.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32211.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32252.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32304.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32342.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32382.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32425.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32461.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32533.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32604.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32644,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32681.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32732,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32837.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32905.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32953.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33006.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33047.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33152,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33212.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33300.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33329.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33363.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33386.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33423.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33459,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33478.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33513.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33532.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33558.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33578.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33599.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33625.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33664.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33686.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33707.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33736.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33781.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33830,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33864.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33897.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33925.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33969.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33994.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34019.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34043,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34087.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34128.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34152.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34188.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34219,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34264,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34306.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34364,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34397.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34422.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34450.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34478.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34526.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34557.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34586.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34615.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34646.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34681.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34697.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34723.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34739.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34763.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34784.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34807.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34834.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34860.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34881.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34900.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34922.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34944.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34962.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34990.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35015.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35032.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35057.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35081.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35109.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35151,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35182.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35214.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35266.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35292.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35336.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35376.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35414.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35438.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35458.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35482.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35502.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35527.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35558.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35593.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35628.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35660.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35681.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35705.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35734.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35755.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35780.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35802.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35828.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35856.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35905.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35923,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35944.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35961.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35988.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36015.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36044.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36070.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36093.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36123.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36150.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36184.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36215.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36241.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36269.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36305.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36331.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36361.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36397.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36418.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36448.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36482.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36502.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36536.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36552.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36575.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36596.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36614.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36631.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36644.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36661.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36676.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36693.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36710.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36723.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36735.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36749.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36762.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36777.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36791.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36805.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36822.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36854.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36907.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36950.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36979.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37037.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37055.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37088,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37111.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37149.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37182.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37203.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37219.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37240,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37263.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37275.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37296.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37317.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37329.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37339.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37364.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37379.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37392.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37419.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37446.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37465.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37489.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37508.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37520.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37545.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37584,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37605.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37619.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37639.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37657.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37682.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37700.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37731.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37760.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37783.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37814.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37833.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37852.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37875.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37890.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37950,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38167.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38354.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38382.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38422.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38438.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38460.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38525.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38556.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38616.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38641.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38675.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38718.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38751,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38788.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38857.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38881,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38901.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38949.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38967.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38990.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39002.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39072.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39120.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39152.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39169.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39191.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39227.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39258.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39302.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39325.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39350.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39383.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39402.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39424.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39453.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39471.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39503.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39521.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39540.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39571.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39593.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39607.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39640.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39658.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39676.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39711.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39731.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39745.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39792.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39808.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39823.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39858.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39879.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39900,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39931.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39958.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39989.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40003.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40033.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40057.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40087.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40115.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40165.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40181.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40205.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40230.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40258.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40299.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40323.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40339.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40371.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40393.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40429.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40460.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40481.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40514.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40533.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40566.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40592.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40622.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40668.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40690.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40737.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40758.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40811.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40841.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40874.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40893.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40910.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40970.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40999.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41038.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41067.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41108.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41132.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41165.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41204.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41237.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41261.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41300.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41327.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41359.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41375.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41404.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41428,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41463.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41482.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41506.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41524.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41549.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41567.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41590,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41610.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41639.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41657.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41685.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41713.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41764,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41780.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41805.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41844.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41866.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41893.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41916.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41933,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41948.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41972.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41987.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42007.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42026.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42054,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42068.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42084.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42107.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42127.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42152.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42166.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42177.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42203.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42226.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42238.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42267.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42282.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42314.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42329.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42342.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42365.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42377.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42400.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42416.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42440.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42463.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42487.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42503.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42528.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42542.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42567.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42583.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42597.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42629.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42643.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42666.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42682.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42710.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42727.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42746.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42761.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42794.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-prepare",
+          "at": 42794.800000000745,
+          "detail": {
+            "id": "squirrel",
+            "seed": 814361,
+            "world": 0
+          }
+        }
+      ]
+    },
+    {
+      "stage": "error",
+      "at": 60035.699999999255,
+      "paused": false,
+      "chartOpen": false,
+      "warm": {
+        "enabled": true,
+        "eligible": false,
+        "targets": [
+          "hedgehog",
+          "squirrel"
+        ],
+        "preparing": false,
+        "prepared": false,
+        "active": false,
+        "retained": 1
+      },
+      "body": {
+        "perch": true,
+        "mode": "ground"
+      },
+      "marks": [
+        {
+          "name": "ground:warm-prepare",
+          "at": 20485.89999999851,
+          "detail": {
+            "id": "hedgehog",
+            "seed": 814361,
+            "world": 0
+          }
+        },
+        {
+          "name": "ground:warm-prepare",
+          "at": 24903.099999997765,
+          "detail": {
+            "id": "hedgehog",
+            "seed": 814361,
+            "world": 0
+          }
+        },
+        {
+          "name": "ground:warm-submit",
+          "at": 27424.699999999255,
+          "detail": {
+            "programs": [
+              81
+            ]
+          }
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27429.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27438.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27446.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27464.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27471.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27483.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27486.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27492.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27500.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27505,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 27515.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 28417.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 28638.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 28753.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 28796.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 28875.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 28923,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 28963.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 29017.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 29071.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 29168,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 29373.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 29475.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 29548.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 29659.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 29740.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 29777.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 29811.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 29856.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 29893.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 29927.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 29959.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30001,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30035.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30069.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30101.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30130.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30164.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30198.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30233.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30262.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30292.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30326.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30363.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30400.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30431.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30459,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30491.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30522,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30554.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30590.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30621.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30655.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30689.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30719.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30754.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30783.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30824.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30853,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30894.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30927.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30956,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 30985.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31018.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31045.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31073.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31097.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31134,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31168.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31209.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31252.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31288.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31319.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31358.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31396.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31427.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31462.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31493.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31522.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31550.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31585.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31614.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31654.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31692.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31733.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31762.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31793.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31825.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31858.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31891.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31925.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31961.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 31994.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32028.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32063.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32093.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32135.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32173.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32211.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32252.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32304.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32342.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32382.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32425.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32461.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32533.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32604.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32644,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32681.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32732,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32837.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32905.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 32953.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33006.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33047.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33152,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33212.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33300.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33329.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33363.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33386.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33423.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33459,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33478.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33513.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33532.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33558.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33578.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33599.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33625.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33664.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33686.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33707.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33736.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33781.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33830,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33864.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33897.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33925.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33969.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 33994.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34019.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34043,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34087.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34128.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34152.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34188.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34219,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34264,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34306.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34364,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34397.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34422.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34450.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34478.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34526.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34557.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34586.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34615.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34646.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34681.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34697.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34723.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34739.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34763.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34784.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34807.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34834.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34860.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34881.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34900.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34922.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34944.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34962.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 34990.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35015.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35032.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35057.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35081.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35109.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35151,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35182.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35214.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35266.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35292.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35336.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35376.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35414.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35438.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35458.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35482.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35502.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35527.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35558.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35593.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35628.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35660.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35681.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35705.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35734.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35755.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35780.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35802.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35828.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35856.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35905.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35923,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35944.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35961.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 35988.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36015.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36044.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36070.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36093.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36123.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36150.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36184.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36215.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36241.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36269.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36305.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36331.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36361.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36397.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36418.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36448.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36482.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36502.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36536.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36552.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36575.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36596.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36614.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36631.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36644.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36661.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36676.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36693.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36710.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36723.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36735.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36749.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36762.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36777.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36791.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36805.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36822.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36854.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36907.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36950.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 36979.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37037.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37055.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37088,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37111.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37149.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37182.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37203.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37219.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37240,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37263.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37275.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37296.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37317.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37329.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37339.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37364.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37379.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37392.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37419.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37446.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37465.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37489.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37508.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37520.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37545.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37584,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37605.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37619.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37639.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37657.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37682.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37700.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37731.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37760.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37783.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37814.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37833.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37852.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37875.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37890.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 37950,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38167.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38354.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38382.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38422.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38438.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38460.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38525.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38556.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38616.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38641.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38675.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38718.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38751,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38788.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38857.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38881,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38901.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38949.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38967.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 38990.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39002.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39072.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39120.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39152.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39169.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39191.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39227.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39258.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39302.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39325.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39350.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39383.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39402.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39424.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39453.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39471.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39503.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39521.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39540.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39571.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39593.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39607.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39640.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39658.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39676.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39711.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39731.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39745.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39792.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39808.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39823.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39858.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39879.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39900,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39931.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39958.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 39989.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40003.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40033.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40057.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40087.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40115.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40165.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40181.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40205.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40230.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40258.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40299.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40323.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40339.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40371.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40393.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40429.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40460.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40481.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40514.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40533.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40566.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40592.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40622.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40668.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40690.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40737.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40758.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40811.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40841.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40874.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40893.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40910.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40970.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 40999.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41038.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41067.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41108.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41132.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41165.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41204.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41237.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41261.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41300.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41327.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41359.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41375.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41404.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41428,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41463.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41482.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41506.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41524.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41549.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41567.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41590,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41610.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41639.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41657.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41685.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41713.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41764,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41780.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41805.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41844.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41866.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41893.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41916.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41933,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41948.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41972.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 41987.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42007.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42026.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42054,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42068.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42084.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42107.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42127.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42152.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42166.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42177.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42203.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42226.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42238.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42267.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42282.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42314.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42329.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42342.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42365.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42377.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42400.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42416.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42440.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42463.800000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42487.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42503.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42528.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42542.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42567.099999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42583.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42597.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42629.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42643.199999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42666.300000000745,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42682.39999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42710.5,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42727.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42746.89999999851,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42761.699999999255,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-poll",
+          "at": 42794.599999997765,
+          "detail": {}
+        },
+        {
+          "name": "ground:warm-prepare",
+          "at": 42794.800000000745,
+          "detail": {
+            "id": "squirrel",
+            "seed": 814361,
+            "world": 0
+          }
+        }
+      ]
+    }
+  ],
+  "midPrepareExit": true,
+  "mapEligibility": true,
+  "midGpuExit": true,
+  "target": {
+    "id": "hedgehog",
+    "seed": 814361,
+    "keys": [
+      "0,105,GROUND_LAKES,,GROUND_LAKE_WATER,,GROUND_SPECIALIZED,,GROUND_DANCEFLOOR,,GROUND_PAVEMENT,,GROUND_LEGENDS,,GROUND_LEGEND_FLOOR,,GROUND_KOI,,highp,srgb-linear,false,,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,,false,false,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,8388608,8519680,srgb-linear,onBeforeCompile(){}"
+    ],
+    "defines": {
+      "GROUND_LAKES": "",
+      "GROUND_LAKE_WATER": "",
+      "GROUND_SPECIALIZED": "",
+      "GROUND_DANCEFLOOR": "",
+      "GROUND_PAVEMENT": "",
+      "GROUND_LEGENDS": "",
+      "GROUND_LEGEND_FLOOR": "",
+      "GROUND_KOI": ""
+    },
+    "programs": [
+      81
+    ],
+    "targets": [
+      "hedgehog",
+      "squirrel"
+    ]
+  },
+  "live": {
+    "island": "hedgehog",
+    "seed": 814361,
+    "keys": [],
+    "programs": []
+  },
+  "error": "Error: Exact normal-ground cache key/program was not reused\n    at file:///C:/Users/edsap/Documents/Codex/2026-10-29/witch-island-performance/work/travel-perf-3/tools/bench/ground-warm.mjs:78:157",
+  "timingsContaminated": true,
+  "endedAt": "2026-10-31T13:46:13.648Z"
+}
