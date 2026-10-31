@@ -1,12 +1,12 @@
 # Patterned lighting: first-slice review
 
-Ed's requested first slice (2026-10-31): one soundsystem, three looks; one gentle irregular light; one patterned spell. Preview is off by default under root reservation 6544780734. This checklist is not a claim of completed visual or performance acceptance.
+Ed's requested first slice (2026-10-31): one soundsystem, three looks; one gentle irregular light; one patterned spell. After the strong and home-lantern visual review, ruling6546467270 chose default ON conditional on the laptop cost gate. This candidate defaults ON; public rollout remains gated. Reduced flashing forces OFF.
 
 Ed's strength ruling (2026-10-31, coordinator1542#6545860556): "Strong", about triple the first preview. Contrast is now .9 for the soundsystem, .75 for the blink rings and .5 for the gentle source, with CPU/GLSL clamps widened to [0,1]. Modulation still only attenuates existing light RGB, never amplifies highlights. The previous75e4fc8 cloud pass captured14 cases without errors and exact comfort/off identity, but was too faint; it does not validate this stronger head. The strong capture must include a clear campfire view and treetop readability.
 
 ## What is implemented
 
-- `?patternlight=spokes`, `stripes`, `bands` hold a look. `auto` visits them over 64-beat sections, fading modulation at each boundary. Off, omitted or unknown values retain original lighting.
+- `?patternlight=spokes`, `stripes`, `bands` hold a look. Default `auto` visits them over64-beat sections, fading modulation at each boundary. `?patternlight=off` retains original lighting; omitted/unknown values use auto.
 - The nearest selected existing soundsystem light carries the held look. One selected existing treehouse light or campfire carries gentle irregular modulation (a magic stone can carry it too if present; ordinary settings disable their generation). The treehouse light's power and the campfire's original flicker remain unchanged. One selected existing moonlight-aura light (the blink spell) carries rings. The ordinary ranking, radius, intensity, pool allocation and light count remain unchanged.
 - All receivers use the same point-light modulation in `LIGHT_GLSL`: world contact minus the selected light's actual world position. Ground, grass, trunks/crowns and creature sprites use that shared code. No camera/receiver UV coordinates, new atlas, normal maps, extra lights or shadow solution.
 - At most three existing slots have patterns. World selection clears every frame; later magic reservation truncates old metadata and overwrites ordinary slots with identity. Diagnostic gallery writes clear replaced slots too. Reduce flashing disables all modulation.
@@ -25,7 +25,7 @@ Capture these pairs at ground and treetop height:
 5. Reduce flashing versus off at the same clock: all new modulation must vanish, without changing the ordinary source data or hiding gameplay cues.
 6. Pause, tempo ramp, slow-time circle and island reload: no wall-clock drift, stale metadata or double event.
 
-Measure GPU frame median/p95 and CPU drawing time over the same settled view, off/on, ground/treetops and crowded overlapping lights. Record shader link errors, actual point-light count, GL uniform limits and program/texture counts. Added metadata is 24 vec4 uniforms (384 raw bytes); no texture or target is added. Patterned branches add fragment arithmetic inside the existing point-light loop: cost remains **unmeasured** until the runner reports it. Check the default-off branch as well as on. Keep raw evidence and comparability keys with the head SHA. Publish requested review images only via `tools/shots/push.mjs`.
+Measure GPU frame median/p95 and CPU drawing time over the same settled view, off/on, ground/treetops and crowded overlapping lights. Record shader link errors, actual point-light count, GL uniform limits and program/texture counts. Added metadata is24 vec4 uniforms (384 raw bytes); no texture or target is added. Hardware cost remains unmeasured until an allocated run reports it. The first default-on gate6546555189 requires each real party/blink/home scene's incremental median<=0.5ms and p95<=1.0ms, real timer queries, no errors/compiles inside the window, and matching fixtures. tools/bench/patterned-light-cost.cjs warms both arms and records raw samples/deltas and16.67ms budget shares; missing/disjoint/incomplete telemetry cannot pass. No local run before fresh grant, green exact-head CI and actual preceding travel timing FREE. Keep exact-SHA evidence and comparability keys. Publish requested review images only via `tools/shots/push.mjs`.
 
 ## Evaluation of the other proposal ideas after this slice
 

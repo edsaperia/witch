@@ -6,9 +6,11 @@ Ed authorized implementation of visual-response-projects section 4 on 2026-10-31
 
 One soundsystem with rotating spokes, sweeping stripes and layered colour bands; one gentle irregular light; one ring-pattern spell. Share a light-local world-position function through the existing lighting shader, preserving ordinary lights, palette/soft-knee treatment, light-budget selection and existing shadow paths. Reuse the real BeatClock (including tempo ramps); the existing music mix spectrum is available but no new analyser or instrument feed is needed for this slice.
 
-Start with at most three patterned existing light slots, not extra point lights. Broad, low-contrast slow motion by default; reduce-flashing disables modulation exactly. An explicit off comparison must restore original light values. No gameplay/collision or authored art changes.
+Start with at most three patterned existing light slots, not extra point lights. Use Ed's strong settings with slow motion; reduce-flashing disables modulation exactly. An explicit off comparison must restore original light values. No gameplay/collision or authored art changes.
 
-Root reservation 1542#6544780734 (2026-10-31 14:35 UTC) grants the narrow existing light interfaces. Preview stays OFF by default until visual/GPU review. Enable explicitly with `?patternlight=auto`, or hold `spokes`, `stripes` or `bands`; `off` and omitted/unknown values retain original lighting. `view.ts` changes only ForestLight metadata; preserve refraction1543's separate view hooks.
+Root reservation1542#6544780734 grants the narrow interfaces; canonical6546067912 extends only the existing home-light metadata producer. Ed's subsequent ruling6546467270 is "On by default", conditional on the Intel cost gate before release. The candidate defaults to strong `auto`; `?patternlight=off` restores original lighting, and explicit `spokes`, `stripes` or `bands` holds a look. Omitted/unknown values use the default. Preserve refraction1543's separate view hooks.
+
+Hardware gate6546555189: each real party/blink/home scene must add at most0.5ms median and1.0ms p95 GPU time versus off; no timed-window compiles/errors or mismatched fixtures. The prepared tools/bench/patterned-light-cost.cjs is one <=270s Intel/KHR/timer-query attempt, never launched before a fresh grant, exact-head CI green and the preceding travel timing run's actual FREE. The old slot5 release is not permission. No public/default-on/release acceptance is claimed before this gate.
 
 ## Ownership before integration
 

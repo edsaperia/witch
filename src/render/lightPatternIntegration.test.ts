@@ -39,11 +39,11 @@ it('adds metadata only to one existing selected speaker and gentle slot, preserv
 });
 it('comfort removes all modulation even if a caller supplies packed metadata', () => {
   comfort.reduceFlashing = true;
-  setLights(view(), [light(0), light(2, 4)], 0, 0, 'auto');
+  setLights(view(), [light(0), light(2, 4)], 0, 0);
   expect(patternedLightCount()).toBe(0); expect(LIGHT_UNIFORMS.uLightCount.value).toBe(2);
   expect(sourcePattern('rings', 1, comfort.reduceFlashing)).toEqual([0, 1, 0, 0]);
 });
-it('defaults to the original unpatterned preview and preserves incident light data when explicitly off', () => {
+it('preserves original incident light data when explicitly off', () => {
   const v = view();
   setLights(v, [light(0), light(2, 4)], 0, 0, 'off');
   expect(patternedLightCount()).toBe(0);

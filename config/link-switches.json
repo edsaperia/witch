@@ -11,7 +11,7 @@
     "stripes",
     "bands"
    ],
-   "does": "Opt-in patterned-light preview, off by default: hold a soundsystem projection look or compare with the original lighting.",
+   "does": "Patterned lighting is on by default: use off to compare original lighting, auto to cycle, or hold a soundsystem projection look.",
    "group": "compare",
    "since": "2026-10-31",
    "readIn": [

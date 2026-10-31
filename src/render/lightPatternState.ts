@@ -6,7 +6,8 @@ export type PackedPattern = readonly [number, number, number, number];
 export const IDENTITY_PATTERN: PackedPattern = [0, 1, 0, 0];
 export const patternOptions = (search: string): PatternLook => {
   const value = new URLSearchParams(search).get('patternlight');
-  return value === 'auto' || value === 'spokes' || value === 'stripes' || value === 'bands' ? value : 'off';
+  if (value === 'off') return 'off';
+  return value === 'spokes' || value === 'stripes' || value === 'bands' ? value : 'auto';
 };
 export const PATTERN_LOOK = patternOptions(globalThis.location?.search ?? '');
 const smooth = (x: number) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
