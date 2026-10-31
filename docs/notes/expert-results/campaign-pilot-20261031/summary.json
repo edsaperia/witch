@@ -1,0 +1,158 @@
+{
+  "schema": 1,
+  "sourceCommit": "6706a867d5bf3b5e59c67f2f7c1cf33b22e863d8",
+  "sourceFingerprint": "a1867cf11699e0d94614d06073983143fe0e53f29b698130a486433ff845ba28",
+  "trainingOnly": true,
+  "candidates": 6,
+  "rows": 12,
+  "uniqueEffectiveCases": 2,
+  "heldOutEvaluated": 0,
+  "wins": 0,
+  "censored": 12,
+  "questsCompleted": 0,
+  "findsEligible": 0,
+  "knockdowns": 0,
+  "allCandidatesTie": true,
+  "selected": {
+    "mobileYouths": 3,
+    "feedRange": 80,
+    "adultPostRange": 140,
+    "speciesPenalty": 250,
+    "flaskGroup": 3
+  },
+  "promoted": false,
+  "modelLock": false,
+  "evaluations": [
+    {
+      "candidate": 0,
+      "parameters": {
+        "mobileYouths": 3,
+        "feedRange": 80,
+        "adultPostRange": 140,
+        "speciesPenalty": 250,
+        "flaskGroup": 3
+      },
+      "objective": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        235.67999999998918
+      ],
+      "accepted": true
+    },
+    {
+      "candidate": 1,
+      "parameters": {
+        "mobileYouths": 3,
+        "feedRange": 80,
+        "adultPostRange": 140,
+        "speciesPenalty": 250,
+        "flaskGroup": 6
+      },
+      "objective": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        235.67999999998918
+      ],
+      "accepted": false
+    },
+    {
+      "candidate": 2,
+      "parameters": {
+        "mobileYouths": 3,
+        "feedRange": 150,
+        "adultPostRange": 140,
+        "speciesPenalty": 250,
+        "flaskGroup": 3
+      },
+      "objective": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        235.67999999998918
+      ],
+      "accepted": false
+    },
+    {
+      "candidate": 3,
+      "parameters": {
+        "mobileYouths": 3,
+        "feedRange": 80,
+        "adultPostRange": 140,
+        "speciesPenalty": 0,
+        "flaskGroup": 3
+      },
+      "objective": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        235.67999999998918
+      ],
+      "accepted": false
+    },
+    {
+      "candidate": 4,
+      "parameters": {
+        "mobileYouths": 6,
+        "feedRange": 80,
+        "adultPostRange": 140,
+        "speciesPenalty": 250,
+        "flaskGroup": 3
+      },
+      "objective": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        235.67999999998918
+      ],
+      "accepted": false
+    },
+    {
+      "candidate": 5,
+      "parameters": {
+        "mobileYouths": 3,
+        "feedRange": 80,
+        "adultPostRange": 140,
+        "speciesPenalty": 250,
+        "flaskGroup": 2
+      },
+      "objective": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        235.67999999998918
+      ],
+      "accepted": false
+    }
+  ],
+  "artifactDigests": {
+    "checkpoint.json": "e4a60b09dc70fcfecda20381b99ed7280044f17988a025579555ab5822892312",
+    "cases.jsonl": "b65f96c8661e4e4408c2a44db56c267ba4f43b37716f1fcf80398ebba37229ba",
+    "training-parameters.json": "ca380dc33cfe57c7aed801166807568de390995093acfa938ba86ebd15558aac"
+  }
+}
