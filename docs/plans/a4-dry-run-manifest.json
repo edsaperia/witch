@@ -1,6 +1,13 @@
 {
   "schema": 1,
-  "sourceCommit": "e169c3723369947f26de1ba42a5677ffdea8901e",
+  "sourceCommit": "5b6fcf427a02139b6f531a7a6aba799986e635de",
+  "sourceHistory": [
+    {
+      "from": "e169c3723369947f26de1ba42a5677ffdea8901e",
+      "to": "5b6fcf427a02139b6f531a7a6aba799986e635de",
+      "reason": "merged prototype; both cut source hashes identical"
+    }
+  ],
   "status": "mechanical rehearsal; typecheck/unit/bench proof pending canonical slot",
   "sources": [
     {
@@ -12028,9 +12035,9 @@
       "originalSha256": "53033e4f1356a09c872c82f340a43324c1e89bd9671e7956edae2aa942c58402",
       "sourceStart": 80752,
       "sourceEnd": 88671,
-      "generatedSha256": "55ff348b24c64f574d2a1f4fe0ab29e4a76789e57952a326ff88dcd4e4520b19",
+      "generatedSha256": "2917fedd5c7d439b851839b7263385f57add17c35ff896daccddad335e334462",
       "outputBodyStart": 4285,
-      "outputBodyEnd": 12543,
+      "outputBodyEnd": 12553,
       "edits": [
         {
           "start": 22,
@@ -12250,102 +12257,116 @@
           "generatedStart": 5237
         },
         {
+          "start": 5085,
+          "end": 5089,
+          "before": "view",
+          "after": "_view",
+          "generatedStart": 5316
+        },
+        {
+          "start": 5163,
+          "end": 5179,
+          "before": "view.shaderEpoch",
+          "after": "a4PrivateHost.shaderEpoch",
+          "generatedStart": 5395
+        },
+        {
           "start": 5306,
           "end": 5310,
           "before": "this",
           "after": "a4ViewHost",
-          "generatedStart": 5537
+          "generatedStart": 5547
         },
         {
           "start": 5359,
           "end": 5375,
           "before": "this.shaderEpoch",
           "after": "a4PrivateHost.shaderEpoch",
-          "generatedStart": 5596
+          "generatedStart": 5606
         },
         {
           "start": 5421,
           "end": 5442,
           "before": "this.shaderDrawStatus",
           "after": "a4ViewHost.shaderDrawStatus",
-          "generatedStart": 5667
+          "generatedStart": 5677
         },
         {
           "start": 5597,
           "end": 5614,
           "before": "this.setReadiness",
           "after": "a4PrivateHost.setReadiness",
-          "generatedStart": 5849
+          "generatedStart": 5859
         },
         {
           "start": 5740,
           "end": 5761,
           "before": "this.shaderDrawStatus",
           "after": "a4ViewHost.shaderDrawStatus",
-          "generatedStart": 6001
+          "generatedStart": 6011
         },
         {
           "start": 6204,
           "end": 6217,
           "before": "this.renderer",
           "after": "a4ViewHost.renderer",
-          "generatedStart": 6471
+          "generatedStart": 6481
         },
         {
           "start": 6245,
           "end": 6249,
           "before": "this",
           "after": "a4PrivateHost",
-          "generatedStart": 6518
+          "generatedStart": 6528
         },
         {
           "start": 7008,
           "end": 7018,
           "before": "this.scene",
           "after": "a4ViewHost.scene",
-          "generatedStart": 7290
+          "generatedStart": 7300
         },
         {
           "start": 7381,
           "end": 7394,
           "before": "this.renderer",
           "after": "a4ViewHost.renderer",
-          "generatedStart": 7669
+          "generatedStart": 7679
         },
         {
           "start": 7668,
           "end": 7685,
           "before": "this.setReadiness",
           "after": "a4PrivateHost.setReadiness",
-          "generatedStart": 7962
+          "generatedStart": 7972
         },
         {
           "start": 7712,
           "end": 7726,
           "before": "this.warmDraws",
           "after": "a4PrivateHost.warmDraws",
-          "generatedStart": 8015
+          "generatedStart": 8025
         },
         {
           "start": 7776,
           "end": 7793,
           "before": "this.setReadiness",
           "after": "a4PrivateHost.setReadiness",
-          "generatedStart": 8088
+          "generatedStart": 8098
         },
         {
           "start": 7818,
           "end": 7834,
           "before": "this.gpuCaughtUp",
           "after": "a4PrivateHost.gpuCaughtUp",
-          "generatedStart": 8139
+          "generatedStart": 8149
         },
         {
           "start": 7882,
           "end": 7899,
           "before": "this.setReadiness",
           "after": "a4PrivateHost.setReadiness",
-          "generatedStart": 8212
+          "generatedStart": 8222
         }
       ]
     },
@@ -12357,8 +12378,8 @@
       "sourceStart": 89350,
       "sourceEnd": 89813,
       "generatedSha256": "94ff513ce580f8c13b89110a6fd6623e3a6d0b7d72ae48d0aa2dba59c69c562d",
-      "outputBodyStart": 12670,
-      "outputBodyEnd": 13139,
+      "outputBodyStart": 12680,
+      "outputBodyEnd": 13149,
       "edits": [
         {
           "start": 17,
@@ -12377,8 +12398,8 @@
       "sourceStart": 90349,
       "sourceEnd": 92335,
       "generatedSha256": "a66c67968c4fc23dc0a3c6e058dfc29a5a0707e818082e397f2b1028245a6129",
-      "outputBodyStart": 13263,
-      "outputBodyEnd": 15345,
+      "outputBodyStart": 13273,
+      "outputBodyEnd": 15355,
       "edits": [
         {
           "start": 16,
@@ -12481,8 +12502,8 @@
       "sourceStart": 78257,
       "sourceEnd": 78716,
       "generatedSha256": "68dabf830bf6734185ff8a7e243b4acf7202ff39e3281ea54f5290e1ddcede07",
-      "outputBodyStart": 15457,
-      "outputBodyEnd": 15922,
+      "outputBodyStart": 15467,
+      "outputBodyEnd": 15932,
       "edits": [
         {
           "start": 16,
@@ -12501,8 +12522,8 @@
       "sourceStart": 80262,
       "sourceEnd": 80570,
       "generatedSha256": "1558efbe8e0dc750ee83185b8f0e19077a291f8bab3652e48d81fa8e5ce4c03f",
-      "outputBodyStart": 16099,
-      "outputBodyEnd": 16413,
+      "outputBodyStart": 16109,
+      "outputBodyEnd": 16423,
       "edits": [
         {
           "start": 112,
@@ -15219,13 +15240,13 @@
     "src/render/view/houseFrame.ts": "8f057505fde12e8e8cfe944b1742795f32a391142fe4c762d9beec021d644d54",
     "src/render/view/markers.ts": "fe7004f260951331974d7390b140a61637a23c73d2cff3df6ef10de41274e634",
     "src/render/view/atmosphere.ts": "d0927ecfa6ba88b6fc6ac599065d96eab314fdec1e9d1ebcd8fc378cde772c3d",
-    "src/render/view/readiness.ts": "fb5510d05bfedc0de1c463356e9f8832159c59630890c644796e025c3148578a",
+    "src/render/view/readiness.ts": "230ed7582ba72fd7a5935ec2b0ff3fe22272c6d0057f3f32ac840aae7866f719",
     "src/render/view/lifecycle.ts": "ee5c85103bfcb39786e79f8159ef194407cb4966e00b5c3731ce63d5fcd03468",
     "src/render/view/viewport.ts": "be563d10fc011a6f19e18108cf435e1f09eb42041caff600fb576f0d98cd1bf0",
     "src/render/view.ts": "70e42f43f5983eab8821533993af0bafabb6ba9df8363fa3c161b9bd141ebdae",
-    "config/link-switches.json": "149e8f6dc33b07860f3e7ab555367e7237d8bda5320eede5a3781240240f49c3",
-    "docs/LINK-SWITCHES.md": "a47155bc1f9e76d6768cb2a2f8a98306bd540cd65a6bb8091ca4de1e9d542460"
+    "config/link-switches.json": "3ada6d07ffea1e6a70498b4715fd87caf58a30fea6a917394d808a455ebc1422",
+    "docs/LINK-SWITCHES.md": "cd45ab5fed5cacffe9d27baed64f9acd72b608fbf1b92a005cd057babe073118"
   },
   "viewApiSha256": "f585e3820e424914506e8060e8a66fa10815310bdebaf306f3d4de051dfa7354",
-  "applyMs": 2648
+  "applyMs": 5668.3
 }

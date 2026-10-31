@@ -114,9 +114,9 @@ export async function compileAll(a4ViewHost: View, a4PrivateHost: ViewInternals,
         await waitForPrograms(allPrograms, compiled, () => {}, () => {}, undefined, undefined, () => epoch === a4PrivateHost.shaderEpoch ? Infinity : -Infinity);
         if (epoch !== a4PrivateHost.shaderEpoch) return;
         const programs = [...(a4ViewHost.renderer.info.programs ?? [])];
-        await runSliced((function* (view: View) {
+        await runSliced((function* (_view: View) {
           for (const p of programs) {
-            if (epoch !== view.shaderEpoch) return;
+            if (epoch !== a4PrivateHost.shaderEpoch) return;
             if ((p as unknown as ReadyProgram).isReady()) p.getUniforms();
             yield;
           }

@@ -142,6 +142,24 @@ No typecheck/full-unit/bench or browser run yet. No local slot or production fen
 No completed behavioural proof or measured full fence-cost claim.
 No user-visible text changed.
 
+After coordinator ruling #1476 comment 6548948298, merged prototype
+`5b6fcf427a02139b6f531a7a6aba799986e635de` (v6703 release lineage). Both cut
+source files are byte-identical to the previous source baseline. The rehearsal
+now pins that prototype SHA and records the previous source SHA in sourceHistory.
+`--replay --adopt-source=<merged commit>` verifies ancestry and both source hashes
+before accepting updated derived switch-location metadata; a changed main/view
+source is refused for explicit cut review, never silently replayed.
+
+CI on `76d19f24f` passed all 502 unit files / 3,025 tests, then typecheck failed
+with TS2341 in readiness.ts: the background generator receives `this` through a
+typed `View` parameter, an alias the first script did not recognize. Immediate
+callback parameters supplied the current `this` are now tracked by lexical symbol
+and their private reads use the live bridge. Two isolated tooling regressions
+(`node --test tools/refactor/a4-split.test.mjs`, 453 ms) pass: the actual generated
+guard respects private accessibility, and its actual generator cancels between
+program slices when the epoch changes. This is not the full game typecheck; that
+gate remains for fresh CI and the requested local proof slot.
+
 Focused regression file: `npx vitest run src/app/pageComposition.test.ts --maxWorkers=1`
 passes four cases (13.95 s including imports, 23 ms of tests): retained callback
 reads the replacement night, manual frames only schedule, draw errors preserve

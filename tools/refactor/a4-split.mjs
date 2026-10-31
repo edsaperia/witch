@@ -56,11 +56,26 @@ if (check) {
 }
 
 const previous = replay ? JSON.parse(read(manifestPath)) : null;
+const adoptArg = argv.find(a => a.startsWith('--adopt-source='));
+let adoptedCommit;
+if (adoptArg) {
+  if (!previous) throw new Error('--adopt-source requires a prior rehearsal and --replay');
+  adoptedCommit = execFileSync('git', ['rev-parse', '--verify', adoptArg.slice('--adopt-source='.length) + '^{commit}'], { encoding: 'utf8' }).trim();
+  execFileSync('git', ['merge-base', '--is-ancestor', adoptedCommit, 'HEAD']);
+  // Adopting a merged base may change other areas and generated metadata, but
+  // never silently change the exact two source files that this rehearsal cut.
+  for (const file of previous.sources) {
+    const source = execFileSync('git', ['show', `${adoptedCommit}:${file.file}`], { encoding: 'utf8', maxBuffer: 8 << 20 });
+    if (hash(source) !== file.sha256) throw new Error(`New base changes ${file.file}; review new cuts before adopting it`);
+  }
+}
 if (previous) for (const [f, digest] of Object.entries(previous.outputs)) {
+  if (adoptedCommit && ['config/link-switches.json', 'docs/LINK-SWITCHES.md'].includes(f)) continue;
   if (hash(read(f)) !== digest) throw new Error(`Refusing to overwrite edits: ${f}`);
 }
 if (!replay && fs.existsSync(manifestPath)) throw new Error('Already applied; use --check (never overwrite a rehearsal)');
-const manifest = { schema: 1, sourceCommit: previous?.sourceCommit ?? execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
+const manifest = { schema: 1, sourceCommit: adoptedCommit ?? previous?.sourceCommit ?? execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
+  ...(adoptedCommit || previous?.sourceHistory ? { sourceHistory: [...(previous?.sourceHistory ?? []), ...(adoptedCommit ? [{ from: previous.sourceCommit, to: adoptedCommit, reason: 'merged prototype; both cut source hashes identical' }] : [])] } : {}),
   status: 'mechanical rehearsal; typecheck/unit/bench proof pending canonical slot', sources: [], cuts: [], outputs: {} };
 const outputs = new Map();
 const importedSymbols = ast => {
@@ -80,7 +95,7 @@ const importedSymbols = ast => {
 // locals and property names cannot be accidentally rewritten. No game diagnostics,
 // type inference, library graph, tests, bundler, worker or browser is run here.
 function parsed(file) {
-  const source = previous ? execFileSync('git', ['show', `${previous.sourceCommit}:${file}`], { encoding: 'utf8', maxBuffer: 8 << 20 }) : read(file);
+  const source = previous ? execFileSync('git', ['show', `${manifest.sourceCommit}:${file}`], { encoding: 'utf8', maxBuffer: 8 << 20 }) : read(file);
   if (!previous) {
     const committed = execFileSync('git', ['show', `${manifest.sourceCommit}:${file}`], { encoding: 'utf8', maxBuffer: 8 << 20 });
     if (source !== committed) throw new Error(`Source differs from the pinned commit: ${file}`);
@@ -347,6 +362,14 @@ function splitView() {
   const findAliases = n => {
     if (ts.isIdentifier(n) && ['a4ViewHost', 'a4PrivateHost', 'a4SharedHost'].includes(n.text)) throw new Error(`Generated host name collides: ${n.text}`);
     if (ts.isVariableDeclaration(n) && ts.isIdentifier(n.name) && n.initializer?.kind === ts.SyntaxKind.ThisKeyword) aliases.set(ctx.checker.getSymbolAtLocation(n.name), { declaration: n, privateOnly: true });
+    if (ts.isCallExpression(n)) {
+      let fn = n.expression;
+      while (ts.isParenthesizedExpression(fn)) fn = fn.expression;
+      if (ts.isFunctionExpression(fn) || ts.isArrowFunction(fn)) for (let i = 0; i < fn.parameters.length; i++) {
+        const p = fn.parameters[i];
+        if (n.arguments[i]?.kind === ts.SyntaxKind.ThisKeyword && ts.isIdentifier(p.name)) aliases.set(ctx.checker.getSymbolAtLocation(p.name), { declaration: p, privateOnly: true, parameter: true });
+      }
+    }
     ts.forEachChild(n, findAliases);
   };
   findAliases(cls);
@@ -365,7 +388,7 @@ function splitView() {
         (ts.isIdentifier(n.expression) && aliases.has(ctx.checker.getSymbolAtLocation(n.expression))))) {
       const name = n.name.text;
       const alias = ts.isIdentifier(n.expression) ? aliases.get(ctx.checker.getSymbolAtLocation(n.expression)) : null;
-      if (alias?.privateOnly) { usedPrivate.add(name); return n.getText(ctx.ast); }
+      if (alias?.privateOnly && !alias.parameter) { usedPrivate.add(name); return n.getText(ctx.ast); }
       if (privateMembers.has(name)) { usedPrivate.add(name); return `a4PrivateHost.${name}`; }
       return alias ? n.getText(ctx.ast) : `a4ViewHost.${name}`;
     }
@@ -378,6 +401,8 @@ function splitView() {
       if (name) { usedShared.add(name); return `${n.name.text}: a4SharedHost.${name}`; }
     }
     if (ts.isIdentifier(n)) {
+      const alias = aliases.get(ctx.checker.getSymbolAtLocation(n));
+      if (alias?.parameter && alias.privateOnly && n === alias.declaration.name) return `_${n.text}`;
       const name = runtime.get(ctx.checker.getSymbolAtLocation(n));
       if (!name || (ts.isPropertyAccessExpression(n.parent) && n.parent.name === n)) return;
       usedShared.add(name); return `a4SharedHost.${name}`;
