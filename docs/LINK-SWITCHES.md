@@ -87,6 +87,7 @@ For the builders, the smoke and bench runs, the repro link and the arenas.
 
 | switch | does | since | read in |
 |---|---|---|---|
+| `layout=ed` | Opt-in Ed house layout preview; the default house stays unchanged. | 2026-10-31 | main.ts |
 | `recording=0` / `recording=1` | Profile-only: 0 disables input recording and incremental log journalling; ordinary games keep both enabled. | 2026-10-30 | platform/diagnosticMode.ts |
 | `restore=comment` | Builder loader: consume the comment snapshot selected on the pause page, restoring that exact saved moment paused on the same build. | 2026-10-30 | main.ts |
 | `poolreadability=0` / `poolreadability=1` | Review-only dark-creature lighting inside the witch's light pool (1 enables it; off by default). | 2026-10-30 | render/sprites.ts |

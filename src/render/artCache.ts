@@ -35,7 +35,8 @@ export const artCacheKey = (j: ArtJob, styleHash: string, fingerprints = ART_KIN
     if (!Number.isInteger(j.level) || j.level < 0 || j.level > 3 || !j.gear) return null;
     return ["art-kind-v1", fingerprint, styleHash, partySheetKey(j.species, j.level, j.gear)].join("|");
   }
-  return ["art-kind-v1", fingerprint, styleHash, j.kind + ":" + j.id, j.kind === "type" ? `${j.seed}|${j.K}${j.biome ? "|" + j.biome : ""}` : j.kind === "beachEdge" || j.kind === "lakeShore" ? `${j.K}` : ""].join("|");
+  const key = ["art-kind-v1", fingerprint, styleHash, j.kind + ":" + j.id, j.kind === "type" ? `${j.seed}|${j.K}${j.biome ? "|" + j.biome : ""}` : j.kind === "beachEdge" || j.kind === "lakeShore" ? `${j.K}` : ""].join("|");
+  return (j.kind === "housePiece" || j.kind === "treehouse") && j.layout ? `${key}|layout:${j.layout.identity}` : key;
 };
 
 /** A short hash of a string (FNV-1a), for the style's part of the key. */

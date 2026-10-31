@@ -2,6 +2,14 @@
 
 <!-- written by tools/inventory.mjs; edit the scripts' header comments, then run it again -->
 
+## `audit-layout.mjs`
+
+Offline authoring audit only.
+
+```
+node tools/house/audit-layout.mjs [input JSON] [output folder]
+```
+
 ## `bedrooms-shots.cjs`
 
 The other two bedrooms, shot in the built game at 1600×900: the house's plan from above with its rooms' names, the Boudoir with both locked doors and their roofs on, and at each locked door peeking in, its roof lifted over its placeholders under dust sheets.
@@ -17,6 +25,14 @@ The dark behind the treehouse's enclosed rooms, shot from the built game at 1600
 ```
 npm run build && node tools/house/dark-shots.cjs <out dir> [seed]     (ROOMS=a,b or none, TIME=0 no timings, SETTLE=frames, REVEAL=0, SIZE=WxH)
 ```
+
+## `draw-census.cjs`
+
+Optional one-frame diagnostics, installed inside the page.
+
+## `editor-check.cjs`
+
+Coordinator-only browser QA for the treehouse editor: real art pixels, drag, rotation, undo, copy fallback, validated import.
 
 ## `forest-fade.cjs`
 
@@ -81,6 +97,10 @@ The treehouse's placeholder rooms in the built game at 1600×900: she's put in t
 ```
 npm run build && node tools/house/rooms-shots.cjs <out dir> [seed]
 ```
+
+## `shot-session.cjs`
+
+Shared house-shot protocol.
 
 ## `takeoff.cjs`
 

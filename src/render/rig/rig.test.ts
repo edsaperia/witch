@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ik2, followChain, footCycle, dutyFactor, rigDirection, rigWorld, RigBody, RigOut } from "./rig";
+import { ik2, followChain, footCycle, dutyFactor, rigDirection, rigWorld, RigBody, RigOut, stiltLift, STILT_MAX_LEGS, STILT_MAX_BONE_STEPS } from "./rig";
 import type { RigMeta } from "./rigBuild";
 
 // A four-legged body in model units: torso at the origin, legs 0.6 long, a disc of every radius.
@@ -8,13 +8,13 @@ const leg = (name: string, fore: boolean, side: number) => ({ name, fore, side, 
 const META: RigMeta = { template: "quadruped", s: 40, torso: five(0), head: five(10), tail: five(20), faces: {}, discs: { 1: Object.fromEntries([1, 2, 3, 4].map(r => [r, piece(30 + r)])) }, legs: [leg("legFN", true, 1), leg("legFF", true, -1), leg("legHN", false, 1), leg("legHF", false, -1)], neck: [0.55, 0.15, 0], headAt: [0.6, 0.2, 0], tailAt: [-0.5, 0.05, 0], top: 0.4, len: 0.5, spine: [] };
 const lay = (sleep: number, droop = sleep) => { const b = new RigBody(), out = new RigOut(); b.update(0, 0, 0, 1, 0); b.quadruped(META, 1, 1 / 60, { crouch: 0, charging: false, air: 0, sleep, droop }, out); return out.items.slice(0, out.n).map(it => ({ f: it.piece.frame, y: it.y })); };
 /** Walks a body at `speed` m/s along `dir` (radians) for `secs`, at `fps`, u2m metres per unit: how far its planted feet slid, as a share of the way it went. */
-function slide(speed: number, dir = 0, secs = 4, fps = 60, u2m = 1): number {
+function slide(speed: number, dir = 0, secs = 4, fps = 60, u2m = 1, stiltLength = 1): number {
   const b = new RigBody(), out = new RigOut(), dt = 1 / fps, prev = new Float32Array(12);
   let x = 0, z = 0, slid = 0, went = 0;
   b.update(x, z, 0);
   for (let f = 0; f < secs * fps; f++) {
     x += Math.cos(dir) * speed * dt; z += Math.sin(dir) * speed * dt; went += speed * dt;
-    b.update(x, z, dt); out.reset(); b.quadruped(META, u2m, dt, { crouch: 0, charging: false, air: 0 }, out);
+    b.update(x, z, dt); out.reset(); b.quadruped(META, u2m, dt, { crouch: 0, charging: false, air: 0, stiltLength }, out);
     if (f > fps) for (let k = 0; k < 4; k++) if (b.feet[k * 3 + 2] && prev[k * 3 + 2]) slid += Math.hypot(b.feet[k * 3] - prev[k * 3], b.feet[k * 3 + 1] - prev[k * 3 + 1]) / 4;
     prev.set(b.feet);
   }
@@ -22,6 +22,96 @@ function slide(speed: number, dir = 0, secs = 4, fps = 60, u2m = 1): number {
 }
 
 describe("the live rig (#79 stage 5)", () => {
+  const stiltPose = (length?: number, tip = .08, meta = META, strength?: number) => {
+    const body = new RigBody(), out = new RigOut(); body.update(0,0,0);
+    body.quadruped(meta, 1, 1/60, { crouch:0,charging:false,air:0,stiltLength:length,stiltTip:tip,stiltStrength:strength }, out);
+    return { body, items:out.items.slice(0,out.n) };
+  };
+  it('leaves the ordinary rig exactly unchanged at zero or unit stilt length', () => {
+    expect(stiltPose(0).items).toEqual(stiltPose().items);
+    expect(stiltPose(1,.02).items).toEqual(stiltPose().items);
+    expect(stiltPose(12,.02,META,0).items).toEqual(stiltPose().items);
+    expect(stiltLift(META,0)).toBe(0);
+  });
+  it('lifts normal-sized torso/head/tail on tapered legs while feet keep their ground targets', () => {
+    const base = stiltPose(1), tall = stiltPose(6), lift = stiltLift(META,6);
+    for (let i=0;i<3;i++) {
+      expect(tall.items[i].piece).toBe(base.items[i].piece);
+      expect(tall.items[i].scale).toBe(1);
+      expect(tall.items[i].x).toBe(base.items[i].x); expect(tall.items[i].z).toBe(base.items[i].z);
+      expect(tall.items[i].y-base.items[i].y).toBeCloseTo(lift,9);
+    }
+    expect(Math.min(...tall.items.map(i=>i.y))).toBeCloseTo(-.6,6);
+    expect(tall.body.feet).toEqual(base.body.feet);
+    expect(slide(1.2,.4,4,60,1,6)).toBeLessThan(.03);
+  });
+  it('keeps tapered leg strokes overlapping, with a hard geometry bound even at the longest thinnest setting', () => {
+    const counts: number[] = [];
+    for (const [length,tip] of [[6,.08],[12,.02]]) {
+      const { items } = stiltPose(length,tip,{...META,shoe:five(50)});
+      counts.push(items.length);
+      let prev: typeof items[number] | null = null;
+      for (const item of items) {
+        if (item.piece.frame < 30 || item.piece.frame >= 50) { prev=null; continue; }
+        if (prev) {
+          const radius = (item.piece.frame-30)/META.s*(item.scale??1), previous = (prev.piece.frame-30)/META.s*(prev.scale??1);
+          expect(Math.hypot(item.x-prev.x,item.y-prev.y,item.z-prev.z)).toBeLessThanOrEqual(radius+previous+1e-6);
+        }
+        prev=item;
+      }
+      expect(items.length).toBeLessThanOrEqual(3+4*(3*(STILT_MAX_BONE_STEPS+1)+1));
+      for(const foot of items.filter(i=>i.piece.frame>=50))expect(foot.scale).toBeCloseTo(tip,12);
+    }
+    console.log('Stilt fixture instances: ordinary, length6/tip.08, length12/tip.02',[stiltPose().items.length,...counts]);
+  });
+  it('tracks more than four real legs and bounds malformed huge leg lists', () => {
+    const legs=Array.from({length:14},(_,i)=>leg(`insect${i}`,i<7,i%2?1:-1));
+    const pose=stiltPose(6,.08,{...META,legs});
+    expect(pose.body.feet.length).toBe(42);
+    const walker=new RigBody(), out=new RigOut();walker.update(0,0,0);walker.speed=1;walker.phase=.2;
+    walker.quadruped({...META,legs},1,1/60,{crouch:0,charging:false,air:0,stiltLength:6},out);
+    for(let i=0;i<14;i++)expect(walker.feet[i*3+2]).toBe(i%2?0:1);
+    const huge=stiltPose(1e6,.02,{...META,legs:Array(100).fill(legs[0])});
+    expect(huge.body.feet.length).toBe(STILT_MAX_LEGS*3);
+    expect(huge.items.length).toBeLessThanOrEqual(3+STILT_MAX_LEGS*(3*(STILT_MAX_BONE_STEPS+1)+1));
+    expect(stiltLift({...META,legs:[]},6)).toBe(0);
+  });
+  it('gives tucked legs visible body-proportioned extension without moving their feet or resizing the body', () => {
+    const legs: RigMeta['legs']=META.legs.map(l=>({...l,hip:[l.hip[0],0,l.hip[2]],knee:[l.hip[0]+.001,-.01,l.hip[2]],foot:[l.foot[0],-.02,l.foot[2]]}));
+    const meta={...META,top:1.2,legs,shoe:five(50)}, base=stiltPose(1,.08,meta), tall=stiltPose(6,.08,meta);
+    expect(stiltLift(meta,6)).toBeGreaterThan(2);
+    expect(tall.items[0].y-base.items[0].y).toBeCloseTo(stiltLift(meta,6),10);
+    expect(tall.items.slice(0,3).every(i=>i.scale===1)).toBe(true);
+    for(const foot of tall.items.filter(i=>i.piece.frame>=50))expect(foot.y).toBeCloseTo(-.02,8);
+    expect(tall.body.feet).toEqual(base.body.feet);
+    expect(stiltPose(12,.08,meta,0).items).toEqual(base.items);
+  });
+  it('resets a pooled disc scale before it becomes a normal body piece', () => {
+    const out=new RigOut(); out.push(piece(0),0,0,0,false,0,.08); out.reset();out.push(piece(1),0,0,0,false,0);
+    expect(out.items[0].scale).toBe(1);
+  });
+  it('restores knee and foot thickness continuously as the trip expires', () => {
+    const meta={...META,shoe:five(50)};
+    for(const strength of [.1,.01,.001]) {
+      const {items}=stiltPose(1+5*strength,.08,meta,strength);
+      const firstFoot=items.findIndex(i=>i.piece.frame>=50), foot=items[firstFoot], tipDisc=items[firstFoot-1];
+      expect(foot.scale).toBeCloseTo(1-.92*strength,12);
+      const tipRadius=(tipDisc.piece.frame-30)/meta.s*(tipDisc.scale??1);
+      const expected=meta.legs[0].r[2]+(meta.legs[0].r[0]*1.1*.08-meta.legs[0].r[2])*strength;
+      expect(tipRadius).toBeCloseTo(expected,10);
+      expect(Math.abs(tipRadius-meta.legs[0].r[2])).toBeLessThan(.05*strength);
+      const kneeIndex=items.findIndex((item,i)=>i>3&&i<firstFoot&&Math.hypot(item.x-items[i-1].x,item.y-items[i-1].y,item.z-items[i-1].z)<1e-12);
+      expect(kneeIndex).toBeGreaterThan(3);
+      const knee=items[kneeIndex], kneeRadius=(knee.piece.frame-30)/meta.s*(knee.scale??1);
+      expect(kneeRadius).toBeCloseTo(meta.legs[0].r[1]+(meta.legs[0].r[0]*1.1*(.35+.08*.65)-meta.legs[0].r[1])*strength,10);
+      expect(Math.abs(foot.x-(meta.legs[0].foot[0]+meta.legs[0].fl*.5))).toBeLessThan(.04*strength+.001);
+    }
+  });
+  it('does not invent legs or stretch a serpent', () => {
+    const meta: RigMeta={...META,template:'serpent',legs:[],spine:Array.from({length:20},(_,i)=>[-i*.05,0,0,.1])};
+    const draw=(stiltLength?:number)=>{const body=new RigBody(),out=new RigOut();body.update(0,0,0);body.serpent(meta,1,1/60,{crouch:0,charging:false,air:0,stiltLength,stiltTip:.02},out);return out.items.slice(0,out.n);};
+    expect(draw(12)).toEqual(draw());
+  });
   it("solves a two-bone leg exactly: the bones keep their lengths and the foot reaches its target", () => {
     for (const [fx, fy] of [[0.1, -0.8], [0.4, -0.5], [-0.3, -0.6], [0, -0.3]]) {
       const [kx, ky, ex, ey] = ik2(0, 0, fx, fy, 0.5, 0.45, 1);

@@ -20,8 +20,21 @@ import type { Tuning } from "../rules/tuning";
 import type { PlaytestLog } from "../platform/playtestLog";
 import type { MusicLab } from "./musicLab";
 import { logCaughtError } from "../platform/caughtError";
+import { potionStrength } from '../render/potionEffects';
+import { potionSettings } from '../rules/potionSettings';
+
+import { PotionFilter } from '../platform/audio/potionFilter';
 
 export class Sound {
+  private ordinary = 1;
+  private potionMusic = 1;
+  private creaturePitch = 0;
+  private nightVisionTrip: unknown = null;
+  private potionFilter: PotionFilter | null = null;
+  private potionOutput(): AudioNode {
+    if (this.potionFilter?.context !== this.audio) this.potionFilter = new PotionFilter(this.audio!);
+    return this.potionFilter.input;
+  }
   audio: AudioContext | null = null;
   music: Music | null = null;
   sfx: Sfx | null = null;
@@ -46,6 +59,9 @@ export class Sound {
    *  style for everything made from here on (the watchdog's rebuilds too), the music's timeline anchored afresh at its game
    *  time 0, the effects re-pointed at its knobs and given fresh cues, and the safety valve's grace again. The same context. */
   setNight(tuning: Tuning, seed: number, style: MusicStyle = this.style): void {
+    this.ordinary = this.potionMusic = 1; this.creaturePitch = 0; this.nightVisionTrip = null;
+    this.music?.setOrdinaryGain(1);
+    this.sfx?.setOrdinaryGain(1); this.sfx?.setCreaturePitch(0); this.sfx?.heatBreathing(0, .18, 0);
     this.tuning = tuning; this.seed = seed; this.style = style;
     this.night = null; // (the night's set's style given to the engine on the next frame)
     const engine = this.music?.engine;
@@ -85,7 +101,9 @@ export class Sound {
   /** The sound effects, once there's an AudioContext (the creator's first click, or the start). */
   ensureSfx(): void {
     const { tuning } = this;
-    if (this.audio && !this.sfx && tuning.sfx.on) { this.sfx = new Sfx(this.audio, SFX_BASE * this.level, tuning.sfx, this.style.root + 24); this.sfxVol = tuning.sfx.volume; this.sfxCues = this.cues(this.sfx); const sfx = this.sfx; (window.requestIdleCallback ?? ((f: () => void) => setTimeout(f, 300)))(() => sfx.prewarm()); } // (its slow parts built while the start screen idles)
+    if (this.audio && !this.sfx && tuning.sfx.on) { this.sfx = new Sfx(this.audio, SFX_BASE * this.level, tuning.sfx, this.style.root + 24, this.potionOutput()); this.sfxVol = tuning.sfx.volume; this.sfxCues = this.cues(this.sfx); const sfx = this.sfx; (window.requestIdleCallback ?? ((f: () => void) => setTimeout(f, 300)))(() => sfx.prewarm()); } // (its slow parts built while the start screen idles)
+    this.sfx?.setOrdinaryGain(this.ordinary);
+    this.sfx?.setCreaturePitch(this.creaturePitch);
   }
 
   /** The context, with the tuning's output buffer (music.buffer, seconds; else its latencyHint category, music.latency; ?latency= a
@@ -108,7 +126,8 @@ export class Sound {
     const fresh = !this.audio;
     this.audio ??= this.context(); void this.audio.resume();
     const t1 = performance.now();
-    if (!this.music && tuning.music.on) { this.music = new Music(this.audio, tuning.music.volume * this.level, this.playing, this.seed, tuning.music.src, musicAhead()); this.voices(); }
+    if (!this.music && tuning.music.on) { this.music = new Music(this.audio, tuning.music.volume * this.level, this.playing, this.seed, tuning.music.src, musicAhead(), this.potionOutput()); this.voices(); }
+    this.music?.setOrdinaryGain(this.potionMusic);
     const t2 = performance.now();
     this.ensureSfx();
     const t3 = performance.now(), ms = (x: number) => Math.round(x);
@@ -146,7 +165,8 @@ export class Sound {
         playtest().audio(what);
         console.warn(`audio watchdog: ${what}`);
         if (!this.audio) return;
-        if ((what === "music-silent" || what === "music-nonfinite") && this.music) { this.music.dispose(); this.music = new Music(this.audio, this.tuning.music.volume * this.level, this.playing, this.seed, this.tuning.music.src, musicAhead()); this.voices(); }
+        if ((what === "music-silent" || what === "music-nonfinite") && this.music) { this.music.dispose(); this.music = new Music(this.audio, this.tuning.music.volume * this.level, this.playing, this.seed, this.tuning.music.src, musicAhead(), this.potionOutput()); this.voices(); }
+        this.music?.setOrdinaryGain(this.potionMusic);
         if (what === "sfx-nonfinite" && this.sfx) { this.sfx.dispose(); this.sfx = null; this.sfxCues = null; this.ensureSfx(); }
       },
     );
@@ -159,7 +179,7 @@ export class Sound {
   private booted: () => boolean = () => false;
   /** Whether the music should be heard now: playing, its volume up, the game running and shown, the home speakers booting
    *  (the watchdog's and the output meter's test). */
-  musicExpected(): boolean { return !!this.music && this.level > 0 && this.tuning.music.volume > 0 && this.music.audible && this.live() && this.booted(); }
+  musicExpected(): boolean { return this.potionMusic > .01 && !!this.music && this.level > 0 && this.tuning.music.volume > 0 && this.music.audible && this.live() && this.booted(); }
 
   /** Frozen (platform/freeze.ts): the context suspended, and resumed after. */
   freeze(on: boolean): void { try { void (on ? this.audio?.suspend() : this.audio?.resume()); } catch { /* no sound */ } }
@@ -183,6 +203,8 @@ export class Sound {
 
   /** A frame: the music, one track mixed by how near the witch is to a playing soundsystem; the cues; the bedroom's room. */
   update(game: Game, cue: MusicCue, roomOpen: boolean): void {
+    this.updatePotionAudio(game);
+    this.potionFilter?.update(game);
     const t0 = performance.now();
     this.lastMix = musicMix(game, game.witch);
     // The volumes (Ed, 2026-10-14: the pause page's Music and Sound effects sliders; app/settings.ts remembers them): the tuning's
@@ -219,6 +241,18 @@ export class Sound {
     const sp = game.party.spellAt, dropped = atDecks && typeof sp === "number" && game.clock.time >= timeAt(game.beat, Math.ceil(beatAt(game.beat, sp + PARTY_CAST) - 1e-6) + 1); // (her routine's needle down: rules/djSet.ts, its beat 1)
     this.sfx?.room(roomOpen ? 1 : atDecks ? this.tuning.sfx.room.decks * (dropped ? 1 : 0.3) : 0);
     this.parts = { mix: t1 - t0, music: t2 - t1, cues: t3 - t2, room: performance.now() - t3 };
+  }
+  /** Derived afresh: stopping/replacing a potion restores the current user settings, never a stale saved volume. */
+  updatePotionAudio(game: Game): void {
+    const night = potionStrength(game, 'night-vision'), heat = potionStrength(game, 'heat-vision');
+    this.ordinary = 1 - night;
+    this.potionMusic = 1 - Math.max(night, heat); this.creaturePitch = heat;
+    this.music?.setOrdinaryGain(this.potionMusic); this.sfx?.setOrdinaryGain(this.ordinary); this.sfx?.setCreaturePitch(heat);
+    const trip = game.mushrooms?.trips[game.witches[0]?.id ?? 0];
+    if (!night) this.nightVisionTrip = null;
+    else if (trip !== this.nightVisionTrip && this.sfx && !game.clock.paused) { this.sfx.nightVisionStart(); this.nightVisionTrip = trip; }
+    const settings = potionSettings('heat-vision');
+    this.sfx?.heatBreathing(heat * (settings.breathVolume ?? .35), settings.breathRate ?? .18, game.clock.time - (trip?.at ?? 0));
   }
 }
 

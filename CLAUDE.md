@@ -29,6 +29,8 @@ The start screen shows a **What's new** panel: the last three entries of the cha
 
 Several builders work in parallel (Claude sessions and Codex alike); one **coordinator** session briefs them, combines their work, checks it and publishes. These rules win over older wording below.
 
+Who is building what, and each builder's state and owned files, is in [`docs/active-builders.md`](docs/active-builders.md) (kept by the coordinator).
+
 - **Branches.** Work on your own branch off `claude/prototype` (Codex: `codex/<topic>`), with a draft PR into `claude/prototype`. **Never push to `claude/prototype` or `main`, and never release:** the coordinator combines ready branches on one build, runs the full check once and publishes (Ed, 2026-10-28: "combine them on one branch, run one check, publish once").
 - **Checks before a FINAL:** `npm run typecheck` plus the tests near what you touched (and `node art/check.mjs` when you touch the art). **Not** the full suite or the smoke tests: the coordinator runs those on the combined build (Ed, 2026-10-29: "Be economical ... Try and batch testing if it saves tokens"). CI still runs everything on your PR.
 - **Reports:** short. `REPORT:` while working, `QUESTION:` when blocked, `FINAL:` when done: what changed and why, the tests, anything you noticed but didn't fix, how Ed can check it in play. Claude builders send them to the coordinator's session; Codex posts them as PR comments, and reads `COORDINATOR:` comments there.
@@ -72,6 +74,8 @@ Literal, stable names for the parts of the game, as Ed and the builders agree th
 Its entries are in the notes below, by area, and listed in [`docs/notes/INDEX.md`](docs/notes/INDEX.md), made from the notes (`node tools/docs/glossary.mjs --write` after adding one; `tools/docs/glossary.test.ts` checks it).
 
 ## Capturing possible mushroom trips
+
+Ed, 2026-10-31: every potion must have an audio effect, even a simple one. It must alter existing sounds throughout the trip; a recurring added sound alone is insufficient. Design and implement sound alongside visuals, use the trip's game-clock envelope and final two-minute fade, and preserve any bespoke sound requirements. The shared trip filter is a fallback, not a replacement for agreed Night Vision/Heat Vision audio.
 
 Ed, 2026-10-30: whenever development reveals an interesting possible effect (an unusual test/debug state, a visual bug, a new drawing system, an extreme parameter or a useful signal crossing), add it as a **suggestion** to `docs/backlog/cauldron.md`. Do this in the same piece of work; do not wait for a dedicated mushroom task. Check for an existing equivalent first and extend it rather than duplicate it. Record what she experiences, the existing signal/drawing hook, any genuinely new machinery needed, and whether it is a variant of another trip. Keep suggestions distinct from Ed-approved effects and implemented features. The catalogue is expandable; 56 is not a cap. Capturing an idea does not authorise implementing it or changing recipe assignments.
 

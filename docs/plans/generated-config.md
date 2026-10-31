@@ -29,3 +29,14 @@ No knob value changes, renames or removals; no new settings; no changes to how t
 ## Validation
 
 Focused tests with one worker (`--maxWorkers=1`) plus typecheck. The coordinator runs the full suite, smokes and release.
+
+## A1 inbox (after A2)
+A2 (tuning.json one setting per line + formatter check) shipped from #1510. A1 continues in a new inbox, because #1510 is merged and no longer watched.
+
+Scope, as agreed in #1510:
+- read-only config/docs gate before the CI build;
+- schema-derived Tuning declaration;
+- generated-files inventory, `docs/generated-files.md`;
+- extra generated families inventory-only (6540613112).
+
+Builder's held commit: 265d28ad (local `codex/generated-config-a1-held`). Merge current claude/prototype into it, push to this branch, then REPORT and FINAL here.

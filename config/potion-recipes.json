@@ -139,7 +139,7 @@
     "effect": "chunky",
     "name": "Chunky",
     "description": "Much bigger pixels.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 11
   },
   {
@@ -333,8 +333,8 @@
     ],
     "effect": "night-vision",
     "name": "Night Vision",
-    "description": "The dark forest becomes clear and luminous.",
-    "comingSoon": true,
+    "description": "The forest turns black and phosphor green. A rising electronic whine gives way to creature sounds alone.",
+    "comingSoon": false,
     "id": 26
   },
   {
@@ -370,10 +370,10 @@
       "red",
       "turquoise"
     ],
-    "effect": "tall-tales",
-    "name": "Tall Tales",
-    "description": "Every animal looks very tall.",
-    "comingSoon": true,
+    "effect": "stiltwalkers",
+    "name": "Stiltwalkers",
+    "description": "Familiar animal bodies stand high on impossibly long legs, tapering from normal hips to tiny feet.",
+    "comingSoon": false,
     "id": 29
   },
   {
@@ -581,7 +581,7 @@
     "effect": "worm-s-eye",
     "name": "Worm's Eye",
     "description": "The camera drops very low, almost level with the ground.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 45
   },
   {
@@ -671,8 +671,8 @@
     ],
     "effect": "heat-vision",
     "name": "Heat Vision",
-    "description": "Thermal; creatures glow by danger, trees cold blue.",
-    "comingSoon": true,
+    "description": "Cold blue scenery surrounds warm animals, glowing hotter with danger. Music falls silent; creature sounds drop an octave beneath slow, muffled mask breathing.",
+    "comingSoon": false,
     "id": 52
   },
   {
@@ -749,8 +749,8 @@
     ],
     "effect": "stiltwalkers",
     "name": "Stiltwalkers",
-    "description": "Familiar animal bodies stand impossibly high on very thin, long legs.",
-    "comingSoon": true,
+    "description": "Familiar animal bodies stand high on impossibly long legs, tapering from normal hips to tiny feet.",
+    "comingSoon": false,
     "id": 58
   },
   {
@@ -828,7 +828,7 @@
     "effect": "the-audience",
     "name": "The Audience",
     "description": "Amplify existing watching-tree lean and lag until the forest visibly follows her passage.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 64
   },
   {
@@ -945,7 +945,7 @@
     "effect": "the-forest-counts",
     "name": "The Forest Counts",
     "description": "Wind and mist advance in musical steps while she and animals remain fluid.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 73
   },
   {
@@ -1322,7 +1322,7 @@
     "effect": "miniature",
     "name": "Miniature",
     "description": "The island looks like a tiny toy world.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 102
   },
   {
@@ -1400,7 +1400,7 @@
     "effect": "hue-spin",
     "name": "Hue Spin",
     "description": "Every colour slowly turns into another.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 108
   },
   {
