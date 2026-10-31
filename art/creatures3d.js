@@ -1505,7 +1505,7 @@ function armadilloBall(S, frame, st, facing) {
 // shell), body.dome (its shell taller and shorter), body.head (its head), body.snout (its snout's length), body.ears, body.tail
 // (its tail's length), body.legs (up on longer legs).
 export function armadillo3d(S, level, frame, st, facing = "towards") {
-  if (level === 3) return armadilloBall(S, frame, st, facing);
+  if (level === 3 && !GEAR?.stilt) return armadilloBall(S, frame, st, facing); // the optional stilt rig unfolds its real four legs
   const legend = false, m = new Model(), bob = frame ? .012 : 0, q = { ...S.q, ...(S.levelQ?.[level] || {}) };
   const soft = q.soft ?? 0, snout = q.snout ?? 1, ears = q.ears ?? 1, tail = q.tail ?? 1, dome = q.dome ?? 1, lift = ((q.legs ?? 1) - 1) * .1;
   for (const [x, z] of [[.26, .2], [.26, -.2], [-.28, .21], [-.28, -.21]]) { const d = (frame ? -1 : 1) * Math.sign(x * z) * .06; m.seg([x, .14 + lift, z], [x + d, .03, z], .06, .05, M.SKIN, { group: z > 0 ? 6 : 2 }); for (let k = -1; k <= 1; k++) m.ell([x + d + .06, .02, z + k * .025], [.035, .012, .01], M.ACCENT, { group: z > 0 ? 6 : 2 }); m.anchors.feet.push({ c: [x + .03 + d, .03, z], r: .065, group: z > 0 ? 6 : 2 }); }

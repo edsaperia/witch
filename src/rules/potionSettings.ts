@@ -2,7 +2,7 @@
 export interface PotionParameter { key: string; label: string; min: number; max: number; step: number; default: number }
 const p = (key: string, label: string, value: number, min: number, max: number, step = .05): PotionParameter => ({ key, label, default: value, min, max, step });
 export const POTION_PARAMETERS: Record<string, readonly PotionParameter[]> = {
-  'stiltwalkers': [p('length', 'Leg length multiplier', 6, 1, 12, .25), p('tip', 'Foot thickness × normal', .08, .02, .5, .01)],
+  'stiltwalkers': [p('length', 'Leg extension', 6, 1, 12, .25), p('tip', 'Leg-tip thickness × hip', .08, .02, .5, .01)],
   'trip-indicator': [p('strength', 'Edge wobble (art pixels)', 1.5, 0, 30, .1), p('speed', 'Wobble speed', 1.2, 0, 12, .1), p('waveSize', 'Wave size (screen fraction)', .3, .02, 2, .01), p('reach', 'Reach from screen edges', .2, 0, 1, .01)],
   'ravine': [p('bendMultiplier', 'Upward bend × treetop bend', 2, 0, 30, .1), p('minimumBend', 'Minimum upward bend', .001, 0, .03, .0001)],
   'little-planet': [p('bendMultiplier', 'Extra bend × treetop bend', 6, 0, 50, .1), p('minimumBend', 'Minimum extra bend', .002, 0, .05, .0001)],

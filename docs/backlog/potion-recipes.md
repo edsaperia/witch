@@ -34,7 +34,7 @@ All potions last ten minutes of game time, start at full strength on waking, and
 | 26 | blue + red + orange | Night Vision | Coming soon | The dark forest becomes clear and luminous. |
 | 27 | blue + red + yellow | Flask Finder | Coming soon | Flasks are easier to find. |
 | 28 | blue + red + green | Left Hook | Coming soon | Unlimited dodges, but they always veer left. |
-| 29 | blue + red + turquoise | Stiltwalkers | Coming soon | Familiar animal bodies stand high on impossibly long legs, tapering from normal hips to tiny feet. |
+| 29 | blue + red + turquoise | Stiltwalkers | Implemented | Familiar animal bodies stand high on impossibly long legs, tapering from normal hips to tiny feet. |
 | 30 | blue + red + white | Thick Canopy | Implemented | The canopy closes over her; every colour grows vivid and the lighting gains deep contrast. |
 | 31 | blue + orange + orange | The Whole Route | Coming soon | The entire route across the island shines into view. |
 | 32 | blue + orange + yellow | Dreamseer | Coming soon | The area a legend's dream points to is easier to see. |
@@ -63,7 +63,7 @@ All potions last ten minutes of game time, start at full strength on waking, and
 | 55 | purple + pink + red | Mirror Floor | Coming soon | The ground becomes a glossy mirror of everything above it. |
 | 56 | purple + pink + orange | Silent Film | Coming soon | Film grain and scratches, sepia, the world as a silent film. |
 | 57 | purple + pink + yellow | Masterplan | Coming soon | See how packs intend to move and attack: targets, destination slots, roles, formations and attack geometry. |
-| 58 | purple + pink + green | Stiltwalkers | Coming soon | Familiar animal bodies stand high on impossibly long legs, tapering from normal hips to tiny feet. |
+| 58 | purple + pink + green | Stiltwalkers | Implemented | Familiar animal bodies stand high on impossibly long legs, tapering from normal hips to tiny feet. |
 | 59 | purple + pink + turquoise | Contour Dream | Coming soon | Vivid contour bands run across ground, animals and scenery. |
 | 60 | purple + pink + white | Bottomless | Coming soon | The ground becomes a starfield, with creatures apparently standing over an abyss. |
 | 61 | purple + red + red | Aurora Outlines | Implemented | Luminous coloured edges replace most solid surfaces. |

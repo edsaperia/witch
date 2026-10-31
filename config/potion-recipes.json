@@ -373,7 +373,7 @@
     "effect": "stiltwalkers",
     "name": "Stiltwalkers",
     "description": "Familiar animal bodies stand high on impossibly long legs, tapering from normal hips to tiny feet.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 29
   },
   {
@@ -750,7 +750,7 @@
     "effect": "stiltwalkers",
     "name": "Stiltwalkers",
     "description": "Familiar animal bodies stand high on impossibly long legs, tapering from normal hips to tiny feet.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 58
   },
   {
