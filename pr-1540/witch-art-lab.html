@@ -3919,14 +3919,17 @@ const OPEN = a => Math.abs(((a - Math.PI / 2 + Math.PI * 3) % (Math.PI * 2)) - M
 // her (DJ_FRAMES of them: the platters turn an eighth of a turn and the LEDs chase on each).
 const DJ_FRAMES = 8;
 const DJ_STAND = [0, TREEHOUSE_STOREYS.studio.y, 1.75]; // where she stands (her seat anchor), in the house's units
-function djFrame3(facing, stand = DJ_STAND) { // her model's (a, b, c) in the house's: squared to the camera at the house's yaw for this facing (stand: where she stands, the Ent's deck's own, art/ent.js)
+function djFrame3(facing, stand = DJ_STAND, rotation = 0) { // optional placement rotation in radians; zero keeps the original frame exactly
   const yaw = YAW[facing] ?? YAW.towards, f = [Math.sin(yaw), 0, Math.cos(yaw)], r = [Math.cos(yaw), 0, -Math.sin(yaw)], o = v3.sub(stand, v3.mul(f, .02)); // (her ground anchor .02 ahead of her origin)
-  const to = ([a, b, c]) => v3.add(o, v3.add(v3.mul(f, a), v3.add(v3.mul(r, -c), [0, b, 0])));
-  const from = p => { const d = v3.sub(p, o); return [v3.dot(d, f), d[1], -v3.dot(d, r)]; };
-  return { to, from, f, r };
+  const turn = v => rotation ? [v[0] * Math.cos(rotation) - v[2] * Math.sin(rotation), v[1], v[0] * Math.sin(rotation) + v[2] * Math.cos(rotation)] : v;
+  const F = turn(f), R = turn(r);
+  const origin = rotation ? v3.sub(stand, v3.mul(F, .02)) : o;
+  const to = ([a, b, c]) => v3.add(origin, v3.add(v3.mul(F, a), v3.add(v3.mul(R, -c), [0, b, 0])));
+  const from = p => { const d = v3.sub(p, origin); return [v3.dot(d, F), d[1], -v3.dot(d, R)]; };
+  return { to, from, f: F, r: R };
 }
-function djTable(m, { frame = 0, facing = "towards", stand } = {}) {
-  const D = DJ_DECKS, F = djFrame3(facing, stand), { to, from, f, r } = F, G0 = 60, TOP = D.top, [a0, a1] = D.depth, am = (a0 + a1) / 2, W = D.width; // its own groups (60..79), apart from the house's
+function djTable(m, { frame = 0, facing = "towards", stand, rotation = 0 } = {}) {
+  const D = DJ_DECKS, F = djFrame3(facing, stand, rotation), { to, from, f, r } = F, G0 = 60, TOP = D.top, [a0, a1] = D.depth, am = (a0 + a1) / 2, W = D.width; // its own groups (60..79), apart from the house's
   const box = (c, h, mat, o = {}) => m.box(to(c), h, mat, { dir: r, up: [0, 1, 0], ...o }); // half sizes: across, up, deep
   const chase = (c, k) => FAIRY[((Math.floor((c + 9) * 22) + frame + k) % 4 + 4) % 4];
   // the desk: a panelled front with LED strips top and bottom round a crescent moon, wood sides, a dark top
@@ -4455,6 +4458,10 @@ function entModel(st, facing, E) {
     const south = [Math.cos(aCam), Math.sin(aCam)], east = [Math.sin(aCam), -Math.cos(aCam)];
     const H = (dx, y, dz) => P(east[0] * dx + south[0] * dz, y, east[1] * dx + south[1] * dz);
     const inHouse = p => { const x = p[0] / k, z = p[2] / k; return { dx: east[0] * x + east[1] * z, dz: south[0] * x + south[1] * z }; };
+    const DK = Tt.decks, rotation = (DK.rotation ?? 0) * Math.PI / 180, co = Math.cos(rotation), si = Math.sin(rotation);
+    const deskPoint = (dx, y, dz) => rotation ? H(DK.x + (dx - DK.x) * co - (dz - DK.z) * si, y, DK.z + (dx - DK.x) * si + (dz - DK.z) * co) : H(dx, y, dz);
+    const deskSpace = p => { const q = inHouse(p); if (!rotation) return q; const x = q.dx - DK.x, z = q.dz - DK.z; return { dx: DK.x + x * co + z * si, dz: DK.z - x * si + z * co }; };
+    const deskEast = rotation ? [east[0] * co + south[0] * si, east[1] * co + south[1] * si] : east;
     const floorPaint = p => { const { dx, dz } = inHouse(p), r = Math.hypot(dx, dz), y = p[1] / k;
       if (y < top - .35) return M.BARK2; // its underside
       if (r > Rt - .45) return entHash(Math.floor(Math.atan2(dz, dx) * Rt * 2), 3) < .4 ? M.MOSS : M.BARK2; // the bark rim, mossy
@@ -4467,23 +4474,24 @@ function entModel(st, facing, E) {
       both(mm => { mm.seg(base, v3.add(base, [0, U(.22), 0]), U(.045), U(.04), M.BELLY, { group: gc }); mm.ell(v3.add(base, [0, U(.28), 0]), [U(.035), U(.06), U(.035)], M.MAGIC2, { group: gc + 1 }); }); g();
       lights.push({ at: v3.add(base, [0, U(.3), 0]), rgb: [255, 170, 80], kind: "candle" }); }
     // her decks: the DJ table at her seat, the desk's two wings either side of it along the rim, a lantern at each end
-    const D0 = DJ_DECKS, S0 = Tt.seat, DK = Tt.decks, stand = H(S0.x, top, S0.z);
-    const dj = djTable(near, { facing, stand }); djTable(m, { facing, stand });
+    const D0 = DJ_DECKS, delta = { x: Tt.seat.x - DK.x, z: Tt.seat.z - DK.z };
+    const S0 = rotation ? { x: DK.x + delta.x * co + delta.z * si, z: DK.z - delta.x * si + delta.z * co } : Tt.seat, stand = deskPoint(S0.x, top, S0.z);
+    const dj = djTable(near, { facing, stand, rotation }); djTable(m, { facing, stand, rotation });
     const half = D0.width / k + .02, deskTop = D0.top / k, x0 = DK.x - DK.w / 2, x1 = DK.x + DK.w / 2;
     for (const [a, b] of [[x0, S0.x - half], [S0.x + half, x1]]) { if (b - a < .1) continue;
-      nearAlso(mm => mm.box(H((a + b) / 2, top + deskTop / 2, DK.z), [U((b - a) / 2), U(deskTop / 2), U(DK.d / 2)], M.WOOD, { dir: [east[0], 0, east[1]], up: [0, 1, 0], group: 80 + (a < S0.x ? 0 : 1), round: U(.02), paint: p => {
-        const { dx, dz } = inHouse(p), y = p[1] / k - top;
+      nearAlso(mm => mm.box(deskPoint((a + b) / 2, top + deskTop / 2, DK.z), [U((b - a) / 2), U(deskTop / 2), U(DK.d / 2)], M.WOOD, { dir: [deskEast[0], 0, deskEast[1]], up: [0, 1, 0], group: 80 + (a < S0.x ? 0 : 1), round: U(.02), paint: p => {
+        const { dx, dz } = deskSpace(p), y = p[1] / k - top;
         if (y > deskTop - .02) return M.SHADES;
         if (dz < DK.z + DK.d / 2 - .04) return M.BARKL; // (its back and ends)
         if (y > deskTop - .1 || y < .09) return ENT_FAIRY[((Math.floor(dx * 9) % 4) + 4) % 4]; // the LED strips
         return ((dx * 5) % 1 + 1) % 1 < .08 ? M.BARK2 : undefined; } })); }
-    for (const x of [x0 - .15, x1 + .15]) { const b = H(x, top, DK.z), gp = g();
+    for (const x of [x0 - .15, x1 + .15]) { const b = deskPoint(x, top, DK.z), gp = g();
       nearAlso(mm => { mm.box(v3.add(b, [0, U(.6), 0]), [U(.12), U(.62), U(.12)], M.WOOD, { group: gp, round: U(.03) }); mm.ell(v3.add(b, [0, U(1.3), 0]), [U(.14), U(.17), U(.14)], M.GLOW, { group: gp + 1, paint: p => (Math.abs(p[1] - b[1] - U(1.3)) < U(.05) ? M.MAGIC2 : undefined) }); }); g();
       lights.push({ at: v3.add(b, [0, U(1.3), 0]), rgb: [255, 190, 96], kind: "lantern" }); }
     lights.push({ at: dj.to([D0.platter.a, D0.top + .03, D0.platter.c]), rgb: [255, 80, 200], kind: "decks" }, { at: dj.to([D0.platter.a, D0.top + .03, -D0.platter.c]), rgb: [80, 230, 255], kind: "decks" });
     const S = Math.PI / 2, standR = Math.hypot(S0.x, S0.z);
-    return { m, far, near, dj, stand, standR, k, top, deck: P(0, top, 0), table: P(0, top, 0), circle: H(C.x, top, C.z), balcony: H(DK.x, top, DK.z), lights, seat: { x: S0.x, z: S0.z },
-      candleRow: { x0: S0.x - 1.4, x1: S0.x + 1.4, z: DK.z + DK.d / 2 - .12, at: (dx, y, dz) => H(dx, y, dz) },
+    return { m, far, near, dj, stand, standR, k, top, deck: P(0, top, 0), table: P(0, top, 0), circle: H(C.x, top, C.z), balcony: H(DK.x, top, DK.z), lights, seat: { x: Tt.seat.x, z: Tt.seat.z }, ...(rotation ? { rotation } : {}),
+      candleRow: { x0: S0.x - 1.4, x1: S0.x + 1.4, z: DK.z + DK.d / 2 - .12, at: (dx, y, dz) => deskPoint(dx, y, dz) },
       desk: { inner: +standR.toFixed(2), front: +(standR + DK.d).toFixed(2), from: +(S - .3).toFixed(3), to: +(S + .3).toFixed(3), mid: +S.toFixed(3) }, aCam, RR: Rt };
   };
   return E.house ? (E.house.organic ? oakParts() : houseParts()) : deckParts();
@@ -4518,7 +4526,7 @@ function entSprite(st = {}, { facing = "towards", ppm = 16, deckY = ENT.deckY, d
   for (let i = 0; i < whole.m.length; i++) { const v = whole.m[i], x = i % W, y = Math.floor(i / W); if (!v) continue;
     if (near0.m[i] === v) near.put(x, y, v, whole.n[i * 3], whole.n[i * 3 + 1], whole.n[i * 3 + 2]);
     else if (!far.m[i]) far.put(x, y, v, whole.n[i * 3], whole.n[i * 3 + 1], whole.n[i * 3 + 2]); }
-  const frames = []; for (let f = 0; f < DJ_FRAMES; f++) { const fm = new Model({ blend: .04 }); djTable(fm, { frame: f, facing, stand: T.stand }); frames.push(into(fm)); }
+  const frames = []; for (let f = 0; f < DJ_FRAMES; f++) { const fm = new Model({ blend: .04 }); djTable(fm, { frame: f, facing, stand: T.stand, rotation: T.rotation ?? 0 }); frames.push(into(fm)); }
   const fore = frames[0];
   // the whole shows the table exactly as it's drawn over her (and the near half too)
   for (let i = 0; i < fore.m.length; i++) if (fore.m[i]) for (const t of [whole, near]) t.put(i % W, Math.floor(i / W), fore.m[i], fore.n[i * 3], fore.n[i * 3 + 1], fore.n[i * 3 + 2]);
@@ -10994,7 +11002,7 @@ function armadilloBall(S, frame, st, facing) {
 // shell), body.dome (its shell taller and shorter), body.head (its head), body.snout (its snout's length), body.ears, body.tail
 // (its tail's length), body.legs (up on longer legs).
 function armadillo3d(S, level, frame, st, facing = "towards") {
-  if (level === 3) return armadilloBall(S, frame, st, facing);
+  if (level === 3 && !GEAR?.stilt) return armadilloBall(S, frame, st, facing); // the optional stilt rig unfolds its real four legs
   const legend = false, m = new Model(), bob = frame ? .012 : 0, q = { ...S.q, ...(S.levelQ?.[level] || {}) };
   const soft = q.soft ?? 0, snout = q.snout ?? 1, ears = q.ears ?? 1, tail = q.tail ?? 1, dome = q.dome ?? 1, lift = ((q.legs ?? 1) - 1) * .1;
   for (const [x, z] of [[.26, .2], [.26, -.2], [-.28, .21], [-.28, -.21]]) { const d = (frame ? -1 : 1) * Math.sign(x * z) * .06; m.seg([x, .14 + lift, z], [x + d, .03, z], .06, .05, M.SKIN, { group: z > 0 ? 6 : 2 }); for (let k = -1; k <= 1; k++) m.ell([x + d + .06, .02, z + k * .025], [.035, .012, .01], M.ACCENT, { group: z > 0 ? 6 : 2 }); m.anchors.feet.push({ c: [x + .03 + d, .03, z], r: .065, group: z > 0 ? 6 : 2 }); }
@@ -19375,6 +19383,104 @@ function variantColours(id, st, variant, gear = null) {
 
 
 
+// ---- inlined from art/genome/stilt.js ----
+// Optional Stiltwalkers extraction. Reuse authored limb cones and foot volumes; none of this
+// changes the ordinary creature bake. Wings, pincers and antennae are never walking legs.
+
+const LEG_PLANS = new Set(["owl", "penguin", "raven", "heron", "hedgehog", "toad", "troll", "mole", "armadillo", "beetle", "scarab", "woodlouse", "scorpion", "crab", "spider", "dragonfly", "bat", "moth", "sentinel"]);
+const MANY = new Set(["beetle", "scarab", "woodlouse", "scorpion", "crab", "spider", "dragonfly"]);
+const BIRDS = new Set(["owl", "penguin", "raven", "heron"]);
+const dist = (a, b) => Math.hypot(...a.map((v, i) => v - b[i]));
+const mid = (a, b) => a.map((v, i) => (v + b[i]) / 2);
+const centre = q => q.c ?? mid(q.a, q.b);
+const radius = q => Math.max(...(q.r ?? q.h ?? [q.r1, q.r2]));
+
+/** Captured geometry only: exported so all species/levels can be checked without rasterising atlases. */
+function stiltSkeleton(m, plan) {
+  if (!LEG_PLANS.has(plan)) return null;
+  const legs = [], used = new Set();
+  const add = (points, rs, mat, primitives = [], footRadius = rs.at(-1)) => {
+    const hip = points[0].slice(), foot = points.at(-1).slice(), knee = (points.length > 2 ? points[1] : mid(hip, foot)).slice();
+    const i = legs.length, side = Math.sign(plan === "crab" ? hip[0] : hip[2]) || (i % 2 ? 1 : -1);
+    const name = `stiltLeg${i}`;
+    legs.push({ name, fore: hip[0] >= 0, side, hip, knee, ...(points.length > 3 ? { hock: points[points.length - 2].slice() } : {}), foot, r: [rs[0], rs.length > 2 ? rs[1] : (rs[0] + rs.at(-1)) / 2, rs.at(-1)], fl: footRadius, mat, hoof: false });
+    for (const q of primitives) { q.part = name; used.add(q); }
+  };
+  // A connected cone chain has exact shared endpoints (Model.chain); taking only the builders'
+  // walking-limb groups excludes wings (10+), antennae (9+) and crab/scorpion pincers (5/6).
+  const groups = MANY.has(plan) ? [2, 7] : [2, 6, 7];
+  const cones = m.parts.filter(q => q.type === "cone" && !q.extra && groups.includes(q.group));
+  const chains = [];
+  const pending = new Set(cones);
+  while (pending.size) {
+    let first = [...pending].find(q => ![...pending].some(p => p !== q && dist(p.b, q.a) < 1e-6)) ?? [...pending][0];
+    const chain = [first]; pending.delete(first);
+    while (true) { const next = [...pending].find(q => dist(chain.at(-1).b, q.a) < 1e-6); if (!next) break; pending.delete(next); chain.push(next); }
+    chains.push(chain);
+  }
+  if (MANY.has(plan)) {
+    for (const chain of chains) add([chain[0].a, ...chain.map(q => q.b)], [chain[0].r1, ...chain.map(q => q.r2)], chain[0].mat, chain);
+  } else {
+    const anchors = [...(m.anchors.feet ?? [])];
+    // The mole's spade hands are real front feet, but the ordinary shoe anchors name only its rear pair.
+    if (plan === "mole") for (const side of [-1, 1]) {
+      const hand = m.parts.filter(q => q.type === "ell" && q.group === (side > 0 ? 7 : 2) && q.c[0] > 0 && Math.sign(q.c[2]) === side).sort((a, b) => radius(b) - radius(a))[0];
+      if (hand) anchors.push({ c: hand.c, r: radius(hand), group: hand.group });
+    }
+    for (const anchor of anchors) {
+      const candidates = chains.filter(c => !used.has(c[0])).sort((a, b) => dist(a.at(-1).b, anchor.c) - dist(b.at(-1).b, anchor.c));
+      const chain = candidates[0], nearby = chain && dist(chain.at(-1).b, anchor.c) < Math.max(.13, anchor.r * 1.6);
+      if (nearby) {
+        add([chain[0].a, ...chain.map(q => q.b)], [chain[0].r1, ...chain.map(q => q.r2)], chain[0].mat, chain, anchor.r);
+      } else {
+        // Short tucked limbs are ellipsoids, not chains: derive their root from the authored
+        // volume's upper surface. This includes penguin feet and a toad's folded hind thigh.
+        const foot = m.parts.filter(q => q.type === "ell" && !used.has(q) && groups.includes(q.group) && Math.sign(q.c[2]) === Math.sign(anchor.c[2])).sort((a, b) => dist(a.c, anchor.c) - dist(b.c, anchor.c))[0];
+        if (!foot || dist(foot.c, anchor.c) > Math.max(.18, anchor.r * 2)) continue;
+        const limb = [foot];
+        if (plan === "toad") {
+          const thigh = m.parts.find(q => q.type === "ell" && q !== foot && groups.includes(q.group) && Math.sign(q.c[2]) === Math.sign(anchor.c[2]) && q.c[0] < 0 && q.c[1] > foot.c[1]);
+          if (thigh) limb.push(thigh);
+        }
+        const root = limb.at(-1), vertical = root.r.reduce((sum, r, i) => sum + (r * root.axes[i][1]) ** 2, 0) ** .5;
+        const hip = [root.c[0], root.c[1] + vertical * .7, root.c[2]], knee = limb.length > 1 ? root.c : mid(hip, anchor.c);
+        add([hip, knee, anchor.c], [Math.max(.02, Math.min(radius(root), anchor.r)), anchor.r * .75, anchor.r * .5], root.mat, limb, anchor.r);
+      }
+      // Remove the existing toes/foot pads from the raised body, including the heron's separately
+      // grouped toes; they are represented by the rig's tapered foot, not left floating below it.
+      const leg = legs.at(-1);
+      for (const q of m.parts) if (!used.has(q) && q.group !== 0 && (groups.includes(q.group) || plan === "heron" && q.group >= 20 && q.group <= 27)) {
+        const c = centre(q);
+        if (c[1] <= anchor.c[1] + Math.max(.06, anchor.r) && dist(c, anchor.c) < Math.max(.16, anchor.r * 2.2)) { q.part = leg.name; used.add(q); }
+      }
+    }
+  }
+  // These two flying models omit tucked limbs entirely. The optional trip supplies anatomically
+  // placed attachment joints only; ordinary art remains unchanged (bat two hind legs, moth six).
+  if (!legs.length && (plan === "bat" || plan === "moth")) {
+    for (const side of [-1, 1]) for (let i = 0; i < (plan === "bat" ? 1 : 3); i++) {
+      const x = plan === "bat" ? -.06 : .1 - i * .08, z = side * (plan === "bat" ? .08 : .045);
+      add([[x, .48, z], [x - .02, .42, z * 1.3], [x + .02, .36, z * 1.6]], plan === "bat" ? [.025, .018, .01] : [.012, .009, .005], M.BODY3);
+    }
+  }
+  if (!legs.length) return null;
+  const head = m.anchors.head, H = head?.c ?? [0, .3, 0], nb = m.anchors.neck?.c ?? H;
+  const body = m.parts.filter(q => q.type === "ell" && !used.has(q) && !q.extra && q.group !== 0).sort((a, b) => radius(b) - radius(a))[0];
+  for (const q of [...m.parts, ...m.flats]) if (!used.has(q)) {
+    if (q.group === 0) { q.part = "ground-shadow"; continue; }
+    // Keep the body's largest mass and wing planes intact. Head-local volumes and existing
+    // head-labelled expression/party gear move with the skull rather than being rebaked as new art.
+    const wing = BIRDS.has(plan) && [2, 4].includes(q.group) || plan === "bat" && q.group === 11;
+    const c = centre(q), local = head && q !== body && q.type && !wing && Math.hypot(...c.map((v, i) => (v - H[i]) / Math.max(.04, head.r[i] * 1.8))) < 1.4;
+    q.part = q.part === "head" || local ? "head" : "body";
+  }
+  const top = Math.max(...m.parts.filter(q => !used.has(q) && q.group !== 0).map(q => centre(q)[1] + radius(q)));
+  const xs = m.parts.filter(q => !used.has(q) && !q.extra).map(q => centre(q)[0]);
+  m.rig = { legs, head: { nb: nb.slice(), H: H.slice() }, tail: [0, 0, 0], top, len: Math.max(.3, Math.max(...xs) - Math.min(...xs)), bw: .3 };
+  return m.rig;
+}
+
+
 const RIG_HEADINGS = [-Math.PI / 2, -Math.PI / 4, 0, Math.PI / 4, Math.PI / 2];
 const RIG_TEMPLATES = { quadruped: "quad", serpent: "snake" }; // the templates the pilot rigs (and their builder)
 
@@ -19403,9 +19509,12 @@ function rigCapture(id, level, st, face = null, gear = null) {
   withTexture({ S, level, st }, () => withGear(g, () => withForm(form, () => buildCreature(S, level, 0, st, "towards"))));
   const s = render(got.m, { height: got.height, measure: true }).s, f = got.m.atScale;
   if (f) { got.m.atScale = null; f(s); }
+  if (gear?.stilt && !S.q && S.plan !== "snake") stiltSkeleton(got.m, S.plan);
   if (gear?.woken) for (const q of got.m.parts) if (q.mat === M.EYE || q.mat === M.IRIS || q.mat === M.PUPIL) q.mat = M.WOKEN; // enraged: angry glowing eyes (as critter's woken look)
   return { m: got.m, s };
 }
+/** The optional trip's authored joints, without the expensive sprite rasterisation. */
+function stiltRigCapture(id, level, st) { return rigCapture(id, level, st, null, { stilt: true }); }
 // A party animal's shoe (creatures3d.js shoe3d, fitted to its hoof or paw) as a piece at each heading, pivoted on the
 // foot's centre, so the rig puts it on each foot in place of the foot's disc and it steps and lifts with the leg.
 function rigShoe(leg, style, s, st) {
@@ -19462,9 +19571,12 @@ function rigDisc(r, mat, s, paint, rod = false) {
 // head { nb, H }, tail (its base) for the four-legged; spine [[x, y, z, r]...] and head for a serpent.
 // gear (optional): a party animal's (art/creatures.js partyGear: collar, hat, glasses, shoes), baked on (shoes as pieces.shoe).
 function rigParts(id, level, st, gear = null) {
-  const S = SPECIES_BY_ID[id], tpl = S.q ? "quadruped" : S.plan === "snake" ? "serpent" : null;
-  if (!tpl) return null;
+  const S = SPECIES_BY_ID[id];
+  let tpl = S.q ? "quadruped" : S.plan === "snake" ? "serpent" : null;
+  if (!tpl && !gear?.stilt) return null;
   const { m, s } = rigCapture(id, level, st, null, gear), R = m.rig, discs = {};
+  if (!tpl && R?.legs?.length) tpl = "quadruped"; // the same joint solver also accepts two, six, eight or fourteen legs
+  if (!tpl) return null;
   const radii = list => [...new Set(list.map(r => Math.max(1, Math.round(r * s))))].sort((a, b) => a - b);
   const discSet = (mat, rs, paint, rod = tpl === "quadruped") => { discs[mat] = discs[mat] || {}; for (const r of rs) if (!discs[mat][r]) discs[mat][r] = rigDisc(r, mat, s, paint, rod); };
   if (tpl === "quadruped") {
