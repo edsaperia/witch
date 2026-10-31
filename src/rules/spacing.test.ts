@@ -5,6 +5,7 @@ import { bodyRadius, spaceOut } from "./spacing";
 import { MOVEMENT } from "./movement";
 import { TUNING } from "./tuning";
 
+// Keep the radius world for the integrated follow test: it recruits eight creatures more than 200 m away before relocating them.
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const fake = (id: number, species: string, level: Level, x: number, z: number) => ({ id, species, level, x, z } as Creature);
 const B = MOVEMENT.bodies;

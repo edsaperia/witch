@@ -12,7 +12,8 @@ This is the art director's brief for that pass. It changes nothing in the game. 
 2. what Ed's references teach;
 3. a proposed effect language;
 4. a staged plan and its risks;
-5. questions for Ed.
+5. Ed's answers;
+6. additions from the 2026-10-30 visual-systems discussion.
 
 ## In short
 
@@ -342,3 +343,57 @@ Asked as multiple choice, the art director's recommendation first.
 - **E5. The first mock?** Fire across 4 forms × 3 intensities, plus a frost blast beside a tree to show the frozen imprint.
 - **E6. Screen shake and flash?** Legends' big blows and the big spells only; all off with reduce flashing.
 - **E7. When?** **Later, after the content passes**, not the art director's recommendation (after orbit combat merges). The pass waits; this brief is its starting point, stage 0 (the mock) first.
+
+## 6. Shared visual systems and spell applications (2026-10-30)
+
+Ed supports using foliage forces for animals moving through plants and her moving through the canopy; refraction for heat and spells; persistent disturbances for grass footprints; patterned light for spells, flickering sources and spectacular soundsystem lighting. He wants to investigate effective, performant lighting of flat art, and suggested water/spells for flowing textures and dodge for echoes. These are design directions, not a change to E7's implementation gate. The scoped projects and review criteria are in [visual-response-projects.md](visual-response-projects.md).
+
+### Extend the existing language
+
+Keep **element × form × intensity**, the existing ten layers and `AttackLook` as the foundation. Do not invent a parallel spell engine or add one special renderer per trip. Proposed extensions:
+
+| Existing layer | Extension | Example |
+|---|---|---|
+| Light | Optional spatial pattern, pattern movement and temporal envelope, within existing light budgets | Firelight varies gently; a spell projects rings; a soundsystem sweeps spokes over trees |
+| Ground mark / scenery imprint | Shared disturbance lifecycle for movement and magic; directional push, compression/recovery and elemental marks | A heavy landing flattens grass while a frost blast recolours the same region |
+| Distortion | Reusable plume, ring, wake and lens shapes with bounded displacement | Fire heat; impact pressure ring; charged-spell lens |
+| Secondary / core | Optional internal flow using the form's direction/path | Energy travels down a beam or spirals inside a shield |
+| Particles / secondary | Optional bounded world-position pose echoes, alongside existing ribbons and motes | Dodge echo or projectile afterimage |
+| Ground/scenery response | Visual-height impulse shared with landing effects | Earth/impact spell sends an expanding ridge through ground and plants |
+
+World-height response can be a named output of an effect rather than an eleventh mandatory visual layer. Not every spell needs every response. Keep separate controls for **strength, reach, persistence and recovery**, with intensity supplying defaults; a long weak spell and a short strong one should remain authorable.
+
+### One event, several coordinated responses
+
+Use a small presentation description derived from real gameplay events: source identity, event identity, position/height, direction, start time, element, form, intensity and optional response overrides. This is a proposed render-side contract, not a second combat event system. Retain the originating clock (world or witch time) and deduplicate events so a spell hit reported through two paths produces one response.
+
+The same impact can schedule body settling, height ripple, vegetation push, refractive ring and a fading mark. Timing gives them a common cause: immediate contact/compression, outward wave, then recovery. A visual ripple must not apply damage, and an optional visual layer must not determine a telegraph's actual timing or radius.
+
+Continuous sources need the same controls with a stable source identity: fire heat and light, a maintained beam, music-driven projections. Stop and reset them cleanly on source removal, pause rules, island changes and quality changes.
+
+### Concrete spell demonstrations
+
+1. **Fire projectile:** current core/trail plus a small moving light and brief heat wake; on impact, vegetation push and a fading scorch imprint. Use sparse secondary detail so the core stays identifiable.
+2. **Frost blast:** keep the existing approved frost/tree mock, adding shared imprint recovery and pale patterned light. Refraction is optional; frost does not need every layer to look powerful.
+3. **Ground-pound / earth impact:** body squash and settling, central compression, outward ground ridge, foliage push and a short pressure ring. Match the drawing to the real impact event. Keep visual bounce/skid distinct from changing movement physics.
+4. **Charged beam or shield:** flow within the anchored form, patterned light on neighbouring surfaces, a local lens only where it improves the result. Reuse the beam's path rather than inventing a world flow field.
+5. **Dodge / blink:** compare existing `SpellFx` motes with sparse world-position pose echoes and a brief wake. Avoid default full-screen feedback, which smears the forest when the camera moves. Extra poses require their own bounded capture; existing position history is not pose history.
+6. **Soundsystem spell and party lighting:** coordinated vertical spell form and projected ground/scenery patterns. Share pattern machinery with ordinary soundsystem lighting while preserving E4's staged replacement. Musical beat/state can drive the first version; inspect the existing spectrum feed before adding audio analysis, and do not assume per-instrument envelopes exist.
+
+### Share the imprint field rather than duplicating it
+
+Section 3.4 already proposes elemental imprints and push. Add movement/footfall writers to that plan, with distinct height bands for ground foliage and canopy. One lifecycle/window does not require packing every effect into one RGBA texture: direction needs components, and elemental marks may need different resolution or decay. Measure channel packing, precision and lookup costs. Individual footprints need actual footfall positions; continuous stamps initially produce flattened trails.
+
+The earlier estimate of one texture lookup describes a target for a simple field, not a guaranteed cost for every extension. Likewise, normal maps are **already used** in `render/sprites.ts`: the flat-art project audits maps and lighting/material response before adding assets or a new shading path. The 2026-10-28 inventory above is dated, not a claim that no intervening work has changed those systems.
+
+### Ordinary play and trips
+
+Ordinary effects should reinforce their causes and retain the existing combat/comfort requirements. Trips may intentionally exaggerate, persist or cross these responses: pack intention drives wind, damaged music drives refraction, impacts make the island roll. Ordinary readability limits do not automatically constrain mushroom perception; existing player comfort settings remain applicable.
+
+Every new visual capability and interesting debug state must be considered for the [trip catalogue](cauldron.md), with a suggestion added when it has potential (Ed's standing rule in `CLAUDE.md`). No new trip framework is needed to record these ideas.
+
+### Integration into the staged plan
+
+Use the seven project briefs as bounded slices, not a second wholesale rewrite. Patterned light extends stage 2; movement and footprint memory extend stage 4; the form-based distortion work implements layer 9, which the earlier stages did not give a distinct demonstration. Landing ripples are a shared renderer project usable before the full magic language if Ed chooses. Flow and echoes enter only with a concrete spell/dodge example. The normal-map investigation can proceed independently when selected.
+
+Each demonstration needs on/off frames, ground/treetop views, crowded-effect timing and memory measurements, and quality/comfort fallbacks. Measure the cost of texture reads, overdraw and full-screen passes; "runs in a shader" is not a performance guarantee. A later implementation brief should recheck current source and relevant notes rather than treating the dated inventory or rough day estimates as current facts.

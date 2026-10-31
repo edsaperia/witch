@@ -2,12 +2,14 @@
 // treetop height, and during the night time slower 10x"; rules/treehouse.ts).
 import { describe, expect, it } from "vitest";
 import { TUNING, withTuning } from "./tuning";
-import { newGame, stepGame, STEP, type Game } from "./game";
+import { newGame as fullGame, stepGame, STEP, type Game } from "./game";
+import { smallWorld } from "../test/worlds";
 import { atTakeoff, carrierOf, clearOfFurniture, deckOf, flyOnto, keepInHouse, keepOnDeck, landsOn, onFloor, onLandingTrunk, onTerrace, onTreehouse, seatOffset } from "./treehouse";
 import { hitWitch } from "./game";
 import { witchHeight } from "./witch";
 import { fromPlan, HOUSE_ROOMS, objectFront, roomAt } from "./houseRooms";
 
+const newGame = smallWorld(fullGame, "House floors, landing, stations and recovery use home-local geometry, independent of surrounding world size.");
 const run = (g: Game, secs: number, c: object = {}) => { for (let i = 0; i < Math.round(secs / STEP); i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...c } as Parameters<typeof stepGame>[1], STEP); };
 const press = (g: Game, c: object) => run(g, STEP, c);
 const D = TUNING.treehouse.deck!, HS = TUNING.treehouse.house!;

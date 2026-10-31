@@ -14,6 +14,7 @@ const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTal
 
 describe("a friendly area's wave", () => {
   it("enrages none of its creatures: they never become stragglers the night can't get past (seed 8919, the hare's area)", () => {
+    // Ten-area regression world: seed 8919's hare wave and a distinct hostile wave are the original bug's fixture.
     const g = newGame(8919, withTuning({ map: { ...TUNING.map!, islandAreas: 10 } }));
     g.clock.paused = false; g.party.spellAt = undefined; g.party.paused = true;
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };

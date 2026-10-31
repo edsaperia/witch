@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { newGame } from "../../rules/game";
+import { newGame as fullGame } from "../../rules/game";
+import { smallWorld } from "../../test/worlds";
+const newGame = smallWorld(fullGame, "A synthetic cleared-area event tests beat timing and attenuation, independent of map extent.");
 import { beatAt, timeAt } from "../../rules/beat";
 import { TUNING } from "../../rules/tuning";
 import type { Sfx } from "./sfx";

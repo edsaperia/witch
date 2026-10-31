@@ -4,7 +4,9 @@ import { describe, expect, it } from "vitest";
 import { pinSpot } from "./pins";
 import { drawnTop } from "./houseFurniture";
 import { generateMap } from "../rules/map";
-import { TUNING } from "../rules/tuning";
+import { TUNING as gameTuning } from "../rules/tuning";
+import { smallWorldTuning } from "../test/worlds";
+const TUNING = smallWorldTuning(gameTuning, "House pin offsets use one treehouse and synthetic heights, independent of island extent.");
 import { HOUSE_ROOMS, objectWorld } from "../rules/houseRooms";
 import { deckOf } from "../rules/treehouse";
 

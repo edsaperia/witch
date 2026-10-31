@@ -20,7 +20,8 @@ export const ROOM_DECOR: Record<string, string[]> = {
   parlour: ["rug", "lamp", "plant", "books", "candles"],
   workshop: ["rug", "crates", "lantern", "mushrooms", "plant", "lamp"],
   studio: ["rug", "neon", "crates", "plant"],
-  kitchen: ["rug", "shelf", "plant", "candles", "lantern", "mushrooms"],
+  // The ten-metre cauldron and nine stock baskets furnish this room themselves; leave the working floor clear.
+  kitchen: [],
   solarium: ["rug", "plant", "plant", "mushrooms", "lantern", "candles"],
   dining: ["rug", "lamp", "plant", "candles", "books", "neon"],
   cloakroom: ["rug", "plant", "candles", "lantern"],

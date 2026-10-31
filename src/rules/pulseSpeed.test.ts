@@ -9,10 +9,12 @@ import { behindLength, stretchLengths } from "./pulseRoute";
 import { bootPath, bootSeconds } from "./bootRing";
 import { tempoRate } from "./beat";
 
+// Four authored areas retain the fixed 195 m boot path and three real stone-to-stone intervals without simulating the full island.
+const tuning = () => ({ ...TUNING, map: { ...TUNING.map!, island: "", islandAreas: 4, found: [] } });
 const still = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const V = TUNING.leyLines.pulseSpeed;
 function game(): Game {
-  const g = newGame(123, TUNING);
+  const g = newGame(123, tuning());
   g.clock.paused = false; g.party.spellAt = undefined;
   g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
   g.witches[0].health.hp = 1e6;
@@ -54,7 +56,7 @@ describe("the ley pulse at a constant speed (Ed, 2026-10-09)", () => {
     }
   }, 60000);
   it("set to 0 on the pause page mid-night, holds the pulse where it is (no waves, nothing NaN), and moves on when set again", () => {
-    const g = newGame(123, JSON.parse(JSON.stringify(TUNING)));
+    const g = newGame(123, JSON.parse(JSON.stringify(tuning())));
     g.clock.paused = false; g.party.spellAt = undefined;
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
     g.witches[0].health.hp = 1e6;

@@ -4,7 +4,7 @@
 // tuning's beach.shown metres of the sand, and it is all let go again when she leaves: in an ordinary
 // run it costs one distance check a frame.
 import * as THREE from "three";
-import type { Game } from "../rules/game";
+import { coastOf, type Game } from "../rules/game";
 import { beachOf, type Beach } from "../rules/mapShape";
 import type { AssetLibrary } from "./assets";
 import type { Ground } from "./ground";
@@ -96,8 +96,13 @@ export class BeachView {
     const b = this.at.beach, w = g.witch;
     if (!b) return false;
     const seen = !!fly && b.intoSand(fly.x, fly.z) >= -fly.reach;
-    if (b.intoSand(w.x, w.z) < -(g.tuning.beach?.shown ?? 0) && !seen) { this.leave(); this.gazing = false; return false; }
-    if (!this.on) { this.on = true; this.ground.setBeach(b); this.assets.partyWitchArt(null); } // (her lying-down art asked for ahead)
+    const witchIntoSand = b.intoSand(w.x, w.z), shown = g.tuning.beach?.shown ?? 0;
+    if (witchIntoSand < -shown && !seen) { this.leave(); this.gazing = false; return false; }
+    if (!this.on) {
+      const witchNear = witchIntoSand >= -shown;
+      try { performance.mark('ground:coast-demand', { detail: { seed: g.seed, trigger: seen && witchNear ? 'intro-camera+witch' : seen ? 'intro-camera' : 'near-coast-witch', witch: { x: w.x, z: w.z, intoSand: witchIntoSand, shown }, camera: fly ? { x: fly.x, z: fly.z, reach: fly.reach, intoSand: b.intoSand(fly.x, fly.z) } : null } }); } catch { /* no timeline */ }
+      this.on = true; this.ground.setBeach(b); this.assets.partyWitchArt(null); // (her lying-down art asked for ahead)
+    }
     this.ground.sandGrain(g.tuning.beach?.grain ?? 0); // (live: the pause page's slider)
     if (g.map.zoo) return false; // (the zoo's edge is a band of water pouring off the disc, render/zooFences.ts ZooFall: no woods' edge, decorations, dolphins or kraken)
     this.edge.update(b, this.assets.beachEdgeArt(), w.x, w.z, g.tuning.beach?.decor?.clear);
@@ -107,7 +112,10 @@ export class BeachView {
     // The spot she's nearest (they're kilometres apart round the coast, so only ever one in view).
     let spot = null as NonNullable<Game["beach"]>[number] | null, sd = Infinity;
     for (const s of g.beach ?? []) { const d = (s.x - w.x) ** 2 + (s.z - w.z) ** 2; if (d < sd) { sd = d; spot = s; } }
-    const I = spot?.players[0], her = I?.activity ? I : w.stargazing ? { activity: "rest" as const, pose: "stargaze", facing: w.facing } : null;
+    // The beach can be drawn from far inland. A potion's lying pose there belongs to the ordinary world view,
+    // without the beach's extra sky bend; keep the actual shoreline experience unchanged.
+    const coastalGaze = coastOf(g)?.gazing;
+    const I = spot?.players[0], her = I?.activity ? I : w.stargazing && coastalGaze ? { activity: "rest" as const, pose: "stargaze", facing: w.facing } : null;
     this.gazing = her?.pose === "stargaze" && w.mode === "ground";
     const mate = I?.pose === "stargaze" && I.partner !== null ? spot?.list.find(q => q.id === I.partner && q.partner !== null && q.pose === "stargaze") : undefined;
     this.heartsFor(g, time, camera, width, height, mate ? [{ x: w.x, z: w.z }, { x: mate.x, z: mate.z }] : null);

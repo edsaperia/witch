@@ -8,6 +8,6 @@
   "z": 44,
   "r": 7.5,
   "objects": [
-    {"id":"cauldron","label":"Cauldron","use":{"kind":"say","line":"The cauldron is cold. Brewing comes later."},"offset":[-1.25,0],"box":{"w":3.92,"d":3.92,"h":2.52}}
+    {"id":"cauldron","label":"Cauldron","use":{"kind":"scenery"},"offset":[0,-1.5],"box":{"w":10,"d":7,"h":6}}
   ]
 }

@@ -1,11 +1,15 @@
 import { describe, expect, it } from "vitest";
+import { UNLOCK_KEY, ownedToChoose, partsToChoose, setUnlockAll, stockMushroomBaskets, syncHatUnlock, unlockAll } from "./debugUnlock";
+import { emptyBaskets } from "../rules/mushrooms";
+import type { Game } from "../rules/game";
 import { slotStorage } from "./saveSlots";
-import { UNLOCK_KEY, ownedToChoose, partsToChoose, setUnlockAll, syncHatUnlock, unlockAll } from "./debugUnlock";
 import { BROOM_KEY, fitBroom, loadBroom } from "./broomSave";
 import { ITEMS } from "../rules/wardrobe";
 import { PART_IDS, SLOTS, partById } from "../rules/broomParts";
 import { tuningFromLink } from "./linkParams";
-import { newGame } from "../rules/game";
+import { newGame as fullGame } from "../rules/game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Hat unlock and storage behavior use one witch's wardrobe, independent of island size.");
 import { TUNING } from "../rules/tuning";
 import { floorHats, HOUSE_ROOMS } from "../rules/houseRooms";
 import { HAT_SPELLS } from "../rules/spells";
@@ -14,6 +18,12 @@ import { HAT_SPELLS } from "../rules/spells";
 const memory = () => { const m = new Map<string, string>(); return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v), removeItem: (k: string) => void m.delete(k), m }; };
 
 describe("Unlock everything (the pause page's debug switch)", () => {
+  it('stocks twenty of every mushroom without reducing an overflowing basket', () => {
+    const baskets = emptyBaskets(); baskets.red = 27;
+    stockMushroomBaskets({ mushrooms: { baskets } } as Pick<Game, 'mushrooms'>);
+    expect(baskets.red).toBe(27);
+    expect(Object.entries(baskets).filter(([type]) => type !== 'red').every(([, count]) => count === 20)).toBe(true);
+  });
   it("refreshes an existing floor, preserves hats in play and finds, and restores earned hats when switched off", () => {
     const s = memory(), g = globalThis as { localStorage?: unknown }, was = g.localStorage;
     g.localStorage = s;

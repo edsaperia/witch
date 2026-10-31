@@ -5,6 +5,7 @@
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
+const { effectsScene } = require("./effects-scene.cjs");
 let playwright;
 try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 
@@ -97,6 +98,7 @@ async function main() {
     else page = await browser.newPage({ viewport: size, deviceScaleFactor: dpr || 1, hasTouch: !!hasTouch, isMobile: !!hasTouch });
     page.on("pageerror", e => errors.push(`${name}: page error: ${e.message}`));
     page.on("console", m => { if (m.type() === "error") errors.push(`${name}: console error: ${m.text()}`); });
+    // Preserve each scenario's authored island/seed: pop, terrain, long-flight and species-specific checks depend on its geometry.
     await page.goto(`http://127.0.0.1:${port}/?creator=0&pixels=keep&${/(^|&)seed=/.test(query || "") ? (query || "").replace(/^&/, "") : `seed=${seed}${query || "&debug"}`}`); // (a run may ask for its own seed; pixels=keep: the floating checks read the atlases' pixels, which the game lets go once uploaded)
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 300000 });
     // All the art is drawn in the background after start; the software renderer here starves the
@@ -263,6 +265,7 @@ async function main() {
     check(popCount === 0, `nothing pops in or out in clear view in the Heath, flying through every zoom level in both modes (${popCount})${popCount ? ": " + pops.join("; ") : ""}`, "pops");
   }, "&debug&island=moth");
 
+  // Four areas: local touch movement/rise does not need distant scenery or area diversity.
   await run("phone", { width: 390, height: 844, hasTouch: true }, async page => {
     await page.touchscreen.tap(200, 400);
     await sleep(300);
@@ -287,9 +290,9 @@ async function main() {
     await page.waitForFunction(() => window.witch.game.witch.mode !== "ground" && window.witch.game.witch.mode === "treetop", null, { timeout: 400000, polling: 50 }).catch(() => {});
     check((await state(page)).mode === "treetop", "the round button rises to treetop mode");
     await shot(page, "11-phone-treetop.png");
-  });
+  }, "&debug&island=4");
 
-  // The tilt-shift both ways, and off, from the same spot, for Ed to compare.
+  // The tilt-shift both ways, and off, from the same spot, for Ed to compare; four areas suffice for this local view.
   for (const tilt of ["before", "after", "off"]) {
     await run(`tilt-${tilt}`, { width: 1280, height: 720 }, async page => {
       await page.keyboard.press("Enter");
@@ -298,7 +301,7 @@ async function main() {
       await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 240000 });
       await sleep(600);
       await shot(page, `2${["before", "after", "off"].indexOf(tilt)}-tilt-${tilt}.png`);
-    }, `&tilt=${tilt}`);
+    }, `&island=4&tilt=${tilt}`);
   }
 
   // The dancefloor from the ground and from the treetops.
@@ -335,17 +338,27 @@ async function main() {
 
   // The ground effects (tree shadows, canopy shadow, mist) off and on, from the same spot, and a
   // short recording in motion with them on.
+  // Retain the authored default island: this walk must frame its ground, paths and forest. The four-area trial
+  // produced mostly empty effects frames in the coordinator's comparison (6537756688), so it is not equivalent coverage.
   for (const [name, q] of [["effects-off", "&shadows=off&canopy=off&mist=off"], ["effects-on", ""]]) {
     await run(name, { width: 1280, height: 720 }, async page => {
       await page.keyboard.press("Enter");
       await offHouse(page);
       await hold(page, "ArrowRight", 1.5);
-      await sleep(300);
-      await shot(page, `30-ground-${name}.png`);
+      const effectsShot = async (mode, file) => {
+        await settleArt(page, { forest: true, trees: true, ground: true });
+        const drawn = await page.waitForFunction(effectsScene, mode, { timeout: 240000, polling: "raf" });
+        const evidence = await drawn.jsonValue(); await drawn.dispose();
+        check(!!evidence, `${name} ${mode}: complete forest and nonblank canvas (${JSON.stringify(evidence)})`);
+        // Keep this proven frame still for the screenshot, then release the normal loop even on a capture failure.
+        await page.evaluate(() => { window.witch.manual = true; });
+        try { await page.screenshot({ path: path.join(out, file), timeout: 300000 }); results.push(`shot previews/${file}`); }
+        finally { await page.evaluate(() => { window.witch.manual = false; }); }
+      };
+      await effectsShot("ground", `30-ground-${name}.png`);
       await page.keyboard.press("Space");
       await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 240000 });
-      await sleep(600);
-      await shot(page, `31-treetop-${name}.png`);
+      await effectsShot("treetop", `31-treetop-${name}.png`);
     }, q);
   }
   // The party spreading: one area partifying (shots through its transition, from the treetops),
@@ -757,7 +770,7 @@ async function main() {
     check(r.besiegers > 0 && r.hit && r.fell && r.ended && r.marched, `a woken area's creatures besiege its soundsystem, bring it down, end its party and march on to the dancefloor (${JSON.stringify(r)})`);
     check(r.over && screen, `when home's speakers have fallen the party's over and the 💤 pin leads her to bed, no card (${r.over}, ${screen})`);
     check(r.fighting === 0 && r.awake === 0 && r.asleep > 0, `the afterparty: nothing fights, everyone's asleep or walking home to bed (${JSON.stringify({ fighting: r.fighting, awake: r.awake, asleep: r.asleep })})`);
-  });
+  }, "&debug&island=4"); // First-area siege and its return to home need four areas, not the full island.
 
   await run("boost", { width: 1900, height: 1240 }, async page => {
     await page.keyboard.press("Enter");

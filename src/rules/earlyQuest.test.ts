@@ -7,6 +7,7 @@ import { cellKey, routeOf } from "./party";
 import { earlyQuest } from "./quest";
 import { TUNING, withTuning } from "./tuning";
 
+// Keep the radius-world seed matrix: seeds 777/14 specifically reproduce first-three routes without an unforced legend.
 const kindOf = (map: ReturnType<typeof generateMap>, k: string) => { const [x, y] = k.split(",").map(Number); return AREA_TYPES[map.typeOf(x, y)].creature; };
 
 describe("the early easy quest", () => {

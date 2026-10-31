@@ -1,7 +1,9 @@
 // After she lands she can't rise again for riseCooldown seconds (Ed, 2026-10-11: rising takes her out of ground mode at
 // once, so players rose to the treetops instead of dodging).
 import { describe, expect, it } from "vitest";
-import { newGame, stepGame, STEP, type Controls } from "./game";
+import { newGame as fullGame, stepGame, STEP, type Controls } from "./game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Rise cooldown timing depends on one witch's landing and broom parts, not distant areas.");
 import { TUNING, withTuning } from "./tuning";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };

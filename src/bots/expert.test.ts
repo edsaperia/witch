@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { newGame } from "../rules/game";
+import { newGame as fullGame } from "../rules/game";
+import { smallWorld } from "../test/worlds";
 import { TUNING, withTuning } from "../rules/tuning";
 import { newExpert, EXPERT_LIMITS } from "./expert";
 import { newObserver, viewRectangle } from "./observe";
 
+const newGame = smallWorld(fullGame, "Observation/input boundaries use local visible targets plus an off-screen specimen, independent of full route length.");
 describe("expert observation and human input boundary", () => {
   it("keeps an exploration destination while no new target is seen", () => {
     const g = newGame(1000, withTuning({ cast: { ...TUNING.cast, on: false } })), w = g.witches[0];

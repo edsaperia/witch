@@ -5,6 +5,7 @@
 // a legend's clearing finishing its quest (rules/quest.ts).
 import { wakeOf } from "./wakeUp";
 import { atZooExit } from "./zoo";
+import { mushroomButton } from "./mushrooms";
 import { needsBag, takeBroom, takeInvites } from "./kit";
 import { atMapTable, deckOf } from "./treehouse";
 import { addFloorHat, objectAt, stepBed, useHats } from "./houseRooms";
@@ -60,6 +61,8 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
   const relicEvents: LeashEvent[] = [];
   // The sigil button by a lying relic picks it up; carrying one, by a sleeping legend, puts it down there (rules/legends.ts).
   let sigil = !!c.sigil && !W.ko, place = !!c.place && !W.ko;
+  // Keyboard names it place; gamepad/touch expose the same game.use action as sigil.
+  if (!g.cauldron && mushroomButton(g, W, sigil || place, sigil || place)) { sigil = false; place = false; }
   // On the treehouse deck (rules/treehouse.ts) nothing goes down or comes up: there's nothing of hers up there. E at the map
   // table opens the sea chart (Ed, 2026-10-11: "The world map is in the centre").
   const perched = !!W.body.perch, deck = perched ? deckOf(g.map, t) : null;

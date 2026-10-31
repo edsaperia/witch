@@ -6,6 +6,7 @@ import { restoreGame, snapshotGame } from "./nightSnapshot";
 import { TUNING } from "./tuning";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
+// Four-area authored home is sufficient: kitchen occupancy, local pickups and shared snapshot references do not need distant terrain.
 function fresh(players = 1): Game {
   const tuning = structuredClone(TUNING);
   tuning.map!.island = "home"; tuning.map!.islandAreas = 4;

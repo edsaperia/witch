@@ -4,7 +4,9 @@ import { describe, expect, it } from "vitest";
 import { furnitureSprite, FURNITURE_IDS, FURNITURE_STATES, SIZE } from "../../art/furniture.js";
 import { HOUSE_ROOMS } from "../rules/houseRooms";
 import { DRAWN_ELSEWHERE, furnitureState, furnitureStates, PENDING, standing } from "./houseFurniture";
-import { newGame } from "../rules/game";
+import { newGame as fullGame } from "../rules/game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Furniture-state integration only consumes one witch's kit; sprite generation uses explicit furniture footprints.");
 import { TUNING } from "../rules/tuning";
 import { newKit, takeBroom, takeInvites } from "../rules/kit";
 

@@ -2,13 +2,22 @@ import { describe, expect, it } from "vitest";
 import { captureNight, nightHasStarted, NightAutosave, savedNight, savesEnabled, type NightStore, type SavedNight } from "./nightSave";
 import { applySettings, DEFAULTS } from "./playerSettings";
 import { restoreGame, snapshotGame } from "../rules/nightSnapshot";
-import { newGame, stepGame, STEP } from "../rules/game";
+import { newGame as fullGame, stepGame, STEP } from "../rules/game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Autosave eligibility depends on leaving one bed, independent of distant areas or creature diversity.");
 import { TUNING } from "../rules/tuning";
 import { wakeInBedroom } from "../rules/opening";
 import { startWake, WAKE_DEFAULT } from "../rules/wakeUp";
 
 const saved = (): SavedNight => ({ version: 1, build: "test", at: 123, params: "seed=123&island=wolf&world=42", look: null, loan: null,
   flags: { chartRecorded: false, overRecorded: false }, settingsBase: { voices: {}, shake: 1, legendFlash: 1 }, game: { version: 1, seed: 123, tuning: {} as never, state: { root: null, nodes: [] } } });
+it("accepts a build-counter jump under the cross-build save contract", () => {
+  const old = { ...saved(), build: "v5955 · old" };
+  expect(savedNight(old, "v5955 · old", new URLSearchParams())).toBe(old);
+  expect(savedNight(old, "v6322 · new", new URLSearchParams())).toBe(old);
+  const next = { ...old, build: "v6322 · new" };
+  expect(savedNight(next, "v6322 · new", new URLSearchParams())).toBe(next);
+});
 const memory = () => {
   let value: unknown;
   const store: NightStore = { read: async () => value, write: async n => { value = n; }, clear: async () => { value = undefined; } };
@@ -19,7 +28,8 @@ describe("resumable night storage", () => {
   it("restores an actual captured game across build numbers while rejecting unknown formats", () => {
     const tuning = structuredClone(TUNING); tuning.map!.islandAreas = 10;
     applySettings(DEFAULTS, tuning);
-    const game = newGame(123, tuning); game.clock.paused = true;
+    // Capture needs the exact tuning object registered by applySettings; the small-world helper clones it.
+    const game = fullGame(123, tuning); game.clock.paused = true;
     const n = captureNight(game, { build: "old build", params: "seed=123", look: null, loan: null, flags: { chartRecorded: false, overRecorded: false } });
     const accepted = savedNight(n, "new build", new URLSearchParams());
     expect(accepted).toBe(n);

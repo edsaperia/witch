@@ -7,6 +7,7 @@ import { TUNING } from "./tuning";
 import { cellKey } from "./party";
 import type { Creature } from "./creatures";
 
+// Keep the seeded radius world: this regression needs a naturally placed sleeper within 15 m of another playable area's border.
 const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 
 /** A wild young one napping, and a spot 15 m off it in another area, nothing else near. */

@@ -6,6 +6,7 @@ import { generateMap, HOME_LOOK, type ForestMap } from "./map";
 import { Forest } from "./forest";
 import { TUNING } from "./tuning";
 
+// Keep this radius-map seed matrix: the six-area-wide survey and eight neighbouring cells check home's boundary deformation and scenery exclusions.
 const SEEDS = [123, 293912, 7, 1000, 42, 31337];
 const same = (a: readonly number[], b: readonly number[]) => a[0] === b[0] && a[1] === b[1];
 const home = (m: ForestMap, x: number, z: number) => same(m.areaAt(x, z).cell, m.centreCell);

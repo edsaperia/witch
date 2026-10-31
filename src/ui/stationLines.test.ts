@@ -3,13 +3,15 @@
 // read-only in its 3 × 3 biome order; and a part chosen at the bay on her broom at once, its set and spell with it.
 import { describe, expect, it } from "vitest";
 import { TUNING } from "../rules/tuning";
-import { newGame, witchTuning } from "../rules/game";
+import { newGame as fullGame, witchTuning } from "../rules/game";
+import { smallWorld } from "../test/worlds";
 import { BOARD, PARTS, bareBroom, fittedKey, fittedOf, partById } from "../rules/broomParts";
 import { setParts } from "../rules/spells";
 import { SHELVES, shelvesAt, type Shelf } from "../rules/wardrobe";
 import { HOUSE_ROOMS } from "../rules/houseRooms";
 import { broomSummary, canChoose, cardAt, choose, itemAt, panelPad, partStats, setChips, stationLines, type Line } from "./stationLines";
 
+const newGame = smallWorld(fullGame, "Station menu integration reads fitted broom stats on one witch, independent of world extent.");
 const ctx = (owned: string[] = []) => ({ owned: new Set(owned), fitOn: () => true, grid: (s: Shelf) => ({ cols: s.grid === "skin" ? 6 : 13, rows: 5 }) });
 const linesAt = (id: string) => { const sh = shelvesAt(id)!; return { sh, L: stationLines(sh, ctx()) }; };
 const cards = (sh: Shelf[], l: Line) => Array.from({ length: l.n }, (_, c) => cardAt(sh[l.shelf], l, c));

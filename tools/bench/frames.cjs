@@ -184,6 +184,9 @@ async function main() {
     // (?loadmist=0: the loading mist, render/loadingMist.ts, shows what the art workers haven't drawn yet, by their timing, not the
     // game's; off as ?quick=1 has it, so two runs of a build still match. An older build ignores it.)
     await page.goto(`http://127.0.0.1:${port}/?opening=old&seed=${seed}${s.query ?? ""}&loadmist=0`);
+    // Shared CI artifacts carry their real build label; the separately built base can say dev.
+    // Compare gameplay pixels, excluding only the two identity stamps; pageKey still records the real build.
+    await page.addStyleTag({ content: "#version, #creator-version { visibility: hidden !important; }" });
     const lap = what => { if (process.env.BENCH_LAPS) console.log(`  ${s.name} ${what} ${Math.round((Date.now() - t0) / 1000)} s`); };
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000 }); // (the cloud's software renderer can take minutes, more when the machine is busy)
     lap("ready");

@@ -12,6 +12,7 @@ import { candleCount, candleMelt, candleRed, hurt, knockOut, newHealth, nextStre
 import { isHomeKey } from "./speakers";
 import { FIGHT, MOVEMENT } from "./movement";
 import { areaOf, homeArea } from "./homeArea";
+import { smallWorldTuning } from "../test/worlds";
 const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
@@ -20,8 +21,9 @@ const run = (g: Game, secs: number, c = idle) => { for (let i = 0; i < Math.roun
 /** The proximity chat, as before the 💌s (invites.on false). */
 const CHAT = withTuning({ invites: { ...TUNING.invites, on: false } });
 
-function quiet(t: Tuning = TUNING): Game {
-  const g = newGame(77, t);
+function quiet(t: Tuning = TUNING, local = false): Game {
+  // Retain seeded terrain for area guards, cross-area pursuit, beach escape and 900 m recovery scenarios.
+  const g = newGame(77, local ? smallWorldTuning(t, "Direct knockout candle and hat timing uses explicit timestamps and leash state, not world extent.") : t);
   g.clock.paused = false;
   const d = g.map.dancefloor;
   g.witch = { ...g.witch, seated: false, x: d.x, z: d.z + 20, mode: "ground", lift: 0 };
@@ -161,8 +163,8 @@ describe("knocked out (Ed, 2026-10-04)", () => {
   const NO_WAIT = { base: 0, step: 0, max: 0, cooldown: 0, minScratch: 0 };
   const withTuning = (patch: (t: Tuning) => void): Tuning => { const t = JSON.parse(JSON.stringify(TUNING)) as Tuning; patch(t); return t; };
   /** Three on her leash (a legend among them, bottom of the stack last) and one parked at a sigil; down to her last hit, an owl in range. */
-  function setUp(t: Tuning = TUNING) {
-    const g = quiet(t), w = g.witch;
+  function setUp(t: Tuning = TUNING, local = false) {
+    const g = quiet(t, local), w = g.witch;
     const a = place(g, 0, "wolf", 1, w.x - 2, w.z + 1, true), b = place(g, 0, "fox", 2, w.x - 3, w.z + 1, true), l = place(g, 0, "stag", LEGEND, w.x - 4, w.z + 1, true);
     const parked = place(g, 0, "badger", 1, w.x - 30, w.z, true);
     g.leash.stack = g.leash.stack.filter(id => id !== parked.id);
@@ -308,7 +310,7 @@ describe("knocked out (Ed, 2026-10-04)", () => {
   it("lights a loading bar of candles on her desk, one a candleStep of the wait, the extra red, melting one after another as she scratches (Ed, 2026-10-07)", () => {
     // (the stacking wait, 6, 8, 10, 12 s, as it was before Ed's "We can remove the extra knockdown time": still a knob)
     const stack = { base: 6, step: 2, max: 12, cooldown: 60, minScratch: 1.5 };
-    const { g } = setUp(), W = g.witches[0], t = withTuning(x => { x.knockout.candleStep = 1; x.knockout.respawn = stack; });
+    const { g } = setUp(TUNING, true), W = g.witches[0], t = withTuning(x => { x.knockout.candleStep = 1; x.knockout.respawn = stack; });
     const kos = [0, 1, 2, 3, 9].map(streak => knockOut(W.leash, g.creatures, 100, t, { hatFloats: true, streak }));
     expect(kos.map(k => candleCount(k, t))).toEqual([6, 8, 10, 12, 12]); // (6, 8, 10, 12 s: the cap)
     expect(kos.map(k => candleRed(k, t))).toEqual([0, 2, 4, 6, 6]); // (the base's 6 s white)
@@ -327,7 +329,7 @@ describe("knocked out (Ed, 2026-10-04)", () => {
   });
 
   it("floats her hat down first, then lets her sigils go within it; a first knockdown with her hat stays near Ed's six seconds", () => {
-    const { g } = setUp(), W = g.witches[0], t = g.tuning;
+    const { g } = setUp(TUNING, true), W = g.witches[0], t = g.tuning;
     const K = knockOut(W.leash, g.creatures, 100, t, { hatFloats: true, streak: 0 });
     expect(K.floatUntil).toBeCloseTo(100 + (t.knockout.hatFloat ?? 0), 6);
     expect(K.teleportAt).toBeGreaterThanOrEqual(K.floatUntil);

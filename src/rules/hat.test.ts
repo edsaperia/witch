@@ -4,7 +4,9 @@
 // (the character creator's none) has none of it.
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
-import { hitWitch, newGame, stepGame, type Game } from "./game";
+import { hitWitch, newGame as fullGame, stepGame, type Game } from "./game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Dropped hats, local sigil priority and knockout returns need one witch near home, not distant areas.");
 import { hatMarker, wearing } from "./hat";
 
 const C = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };

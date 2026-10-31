@@ -9,6 +9,7 @@ import { pulseRouteMetres, routeLengths } from "./leypulse";
 import { liveRainbows, rainbowKnobs, rainbowLength, rainbowRuns, rainbowSpeed, routePoint, sendRainbow, stoneMetres } from "./rainbow";
 
 const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
+// Keep the authored fox route: wave travel, spark interception and metre-by-metre continuity cover its complete island path.
 const onFox = { ...TUNING, map: { ...TUNING.map!, island: "fox", found: [] } };
 
 describe("the rainbow wave", () => {

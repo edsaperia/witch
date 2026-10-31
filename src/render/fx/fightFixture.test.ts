@@ -1,6 +1,8 @@
 import { expect, it } from "vitest";
 import fixture from "../../../tools/magic-mock/fight-fixture.json";
-import { newGame, stepGame, STEP } from "../../rules/game";
+import { newGame as fullGame, stepGame, STEP } from "../../rules/game";
+import { smallWorld } from "../../test/worlds";
+const newGame = smallWorld(fullGame, "The grammar timing fixture explicitly spawns its arena pack beside the witch, independent of area count.");
 import { setupArena, arenaAttack } from "../../rules/arena";
 import { TUNING } from "../../rules/tuning";
 

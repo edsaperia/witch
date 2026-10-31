@@ -1,0 +1,84 @@
+{
+  "sourceSha": "347988785d2413ed5a6ca4e474230aae1ec55907",
+  "method": "Source-map spans removed from original chunks then gzip9 recomputed; compression model only, no valid split JS, new chunk/bridge/helper overhead excluded, unmapped bytes retained. Group marginal reductions are not additive.",
+  "creatorRetainedDeclarations": [
+    "DARKS",
+    "GRID_COLS",
+    "GRID_ROWS",
+    "KEY",
+    "PURE_ROW",
+    "TINTS",
+    "classicPalette",
+    "cpuCanvas",
+    "loadGenome",
+    "nearestSwatch",
+    "saveGenome",
+    "slot",
+    "snapPalette",
+    "swatchAt",
+    "upgrade"
+  ],
+  "groups": {
+    "Telescope": {
+      "generatedBytes": 4292,
+      "estimatedGzip9Reduction": 1629,
+      "isolatedFragmentGzip9": 2011,
+      "bySource": {
+        "src/app/telescope.ts": 4292
+      }
+    },
+    "Zoo": {
+      "generatedBytes": 1477,
+      "estimatedGzip9Reduction": 418,
+      "isolatedFragmentGzip9": 728,
+      "bySource": {
+        "src/app/zooOverlay.ts": 1477
+      }
+    },
+    "DJ": {
+      "generatedBytes": 6318,
+      "estimatedGzip9Reduction": 1437,
+      "isolatedFragmentGzip9": 2657,
+      "bySource": {
+        "src/ui/djBooth.ts": 6318
+      }
+    },
+    "Studio": {
+      "generatedBytes": 17467,
+      "estimatedGzip9Reduction": 5609,
+      "isolatedFragmentGzip9": 6384,
+      "bySource": {
+        "src/app/studio.ts": 7211,
+        "src/ui/studioPanel.ts": 10256
+      }
+    },
+    "Creator": {
+      "generatedBytes": 44143,
+      "estimatedGzip9Reduction": 16461,
+      "isolatedFragmentGzip9": 16862,
+      "bySource": {
+        "src/ui/roomWalk.ts": 1067,
+        "src/ui/spellScroll.ts": 9646,
+        "src/render/hatIcons.ts": 3065,
+        "src/ui/creator.ts": 30365
+      }
+    }
+  },
+  "combined": {
+    "generatedBytes": 73697,
+    "estimatedGzip9Reduction": 25350,
+    "isolatedFragmentGzip9": 27172,
+    "bySource": {
+      "src/app/studio.ts": 7211,
+      "src/ui/studioPanel.ts": 10256,
+      "src/ui/roomWalk.ts": 1067,
+      "src/ui/spellScroll.ts": 9646,
+      "src/render/hatIcons.ts": 3065,
+      "src/ui/creator.ts": 30365,
+      "src/ui/djBooth.ts": 6318,
+      "src/app/zooOverlay.ts": 1477,
+      "src/app/telescope.ts": 4292
+    }
+  },
+  "actualSplitOrBootMeasured": false
+}

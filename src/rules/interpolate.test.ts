@@ -4,7 +4,9 @@
 // still every other frame; then puts the simulated state back exactly.
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
-import { STEP, interpolated, newGame } from "./game";
+import { STEP, interpolated, newGame as fullGame } from "./game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Interpolation restores synthetic letters and shots; distant area count cannot affect their coordinates.");
 import type { Letter } from "./invites";
 
 describe("drawing between steps", () => {

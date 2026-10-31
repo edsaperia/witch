@@ -12,6 +12,7 @@ import { runAway } from "./orbit";
 import { runawaySpot } from "./runaway";
 import type { Creature } from "./creatures";
 
+// Keep the seeded full coastline: runaways traverse to distinct beach spots and return to their assigned inland area after a loss.
 const C = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const run = (g: Game, s: number) => { for (let i = 0; i < s / STEP; i++) stepGame(g, C, STEP); };
 function game(): Game {
