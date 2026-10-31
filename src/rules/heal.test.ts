@@ -34,7 +34,7 @@ describe("every heal shows", () => {
     expect(c.healedAt).toBe(6);
   });
   it("leashed", () => {
-    const g = game(), c = hurt(g, 3);
+    const g = game(), c = hurt(g, 3, { level: 1, boss: false, legendState: undefined });
     inviteCreature(g.leash, c, c.x, c.z, 7);
     expect(c.healedAt).toBe(7);
   });

@@ -88,7 +88,7 @@ describe("charges and leaps go further (Ed, 2026-10-06)", () => {
 });
 
 describe("a chase given up (Ed, 2026-10-06: 'pursue you 30 m outside of their area ... instead they should retreat and go back to idling')", () => {
-  it("follows her about 30 m past its area's edge, then retreats into its area and roams again, not waiting on the edge (one not hunting her: the hunt off, rules/hunt.ts)", () => {
+  it("follows her on the ground past its old 30 m band, then retreats home after take-off (hunt off)", () => {
     expect(TUNING.combat.leaveArea).toBe(30);
     const g = newGame(1000, { ...TUNING, hunt: { on: false } }), w = g.witches[0];
     g.clock.paused = false; g.party.paused = true;
@@ -107,6 +107,10 @@ describe("a chase given up (Ed, 2026-10-06: 'pursue you 30 m outside of their ar
       if (wolf.retreat) retreated = true;
       if (!inArea(wolf.x, wolf.z)) outFar = Math.max(outFar, Math.hypot(wolf.x - site.x, wolf.z - site.z));
     }
+    expect(retreated, "ground pursuit crosses the old band").toBe(false);
+    expect(wolf.fight?.target).toEqual({ kind: "witch", id: 0 });
+    w.body = { ...w.body, mode: "treetop", lift: 1 };
+    for (let i = 0; i < 30 / STEP; i++) { stepGame(g, idle, STEP); retreated ||= !!wolf.retreat; }
     expect(retreated).toBe(true);
     expect(wolf.fight?.target ?? null).toBe(null);
     expect(inArea(wolf.x, wolf.z)).toBe(true); // (back in its area, not on its edge)

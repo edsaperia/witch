@@ -57,6 +57,10 @@
         }
       ]
     },
+    "legends.friendRange": {
+      "what": "A friendly legend defends a witch within this many metres, otherwise engages enemies in this range before walking towards the ley line tip.",
+      "decisions": [{ "by": "Ed", "date": "2026-10-31", "quote": "about the average radius of an area", "rest": "85 m; replaces happyRange 420 m. Defend, engage, then walk the route towards its drawing tip." }]
+    },
     "legends": {
       "what": "Which areas have a legend, and how far a happy one reaches.",
       "decisions": [

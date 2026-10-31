@@ -415,8 +415,7 @@
         "wrap": 2
       },
       "terraceRoom": true
-    },
-    "carrier": "island"
+    }
   },
   "home": {
     "margin": 10,
@@ -1428,7 +1427,7 @@
     "share": 0.2,
     "earlyQuest": true,
     "areas": true,
-    "happyRange": 420,
+    "friendRange": 85,
     "questCap": 6,
     "questLater": true,
     "bombard": {
