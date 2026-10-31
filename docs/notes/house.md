@@ -1,5 +1,7 @@
 # The treehouse and its house
 
+Treehouse layout authoring: [the separate editor](treehouse-editor.md) moves/rotates objects and stations in a fixed floorplan, previews both views and exports versioned JSON for explicit adoption. It leaves the published house and player saves unchanged.
+
 Morning station fixes (#1469, 2026-10-30): `PanelChoice.awaitingDress` distinguishes the saved outfit from pieces still in `wake.pile`. The wardrobe, shoes, cloak and bags show no wearing tick until a choice puts their piece on; choosing an unchanged default still sends the look callback once. Selecting colours follows the same rule. While paused the station panel is hidden, retaining its choice and focus for resume; Esc still pauses rather than closing it.
 
 The first-morning dressing-table “75 m” report (#1469) came from the accessibility reading, with no distance visible in the original screenshot. Her hat is on the hats' floor about 74 m from the table's use position (seed 123); its pointer fades fully while indoors, but opacity alone left its distance in the accessibility tree. Fully faded `StoneIndicator` elements now also use `visibility: hidden`; world distances and the guidance pin's existing no-label behavior are unchanged.
