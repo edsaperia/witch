@@ -109,9 +109,9 @@ policies are untouched; the four iPos resources are not silently rewritten.
 Shared still/pixels/headless/run modules and small dodge/refraction scenarios are
 implemented. They do not move/rewrite the still-owned1543/1542 drivers. True
 OFF-return equality, masks/diffs and cleanup are tested with tiny fixtures/fake
-pages; no actual browser launched.17 focused tests pass. Bench declaration and
-usage are in docs/notes/testing.md. Hardware/pixel/feel/cost acceptance, full
-typecheck/CI and allocated real captures remain pending. Workspace/global usual
+pages; no actual browser launched.23 focused tests and local typecheck pass.
+Bench declaration and usage are in docs/notes/testing.md. Hardware/pixel/feel/cost
+acceptance, CI and allocated real captures remain pending. Workspace/global usual
 Playwright and ms-playwright caches were absent. Prepared SDK-only playwright1.64.1
 in ignored work/capture-runtime with install scripts disabled, no browser download
 or launch. Installed Chrome/Edge binaries exist; canonical can name an existing
