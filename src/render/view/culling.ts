@@ -50,7 +50,7 @@ export function viewRect(v: View, far: number, margin: number) {
         let t = d.y < -1e-3 ? (h - o.y) / d.y : Infinity;
         // With the bend, the ground drops away under the top of the view: it sees on past where
         // the flat ground would meet it, out to the reach.
-        if (!(t > 0) || (ny > 0 && (HEIGHT_UNIFORMS.uBend.value.x > 0 || v.bendTo > 0))) t = Infinity;
+        if (!(t > 0) || (ny > 0 && (HEIGHT_UNIFORMS.uBend.value.x !== 0 || v.bendTo !== 0))) t = Infinity;
         t = Math.min(t, reach);
         const px = o.x + d.x * t, pz = o.z + d.z * t;
         if (px < minX) minX = px; if (px > maxX) maxX = px; if (pz < minZ) minZ = pz; if (pz > maxZ) maxZ = pz;

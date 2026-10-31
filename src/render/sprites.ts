@@ -19,7 +19,9 @@ export function metresPerArtPixel(t: { artPixelsPerMetre: number; pixelSize: num
 }
 
 /** Shared by every sprite batch: the camera's right and (tilted) up, and the canopy fade. */
+export interface SpriteInstance { /** Bushes and low foliage, hidden by Floor Becomes Sky. */ small?: boolean }
 export const SPRITE_UNIFORMS = {
+  uPotionSky: { value: 0 },
   /** Review experiment, Ed 2026-10-30: creatures read inside her light, camouflage outside stays unchanged. */
   uPoolReadability: { value: new URLSearchParams(globalThis.location?.search ?? "").get("poolreadability") === "1" ? 1 : 0 },
   /** The mood's moonlight rim on characters (render/mood.ts): colour, strength (0 off). */
@@ -140,7 +142,7 @@ uniform float uCanopyReach;
 attribute vec3 iPos;
 attribute vec3 iSize; // its width and height (metres), and how far its foot reaches either side of its base
 attribute vec4 iUv;
-attribute vec4 iFlags; // flip, top (or a trunk's cut, negative), fresh, sway
+attribute vec4 iFlags; // flip, top (or a trunk's cut, negative), fresh + 2 for small foliage, sway
 attribute float iGlow; // glowing white, 0 to 1 (a party animal evolving); -1: a wild creature blinking (no eyeshine); -0.5: switched off (its glowing pixels unlit)
 attribute vec2 iJitter; // a tree's own leaf-colour jitter seeds, -1 to 1 (hue, value); 0 for everything else (render/view/scenery.ts; Ed, 2026-10-16)
 varying float vGlow;
@@ -152,6 +154,7 @@ uniform vec4 uWatch;
 varying vec2 vUv;
 varying vec3 vWorld;
 varying vec3 vFlags;
+varying float vSmall;
 varying float vFront;
 varying vec2 vLocal;
 varying float vSizeY;
@@ -214,6 +217,7 @@ void main() {
   float u = iFlags.x > 0.5 ? 1.0 - uv.x : uv.x;
   vUv = vec2(mix(iUv.x, iUv.z, u), mix(iUv.w, iUv.y, uv.y));
   vFlags = iFlags.xyz;
+  vFlags.z = mod(iFlags.z, 2.0); vSmall = step(1.5, iFlags.z);
   vGlow = iGlow;
   vJitter = iJitter;
   vLocal = uv;
@@ -336,6 +340,8 @@ uniform vec4 uUplight;
 varying vec2 vUv;
 varying vec3 vWorld;
 varying vec3 vFlags;
+varying float vSmall;
+uniform float uPotionSky;
 varying float vGlow;
 varying float vSwayM; // metres its leafiest pixels move this frame (masked sprites)
 varying vec4 vFrame;  // its frame in the atlas (u0, v0, u1, v1), to keep the sway inside it
@@ -634,6 +640,7 @@ void shade() {
 }
 void main() {
   vec2 rdx = dFdx(vUv), rdy = dFdy(vUv); // (taken here, in uniform flow: one screen pixel, one art pixel, along the sprite)
+  if (vSmall > 0.5 && uPotionSky > 0.0 && (uPotionSky >= 1.0 || bayer(gl_FragCoord.xy) < uPotionSky)) discard;
   uvDx = rdx; uvDy = rdy;
   if (uArrivalFade < 0.999 && bayer(gl_FragCoord.xy) >= uArrivalFade) discard;
   shade();
@@ -862,7 +869,7 @@ export class SpriteBatch {
       if (S[j] !== w || S[j + 1] !== h || S[j + 2] !== ft) { S[j] = w; S[j + 1] = h; S[j + 2] = ft; dS.touch(i); }
       j = i * 4;
       if (U[j] !== uv[0] || U[j + 1] !== uv[1] || U[j + 2] !== uv[2] || U[j + 3] !== uv[3]) { U[j] = uv[0]; U[j + 1] = uv[1]; U[j + 2] = uv[2]; U[j + 3] = uv[3]; dU.touch(i); }
-      const f0 = it.flip ? 1 : 0, f1 = it.top ? 1 : it.cut ? -it.cut : 0, f2 = it.fresh ? 1 : 0, f3 = (fr.masked ? -1 : 1) * (it.sway ?? 0);
+      const f0 = it.flip ? 1 : 0, f1 = it.top ? 1 : it.cut ? -it.cut : 0, f2 = (it.fresh ? 1 : 0) + (it.small ? 2 : 0), f3 = (fr.masked ? -1 : 1) * (it.sway ?? 0);
       if (F[j] !== f0 || F[j + 1] !== f1 || F[j + 2] !== f2 || F[j + 3] !== f3) { F[j] = f0; F[j + 1] = f1; F[j + 2] = f2; F[j + 3] = f3; dF.touch(i); }
       const gl = it.glow ?? 0;
       if (G[i] !== gl) { G[i] = gl; dG.touch(i); }

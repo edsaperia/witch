@@ -129,6 +129,9 @@ says what each note covers.
 
 ## [The treehouse and its house](house.md)
 
+- Current brewing authority (Ed, 2026-10-31):
+- Mushrooms and brewing
+- Mushroom kitchen artwork
 - The dressing stations
 - Treehouse
 - Arriving
@@ -293,6 +296,7 @@ says what each note covers.
 
 ## [Sound effects](sound.md)
 
+- Cauldron plop
 - Sound effects
 - Babble
 - Audio capacity test
@@ -304,6 +308,7 @@ says what each note covers.
 
 ## [The view](view.md)
 
+- Potion perception
 - Layered magic
 - Magic mock (stage 0 only)
 - Pixel snap
@@ -340,6 +345,7 @@ says what each note covers.
 
 ## [The world's art](world-art.md)
 
+- Collectible mushroom art generator
 - Area type
 - Wall objects, small objects, big objects (legacy set pieces)
 - Layout
