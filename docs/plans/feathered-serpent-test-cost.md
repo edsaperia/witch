@@ -1,0 +1,9 @@
+# Sleeping legend test cost
+
+PLAN: codex/feathered-serpent-test-cost, isolated C:/Users/edsap/Documents/ChatGPT/witch game/work/feathered-serpent-test-cost, fresh prototype dcaa9c10307a4e8c6cd1c929735f7b13bc2f3fba. Exact branch/PR lookup found no existing owner. Same CI-speed1557 owner, canonical1476#6550319134 (23:02UTC). Preserve house1565 checkpoint3f2d67e9 and its separate acceptance; unrelated feathered-serpent timeout is explicitly no longer its blocker.
+
+First measure the existing critter(featheredserpent,3,0,style) call and each legendForm breath separately through the existing PR CI unit path, with its unchanged 60000ms limit and all assertions retained. No local art generation or browser; active laptop slot belongs elsewhere. Source review shows critter already caches its shape while legendForm builds its two sleeping forms separately and measures each awake model's scale; these are hypotheses about cost, not measured causes.
+
+Use the resulting timings to choose the smallest test-cost improvement: reuse genuine existing awake/cache work, or place full art validation in its appropriate art lane if required. Keep height, occupied bottom row, finite normals, no awake eye/glow materials, valid ground/origin and different breath pixels assertions unchanged. Do not reduce scale, species/frames or raise timeout. Before/after timings must identify runner/source and warm/cold conditions. Ask canonical for runner routing if the existing CI path cannot provide the needed measurement. No self-allocated cloud/heavy laptop/fullsuite rerun.
+
+Own draft PR into claude/prototype; post exact branch/worktree/PR on watched1476, normal prototype merge before milestones. No runtime/art change before profiling evidence; no gameplay text changes. Report required checks faithfully; profiling-only head is not a completed fix or release.
