@@ -5900,6 +5900,8 @@ registerProcessor("witch-fof", WitchFof);
     constructor(ctx2, volume, style2, seed2, src = "", drawAhead = false, destination = ctx2.destination) {
       this.ctx = ctx2;
       this.volume = volume;
+      this.potionGate = ctx2.createGain();
+      this.potionGate.connect(destination);
       this.master = ctx2.createGain();
       this.master.gain.value = 0;
       this.wobble = ctx2.createGain();
@@ -5920,10 +5922,10 @@ registerProcessor("witch-fof", WitchFof);
       this.wet.connect(this.filter);
       this.filter.connect(this.wobble);
       this.wobble.connect(this.master);
-      this.master.connect(destination);
+      this.master.connect(this.potionGate);
       this.circleGain = ctx2.createGain();
       this.circleGain.gain.value = 0;
-      this.circleGain.connect(destination);
+      this.circleGain.connect(this.potionGate);
       this.noise = ctx2.createBuffer(1, ctx2.sampleRate, ctx2.sampleRate);
       const d = this.noise.getChannelData(0);
       for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
@@ -5941,6 +5943,7 @@ registerProcessor("witch-fof", WitchFof);
     }
     ctx;
     volume;
+    potionGate;
     master;
     wobble;
     filter;
@@ -6064,11 +6067,17 @@ registerProcessor("witch-fof", WitchFof);
       return this.master.gain.value > 0.02 && !this.engine?.gated;
     }
     /** Silenced for good and let go (the watchdog building afresh). */
+    setOrdinaryGain(level) {
+      const p = this.potionGate.gain, at2 = this.ctx.currentTime;
+      p.cancelScheduledValues(at2);
+      p.setValueAtTime(Math.max(0, Math.min(1, level)), at2);
+    }
     dispose() {
       this.ahead?.stopAll();
       try {
         this.master.disconnect();
         this.circleGain.disconnect();
+        this.potionGate.disconnect();
         this.analyser?.disconnect();
       } catch {
       }
@@ -8707,15 +8716,17 @@ registerProcessor("witch-fof", WitchFof);
       this.T = T;
       this.root = root;
       const c = ctx2;
+      this.master = c.createGain();
+      this.master.gain.value = volume * T.volume;
       this.out = c.createGain();
-      this.out.gain.value = volume * T.volume;
+      this.out.connect(this.master);
       const limit = c.createDynamicsCompressor();
       limit.threshold.value = -10;
       limit.knee.value = 6;
       limit.ratio.value = 8;
       limit.attack.value = 3e-3;
       limit.release.value = 0.12;
-      this.out.connect(limit);
+      this.master.connect(limit);
       limit.connect(dest ?? c.destination);
       this.final = limit;
       this.noise = noiseBuffer(c, 1, 777);
@@ -8725,6 +8736,7 @@ registerProcessor("witch-fof", WitchFof);
     T;
     root;
     out;
+    master;
     /** The last node before the speakers (its limiter): the watchdog taps it. */
     final;
     noise;
@@ -8736,7 +8748,21 @@ registerProcessor("witch-fof", WitchFof);
     ocean = null;
     setVolume(v) {
       this.volume = v;
-      this.out.gain.setTargetAtTime(v * this.T.volume, this.ctx.currentTime, 0.05);
+      this.master.gain.setTargetAtTime(v * this.T.volume, this.ctx.currentTime, 0.05);
+    }
+    /** A separate route, sharing tuning, voice budgets and master volume. Its reverb stays on its own route. */
+    creatureKit(destination) {
+      const branch = Object.create(this), out = this.ctx.createGain();
+      out.connect(destination ?? this.master);
+      Object.defineProperty(branch, "out", { value: out });
+      Object.defineProperty(branch, "ocean", { value: null, writable: true });
+      return branch;
+    }
+    /** Isolate creature sounds without touching the player's volume or active creature voices. */
+    ordinaryGain(level) {
+      const gain = this.out.gain, at2 = this.ctx.currentTime;
+      gain.cancelScheduledValues(at2);
+      gain.setValueAtTime(Math.max(0, Math.min(1, level)), at2);
     }
     /** A new night's tuning (docs/plans/sail-without-reload.md, A4): its sfx knobs from now on, its volume eased to. */
     retune(T) {
@@ -8977,9 +9003,154 @@ registerProcessor("witch-fof", WitchFof);
     }
   };
 
+  // src/platform/audio/potionAudio.ts
+  var CreaturePitch = class {
+    constructor(ctx2, destination) {
+      this.ctx = ctx2;
+      this.input = ctx2.createGain();
+      this.dry = ctx2.createGain();
+      this.wet = ctx2.createGain();
+      this.input.connect(this.dry);
+      this.dry.connect(destination);
+      this.wet.connect(destination);
+      this.wet.gain.value = 0;
+    }
+    ctx;
+    input;
+    dry;
+    wet;
+    taps = null;
+    amount = 0;
+    set(amount) {
+      amount = Math.max(0, Math.min(1, amount));
+      if (amount === this.amount) return;
+      this.amount = amount;
+      const c = this.ctx, at2 = c.currentTime;
+      if (!amount) {
+        this.dry.gain.setValueAtTime(1, at2);
+        this.wet.gain.setValueAtTime(0, at2);
+        this.stopTaps();
+        return;
+      }
+      if (!this.taps) {
+        const sources = [], nodes = [];
+        const ramp = c.createBuffer(1, c.sampleRate, c.sampleRate), window2 = c.createBuffer(1, c.sampleRate, c.sampleRate);
+        const r = ramp.getChannelData(0), w = window2.getChannelData(0);
+        for (let i = 0; i < r.length; i++) {
+          r[i] = i / r.length;
+          w[i] = Math.sin(Math.PI * i / r.length) ** 2;
+        }
+        for (const phase of [0, 0.5]) {
+          const delay = c.createDelay(0.1), gain = c.createGain(), depth = c.createGain();
+          delay.delayTime.value = 3e-3;
+          gain.gain.value = 0;
+          depth.gain.value = 0.06;
+          this.input.connect(delay);
+          delay.connect(gain);
+          gain.connect(this.wet);
+          depth.connect(delay.delayTime);
+          for (const [buffer, target] of [[ramp, depth], [window2, gain.gain]]) {
+            const source = c.createBufferSource();
+            source.buffer = buffer;
+            source.loop = true;
+            source.playbackRate.value = creaturePitchRate(amount);
+            source.connect(target);
+            source.start(at2, phase);
+            sources.push(source);
+          }
+          nodes.push(delay, gain, depth);
+        }
+        this.taps = { sources, nodes };
+      }
+      for (const source of this.taps.sources) source.playbackRate.setValueAtTime(creaturePitchRate(amount), at2);
+      const wet = Math.min(1, amount * 50);
+      this.dry.gain.setValueAtTime(1 - wet, at2);
+      this.wet.gain.setValueAtTime(wet, at2);
+    }
+    stopTaps() {
+      if (!this.taps) return;
+      for (const node of this.taps.nodes) {
+        try {
+          this.input.disconnect(node);
+        } catch {
+        }
+        node.disconnect();
+      }
+      for (const source of this.taps.sources) {
+        source.stop();
+        source.disconnect();
+      }
+      this.taps = null;
+    }
+    dispose() {
+      this.stopTaps();
+      this.input.disconnect();
+      this.dry.disconnect();
+      this.wet.disconnect();
+    }
+  };
+  var creaturePitchRate = (strength) => (1 - 2 ** -strength) / 0.06;
+  function maskBreath(time, rate) {
+    const phase = (time * rate % 1 + 1) % 1;
+    const inhale = phase < 0.43 ? Math.sin(Math.PI * phase / 0.43) : 0;
+    const exhale = phase > 0.53 && phase < 0.96 ? Math.sin(Math.PI * (phase - 0.53) / 0.43) * 0.72 : 0;
+    return Math.max(0, inhale + exhale);
+  }
+  var PotionAudio = class {
+    constructor(kit) {
+      this.kit = kit;
+    }
+    kit;
+    breath = null;
+    /** The sole non-creature cue allowed through Night Vision isolation. Original synthesised whine. */
+    startup() {
+      const k = this.kit, at2 = k.ctx.currentTime + 5e-3, out = k.voice(0, 1, 0.65), gain = k.ctx.createGain();
+      gain.connect(out);
+      k.env(gain, at2, 0.065, 0.035, 0.5);
+      const tone = k.osc("sine", 380, at2, 0.58, gain);
+      tone.frequency.exponentialRampToValueAtTime(2100, at2 + 0.37);
+      tone.frequency.exponentialRampToValueAtTime(1600, at2 + 0.55);
+    }
+    breathing(level, rate, time) {
+      if (level <= 0) {
+        this.dispose();
+        return;
+      }
+      const k = this.kit, at2 = k.ctx.currentTime;
+      if (!this.breath) {
+        const source = k.loopNoise(0.72), filter = k.ctx.createBiquadFilter(), gain = k.ctx.createGain();
+        filter.type = "bandpass";
+        filter.frequency.value = 430;
+        filter.Q.value = 0.8;
+        gain.gain.value = 0;
+        source.connect(filter);
+        filter.connect(gain);
+        gain.connect(k.out);
+        source.start(at2);
+        this.breath = { source, filter, gain };
+      }
+      const shape = maskBreath(time, rate);
+      this.breath.gain.gain.setTargetAtTime(0.14 * level * shape, at2, 0.035);
+      this.breath.filter.frequency.setTargetAtTime(280 + shape * 280, at2, 0.06);
+    }
+    dispose() {
+      if (!this.breath) return;
+      const { source, filter, gain } = this.breath;
+      this.breath = null;
+      source.stop();
+      source.disconnect();
+      filter.disconnect();
+      gain.disconnect();
+    }
+  };
+
   // src/platform/audio/sfx.ts
   var Sfx = class {
     k;
+    creatures;
+    creatureBabble;
+    potionAudio;
+    creaturePitch;
     babble;
     whales;
     charging;
@@ -9004,9 +9175,14 @@ registerProcessor("witch-fof", WitchFof);
     }
     constructor(ctx2, volume, T, root = 57, dest) {
       this.k = new SfxKit(ctx2, volume, T, root, dest);
-      this.whales = new Whale(this.k);
+      const bypass = this.k.creatureKit();
+      this.creaturePitch = new CreaturePitch(ctx2, bypass.out);
+      this.creatures = this.k.creatureKit(this.creaturePitch.input);
+      this.potionAudio = new PotionAudio(bypass);
+      this.whales = new Whale(this.creatures);
+      this.creatureBabble = new Babble(this.creatures, (mood, pan, near) => this.whales.whale(mood, pan, near));
       this.babble = new Babble(this.k, (mood, pan, near) => this.whales.whale(mood, pan, near));
-      this.charging = new Charge(this.k);
+      this.charging = new Charge(this.creatures);
       this.home = new Meadow(this.k);
       this.pondBed = new Pond(this.k);
       this.picnicBed = new Picnic(this.k);
@@ -9029,8 +9205,11 @@ registerProcessor("witch-fof", WitchFof);
      *  mid-play when the first stone powered up; the audit's phase 2), so it's ready before play. */
     prewarm() {
       this.k.space();
+      this.creatures.space();
     }
     dispose() {
+      this.potionAudio.dispose();
+      this.creaturePitch.dispose();
       try {
         this.k.final.disconnect();
       } catch {
@@ -9038,6 +9217,18 @@ registerProcessor("witch-fof", WitchFof);
     }
     setVolume(v) {
       this.k.setVolume(v);
+    }
+    setOrdinaryGain(level) {
+      this.k.ordinaryGain(level);
+    }
+    setCreaturePitch(strength) {
+      this.creaturePitch.set(strength);
+    }
+    nightVisionStart() {
+      this.potionAudio.startup();
+    }
+    heatBreathing(level, rate, time) {
+      this.potionAudio.breathing(level, rate, time);
     }
     /** A new night's tuning (sfxKit.ts retune): every effect reads its sfx knobs from then on. */
     retune(T) {
@@ -9085,20 +9276,20 @@ registerProcessor("witch-fof", WitchFof);
     }
     /** A 💌 refused by an enraged animal: its whine (chimes.ts refused). */
     refused(pan = 0, near = 1) {
-      refused(this.k, pan, near);
+      refused(this.creatures, pan, near);
     }
     reply(v, amount, pan = 0, near = 1) {
-      this.babble.reply(v, amount, pan, near);
+      this.creatureBabble.reply(v, amount, pan, near);
     }
     // ——— creatures ———
     speak(v, mood, pan = 0, near = 1, prio = near) {
-      this.babble.speak(v, mood, pan, near, prio);
+      this.creatureBabble.speak(v, mood, pan, near, prio);
     }
     howl(v, pan = 0, near = 1) {
-      this.babble.howl(v, pan, near);
+      this.creatureBabble.howl(v, pan, near);
     }
     enraged(pan = 0, near = 1, many = 1) {
-      enraged(this.k, pan, near, many);
+      enraged(this.creatures, pan, near, many);
     }
     happy(pan = 0, near = 1) {
       happy(this.k, pan, near);
@@ -9125,7 +9316,7 @@ registerProcessor("witch-fof", WitchFof);
     }
     /** A restless legend calling out sadly in its own voice (`urgency` its restlessness). */
     lament(v, urgency, pan = 0, near = 1) {
-      this.babble.lament(v, urgency, pan, near);
+      this.creatureBabble.lament(v, urgency, pan, near);
     }
     bellow(pan = 0, near = 1) {
       this.charging.bellow(pan, near);
@@ -9160,11 +9351,11 @@ registerProcessor("witch-fof", WitchFof);
     }
     /** A legend turning angry: its roar. */
     roar(pan = 0, near = 1) {
-      roar(this.k, pan, near);
+      roar(this.creatures, pan, near);
     }
     /** Dancers' party shoes tapping on the beat. */
     taps(n, pan = 0, near = 1) {
-      taps(this.k, n, pan, near);
+      taps(this.creatures, n, pan, near);
     }
     /** By a pond, a picnic in a partified area, in the creator's room: each frame, by how near (0-1). */
     pond(level, pan = 0) {
@@ -9178,13 +9369,13 @@ registerProcessor("witch-fof", WitchFof);
     }
     /** The sea's life off the beach (seaLife.ts): a dolphin's leap (its splash `fall` seconds after), the kraken's groan and the water pouring off it. */
     splash(size = 0.5, pan = 0, near = 1, fall = 0.9) {
-      splash(this.k, size, pan, near, fall);
+      splash(this.creatures, size, pan, near, fall);
     }
     krakenGroan(pan = 0, near = 1) {
-      groan(this.k, pan, near);
+      groan(this.creatures, pan, near);
     }
     krakenPour(dur = 4, pan = 0, near = 1) {
-      pour(this.k, dur, pan, near);
+      pour(this.creatures, dur, pan, near);
     }
     /** Knocked down (knockdown.ts): the sad trumpet as her hat drops (`full`; with no hat, its shorter "wah-waaah"); then the
      *  rewind as she's whisked to her decks, a backwards scratch cutting the trumpet off (never before its last note has had
@@ -9280,13 +9471,14 @@ registerProcessor("witch-fof", WitchFof);
     }
     /** A sleeping animal's snore (`size` 0 a baby to 1 a legend). */
     snore(size, pan = 0, near = 1) {
-      (this.nightBed ??= new Night(this.k)).snore(size, pan, near);
+      (this.creatureNight ??= new Night(this.creatures)).snore(size, pan, near);
     }
     /** Whether the night's sounds are built. */
     get nightBuilt() {
       return !!this.nightBed?.built;
     }
     nightBed = null;
+    creatureNight = null;
     /** Each area's ambience in play (night.ts layers without their bed): `kind` her area's, at `level` (0-1). Built when first heard. */
     ambience(kind, level) {
       level *= this.beds;
