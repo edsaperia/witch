@@ -32,6 +32,12 @@ export function stiltwalkerShape(amount: number): { length: number; tip: number;
 
 export const tripIndicatorStrength = (g: Game): number => effectEnvelope(g.mushrooms?.trips[g.witches[0]?.id ?? 0], g.clock.time);
 
+/** Rotation about the neutral RGB axis: greys stay grey; 120 degrees permutes channels. */
+export function hueRotation(phase: number): [number, number, number] {
+  const c = Math.cos(phase), s = Math.sin(phase) / Math.sqrt(3), k = (1 - c) / 3;
+  return [c + k, k - s, k + s];
+}
+
 /** Grow the existing scene pixels in whole display-pixel steps; expiry restores its exact baseline. */
 export function chunkyPixelSize(base: number, dpr: number, amount: number): number {
   if (amount <= 0) return base;
@@ -69,3 +75,11 @@ export const potionLevels = (black: number, gamma: number, amount: number) => {
   const p = potionSettings('thick-canopy');
   return { black: black + (p.blackFloor - black) * amount, gamma: gamma * (1 + (p.gamma - 1) * amount), saturation: 1 + (p.saturation - 1) * amount };
 };
+/** Existing tone controls recover dark detail; no extra screen pass or changes to saved lighting. */
+export function nightVisionLevels(black: number, gamma: number, grade: number, amount: number) {
+  if (amount <= 0) return { black, gamma, grade };
+  const p = potionSettings('night-vision');
+  return { black: black + (p.blackFloor - black) * amount,
+    gamma: gamma * (1 + (1 / p.brightness - 1) * amount),
+    grade: grade * (1 + (p.grade - 1) * amount) };
+}

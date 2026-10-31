@@ -7,8 +7,51 @@ import type { Sfx } from "../platform/audio/sfx";
 import { TUNING, type Tuning } from "../rules/tuning";
 import type { MusicStyle } from "../rules/musicScore";
 import type { PlaytestLog } from "../platform/playtestLog";
+import type { Game } from '../rules/game';
+import { POTION_RECIPES } from '../rules/potionRecipes';
 
 const style = styleJson as unknown as MusicStyle;
+
+describe('potion audio isolation', () => {
+  it('isolates ordinary audio at wake, restores it over the final two game minutes, and starts only once', () => {
+    const { sound } = made(11), recipe = POTION_RECIPES.find(r => r.effect === 'night-vision')!;
+    const game = { clock: { time: 100, paused: false }, witches: [{ id: 2 }], mushrooms: { trips: { 2: { key: recipe.key, at: 100, until: 700 } } } } as unknown as Game;
+    const gate = vi.spyOn(sound.music!, 'setOrdinaryGain');
+    sound.updatePotionAudio(game); sound.updatePotionAudio(game);
+    expect(gate).toHaveBeenLastCalledWith(0);
+    expect(sound.sfx!.setOrdinaryGain).toHaveBeenLastCalledWith(0);
+    expect(sound.sfx!.nightVisionStart).toHaveBeenCalledTimes(1);
+    expect(sound.musicExpected()).toBe(false);
+    game.clock.time = 580; sound.updatePotionAudio(game); expect(gate).toHaveBeenLastCalledWith(0);
+    game.clock.time = 640; sound.updatePotionAudio(game); expect(gate).toHaveBeenLastCalledWith(.5);
+    const volume = sound.music!.volume;
+    delete game.mushrooms.trips[2]; sound.updatePotionAudio(game);
+    expect(gate).toHaveBeenLastCalledWith(1); expect(sound.music!.volume).toBe(volume);
+    game.mushrooms.trips[2] = { key: recipe.key, recipe: recipe.recipe, at: 640, until: 1240 };
+    sound.updatePotionAudio(game); expect(sound.sfx!.nightVisionStart).toHaveBeenCalledTimes(2);
+    game.clock.time = 1240; sound.updatePotionAudio(game); expect(gate).toHaveBeenLastCalledWith(1);
+  });
+  it('heat mutes music, lowers creatures an octave and fades breathing, without muting ordinary effects', () => {
+    const { sound } = made(11), recipe = POTION_RECIPES.find(r => r.effect === 'heat-vision')!;
+    const musicGate = vi.spyOn(sound.music!, 'setOrdinaryGain');
+    const game = { clock: { time: 100, paused: false }, witches: [{ id: 0 }], mushrooms: { trips: { 0: { key: recipe.key, at: 100, until: 700 } } } } as unknown as Game;
+    sound.updatePotionAudio(game);
+    expect(sound.sfx!.setOrdinaryGain).toHaveBeenLastCalledWith(1);
+    expect(sound.sfx!.setCreaturePitch).toHaveBeenLastCalledWith(1);
+    expect(musicGate).toHaveBeenLastCalledWith(0);
+    expect(sound.musicExpected()).toBe(false);
+    expect(sound.sfx!.heatBreathing).toHaveBeenLastCalledWith(.35, .18, 0);
+    game.clock.time = 640; sound.updatePotionAudio(game);
+    expect(sound.sfx!.setCreaturePitch).toHaveBeenLastCalledWith(.5);
+    expect(musicGate).toHaveBeenLastCalledWith(.5);
+    expect(sound.sfx!.heatBreathing).toHaveBeenLastCalledWith(.175, .18, 540);
+    delete game.mushrooms.trips[0]; sound.updatePotionAudio(game);
+    expect(sound.sfx!.setCreaturePitch).toHaveBeenLastCalledWith(0);
+    expect(musicGate).toHaveBeenLastCalledWith(1);
+    expect(sound.sfx!.heatBreathing).toHaveBeenLastCalledWith(0, .18, 640);
+    expect(sound.sfx!.nightVisionStart).not.toHaveBeenCalled();
+  });
+});
 
 /** A stand-in audio context (as musicEngine.test.ts's): every node and param takes any call and does nothing. */
 function fakeContext() {
@@ -20,7 +63,7 @@ function fakeContext() {
     if (k === "then") return undefined;
     return () => node();
   }, set: (o, k, v) => { (o as Record<string | symbol, unknown>)[k] = v; return true; } });
-  const ctx = { currentTime: 0, sampleRate: 32000, destination: node(), createBuffer: (ch: number, n: number) => ({ getChannelData: () => new Float32Array(n), numberOfChannels: ch, length: n }) } as Record<string, unknown>;
+  const ctx = { currentTime: 0, sampleRate: 32000, resume: async () => {}, destination: node(), createBuffer: (ch: number, n: number) => ({ getChannelData: () => new Float32Array(n), numberOfChannels: ch, length: n }) } as Record<string, unknown>;
   return new Proxy(ctx, { get: (o, k) => (k in o ? o[k as string] : String(k).startsWith("create") ? () => node() : undefined) }) as unknown as AudioContext & { currentTime: number };
 }
 
@@ -30,7 +73,7 @@ function made(seed: number) {
   sound.audio = ctx;
   sound.music = new Music(ctx, 0.5, style, seed);
   const told: { retune: unknown[]; aggro: unknown[] } = { retune: [], aggro: [] };
-  sound.sfx = { retune: (T: unknown) => told.retune.push(T), aggro: (k: unknown) => told.aggro.push(k) } as unknown as Sfx;
+  sound.sfx = { retune: (T: unknown) => told.retune.push(T), aggro: (k: unknown) => told.aggro.push(k), setOrdinaryGain: vi.fn(), setCreaturePitch: vi.fn(), heatBreathing: vi.fn(), nightVisionStart: vi.fn() } as unknown as Sfx;
   sound.sfxCues = new SfxCues(sound.sfx);
   return { sound, ctx, told };
 }

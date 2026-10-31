@@ -45,7 +45,7 @@ export function savedNight(value: unknown, _build: string, link: URLSearchParams
       (n.look !== null && (!n.look || typeof n.look !== "object" || Array.isArray(n.look))) ||
       (n.loan !== null && (!n.loan || typeof n.loan !== "object" || typeof n.loan.id !== "string" || !n.loan.before))) return null;
   const p = new URLSearchParams(n.params);
-  for (const key of ["seed", "island", "world"]) if (link.has(key) && link.get(key) !== p.get(key)) return null;
+  for (const key of ["seed", "island", "world", "layout"]) if (link.has(key) && link.get(key) !== p.get(key)) return null;
   return n;
 }
 

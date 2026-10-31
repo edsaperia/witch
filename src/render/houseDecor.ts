@@ -8,6 +8,7 @@ import { HOUSE_ROOMS, type HouseConfig, type Rect } from "../rules/houseRooms";
 import { MESS } from "../../art/houseMess.js";
 import { FURNITURE_IDS } from "../../art/furniture.js";
 import { standing } from "./housePieces";
+import { roomAt as physicalRoomAt } from "../../config/house/shape.js";
 
 /** Whether the rooms are dressed (`?decor=0`: bare, as before). */
 export const decorOn = typeof location === "undefined" || new URLSearchParams(location.search).get("decor") !== "0";
@@ -76,6 +77,18 @@ export function decorPlan(room: Rect & { id: string; r?: number; locked?: boolea
     if (at) out.push({ kind, x: +at[0].toFixed(2), z: +at[1].toFixed(2), yaw: face(at[0], at[1]), k: seed + i * 101 });
   });
   return out;
+}
+
+/** Selected placements are resolved at draw time, never from the default DECOR_ROOMS initializer. */
+export function placedDecorPlan(room: Rect & { id: string; r?: number; locked?: boolean }, H: HouseConfig = HOUSE_ROOMS): DecorItem[] {
+  if (!H.layout?.decor) return decorPlan(room, H);
+  const source = H.layout.baseline, target = H.rooms.find(r => r.id === room.id)!;
+  return source.rooms.flatMap(r => decorPlan(r, source).flatMap(it => {
+    const id = `clutter:${r.id}:${it.kind}:${it.of ?? it.k}`, p = H.layout!.decor!.find(p => p.id === id);
+    if (!p) return [];
+    const destination = physicalRoomAt(H.shape, p.x, p.z)?.id ?? [...H.rooms].sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0].id;
+    return destination === room.id ? [{ ...it, x: p.x - target.x, z: p.z - target.z, yaw: p.rotation * Math.PI / 180 }] : [];
+  }));
 }
 
 /** The rooms dressed (those with any), for render/houseRooms.ts. */
