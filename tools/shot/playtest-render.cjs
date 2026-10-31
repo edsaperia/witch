@@ -18,7 +18,7 @@ async function main() {
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
     page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
-    url.search = mode === 'stumps' ? '?seed=123' : '?shot=creature:fox@2&seed=123';
+    url.search = mode === 'stumps' ? '?seed=723288&world=1268398697&found=squirrel,hedgehog' : '?shot=creature:fox@2&seed=123';
     await page.goto(url.href);
     await page.waitForFunction(() => window.witch?.ready, null, { timeout: 600000 });
     if (mode === 'stumps') {

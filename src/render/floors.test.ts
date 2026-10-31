@@ -4,10 +4,25 @@
 import { describe, expect, it } from "vitest";
 import * as THREE from "three";
 import { FLOOR_ORDER, SpriteBatch, asFloor } from "./sprites";
+import { Ground } from "./ground";
 
 const atlas = () => ({ albedo: new THREE.Texture(), normal: new THREE.Texture(), frames: [{ x: 0, y: 0, w: 4, h: 4 }], width: 4, height: 4 }) as never;
 
 describe("floors under every actor", () => {
+  it("keeps ordinary terrain and the coast under placed stumps before, during and after a skylight trip", () => {
+    const terrain = new THREE.Mesh();
+    terrain.renderOrder = -1;
+    const coast = new THREE.Mesh();
+    const material = () => new THREE.ShaderMaterial({ uniforms: { uPotionSky: { value: 0 } } });
+    const ground = Object.assign(Object.create(Ground.prototype), { mesh: terrain, coastSurface: coast, plain: material(), beach: material() }) as Ground;
+    const stump = asFloor(new SpriteBatch(atlas(), 0.1, { scenery: true, flat: true, absolute: true, lie: 2 })).mesh;
+    for (const strength of [0, 1, 0.5, 0]) {
+      ground.potionSky(strength);
+      expect(terrain.renderOrder).toBeLessThan(stump.renderOrder);
+      expect(coast.renderOrder).toBeGreaterThan(terrain.renderOrder);
+      expect(coast.renderOrder).toBeLessThan(stump.renderOrder);
+    }
+  });
   it("draws a floor after the ground and before creatures, scenery and shadows, writing no depth", () => {
     const floor = asFloor(new SpriteBatch(atlas(), 0.1, { scenery: true, flat: true }));
     const creature = new SpriteBatch(atlas(), 0.1, { solid: true, rim: true });

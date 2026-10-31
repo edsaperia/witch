@@ -1,25 +1,48 @@
-// Record the seed-123 wild stump's art, shader gate, instance counts and visible pixels in the allocated capture session.
+// Record the reported world's stump art, shader gate, draw calls and visible pixels in the allocated capture session.
 //   node tools/shot/playtest-render.cjs <served-url> <expected-sha> <output-dir> stumps
 const fs = require('node:fs'), path = require('node:path');
 
 exports.capture = async function capture(page, out) {
-  await page.evaluate(() => {
+  const sites = process.env.STUMP_CELL ? [process.env.STUMP_CELL] : ['16,14', '14,14', '15,14'];
+  for (const cell of sites) {
+    const siteDir = path.join(out, cell);
+    fs.mkdirSync(siteDir, {recursive:true});
+    await captureSite(page, siteDir, cell);
+  }
+};
+
+async function captureSite(page, out, cell) {
+  await page.evaluate(cell => {
     const w = window.witch, g = w.game;
     w.manual = true;
     w.view.render(g.clock.time,true);
-    const marker = w.view.markerCache.list.find(m => m.key !== g.map.centreCell.join(',') &&
+    const marker = w.view.markerCache.list.find(m => m.key === cell && m.key !== g.map.centreCell.join(',') &&
       g.map.playable(...m.cell) && !g.party.areas.has(m.key) && !g.party.ruined?.has(m.key));
-    if (!marker) throw Error('Seed 123 has no wild stump in the marker list');
+    if (!marker) throw Error('Expected playable wild stump missing from marker list at ' + cell);
     window.stumpFixture = marker;
     g.tuning.groundCover.budgetMs = Infinity;
     const at = w.shot('at:' + marker.x + ',' + (marker.z + 7));
     if (!at.ok) throw Error(at.say);
-  });
+  }, cell);
   const records = [];
   async function frame(label) {
     const record = await page.evaluate(() => {
       const {game:g,view:v} = window.witch, m = window.stumpFixture;
-      v.render(g.clock.time,true); v.renderer.getContext().finish();
+      // Count actual WebGL draws inside each existing stump mesh's render callbacks.
+      // Arrival can create batches mid-frame; the next frame can instrument those too.
+      const calls = {}, restore = [];
+      for (const [key,b] of v.island.stumpBatches) {
+        calls[key] = 0;
+        for (const mesh of b.meshes) {
+          const before = mesh.onBeforeRender, after = mesh.onAfterRender;
+          let entered = 0;
+          mesh.onBeforeRender = function(...args) { before.apply(this,args); entered=v.renderer.info.render.calls; };
+          mesh.onAfterRender = function(...args) { calls[key]+=v.renderer.info.render.calls-entered; after.apply(this,args); };
+          restore.push(() => { mesh.onBeforeRender=before; mesh.onAfterRender=after; });
+        }
+      }
+      try { v.render(g.clock.time,true); v.renderer.getContext().finish(); }
+      finally { for(const reset of restore) reset(); }
       const descriptor = v.markerArt.stump(m.cell);
       const spec = descriptor?.spec;
       const id = spec && [spec.species,spec.area ?? '',spec.seed,spec.yaw.toFixed(3),spec.biome ?? ''].join(':') +
@@ -29,7 +52,9 @@ exports.capture = async function capture(page, out) {
         screen:v.screenOf(m.x,0,m.z), enabled:g.tuning.runeMarkers.stump?.on, specId:id,
         artArrived:v.assets.stumps.has(id), pendingAssets:v.assets.pending,
         batchCount:v.island.stumpBatches.size, targetInstances:batch?.count ?? 0,
-        meshes:batch?.meshes.map(mesh=>({name:mesh.name,visible:mesh.visible,layers:mesh.layers.mask})) ?? [],
+        targetDrawCalls:calls[id] ?? null, terrainOrder:v.ground.mesh.renderOrder,
+        meshes:batch?.meshes.map(mesh=>({name:mesh.name,visible:mesh.visible,layers:mesh.layers.mask,
+          order:mesh.renderOrder,depthWrite:mesh.material.depthWrite,depthTest:mesh.material.depthTest})) ?? [],
         shaderGate:{active:v.shaderDrawStatus.active, skipped:v.shaderDrawStatus.skipped,
           submitted:v.shaderDrawStatus.submitted, fallback:v.shaderDrawStatus.fallback} };
     });
@@ -66,4 +91,4 @@ exports.capture = async function capture(page, out) {
     },distance);
     await frame(label);
   }
-};
+}

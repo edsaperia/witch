@@ -71,7 +71,7 @@ node tools/shot/shot.cjs creature:fox@1 previews/shot/fox.png zoom=0
 
 ## `stump-diagnostic.cjs`
 
-Record the seed-123 wild stump's art, shader gate, instance counts and visible pixels in the allocated capture session.
+Record the reported world's stump art, shader gate, draw calls and visible pixels in the allocated capture session.
 
 ```
 node tools/shot/playtest-render.cjs <served-url> <expected-sha> <output-dir> stumps
