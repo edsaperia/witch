@@ -1,5 +1,7 @@
 # The run
 
+Native pause-key isolation (#1522, 2026-10-31): rejected Enter/NumpadEnter/Space keydown and keyup events aimed outside the pause UI cancel the browser default as well as propagation, so they cannot activate an underlying focused button. Opening pause focuses its visible button container with tabindex=-1 after mounting: immediate Enter/Space is cancelled, the first native Tab reaches Controls, and activation on a focused button still works. The container opens no corner panel, so the existing pad Back resumes immediately; Back in an explicitly opened corner panel closes that panel as before. Tab/Shift+Tab and arrows retain native defaults; resume does not restore old underlying focus. Native controls inside pause, Settings and the potion lab retain their existing defaults/routing. This preserves #1523's potion-lab Escape and single-step exceptions. Focused tests cover cancellation, native navigation, inside controls and focus; the coordinator owns real-browser acceptance.
+
 Pause input stack (#1495, Ed's approved architecture review, 2026-10-30):
 `platform/inputStack.ts` owns the page's registered overlay order. Pause is the
 first migrated panel; chart, Studio, zoo, DJ booth, creator, telescope and Settings
