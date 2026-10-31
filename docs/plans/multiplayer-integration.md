@@ -10,6 +10,8 @@ Latest rulings in `docs/backlog/platform.md` supersede its older notes: browser 
 
 Guest arrival/departure follows the telephone design, with no new map indicators. Shared host hats/brooms/bags and exclusive broom parts must not be duplicated. Guest equipment, face/clothes and personal browser settings need separate presentation/ownership adapters. Room placement remains Ed's camera-authoritative layout, supplied by the house owner.
 
+Ed ruling in this owner chat,2026-10-31: the telephone uses a menu that slides in **from the left like the other stations**, superseding the older bottom-menu wording. Telephone UI uses the existing SlideIn left/220ms behavior. Canonical6544955800 assigns new telephone/session modules, additive telephone use-kind/config/render branch and narrow main step/render/night call sites; save hook waits until1526 is on prototype, audio hooks wait until1539 is live. No shared room/wake/audio rewrites. The new telephone protocol remains undeployed until fresh canonical review and Ed approval; live relay is still7fb7aff67.
+
 Ed ruling in this owner chat, 2026-10-31 (recorded on PR #1538, comment6544237613): returning from a friend's game starts a **fresh solo night**, not the interrupted saved night. Successful permanent unlocks remain kept/shared. Clear/replace only the participating slot's interrupted-night checkpoint at the reviewed session transition, never its permanent collection or another slot, and never write the host's multiplayer snapshot as the guest's solo night. Exact crash/reload/failed-call transition boundaries still need explicit lifecycle tests.
 
 ## Current source audit

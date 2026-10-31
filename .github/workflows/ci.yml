@@ -201,6 +201,8 @@ jobs:
       - run: npm ci
       - name: Full or related unit tests
         run: node tools/ci/run-unit.mjs
+      - name: Relay protocol and admission tests
+        run: npm --prefix server ci && npm --prefix server test
       - run: npm run typecheck
       - name: Unit selection and wall-clock evidence
         if: always()

@@ -1,5 +1,11 @@
 # Witch online relay
 
+## Telephone signaling under review (not deployed)
+
+PR1538 adds `telephone` registration with a seven-digit number, `available` presence, `dial`, `answer`, `decline` and `cancel-call`. Only an explicit answer promotes the exact caller socket to host and answerer socket to guest. No snapshot/input authority is granted while ringing; no bearer token is disclosed. Existing token invitations remain unchanged. One pending call per socket, at most the room capacity in pending calls,30second ring deadline; stepping away, declining, canceling or disconnecting clears both ends. Direct invitation-room admission can exhaust capacity after ringing starts, so answer checks capacity again. Number registration is ephemeral and does not list off-phone witches. This is still two-person-only signaling, not completed normal-game integration or a deployed protocol.
+
+`WITCH_MAX_CONNECTIONS` and `WITCH_MAX_ROOMS` now override the CLI's positive-integer caps; the coordinator recommends8/4 on512MB instances. CI's check job now installs server dependencies and runs its sequential protocol tests. The live Render revision remains7fb7aff67 until fresh review/deployment approval.
+
 ## Public playtest configuration (PR1538)
 
 The separate online page already uses this relay. Normal-game telephone/audio/stations/guest-room/save integration is still pending. Public CLI now requires `HOST=0.0.0.0`, supplied `PORT`, full 40-character lowercase reviewed source `WITCH_SHA`, and `WITCH_ALLOWED_ORIGINS=https://edsaperia.github.io`. Missing origins/SHA fail startup. Exact comma-separated origins only: no wildcards, paths, opaque null or missing Origin. HTTP is allowed only for explicitly configured loopback origins. Library createRelay defaults permit origin-less local tests; public CLI does not.

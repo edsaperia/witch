@@ -10,6 +10,8 @@ export interface RelayOptions {
   endpoint: string;
   room: string;
   token?: string;
+  /** Register only while using the ordinary-game telephone; an explicit answer assigns host/guest. */
+  telephone?: boolean;
   heartbeatMs?: number;
   socket?: (url: string) => RelaySocket;
   onMessage(message: Record<string, unknown>): void;
@@ -27,15 +29,18 @@ export function connectRelay(options: RelayOptions) {
   if (!(heartbeatMs > 0 && heartbeatMs < ONLINE_TIMING.dropMs)) throw new Error("Invalid heartbeat interval");
   const ws = (options.socket ?? (endpoint => new WebSocket(endpoint) as unknown as RelaySocket))(url.href);
   let stopped = false, timer: ReturnType<typeof setInterval> | undefined;
-  const send = (type: string, payload?: unknown): boolean => {
+  let role: "host" | "guest" | null = options.telephone ? null : options.token ? "guest" : "host";
+  const sendMessage = (message: Record<string, unknown>): boolean => {
     if (stopped || ws.readyState !== 1) return false;
-    ws.send(JSON.stringify({ protocol: 1, type, ...(payload === undefined ? {} : { payload }) }));
-    return true;
+    ws.send(JSON.stringify({ protocol: 1, ...message })); return true;
+  };
+  const send = (type: string, payload?: unknown): boolean => {
+    return sendMessage({ type, ...(payload === undefined ? {} : { payload }) });
   };
   const cleanup = () => { if (timer !== undefined) clearInterval(timer); timer = undefined; };
   ws.addEventListener("open", () => {
     if (stopped) return;
-    ws.send(JSON.stringify({ protocol: 1, type: options.token ? "join" : "host", room: options.room, ...(options.token ? { token: options.token } : {}) }));
+    sendMessage(options.telephone ? { type: "telephone", number: options.room } : { type: options.token ? "join" : "host", room: options.room, ...(options.token ? { token: options.token } : {}) });
     timer = setInterval(() => send("heartbeat"), heartbeatMs);
   });
   ws.addEventListener("message", event => {
@@ -44,17 +49,26 @@ export function connectRelay(options: RelayOptions) {
       if (typeof event.data !== "string") throw new Error("Invalid relay message");
       const m = JSON.parse(event.data) as Record<string, unknown>;
       if (!m || typeof m !== "object" || m.protocol !== 1 || typeof m.type !== "string") throw new Error("Incompatible relay message");
+      if (options.telephone && m.type === "call-connected") {
+        if (m.role !== "host" && m.role !== "guest" || m.player !== (m.role === "host" ? 0 : 1)) throw new Error("Invalid telephone role");
+        role = m.role;
+      }
       options.onMessage(m);
     } catch (error) { options.onError(error instanceof Error ? error : new Error("Invalid relay message")); }
   });
   ws.addEventListener("error", () => { if (!stopped) options.onError(new Error("Relay connection failed")); });
   ws.addEventListener("close", () => { cleanup(); if (!stopped) { stopped = true; options.onClose(); } });
   return {
-    sendInput: (payload: unknown) => options.token ? send("input", payload) : false,
-    sendState: (payload: unknown) => !options.token ? send("state", payload) : false,
+    sendInput: (payload: unknown) => role === "guest" ? send("input", payload) : false,
+    sendState: (payload: unknown) => role === "host" ? send("state", payload) : false,
+    dial: (number: string) => options.telephone && /^[1-9][0-9]{6}$/.test(number) ? sendMessage({ type: "dial", number }) : false,
+    answer: () => options.telephone ? send("answer") : false,
+    decline: () => options.telephone ? send("decline") : false,
+    cancelCall: () => options.telephone ? send("cancel-call") : false,
+    available: (on: boolean) => options.telephone ? send("available", on) : false,
     sendReady: () => send("ready"),
     sendProgress: (sequence: number) => send("progress", sequence),
-    sendActive: () => options.token ? send("active") : false,
+    sendActive: () => role === "guest" ? send("active") : false,
     close() { if (stopped) return; stopped = true; cleanup(); ws.close(); },
   };
 }

@@ -3,6 +3,7 @@ import { randomBytes } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { WebSocketServer, WebSocket } from 'ws';
 import { bucket, limitsWith, originSet, relayEnvironment, sendBounded } from './guards.mjs';
+import { telephoneDirectory } from './telephone.mjs';
 
 /** Relay only: the host browser owns all simulation and permanent outcomes. */
 export function createRelay({ dropMs = 5000, joiningGraceMs = 600000, joiningStallMs = 90000, hostJoiningDropMs = 20000, checkMs = 250, now = Date.now, log = line => console.info(JSON.stringify(line)), build = process.env.WITCH_SHA ?? 'local-unidentified', allowedOrigins, limits: overrides } = {}) {
@@ -34,8 +35,13 @@ export function createRelay({ dropMs = 5000, joiningGraceMs = 600000, joiningSta
   const send = (ws, message) => {
     sendBounded(ws, message, limits, stop);
   };
+  const telephone = telephoneDirectory({ send, stop, rooms, roomLimit: limits.rooms, now });
   wss.on('connection', ws => {
     let room, role;
+    ws.assignRoom = (assigned, assignedRole) => {
+      room = assigned; role = assignedRole; ws.onlineRoom = room; ws.onlineRole = role;
+      ws.joinedAt = ws.advancedAt = now(); ws.progress = -1; ws.renderReady = ws.playable = false;
+    };
     ws.connectionNumber = ++connectionNumber;
     ws.lastMessage = now();
     ws.joinedAt = ws.advancedAt = now(); ws.progress = -1; ws.playable = false;
@@ -50,6 +56,11 @@ export function createRelay({ dropMs = 5000, joiningGraceMs = 600000, joiningSta
       try { m = JSON.parse(bytes.toString()); } catch { stop(ws, 'protocol', 1008, 'Invalid JSON'); return; }
       if (!m || typeof m !== 'object' || Array.isArray(m) || m.protocol !== 1) { stop(ws, 'protocol', 1008, 'Incompatible protocol'); return; }
       ws.lastMessage = now();
+      if (telephone.handle(ws, m)) return;
+      if (ws.onlineRole === 'telephone') {
+        if (m.type !== 'heartbeat') stop(ws, 'protocol', 1008, 'Message not permitted');
+        return;
+      }
       if (!room) {
         if (m.type === 'host' && typeof m.room === 'string' && /^\d{7}$/.test(m.room) && !rooms.has(m.room)) {
           if (rooms.size >= limits.rooms) { stop(ws, 'capacity', 1013, 'Relay full'); return; }
@@ -88,6 +99,7 @@ export function createRelay({ dropMs = 5000, joiningGraceMs = 600000, joiningSta
     });
     ws.on('error', () => { ws.closeRule ??= 'socket-error'; });
     ws.on('close', code => {
+      telephone.closed(ws);
       log({ event: 'relay-close', connection: ws.connectionNumber, role: role ?? 'unassigned', rule: ws.closeRule ?? 'client-close', detail: ws.closeDetail ?? '', code, silenceMs: now() - ws.lastMessage, progressSilenceMs: now() - ws.advancedAt, progress: ws.progress, joiningMs: now() - ws.joinedAt, limitMs: ws.closeLimit });
       if (!room) return;
       if (role === 'host') {
@@ -101,6 +113,7 @@ export function createRelay({ dropMs = 5000, joiningGraceMs = 600000, joiningSta
     });
   });
   const timer = setInterval(() => {
+    telephone.check();
     for (const ws of wss.clients) {
       if (ws.closeRule) continue;
       if (!ws.onlineRole && now() - ws.joinedAt >= limits.handshakeMs) { stop(ws, 'handshake', 1008, 'Handshake deadline', true); continue; }

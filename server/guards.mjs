@@ -37,7 +37,10 @@ export function relayEnvironment(env) {
   if (!local && (!allowedOrigins || !/^[a-f0-9]{40}$/.test(env.WITCH_SHA ?? ''))) throw new Error('Public relay requires WITCH_ALLOWED_ORIGINS and full WITCH_SHA');
   const port = Number(env.PORT ?? 8787);
   if (!Number.isSafeInteger(port) || port < 1 || port > 65535) throw new Error('Invalid relay port');
-  return { host, port, allowedOrigins, build: env.WITCH_SHA ?? 'local-unidentified' };
+  const limits = {};
+  for (const [key, name] of [['connections', 'WITCH_MAX_CONNECTIONS'], ['rooms', 'WITCH_MAX_ROOMS']]) if (env[name] !== undefined) limits[key] = Number(env[name]);
+  limitsWith(limits);
+  return { host, port, allowedOrigins, limits, build: env.WITCH_SHA ?? 'local-unidentified' };
 }
 
 /** Check the serialized message too: do not queue a payload which crosses the outgoing budget. */
