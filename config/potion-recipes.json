@@ -828,7 +828,7 @@
     "effect": "the-audience",
     "name": "The Audience",
     "description": "Amplify existing watching-tree lean and lag until the forest visibly follows her passage.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 64
   },
   {
