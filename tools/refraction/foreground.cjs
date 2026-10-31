@@ -3,9 +3,10 @@
 // No browser/server launch or simulation step. Saves OFF/ON/OFF-return at five lateral positions and rejects an empty foreground case.
 const fs = require('node:fs/promises'), path = require('node:path');
 const { capturePair } = require('./capture-pair.cjs');
+const { installCaptureHold, restoreCaptureHold, probeRenderDrift } = require('./capture-hold.cjs');
 
 async function captureForeground(page, expectedSha, output, options = {}) {
-  const before = await page.evaluate(async requested => {
+  const before = await page.evaluate(async ({ requested, creatureId }) => {
     const w = window.witch, g = w.game, v = w.view;
     if (g.tuning.bare || v.fly || v.telescope) throw Error('Require ordinary clothed ground view');
     if (g.mushrooms?.trips?.[g.witches[0]?.id ?? 0]) throw Error('Use an ordinary no-potion foreground scene');
@@ -13,13 +14,16 @@ async function captureForeground(page, expectedSha, output, options = {}) {
     const fire = requested ? fires.find(f => Math.hypot(f.x - requested.x, f.z - requested.z) < 0.01)
       : fires.sort((a, b) => Math.hypot(a.x - g.witch.x, a.z - g.witch.z) - Math.hypot(b.x - g.witch.x, b.z - g.witch.z))[0];
     if (!fire) throw Error('Require a real existing campfire; no synthetic emitter is installed');
+    const creature = creatureId === null ? null : g.creatures.find(c => c.id === creatureId && c.friendly && !c.gone && !c.boss && !c.leashed);
+    if (creatureId !== null && !creature) throw Error('creatureId must identify an existing friendly, unleashed, non-boss creature');
     // Keep the original objects in-page: shot() replaces both rather than editing them.
     if (window.__refractionForeground) throw Error('Foreground staging already active');
     await v.assets.whenIdle();
-    window.__refractionForeground = { witch: g.witch, camera: g.camera, manual: w.manual, enabled: v.post.refractionEnabled };
+    window.__refractionForeground = { witch: g.witch, camera: g.camera, manual: w.manual, enabled: v.post.refractionEnabled,
+      creature, creaturePosition: creature && { x: creature.x, z: creature.z, cell: creature.cell } };
     w.manual = true;
-    return { fire: { x: fire.x, z: fire.z, scale: fire.scale }, time: g.clock.time };
-  }, options.fire ?? null);
+    return { fire: { x: fire.x, z: fire.z, scale: fire.scale }, time: g.clock.time, creatureId: creature?.id ?? null };
+  }, { requested: options.fire ?? null, creatureId: options.creatureId ?? null });
 
   const stage = async (x, z) => page.evaluate(async ({ x, z, time, fire }) => {
     const w = window.witch, v = w.view, g = w.game;
@@ -30,8 +34,9 @@ async function captureForeground(page, expectedSha, output, options = {}) {
     v.render(time); await v.assets.whenIdle();
     for (let i = 0; i < 4; i++) v.render(time);
     if (g.clock.time !== time) throw Error('Foreground staging advanced the simulation clock');
-    const batch = v.witchBatch, mesh = batch.mesh, u = mesh.material.uniforms;
-    if (!batch.items.length) throw Error('Witch body not visible: staging refused');
+    const batch = v.witchBatch.items.length ? v.witchBatch : v.bareBatch;
+    if (!batch?.items.length || batch.items[0].frame.h !== v.witchFrameH) throw Error('Witch body not visible in either batch: staging refused');
+    const mesh = batch.mesh, u = mesh.material.uniforms;
     const nearest = v.worldFires.filter(f => f.scale > 0.1).sort((a, b) => Math.hypot(a.x - x, a.z - z) - Math.hypot(b.x - x, b.z - z))[0];
     if (!nearest || Math.hypot(nearest.x - fire.x, nearest.z - fire.z) > 0.01) throw Error('Another fire became nearest; choose an isolated real fire');
     const bend = p => {
@@ -60,7 +65,7 @@ async function captureForeground(page, expectedSha, output, options = {}) {
     const qx = Math.max(box.left, Math.min(box.right, shape.x)), qy = Math.max(box.bottom, Math.min(box.top, shape.y));
     const ellipseRadius = Math.hypot((qx - shape.x) / shape.z, (qy - shape.y) / shape.w);
     const depth = Math.max(...points.map(p => p[2]));
-    return { witch: { x: g.witch.x, z: g.witch.z }, camera: v.camera.position.toArray(), bodyEnvelope: box,
+    return { witch: { x: g.witch.x, z: g.witch.z }, batch: batch === v.bareBatch ? 'bareBatch' : 'witchBatch', camera: v.camera.position.toArray(), bodyEnvelope: box,
       fireShape: shape.toArray(), supportDepth, farthestBodyDepth: depth,
       foreground: depth < supportDepth, overlapsPlume: ellipseRadius < 0.8, ellipseRadius,
       lowResolution: v.post.scene.width ? [v.post.scene.width, v.post.scene.height] : null };
@@ -77,20 +82,57 @@ async function captureForeground(page, expectedSha, output, options = {}) {
     if (distance === null) throw Error('No verified foreground/body-plume overlap: choose another existing fire; never accept an empty guard case');
     const stages = [];
     for (const [i, lateral] of [-2, -1, 0, 1, 2].entries()) {
-      const metadata = await stage(before.fire.x + lateral, before.fire.z + distance);
+      let metadata = await stage(before.fire.x + lateral, before.fire.z + distance);
       const directory = path.join(output, `crossing-${i}`);
-      const pair = await capturePair(page, expectedSha, directory, 'fire');
-      const record = { lateral, ...metadata, pair };
+      const drift = await page.evaluate(probeRenderDrift);
+      metadata = await stage(before.fire.x + lateral, before.fire.z + distance);
+      const hold = await page.evaluate(installCaptureHold);
+      let pair;
+      try {
+        await page.screenshot({ timeout: 120000 }); // Compile/warm SwiftShader before the measured screenshots.
+        pair = await capturePair(page, expectedSha, directory, 'fire');
+        // With View update held, SpriteBatch.set cannot undo this temporary visibility mask.
+        await page.evaluate(time => {
+          const v = window.witch.view, state = window.__refractionCaptureHold;
+          state.maskVisibility = [v.witchBatch, v.bareBatch].filter(Boolean).flatMap(b => b.meshes).map(mesh => [mesh, mesh.visible]);
+          for (const [mesh] of state.maskVisibility) mesh.visible = false;
+          v.post.refractionEnabled = false; v.render(time);
+        }, before.time);
+        try { await page.screenshot({ path: path.join(directory, 'off-nowitch.png'), timeout: 120000 }); }
+        finally { await page.evaluate(() => { for (const [mesh, visible] of window.__refractionCaptureHold.maskVisibility) mesh.visible = visible; }); }
+      } finally { await page.evaluate(restoreCaptureHold); }
+      const record = { lateral, ...metadata, drift, hold, pair };
       await fs.writeFile(path.join(directory, 'foreground.json'), JSON.stringify(record, null, 2)); stages.push(record);
     }
     if (!stages.some(s => s.foreground && s.overlapsPlume)) throw Error('Crossing lost the required foreground overlap');
-    const result = { expectedSha, ...before, distance, stages, limitation: 'Staged quad envelopes/depth only; inspect opaque witch pixels in OFF/ON/OFF-return diffs. No pixel, foreground, GPU or memory pass is asserted. Creature crossing is not included.' };
+    const creatures = [];
+    if (before.creatureId !== null) for (const [i, lateral] of [-2, 0, 2].entries()) {
+      const metadata = await page.evaluate(async ({ fire, distance, lateral, time }) => {
+        const w = window.witch, v = w.view, c = window.__refractionForeground.creature;
+        const result = w.shot(`at:${fire.x + 8},${fire.z + distance}`);
+        if (!result.ok) throw Error(result.say);
+        c.x = fire.x + lateral; c.z = fire.z + distance; c.cell = w.game.map.cellSafe(c.x, c.z).cell;
+        v.post.refractionEnabled = true; v.render(time); await v.assets.whenIdle();
+        for (let j = 0; j < 4; j++) v.render(time);
+        return { id: c.id, species: c.species, level: c.level, x: c.x, z: c.z, camera: v.camera.position.toArray(), limitation: 'Real existing creature; body overlap and actual rig/sprite depth require image inspection, not inferred from the witch envelope.' };
+      }, { fire: before.fire, distance, lateral, time: before.time });
+      const directory = path.join(output, `creature-${i}`), hold = await page.evaluate(installCaptureHold);
+      try {
+        await page.screenshot({ timeout: 120000 });
+        const pair = await capturePair(page, expectedSha, directory, 'fire');
+        const record = { lateral, ...metadata, hold, pair }; creatures.push(record);
+        await fs.writeFile(path.join(directory, 'foreground.json'), JSON.stringify(record, null, 2));
+      } finally { await page.evaluate(restoreCaptureHold); }
+    }
+    const result = { expectedSha, ...before, distance, stages, creatures, limitation: 'Staged quad envelopes/depth only; inspect opaque body pixels in OFF/ON/OFF-return diffs. No pixel, foreground, GPU or memory pass is asserted.' };
     await fs.writeFile(path.join(output, 'foreground.json'), JSON.stringify(result, null, 2)); return result;
   } finally {
+    await page.evaluate(restoreCaptureHold);
     await page.evaluate(() => {
       const w = window.witch, saved = window.__refractionForeground;
       if (!saved) return;
       w.game.witch = saved.witch; w.game.camera = saved.camera;
+      if (saved.creature) Object.assign(saved.creature, saved.creaturePosition);
       w.view.post.refractionEnabled = saved.enabled; w.manual = saved.manual; delete window.__refractionForeground;
     });
   }

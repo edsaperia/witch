@@ -25,12 +25,12 @@ async function capturePair(page, expectedSha, output, kind, requireCombinedPotio
   }, { enabled, time: state.time });
   await fs.mkdir(output, { recursive: true });
   try {
-    await render(false); const off = await page.screenshot({ path: path.join(output, 'off.png') });
+    await render(false); const off = await page.screenshot({ path: path.join(output, 'off.png'), timeout: 120000 });
     const forms = await render(true);
     if (requireCombinedPotion && !(forms.potion.wobble > 0 && forms.potion.canopy > 0)) throw Error('Stage actual active wobble and the canopy grading potion together; combined comparison refused');
     if (!forms.states.some(s => (kind === 'fire' ? s[1] < 0.5 : s[1] >= 0.5))) throw Error(`No active ${kind} at the staged clock; comparison refused`);
-    const on = await page.screenshot({ path: path.join(output, 'on.png') });
-    await render(false); const returned = await page.screenshot({ path: path.join(output, 'off-return.png') });
+    const on = await page.screenshot({ path: path.join(output, 'on.png'), timeout: 120000 });
+    await render(false); const returned = await page.screenshot({ path: path.join(output, 'off-return.png'), timeout: 120000 });
     if (JSON.stringify(await version()) !== JSON.stringify(served)) throw Error('Build changed during capture');
     const result = { expectedSha, served, kind, ...state, forms, offPngByteIdentity: off.equals(returned), onPngDiffers: !off.equals(on), limitation: 'Capture only: no GPU timing, allocation/memory measurement or automatic foreground acceptance. PNG byte comparisons are not pixel-diff counts. Caller verifies full CI source SHA and scene comparability.' };
     await fs.writeFile(path.join(output, 'capture.json'), JSON.stringify(result, null, 2));

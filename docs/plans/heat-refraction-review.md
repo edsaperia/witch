@@ -117,3 +117,43 @@ the checks. No creature crossing is supplied in this first follow-up.
 
 NaN markers, moving-camera screen edges, clock/island/quality cases, potion-local
 signal isolation and GPU/memory acceptance remain outside this driver and unaccepted.
+
+### Ordinary-scene repeat-render correction (canonical6547156299)
+
+The 0cb56c2 run is NOT a foreground pass: dream crossings had zero opaque-body
+differences but a tiny dim/blurred mask; ordinary crossings had per-render noise
+comparable to the alleged signal. The revised helper accepts the first real body
+in witchBatch or bareBatch (not merely a fallen hat). Every screenshot now has a
+120 s timeout and each crossing warms a screenshot before measurement.
+
+Each witch stage records `drift`: one consecutive full View.render at fixed game
+time, with changed camera state, geometry-attribute hashes and numerical/vector
+uniforms listed by object/resource name. This distinguishes state changes from a
+guess based on particle-like pixels. Definite source-level repeat-render mutations
+include camera hill clearance in view/camera.ts (`camLift` eases by .35/.06 per
+call, without dt) and canopy reach in View.render (.08 per call). Loading-mist
+time follows performance.now, separately from the simulation clock. These facts
+do not establish which one caused every ordinary-scene pixel difference; the
+canonical run must read the resource diagnostics and OFF-return images.
+
+For the trio itself, `capture-hold.cjs` temporarily replaces only this page's
+View.render with a Post redraw of the already prepared scene/camera. It neither
+advances View's camera/effect update state nor removes particles/mist from the
+scene; existing buffers, lights and uniforms stay as staged. Refraction toggle
+still goes through the real Post composite. No game code, clock, global random
+generator, potion behavior or production pause policy changes. The exact prior
+render descriptor (including a runner wrapper) is restored in finally, along
+with temporary mask visibility; the outer helper restores actor/camera/manual/
+toggle. The Node hold tests cover bypass, time-advance refusal, nested refusal,
+error/backdrop cleanup and inherited/own descriptor restoration. This is a
+test-only diagnostic mode, not a production rendering fix or visual acceptance.
+
+`off-nowitch.png` hides both body batches only during held redraw, so a subsequent
+SpriteBatch.set cannot turn them back on. It is input for canonical opaque-mask
+analysis, not an automatic pixel statistic. For an optional cheap creature pass,
+set `creatureId` alongside `fire` to the ID of an existing friendly, non-boss,
+unleashed creature. Three extra lateral positions borrow that actual creature
+without changing species/art and restore its position/cell afterward. Its camera
+and pose are saved in the creature folders; inspect actual rig/sprite overlap
+and depth rather than applying the witch quad envelope to a different actor.
+This optional stage has not been browser-run by the builder.
