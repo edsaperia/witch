@@ -1,6 +1,7 @@
 import type { Game } from '../../rules/game';
 import { effectEnvelope, potionRecipe } from '../../rules/potionRecipes';
 import { potionSettings } from '../../rules/potionSettings';
+import { hueSpinPhase } from '../../rules/potionCycle';
 
 /** A fallback for existing/future trips; bespoke vision audio owns its own treatment. */
 export function potionFilterState(g: Game) {
@@ -9,9 +10,12 @@ export function potionFilterState(g: Game) {
   const amount = recipe && !['night-vision', 'heat-vision'].includes(recipe.effect)
     ? effectEnvelope(trip, g.clock.time) * p.mix : 0;
   const small = recipe?.effect === 'miniature';
+  const spin = recipe?.effect === 'hue-spin';
+  const phase = spin ? hueSpinPhase(g) : g.clock.time * p.speed * Math.PI * 2;
+  const depth = spin ? potionSettings('hue-spin').soundDepth : p.motion;
   return { amount, high: small ? 700 : 40,
-    low: small ? 8500 : p.cutoff * Math.pow(2, p.motion * Math.sin(g.clock.time * p.speed * Math.PI * 2)),
-    gain: 1 - amount * p.flutter * (.5 + .5 * Math.sin(g.clock.time * p.speed * Math.PI * 4)) };
+    low: small ? 8500 : p.cutoff * Math.pow(2, depth * Math.sin(phase)),
+    gain: 1 - amount * p.flutter * (.5 + .5 * Math.sin(phase * 2)) };
 }
 
 /** Both existing buses feed a dry/filtered crossfade. No new sources, timers or generated sounds. */

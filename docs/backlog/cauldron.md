@@ -145,7 +145,7 @@ Cheap, from how the game draws (low-res target scaled up, bloom, tilt-shift, ben
 - **Mannequins:** animation frozen; everything slides.
 - **Cutaway:** the camera's near plane pushed in: see inside trees and the treehouse.
 - **Wandering Shadows:** shadows drift away from their owners.
-- **Hue Spin:** the colour grade rotates hue continuously.
+- **Hue Spin:** the colour grade rotates hue continuously. PR #1541 implements recipe #108 with a neutral-preserving RGB rotation in the existing composite pass and a synchronised sweep of existing audio (shared routing from #1536).
 
 Visual references: Qualia Research Institute's replications of psychedelic visuals; PsychonautWiki's Subjective Effect Index (drifting, tracers, symmetrical texture repetition, colour shifting, recursion, scenery slicing, environmental cubism, frame-rate suppression).
 

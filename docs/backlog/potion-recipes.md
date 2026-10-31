@@ -113,7 +113,7 @@ All potions last ten minutes of game time, start at full strength on waking, and
 | 105 | pink + green + turquoise | Mix-up | Coming soon | Creatures wear mismatched fragments of other creatures’ appearances. |
 | 106 | pink + green + white | Mannequins | Coming soon | Everyone freezes in a single pose and slides across the ground. |
 | 107 | pink + turquoise + turquoise | Cutaway | Coming soon | Nearby surfaces disappear, revealing the insides of trees and the treehouse. |
-| 108 | pink + turquoise + white | Hue Spin | Coming soon | Every colour slowly turns into another. |
+| 108 | pink + turquoise + white | Hue Spin | Implemented | Every colour slowly turns into another. |
 | 109 | pink + white + white | Vertigo | Implemented | Treetop flight feels dizzyingly high: a wide, steep view and blurred distant ground exaggerate the drop below. |
 | 110 | red + red + red | Unassigned recipe | Coming soon | This combination has not been assigned an effect yet. |
 | 111 | red + red + orange | Unassigned recipe | Coming soon | This combination has not been assigned an effect yet. |
