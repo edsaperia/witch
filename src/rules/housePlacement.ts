@@ -22,7 +22,7 @@ export const edLayoutRequested = (): boolean => activeLayout;
 export const rotatePlacement = (x: number, z: number, degrees: number) => {
   const a = degrees * Math.PI / 180; return { x: x * Math.cos(a) - z * Math.sin(a), z: x * Math.sin(a) + z * Math.cos(a) };
 };
-/** Explicit opt-in only. Geometry and the caller's published configuration are never mutated. */
+/** Explicit selected configuration. Geometry and the caller's classic source are never mutated. */
 export function applyEdLayout(source: HouseConfig, on = edLayoutRequested()): HouseConfig {
   if (!on) return source;
   source = source.layout?.baseline ?? source;

@@ -1,9 +1,10 @@
 import { field } from "../../config/house/shape.js";
-import { EDITOR_HOUSE as HOUSE_ROOMS, attachedPoint, defaultLayout, exportLayout, floorplanKey, hitItem, isHatZone, itemKind, LayoutHistory, layoutItems, normalAngle, parseLayout, physicalRoom } from "./houseLayout";
+import { EDITOR_HOUSE as HOUSE_ROOMS, attachedPoint, exportLayout, floorplanKey, hitItem, isHatZone, itemKind, LayoutHistory, layoutItems, normalAngle, parseLayout, physicalRoom } from "./houseLayout";
+import { publishedLayout } from "./publishedLayout";
 import { HousePreview, type Frame, type Mapping } from "./housePreview";
 import "./treehouseEditor.css";
 
-const items = layoutItems(), identity = floorplanKey(HOUSE_ROOMS, items), initial = defaultLayout(items, identity), history = new LayoutHistory(structuredClone(initial));
+const items = layoutItems(), identity = floorplanKey(HOUSE_ROOMS, items), initial = publishedLayout(items, identity, new URLSearchParams(location.search)), history = new LayoutHistory(structuredClone(initial));
 const preview = new HousePreview(); let selected = items[0].id, ready = false, zoom = 1;
 const bounds = { x0: Math.min(...HOUSE_ROOMS.rooms.map(r => r.x0)) - 3, x1: Math.max(...HOUSE_ROOMS.rooms.map(r => r.x1)) + 3, z0: Math.min(...HOUSE_ROOMS.rooms.map(r => r.z0)) - 3, z1: Math.max(...HOUSE_ROOMS.rooms.map(r => r.z1)) + 3 };
 const fullFrame = (): Frame => ({ x: (bounds.x0 + bounds.x1) / 2, z: (bounds.z0 + bounds.z1) / 2, width: bounds.x1 - bounds.x0, height: bounds.z1 - bounds.z0 });
