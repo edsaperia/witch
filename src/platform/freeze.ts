@@ -89,7 +89,8 @@ export class Freeze {
       if (inputStack.key(e) || !inputStack.top && e.type === "keydown" && this.shortcut(e)) {
         // Stopping listeners does not stop Enter/Space activating a focused native control behind pause.
         if (this.frozen && inputStack.top === this.layer && ["Enter", "NumpadEnter", "Space"].includes(e.code)
-          && !(e.target as Element | null)?.closest?.(PAUSE_UI.join(","))) e.preventDefault();
+          && (!(e.target as Element | null)?.closest?.(PAUSE_UI.join(","))
+            || (e.target as Element | null)?.matches?.("#pause-btns"))) e.preventDefault();
         e.stopImmediatePropagation();
       }
     };
@@ -134,10 +135,11 @@ export class Freeze {
     // (thawed, a pause-page control the pad or mouse focused lets go: it kept every key from her after, E opening nothing; pause-on-top)
     if (!this.frozen && document.activeElement instanceof HTMLElement && document.activeElement.closest(PAUSE_UI.join(","))) document.activeElement.blur();
     this.onToggle(this.frozen);
-    // onToggle mounts/shows these controls. Start keyboard navigation here instead of an underlying panel or BODY.
-    if (this.frozen && !(document.activeElement as Element | null)?.closest?.(PAUSE_UI.join(","))) {
-      const first = document.querySelector<HTMLButtonElement>("#pause-btns button:not(:disabled)");
-      if (first?.getClientRects().length) first.focus();
+    // Start on the non-activating container: Tab reaches Controls, but an immediate Enter/Space opens nothing.
+    // Keeping the corner panel closed lets the existing pad Back callback resume instead of closing Controls.
+    if (this.frozen) {
+      const panel = document.querySelector<HTMLElement>("#pause-btns");
+      if (panel?.getClientRects().length) { panel.tabIndex = -1; panel.focus(); }
     }
     this.marker.style.display = this.stamp.style.display = this.frozen && !this.quiet ? "block" : "none";
   }
