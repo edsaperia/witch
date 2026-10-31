@@ -11,7 +11,7 @@ Checked 2026-10-31 15:54–16:25 UTC. Candidate served label `dev · b21a00a`; b
 | 1b | OFF identity: candidate (no flag) vs base | **PASS**: only the version label differs (351–410 px, all inside box [900,518]–[949,528], "b21a00a" vs "1ccec66"). |
 | 2a | Campfire, ON vs OFF (`capturePair 'fire'`) | **PASS, with caveats**: inside the form's box 693 px change (max channel 25) vs 696 px / max 1 for the OFF-return noise. The whole-frame numbers are swamped by the sea redrawing differently each render. The witch was not in front of the plume, so the foreground guard was **NOT TESTED** for fire. |
 | 2b | Party-cast wave, ON vs OFF (`capturePair 'ring'`, age 0.20 s of 0.65 s) | **PASS**: 6,141 px change (1.18 %), mean diff 0.391, max 171, bounds [323,107]–[643,438]; OFF-return 0 px. The witch, DJ table and HUD are unchanged. |
-| 3 | Refraction + potion wobble + Thick Canopy grading together (`capturePair …, true`) | **PASS (it composes)**: helper accepted (wobble 1, canopy 1, one fire form); no black frame (black px 14.67 % OFF vs 14.76 % ON = the night sky); no NaN colours seen; source order is refract → wobble (`src/render/post.ts:92–96`). Refraction's own share **can't be isolated** here: the per-render noise is bigger (see 3). |
+| 3 | Refraction + potion wobble + Thick Canopy grading together (`capturePair …, true`) | **PASS (it composes)**: helper accepted (wobble 1, canopy 1, one fire form); no black frame (black px 14.67 % OFF vs 14.76 % ON = the night sky); NaN **not directly checked** (the shader's NaN markers, `uBroken`, were off); source order is refract → wobble (`src/render/post.ts:92–96`). Refraction's own share **can't be isolated** here: the per-render noise is bigger (see 3). |
 | – | Screen edges, camera motion, slowed/paused clock, island swap, quality rung, GPU timing/memory | **NOT TESTED** (outside this brief's time box) |
 | – | Page errors / console errors | **None** on any of 9 page loads |
 
@@ -72,7 +72,7 @@ Helper output (`capture.json` in each folder):
 
 - `capturePair(page, sha, …, 'fire', true)` accepted: `potion.wobble` 1, `potion.canopy` 1, one fire form.
 - Inside the form box: ON vs OFF 2,521 px (max 56); OFF-return vs OFF 3,493 px (max 81). The per-render noise is larger than the effect here, so this proves composition only, not refraction's exact pixels under potions.
-- No black frame, no red/magenta/yellow NaN markers seen (`uBroken` was not switched on).
+- No black or blank frame. NaN was not directly checked: the shader's NaN markers (`uBroken`) were off.
 
 ## SwiftShader cost
 
