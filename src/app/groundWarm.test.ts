@@ -35,3 +35,24 @@ it('invalidates old-world replies and bounds retained program references', async
   warm.tick('new',['wolf','fox']); warm.tick('new',['wolf','fox']); warm.tick('new',['wolf','fox']); expect(prepare).toHaveBeenCalledTimes(2);
   warm.tick('newer',[]); expect(dispose).toHaveBeenCalledOnce();
 });
+it('re-entry in the same context starts a fresh descriptor after cancellation and retains it',async()=>{
+  let eligible=true; const cancelled=deferred<string>(), fresh=deferred<string>();
+  const prepare=vi.fn().mockReturnValueOnce(cancelled).mockReturnValueOnce(fresh);
+  const compile=vi.fn(()=>({ready:()=>true,dispose:vi.fn()}));
+  const warm=new GroundWarm(()=>eligible,prepare,compile);
+  warm.tick('same',['fox']);eligible=false;warm.tick('same',['fox']);
+  cancelled.resolve('stale');await Promise.resolve();
+  eligible=true;warm.tick('same',['fox']);expect(prepare).toHaveBeenCalledTimes(2);
+  fresh.resolve('fresh');await Promise.resolve();warm.tick('same',['fox']);warm.tick('same',['fox']);
+  expect(compile).toHaveBeenCalledExactlyOnceWith('fresh');expect(warm.status.retained).toBe(1);warm.dispose();
+});
+it('re-entry resumes interrupted GPU polling and retains when that GPU reports completion',async()=>{
+  let eligible=true,done=false;const job=deferred<string>(),poll=vi.fn(()=>done);
+  const prepare=vi.fn(()=>job),compile=vi.fn(()=>({ready:poll,dispose:vi.fn()}));
+  const warm=new GroundWarm(()=>eligible,prepare,compile);
+  warm.tick('same',['fox']);job.resolve('fox');await Promise.resolve();warm.tick('same',['fox']);
+  eligible=false;warm.tick('same',['fox']);expect(poll).not.toHaveBeenCalled();
+  done=true;eligible=true;warm.tick('same',['fox']);
+  expect(warm.status.retained).toBe(1);expect(poll).toHaveBeenCalledOnce();
+  expect(prepare).toHaveBeenCalledOnce();expect(compile).toHaveBeenCalledOnce();warm.dispose();
+});

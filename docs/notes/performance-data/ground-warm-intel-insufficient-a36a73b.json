@@ -1,0 +1,102 @@
+{
+  "sha": "a36a73b37fab5765fc7d419d2ed79586ad63c45a",
+  "grant": "ed-1150-slot2",
+  "precedingRelease": "003eb8cc0fad18014fe1d8430784d649fc5e4a0d",
+  "version": {
+    "version": "dev · a36a73b",
+    "built": "2026-10-31T11:12:17.377Z"
+  },
+  "timeoutScale": 1,
+  "budgetMs": 420000,
+  "startedAt": "2026-10-31T12:23:54.087Z",
+  "errors": [],
+  "cpu": [
+    {
+      "at": "2026-10-31T12:23:55.146Z",
+      "percent": 61.95795327057216
+    },
+    {
+      "at": "2026-10-31T12:24:08.139Z",
+      "percent": 57.71516938095008
+    },
+    {
+      "at": "2026-10-31T12:24:18.419Z",
+      "percent": 23.571607306697807
+    },
+    {
+      "at": "2026-10-31T12:24:28.276Z",
+      "percent": 56.62584031678792
+    },
+    {
+      "at": "2026-10-31T12:24:38.223Z",
+      "percent": 54.484800075177375
+    },
+    {
+      "at": "2026-10-31T12:24:48.226Z",
+      "percent": 16.186174217262295
+    },
+    {
+      "at": "2026-10-31T12:24:58.600Z",
+      "percent": 22.31532628031083
+    },
+    {
+      "at": "2026-10-31T12:25:08.407Z",
+      "percent": 57.515429950345734
+    },
+    {
+      "at": "2026-10-31T12:25:18.413Z",
+      "percent": 67.76016540317022
+    },
+    {
+      "at": "2026-10-31T12:25:28.424Z",
+      "percent": 66.15900516976387
+    },
+    {
+      "at": "2026-10-31T12:25:38.389Z",
+      "percent": 63.88481030644626
+    },
+    {
+      "at": "2026-10-31T12:25:48.337Z",
+      "percent": 56.97668711656442
+    },
+    {
+      "at": "2026-10-31T12:25:58.349Z",
+      "percent": 55.37792953593046
+    },
+    {
+      "at": "2026-10-31T12:26:08.412Z",
+      "percent": 58.36554389839868
+    },
+    {
+      "at": "2026-10-31T12:26:18.387Z",
+      "percent": 25.081707437852828
+    },
+    {
+      "at": "2026-10-31T12:26:28.636Z",
+      "percent": 22.904307454217175
+    },
+    {
+      "at": "2026-10-31T12:26:38.443Z",
+      "percent": 18.94711422361748
+    },
+    {
+      "at": "2026-10-31T12:26:44.214Z",
+      "percent": 29.630161923924504
+    }
+  ],
+  "complete": false,
+  "status": "INSUFFICIENT",
+  "note": "Single candidate lifecycle/cache-identity probe. No boot/travel speedup inference; no OS shader-cache purge. Historical666.7ms frame is not a gate.",
+  "served": {
+    "version": "dev · a36a73b",
+    "built": "2026-10-31T11:12:17.377Z"
+  },
+  "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "parallel": true,
+  "midPrepareExit": true,
+  "mapEligibility": true,
+  "midGpuExit": true,
+  "error": "page.waitForFunction: Timeout 90000ms exceeded.\n    at C:\\Users\\edsap\\Documents\\Codex\\2026-10-29\\witch-island-performance\\work\\travel-perf-3\\tools\\bench\\ground-warm.mjs:61:29",
+  "timingsContaminated": false,
+  "endedAt": "2026-10-31T12:26:44.215Z"
+}
