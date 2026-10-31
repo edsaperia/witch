@@ -59,3 +59,5 @@ Friendly route movement is supplied through CombatWorld.friendlyRoute (optional,
 31 Oct playtest item 13 (Ed, PR1552): legends.questCap defaults to 0, so dream selection has no distance tail cut; questLater stays unchanged. Positive explicit caps remain supported and tested at 6. Uncapped quest far values use the map farthest and remain finite in 0–1. The pause panel uses friendRange at 85 m instead of the removed happyRange.
 
 31 Oct playtest item 14 (Ed, PR1552): rhino and unicorn join boar, elk, stag, ram, ibex, hedgehog and woodlouse in LEGENDS.charge.species. Their legend forms use the shared long charge and lane; ordinary youth/adult rhino runner and unicorn beam attacks remain unchanged. Long-charge timing reads legends.json, not their existing per-species movement charge settings.
+
+Long legend charges now feed the existing attackFeel crouch during windup and stretch/rig lunge during run/brake (narrow renderer grant PR1552, 2026-10-31); home releases the pose. A pre-change byte hash pins idle, ordinary windup/lunge/charge, hits and tumbles with no c.run. Generic lane/dust rendering already reads c.run for every charging species.
