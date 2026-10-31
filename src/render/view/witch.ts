@@ -7,6 +7,7 @@ import { updatePotionCaption } from "../potionCaption";
 import { onRoomFloor } from "../../rules/houseRooms";
 import { broomWhere, stationOf } from "../../rules/stations";
 import type { View } from "../view";
+import { captureDodgeEchoes } from "./dodgeEchoes";
 import { PARTY_CAST } from "../../rules/party";
 import { STEP } from "../../rules/game";
 import { stunned } from "../../rules/knock";
@@ -280,6 +281,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   const inHouse = !!(hat && deck?.house?.rooms && onRoomFloor(deck.house.rooms, Hat.down!.x, Hat.down!.z));
   if (hat && inHouse) { const [X, Y, Z] = v.herOffset.on ? letterAt(v.herOffset, hat.x, hat.y, hat.z, groundHeight) : [hat.x, hat.y + deck!.h, hat.z]; hat = { ...hat, x: X, y: Y, z: Z }; }
   v.bareBatch?.set(bare ? (hat ? [...her, { x: hat.x, y: hat.y + groundHeight(hat.x, hat.z), z: hat.z, frame: hatFrame!, flip: hat.flip }] : her) : []);
+  captureDodgeEchoes(v, ht, bare ? v.bareBatch : v.witchBatch, her, wsink, D);
   const lying = drawLeftHats(v);
   // The party's and the beach's witches' shadows, and a small one under her hat (gathering as it comes down).
   v.witchShadows = [...v.partyWitchView.shadows, ...v.beachView.shadows];
