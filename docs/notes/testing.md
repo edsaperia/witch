@@ -1,12 +1,12 @@
 # Testing tools
 
-### Largest-world sleep-cell failure (A7 audit, 2026-10-30)
+### Sleep-cell ownership invariant (A7 audit, 2026-10-30; diagnosed 2026-10-31)
 
-PR #1496 exposed a failure using the largest shipped home world: game seed `123`, world `0`, shape seed `1063814361`, all 64 found kinds (64 roster areas plus home). Newt `#18` sleeps at a point whose `cellSafe` cell is `21,12`, while its assigned `c.cell` is `21,11`. The unchanged first assertion in `src/rules/asleepBeforeParty.test.ts` fails when that file uses `largestWorldTuning(TUNING)`; the other seven sleep cases passed. Root cause (initial placement versus the sleep transition) is not yet established.
+PR #1496 exposed a raw-cell assertion failure using the largest shipped home world: game seed `123`, world `0`, shape seed `1063814361`, all 64 found kinds (64 roster areas plus home). Newt `#18` physically sleeps in cell `21,12`, while its ownership cell `c.cell` is `21,11`. These are intentionally one logical area: Ed's 2026-10-26 legend-area design gives an extra legend cell the ownership of its paired playable cell (`map.legendAreas`, `areaOf`, `sameArea`). The old test and diagnostic incorrectly required physical cell equality.
 
-Reproduce without a browser or production changes: `node tools/ci/sleep-cell-repro.mjs`. Exit `1` reports every mismatched creature in before-party and lost-night states. The focused assertion command is `npx vitest run src/rules/asleepBeforeParty.test.ts --testNamePattern "every creature asleep in its own area" --maxWorkers=1` after substituting the largest-world fixture; the PR retains the original fixture by coordinator instruction `6528047220`. Raw focused failure and the fixture patch are retained in this builder's work folder.
+Reproduce without a browser: `node tools/ci/sleep-cell-repro.mjs all` reports raw physical differences and actual logical ownership mismatches at spawn, new-game initialization, before-party and lost-night stages for the largest, four-area and radius fixtures. Exit `1` means a logical mismatch or an invalid physical-cell exception. A raw difference is accepted only for a legend or its circle baby physically in the explicit legend cell paired to its assigned cell; unrelated areas still fail. `src/rules/sleepCells.test.ts` preserves the exact 14 IDs/roles, checks each pairing, and includes negative cases. No production rules or tuning change is required.
 
-The diagnostic finds the same 14 mismatches in both states:
+The staged proof finds the same 14 raw differences already at initial placement and through both sleep states, with zero logical mismatches. Each row is a boss legend followed by its circle baby. The four-area (5 cells including home) and radius (98 cells) fixtures have zero raw and logical differences at all four stages:
 
 | Species and IDs | Assigned cell | Actual cell |
 |---|---|---|
@@ -18,7 +18,7 @@ The diagnostic finds the same 14 mismatches in both states:
 | polarbear 454, 455 | 19,20 | 19,21 |
 | moth 485, 486 | 22,20 | 21,21 |
 
-After the A7 audit completes, the assigned follow-up is `codex/sleep-cell-fix` from then-current `claude/prototype`: post a root-cause PLAN before any code, make only this bug's permitted rules change, and add the largest-world regression with every assertion intact. Further largest-world rules failures found by this audit belong in this note rather than weakening tests.
+PR #1516's approved PLAN and staged proof establish a test/diagnostic contract correction, not a game sleep bug. Legends are placed by `spawnCreatures`/`legendSpot` and their babies by `pointInCircle` in the extra legend area while retaining the paired ownership cell. `bedOf` preserves the lair or chooses the same circle; sleep introduces no ownership violation. Seven species appear because this world deals seven legends. Future failures must still distinguish physical and logical cells and must not ignore bosses or circle babies indiscriminately.
 
 Fixture limit found during the audit: `legendShare.test.ts` must retain a roster-free radius map. `map.ts` applies `legends.share` through `chooseLegendCells` only in that mode; authored islands deliberately deal their own legends. A trial using the largest authored island therefore exercised a different policy (including 13 legends at share 1), not a newly identified rules defect. The original fixture and all its assertions remain intact.
 
