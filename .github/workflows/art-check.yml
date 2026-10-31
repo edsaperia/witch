@@ -57,6 +57,27 @@ jobs:
           path: .art-check-results
           key: art-results-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: art-results-v1-${{ runner.os }}-
+      - name: Import successful PR task results into the existing cache
+        if: steps.checked.outputs.run == ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs'), path = require('path'), cp = require('child_process');
+            const {pathToFileURL} = require('url');
+            const {importPassedResults} = await import(pathToFileURL(path.resolve('tools/art-check/checked-tree.mjs')).href);
+            const environment = {node:cp.execFileSync('node',['-p','process.version'],{encoding:'utf8'}).trim(),os:process.env.RUNNER_OS,arch:process.arch,browser:process.env.PLAYWRIGHT_VERSION};
+            const {owner,repo} = context.repo;
+            const count = await importPassedResults({github,owner,repo,environment,currentRun:context.runId,info:core.info,
+              saveResult: result => { fs.mkdirSync('.art-check-results',{recursive:true}); fs.writeFileSync(path.join('.art-check-results',`${result.key}.json`),JSON.stringify({schema:1,id:result.id,key:result.key,passed:true})); },
+              readProof: async artifact => {
+                if (artifact.size_in_bytes > 1048576) throw Error('Oversized task proof');
+                const zip = path.join(process.env.RUNNER_TEMP,`task-proof-${artifact.id}.zip`);
+                const {data} = await github.rest.actions.downloadArtifact({owner,repo,artifact_id:artifact.id,archive_format:'zip'});
+                fs.writeFileSync(zip,Buffer.from(data));
+                try { return JSON.parse(cp.execFileSync('unzip',['-p',zip,'art-check-proof.json'],{encoding:'utf8',maxBuffer:1048576})); }
+                finally { fs.unlinkSync(zip); }
+              }});
+            core.info(`Imported ${count} successful task results; current fingerprints still decide every hit`);
       # Every missed result runs; unknown dependency layouts fall back to full coverage.
       - name: Scope
         id: scope
@@ -97,7 +118,7 @@ jobs:
         if: success()
         run: |
           mkdir -p out
-          node --input-type=module -e 'import fs from "node:fs"; import cp from "node:child_process"; fs.writeFileSync("out/art-check-proof.json", JSON.stringify({schema:1,tree:cp.execFileSync("git",["rev-parse","HEAD^{tree}"],{encoding:"utf8"}).trim(),runId:Number(process.env.GITHUB_RUN_ID),environment:{node:process.version,os:process.env.RUNNER_OS,arch:process.arch,browser:process.env.PLAYWRIGHT_VERSION}}));'
+          node --input-type=module -e 'import fs from "node:fs"; import cp from "node:child_process"; const plan=fs.existsSync("out/art-check-plan.json")?JSON.parse(fs.readFileSync("out/art-check-plan.json","utf8")):null; const results=(plan?.tasks??[]).flatMap(t=>{try{const r=JSON.parse(fs.readFileSync(`.art-check-results/${t.key}.json`,"utf8"));return r.schema===1&&r.id===t.id&&r.key===t.key&&r.passed===true?[r]:[];}catch{return[];}}); fs.writeFileSync("out/art-check-proof.json", JSON.stringify({schema:1,tree:cp.execFileSync("git",["rev-parse","HEAD^{tree}"],{encoding:"utf8"}).trim(),runId:Number(process.env.GITHUB_RUN_ID),environment:{node:process.version,os:process.env.RUNNER_OS,arch:process.arch,browser:process.env.PLAYWRIGHT_VERSION},results}));'
       - name: Save exact checked-tree proof
         if: success()
         uses: actions/upload-artifact@v4

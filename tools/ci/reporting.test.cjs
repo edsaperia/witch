@@ -76,3 +76,31 @@ test('real isolated Vitest failure reports its test name, file and assertion lin
     assert.match(run.stdout, /::error .*file=.*failure.test.ts,line=3::.*named assertion fixture.*expected 1 to be 2/);
   } finally { fs.rmSync(dir,{recursive:true,force:true}); }
 });
+
+test('release imports only successful matching-environment task results; changed fingerprints remain misses', async () => {
+  const { importPassedResults } = await import('../art-check/checked-tree.mjs');
+  const environment={node:'v22',os:'Linux',arch:'x64',browser:'1.56.1'}, key='a'.repeat(64), saved=[];
+  const run={id:7,conclusion:'success',head_repository:{full_name:'o/r'}};
+  const proof={schema:1,runId:7,tree:'b'.repeat(40),environment,results:[{schema:1,id:'trees',key,passed:true},{schema:1,id:'failed',key:'c'.repeat(64),passed:false},{schema:1,id:'invalid',key:'../../file',passed:true}]};
+  const github={rest:{actions:{listWorkflowRuns:async()=>({data:{workflow_runs:[run]}}),listWorkflowRunArtifacts:async()=>({data:{artifacts:[{name:'art-check-tree',expired:false}]}})}}};
+  const options={github,owner:'o',repo:'r',environment,currentRun:8,readProof:async()=>proof,saveResult:r=>saved.push(r)};
+  assert.equal(await importPassedResults(options),1); assert.deepEqual(saved,[proof.results[0]]);
+  assert.equal(saved.some(r=>r.key==='d'.repeat(64)),false); // Actual changed task is not manufactured into a cache hit.
+  assert.equal(await importPassedResults({...options,environment:{...environment,node:'v24'}}),0);
+  run.conclusion='failure'; assert.equal(await importPassedResults(options),0);
+});
+
+test('embedded GitHub scripts compile and neither workflow reruns on PR edits', () => {
+  const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+  for (const file of ['.github/workflows/ci.yml','.github/workflows/art-check.yml']) {
+    const text=fs.readFileSync(file,'utf8'), lines=text.split(/\r?\n/); let count=0;
+    assert.doesNotMatch(text,/^\s*- edited\s*$|types:.*\bedited\b/m);
+    for(let i=0;i<lines.length;i++) {
+      const match=lines[i].match(/^(\s*)script: \|$/); if(!match)continue;
+      const indent=match[1].length+2, body=[];
+      for(i++;i<lines.length&&(lines[i].trim()===''||lines[i].search(/\S/)>=indent);i++)body.push(lines[i].slice(indent));
+      i--; new AsyncFunction(body.join('\n')); count++;
+    }
+    assert.ok(count>0);
+  }
+});
