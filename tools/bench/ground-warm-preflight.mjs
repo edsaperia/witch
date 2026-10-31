@@ -28,20 +28,11 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
       if (execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim() !== sha || execFileSync('git',['status','--porcelain','--untracked-files=no'],{encoding:'utf8'}).trim()) throw Error('Prepare requires clean exact candidate checkout');
       const version = JSON.parse(fs.readFileSync(path.join(root,'version.json'),'utf8'));
       if (!version.version.includes(sha.slice(0,7))) throw Error('Prepared build SHA mismatch');
-      const {build} = await import('esbuild');
-      // Use the candidate's real virtual data loader; never replace game data with a test stub.
+      // Use Vite's real virtual data and glob transforms; never replace game data with a test stub.
       process.env.WITCH_SHA = sha;
-      const {loadConfigFromFile} = await import('vite');
+      const {build,loadConfigFromFile} = await import('vite');
       const loaded = await loadConfigFromFile({command:'build',mode:'production'},path.resolve('vite.config.ts'));
-      const overrides = loaded.config.plugins.flat().find(p => p?.name === 'art-overrides');
-      if (typeof overrides?.load !== 'function') throw Error('Candidate art data loader missing');
-      const raw = await overrides.load('\0virtual:art-overrides');
-      await build({entryPoints:['tools/bench/ground-warm-fixture.ts'],bundle:true,platform:'node',format:'esm',target:'es2022',define:loaded.config.define,outfile:path.join(root,'ground-warm-fixture.mjs'),plugins:[{
-        name:'candidate-virtual-data',setup(b) {
-          b.onResolve({filter:/^virtual:art-overrides$/},() => ({path:'art-overrides',namespace:'candidate-data'}));
-          b.onLoad({filter:/.*/,namespace:'candidate-data'},() => ({contents:typeof raw === 'string' ? raw : raw.code,loader:'js'}));
-        },
-      }]});
+      await build({...loaded.config,configFile:false,build:{...loaded.config.build,ssr:'tools/bench/ground-warm-fixture.ts',outDir:root,emptyOutDir:false,rollupOptions:{input:'tools/bench/ground-warm-fixture.ts',output:{entryFileNames:'ground-warm-fixture.mjs'}}}});
       const inventory = Object.fromEntries(files(root).filter(f => !f.endsWith('ground-warm-preflight.json')).map(f => [path.relative(root,f),hash(f)]));
       fs.writeFileSync(path.join(root,'ground-warm-preflight.json'),JSON.stringify({sha,inventory}));
     }
