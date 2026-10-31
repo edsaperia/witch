@@ -16,9 +16,9 @@ export function houseArtLayout(H: HouseConfig): HouseArtLayout | undefined {
   let hash = 2166136261; for (const c of JSON.stringify(H)) hash = Math.imul(hash ^ c.charCodeAt(0), 16777619);
   const result = { identity: `ed-${(hash >>> 0).toString(16)}`, config: H }; artLayouts.set(H, result); return result;
 }
-let activeLayout: boolean | undefined;
+let activeLayout = false;
 export const setEdLayoutActive = (on: boolean): void => { activeLayout = on; };
-export const edLayoutRequested = (): boolean => activeLayout ?? (typeof location !== "undefined" && new URLSearchParams(location.search).get("layout") === "ed");
+export const edLayoutRequested = (): boolean => activeLayout;
 export const rotatePlacement = (x: number, z: number, degrees: number) => {
   const a = degrees * Math.PI / 180; return { x: x * Math.cos(a) - z * Math.sin(a), z: x * Math.sin(a) + z * Math.cos(a) };
 };
