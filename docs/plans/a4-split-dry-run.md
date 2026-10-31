@@ -170,6 +170,31 @@ storage warning was printed; it was not hidden or treated as a browser result.
 
 ## Allocated proof checklist (not executed)
 
+Conditional slot 7 is recorded in #1476 comments 6549116028 / 6549149150;
+it starts only after #1543's actual SLOT DONE on #1476. Driver updates
+6549320960 and 6549377462 are incorporated in prepared tooling, not a run:
+`tools/refactor/a4-proof-step.ps1` is a finite supervisor (no monitor started),
+with separate input/browser/CPU/watchdog stop reasons, full own-process-tree
+exclusion, an independent 265-second watchdog under the 270-second ceiling,
+and cleanup restricted to its own processes and verified own temporary profiles.
+CPU's existing driver contamination ceiling is 70%, sampled before launch and
+only within timed benchmark measurement, never during build/art initialization.
+
+The browser preload creates a fresh headless installed Chrome process, routes
+favicon to 204, records console noise separately, and preserves game/page/asset
+failures. Browser setup is inactive until launch. Bundled Playwright is available
+through the runtime dependency tool's Node packages directory; supply it through
+`-NodeModulePath`, and supply the approved installed binary through
+`-ChromeExecutable`. No new dependency install or real browser launch was done.
+
+Full units are prepared as four `npm test -- --shard=N/4 --maxWorkers=2` steps,
+all on one exact head; all four outputs/counts are required to call it a full
+suite. A timeout is incomplete evidence. Head and baseline builds/benches stay
+separate. The baseline may use the own detached `.a4-baseline` checkout only;
+the supervisor refuses any other source root. Baseline creation is not yet done.
+Two synthetic policy/preload checks pass without reading actual input/process
+state or launching a browser (`node --test tools/refactor/a4-proof.test.cjs`).
+
 - Obtain the existing requested slot from #1476. Check its actual FREE evidence,
   current five-minute input idle and no game tab; stop safely if Ed returns.
 - Pin source and tested head SHAs in the report before any build. The original
