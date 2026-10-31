@@ -4097,7 +4097,7 @@ Code: `render/mood.ts`
 
 | knob | type | range |
 |---|---|---|
-| `light.mood` | string |  |
+| `light.mood` | string | "spooky" / "plain" |
 | `light.spooky.ambientHue` | number | 0 to … |
 | `light.spooky.ambient` | number | 0 to … |
 | `light.spooky.unlit` | number | 0 to … |

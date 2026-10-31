@@ -16,6 +16,7 @@ import { bendPoint, groundHeight, placed } from "../height";
 import { LIGHT_UNIFORMS } from "../lighting";
 import { LOAD_DEFAULT } from "../load";
 import { setOverlayTilt } from "../overlayTilt";
+import { miniatureTilt, potionStrength } from "../potionEffects";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "../sprites";
 import { hatKey, noteHatLooks } from "./hatLooks";
 import { inView } from "./culling";
@@ -233,7 +234,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   if (!potionLying) v.partyWitchView.update(g, time, (x, z, ww, hh) => inView(v, x, z, ww, hh, 4));
   v.swoopTrails.update(g.partyWitches.list, time);
   for(const p of g.partyWitches.list)if(p.state==="floor"&&p.activity==="swoop"&&p.y>0.05)v.magic.native("partySwoop",p.x,p.y,p.z,Math.min(1,p.y/3),960000+p.id);
-  setOverlayTilt(t.tiltShift, w.lift, v.canvas.clientHeight || window.innerHeight, v.height, v.houseTilt(g)); // (the DOM overlays blurred as the world: render/overlayTilt.ts)
+  setOverlayTilt(miniatureTilt(t.tiltShift, potionStrength(g, 'miniature')), w.lift, v.canvas.clientHeight || window.innerHeight, v.height, v.houseTilt(g)); // (the DOM overlays blurred as the world: render/overlayTilt.ts)
   v.partyWitchView.bubbles(g, time, v.camera, v.canvas.clientWidth || window.innerWidth, v.canvas.clientHeight || window.innerHeight);
   const onBeach = v.beachView.update(g, time, (x, z, ww, hh) => inView(v, x, z, ww, hh, 4), v.camera, v.canvas.clientWidth || window.innerWidth, v.canvas.clientHeight || window.innerHeight, v.fly ? { x: v.fly.tx, z: v.fly.tz, reach: g.tuning.haze.far } : undefined); // (a sail's dive in over the sea: the sea drawn)
   // Keep the lying pose after recovery unlocks movement; the beach owns its own copy when she is on the sand.

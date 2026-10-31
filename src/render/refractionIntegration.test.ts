@@ -6,6 +6,7 @@ import { updateRefraction, resetRefraction, captureRefractionCast } from "./view
 import { FX_QUALITY } from "./fx/system";
 import { comfort } from "./comfort";
 import type { View } from "./view";
+import { potionLevels } from "./potionEffects";
 
 afterEach(() => { FX_QUALITY.distortion = true; comfort.reduceFlashing = false; });
 it("binds existing depth plus bounded form uniforms in the real Post composite without adding passes", () => {
@@ -17,8 +18,16 @@ it("binds existing depth plus bounded form uniforms in the real Post composite w
   expect([...post.renderSteps(new THREE.Scene(), new THREE.PerspectiveCamera())]).toHaveLength(1);
   expect(composite.uniforms.uRefractionCount.value).toBe(0);
   post.refractionEnabled = true;
+  // Real released potion bindings coexist with refraction (CPU binding check, not pixel evidence).
+  post.potionWobble = 1; post.potionCanopy = 1; post.potionTime = 12;
   expect([...post.renderSteps(new THREE.Scene(), new THREE.PerspectiveCamera())]).toHaveLength(1);
   expect(composite.uniforms.uRefractionCount.value).toBe(2);
+  expect(composite.uniforms.uPotionWobble.value.x).toBeGreaterThan(0);
+  expect(composite.uniforms.uPotionTime.value).toBe(12);
+  const levels = potionLevels(0, 1, 1);
+  expect(composite.uniforms.uBlack.value).toBe(levels.black);
+  expect(composite.uniforms.uGamma.value).toBe(levels.gamma);
+  expect(composite.uniforms.uPotionStyle.value.x).toBe(levels.saturation - 1);
   expect(composite.uniforms.uRefractionDepth.value).toBe(post.scene.depthTexture);
   expect(composite.uniforms.uRefractionShape.value).toBe(post.refraction.shapes);
   // Canonical6545181860: one additive seam, before the unchanged potion block.

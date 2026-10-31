@@ -20,6 +20,8 @@ const { capturePair } = require('./tools/refraction/capture-pair.cjs');
 await capturePair(page, SOURCE_SHA, 'previews/refraction/fire', 'fire');
 // On a separate staged party-cast frame within its first 0.65 game seconds:
 await capturePair(page, SOURCE_SHA, 'previews/refraction/party', 'ring');
+// Stage an actual active canopy grading trip (which also has shared wobble):
+await capturePair(page, SOURCE_SHA, 'previews/refraction/combined', 'fire', true);
 ```
 
 Start from `https://edsaperia.github.io/witch/pr-1543/?seed=123&refraction=1`.
@@ -55,7 +57,9 @@ the helper's PNG byte flags alone are not the required visual measurement.
    pressure-wave edges and outline seams explicitly; do not assume those layers
    move with the scene. On the combined build repeat with Night Vision, Miniature
    and Hue Spin while preserving their existing implementations. Normal-merge
-   prototype after #1539 is verified LIVE before the next REPORT/combined run.
+   prototype after #1539 is verified LIVE before the next REPORT/combined run
+   (gate opened by canonical6545409448, v6599). The helper's final true argument
+   refuses the combined capture without active wobble and canopy grading.
    OFF-return stability and source-code identity do not establish OFF pixel
    identity against the unmodified composite: measure that separately in the
    canonical runner, including refraction+wobble+one grading potion simultaneously.

@@ -2,7 +2,7 @@
 // No browser launch, server, listener, simulation advance or scheduling is owned by this helper.
 const fs = require('node:fs/promises'), path = require('node:path');
 
-async function capturePair(page, expectedSha, output, kind) {
+async function capturePair(page, expectedSha, output, kind, requireCombinedPotion = false) {
   if (!/^[a-f0-9]{40}$/.test(expectedSha)) throw Error('Require the full tested source SHA');
   if (!['fire', 'ring'].includes(kind)) throw Error('Require fire or ring: never accept an empty effect comparison');
   const version = () => page.evaluate(async () => {
@@ -20,12 +20,14 @@ async function capturePair(page, expectedSha, output, kind) {
   });
   const render = enabled => page.evaluate(({ enabled, time }) => {
     const w = window.witch, p = w.view.post; p.refractionEnabled = enabled; w.view.render(time);
-    return { count: p.refraction.count, shapes: p.refraction.shapes.slice(0, p.refraction.count).map(v => v.toArray()), states: p.refraction.states.slice(0, p.refraction.count).map(v => v.toArray()), clock: w.game.clock.time };
+    return { count: p.refraction.count, shapes: p.refraction.shapes.slice(0, p.refraction.count).map(v => v.toArray()), states: p.refraction.states.slice(0, p.refraction.count).map(v => v.toArray()), clock: w.game.clock.time,
+      potion: { wobble: p.potionWobble, canopy: p.potionCanopy, time: p.potionTime } };
   }, { enabled, time: state.time });
   await fs.mkdir(output, { recursive: true });
   try {
     await render(false); const off = await page.screenshot({ path: path.join(output, 'off.png') });
     const forms = await render(true);
+    if (requireCombinedPotion && !(forms.potion.wobble > 0 && forms.potion.canopy > 0)) throw Error('Stage actual active wobble and the canopy grading potion together; combined comparison refused');
     if (!forms.states.some(s => (kind === 'fire' ? s[1] < 0.5 : s[1] >= 0.5))) throw Error(`No active ${kind} at the staged clock; comparison refused`);
     const on = await page.screenshot({ path: path.join(output, 'on.png') });
     await render(false); const returned = await page.screenshot({ path: path.join(output, 'off-return.png') });
