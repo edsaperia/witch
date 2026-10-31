@@ -1,5 +1,7 @@
 # Crash log, layer check, start screen retirement
 
+COMPLETED release scope in PR #1493, included in v6478 (2026-10-31): diagnostic recording/replay, direct-play startup and lazy What's new in Settings. Later screen splitting was stopped in favor of #1507's house precompute; its evidence is [archived](archive/rare-screens/README.md). Historical fences and future command candidates below do not authorize another implementation pass.
+
 Release boundary (COORDINATOR 6529019184, 2026-10-30): stop before rare-screen splitting and hand off logging plus startup steps 3–4 now, so input-stack #1495 and save-slots #1494 can proceed. Startup step 5 is deferred until this release ships, then continues on a fresh branch against the recorded baseline (refreshing or identifying intervening prototype changes). No rare-screen splitting or actual browser boot measurement is included in this release. Normal prototype merge and nearby checks precede FINAL; the coordinator owns full-suite and browser release checks.
 
 Brief: COORDINATOR 6525574522, 2026-10-30. Branch `codex/robustness`, starting at `3f7d386beb3d7147f32f6837d9144decd467b7b2`.
