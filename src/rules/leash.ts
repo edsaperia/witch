@@ -205,6 +205,7 @@ function nearest(creatures: Creature[], x: number, z: number, within: number, le
   let best: Creature | null = null, bd = within;
   for (const c of creatures) {
     if (Math.abs(c.x - x) > bd || Math.abs(c.z - z) > bd) continue; // (cheap: thousands of creatures, every step)
+    if (c.level === 0) continue; // The legend-snub fallback must not reselect a baby (Ed, 2026-10-31: no baby talk).
     if (c.leashed || c.gone || c.fleeUntil || (!legends && !invitable(c)) || skip?.has(c.id)) continue;
     if (c.legendState) continue; // (an area legend is never chatted to: asleep it's scenery, happy it's at peace, angry it's far off)
     const d = Math.hypot(c.x - x, c.z - z);

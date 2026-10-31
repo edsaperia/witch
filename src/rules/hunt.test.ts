@@ -32,6 +32,19 @@ function landed(): { g: Game; key: string; natives: () => Creature[] } {
 }
 
 describe("the hunt (Ed, 2026-10-07: 'fight with me until either I die or they are invited')", () => {
+  it("holds while she is airborne over the hunted area, then resumes when she lands there", () => {
+    const { g, natives } = landed();
+    run(g, (W.on ? W.time : 0) + 1);
+    const hunters = natives().filter(c => c.hunting === 0);
+    expect(hunters.length).toBeGreaterThan(0);
+    g.witch = { ...g.witch, mode: "treetop", lift: 1 };
+    run(g, 0.2);
+    for (const c of hunters) expect(c.hunting).toBe(0);
+    g.witch = { ...g.witch, mode: "ground", lift: 0 };
+    run(g, 0.2);
+    expect(hunters.some(c => c.fight?.target?.kind === "witch" && c.fight.target.id === 0)).toBe(true);
+  }, 60000);
+
   it("once the watch is over, every awake young and adult of the area hunts her; never its babies, legend or circle baby", () => {
     const { g, key, natives } = landed();
     run(g, W.on ? W.time - 0.5 : 0.1);

@@ -390,7 +390,7 @@ describe("Ed's Stage 4 rulings", () => {
     expect(wildPup.gone).toBeFalsy(); expect(unhurt(wildPup)).toBe(true);
   }, 60000);
 
-  it("goes for her within 30 m and lets her go when she rises, or once she's out of its area, range and 30 m; then it walks back", () => {
+  it("a hunter holds when she rises over its area, follows outside on foot, and walks back after outside take-off", () => {
     const g = quiet(), w = g.witch;
     const wolf = place(g, 0, "wolf", 1, w.x + 25, w.z);
     run(g, 1);
@@ -405,7 +405,7 @@ describe("Ed's Stage 4 rulings", () => {
     const far = { x: wolf.homeX + 400, z: wolf.homeZ };
     g.witch = { ...g.witch, x: far.x, z: far.z };
     run(g, 1);
-    expect(wolf.fight?.target ?? null).toBeNull();
+    expect(wolf.fight?.target).toEqual({ kind: "witch", id: 0 });
     wolf.x = wolf.homeX + 150; wolf.z = wolf.homeZ; // (as if it had chased her out of its area)
     const d0 = Math.hypot(wolf.x - wolf.anchorX, wolf.z - wolf.anchorZ);
     g.witch = { ...g.witch, x: wolf.homeX + 120, z: wolf.homeZ + 200, mode: "treetop", lift: 1 }; // near enough to simulate it
@@ -598,7 +598,7 @@ describe("Ed's playtest (2026-10-04)", () => {
     expect(friend.fight?.target).toEqual({ kind: "witch", id: 0 });
   }, 60000);
 
-  it("can't invite a creature enraged by a wave (besieging); a woken area's babies can still be had (invited, or happy with their rune)", () => {
+  it("cannot invite enraged creatures or babies; a woken area befriends its babies without personal runes", () => {
     const g = newGame(77, { ...TUNING, cast: { ...TUNING.cast, on: false } }); // (their runes at their feet: the game without the stone stacks, ?cast=0)
     g.clock.paused = false;
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
@@ -609,7 +609,7 @@ describe("Ed's playtest (2026-10-04)", () => {
     expect(angry.enraged).toBe(true);
     expect(invitable(angry)).toBe(false);
     expect(here[0].enraged).toBeFalsy();
-    expect(invitable(here[0]) || hasRune(here[0], g.clock.time)).toBe(true);
+    expect(invitable(here[0]) || hasRune(here[0], g.clock.time)).toBe(false);
   }, 60000);
 
   it("has a stunned hostile run off at a baby's run, out of sight, and then it's gone for good", () => {
@@ -690,7 +690,7 @@ describe("the motion scale pass (Ed, 2026-10-04)", () => {
     g.tuning.fight.scale = 1;
   }, 60000);
 
-  it("has a wild creature chasing her give up soon after she leaves its area, and go home (Ed, 2026-10-05; one not hunting her: the hunt off, rules/hunt.ts)", () => {
+  it("has an ordinary wild pursuer follow across area borders until take-off, then go home (Ed, 2026-10-31; hunt off)", () => {
     const g = quiet({ ...TUNING, hunt: { on: false } }), W = g.witches[0];
     W.health.hp = 1e6;
     const cell: [number, number] = [g.map.centreCell[0] + 2, g.map.centreCell[1]], site = g.map.siteOf(cell[0], cell[1]);
@@ -706,8 +706,9 @@ describe("the motion scale pass (Ed, 2026-10-04)", () => {
       const k = g.map.cellSafe(wolf.x, wolf.z).cell;
       if (k[0] !== cell[0] || k[1] !== cell[1]) maxOut++;
     }
-    expect(wolf.fight?.target?.kind ?? null).not.toBe("witch");
-    expect(maxOut * STEP).toBeLessThan(4); // out of its area only briefly
+    expect(wolf.fight?.target?.kind).toBe("witch");
+    expect(maxOut).toBeGreaterThan(0);
+    g.witch = { ...g.witch, mode: "treetop", lift: 1 };
     for (let i = 0; i < 15 / STEP; i++) stepGame(g, idle, STEP);
     expect(g.map.cellSafe(wolf.x, wolf.z).cell).toEqual(cell); // back home
   }, 60000);

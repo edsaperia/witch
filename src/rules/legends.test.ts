@@ -4,7 +4,7 @@ import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING, withTuning, type Tuning } from "./tuning";
 // (she stands by the legends here: their own timers are under test, so the circle's slowed time (rules/slowTime.ts, its own tests) is off)
 const NO_SLOW = { ...TUNING, legendCircle: { slow: { ...TUNING.legendCircle!.slow, on: false } } };
-import { LEGENDS, anger, canopyOver, lull, relicGlints, stepLegendStates } from "./legends";
+import { LEGENDS, anger, cheer, canopyOver, lull, relicGlints, stepLegendStates } from "./legends";
 import { cellKey } from "./party";
 import { setupQuestDemo } from "./quest";
 import { inLegendClearing } from "./map";
@@ -47,6 +47,19 @@ function put(g: Game, species: string, level: Level, x: number, z: number, cell 
 const withAngryAfter = <T,>(s: number, f: () => T): T => { const was = [LEGENDS.angryAfter, LEGENDS.check]; LEGENDS.angryAfter = s; LEGENDS.check = 0.5; try { return f(); } finally { [LEGENDS.angryAfter, LEGENDS.check] = was; } };
 
 describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
+  it("a friendly legend's attacks actually land on a wild witch-attacker, in grammar and classic modes", () => {
+    for (const species of [false, true]) {
+      const { g, L } = beside(true, { ...NO_SLOW, attacks: { ...TUNING.attacks!, species } });
+      cheer(L, g.clock.time);
+      const enemy = put(g, L.species === "boar" ? "wolf" : "boar", 1, L.x + 25, L.z);
+      enemy.friendly = undefined; enemy.hunting = 0; g.hunts ??= new Set(); g.hunts.add(enemy.id);
+      const at = { x: enemy.x, z: enemy.z };
+      let landed = false, aimed = false, shots = 0;
+      run(g, LEGENDS.attack.interval + LEGENDS.attack.windup + LEGENDS.attack.lobFlight + 2, idle, () => { landed ||= enemy.hurtAt !== undefined; aimed ||= L.fight?.target?.kind === "creature" && L.fight.target.id === enemy.id; shots = Math.max(shots, g.combat.shots.filter(s => s.from === L.id).length + g.combat.beams.filter(s => s.from === L.id).length); Object.assign(enemy, at); }); // fixed target: damage eligibility, not the existing beam's ability to track a moving target
+      expect(landed, JSON.stringify({ species, aimed, shots, legend: L.legendState, fight: L.fight, enemy: { hunting: enemy.hunting, fight: enemy.fight, asleep: enemy.asleep, friendly: enemy.friendly, gone: enemy.gone, state: enemy.state }, distance: Math.hypot(L.x - enemy.x, L.z - enemy.z), time: g.clock.time })).toBe(true);
+    }
+  }, 60000);
+
   it("sleep on when their area's soundsystem comes (soundsystems no longer wake them)", () => {
     const { g, L } = beside();
     g.party.areas.set(cellKey(L.cell), { cell: L.cell, wave: 1, at: g.clock.time, from: null, soundsystem: null });

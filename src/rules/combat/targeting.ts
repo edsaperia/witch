@@ -84,9 +84,8 @@ export function valid(w: CombatWorld, s: CombatState, c: Creature, tg: Target): 
     return !!o && targetable(o) && foes(sideOf(o), sideOf(c)) && !truce(c, o) && !w.asleep(o) && !inviting(w, c, o);
   }
   if (tg.kind === "witch") {
-    // A wild one loses her when she rises, or (Ed, 2026-10-05: "wild creatures shouldn't pursue you
-    // very far outside of their area") once she's combat.leaveArea metres past its area's edge
-    // (Ed, 2026-10-06: 30 m); then it gives up and retreats into its area (c.retreat, stepCombat). A besieger keeps the old rule: out of its area, out of its
+    // Ed, 2026-10-31: an ordinary pursuer follows anywhere on the ground until take-off.
+    // A besieger keeps the old rule: out of its area, out of its
     // attack range and at least combat.witchLose away. (Only wild ones go for her at all.)
     const v = w.witches[tg.id];
     if (!huntsWitch(sideOf(c)) || !v || !v.onGround || v.down || w.talkingTo(c.id) === tg.id || sheltered(v, c)) return false;

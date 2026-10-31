@@ -12,15 +12,34 @@ import { drainOf, fillOf } from "../orbit";
 import { cast as castSpell, newSpells } from "../attacks/engine";
 import { hittableOf, spellWorld } from "../attacks/combatWorld";
 import { legendAttack } from "../attacks/species";
+import type { Game } from "../game";
+import { leyChain, leyKey } from "../leylines";
+import { frontMetres, TIP_PACE } from "../leypulse";
+import { linkLine } from "../pulseRoute";
 
 const attacksWitch = (c: Creature, id: number) => c.hunting === id || (c.fight?.target?.kind === "witch" && c.fight.target.id === id);
 const friendlyEnemy = (c: Creature) => stateOf(c) === "enraged" || (stateOf(c) === "wild" && (c.hunting !== undefined || c.fight?.target?.kind === "witch"));
 
 type RoutePoint = readonly [number, number];
+const routeLines = new WeakMap<Game, { key: number; line: RoutePoint[] }>();
+/** The same curved links and drawing-front metres used by the ley line, not its slower wave pulse. */
+export function friendlyLegendRoute(g: Game): { line: readonly RoutePoint[]; tip: number } {
+  const key = leyKey(g.party);
+  let cached = routeLines.get(g);
+  if (!cached || cached.key !== key) {
+    const { stones } = leyChain(g.party, g.map), line: RoutePoint[] = [];
+    for (let i = 1; i < stones.length; i++) {
+      const link = linkLine(g.map, stones[i - 1], stones[i]);
+      line.push(...(line.length ? link.slice(1) : link));
+    }
+    cached = { key, line }; routeLines.set(g, cached);
+  }
+  return { line: cached.line, tip: frontMetres(g.party, g.map, g.clock.time, g.tuning.leyLines.reveal ?? TIP_PACE) };
+}
 const friendRoutes = new WeakMap<Creature, { line: readonly RoutePoint[]; at: number; x: number; z: number }>();
 /** Join the nearest point on tonight's route, then walk along its curves towards the growing front, stopping at it.
  * The transient progress hint disambiguates crossings; after displacement or a changed route the legend rejoins. */
-export function walkFriendlyRoute(c: Creature, line: readonly RoutePoint[], tip: number, dt: number): void {
+export function walkFriendlyRoute(c: Creature, line: readonly RoutePoint[], tip: number, dt: number, speed = c.speed): void {
   if (line.length < 2) return;
   const lengths = [0];
   for (let i = 1; i < line.length; i++) lengths.push(lengths[i - 1] + Math.hypot(line[i][0] - line[i - 1][0], line[i][1] - line[i - 1][1]));
@@ -42,8 +61,8 @@ export function walkFriendlyRoute(c: Creature, line: readonly RoutePoint[], tip:
     }
     state = { line, at, x: c.x, z: c.z }; friendRoutes.set(c, state);
   }
-  const speed = c.speed * FIGHT.speed, join = point(state.at), distance = Math.hypot(join[0] - c.x, join[1] - c.z);
-  let left = speed * dt;
+  const join = point(state.at), distance = Math.hypot(join[0] - c.x, join[1] - c.z);
+  let left = speed * FIGHT.speed * dt;
   const before = { x: c.x, z: c.z };
   if (distance > 0) {
     const step = Math.min(left, distance); c.x += (join[0] - c.x) / distance * step; c.z += (join[1] - c.z) / distance * step; left -= step;
@@ -66,7 +85,8 @@ export function walkFriendlyRoute(c: Creature, line: readonly RoutePoint[], tip:
  *  lobFlight seconds) or beams (by its species), each hit attack.damage times its level's power for
  *  interval seconds. (Its shots are the wild's when angry, the happy's when happy: foes() does the rest.) */
 export function stepLegendAttack(w: CombatWorld, s: CombatState, c: Creature, data: CombatData, grid: Grid): void {
-  const A = LEGENDS.attack, time = w.time, S = FIGHT.scale, angry = c.legendState !== "happy", R = (angry ? A.range : w.t.legends.friendRange) * S, side: State = angry ? "wild" : "happy";
+  // Its attacks share the posse's allegiance so blows can land on wild witch-attackers as well as the enraged.
+  const A = LEGENDS.attack, time = w.time, S = FIGHT.scale, angry = c.legendState !== "happy", R = (angry ? A.range : w.t.legends.friendRange) * S, side: State = angry ? "wild" : "leashed";
   const f = (c.fight ??= { target: null, readyAt: time + A.interval * 0.5, windupUntil: 0, aimX: 0, aimZ: 0 });
   if (c.lairX === undefined) { c.lairX = c.x; c.lairZ = c.z; }
   const charger = LEGENDS.charge.species.includes(c.species);
