@@ -7,6 +7,7 @@ import {createServer} from 'node:http';
 import {createRequire} from 'node:module';
 import {preflight} from './ground-warm-preflight.mjs';
 import {closeWarmChart,waitWarmFunction} from './ground-warm-controls.mjs';
+import {observeArrivalGround,groundReuseObservation} from './ground-warm-observation.mjs';
 const abort=message=>{console.error(`FAIL ground-warm: ${message}`);process.exit(1);};
 const require=createRequire(import.meta.url), root=path.resolve(process.argv[2]||'dist'), out=path.resolve(process.argv[3]||'ground-warm-probe');
 const cloud=process.platform!=='win32', scale=Number(process.env.TIMEOUT_SCALE||(cloud?'5':'1'));
@@ -26,6 +27,7 @@ const save=()=>fs.writeFileSync(path.join(out,'results.json'),JSON.stringify(rep
 const cpu=async()=>{const a=os.cpus();await new Promise(r=>setTimeout(r,1000));let idle=0,total=0;os.cpus().forEach((c,i)=>{idle+=c.times.idle-a[i].times.idle;for(const k in c.times)total+=c.times[k]-a[i].times[k];});return {at:new Date().toISOString(),percent:100*(1-idle/total)};};
 let browser,timer,cpuTimer,page;
 const wait=(predicate,options)=>waitWarmFunction(page,predicate,options);
+const arrivalState=()=>page.evaluate(()=>{const w=window.witch;return {...window.__groundWarmArrival,current:{ready:w?.ready,frame:w?.view?.renderer.info.render.frame,readiness:w?.view?.readiness,material:w?.view?.ground.programMaterial.uuid,registry:w?.view?.renderer.info.programs.map(p=>({id:p.id,key:p.cacheKey,usedTimes:p.usedTimes}))}};});
 const snapshot=async stage=>{
   if(!page||page.isClosed())return;
   try{
@@ -72,11 +74,17 @@ try{
   const target=await page.evaluate(()=>{const marks=performance.getEntriesByType('mark'),submit=marks.find(m=>m.name==='ground:warm-submit');const prepare=marks.filter(m=>m.name==='ground:warm-prepare'&&m.startTime<=submit.startTime).at(-1);return {id:prepare.detail.id,seed:prepare.detail.seed,...submit.detail,targets:window.witch.groundWarmStatus.targets};});
   if(target.id!==target.targets[0])throw Error('First compile target was not nearest reachable island');report.target=target;
   if(target.id!==fixture.targets[0].id||target.seed!==fixture.seed)throw Error('Runtime target differs from preflight fixture');
+  await page.evaluate(observeArrivalGround,target);
   await page.evaluate(async t=>{await window.witch.sail(t.id,t.seed);},target);
   await wait(()=>window.witch.ready,{timeout:waitMs(150000)});
-  report.live=await page.evaluate(()=>{const w=window.witch,p=w.view.renderer.properties.get(w.view.ground.programMaterial);return {island:w.game.map.island?.kind,seed:w.game.seed,keys:[...(p.programs?.keys()??[])],programs:[...(p.programs?.values()??[])].map(p=>p.id)};});
-  if(report.live.seed!==target.seed||!target.keys.some(k=>report.live.keys.includes(k))||!target.programs.some(id=>report.live.programs.includes(id)))throw Error('Exact normal-ground cache key/program was not reused');
+  // Night readiness precedes the first arrival draw. Empty material properties here mean WAIT.
+  await wait(()=>!!window.__groundWarmArrival?.firstDraw,{timeout:waitMs(150000)});
+  report.arrivalObservation=await arrivalState();
+  const draw=report.arrivalObservation.firstDraw;
+  report.live={island:draw.island,seed:draw.seed,keys:[draw.key],programs:[draw.program],material:draw.material,registry:draw.registry};
+  report.reuse=groundReuseObservation(target,report.arrivalObservation);await snapshot('arrival-first-draw');
+  if(report.reuse.status!=='PASS')throw Error(report.reuse.reason);
   report.marks=await page.evaluate(()=>performance.getEntriesByType('mark').filter(m=>m.name.startsWith('ground:warm-')).map(m=>({name:m.name,at:m.startTime,detail:m.detail})));
   if(report.errors.length)throw Error(report.errors.join('; '));report.complete=true;report.status='PASS';
-}catch(error){await snapshot('error');const deadline=report.error?.includes('deadline');report.error=String(error?.stack||error);report.status=report.errors.length?'FAIL':deadline||error?.name==='TimeoutError'||error?.name==='InsufficientError'?'INSUFFICIENT':'FAIL';process.exitCode=report.status==='INSUFFICIENT'?2:1;}
+}catch(error){if(page&&!page.isClosed())try{report.arrivalObservation=await arrivalState();}catch{}await snapshot('error');const deadline=report.error?.includes('deadline');report.error=String(error?.stack||error);report.status=report.errors.length?'FAIL':deadline||error?.name==='TimeoutError'||error?.name==='InsufficientError'?'INSUFFICIENT':'FAIL';process.exitCode=report.status==='INSUFFICIENT'?2:1;}
 finally{clearTimeout(timer);clearInterval(cpuTimer);await browser?.close();await new Promise(r=>server.close(r));report.cpu.push(await cpu());report.timingsContaminated=report.cpu.some(c=>c.percent>=70);report.endedAt=new Date().toISOString();save();console.log(`${report.status} ground-warm: ${report.complete?'exact program reuse and lifecycle gates observed':report.error}`);console.log(JSON.stringify({status:report.status,complete:report.complete,error:report.error,endedAt:report.endedAt}));}
