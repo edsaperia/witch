@@ -7,6 +7,7 @@ import { groundOf, witchLookOf } from "./artLook";
 import type { Baked, FrameGround, MakeCanvas } from "./artBuild";
 import type { Style } from "./style";
 import { HOUSE_CONFIG as HOUSE_PLAN } from "../rules/houseConfig";
+import type { HouseConfig } from "../rules/houseRooms";
 
 type Poses = Record<string, { towards: number[]; away: number[]; fps: number }>;
 /** Where her frames are in her atlas, pose by pose (render/assets.ts hands them to the view). */
@@ -157,11 +158,12 @@ export interface TreehouseArt { base: { x: number; y: number }; seat: { x: numbe
 /** The treehouse Ent (Bravo's, art/ent.js) at the deck's height and radius: frames 0 its far half, 1 its near half (she stands
  *  between them), 2 on the DJ table alone, turning (drawn over her), then the knockdown candles, as the old treehouse's; and last,
  *  given a kind, the island's legend carrying it (art/carrier.js), the Ent's trunk that much shorter. */
-export function entTreehouseSprites(style: Style, mk: MakeCanvas, deckY: number, deckR: number, carrierKind: string | null = null, house = false): { sprites: Baked[]; treehouse: TreehouseArt } {
+export function entTreehouseSprites(style: Style, mk: MakeCanvas, deckY: number, deckR: number, carrierKind: string | null = null, house = false, layout?: HouseConfig): { sprites: Baked[]; treehouse: TreehouseArt } {
   type EntArt = { far: unknown; near: unknown; foreFrames: unknown[]; foreBox: { x: number; y: number }; candles: { x: number; y: number }[];
     anchors: { base: { x: number; y: number }; deck: { x: number; y: number }; table: { x: number; y: number }; circle?: { x: number; y: number }; balcony?: { x: number; y: number }; seat: { x: number; y: number }; platter?: { x: number; y: number }; camera: { x: number; y: number }; lights: { x: number; y: number; rgb: number[]; kind: string }[] } };
   // (the oak, config/house/ organic: the Terrace one of its trunk's rooms, its decks on the open rim; Ed, 2026-10-24)
-  const look = house && (HOUSE_PLAN as { organic?: boolean }).organic ? { organic: true, terrace: { ...(HOUSE_PLAN as unknown as { terrace: object }).terrace, r: 10 } } : house; // (the oak: its Terrace's layout the game's, config/house/base.json)
+  const plan = layout ?? HOUSE_PLAN;
+  const look = house && (plan as { organic?: boolean }).organic ? { organic: true, terrace: { ...(plan as unknown as { terrace: object }).terrace, r: 10 } } : house; // (the oak: its Terrace's layout the game's, config/house/base.json)
   const ent = (y: number) => Art.entSprite(style, { facing: "towards", deckY: y, deckR, house: look }) as EntArt, trunk = (a: EntArt) => a.anchors.base.y - a.anchors.deck.y;
   let e = ent(deckY);
   // The island's legend carrying it (art/carrier.js; Ed, 2026-10-10): grown at the Ent's own pixels a metre (its trunk's pixels
