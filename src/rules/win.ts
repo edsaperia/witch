@@ -253,7 +253,7 @@ function win(g: Game, time: number): void {
   const legends = dealtLegends(g), woken: Creature[] = [];
   w.found = [...(g.islandsTonight ?? [])]; // (only the quests done tonight find islands: Ed, 2026-10-18)
   for (const c of legends) {
-    if (c.legendState === "angry" || c.enraged) { lull(c, time); w.lost.push(c.species); continue; }
+    if (!c.quest?.done) { lull(c, time); w.lost.push(c.species); continue; }
     woken.push(c);
   }
   // One still running for the beach (rules/runaway.ts): there at once, asleep, as it stays (Ed, 2026-10-28: "stay there if it's won");

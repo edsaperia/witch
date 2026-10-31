@@ -57,6 +57,7 @@ export function enrage(c: Creature): boolean {
 /** Whether it can be invited now: a wild one (dazed or not; not a legend), or a happy one for its
  *  second step (states.leash). Enraged ones, legends and leashed ones can't. */
 export function invitableNow(c: Creature, data: StatesData = STATES): boolean {
+  if (c.level === 0) return false; // Ed, 2026-10-31: "No, no baby is invitable", including the circle baby.
   if (c.asleep || c.bed) return false; // (asleep, or walking home to bed: rules/partyOver.ts)
   if (inConga(c)) return false; // (the won night's line: never hers again)
   if (c.swoop?.up) return false; // (a wild flyer up in the air, out of reach: 💌s pass under it; rules/movement.ts stepSwoop)
@@ -85,6 +86,7 @@ export function makePartyLegend(c: Creature, time: number): void {
  *  legend circle's baby, once happy, carries one like any other). `time` given: whether it's ready yet
  *  (pickupDelay after the hearts); without, whether it has one at all (the view draws it popping out). */
 export function hasRune(c: Creature, time?: number, data: StatesData = STATES): boolean {
+  if (c.level === 0) return false; // Babies join at soundsystem conversion, through its loose sigils, never a personal rune.
   if (c.asleep || c.bed || inConga(c) || c.packHide) return false; // (hiding in a pack's lull, a shadow of itself: no rune till it's back, Ed 2026-10-29)
   if (c.atStone || c.loose) return false; // (its sigil in its stone's stack, or lying loose by its soundsystem: rules/stoneStacks.ts)
   if (c.partyLegend) { if (data.leash !== "pickup" || c.gone || c.leashed) return false; } // (a party legend's: the egg)

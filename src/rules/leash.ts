@@ -179,7 +179,7 @@ export interface LeashControls {
 
 export const newLeash = (): LeashState => ({ stack: [], placed: [], talk: null, progress: new Map(), events: [], snubbed: new Set(), relics: [] });
 
-/** Seconds of talk a creature needs: babies 3, young 6, adults 12; legends can't be invited. */
+/** Seconds of talk a creature needs: young 6, adults 12; babies and legends can't be invited. */
 export const talkTime = (c: Creature, t: Tuning): number => t.invite.talkTime[Math.min(c.level, t.invite.talkTime.length - 1)];
 /** Seconds per turn of the conversation (hers, then theirs): slower for older creatures. */
 export const talkTurn = (c: Creature, t: Tuning): number => t.invite.turn[Math.min(c.level, t.invite.turn.length - 1)];
@@ -215,6 +215,7 @@ function nearest(creatures: Creature[], x: number, z: number, within: number, le
 
 /** Invite it: leashed to her, for good (#87), its sigil on the bottom of the stack (the 💌's second step: rules/invites.ts). */
 export function inviteCreature(s: LeashState, c: Creature, x: number, z: number, time: number, kind: "invited" | "picked" = "invited"): void {
+  if (c.level === 0 && (kind !== "picked" || stateOf(c) !== "happy")) return; // Soundsystem loose-sigil pickup only; never a baby invitation.
   if (inConga(c)) return; // (the won night's line follows her, never on her leash: rules/creatureStates.ts inConga)
   c.leashed = true; c.state = "leashed"; c.affection = undefined; c.dazed = false; c.dazedUntil = undefined;
   c.rest = 0;
