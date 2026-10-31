@@ -65,3 +65,13 @@ Call log:
 
 Note: 1b hit its 2700 s cap inside tilt-before's first screenshot (smoke.cjs:303). heath and phone had run (their screenshots 08, 10, 11 were written), but smoke.cjs prints ok/FAIL only at the end of a run, so their checks are lost. tilt-before: TIMEOUT (more than ~13 min, still in its first shot). From here, one scene per run (cap 900 s), so a slow scene can't take others' results with it.
 
+### Batch s-dancefloor: dancefloor
+
+- exit code: 0
+- wall time: 361s (12:18 UTC end)
+
+```
+ok   over the treetops, no wave number shows for a stone past the bent horizon (10 drawn, 0 past the horizon, 0 still showing)
+smoke test passed
+```
+
