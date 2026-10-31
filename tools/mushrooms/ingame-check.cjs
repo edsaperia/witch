@@ -49,7 +49,8 @@ const fail = text => { throw new Error(text); };
     if(!result.trip||result.perch||!result.stargazing||result.ingredients||result.smoke)fail('Wake/reset failed: '+JSON.stringify(result));
     if(Math.abs(result.trip.until-result.trip.at-600)>.001)fail('Potion duration is not 600 game seconds');
     await page.waitForFunction(()=>!!window.witch.view.assets.partyWitchArt(null),null,{timeout:120000});
-    await page.evaluate(()=>window.witch.frame({moveX:0,moveZ:0,toggleMode:false,zoom:0},0,true));
+    // The behind-house reveal is deliberately advanced only by real draws, not the fast rules-only frames above.
+    await page.evaluate(()=>{for(let i=0;i<12;i++)window.witch.frame({moveX:0,moveZ:0,toggleMode:false,zoom:0},.1,true);});
     console.log('Wake view',await page.evaluate(()=>{const w=window.witch,v=w.view,g=w.game;return {body:{x:g.witch.x,z:g.witch.z,perch:g.witch.perch,stargazing:g.witch.stargazing},herIdle:v.partyWitchView.herIdle,beach:v.beachView.gazing,camera:g.camera,base:v.witchBase,treehouse:g.map.treehouse};}));
     await page.screenshot({path:path.join(out,'waking-on-grass.png')});
     if(!await page.evaluate(()=>window.witch.view.partyWitchView.herIdle && (window.witch.game.camera.gaze??0)<.01))fail('Inland recovery must show her lying pose without the beach camera');
