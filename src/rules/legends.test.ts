@@ -9,6 +9,7 @@ import { cellKey } from "./party";
 import { setupQuestDemo } from "./quest";
 import { inLegendClearing } from "./map";
 import { stateOf } from "./creatureStates";
+import { smallWorldTuning } from "../test/worlds";
 const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 // Legends, redesigned (Ed, 2026-10-05; issue #87).
@@ -363,7 +364,7 @@ describe("a wave on a legend's area (#87, found by the overnight playthrough)", 
 describe("an awake legend with nothing in reach (balance, 2026-10-06)", () => {
   it("looks again every attack.recheck seconds, not every step", async () => {
     const { cheer } = await import("./legends");
-    const g = newGame(1000, TUNING);
+    const g = newGame(1000, smallWorldTuning(TUNING, "An awake legend's empty-target recheck timer is independent of world extent."));
     g.clock.paused = false; g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
     const L = g.creatures.find(c => c.boss)!;
     cheer(L, 0); // (happy: it shoots the enraged, and there are none)
