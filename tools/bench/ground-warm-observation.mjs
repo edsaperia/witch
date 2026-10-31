@@ -1,3 +1,4 @@
+// Ground warm probe: identify actual arrival draws and validate retained program registry identity.
 export function groundReuseObservation(target, observation) {
   const live=observation?.firstDraw;
   if(!live)return {status:'WAIT',reason:'Arrival plain ground has not submitted a real draw'};

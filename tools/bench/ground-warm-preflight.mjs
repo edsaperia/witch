@@ -1,3 +1,4 @@
+// Ground warm probe: build and verify an exact-head game-data fixture without a browser or server.
 import fs from 'node:fs';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';

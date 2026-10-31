@@ -1,3 +1,4 @@
+// Ground warm probe: CPU shader-recipe fingerprints, never renderer reuse or timing proof.
 import {createHash} from 'node:crypto';
 /** CPU identity of shader-key inputs, not a renderer program-id/reuse proof. */
 export function groundShaderKey(material){
