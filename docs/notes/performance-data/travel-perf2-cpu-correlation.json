@@ -1,0 +1,59 @@
+{
+  "runtimeSha": "1c7e48bc65e6e478909b7e42a60d696051bee54a",
+  "kind": "historical timestamp correlation, not a new CPU profile",
+  "clockOffsetMs": 59322.5,
+  "forestTask": {
+    "at": 21328,
+    "ms": 697,
+    "after": "witch:build-forest"
+  },
+  "forestWarmSlices": {
+    "what": "warm",
+    "ms": 5105,
+    "slices": 131,
+    "longest": 8,
+    "at": "forest"
+  },
+  "firstVisible": {
+    "relativeAtMs": 21436.400000095367,
+    "ms": 582.7000000476837,
+    "parts": {
+      "start": 3.200000047683716,
+      "heights": 97.89999985694885,
+      "sky": 0.5,
+      "uniforms": 0.9000000953674316,
+      "sources": 0,
+      "party": 9.799999952316284,
+      "markers": 244.09999990463257,
+      "grass+lights": 11.300000190734863,
+      "witch": 123.59999990463257,
+      "refresh": 4.5,
+      "creatures": 1,
+      "hud": 0.2999999523162842,
+      "leash": 25.5,
+      "heightsAhead": 11.700000047683716,
+      "prefetch": 5.400000095367432,
+      "art": 0,
+      "groundTiles": 7.8999998569488525,
+      "draw": 11.400000095367432
+    }
+  },
+  "houseTask": {
+    "at": 44456,
+    "ms": 667,
+    "after": "witch:prep-home"
+  },
+  "houseUpdate": {
+    "relativeAtMs": 44460.700000047684,
+    "longestMs": 640.2999999523163
+  },
+  "inferences": [
+    "The697ms task spans the first visible582.7ms render plus preceding reveal/frame work; build-forest is the latest marker, not a sampled function attribution.",
+    "The first visible render contains97.9ms heights,244.1ms markers and123.6ms witch work; warm forest slicing reports longest8ms rather than697ms.",
+    "The667ms prep-home task contains the directly wrapped640.3ms HouseRoomsView.update call; no inner call stack was captured."
+  ],
+  "limitations": [
+    "Historical measurements do not prove current speedup.",
+    "No edits to house/startup under coordinator6532032898; inner house attribution remains with canonical/1493."
+  ]
+}

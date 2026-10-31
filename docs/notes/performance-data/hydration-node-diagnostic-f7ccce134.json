@@ -1,0 +1,509 @@
+{
+  "sha": "f7ccce134bbc8bd14cb534769d52993461c54f37",
+  "baseSha": "a4aad736dd9c4f1a4e52b5a5eecd8218465d6837",
+  "preparationOnly": false,
+  "complete": true,
+  "rows": [
+    {
+      "name": "baseline",
+      "island": "home",
+      "seed": 424242,
+      "build": "a4aad736dd9c4f1a4e52b5a5eecd8218465d6837",
+      "workerWallMs": 2347.9611000000004,
+      "workerComputeMs": 2008.8417000000009,
+      "checkMs": 2.2594000000008236,
+      "worldInstallMs": 0.30680000000029395,
+      "hydrateMs": 487.625,
+      "mapPhases": [
+        {
+          "kind": "stage",
+          "stage": "layout-before-paths",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 257.5758999999998
+        },
+        {
+          "kind": "span",
+          "stage": "paths:world",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 134.85930000000008
+        },
+        {
+          "kind": "stage",
+          "stage": "paths-world-block",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 139.4295000000002
+        },
+        {
+          "kind": "span",
+          "stage": "deal-scoring",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 4.351700000001074
+        },
+        {
+          "kind": "stage",
+          "stage": "deal-and-legend-matching",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 18.83349999999882
+        },
+        {
+          "kind": "span",
+          "stage": "paths:dealt",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 55.39730000000054
+        },
+        {
+          "kind": "stage",
+          "stage": "paths-dealt-block",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 55.452000000001135
+        },
+        {
+          "kind": "stage",
+          "stage": "deal-end",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 0.008799999999610009
+        },
+        {
+          "kind": "stage",
+          "stage": "placements",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 6.9703000000008615
+        },
+        {
+          "kind": "span",
+          "stage": "path-pieces",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 0.530799999998635
+        },
+        {
+          "kind": "stage",
+          "stage": "path-pieces-block",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 0.5512999999991735
+        },
+        {
+          "kind": "total",
+          "stage": "generateMap",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 478.85609999999906
+        }
+      ],
+      "forestMs": 340.7608,
+      "heightMs": 1302.4344,
+      "pathMs": 12.45049999999901,
+      "consumerCpuMs": 2145.8369000000002,
+      "heightSteps": 100,
+      "heightPrepSource": null,
+      "pathPrepared": false,
+      "heightPrepared": false,
+      "heightHash": "d3d8f4a819ab90618dc8057a2104928eae05a1a90ea8c2344072d923b72b8291",
+      "pathHash": "8a50d7ea04fdf0d9cbe877f5bedc3a2ddb95741e3f45d424ba53bd2abce62ecf",
+      "pathGroups": 6
+    },
+    {
+      "name": "baseline",
+      "island": "fox",
+      "seed": 424242,
+      "build": "a4aad736dd9c4f1a4e52b5a5eecd8218465d6837",
+      "workerWallMs": 2363.9032000000007,
+      "workerComputeMs": 2036.0429000000004,
+      "checkMs": 1.962100000000646,
+      "worldInstallMs": 0.02050000000053842,
+      "hydrateMs": 462.0030000000006,
+      "mapPhases": [
+        {
+          "kind": "stage",
+          "stage": "layout-before-paths",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 214.0596999999998
+        },
+        {
+          "kind": "span",
+          "stage": "paths:world",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 119.91569999999956
+        },
+        {
+          "kind": "stage",
+          "stage": "paths-world-block",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 119.95960000000014
+        },
+        {
+          "kind": "span",
+          "stage": "deal-scoring",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 24.290800000000672
+        },
+        {
+          "kind": "stage",
+          "stage": "deal-and-legend-matching",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 30.389900000000125
+        },
+        {
+          "kind": "span",
+          "stage": "paths:dealt",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 91.46900000000096
+        },
+        {
+          "kind": "stage",
+          "stage": "paths-dealt-block",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 91.53830000000016
+        },
+        {
+          "kind": "stage",
+          "stage": "deal-end",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 0.05680000000029395
+        },
+        {
+          "kind": "stage",
+          "stage": "placements",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 5.884700000000521
+        },
+        {
+          "kind": "span",
+          "stage": "path-pieces",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 0.0474000000012893
+        },
+        {
+          "kind": "stage",
+          "stage": "path-pieces-block",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 0.07629999999880965
+        },
+        {
+          "kind": "total",
+          "stage": "generateMap",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 461.97429999999986
+        }
+      ],
+      "forestMs": 350.28360000000066,
+      "heightMs": 1055.9076999999997,
+      "pathMs": 11.730600000000777,
+      "consumerCpuMs": 1881.907500000003,
+      "heightSteps": 100,
+      "heightPrepSource": null,
+      "pathPrepared": false,
+      "heightPrepared": false,
+      "heightHash": "02dbc1296e91f85ff344019f140cf7a927931119b29179702772383ce07fc888",
+      "pathHash": "b54f5f8cf63b97aa0a3e408c742fd63b455b1325e099e323897677461a90703a",
+      "pathGroups": 8
+    },
+    {
+      "name": "candidate",
+      "island": "home",
+      "seed": 424242,
+      "build": "f7ccce134bbc8bd14cb534769d52993461c54f37",
+      "workerWallMs": 6604.216,
+      "workerComputeMs": 6261.527499999998,
+      "checkMs": 31.575300000000425,
+      "worldInstallMs": 1.4209999999984575,
+      "hydrateMs": 760.1911,
+      "mapPhases": [
+        {
+          "kind": "stage",
+          "stage": "layout-before-paths",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 475.64440000000104
+        },
+        {
+          "kind": "span",
+          "stage": "paths:world",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 116.41470000000118
+        },
+        {
+          "kind": "stage",
+          "stage": "paths-world-block",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 116.52079999999842
+        },
+        {
+          "kind": "span",
+          "stage": "deal-scoring",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 7.558499999999185
+        },
+        {
+          "kind": "stage",
+          "stage": "deal-and-legend-matching",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 36.69330000000264
+        },
+        {
+          "kind": "span",
+          "stage": "paths:dealt",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 72.92090000000098
+        },
+        {
+          "kind": "stage",
+          "stage": "paths-dealt-block",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 73.03800000000047
+        },
+        {
+          "kind": "stage",
+          "stage": "deal-end",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 0.02019999999902211
+        },
+        {
+          "kind": "stage",
+          "stage": "placements",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 21.140400000000227
+        },
+        {
+          "kind": "span",
+          "stage": "path-pieces",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 0.8374000000003434
+        },
+        {
+          "kind": "stage",
+          "stage": "path-pieces-block",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 0.8711999999977706
+        },
+        {
+          "kind": "total",
+          "stage": "generateMap",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 724.0138000000006
+        }
+      ],
+      "forestMs": 645.2554000000018,
+      "heightMs": 86.69310000000041,
+      "pathMs": 0.23110000000087894,
+      "consumerCpuMs": 1525.367000000002,
+      "heightSteps": 0,
+      "heightPrepSource": "worker",
+      "pathPrepared": true,
+      "heightPrepared": true,
+      "heightHash": "d3d8f4a819ab90618dc8057a2104928eae05a1a90ea8c2344072d923b72b8291",
+      "pathHash": "8a50d7ea04fdf0d9cbe877f5bedc3a2ddb95741e3f45d424ba53bd2abce62ecf",
+      "pathGroups": 6
+    },
+    {
+      "name": "candidate",
+      "island": "fox",
+      "seed": 424242,
+      "build": "f7ccce134bbc8bd14cb534769d52993461c54f37",
+      "workerWallMs": 40563.2313,
+      "workerComputeMs": 35734.9743,
+      "checkMs": 1634.505299999997,
+      "worldInstallMs": 0.11050000000977889,
+      "hydrateMs": 20375.375100000005,
+      "mapPhases": [
+        {
+          "kind": "stage",
+          "stage": "layout-before-paths",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 8832.10089999999
+        },
+        {
+          "kind": "span",
+          "stage": "paths:world",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 5582.469199999992
+        },
+        {
+          "kind": "stage",
+          "stage": "paths-world-block",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 5583.483800000002
+        },
+        {
+          "kind": "span",
+          "stage": "deal-scoring",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 62.005300000004354
+        },
+        {
+          "kind": "stage",
+          "stage": "deal-and-legend-matching",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 1560.0864000000001
+        },
+        {
+          "kind": "span",
+          "stage": "paths:dealt",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 4004.734700000001
+        },
+        {
+          "kind": "stage",
+          "stage": "paths-dealt-block",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 4004.8727999999974
+        },
+        {
+          "kind": "stage",
+          "stage": "deal-end",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 0.03320000000530854
+        },
+        {
+          "kind": "stage",
+          "stage": "placements",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 151.2829999999958
+        },
+        {
+          "kind": "span",
+          "stage": "path-pieces",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 0.0405999999929918
+        },
+        {
+          "kind": "stage",
+          "stage": "path-pieces-block",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 0.401400000002468
+        },
+        {
+          "kind": "total",
+          "stage": "generateMap",
+          "seed": 424242,
+          "prepared": true,
+          "only": false,
+          "ms": 20132.381299999994
+        }
+      ],
+      "forestMs": 7605.855499999991,
+      "heightMs": 991.1888000000035,
+      "pathMs": 15.197099999990314,
+      "consumerCpuMs": 30622.232299999996,
+      "heightSteps": 0,
+      "heightPrepSource": "worker",
+      "pathPrepared": true,
+      "heightPrepared": true,
+      "heightHash": "02dbc1296e91f85ff344019f140cf7a927931119b29179702772383ce07fc888",
+      "pathHash": "b54f5f8cf63b97aa0a3e408c742fd63b455b1325e099e323897677461a90703a",
+      "pathGroups": 8
+    }
+  ],
+  "sources": {
+    "baseline": {
+      "mapOriginalHash": "9e9daac8f384d37442688a4db16f6122cfff896987d457a940efee02af98fac9",
+      "mapInstrumentedHash": "58395cfc2cb13eaa93fb3738a7af12263a6782258fbc21a9ff1a54276598a1f1",
+      "main.js": "d6ddace8d4938a9c5189d31728a779f90808cb14b72fcd5d14a804c080047340",
+      "worker.js": "4efabc18bfe46760db6e4865e610026459ed2fc115d87e09ed58a4fdbfce9785"
+    },
+    "candidate": {
+      "mapOriginalHash": "e820d067e0fb272eb58292f1ca0275cd6bc8d38a751a79c1962215fb79fd0e12",
+      "mapInstrumentedHash": "40d8e12331e6a4956905dc2ab7de1925322ab7e3b6cf0df6adf103450155b61f",
+      "main.js": "cbbc6589e16235f4ce4dd9c43b5fd45040339cdb6b5f7ad61eec7299c98c73e4",
+      "worker.js": "02b871a5dc8a1eb2508e563f0ee720a7fa5670bfa57f21fe2018f86734e96ffa"
+    }
+  },
+  "note": "Actual mapPrep worker followed by checked map hydration, Forest, HeightField and pure path-ribbon consumption. Fixed Home/Fox, seed424242, world0. No game boot, art bakes, uploads, coast or travel-speed claim. One ordered pair, no cache purge. NODE_DRY validates Node worker/data paths only; no browser, GPU or Intel timing proof.",
+  "profileHydrate": true,
+  "worldInstalledBeforeHydration": true,
+  "harnessSourceHash": "c37429c700bd0da76fbf90aac3181ccf5b7116613d45fc93149a086819470591",
+  "cpuOnly": true,
+  "performanceUsable": false,
+  "performanceLimitation": "Uncontrolled Node-only timing while laptop in use; candidate Fox wall20.4s outlier. No conditional implementation justified."
+}

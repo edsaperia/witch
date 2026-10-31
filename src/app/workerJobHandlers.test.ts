@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { TUNING } from '../rules/tuning';
 const mocks = vi.hoisted(() => ({ cacheGet: vi.fn(), cachePut: vi.fn(), runJob: vi.fn(), putPrep: vi.fn() }));
 beforeEach(() => {
   vi.resetModules(); vi.clearAllMocks();
@@ -6,9 +7,7 @@ beforeEach(() => {
   vi.doMock('../render/artCacheStorage', () => ({ cacheGet: mocks.cacheGet, cachePut: mocks.cachePut }));
   vi.doMock('../render/artTransfer', () => ({ transferables: () => [] }));
   vi.doMock('../render/artBuild', () => ({ runJob: mocks.runJob }));
-  vi.doMock('../rules/map', () => ({ generateMap: () => ({}), prepOf: () => ({ prep: true }) }));
-  vi.doMock('../rules/rosters', () => ({ worldOf: () => ({ world: true }) }));
-  vi.doMock('../rules/party', () => ({ routeOf: () => ({ route: true }) }));
+  vi.doMock('../rules/map', async importOriginal => ({ ...await importOriginal<typeof import('../rules/map')>(), prepOf: () => ({ prep: true }) }));
   vi.doMock('./mapPrepStore', () => ({ putPrep: mocks.putPrep }));
   mocks.cacheGet.mockResolvedValue(null); mocks.cachePut.mockResolvedValue(undefined);
   mocks.runJob.mockReturnValue({ px: { output: true } }); mocks.putPrep.mockResolvedValue(true);
@@ -16,7 +15,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.doUnmock('../render/artCacheStorage'); vi.doUnmock('../render/artTransfer'); vi.doUnmock('../render/artBuild');
-  vi.doUnmock('../rules/map'); vi.doUnmock('../rules/rosters'); vi.doUnmock('../rules/party'); vi.doUnmock('./mapPrepStore');
+  vi.doUnmock('../rules/map'); vi.doUnmock('./mapPrepStore');
   vi.resetModules();
 });
 const meta = { jobId: 'one', jobKind: 'art:type', id: 17, workerIndex: 2, queueDepth: 3, enqueuedEpochMs: performance.timeOrigin + performance.now() };
@@ -42,9 +41,9 @@ it('records a cached art job end before its business reply without running the b
 it('separates map compute and store stages and completes diagnostics before the terminating reply', async () => {
   const scope: any = { postMessage: vi.fn() }; vi.stubGlobal('self', scope);
   await import('./mapPrep.worker');
-  await scope.onmessage({ data: { key: 'key', seed: 424242, tuning: { map: { world: 0 } }, __witchJobTrace: { ...meta, jobKind: 'map-prep', id: 424242 } } });
+  await scope.onmessage({ data: { key: 'key', seed: 424242, tuning: TUNING, __witchJobTrace: { ...meta, jobKind: 'map-prep', id: 424242 } } });
   const messages = scope.postMessage.mock.calls.map((c: any[]) => c[0]);
   expect(messages.at(-1)).toEqual({ ok: true });
   expect(messages.at(-2).__witchJobTraceEvent).toMatchObject({ phase: 'end', status: 'done' });
-  expect(messages.filter((m: any) => m.__witchJobTraceEvent?.phase === 'stage-start').map((m: any) => m.__witchJobTraceEvent.stage)).toEqual(['compute:archipelago', 'compute:map', 'compute:route', 'compute:prep-record', 'cache-write']);
+  expect(messages.filter((m: any) => m.__witchJobTraceEvent?.phase === 'stage-start').map((m: any) => m.__witchJobTraceEvent.stage)).toEqual(['compute:archipelago', 'compute:map', 'compute:route', 'compute:path-geometry', 'compute:height-samples', 'compute:prep-record', 'cache-write']);
 });
