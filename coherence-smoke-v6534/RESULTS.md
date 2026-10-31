@@ -97,3 +97,21 @@ ok   nothing drawn without a depth test shows through the bent earth
 smoke test passed
 ```
 
+### Batch s-ley: ley
+
+- exit code: 1
+- wall time: 221s (12:37 UTC end)
+
+```
+FAIL the ley line is drawn from home through every area (10 sections for 11 areas), the last reached at 0 (2798 triangles)
+ok   only the next stone has a HUD indicator (1 for the 1 waking next)
+ok   two waves on, the same line, moved on along it (18,17 → 19,17 → 20,18, now at 19,17, 1 behind, 9 ahead)
+FAILED:
+```
+
+Error (trimmed):
+```
+FAILED:
+the ley line is drawn from home through every area (10 sections for 11 areas), the last reached at 0 (2798 triangles)
+```
+
