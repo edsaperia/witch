@@ -20,6 +20,8 @@ Ed, 2026-10-31: the hats' area is not a station; it is an ordered series of spaw
 
 ### Coordinator visual QA
 
+Opt-in hat-point follow-up: an actual hat reserves only its nearest point within half that point's nearest-neighbour spacing. E chooses the nearest eligible floor/dropped hat, and refreshing reservations immediately reconciles queued overflow. Saved point origins retain only x/z; legacy deck-shaped origins remain readable and are trimmed when the floor is read.
+
 Builders do not run the browser without an allocated slot. Build the exact source with `WITCH_SHA` set to its full SHA, using `npm run build`; serve that build on the already allocated runner, then:
 
 ```

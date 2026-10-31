@@ -2,6 +2,41 @@ import { afterEach, expect, it, vi } from "vitest";
 import { smallWorld } from "../test/worlds";
 afterEach(() => { vi.unstubAllGlobals(); vi.resetModules(); });
 
+it("reserves one nearest point, picks the underfoot hat, refills released points and trims old origins", async () => {
+  vi.resetModules();
+  const rules = await import("./houseRooms"); rules.installEdLayout(true);
+  const { newGame } = await import("./game"), { TUNING } = await import("./tuning"), { deckOf } = await import("./treehouse");
+  const g = smallWorld(newGame, "Hat point regressions need one real house.")(123, TUNING), W = g.witches[0], deck = deckOf(g.map, g.tuning)!;
+  const slots = rules.hatSlots(deck);
+  W.spells.hat = "none"; W.hat = { has: true, down: { ...slots[0], at: 0 }, left: [] };
+  W.house = { hats: slots.map(() => ""), hatFloorVersion: 2 };
+  rules.reserveHatPoints(W, deck);
+  expect(W.house.hatReserved).toEqual([0]);
+  expect(W.house.hatPointOrigin).toEqual({ x: deck.x, z: deck.z });
+  rules.addFloorHat(W, "mine"); expect(W.house.hats![1]).toBe("mine");
+  expect(rules.hatToTake(W, deck, slots[1].x, slots[1].z, 2)?.slot).toBe(1);
+  rules.useHats(W, deck, slots[1].x, slots[1].z, 1, 2);
+  expect(W.spells.hat).toBe("mine"); expect(W.hat.left).toHaveLength(1);
+  // A left hat underfoot wins over her own dropped hat farther away.
+  W.hat.down = { x: slots[0].x + 1, z: slots[0].z, at: 2 };
+  expect(rules.hatToTake(W, deck, slots[0].x, slots[0].z, 2)).toEqual(slots[0]);
+  rules.useHats(W, deck, slots[0].x, slots[0].z, 3, 2);
+  expect(W.spells.hat).toBe("none");
+  // A full floor queues a find; lifting its only blocking hat fills that point immediately.
+  W.hat = { has: true, down: { ...slots[0], at: 4 }, left: [] }; W.spells.hat = "none";
+  W.house = { hats: slots.map((_, i) => i ? `occupied-${i}` : ""), hatFloorVersion: 2, hatOverflow: ["routeseer"] };
+  rules.reserveHatPoints(W, deck); expect(W.house.hatOverflow).toEqual(["routeseer"]);
+  rules.useHats(W, deck, slots[0].x, slots[0].z, 5, 2);
+  expect(W.house.hats![0]).toBe("routeseer"); expect(W.house.hatOverflow).toEqual([]);
+  // Old saves may contain a full deck object. Reading it retains coordinates only.
+  W.house.hatPointOrigin = { ...deck };
+  const { snapshotGame, restoreGame } = await import("./nightSnapshot");
+  const restored = restoreGame(snapshotGame(g)).witches[0];
+  rules.floorHats(restored);
+  expect(restored.house!.hatPointOrigin).toEqual({ x: deck.x, z: deck.z });
+  expect(Object.keys(restored.house!.hatPointOrigin!)).toEqual(["x", "z"]);
+});
+
 it("runs ordered spawn/pick/drop and legacy save loading through the actual opt-in house consumers", async () => {
   vi.stubGlobal("location", { search: "?layout=ed", href: "https://unit.invalid/?layout=ed" }); vi.resetModules();
   const rules = await import("./houseRooms"); rules.installEdLayout(true);

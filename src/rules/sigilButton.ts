@@ -99,6 +99,7 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
   const worn = (sigil || place || hatPress) && W.body.mode === "ground" ? hatButton(W.hat, W.body.x, W.body.z, t.leash.runeRadius, W.spells.hat) : null;
   if (worn !== null) {
     if (worn !== W.spells.hat) setLoadout(W.spells, worn);
+    if (W.house?.hatPointOrigin) reserveHatPoints(W, W.house.hatPointOrigin);
     sigil = false; place = false;
     relicEvents.push({ kind: "hatPicked", id: W.id, x: W.body.x, z: W.body.z, at: ht }); // (after the leash's step, which starts its events afresh)
   } else if (hatPress && wearing(W.hat)) {

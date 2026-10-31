@@ -169,6 +169,7 @@ export function hatSlots(at: At, H = HOUSE_ROOMS): { x: number; z: number }[] {
 export function floorHats(W: Witch): string[] {
   const H = (W.house ??= {});
   if (HOUSE_ROOMS.layout?.hatPoints.length) {
+    if (H.hatPointOrigin) H.hatPointOrigin = { x: H.hatPointOrigin.x, z: H.hatPointOrigin.z };
     H.hats ??= HAT_FLOOR.filter(s => ownsHat(W.spells, s) && !hatsElsewhere(W).has(s));
     return reconcileHatPoints(H, HOUSE_ROOMS.layout.hatPoints.length, hatsElsewhere(W));
   }
@@ -207,8 +208,17 @@ function restoreLegacyHatFloor(H: HouseState): void {
 export function reserveHatPoints(W: Witch, at: At): void {
   if (!HOUSE_ROOMS.layout?.hatPoints.length) return;
   const H = W.house ??= {}, actual = [...W.hat.left, ...(W.hat.down ? [W.hat.down] : [])];
-  H.hatPointOrigin = { ...at };
-  H.hatReserved = hatSlots(at).flatMap((p, i) => actual.some(h => Math.hypot(h.x - p.x, h.z - p.z) <= .9) ? [i] : []);
+  H.hatPointOrigin = { x: at.x, z: at.z };
+  const slots = hatSlots(at), reserved = new Set<number>();
+  for (const h of actual) {
+    let nearest = -1, distance = Infinity;
+    slots.forEach((p, i) => { const d = Math.hypot(h.x - p.x, h.z - p.z); if (d < distance) { nearest = i; distance = d; } });
+    if (nearest < 0) continue;
+    const p = slots[nearest], spacing = Math.min(...slots.filter((_, i) => i !== nearest).map(q => Math.hypot(q.x - p.x, q.z - p.z)));
+    if (distance <= (Number.isFinite(spacing) ? spacing / 2 : .9)) reserved.add(nearest);
+  }
+  H.hatReserved = [...reserved].sort((a, b) => a - b);
+  reconcileHatPoints(H, slots.length, hatsElsewhere(W));
 }
 
 /** The hat E would take, standing at (x, z) on the hats' floor (Ed, 2026-10-29: "The floor hats are not a separate station; it's
@@ -218,8 +228,13 @@ export function reserveHatPoints(W: Witch, at: At): void {
 export function hatToTake(W: Witch, at: At, x: number, z: number, radius: number, reach = 0.9): { x: number; z: number; slot?: number } | null {
   if (!W.hat.has) return null;
   reserveHatPoints(W, at);
-  if (HOUSE_ROOMS.layout && W.hat.down && Math.hypot(W.hat.down.x - x, W.hat.down.z - z) <= radius) return { x: W.hat.down.x, z: W.hat.down.z };
   const hats = hatsOnFloor(W), slots = hatSlots(at);
+  if (HOUSE_ROOMS.layout) {
+    const candidates: { x: number; z: number; slot?: number }[] = [];
+    hats.forEach((s, i) => { if (s && slots[i] && Math.hypot(slots[i].x - x, slots[i].z - z) <= reach) candidates.push({ ...slots[i], slot: i }); });
+    if (W.hat.down) for (const h of [W.hat.down, ...W.hat.left]) if (Math.hypot(h.x - x, h.z - z) <= radius) candidates.push({ x: h.x, z: h.z });
+    return candidates.sort((a, b) => Math.hypot(a.x - x, a.z - z) - Math.hypot(b.x - x, b.z - z))[0] ?? null;
+  }
   let pick = -1, bd = reach;
   hats.forEach((s, i) => { if (!slots[i]) return; const d = Math.hypot(slots[i].x - x, slots[i].z - z); if (s && d <= bd) { bd = d; pick = i; } });
   if (pick >= 0) return { ...slots[pick], slot: pick };
@@ -245,7 +260,7 @@ export function useHats(W: Witch, at: At, x: number, z: number, time: number, ra
     if (HOUSE_ROOMS.layout?.hatPoints.length) reconcileHatPoints(W.house!, HOUSE_ROOMS.layout.hatPoints.length, hatsElsewhere(W));
     return { kind: "hatPicked", id: W.id, x: h.x, z: h.z, at: time };
   }
-  const own = hatButton(W.hat, x, z, radius, W.spells.hat);
+  const own = HOUSE_ROOMS.layout ? hatButton(W.hat, h.x, h.z, 0, W.spells.hat) : hatButton(W.hat, x, z, radius, W.spells.hat);
   if (own === null) return null;
   if (own !== W.spells.hat) setLoadout(W.spells, own);
   reserveHatPoints(W, at);
