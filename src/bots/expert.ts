@@ -7,10 +7,11 @@ import { newCoverage } from "./coverage";
 import { newKnownQuestJob } from "./knownQuest";
 import { newQuestOffering } from "./questOffering";
 import { newCoverageGuard } from "./coverageGuard";
-import { newCampaign } from "./campaign";
+import { newCampaign, CAMPAIGN_DEFAULTS } from "./campaign";
 import { useBroom } from "./equipment";
 
 export const EXPERT_DEFAULTS = {
+  ...CAMPAIGN_DEFAULTS,
   healAt: 1, healTo: 3, kite: 9, dashAt: 5, fireFrac: 0.95, closeFrac: 0.8,
   stick: 250, ahead: 400, homeRange: 120, follow: 10,
   homeStand: 22, castMoveFrac: 0.5, pickRadiusFrac: 0.6, retargetSeconds: 3,
@@ -53,7 +54,7 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
   // Candidate stays opt-in until the coordinator disposes of the fixed test.
   const questJob = newKnownQuestJob(options.knownQuestPriority === true);
   const deliverySelection = newQuestOffering(), deliveryRepair = options.questDeliveryRepair !== false;
-  const campaign = newCampaign();
+  const campaign = newCampaign(K);
   let campaignCycle: { stack: string; at: number } | null = null;
   let campaignPress: { key: string; at: number } | null = null;
   let trailJob: { id: number; until: number } | null = null;
@@ -265,8 +266,8 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
         return c;
       }
     }
-    const candidates = o.creatures.filter(a => !a.boss && !a.friendly && !a.rune && (job ? a.id === job.creatureId : a.level > 0 || a.species === quest?.wants || !!o.campaign?.berries.length && o.carried.filter(c => c.level === 1).length < 3))
-      .filter(a => !o.campaign || !front || o.carried.filter(c => c.level === 1).length < 3 || a.species === quest?.wants || dist(a, front) < 150 || dist(w, a) < K.kite);
+    const candidates = o.creatures.filter(a => !a.boss && !a.friendly && !a.rune && (job ? a.id === job.creatureId : a.level > 0 || a.species === quest?.wants || !!o.campaign?.berries.length && o.carried.filter(c => c.level === 1).length < K.mobileYouths))
+      .filter(a => !o.campaign || !front || o.carried.filter(c => c.level === 1).length < K.mobileYouths || a.species === quest?.wants || dist(a, front) < 150 || dist(w, a) < K.kite);
     const score = (a: typeof candidates[number]) => campaign.recruitScore(o, a, quest?.wants) - (a.area === lastArea ? K.stick : 0) - (front && dist(a, front) < 100 ? K.ahead : 0);
     if (o.playerTime >= retargetAt || !candidates.some(a => a.id === target)) {
       target = [...candidates].sort((a, b) => score(a) - score(b) || a.id - b.id)[0]?.id ?? null;

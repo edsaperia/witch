@@ -33,3 +33,23 @@ no station-menu selection action. Condition to resume that subtask: a trusted
 COORDINATOR instruction on PR1540 assigns the adapter scope (or existing owner
 provides it). Never substitute direct Game loadout mutation. This dependency does
 not block the independent campaign implementation or tests above.
+
+## Training start (Ed, 2026-10-31)
+
+Ed explicitly requested training after the implementation. This supersedes the
+earlier no-training scope for this new batch only; old experiments are not replayed.
+Five campaign choices are now parameters: mobile youth reserve, berry trip range,
+adult pickup/post range, species mismatch penalty and growth-flask group size.
+Default behavior is unchanged. `--campaign-only` freezes movement/quest controls;
+an explicit fitness matrix also fixes equipment. Protected final pairs and the
+survey-reserved first-round pairs remain excluded.
+
+First bounded local training pilot: the exact two120-player-second cases in
+`tools/balance/expert-campaign-pilot-cases.json`, six candidates including baseline,
+search seed1540, one below-normal worker,480-wall-second hard cap, training-only.
+No held-out cases, no model lock, no automatic restart, no default promotion.
+The pilot may censor every primary objective; report that rather than calling
+survival tie-breakers strategic strength. It tests the new search plumbing and
+current-source behavior. Long cases remain cloud-only under the existing driver;
+canonical coordinator must allocate/dispatch that separate batch. No old source
+checkpoint or initial model can be relabelled for this source.

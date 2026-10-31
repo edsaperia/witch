@@ -2,10 +2,12 @@ import type { Observation, Point } from "./observe";
 
 const distance = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.z - b.z);
 type Animal = Observation["carried"][number];
+export const CAMPAIGN_DEFAULTS = { mobileYouths: 3, feedRange: 80, adultPostRange: 140, speciesPenalty: 250, flaskGroup: 3 };
 export type CampaignAction = { kind: "move" | "drop" | "pickup" | "wait" | "flask"; at: Point; id?: number; doing: string };
 
 /** Memory and decisions contain only consumed delayed public observations. */
-export function newCampaign() {
+export function newCampaign(parameters: Partial<typeof CAMPAIGN_DEFAULTS> = {}) {
+  const K = { ...CAMPAIGN_DEFAULTS, ...parameters };
   const areas = new Map<string, Point & { captured: boolean; seen: number }>();
   const enemies = new Map<number, { species: string; area: string; seen: number }>();
   const posted = new Map<number, { at: Point; species: string }>();
@@ -54,8 +56,8 @@ export function newCampaign() {
   function recruitScore(o: Observation, a: Animal & Point, wanted?: string): number {
     const at = front(o), force = o.carried.filter(c => c.level === 1).length;
     const duplicate = o.carried.filter(c => c.species === a.species).length;
-    const mismatch = at && !useful(o, a, at) ? 250 : 0;
-    const age = a.level === 0 ? (force < 3 && (o.campaign?.berries.length ?? 0) > 0 ? -100 : 180)
+    const mismatch = at && !useful(o, a, at) ? K.speciesPenalty : 0;
+    const age = a.level === 0 ? (force < K.mobileYouths && (o.campaign?.berries.length ?? 0) > 0 ? -100 : 180)
       : a.level === 1 ? -120 : at && distance(a, at) < 100 ? -100 : 150;
     return distance(o.self, a) + duplicate * 100 + mismatch + age - (a.species === wanted ? 600 : 0);
   }
@@ -63,9 +65,9 @@ export function newCampaign() {
     if (a.species === wanted) return true;
     if (reserve(o, a.id)) return false;
     const at = front(o), mobile = o.carried.filter(c => c.level === 1).length;
-    if (a.level >= 2) return !!at && distance(o.self, at) < 140 && useful(o, a, at);
-    if (a.level === 0) return mobile < 3 && ((o.campaign?.berries.length ?? 0) > 0 || o.campaign?.equipment?.hat === "harvest");
-    return mobile < 6 && (!at || useful(o, a, at) || mobile < 2);
+    if (a.level >= 2) return !!at && distance(o.self, at) < K.adultPostRange && useful(o, a, at);
+    if (a.level === 0) return mobile < K.mobileYouths && ((o.campaign?.berries.length ?? 0) > 0 || o.campaign?.equipment?.hat === "harvest");
+    return mobile < K.mobileYouths * 2 && (!at || useful(o, a, at) || mobile < 2);
   }
 
   function choose(o: Observation): CampaignAction | null {
@@ -90,7 +92,7 @@ export function newCampaign() {
     // Adult strength is committed to a nearby battlefield. Keep several youths
     // mobile; do not ground the entire travelling party for a distant flask.
     const flask = C.flasks.filter(p => at && distance(p, at) < 80 && distance(o.self, p) < 60)[0];
-    if (flask && at && o.carried.length >= 3 && o.carried.filter(a => a.level < 2 && useful(o, a, at)).length >= 2 && o.carried.every(a => useful(o, a, at)))
+    if (flask && at && o.carried.length >= K.flaskGroup && o.carried.filter(a => a.level < 2 && useful(o, a, at)).length >= 2 && o.carried.every(a => useful(o, a, at)))
       return { kind: "flask", at: flask, doing: "using a growth flask at a battlefield" };
 
     const adult = o.carried.find(a => a.level >= 2 && at && useful(o, a, at));
@@ -108,10 +110,10 @@ export function newCampaign() {
     // Grow a youth to adult only close to its intended post, retaining a mobile
     // youth force. A baby's first berry is the cheap mobile-force investment.
     const patient = C.troops.filter(a => o.carried.some(c => c.id === a.id)).find(a => a.hurt)
-      ?? C.troops.find(a => o.carried.some(c => c.id === a.id) && a.level === 0 && youths.length < 4)
-      ?? C.troops.find(a => o.carried.some(c => c.id === a.id) && a.level === 1 && youths.length > 3 && at && distance(o.self, at) < 80 && useful(o, a, at));
+      ?? C.troops.find(a => o.carried.some(c => c.id === a.id) && a.level === 0 && youths.length <= K.mobileYouths)
+      ?? C.troops.find(a => o.carried.some(c => c.id === a.id) && a.level === 1 && youths.length > K.mobileYouths && at && distance(o.self, at) < K.feedRange && useful(o, a, at));
     if (patient && o.playerTime >= feedAgain) {
-      const berry = C.berries.filter(p => distance(o.self, p) < 80 && (!at || patient.level !== 1 || distance(p, at) < 80))
+      const berry = C.berries.filter(p => distance(o.self, p) < K.feedRange && (!at || patient.level !== 1 || distance(p, at) < K.feedRange))
         .sort((a, b) => distance(o.self, a) - distance(o.self, b))[0];
       if (berry) {
         feed = { id: patient.id, at: { ...berry }, until: o.playerTime + 40, level: patient.hurt ? patient.level : patient.level + 1, phase: "drop" };
@@ -120,7 +122,7 @@ export function newCampaign() {
     }
     // Retain three mobile fighters. Surplus useful youths cover captured areas
     // or a known future front instead of all travelling with the witch.
-    if (youths.length > 3 && o.playerTime >= postAgain) {
+    if (youths.length > K.mobileYouths && o.playerTime >= postAgain) {
       const defended = [...areas.values()].filter(a => a.captured && distance(a, o.home) > 40)
         .sort((a, b) => distance(o.self, a) - distance(o.self, b))[0];
       const goal = o.alarms[0] ?? defended ?? o.home;

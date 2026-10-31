@@ -2,6 +2,16 @@
 
 ## Campaign strategy (Ed's direct brief, 2026-10-31)
 
+Ed requested training on2026-10-31. `--campaign-only` searches only
+`mobileYouths`, `feedRange`, `adultPostRange`, `speciesPenalty`, `flaskGroup`;
+default values remain3/80/140/250/3. With an exact `--cases` matrix all gear and
+movement/quest parameters are fixed. This is parameter search, not a learned
+world model or a neural policy. The first two-cell120s training-only pilot has
+six candidates and a480s hard cap; it never evaluates held-out cases, emits a
+model lock or promotes defaults. Longer full-night cases remain cloud-only.
+All new artifacts bind the new source/parameter schema; historical locks and
+measurements are not relabelled or reused for the changed policy.
+
 `bots/campaign.ts` adds bounded age/species decisions to the expert only. It
 recruits babies when a mobile youth force is short and observed berries can grow
 them, retains three travelling youths, considers species that can fight the known

@@ -38,6 +38,7 @@ const limit = positive("time", 60), iterations = positive("iterations", 3, true)
 const wall = positive("wall-seconds", 480), searchSeed = positive("search-seed", 1477, true);
 const execution = arg("execution", "pilot"), trainingOnly = process.argv.includes("--training-only"), shard = arg("shard", "local-pilot");
 const deferQuests = process.argv.includes("--defer-quests");
+const campaignOnly = process.argv.includes("--campaign-only");
 if (!["pilot", "cloud"].includes(execution)) throw Error("Unsupported execution mode");
 if (wall > (execution === "cloud" ? 3600 : 600)) throw Error("Wall cap exceeds approved execution window");
 if (limit > 120 && execution !== "cloud") throw Error("Long training is cloud-only; pilot case limit is 120 player seconds");
@@ -91,9 +92,9 @@ try {
   }
   const equipmentFor = point => equipmentOf({ ...initial, ...point }, catalogue);
   const policyFor = point => policyOf({ ...initial, ...point });
-  const activePolicy = policySpace(deferQuests);
+  const activePolicy = policySpace(deferQuests, campaignOnly);
   const activeSpace = fitness ? activePolicy : [...activePolicy, ...equipmentSpace(catalogue)];
-  Object.assign(manifest, { deferQuests, activeSpace });
+  Object.assign(manifest, { deferQuests, campaignOnly, activeSpace });
   const initialPoint = Object.fromEntries(activeSpace.map(([name]) => [name, initial[name]]));
   let checkpoint = existsSync(checkpointPath) ? JSON.parse(readFileSync(checkpointPath, "utf8")) : { manifest, search: startSearch(activeSpace, initialPoint, searchSeed), evaluations: [], held: [], complete: false };
   // Runners commit results on their result branches. Those docs-only commits

@@ -90,3 +90,11 @@ test("a visible early-clear rainbow supplies a direction without a future endpoi
   o.campaign!.rainbow = []; o.playerTime = 16; p.observe(o);
   expect(p.destination(o)).toBeNull();
 });
+test("training parameters change the actual mobile reserve and adult carry decisions", () => {
+  const o = frame(); carry(o, animal(1), animal(2), animal(3));
+  const small = newCampaign({ mobileYouths: 1 }), large = newCampaign({ mobileYouths: 5 }); small.observe(o); large.observe(o);
+  expect(small.choose(o)?.kind).toBe("drop"); expect(large.choose(o)).toBeNull();
+  o.next = { x: 100, z: 0 };
+  expect(newCampaign({ adultPostRange: 60 }).carryUseful(o, animal(9, 2))).toBe(false);
+  expect(newCampaign({ adultPostRange: 200 }).carryUseful(o, animal(9, 2))).toBe(true);
+});
