@@ -27,7 +27,12 @@ States: **ACTIVE** (working now), **WAITING** (blocked on the named condition), 
 | patterned lighting | On by default (Ed 16:49), #1542 | `codex/patterned-lighting` | WAITING | CI green → laptop cost slot after #1513 | `render/lighting.ts` modulation; light metadata lines in `view.ts`/`view/lights.ts`, `fx/system.ts` |
 | refraction + dodge `01a18d4a-9d53` | #1543 heat refraction; #1545 dodge echoes | `codex/heat-refraction`, `codex/dodge-echoes` | WAITING | cloud reruns (580fcb83; 17a8111e) | `render/refraction*.ts`, `tools/refraction/*`; `render/dodgeEcho*.ts`, `render/view/dodgeEchoes.ts` |
 | expert bot | Campaign strategy, #1540 | `codex/expert-strategy` | ACTIVE | laptop training run (current slot holder); merge prototype (60 behind) | `docs/plans/expert-strategy.md`, bot strategy/training tools |
-| (unassigned) | Inbox #1555: CI speed, capture harness, veil readback, A4 split; #1551 slice C (pause menu) | `codex/ops-inbox` | — | root assignment | see each brief |
+| CI speed (Codex) | Art-check reuse + triggers, annotations, Pages, local gate, #1557 | `codex/ci-speed` | ACTIVE | each item green → publish | `.github/workflows/*`, `tools/art-check/*`, `tools/ci/*` |
+| veil readback (Codex) | Smoke veil readback replacement, #1558 (parent #1240) | `codex/veil-readback` | ACTIVE | notes index fix → CI green → laptop slot | `render/veilReadback.ts`, `render/occlusion.ts` hook |
+| crash (Claude cloud `session_018uvzSQnP2XjAVudegQrn7j`) | Playtest crash 18:23, #1559 | `codex/crash-1823` | ACTIVE | fix + cloud pause/reload measurement | `platform/inputRecording.ts` journal, night-save restore path |
+| pause panel (Claude cloud `session_018uvzSPfS3VkpDHkygXYViC`) | Playtest slice C items 11–12 | `claude/pause-panel-1031` | ACTIVE | PLAN on #1551 | `src/ui/decide.ts` pause panel; `newBuild` hook wiring in `main.ts` |
+| A4 plan (Claude cloud `session_018uvzSLhmrPRbVUpyX26G8N`) | Split plan + scripted dry run, brief on #1555 | `claude/a4-split-dry-run` | ACTIVE | PLAN + fence cost → Ed's OK for the fence | nothing live until the fence |
+| (unassigned) | Inbox #1555: capture harness | `codex/ops-inbox` | — | root assignment | see brief |
 
 #1479 is closed (historical). #1240's fix moves to a fresh PR under `docs/plans/veil-readback.md`.
 
