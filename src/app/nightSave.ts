@@ -22,6 +22,33 @@ export interface NightStore {
   clear(): Promise<void>;
 }
 
+/** Suspend before adopting a borrowed game. Confirmation alone discards the interrupted solo checkpoint;
+ * a failed/preparing call can resume its own game without having deleted that checkpoint. */
+export function borrowedNightSaves(original: NightStore) {
+  let held = false, tail = Promise.resolve(), barrier: Promise<void> | null = null, confirmation: Promise<void> | null = null;
+  const queue = (action: () => Promise<void>) => {
+    const operation = tail.then(action); tail = operation.catch(() => {}); return operation;
+  };
+  const store: NightStore = {
+    read: () => held ? Promise.resolve(undefined) : original.read(),
+    write: value => held ? Promise.resolve() : queue(() => held ? Promise.resolve() : original.write(value)),
+    clear: () => held ? Promise.resolve() : queue(() => held ? Promise.resolve() : original.clear()),
+  };
+  return {
+    store,
+    get suspended() { return held; },
+    suspendForVisit(): Promise<void> { if (!held) { held = true; barrier = tail; } return barrier ?? Promise.resolve(); },
+    confirmVisit(): Promise<void> {
+      if (!held) return Promise.reject(new Error("Suspend own night saves before confirming a visit."));
+      return confirmation ??= (barrier ?? tail).then(() => original.clear());
+    },
+    /** Only after an own solo game has replaced the borrowed game. Never flush borrowed snapshots. */
+    async resumeSolo(): Promise<void> {
+      await (confirmation ?? barrier)?.catch(() => {}); held = false; barrier = confirmation = null;
+    },
+  };
+}
+
 /** Hiding the loading card also happens while she is still asleep: wait until she's up before saving. */
 export function nightHasStarted(game: Pick<Game, "wake">, playStarted: boolean): boolean {
   return playStarted && (!game.wake || game.wake.open);

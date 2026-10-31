@@ -297,6 +297,7 @@ says what each note covers.
 - Compatible nights
 - Save format guards
 - Compatible mushroom extension (PR #1523)
+- Borrowed visits (PR #1538)
 
 ## [Sound effects](sound.md)
 
