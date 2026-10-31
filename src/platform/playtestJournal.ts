@@ -48,6 +48,10 @@ export class PlaytestJournal {
       try {
         const old = (await store.list(path)).filter(p => p.id !== id && p.session === session).sort((a, b) => b.started - a.started);
         // Never delete another tab/session or an unclosed page that may still be running.
+        // crash1823: a reload's pagehide can't commit to IndexedDB, only the synchronous marker
+        // (see pageHidden); a page whose marker says it ended cleanly is closed here.
+        const ended = this.previousMarker?.active === false ? old.find(p => p.id === this.previousMarker!.owner && !p.closed) : undefined;
+        if (ended) { ended.closed = true; await store.append(ended, []); }
         this.previous = old.slice(0, 2); await store.prune(old.slice(2).filter(p => p.closed).map(p => p.id));
         await store.append(page, []);
       } catch { this.persistent = false; }
@@ -93,6 +97,14 @@ export class PlaytestJournal {
       }
     });
     this.queue = job; await job;
+  }
+  /** pagehide (not into the back/forward cache): the page is going away on purpose. IndexedDB work started now
+   * doesn't commit before an unload in Chromium (crash1823: 0 of 5 reloads), so the clean-end marker is written
+   * synchronously first; only a page that dies without pagehide (a renderer crash or kill) stays "unexpected". */
+  pageHidden(): void {
+    if (this.closing || !this.persistent) { void this.close(); return; }
+    try { if (this.markers.read()?.owner === this.page.id) this.markers.write({ owner: this.page.id, active: false, build: this.page.build, at: Date.now(), compact: this.compact }); } catch { this.persistent = false; }
+    void this.close();
   }
   async close(): Promise<void> {
     this.closing = true; await this.flush();
@@ -191,7 +203,7 @@ export function beginBrowserJournal(build: string): PlaytestJournal | undefined 
     return value && typeof value.owner === "string" && typeof value.active === "boolean" && Array.isArray(value.compact) ? { ...value, compact: value.compact.slice(-50) } : null;
   }, write: marker => localStorage.setItem(key, JSON.stringify(marker)) };
   active = new PlaytestJournal(location.pathname, session, id, build, browserJournalStore(globalThis.indexedDB), markers);
-  window.addEventListener("pagehide", event => { if (event.persisted) void active?.flush(); else void active?.close(); });
+  window.addEventListener("pagehide", event => { if (event.persisted) void active?.flush(); else active?.pageHidden(); });
   document.addEventListener("visibilitychange", () => { if (document.hidden) void active?.flush(); });
   return active;
 }

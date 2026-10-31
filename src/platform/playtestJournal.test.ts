@@ -72,6 +72,24 @@ describe("incremental playtest journal", () => {
     expect((await third.ready).unexpected).toBe(false);
     await third.close();
   });
+  it("an ordinary reload is not an unexpected end even though its pagehide write never commits (crash1823)", async () => {
+    const f = fixture();
+    // Chromium: IndexedDB work a page starts in pagehide never commits before the unload.
+    let unloading = false;
+    const dying: JournalStore = { ...f.store, append: (page, rows, removed) => unloading ? new Promise<void>(() => {}) : f.store.append(page, rows, removed) };
+    const first = new PlaytestJournal("/test", "session", "first", "build", dying, f.markers, 1); await first.ready;
+    first.append("input", { tick: 1 }); await first.flush();
+    unloading = true; first.pageHidden();
+    const second = f.open("second", 2);
+    expect(await second.ready).toEqual({ unexpected: false, persistent: true });
+    expect(f.pages.get("first")!.closed).toBe(true);
+    expect(f.entries.get("first")).toHaveLength(1);
+    // A page that dies without pagehide (a renderer crash or kill) still reads as unexpected.
+    const third = f.open("third", 3);
+    expect((await third.ready).unexpected).toBe(true);
+    expect(f.pages.get("second")!.closed).toBe(false);
+    await third.close();
+  });
   it("leaves the unexpected-end marker after storage failure without throwing", async () => {
     const f = fixture(), page = f.open("first"); await page.ready;
     f.store.append = async () => { throw Error("quota"); };
