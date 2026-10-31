@@ -264,6 +264,7 @@ async function main() {
     check(popCount === 0, `nothing pops in or out in clear view in the Heath, flying through every zoom level in both modes (${popCount})${popCount ? ": " + pops.join("; ") : ""}`, "pops");
   }, "&debug&island=moth");
 
+  // Four areas: local touch movement/rise does not need distant scenery or area diversity.
   await run("phone", { width: 390, height: 844, hasTouch: true }, async page => {
     await page.touchscreen.tap(200, 400);
     await sleep(300);
@@ -288,9 +289,9 @@ async function main() {
     await page.waitForFunction(() => window.witch.game.witch.mode !== "ground" && window.witch.game.witch.mode === "treetop", null, { timeout: 400000, polling: 50 }).catch(() => {});
     check((await state(page)).mode === "treetop", "the round button rises to treetop mode");
     await shot(page, "11-phone-treetop.png");
-  });
+  }, "&debug&island=4");
 
-  // The tilt-shift both ways, and off, from the same spot, for Ed to compare.
+  // The tilt-shift both ways, and off, from the same spot, for Ed to compare; four areas suffice for this local view.
   for (const tilt of ["before", "after", "off"]) {
     await run(`tilt-${tilt}`, { width: 1280, height: 720 }, async page => {
       await page.keyboard.press("Enter");
@@ -299,7 +300,7 @@ async function main() {
       await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 240000 });
       await sleep(600);
       await shot(page, `2${["before", "after", "off"].indexOf(tilt)}-tilt-${tilt}.png`);
-    }, `&tilt=${tilt}`);
+    }, `&island=4&tilt=${tilt}`);
   }
 
   // The dancefloor from the ground and from the treetops.
@@ -347,7 +348,7 @@ async function main() {
       await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 240000 });
       await sleep(600);
       await shot(page, `31-treetop-${name}.png`);
-    }, q);
+    }, `&island=4${q || "&debug"}`); // Local ground/canopy effects comparison; distant area diversity is covered separately.
   }
   // The party spreading: one area partifying (shots through its transition, from the treetops),
   // its string lights from the ground, then the party after four waves from high up.
@@ -758,7 +759,7 @@ async function main() {
     check(r.besiegers > 0 && r.hit && r.fell && r.ended && r.marched, `a woken area's creatures besiege its soundsystem, bring it down, end its party and march on to the dancefloor (${JSON.stringify(r)})`);
     check(r.over && screen, `when home's speakers have fallen the party's over and the 💤 pin leads her to bed, no card (${r.over}, ${screen})`);
     check(r.fighting === 0 && r.awake === 0 && r.asleep > 0, `the afterparty: nothing fights, everyone's asleep or walking home to bed (${JSON.stringify({ fighting: r.fighting, awake: r.awake, asleep: r.asleep })})`);
-  });
+  }, "&debug&island=4"); // First-area siege and its return to home need four areas, not the full island.
 
   await run("boost", { width: 1900, height: 1240 }, async page => {
     await page.keyboard.press("Enter");
