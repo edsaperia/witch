@@ -3919,14 +3919,17 @@ const OPEN = a => Math.abs(((a - Math.PI / 2 + Math.PI * 3) % (Math.PI * 2)) - M
 // her (DJ_FRAMES of them: the platters turn an eighth of a turn and the LEDs chase on each).
 const DJ_FRAMES = 8;
 const DJ_STAND = [0, TREEHOUSE_STOREYS.studio.y, 1.75]; // where she stands (her seat anchor), in the house's units
-function djFrame3(facing, stand = DJ_STAND) { // her model's (a, b, c) in the house's: squared to the camera at the house's yaw for this facing (stand: where she stands, the Ent's deck's own, art/ent.js)
+function djFrame3(facing, stand = DJ_STAND, rotation = 0) { // optional placement rotation in radians; zero keeps the original frame exactly
   const yaw = YAW[facing] ?? YAW.towards, f = [Math.sin(yaw), 0, Math.cos(yaw)], r = [Math.cos(yaw), 0, -Math.sin(yaw)], o = v3.sub(stand, v3.mul(f, .02)); // (her ground anchor .02 ahead of her origin)
-  const to = ([a, b, c]) => v3.add(o, v3.add(v3.mul(f, a), v3.add(v3.mul(r, -c), [0, b, 0])));
-  const from = p => { const d = v3.sub(p, o); return [v3.dot(d, f), d[1], -v3.dot(d, r)]; };
-  return { to, from, f, r };
+  const turn = v => rotation ? [v[0] * Math.cos(rotation) - v[2] * Math.sin(rotation), v[1], v[0] * Math.sin(rotation) + v[2] * Math.cos(rotation)] : v;
+  const F = turn(f), R = turn(r);
+  const origin = rotation ? v3.sub(stand, v3.mul(F, .02)) : o;
+  const to = ([a, b, c]) => v3.add(origin, v3.add(v3.mul(F, a), v3.add(v3.mul(R, -c), [0, b, 0])));
+  const from = p => { const d = v3.sub(p, origin); return [v3.dot(d, F), d[1], -v3.dot(d, R)]; };
+  return { to, from, f: F, r: R };
 }
-function djTable(m, { frame = 0, facing = "towards", stand } = {}) {
-  const D = DJ_DECKS, F = djFrame3(facing, stand), { to, from, f, r } = F, G0 = 60, TOP = D.top, [a0, a1] = D.depth, am = (a0 + a1) / 2, W = D.width; // its own groups (60..79), apart from the house's
+function djTable(m, { frame = 0, facing = "towards", stand, rotation = 0 } = {}) {
+  const D = DJ_DECKS, F = djFrame3(facing, stand, rotation), { to, from, f, r } = F, G0 = 60, TOP = D.top, [a0, a1] = D.depth, am = (a0 + a1) / 2, W = D.width; // its own groups (60..79), apart from the house's
   const box = (c, h, mat, o = {}) => m.box(to(c), h, mat, { dir: r, up: [0, 1, 0], ...o }); // half sizes: across, up, deep
   const chase = (c, k) => FAIRY[((Math.floor((c + 9) * 22) + frame + k) % 4 + 4) % 4];
   // the desk: a panelled front with LED strips top and bottom round a crescent moon, wood sides, a dark top
@@ -4455,6 +4458,10 @@ function entModel(st, facing, E) {
     const south = [Math.cos(aCam), Math.sin(aCam)], east = [Math.sin(aCam), -Math.cos(aCam)];
     const H = (dx, y, dz) => P(east[0] * dx + south[0] * dz, y, east[1] * dx + south[1] * dz);
     const inHouse = p => { const x = p[0] / k, z = p[2] / k; return { dx: east[0] * x + east[1] * z, dz: south[0] * x + south[1] * z }; };
+    const DK = Tt.decks, rotation = (DK.rotation ?? 0) * Math.PI / 180, co = Math.cos(rotation), si = Math.sin(rotation);
+    const deskPoint = (dx, y, dz) => rotation ? H(DK.x + (dx - DK.x) * co - (dz - DK.z) * si, y, DK.z + (dx - DK.x) * si + (dz - DK.z) * co) : H(dx, y, dz);
+    const deskSpace = p => { const q = inHouse(p); if (!rotation) return q; const x = q.dx - DK.x, z = q.dz - DK.z; return { dx: DK.x + x * co + z * si, dz: DK.z - x * si + z * co }; };
+    const deskEast = rotation ? [east[0] * co + south[0] * si, east[1] * co + south[1] * si] : east;
     const floorPaint = p => { const { dx, dz } = inHouse(p), r = Math.hypot(dx, dz), y = p[1] / k;
       if (y < top - .35) return M.BARK2; // its underside
       if (r > Rt - .45) return entHash(Math.floor(Math.atan2(dz, dx) * Rt * 2), 3) < .4 ? M.MOSS : M.BARK2; // the bark rim, mossy
@@ -4467,23 +4474,24 @@ function entModel(st, facing, E) {
       both(mm => { mm.seg(base, v3.add(base, [0, U(.22), 0]), U(.045), U(.04), M.BELLY, { group: gc }); mm.ell(v3.add(base, [0, U(.28), 0]), [U(.035), U(.06), U(.035)], M.MAGIC2, { group: gc + 1 }); }); g();
       lights.push({ at: v3.add(base, [0, U(.3), 0]), rgb: [255, 170, 80], kind: "candle" }); }
     // her decks: the DJ table at her seat, the desk's two wings either side of it along the rim, a lantern at each end
-    const D0 = DJ_DECKS, S0 = Tt.seat, DK = Tt.decks, stand = H(S0.x, top, S0.z);
-    const dj = djTable(near, { facing, stand }); djTable(m, { facing, stand });
+    const D0 = DJ_DECKS, delta = { x: Tt.seat.x - DK.x, z: Tt.seat.z - DK.z };
+    const S0 = rotation ? { x: DK.x + delta.x * co + delta.z * si, z: DK.z - delta.x * si + delta.z * co } : Tt.seat, stand = deskPoint(S0.x, top, S0.z);
+    const dj = djTable(near, { facing, stand, rotation }); djTable(m, { facing, stand, rotation });
     const half = D0.width / k + .02, deskTop = D0.top / k, x0 = DK.x - DK.w / 2, x1 = DK.x + DK.w / 2;
     for (const [a, b] of [[x0, S0.x - half], [S0.x + half, x1]]) { if (b - a < .1) continue;
-      nearAlso(mm => mm.box(H((a + b) / 2, top + deskTop / 2, DK.z), [U((b - a) / 2), U(deskTop / 2), U(DK.d / 2)], M.WOOD, { dir: [east[0], 0, east[1]], up: [0, 1, 0], group: 80 + (a < S0.x ? 0 : 1), round: U(.02), paint: p => {
-        const { dx, dz } = inHouse(p), y = p[1] / k - top;
+      nearAlso(mm => mm.box(deskPoint((a + b) / 2, top + deskTop / 2, DK.z), [U((b - a) / 2), U(deskTop / 2), U(DK.d / 2)], M.WOOD, { dir: [deskEast[0], 0, deskEast[1]], up: [0, 1, 0], group: 80 + (a < S0.x ? 0 : 1), round: U(.02), paint: p => {
+        const { dx, dz } = deskSpace(p), y = p[1] / k - top;
         if (y > deskTop - .02) return M.SHADES;
         if (dz < DK.z + DK.d / 2 - .04) return M.BARKL; // (its back and ends)
         if (y > deskTop - .1 || y < .09) return ENT_FAIRY[((Math.floor(dx * 9) % 4) + 4) % 4]; // the LED strips
         return ((dx * 5) % 1 + 1) % 1 < .08 ? M.BARK2 : undefined; } })); }
-    for (const x of [x0 - .15, x1 + .15]) { const b = H(x, top, DK.z), gp = g();
+    for (const x of [x0 - .15, x1 + .15]) { const b = deskPoint(x, top, DK.z), gp = g();
       nearAlso(mm => { mm.box(v3.add(b, [0, U(.6), 0]), [U(.12), U(.62), U(.12)], M.WOOD, { group: gp, round: U(.03) }); mm.ell(v3.add(b, [0, U(1.3), 0]), [U(.14), U(.17), U(.14)], M.GLOW, { group: gp + 1, paint: p => (Math.abs(p[1] - b[1] - U(1.3)) < U(.05) ? M.MAGIC2 : undefined) }); }); g();
       lights.push({ at: v3.add(b, [0, U(1.3), 0]), rgb: [255, 190, 96], kind: "lantern" }); }
     lights.push({ at: dj.to([D0.platter.a, D0.top + .03, D0.platter.c]), rgb: [255, 80, 200], kind: "decks" }, { at: dj.to([D0.platter.a, D0.top + .03, -D0.platter.c]), rgb: [80, 230, 255], kind: "decks" });
     const S = Math.PI / 2, standR = Math.hypot(S0.x, S0.z);
-    return { m, far, near, dj, stand, standR, k, top, deck: P(0, top, 0), table: P(0, top, 0), circle: H(C.x, top, C.z), balcony: H(DK.x, top, DK.z), lights, seat: { x: S0.x, z: S0.z },
-      candleRow: { x0: S0.x - 1.4, x1: S0.x + 1.4, z: DK.z + DK.d / 2 - .12, at: (dx, y, dz) => H(dx, y, dz) },
+    return { m, far, near, dj, stand, standR, k, top, deck: P(0, top, 0), table: P(0, top, 0), circle: H(C.x, top, C.z), balcony: H(DK.x, top, DK.z), lights, seat: { x: Tt.seat.x, z: Tt.seat.z }, ...(rotation ? { rotation } : {}),
+      candleRow: { x0: S0.x - 1.4, x1: S0.x + 1.4, z: DK.z + DK.d / 2 - .12, at: (dx, y, dz) => deskPoint(dx, y, dz) },
       desk: { inner: +standR.toFixed(2), front: +(standR + DK.d).toFixed(2), from: +(S - .3).toFixed(3), to: +(S + .3).toFixed(3), mid: +S.toFixed(3) }, aCam, RR: Rt };
   };
   return E.house ? (E.house.organic ? oakParts() : houseParts()) : deckParts();
@@ -4518,7 +4526,7 @@ function entSprite(st = {}, { facing = "towards", ppm = 16, deckY = ENT.deckY, d
   for (let i = 0; i < whole.m.length; i++) { const v = whole.m[i], x = i % W, y = Math.floor(i / W); if (!v) continue;
     if (near0.m[i] === v) near.put(x, y, v, whole.n[i * 3], whole.n[i * 3 + 1], whole.n[i * 3 + 2]);
     else if (!far.m[i]) far.put(x, y, v, whole.n[i * 3], whole.n[i * 3 + 1], whole.n[i * 3 + 2]); }
-  const frames = []; for (let f = 0; f < DJ_FRAMES; f++) { const fm = new Model({ blend: .04 }); djTable(fm, { frame: f, facing, stand: T.stand }); frames.push(into(fm)); }
+  const frames = []; for (let f = 0; f < DJ_FRAMES; f++) { const fm = new Model({ blend: .04 }); djTable(fm, { frame: f, facing, stand: T.stand, rotation: T.rotation ?? 0 }); frames.push(into(fm)); }
   const fore = frames[0];
   // the whole shows the table exactly as it's drawn over her (and the near half too)
   for (let i = 0; i < fore.m.length; i++) if (fore.m[i]) for (const t of [whole, near]) t.put(i % W, Math.floor(i / W), fore.m[i], fore.n[i * 3], fore.n[i * 3 + 1], fore.n[i * 3 + 2]);
