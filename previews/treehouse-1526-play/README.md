@@ -1,6 +1,6 @@
 # PR #1526 play check: treehouse editor and Ed's opt-in layout (commit 2d14f5d)
 
-Run on 2026-10-31, 14:12 to 15:00 UTC. Cloud container, headless Chromium on SwiftShader (about 1 frame per second in the game).
+Run on 2026-10-31, 14:12 to 14:52 UTC. Cloud container, headless Chromium on SwiftShader (about 1 frame per second in the game).
 Built with `WITCH_SHA=2d14f5d3a35d8f729a40de44635847846e50e37d npx vite build`. `dist/version.json` = `{"version":"dev · 2d14f5d", ...}`. The build was served from a small local static server (`scripts/serve.cjs`).
 
 ## Summary
