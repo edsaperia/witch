@@ -46,7 +46,8 @@ jobs:
             fs.writeFileSync("upcoming.generated.json", JSON.stringify(items));
             core.info(`${items.length} items in flight`);
       - name: Build once for this tested revision
-        run: npm run build
+        # Formatting is checked before producing the shared build artifact.
+        run: node tools/config/format.mjs --check && npm run build
         env:
           WITCH_VERSION: ${{ github.run_number }}
           WITCH_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
