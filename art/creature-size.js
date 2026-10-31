@@ -2,7 +2,9 @@ import {witchSprite} from "./witch.js";
 import {render} from "./model3d.js";
 import {sizeTargetPixels,SIZE_CLASSES,SIZE_CLASS_BY_ID} from "./genome/size-ranks.js";
 import {rng,uni} from "./core.js";
-export function sizePixelRange(id,level,witch){
+import {candidateSizePixels} from "./genome/size-candidate.js";
+export function sizePixelRange(id,level,witch,candidate=false){
+ if(candidate){const target=candidateSizePixels(id,level,witch);return [target-1,target+1];}
  const target=sizeTargetPixels(id,level,witch);
  if(level===3)return [target,target+1]; // protects 1.75x even when the adult reaches its upper bound
  const band=[[.75,1.2],[1.1,1.5],[1.8,3]][level],rank=SIZE_CLASS_BY_ID[id];
@@ -25,7 +27,7 @@ export function standingWitchHeight(st) {
 // an initial scale; the raster fit below targets occupied pixels, including
 // decorative extras, rather than blank padding. Pins cannot exceed the band.
 export function creatureSizeOptions(model, options, S, level, st) {
-  const target=sizeTargetPixels(S.id,level,standingWitchHeight(st));
+  const target=(st.creatureSizeCandidate===1?candidateSizePixels:sizeTargetPixels)(S.id,level,standingWitchHeight(st));
   const unit=render(model,{...options,scale:1,measure:true,projected:true});
   // measure's integer dimensions would lose subpixel support, so use its span.
   const span=unit.projectedHeight;
@@ -48,7 +50,7 @@ export function fitOccupiedCreature(model,options,S,level,st,decorate) {
   const atScale=model.atScale,parts=model.parts.slice(),flats=model.flats.slice(),partState=parts.map(p=>({...p})),part=model.part;
   const reset=()=>{model.parts=parts.slice();model.flats=flats.slice();model.part=part;for(let i=0;i<parts.length;i++)Object.assign(parts[i],partState[i]);model.atScale=atScale;};
   if(!(S.id==='snowleopard'&&S.sizes.motes?.[level])){
-    const range=sizePixelRange(S.id,level,standingWitchHeight(st));let scale=options.scale,lo=null,hi=null,best=null;
+    const range=sizePixelRange(S.id,level,standingWitchHeight(st),st.creatureSizeCandidate===1);let scale=options.scale,lo=null,hi=null,best=null;
     const probePixels=(W,H)=>{
       const r=rng(S.plan==='owl'?31:S.id.length*(S.q?7919:131)),points=[];
       for(let i=0;i<(S.sizes.motes?.[level]??0);i++){
@@ -75,7 +77,7 @@ export function fitOccupiedCreature(model,options,S,level,st,decorate) {
     reset();const sp=draw(model,{...options,scale:best.scale,samplePhaseY:best.samplePhaseY}).sp;decorate(sp);
     return {options:{...options,scale:best.scale,samplePhaseY:best.samplePhaseY},sprite:sp,stats};
   }
-  const range=sizePixelRange(S.id,level,standingWitchHeight(st)),observations=[];
+  const range=sizePixelRange(S.id,level,standingWitchHeight(st),st.creatureSizeCandidate===1),observations=[];
   let scale=options.scale,best=null,samplePhaseY=0;
   for(let attempt=0;attempt<3;attempt++){
     reset();

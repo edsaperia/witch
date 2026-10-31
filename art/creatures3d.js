@@ -9,7 +9,7 @@ import { quadrupedTorsoGraph, quadrupedEarSocket, triangularEarMask, triangularE
 import { mandiblePart } from "./body-graph/mandibles.js";
 import { paintTailParts } from "./body-graph/tail-markings.js";
 import { GENOME_BY_ID, speciesOf } from "./genome/index.js";
-import { creatureSizeOptions, fitOccupiedCreature } from "./creature-size.js";
+import { creatureSizeOptions, fitOccupiedCreature, occupiedHeight as occupiedHeightForCandidate } from "./creature-size.js";
 import { elderQuad, grizzle, notch, surfaceFrom, ring, fitRing, frontPts, closed, charm, crown, drawOn, meerkatDress, sentinelHeap } from "./elders.js";
 
 // Levels (Ed): 0 baby, 1 young, 2 adult, 3 legend.
@@ -99,16 +99,23 @@ let VIEW = null;
 export function withView(view, f) { const was = VIEW; VIEW = view; try { return f(); } finally { VIEW = was; } }
 export const viewKey = () => VIEW ? `view${VIEW.yaw ?? ""},${VIEW.pitch ?? ""}` : "";
 const drawForm = (m, o, S, level, st) => {
+  // Candidate measures existing anatomical volumes only. Keep every decorative
+  // part for the final drawing at the measured scale; never alter the anatomy.
+  const candidate = st.creatureSizeCandidate === 1;
+  const complete = candidate ? {parts:m.parts,flats:m.flats} : null;
   const dressed = m.sizeBody ? { parts: m.parts, flats: m.flats, atScale: m.atScale, part: m.part, values: m.parts.map(p => ({...p})) } : null;
   if (dressed) { m.parts = m.sizeBody.parts.slice(); m.flats = m.sizeBody.flats.slice(); }
+  if (candidate) { m.parts=m.parts.filter(p=>!p.extra);m.flats=m.flats.filter(p=>!p.extra); }
   o = creatureSizeOptions(m, o, S, level, st);
-  const decorate = sp => { const n = S.sizes.motes?.[level]; if (n) glowMotes(sp, S.plan === "owl" ? 31 : S.id.length * (S.q ? 7919 : 131), n, S.q && S.id === "snowleopard"); };
+  const decorate = sp => { const n = S.sizes.motes?.[level]; if (!candidate && n) glowMotes(sp, S.plan === "owl" ? 31 : S.id.length * (S.q ? 7919 : 131), n, S.q && S.id === "snowleopard"); };
   const fitted = fitOccupiedCreature(m, o, S, level, st, decorate);
+  if (candidate) { fitted.stats.bodyTarget=o.sizeTarget;fitted.stats.bodyHeight=fitted.sprite ? occupiedHeightForCandidate(fitted.sprite) : null; }
   if (dressed) {
     for (let i=0;i<dressed.parts.length;i++) Object.assign(dressed.parts[i],dressed.values[i]);
     m.parts=dressed.parts; m.flats=dressed.flats; m.atScale=dressed.atScale; m.part=dressed.part;
     fitted.sprite=null; // gear keeps the calibrated body scale, then draws on top
   }
+  if (complete) {m.parts=complete.parts;m.flats=complete.flats;fitted.sprite=null;}
   o = VIEW ? { ...fitted.options, ...VIEW } : fitted.options;
   if (FORM) {
     // Pose transforms move the already-built face and its anchors together.
@@ -117,7 +124,9 @@ const drawForm = (m, o, S, level, st) => {
     return FORM(m, o, S, level);
   }
   if (fitted.sprite && !VIEW) { fitted.sprite.sizeFit = fitted.stats; return fitted.sprite; }
-  const sp = render(m, o).sp; decorate(sp); sp.sizeFit = { ...fitted.stats, rasters: fitted.stats.rasters + 1 }; return sp;
+  const sp = render(m, o).sp; decorate(sp);
+  if(candidate){const n=S.sizes.motes?.[level];if(n)glowMotes(sp,S.plan === "owl" ? 31 : S.id.length * (S.q ? 7919 : 131),n,S.q&&S.id==='snowleopard');}
+  sp.sizeFit = { ...fitted.stats, rasters: fitted.stats.rasters + 1 }; return sp;
 };
 export function withGear(gear, f) { const was = GEAR; GEAR = gear; try { return f(); } finally { GEAR = was; } }
 // A little party shoe (Ed, 2026-10-05: "yes, little party shoes"): on a foot { c, r, group, fit } in a style

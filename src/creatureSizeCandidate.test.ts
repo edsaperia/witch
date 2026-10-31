@@ -1,8 +1,19 @@
 import { describe, expect, it } from "vitest";
 import { SIZE_CLASSES } from "../art/genome/size-ranks.js";
 import { candidateSizePixels } from "../art/genome/size-candidate.js";
+import {critter,defaultStyle} from "../art/generator.js";
 
 describe("Ed's opt-in body size candidate", () => {
+  it("fits anatomical bodies only when opted in and isolates the sprite cache", () => {
+    const st=defaultStyle(), before=critter("dormouse",2,0,st);
+    for(const id of ["dormouse","wolf","elephant"])for(const level of [0,1,2,3]){
+      const sp=critter(id,level,0,{...st,creatureSizeCandidate:1});
+      expect(sp.sizeFit.bodyTarget).toBe(candidateSizePixels(id,level));
+      expect(Math.abs(sp.sizeFit.bodyHeight-sp.sizeFit.bodyTarget)).toBeLessThanOrEqual(1);
+    }
+    expect(critter("dormouse",2,0,st)).toBe(before);
+    expect(before.sizeFit.bodyTarget).toBeUndefined();
+  });
   it("keeps readable small adults and the medium anchor with a broader adult range", () => {
     expect(candidateSizePixels("woodlouse", 2)).toBe(65);
     expect(candidateSizePixels("wolf", 2)).toBe(120);

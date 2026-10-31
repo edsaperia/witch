@@ -17,10 +17,11 @@ try{
  const served=await b.page.evaluate(async u=>(await(await fetch(u,{cache:"no-store"})).json()).sha,url);if(served!==sha)throw new Error("Served SHA mismatch");
  const ids=await b.page.evaluate(async()=>Object.keys((await import("/art/generator.js")).GENOME_BY_ID));
  for(const id of ids){
-  const result=await b.page.evaluate(async({id,sha})=>{
+  const result=await b.page.evaluate(async({id,sha,candidate})=>{
    const G=await import("/art/generator.js"),{shade}=await import("/art/lighting.js"),selection=await import("/art/genome/selection.js");
    const status=(selection.DEFAULT_ROSTER_IDS??[]).includes(id)?"redesigned":"current";
    const st={...G.defaultStyle(),...await(await fetch("/config/style.json")).json(),artStyle:"bold",pixel:(await(await fetch("/config/tuning.json")).json()).pixelSize};
+   if(candidate)st.creatureSizeCandidate=1;
    const rows=[],times=[];
    for(const level of [0,1,2,3])for(const facing of ["towards","away"])for(let frame=0;frame<G.walkGait(id).frames;frame++){
     const start=performance.now(),sp=G.critter(id,level,frame,st,facing),made=performance.now();
@@ -32,7 +33,7 @@ try{
    const width=Math.max(...rows.map(r=>r.albedo.width))+24,height=48+rows.reduce((s,r)=>s+r.h,0);if(width>8192||height>16384)throw new Error(`Contact sheet budget exceeded: ${id}`);
    const sheets={};for(const mode of ["albedo","night"]){const c=document.createElement("canvas");c.width=width;c.height=height;const ctx=c.getContext("2d");ctx.imageSmoothingEnabled=false;ctx.fillStyle=mode==="night"?"#12141f":"#292633";ctx.fillRect(0,0,width,height);ctx.fillStyle="#eee";ctx.font="12px sans-serif";ctx.fillText(`${id} ${status} ${mode} ${sha.slice(0,12)} — native pixels`,8,18);let y=48;for(const r of rows){ctx.fillText(`L${r.level} ${r.facing} frame${r.frame} ${r.albedo.width}×${r.albedo.height}`,8,y+12);ctx.drawImage(r[mode],12,y+22);y+=r.h;}sheets[mode]=c.toDataURL("image/png").split(",")[1];}
    return {sheets,times,status};
-  },{id,sha});
+  },{id,sha,candidate:process.env.SIZE_CANDIDATE==="1"});
   for(const [mode,data]of Object.entries(result.sheets))writeFileSync(resolve(out,`${id}-${mode}.png`),Buffer.from(data,"base64"));
   metadata.push({id,status:result.status,times:result.times});console.log(id);
  }

@@ -437,6 +437,18 @@
    ]
   },
   {
+   "name": "creatureSizeCandidate",
+   "values": [
+    "1"
+   ],
+   "does": "Opts into Ed's revised body-size mockups; absent stays off pending review.",
+   "group": "compare",
+   "since": "2026-10-31",
+   "readIn": [
+    "src/app/viewParams.ts"
+   ]
+  },
+  {
    "name": "creatureModels",
    "values": [
     "<species>:<variant>,..."

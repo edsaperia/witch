@@ -34,7 +34,7 @@ export const artCacheKey = (j: ArtJob, styleHash: string, fingerprints = ART_KIN
   if (typeof fingerprint !== "string" || !fingerprint) return null;
   const species = j.kind === "creature" ? j.id : "species" in j ? j.species : null;
   const base = species ? GENOME_BY_ID[species] : null;
-  const selectedKey = base && selectedCreatureGenome(base, j.style) !== base ? `|genome:${genomeHash(base, j.style, j.kind === "rig" || j.kind === "party" ? j.level : null)}` : "";
+  const selectedKey = (base && selectedCreatureGenome(base, j.style) !== base ? `|genome:${genomeHash(base, j.style, j.kind === "rig" || j.kind === "party" ? j.level : null)}` : "") + (base && j.style.creatureSizeCandidate === 1 ? "|body-size-candidate:2026-10-31" : "");
   if (j.kind === "party") {
     if (!Number.isInteger(j.level) || j.level < 0 || j.level > 3 || !j.gear) return null;
     return ["art-kind-v1", fingerprint, styleHash, partySheetKey(j.species, j.level, j.gear)].join("|") + selectedKey;
