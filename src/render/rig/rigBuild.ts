@@ -38,7 +38,7 @@ export const rigGearKey = (g: RigGear): string => (g.woken ? "woken" : `${g.coll
 export function rigSprites(st: Style, species: string, level: number, mk: MakeCanvas, gear: RigGear | null = null): { px: AtlasPixels; meta: RigMeta } | null {
   const P = (rigParts as (id: string, level: number, st: Style, gear: RigGear | null) => unknown)(species, level, st, gear) as Parts | null;
   if (!P) return null;
-  const colours = Art.speciesColours(species, st, gear as null), sprites: Baked[] = [];
+  const colours = Art.speciesColours(species, st, gear as null, level), sprites: Baked[] = [];
   const add = (p: Part, outline = st.cOutline): RigPiece | null => p ? { frame: sprites.push(Art.bake(p.sp, colours, st, outline, mk) as Baked) - 1, px: p.px, py: p.py } : null;
   const all = (k: string) => (P.pieces[k] ?? [null, null, null, null, null]).map(p => add(p));
   const discs: RigMeta["discs"] = {};

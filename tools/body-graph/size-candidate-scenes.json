@@ -1,0 +1,17 @@
+{
+  "candidate": "body-range-2026-10-31",
+  "switch": "creatureSizeCandidate=1",
+  "default": "off",
+  "reference": "actual standing witch; same game camera and zoom in every fixture; native pixels labelled",
+  "baseline": "claude/ed-shots/previews/ed/creature-graph/size-model/before and after; do not recapture",
+  "fixtures": [
+    {"name":"mixed-adults","species":["woodlouse","dormouse","fennec","wolf","bear","elephant"],"ages":[2]},
+    {"name":"small-family","species":["dormouse"],"ages":[0,1,2,3]},
+    {"name":"medium-family","species":["wolf"],"ages":[0,1,2,3]},
+    {"name":"large-family","species":["elephant"],"ages":[0,1,2,3]},
+    {"name":"adult-legend-crossover","creatures":[{"species":"elephant","age":2},{"species":"woodlouse","age":3}]}
+  ],
+  "contexts": ["ground-day","ground-night","treetop-day","treetop-night"],
+  "facings": ["towards","away"],
+  "requirements": "Use game world lighting and camera, one fixed zoom, no per-creature fitting. Keep witch reference in frame. Label redesigned/current selection and anatomical body target separately from complete decorative extent. Include actual gameplay ground/treetop frames, not only contact sheets. Canonical allocated runner only."
+}
