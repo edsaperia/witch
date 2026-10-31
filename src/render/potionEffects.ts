@@ -3,6 +3,16 @@ import type { Game } from '../rules/game';
 import { effectEnvelope, potionRecipe } from '../rules/potionRecipes';
 import { potionSettings } from '../rules/potionSettings';
 
+/** Amplify the existing watching motion without modifying saved tuning or simulation. */
+export function potionWatching(base: { on: boolean; radius: number; lean: number; lag: number } | undefined, amount: number) {
+  const k = Math.max(0, Math.min(1, amount)), p = potionSettings('the-audience');
+  const normal = base ?? { on: false, radius: 9, lean: 0, lag: .45 };
+  if (!k) return normal;
+  return { on: true, radius: normal.radius + (p.radius - normal.radius) * k,
+    lean: (normal.on ? normal.lean : 0) * (1 - k) + p.lean * k,
+    lag: normal.lag + (p.lag - normal.lag) * k };
+}
+
 export const tripIndicatorStrength = (g: Game): number => effectEnvelope(g.mushrooms?.trips[g.witches[0]?.id ?? 0], g.clock.time);
 
 export function potionStrength(g: Game, effect: string): number {

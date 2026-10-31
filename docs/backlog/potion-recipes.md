@@ -69,7 +69,7 @@ All potions last ten minutes of game time, start at full strength on waking, and
 | 61 | purple + red + red | Aurora Outlines | Implemented | Luminous coloured edges replace most solid surfaces. |
 | 62 | purple + red + orange | Folded Space | Coming soon | Repeated mirrored sectors fold the forest around her. |
 | 63 | purple + red + yellow | Sliced World | Coming soon | Horizontal world-height bands disappear, revealing stacked slices through animals and scenery. |
-| 64 | purple + red + green | The Audience | Coming soon | Amplify existing watching-tree lean and lag until the forest visibly follows her passage. |
+| 64 | purple + red + green | The Audience | Implemented | Amplify existing watching-tree lean and lag until the forest visibly follows her passage. |
 | 65 | purple + red + turquoise | Concertina | Coming soon | Shared scene deformation squeezes and stretches distance sideways. |
 | 66 | purple + red + white | Far Sight | Coming soon | Nearby scenery dissolves into haze while distant scenery is unnaturally crisp. |
 | 67 | purple + orange + orange | The World Is Late | Coming soon | Her light, canopy opening and tree attention follow her past position, catching up when she stops. |
