@@ -11,29 +11,34 @@ async function page() {
     constructor(readonly root = "", readonly tagName = "BUTTON") {}
     closest(selectors: string) { return this.root && selectors.split(",").map(s => s.trim()).includes(this.root) ? this : null; }
     addEventListener() {} append() {}
+    focus() { focused = this as unknown as Element; }
+    getClientRects() { return [{}]; }
     blur() { if (focused === this as unknown as Element) focused = null; }
   }
   vi.stubGlobal("HTMLElement", Control);
   vi.stubGlobal("navigator", {});
   vi.stubGlobal("window", { addEventListener(type: string, f: (e: KeyboardEvent) => void) { (listeners[type] ??= []).push(f); } });
+  const firstPause = new Control("#pause-btns"); let controlsReady = false;
   vi.stubGlobal("document", {
-    get activeElement() { return focused; }, hidden: false, addEventListener() {}, querySelector: () => null,
+    get activeElement() { return focused; }, hidden: false, addEventListener() {},
+    querySelector: (selector: string) => controlsReady && selector.startsWith("#pause-btns button") ? firstPause : null,
     createElement: () => new Control(), head: { append() {} }, body: { append() {}, classList: { toggle() {} } },
   });
   const { Freeze } = await import("./freeze");
   const freeze = new Freeze({ clock: { paused: false } } as Game, 123, "test");
-  const key = (target: Control, code: string, type: "keydown" | "keyup") => {
+  freeze.onToggle = on => { controlsReady = on; };
+  const key = (target: Control, code: string, type: "keydown" | "keyup", shiftKey = false) => {
     const e = new Event(type, { cancelable: true });
-    Object.defineProperties(e, { code: { value: code }, target: { value: target }, repeat: { value: false } });
+    Object.defineProperties(e, { code: { value: code }, target: { value: target }, repeat: { value: false }, shiftKey: { value: shiftKey } });
     for (const f of listeners[type] ?? []) f(e as KeyboardEvent);
     return e;
   };
-  return { freeze, key, control: (root = "", tag = "BUTTON") => new Control(root, tag), focus: (c: Control) => { focused = c as unknown as Element; }, active: () => focused };
+  return { freeze, key, firstPause, control: (root = "", tag = "BUTTON") => new Control(root, tag), focus: (c: Control) => { focused = c as unknown as Element; }, active: () => focused };
 }
 
 it("cancels rejected outside button defaults on both keydown and keyup, including Enter and Space", async () => {
   const p = await page(), outside = p.control("#finds-panel"); p.freeze.toggle();
-  for (const code of ["Enter", "Space"]) for (const phase of ["keydown", "keyup"] as const) {
+  for (const code of ["Enter", "NumpadEnter", "Space"]) for (const phase of ["keydown", "keyup"] as const) {
     expect(p.key(outside, code, phase).defaultPrevented, `${code} ${phase}`).toBe(true);
   }
 });
@@ -48,10 +53,20 @@ it("preserves native button and slider defaults inside pause, Settings and the p
   }
 });
 
-it("removes underlying focus when pause opens without blurring a pause control or restoring old focus", async () => {
+it("moves underlying focus to the first visible pause control after it is mounted, without restoring old focus", async () => {
   const p = await page(), outside = p.control("#finds-panel"); p.focus(outside);
-  p.freeze.toggle(); expect(p.active() === null).toBe(true);
+  p.freeze.toggle(); expect(p.active() === p.firstPause as unknown as Element).toBe(true);
   p.freeze.toggle(); expect(p.active()).toBeNull();
   const inside = p.control("#pause-btns"); p.focus(inside);
   p.freeze.toggle(); expect(p.active()).toBe(inside);
+});
+
+it("leaves Tab, Shift+Tab and arrows native even when pause receives them from BODY", async () => {
+  const p = await page(), body = p.control("", "BODY"); p.freeze.toggle();
+  for (const shift of [false, true]) for (const phase of ["keydown", "keyup"] as const) {
+    expect(p.key(body, "Tab", phase, shift).defaultPrevented).toBe(false);
+  }
+  for (const code of ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"]) for (const phase of ["keydown", "keyup"] as const) {
+    expect(p.key(body, code, phase).defaultPrevented).toBe(false);
+  }
 });

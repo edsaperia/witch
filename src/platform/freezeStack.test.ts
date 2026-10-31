@@ -41,7 +41,7 @@ it("pause owns keys and pads, and held keyboard input cannot leak across a frame
   expect(p.freeze.pad()?.buttons[1].pressed).toBe(true);
   expect(p.key("KeyE").stopped).toBe(true);
   const typing = p.key("KeyA", "keydown", false, { tagName: "TEXTAREA", closest: () => null });
-  expect(typing.stopped).toBe(true); expect(typing.event.preventDefault).toHaveBeenCalled(); // outside pause: native defaults are blocked too
+  expect(typing.stopped).toBe(true); expect(typing.event.preventDefault).not.toHaveBeenCalled(); // only native activation is cancelled
   p.key("Escape", "keyup"); p.key("Escape");
   expect(p.freeze.frozen).toBe(false); expect(p.inputStack.owns(null)).toBe(true);
   expect(navigator.getGamepads()[0]?.buttons[1].pressed).toBe(false);
