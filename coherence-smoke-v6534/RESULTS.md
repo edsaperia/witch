@@ -115,3 +115,21 @@ FAILED:
 the ley line is drawn from home through every area (10 sections for 11 areas), the last reached at 0 (2798 triangles)
 ```
 
+### Batch s-trunks: trunks
+
+- exit code: 124 (timed out)
+- wall time: 900s (12:52 UTC end)
+
+```
+```
+
+Error (trimmed):
+```
+page.waitForFunction: Target page, context or browser has been closed
+    at /home/user/witch/tools/smoke/smoke.cjs:474:16
+    at async run (/home/user/witch/tools/smoke/smoke.cjs:107:5)
+    at async main (/home/user/witch/tools/smoke/smoke.cjs:469:3) {
+  log: []
+}
+```
+
