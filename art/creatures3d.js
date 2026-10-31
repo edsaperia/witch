@@ -1218,7 +1218,7 @@ export function penguin3d(S, level, frame, st, facing = "towards") {
 
 const eyesOn = (m, c, r, dirs, size, mat, group = 1) => {
   for (const d of dirs) m.ell(Model.surface(c, r, v3.norm(d)), [size, size * 1.2, size], mat, { group });
-  m.anchors.head ||= { c, r }; m.anchors.eyes ||= { pts: dirs.map(d => Model.surface(c, r, v3.norm(d))), size };
+  m.anchors.head ||= { c, r, group }; m.anchors.eyes ||= { pts: dirs.map(d => Model.surface(c, r, v3.norm(d))), size }; // expressions follow the rendered smooth-union head surface
 };
 const shadow = (m, x, w) => m.ell([x, .005, 0], [w, .005, w * .6], M.NOSE, { group: 0 }); // a flyer's shadow on the ground
 function finish(m, S, level, st, k, facing, ref = null, scaleOverride = null) {

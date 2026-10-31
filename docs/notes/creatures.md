@@ -46,3 +46,11 @@ is drawn at that scale, preserving ornaments, gear, anatomy and gameplay radii.
 `sizeFit.bodyHeight` reports the measured anatomical silhouette separately.
 CI remains the release gate; the cancelled scene captures are not required.
 The fixture manifest is `tools/body-graph/size-candidate-scenes.json`.
+
+Size-adoption CI regressions (2026-10-31): `eyesOn` records the head's union
+group so expressions find the same blended surface as rendering; the smaller
+heron legend's dazed brows remain visible. Nap crops retain blank native canvas
+for a ground anchor below the opaque box, preserving the anchor and every drawn
+pixel; the existing awake-height budget includes this margin. Carriers retain
+their original limits, with at most two additional measured correction passes
+after the original two guesses when integer native-size steps overshoot.
