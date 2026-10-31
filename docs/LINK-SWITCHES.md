@@ -127,6 +127,7 @@ For the builders, the smoke and bench runs, the repro link and the arenas.
 | `pixels=keep` | The art atlases keep their pixels on the page (the smoke test's floating check reads them). | 2026-10-13 | main.ts |
 | `playtest=download` | Saves the playtest log at load (as L does). | 2026-10-04 | main.ts |
 | `precision=high` / `precision=medium` / `precision=low` | Every shader's float precision. | 2026-10-14 | render/view.ts |
+| `precompileGround=1` / `precompileGround=0` | Precompile reachable islands' ground programs while in the treehouse or map (default on); 0 disables it for comparison. | 2026-10-31 | app/groundWarm.ts |
 | `prepChart=1` / `prepChart=0` | The sea chart made ahead even under automation (1), or never (0). | 2026-10-19 | main.ts |
 | `quest=1` | The first quest's demo: beside the nearest sleeping legend with its dream on her stack. | 2026-10-07 | app/gameParams.ts |
 | `quick=1` | Only the art the start needs (the quick smoke and bench). | 2026-10-07 | app/viewParams.ts, platform/online/relayClient.ts |

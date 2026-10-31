@@ -79,7 +79,7 @@ import { guidanceOf, seeGuide, GUIDANCE_HOOKS } from "./rules/guidance";
 import { addNew, dropNew, loadGuide, storeGuide } from "./app/guideSave";
 import { GuidePin } from "./render/view/guidance";
 import { warmChart } from "./app/chartWarm";
-import { nearestGroundTargets } from './app/groundWarm';
+import { groundWarmFromLink, nearestGroundTargets } from './app/groundWarm';
 import { warmGroundPrograms } from './render/groundWarm';
 import { resetTravelSeeds } from './app/travelSeeds';
 import { islandAt } from './app/chartLayout';
@@ -122,7 +122,7 @@ import { snapshotGame } from "./rules/nightSnapshot";
 import { nightSaveNotice } from "./ui/resumeNight";
 import { restoreSettingsBase } from "./app/playerSettings";
 
-let groundWarmEnabled = false, groundWarmView: View | null = null, groundWarmer: ReturnType<typeof warmGroundPrograms> | null = null;
+let groundWarmEnabled = groundWarmFromLink(new URLSearchParams(location.search)), groundWarmView: View | null = null, groundWarmer: ReturnType<typeof warmGroundPrograms> | null = null;
 let groundWarmTargets: string[] = [];
 
 declare const __BUILD__: string;
@@ -1208,7 +1208,7 @@ function frame(now: number): void {
     } catch (error) { logCaughtError(error, "slow-frame observation"); }
   }
 }
-// Opt-in until an allocated probe proves renderer reuse and safe eligibility exits.
+// Default-on after accepted Intel reuse proof; eligibility still ends immediately on departure.
 const groundWarmEligible = () => {
   if (!groundWarmEnabled) return false;
   const n = N(), p = n.params;

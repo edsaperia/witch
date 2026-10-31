@@ -1,5 +1,10 @@
 import {expect, it, vi} from 'vitest';
-import {GroundWarm, nearestGroundTargets} from './groundWarm';
+import {GroundWarm, groundWarmFromLink, nearestGroundTargets} from './groundWarm';
+it('defaults ground precompile on and honors the explicit link off switch', () => {
+  expect(groundWarmFromLink(new URLSearchParams())).toBe(true);
+  expect(groundWarmFromLink(new URLSearchParams('precompileGround=1'))).toBe(true);
+  expect(groundWarmFromLink(new URLSearchParams('precompileGround=0'))).toBe(false);
+});
 const deferred = <T>() => { let resolve!: (v:T|null) => void; const done = new Promise<T|null>(r=>{resolve=r;}); return {done,resolve,stop:vi.fn()}; };
 it('keeps only other reachable targets, nearest first with deterministic ties', () => {
   const from={id:'home',x:0,y:0};

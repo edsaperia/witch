@@ -1,3 +1,5 @@
+/** Accepted Intel reuse proof, 2026-10-31: on by default; link override for paired diagnostics. */
+export const groundWarmFromLink = (params: URLSearchParams): boolean => params.get('precompileGround') !== '0';
 export interface GroundWarmTarget { id: string; x: number; y: number }
 export const nearestGroundTargets = (targets: readonly GroundWarmTarget[], from: GroundWarmTarget) =>
   targets.filter(t => t.id !== from.id).slice().sort((a, b) => Math.hypot(a.x - from.x, a.y - from.y) - Math.hypot(b.x - from.x, b.y - from.y) || a.id.localeCompare(b.id));

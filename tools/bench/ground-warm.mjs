@@ -52,7 +52,8 @@ try{
   page.on('pageerror',e=>report.errors.push(String(e)));page.on('console',m=>{if(m.type()==='error')report.errors.push(m.text());});
   // Deliberately fixed randomness in this lifecycle-only fixture: every offered/chart seed is preflighted.
   await page.addInitScript(f=>{Math.random=()=>f.random;localStorage.setItem(f.saveKey,JSON.stringify(f.save));},fixture);
-  await page.goto(`http://127.0.0.1:${server.address().port}/${fixture.url}`);
+  // Lifecycle mode deliberately starts OFF; material-only mode must never warm incidentally.
+  await page.goto(`http://127.0.0.1:${server.address().port}/${fixture.url}&precompileGround=0`);
   report.served=await page.evaluate(async()=>await (await fetch('./version.json',{cache:'no-store'})).json());
   if(!report.served.version.includes(process.env.EXPECT_SHA.slice(0,7)))throw Error('Actual served SHA mismatch');
   await wait(()=>window.witch?.view,{timeout:waitMs(150000)});
