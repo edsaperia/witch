@@ -8,6 +8,10 @@ CI now builds one `game-dist` artifact per tested revision. Main deploy has prio
 
 The [2026-10-31 CI flake audit](../reports/ci-flakes-2026-10-31.md) records original and rerun evidence, separately from deterministic failures and cancellations. It does not authorize another rerun or a timeout increase.
 
+CI failure reporting uses `tools/ci/annotations.cjs` for20 detail annotations per job plus one totals annotation, without truncating logs/artifacts or changing check exit codes. Vitest retains its default reporter plus an extra CI reporter; art/smoke/config commands stream their full output through the diagnostic wrapper. `node --test tools/ci/reporting.test.cjs` exercises synthetic failures and checked-tree proof safety without loading the game.
+
+Release art checks now use the same successful task fingerprints as ordinary PRs, with full fallback on unknown analysis. Prototype/main pushes may reuse a successful same-repository Art check's exact checked Git tree and matching environment proof artifact; missing/expired/mismatched proof falls back to checking. PR title/body edits do not re-run CI/art. Proofs are new, so historical checks without them remain conservative misses. Measured release timing acceptance is separate from these policies.
+
 Effects-off/on smoke scenes (`ONLY=effects-off,effects-on`) now wait for complete island art, forest and ground, idle art jobs, requested flight mode and actual drawing (>20 trees, at least one batch, >15 draw calls). They require >40 six-bit canvas colours, the existing quick-smoke nonblank criterion, before holding that frame for its screenshot. Readiness counters alone cannot accept a black frame. This proves a complete, nonblank scene; it does not claim pixel parity or measure the visual strength of each effect. Canonical base/candidate cloud comparisons remain coordinator-owned.
 
 ### Sleep-cell ownership invariant (A7 audit, 2026-10-30; diagnosed 2026-10-31)

@@ -33,3 +33,8 @@ jobs:
             git fetch -q origin gh-pages && git reset -q --hard FETCH_HEAD
           done
           exit 1
+      - name: Publish the cleaned snapshot through the coalescing publisher
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.repos.createDispatchEvent({...context.repo,event_type:'pages-preview',client_payload:{closed_pr:context.issue.number,requested_at:new Date().toISOString()}});

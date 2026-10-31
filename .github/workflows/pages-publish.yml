@@ -1,0 +1,93 @@
+# Ed switches Pages Source to Actions only after this is reviewed/green and released.
+# repository_dispatch runs from default main even though gh-pages has no workflow files.
+name: Publish Pages snapshot
+on:
+  repository_dispatch:
+    types: [pages-live, pages-preview]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    permissions:
+      pages: read
+    outputs:
+      enabled: ${{ steps.source.outputs.enabled }}
+    steps:
+      # No environment/deploy approval is requested while Ed still uses legacy Pages.
+      - name: Read the manually selected Pages source
+        id: source
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const {data} = await github.rest.repos.getPages(context.repo);
+            core.setOutput('enabled', data.build_type === 'workflow' ? 'true' : 'false');
+            if (data.build_type !== 'workflow') core.notice('Pages is still legacy. Ed will switch Source to Actions after review; no settings changed.');
+  debounce:
+    needs: [source]
+    if: needs.source.outputs.enabled == 'true' && github.event_name == 'repository_dispatch' && github.event.action == 'pages-preview'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: pages-preview-debounce
+      cancel-in-progress: true
+    steps:
+      # Outside the publisher lock: a live request never waits for this sleep.
+      - run: sleep 60
+  publish:
+    needs: [source, debounce]
+    if: ${{ !cancelled() && needs.source.outputs.enabled == 'true' && (needs.debounce.result == 'success' || needs.debounce.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    concurrency:
+      group: pages-snapshot-publisher
+      # Previews cannot cancel a running live publisher; newer live requests can preempt older work.
+      cancel-in-progress: ${{ github.event_name == 'workflow_dispatch' || github.event.action == 'pages-live' }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout the latest complete site including live root
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: site
+      - name: Record publication boundary
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs=require('fs'),cp=require('child_process');
+            const {publicationPolicy,publicationSnapshot}=require('./tools/ci/pages-policy.cjs');
+            const policy=publicationPolicy(context.eventName,context.payload.action);
+            const sha=cp.execFileSync('git',['-C','site','rev-parse','HEAD'],{encoding:'utf8'}).trim();
+            const rootVersion=JSON.parse(fs.readFileSync('site/version.json','utf8')).version;
+            const evidence={...publicationSnapshot(context.payload.client_payload??{}, {sha,rootVersion}),policy,startedAt:new Date().toISOString(),requestAt:context.payload.client_payload?.requested_at??null};
+            fs.writeFileSync('pages-publication.json',JSON.stringify(evidence,null,2));
+            core.info(`Publishing latest site ${sha}, LIVE root ${rootVersion}; ${policy.kind} request`);
+      - name: Package complete site snapshot
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+      - name: Deploy complete snapshot
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Record publication completion
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs=require('fs'),file='pages-publication.json',e=JSON.parse(fs.readFileSync(file,'utf8'));
+            e.completedAt=new Date().toISOString();
+            e.requestToDeployMs=e.requestAt?Date.parse(e.completedAt)-Date.parse(e.requestAt):null;
+            fs.writeFileSync(file,JSON.stringify(e,null,2));
+            await core.summary.addHeading('Pages snapshot published').addRaw(`Site ${e.sha}; LIVE root ${e.rootVersion}; request-to-deploy ${e.requestToDeployMs??'manual'} ms. Canonical still verifies public version.json.`).write();
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pages-publication-evidence
+          path: pages-publication.json
+          if-no-files-found: ignore
