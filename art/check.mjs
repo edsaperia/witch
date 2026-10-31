@@ -945,6 +945,20 @@ const SPRITE_CHECKS = async ({ names, only }) => {
     const ap = G.areaPathKinds(), none = AREAS.filter(A => !(ap[A.id] || []).length).map(A => A.id);
     res.push({ what: "paths: 10 kinds, each strip tiling with its end, Y and T; only the magic trail glows; railway variants, points, broken end, crossing; the 3D pieces stand, only flagged ones glow; every area suits a path kind", good: !bad.length && !none.length && G.PATH_IDS.length >= 10, info: [...bad, ...none.map(a => a + " has no path kind")].join(", ") || `${G.PATH_IDS.length} kinds, ${G.PATH_PIECES.length} pieces` });
   });
+  task("mushrooms", async () => {
+    const bad = [];
+    for (const type of Object.keys(G.MUSHROOM_TYPES)) for (const pixel of [3, 4, 5]) {
+      const style = { ...st, pixel }, opts = { type, seed: 17 }, sp = G.mushroomSprite(style, opts);
+      const baked = G.bakeMushroom(style, opts), col = G.mushroomColours(type);
+      const a = baked.A.getContext("2d").getImageData(0, 0, baked.w, baked.h).data;
+      let glow = 0;
+      for (let i = 3; i < a.length; i += 4) if (a[i] === 254) glow++;
+      if (!glow || !sp.m.some(Boolean) || baked.scale !== 1) bad.push(`${type}/${pixel}: empty, unlit or scaled`);
+      if (baked.N.width !== baked.w || baked.NF.height !== baked.h) bad.push(`${type}/${pixel}: normal dimensions`);
+      for (const m of new Set(sp.m)) if (m && !col[m]) bad.push(`${type}/${pixel}: uncoloured ${m}`);
+    }
+    res.push({ what: "mushrooms: nine colour families at pixel 3/4/5 bake with emissive spots, coloured materials and matching normal maps", good: !bad.length, info: bad.join(", ") });
+  });
   task("generators", async () => { // every generator draws (phase 1: the ones no other check reached): every beach find and print (prints at every heading), the bedroom,
     // every broom kind under the witch, her hat alone both ways, every species' rune stone, a party patch, every legend's sprites; each
     // non-empty, nothing NaN in its normals, every material it uses coloured, its origin (where it has one) on the sprite

@@ -20,6 +20,8 @@ import { standing, type FloorPixels } from "./houseArt";
 import { paintFloorOff } from "./houseFloor";
 import type { PlanMap } from "./crown";
 import { bakePieceHere, furnitureState, furnitureStates, pieceArt, standing as facing, DRAWN_ELSEWHERE, FURNITURE, type FurnitureArt } from "./houseFurniture";
+import { BrewingView } from './brewing';
+import { basketNear } from '../rules/mushrooms';
 import { WorkshopArt } from "./workshopArt";
 import { broomWhere, stationOf } from "../rules/stations";
 import * as Art from "../../art/generator.js";
@@ -179,6 +181,7 @@ export class HouseRoomsView {
   private readonly pieces = new Map<string, { art: FurnitureArt; mesh: THREE.Mesh; pos: Float32Array; id: string; x: number; z: number }>();
   /** The Workshop's: her broom on the bay (or the lathe) and the parts on the pegboard, laid on those pieces' marks (render/workshopArt.ts). */
   private readonly workshop = new WorkshopArt();
+  private readonly brewing = new BrewingView();
   /** Pieces baked to nothing (a room with no dressing), not tried again. */
   private readonly empty = new Set<string>();
   /** The pieces asked of the art workers (render/housePieces.ts), by key; those that came back, waiting for their meshes; and those
@@ -217,7 +220,7 @@ export class HouseRoomsView {
     this.floor.frustumCulled = false; this.floor.visible = false; this.floor.renderOrder = 19.925;
     this.terraceFloor.frustumCulled = false; this.terraceFloor.visible = false;
     this.furniture.add(this.spot.mesh, this.glow.mesh);
-    this.meshes = [this.floor, this.terraceFloor, ...this.parts.map(p => p.mesh), this.furniture, this.workshop.group, ...programTwins()];
+    this.meshes = [this.floor, this.terraceFloor, ...this.parts.map(p => p.mesh), this.furniture, this.workshop.group, this.brewing.group, ...programTwins()];
     this.box = document.createElement("div");
     this.box.id = "house-tags"; // (hidden under a table's chart: ui/chartOverlay.ts)
     this.box.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:11;display:none";
@@ -252,6 +255,7 @@ export class HouseRoomsView {
     this.mat.dispose(); this.box.remove();
     for (const { art, mesh } of this.pieces.values()) { art.tex.dispose(); mesh.geometry.dispose(); (mesh.material as THREE.Material).dispose(); }
     this.workshop.dispose();
+    this.brewing.dispose();
     this.spot.dispose();
     this.sparkle?.canvas.remove();
   }
@@ -263,6 +267,7 @@ export class HouseRoomsView {
     for (const p of this.parts) p.mesh.visible = shown;
     this.furniture.visible = shown;
     this.workshop.group.visible = shown;
+    this.brewing.group.visible = shown;
     this.floor.visible = this.terraceFloor.visible = shown;
     if (!shown) { this.box.style.display = "none"; this.plan = null; this.sparkle?.draw([], 0, 1); v.usePrompt.id = ""; return; }
     const D = d as Deck & { house: NonNullable<Deck["house"]> };
@@ -364,6 +369,7 @@ export class HouseRoomsView {
       this.furniture.add(mesh); this.pieces.set(key, { art, mesh, pos, id, x: at.x, z: at.z });
     }
     const pxWorld = (px: number, pz: number, dx: number, dy: number): V3 => { const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent!.deck.x + x / v.mpp + dx, T.ent!.deck.y + z * ky + v.houseShift + dy); return alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, z); };
+    this.brewing.update(v, pxWorld, ky * v.mpp);
     let glowed = false;
     const now = performance.now() / 1000;
     for (const [k, { art, mesh, pos, id, x, z }] of this.pieces) {
@@ -458,7 +464,12 @@ export class HouseRoomsView {
     // alone, the old walking keys' (ui/keyHint.ts), the use button as bound (E, the pad's ✕: ui/keyHint.ts glyphOf), or on a touch screen the keycap itself to tap; none while it's
     // open. Up at her decks before the party, E there starts it (rules/wakeUp.ts atDecks).
     const decks = !at && g.wake?.open && g.party.spellAt === null && atDecks(g) ? decksSpot(D) : null;
-    const tagged = decks ?? (at && at.use.kind !== "scenery" && !this.said && !waking && !(at.use.kind === "pile" && !pileOut(g.wake)) ? at : null);
+    const basket = g.mushrooms ? basketNear(g) : null;
+    const basketTag: HouseObject | null = basket && !g.mushrooms.smoke && !g.mushrooms.affected[W.id] ? {
+      id: `mushroom-basket:${basket.type}`, room: 'kitchen', label: `${basket.type} mushrooms`,
+      ...toPlanAt0(basket.x - D.x, basket.z - D.z), w: 1.4, d: 1.4, h: 1.5, use: { kind: 'scenery' },
+    } : null;
+    const tagged = basketTag ?? decks ?? (at && at.use.kind !== "scenery" && !this.said && !waking && !(at.use.kind === "pile" && !pileOut(g.wake)) ? at : null);
     const usable0 = tagged && tagged.id !== v.houseOpen ? tagged : null, usable = usable0 && hatBy && usable0 === at ? { ...usable0, ...toPlanAt0(hatBy.x - D.x, hatBy.z - D.z), h: 0 } : usable0, px = Math.max(2, Math.round(cv.width / Math.max(1, v.width))), glyph = useGlyph(v.useDevice), cap = `${glyph}|${px}`;
     if (cap !== this.tagKey) { this.tagKey = cap; this.tag.replaceChildren(keycapCanvas(glyph, px)); }
     this.tapUse = usable && v.useDevice === "touch" ? v.onUse : null;

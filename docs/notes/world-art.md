@@ -1,5 +1,7 @@
 # The world's art
 
+- **Collectible mushroom art generator** (Ed, 2026-10-30): `art/mushrooms.js`, exported from `art/generator.js`, makes seeded single-cap mushrooms in nine colour families at half to two-thirds of `witchHeight(style)` on the same art grid. Stem bend/twist, width, height, cap shape and glowing spots vary; `bakeMushroom` returns standard albedo/normal/mirrored-normal canvases plus a ground anchor at scale 1. The spots use existing emissive materials. Initial biome colours are editable in `BIOME_MUSHROOMS`; no recipe or collectible placement change is implied. Preview and check: `tools/mushrooms/README.md`.
+
 Part of Witch's notes (CLAUDE.md is the index): area types and recipes, layouts, flora and trees, props and scenes, party objects, the dancefloor and soundsystems, paths, the art style, the pixel wind. Moved here from CLAUDE.md as it stood (housekeeping, Ed 2026-10-23: a note an area, so pull requests add to their own area's file, not one shared file); every rule kept. Add to this file, not CLAUDE.md, when you change this area.
 
 - **Area type**: one of the kinds of area: Ed's 30, defined with their art in `art/areas.js` (his columns: floor, wall objects, small objects, big objects, set piece, creature). `config/area-types.json` adds the game's own numbers per type (how thick its big objects stand).

@@ -2,6 +2,8 @@
 // the trunks' fade, finding creatures in the dark, the wind, her glow's reach and place, and the mood where she is.
 import * as THREE from "three";
 import type { View } from "../view";
+import { potionStrength } from "../potionEffects";
+import { potionSettings } from "../../rules/potionSettings";
 import { AREA_TYPES } from "../../rules/map";
 import { coastView } from "../../rules/camera";
 import { canopyShown, witchHeight } from "../../rules/witch";
@@ -21,6 +23,7 @@ const WILD = { k: 0, at: 0 };
 
 export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void {
   const g = v.game, t = g.tuning;
+  SPRITE_UNIFORMS.uPotionSky.value = potionStrength(g, 'skylight') * potionSettings('skylight').foliage;
   // Sprites face the camera, tilted back toward it by spriteTilt.
   const tilt = t.spriteTilt;
   // Across the screen: east, as the game's camera always looks north; the telescope's own way as it turns (render/view/camera.ts).
@@ -58,6 +61,11 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
   SPRITE_UNIFORMS.uTopFade.value = lifted;
   SPRITE_UNIFORMS.uTrunkFade.value.set(S.trunkFade ? t.trunkFade.metres : 0, v.mpp, t.trunkFade.share);
   SPRITE_UNIFORMS.uOcc.value.set(t.occlusion.fadeOpacity, t.occlusion.edge, t.occlusion.minHeight, t.occlusion.on && S.seeThrough ? 1 : 0); // (every frame: the pause page's sliders)
+  const thick = potionStrength(g, 'thick-canopy') * potionSettings('thick-canopy').closure;
+  SPRITE_UNIFORMS.uCutout.value.z *= 1 - thick;
+  SPRITE_UNIFORMS.uTopFade.value += (1 - SPRITE_UNIFORMS.uTopFade.value) * thick;
+  SPRITE_UNIFORMS.uTrunkFade.value.x *= 1 - thick;
+  SPRITE_UNIFORMS.uOcc.value.w *= 1 - thick;
   { const M = moodOf(t); if (M && !t.bare) hsvInto(LIGHT_UNIFORMS.uGlowRgb.value, M.glowHue, M.glowSat, 1); } // (her glow's colour, every frame: the pause page's Hidden witch sliders)
   // In the wild (an area the party hasn't reached), her glow cools toward the wild stumps' teal, so the night there reads eerie
   // blue-green against the party's warm light (Ed, 2026-10-29: "the overall lighting palette should be an eerie blue/green; this is

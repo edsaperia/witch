@@ -6,6 +6,7 @@
 // tuning's sail.inPlace, ?sail=reload the old way): a sail, the bed and the bot game's exit, the view
 // taking it (View.setGame, render/view.ts), and so does ?debug=sail's window.witch.debugSwap.
 import { newGame, type Game } from "../rules/game";
+import { loadMushroomStock, mushroomStock, restoreMushroomStock, saveMushroomStock } from "./mushroomStock";
 import type { MusicCue } from "../rules/musicPlan";
 import type { Tuning } from "../rules/tuning";
 import type { MusicStyle } from "../rules/musicScore";
@@ -148,8 +149,17 @@ export async function startNight(page: Page, spec: NightSpec): Promise<Night> {
   const map = mapPrep ? readyMap(seed, tuning, mapPrep) : undefined;
   if (mapPrep) performance.mark("witch:map-prep");
   const game = newGame(seed, tuning, 1, map);
+  const stockWorld = spec.world ?? tuning.map?.world ?? 0;
+  if (old && (old.spec.world ?? old.tuning.map?.world ?? 0) === stockWorld) restoreMushroomStock(game.mushrooms, mushroomStock(old.game.mushrooms));
+  else loadMushroomStock(game.mushrooms, stockWorld);
   performance.mark("witch:game");
   const cleanups: (() => void)[] = [];
+  const saveStock = () => saveMushroomStock(game.mushrooms, stockWorld);
+  if (typeof window !== 'undefined') {
+    const timer = window.setInterval(saveStock, 2000);
+    window.addEventListener('pagehide', saveStock);
+    cleanups.push(() => { saveStock(); window.clearInterval(timer); window.removeEventListener('pagehide', saveStock); });
+  }
   // The link's switches for the game: the spell, quest, party's over, arena and waves (app/gameParams.ts).
   cleanups.push(gameFromLink(game, tuning, params));
   wearHat(game, page.look());
@@ -214,6 +224,8 @@ function closeNight(n: Night): void {
  *  hold on the HUD, the canvas's shake, the sound note. */
 export function resetDom(): void {
   if (typeof document === "undefined") return;
+  const potionCaption = document.getElementById('potion-caption');
+  if (potionCaption) potionCaption.hidden = true;
   const clock = document.getElementById("clock");
   if (clock) { clock.classList.remove("on", "paused", "lost"); clock.querySelectorAll(".boot-pop, .loss-pop").forEach(p => p.remove()); }
   document.body.classList.remove("arriving");

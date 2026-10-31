@@ -2,6 +2,8 @@
 // headings, on foot, the treehouse's seat, a knockout, mid-blink), her hat knocked off, her sprite stood by its frame's ground,
 // the party's and the beach's views of her, where she is on screen, and her shadow.
 import { deckOf, onTerrace } from "../../rules/treehouse";
+import { potionBlackout, potionFall } from "../potionChoreography";
+import { updatePotionCaption } from "../potionCaption";
 import { onRoomFloor } from "../../rules/houseRooms";
 import { broomWhere, stationOf } from "../../rules/stations";
 import type { View } from "../view";
@@ -35,6 +37,12 @@ const REDUCED = typeof matchMedia === "function" && matchMedia("(prefers-reduced
 export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: number, py: number) => { x: number; y: number; z: number }): number {
   const g = v.game, t = g.tuning, w = g.witch, h = witchHeight(w, t), T = v.assets.treehouse;
   const KO = g.witches[0].ko;
+  const potion = g.mushrooms?.affected[g.witches[0].id];
+  const potionSpin = !!potion && ht < potion.fallAt;
+  const potionRest = !!potion && ht >= potion.landAt && ht < potion.freeAt;
+  v.post.potionFade = potionBlackout(potion, ht);
+  updatePotionCaption(g);
+  if (potion) v.assets.partyWitchArt(null); // warm the existing stargazing art before she lands
   const irisOn = !!KO && g.witches[0].hat.has && !!g.witches[0].hat.down && !REDUCED; // (the cut from her fallen hat to her decks, render/koIris.ts)
   const bob = Math.sin(ht * 2.4) * 0.12;
   // Her hover frames, turned away when flying up the screen, leaning when fast.
@@ -91,8 +99,8 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
       // (a change shown off at a dressing station, standing: she turns to face us for a beat, View.turnUntil)
       // (a change at a dressing station: she twirls in what she has on till the new look's frames are in, render/spin.ts)
       if (v.spin) { const was = v.spin; v.spin = still ? spinAt(was, ht, v.assets.lookReady && (!v.hatOff || v.assets.bareFresh)) : null; if (!v.spin) v.turnUntil = ht + 0.8; }
-      const S = v.spin && spinFacing(ht - v.spin.from);
-      if (S) { spinFlip = S.flip; spinUp = spinLift(ht - v.spin!.from); }
+      const S = potionSpin ? spinFacing(ht - potion!.at) : v.spin && spinFacing(ht - v.spin.from);
+      if (S) { spinFlip = S.flip; spinUp = spinLift(ht - (potionSpin ? potion!.at : v.spin!.from)); }
       const sp = Math.hypot(w.vx, w.vz), heading = S ? S.heading : still && ht < v.turnUntil ? "down" : w.heading, Hd = heading && heading !== "side" ? v.assets.witchHeading[heading] : null;
       v.walkPhase = still ? 0 : v.walkPhase + fdt * F.walk.fps * sp / Math.max(0.5, deckNow!.house!.stride ?? deckNow!.house!.walk);
       // (on the Terrace she carries her broom: Ed, 2026-10-23, "she holds it when she's on the terrace"; rules/stations.ts broomWhere)
@@ -188,6 +196,10 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   }
   // The fall off the balcony (rules/treehouse.ts house.fall): dropping out of the picture, then gone till she's back at the circle.
   if (w.falling !== undefined && deck?.house) { const u = Math.min(1, w.falling / Math.max(1e-6, deck.house.fall.time)); wyy -= u * u * deck.h * 1.4; wf = F.sit.towards[0]; if (u > 0.7) hidden = true; }
+  if (potion && ht >= potion.fallAt && ht < potion.landAt) {
+    wyy -= potionFall(potion, ht) * (deck?.h ?? 0);
+    wf = F.sit.towards[0]; djUpper = -1;
+  }
   // Over the ride's smoothed height (eased in off the treehouse seat), in the air only: on foot she stands on the ground itself,
   // over her shadow (the ride, smoothed along her flight, sits above a slope she drifts down; Ed, 2026-10-06: "check shadows in general").
   wyy += v.rideOff * (1 - v.seatK * v.seatK * (3 - 2 * v.seatK)) * (1 - footEase);
@@ -213,11 +225,12 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // her shadow lies at that point, under her feet whatever the pose.
   const wg = watlas.grounds?.[wf], wflip = spinFlip ?? (w.seated ? false : w.facing < 0), U = SPRITE_UNIFORMS.uUp.value, R = SPRITE_UNIFORMS.uRight.value;
   const wsink = wg ? (wframe.h - wg.y) * v.mpp : 0, wside = wg ? (wg.x - wframe.w / 2) * v.mpp * (wflip ? -1 : 1) : 0;
-  v.partyWitchView.update(g, time, (x, z, ww, hh) => inView(v, x, z, ww, hh, 4));
   v.swoopTrails.update(g.partyWitches.list, time);
   setOverlayTilt(t.tiltShift, w.lift, v.canvas.clientHeight || window.innerHeight, v.height, v.houseTilt(g)); // (the DOM overlays blurred as the world: render/overlayTilt.ts)
   v.partyWitchView.bubbles(g, time, v.camera, v.canvas.clientWidth || window.innerWidth, v.canvas.clientHeight || window.innerHeight);
   const onBeach = v.beachView.update(g, time, (x, z, ww, hh) => inView(v, x, z, ww, hh, 4), v.camera, v.canvas.clientWidth || window.innerWidth, v.canvas.clientHeight || window.innerHeight, v.fly ? { x: v.fly.tx, z: v.fly.tz, reach: g.tuning.haze.far } : undefined); // (a sail's dive in over the sea: the sea drawn)
+  // Keep the lying pose after recovery unlocks movement; the beach owns its own copy when she is on the sand.
+  v.partyWitchView.update(g, time, (x, z, ww, hh) => inView(v, x, z, ww, hh, 4), !onBeach && (potionRest || w.stargazing) ? { list: g.partyWitches.list, her: { activity: "rest", pose: "stargaze", facing: w.facing } } : undefined);
   v.stateMarks.update(g, time, v.leashView.tops, 70, v.camera.position);
   // (where she's drawn less the rules' place, in the house: her 💌s leave her hand as drawn, render/invites.ts letterAt)
   { const O = v.herOffset; O.on = !!(T.ent && deck && w.perch); O.x = wx - w.x; O.z = wz - w.z; O.y = wyy + groundHeight(wx, wz); }

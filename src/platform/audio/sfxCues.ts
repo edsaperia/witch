@@ -35,6 +35,7 @@ import { musicMix, partyOverEase } from "../../rules/music";
 import { PARTY_CAST } from "../../rules/party";
 import { djGesture } from "../../../art/witch.js";
 import { djRoutineAt, djStrokes } from "../../rules/djSet";
+import { kitchenLayout } from "../../rules/mushrooms";
 
 /** ?partyover=<s>: the party over from that game time (debug; as the look's, render/view.ts). */
 export const OVER_DEBUG: number | null = (() => { const v = new URLSearchParams(globalThis.location?.search ?? "").get("partyover"); return v === null ? null : Number(v) || 0; })();
@@ -53,6 +54,8 @@ const happyNow = (c: Creature) => !c.leashed && !c.gone && (!!c.friendly || (!!c
 interface Here { g: Game; time: number; near: (x: number, z: number) => number; pan: (x: number) => number }
 
 export class SfxCues {
+  private potionGame: Game | null = null;
+  private potionPlopSeen = -1;
   /** Her failed take-off's landing, due at `at` (the "grounded" leash event): the thud as her leashes pull her down. */
   private yank: { at: number; pan: number } | null = null;
   /** Taken note of on the first frame, so nothing already so sounds as though it just turned. */
@@ -104,6 +107,12 @@ export class SfxCues {
   update(g: Game, time: number): void {
     const w = g.witch, hear = Math.max(1, g.tuning.sfx.hear);
     const h: Here = { g, time, near: (x, z) => Math.max(0, 1 - Math.hypot(x - w.x, z - w.z) / hear), pan: x => (x - w.x) / 30 };
+    if (this.potionGame !== g) { this.potionGame = g; this.potionPlopSeen = -1; }
+    for (const e of g.mushrooms?.plops ?? []) if (e.id > this.potionPlopSeen) {
+      const k = kitchenLayout(g).cauldron;
+      this.sfx.potionPlop(h.pan(k.x), h.near(k.x, k.z));
+      this.potionPlopSeen = e.id;
+    }
     this.invites(h);
     if (this.yank && time >= this.yank.at) { this.sfx.land(this.yank.pan, 1); this.yank = null; }
     // (the legends gathered once a frame for the four that look only at them: not four passes over every creature)

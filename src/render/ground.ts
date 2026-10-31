@@ -56,7 +56,7 @@ void main() {
 }
 `;
 
-const FRAG = /* glsl */ `
+const FLOOR_FRAG = /* glsl */ `
 ${AREA_GLSL}
 uniform float uPixel; // metres per art pixel
 uniform vec3 uTypeFloor[${TYPE_SLOTS}];      // each type's floor colour (hsv), until its tile is drawn
@@ -634,6 +634,9 @@ void main() {
 }
 `;
 
+// Blend only colour: the bent floor continues writing depth, hiding things beyond its horizon.
+const FRAG = 'uniform float uPotionSky;\n' + FLOOR_FRAG.replace('void main()', 'void floorMain()') + '\nvoid main() { if (uPotionSky >= 1.0) { gl_FragColor = vec4(0.0); return; } floorMain(); gl_FragColor.a *= 1.0 - uPotionSky; }';
+
 export class Ground {
   readonly mesh: THREE.Mesh;
   /** The area texture's two windows round her (render/areaWindow.ts): the near one, and the far one for the telescope. */
@@ -673,6 +676,7 @@ export class Ground {
       vertexShader: VERT, fragmentShader: FRAG, defines: defines(false),
       uniforms: {
         ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS,
+        uPotionSky: { value: 0 },
         uAreas: { value: this.near.texture }, uAreasFar: { value: this.far.texture },
         uExtent: { value: this.near.extent }, uExtentFar: { value: this.far.extent },
         uAreaWin: { value: this.near.box }, uAreaWinFar: { value: this.far.box },
@@ -732,6 +736,14 @@ export class Ground {
 
   /** Keep the grid round (x, z), snapped to its squares so the hills don't swim. */
   follow(x: number, z: number): void { this.mesh.position.set(Math.round(x / GRID) * GRID, 0, Math.round(z / GRID) * GRID); }
+  potionSky(amount: number): void {
+    this.plain.uniforms.uPotionSky.value = amount;
+    for (const mat of [this.plain, this.beach]) {
+      mat.blending = amount > 0 ? THREE.CustomBlending : THREE.NormalBlending;
+      mat.blendSrc = THREE.SrcAlphaFactor; mat.blendDst = THREE.OneMinusSrcAlphaFactor;
+    }
+    this.mesh.renderOrder = amount > 0 ? -90 : 0;
+  }
 
   /** This frame's dancefloor tiles: per tile r, g, b and intensity (0 to 3), row by row (rules/dancefloor.ts). */
   setFloorTiles(rgbi: Uint8Array): void {

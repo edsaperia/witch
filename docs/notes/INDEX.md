@@ -90,6 +90,8 @@ says what each note covers.
 
 ## [The treehouse and its house](house.md)
 
+- Mushrooms and brewing
+- Mushroom kitchen artwork
 - The dressing stations
 - Treehouse
 - Arriving
@@ -227,6 +229,7 @@ says what each note covers.
 
 ## [Sound effects](sound.md)
 
+- Cauldron plop
 - Sound effects
 - Babble
 - Audio capacity test
@@ -238,6 +241,7 @@ says what each note covers.
 
 ## [The view](view.md)
 
+- Potion perception
 - Pixel snap
 - Stump wisps
 - Tilt-shift
@@ -272,6 +276,7 @@ says what each note covers.
 
 ## [The world's art](world-art.md)
 
+- Collectible mushroom art generator
 - Area type
 - Wall objects, small objects, big objects, set piece
 - Layout
