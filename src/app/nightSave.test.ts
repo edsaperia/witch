@@ -63,7 +63,10 @@ describe("resumable night storage", () => {
     const n = saved();
     expect(savedNight(n, "test", new URLSearchParams())).toBe(n);
     expect(savedNight(n, "test", new URLSearchParams(n.params))).toBe(n);
-    for (const p of ["seed=124", "island=home", "world=43"]) expect(savedNight(n, "test", new URLSearchParams(p))).toBeNull();
+    for (const p of ["seed=124", "island=home", "world=43", "layout=ed"]) expect(savedNight(n, "test", new URLSearchParams(p))).toBeNull();
+    const ed = { ...n, params: n.params + "&layout=ed" };
+    expect(savedNight(ed, "test", new URLSearchParams("layout=ed"))).toBe(ed);
+    expect(savedNight(ed, "test", new URLSearchParams("layout=default"))).toBeNull();
     expect(savedNight(n, "new-build", new URLSearchParams())).toBe(n);
     for (const bad of [null, {}, { ...n, version: 2 }, { ...n, at: NaN }, { ...n, flags: {} }, { ...n, loan: { id: "x" } }]) expect(savedNight(bad, "test", new URLSearchParams())).toBeNull();
   });

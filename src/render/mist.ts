@@ -18,14 +18,14 @@ void main() {
 }`;
 
 const FRAG = /* glsl */ `
-uniform float uStrength, uWind;
+uniform float uStrength, uWind, uTimeOverride;
 uniform sampler2D uDepth; uniform vec2 uLow;
 varying vec3 vWorld;
 ${LIGHT_GLSL}
 ${VALUE_NOISE_GLSL}
 void main() {
   vec2 p = vWorld.xz;
-  vec2 drift = vec2(1.0, 0.35) * uWind * uTime;
+  vec2 drift = vec2(1.0, 0.35) * uWind * (uTimeOverride >= 0.0 ? uTimeOverride : uTime);
   float n = vnoise((p + drift) / 14.0) * 0.65 + vnoise((p - drift * 0.6) / 5.0) * 0.35;
   float far = smoothstep(uHazeRange.x * 0.5, uHazeRange.y, length(vWorld.xz - uHazeCentre));
   float a = uStrength * (smoothstep(0.45, 0.85, n) + far * 0.3);
@@ -42,7 +42,7 @@ export class Mist {
   constructor(strength: number, private height: number, wind: number, depth: THREE.Texture | null, low: THREE.Vector2) {
     this.mat = new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG,
-      uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uStrength: { value: strength }, uWind: { value: wind }, uDepth: { value: depth }, uLow: { value: low } },
+      uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uStrength: { value: strength }, uWind: { value: wind }, uTimeOverride: { value: -1 }, uDepth: { value: depth }, uLow: { value: low } },
       depthWrite: false, depthTest: false, blending: THREE.NoBlending,
     });
     this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(700, 700, 70, 70).rotateX(-Math.PI / 2), this.mat);
@@ -52,6 +52,8 @@ export class Mist {
 
   /** Its strength now (the mood's, area by area: render/mood.ts AreaMoods). */
   setStrength(s: number): void { this.mat.uniforms.uStrength.value = s; }
+  /** Local drift clock only: never change the shared lighting/animation time. -1 restores normal. */
+  setTimeOverride(time: number): void { this.mat.uniforms.uTimeOverride.value = time; }
 
   /** Keep the mist round the camera's view. */
   follow(x: number, z: number): void { this.mesh.position.set(x, this.height, z - 150); }

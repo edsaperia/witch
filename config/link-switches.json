@@ -19,6 +19,18 @@
    ]
   },
   {
+   "name": "layout",
+   "values": [
+    "ed"
+   ],
+   "does": "Opt-in Ed house layout preview; the default house stays unchanged.",
+   "group": "debug",
+   "since": "2026-10-31",
+   "readIn": [
+    "src/main.ts"
+   ]
+  },
+  {
    "name": "recording",
    "values": [
     "0",
