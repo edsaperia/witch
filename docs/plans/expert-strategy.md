@@ -53,3 +53,24 @@ survival tie-breakers strategic strength. It tests the new search plumbing and
 current-source behavior. Long cases remain cloud-only under the existing driver;
 canonical coordinator must allocate/dispatch that separate batch. No old source
 checkpoint or initial model can be relabelled for this source.
+
+## Authorized full-night, many-island pass
+
+Ed subsequently said “Go ahead with the full-night training and compare the
+results against the current defaults”, then requested many different islands.
+That direct authorization supersedes this plan's earlier cloud-allocation wait
+for this bounded pass. Use explicit `local-full-night` execution, never a cloud
+label on the laptop: one below-normal worker,3300s hard wall cap, no browser,
+no automatic restart, campaign-only/training-only/exact cases,4200player-second
+maximum per case. Win/loss ends a case earlier;4200s censorship is not a win or
+a guarantee that every naturally long night has finished.
+
+The sealed matrix has12island kinds (home,fox,boar,otter,wolf,lynx,ram,meerkat,
+fennec,owl,tiger,komodo), spanning all8biomes and island sizes/progression stages,
+three world seeds and12night seeds, alternating100/200BPM. Fixed Satchel/nohat/
+barebroom per case. The baseline is the current untrained campaign defaults;
+five subsequent search candidates receive exactly the same cases. Keep all
+per-island paired results, actual quest/find/KO metrics and censored cases.
+Never promote from incomplete/unmatched totals or a lower-term gain alone.
+Protected final-evaluation and survey-reserved pairs remain excluded. No new
+held-out evaluation, equipment-menu adapter, model lock or release is authorized.
