@@ -86,3 +86,14 @@ ok   after four waves 5 areas are partified
 smoke test passed
 ```
 
+### Batch s-earth: earth
+
+- exit code: 0
+- wall time: 168s (12:34 UTC end)
+
+```
+ok   every layer stands on the rolling ground and bends with the world (86 checked)
+ok   nothing drawn without a depth test shows through the bent earth
+smoke test passed
+```
+
