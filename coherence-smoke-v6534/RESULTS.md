@@ -142,3 +142,21 @@ page.waitForFunction: Target page, context or browser has been closed
 smoke test passed
 ```
 
+### Batch rerun-ley: ley
+
+- exit code: 1
+- wall time: 244s (13:01 UTC end)
+
+```
+FAIL the ley line is drawn from home through every area (10 sections for 11 areas), the last reached at 0 (2798 triangles)
+ok   only the next stone has a HUD indicator (1 for the 1 waking next)
+ok   two waves on, the same line, moved on along it (18,17 → 19,17 → 20,18, now at 19,17, 1 behind, 9 ahead)
+FAILED:
+```
+
+Error (trimmed):
+```
+FAILED:
+the ley line is drawn from home through every area (10 sections for 11 areas), the last reached at 0 (2798 triangles)
+```
+
