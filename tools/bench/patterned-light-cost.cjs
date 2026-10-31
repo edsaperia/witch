@@ -100,7 +100,7 @@ async function main(){
   const bounded=p=>Promise.race([p,stop]);
   const remaining=()=>Math.max(1,WORK_MS-(Date.now()-started));
   try{
-    hardTimer=setTimeout(()=>{report.error='Hard270s deadline';save();void browserServer?.kill();server?.closeAllConnections();server?.close();setTimeout(()=>process.exit(2),1000);},MAX_MS-1000);
+    hardTimer=setTimeout(()=>{report.error='Hard270s deadline';report.status='INSUFFICIENT';report.complete=false;report.browserServerClosed=false;report.elapsedMs=Date.now()-started;save();void browserServer?.kill().catch(()=>{});server?.closeAllConnections();server?.close();setTimeout(()=>process.exit(2),1000);},MAX_MS-1000);
     workTimer=setTimeout(()=>fail(Error('258s work deadline; cleanup reserved')),remaining());
     const state=laptopState();report.preconditions=state;initialIdle=state.idleMs;
     if(state.idleMs<60000||state.headless.length)throw Error('Laptop must be idle60s with no other headless/Playwright browser');
