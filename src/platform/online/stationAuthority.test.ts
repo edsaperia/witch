@@ -6,6 +6,29 @@ import { newGame } from "../../rules/game";
 import { TUNING } from "../../rules/tuning";
 import { HOUSE_ROOMS, objectFront } from "../../rules/houseRooms";
 import { setParts } from "../../rules/spells";
+import { startWake } from "../../rules/wakeUp";
+import { deckOf } from "../../rules/treehouse";
+import { RECORDS } from "../../rules/records";
+import { applyStationChoice, stationChoice } from "./stationChoice";
+import { bpmAt } from "../../rules/beat";
+
+it("requires the host's record and the acting witch at the booth, deriving tempo only from its ID", () => {
+  const tuning = structuredClone(TUNING); tuning.map!.island = "home"; tuning.map!.islandAreas = 4;
+  const game = newGame(123, tuning, 2), guest = game.witches[1], records = new Set<string>(), record = RECORDS[0];
+  game.party.spellAt = null;
+  expect(startWake(game, 0, {}, guest)).toBe(true); guest.wake!.open = true;
+  Object.assign(guest.body, deckOf(game.map, tuning)!.seat, { perch: true, mode: "ground", seated: false });
+  const authority = stationAuthority(() => ({ bags: new Set(), hats: new Set(), parts: new Set(), records }));
+  const choice = { kind: "party" as const, id: record.id };
+  expect(stationChoice({ ...choice, bpm: 999 })).toBeNull(); expect(stationChoice({ kind: "party", id: "invented" })).toBeNull();
+  expect(authority(game, 1, choice)).toBe(false); records.add(record.id);
+  expect(authority(game, 0, choice)).toBe(false); expect(authority(game, 1, choice)).toBe(true);
+  guest.body.x += 100; expect(authority(game, 1, choice)).toBe(false); guest.body.x -= 100;
+  const host = structuredClone(game.witches[0].body);
+  expect(applyStationChoice(game, 1, choice)).toBe(true);
+  expect(bpmAt(game.beat, game.clock.time)).toBe(record.bpm); expect(game.witches[0].body).toEqual(host); expect(guest.body.seated).toBe(true);
+  expect(authority(game, 1, choice)).toBe(false); expect(applyStationChoice(game, 1, choice)).toBe(false);
+});
 
 it("checks the assigned visitor's real station position and host-owned choices, not the host's position", () => {
   // One house and two players are sufficient for proximity/inventory authority.

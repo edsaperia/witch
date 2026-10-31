@@ -11,11 +11,39 @@ import { WITCH_GENOME } from "../../../art/witchGenome.js";
 import { appearance } from "./appearance";
 import { stationLook } from "./stationAppearance";
 import { SHELVES, wear } from "../../rules/wardrobe";
+import { startWake } from "../../rules/wakeUp";
+import { deckOf } from "../../rules/treehouse";
+import { RECORDS } from "../../rules/records";
+import { stationAuthority } from "./stationAuthority";
+import { bpmAt } from "../../rules/beat";
 
 const cleanups: (() => void)[] = [];
 afterEach(() => { for (const stop of cleanups.splice(0)) stop(); });
 const input = (moveX = 0): Controls => ({ moveX, moveZ: 0, zoom: 0, toggleMode: false, autoTalk: false });
 const turn = () => new Promise<void>(resolve => setTimeout(resolve, 0));
+it("starts a visitor's approved record on both peers before the next frame", async () => {
+  const f = fixture(), attach = f.hostOptions.attach, records = new Set<string>(), record = RECORDS[0];
+  f.hostOptions.attach = game => {
+    attach(game); game.party.spellAt = null; const guest = game.witches[1];
+    expect(startWake(game, 0, {}, guest)).toBe(true); guest.wake!.open = true;
+    Object.assign(guest.body, deckOf(game.map, game.tuning)!.seat, { perch: true, mode: "ground", seated: false });
+  };
+  f.hostOptions.authorizeStation = stationAuthority(() => ({ bags: new Set(), hats: new Set(), parts: new Set(), records }));
+  const { joined } = await f.start(); await f.sync(); await joined;
+  const choice = { kind: "party" as const, id: record.id };
+  f.guest.choose(choice); f.host.message(f.guestMessages.at(-1)!);
+  let index = f.hostMessages.length; f.host.step(input(), .02);
+  for (const message of f.hostMessages.slice(index)) f.guest.message(message);
+  expect(f.hostGame.party.spellAt).toBeNull(); records.add(record.id);
+  f.guest.choose(choice); f.host.message(f.guestMessages.at(-1)!); index = f.hostMessages.length;
+  expect(f.guest.game!.party.spellAt).toBeNull(); f.host.step(input(), .02);
+  const updates = f.hostMessages.slice(index);
+  expect(updates.map(m => (m.payload as { kind: string }).kind)).toEqual(["station", "frame"]);
+  for (const message of updates) f.guest.message(message);
+  expect(bpmAt(f.guest.game!.beat, f.guest.game!.clock.time)).toBe(record.bpm);
+  expect(snapshotGame(f.guest.game!)).toEqual(snapshotGame(f.hostGame));
+  expect(f.hostOptions.failed).not.toHaveBeenCalled(); expect(f.guestOptions.failed).not.toHaveBeenCalled();
+});
 it("replicates only host-owned approved wardrobe changes before the next frame", async () => {
   const f = fixture(), hostSeen = vi.fn(), guestSeen = vi.fn();
   f.hostOptions.appearance = f.guestOptions.appearance = () => WITCH_GENOME;
