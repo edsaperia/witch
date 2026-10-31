@@ -20,8 +20,14 @@ import type { Tuning } from "../rules/tuning";
 import type { PlaytestLog } from "../platform/playtestLog";
 import type { MusicLab } from "./musicLab";
 import { logCaughtError } from "../platform/caughtError";
+import { PotionFilter } from '../platform/audio/potionFilter';
 
 export class Sound {
+  private potionFilter: PotionFilter | null = null;
+  private potionOutput(): AudioNode {
+    if (this.potionFilter?.context !== this.audio) this.potionFilter = new PotionFilter(this.audio!);
+    return this.potionFilter.input;
+  }
   audio: AudioContext | null = null;
   music: Music | null = null;
   sfx: Sfx | null = null;
@@ -85,7 +91,7 @@ export class Sound {
   /** The sound effects, once there's an AudioContext (the creator's first click, or the start). */
   ensureSfx(): void {
     const { tuning } = this;
-    if (this.audio && !this.sfx && tuning.sfx.on) { this.sfx = new Sfx(this.audio, SFX_BASE * this.level, tuning.sfx, this.style.root + 24); this.sfxVol = tuning.sfx.volume; this.sfxCues = this.cues(this.sfx); const sfx = this.sfx; (window.requestIdleCallback ?? ((f: () => void) => setTimeout(f, 300)))(() => sfx.prewarm()); } // (its slow parts built while the start screen idles)
+    if (this.audio && !this.sfx && tuning.sfx.on) { this.sfx = new Sfx(this.audio, SFX_BASE * this.level, tuning.sfx, this.style.root + 24, this.potionOutput()); this.sfxVol = tuning.sfx.volume; this.sfxCues = this.cues(this.sfx); const sfx = this.sfx; (window.requestIdleCallback ?? ((f: () => void) => setTimeout(f, 300)))(() => sfx.prewarm()); } // (its slow parts built while the start screen idles)
   }
 
   /** The context, with the tuning's output buffer (music.buffer, seconds; else its latencyHint category, music.latency; ?latency= a
@@ -108,7 +114,7 @@ export class Sound {
     const fresh = !this.audio;
     this.audio ??= this.context(); void this.audio.resume();
     const t1 = performance.now();
-    if (!this.music && tuning.music.on) { this.music = new Music(this.audio, tuning.music.volume * this.level, this.playing, this.seed, tuning.music.src, musicAhead()); this.voices(); }
+    if (!this.music && tuning.music.on) { this.music = new Music(this.audio, tuning.music.volume * this.level, this.playing, this.seed, tuning.music.src, musicAhead(), this.potionOutput()); this.voices(); }
     const t2 = performance.now();
     this.ensureSfx();
     const t3 = performance.now(), ms = (x: number) => Math.round(x);
@@ -146,7 +152,7 @@ export class Sound {
         playtest().audio(what);
         console.warn(`audio watchdog: ${what}`);
         if (!this.audio) return;
-        if ((what === "music-silent" || what === "music-nonfinite") && this.music) { this.music.dispose(); this.music = new Music(this.audio, this.tuning.music.volume * this.level, this.playing, this.seed, this.tuning.music.src, musicAhead()); this.voices(); }
+        if ((what === "music-silent" || what === "music-nonfinite") && this.music) { this.music.dispose(); this.music = new Music(this.audio, this.tuning.music.volume * this.level, this.playing, this.seed, this.tuning.music.src, musicAhead(), this.potionOutput()); this.voices(); }
         if (what === "sfx-nonfinite" && this.sfx) { this.sfx.dispose(); this.sfx = null; this.sfxCues = null; this.ensureSfx(); }
       },
     );
@@ -183,6 +189,7 @@ export class Sound {
 
   /** A frame: the music, one track mixed by how near the witch is to a playing soundsystem; the cues; the bedroom's room. */
   update(game: Game, cue: MusicCue, roomOpen: boolean): void {
+    this.potionFilter?.update(game);
     const t0 = performance.now();
     this.lastMix = musicMix(game, game.witch);
     // The volumes (Ed, 2026-10-14: the pause page's Music and Sound effects sliders; app/settings.ts remembers them): the tuning's
