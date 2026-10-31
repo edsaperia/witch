@@ -8,11 +8,46 @@ import { BAGS } from "../../rules/bags";
 import { beatAt, shiftBeat } from "../../rules/beat";
 import { localView } from "./localView";
 import { WITCH_GENOME } from "../../../art/witchGenome.js";
+import { appearance } from "./appearance";
+import { stationLook } from "./stationAppearance";
+import { SHELVES, wear } from "../../rules/wardrobe";
 
 const cleanups: (() => void)[] = [];
 afterEach(() => { for (const stop of cleanups.splice(0)) stop(); });
 const input = (moveX = 0): Controls => ({ moveX, moveZ: 0, zoom: 0, toggleMode: false, autoTalk: false });
 const turn = () => new Promise<void>(resolve => setTimeout(resolve, 0));
+it("replicates only host-owned approved wardrobe changes before the next frame", async () => {
+  const f = fixture(), hostSeen = vi.fn(), guestSeen = vi.fn();
+  f.hostOptions.appearance = f.guestOptions.appearance = () => WITCH_GENOME;
+  f.hostOptions.appearanceApplied = hostSeen; f.guestOptions.appearanceApplied = guestSeen;
+  f.hostOptions.authorizeStation = () => true;
+  const owned = new Set<string>(); f.hostOptions.wardrobe = () => owned;
+  const { joined } = await f.start(); await f.sync(); await joined;
+  hostSeen.mockClear(); guestSeen.mockClear();
+  const item = SHELVES.cloak.items.find(i => i.set.cloak === "long")!;
+  const choice = stationLook("cloakPegs", wear(appearance(WITCH_GENOME)!, item))!;
+  const request = () => { expect(f.guest.choose(choice)).toBe(true); f.host.message(f.guestMessages.at(-1)!); };
+  request(); let index = f.hostMessages.length; f.host.step(input(), .02);
+  for (const message of f.hostMessages.slice(index)) f.guest.message(message);
+  expect(hostSeen).not.toHaveBeenCalled(); expect(guestSeen).not.toHaveBeenCalled();
+  owned.add(item.id); request(); index = f.hostMessages.length;
+  expect(guestSeen).not.toHaveBeenCalled(); f.host.step(input(), .02);
+  const updates = f.hostMessages.slice(index);
+  expect(updates.map(m => (m.payload as { kind: string }).kind)).toEqual(["station", "frame"]);
+  for (const message of updates) f.guest.message(message);
+  expect(hostSeen).toHaveBeenCalledExactlyOnceWith(1, expect.objectContaining({ cloak: "long" }));
+  expect(guestSeen).toHaveBeenCalledExactlyOnceWith(1, expect.objectContaining({ cloak: "long" }));
+  expect(snapshotGame(f.guest.game!)).toEqual(snapshotGame(f.hostGame));
+  expect(f.hostOptions.failed).not.toHaveBeenCalled(); expect(f.guestOptions.failed).not.toHaveBeenCalled();
+  const bag = BAGS[0]; owned.add(bag.id);
+  const bagChoice = stationLook("bags", wear(appearance(WITCH_GENOME)!, bag))!;
+  expect(f.guest.choose(bagChoice)).toBe(true); f.host.message(f.guestMessages.at(-1)!);
+  index = f.hostMessages.length; f.host.step(input(), .02);
+  for (const message of f.hostMessages.slice(index)) f.guest.message(message);
+  expect(f.hostGame.witches[1].spells.bag).toBe(bag.id); expect(f.guest.game!.witches[1].spells.bag).toBe(bag.id);
+  expect(hostSeen).toHaveBeenLastCalledWith(1, wear({ ...appearance(WITCH_GENOME)!, cloak: "long" }, bag));
+  expect(snapshotGame(f.guest.game!)).toEqual(snapshotGame(f.hostGame));
+});
 function fixture() {
   // Four areas supply the existing test-only bedroom geometry; distant area count does not affect session replication.
   const tuning = structuredClone(TUNING); tuning.map!.island = "home"; tuning.map!.islandAreas = 4;

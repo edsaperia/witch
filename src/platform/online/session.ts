@@ -5,6 +5,8 @@ import { replayGuest, replayHostStep, replayStart, type ReplayFrame, type Replay
 import { applyStationChoice, stationChoice, type StationChoice } from "./stationChoice";
 import { beatAnchor } from "./beatAnchor";
 import { appearance, type Appearance } from "./appearance";
+import { applyStationLook } from "./stationAppearance";
+import { bagOf, setBag } from "../../rules/bags";
 
 export interface SessionConnection {
   sendInput(payload: unknown): boolean;
@@ -35,6 +37,9 @@ export interface SessionOptions {
   /** Personal cosmetic data only, exchanged after telephone identity verification; never inventory or rules. */
   appearance?(): unknown;
   appearanceApplied?(player: 0 | 1, look: Appearance): void;
+  /** Host collection only; guests never supply ownership. Palette is the build's actual classic outfit. */
+  wardrobe?(): ReadonlySet<string>;
+  stationPalette?(): Record<string, number[]>;
 }
 
 /** Reuses the prototype's replication and input lease without a second frame loop, View or save store. */
@@ -175,6 +180,12 @@ export function onlineSession(options: SessionOptions) {
             if (!ready || !replica || payload.tick !== replica.tick || !Array.isArray(payload.choices) || payload.choices.length > 8) throw new Error("Invalid online station choices");
             for (const entry of payload.choices) {
               const choice = stationChoice(entry.choice);
+              if (choice?.kind === "look" && (entry.player === 0 || entry.player === 1)) {
+                const before = looks.get(entry.player), next = before && applyStationLook(before, choice, undefined, options.stationPalette?.());
+                if (!next) throw new Error("Invalid approved station appearance");
+                if (choice.station === "bags") setBag(replica.game.witches[entry.player].spells, bagOf(next));
+                looks.set(entry.player, next); options.appearanceApplied?.(entry.player, structuredClone(next));
+              }
               if (!choice || entry.player !== 0 && entry.player !== 1 || !applyStationChoice(replica.game, entry.player, choice)) throw new Error("Online station choices disagree");
               options.stationApplied?.(entry.player, choice);
             }
@@ -210,10 +221,25 @@ export function onlineSession(options: SessionOptions) {
         // ordinary deterministic tempo changes inside stepGame are already replayed on both ends.
         if (ready && game.beat.segs !== beatSegments && !connection.sendState({ kind: "beat", tick, beat: structuredClone(game.beat) })) throw new Error("The host beat couldn't be sent to your friend.");
         const approved: { player: 0 | 1; choice: StationChoice }[] = [];
-        for (const request of requests.splice(0)) if (options.authorizeStation?.(game, request.player, request.choice) === true && applyStationChoice(game, request.player, request.choice)) approved.push(request);
+        for (const request of requests.splice(0)) {
+          if (options.authorizeStation?.(game, request.player, request.choice) !== true) continue;
+          const before = looks.get(request.player), wardrobe = options.wardrobe?.();
+          const next = request.choice.kind === "look" && before && wardrobe ? applyStationLook(before, request.choice, wardrobe, options.stationPalette?.()) : null;
+          if (request.choice.kind === "look" && !next) continue;
+          if (next && request.choice.kind === "look" && request.choice.station === "bags" && options.authorizeStation?.(game, request.player, { kind: "bag", id: bagOf(next) }) !== true) continue;
+          if (!applyStationChoice(game, request.player, request.choice)) continue;
+          if (next) {
+            if (request.choice.kind === "look" && request.choice.station === "bags") setBag(game.witches[request.player].spells, bagOf(next));
+            looks.set(request.player, next);
+          }
+          approved.push(request);
+        }
         if (approved.length) {
           if (!connection.sendState({ kind: "station", tick, choices: approved })) throw new Error("The station choice couldn't be sent to your friend.");
-          for (const request of approved) options.stationApplied?.(request.player, request.choice);
+          for (const request of approved) {
+            if (request.choice.kind === "look") options.appearanceApplied?.(request.player, structuredClone(looks.get(request.player)!));
+            options.stationApplied?.(request.player, request.choice);
+          }
         }
         const guestControls = ready ? buffer.sample(now()) : wireControls({})!;
         guestControls.pausePage = guestControls.pausePage === true;

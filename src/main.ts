@@ -16,6 +16,7 @@ import { visitUnlocks } from "./app/visitUnlocks";
 import { stationAuthority } from "./platform/online/stationAuthority";
 import { remoteWitchAppearance } from "./platform/online/remoteAppearance";
 import { appearance } from "./platform/online/appearance";
+import { stationLook } from "./platform/online/stationAppearance";
 import { currentSettings } from "./app/playerSettings";
 import { wavesOver } from "./rules/win";
 import { chartOpen, closeChart, openChart, prepareChart, finishChartFlight, type Sailed } from "./ui/chartOverlay";
@@ -50,7 +51,7 @@ import { StallLog } from "./platform/stallLog";
 import { Freeze } from "./platform/freeze";
 import { StudioPlayer } from "./app/studio";
 import { StudioPanel } from "./ui/studioPanel";
-import { Creator, loadGenome, saveGenome } from "./ui/creator";
+import { Creator, loadGenome, saveGenome, classicPalette } from "./ui/creator";
 import { BOT_KINDS, type BotKind } from "./rules/botKinds";
 import type { Bot } from "./rules/bot";
 import type { BotTag } from "./ui/botGame";
@@ -398,6 +399,8 @@ const phone = telephoneStation({ storage: (() => { try { return localStorage; } 
     const wardrobe = findsCtx().owned();
     return { bags: new Set(BAGS.filter(b => wardrobe.has(b.id)).map(b => b.id)), hats: new Set(game.witches[0].spells.hats ?? HAT_SPELLS.filter(hat => hat.built).map(hat => hat.id)), parts: partsNow() };
   }),
+  wardrobe: () => findsCtx().owned(),
+  stationPalette: () => classicPalette(style),
   stationApplied: (player, choice) => {
     if (player !== (phone.visiting ? 1 : 0)) return;
     const witch = N().game.witches[player]; if (!witch) return;
@@ -407,6 +410,11 @@ const phone = telephoneStation({ storage: (() => { try { return localStorage; } 
     } else if (choice.kind === "broom" && !phone.visiting) fitBroom(partsWithoutLoan(witch.spells.parts, loan));
   },
   appearanceApplied: (player, look) => {
+    if (player === (phone.visiting ? 1 : 0)) {
+      lookNow = JSON.stringify(look); creator.adopt(look as never); showLook();
+      if (!phone.visiting) saveGenome(lookWithoutLoan(look, loan) as never);
+      return; // The local witch uses the normal artwork; only approved host wardrobe changes persist.
+    }
     void remoteArt.look(player, look).then(() => {
       if (phone.active && !phone.visiting && N().game.witches.length === 2) return remoteArt.start(N().game, 0);
     }).catch(error => { logCaughtError(error, "remote appearance"); phone.hangUp(); });
@@ -541,8 +549,7 @@ let owned: Set<string> | null = null, stillAt = 0;
 const findsCtx = (): FindsCtx => ({ spells: N().game.spells, owned: () => (owned ??= withLoan("wearable", loadOwned((page.look() ?? creator.genome()) as Record<string, unknown>), loan)) });
 stations.onLook = g => {
   if (phone.active) {
-    if (stations.station === "bags") phone.choose({ kind: "bag", id: bagOf(g as Record<string, unknown>) });
-    else if (stations.station) phone.choose({ kind: "dress", station: stations.station });
+    if (stations.station) { const choice = stationLook(stations.station, g); if (choice) phone.choose(choice); }
     return; // No raw host/guest mutation or visitor wardrobe save before approval.
   }
   mutate("dressing: station look and bag", () => {
@@ -897,6 +904,7 @@ const ordinaryVisit = visitNightSaves ? visitLifecycle({
     startedNights.add(game); input.clearPresses(); sailing = false;
   },
   adoptOwn: async (own, fresh) => {
+    lookNow = JSON.stringify(own.look); creator.adopt(own.look as never); shownLook = "";
     if (fresh) {
       const ownCollection = loadOwned(own.look);
       returnedUnlocks?.apply(browserSaveSlots(), { spells: own.night.game.spells, owned: () => ownCollection });
