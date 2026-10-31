@@ -92,7 +92,7 @@ test('release imports only successful matching-environment task results; changed
 
 test('embedded GitHub scripts compile and neither workflow reruns on PR edits', () => {
   const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
-  for (const file of ['.github/workflows/ci.yml','.github/workflows/art-check.yml']) {
+  for (const file of ['.github/workflows/ci.yml','.github/workflows/art-check.yml','.github/workflows/pages.yml','.github/workflows/pages-publish.yml']) {
     const text=fs.readFileSync(file,'utf8'), lines=text.split(/\r?\n/); let count=0;
     assert.doesNotMatch(text,/^\s*- edited\s*$|types:.*\bedited\b/m);
     for(let i=0;i<lines.length;i++) {

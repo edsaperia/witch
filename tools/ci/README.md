@@ -10,6 +10,10 @@ Bounded GitHub failure annotations shared across commands in one job; logs/artif
 node tools/ci/annotations.cjs --summary
 ```
 
+## `pages-policy.cjs`
+
+Pages publication policy: debounce previews outside the publisher lock; live requests preempt older publication.
+
 ## `report-command.cjs`
 
 Stream a check unchanged, annotating named failures or its crash reason only when it exits unsuccessfully.
@@ -46,6 +50,7 @@ Inventory real world-constructor calls and explicit small-fixture reasons; comme
 
 - `PLAN.md`
 - `effects-scene.test.ts`
+- `pages-policy.test.cjs`
 - `reporting.test.cjs`
 - `run-unit.test.ts`
 - `test-scope.test.ts`

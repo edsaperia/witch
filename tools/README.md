@@ -18,7 +18,7 @@ Scripts for building, checking and measuring the game, run from the repository r
 - [`bench/`](bench/README.md): 44 scripts — alloc.mjs, alloc.ts, artmem.cjs, bootstall.cjs, comparable.cjs, compare.cjs, crown-cost.cjs, cull-walk.cjs, early-diff.cjs, expect.cjs, fingerprint.ts, frames.cjs, gpu.cjs, ground-compile-variants.cjs, ground-compile.mjs, ground-extra-intel.cjs, ground-extra-parity.mjs, ground-family-map.mjs, ground-family-parity.mjs, ground-parity-scene.mjs, ground.cjs, heapdiff.cjs, hitch.cjs, hold-simulation.cjs, house-cpu-functions.mjs, house-profile-summary.mjs, house-profile.mjs, house-route.cjs, late.cjs, map-prep-intel.mjs, neutral-hunt.cjs, ordinary.cjs, perf.ts, rules.ts, run.mjs, spikes.ts, stalls.cjs, travel-budget.cjs, ts.mjs, viewalloc.cjs, worker-compute-entry.ts, worker-compute.mjs, worker-job-summary.cjs, worker-profile.cjs
 - [`biomes/`](biomes/README.md): 2 scripts — sheet.mjs, shots.cjs
 - [`chart/`](chart/README.md): 4 scripts — diff.cjs, emerge.cjs, open.cjs, profile.cjs
-- [`ci/`](ci/README.md): 7 scripts — annotations.cjs, report-command.cjs, run-unit.mjs, sleep-cell-repro.mjs, test-scope.mjs, vitest-reporter.mjs, world-audit.mjs
+- [`ci/`](ci/README.md): 8 scripts — annotations.cjs, pages-policy.cjs, report-command.cjs, run-unit.mjs, sleep-cell-repro.mjs, test-scope.mjs, vitest-reporter.mjs, world-audit.mjs
 - [`config/`](config/README.md): 7 scripts — check.mjs, format.mjs, generated.mjs, knob-docs.mjs, linkSwitches.mjs, schema.mjs, typegen.mjs
 - [`dj/`](dj/README.md): 5 scripts — booth-sheet.mjs, booth.cjs, candles-sheet.mjs, respawn.cjs, strip.mjs
 - [`docs/`](docs/README.md): 2 scripts — glossary.mjs, tables.mjs
