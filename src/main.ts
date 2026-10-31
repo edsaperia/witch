@@ -356,6 +356,7 @@ freeze.advance = (game, controls, dt) => recordedStep(game, controls, dt, BUILD,
 freeze.started = () => (startEl.style.display === "none" || creator.open) && !studio.at; // (in the bedroom too: Ed, 2026-10-14, "Can we pause from the bedroom?")
 freeze.ownsEsc = () => !bot && !document.querySelector("#settings-page.open, #potion-lab.open"); // (the Settings page's Esc is its own: it closes, the pause page stays) // (the bot game's Esc is its way back to the start screen: ui/botGame.ts)
 const phone = telephoneStation({ storage: (() => { try { return localStorage; } catch { return null; } })() });
+let guestAudioGame: Game | null = null;
 page.presentationGame = game => phone.presented(game);
 
 // Arriving from the sea chart (?arrive=1, or a sail in place; the night's arrival, app/night.ts): the chart's last frame while the
@@ -452,7 +453,10 @@ creator.version = typeof __BUILD__ === "string" ? __BUILD__.split(" ")[0] : "dev
 (window as unknown as { __creator: Creator }).__creator = creator; // (the creator's smoke scripts read her place in the room)
 // Her hat's spell (rules/spells.ts, app/loadout.ts): the creator's Hat box chooses it from the hats she owns, kept on this browser.
 creator.loadout = { hat: N().game.spells.hat }; creator.hats = unlockAll() ? undefined : N().game.spells.hats; // (the pause page's Unlock everything: every hat, app/debugUnlock.ts)
-creator.onLoadout = l => mutate("dressing: loadout", () => { const { game } = N(); changeLoadout(game.witches[0], l.hat); saveLoadout({ hat: hatWithoutLoan(game.spells.hat, loan) as typeof game.spells.hat }); wearHat(page.look()); }); // (a loaned hat never saved: app/loan.ts; a hat swapped while hers lies elsewhere leaves that one lying: rules/hatSpells.ts)
+creator.onLoadout = l => {
+  if (phone.active) { phone.choose({ kind: "hat", id: l.hat }); return; }
+  mutate("dressing: loadout", () => { const { game } = N(); changeLoadout(game.witches[0], l.hat); saveLoadout({ hat: hatWithoutLoan(game.spells.hat, loan) as typeof game.spells.hat }); wearHat(page.look()); });
+}; // A loaned hat is never saved; online choices wait for host approval.
 // Her room mid-night from the treehouse's rooms (rules/houseRooms.ts; Ed, 2026-10-19): E at a dressing station, the bags or the broom
 // stand opens it at only that station's choices (config/house/), the world running on at the house's tenth; its way out brings
 // her back where she stood, in her new look and broom: any hat lying about staying where it lies (Ed, 2026-10-12). They are the only
@@ -479,13 +483,20 @@ document.body.append(shutButton);
 let owned: Set<string> | null = null, stillAt = 0;
 /** What the finds' keepers work on (app/finds.ts): tonight's spells and what she owns to wear, kept. */
 const findsCtx = (): FindsCtx => ({ spells: N().game.spells, owned: () => (owned ??= withLoan("wearable", loadOwned((page.look() ?? creator.genome()) as Record<string, unknown>), loan)) });
-stations.onLook = g => mutate("dressing: station look and bag", () => {
+stations.onLook = g => {
+  if (phone.active) {
+    if (stations.station === "bags") phone.choose({ kind: "bag", id: bagOf(g as Record<string, unknown>) });
+    else if (stations.station) phone.choose({ kind: "dress", station: stations.station });
+    return; // No raw host/guest mutation or visitor wardrobe save before approval.
+  }
+  mutate("dressing: station look and bag", () => {
   saveGenome(lookWithoutLoan(g as Record<string, unknown>, loan) as never); creator.adopt(g); // (saved without the loan: app/loan.ts)
   // (not yet dressed: a station's choice puts its piece on her, out of last night's pile: rules/clothesPile.ts; Ed, 2026-10-23)
   const w = N().game.wake; if (w && stations.station) wearFromStation(w, stations.station);
   if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); wearHat(g); setBag(N().game.witches[0].spells, bagOf(g as Record<string, unknown>)); } // (her bag's 💌 stats follow the bag she wears: rules/bags.ts)
   showLook();
-});
+  });
+};
 stations.onBack = () => shutStation("back"); // (menu.back, E by default: platform/bindings.ts; the pad's, circle, comes through padControls)
 // Her DJ booth at the decks (Ed, 2026-10-29; ui/djBooth.ts): E there opens it (the wake-up's "booth" event); "Get this party started"
 // closes it and starts the party at the record's bpm (rules/wakeUp.ts startParty), the record remembered for next time.
@@ -496,9 +507,12 @@ stations.onChange = () => { const { game } = N(); view.turnUntil = game.herTime 
 stations.onDress = () => { view.spin = spinStep(view.spin, N().game.herTime); }; // (Ed, 2026-10-26: she twirls while her new look draws)
 // The Workshop's bay (Ed, 2026-10-23; docs/backlog/workshop.md): a part chosen goes on her broom at once, mid-night too (its stats
 // and its set's spell with it: rules/spells.ts setParts), and is kept on this browser for the nights after (app/broomSave.ts).
-stations.onFit = f => mutate("dressing: broom fitting", () => { const { game } = N(); setParts(game.witches[0].spells, f); fitBroom(partsWithoutLoan(f, loan)); }); // (kept without a part on loan: app/loan.ts)
+stations.onFit = f => {
+  if (phone.active) { phone.choose({ kind: "broom", fitted: { ...f } }); return; }
+  mutate("dressing: broom fitting", () => { const { game } = N(); setParts(game.witches[0].spells, f); fitBroom(partsWithoutLoan(f, loan)); });
+}; // Solo keeps fitted parts without any loan; online choices wait for host approval.
 /** What the Workshop's stations show (ui/stationPanel.ts): the parts found, her broom, tonight's part to find, her tuning. */
-const workshopNow = (): WorkshopCtx => { const { game, tuning } = N(), t = game.trunk; return { found: partsToChoose(partsNow()), fitted: game.witches[0].spells.parts, tonight: t && t.kind === "part" && !t.found ? t.item : null, tuning }; };
+const workshopNow = (): WorkshopCtx => { const { game, tuning } = N(), t = game.trunk; return { found: partsToChoose(partsNow()), fitted: phone.active ? { ...phone.presented(game).spells.parts } : game.witches[0].spells.parts, tonight: t && t.kind === "part" && !t.found ? t.item : null, tuning }; };
 /** Tonight's find taken (the "found" event): on loan till she sleeps (app/loan.ts), hers to wear or use at once, never written. */
 function lendFind(kind: FindKindId, id: string): void {
   const { game } = N();
@@ -717,7 +731,7 @@ freeze.onToggle = on => {
   pauseLoading = true;
   void import("./ui/decide").then(({ PauseSliders }) => {
     const report = () => import("./ui/visualReport").then(({ report }) => report(reportHost()));
-    pauseSliders = new PauseSliders({ mutate, saveComment, restoreComment, downloadReadableLog: () => { void N().playtest.download("text"); }, settings: () => settingsPage.show(), get tuning() { return N().game.tuning; }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive, report, potionLab: () => { void openPotionLab(); }, musicLab: openMusicLab, audioTest: () => { window.open("audio-test/", "_blank", "noopener"); }, downloadLog: () => N().playtest.download(), unlockAll: { get: () => unlockAll(), set: on => mutate("debug: unlock all", () => { setUnlockAll(on); if (on) stockMushroomBaskets(N().game); for (const W of N().game.witches) syncHatUnlock(W, on, params); creator.hats = N().game.spells.hats; }) }, defaults: { text: () => defaultsText(lookWithoutLoan((page.look() ?? creator.genome()) as Record<string, unknown> | null, loan), partsWithoutLoan(N().game.witches[0].spells.parts, loan)), tryIt: () => { window.open(newWitchLink(location.href), "_blank", "noopener"); }, shown: () => N().hud.debugOn || unlockAll() }, fightArena: () => { window.open(fightLink(newFightSeed()), "_blank", "noopener"); }, finds: () => findsPanel.toggle(true), findsShown: () => N().hud.debugOn || devFinds, quality: { lines: () => ladder.lines(), options: () => ladder.options(), current: () => ladder.current(), choose: v => { ladder.choose(v); ladder.apply(N().game.tuning); } } });
+    pauseSliders = new PauseSliders({ mutate, saveComment, restoreComment, downloadReadableLog: () => { void N().playtest.download("text"); }, settings: () => settingsPage.show(), get tuning() { return phone.preferences(N().game); }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive, report, potionLab: () => { void openPotionLab(); }, musicLab: openMusicLab, audioTest: () => { window.open("audio-test/", "_blank", "noopener"); }, downloadLog: () => N().playtest.download(), unlockAll: { get: () => unlockAll(), set: on => mutate("debug: unlock all", () => { setUnlockAll(on); if (on) stockMushroomBaskets(N().game); for (const W of N().game.witches) syncHatUnlock(W, on, params); creator.hats = N().game.spells.hats; }) }, defaults: { text: () => defaultsText(lookWithoutLoan((page.look() ?? creator.genome()) as Record<string, unknown> | null, loan), partsWithoutLoan(N().game.witches[0].spells.parts, loan)), tryIt: () => { window.open(newWitchLink(location.href), "_blank", "noopener"); }, shown: () => N().hud.debugOn || unlockAll() }, fightArena: () => { window.open(fightLink(newFightSeed()), "_blank", "noopener"); }, finds: () => findsPanel.toggle(true), findsShown: () => N().hud.debugOn || devFinds, quality: { lines: () => ladder.lines(), options: () => ladder.options(), current: () => ladder.current(), choose: v => { ladder.choose(v); ladder.apply(phone.preferences(N().game)); } } });
     requestAnimationFrame(() => pauseSliders!.show(freeze.frozen, creator.open)); // (a frame shut first, so it slides in)
   }, () => { // (its files replaced under it: Ed, 2026-10-14, "the menu does not appear")
     pauseLoading = false;
@@ -749,7 +763,7 @@ let decide: DecidePanel | null = null, decideLoading = false;
 const decidePanel = (open: boolean) => {
   if (decide || decideLoading) return;
   decideLoading = true;
-  void import("./ui/decide").then(({ DecidePanel }) => { decide = new DecidePanel({ mutate, get tuning() { return N().game.tuning; }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive }, open); });
+  void import("./ui/decide").then(({ DecidePanel }) => { decide = new DecidePanel({ mutate, get tuning() { return phone.preferences(N().game); }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive }, open); });
 };
 if (params.has("decide")) decidePanel(true);
 window.addEventListener("keydown", e => { if (e.code !== "F2") return; e.preventDefault(); if (decide) decide.toggle(); else decidePanel(true); });
@@ -817,7 +831,7 @@ const frameStats = new FrameStats(view.renderer.getContext());
  *  are over budget and back up while there's room, remembered for this device; ?ladder=off or ?ladder=<n> to hold it. */
 const ladder = new QualityLadder(gpuName(view.renderer.getContext()), params);
 // The player's Settings page (app/settingsPage.ts): its settings on the live pieces now, the page itself opened from the pause page's dev menu.
-const settingsPage = new SettingsPage({ mutate, input, shake, ladder, freeze, audio: on => sound.freeze(!on), tuning: () => N().game.tuning, version: BUILD,
+const settingsPage = new SettingsPage({ mutate, input, shake, ladder, freeze, audio: on => sound.freeze(!on), tuning: () => phone.preferences(N().game), version: BUILD,
   saves: { list: () => browserSaveSlots().list(), active: () => bootSlot, choose: id =>
     switchSave(browserSaveSlots(), () => autosave?.flush(performance.now()) ?? Promise.resolve(true), () => { forgetArrival(); location.assign(location.pathname); }, id) },
 });
@@ -1357,6 +1371,8 @@ function frameBody(now: number): void {
   const audio0 = performance.now();
   // The music: one track, mixed by how near the witch is to a playing soundsystem.
   const audioGame = phone.presented(game, dt, c.zoom);
+  if (phone.visiting && guestAudioGame !== game) { sound.setNight(audioGame.tuning, N().seed, N().musicStyle); guestAudioGame = game; }
+  else if (!phone.visiting) guestAudioGame = null;
   const cue = N().musicCue = musicCue(audioGame, N().musicCue);
   sound.update(audioGame, cue, creator.open, phone.visiting ? { shareBeat: true } : undefined);
   // The soundsystem spell's analyser bars (render/leash/stones.ts): the mix's spectrum, read once a frame only while its ring shows, and

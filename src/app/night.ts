@@ -148,7 +148,7 @@ export async function startNight(page: Page, spec: NightSpec): Promise<Night> {
   if (!spec.resume) applyLoadRungs(tuning, linkSets); // (the quality ladder's load rungs: app/ladder.ts)
   // A night after another on this page: every pause-page slider as it was set (Ed's decision 5: the game's knobs too), on purpose,
   // but for those this night's link sets itself.
-  if (old && !spec.resume) carryKnobs(old.tuning, tuning, DECISION_LIST, linkKnobs(params, DECISION_LIST));
+  if (old && !old.spec.borrowed && !spec.resume) carryKnobs(old.tuning, tuning, DECISION_LIST, linkKnobs(params, DECISION_LIST));
   if (!spec.resume) applySettings(currentSettings(), tuning); // (a resume keeps the saved rules' knobs)
   // Sailed here (&arrive=1, or in place): the island's map made already, in a worker while the chart flew (app/mapPrep.ts), if it's this night's.
   // (the boot: its own map, if the worker it started at once has it: app/mapPrep.ts startBootMapPrep)
@@ -191,7 +191,7 @@ export async function startNight(page: Page, spec: NightSpec): Promise<Night> {
   if (old) page.sound?.setNight(tuning, seed, musicStyle);
   // The page's own switch the boot puts on its night's tuning once the night is made (main.ts styleFromLink: the prop generator's
   // party pieces, which the rules' party places and the view's dressings read), on each later night's at the same point.
-  if (old) tuning.partyObjects.generated = old.tuning.partyObjects.generated;
+  if (old && !old.spec.borrowed && !spec.borrowed) tuning.partyObjects.generated = old.tuning.partyObjects.generated;
   if (old) await page.view?.setGameSliced(presentedGame(page, game)); // (the view's island and records, tonight's, built a frame's budget at a time: render/view.ts; its start's art is the caller's, view.prepare)
   page.night = night;
   page.last = undefined;

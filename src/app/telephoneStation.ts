@@ -4,16 +4,18 @@ import { telephone, type TelephoneOptions } from "./telephone";
 import { onlineSession, type SessionOptions } from "../platform/online/session";
 import { localView } from "../platform/online/localView";
 import type { StationChoice } from "../platform/online/stationChoice";
+import { visitPreferences } from "./visitPreferences";
 
 /** The ordinary station's lifetime/input seam. Call admission stays off until the actual guest/save hooks are bound. */
 export function telephoneStation(options: Pick<TelephoneOptions, "storage" | "loadIdentity" | "menu" | "socket"> & { session?: SessionOptions }) {
   const session = options.session ? onlineSession(options.session) : null;
+  const preferences = visitPreferences();
   let presentation: ReturnType<typeof localView> | null = null, source: Game | null = null;
   const phone = telephone({ ...options, callsEnabled: false,
     connected: async (role, connection, _peer, signal) => {
       if (!session) throw new Error("Calls aren't available in this build yet.");
       await session.connect(role, connection, signal);
-    }, message: message => { session?.message(message); }, departed: () => { session?.disconnect(); presentation = source = null; },
+    }, message: message => { session?.message(message); }, departed: () => { session?.disconnect(); presentation = source = null; preferences.clear(); },
   });
   let night: Game | null = null, object: string | null = null;
   const close = () => { void phone.show(false); };
@@ -24,6 +26,7 @@ export function telephoneStation(options: Pick<TelephoneOptions, "storage" | "lo
     get active() { return session?.role !== null && session?.role !== undefined; },
     get visiting() { return session?.role === "guest"; },
     choose(choice: StationChoice): boolean { return session?.choose(choice) ?? false; },
+    preferences(game: Game) { return session?.role === "guest" ? preferences.tuning(game) : game.tuning; },
     step(game: Game, controls: Controls, dt: number): boolean {
       if (session?.game && session.game !== game) { session.nightChanged(); presentation = source = null; return false; }
       return session?.step(controls, Math.min(0.1, dt)) ?? false;
@@ -32,7 +35,7 @@ export function telephoneStation(options: Pick<TelephoneOptions, "storage" | "lo
     presented(game: Game, dt = 0, zoom = 0): Game {
       if (session?.role !== "guest" || session.game !== game) { presentation = source = null; return game; }
       if (source !== game) { source = game; presentation = localView(game, 1); }
-      return presentation!.update(dt, zoom);
+      return Object.assign(presentation!.update(dt, zoom), { tuning: preferences.tuning(game) });
     },
     use(game: Game, id: string): void {
       if (game.witches[0].ko || HOUSE_ROOMS.objects.find(o => o.id === id)?.use.kind !== "telephone") return;
@@ -44,6 +47,6 @@ export function telephoneStation(options: Pick<TelephoneOptions, "storage" | "lo
       if (phone.open) phone.pollPad(typeof navigator !== "undefined" && navigator.getGamepads ? [...navigator.getGamepads()].find(p => p) ?? null : null, now);
     },
     close,
-    dispose() { session?.disconnect(); presentation = source = null; phone.dispose(); },
+    dispose() { session?.disconnect(); presentation = source = null; preferences.clear(); phone.dispose(); },
   };
 }

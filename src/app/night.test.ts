@@ -33,6 +33,22 @@ afterAll(() => {
 const spec = (seed: number, island = "4") => ({ how: "boot" as const, island, seed, params: new URLSearchParams({ island, seed: String(seed), creator: "0" }) });
 
 describe("startNight (docs/plans/sail-without-reload.md B)", () => {
+  it("returns from a borrowed night without host knobs or generated-party state", async () => {
+    const page: Page = { night: null, build: "test", look: () => null };
+    const baseline = await startNight(page, spec(71));
+    const flash = DECISION_LIST.find(d => d.id === "legendFlash")!;
+    const ownFlash = knobAt(baseline.tuning, flash.apply.knob!), generated = baseline.tuning.partyObjects.generated;
+    const host = newGame(72, structuredClone(baseline.tuning));
+    setKnob(host.tuning, flash.apply.knob!, 0.123); host.tuning.partyObjects.generated = !generated;
+    await startNight(page, { ...spec(72), how: "bed", resume: host, borrowed: true });
+    endNight(page);
+    const home = await startNight(page, { ...spec(73), how: "bed" });
+    expect(knobAt(home.tuning, flash.apply.knob!)).toBe(ownFlash);
+    expect(home.tuning.partyObjects.generated).toBe(generated);
+    expect(knobAt(host.tuning, flash.apply.knob!)).toBe(0.123);
+    expect(host.tuning.partyObjects.generated).toBe(!generated);
+    endNight(page);
+  });
   it("a borrowed visit returns home to the visitor's exact pre-visit stock bytes", async () => {
     vi.useFakeTimers();
     const bytes = new Map<string, string>(), listeners = new Map<string, Set<() => void>>();
