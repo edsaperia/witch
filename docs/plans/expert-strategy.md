@@ -17,3 +17,19 @@ Validate focused decision fixtures, observation non-leakage and control executio
 plus typecheck. No training, protected cases, historical experiment replay, full
 suite/browser or performance/strength claims. Report unsupported mechanics or
 ownership overlaps honestly; canonical coordinator owns combined release.
+
+## Checkpoint and remaining route
+
+Campaign decisions, public resources, equipped Harvest/healing hats and broom
+spell use, opportunistic legend-sigil trails, and visible early-clear rainbow
+directions are implemented. The rainbow uses the renderer's rule fallback and
+the existing approximate view, not exact renderer curves/ground occlusion.
+Actual small-world tests prove baby growth/retrieval and adult placement through
+controls. No full-night evaluation, model training or strength claim.
+
+Changing equipment at Workshop/wardrobe stations remains dependent on canonical
+ownership routing: QUESTION6544266067 on PR1540. The current Bot Controls API has
+no station-menu selection action. Condition to resume that subtask: a trusted
+COORDINATOR instruction on PR1540 assigns the adapter scope (or existing owner
+provides it). Never substitute direct Game loadout mutation. This dependency does
+not block the independent campaign implementation or tests above.

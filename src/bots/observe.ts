@@ -10,6 +10,7 @@ import { bagTuning } from "../rules/bags";
 import { winTarget, winPulse, won } from "../rules/win";
 import { pointerShown, leyReachTimes } from "../rules/leypulse";
 import { leyChain } from "../rules/leylines";
+import { rainbowKnobs, rainbowRuns, routePoint } from "../rules/rainbow";
 import { questOpen, dreamStone, dreamWay } from "../rules/dream";
 import { ALARM_DEFAULTS, newAlarms, shownAlarms, stepAlarms } from "../rules/alarms";
 
@@ -24,6 +25,7 @@ export interface Observation {
     troops: (Point & { id: number; species: string; level: number; hurt: boolean; placed: Point | null })[];
     route: (Point & { key: string; captured: boolean })[];
     areas?: (Point & { key: string; captured: boolean })[];
+    rainbow?: (Point & { way: Point })[];
     sigils: (Point & { id: number; species: string; level: number })[];
   };
   view: { halfWidth: number; halfDepth: number };
@@ -46,6 +48,9 @@ export function viewRectangle(g: Game): { halfWidth: number; halfDepth: number }
 
 export function newObserver() {
   const alarms = newAlarms();
+  let rainbowAt = -Infinity;
+  let rainbowParty: Game["party"] | null = null;
+  let rainbowBars: (Point & { way: Point })[] = [];
   return (g: Game): Observation => {
     const w = g.witches[0], b = w.body, t = g.tuning, time = g.clock.time, ext = viewRectangle(g);
     const visible = (p: Point) => Math.abs(p.x - b.x) <= ext.halfWidth && Math.abs(p.z - b.z) <= ext.halfDepth;
@@ -69,6 +74,24 @@ export function newObserver() {
     const routeSeer = w.hat.has && !w.hat.down && w.spells.hat === "routeseer";
     const route = leyChain(g.party, g.map).stones.filter(s => visible(s) && (routeSeer && g.party.spellAt !== null || (reach?.get(cellKey(s.cell)) ?? Infinity) <= time))
       .map(s => ({ x: s.x, z: s.z, key: cellKey(s.cell), captured: g.party.areas.has(cellKey(s.cell)) }));
+    // Sample actual rainbow bar locations via the renderer's rule fallback.
+    // No wave start, route distance/index, hidden endpoint or full path escapes.
+    // This shares the documented approximate-camera/no-occlusion boundary, not
+    // a claim of exact bent-world/frustum visibility or renderer curve parity.
+    if (rainbowParty !== g.party) { rainbowAt = -Infinity; rainbowParty = g.party; }
+    if (time < rainbowAt || time - rainbowAt >= 0.125) {
+      rainbowAt = time; rainbowBars = [];
+      const K = rainbowKnobs(t);
+      if (K.on && !g.partyOver) for (const r of rainbowRuns(g.party, g.map, g.rainbows ?? [], time)) {
+        const n = Math.max(4, Math.min(128, Math.round(K.bars ?? 84)));
+        for (let i = 0; i < n; i += 4) {
+          const m = r.head - r.dir * i * (K.spacing ?? 1.4);
+          if (m < r.lo || m > r.hi) continue;
+          const p = routePoint(g.party, g.map, m);
+          if (p) rainbowBars.push({ x: p.x, z: p.z, way: { x: p.x + p.dx * 30, z: p.z + p.dz * 30 } });
+        }
+      }
+    }
     const straggler = winTarget(g); // The public straggler pointer, not a full entity.
     const quests: Observation["quests"] = [];
     const dreamers = g.creatures.filter(c => c.boss && !c.gone && c.quest && visible(c) && Math.hypot(c.x - b.x, c.z - b.z) <= t.dreams.range).sort((a, c) => Math.hypot(a.x - b.x, a.z - b.z) - Math.hypot(c.x - b.x, c.z - b.z)).slice(0, 4);
@@ -93,6 +116,7 @@ export function newObserver() {
         })() : g.loose.filter(p => p.legend && visible(p)).map(p => ({ id: p.id, x: p.x, z: p.z, way: null })),
         equipment: { hat: w.spells.hat, hatDown: w.hat.down ? { x: w.hat.down.x, z: w.hat.down.z } : null, broom: w.spells.broom, ready: time >= w.spells.readyAt },
         route,
+        rainbow: rainbowBars.filter(visible).map(p => ({ x: p.x, z: p.z, way: { ...p.way } })),
         areas: stones.map(s => ({ key: s.key, x: s.x, z: s.z, captured: g.party.areas.has(s.key) })),
         berries: g.berries.berries.filter(r => !r.gone && r.claimedBy === null && visible(g.berries.bushes[r.bush])).map(r => { const p = g.berries.bushes[r.bush]; return { x: p.x, z: p.z }; }),
         flasks: g.relics.filter(r => r.state === "lying" && visible({ x: r.sx, z: r.sz })).map(r => ({ x: r.sx, z: r.sz })),

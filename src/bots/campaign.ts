@@ -13,9 +13,13 @@ export function newCampaign() {
   let feedAgain = 0;
   let posting: { id: number; at: Point; species: string; until: number; doing: string } | null = null;
   let postAgain = 0;
-  return { observe, choose, recruitScore, reserve, carryUseful, snapshot: () => ({ areas: [...areas], posted: [...posted], feeding: feed ? structuredClone(feed) : null }) };
+  let rainbow: { at: Point; way: Point; seen: number } | null = null;
+  return { observe, choose, recruitScore, reserve, carryUseful, destination: front, snapshot: () => ({ areas: [...areas], posted: [...posted], feeding: feed ? structuredClone(feed) : null }) };
 
   function observe(o: Observation) {
+    const bar = o.campaign?.rainbow?.slice().sort((a, b) => distance(o.self, a) - distance(o.self, b))[0];
+    if (bar) rainbow = { at: { x: bar.x, z: bar.z }, way: { ...bar.way }, seen: o.playerTime };
+    if (rainbow && o.playerTime - rainbow.seen > 15) rainbow = null;
     for (const a of [...o.campaign?.areas ?? [], ...o.campaign?.route ?? []]) areas.set(a.key, { x: a.x, z: a.z, captured: a.captured, seen: o.playerTime });
     for (const a of o.creatures) if (!a.boss && !a.friendly && !a.rune && a.level > 0) enemies.set(a.id, { species: a.species, area: a.area, seen: o.playerTime });
     for (const [id, a] of enemies) if (o.playerTime - a.seen > 60 || o.creatures.some(c => c.id === id && (c.friendly || !!c.rune))) enemies.delete(id);
@@ -34,6 +38,7 @@ export function newCampaign() {
     if (o.next && !nextArea?.captured) return o.next;
     const revealed = o.campaign?.route.find(a => !a.captured);
     if (revealed) return revealed;
+    if (rainbow && distance(o.self, rainbow.way) > 10) return rainbow.way;
     return [...areas.values()].filter(a => !a.captured).sort((a, b) => distance(o.self, a) - distance(o.self, b))[0] ?? null;
   }
   function opposition(o: Observation, at = front(o)): string[] {

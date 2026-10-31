@@ -75,3 +75,18 @@ test("equipped broom use follows public cooldown and tactical conditions", () =>
   o.creatures = [1, 2].map(id => ({ ...animal(id), x: id * 2, z: 0, area: "front", boss: false, friendly: false, angry: true, stunned: false, rune: null }));
   useBroom(o, c); expect(c.spell).toBe(true);
 });
+test("early capture advances to another revealed route area instead of waiting at the old wave pointer", () => {
+  const o = frame(), p = newCampaign();
+  o.campaign!.route[0].captured = true;
+  o.campaign!.route.push({ key: "future", x: 180, z: 20, captured: false }); p.observe(o);
+  expect(p.destination(o)).toMatchObject({ x: 180, z: 20 });
+  o.campaign!.route = []; p.observe(o); // remembered discovery survives leaving the view
+  expect(p.destination(o)).toMatchObject({ x: 180, z: 20 });
+});
+test("a visible early-clear rainbow supplies a direction without a future endpoint, then expires", () => {
+  const o = frame(), p = newCampaign(); o.campaign!.route[0].captured = true;
+  o.campaign!.rainbow = [{ x: 10, z: 0, way: { x: 40, z: 0 } }]; p.observe(o);
+  expect(p.destination(o)).toEqual({ x: 40, z: 0 });
+  o.campaign!.rainbow = []; o.playerTime = 16; p.observe(o);
+  expect(p.destination(o)).toBeNull();
+});

@@ -94,6 +94,7 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
     selectedQuest = null;
     visitingLegend = null;
     const c = idle(), w = o.self;
+    const front = campaign.destination(o);
     // Evaluate even when a higher priority returns early, so an unsafe waypoint
     // cannot silently resume later in the same thirty-second slot.
     const safeCoverage = !guardedCoverage || coverageGuard.update(o, w.hp >= K.healTo ? false : healing || w.hp <= K.healAt);
@@ -265,8 +266,8 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
       }
     }
     const candidates = o.creatures.filter(a => !a.boss && !a.friendly && !a.rune && (job ? a.id === job.creatureId : a.level > 0 || a.species === quest?.wants || !!o.campaign?.berries.length && o.carried.filter(c => c.level === 1).length < 3))
-      .filter(a => !o.campaign || !o.next || o.carried.filter(c => c.level === 1).length < 3 || a.species === quest?.wants || dist(a, o.next) < 150 || dist(w, a) < K.kite);
-    const score = (a: typeof candidates[number]) => campaign.recruitScore(o, a, quest?.wants) - (a.area === lastArea ? K.stick : 0) - (o.next && dist(a, o.next) < 100 ? K.ahead : 0);
+      .filter(a => !o.campaign || !front || o.carried.filter(c => c.level === 1).length < 3 || a.species === quest?.wants || dist(a, front) < 150 || dist(w, a) < K.kite);
+    const score = (a: typeof candidates[number]) => campaign.recruitScore(o, a, quest?.wants) - (a.area === lastArea ? K.stick : 0) - (front && dist(a, front) < 100 ? K.ahead : 0);
     if (o.playerTime >= retargetAt || !candidates.some(a => a.id === target)) {
       target = [...candidates].sort((a, b) => score(a) - score(b) || a.id - b.id)[0]?.id ?? null;
       retargetAt = o.playerTime + K.retargetSeconds;
@@ -284,7 +285,7 @@ export function newExpert(params: Partial<ExpertParams> = {}, seed = 1, limits: 
       if (c.dash) { c.aimX = c.moveX * 10; c.aimZ = c.moveZ * 10; c.fire = false; }
       return c;
     }
-    const alarm = o.alarms[0], destination = o.straggler ?? alarm ?? quest?.hint ?? o.next;
+    const alarm = o.alarms[0], destination = o.straggler ?? alarm ?? quest?.hint ?? front;
     if (destination && dist(w, destination) > 12) {
       bot.doing = o.straggler ? "following the straggler pointer" : alarm ? "answering an alarm" : "following the wave pointer";
       go(destination, 10, true); return c;

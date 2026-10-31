@@ -4,6 +4,7 @@ import { smallWorld } from "../test/worlds";
 import { TUNING, withTuning } from "../rules/tuning";
 import { newExpert } from "./expert";
 import { newObserver } from "./observe";
+import { rainbowRuns, routePoint, sendRainbow } from "../rules/rainbow";
 const make = smallWorld(newGame, "Actual expert controls at a berry patch; no full-night strength evaluation.");
 
 test("the expert grows and retrieves a baby through real sigil controls and berry rules", () => {
@@ -57,4 +58,17 @@ test("an adult is posted with real controls and is not immediately collected aga
   expect(w.leash.stack).not.toContain(adult.id);
   const placed = w.leash.placed.find(p => p.id === adult.id);
   expect(placed).toBeDefined(); expect(Math.hypot(placed!.x - at.x, placed!.z - at.z)).toBeLessThan(60);
+});
+test("only local rainbow bars and their forward direction escape the observation boundary", () => {
+  const g = make(1000, TUNING), w = g.witches[0];
+  g.party.bootUntil = 0; g.clock.time = 20; g.party.spellAt = 0;
+  g.rainbows = []; sendRainbow(g.rainbows, g.tuning, 19, 0);
+  const run = rainbowRuns(g.party, g.map, g.rainbows, 20)[0], p = routePoint(g.party, g.map, run.head)!;
+  Object.assign(w.body, { x: p.x, z: p.z });
+  const seen = newObserver()(g).campaign!.rainbow!;
+  expect(seen.length).toBeGreaterThan(0);
+  expect(Object.keys(seen[0]).sort()).toEqual(["way", "x", "z"]);
+  expect(Math.hypot(seen[0].way.x - seen[0].x, seen[0].way.z - seen[0].z)).toBeCloseTo(30);
+  w.body.x += 10000; w.body.z += 10000;
+  expect(newObserver()(g).campaign!.rainbow).toEqual([]);
 });

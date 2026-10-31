@@ -21,7 +21,13 @@ columns use the renderer's `leyReachTimes` gate (or a worn Route-seer); a hidden
 wave-plan endpoint never escapes. Clearing early is prioritized through ready
 casts and newly visible route/capture information is consumed on subsequent
 delayed snapshots. This does not make the internal future route known or change
-the game's pulse/early-clear reveal behavior. A picked-up legend sigil provides
+the game's pulse/early-clear reveal behavior. The early-clear rainbow is sampled
+at every fourth bar, at most128 bars per run, through `rainbowRuns`/`routePoint`
+(the renderer's rule fallback). Only bars inside the approximate view and a30m
+forward-direction waypoint escape; no route distance, wave origin or endpoint.
+Samples refresh at most8Hz, memory expires after15player seconds. This is
+explicitly approximate: it does not reproduce the renderer's smoothed curves,
+bent-world ground occlusion or exact frustum. A picked-up legend sigil provides
 only the drawn tether's direction in40m steps; a loose crowned sigil alone gives
 no remote legend coordinate. Encountered dreams retain the existing request and
 delivery controls; their deliberate discovery is no longer limited to one per
