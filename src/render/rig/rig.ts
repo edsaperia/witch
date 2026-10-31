@@ -63,6 +63,9 @@ export function footCycle(phase: number, duty: number): [number, number] {
 
 /** How the body moves this frame: given by the view from the creature's state. */
 export interface RigDrive {
+  /** Stiltwalkers: reach based on leg/body proportions; 0/1/undefined leave the ordinary rig untouched. */ stiltLength?: number;
+  /** Foot radius relative to normal hip radius, used only with extended legs. */ stiltTip?: number;
+  /** Taper envelope, 0 ordinary to 1 fully tapered; stiltLength is already enveloped by the caller. */ stiltStrength?: number;
   /** Crouching for a charge or a leap, 0..1. */ crouch: number;
   /** Charging: stretched out, at a run. */ charging: boolean;
   /** In the air (a leap), 0..1 of its arc's height: legs tucked. */ air: number;
@@ -76,21 +79,33 @@ export interface RigDrive {
 /** What the rig lays out: a piece or a disc of the atlas, its pivot's world position (metres from
  *  the creature's place on the ground) and a nudge toward the camera (model units) to settle which
  *  of two pieces at the same depth is in front (the head over the torso, the tail behind it). */
-export interface RigItem { piece: RigPiece; x: number; y: number; z: number; flip: boolean; bias: number }
+export interface RigItem { piece: RigPiece; x: number; y: number; z: number; flip: boolean; bias: number; scale?: number }
 /** Where the rig lays its items: a pool reused from frame to frame (no garbage for hundreds of creatures). */
 export class RigOut {
   readonly items: RigItem[] = [];
   n = 0;
   reset(): void { this.n = 0; }
-  push(piece: RigPiece, x: number, y: number, z: number, flip: boolean, bias: number): void {
+  push(piece: RigPiece, x: number, y: number, z: number, flip: boolean, bias: number, scale = 1): void {
     let it = this.items[this.n];
     if (!it) this.items[this.n] = it = { piece, x, y, z, flip, bias };
     else { it.piece = piece; it.x = x; it.y = y; it.z = z; it.flip = flip; it.bias = bias; }
+    it.scale = scale;
     this.n++;
   }
 }
 
 const N_SPINE = 12, HOOF = 23; // HOOF: art/core.js M.NOSE, the hooves' dark horn
+export const STILT_MAX_LEGS = 16, STILT_MAX_BONE_STEPS = 256;
+const stiltFactor = (length = 1) => Number.isFinite(length) ? Math.max(1, Math.min(12, length)) : 1;
+/** Added height in model units (multiply by u2m for world metres), shared with culling and labels. */
+export function stiltLift(m: RigMeta, length = 1): number {
+  const extra = stiltFactor(length) - 1;
+  if (!extra || !m.legs.length) return 0;
+  let reach = Infinity;
+  for (let i = 0; i < Math.min(m.legs.length, STILT_MAX_LEGS); i++) reach = Math.min(reach, Math.max(0, m.legs[i].hip[1] - m.legs[i].foot[1]));
+  // Tucked legs (penguins, moles) still grow visible stilts, without stretching their body artwork.
+  return Math.max(reach, Math.max(0, m.top) * .35) * extra * .98; // leave a little IK reach for the original foot stride
+}
 /** One creature's rig: the state it carries from frame to frame. */
 export class RigBody {
   private init = false;
@@ -99,7 +114,7 @@ export class RigBody {
   /** Each leg's foot where it was put down (world x, z from the creature's place's origin), while it's planted. */
   private plant = new Float32Array(8); private planted = new Uint8Array(4);
   /** Each foot as drawn this frame: world x, z, and 1 while it's planted (for measuring slide). */
-  readonly feet = new Float32Array(12);
+  feet = new Float32Array(12);
   readonly tail = new Float32Array(9);
   readonly spine = new Float32Array(N_SPINE * 3);
   // the point last put in the world (world()): metres from the creature's place
@@ -133,6 +148,16 @@ export class RigBody {
   /** A four-legged body's parts this frame, pushed to `out`. u2m: metres per model unit. */
   quadruped(m: RigMeta, u2m: number, dt: number, drive: RigDrive, out: RigOut): void {
     const { i, flip, a } = rigDirection(this.heading), len = Math.max(0.3, m.len) * 2, legLen = m.legs.length ? Math.hypot(m.legs[0].hip[0] - m.legs[0].foot[0], m.legs[0].hip[1] - m.legs[0].foot[1]) : 0.6;
+    const strength = Number.isFinite(drive.stiltStrength) ? Math.max(0, Math.min(1, drive.stiltStrength!)) : 1;
+    const stretch = strength > 0 ? stiltFactor(drive.stiltLength) : 1, stilts = stretch > 1, tip = Number.isFinite(drive.stiltTip) ? Math.max(.02, Math.min(.5, drive.stiltTip!)) : .08;
+    const footScale = stilts ? 1 + (tip - 1) * strength : 1;
+    const extraLift = stiltLift(m, stretch);
+    const legCount = stilts ? Math.min(STILT_MAX_LEGS, m.legs.length) : m.legs.length;
+    if (stilts && legCount > this.planted.length) {
+      const plant = new Float32Array(legCount * 2); plant.set(this.plant); this.plant = plant;
+      const planted = new Uint8Array(legCount); planted.set(this.planted); this.planted = planted;
+      const feet = new Float32Array(legCount * 3); feet.set(this.feet); this.feet = feet;
+    }
     // the gait: the cycle's clock by stride, its duty factor by speed (body lengths a second)
     this.clock += dt;
     const sl = drive.sleep ?? 0, dr = drive.droop ?? sl, tw = drive.twitch ?? 0, t = this.clock;
@@ -147,7 +172,7 @@ export class RigBody {
     const sink = drive.crouch * 0.16 + Math.max(0, -acc) * 0.04, bob = go * Math.abs(Math.sin(this.phase * Math.PI * 2)) * 0.025;
     // lying down: the body on the ground (its legs folding under it by IK), breathing slowly, heaving in a nightmare
     const breath = sl * (Math.sin(t * Math.PI * 2 / 4.5) * 0.012 + tw * Math.sin(t * 5.3) * 0.015);
-    const bodyY = -sink + bob + drive.air * 0.05 - sl * legLen * 0.62 + breath;
+    const bodyY = -sink + bob + drive.air * 0.05 - sl * legLen * 0.62 + breath + extraLift;
     const jerk = tw * Math.max(0, Math.sin(t * 2.1)) ** 4 * Math.sin(t * 17) * 0.05; // its head, in fits
     // its character (config/character.json): the posture it holds, and its idle quirk (a sniff, a stomp, a tail flick...), only as it stands
     const P = drive.posture, qk = drive.quirkK ?? -1, still = (1 - go) * (1 - sl) * (drive.crouch > 0.05 || drive.air ? 0 : 1), env = qk >= 0 ? Math.sin(qk * Math.PI) * still : 0;
@@ -172,8 +197,8 @@ export class RigBody {
     this.sway += (Math.max(-1, Math.min(1, -this.turn * 0.35)) * (drive.charging ? 0.3 : 1) - this.sway) * Math.min(1, dt * 5);
     at(m.tail[i], m.tailAt[0], m.tailAt[1] + bodyY + pby + qty - sl * 0.06, m.tailAt[2] + this.sway * 0.25 * (flip ? -1 : 1) + qtz, a > 0.1 ? -0.05 : 0.05); // behind, unless walking away
     // the legs: each foot on its own phase (a trot: diagonal pairs together), IK to the knee, bones as discs
-    for (let k = 0; k < m.legs.length; k++) {
-      const L = m.legs[k], [fwd, lift] = footCycle(this.phase + (TROT[L.name] ?? 0), duty);
+    for (let k = 0; k < legCount; k++) {
+      const L = m.legs[k], [fwd, lift] = footCycle(this.phase + (TROT[L.name] ?? (stilts ? (k % 2) * .5 : 0)), duty);
       const hipY = L.hip[1] + bodyY + pby, tuck = drive.air * legLen * 0.45;
       const quirked = L.side > 0 ? (L.fore ? qFore : qHind) : 0; // (the near foot does the stomping, thumping, scratching)
       const tapping = L.fore && drive.tap ? (drive.tap > 0) === (L.side > 0) ? Math.abs(drive.tap) * (1 - go) : 0 : 0; // its shoe tapping while it stands
@@ -182,7 +207,8 @@ export class RigBody {
       const z = L.hip[2]; let fz = z;
       // planted: a foot on the ground stays where it was put down (in the world) while the body goes on over it; lifted, it swings
       // to its next place. (Not in the air, tapping or lying down, and only while walking: standing, the feet settle under the hips.)
-      const stance = k < 4 && lift === 0 && go > 0.05 && !drive.air && !tapping && !sl && !quirked;
+      const tracked = k < (stilts ? this.planted.length : 4);
+      const stance = tracked && lift === 0 && go > 0.05 && !drive.air && !tapping && !sl && !quirked;
       if (stance) {
         if (!this.planted[k]) { this.world(fx, 0, z, a, flip, u2m); this.plant[k * 2] = this.x + this.wx; this.plant[k * 2 + 1] = this.z + this.wz; this.planted[k] = 1; }
         else { // the planted spot back in model space for the drawn heading (rigWorld undone): along it and across it
@@ -191,17 +217,22 @@ export class RigBody {
           if (Math.abs(px - L.foot[0]) > stride + 0.05 || Math.abs(pz - z) > stride * 0.6 + 0.05) this.planted[k] = 0; // left far behind (a sharp turn, a jump): it lets go and steps
           else { fx = px; fz = pz; }
         }
-      } else if (k < 4) this.planted[k] = 0;
-      if (k < 4) { this.world(fx, 0, fz, a, flip, u2m); this.feet[k * 3] = this.x + this.wx; this.feet[k * 3 + 1] = this.z + this.wz; this.feet[k * 3 + 2] = this.planted[k]; }
+      } else if (tracked) this.planted[k] = 0;
+      if (tracked) { this.world(fx, 0, fz, a, flip, u2m); this.feet[k * 3] = this.x + this.wx; this.feet[k * 3 + 1] = this.z + this.wz; this.feet[k * 3 + 2] = this.planted[k]; }
       const l1 = Math.hypot(L.hip[0] - L.knee[0], L.hip[1] - L.knee[1]), l2 = Math.hypot(L.knee[0] - L.foot[0], L.knee[1] - L.foot[1]);
       const restBend = Math.sign((L.knee[0] - L.hip[0]) * (L.foot[1] - L.hip[1]) - (L.knee[1] - L.hip[1]) * (L.foot[0] - L.hip[0])) || (L.fore ? -1 : 1);
-      const [kx, ky, ex, ey] = ik2(L.hip[0], hipY, fx, fy, l1, l2, -restBend);
+      // Every leg gains the same added reach as the lifted body, including authored tiny tucked legs.
+      const reachScale = stilts ? 1 + extraLift / (.98 * Math.max(.00001, l1 + l2)) : 1;
+      const [kx, ky, ex, ey] = ik2(L.hip[0], hipY, fx, fy, l1 * reachScale, l2 * reachScale, -restBend);
       const near = L.side > 0, discs = discLut(m, L.mat);
       const bias = near ? 0.02 : -0.02;
       const kz = (z + fz) / 2; // (the knee halfway across to a foot planted off the hip's line)
+      const hipR = L.r[0] * 1.1;
+      const kneeR = stilts ? L.r[1] + (hipR * (.35 + tip * .65) - L.r[1]) * strength : L.r[1];
+      const footR = stilts ? L.r[2] + (hipR * tip - L.r[2]) * strength : L.r[2];
       // thigh into shin into foot: the thigh full at the hip (blending into the body) tapering to the knee; a hind leg bends
       // again at the hock, back from the line knee-to-foot, its cannon bone slim and upright down to the foot
-      this.bone(discs, L.hip[0], hipY, kx, ky, z, L.r[0] * 1.1, L.r[1], a, flip, u2m, m.s, bias, out, kz);
+      this.bone(discs, L.hip[0], hipY, kx, ky, z, hipR, kneeR, a, flip, u2m, m.s, bias, out, kz, stilts);
       // the lower leg bends again at the hock (a hind leg) or the wrist (a foreleg), where the art bakes that joint (L.hock: kept
       // at the same place along and off the knee-to-foot line, so the cannon stays as long and as upright as the species' own;
       // the bend eased out in the air); without one baked, a hind leg's hock is guessed back from the line as before
@@ -217,16 +248,32 @@ export class RigBody {
       }
       if (bent) {
         const hz = kz + (fz - kz) * 0.55;
-        this.bone(discs, kx, ky, hx, hy, kz, L.r[1], (L.r[1] + L.r[2]) / 2, a, flip, u2m, m.s, bias, out, hz);
-        this.bone(discs, hx, hy, ex, ey, hz, (L.r[1] + L.r[2]) / 2 * 0.9, L.r[2], a, flip, u2m, m.s, bias, out, fz);
-      } else this.bone(discs, kx, ky, ex, ey, kz, L.r[1], L.r[2], a, flip, u2m, m.s, bias, out, fz);
+        this.bone(discs, kx, ky, hx, hy, kz, kneeR, (kneeR + footR) / 2, a, flip, u2m, m.s, bias, out, hz, stilts);
+        this.bone(discs, hx, hy, ex, ey, hz, (kneeR + footR) / 2 * 0.9, footR, a, flip, u2m, m.s, bias, out, fz, stilts);
+      } else this.bone(discs, kx, ky, ex, ey, kz, kneeR, footR, a, flip, u2m, m.s, bias, out, fz, stilts);
       const fp = m.shoe?.[i] ?? pickDisc(L.hoof && m.discs[HOOF] ? discLut(m, HOOF) : discs, L.fl * 0.9 * m.s); // a party animal's shoe, else its hoof or paw
-      if (fp) { this.world(ex + L.fl * 0.5, ey, fz, a, flip, u2m); out.push(fp, this.wx, this.wy, this.wz, flip, bias + (m.shoe ? 0.01 : 0)); }
+      if (fp) { this.world(ex + L.fl * 0.5 * footScale, ey, fz, a, flip, u2m); out.push(fp, this.wx, this.wy, this.wz, flip, bias + (m.shoe ? 0.01 : 0), footScale); }
     }
   }
 
   /** A bone from (x0, y0) to (x1, y1) at side z, as discs from radius r0 to r1 (model units). */
-  private bone(discs: (RigPiece | undefined)[], x0: number, y0: number, x1: number, y1: number, z: number, r0: number, r1: number, a: number, flip: boolean, u2m: number, s: number, bias: number, out: RigOut, z1 = z): void {
+  private bone(discs: (RigPiece | undefined)[], x0: number, y0: number, x1: number, y1: number, z: number, r0: number, r1: number, a: number, flip: boolean, u2m: number, s: number, bias: number, out: RigOut, z1 = z, stilt = false): void {
+    if (stilt) {
+      const length = Math.hypot(x1 - x0, y1 - y0, z1 - z), lo = Math.max(.00001, r0), hi = Math.max(.00001, r1);
+      const log = Math.log(hi / lo), delta = hi - lo;
+      const n = Math.max(2, Math.min(STILT_MAX_BONE_STEPS, Math.ceil(length * (Math.abs(delta) < 1e-8 ? 1 / lo : log / delta) / 1.5)));
+      const at = (k: number) => Math.abs(log) < 1e-8 ? k / n : (Math.exp(log * k / n) - 1) / Math.expm1(log);
+      for (let k = 0; k <= n; k++) {
+        const t = at(k), radius = lo + delta * t;
+        // At the cap, widen only enough to keep neighbouring strokes overlapping; never leave a broken leg.
+        const gap = length * Math.max(k ? t - at(k - 1) : 0, k < n ? at(k + 1) - t : 0), r = Math.max(radius, gap * .55);
+        const d = pickDisc(discs, r * s); if (!d) continue;
+        const scale = r * s / (discRadii.get(d) ?? Math.max(1, r * s));
+        this.world(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, z + (z1 - z) * t, a, flip, u2m);
+        out.push(d, this.wx, this.wy, this.wz, flip, bias, scale);
+      }
+      return;
+    }
     // discs every 0.7 of a radius (in pixels; eight at most): overlapping that closely their edges run straight, one smooth tapering limb,
     // not a string of beads (Ed's playtest, 2026-10-06: "creature legs look like a string of balls")
     const len = Math.hypot(x1 - x0, y1 - y0), n = Math.max(2, Math.min(8, Math.ceil((len * s) / Math.max(1, Math.min(r0, r1) * s * 0.7))));
@@ -279,12 +326,14 @@ export class RigBody {
 const TROT: Record<string, number> = { legFN: 0, legHF: 0, legFF: 0.5, legHN: 0.5 };
 // A material's discs by radius in whole pixels (each the nearest baked one), worked out once per rig page.
 const luts = new WeakMap<RigMeta, Map<number, (RigPiece | undefined)[]>>();
+const discRadii = new WeakMap<RigPiece, number>();
 function discLut(m: RigMeta, mat: number): (RigPiece | undefined)[] {
   let byMat = luts.get(m);
   if (!byMat) luts.set(m, (byMat = new Map()));
   let lut = byMat.get(mat);
   if (!lut) {
     const discs = m.discs[mat] ?? m.discs[+Object.keys(m.discs)[0]] ?? {}, radii = Object.keys(discs).map(Number);
+    for (const r of radii) discRadii.set(discs[r], r);
     lut = [];
     const max = radii.length ? Math.max(...radii) + 1 : 0;
     for (let r = 0; r <= max; r++) { let best: RigPiece | undefined, d = Infinity; for (const k of radii) { const e = Math.abs(k - r); if (e < d) { d = e; best = discs[k]; } } lut[r] = best; }

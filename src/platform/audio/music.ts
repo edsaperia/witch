@@ -61,8 +61,8 @@ export class Music {
     return this.bins;
   }
 
-  constructor(private ctx: BaseAudioContext, public volume: number, style: MusicStyle, seed: number, src = "", drawAhead = false) {
-    this.potionGate = ctx.createGain(); this.potionGate.connect(ctx.destination);
+  constructor(private ctx: BaseAudioContext, public volume: number, style: MusicStyle, seed: number, src = "", drawAhead = false, destination: AudioNode = ctx.destination) {
+    this.potionGate = ctx.createGain(); this.potionGate.connect(destination);
     this.master = ctx.createGain(); this.master.gain.value = 0;
     this.wobble = ctx.createGain();
     this.filter = ctx.createBiquadFilter(); this.filter.type = "lowpass"; this.filter.frequency.value = 16000; this.filter.Q.value = 0.7;

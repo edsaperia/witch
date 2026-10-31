@@ -62,6 +62,7 @@ says what each note covers.
 
 ## [Creatures' art](creatures.md)
 
+- Stiltwalkers
 - Sleeping legend
 - Asleep / nap
 - Genome
