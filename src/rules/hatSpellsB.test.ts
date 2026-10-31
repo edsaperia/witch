@@ -6,6 +6,7 @@ import { TUNING, type Tuning } from "./tuning";
 import { newGame, stepGame, type Controls, type Game } from "./game";
 import { cyclonePose } from "./hatSpells";
 import { inviteCreature } from "./leash";
+import { befriend } from "./creatureStates";
 import type { Creature } from "./creatures";
 
 // Keep the radius fixture: remote-hat effects are tested with her 300 m away while nearby wild/parked creatures remain active.
@@ -27,12 +28,12 @@ function putDown(g: Game): void {
   stepGame(g, C, 1 / 60);
   expect(g.witches[0].hat.down).not.toBeNull();
 }
-/** A wild baby (invitable, never attacking) put at (x, z) and kept resting there; a different one each call. */
-function WILD_STATE(g: Game, x: number, z: number): Creature {
+/** A resting wild baby by default; letter tests ask for an inviteable youth. A different one each call. */
+function WILD_STATE(g: Game, x: number, z: number, level: 0 | 1 = 0): Creature {
   const used = ((g as unknown as { _used?: Set<number> })._used ??= new Set<number>());
   const c = g.creatures.find(k => !k.gone && !k.leashed && !k.boss && !k.enraged && !k.circle && k.level < 3 && !used.has(k.id))!;
   used.add(c.id);
-  Object.assign(c, { level: 0, x, z, tx: x, tz: z, anchorX: x, anchorZ: z, homeX: x, homeZ: z, rest: 99, fight: undefined });
+  Object.assign(c, { level, x, z, tx: x, tz: z, anchorX: x, anchorZ: z, homeX: x, homeZ: z, rest: 99, fight: undefined });
   c.cell = g.map.cellSafe(x, z).cell as [number, number];
   g.byArea = null;
   return c;
@@ -43,7 +44,8 @@ const spot = (g: Game) => ({ x: g.map.dancefloor.x + 40, z: g.map.dancefloor.z +
 /** Hers: invited and parked by its sigil where it stands. */
 function mine(g: Game, c: Creature): Creature {
   const W = g.witches[0];
-  inviteCreature(W.leash, c, c.x, c.z, g.clock.time);
+  befriend(c, g.clock.time); // existing converted follower; no baby invitation
+  inviteCreature(W.leash, c, c.x, c.z, g.clock.time, "picked");
   W.leash.stack = W.leash.stack.filter(k => k !== c.id);
   W.leash.placed.push({ id: c.id, x: c.x, z: c.z, at: g.clock.time });
   return c;
@@ -79,7 +81,7 @@ describe("the Lullaby hat (Ed, 2026-10-12: 'Wild creatures that are asleep wake 
   it("put down, wild creatures near it sleep, even with her on the ground beside them, till a 💌 lands on one", () => {
     const g = game(wearingHat("lullaby")), W = g.witches[0], p = spot(g), L = TUNING.spells.lullaby!;
     at(g, p.x, p.z);
-    const a = WILD_STATE(g, p.x + 8, p.z), b = WILD_STATE(g, p.x - 8, p.z), far = WILD_STATE(g, p.x + L.range + 10, p.z);
+    const a = WILD_STATE(g, p.x + 8, p.z, 1), b = WILD_STATE(g, p.x - 8, p.z), far = WILD_STATE(g, p.x + L.range + 10, p.z);
     putDown(g);
     for (const c of [a, b]) { expect(c.asleep).toBe(true); expect(c.lulled).toBe(true); }
     expect(far.asleep).toBeFalsy();
