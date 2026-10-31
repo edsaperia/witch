@@ -2,7 +2,9 @@
 // rises by knockout.bpmStep a knockdown, eased in from the next beat, and the wave countdown runs that much faster.
 import { describe, expect, it } from "vitest";
 import { beatAt, bpmAt, knockdownTempo, newBeatClock, recordTempo, tempoRate } from "./beat";
-import { hitWitch, newGame, stepGame, type Controls, type Game } from "./game";
+import { hitWitch, newGame as fullGame, stepGame, type Controls, type Game } from "./game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Knockdown beat and countdown ratios need only the initial waves, independent of distant area diversity.");
 import { TUNING } from "./tuning";
 
 const still: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };

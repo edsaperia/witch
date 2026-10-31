@@ -11,6 +11,7 @@ import { newWitch, stepWitch, NO_INTENT, type WitchState } from "./witch";
 import { planRoute, stepTraveller } from "./travel";
 import { lakePlan, placeLakes, SHAPES } from "./islandGrowth";
 
+// Retain the 10–50-area phase matrix: inland lakes, connectivity, shoreline routes and chart loops depend on island extent.
 const isle = (phase: number): Tuning => ({ ...TUNING, map: { ...TUNING.map!, islandAreas: phase ? 10 * phase : 10, island: "", phase } });
 const maps = new Map<string, ForestMap>();
 const mapOf = (phase: number, seed: number) => { const k = `${phase}:${seed}`; if (!maps.has(k)) maps.set(k, generateMap(seed, isle(phase))); return maps.get(k)!; };

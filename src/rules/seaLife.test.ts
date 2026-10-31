@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { newGame } from "./game";
-import { TUNING } from "./tuning";
+import { TUNING as gameTuning } from "./tuning";
+import { largestWorldTuning } from "../test/worlds";
+// Largest shipped world: east/west sea-life placement must use a full-sized authored coastline.
+const TUNING = largestWorldTuning(gameTuning);
 import { beachOf } from "./mapShape";
 import { dolphinLeaps, krakenRising } from "./seaLife";
 import { facing } from "../test/coast";

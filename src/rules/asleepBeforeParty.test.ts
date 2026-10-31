@@ -5,6 +5,7 @@
 // spell cast, everything gets up as a night that never waited has it.
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
+// Keep this existing sleep fixture until the separately assigned largest-world cell-placement bug is fixed (docs/notes/testing.md).
 import { cellKey } from "./party";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { fillTrunk } from "./finds";

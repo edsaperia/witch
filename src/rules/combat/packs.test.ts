@@ -8,6 +8,7 @@ import { TUNING, withTuning } from "../tuning";
 import { PACKS, assignRoles, lullOf, packAttack, packKindOf, retreatSlot, strikingNow } from "./packs";
 import { FIGHT, profileOf } from "../movement";
 import { COMBAT } from "./data";
+import { smallWorldTuning } from "../../test/worlds";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const ON = withTuning({ combat: { ...TUNING.combat, packs: { on: true } } });
@@ -16,6 +17,7 @@ const ON_OLD = withTuning({ combat: { ...TUNING.combat, packs: { on: true } }, a
 
 /** A pack of the kind against her (or hers against wild wolves), the switch on, her health held; then `secs` of play, `each` step. */
 function arena(spec: string, secs: number, each?: (g: Game) => void, t = ON, seed = 5): Game {
+  // Retain seeded arena terrain for timed movement/retreat ratios and the species-wide combat integration matrix.
   const g = newGame(seed, t);
   g.clock.paused = false; g.party.paused = true;
   setupArena(g, spec);
@@ -231,7 +233,7 @@ describe("pack combat, step 2's specials (2026-10-23: knockback, pull, decoy)", 
 
   it("decoy: a 💌 the waving raccoon catches is wasted, its meter untouched (Ed, 2026-10-23: \"otherwise it's not a decoy\")", () => {
     // (one of the pack across the arena waving, she throwing straight at it: before it's on her and she's staggered)
-    const g = newGame(5, ON); g.clock.paused = false; g.party.paused = true;
+    const g = newGame(5, smallWorldTuning(ON, "Decoy interception uses a manually assigned nearby target and two seconds of input.")); g.clock.paused = false; g.party.paused = true;
     setupArena(g, "pack-raccoon");
     const W = g.witches[0], c = g.creatures.filter(k => k?.species === "raccoon" && !k.leashed && k.level === 2).sort((p, q) => Math.hypot(p.x - W.body.x, p.z - W.body.z) - Math.hypot(q.x - W.body.x, q.z - W.body.z))[0];
     let caught = 0, landed = 0;
@@ -330,7 +332,7 @@ describe("pack combat, Phase 1's pieces", () => {
   }, 60000);
 
   it("the bat's screech turns her movement, not her aim", () => {
-    const g = newGame(5, ON);
+    const g = newGame(5, smallWorldTuning(ON, "Confused input steering is local to the witch and does not depend on world extent."));
     g.clock.paused = false; g.party.paused = true;
     setupArena(g, "pack-bat");
     for (let i = 0; i < 20; i++) stepGame(g, idle, STEP);
@@ -350,6 +352,7 @@ describe("pack combat, Phase 1's pieces", () => {
 // speed, turning now and then: its lunges land, its bolts hit, and it hurts her about as often as the plain fight does.
 describe("a pack against her walking away (Ed's playtest, v3893)", () => {
   function chase(packs: boolean) {
+    // Retain seed 123's natural hare area and 40-second walking route for the paired hit-rate comparison.
     const g = newGame(123, withTuning({ combat: { ...TUNING.combat, packs: { on: packs } }, attacks: { reactionFloor: 0.45, species: false } })); // (the hares' lunges, as they were)
     g.clock.paused = false; g.party.paused = true;
     const h = g.creatures.filter(c => c.species === "hare" && c.level > 0 && !c.gone)[0];

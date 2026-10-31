@@ -9,6 +9,7 @@ import { behindLength, stretchLengths } from "./pulseRoute";
 import { bootPath, bootSeconds } from "./bootRing";
 import { tempoRate } from "./beat";
 
+// Keep seed 123's full route: the fixed 195 m boot path and three real stone-to-stone travel intervals are the regression coverage.
 const still = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const V = TUNING.leyLines.pulseSpeed;
 function game(): Game {

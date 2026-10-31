@@ -10,6 +10,7 @@ import { bootSeconds } from "./bootRing";
 import { stretchLengths } from "./pulseRoute";
 import { castPartySpell, cellKey, spawnMarkers, waveCountdown } from "./party";
 
+// Keep the seeded radius route: first/third stone arrival and far-half-of-map reveal timing depend on its complete boot-plus-route geometry.
 describe("the game clock", () => {
   it("counts mm:ss from 0, whole seconds down, minutes running past 99", () => {
     expect(clockText(0)).toBe("00:00");

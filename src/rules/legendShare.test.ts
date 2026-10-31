@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { generateMap, type ForestMap } from "./map";
 import { TUNING, withTuning } from "./tuning";
+// Keep the roster-free radius fixture: legends.share controls chooseLegendCells there; authored islands deal their own legends (map.ts).
 
 // Ed (2026-10-06): "Legends should only appear in about half of areas (we can test this ratio); every area makes them too common."
 /** The playable areas, home among them (the circular map's map.cells, #281; else the square's). */

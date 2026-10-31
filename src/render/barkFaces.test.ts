@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { generateMap } from "../rules/map";
 import { Forest } from "../rules/forest";
-import { TUNING } from "../rules/tuning";
+import { TUNING as gameTuning } from "../rules/tuning";
+import { largestWorldTuning } from "../test/worlds";
+// Largest shipped world: face allocation must stay bounded and deterministic across all area types.
+const TUNING = largestWorldTuning(gameTuning);
 import { BarkFaces, treeKey } from "./barkFaces";
 import { cellKey } from "../rules/party";
 

@@ -9,7 +9,10 @@ import { AT_SOUNDSYSTEM, GUEST_DEPTH, guestGap, guestSlot, guestSpot, partySpots
 import { joinParty, newGame } from "./game";
 import { bodyRadius } from "./spacing";
 import { rng } from "./random";
-import { TUNING } from "./tuning";
+import { TUNING as gameTuning } from "./tuning";
+import { largestWorldTuning } from "../test/worlds";
+// Largest shipped world: guest places span multiple area types and the crowd-spacing case needs at least sixty creatures.
+const TUNING = largestWorldTuning(gameTuning);
 
 const map = generateMap(123, TUNING), t = TUNING;
 const cells: [number, number][] = [];

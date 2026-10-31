@@ -2,7 +2,9 @@ import { describe, expect, it, beforeAll, afterAll } from "vitest";
 import { COMBAT } from "./combat";
 import { setupArena } from "./arena";
 import { counterOf, traitsOf } from "./combat";
-import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { newGame as fullGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Counter matchups use explicitly spawned arena groups in the home clearing, not the world's population.");
 import { TUNING } from "./tuning";
 
 /** Every species at strength 1 for these tests (Ed, 2026-10-08, gave the species strengths by class; these test other

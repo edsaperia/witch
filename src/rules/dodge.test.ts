@@ -9,6 +9,7 @@ import { newDash, rechargeDash, startDash } from "./dash";
 import { newWitch } from "./witch";
 import { speedFactor, wanderRange } from "./creatures";
 
+// Keep the radius map: the arena is two cells east and recruits up to twelve creatures more than 300 m away before testing bounded retreat.
 const D = TUNING.dodge!;
 const only = (on: string): Tuning => withTuning({ witchHealth: { ...TUNING.witchHealth, hits: 1e6 }, dodge: { a: { ...D.a, on: on.includes("a") }, b: { ...D.b, on: on.includes("b") }, c: { ...D.c, on: on.includes("c") } } });
 

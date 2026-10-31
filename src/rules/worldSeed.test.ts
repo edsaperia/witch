@@ -8,6 +8,7 @@ import { TUNING, type Tuning } from "./tuning";
 import { newGame } from "./game";
 
 const at = (island: string, world: number, areas = 10): Tuning => ({ ...TUNING, map: { ...TUNING.map!, island, world, islandAreas: areas } });
+// Keep these authored island/world pairs: campaign shape persistence across night seeds is the test subject.
 // (its areas' types are the night's too, dealt along its route (Ed, 2026-10-28, rules/deal.ts); the roster they're dealt from, its world's)
 const shape = (m: ReturnType<typeof generateMap>) => ({ cells: m.cells, roster: m.cells.map(([x, y]) => AREA_TYPES[m.typeOf(x, y)].id).sort(), r: m.bounds.land!.box, coast: [0, 1, 2, 3, 4, 5].map(a => m.coast(a)) });
 const insides = (m: ReturnType<typeof generateMap>) => JSON.stringify({ types: m.cells.map(([x, y]) => m.typeOf(x, y)), scenes: m.scenes, grounds: m.grounds, legends: m.legendKinds, paths: m.paths.lines?.length ?? 0 });

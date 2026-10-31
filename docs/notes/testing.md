@@ -1,5 +1,27 @@
 # Testing tools
 
+### Largest-world sleep-cell failure (A7 audit, 2026-10-30)
+
+PR #1496 exposed a failure using the largest shipped home world: game seed `123`, world `0`, shape seed `1063814361`, all 64 found kinds (64 roster areas plus home). Newt `#18` sleeps at a point whose `cellSafe` cell is `21,12`, while its assigned `c.cell` is `21,11`. The unchanged first assertion in `src/rules/asleepBeforeParty.test.ts` fails when that file uses `largestWorldTuning(TUNING)`; the other seven sleep cases passed. Root cause (initial placement versus the sleep transition) is not yet established.
+
+Reproduce without a browser or production changes: `node tools/ci/sleep-cell-repro.mjs`. Exit `1` reports every mismatched creature in before-party and lost-night states. The focused assertion command is `npx vitest run src/rules/asleepBeforeParty.test.ts --testNamePattern "every creature asleep in its own area" --maxWorkers=1` after substituting the largest-world fixture; the PR retains the original fixture by coordinator instruction `6528047220`. Raw focused failure and the fixture patch are retained in this builder's work folder.
+
+The diagnostic finds the same 14 mismatches in both states:
+
+| Species and IDs | Assigned cell | Actual cell |
+|---|---|---|
+| newt 18, 19 | 21,11 | 21,12 |
+| snowleopard 34, 35 | 19,12 | 20,11 |
+| fennec 86, 87 | 18,13 | 18,11 |
+| squirrel 164, 165 | 22,14 | 22,13 |
+| lion 185, 186 | 15,15 | 13,14 |
+| polarbear 454, 455 | 19,20 | 19,21 |
+| moth 485, 486 | 22,20 | 21,21 |
+
+After the A7 audit completes, the assigned follow-up is `codex/sleep-cell-fix` from then-current `claude/prototype`: post a root-cause PLAN before any code, make only this bug's permitted rules change, and add the largest-world regression with every assertion intact. Further largest-world rules failures found by this audit belong in this note rather than weakening tests.
+
+Fixture limit found during the audit: `legendShare.test.ts` must retain a roster-free radius map. `map.ts` applies `legends.share` through `chooseLegendCells` only in that mode; authored islands deliberately deal their own legends. A trial using the largest authored island therefore exercised a different policy (including 13 legends at share 1), not a newly identified rules defect. The original fixture and all its assertions remain intact.
+
 Frame benchmark startup (#1493): `tools/bench/frames.cjs` installs a synchronous `window.witch` assignment interceptor before game scripts run, setting the existing manual hook before the first live RAF on both pre-start-card and direct-play builds. Readiness/art preparation continues independently. After the common Enter gesture it waits for reveal-triggered art as well, and asserts a ready/art-idle zero-step boundary (world/her clocks and accumulator zero) before controlled frames. The boundary is saved in frames.json and compared without a declarable exception. No clocks/state are reset to hide prior progress, and pixel thresholds/scene exceptions are unchanged. Browser acceptance remains the coordinator's CI run; Node tests exercise both hook lifecycles and reject progressed/pending-art boundaries.
 
 Part of Witch's notes (CLAUDE.md is the index): the full smoke test, proof shots. Moved here from CLAUDE.md as it stood (housekeeping, Ed 2026-10-23: a note an area, so pull requests add to their own area's file, not one shared file); every rule kept. Add to this file, not CLAUDE.md, when you change this area.

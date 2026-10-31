@@ -86,6 +86,14 @@ The party's tempo on screen.
 npm run build && node tools/smoke/knockdown-bpm.cjs [out dir] [seed]
 ```
 
+## `large-world.cjs`
+
+Largest shipped world: art loading/drawing can depend on area diversity and world extent.
+
+```
+NODE_PATH=.pw/node_modules node tools/smoke/large-world.cjs
+```
+
 ## `legend-attack.cjs`
 
 An angry legend's long-range attack seen from the treetops: the built game at 1280×720, a lobbing legend made angry, the witch in the treetops LEGEND_DIST metres south and 40 m west of it, stepped frame by frame through its wind-up, throw and landing;…

@@ -8,6 +8,7 @@ import { cyclonePose } from "./hatSpells";
 import { inviteCreature } from "./leash";
 import type { Creature } from "./creatures";
 
+// Keep the radius fixture: remote-hat effects are tested with her 300 m away while nearby wild/parked creatures remain active.
 const C: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const wearingHat = (hat: string): Tuning => ({ ...TUNING, spells: { ...TUNING.spells, hat } });
 function game(t: Tuning): Game {

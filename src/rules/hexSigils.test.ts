@@ -3,12 +3,15 @@
 // runestones, soundsystems and home's speakers are skipped. (Parked animals rest north of their sigil by their size: runeOffset.test.ts.)
 import { describe, expect, it } from "vitest";
 import { hexCell, hexCentre, hexSpot, newLeash, stepLeash, type LeashState } from "./leash";
-import { TUNING } from "./tuning";
+import { TUNING as gameTuning } from "./tuning";
+import { largestWorldTuning } from "../test/worlds";
 import { newGame } from "./game";
 import { sigilBarred } from "./sigilButton";
 import { isHomeKey } from "./speakers";
 import type { Creature } from "./creatures";
 
+// Largest shipped world: check barred placement at every real runestone/soundsystem across the available area roster.
+const TUNING = largestWorldTuning(gameTuning);
 const H = TUNING.leash.hex!;
 /** A leash with `n` creatures in her stack (stand-ins: only their ids and partyLegend are read here). */
 function stacked(n: number): { s: LeashState; all: Creature[] } {

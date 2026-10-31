@@ -8,6 +8,7 @@ import { setupArena } from "./arena";
 import { isHomeKey, speakerKey } from "./speakers";
 import { powerReport } from "./power";
 
+// Keep the seeded radius arena: speaker retargeting runs with her 400 m away and depends on the real home ring approach geometry.
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const homeKeys = (g: Game) => [...g.combat.sounds.keys()].filter(isHomeKey);
 

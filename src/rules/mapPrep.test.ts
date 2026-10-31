@@ -11,6 +11,7 @@ import { newGame, stepGame, STEP, type Controls } from "./game";
 /** JSON of a value with Maps, Sets and typed arrays spelled out and functions left out (as the bench's, tools/bench/fingerprint.ts). */
 const plain = (v: unknown): string => JSON.stringify(v, (_k, x) => (x instanceof Map ? { map: [...x.entries()] } : x instanceof Set ? { set: [...x] } : ArrayBuffer.isView(x) ? { typed: Array.from(x as unknown as ArrayLike<number>) } : typeof x === "function" ? undefined : x));
 
+// Keep the authored phase/world/seed matrix and legacy radius cases: hydration must preserve full terrain/route data and replay, including the reported world-1268398697 sail home.
 const islandTuning = (island: string, world: number): Tuning => ({ ...TUNING, map: { ...TUNING.map!, island, world, islandAreas: island === "home" ? 10 : TUNING.map!.islandAreas } });
 /** The prep as the worker sends it: made after the map (its route worked out), then through a structured clone (postMessage, IndexedDB). */
 const prepFor = (seed: number, t: Tuning): MapPrep => { const m = generateMap(seed, t); routeOf(m); return structuredClone(prepOf(m)); };

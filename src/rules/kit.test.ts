@@ -2,7 +2,9 @@
 // invitations her 💌s don't fly; without a broom she falls off the Terrace (a thud, then back at the magic circle); E takes each.
 import { describe, expect, it } from "vitest";
 import { TUNING, withTuning } from "./tuning";
-import { hitWitch, newGame, stepGame, STEP, type Game } from "./game";
+import { hitWitch, newGame as fullGame, stepGame, STEP, type Game } from "./game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Kit pickup and Terrace falls use one house and nearby open ground, independent of distant areas.");
 import { deckOf } from "./treehouse";
 import { HOUSE_ROOMS, objectFront } from "./houseRooms";
 import { broomsLeft, hasBag, hasBroom, hasInvites, KIT_BROOMS, needsBag, newKit, takeBroom, takeInvites } from "./kit";

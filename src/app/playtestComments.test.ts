@@ -8,7 +8,8 @@ import { packLog } from "../platform/logCodec";
 import { notable } from "../platform/playtestJournal";
 
 function fixture() {
-  const t = structuredClone(TUNING); t.map!.islandAreas = 10;
+  // Four areas suffice for comment storage/continuation; full-roster snapshot coverage lives in nightSnapshot.test.ts.
+  const t = structuredClone(TUNING); t.map!.islandAreas = 4;
   const game = newGame(123, t); restoreSettingsBase(game.tuning, { voices: {}, shake: 1, legendFlash: 1 });
   game.clock.paused = false;
   for (let i = 0; i < 45; i++) stepGame(game, { moveX: 1, moveZ: 0, toggleMode: false, zoom: 0 }, STEP);

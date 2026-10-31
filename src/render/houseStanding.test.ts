@@ -33,6 +33,7 @@ describe("build-time house uprights", () => {
     expect(() => packStanding([{ p: [[0, 0, 0], [1, 0, 0], [2, 0, 1], [0, 0, 1]], rgb: [1, 0, 0], layer: 1 }])).toThrow("not a vertical quad");
   });
 
+  // Retain the two seeded world placements: compare transformed house geometry at its original map/deck coordinates.
   it.each([123, 165272])("preserves placed upright quads on island seed %s", seed => {
     const game = newGame(seed, TUNING), deck = deckOf(game.map, game.tuning)!;
     const original = standing(HOUSE_ROOMS), decoded = shipped;

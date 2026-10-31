@@ -4,12 +4,14 @@
 // it's let go where it stands and she's free; knocked out, it's let go too.
 import { describe, expect, it } from "vitest";
 import { TUNING, withTuning } from "./tuning";
-import { affectionOf, hitWitch, newGame, stepGame, type Game } from "./game";
+import { affectionOf, hitWitch, newGame as fullGame, stepGame, type Game } from "./game";
+import { smallWorld } from "../test/worlds";
 import { hasRune, stateOf } from "./creatureStates";
 import { targetable } from "./combat";
 import type { Creature } from "./creatures";
 import { runeOffset } from "./runeOffset";
 
+const newGame = smallWorld(fullGame, "Party-legend affection, local tether/drop and knockout release need one nearby legend, independent of world extent.");
 const C = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const E = TUNING.legends;
 

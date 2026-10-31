@@ -6,9 +6,11 @@ import { rng, rngState } from "./random";
 import { inviteCreature } from "./leash";
 import { knockOut } from "./knockout";
 import { spreadWave } from "./party";
+import { largestWorldTuning } from "../test/worlds";
 
 const idle: Controls = { moveX: 0, moveZ: 0, zoom: 0, toggleMode: false };
-const fresh = (island = "home") => { const t = structuredClone(TUNING); t.map!.island = island; t.map!.islandAreas = 10; return newGame(123, t); };
+// Largest shipped home world: snapshot graphs and continuation must include the full creature/area roster; named later islands retain their authored layouts.
+const fresh = (island = "home") => { const t = structuredClone(TUNING); t.map!.island = island; t.map!.islandAreas = 10; return newGame(123, island === "home" ? largestWorldTuning(t) : t); };
 const roundtrip = (g: Game) => restoreGame(JSON.parse(JSON.stringify(snapshotGame(g))));
 function stable(g: Game) { const paused = g.clock.paused; g.clock.paused = false; try { return snapshotGame(g); } finally { g.clock.paused = paused; } }
 
