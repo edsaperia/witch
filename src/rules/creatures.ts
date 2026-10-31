@@ -491,7 +491,7 @@ export function stepCreature(c: Creature, dt: number, map: ForestMap, time?: num
 
 /** A creature moved by combat (rules/combat.ts) or a knockout (rules/knockout.ts) this step,
  *  not by its roam or its leash. */
-export const heldByCombat = (c: Creature) => !!(c.gone || c.fleeUntil || c.wanderTo || c.fight?.target || c.retreat || (c.siege && !c.leashed) || c.hunting !== undefined); // (a hunter: moved by combat, wherever she is: rules/hunt.ts)
+export const heldByCombat = (c: Creature) => !!(c.gone || c.fleeUntil || c.wanderTo || c.fight?.target || c.retreat || (c.siege && !c.leashed) || c.hunting !== undefined || (c.level === LEGEND && c.legendState === "happy" && !c.leashed && !c.partyLegend)); // Friendly route legends, like hunters, are moved by combat wherever they are.
 
 /** Wild idlers' naps (Ed, 2026-10-06: "I think animals in wild areas which are idling can sleep. They awake when you are
  *  there in ground mode, but stay asleep if you're in treetop mode, or not in their area"; "They don't all sleep - but it's

@@ -10,6 +10,7 @@ import { hasRune, stateOf } from "./creatureStates";
 import { targetable } from "./combat";
 import type { Creature } from "./creatures";
 import { runeOffset } from "./runeOffset";
+import { inviteCreature, talkTarget } from "./leash";
 
 const newGame = smallWorld(fullGame, "Party-legend affection, local tether/drop and knockout release need one nearby legend, independent of world extent.");
 const C = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
@@ -41,6 +42,18 @@ function leashed(): { g: Game; L: Creature } {
 }
 
 describe("the party legend (Easter egg)", () => {
+  it("below the egg threshold stays a route legend: no direct invite, chat or rune; the final letter alone creates the party legend", () => {
+    const { g, L } = game(); L.legendState = "happy";
+    fill(g, L, E.partyHits - 1);
+    expect(L.partyLegend).toBeFalsy(); expect(L.legendState).toBe("happy"); expect(L.leashed).toBeFalsy();
+    expect(talkTarget([L], L.x, L.z, g.tuning)).toBeNull(); expect(hasRune(L)).toBe(false);
+    inviteCreature(g.leash, L, L.x, L.z, g.clock.time);
+    inviteCreature(g.leash, L, L.x, L.z, g.clock.time, "picked");
+    expect(g.leash.stack).not.toContain(L.id); expect(L.leashed).toBeFalsy(); expect(L.legendState).toBe("happy");
+    fill(g, L, 1);
+    expect(L.partyLegend).toBe(true); expect(hasRune(L, g.clock.time)).toBe(true);
+  });
+
   it("only a happy legend takes 💌s: asleep, restless and angry ones block them, and with the egg off a happy one does too", () => {
     const { g, L } = game(), A = affectionOf(g);
     for (const s of ["asleep", "restless", "angry"] as const) { L.legendState = s; expect(A.invitable(L)).toBe(false); expect(A.blocksLetters(L)).toBe(true); }

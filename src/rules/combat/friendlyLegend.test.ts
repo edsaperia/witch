@@ -19,6 +19,37 @@ function scene(enemies: Creature[], witchX = 1000) {
 }
 
 describe("friendly legends: defend, engage, walk (Ed, 31 Oct)", () => {
+  it("keeps absent-callback combat parity: an empty decision stands still and schedules the same recheck", () => {
+    const { legend, w, step } = scene([]);
+    legend.x = 15; legend.z = 10;
+    step();
+    expect([legend.x, legend.z, legend.moving, legend.vx, legend.vz]).toEqual([15, 10, false, 0, 0]);
+    expect(legend.fight).toMatchObject({ target: null, readyAt: w.time + 0.5, windupUntil: 0 });
+  });
+
+  it("walks only when no defence or engagement is needed, even during its attack cooldown", () => {
+    const { legend, w, step } = scene([]), line = [[0, 0], [100, 0]] as const;
+    w.friendlyRoute = () => ({ line, tip: 50 });
+    w.dt = 1; legend.fight!.readyAt = 1000;
+    step();
+    expect(legend.x).toBeCloseTo(w.t.combat.legendRun);
+    const at = legend.x;
+    w.creatures.push(creature(1, at + 10, { enraged: true }));
+    step();
+    expect(legend.x).toBe(at); expect(legend.moving).toBe(false);
+    w.creatures[1].gone = true;
+    step();
+    expect(legend.x).toBeGreaterThan(at);
+  });
+
+  it("a friendly charger finishes braking then resumes the route instead of walking to its lair", () => {
+    const { legend, w, step } = scene([]), line = [[0, 0], [100, 0]] as const;
+    Object.assign(legend, { species: "boar", x: 50, lairX: -100, lairZ: 0, run: { phase: "home", at: 0, angle: 0, speed: 0, turn: 1, target: null, tx: 0, tz: 0, ran: 0, hit: [], fromX: 0, fromZ: 0 } });
+    w.friendlyRoute = () => ({ line, tip: 80 }); w.dt = 1;
+    step(); expect(legend.run).toBeUndefined(); expect(legend.x).toBe(50);
+    step(); expect(legend.x).toBeGreaterThan(50);
+  });
+
   it("joins the nearest route point, follows a bend towards the drawing tip, waits there and follows its growth", () => {
     const c = creature(0, 5, { z: 5, speed: 10 });
     const route = [[0, 0], [20, 0], [20, 20]] as const;

@@ -9,7 +9,7 @@
 // No drawing here.
 import { attackerNear, BABIES_DEFAULT, babiesOf, isBaby, scatterSpot, stepBaby, trailPoint, updateTrail } from "./babies";
 import { runeOffset } from "./runeOffset";
-import { heal, speedFactor, type Creature } from "./creatures";
+import { LEGEND, heal, speedFactor, type Creature } from "./creatures";
 import type { Tuning } from "./tuning";
 import { befriend, inConga, invitableNow, stateOf } from "./creatureStates";
 import { facingAway } from "./witch";
@@ -216,6 +216,7 @@ function nearest(creatures: Creature[], x: number, z: number, within: number, le
 
 /** Invite it: leashed to her, for good (#87), its sigil on the bottom of the stack (the 💌's second step: rules/invites.ts). */
 export function inviteCreature(s: LeashState, c: Creature, x: number, z: number, time: number, kind: "invited" | "picked" = "invited"): void {
+  if ((c.boss || c.level === LEGEND) && !c.partyLegend) return; // Only the completed partyEgg may make a legend available for pickup.
   if (c.level === 0 && (kind !== "picked" || stateOf(c) !== "happy")) return; // Soundsystem loose-sigil pickup only; never a baby invitation.
   if (inConga(c)) return; // (the won night's line follows her, never on her leash: rules/creatureStates.ts inConga)
   c.leashed = true; c.state = "leashed"; c.affection = undefined; c.dazed = false; c.dazedUntil = undefined;

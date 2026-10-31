@@ -133,7 +133,14 @@ export function stepLegendAttack(w: CombatWorld, s: CombatState, c: Creature, da
     for (const [k, h] of s.sounds) { if (h.hp <= 0) continue; const d = Math.hypot(h.x - c.x, h.z - c.z); if (d <= bd) { bd = d; key = k; at = h; } }
     if (key) { found.unshift({ d: bd, x: at.x, z: at.z, target: { kind: "sound", key } }); bombard = true; }
   }
-  if (!found.length) { f.target = null; f.readyAt = time + A.recheck; return; } // (nothing in reach: look again in a moment, not every step)
+  if (!found.length) {
+    f.target = null; f.readyAt = time + A.recheck;
+    if (!angry && w.friendlyRoute) {
+      const route = w.friendlyRoute();
+      walkFriendlyRoute(c, route.line, route.tip, w.dt, w.t.combat.legendRun);
+    }
+    return;
+  }
   if (time < f.readyAt) return;
   if (charger && !bombard) {
     // A charging legend: one long charge at the nearest, its head lowered windup seconds first.

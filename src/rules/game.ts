@@ -38,6 +38,7 @@ import { moonState } from "./moon";
 import { floorEvent, floorLevel, islandKinds, islandSigilOf, neon, newFloor, stepFloor, switchOn, tileOf, type FloorInputs, type FloorState } from "./dancefloor";
 import { SIGIL_NEON } from "../../art/sigils.js";
 import { COMBAT, marchOn, marchSpeed, nearestHomeSpeaker, newCombat, startSiege, stepCombat, type CombatState } from "./combat";
+import { friendlyLegendRoute } from "./combat/legend";
 import { coarseTurn, fullRadius, inFull, newLodCounts, type LodCounts } from "./simLod";
 import { dropHat, newHat, type HatState } from "./hat";
 import { gatherFloorSigils, setFloorSigils } from "./sigilAvoid";
@@ -895,6 +896,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
   const stepped = coarse.size ? active.filter(c => !coarse.has(c)) : active;
   const views = g.witches.map(w => leashView(w, g.creatures, g.map, t)); // (each witch's: in the treehouse, her followers guard home)
   stepCombat(S, {
+    friendlyRoute: () => friendlyLegendRoute(g),
     creatures: g.creatures, active: stepped, time, dt, t, busy,
     witches: g.witches.map((w, i) => {
       const onGround = w.body.mode === "ground" && !w.body.seated && !w.body.perch; // (up on the treehouse deck: out of every fight)
