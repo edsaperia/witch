@@ -131,3 +131,31 @@ private getter/setter bridge; the bridge's type uses indexed member types and no
 No typecheck/full-unit/bench or browser run yet. No local slot or production fence.
 No completed behavioural proof or measured full fence-cost claim.
 No user-visible text changed.
+
+Focused regression file: `npx vitest run src/app/pageComposition.test.ts --maxWorkers=1`
+passes four cases (13.95 s including imports, 23 ms of tests): retained callback
+reads the replacement night, manual frames only schedule, draw errors preserve
+timing accounting, and an epoch change cancels a stale sliced home build. First
+restricted run failed before test collection with Windows temporary-file rename
+EPERM; rerunning with normal file access passed. Node's expected unavailable-save
+storage warning was printed; it was not hidden or treated as a browser result.
+
+## Allocated proof checklist (not executed)
+
+- Obtain the existing requested slot from #1476. Check its actual FREE evidence,
+  current five-minute input idle and no game tab; stop safely if Ed returns.
+- Pin source and tested head SHAs in the report before any build. The original
+  baseline is the manifest's sourceCommit, not a remembered version label.
+- Run `npm run typecheck` and `npm test` serially, retaining complete output,
+  exit codes and elapsed times. The focused regression run is not either gate.
+- Build baseline and head separately, with their real `WITCH_SHA`; verify each
+  served `version.json` against that SHA before its `npm run bench:quick`.
+  Do not reuse an unrelated existing dist or server. Compare complete outputs
+  with `node tools/bench/compare.cjs <before> <after>` and no --expect/--override.
+- The stock frames driver contains waits longer than the laptop policy permits.
+  Any local invocation must have an outer process-tree bound of <=270 seconds
+  for each browser capture; timeout means incomplete proof, never a pass. The
+  comparison tool also launches headless Chromium and needs the same bound.
+- Post SLOT DONE and exact results. Only after proof passes does the coordinator
+  announce the fence and the source/ownership check run again on latest prototype.
+  Release CI must still certify identical smoke/art; no local smoke/art run.
