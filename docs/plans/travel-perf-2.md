@@ -1,5 +1,7 @@
 # Travel performance 2 (brief)
 
+STATUS 2026-10-31: PR #1498 shipped milestones 1–2, included in v6478: ground feature families/coast demand and worker path/height preparation. Current evidence and its limits are in [performance notes](../notes/performance.md). Milestones 3–4 (background precompile and chart pre-draw) remain deferred until separately assigned; this brief does not authorize starting them. House first-show work was assigned separately to #1507.
+
 From Ed's efficiency decisions (2026-10-30 14:40 UTC). Work on this branch, `codex/travel-perf-2`; report on its draft PR. Background: #1464 (sleep-until-alarm landing, per-kind lake shaders), shipped as v5936.
 
 In this order, one milestone at a time, each with a PLAN if it's over about 30 lines:

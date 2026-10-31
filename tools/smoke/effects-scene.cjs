@@ -11,6 +11,9 @@ function effectsScene(mode) {
   const pixels = ctx.getImageData(0, 0, 64, 36).data, colours = new Set();
   // Same six-bit colour measure as quick.cjs: dark forest retains detail; a black frame has one colour.
   for (let i = 0; i < pixels.length; i += 4) colours.add((pixels[i] >> 2) * 4096 + (pixels[i + 1] >> 2) * 64 + (pixels[i + 2] >> 2));
-  return colours.size > 40 && { mode, colours: colours.size, trees: s.trees, batches: s.batches, drawCalls: s.drawCalls };
+  if (colours.size <= 40) return false;
+  // Latch in this page task, before another RAF can replace the frame we just proved.
+  w.manual = true;
+  return { mode, colours: colours.size, trees: s.trees, batches: s.batches, drawCalls: s.drawCalls };
 }
 module.exports = { effectsScene };

@@ -21,4 +21,5 @@ it("rejects an unfinished forest and the wrong flight mode even when pixels have
 });
 it("reports actual drawn detail only when the complete scene and requested mode agree", () => {
   scene(); expect(effectsScene("ground")).toEqual({ mode: "ground", colours: 50, trees: 100, batches: 5, drawCalls: 50 });
+  expect((globalThis as any).window.witch.manual).toBe(true);
 });
