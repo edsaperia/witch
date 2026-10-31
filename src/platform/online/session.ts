@@ -3,6 +3,7 @@ import { guestInput, wireControls } from "./guestInput";
 import { prepareJoin } from "./joinPreparation";
 import { replayGuest, replayHostStep, replayStart, type ReplayFrame, type ReplayStart } from "./replay";
 import { applyStationChoice, stationChoice, type StationChoice } from "./stationChoice";
+import { beatAnchor } from "./beatAnchor";
 
 export interface SessionConnection {
   sendInput(payload: unknown): boolean;
@@ -42,11 +43,13 @@ export function onlineSession(options: SessionOptions) {
   let accept: (() => void) | null = null, reject: ((error: Error) => void) | null = null;
   let stationSequence = 0, lastStation = -1;
   const requests: { player: 0 | 1; choice: StationChoice }[] = [];
+  let beatSegments: Game["beat"]["segs"] | null = null;
   const stop = () => {
     const previous = role, previousGame = game, attached = present;
     epoch++; role = null; connection = null; game = null; present = prepared = ready = preparing = changed = false; replica = null;
     buffer.clear(); removeAbort(); removeAbort = () => {}; controller?.abort(); controller = null;
     requests.length = 0; stationSequence = 0; lastStation = -1;
+    beatSegments = null;
     reject?.(new Error("The online night ended.")); accept = reject = null;
     if (previous === "host" && attached && previousGame) options.detach(previousGame);
     if (previous) options.ended(previous);
@@ -54,6 +57,7 @@ export function onlineSession(options: SessionOptions) {
   const fail = (value: unknown) => { const error = value instanceof Error ? value : new Error(String(value)); stop(); options.failed(error); };
   const sendStart = () => {
     if (!connection || !game || !connection.sendState({ kind: "start", start: replayStart(game, options.build, tick) })) throw new Error("The night couldn't be sent to your friend.");
+    beatSegments = game.beat.segs;
   };
   const api = {
     get role() { return role; }, get game() { return game; }, get ready() { return ready; }, get tick() { return replica?.tick ?? tick; },
@@ -95,7 +99,7 @@ export function onlineSession(options: SessionOptions) {
           }
           if (message.type === "guest-left" && message.player === 1) { stop(); return true; }
         } else if (message.type === "state" && message.player === 0) {
-          const payload = message.payload as { kind?: string; start?: ReplayStart; frame?: ReplayFrame; tick?: number; choices?: { player: unknown; choice: unknown }[] } | null;
+          const payload = message.payload as { kind?: string; start?: ReplayStart; frame?: ReplayFrame; tick?: number; choices?: { player: unknown; choice: unknown }[]; beat?: unknown } | null;
           if (payload?.kind === "start" && payload.start) {
             if (!replica && !preparing) {
               preparing = true; const current = epoch, signal = controller.signal;
@@ -139,6 +143,11 @@ export function onlineSession(options: SessionOptions) {
             }
             return true;
           }
+          if (payload?.kind === "beat") {
+            const anchor = beatAnchor(payload.beat);
+            if (!ready || !replica || payload.tick !== replica.tick || !anchor) throw new Error("Invalid online beat anchor");
+            replica.game.beat = anchor; return true;
+          }
           throw new Error("Invalid online night message");
         }
         return false;
@@ -156,7 +165,11 @@ export function onlineSession(options: SessionOptions) {
         if (changed && ready) {
           if (!connection.sendState({ kind: "checkpoint", start: replayStart(game, options.build, tick) })) throw new Error("The station change couldn't be sent to your friend.");
           changed = false;
+          beatSegments = game.beat.segs;
         }
+        // shiftBeat always replaces segs. Send that small host-owned anchor before the next frame;
+        // ordinary deterministic tempo changes inside stepGame are already replayed on both ends.
+        if (ready && game.beat.segs !== beatSegments && !connection.sendState({ kind: "beat", tick, beat: structuredClone(game.beat) })) throw new Error("The host beat couldn't be sent to your friend.");
         const approved: { player: 0 | 1; choice: StationChoice }[] = [];
         for (const request of requests.splice(0)) if (options.authorizeStation?.(game, request.player, request.choice) === true && applyStationChoice(game, request.player, request.choice)) approved.push(request);
         if (approved.length) {
@@ -164,6 +177,7 @@ export function onlineSession(options: SessionOptions) {
           for (const request of approved) options.stationApplied?.(request.player, request.choice);
         }
         const frame = replayHostStep(game, [controls, ready ? buffer.sample(now()) : wireControls({})!], dt, ++tick, options.advanceHost);
+        beatSegments = game.beat.segs;
         if (ready && !connection.sendState({ kind: "frame", frame })) throw new Error("The host telephone disconnected.");
         return true;
       } catch (error) { fail(error); return true; }

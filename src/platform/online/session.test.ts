@@ -5,6 +5,8 @@ import { snapshotGame } from "../../rules/nightSnapshot";
 import { attachGuest, detachGuest } from "./membership";
 import { onlineSession, type SessionConnection, type SessionOptions } from "./session";
 import { BAGS } from "../../rules/bags";
+import { beatAt, shiftBeat } from "../../rules/beat";
+import { localView } from "./localView";
 
 const cleanups: (() => void)[] = [];
 afterEach(() => { for (const stop of cleanups.splice(0)) stop(); });
@@ -127,5 +129,17 @@ it("keeps a visitor's station request inert until host approval and applies it t
   expect(f.hostOptions.authorizeStation).toHaveBeenCalledTimes(1);
   expect(f.hostOptions.stationApplied).toHaveBeenCalledTimes(1); expect(f.guestOptions.stationApplied).toHaveBeenCalledTimes(1);
   expect(f.hostGame.witches[1].spells.bag).toBe(choice.id); expect(f.hostGame.witches[0].spells.bag).toBe(hostBag);
+  expect(snapshotGame(f.guest.game!)).toEqual(snapshotGame(f.hostGame));
+});
+
+it("carries the host audio-stall beat anchor into the guest view before advancing the next frame", async () => {
+  const f = fixture(), { joined } = await f.start(); await f.sync(); await joined;
+  const view = localView(f.guest.game!, 1), before = f.hostMessages.length;
+  shiftBeat(f.hostGame.beat, f.hostGame.clock.time, 1.5); f.host.step(input(), .02);
+  const updates = f.hostMessages.slice(before);
+  expect(updates.map(m => (m.payload as { kind: string }).kind)).toEqual(["beat", "frame"]);
+  for (const message of updates) f.guest.message(message);
+  expect(view.update(0).beat).toEqual(f.hostGame.beat);
+  expect(beatAt(view.game.beat, f.hostGame.clock.time)).toBe(beatAt(f.hostGame.beat, f.hostGame.clock.time));
   expect(snapshotGame(f.guest.game!)).toEqual(snapshotGame(f.hostGame));
 });

@@ -188,7 +188,7 @@ export class Sound {
   parts: Record<string, number> = {};
 
   /** A frame: the music, one track mixed by how near the witch is to a playing soundsystem; the cues; the bedroom's room. */
-  update(game: Game, cue: MusicCue, roomOpen: boolean): void {
+  update(game: Game, cue: MusicCue, roomOpen: boolean, options?: { shareBeat?: boolean }): void {
     this.potionFilter?.update(game);
     const t0 = performance.now();
     this.lastMix = musicMix(game, game.witch);
@@ -210,7 +210,7 @@ export class Sound {
     const labCue = this.lab ? this.lab.cued(cue) : cue, pv = this.lab?.previewTime(performance.now() / 1000) ?? null;
     const mix = pv ? { ...this.lastMix, volume: 1, cutoff: 16000, distort: 0 } : this.lastMix;
     // (the audio clock the master: a stall's lost time moves the game's beat on to the music's, docs/notes/music.md "Music ahead")
-    const lost = !pv && !game.clock.paused ? this.music?.keepBeat(game.clock.time, game.beat) ?? 0 : 0;
+    const lost = !options?.shareBeat && !pv && !game.clock.paused ? this.music?.keepBeat(game.clock.time, game.beat) ?? 0 : 0;
     if (lost) { this.beatShifts++; this.beatShifted += lost; }
     this.music?.update(mix, labCue, pv ? pv.time : game.clock.time, pv ? pv.clock : game.beat, pv ? true : !game.clock.paused, this.tuning.music, pv ? 1 : game.timeScale ?? 1, pv ? 0 : partyOverEase(game, OVER_DEBUG), pv || !game.witch.perch ? 0 : slowAmount(game.timeScale ?? 1, slowest(this.tuning))); // (the world slowed in a legend's circle or the treehouse: the music with it, and muffled there)
     if (this.lab && this.music?.engine && this.audio) this.lab.frame(this.music.engine, this.audio);
