@@ -50,9 +50,9 @@ const fail = text => { throw new Error(text); };
     if(Math.abs(result.trip.until-result.trip.at-600)>.001)fail('Potion duration is not 600 game seconds');
     await page.waitForFunction(()=>!!window.witch.view.assets.partyWitchArt(null),null,{timeout:120000});
     await page.evaluate(()=>window.witch.frame({moveX:0,moveZ:0,toggleMode:false,zoom:0},0,true));
-    if(!await page.evaluate(()=>window.witch.view.partyWitchView.herIdle && window.witch.game.camera.gaze<.01))fail('Inland recovery must show her lying pose without the beach camera');
-    console.log('Wake view',await page.evaluate(()=>{const w=window.witch,v=w.view,g=w.game;return {body:{x:g.witch.x,z:g.witch.z,perch:g.witch.perch},herIdle:v.partyWitchView.herIdle,camera:g.camera,base:v.witchBase,treehouse:g.map.treehouse};}));
+    console.log('Wake view',await page.evaluate(()=>{const w=window.witch,v=w.view,g=w.game;return {body:{x:g.witch.x,z:g.witch.z,perch:g.witch.perch,stargazing:g.witch.stargazing},herIdle:v.partyWitchView.herIdle,beach:v.beachView.gazing,camera:g.camera,base:v.witchBase,treehouse:g.map.treehouse};}));
     await page.screenshot({path:path.join(out,'waking-on-grass.png')});
+    if(!await page.evaluate(()=>window.witch.view.partyWitchView.herIdle && (window.witch.game.camera.gaze??0)<.01))fail('Inland recovery must show her lying pose without the beach camera');
     if(errors.length)fail(errors.join('\n'));
     console.log('PASS pickup, unloading, basket throws, smoke, wake and 600-second trip; screenshots in '+out);
   } finally {await browser.close();server.close();}

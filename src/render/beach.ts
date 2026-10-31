@@ -4,7 +4,7 @@
 // tuning's beach.shown metres of the sand, and it is all let go again when she leaves: in an ordinary
 // run it costs one distance check a frame.
 import * as THREE from "three";
-import type { Game } from "../rules/game";
+import { coastOf, type Game } from "../rules/game";
 import { beachOf, type Beach } from "../rules/mapShape";
 import type { AssetLibrary } from "./assets";
 import type { Ground } from "./ground";
@@ -107,7 +107,10 @@ export class BeachView {
     // The spot she's nearest (they're kilometres apart round the coast, so only ever one in view).
     let spot = null as NonNullable<Game["beach"]>[number] | null, sd = Infinity;
     for (const s of g.beach ?? []) { const d = (s.x - w.x) ** 2 + (s.z - w.z) ** 2; if (d < sd) { sd = d; spot = s; } }
-    const I = spot?.players[0], her = I?.activity ? I : w.stargazing ? { activity: "rest" as const, pose: "stargaze", facing: w.facing } : null;
+    // The beach can be drawn from far inland. A potion's lying pose there belongs to the ordinary world view,
+    // without the beach's extra sky bend; keep the actual shoreline experience unchanged.
+    const coastalGaze = coastOf(g)?.gazing;
+    const I = spot?.players[0], her = I?.activity ? I : w.stargazing && coastalGaze ? { activity: "rest" as const, pose: "stargaze", facing: w.facing } : null;
     this.gazing = her?.pose === "stargaze" && w.mode === "ground";
     const mate = I?.pose === "stargaze" && I.partner !== null ? spot?.list.find(q => q.id === I.partner && q.partner !== null && q.pose === "stargaze") : undefined;
     this.heartsFor(g, time, camera, width, height, mate ? [{ x: w.x, z: w.z }, { x: mate.x, z: mate.z }] : null);
