@@ -10,6 +10,7 @@ import { TUNING } from "../tuning";
 import { FIGHT } from "../movement";
 import { PACKS } from "./packs";
 
+// Keep seed 5's arena landscape: terrain-dependent hides/retreats during the moving 30-second pack fight are the regression under test.
 // The kinds that hide in a lull (trees, burrow, water, branches), scatter, or leap; the ibex Ed saw; and a plain lunger.
 const KINDS = ["ibex", "squirrel", "roe", "cat", "mole", "otter", "owl", "toad", "wolf"];
 

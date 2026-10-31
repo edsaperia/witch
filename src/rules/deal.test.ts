@@ -9,6 +9,7 @@ import { islandOf, OTHERS_MAX, ownAreas, playableIsland, REAL_KINDS } from "./ro
 import { TUNING } from "./tuning";
 type Tuning = typeof TUNING;
 
+// Keep every playable island's authored size/roster: counts, route adjacency, stable shapes and path clearance are the integration coverage.
 const onIsland = (island: string): Tuning => ({ ...TUNING, map: { ...TUNING.map!, island, found: [], ...(island === "home" ? { islandAreas: 10 } : {}) } });
 const kindsAlong = (map: ForestMap) => routeOf(map).order.map(k => { const [x, y] = k.split(",").map(Number); return AREA_TYPES[map.typeOf(x, y)].creature; });
 const shapes = (map: ForestMap) => ({ cells: map.cells, legendAreas: [...map.legendAreas.keys()].sort(), lakes: map.cells.filter(([x, y]) => map.isLake(x, y)), box: map.bounds.land?.box });

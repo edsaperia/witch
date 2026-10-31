@@ -5,10 +5,12 @@
 import { describe, expect, it } from "vitest";
 import { newInvites, stepInvites, type Affection } from "./invites";
 import { TUNING, withTuning } from "./tuning";
-import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { newGame as fullGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { smallWorld } from "../test/worlds";
 import type { Creature } from "./creatures";
 import { stun } from "./orbit";
 
+const newGame = smallWorld(fullGame, "Chain letters use three relocated local specimens and explicit hop distances; no distant route or population coverage is asserted.");
 const her = { x: 0, z: 0, facing: 1 };
 const critter = (id: number, x: number, z: number) => ({ id, species: "wolf", level: 1, x, z, leashed: false, gone: false }) as Creature;
 function counting(no: number[] = []): Affection & { hits: number[]; asked: Set<number> } {

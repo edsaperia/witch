@@ -10,12 +10,14 @@ import { hexCell, hexCentre } from "./leash";
 import { wearing } from "./hat";
 import { deckOf } from "./treehouse";
 import { HOUSE_ROOMS, objectFront } from "./houseRooms";
+import { smallWorldTuning } from "../test/worlds";
 
 const C = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const H = TUNING.leash.hex!;
 
-function game(t: Tuning = TUNING): Game {
-  const g = newGame(123, t);
+function game(t: Tuning = TUNING, station = false): Game {
+  // Run fixtures retain their 200 m displaced recruits and multi-hex terrain; station input stays inside home.
+  const g = newGame(123, station ? smallWorldTuning(t, "Holding Use at home stations depends on input handling, not the surrounding world.") : t);
   g.clock.paused = false;
   g.party.spellAt = undefined;
   const d = g.map.dancefloor;
@@ -37,7 +39,7 @@ const kinds = (g: Game) => g.leash.events.map(e => e.kind);
 
 describe("placing in a run", () => {
   it("holding Use at every morning dressing station and the booth never drops her hat", () => {
-    const g = game(), W = g.witches[0], deck = deckOf(g.map, g.tuning)!;
+    const g = game(TUNING, true), W = g.witches[0], deck = deckOf(g.map, g.tuning)!;
     const stations = ["dressingTable", "wardrobe", "shoeRack", "bags", "cloakPegs", "lathe"];
     const targets = stations.map(id => objectFront(HOUSE_ROOMS.objects.find(o => o.id === id)!, deck, .6));
     targets.push(deck.seat);

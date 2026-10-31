@@ -4,7 +4,10 @@ import { describe, expect, it } from "vitest";
 import { Forest } from "./forest";
 import { generateMap, type ForestMap } from "./map";
 import { drawnHills, layoutBias, lowlandDensity, terrainAt } from "./terrain";
-import { TUNING, withTuning } from "./tuning";
+import { TUNING as gameTuning, withTuning } from "./tuning";
+import { largestWorldTuning } from "../test/worlds";
+// Largest shipped world: terrain bias and tree-density samples must span the full area roster and its legend clearings.
+const TUNING = largestWorldTuning(gameTuning);
 
 const H = drawnHills(TUNING), off = withTuning({ ground: { ...TUNING.ground, layout: { ...TUNING.ground.layout!, on: false } } });
 const ring = (m: ForestMap, x: number, z: number, r: number) => { let s = 0; for (let a = 0; a < 16; a++) s += terrainAt(m, x + Math.cos(a * Math.PI / 8) * r, z + Math.sin(a * Math.PI / 8) * r, H); return s / 16; };
@@ -20,7 +23,7 @@ describe("the lie of the land (ground.layout)", () => {
   it("is seeded, and with ground.layout off the land is the hills alone and trees grow as before", () => {
     const a = generateMap(7, TUNING), b = generateMap(7, TUNING), s = a.soundsystemSpot(...a.cells[3]);
     expect(terrainAt(a, s.x, s.z, H)).toBe(terrainAt(b, s.x, s.z, H));
-    const m = generateMap(7, off);
+    const m = generateMap(7, largestWorldTuning(off));
     expect(layoutBias(m, s.x, s.z)).toBe(0);
     expect(lowlandDensity(m, s.x, s.z)).toBe(1);
   });

@@ -4,7 +4,10 @@ import { describe, expect, it } from "vitest";
 import { generateMap } from "../rules/map";
 import { beachOf } from "../rules/mapShape";
 import { newBeachWitches } from "../rules/beach";
-import { TUNING } from "../rules/tuning";
+import { TUNING as gameTuning } from "../rules/tuning";
+import { largestWorldTuning } from "../test/worlds";
+// Largest shipped world: campfires must remain on sand and clear of witches around its full coastline.
+const TUNING = largestWorldTuning(gameTuning);
 import type { Game } from "../rules/game";
 import { beachFires } from "./beach";
 

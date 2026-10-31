@@ -50,6 +50,7 @@ describe("the witch knocked back and staggered (Ed, 2026-10-05)", () => {
   });
 
   it("carries her straight through a tree, and leaves her clear of it (Ed: \"don't make it stop at scenery\")", () => {
+    // Keep the seeded spatial fixture: this regression knocks her through its actual tree 120 m east and south of home.
     const g = newGame(77, TUNING), d = g.map.dancefloor, tree = g.forest.treesNear(d.x + 120, d.z + 120, 60)[0];
     expect(tree).toBeDefined();
     g.clock.paused = false;

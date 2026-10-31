@@ -7,6 +7,7 @@ import { newGame, stepGame, STEP, type Controls, type Game } from "../game";
 import { TUNING, withTuning } from "../tuning";
 import { serialiseAttack, type AttackSpec } from "./index";
 
+// Keep the seeded real-fight arena: cat flanking/leap timing and old-versus-grammar combat comparisons cover its existing terrain setup.
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 
 function arena(spec: string, attack: string | null, secs: number, t = TUNING): { g: Game; notes: string[] } {

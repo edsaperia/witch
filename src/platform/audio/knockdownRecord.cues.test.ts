@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { hitWitch, newGame } from "../../rules/game";
+import { hitWitch, newGame as fullGame } from "../../rules/game";
+import { smallWorld } from "../../test/worlds";
+const newGame = smallWorld(fullGame, "Knockdown audio order depends on one witch and her timers, not world extent.");
 import { TUNING } from "../../rules/tuning";
 import { musicCue, silentAt, barAt } from "../../rules/musicPlan";
 import type { Sfx } from "./sfx";

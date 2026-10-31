@@ -9,6 +9,7 @@ const OLD_ATTACKS = withTuning({ attacks: { reactionFloor: 0.45, species: false 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 /** A quiet game, the witch on the ground away from everything, too tough to knock out (to watch them move). */
 function quiet(t = TUNING): Game {
+  // Retain seed 77's terrain and distant recruits (>150 m) for the simulated multi-creature movement comparisons.
   const g = newGame(77, t);
   g.clock.paused = false;
   const d = g.map.dancefloor;

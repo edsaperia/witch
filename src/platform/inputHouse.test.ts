@@ -9,7 +9,9 @@ import { Input } from "./input";
 import { bindings } from "./bindings";
 const RISE_KEY = bindings.keys("game.rise")[0], RISE_PAD = bindings.padButtons("game.rise")[0];
 import { TUNING } from "../rules/tuning";
-import { newGame, stepGame, STEP, type Controls, type Game } from "../rules/game";
+import { newGame as fullGame, stepGame, STEP, type Controls, type Game } from "../rules/game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "House rise controls exercise local walls, rooms and kit state, independent of distant area count.");
 import { deckOf, onTerrace } from "../rules/treehouse";
 import { HOUSE_ROOMS, fromPlan, objectFront } from "../rules/houseRooms";
 
