@@ -1,5 +1,0 @@
-PLAN: codex/playtest-report-retention, isolated work/playtest-report-retention, based on origin/claude/prototype dcaa9c103. Draft PR targets claude/prototype.
-
-Direct Ed ruling, 2026-10-31 (communication1476#6550489862): additional written reports including an unwanted hat marker and a suggestion are missing. Preserve submitted text/id/time/build/context independently of replay budgets; expose replay omissions and actual storage failures. Root coordinates and watches; no release, browser/profile access, heavy local run or separate monitor. Crash #1559 and CI #1570 remain separate.
-
-First audit permitted earlier Witch downloads read-only. Then replace whole-report eviction with retained report summaries and independently bounded moment/replay attachments, safely reading legacy rows. Preserve export/reload behavior and visible storage/omission status. Verify production-sized replay pressure, count pressure, migration, reload, export and failures with focused single-worker tests plus typecheck. No claim that already missing text has been recovered.
