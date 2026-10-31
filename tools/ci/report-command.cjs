@@ -1,6 +1,7 @@
 // Stream a check unchanged, annotating named failures or its crash reason only when it exits unsuccessfully.
 //   node tools/ci/report-command.cjs --kind art -- node art/check.mjs --times
 const { spawn } = require('node:child_process');
+const { StringDecoder } = require('node:string_decoder');
 const { createSink } = require('./annotations.cjs');
 function failureLine(kind, line) {
   const text = line.replace(/\x1b\[[0-9;]*m/g, '').trim();
@@ -11,10 +12,10 @@ async function runCommand({ command, args, kind, source, sink = createSink() }) 
   const child = spawn(command, args, { stdio: ['inherit', 'pipe', 'pipe'] });
   const failures = new Set(), tail = [];
   function stream(input, output) {
-    let pending = '';
+    let pending = ''; const decoder = new StringDecoder('utf8');
     const line = s => { if (!s.trim()) return; tail.push(s); if (tail.length > 12) tail.shift(); const failure = failureLine(kind, s); if (failure) failures.add(failure); };
-    input.on('data', bytes => { output.write(bytes); pending += bytes.toString(); let i; while ((i = pending.indexOf('\n')) >= 0) { line(pending.slice(0, i)); pending = pending.slice(i + 1); } });
-    input.on('end', () => { if (pending) line(pending); });
+    input.on('data', bytes => { output.write(bytes); pending += decoder.write(bytes); let i; while ((i = pending.indexOf('\n')) >= 0) { line(pending.slice(0, i)); pending = pending.slice(i + 1); } });
+    input.on('end', () => { pending += decoder.end(); if (pending) line(pending); });
   }
   stream(child.stdout, process.stdout); stream(child.stderr, process.stderr);
   const result = await new Promise(resolve => { let error; child.on('error', e => { error = e; }); child.on('close', (status, signal) => resolve({ status, signal, error })); });
