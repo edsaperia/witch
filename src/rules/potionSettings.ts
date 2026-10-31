@@ -5,6 +5,7 @@ export const POTION_PARAMETERS: Record<string, readonly PotionParameter[]> = {
   'hue-spin': [p('period', 'Colour cycle (game seconds)', 20, 2, 120, 1), p('offset', 'Starting colour rotation (degrees)', 120, 0, 360, 1), p('strength', 'Colour rotation strength', 1, 0, 1), p('soundDepth', 'Sound sweep (octaves)', 2, 0, 4, .1)],
   'night-vision': [p('brightness', 'Shadow brightness', 3, 1, 6, .1), p('blackFloor', 'Black level', 0, 0, .3, .01), p('grade', 'Night-colour strength × normal', .2, 0, 1, .05)],
   'heat-vision': [p('coldBrightness', 'Cold scenery brightness', .35, .1, 1, .05), p('dangerGain', 'Danger heat strength', 1, 0, 2, .1), p('breathVolume', 'Mask breathing volume', .35, 0, 1, .05), p('breathRate', 'Breaths per second', .18, .08, .5, .01)],
+  'the-forest-counts': [p('beats', 'Beats per scenery step', 1, .25, 4, .25), p('speed', 'Scenery clock speed', 4, .25, 12, .25), p('soundDepth', 'Stepped sound range (octaves)', 2, 0, 4, .1)],
   'the-audience': [p('radius', 'Watching distance (metres)', 35, 0, 100, 1), p('lean', 'Tree lean (metres)', 4, 0, 12, .1), p('lag', 'Following delay (seconds)', 2, .05, 8, .05)],
   'chunky': [p('multiplier', 'Pixel size × normal', 4, 1, 12, .25)],
   'trip-audio': [p('mix', 'Trip sound treatment', 1, 0, 1), p('cutoff', 'Sound brightness (Hz)', 2600, 200, 12000, 100), p('motion', 'Sound brightness motion (octaves)', .6, 0, 2, .05), p('speed', 'Sound motion speed (Hz)', .18, .02, 2, .02), p('flutter', 'Sound flutter', .18, 0, .7, .01)],

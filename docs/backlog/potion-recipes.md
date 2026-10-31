@@ -78,7 +78,7 @@ All potions last ten minutes of game time, start at full strength on waking, and
 | 70 | purple + orange + turquoise | Borrowed Habits | Coming soon | Vegetation acquires nearby animals' idle quirks: sniffing, shivering, stretching and happy bouncing. |
 | 71 | purple + orange + white | Someone Is Having a Bad Dream | Coming soon | A legend's growing restlessness changes mist, grade and tree motion; its kin's arrival lets the scene relax. |
 | 72 | purple + yellow + yellow | Too Much Happening | Coming soon | Nearby combat makes the scene increasingly luminous until a fight dissolves into light, then settles. |
-| 73 | purple + yellow + green | The Forest Counts | Coming soon | Wind and mist advance in musical steps while she and animals remain fluid. |
+| 73 | purple + yellow + green | The Forest Counts | Implemented | Wind and mist advance in musical steps while she and animals remain fluid. |
 | 74 | purple + yellow + turquoise | Spilling Habitats | Coming soon | Ground textures and habitat colours spill across borders while trees and inhabitants stay put. |
 | 75 | purple + yellow + white | Seeing Through Seeing | Coming soon | Perceive the masks that erase the canopy to make her visible. |
 | 76 | purple + green + green | Lovesick Leaves | Coming soon | Current affection controls nearby leaf colour, glow or motion. |
