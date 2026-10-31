@@ -29,6 +29,8 @@ The start screen shows a **What's new** panel: the last three entries of the cha
 
 Several builders work in parallel (Claude sessions and Codex alike); one **coordinator** session briefs them, combines their work, checks it and publishes. These rules win over older wording below.
 
+Who is building what, and each builder's state and owned files, is in [`docs/active-builders.md`](docs/active-builders.md) (kept by the coordinator).
+
 - **Branches.** Work on your own branch off `claude/prototype` (Codex: `codex/<topic>`), with a draft PR into `claude/prototype`. **Never push to `claude/prototype` or `main`, and never release:** the coordinator combines ready branches on one build, runs the full check once and publishes (Ed, 2026-10-28: "combine them on one branch, run one check, publish once").
 - **Checks before a FINAL:** `npm run typecheck` plus the tests near what you touched (and `node art/check.mjs` when you touch the art). **Not** the full suite or the smoke tests: the coordinator runs those on the combined build (Ed, 2026-10-29: "Be economical ... Try and batch testing if it saves tokens"). CI still runs everything on your PR.
 - **Reports:** short. `REPORT:` while working, `QUESTION:` when blocked, `FINAL:` when done: what changed and why, the tests, anything you noticed but didn't fix, how Ed can check it in play. Claude builders send them to the coordinator's session; Codex posts them as PR comments, and reads `COORDINATOR:` comments there.
