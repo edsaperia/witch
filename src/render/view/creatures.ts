@@ -33,6 +33,7 @@ import { inView } from "./culling";
 import { mark } from "./pops";
 import { attackFeel, newFeel } from "../attackFeel";
 import { impactOf } from "../impact";
+import { creatureHeat } from '../thermalVision';
 import { cheerKind, cheerPose, type CheerPose } from "../cheer";
 import { legendSleep, newSleepTrack, type SleepPose } from "../legendSleep";
 /** How near her (m) a rattlesnake rattles its warning (config/character.json's "rattle" quirk). */
@@ -297,9 +298,11 @@ export function drawCreatures(v: View, time = 0): void {
     // body's middle lies from its place (a sleeping form's frame is often off-centre: a curl, a legend's tails).
     const flip = ((c.facing < 0) !== (toss > 0.5 && Math.floor(time * 0.35 + c.id * 0.13) % 2 === 1)) !== feel.flip, mid = (slept ?? napped)?.centre?.[fi] ?? 0, RT = SPRITE_UNIFORMS.uRight.value;
     let rigged = false;
+    const heat = creatureHeat(c, feel.lunging || feel.crouch > 0);
     if (hide) glow = shadowK; // (a shadow batch's glow: how far gone to its shadow)
     if (v.rig && !form && !idlePose && !glided && !hide) { // the rig draws it, if it can (its look record filled in place: one for every creature)
       const L = LOOK;
+      L.heat = heat;
       L.y = dance + hop + (st ? rigSunk : sunk); L.tap = tap; L.scale = scale; L.glow = glow; L.fresh = fresh; L.h = frame.h - (frame.pad ?? 0); L.face = lying > 0.5 ? "asleep" : face; L.sleep = lying; L.droop = droop; L.twitch = toss;
       L.sx = feel.sx * csx; L.sy = feel.sy * breathY * csy; L.dx = cx; L.dz = cz; L.crouch = feel.crouch; L.lunging = feel.lunging; L.gear = party ? v.rigGear(c, look === "leashed") : c.enraged ? WOKEN_GEAR : undefined; L.posture = ch.rig; L.quirk = ch.quirk; L.quirkK = quirkK; L.lookAt = watching ? g.witch : undefined;
       rigged = v.rig.add(c, L);
@@ -309,6 +312,7 @@ export function drawCreatures(v: View, time = 0): void {
       const turned = flip !== SQ.turned, k = -mid * v.mpp * scale * (turned ? -1 : 1) + SQ.x * fh;
       const near = below * toward - (form || napped ? U.z * padM : 0), nx = form || napped ? -U.x * padM : 0;
       l.push(inst(INST_POOL, ni++, c.x + cx + sway + fit * 0.35 * Math.sin(time * 11 + c.id) + RT.x * k + nx, dance + hop + sunk + SQ.hop * fh, c.z + cz + RT.z * k + near, frame, turned, fresh, glow, scale, feel.sx * SQ.sx * csx, feel.sy * breathY * SQ.sy * csy));
+      l[l.length - 1].heat = heat;
     }
     v.leashView.tops.set(c.id, (frame.h - (frame.pad ?? 0)) * v.mpp * scale + dance + hop + sunk); // its health bar goes over it
     v.leashView.halfW.set(c.id, frame.w * v.mpp * scale * 0.5);

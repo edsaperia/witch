@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Game } from '../rules/game';
 import { POTION_RECIPES } from '../rules/potionRecipes';
+import { POTION_PARAMETERS } from '../rules/potionSettings';
 import { sortedPotions, potionLabSnapshot, tryLabPotion } from './potionLab';
 describe('potion lab', () => {
   it('reverses each sortable column without changing permanent IDs', () => {
@@ -20,6 +21,6 @@ describe('potion lab', () => {
     expect(snapshot.recipe.id).toBe(recipe.id);
     expect(snapshot.seed).toBe(61);
     expect(snapshot.settings.effects['trip-indicator']).toBeDefined();
-    expect(Object.keys(snapshot.settings.effects)).toHaveLength(9);
+    expect(Object.keys(snapshot.settings.effects).sort()).toEqual(Object.keys(POTION_PARAMETERS).sort());
   });
 });

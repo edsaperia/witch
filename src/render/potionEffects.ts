@@ -28,3 +28,11 @@ export const potionLevels = (black: number, gamma: number, amount: number) => {
   const p = potionSettings('thick-canopy');
   return { black: black + (p.blackFloor - black) * amount, gamma: gamma * (1 + (p.gamma - 1) * amount), saturation: 1 + (p.saturation - 1) * amount };
 };
+/** Existing tone controls recover dark detail; no extra screen pass or changes to saved lighting. */
+export function nightVisionLevels(black: number, gamma: number, grade: number, amount: number) {
+  if (amount <= 0) return { black, gamma, grade };
+  const p = potionSettings('night-vision');
+  return { black: black + (p.blackFloor - black) * amount,
+    gamma: gamma * (1 + (1 / p.brightness - 1) * amount),
+    grade: grade * (1 + (p.grade - 1) * amount) };
+}

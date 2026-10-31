@@ -85,6 +85,7 @@ Agreed one by one with Ed (2026-10-09). Not yet assigned to recipes, apart from 
 24. **Watched** (Ed): every legend on the map stands and stares at her.
 25. **Giant Trees** (Ed): the trees are three times taller.
 26. **Night Vision** (Ed).
+    Recipe #26 (blue + red + orange), Ed's refinement 2026-10-31: black and phosphor-green night vision, with pale-green highlights and lifted shadow detail. A rising electronic whine plays on waking, then only creature sounds remain. Other sound returns during the final two-minute fade. Existing tone/grade controls feed a monochrome step in the existing screen pass; saved settings remain unchanged.
 27. **Flask Finder** (Ed): flasks are easier to find.
 28. **Left Hook** (Ed): unlimited dodges, but they always veer left.
 29. **Tall Tales** (Ed): every animal looks very tall.
@@ -111,6 +112,7 @@ Agreed one by one with Ed (2026-10-09). Not yet assigned to recipes, apart from 
 50. **Stopmotion:** the world at 6 fps; she runs smoothly.
 51. **Fireflies:** everything moving leaves glowing dots hanging in the air.
 52. **Heat Vision:** thermal; creatures glow by danger, trees cold blue.
+    Ed's refinement, 2026-10-31: use the thermal-boar reference (cold blue scenery; animals green/yellow/orange/red with texture retained), plus slow, close, muffled mechanical-mask breathing. Recipe #52 (purple + purple + turquoise). Creature identity and existing danger signals select heat; bright scenery is not mistaken for an animal. Ed: "Heat vision should also stop the background music and shift the creature sounds down an octave". Other sound effects remain; music and creature pitch return gradually during the final two game minutes.
 53. **Fisheye:** extreme wide angle; she sees further, everything bends.
 54. **Synaesthesia:** colours pulse with the music, one colour per instrument, floods on the kick.
 55. **Mirror Floor** (Ed): the floor is a mirror: every sprite drawn again upside down beneath its feet, the ground dark and glossy (the same trick as the bedroom mirror). Fills Afterparty's slot.
