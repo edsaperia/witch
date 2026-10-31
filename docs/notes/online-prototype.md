@@ -1,5 +1,7 @@
 # Two-browser prototype
 
+Ordinary telephone integration (PR #1538) remains calls-off. The station now delegates verified connection/messages/departure to an optional existing online session; the ordinary main step consults that session before its unchanged solo recording step. Presentation and guest-only shared-beat sound use the local-view seam without substituting that facade for canonical simulation or saves. No session options are installed in main yet: preparation/return, storage leases, approved appearance and successful-unlock settlement must be completed before admission. Guest-room adapter signatures match reviewed PR #1553 (`startWakeFor`, `WakeTarget`, `bedFor`, `doorFor`), using stable bedroom2/bedroom3; actual exports await the normal prototype merge, with no copied wake implementation. Browser, audible-stall and two-person acceptance remain unrun.
+
 Assigned slice (Ed, 2026-10-30): two players on the host's island, joined by link, in separate browsers. Builds on multiplayer groundwork #1457 at `bcf86735e8c83d318de37f066c76706e3fb5f2eb` and its #1455 snapshot dependency. This document proposes integration contracts; it does not expose online play.
 
 ## Authority and public boundaries

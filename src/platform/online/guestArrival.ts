@@ -1,15 +1,18 @@
 import type { Game, Witch } from "../../rules/game";
 import type { WakeStart } from "../../rules/wakeUp";
+import type { HouseObject } from "../../rules/houseRooms";
 import { attachGuest, detachGuest } from "./membership";
 
-/** Provisional local contract approved in6545990391; actual1526 exports are bound only once landed. */
+/** Exact reviewed PR1553 contract (6547169176); bind exports after they land, never copy wake code. */
+export interface WakeTarget { player: number; room: string }
 export interface GuestRoomHooks {
-  startWakeFor(game: Game, time: number, options: WakeStart, witch: Witch, placement: { player: 1; room: string }): boolean;
-  bedFor(room: string): unknown | null;
-  doorFor(room: string): unknown | null;
+  startWakeFor(game: Game, time: number, options: WakeStart, witch: Witch, placement: WakeTarget): boolean;
+  bedFor(room: string): HouseObject | undefined;
+  doorFor(room: string): HouseObject | undefined;
 }
+export const guestBedrooms = ["bedroom2", "bedroom3"] as const;
 export interface GuestArrivalOptions {
-  room: string;
+  room: typeof guestBedrooms[number];
   rooms: GuestRoomHooks;
   /** Host-approved equipment only; never clone the host's equipped possessions or trust guest inventory. */
   equipment(game: Game): Witch;
@@ -17,7 +20,7 @@ export interface GuestArrivalOptions {
 
 /** No layout constants or host-bedroom fallback. This adapter cannot be mounted until the room hooks exist. */
 export function guestArrival(options: GuestArrivalOptions) {
-  if (!options.room.trim()) throw new Error("A guest bedroom must be assigned.");
+  if (!guestBedrooms.includes(options.room)) throw new Error("A guest bedroom must be assigned.");
   let attached: Game | null = null;
   return {
     attach(game: Game): void {

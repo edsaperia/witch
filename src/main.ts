@@ -356,6 +356,7 @@ freeze.advance = (game, controls, dt) => recordedStep(game, controls, dt, BUILD,
 freeze.started = () => (startEl.style.display === "none" || creator.open) && !studio.at; // (in the bedroom too: Ed, 2026-10-14, "Can we pause from the bedroom?")
 freeze.ownsEsc = () => !bot && !document.querySelector("#settings-page.open, #potion-lab.open"); // (the Settings page's Esc is its own: it closes, the pause page stays) // (the bot game's Esc is its way back to the start screen: ui/botGame.ts)
 const phone = telephoneStation({ storage: (() => { try { return localStorage; } catch { return null; } })() });
+page.presentationGame = game => phone.presented(game);
 
 // Arriving from the sea chart (?arrive=1, or a sail in place; the night's arrival, app/night.ts): the chart's last frame while the
 // night builds, then the flight from the chart's camera down to her asleep in her bed (Ed, 2026-10-25: "a sail always ends with her
@@ -1273,7 +1274,8 @@ function frameBody(now: number): void {
   const recordedInput = JSON.stringify(c);
   if (recordedInput !== lastRecordedInput || game.clock.time - lastInputAt >= 1) { breadcrumbs.add(game, "input", c); lastRecordedInput = recordedInput; lastInputAt = game.clock.time; }
   if (params.get("cauldron") === "1" && !game.cauldron) mutate("cauldron: enable legacy preview", () => enableCauldron(game, homeMushroomPickups(game))); // Explicit compatibility preview; ordinary nights use the nine-colour mushroom system.
-  recordedStep(game, c, fightDt(dt * (botTag?.speed ?? 1)), BUILD, captureRecording); // Same stepGame and original controls; tape is diagnostic only.
+  const rulesDt = fightDt(dt * (botTag?.speed ?? 1));
+  if (!phone.step(game, c, rulesDt)) recordedStep(game, c, rulesDt, BUILD, captureRecording); // Solo retains its original controls and step.
   for (const [kind, events] of [["ko", game.koEvents], ["quest", game.questEvents], ["spell", game.combat.spells?.events ?? []]] as const) for (const event of events) { breadcrumbs.add(game, kind, event); if (kind !== "spell") notable(kind, `${kind} event`, event); }
   rumble.update(game, currentSettings(), input.device === "pad" && !document.hidden ? [freeze.pad()] : [], now);
   // ?debug=attack: every 10 s, a few seconds of blows on the two soundsystems farthest from her (never felling one), so the
@@ -1354,8 +1356,9 @@ function frameBody(now: number): void {
   playtest.update();
   const audio0 = performance.now();
   // The music: one track, mixed by how near the witch is to a playing soundsystem.
-  const cue = N().musicCue = musicCue(game, N().musicCue);
-  sound.update(game, cue, creator.open);
+  const audioGame = phone.presented(game, dt, c.zoom);
+  const cue = N().musicCue = musicCue(audioGame, N().musicCue);
+  sound.update(audioGame, cue, creator.open, phone.visiting ? { shareBeat: true } : undefined);
   // The soundsystem spell's analyser bars (render/leash/stones.ts): the mix's spectrum, read once a frame only while its ring shows, and
   // only while the audio runs (else the bars idle gently).
   { const SV = view.leashView.stoneView; SV.spectrum = SV.wantsSpectrum && sound.audio?.state === "running" ? sound.music?.spectrum() ?? null : null; }

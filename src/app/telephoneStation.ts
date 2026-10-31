@@ -1,11 +1,19 @@
-import type { Game } from "../rules/game";
+import type { Controls, Game } from "../rules/game";
 import { HOUSE_ROOMS, objectAt } from "../rules/houseRooms";
 import { telephone, type TelephoneOptions } from "./telephone";
+import { onlineSession, type SessionOptions } from "../platform/online/session";
+import { localView } from "../platform/online/localView";
+import type { StationChoice } from "../platform/online/stationChoice";
 
 /** The ordinary station's lifetime/input seam. Call admission stays off until the actual guest/save hooks are bound. */
-export function telephoneStation(options: Pick<TelephoneOptions, "storage" | "loadIdentity" | "menu" | "socket">) {
+export function telephoneStation(options: Pick<TelephoneOptions, "storage" | "loadIdentity" | "menu" | "socket"> & { session?: SessionOptions }) {
+  const session = options.session ? onlineSession(options.session) : null;
+  let presentation: ReturnType<typeof localView> | null = null, source: Game | null = null;
   const phone = telephone({ ...options, callsEnabled: false,
-    connected: async () => { throw new Error("Calls aren't available in this build yet."); }, message: () => {}, departed: () => {},
+    connected: async (role, connection, _peer, signal) => {
+      if (!session) throw new Error("Calls aren't available in this build yet.");
+      await session.connect(role, connection, signal);
+    }, message: message => { session?.message(message); }, departed: () => { session?.disconnect(); presentation = source = null; },
   });
   let night: Game | null = null, object: string | null = null;
   const close = () => { void phone.show(false); };
@@ -13,6 +21,19 @@ export function telephoneStation(options: Pick<TelephoneOptions, "storage" | "lo
     get open() { return phone.open; },
     get object() { return phone.open ? object : null; },
     get state() { return phone.state; },
+    get active() { return session?.role !== null && session?.role !== undefined; },
+    get visiting() { return session?.role === "guest"; },
+    choose(choice: StationChoice): boolean { return session?.choose(choice) ?? false; },
+    step(game: Game, controls: Controls, dt: number): boolean {
+      if (session?.game && session.game !== game) { session.nightChanged(); presentation = source = null; return false; }
+      return session?.step(controls, Math.min(0.1, dt)) ?? false;
+    },
+    /** Read-only presentation seam: solo/host returns the exact canonical object. */
+    presented(game: Game, dt = 0, zoom = 0): Game {
+      if (session?.role !== "guest" || session.game !== game) { presentation = source = null; return game; }
+      if (source !== game) { source = game; presentation = localView(game, 1); }
+      return presentation!.update(dt, zoom);
+    },
     use(game: Game, id: string): void {
       if (game.witches[0].ko || HOUSE_ROOMS.objects.find(o => o.id === id)?.use.kind !== "telephone") return;
       night = game; object = id; void phone.show(!phone.open);
@@ -23,6 +44,6 @@ export function telephoneStation(options: Pick<TelephoneOptions, "storage" | "lo
       if (phone.open) phone.pollPad(typeof navigator !== "undefined" && navigator.getGamepads ? [...navigator.getGamepads()].find(p => p) ?? null : null, now);
     },
     close,
-    dispose: phone.dispose,
+    dispose() { session?.disconnect(); presentation = source = null; phone.dispose(); },
   };
 }

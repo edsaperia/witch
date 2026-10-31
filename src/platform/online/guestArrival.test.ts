@@ -4,6 +4,8 @@ import { TUNING } from "../../rules/tuning";
 import { bareBroom } from "../../rules/broomParts";
 import { setParts } from "../../rules/spells";
 import { guestArrival, type GuestRoomHooks } from "./guestArrival";
+import { HOUSE_ROOMS } from "../../rules/houseRooms";
+const geometry = HOUSE_ROOMS.objects[0]; // Injected geometry; no copied wake implementation.
 
 it("requires the assigned room hooks, supplies separate equipment and leaves host identity/time intact", () => {
   // Four-area fixture: arrival ownership does not depend on distant map size; injected hooks supply all guest geometry.
@@ -12,17 +14,17 @@ it("requires the assigned room hooks, supplies separate equipment and leaves hos
   game.herTime = 45; game.clock.paused = true; game.pending = { dash: true };
   const guest = newWitchPlayer(1, 0, 0, tuning); setParts(guest.spells, bareBroom()); guest.spells.hat = "none";
   const rooms: GuestRoomHooks = {
-    bedFor: vi.fn(() => null), doorFor: vi.fn(() => ({ id: "assigned-door" })),
+    bedFor: vi.fn(() => undefined), doorFor: vi.fn(() => geometry),
     startWakeFor: vi.fn((_g, time, _options, witch, placement) => {
-      expect(placement).toEqual({ player: 1, room: "assigned-guest-room" }); expect(time).toBe(45); expect(witch).toBe(guest);
+      expect(placement).toEqual({ player: 1, room: "bedroom2" }); expect(time).toBe(45); expect(witch).toBe(guest);
       witch.body.x = 91; witch.body.z = 23; return true;
     }),
   };
-  const equipment = vi.fn(() => guest), arrival = guestArrival({ room: "assigned-guest-room", rooms, equipment });
+  const equipment = vi.fn(() => guest), arrival = guestArrival({ room: "bedroom2", rooms, equipment });
   expect(() => arrival.attach(game)).toThrow("isn't ready"); expect(equipment).not.toHaveBeenCalled(); expect(game.witches).toEqual([host]);
-  rooms.bedFor = vi.fn(() => ({ id: "assigned-bed" })); rooms.doorFor = vi.fn(() => null);
+  rooms.bedFor = vi.fn(() => geometry); rooms.doorFor = vi.fn(() => undefined);
   expect(() => arrival.attach(game)).toThrow("isn't ready"); expect(rooms.startWakeFor).not.toHaveBeenCalled();
-  rooms.doorFor = vi.fn(() => ({ id: "assigned-door" })); arrival.attach(game);
+  rooms.doorFor = vi.fn(() => geometry); arrival.attach(game);
   expect(game.witches).toEqual([host, guest]); expect(game.witch).toBe(body); expect(host.spells).toBe(spells); expect(guest.spells).not.toBe(spells);
   expect(guest.body).toMatchObject({ x: 91, z: 23 }); expect(host.time).toBe(45); expect(host.paused).toBe(true); expect(host.pending).toEqual({ dash: true });
   expect(() => arrival.attach(game)).toThrow("already"); arrival.detach(game); arrival.detach(game);
@@ -32,8 +34,8 @@ it("requires the assigned room hooks, supplies separate equipment and leaves hos
 it("rolls back a refused or thrown room wake and can retry without a phantom guest", () => {
   const tuning = structuredClone(TUNING); tuning.map!.island = "home"; tuning.map!.islandAreas = 4;
   const game = newGame(123, tuning), host = game.witches[0]; game.clock.paused = true;
-  const rooms: GuestRoomHooks = { bedFor: () => ({}), doorFor: () => ({}), startWakeFor: () => false };
-  const arrival = guestArrival({ room: "assigned-guest-room", rooms, equipment: () => newWitchPlayer(1, 0, 0, tuning) });
+  const rooms: GuestRoomHooks = { bedFor: () => geometry, doorFor: () => geometry, startWakeFor: () => false };
+  const arrival = guestArrival({ room: "bedroom3", rooms, equipment: () => newWitchPlayer(1, 0, 0, tuning) });
   expect(() => arrival.attach(game)).toThrow("wake geometry"); expect(game.witches).toEqual([host]); expect(host.time).toBeUndefined(); expect(game.clock.paused).toBe(true);
   rooms.startWakeFor = () => { throw new Error("room unavailable"); };
   expect(() => arrival.attach(game)).toThrow("room unavailable"); expect(game.witches).toEqual([host]); expect(host.pending).toBeUndefined();

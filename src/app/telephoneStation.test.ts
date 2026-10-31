@@ -20,6 +20,9 @@ it("opens the real telephone use kind without contacting the old relay, and clos
     menu: a => { actions = a; return { show, render: vi.fn(), redial: vi.fn(), pollPad }; },
   });
   try {
+    expect(station.active).toBe(false); expect(station.visiting).toBe(false);
+    expect(station.presented(game, 0.05, 1)).toBe(game);
+    expect(station.step(game, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 0.25)).toBe(false);
     station.use(game, "not-a-phone"); expect(station.open).toBe(false);
     station.use(game, phoneObject.id); expect(station.open).toBe(true);
     await vi.waitFor(() => expect(station.state.status).toBe("preparing"));
