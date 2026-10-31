@@ -1,0 +1,372 @@
+{
+ "R": {
+  "loadSecs": 36.607,
+  "a0": {
+   "x": 3160.58,
+   "z": 2712.1,
+   "mode": "ground",
+   "perch": true,
+   "seated": false,
+   "t": 0.18,
+   "wear": "none",
+   "hatHas": true,
+   "hatDown": {
+    "x": 3194.35,
+    "z": 2776.58
+   },
+   "left": [],
+   "floor": [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+   ],
+   "overflow": [],
+   "reserved": [
+    0,
+    1
+   ],
+   "spellAt": null,
+   "wake": {
+    "beat": "alarm",
+    "open": false
+   },
+   "baskets": {
+    "blue": 0,
+    "purple": 0,
+    "pink": 0,
+    "red": 0,
+    "orange": 0,
+    "yellow": 0,
+    "green": 0,
+    "turquoise": 0,
+    "white": 0
+   },
+   "ingredients": 0,
+   "flights": 0
+  },
+  "a_E": {
+   "x": 3160.58,
+   "z": 2712.1,
+   "mode": "ground",
+   "perch": true,
+   "seated": false,
+   "t": 0.21,
+   "wear": "none",
+   "hatHas": true,
+   "hatDown": {
+    "x": 3194.35,
+    "z": 2776.58
+   },
+   "left": [],
+   "floor": [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+   ],
+   "overflow": [],
+   "reserved": [
+    0,
+    1
+   ],
+   "spellAt": null,
+   "wake": {
+    "beat": "alarm",
+    "open": false
+   },
+   "baskets": {
+    "blue": 0,
+    "purple": 0,
+    "pink": 0,
+    "red": 0,
+    "orange": 0,
+    "yellow": 0,
+    "green": 0,
+    "turquoise": 0,
+    "white": 0
+   },
+   "ingredients": 0,
+   "flights": 0
+  },
+  "a_up": {
+   "x": 3163.74,
+   "z": 2709.58,
+   "mode": "ground",
+   "perch": true,
+   "seated": false,
+   "t": 0.6,
+   "wear": "none",
+   "hatHas": true,
+   "hatDown": {
+    "x": 3194.35,
+    "z": 2776.58
+   },
+   "left": [],
+   "floor": [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+   ],
+   "overflow": [],
+   "reserved": [
+    0,
+    1
+   ],
+   "spellAt": null,
+   "wake": {
+    "beat": "up",
+    "open": true
+   },
+   "baskets": {
+    "blue": 0,
+    "purple": 0,
+    "pink": 0,
+    "red": 0,
+    "orange": 0,
+    "yellow": 0,
+    "green": 0,
+    "turquoise": 0,
+    "white": 0
+   },
+   "ingredients": 0,
+   "flights": 0
+  },
+  "f_turret": {
+   "ok": true,
+   "say": "in the Turret",
+   "x": 3162.43871836629,
+   "z": 2711.926777190793
+  },
+  "f_bedroom": {
+   "ok": true,
+   "say": "in the Bedroom",
+   "x": 3150.43871836629,
+   "z": 2725.926777190793
+  },
+  "f_boudoir": {
+   "ok": true,
+   "say": "in the Boudoir",
+   "x": 3164.43871836629,
+   "z": 2742.926777190793
+  },
+  "f_parlour": {
+   "ok": true,
+   "say": "in the Parlour",
+   "x": 3150.43871836629,
+   "z": 2762.926777190793
+  },
+  "f_terrace": {
+   "ok": true,
+   "say": "in the Terrace",
+   "x": 3166.43871836629,
+   "z": 2786.926777190793
+  },
+  "f_dining": {
+   "ok": true,
+   "say": "in the Dining Room",
+   "x": 3148.43871836629,
+   "z": 2812.926777190793
+  },
+  "f_kitchen": {
+   "ok": true,
+   "say": "in the Kitchen",
+   "x": 3096.43871836629,
+   "z": 2830.926777190793
+  },
+  "f_workshop": {
+   "ok": true,
+   "say": "in the Workshop",
+   "x": 3116.43871836629,
+   "z": 2798.926777190793
+  },
+  "f_cloakroom": {
+   "ok": true,
+   "say": "in the Cloakroom",
+   "x": 3197.43871836629,
+   "z": 2774.926777190793
+  },
+  "f_studio": {
+   "ok": true,
+   "say": "in the Studio",
+   "x": 3216.43871836629,
+   "z": 2806.926777190793
+  },
+  "f_solarium": {
+   "ok": true,
+   "say": "in the Solarium",
+   "x": 3119.43871836629,
+   "z": 2748.926777190793
+  },
+  "f_bestiary": {
+   "ok": true,
+   "say": "in the Bestiary",
+   "x": 3099.43871836629,
+   "z": 2776.926777190793
+  },
+  "f_bedroom2": {
+   "ok": true,
+   "say": "in the Bedroom 2",
+   "x": 3194.43871836629,
+   "z": 2728.926777190793
+  },
+  "f_bedroom3": {
+   "ok": true,
+   "say": "in the Bedroom 3",
+   "x": 3212.43871836629,
+   "z": 2758.926777190793
+  },
+  "d_before": {
+   "x": 3175.73,
+   "z": 2794.23,
+   "mode": "ground",
+   "perch": true,
+   "seated": false,
+   "t": 0.74,
+   "wear": "none",
+   "hatHas": true,
+   "hatDown": {
+    "x": 3194.35,
+    "z": 2776.58
+   },
+   "left": [],
+   "floor": [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+   ],
+   "overflow": [],
+   "reserved": [
+    0,
+    1
+   ],
+   "spellAt": null,
+   "wake": {
+    "beat": "up",
+    "open": true
+   },
+   "baskets": {
+    "blue": 0,
+    "purple": 0,
+    "pink": 0,
+    "red": 0,
+    "orange": 0,
+    "yellow": 0,
+    "green": 0,
+    "turquoise": 0,
+    "white": 0
+   },
+   "ingredients": 0,
+   "flights": 0
+  },
+  "d_afterE": {
+   "s": {
+    "x": 3175.73,
+    "z": 2794.23,
+    "mode": "ground",
+    "perch": true,
+    "seated": false,
+    "t": 0.84,
+    "wear": "none",
+    "hatHas": true,
+    "hatDown": {
+     "x": 3194.35,
+     "z": 2776.58
+    },
+    "left": [],
+    "floor": [
+     "",
+     "",
+     "",
+     "",
+     "",
+     "",
+     "",
+     "",
+     "",
+     "",
+     "",
+     "",
+     "",
+     "",
+     ""
+    ],
+    "overflow": [],
+    "reserved": [
+     0,
+     1
+    ],
+    "spellAt": null,
+    "wake": {
+     "beat": "up",
+     "open": true
+    },
+    "baskets": {
+     "blue": 0,
+     "purple": 0,
+     "pink": 0,
+     "red": 0,
+     "orange": 0,
+     "yellow": 0,
+     "green": 0,
+     "turquoise": 0,
+     "white": 0
+    },
+    "ingredients": 0,
+    "flights": 0
+   },
+   "buttons": [
+    "Get this party started"
+   ]
+  },
+  "d_ERROR": "locator.click: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button').filter({ hasText: /party started/i }).first()\u001b[22m\n\u001b[2m    - locator resolved to <button data-at=\"11\" class=\"db-go off\" aria-disabled=\"true\">Get this party started</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is not enabled\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+  "errors": []
+ },
+ "errors": []
+}

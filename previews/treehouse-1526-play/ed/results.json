@@ -901,7 +901,15 @@
    "say": "in the Studio",
    "x": 3216.43871836629,
    "z": 2806.926777190793
-  }
+  },
+  "f_solarium": {
+   "ok": true,
+   "say": "in the Solarium",
+   "x": 3119.43871836629,
+   "z": 2748.926777190793
+  },
+  "f_ERROR": "page.evaluate: Target page, context or browser has been closed",
+  "errors": []
  },
  "errors": []
 }
