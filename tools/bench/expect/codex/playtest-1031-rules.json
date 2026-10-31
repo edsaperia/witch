@@ -1,6 +1,8 @@
 {
-  "reason": "Ed playtest item 13: legends.questCap defaults to 0; quests may pick any distance while questLater stays unchanged.",
+  "reason": "Ed playtest items13/14: no default dream distance cap, and rhino/unicorn legends use long charges; ordinary attacks stay unchanged.",
   "rules": {
-    "creatures": "Dream species, far values and quest rewards can change because the default distance tail is no longer cut."
+    "creatures": "Dream species, far values and quest rewards can change because the default distance tail is no longer cut. Rhino/unicorn legends now move through long-charge windup/run/brake instead of runner/beam casts.",
+    "combat": "Rhino/unicorn legend long-charge impacts and events replace their grammar casts.",
+    "witches": "Witch health/knockback can differ when hit by rhino/unicorn legend charges."
   }
 }
