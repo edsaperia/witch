@@ -1,6 +1,6 @@
 // Read-only config/docs freshness gate, run before CI's shared build; every failure keeps its exact fix command.
 //   node tools/config/check.mjs
-import { spawnSync } from 'node:child_process';
+import reporting from '../ci/report-command.cjs';
 
 const checks = [
   ['tools/config/format.mjs', '--check'],
@@ -13,7 +13,7 @@ const checks = [
   ['tools/config/generated.mjs', '--check'],
 ];
 for (const args of checks) {
-  const result = spawnSync(process.execPath, args, { stdio: 'inherit' });
+  const result = await reporting.runCommand({ command: process.execPath, args, kind: 'config', source: args[0] });
   if (result.error) console.error(result.error);
   if (result.status !== 0) { process.exitCode = result.status ?? 1; break; }
 }

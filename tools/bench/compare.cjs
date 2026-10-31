@@ -9,6 +9,7 @@
 //   node tools/bench/compare.cjs <before out> <after out> [--expect <file>] [--testing build,...] [--override]
 const fs = require("fs");
 const path = require("path");
+const annotations = require('../ci/annotations.cjs').createSink();
 let playwright;
 try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 
@@ -31,7 +32,7 @@ async function main() {
     if (!a || !b) continue;
     const c = checkComparable(a.key, b.key, { ...flags, what });
     console.log(c.text);
-    if (!c.ok) process.exit(2);
+    if (!c.ok) { annotations.error('bench comparability', c.text, { file: __filename }); process.exit(2); }
   }
   // The rules: same fingerprints at every checkpoint, every seed.
   const ra = read(A, "rules.json"), rb = read(B, "rules.json");
@@ -94,7 +95,7 @@ async function main() {
   if (expect) console.log(`Declared (${expectFile}): ${expect.reason}`);
   if (ok.length) console.log("DECLARED (differ as the PR says):\n" + ok.map(b => `- ${b.text}\n  why: ${b.why}`).join("\n"));
   if (unseen.length) console.log("Declared but unchanged (stale, or a change that didn't happen?): " + unseen.join(", "));
-  if (left.length) { console.log("MISMATCH" + (expect ? " (not declared)" : "") + ":\n" + left.map(b => "- " + b.text + (b.key ? ` [${b.key}]` : "")).join("\n")); process.exit(1); }
+  if (left.length) { for (const b of left) annotations.error('bench', `${b.key ?? 'unclassified'}: ${b.text}`, { file: __filename }); console.log("MISMATCH" + (expect ? " (not declared)" : "") + ":\n" + left.map(b => "- " + b.text + (b.key ? ` [${b.key}]` : "")).join("\n")); process.exit(1); }
   console.log(ok.length ? "match: only the declared differences" : "match: same state, same pictures");
 }
-main().catch(e => { console.error(e); process.exit(1); });
+main().catch(e => { annotations.error('bench crash', String(e), { file: __filename }); console.error(e); process.exit(1); });
