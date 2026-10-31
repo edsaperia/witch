@@ -9,3 +9,5 @@ PLAN:
 4. Test finite values, identity, export roundtrip and station transforms; one-worker nearby tests/typecheck. Prepare build/visual QA instructions for the coordinator. No local browser or self-allocated cloud run.
 
 Ownership: PR1523 is changing kitchen config and house rendering for mushroom brewing. Do not change its room data or runtime behavior. Prefer isolated editor modules and existing public geometry/art functions; ask the coordinator before expanding shared house renderer ownership.
+
+Follow-up, 2026-10-31: Ed's supplied version-1 layout is camera-authoritative. Preserve it unchanged as evidence, convert explicitly to coherent absolute angles, expose original individual clutter art, and prepare an adoption audit against current mushroom defaults. The editor/migration/audit remain isolated from gameplay. Runtime bed, DJ, hat/landing and station consumers require canonical ownership before enabling the proposed default; the changed kitchen is retained. Review evidence and exact limits are in `docs/evidence/treehouse-layout-adoption.md`.

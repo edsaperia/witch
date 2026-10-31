@@ -2,9 +2,13 @@ import { HOUSE_ROOMS } from "../rules/houseRooms";
 import { floorFrame, paintFloorRows, type Upright } from "../render/houseArt";
 import uprights from "virtual:house-standing";
 import { furnitureSprite, FURNITURE_IDS } from "../../art/furniture.js";
-import { litCanvas, roomDecorPiece, standing, type Drawn } from "../render/housePieces";
+import { decorSprite } from "../../art/houseDecor.js";
+import { messSprite } from "../../art/houseMess.js";
+import { SIZE } from "../../art/furniture.js";
+import { RUG_DIM, MESS_DIM } from "../render/houseDecor";
+import { litCanvas, type Drawn } from "../render/housePieces";
 import { loadStyle } from "../render/style";
-import { attachedPoint, corners, type Layout, type LayoutItem, type Placement } from "./houseLayout";
+import { artKey, attachedPoint, cameraYaw, corners, lightingRoom, rotate, type Layout, type LayoutItem, type Placement } from "./houseLayout";
 
 const PITCH = 24 * Math.PI / 180, SIN = Math.sin(PITCH), COS = Math.cos(PITCH), PPM = 6;
 export const makeCanvas = (w: number, h: number): HTMLCanvasElement => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
@@ -20,7 +24,6 @@ export class HousePreview {
   private readonly floorBox = floorFrame(HOUSE_ROOMS, .35);
   private style = loadStyle();
   private art = new Map<string, { canvas: HTMLCanvasElement; ox: number; oy: number }>();
-  private decor = new Map<string, { canvas: HTMLCanvasElement; ox: number; oy: number }>();
   private ids = new Set<string>(FURNITURE_IDS);
   async prepare(progress: (text: string) => void): Promise<void> {
     const F = this.floorBox, out = makeCanvas(F.w, F.h), ctx = out.getContext("2d")!;
@@ -35,22 +38,19 @@ export class HousePreview {
   }
   /** Reuses the production model, room palette, bake and lighting; no screenshot stand-ins. */
   bake(item: LayoutItem, pose: Placement): boolean {
-    if (!this.ids.has(item.id)) return false;
-    const key = `${item.id}:${pose.rotation}`;
+    if (!item.decor && !this.ids.has(item.id)) return false;
+    const key = artKey(item, pose);
     if (this.art.has(key)) return true;
-    const base = standing(item), yaw = base.yaw - pose.rotation * Math.PI / 180;
-    const drawn = furnitureSprite(item.id, base.foot, this.style, { ppm: PPM, pitch: PITCH, yaw, curve: base.curve }) as Drawn;
-    const canvas = litCanvas(drawn, item.room, this.style, makeCanvas, 1, item.id) as HTMLCanvasElement;
+    const base = item.facing, yaw = cameraYaw(pose), d = item.decor;
+    const drawn = (d ? d.kind === "mess" ? messSprite(d.of!, d.foot!, this.style, { ppm: PPM, pitch: PITCH, yaw })
+      : decorSprite(d.kind, d.k, this.style, { ppm: PPM, pitch: PITCH, yaw, ...(d.r ? { r: d.r / SIZE } : {}) })
+      : furnitureSprite(item.id, base.foot, this.style, { ppm: PPM, pitch: PITCH, yaw, curve: base.curve })) as Drawn;
+    const dim = d?.kind === "rug" ? RUG_DIM : d?.kind === "mess" ? MESS_DIM : 1;
+    const canvas = litCanvas(drawn, lightingRoom(pose), this.style, makeCanvas, dim, d ? "" : item.id) as HTMLCanvasElement;
     this.art.set(key, { canvas, ox: drawn.origin.x, oy: drawn.origin.y });
     // Authoring may explore many angles; retain a bounded image cache.
-    if (this.art.size > 160) this.art.delete(this.art.keys().next().value!);
+    if (this.art.size > 400) this.art.delete(this.art.keys().next().value!);
     return true;
-  }
-  bakeRoom(id: string): void {
-    const p = roomDecorPiece(id, this.style, PPM, PITCH, makeCanvas);
-    if (!p) return;
-    const canvas = makeCanvas(p.w, p.h); canvas.getContext("2d")!.putImageData(new ImageData(new Uint8ClampedArray(p.px), p.w, p.h), 0, 0);
-    this.decor.set(id, { canvas, ox: p.ox, oy: p.oy });
   }
   draw(canvas: HTMLCanvasElement, items: LayoutItem[], layout: Layout, selected: string, frame: Frame, camera: boolean, zoom: number): Mapping {
     const rect = canvas.getBoundingClientRect(); canvas.width = Math.max(200, Math.round(rect.width)); canvas.height = Math.max(200, Math.round(rect.height));
@@ -58,20 +58,16 @@ export class HousePreview {
     ctx.fillStyle = "#151b22"; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.imageSmoothingEnabled = false;
     if (this.floor) { const p = m.project(F.x0, F.z0); ctx.drawImage(this.floor, p.x, p.y, F.ww * m.scale, F.hh * m.scale * k); }
     if (camera) for (const q of (uprights as Upright[]).filter(q => q.layer === 1)) this.wall(ctx, m, q);
-    if (camera) for (const room of HOUSE_ROOMS.rooms) {
-      const art = this.decor.get(room.id); if (!art) continue;
-      const p = m.project(room.x, room.z), s = m.scale / PPM;
-      ctx.drawImage(art.canvas, p.x - art.ox * s, p.y - art.oy * s, art.canvas.width * s, art.canvas.height * s);
-    }
     if (!camera) {
       ctx.font = "12px system-ui"; ctx.fillStyle = "#f3dca8"; ctx.textAlign = "center";
       for (const r of HOUSE_ROOMS.rooms) { const p = m.project(r.x, r.z); ctx.fillText(r.label, p.x, p.y - r.r * m.scale + 12); }
     }
     const byId = new Map(items.map(o => [o.id, o]));
-    for (const p of [...layout.objects].sort((a, b) => a.z - b.z)) {
+    const floor = (id: string) => ["rug", "mess"].includes(byId.get(id)?.decor?.kind ?? "");
+    for (const p of [...layout.objects].sort((a, b) => Number(floor(b.id)) - Number(floor(a.id)) || a.z - b.z)) {
       const o = byId.get(p.id)!, active = o.id === selected, pos = m.project(p.x, p.z);
       if (camera) {
-        const art = this.art.get(`${o.id}:${p.rotation}`);
+        const art = this.art.get(artKey(o, p));
         if (art) { const s = m.scale / PPM; ctx.drawImage(art.canvas, pos.x - art.ox * s, pos.y - art.oy * s, art.canvas.width * s, art.canvas.height * s); }
         else { this.proxy(ctx, m, o, p); }
       }
@@ -80,7 +76,12 @@ export class HousePreview {
         ctx.fillStyle = active ? "#ffc77855" : "#9ac6c522"; if (!camera) ctx.fill(); ctx.strokeStyle = active ? "#ffd079" : "#c3d2ce"; ctx.lineWidth = active ? 2 : 1; ctx.stroke();
         const a = attachedPoint(o, p), anchor = m.project(a.x, a.z); ctx.beginPath(); ctx.moveTo(pos.x, pos.y); ctx.lineTo(anchor.x, anchor.y); ctx.strokeStyle = "#89e0da"; ctx.stroke();
         ctx.beginPath(); ctx.arc(anchor.x, anchor.y, 4, 0, Math.PI * 2); ctx.fillStyle = "#89e0da"; ctx.fill();
-        if (active) { ctx.font = "bold 12px system-ui"; ctx.fillStyle = "#fff1d5"; ctx.textAlign = "center"; ctx.fillText(o.label, pos.x, pos.y + Math.max(16, o.d * m.scale * k / 2 + 14)); }
+        if (active) {
+          const f = rotate(0, o.facing.foot.d / 2 + 1, p.rotation), front = m.project(p.x + f.x, p.z + f.z);
+          ctx.beginPath(); ctx.moveTo(pos.x, pos.y); ctx.lineTo(front.x, front.y); ctx.strokeStyle = "#ffb67d"; ctx.lineWidth = 3; ctx.stroke();
+          ctx.beginPath(); ctx.arc(front.x, front.y, 4, 0, Math.PI * 2); ctx.fillStyle = "#ffb67d"; ctx.fill();
+          ctx.font = "bold 12px system-ui"; ctx.fillStyle = "#fff1d5"; ctx.textAlign = "center"; ctx.fillText(o.label, pos.x, pos.y + Math.max(16, o.d * m.scale * k / 2 + 14));
+        }
       }
     }
     if (camera) for (const q of (uprights as Upright[]).filter(q => q.layer === 3)) this.wall(ctx, m, q);

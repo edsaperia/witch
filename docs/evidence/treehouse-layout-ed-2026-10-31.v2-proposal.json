@@ -1,0 +1,1316 @@
+{
+  "version": 2,
+  "floorplan": "oak-e553ed9b",
+  "objects": [
+    {
+      "id": "teaTable",
+      "x": -21.69,
+      "z": -17.43,
+      "rotation": -63.02308529760313,
+      "physicalRoom": "parlour",
+      "lightingRoom": "parlour",
+      "useAnchor": {
+        "x": -19.23,
+        "z": -17.43
+      }
+    },
+    {
+      "id": "cardTable",
+      "x": 50.1,
+      "z": 19.31,
+      "rotation": 56.2910479066378,
+      "physicalRoom": "studio",
+      "lightingRoom": "studio",
+      "useAnchor": {
+        "x": 47.22,
+        "z": 19.309999999999995
+      }
+    },
+    {
+      "id": "bags",
+      "x": -18.95,
+      "z": -33.96,
+      "rotation": -36.02944460572104,
+      "physicalRoom": "parlour",
+      "lightingRoom": "parlour",
+      "useAnchor": {
+        "x": -18.58765333685647,
+        "z": -32.60770384319531
+      }
+    },
+    {
+      "id": "invitations",
+      "x": 3.05,
+      "z": -12.7,
+      "rotation": 30,
+      "physicalRoom": "terrace",
+      "lightingRoom": "terrace",
+      "useAnchor": {
+        "x": 2.1000000000000005,
+        "z": -11.054551732809568
+      }
+    },
+    {
+      "id": "telephone",
+      "x": 6.1,
+      "z": -50.72,
+      "rotation": -14.9894301898521,
+      "physicalRoom": null,
+      "lightingRoom": "boudoir",
+      "useAnchor": {
+        "x": 6.1,
+        "z": -49.32
+      }
+    },
+    {
+      "id": "wardrobe",
+      "x": -22.62,
+      "z": -64.49,
+      "rotation": -48.00544377447312,
+      "physicalRoom": "bedroom",
+      "lightingRoom": "bedroom",
+      "useAnchor": {
+        "x": -21.02,
+        "z": -64.49
+      }
+    },
+    {
+      "id": "dressingTable",
+      "x": -16.29,
+      "z": -69.66,
+      "rotation": -35.995769600226595,
+      "physicalRoom": null,
+      "lightingRoom": "bedroom",
+      "useAnchor": {
+        "x": -15.64,
+        "z": -68.53416697508023
+      }
+    },
+    {
+      "id": "shoeRack",
+      "x": -3.08,
+      "z": -54.39,
+      "rotation": 45,
+      "physicalRoom": null,
+      "lightingRoom": "boudoir",
+      "useAnchor": {
+        "x": -1.7549999999999972,
+        "z": -54.39
+      }
+    },
+    {
+      "id": "clothesPile",
+      "x": -6.25,
+      "z": -64.89,
+      "rotation": 0,
+      "physicalRoom": null,
+      "lightingRoom": "turret",
+      "useAnchor": {
+        "x": -6.25,
+        "z": -63.39
+      }
+    },
+    {
+      "id": "telescope",
+      "x": 0.68,
+      "z": -76.18,
+      "rotation": 6.0405651828972395,
+      "physicalRoom": "turret",
+      "lightingRoom": "turret",
+      "useAnchor": {
+        "x": 0.6800000000000008,
+        "z": -74.4
+      }
+    },
+    {
+      "id": "bed",
+      "x": -6.16,
+      "z": -75.35,
+      "rotation": 45.20209202266972,
+      "physicalRoom": "turret",
+      "lightingRoom": "turret",
+      "useAnchor": {
+        "x": -3.4753212482682447,
+        "z": -76.89999999999999
+      }
+    },
+    {
+      "id": "pegboard",
+      "x": -28.08,
+      "z": 17.18,
+      "rotation": -5.974723935632937,
+      "physicalRoom": null,
+      "lightingRoom": "dining",
+      "useAnchor": {
+        "x": -28.779999999999998,
+        "z": 18.392435565298214
+      }
+    },
+    {
+      "id": "broomBay",
+      "x": -11.77,
+      "z": 34.43,
+      "rotation": -3.728598642910356,
+      "physicalRoom": "dining",
+      "lightingRoom": "dining",
+      "useAnchor": {
+        "x": -10.72,
+        "z": 32.61134665205268
+      }
+    },
+    {
+      "id": "lathe",
+      "x": -19.5,
+      "z": 11.54,
+      "rotation": -51.00458737344269,
+      "physicalRoom": null,
+      "lightingRoom": "dining",
+      "useAnchor": {
+        "x": -17.92,
+        "z": 11.540000000000001
+      }
+    },
+    {
+      "id": "cauldron",
+      "x": -70,
+      "z": 42.5,
+      "rotation": 0,
+      "physicalRoom": "kitchen",
+      "lightingRoom": "kitchen",
+      "useAnchor": {
+        "x": -70,
+        "z": 46.5
+      }
+    },
+    {
+      "id": "mirror",
+      "x": 33.93,
+      "z": -15.75,
+      "rotation": 39.45014457175557,
+      "physicalRoom": "cloakroom",
+      "lightingRoom": "cloakroom",
+      "useAnchor": {
+        "x": 33.012370465025384,
+        "z": -15.504121907152605
+      }
+    },
+    {
+      "id": "hats",
+      "x": 29.45,
+      "z": -9.54,
+      "rotation": 45.000000000000114,
+      "physicalRoom": "cloakroom",
+      "lightingRoom": "cloakroom",
+      "useAnchor": {
+        "x": 27.15,
+        "z": -9.540000000000001
+      }
+    },
+    {
+      "id": "cloakPegs",
+      "x": 26.63,
+      "z": -16.19,
+      "rotation": 30,
+      "physicalRoom": "cloakroom",
+      "lightingRoom": "cloakroom",
+      "useAnchor": {
+        "x": 25.229407551880847,
+        "z": -15.814712384601345
+      }
+    },
+    {
+      "id": "drumKit",
+      "x": -53.88,
+      "z": 7.51,
+      "rotation": -11.531770741082823,
+      "physicalRoom": "workshop",
+      "lightingRoom": "workshop",
+      "useAnchor": {
+        "x": -55.28,
+        "z": 9.934871130596424
+      }
+    },
+    {
+      "id": "synthRack",
+      "x": -46.48,
+      "z": 6.9,
+      "rotation": 28.739795291688097,
+      "physicalRoom": "workshop",
+      "lightingRoom": "workshop",
+      "useAnchor": {
+        "x": -47.68208152801713,
+        "z": 8.10208152801713
+      }
+    },
+    {
+      "id": "microphone",
+      "x": -50.45,
+      "z": 17.2,
+      "rotation": 11.386428796409177,
+      "physicalRoom": "workshop",
+      "lightingRoom": "workshop",
+      "useAnchor": {
+        "x": -50.45,
+        "z": 15.899999999999999
+      }
+    },
+    {
+      "id": "mapTable",
+      "x": -45.97,
+      "z": -38.87,
+      "rotation": -90,
+      "physicalRoom": "solarium",
+      "lightingRoom": "solarium",
+      "useAnchor": {
+        "x": -43.519999999999996,
+        "z": -38.87
+      }
+    },
+    {
+      "id": "book",
+      "x": -67.05,
+      "z": -13.68,
+      "rotation": -2.981429696964028,
+      "physicalRoom": "bestiary",
+      "lightingRoom": "bestiary",
+      "useAnchor": {
+        "x": -67.44340494855582,
+        "z": -12.211792744040617
+      }
+    },
+    {
+      "id": "specimens",
+      "x": -72.01,
+      "z": -14.77,
+      "rotation": -42.005718883904706,
+      "physicalRoom": "bestiary",
+      "lightingRoom": "bestiary",
+      "useAnchor": {
+        "x": -72.01,
+        "z": -13.27
+      }
+    },
+    {
+      "id": "bedroom2Bed",
+      "x": 29.99,
+      "z": -60.98,
+      "rotation": 30,
+      "physicalRoom": "bedroom2",
+      "lightingRoom": "bedroom2",
+      "useAnchor": {
+        "x": 30.79233903981781,
+        "z": -57.985629938503884
+      }
+    },
+    {
+      "id": "bedroom2Wardrobe",
+      "x": 24.7,
+      "z": -61.64,
+      "rotation": -21.801409486351872,
+      "physicalRoom": "bedroom2",
+      "lightingRoom": "bedroom2",
+      "useAnchor": {
+        "x": 24.7,
+        "z": -60.44
+      }
+    },
+    {
+      "id": "bedroom2Chest",
+      "x": 34.46,
+      "z": -60.88,
+      "rotation": -16.313852426260496,
+      "physicalRoom": "bedroom2",
+      "lightingRoom": "bedroom2",
+      "useAnchor": {
+        "x": 34.46,
+        "z": -59.580000000000005
+      }
+    },
+    {
+      "id": "bedroom2Crates",
+      "x": 26.02,
+      "z": -54.05,
+      "rotation": -7.943471810590381,
+      "physicalRoom": "bedroom2",
+      "lightingRoom": "bedroom2",
+      "useAnchor": {
+        "x": 26.02,
+        "z": -55.349999999999994
+      }
+    },
+    {
+      "id": "bedroom2Door",
+      "x": 21.8,
+      "z": -55.46,
+      "rotation": 64.288598588387,
+      "physicalRoom": "bedroom2",
+      "lightingRoom": "bedroom2",
+      "useAnchor": {
+        "x": 20.6,
+        "z": -55.46
+      }
+    },
+    {
+      "id": "bedroom3Bed",
+      "x": 48.6,
+      "z": -30.6,
+      "rotation": 45,
+      "physicalRoom": "bedroom3",
+      "lightingRoom": "bedroom3",
+      "useAnchor": {
+        "x": 48.6,
+        "z": -27.5
+      }
+    },
+    {
+      "id": "bedroom3Wardrobe",
+      "x": 43.57,
+      "z": -33.81,
+      "rotation": 2.354024636261329,
+      "physicalRoom": "bedroom3",
+      "lightingRoom": "bedroom3",
+      "useAnchor": {
+        "x": 42.97,
+        "z": -32.770769515458674
+      }
+    },
+    {
+      "id": "bedroom3Chest",
+      "x": 51.42,
+      "z": -24.6,
+      "rotation": -153.08344538304868,
+      "physicalRoom": "bedroom3",
+      "lightingRoom": "bedroom3",
+      "useAnchor": {
+        "x": 52.339238815542515,
+        "z": -25.519238815542515
+      }
+    },
+    {
+      "id": "bedroom3Crates",
+      "x": 43.68,
+      "z": -24.39,
+      "rotation": -148.99491399474584,
+      "physicalRoom": "bedroom3",
+      "lightingRoom": "bedroom3",
+      "useAnchor": {
+        "x": 42.42429642582421,
+        "z": -24.053535241366724
+      }
+    },
+    {
+      "id": "bedroom3Door",
+      "x": 39.89,
+      "z": -32.07,
+      "rotation": 74.10339105776325,
+      "physicalRoom": "bedroom3",
+      "lightingRoom": "bedroom3",
+      "useAnchor": {
+        "x": 38.69,
+        "z": -32.07
+      }
+    },
+    {
+      "id": "terrace:decks",
+      "x": 8.16,
+      "z": 8.13,
+      "rotation": 45,
+      "physicalRoom": "terrace",
+      "lightingRoom": "terrace",
+      "useAnchor": {
+        "x": 9.291370849898476,
+        "z": 6.998629150101525
+      }
+    },
+    {
+      "id": "clutter:dining:rug:585857408",
+      "x": -18,
+      "z": 28.1,
+      "rotation": 0,
+      "physicalRoom": "dining",
+      "lightingRoom": "dining",
+      "useAnchor": {
+        "x": -18,
+        "z": 28.1
+      }
+    },
+    {
+      "id": "clutter:dining:mess:teaTable",
+      "x": -21.69,
+      "z": -17.43,
+      "rotation": -63.02308529760313,
+      "physicalRoom": "parlour",
+      "lightingRoom": "parlour",
+      "useAnchor": {
+        "x": -21.69,
+        "z": -17.43
+      }
+    },
+    {
+      "id": "clutter:dining:mess:cardTable",
+      "x": 50.1,
+      "z": 19.31,
+      "rotation": 56.2910479066378,
+      "physicalRoom": "studio",
+      "lightingRoom": "studio",
+      "useAnchor": {
+        "x": 50.1,
+        "z": 19.31
+      }
+    },
+    {
+      "id": "clutter:dining:lamp:585857408",
+      "x": -11.33,
+      "z": 14.9,
+      "rotation": 31,
+      "physicalRoom": "dining",
+      "lightingRoom": "dining",
+      "useAnchor": {
+        "x": -11.33,
+        "z": 14.9
+      }
+    },
+    {
+      "id": "clutter:dining:plant:585857509",
+      "x": -25.17,
+      "z": 15.76,
+      "rotation": -35,
+      "physicalRoom": null,
+      "lightingRoom": "dining",
+      "useAnchor": {
+        "x": -25.17,
+        "z": 15.76
+      }
+    },
+    {
+      "id": "clutter:dining:candles:585857610",
+      "x": -6.08,
+      "z": 20.94,
+      "rotation": 67,
+      "physicalRoom": "dining",
+      "lightingRoom": "dining",
+      "useAnchor": {
+        "x": -6.08,
+        "z": 20.94
+      }
+    },
+    {
+      "id": "clutter:dining:books:585857711",
+      "x": -19.09,
+      "z": 13.55,
+      "rotation": -5,
+      "physicalRoom": "dining",
+      "lightingRoom": "dining",
+      "useAnchor": {
+        "x": -19.09,
+        "z": 13.55
+      }
+    },
+    {
+      "id": "clutter:dining:neon:585857812",
+      "x": -8.23,
+      "z": 17.5,
+      "rotation": 49,
+      "physicalRoom": "dining",
+      "lightingRoom": "dining",
+      "useAnchor": {
+        "x": -8.23,
+        "z": 17.5
+      }
+    },
+    {
+      "id": "clutter:terrace:plant:-2108666741",
+      "x": 10.83,
+      "z": 3.73,
+      "rotation": 71,
+      "physicalRoom": "terrace",
+      "lightingRoom": "terrace",
+      "useAnchor": {
+        "x": 10.83,
+        "z": 3.73
+      }
+    },
+    {
+      "id": "clutter:terrace:lantern:-2108666640",
+      "x": -10.8,
+      "z": 2.1,
+      "rotation": -79,
+      "physicalRoom": "terrace",
+      "lightingRoom": "terrace",
+      "useAnchor": {
+        "x": -10.8,
+        "z": 2.1
+      }
+    },
+    {
+      "id": "clutter:terrace:candles:-2108666539",
+      "x": 6.62,
+      "z": -8.78,
+      "rotation": 37,
+      "physicalRoom": "terrace",
+      "lightingRoom": "terrace",
+      "useAnchor": {
+        "x": 6.62,
+        "z": -8.78
+      }
+    },
+    {
+      "id": "clutter:parlour:rug:-1478395494",
+      "x": -16,
+      "z": -22.35,
+      "rotation": 0,
+      "physicalRoom": "parlour",
+      "lightingRoom": "parlour",
+      "useAnchor": {
+        "x": -16,
+        "z": -22.35
+      }
+    },
+    {
+      "id": "clutter:parlour:mess:bags",
+      "x": -18.95,
+      "z": -33.96,
+      "rotation": -36.02944460572104,
+      "physicalRoom": "parlour",
+      "lightingRoom": "parlour",
+      "useAnchor": {
+        "x": -18.95,
+        "z": -33.96
+      }
+    },
+    {
+      "id": "clutter:parlour:lamp:-1478395494",
+      "x": -6.59,
+      "z": -20.759999999999998,
+      "rotation": 71,
+      "physicalRoom": "parlour",
+      "lightingRoom": "parlour",
+      "useAnchor": {
+        "x": -6.59,
+        "z": -20.759999999999998
+      }
+    },
+    {
+      "id": "clutter:parlour:plant:-1478395393",
+      "x": -25.95,
+      "z": -24.17,
+      "rotation": -89,
+      "physicalRoom": "parlour",
+      "lightingRoom": "parlour",
+      "useAnchor": {
+        "x": -25.95,
+        "z": -24.17
+      }
+    },
+    {
+      "id": "clutter:parlour:books:-1478395292",
+      "x": -7.6899999999999995,
+      "z": -28.61,
+      "rotation": 61,
+      "physicalRoom": "parlour",
+      "lightingRoom": "parlour",
+      "useAnchor": {
+        "x": -7.6899999999999995,
+        "z": -28.61
+      }
+    },
+    {
+      "id": "clutter:parlour:candles:-1478395191",
+      "x": -24.53,
+      "z": -29.12,
+      "rotation": -59,
+      "physicalRoom": null,
+      "lightingRoom": "parlour",
+      "useAnchor": {
+        "x": -24.53,
+        "z": -29.12
+      }
+    },
+    {
+      "id": "clutter:boudoir:rug:-615205163",
+      "x": -2,
+      "z": -42.575,
+      "rotation": 0,
+      "physicalRoom": "boudoir",
+      "lightingRoom": "boudoir",
+      "useAnchor": {
+        "x": -2,
+        "z": -42.575
+      }
+    },
+    {
+      "id": "clutter:boudoir:mess:telephone",
+      "x": 6.1,
+      "z": -50.72,
+      "rotation": -14.9894301898521,
+      "physicalRoom": null,
+      "lightingRoom": "boudoir",
+      "useAnchor": {
+        "x": 6.1,
+        "z": -50.72
+      }
+    },
+    {
+      "id": "clutter:boudoir:candles:-615205163",
+      "x": 5.97,
+      "z": -44.7,
+      "rotation": 85,
+      "physicalRoom": "boudoir",
+      "lightingRoom": "boudoir",
+      "useAnchor": {
+        "x": 5.97,
+        "z": -44.7
+      }
+    },
+    {
+      "id": "clutter:boudoir:neon:-615205062",
+      "x": 2.12,
+      "z": -50.86,
+      "rotation": 31,
+      "physicalRoom": "boudoir",
+      "lightingRoom": "boudoir",
+      "useAnchor": {
+        "x": 2.12,
+        "z": -50.86
+      }
+    },
+    {
+      "id": "clutter:boudoir:plant:-615204961",
+      "x": -9.39,
+      "z": -39.9,
+      "rotation": -61,
+      "physicalRoom": "boudoir",
+      "lightingRoom": "boudoir",
+      "useAnchor": {
+        "x": -9.39,
+        "z": -39.9
+      }
+    },
+    {
+      "id": "clutter:boudoir:lantern:-615204860",
+      "x": 5.25,
+      "z": -40.62,
+      "rotation": 65,
+      "physicalRoom": "boudoir",
+      "lightingRoom": "boudoir",
+      "useAnchor": {
+        "x": 5.25,
+        "z": -40.62
+      }
+    },
+    {
+      "id": "clutter:bedroom:mess:wardrobe",
+      "x": -22.62,
+      "z": -64.49,
+      "rotation": -48.00544377447312,
+      "physicalRoom": "bedroom",
+      "lightingRoom": "bedroom",
+      "useAnchor": {
+        "x": -22.62,
+        "z": -64.49
+      }
+    },
+    {
+      "id": "clutter:bedroom:mess:dressingTable",
+      "x": -16.29,
+      "z": -69.66,
+      "rotation": -35.995769600226595,
+      "physicalRoom": null,
+      "lightingRoom": "bedroom",
+      "useAnchor": {
+        "x": -16.29,
+        "z": -69.66
+      }
+    },
+    {
+      "id": "clutter:bedroom:mess:shoeRack",
+      "x": -3.08,
+      "z": -54.39,
+      "rotation": 45,
+      "physicalRoom": null,
+      "lightingRoom": "boudoir",
+      "useAnchor": {
+        "x": -3.08,
+        "z": -54.39
+      }
+    },
+    {
+      "id": "clutter:bedroom:plant:-916779275",
+      "x": -23.259999999999998,
+      "z": -62.68,
+      "rotation": -77,
+      "physicalRoom": "bedroom",
+      "lightingRoom": "bedroom",
+      "useAnchor": {
+        "x": -23.259999999999998,
+        "z": -62.68
+      }
+    },
+    {
+      "id": "clutter:bedroom:shelf:-916779174",
+      "x": -9.030000000000001,
+      "z": -61.61,
+      "rotation": 85,
+      "physicalRoom": "bedroom",
+      "lightingRoom": "bedroom",
+      "useAnchor": {
+        "x": -9.030000000000001,
+        "z": -61.61
+      }
+    },
+    {
+      "id": "clutter:bedroom:candles:-916779073",
+      "x": -10.719999999999999,
+      "z": -65.59,
+      "rotation": 49,
+      "physicalRoom": "bedroom",
+      "lightingRoom": "bedroom",
+      "useAnchor": {
+        "x": -10.719999999999999,
+        "z": -65.59
+      }
+    },
+    {
+      "id": "clutter:bedroom:neon:-916778972",
+      "x": -12.16,
+      "z": -67.39,
+      "rotation": 31,
+      "physicalRoom": "bedroom",
+      "lightingRoom": "bedroom",
+      "useAnchor": {
+        "x": -12.16,
+        "z": -67.39
+      }
+    },
+    {
+      "id": "clutter:bedroom:books:-916778871",
+      "x": -8.74,
+      "z": -59.32,
+      "rotation": 77,
+      "physicalRoom": "bedroom",
+      "lightingRoom": "bedroom",
+      "useAnchor": {
+        "x": -8.74,
+        "z": -59.32
+      }
+    },
+    {
+      "id": "clutter:turret:mess:telescope",
+      "x": 0.68,
+      "z": -76.18,
+      "rotation": 6.0405651828972395,
+      "physicalRoom": "turret",
+      "lightingRoom": "turret",
+      "useAnchor": {
+        "x": 0.68,
+        "z": -76.18
+      }
+    },
+    {
+      "id": "clutter:turret:lantern:1055133623",
+      "x": 0.9400000000000004,
+      "z": -72.7,
+      "rotation": 65,
+      "physicalRoom": "turret",
+      "lightingRoom": "turret",
+      "useAnchor": {
+        "x": 0.9400000000000004,
+        "z": -72.7
+      }
+    },
+    {
+      "id": "clutter:turret:crates:1055133724",
+      "x": -6.640000000000001,
+      "z": -79.77,
+      "rotation": -29,
+      "physicalRoom": "turret",
+      "lightingRoom": "turret",
+      "useAnchor": {
+        "x": -6.640000000000001,
+        "z": -79.77
+      }
+    },
+    {
+      "id": "clutter:turret:plant:1055133825",
+      "x": -8.98,
+      "z": -74.56,
+      "rotation": -85,
+      "physicalRoom": "turret",
+      "lightingRoom": "turret",
+      "useAnchor": {
+        "x": -8.98,
+        "z": -74.56
+      }
+    },
+    {
+      "id": "clutter:workshop:rug:268483214",
+      "x": -50,
+      "z": 13.2,
+      "rotation": 0,
+      "physicalRoom": "workshop",
+      "lightingRoom": "workshop",
+      "useAnchor": {
+        "x": -50,
+        "z": 13.2
+      }
+    },
+    {
+      "id": "clutter:workshop:mess:pegboard",
+      "x": -28.08,
+      "z": 17.18,
+      "rotation": -5.974723935632937,
+      "physicalRoom": null,
+      "lightingRoom": "dining",
+      "useAnchor": {
+        "x": -28.08,
+        "z": 17.18
+      }
+    },
+    {
+      "id": "clutter:workshop:mess:broomBay",
+      "x": -11.77,
+      "z": 34.43,
+      "rotation": -3.728598642910356,
+      "physicalRoom": "dining",
+      "lightingRoom": "dining",
+      "useAnchor": {
+        "x": -11.77,
+        "z": 34.43
+      }
+    },
+    {
+      "id": "clutter:workshop:mess:lathe",
+      "x": -19.5,
+      "z": 11.54,
+      "rotation": -51.00458737344269,
+      "physicalRoom": null,
+      "lightingRoom": "dining",
+      "useAnchor": {
+        "x": -19.5,
+        "z": 11.54
+      }
+    },
+    {
+      "id": "clutter:workshop:crates:268483214",
+      "x": -43.67,
+      "z": 13.46,
+      "rotation": 77,
+      "physicalRoom": "workshop",
+      "lightingRoom": "workshop",
+      "useAnchor": {
+        "x": -43.67,
+        "z": 13.46
+      }
+    },
+    {
+      "id": "clutter:workshop:lantern:268483315",
+      "x": -43.519999999999996,
+      "z": 11.43,
+      "rotation": 85,
+      "physicalRoom": "workshop",
+      "lightingRoom": "workshop",
+      "useAnchor": {
+        "x": -43.519999999999996,
+        "z": 11.43
+      }
+    },
+    {
+      "id": "clutter:workshop:mushrooms:268483416",
+      "x": -44.04,
+      "z": 15.58,
+      "rotation": 59,
+      "physicalRoom": "workshop",
+      "lightingRoom": "workshop",
+      "useAnchor": {
+        "x": -44.04,
+        "z": 15.58
+      }
+    },
+    {
+      "id": "clutter:workshop:plant:268483517",
+      "x": -56.33,
+      "z": 10.54,
+      "rotation": -77,
+      "physicalRoom": "workshop",
+      "lightingRoom": "workshop",
+      "useAnchor": {
+        "x": -56.33,
+        "z": 10.54
+      }
+    },
+    {
+      "id": "clutter:workshop:lamp:268483618",
+      "x": -56.92,
+      "z": 12.61,
+      "rotation": -85,
+      "physicalRoom": "workshop",
+      "lightingRoom": "workshop",
+      "useAnchor": {
+        "x": -56.92,
+        "z": 12.61
+      }
+    },
+    {
+      "id": "clutter:kitchen:mess:cauldron",
+      "x": -70,
+      "z": 42.5,
+      "rotation": 0,
+      "physicalRoom": "kitchen",
+      "lightingRoom": "kitchen",
+      "useAnchor": {
+        "x": -70,
+        "z": 42.5
+      }
+    },
+    {
+      "id": "clutter:cloakroom:rug:1928006788",
+      "x": 31,
+      "z": -10.95,
+      "rotation": 0,
+      "physicalRoom": "cloakroom",
+      "lightingRoom": "cloakroom",
+      "useAnchor": {
+        "x": 31,
+        "z": -10.95
+      }
+    },
+    {
+      "id": "clutter:cloakroom:mess:mirror",
+      "x": 33.93,
+      "z": -15.75,
+      "rotation": 39.45014457175557,
+      "physicalRoom": "cloakroom",
+      "lightingRoom": "cloakroom",
+      "useAnchor": {
+        "x": 33.93,
+        "z": -15.75
+      }
+    },
+    {
+      "id": "clutter:cloakroom:mess:cloakPegs",
+      "x": 26.63,
+      "z": -16.19,
+      "rotation": 30,
+      "physicalRoom": "cloakroom",
+      "lightingRoom": "cloakroom",
+      "useAnchor": {
+        "x": 26.63,
+        "z": -16.19
+      }
+    },
+    {
+      "id": "clutter:cloakroom:plant:1928006788",
+      "x": 36.93,
+      "z": -12.52,
+      "rotation": 85,
+      "physicalRoom": "cloakroom",
+      "lightingRoom": "cloakroom",
+      "useAnchor": {
+        "x": 36.93,
+        "z": -12.52
+      }
+    },
+    {
+      "id": "clutter:cloakroom:candles:1928006889",
+      "x": 25.07,
+      "z": -11.48,
+      "rotation": -85,
+      "physicalRoom": null,
+      "lightingRoom": "cloakroom",
+      "useAnchor": {
+        "x": 25.07,
+        "z": -11.48
+      }
+    },
+    {
+      "id": "clutter:cloakroom:lantern:1928006990",
+      "x": 36.63,
+      "z": -10.06,
+      "rotation": 71,
+      "physicalRoom": "cloakroom",
+      "lightingRoom": "cloakroom",
+      "useAnchor": {
+        "x": 36.63,
+        "z": -10.06
+      }
+    },
+    {
+      "id": "clutter:studio:rug:1025656989",
+      "x": 50,
+      "z": 21.125,
+      "rotation": 0,
+      "physicalRoom": "studio",
+      "lightingRoom": "studio",
+      "useAnchor": {
+        "x": 50,
+        "z": 21.125
+      }
+    },
+    {
+      "id": "clutter:studio:mess:drumKit",
+      "x": -53.88,
+      "z": 7.51,
+      "rotation": -11.531770741082823,
+      "physicalRoom": "workshop",
+      "lightingRoom": "workshop",
+      "useAnchor": {
+        "x": -53.88,
+        "z": 7.51
+      }
+    },
+    {
+      "id": "clutter:studio:mess:synthRack",
+      "x": -46.48,
+      "z": 6.9,
+      "rotation": 28.739795291688097,
+      "physicalRoom": "workshop",
+      "lightingRoom": "workshop",
+      "useAnchor": {
+        "x": -46.48,
+        "z": 6.9
+      }
+    },
+    {
+      "id": "clutter:studio:mess:microphone",
+      "x": -50.45,
+      "z": 17.2,
+      "rotation": 11.386428796409177,
+      "physicalRoom": "workshop",
+      "lightingRoom": "workshop",
+      "useAnchor": {
+        "x": -50.45,
+        "z": 17.2
+      }
+    },
+    {
+      "id": "clutter:studio:neon:1025656989",
+      "x": 45.09,
+      "z": 23.44,
+      "rotation": -55,
+      "physicalRoom": "studio",
+      "lightingRoom": "studio",
+      "useAnchor": {
+        "x": 45.09,
+        "z": 23.44
+      }
+    },
+    {
+      "id": "clutter:studio:crates:1025657090",
+      "x": 56.4,
+      "z": 20.79,
+      "rotation": 83,
+      "physicalRoom": "studio",
+      "lightingRoom": "studio",
+      "useAnchor": {
+        "x": 56.4,
+        "z": 20.79
+      }
+    },
+    {
+      "id": "clutter:studio:plant:1025657191",
+      "x": 44.56,
+      "z": 17.46,
+      "rotation": -65,
+      "physicalRoom": "studio",
+      "lightingRoom": "studio",
+      "useAnchor": {
+        "x": 44.56,
+        "z": 17.46
+      }
+    },
+    {
+      "id": "clutter:solarium:rug:1706137703",
+      "x": -47,
+      "z": -36.95,
+      "rotation": 0,
+      "physicalRoom": "solarium",
+      "lightingRoom": "solarium",
+      "useAnchor": {
+        "x": -47,
+        "z": -36.95
+      }
+    },
+    {
+      "id": "clutter:solarium:mess:mapTable",
+      "x": -45.97,
+      "z": -38.87,
+      "rotation": -90,
+      "physicalRoom": "solarium",
+      "lightingRoom": "solarium",
+      "useAnchor": {
+        "x": -45.97,
+        "z": -38.87
+      }
+    },
+    {
+      "id": "clutter:solarium:plant:1706137703",
+      "x": -52.93,
+      "z": -37.48,
+      "rotation": -85,
+      "physicalRoom": "solarium",
+      "lightingRoom": "solarium",
+      "useAnchor": {
+        "x": -52.93,
+        "z": -37.48
+      }
+    },
+    {
+      "id": "clutter:solarium:plant:1706137804",
+      "x": -48.74,
+      "z": -43.69,
+      "rotation": -17,
+      "physicalRoom": "solarium",
+      "lightingRoom": "solarium",
+      "useAnchor": {
+        "x": -48.74,
+        "z": -43.69
+      }
+    },
+    {
+      "id": "clutter:solarium:mushrooms:1706137905",
+      "x": -41.09,
+      "z": -37.27,
+      "rotation": 83,
+      "physicalRoom": "solarium",
+      "lightingRoom": "solarium",
+      "useAnchor": {
+        "x": -41.09,
+        "z": -37.27
+      }
+    },
+    {
+      "id": "clutter:solarium:lantern:1706138006",
+      "x": -43.69,
+      "z": -42.39,
+      "rotation": 37,
+      "physicalRoom": "solarium",
+      "lightingRoom": "solarium",
+      "useAnchor": {
+        "x": -43.69,
+        "z": -42.39
+      }
+    },
+    {
+      "id": "clutter:solarium:candles:1706138107",
+      "x": -42.29,
+      "z": -35.17,
+      "rotation": 59,
+      "physicalRoom": "solarium",
+      "lightingRoom": "solarium",
+      "useAnchor": {
+        "x": -42.29,
+        "z": -35.17
+      }
+    },
+    {
+      "id": "clutter:bestiary:rug:2075705930",
+      "x": -67,
+      "z": -8.875,
+      "rotation": 0,
+      "physicalRoom": "bestiary",
+      "lightingRoom": "bestiary",
+      "useAnchor": {
+        "x": -67,
+        "z": -8.875
+      }
+    },
+    {
+      "id": "clutter:bestiary:mess:book",
+      "x": -67.05,
+      "z": -13.68,
+      "rotation": -2.981429696964028,
+      "physicalRoom": "bestiary",
+      "lightingRoom": "bestiary",
+      "useAnchor": {
+        "x": -67.05,
+        "z": -13.68
+      }
+    },
+    {
+      "id": "clutter:bestiary:mess:specimens",
+      "x": -72.01,
+      "z": -14.77,
+      "rotation": -42.005718883904706,
+      "physicalRoom": "bestiary",
+      "lightingRoom": "bestiary",
+      "useAnchor": {
+        "x": -72.01,
+        "z": -14.77
+      }
+    },
+    {
+      "id": "clutter:bestiary:mushrooms:2075705930",
+      "x": -72.85,
+      "z": -11.35,
+      "rotation": -77,
+      "physicalRoom": "bestiary",
+      "lightingRoom": "bestiary",
+      "useAnchor": {
+        "x": -72.85,
+        "z": -11.35
+      }
+    },
+    {
+      "id": "clutter:bestiary:candles:2075706031",
+      "x": -64.27,
+      "z": -15.85,
+      "rotation": 25,
+      "physicalRoom": "bestiary",
+      "lightingRoom": "bestiary",
+      "useAnchor": {
+        "x": -64.27,
+        "z": -15.85
+      }
+    },
+    {
+      "id": "clutter:bestiary:lantern:2075706132",
+      "x": -73.17,
+      "z": -8.11,
+      "rotation": -73,
+      "physicalRoom": "bestiary",
+      "lightingRoom": "bestiary",
+      "useAnchor": {
+        "x": -73.17,
+        "z": -8.11
+      }
+    },
+    {
+      "id": "clutter:bestiary:books:2075706233",
+      "x": -71.39,
+      "z": -14.09,
+      "rotation": -47,
+      "physicalRoom": "bestiary",
+      "lightingRoom": "bestiary",
+      "useAnchor": {
+        "x": -71.39,
+        "z": -14.09
+      }
+    },
+    {
+      "id": "clutter:bestiary:plant:2075706334",
+      "x": -61.04,
+      "z": -9.27,
+      "rotation": 83,
+      "physicalRoom": "bestiary",
+      "lightingRoom": "bestiary",
+      "useAnchor": {
+        "x": -61.04,
+        "z": -9.27
+      }
+    }
+  ],
+  "migration": {
+    "from": 1,
+    "cameraPreserved": true,
+    "held": [
+      {
+        "id": "cauldron",
+        "x": -72.58,
+        "z": 38.7,
+        "rotation": 0
+      }
+    ]
+  },
+  "coordinates": "house-plan-metres",
+  "rotationMode": "absolute-clockwise-degrees-south-zero"
+}

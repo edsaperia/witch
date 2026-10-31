@@ -1,0 +1,760 @@
+{
+  "version": 1,
+  "floorplan": "oak-e553ed9b",
+  "objectCount": 35,
+  "clutterCount": 73,
+  "migration": {
+    "from": 1,
+    "cameraPreserved": true,
+    "held": [
+      {
+        "id": "cauldron",
+        "x": -72.58,
+        "z": 38.7,
+        "rotation": 0
+      }
+    ]
+  },
+  "objects": [
+    {
+      "id": "teaTable",
+      "function": "say",
+      "sourceRoom": "dining",
+      "physicalRoom": "parlour",
+      "crossesRooms": true,
+      "locked": false,
+      "interactive": false,
+      "anchor": {
+        "x": -19.23,
+        "z": -17.43
+      },
+      "centerOutside": -3.807,
+      "footprintOutside": -1.364,
+      "anchorOutside": -5.41,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "cardTable",
+      "function": "say",
+      "sourceRoom": "dining",
+      "physicalRoom": "studio",
+      "crossesRooms": true,
+      "locked": false,
+      "interactive": false,
+      "anchor": {
+        "x": 47.22,
+        "z": 19.309999999999995
+      },
+      "centerOutside": -6.448,
+      "footprintOutside": -3.201,
+      "anchorOutside": -4.864,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "bags",
+      "function": "creator",
+      "sourceRoom": "parlour",
+      "physicalRoom": "parlour",
+      "crossesRooms": false,
+      "locked": false,
+      "interactive": true,
+      "anchor": {
+        "x": -18.58765333685647,
+        "z": -32.60770384319531
+      },
+      "centerOutside": -2.554,
+      "footprintOutside": -0.998,
+      "anchorOutside": -3.858,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "invitations",
+      "function": "invites",
+      "sourceRoom": "parlour",
+      "physicalRoom": "terrace",
+      "crossesRooms": true,
+      "locked": false,
+      "interactive": true,
+      "anchor": {
+        "x": 2.1000000000000005,
+        "z": -11.054551732809568
+      },
+      "centerOutside": -1.6,
+      "footprintOutside": -0.056,
+      "anchorOutside": -3.289,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "telephone",
+      "function": "say",
+      "sourceRoom": "boudoir",
+      "physicalRoom": null,
+      "crossesRooms": true,
+      "locked": false,
+      "interactive": false,
+      "anchor": {
+        "x": 6.1,
+        "z": -49.32
+      },
+      "centerOutside": -2.105,
+      "footprintOutside": -1.281,
+      "anchorOutside": -3.315,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "wardrobe",
+      "function": "creator",
+      "sourceRoom": "bedroom",
+      "physicalRoom": "bedroom",
+      "crossesRooms": false,
+      "locked": false,
+      "interactive": true,
+      "anchor": {
+        "x": -21.02,
+        "z": -64.49
+      },
+      "centerOutside": -2.145,
+      "footprintOutside": -0.169,
+      "anchorOutside": -3.623,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "dressingTable",
+      "function": "creator",
+      "sourceRoom": "bedroom",
+      "physicalRoom": null,
+      "crossesRooms": true,
+      "locked": false,
+      "interactive": true,
+      "anchor": {
+        "x": -15.64,
+        "z": -68.53416697508023
+      },
+      "centerOutside": -1.697,
+      "footprintOutside": -0.684,
+      "anchorOutside": -3.002,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "shoeRack",
+      "function": "creator",
+      "sourceRoom": "bedroom",
+      "physicalRoom": null,
+      "crossesRooms": true,
+      "locked": false,
+      "interactive": true,
+      "anchor": {
+        "x": -1.7549999999999972,
+        "z": -54.39
+      },
+      "centerOutside": -1.881,
+      "footprintOutside": -0.847,
+      "anchorOutside": -1.364,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "clothesPile",
+      "function": "pile",
+      "sourceRoom": "bedroom",
+      "physicalRoom": null,
+      "crossesRooms": true,
+      "locked": false,
+      "interactive": true,
+      "anchor": {
+        "x": -6.25,
+        "z": -63.39
+      },
+      "centerOutside": -2.557,
+      "footprintOutside": -1.491,
+      "anchorOutside": -1.923,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "telescope",
+      "function": "telescope",
+      "sourceRoom": "turret",
+      "physicalRoom": "turret",
+      "crossesRooms": false,
+      "locked": false,
+      "interactive": true,
+      "anchor": {
+        "x": 0.6800000000000008,
+        "z": -74.4
+      },
+      "centerOutside": -2.665,
+      "footprintOutside": -0.945,
+      "anchorOutside": -2.775,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "bed",
+      "function": "bed",
+      "sourceRoom": "turret",
+      "physicalRoom": "turret",
+      "crossesRooms": false,
+      "locked": false,
+      "interactive": true,
+      "anchor": {
+        "x": -3.4753212482682447,
+        "z": -76.89999999999999
+      },
+      "centerOutside": -5.281,
+      "footprintOutside": -2.527,
+      "anchorOutside": -5.347,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "pegboard",
+      "function": "scenery",
+      "sourceRoom": "workshop",
+      "physicalRoom": null,
+      "crossesRooms": true,
+      "locked": false,
+      "interactive": false,
+      "anchor": {
+        "x": -28.779999999999998,
+        "z": 18.392435565298214
+      },
+      "centerOutside": -2.142,
+      "footprintOutside": -1.437,
+      "anchorOutside": -3.269,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "broomBay",
+      "function": "scenery",
+      "sourceRoom": "workshop",
+      "physicalRoom": "dining",
+      "crossesRooms": true,
+      "locked": false,
+      "interactive": false,
+      "anchor": {
+        "x": -10.72,
+        "z": 32.61134665205268
+      },
+      "centerOutside": -5.489,
+      "footprintOutside": -2.053,
+      "anchorOutside": -5.423,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "lathe",
+      "function": "creator",
+      "sourceRoom": "workshop",
+      "physicalRoom": null,
+      "crossesRooms": true,
+      "locked": false,
+      "interactive": true,
+      "anchor": {
+        "x": -17.92,
+        "z": 11.540000000000001
+      },
+      "centerOutside": -1.552,
+      "footprintOutside": -0.211,
+      "anchorOutside": -2.528,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "cauldron",
+      "function": "scenery",
+      "sourceRoom": "kitchen",
+      "physicalRoom": "kitchen",
+      "crossesRooms": false,
+      "locked": false,
+      "interactive": false,
+      "anchor": {
+        "x": -70,
+        "z": 46.5
+      },
+      "centerOutside": -5.781,
+      "footprintOutside": -0.893,
+      "anchorOutside": -5.104,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "mirror",
+      "function": "creator",
+      "sourceRoom": "cloakroom",
+      "physicalRoom": "cloakroom",
+      "crossesRooms": false,
+      "locked": false,
+      "interactive": true,
+      "anchor": {
+        "x": 33.012370465025384,
+        "z": -15.504121907152605
+      },
+      "centerOutside": -1.684,
+      "footprintOutside": -1.351,
+      "anchorOutside": -2.547,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "hats",
+      "function": "hats",
+      "sourceRoom": "cloakroom",
+      "physicalRoom": "cloakroom",
+      "crossesRooms": false,
+      "locked": false,
+      "interactive": true,
+      "anchor": {
+        "x": 27.15,
+        "z": -9.540000000000001
+      },
+      "centerOutside": -4.582,
+      "footprintOutside": -2.368,
+      "anchorOutside": -3.339,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "cloakPegs",
+      "function": "creator",
+      "sourceRoom": "cloakroom",
+      "physicalRoom": "cloakroom",
+      "crossesRooms": false,
+      "locked": false,
+      "interactive": true,
+      "anchor": {
+        "x": 25.229407551880847,
+        "z": -15.814712384601345
+      },
+      "centerOutside": -1.925,
+      "footprintOutside": -0.64,
+      "anchorOutside": -0.859,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "drumKit",
+      "function": "instrument",
+      "sourceRoom": "studio",
+      "physicalRoom": "workshop",
+      "crossesRooms": true,
+      "locked": false,
+      "interactive": true,
+      "anchor": {
+        "x": -55.28,
+        "z": 9.934871130596424
+      },
+      "centerOutside": -3.353,
+      "footprintOutside": -0.287,
+      "anchorOutside": -2.761,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "synthRack",
+      "function": "instrument",
+      "sourceRoom": "studio",
+      "physicalRoom": "workshop",
+      "crossesRooms": true,
+      "locked": false,
+      "interactive": true,
+      "anchor": {
+        "x": -47.68208152801713,
+        "z": 8.10208152801713
+      },
+      "centerOutside": -1.53,
+      "footprintOutside": 0.268,
+      "anchorOutside": -3.315,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "microphone",
+      "function": "instrument",
+      "sourceRoom": "studio",
+      "physicalRoom": "workshop",
+      "crossesRooms": true,
+      "locked": false,
+      "interactive": true,
+      "anchor": {
+        "x": -50.45,
+        "z": 15.899999999999999
+      },
+      "centerOutside": -3.345,
+      "footprintOutside": -2.465,
+      "anchorOutside": -4.566,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "mapTable",
+      "function": "chart",
+      "sourceRoom": "solarium",
+      "physicalRoom": "solarium",
+      "crossesRooms": false,
+      "locked": false,
+      "interactive": true,
+      "anchor": {
+        "x": -43.519999999999996,
+        "z": -38.87
+      },
+      "centerOutside": -5.963,
+      "footprintOutside": -3.287,
+      "anchorOutside": -2.873,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "book",
+      "function": "zoo",
+      "sourceRoom": "bestiary",
+      "physicalRoom": "bestiary",
+      "crossesRooms": false,
+      "locked": false,
+      "interactive": true,
+      "anchor": {
+        "x": -67.44340494855582,
+        "z": -12.211792744040617
+      },
+      "centerOutside": -2.832,
+      "footprintOutside": -1.605,
+      "anchorOutside": -4.034,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "specimens",
+      "function": "say",
+      "sourceRoom": "bestiary",
+      "physicalRoom": "bestiary",
+      "crossesRooms": false,
+      "locked": false,
+      "interactive": false,
+      "anchor": {
+        "x": -72.01,
+        "z": -13.27
+      },
+      "centerOutside": -1.433,
+      "footprintOutside": 0.247,
+      "anchorOutside": -2.464,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "bedroom2Bed",
+      "function": "say",
+      "sourceRoom": "bedroom2",
+      "physicalRoom": "bedroom2",
+      "crossesRooms": false,
+      "locked": true,
+      "interactive": false,
+      "anchor": {
+        "x": 30.79233903981781,
+        "z": -57.985629938503884
+      },
+      "centerOutside": 3.807,
+      "footprintOutside": 4.499,
+      "anchorOutside": 4.465,
+      "approachOverlaps": [],
+      "floorReachable": false
+    },
+    {
+      "id": "bedroom2Wardrobe",
+      "function": "say",
+      "sourceRoom": "bedroom2",
+      "physicalRoom": "bedroom2",
+      "crossesRooms": false,
+      "locked": true,
+      "interactive": false,
+      "anchor": {
+        "x": 24.7,
+        "z": -60.44
+      },
+      "centerOutside": 2.289,
+      "footprintOutside": 2.771,
+      "anchorOutside": 3.89,
+      "approachOverlaps": [],
+      "floorReachable": false
+    },
+    {
+      "id": "bedroom2Chest",
+      "function": "say",
+      "sourceRoom": "bedroom2",
+      "physicalRoom": "bedroom2",
+      "crossesRooms": false,
+      "locked": true,
+      "interactive": false,
+      "anchor": {
+        "x": 34.46,
+        "z": -59.580000000000005
+      },
+      "centerOutside": 4.143,
+      "footprintOutside": 5.684,
+      "anchorOutside": 3.656,
+      "approachOverlaps": [],
+      "floorReachable": false
+    },
+    {
+      "id": "bedroom2Crates",
+      "function": "say",
+      "sourceRoom": "bedroom2",
+      "physicalRoom": "bedroom2",
+      "crossesRooms": false,
+      "locked": true,
+      "interactive": false,
+      "anchor": {
+        "x": 26.02,
+        "z": -55.349999999999994
+      },
+      "centerOutside": 2.299,
+      "footprintOutside": 4.007,
+      "anchorOutside": 3.527,
+      "approachOverlaps": [],
+      "floorReachable": false
+    },
+    {
+      "id": "bedroom2Door",
+      "function": "say",
+      "sourceRoom": "boudoir",
+      "physicalRoom": "bedroom2",
+      "crossesRooms": true,
+      "locked": true,
+      "interactive": false,
+      "anchor": {
+        "x": 20.6,
+        "z": -55.46
+      },
+      "centerOutside": 0.007,
+      "footprintOutside": 0.825,
+      "anchorOutside": -1.203,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "bedroom3Bed",
+      "function": "say",
+      "sourceRoom": "bedroom3",
+      "physicalRoom": "bedroom3",
+      "crossesRooms": false,
+      "locked": true,
+      "interactive": false,
+      "anchor": {
+        "x": 48.6,
+        "z": -27.5
+      },
+      "centerOutside": 4.318,
+      "footprintOutside": 4.421,
+      "anchorOutside": 4.035,
+      "approachOverlaps": [],
+      "floorReachable": false
+    },
+    {
+      "id": "bedroom3Wardrobe",
+      "function": "say",
+      "sourceRoom": "bedroom3",
+      "physicalRoom": "bedroom3",
+      "crossesRooms": false,
+      "locked": true,
+      "interactive": false,
+      "anchor": {
+        "x": 42.97,
+        "z": -32.770769515458674
+      },
+      "centerOutside": 0.511,
+      "footprintOutside": 2.078,
+      "anchorOutside": 1.27,
+      "approachOverlaps": [],
+      "floorReachable": false
+    },
+    {
+      "id": "bedroom3Chest",
+      "function": "say",
+      "sourceRoom": "bedroom3",
+      "physicalRoom": "bedroom3",
+      "crossesRooms": false,
+      "locked": true,
+      "interactive": false,
+      "anchor": {
+        "x": 52.339238815542515,
+        "z": -25.519238815542515
+      },
+      "centerOutside": 3.489,
+      "footprintOutside": 4.988,
+      "anchorOutside": 3.902,
+      "approachOverlaps": [],
+      "floorReachable": false
+    },
+    {
+      "id": "bedroom3Crates",
+      "function": "say",
+      "sourceRoom": "bedroom3",
+      "physicalRoom": "bedroom3",
+      "crossesRooms": false,
+      "locked": true,
+      "interactive": false,
+      "anchor": {
+        "x": 42.42429642582421,
+        "z": -24.053535241366724
+      },
+      "centerOutside": 1.581,
+      "footprintOutside": 3.532,
+      "anchorOutside": 2.444,
+      "approachOverlaps": [],
+      "floorReachable": false
+    },
+    {
+      "id": "bedroom3Door",
+      "function": "say",
+      "sourceRoom": "boudoir",
+      "physicalRoom": "bedroom3",
+      "crossesRooms": true,
+      "locked": true,
+      "interactive": false,
+      "anchor": {
+        "x": 38.69,
+        "z": -32.07
+      },
+      "centerOutside": 0.096,
+      "footprintOutside": 1.104,
+      "anchorOutside": -0.99,
+      "approachOverlaps": [],
+      "floorReachable": true
+    },
+    {
+      "id": "terrace:decks",
+      "function": "say",
+      "sourceRoom": "terrace",
+      "physicalRoom": "terrace",
+      "crossesRooms": false,
+      "locked": false,
+      "interactive": true,
+      "anchor": {
+        "x": 9.291370849898476,
+        "z": 6.998629150101525
+      },
+      "centerOutside": -2.618,
+      "footprintOutside": -0.076,
+      "anchorOutside": -2.799,
+      "approachOverlaps": [],
+      "floorReachable": true
+    }
+  ],
+  "overlaps": [],
+  "corridors": [
+    {
+      "corridor": "bedroom-turret",
+      "footprintCrossings": [
+        "bed"
+      ]
+    },
+    {
+      "corridor": "dining-kitchen",
+      "footprintCrossings": [
+        "cauldron"
+      ]
+    },
+    {
+      "corridor": "terrace-cloakroom",
+      "footprintCrossings": [
+        "hats"
+      ]
+    },
+    {
+      "corridor": "terrace-studio",
+      "footprintCrossings": [
+        "cardTable"
+      ]
+    },
+    {
+      "corridor": "parlour-solarium",
+      "footprintCrossings": [
+        "mapTable"
+      ]
+    },
+    {
+      "corridor": "boudoir-bedroom2",
+      "footprintCrossings": [
+        "bedroom2Door"
+      ]
+    },
+    {
+      "corridor": "boudoir-bedroom3",
+      "footprintCrossings": [
+        "bedroom3Door"
+      ]
+    }
+  ],
+  "limitations": [
+    "Floor reachability is a 0.75m sampled walkable-shape check, not navigation/play acceptance.",
+    "Furniture overlap/path crossings are advisory; runtime walking currently has no furniture collision solver.",
+    "Current kitchen baskets/smoke are room-anchored, not moved by a cauldron object transform.",
+    "Bed wake pose/UI and DJ desk/seat orientation need runtime integration before enabling rotated adoption.",
+    "Room labels are display text; stable object use kinds keep station functions, physical membership controls destination lighting."
+  ],
+  "corridorComparison": {
+    "baseline": [
+      {
+        "corridor": "parlour-boudoir",
+        "footprintCrossings": [
+          "invitations"
+        ]
+      },
+      {
+        "corridor": "boudoir-bedroom",
+        "footprintCrossings": [
+          "clothesPile"
+        ]
+      },
+      {
+        "corridor": "bedroom-turret",
+        "footprintCrossings": [
+          "clothesPile",
+          "bed"
+        ]
+      },
+      {
+        "corridor": "dining-kitchen",
+        "footprintCrossings": [
+          "teaTable",
+          "cauldron"
+        ]
+      },
+      {
+        "corridor": "parlour-solarium",
+        "footprintCrossings": [
+          "mapTable"
+        ]
+      },
+      {
+        "corridor": "boudoir-bedroom2",
+        "footprintCrossings": [
+          "bedroom2Door"
+        ]
+      },
+      {
+        "corridor": "boudoir-bedroom3",
+        "footprintCrossings": [
+          "bedroom3Door"
+        ]
+      }
+    ],
+    "added": [
+      {
+        "corridor": "terrace-cloakroom",
+        "id": "hats"
+      },
+      {
+        "corridor": "terrace-studio",
+        "id": "cardTable"
+      }
+    ]
+  }
+}
