@@ -293,6 +293,7 @@ says what each note covers.
 - Slot switching
 - Compatible nights
 - Save format guards
+- Compatible mushroom extension (PR #1523)
 
 ## [Sound effects](sound.md)
 
