@@ -15,3 +15,7 @@ PR1240 (claude/frame-regress, four commits) addressed Ed's jerky frames near cam
 5. Report exact head/checks/driver; hardware acceptance requires default as smooth as off within a declared noise allowance and smoother than Three. Ask canonical for numerical noise criteria before claiming PASS. Preserve1240 history; close it only after this replacement is registered and reviewed as instructed. No production merge/release.
 
 All current local work is lightweight implementation/driver preparation. The hardware driver and cloud browser proof remain unexecuted until specifically allocated.
+
+## Fixed acceptance (1558#6547506171)
+
+Every arm must show an active invite probe and drawn campfire smoke for at least80% of its measured time, with identical fixture/seed/route, CPU below70%, five-minute input idle and read-only no-Ed-game-tab proof. The analysis module fails closed on missing evidence. The previous Three route must reproduce at least3 frames over50ms with probe/readback time at least30ms, or its p95 must exceed default by at least10ms. Otherwise report INCONCLUSIVE: stall not reproduced. Default passes against off only if p95 is at most off plus max(2ms,5% of off), worst at most off plus16.7ms, and frames over50ms at most off count plus1. Retain all raw numbers; never retry/tune the ceiling. Cloud appearance compares default with Three; off is sensitivity only. The driver will use the same five-minute/fail-closed browser guard as lighting1542. These criteria replace the earlier request for numerical limits; they are not a laptop grant.
