@@ -86,7 +86,11 @@ export class Freeze {
     // chooses anything: Esc is the pause's alone; frozen, only the pause page's own pieces have keys.
     const key = (e: KeyboardEvent) => {
       // Track the opening press before push(), so its repeats cannot close the new owner.
-      if (inputStack.key(e) || !inputStack.top && e.type === "keydown" && this.shortcut(e)) e.stopImmediatePropagation();
+      if (inputStack.key(e) || !inputStack.top && e.type === "keydown" && this.shortcut(e)) {
+        // Stopping listeners does not stop Enter/Space activating a focused native control behind pause.
+        if (this.frozen && inputStack.top === this.layer && !(e.target as Element | null)?.closest?.(PAUSE_UI.join(","))) e.preventDefault();
+        e.stopImmediatePropagation();
+      }
     };
     window.addEventListener("keydown", key, { capture: true });
     window.addEventListener("keyup", key, { capture: true });
@@ -124,6 +128,8 @@ export class Freeze {
     else { this.openPad = null; g.clock.paused = this.wasPaused; this.heldAtThaw = new Set([...(realPads?.() ?? [])].find(p => p)?.buttons.flatMap((b, i) => (b.pressed ? [i] : [])) ?? []); }
     if (this.frozen) inputStack.push(this.layer); else inputStack.remove(this.layer);
     document.body.classList.toggle("paused", this.frozen);
+    const focused = document.activeElement;
+    if (this.frozen && focused && focused instanceof HTMLElement && !focused.closest(PAUSE_UI.join(","))) focused.blur();
     // (thawed, a pause-page control the pad or mouse focused lets go: it kept every key from her after, E opening nothing; pause-on-top)
     if (!this.frozen && document.activeElement instanceof HTMLElement && document.activeElement.closest(PAUSE_UI.join(","))) document.activeElement.blur();
     this.onToggle(this.frozen);
