@@ -14,6 +14,8 @@ export interface JournalStore {
   prune(ids: string[]): Promise<void>;
 }
 export const JOURNAL_TOTAL_BYTES = 96 * 1024 * 1024;
+/** Per-page low-priority retention; warnings/errors survive even if they alone exceed it. */
+export const JOURNAL_DEBUG_BYTES = 512 * 1024;
 /** All paths share one DB budget. Closed pages can go; live/unknown pages never get deleted to make room. */
 export function journalPrunePlan(pages: JournalPage[], next: JournalPage, budget = JOURNAL_TOTAL_BYTES): string[] | null {
   let total = pages.filter(p => p.id !== next.id).reduce((n, p) => n + p.bytes, next.bytes);
@@ -39,7 +41,7 @@ export class PlaytestJournal {
   private closing = false;
   private page: JournalPage;
   constructor(path: string, session: string, id: string, build: string, private store: JournalStore, private markers: MarkerStore, now = Date.now(), limits?: { bytes: number; count: number }) {
-    this.records = new LogRecords(limits?.bytes, limits?.count);
+    this.records = new LogRecords(limits?.bytes ?? JOURNAL_DEBUG_BYTES, limits?.count ?? 1000, true);
     const page = this.page = { id, path, session, build, started: now, updated: now, closed: false, bytes: 0, dropped: 0 };
     try { this.previousMarker = markers.read(); markers.write({ owner: id, active: true, build, at: now, compact: [] }); } catch { this.persistent = false; }
     this.ready = (async () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PlaytestJournal, journalPrunePlan, type JournalEntry, type JournalMarker, type JournalPage, type JournalStore } from "./playtestJournal";
+import { PlaytestJournal, JOURNAL_DEBUG_BYTES, journalPrunePlan, type JournalEntry, type JournalMarker, type JournalPage, type JournalStore } from "./playtestJournal";
 
 function fixture() {
   const pages = new Map<string, JournalPage>(), entries = new Map<string, JournalEntry[]>();
@@ -22,6 +22,33 @@ function fixture() {
 }
 
 describe("incremental playtest journal", () => {
+  it("bounds durable debug growth across a long pause and reload while preserving warnings and errors", async () => {
+    const f = fixture(), journal = f.open("paused");
+    journal.append("error", { message: "before pause" });
+    journal.append("slowframe", { gap: 19533 });
+    for (let second = 0; second < 600; second++) {
+      journal.append("recording:event", { tick: second, debug: "x".repeat(2048) });
+      if (second % 10 === 0) await journal.flush();
+    }
+    await journal.flush();
+    const rows = f.entries.get("paused")!;
+    expect(f.pages.get("paused")!.bytes).toBeLessThan(JOURNAL_DEBUG_BYTES + 32 * rows.length);
+    expect(rows.some(r => r.level === "error" && (r.data as { message: string }).message === "before pause")).toBe(true);
+    expect(rows.some(r => r.level === "warn" && (r.data as { gap: number }).gap === 19533)).toBe(true);
+    const reloaded = f.open("reloaded", 2); expect((await reloaded.ready).unexpected).toBe(true);
+    const bundle = await reloaded.download() as { previous: { entries: JournalEntry[] }[] };
+    expect(bundle.previous[0].entries.filter(r => r.level === "error" || r.level === "warn")).toHaveLength(2);
+    await journal.close(); await reloaded.close();
+  });
+  it("does not evict important records even when they alone exceed the debug budget", async () => {
+    const f = fixture(), journal = new PlaytestJournal("/test", "session", "important", "build", f.store, f.markers, 1, { bytes: 400, count: 1 });
+    for (let i = 0; i < 8; i++) journal.append(i % 2 ? "error" : "slowframe", { index: i });
+    for (let i = 0; i < 20; i++) journal.append("recording:event", { tick: i });
+    await journal.flush();
+    expect(f.entries.get("important")).toHaveLength(8);
+    expect(f.entries.get("important")!.every(r => r.level === "warn" || r.level === "error")).toBe(true);
+    await journal.close();
+  });
   it("keeps committed records and the last fifty notable events after an unexpected reload", async () => {
     const f = fixture(), first = f.open("first");
     first.append("input", { tick: 1 });

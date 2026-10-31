@@ -15,6 +15,26 @@ function fixture(persist?: (kind: string, payload: unknown, context: { build: st
   return { game, recorder: new InputRecorder(game, "test", capture, persist) };
 }
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
+it("keeps a ten-minute paused tape exact without expanding paused frames into the crash journal", () => {
+  vi.useFakeTimers();
+  try {
+    const streamed: { kind: string; payload: unknown }[] = [];
+    const { game, recorder } = fixture((kind, payload) => streamed.push({ kind, payload }));
+    recorder.mutate("pause", () => { game.clock.paused = true; });
+    const before = snapshotGame(game);
+    for (let second = 0; second < 600; second++) {
+      for (let frame = 0; frame < 60; frame++) recorder.step(idle, 1 / 60);
+      vi.advanceTimersByTime(1000);
+    }
+    const tape = recorder.export();
+    expect(tape.complete).toBe(true); expect(tape.events.filter(e => e.kind === "frame")).toHaveLength(36_000);
+    expect(streamed.filter(e => e.kind === "recording:paused")).toHaveLength(1);
+    expect(streamed.filter(e => e.kind === "recording:event").every(e => (e.payload as { event: { kind: string } }).event.kind !== "frame")).toBe(true);
+    expect(snapshotGame(game)).toEqual(before);
+    expect(snapshotGame(replayRecording(tape, "test"))).toEqual(before);
+    expect(vi.getTimerCount()).toBe(0);
+  } finally { vi.useRealTimers(); }
+});
 it("records a scripted fractional-frame run, retains local aim/zoom/framing, and replays to the identical paused moment", async () => {
   const streamed: { kind: string; payload: unknown }[] = [];
   const { game, recorder } = fixture((kind, payload) => streamed.push({ kind, payload: structuredClone(payload) }));
