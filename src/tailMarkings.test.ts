@@ -11,14 +11,16 @@ import type {Style} from "./render/style";
 const bent=()=>new Model().chain([[0,0,0,.2],[-1,0,0,.2],[-1,1,0,.1]],M.BODY,{paint:()=>M.MAGIC});
 describe("optional tail region painter",()=>{
   it.each([
-    // Combined age-size/approved roster baselines (6520542543/6520690688).
-    ["raccoon","275d162d7a02d892c6017c20ec64d5c0ca68eadcbec73b04d8a3a0d1122d3759"],
-    ["stoat","68f49f0a85916ba65f5ffc6d53d64541d18b7ebe0a2ed2d3e1cc89e0dc2d11a6"],
-    ["jaguar","67c854bb29f1305ec035956460f489b4a0c64f47f557befb2ddf4e76f9454b52"],
-  ])("pins projected-fit %s material and normal bytes with the region absent",(id,expected)=>{
+    // Ed's 2026-10-31 size adoption changes raster dimensions; =0 reproduces every old pin exactly.
+    ["raccoon","275d162d7a02d892c6017c20ec64d5c0ca68eadcbec73b04d8a3a0d1122d3759","b00f010363833f302dcf076fc6469d11c122a1e75949b7a2a49701265bbacc7c"],
+    ["stoat","68f49f0a85916ba65f5ffc6d53d64541d18b7ebe0a2ed2d3e1cc89e0dc2d11a6","fe73bf2d7b440dec9c4956b9734c87d32bd1fa2979346bbcdd496bdaa9bff7b2"],
+    ["jaguar","67c854bb29f1305ec035956460f489b4a0c64f47f557befb2ddf4e76f9454b52","5a90481c039dd9acd91ff2328a07856884cbb0dc54c2c180548402a0ca244b39"],
+  ])("pins projected-fit %s material and normal bytes with the region absent",(id,oldSize,adoptedSize)=>{
+    for(const [flag,expected]of [[0,oldSize],[1,adoptedSize]] as const){
     const hash=createHash("sha256");
-    for(const facing of ["towards","away"]){const sp=critter(id,1,0,defaultStyle(),facing);hash.update(JSON.stringify([sp.w,sp.h]));for(const bytes of [sp.m,sp.n])hash.update(Buffer.from(bytes.buffer,bytes.byteOffset,bytes.byteLength));}
+    for(const facing of ["towards","away"]){const sp=critter(id,1,0,{...defaultStyle(),creatureSizeCandidate:flag},facing);hash.update(JSON.stringify([sp.w,sp.h]));for(const bytes of [sp.m,sp.n])hash.update(Buffer.from(bytes.buffer,bytes.byteOffset,bytes.byteLength));}
     expect(hash.digest("hex")).toBe(expected);
+    }
   });
   it("uses arc length around bends for rings and the tip, preserving geometry",()=>{
     const m=bent(),before=JSON.stringify(m.parts.map(({paint,...part})=>part));
