@@ -4,7 +4,11 @@
 
 ## `affected.mjs`
 
-PR-only successful-result cache.
+Successful-result cache for PRs, releases and shared pushes.
+
+## `checked-tree.mjs`
+
+Reuse only an exact tree/environment proven by a successful same-repository Art check run.
 
 ## `scope.mjs`
 
