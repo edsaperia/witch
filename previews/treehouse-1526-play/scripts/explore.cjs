@@ -1,0 +1,17 @@
+const {start}=require('/tmp/qa/serve.cjs');const pw=require('playwright');const fs=require('fs');
+const OUT=process.env.OUT, Q=process.argv[2];
+(async()=>{const s=await start(8766);const b=await pw.chromium.launch({args:["--use-gl=angle","--use-angle=swiftshader","--enable-unsafe-swiftshader","--ignore-gpu-blocklist"]});
+const errors=[];const p=await b.newPage({viewport:{width:1280,height:720}});
+p.on('pageerror',e=>errors.push('pageerror: '+e.message));p.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text())});
+const t0=Date.now();
+await p.goto(`http://127.0.0.1:8766/?${Q}`);
+await p.waitForFunction(()=>window.witch&&window.witch.ready,null,{timeout:300000,polling:500});
+console.log('ready s',(Date.now()-t0)/1000);
+await p.screenshot({path:OUT+'/00-start.png'});
+await p.keyboard.press('Enter');
+await p.waitForFunction(()=>!window.witch.game.clock.paused,null,{timeout:60000}).catch(()=>console.log('still paused'));
+await p.waitForTimeout(3000);
+const st=await p.evaluate(()=>{const g=window.witch.game,W=g.witches[0];return {w:{x:g.witch.x,z:g.witch.z,mode:g.witch.mode,perch:g.witch.perch,seated:g.witch.seated},house:W.house,hat:W.spells.hat,hats:W.spells.hats,wake:g.wake?{open:g.wake.open}:null,keys:Object.keys(W).join(','),objs:window.witch.shot('object:zzz').say,rooms:window.witch.shot('room:zzz').say}});
+console.log(JSON.stringify(st,null,1));
+await p.screenshot({path:OUT+'/01-after-start.png'});
+console.log('errors',JSON.stringify(errors));await b.close();s.close();})().catch(e=>{console.log('FAIL',e.message);process.exit(1)});
