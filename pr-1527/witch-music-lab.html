@@ -8311,6 +8311,22 @@ registerProcessor("witch-fof", WitchFof);
   };
 
   // src/platform/audio/chimes.ts
+  function potionPlop(K, pan = 0, near = 1) {
+    if (near <= 0 || !K.ready("potionPlop", 0.08)) return;
+    const c = K.ctx, at2 = c.currentTime + 5e-3, out = K.voice(pan, 0.7);
+    const g = c.createGain();
+    g.connect(out);
+    K.env(g, at2, K.T.hit.volume * near, 3e-3, 0.24);
+    const o = K.osc("sine", 440, at2, 0.28, g);
+    o.frequency.exponentialRampToValueAtTime(85, at2 + 0.15);
+    const lp = c.createBiquadFilter(), splash2 = c.createGain();
+    lp.type = "lowpass";
+    lp.frequency.value = 1400;
+    lp.connect(splash2);
+    splash2.connect(out);
+    K.env(splash2, at2, K.T.hit.volume * near * 0.2, 2e-3, 0.07);
+    K.noiseBurst(at2, 0.09, lp, 61);
+  }
   function hit(K, pan = 0, near = 1, spent = false) {
     const H = K.T.hit;
     if (!K.ready(spent ? "hitSpent" : "hit", H.gap)) return;
@@ -9043,6 +9059,9 @@ registerProcessor("witch-fof", WitchFof);
     /** A 💌 coming down on the ground, having met no one. */
     land(pan = 0, near = 1) {
       land(this.k, pan, near);
+    }
+    potionPlop(pan = 0, near = 1) {
+      potionPlop(this.k, pan, near);
     }
     /** An area cleared early: the "cleared!" sting (chimes.ts cleared). */
     cleared(pan = 0, near = 1) {
