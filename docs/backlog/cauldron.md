@@ -105,6 +105,7 @@ Agreed one by one with Ed (2026-10-09). Not yet assigned to recipes, apart from 
 43. **Chipmunks:** every sound at double pitch.
 44. **Loop the Loop** (Ed): rising does a loop-the-loop instead.
 45. **Worm's Eye** (Ed): the camera drops very low, almost level with the ground.
+    Implemented as recipe #45 (blue + white + white), reusing camera angle and distance. Default 3° and 0.4× distance; both exposed in Potion lab. Telescope and voyage cameras retain control. The normal view returns through the final two-minute fade or immediately on Stop/replacement; saved camera tuning is unchanged.
 46. **Cartoon:** thick outlines, flat colours, a pictorial pow burst on hits.
 47. **Underwater:** water wobble, muffled bubbly sound, floaty movement. **Only if executed really well** (Ed): bubbles rising from animals breathing, and so on.
 48. **Moonwalk:** she always faces backwards; 💌s still fly forward.

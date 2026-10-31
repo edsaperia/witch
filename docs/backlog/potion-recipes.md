@@ -50,7 +50,7 @@ All potions last ten minutes of game time, start at full strength on waking, and
 | 42 | blue + green + white | Foresight | Coming soon | Attack telegraphs twice as early, in garish colours. |
 | 43 | blue + turquoise + turquoise | Chipmunks | Coming soon | Every sound at double pitch. |
 | 44 | blue + turquoise + white | Loop the Loop | Coming soon | Rising does a loop-the-loop instead. |
-| 45 | blue + white + white | Worm's Eye | Coming soon | The camera drops very low, almost level with the ground. |
+| 45 | blue + white + white | Worm's Eye | Implemented | The camera drops very low, almost level with the ground. |
 | 46 | purple + purple + purple | Cartoon | Coming soon | Thick outlines, flat colours, a pictorial pow burst on hits. |
 | 47 | purple + purple + pink | Underwater | Coming soon | The world ripples like water, sounds turn muffled and bubbly, and movement feels weightless. |
 | 48 | purple + purple + red | Moonwalk | Coming soon | She always faces backwards; 💌s still fly forward. |
