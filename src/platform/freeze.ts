@@ -22,7 +22,7 @@ export const padPauseHeld = (buttons: readonly boolean[], axes: readonly number[
 const STILL: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 /** The pause page's own pieces: above the shield while frozen, and the only things keys and the mouse reach then (its test
  *  sliders, its Controls / What's new / Options buttons and their panel, the Music Lab, the new-build notice, the freeze's stamp). */
-export const PAUSE_UI = ["#settings-page", "#pause-sliders", "#pause-btns", ".corner-panel", "#music-lab", "#new-build", "#freeze-marker", "#freeze-stamp"];
+export const PAUSE_UI = ["#settings-page", "#potion-lab", "#pause-sliders", "#pause-btns", ".corner-panel", "#music-lab", "#new-build", "#freeze-marker", "#freeze-stamp"];
 /** Over every overlay (the highest is the corner panel's 62). */
 const PAUSE_Z = 1000;
 const LAYER_CSS = `#pause-shield { position: fixed; inset: 0; z-index: ${PAUSE_Z}; display: none; }
@@ -40,7 +40,7 @@ export class Freeze {
     id: "pause",
     // Native pause controls keep browser defaults (typing, slider arrows, Enter clicks) without propagating to game/panels.
     // Settings retains its window key handler until its separately released migration.
-    acceptsKey: e => !!(e.target as Element | null)?.closest?.("#settings-page"),
+    acceptsKey: e => !!(e.target as Element | null)?.closest?.("#settings-page, #potion-lab") || e.code === 'Escape' && !!document.querySelector('#potion-lab.open'),
     key: e => e.type === "keydown" && this.shortcut(e),
   };
   /** Whether the game was already paused (the start screen, the end) when it froze. */
@@ -104,7 +104,7 @@ export class Freeze {
       if (!e.repeat) this.toggle();
       return true;
     }
-    if (e.code === "Period" && this.frozen && !textEntry(e.target)) {
+    if (e.code === "Period" && this.frozen && !textEntry(e.target) && !document.querySelector('#potion-lab.open')) {
       e.preventDefault(); this.step(e.shiftKey ? 10 : 1); return true;
     }
     return false;
@@ -164,7 +164,10 @@ export class Freeze {
   /** The pad's pause (Options, standard button 9: platform/bindings.ts global.pause) toggles, read once a frame. */
   pollPad(): void {
     const pad = [...(realPads?.() ?? [])].find(p => p), down = !!pad && padPauseHeld(pad.buttons.map(b => b.pressed), pad.axes);
-    if (down && !this.padPrev) this.toggle();
+    if (down && !this.padPrev) {
+      if (document.querySelector('#potion-lab.open')) document.querySelector('#potion-lab.open')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
+      else this.toggle();
+    }
     this.padPrev = down;
   }
 

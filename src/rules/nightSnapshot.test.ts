@@ -15,6 +15,18 @@ const roundtrip = (g: Game) => restoreGame(JSON.parse(JSON.stringify(snapshotGam
 function stable(g: Game) { const paused = g.clock.paused; g.clock.paused = false; try { return snapshotGame(g); } finally { g.clock.paused = paused; } }
 
 describe("a whole night's snapshot", () => {
+  it('migrates older nights without mushroom state and preserves new brewing snapshots exactly', () => {
+    const g = fresh('fox');
+    const initial = g.mushrooms;
+    delete (g as unknown as { mushrooms?: unknown }).mushrooms;
+    const old = roundtrip(g);
+    expect(old.mushrooms).toEqual(initial);
+    old.mushrooms.baskets.blue = 17;
+    old.mushrooms.carried[0] = ['pink', 'white'];
+    old.mushrooms.ingredients = ['red'];
+    old.mushrooms.trips[0] = { recipe: ['blue', 'blue', 'blue'], key: 'blue+blue+blue', at: 10, until: 610 };
+    expect(roundtrip(old).mushrooms).toEqual(old.mushrooms);
+  });
   it("keeps seeded streams at their cursor without changing the existing generator", () => {
     const a = rng(123); expect([a(), a(), a()]).toEqual([0.7872516233474016, 0.1785435655619949, 0.49531551403924823]);
     const b = rng(rngState(a)!); expect([b(), b(), b()]).toEqual([a(), a(), a()]);

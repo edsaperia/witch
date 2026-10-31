@@ -6,7 +6,9 @@
 - [treehouse.md](treehouse.md): the treehouse: a walkable house on the Ent round a hub, its rooms, the night's loop through it, the lobby (Ed, 2026-10-14; it overrides journey.md's room table).
 - [unlocks.md](unlocks.md): hats and brooms, unlocked by achievements.
 - [workshop.md](workshop.md): the Workshop (the broom garage renamed): one broom of three parts found at wrecks, sets that cast today's broom spells, the bay, lathe and pegboard (Ed's go 2026-10-23; built: the rules and the finds, #1037, and the room, #1040).
-- [cauldron.md](cauldron.md): the kitchen's cauldron, mushrooms and the 56 trips.
+- [cauldron.md](cauldron.md): the kitchen's cauldron, mushrooms, the expandable trip catalogue and the rule for capturing discoveries during development.
+- [visual-response-projects.md](visual-response-projects.md): seven scoped projects for foliage and footprints, landings and ripples, refraction, patterned lighting, existing normal-map improvements, flowing surfaces and dodge echoes.
+- [world-and-perception.md](world-and-perception.md): Ed's personal-world interpretation, optional party, Ent ambiguity and perception as a way to reveal hidden game systems.
 - [creator-and-house.md](creator-and-house.md): getting dressed, the mirror and poster, stargazing witches and the end of the night.
 - [combat.md](combat.md): pack combat: packs that combo their moves (a lunge, crossfire, a smoke bomb), three moves per animal (melee, ranged, special) from young, lulls and retreats, flyers that take off only to attack, sieges shelled from the trees (Ed, 2026-10-15).
 - [gameplay.md](gameplay.md): smaller changes: babies, flasks, tempo, flying cooldown, enraged marches, controller.

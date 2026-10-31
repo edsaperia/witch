@@ -13,7 +13,7 @@ async function page(game: Game) {
   vi.stubGlobal("window", { addEventListener });
   vi.stubGlobal("navigator", { getGamepads: () => [pad()] });
   vi.stubGlobal("HTMLElement", class {});
-  vi.stubGlobal("document", { hidden: false, addEventListener() {}, createElement: () => ({ style: {}, addEventListener() {} }), head: { append() {} }, body: { append() {}, classList: { toggle() {} } } });
+  vi.stubGlobal("document", { hidden: false, querySelector: () => null, addEventListener() {}, createElement: () => ({ style: {}, addEventListener() {} }), head: { append() {} }, body: { append() {}, classList: { toggle() {} } } });
   const { Input } = await import("./input"), { Freeze } = await import("./freeze"), { inputStack } = await import("./inputStack");
   // The production construction order: game release listeners precede the freeze capture adapter.
   const input = new Input(window), freeze = new Freeze(game, 123, "test");

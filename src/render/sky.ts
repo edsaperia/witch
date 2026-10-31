@@ -150,9 +150,17 @@ export class Sky {
   private u: Record<string, THREE.IUniform>;
 
   private on: boolean;
+  private readonly baseDisc: number;
+  private readonly baseMoon: number;
+  /** Multiplier for the existing moon-radius parameter, reset every frame. */
+  potionMoon = 1;
+  potionMoonGlow = 1;
+  potionFloor = 0;
 
   constructor(T: SkyTuning, disc = 1) {
     this.on = T.on;
+    this.baseDisc = disc;
+    this.baseMoon = T.moon;
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3)); // one triangle over the screen
     this.u = {
@@ -192,7 +200,11 @@ export class Sky {
   }
 
   update(bend: number, x: number, z: number, ahead: number, width: number, moon: MoonState): void {
-    this.mesh.visible = this.on && bend > 1e-6;
+    (this.u.uSky.value as THREE.Vector4).z = this.baseDisc * this.potionMoon;
+    (this.u.uSky.value as THREE.Vector4).y = this.baseMoon * this.potionMoonGlow;
+    this.mesh.visible = this.potionFloor > 0 || this.on && bend > 1e-6;
+    this.mesh.renderOrder = this.potionFloor > 0 ? -100 : 9;
+    (this.mesh.material as THREE.ShaderMaterial).depthTest = this.potionFloor <= 0;
     (this.u.uCam.value as THREE.Vector4).set(x, z, ahead, width);
     (this.u.uMoonAt.value as THREE.Vector4).set(moon.x, moon.y, moon.phase, moon.lit);
     (this.u.uMoonRgb.value as THREE.Vector3).set(...moon.rgb);
