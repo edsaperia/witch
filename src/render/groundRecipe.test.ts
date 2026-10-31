@@ -12,9 +12,10 @@ import {lakeLooksOf} from './lakeLooks';
 import {lakeKnobs} from '../rules/lakes';
 it('retains the accepted shader source and normal material defaults for warm and live ground',()=>{
   const warm=groundProgramMaterial({GROUND_SPECIALIZED:''},{}), live=groundProgramMaterial({GROUND_SPECIALIZED:''},{uTime:{value:1}}), defaults=new ShaderMaterial();
-  // #1523 adds the POTION_SKY-gated wrapper; ordinary active tokens retain their independent baseline.
-  expect(createHash('sha256').update(warm.vertexShader+warm.fragmentShader).digest('hex')).toBe('5c408926d1596622fd9dd0ea8113090eaaf0e4ffb2705a96e203b437f3bc3bef');
+  // v6628 adds THERMAL_VISION to #1523's gated wrapper; ordinary active tokens retain their independent baseline.
+  expect(createHash('sha256').update(warm.vertexShader+warm.fragmentShader).digest('hex')).toBe('b1bb454bef780f1159ded90976eb45137ab95483462e910fba2d5fb1aedfe9a5');
   expect(warm.defines).not.toHaveProperty('POTION_SKY'); expect(live.defines).not.toHaveProperty('POTION_SKY');
+  expect(warm.defines).not.toHaveProperty('THERMAL_VISION'); expect(live.defines).not.toHaveProperty('THERMAL_VISION');
   expect(warm.vertexShader).toBe(live.vertexShader); expect(warm.fragmentShader).toBe(live.fragmentShader); expect(warm.customProgramCacheKey()).toBe(live.customProgramCacheKey());
   for(const key of ['precision','side','shadowSide','transparent','alphaTest','alphaHash','toneMapped','fog','lights','glslVersion','vertexColors'] as const)expect(warm[key]).toBe(defaults[key]);
   warm.dispose();live.dispose();defaults.dispose();

@@ -37,5 +37,17 @@ it('the worker warm key equals the BUILT arrival material for hedgehog814361 and
     expect(groundShaderKey(warm)).toBe(groundShaderKey(arrival));
     expect(warm.customProgramCacheKey()).toBe(arrival.customProgramCacheKey());
     warm.dispose();ground.dispose();
+    if(coast){
+      // v6628 merge: a lazily created coast must inherit both active potion flags through the shared factory.
+      const thermal=new Ground(map,new Forest(map),loadStyle(),1,64,art);
+      thermal.potionSky(1);thermal.thermalVision(1);thermal.setBeach(coast);
+      const material=(thermal.mesh.children.find(o=>(o as any).material?.defines?.GROUND_BEACH!==undefined) as any).material as ShaderMaterial;
+      expect(material.defines).toMatchObject({GROUND_BEACH:'',POTION_SKY:'',THERMAL_VISION:''});
+      const shared=groundProgramMaterial({...groundArrivalProgramDefines(map),POTION_SKY:'',THERMAL_VISION:''},{});
+      expect(groundShaderKey(material)).toBe(groundShaderKey(shared));
+      thermal.thermalVision(0);thermal.potionSky(0);
+      expect(material.defines).not.toHaveProperty('THERMAL_VISION');expect(material.defines).not.toHaveProperty('POTION_SKY');
+      shared.dispose();thermal.dispose();
+    }
   }
 });
