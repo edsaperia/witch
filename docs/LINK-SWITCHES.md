@@ -15,7 +15,7 @@ What the night is: its seed, island, world, opening, sail and her kit.
 | `arrive=1` | The night opens with the sea chart's arrival flight (a sail sets it); the boot's map isn't made ahead. | 2026-10-12 | index.html, app/night.ts, main.ts |
 | `bot=skilled` / `bot=crude` / `bot=…` | A bot plays the run (rules/bot.ts), with a seeded witch. | 2026-10-06 | main.ts |
 | `chart` / `chart=all` | Opens the sea chart page instead of the game; all shows every island. | 2026-10-11 | index.html, app/chartPage.ts |
-| `creator=0` | No character creator: the plain start card (the tools and the smoke runs). | 2026-10-05 | app/fightArena.ts, app/gameParams.ts, app/nightSave.ts, app/opening.ts, main.ts, render/ground.ts |
+| `creator=0` | No character creator: the plain start card (the tools and the smoke runs). | 2026-10-05 | app/fightArena.ts, app/gameParams.ts, app/nightSave.ts, app/opening.ts, main.ts, render/groundRecipe.ts |
 | `dev=0` / `dev=finds` | Hides the bedroom's dev "Player:" pick (0), or opens the finds dev panel (finds). | 2026-10-04 | app/playerPick.ts, main.ts |
 | `fightMomentum=<k>` | The creatures' momentum in a fight for this load (the debug overlay's slider; never remembered). | 2026-10-07 | app/knobs.ts |
 | `fightScale=<k>` | The fight's scale for this load (the debug overlay's slider; never remembered). | 2026-10-07 | app/knobs.ts |
@@ -102,7 +102,7 @@ For the builders, the smoke and bench runs, the repro link and the arenas.
 | `bag=starter` / `bag=quick` / `bag=far` / `bag=none` / `bag=<bag item id>` | Her bag for one load: the Satchel (the starter: base rate and reach, a little homing), the Bumbag (faster 💌s, shorter reach) or the Purse (slower, further); none, no bag. | 2026-10-29 | app/linkParams.ts |
 | `cauldron=0` | Mushroom collecting and the kitchen cauldron (two home mushroom clusters, shared baskets and pot, and the BBB Mirror Floor trip) are on by default; 0 turns them off. | 2026-10-30 | main.ts |
 | `cleared=<cx>_<cy>,…` | The repro link: these areas start cleared. | 2026-10-14 | app/repro.ts |
-| `debug` / `debug=cull` / `debug=shadows` / `debug=attack` | The debug overlay and the metre rulers on from the start; cull also tints whatever just appeared or vanished (pops), shadows draws every shadow a flat magenta, and attack blows on the two farthest soundsystems every 10 s (never felling one). | 2026-10-04 | app/keys.ts, app/night.ts, app/playerPick.ts, app/viewParams.ts, main.ts, render/ground.ts |
+| `debug` / `debug=cull` / `debug=shadows` / `debug=attack` | The debug overlay and the metre rulers on from the start; cull also tints whatever just appeared or vanished (pops), shadows draws every shadow a flat magenta, and attack blows on the two farthest soundsystems every 10 s (never felling one). | 2026-10-04 | app/keys.ts, app/night.ts, app/playerPick.ts, app/viewParams.ts, main.ts, render/groundRecipe.ts |
 | `decide` | Opens Ed's decisions panel (F2 too). | 2026-10-06 | main.ts, ui/decide.ts |
 | `decor=0` | The treehouse rooms without their decoration. | 2026-10-23 | render/houseDecor.ts |
 | `dream=won:<kind>:<item>` / `dream=lost:<kind>:<item>` | Her dream of a loaned find over the night, at once, for a look at it. | 2026-10-24 | main.ts |

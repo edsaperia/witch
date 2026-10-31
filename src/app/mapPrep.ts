@@ -110,6 +110,21 @@ export function startMapPrep(island: string, world: number | undefined, seed: nu
   return prepInWorker(seed, sailTuning(island, world, seed), send);
 }
 
+/** Existing worker, descriptor only: never overwrite the selected sailing's map cache. */
+export function startGroundPrep(island: string, world: number, seed: number) {
+  let worker: Worker | null = null, finish: (v: Record<string, string> | null) => void = () => {};
+  const done = new Promise<Record<string, string> | null>(resolve => { finish = resolve; });
+  const stop = () => { worker?.terminate(); worker = null; finish(null); };
+  try {
+    const tuning = sailTuning(island, world, seed);
+    worker = new Worker(new URL('./mapPrep.worker.ts', import.meta.url), {type:'module'});
+    worker.onmessage = (e: MessageEvent<{ok: boolean; ground?: Record<string, string>}>) => { const value = e.data.ok ? e.data.ground ?? null : null; worker?.terminate(); worker = null; finish(value); };
+    worker.onerror = stop;
+    worker.postMessage({key:prepKey(seed,tuning),seed,tuning,groundOnly:true} satisfies PrepAsk);
+  } catch { stop(); }
+  return {done,stop};
+}
+
 /** The boot's own map (Ed, 2026-10-20: the first load's home map, 1.6 s on the page in the cloud): made in a worker from the page's
  *  first moments, with the tuning the boot's night will have (app/night.ts startNight: the link's, then this browser's settings
  *  but those the link's ?set= gives), and sent straight back for useReadyMap. Null (the map made on the page, as before) with no

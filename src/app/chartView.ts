@@ -19,6 +19,7 @@ import { TUNING } from "../rules/tuning";
 import { islandSigil } from "../../art/sigils.js";
 import { CHART_PIXEL, releaseSeaChart, SeaChart, takeSeaChart, type ChartIsland, type FlightEnd, type FlyOptions } from "../render/chart/seaChart";
 import { loadSave, unlocked, unvisited, type ChartSave } from "./chartSave";
+import { offeredTravelSeed, rememberTravelSeed, registerTravelSeeds } from './travelSeeds';
 import { unlockAll } from "./debugUnlock";
 import { ChartPin } from "../render/chart/chartPin";
 import { islandAt } from "./chartLayout";
@@ -216,8 +217,9 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   // chooses; each island keeps its night's seed for the chart's whole visit, so what was drawn for it before a change of mind is
   // still hers when she comes back to it)
   const seeds = new Map<string, number>();
+  const releaseSeeds = mini ? () => {} : registerTravelSeeds(worldNow,seeds);
   const dive = diveOptions(); // (where its flights hand over: the tuning's, or ?dive='s)
-  const seedOf = (id: string) => { let s = seeds.get(id); if (s === undefined) { s = Math.floor(Math.random() * 1000000); seeds.set(id, s); } return s; };
+  const seedOf = (id: string) => { let s = seeds.get(id); if (s === undefined) { s = offeredTravelSeed(worldNow(), id) ?? Math.floor(Math.random() * 1000000); seeds.set(id, s); rememberTravelSeed(worldNow(), id, s); } return s; };
   const bakeFor = (id: string | null) => {
     if (!sailing || mini || bake?.island === id) return;
     void bake?.job.then(b => b?.stop());
@@ -479,6 +481,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     update(dt, time) { if (!mini) { pad(dt); showHint(); } holdFrame(); wrapOne(); chart.frame(dt, time); const box = canvas.getBoundingClientRect(); for (const [id, p] of pins) p.update(!chart.flying && !left ? chart.screenTopOf(id) : null, box, time, id === chart.selected ? 0 : 1, dt); }, // (each 🧭 over its island's top, never on it; faded while its island's the one chosen)
     resize, choose,
     dispose() {
+      releaseSeeds();
       disposed = true; waiting.clear();
       removeEventListener("keydown", onKey); removeEventListener("keyup", onKeyUp);
       if (poll) { clearInterval(poll); poll = null; }
