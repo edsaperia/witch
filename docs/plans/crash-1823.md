@@ -16,6 +16,8 @@ Ed's log: `docs/evidence/playtest-1031/witch-playtest-1-2026-10-31-18-23.json`, 
 
 **Prime suspect:** the crash-safe journal and the input recording. `src/platform/inputRecording.ts:111-114` writes one `recording:event` journal entry per frame, **even while paused** (no game step), and the journal is persisted for crash-safety. 7.4 MB in one page and about 40 KB/s growth suggest storage writes big enough to stall the main thread (the 19.5 s gap) and run memory or storage out, killing the renderer. That's unproven; prove or rule it out.
 
+**Second suspect: memory pressure from another process.** From about 18:05 UTC, #1540's local full-night bot training (one worker, up to 3,300 s) was running **on the same laptop** while Ed played. Both unclean ends fall inside that window. Chrome kills a renderer under system memory pressure without any page-side error, which matches what we see. Check the training worker's peak memory (#1540 can report it), and if possible Windows' event log or `chrome://crashes` for 18:22–18:24 UTC. Both suspects can be true at once.
+
 ## Do
 1. Reproduce on a build like v6628: pause for 10+ minutes with recording on, then reload. Measure journal bytes, persist time per write, the JS heap and storage quota over time. Also try a reload straight after a long pause, which matches the second page's 19.5 s gap.
 2. Fix the root cause. For example:
