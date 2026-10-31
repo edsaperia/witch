@@ -1,0 +1,284 @@
+[
+ {
+  "run": 1,
+  "steps": [
+   {
+    "step": "4 focused",
+    "activeIsClose": true,
+    "active": "BUTTON[data-act=close]",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": false,
+    "slidersOpen": false,
+    "shieldShown": false,
+    "middleHit": "game",
+    "clockPaused": false,
+    "keys": []
+   },
+   {
+    "step": "5 after Esc (pause)",
+    "activeIsClose": true,
+    "active": "BUTTON[data-act=close]",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Escape",
+      "defaultPrevented": true
+     },
+     {
+      "type": "keyup",
+      "key": "Escape",
+      "defaultPrevented": false
+     }
+    ]
+   },
+   {
+    "step": "6 after Enter (paused)",
+    "activeIsClose": false,
+    "active": "BODY",
+    "clicks": 1,
+    "findsOpen": false,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Enter",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Enter",
+      "defaultPrevented": false
+     }
+    ]
+   },
+   {
+    "step": "7 skipped: Finds already closed"
+   },
+   {
+    "step": "8 after Esc (resume)",
+    "activeIsClose": false,
+    "active": "BODY",
+    "clicks": 1,
+    "findsOpen": false,
+    "bodyPaused": false,
+    "slidersOpen": false,
+    "shieldShown": false,
+    "middleHit": "game",
+    "clockPaused": false,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Escape",
+      "defaultPrevented": true
+     },
+     {
+      "type": "keyup",
+      "key": "Escape",
+      "defaultPrevented": false
+     }
+    ]
+   }
+  ],
+  "errors": []
+ },
+ {
+  "run": 2,
+  "steps": [
+   {
+    "step": "4 focused",
+    "activeIsClose": true,
+    "active": "BUTTON[data-act=close]",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": false,
+    "slidersOpen": false,
+    "shieldShown": false,
+    "middleHit": "game",
+    "clockPaused": false,
+    "keys": []
+   },
+   {
+    "step": "5 after Esc (pause)",
+    "activeIsClose": true,
+    "active": "BUTTON[data-act=close]",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Escape",
+      "defaultPrevented": true
+     },
+     {
+      "type": "keyup",
+      "key": "Escape",
+      "defaultPrevented": false
+     }
+    ]
+   },
+   {
+    "step": "6 after Enter (paused)",
+    "activeIsClose": false,
+    "active": "BODY",
+    "clicks": 1,
+    "findsOpen": false,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Enter",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": "Enter",
+      "defaultPrevented": false
+     }
+    ]
+   },
+   {
+    "step": "7 skipped: Finds already closed"
+   },
+   {
+    "step": "8 after Esc (resume)",
+    "activeIsClose": false,
+    "active": "BODY",
+    "clicks": 1,
+    "findsOpen": false,
+    "bodyPaused": false,
+    "slidersOpen": false,
+    "shieldShown": false,
+    "middleHit": "game",
+    "clockPaused": false,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Escape",
+      "defaultPrevented": true
+     },
+     {
+      "type": "keyup",
+      "key": "Escape",
+      "defaultPrevented": false
+     }
+    ]
+   }
+  ],
+  "errors": []
+ },
+ {
+  "run": 3,
+  "steps": [
+   {
+    "step": "4 focused",
+    "activeIsClose": true,
+    "active": "BUTTON[data-act=close]",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": false,
+    "slidersOpen": false,
+    "shieldShown": false,
+    "middleHit": "game",
+    "clockPaused": false,
+    "keys": []
+   },
+   {
+    "step": "5 after Esc (pause)",
+    "activeIsClose": true,
+    "active": "BUTTON[data-act=close]",
+    "clicks": 0,
+    "findsOpen": true,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Escape",
+      "defaultPrevented": true
+     },
+     {
+      "type": "keyup",
+      "key": "Escape",
+      "defaultPrevented": false
+     }
+    ]
+   },
+   {
+    "step": "6 skipped (Space-only run)"
+   },
+   {
+    "step": "7 after Space (paused)",
+    "activeIsClose": false,
+    "active": "BODY",
+    "clicks": 1,
+    "findsOpen": false,
+    "bodyPaused": true,
+    "slidersOpen": true,
+    "shieldShown": true,
+    "middleHit": "pause-shield",
+    "clockPaused": true,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": " ",
+      "defaultPrevented": false
+     },
+     {
+      "type": "keyup",
+      "key": " ",
+      "defaultPrevented": false
+     }
+    ]
+   },
+   {
+    "step": "8 after Esc (resume)",
+    "activeIsClose": false,
+    "active": "BODY",
+    "clicks": 1,
+    "findsOpen": false,
+    "bodyPaused": false,
+    "slidersOpen": false,
+    "shieldShown": false,
+    "middleHit": "game",
+    "clockPaused": false,
+    "keys": [
+     {
+      "type": "keydown",
+      "key": "Escape",
+      "defaultPrevented": true
+     },
+     {
+      "type": "keyup",
+      "key": "Escape",
+      "defaultPrevented": false
+     }
+    ]
+   }
+  ],
+  "errors": []
+ }
+]
