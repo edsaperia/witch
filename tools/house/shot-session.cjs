@@ -1,5 +1,6 @@
 // Shared house-shot protocol. No game changes, no dropped draws, no larger capture timeout.
 const { holdSimulation, startingBoundary } = require("../bench/hold-simulation.cjs");
+const { installDrawCensus } = require("./draw-census.cjs");
 function installClock() {
   const real = performance.now.bind(performance);
   let held = null;
@@ -43,6 +44,7 @@ async function prepareShot(page) {
   // Same deterministic fade settling protocol as tools/bench/frames.cjs; simulation does not step.
   for (let i = 1; i <= 80; i++) {
     await page.evaluate(t => window.__houseShotClock(t), 1e7 + i * 100);
+    if (i === 80 && process.env.DRAW_CENSUS === "1") await page.evaluate(installDrawCensus);
     await step(page, {}, 1, 0);
   }
   return page.evaluate(() => {
@@ -53,7 +55,8 @@ async function prepareShot(page) {
       wallClock: performance.now(), houseVisible: !!v.houseRooms?.floor.visible,
       camera: v.camera.matrixWorld.elements.slice(), projection: v.camera.projectionMatrix.elements.slice(),
       lightTime: w.lightUniforms.uTime.value, lightRealTime: w.lightUniforms.uRealTime.value,
-      glLost: v.renderer.getContext().isContextLost(), drawCalls: v.renderer.info.render.calls };
+      glLost: v.renderer.getContext().isContextLost(), drawCalls: v.renderer.info.render.calls,
+      ...(window.__houseDrawCensus ? { drawCensus: window.__houseDrawCensus() } : {}) };
   });
 }
 async function capture(page, options) {
