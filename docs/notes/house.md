@@ -62,3 +62,7 @@ The broom sets (`config/broom-parts.json` `sets`; `node tools/docs/tables.mjs`):
 | Joust | horse, fairing | battering |
 | Pile driver | ladder, nozzles | pound |
 <!-- /data: broom-sets -->
+
+## House geometry preparation
+
+The fixed living-wood uprights are generated from the shipped layout at build time (`tools/houseStanding.ts`, `virtual:house-standing`). The original `render/houseArt.ts` `standing` algorithm remains the source and parity reference. Lossless repeated-corner/colour tuples decode once per loaded module; no rounding or geometry simplification is used. Object boxes (including the furniture switch), hats, world transforms and drawing order remain runtime work. `houseStanding.test.ts` compares the complete original and generated geometry and rejects unsupported future quad shapes. Browser cold-prep and pixel acceptance are coordinator checks, not implied by these unit tests.
