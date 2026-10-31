@@ -1,6 +1,7 @@
 import type { Game } from '../../rules/game';
 import { effectEnvelope, potionRecipe } from '../../rules/potionRecipes';
 import { potionSettings } from '../../rules/potionSettings';
+import { forestCountStep } from '../../rules/forestCounts';
 
 /** A fallback for existing/future trips; bespoke vision audio owns its own treatment. */
 export function potionFilterState(g: Game) {
@@ -9,6 +10,11 @@ export function potionFilterState(g: Game) {
   const amount = recipe && !['night-vision', 'heat-vision'].includes(recipe.effect)
     ? effectEnvelope(trip, g.clock.time) * p.mix : 0;
   const small = recipe?.effect === 'miniature';
+  if (recipe?.effect === 'the-forest-counts' && amount > 0) {
+    const index = forestCountStep(g).index, depth = potionSettings('the-forest-counts').soundDepth;
+    const steps = [-1, 1, -.5, .5];
+    return { amount, high: 40, low: p.cutoff * Math.pow(2, depth * steps[((index % 4) + 4) % 4]), gain: 1 };
+  }
   return { amount, high: small ? 700 : 40,
     low: small ? 8500 : p.cutoff * Math.pow(2, p.motion * Math.sin(g.clock.time * p.speed * Math.PI * 2)),
     gain: 1 - amount * p.flutter * (.5 + .5 * Math.sin(g.clock.time * p.speed * Math.PI * 4)) };

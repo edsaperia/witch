@@ -4,6 +4,7 @@ import * as THREE from "three";
 import type { View } from "../view";
 import { potionStrength } from "../potionEffects";
 import { potionSettings } from "../../rules/potionSettings";
+import { forestCountTime } from "../../rules/forestCounts";
 import { AREA_TYPES } from "../../rules/map";
 import { coastView } from "../../rules/camera";
 import { canopyShown, witchHeight } from "../../rules/witch";
@@ -103,7 +104,9 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
   SPRITE_UNIFORMS.uLeafJitter.value.set(LJ ? LJ.autumn * bj : 0, LJ ? LJ.value : 0, LJ ? ((LJ.hue ?? 0) / 360) * bj : 0);
   // The wind: gentler over the treetops (Ed, v171: "gentle and lovely").
   const W = t.wind;
-  SPRITE_UNIFORMS.uWind.value.set(W.on ? W.strength * (1 + (W.treetop - 1) * lifted) : 0, W.speed, W.gustScale, time);
+  const counting = potionStrength(g, 'the-forest-counts'), sceneryTime = forestCountTime(g, time, counting);
+  SPRITE_UNIFORMS.uWind.value.set(W.on ? W.strength * (1 + (W.treetop - 1) * lifted) : 0, W.speed, W.gustScale, sceneryTime);
+  v.mist?.setTimeOverride(counting > 0 ? sceneryTime : -1);
   // The trees watching her (Ed, 2026-10-07; render/sprites.ts uWatch): where she was a beat ago, eased lag seconds behind.
   const Wt = t.watching, at = v.watch;
   if (Wt?.on) {

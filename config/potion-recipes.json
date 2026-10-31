@@ -945,7 +945,7 @@
     "effect": "the-forest-counts",
     "name": "The Forest Counts",
     "description": "Wind and mist advance in musical steps while she and animals remain fluid.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 73
   },
   {

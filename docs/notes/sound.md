@@ -1,5 +1,7 @@
 # Sound effects
 
+The Forest Counts (recipe73, PR1544) uses the shared trip filter from PR1536, stepping its cutoff through four values on the same real beat boundaries as wind and mist. Lab controls change beats per step and cutoff range in octaves. Gain stays steady; the existing dry/wet envelope returns normal sound over the final two minutes. No new nodes, sources or altered simulation clock. Keep Night/Heat Vision's bespoke routing when combining.
+
 Potion audio (Ed, 2026-10-31): every potion alters existing sounds throughout its trip. `platform/audio/potionFilter.ts` supplies a shared dry/filtered bus for music (including legend layers) and SFX, preserving their volume controls. The fallback gently moves a low-pass cutoff and attenuates volume; Miniature removes bass for small-speaker sound. The game clock drives motion and the existing final-two-minute envelope restores the dry path; browser pause suspends the audio context. No new sources or timers. Night Vision and Heat Vision bypass this fallback because PR1531 supplies their bespoke creature-only/pitched treatment; combining must preserve both routes. Offline audio checks/audition remain pending coordinator allocation in PR1536.
 
 **Cauldron plop** (2026-10-31): a short descending bubble tone and filtered splash in `platform/audio/chimes.ts`, played once when each brewing flight lands (`sfxCues.ts` reads the flight's serial). `node tools/sfx/check.mjs potion-plop` renders and checks it offline.
