@@ -64,3 +64,34 @@ Each item is small. Ship each slice as one PR: CI green, then the coordinator co
 - Branch from the latest `claude/prototype` (v6628). Your own branch and draft PR, with `REPORT:`/`QUESTION:`/`FINAL:` comments.
 - `node tools/config/check.mjs` and nearby tests one-worker, then CI green on the exact head.
 - No laptop browser. The coordinator runs cloud captures and releases.
+
+# Addendum: stumps and the home legend (Ed, 17:47 and 17:52 UTC)
+
+Sense-checked against the code by the coordinator. Ed's words are quoted; his new rules replace the earlier ones named below. Items 7–9 go to slice B (render, #1554 builder), item 10 to slice A (rules, #1552 builder) after its current items, unless root assigns another builder.
+
+### 7. Stump sigil stacks: hostiles only, then everyone (Ed: "in wild areas, I think they should only show the hostile creatures (no legends, no babies, no happy animals); when there are no more hostile creatures, then all of the area creatures show above the stump (all levels)")
+
+- **Now:** `stoneStack` (`src/rules/stoneStacks.ts:87-96`, filter `inStack` :70) shows every rank, including the legend (`legend: !!c.boss`), all babies (the circle baby too) and invited "friend" creatures. `stackOrder` (:82) puts enemies at the bottom and friends above. Drawing is in `src/render/leash/stones.ts:108-115`.
+- **Change:** while the wild area still has any hostile creature (wild, not invited, level > 0, not the legend), the stack shows **only those hostile creatures**: no legend, no babies, no happy or invited animals. Once none are left, the stack shows **all of the area's creatures, every level** (legend, adults, youths, babies, the circle baby), in the existing order (Ed 28–29 Oct: babies on top, legend lowest). The leashed/dropped/gone exclusions stay.
+- After a cast or wave converts the area, it empties and scatters as today (`stoneOpen`, `friendSigils`).
+
+### 8. Soundsystem spell icon visible from any distance once the area is clear (Ed: "The soundsystem spell icon on the stump should be visible from all distances once there are no hostile creatures")
+
+- **Now:** the 🎶 (`src/render/leash/stones.ts:116-127`) shows only when `castReady`, and in stump mode only as she reaches the cut (`pastCasting`, `stoneStacks.ts:111-121`; Ed 28 Oct "visible only as you enter the clearing… disappears as you leave"). The stack column itself only draws within 90 m (`STONES_DEFAULT` range 90/fade 20; `home.ts:111-113`).
+- **Change (replaces Ed's 28 Oct rule):** when `castReady`, the 🎶 shows on the stump **at any distance**, with no distance fade or cut. It shows whenever the stump is on screen, including beyond the 90 m stack range, so the icon is drawn even where the stack isn't. Keep it readable at distance (a minimum on-screen size). **Casting itself is unchanged:** she still casts on the stump (`castShown` / the cast ring within `cast.show` 6 m).
+
+### 9. Stumps not drawn (Ed: "Stumps seem to not be drawn anymore")
+
+- **Unknown cause.** No commit since 29 Oct touched `src/render/view/home.ts` `drawMarkers` (:176-194), `src/render/island.ts`, `src/render/markers.ts` or `art/props/stumps.js`. Suspects:
+  1. The 30 Oct shader draw gate / limited landing (`src/render/shaderDrawGate.ts:13-28`, commits 6c4873df4 and 64c95a287). Stump `SpriteBatch`es are created lazily after `compileAll`, and the gate skips any material whose program isn't ready while `shaderDrawStatus.active`.
+  2. Stump art (`AssetLibrary.stumpArt`, `src/render/assets.ts:683`) dropped on `reseat` (:727-737) and never re-requested.
+  3. `runeMarkers.stump.on` (on in tuning).
+- **Do:** reproduce first. The coordinator can run a cloud check: provide a tiny driver that loads `?seed=123`, walks or shots to a wild area, and reports `shaderDrawStatus.skipped` labels, stump batch counts and whether stump art arrived. Then fix the root cause and add a regression test. Don't fix it blind.
+
+### 10. The home legend (Ed: "At the moment we draw the legend of the island you're on by the treehouse. Remove this. Instead, the legend whose island you're on is a friendly legend of its type that spawns in your home area. It targets enraged creatures, and any creature that is targeting you if it can target it without leaving the home area." and "The home legend does not target creatures of its own type, as normal")
+
+- **Remove** the treehouse carrier: `carrierOf` (`src/rules/treehouse.ts:111-117`), baked in `entTreehouseSprites` (`src/render/homeArt.ts:160-180`), placed in `home.ts:427-440`, knob `treehouse.carrier: "island"` (Ed 10 Oct). The Ent/oak then has no carrier.
+- **Spawn** one **friendly legend of the island's own kind** (`map.island.kind`; the home area type gives the wrong species) in the home area (`homeArea(map)`, `src/rules/homeArea.ts:12-33`). Today `spawnCreatures` skips home (`src/rules/creatures.ts:403-434`; Ed 5 Oct "Home area shouldn't have a legend", now replaced for this one legend). Make it happy, give it a lair in the home area and no quest, and mark it (for example `homeGuard`). On the home island (no island kind) there is none.
+- **Behaviour:** it **never leaves the home area**: it roams or stands there. It targets (a) enraged creatures and (b) any creature targeting her, **only if it can attack them without leaving the home area** (its normal attack reach from inside the home area; use the same range knob as item 6). It **never targets its own kind** (the normal legend rule). It's exempt from item 6's route walking.
+- **Exclude it from:** the win (`src/rules/win.ts:244-275`): it doesn't go to the dancefloor. Also dealt legends, quests, invites/💌, partyEgg, `hasKin`, stacks (item 7) and the legend count.
+- **Tests:** spawn per island kind, none on the home island, the targeting gates (enraged / attacking her / inside-area reach / own kind), never leaving the home area, and the exclusions.
