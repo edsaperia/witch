@@ -1,0 +1,8 @@
+[29.3s] loaded 28.408
+[72.5s] fires [{"x":3472.798738082701,"z":2292.1735112566575,"scale":1,"d":530.1652805305545},{"x":2847.1519643374227,"z":2145.6558311616964,"scale":1,"d":655.0171251209857},{"x":3831.780964176144,"z":2975.643165788481,"scale":1,"d":717.8510486280737},{"x":2700.9467436681857,"z":3295.6442787288242,"scale":1,"d":736.1305663080228},{"x":3250.462950521843,"z":3649.3280703606824,"scale":1,"d":932.9089131393786}]
+[73.8s] fire 0 REJECTED page.evaluate: Error: Witch body not visible: staging refused
+    at eval (eval at evaluate (:311:30), <anonymous>:11:36)
+    at async <anonymous>:337:30
+[137.8s] fire 1 REJECTED page.evaluate: Error: Witch body not visible: staging refused
+    at eval (eval at evaluate (:311:30), <anonymous>:11:36)
+    at async <anonymous>:337:30

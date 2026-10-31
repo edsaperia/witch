@@ -1,0 +1,234 @@
+{
+ "r": {
+  "t": 0.26749999999999974,
+  "clockAfter": 0.26749999999999974,
+  "out": [
+   {
+    "fire": [
+     2700.9,
+     3295.6
+    ],
+    "d": 1,
+    "shot": true,
+    "witchBatchItems": 0,
+    "bareItems": 2,
+    "hatHas": true,
+    "hatDown": true,
+    "herIdle": false,
+    "mode": "ground",
+    "ground": -0.46
+   },
+   {
+    "fire": [
+     2700.9,
+     3295.6
+    ],
+    "d": 3,
+    "shot": true,
+    "witchBatchItems": 0,
+    "bareItems": 2,
+    "hatHas": true,
+    "hatDown": true,
+    "herIdle": false,
+    "mode": "ground",
+    "ground": -0.51
+   },
+   {
+    "fire": [
+     2700.9,
+     3295.6
+    ],
+    "d": 6,
+    "shot": true,
+    "witchBatchItems": 0,
+    "bareItems": 2,
+    "hatHas": true,
+    "hatDown": true,
+    "herIdle": false,
+    "mode": "ground",
+    "ground": -0.6
+   },
+   {
+    "fire": [
+     3250.5,
+     3649.3
+    ],
+    "d": 1,
+    "shot": true,
+    "witchBatchItems": 0,
+    "bareItems": 2,
+    "hatHas": true,
+    "hatDown": true,
+    "herIdle": false,
+    "mode": "ground",
+    "ground": -0.55
+   },
+   {
+    "fire": [
+     3250.5,
+     3649.3
+    ],
+    "d": 3,
+    "shot": true,
+    "witchBatchItems": 0,
+    "bareItems": 2,
+    "hatHas": true,
+    "hatDown": true,
+    "herIdle": false,
+    "mode": "ground",
+    "ground": -0.65
+   },
+   {
+    "fire": [
+     3250.5,
+     3649.3
+    ],
+    "d": 6,
+    "shot": true,
+    "witchBatchItems": 0,
+    "bareItems": 2,
+    "hatHas": true,
+    "hatDown": true,
+    "herIdle": false,
+    "mode": "ground",
+    "ground": -0.85
+   },
+   {
+    "fire": [
+     3831.8,
+     2975.6
+    ],
+    "d": 1,
+    "shot": true,
+    "witchBatchItems": 0,
+    "bareItems": 2,
+    "hatHas": true,
+    "hatDown": true,
+    "herIdle": false,
+    "mode": "ground",
+    "ground": -0.82
+   },
+   {
+    "fire": [
+     3831.8,
+     2975.6
+    ],
+    "d": 3,
+    "shot": true,
+    "witchBatchItems": 0,
+    "bareItems": 2,
+    "hatHas": true,
+    "hatDown": true,
+    "herIdle": false,
+    "mode": "ground",
+    "ground": -0.83
+   },
+   {
+    "fire": [
+     3831.8,
+     2975.6
+    ],
+    "d": 6,
+    "shot": true,
+    "witchBatchItems": 0,
+    "bareItems": 2,
+    "hatHas": true,
+    "hatDown": true,
+    "herIdle": false,
+    "mode": "ground",
+    "ground": -0.86
+   },
+   {
+    "fire": [
+     3472.8,
+     2292.2
+    ],
+    "d": 1,
+    "shot": true,
+    "witchBatchItems": 0,
+    "bareItems": 2,
+    "hatHas": true,
+    "hatDown": true,
+    "herIdle": false,
+    "mode": "ground",
+    "ground": -0.87
+   },
+   {
+    "fire": [
+     3472.8,
+     2292.2
+    ],
+    "d": 3,
+    "shot": true,
+    "witchBatchItems": 0,
+    "bareItems": 2,
+    "hatHas": true,
+    "hatDown": true,
+    "herIdle": false,
+    "mode": "ground",
+    "ground": -0.87
+   },
+   {
+    "fire": [
+     3472.8,
+     2292.2
+    ],
+    "d": 6,
+    "shot": true,
+    "witchBatchItems": 0,
+    "bareItems": 2,
+    "hatHas": true,
+    "hatDown": true,
+    "herIdle": false,
+    "mode": "ground",
+    "ground": -0.86
+   },
+   {
+    "fire": [
+     2847.2,
+     2145.7
+    ],
+    "d": 1,
+    "shot": true,
+    "witchBatchItems": 0,
+    "bareItems": 2,
+    "hatHas": true,
+    "hatDown": true,
+    "herIdle": false,
+    "mode": "ground",
+    "ground": -0.69
+   },
+   {
+    "fire": [
+     2847.2,
+     2145.7
+    ],
+    "d": 3,
+    "shot": true,
+    "witchBatchItems": 0,
+    "bareItems": 2,
+    "hatHas": true,
+    "hatDown": true,
+    "herIdle": false,
+    "mode": "ground",
+    "ground": -0.7
+   },
+   {
+    "fire": [
+     2847.2,
+     2145.7
+    ],
+    "d": 6,
+    "shot": true,
+    "witchBatchItems": 0,
+    "bareItems": 2,
+    "hatHas": true,
+    "hatDown": true,
+    "herIdle": false,
+    "mode": "ground",
+    "ground": -0.78
+   }
+  ]
+ },
+ "errs": []
+}

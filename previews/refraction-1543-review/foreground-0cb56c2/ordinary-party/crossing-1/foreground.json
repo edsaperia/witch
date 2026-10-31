@@ -1,0 +1,91 @@
+{
+  "lateral": -1,
+  "witch": {
+    "x": 3471.798738082701,
+    "z": 2293.1735112566575
+  },
+  "camera": [
+    3471.8782501496758,
+    54.0572742280838,
+    2377.973011792203
+  ],
+  "bodyEnvelope": {
+    "left": 0.45462954928752236,
+    "right": 0.5428454009596401,
+    "bottom": 0.47979447440646106,
+    "top": 0.615423813669405
+  },
+  "fireShape": [
+    0.5145873664180859,
+    0.5348713240580806,
+    0.017432171008635255,
+    0.05345907845600317
+  ],
+  "supportDepth": 0.9912856690663143,
+  "farthestBodyDepth": 0.9911369374193424,
+  "foreground": true,
+  "overlapsPlume": true,
+  "ellipseRadius": 0,
+  "lowResolution": [
+    320,
+    180
+  ],
+  "pair": {
+    "expectedSha": "0cb56c2e55dc0992119a32da86ee08eb256fe59a",
+    "served": {
+      "version": "dev · 0cb56c2",
+      "built": "2026-10-31T17:05:23.107Z"
+    },
+    "kind": "fire",
+    "manual": true,
+    "time": 1.6666666666666656,
+    "enabled": true,
+    "key": {
+      "build": "dev · 0cb56c2",
+      "seed": 123,
+      "world": 0,
+      "island": "home",
+      "scene": "wave 0 · ground",
+      "spot": "play",
+      "viewport": "960x540",
+      "pixelScale": "3 @1 (canvas 320x180)",
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "machine": "Chrome 153 Linux · 4 cores · 16 GB",
+      "knobs": {
+        "spells.hats": "",
+        "spells.bag": "satchel",
+        "?refraction": "1",
+        "?creator": "0"
+      }
+    },
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "forms": {
+      "count": 1,
+      "shapes": [
+        [
+          0.5145915938215946,
+          0.5348761783531036,
+          0.01743722283355198,
+          0.053489779211465915
+        ]
+      ],
+      "states": [
+        [
+          0.9912827671840938,
+          0,
+          1.6666666666666656,
+          1.5
+        ]
+      ],
+      "clock": 1.6666666666666656,
+      "potion": {
+        "wobble": 0,
+        "canopy": 0,
+        "time": 1.6666666666666656
+      }
+    },
+    "offPngByteIdentity": false,
+    "onPngDiffers": true,
+    "limitation": "Capture only: no GPU timing, allocation/memory measurement or automatic foreground acceptance. PNG byte comparisons are not pixel-diff counts. Caller verifies full CI source SHA and scene comparability."
+  }
+}

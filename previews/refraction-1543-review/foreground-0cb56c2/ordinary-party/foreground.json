@@ -1,0 +1,468 @@
+{
+  "expectedSha": "0cb56c2e55dc0992119a32da86ee08eb256fe59a",
+  "fire": {
+    "x": 3472.798738082701,
+    "z": 2292.1735112566575,
+    "scale": 1
+  },
+  "time": 1.6666666666666656,
+  "distance": 1,
+  "stages": [
+    {
+      "lateral": -2,
+      "witch": {
+        "x": 3470.798738082701,
+        "z": 2293.1735112566575
+      },
+      "camera": [
+        3470.7027369449524,
+        54.36424376646253,
+        2377.973011792203
+      ],
+      "bodyEnvelope": {
+        "left": 0.45748004351092775,
+        "right": 0.545570283866973,
+        "bottom": 0.4798261574808078,
+        "top": 0.6152613038759526
+      },
+      "fireShape": [
+        0.5331632268174362,
+        0.5348443309996099,
+        0.01740435577166044,
+        0.05329018176103151
+      ],
+      "supportDepth": 0.991301643579498,
+      "farthestBodyDepth": 0.9911533507551322,
+      "foreground": true,
+      "overlapsPlume": true,
+      "ellipseRadius": 0,
+      "lowResolution": [
+        320,
+        180
+      ],
+      "pair": {
+        "expectedSha": "0cb56c2e55dc0992119a32da86ee08eb256fe59a",
+        "served": {
+          "version": "dev · 0cb56c2",
+          "built": "2026-10-31T17:05:23.107Z"
+        },
+        "kind": "fire",
+        "manual": true,
+        "time": 1.6666666666666656,
+        "enabled": true,
+        "key": {
+          "build": "dev · 0cb56c2",
+          "seed": 123,
+          "world": 0,
+          "island": "home",
+          "scene": "wave 0 · ground",
+          "spot": "play",
+          "viewport": "960x540",
+          "pixelScale": "3 @1 (canvas 320x180)",
+          "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "machine": "Chrome 153 Linux · 4 cores · 16 GB",
+          "knobs": {
+            "spells.hats": "",
+            "spells.bag": "satchel",
+            "?refraction": "1",
+            "?creator": "0"
+          }
+        },
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "forms": {
+          "count": 1,
+          "shapes": [
+            [
+              0.5331790336931028,
+              0.534852428200181,
+              0.017412651360299347,
+              0.05334052835510861
+            ]
+          ],
+          "states": [
+            [
+              0.991296879918734,
+              0,
+              1.6666666666666656,
+              1.5
+            ]
+          ],
+          "clock": 1.6666666666666656,
+          "potion": {
+            "wobble": 0,
+            "canopy": 0,
+            "time": 1.6666666666666656
+          }
+        },
+        "offPngByteIdentity": false,
+        "onPngDiffers": true,
+        "limitation": "Capture only: no GPU timing, allocation/memory measurement or automatic foreground acceptance. PNG byte comparisons are not pixel-diff counts. Caller verifies full CI source SHA and scene comparability."
+      }
+    },
+    {
+      "lateral": -1,
+      "witch": {
+        "x": 3471.798738082701,
+        "z": 2293.1735112566575
+      },
+      "camera": [
+        3471.8782501496758,
+        54.0572742280838,
+        2377.973011792203
+      ],
+      "bodyEnvelope": {
+        "left": 0.45462954928752236,
+        "right": 0.5428454009596401,
+        "bottom": 0.47979447440646106,
+        "top": 0.615423813669405
+      },
+      "fireShape": [
+        0.5145873664180859,
+        0.5348713240580806,
+        0.017432171008635255,
+        0.05345907845600317
+      ],
+      "supportDepth": 0.9912856690663143,
+      "farthestBodyDepth": 0.9911369374193424,
+      "foreground": true,
+      "overlapsPlume": true,
+      "ellipseRadius": 0,
+      "lowResolution": [
+        320,
+        180
+      ],
+      "pair": {
+        "expectedSha": "0cb56c2e55dc0992119a32da86ee08eb256fe59a",
+        "served": {
+          "version": "dev · 0cb56c2",
+          "built": "2026-10-31T17:05:23.107Z"
+        },
+        "kind": "fire",
+        "manual": true,
+        "time": 1.6666666666666656,
+        "enabled": true,
+        "key": {
+          "build": "dev · 0cb56c2",
+          "seed": 123,
+          "world": 0,
+          "island": "home",
+          "scene": "wave 0 · ground",
+          "spot": "play",
+          "viewport": "960x540",
+          "pixelScale": "3 @1 (canvas 320x180)",
+          "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "machine": "Chrome 153 Linux · 4 cores · 16 GB",
+          "knobs": {
+            "spells.hats": "",
+            "spells.bag": "satchel",
+            "?refraction": "1",
+            "?creator": "0"
+          }
+        },
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "forms": {
+          "count": 1,
+          "shapes": [
+            [
+              0.5145915938215946,
+              0.5348761783531036,
+              0.01743722283355198,
+              0.053489779211465915
+            ]
+          ],
+          "states": [
+            [
+              0.9912827671840938,
+              0,
+              1.6666666666666656,
+              1.5
+            ]
+          ],
+          "clock": 1.6666666666666656,
+          "potion": {
+            "wobble": 0,
+            "canopy": 0,
+            "time": 1.6666666666666656
+          }
+        },
+        "offPngByteIdentity": false,
+        "onPngDiffers": true,
+        "limitation": "Capture only: no GPU timing, allocation/memory measurement or automatic foreground acceptance. PNG byte comparisons are not pixel-diff counts. Caller verifies full CI source SHA and scene comparability."
+      }
+    },
+    {
+      "lateral": 0,
+      "witch": {
+        "x": 3472.798738082701,
+        "z": 2293.1735112566575
+      },
+      "camera": [
+        3472.857844486945,
+        53.870155132409835,
+        2377.973011792203
+      ],
+      "bodyEnvelope": {
+        "left": 0.45491481307879184,
+        "right": 0.5432071400221273,
+        "bottom": 0.4797751940639854,
+        "top": 0.6155223689967879
+      },
+      "fireShape": [
+        0.49906240520655776,
+        0.5348875438111316,
+        0.01744911208832245,
+        0.0535620631584921
+      ],
+      "supportDepth": 0.9912759370207296,
+      "farthestBodyDepth": 0.9911269383834255,
+      "foreground": true,
+      "overlapsPlume": true,
+      "ellipseRadius": 0,
+      "lowResolution": [
+        320,
+        180
+      ],
+      "pair": {
+        "expectedSha": "0cb56c2e55dc0992119a32da86ee08eb256fe59a",
+        "served": {
+          "version": "dev · 0cb56c2",
+          "built": "2026-10-31T17:05:23.107Z"
+        },
+        "kind": "fire",
+        "manual": true,
+        "time": 1.6666666666666656,
+        "enabled": true,
+        "key": {
+          "build": "dev · 0cb56c2",
+          "seed": 123,
+          "world": 0,
+          "island": "home",
+          "scene": "wave 0 · ground",
+          "spot": "play",
+          "viewport": "960x540",
+          "pixelScale": "3 @1 (canvas 320x180)",
+          "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "machine": "Chrome 153 Linux · 4 cores · 16 GB",
+          "knobs": {
+            "spells.hats": "",
+            "spells.bag": "satchel",
+            "?refraction": "1",
+            "?creator": "0"
+          }
+        },
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "forms": {
+          "count": 1,
+          "shapes": [
+            [
+              0.49906223984023773,
+              0.5348904722567533,
+              0.01745218963895906,
+              0.05358078105340114
+            ]
+          ],
+          "states": [
+            [
+              0.9912741688609112,
+              0,
+              1.6666666666666656,
+              1.5
+            ]
+          ],
+          "clock": 1.6666666666666656,
+          "potion": {
+            "wobble": 0,
+            "canopy": 0,
+            "time": 1.6666666666666656
+          }
+        },
+        "offPngByteIdentity": false,
+        "onPngDiffers": true,
+        "limitation": "Capture only: no GPU timing, allocation/memory measurement or automatic foreground acceptance. PNG byte comparisons are not pixel-diff counts. Caller verifies full CI source SHA and scene comparability."
+      }
+    },
+    {
+      "lateral": 1,
+      "witch": {
+        "x": 3473.798738082701,
+        "z": 2293.1735112566575
+      },
+      "camera": [
+        3473.837438824214,
+        53.756093143879085,
+        2377.973011792203
+      ],
+      "bodyEnvelope": {
+        "left": 0.45521585291614236,
+        "right": 0.54355476132812,
+        "bottom": 0.4797634538012115,
+        "top": 0.615582255118282
+      },
+      "fireShape": [
+        0.483513521431652,
+        0.5348973430415849,
+        0.017459433405974834,
+        0.05362484969454362
+      ],
+      "supportDepth": 0.9912700068006629,
+      "farthestBodyDepth": 0.9911208456062817,
+      "foreground": true,
+      "overlapsPlume": true,
+      "ellipseRadius": 0,
+      "lowResolution": [
+        320,
+        180
+      ],
+      "pair": {
+        "expectedSha": "0cb56c2e55dc0992119a32da86ee08eb256fe59a",
+        "served": {
+          "version": "dev · 0cb56c2",
+          "built": "2026-10-31T17:05:23.107Z"
+        },
+        "kind": "fire",
+        "manual": true,
+        "time": 1.6666666666666656,
+        "enabled": true,
+        "key": {
+          "build": "dev · 0cb56c2",
+          "seed": 123,
+          "world": 0,
+          "island": "home",
+          "scene": "wave 0 · ground",
+          "spot": "play",
+          "viewport": "960x540",
+          "pixelScale": "3 @1 (canvas 320x180)",
+          "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "machine": "Chrome 153 Linux · 4 cores · 16 GB",
+          "knobs": {
+            "spells.hats": "",
+            "spells.bag": "satchel",
+            "?refraction": "1",
+            "?creator": "0"
+          }
+        },
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "forms": {
+          "count": 1,
+          "shapes": [
+            [
+              0.4835117506688142,
+              0.5348991167004294,
+              0.017461308670935927,
+              0.053636260806020575
+            ]
+          ],
+          "states": [
+            [
+              0.9912689292667636,
+              0,
+              1.6666666666666656,
+              1.5
+            ]
+          ],
+          "clock": 1.6666666666666656,
+          "potion": {
+            "wobble": 0,
+            "canopy": 0,
+            "time": 1.6666666666666656
+          }
+        },
+        "offPngByteIdentity": false,
+        "onPngDiffers": true,
+        "limitation": "Capture only: no GPU timing, allocation/memory measurement or automatic foreground acceptance. PNG byte comparisons are not pixel-diff counts. Caller verifies full CI source SHA and scene comparability."
+      }
+    },
+    {
+      "lateral": 2,
+      "witch": {
+        "x": 3474.798738082701,
+        "z": 2293.1735112566575
+      },
+      "camera": [
+        3474.8170331614833,
+        53.686564498602515,
+        2377.973011792203
+      ],
+      "bodyEnvelope": {
+        "left": 0.45552642580402014,
+        "right": 0.5438937154790894,
+        "bottom": 0.4797563019891765,
+        "top": 0.6156186886668942
+      },
+      "fireShape": [
+        0.46795365219384566,
+        0.5349032835460511,
+        0.01746572290511178,
+        0.05366312598237544
+      ],
+      "supportDepth": 0.9912663927335893,
+      "farthestBodyDepth": 0.9911171325219881,
+      "foreground": true,
+      "overlapsPlume": true,
+      "ellipseRadius": 0,
+      "lowResolution": [
+        320,
+        180
+      ],
+      "pair": {
+        "expectedSha": "0cb56c2e55dc0992119a32da86ee08eb256fe59a",
+        "served": {
+          "version": "dev · 0cb56c2",
+          "built": "2026-10-31T17:05:23.107Z"
+        },
+        "kind": "fire",
+        "manual": true,
+        "time": 1.6666666666666656,
+        "enabled": true,
+        "key": {
+          "build": "dev · 0cb56c2",
+          "seed": 123,
+          "world": 0,
+          "island": "home",
+          "scene": "wave 0 · ground",
+          "spot": "play",
+          "viewport": "960x540",
+          "pixelScale": "3 @1 (canvas 320x180)",
+          "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "machine": "Chrome 153 Linux · 4 cores · 16 GB",
+          "knobs": {
+            "spells.hats": "",
+            "spells.bag": "satchel",
+            "?refraction": "1",
+            "?creator": "0"
+          }
+        },
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "forms": {
+          "count": 1,
+          "shapes": [
+            [
+              0.4679515553051056,
+              0.5349043604508107,
+              0.017466865739797444,
+              0.05367008228871928
+            ]
+          ],
+          "states": [
+            [
+              0.9912657360086363,
+              0,
+              1.6666666666666656,
+              1.5
+            ]
+          ],
+          "clock": 1.6666666666666656,
+          "potion": {
+            "wobble": 0,
+            "canopy": 0,
+            "time": 1.6666666666666656
+          }
+        },
+        "offPngByteIdentity": false,
+        "onPngDiffers": true,
+        "limitation": "Capture only: no GPU timing, allocation/memory measurement or automatic foreground acceptance. PNG byte comparisons are not pixel-diff counts. Caller verifies full CI source SHA and scene comparability."
+      }
+    }
+  ],
+  "limitation": "Staged quad envelopes/depth only; inspect opaque witch pixels in OFF/ON/OFF-return diffs. No pixel, foreground, GPU or memory pass is asserted. Creature crossing is not included."
+}

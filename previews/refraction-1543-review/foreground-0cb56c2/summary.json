@@ -1,0 +1,886 @@
+{
+ "ordinary-party": [
+  {
+   "crossing": 0,
+   "lateral": -2,
+   "witch": {
+    "onVsOff": {
+     "pixels": 6322,
+     "changed": 1608,
+     "maxChannel": 2,
+     "bounds": [
+      439,
+      207,
+      524,
+      281
+     ]
+    },
+    "retVsOff": {
+     "pixels": 6322,
+     "changed": 1749,
+     "maxChannel": 4,
+     "bounds": [
+      439,
+      207,
+      524,
+      281
+     ]
+    }
+   },
+   "foreground": true,
+   "overlapsPlume": true,
+   "ellipseRadius": 0,
+   "supportDepth": 0.991301643579498,
+   "farthestBodyDepth": 0.9911533507551322,
+   "boxPx": [
+    439,
+    207,
+    524,
+    281
+   ],
+   "opaquePixels": 1197,
+   "maskPixels": 6322,
+   "whole": {
+    "onVsOff": {
+     "pixels": 518400,
+     "changed": 60040,
+     "maxChannel": 108,
+     "bounds": [
+      0,
+      2,
+      959,
+      539
+     ]
+    },
+    "retVsOff": {
+     "pixels": 518400,
+     "changed": 89049,
+     "maxChannel": 108,
+     "bounds": [
+      0,
+      2,
+      959,
+      539
+     ]
+    },
+    "recheckVsOff": {
+     "pixels": 518400,
+     "changed": 267484,
+     "maxChannel": 110,
+     "bounds": [
+      0,
+      2,
+      959,
+      539
+     ]
+    }
+   },
+   "witchOpaque": {
+    "onVsOff": {
+     "pixels": 1197,
+     "changed": 144,
+     "maxChannel": 1,
+     "bounds": [
+      453,
+      227,
+      488,
+      268
+     ]
+    },
+    "retVsOff": {
+     "pixels": 1197,
+     "changed": 189,
+     "maxChannel": 1,
+     "bounds": [
+      453,
+      227,
+      512,
+      271
+     ]
+    }
+   }
+  },
+  {
+   "crossing": 1,
+   "lateral": -1,
+   "witch": {
+    "onVsOff": {
+     "pixels": 6371,
+     "changed": 1068,
+     "maxChannel": 2,
+     "bounds": [
+      436,
+      212,
+      522,
+      281
+     ]
+    },
+    "retVsOff": {
+     "pixels": 6371,
+     "changed": 756,
+     "maxChannel": 3,
+     "bounds": [
+      436,
+      207,
+      522,
+      281
+     ]
+    }
+   },
+   "foreground": true,
+   "overlapsPlume": true,
+   "ellipseRadius": 0,
+   "supportDepth": 0.9912856690663143,
+   "farthestBodyDepth": 0.9911369374193424,
+   "boxPx": [
+    436,
+    207,
+    522,
+    281
+   ],
+   "opaquePixels": 1224,
+   "maskPixels": 6371,
+   "whole": {
+    "onVsOff": {
+     "pixels": 518400,
+     "changed": 48213,
+     "maxChannel": 79,
+     "bounds": [
+      0,
+      2,
+      959,
+      539
+     ]
+    },
+    "retVsOff": {
+     "pixels": 518400,
+     "changed": 77348,
+     "maxChannel": 107,
+     "bounds": [
+      0,
+      2,
+      959,
+      539
+     ]
+    },
+    "recheckVsOff": {
+     "pixels": 518400,
+     "changed": 216800,
+     "maxChannel": 111,
+     "bounds": [
+      0,
+      2,
+      959,
+      539
+     ]
+    }
+   },
+   "witchOpaque": {
+    "onVsOff": {
+     "pixels": 1224,
+     "changed": 171,
+     "maxChannel": 1,
+     "bounds": [
+      468,
+      248,
+      509,
+      271
+     ]
+    },
+    "retVsOff": {
+     "pixels": 1224,
+     "changed": 153,
+     "maxChannel": 1,
+     "bounds": [
+      474,
+      248,
+      509,
+      271
+     ]
+    }
+   }
+  },
+  {
+   "crossing": 2,
+   "lateral": 0,
+   "witch": {
+    "onVsOff": {
+     "pixels": 6370,
+     "changed": 948,
+     "maxChannel": 1,
+     "bounds": [
+      436,
+      207,
+      522,
+      281
+     ]
+    },
+    "retVsOff": {
+     "pixels": 6370,
+     "changed": 1122,
+     "maxChannel": 3,
+     "bounds": [
+      436,
+      207,
+      522,
+      281
+     ]
+    }
+   },
+   "foreground": true,
+   "overlapsPlume": true,
+   "ellipseRadius": 0,
+   "supportDepth": 0.9912759370207296,
+   "farthestBodyDepth": 0.9911269383834255,
+   "boxPx": [
+    436,
+    207,
+    522,
+    281
+   ],
+   "opaquePixels": 1269,
+   "maskPixels": 6370,
+   "whole": {
+    "onVsOff": {
+     "pixels": 518400,
+     "changed": 31706,
+     "maxChannel": 110,
+     "bounds": [
+      0,
+      2,
+      959,
+      539
+     ]
+    },
+    "retVsOff": {
+     "pixels": 518400,
+     "changed": 43343,
+     "maxChannel": 110,
+     "bounds": [
+      0,
+      2,
+      959,
+      539
+     ]
+    },
+    "recheckVsOff": {
+     "pixels": 518400,
+     "changed": 162086,
+     "maxChannel": 112,
+     "bounds": [
+      0,
+      2,
+      959,
+      539
+     ]
+    }
+   },
+   "witchOpaque": {
+    "onVsOff": {
+     "pixels": 1269,
+     "changed": 63,
+     "maxChannel": 1,
+     "bounds": [
+      477,
+      230,
+      488,
+      271
+     ]
+    },
+    "retVsOff": {
+     "pixels": 1269,
+     "changed": 153,
+     "maxChannel": 3,
+     "bounds": [
+      465,
+      224,
+      506,
+      271
+     ]
+    }
+   }
+  },
+  {
+   "crossing": 3,
+   "lateral": 1,
+   "witch": {
+    "onVsOff": {
+     "pixels": 6304,
+     "changed": 642,
+     "maxChannel": 4,
+     "bounds": [
+      450,
+      209,
+      522,
+      268
+     ]
+    },
+    "retVsOff": {
+     "pixels": 6304,
+     "changed": 696,
+     "maxChannel": 1,
+     "bounds": [
+      437,
+      207,
+      522,
+      281
+     ]
+    }
+   },
+   "foreground": true,
+   "overlapsPlume": true,
+   "ellipseRadius": 0,
+   "supportDepth": 0.9912700068006629,
+   "farthestBodyDepth": 0.9911208456062817,
+   "boxPx": [
+    437,
+    207,
+    522,
+    281
+   ],
+   "opaquePixels": 1269,
+   "maskPixels": 6304,
+   "whole": {
+    "onVsOff": {
+     "pixels": 518400,
+     "changed": 39512,
+     "maxChannel": 113,
+     "bounds": [
+      0,
+      2,
+      959,
+      539
+     ]
+    },
+    "retVsOff": {
+     "pixels": 518400,
+     "changed": 51273,
+     "maxChannel": 113,
+     "bounds": [
+      0,
+      2,
+      959,
+      539
+     ]
+    },
+    "recheckVsOff": {
+     "pixels": 518400,
+     "changed": 122100,
+     "maxChannel": 112,
+     "bounds": [
+      0,
+      2,
+      959,
+      539
+     ]
+    }
+   },
+   "witchOpaque": {
+    "onVsOff": {
+     "pixels": 1269,
+     "changed": 126,
+     "maxChannel": 4,
+     "bounds": [
+      462,
+      224,
+      488,
+      250
+     ]
+    },
+    "retVsOff": {
+     "pixels": 1269,
+     "changed": 117,
+     "maxChannel": 1,
+     "bounds": [
+      465,
+      224,
+      491,
+      253
+     ]
+    }
+   }
+  },
+  {
+   "crossing": 4,
+   "lateral": 2,
+   "witch": {
+    "onVsOff": {
+     "pixels": 6419,
+     "changed": 516,
+     "maxChannel": 4,
+     "bounds": [
+      438,
+      236,
+      523,
+      281
+     ]
+    },
+    "retVsOff": {
+     "pixels": 6419,
+     "changed": 1074,
+     "maxChannel": 2,
+     "bounds": [
+      441,
+      207,
+      523,
+      281
+     ]
+    }
+   },
+   "foreground": true,
+   "overlapsPlume": true,
+   "ellipseRadius": 0,
+   "supportDepth": 0.9912663927335893,
+   "farthestBodyDepth": 0.9911171325219881,
+   "boxPx": [
+    437,
+    207,
+    523,
+    281
+   ],
+   "opaquePixels": 1305,
+   "maskPixels": 6419,
+   "whole": {
+    "onVsOff": {
+     "pixels": 518400,
+     "changed": 19308,
+     "maxChannel": 36,
+     "bounds": [
+      0,
+      2,
+      956,
+      539
+     ]
+    },
+    "retVsOff": {
+     "pixels": 518400,
+     "changed": 33459,
+     "maxChannel": 48,
+     "bounds": [
+      0,
+      2,
+      959,
+      539
+     ]
+    },
+    "recheckVsOff": {
+     "pixels": 518400,
+     "changed": 90348,
+     "maxChannel": 109,
+     "bounds": [
+      0,
+      2,
+      959,
+      539
+     ]
+    }
+   },
+   "witchOpaque": {
+    "onVsOff": {
+     "pixels": 1305,
+     "changed": 63,
+     "maxChannel": 3,
+     "bounds": [
+      471,
+      263,
+      506,
+      274
+     ]
+    },
+    "retVsOff": {
+     "pixels": 1305,
+     "changed": 144,
+     "maxChannel": 1,
+     "bounds": [
+      450,
+      224,
+      506,
+      268
+     ]
+    }
+   }
+  }
+ ],
+ "dream-start": [
+  {
+   "crossing": 0,
+   "lateral": -2,
+   "witch": {
+    "onVsOff": {
+     "pixels": 5657,
+     "changed": 36,
+     "maxChannel": 1,
+     "bounds": [
+      503,
+      237,
+      511,
+      257
+     ]
+    },
+    "retVsOff": {
+     "pixels": 5657,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    }
+   },
+   "foreground": true,
+   "overlapsPlume": true,
+   "ellipseRadius": 0,
+   "supportDepth": 0.991258111133686,
+   "farthestBodyDepth": 0.9911773436802309,
+   "boxPx": [
+    450,
+    208,
+    513,
+    298
+   ],
+   "opaquePixels": 153,
+   "maskPixels": 5657,
+   "whole": {
+    "onVsOff": {
+     "pixels": 518400,
+     "changed": 37,
+     "maxChannel": 1,
+     "bounds": [
+      503,
+      237,
+      518,
+      257
+     ]
+    },
+    "retVsOff": {
+     "pixels": 518400,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    },
+    "recheckVsOff": {
+     "pixels": 518400,
+     "changed": 48,
+     "maxChannel": 1,
+     "bounds": [
+      473,
+      258,
+      499,
+      287
+     ]
+    }
+   },
+   "witchOpaque": {
+    "onVsOff": {
+     "pixels": 153,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    },
+    "retVsOff": {
+     "pixels": 153,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    }
+   }
+  },
+  {
+   "crossing": 1,
+   "lateral": -1,
+   "witch": {
+    "onVsOff": {
+     "pixels": 5316,
+     "changed": 58,
+     "maxChannel": 1,
+     "bounds": [
+      485,
+      237,
+      499,
+      257
+     ]
+    },
+    "retVsOff": {
+     "pixels": 5316,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    }
+   },
+   "foreground": true,
+   "overlapsPlume": true,
+   "ellipseRadius": 0,
+   "supportDepth": 0.991258111133686,
+   "farthestBodyDepth": 0.9911762390840821,
+   "boxPx": [
+    448,
+    208,
+    510,
+    298
+   ],
+   "opaquePixels": 135,
+   "maskPixels": 5316,
+   "whole": {
+    "onVsOff": {
+     "pixels": 518400,
+     "changed": 58,
+     "maxChannel": 1,
+     "bounds": [
+      485,
+      237,
+      499,
+      257
+     ]
+    },
+    "retVsOff": {
+     "pixels": 518400,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    },
+    "recheckVsOff": {
+     "pixels": 518400,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    }
+   },
+   "witchOpaque": {
+    "onVsOff": {
+     "pixels": 135,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    },
+    "retVsOff": {
+     "pixels": 135,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    }
+   }
+  },
+  {
+   "crossing": 2,
+   "lateral": 0,
+   "witch": {
+    "onVsOff": {
+     "pixels": 5231,
+     "changed": 16,
+     "maxChannel": 1,
+     "bounds": [
+      470,
+      237,
+      487,
+      263
+     ]
+    },
+    "retVsOff": {
+     "pixels": 5231,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    }
+   },
+   "foreground": true,
+   "overlapsPlume": true,
+   "ellipseRadius": 0,
+   "supportDepth": 0.991258111133686,
+   "farthestBodyDepth": 0.9911749532124636,
+   "boxPx": [
+    448,
+    208,
+    510,
+    297
+   ],
+   "opaquePixels": 68,
+   "maskPixels": 5231,
+   "whole": {
+    "onVsOff": {
+     "pixels": 518400,
+     "changed": 16,
+     "maxChannel": 1,
+     "bounds": [
+      470,
+      237,
+      487,
+      263
+     ]
+    },
+    "retVsOff": {
+     "pixels": 518400,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    },
+    "recheckVsOff": {
+     "pixels": 518400,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    }
+   },
+   "witchOpaque": {
+    "onVsOff": {
+     "pixels": 68,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    },
+    "retVsOff": {
+     "pixels": 68,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    }
+   }
+  },
+  {
+   "crossing": 3,
+   "lateral": 1,
+   "witch": {
+    "onVsOff": {
+     "pixels": 5569,
+     "changed": 54,
+     "maxChannel": 1,
+     "bounds": [
+      452,
+      237,
+      469,
+      263
+     ]
+    },
+    "retVsOff": {
+     "pixels": 5569,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    }
+   },
+   "foreground": true,
+   "overlapsPlume": true,
+   "ellipseRadius": 0,
+   "supportDepth": 0.991258111133686,
+   "farthestBodyDepth": 0.9911736213762656,
+   "boxPx": [
+    448,
+    208,
+    511,
+    297
+   ],
+   "opaquePixels": 72,
+   "maskPixels": 5569,
+   "whole": {
+    "onVsOff": {
+     "pixels": 518400,
+     "changed": 54,
+     "maxChannel": 1,
+     "bounds": [
+      452,
+      237,
+      469,
+      263
+     ]
+    },
+    "retVsOff": {
+     "pixels": 518400,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    },
+    "recheckVsOff": {
+     "pixels": 518400,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    }
+   },
+   "witchOpaque": {
+    "onVsOff": {
+     "pixels": 72,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    },
+    "retVsOff": {
+     "pixels": 72,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    }
+   }
+  },
+  {
+   "crossing": 4,
+   "lateral": 2,
+   "witch": {
+    "onVsOff": {
+     "pixels": 5614,
+     "changed": 37,
+     "maxChannel": 1,
+     "bounds": [
+      448,
+      243,
+      457,
+      263
+     ]
+    },
+    "retVsOff": {
+     "pixels": 5614,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    }
+   },
+   "foreground": true,
+   "overlapsPlume": true,
+   "ellipseRadius": 0,
+   "supportDepth": 0.991258111133686,
+   "farthestBodyDepth": 0.9911720581512455,
+   "boxPx": [
+    448,
+    207,
+    511,
+    297
+   ],
+   "opaquePixels": 117,
+   "maskPixels": 5614,
+   "whole": {
+    "onVsOff": {
+     "pixels": 518400,
+     "changed": 82,
+     "maxChannel": 1,
+     "bounds": [
+      437,
+      243,
+      457,
+      263
+     ]
+    },
+    "retVsOff": {
+     "pixels": 518400,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    },
+    "recheckVsOff": {
+     "pixels": 518400,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    }
+   },
+   "witchOpaque": {
+    "onVsOff": {
+     "pixels": 117,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    },
+    "retVsOff": {
+     "pixels": 117,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    }
+   }
+  }
+ ]
+}

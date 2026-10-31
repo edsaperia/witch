@@ -1,0 +1,473 @@
+{
+ "url": "http://127.0.0.1:8765/?seed=123&refraction=1",
+ "sha": "0cb56c2e55dc0992119a32da86ee08eb256fe59a",
+ "loadS": 27.972,
+ "timings": {},
+ "hatOn": {
+  "wasDown": "{\"x\":3198.7087183662898,\"z\":2776.196777190793,\"at\":0}"
+ },
+ "fires": [
+  {
+   "x": 3472.798738082701,
+   "z": 2292.1735112566575,
+   "scale": 1,
+   "d": 530.1652805305545
+  },
+  {
+   "x": 2847.1519643374227,
+   "z": 2145.6558311616964,
+   "scale": 1,
+   "d": 655.0171251209857
+  },
+  {
+   "x": 3831.780964176144,
+   "z": 2975.643165788481,
+   "scale": 1,
+   "d": 717.8510486280737
+  },
+  {
+   "x": 2700.9467436681857,
+   "z": 3295.6442787288242,
+   "scale": 1,
+   "d": 736.1305663080228
+  },
+  {
+   "x": 3250.462950521843,
+   "z": 3649.3280703606824,
+   "scale": 1,
+   "d": 932.9089131393786
+  }
+ ],
+ "warmupScreenshotS": 51.883,
+ "used": {
+  "idx": 0,
+  "fire": {
+   "x": 3472.798738082701,
+   "z": 2292.1735112566575,
+   "scale": 1,
+   "d": 530.1652805305545
+  },
+  "distance": 1,
+  "captureS": 66.718,
+  "time": 1.066666666666667
+ },
+ "stages": [
+  {
+   "crossing": 0,
+   "lateral": -2,
+   "witch": {
+    "onVsOff": {
+     "pixels": 5657,
+     "changed": 36,
+     "maxChannel": 1,
+     "bounds": [
+      503,
+      237,
+      511,
+      257
+     ]
+    },
+    "retVsOff": {
+     "pixels": 5657,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    }
+   },
+   "foreground": true,
+   "overlapsPlume": true,
+   "ellipseRadius": 0,
+   "supportDepth": 0.991258111133686,
+   "farthestBodyDepth": 0.9911773436802309,
+   "fireShape": [
+    0.5333078967363614,
+    0.5349219788718137,
+    0.017480279829116263,
+    0.05373774632852202
+   ],
+   "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+   "servedVersion": "dev · 0cb56c2",
+   "restage": {
+    "clock": 1.066666666666667,
+    "items": 1
+   },
+   "W": 960,
+   "H": 540,
+   "boxPx": [
+    450,
+    208,
+    513,
+    298
+   ],
+   "maskPixels": 5657,
+   "maskPixelsOutsideBox": 3789,
+   "whole": {
+    "onVsOff": {
+     "pixels": 518400,
+     "changed": 37,
+     "maxChannel": 1,
+     "bounds": [
+      503,
+      237,
+      518,
+      257
+     ]
+    },
+    "retVsOff": {
+     "pixels": 518400,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    },
+    "recheckVsOff": {
+     "pixels": 518400,
+     "changed": 48,
+     "maxChannel": 1,
+     "bounds": [
+      473,
+      258,
+      499,
+      287
+     ]
+    }
+   },
+   "crop": [
+    390,
+    148,
+    573,
+    358
+   ],
+   "analyseS": 2.339
+  },
+  {
+   "crossing": 1,
+   "lateral": -1,
+   "witch": {
+    "onVsOff": {
+     "pixels": 5316,
+     "changed": 58,
+     "maxChannel": 1,
+     "bounds": [
+      485,
+      237,
+      499,
+      257
+     ]
+    },
+    "retVsOff": {
+     "pixels": 5316,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    }
+   },
+   "foreground": true,
+   "overlapsPlume": true,
+   "ellipseRadius": 0,
+   "supportDepth": 0.991258111133686,
+   "farthestBodyDepth": 0.9911762390840821,
+   "fireShape": [
+    0.5146276242260103,
+    0.5349219788718137,
+    0.017480279829116263,
+    0.05373774632852202
+   ],
+   "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+   "servedVersion": "dev · 0cb56c2",
+   "restage": {
+    "clock": 1.066666666666667,
+    "items": 1
+   },
+   "W": 960,
+   "H": 540,
+   "boxPx": [
+    448,
+    208,
+    510,
+    298
+   ],
+   "maskPixels": 5316,
+   "maskPixelsOutsideBox": 3414,
+   "whole": {
+    "onVsOff": {
+     "pixels": 518400,
+     "changed": 58,
+     "maxChannel": 1,
+     "bounds": [
+      485,
+      237,
+      499,
+      257
+     ]
+    },
+    "retVsOff": {
+     "pixels": 518400,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    },
+    "recheckVsOff": {
+     "pixels": 518400,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    }
+   },
+   "crop": [
+    388,
+    148,
+    570,
+    358
+   ],
+   "analyseS": 2.305
+  },
+  {
+   "crossing": 2,
+   "lateral": 0,
+   "witch": {
+    "onVsOff": {
+     "pixels": 5231,
+     "changed": 16,
+     "maxChannel": 1,
+     "bounds": [
+      470,
+      237,
+      487,
+      263
+     ]
+    },
+    "retVsOff": {
+     "pixels": 5231,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    }
+   },
+   "foreground": true,
+   "overlapsPlume": true,
+   "ellipseRadius": 0,
+   "supportDepth": 0.991258111133686,
+   "farthestBodyDepth": 0.9911749532124636,
+   "fireShape": [
+    0.499060730467388,
+    0.5349219788718137,
+    0.017480279829116208,
+    0.05373774632852202
+   ],
+   "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+   "servedVersion": "dev · 0cb56c2",
+   "restage": {
+    "clock": 1.066666666666667,
+    "items": 1
+   },
+   "W": 960,
+   "H": 540,
+   "boxPx": [
+    448,
+    208,
+    510,
+    297
+   ],
+   "maskPixels": 5231,
+   "maskPixelsOutsideBox": 2751,
+   "whole": {
+    "onVsOff": {
+     "pixels": 518400,
+     "changed": 16,
+     "maxChannel": 1,
+     "bounds": [
+      470,
+      237,
+      487,
+      263
+     ]
+    },
+    "retVsOff": {
+     "pixels": 518400,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    },
+    "recheckVsOff": {
+     "pixels": 518400,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    }
+   },
+   "crop": [
+    388,
+    148,
+    570,
+    357
+   ],
+   "analyseS": 2.322
+  },
+  {
+   "crossing": 3,
+   "lateral": 1,
+   "witch": {
+    "onVsOff": {
+     "pixels": 5569,
+     "changed": 54,
+     "maxChannel": 1,
+     "bounds": [
+      452,
+      237,
+      469,
+      263
+     ]
+    },
+    "retVsOff": {
+     "pixels": 5569,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    }
+   },
+   "foreground": true,
+   "overlapsPlume": true,
+   "ellipseRadius": 0,
+   "supportDepth": 0.991258111133686,
+   "farthestBodyDepth": 0.9911736213762656,
+   "fireShape": [
+    0.4834938367087657,
+    0.5349219788718137,
+    0.017480279829116208,
+    0.05373774632852202
+   ],
+   "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+   "servedVersion": "dev · 0cb56c2",
+   "restage": {
+    "clock": 1.066666666666667,
+    "items": 1
+   },
+   "W": 960,
+   "H": 540,
+   "boxPx": [
+    448,
+    208,
+    511,
+    297
+   ],
+   "maskPixels": 5569,
+   "maskPixelsOutsideBox": 3636,
+   "whole": {
+    "onVsOff": {
+     "pixels": 518400,
+     "changed": 54,
+     "maxChannel": 1,
+     "bounds": [
+      452,
+      237,
+      469,
+      263
+     ]
+    },
+    "retVsOff": {
+     "pixels": 518400,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    },
+    "recheckVsOff": {
+     "pixels": 518400,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    }
+   },
+   "crop": [
+    388,
+    148,
+    571,
+    357
+   ],
+   "analyseS": 2.461
+  },
+  {
+   "crossing": 4,
+   "lateral": 2,
+   "witch": {
+    "onVsOff": {
+     "pixels": 5614,
+     "changed": 37,
+     "maxChannel": 1,
+     "bounds": [
+      448,
+      243,
+      457,
+      263
+     ]
+    },
+    "retVsOff": {
+     "pixels": 5614,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    }
+   },
+   "foreground": true,
+   "overlapsPlume": true,
+   "ellipseRadius": 0,
+   "supportDepth": 0.991258111133686,
+   "farthestBodyDepth": 0.9911720581512455,
+   "fireShape": [
+    0.4679269429501434,
+    0.5349219788718137,
+    0.017480279829116208,
+    0.05373774632852202
+   ],
+   "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+   "servedVersion": "dev · 0cb56c2",
+   "restage": {
+    "clock": 1.066666666666667,
+    "items": 1
+   },
+   "W": 960,
+   "H": 540,
+   "boxPx": [
+    448,
+    207,
+    511,
+    297
+   ],
+   "maskPixels": 5614,
+   "maskPixelsOutsideBox": 3834,
+   "whole": {
+    "onVsOff": {
+     "pixels": 518400,
+     "changed": 82,
+     "maxChannel": 1,
+     "bounds": [
+      437,
+      243,
+      457,
+      263
+     ]
+    },
+    "retVsOff": {
+     "pixels": 518400,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    },
+    "recheckVsOff": {
+     "pixels": 518400,
+     "changed": 0,
+     "maxChannel": 0,
+     "bounds": null
+    }
+   },
+   "crop": [
+    388,
+    147,
+    571,
+    357
+   ],
+   "analyseS": 2.493
+  }
+ ],
+ "errors": [],
+ "totalS": 148.902
+}

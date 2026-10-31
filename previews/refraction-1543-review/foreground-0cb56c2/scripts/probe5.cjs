@@ -1,0 +1,14 @@
+const L=require('./lib.cjs');
+(async()=>{const {b,page}=await L.open(process.argv[2]);
+const T=()=>new Date().toISOString().slice(14,19);
+const shot=async(n,to=90000)=>{const t=Date.now();try{await page.screenshot({path:`/tmp/fg/p5-${n}.png`,timeout:to});console.log(T(),n,'shot ok',(Date.now()-t)/1000);}catch(e){console.log(T(),n,'shot FAIL',(Date.now()-t)/1000);}};
+await L.step(page,30); await L.settle(page);
+await page.evaluate(()=>{window.witch.game.witches[0].hat.down=null;}); await L.step(page,10); await L.settle(page);
+const f={x:3472.798738082701,z:2292.1735112566575};
+await page.evaluate(({x,z})=>window.witch.shot(`at:${x},${z+3}`),f); await L.step(page,60,{},10); await L.settle(page,4); await shot('afterstep60');
+const fin=async(n,en,k=1)=>{const r=await Promise.race([page.evaluate(({en,k})=>{const w=window.witch,v=w.view;w.manual=true;const gl=v.renderer.getContext();const t0=performance.now();v.post.refractionEnabled=en;for(let i=0;i<k;i++)v.render(w.game.clock.time);const t1=performance.now();gl.finish();return {cpu:t1-t0,gpu:performance.now()-t1,count:v.post.refraction.count,items:v.witchBatch.items.length};},{en,k}),new Promise(r=>setTimeout(()=>r('noreply 120s'),120000))]);console.log(T(),n,JSON.stringify(r));};
+await page.evaluate(({x,z})=>window.witch.shot(`at:${x},${z+1}`),f);
+await fin('off',false); await shot('off');
+await fin('on',true); await shot('on');
+await fin('on x5',true,5); await shot('on5');
+await b.close();})().catch(e=>{console.log('ERR',e.message);process.exit(1)});
