@@ -30,11 +30,17 @@ activation and review scene selection follow canonical's integration ruling.
 Root reservation 6544780920 (2026-10-31) opened the narrow Post/View integration.
 Implemented as additive namespaced uniforms and one scene-sampling hook, separate
 View update/reset hooks and one cast-pose capture call in the existing drawWitch
-party-cast branch. Potion coordinate computation, colour/edge/tilt/audio and old
-bloom/smooth-FX coordinates remain unchanged. Source-only OFF audit restores the
-exact legacy composite hash `215f5c758c04dbf39687a7b8f7e57a9df650b7ceb75f155a615dc9cade99a6a9`
-after removing only the new injection/identity hook; this is not a pixel test.
-Foreground guards include the source support depth and all four colour texels
-participating in fractional potion sampling. Default-OFF preview is registered;
+party-cast branch. Canonical6545181860 supersedes the initial root order: base
+quantized UV -> guarded refraction -> unchanged potion wobble -> existing
+grading/composite. Potion-owned lines stay intact. Bloom/outlines consume the
+resulting p; smooth FX retains vUv. After merging five-potion prototype1ccec661,
+removing only the GLSL injection/call restores that composite's source hash
+`a46bf929859f323b4af09e5e8760d76ef1157edef29d3904afeaa004d6f56a3f`.
+Canonical6546187281 subsequently reports matched-art OFF pixel identity and
+ring/fire/combined-potion composition passing on b21a00ac (adapter-only c38 carries
+over). Foreground remains untested: tools/refraction/foreground.cjs stages the
+next real-witch crossing for the canonical runner. Source/destination guards use
+the base/refraction coordinates before potion wobble. Default-OFF preview is registered;
 review cases and the coordinator-owned capture helper are in
-`docs/plans/heat-refraction-review.md`. No browser/GLSL/GPU acceptance is claimed.
+`docs/plans/heat-refraction-review.md`. No builder browser run, foreground or GPU
+acceptance is claimed. Prototype v6618 (7190f350) normal-merged for this follow-up.

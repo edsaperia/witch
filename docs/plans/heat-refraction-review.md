@@ -78,3 +78,42 @@ acceptance until canonical reviews these actual images and measured costs.
 Trip catalogue references already exist: Thick Air (#87) and Mushroom Lenses
 (#88) in `docs/backlog/cauldron.md`. This shared path may support them later;
 neither potion is implemented or authorised by this slice.
+
+## Foreground crossing follow-up (canonical6546187281)
+
+Canonical's b21a00ac cloud review passed matched-art OFF identity (same build
+zero pixels; versus prototype only the version label), ring/fire pairs and
+wobble+Thick Canopy composition; its results carry to the adapter-only c38 fix.
+This did **not** exercise a body in front of the fire. No foreground pass is claimed.
+
+On the existing allocated page, with ordinary ground view/no active trip, use:
+
+```js
+const { captureForeground } = require('./tools/refraction/foreground.cjs');
+await captureForeground(page, SOURCE_SHA, 'previews/refraction/foreground', {
+  fire: { x: REAL_FIRE_X, z: REAL_FIRE_Z },
+});
+```
+
+Choose an existing isolated, preferably inland campfire from `view.worldFires`.
+The optional fire argument defaults to the nearest existing fire. This tool adds
+no emitters, character graphics or browser. It uses the existing `witch.shot`
+ground placement, freezes simulation time and tries 1/2/3/4/6 m south of the fire,
+then captures five lateral positions (-2/-1/0/1/2 m). Camera follows the ordinary
+shot; each position has its own same-clock OFF/ON/OFF-return trio. It refuses a
+hidden body, missing form, different nearest fire or absence of a body envelope
+inside the plume with all body-quad vertices nearer than the fire support depth.
+Original witch/camera objects, manual mode and refraction toggle are restored.
+
+Each crossing folder contains the trio, capture.json and foreground.json with
+the actual instance-buffer projected body envelope, fire ellipse, depths and
+camera. The root foreground.json indexes the five stages. Envelopes are padded
+one art texel for sprite snapping and are **not opaque-body masks**. Canonical
+must inspect the real body silhouette overlapping the plume interior, crop/mask
+its opaque pixels and compare ON-OFF against OFF-return noise. Reject unrelated
+shore/sea changes or camera/asset instability; envelope overlap alone is not a
+guard pass. If a site fails staging, select another real fire rather than weaken
+the checks. No creature crossing is supplied in this first follow-up.
+
+NaN markers, moving-camera screen edges, clock/island/quality cases, potion-local
+signal isolation and GPU/memory acceptance remain outside this driver and unaccepted.
