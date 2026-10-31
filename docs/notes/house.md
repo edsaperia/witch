@@ -2,6 +2,8 @@
 
 ## Treehouse layout editor
 
+Guest walking access (`rules/houseRooms.ts`): `roomAccessFor(floor: RoomFloor, player: number, assignment?: { player: number; room: string }): RoomFloor` returns a separate walking floor with only the matching guest's assigned bedroom2/3 open. The caller supplies the authoritative assignment and passes this floor to that guest's movement checks; it does not mutate the shared floor, room config, art or other witches. Host player 0, solo/unassigned and mismatched assignments return the original floor unchanged. Existing callers remain unchanged; multiplayer wiring belongs to #1538 (1476#6549097708).
+
 Guest wake rules exports (`rules/wakeUp.ts`): `startWakeFor(g, time, options, W, {player, room})` selects an existing player and stable room ID; `bedFor(room)` and `doorFor(room)` return that room's configured objects (or undefined). Existing guest rooms are `bedroom2` and `bedroom3`; their bare frames count as beds. The caller retains room-access and equipment policy. Per-witch wake metadata keeps the stretch/bedside hold in the selected room without changing the host-default `startWake` path, page/camera, save hooks or audio. These exports do not unlock the guest rooms or connect the multiplayer UI.
 
 Ed, 2026-10-31: "I just need the top down view and the camera view and the ability to move objects around and export the layout. Skip floorplan editing for now."
