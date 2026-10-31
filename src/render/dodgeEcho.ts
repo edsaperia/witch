@@ -15,7 +15,8 @@ const copyPose = (p: DodgePose): DodgePose => ({
 
 /** Borrows the current witch atlas; owns only three tiny sprite buffers/materials, allocated on the first live echo. */
 export class DodgeEchoView {
-  enabled = new URLSearchParams(globalThis.location?.search ?? "").get("dodgeEchoes") === "1";
+  // Ed, 2026-10-31: "On as is" after the real-hardware slot 5 frames; retain an explicit comparison off switch.
+  enabled = new URLSearchParams(globalThis.location?.search ?? "").get("dodgeEchoes") !== "0";
   /** Capture-only visibility: survives SpriteBatch.set without clearing or replaying history. */
   private captureShown = true;
   get captureVisible(): boolean { return this.captureShown; }

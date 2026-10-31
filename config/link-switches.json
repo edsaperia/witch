@@ -8,7 +8,7 @@
     "0",
     "1"
    ],
-   "does": "Optional dodge silhouettes at actual departure and arrival poses (1 enables the preview; off by default).",
+   "does": "Brief dodge silhouettes at actual departure and arrival poses (on by default; 0 switches them off).",
    "group": "view",
    "since": "2026-10-31",
    "readIn": [
