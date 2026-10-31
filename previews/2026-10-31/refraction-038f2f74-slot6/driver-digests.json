@@ -1,0 +1,14 @@
+[
+  {
+    "name": "capture-slot-supervisor.cjs",
+    "sha256": "a976623069a2b51aa1d41766d5cbfc0bbff11fd6e67b02ea65372c5a5d46d846"
+  },
+  {
+    "name": "capture-native-probe.ps1",
+    "sha256": "51c5ec922b086f827b90ba0230ffff72e69dacfeaabf17e95165fdfd70201b91"
+  },
+  {
+    "name": "capture-slot-driver.mjs",
+    "sha256": "afc4df101849169792482eae386e0e008f5a66d231dcf122ff5afa17cc12ac09"
+  }
+]

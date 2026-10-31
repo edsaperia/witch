@@ -1,0 +1,65 @@
+{
+  "expectedSha": "038f2f74e42a4ce29c13d1540d9eb442c8e3c834",
+  "harnessSha": "6fea35407eb7bd1f914c810b6b1d4f1a71fc3db9",
+  "slotId": "1543-slot6",
+  "started": "2026-10-31T21:40:46.312Z",
+  "ended": "2026-10-31T21:41:37.169Z",
+  "elapsedMs": 50857,
+  "code": 1,
+  "stopReason": null,
+  "stopped": false,
+  "launching": true,
+  "ownedDriverPid": 36724,
+  "ownedBrowserIdentities": [
+    {
+      "pid": 15648,
+      "created": "2026-10-31T21:40:47.8282810Z",
+      "name": "chrome.exe"
+    },
+    {
+      "pid": 35252,
+      "created": "2026-10-31T21:40:47.8499030Z",
+      "name": "chrome.exe"
+    },
+    {
+      "pid": 30776,
+      "created": "2026-10-31T21:40:47.9570360Z",
+      "name": "chrome.exe"
+    },
+    {
+      "pid": 32856,
+      "created": "2026-10-31T21:40:47.9650950Z",
+      "name": "chrome.exe"
+    },
+    {
+      "pid": 28216,
+      "created": "2026-10-31T21:40:47.9823330Z",
+      "name": "chrome.exe"
+    },
+    {
+      "pid": 1060,
+      "created": "2026-10-31T21:40:48.0649940Z",
+      "name": "chrome.exe"
+    },
+    {
+      "pid": 36776,
+      "created": "2026-10-31T21:40:48.1004790Z",
+      "name": "chrome.exe"
+    },
+    {
+      "pid": 33040,
+      "created": "2026-10-31T21:40:48.1091230Z",
+      "name": "chrome.exe"
+    },
+    {
+      "pid": 27608,
+      "created": "2026-10-31T21:41:04.0539010Z",
+      "name": "chrome.exe"
+    }
+  ],
+  "lastInputTick": 51056953,
+  "note": "Native input timestamp is not attributed to Ed. Browser guard excludes complete owned tree. Operator still verifies owned-PID cleanup/FREE and posts SLOT DONE.",
+  "cleanupVerified": true,
+  "cleanupCheckedAt": "2026-10-31T21:41:43.9491005Z",
+  "cleanupEvidence": "Independent elevated Win32_Process enumeration: supervisor37236/probes23252,17480/driver36724 and all9trackedChrome absent"
+}

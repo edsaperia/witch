@@ -1,0 +1,61 @@
+{
+  "expectedSha": "038f2f74e42a4ce29c13d1540d9eb442c8e3c834",
+  "served": {
+    "version": "v6696 · 038f2f7",
+    "built": "2026-10-31T20:03:39.001Z"
+  },
+  "kind": "fire",
+  "manual": true,
+  "time": 1.0000000000000013,
+  "enabled": true,
+  "key": {
+    "build": "v6696 · 038f2f7",
+    "seed": 123,
+    "world": 0,
+    "island": "home",
+    "scene": "wave 0 · ground",
+    "spot": "play",
+    "viewport": "960x540",
+    "pixelScale": "3 @1 (canvas 320x180)",
+    "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "machine": "Chrome 156 Windows · 20 cores · 16 GB",
+    "knobs": {
+      "spells.hats": "",
+      "spells.bag": "satchel",
+      "?shot": "at:3472.8,2295.2",
+      "?creator": "0",
+      "?refraction": "1",
+      "?quick": "1",
+      "?pulse": "off"
+    }
+  },
+  "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "forms": {
+    "count": 1,
+    "shapes": [
+      [
+        0.5146114579862612,
+        0.5348987798291887,
+        0.01746096087545479,
+        0.05363417308423024
+      ]
+    ],
+    "states": [
+      [
+        0.991269128941713,
+        0,
+        1.0000000000000013,
+        1.5
+      ]
+    ],
+    "clock": 1.0000000000000013,
+    "potion": {
+      "wobble": 0,
+      "canopy": 0,
+      "time": 1.0000000000000013
+    }
+  },
+  "offPngByteIdentity": true,
+  "onPngDiffers": true,
+  "limitation": "Capture only: no GPU timing, allocation/memory measurement or automatic foreground acceptance. PNG byte comparisons are not pixel-diff counts. Caller verifies full CI source SHA and scene comparability."
+}

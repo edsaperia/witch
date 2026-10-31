@@ -1,0 +1,181 @@
+{
+  "expectedSha": "038f2f74e42a4ce29c13d1540d9eb442c8e3c834",
+  "driver": "C:\\Users\\edsap\\Documents\\ChatGPT\\witch game\\work\\heat-refraction\\tools\\refraction\\foreground.cjs",
+  "driverSha": "038f2f74e42a4ce29c13d1540d9eb442c8e3c834",
+  "measures": [
+    {
+      "crossing": 0,
+      "noise": {
+        "count": 0,
+        "max": 0,
+        "considered": 518400,
+        "bounds": null,
+        "ignored": []
+      },
+      "body": {
+        "count": 0,
+        "max": 0,
+        "considered": 1476,
+        "bounds": null,
+        "ignored": []
+      },
+      "maskPixels": 1476,
+      "wholeChanged": 126,
+      "overlap": true,
+      "foreground": true
+    },
+    {
+      "crossing": 1,
+      "noise": {
+        "count": 0,
+        "max": 0,
+        "considered": 518400,
+        "bounds": null,
+        "ignored": []
+      },
+      "body": {
+        "count": 9,
+        "max": 11,
+        "considered": 1620,
+        "bounds": {
+          "left": 495,
+          "top": 254,
+          "right": 497,
+          "bottom": 256
+        },
+        "ignored": []
+      },
+      "maskPixels": 1620,
+      "wholeChanged": 27,
+      "overlap": true,
+      "foreground": true
+    },
+    {
+      "crossing": 2,
+      "noise": {
+        "count": 0,
+        "max": 0,
+        "considered": 518400,
+        "bounds": null,
+        "ignored": []
+      },
+      "body": {
+        "count": 0,
+        "max": 0,
+        "considered": 1539,
+        "bounds": null,
+        "ignored": []
+      },
+      "maskPixels": 1539,
+      "wholeChanged": 0,
+      "overlap": true,
+      "foreground": true
+    },
+    {
+      "crossing": 3,
+      "noise": {
+        "count": 0,
+        "max": 0,
+        "considered": 518400,
+        "bounds": null,
+        "ignored": []
+      },
+      "body": {
+        "count": 0,
+        "max": 0,
+        "considered": 1638,
+        "bounds": null,
+        "ignored": []
+      },
+      "maskPixels": 1638,
+      "wholeChanged": 9,
+      "overlap": true,
+      "foreground": true
+    },
+    {
+      "crossing": 4,
+      "noise": {
+        "count": 0,
+        "max": 0,
+        "considered": 518400,
+        "bounds": null,
+        "ignored": []
+      },
+      "body": {
+        "count": 0,
+        "max": 0,
+        "considered": 1800,
+        "bounds": null,
+        "ignored": []
+      },
+      "maskPixels": 1800,
+      "wholeChanged": 63,
+      "overlap": true,
+      "foreground": true
+    }
+  ],
+  "creatures": [
+    {
+      "id": 28,
+      "lateral": -0.5,
+      "noise": {
+        "count": 0,
+        "max": 0,
+        "considered": 518400,
+        "bounds": null,
+        "ignored": []
+      },
+      "body": {
+        "count": 0,
+        "max": 0,
+        "considered": 680,
+        "bounds": null,
+        "ignored": []
+      },
+      "maskPixels": 680,
+      "maskScope": "All actual creature geometry removed; thresholded pixels inside plume interior only"
+    },
+    {
+      "id": 28,
+      "lateral": 0,
+      "noise": {
+        "count": 0,
+        "max": 0,
+        "considered": 518400,
+        "bounds": null,
+        "ignored": []
+      },
+      "body": {
+        "count": 0,
+        "max": 0,
+        "considered": 438,
+        "bounds": null,
+        "ignored": []
+      },
+      "maskPixels": 438,
+      "maskScope": "All actual creature geometry removed; thresholded pixels inside plume interior only"
+    },
+    {
+      "id": 28,
+      "lateral": 0.5,
+      "noise": {
+        "count": 0,
+        "max": 0,
+        "considered": 518400,
+        "bounds": null,
+        "ignored": []
+      },
+      "body": {
+        "count": 0,
+        "max": 0,
+        "considered": 435,
+        "bounds": null,
+        "ignored": []
+      },
+      "maskPixels": 435,
+      "maskScope": "All actual creature geometry removed; thresholded pixels inside plume interior only"
+    }
+  ],
+  "guardZeroBodyPixels": false,
+  "limitation": "Stable meaningful body-mask pixels only. Creature mask includes all actual creature geometry in plume interior. GPU/memory unmeasured."
+}
