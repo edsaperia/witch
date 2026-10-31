@@ -2,6 +2,16 @@
 const fs = require('node:fs'), vm = require('node:vm'), cp = require('node:child_process');
 const assert = require('node:assert/strict'), test = require('node:test');
 
+test('supervisor captures a real known nonzero child exit without interpreting null as a result', () => {
+  const source = fs.readFileSync('tools/refactor/a4-proof-step.ps1', 'utf8');
+  const native = source.match(/Add-Type -TypeDefinition @'([\s\S]+?)'@/)[1];
+  const encoded = Buffer.from(native, 'utf8').toString('base64');
+  const script = `Add-Type -TypeDefinition ([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${encoded}'))); $taskChild=Start-Process -FilePath $env:ComSpec -ArgumentList @('/d','/s','/c','exit /b 7') -WindowStyle Hidden -PassThru; $taskHandle=$taskChild.Handle; $taskChild.WaitForExit(); $taskCode=[A4ProofInput]::ExitCode($taskHandle); if($taskCode -ne 7){throw 'Wrong exit code'}; 'PASS real child exit 7'`;
+  const result = cp.spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script], { encoding: 'utf8', windowsHide: true, timeout: 10000 });
+  assert.equal(result.status, 0, result.stderr || result.error?.message);
+  assert.match(result.stdout, /PASS real child exit 7/);
+});
+
 test('actual PowerShell browser policy excludes the full own descendant tree', () => {
   const file = require('node:path').resolve('tools/refactor/a4-proof-step.ps1').replaceAll("'", "''");
   const script = `

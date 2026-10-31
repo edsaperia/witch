@@ -51,6 +51,8 @@ public static class A4ProofInput {
   [DllImport("user32.dll")] public static extern bool GetLastInputInfo(ref Last value);
   public static uint LastTick() { Last value = new Last(); value.size = (uint)Marshal.SizeOf(value); if (!GetLastInputInfo(ref value)) throw new Exception("Input telemetry unavailable"); return value.time; }
   public static uint Idle(uint last) { return unchecked((uint)Environment.TickCount - last); }
+  [DllImport("kernel32.dll", SetLastError=true)] public static extern bool GetExitCodeProcess(IntPtr handle, out uint code);
+  public static int ExitCode(IntPtr handle) { uint code; if (!GetExitCodeProcess(handle, out code) || code == 259) throw new Exception("Child exit code unavailable"); return unchecked((int)code); }
 }
 '@
 function Get-A4ExternalBrowsers {
@@ -110,6 +112,9 @@ try {
   $taskLaunch = [System.Diagnostics.Stopwatch]::StartNew()
   $env:WITCH_SHA = $ExpectedSha
   $taskChild = Start-Process -FilePath $env:ComSpec -ArgumentList @('/d','/s','/c',$taskCommands[$Step]) -WorkingDirectory $taskRoot -WindowStyle Hidden -PassThru -RedirectStandardOutput "$taskPrefix.stdout.txt" -RedirectStandardError "$taskPrefix.stderr.txt"
+  $taskChildHandle = $taskChild.Handle
+  $taskReport.childPid = $taskChild.Id
+  $taskReport.supervisorSha256 = (Get-FileHash -LiteralPath $PSCommandPath -Algorithm SHA256).Hash.ToLowerInvariant()
   [void]$taskOwned.Add($taskChild.Id)
   # Independent of this loop/CIM: terminate only this exact child's tree at 265 s,
   # leaving a safety margin under the canonical 270 s hard ceiling. A start-time
@@ -130,9 +135,9 @@ try {
     $taskChild.Refresh()
   }
   $taskChild.WaitForExit()
-  $taskReport.exitCode = $taskChild.ExitCode
+  $taskReport.exitCode = [A4ProofInput]::ExitCode($taskChildHandle)
   $taskReport.elapsedMs = $taskLaunch.ElapsedMilliseconds
-  $taskReport.status = $(if ($taskChild.ExitCode -eq 0) { 'passed' } else { 'failed' })
+  $taskReport.status = $(if ($taskReport.exitCode -eq 0) { 'passed' } else { 'failed' })
   if (Test-Path -LiteralPath "$taskPrefix.watchdog") { $taskReport.watchdogStop=$true; $taskReport.status='stopped'; $taskReport.stopReason='watchdog_265s' }
   if (Test-Path -LiteralPath "$taskPrefix.browser.jsonl") {
     $taskBrowserRows = @(Get-Content -LiteralPath "$taskPrefix.browser.jsonl" | ForEach-Object { $_ | ConvertFrom-Json })
@@ -164,6 +169,7 @@ try {
   $taskRemaining = @($taskOwned | Where-Object { $_ -ne $PID } | ForEach-Object { Get-Process -Id $_ -ErrorAction SilentlyContinue } | Where-Object { $_.StartTime.ToUniversalTime() -ge $taskStarted })
   $taskReport.processTreeClean = ($taskRemaining.Count -eq 0)
   $taskReport.finished = [DateTime]::UtcNow.ToString('o')
+  $taskReport.ownedPids = @($taskOwned | Sort-Object)
   $taskReport | ConvertTo-Json -Depth 6 | Out-File -LiteralPath "$taskPrefix.json" -Encoding utf8
   Write-Output "A4 $Step $($taskReport.status); reason=$($taskReport.stopReason); cleanup=$($taskReport.processTreeClean); record=$taskPrefix.json"
 }
