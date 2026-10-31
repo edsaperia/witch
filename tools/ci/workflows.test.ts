@@ -5,6 +5,13 @@ import { parse } from "yaml";
 const workflow = (name: string) => parse(fs.readFileSync(`.github/workflows/${name}.yml`, "utf8"));
 const ci = workflow("ci"), jobs = ci.jobs;
 describe("shared CI game build", () => {
+  it("checks config values and every maintained generated reference before building", () => {
+    const step = jobs.build.steps.find((s: any) => /npm run build/.test(s.run ?? ""));
+    expect(step.run).toBe("node tools/config/check.mjs && npm run build");
+    const gate = fs.readFileSync("tools/config/check.mjs", "utf8");
+    for (const tool of ["config/format", "config/schema", "config/typegen", "config/linkSwitches", "docs/glossary", "docs/tables", "inventory", "config/generated"])
+      expect(gate).toContain(`'tools/${tool}.mjs', '--check'`);
+  });
   it("builds the tested revision once, with the benchmark base explicitly distinct", () => {
     const builds = Object.entries(jobs).flatMap(([job, value]: [string, any]) => value.steps.filter((s: any) => /npm run build/.test(s.run ?? "")).map((s: any) => ({ job, step: s })));
     expect(builds.map((b: any) => b.job)).toEqual(["build", "game-unchanged"]);

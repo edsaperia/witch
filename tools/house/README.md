@@ -18,6 +18,10 @@ The dark behind the treehouse's enclosed rooms, shot from the built game at 1600
 npm run build && node tools/house/dark-shots.cjs <out dir> [seed]     (ROOMS=a,b or none, TIME=0 no timings, SETTLE=frames, REVEAL=0, SIZE=WxH)
 ```
 
+## `draw-census.cjs`
+
+Optional one-frame diagnostics, installed inside the page.
+
 ## `forest-fade.cjs`
 
 The forest fading in behind the treehouse once the island has loaded: from the built game, she's stood in a room with the island not yet counted ready, shot; then it's ready and the fade's shot at its middle and after its end; then the Terrace with the…
@@ -81,6 +85,10 @@ The treehouse's placeholder rooms in the built game at 1600×900: she's put in t
 ```
 npm run build && node tools/house/rooms-shots.cjs <out dir> [seed]
 ```
+
+## `shot-session.cjs`
+
+Shared house-shot protocol.
 
 ## `takeoff.cjs`
 
