@@ -1,6 +1,10 @@
 /** Drawing-only contracts for the shared scene refraction path (Ed, 2026-10-31). */
 export const REFRACTION_LIMIT = 4;
 export const REFRACTION_MAX_PIXELS = 2;
+/** One art-texel silhouette halo; scene sampling/upscale must not borrow across a foreground edge. */
+export const REFRACTION_GUARD_RADIUS = 1;
+/** The existing scene is DEPTH24_STENCIL8: conservatively cover two representable depth steps. */
+export const REFRACTION_DEPTH_EPSILON = 2 / (2 ** 24 - 1);
 export const PRESSURE_SECONDS = 0.65;
 
 /** A nearer surface is never borrowed into a distortion behind it. Depth is the scene's 0..1 device depth. */
@@ -23,13 +27,15 @@ export function pressureMask(distance: number, age: number): number {
   return band * band * (1 - phase);
 }
 
-/** The scene is linearly filtered, depth nearest-filtered. A fractional potion coordinate needs all four scene-texel depths. */
+/** Read exact clamped depth texels, dilating the protected foreground by one art pixel. */
 export function refractionDepth(p: readonly [number, number], low: readonly [number, number], depthAt: (p: readonly [number, number]) => number): number {
-  const x = p[0] * low[0] - 0.5, y = p[1] * low[1] - 0.5;
-  if (Math.abs(x - Math.round(x)) < 1e-4 && Math.abs(y - Math.round(y)) < 1e-4) return depthAt(p);
-  const uv = (cell: number, n: number) => Math.max(0.5 / n, Math.min(1 - 0.5 / n, (cell + 0.5) / n));
-  const bx = Math.floor(x), by = Math.floor(y);
-  return Math.min(...[0, 1].flatMap(dy => [0, 1].map(dx => depthAt([uv(bx + dx, low[0]), uv(by + dy, low[1])]))));
+  const x = Math.floor(p[0] * low[0]), y = Math.floor(p[1] * low[1]);
+  const uv = (cell: number, n: number) => (Math.max(0, Math.min(n - 1, cell)) + 0.5) / n;
+  let depth = depthAt([uv(x, low[0]), uv(y, low[1])]);
+  for (let dy = -REFRACTION_GUARD_RADIUS; dy <= REFRACTION_GUARD_RADIUS; dy++) for (let dx = -REFRACTION_GUARD_RADIUS; dx <= REFRACTION_GUARD_RADIUS; dx++) {
+    if (dx || dy) depth = Math.min(depth, depthAt([uv(x + dx, low[0]), uv(y + dy, low[1])]));
+  }
+  return depth;
 }
 
 /** CPU reference for capture diagnostics/tests, using the same projected uniforms as the composite.
@@ -43,7 +49,7 @@ export function refractionCoordinate(p: readonly [number, number], low: readonly
     const mask = t[1] < 0.5 ? plumeMask(x, y) : pressureMask(r, t[2] * PRESSURE_SECONDS);
     if (mask <= 0) continue;
     if (depth < 0) depth = refractionDepth(p, low, depthAt);
-    if (!refractable(depth, t[0])) continue;
+    if (!refractable(depth, t[0]) || depth < t[0] + REFRACTION_DEPTH_EPSILON) continue;
     guard = Math.max(guard, t[0]);
     const vx = t[1] < 0.5 ? Math.sin(y * 11 - t[2] * 3) : r > 1e-5 ? x / r : 0;
     const vy = t[1] < 0.5 ? 0.25 * Math.sin(x * 9 + y * 6 - t[2] * 2) : r > 1e-5 ? y / r : 0;
@@ -55,7 +61,7 @@ export function refractionCoordinate(p: readonly [number, number], low: readonly
   const pixel = refractedPixel(Math.floor(p[0] * low[0]), Math.floor(p[1] * low[1]), dx, dy, low[0], low[1]);
   const at: [number, number] = [(pixel[0] + 0.5) / low[0], (pixel[1] + 0.5) / low[1]];
   if (Math.abs(at[0] - p[0]) * low[0] > REFRACTION_MAX_PIXELS + 0.0001 || Math.abs(at[1] - p[1]) * low[1] > REFRACTION_MAX_PIXELS + 0.0001) return p;
-  return refractionDepth(at, low, depthAt) < guard ? p : at;
+  return refractionDepth(at, low, depthAt) < guard + REFRACTION_DEPTH_EPSILON ? p : at;
 }
 
 /** Consume each event object once per island, even when its queue is held through several paused frames. */

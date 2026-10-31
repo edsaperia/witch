@@ -14,13 +14,13 @@ async function captureForeground(page, expectedSha, output, options = {}) {
     const fire = requested ? fires.find(f => Math.hypot(f.x - requested.x, f.z - requested.z) < 0.01)
       : fires.sort((a, b) => Math.hypot(a.x - g.witch.x, a.z - g.witch.z) - Math.hypot(b.x - g.witch.x, b.z - g.witch.z))[0];
     if (!fire) throw Error('Require a real existing campfire; no synthetic emitter is installed');
-    const creature = creatureId === null ? null : g.creatures.find(c => c.id === creatureId && c.friendly && !c.gone && !c.boss && !c.leashed);
+    const creature = g.creatures.find(c => (creatureId === null || c.id === creatureId) && c.friendly && !c.gone && !c.boss && !c.leashed) ?? null;
     if (creatureId !== null && !creature) throw Error('creatureId must identify an existing friendly, unleashed, non-boss creature');
     // Keep the original objects in-page: shot() replaces both rather than editing them.
     if (window.__refractionForeground) throw Error('Foreground staging already active');
     await v.assets.whenIdle();
     window.__refractionForeground = { witch: g.witch, camera: g.camera, manual: w.manual, enabled: v.post.refractionEnabled,
-      creature, creaturePosition: creature && { x: creature.x, z: creature.z, cell: creature.cell } };
+      creature, creaturePosition: creature && { ...creature }, introFocus: g.introFocus, hadIntroFocus: Object.hasOwn(g, 'introFocus') };
     w.manual = true;
     return { fire: { x: fire.x, z: fire.z, scale: fire.scale }, time: g.clock.time, creatureId: creature?.id ?? null };
   }, { requested: options.fire ?? null, creatureId: options.creatureId ?? null });
@@ -73,6 +73,19 @@ async function captureForeground(page, expectedSha, output, options = {}) {
 
   try {
     await fs.mkdir(output, { recursive: true });
+    // A normal start may have no friendly creature. The existing shot stager borrows a real fox, friendly and unleashed.
+    if (before.creatureId === null && options.stageCreature !== false) before.creatureId = await page.evaluate(() => {
+      const w = window.witch, g = w.game, saved = window.__refractionForeground;
+      const originals = new Map(g.creatures.map(c => [c, { ...c }]));
+      saved.creatureOriginals = originals; // Roll back even if a staging assertion below fails.
+      const result = w.shot('creature:fox@1');
+      if (!result.ok) throw Error(`Cannot stage required creature: ${result.say}`);
+      const creature = g.creatures.find(c => c.x !== originals.get(c).x || c.z !== originals.get(c).z || c.species !== originals.get(c).species);
+      if (!creature || !creature.friendly || creature.leashed) throw Error('Existing shot stager did not supply a friendly, unleashed creature');
+      saved.creature = creature; saved.creaturePosition = originals.get(creature);
+      delete saved.creatureOriginals;
+      return creature.id;
+    });
     // Camera is south of the fire. Find a real foreground depth whose body overlaps the plume's interior.
     let distance = null;
     for (const d of [1, 2, 3, 4, 6]) {
@@ -132,7 +145,15 @@ async function captureForeground(page, expectedSha, output, options = {}) {
       const w = window.witch, saved = window.__refractionForeground;
       if (!saved) return;
       w.game.witch = saved.witch; w.game.camera = saved.camera;
-      if (saved.creature) Object.assign(saved.creature, saved.creaturePosition);
+      if (saved.creature) {
+        for (const key of Object.keys(saved.creature)) if (!Object.hasOwn(saved.creaturePosition, key)) delete saved.creature[key];
+        Object.assign(saved.creature, saved.creaturePosition);
+      }
+      if (saved.creatureOriginals) for (const [creature, original] of saved.creatureOriginals) {
+        for (const key of Object.keys(creature)) if (!Object.hasOwn(original, key)) delete creature[key];
+        Object.assign(creature, original);
+      }
+      if (saved.hadIntroFocus) w.game.introFocus = saved.introFocus; else delete w.game.introFocus;
       w.view.post.refractionEnabled = saved.enabled; w.manual = saved.manual; delete window.__refractionForeground;
     });
   }

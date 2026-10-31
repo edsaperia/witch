@@ -28,10 +28,12 @@ test('restores an existing runner wrapper descriptor and backdrop even when Post
 });
 test('diagnostic names actual changed camera state and interleaved/instance buffers at one clock', () => {
   const f = fixture(), a = new Float32Array([1]), m = new Float32Array([2]);
-  f.v.camLift = 0;
+  f.v.camLift = 0; f.v.canopyNow = 0;
   f.v.scene.traverse = visit => visit({ visible: true, id: 7, name: 'actor', geometry: { attributes: { iPos: { data: { array: a } } } }, instanceMatrix: { array: m } });
   f.v.render = () => { f.v.camLift = 0.35; a[0] = 3; m[0] = 4; };
   const result = probeRenderDrift(f.root);
   assert.equal(result.time, 2); assert.equal(f.root.witch.game.clock.time, 2);
   assert.deepEqual(result.changes.map(c => c.key), ['camLift', 'actor:7/attribute/iPos', 'actor:7/instanceMatrix']);
+  assert.equal(result.observations.canopyNow.ownProperty, true);
+  assert.equal(result.observations.canopyNow.before, 0); assert.equal(result.observations.canopyNow.after, 0);
 });

@@ -1,4 +1,4 @@
-import { REFRACTION_LIMIT, REFRACTION_MAX_PIXELS } from "./refractionMath";
+import { REFRACTION_LIMIT, REFRACTION_MAX_PIXELS, REFRACTION_GUARD_RADIUS, REFRACTION_DEPTH_EPSILON } from "./refractionMath";
 
 /** Inject after the composite's existing uLow declaration; no extra full-screen pass or render target. */
 export const REFRACTION_GLSL = /* glsl */ `
@@ -7,13 +7,14 @@ uniform int uRefractionCount;
 uniform vec4 uRefractionShape[${REFRACTION_LIMIT}]; // centre uv, half-width/height uv
 uniform vec4 uRefractionState[${REFRACTION_LIMIT}]; // protected support depth, kind (plume/ring), clock/phase, art-pixel strength
 float refractionDepthAt(vec2 p) {
-  // Protect every participating foreground texel if diagnostic callers supply a fractional coordinate.
-  vec2 cell = p * uLow - 0.5, nearest = floor(cell + 0.5);
-  if (all(lessThan(abs(cell - nearest), vec2(0.0001)))) return texture2D(uRefractionDepth, p).r;
-  vec2 base = floor(cell), lo = clamp((base + 0.5) / uLow, 0.5 / uLow, 1.0 - 0.5 / uLow);
-  vec2 hi = clamp((base + 1.5) / uLow, 0.5 / uLow, 1.0 - 0.5 / uLow);
-  return min(min(texture2D(uRefractionDepth, lo).r, texture2D(uRefractionDepth, vec2(hi.x, lo.y)).r),
-             min(texture2D(uRefractionDepth, vec2(lo.x, hi.y)).r, texture2D(uRefractionDepth, hi).r));
+  // Exact DEPTH24 texels plus a one-art-pixel foreground halo protect thin/faint silhouette edges.
+  ivec2 size = textureSize(uRefractionDepth, 0), cell = ivec2(floor(p * vec2(size)));
+  float depth = 1.0;
+  for (int y = -${REFRACTION_GUARD_RADIUS}; y <= ${REFRACTION_GUARD_RADIUS}; y++) for (int x = -${REFRACTION_GUARD_RADIUS}; x <= ${REFRACTION_GUARD_RADIUS}; x++) {
+    ivec2 at = clamp(cell + ivec2(x, y), ivec2(0), size - ivec2(1));
+    depth = min(depth, texelFetch(uRefractionDepth, at, 0).r);
+  }
+  return depth;
 }
 vec2 refractScene(vec2 p) {
   if (uRefractionCount == 0) return p;
@@ -35,7 +36,7 @@ vec2 refractScene(vec2 p) {
     }
     if (mask <= 0.0) continue;
     if (depth < 0.0) depth = refractionDepthAt(p);
-    if (depth < state.x) continue;
+    if (depth < state.x + ${REFRACTION_DEPTH_EPSILON.toFixed(12)}) continue;
     guardDepth = max(guardDepth, state.x);
     offset += direction * mask * state.w;
   }
@@ -47,7 +48,7 @@ vec2 refractScene(vec2 p) {
   if (any(greaterThan(abs(at - p) * uLow, vec2(${REFRACTION_MAX_PIXELS.toFixed(1)} + 0.0001)))) return p;
   float sourceDepth = refractionDepthAt(at);
   // Conservative source guard too: background heat cannot pull a foreground silhouette sideways.
-  if (sourceDepth < guardDepth) return p;
+  if (sourceDepth < guardDepth + ${REFRACTION_DEPTH_EPSILON.toFixed(12)}) return p;
   return at;
 }
 `;

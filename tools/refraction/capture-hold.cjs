@@ -54,6 +54,8 @@ function probeRenderDrift(root = window) {
   };
   const before = snapshot(); v.render(time); const after = snapshot();
   const changes = Object.keys(after).filter(k => JSON.stringify(before[k]) !== JSON.stringify(after[k])).map(key => ({ key, before: before[key], after: after[key] }));
-  return { time, changes, limitation: 'CPU state/resource changes only; pixel attribution requires canonical renders. No production fix inferred.' };
+  return { time, changes,
+    observations: { canopyNow: { path: 'view.canopyNow (nightState copied onto View with Object.assign)', ownProperty: Object.hasOwn(v, 'canopyNow'), before: before.canopyNow, after: after.canopyNow, uniform: w.lightUniforms?.uCanopyReach?.value ?? null } },
+    limitation: 'CPU state/resource changes only; pixel attribution requires canonical renders. No production fix inferred.' };
 }
 module.exports = { installCaptureHold, restoreCaptureHold, probeRenderDrift };

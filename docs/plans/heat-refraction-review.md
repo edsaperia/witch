@@ -157,3 +157,33 @@ without changing species/art and restore its position/cell afterward. Its camera
 and pose are saved in the creature folders; inspect actual rig/sprite overlap
 and depth rather than applying the witch quad envelope to a different actor.
 This optional stage has not been browser-run by the builder.
+
+### Zero-noise edge follow-up (canonical6547931572)
+
+The580fcb83 held capture has OFF-return0 in all five crossings, so its measured
+36/9/18 changed opaque-body pixels by1–3 levels are a real FAIL. The revised guard
+uses exact texelFetch depth reads with a one-art-texel min-depth halo at both
+destination and source, plus two representable DEPTH24_STENCIL8 depth steps of
+conservative comparison margin. CPU tests exercise adjacent diagonal/thin edges,
+the displaced source's halo and depth quantisation uncertainty. Up to nine reads
+per guarded coordinate (18 for a moved pixel), only inside local masks; OFF still
+returns before any read. No extra pass, texture, actor mask or potion-line edit.
+This deliberately shrinks distortion near foreground geometry. GPU cost and the
+required zero-body-pixel result remain UNMEASURED until an allocated capture.
+
+The probe now always includes canopy observations, including a stable zero,
+instead of showing only changed keys. Actual source uses Object.assign(this,
+nightState(t)) at construction/reset: canopyNow is a direct View property, despite
+the previous review's nested-object hypothesis. Its direct path/own-property flag
+and uCanopyReach are recorded to make that distinction checkable.
+
+The helper first uses an existing eligible friendly/unleashed creature. If none
+exists, it invokes the existing creature:fox@1 shot stager and borrows its real
+friendly/unleashed fox; that full creature snapshot, including its species/state,
+is restored afterward or on error. Creature crossing is now included by default
+(stageCreature:false explicitly opts out); creatureId can still select an
+existing eligible actor. The actual image overlap is still a review requirement.
+
+No new cloud/Claude runner is assumed. Canonical1476#6547931247 now requires own
+headless Chromium, explicit laptop slot with FREE evidence, Ed idle>=5min/no game
+tab, <=270s and SLOT DONE. Request after pushing exact fix; do not start early.
