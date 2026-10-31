@@ -12,6 +12,7 @@ import { guestArrival } from "./platform/online/guestArrival";
 import { pendingGuestAccess } from "./platform/online/guestAccess";
 import { visitSaves } from "./app/visitSaves";
 import { visitLifecycle } from "./app/visitLifecycle";
+import { visitUnlocks } from "./app/visitUnlocks";
 import { currentSettings } from "./app/playerSettings";
 import { wavesOver } from "./rules/win";
 import { chartOpen, closeChart, openChart, prepareChart, finishChartFlight, type Sailed } from "./ui/chartOverlay";
@@ -362,16 +363,23 @@ freeze.ownsEsc = () => !bot && !document.querySelector("#settings-page.open, #po
 const callArrival = guestArrival({ room: "bedroom2", equipment: game => {
   const witch = newWitchPlayer(1, 0, 0, game.tuning); setParts(witch.spells, bareBroom()); witch.spells.hat = "none"; return witch;
 } });
+let returnedUnlocks: ReturnType<typeof visitUnlocks> | null = null;
 const phone = telephoneStation({ storage: (() => { try { return localStorage; } catch { return null; } })(), session: {
   build: BUILD, hostGame: () => N().game,
-  attach: game => { if (!pendingGuestAccess.roomAccessFor(1, "bedroom2")) throw new Error("The guest room isn't ready yet."); callArrival.attach(game); },
+  attach: game => { if (!pendingGuestAccess.ready) throw new Error("The guest room isn't ready yet."); callArrival.attach(game); },
   detach: game => callArrival.detach(game),
   prepareGuest: (game, signal, advanced) => {
     if (!ordinaryVisit) return Promise.reject(new Error("This browser isn't ready to protect your saved night."));
     return ordinaryVisit.prepare(game, signal, advanced);
   },
   synchronized: game => { void ordinaryVisit?.synchronized(game).catch(error => { logCaughtError(error, "visit confirmation"); phone.hangUp(); }); },
-  ended: role => { if (role === "guest") void ordinaryVisit?.end().catch(error => logCaughtError(error, "visit return")); },
+  ended: (role, game) => {
+    if (role === "guest") {
+      try { returnedUnlocks = game && game.witches.some(w => w.id === 1) ? visitUnlocks(game, 1) : null; }
+      catch (error) { returnedUnlocks = null; logCaughtError(error, "visit unlock capture"); }
+      void ordinaryVisit?.end().catch(error => logCaughtError(error, "visit return"));
+    }
+  },
   failed: error => { logCaughtError(error, "telephone session"); phone.hangUp(); },
   advanceHost: (game, controls, dt) => recordedStep(game, controls, dt, BUILD, captureRecording),
 } });
@@ -833,7 +841,7 @@ const autosave = visitNightSaves ? new NightAutosave(visitNightSaves.store, () =
 }, error => { if (!nightWriteReported) { nightWriteReported = true; logCaughtError(error, "save slot: write night"); } nightSaveNotice("Your night could not be saved. Keep this page open to continue playing."); }) : null;
 const ordinaryVisit = visitNightSaves ? visitLifecycle({
   saves: visitSaves(browserSaveSlots(), visitNightSaves),
-  own: () => ({ night: N(), href: location.href }),
+  own: () => ({ night: N(), href: location.href, look: page.look() as Record<string, unknown> | null }),
   adoptBorrowed: async (game, signal, advanced) => {
     signal.throwIfAborted(); sailing = true; input.release(); input.clearPresses();
     const p = new URLSearchParams(N().params); p.delete("arrive");
@@ -858,8 +866,12 @@ const ordinaryVisit = visitNightSaves ? visitLifecycle({
   },
   adoptOwn: async (own, fresh) => {
     if (fresh) {
+      const ownCollection = loadOwned(own.look);
+      returnedUnlocks?.apply(browserSaveSlots(), { spells: own.night.game.spells, owned: () => ownCollection });
+      returnedUnlocks = null; owned = null;
       const href = nightHref("bed", own.href); await nightInPlace(nightFromHref("bed", href), href);
     } else {
+      returnedUnlocks = null;
       const restored = await startNight(page, { ...own.night.spec, how: "bed", resume: own.night.game, borrowed: false });
       await view.prepare(); Object.assign(restored.flags, own.night.flags, { last: 0 }); sailing = false; input.clearPresses();
     }

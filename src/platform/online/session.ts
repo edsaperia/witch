@@ -23,7 +23,7 @@ export interface SessionOptions {
   /** Called after the fresh post-preparation rebase; menus/saves must not mutate a presentation facade. */
   synchronized(game: Game): void;
   /** Page owns fresh-solo return/save policy and telephone/socket teardown. */
-  ended(role: "host" | "guest"): void;
+  ended(role: "host" | "guest", game: Game | null): void;
   failed(error: Error): void;
   advanceHost?(game: Game, inputs: readonly Controls[], dt: number): void;
   now?(): number;
@@ -52,7 +52,7 @@ export function onlineSession(options: SessionOptions) {
     beatSegments = null;
     reject?.(new Error("The online night ended.")); accept = reject = null;
     if (previous === "host" && attached && previousGame) options.detach(previousGame);
-    if (previous) options.ended(previous);
+    if (previous) options.ended(previous, previousGame);
   };
   const fail = (value: unknown) => { const error = value instanceof Error ? value : new Error(String(value)); stop(); options.failed(error); };
   const sendStart = () => {
