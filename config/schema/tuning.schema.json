@@ -5968,11 +5968,12 @@
         },
         "questCap": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "description": "The maximum distance in areas to a dream kind; default 0 means no distance cap, so any kind on the map can be dreamed of however far."
         },
         "questLater": {
           "type": "boolean",
-          "description": "a legend dreams only of a kind living in an area later on the route than its own, within questCap areas; failing that, the kind of the nearest later area; with no later area, any kind (the early easy quest keeps its own pick); false: any kind as before."
+          "description": "a legend dreams only of a kind living in an area later on the route than its own, within questCap areas when a positive cap is set (default 0: no cap); failing that, the kind of the nearest later area; with no later area, any kind (the early easy quest keeps its own pick); false: any kind as before."
         },
         "bombard": {
           "type": "object",

@@ -110,8 +110,12 @@
       ],
       "notes": "on, each of the night's legends gets an area of its own grown out of the island beside one of its kind's areas (its pair), taking its kind and look, with no runestone, soundsystem or route stop, its circle at its heart; the island grows by them; the pair counts as one area for a legend's rage and for creatures attacking and defending (rules/map.ts areaOf); false: legends in their own kind's areas as before."
     },
+    "legends.questCap": {
+      "what": "The maximum distance in areas to a dream kind; default 0 means no distance cap, so any kind on the map can be dreamed of however far.",
+      "decisions": [{ "by": "Ed", "date": "2026-10-31", "quote": "no quest cap", "rest": "questCap is 0; questLater is unchanged." }]
+    },
     "legends.questLater": {
-      "what": "a legend dreams only of a kind living in an area later on the route than its own, within questCap areas; failing that, the kind of the nearest later area; with no later area, any kind (the early easy quest keeps its own pick); false: any kind as before.",
+      "what": "a legend dreams only of a kind living in an area later on the route than its own, within questCap areas when a positive cap is set (default 0: no cap); failing that, the kind of the nearest later area; with no later area, any kind (the early easy quest keeps its own pick); false: any kind as before.",
       "decisions": [
         {
           "by": "Ed's core design",

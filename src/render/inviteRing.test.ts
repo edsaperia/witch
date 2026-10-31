@@ -18,8 +18,15 @@ function setup(level: number) {
 }
 
 describe("the 💌 ring", () => {
+  it("does not fill a baby invitation meter", () => {
+    const { g, A, c, ring, hits } = setup(0);
+    for (let k = 0; k <= hits; k++) A.hit(c, TUNING.invites.amount, g.clock.time);
+    expect(A.affection(c)).toBeNull();
+    expect(ring(g.clock.time).filled).toBe(0);
+    expect(stateOf(c)).toBe("wild");
+  });
   it("has a slot for every hit its level's meter takes, and its filled slots are the meter's hits", () => {
-    for (const level of [0, 1, 2]) {
+    for (const level of [1, 2]) {
       const { g, A, c, ring, hits } = setup(level);
       expect(ring(0)).toEqual({ slots: hits, filled: 0 });
       for (let k = 1; k < hits; k++) {

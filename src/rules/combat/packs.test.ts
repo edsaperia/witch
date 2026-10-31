@@ -382,7 +382,7 @@ describe("a pack against her walking away (Ed's playtest, v3893)", () => {
     expect(packs.lunges).toBeGreaterThanOrEqual(5);
     expect(packs.landed / packs.lunges).toBeGreaterThanOrEqual(0.6); // (a lunge that starts reaches her: 7 of 10 before the fight styles, 4 of 6 since, the hares bounding in: Ed's playtest, 2026-10-29)
     expect(packs.shotHits / Math.max(1, packs.fired)).toBeGreaterThanOrEqual(0.35); // (13 to 26% before: aimed behind her)
-    expect(packs.hits).toBeGreaterThanOrEqual(plain.hits * 0.5); // (9 to 17 of plain's 24 to 30 before; and since Ed, 2026-10-20, a pack's strikes at her take the dodge's tokens, one at a time as the plain fight's do, with its lulls besides)
+    expect(packs.hits, JSON.stringify({ plain, packs })).toBeGreaterThanOrEqual(plain.hits * 0.5); // (9 to 17 of plain's 24 to 30 before; and since Ed, 2026-10-20, a pack's strikes at her take the dodge's tokens, one at a time as the plain fight's do, with its lulls besides)
   }, 60000);
 });
 

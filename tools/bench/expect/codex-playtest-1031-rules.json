@@ -1,0 +1,6 @@
+{
+  "reason": "Ed playtest item 13: legends.questCap defaults to 0; quests may pick any distance while questLater stays unchanged.",
+  "rules": {
+    "creatures": "Dream species, far values and quest rewards can change because the default distance tail is no longer cut."
+  }
+}

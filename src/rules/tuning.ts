@@ -506,7 +506,7 @@ export interface Tuning {
   legends: { share: number;
     /** Friendly legends defend witches and engage enemies within this many metres (Ed, 2026-10-31); angry reach stays in legends.json. */
     friendRange: number;
-    /** A legend dreams of any other kind on the map, equally likely, but none whose nearest area lies over questCap areas away (about the farthest tenth at 5; 0: no cap). */
+    /** A legend dreams of any other kind on the map; default 0 means no distance cap (Ed, 2026-10-31). A positive questCap limits its nearest dream area in area units. */
     questCap: number;
     /** A legend dreams only of a kind living in an area later on the route than its own (else the nearest later area's, else any). */
     questLater?: boolean;
