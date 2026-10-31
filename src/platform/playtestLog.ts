@@ -114,7 +114,8 @@ function readRuns(): PlaytestRun[] {
 }
 
 export class PlaytestLog {
-  comments?: () => Promise<unknown[]>;
+  comments?: (moments?: boolean) => Promise<unknown[]>;
+  commentStorage?: () => unknown;
   inputRecording?: () => unknown;
   private run: PlaytestRun;
   private next = EVERY;
@@ -233,13 +234,29 @@ export class PlaytestLog {
     const runs = readRuns(), all = runs.some(r => r.started === this.run.started) ? runs : [...runs, this.run];
     if (this.inputRecording) Object.assign(all[all.length - 1], { inputRecording: this.inputRecording() });
     if (this.comments) Object.assign(all[all.length - 1], { comments: await this.comments() });
+    if (this.commentStorage) Object.assign(all[all.length - 1], { commentStorage: this.commentStorage() });
     if (currentJournal()) Object.assign(all[all.length - 1], { journal: await currentJournal()!.download() });
-    const content = format === "text" ? readablePlaytest(all) : JSON.stringify(await packLog(all));
+    const content = format === "text" ? readablePlaytest(all) : JSON.stringify(await packPlaytestDownload(all, this.comments ? () => this.comments!(false) : undefined));
     const blob = new Blob([content], { type: format === "text" ? "text/plain;charset=utf-8" : "application/json" }), a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = `witch-playtest-${this.run.seed}-${this.run.started.slice(0, 16).replace(/[:T]/g, "-")}.${format === "text" ? "txt" : "json"}`;
     document.body.append(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+}
+
+/** A diagnostics envelope limit must not prevent downloading the written reports. */
+export async function packPlaytestDownload(runs: PlaytestRun[], reports?: () => Promise<unknown[]>) {
+  try { return await packLog(runs); }
+  catch (e) {
+    if (!reports) throw e;
+    const comments = await reports();
+    if (!comments.length) throw e;
+    const latest = runs.at(-1)!;
+    return packLog([{ seed: latest.seed, build: latest.build, started: latest.started, interval: latest.interval, samples: [], comments,
+      sourceRuns: runs.map(({ seed, build, started }) => ({ seed, build, started })),
+      exportOmissions: [`Full diagnostics could not be downloaded: ${e instanceof Error ? `${e.name}: ${e.message}` : String(e)}`,
+        "Reports-only download: all written comments and their context kept; saved moments, input recordings, samples and journal omitted."] }]);
   }
 }
 
