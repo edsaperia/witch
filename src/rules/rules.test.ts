@@ -36,6 +36,7 @@ import { RELICS } from "../../art/relics.js";
 import { SCENES, sceneLayout } from "../../art/scenes.js";
 import { COUNTRY } from "../../art/country.js";
 import { runeOffset } from "./runeOffset";
+import { smallWorldTuning } from "../test/worlds";
 // The rules' every kind of scenery on, as before the small islands' cuts (Ed, 2026-10-11: no set pieces, sports grounds, rocks, freak
 // trees or path pieces; ruins twice): this file tests how each is placed, so it keeps them all; "the small islands' scenery" below
 // checks the game's own tuning.
@@ -44,7 +45,9 @@ const withTuning = (over: Partial<Tuning>): Tuning => ({ ...TUNING, ...over, cam
 const MODERN_POOL = [...RELICS.filter(r => r.family === "modern" && (r as { scatter?: boolean }).scatter !== false), ...(COUNTRY as { id: string; family: string }[]).filter(d => d.family === "farm" || d.family === "street")].map(d => d.id); // the scattered modern finds, in the view's order (the bits of highway left out: Ed, round 13)
 const MODERN = MODERN_POOL.length;
 
+// Retain this shared full map for explicit area-count, >1000-neighbour, 25-kind and scenery-distribution assertions.
 const map = generateMap(123, TUNING);
+// Retain full extent for >5-area railway crossings, >20 paths and 600 m corridor/distribution samples.
 // A map with plenty of paths and railways, for the tests of how they behave (the game's own numbers make few: Ed, 2026-10-11).
 const NET = { ...TUNING, paths: { ...TUNING.paths, rails: [2, 4] as [number, number], linkChance: 0.55, deadEndChance: 0.3 } }, NET_MAP = generateMap(123, NET);
 
@@ -798,7 +801,7 @@ describe("inviting and leashing", () => {
   beforeEach(() => { savedLeash = STATES.leash; STATES.leash = "again"; });
   afterEach(() => { STATES.leash = savedLeash; });
   // (Every level to talk to: a baby, a young and an adult in each area.)
-  const creatures = spawnCreatures(generateMap(123, withTuning({ population: { ...TUNING.population, start: { babies: 1, young: 1, adults: 1 } } })));
+  const creatures = spawnCreatures(generateMap(123, smallWorldTuning(withTuning({ population: { ...TUNING.population, start: { babies: 1, young: 1, adults: 1 } } }), "Conversation and leash transitions need a few creatures of each level, not a full world.")));
   const fresh = () => creatures.map(c => ({ ...c, rand: (() => { let k = c.id * 7 + 1; return () => (k = (k * 16807) % 2147483647) / 2147483647; })() }));
   const none: LeashControls = { sigil: false };
   // Stand the witch next to a creature of the given level and talk until it is invited.
