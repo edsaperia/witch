@@ -95,3 +95,17 @@ Sense-checked against the code by the coordinator. Ed's words are quoted; his ne
 - **Behaviour:** it **never leaves the home area**: it roams or stands there. It targets (a) enraged creatures and (b) any creature targeting her, **only if it can attack them without leaving the home area** (its normal attack reach from inside the home area; use the same range knob as item 6). It **never targets its own kind** (the normal legend rule). It's exempt from item 6's route walking.
 - **Exclude it from:** the win (`src/rules/win.ts:244-275`): it doesn't go to the dancefloor. Also dealt legends, quests, invites/💌, partyEgg, `hasKin`, stacks (item 7) and the legend count.
 - **Tests:** spawn per island kind, none on the home island, the targeting gates (enraged / attacking her / inside-area reach / own kind), never leaving the home area, and the exclusions.
+
+# Addendum 2: pause menu (Ed, 18:08 UTC)
+
+Slice C (UI, small). Root assigns a builder. If none is free, it goes to slice B after items 7–9.
+
+### 11. "Load latest version" in the pause menu (Ed: "Can we put the 'load to latest version' button in the pause menu")
+
+- **Now:** `NewBuildNotice` (`src/app/newBuild.ts`; Ed 14 Oct) checks `version.json` on load, on pausing and every 5 minutes. While a newer build is up, it shows the `#new-build` notice with a reload button in the bedroom and on the pause page. That notice is a separate floating element (`main.ts:675-677`, `PAUSE_UI` in `platform/freeze.ts:25`), not part of the pause menu, so it's easy to miss or covered by the menu.
+- **Change:** put a **"Load latest version (vNNNN)"** entry **inside the pause menu itself**, reachable by keys and pad like the other entries. It appears while `newBuild.latest` is set, and choosing it reloads the page (`location.reload()`; the page's own save rules apply, so check that a reload mid-night loses nothing it wouldn't on an ordinary refresh). Remove the separate floating notice from the pause page; keep the bedroom notice. Test: present only when newer, focus and pad navigation, the reload call.
+
+### 12. Quality dropdown spills out of its card (Ed: "The quality dropdown spills out of its card")
+
+- **Where:** the settings page's Display card, row `quality` (`src/ui/settingsMenu.ts:268`, `kind: "choice"`, options auto/high/medium/low, with a note).
+- **Do:** reproduce it at the text sizes 1, 1.25 and 1.5 and at narrow and wide windows. Fix it so the row's control and note stay inside the card (wrap or resize as the other choice rows do), and check the other `choice` rows don't share the problem. Before/after screenshots in your REPORT (the coordinator can take cloud screenshots if you post a driver).
