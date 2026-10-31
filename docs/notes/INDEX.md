@@ -200,6 +200,7 @@ says what each note covers.
 
 ## [The music](music.md)
 
+- Potion isolation
 - Music style
 - Section
 - Boot-up
@@ -297,6 +298,7 @@ says what each note covers.
 
 ## [Sound effects](sound.md)
 
+- Night Vision and Heat Vision audio
 - Cauldron plop
 - Sound effects
 - Babble
@@ -309,6 +311,7 @@ says what each note covers.
 
 ## [The view](view.md)
 
+- Night and Heat Vision
 - Potion perception
 - Layered magic
 - Magic mock (stage 0 only)
