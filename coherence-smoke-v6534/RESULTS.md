@@ -191,7 +191,7 @@ page.waitForFunction: Timeout 240000ms exceeded.
 | cull | pass (no checks of its own; "smoke test passed") | |
 | ley | **FAIL**: "the ley line is drawn from home through every area (10 sections for 11 areas), the last reached at 0 (2798 triangles)" | repeated identically: **real** |
 | laptop | **FAIL**: uncaught `page.waitForFunction: Timeout 240000ms exceeded` in `hold` during flyPath (smoke.cjs:138 ← :165 / :163 ← :214); aborts the run, so no checks were printed | repeated (1185 s, same timeout in flyPath): **real** (or the software renderer too slow for the 240 s hold) |
-| trunks | TIMEOUT at the 900 s cap, in its body (smoke.cjs:474) | not rerun: a 1200 s rerun wouldn't fit the budget |
+| trunks | TIMEOUT at the 900 s cap, in its wait for the forest reveal (smoke.cjs:474, which itself allows 900 s), so the cap was too short to judge it | not rerun: a 1200 s rerun wouldn't fit the budget |
 | tilt-before | TIMEOUT: still in its first screenshot (smoke.cjs:303) when batch 1b hit 2700 s | not rerun |
 | heath, phone | ran in batch 1b (screenshots 08, 10, 11 in previews/) but their checks were lost when the batch timed out | not run again |
 | vanish-1900x1240, vanish-2000x1076 | KNOWN (#1090): fly only on a real GPU | |
