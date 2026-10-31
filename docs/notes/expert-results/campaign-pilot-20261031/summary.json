@@ -151,8 +151,9 @@
     }
   ],
   "artifactDigests": {
-    "checkpoint.json": "e4a60b09dc70fcfecda20381b99ed7280044f17988a025579555ab5822892312",
-    "cases.jsonl": "b65f96c8661e4e4408c2a44db56c267ba4f43b37716f1fcf80398ebba37229ba",
-    "training-parameters.json": "ca380dc33cfe57c7aed801166807568de390995093acfa938ba86ebd15558aac"
-  }
+    "checkpoint.json": "b8e151ce02ac07567842a0c2ce4f3b4b192f92a15fd157b4bce3f3e66817da12",
+    "cases.jsonl": "5aaa19761e7c63dbba2097e15d9c12898af83d87e1928dc72b4c276f9a5f50ed",
+    "training-parameters.json": "23354b925439cbf73b7db6a910f177dd1d14a4ba0236d45f46bfe3b94a65ef33"
+  },
+  "artifactDigestFormat": "sha256-canonical-parsed-json-v1 (JSONL as row array)"
 }
