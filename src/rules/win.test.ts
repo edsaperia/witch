@@ -48,7 +48,7 @@ describe("the end of the route (rules/win.ts)", () => {
       c.quest = { species: "fox" };
       Object.assign(c, { legendState: state, partyLegend: state === "happy", finale: undefined, lairX: c.x, lairZ: c.z });
       if (state === "angry") c.enraged = true;
-      stepGame(g, idle, STEP); calmAll(g); stepGame(g, idle, STEP);
+      stepGame(g, idle, STEP); calmAll(g); g.win!.pickedAt = -Infinity; stepGame(g, idle, STEP);
       expect(g.win?.phase).toBe("lap");
       // Bring the victory lap to its end; the win's state transitions are the subject, not pulse travel time.
       for (const p of g.win!.lap) p.at = g.clock.time;
