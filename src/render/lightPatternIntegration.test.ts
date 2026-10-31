@@ -20,7 +20,7 @@ it('uses an ordinary lit campfire for the gentle preview without requiring disab
   updateSources(v, 20);
   expect(v.forestLights).toHaveLength(1); expect(v.worldFires).toHaveLength(1);
   const original = { ...v.forestLights[0] };
-  expect(original.pattern?.[0]).toBe(4); expect(original.pattern?.[2]).toBe(.16);
+  expect(original.pattern?.[0]).toBe(4); expect(original.pattern?.[2]).toBe(.5);
   expect(original.rgb).toBe(fire); expect(original.reach).toBe(25);
   comfort.reduceFlashing = true; updateSources(v, 20);
   expect(v.forestLights[0].pattern?.[2]).toBe(0);

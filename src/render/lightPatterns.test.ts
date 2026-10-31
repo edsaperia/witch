@@ -21,8 +21,8 @@ it('leaves ordinary/off/comfort light exactly unchanged', () => {
 });
 it('keeps every look finite and bounded without increasing incident light', () => {
   for (const kind of ['spokes', 'stripes', 'bands', 'flicker', 'rings'] as const) for (let i = 0; i < 80; i++) {
-    for (const value of lightPatternSample({ x: i * .3, y: i % 9, z: -i * .1 }, origin, { ...config, kind, phase: i * .17, contrast: .65 })) {
-      expect(Number.isFinite(value)).toBe(true); expect(value).toBeGreaterThanOrEqual(.35 - 1e-12); expect(value).toBeLessThanOrEqual(1);
+    for (const value of lightPatternSample({ x: i * .3, y: i % 9, z: -i * .1 }, origin, { ...config, kind, phase: i * .17, contrast: .9 })) {
+      expect(Number.isFinite(value)).toBe(true); expect(value).toBeGreaterThanOrEqual(.1 - 1e-12); expect(value).toBeLessThanOrEqual(1);
     }
     expect(lightPatternSample(origin, origin, { ...config, kind }).every(Number.isFinite)).toBe(true);
   }

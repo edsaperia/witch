@@ -6,7 +6,8 @@ export const LIGHT_PATTERN = { none: 0, spokes: 1, stripes: 2, bands: 3, flicker
 export type LightPatternKind = keyof typeof LIGHT_PATTERN;
 export interface LightPattern { kind: LightPatternKind; scale: number; contrast: number; angle: number; phase: number }
 export interface LightPoint { x: number; y: number; z: number }
-export const PATTERN_DEFAULTS = { scale: 6, contrast: .3, beatsPerTurn: 32, projectorCap: 3 } as const;
+// Ed, 2026-10-31 via coordinator1542#6545860556: "Strong", about triple the first preview.
+export const PATTERN_DEFAULTS = { scale: 6, contrast: .9, beatsPerTurn: 32, projectorCap: 3 } as const;
 const TAU = Math.PI * 2;
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
 
@@ -17,7 +18,7 @@ export function lightPatternPhase(clock: BeatClock, gameTime: number): number {
 
 /** Comfort/off returns the exact identity, not a separate animation clock or a bright flash. */
 export function patternContrast(contrast: number, enabled: boolean, reduceFlashing: boolean): number {
-  return enabled && !reduceFlashing && Number.isFinite(contrast) ? clamp(contrast, 0, .65) : 0;
+  return enabled && !reduceFlashing && Number.isFinite(contrast) ? clamp(contrast, 0, 1) : 0;
 }
 
 export function lightLocal(point: LightPoint, origin: LightPoint, angle: number): LightPoint {
@@ -65,9 +66,9 @@ vec3 lightPattern(vec3 relativeWorld, vec4 pattern, vec2 rotation) {
   } else if (pattern.x < 2.5) wave = 0.5 + 0.5 * sin(stripe * 6.28318530718 - pattern.w);
   else if (pattern.x < 3.5) {
     bands = 0.5 + 0.5 * sin(vec3(stripe * 6.28318530718 - pattern.w) + vec3(0.0, 2.09439510239, 4.18879020479));
-    return mix(vec3(1.0), clamp(bands, 0.0, 1.0), clamp(pattern.z, 0.0, 0.65));
+    return mix(vec3(1.0), clamp(bands, 0.0, 1.0), clamp(pattern.z, 0.0, 1.0));
   } else if (pattern.x < 4.5) wave = 0.5 + 0.3 * sin(pattern.w) + 0.2 * sin(pattern.w * 1.73 + 1.2);
   else wave = 0.5 + 0.5 * sin(length(p) * 6.28318530718 - pattern.w);
-  return vec3(mix(1.0, clamp(wave, 0.0, 1.0), clamp(pattern.z, 0.0, 0.65)));
+  return vec3(mix(1.0, clamp(wave, 0.0, 1.0), clamp(pattern.z, 0.0, 1.0)));
 }
 `;

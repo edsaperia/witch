@@ -2,6 +2,8 @@
 
 Ed's requested first slice (2026-10-31): one soundsystem, three looks; one gentle irregular light; one patterned spell. Preview is off by default under root reservation 6544780734. This checklist is not a claim of completed visual or performance acceptance.
 
+Ed's strength ruling (2026-10-31, coordinator1542#6545860556): "Strong", about triple the first preview. Contrast is now .9 for the soundsystem, .75 for the blink rings and .5 for the gentle source, with CPU/GLSL clamps widened to [0,1]. Modulation still only attenuates existing light RGB, never amplifies highlights. The previous75e4fc8 cloud pass captured14 cases without errors and exact comfort/off identity, but was too faint; it does not validate this stronger head. The strong capture must include a clear campfire view and treetop readability.
+
 ## What is implemented
 
 - `?patternlight=spokes`, `stripes`, `bands` hold a look. `auto` visits them over 64-beat sections, fading modulation at each boundary. Off, omitted or unknown values retain original lighting.

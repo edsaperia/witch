@@ -21,7 +21,7 @@ export function speakerPattern(clock: BeatClock, time: number, look: PatternLook
 }
 export function sourcePattern(kind: LightPatternKind, worldTime: number, calm: boolean): PackedPattern {
   return calm ? IDENTITY_PATTERN : [LIGHT_PATTERN[kind], kind === 'rings' ? 3 : 6,
-    patternContrast(kind === 'flicker' ? .16 : .25, true, calm), worldTime * (kind === 'flicker' ? .45 : .7)];
+    patternContrast(kind === 'flicker' ? .5 : .75, true, calm), worldTime * (kind === 'flicker' ? .45 : .7)];
 }
 
 /** Clears every slot each frame, and also when another writer replaces that slot. */

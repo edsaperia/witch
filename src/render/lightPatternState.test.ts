@@ -9,6 +9,7 @@ it('has one explicit off switch and three repeatable soundsystem looks', () => {
   expect(patternOptions('?patternlight=auto')).toBe('auto');
   expect(speakerPattern(clock, 10, 'off', false)).toBe(IDENTITY_PATTERN);
   expect(speakerPattern(clock, 10, 'auto', true)).toBe(IDENTITY_PATTERN);
+  expect(speakerPattern(clock, 10, 'stripes', false)[2]).toBe(.9);
   expect([8, 72, 136].map(beat => speakerPattern(clock, timeAt(clock, beat), 'auto', false)[0])).toEqual([1, 2, 3]);
   expect(speakerPattern(clock, timeAt(clock, 64), 'auto', false)[2]).toBe(0);
 });
@@ -24,7 +25,8 @@ it('respects existing physical slots and releases/replaces patterned metadata wi
   slots.begin(); expect(slots.used).toBe(0); expect(slots.data.every(x => x === 0)).toBe(true);
 });
 it('gentle sources use world time and comfort keeps exact identity', () => {
-  expect(sourcePattern('flicker', 12, false)[2]).toBe(.16);
+  expect(sourcePattern('flicker', 12, false)[2]).toBe(.5);
+  expect(sourcePattern('rings', 12, false)[2]).toBe(.75);
   expect(sourcePattern('flicker', 12, true)).toBe(IDENTITY_PATTERN);
   expect(sourcePattern('rings', 12, false)).toEqual(sourcePattern('rings', 12, false));
 });
