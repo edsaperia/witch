@@ -44,7 +44,7 @@ export function updateSources(v: View, time: number): void {
       if (out >= 0.999) continue;
       const grow = Math.min(1, since / 0.5) * (1 - out), whoosh = Math.max(0, 1 - since / 1.2) * (1 - out);
       const flick = 0.8 + 0.12 * Math.sin(time * 11 + k * 40) + 0.08 * Math.sin(time * 23.7 + k * 13);
-      lights.push({ x: src.x + Math.sin(time * 9 + k) * 0.08, y: 1.2, z: src.z, reach: g.tuning.lights.campfire.reach * src.size, rgb: v.fire, strength: g.tuning.lights.campfire.strength * (flick * grow + whoosh * 2) });
+      lights.push({ x: src.x + Math.sin(time * 9 + k) * 0.08, y: 1.2, z: src.z, reach: g.tuning.lights.campfire.reach * src.size, rgb: v.fire, strength: g.tuning.lights.campfire.strength * (flick * grow + whoosh * 2), pattern: PATTERN_LOOK === "off" ? undefined : sourcePattern("flicker", time, comfort.reduceFlashing) });
       if (whoosh > 0) for (let i = 0; i < 10; i++) {
         const ang = i * 2.4 + k * 9, r = (1 - whoosh) * (0.4 + (i % 3) * 0.5);
         v.fireSparks.push({ x: src.x + Math.cos(ang) * r, y: 0.5 + (1 - whoosh) * (2 + (i % 4) * 1.2), z: src.z + Math.sin(ang) * r, colour: v.fire, alpha: whoosh });

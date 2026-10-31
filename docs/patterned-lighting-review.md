@@ -5,21 +5,21 @@ Ed's requested first slice (2026-10-31): one soundsystem, three looks; one gentl
 ## What is implemented
 
 - `?patternlight=spokes`, `stripes`, `bands` hold a look. `auto` visits them over 64-beat sections, fading modulation at each boundary. Off, omitted or unknown values retain original lighting.
-- The nearest selected existing soundsystem light carries the held look. One selected forest magic stone carries gentle irregular modulation. One selected existing moonlight-aura light (the blink spell) carries rings. The ordinary ranking, radius, intensity, pool allocation and light count remain unchanged.
+- The nearest selected existing soundsystem light carries the held look. One selected existing campfire carries gentle irregular modulation (a magic stone can carry it too if present; ordinary settings disable their generation). The campfire's original flicker remains unchanged. One selected existing moonlight-aura light (the blink spell) carries rings. The ordinary ranking, radius, intensity, pool allocation and light count remain unchanged.
 - All receivers use the same point-light modulation in `LIGHT_GLSL`: world contact minus the selected light's actual world position. Ground, grass, trunks/crowns and creature sprites use that shared code. No camera/receiver UV coordinates, new atlas, normal maps, extra lights or shadow solution.
 - At most three existing slots have patterns. World selection clears every frame; later magic reservation truncates old metadata and overwrites ordinary slots with identity. Diagnostic gallery writes clear replaced slots too. Reduce flashing disables all modulation.
 - Music-driven phase is absolute `BeatClock` time, including tempo ramps and audio catch-up; gentle scenery uses world time, while the existing blink follows her spell clock. Pause repeats the same phase. New island metadata is cleared with the next ordinary light selection.
 
 ## Exact-SHA runner request (canonical allocation required)
 
-Before screenshots, prove the served `version.json` SHA equals the requested head. Record comparison key, seed/world/island, camera position, game clock/beat, viewport/pixel scale, renderer and comfort setting. Use the same saved scene/time for every pair; wait for art readiness. Make a real clearing with an existing playing soundsystem and a nearby magic stone; use an ordinary blink for the moonlight aura. Do not substitute standalone CPU swatches for game images.
+Before screenshots, prove the served `version.json` SHA equals the requested head. Record comparison key, seed/world/island, camera position, game clock/beat, viewport/pixel scale, renderer and comfort setting. Use the same saved scene/time for every pair; wait for art readiness. Make a real clearing with an existing playing soundsystem and an active campfire; use an ordinary blink for the moonlight aura. Do not substitute standalone CPU swatches for game images.
 
 Capture these pairs at ground and treetop height:
 
 1. Off versus each held look, fixed camera and fixed clock.
 2. Creature crossing a stripe; camera moving past the same ground/trunk contact. Compare the actual contact's pattern phase, allowing different surface shading.
 3. Two overlapping playing systems: confirm only one selected source gets modulation and that both original lights still contribute. Move across the existing budget boundary and inspect fade/pop behaviour.
-4. Gentle stone over several seconds, and ordinary blink with ring light over its real lifetime.
+4. Gentle campfire modulation over several seconds, and ordinary blink with ring light over its real lifetime.
 5. Reduce flashing versus off at the same clock: all new modulation must vanish, without changing the ordinary source data or hiding gameplay cues.
 6. Pause, tempo ramp, slow-time circle and island reload: no wall-clock drift, stale metadata or double event.
 
