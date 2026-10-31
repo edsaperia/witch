@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { partySheetFrame, partySheetKey } from "./partySheet";
 import { artCacheKey } from "./artCache";
 import type { ArtJob } from "./artBuild";
+import { defaultStyle } from "../../art/generator.js";
 
 describe("party sheet identity", () => {
   const gear = { collar: [1, 0, 1], hat: 0, glasses: "round", shoes: "boots" };
@@ -24,5 +25,10 @@ describe("party sheet identity", () => {
       expect(frame).toBeLessThan(away ? n * 2 : n);
       expect(partySheetFrame(f + n, away, n)).toBe(frame);
     }
+  });
+  it("separates Current and redesigned genomes even with the same style hash", () => {
+    const selected = { ...job, species: "bear", style: defaultStyle() } as ArtJob;
+    const current = { ...selected, style: { ...defaultStyle(), creatureModels: "bear:current" } } as unknown as ArtJob;
+    expect(artCacheKey(selected, "same", { party: "art" })).not.toBe(artCacheKey(current, "same", { party: "art" }));
   });
 });
