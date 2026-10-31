@@ -1,0 +1,673 @@
+{
+ "scene": "creature:fox@1",
+ "frames": [
+  {
+   "name": "a-before",
+   "note": "frame before the dodge",
+   "state": {
+    "t": 1.6667,
+    "x": 3208.51,
+    "z": 2856.5,
+    "facing": 1,
+    "mode": "ground",
+    "dashAt": null,
+    "until": null,
+    "enabled": true,
+    "batches": 0,
+    "echoes": [],
+    "paused": false,
+    "timeScale": 1,
+    "uniforms": []
+   }
+  },
+  {
+   "name": "a-0.05",
+   "note": "~0.05 s after dodge (3 frames)",
+   "state": {
+    "t": 1.7167,
+    "x": 3193.08,
+    "z": 2856.5,
+    "facing": -1,
+    "mode": "ground",
+    "dashAt": 1.6833,
+    "until": 1.8833333333333322,
+    "enabled": true,
+    "batches": 3,
+    "echoes": [
+     {
+      "x": 3208.51,
+      "z": 2856.5,
+      "born": 1.683,
+      "alpha": 0.193
+     }
+    ],
+    "paused": false,
+    "timeScale": 1,
+    "uniforms": [
+     0.193,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "name": "a-0.15",
+   "note": "~0.15 s after dodge (9 frames)",
+   "state": {
+    "t": 1.8167,
+    "x": 3192.69,
+    "z": 2856.5,
+    "facing": -1,
+    "mode": "ground",
+    "dashAt": 1.6833,
+    "until": 1.8833333333333322,
+    "enabled": true,
+    "batches": 3,
+    "echoes": [
+     {
+      "x": 3208.51,
+      "z": 2856.5,
+      "born": 1.683,
+      "alpha": 0.082
+     }
+    ],
+    "paused": false,
+    "timeScale": 1,
+    "uniforms": [
+     0.082,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "name": "a-0.30",
+   "note": "~0.30 s after dodge (18 frames)",
+   "state": {
+    "t": 1.9667,
+    "x": 3192.67,
+    "z": 2856.5,
+    "facing": -1,
+    "mode": "ground",
+    "dashAt": 1.6833,
+    "until": 1.8833333333333322,
+    "enabled": true,
+    "batches": 3,
+    "echoes": [
+     {
+      "x": 3208.51,
+      "z": 2856.5,
+      "born": 1.683,
+      "alpha": 0.003
+     },
+     {
+      "x": 3192.67,
+      "z": 2856.5,
+      "born": 1.683,
+      "alpha": 0.003
+     }
+    ],
+    "paused": false,
+    "timeScale": 1,
+    "uniforms": [
+     0.003,
+     0.003,
+     0
+    ]
+   }
+  },
+  {
+   "name": "a-0.40",
+   "note": "~0.40 s after: echoes should have expired (life 0.32 s)",
+   "state": {
+    "t": 2.0667,
+    "x": 3192.67,
+    "z": 2856.5,
+    "facing": -1,
+    "mode": "ground",
+    "dashAt": 1.6833,
+    "until": 1.8833333333333322,
+    "enabled": true,
+    "batches": 3,
+    "echoes": [],
+    "paused": false,
+    "timeScale": 1,
+    "uniforms": [
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "name": "b-turn-0.06",
+   "note": "walking east then dodge west (turn), ~0.06 s after",
+   "state": {
+    "t": 4.4667,
+    "x": 3198.94,
+    "z": 2856.5,
+    "facing": -1,
+    "mode": "ground",
+    "dashAt": 4.4167,
+    "until": 4.6166666666666565,
+    "enabled": true,
+    "batches": 3,
+    "echoes": [
+     {
+      "x": 3214.39,
+      "z": 2856.5,
+      "born": 4.417,
+      "alpha": 0.171
+     },
+     {
+      "x": 3213.43,
+      "z": 2856.5,
+      "born": 4.417,
+      "alpha": 0.171
+     }
+    ],
+    "paused": false,
+    "timeScale": 1,
+    "uniforms": [
+     0.171,
+     0.171,
+     0
+    ]
+   }
+  },
+  {
+   "name": "b-turn-0.16",
+   "note": "turn, ~0.16 s after",
+   "state": {
+    "t": 4.5667,
+    "x": 3198.59,
+    "z": 2856.5,
+    "facing": -1,
+    "mode": "ground",
+    "dashAt": 4.4167,
+    "until": 4.6166666666666565,
+    "enabled": true,
+    "batches": 3,
+    "echoes": [
+     {
+      "x": 3214.39,
+      "z": 2856.5,
+      "born": 4.417,
+      "alpha": 0.068
+     },
+     {
+      "x": 3213.43,
+      "z": 2856.5,
+      "born": 4.417,
+      "alpha": 0.068
+     }
+    ],
+    "paused": false,
+    "timeScale": 1,
+    "uniforms": [
+     0.068,
+     0.068,
+     0
+    ]
+   }
+  },
+  {
+   "name": "c1-dodge1",
+   "note": "dodge 1 of 3 south at real cooldown, ~0.06 s after",
+   "state": {
+    "t": 6.6333,
+    "x": 3208.51,
+    "z": 2872.21,
+    "facing": -1,
+    "mode": "ground",
+    "dashAt": 6.5833,
+    "until": 6.7833333333333155,
+    "enabled": true,
+    "batches": 3,
+    "echoes": [
+     {
+      "x": 3208.51,
+      "z": 2856.5,
+      "born": 6.583,
+      "alpha": 0.171
+     }
+    ],
+    "paused": false,
+    "timeScale": 1,
+    "uniforms": [
+     0.171,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "name": "c1-dodge2",
+   "note": "dodge 2 of 3 south at real cooldown, ~0.06 s after",
+   "state": {
+    "t": 7.6667,
+    "x": 3208.51,
+    "z": 2906.69,
+    "facing": -1,
+    "mode": "ground",
+    "dashAt": 7.6167,
+    "until": 7.816666666666645,
+    "enabled": true,
+    "batches": 3,
+    "echoes": [
+     {
+      "x": 3208.51,
+      "z": 2890.73,
+      "born": 7.617,
+      "alpha": 0.171
+     },
+     {
+      "x": 3208.51,
+      "z": 2889.77,
+      "born": 7.617,
+      "alpha": 0.171
+     }
+    ],
+    "paused": false,
+    "timeScale": 1,
+    "uniforms": [
+     0.171,
+     0.171,
+     0
+    ]
+   }
+  },
+  {
+   "name": "c1-dodge3",
+   "note": "dodge 3 of 3 south at real cooldown, ~0.06 s after",
+   "state": {
+    "t": 8.7,
+    "x": 3208.51,
+    "z": 2941.27,
+    "facing": -1,
+    "mode": "ground",
+    "dashAt": 8.65,
+    "until": 8.850000000000009,
+    "enabled": true,
+    "batches": 3,
+    "echoes": [
+     {
+      "x": 3208.51,
+      "z": 2925.3,
+      "born": 8.65,
+      "alpha": 0.171
+     },
+     {
+      "x": 3208.51,
+      "z": 2924.34,
+      "born": 8.65,
+      "alpha": 0.171
+     }
+    ],
+    "paused": false,
+    "timeScale": 1,
+    "uniforms": [
+     0.171,
+     0.171,
+     0
+    ]
+   }
+  },
+  {
+   "name": "c2-rapid3",
+   "note": "three dodges west 0.15 s apart (cooldown lowered to 0.1 s in-page)",
+   "state": {
+    "t": 12.1167,
+    "x": 3156.15,
+    "z": 2856.5,
+    "facing": -1,
+    "mode": "ground",
+    "dashAt": 12.0833,
+    "until": 12.283333333333513,
+    "enabled": true,
+    "batches": 3,
+    "echoes": [
+     {
+      "x": 3208.51,
+      "z": 2856.5,
+      "born": 11.883,
+      "alpha": 0.018
+     },
+     {
+      "x": 3208.51,
+      "z": 2856.5,
+      "born": 12.083,
+      "alpha": 0.193
+     }
+    ],
+    "paused": false,
+    "timeScale": 1,
+    "uniforms": [
+     0.018,
+     0.193,
+     0
+    ]
+   }
+  },
+  {
+   "name": "c2-rapid3-later",
+   "note": "0.15 s after the third",
+   "state": {
+    "t": 12.2667,
+    "x": 3153.26,
+    "z": 2856.5,
+    "facing": -1,
+    "mode": "ground",
+    "dashAt": 12.0833,
+    "until": 12.283333333333513,
+    "enabled": true,
+    "batches": 3,
+    "echoes": [
+     {
+      "x": 3208.51,
+      "z": 2856.5,
+      "born": 12.083,
+      "alpha": 0.044
+     }
+    ],
+    "paused": false,
+    "timeScale": 1,
+    "uniforms": [
+     0.044,
+     0.097,
+     0
+    ]
+   }
+  },
+  {
+   "name": "d-cam-0",
+   "note": "dodge north, 0.05 s after",
+   "state": {
+    "t": 14.3167,
+    "x": 3208.51,
+    "z": 2841.06,
+    "facing": -1,
+    "mode": "ground",
+    "dashAt": 14.2833,
+    "until": 14.483333333333622,
+    "enabled": true,
+    "batches": 3,
+    "echoes": [
+     {
+      "x": 3208.51,
+      "z": 2856.5,
+      "born": 14.283,
+      "alpha": 0.193
+     }
+    ],
+    "paused": false,
+    "timeScale": 1,
+    "uniforms": [
+     0.193,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "name": "d-cam-1",
+   "note": "walking north (camera moving), 0.18 s after",
+   "state": {
+    "t": 14.45,
+    "x": 3208.51,
+    "z": 2838.63,
+    "facing": -1,
+    "mode": "ground",
+    "dashAt": 14.2833,
+    "until": 14.483333333333622,
+    "enabled": true,
+    "batches": 3,
+    "echoes": [
+     {
+      "x": 3208.51,
+      "z": 2856.5,
+      "born": 14.283,
+      "alpha": 0.055
+     }
+    ],
+    "paused": false,
+    "timeScale": 1,
+    "uniforms": [
+     0.055,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "name": "d-cam-2",
+   "note": "walking north (camera moving), 0.28 s after",
+   "state": {
+    "t": 14.55,
+    "x": 3208.51,
+    "z": 2836.7,
+    "facing": -1,
+    "mode": "ground",
+    "dashAt": 14.2833,
+    "until": 14.483333333333622,
+    "enabled": true,
+    "batches": 3,
+    "echoes": [
+     {
+      "x": 3208.51,
+      "z": 2856.5,
+      "born": 14.283,
+      "alpha": 0.007
+     },
+     {
+      "x": 3208.51,
+      "z": 2837.99,
+      "born": 14.283,
+      "alpha": 0.007
+     }
+    ],
+    "paused": false,
+    "timeScale": 1,
+    "uniforms": [
+     0.007,
+     0.007,
+     0
+    ]
+   }
+  },
+  {
+   "name": "e-fox-0.05",
+   "note": "dodge east past the fox (6 m east), 0.05 s after",
+   "state": {
+    "t": 16.6,
+    "x": 3223.95,
+    "z": 2856.5,
+    "facing": 1,
+    "mode": "ground",
+    "dashAt": 16.5667,
+    "until": 16.766666666667007,
+    "enabled": true,
+    "batches": 3,
+    "echoes": [
+     {
+      "x": 3208.51,
+      "z": 2856.5,
+      "born": 16.567,
+      "alpha": 0.193
+     }
+    ],
+    "paused": false,
+    "timeScale": 1,
+    "uniforms": [
+     0.193,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "name": "e-fox-0.15",
+   "note": "0.15 s after",
+   "state": {
+    "t": 16.7,
+    "x": 3224.33,
+    "z": 2856.5,
+    "facing": 1,
+    "mode": "ground",
+    "dashAt": 16.5667,
+    "until": 16.766666666667007,
+    "enabled": true,
+    "batches": 3,
+    "echoes": [
+     {
+      "x": 3208.51,
+      "z": 2856.5,
+      "born": 16.567,
+      "alpha": 0.082
+     }
+    ],
+    "paused": false,
+    "timeScale": 1,
+    "uniforms": [
+     0.082,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "name": "f-prepause",
+   "note": "0.06 s after dodge, before pause",
+   "state": {
+    "t": 18.7667,
+    "x": 3192.8,
+    "z": 2856.5,
+    "facing": -1,
+    "mode": "ground",
+    "dashAt": 18.7167,
+    "until": 18.916666666666885,
+    "enabled": true,
+    "batches": 3,
+    "echoes": [
+     {
+      "x": 3208.51,
+      "z": 2856.5,
+      "born": 18.717,
+      "alpha": 0.171
+     }
+    ],
+    "paused": false,
+    "timeScale": 1,
+    "uniforms": [
+     0.171,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "name": "f-paused-1s",
+   "note": "clock paused, 60 frames (1 s real) stepped",
+   "state": {
+    "t": 18.7667,
+    "x": 3192.8,
+    "z": 2856.5,
+    "facing": -1,
+    "mode": "ground",
+    "dashAt": 18.7167,
+    "until": 18.916666666666885,
+    "enabled": true,
+    "batches": 3,
+    "echoes": [
+     {
+      "x": 3208.51,
+      "z": 2856.5,
+      "born": 18.717,
+      "alpha": 0.171
+     }
+    ],
+    "paused": true,
+    "timeScale": 1,
+    "uniforms": [
+     0.171,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "name": "f-resumed-0.1",
+   "note": "resumed, +6 frames",
+   "state": {
+    "t": 18.8667,
+    "x": 3192.38,
+    "z": 2856.5,
+    "facing": -1,
+    "mode": "ground",
+    "dashAt": 18.7167,
+    "until": 18.916666666666885,
+    "enabled": true,
+    "batches": 3,
+    "echoes": [
+     {
+      "x": 3208.51,
+      "z": 2856.5,
+      "born": 18.717,
+      "alpha": 0.068
+     }
+    ],
+    "paused": false,
+    "timeScale": 1,
+    "uniforms": [
+     0.068,
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "name": "f-resumed-0.4",
+   "note": "resumed, +24 frames: should be expired",
+   "state": {
+    "t": 19.1667,
+    "x": 3192.35,
+    "z": 2856.5,
+    "facing": -1,
+    "mode": "ground",
+    "dashAt": 18.7167,
+    "until": 18.916666666666885,
+    "enabled": true,
+    "batches": 3,
+    "echoes": [],
+    "paused": false,
+    "timeScale": 1,
+    "uniforms": [
+     0,
+     0,
+     0
+    ]
+   }
+  }
+ ],
+ "flag": {
+  "t": 21.2167,
+  "x": 3193.08,
+  "z": 2856.5,
+  "facing": -1,
+  "mode": "ground",
+  "dashAt": 21.1833,
+  "until": 21.38333333333341,
+  "enabled": false,
+  "batches": 3,
+  "echoes": [],
+  "paused": false,
+  "timeScale": 1
+ },
+ "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+ "version": {
+  "version": "dev · 17a8111",
+  "built": "2026-10-31T18:06:08.828Z"
+ },
+ "errors": [],
+ "seconds": 114.967
+}

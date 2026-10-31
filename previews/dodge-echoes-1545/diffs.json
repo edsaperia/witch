@@ -1,0 +1,228 @@
+{
+ "frames": [
+  {
+   "changed": 0,
+   "max": 0,
+   "bounds": null,
+   "name": "a-before",
+   "note": "frame before the dodge",
+   "echoes": 0,
+   "idempotent_changed": 21807
+  },
+  {
+   "changed": 0,
+   "max": 0,
+   "bounds": null,
+   "name": "a-0.05",
+   "note": "~0.05 s after dodge (3 frames)",
+   "echoes": 1,
+   "idempotent_changed": 0
+  },
+  {
+   "changed": 0,
+   "max": 0,
+   "bounds": null,
+   "name": "a-0.15",
+   "note": "~0.15 s after dodge (9 frames)",
+   "echoes": 1,
+   "idempotent_changed": 12411
+  },
+  {
+   "changed": 0,
+   "max": 0,
+   "bounds": null,
+   "name": "a-0.30",
+   "note": "~0.30 s after dodge (18 frames)",
+   "echoes": 2,
+   "idempotent_changed": 0
+  },
+  {
+   "changed": 0,
+   "max": 0,
+   "bounds": null,
+   "name": "a-0.40",
+   "note": "~0.40 s after: echoes should have expired (life 0.32 s)",
+   "echoes": 0,
+   "idempotent_changed": 0
+  },
+  {
+   "changed": 14454,
+   "max": 227,
+   "bounds": [
+    458,
+    183,
+    622,
+    326
+   ],
+   "name": "b-turn-0.06",
+   "note": "walking east then dodge west (turn), ~0.06 s after",
+   "echoes": 2,
+   "idempotent_changed": 16164
+  },
+  {
+   "changed": 0,
+   "max": 0,
+   "bounds": null,
+   "name": "b-turn-0.16",
+   "note": "turn, ~0.16 s after",
+   "echoes": 2,
+   "idempotent_changed": 0
+  },
+  {
+   "changed": 15543,
+   "max": 241,
+   "bounds": [
+    484,
+    174,
+    651,
+    338
+   ],
+   "name": "c1-dodge1",
+   "note": "dodge 1 of 3 south at real cooldown, ~0.06 s after",
+   "echoes": 1,
+   "idempotent_changed": 15714
+  },
+  {
+   "changed": 0,
+   "max": 0,
+   "bounds": null,
+   "name": "c1-dodge2",
+   "note": "dodge 2 of 3 south at real cooldown, ~0.06 s after",
+   "echoes": 2,
+   "idempotent_changed": 0
+  },
+  {
+   "changed": 0,
+   "max": 0,
+   "bounds": null,
+   "name": "c1-dodge3",
+   "note": "dodge 3 of 3 south at real cooldown, ~0.06 s after",
+   "echoes": 2,
+   "idempotent_changed": 0
+  },
+  {
+   "changed": 2079,
+   "max": 192,
+   "bounds": [
+    906,
+    195,
+    959,
+    263
+   ],
+   "name": "c2-rapid3",
+   "note": "three dodges west 0.15 s apart (cooldown lowered to 0.1 s in-page)",
+   "echoes": 2,
+   "idempotent_changed": 2079
+  },
+  {
+   "changed": 0,
+   "max": 0,
+   "bounds": null,
+   "name": "c2-rapid3-later",
+   "note": "0.15 s after the third",
+   "echoes": 1,
+   "idempotent_changed": 0
+  },
+  {
+   "changed": 0,
+   "max": 0,
+   "bounds": null,
+   "name": "d-cam-0",
+   "note": "dodge north, 0.05 s after",
+   "echoes": 1,
+   "idempotent_changed": 0
+  },
+  {
+   "changed": 0,
+   "max": 0,
+   "bounds": null,
+   "name": "d-cam-1",
+   "note": "walking north (camera moving), 0.18 s after",
+   "echoes": 1,
+   "idempotent_changed": 0
+  },
+  {
+   "changed": 0,
+   "max": 0,
+   "bounds": null,
+   "name": "d-cam-2",
+   "note": "walking north (camera moving), 0.28 s after",
+   "echoes": 2,
+   "idempotent_changed": 0
+  },
+  {
+   "changed": 16128,
+   "max": 222,
+   "bounds": [
+    473,
+    171,
+    667,
+    329
+   ],
+   "name": "e-fox-0.05",
+   "note": "dodge east past the fox (6 m east), 0.05 s after",
+   "echoes": 1,
+   "idempotent_changed": 16128
+  },
+  {
+   "changed": 0,
+   "max": 0,
+   "bounds": null,
+   "name": "e-fox-0.15",
+   "note": "0.15 s after",
+   "echoes": 1,
+   "idempotent_changed": 0
+  },
+  {
+   "changed": 9225,
+   "max": 236,
+   "bounds": [
+    513,
+    177,
+    683,
+    317
+   ],
+   "name": "f-prepause",
+   "note": "0.06 s after dodge, before pause",
+   "echoes": 1,
+   "idempotent_changed": 9216
+  },
+  {
+   "changed": 0,
+   "max": 0,
+   "bounds": null,
+   "name": "f-paused-1s",
+   "note": "clock paused, 60 frames (1 s real) stepped",
+   "echoes": 1,
+   "idempotent_changed": 0
+  },
+  {
+   "changed": 0,
+   "max": 0,
+   "bounds": null,
+   "name": "f-resumed-0.1",
+   "note": "resumed, +6 frames",
+   "echoes": 1,
+   "idempotent_changed": 0
+  },
+  {
+   "changed": 0,
+   "max": 0,
+   "bounds": null,
+   "name": "f-resumed-0.4",
+   "note": "resumed, +24 frames: should be expired",
+   "echoes": 0,
+   "idempotent_changed": 0
+  }
+ ],
+ "flag_disabled_vs_hidden": {
+  "changed": 12456,
+  "max": 232,
+  "bounds": [
+   495,
+   174,
+   674,
+   326
+  ]
+ }
+}

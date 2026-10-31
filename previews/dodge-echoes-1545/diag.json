@@ -1,0 +1,78 @@
+{
+ "before": {
+  "echoes": 1,
+  "frustumCulled": false,
+  "visible": true,
+  "renderOrder": 9.9,
+  "layers": 1,
+  "camLayers": 1,
+  "parentIsScene": true,
+  "count": 1,
+  "drawRange": {
+   "start": 0,
+   "count": null
+  },
+  "uSil": {
+   "x": 0.4,
+   "y": 0.4,
+   "z": 0.85,
+   "w": 0.19260416666666683
+  },
+  "uAbsolute": 1,
+  "uUnlit": 1,
+  "uAppear": 1,
+  "uArrivalFade": 1,
+  "uFadePass": 0,
+  "uHasFade": 0,
+  "uWholeCull": 1,
+  "transparent": true,
+  "depthTest": true,
+  "blending": 1,
+  "witchMesh": {
+   "uAbsolute": 1,
+   "uAppear": 1,
+   "uArrivalFade": 1,
+   "renderOrder": 10,
+   "layers": 1,
+   "transparent": false
+  }
+ },
+ "after": {
+  "echoes": 1,
+  "frustumCulled": false,
+  "visible": true,
+  "renderOrder": 9.9,
+  "layers": 1,
+  "camLayers": 1,
+  "parentIsScene": true,
+  "count": 1,
+  "drawRange": {
+   "start": 0,
+   "count": null
+  },
+  "uSil": {
+   "x": 1,
+   "y": 0,
+   "z": 0,
+   "w": 1
+  },
+  "uAbsolute": 1,
+  "uUnlit": 1,
+  "uAppear": 1,
+  "uArrivalFade": 1,
+  "uFadePass": 0,
+  "uHasFade": 0,
+  "uWholeCull": 1,
+  "transparent": true,
+  "depthTest": false,
+  "blending": 1,
+  "witchMesh": {
+   "uAbsolute": 1,
+   "uAppear": 1,
+   "uArrivalFade": 1,
+   "renderOrder": 10,
+   "layers": 1,
+   "transparent": false
+  }
+ }
+}
