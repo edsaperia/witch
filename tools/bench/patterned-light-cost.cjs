@@ -2,6 +2,8 @@
 // Prepared exact-SHA dist, fresh canonical allocation + preceding FREE required. Never starts from an import or PREPARE_ONLY.
 // EXPECT_SHA=<full> INTEL_SLOT=<grant> PRECEDING_RELEASE=<actual FREE> node tools/bench/patterned-light-cost.cjs <dist> <out>
 // PLAYWRIGHT_MODULE=<module> CHROMIUM=<exe> FRAMES=48 PREPARE_ONLY=1
+// Five-minute input idle and read-only absence of external browser processes are mandatory.
+// If an external browser is open we cannot prove its tabs safe: fail closed, never close it.
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),os=require('node:os');
 const {execFileSync}=require('node:child_process'),{createHash}=require('node:crypto');
 const MAX_MS=270000,WORK_MS=258000,FRAME_BUDGET_MS=1000/60;
@@ -18,8 +20,17 @@ function pair(on,off){
 const hash=s=>createHash('sha256').update(s).digest('hex');
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function cpu(){const a=os.cpus();await sleep(1000);let idle=0,total=0;os.cpus().forEach((c,i)=>{idle+=c.times.idle-a[i].times.idle;for(const k in c.times)total+=c.times[k]-a[i].times[k];});const percent=100*(1-idle/total);if(!(total>0)||!Number.isFinite(percent)||percent<0||percent>100)throw Error('CPU telemetry unavailable');return {at:new Date().toISOString(),percent};}
+function quietPolicy(state,ownedPid,previous){
+  if(!state||!Number.isFinite(state.idleMs)||state.idleMs<300000||!Array.isArray(state.processes)||!state.processes.length||state.processes.some(p=>typeof p.Name!=='string'||!Number.isInteger(p.ProcessId)||!Number.isInteger(p.ParentProcessId))||state.processInventoryComplete!==true)throw Error('Cannot prove five-minute input idle and complete browser-process inventory');
+  if(previous&&state.idleMs<previous.idleMs)throw Error('Ed returned: stop at this safe checkpoint');
+  const owned=new Set(ownedPid?[ownedPid]:[]);
+  for(let changed=true;changed;){changed=false;for(const p of state.processes)if(owned.has(p.ParentProcessId)&&!owned.has(p.ProcessId)){owned.add(p.ProcessId);changed=true;}}
+  const external=state.processes.filter(p=>/^(chrome|chromium|msedge|firefox|brave|opera|vivaldi|iexplore|headless_shell)\.exe$/i.test(p.Name)&&!owned.has(p.ProcessId));
+  if(external.length)throw Error('No-Ed-game-tab proof unavailable: external browser processes exist; cannot inspect their tabs. Fail closed without closing them.');
+  return {at:state.at,idleMs:state.idleMs,method:'complete-process-inventory/no-external-browser',externalBrowserCount:0,ownedBrowserPid:ownedPid??null};
+}
 function laptopState(){
-  const script=`Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public static class PatternedInput { [StructLayout(LayoutKind.Sequential)] public struct Last { public uint size; public uint time; } [DllImport("user32.dll")] public static extern bool GetLastInputInfo(ref Last x); public static uint Idle() { Last x = new Last(); x.size = (uint)Marshal.SizeOf(x); if (!GetLastInputInfo(ref x)) throw new Exception("Last input unavailable"); return unchecked((uint)Environment.TickCount - x.time); } }'; $taskIdle=[PatternedInput]::Idle(); $taskBrowsers=@(Get-CimInstance Win32_Process | Where-Object { $_.Name -match 'chrome|chromium|msedge|headless' -and $_.CommandLine -match '--headless|--remote-debugging-pipe' } | Select-Object ProcessId,Name); @{idleMs=$taskIdle;headless=$taskBrowsers}|ConvertTo-Json -Depth 4 -Compress`;
+  const script=`$ErrorActionPreference='Stop'; Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public static class PatternedInput { [StructLayout(LayoutKind.Sequential)] public struct Last { public uint size; public uint time; } [DllImport("user32.dll")] public static extern bool GetLastInputInfo(ref Last x); public static uint Idle() { Last x = new Last(); x.size = (uint)Marshal.SizeOf(x); if (!GetLastInputInfo(ref x)) throw new Exception("Last input unavailable"); return unchecked((uint)Environment.TickCount - x.time); } }'; $taskIdle=[PatternedInput]::Idle(); $taskProcesses=@(Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId,Name); @{at=[DateTime]::UtcNow.ToString('o');idleMs=$taskIdle;processes=$taskProcesses;processInventoryComplete=$true}|ConvertTo-Json -Depth 4 -Compress`;
   return JSON.parse(execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',script],{encoding:'utf8',windowsHide:true,timeout:10000}));
 }
 function setup(scene){
@@ -34,6 +45,7 @@ function setup(scene){
 async function settle(){
   const W=window.witch,v=W.view;let last,stable=0;
   for(let i=0;i<720;i++){
+    if(window.__patternStop)throw Error(window.__patternStop);
     v.render(W.game.clock.time,i%12===0);
     await Promise.race([v.assets.whenIdle(true),new Promise((_,reject)=>setTimeout(()=>reject(Error('Urgent visible art timeout')),45000))]);
     v.render(W.game.clock.time,false);
@@ -65,12 +77,13 @@ async function measure({scene,on,frames,remaining}){
   const compile=gl.compileShader,link=gl.linkProgram;
   gl.compileShader=function(...args){compiles++;return compile.apply(this,args);};gl.linkProgram=function(...args){compiles++;return link.apply(this,args);};
   try{for(let i=0;i<frames;i++){
+    if(window.__patternStop)throw Error(window.__patternStop);
     if(performance.now()-start>remaining)throw Error('Per-stage shared deadline');
     if(gl.isContextLost()||gl.getParameter(ext.GPU_DISJOINT_EXT)||gl.getQuery(ext.TIME_ELAPSED_EXT,gl.CURRENT_QUERY))throw Error('Lost/disjoint GPU or another timer active');
     const q=gl.createQuery();if(!q)throw Error('GPU query allocation failed');
     try{
       gl.beginQuery(ext.TIME_ELAPSED_EXT,q);const t=performance.now();v.render(g.clock.time);cpuMs.push(performance.now()-t);gl.endQuery(ext.TIME_ELAPSED_EXT);gl.flush();
-      for(let poll=0;!gl.getQueryParameter(q,gl.QUERY_RESULT_AVAILABLE);poll++){if(poll>=120||performance.now()-start>remaining)throw Error('GPU query did not complete');await new Promise(requestAnimationFrame);}
+      for(let poll=0;!gl.getQueryParameter(q,gl.QUERY_RESULT_AVAILABLE);poll++){if(window.__patternStop)throw Error(window.__patternStop);if(poll>=120||performance.now()-start>remaining)throw Error('GPU query did not complete');await new Promise(requestAnimationFrame);}
       if(gl.getParameter(ext.GPU_DISJOINT_EXT))throw Error('Disjoint GPU sample; whole run rejected');
       const ms=gl.getQueryParameter(q,gl.QUERY_RESULT)/1e6;if(!Number.isFinite(ms)||ms<0)throw Error('Invalid GPU time');gpu.push(ms);
     }finally{if(gl.getQuery(ext.TIME_ELAPSED_EXT,gl.CURRENT_QUERY)===q)gl.endQuery(ext.TIME_ELAPSED_EXT);gl.deleteQuery(q);}
@@ -93,19 +106,23 @@ async function main(){
   const frames=Number(process.env.FRAMES||48);
   if(!Number.isInteger(frames)||frames<32||frames>120||process.env.GPU_DELTA_BUDGET_MS!==undefined)throw Error('Invalid sample count or attempted budget override');
   fs.mkdirSync(out,{recursive:true});const report={sha,version,entryHash:hash(entry),grant:process.env.INTEL_SLOT,precedingRelease:process.env.PRECEDING_RELEASE,startedAt:new Date(started).toISOString(),budgetMs:MAX_MS,frames,order:['default-on','explicit-off'],sceneOrder:['home','party','blink'],viewport:[960,540],pixelScale:1,scenery:120,errors:[],cpu:[],arms:[],complete:false,status:'INSUFFICIENT',note:'Single paired steady GPU diagnostic; full View.render timed, frozen real scenes. ON first, OFF can benefit from caches. No cold-cache, startup or broad gameplay claim.'};
-  let browserServer,browser,server,cpuTimer,hardTimer,workTimer,rejectStop,initialIdle,cpuPending=Promise.resolve();
+  let browserServer,browser,server,cpuTimer,hardTimer,workTimer,rejectStop,lastQuiet,activePage,safetyError,cpuPending=Promise.resolve();
   const stop=new Promise((_,reject)=>{rejectStop=reject;});stop.catch(()=>{});
   const fail=e=>{report.error=String(e);rejectStop(e instanceof Error?e:Error(String(e)));};
   const save=()=>fs.writeFileSync(path.join(out,'results.json'),JSON.stringify(report,null,2));
   const bounded=p=>Promise.race([p,stop]);
   const remaining=()=>Math.max(1,WORK_MS-(Date.now()-started));
+  const quietCheckpoint=()=>{
+    if(safetyError)throw safetyError;
+    const state=laptopState(),proof=quietPolicy(state,report.browserPid,lastQuiet);
+    lastQuiet={idleMs:state.idleMs};(report.quietProofs??=[]).push(proof);return proof;
+  };
   try{
     hardTimer=setTimeout(()=>{report.error='Hard270s deadline';report.status='INSUFFICIENT';report.complete=false;report.browserServerClosed=false;report.elapsedMs=Date.now()-started;save();void browserServer?.kill().catch(()=>{});server?.closeAllConnections();server?.close();setTimeout(()=>process.exit(2),1000);},MAX_MS-1000);
     workTimer=setTimeout(()=>fail(Error('258s work deadline; cleanup reserved')),remaining());
-    const state=laptopState();report.preconditions=state;initialIdle=state.idleMs;
-    if(state.idleMs<60000||state.headless.length)throw Error('Laptop must be idle60s with no other headless/Playwright browser');
+    report.preconditions=quietCheckpoint();
     const load=await cpu();report.cpu.push(load);if(load.percent>=70)throw Error('CPU contamination at start');
-    cpuTimer=setInterval(()=>{cpuPending=cpuPending.then(async()=>{try{const c=await cpu();report.cpu.push(c);if(c.percent>=70){report.timingsContaminated=true;fail(Error('CPU>=70%; timing rejected'));}save();}catch(e){fail(e);}});},10000);
+    cpuTimer=setInterval(()=>{cpuPending=cpuPending.then(async()=>{try{quietCheckpoint();const c=await cpu();report.cpu.push(c);if(c.percent>=70){report.timingsContaminated=true;throw Error('CPU>=70%; timing rejected');}save();}catch(e){safetyError=e;report.error=String(e);report.complete=false;save();if(activePage&&!activePage.isClosed())await activePage.evaluate(message=>{window.__patternStop=message;},String(e)).catch(()=>{});}});},5000);
     const mime={'.html':'text/html','.js':'text/javascript','.json':'application/json','.css':'text/css','.woff2':'font/woff2','.png':'image/png','.webp':'image/webp','.ogg':'audio/ogg','.wasm':'application/wasm'};
     server=http.createServer((req,res)=>{const pth=new URL(req.url,'http://x').pathname;if(pth==='/favicon.ico'){res.writeHead(204);return res.end();}let f=path.resolve(root,'.'+decodeURIComponent(pth));if(f!==root&&!f.startsWith(root+path.sep)){res.writeHead(403);return res.end();}if(fs.existsSync(f)&&fs.statSync(f).isDirectory())f=path.join(f,'index.html');try{res.setHeader('content-type',mime[path.extname(f)]||'application/octet-stream');res.end(fs.readFileSync(f));}catch{report.errors.push('HTTP404 '+req.url);fail(Error('HTTP404 '+req.url));res.writeHead(404);res.end();}});
     await bounded(new Promise(r=>server.listen(0,'127.0.0.1',r)));const base=`http://127.0.0.1:${server.address().port}`;
@@ -118,22 +135,23 @@ async function main(){
       let hooks;Object.defineProperty(window,'witch',{configurable:true,get:()=>hooks,set:value=>{hooks=value;if(Object.getOwnPropertyDescriptor(value??{},'manual')?.set)value.manual=true;}});
     });
     for(const on of [true,false]){
-      const page=await context.newPage();let closing=false;page.setDefaultTimeout(30000);page.setDefaultNavigationTimeout(30000);
+      quietCheckpoint();const page=await context.newPage();activePage=page;let closing=false;page.setDefaultTimeout(30000);page.setDefaultNavigationTimeout(30000);
       page.on('pageerror',e=>{if(!closing){report.errors.push(String(e));fail(e);}});page.on('console',m=>{if(!closing&&m.type()==='error'){report.errors.push(m.text());fail(Error(m.text()));}});page.on('requestfailed',r=>{if(!closing){report.errors.push('Fetch failed '+r.url());fail(Error('Resource failure'));}});
       await bounded(page.goto(base+'/?seed=123&world=0&island=10&wave=3&shot=room:terrace&ladder=off&px=1&recording=0'+(on?'':'&patternlight=off')));
-      await bounded(page.waitForFunction(()=>window.witch?.ready,null,{timeout:remaining()}));
+      await bounded(page.waitForFunction(()=>{if(window.__patternStop)throw Error(window.__patternStop);return window.witch?.ready;},null,{timeout:remaining()}));
+      quietCheckpoint();
       const served=await bounded(page.evaluate(async()=>await (await fetch('./version.json',{cache:'no-store'})).json()));if(JSON.stringify(served)!==JSON.stringify(version))throw Error('Actual served build mismatch');
       const info=await bounded(page.evaluate(()=>{const gl=window.witch.view.renderer.getContext(),d=gl.getExtension('WEBGL_debug_renderer_info');return {gpu:d?gl.getParameter(d.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),khr:!!gl.getExtension('KHR_parallel_shader_compile'),timer:!!gl.getExtension('EXT_disjoint_timer_query_webgl2')};}));capabilities(info);if(report.hardware&&JSON.stringify(info)!==JSON.stringify(report.hardware))throw Error('GPU changed across arms');report.hardware=info;
       const arm={on,served,scenes:[]};report.arms.push(arm);
       for(const scene of report.sceneOrder){
         report.stage={on,scene,phase:'setup'};save();
         if(remaining()<12000)throw Error('Insufficient shared budget for another scene');
-        const activity=laptopState();if(activity.idleMs<initialIdle||activity.headless.some(p=>p.ProcessId!==report.browserPid))throw Error('New user input or another headless process; timing rejected');
+        quietCheckpoint();
         const fixture=await bounded(page.evaluate(setup,scene));report.stage.phase='settle';await bounded(page.evaluate(settle));
         if(scene==='blink')fixture.blink=await bounded(page.evaluate(blink));
         report.stage.phase='GPU samples';save();const data=await bounded(page.evaluate(measure,{scene,on,frames,remaining:remaining()}));
         if(remaining()<12000)throw Error('Insufficient shared budget for final scene guards');
-        const after=laptopState();if(after.idleMs<initialIdle||after.headless.some(p=>p.ProcessId!==report.browserPid))throw Error('Input/concurrent browser during samples; timing rejected');
+        quietCheckpoint();
         arm.scenes.push({scene,fixture,...data,fingerprint:hash(JSON.stringify({fixture,descriptor:data.descriptor}))});save();
         if(!on){const result={scene,...pair(report.arms[0].scenes.find(s=>s.scene===scene),arm.scenes.find(s=>s.scene===scene))};(report.pairs??=[]).push(result);save();if(!result.withinCeiling){report.overBudget=true;throw Error('Canonical incremental GPU budget exceeded in '+scene);}}
       }
@@ -141,7 +159,7 @@ async function main(){
     }
     if(remaining()<12000)throw Error('Insufficient shared budget for end guards');
     clearInterval(cpuTimer);await cpuPending;const endLoad=await cpu();report.cpu.push(endLoad);if(report.cpu.some(c=>c.percent>=70))throw Error('CPU contamination at end');
-    if(laptopState().idleMs<initialIdle)throw Error('New user input at end; timing rejected');
+    quietCheckpoint();
     if(report.errors.length)throw Error('Page/resource errors');
     report.complete=true;report.status='PASS';
   }catch(e){report.error=String(e.stack||e);report.complete=false;report.status=report.overBudget?'OVER_BUDGET':'INSUFFICIENT';process.exitCode=2;}
@@ -153,5 +171,5 @@ async function main(){
   }
   console.log(JSON.stringify({status:report.status,complete:report.complete,pairs:report.pairs,error:report.error,elapsedMs:report.elapsedMs,browserClosed:report.browserServerClosed,serverClosed:report.serverClosed}));
 }
-module.exports={percentile,pair,capabilities,MAX_MS,WORK_MS,GPU_BUDGET};
+module.exports={percentile,pair,capabilities,quietPolicy,MAX_MS,WORK_MS,GPU_BUDGET};
 if(require.main===module)main().catch(e=>{console.error(e.stack||e);process.exitCode=2;});

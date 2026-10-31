@@ -1,9 +1,27 @@
 import { expect, it } from 'vitest';
 import { createRequire } from 'node:module';
-const { percentile, pair, capabilities, MAX_MS, WORK_MS } = createRequire(import.meta.url)('./patterned-light-cost.cjs');
+const { percentile, pair, capabilities, quietPolicy, MAX_MS, WORK_MS } = createRequire(import.meta.url)('./patterned-light-cost.cjs');
 it('reports nearest-rank tails without dropping outliers or inventing missing GPU samples', () => {
   expect(percentile([1, 2, 3, 100], .95)).toBe(100);
   expect(() => percentile([], .5)).toThrow(); expect(() => percentile([NaN], .5)).toThrow();
+});
+it('fails closed below five minutes, on input return, incomplete inventory or any external browser', () => {
+  const state={at:'now',idleMs:300000,processInventoryComplete:true,processes:[{Name:'node.exe',ProcessId:1,ParentProcessId:0}]};
+  expect(quietPolicy(state).externalBrowserCount).toBe(0);
+  expect(()=>quietPolicy({...state,idleMs:299999})).toThrow();
+  expect(()=>quietPolicy({...state,processInventoryComplete:false})).toThrow();
+  expect(()=>quietPolicy({...state,processes:[]})).toThrow();
+  expect(()=>quietPolicy(state,undefined,{idleMs:310000})).toThrow();
+  expect(()=>quietPolicy({...state,processes:[{Name:'chrome.exe',ProcessId:4,ParentProcessId:1}]})).toThrow(/proof unavailable/);
+});
+it('exempts only the runner browser and its descendants, never a second browser', () => {
+  const state={idleMs:310000,processInventoryComplete:true,processes:[
+    {Name:'chrome.exe',ProcessId:4,ParentProcessId:1},
+    {Name:'chrome.exe',ProcessId:5,ParentProcessId:4},
+    {Name:'chrome.exe',ProcessId:6,ParentProcessId:5},
+  ]};
+  expect(quietPolicy(state,4).externalBrowserCount).toBe(0);
+  expect(()=>quietPolicy({...state,processes:[...state.processes,{Name:'msedge.exe',ProcessId:7,ParentProcessId:1}]},4)).toThrow();
 });
 it('refuses mismatches and enforces both canonical thresholds without dropping tail frames', () => {
   const off = { fingerprint: 'same', gpu: Array(48).fill(2) }, on = { fingerprint: 'same', gpu: Array(48).fill(3) };
