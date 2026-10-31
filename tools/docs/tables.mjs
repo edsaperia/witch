@@ -71,6 +71,7 @@ const BLOCK = /(<!-- data: ([\w-]+) [^>]*-->)\n(?:([\s\S]*?)\n)?(<!-- \/data: \2
 
 /** A doc's text with its tables made afresh (an unknown name throws). */
 export async function fill(text) {
+  text = text.replace(/\r\n/g, "\n");
   const found = [...text.matchAll(BLOCK)];
   let out = text;
   for (const m of found) {
@@ -85,7 +86,7 @@ export async function fill(text) {
 export async function stale() {
   const out = [];
   for (const f of docs()) {
-    const have = fs.readFileSync(path.join(ROOT, f), "utf8");
+      const have = fs.readFileSync(path.join(ROOT, f), "utf8").replace(/\r\n/g, "\n");
     if (!have.includes("<!-- data: ")) continue;
     const want = await fill(have);
     if (want !== have) out.push({ file: f, want });
