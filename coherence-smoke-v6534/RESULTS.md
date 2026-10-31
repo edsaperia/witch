@@ -1,4 +1,4 @@
-PARTIAL 0/23 done (laptop: FAIL timeout crash; tilt-before: TIMEOUT)
+FAIL: ley, laptop (both repeated); trunks, tilt-before timed out. PARTIAL 6/23 done (4 pass)
 
 # Full smoke run on 003eb8cc0fad18014fe1d8430784d649fc5e4a0d
 
@@ -181,3 +181,20 @@ page.waitForFunction: Timeout 240000ms exceeded.
 }
 ```
 
+## Summary (13:21 UTC, 133 of 150 minutes used)
+
+| Scene | Result | Rerun |
+|---|---|---|
+| dancefloor | pass | |
+| party | pass | |
+| earth | pass | |
+| cull | pass (no checks of its own; "smoke test passed") | |
+| ley | **FAIL**: "the ley line is drawn from home through every area (10 sections for 11 areas), the last reached at 0 (2798 triangles)" | repeated identically: **real** |
+| laptop | **FAIL**: uncaught `page.waitForFunction: Timeout 240000ms exceeded` in `hold` during flyPath (smoke.cjs:138 ← :165 / :163 ← :214); aborts the run, so no checks were printed | repeated (1185 s, same timeout in flyPath): **real** (or the software renderer too slow for the 240 s hold) |
+| trunks | TIMEOUT at the 900 s cap, in its body (smoke.cjs:474) | not rerun: a 1200 s rerun wouldn't fit the budget |
+| tilt-before | TIMEOUT: still in its first screenshot (smoke.cjs:303) when batch 1b hit 2700 s | not rerun |
+| heath, phone | ran in batch 1b (screenshots 08, 10, 11 in previews/) but their checks were lost when the batch timed out | not run again |
+| vanish-1900x1240, vanish-2000x1076 | KNOWN (#1090): fly only on a real GPU | |
+| tilt-after, tilt-off, effects-off, effects-on, leash, speed, slope, siege, boost, neutral, ground | **not run**: out of budget | |
+
+Lessons for the next runner: on this container scenes take 4 to 20+ minutes each, and smoke.cjs prints results only at the end and aborts the whole run on any uncaught timeout, so run one scene per invocation.
