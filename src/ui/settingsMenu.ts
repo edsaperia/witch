@@ -9,7 +9,8 @@ import jacquard from "./fonts/Jacquard24.woff2?url";
 import { DEFAULTS, padGlyphs, type PlayerSettings } from "../app/playerSettings";
 import { PadNav, firstRow, keyInput, navigate, stepChoice, stepSlider, type NavInput, type NavRow, type NavState } from "./settingsNav";
 import { DEFAULTS as ACTIONS, bindings, keysName, type ActionId } from "../platform/bindings";
-import { SLOTS, assign, clashes, inputName, inputsOf, padIdle, padPress, withSlot, type Device } from "./rebind";
+import { SLOTS, assign, clashes, clearSlot, inputName, inputsOf, padIdle, padPress, withSlot, type Device } from "./rebind";
+import type { SavesHost } from "../app/saveSlots";
 
 /** What the page needs of the game. */
 export interface SettingsHost {
@@ -25,6 +26,7 @@ export interface SettingsHost {
   /** the real pad (the freeze hides it from everyone else while paused) */
   pad(): Gamepad | null;
   version: string;
+  saves?: SavesHost;
 }
 
 type Row = NavRow & { label: string; sub?: string; note?: string; /** a heading over it */ group?: string };
@@ -36,7 +38,10 @@ interface Clash { id: ActionId; slot: number; device: Device; input: string; oth
 const ACTION_NAME = new Map(ACTIONS.map(a => [a.id, a.name]));
 /** How long the pad's listening waits (s): every button can be bound, so waiting is its cancel. */
 const PAD_WAIT = 6;
-const TAB_NAMES = ["Controls", "Sound", "Display", "Accessibility"];
+const TAB_NAMES = ["Controls", "Sound", "Display", "Accessibility", "What's new", "Saves"];
+const NEWS_TAB = 4;
+const SAVES_TAB = 5;
+const escape = (text: string): string => text.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 
 const CSS = `
@@ -95,15 +100,21 @@ const CSS = `
 #settings-page .clash .btns span.on { background: var(--gold); color: var(--ink); }
 #settings-page .win { position: relative; }
 #settings-page .status { color: var(--gold); min-height: calc(var(--u) * 7); font-size: calc(var(--u) * 6); padding: 0 calc(var(--u) * 10); }
+#settings-page .news-entry { display: block; cursor: default; padding: calc(var(--u) * 3) calc(var(--u) * 4); }
+#settings-page .news-entry h2 { color: var(--gold); font-size: inherit; margin: 0 0 calc(var(--u) * 2); }
+#settings-page .news-entry small { color: var(--dim); }
+#settings-page .news-entry ul { margin: calc(var(--u) * 2) 0; padding-left: calc(var(--u) * 8); }
 `;
 
 /** The page: built once, opened over the pause page; `update` each frame reads the pad. */
 export class SettingsMenu {
   readonly el = document.createElement("div");
   private state: NavState = { tab: 1, row: 0 };
+  private switchingSave = false;
   private pad = new PadNav();
   private screens: string[] | null = null;
   private status = "";
+  private bindingNote: { id: ActionId; text: string } | null = null;
   /** the input last used: the hints at the foot follow it */
   private mode: "pad" | "keys" | "mouse" = "keys";
   /** the Controls tab: the device whose bindings it shows, the slot focused on a binding's row, a slot listening, a clash asked */
@@ -113,6 +124,9 @@ export class SettingsMenu {
   private clash: Clash | null = null;
   private padPrev: boolean[] = [];
   private padPrevAxes: number[] = [];
+  private news: import("../app/whatsNew").WhatsNew | null = null;
+  private newsLoading = false;
+  private newsImportError = false;
   onClose: () => void = () => {};
 
   constructor(private host: SettingsHost) {
@@ -124,6 +138,7 @@ export class SettingsMenu {
       if (!this.open) return;
       e.preventDefault(); e.stopImmediatePropagation();
       if (this.listen) { this.mode = "keys"; if (!e.repeat) this.heardKey(e.code); return; }
+      if (this.state.tab === NEWS_TAB && (e.code === "PageDown" || e.code === "PageUp")) { this.scrollNews(e.code === "PageDown" ? 1 : -1); return; }
       const i = keyInput(e.code, e.shiftKey);
       if (i && !(e.repeat && (i === "back" || i === "choose" || i === "tabPrev" || i === "tabNext"))) { this.mode = "keys"; this.input(i); }
     }, { capture: true });
@@ -156,6 +171,7 @@ export class SettingsMenu {
     this.el.addEventListener("mousedown", e => e.preventDefault()); // (the click redraws it: the browser's focus would fall from the gone target to the page's body, and the freeze then keeps the keys from it)
     this.el.addEventListener("wheel", e => {
       e.preventDefault(); this.mode = "mouse";
+      if (this.state.tab === NEWS_TAB) { e.stopPropagation(); const body = this.el.querySelector<HTMLElement>(".body"); if (body) body.scrollTop += e.deltaY; return; }
       if (this.listen?.device === "keys") this.offer(e.deltaY > 0 ? "mouse:wheelDown" : "mouse:wheelUp");
       else if (!this.listen && !this.clash) this.input(e.deltaY > 0 ? "down" : "up");
     }, { passive: false });
@@ -164,7 +180,7 @@ export class SettingsMenu {
 
   get open(): boolean { return this.el.classList.contains("open"); }
   show(): void {
-    this.el.classList.add("open"); this.status = ""; this.listen = this.clash = null;
+    this.el.classList.add("open"); this.status = ""; this.bindingNote = null; this.listen = this.clash = null;
     this.device = this.host.pad() ? "pad" : "keys";
     this.el.tabIndex = -1; this.el.focus({ preventScroll: true }); // (the keys' target inside it: the freeze lets only the pause page's own pieces have keys)
     const rows = this.tabs()[this.state.tab];
@@ -198,6 +214,7 @@ export class SettingsMenu {
   input(i: NavInput): void {
     if (this.listen) return;
     if (this.clash) { this.clashInput(i); return; }
+    if (this.state.tab === NEWS_TAB && (i === "left" || i === "right")) { this.scrollNews(i === "right" ? 1 : -1); return; }
     const before = this.state.row, { state, action } = navigate(this.state, this.tabs(), i);
     this.state = state;
     if (state.row !== before) this.slot = Math.min(this.slot, SLOTS - 1);
@@ -205,15 +222,29 @@ export class SettingsMenu {
     const bind = this.tabs()[this.state.tab][this.state.row]?.kind === "bind";
     if (action.kind === "step" && bind) this.slot = Math.max(0, Math.min(SLOTS - 1, this.slot + action.dir));
     else if (action.kind === "step") this.step(action.id, action.dir);
-    else if (action.kind === "reset" && bind) { bindings.reset(action.id as ActionId); this.status = `${ACTION_NAME.get(action.id as ActionId)} back to its default.`; }
+    else if (action.kind === "reset" && bind) { this.bindingNote = null; bindings.reset(action.id as ActionId); this.status = `${ACTION_NAME.get(action.id as ActionId)} back to its default.`; }
     else if (action.kind === "reset" && action.id === "device") { /* (a view, not a setting) */ }
-    else if (action.kind === "reset") this.setValue(action.id, (DEFAULTS as unknown as Record<string, unknown>)[action.id]);
+    else if (action.kind === "reset" && this.state.tab !== SAVES_TAB) this.setValue(action.id, (DEFAULTS as unknown as Record<string, unknown>)[action.id]);
     else if (action.kind === "press" && bind) { this.startListening(action.id as ActionId); return; }
     else if (action.kind === "press") void this.press(action.id);
     this.render();
   }
 
   // ---- the rows ----
+  private scrollNews(direction: number): void { const body = this.el.querySelector<HTMLElement>(".body"); if (body) body.scrollTop += direction * body.clientHeight * 0.7; }
+  private ensureNews(): void {
+    if (this.news) { if (!this.news.started) void this.news.more(); return; }
+    if (this.newsLoading) return;
+    this.newsLoading = true; this.newsImportError = false;
+    void import("../app/whatsNew").then(({ WhatsNew }) => {
+      this.newsLoading = false;
+      this.news = new WhatsNew(new URL("news/", new URL(import.meta.env.BASE_URL, location.href)), () => this.render());
+      this.render(); // Fetch only if this tab is still open/selected.
+    }, () => { this.newsLoading = false; this.newsImportError = true; if (this.open && this.state.tab === NEWS_TAB) this.render(); });
+  }
+  private newsChanges() {
+    return this.news?.entries.flatMap(entry => entry.changes.map(change => ({ version: entry.version, date: entry.date, change }))) ?? [];
+  }
 
   /** Every tab's rows (rebuilt each time: some show only where they can work). */
   tabs(): Row[][] {
@@ -239,8 +270,18 @@ export class SettingsMenu {
       ],
       [
         { id: "reduceFlashing", kind: "toggle", label: "Reduce flashing", sub: "warnings, hits" },
+        { id: "rumble", kind: "toggle", label: "Gamepad rumble", sub: "short feedback", note: "Off with Reduce flashing too. Only on pads that support vibration." },
         { id: "talk", kind: "choice", label: "Talk", sub: keysName("game.talk"), options: ["hold", "toggle"] },
         { id: "textSize", kind: "choice", label: "Text size", sub: "menus, hints", options: ["1", "1.25", "1.5"] },
+      ],
+      [
+        ...this.newsChanges().map((item, i): Row => ({ id: `news-${i}`, kind: "button", label: item.change.title ?? "Update notes" })),
+        { id: "news-more", kind: "button", label: this.news?.busy || this.newsLoading || !this.news && !this.newsImportError ? "Loading update notes…" : this.news?.error || this.newsImportError ? "Try again" : "Load more", hidden: this.news?.done },
+      ],
+      [
+        ...(this.host.saves?.list() ?? []).map((slot): Row => ({ id: `save:${slot.id}`, kind: "button", label: `${slot.name}${slot.id === this.host.saves?.active() ? " · Current" : ""}`,
+          sub: `${slot.island ?? "New night"} · ${slot.nights === undefined ? "Earlier nights not counted" : `${slot.nights} night${slot.nights === 1 ? "" : "s"} recorded`} · ${new Date(slot.updated).toLocaleString()}` })),
+        { id: "save:new", kind: "button", label: "New save", sub: "Start with fresh progress and default settings", hidden: !this.host.saves },
       ],
     ];
   }
@@ -272,6 +313,17 @@ export class SettingsMenu {
     this.render();
   }
   private async press(id: string): Promise<void> {
+    if (id.startsWith("save:") && this.host.saves) {
+      if (this.switchingSave) return;
+      const slot = id.slice(5);
+      if (slot === this.host.saves.active()) { this.status = "This is your current save."; this.render(); return; }
+      this.switchingSave = true; this.status = "Saving your night…"; this.render();
+      try { this.status = await this.host.saves.choose(slot === "new" ? null : slot) ?? "Opening save…"; }
+      catch (error) { console.warn("[saves] Could not switch save", error); this.status = "The save could not be opened. Your current night is still here."; }
+      finally { this.switchingSave = false; this.render(); }
+      return;
+    }
+    if (id === "news-more") { if (this.news) await this.news.more(); else this.ensureNews(); return; }
     if (id === "fullscreen") {
       const err = await this.host.setFullscreen(!this.host.fullscreen(), this.host.get().screen);
       this.status = err ?? ""; this.render(); return;
@@ -280,6 +332,8 @@ export class SettingsMenu {
   }
   /** The tab's things back to their defaults: on Controls every binding and the pad's names; elsewhere that tab's settings. */
   private resetAll(): void {
+    if (this.state.tab === NEWS_TAB || this.state.tab === SAVES_TAB) return;
+    this.bindingNote = null;
     const ids = this.tabs()[this.state.tab].map(r => r.id), d = DEFAULTS as unknown as Record<string, unknown>;
     if (this.state.tab === 0) bindings.resetAll();
     this.host.set({ ...this.host.get(), ...Object.fromEntries(ids.filter(id => id in d).map(id => [id, d[id]])) });
@@ -289,6 +343,7 @@ export class SettingsMenu {
   // ---- the Controls tab: listening for a slot's new input, and a clash ----
 
   private startListening(id: ActionId): void {
+    this.bindingNote = null;
     this.listen = { id, slot: this.slot, device: this.device, armed: false, until: 0 };
     this.el.focus({ preventScroll: true });
     this.status = this.device === "pad" ? `Press a button or push a stick for ${ACTION_NAME.get(id)} · wait ${PAD_WAIT} s to cancel` : `Press a key or a mouse button for ${ACTION_NAME.get(id)} · Esc cancels · Delete empties it`;
@@ -302,7 +357,8 @@ export class SettingsMenu {
     if (code === "Delete") {
       const next = withSlot(bindings.get(l.id), "keys", l.slot, null);
       if (l.id === "global.pause" && !next.keys?.length) { this.stopListening("Pause keeps a key (or you couldn't reach this page)."); return; }
-      bindings.set(l.id, next); this.stopListening(); return;
+      if (!clearSlot(bindings, l.id, "keys", l.slot)) { this.bindingNote = { id: l.id, text: "needs at least one button" }; this.stopListening(); return; }
+      this.stopListening(); return;
     }
     this.offer(`key:${code}`);
   }
@@ -326,7 +382,10 @@ export class SettingsMenu {
   }
   private decide(how: "swap" | "both" | "cancel"): void {
     const c = this.clash!; this.clash = null;
-    if (how !== "cancel") assign(bindings, c.id, c.device, c.slot, c.input, how);
+    if (how !== "cancel") {
+      const blocked = assign(bindings, c.id, c.device, c.slot, c.input, how);
+      if (blocked) { this.bindingNote = { id: c.id, text: `${ACTION_NAME.get(blocked)} needs at least one button` }; }
+    }
     this.render();
   }
 
@@ -334,12 +393,21 @@ export class SettingsMenu {
 
   render(): void {
     if (!this.open) return;
+    if (this.state.tab === NEWS_TAB && !this.newsImportError) this.ensureNews();
     const tabs = this.tabs(), rows = tabs[this.state.tab], pad = this.mode === "pad", ps = padGlyphs(this.host.get().glyphs, this.host.pad()?.id) === "ps";
+    if (this.state.tab === NEWS_TAB && (!rows[this.state.row] || rows[this.state.row].hidden)) this.state = { ...this.state, row: firstRow(rows) };
     const g = (psName: string, xbName: string) => `<span class="key">${ps ? psName : xbName}</span>`;
     const xbox = !ps, shared = new Map<string, ActionId[]>();
     for (const c of bindings.conflicts()) for (const a of c.actions) shared.set(a, [...(shared.get(a) ?? []), ...c.actions.filter(o => o !== a)]);
+    const newsItems = this.state.tab === NEWS_TAB ? this.newsChanges() : [];
     const rowHtml = rows.map((r, i) => {
       if (r.hidden) return "";
+      if (this.state.tab === NEWS_TAB) {
+        if (r.id === "news-more") return `<div class="row ${i === this.state.row ? "focus" : ""}" data-row="${i}" aria-disabled="${!!this.news?.busy || this.newsLoading}"><span class="btn">${escape(r.label)}</span></div>`;
+        const item = newsItems[i], version = item.version === null ? this.host.version : `v${item.version}`;
+        return `<article class="row news-entry ${i === this.state.row ? "focus" : ""}" data-row="${i}"><h2>${escape(version)}${item.change.title ? ` · ${escape(item.change.title)}` : ""}</h2>${item.date ? `<small>${escape(item.date)}</small>` : ""}<ul>${item.change.items.map(text => `<li>${escape(text)}</li>`).join("")}</ul></article>`;
+      }
+      if (this.state.tab === SAVES_TAB) return `<div class="row ${i === this.state.row ? "focus" : ""}" data-row="${i}" aria-disabled="${this.switchingSave}"><span class="lab">${escape(r.label)}${r.sub ? `<small>${escape(r.sub)}</small>` : ""}</span><span class="btn">${r.id === "save:new" ? "Create" : "Open"}</span></div>`;
       const head = r.group === "play" ? `<div class="group">In play</div>` : r.group === "menu" ? `<div class="group">In menus<small>a station, the sea chart, the telescope, the Studio · this page keeps its own: arrows, Enter, Esc</small></div>` : "";
       if (r.kind === "bind") {
         const id = r.id as ActionId, list = inputsOf(bindings.get(id), this.device), focus = i === this.state.row, l = this.listen;
@@ -349,7 +417,7 @@ export class SettingsMenu {
           return `<span class="slot ${wait ? "wait" : ""} ${!inp && !wait ? "none" : ""} ${focus && this.slot === k ? "on" : ""}" data-slot="${k}">${text}</span>`;
         }).join("");
         const sh = shared.get(id), others = sh ? [...new Set(sh)].map(o => ACTION_NAME.get(o)).join(", ") : "";
-        return `${head}<div class="row ${focus ? "focus" : ""}" data-row="${i}" data-id="${id}"><span class="lab">${r.label}${sh ? `<span class="shared">shared with ${others}</span>` : ""}</span>${slots}</div>`;
+        return `${head}<div class="row ${focus ? "focus" : ""}" data-row="${i}" data-id="${id}"><span class="lab">${r.label}${sh ? `<span class="shared">shared with ${others}</span>` : ""}</span>${slots}</div>${this.bindingNote?.id === id ? `<div class="note">${this.bindingNote.text}</div>` : ""}`;
       }
       const v = this.value(r.id);
       let ctl = "";
@@ -363,16 +431,16 @@ export class SettingsMenu {
       <div class="why">${c.choices.includes("swap") ? `Swap: ${c.others.map(o => ACTION_NAME.get(o)).join(" and ")} takes ${inputsOf(bindings.get(c.id), c.device)[c.slot] ? inputName(inputsOf(bindings.get(c.id), c.device)[c.slot], xbox) : "nothing"} instead. ` : ""}Use both: one press does both.</div>
       <div class="btns">${c.choices.map((h, k) => `<span data-clash="${k}" class="${k === c.focus ? "on" : ""}">${word(h)}</span>`).join("")}</div></div></div>` : "";
     const foot = pad
-      ? `<span>${g("✕", "A")}choose</span><span>${g("○", "B")}back</span><span>${g("L1", "LB")}${g("R1", "RB")}tabs</span><span>${g("△", "Y")}reset</span>`
+      ? `<span>${g("✕", "A")}choose</span><span>${g("○", "B")}back</span><span>${g("L1", "LB")}${g("R1", "RB")}tabs</span>${(this.state.tab === NEWS_TAB || this.state.tab === SAVES_TAB) ? "" : `<span>${g("△", "Y")}reset</span>`}`
       : this.mode === "keys"
-        ? `<span><span class="key">↑↓</span><span class="key">←→</span></span><span><span class="key">Enter</span>choose</span><span><span class="key">Esc</span>back</span><span><span class="key">Q</span><span class="key">E</span>tabs</span><span><span class="key">Del</span>reset</span>`
+        ? `<span><span class="key">↑↓</span><span class="key">←→</span></span><span><span class="key">Enter</span>choose</span><span><span class="key">Esc</span>back</span><span><span class="key">Q</span><span class="key">E</span>tabs</span>${(this.state.tab === NEWS_TAB || this.state.tab === SAVES_TAB) ? "" : `<span><span class="key">Del</span>reset</span>`}`
         : `<span>click to choose · right click: back</span>`;
     this.el.innerHTML = `<div class="win cut"><div class="in">
       <div class="title"><h1>Settings</h1><span class="ver">Witch · ${this.host.version}</span></div>
       <div class="tabs">${pad ? `<span class="bump">${g("L1", "LB")}</span>` : ""}${TAB_NAMES.map((t, i) => `<button type="button" data-tab="${i}" class="${i === this.state.tab ? "on" : ""}">${t}</button>`).join("")}${pad ? `<span class="bump">${g("R1", "RB")}</span>` : ""}</div>
-      <div class="body">${rowHtml}</div>
-      <div class="status">${this.status}</div>
-      <div class="foot">${foot}<span class="sp"></span><button type="button" data-act="resetAll">Reset tab</button><button type="button" data-act="done">Done</button></div>
+      <div class="body">${rowHtml}${this.state.tab === NEWS_TAB && this.news?.done ? `<div class="group">${this.news.entries.length ? "All update notes loaded." : "No update notes yet."}</div>` : ""}</div>
+      <div class="status">${this.state.tab === NEWS_TAB ? this.news?.error || this.newsImportError ? "Update notes couldn't load. Try again." : "Left/right or Page Up/Down scrolls the notes." : this.status}</div>
+      <div class="foot">${foot}<span class="sp"></span>${(this.state.tab === NEWS_TAB || this.state.tab === SAVES_TAB) ? "" : `<button type="button" data-act="resetAll">Reset tab</button>`}<button type="button" data-act="done">Done</button></div>
     </div>${clash}</div>`;
     this.el.querySelector(".row.focus")?.scrollIntoView({ block: "nearest" });
   }

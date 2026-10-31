@@ -23,6 +23,11 @@ export function drawHatArt(v: View): void {
   const ring = (B.harvest ?? []).map((id, i) => ({ b: B.berries[id], i })).filter(q => q.b && !q.b.gone);
   const winds = Y ? g.witches.map(w => w.spells.cyc).filter((c): c is NonNullable<typeof c> => !!c && !!cycloneFrame(now - c.at, Y.time, Y.flingTime)) : [];
   const batch = v.decorBatches.get("hatArt");
+  for (const c of winds) {
+    const age=now-c.at, fade=Math.min(1,age/0.3,Math.max(0,(Y!.time+Y!.flingTime-age)/0.4));
+    v.magic.draw("wind", "vortex", c.x, 2.5, c.z, 2, 1.1, fade, age/Y!.time, 800001);
+  }
+  if (!ring.length) { batch?.set([]); return; }
   if (!ring.length && !winds.length) { batch?.set([]); return; }
   const sa = v.assets.sceneArt();
   if (!sa) return;
@@ -33,6 +38,5 @@ export function drawHatArt(v: View): void {
     items.push({ x: x - (a.originX - frame.w / 2) * m, y: 0, z, frame, flip: false, scale: m / v.mpp });
   };
   for (const { b, i } of ring) { const p = B.bushes[b.bush]; put(HARVEST_SPROUTS[i % HARVEST_SPROUTS.length], p.x, p.z - 0.05); }
-  for (const c of winds) { const ref = cycloneFrame(now - c.at, Y!.time, Y!.flingTime); if (ref) put(ref, c.x, c.z); }
   v.batchFor(v.decorBatches, "hatArt", () => new SpriteBatch(sa.atlas, v.mpp, { solid: true }))?.set(items);
 }

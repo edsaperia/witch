@@ -9,6 +9,7 @@ import { placeTrunk, TRUNK_REACH } from "./finds";
 import { dressingOf, partyDef } from "./partyDressing";
 import { TUNING, type Tuning } from "./tuning";
 
+// Keep this island/radius seed matrix: authored clearings and enabled scenery families exercise distinct whole-map keep-clear placement paths.
 const islandOf = (kind: string): Tuning => ({ ...TUNING, map: { ...TUNING.map!, island: kind, islandAreas: 10 } }); // (the game's islands)
 // (the radius map with set pieces, every ground and every decor family on, as placement.test.ts checks them)
 const everything: Tuning = { ...TUNING, setPieceChance: 0.25, grounds: { ...TUNING.grounds, chance: 0.3, kinds: ["playground", "tennis", "baseball", "football", "basketball"] }, decor: { ...TUNING.decor, mix: { ruins: 1, rocks: 1, freak: 1 } } };

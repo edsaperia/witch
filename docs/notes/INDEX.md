@@ -9,8 +9,30 @@ says what each note covers.
 - Style bible
 - Bold sigils
 
+## [Balance baselines — v5655 rules](balance-baselines.md)
+
+(no entries: its tools and checks only)
+
+## [Real-rules reports and legacy coverage](balance-report-coverage.md)
+
+(no entries: its tools and checks only)
+
+## [Balance study follow-up](balance-study.md)
+
+(no entries: its tools and checks only)
+
+## [Wide, shallow balance survey — design v1](balance-survey-design.md)
+
+- First dispatch is the 24-shard wave 1 below, not the 190-shard full envelope.
+
 ## [Balance](balance.md)
 
+- Compressed log bundles
+- Structured log records
+- Log recovery
+- Input recording
+- Paused playtest comments
+- Legacy models retained (2026-10-29, #1459, coordinator decision).
 - Fighting value (F)
 - Population growth
 - Strength
@@ -21,6 +43,15 @@ says what each note covers.
 - Playtest log
 - Balance simulator
 - Bot / bot game
+- Bags:
+- Lone shooters
+- 7 species/ages can't be stunned by one witch alone.
+- Changed on 2026-10-29, live:
+- Ed's direction:
+
+## [Cauldron collection and brewing preview](cauldron.md)
+
+(no entries: its tools and checks only)
 
 ## [Config files](config.md)
 
@@ -46,8 +77,16 @@ says what each note covers.
 - Silhouette check
 - Live rig
 
+## [Expert search: implementation and fairness audit](expert-search.md)
+
+(no entries: its tools and checks only)
+
 ## [Creatures in play](gameplay.md)
 
+- Attack target identity
+- Sheltered attack effects
+- Momentum class selection
+- Accepted attack outcomes
 - Talk / invite
 - Bubble sight
 - Babies on her leash
@@ -90,6 +129,7 @@ says what each note covers.
 
 ## [The treehouse and its house](house.md)
 
+- Current brewing authority (Ed, 2026-10-31):
 - Mushrooms and brewing
 - Mushroom kitchen artwork
 - The dressing stations
@@ -150,6 +190,10 @@ says what each note covers.
 - Sail in place
 - Zoo
 
+## [Light-pool readability experiment](light-pool-readability.md)
+
+(no entries: its tools and checks only)
+
 ## [The Making Of](making-of.md)
 
 (no entries: its tools and checks only)
@@ -175,8 +219,21 @@ says what each note covers.
 - The alto set
 - A/B renders
 
+## [Two-browser prototype](online-prototype.md)
+
+(no entries: its tools and checks only)
+
 ## [Performance](performance.md)
 
+- House route profiling
+- Startup bundle baseline
+- Slow-frame summaries
+- Reused surface roughness (#1464, 2026-10-30):
+- Exact travel art profiles (2026-10-30, #1464):
+- Ordinary-play scenery stalls
+- Travel evidence and budgets
+- Cached bare sigils
+- The sail's terrain relocation
 - The View's build in slices
 - The start's shaders
 - The stall hunt
@@ -191,6 +248,8 @@ says what each note covers.
 
 ## [The run](run.md)
 
+- What's new in Settings
+- Direct play after loading
 - The phases of a run
 - Bedroom
 - Loading screen
@@ -227,6 +286,14 @@ says what each note covers.
 - Aim reticle
 - Action bar
 
+## [Save slots](save-slots.md)
+
+- Save slot storage
+- Single-save migration
+- Slot switching
+- Compatible nights
+- Save format guards
+
 ## [Sound effects](sound.md)
 
 - Cauldron plop
@@ -242,6 +309,8 @@ says what each note covers.
 ## [The view](view.md)
 
 - Potion perception
+- Layered magic
+- Magic mock (stage 0 only)
 - Pixel snap
 - Stump wisps
 - Tilt-shift
@@ -278,7 +347,7 @@ says what each note covers.
 
 - Collectible mushroom art generator
 - Area type
-- Wall objects, small objects, big objects, set piece
+- Wall objects, small objects, big objects (legacy set pieces)
 - Layout
 - Area blend
 - Modern relics
@@ -305,7 +374,7 @@ says what each note covers.
 - Prop generator
 - Great stump
 - Stone keep-clear zone
-- Set-piece generator
+- Set-piece generator (legacy art)
 - Area recipe
 - Area folder
 - Snow crowns

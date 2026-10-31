@@ -1,3 +1,4 @@
+import { slotStorage } from "./saveSlots";
 // Screen shake when she's hit (Ed, 2026-10-05; render/shake.ts), laid on the canvas as a transform with the camera's sub-pixel
 // glide. For comfort it can be turned off: ?shake=0, or the start screen's toggle (remembered here).
 import { Shake } from "../render/shake";
@@ -13,7 +14,7 @@ export class ScreenShake {
 
   constructor(private game: Game, private tuning: Tuning, private view: View, private canvas: HTMLCanvasElement, params: URLSearchParams) {
     let shakeOn = params.get("shake") !== "0";
-    try { if (params.get("shake") === null && localStorage.getItem("witch.shake") === "0") shakeOn = false; } catch { /* fine */ }
+    try { if (params.get("shake") === null && slotStorage.getItem("witch.shake") === "0") shakeOn = false; } catch { /* fine */ }
     this.shake = new Shake(tuning.camera.shake, shakeOn);
     this.option = document.getElementById("shake-opt");
     this.showOption();
@@ -22,7 +23,7 @@ export class ScreenShake {
       const b = (e.target as HTMLElement).closest("button");
       if (!b) return;
       this.shake.on = b.dataset.v === "1";
-      try { localStorage.setItem("witch.shake", this.shake.on ? "1" : "0"); } catch { /* fine */ }
+      try { slotStorage.setItem("witch.shake", this.shake.on ? "1" : "0"); } catch { /* fine */ }
       this.showOption();
     });
   }

@@ -62,6 +62,7 @@ export class ArrivalFlight {
   frame(v: View, g: Game, now: number): boolean {
     if (this.done) { v.fly = null; return true; }
     if (!this.plan) return false;
+    if (v.limitedLandingReady(now)) { performance.mark('landing:early-land'); this.land(v); return true; }
     this.plan.keys[this.plan.keys.length - 1] = this.end(g); // (the opening shot as the game's camera has it now)
     const tree = v.treeExtent(); // (the whole tree's shot by the tree as it's measured once it's there, the crown or the Ent's art: rules/arrive.ts treeShot)
     if (this.A.tree && tree && this.plan.keys.length >= 3) this.plan.keys[this.plan.keys.length - 2] = treeShot(this.A.tree, groundHeight, this.end(g).fov, tree, innerWidth / Math.max(1, innerHeight));

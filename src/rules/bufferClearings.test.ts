@@ -8,6 +8,7 @@ import { TUNING, withTuning } from "./tuning";
 
 // (the radius map as the tests start from it, and the game's own 10-area islands)
 const CASES = [[123, "home", 0], [7, "home", 0], [42, "fox", 0], [9, "ibex", 0], [123, "home", 10], [7, "home", 10], [42, "fox", 10]] as const;
+// Keep this explicit size/island matrix: buffer clearings are compared across radius and authored-island layouts.
 
 describe("no reserved clearing with nothing in it", () => {
   for (const [seed, island, islandAreas] of CASES) {

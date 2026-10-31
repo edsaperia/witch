@@ -9,6 +9,7 @@ import { targetable } from "./combat";
 import { invitableNow } from "./creatureStates";
 import { MOVEMENT, stepSwoop, swoopHeight, swoopStriking } from "./movement";
 
+// Keep seed 5's radius arena: the straight-walk lead-at-release hit regression changes outcome on the small fixture (zero hits instead of one).
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 
 /** Her against one wild flyer (or a few) in the arena, nothing of hers there. */

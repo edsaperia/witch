@@ -3,7 +3,7 @@
 // lit by its own lights, on whatever canvas `mk` makes. No three.js and no page here, so the art workers run it (render/artBuild.ts,
 // the "housePiece" job), not the page's thread: Ed's playtest of v4515 ("stuck_walking_down") had each piece baked on the page as she
 // came within 30 m of it, a frame of 120 to 220 ms each on his laptop, every second or so as she walked the house.
-import * as Art from "../../art/generator.js";
+import * as Art from "./housePieces.primitives";
 import { furnitureSprite, furnitureColours } from "../../art/furniture.js";
 import { decorSprite } from "../../art/houseDecor.js";
 import { messSprite } from "../../art/houseMess.js";

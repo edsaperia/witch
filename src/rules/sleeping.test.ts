@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { toEvolve } from "./berries";
-import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { newGame as fullGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { smallWorld } from "../test/worlds";
 import { TUNING } from "./tuning";
 
+const newGame = smallWorld(fullGame, "Sleeping-legend interactions use one nearby legend and its kin; no distant travel or world population count is asserted.");
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, secs: number, c: Controls = idle) => { for (let i = 0; i < Math.round(secs / STEP); i++) stepGame(g, i === 0 ? c : idle, STEP); };
 /** A game with the witch on the ground beside a sleeping legend, too tough to knock out. */

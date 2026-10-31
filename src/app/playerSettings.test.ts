@@ -1,7 +1,7 @@
 // The player's settings (app/playerSettings.ts): saved and loaded on this browser, today's volumes and screen shake carried over the
 // first time, a bad or blocked storage harmless, and each one put on the tuning.
 import { describe, expect, it } from "vitest";
-import { DEFAULTS, KEY, applySettings, clean, currentSettings, devVolume, ladderChoice, loadSettings, padGlyphs, saveSettings, setCurrentSettings, type Store } from "./playerSettings";
+import { DEFAULTS, KEY, applySettings, clean, currentSettings, devVolume, ladderChoice, loadSettings, padGlyphs, saveSettings, setCurrentSettings, settingsBase, restoreSettingsBase, type Store } from "./playerSettings";
 import { TUNING } from "../rules/tuning";
 
 const mem = (init: Record<string, string> = {}): Store & { data: Record<string, string> } => {
@@ -10,6 +10,12 @@ const mem = (init: Record<string, string> = {}): Store & { data: Record<string, 
 };
 
 describe("saving and loading", () => {
+  it("defaults rumble on for older saves and remembers it off", () => {
+    expect(loadSettings(mem({ [KEY]: JSON.stringify({ shake: true }) })).rumble).toBe(true);
+    const st = mem(); saveSettings({ ...DEFAULTS, rumble: false }, st);
+    expect(loadSettings(st).rumble).toBe(false);
+    expect(clean({ rumble: "yes" }).rumble).toBe(true);
+  });
   it("is the defaults on a new browser", () => expect(loadSettings(mem())).toEqual(DEFAULTS));
   it("comes back as saved", () => {
     const st = mem(), s = { ...DEFAULTS, master: 0.6, quality: "low" as const, reduceFlashing: true, talk: "toggle" as const, textSize: 1.25 as const, glyphs: "xbox" as const };
@@ -40,6 +46,17 @@ describe("saving and loading", () => {
 
 describe("applying", () => {
   const fresh = () => structuredClone(TUNING) as unknown as typeof TUNING;
+  it("keeps original settings levels across a saved night, including disabled shake/flash and quieter voices", () => {
+    const t = fresh(), original = { voice: t.sfx.voice.witch.volume, shake: t.combat.shake, flash: t.attackFx.legendFlash };
+    const s = { ...DEFAULTS, voices: 0.5, shake: false, reduceFlashing: true };
+    applySettings(s, t);
+    const resumed = structuredClone(t);
+    restoreSettingsBase(resumed, settingsBase(t)!);
+    applySettings(s, resumed);
+    expect(resumed.sfx.voice.witch.volume).toBeCloseTo(original.voice * 0.5);
+    applySettings(DEFAULTS, resumed);
+    expect([resumed.sfx.voice.witch.volume, resumed.combat.shake, resumed.attackFx.legendFlash]).toEqual([original.voice, original.shake, original.flash]);
+  });
   it("sets the volumes, master times each", () => {
     const t = fresh();
     applySettings({ ...DEFAULTS, master: 0.5, music: 0.8, effects: 0.6 }, t);

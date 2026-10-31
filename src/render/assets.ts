@@ -3,6 +3,7 @@
 // Sets are asked for as the witch nears them and drawn by a few Web Workers in the background;
 // where workers or OffscreenCanvas are missing, they are drawn on the page, one per frame.
 import * as Art from "../../art/generator.js";
+import { enqueueWorkerTrace, postTracedJob, cancelWorkerTrace } from "../app/workerJobTrace";
 import { atlasBytes, atlasFromPixels, placeholderAtlas, type Atlas } from "./atlas";
 import { channelAt } from "./palette";
 import type { GpuKind } from "./gpuLedger";
@@ -11,6 +12,8 @@ import { creatureFrame, walkGait, runJob, stumpId, type StumpArt, type StumpSpec
 import type { Style } from "./style";
 import { artCacheKey, cachePut, hashText, type CacheHint } from "./artCache";
 import { rigGearKey, type RigGear, type RigMeta } from "./rig/rigBuild";
+import { partyGearOf } from "./creatureArt";
+import { partySheetKey, partySheetFrame } from "./partySheet";
 import { trunkCut } from "./trunkCut";
 
 export interface TypeArt {
@@ -19,6 +22,8 @@ export interface TypeArt {
    *  frame's height from its top (the trunk fades out below it in ground mode, Ed v149). */
   cut: Map<number, number>;
 }
+/** Shared party sheet identity includes its outfit and current age. */
+export interface CreatureArt { key?: string }
 export interface RelicSet { atlas: Atlas; byId: Record<string, RelicArt>; modern: RelicArt[]; layouts: RelicLayouts }
 export interface DecorArt { atlas: Atlas; pieces: DecorPiece[]; families: Record<string, DecorPiece[]>; /** the island biome it was drawn in (none: temperate) */ biome?: string }
 export interface CreatureArt { atlas: Atlas; frame: (level: number, frame: number, away?: boolean) => number; /** Its walk (art/creatures.js walkGait): frames in the cycle, and how far it moves between them (a share of its width). */ walk?: { frames: number; step: number }; /** A sleeping legend's ground line in each frame (rows from its top): drawn with that row on the ground. */ ground?: number[]; /** And how far its body's middle lies right of the frame's middle in each frame (pixels): drawn with its middle on its place. */ centre?: number[] }
@@ -118,6 +123,8 @@ export class AssetLibrary {
   /** The start's own art (fast start (b)): which of it has arrived from the art workers. Play waits for it (prepare's whenIdle). */
   readonly home = { witch: false, props: false, soundsystems: false, treehouse: false };
   get homeReady(): boolean { const h = this.home; return h.witch && h.props && h.soundsystems && h.treehouse; }
+  /** A quick outfit preview is drawn art, but is not the complete witch required for a limited landing. */
+  get fullWitchReady(): boolean { return this.home.witch && this.preview === null && this.witchLooks.has(JSON.stringify(this.witchGenome ?? null)); }
   /** Resolves once the start's own art has arrived (her frames, the light props, the soundsystems, the treehouse). */
   homeArt(): Promise<void> {
     return new Promise(resolve => { const check = () => { if (this.homeReady) resolve(); else { this.work(50); setTimeout(check, 30); } }; check(); });
@@ -187,7 +194,7 @@ export class AssetLibrary {
     w.onmessage = (e: MessageEvent<Reply>) => { slot.busy = false; slot.job = undefined; this.receive(e.data); this.dispatch(); };
     w.onerror = () => { // the worker itself failed (no module workers, say): draw on the page
       this.useWorkers = false;
-      if (slot.job) this.queue.unshift(slot.job);
+      if (slot.job) { cancelWorkerTrace(slot.job, 'worker-error'); this.queue.unshift(slot.job); }
       slot.busy = false; slot.job = undefined;
     };
   }
@@ -225,6 +232,7 @@ export class AssetLibrary {
     (job as ArtJob & CacheHint).cacheKey = this.cacheKey(job);
     (job as ArtJob & { urgent?: boolean }).urgent = urgent;
     (job as Stamped).gen = this.gen;
+    enqueueWorkerTrace(job, `art:${job.kind}`, job.id, this.queue.length);
     if (home || urgent || this.promoted.has(k)) this.queue.splice(this.front, 0, job); else this.queue.push(job);
     this.dispatch();
   }
@@ -246,7 +254,7 @@ export class AssetLibrary {
       if (i < 0) break;
       slot.busy = true;
       slot.job = this.queue.splice(i, 1)[0];
-      slot.w.postMessage(slot.job);
+      postTracedJob(slot.w, slot.job, `art:${slot.job.kind}`, slot.job.id);
     }
   }
   /** One-off asks (oneOff), by their key: what each is waiting for. */
@@ -385,6 +393,8 @@ export class AssetLibrary {
     } else if (r.job.kind === "sleep") this.creatures.set(r.job.id, { atlas, frame: (_level, f) => f % 2, ground: r.result.ground, centre: r.result.centre });
     else if (r.job.kind === "nap") this.creatures.set(r.job.id, { atlas, frame: napFrame, ground: r.result.ground, centre: r.result.centre });
     else if (r.job.kind === "glide") this.creatures.set(r.job.id, { atlas, frame: napFrame });
+    else if (r.job.kind === "party") { const G = walkGait(r.job.species);
+      this.creatures.set(r.job.id, { atlas, key: r.job.id, frame: (_l, f, away) => partySheetFrame(f, away, G.frames), walk: G }); }
     else { const G = walkGait("species" in r.job ? r.job.species : r.job.id); // (its walk's frames: a party look's, woken or a face's are its species')
       this.creatures.set(r.job.id, { atlas, frame: (l: number, f: number, away?: boolean) => creatureFrame(l, f, away, G.frames), walk: G }); }
     this.inFlight.delete(this.key(r.job)); this.promoted.delete(this.key(r.job)); this.urgentKeys.delete(this.key(r.job));
@@ -543,15 +553,15 @@ export class AssetLibrary {
     return a;
   }
   /** An invited creature's party look (its gear seeded by its id), or undefined (and asked for). */
-  partyArt(species: string, id: number, colour: number[]): CreatureArt | undefined {
-    const k = `party-${species}-${id}`, a = this.creatures.get(k); // (the species in the key: an id is a creature only within one map)
-    if (!a) this.ask({ kind: "party", id: k, species, seed: id, colour, style: this.style });
+  partyArt(species: string, id: number, colour: number[], level: number): CreatureArt | undefined {
+    const gear = partyGearOf(id, colour), k = partySheetKey(species, level, gear), a = this.creatures.get(k);
+    if (!a) this.ask({ kind: "party", id: k, species, level, gear, style: this.style });
     return a;
   }
   /** A happy creature's look (issue #87): party clothes, no glowing collar; or undefined (and asked for). */
-  happyArt(species: string, id: number): CreatureArt | undefined {
-    const k = `happy-${species}-${id}`, a = this.creatures.get(k);
-    if (!a) this.ask({ kind: "party", id: k, species, seed: id, colour: null, style: this.style });
+  happyArt(species: string, id: number, level: number): CreatureArt | undefined {
+    const gear = partyGearOf(id, null), k = partySheetKey(species, level, gear), a = this.creatures.get(k);
+    if (!a) this.ask({ kind: "party", id: k, species, level, gear, style: this.style });
     return a;
   }
   /** The party objects' art (#38), or undefined (and asked for). */
@@ -584,7 +594,7 @@ export class AssetLibrary {
     // witch immediately")
     const mine = JSON.stringify(genome ?? null);
     const stale = (q?: ArtJob) => q?.kind === "witch" && JSON.stringify(q.genome ?? null) !== mine;
-    const forget = (q: ArtJob) => { const k = this.key(q); this.inFlight.delete(k); this.promoted.delete(k); this.urgentKeys.delete(k); };
+    const forget = (q: ArtJob) => { cancelWorkerTrace(q, 'witch-look-superseded'); const k = this.key(q); this.inFlight.delete(k); this.promoted.delete(k); this.urgentKeys.delete(k); };
     this.queue = this.queue.filter(q => !stale(q) || (forget(q), false));
     // and one already drawing, if it's a whole set (seconds of a worker's time; tens in the cloud): its worker let go for another
     for (const slot of this.workers) if (stale(slot.job) && !(slot.job as { quick?: boolean }).quick) {
@@ -711,7 +721,7 @@ export class AssetLibrary {
    *  afresh as they're wanted (from the browser's store, if drawn before). */
   reseat(o: { seed: number; typeSeed: number; typeBiome?: string; treehouse: string }): void {
     this.gen++;
-    this.queue = this.queue.filter(j => !islandBound(j));
+    this.queue = this.queue.filter(j => !islandBound(j) || (cancelWorkerTrace(j, 'island-reseated'), false));
     for (const k of [...this.inFlight]) if (islandBound(k)) { this.inFlight.delete(k); this.promoted.delete(k); this.urgentKeys.delete(k); }
     const free = (a: Atlas) => { a.albedo.dispose(); a.normal.dispose(); };
     for (const a of this.types.values()) free(a.atlas);

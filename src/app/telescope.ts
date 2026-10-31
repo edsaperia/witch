@@ -6,7 +6,8 @@
 // the house's tenth round her; the view draws from the crow's nest (render/view/camera.ts placeTelescope), at telescope.resolution
 // (lowGpuResolution on an integrated GPU, Ed's Intel UHD).
 import { newTelescope, stepTelescope, telescopeFov, telescopeMagnification, turnTelescope, wrapBearing, type Telescope, type TelescopeTuning } from "../rules/telescope";
-import { bindings, keysName, padName, type ActionId } from "../platform/bindings";
+import { bindings, type ActionId } from "../platform/bindings";
+import { telescopeHint, type HintDevice } from "../ui/deviceHints";
 
 /** The arrow keys, while she looks: the telescope's (taken before the game's input sees them, as a station's panel takes them). */
 const ARROWS: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
@@ -28,6 +29,7 @@ export class TelescopeView {
   night: unknown = null;
   /** Called as she starts and stops looking. */
   onChange: (on: boolean) => void = () => {};
+  device: HintDevice = "keys";
 
   /** Its vignette as drawn (telescope.vignette: how dark its edges). */
   private vignette: number;
@@ -114,7 +116,7 @@ export class TelescopeView {
     if (T.vignette !== this.vignette) { this.vignette = T.vignette; this.el.style.background = vignetteCss(T.vignette); } // (live: the pause page's slider)
     const up = Math.round(this.aim.elevation);
     this.drawStrip(this.aim.heading);
-    this.readout.textContent = `${up >= 0 ? "up" : "down"} ${Math.abs(up)}°  ·  ×${telescopeMagnification(T, this.aim.zoom).toFixed(1)}\nthe mouse, ◀ ▶ ▲ ▼ or the sticks look round   wheel / Z X (${padName("menu.zoomIn")} ${padName("menu.zoomOut")}) zoom   ${keysName("menu.back")} ${padName("menu.back")} ⏏`;
+    this.readout.textContent = `${up >= 0 ? "up" : "down"} ${Math.abs(up)}°  ·  ×${telescopeMagnification(T, this.aim.zoom).toFixed(1)}\n${telescopeHint(this.device)}`;
   }
 
   /** The compass strip (Ed, 2026-10-23: "Telescope view has a compass at the top"): STRIP.span degrees across, ticks every 15°, the

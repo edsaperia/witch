@@ -6,6 +6,7 @@ import { Forest } from "./forest";
 import { TUNING } from "./tuning";
 import { tuftSpan, tuftsInCell, TUFT_KINDS } from "./groundcover";
 
+// Keep this spatial regression world: pond search spans 1500 m and origin-drift checks sample fixed distant coordinates.
 const map = generateMap(123, TUNING), forest = new Forest(map), G = TUNING.groundCover;
 const cells = (x: number, z: number, r: number, f?: Forest) => {
   const out = [], span = Math.max(1, Math.round(G.cell / G.spacing)) * G.spacing; // (a cell's true size: whole tufts across, as tuftsInCell has it)

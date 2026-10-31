@@ -2,7 +2,8 @@
 // stack, friends above enemies; no auto-clearing; she converts a stone by holding the sigil button at it (a hit stops it, it drains
 // while she's away), or a wave does; either way its friend sigils scatter round it, loose for anyone; a legend's tethers her.
 import { describe, expect, it } from "vitest";
-import { affectionOf, loseSoundsystem, newGame, stepGame, type Controls, type Game } from "./game";
+import { affectionOf, loseSoundsystem, newGame, newWitchPlayer, stepGame, type Controls, type Game } from "./game";
+import { stepSigilButton } from "./sigilButton";
 import { TUNING as BUILT, withTuning } from "./tuning";
 
 /** The tuning with the stacks on (they ship off till their view lands: ?cast=1). */
@@ -11,6 +12,8 @@ import { cellKey, spreadWave } from "./party";
 import { befriend, hasRune, stateOf } from "./creatureStates";
 import { castingStone, castOf, castProgress, castReady, castShown, castSpot, stoneStack } from "./stoneStacks";
 import { hexCell } from "./leash";
+import { CUT_ANGLES, cutRadius, stumpCutOf } from "./stumps";
+import { smallWorldTuning } from "../test/worlds";
 
 const still: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const hold: Controls = { ...still, sigilHeld: true };
@@ -18,8 +21,9 @@ const run = (g: Game, secs: number, c: Controls = still) => { for (let i = 0; i 
 const C = castOf(TUNING);
 
 /** A game under way, the boot long done, the witch high over home. */
-function game(seed = 123, t = TUNING): Game {
-  const g = newGame(seed, t);
+function game(seed = 123, t = TUNING, localCut = false): Game {
+  // Retain roster/population geometry for legend stacks, circle sigils and the up-to-40-wave scan.
+  const g = newGame(seed, localCut ? smallWorldTuning(t, "Stump cut shape and casting bounds are local to one runestone.") : t);
   g.clock.paused = false; g.party.spellAt = undefined; g.party.paused = true; // (no waves unless a test brings one)
   g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
   g.witches[0].health.hp = 1e6;
@@ -103,6 +107,29 @@ describe("runestone stacks (Ed, 2026-10-28)", () => {
 });
 
 describe("the soundsystem spell (Ed, 2026-10-28)", () => {
+  it("an unready stump reserves Use for a second witch at her own position", () => {
+    const g = game(), a = area(g), p = castSpot(a.stone, TUNING);
+    const W = newWitchPlayer(1, p.x, p.z, TUNING, false);
+    W.body.perch = undefined; g.witches.push(W); W.hat.hold = 0;
+    expect(castReady(g, a.key)).toBe(false);
+    stepSigilButton(g, { ...hold, hatHold: true }, W, TUNING, 2, 1 / 60, [], () => false, 1 / 60);
+    expect(W.hat.down).toBeNull();
+    expect(W.hat.hold).toBeUndefined();
+    expect(W.leash.events.some(e => e.kind === "hatPut")).toBe(false);
+  });
+
+  it("holding Use at a hostile, unready stump never puts her hat down, including an idle hold begun elsewhere", () => {
+    const g = game(), a = area(g), W = g.witches[0];
+    at(g, a, true);
+    expect(castReady(g, a.key)).toBe(false);
+    expect(castingStone(g, W)).toBeNull();
+    W.hat.hold = g.herTime - 10;
+    run(g, TUNING.leash.hatHold! + .1, { ...hold, sigil: true, hatHold: true });
+    expect(W.hat.down).toBeNull();
+    expect(W.hat.hold).toBeUndefined();
+    expect(W.casting ?? null).toBeNull();
+  });
+
   it("held at the stone for cast.time converts it: a soundsystem, its babies friends, every friend sigil scattered loose round it", () => {
     const g = game(), a = area(g), W = g.witches[0];
     at(g, a);
@@ -166,12 +193,32 @@ describe("the soundsystem spell (Ed, 2026-10-28)", () => {
 
   it("casts from the middle of a great stump's cut, not south of it (Ed, 2026-10-29: \"the spell and the audio circle effect can be on top of the stump\")", () => {
     const T = withTuning({ cast: { ...BUILT.cast, on: true }, runeMarkers: { ...BUILT.runeMarkers, stump: { ...BUILT.runeMarkers.stump!, on: true } } });
+    // Retain seeded stump placement: the small-map trial accepted a point 0.3 m past the computed cut edge.
     const g = game(123, T), a = area(g), W = g.witches[0];
     at(g, a);
     g.witch = { ...g.witch, x: a.stone.x + 0.5, z: a.stone.z + 0.5 };
     expect(castingStone(g, W)?.key).toBe(a.key);
-    g.witch = { ...g.witch, x: a.stone.x, z: a.stone.z + C.spot };
-    expect(castingStone(g, W)).toBeNull();
+    // (anywhere on the cut, Ed, 2026-10-29: "The area in which I can cast the soundsystem spell should be the whole trunk. (cut part,
+    // not the roots)": just inside its outline all round, not just past it, nor out on the roots)
+    const cut = stumpCutOf(T, g.map, a.cell)!;
+    expect(cut.length).toBe(CUT_ANGLES);
+    for (let i = 0; i < 16; i++) {
+      const ang = (i / 16) * Math.PI * 2, ux = Math.cos(ang), uz = Math.sin(ang), r = cutRadius(cut, ux, uz);
+      expect(r, "a cut metres across").toBeGreaterThan(2);
+      for (const [d, on] of [[r - 0.3, true], [r + 0.3, false], [r + 4, false]] as const) {
+        g.witch = { ...g.witch, x: a.stone.x + ux * d, z: a.stone.z + uz * d };
+        expect(castingStone(g, W)?.key ?? null, `${i}: ${d.toFixed(1)} m out, its edge ${r.toFixed(1)}`).toBe(on ? a.key : null);
+      }
+    }
+  });
+
+  it("grows the great stumps' cuts irregular (runeMarkers.stump.irregular; Ed, 2026-10-29: \"can they be more irregular?\"), each its own", () => {
+    const at = (irregular: number) => withTuning({ cast: { ...BUILT.cast, on: true }, runeMarkers: { ...BUILT.runeMarkers, stump: { ...BUILT.runeMarkers.stump!, on: true, irregular } } });
+    const g = game(123, at(0), true), a = area(g), even = stumpCutOf(at(0), g.map, a.cell)!, odd = stumpCutOf(at(1), g.map, a.cell)!;
+    expect(stumpCutOf(at(1), g.map, a.cell)).toEqual(odd); // (the same each time)
+    expect(odd.some((r, i) => Math.abs(r - even[i]) > 0.15)).toBe(true);
+    const spread = (c: number[]) => { const m = c.reduce((p, q) => p + q, 0) / c.length; return Math.sqrt(c.reduce((p, q) => p + (q - m) ** 2, 0) / c.length) / m; };
+    expect(spread(odd)).toBeGreaterThan(spread(even) * 0.8);
   });
 
   it("drains while she's away, and resumes from where it has drained to", () => {
@@ -342,6 +389,7 @@ describe("loose sigils (Ed, 2026-10-28)", () => {
 
 describe("the bots and the spell", () => {
   it("the skilled bot converts a stone by casting it, then gathers its loose sigils (seed 11, the 10-area home)", async () => {
+    // Retain the seeded ten-area route for this bot's conversion/gathering integration scenario.
     const { newBot } = await import("./bot");
     const g = newGame(11, withTuning({ cast: { ...BUILT.cast, on: true }, map: { ...BUILT.map!, islandAreas: 10 } }));
     g.clock.paused = false; g.witch = { ...g.witch, seated: false, perch: false };

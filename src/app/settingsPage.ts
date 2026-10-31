@@ -11,6 +11,7 @@ import type { ScreenShake } from "./shake";
 import type { QualityLadder } from "./ladder";
 import type { Freeze } from "../platform/freeze";
 import type { SettingsMenu } from "../ui/settingsMenu";
+import type { SavesHost } from "./saveSlots";
 
 /** The page's text panels text size scales (CSS zoom; Chrome, Safari and Firefox 126 on). */
 const TEXT = ["#studio-panel", ".corner-panel", ".legend-panel", ".boot-pop", ".loss-pop", "#sound-note", "#pause-btns", "#settings-page .win"];
@@ -19,15 +20,19 @@ const TEXT = ["#studio-panel", ".corner-panel", ".legend-panel", ".boot-pop", ".
 const STATION_TYPE = "clamp(15px, 1.45vw, 26px)";
 
 export interface SettingsPageHost {
+  mutate?: (label: string, action: () => void) => void;
   input: Input; shake: ScreenShake; ladder: QualityLadder; freeze: Freeze;
   /** the context's suspend or resume (Sound.freeze): muted in the background, and while paused as ever */
   audio(on: boolean): void;
   tuning(): object;
   version: string;
+  saves?: SavesHost;
 }
 
 type ScreenDetails = { screens: { label?: string }[] };
 const getDetails = (): Promise<ScreenDetails> | null => { const w = window as unknown as { getScreenDetails?: () => Promise<ScreenDetails> }; return w.getScreenDetails ? w.getScreenDetails() : null; };
+/** Detect support without asking for screen permission until the player chooses it. */
+export const canPickScreen = (): boolean => typeof window !== "undefined" && typeof (window as unknown as { getScreenDetails?: unknown }).getScreenDetails === "function";
 
 /** Muted in the background: the setting on, and the page hidden or its window not focused (the audio watchdog, main.ts, keeps out too). */
 export const mutedAway = (): boolean => currentSettings().muteBackground && typeof document !== "undefined" && (document.hidden || !document.hasFocus());
@@ -35,6 +40,7 @@ export const mutedAway = (): boolean => currentSettings().muteBackground && type
 export class SettingsPage {
   private menu: SettingsMenu | null = null;
   private loading = false;
+  private wantedOpen = false;
   private quality = "";
   private readonly style = document.createElement("style");
 
@@ -64,16 +70,21 @@ export class SettingsPage {
   }
 
   /** New settings: saved, and on to everything at once. */
-  set(s: PlayerSettings): void { setCurrentSettings(s); this.live(currentSettings()); }
+  set(s: PlayerSettings): void {
+    const action = () => { setCurrentSettings(s); this.live(currentSettings()); };
+    if (this.host.mutate) this.host.mutate("player settings", action); else action();
+  }
 
   /** Opened from the pause page (its code loaded the first time). */
   show(): void {
+    this.wantedOpen = true;
     if (this.menu) { this.menu.show(); return; }
     if (this.loading) return;
     this.loading = true;
     void import("../ui/settingsMenu").then(({ SettingsMenu }) => {
+      this.loading = false;
       this.menu = new SettingsMenu({
-        get: () => currentSettings(), set: s => this.set(s), version: this.host.version,
+        get: () => currentSettings(), set: s => this.set(s), version: this.host.version, saves: this.host.saves,
         fullscreen: () => !!document.fullscreenElement,
         setFullscreen: async (on, screen) => {
           try {
@@ -83,14 +94,14 @@ export class SettingsPage {
             return null;
           } catch { return "The browser wants a key or a click for fullscreen: press Enter on it, or click it (a pad can't start it)."; }
         },
-        canPickScreen: () => !!getDetails,
+        canPickScreen,
         screens: async () => { try { const d = await getDetails(); return d ? d.screens.map((x, i) => x.label || `Screen ${i + 1}`) : null; } catch { return null; } },
         pad: () => this.host.freeze.pad(),
       });
-      this.menu.show();
+      if (this.wantedOpen) this.menu.show();
     }, () => { this.loading = false; });
   }
-  close(): void { this.menu?.close(); }
+  close(): void { this.wantedOpen = false; this.menu?.close(); }
   /** Each frame: the pad, while it's open. */
   update(now: number): void {
     padGlyphStyle.xbox = padGlyphs(currentSettings().glyphs, this.host.freeze.pad()?.id) === "xbox"; // (the prompts' pad buttons: ui/keyHint.ts)

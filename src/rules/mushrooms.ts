@@ -116,6 +116,7 @@ export function mushroomButton(g: Game, W: Witch, place: boolean, use: boolean):
   return true;
 }
 export function potionPhase(g: Game, W = g.witches[0]): 'spin' | 'fall' | 'sleep' | 'recover' | null {
+  if (g.cauldron) return null; // The explicit legacy preview owns its own choreography.
   const p = g.mushrooms?.affected[W.id], at = g.herTime;
   return !p || at >= p.freeAt ? null : at < p.fallAt ? 'spin' : at < p.landAt ? 'fall' : at < p.wakeAt ? 'sleep' : 'recover';
 }

@@ -1,0 +1,135 @@
+{
+  "baseline": "523b5cec0a9861aff1043f016c77fc255cbebfc7",
+  "candidateFragmentHash": "ef9f3178ef269c8856550600019571b39fae57d31c2c55a104a64a110c1d460f",
+  "rawFullBaselineChars": 67567,
+  "note": "Active GLSL source characters after feature preprocessing, not GPU time. Full/no-lakes token equality is source evidence, not pixel proof.",
+  "rows": [
+    {
+      "look": "water",
+      "beach": false,
+      "chars": 42799,
+      "fullChars": 55388,
+      "reductionPercent": 22.73
+    },
+    {
+      "look": "ice",
+      "beach": false,
+      "chars": 40672,
+      "fullChars": 55388,
+      "reductionPercent": 26.57
+    },
+    {
+      "look": "lava",
+      "beach": false,
+      "chars": 42054,
+      "fullChars": 55388,
+      "reductionPercent": 24.07
+    },
+    {
+      "look": "oasis",
+      "beach": false,
+      "chars": 42043,
+      "fullChars": 55388,
+      "reductionPercent": 24.09
+    },
+    {
+      "look": "sinkhole",
+      "beach": false,
+      "chars": 43482,
+      "fullChars": 55388,
+      "reductionPercent": 21.5
+    },
+    {
+      "look": "tarn",
+      "beach": false,
+      "chars": 42376,
+      "fullChars": 55388,
+      "reductionPercent": 23.49
+    },
+    {
+      "look": "tar",
+      "beach": false,
+      "chars": 42102,
+      "fullChars": 55388,
+      "reductionPercent": 23.99
+    },
+    {
+      "look": "rust",
+      "beach": false,
+      "chars": 42349,
+      "fullChars": 55388,
+      "reductionPercent": 23.54
+    },
+    {
+      "look": "lily",
+      "beach": false,
+      "chars": 42081,
+      "fullChars": 55388,
+      "reductionPercent": 24.03
+    },
+    {
+      "look": "water",
+      "beach": true,
+      "chars": 54897,
+      "fullChars": 67486,
+      "reductionPercent": 18.65
+    },
+    {
+      "look": "ice",
+      "beach": true,
+      "chars": 52770,
+      "fullChars": 67486,
+      "reductionPercent": 21.81
+    },
+    {
+      "look": "lava",
+      "beach": true,
+      "chars": 54152,
+      "fullChars": 67486,
+      "reductionPercent": 19.76
+    },
+    {
+      "look": "oasis",
+      "beach": true,
+      "chars": 54141,
+      "fullChars": 67486,
+      "reductionPercent": 19.77
+    },
+    {
+      "look": "sinkhole",
+      "beach": true,
+      "chars": 55580,
+      "fullChars": 67486,
+      "reductionPercent": 17.64
+    },
+    {
+      "look": "tarn",
+      "beach": true,
+      "chars": 54474,
+      "fullChars": 67486,
+      "reductionPercent": 19.28
+    },
+    {
+      "look": "tar",
+      "beach": true,
+      "chars": 54200,
+      "fullChars": 67486,
+      "reductionPercent": 19.69
+    },
+    {
+      "look": "rust",
+      "beach": true,
+      "chars": 54447,
+      "fullChars": 67486,
+      "reductionPercent": 19.32
+    },
+    {
+      "look": "lily",
+      "beach": true,
+      "chars": 54179,
+      "fullChars": 67486,
+      "reductionPercent": 19.72
+    }
+  ],
+  "fullAndNoLakesTokensEqual": true
+}

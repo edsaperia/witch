@@ -18,6 +18,7 @@ const run = (g: Game, secs: number, c: Controls = idle, each?: () => void) => { 
 
 /** She stands on the ground in a quiet wild area two out from home, `n` babies of hers following (on her stack, oldest first). */
 function scene(n: number, species = "fox", seed = 123): { g: Game; babies: Creature[] } {
+  // Retain the two-area-away site, >300 m spare recruits, 200 m catch-up and coastal scatter geometry.
   const g = newGame(seed, T), w = g.witches[0];
   g.clock.paused = false; g.party.paused = true;
   const [hx, hy] = g.map.centreCell, cell: [number, number] = [hx + 2, hy], site = g.map.siteOf(cell[0], cell[1]);

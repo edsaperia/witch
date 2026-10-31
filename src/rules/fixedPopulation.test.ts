@@ -12,6 +12,7 @@ import { runAway } from "./orbit";
 import { runawaySpot } from "./runaway";
 import type { Creature, Level } from "./creatures";
 
+// Keep the seed-22 ten-area bot night and seed-77 radius fight: these cover complete win/loss population conservation and real beach return travel.
 /** Every one gone is asleep on the beach. */
 const allBeached = (g: Game) => { for (const c of g.creatures.filter(c => c.gone)) { expect(c.beached, `#${c.id} gone, not on the beach`).toBe(true); expect(c.asleep).toBe(true); } };
 

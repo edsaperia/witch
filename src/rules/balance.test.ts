@@ -12,6 +12,7 @@ const SAVED_STRENGTH = { ...COMBAT.strength!.species };
 const plainStrength = () => { for (const k of Object.keys(COMBAT.strength!.species)) delete COMBAT.strength!.species[k]; };
 const restoreStrength = () => Object.assign(COMBAT.strength!.species, SAVED_STRENGTH);
 import { homeHealth } from "./speakers";
+// Keep the full seeded route/population: 20–40-wave survival and march/logistics comparisons require that pressure and travel-distance distribution.
 const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 describe("fighting value (rules/power.ts)", () => {

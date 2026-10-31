@@ -1,22 +1,25 @@
+export { packPixels, packSteps } from "./artPacking";
+import { pixels, packPixels } from "./artPacking";
+export { groundOf, witchLookOf } from "./artLook";
+import { witchLookOf } from "./artLook";
+export { creatureSprites, bakeOverride, headPoint, creatureFrame, walkGait, partyGearOf } from "./creatureArt";
+import { creatureSprites, headPoint, partyGearOf } from "./creatureArt";
+export { typeSprites } from "./areaArt";
+import { typeSprites } from "./areaArt";
+import { sceneSprites, speakerSprites, beachSprites, relicSprites, pathPieceSprites, beachEdgeSprites, lakeShoreSprites, decorSprites, partyObjectSprites, partyWitchSprites } from "./worldArt";
+export { SPEAKER_STONE_WIDTH, RING_STONE_CARVING, RING_STONE_CARVINGS, ringStoneKey, stumpId, HARVEST_SPROUTS, CYCLONE_FRAMES, CYCLONE_TINT } from "./artMetadata";
 // Drawing the sprite sets with art/generator.js and packing them into atlas pixels. No Three.js
 // and no page needed, so it runs in a Web Worker (with OffscreenCanvas) as well as on the page.
-import * as Art from "../../art/generator.js";
-import { LOOKS, lookSeed } from "../rules/map";
-import { AREA_BY_ID, areaAssets } from "../../art/areas.js";
-import { biomeColours, biomeLook, biomeScale, biomeSnow, biomeStyle } from "../../art/flora/biomes.js";
-import { rng } from "../rules/random";
+import * as Art from "./artBuild.primitives";
 import type { Style } from "./style";
 import { rigSprites, type RigGear, type RigMeta } from "./rig/rigBuild";
-import { overrideFor, poseName, type Override } from "./overrides";
 import { entTreehouseSprites, propSprites, soundsystemGenSprites, soundsystemSprites, treehouseSprites, witchSprites, type SoundsystemGenArt, type TreehouseArt, type WitchArt } from "./homeArt";
-import { runSync, type Steps } from "./slices";
 import { canvasPixels, discoDrawn, seaSprites, stoneSprites, type CanvasPixels, type StoneSpec } from "./islandArt";
 import { housePiece, type PiecePixels } from "./housePieces";
 import { workshopPicture, type WorkshopPic } from "./workshopPieces";
 import { clearMask } from "./crownMask";
-import { indexPlane } from "./palette";
 
-type AnyCanvas = HTMLCanvasElement | OffscreenCanvas;
+export type AnyCanvas = HTMLCanvasElement | OffscreenCanvas;
 export interface Baked { A: AnyCanvas; N: AnyCanvas; w: number; h: number; /** A wild creature's eye pixels (1), for eyeshine (Ed, v244). */ eyes?: Uint8Array; /** Its sway mask (#34: grey, 0 rigid to 255 the leafy tips), packed into the normal map's alpha. */ S?: AnyCanvas; /** A creature's head (art pixels from its top left): bubbles point their tails at it (headPoint). */ head?: [number, number] }
 /** Where a sprite sits in its atlas: u0, vTop, u1, vBottom, and its size in art pixels. */
 /** pad: empty rows (nothing drawn) at the bottom of the sprite, so it can stand on its lowest
@@ -31,11 +34,6 @@ export type MakeCanvas = (w: number, h: number) => AnyCanvas;
 /** Where a witch frame's ground is (the art's `ground` and `shadow` anchors, art/witch.js liftShadow): the point under her on the
  *  model's ground and her shadow's size there, in the sprite's pixels. */
 export interface FrameGround { x: number; y: number; w: number; d: number }
-/** A witch sprite's ground from its anchors (art/witch.js liftShadow), or null. */
-export function groundOf(anchors?: Record<string, number[]> | null): FrameGround | null {
-  const g = anchors?.ground, s = anchors?.shadow;
-  return g ? { x: g[0], y: g[1], w: s?.[0] ?? 0, d: s?.[1] ?? 0 } : null;
-}
 
 /** Where each of an area type's sprites sits in its atlas. A big object with a top half (a
  *  tree's crown) has `top`; one without (a mound, a boulder, a log) is drawn whole, always. */
@@ -62,208 +60,8 @@ export interface TypeLayout {
   rim: { frame: number; form: string; height: number }[];
 }
 
-interface ArtDef { id: string; leaf: number; big: [string, Record<string, unknown>][]; small: [string, Record<string, unknown>][]; set?: [string, Record<string, unknown>] }
-type TreeOpts = { type: string; minor?: boolean; dark?: boolean; gnarl?: number; bare?: boolean; trunks?: number; lean?: number; thick?: boolean; thin?: boolean; hollow?: boolean; webs?: boolean; scale?: number };
-
-// One of an area's trees, drawn as art/areas.js draws its "tree" props, but keeping the crown
-// line so it splits into a top half (shown from the treetops) and a bottom half (the trunk).
-function areaTree(def: ArtDef, o: TreeOpts, st: Style, r: () => number, K: number) {
-  const f = (Art.treeSpecies as (type: string) => { fn: unknown })(o.type).fn as (r: () => number, st: Style, s: number) => { sp: unknown; crownY: number }; // any species art/trees.js knows
-  const ts = { ...st, leafHue: def.leaf + (o.dark ? 0.05 : 0), gnarl: o.gnarl ?? st.gnarl, treeBare: o.bare, treeTrunks: o.trunks, treeLean: o.lean, treeThick: o.thick, treeThin: o.thin, treeHollow: o.hollow, treeWebs: o.webs, treeHang: (def as { layout?: { hang?: number } }).layout?.hang ?? 0 } as unknown as Style;
-  const look = st.biome ? biomeLook(st.biome) : null; // (the island's biome: art/flora/biomes.js)
-  const t = f(r, biomeStyle(ts, look) as Style, st.treeSize * K * (o.scale || 1) * biomeScale(look) * Art.uni(r, 0.9, 1.1));
-  Art.snowCrown(t.sp, biomeSnow(look, 0), 1);
-  const c = Art.treeColours(r, ts, f) as Record<number, number[]>;
-  if (o.dark) { c[Art.M.LEAF] = c[Art.M.LEAF3]; c[Art.M.LEAF3] = Art.hsv2rgb(def.leaf + 0.05, 0.7, 0.22); }
-  c[Art.M.NOSE] = [20, 16, 24]; c[Art.M.GLINT] = [235, 235, 240]; biomeColours(c, look, Art.M);
-  return { parts: Art.splitTree(t), colours: c };
-}
-
-/** Everything an area type needs, from art/areas.js: its big objects (trees in several
- *  variants, split into halves), small objects, wall objects, set piece, and floor tile. */
-export function typeSprites(st: Style, seed: number, t: number, K: number, mk: MakeCanvas): { sprites: Baked[]; layout: TypeLayout; floor: Baked } {
-  const id = LOOKS[t].id, def = (AREA_BY_ID as unknown as Record<string, ArtDef>)[id]; // (LOOKS: the area types and home's meadow)
-  const assets = areaAssets(id, st, { K, makeCanvas: mk }) as { floor: { sp: Baked }; walls: { sp: Baked }[]; small: { sp: Baked }[]; big: { sp: Baked }[]; setPiece: { sp: Baked; origin?: { x: number; y: number } } | null; rim: { sp: Baked; kind: string; metres: { height: number } }[] };
-  const sprites: Baked[] = [], add = (b: Baked) => sprites.push(b) - 1;
-  const layout: TypeLayout = { big: [], bigWeight: [], grove: { giant: [], tall: [] }, small: [], walls: [], set: null, rim: [] };
-  const bk = (sp: unknown, col: unknown) => Art.bake(sp, col, st, "none", mk) as Baked;
-  // Anything drawn as a tree (big objects, small trees, a tree set piece) is split into crown and
-  // trunk, so its crown hides in ground mode; everything else is drawn whole.
-  const tree = (o: TreeOpts, k: number): Piece => {
-    const { parts, colours } = areaTree(def, o, st, rng(seed * 13 + lookSeed(t) * 101 + k * 7 + 1), K);
-    return { bot: add(bk(parts.bot, colours)), top: add(bk(parts.top, colours)) };
-  };
-  // Trees: the area's own UK species (a main and a minor one) across four height classes, from
-  // saplings to a rare giant over the canopy (art/areas.js areaTreeVariants), each with its share
-  // of the area's trees. Anything else big (mounds, boulders, logs) is drawn whole, as before.
-  // Each height class gets the area's own share of its trees (its layout's heightMix), split among
-  // that class's variants; without one, the art's default weights.
-  const variants = (Art.areaTreeVariants as (id: string, st: Style, o: object) => unknown)(id, st, { K, makeCanvas: mk, flora: (Art.floraPick as (q: unknown) => string[])(st.flora) }) as { top: Baked; bot: Baked; weight: number; heightClass: "sapling" | "mature" | "tall" | "giant"; face?: boolean; sway?: { top: unknown; bot: unknown } }[]; // flora: ?flora= (main.ts), these species instead of the area's own
-  const faced = variants.filter(v => v.face), plain = variants.filter(v => !v.face); // (the bark face's tree: never dealt by weight, see below)
-  const mix = LOOKS[t].layout.heightMix, perClass = (c: string) => plain.filter(v => v.heightClass === c).length || 1;
-  // Each carries its sway mask (#34), so only its leaves move in the wind.
-  const withSway = (b: Baked, S?: unknown) => (S ? { ...b, S: S as Baked["A"] } : b);
-  for (const v of plain) { layout.big.push({ bot: add(withSway(v.bot, v.sway?.bot)), top: add(withSway(v.top, v.sway?.top)) }); layout.bigWeight.push(mix ? mix[v.heightClass] / perClass(v.heightClass) : v.weight); }
-  // The grove's trees (a legend's ring of old giants, Ed 2026-10-06): the two tallest classes it has.
-  const ranks = ["sapling", "mature", "tall", "giant"], have = ranks.filter(c => plain.some(v => v.heightClass === c)), of = (c?: string) => plain.flatMap((v, i) => (v.heightClass === c ? [i] : []));
-  layout.grove.giant = of(have[have.length - 1]); layout.grove.tall = have.length > 1 ? of(have[have.length - 2]) : layout.grove.giant;
-  // The bark face's tree (art/areas.js barkFace): a big object of its own, weight 0, so it's never dealt; the view puts it on
-  // at most two trees an area (view/scenery.ts).
-  for (const v of faced.slice(0, 1)) { layout.face = layout.big.length; layout.big.push({ bot: add(withSway(v.bot, v.sway?.bot)), top: add(withSway(v.top, v.sway?.top)) }); layout.bigWeight.push(0); }
-  // The baked pieces stand for the area's list entries (a.from): one each, or under the prop generator (?props=gen) n variants of
-  // one, each a share of that entry's weight (a.share). Walked by piece, not by entry, so each entry is its own art.
-  type Asset = { sp: Baked; sway?: unknown; sparse?: number; from: number; share?: number };
-  const bigs = assets.big as Asset[], smalls = assets.small as Asset[];
-  const firstBig = layout.big.length, share = Math.min(0.95, LOOKS[t].layout.treeShare ?? 0);
-  bigs.forEach(a => {
-    if (def.big[a.from][0] === "tree" && variants.length) return;
-    layout.big.push({ bot: add(withSway(a.sp, a.sway)), top: null });
-    // Tall pieces in the open areas (snags, cairns, standing stones, pillars, spires: #33) stand
-    // sparsely: their art's own sparse share as their weight among the area's big objects (about
-    // a fifth of them all), the mounds, boulders and logs at 1.
-    layout.bigWeight.push(variants.length && !share ? 0.1 * (a.share ?? 1) : a.sparse ?? a.share ?? 1);
-  });
-  // An open area with a few trees among its props (its layout's treeShare; Ed, 2026-10-13: "trees into areas with no trees"): the
-  // trees' weights scaled so they're that share of all its big objects, the props keeping their own.
-  if (share && variants.length && layout.big.length > firstBig) {
-    const w = layout.bigWeight, trees = w.slice(0, firstBig).reduce((t, v) => t + v, 0), props = w.slice(firstBig).reduce((t, v) => t + v, 0), k = trees > 0 ? (share / (1 - share)) * props / trees : 0;
-    for (let i = 0; i < firstBig; i++) w[i] *= k;
-  }
-  // An area with no trees (Ed, 2026-10-06: "Legend with no tall trees around it"): its legends' groves grow its two tallest big
-  // objects (the stone shrine's great stones, the ravine's spires, the moor's standing stones and cairns), so every circle has a tall ring;
-  // every variant of each.
-  if (!variants.length && bigs.length) {
-    const tallest = new Map<number, number>(); // (an entry's tallest piece, in art pixels)
-    bigs.forEach(a => tallest.set(a.from, Math.max(tallest.get(a.from) ?? 0, a.sp.h)));
-    const byH = [...tallest].filter(([, h]) => h >= 48).sort((a, b) => b[1] - a[1]).map(([from]) => from); // (as tall as she is or more: no boulders or mounds)
-    const of = (from: number) => bigs.flatMap((a, j) => (a.from === from ? [firstBig + j] : []));
-    if (byH.length) { layout.grove.giant = of(byH[0]); layout.grove.tall = of(byH[1] ?? byH[0]); }
-  }
-  // The small objects are picked evenly, so each entry gets as many slots as the most variants any has (a plain one repeated).
-  const slots = Math.max(1, ...def.small.map((_, i) => smalls.filter(a => a.from === i).length));
-  def.small.forEach(([kind, o], i) => {
-    const mine = smalls.filter(a => a.from === i);
-    const pieces = kind === "tree" ? [tree(o as TreeOpts, 500 + i)] : mine.map(a => ({ bot: add(withSway(a.sp, a.sway)), top: null }));
-    for (let k = 0; k < slots && pieces.length; k++) layout.small.push(pieces[k % pieces.length]);
-  });
-  for (const a of assets.walls) layout.walls.push(add(a.sp));
-  for (const a of assets.rim) layout.rim.push({ frame: add(a.sp), form: a.kind, height: a.metres.height });
-  if (assets.setPiece) layout.set = def.set?.[0] === "tree" ? tree(def.set[1] as TreeOpts, 900) : { bot: add(assets.setPiece.sp), top: null, origin: assets.setPiece.origin };
-  return { sprites, layout, floor: assets.floor.sp };
-}
-
-/** A kind of creature at each level (baby, young, adult, legend), two walking frames each. */
-export function creatureSprites(st: Style, species: string, mk: MakeCanvas, gear: unknown = null): Baked[] {
-  const out: Baked[] = [];
-  const n = (Art.walkGait(species) as { frames: number }).frames; // (its walk's frames: 2, or its own cycle's)
-  for (const facing of ["towards", "away"]) for (let level = 0; level < 4; level++) for (let f = 0; f < n; f++) {
-    const hand = overrideFor(species, poseName(level, f, facing === "away")); // (a hand-drawn frame: art/overrides, as it is)
-    if (hand) { out.push(bakeOverride(hand, mk)); continue; }
-    const sp = Art.critter(species, level, f, st, facing, gear as null) as { m: ArrayLike<number> };
-    const b = Art.bake(sp, Art.speciesColours(species, st, gear as null), st, st.cOutline, mk) as Baked;
-    if (!gear || Object.keys(gear).every(k => k === "face")) b.eyes = eyeMask(sp.m); // (an expression alone keeps the find-in-the-dark eyes)
-    b.head = headPoint(sp.m, b.w, b.h);
-    out.push(b);
-  }
-  return out;
-}
-
-/** A hand-drawn frame (art/overrides/README.md) as a baked sprite: its pixels as drawn (alpha 254 glows, under 128 is empty,
- *  the rest solid) and a flat normal facing us, so the light falls on it evenly. */
-export function bakeOverride(o: Override, mk: MakeCanvas): Baked {
-  const A = mk(o.w, o.h), N = mk(o.w, o.h);
-  const ca = A.getContext("2d") as CanvasRenderingContext2D, cn = N.getContext("2d") as CanvasRenderingContext2D;
-  const a = ca.createImageData(o.w, o.h), n = cn.createImageData(o.w, o.h);
-  for (let i = 0; i < o.w * o.h; i++) {
-    const al = o.rgba[i * 4 + 3];
-    if (al < 128) continue;
-    a.data.set([o.rgba[i * 4], o.rgba[i * 4 + 1], o.rgba[i * 4 + 2], al === 254 ? 254 : 255], i * 4);
-    n.data.set([128, 128, 255, 255], i * 4);
-  }
-  ca.putImageData(a, 0, 0); cn.putImageData(n, 0, 0);
-  return { A, N, w: o.w, h: o.h };
-}
-
-// Wild creatures' eyes (Ed, v244): packPixels gives their eye pixels alpha 253, so the sprite
-// shader can make them catch the light (eyeshine) when finding is on; otherwise they're lit like the rest.
-const EYES = new Set([Art.M.EYE, Art.M.IRIS, Art.M.PUPIL]);
-function eyeMask(m: ArrayLike<number>): Uint8Array | undefined {
-  const out = new Uint8Array(m.length);
-  let any = false;
-  for (let i = 0; i < m.length; i++) if (EYES.has(m[i])) { out[i] = 1; any = true; }
-  return any ? out : undefined;
-}
-/** Where a creature's head is in its sprite (Ed, 2026-10-12: "can we have the tail of bubbles point at creatures' heads?"): the
- *  middle of its eyes where they show, else the middle of its topmost few rows (turned away, its head's back and ears; asleep,
- *  the top of the curl), in art pixels from its top left. */
-export function headPoint(m: ArrayLike<number>, w: number, h: number): [number, number] | undefined {
-  let n = 0, sx = 0, sy = 0, top = -1;
-  for (let i = 0; i < w * h; i++) { if (EYES.has(m[i])) { n++; sx += i % w; sy += Math.floor(i / w); } if (top < 0 && m[i]) top = Math.floor(i / w); }
-  if (n) return [sx / n + 0.5, sy / n + 0.5];
-  if (top < 0) return undefined;
-  let bottom = h - 1;
-  while (bottom > top && ![...Array(w).keys()].some(x => m[bottom * w + x])) bottom--;
-  const rows = Math.max(2, Math.round((bottom - top + 1) * 0.18));
-  for (let y = top; y < Math.min(h, top + rows); y++) for (let x = 0; x < w; x++) if (m[y * w + x]) { n++; sx += x; }
-  return [sx / n + 0.5, top + rows / 2];
-}
-/** Towards: frames 0 to 4n - 1 (level x n + walk frame, n its walk's frames: 2 unless it has its own cycle); away: the
- *  same, from 4n. */
-export const creatureFrame = (level: number, f: number, away = false, n = 2) => (away ? 4 * n : 0) + level * n + (((f % n) + n) % n);
-/** A species' walk: its frames, and how far it moves between them (a share of its sprite's width). */
-export const walkGait = (species: string): { frames: number; step: number } => Art.walkGait(species) as { frames: number; step: number };
-
-function pixels(c: AnyCanvas, w: number, h: number): Uint8ClampedArray {
-  const ctx = c.getContext("2d") as CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
-  return ctx.getImageData(0, 0, w, h).data;
-}
-
-/** Shelf-pack the sprites; row 0 is the top of the image. */
-export const packPixels = (sprites: Baked[], width = 2048): AtlasPixels => runSync(packSteps(sprites, width));
-
-/** packPixels as steps (render/slices.ts): a step every few sprites. */
-export function* packSteps(sprites: Baked[], width = 2048): Steps<AtlasPixels> {
-  const pad = 1, place: { x: number; y: number }[] = [], first = new Map<Baked, number>(); // (a sprite given twice is packed once: her preview's frames, render/homeArt.ts)
-  let x = 0, y = 0, rowH = 0, W = 1;
-  for (const [i, s] of sprites.entries()) {
-    const was = first.get(s);
-    if (was !== undefined) { place.push(place[was]); continue; }
-    first.set(s, i);
-    if (x + s.w + pad > width) { x = 0; y += rowH + pad; rowH = 0; }
-    place.push({ x, y });
-    x += s.w + pad; rowH = Math.max(rowH, s.h); W = Math.max(W, x);
-  }
-  const H = Math.max(1, y + rowH);
-  const albedo = new Uint8Array(W * H * 4), normal = new Uint8Array(W * H * 4);
-  const frames: Frame[] = [];
-  for (let i = 0; i < sprites.length; i++) {
-    if (i && i % 4 === 0) yield;
-    const s = sprites[i], was = first.get(s)!;
-    if (was !== i) { frames.push(frames[was]); continue; }
-    const p = place[i], pa = pixels(s.A, s.w, s.h), pn = pixels(s.N, s.w, s.h);
-    const sd = s.S ? pixels(s.S, s.w, s.h) : null, sway = sd ? Array.from({ length: s.h }, (_, row) => Array.from({ length: s.w }, (_, x) => sd[(row * s.w + x) * 4 + 1])) : null; // G: the pixel-wind code (art/sway.js swayCode)
-    for (let row = 0; row < s.h; row++) {
-      const src = row * s.w * 4, dst = ((p.y + row) * W + p.x) * 4;
-      albedo.set(pa.subarray(src, src + s.w * 4), dst);
-      if (s.eyes) for (let x = 0; x < s.w; x++) if (s.eyes[row * s.w + x] && albedo[dst + x * 4 + 3] === 255) albedo[dst + x * 4 + 3] = 253;
-      normal.set(pn.subarray(src, src + s.w * 4), dst);
-      if (s.S) { const ps = sway![row]; for (let x = 0; x < s.w; x++) if (normal[dst + x * 4 + 3]) normal[dst + x * 4 + 3] = ps[x]; } // after the normals: the mask in their alpha
-    }
-    // Its lowest drawn row (the sprite shader drops alpha under a half).
-    let pad = 0;
-    bottom: for (let row = s.h - 1; row >= 0; row--, pad++) for (let x = 0; x < s.w; x++) if (pa[(row * s.w + x) * 4 + 3] >= 128) break bottom;
-    // And how far that row reaches from the middle, either way.
-    let foot = 0;
-    if (pad < s.h) { const row = s.h - 1 - pad; for (let x = 0; x < s.w; x++) if (pa[(row * s.w + x) * 4 + 3] >= 128) foot = Math.max(foot, Math.abs(x + 0.5 - s.w / 2) + 0.5); }
-    frames.push({ uv: [p.x / W, p.y / H, (p.x + s.w) / W, (p.y + s.h) / H], w: s.w, h: s.h, pad: Math.min(pad, s.h), ...(foot ? { foot } : {}), ...(s.S ? { masked: true } : {}), ...(s.head ? { head: s.head } : {}) });
-  }
-  // Each plane as palette indices where it can be (render/palette.ts: a quarter of the bytes, the colours exact).
-  yield;
-  const a = indexPlane(albedo);
-  yield;
-  const n = indexPlane(normal);
-  return { albedo: a?.idx ?? albedo, normal: n?.idx ?? normal, albedoPal: a?.pal ?? null, normalPal: n?.pal ?? null, width: W, height: H, frames };
-}
+export interface ArtDef { id: string; leaf: number; big: [string, Record<string, unknown>][]; small: [string, Record<string, unknown>][]; set?: [string, Record<string, unknown>] }
+export type TreeOpts = { type: string; minor?: boolean; dark?: boolean; gnarl?: number; bare?: boolean; trunks?: number; lean?: number; thick?: boolean; thin?: boolean; hollow?: boolean; webs?: boolean; scale?: number };
 
 export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: number; /** the island's biome blend's key (rules/lakeLooks.ts biomeKey), its look over the area's trees and props; none, temperate */ biome?: string } | { kind: "creature"; id: string; style: Style } | { kind: "rig"; id: string; species: string; level: number; style: Style; /** a party animal's gear, baked on */ gear?: RigGear }
   /** A creature enraged by a wave (Stage 4 playtest): angry glowing red eyes and a darker tint. */
@@ -273,8 +71,8 @@ export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: 
   | { kind: "glide"; id: string; species: string; style: Style }
   | { kind: "nap"; id: string; species: string; style: Style; /** its idle pose instead (art/creatures.js IDLE_BUILDERS: the meerkat sat up as a sentinel), each level in its 2 frames */ idle?: boolean; /** a party animal's (or a happy one's) own gear, by its seed and collar colour (null: none), worn asleep */ dressed?: { seed: number; colour: number[] | null } }
   | { kind: "face"; id: string; species: string; face: string; style: Style }
-  /** A party animal: an invited creature in its party gear (seeded by its id: collar in its sigil colour, maybe a hat, sunglasses, shoes). */
-  | { kind: "party"; id: string; species: string; seed: number; /** the collar's colour; null: no collar (happy, issue #87) */ colour: number[] | null; style: Style }
+  /** One current age in an outfit selected by the creature's seed, shared by identical looks. */
+  | { kind: "party"; id: string; species: string; level: number; gear: RigGear; style: Style }
   /** Every decoration (ruins in both conditions, rocks, freak trees), split as trees are. */
   | { kind: "decor"; id: string; style: Style; /** the island's biome key (its look over the rocks, ruins and freak trees); id is the same, or "all" */ biome?: string }
   /** The beach's edge of the woods (render/beach.ts): palms (split as trees are), beach shrubs and grass clumps, each with its sway mask. */
@@ -343,20 +141,10 @@ export interface PartyWitchArt { poses: Record<string, number[]>; fps: Record<st
  *  scene's pieces in metres from its middle, as authored and mirrored. */
 export interface SceneArt { pieces: Record<string, { frame: number; originX: number; originY: number; decal: boolean; /** drawn at this many art pixels a metre, not the game's own (the effects': art/effects.js EFFECT_PPM) */ ppm?: number }>; layouts: Record<string, { plain: ScenePlace[]; mirror: ScenePlace[] }> }
 export interface ScenePlace { ref: string; dx: number; dz: number; left: boolean }
-
-/** The dancefloor speakers in their atlas: the frame for "angle:state:frame", and each angle's ground point. */
-/** A home speaker's runestone: an area's rune stone, as tall and carved the same, at this share of its width (Ed, 2026-10-08:
- *  "similar to normal runestones but half the width"; it was a 0.55 miniature). */
-export const SPEAKER_STONE_WIDTH = 0.5;
 /** What a ring stone is carved with, by its place in the ring (0 at the top, clockwise): a rune glyph or a creature's sigil. One
  *  not listed carves RING_STONE_CARVING, Ed's pick (2026-10-08): "three glowing dots in a vertical stack, hinting at the speaker
  *  that will replace it" (its bass, mid and tweeter). */
-type Carving = { rune?: number; sigil?: string; dots?: boolean };
-export const RING_STONE_CARVING: Carving = { dots: true };
-export const RING_STONE_CARVINGS: Record<number, Carving> = {};
-const carvingKey = (c?: Carving) => (c?.sigil ? `s:${c.sigil}` : c?.rune !== undefined ? `r:${c.rune}` : "");
-/** A ring stone's frame key in SpeakerArt.stones: its drawn angle and its carving. */
-export const ringStoneKey = (i: number, angle: number): string => `${angle}|${carvingKey(RING_STONE_CARVINGS[i])}`;
+export type Carving = { rune?: number; sigil?: string; dots?: boolean };
 export interface SpeakerArt { frames: Record<string, number>; origin: Record<number, { x: number; y: number }>; /** The runestone each home speaker starts as (Ed, 2026-10-06), turned like the speakers (Ed, 2026-10-08: "face inwards, like the ring speakers do"): by ringStoneKey, its frame and its ground point. */ stones?: Record<string, number>; stoneOrigin?: Record<string, { x: number; y: number }>; /** And where its glowing dots' middles are in its frame (art pixels), by the same key: the game's glow round them (Ed, 2026-10-09). */ stoneDots?: Record<string, { x: number; y: number }[]> }
 
 /** The beach's edge of the woods in its atlas (render/beach.ts): palms as crown and trunk frames, shrubs and grass clumps whole. */
@@ -377,262 +165,10 @@ export interface DecorPiece { id: string; family: string; bot: number; top: numb
 /** A floor tile's pixels: albedo and normal map, w x h. */
 export interface TilePixels { albedo: Uint8Array; normal: Uint8Array; w: number; h: number }
 /** A stump to bake: its species (art/props/stumps.js STUMP_GENOMES), seed and the angle it's seen from (radians). */
-export interface StumpSpec { species: string; seed: number; yaw: number; /** fitted to this area type (its id: its main tree's bark, its ground) */ area?: string; /** in this biome (art/flora/biomes.js key) */ biome?: string }
-/** A baked stump: the ground under its middle and its cut's middle on the sprite (art pixels from its top-left), the cut's height
- *  and the trunk's radius (m). */
-/** A stump spec's id: its art job's, and its key in the asset library. */
-export const stumpId = (s: StumpSpec): string => `${s.species}:${s.area ?? ""}:${s.seed}:${s.yaw.toFixed(3)}:${s.biome ?? ""}`;
+export type { StumpSpec } from "../rules/stumps";
+import type { StumpSpec } from "../rules/stumps";
 export interface StumpArt { origin: { x: number; y: number }; top: { x: number; y: number }; height: number; radius: number; /** The root area's outline: its radius (art pixels) at even angles round the rings' middle, from east towards the camera (art/props/stumps.js ROOT_ANGLES). */ roots: number[]; /** Metres over the ground a metre of the sprite's height reaches, as the art's camera saw it: it lies on the ground by this. */ depth: number }
 export interface ArtResult { /** The dancefloor's looks (kind disco). */ disco?: { base: CanvasPixels; lit: CanvasPixels; pitch: number; size: number; gridOrigin: number; rimOuter: number; radius: number }; /** The runestones' heights, in order (kind stones). */ stones?: number[]; /** The stumps' ground points and cuts (kind stumps), in order. */ stumps?: StumpArt[]; /** The sea creatures' frames' origins (kind sea). */ sea?: { x: number; y: number }[]; /** The beach's edge of the woods: its palms' frames (crown, trunk) and its shrubs' and grass clumps'. */ beachEdge?: BeachEdgeArt; /** The biome lakes' shore dressing. */ lakeShore?: LakeShoreArt; /** A sleeping legend's ground line in each frame: rows from its top (the art's origin). */ ground?: number[]; /** And how far its body's middle (the origin) lies right of the frame's middle, pixels. */ centre?: number[]; /** The live rig's parts (#79): their joints and pieces. */ rig?: RigMeta; px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[]; pieces?: PathPieceArt[]; relics?: RelicArt[]; beach?: BeachArt; layouts?: RelicLayouts; speakers?: SpeakerArt; scenes?: SceneArt; witch?: PartyWitchArt; party?: PartyArt; /** Our witch's poses (render/homeArt.ts). */ ours?: WitchArt; /** The treehouse's anchors. */ treehouse?: TreehouseArt; /** A generated soundsystem's origins and projector tops. */ ss?: SoundsystemGenArt; /** A treehouse piece's picture (kinds housePiece and workshopPic; null: nothing to draw). */ housePiece?: PiecePixels | null; /** The crown's clearing over a floor (kind crownMask). */ mask?: Uint8Array }
-
-/** The Harvest hat's sprouts (art/country.js scene pieces), one under each of its berries by its place in the ring. */
-export const HARVEST_SPROUTS = ["harvest-sprout-1", "harvest-sprout-2", "harvest-sprout-3"];
-/** The Cyclone's whirlwind's effects and their frames (art/effects.js), and the spell's neon its wind and motes take. */
-export const CYCLONE_FRAMES: [string, number][] = [["cycloneRise", 3], ["cyclone", 8], ["cycloneFall", 3]];
-export const CYCLONE_TINT = [190, 150, 255];
-
-function sceneSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; scenes: SceneArt } {
-  const sprites: Baked[] = [], scenes: SceneArt = { pieces: {}, layouts: {} };
-  type Layout = { pieces: { sprite: string; dx: number; dz: number; facing?: string }[] };
-  for (const sc of Art.SCENES as { id: string }[]) {
-    const lay = (mirror: boolean) => (Art.sceneLayout(sc.id, st, { mirror }) as Layout).pieces.map(p => ({ ref: p.sprite, dx: p.dx, dz: p.dz, left: p.facing === "left" }));
-    scenes.layouts[sc.id] = { plain: lay(false), mirror: lay(true) };
-    for (const p of scenes.layouts[sc.id].plain) {
-      if (scenes.pieces[p.ref]) continue;
-      const piece = Art.scenePiece(p.ref, st) as { sprite: { whole: unknown; origin: { x: number; y: number } }; colours: unknown; decal: boolean };
-      scenes.pieces[p.ref] = { frame: sprites.push(Art.bake(piece.sprite.whole, piece.colours, st, "none", mk) as Baked) - 1, originX: piece.sprite.origin.x, originY: piece.sprite.origin.y, decal: piece.decal };
-    }
-  }
-  // The hats' own art (#723, drawn each frame by render/view/hatArt.ts): the Harvest hat's sprouts, under its berries, and the
-  // Cyclone hat's whirlwind (art/effects.js: rising, its loop, falling apart), in the spell's neon, by its foot's middle.
-  for (const ref of HARVEST_SPROUTS) {
-    const piece = Art.scenePiece(ref, st) as { sprite: { whole: unknown; origin: { x: number; y: number } }; colours: unknown; decal: boolean };
-    scenes.pieces[ref] = { frame: sprites.push(Art.bake(piece.sprite.whole, piece.colours, st, "none", mk) as Baked) - 1, originX: piece.sprite.origin.x, originY: piece.sprite.origin.y, decal: false };
-  }
-  const fxColours = Art.effectColours(CYCLONE_TINT);
-  for (const [id, n] of CYCLONE_FRAMES) for (let f = 0; f < n; f++) {
-    const e = Art.effectSprite(id, { frame: f, variant: "light" }) as { sp: unknown; anchors: { base?: number[] }; px: number };
-    const b = Art.bake(e.sp, fxColours, st, "none", mk) as Baked, base = e.anchors.base ?? [b.w / 2, b.h - 1];
-    scenes.pieces[`fx:${id}/${f}`] = { frame: sprites.push(b) - 1, originX: base[0], originY: base[1], decal: false, ppm: e.px };
-  }
-  return { sprites, scenes };
-}
-
-function speakerSprites(st: Style, mk: MakeCanvas, stoneScale: number): { sprites: Baked[]; speakers: SpeakerArt } {
-  const sprites: Baked[] = [], speakers: SpeakerArt = { frames: {}, origin: {} }, colours = Art.dancefloorSpeakerColours();
-  for (const angle of Art.DANCEFLOOR_SPEAKER_ANGLES as number[])
-    for (const [state, n] of Object.entries(Art.DANCEFLOOR_SPEAKER_STATES as Record<string, number>))
-      for (let frame = 0; frame < n; frame++) {
-        const r = Art.dancefloorSpeakerSprite(st, { angle, state, frame }) as { sp: unknown; origin: { x: number; y: number } };
-        speakers.frames[`${angle}:${state}:${frame}`] = sprites.push(Art.bake(r.sp, colours, st, st.cOutline, mk) as Baked) - 1;
-        if (!speakers.origin[angle]) speakers.origin[angle] = r.origin;
-      }
-  // the runestone it starts as (the areas' rune stone, cyan, carved with its three dots or its own carving): baked at the areas' stones' scale, so as
-  // tall as theirs, at SPEAKER_STONE_WIDTH of their width, at each of the speakers' angles (mirrored as they are), drawn at 1 (docs/STYLE.md rule 1)
-  type Stone = Baked & { origin: { x: number; y: number }; dots?: { x: number; y: number }[] };
-  const runeStone = Art.runeStone as unknown as (st: Style, o: { glow: string; scale: number; width: number; yaw: number; rune?: number; sigil?: string; dots?: boolean; makeCanvas: MakeCanvas }) => Stone;
-  speakers.stones = {}; speakers.stoneOrigin = {}; speakers.stoneDots = {};
-  const carvings = new Map<string, Carving>([["", RING_STONE_CARVING], ...Object.values(RING_STONE_CARVINGS).map(c => [carvingKey(c), c] as const)]);
-  for (const angle of Art.DANCEFLOOR_SPEAKER_ANGLES as number[])
-    for (const [key, c] of carvings) {
-      const stone = runeStone(st, { glow: "cyan", scale: stoneScale, width: SPEAKER_STONE_WIDTH, yaw: angle, ...c, makeCanvas: mk });
-      speakers.stones[`${angle}|${key}`] = sprites.push(stone) - 1; speakers.stoneOrigin[`${angle}|${key}`] = stone.origin; if (stone.dots) speakers.stoneDots[`${angle}|${key}`] = stone.dots;
-    }
-  return { sprites, speakers };
-}
-
-function beachSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; beach: BeachArt } {
-  const sprites: Baked[] = [], colours = Art.beachColours(st), H = Art.PRINT_HEADINGS as number;
-  const beach: BeachArt = { pieces: {}, finds: [], prints: [], headings: H };
-  const put = (key: string, id: string, heading = 0) => {
-    const r = Art.beachSprite(id, st, { heading }) as { whole: unknown; origin: { x: number; y: number } };
-    beach.pieces[key] = { frame: sprites.push(Art.bake(r.whole, colours, st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y };
-  };
-  for (const d of Art.BEACH_FINDS as { id: string }[]) { put(d.id, d.id); beach.finds.push(d.id); }
-  for (const d of Art.BEACH_PRINTS as { id: string }[]) { for (let h = 0; h < H; h++) put(`${d.id}~${h}`, d.id, h); beach.prints.push(d.id); }
-  return { sprites, beach };
-}
-
-function relicSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; relics: RelicArt[]; layouts: RelicLayouts } {
-  const sprites: Baked[] = [], relics: RelicArt[] = [], colours = Art.relicColours(st);
-  for (const d of Art.RELICS as { id: string; family: string; decal?: boolean; scatter?: boolean }[]) {
-    const r = Art.relicSprite(d.id, st) as { whole: unknown; origin: { x: number; y: number } };
-    relics.push({ id: d.id, family: d.family === "modern" && d.scatter === false ? "unscattered" : d.family, decal: !!d.decal, frame: sprites.push(Art.bake(r.whole, colours, st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y }); // the bits of highway kept out of the modern finds the rules scatter (Ed, round 13)
-  }
-  // The countryside and street pieces that stand alone (Ed, 2026-10-04) join the modern finds, after the relics' own (the rules count them in this order).
-  const cc = Art.countryColours(st);
-  for (const d of Art.COUNTRY as { id: string; family: string }[]) {
-    if (d.family !== "farm" && d.family !== "street") continue;
-    const r = Art.countrySprite(d.id, st) as { whole: unknown; origin: { x: number; y: number } };
-    relics.push({ id: d.id, family: "modern", decal: false, frame: sprites.push(Art.bake(r.whole, cc, st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y });
-  }
-  // The party relics' bottles (art/partyRelics.js; Ed, 2026-10-09: "Draw at today's size and show me!"), each half-buried in its
-  // mound, under "party:<kind>": drawn where a quest relic lies (render/view/scenery.ts).
-  // Each in its own glass ("party:<kind>") and every other ("party:<kind>~<glass>": Ed, 2026-10-11, recoloured for more kinds).
-  for (const id of Art.PARTY_RELIC_IDS as string[]) {
-    const r = Art.partyRelicSprite(id, st) as { sp: unknown; origin: { x: number; y: number } };
-    for (const glass of ["", ...(Art.PARTY_RELIC_GLASSES as string[])]) {
-      if (glass && glass === (Art.PARTY_RELIC_BY_ID as Record<string, { glass: string }>)[id].glass) continue;
-      relics.push({ id: `party:${id}${glass ? "~" + glass : ""}`, family: "party", decal: false, frame: sprites.push(Art.bake(r.sp, Art.partyRelicColours(id, st, glass || undefined), st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y });
-    }
-  }
-  return { sprites, relics, layouts: Art.relicLayouts(st) as RelicLayouts };
-}
-
-function pathPieceSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; pieces: PathPieceArt[] } {
-  const sprites: Baked[] = [], pieces: PathPieceArt[] = [], colours = Art.pathColours(st);
-  for (const d of Art.PATH_PIECES as { id: string }[]) {
-    const r = Art.pathPieceSprite(d.id, st) as { sp: unknown; origin: { x: number; y: number } };
-    pieces.push({ id: d.id, frame: sprites.push(Art.bake(r.sp, colours, st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y });
-  }
-  // With the prop generator (the game always has it on), each bridge's and the fingerpost's generated variants too ("footbridge~0"...), which the view picks among by place.
-  if ((st as { propGen?: number }).propGen) for (const id of Art.PATH_GEN_IDS as string[]) for (let k = 0; k < (Art.BRIDGE_VARIANTS as number); k++) {
-    const r = Art.pathPieceSprite(`${id}~${k}`, st) as { sp: unknown; origin: { x: number; y: number } };
-    pieces.push({ id: `${id}~${k}`, frame: sprites.push(Art.bake(r.sp, colours, st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y });
-  }
-  return { sprites, pieces };
-}
-
-/** The beach's edge of the woods (Ed, 2026-10-06, after a photo of a real beach forest: "rounded bushes and shrubs, dense low
- *  vegetation, pandanus and palm-like plants, clumps spilling onto the sand"): the art's palms, and its shrubs, round bushes, ferns
- *  and grass, in a beach palette (the leaves a deep green, a little brighter than the woods' at night), with their sway masks. */
-function beachEdgeSprites(st: Style, K: number, mk: MakeCanvas): { sprites: Baked[]; beach: BeachEdgeArt } {
-  const sprites: Baked[] = [], beach: BeachEdgeArt = { palms: [], shrubs: [], grass: [] }, add = (b: Baked) => sprites.push(b) - 1;
-  const bst = { ...st, leafHue: 0.31, leafVal: 1.12, leafVariety: 0.12, bushSize: (st as { bushSize: number }).bushSize * K } as Style;
-  const sway = (b: Baked, sp: unknown) => ({ ...b, S: Art.bakeSway(sp, mk) as Baked["A"] });
-  for (let v = 0; v < 4; v++) {
-    const r = Art.rng(9100 + v * 37) as () => number, f = Art.palmTree as (r: () => number, st: Style, s: number) => unknown;
-    const t = f(r, bst, (st as { treeSize: number }).treeSize * K * (0.8 + 0.12 * v)), col = Art.treeColours(r, bst, f), parts = Art.splitTree(t) as { top: unknown; bot: unknown };
-    beach.palms.push({ top: add(sway(Art.bake(parts.top, col, bst, "none", mk) as Baked, parts.top)), bot: add(sway(Art.bake(parts.bot, col, bst, "none", mk) as Baked, parts.bot)) });
-  }
-  const kinds = ["shrub", "round", "shrub", "fern", "round", "shrub", "fern", "round"];
-  kinds.forEach((kind, i) => { const { sp, colours } = Art.bush(Art.rng(9300 + i * 41), bst, kind) as { sp: unknown; colours: unknown }; beach.shrubs.push(add(sway(Art.bake(sp, colours, bst, "none", mk) as Baked, sp))); });
-  for (let i = 0; i < 4; i++) { const { sp, colours } = Art.bush(Art.rng(9500 + i * 43), bst, "grass") as { sp: unknown; colours: unknown }; beach.grass.push(add(sway(Art.bake(sp, colours, bst, "none", mk) as Baked, sp))); }
-  return { sprites, beach };
-}
-
-/** The biome lakes' shore dressing (Ed, 2026-10-23): art/lakeShore.js's pieces (bones, drowned trunks, ice, lava rocks, scorched
- *  trees, mineral crust), the oasis's palms and grass (the beach's, in a drier palette) and the lily pond's reeds
- *  (decor.js lakeKit), the leafy ones with their sway masks. */
-function lakeShoreSprites(st: Style, K: number, mk: MakeCanvas, biome?: string): { sprites: Baked[]; shore: LakeShoreArt } {
-  const look = biome ? biomeLook(biome) : null, tint = <T>(c: T): T => (look ? (biomeColours({ ...(c as object) }, look, Art.M, { flower: false }) as T) : c); // (the island's biome look: art/flora/biomes.js)
-  const sprites: Baked[] = [], shore: LakeShoreArt = { kinds: {} }, add = (b: Baked) => sprites.push(b) - 1, put = (k: string, bot: number, top: number | null = null) => (shore.kinds[k] ??= []).push({ bot, top });
-  const sway = (b: Baked, sp: unknown) => ({ ...b, S: Art.bakeSway(sp, mk) as Baked["A"] });
-  const empty = (sp: { m: ArrayLike<number> }) => { for (let i = 0; i < sp.m.length; i++) if (sp.m[i]) return false; return true; };
-  // the oasis's palms and grass clumps
-  const ost = { ...st, leafHue: 0.27, leafVal: 1.05, leafVariety: 0.12, bushSize: (st as { bushSize: number }).bushSize * K } as Style;
-  for (let v = 0; v < 4; v++) {
-    const r = Art.rng(9700 + v * 37) as () => number, f = Art.palmTree as (r: () => number, st: Style, s: number) => unknown;
-    const t = f(r, ost, (st as { treeSize: number }).treeSize * K * (0.85 + 0.12 * v)), col = tint(Art.treeColours(r, ost, f)), parts = Art.splitTree(t) as { top: unknown; bot: unknown };
-    put("palm", add(sway(Art.bake(parts.bot, col, ost, "none", mk) as Baked, parts.bot)), add(sway(Art.bake(parts.top, col, ost, "none", mk) as Baked, parts.top)));
-  }
-  for (let i = 0; i < 4; i++) { const { sp, colours } = Art.bush(Art.rng(9900 + i * 43), ost, "grass") as { sp: unknown; colours: unknown }; put("grass", add(sway(Art.bake(sp, tint(colours), ost, "none", mk) as Baked, sp))); }
-  // the lily pond's reeds
-  const kit = Art.lakeKit(st) as { reeds: unknown[]; colours: unknown };
-  const reedCol = tint(kit.colours);
-  for (const sp of kit.reeds) put("reeds", add(sway(Art.bake(sp, reedCol, st, "none", mk) as Baked, sp)));
-  // the pieces
-  for (const d of Art.LAKE_SHORE_PIECES as { id: string; kind: string; variants: number }[])
-    for (let v = 0; v < d.variants; v++) {
-      const r = Art.lakeShoreSprite(d.id, st, { variant: v }) as { top: { m: ArrayLike<number> }; bot: unknown; whole: unknown; crownY: number; colours: unknown };
-      const tall = r.crownY > 0 && !empty(r.top), col = tint(r.colours);
-      put(d.kind, add(Art.bake(tall ? r.bot : r.whole, col, st, "none", mk) as Baked), tall ? add(Art.bake(r.top, col, st, "none", mk) as Baked) : null);
-    }
-  return { sprites, shore };
-}
-
-function decorSprites(st: Style, mk: MakeCanvas, biome?: string): { sprites: Baked[]; decor: DecorPiece[] } {
-  const look = biome ? biomeLook(biome) : null, colours = Art.decorColours(st) as Record<number, number[]>; // (the island's biome: its stone, leaves and wood; art/flora/biomes.js)
-  if (look) biomeColours(colours, look, Art.M, { flower: false, stone: true });
-  const sprites: Baked[] = [], decor: DecorPiece[] = [];
-  const empty = (sp: { m: ArrayLike<number> }) => { for (let i = 0; i < sp.m.length; i++) if (sp.m[i]) return false; return true; };
-  for (const d of Art.DECOR as { id: string; family: string; variants: number }[])
-    for (let v = 0; v < d.variants; v++) {
-      const r = Art.decorSprite(d.id, st, { variant: v }) as { top: { m: ArrayLike<number> }; bot: unknown; whole: unknown; crownY: number; metres: { footprint: number } };
-      const tall = r.crownY > 0 && !empty(r.top);
-      const bot = sprites.push(Art.bake(tall ? r.bot : r.whole, colours, st, "none", mk) as Baked) - 1;
-      const top = tall ? sprites.push(Art.bake(r.top, colours, st, "none", mk) as Baked) - 1 : null;
-      decor.push({ id: d.id, family: d.family, bot, top, footprint: r.metres.footprint });
-    }
-  return { sprites, decor };
-}
-
-function partyObjectSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; party: PartyArt } {
-  const sprites: Baked[] = [], party: PartyArt = { pieces: {}, layouts: {} };
-  type Def = { id: string; cls: string; light: string | null; frames: number; hang?: boolean };
-  const refs = new Set<string>(), palettes = ["neon", "pastel", "metallic", "mixed"];
-  for (const d of Art.PARTY_OBJECTS as Def[]) {
-    if (d.id.startsWith("gen-") && !st.propGen) continue; // the prop generator's party pieces only with it (the game always has it on)
-    const neons = d.light === "neon" ? (Art.PARTY_LIGHT_NEONS as string[]).map(n => "@" + n) : [""];
-    for (const n of neons) for (const p of d.cls === "balloon" ? palettes.map(q => "~" + q) : [""]) refs.add(`party:${d.id}${n}${p}`);
-  }
-  type Layout = { pieces: { sprite: string; dx: number; dz: number; facing?: string }[] };
-  for (const c of Art.PARTY_CLUSTERS as { id: string }[]) {
-    const lay = (mirror: boolean) => (Art.sceneLayout(c.id, st, { mirror }) as Layout).pieces.map(p => ({ ref: p.sprite, dx: p.dx, dz: p.dz, left: p.facing === "left" }));
-    party.layouts[c.id] = { plain: lay(false), mirror: lay(true) };
-    for (const p of party.layouts[c.id].plain) refs.add(p.ref);
-  }
-  for (const ref of refs) {
-    const piece = Art.scenePiece(ref, st) as { sprite: { whole: unknown; origin: { x: number; y: number }; anchors?: Record<string, { x: number; y: number }> }; colours: unknown; decal: boolean; def?: { frames?: number } };
-    const hang = piece.sprite.anchors?.hang ?? piece.sprite.anchors?.tie;
-    const id = ref.replace(/^party:/, "").split("~")[0].split("@")[0], n = (Art.PARTY_BY_ID as Record<string, { frames: number }>)[id]?.frames ?? 1;
-    if (n <= 1) {
-      party.pieces[ref] = { frames: [sprites.push(Art.bake(piece.sprite.whole, piece.colours, st, "none", mk) as Baked) - 1], originX: piece.sprite.origin.x, originY: piece.sprite.origin.y, decal: piece.decal, ...(hang ? { hang } : {}) };
-      continue;
-    }
-    // Animated (the fires): each frame is its own size with its own origin, so they're laid into one
-    // shared box with their origins on the same pixel; only the flames move (Ed: "fires of all kinds
-    // seem to jitter during their animations").
-    const raw = Array.from({ length: n }, (_, f) => Art.partySprite(id, st, { frame: f }) as { whole: unknown; origin: { x: number; y: number } });
-    const baked = raw.map(r => Art.bake(r.whole, piece.colours, st, "none", mk) as Baked);
-    const left = Math.max(...raw.map(r => r.origin.x)), up = Math.max(...raw.map(r => r.origin.y));
-    const W = Math.ceil(left + Math.max(...raw.map((r, f) => baked[f].w - r.origin.x))), H = Math.ceil(up + Math.max(...raw.map((r, f) => baked[f].h - r.origin.y)));
-    const frames = baked.map((b, f) => {
-      const dx = Math.round(left - raw[f].origin.x), dy = Math.round(up - raw[f].origin.y), A = mk(W, H), N = mk(W, H);
-      (A.getContext("2d") as CanvasRenderingContext2D).drawImage(b.A as CanvasImageSource, dx, dy);
-      (N.getContext("2d") as CanvasRenderingContext2D).drawImage(b.N as CanvasImageSource, dx, dy);
-      return sprites.push({ A, N, w: W, h: H }) - 1;
-    });
-    party.pieces[ref] = { frames, originX: left, originY: up, decal: piece.decal };
-  }
-  return { sprites, party };
-}
-
-/** Our witch's look and colours from her genome (art/witchGenome.js; null: the classic witch, the style's hues on top). */
-export function witchLookOf(st: Style, genome: unknown): { look: object | undefined; colours: object } {
-  if (!genome) return { look: undefined, colours: Art.witchColours(st) };
-  const { look, outfit } = (Art.genomeLook as (g: unknown) => { look: object; outfit: object | null })(genome);
-  const colours = Art.witchColours as (st: Style, outfit?: object, o?: { styleHues?: boolean }) => object;
-  return { look, colours: outfit ? colours(st, outfit, { styleHues: false }) : colours(st) };
-}
-
-function partyWitchSprites(st: Style, seed: number | null, mk: MakeCanvas, genome: unknown = null): { sprites: Baked[]; witch: PartyWitchArt } {
-  const pw = seed === null ? null : (Art.partyWitch as (s: number) => { look: object; colours: (st: Style) => object })(seed);
-  const mine = seed === null ? witchLookOf(st, genome) : null;
-  const colours = pw ? pw.colours(st) : mine!.colours, look = pw ? pw.look : mine!.look;
-  const sprites: Baked[] = [], witch: PartyWitchArt = { poses: {}, fps: {}, hover: { towards: [], away: [] }, anchors: [] };
-  const draw = (o: object) => {
-    const sp = (Art.witchSprite as (st: Style, o: object) => unknown)(st, { ...o, look }) as { anchors?: Record<string, [number, number]> };
-    witch.anchors.push(sp.anchors ? Object.fromEntries(Object.entries(sp.anchors).map(([k, p]) => [k, [p[0], p[1]] as [number, number]])) : null);
-    return sprites.push(Art.bake(sp, colours, st, st.cOutline, mk) as Baked) - 1;
-  };
-  const FOOT = Art.WITCH_FOOT_POSES as Record<string, { frames: number; fps: number; party?: string }>;
-  for (const [pose, P] of Object.entries(FOOT)) {
-    if (!P.party && pose !== "stand" && pose !== "land" && pose !== "takeoff") continue;
-    witch.poses[pose] = Array.from({ length: P.frames }, (_, frame) => draw({ pose, frame }));
-    witch.fps[pose] = P.fps;
-  }
-  for (const facing of ["towards", "away"] as const) witch.hover[facing] = [0, 1, 2].map(frame => draw({ frame, facing }));
-  return { sprites, witch };
-}
-
-/** A party animal's gear (seeded by its id). Leashed: its seeded gear and the glowing collar in
- *  `colour`. Happy (colour null): the gear without the collar, always at least a hat so it reads as
- *  dressed up. The party bake and the live rig's party pages both wear it. */
-export function partyGearOf(seed: number, colour: number[] | null): RigGear {
-  const g = Art.partyGear(seed) as { hat: number | null; glasses: string | null; shoes: string | null };
-  return { collar: colour ?? null, hat: !colour && g.hat === null ? seed % 3 : g.hat, glasses: g.glasses, shoes: g.shoes };
-}
 
 export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "disco") { const d = discoDrawn(job.style, mk); return { px: packPixels([], 16), disco: { ...d, base: canvasPixels(d.base), lit: canvasPixels(d.lit) } }; }
@@ -641,7 +177,7 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
     const sprites: Baked[] = [], stumps: StumpArt[] = [];
     for (const s of job.kind === "stump" ? [job.stump] : job.stumps) {
       const def = s.area ? (Art.AREA_BY_ID as Record<string, unknown>)[s.area] ?? null : null, st = s.biome ? ({ ...job.style, biome: s.biome } as unknown as Style) : job.style;
-      const p = (Art.stumpPiece as unknown as (sp: string, o: object, def: unknown, st: Style) => { sp: unknown; colours: unknown; origin: { x: number; y: number }; top: { x: number; y: number }; roots: number[]; depth: number; variant: { height: number }; metres: { radius: number } })(s.species, { seed: s.seed, yaw: s.yaw }, def, st);
+      const p = (Art.stumpPiece as unknown as (sp: string, o: object, def: unknown, st: Style) => { sp: unknown; colours: unknown; origin: { x: number; y: number }; top: { x: number; y: number }; roots: number[]; depth: number; variant: { height: number }; metres: { radius: number } })(s.species, { seed: s.seed, yaw: s.yaw, irregular: s.irregular ?? 0 }, def, st);
       sprites.push(Art.bake(p.sp, p.colours, st, "none", mk) as Baked); stumps.push({ origin: p.origin, top: p.top, height: p.variant.height, radius: p.metres.radius, roots: p.roots, depth: p.depth });
     }
     return { px: packPixels(sprites, job.kind === "stump" ? 512 : 2048), stumps };
@@ -709,13 +245,12 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "woken") return { px: packPixels(creatureSprites(job.style, job.species, mk, { woken: true, face: "angry" }), 2048) };
   if (job.kind === "face") return { px: packPixels(creatureSprites(job.style, job.species, mk, { face: job.face }), 2048) };
   if (job.kind === "party") {
-    const gear = { ...partyGearOf(job.seed, job.colour), face: "happy" }; // (both smiling)
-    return { px: packPixels(creatureSprites(job.style, job.species, mk, gear), 2048) };
+    if (!Number.isInteger(job.level) || job.level < 0 || job.level > 3) throw new Error("Invalid party sheet age");
+    const gear = { ...job.gear, face: "happy" }; // (both smiling)
+    return { px: packPixels(creatureSprites(job.style, job.species, mk, gear, job.level), 2048) };
   }
   const { sprites, layout, floor } = typeSprites(job.biome && !job.style.biome ? ({ ...job.style, biome: job.biome } as unknown as Style) : job.style, job.seed, job.id, job.K, mk); // (the island's biome over its areas' trees and props; ?biome= over it)
   return { px: packPixels(sprites), layout, floor: { albedo: new Uint8Array(pixels(floor.A, floor.w, floor.h)), normal: new Uint8Array(pixels(floor.N, floor.w, floor.h)), w: floor.w, h: floor.h } };
 }
 
-/** The buffers a result can hand over to the page without copying. */
-export const transferables = (r: ArtResult): ArrayBuffer[] =>
-  [r.px.albedo.buffer, r.px.normal.buffer, ...(r.px.albedoPal ? [r.px.albedoPal.buffer] : []), ...(r.px.normalPal ? [r.px.normalPal.buffer] : []), ...(r.floor ? [r.floor.albedo.buffer, r.floor.normal.buffer] : []), ...(r.disco ? [r.disco.base.px.buffer, r.disco.lit.px.buffer] : []), ...(r.housePiece ? [r.housePiece.px.buffer] : []), ...(r.mask ? [r.mask.buffer] : [])] as ArrayBuffer[];
+export { transferables } from "./artTransfer";

@@ -127,7 +127,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   const inRoom = !!(T.ent && deck?.house?.rooms && w.perch && !onTerrace(deck, w.x, w.z) && onRoomFloor(deck.house.rooms, w.x, w.z)); // (in a room off the Terrace, rules/houseRooms.ts)
   v.houseCam.x = v.houseCam.y = v.houseCam.z = 0;
   if (T.ent && deck && w.perch) {
-    const m = 1 - w.lift, ky = (T.seat.y - T.ent.deck.y) / Math.max(0.1, deck.seat.z - deck.z), dz = w.z - deck.z;
+    const m = (1 - w.lift) * v.landingHouseShare, ky = (T.seat.y - T.ent.deck.y) / Math.max(0.1, deck.seat.z - deck.z), dz = w.z - deck.z;
     // (the house's drawing slid up the Ent's plane by her own place on it: v.houseShift, houseShiftOf, set before the Ent is placed)
     const p = onTreehouse(T.ent.deck.x + (w.x - deck.x) / v.mpp, T.ent.deck.y + dz * ky + v.houseShift), g0 = groundHeight(deck.x, deck.z);
     // (in a room off the hub, rules/houseRooms.ts: in the plane through the hub's middle, the same pixels, never out over the forest
@@ -152,10 +152,12 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   const deckSeat = deck && !T.ent ? { x: g.map.start.x, y: groundHeight(g.map.start.x, g.map.start.z) + deck.h, z: g.map.start.z } : null;
   if (!v.leashView.seatAt && (T || deckSeat)) v.leashView.seatAt = deckSeat ?? onTreehouse(T.seat.x, T.seat.y); // (the decks' place, from the start: the tempo over them, render/leash/deckBpm.ts)
   if (v.seatK > 0) {
-    const seat = deckSeat ?? onTreehouse(T.seat.x, T.seat.y), k = deckSeat ? 0 : v.seatK * v.seatK * (3 - 2 * v.seatK);
+    const seat = deckSeat ?? onTreehouse(T.seat.x, T.seat.y), k = deckSeat ? 0 : v.seatK * v.seatK * (3 - 2 * v.seatK) * v.landingHouseShare;
     v.leashView.seatAt = seat; // (where she sparkles back in after a knockout)
     const cam = deckSeat ? { ...deckSeat, y: deck!.h + 1.2 } : onTreehouse(T.camera.x, T.camera.y); // (the rules' heights: the camera stands it on the smoothed ground)
-    g.introFocus = { x: cam.x, y: cam.y, z: cam.z }; // the opening shot frames the studio (the art's camera anchor)
+    const focus = { x: cam.x, y: cam.y, z: cam.z };
+    if (!g.introFocus || g.introFocus.x !== focus.x || g.introFocus.y !== focus.y || g.introFocus.z !== focus.z) v.setIntroFocus(g, focus);
+    else g.introFocus = focus; // same values, same original per-frame assignment
     // (a touch nearer the camera than the house, along the ray to it, so she lands on the seat's own pixel: render/view/home.ts; on the
     // oak, as far along the ray as its floor under her seat is drawn, render/houseRooms.ts, and that touch more, so the floor's behind her)
     const dzSeat = deck?.house ? deck.seat.z - deck.z : 0;
@@ -180,7 +182,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
         const j = R ? v.assets.djGestureFrame(R.gesture, R.frame) : KO && irisOn && KO.riseUntil === undefined && ht >= atDecksFrom(KO, true) && ht < KO.inAt ? v.assets.djGestureFrame("scratch", 0) : v.assets.djFrame(beatAt(g.beat, time), casting, respawnLeft(g.witches[0].ko, ht) !== null); // (its fallback: scratching through a knockout's wait, rules/knockout.ts)
         wf = Dj.full[j]; djUpper = Dj.upper[j];
       }
-      if (typeof sp === "number" && sp !== v.castSeen) { v.castSeen = sp; v.spellFx.partyBurst(wx, wyy, wz, sp); }
+      if (typeof sp === "number" && sp !== v.castSeen) { v.castSeen = sp; v.spellFx.partyBurst(wx, wyy, wz, sp); v.magic.emit("party", "pillar", wx, wyy+5, wz, 3, 1.5, 2.4, 914); v.magic.emit("party", "dome", wx, wyy+2, wz, 3, 1, 1.8, 915); }
     }
   }
   // Knocked out (Ed, 2026-10-04): she sits slumped on the ground while her stack lets go, then
@@ -226,6 +228,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   const wg = watlas.grounds?.[wf], wflip = spinFlip ?? (w.seated ? false : w.facing < 0), U = SPRITE_UNIFORMS.uUp.value, R = SPRITE_UNIFORMS.uRight.value;
   const wsink = wg ? (wframe.h - wg.y) * v.mpp : 0, wside = wg ? (wg.x - wframe.w / 2) * v.mpp * (wflip ? -1 : 1) : 0;
   v.swoopTrails.update(g.partyWitches.list, time);
+  for(const p of g.partyWitches.list)if(p.state==="floor"&&p.activity==="swoop"&&p.y>0.05)v.magic.native("partySwoop",p.x,p.y,p.z,Math.min(1,p.y/3),960000+p.id);
   setOverlayTilt(t.tiltShift, w.lift, v.canvas.clientHeight || window.innerHeight, v.height, v.houseTilt(g)); // (the DOM overlays blurred as the world: render/overlayTilt.ts)
   v.partyWitchView.bubbles(g, time, v.camera, v.canvas.clientWidth || window.innerWidth, v.canvas.clientHeight || window.innerHeight);
   const onBeach = v.beachView.update(g, time, (x, z, ww, hh) => inView(v, x, z, ww, hh, 4), v.camera, v.canvas.clientWidth || window.innerWidth, v.canvas.clientHeight || window.innerHeight, v.fly ? { x: v.fly.tx, z: v.fly.tz, reach: g.tuning.haze.far } : undefined); // (a sail's dive in over the sea: the sea drawn)

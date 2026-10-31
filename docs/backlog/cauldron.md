@@ -6,7 +6,7 @@ Design catalogue (Ed, 2026-10-09 onward). Ed authorised implementation on 2026-1
 
 ### Latest design decisions — 2026-10-31
 
-These decisions supersede conflicting collection, kitchen and trip-recipient details below and the earlier home-growing distribution in journey.md. Implementation is tracked by the developer recipe book and the kitchen notes.
+These decisions supersede conflicting collection, kitchen and trip-recipient details below and the earlier home-growing distribution in journey.md. They govern the always-on nine-colour mushroom kitchen, including late entrants during smoke and 600 game seconds from waking. The PR #1472 six-kind slice, fixed-at-brew recipient group and its earlier duration remain historical context, not the authority for this flow. Implementation is tracked by the developer recipe book and the kitchen notes.
 
 - Nine mushroom types, using the reviewed generator. One mushroom per area except the home area, in a quiet reachable spot where the forest is thicker; matches the area's biome 90% of the time. Picked mushrooms return the next night.
 - Press the **place key** near a mushroom to collect it; it vanishes in a puff. Walking over it does not collect it.
@@ -27,14 +27,18 @@ These decisions supersede conflicting collection, kitchen and trip-recipient det
 
 - **Initially six kinds of mushroom** (Ed), in various shapes and colours. Every ingredient is a mushroom. Ed, 2026-10-30: more kinds can be added to support hundreds of effects; six kinds and 56 recipes are not a cap. Additional kinds and their distribution are not assigned yet.
 - She **picks them up by walking over them**, into a **hidden bag**: not in her stack, not shown in the UI.
+- **Unlimited bag; nothing is lost on knockout** (Ed, 2026-10-30, cauldron builder chat: "bag capacity is unlimited, nothing is lost on knockout").
 - Where they grow: two temperate kinds at home from the start, one kind per biome direction on phase-3-and-beyond islands; a kind found once grows at home from then on (journey.md).
 - After the party's over she can still collect mushrooms and brew, so players explore trips without time pressure.
 
-## The kitchen
+## The kitchen (earlier design; latest decisions above take precedence)
 
 - She enters from the bottom. **A big cauldron at the top**, **six baskets in a row round its base**, one kind each.
 - Coming in with a full bag, her mushrooms **jump out of her into their baskets**.
 - Near a basket, it **lights up and trembles**; **E throws one in**.
+- **Partial ingredients stay in the pot** when she leaves; she can return and finish it (Ed, 2026-10-30, coordinator ruling on PR #1472).
+- **Co-op has shared baskets and one shared pot in the host's treehouse** (Ed, 2026-10-30, coordinator ruling on PR #1472). **Everyone standing in the kitchen when the shared brew completes takes the trip together; witches elsewhere stay normal** (Ed, 2026-10-30, subsequent coordinator ruling on PR #1472).
+- The group is **fixed at the instant the third ingredient goes in**; that same group exits after one second of smoke. Entering or leaving during the smoke changes nothing (coordinator detail ruling, 2026-10-30, PR #1472 comment6512476115).
 - **Three in = a brew, at once** (no use button, no bottle): the cauldron bubbles, colourful bubbles pour out, the room fills with smoke, and a second later she staggers outside and the world is... different.
 - The kitchen travels with the Ent, so brewing works on any island. Rooms visited during the party slow time and add their own music (journey.md).
 
@@ -46,7 +50,8 @@ These decisions supersede conflicting collection, kitchen and trip-recipient det
 - **Recipes are the same in every run** (players learn and share them); the game never tells, and keeps **no recipe book**.
 - **Order doesn't matter; repeats are allowed** (Ed): 6 kinds make **56 recipes** (20 all different, 30 a pair plus one, 6 triples). With three ingredients, N kinds give N(N+1)(N+2)/6 recipes: 7 gives 84, 8 gives 120, 9 gives 165, 10 gives 220, 12 gives 364. More mushrooms also require expanding the kitchen baskets and journey distribution; this catalogue does not silently assign those changes.
 - **Every combination is its own effect, unrelated to its parts** (Ed): mushroom colour or shape doesn't hint at the result.
-- **The one-frame rule** (Ed): a single frame must show the game is doing something weird *on purpose*. Proposed fix for the subtle ones: a **trip frame**, a shimmering coloured edge on every trip that shrinks as it wears off.
+- **The one-frame rule** (Ed): a single frame must show the game is doing something weird *on purpose*. The earlier proposed **trip frame** (a shimmering coloured edge that shrinks as it wears off) is superseded by the wobbly-edge ruling below.
+- **First slice: Mirror Floor (BBB)** (Ed, 2026-10-30, coordinator ruling on PR #1472). The cue for the trip's length is **"slight wobbly edges to the screen"**, not the proposed coloured frame.
 - **Build from what's there** (Ed): as many as possible from shaders and parameters already in the game; avoid new systems that bring bugs; take inspiration from bugs found while making the game.
 - Considered and dropped: creature sigils as ingredients, potion bottles, and ingredients with hidden traits.
 
@@ -225,11 +230,10 @@ The mushrooms' new complementary-colour subtraction (`render/mushroomGlow.ts`) i
 
 The treehouse and its occupants remain visible while the forest disappears into black; the world returns outward from a doorway or from her feet. The existing house-loading reveal already does this with `Post.behind`, `behindAt` and `HOUSE_LAYER`. A test that skipped drawing the reveal's frames exposed the intermediate state. This could be a variant of Alone, driven by her distance from home or the trip envelope. It needs no new rendering pass; a deliberate version must include her ground-level sprite in the retained layer so she does not disappear when leaving the branch. Suggestion only, with no recipe assignment.
 
-## Open questions
+## Catalogue follow-up
 
-- Assign the 56 trips to recipes; name the six mushrooms.
-- Assign CRT and the expanded catalogue when additional mushroom kinds are chosen; replacement of Underwater is no longer required by a fixed 56-slot limit.
-- Bag size, and whether the bag survives a knockdown.
-- The trip frame: adopt it for every trip, or fix the subtle ones one by one?
+- The earlier questions about six mushroom names, 56 recipe assignments and replacing Underwater with CRT are superseded by the nine colours and 165 fixed combinations in the developer recipe book (Ed, 2026-10-31). Unassigned entries remain available for future suggestions.
+- Bag capacity is unlimited and knockout loses no mushrooms (Ed, 2026-10-30); carried stock and baskets persist across nights and voyages (Ed, 2026-10-31).
+- A shared adjustable wobbly-edge trip indicator now accompanies every active trip, including coming-soon recipes (Ed, 2026-10-31), fading over the final two game minutes. Its settings and the implemented effects' controls are in the pause menu's Potion lab.
 
 - **The build-cost sort is accepted as it stands** (Ed, 2026-10-11).

@@ -12,6 +12,20 @@ const OFF = withTuning({ creatureMomentum: { ...M, on: false } });
 const deg = (r: number) => (r * 180) / Math.PI;
 
 describe("each species' momentum", () => {
+  it("uses a changed heavy-class selection even when the momentum table is shared", () => {
+    const normal = momentumOf("badger", TUNING)!;
+    const D = TUNING.dodge!;
+    const changed: Tuning = { ...TUNING, dodge: { ...D, a: { ...D.a, heavy: { ...D.a.heavy, species: [...D.a.heavy.species, "badger"] } } } };
+    expect(classOf("badger", TUNING)).toBe("normal");
+    expect(classOf("badger", changed)).toBe("heavy");
+    const heavy = momentumOf("badger", changed)!;
+    const fresh = momentumOf("badger", { ...changed, creatureMomentum: { ...M, classes: { ...M.classes } } })!;
+    expect(heavy).toEqual(fresh);
+    expect(heavy.delay).toBeGreaterThan(normal.delay);
+    expect(heavy.turn).toBeLessThan(normal.turn);
+    expect(momentumOf("badger", TUNING)).toEqual(normal);
+  });
+
   it("is its class's (heavy, light, normal) under its own, the sliders over all", () => {
     expect(classOf("bear", TUNING)).toBe("heavy");
     expect(classOf("hare", TUNING)).toBe("light");
@@ -99,6 +113,7 @@ describe("the reaction delay", () => {
 // In the game: a wolf chasing her.
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 function quiet(t: Tuning): Game {
+  // Keep the spatial fixture: the fight recruits an untouched creature over 200 m away before moving it locally.
   const g = newGame(77, t);
   g.clock.paused = false;
   const d = g.map.dancefloor;

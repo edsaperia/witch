@@ -10,6 +10,7 @@ import { attackOf, marchSpeedOf, topSpeedOf } from "./combat";
 import { profileOf } from "./movement";
 import { LEGEND, type Creature, type Level } from "./creatures";
 
+// Keep the radius fixture: this regression moves her 2000 m away and compares a besieger's 120 m coarse-to-full approach.
 const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 
 /** One creature of `species` at `level` besieging home's speaker 0 from `from` metres off (away from the dancefloor), alone, the

@@ -35,7 +35,7 @@ export class PotionLab {
   private descending = true;
   private previousFocus: HTMLElement | null = null;
   get on(): boolean { return this.root.classList.contains('open'); }
-  constructor(private readonly game: () => Game, private readonly style: Style, private readonly build: string, private readonly resume: () => void) {
+  constructor(private readonly game: () => Game, private readonly style: Style, private readonly build: string, private readonly resume: () => void, private readonly mutate: <T>(label: string, action: () => T) => T = (_label, action) => action()) {
     document.head.append(h('style', { text: CSS }));
     const back = button('Back to pause', () => this.close());
     this.root.append(h('div', { class: 'actions' }, h('h2', { text: 'Potion lab' }), back),
@@ -103,7 +103,7 @@ export class PotionLab {
     this.detail.replaceChildren(h('h3', { text: `Potion #${r.id} · ${r.name}` }), h('p', { text: r.description }));
     if (r.comingSoon) this.detail.append(h('p', { text: 'Coming soon — this recipe has no effect to try yet.' }));
     else this.detail.append(this.controls(r.effect), button('Try effect', () => {
-      if (!tryLabPotion(this.game(), r)) { this.status.textContent = 'Wait until the current brewing sequence has finished, then try again.'; return; }
+      if (!this.mutate('potion lab: try effect', () => tryLabPotion(this.game(), r))) { this.status.textContent = 'Wait until the current brewing sequence has finished, then try again.'; return; }
       this.close(); this.resume();
     }));
     this.detail.append(h('h3', { text: 'Wobbly edges · every potion' }), this.controls('trip-indicator'),
@@ -111,7 +111,7 @@ export class PotionLab {
         const g = this.game(), witch = g.witches[0];
         if (!witch) return;
         if (g.mushrooms.affected[witch.id]) { this.status.textContent = 'Wait until the current brewing sequence has finished.'; return; }
-        delete g.mushrooms.trips[witch.id]; this.status.textContent = 'Potion stopped. The game is still paused.';
+        this.mutate('potion lab: stop effect', () => { delete g.mushrooms.trips[witch.id]; }); this.status.textContent = 'Potion stopped. The game is still paused.';
       })));
   }
   private async copy(): Promise<void> {

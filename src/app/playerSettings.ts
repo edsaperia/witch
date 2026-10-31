@@ -5,6 +5,8 @@
 // (witch.shake) carry over the first time. What each one changes in the game: `applySettings` here for the tuning's knobs, the rest
 // read where they act (the comfort flags, render/comfort.ts; the hold or toggle, platform/input.ts; text size, the page's CSS).
 
+import { fallbackStorage } from "./storageFallback";
+
 export type Quality = "auto" | "high" | "medium" | "low";
 export type HoldMode = "hold" | "toggle";
 export type Glyphs = "auto" | "ps" | "xbox";
@@ -27,16 +29,18 @@ export interface PlayerSettings {
   textSize: 1 | 1.25 | 1.5;
   /** the pad's button names: from its name, or PlayStation's or Xbox's */
   glyphs: Glyphs;
+  /** short event feedback on gamepads that support vibration */
+  rumble: boolean;
 }
 
-export const DEFAULTS: PlayerSettings = { master: 1, music: 0.5, effects: 1, voices: 1, muteBackground: true, quality: "auto", shake: true, screen: "", reduceFlashing: false, talk: "hold", textSize: 1, glyphs: "auto" };
+export const DEFAULTS: PlayerSettings = { master: 1, music: 0.5, effects: 1, voices: 1, muteBackground: true, quality: "auto", shake: true, screen: "", reduceFlashing: false, talk: "hold", textSize: 1, glyphs: "auto", rumble: true };
 export const KEY = "witch.player";
 /** (the pause page's saved volumes and the start screen's shake: carried over the first time) */
 const OLD_VOLUMES = "witch.settings", OLD_SHAKE = "witch.shake";
 
 /** A storage (localStorage, or a test's stand-in). */
 export interface Store { getItem(k: string): string | null; setItem(k: string, v: string): void }
-const local = (): Store | null => { try { return typeof localStorage === "undefined" ? null : localStorage; } catch { return null; } };
+const local = (): Store => fallbackStorage();
 
 /** Each value checked against its kind and range; anything else is its default. */
 export function clean(raw: unknown): PlayerSettings {
@@ -45,7 +49,7 @@ export function clean(raw: unknown): PlayerSettings {
   const bool = (k: keyof PlayerSettings) => { if (typeof r[k] === "boolean") (out as Record<string, unknown>)[k] = r[k]; };
   const one = <T>(k: keyof PlayerSettings, opts: readonly T[]) => { if (opts.includes(r[k] as T)) (out as Record<string, unknown>)[k] = r[k]; };
   num("master"); num("music"); num("effects"); num("voices");
-  bool("muteBackground"); bool("shake"); bool("reduceFlashing");
+  bool("muteBackground"); bool("shake"); bool("reduceFlashing"); bool("rumble");
   one("quality", ["auto", "high", "medium", "low"]); one("talk", ["hold", "toggle"]); one("textSize", [1, 1.25, 1.5]); one("glyphs", ["auto", "ps", "xbox"]);
   if (typeof r.screen === "string") out.screen = r.screen.slice(0, 80);
   return out;
@@ -74,7 +78,14 @@ export function saveSettings(s: PlayerSettings, store: Store | null = local()): 
 /** The tuning's knobs the settings set, and what each was as the tuning was made (so a change is from the built value, not
  *  compounded). */
 interface Knobs { music: { volume: number }; sfx: { volume: number; voice: Record<string, { volume?: number }> }; combat: { shake: number }; attackFx: { legendFlash: number } }
-const BASE = new WeakMap<object, { voices: Record<string, number>; shake: number; legendFlash: number }>();
+export interface SettingsBase { voices: Record<string, number>; shake: number; legendFlash: number }
+const BASE = new WeakMap<object, SettingsBase>();
+/** A resumed tuning has settings baked in already; retain the original levels so applying settings doesn't compound them. */
+export function settingsBase(tuning: object): SettingsBase | undefined { const b = BASE.get(tuning); return b ? structuredClone(b) : undefined; }
+export function restoreSettingsBase(tuning: object, base: SettingsBase): void {
+  if (!base || !base.voices || typeof base.voices !== "object" || !Number.isFinite(base.shake) || !Number.isFinite(base.legendFlash) || Object.values(base.voices).some(v => !Number.isFinite(v))) throw new Error("Invalid saved settings levels.");
+  BASE.set(tuning, structuredClone(base));
+}
 
 /** The settings on to a night's tuning: the volumes (master times each; the voices on every babbling voice's own level), a legend's
  *  quake shake (off with screen shake), a legend's flash (none with reduce flashing). */

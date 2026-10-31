@@ -24,7 +24,7 @@ export class MushroomView {
   private readonly halo = new MushroomGlow();
   update(v: View): void {
     const state = v.game.mushrooms;
-    if (!state) return;
+    if (!state || v.game.cauldron) { this.batch?.set([]); this.halo.set([]); return; }
     if (!this.halo.mesh.parent) v.scene.add(this.halo.mesh);
     const key = `${v.mpp}:${v.assets.style.pixel}:` + state.patches.map(p => `${p.id}/${p.type}/${p.seed}`).join(',');
     if (key !== this.key) {

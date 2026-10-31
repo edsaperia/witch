@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { newGame } from "../../rules/game";
+import { newGame as fullGame } from "../../rules/game";
+import { smallWorld } from "../../test/worlds";
+const newGame = smallWorld(fullGame, "Injected invitation events test sound routing, independent of world size.");
 import { TUNING } from "../../rules/tuning";
 import type { Sfx } from "./sfx";
 import { SfxCues } from "./sfxCues";

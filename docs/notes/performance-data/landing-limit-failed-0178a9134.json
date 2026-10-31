@@ -1,0 +1,40 @@
+{
+  "result": "FAIL",
+  "sha": "0178a9134a868e659ef4f5f8d452368e4f63de93",
+  "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "served": {
+    "version": "vlanding-limit-demo · 0178a91",
+    "built": "2026-10-30T11:17:44.479Z"
+  },
+  "route": "chart",
+  "hookMinimumMs": 30000,
+  "actualShaderReadyWaitMs": 70481,
+  "timesFromSailMs": {
+    "landingDue": 6244,
+    "shaderLimit": 21273,
+    "chartHandoff": 22288,
+    "backgroundReady": 75601,
+    "homeReady": 91536,
+    "actualArrival": 93075
+  },
+  "arrivalAfterDueMs": 86831,
+  "snapshot": {
+    "graceMs": 15526,
+    "chartPresent": true,
+    "limited": true,
+    "skippedObjects": {},
+    "fallbackObjects": {},
+    "unsafeUniformReads": 0,
+    "shaderMethods": {},
+    "worstFrameMs": 408.40000000000873
+  },
+  "worstRecordedFrameMs": 1258,
+  "fullRunShaderCounters": "UNAVAILABLE: close observer ran after sail-timing closed its page;15.5s counters alone cannot prove later shader/log queries stayed below100ms",
+  "notes": [
+    "Tool exit0 only means journey completed; required proof failed.",
+    "Actual shader wait exceeded the injected30s minimum; this was hardware GL.",
+    "At15.5s screenshot is blank dark blue and chart-present; no visible fallback proof.",
+    "After limit, chart handoff was delayed about1s by track prep, then ArrivalFlight.skip still required homeDone.",
+    "buildHome waited63.590s between prep-warm and prep-home; no scheduler change authorized."
+  ]
+}

@@ -15,6 +15,7 @@ const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTal
 /** A night under way, her three followers (a wolf, a fox and a baby boar) on her stack at her feet under the treehouse, nothing else
  *  near; she's `where`: up in the treehouse on its floor, or over it in the treetops. */
 function night(where: "house" | "treetops"): { g: Game; ids: number[] } {
+  // Keep this spatial fixture: guards are recruited over 200 m away and then travel between home and a neighbouring area.
   const g = newGame(77, TUNING), d = deckOf(g.map, g.tuning)!;
   g.clock.paused = false; g.party.paused = true;
   g.witch = where === "house" ? { ...g.witch, seated: false, perch: true, mode: "ground", lift: 0, x: d.x, z: d.z, vx: 0, vz: 0 } : { ...g.witch, seated: false, perch: false, mode: "treetop", lift: 1, x: d.x, z: d.z, vx: 0, vz: 0 };

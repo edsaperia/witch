@@ -17,6 +17,9 @@ const ok = (cond, what) => { console.log(`${cond ? "ok  " : "FAIL"} ${what}`); i
 // that walks the species or the areas to those ids (a builder's own creature and area), --no-lab skips the two lab pages (minutes each);
 // --times prints what each task and pass took.
 const argv = process.argv.slice(2), opt = name => { const i = argv.indexOf("--" + name); return i < 0 ? null : argv[i + 1] ?? ""; }, flag = name => argv.includes("--" + name);
+// PR result caching separates named sprite tasks from the remaining checks.
+// The normal command still runs both, including lab pages, without caching.
+if (flag("sprite-only") && (flag("aux-only") || !flag("no-lab"))) throw new Error("--sprite-only requires --no-lab and excludes --aux-only");
 const PAGES = Math.max(1, Number(opt("pages") || process.env.PAGES) || Math.max(1, cpus().length - 1));
 const ONLY = opt("only")?.split(",").map(s => s.trim()).filter(Boolean) ?? null, TASKS = opt("tasks")?.split(",").map(s => s.trim()).filter(Boolean) ?? null;
 const T0 = performance.now(), laps = [];
@@ -1002,13 +1005,18 @@ const SPRITE_CHECKS = async ({ names, only }) => {
   for (const t of tasks) if (!names || names.includes(t.name)) { const t0 = performance.now(), n0 = res.length; await t.fn(); timings.push([t.name, performance.now() - t0, res.length - n0]); }
   return { res, timings, names: tasks.map(t => t.name) };
 };
-const report = await runSpriteChecks(b, SPRITE_CHECKS);
+const report = flag("aux-only") ? [] : await runSpriteChecks(b, SPRITE_CHECKS);
 for (const lines of await Promise.all(LABS)) for (const [cond, what] of lines) ok(cond, what);
 lap("lab pages (the rest)");
 for (const r of report) if (!r.good) ok(false, `${r.what} (${r.info})`);
 for (const r of report) if (r.good && r.warn) console.log(`WARN ${r.what} — ${r.warn}`); // (a warning: reported, not failed)
 if (flag("info")) for (const r of report) if (r.good && r.info) console.log(`info ${r.what} — ${r.info}`); // (--info: what a passing check measured)
 ok(report.every(r => r.good), `${report.length} sprite checks`);
+if (flag("sprite-only")) {
+  const errs = b.errors.filter(e => !ignore(e));
+  ok(!errs.length, `no script errors${errs.length ? " — " + errs.join("; ") : ""}`);
+  await b.close(); process.exit(failed ? 1 : 0);
+}
 // the detailed sigils (Ed, 2026-10-12, the sea chart's island runes: "more detailed versions of the rune itself", no circles):
 // every species' and home's World Tree, at each tier: ink, crisp (every pixel ink or not), clear of its box's edge (no circle
 // reaching it), each tier different and the carved ones more detailed than the plain glyph (more edges), not a solid disc

@@ -2,15 +2,18 @@ import { defineConfig } from "vitest/config";
 import { existsSync, readFileSync } from "node:fs";
 import { availableParallelism } from "node:os";
 import { readPng } from "./tools/overrides/png";
-import { artHash as artHashOf, overrideFiles as overridesAt } from "./tools/artHash";
+import { artHash as artHashOf, artFingerprintMap, overrideFiles as overridesAt } from "./tools/artHash";
+import { changelogBatches } from "./tools/changelogBatches";
+import { houseStanding } from "./tools/houseStanding";
 
 // base "./": the same build works at the site's root and under /pr-<number>/.
 // The build's version, shown in the corner: the Pages workflow sets these; local builds say "dev".
 const version = process.env.WITCH_VERSION ? `v${process.env.WITCH_VERSION}` : "dev";
 const sha = (process.env.WITCH_SHA ?? "").slice(0, 7);
-// What the drawn sprite sets depend on (tools/artHash.ts): browsers keep drawn sets under this hash, so a build that
-// changes none of it reuses them.
+// Legacy global hash retained for diagnostics. Persistent keys use only their kind's
+// fingerprint; source/declaration analysis stays in this build process, not the game.
 const artHash = artHashOf();
+const artKindHashes = artFingerprintMap().fingerprints;
 // Hand-drawn sprites (art/overrides/<species>/<pose>.png, src/render/overrides.ts): read here, given to the game as
 // virtual:art-overrides (each one's size and RGBA pixels), and part of the art's hash.
 const OVERRIDES = "art/overrides";
@@ -57,16 +60,16 @@ const versionFile = () => ({
 
 export default defineConfig({
   base: "./",
-  define: { __BUILD__: JSON.stringify(sha ? `${version} · ${sha}` : version), __BUILD_DATE__: JSON.stringify(new Date().toISOString().slice(0, 10)), __UPCOMING__: JSON.stringify(upcoming), __ART_HASH__: JSON.stringify(artHash) },
+  define: { __BUILD__: JSON.stringify(sha ? `${version} · ${sha}` : version), __BUILD_DATE__: JSON.stringify(new Date().toISOString().slice(0, 10)), __UPCOMING__: JSON.stringify(upcoming), __ART_HASH__: JSON.stringify(artHash), __ART_KIND_HASHES__: JSON.stringify(artKindHashes) },
   // (two pages: the game, and the sea chart: chart.html, wave 2 part C)
   build: { target: "es2022", chunkSizeWarningLimit: 1200, rollupOptions: { input: { main: "index.html", chart: "chart.html" } } },
-  plugins: [artOverrides(), configNotes(), versionFile()],
-  worker: { plugins: () => [artOverrides(), configNotes()] },
+  plugins: [artOverrides(), configNotes(), versionFile(), changelogBatches(), houseStanding()],
+  worker: { format: "es", plugins: () => [artOverrides(), configNotes()] },
   // The rules tests build whole maps and play out fights and waves: CPU-bound seconds each, many more
   // under load (a smoke run or CI's busy runners), so vitest's 5 s default made them time out at random.
   // One generous limit for all (a hung test still fails, after a minute).
   // Tests (overnight phase 1, test speed): a worker per core (Vitest leaves one idle by default) and one module load per
   // worker rather than per file (isolate false: no test file leaves module state changed; the few that change it put it
   // back in afterEach). 281 s to 216 s locally on 4 cores, the same 758 tests.
-  test: { include: ["src/**/*.test.ts", "tools/bench/*.test.ts", "tools/shots/*.test.ts", "tools/docs/*.test.ts"], environment: "node", setupFiles: ["src/test/radiusMap.ts"], testTimeout: 60_000, hookTimeout: 60_000, maxWorkers: availableParallelism(), isolate: false },
+  test: { include: ["src/**/*.test.ts", "tools/bench/*.test.ts", "tools/shots/*.test.ts", "tools/docs/*.test.ts", "tools/ci/*.test.ts"], environment: "node", setupFiles: ["src/test/radiusMap.ts"], testTimeout: 60_000, hookTimeout: 60_000, maxWorkers: availableParallelism(), isolate: false },
 });

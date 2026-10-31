@@ -31,7 +31,7 @@ export class BrewingView {
   constructor() { subtractiveMaterial(this.halo.mesh.material); this.group.add(this.halo.mesh, this.back.mesh, this.front.mesh); }
   update(v: View, pxWorld: PixelMap, pitch: number): void {
     const g = v.game, state = g.mushrooms, layout = kitchenPlan();
-    if (!state || !layout) { this.group.visible = false; return; }
+    if (!state || !layout || g.cauldron) { this.group.visible = false; return; }
     this.group.visible = true;
     const ppm = 1 / v.mpp, room = layout.room, width = Math.ceil(24 * ppm), height = Math.ceil(25 * ppm);
     const ox = width / 2, oy = 17 * ppm;

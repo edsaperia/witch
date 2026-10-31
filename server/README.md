@@ -1,0 +1,15 @@
+# Local online relay
+
+From `server/`, run `npm ci` then `node relay.mjs`. Default address: `ws://127.0.0.1:8787`. This is a local service, with no game-page integration yet. `npm test` exercises real loopback WebSocket connections and closes the service afterwards.
+
+Knobs: `PORT` (8787), `HOST` (127.0.0.1), `WITCH_DROP_MS` (5000), `WITCH_JOIN_GRACE_MS` (180000). Joining connections have an absolute grace deadline; heartbeat traffic cannot extend it. Renderer readiness triggers a fresh current-night snapshot, and the guest reports active only after applying it; normal silence timeout starts then. A future Render Web Service can use its supplied PORT and HOST=0.0.0.0, but no deployment or account setup is part of this milestone. TLS belongs to that later hosting setup. Do not expose the local prototype publicly as a production service.
+
+While a guest is joining, an active host's silence allowance is `WITCH_HOST_JOIN_DROP_MS` (20000). It returns to `WITCH_DROP_MS` after guest activation/departure, with a fresh normal interval. This is bounded tolerance for a busy host main thread, not a faster-loading claim. The relay emits one JSON `relay-close` line per socket with connection number, role, rule, close code, elapsed silence/join time and any deadline that fired. It omits invitation tokens and message payloads. Rules distinguish `silence`, `join-grace`, `protocol`, `client-close`, `host-left`, `backpressure`, `socket-error` and `shutdown`.
+
+Every JSON message carries `protocol: 1`. A host sends `{type: "host", room: "1234567"}` and receives `hosted` with a random invitation token and player 0. A guest sends `{type: "join", room, token}` and receives `joined` with player 1; the host receives `guest-joined`. Room numbers have seven digits. The invitation token is required: knowing the number alone is insufficient. No room list is exposed.
+
+A guest sends `input` with `payload`; only the host receives it, labelled player 1 by the relay. The host sends `state` with `payload`; only the guest receives it, labelled player 0. The relay never accepts guest state. Payload schemas, game session IDs, tick/sequence validation and applying snapshots remain browser-session responsibilities. The existing envelope receiver is not automatically wired to this outer relay framing.
+
+Clients must send `heartbeat` or valid traffic more often than the drop interval. The relay drops silent sockets, notifies the host with `guest-left`, and closes a guest when the host leaves. It does not modify rules state or perform the hat/creature/return-home consequences; those require the gated game integration. Guest controls expire separately after 250 ms; heartbeats must never renew held movement. Both timings are configurable (`inputLease` arguments in the browser module, environment for server timeout).
+
+The service caps message size and queued outgoing data. Rate limits, deployment origin policy, abuse protection and operational monitoring need review before public hosting. Full snapshot size and throughput have not been measured. No telephone UI, account, external service or browser session is created here.

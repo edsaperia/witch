@@ -237,7 +237,7 @@
     },
     "lasers": {
       "what": "Each playing soundsystem's laser show, its beams fanning and sweeping in time with the music.",
-      "notes": "Each playing soundsystem's laser show: bursts of blockBars bars, on about duty of the time (seeded per soundsystem), up to maxCount beams stepping on the bars, fanned over spread degrees (no beam tilting more than maxTilt from straight up), swinging sweep degrees once every sweepBeats beats (slow, like searchlights), opening and closing the fan every openBars bars, length metres tall, opacity 0-1, fading in over fadeIn and out over fadeOut seconds, and fading with distance from fadeNear to fadeFar metres. Glow only: no light, nothing from the light budget."
+      "notes": "Each playing soundsystem's laser show: bursts of blockBars bars, on about duty of the time (seeded per soundsystem), up to maxCount beams stepping on the bars, fanned over spread degrees, swinging sweep degrees once every sweepBeats beats (slow, like searchlights), opening and closing the fan every openBars bars, length metres tall, opacity 0-1, fading in over fadeIn and out over fadeOut seconds, and fading with distance from fadeNear to fadeFar metres. Glow only: no light, nothing from the light budget."
     },
     "borders": {
       "what": "A sparkling line round the partified region's outside edge, in each area's sigil colour: width (px), brightness, sparkle (0-1, how much it twinkles and runs), step (metres between its sparks)."
@@ -973,6 +973,18 @@
         }
       ]
     },
+    "runeMarkers.stump.irregular": {
+      "what": "How irregular each great stump grows, from 0 (round and even, as first drawn) to 1.",
+      "notes": "At 1: a wobblier cut with knuckles of wood, maybe a flattened side or a notch, its heart off the middle, its rings unevenly spaced and wavering, sometimes a long split; seeded per stump. The cut where she casts follows it.",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "The trunk shape and rings are a bit even, can they be more irregular? (I have mostly been looking on the home island)",
+          "rest": "via the coordinator (art/props/stumps.js)"
+        }
+      ]
+    },
     "runeMarkers.stump.wisps": {
       "what": "A wild stump's will-o'-the-wisps, drifting round its clearing before its soundsystem, in place of its own light.",
       "decisions": [
@@ -1028,6 +1040,21 @@
     },
     "runeMarkers.stump.wisps.trail": {
       "what": "How many fading motes trail behind each wisp."
+    },
+    "runeMarkers.stump.wisps.size": {
+      "what": "How big (m) a wisp's glow is.",
+      "notes": "A soft round point that shrinks with the world as it's seen from farther, dimming once it's under a pixel (absent: 4 of the picture's pixels at every zoom, as first drawn).",
+      "decisions": [
+        {
+          "by": "Ed",
+          "date": "2026-10-29",
+          "quote": "I can see the trunk area wisps from far away and they look like big squares.",
+          "rest": "via the coordinator (render/markers.ts motePoints)"
+        }
+      ]
+    },
+    "runeMarkers.stump.wisps.fade": {
+      "what": "The distances from her (m) over which a stump's wisps and their light fade out: all within the first, none past the second."
     },
     "runeMarkers.stump.wisps.fill": {
       "what": "The wild clearing's own dim teal moonlight over the stump's middle.",

@@ -4,7 +4,8 @@
 import { newKit, takeBroom, takeInvites } from "./kit";
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
-import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { newGame as fullGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { smallWorld } from "../test/worlds";
 import { HOUSE_ROOMS, objectFront } from "./houseRooms";
 import { wakeInBedroom } from "./opening";
 import { startWake, WAKE_DEFAULT } from "./wakeUp";
@@ -12,6 +13,7 @@ import { wearFromStation } from "./clothesPile";
 import { deckOf } from "./treehouse";
 import { atGuide, emptyGuide, guidanceOf, seeGuide, GUIDANCE_HOOKS, type GuideSave } from "./guidance";
 
+const newGame = smallWorld(fullGame, "Guidance pin ordering and home-station targets use supplied progress flags, not the surrounding world.");
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, s: number, c: Partial<Controls> = {}) => { for (let i = 0; i < Math.round(s / STEP); i++) stepGame(g, { ...idle, ...c }, STEP); };
 /** Up in her bedroom: a game's first morning, or (`later`) after a night played (one wake-up for every morning: Ed, 2026-10-26). */

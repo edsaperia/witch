@@ -19,6 +19,7 @@ import { hash2 } from "./random";
 import { stateOf } from "./creatureStates";
 import type { WitchState } from "./witch";
 import type { Pinned } from "./partyLegend";
+import { CUT_BOUND, pastCut, stumpCutOf } from "./stumps";
 
 const keyOf = (c: Cell) => `${c[0]},${c[1]}`;
 
@@ -104,17 +105,32 @@ export function castReady(g: Game, key: string): boolean {
 // (on a great stump, its cut's middle: Ed, 2026-10-29, "the spell and the audio circle effect can be on top of the stump"; runeMarkers.stump)
 export const castSpot = (s: { x: number; z: number }, t: Tuning): { x: number; z: number } => ({ x: s.x, z: s.z + (t.runeMarkers?.stump?.on ? 0 : castOf(t).spot) });
 
+/** How far (m) (x, z) lies outside a stone's casting ground: a great stump's whole cut (Ed, 2026-10-29: "The area in which I can cast
+ *  the soundsystem spell should be the whole trunk. (cut part, not the roots)": rules/stumps.ts), else cast.radius round its spell spot;
+ *  0 or less on it. */
+export function pastCasting(g: Game, cell: Cell, x: number, z: number): number {
+  const t = g.tuning, s = g.map.soundsystemSpot(cell[0], cell[1]);
+  if (t.runeMarkers?.stump?.on) {
+    if (Math.hypot(x - s.x, z - s.z) > CUT_BOUND + castOf(t).show) return Infinity; // (too far to matter: its cut not built)
+    const cut = stumpCutOf(t, g.map, cell);
+    if (cut) return pastCut(cut, x - s.x, z - s.z);
+  }
+  const p = castSpot(s, t);
+  return Math.hypot(p.x - x, p.z - z) - castOf(t).radius;
+}
+
 /** The stone she'd cast at from (x, z): her area's (a legend area's pair's), if it has a stack, is ready to cast (castReady) and
- *  she's within `reach` of its spell spot (castSpot). Its x, z the stone's own. */
-export function stoneNear(g: Game, x: number, z: number, reach: number): { key: string; cell: Cell; x: number; z: number } | null {
+ *  she's within `reach` m of its casting ground (pastCasting: 0, on it). Its x, z the stone's own.
+ *  `requireReady` false also finds hostile stones: Use belongs to them even before she can cast. */
+export function stoneNear(g: Game, x: number, z: number, reach: number, requireReady = true): { key: string; cell: Cell; x: number; z: number } | null {
   // (her area's stone, or a neighbour's: a stone can stand near its area's edge, and a step either way of the line mustn't lose it)
   const here = g.map.cellSafe(x, z).cell, keys = [keyOf(here), ...(g.map.neighbours.get(keyOf(here)) ?? [])];
   let best: { key: string; cell: Cell; x: number; z: number } | null = null, bd = reach;
   for (const k of keys) {
     const [cx, cy] = k.split(",").map(Number), cell = g.map.areaOf ? g.map.areaOf([cx, cy]) : ([cx, cy] as Cell), key = keyOf(cell);
     if (!g.map.playable(cell[0], cell[1]) || !stoneOpen(g, key)) continue;
-    const s = g.map.soundsystemSpot(cell[0], cell[1]), p = castSpot(s, g.tuning), d = Math.hypot(p.x - x, p.z - z);
-    if (d <= bd && castReady(g, key)) { bd = d; best = { key, cell, x: s.x, z: s.z }; }
+    const d = pastCasting(g, cell, x, z);
+    if (d <= bd && (!requireReady || castReady(g, key))) { const s = g.map.soundsystemSpot(cell[0], cell[1]); bd = d; best = { key, cell, x: s.x, z: s.z }; }
   }
   return best;
 }
@@ -136,18 +152,19 @@ export function castProgress(W: Witch, key: string, ht: number, t: Tuning): numb
 export function castShown(g: Game, W: Witch): { key: string; x: number; z: number; k: number; lostFrom?: number; hitAt?: number; casting: boolean } | null {
   const t = g.tuning, b = W.body;
   if (!castOn(t) || b.mode !== "ground" || b.seated || b.perch || W.ko) return null;
-  const s = stoneNear(g, b.x, b.z, castOf(t).show);
+  const s = stoneNear(g, b.x, b.z, castOf(t).show - castOf(t).radius); // (as near its casting ground as the spot's edge was)
   if (!s) return null;
   const r = W.casts?.[s.key];
-  return { key: s.key, x: s.x, z: s.z, k: castProgress(W, s.key, g.herTime, t), ...(r?.lostFrom !== undefined ? { lostFrom: r.lostFrom, hitAt: r.hitAt } : {}), casting: W.casting === s.key };
+  return { key: s.key, x: s.x, z: s.z, k: castProgress(W, s.key, W.time ?? g.herTime, t), ...(r?.lostFrom !== undefined ? { lostFrom: r.lostFrom, hitAt: r.hitAt } : {}), casting: W.casting === s.key };
 }
 
-/** The stone she casts at where she stands: on foot, not knocked out, within cast.radius of the spot of a stone with a stack (the sigil button
+/** The stone she casts at where she stands: on foot, not knocked out, on its casting ground (a great stump's cut, else within cast.radius
+ *  of a stone's spot: pastCasting), a stone with a stack (the sigil button
  *  then casts, rather than putting down or picking up: rules/sigilButton.ts); else null. */
 export function castingStone(g: Game, W: Witch): { key: string; cell: Cell; x: number; z: number } | null {
   const b = W.body;
   if (!castOn(g.tuning) || b.mode !== "ground" || b.seated || b.perch || W.ko) return null;
-  return stoneNear(g, b.x, b.z, castOf(g.tuning).radius);
+  return stoneNear(g, b.x, b.z, 0);
 }
 
 /** One step of her spell, on her clock (ht, hdt): held at a stone, it fills (1/time a second); let go, or moved off, it stops and

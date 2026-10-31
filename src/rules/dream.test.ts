@@ -4,6 +4,7 @@ import type { Creature } from "./creatures";
 import type { PartyState } from "./party";
 import { AREA_TYPES, generateMap } from "./map";
 import { TUNING } from "./tuning";
+// Keep this seeded radius fixture: nearest-kind choice needs repeated area species and the fixed (2,3)/(7,7) sample cells.
 
 describe("a dream's direction", () => {
   it("points at the runestone of the nearest area of the dreamed creature's kind, explored or not", () => {

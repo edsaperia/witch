@@ -1,21 +1,12 @@
-# The art check (node art/check.mjs: every creature, tree, area and piece of the art drawn and measured in headless Chromium)
-# at the pull request, so a red is caught there and not later on claude/prototype (the coordinator, 2026-10-13). On a pull
-# request that touches only creature and area folders (art/creatures/<id>/, art/areas/<id>/) it runs just their checks
-# (--only, about a minute); shared art code, the Art Lab, the style file or the check itself mean the full run (about 40
-# minutes on a runner, the sprite checks dealt out over its cores); a change with nothing of the art in it is skipped
-# (tools/art-check/scope.mjs says which). Every push to claude/prototype gets the full run. Its own check, never required,
-# until it has proven steady; the log and the silhouette sheet are the run's art-check artifact.
+# Ordinary PRs reuse successful named-task results by source/dependency/environment
+# fingerprint. Missing results run; unknown dependency layouts run the full check.
+# Prototype/main pushes and release-check PRs always run the full uncached command.
 name: Art check
 on:
   push:
-    branches: [claude/prototype]
+    branches: [claude/prototype, main]
   pull_request:
-    paths:
-      - "art/**"
-      - "tools/art-lab/**"
-      - "tools/art-check/**"
-      - "config/style.json"
-      - ".github/workflows/art-check.yml"
+    types: [opened, synchronize, reopened, edited]
 concurrency:
   group: art-check-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
@@ -35,43 +26,59 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      # What to run: the paths the pull request changes, against its base (the push to prototype runs it all).
+      - name: Restore successful PR art checks
+        if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'claude/rel-') && !startsWith(github.event.pull_request.title, 'Release check:')
+        uses: actions/cache@v4
+        with:
+          path: .art-check-results
+          key: art-results-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: art-results-v1-${{ runner.os }}-
+      # Match successful input hashes on ordinary PRs; shared pushes/releases run all.
       - name: Scope
         id: scope
         shell: bash
+        env:
+          CHECK_EVENT: ${{ github.event_name }}
+          CHECK_BRANCH: ${{ github.head_ref }}
+          CHECK_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            git fetch --no-tags --depth=1 origin "${{ github.event.pull_request.base.sha }}"
-            git diff --name-only "${{ github.event.pull_request.base.sha }}" HEAD > changed.txt
-            FLAGS=$(node tools/art-check/scope.mjs --file changed.txt)
+          if [ "$CHECK_EVENT" = "pull_request" ] && [[ "$CHECK_BRANCH" != claude/rel-* ]] && [[ "$CHECK_TITLE" != 'Release check:'* ]]; then
+            MODE=$(node tools/art-check/affected.mjs --plan out/art-check-plan.json | tail -n 1)
           else
-            FLAGS=""
+            MODE="full"
           fi
-          echo "flags=$FLAGS" >> "$GITHUB_OUTPUT"
-          echo "art check: ${FLAGS:-the full run}"
+          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
+          echo "art check: $MODE"
       # Playwright isn't one of the game's dependencies: installed on its own, its Chromium cached between runs (as ci.yml).
-      - if: steps.scope.outputs.flags != 'skip'
+      - if: steps.scope.outputs.mode != 'skip'
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ env.PLAYWRIGHT_VERSION }}
-      - if: steps.scope.outputs.flags != 'skip'
+      - if: steps.scope.outputs.mode != 'skip'
         run: npm install --prefix .pw --no-save --no-package-lock playwright@${{ env.PLAYWRIGHT_VERSION }}
-      - if: steps.scope.outputs.flags != 'skip'
+      - if: steps.scope.outputs.mode != 'skip'
         run: .pw/node_modules/.bin/playwright install --with-deps chromium
       - name: Art check
-        if: steps.scope.outputs.flags != 'skip'
+        if: steps.scope.outputs.mode != 'skip'
         shell: bash
+        env:
+          CHECK_MODE: ${{ steps.scope.outputs.mode }}
         run: |
           set -o pipefail
           mkdir -p out
-          NODE_PATH=$PWD/.pw/node_modules node art/check.mjs ${{ steps.scope.outputs.flags }} --times 2>&1 | tee out/log.txt
+          if [ "$CHECK_MODE" = "full" ]; then
+            NODE_PATH=$PWD/.pw/node_modules node art/check.mjs --times 2>&1 | tee out/log.txt
+          else
+            NODE_PATH=$PWD/.pw/node_modules node tools/art-check/affected.mjs --run out/art-check-plan.json 2>&1 | tee out/log.txt
+          fi
       - uses: actions/upload-artifact@v4
-        if: always() && steps.scope.outputs.flags != 'skip'
+        if: always()
         with:
           name: art-check
           path: |
             out/log.txt
+            out/art-check-plan.json
             art/out/silhouettes.png
           retention-days: 14
           if-no-files-found: ignore

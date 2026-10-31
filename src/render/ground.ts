@@ -19,7 +19,13 @@ import { speakerRadius } from "../rules/speakers";
 import type { Beach } from "../rules/mapShape";
 import { koiPonds, lakeKnobs } from "../rules/lakes";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
-import { LAKE_LOOKS_GLSL, lakeLookTexture, lakeLooksOf } from "./lakeLooks";
+import { LOADING_LIGHT_GLSL } from './loadingLight';
+import { FX_UNIFORMS, FX_FIELD_GLSL } from "./fx/uniforms";
+import { NATIVE_GLSL, nativeFxUniforms } from "./fx/native";
+import { LAKE_LOOKS_GLSL, lakeLookTexture, lakeLooksOf, hasForcedLakeLook } from "./lakeLooks";
+import { groundExtras, groundFamily, groundDefines } from "./groundFamily";
+import { CoastReadiness } from './coastReadiness';
+import { materialProgramsReady } from './shaderDrawGate';
 import { HEIGHT_GLSL, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import type { TilePixels } from "./artBuild";
 import type { Style } from "./style";
@@ -121,13 +127,17 @@ uniform float uHillShade; // the hills' slopes in the light, exaggerated this mu
 uniform float uBare;  // ?bare=2: a flat grey ground with contour lines (0.5 m) and a 10 m grid
 varying vec3 vWorld;
 ${LIGHT_GLSL}
+${FX_FIELD_GLSL}
+${NATIVE_GLSL}
 ${HEIGHT_GLSL}
 ${VALUE_NOISE_GLSL}${BAYER_GLSL}vec3 hsv(float h, float s, float v) {
   vec3 k = clamp(abs(mod(fract(h) * 6.0 + vec3(0, 4, 2), 6.0) - 3.0) - 1.0, 0.0, 1.0);
   return clamp(v, 0.0, 1.0) * mix(vec3(1.0), k, clamp(s, 0.0, 1.0));
 }
 #ifdef GROUND_LAKES
+#if defined(GROUND_LAKE_ICE) || defined(GROUND_LAKE_LAVA) || defined(GROUND_LAKE_OASIS) || defined(GROUND_LAKE_SINKHOLE) || defined(GROUND_LAKE_TARN) || defined(GROUND_LAKE_TAR) || defined(GROUND_LAKE_RUST) || defined(GROUND_LAKE_LILY)
 ${LAKE_LOOKS_GLSL}
+#endif
 /** How much of a zoo lake's sigil is under p (0 to 1): faint, its lines wavering with the water. */
 float lakeSigil(vec2 p) {
   for (int i = 0; i < 4; i++) {
@@ -168,6 +178,7 @@ void main() {
     shoreNear = 1.0 - smoothstep(0.0, 16.0, -into);
     // (the zoo's edge, Ed 2026-10-26: "all around the flagstones give way to water, which falls off the disc as a waterfall, and
     // behind that is space": past its lip, space, its stars fixed to the sky, not the ground; the fall is render/zooFences.ts)
+#if !defined(GROUND_SPECIALIZED) || defined(GROUND_ZOO_STREET)
     if (uZooStreet.x > 0.5 && bd > uZooStreet.z) {
       if (bd < uZooStreet.z + 55.0) discard; // (the water pouring over the lip shows here, curving down below: render/zooFences.ts ZooFall)
       vec3 V = normalize(vec3(p.x, vWorld.y, p.y) - cameraPosition);
@@ -178,6 +189,7 @@ void main() {
       gl_FragColor = vec4(sp, 1.0);
       return;
     }
+#endif
     if (uZooStreet.x < 0.5 && into <= 0.0 && into > -2.6) {
       // The beach grass: a strip of tussocks, blades lighter and darker, sand showing through at its outer edge.
       vec2 bp = floor(px / vec2(1.0, 2.0));
@@ -203,6 +215,7 @@ void main() {
         float up = clamp(R.y, 0.0, 1.0);
         col = mix(uHazeColour * 0.9 + vec3(0.1, 0.17, 0.22), vec3(0.09, 0.18, 0.26), smoothstep(0.0, 0.3, up)); // (the sky's glow low down, the deep blue-teal over most of it)
         col *= 0.9 + 0.25 * (rip.x + 0.5); // (its ripples, lighter and darker)
+#if !defined(GROUND_SPECIALIZED) || defined(GROUND_ZOO_STREET)
         if (uZooStreet.x > 0.5) {
           // The zoo's edge pouring off the disc (the coordinator, 2026-10-26: "the water visibly curving over the lip, falling
           // streaks below it, and the space beyond"; from her height a fall beyond a far edge hides behind it, so the water shows
@@ -219,6 +232,7 @@ void main() {
           float crest = step(toLip, uPixel * sandCell.y * 2.5);
           col = mix(col, vec3(0.9, 0.96, 1.0), crest * (0.75 + 0.25 * vnoise(vec2(tang * 0.8, uTime * 3.0))));
         } // (the zoo's lip)
+#endif
         vec2 sc = floor(R.xz / max(0.08, R.y) * 26.0);
         float hs = fract(sin(dot(sc, vec2(12.9898, 78.233))) * 43758.5453);
         if (hs > 0.9965) col += vec3(0.42, 0.46, 0.56) * (0.55 + 0.45 * sin(uTime * 2.3 + hs * 90.0)); // a star
@@ -333,6 +347,7 @@ void main() {
   // The zoo's streets (Ed, 2026-10-26: "the sea are flagstone streets"; "The flagstones look like the ones around the dancefloor";
   // rules/zooMap.ts): home's ground, the plaza and every street out to the edge, laid in the dancefloor plaza's flagstones (its
   // stone, joints, moss and grain: uPave), in straight courses east to west, each course's joints staggered.
+#if !defined(GROUND_SPECIALIZED) || defined(GROUND_ZOO_STREET)
   if (uZooStreet.x > 0.5 && area.a > 0.5 && t == int(uZooStreet.y)) {
     float ci = floor(p.y / uPave.z), u = p.x / uPave.w + fract(sin(ci * 12.9898) * 43758.5453), si = floor(u);
     float depth = p.y - ci * uPave.z, arc = (u - si) * uPave.w;
@@ -351,7 +366,9 @@ void main() {
   // The zoo's plaza (Ed, 2026-10-26: "Home appears as a stone plaza with the ent's sigil on it"; the coordinator, "clean, continuous
   // lines ... so the glow follows the strokes"; then Ed, "less strong and bright and thick, and be more weathered"): inside its ring
   // the flagstones paler, the World Tree's sigil carved in thin grooves of whole art pixels with a faint mint light in them, worn.
+#endif
   float plazaLine = 0.0, plazaHalo = 0.0;
+#if !defined(GROUND_SPECIALIZED) || defined(GROUND_ZOO_PLAZA)
   if (uZooPlaza.w > 0.5) {
     vec2 q = p - uZooPlaza.xy;
     float d = length(q), R = uZooPlaza.z;
@@ -380,6 +397,8 @@ void main() {
   // A sleeping legend's clearing: a soft ring of trodden earth set with pale stones marks its edge, the
   // floor inside a touch darker and mossier (worn smooth round the sleeper); its ring brightens while
   // she stands in it. (Its twilight and motes are the lighting's: render/mood.ts and friends.)
+#endif
+#if !defined(GROUND_SPECIALIZED) || defined(GROUND_LEGENDS)
   for (int i = 0; i < 6; i++) {
     if (i >= uLegendRingCount) break;
     vec4 L = uLegendRings[i];
@@ -390,6 +409,7 @@ void main() {
     // Its floor: old flagstones, cracked, a few tilted or gone, the legend's sigil cut into them, and moss, grass and
     // litter over much of it, so the carving shows only in pieces; the stone fading into the clearing's earth toward
     // the rim. All seeded by where the circle lies.
+#if !defined(GROUND_SPECIALIZED) || defined(GROUND_LEGEND_FLOOR)
     if (uLegendFloor.x > 0.0 && d < L.z) {
       vec2 q = p - L.xy, s0 = fract(L.xy * 0.0173) * 97.0;
       float rr = d / L.z;
@@ -437,17 +457,21 @@ void main() {
       float show = (1.0 - smoothstep(0.6, 0.95, rr + (vnoise(q / 1.7 + s0) - 0.5) * 0.25)) * (ST.a > 0.5 ? 1.0 : step(0.1, hs));
       c = mix(c, fl, show);
     }
+#endif
     c *= 1.0 - 0.38 * band;
     vec2 sc = floor(px / 2.0);
     float h = fract(sin(dot(sc, vec2(12.9898, 78.233))) * 43758.5453);
     if (band > 0.55 && h > 0.84) c = mix(vec3(0.42, 0.44, 0.47), vec3(0.62, 0.64, 0.66), fract(h * 7.0)) * (0.8 + 0.4 * vnoise(px));
     if (uLegendGlow[i] > 0.0) c += vec3(0.35, 0.55, 0.6) * band * uLegendGlow[i] * 0.35;
   }
+#endif
   // The dancefloor: the art's floor of glass tiles inside its stone rim; a lit tile glows in its
   // colour (unlit by the night: it is the light), the rest is lit like the ground.
+#if !defined(GROUND_SPECIALIZED) || defined(GROUND_DANCEFLOOR) || defined(GROUND_PAVEMENT)
   {
     vec2 fd = p - uFloor.xy;
     if (length(fd) / uDiscoGeom.x * uDiscoGeom.y < uDiscoRim) {
+#if !defined(GROUND_SPECIALIZED) || defined(GROUND_DANCEFLOOR)
       vec2 bpx = floor(fd / uDiscoGeom.x * uDiscoGeom.y + uDiscoGeom.z * 0.5);
       vec4 base = texture2D(uDiscoBase, (bpx + 0.5) / uDiscoGeom.z);
       vec2 g = bpx - uDiscoGeom.w, tile = floor(g / uDiscoGeom.y), tp = g - tile * uDiscoGeom.y - 1.0;
@@ -461,7 +485,10 @@ void main() {
         }
       }
       if (base.a > 0.5) c = base.rgb;
-    } else if (uPave.y > 0.0) {
+#endif
+    }
+#if !defined(GROUND_SPECIALIZED) || defined(GROUND_PAVEMENT)
+    else if (uPave.y > 0.0) {
       // The plaza: courses of flagstones in rings round the floor, in the rim's stone, joints
       // staggered course to course; the speakers stand on a course of darker stone; moss on some,
       // grass in the joints, and the outer edge breaking up into the grass.
@@ -487,7 +514,9 @@ void main() {
         }
       }
     }
+#endif
   }
+#endif
   // Lakes (Ed, 2026-10-11, rules/lakes.ts): no beach, a small shore: the area's own floor running down into the water, darker
   // and wet over the last couple of metres, a pale line lapping at the edge; then shallows where the floor still shows under
   // the water, deepening to a lake blue lighter than the sea's, the night sky in it (its stars, the moon's glint) and ripples.
@@ -497,12 +526,19 @@ void main() {
     if (kuv.x > 0.0 && kuv.y > 0.0 && kuv.x < 1.0 && kuv.y < 1.0) {
       float ld = texture2D(uLakes, kuv).r + (vnoise(p / 5.0 + 23.0) - 0.5) * 1.4; // (+ on the water; its line wobbled a little)
       // a biome lake (Ed, 2026-10-23; render/lakeLooks.ts): its look's shore and water, the sea chart's look for it
+#if defined(GROUND_LAKE_ICE) || defined(GROUND_LAKE_LAVA) || defined(GROUND_LAKE_OASIS) || defined(GROUND_LAKE_SINKHOLE) || defined(GROUND_LAKE_TARN) || defined(GROUND_LAKE_TAR) || defined(GROUND_LAKE_RUST) || defined(GROUND_LAKE_LILY)
       float LK = ld > -14.0 ? lakeLookAt(kuv) : 0.0;
       if (LK > 0.5 && ld > -lakeRim(LK)) {
         vec3 lit = nightLightShaded(vec3(0.0, 1.0, 0.0), vWorld, 1.0);
         if (ld < (LK > 1.5 && LK < 2.5 ? -0.6 : 0.0)) c = lakeShore(LK, ld, p, c);
-        else { float hz; vec3 w = lakeWater(LK, ld, p, px, c, lit, hz); w = mix(w, w * 1.25 + vec3(0.06, 0.08, 0.09), lakeSigil(p) * 0.4); gl_FragColor = vec4(mix(w, haze(w, vWorld), hz), 1.0); return; }
-      } else if (ld > -2.6) {
+        else { float hz; vec3 w = lakeWater(LK, ld, p, px, c, lit, hz); w = mix(w, w * 1.25 + vec3(0.06, 0.08, 0.09), lakeSigil(p) * 0.4); w=nativeFxColour(fxTint(w,fxField(p))); gl_FragColor = vec4(mix(w, haze(w, vWorld), hz), 1.0); return; }
+      }
+#ifdef GROUND_LAKE_WATER
+      else
+#endif
+#endif
+#ifdef GROUND_LAKE_WATER
+      if (ld > -2.6) {
         float lap = 0.5 + 0.5 * sin(uTime * 1.1 + vnoise(p / 30.0 + 5.0) * 6.0), front = 0.35 * lap - 0.1; // (the edge laps in and out)
         vec3 lit = nightLightShaded(vec3(0.0, 1.0, 0.0), vWorld, 1.0);
         if (ld < front) {
@@ -528,6 +564,7 @@ void main() {
           else if (mod(px.y, 5.0) < 1.0 && vnoise(px / vec2(8.0, 2.0) + vec2(uTime * 0.3, 0.0)) > 0.76) water += vec3(0.08, 0.12, 0.14); // ripples catching the light
           // Koi (Ed, 2026-10-11; 2026-10-12: "large, similar to the size of a baby creature"): in some lakes a few, orange, white
           // and gold, patched, swimming slow rounds under the water.
+#if !defined(GROUND_SPECIALIZED) || defined(GROUND_KOI)
           for (int i = 0; i < 8; i++) {
             vec4 K = uKoi[i];
             if (K.z <= 0.0) break;
@@ -553,12 +590,14 @@ void main() {
               }
             }
           }
+#endif
           if (ld < front + uPixel * 2.0 && mod(px.x + px.y, 2.0) < 1.0) water = mix(water, vec3(0.5, 0.6, 0.64), 0.25); // (the edge's thin shine, broken)
           water = mix(water, water * 1.25 + vec3(0.06, 0.08, 0.09), lakeSigil(p) * 0.4 * deep); // (a zoo lake's sigil, faint)
           gl_FragColor = vec4(mix(water, haze(water, vWorld), 0.6), 1.0);
           return;
         }
       }
+#endif
     }
   }
 #endif
@@ -589,7 +628,7 @@ void main() {
       if (up1 < 0.5) water = rim; // the moonlit far shore
       else if (up2 < 0.5 && mod(px.x, 2.0) < 1.0) water = mix(water, rim, 0.5);
       else if (side < 0.5) water = vec3(0.07, 0.06, 0.05) * (0.6 + 0.8 * nightLight(vec3(0.0, 1.0, 0.0), vWorld)); // the muddy lip
-      gl_FragColor = vec4(haze(water, vWorld), 1.0);
+      gl_FragColor = vec4(haze(nativeFxColour(fxTint(water, fxField(p))), vWorld), 1.0);
       return;
     }
   }
@@ -617,6 +656,7 @@ void main() {
     N = normalize(vec3(-(hx - h0) / e * S * uRelief.x - hg.x, 1.0, -(hz - h0) / e * S * uRelief.x - hg.y));
     c *= 1.0 - uRelief.z * smoothstep(0.55, 0.2, h0);
   }
+#if !defined(GROUND_SPECIALIZED) || defined(GROUND_BARE)
   if (uBare > 1.5) {
     // The bare view's plain ground: grey, a darker line where the height crosses each half metre
     // (the art pixel next door on the other side of it), and a faint 10 m grid.
@@ -626,9 +666,14 @@ void main() {
     if (floor(hc / 0.5) != floor(hx / 0.5) || floor(hc / 0.5) != floor(hz / 0.5)) c = mod(floor(hc / 0.5 + 0.5), 5.0) < 0.5 ? vec3(0.02, 0.02, 0.04) : vec3(0.12, 0.1, 0.16); // every 2.5 m darkest
     if (mod(px.x, 10.0 / uPixel) < 1.0 || mod(px.y, 10.0 / uPixel) < 1.0) c *= 0.85;
   }
+#endif
   if (shoreNear > 0.0) { moonK = mix(moonK, 1.0, shoreNear * 0.7); c = mix(c, c * vec3(0.95, 1.18, 1.0) * 1.2, shoreNear * 0.6); } // (by the sand, the woods' floor in more moonlight, greener)
+  vec4 magicGround = fxField(p);
+  c = fxTint(c, magicGround);
   vec3 light = nightLightShaded(N, vWorld, moonK);
   vec3 lit = glowPool(min(vec3(1.0), c * light * 1.25), vWorld);
+  float charge = fxExtra(p).r;
+  lit += vec3(0.1,0.15,0.22) * charge * (uFxCalm>0.5?0.5:0.65+0.15*sin(uFxTime*3.0));
   if (plazaLine + plazaHalo > 0.0) lit = mix(lit, vec3(0.36, 0.62, 0.52), plazaLine * 0.55) + vec3(0.04, 0.16, 0.11) * plazaHalo * (1.0 - plazaLine) * 0.4; // (the plaza's sigil, its own light)
   gl_FragColor = vec4(haze(lit, vWorld), 1.0); // (her pool in her light's colour)
 }
@@ -636,9 +681,19 @@ void main() {
 
 // Blend only colour: the bent floor continues writing depth, hiding things beyond its horizon.
 const FRAG = 'uniform float uPotionSky;\n' + FLOOR_FRAG.replace('void main()', 'void floorMain()') + '\nvoid main() { if (uPotionSky >= 1.0) { gl_FragColor = vec4(0.0); return; } floorMain(); gl_FragColor.a *= 1.0 - uPotionSky; }';
+/** At full share this is the exact ground shader; the added dither only runs during coast handover. */
+const BEACH_FRAG = FRAG.replace('void main() {', 'uniform float uCoastAppear;\nvoid main() {\n  if (uCoastAppear < 0.999 && bayer4(gl_FragCoord.xy) >= uCoastAppear) discard;');
 
 export class Ground {
   readonly mesh: THREE.Mesh;
+  /** Always compiled at boot and retained across islands; no expensive lighting, effects, or individual lake bodies. */
+  readonly loadingFallback: THREE.ShaderMaterial;
+  readonly coastReadiness = new CoastReadiness();
+  private coastSurface: THREE.Mesh<THREE.BufferGeometry, THREE.ShaderMaterial> | null = null;
+  private coastReadyMarked = false;
+  private coastFullMarked = false;
+  private disposed = false;
+  private readonly beachDefines: Record<string, string>;
   /** The area texture's two windows round her (render/areaWindow.ts): the near one, and the far one for the telescope. */
   private near: AreaWindow;
   private far: AreaWindow;
@@ -668,14 +723,22 @@ export class Ground {
     this.floors = gpuKind(nearest(new THREE.DataTexture(new Uint8Array(64 * FLOOR_VARIANTS * FLOOR_COLS * 48 * FLOOR_ROWS * 4), 64 * FLOOR_VARIANTS * FLOOR_COLS, 48 * FLOOR_ROWS)), "ground");
     const floors = Array.from({ length: TYPE_SLOTS }, (_, i) => new THREE.Vector3(...(LOOKS[i]?.floor ?? [0.25, 0.45, 0.4])));
     const disco = discoLooks(made);
+    const lakes = lakeUniforms(map, lakeKnobs(map.tuning).koi, koiScale(st, metresPerPixel)), pavement = paving(map, disco);
+    const params = typeof location === 'undefined' ? new URLSearchParams() : new URLSearchParams(location.search);
+    const mutable = hasForcedLakeLook() || params.has('debug') || params.get('creator') === '1';
+    const extras = groundExtras({ zoo: !!map.zoo?.layout, dancefloor: !map.zoo?.layout && map.dancefloor.radius > 0,
+      pavement: !map.zoo?.layout && pavement.uPave.value.y > 0, legends: map.legendClearings.length > 0,
+      legendFloor: !!map.tuning.legendClearing.floor?.on, koi: (lakes.uKoi.value as THREE.Vector4[]).some(k => k.z > 0), bare: (map.tuning.bare ?? 0) > 1.5 }, mutable);
     // The shader as two programs over one set of uniforms (the perf pass's fix C, 2026-10-23, tools/bench/ground.cjs: code a
     // pixel never runs still cost the ground a quarter to two fifths of its time on the cloud's renderer): the lakes' code only on
     // an island with lakes (fixed for the night), and the beach and sea's only in the second, drawn while the beach is on (setBeach).
-    const lakes = !!map.bounds.lakes, defines = (beach: boolean): Record<string, string> => ({ ...(lakes ? { GROUND_LAKES: "" } : {}), ...(beach ? { GROUND_BEACH: "" } : {}) });
+    const family = groundFamily(!!map.bounds.lakes, map.bounds.lakes ? lakeLooksOf(map)?.any ?? null : null, hasForcedLakeLook(), !!map.zoo?.layout, typeof location !== 'undefined' && (new URLSearchParams(location.search).has('debug') || new URLSearchParams(location.search).get('creator') === '1'));
+    const defines = (beach: boolean) => groundDefines(family, beach, extras);
+    this.beachDefines = defines(true);
     const mat = new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG, defines: defines(false),
       uniforms: {
-        ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS,
+        ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, ...FX_UNIFORMS, ...nativeFxUniforms("lake"),
         uPotionSky: { value: 0 },
         uAreas: { value: this.near.texture }, uAreasFar: { value: this.far.texture },
         uExtent: { value: this.near.extent }, uExtentFar: { value: this.far.extent },
@@ -695,7 +758,7 @@ export class Ground {
         uLandBox: { value: new THREE.Vector4() },
         uLand: { value: null as THREE.DataTexture | null },
         uMoonRoad: { value: new THREE.Vector3() },
-        ...lakeUniforms(map, lakeKnobs(map.tuning).koi, koiScale(st, metresPerPixel)),
+        ...lakes,
         uLegendRings: { value: Array.from({ length: 6 }, () => new THREE.Vector4()) },
         uLegendGlow: { value: new Array(6).fill(0) },
         uLegendRingCount: { value: 0 },
@@ -709,7 +772,7 @@ export class Ground {
         uClearing: { value: new THREE.Vector2(map.tuning.clearingSize, map.tuning.clearingFalloff) },
         uDiscoBase: { value: disco.base }, uDiscoLit: { value: disco.lit }, uDiscoTiles: { value: this.discoTiles },
         uDiscoGeom: { value: new THREE.Vector4(disco.tileM, disco.pitch, disco.size, disco.gridOrigin) }, uDiscoRim: { value: disco.rimOuter },
-        ...paving(map, disco),
+        ...pavement,
         uZooPlaza: { value: new THREE.Vector4(map.zoo?.layout?.home.x ?? 0, map.zoo?.layout?.home.z ?? 0, ZOO_CONFIG.plaza ?? 60, map.zoo?.layout ? 1 : 0) }, uPlazaSigil: { value: this.plazaSigil },
         uBare: { value: map.tuning.bare ?? 0 }, uHillShade: { value: map.tuning.ground.hills.shade ?? 1 },
         uRelief: { value: new THREE.Vector3(map.tuning.ground.relief.strength, map.tuning.ground.relief.scale, map.tuning.ground.relief.shade) },
@@ -724,14 +787,40 @@ export class Ground {
       if (Math.abs(P.getZ(i)) >= REACH - 0.01) P.setZ(i, Math.sign(P.getZ(i)) * SKIRT);
     }
     this.plain = mat;
-    this.beach = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, defines: defines(true), uniforms: mat.uniforms });
+    this.loadingFallback = new THREE.ShaderMaterial({ name: 'Loading ground and lake surfaces', vertexShader: VERT, uniforms: mat.uniforms, fragmentShader: `
+varying vec3 vWorld;
+${LOADING_LIGHT_GLSL}
+uniform vec3 uTypeFloor[${TYPE_SLOTS}];
+uniform vec4 uLake, uLakeBox;
+uniform sampler2D uLakes, uLakeLooks;
+uniform vec4 uBeach, uLandBox;
+uniform sampler2D uLand;
+void main() {
+  vec3 c = max(uTypeFloor[0], vec3(0.18, 0.24, 0.15));
+  vec2 uv = (vWorld.xz - uLakeBox.xy + uLake.y) * uLakeBox.zw;
+  if (uLake.x > 0.0 && uv.x > 0.0 && uv.y > 0.0 && uv.x < 1.0 && uv.y < 1.0) {
+    float d = texture2D(uLakes, uv).r;
+    float kind = floor(texture2D(uLakeLooks, uv).r * 255.0 + 0.5);
+    if (d > 0.0) c = kind > 1.5 && kind < 2.5 ? vec3(0.8, 0.2, 0.04) : kind > 0.5 && kind < 1.5 ? vec3(0.55, 0.7, 0.8) : vec3(0.08, 0.27, 0.38);
+    else if (d > -1.5) c = vec3(0.36, 0.4, 0.3);
+  }
+  if (uBeach.x > 0.0) {
+    vec2 luv = (vWorld.xz - uLandBox.xy + uBeach.z) * uLandBox.zw, cuv = clamp(luv, vec2(0.0), vec2(1.0));
+    vec4 land = texture2D(uLand, cuv);
+    float bd = -land.r + length((luv - cuv) / uLandBox.zw);
+    if (bd > uBeach.y) c = vec3(0.09, 0.18, 0.26);
+    else if (bd > -land.g) c = vec3(0.36, 0.37, 0.39);
+  }
+  gl_FragColor = vec4(loadingLight(c, vWorld), 1.0);
+}` });
     this.mesh = new THREE.Mesh(geo, mat);
     this.mesh.frustumCulled = false;
-    // (the beach's program held by a twin that's never shown, so the view compiles and warms it with the rest: View.compileAll)
-    const twin = new THREE.Mesh(geo, this.beach);
-    twin.visible = false; twin.frustumCulled = false;
-    this.mesh.add(twin);
+    // No beach material/twin exists until setBeach says the coast is actually in view.
+    const fallbackTwin = new THREE.Mesh(geo, this.loadingFallback);
+    fallbackTwin.name = 'Loading ground and lake surfaces'; fallbackTwin.visible = false; fallbackTwin.frustumCulled = false;
+    this.mesh.add(fallbackTwin);
     this.follow((e.minX + e.maxX) / 2, (e.minZ + e.maxZ) / 2);
+    try { performance.mark('ground:coast-constructed', { detail: { seed: map.seed, beachExists: this.beach !== null } }); } catch { /* no timeline */ }
   }
 
   /** Keep the grid round (x, z), snapped to its squares so the hills don't swim. */
@@ -739,10 +828,12 @@ export class Ground {
   potionSky(amount: number): void {
     this.plain.uniforms.uPotionSky.value = amount;
     for (const mat of [this.plain, this.beach]) {
+      if (!mat) continue; // The coast material is now created lazily on first approach.
       mat.blending = amount > 0 ? THREE.CustomBlending : THREE.NormalBlending;
       mat.blendSrc = THREE.SrcAlphaFactor; mat.blendDst = THREE.OneMinusSrcAlphaFactor;
     }
     this.mesh.renderOrder = amount > 0 ? -90 : 0;
+    if (this.coastSurface) this.coastSurface.renderOrder = this.mesh.renderOrder + 0.00001;
   }
 
   /** This frame's dancefloor tiles: per tile r, g, b and intensity (0 to 3), row by row (rules/dancefloor.ts). */
@@ -799,8 +890,18 @@ export class Ground {
   moonRoad(x: number, widthPx: number, up: boolean): void { ((this.mesh.material as THREE.ShaderMaterial).uniforms.uMoonRoad.value as THREE.Vector3).set(x, widthPx, up ? 1 : 0); }
   setBeach(b: Beach | null): void {
     const u = (this.mesh.material as THREE.ShaderMaterial).uniforms, v = u.uBeach.value as THREE.Vector4;
-    this.mesh.material = b ? this.beach : this.plain;
-    if (!b) { v.set(0, 0, 0, 0); return; }
+    this.coastReadiness.request(!!b, performance.now());
+    if (!b) { this.mesh.material = this.plain; if (this.coastSurface) this.coastSurface.visible = false; v.set(0, 0, 0, 0); return; }
+    if (!this.beach) {
+      this.beach = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: BEACH_FRAG, defines: this.beachDefines, uniforms: { ...u, uCoastAppear: { value: 0 } } });
+      // A coast first appearing mid-trip inherits the floor's blend before its first draw.
+      this.beach.blending = this.plain.blending; this.beach.blendSrc = this.plain.blendSrc; this.beach.blendDst = this.plain.blendDst;
+      this.coastSurface = new THREE.Mesh(this.mesh.geometry, this.beach);
+      this.coastSurface.name = 'Deferred coast surface'; this.coastSurface.frustumCulled = false; this.coastSurface.visible = false;
+      this.coastSurface.renderOrder = this.mesh.renderOrder + 0.00001; this.mesh.add(this.coastSurface);
+      performance.mark('ground:coast-requested');
+    }
+    this.mesh.material = this.coastReadiness.share === 1 ? this.beach : this.loadingFallback;
     const L = b.land;
     if (this.landFor !== b) {
       // (the land map's distances, the sand's widths and the way to the coast, as a half-float texture eased between its samples)
@@ -816,12 +917,31 @@ export class Ground {
     (u.uLandBox.value as THREE.Vector4).set(L.x0, L.z0, 1 / (L.step * L.cols), 1 / (L.step * L.rows));
     v.set(1, b.out, L.step / 2, v.w);
   }
+  /** Called after BeachView.update, before scene submission. No unfinished coast program reaches a draw. */
+  prepareCoast(renderer: THREE.WebGLRenderer, camera: THREE.Camera, scene: THREE.Scene): void {
+    const surface = this.coastSurface, coast = this.coastReadiness;
+    if (!coast.requested || !surface || !this.beach) return;
+    if (coast.launch()) {
+      // compileAsync discovers materials synchronously through visible objects, then polls KHR asynchronously.
+      const was = surface.visible; surface.visible = true;
+      let compiling: Promise<unknown>;
+      try { compiling = renderer.compileAsync(surface, camera, scene); }
+      catch (error) { compiling = Promise.reject(error); }
+      finally { surface.visible = was; }
+      void compiling.catch(error => { if (!this.disposed) console.error('Coast shader preparation failed; retaining continuous fallback', error); });
+    }
+    coast.linked = materialProgramsReady(renderer.properties.get(this.beach));
+    if (coast.linked && !this.coastReadyMarked) { this.coastReadyMarked = true; performance.mark('ground:coast-ready', { detail: { fallbackMs: coast.fallbackMs } }); }
+    const share = coast.frame(performance.now()); this.beach.uniforms.uCoastAppear.value = share;
+    this.mesh.material = share === 1 ? this.beach : this.loadingFallback; surface.visible = share > 0 && share < 1;
+    if (share === 1 && !this.coastFullMarked) { this.coastFullMarked = true; performance.mark('ground:coast-full', { detail: { fallbackMs: coast.fallbackMs } }); }
+  }
   /** The sand's grain: how far each of its art pixels is lightened or darkened, at random (the tuning's beach.grain). */
   sandGrain(k: number): void { ((this.mesh.material as THREE.ShaderMaterial).uniforms.uBeach.value as THREE.Vector4).w = k; }
   private landFor: Beach | null = null;
   /** The ground's two programs (one set of uniforms): without the beach and sea, and with them. */
   private readonly plain: THREE.ShaderMaterial;
-  private readonly beach: THREE.ShaderMaterial;
+  private beach: THREE.ShaderMaterial | null = null;
   private landTex: THREE.DataTexture | null = null;
 
   setCircle(hue: number, hue2: number, brightness: number, turn: number): void {
@@ -896,10 +1016,11 @@ export class Ground {
   }
 
   dispose(): void {
+    this.disposed = true;
     const u = (this.mesh.material as THREE.ShaderMaterial).uniforms;
     for (const k of ["uDiscoBase", "uDiscoLit", "uLakes", "uLakeLooks"]) (u[k]?.value as THREE.Texture | null)?.dispose();
     this.near.dispose(); this.far.dispose(); this.landTex?.dispose(); this.floors.dispose(); this.carve.dispose(); this.lakeCarve.dispose(); this.plazaSigil.dispose(); this.discoTiles.dispose();
-    this.mesh.geometry.dispose(); this.plain.dispose(); this.beach.dispose();
+    this.mesh.geometry.dispose(); this.plain.dispose(); this.beach?.dispose(); this.loadingFallback.dispose();
   }
 }
 

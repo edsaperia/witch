@@ -43,6 +43,8 @@ export interface NightSpec {
   params: URLSearchParams;
   /** The boot's map, made in a worker from the page's first moments (app/mapPrep.ts startBootMapPrep): taken if it's this night's. */
   ready?: Promise<PrepRecord | null>;
+  /** A validated saved night's rules, already rebuilt before its view is made. */
+  resume?: Game;
 }
 
 /** The night's own flags, fresh each night (a second night left with the first's would never record to the chart). */
@@ -94,6 +96,8 @@ export interface Night {
  *  filled in after it, and re-pointed by each later night. */
 export interface Page {
   night: Night | null;
+  /** Forget the resumable night before replacing it (including a direct startNight). */
+  onNightEnd?: () => void;
   /** The night just ended (endNight) while the next one is made: what the page's pieces read meanwhile, and what the next
    *  carries on from (its sliders, the log's hooks, the overlay); let go once the next is on. */
   last?: Night;
@@ -116,7 +120,7 @@ export function wearHat(game: Game, look: unknown): void { const H = game.witche
 const freshFlags = (): NightFlags => ({ ready: false, landed: false, inBed: false, overRecorded: false, chartRecorded: false, castWanted: false, artRevealed: false, frame1: false, last: 0, attackTick: -1 });
 
 /** The playtest log's hooks main.ts sets (they read the holder, so they carry to the next night's log as they are). */
-const LOG_HOOKS = ["audioState", "frameState", "gpuState", "viewState", "keyState", "sceneState", "debugInfo", "debugText", "stalls"] as const;
+const LOG_HOOKS = ["audioState", "frameState", "gpuState", "viewState", "keyState", "sceneState", "debugInfo", "debugText", "stalls", "comments", "inputRecording"] as const;
 
 /** A night, made as the boot makes it, in the same order: the tuning from its link and this browser's settings, the game (from the
  *  chart's map prep if it's this night's), the link's switches for the game, her hat, a new playtest run, the knobs' start, the HUD
@@ -125,22 +129,24 @@ export async function startNight(page: Page, spec: NightSpec): Promise<Night> {
   // (the boot's is a page's first night only; every later one comes in place, View.setGame taking it)
   const old = page.night ?? page.last ?? null;
   if (old && spec.how === "boot") throw new Error("startNight: the boot's night is the page's first only");
-  if (page.night) closeNight(page.night);
+  if (page.night) { page.onNightEnd?.(); closeNight(page.night); }
   const { params, seed } = spec;
   // The link's switches and the tuning for this night (app/linkParams.ts).
-  const { tuning, musicStyle, musicCue, world, WORLD_DEFAULT } = tuningFromLink(params);
+  const fromLink = tuningFromLink(params);
+  const { musicStyle, musicCue, world, WORLD_DEFAULT } = fromLink;
+  const tuning = spec.resume?.tuning ?? fromLink.tuning;
   // The settings this browser remembers (the volumes, the waves' speed: app/settings.ts), on to their knobs before the game and
   // the sound are made; a knob the link's ?set= gives keeps the link's (a repro link), and ?pulse= is over the waves' (app/gameParams.ts).
   const linkSets = new Set((params.get("set") ?? "").split(";").map(p => p.split("=")[0]).filter(Boolean));
-  applySavedSettings(tuning, undefined, linkSets);
-  applyLoadRungs(tuning, linkSets); // (the quality ladder's load rungs: app/ladder.ts)
+  if (!spec.resume) applySavedSettings(tuning, undefined, linkSets);
+  if (!spec.resume) applyLoadRungs(tuning, linkSets); // (the quality ladder's load rungs: app/ladder.ts)
   // A night after another on this page: every pause-page slider as it was set (Ed's decision 5: the game's knobs too), on purpose,
   // but for those this night's link sets itself.
-  if (old) carryKnobs(old.tuning, tuning, DECISION_LIST, linkKnobs(params, DECISION_LIST));
-  applySettings(currentSettings(), tuning); // (the player's settings, last: app/playerSettings.ts; the same in mapPrep.ts, so the map prep's key matches)
+  if (old && !spec.resume) carryKnobs(old.tuning, tuning, DECISION_LIST, linkKnobs(params, DECISION_LIST));
+  if (!spec.resume) applySettings(currentSettings(), tuning); // (a resume keeps the saved rules' knobs)
   // Sailed here (&arrive=1, or in place): the island's map made already, in a worker while the chart flew (app/mapPrep.ts), if it's this night's.
   // (the boot: its own map, if the worker it started at once has it: app/mapPrep.ts startBootMapPrep)
-  const sailed = !!params.get("arrive") || spec.how === "sail", mapPrep = sailed ? await takeMapPrep(seed, tuning) : spec.ready ? useReadyMap(await spec.ready, seed, tuning) : null;
+  const sailed = !spec.resume && (!!params.get("arrive") || spec.how === "sail"), mapPrep = spec.resume ? null : sailed ? await takeMapPrep(seed, tuning) : spec.ready ? useReadyMap(await spec.ready, seed, tuning) : null;
   // (a task of its own from here: what follows, the game and the View, would otherwise run in IndexedDB's success callback and be
   // blamed on it, as Ed's laptop's stall log did, 2026-10-20)
   if (sailed) await new Promise(res => setTimeout(res, 0));
@@ -148,10 +154,12 @@ export async function startNight(page: Page, spec: NightSpec): Promise<Night> {
   // (the map: from the prep, guarded, or made as ever; ?timing=1 has its own step, witch:map-prep)
   const map = mapPrep ? readyMap(seed, tuning, mapPrep) : undefined;
   if (mapPrep) performance.mark("witch:map-prep");
-  const game = newGame(seed, tuning, 1, map);
+  const game = spec.resume ?? newGame(seed, tuning, 1, map);
   const stockWorld = spec.world ?? tuning.map?.world ?? 0;
-  if (old && (old.spec.world ?? old.tuning.map?.world ?? 0) === stockWorld) restoreMushroomStock(game.mushrooms, mushroomStock(old.game.mushrooms));
-  else loadMushroomStock(game.mushrooms, stockWorld);
+  if (!spec.resume) {
+    if (old && (old.spec.world ?? old.tuning.map?.world ?? 0) === stockWorld) restoreMushroomStock(game.mushrooms, mushroomStock(old.game.mushrooms));
+    else loadMushroomStock(game.mushrooms, stockWorld);
+  }
   performance.mark("witch:game");
   const cleanups: (() => void)[] = [];
   const saveStock = () => saveMushroomStock(game.mushrooms, stockWorld);
@@ -161,17 +169,16 @@ export async function startNight(page: Page, spec: NightSpec): Promise<Night> {
     cleanups.push(() => { saveStock(); window.clearInterval(timer); window.removeEventListener('pagehide', saveStock); });
   }
   // The link's switches for the game: the spell, quest, party's over, arena and waves (app/gameParams.ts).
-  cleanups.push(gameFromLink(game, tuning, params));
-  wearHat(game, page.look());
+  if (!spec.resume) { cleanups.push(gameFromLink(game, tuning, params)); wearHat(game, page.look()); }
   // The playtest log (Ed, 2026-10-04): a new run each night, or the nights would merge under the first's seed.
   const playtest = new PlaytestLog(game, page.build);
   if (old) for (const k of LOG_HOOKS) (playtest as unknown as Record<string, unknown>)[k] = old.playtest[k];
   // The debug knobs' start for this night: the link's fight and treetop speed (app/knobs.ts).
-  startKnobs({ tuning, game, world, playtest }, WORLD_DEFAULT, params);
+  if (!spec.resume) startKnobs({ tuning, game, world, playtest }, WORLD_DEFAULT, params);
   // The clock, its pops and the debug overlay (app/hud.ts); the overlay as it was.
   const hud = new Hud(game);
   hud.setDebug(old ? old.hud.debugOn : params.has("debug"));
-  const night: Night = { spec, seed, params, tuning, musicStyle, musicCue, world, WORLD_DEFAULT, game, playtest, hud, arrival: nightArrival(spec, tuning), flags: freshFlags(), cleanups };
+  const night: Night = { spec, seed, params, tuning, musicStyle, musicCue, world, WORLD_DEFAULT, game, playtest, hud, arrival: spec.resume ? null : nightArrival(spec, tuning), flags: freshFlags(), cleanups };
   page.freeze?.retarget(game, seed);
   page.shake?.retarget(game, tuning);
   page.perfHud?.retarget(game);
@@ -207,6 +214,7 @@ export function flyIn(n: Night, r: Arrival): ArrivalFlight | null {
 export function endNight(page: Page, strict = false): void {
   const n = page.night;
   if (!n) return;
+  page.onNightEnd?.();
   closeNight(n);
   if (strict) n.game.disposed = true;
   page.last = n;

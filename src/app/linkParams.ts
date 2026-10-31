@@ -1,3 +1,4 @@
+import { slotStorage } from "./saveSlots";
 // The link's switches (?px=, ?tilt=, ?music=, ?hills=, ?shape=, ...): the tuning for this load, made from the tuning file
 // and the page's query parameters (and the world's knobs kept on this browser). Called once, before the game is made.
 import { TUNING } from "../rules/tuning";
@@ -24,7 +25,7 @@ import { defaultGenome, newWitch } from "./defaultLook";
  *  link's alone now (2026-10-07: a 14 x 14 map left in Ed's browser gave every PR build 196 areas and threw off each
  *  playtest's balance), so a load forgets them. */
 export const FORGOTTEN_KEYS = ["witch.world", "witch.fight", "witch.wave"]; // (and the waves' pace, 2026-10-08: Ed, "stop remembering it")
-export function forgetRuleKnobs(storage: Pick<Storage, "removeItem"> | undefined = globalThis.localStorage): void {
+export function forgetRuleKnobs(storage: Pick<Storage, "removeItem"> | undefined = slotStorage): void {
   for (const k of FORGOTTEN_KEYS) try { storage?.removeItem(k); } catch { /* storage blocked */ }
 }
 
@@ -248,14 +249,14 @@ export function tuningFromLink(params: URLSearchParams) {
   { const own = params.get("own"); if (own !== null) applyOwn(own); }
   // Her hat's spell (app/loadout.ts): the creator's, kept on this browser, or ?hat=; her hats (app/hatSave.ts; Ed, 2026-10-23: the
   // plain hat hers, the rest found): a saved hat she doesn't own is the plain one.
-  { const L = loadoutFrom(params), hats = hatsFrom(params, L.hat), hat = hats === "*" || L.hat === "none" || hats.split(",").includes(L.hat) || unlockAll() ? L.hat : "none"; tuning.spells = { ...tuning.spells, hat, hats }; }
+  { const L = loadoutFrom(params), hats = unlockAll() ? "*" : hatsFrom(params, L.hat), hat = hats === "*" || L.hat === "none" || hats.split(",").includes(L.hat) ? L.hat : "none"; tuning.spells = { ...tuning.spells, hat, hats }; }
   // Her broom's parts (app/broomSave.ts; the Workshop, Ed 2026-10-23): those fitted at the bay on this browser, or
   // ?parts=missile,ladder,nozzles for one load (any parts, found or not: for testing). Her broom's spell is the set they complete.
   { const P = params.get("parts"); tuning.spells = { ...tuning.spells, parts: P !== null ? P : fittedParts(loadBroom().fitted).map(p => p.id).join(",") }; }
   // Her bag (rules/bags.ts; Ed, 2026-10-29: a Bumbag and a Far bag to choose from): the one her saved look wears (localStorage
   // witch.genome, chosen at the bags station), or ?bag=starter, ?bag=quick, ?bag=far (or a bag item's id; ?bag=none for none) for one load.
   { const B = params.get("bag"), ids: Record<string, string> = { starter: "satchel", quick: "bumbag", far: "purse", none: "" };
-    let look: Record<string, unknown> | null = null; try { look = newWitch() ? null : JSON.parse(localStorage.getItem("witch.genome") ?? "null"); } catch { /* storage blocked or spoilt: none */ }
+    let look: Record<string, unknown> | null = null; try { look = newWitch() ? null : JSON.parse(slotStorage.getItem("witch.genome") ?? "null"); } catch { /* storage blocked or spoilt: none */ }
     look ??= defaultGenome(); // (a brand-new witch: the game's default look's bag, app/defaultLook.ts)
     tuning.spells = { ...tuning.spells, bag: B !== null ? ids[B] ?? B : bagOf(look) }; }
   // ?set=path=value;path=value (the repro link's: every setting changed from the build's, app/repro.ts), last, over the rest.

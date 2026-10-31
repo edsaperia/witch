@@ -11,6 +11,7 @@ import { bootPath } from "./bootRing";
 import { speakerCircle } from "./departure";
 import { leyRadius } from "./leyroute";
 
+// Retain the full route: seven distinct stones and five/six advancing waves must not exhaust the fixture.
 const map = generateMap(123, TUNING);
 /** The same map with leyLines.advance "first": a quest done moves the line on (the default since Ed, 2026-10-08, is "wave": it doesn't). */
 const firstMap = generateMap(123, withTuning({ leyLines: { ...TUNING.leyLines, advance: "first" } }));
@@ -96,6 +97,7 @@ describe("the whole route, the whole time (Ed, 2026-10-06: \"I think the leyline
 });
 
 describe("the first ley line leaves the treehouse's front, towards the dancefloor (Ed, 2026-10-05; the oak north-west of it, 2026-10-24)", () => {
+  // Retain seeded first objectives: the departure sweeps are checked against their actual bearings and boot paths.
   const D = TUNING.leyLines.depart;
   it("starts at the treehouse's front at the start of a run", () => {
     const m = generateMap(123, TUNING), p = newParty(m), first = ahead(p, m, 2)[0];

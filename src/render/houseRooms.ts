@@ -16,7 +16,8 @@ import { deckOf, type Deck } from "../rules/treehouse";
 import { fromPlan, toPlan, HOUSE_ROOMS, hatsOnFloor, hatSlots, hatToTake, objectAt, type HouseObject } from "../rules/houseRooms";
 import { groundHeight } from "./height";
 import { alongRay } from "./view/home";
-import { standing, type FloorPixels } from "./houseArt";
+import type { FloorPixels } from "./houseArt";
+import houseStanding from "virtual:house-standing";
 import { paintFloorOff } from "./houseFloor";
 import type { PlanMap } from "./crown";
 import { bakePieceHere, furnitureState, furnitureStates, pieceArt, standing as facing, DRAWN_ELSEWHERE, FURNITURE, type FurnitureArt } from "./houseFurniture";
@@ -33,6 +34,10 @@ import { LoanSparkle } from "./loanSparkle";
 import { UseGlow } from "./useGlow";
 import { glyphOf, keycapCanvas, wasdCanvas, type KeycapGlyph } from "../ui/keyHint";
 import { atDecks } from "../rules/wakeUp";
+import { loadingFloorBounds } from './landingReadiness';
+import { LIGHT_UNIFORMS } from './lighting';
+import { LOADING_LIGHT_GLSL } from './loadingLight';
+import { materialProgramsReady } from './shaderDrawGate';
 import { loanFind } from "../rules/finds";
 
 type V3 = { x: number; y: number; z: number };
@@ -55,7 +60,7 @@ const inOrder = (q: Quad[]) => q.sort((a, b) => a.layer - b.layer || a.depth - b
  *  objects' boxes. */
 function buildQuads(): Quad[] {
   const q: Quad[] = [];
-  for (const u of standing(HOUSE_ROOMS)) q.push(quad(u.p, u.rgb, u.layer));
+  for (const u of houseStanding) q.push(quad(u.p, u.rgb, u.layer));
   objects(q);
   return inOrder(q);
 }
@@ -197,6 +202,13 @@ export class HouseRoomsView {
   private readonly spot = new Spotlight();
   // (the Ent's own floors, painted: render/houseArt.ts; a grid laid on the house's plane, an art pixel a texel)
   private readonly floor = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide }));
+  readonly loadingFloor = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.ShaderMaterial({
+    uniforms: { ...LIGHT_UNIFORMS, uLoadingOpacity: { value: 1 } }, transparent: true, depthWrite: false, side: THREE.DoubleSide,
+    vertexShader: `varying vec3 vWorld; void main() { vec4 p = modelMatrix * vec4(position, 1.0); vWorld = p.xyz; gl_Position = projectionMatrix * viewMatrix * p; }`,
+    fragmentShader: `varying vec3 vWorld; uniform float uLoadingOpacity; ${LOADING_LIGHT_GLSL} void main() { gl_FragColor = vec4(loadingLight(vec3(0.62, 0.53, 0.37), vWorld), uLoadingOpacity); }`,
+  }));
+  private floorArrivalAt = -Infinity;
+  private floorCompiled = true;
   private floorArt: FloorPixels | null = null;
   /** The floor being painted off the page's thread (render/houseFloor.ts), and what came back. */
   private floorAsked = false;
@@ -220,7 +232,9 @@ export class HouseRoomsView {
     this.floor.frustumCulled = false; this.floor.visible = false; this.floor.renderOrder = 19.925;
     this.terraceFloor.frustumCulled = false; this.terraceFloor.visible = false;
     this.furniture.add(this.spot.mesh, this.glow.mesh);
-    this.meshes = [this.floor, this.terraceFloor, ...this.parts.map(p => p.mesh), this.furniture, this.workshop.group, this.brewing.group, ...programTwins()];
+    this.loadingFloor.name = 'Loading house platform'; this.loadingFloor.visible = false; this.loadingFloor.frustumCulled = false; this.loadingFloor.renderOrder = 19.924;
+    this.loadingFloor.geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(12), 3)); this.loadingFloor.geometry.setIndex([0, 1, 2, 0, 2, 3]);
+    this.meshes = [this.loadingFloor, this.floor, this.terraceFloor, ...this.parts.map(p => p.mesh), this.furniture, this.workshop.group, this.brewing.group, ...programTwins()];
     this.box = document.createElement("div");
     this.box.id = "house-tags"; // (hidden under a table's chart: ui/chartOverlay.ts)
     this.box.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:11;display:none";
@@ -246,11 +260,20 @@ export class HouseRoomsView {
 
   /** Another night at a house with rooms (View.setGame): its plan made afresh, nothing said. */
   reset(): void {
+    this.loadingFloor.visible = false;
     this.hub = -1; this.quads = []; this.hatsKey = ""; this.said = null; this.box.style.display = "none";
     for (const p of this.parts) p.mesh.visible = false;
   }
+  /** The actual floor and bed, not optional props/ground/detail programs. */
+  landingReady(renderer: THREE.WebGLRenderer): boolean {
+    const bed = HOUSE_ROOMS.objects.find(o => o.use.kind === 'bed');
+    const piece = [...this.pieces.values()].find(p => p.id === bed?.id && p.mesh.visible);
+    return !!(this.floorArt && this.floorCompiled && this.floor.visible && piece &&
+      [this.floor, this.terraceFloor, piece.mesh, ...this.parts.map(p => p.mesh).filter(o => o.visible)].every(o => materialProgramsReady(renderer.properties.get(o.material))));
+  }
   /** Off the page (an island whose treehouse has no rooms): its meshes' geometry and material let go, its labels taken off. */
   dispose(): void {
+    this.loadingFloor.geometry.dispose(); this.loadingFloor.material.dispose();
     for (const p of this.parts) p.geo.dispose();
     this.mat.dispose(); this.box.remove();
     for (const { art, mesh } of this.pieces.values()) { art.tex.dispose(); mesh.geometry.dispose(); (mesh.material as THREE.Material).dispose(); }
@@ -264,12 +287,69 @@ export class HouseRoomsView {
   update(v: View, onTreehouse: (px: number, py: number) => V3, ht: number): void {
     const g = v.game, w = g.witch, t = g.tuning, T = v.assets.treehouse, d = deckOf(g.map, t);
     const shown = !!(d?.house?.rooms && T.ent && w.perch && (w.mode === "ground" || w.mode === "descending")); // (at her decks too: the Terrace the oak's floor, render/houseArt.ts)
+    const late = v.shaderLandingLimited, share = v.landingHouseShare, arrivalNow = performance.now();
+    const world = (px: number, pz: number, h: number): V3 => { const p = fromPlan(d!, px, pz); return { ...p, y: groundHeight(p.x, p.z) + d!.h + h }; };
+    const g0 = d ? groundHeight(d.x, d.z) : 0;
+    const ky = T.ent && d ? (T.seat.y - T.ent.deck.y) / Math.max(0.1, d.seat.z - d.z) : 0;
+    const toWorld = (px: number, pz: number, h: number): V3 => {
+      if (!T.ent) return world(px, pz, h);
+      const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent.deck.x + x / v.mpp, T.ent.deck.y + z * ky + v.houseShift - h / v.mpp);
+      const b = alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, z);
+      if (!late || share >= 1) return b;
+      const a = world(px, pz, h);
+      return { x: a.x + (b.x - a.x) * share, y: a.y + (b.y - a.y) * share, z: a.z + (b.z - a.z) * share };
+    };
+    const floorShare = this.floorArt && this.floorCompiled ? Math.min(1, Math.max(0, (arrivalNow - this.floorArrivalAt) / 800)) : 0;
+    const terraceMaterial = this.terraceFloor.material as THREE.MeshBasicMaterial;
+    if (terraceMaterial.transparent !== late) { terraceMaterial.transparent = late; terraceMaterial.needsUpdate = true; }
+    this.loadingFloor.visible = !!(late && d?.house?.rooms && w.perch && share * floorShare < 1);
+    if (this.loadingFloor.visible) {
+      const b = loadingFloorBounds([...HOUSE_ROOMS.rooms, ...HOUSE_ROOMS.corridors], d!.r), pos = this.loadingFloor.geometry.getAttribute('position') as THREE.BufferAttribute;
+      [[b.x0, b.z0], [b.x1, b.z0], [b.x1, b.z1], [b.x0, b.z1]].forEach(([x, z], i) => { const p = toWorld(x, z, 0); pos.setXYZ(i, p.x, p.y, p.z); });
+      pos.needsUpdate = true; this.loadingFloor.material.uniforms.uLoadingOpacity.value = 1 - share * floorShare;
+    }
+    this.mat.opacity = late ? share : 1;
     for (const p of this.parts) p.mesh.visible = shown;
     this.furniture.visible = shown;
     this.workshop.group.visible = shown;
     this.brewing.group.visible = shown;
     this.floor.visible = this.terraceFloor.visible = shown;
-    if (!shown) { this.box.style.display = "none"; this.plan = null; this.sparkle?.draw([], 0, 1); v.usePrompt.id = ""; return; }
+    if (!shown) {
+      this.box.style.display = "none"; this.plan = null; this.sparkle?.draw([], 0, 1); v.usePrompt.id = "";
+      for (const el of [this.ring, this.wakeL, this.wakeR, ...this.labels.map(l => l.el)]) el.style.display = 'none';
+      if (v.landingSleeping && d?.house?.rooms) {
+        // Retain the boot's already-drawn bed while the next house atlas is still absent.
+        const bed = HOUSE_ROOMS.objects.find(o => o.use.kind === 'bed'), M = v.camera.matrixWorld.elements;
+        let used = false;
+        for (const { id, art, mesh, pos } of this.pieces.values()) {
+          mesh.visible = !used && id === bed?.id;
+          if (!mesh.visible || !bed) continue;
+          used = true; this.furniture.visible = true;
+          mesh.userData.loadingOrder ??= mesh.renderOrder; mesh.renderOrder = 9.99;
+          (mesh.material as THREE.MeshBasicMaterial).opacity = 1;
+          const anchor = world(bed.x, bed.z, 0);
+          [[-art.ox, -art.oy], [art.w - art.ox, -art.oy], [art.w - art.ox, art.h - art.oy], [-art.ox, art.h - art.oy]].forEach(([dx, dy], i) => {
+            const x = dx * v.mpp, y = -dy * v.mpp;
+            pos[i * 3] = anchor.x + M[0] * x + M[4] * y;
+            pos[i * 3 + 1] = anchor.y + M[1] * x + M[5] * y;
+            pos[i * 3 + 2] = anchor.z + M[2] * x + M[6] * y;
+          });
+          (mesh.geometry.getAttribute('position') as THREE.BufferAttribute).needsUpdate = true;
+        }
+      } else if (late && d?.house?.rooms && w.perch) {
+        const at = objectAt(d, w.x, w.z);
+        if (at && at.use.kind !== 'scenery') {
+          const p = toWorld(at.x, at.z, 1.5), s = v.v3.set(p.x, p.y, p.z).project(v.camera), cv = v.canvas.getBoundingClientRect();
+          this.box.style.display = 'block'; this.tag.style.display = this.bubble.style.display = 'block';
+          this.tag.replaceChildren(keycapCanvas(useGlyph(v.useDevice), Math.max(2, Math.round(cv.width / Math.max(1, v.width)))));
+          for (const el of [this.tag, this.bubble]) { el.style.left = `${cv.left + (s.x + 1) * cv.width / 2}px`; el.style.top = `${cv.top + (1 - s.y) * cv.height / 2}px`; }
+          this.bubble.style.top = `${cv.top + (1 - s.y) * cv.height / 2 + 28}px`;
+          this.bubble.textContent = this.said?.line ?? at.label; v.usePrompt.id = at.id; v.usePrompt.top = cv.top + (1 - s.y) * cv.height / 2 - this.tag.offsetHeight;
+          this.tapUse = v.useDevice === 'touch' ? v.onUse : null; this.tag.style.pointerEvents = this.tapUse ? 'auto' : 'none';
+        }
+      }
+      return;
+    }
     const D = d as Deck & { house: NonNullable<Deck["house"]> };
     if (this.hub !== D.r) { this.hub = D.r; this.quads = buildQuads(); this.hatsKey = ""; }
     // her hats on the hats' floor (rules/houseRooms.ts floorHats: laid out the first time she comes in)
@@ -285,18 +365,19 @@ export class HouseRoomsView {
       this.parts[4].set(this.quads.filter(hat));
     }
     // the house's plane (render/view/witch.ts): x across the Ent's art in its pixels, z down it, h up it; along the ray by z
-    const ky = (T.seat.y - T.ent!.deck.y) / Math.max(0.1, D.seat.z - D.z), g0 = groundHeight(D.x, D.z);
     // (each point of the plan turned into the house's metres first: rules/houseRooms.ts fromPlan)
-    const toWorld = (px: number, pz: number, h: number): V3 => { const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent!.deck.x + x / v.mpp, T.ent!.deck.y + z * ky + v.houseShift - h / v.mpp); return alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, z); }; // (slid up the plane with her: render/view/witch.ts houseShift)
     if (this.floor.visible && !this.floorArt) {
       // (painted by workers, the first time it's shown: the boot freeze, 2026-10-25; the floor shows once it's come)
       if (!this.floorAsked) { this.floorAsked = true; const p = paintFloorOff(v.mpp).then(F => { this.floorCame = F; }); v.assets.track("houseFloor", p); }
       if (!this.floorCame) this.floor.visible = this.terraceFloor.visible = false;
     }
+    let floorCreated = false;
     if (this.floor.visible) {
       const N = 48;
       if (!this.floorArt) {
         const A = (this.floorArt = this.floorCame!);
+        floorCreated = true;
+        this.floorArrivalAt = late ? arrivalNow : -Infinity;
         for (const [mesh, px] of [[this.floor, A.rest], [this.terraceFloor, A.terrace]] as const) {
           const tex = gpuKind(new THREE.DataTexture(px, A.w, A.h, THREE.RGBAFormat), "house");
           tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.flipY = false; tex.colorSpace = THREE.NoColorSpace; tex.needsUpdate = true; // (its colours as the quads' vertex colours are: as they are)
@@ -312,6 +393,13 @@ export class HouseRoomsView {
       for (let j = 0, k = 0; j <= N; j++) for (let i = 0; i <= N; i++, k++) { const p = toWorld(A.x0 + (A.ww * i) / N, A.z0 + (A.hh * j) / N, 0); pos.setXYZ(k, p.x, p.y, p.z); }
       pos.needsUpdate = true;
     }
+    if (late && floorCreated) {
+      this.floorCompiled = false;
+      void Promise.all([v.renderer.compileAsync(this.floor, v.camera, v.scene), v.renderer.compileAsync(this.terraceFloor, v.camera, v.scene)]).then(() => { this.floorCompiled = true; this.floorArrivalAt = performance.now(); }, () => {});
+    }
+    const nativeShare = late ? share * (this.floorArt && this.floorCompiled ? Math.min(1, Math.max(0, (arrivalNow - this.floorArrivalAt) / 800)) : 0) : 1;
+    (this.floor.material as THREE.MeshBasicMaterial).opacity = nativeShare;
+    terraceMaterial.opacity = nativeShare;
     // (the floors' map without the push along the camera's rays, which moves nothing on the screen: what's laid over them in their
     // plane, the crown, is drawn after them with no depth)
     { const flat = (px: number, pz: number, h: number) => { const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent!.deck.x + x / v.mpp, T.ent!.deck.y + z * ky + v.houseShift - h / v.mpp); return new THREE.Vector3(p.x, p.y + g0, p.z); }; // (slid with the rooms: houseShift)
@@ -366,13 +454,23 @@ export class HouseRoomsView {
       // (after its part's floors and walls, before its near rails; nearer pieces later; a room's dressing before all furniture)
       const mesh = new THREE.Mesh(geo, mat);
       mesh.frustumCulled = false; mesh.renderOrder = furnitureOrder(south(at.x, at.z), decor);
+      if (late) mesh.userData.landingAppearAt = arrivalNow;
       this.furniture.add(mesh); this.pieces.set(key, { art, mesh, pos, id, x: at.x, z: at.z });
     }
-    const pxWorld = (px: number, pz: number, dx: number, dy: number): V3 => { const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent!.deck.x + x / v.mpp + dx, T.ent!.deck.y + z * ky + v.houseShift + dy); return alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, z); };
+    const pxWorld = (px: number, pz: number, dx: number, dy: number): V3 => {
+      const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent!.deck.x + x / v.mpp + dx, T.ent!.deck.y + z * ky + v.houseShift + dy);
+      const b = alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, z);
+      if (!late || share >= 1) return b;
+      const anchor = toWorld(px, pz, 0);
+      // Carry the whole painted piece with its moving floor anchor; retain its own pixel offsets.
+      const q = onTreehouse(T.ent!.deck.x + x / v.mpp, T.ent!.deck.y + z * ky + v.houseShift), full = alongRay(v, { x: q.x, y: q.y + g0, z: q.z }, z);
+      return { x: b.x + anchor.x - full.x, y: b.y + anchor.y - full.y, z: b.z + anchor.z - full.z };
+    };
     this.brewing.update(v, pxWorld, ky * v.mpp);
     let glowed = false;
     const now = performance.now() / 1000;
     for (const [k, { art, mesh, pos, id, x, z }] of this.pieces) {
+      if (mesh.userData.loadingOrder !== undefined) { mesh.renderOrder = mesh.userData.loadingOrder; delete mesh.userData.loadingOrder; }
       const o = HOUSE_ROOMS.objects.find(q => q.id === id);
       // (a piece in another state than now's, hidden, unless now's isn't in yet: the last one shown stays till it is; a room's dressing always)
       const cur = o ? pieceKey(o) : k;
@@ -385,6 +483,7 @@ export class HouseRoomsView {
       this.marks.set(`${id}.top`, pxWorld(x, z, art.top.x - art.ox, art.top.y - art.oy)); // (its top as drawn: pins clear it, render/pins.ts)
       (mesh.geometry.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
       (mesh.material as THREE.MeshBasicMaterial).color.setScalar(id === lit ? 1.15 : 1);
+      (mesh.material as THREE.MeshBasicMaterial).opacity = late ? share * Math.min(1, Math.max(0, (arrivalNow - (mesh.userData.landingAppearAt ?? -Infinity)) / 800)) : 1;
       if (id === lit) { this.glow.set(art.tex, art.w, art.h, -art.ox, -art.oy, (dx, dy) => pxWorld(x, z, dx, dy), mesh.renderOrder, now); glowed = true; }
     }
     // the Workshop's (render/workshopArt.ts): her broom resting on the bay while she's at it, on the lathe while she's at that (Ed,
@@ -464,7 +563,7 @@ export class HouseRoomsView {
     // alone, the old walking keys' (ui/keyHint.ts), the use button as bound (E, the pad's ✕: ui/keyHint.ts glyphOf), or on a touch screen the keycap itself to tap; none while it's
     // open. Up at her decks before the party, E there starts it (rules/wakeUp.ts atDecks).
     const decks = !at && g.wake?.open && g.party.spellAt === null && atDecks(g) ? decksSpot(D) : null;
-    const basket = g.mushrooms ? basketNear(g) : null;
+    const basket = g.mushrooms && !g.cauldron ? basketNear(g) : null;
     const basketTag: HouseObject | null = basket && !g.mushrooms.smoke && !g.mushrooms.affected[W.id] ? {
       id: `mushroom-basket:${basket.type}`, room: 'kitchen', label: `${basket.type} mushrooms`,
       ...toPlanAt0(basket.x - D.x, basket.z - D.z), w: 1.4, d: 1.4, h: 1.5, use: { kind: 'scenery' },

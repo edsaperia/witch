@@ -8,12 +8,14 @@ import { affection, blocksLetters, hit, hold, invitable } from "./affection";
 import { inviteCreature, newLeash } from "./leash";
 import { startSiege } from "./combat";
 import { cellKey } from "./party";
+import { smallWorldTuning } from "../test/worlds";
 
 // Creature states (Ed, 2026-10-05; issue #87).
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, secs: number, each?: () => void) => { for (let i = 0; i < Math.round(secs / STEP); i++) { stepGame(g, idle, STEP); each?.(); } };
-function quiet(t: Tuning = TUNING): Game {
-  const g = newGame(77, t);
+function quiet(t: Tuning = TUNING, meters = false): Game {
+  // Combat cases retain >200 m recruits, area-edge searches and seeded party-place geometry.
+  const g = newGame(77, meters ? smallWorldTuning(t, "Direct affection meter and hold-time checks do not simulate combat or cross-area routes.") : t);
   g.clock.paused = false;
   const d = g.map.dancefloor;
   g.witch = { ...g.witch, seated: false, x: d.x, z: d.z + 20, mode: "treetop", lift: 1 }; // (out of every fight herself)
@@ -133,7 +135,7 @@ describe("creature states (#87)", () => {
   });
 
   it("the game's 💌 meter drains slowly (Ed, 2026-10-06: \"the invitation dropoff rate ... is too fast\"): held drainDelay seconds, then invites.drain of a full meter a second", () => {
-    const g = quiet(), A = affectionOf(g), c = place(g, "hare", 1, 5, 0), t0 = g.clock.time;
+    const g = quiet(TUNING, true), A = affectionOf(g), c = place(g, "hare", 1, 5, 0), t0 = g.clock.time;
     for (let i = 0; i < 4; i++) A.hit(c, 1, t0);
     const m0 = A.affection(c)!, at = (s: number) => { g.clock.time = t0 + s; return A.affection(c)!; };
     expect(STATES.affection.drainDelay).toBeGreaterThanOrEqual(3);
@@ -144,7 +146,7 @@ describe("creature states (#87)", () => {
   });
 
   it("fills the 💌 meter: more hits at higher levels, one counted per creature every gap, draining slowly; full, it's stunned, the next makes it happy, and full again (states.leash 'again') it's leashed", () => {
-    const g = quiet(), leash = newLeash(), saved = STATES.leash;
+    const g = quiet(TUNING, true), leash = newLeash(), saved = STATES.leash;
     STATES.leash = "again"; // (the old second meter, kept behind the flag: the game picks up a rune now, pickup.test.ts)
     try { for (const level of [0, 1, 2] as const) {
       const c = place(g, "hare", level, level * 5, 0), world = { time: 0, leash: (k: Creature) => inviteCreature(leash, k, k.x, k.z, 0) };
@@ -166,7 +168,7 @@ describe("creature states (#87)", () => {
   });
 
   it("leashes a happy one held on for holdTime (states.leash 'hold'), starting over if let go", () => {
-    const g = quiet(), leash = newLeash(), c = place(g, "hare", 1, 0, 0, "happy"), saved = STATES.leash, world = { time: 0, leash: (k: Creature) => inviteCreature(leash, k, k.x, k.z, 0) };
+    const g = quiet(TUNING, true), leash = newLeash(), c = place(g, "hare", 1, 0, 0, "happy"), saved = STATES.leash, world = { time: 0, leash: (k: Creature) => inviteCreature(leash, k, k.x, k.z, 0) };
     STATES.leash = "hold";
     try {
       let t = 0;

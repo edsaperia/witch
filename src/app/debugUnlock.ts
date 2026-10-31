@@ -1,3 +1,4 @@
+import { slotStorage } from "./saveSlots";
 // The pause page's debug switch, "Unlock everything" (Ed, 2026-10-29: "I need a debug toggle to allow me to select anything (outfits,
 // bags, brooms, islands) on the pause menu"): while it's on, every wardrobe item and bag (the shelves' own lists, config/wardrobe.json,
 // so a new bag shows with no change here), every broom part, every spell hat and every island on the sea chart can be chosen, whatever
@@ -8,11 +9,14 @@
 import { ITEMS } from "../rules/wardrobe";
 import { PART_IDS } from "../rules/broomParts";
 import { MUSHROOM_COLOURS } from "../rules/mushrooms";
-import type { Game } from "../rules/game";
+import type { Game, Witch } from "../rules/game";
+import { HAT_FLOOR } from "../rules/houseRooms";
+import { ownsHat } from "../rules/spells";
+import { hatsFrom } from "./hatSave";
 
 export const UNLOCK_KEY = "witch.debug.unlockAll";
 type Store = Pick<Storage, "getItem" | "setItem" | "removeItem">;
-const storeOf = (s?: Store | null): Store | null => { try { return s ?? globalThis.localStorage ?? null; } catch { return null; } };
+const storeOf = (s?: Store | null): Store | null => { try { return s ?? slotStorage ?? null; } catch { return null; } };
 
 /** Whether the switch is on (off when storage is blocked or spoilt). */
 export function unlockAll(storage?: Store | null): boolean {
@@ -31,3 +35,15 @@ export function stockMushroomBaskets(g: Pick<Game, 'mushrooms'>): void {
 export const ownedToChoose = (owned: ReadonlySet<string>, on = unlockAll()): Set<string> => on ? new Set([...owned, ...ITEMS.map(i => i.id)]) : new Set(owned);
 /** The broom parts the Workshop offers: hers tonight, or with the switch on every part. */
 export const partsToChoose = (found: ReadonlySet<string>, on = unlockAll()): Set<string> => on ? new Set([...found, ...PART_IDS]) : new Set(found);
+
+/** Refresh the actual hats, not just the creator's choices (Ed, 2026-10-30: all hats spawn in the Cloakroom).
+ * Headless callers may omit params; no storage is written. Off restores the save or this load's ?hats= override. */
+export function syncHatUnlock(W: Witch, on: boolean, params = new URLSearchParams()): void {
+  const owned = hatsFrom(params, params.get("hat") ?? "none");
+  W.spells.hats = on || owned === "*" ? undefined : owned.split(",").filter(Boolean);
+  const floor = W.house?.hats;
+  if (!floor) return; // The normal lazy layout will use the refreshed availability.
+  for (let i = 0; i < floor.length; i++) if (floor[i] && !ownsHat(W.spells, floor[i])) floor[i] = "";
+  const out = new Set([W.spells.hat, ...W.hat.left.map(h => h.spell), ...floor.filter(Boolean)]);
+  HAT_FLOOR.forEach((id, i) => { if (!floor[i] && !out.has(id) && ownsHat(W.spells, id)) { floor[i] = id; out.add(id); } });
+}

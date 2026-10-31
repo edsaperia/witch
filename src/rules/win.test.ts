@@ -26,6 +26,7 @@ const run = (g: Game, secs: number, each?: () => void) => { for (let i = 0; i < 
 
 /** A 10-area island, waves held, every wave brought on (the last noted when it's the final stone); she hovers out of it all. */
 function toTheEnd(seed = 7): { g: Game; finalSeen: boolean } {
+  // Retain ten authored areas for the complete reverse victory lap, dealt legends and population-sized conga.
   const g = newGame(seed, withTuning({ map: { ...TUNING.map!, islandAreas: 10 } }));
   g.clock.paused = false; g.party.spellAt = undefined; g.party.paused = true;
   g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
@@ -223,6 +224,7 @@ describe("a quick win (Ed, 2026-10-29: \"The pulse ended in a strange place, pos
   // and mid-route after wave 1. Home's stone is the treehouse's front, the boot ring's path before the route's start (links -1), so
   // the pulse home runs on round the ring, that much longer, and the win comes as it gets there.
   function cleared(stage: "ring" | "first" | "start" | "route"): Game {
+    // Retain seeded ten-area link lengths: fixed pulse distances exercise distinct ring/first/mid-route stages.
     const g = newGame(7, withTuning({ map: { ...TUNING.map!, islandAreas: 10 } }));
     g.clock.paused = false; g.party.spellAt = undefined; g.party.paused = true;
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };

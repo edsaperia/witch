@@ -96,8 +96,13 @@ export class BeachView {
     const b = this.at.beach, w = g.witch;
     if (!b) return false;
     const seen = !!fly && b.intoSand(fly.x, fly.z) >= -fly.reach;
-    if (b.intoSand(w.x, w.z) < -(g.tuning.beach?.shown ?? 0) && !seen) { this.leave(); this.gazing = false; return false; }
-    if (!this.on) { this.on = true; this.ground.setBeach(b); this.assets.partyWitchArt(null); } // (her lying-down art asked for ahead)
+    const witchIntoSand = b.intoSand(w.x, w.z), shown = g.tuning.beach?.shown ?? 0;
+    if (witchIntoSand < -shown && !seen) { this.leave(); this.gazing = false; return false; }
+    if (!this.on) {
+      const witchNear = witchIntoSand >= -shown;
+      try { performance.mark('ground:coast-demand', { detail: { seed: g.seed, trigger: seen && witchNear ? 'intro-camera+witch' : seen ? 'intro-camera' : 'near-coast-witch', witch: { x: w.x, z: w.z, intoSand: witchIntoSand, shown }, camera: fly ? { x: fly.x, z: fly.z, reach: fly.reach, intoSand: b.intoSand(fly.x, fly.z) } : null } }); } catch { /* no timeline */ }
+      this.on = true; this.ground.setBeach(b); this.assets.partyWitchArt(null); // (her lying-down art asked for ahead)
+    }
     this.ground.sandGrain(g.tuning.beach?.grain ?? 0); // (live: the pause page's slider)
     if (g.map.zoo) return false; // (the zoo's edge is a band of water pouring off the disc, render/zooFences.ts ZooFall: no woods' edge, decorations, dolphins or kraken)
     this.edge.update(b, this.assets.beachEdgeArt(), w.x, w.z, g.tuning.beach?.decor?.clear);

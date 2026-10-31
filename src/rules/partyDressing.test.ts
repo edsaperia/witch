@@ -5,6 +5,7 @@ import { generateMap } from "./map";
 import { floorClearing } from "./speakers";
 import { TUNING } from "./tuning";
 
+// Keep the radius placement fixture: whole-map density/diversity and the fixed 12×12 generated-prop/neon probes cover its seeded spatial distribution.
 const map = generateMap(123, TUNING), t = TUNING, P = t.partyObjects;
 /** Cut from the game in Ed's scenery review (2026-10-19). */
 const CUT = ["fairy-bush", "fairy-branch", "led-cube", "mirror-ball", "uv-rock", "uv-stump", "fairy-lights-hanging", "party-tent", "inflatable-ring", "speaker-stack"];

@@ -2,7 +2,9 @@
 // the Terrace and out along every branch, kept in by its edge, the locked rooms' doors, each object's E, the hats' floor, and the bed.
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
-import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { newGame as fullGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Room walls, furniture, doors and Terrace landings use one house's layout, independent of island extent.");
 import { deckOf, keepInHouse, onFloor, onTerrace } from "./treehouse";
 import { HOUSE_ROOMS, floorHats, fromPlan, hatSlots, hatToTake, objectAt, objectFront, objectWorld, toPlan } from "./houseRooms";
 import { field, inRoom } from "../../config/house/shape.js";

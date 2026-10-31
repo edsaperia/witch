@@ -13,7 +13,7 @@
 //   flares, the friends' sigils arc down off the column to where they lie, the enemies' fade;
 // - the loose sigils lying on the ground, to pick up (a sleeping legend's tethers her: render/leash/stack.ts).
 import { NOTES, rainbow } from "../indicator";
-import { castReady, castShown, castSpot, stoneStack, type StackEntry } from "../../rules/stoneStacks";
+import { castingStone, castReady, castShown, castSpot, pastCasting, stoneStack, type StackEntry } from "../../rules/stoneStacks";
 import { RUNE_SCALE, sigilSize } from "../../rules/runeOffset";
 import { hash2 } from "../../rules/random";
 import type { LeashView } from "../leash";
@@ -61,7 +61,7 @@ export interface StoneView {
   bars: Float32Array;
   /** The spell's spot shown this frame (its 🎶: x, z, its size in m, how far faded in, and whether she's casting there), for its key
    *  prompt (render/castTag.ts); null: none shown. */
-  notes: { x: number; z: number; size: number; on: number; casting: boolean } | null;
+  notes: { x: number; z: number; size: number; on: number; casting: boolean; /** she can cast here (rules/stoneStacks.ts castingStone): on its casting ground, the stump's cut */ here: boolean } | null;
   /** On a stump, the light riding the dial's filling edge round it in that bar's colour (render/view/home.ts lights the stump and the
    *  trees round it with it, a frame on); null: none. */
   castLight: { x: number; z: number; rgb: [number, number, number]; k: number } | null;
@@ -115,13 +115,17 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
     if (vis > 0.01) items.forEach((it, i) => { const h = st.top + P[i].y; sigil(it.id, it.level, st.x, upY(st.x, st.z, h), upZ(st.z, h), P[i].size * flipPop(it.id, it.friend, time), vis, sigilRankColour(t, it.level, it.friend, asleepLegend(g.creatures[it.id]))); });
     // The spell's spot: south of the stone, only as she comes near it, and only once it can be cast (castReady: every wild fighter
     // of its area invited; Ed, 2026-10-29).
-    const { x: sx, z: sz } = castSpot(st, t), on = smooth((K.far - Math.hypot(w.x - sx, w.z - sz)) / Math.max(0.1, K.far - K.near));
+    // (on a great stump, only as she's on its cut, where she can cast: Ed, 2026-10-29, "The area in which I can cast the soundsystem
+    // spell should be the whole trunk"; fading in over its last metre)
+    const { x: sx, z: sz } = castSpot(st, t), cell = st.key.split(",").map(Number) as [number, number];
+    const on = t.runeMarkers.stump?.on ? smooth(1 - pastCasting(g, cell, w.x, w.z)) : smooth((K.far - Math.hypot(w.x - sx, w.z - sz)) / Math.max(0.1, K.far - K.near));
     if (on > 0.01 && castReady(g, st.key)) {
       const c = hue(time * 0.25);
       lv.flat.add(sx, 0, sz, K.size * 1.9, dot, c[0], c[1], c[2], 0.22 * on, 1, true); // (its glow)
       lv.ink.add(sx, 0, sz, K.size, notes, c[0] * on, c[1] * on, c[2] * on, on);
       lv.flat.add(sx, 0, sz, K.size, notes, c[0], c[1], c[2], 0.6 * on);
-      if (!V.notes || on > V.notes.on) V.notes = { x: sx, z: sz, size: K.size, on, casting: g.witches?.[0]?.casting === st.key };
+      const W0 = g.witches?.[0];
+      if (!V.notes || on > V.notes.on) V.notes = { x: sx, z: sz, size: K.size, on, casting: W0?.casting === st.key, here: !!W0 && castingStone(g, W0)?.key === st.key };
     }
   }
   // The conversions: a stone's friend sigils newly loose, each from its slot in the stack (rules/game.ts, LooseSigil.from).
@@ -135,6 +139,7 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
     if (!C) {
       const col = [...V.last.values()].find(c => Math.abs(c.x - p.from!.x) < 0.5 && Math.abs(c.z - p.from!.z) < 0.5) ?? { x: p.from.x, z: p.from.z, top: 5.4, items: [] };
       V.converted.push(C = { col, at: time });
+      lv.look.magic.emit("party","eruption",col.x,col.top+3,col.z,3,1.3,1.5,950001);
     }
     const it = C.col.items.find(q => q.id === p.id), lvl = it?.level ?? Math.min(3, g.creatures[p.id]?.level ?? 0), y = it?.y ?? 0.6 + (p.from.y + 0.5) * sizeOf(lvl) * 1.15;
     const t0 = time + K.convert * (0.1 + 0.2 * hash2(p.id, 3, 91));
@@ -184,10 +189,10 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
   // on the ground with the stump, its bars running out from the rings' middle (where she casts) over the roots all round, following
   // the root area's outline (StoneSpot.roots), only the filled ones drawn ("the unfilled white bars don't need to be drawn").
   const SR = t.runeMarkers.stump?.on ? t.runeMarkers.stump.ring : null, nb = Math.min(V.bars.length, n * 2); // (twice the bars: they reach out over the roots, so their ends stay close)
-  const edgeOf = (st: StoneSpot) => (a: number) => { // (the root area's radius that way: between its two nearest angles; mirrored with the stump)
-    const R = st.roots!, N = R.length, u = ((((st.flip ? Math.PI - a : a) / (Math.PI * 2)) * N) % N + N) % N, i0 = Math.floor(u), q = u - i0;
-    return R[i0] * (1 - q) + R[(i0 + 1) % N] * q;
-  };
+  // (an even circle round the cut's middle, as far out as the root area reaches on average: Ed, 2026-10-29, after "why is the spectrum
+  // circle longer at the bottom than at the top?" (the drawn roots lie farther south, the picture laid on the ground by its cut); the
+  // even circle chosen over following them)
+  const edgeOf = (st: StoneSpot) => { const R = st.roots!, mean = R.reduce((p, q) => p + q, 0) / Math.max(1, R.length); return (_a: number) => mean; };
   // (one bar, at angle a from the rings' middle (x, z), `reach` of the way out to the roots' edge, in colour c)
   const rootBar = (S: NonNullable<typeof SR>, edge: (a: number) => number, x0: number, z0: number, a: number, reach: number, c: number[], alpha: number) => {
     const ux = Math.cos(a), uz = Math.sin(a), steps = Math.max(1, Math.floor((edge(a) * S.fill - S.inner) / S.cell)), top = Math.round(reach * steps);
@@ -217,6 +222,8 @@ export function drawStones(lv: LeashView, time: number, dot: number[]): void {
     waving = true;
     for (let i = 0; i < nb; i++) { const f = i / nb; rootBar(SR, edge, st.x, st.z, Math.PI / 2 + f * Math.PI * 2, fill * (0.55 + 0.45 * level(i, nb)), hue(f + time * 0.15), fade); }
     if (!V.castLight) V.castLight = { x: st.x, z: st.z, rgb: hue(time * 0.3) as [number, number, number], k: fill * fade };
+    lv.look.magic.draw("party", "vortex", st.x, st.top+2, st.z, 2, 0.8, fill*fade*0.6, fill, 700001);
+    lv.look.magic.draw("party", "dome", st.x, st.top+1, st.z, 2, 0.65, fill*fade*0.35, fill, 700002);
   }
   V.wantsSpectrum = show || waving;
   if (!cs || !show) return;

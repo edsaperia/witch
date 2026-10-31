@@ -9,6 +9,7 @@ import { TUNING, withTuning } from "./tuning";
 const SAVED_STRENGTH = { ...COMBAT.strength!.species };
 const plainStrength = () => { for (const k of Object.keys(COMBAT.strength!.species)) delete COMBAT.strength!.species[k]; };
 const restoreStrength = () => Object.assign(COMBAT.strength!.species, SAVED_STRENGTH);
+// Keep the full seeded route/population: these multi-wave policy comparisons include 40-wave survival and relics found every four waves.
 const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 // The creature-state model (issue #87): invite only, happy defenders, leashed army, enraged sieges.

@@ -5,8 +5,9 @@
 import type { Creature, Level } from "../creatures";
 import { foes, huntsWitch } from "../creatureStates";
 import { attackNamed, type Attack, type CombatData, type CombatState, type CombatWorld, type Delivery, type Target } from "../combat/data";
-import { land } from "../combat/hits";
-import { sideOf, targetable, type Grid } from "../combat/targeting";
+import { landUnobserved } from "../combat/hits";
+import { observeAttack, type AttackContext } from "../attackObservation";
+import { sheltered, sideOf, targetable, type Grid } from "../combat/targeting";
 import { strengthOf } from "../combat/data";
 import { withBase, type Library } from "./parse";
 import { speciesAttack } from "./species";
@@ -64,11 +65,20 @@ export function speciesSpell(c: Creature, data: CombatData, floor?: number): { n
 }
 
 /** A melee attack's blow landed (the fight's lunge): the rest of its effect (a stun, a root, a pull, a burn) on what it hit. */
-export function meleeExtras(w: CombatWorld, s: CombatState, tg: Target, spec: AttackSpec, fx: number, fz: number): void {
+export function meleeExtras(w: CombatWorld, s: CombatState, tg: Target, spec: AttackSpec, fx: number, fz: number, from: Creature | null, context?: AttackContext): void {
   const e = spec.hit?.effect, t = hittableOf(w, s, tg);
   if (!e || !t) return;
   const { knockback: _k, slow: _s, ...rest } = e;
-  if (Object.keys(rest).length) effects(w, s, t, rest, null, fx, fz);
+  if (Object.keys(rest).length) observeAttack(w, s, tg,
+    { ...context, source: from?.id ?? null, attack: context?.attack ?? null, delivery: "melee", phase: "effect" }, 0,
+    () => { if (!shelteredTouch(w, t, from)) effects(w, s, t, rest, null, fx, fz); });
+}
+
+/** The same shelter exception as land, for effect-only touches and forced movement too. */
+function shelteredTouch(w: CombatWorld, t: Hittable, from: Creature | null): boolean {
+  if (t.kind !== "witch") return false;
+  const v = w.witches.find(v => v.id === t.id);
+  return !!v && sheltered(v, from);
 }
 
 /** How a body's hit counts against the fight's counters (a flier dodging melee, armour turning shots, lobs and beams, a swarm
@@ -125,19 +135,24 @@ export function spellWorld(w: CombatWorld, s: CombatState, grid: Grid, seed: num
       if (t.id === caster) return false;
       return foes(t.side as never, side as never) && t.species !== species;
     },
-    harm(t, damage, effect, fx, fz, source, attack, body) {
+    harm(t, damage, effect, fx, fz, source, attack, body, context) {
       const from = w.creatures[source] ?? null, tg: Target = t.kind === "creature" ? { kind: "creature", id: t.id as number } : t.kind === "witch" ? { kind: "witch", id: t.id as number } : { kind: "sound", key: t.id as string };
-      // (a blow lands as any does, a named attack today's runtime knows as itself, any other by its knockback or slow; whatever else its
-      // effect does (and all of it, on a touch with no damage: a slowing puddle on her doesn't cost her a hit) after it)
-      let done: keyof Effect | null = null;
-      if (damage > 0) {
-        const own = attackNamed(attack, data) as Attack | undefined, blow = own ?? blowOf(effect, deliveryOf(body));
-        land(w, s, from, tg, damage, blow, fx, fz);
-        done = blow.modifier === "knockback" ? "knockback" : blow.modifier === "slow" ? "slow" : null;
-      }
-      if (effect) effects(w, s, t, effect, done, fx, fz);
+      const observation: AttackContext = { ...context, source, attack, delivery: deliveryOf(body), phase: "contact" };
+      observeAttack(w, s, tg, observation, damage, () => {
+        if (shelteredTouch(w, t, from)) return;
+        // (a blow lands as any does, a named attack today's runtime knows as itself, any other by its knockback or slow; whatever else its
+        // effect does (and all of it, on a touch with no damage: a slowing puddle on her doesn't cost her a hit) after it)
+        let done: keyof Effect | null = null;
+        if (damage > 0) {
+          const own = attackNamed(attack, data) as Attack | undefined, blow = own ?? blowOf(effect, deliveryOf(body));
+          landUnobserved(w, s, from, tg, damage, blow, fx, fz, observation);
+          done = blow.modifier === "knockback" ? "knockback" : blow.modifier === "slow" ? "slow" : null;
+        }
+        if (effect) effects(w, s, t, effect, done, fx, fz);
+      });
     },
-    force(t, fx, fz, push, dt) {
+    force(t, fx, fz, push, dt, source) {
+      if (shelteredTouch(w, t, source === undefined ? null : w.creatures[source] ?? null)) return;
       const dx = t.x - fx, dz = t.z - fz, d = Math.hypot(dx, dz) || 1, step = push * dt, k = push < 0 ? Math.max(step, -(d - 0.5)) / d : step / d; // (a pull stops short of its middle)
       if (t.kind === "creature") { const c = w.creatures[t.id as number]; if (c && !c.gone && !c.boss) { c.x += dx * k; c.z += dz * k; } }
       else if (t.kind === "witch") w.nudgeWitch?.(t.id as number, dx * k, dz * k);

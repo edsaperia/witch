@@ -2,12 +2,15 @@
 // themselves collectible items"): a find given is exactly a find found, rules and saves alike.
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { TUNING } from "../rules/tuning";
-import { newGame, stepGame, type Controls, type Game } from "../rules/game";
+import { newGame as fullGame, stepGame, type Controls, type Game } from "../rules/game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Find grants and local pickup saves use one placed trunk, independent of area count.");
 import { FIND_KINDS, FINDABLE, fillTrunk, type FindKindId } from "../rules/finds";
 import { fitBroom, loadBroom } from "./broomSave";
 import { setParts } from "../rules/spells";
 import { loadOwned } from "./owned";
 import { KEEPERS, applyOwn, dropFind, grantAll, grantFind, keepFound, ownWanted, type FindsCtx } from "./finds";
+import { SLOT_INDEX } from "./saveSlots";
 
 /** A localStorage of our own for each test (the saves are this browser's). */
 let store: Map<string, string>;
@@ -34,7 +37,8 @@ function findIt(g: Game): void {
   const c = ctxOf(g);
   for (const e of g.leashEvents) if (e.kind === "found" && e.obj) keepFound(c, (e.find ?? "wearable") as FindKindId, e.obj);
 }
-const saves = () => Object.fromEntries([...store].sort());
+// Compare actual progress bytes; slot-index creation dates are metadata, not collectible grants.
+const saves = () => Object.fromEntries([...store].filter(([key]) => key !== SLOT_INDEX).sort());
 const spellsOf = (g: Game) => { const s = g.witches[0].spells; return { parts: s.parts, broom: s.broom }; };
 
 describe("a find given through the dev control is a find found", () => {

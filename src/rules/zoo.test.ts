@@ -7,6 +7,7 @@ import { KINDS } from "./rosters";
 import { TUNING, type Tuning } from "./tuning";
 import { zooJunctions, zooPathLines, zooPlan } from "./zoo";
 
+// Keep the complete authored zoo: this integration test checks every area's group and sleeping legend, not a radius-world substitute.
 const zooTuning = (): Tuning => ({ ...TUNING, map: { ...TUNING.map!, shape: "zoo", island: "", islandAreas: 0 } });
 
 describe("the zoo (?zoo)", () => {

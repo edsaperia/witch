@@ -24,6 +24,7 @@ describe("the zoo's inscriptions", () => {
     expect(wrap("a bb ccc dddd", 6)).toEqual(["a bb", "ccc", "dddd"]);
   });
   it("every island in the zoo has room for a whole inscription in the street, off every island; south of it nearly always", () => {
+    // Full found zoo: inscription clearance depends on every neighbouring island and the complete gallery extent.
     const g = newGame(7, { ...TUNING, map: { ...TUNING.map!, shape: "zoo", island: "", islandAreas: 0, found: ["*"] } }), L = g.map.zoo!.layout!;
     const edge = L.reach + (ZOO_CONFIG.margin ?? 120) - 8;
     // (about the biggest, as wrapped wider and shallower in turn: a name and five lines, four, three; then just the name and place)

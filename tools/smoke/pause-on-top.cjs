@@ -42,10 +42,11 @@ const CASES = [
   page.on("pageerror", e => errors.push(`page error: ${e.message}`));
   // A pad of our own (window.__pad: null, none; else its pressed buttons), and a count of the keys that reach the document.
   await page.addInitScript(() => {
-    window.__pad = null; window.__keys = 0;
+    window.__pad = null; window.__keys = 0; window.__keyups = 0;
     const pad = () => { const p = window.__pad; return p ? { connected: true, index: 0, id: "stub", mapping: "standard", axes: [0, 0, 0, 0], buttons: Array.from({ length: 17 }, (_, i) => ({ pressed: p.includes(i), value: p.includes(i) ? 1 : 0 })) } : null; };
     Object.defineProperty(Navigator.prototype, "getGamepads", { configurable: true, writable: true, value: () => [pad(), null, null, null] });
     document.addEventListener("keydown", () => { window.__keys++; });
+    document.addEventListener("keyup", () => { window.__keyups++; });
     // the page thread's heartbeat (its longest wait, and its time held in waits over 250 ms) and the stall log's frames, a case at a time
     window.__beat = { last: performance.now(), worst: 0, held: 0 }; window.__stalls = [];
     const tick = () => { const n = performance.now(), b = window.__beat, d = n - b.last; b.worst = Math.max(b.worst, d); if (d > 250) b.held += d; b.last = n; setTimeout(tick, 50); }; setTimeout(tick, 50);
@@ -58,7 +59,8 @@ const CASES = [
     console.log(`time ${what}: ${since(t)} (page thread: longest wait ${(r.worst / 1000).toFixed(1)} s, ${(r.held / 1000).toFixed(0)} s held in waits over 0.25 s; ${r.stalls} frames over 100 ms; art pending ${r.pending}, island ${r.ready ? "ready" : "not ready"})`);
     for (const x of r.top) console.log(`     stall ${x}`);
   };
-  await page.goto(`http://127.0.0.1:${server.address().port}/?creator=0&quick=1&seed=123&wave=off&debug`);
+  // Four-area world: pause/input shielding uses house overlays, not distant scenery or area diversity.
+  await page.goto(`http://127.0.0.1:${server.address().port}/?creator=0&quick=1&seed=123&island=4&wave=off&debug`);
   await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000, polling: 1000 });
   await page.addStyleTag({ content: "#pause-sliders { transition: none !important; }" }); // (where they rest, not mid-slide: a software GL draws a frame in seconds)
   await page.keyboard.press("Enter");
@@ -90,6 +92,7 @@ const CASES = [
     try { await page.waitForFunction(() => (document.getElementById("pause-sliders")?.getBoundingClientRect().left ?? -1) >= 0, null, { timeout: 30000, polling: 200 }); } catch { /* checked below */ }
     check(await paused(), `${C.id}: Esc pauses`);
     check(await isOpen(), `${C.id}: the overlay is still there under the pause`);
+    if (C.state) check(await page.$eval(C.sel, e => getComputedStyle(e).visibility === "hidden"), `${C.id}: station text is hidden behind the transparent pause page`);
     if (!(await isOpen())) console.log(`  ${C.id}: closed by ${JSON.stringify(await page.evaluate(() => (window.witch.stationShuts ?? []).slice(-3)))}`);
     const top = await page.evaluate(() => {
       const s = document.getElementById("pause-sliders")?.getBoundingClientRect(), mid = (x, y) => document.elementFromPoint(x, y);
@@ -112,20 +115,46 @@ const CASES = [
     if (process.env.SHOTS) { fs.mkdirSync("previews", { recursive: true }); await page.screenshot({ path: `previews/pause-on-top-${C.id}.png` }); }
     // keys and the pad reach nothing under it
     const k0 = await page.evaluate(() => window.__keys);
+    const u0 = await page.evaluate(() => window.__keyups);
     for (const key of ["ArrowDown", "ArrowRight", "KeyD", "Enter", "KeyE"]) await page.keyboard.press(key);
     check(await page.evaluate(() => window.__keys) === k0, `${C.id}: keys reach nothing under the pause`);
+    check(await page.evaluate(() => window.__keyups) === u0, `${C.id}: key releases reach nothing under the pause`);
+    if (C.id === "sea-chart") {
+      // Browser defaults still edit native pause controls despite capture routing blocking lower panels.
+      const time = await page.evaluate(() => window.witch.game.clock.time);
+      await page.locator("#playtest-comment").fill("");
+      await page.locator("#playtest-comment").focus();
+      await page.keyboard.press("KeyA"); await page.keyboard.press("Period"); await page.keyboard.press("Enter");
+      check(await page.locator("#playtest-comment").inputValue() === "a.\n", "pause: native comment typing and Enter stay usable");
+      check(await page.evaluate(() => window.witch.game.clock.time) === time, "pause: typing a period does not single-step");
+      await page.locator("#playtest-comment").evaluate(e => e.blur());
+    }
     await page.evaluate(() => { window.__pad = [13, 15]; }); await page.waitForTimeout(700);
-    await page.evaluate(() => { window.__pad = [1]; }); await page.waitForTimeout(700);
     await page.evaluate(() => { window.__pad = null; }); await page.waitForTimeout(300);
-    check(await paused(), `${C.id}: the pad didn't unpause it`);
-    check(await isOpen(), `${C.id}: the pad's B didn't shut the overlay under the pause`);
+    check(await paused(), `${C.id}: the pad's d-pad didn't unpause it`);
+    // (the pad's B is the pause page's Back, #1456: it resumes, and that press is the resume and nothing else, so what's under stays)
+    // (held till a frame has read it, up to 20 s: a software GL's frames here can take seconds, and a short tap falls between them)
+    await page.evaluate(() => { window.__pad = [1]; });
+    try { await page.waitForFunction(() => !document.body.classList.contains("paused"), null, { timeout: 20000, polling: 100 }); } catch { /* checked below */ }
+    await page.waitForTimeout(300);
+    await page.evaluate(() => { window.__pad = null; }); await page.waitForTimeout(300);
+    check(!(await paused()), `${C.id}: the pad's B resumes`);
+    check(await isOpen(), `${C.id}: the pad's B didn't also shut the overlay under the pause`);
+    if (!(await paused())) { await page.keyboard.press("Escape"); try { await page.waitForFunction(() => !!document.querySelector("#pause-sliders.open"), null, { timeout: 60000, polling: 250 }); } catch { /* checked below */ } } // (paused again, for the rest)
     if (!(await isOpen())) console.log(`  ${C.id}: closed by ${JSON.stringify(await page.evaluate(() => (window.witch.stationShuts ?? []).slice(-3)))}`); // (main.ts: why it shut, and whether paused)
     if (C.state) { const after = await focus(); check(after === before, `${C.id}: the d-pad and keys didn't move its focus (${before} → ${after})`); }
+    // A key held inside pause must not leak a repeat into the underlying overlay after resume.
+    await page.keyboard.down("KeyE");
+    const heldKeys = await page.evaluate(() => window.__keys);
     // resume: back to it as it was
     await page.keyboard.press("Escape");
+    await page.keyboard.down("KeyE");
+    check(await page.evaluate(() => window.__keys) === heldKeys, `${C.id}: a held pause key cannot repeat into the resumed overlay`);
+    await page.keyboard.up("KeyE");
     await page.waitForTimeout(800);
     check(!(await paused()), `${C.id}: Esc resumes`);
     check(await isOpen(), `${C.id}: back to the overlay on resume`);
+    if (C.state) check(await page.$eval(C.sel, e => getComputedStyle(e).visibility === "visible"), `${C.id}: station text is visible again on resume`);
     // close it for the next one
     if (C.id === "sea-chart") await page.evaluate(() => document.querySelector("#chart-overlay button[title*='lose'], #chart-overlay .close")?.click());
     if (C.id === "map-table") { await page.keyboard.press("KeyE"); await page.waitForTimeout(600); } // (E again: it's put away; walking doesn't, Ed 2026-10-26)

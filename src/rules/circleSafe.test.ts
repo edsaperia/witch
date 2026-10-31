@@ -5,7 +5,10 @@ import { describe, expect, it } from "vitest";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING } from "./tuning";
 import { legendRings, type Ring } from "./slowTime";
+import { attackNamed, COMBAT } from "./combat/data";
+import { observingAttacks } from "./attackObservation";
 
+// Keep the radius world: the ring fixture borrows six attackers more than 400 m away after clearing its surrounding 200 m.
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, secs: number) => { for (let i = 0; i < Math.round(secs / STEP); i++) stepGame(g, idle, STEP); };
 
@@ -32,6 +35,19 @@ function crowd(inside: boolean): { g: Game; ring: Ring; hp: number; ids: number[
 }
 
 describe("a legend's circle is safe from outside", () => {
+  it("keeps an unknown legacy shot harmless inside the circle with observation off", () => {
+    const { g, hp, ids } = crowd(true), w = g.witches[0], from = g.creatures[ids[0]];
+    expect(observingAttacks(g.combat)).toBe(false);
+    expect(attackNamed("shot", COMBAT)).toBeUndefined();
+    g.combat.shots.push({ id: 9999, x: w.body.x, z: w.body.z, vx: 0, vz: 0,
+      until: g.clock.time + 1, from: from.id, side: "wild", species: from.species,
+      damage: 1, radius: 0.5, attack: "shot" });
+    expect(() => stepGame(g, idle, STEP)).not.toThrow();
+    expect(w.health.hp).toBe(hp);
+    expect(g.combat.shots.some(shot => shot.id === 9999)).toBe(false);
+    expect(g.combat.events.some(event => event.kind === "witchHit")).toBe(false);
+  });
+
   it("keeps her safe in it from wild creatures crowding its edge, who'd hit her just outside it", () => {
     const out = crowd(false);
     run(out.g, 15);

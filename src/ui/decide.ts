@@ -10,6 +10,10 @@ import { button, h } from "./dom";
 import { byPr, changedIn, DECISION_LIST, decisionLine, groupOf, issueUrl, knobAt, knobParam, openGroups, saveOpenGroups, setKnob, currentValue, valuesText, type Decision } from "./decisions";
 import { saveSetting } from "../app/settings";
 import { devVolume } from "../app/playerSettings";
+import { commentControls } from "./playtestComment";
+export interface DecideHost { saveComment?: (text: string) => Promise<string>; restoreComment?: (file: File) => Promise<void> }
+export interface DecideHost { mutate?: (label: string, action: () => void) => void }
+export interface DecideHost { downloadReadableLog?: () => void }
 export * from "./decisions";
 export interface DecideHost { potionLab?: () => void }
 
@@ -117,6 +121,10 @@ export class DecidePanel {
 /** Put a choice into the game, and keep it in the URL: a knob live on the running game (reloading for one the game reads only as
  *  it starts), a URL switch live where the game can take it, else by reloading with it. The decisions panel's and the pause page's. */
 export function applyDecision(host: DecideHost, d: Decision, v: string | number | boolean): void {
+  if (host.mutate) { host.mutate(`tuning: ${d.id}`, () => applyDecisionNow(host, d, v)); return; }
+  applyDecisionNow(host, d, v);
+}
+function applyDecisionNow(host: DecideHost, d: Decision, v: string | number | boolean): void {
   const url = new URL(location.href), isDefault = v === d.default;
   if (d.apply.knob) {
     setKnob(host.tuning, d.apply.knob, v);
@@ -208,10 +216,15 @@ export class PauseSliders {
       button("👗 Copy look as defaults", () => { const t = D.text(), done = () => { this.status.textContent = "copied: config/default-look.json's text, to paste to the coordinator"; }; if (navigator.clipboard?.writeText) navigator.clipboard.writeText(t).then(done, () => { this.status.textContent = t; }); else this.status.textContent = t; }, { class: "copyall", title: "Dev: how she's dressed now (her look and colours, her bag, her broom's parts) as the game's default look, what a brand-new witch starts with: config/default-look.json's text, to paste back. Nothing is saved" }),
       button("✨ Try as a new witch", () => D.tryIt(), { class: "copyall", title: "Dev: a new tab playing as a brand-new witch (?newWitch=1): the default look, the starting wardrobe and broom, no hats found. Nothing of hers is read or saved there" }),
     ] : [];
-    const logBtn = host.downloadLog ? [button("⬇ Download log", () => { host.downloadLog!(); this.status.textContent = "playtest log saved"; }, { class: "copyall", title: "Save the playtest log (this browser's last few runs) as JSON, for the builders" })] : [];
+    const logBtn = host.downloadLog ? [button("⬇ Download log", () => {
+      this.status.textContent = "Preparing playtest log…";
+      void Promise.resolve().then(() => host.downloadLog!()).then(() => { this.status.textContent = "playtest log saved"; }, error => { this.status.textContent = error instanceof Error ? error.message : "The playtest log could not be saved."; });
+    }, { class: "copyall", title: "Save the playtest log (this browser's last few runs) as JSON, for the builders" })] : [];
+    if (host.downloadReadableLog) logBtn.push(button("⬇ Download readable log", () => host.downloadReadableLog!(), { class: "copyall", title: "Save a text copy to read; use Download log for a builder's restore bundle" }));
     const top = h("div", { class: "top", html: `<div class="title">❚❚ Paused · test sliders</div><p class="hint">Esc resumes · . steps (Shift+. ten) · changes show now; double-click a slider for its built value</p>` }, ...settingsBtn, copy, ...logBtn, ...(unlockBtn ? [unlockBtn] : []), ...this.defaultBtns, ...(host.report ? [button("Report", () => { this.status.textContent = "drawing the frame with each neutral pair…"; void host.report!().then(t => { this.status.textContent = t; }, e => { this.status.textContent = `report failed: ${e}`; }); }, { class: "copyall", title: "For a visual bug: draw this frame with each neutral pair of settings and save a picture and a JSON (where they differ, the GPU, her place, the repro link)" })] : []), ...(host.musicLab ? [button("🎛 Music Lab", () => host.musicLab!(), { class: "copyall", title: "The night's own music with the lab's sliders, down the right edge: the singer, the levels, a jump to any wave or section; Esc resumes with it up" })] : []), ...(host.audioTest ? [button("🔊 Audio test", () => host.audioTest!(), { class: "copyall", title: "About two minutes in a new tab: the game's music under a rising sound load, with and without AudioWorklets, then Copy results for the builders" })] : []), ...(host.fightArena ? [button("⚔ Fight arena", () => host.fightArena!(), { class: "copyall", title: "In a new tab: her alone against a random wild pack (a seed you can share), with slow motion and today's attacks" })] : []), ...(host.finds ? [this.findsBtn = button("🧪 Finds", () => host.finds!(), { class: "copyall", title: "Dev: give yourself finds, or spawn one near her (the debug overlay's tools are on)" })] : []), this.status);
     if (host.potionLab) top.append(button('Potion lab', () => host.potionLab!(), { class: 'copyall' }));
     const body = h("div", { class: "list" });
+    if (host.saveComment && host.restoreComment) body.append(commentControls(host.saveComment, host.restoreComment));
     // (by the PR that added them, newest first: Ed, 2026-10-12, "The panel shows all the sliders in PR order")
     const ordered = byPr(list);
     // (each PR's group under a header that folds it, every one folded at first: Ed, 2026-10-26, "Can all the menu settings be grouped

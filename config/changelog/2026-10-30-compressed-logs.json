@@ -1,0 +1,1 @@
+{ "version": null, "items": ["Saved playtest comments and JSON logs use lossless input runs and compression when available. Builders can still restore older JSON logs, and oversized or damaged files report an error."] }

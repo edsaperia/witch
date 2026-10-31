@@ -1,0 +1,132 @@
+{
+  "schema": 1,
+  "observerManifest": {
+    "schema": 2,
+    "sourceHead": "d14756377951ef21780f8cc25d70313feb893f3e",
+    "sourceSha256": "aa25ac6e8c3141d78ec0f64a292ec0439f34d738bf737c35393c9c762d973395",
+    "sourceFiles": 1396,
+    "node": "v24.18.0",
+    "platform": "win32",
+    "startedAt": "2026-10-30T18:40:01.059Z",
+    "wholeJobCapMs": 120000,
+    "mutatesRuleInputs": false,
+    "oneWorker": true,
+    "finished": true,
+    "exitCode": 0,
+    "error": null,
+    "elapsedMs": 5671
+  },
+  "packBaselineManifest": {
+    "schema": 1,
+    "sourceHead": "6a3493185c0308ab38cf9f98220ba8c31713f48c",
+    "sourceSha256": "cf8c4f016b899c41d53fcf4cc4d7afb04b612d9a4dc448ba481026b868a65d72",
+    "sourceFiles": 1394,
+    "node": "v24.18.0",
+    "platform": "win32",
+    "startedAt": "2026-10-30T18:12:56.318Z",
+    "wholeJobCapMs": 120000,
+    "mutatesRuleInputs": false,
+    "oneWorker": true,
+    "finished": true,
+    "exitCode": 0,
+    "error": null,
+    "elapsedMs": 6041
+  },
+  "witchBaselineManifest": {
+    "schema": 1,
+    "sourceHead": "f55f2bc13f65a180134e42dafb27a3916f5c8f81",
+    "sourceSha256": "4a3a5b7807025a836b370f570a568800a86c8ca7ac282232870efbe609cad187",
+    "sourceFiles": 1392,
+    "node": "v24.18.0",
+    "platform": "win32",
+    "startedAt": "2026-10-30T17:33:07.968Z",
+    "wholeJobCapMs": 120000,
+    "ruleChanges": false,
+    "oneWorker": true,
+    "finished": true,
+    "exitCode": 0,
+    "error": null,
+    "elapsedMs": 3164
+  },
+  "packCases": [
+    {
+      "id": "wolves-ravens",
+      "digest": "bab70dc278f7a748462eadf7859909b9cb233647217f23b81036c6beb33f8423",
+      "matches": true,
+      "completed": null,
+      "censored": true,
+      "selfMisses": 0,
+      "selfStunUpdates": 0,
+      "targetStunUpdates": 0
+    },
+    {
+      "id": "wolves-cats",
+      "digest": "d6e4112987e2b35d59ac21df964ee3171846d046209a01273fa84ff82d75ebbe",
+      "matches": true,
+      "completed": null,
+      "censored": true,
+      "selfMisses": 0,
+      "selfStunUpdates": 0,
+      "targetStunUpdates": 0
+    },
+    {
+      "id": "boars-foxes",
+      "digest": "161f9c7bc8620ce0a0f00591c11d379faa5275cfc16bc1b6d964f52f2ce72320",
+      "matches": true,
+      "completed": null,
+      "censored": true,
+      "selfMisses": 5,
+      "selfStunUpdates": 5,
+      "targetStunUpdates": 0
+    },
+    {
+      "id": "wolves-ravens-repeat",
+      "digest": "bab70dc278f7a748462eadf7859909b9cb233647217f23b81036c6beb33f8423",
+      "matches": true,
+      "completed": null,
+      "censored": true,
+      "selfMisses": 0,
+      "selfStunUpdates": 0,
+      "targetStunUpdates": 0
+    }
+  ],
+  "witchCases": [
+    {
+      "species": "wolf",
+      "delayedPolicy": false,
+      "measuredHealthLost": 3,
+      "observedHealthLost": 3,
+      "sameHealthKOActionsAndBlinks": true,
+      "confirmedDamageDodges": 0
+    },
+    {
+      "species": "wolf",
+      "delayedPolicy": true,
+      "measuredHealthLost": 0,
+      "observedHealthLost": 0,
+      "sameHealthKOActionsAndBlinks": true,
+      "confirmedDamageDodges": 0
+    },
+    {
+      "species": "cat",
+      "delayedPolicy": false,
+      "measuredHealthLost": 4,
+      "observedHealthLost": 4,
+      "sameHealthKOActionsAndBlinks": true,
+      "confirmedDamageDodges": 0
+    },
+    {
+      "species": "cat",
+      "delayedPolicy": true,
+      "measuredHealthLost": 4,
+      "observedHealthLost": 4,
+      "sameHealthKOActionsAndBlinks": true,
+      "confirmedDamageDodges": 0
+    }
+  ],
+  "records": 75,
+  "unlabelledRecords": 47,
+  "unknownDamageAttempts": 0,
+  "globalCoverageClaim": false,
+  "limits": "Unlabelled legacy sources and limited physical-miss coverage stay explicit; no strength/safety claim."
+}

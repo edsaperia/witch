@@ -11,6 +11,7 @@ import { TUNING } from "./tuning";
 
 // (871136: Ed's, v1628: the ghost area 6,8's runestone and heron legend at (1061, 1507), on area 5,7's ground in the Old pinewood)
 const SEEDS = [871136, ...Array.from({ length: 30 }, (_, i) => 1 + i * 7919)];
+// Keep the original seeded partition: Ed's ghost-area regression names exact cells and coordinates on this layout.
 const LC = TUNING.legendClearing;
 
 describe("point features keep apart", () => {

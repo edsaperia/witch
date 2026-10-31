@@ -1,5 +1,29 @@
 # Testing tools
 
+### Sleep-cell ownership invariant (A7 audit, 2026-10-30; diagnosed 2026-10-31)
+
+PR #1496 exposed a raw-cell assertion failure using the largest shipped home world: game seed `123`, world `0`, shape seed `1063814361`, all 64 found kinds (64 roster areas plus home). Newt `#18` physically sleeps in cell `21,12`, while its ownership cell `c.cell` is `21,11`. These are intentionally one logical area: Ed's 2026-10-26 legend-area design gives an extra legend cell the ownership of its paired playable cell (`map.legendAreas`, `areaOf`, `sameArea`). The old test and diagnostic incorrectly required physical cell equality.
+
+Reproduce without a browser: `node tools/ci/sleep-cell-repro.mjs all` reports raw physical differences and actual logical ownership mismatches at spawn, new-game initialization, before-party and lost-night stages for the largest, four-area and radius fixtures. Exit `1` means a logical mismatch or an invalid physical-cell exception. A raw difference is accepted only for a legend or its circle baby physically in the explicit legend cell paired to its assigned cell; unrelated areas still fail. `src/rules/sleepCells.test.ts` preserves the exact 14 IDs/roles, checks each pairing, and includes negative cases. No production rules or tuning change is required.
+
+The staged proof finds the same 14 raw differences already at initial placement and through both sleep states, with zero logical mismatches. Each row is a boss legend followed by its circle baby. The four-area (5 cells including home) and radius (98 cells) fixtures have zero raw and logical differences at all four stages:
+
+| Species and IDs | Assigned cell | Actual cell |
+|---|---|---|
+| newt 18, 19 | 21,11 | 21,12 |
+| snowleopard 34, 35 | 19,12 | 20,11 |
+| fennec 86, 87 | 18,13 | 18,11 |
+| squirrel 164, 165 | 22,14 | 22,13 |
+| lion 185, 186 | 15,15 | 13,14 |
+| polarbear 454, 455 | 19,20 | 19,21 |
+| moth 485, 486 | 22,20 | 21,21 |
+
+PR #1516's approved PLAN and staged proof establish a test/diagnostic contract correction, not a game sleep bug. Legends are placed by `spawnCreatures`/`legendSpot` and their babies by `pointInCircle` in the extra legend area while retaining the paired ownership cell. `bedOf` preserves the lair or chooses the same circle; sleep introduces no ownership violation. Seven species appear because this world deals seven legends. Future failures must still distinguish physical and logical cells and must not ignore bosses or circle babies indiscriminately.
+
+Fixture limit found during the audit: `legendShare.test.ts` must retain a roster-free radius map. `map.ts` applies `legends.share` through `chooseLegendCells` only in that mode; authored islands deliberately deal their own legends. A trial using the largest authored island therefore exercised a different policy (including 13 legends at share 1), not a newly identified rules defect. The original fixture and all its assertions remain intact.
+
+Frame benchmark startup (#1493): `tools/bench/frames.cjs` installs a synchronous `window.witch` assignment interceptor before game scripts run, setting the existing manual hook before the first live RAF on both pre-start-card and direct-play builds. Readiness/art preparation continues independently. After the common Enter gesture it waits for reveal-triggered art as well, and asserts a ready/art-idle zero-step boundary (world/her clocks and accumulator zero) before controlled frames. The boundary is saved in frames.json and compared without a declarable exception. No clocks/state are reset to hide prior progress, and pixel thresholds/scene exceptions are unchanged. Browser acceptance remains the coordinator's CI run; Node tests exercise both hook lifecycles and reject progressed/pending-art boundaries.
+
 Part of Witch's notes (CLAUDE.md is the index): the full smoke test, proof shots. Moved here from CLAUDE.md as it stood (housekeeping, Ed 2026-10-23: a note an area, so pull requests add to their own area's file, not one shared file); every rule kept. Add to this file, not CLAUDE.md, when you change this area.
 
 Not in CI, run by builders before a FINAL: `npm run build && npm run smoke`, a headless Chromium smoke test (`tools/smoke/smoke.cjs`, Playwright from the machine's global install; never `playwright install`) that flies both modes on the laptop and phone layouts, drives the touch controls, flies a path through every zoom step in both modes failing on any pop (anything appearing or vanishing in clear view), flies full-speed straight lines in both modes at Ed's window sizes (1900×1240 at DPR 1, 2000×1076 at DPR 2) failing on any pop or any sprite instance set but not drawn (`view.stats.dropped`), flies a 10 s full boost north over the treetops frame by frame at a fixed 1/60 s (`window.witch.frame`) failing if its frames' own work (rules and view, `view.ms` by part) passes 22 ms at p99 or 40 ms at worst, runs four party waves, and saves screenshots to `previews/` (`RECORD=1` also saves `previews/flight.webm`). Checks that fail on `claude/prototype` itself for a known reason are listed in `KNOWN` at the top of `tools/smoke/smoke.cjs`, each with its issue (today the cloud's frame-time budgets, #310; the scenery rebuild at full boost, 35–135 ms frames, #1325; the pop checks under its 1–2 s software-rendered frames, #311; and the vanish flights at Ed's window sizes, which take tens of seconds a frame in software and so fly only on a real GPU, `SMOKE_GPU=1`, #1090): they're reported apart (`known: N`) and don't fail the run, and one that starts passing says so, to come off the list. Keep the list small and honest, so a red full smoke means something new.

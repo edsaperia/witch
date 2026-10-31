@@ -5,6 +5,7 @@ import { LEGEND, spawnCreatures, type Creature, type Level } from "./creatures";
 import { invitable, leashSpeed, newLeash } from "./leash";
 import { generateMap } from "./map";
 import { TUNING } from "./tuning";
+import { smallWorldTuning } from "../test/worlds";
 
 /** Every species at strength 1 for these tests (Ed, 2026-10-08, gave the species strengths by class; these test other
  *  mechanics, written when every species was 1): combat.json strength.species emptied for the block, put back after. */
@@ -12,7 +13,9 @@ const SAVED_STRENGTH = { ...COMBAT.strength!.species };
 const plainStrength = () => { for (const k of Object.keys(COMBAT.strength!.species)) delete COMBAT.strength!.species[k]; };
 const restoreStrength = () => Object.assign(COMBAT.strength!.species, SAVED_STRENGTH);
 
+// Retain the full population for area-distribution ratios, patch coverage and the separated berry-index fixtures.
 const map = generateMap(123, TUNING), t = TUNING;
+const mechanicsMap = () => generateMap(123, smallWorldTuning(TUNING, "Evolution counters and one creature's leash pace do not depend on world size."));
 const bushesOk = (s: BerryState) => {
   const seen = new Set<number>();
   for (const b of s.berries) { expect(seen.has(b.bush)).toBe(false); seen.add(b.bush); expect(s.onBush[b.bush]).toBe(b.id); }
@@ -69,6 +72,7 @@ describe("berries and evolving", () => {
   });
 
   it("evolves after 1 and 4 berries (a baby's one: Ed, 2026-10-11; the youth's by its strength gained, Ed 2026-10-05; 3 / 4 / 8 by strength, Ed 2026-10-27), on a bar line, up to adult and no further (Ed, 2026-10-04); legends can't be invited", () => {
+    const map = mechanicsMap();
     const s = newBerries(map, t), [c, wild] = spawnCreatures(map), leash = newLeash();
     Object.assign(c, { leashed: true, level: 0 });
     leash.stack.push(c.id);
@@ -141,6 +145,7 @@ describe("berries and evolving", () => {
   });
 
   it("a party animal goes to a berry at its leash pace, not its idle amble", () => {
+    const map = mechanicsMap();
     const s = newBerries(map, t), [a] = spawnCreatures(map);
     for (const x of s.berries) x.claimedBy = -1;
     const on = s.berries[0], p = s.bushes[on.bush];

@@ -4,7 +4,9 @@
 // her clothes either, "I should be able to leave regardless").
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
-import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { newGame as fullGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Alarm, dressing, doors and DJ intro routines use one house, independent of distant areas.");
 import { HOUSE_ROOMS, floorHats, fromObject, fromPlan, hatSlots, objectAt, objectFront, toPlan } from "./houseRooms";
 import { inRoom as inBlob } from "../../config/house/shape.js";
 import { wakeInBedroom } from "./opening";

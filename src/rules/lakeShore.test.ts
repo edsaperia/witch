@@ -6,6 +6,7 @@ import { TUNING } from "./tuning";
 import { LAKE_SHORE_PIECES, lakeShoreSprite } from "../../art/lakeShore.js";
 import { EMISSIVE } from "../../art/core.js";
 
+// Keep authored biome islands: lava/oasis shore counts and path/clearing exclusions depend on their real lake geometry.
 const island = (kind: string) => {
   const t = { ...TUNING, map: { ...TUNING.map, island: kind } } as typeof TUNING, map = generateMap(1, t), L = map.bounds.lakes!;
   return { map, L, ...lakesOf(L, map.island!.seed, mapBiome(map.island, t)) };
