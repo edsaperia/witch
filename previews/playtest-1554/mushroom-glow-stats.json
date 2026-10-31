@@ -1,0 +1,134 @@
+{
+ "blue-near": {
+  "base": {
+   "mean_rgb": [
+    122.3,
+    82.6,
+    61.3
+   ],
+   "mean_value": 0.498,
+   "mean_saturation": 0.538,
+   "near_white_px(min>0.85)": 468
+  },
+  "cand": {
+   "mean_rgb": [
+    114.5,
+    78.4,
+    77.8
+   ],
+   "mean_value": 0.545,
+   "mean_saturation": 0.632,
+   "near_white_px(min>0.85)": 378
+  }
+ },
+ "blue-far": {
+  "base": {
+   "mean_rgb": [
+    20.6,
+    25.9,
+    49.6
+   ],
+   "mean_value": 0.194,
+   "mean_saturation": 0.7,
+   "near_white_px(min>0.85)": 66
+  },
+  "cand": {
+   "mean_rgb": [
+    5.8,
+    13.5,
+    82.6
+   ],
+   "mean_value": 0.324,
+   "mean_saturation": 0.933,
+   "near_white_px(min>0.85)": 57
+  }
+ },
+ "red-near": {
+  "base": {
+   "mean_rgb": [
+    145.3,
+    82.6,
+    53.1
+   ],
+   "mean_value": 0.57,
+   "mean_saturation": 0.668,
+   "near_white_px(min>0.85)": 459
+  },
+  "cand": {
+   "mean_rgb": [
+    165.6,
+    72.8,
+    45.0
+   ],
+   "mean_value": 0.65,
+   "mean_saturation": 0.737,
+   "near_white_px(min>0.85)": 414
+  }
+ },
+ "red-far": {
+  "base": {
+   "mean_rgb": [
+    78.5,
+    30.5,
+    34.3
+   ],
+   "mean_value": 0.309,
+   "mean_saturation": 0.633,
+   "near_white_px(min>0.85)": 66
+  },
+  "cand": {
+   "mean_rgb": [
+    109.0,
+    6.3,
+    9.7
+   ],
+   "mean_value": 0.428,
+   "mean_saturation": 0.933,
+   "near_white_px(min>0.85)": 57
+  }
+ },
+ "turquoise-near": {
+  "base": {
+   "mean_rgb": [
+    123.7,
+    86.0,
+    52.2
+   ],
+   "mean_value": 0.496,
+   "mean_saturation": 0.574,
+   "near_white_px(min>0.85)": 270
+  },
+  "cand": {
+   "mean_rgb": [
+    120.1,
+    95.6,
+    57.2
+   ],
+   "mean_value": 0.527,
+   "mean_saturation": 0.6,
+   "near_white_px(min>0.85)": 405
+  }
+ },
+ "turquoise-far": {
+  "base": {
+   "mean_rgb": [
+    16.8,
+    29.7,
+    32.3
+   ],
+   "mean_value": 0.135,
+   "mean_saturation": 0.619,
+   "near_white_px(min>0.85)": 84
+  },
+  "cand": {
+   "mean_rgb": [
+    6.8,
+    43.8,
+    38.3
+   ],
+   "mean_value": 0.183,
+   "mean_saturation": 0.855,
+   "near_white_px(min>0.85)": 66
+  }
+ }
+}

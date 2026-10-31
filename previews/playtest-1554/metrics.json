@@ -1,0 +1,345 @@
+{
+ "base_vs_candidate": {
+  "chain": {
+   "changed_px": 33605,
+   "changed_px_gt8": 21846,
+   "max_diff": 176,
+   "mean_diff_changed": 16.41,
+   "bounds": [
+    27,
+    496,
+    1269,
+    717
+   ],
+   "mean_rgb_base_changed": [
+    19.7,
+    31.1,
+    17.6
+   ],
+   "mean_rgb_cand_changed": [
+    18.8,
+    21.0,
+    13.5
+   ],
+   "zoom_box": [
+    0,
+    456,
+    1280,
+    720
+   ],
+   "zoom_scale": 1
+  },
+  "falling": {
+   "changed_px": 102821,
+   "changed_px_gt8": 51081,
+   "max_diff": 249,
+   "mean_diff_changed": 36.57,
+   "bounds": [
+    207,
+    100,
+    1279,
+    717
+   ],
+   "mean_rgb_base_changed": [
+    88.4,
+    66.5,
+    47.2
+   ],
+   "mean_rgb_cand_changed": [
+    92.7,
+    65.2,
+    51.7
+   ],
+   "zoom_box": [
+    167,
+    60,
+    1280,
+    720
+   ],
+   "zoom_scale": 1
+  },
+  "path": {
+   "changed_px": 124758,
+   "changed_px_gt8": 72917,
+   "max_diff": 254,
+   "mean_diff_changed": 49.39,
+   "bounds": [
+    0,
+    142,
+    1279,
+    717
+   ],
+   "mean_rgb_base_changed": [
+    107.4,
+    74.3,
+    48.2
+   ],
+   "mean_rgb_cand_changed": [
+    107.4,
+    70.7,
+    49.3
+   ],
+   "zoom_box": [
+    0,
+    102,
+    1280,
+    720
+   ],
+   "zoom_scale": 1
+  },
+  "lifting": {
+   "changed_px": 59412,
+   "changed_px_gt8": 16905,
+   "max_diff": 240,
+   "mean_diff_changed": 16.15,
+   "bounds": [
+    0,
+    0,
+    1279,
+    717
+   ],
+   "mean_rgb_base_changed": [
+    55.4,
+    53.9,
+    61.0
+   ],
+   "mean_rgb_cand_changed": [
+    54.5,
+    46.1,
+    46.7
+   ],
+   "zoom_box": [
+    0,
+    0,
+    1280,
+    720
+   ],
+   "zoom_scale": 1
+  },
+  "rejoined": {
+   "changed_px": 3661,
+   "changed_px_gt8": 2305,
+   "max_diff": 176,
+   "mean_diff_changed": 23.34,
+   "bounds": [
+    1215,
+    250,
+    1279,
+    717
+   ],
+   "mean_rgb_base_changed": [
+    17.4,
+    40.3,
+    21.9
+   ],
+   "mean_rgb_cand_changed": [
+    18.4,
+    33.0,
+    19.3
+   ],
+   "zoom_box": [
+    1175,
+    210,
+    1280,
+    720
+   ],
+   "zoom_scale": 1
+  },
+  "blue-near": {
+   "changed_px": 16565,
+   "changed_px_gt8": 8461,
+   "max_diff": 171,
+   "mean_diff_changed": 26.9,
+   "bounds": [
+    0,
+    229,
+    1279,
+    717
+   ],
+   "mean_rgb_base_changed": [
+    49.8,
+    46.3,
+    52.2
+   ],
+   "mean_rgb_cand_changed": [
+    32.9,
+    38.6,
+    89.3
+   ],
+   "zoom_box": [
+    0,
+    189,
+    1280,
+    720
+   ],
+   "zoom_scale": 1
+  },
+  "blue-far": {
+   "changed_px": 14999,
+   "changed_px_gt8": 10117,
+   "max_diff": 171,
+   "mean_diff_changed": 31.48,
+   "bounds": [
+    0,
+    64,
+    1279,
+    717
+   ],
+   "mean_rgb_base_changed": [
+    19.0,
+    26.7,
+    45.0
+   ],
+   "mean_rgb_cand_changed": [
+    6.8,
+    16.7,
+    73.9
+   ],
+   "zoom_box": [
+    0,
+    24,
+    1280,
+    720
+   ],
+   "zoom_scale": 1
+  },
+  "red-near": {
+   "changed_px": 76790,
+   "changed_px_gt8": 41178,
+   "max_diff": 254,
+   "mean_diff_changed": 41.9,
+   "bounds": [
+    0,
+    142,
+    1279,
+    708
+   ],
+   "mean_rgb_base_changed": [
+    119.5,
+    82.5,
+    57.7
+   ],
+   "mean_rgb_cand_changed": [
+    129.1,
+    73.9,
+    49.3
+   ],
+   "zoom_box": [
+    0,
+    102,
+    1280,
+    720
+   ],
+   "zoom_scale": 1
+  },
+  "red-far": {
+   "changed_px": 72605,
+   "changed_px_gt8": 39738,
+   "max_diff": 254,
+   "mean_diff_changed": 42.42,
+   "bounds": [
+    0,
+    64,
+    1279,
+    708
+   ],
+   "mean_rgb_base_changed": [
+    110.1,
+    76.3,
+    56.2
+   ],
+   "mean_rgb_cand_changed": [
+    117.1,
+    67.1,
+    46.1
+   ],
+   "zoom_box": [
+    0,
+    24,
+    1280,
+    720
+   ],
+   "zoom_scale": 1
+  },
+  "turquoise-near": {
+   "changed_px": 12269,
+   "changed_px_gt8": 4782,
+   "max_diff": 171,
+   "mean_diff_changed": 18.84,
+   "bounds": [
+    0,
+    172,
+    1279,
+    708
+   ],
+   "mean_rgb_base_changed": [
+    54.8,
+    64.3,
+    39.1
+   ],
+   "mean_rgb_cand_changed": [
+    41.3,
+    99.2,
+    56.6
+   ],
+   "zoom_box": [
+    0,
+    132,
+    1280,
+    720
+   ],
+   "zoom_scale": 1
+  },
+  "turquoise-far": {
+   "changed_px": 9083,
+   "changed_px_gt8": 5664,
+   "max_diff": 171,
+   "mean_diff_changed": 23.92,
+   "bounds": [
+    0,
+    82,
+    1279,
+    708
+   ],
+   "mean_rgb_base_changed": [
+    22.5,
+    42.7,
+    42.6
+   ],
+   "mean_rgb_cand_changed": [
+    8.1,
+    62.2,
+    50.6
+   ],
+   "zoom_box": [
+    0,
+    42,
+    1280,
+    720
+   ],
+   "zoom_scale": 1
+  }
+ },
+ "candidate_pose_to_pose": {
+  "chain->falling": {
+   "changed_px": 502902,
+   "changed_px_gt8": 92946,
+   "max_diff": 249
+  },
+  "falling->path": {
+   "changed_px": 607930,
+   "changed_px_gt8": 122782,
+   "max_diff": 254
+  },
+  "path->lifting": {
+   "changed_px": 532157,
+   "changed_px_gt8": 113159,
+   "max_diff": 252
+  },
+  "lifting->rejoined": {
+   "changed_px": 603633,
+   "changed_px_gt8": 115668,
+   "max_diff": 248
+  }
+ }
+}

@@ -1,0 +1,20 @@
+{
+ "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+ "timings": {
+  "ready_s": 70.758,
+  "warmup_s": 3.083,
+  "chain": 3.492,
+  "falling": 1.286,
+  "path": 2.054,
+  "lifting": 2.509,
+  "rejoined": 2.76,
+  "blue-near": 4.517,
+  "blue-far": 0.22,
+  "red-near": 2.963,
+  "red-far": 1.007,
+  "turquoise-near": 2.036,
+  "turquoise-far": 0.701,
+  "total_s": 189.94
+ },
+ "errors": []
+}
