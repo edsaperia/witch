@@ -4,11 +4,13 @@
 // and bursts, a roller that slows or stops and goes).
 import { describe, expect, it } from "vitest";
 import { setupArena } from "../arena";
-import { newGame, stepGame, STEP, type Controls } from "../game";
+import { newGame as fullGame, stepGame, STEP, type Controls } from "../game";
+import { smallWorld } from "../../test/worlds";
 import { TUNING } from "../tuning";
 import { bodyReach, reachingFurther } from "./combatWorld";
 import { SPECIES_ATTACKS, speciesAttack } from "./species";
 
+const newGame = smallWorld(fullGame, "Attack reach uses one injected arena creature and a 10–28 m local separation, independent of world extent.");
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const floor = TUNING.attacks?.reactionFloor;
 

@@ -113,6 +113,7 @@ describe("the reaction delay", () => {
 // In the game: a wolf chasing her.
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 function quiet(t: Tuning): Game {
+  // Keep the spatial fixture: the fight recruits an untouched creature over 200 m away before moving it locally.
   const g = newGame(77, t);
   g.clock.paused = false;
   const d = g.map.dancefloor;

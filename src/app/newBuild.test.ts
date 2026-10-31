@@ -15,6 +15,11 @@ describe("a newer build", () => {
     expect(isNewer("v3720", "v3712")).toBe(false);
     expect(isNewer("dev", "v3712")).toBe(false);
   });
+  it("detects a workflow-counter jump without assuming consecutive builds", () => {
+    expect(isNewer("v5955 · old", "v6322 · newer")).toBe(true);
+    expect(isNewer("v6322 · newer", "v5956 · offset-backwards")).toBe(false);
+    expect(isNewer("v6322 · first", "v6323 · next")).toBe(true);
+  });
   it("reads version.json without the cache and remembers a newer build", async () => {
     vi.useFakeTimers();
     const fetch = vi.fn(async (url: string, init: RequestInit) => ({ ok: true, json: async () => ({ version: url && init.cache === "no-store" ? "v3712 · def" : "" }) }));

@@ -8,6 +8,7 @@ import { TUNING } from "../rules/tuning";
 import { floorClearing } from "../rules/speakers";
 import { HeightField, hillsAt, N, RES, SLOPE_SCALE } from "./height";
 
+// Keep these spatial regression worlds: height windows move 1200 m and path-slope checks require many seeded path samples.
 const map = generateMap(123, TUNING), forest = new Forest(map);
 // (the 40 m hills' checks on a map of their own: the slope limit still lets a few spots past the sightline on some maps' paths,
 // seeds 1, 2, 3, 5, 7, 9, 11 and 12 among them, before and after the land map changed 123's: a known gap, its own task)

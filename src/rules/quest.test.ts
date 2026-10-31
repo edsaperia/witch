@@ -6,6 +6,7 @@ import { cellKey } from "./party";
 import { setupQuestDemo } from "./quest";
 import { TUNING, withTuning } from "./tuning";
 
+// Keep the radius route/population: a combat case recruits beyond 300 m, and questCap's near/far distribution is compared across the original seed matrix.
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, secs: number, first: Controls = idle) => { for (let i = 0; i < Math.round(secs / STEP); i++) stepGame(g, i === 0 ? first : idle, STEP); };
 /** The demo set-up: beside the nearest sleeping legend with what it dreams of on her stack. */

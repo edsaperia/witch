@@ -10,6 +10,7 @@ import { FIGHT } from "../movement";
 import { type Creature } from "../creatures";
 import { PACKS, spreadLull, strikingNow, styleOf, wheelSlot, type PackState } from "./packs";
 
+// Keep the seeded arena landscape: 20–30-second moving-pack geometry, flanking angles and historical letter-hit shares are the regression coverage.
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 /** A debug arena run for `secs`, `each` called every step with the game and the arena's creatures; `ctl` her controls by the time. */
 function arena(spec: string, secs: number, each: (g: Game, them: Creature[]) => void, ctl: (t: number, g: Game) => Controls = () => idle, seed = 5): Game {

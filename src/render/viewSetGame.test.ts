@@ -4,7 +4,9 @@
 // island's layers that bake on a canvas stand-ins too.)
 import { afterEach, describe, expect, it, vi } from "vitest";
 import * as THREE from "three";
-import { newGame, type Game } from "../rules/game";
+import { newGame as fullGame, type Game } from "../rules/game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Headless view reset tests mock island layers and assert disposal/order, independent of area diversity.");
 import { TUNING } from "../rules/tuning";
 import { islandArtSeed } from "./artCache";
 import { groundHeight } from "./height";

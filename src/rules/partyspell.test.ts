@@ -4,7 +4,9 @@
 // needle-drop routine at the decks with it (Ed, 2026-10-07: "She IS held at the decks until it ends"; rules/djSet.ts).
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
-import { newGame, stepGame, STEP } from "./game";
+import { newGame as fullGame, stepGame, STEP } from "./game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Party-spell input and local boot-clock transitions use the home ring, independent of distant areas.");
 import { PARTY_CAST } from "./party";
 import { clockSeconds, pointerShown } from "./leypulse";
 import { djIntroEnd } from "./djSet";

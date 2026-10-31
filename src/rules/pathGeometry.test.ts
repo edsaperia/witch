@@ -4,9 +4,11 @@ import { createHash } from 'node:crypto';
 import { PATH_KINDS, areaPathKinds } from '../../art/generator.js';
 import { generateMap, hydrateMap, prepOf, prepProblem } from './map';
 import { TUNING } from './tuning';
+import { smallWorldTuning } from '../test/worlds';
 import { knownPathGeometry, pathGeometrySteps, pathGeometryProblem, rememberPathGeometry } from './pathGeometry';
 
 const catalog = { kinds: PATH_KINDS, byArea: areaPathKinds() as unknown as Record<string, string[]> };
+const payloadTuning = smallWorldTuning(TUNING, 'Worker payload cloning and hydration require valid paths, not a full world; frozen geometry references retain shipped maps.');
 const finish = <T>(steps: Generator<undefined, T>): T => { for (;;) { const n = steps.next(); if (n.done) return n.value; } };
 
 it('retains exact pre-extraction ribbon arrays on a fixed map and a coastal island', () => {
@@ -23,16 +25,16 @@ it('retains exact pre-extraction ribbon arrays on a fixed map and a coastal isla
 });
 
 it('round-trips prepared geometry through worker cloning and map hydration; old prep falls back', () => {
-  const map = generateMap(123, TUNING), data = finish(pathGeometrySteps(map, catalog));
+  const map = generateMap(123, payloadTuning), data = finish(pathGeometrySteps(map, catalog));
   rememberPathGeometry(map, data);
   const prep = structuredClone(prepOf(map));
   expect(prepProblem(prep)).toBeNull();
-  const hydrated = hydrateMap(123, TUNING, prep);
+  const hydrated = hydrateMap(123, payloadTuning, prep);
   expect(knownPathGeometry(hydrated)).toEqual(data);
   expect(knownPathGeometry(hydrated)).toEqual(finish(pathGeometrySteps(hydrated, catalog)));
   delete prep.pathGeometry;
   expect(prepProblem(prep)).toBeNull();
-  expect(knownPathGeometry(hydrateMap(123, TUNING, prep))).toBeUndefined();
+  expect(knownPathGeometry(hydrateMap(123, payloadTuning, prep))).toBeUndefined();
 });
 
 it('rejects malformed, inconsistent and nonfinite prepared geometry', () => {
@@ -49,10 +51,10 @@ it('the existing worker returns plain geometry without canvas or GPU objects', a
   vi.stubGlobal('self', scope);
   try {
     await import('../app/mapPrep.worker');
-    await scope.onmessage({ data: { key: 'test', seed: 123, tuning: TUNING, send: true, noKeep: true } });
+    await scope.onmessage({ data: { key: 'test', seed: 123, tuning: payloadTuning, send: true, noKeep: true } });
     expect(message?.ok).toBe(true);
     expect(message?.rec?.prep.pathGeometry).toBeDefined();
     expect(prepProblem(structuredClone(message!.rec!.prep))).toBeNull();
-    expect(message!.rec!.prep.pathGeometry).toEqual(finish(pathGeometrySteps(generateMap(123, TUNING), catalog)));
+    expect(message!.rec!.prep.pathGeometry).toEqual(finish(pathGeometrySteps(generateMap(123, payloadTuning), catalog)));
   } finally { vi.unstubAllGlobals(); }
 });

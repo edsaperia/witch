@@ -4,6 +4,8 @@ import { TUNING } from "../../rules/tuning";
 import { snapshotGame } from "../../rules/nightSnapshot";
 import { replayGuest, replayHostStep, replayStart } from "./replay";
 
+// Four-area home worlds: replay and accumulator equality need two players, not distant area diversity.
+
 it("serializes a mid-frame handoff and replays authoritative two-witch inputs identically", () => {
   const tuning = structuredClone(TUNING); tuning.map!.island = "home"; tuning.map!.islandAreas = 4;
   const host = newGame(123, tuning, 2);

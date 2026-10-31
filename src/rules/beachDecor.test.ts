@@ -6,6 +6,7 @@ import { generateMap } from "./map";
 import { beachOf } from "./mapShape";
 import { BeachDecor } from "./beachDecor";
 
+// Keep seed 123's full coastline: density, rocky stretches, footprint diversity and the inland 120 m exclusion share that geometry.
 const K = TUNING.beach!.decor!;
 
 describe("the beach's decorations", () => {

@@ -2,7 +2,9 @@
 // play (the Workshop, Ed 2026-10-23: the old passive brooms' jobs), the Helmet (an extra hit, knocked off) and the Healing ring (placed).
 import { describe, expect, it } from "vitest";
 import { TUNING, type Tuning } from "./tuning";
-import { hitWitch, newGame, stepGame, type Game } from "./game";
+import { hitWitch, newGame as fullGame, stepGame, type Game } from "./game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Loadout, dodge, helmet and healing tests use one witch's local state, independent of area diversity.");
 import { wearing } from "./hat";
 import { BROOM_SPELLS, HAT_SPELLS, broomOf, castable, hatOf, newSpells, setLoadout, setParts } from "./spells";
 import { fittedKey, fittedOf } from "./broomParts";

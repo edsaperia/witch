@@ -6,12 +6,14 @@ import { describe, expect, it } from "vitest";
 import { CREATURE_OPTIONAL, spawnCreatures } from "./creatures";
 import { generateMap } from "./map";
 import { TUNING } from "./tuning";
+import { largestWorldTuning } from "../test/worlds";
 
 const REQUIRED = ["id", "species", "level", "cell", "homeX", "homeZ", "range", "anchorX", "anchorZ", "x", "z", "tx", "tz", "rest", "speed", "facing", "away", "moving", "walk", "seen", "leashed", "rand"];
 
 describe("a creature's shape", () => {
   it("has every field, required then optional in one order, for every creature (legends too)", () => {
-    const all = spawnCreatures(generateMap(123, TUNING)), want = [...REQUIRED, ...CREATURE_OPTIONAL];
+    // Largest shipped world: the spawn roster must include ordinary creatures, legends and circles together.
+    const all = spawnCreatures(generateMap(123, largestWorldTuning(TUNING))), want = [...REQUIRED, ...CREATURE_OPTIONAL];
     for (const c of [all[0], all.find(c => c.boss)!, all.find(c => c.circle)!]) expect(Object.keys(c)).toEqual(want);
   });
 });

@@ -12,6 +12,7 @@ import type { Creature } from "./creatures";
 const C = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const run = (g: Game, s: number, c: Partial<typeof C> = {}) => { for (let i = 0; i < s / STEP; i++) stepGame(g, { ...C, ...c }, STEP); };
 function game(): Game {
+  // Keep this spatial regression world: the sleep transition checks more than ten creatures beyond haze.far + 200 m.
   const g = newGame(123, TUNING);
   g.clock.paused = false; g.party.spellAt = undefined;
   g.witch = { ...g.witch, seated: false, perch: false };

@@ -7,6 +7,7 @@ import { broughtLine, legendCircleNear, sigilWords } from "./legendCircle";
 import { setupQuestDemo } from "./quest";
 import { TUNING, withTuning } from "./tuning";
 
+// Keep the radius fixtures: drop-versus-creature separation uses 200 m, and Ed's seed-162218 regression depends on its exact 14-area legend/coordinates.
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, secs: number) => { for (let i = 0; i < Math.round(secs / STEP); i++) stepGame(g, idle, STEP); };
 /** Beside the nearest sleeping legend with what it dreams of on her stack, standing in its circle. */

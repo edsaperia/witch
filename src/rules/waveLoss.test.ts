@@ -3,9 +3,11 @@
 // ("Knockdowns increase the bpm by 5"), with no cap.
 import { describe, expect, it } from "vitest";
 import { bpmAt, knockdownTempo } from "./beat";
-import { loseSoundsystem, newGame, STEP, stepGame, type Game } from "./game";
+import { loseSoundsystem, newGame as fullGame, STEP, stepGame, type Game } from "./game";
+import { smallWorld } from "../test/worlds";
 import { TUNING } from "./tuning";
 
+const newGame = smallWorld(fullGame, "Loss timing derives from the fixture's actual first link; tempo/countdown invariants do not depend on world extent.");
 const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 /** A game a few seconds in, booted, the ley pulse `left` seconds (at most its whole first link) from the first wave's stone. */
 function game(left: number): Game {

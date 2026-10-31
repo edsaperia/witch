@@ -8,6 +8,7 @@ import { TUNING } from "../rules/tuning";
 import { HeightField } from "./height";
 import { runSliced, runSync, sliceLog, type Steps } from "./slices";
 
+// Keep the seeded radius map for the height integration: its 400 m sample window and moved terrain window need the original spatial extent.
 /** A clock of the test's own (ms): a step's work moves it on, so the slicing is the same however loaded the machine is. */
 const clock = { t: 0, now: () => clock.t };
 function* counted(log: string[], n: number, spin = 0): Steps<number> {

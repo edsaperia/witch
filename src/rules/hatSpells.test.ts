@@ -8,6 +8,7 @@ import { dowseMarker } from "./hatSpells";
 import { inviteCreature } from "./leash";
 import type { Creature } from "./creatures";
 
+// Keep the radius fixture: Sentry is exercised with her 200 m away, Gathering parks beyond its full range and Dowsing chooses among map-wide relics.
 const C: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const wearingHat = (hat: string): Tuning => ({ ...TUNING, spells: { ...TUNING.spells, hat } });
 function game(t: Tuning): Game {

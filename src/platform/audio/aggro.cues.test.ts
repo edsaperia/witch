@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { newGame } from "../../rules/game";
+import { newGame as fullGame } from "../../rules/game";
+import { smallWorld } from "../../test/worlds";
+const newGame = smallWorld(fullGame, "Warning cue timing uses one local witch and synthetic watches, independent of area count.");
 import { cellKey } from "../../rules/party";
 import { TUNING } from "../../rules/tuning";
 import type { Sfx } from "./sfx";

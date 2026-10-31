@@ -6,6 +6,7 @@ import { AREA_TYPES, generateMap } from "./map";
 import { TUNING, type Tuning } from "./tuning";
 import { newGame } from "./game";
 
+// Keep authored island sizes/rosters and placeholder fallback: exact area multiplicities, dealt legends and coast identity are the behavior under test.
 const onIsland = (island: string, found: string[] = []): Tuning => ({ ...TUNING, map: { ...TUNING.map!, island, found } });
 const kindOfCell = (map: ReturnType<typeof generateMap>, k: string) => { const [x, y] = k.split(",").map(Number); return AREA_TYPES[map.typeOf(x, y)].creature; };
 

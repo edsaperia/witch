@@ -4,6 +4,7 @@ import { DataUtils } from 'three';
 import { generateMap, hydrateMap, prepOf, prepProblem } from './map';
 import { Forest } from './forest';
 import { TUNING } from './tuning';
+import { smallWorldTuning } from '../test/worlds';
 import { HeightField } from '../render/height';
 import { HeightSamples, arrivalHills, heightPrepProblem, rememberHeightPrep } from './heightSamples';
 
@@ -52,7 +53,7 @@ it('hydrates the worker window without refilling, preserves rolling continuation
 
 it('rejects incomplete or nonfinite height payloads instead of trusting a cached window', () => {
   expect(heightPrepProblem({})).toBe('height prep');
-  const map = generateMap(123, tuning('home')), H = { ...arrivalHills(map.tuning), on: false };
+  const map = generateMap(123, smallWorldTuning(TUNING, 'Malformed height-buffer validation is independent of world extent.')), H = { ...arrivalHills(map.tuning), on: false };
   const field = new HeightSamples(map, new Forest(map), H, DataUtils);
   field.follow(map.start.x, map.start.z);
   const prep = structuredClone(field.snapshot(H));

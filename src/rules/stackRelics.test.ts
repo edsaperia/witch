@@ -10,6 +10,7 @@ import { carryRelic, cycleStack, cycleStackBack, dropRelic, inviteCreature, newL
 import { LEGENDS } from "./legends";
 import { cellKey } from "./party";
 import { TUNING } from "./tuning";
+import { smallWorldTuning } from "../test/worlds";
 
 const NO_SLOW = { ...TUNING, legendCircle: { slow: { ...TUNING.legendCircle!.slow, on: false } } };
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
@@ -60,7 +61,7 @@ describe("a relic's sigil in her stack", () => {
   });
 
   it("cycles back in play, on the cycle-back control", () => {
-    const g = newGame(5, TUNING);
+    const g = newGame(5, smallWorldTuning(TUNING, "Cycle-back integration consumes only three stack IDs and local input, independent of area count."));
     g.clock.paused = false; g.party.paused = true;
     g.leash.stack.push(...g.creatures.slice(0, 3).map(c => c.id));
     const before = names(g.leash);
@@ -81,6 +82,7 @@ describe("a relic's sigil in her stack", () => {
 
 /** The witch on the ground in a sleeping legend's clearing, with two of hers following and the flask picked up. */
 function setup(): { g: Game; L: Creature; mine: Creature[]; relic: number; ring: { x: number; z: number; r: number } } {
+  // Keep this spatial fixture: isolate legends within 700 m, recruit creatures over 300 m away, then move her 400 m.
   const g = newGame(123, NO_SLOW);
   g.clock.paused = false; g.party.paused = true; g.clearedAt = Infinity;
   const L = g.creatures.find(c => c.boss && c.legendState === "asleep" && !LEGENDS.charge.species.includes(c.species))!;

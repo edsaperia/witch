@@ -4,6 +4,7 @@ import { TUNING, withTuning } from "./tuning";
 import { newGame, stepGame, type Game } from "./game";
 import { article, BOT_GAME, newBot, plural, type BotKind, type BotOptions } from "./bot";
 
+// Keep the seeded radius runs and ten-area regressions: full-night wins, cross-area sleeper targeting and 150–200 s travel/landing behavior depend on their routes and populations.
 /** A fresh game as the bot game starts one: unpaused, waiting for the party spell. */
 function fresh(seed = 123): Game {
   const g = newGame(seed, TUNING);

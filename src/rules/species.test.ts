@@ -13,6 +13,7 @@ import type { Creature } from "./creatures";
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 /** A quiet game, the witch on the ground away from everything, too tough to knock out. */
 function quiet(seed = 77, t: Tuning = TUNING): Game {
+  // Retain distant recruits (>150 m), seeded terrain and the multi-seed arena fights for movement comparisons.
   const g = newGame(seed, t);
   g.clock.paused = false;
   const d = g.map.dancefloor;

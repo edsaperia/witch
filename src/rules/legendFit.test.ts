@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { LEGEND_SIZES, legendRadius, overflow, radiusToFit } from "./legendFit";
 import { AREA_TYPES, generateMap } from "./map";
-import { TUNING } from "./tuning";
+import { TUNING as gameTuning } from "./tuning";
+import { largestWorldTuning } from "../test/worlds";
+// Largest shipped world: legend placement must be checked against every available area type and footprint.
+const TUNING = largestWorldTuning(gameTuning);
 
 const LC = TUNING.legendClearing;
 

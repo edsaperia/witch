@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { newGame, stepGame } from "./game";
+import { newGame as fullGame, stepGame } from "./game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Per-witch hat input edges depend on frame rate and local hat state, not island extent.");
 import { TUNING } from "./tuning";
 
 describe("hat presses across render frame rates", () => {

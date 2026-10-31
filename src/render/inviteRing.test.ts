@@ -2,7 +2,9 @@
 // its filled slots are the meter's hits, a full ring turns to hearts, and the drain drops envelopes one at a time.
 import { describe, expect, it } from "vitest";
 import { TUNING } from "../rules/tuning";
-import { affectionOf, newGame, stepGame } from "../rules/game";
+import { affectionOf, newGame as fullGame, stepGame } from "../rules/game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Invitation ring fill and drain track one creature's affection, independent of distant areas.");
 import { hasRune, STATES, stateOf } from "../rules/creatureStates";
 import type { Creature } from "../rules/creatures";
 import { RingModel, ringOf, type RingChange } from "./inviteRing";
