@@ -1589,8 +1589,9 @@ describe("creature speeds (Ed, 2026-10-04: she is much faster than almost all of
 });
 
 describe("E cycles the sigils in the treetops (Ed, 2026-10-05)", () => {
+  const cycleMap = generateMap(123, smallWorldTuning(TUNING, "Cycling and placing three sigils needs a few creatures, not a full world."));
   it("in the air sends the bottom sigil of the stack to the top, and never places or lifts", () => {
-    const s = newLeash(), none: LeashControls = { sigil: false }, cs = spawnCreatures(map);
+    const s = newLeash(), none: LeashControls = { sigil: false }, cs = spawnCreatures(cycleMap);
     s.stack.push(1, 2, 3); // 3 is the bottom (next down)
     for (const id of s.stack) cs[id].leashed = true;
     stepLeash(s, cs, { sigil: true }, { x: 0, z: 0 }, false, 1, 1 / 60, TUNING);
@@ -1602,7 +1603,7 @@ describe("E cycles the sigils in the treetops (Ed, 2026-10-05)", () => {
     expect(s.stack).toEqual([3, 1, 2]);
   });
   it("on the ground never cycles: it puts the bottom sigil down", () => {
-    const s = newLeash(), cs = spawnCreatures(map);
+    const s = newLeash(), cs = spawnCreatures(cycleMap);
     s.stack.push(1, 2, 3);
     for (const id of s.stack) cs[id].leashed = true;
     stepLeash(s, cs, { sigil: true }, { x: 0, z: 0 }, true, 1, 1 / 60, TUNING);
@@ -1815,7 +1816,7 @@ describe("the dash (Ed, 2026-10-04)", () => {
   });
 
   it("does nothing over the treetops or while she sits", () => {
-    const g = newGame(321, TUNING); g.clock.paused = false;
+    const g = newGame(321, smallWorldTuning(TUNING, "Seated and treetop dash eligibility is independent of world extent.")); g.clock.paused = false;
     const x0 = g.witch.x;
     run(g, 1, { dash: true });
     expect(g.witches[0].dash.until).toBe(-Infinity);
