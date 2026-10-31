@@ -4,27 +4,7 @@ Backlog (Ed, 2026-10-09). **Not built yet; don't build without Ed's go.** The tr
 
 ## Getting dressed (the character creator)
 
-- **The creator is her getting dressed** (Ed): she starts in her nightie and puts on each piece in the order you'd dress.
-- **Next and Back steps, not tabs** (Ed). Clothes go on one at a time: top, then jeans, then jacket (the cloak), each its own step.
-- Proposed step order: Face → Hair → Top → Jeans → Shoes → Jacket (cloak) → Scarf → out the door. Hats and brooms are chosen in their own rooms (journey.md; [unlocks.md](unlocks.md)).
-- **No "same again" button** (Ed): next, next, next is fast enough.
-- The creator is only her look: Options, Controls and What's new move out of it (for example to a pause menu).
-
-### Ed's streamlining answers (2026-10-09) that still apply
-
-- **Rotators** for choices: ‹ name › arrows (keyboard left and right too), with a live preview: the witch spins or shows the item off when it changes.
-- **Every slider works for every option** (no greyed-out sliders).
-- **Colours:** keep every part; the colour grid has five rows (was nine), on every part.
-- **Hat:** keep all 17 shapes as a rotator; keep height, brim, tilt and band sliders; add a curl slider.
-- **Spartan helmet** (Ed, 2026-10-15): a new hat kind; on it the brim slider sets the size of the crest and the plume (band) colour sets the crest's colour.
-- **Hair:** a rotator; add a length slider that works for every style.
-- **Face:** skin, plus an eyewear rotator (none, sunglasses, round glasses, visor, goggles...); headphones and earrings move here.
-- **Top and Cloak** are separate steps. Cloak: none / short / long becomes a length slider; add a collar option and a width slider.
-- **Shoes:** their own step, with a shoe-type rotator (trainers, boots, platforms, bare feet...).
-- **Scarf** keeps its own step.
-- **Broom:** a rotator, keep all 18; a width slider scales each broom's distinctive part (bicycle wheels, gyrocopter and drone rotors, handlebar length, hobby-horse head size).
-- **Removed:** bag (satchel, bum bag), backpack; the "Magic and more" items (lantern, potion vial, spellbook, glow sticks, wristband); the Randomise, Wild and Classic buttons.
-- The Player dropdown lives in the debug overlay (built, #649); the Waves dropdown goes for a pause-page wave-speed slider (Ed, 2026-10-18; built, #953).
+**Retired, 2026-10-31: "Game wins" (Ed).** The default opening wakes her in the walkable house and she dresses at separate stations, led by guidance pins. The old creator remains under `?opening=old`; there is no pending Next/Back dressing sequence. The first morning's order is dressing table, wardrobe, shoes, bag, invitations, cloak, hat, broom (`rules/guidance.ts` FIRST_MORNING). The original plan is [archived](../archive/superseded-design-plans.md#getting-dressed-the-character-creator).
 
 ## The bedroom's objects
 

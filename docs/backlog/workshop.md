@@ -11,6 +11,8 @@ Proposal (2026-10-23); **Ed's go the same day; built (PR 1 the rules and finds, 
 7. Multiplayer: only the host's parts, each on one witch's broom at a time. Not built now.
 8. Furniture art: Alpha's or ours (see "What we need from Alpha and Echo").
 
+**Current behaviour and parked follow-up** (Ed, 2026-10-31): the live Workshop uses one lathe for fitting and colours; parts are shared finds, kept only on a won night (#1109, `app/loan.ts`), rather than wrecks kept after a loss. Broom mechanics, set trails and more parts are parked for a future Workshop pass. The proposal below is historical where it differs; `docs/notes/house.md` describes the current Workshop.
+
 ## Ed's decisions (2026-10-23)
 
 1. **The sets as proposed**: Rocket (Missile nose, Jet-bike fairing, Jet nozzles) → Speed; Hedge (Curled tip, Ladder, Twig bristles) → Stealth; Ferry (Hobby-horse head, Canoe hull, Oar blade) → Ley jump; Joust (Hobby-horse head, Jet-bike fairing) → Battering; Pile driver (Ladder, Jet nozzles) → Ground pound. The nine parts and their stats as in the table below.
@@ -195,7 +197,9 @@ Only the host's found parts are in the Workshop, and each part is on one witch's
 3. **Finds**: `nightFind`'s draw over wearables and parts; `placeTrunk` places a wreck too; E picks up a part (`found`).
 4. **The Workshop**: the bay, lathe and pegboard stations, with Echo's panel kinds and Alpha's furniture; the broom stand retired; the save migration.
 
-## Open questions
+## Answered and parked follow-up
+
+Ed, 2026-10-31: the remaining broom mechanics, set trails and more parts are **parked for a future Workshop pass**, not open questions for Ed now.
 
 Questions 1 to 5 were answered by Ed on 2026-10-23 (above): the sets as proposed, one draw, the pegboard its own read-only station, no biome lean, and the bare broom without the quick take-off.
 

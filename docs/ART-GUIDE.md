@@ -10,7 +10,7 @@ Sources: #97 (art iterations; `tools/art-iterations/README.md`), #112 (art pass 
 
 Ed's main art feedback at this stage. Earlier, about the legends, he said "the more pixellated version is better". This section turns that into rules a generator can enforce. They apply to everything: creatures, plants, witches, props, ground and set pieces.
 
-**The ladder.** `tools/art-iterations/ladder.mjs <area> <dir>` draws one area's set at the current look and at each rung below, at the game's screen scale and at night. The examples are in `docs/art-guide/ladder/`. Ed picks the rung. Until he does, the rules below are a proposal and are marked (proposed).
+**The ladder.** `tools/art-iterations/ladder.mjs <area> <dir>` draws one area's set at the current look and at each rung below, at the game's screen scale and at night. The examples are in `docs/art-guide/ladder/`. The ladder records the comparison; Ed settled on Bold at art pixel 3 on 2026-10-31. Earlier rules marked (proposed) retain their review history.
 
 | Rung | What changes |
 |---|---|
@@ -22,8 +22,8 @@ Ed's main art feedback at this stage. Earlier, about the legends, he said "the m
 | 5 Chunkier | Rung 3 at art pixel 5 |
 | 6 Reference | Ed's reference look (below): one tone family, cream light falling as a big shape over the top, red-brown shadow, a strong near-black outline, interior lines where parts overlap, clean clusters, pixel 4 |
 
-**Ed's decision (2026-10-05):** "4 or 5, but we will decide in playtesting", then "6 is also good". Two looks stay in the running, **Bold** (rung 3's treatment) and **Reference** (rung 6), each at **art pixel 4 or 5**. The final choice is made in playtesting, with a complete scene in motion ("trees, creatures, witch").
-- **In the game:** `?style=now|bold|ref` and `?px=3|4|5` choose one per load (`art/stylise.js`, applied in `bake`: the live preview PR, branch `claude/art-style-preview`). With neither, the game looks as it did. The generators' own version of the styles will keep these switch names.
+**Ed's decision (2026-10-05):** "4 or 5, but we will decide in playtesting", then "6 is also good". **Settled by Ed, 2026-10-31: Bold at art pixel 3.** The earlier comparison of Bold and Reference at art pixels 4 or 5 is closed. `?style=ref` and `?px` remain comparison switches.
+- **In the game:** `?style=now|bold|ref` and `?px=3|4|5` choose one per load (`art/stylise.js`, applied in `bake`). With neither, the default is Bold at art pixel 3. The comparison switches remain available.
 - **The comparison strips** (each style at 3, 4 and 5 px, a strip and the ground): on claude/ed-shots, [`previews/archive/art-guide/styles/`](https://github.com/edsaperia/witch/tree/claude/ed-shots/previews/archive/art-guide/styles) since the docs pass (2026-10-28).
 - **Either way the rest of the reference stands:** exaggerated silhouettes, an evolved design per level (0b), and texture as tone shapes.
 - **Until Ed decides,** the rules below hold for both looks except where marked bold-only or ref-only.
@@ -276,5 +276,5 @@ From Ed's playtest notes and #334, #358, #325 and #363. The rules themselves are
 - **Nothing is cut by the ground.** Sinking into the floor slices a sprite along a straight line; lie it down instead. Flat things (floors, decals, mats) draw before actors and write no depth (`asFloor`).
 - **No outline on limbs.** The rig's leg discs carry no rim (Ed: "Animal legs have outlines on them; they'd look better without").
 - **Overlays belong to the world.** 💌s, hearts and bubbles standing in the world blur with the tilt-shift (#325) and hide past the bend (#358); only the HUD sits on top.
-- **Bold is the default style** (Ed, 2026-10-06), at art pixel 3 until Ed picks 4 or 5. With `fx: "smooth"` (the default) the game's moonlight isn't banded; under bold the bands are baked into the sprites instead (the Lab and `?fx=pixel` band the light itself).
+- **Bold is the default style** (Ed, 2026-10-06), at **art pixel 3**, confirmed by Ed, 2026-10-31. With `fx: "smooth"` (the default) the game's moonlight isn't banded; under bold the bands are baked into the sprites instead (the Lab and `?fx=pixel` band the light itself).
 - **Contact sheets for legends**: every state (asleep, restless, happy, angry) in the game at night, before and after, not only the art preview (`previews/legend-pixels/` on #363).

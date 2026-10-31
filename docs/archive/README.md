@@ -11,3 +11,5 @@ under `docs/notes/` are). Their numbers were measured in the cloud's software re
 | `BASELINE-2026-10-07.md` | 2026-10-07 | The overnight performance baseline at #400's merge, on the old radius map. |
 | `QA-LOG.md` | 2026-10-07 to 09 | QA's record of the overnight programme, round by round. |
 | `perf-housekeeping-review.md` | 2026-10-13 | Juliet's performance and housekeeping review at #772's merge. |
+
+- [Superseded design plans](superseded-design-plans.md): retired proposals and the current behaviour that replaces each (Ed, 2026-10-31: "Game wins").
