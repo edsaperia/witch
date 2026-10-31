@@ -71,6 +71,10 @@ Literal, stable names for the parts of the game, as Ed and the builders agree th
 
 Its entries are in the notes below, by area, and listed in [`docs/notes/INDEX.md`](docs/notes/INDEX.md), made from the notes (`node tools/docs/glossary.mjs --write` after adding one; `tools/docs/glossary.test.ts` checks it).
 
+## Capturing possible mushroom trips
+
+Ed, 2026-10-30: whenever development reveals an interesting possible effect (an unusual test/debug state, a visual bug, a new drawing system, an extreme parameter or a useful signal crossing), add it as a **suggestion** to `docs/backlog/cauldron.md`. Do this in the same piece of work; do not wait for a dedicated mushroom task. Check for an existing equivalent first and extend it rather than duplicate it. Record what she experiences, the existing signal/drawing hook, any genuinely new machinery needed, and whether it is a variant of another trip. Keep suggestions distinct from Ed-approved effects and implemented features. The catalogue is expandable; 56 is not a cap. Capturing an idea does not authorise implementing it or changing recipe assignments.
+
 ## Notes
 
 The rest of what builders need lives in a note an area, under `docs/notes/` (housekeeping, Ed 2026-10-23: four pull requests went back for conflicts in one day, nearly all in this file). **Before working on an area, read its note; when you change the area, add to its note, not to this file.** This file keeps what every builder needs every time: the deploys, What's new, fixing bugs, testing and this index. The glossary's names are the notes' headings: each note holds its area's entries (bold, as before: a line opening `**Name**` or `- **Name**`), and its tools and checks; [`docs/notes/INDEX.md`](docs/notes/INDEX.md) lists them all, made from the notes, never by hand (the coordinator's docs pass, 2026-10-28: the lists that stood here had fallen 46 entries behind).

@@ -13,6 +13,8 @@ import { loanFind, nightFind } from "../../rules/finds";
 import { groundHeight, HEIGHT_UNIFORMS } from "../height";
 import { SPRITE_UNIFORMS } from "../sprites";
 import { updateFrustum } from "./culling";
+import { potionBend, potionStrength, potionCamera, vertigoAmount, tripIndicatorStrength } from "../potionEffects";
+import { potionSettings } from "../../rules/potionSettings";
 
 /** At a station (camera.station.whole; Ed, 2026-10-29: "the witch right half of the screen, and she should be nicely centred and
  *  visible top of hat to bottom of shoes"): the camera's distance made so she, feet to the top of her hat as drawn (last frame's,
@@ -33,11 +35,19 @@ function wholeAtStation(v: View, pose: ReturnType<typeof poseOf>): ReturnType<ty
 export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseOf>): THREE.Vector3 {
   const g = v.game, t = g.tuning;
   pose = wholeAtStation(v, pose);
+  const vertigo = v.fly || v.telescope ? 0 : vertigoAmount(potionStrength(g, 'vertigo'), g.witch.lift);
+  const tripCamera = potionCamera(pose.angle, pose.distance, t.camera.fov, vertigo);
+  pose = { ...pose, angle: tripCamera.angle, distance: tripCamera.distance };
+  v.post.potionVertigo = vertigo;
+  v.post.potionCanopy = potionStrength(g, 'thick-canopy');
+  v.post.potionEdges = potionStrength(g, 'aurora-outlines');
+  v.post.potionWobble = tripIndicatorStrength(g);
+  v.post.potionTime = g.clock.time;
   const a = (pose.angle * Math.PI) / 180;
   // Camera, snapped to the pixel grid along the screen's axes so the art does not shimmer.
   // Arriving from the sea chart (rules/arrive.ts, app/arrive.ts): the flight's shot in place of hers, its field of view
   // easing from the chart's to the game's, the ground and the heights following its aim (not her, at her decks).
-  const F = v.fly, fov = F ? F.fov : t.camera.fov;
+  const F = v.fly, fov = F ? F.fov : tripCamera.fov;
   if (v.camera.fov !== fov || v.camera.far !== 900) { v.camera.fov = fov; v.camera.far = 900; v.camera.updateProjectionMatrix(); } // (900: as made; the telescope's reaches further)
   const wpp = (2 * pose.distance * Math.tan((fov * Math.PI) / 360)) / v.height;
   const up = new THREE.Vector3(0, Math.cos(a), -Math.sin(a));
@@ -93,9 +103,17 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
     const seaKeep = seaKeep0 + (Math.max(0, gazeBend) - seaKeep0) * V.gaze;
     const gk = Math.max(V.gaze * (B?.stargazeCurve ?? 0), V.coast * (B?.camera?.curve ?? 0)) * C.treetop * seaKeep;
     SPRITE_UNIFORMS.uNearCut.value = V.gaze > 0.01 ? V.gaze * Math.max(0, pose.distance - 12) : 0; // (lying down, the camera low behind her: what's between it and her, from 12 m before her, dithers away)
-    const k = Math.max(C.ground + (C.treetop - C.ground) * m * m * (3 - 2 * m), gk);
-    HEIGHT_UNIFORMS.uBend.value.set(Math.max(0, k), pose.tx, pose.tz, t.ground.hills.on ? t.ground.hills.amplitude : 0); // (w: the hills' amplitude, for the horizon test)
+    const ravine = potionStrength(g, 'ravine'), planet = potionStrength(g, 'little-planet');
+    const k = potionBend(Math.max(C.ground + (C.treetop - C.ground) * m * m * (3 - 2 * m), gk), C.treetop, ravine, planet);
+    HEIGHT_UNIFORMS.uBend.value.set(k, pose.tx, pose.tz, t.ground.hills.on ? t.ground.hills.amplitude : 0); // (w: the hills' amplitude, for the horizon test)
+    // Keep ordinary geometry in the culling bounds throughout the fade back to normal.
     v.bendTo = Math.max(0, g.witch.mode === "rising" || g.witch.mode === "treetop" ? C.treetop : C.ground, gk, v.beachView.gazing ? C.treetop * (B?.stargazeCurve ?? 0) * seaKeep : 0);
+    v.post.potionGlow = potionStrength(g, 'glow-up');
+    v.sky.potionMoon = 1 + (potionSettings('big-moon').size - 1) * potionStrength(g, 'big-moon');
+    v.sky.potionMoonGlow = 1 + (potionSettings('big-moon').glow - 1) * potionStrength(g, 'big-moon');
+    const floorSky = potionStrength(g, 'skylight');
+    v.sky.potionFloor = floorSky;
+    v.ground.potionSky(floorSky * potionSettings('skylight').ground);
     HEIGHT_UNIFORMS.uBendFwd.value.set(0, -1); // the camera always looks north (toward -z)
     const far = t.haze.far;
     moonNow = v.updateMoon(g);

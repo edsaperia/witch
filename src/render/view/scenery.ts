@@ -10,6 +10,8 @@ import { TrunkShadowBatch, type TrunkShadow } from "../trunkShadows";
 import type { Atlas } from "../atlas";
 import type { TypeArt } from "../assets";
 import { hash2 } from "../../rules/random";
+import { potionStrength } from "../potionEffects";
+import { potionSettings } from "../../rules/potionSettings";
 
 /** A tree's own leaf-colour jitter seeds, -1 to 1 for hue and for value, from where it stands (Ed, 2026-10-16: "a small amount of
  *  per-tree colour jitter"; the amount is the tuning's leafJitter, applied to its leaves in the sprite shader). One pair a tree,
@@ -83,6 +85,14 @@ export function* refreshSteps(v: View): Steps {
 }
 
 const SLICE_MS = 2.5;
+const potionBuild = new WeakMap<View, string>();
+const bendPotionKey = (v: View): string => {
+  const g = v.game, trip = g.mushrooms?.trips[g.witches[0]?.id ?? 0];
+  const effect = potionStrength(g, 'ravine') > 0 ? 'ravine' : potionStrength(g, 'little-planet') > 0 ? 'little-planet' : null;
+  if (!trip || !effect) return '';
+  const settings = potionSettings(effect);
+  return `${trip.key}:${trip.at}:${settings.minimumBend}:${settings.bendMultiplier}`;
+};
 
 /** The tallest trees' squeeze (treeCap) as one number, to see it change. */
 const treeCapKey = (t: View["game"]["tuning"]): number => t.treeCap.from * 1e3 + t.treeCap.keep;
@@ -91,6 +101,8 @@ const lyingRelics = (g: View["game"]): number => { let m = 0; for (const r of re
 
 /** What a rebuild needs, if one is due now (she has moved, turned or zoomed, the scenery's radius has grown, or new art is in), else null; `force`: anyway. */
 function due(v: View, force = false) {
+  // Rebuild on a bend trip's start/replacement/end, not on every fading frame.
+  force ||= (potionBuild.get(v) ?? '') !== bendPotionKey(v);
   // The margin grows with her speed (a quarter second's flight), so at full boost the batches are
   // rebuilt every 10 m or so rather than every 4 (Ed, v256: dropped frames boosting over the treetops).
   const g = v.game, t = g.tuning, cam = v.camera, margin = Math.max(t.viewMargin, Math.hypot(g.witch.vx, g.witch.vz) * 0.25), pose = poseOf(g);
@@ -119,6 +131,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tel
   let t0 = performance.now();
   const sliceDone = () => performance.now() - t0 > SLICE_MS, resume = () => { t0 = performance.now(); };
   const g = v.game, t = g.tuning;
+  potionBuild.set(v, bendPotionKey(v));
   v.lastBuild = { ...key, version: v.assets.version, radius, canopy, relics: lyingRelics(v.game), cap: treeCapKey(t) };
   v.lastPose = { distance: pose.distance, angle: pose.angle, zoomStep: g.camera.zoomStep, lift, tele };
   // Through the telescope, the whole circle round her at once (it pans with nothing listed again; inView passes all within reach).
@@ -221,8 +234,9 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tel
       const fresh = mark(v, kind, p.x, p.z, whole.h * m);
       const at = stand(x, z, frame, m);
       const sway = kind === "small" ? 1 : 0; // undergrowth sways; walls and set pieces stand still
-      add(p.type, { ...at, frame, flip: p.flip, fresh, scale, sway });
-      if (piece.top !== null) add(p.type, { ...at, frame: f[piece.top], flip: p.flip, top: true, fresh, scale, sway, foot: f[piece.bot].foot });
+      const small = kind === 'small' || kind === 'berrybush';
+      add(p.type, { ...at, frame, flip: p.flip, fresh, scale, sway, small });
+      if (piece.top !== null) add(p.type, { ...at, frame: f[piece.top], flip: p.flip, top: true, fresh, scale, sway, small, foot: f[piece.bot].foot });
       // Set pieces model their own ground: no blob under them (it read as a hard dark oval).
       // Its shadow lies under it, its front edge at its base (not centred on its bottom edge,
       // which leaves half of it in front, reading as a shadow below something hovering); one
