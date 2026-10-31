@@ -478,7 +478,7 @@ export class AssetLibrary {
     // Only the four-legged and the snakes have rig parts (art/genome/parts.js); a page that came back without any (a squat
     // mole's, say) was asked for again every frame, a job at the head of the queue each round for the whole night (2026-10-14).
     const template = (g as { template?: string }).template;
-    if ((template !== "quadruped" && template !== "serpent") || this.noRig.has(k)) return undefined;
+    if ((!gear?.stilt && template !== "quadruped" && template !== "serpent") || this.noRig.has(k)) return undefined;
     this.ask({ kind: "rig", id: k, species, level, style: this.style, ...(gear ? { gear } : {}) }, true); // gameplay: ahead of the scenery
     return undefined;
   }

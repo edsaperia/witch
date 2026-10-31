@@ -60,7 +60,7 @@ export class Music {
     return this.bins;
   }
 
-  constructor(private ctx: BaseAudioContext, public volume: number, style: MusicStyle, seed: number, src = "", drawAhead = false) {
+  constructor(private ctx: BaseAudioContext, public volume: number, style: MusicStyle, seed: number, src = "", drawAhead = false, destination: AudioNode = ctx.destination) {
     this.master = ctx.createGain(); this.master.gain.value = 0;
     this.wobble = ctx.createGain();
     this.filter = ctx.createBiquadFilter(); this.filter.type = "lowpass"; this.filter.frequency.value = 16000; this.filter.Q.value = 0.7;
@@ -70,8 +70,8 @@ export class Music {
     // bus -> (dry | shaper -> wet) -> filter -> wobble -> master -> out
     this.bus.connect(this.dry); this.bus.connect(this.shaper); this.shaper.connect(this.wet);
     this.dry.connect(this.filter); this.wet.connect(this.filter);
-    this.filter.connect(this.wobble); this.wobble.connect(this.master); this.master.connect(ctx.destination);
-    this.circleGain = ctx.createGain(); this.circleGain.gain.value = 0; this.circleGain.connect(ctx.destination);
+    this.filter.connect(this.wobble); this.wobble.connect(this.master); this.master.connect(destination);
+    this.circleGain = ctx.createGain(); this.circleGain.gain.value = 0; this.circleGain.connect(destination);
     this.noise = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
     const d = this.noise.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;

@@ -2,6 +2,14 @@
 
 <!-- written by tools/inventory.mjs; edit the scripts' header comments, then run it again -->
 
+## `bags-sheet.mjs`
+
+Her bags on her: each standing and hovering, towards and away, at the game's size, then standing close up, labelled.
+
+```
+node tools/witch/bags-sheet.mjs <out.png>
+```
+
 ## `brooms-gif.mjs`
 
 A few broom kinds flying: her lean cycle on each, over ground scrolling past, at 3× the game's size; the drone's rotors, the bicycle's wheels, the flames and exhausts and the mop's drips turn with the frames.
