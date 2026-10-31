@@ -2,7 +2,8 @@
 // config/combat.json, strength by species, and the types the fight is made of (targets, shots, beams, events, the world it reads).
 import raw from "../../../config/combat.json";
 import TUNED from "../../../config/tuning.json";
-import { LEGEND, type Creature, type Level } from "../creatures";
+import type { Creature, Level } from "../creatures";
+import { LEGEND } from "../creatureLevels";
 import { type State } from "../creatureStates";
 import { FIGHT } from "../movement";
 import { sectionOf, speciesWith } from "../creatureConfig";

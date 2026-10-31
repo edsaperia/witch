@@ -1,4 +1,4 @@
-// PR-only successful-result cache. Full release/prototype checks never use it.
+// Successful-result cache for PRs, releases and shared pushes. Unknown layouts still run full checks.
 import ts from 'typescript';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
@@ -10,7 +10,7 @@ import { loadAnalyzer } from '../art-cache/load.mjs';
 const DISPATCHER = 'tools/art-check/.task-dispatcher.ts';
 export const sha = value => createHash('sha256').update(value).digest('hex');
 export function fullCheck(event, branch = '', title = '') {
-  return event !== 'pull_request' || branch.startsWith('claude/rel-') || title.startsWith('Release check:');
+  return !['pull_request', 'push'].includes(event);
 }
 
 /** Reuse the production binding/initialization analyzer on the actual check's

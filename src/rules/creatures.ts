@@ -18,9 +18,9 @@ import type { Tuning } from "./tuning";
 import type { Fight } from "./combat";
 import { glideOf } from "./movement";
 import { offSigils, onFloorSigil } from "./sigilAvoid";
+import { LEGEND, type Level } from "./creatureLevels";
 
-export type Level = 0 | 1 | 2 | 3;
-export const LEGEND = 3;
+export { LEGEND, type Level } from "./creatureLevels";
 
 /** How fast a species moves, against the usual (Ed, 2026-10-04): the witch is much faster than
  *  almost all of them; a few species are fast (rare, and weaker when combat comes); legends are
