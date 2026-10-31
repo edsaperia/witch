@@ -104,18 +104,6 @@ export function onLandingTrunk(d: Deck, x: number, z: number, pad = 0): boolean 
  *  over its floor. */
 export const flyOnto = (d: Deck, x: number, z: number): boolean => !!d.house && onLandingTrunk(d, x, z, -d.rail) && onFloor(d, x, z, -d.rail);
 
-/** The kind whose legend carries the Ent here (drawing only: art/carrier.js; Ed, 2026-10-10, journey.md "Arriving": on a new
- *  island the Ent stands on the back of a party legend of that island's kind), or null: tuning treehouse.carrier "island" the
- *  island's own kind (none at home, the Ent's own island, or on a map that isn't an island by roster), a kind's id that kind's,
- *  "none" no one. */
-export function carrierOf(map: { island: { kind: string } | null }, t: Tuning): string | null {
-  const c = t.treehouse.carrier ?? "island";
-  if (c === "none" || c === "") return null;
-  if (c !== "island") return c;
-  const k = map.island?.kind;
-  return k && k !== "home" ? k : null; // (a placeholder kind's island is never played: rules/rosters.ts)
-}
-
 /** Is she on the deck (landed, or landing or leaving it)? */
 export const perched = (w: WitchState): boolean => !!w.perch;
 

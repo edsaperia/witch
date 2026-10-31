@@ -5,6 +5,7 @@ import { dealLegends, homeIsland, OTHERS_MAX, homeKinds, isPlaceholder, islandOf
 import { AREA_TYPES, generateMap } from "./map";
 import { TUNING, type Tuning } from "./tuning";
 import { newGame } from "./game";
+import { dealtLegends } from "./win";
 
 // Keep authored island sizes/rosters and placeholder fallback: exact area multiplicities, dealt legends and coast identity are the behavior under test.
 const onIsland = (island: string, found: string[] = []): Tuning => ({ ...TUNING, map: { ...TUNING.map!, island, found } });
@@ -88,7 +89,8 @@ describe("the map of an island by roster", () => {
 
   it("has the game's legends the night's dealt kinds, favouring islands not yet found", () => {
     const g = newGame(9, onIsland("fox"));
-    const legends = g.creatures.filter(c => c.boss && !c.gone).map(c => c.species).sort();
+    const legends = dealtLegends(g).filter(c => !c.gone).map(c => c.species).sort();
+    expect(g.creatures.filter(c => c.homeGuard).map(c => c.species)).toEqual(["fox"]);
     expect(legends).toEqual([...g.map.legendKinds].sort());
     const found = g.map.legendKinds.slice(0, 1), g2 = newGame(9, onIsland("fox", found));
     const pool = islandOf("fox")!.roster.map(r => r.kind).filter(k => k !== "fox" && !found.includes(k));

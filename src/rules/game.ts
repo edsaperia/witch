@@ -38,6 +38,7 @@ import { moonState } from "./moon";
 import { floorEvent, floorLevel, islandKinds, islandSigilOf, neon, newFloor, stepFloor, switchOn, tileOf, type FloorInputs, type FloorState } from "./dancefloor";
 import { SIGIL_NEON } from "../../art/sigils.js";
 import { COMBAT, marchOn, marchSpeed, nearestHomeSpeaker, newCombat, startSiege, stepCombat, type CombatState } from "./combat";
+import { friendlyLegendRoute } from "./combat/legend";
 import { coarseTurn, fullRadius, inFull, newLodCounts, type LodCounts } from "./simLod";
 import { dropHat, newHat, type HatState } from "./hat";
 import { gatherFloorSigils, setFloorSigils } from "./sigilAvoid";
@@ -413,6 +414,7 @@ export const affectionOf = (g: Game, W: Witch = g.witches[0]): Affection => {
     invitable: c => (napper(c) ? invitableNow({ ...c, asleep: false }, data) : invitableNow(c, data)), // (as if up: the letter wakes it)
     blocksLetters: c => !c.partyLegend && !c.asleep && !invitableNow(c, data) && blocksLetters(c), // (the egg: a happy legend takes them; a party legend lets them by)
     hit(c, amount, at) {
+      if (c.level === 0) return; // Ed, 2026-10-31: no baby invitation, wake or meter.
       // (the creature's meter on the world's clock; her letters' events on hers: rules/slowTime.ts)
       if (napper(c)) Object.assign(c, { asleep: false, napUntil: undefined, lulled: undefined, wakeUntil: undefined, rest: 0 }); // (roused by it: up at once, as rules/inviteWakes.ts wakes its area)
       const was = stateOf(c), time = g.clock.time, party = !!c.partyLegend;
@@ -420,7 +422,7 @@ export const affectionOf = (g: Game, W: Witch = g.witches[0]): Affection => {
       if (was !== "happy" && castOn(t)) markAtStone(g, c); // (its sigil friend-coloured in its stone's stack: rules/stoneStacks.ts)
       if (stateOf(c) !== was || (c.partyLegend && !party)) s.events.push({ kind: "happy", x: c.x, z: c.z, at, id: c.id }); // (happy, or leashed; or a party legend)
     },
-    affection: c => affection({ time: g.clock.time }, c, data),
+    affection: c => c.level === 0 ? null : affection({ time: g.clock.time }, c, data),
   };
 };
 
@@ -778,6 +780,13 @@ function fixedStep(g: Game, controls: readonly Controls[]): void {
     const I = F.ofCell(c.cell[0], c.cell[1]);
     if (I) { const p = F.keepIn(I, c.x, c.z); c.x = p.x; c.z = p.z; }
   }
+  // Last boundary guard, including afterparty/knockback/lake corrections: the home legend never leaves home.
+  const H = homeArea(g.map);
+  for (const id of legends) {
+    const c = g.creatures[id];
+    if (!c.homeGuard || H.inside(c.x, c.z)) continue;
+    c.x = c.lairX ?? c.homeX; c.z = c.lairZ ?? c.homeZ; c.run = undefined; c.moving = false; c.vx = 0; c.vz = 0;
+  }
 }
 
 /** Spacing (rules/spacing.ts) for the creatures within movement.json bodies.range of a witch (about the view on the ground): every kind of movement at
@@ -790,7 +799,7 @@ function stepSpacing(g: Game, dt: number): void {
     if (c.gone || c.burrow || c.leap || c.swoop) continue; // (a flyer swooping: rules/movement.ts stepSwoop)
     for (const w of ws) if (Math.abs(c.x - w.x) < R && Math.abs(c.z - w.z) < R) { list.push(c); break; }
   }
-  spaceOut(list, dt, c => !!c.partyLegend || dormant(g, c) || !!c.asleep || (c.stunUntil !== undefined && g.clock.time < c.stunUntil));
+  spaceOut(list, dt, c => !!c.homeGuard || !!c.partyLegend || dormant(g, c) || !!c.asleep || (c.stunUntil !== undefined && g.clock.time < c.stunUntil));
   list.length = 0; // (let them go)
 }
 
@@ -801,7 +810,7 @@ function napRules(g: Game): NapRules | undefined {
   if (!N?.on) return undefined;
   const roused = new Set<string>(), down = g.witches.filter(w => w.body.mode === "ground" && !w.body.seated && !w.body.perch && !w.ko).map(w => w.body);
   for (const b of down) roused.add(cellKey(areaCellAt(g.map, b.x, b.z)));
-  // A legend circle's baby (naps.circle) wakes only for a witch at its circle (so she can still invite it), not anywhere in its area.
+  // A legend circle's baby (naps.circle) wakes for a witch at its circle; it joins only when its area is soundsystemed.
   const C = N.circle, atCircle = (c: Creature) => down.some(b => Math.hypot(b.x - c.circle!.x, b.z - c.circle!.z) <= c.circle!.r + C!.reach);
   return { chance: N.chance, length: N.length, wake: N.wake, circle: C, wild: c => !g.party.areas.has(cellKey(c.cell)), roused: c => C && keepsToCircle(c) ? atCircle(c) : roused.size > 0 && roused.has(cellKey(c.cell)) };
 }
@@ -894,6 +903,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
   const stepped = coarse.size ? active.filter(c => !coarse.has(c)) : active;
   const views = g.witches.map(w => leashView(w, g.creatures, g.map, t)); // (each witch's: in the treehouse, her followers guard home)
   stepCombat(S, {
+    friendlyRoute: () => friendlyLegendRoute(g),
     creatures: g.creatures, active: stepped, time, dt, t, busy,
     witches: g.witches.map((w, i) => {
       const onGround = w.body.mode === "ground" && !w.body.seated && !w.body.perch; // (up on the treehouse deck: out of every fight)
