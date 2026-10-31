@@ -8,6 +8,8 @@ One soundsystem with rotating spokes, sweeping stripes and layered colour bands;
 
 Start with at most three patterned existing light slots, not extra point lights. Broad, low-contrast slow motion by default; reduce-flashing disables modulation exactly. An explicit off comparison must restore original light values. No gameplay/collision or authored art changes.
 
+Root reservation 1542#6544780734 (2026-10-31 14:35 UTC) grants the narrow existing light interfaces. Preview stays OFF by default until visual/GPU review. Enable explicitly with `?patternlight=auto`, or hold `spokes`, `stripes` or `bands`; `off` and omitted/unknown values retain original lighting. `view.ts` changes only ForestLight metadata; preserve refraction1543's separate view hooks.
+
 ## Ownership before integration
 
 Request canonical approval for narrow additions in lighting.ts, view/lights.ts and ForestLight metadata, source selection in view/home.ts and existing spell-light slot writing in fx/system.ts. Do not change creature art/rig owners (#1470/#1532), potion/audio owner (#1536), house/worker/kitchen owner (#1526), or multiplayer owner (#1538). Independent lightPatterns math/tests can proceed while those boundaries are confirmed.

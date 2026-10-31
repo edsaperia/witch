@@ -4,6 +4,8 @@
 import * as THREE from "three";
 import { hsv2rgb } from "../../art/generator.js";
 import type { Style } from "./style";
+import { LIGHT_PATTERN_GLSL } from "./lightPatterns";
+import { LIGHT_PATTERN_UNIFORMS } from "./lightPatternUniforms";
 
 /** The most point lights shaded at once (the light budget in the tuning file may be lower). */
 export const MAX_LIGHTS = 24;
@@ -11,6 +13,7 @@ export const MAX_LIGHTS = 24;
 export const MAX_GLADES = 4;
 
 export const LIGHT_UNIFORMS = {
+  ...LIGHT_PATTERN_UNIFORMS,
   uAmb: { value: new THREE.Vector3() },
   /** What nothing lights, darkened: the ambient and the moonlight times this (the mood's unlit; 1 as they are). */
   uUnlitDim: { value: 1 },
@@ -105,6 +108,8 @@ uniform float uShafts, uShaftScale, uGlowR, uGlowFalloff, uGlowNear, uGlowPower,
 uniform vec2 uHazeCentre, uHazeRange;
 uniform vec3 uHazeColour;
 uniform vec4 uLightPos[${MAX_LIGHTS}], uLightCol[${MAX_LIGHTS}];
+uniform vec4 uLightPattern[${MAX_LIGHTS}];
+${LIGHT_PATTERN_GLSL}
 uniform vec4 uGlade[${MAX_GLADES}];
 uniform int uGladeCount;
 uniform vec3 uGladeRgb;
@@ -219,7 +224,7 @@ vec3 nightLightShaded(vec3 N, vec3 P, float moonK) {
     if (ld >= reach) continue;
     float ndl = max(0.0, dot(N, lv / max(ld, 1e-4))) * 0.7 + 0.3;
     float fall = 1.0 - ld / reach;
-    l += uLightCol[i].rgb * min(1.0, ndl * fall * fall * uLightCol[i].w);
+    l += uLightCol[i].rgb * lightPattern(P - uLightPos[i].xyz, uLightPattern[i], vec2(1.0, 0.0)) * min(1.0, ndl * fall * fall * uLightCol[i].w);
   }
   l = l * uDim + gladeLight(P); // (inside a clearing the forest goes dark: Ed, 2026-10-06; render/glades.ts)
   if (uDisco.w > 0.5) {

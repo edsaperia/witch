@@ -4,7 +4,9 @@ import { IDENTITY_PATTERN, PatternSlots, patternOptions, sourcePattern, speakerP
 it('has one explicit off switch and three repeatable soundsystem looks', () => {
   const clock = newBeatClock(120);
   expect(patternOptions('?patternlight=off')).toBe('off');
-  expect(patternOptions('?patternlight=unknown')).toBe('auto');
+  expect(patternOptions('?patternlight=unknown')).toBe('off');
+  expect(patternOptions('')).toBe('off');
+  expect(patternOptions('?patternlight=auto')).toBe('auto');
   expect(speakerPattern(clock, 10, 'off', false)).toBe(IDENTITY_PATTERN);
   expect(speakerPattern(clock, 10, 'auto', true)).toBe(IDENTITY_PATTERN);
   expect([8, 72, 136].map(beat => speakerPattern(clock, timeAt(clock, beat), 'auto', false)[0])).toEqual([1, 2, 3]);

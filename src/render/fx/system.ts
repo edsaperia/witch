@@ -8,8 +8,10 @@ import { groundHeight } from "../height";
 import { comfort } from "../comfort";
 import { native, NATIVE_ON, type NativeFx } from "./native";
 import layerPolicy from "../../../config/fx/layers.json";
+import { sourcePattern, PATTERN_LOOK, type PatternLook } from "../lightPatternState";
+import { trimLightPatterns, writeLightPattern } from "../lightPatternUniforms";
 export const FX_QUALITY = { distortion:true, imprints:true, secondary:true, lightCap:settings.lightCap, particles:1 };
-type Light={x:number;y:number;z:number;reach:number;rgb:THREE.Vector3;strength:number;target:number;seen:number;score:number;fade:number};
+type Light={x:number;y:number;z:number;reach:number;rgb:THREE.Vector3;strength:number;target:number;seen:number;score:number;fade:number;pattern?:boolean};
 type Burst={element:string;form:FxForm;x:number;y:number;z:number;level:number;size:number;at:number;life:number;seed:number};
 const SYSTEMS=new WeakMap<THREE.Scene,MagicFx>();
 export function fxFor(scene:THREE.Scene):MagicFx {let fx=SYSTEMS.get(scene);if(!fx){fx=new MagicFx(scene);SYSTEMS.set(scene,fx);}return fx;}
@@ -39,7 +41,7 @@ export class MagicFx {
   private owner:object|null=null;
   private time=0;private dt=0;private cx=0;private cz=0;
   private screenAt=-Infinity;private screenStrength=0;
-  constructor(scene:THREE.Scene){this.batches=new FxBatches(scene);}
+  constructor(scene:THREE.Scene,private readonly patternLook:PatternLook=PATTERN_LOOK){this.batches=new FxBatches(scene);}
   begin(time:number,x:number,z:number,owner:object):void {
     time=this.captureTime??time;
     if(this.owner!==owner || time<this.time){this.reset();this.owner=owner;this.time=time;}
@@ -126,6 +128,7 @@ export class MagicFx {
     light.rgb.set(tint?.[0]??(n>>16)/255,tint?.[1]??((n>>8)&255)/255,tint?.[2]??(n&255)/255);
     light.target=mixIntensity(settings.lightStrength,intensity)*Math.min(1,alpha)*(comfort.reduceFlashing?0.5:1);
     light.seen=this.time;
+    light.pattern=id.startsWith("moonlight:aura:"); // The existing blink's moonlight aura, not a new spell/light.
   }
   finish(budget:number):void {
     let used=0;
@@ -164,10 +167,15 @@ export class MagicFx {
     const cap=Math.min(FX_QUALITY.lightCap,settings.lightCap,limit),n=Math.min(cap,this.selected.length);
     // At least budget-cap slots stay available to the world's existing lights. Strongest nearby effects take the last n.
     const world=Math.min(U.uLightCount.value,Math.max(0,limit-n));
+    trimLightPatterns(world);
+    let patternedSpell=false;
     for(let i=0;i<n;i++){
       const l=this.selected[i];U.uLightPos.value[world+i].set(l.x,groundHeight(l.x,l.z)+l.y,l.z,l.reach);
       const slot=U.uLightCol.value[world+i];
       slot.set(l.rgb.x,l.rgb.y,l.rgb.z,l.strength);
+      const pattern=l.pattern&&!patternedSpell&&this.patternLook!=="off"?sourcePattern("rings",this.time,comfort.reduceFlashing):undefined;
+      writeLightPattern(world+i,pattern);
+      if(pattern)patternedSpell=true;
     }
     U.uLightCount.value=world+n;this.stats.lights=n;this.stats.requests=this.lights.size;
   }

@@ -157,6 +157,8 @@ void main(){ vUv = uv; gl_Position = clipOf(onGround((modelMatrix * vec4(positio
 /** The zoo's plaza's own soft light over the World Tree (the legend circles' moonlit cyan). */
 const PLAZA_RGB = new THREE.Vector3(0.55, 0.85, 0.9);
 export interface ForestLight { x: number; y: number; z: number; reach: number; rgb: THREE.Vector3; strength: number;
+  /** Drawing-only modulation of an existing slot; never a new light or a shadow source. */
+  pattern?: import("./lightPatternState").PackedPattern;
   /** a light things cast shadows from (render/trunkShadows.ts), as a campfire's: where they're thrown from and how strongly (0 to 1);
    *  the soundsystems' and runestones' (Ed, 2026-10-13: "the light that soundsystems and runestones produce" casting shadows) */
   shadow?: { x: number; y: number; z: number; k: number } }
