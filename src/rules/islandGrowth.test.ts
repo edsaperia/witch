@@ -9,6 +9,7 @@ import { reachOf, shapeOf, SHAPES } from "./islandGrowth";
 import { islandOutline } from "./islandShape";
 import { homeIsland, islandOf } from "./rosters";
 
+// Keep the explicit phase/area-size matrix: counts, connectivity, inland clearance and increasing outline irregularity are the assertions.
 const isle = (phase: number): Tuning => ({ ...TUNING, map: { ...TUNING.map!, islandAreas: phase ? 10 * phase : 10, island: "", phase } });
 /** How far from round an outline is: its coast's length squared over 4 pi its area (1 for a circle). */
 const ragged = (L: { loops: { pts: ArrayLike<number>; sea: boolean }[] }) => {

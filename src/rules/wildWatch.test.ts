@@ -9,6 +9,7 @@ import { aggroOf, watcher } from "./wildWatch";
 import { legendRings } from "./slowTime";
 import { napping } from "./creatures";
 import { hit } from "./affection";
+import { smallWorldTuning } from "../test/worlds";
 
 /** Every species at strength 1 for these tests (Ed, 2026-10-08, gave the species strengths by class; these test other
  *  mechanics, written when every species was 1): combat.json strength.species emptied for the block, put back after. */
@@ -21,6 +22,7 @@ const run = (g: Game, secs: number, each?: () => void) => { for (let i = 0; i < 
 
 /** A wild area with young or adults in it, the witch high over it in the treetops, the game running. */
 function overWild(): { g: Game; key: string; at: { x: number; z: number } } {
+  // Retain seed 77's populated wild area and an inland neighbour beyond its chase band/400 m border search.
   const g = newGame(77, TUNING);
   g.clock.paused = false;
   g.witches[0].health.hp = 1e6;
@@ -163,7 +165,7 @@ describe("the wild watch (Ed, 2026-10-07)", () => {
   }, 120_000);
 
   it("does nothing with wildWatch off", () => {
-    const t = { ...TUNING, wildWatch: { ...TUNING.wildWatch!, on: false } }, g = newGame(77, t);
+    const t = { ...TUNING, wildWatch: { ...TUNING.wildWatch!, on: false } }, g = newGame(77, smallWorldTuning(t, "The disabled watch must leave every creature's watch state unset, independent of map size."));
     g.clock.paused = false; g.witch = { ...g.witch, seated: false, mode: "ground", lift: 0 };
     run(g, 1);
     expect(g.wildEntry.size).toBe(0);

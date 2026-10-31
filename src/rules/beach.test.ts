@@ -12,6 +12,7 @@ import { newWitch, stepWitch, NO_INTENT, type Intent, type WitchState } from "./
 import { newBeachWitches, stepBeachWitches, SEQUENCE } from "./beach";
 import { TUNING, type Tuning } from "./tuning";
 
+// Retain the full seeded coast: circumference sampling, separated beach spots and 400–1000 m inland probes are the subject.
 const SEEDS = [1, 123, 4242];
 const STEP = 1 / 60;
 

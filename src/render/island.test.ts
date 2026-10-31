@@ -3,7 +3,8 @@
 // a canvas, the ground, the paths and the runestones, stand in where they must.)
 import { afterEach, describe, expect, it, vi } from "vitest";
 import * as THREE from "three";
-import { newGame } from "../rules/game";
+import { newGame as fullGame } from "../rules/game";
+import { smallWorld } from "../test/worlds";
 import { TUNING } from "../rules/tuning";
 import { Dancefloor } from "./dancefloor";
 import { groundHeight, HEIGHT_UNIFORMS, HeightField, useHeightField } from "./height";
@@ -17,6 +18,7 @@ import type { Atlas } from "./atlas";
 import type { Ground } from "./ground";
 import type { MarkerArt } from "./markers";
 
+const newGame = smallWorld(fullGame, "Layer ownership/disposal checks use stand-in art and resource events, independent of world extent or art diversity.");
 const g = newGame(123, TUNING), map = g.map, H = { on: true, amplitude: 2, scale: 48, octaves: 3 };
 
 /** Every geometry, material and texture under the objects, each once. */

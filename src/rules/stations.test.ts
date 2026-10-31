@@ -2,7 +2,9 @@
 // one at a time, with a little slack at the edge; never off foot in the house.
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
-import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { newGame as fullGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Dressing station proximity and camera framing use one house, independent of distant areas.");
 import { deckOf } from "./treehouse";
 import { HOUSE_ROOMS, objectFrontAt } from "./houseRooms";
 import { STATION_SLACK, broomWhere, stationAt, stationOf, tableOf } from "./stations";

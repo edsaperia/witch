@@ -3,7 +3,10 @@
 // solve this by having the hostile creatures tend to idle near the runestone"): rules/creatures.ts idlesAtStone.
 import { describe, expect, it } from "vitest";
 import { newGame } from "./game";
-import { TUNING, type Tuning } from "./tuning";
+import { TUNING as gameTuning, type Tuning } from "./tuning";
+import { largestWorldTuning } from "../test/worlds";
+// Largest shipped world: roaming distributions must cover its full roster and area boundaries.
+const TUNING = largestWorldTuning(gameTuning);
 import { cellKey } from "./party";
 import { LEGEND, stepCreaturesNear, type Creature } from "./creatures";
 

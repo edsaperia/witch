@@ -5,8 +5,10 @@ import { generateMap } from "../rules/map";
 import { TUNING, withTuning } from "../rules/tuning";
 import { stumpDeal } from "./markers";
 import { stumpId } from "./artBuild";
+import { largestWorldTuning } from "../test/worlds";
 
-const T = withTuning({ runeMarkers: { ...TUNING.runeMarkers, stump: { ...TUNING.runeMarkers.stump!, on: true } } });
+// Largest shipped world: stump allocation must cover all area types and repeated variants.
+const T = largestWorldTuning(withTuning({ runeMarkers: { ...TUNING.runeMarkers, stump: { ...TUNING.runeMarkers.stump!, on: true } } }));
 
 describe("the great stumps' deal", () => {
   it("gives every area a stump of its type's form and colours, at most `variants` of a type, the same each time", () => {

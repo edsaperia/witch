@@ -14,6 +14,7 @@ const OLD = withTuning({ fight: { ...TUNING.fight, charge: { reach: 1, turn: 1, 
 
 /** A quiet game, the witch on the ground away from everything, too tough to knock out. */
 function quiet(t: Tuning = TUNING): Game {
+  // Keep the spatial fixture: attacks recruit creatures over 200 m away and test pursuit across area edges.
   const g = newGame(77, t);
   g.clock.paused = false;
   const d = g.map.dancefloor;

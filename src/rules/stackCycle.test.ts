@@ -4,7 +4,9 @@
 // sleeping legend's she carries (rules/stoneStacks.ts tether), and the playtest log now says which it was (platform/playtestLog.ts).
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
-import { newGame, stepGame, STEP } from "./game";
+import { newGame as fullGame, stepGame, STEP } from "./game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Stack cycling uses three nearby creatures and one tethered legend, independent of distant areas.");
 import { stackBottom } from "./leash";
 import { stackShown } from "../platform/playtestLog";
 

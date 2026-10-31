@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import styleJson from "../../config/music-style.json";
 import { Conductor, barSeconds, bootLayers, legendNear, musicCue, partyNear, planBlock, type MusicCue } from "./musicPlan";
-import { newGame } from "./game";
+import { newGame as fullGame } from "./game";
+import { smallWorld } from "../test/worlds";
 import { TUNING } from "./tuning";
 import { checkStyle, notesAt, resolveSection, type BlockPlan, type MusicStyle } from "./musicScore";
 
+const newGame = smallWorld(fullGame, "Music cues use supplied clocks and nearby legend/soundsystem targets, independent of world extent.");
 const style = styleJson as unknown as MusicStyle;
 /** The section a wave lands on (the form's first block, Ed 2026-10-09). */
 const landOf = (a: MusicStyle["arc"][number]) => a.sections!.land ?? a.sections!.four[0];

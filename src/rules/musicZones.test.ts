@@ -8,6 +8,7 @@ import { spreadWave } from "./party";
 import { beachOf } from "./mapShape";
 import { TUNING } from "./tuning";
 
+// Keep the radius coastline: assertions need >200 m inland quiet and a continuous 400 m beach-to-forest fade.
 describe("the music, place by place", () => {
   const g = newGame(123, TUNING), M = TUNING.music, d = g.map.dancefloor;
   g.clock.paused = false; g.party.spellAt = 0; g.party.bootFrom = 0;

@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import * as Art from "../../art/generator.js";
 import { newGame } from "../rules/game";
-import { TUNING } from "../rules/tuning";
+import { TUNING as gameTuning } from "../rules/tuning";
+import { largestWorldTuning } from "../test/worlds";
+// Largest shipped world: pairwise visual diversity and near/far scaling must cover the full area allocation.
+const TUNING = largestWorldTuning(gameTuning);
 import { SOUNDSYSTEM_GEN_DEFAULT, soundsystemSpecs } from "./soundsystemGen";
 
 type G = { seed: number; profile: string; crystal: string; stone: string; projector: string; tiers: { kind: string; n: number }[] };

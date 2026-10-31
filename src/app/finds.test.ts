@@ -2,7 +2,9 @@
 // themselves collectible items"): a find given is exactly a find found, rules and saves alike.
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { TUNING } from "../rules/tuning";
-import { newGame, stepGame, type Controls, type Game } from "../rules/game";
+import { newGame as fullGame, stepGame, type Controls, type Game } from "../rules/game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Find grants and local pickup saves use one placed trunk, independent of area count.");
 import { FIND_KINDS, FINDABLE, fillTrunk, type FindKindId } from "../rules/finds";
 import { fitBroom, loadBroom } from "./broomSave";
 import { setParts } from "../rules/spells";

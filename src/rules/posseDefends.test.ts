@@ -8,6 +8,7 @@ import { speedFactor, wanderRange } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING, withTuning } from "./tuning";
 
+// Keep the radius fight fixture: two-cell-away arena recruits beyond 300 m and tests an uninvolved defender parked 120 m away.
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const T = withTuning({ witchHealth: { ...TUNING.witchHealth, hits: 1e6 }, invites: { ...TUNING.invites, on: false } });
 

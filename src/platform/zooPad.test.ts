@@ -5,6 +5,7 @@ import { zooExitSpot } from "../rules/zoo";
 import { padControls } from "./input";
 
 it("Square uses the zoo's in-world exit; Circle is not a parent-side exit action", () => {
+  // Keep the zoo's authored full collection: its exit must be located on the real zoo layout, not a generic small island.
   const g = newGame(7, { ...TUNING, map: { ...TUNING.map!, shape: "zoo", island: "", islandAreas: 0, found: ["*"] } });
   g.clock.paused = false;
   const exit = zooExitSpot(g.map)!;

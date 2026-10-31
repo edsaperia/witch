@@ -3,9 +3,11 @@ import { FIGHTERS, nextSeed, packSpec, rollPack, TellWatch } from "./fightArena"
 import { arenaAttack, parseArena, setupArena } from "./arena";
 import { LEGEND } from "./creatures";
 import { attackOf } from "./combat/data";
-import { newGame, stepGame, STEP, type Controls } from "./game";
+import { newGame as fullGame, stepGame, STEP, type Controls } from "./game";
+import { smallWorld } from "../test/worlds";
 import { TUNING, withTuning } from "./tuning";
 
+const newGame = smallWorld(fullGame, "Fight Arena setup and telegraph timing use explicitly injected local packs, independent of world extent.");
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 
 describe("the Fight Arena's pack roll (Ed, 2026-10-27)", () => {

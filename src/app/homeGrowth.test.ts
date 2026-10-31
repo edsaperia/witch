@@ -7,6 +7,7 @@ import { islandCoast } from "../rules/islandShape";
 import { TUNING, type Tuning } from "../rules/tuning";
 import { emptySave, recordNight } from "./chartSave";
 
+// Keep explicit 10/11/13-area authored homes: persistence, outward growth, roster counts and coast scaling are the integration assertions.
 const home = (found: string[], world = 0): Tuning => ({ ...TUNING, map: { ...TUNING.map!, island: "home", islandAreas: 10, found, world } });
 /** Each of the map's areas but home's own, by cell, with its kind. */
 const areas = (map: ReturnType<typeof generateMap>) => new Map(map.cells.filter(([x, y]) => x !== map.centreCell[0] || y !== map.centreCell[1]).map(([x, y]) => [`${x},${y}`, AREA_TYPES[map.typeOf(x, y)].creature]));

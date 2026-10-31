@@ -5,6 +5,7 @@ import { newGame, poseOf } from "./game";
 import { arrivePlan, diveReach, dueAt, dueRate, inShot, newFlightClock, treeShot, planLength, shotAt, shotCamera, southCoast, stepFlightClock, type Handoff, type Shot } from "./arrive";
 
 const A = TUNING.arrive!;
+// Keep this seeded spatial fixture: arrival duration and framing depend on its real south coast and treehouse distance.
 
 describe("arriving from the sea chart", () => {
   it("flies on from the chart's own camera, down low over the forest, up to frame the dancefloor and the Ent's spot, and down to her decks", () => {

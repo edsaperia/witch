@@ -4,6 +4,7 @@ import { availableParallelism } from "node:os";
 import { readPng } from "./tools/overrides/png";
 import { artHash as artHashOf, artFingerprintMap, overrideFiles as overridesAt } from "./tools/artHash";
 import { changelogBatches } from "./tools/changelogBatches";
+import { houseStanding } from "./tools/houseStanding";
 
 // base "./": the same build works at the site's root and under /pr-<number>/.
 // The build's version, shown in the corner: the Pages workflow sets these; local builds say "dev".
@@ -62,7 +63,7 @@ export default defineConfig({
   define: { __BUILD__: JSON.stringify(sha ? `${version} · ${sha}` : version), __BUILD_DATE__: JSON.stringify(new Date().toISOString().slice(0, 10)), __UPCOMING__: JSON.stringify(upcoming), __ART_HASH__: JSON.stringify(artHash), __ART_KIND_HASHES__: JSON.stringify(artKindHashes) },
   // (two pages: the game, and the sea chart: chart.html, wave 2 part C)
   build: { target: "es2022", chunkSizeWarningLimit: 1200, rollupOptions: { input: { main: "index.html", chart: "chart.html" } } },
-  plugins: [artOverrides(), configNotes(), versionFile(), changelogBatches()],
+  plugins: [artOverrides(), configNotes(), versionFile(), changelogBatches(), houseStanding()],
   worker: { format: "es", plugins: () => [artOverrides(), configNotes()] },
   // The rules tests build whole maps and play out fights and waves: CPU-bound seconds each, many more
   // under load (a smoke run or CI's busy runners), so vitest's 5 s default made them time out at random.
@@ -70,5 +71,5 @@ export default defineConfig({
   // Tests (overnight phase 1, test speed): a worker per core (Vitest leaves one idle by default) and one module load per
   // worker rather than per file (isolate false: no test file leaves module state changed; the few that change it put it
   // back in afterEach). 281 s to 216 s locally on 4 cores, the same 758 tests.
-  test: { include: ["src/**/*.test.ts", "tools/bench/*.test.ts", "tools/shots/*.test.ts", "tools/docs/*.test.ts"], environment: "node", setupFiles: ["src/test/radiusMap.ts"], testTimeout: 60_000, hookTimeout: 60_000, maxWorkers: availableParallelism(), isolate: false },
+  test: { include: ["src/**/*.test.ts", "tools/bench/*.test.ts", "tools/shots/*.test.ts", "tools/docs/*.test.ts", "tools/ci/*.test.ts"], environment: "node", setupFiles: ["src/test/radiusMap.ts"], testTimeout: 60_000, hookTimeout: 60_000, maxWorkers: availableParallelism(), isolate: false },
 });

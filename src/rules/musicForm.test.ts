@@ -5,7 +5,9 @@
 import { describe, expect, it } from "vitest";
 import styleJson from "../../config/music-style.json";
 import { bpmAt, timeAt, waveArrived, waveTempo } from "./beat";
-import { hitWitch, newGame } from "./game";
+import { hitWitch, newGame as fullGame } from "./game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Music cue and knockdown tempo integration consumes one witch's beat state, not distant areas.");
 import { Conductor, formClock, musicCue, silentAt, type MusicCue } from "./musicPlan";
 import { arcStep, degreeToMidi, formBars, formChord, formInstrument, formNoteAt, formPhrase, musicSeed, notesAt, resolveSection, sungHere, type BlockPlan, type MusicStyle } from "./musicScore";
 import { TUNING, type Tuning } from "./tuning";

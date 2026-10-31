@@ -3,6 +3,7 @@ import { parseArena, setupArena } from "./arena";
 import { newGame, stepGame, STEP, type Controls } from "./game";
 import { TUNING } from "./tuning";
 
+// Keep seed 5's radius-world clearing: the 30-second kiting regression depends on that map's legend layout.
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 
 describe("the debug arena (Stage 5)", () => {

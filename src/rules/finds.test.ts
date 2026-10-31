@@ -10,9 +10,11 @@ import { newSpells, ownsHat } from "./spells";
 import { COUNTRY_BY_ID } from "../../art/country.js";
 import { PART_IDS, fittedKey } from "./broomParts";
 import { deckOf, onFloor } from "./treehouse";
+import { smallWorldTuning } from "../test/worlds";
 
 const C: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 function game(seed = 123): Game {
+  // Retain seeded trunk/relic placement and dev-spawn terrain probes up to 300 m from home.
   const g = newGame(seed, TUNING);
   g.clock.paused = false; g.party.paused = true; g.party.spellAt = undefined;
   return g;
@@ -140,7 +142,7 @@ describe("the way to the trunk (never how far)", () => {
 describe("tonight's wreck (the Workshop, Ed 2026-10-23: a broom part to find)", () => {
   /** A night whose find is a wreck holding `part`. */
   const wreck = (part: string, t = TUNING) => {
-    const g = newGame(123, t);
+    const g = newGame(123, smallWorldTuning(t, "Wreck pickup changes ownership and fitted parts at one find, independent of map size."));
     g.clock.paused = false; g.party.paused = true; g.party.spellAt = undefined;
     fillTrunk(g, {}); g.trunk!.kind = "part"; g.trunk!.item = part;
     return g;

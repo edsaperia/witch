@@ -20,6 +20,7 @@ import { keepIn } from "./mapShape";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 function fresh(players = 2): Game {
+  // Four authored areas retain three occupied wild watches and complete seeded multiplayer replay coverage.
   const t = structuredClone(TUNING); t.map!.island = "home"; t.map!.islandAreas = 4;
   const g = newGame(123, t, players);
   g.clock.paused = false; g.party.spellAt = -100;
@@ -190,6 +191,7 @@ describe("several witches in one deterministic night", () => {
   });
 
   it("does not let another witch reset an outward push against the zoo edge", () => {
+    // Retain the complete zoo layout: the outward boundary and exit are the behavior under test.
     const t = structuredClone(TUNING); t.map = { ...t.map!, shape: "zoo", island: "", islandAreas: 0 }; t.beach!.on = false;
     const g = newGame(7, t, 2), [a, b] = g.witches, L = g.map.zoo!.layout!;
     const edge = keepIn(g.map.bounds, L.home.x, g.map.bounds.minZ);

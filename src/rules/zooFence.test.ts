@@ -10,6 +10,7 @@ import { knockOut } from "./knockout";
 import { deckOf } from "./treehouse";
 import { ZOO_CONFIG, zooExitSpot } from "./zoo";
 
+// Keep the complete chart-shaped zoo: discovered/unfound fence geometry, shared plaza, knockout return and outer-waterfall exit are mode-specific integration coverage.
 const C: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const run = (g: Game, s: number, c: Partial<Controls> = {}) => { for (let i = 0; i < Math.round(s / STEP); i++) stepGame(g, { ...C, ...c }, STEP); };
 const zoo = (found: string[]) => { const g = newGame(7, { ...TUNING, map: { ...TUNING.map!, shape: "zoo", island: "", islandAreas: 0, found } }); g.clock.paused = false; return g; };

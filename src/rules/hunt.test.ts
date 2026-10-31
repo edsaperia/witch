@@ -11,6 +11,7 @@ import { holdsArea, wildLeft } from "./clear";
 import type { Creature } from "./creatures";
 import { calmRingAt } from "./slowTime";
 
+// Keep the seeded radius population/geometry: the regression walks 220 m out of an area and searches ±400 m for far-end ambusher approach coverage.
 const still: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, secs: number, each?: () => void) => { for (let i = 0; i < Math.round(secs * 60); i++) { stepGame(g, still, 1 / 60); each?.(); } };
 const W = TUNING.wildWatch!;

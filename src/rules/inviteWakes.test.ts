@@ -8,6 +8,7 @@ import { holdsArea } from "./clear";
 import type { Creature } from "./creatures";
 import { wakeOnInvites } from "./inviteWakes";
 
+// Keep the seeded radius layout: the fixture finds a populated wild area and crosses its actual border on a path up to 400 m toward home.
 const W = TUNING.wildWatch!;
 
 /** A game under way, she landed 3 m east of one of a wild area's young or adults (an area with at least two), her health endless. */

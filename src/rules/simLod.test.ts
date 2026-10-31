@@ -9,6 +9,7 @@ import { marchSpeed } from "./combat";
 import { inFull } from "./simLod";
 import { TUNING } from "./tuning";
 
+// Keep the radius world: coarse/full marching uses 600 m approaches and a witch 2000 m away, with a separate 5000 m freeze probe.
 const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const L = TUNING.simLod;
 

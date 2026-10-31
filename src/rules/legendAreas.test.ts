@@ -17,6 +17,7 @@ import { borderOf } from "./borders";
 // "extra areas are added to each island, and the legend areas can be adjacent to the same type of area, so it effectively becomes
 // an area twice the size"; "The route only cares about runestones"; "for legends getting enraged, and also for animals attacking
 // and defending, the adjacent areas should count as one").
+// Retain the authored ten-area roster matrix: paired legend geometry, route exclusion and neighbours are the subject.
 const islandOf = (kind: string): Tuning => ({ ...TUNING, map: { ...TUNING.map!, island: kind, islandAreas: 10 } }); // (the game's islands by roster: the tests' tuning is the radius map)
 const MAPS: [string, number][] = [["home", 1], ["home", 2], ["tiger", 1], ["lion", 2], ["elephant", 1]];
 const cellOf = (k: string): [number, number] => { const [x, y] = k.split(",").map(Number); return [x, y]; };

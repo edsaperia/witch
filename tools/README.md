@@ -17,6 +17,7 @@ Scripts for building, checking and measuring the game, run from the repository r
 - [`bench/`](bench/README.md): 24 scripts — alloc.mjs, alloc.ts, bootstall.cjs, comparable.cjs, compare.cjs, crown-cost.cjs, cull-walk.cjs, early-diff.cjs, expect.cjs, fingerprint.ts, frames.cjs, gpu.cjs, ground.cjs, heapdiff.cjs, hitch.cjs, late.cjs, neutral-hunt.cjs, perf.ts, rules.ts, run.mjs, spikes.ts, stalls.cjs, ts.mjs, viewalloc.cjs
 - [`biomes/`](biomes/README.md): 2 scripts — sheet.mjs, shots.cjs
 - [`chart/`](chart/README.md): 4 scripts — diff.cjs, emerge.cjs, open.cjs, profile.cjs
+- [`ci/`](ci/README.md): 4 scripts — run-unit.mjs, sleep-cell-repro.mjs, test-scope.mjs, world-audit.mjs
 - [`config/`](config/README.md): 3 scripts — knob-docs.mjs, linkSwitches.mjs, schema.mjs
 - [`dj/`](dj/README.md): 5 scripts — booth-sheet.mjs, booth.cjs, candles-sheet.mjs, respawn.cjs, strip.mjs
 - [`docs/`](docs/README.md): 2 scripts — glossary.mjs, tables.mjs

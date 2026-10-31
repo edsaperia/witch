@@ -1,0 +1,663 @@
+{
+  "runtimeSha": "0389ac1e8970523e83c630caf70213f1d568b1c3",
+  "summaryBlob": "01fd30e4fcfe6c0e1341f6b14fa61978806a54b1",
+  "cpuBlob": "bf5391c629aaf2299b66a03b8c4ec05743d7ab7f",
+  "cpuRun": "as-built-1",
+  "exactMainAsset": "main-CACGRzNM.js",
+  "method": "CPU sample interval overlap in microseconds, reported ms. Self and inclusive are separate; never add them. Negative deltas keep clock alignment but add no weight; already-covered interval overlaps are skipped. Sampled wall attribution is not exact function duration or GPU time.",
+  "negativeDeltas": 6,
+  "browserRunPerformedHere": false,
+  "groups": {
+    "boot-before-walk": {
+      "sampledMs": 49241.353000001145,
+      "houseUpdateInclusive": [
+        {
+          "key": "src/render/houseRooms.ts:282:2:update",
+          "source": "src/render/houseRooms.ts",
+          "line": 282,
+          "column": 2,
+          "name": "update",
+          "snippet": "update(v: View, onTreehouse: (px: number, py: number) => V3, ht: number): void {",
+          "ms": 744.686
+        }
+      ],
+      "topHouseSelf": [
+        {
+          "key": "config/house/shape.js:16:13:Jr",
+          "source": "config/house/shape.js",
+          "line": 16,
+          "column": 13,
+          "name": "Jr",
+          "snippet": "const hash = (x, y) => { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); };",
+          "ms": 224.76700000000017
+        },
+        {
+          "key": "config/house/shape.js:40:16:Bi",
+          "source": "config/house/shape.js",
+          "line": 40,
+          "column": 16,
+          "name": "Bi",
+          "snippet": "export function limb(a, b, bend, w0, w1, x, z, n = 24, rough = 0.35, roughScale = 0.2) {",
+          "ms": 151.88300000000007
+        },
+        {
+          "key": "config/house/shape.js:27:16:Sr",
+          "source": "config/house/shape.js",
+          "line": 27,
+          "column": 16,
+          "name": "Sr",
+          "snippet": "export function blob(r, x, z) {",
+          "ms": 63.58799999999996
+        },
+        {
+          "key": "src/render/houseRooms.ts:282:2:update",
+          "source": "src/render/houseRooms.ts",
+          "line": 282,
+          "column": 2,
+          "name": "update",
+          "snippet": "update(v: View, onTreehouse: (px: number, py: number) => V3, ht: number): void {",
+          "ms": 59.92100000000002
+        },
+        {
+          "key": "config/house/shape.js:75:16:B1",
+          "source": "config/house/shape.js",
+          "line": 75,
+          "column": 16,
+          "name": "B1",
+          "snippet": "export function field(S0, x0, z0, walk = false, parts = null) {",
+          "ms": 46.402000000000015
+        },
+        {
+          "key": "config/house/shape.js:17:16:$0",
+          "source": "config/house/shape.js",
+          "line": 17,
+          "column": 16,
+          "name": "$0",
+          "snippet": "export function noise(x, y) {",
+          "ms": 27.592
+        },
+        {
+          "key": "src/render/houseRooms.ts:289:20:w",
+          "source": "src/render/houseRooms.ts",
+          "line": 289,
+          "column": 20,
+          "name": "w",
+          "snippet": "const toWorld = (px: number, pz: number, h: number): V3 => {",
+          "ms": 21.927
+        },
+        {
+          "key": "config/house/shape.js:143:16:uC",
+          "source": "config/house/shape.js",
+          "line": 143,
+          "column": 16,
+          "name": "uC",
+          "snippet": "export function outline(S, box, step = 0.5, inside = (x, z) => field(S, x, z) < 0) {",
+          "ms": 19.165
+        },
+        {
+          "key": "config/house/shape.js:37:23:lr",
+          "source": "config/house/shape.js",
+          "line": 37,
+          "column": 23,
+          "name": "lr",
+          "snippet": "export const curveAt = (q, t) => ({ x: (1 - t) * (1 - t) * q.a.x + 2 * (1 - t) * t * q.c.x + t * t * q.b.x, z: (1 - t) * (1 - t) * q.a.z + 2 * (1 - t) * t * q.c.z + t * t * q.b.z }",
+          "ms": 16.128000000000004
+        },
+        {
+          "key": "config/house/shape.js:53:15:hE",
+          "source": "config/house/shape.js",
+          "line": 53,
+          "column": 15,
+          "name": "hE",
+          "snippet": "const stubAt = (l, x, z) => limb(l.a, l.b, 0, l.w0, l.w1, x, z, Math.max(8, Math.ceil(Math.hypot(l.b.x - l.a.x, l.b.z - l.a.z) * 3)), 0.25, 0.4);",
+          "ms": 15.943999999999997
+        },
+        {
+          "key": "src/render/houseArt.ts:139:16:XO",
+          "source": "src/render/houseArt.ts",
+          "line": 139,
+          "column": 16,
+          "name": "XO",
+          "snippet": "export function standing(H: HouseConfig): Upright[] {",
+          "ms": 14.097999999999995
+        },
+        {
+          "key": "src/render/view/home.ts:362:16:An",
+          "source": "src/render/view/home.ts",
+          "line": 362,
+          "column": 16,
+          "name": "An",
+          "snippet": "export function alongRay(v: View, p: { x: number; y: number; z: number }, d: number): { x: number; y: number; z: number; scale: number } {",
+          "ms": 12.375
+        }
+      ]
+    },
+    "seat-exit": {
+      "sampledMs": 78.49999999999999,
+      "houseUpdateInclusive": [
+        {
+          "key": "src/render/houseRooms.ts:282:2:update",
+          "source": "src/render/houseRooms.ts",
+          "line": 282,
+          "column": 2,
+          "name": "update",
+          "snippet": "update(v: View, onTreehouse: (px: number, py: number) => V3, ht: number): void {",
+          "ms": 26.306000000000004
+        }
+      ],
+      "topHouseSelf": [
+        {
+          "key": "src/render/houseRooms.ts:282:2:update",
+          "source": "src/render/houseRooms.ts",
+          "line": 282,
+          "column": 2,
+          "name": "update",
+          "snippet": "update(v: View, onTreehouse: (px: number, py: number) => V3, ht: number): void {",
+          "ms": 19.677000000000003
+        },
+        {
+          "key": "src/render/view/home.ts:362:16:An",
+          "source": "src/render/view/home.ts",
+          "line": 362,
+          "column": 16,
+          "name": "An",
+          "snippet": "export function alongRay(v: View, p: { x: number; y: number; z: number }, d: number): { x: number; y: number; z: number; scale: number } {",
+          "ms": 3.266
+        },
+        {
+          "key": "src/render/houseRooms.ts:289:20:w",
+          "source": "src/render/houseRooms.ts",
+          "line": 289,
+          "column": 20,
+          "name": "w",
+          "snippet": "const toWorld = (px: number, pz: number, h: number): V3 => {",
+          "ms": 1.5230000000000001
+        },
+        {
+          "key": "src/rules/houseRooms.ts:60:16:o0",
+          "source": "src/rules/houseRooms.ts",
+          "line": 60,
+          "column": 16,
+          "name": "o0",
+          "snippet": "export function fromPlan(at: At, x: number, z: number, turn = HOUSE_ROOMS.turn ?? 0): { x: number; z: number } {",
+          "ms": 0.619
+        },
+        {
+          "key": "src/render/houseRooms.ts:454:20:$",
+          "source": "src/render/houseRooms.ts",
+          "line": 454,
+          "column": 20,
+          "name": "$",
+          "snippet": "const pxWorld = (px: number, pz: number, dx: number, dy: number): V3 => {",
+          "ms": 0.617
+        },
+        {
+          "key": "src/render/view/home.ts:344:16:Zr",
+          "source": "src/render/view/home.ts",
+          "line": 344,
+          "column": 16,
+          "name": "Zr",
+          "snippet": "export function nearerCamera(v: View, p: { x: number; y: number; z: number }, d: number): { x: number; y: number; z: number } {",
+          "ms": 0.604
+        }
+      ]
+    },
+    "route1to12": {
+      "sampledMs": 674.8000000000002,
+      "houseUpdateInclusive": [
+        {
+          "key": "src/render/houseRooms.ts:282:2:update",
+          "source": "src/render/houseRooms.ts",
+          "line": 282,
+          "column": 2,
+          "name": "update",
+          "snippet": "update(v: View, onTreehouse: (px: number, py: number) => V3, ht: number): void {",
+          "ms": 154.41899999999993
+        }
+      ],
+      "topHouseSelf": [
+        {
+          "key": "src/render/houseRooms.ts:282:2:update",
+          "source": "src/render/houseRooms.ts",
+          "line": 282,
+          "column": 2,
+          "name": "update",
+          "snippet": "update(v: View, onTreehouse: (px: number, py: number) => V3, ht: number): void {",
+          "ms": 66.25100000000005
+        },
+        {
+          "key": "src/render/houseRooms.ts:289:20:w",
+          "source": "src/render/houseRooms.ts",
+          "line": 289,
+          "column": 20,
+          "name": "w",
+          "snippet": "const toWorld = (px: number, pz: number, h: number): V3 => {",
+          "ms": 27.094999999999995
+        },
+        {
+          "key": "src/render/view/home.ts:362:16:An",
+          "source": "src/render/view/home.ts",
+          "line": 362,
+          "column": 16,
+          "name": "An",
+          "snippet": "export function alongRay(v: View, p: { x: number; y: number; z: number }, d: number): { x: number; y: number; z: number; scale: number } {",
+          "ms": 22.793999999999997
+        },
+        {
+          "key": "src/render/view/home.ts:344:16:Zr",
+          "source": "src/render/view/home.ts",
+          "line": 344,
+          "column": 16,
+          "name": "Zr",
+          "snippet": "export function nearerCamera(v: View, p: { x: number; y: number; z: number }, d: number): { x: number; y: number; z: number } {",
+          "ms": 19.394000000000002
+        },
+        {
+          "key": "src/rules/houseRooms.ts:60:16:o0",
+          "source": "src/rules/houseRooms.ts",
+          "line": 60,
+          "column": 16,
+          "name": "o0",
+          "snippet": "export function fromPlan(at: At, x: number, z: number, turn = HOUSE_ROOMS.turn ?? 0): { x: number; z: number } {",
+          "ms": 3.6870000000000003
+        },
+        {
+          "key": "src/render/houseRooms.ts:503:40:",
+          "source": "src/render/houseRooms.ts",
+          "line": 503,
+          "column": 40,
+          "name": "",
+          "snippet": "const po = HOUSE_ROOMS.objects.find(o => o.use.kind === \"pile\"), slots = pileOut(g.wake) ? g.wake!.pile! : []; // (none on her first wake-up)",
+          "ms": 2.995
+        },
+        {
+          "key": "src/render/view.ts:1741:24:v",
+          "source": "src/render/view.ts",
+          "line": 1741,
+          "column": 24,
+          "name": "v",
+          "snippet": "const onTreehouse = (px: number, py: number) => {",
+          "ms": 2.867
+        },
+        {
+          "key": "src/render/houseRooms.ts:454:20:$",
+          "source": "src/render/houseRooms.ts",
+          "line": 454,
+          "column": 20,
+          "name": "$",
+          "snippet": "const pxWorld = (px: number, pz: number, dx: number, dy: number): V3 => {",
+          "ms": 1.6099999999999999
+        },
+        {
+          "key": "src/render/workshopArt.ts:69:18:",
+          "source": "src/render/workshopArt.ts",
+          "line": 69,
+          "column": 18,
+          "name": "",
+          "snippet": "BOARD.forEach((cell, i) => {",
+          "ms": 1.182
+        },
+        {
+          "key": "src/render/houseRooms.ts:485:19:I",
+          "source": "src/render/houseRooms.ts",
+          "line": 485,
+          "column": 19,
+          "name": "I",
+          "snippet": "const piece = (id: string) => { for (const p of this.pieces.values()) if (p.id === id && p.mesh.visible) return p; return null; };",
+          "ms": 1.141
+        },
+        {
+          "key": "src/render/houseRooms.ts:419:22:z",
+          "source": "src/render/houseRooms.ts",
+          "line": 419,
+          "column": 22,
+          "name": "z",
+          "snippet": "const pieceKey = (o: HouseObject) => `${o.id}|${furnitureState(o.id, g) ?? \"\"}`;",
+          "ms": 0.897
+        },
+        {
+          "key": "node_modules/three/build/three.core.js:17494:1:setXYZ",
+          "source": "node_modules/three/build/three.core.js",
+          "line": 17494,
+          "column": 1,
+          "name": "setXYZ",
+          "snippet": "setXYZ( index, x, y, z ) {",
+          "ms": 0.688
+        }
+      ]
+    },
+    "route13to30": {
+      "sampledMs": 659.5000000000003,
+      "houseUpdateInclusive": [
+        {
+          "key": "src/render/houseRooms.ts:282:2:update",
+          "source": "src/render/houseRooms.ts",
+          "line": 282,
+          "column": 2,
+          "name": "update",
+          "snippet": "update(v: View, onTreehouse: (px: number, py: number) => V3, ht: number): void {",
+          "ms": 195.133
+        }
+      ],
+      "topHouseSelf": [
+        {
+          "key": "src/render/view/home.ts:362:16:An",
+          "source": "src/render/view/home.ts",
+          "line": 362,
+          "column": 16,
+          "name": "An",
+          "snippet": "export function alongRay(v: View, p: { x: number; y: number; z: number }, d: number): { x: number; y: number; z: number; scale: number } {",
+          "ms": 57.713999999999984
+        },
+        {
+          "key": "src/render/houseRooms.ts:282:2:update",
+          "source": "src/render/houseRooms.ts",
+          "line": 282,
+          "column": 2,
+          "name": "update",
+          "snippet": "update(v: View, onTreehouse: (px: number, py: number) => V3, ht: number): void {",
+          "ms": 51.690999999999995
+        },
+        {
+          "key": "src/render/houseRooms.ts:289:20:w",
+          "source": "src/render/houseRooms.ts",
+          "line": 289,
+          "column": 20,
+          "name": "w",
+          "snippet": "const toWorld = (px: number, pz: number, h: number): V3 => {",
+          "ms": 27.052999999999997
+        },
+        {
+          "key": "src/render/view/home.ts:344:16:Zr",
+          "source": "src/render/view/home.ts",
+          "line": 344,
+          "column": 16,
+          "name": "Zr",
+          "snippet": "export function nearerCamera(v: View, p: { x: number; y: number; z: number }, d: number): { x: number; y: number; z: number } {",
+          "ms": 16.919
+        },
+        {
+          "key": "src/rules/houseRooms.ts:60:16:o0",
+          "source": "src/rules/houseRooms.ts",
+          "line": 60,
+          "column": 16,
+          "name": "o0",
+          "snippet": "export function fromPlan(at: At, x: number, z: number, turn = HOUSE_ROOMS.turn ?? 0): { x: number; z: number } {",
+          "ms": 12.436
+        },
+        {
+          "key": "src/render/view.ts:1741:24:v",
+          "source": "src/render/view.ts",
+          "line": 1741,
+          "column": 24,
+          "name": "v",
+          "snippet": "const onTreehouse = (px: number, py: number) => {",
+          "ms": 7.123999999999999
+        },
+        {
+          "key": "node_modules/three/build/three.core.js:17494:1:setXYZ",
+          "source": "node_modules/three/build/three.core.js",
+          "line": 17494,
+          "column": 1,
+          "name": "setXYZ",
+          "snippet": "setXYZ( index, x, y, z ) {",
+          "ms": 6.7090000000000005
+        },
+        {
+          "key": "src/render/houseRooms.ts:485:19:I",
+          "source": "src/render/houseRooms.ts",
+          "line": 485,
+          "column": 19,
+          "name": "I",
+          "snippet": "const piece = (id: string) => { for (const p of this.pieces.values()) if (p.id === id && p.mesh.visible) return p; return null; };",
+          "ms": 4.7860000000000005
+        },
+        {
+          "key": "src/render/houseRooms.ts:431:34:",
+          "source": "src/render/houseRooms.ts",
+          "line": 431,
+          "column": 34,
+          "name": "",
+          "snippet": "for (const q of wanted.filter(q => !this.asked.has(q.key)).sort((a, b) => (spare.includes(a) ? 1e6 : 0) + near(a) - (spare.includes(b) ? 1e6 : 0) - near(b))) {",
+          "ms": 3.9909999999999997
+        },
+        {
+          "key": "src/render/workshopArt.ts:64:2:update",
+          "source": "src/render/workshopArt.ts",
+          "line": 64,
+          "column": 2,
+          "name": "update",
+          "snippet": "update(s: WorkshopState, st: Style, ppm: number, pitch: number, yawOf: (piece: string) => number, markAt: MarkAt, orderOf: (piece: string) => number, t: number, draw: DrawPic): voi",
+          "ms": 1.8099999999999998
+        },
+        {
+          "key": "src/render/houseRooms.ts:419:22:z",
+          "source": "src/render/houseRooms.ts",
+          "line": 419,
+          "column": 22,
+          "name": "z",
+          "snippet": "const pieceKey = (o: HouseObject) => `${o.id}|${furnitureState(o.id, g) ?? \"\"}`;",
+          "ms": 1.229
+        },
+        {
+          "key": "src/render/houseRooms.ts:474:123:",
+          "source": "src/render/houseRooms.ts",
+          "line": 474,
+          "column": 123,
+          "name": "",
+          "snippet": "[[-art.ox, -art.oy], [art.w - art.ox, -art.oy], [art.w - art.ox, art.h - art.oy], [-art.ox, art.h - art.oy]].forEach(([dx, dy], i) => { const p = pxWorld(x, z, dx, dy); pos[i * 3] ",
+          "ms": 0.621
+        }
+      ]
+    },
+    "routeAfter30": {
+      "sampledMs": 18403.700000000146,
+      "houseUpdateInclusive": [
+        {
+          "key": "src/render/houseRooms.ts:282:2:update",
+          "source": "src/render/houseRooms.ts",
+          "line": 282,
+          "column": 2,
+          "name": "update",
+          "snippet": "update(v: View, onTreehouse: (px: number, py: number) => V3, ht: number): void {",
+          "ms": 8944.297999999979
+        }
+      ],
+      "topHouseSelf": [
+        {
+          "key": "src/render/view/home.ts:362:16:An",
+          "source": "src/render/view/home.ts",
+          "line": 362,
+          "column": 16,
+          "name": "An",
+          "snippet": "export function alongRay(v: View, p: { x: number; y: number; z: number }, d: number): { x: number; y: number; z: number; scale: number } {",
+          "ms": 2562.514999999996
+        },
+        {
+          "key": "src/render/houseRooms.ts:282:2:update",
+          "source": "src/render/houseRooms.ts",
+          "line": 282,
+          "column": 2,
+          "name": "update",
+          "snippet": "update(v: View, onTreehouse: (px: number, py: number) => V3, ht: number): void {",
+          "ms": 2490.012999999995
+        },
+        {
+          "key": "src/render/view/home.ts:344:16:Zr",
+          "source": "src/render/view/home.ts",
+          "line": 344,
+          "column": 16,
+          "name": "Zr",
+          "snippet": "export function nearerCamera(v: View, p: { x: number; y: number; z: number }, d: number): { x: number; y: number; z: number } {",
+          "ms": 1412.0989999999977
+        },
+        {
+          "key": "src/render/houseRooms.ts:289:20:w",
+          "source": "src/render/houseRooms.ts",
+          "line": 289,
+          "column": 20,
+          "name": "w",
+          "snippet": "const toWorld = (px: number, pz: number, h: number): V3 => {",
+          "ms": 875.2669999999997
+        },
+        {
+          "key": "src/rules/houseRooms.ts:60:16:o0",
+          "source": "src/rules/houseRooms.ts",
+          "line": 60,
+          "column": 16,
+          "name": "o0",
+          "snippet": "export function fromPlan(at: At, x: number, z: number, turn = HOUSE_ROOMS.turn ?? 0): { x: number; z: number } {",
+          "ms": 530.1120000000005
+        },
+        {
+          "key": "src/render/view.ts:1741:24:v",
+          "source": "src/render/view.ts",
+          "line": 1741,
+          "column": 24,
+          "name": "v",
+          "snippet": "const onTreehouse = (px: number, py: number) => {",
+          "ms": 527.5419999999995
+        },
+        {
+          "key": "src/render/workshopArt.ts:64:2:update",
+          "source": "src/render/workshopArt.ts",
+          "line": 64,
+          "column": 2,
+          "name": "update",
+          "snippet": "update(s: WorkshopState, st: Style, ppm: number, pitch: number, yawOf: (piece: string) => number, markAt: MarkAt, orderOf: (piece: string) => number, t: number, draw: DrawPic): voi",
+          "ms": 107.32300000000005
+        },
+        {
+          "key": "src/render/houseRooms.ts:431:34:",
+          "source": "src/render/houseRooms.ts",
+          "line": 431,
+          "column": 34,
+          "name": "",
+          "snippet": "for (const q of wanted.filter(q => !this.asked.has(q.key)).sort((a, b) => (spare.includes(a) ? 1e6 : 0) + near(a) - (spare.includes(b) ? 1e6 : 0) - near(b))) {",
+          "ms": 45.406000000000006
+        },
+        {
+          "key": "src/render/houseRooms.ts:474:123:",
+          "source": "src/render/houseRooms.ts",
+          "line": 474,
+          "column": 123,
+          "name": "",
+          "snippet": "[[-art.ox, -art.oy], [art.w - art.ox, -art.oy], [art.w - art.ox, art.h - art.oy], [-art.ox, art.h - art.oy]].forEach(([dx, dy], i) => { const p = pxWorld(x, z, dx, dy); pos[i * 3] ",
+          "ms": 31.8
+        },
+        {
+          "key": "src/render/houseRooms.ts:454:20:$",
+          "source": "src/render/houseRooms.ts",
+          "line": 454,
+          "column": 20,
+          "name": "$",
+          "snippet": "const pxWorld = (px: number, pz: number, dx: number, dy: number): V3 => {",
+          "ms": 26.706000000000007
+        },
+        {
+          "key": "node_modules/three/build/three.core.js:17494:1:setXYZ",
+          "source": "node_modules/three/build/three.core.js",
+          "line": 17494,
+          "column": 1,
+          "name": "setXYZ",
+          "snippet": "setXYZ( index, x, y, z ) {",
+          "ms": 20.683
+        },
+        {
+          "key": "node_modules/three/build/three.core.js:18641:1:getAttribute",
+          "source": "node_modules/three/build/three.core.js",
+          "line": 18641,
+          "column": 1,
+          "name": "getAttribute",
+          "snippet": "getAttribute( name ) {",
+          "ms": 18.93
+        }
+      ]
+    }
+  },
+  "bootOneOffInclusive": [
+    {
+      "key": "src/render/houseRooms.ts:58:9:yF",
+      "source": "src/render/houseRooms.ts",
+      "line": 58,
+      "column": 9,
+      "name": "yF",
+      "snippet": "function buildQuads(): Quad[] {",
+      "ms": 620.3830000000003
+    },
+    {
+      "key": "src/render/houseArt.ts:139:16:XO",
+      "source": "src/render/houseArt.ts",
+      "line": 139,
+      "column": 16,
+      "name": "XO",
+      "snippet": "export function standing(H: HouseConfig): Upright[] {",
+      "ms": 612.9540000000003
+    },
+    {
+      "key": "config/house/shape.js:143:16:uC",
+      "source": "config/house/shape.js",
+      "line": 143,
+      "column": 16,
+      "name": "uC",
+      "snippet": "export function outline(S, box, step = 0.5, inside = (x, z) => field(S, x, z) < 0) {",
+      "ms": 598.8560000000004
+    },
+    {
+      "key": "config/house/shape.js:75:16:B1",
+      "source": "config/house/shape.js",
+      "line": 75,
+      "column": 16,
+      "name": "B1",
+      "snippet": "export function field(S0, x0, z0, walk = false, parts = null) {",
+      "ms": 571.4850000000006
+    }
+  ],
+  "creatorConstructorInclusive": [
+    {
+      "key": "src/ui/creator.ts:266:2:X_",
+      "source": "src/ui/creator.ts",
+      "line": 266,
+      "column": 2,
+      "name": "X_",
+      "snippet": "constructor(private style: Style, start: Genome | null, pixel = 3) {",
+      "ms": 127.16599999999998
+    }
+  ],
+  "first30AndFullRoute": [
+    {
+      "config": "as-built",
+      "runs": 4,
+      "samples": 7208,
+      "first30Samples": 120,
+      "first30Max": 86.79999999993015,
+      "first30P99": 80.90000000002328,
+      "fullRouteP99": 18.5
+    },
+    {
+      "config": "recording-off",
+      "runs": 3,
+      "samples": 5406,
+      "first30Samples": 90,
+      "first30Max": 85.20000000006985,
+      "first30P99": 85.20000000006985,
+      "fullRouteP99": 23.399999999906868
+    },
+    {
+      "config": "external-baseline",
+      "runs": 3,
+      "samples": 5406,
+      "first30Samples": 90,
+      "first30Max": 99,
+      "first30P99": 99,
+      "fullRouteP99": 28.300000000046566
+    }
+  ],
+  "limitations": [
+    "One CPU run attributed; pooled rank metrics use the completed4/3/3 configuration runs, not a complete4each experiment.",
+    "First30 means section1 and frame counter1through30; seat-exit0 is separate.",
+    "The trace omitted boot GC by design; CPU GC samples do not prove which allocation caused a collection.",
+    "Intel correlation is historical outer-call evidence, not this cloud run or a current Intel speedup.",
+    "No house behavior change, new browser run, GPU-time inference or parity acceptance."
+  ]
+}
