@@ -1223,12 +1223,13 @@ function tickGroundWarm(): void {
   if (!groundWarmEligible()) { groundWarmer?.pause(); return; }
   if (groundWarmView !== view) { groundWarmer?.dispose(); groundWarmView = view; groundWarmer = warmGroundPrograms(view, groundWarmEligible, chartWorld); }
   const save = loadSave();
-  const context = `${world}|${n.game.seed}|${here}|${JSON.stringify(save.found)}|${unlockAll()}|${JSON.stringify(n.tuning)}|${JSON.stringify(currentSettings())}`;
+  const settingsScope=JSON.stringify(currentSettings());
+  const context = `${world}|${n.game.seed}|${here}|${JSON.stringify(save.found)}|${unlockAll()}|${JSON.stringify(n.tuning)}|${settingsScope}`;
   const from = {id:here,...(islandAt(here, world) ?? {x:0,y:0})};
   const ids = (unlockAll() ? ['home', ...REAL_KINDS] : unlocked(save)).filter(id => !isPlaceholder(id));
   const targets = nearestGroundTargets(ids.map(id => ({id,...(islandAt(id, world) ?? {x:0,y:0})})), from).map(t => t.id);
   groundWarmTargets = targets;
-  groundWarmer!.tick(context, targets);
+  groundWarmer!.tick(context, targets, {world,island:here,scope:settingsScope});
 }
 function frameBody(now: number): void {
   requestAnimationFrame(frame);

@@ -56,3 +56,33 @@ it('re-entry resumes interrupted GPU polling and retains when that GPU reports c
   expect(warm.status.retained).toBe(1);expect(poll).toHaveBeenCalledOnce();
   expect(prepare).toHaveBeenCalledOnce();expect(compile).toHaveBeenCalledOnce();warm.dispose();
 });
+it('pins the destination program through old-night teardown and the new island context',async()=>{
+  let users=0;const job=deferred<string>(),dispose=vi.fn(()=>{users--;});
+  const warm=new GroundWarm(()=>true,()=>job,()=>{users++;return {ready:()=>true,dispose};},8);
+  warm.tick('home-night',['fox'],{world:0,island:'home'});job.resolve('fox');await Promise.resolve();
+  warm.tick('home-night',['fox'],{world:0,island:'home'});warm.tick('home-night',['fox'],{world:0,island:'home'});
+  expect(users).toBe(1);expect(warm.status.retained).toBe(1);
+  // The old live scene is retired; only the warm material owns this destination program.
+  warm.tick('fox-night',[],{world:0,island:'fox'});
+  expect(users,'destination warm material must survive the sail context reset').toBe(1);
+  expect(dispose).not.toHaveBeenCalled();expect(warm.status.retained).toBe(1);
+  // The arrival's real material can acquire this still-live program before the pin is released.
+  users++;warm.dispose();expect(users).toBe(1);expect(dispose).toHaveBeenCalledOnce();
+});
+it('does not carry destination references across a world or settings-scope change',async()=>{
+  for(const next of [{world:1,island:'fox',scope:'normal'},{world:0,island:'fox',scope:'changed'}]){
+    const job=deferred<string>(),dispose=vi.fn(),warm=new GroundWarm(()=>true,()=>job,()=>({ready:()=>true,dispose}));
+    const before={world:0,island:'home',scope:'normal'};
+    warm.tick('old',['fox'],before);job.resolve('fox');await Promise.resolve();warm.tick('old',['fox'],before);warm.tick('old',['fox'],before);
+    warm.tick('new',[],next);expect(dispose).toHaveBeenCalledOnce();expect(warm.status.retained).toBe(0);warm.dispose();
+  }
+});
+it('also pins an in-flight destination GPU program without polling during the sail',async()=>{
+  let eligible=true,ready=false;const job=deferred<string>(),dispose=vi.fn(),poll=vi.fn(()=>ready);
+  const warm=new GroundWarm(()=>eligible,()=>job,()=>({ready:poll,dispose}));
+  warm.tick('home',['fox'],{world:0,island:'home'});job.resolve('fox');await Promise.resolve();warm.tick('home',['fox'],{world:0,island:'home'});
+  eligible=false;warm.tick('fox',[],{world:0,island:'fox'});
+  expect(dispose).not.toHaveBeenCalled();expect(poll).not.toHaveBeenCalled();
+  eligible=true;ready=true;warm.tick('fox',[],{world:0,island:'fox'});expect(warm.status.retained).toBe(1);
+  warm.dispose();expect(dispose).toHaveBeenCalledOnce();
+});

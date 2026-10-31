@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GroundWarm } from '../app/groundWarm';
+import { GroundWarm, type GroundWarmLocation } from '../app/groundWarm';
 import { startGroundPrep } from '../app/mapPrep';
 import { offerTravelSeed } from '../app/travelSeeds';
 import { groundProgramMaterial } from './ground';
@@ -38,7 +38,7 @@ export function warmGroundPrograms(view: View, eligible: () => boolean, world: (
   renderer.domElement.addEventListener('webglcontextlost', onLost);
   return {
     get status() { return controller.status; },
-    tick(context: string, targets: readonly string[]) { controller.tick(context, targets); },
+    tick(context: string, targets: readonly string[], location?: GroundWarmLocation) { controller.tick(context, targets, location); },
     pause() { controller.pause(); },
     dispose() { renderer.domElement.removeEventListener('webglcontextlost', onLost); controller.dispose(); },
   };

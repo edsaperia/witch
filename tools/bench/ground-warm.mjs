@@ -11,7 +11,9 @@ import {observeArrivalGround,groundReuseObservation} from './ground-warm-observa
 const abort=message=>{console.error(`FAIL ground-warm: ${message}`);process.exit(1);};
 const require=createRequire(import.meta.url), root=path.resolve(process.argv[2]||'dist'), out=path.resolve(process.argv[3]||'ground-warm-probe');
 const cloud=process.platform!=='win32', scale=Number(process.env.TIMEOUT_SCALE||(cloud?'5':'1'));
-const budget=Number(process.env.PROBE_BUDGET_MS||(cloud?'2880000':'420000'));
+const materialOnly=process.env.MATERIAL_ONLY==='1';
+if(materialOnly&&!cloud)abort('Material-identification mode is reserved for the allocated cloud diagnostic');
+const budget=Number(process.env.PROBE_BUDGET_MS||(cloud?(materialOnly?'900000':'2880000'):'420000'));
 if(!Number.isFinite(scale)||scale<1||scale>(cloud?5:1)||!Number.isFinite(budget)||budget<1000||budget>(cloud?2880000:420000))abort('Invalid bounded probe timeout configuration');
 const waitMs=ms=>ms*scale;
 if(!process.env.EXPECT_SHA||!process.env.INTEL_SLOT||!process.env.PRECEDING_RELEASE)abort('Exact SHA, new allocation and canonical preceding release required');
@@ -23,6 +25,8 @@ let fixture;
 try{fixture=await preflight(root,process.env.EXPECT_SHA);}catch(error){console.error(`INSUFFICIENT ground-warm: preflight: ${error.message}`);process.exit(2);}
 fs.mkdirSync(out,{recursive:true});
 const report={sha:process.env.EXPECT_SHA,grant:process.env.INTEL_SLOT,precedingRelease:process.env.PRECEDING_RELEASE,version,timeoutScale:scale,budgetMs:budget,startedAt:new Date().toISOString(),errors:[],cpu:[],complete:false,status:'INSUFFICIENT',note:'Single candidate lifecycle/cache-identity probe. No boot/travel speedup inference; no OS shader-cache purge. Historical666.7ms frame is not a gate.'};
+report.mode=materialOnly?'material-identification-only':'reuse';
+if(materialOnly)report.note='Cloud material identification only. Precompile stays OFF. No lifecycle, reuse or timing PASS can be produced in this mode.';
 const save=()=>fs.writeFileSync(path.join(out,'results.json'),JSON.stringify(report,null,2));
 const cpu=async()=>{const a=os.cpus();await new Promise(r=>setTimeout(r,1000));let idle=0,total=0;os.cpus().forEach((c,i)=>{idle+=c.times.idle-a[i].times.idle;for(const k in c.times)total+=c.times[k]-a[i].times[k];});return {at:new Date().toISOString(),percent:100*(1-idle/total)};};
 let browser,timer,cpuTimer,page;
@@ -55,9 +59,12 @@ try{
   report.gpu=capabilities.gpu;report.parallel=capabilities.parallel;
   if(process.platform==='win32'&&(!/Intel/i.test(report.gpu)||/SwiftShader/i.test(report.gpu)))throw Error('Intel hardware required');
   if(cloud&&!/SwiftShader/i.test(report.gpu))throw Error('Allocated cloud probe requires SwiftShader');
-  if(!report.parallel){const error=new Error('KHR_parallel_shader_compile unavailable; production correctly does no warm work on this context');error.name='InsufficientError';throw error;}
+  if(!report.parallel&&!materialOnly){const error=new Error('KHR_parallel_shader_compile unavailable; production correctly does no warm work on this context');error.name='InsufficientError';throw error;}
   await wait(()=>window.witch?.ready,{timeout:waitMs(150000)});await page.keyboard.press('Space');
   await wait(()=>getComputedStyle(document.getElementById('start')).display==='none');
+  let target;
+  if(materialOnly){target=fixture.targets[0];report.target=target;}
+  else{
   const inside=async()=>page.evaluate(shot=>{const w=window.witch,r=w.shot(shot);if(!r.ok)throw Error(r.say);w.precompileGround=true;},fixture.inside);
   const outside=async()=>page.evaluate(shot=>{const w=window.witch,r=w.shot(shot);if(!r.ok)throw Error(r.say);},fixture.outside);
   const counts=async()=>page.evaluate(()=>performance.getEntriesByType('mark').filter(m=>/^ground:warm-(prepare|submit|poll)$/.test(m.name)).map(m=>m.name));
@@ -71,9 +78,10 @@ try{
   if(JSON.stringify(beforeGpu)!==JSON.stringify(afterGpu))throw Error('Submission/poll continued outside after GPU submission');report.midGpuExit=true;
   await snapshot('gpu-exit');await inside();await snapshot('treehouse-reentry');
   await wait(()=>window.witch.groundWarmStatus.eligible);await wait(()=>window.witch.groundWarmStatus.retained>0,{timeout:waitMs(90000)});await snapshot('retained');
-  const target=await page.evaluate(()=>{const marks=performance.getEntriesByType('mark'),submit=marks.find(m=>m.name==='ground:warm-submit');const prepare=marks.filter(m=>m.name==='ground:warm-prepare'&&m.startTime<=submit.startTime).at(-1);return {id:prepare.detail.id,seed:prepare.detail.seed,...submit.detail,targets:window.witch.groundWarmStatus.targets};});
+  target=await page.evaluate(()=>{const marks=performance.getEntriesByType('mark'),submit=marks.find(m=>m.name==='ground:warm-submit');const prepare=marks.filter(m=>m.name==='ground:warm-prepare'&&m.startTime<=submit.startTime).at(-1);return {id:prepare.detail.id,seed:prepare.detail.seed,...submit.detail,targets:window.witch.groundWarmStatus.targets};});
   if(target.id!==target.targets[0])throw Error('First compile target was not nearest reachable island');report.target=target;
   if(target.id!==fixture.targets[0].id||target.seed!==fixture.seed)throw Error('Runtime target differs from preflight fixture');
+  }
   await page.evaluate(observeArrivalGround,target);
   await page.evaluate(async t=>{await window.witch.sail(t.id,t.seed);},target);
   await wait(()=>window.witch.ready,{timeout:waitMs(150000)});
@@ -82,9 +90,10 @@ try{
   report.arrivalObservation=await arrivalState();
   const draw=report.arrivalObservation.firstDraw;
   report.live={island:draw.island,seed:draw.seed,keys:[draw.key],programs:[draw.program],material:draw.material,registry:draw.registry};
-  report.reuse=groundReuseObservation(target,report.arrivalObservation);await snapshot('arrival-first-draw');
-  if(report.reuse.status!=='PASS')throw Error(report.reuse.reason);
+  await snapshot('arrival-first-draw');
+  if(!materialOnly){report.reuse=groundReuseObservation(target,report.arrivalObservation);if(report.reuse.status!=='PASS')throw Error(report.reuse.reason);}
   report.marks=await page.evaluate(()=>performance.getEntriesByType('mark').filter(m=>m.name.startsWith('ground:warm-')).map(m=>({name:m.name,at:m.startTime,detail:m.detail})));
-  if(report.errors.length)throw Error(report.errors.join('; '));report.complete=true;report.status='PASS';
+  if(report.errors.length)throw Error(report.errors.join('; '));
+  if(materialOnly){report.diagnosticComplete=true;report.status='MATERIAL_OBSERVED';}else{report.complete=true;report.status='PASS';}
 }catch(error){if(page&&!page.isClosed())try{report.arrivalObservation=await arrivalState();}catch{}await snapshot('error');const deadline=report.error?.includes('deadline');report.error=String(error?.stack||error);report.status=report.errors.length?'FAIL':deadline||error?.name==='TimeoutError'||error?.name==='InsufficientError'?'INSUFFICIENT':'FAIL';process.exitCode=report.status==='INSUFFICIENT'?2:1;}
-finally{clearTimeout(timer);clearInterval(cpuTimer);await browser?.close();await new Promise(r=>server.close(r));report.cpu.push(await cpu());report.timingsContaminated=report.cpu.some(c=>c.percent>=70);report.endedAt=new Date().toISOString();save();console.log(`${report.status} ground-warm: ${report.complete?'exact program reuse and lifecycle gates observed':report.error}`);console.log(JSON.stringify({status:report.status,complete:report.complete,error:report.error,endedAt:report.endedAt}));}
+finally{clearTimeout(timer);clearInterval(cpuTimer);await browser?.close();await new Promise(r=>server.close(r));report.cpu.push(await cpu());report.timingsContaminated=report.cpu.some(c=>c.percent>=70);report.endedAt=new Date().toISOString();save();console.log(`${report.status} ground-warm: ${report.diagnosticComplete?'arrival material identified; no reuse or timing claim':report.complete?'exact program reuse and lifecycle gates observed':report.error}`);console.log(JSON.stringify({status:report.status,complete:report.complete,diagnosticComplete:!!report.diagnosticComplete,error:report.error,endedAt:report.endedAt}));}
