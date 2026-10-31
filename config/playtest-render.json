@@ -1,0 +1,8 @@
+{
+  "chainTransitionSeconds": 0.5,
+  "chainGroundHeight": 0.15,
+  "chainLiftStagger": 0.25,
+  "mushroomSpotGain": 4.8,
+  "mushroomHaloStrength": 0.8,
+  "mushroomPoolStrength": 0.45
+}

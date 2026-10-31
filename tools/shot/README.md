@@ -50,6 +50,14 @@ How crisp the pixel art reaches the screen.
 npm run build && node tools/shot/pixels.cjs [out dir]   (SEED=542195, LINK= more of the link, SIZE=1106x743, DPRS=1,1.25,1.5,
 ```
 
+## `playtest-render.cjs`
+
+Capture the five chain poses and three near/far night mushroom colours on an allocated cloud renderer.
+
+```
+node tools/shot/playtest-render.cjs <served-url> <expected-sha> <output-dir>
+```
+
 ## `shot.cjs`
 
 A builder's quick proof shot: one picture of a room, an area, a creature or a find in the built game, in a minute or two on the cloud's software renderer.
