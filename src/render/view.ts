@@ -16,7 +16,7 @@ import { monitorProgramLink, waitForPrograms, type ReadyProgram } from "./progra
 import { installShaderDrawGate, materialProgramsReady, type ShaderDrawStatus } from "./shaderDrawGate";
 import { LandingArtFade, lateLandingReady } from './landingReadiness';
 import { captureProgramUses, mapProgramUses } from "./programInventory";
-import { carrierOf, deckOf } from "../rules/treehouse";
+import { deckOf } from "../rules/treehouse";
 import { HOUSE_LAYER } from "./post";
 import { StationBackdrop } from "./stationBackdrop";
 import type { MapTable } from "./mapTable";
@@ -176,11 +176,10 @@ export interface ViewStats { berries: number; forestMs: number; forestMissing: n
 export const HAT_BESIDE = 0.9;
 export const HAT_INK = new THREE.Vector3(232 / 255, 180 / 255, 106 / 255); // (the HUD's one accent)
 
-/** Which treehouse an island's art draws: the house (art/ent.js HOUSE), the Ent holding the deck (with the island's legend carrying
- *  it, art/carrier.js), or the old treehouse, "home". */
+/** Which treehouse an island's art draws: the house (art/ent.js HOUSE), the Ent holding the deck, or the old treehouse, "home". */
 function treehouseArtId(game: Game): string {
-  const t = game.tuning, deck = deckOf(game.map, t), carrier = deck ? carrierOf(game.map, t) : null;
-  return deck ? `${deck.house ? "house" : "ent"}:${deck.h}:${deck.r}${carrier ? `:${carrier}` : ""}` : "home";
+  const t = game.tuning, deck = deckOf(game.map, t);
+  return deck ? `${deck.house ? "house" : "ent"}:${deck.h}:${deck.r}` : "home";
 }
 
 /** The deck's one warm lantern (over the map table): its colour, made once. */

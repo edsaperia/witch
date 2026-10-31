@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { witchSprites } from "./homeArt";
+import { entTreehouseSprites, witchSprites } from "./homeArt";
+import { createHash } from "node:crypto";
 import { loadStyle } from "./style";
 import type { MakeCanvas } from "./artBuild";
 
@@ -10,6 +11,15 @@ const mk: MakeCanvas = (w, h) => {
   return { width: w, height: h, getContext: () => ctx, get img() { return img; } } as never;
 };
 const pixels = (b: unknown) => { const a = (b as { A: { img: ImageData | null } }).A.img; expect(a).toBeTruthy(); return Buffer.from(a!.data).toString("base64"); };
+
+it("carrier-free Ent and oak baseline", () => {
+  for (const house of [false, true]) {
+    const { sprites, treehouse } = entTreehouseSprites(loadStyle(), mk, 30, 20, house);
+    const hash = createHash("sha256").update(JSON.stringify({ treehouse, pixels: sprites.map(pixels) })).digest("hex");
+    expect(sprites).toHaveLength(40);
+    expect(hash).toBe(house ? "ca5e07fb1c37e0cb369b5b22eecf9596655a878156a5f1e18ea7fe97a1afc55a" : "66267cf763b22e0bf91f7f322145e286ad7d01f5c1446d5dd237297c6bc82ce6");
+  }
+});
 
 describe("her preview (witchSprites quick: worn till her whole set is in)", () => {
   // Ed's v5249 report (2026-10-28): out of bed, or off a dressing station, she slid about on her standing frame: her frames were the

@@ -6,6 +6,7 @@ import { newGame, stepGame, type Controls, type Game } from "./game";
 import { wearing } from "./hat";
 import { dowseMarker } from "./hatSpells";
 import { inviteCreature } from "./leash";
+import { befriend } from "./creatureStates";
 import type { Creature } from "./creatures";
 
 // Keep the radius fixture: Sentry is exercised with her 200 m away, Gathering parks beyond its full range and Dowsing chooses among map-wide relics.
@@ -28,12 +29,12 @@ function putDown(g: Game): void {
   expect(wearing(g.witches[0].hat)).toBe(false);
 }
 const pickUp = (g: Game) => { const d = g.witches[0].hat.down!; at(g, d.x, d.z); stepGame(g, { ...C, place: true }, 1 / 60); stepGame(g, C, 1 / 60); expect(wearing(g.witches[0].hat)).toBe(true); };
-/** A wild baby (invitable, never attacking) put at (x, z) and kept resting there; a different one each call. */
-function WILD_STATE(g: Game, x: number, z: number): Creature {
+/** A resting wild baby by default; letter tests ask for an inviteable youth. A different one each call. */
+function WILD_STATE(g: Game, x: number, z: number, level: 0 | 1 = 0): Creature {
   const used = ((g as unknown as { _used?: Set<number> })._used ??= new Set<number>());
   const c = g.creatures.find(k => !k.gone && !k.leashed && !k.boss && !k.enraged && !k.circle && k.level < 3 && !used.has(k.id))!;
   used.add(c.id);
-  Object.assign(c, { level: 0, x, z, tx: x, tz: z, anchorX: x, anchorZ: z, homeX: x, homeZ: z, rest: 99, fight: undefined });
+  Object.assign(c, { level, x, z, tx: x, tz: z, anchorX: x, anchorZ: z, homeX: x, homeZ: z, rest: 99, fight: undefined });
   c.cell = g.map.cellSafe(x, z).cell as [number, number];
   g.byArea = null;
   return c;
@@ -81,7 +82,7 @@ describe("the Sentry hat", () => {
     const d = W.hat.down!;
     // walk away into the treetops, so only the hat throws
     g.witch = { ...g.witch, x: d.x + 200, z: d.z, mode: "treetop", lift: 1 };
-    const wild = WILD_STATE(g, d.x + S.range - 5, d.z);
+    const wild = WILD_STATE(g, d.x + S.range - 5, d.z, 1);
     let hits = 0;
     for (let i = 0; i < 4 * 60; i++) { stepGame(g, C, 1 / 60); hits += W.invites.events.filter(e => e.kind === "hit" && e.id === wild.id).length; }
     expect(hits).toBeGreaterThan(0);
@@ -101,7 +102,7 @@ describe("the Slingshot hat", () => {
     putDown(g);
     const d = W.hat.down!;
     // a creature out past her own 💌s' reach from where she stands, but within the slingshot's
-    const wild = WILD_STATE(g, d.x, d.z + SL.fire - 5);
+    const wild = WILD_STATE(g, d.x, d.z + SL.fire - 5, 1);
     at(g, d.x - 6, d.z);
     stepGame(g, { ...C, fire: true, aimX: 1, aimZ: 0 }, 1 / 60);
     let caught = 0, hits = 0;
@@ -125,7 +126,8 @@ describe("the Gathering hat (Ed: 'all sigils in range')", () => {
     const ids = [WILD_STATE(g, d.x + 20, d.z), WILD_STATE(g, d.x - R + 10, d.z), WILD_STATE(g, d.x + R + 30, d.z)].map(c => c.id);
     for (const [i, id] of ids.entries()) {
       const c = g.creatures[id];
-      inviteCreature(W.leash, c, c.x, c.z, g.clock.time);
+      befriend(c, g.clock.time); // existing converted follower; no baby invitation
+      inviteCreature(W.leash, c, c.x, c.z, g.clock.time, "picked");
       W.leash.stack = W.leash.stack.filter(k => k !== id);
       W.leash.placed.push({ id, x: c.x, z: c.z + (i === 0 ? 0 : 0), at: g.clock.time });
     }
@@ -139,7 +141,8 @@ describe("the Gathering hat (Ed: 'all sigils in range')", () => {
     at(g, p.x, p.z);
     putDown(g);
     const d = W.hat.down!, c = WILD_STATE(g, d.x + 10, d.z);
-    inviteCreature(W.leash, c, c.x, c.z, g.clock.time);
+    befriend(c, g.clock.time); // existing converted follower; no baby invitation
+    inviteCreature(W.leash, c, c.x, c.z, g.clock.time, "picked");
     W.leash.stack = W.leash.stack.filter(k => k !== c.id);
     W.leash.placed.push({ id: c.id, x: c.x, z: c.z, at: g.clock.time });
     pickUp(g);

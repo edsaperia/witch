@@ -52,7 +52,6 @@ How the world is drawn, to try values live or to measure.
 | `bloom=off` | The bloom off. | 2026-10-07 | app/linkParams.ts |
 | `border=<twinkle>,<swapRate>,<swapBeat>` | The party border's sparkle. | 2026-10-07 | app/linkParams.ts |
 | `canopy=off` | The canopy off. | 2026-10-07 | app/linkParams.ts |
-| `carrier=<kind>` / `carrier=none` | That kind's legend carries the treehouse Ent, wherever she is; none, no one. | 2026-10-12 | app/linkParams.ts |
 | `clouds=<n>` | How many clouds. | 2026-10-07 | app/linkParams.ts |
 | `creatures=<k>` | Creatures drawn at this size against the style's (1 is the size before Ed's +50%). | 2026-10-08 | app/viewParams.ts |
 | `curve=<k>` | The world's bend over the treetops (0 off). | 2026-10-07 | app/linkParams.ts |
@@ -183,6 +182,7 @@ Switches that brought back an older look or behaviour, to compare against what r
 
 | switch | brought back | what stays |
 |---|---|---|
+| `carrier=<kind>` / `carrier=none` | a legend carrying the treehouse | removed: the island-kind legend guards home instead (Ed, 2026-10-31) |
 | `tilt=before\|after` | the tilt-shift applied before or after the upscale | before (at the low resolution); `tiltShift.where` gone |
 | `tiltsky=0` | the sky left sharp by the tilt-shift | `tiltShift.skyBlur` (the decisions panel's slider); `tiltShift.sky` gone |
 | `find=0` | the forest without the find-in-the-dark looks | always on; `find.on` gone |
