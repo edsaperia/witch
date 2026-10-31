@@ -5893,7 +5893,7 @@ registerProcessor("witch-fof", WitchFof);
     return !S?.on || rate >= 1 ? 1 : Math.max(S.floor, Math.pow(Math.max(1e-3, rate), S.pitch));
   }
   var Music = class {
-    constructor(ctx2, volume, style2, seed2, src = "", drawAhead = false) {
+    constructor(ctx2, volume, style2, seed2, src = "", drawAhead = false, destination = ctx2.destination) {
       this.ctx = ctx2;
       this.volume = volume;
       this.master = ctx2.createGain();
@@ -5916,10 +5916,10 @@ registerProcessor("witch-fof", WitchFof);
       this.wet.connect(this.filter);
       this.filter.connect(this.wobble);
       this.wobble.connect(this.master);
-      this.master.connect(ctx2.destination);
+      this.master.connect(destination);
       this.circleGain = ctx2.createGain();
       this.circleGain.gain.value = 0;
-      this.circleGain.connect(ctx2.destination);
+      this.circleGain.connect(destination);
       this.noise = ctx2.createBuffer(1, ctx2.sampleRate, ctx2.sampleRate);
       const d = this.noise.getChannelData(0);
       for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
