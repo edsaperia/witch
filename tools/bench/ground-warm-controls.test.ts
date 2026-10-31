@@ -1,6 +1,6 @@
 import {afterEach,expect,it,vi} from 'vitest';
 import type {Game} from '../../src/rules/game';
-import {closeWarmChart} from './ground-warm-controls.mjs';
+import {closeWarmChart,waitWarmFunction} from './ground-warm-controls.mjs';
 afterEach(() => {vi.unstubAllGlobals();vi.resetModules();});
 
 it('the probe closes MAP without invoking the real global pause adapter',async () => {
@@ -27,4 +27,16 @@ it('the probe closes MAP without invoking the real global pause adapter',async (
   await closeWarmChart(page);
   expect(freeze.frozen,'closing the chart must not pause over it').toBe(false);
   expect(chartOpen,'the chart must actually close').toBe(false);
+});
+it('fails a wait immediately on global pause, even if its condition would be true',async()=>{
+  vi.stubGlobal('document',{body:{classList:{contains:()=>true}}});
+  const predicate=vi.fn(()=>true);
+  const page={waitForFunction:async(fn:Function,arg:unknown)=>fn(arg)};
+  await expect(waitWarmFunction(page,predicate,{})).rejects.toThrow('global pause');
+  expect(predicate).not.toHaveBeenCalled();
+});
+it('polls the original condition normally when global pause is off',async()=>{
+  vi.stubGlobal('document',{body:{classList:{contains:()=>false}}});
+  const page={waitForFunction:async(fn:Function,arg:unknown)=>fn(arg)};
+  expect(await waitWarmFunction(page,()=>42,{})).toBe(42);
 });
