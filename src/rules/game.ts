@@ -780,6 +780,13 @@ function fixedStep(g: Game, controls: readonly Controls[]): void {
     const I = F.ofCell(c.cell[0], c.cell[1]);
     if (I) { const p = F.keepIn(I, c.x, c.z); c.x = p.x; c.z = p.z; }
   }
+  // Last boundary guard, including afterparty/knockback/lake corrections: the home legend never leaves home.
+  const H = homeArea(g.map);
+  for (const id of legends) {
+    const c = g.creatures[id];
+    if (!c.homeGuard || H.inside(c.x, c.z)) continue;
+    c.x = c.lairX ?? c.homeX; c.z = c.lairZ ?? c.homeZ; c.run = undefined; c.moving = false; c.vx = 0; c.vz = 0;
+  }
 }
 
 /** Spacing (rules/spacing.ts) for the creatures within movement.json bodies.range of a witch (about the view on the ground): every kind of movement at
@@ -792,7 +799,7 @@ function stepSpacing(g: Game, dt: number): void {
     if (c.gone || c.burrow || c.leap || c.swoop) continue; // (a flyer swooping: rules/movement.ts stepSwoop)
     for (const w of ws) if (Math.abs(c.x - w.x) < R && Math.abs(c.z - w.z) < R) { list.push(c); break; }
   }
-  spaceOut(list, dt, c => !!c.partyLegend || dormant(g, c) || !!c.asleep || (c.stunUntil !== undefined && g.clock.time < c.stunUntil));
+  spaceOut(list, dt, c => !!c.homeGuard || !!c.partyLegend || dormant(g, c) || !!c.asleep || (c.stunUntil !== undefined && g.clock.time < c.stunUntil));
   list.length = 0; // (let them go)
 }
 

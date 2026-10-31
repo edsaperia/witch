@@ -415,8 +415,7 @@
         "wrap": 2
       },
       "terraceRoom": true
-    },
-    "carrier": "island"
+    }
   },
   "home": {
     "margin": 10,

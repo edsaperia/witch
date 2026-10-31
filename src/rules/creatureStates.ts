@@ -57,6 +57,7 @@ export function enrage(c: Creature): boolean {
 /** Whether it can be invited now: a wild one (dazed or not; not a legend), or a happy one for its
  *  second step (states.leash). Enraged ones, legends and leashed ones can't. */
 export function invitableNow(c: Creature, data: StatesData = STATES): boolean {
+  if (c.homeGuard) return false;
   if (c.level === 0) return false; // Ed, 2026-10-31: "No, no baby is invitable", including the circle baby.
   if (c.asleep || c.bed) return false; // (asleep, or walking home to bed: rules/partyOver.ts)
   if (inConga(c)) return false; // (the won night's line: never hers again)
@@ -71,7 +72,7 @@ export function invitableNow(c: Creature, data: StatesData = STATES): boolean {
 /** The party-legend egg (Ed, 2026-10-06: "Maybe you should be able to turn a happy legend into a party legend with an
  *  absurd number of invites (100?) and then pick up its sigil but it's totally useless"): a happy legend (by a relic or its
  *  quest) not yet a party legend, free. Asleep, restless and angry ones still block 💌s. */
-export const partyEggOpen = (c: Creature) => !!c.boss && c.legendState === "happy" && !c.partyLegend && !c.leashed && !c.gone;
+export const partyEggOpen = (c: Creature) => !c.homeGuard && !!c.boss && c.legendState === "happy" && !c.partyLegend && !c.leashed && !c.gone;
 
 /** Its 100th 💌: a party legend. It dances where it stands and fights no one; its
  *  legendary rune pops out at its feet. */
@@ -86,6 +87,7 @@ export function makePartyLegend(c: Creature, time: number): void {
  *  `time` given: whether it's ready yet
  *  (pickupDelay after the hearts); without, whether it has one at all (the view draws it popping out). */
 export function hasRune(c: Creature, time?: number, data: StatesData = STATES): boolean {
+  if (c.homeGuard) return false;
   if (c.level === 0) return false; // Babies join at soundsystem conversion, through its loose sigils, never a personal rune.
   if (c.asleep || c.bed || inConga(c) || c.packHide) return false; // (hiding in a pack's lull, a shadow of itself: no rune till it's back, Ed 2026-10-29)
   if (c.atStone || c.loose) return false; // (its sigil in its stone's stack, or lying loose by its soundsystem: rules/stoneStacks.ts)

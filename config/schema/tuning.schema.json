@@ -1485,10 +1485,6 @@
             "terraceRoom"
           ],
           "additionalProperties": false
-        },
-        "carrier": {
-          "type": "string",
-          "description": "On other islands, that island's legend carries the treehouse on its back, braced under the oak."
         }
       },
       "required": [
@@ -1498,8 +1494,7 @@
         "lightReach",
         "lightStrength",
         "deck",
-        "house",
-        "carrier"
+        "house"
       ],
       "additionalProperties": false,
       "description": "The witch's home in the great oak beside the dancefloor: where it stands, its deck and rooms, how she walks and lands there, and the oak's crown, lights and warm glow over it."

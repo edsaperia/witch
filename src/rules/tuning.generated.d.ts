@@ -291,7 +291,6 @@ export type SchemaTuning = {
       };
       "terraceRoom": boolean;
     };
-    "carrier": string;
   };
   "home": {
     "margin": number;

@@ -19,6 +19,27 @@ function scene(enemies: Creature[], witchX = 1000) {
 }
 
 describe("friendly legends: defend, engage, walk (Ed, 31 Oct)", () => {
+  it("home guards use their own 85 m reach, never route, and leave calm creatures and their own kind alone", () => {
+    const { legend, w, step } = scene([creature(1, 85, { enraged: true }), creature(2, 1), creature(3, 2, { species: "toad", enraged: true })], 80);
+    legend.homeGuard = true;
+    w.home = { x: 0, z: 0, r: 20, inside: (x, z) => Math.hypot(x, z) <= 20 };
+    w.friendlyRoute = () => { throw Error("home guard followed the route"); };
+    step(); expect(legend.fight?.target).toEqual({ kind: "creature", id: 1 });
+    legend.fight!.windupUntil = 0; legend.aims = undefined;
+    w.creatures[1].gone = true; w.creatures.push(creature(4, 100, { hunting: 0 }));
+    step(); expect(legend.fight?.target).toBeNull(); expect([legend.x, legend.z]).toEqual([0, 0]);
+  });
+
+  it("a charging home guard targets only where it can charge inside home and cannot cross its boundary", () => {
+    const { legend, w, step } = scene([creature(1, 10, { enraged: true })]);
+    Object.assign(legend, { species: "boar", homeGuard: true });
+    w.home = { x: 0, z: 0, r: 5, inside: (x, z) => Math.hypot(x, z) <= 5 };
+    step(); expect(legend.fight?.target).toBeNull();
+    Object.assign(legend, { x: 4, run: { phase: "run", at: 0, angle: 0, speed: 100, turn: 1, target: null, tx: 100, tz: 0, ran: 0, hit: [], fromX: 0, fromZ: 0 } });
+    w.dt = 1;
+    step(); expect(w.home.inside(legend.x, legend.z)).toBe(true); expect(legend.run).toBeUndefined();
+  });
+
   it("keeps absent-callback combat parity: an empty decision stands still and schedules the same recheck", () => {
     const { legend, w, step } = scene([]);
     legend.x = 15; legend.z = 10;

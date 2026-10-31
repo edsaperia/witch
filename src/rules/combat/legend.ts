@@ -111,13 +111,14 @@ export function stepLegendAttack(w: CombatWorld, s: CombatState, c: Creature, da
   if (angry) for (const v of w.witches) { if (!v.onGround || v.down || unseen(v, c)) continue; const d = Math.hypot(v.x - c.x, v.z - c.z); if (d <= R) found.push({ d, x: v.x, z: v.z, target: { kind: "witch", id: v.id } }); }
   for (const o of grid.near(c.x, c.z, R)) {
     if (o === c || !targetable(o) || truce(c, o) || w.asleep(o)) continue;
+    if (c.homeGuard && charger && !w.home?.inside(o.x, o.z)) continue; // A charging guard can reach only targets inside home.
     const st = stateOf(o);
     if (angry ? st !== "leashed" : !friendlyEnemy(o)) continue;
     const d = Math.hypot(o.x - c.x, o.z - c.z);
     if (d <= R) found.push({ d, x: o.x, z: o.z, target: { kind: "creature", id: o.id } });
   }
   found.sort((a, b) => a.d - b.d);
-  if (!angry) {
+  if (!angry && !c.homeGuard) {
     // Defend a witch in range before engaging other enemies. Attackers may be beyond the range themselves.
     const defended = w.witches.filter(v => !v.down && Math.hypot(v.x - c.x, v.z - c.z) <= R);
     const attackers = w.creatures.filter(o => o !== c && targetable(o) && !truce(c, o) && !w.asleep(o) && friendlyEnemy(o) && defended.some(v => attacksWitch(o, v.id)))
@@ -135,7 +136,7 @@ export function stepLegendAttack(w: CombatWorld, s: CombatState, c: Creature, da
   }
   if (!found.length) {
     f.target = null; f.readyAt = time + A.recheck;
-    if (!angry && w.friendlyRoute) {
+    if (!angry && !c.homeGuard && w.friendlyRoute) {
       const route = w.friendlyRoute();
       walkFriendlyRoute(c, route.line, route.tip, w.dt, w.t.combat.legendRun);
     }
@@ -199,6 +200,9 @@ export function stepLongCharge(w: CombatWorld, s: CombatState, c: Creature, f: F
       if (run.speed < 0.5) { run.phase = "home"; run.at = time; c.moving = false; }
     }
     const vx = Math.cos(run.angle) * run.speed, vz = Math.sin(run.angle) * run.speed;
+    if (c.homeGuard && !w.home?.inside(c.x + vx * dt, c.z + vz * dt)) {
+      c.run = undefined; c.moving = false; c.vx = 0; c.vz = 0; f.target = null; f.readyAt = time + K.rest; return;
+    }
     c.x += vx * dt; c.z += vz * dt; c.vx = vx; c.vz = vz; run.ran += run.speed * dt;
     c.moving = true; c.walk += dt * (2 + run.speed * 0.4); c.facing = vx >= 0 ? 1 : -1;
     // Its lane: everything within laneWidth / 2 of it but its own side and kind, once each.
