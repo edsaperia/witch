@@ -40,6 +40,7 @@ export const mutedAway = (): boolean => currentSettings().muteBackground && type
 export class SettingsPage {
   private menu: SettingsMenu | null = null;
   private loading = false;
+  private wantedOpen = false;
   private quality = "";
   private readonly style = document.createElement("style");
 
@@ -76,10 +77,12 @@ export class SettingsPage {
 
   /** Opened from the pause page (its code loaded the first time). */
   show(): void {
+    this.wantedOpen = true;
     if (this.menu) { this.menu.show(); return; }
     if (this.loading) return;
     this.loading = true;
     void import("../ui/settingsMenu").then(({ SettingsMenu }) => {
+      this.loading = false;
       this.menu = new SettingsMenu({
         get: () => currentSettings(), set: s => this.set(s), version: this.host.version, saves: this.host.saves,
         fullscreen: () => !!document.fullscreenElement,
@@ -95,10 +98,10 @@ export class SettingsPage {
         screens: async () => { try { const d = await getDetails(); return d ? d.screens.map((x, i) => x.label || `Screen ${i + 1}`) : null; } catch { return null; } },
         pad: () => this.host.freeze.pad(),
       });
-      this.menu.show();
+      if (this.wantedOpen) this.menu.show();
     }, () => { this.loading = false; });
   }
-  close(): void { this.menu?.close(); }
+  close(): void { this.wantedOpen = false; this.menu?.close(); }
   /** Each frame: the pad, while it's open. */
   update(now: number): void {
     padGlyphStyle.xbox = padGlyphs(currentSettings().glyphs, this.host.freeze.pad()?.id) === "xbox"; // (the prompts' pad buttons: ui/keyHint.ts)
