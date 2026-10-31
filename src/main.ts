@@ -8,6 +8,10 @@ import { bagOf, setBag } from "./rules/bags";
 import { bindings } from "./platform/bindings";
 import { Rumble } from "./platform/rumble";
 import { telephoneStation } from "./app/telephoneStation";
+import { guestArrival } from "./platform/online/guestArrival";
+import { pendingGuestAccess } from "./platform/online/guestAccess";
+import { visitSaves } from "./app/visitSaves";
+import { visitLifecycle } from "./app/visitLifecycle";
 import { currentSettings } from "./app/playerSettings";
 import { wavesOver } from "./rules/win";
 import { chartOpen, closeChart, openChart, prepareChart, finishChartFlight, type Sailed } from "./ui/chartOverlay";
@@ -24,7 +28,7 @@ import "./platform/tuningPreset"; // (first: ?tuning=pre-overnight writes the ol
 import { FrameStats } from "./platform/frameStats";
 import { gpuName, QualityLadder } from "./app/ladder";
 import { musicCue } from "./rules/musicPlan";
-import { areaUnderWitch, interpolated, STEP, type Game } from "./rules/game";
+import { areaUnderWitch, interpolated, newWitchPlayer, STEP, type Game } from "./rules/game";
 import { enableCauldron, homeMushroomPickups } from "./rules/cauldronNight";
 import { TUNING, type Tuning } from "./rules/tuning";
 import { diveReach, diveTrack, handoffShot, newFlightClock, stepFlightClock, type Shot } from "./rules/arrive";
@@ -57,7 +61,7 @@ import { stationOf, tableOf } from "./rules/stations";
 import { itemById, shelfOf, shelvesAt, stationsShowing } from "./rules/wardrobe";
 import { FIND_KINDS, fillTrunk, findKind, loanFind, spawnFind, spawnSpot, type FindKindId } from "./rules/finds";
 import { fitBroom, loadBroom, migrateBroom } from "./app/broomSave";
-import { partById } from "./rules/broomParts";
+import { bareBroom, partById } from "./rules/broomParts";
 import { loadOwned } from "./app/owned";
 import { ownedToChoose, partsToChoose, setUnlockAll, stockMushroomBaskets, syncHatUnlock, unlockAll } from "./app/debugUnlock";
 import { defaultsText, newWitchLink } from "./app/defaultLook";
@@ -355,7 +359,22 @@ freeze.mutate = mutate;
 freeze.advance = (game, controls, dt) => recordedStep(game, controls, dt, BUILD, captureRecording);
 freeze.started = () => (startEl.style.display === "none" || creator.open) && !studio.at; // (in the bedroom too: Ed, 2026-10-14, "Can we pause from the bedroom?")
 freeze.ownsEsc = () => !bot && !document.querySelector("#settings-page.open, #potion-lab.open"); // (the Settings page's Esc is its own: it closes, the pause page stays) // (the bot game's Esc is its way back to the start screen: ui/botGame.ts)
-const phone = telephoneStation({ storage: (() => { try { return localStorage; } catch { return null; } })() });
+const callArrival = guestArrival({ room: "bedroom2", equipment: game => {
+  const witch = newWitchPlayer(1, 0, 0, game.tuning); setParts(witch.spells, bareBroom()); witch.spells.hat = "none"; return witch;
+} });
+const phone = telephoneStation({ storage: (() => { try { return localStorage; } catch { return null; } })(), session: {
+  build: BUILD, hostGame: () => N().game,
+  attach: game => { if (!pendingGuestAccess.roomAccessFor(1, "bedroom2")) throw new Error("The guest room isn't ready yet."); callArrival.attach(game); },
+  detach: game => callArrival.detach(game),
+  prepareGuest: (game, signal, advanced) => {
+    if (!ordinaryVisit) return Promise.reject(new Error("This browser isn't ready to protect your saved night."));
+    return ordinaryVisit.prepare(game, signal, advanced);
+  },
+  synchronized: game => { void ordinaryVisit?.synchronized(game).catch(error => { logCaughtError(error, "visit confirmation"); phone.hangUp(); }); },
+  ended: role => { if (role === "guest") void ordinaryVisit?.end().catch(error => logCaughtError(error, "visit return")); },
+  failed: error => { logCaughtError(error, "telephone session"); phone.hangUp(); },
+  advanceHost: (game, controls, dt) => recordedStep(game, controls, dt, BUILD, captureRecording),
+} });
 let guestAudioGame: Game | null = null;
 page.presentationGame = game => phone.presented(game);
 
@@ -812,7 +831,41 @@ const autosave = visitNightSaves ? new NightAutosave(visitNightSaves.store, () =
   return captureNight(n.game, { build: BUILD, params: n.params.toString(), look: page.look() as Record<string, unknown> | null, loan,
     flags: { chartRecorded: n.flags.chartRecorded, overRecorded: n.flags.overRecorded } });
 }, error => { if (!nightWriteReported) { nightWriteReported = true; logCaughtError(error, "save slot: write night"); } nightSaveNotice("Your night could not be saved. Keep this page open to continue playing."); }) : null;
-page.onNightEnd = () => { if (page.night && !endedNights.has(page.night.game)) { endedNights.add(page.night.game); browserSaveSlots().summary(page.night.game.tuning.map?.island ?? "home", true, bootSlot); } void autosave?.clear(); };
+const ordinaryVisit = visitNightSaves ? visitLifecycle({
+  saves: visitSaves(browserSaveSlots(), visitNightSaves),
+  own: () => ({ night: N(), href: location.href }),
+  adoptBorrowed: async (game, signal, advanced) => {
+    signal.throwIfAborted(); sailing = true; input.release(); input.clearPresses();
+    const p = new URLSearchParams(N().params); p.delete("arrive");
+    await startNight(page, { how: "bed", island: game.tuning.map?.island ?? "home", seed: game.seed, world: game.tuning.map?.world, params: p, resume: game, borrowed: true });
+    advanced(); signal.throwIfAborted();
+    const markAt = performance.now(), timingAt = view.assets.timings.length;
+    const landedAt = new Set([...view.assets.typeLog].filter(([, v]) => v.landed !== undefined).map(([id]) => id)); let best = 0;
+    const progress = () => {
+      const completed = performance.getEntriesByType("mark").filter(m => m.startTime >= markAt && (m.name.startsWith("witch:prep-") || m.name.startsWith("witch:build-"))).length
+        + Math.max(0, view.assets.timings.length - timingAt) + [...view.assets.typeLog].filter(([id, v]) => !landedAt.has(id) && v.landed !== undefined).length;
+      if (completed > best) { best = completed; advanced(); }
+    };
+    const timer = setInterval(progress, 500), clear = () => clearInterval(timer);
+    signal.addEventListener("abort", clear, { once: true });
+    try { await view.prepare(); signal.throwIfAborted(); advanced(); }
+    finally { clear(); signal.removeEventListener("abort", clear); }
+  },
+  playing: game => {
+    if (page.night?.game !== game) throw new Error("The prepared visit was replaced.");
+    page.night.flags.ready = page.night.flags.landed = true; page.night.flags.last = 0;
+    startedNights.add(game); input.clearPresses(); sailing = false;
+  },
+  adoptOwn: async (own, fresh) => {
+    if (fresh) {
+      const href = nightHref("bed", own.href); await nightInPlace(nightFromHref("bed", href), href);
+    } else {
+      const restored = await startNight(page, { ...own.night.spec, how: "bed", resume: own.night.game, borrowed: false });
+      await view.prepare(); Object.assign(restored.flags, own.night.flags, { last: 0 }); sailing = false; input.clearPresses();
+    }
+  },
+}) : null;
+page.onNightEnd = () => { if (!phone.visiting && page.night && !page.night.spec.borrowed && !endedNights.has(page.night.game)) { endedNights.add(page.night.game); browserSaveSlots().summary(page.night.game.tuning.map?.island ?? "home", true, bootSlot); } void autosave?.clear(); };
 if (autosave) {
   setInterval(() => { void autosave.save(performance.now()); }, 5000);
   addEventListener("pagehide", () => { void autosave.save(performance.now(), true); });

@@ -28,6 +28,7 @@ export function telephoneStation(options: Pick<TelephoneOptions, "storage" | "lo
     choose(choice: StationChoice): boolean { return session?.choose(choice) ?? false; },
     preferences(game: Game) { return session?.role === "guest" ? preferences.tuning(game) : game.tuning; },
     step(game: Game, controls: Controls, dt: number): boolean {
+      if (session?.role === "guest" && !session.ready) return true; // Own page may still be draining its checkpoint before adoption.
       if (session?.game && session.game !== game) { session.nightChanged(); presentation = source = null; return false; }
       return session?.step(controls, Math.min(0.1, dt)) ?? false;
     },
@@ -47,6 +48,7 @@ export function telephoneStation(options: Pick<TelephoneOptions, "storage" | "lo
       if (phone.open) phone.pollPad(typeof navigator !== "undefined" && navigator.getGamepads ? [...navigator.getGamepads()].find(p => p) ?? null : null, now);
     },
     close,
+    hangUp: phone.hangUp,
     dispose() { session?.disconnect(); presentation = source = null; preferences.clear(); phone.dispose(); },
   };
 }
