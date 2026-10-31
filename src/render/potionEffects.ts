@@ -3,6 +3,12 @@ import type { Game } from '../rules/game';
 import { effectEnvelope, potionRecipe } from '../rules/potionRecipes';
 import { potionSettings } from '../rules/potionSettings';
 
+/** Deform existing legs only; the trip envelope never changes simulation size or reach. */
+export function stiltwalkerShape(amount: number): { length: number; tip: number } {
+  const k = Math.max(0, Math.min(1, amount)), p = potionSettings('stiltwalkers');
+  return { length: 1 + (p.length - 1) * k, tip: 1 + (p.tip - 1) * k };
+}
+
 export const tripIndicatorStrength = (g: Game): number => effectEnvelope(g.mushrooms?.trips[g.witches[0]?.id ?? 0], g.clock.time);
 
 export function potionStrength(g: Game, effect: string): number {
