@@ -15,7 +15,7 @@ What the night is: its seed, island, world, opening, sail and her kit.
 | `arrive=1` | The night opens with the sea chart's arrival flight (a sail sets it); the boot's map isn't made ahead. | 2026-10-12 | index.html, app/night.ts, main.ts |
 | `bot=skilled` / `bot=crude` / `bot=…` | A bot plays the run (rules/bot.ts), with a seeded witch. | 2026-10-06 | main.ts |
 | `chart` / `chart=all` | Opens the sea chart page instead of the game; all shows every island. | 2026-10-11 | index.html, app/chartPage.ts |
-| `creator=0` | No character creator: the plain start card (the tools and the smoke runs). | 2026-10-05 | app/fightArena.ts, app/gameParams.ts, app/nightSave.ts, app/opening.ts, main.ts, render/ground.ts |
+| `creator=0` | No character creator: the plain start card (the tools and the smoke runs). | 2026-10-05 | app/fightArena.ts, app/gameParams.ts, app/nightSave.ts, app/opening.ts, app/pageNight.ts, main.ts, render/ground.ts |
 | `dev=0` / `dev=finds` | Hides the bedroom's dev "Player:" pick (0), or opens the finds dev panel (finds). | 2026-10-04 | app/playerPick.ts, main.ts |
 | `fightMomentum=<k>` | The creatures' momentum in a fight for this load (the debug overlay's slider; never remembered). | 2026-10-07 | app/knobs.ts |
 | `fightScale=<k>` | The fight's scale for this load (the debug overlay's slider; never remembered). | 2026-10-07 | app/knobs.ts |
@@ -36,7 +36,7 @@ What the night is: its seed, island, world, opening, sail and her kit.
 | `spell=auto` / `spell=wait` | The party spell: `auto` starts at once anywhere; `wait` keeps her at the decks even with `creator=0`. | 2026-10-07 | app/gameParams.ts |
 | `treetopSpeed=<m/s>` | Her treetop speed for this load only (never remembered: it changes the balance). | 2026-10-07 | app/linkParams.ts |
 | `wave=<n>` / `wave=off` | The repro link: the night brought on to wave n before play; off holds the waves where they are (as pulse=off). | 2026-10-07 | app/gameParams.ts, app/repro.ts |
-| `world=<n>` / `world=<text>` | The campaign's world seed (every island's shape) for this load. | 2026-10-11 | app/chartPage.ts, app/linkParams.ts, app/sail.ts, main.ts |
+| `world=<n>` / `world=<text>` | The campaign's world seed (every island's shape) for this load. | 2026-10-11 | app/chartPage.ts, app/linkParams.ts, app/pageNight.ts, app/sail.ts, main.ts |
 | `resume=0` / `resume=1` | Disable night saves, or explicitly enable them on a debug or automated link. | 2026-10-29 | app/nightSave.ts |
 
 ## Looks and their costs
@@ -101,9 +101,9 @@ For the builders, the smoke and bench runs, the repro link and the arenas.
 | `attack=<attack as JSON>` | The Fight Arena or a debug arena tries this attack (an attack spec, as JSON) on its pack. | 2026-10-27 | app/fightArena.ts, app/gameParams.ts |
 | `audio=lite` / `audio=full` | The sound's weight for one load: lite sheds the costly parts (platform/audio/shed.ts). | 2026-10-07 | app/sound.ts |
 | `bag=starter` / `bag=quick` / `bag=far` / `bag=none` / `bag=<bag item id>` | Her bag for one load: the Satchel (the starter: base rate and reach, a little homing), the Bumbag (faster 💌s, shorter reach) or the Purse (slower, further); none, no bag. | 2026-10-29 | app/linkParams.ts |
-| `cauldron=0` | Mushroom collecting and the kitchen cauldron (two home mushroom clusters, shared baskets and pot, and the BBB Mirror Floor trip) are on by default; 0 turns them off. | 2026-10-30 | main.ts |
+| `cauldron=0` | Mushroom collecting and the kitchen cauldron (two home mushroom clusters, shared baskets and pot, and the BBB Mirror Floor trip) are on by default; 0 turns them off. | 2026-10-30 | app/pageFrame.ts |
 | `cleared=<cx>_<cy>,…` | The repro link: these areas start cleared. | 2026-10-14 | app/repro.ts |
-| `debug` / `debug=cull` / `debug=shadows` / `debug=attack` | The debug overlay and the metre rulers on from the start; cull also tints whatever just appeared or vanished (pops), shadows draws every shadow a flat magenta, and attack blows on the two farthest soundsystems every 10 s (never felling one). | 2026-10-04 | app/keys.ts, app/night.ts, app/playerPick.ts, app/viewParams.ts, main.ts, render/ground.ts |
+| `debug` / `debug=cull` / `debug=shadows` / `debug=attack` | The debug overlay and the metre rulers on from the start; cull also tints whatever just appeared or vanished (pops), shadows draws every shadow a flat magenta, and attack blows on the two farthest soundsystems every 10 s (never felling one). | 2026-10-04 | app/keys.ts, app/night.ts, app/pageDebug.ts, app/pageNight.ts, app/playerPick.ts, app/viewParams.ts, main.ts, render/ground.ts |
 | `decide` | Opens Ed's decisions panel (F2 too). | 2026-10-06 | main.ts, ui/decide.ts |
 | `decor=0` | The treehouse rooms without their decoration. | 2026-10-23 | render/houseDecor.ts |
 | `dream=won:<kind>:<item>` / `dream=lost:<kind>:<item>` | Her dream of a loaned find over the night, at once, for a look at it. | 2026-10-24 | main.ts |
@@ -119,7 +119,7 @@ For the builders, the smoke and bench runs, the repro link and the arenas.
 | `mistgate=0` | The bedroom's curtains and door don't wait for the island's art, so she can go out while it's still drawing. | 2026-10-24 | main.ts |
 | `mode=treetop` | The repro link: with at=, she starts in the treetops. | 2026-10-14 | app/repro.ts |
 | `music=off` / `music=live` / `music=<section>` / `music=wave<N>` | No music, the music played live rather than the pre-recorded way (the default since Ed, 2026-10-27), one section on a loop, or wave N's music. *Decision: Pre-recorded (drawn-ahead) music is the default (Ed, 2026-10-27).* | 2026-10-07 | app/linkParams.ts, app/sound.ts |
-| `occlusion=off` | The occlusion probes off. | 2026-10-19 | render/view.ts |
+| `occlusion=off` | The occlusion probes off. | 2026-10-19 | render/view/lifecycle.ts |
 | `own=all` / `own=none` / `own=<kind>:<item>` / `own=<kind>:*` | Finds given or let go on this browser's saves, as the dev control does. | 2026-10-23 | app/linkParams.ts |
 | `pack=wolf*4@2,…` | The Fight Arena's pack, written as an arena, instead of a rolled one. | 2026-10-27 | app/fightArena.ts |
 | `parts=<part>,…` | Her broom's parts for one load, found or not. | 2026-10-23 | app/linkParams.ts |
@@ -134,9 +134,9 @@ For the builders, the smoke and bench runs, the repro link and the arenas.
 | `rig=0` | Creatures as baked sprites, without the live rig. | 2026-10-05 | render/rig/rigView.ts |
 | `scenery=<m>` | A fixed scenery radius instead of the adaptive budget. | 2026-10-07 | app/viewParams.ts |
 | `set=<path>=<value>;…` | Any tuning settings for one load (the repro link's: every setting changed from the build's). | 2026-10-14 | app/linkParams.ts, app/mapPrep.ts, app/night.ts, app/sail.ts |
-| `shot=object:<id>` / `shot=room:<id>` / `shot=area:<type>` / `shot=creature:<species>[@level]` / `shot=find:<kind>:<item>` / `shot=at:<x>,<z>` | A builder's quick proof shot: only the art the scene needs, with her put at it. | 2026-10-23 | app/gameParams.ts, app/shot.ts, main.ts |
+| `shot=object:<id>` / `shot=room:<id>` / `shot=area:<type>` / `shot=creature:<species>[@level]` / `shot=find:<kind>:<item>` / `shot=at:<x>,<z>` | A builder's quick proof shot: only the art the scene needs, with her put at it. | 2026-10-23 | app/gameParams.ts, app/pageFinds.ts, app/shot.ts |
 | `spawnfind=<kind>:<item>` / `spawnfind=tonight` | That find spawned once where she first stands on open ground, for shots. | 2026-10-23 | main.ts |
-| `telescopeRes=<k>` | The telescope's render resolution. | 2026-10-21 | main.ts |
+| `telescopeRes=<k>` | The telescope's render resolution. | 2026-10-21 | app/pageStations.ts |
 | `timing=1` / `timing=0` | The frame-timing log on (kept on this browser) or off. | 2026-10-19 | app/timing.ts |
 | `tuning=<preset>` | A tuning preset laid over the config files for this load. | 2026-10-07 | platform/tuningPreset.ts |
 | `warmChart=1` / `warmChart=0` | The night's chart islands made ahead even under automation (1), or never (0). | 2026-10-12 | main.ts |

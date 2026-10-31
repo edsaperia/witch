@@ -92,8 +92,33 @@ private View state, lazy import timing, shader initialization, and conflicting
 unmerged edits (#1538, #1543, #1545). They are reasons for strict anchors and
 identity evidence, not permission to change behaviour or waive a gate.
 
-## Current evidence
+## Rehearsal checkpoint (2026-10-31)
 
-Repository/shared instructions and full coordinator comment history read.
-No source edits or checks yet; no proof or measured fence-cost claim.
+Coordinator approval: #1476 comment 6548060224, acknowledged on #1562 comment
+6548140613. Cut lines approved. Preserve #1538's station/presentation call sites;
+do not move #1543/#1545's owned files. Smoke and art identity remain mandatory,
+but release CI supplies those gates; no local smoke/art run is requested.
+
+`node tools/refactor/a4-split.mjs --apply` performs the first extraction;
+`--check` verifies generated hashes and reverses every declared body adapter to
+the exact source slice at the pinned SHA. `--replay` rereads that same source SHA
+and refuses to overwrite any generated file that differs from its manifest.
+Default evaluation and async boundaries remain in one place. Import-only symbol
+binding uses no libraries or module graph and runs no game typecheck.
+
+First implementation checkpoint: 132 named bodies/statements across 16 source
+files, with two derived link-switch location files. Replay measured 1,529.8 ms;
+identity check 113.7 ms. These are script timings, NOT total fence costs.
+Every source/body hash is in `a4-dry-run-manifest.json`. All 132 bodies reverse
+exactly. Config freshness gate passed after updating moved switch locations.
+
+This is still WIP: full source/type/unit/bench validation is pending. The page
+composition retains boot state declarations and several arrow-function initializers;
+further thinning and callback adapter review remain before proof readiness.
+Private View fields remain private, exposed to extracted bodies through an explicit
+private getter/setter bridge; the bridge's type uses indexed member types and no
+`any`. The class's existing callable methods remain forwarding boundaries.
+
+No typecheck/full-unit/bench or browser run yet. No local slot or production fence.
+No completed behavioural proof or measured full fence-cost claim.
 No user-visible text changed.
