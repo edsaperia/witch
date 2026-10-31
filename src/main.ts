@@ -364,6 +364,7 @@ const callArrival = guestArrival({ room: "bedroom2", equipment: game => {
   const witch = newWitchPlayer(1, 0, 0, game.tuning); setParts(witch.spells, bareBroom()); witch.spells.hat = "none"; return witch;
 } });
 let returnedUnlocks: ReturnType<typeof visitUnlocks> | null = null;
+let hostedUnlocks: ReturnType<typeof visitUnlocks> | null = null;
 const phone = telephoneStation({ storage: (() => { try { return localStorage; } catch { return null; } })(), session: {
   build: BUILD, hostGame: () => N().game,
   attach: game => { if (!pendingGuestAccess.ready) throw new Error("The guest room isn't ready yet."); callArrival.attach(game); },
@@ -378,6 +379,9 @@ const phone = telephoneStation({ storage: (() => { try { return localStorage; } 
       try { returnedUnlocks = game && game.witches.some(w => w.id === 1) ? visitUnlocks(game, 1) : null; }
       catch (error) { returnedUnlocks = null; logCaughtError(error, "visit unlock capture"); }
       void ordinaryVisit?.end().catch(error => logCaughtError(error, "visit return"));
+    } else if (game) {
+      try { hostedUnlocks = visitUnlocks(game, 0); }
+      catch (error) { hostedUnlocks = null; logCaughtError(error, "host unlock capture"); }
     }
   },
   failed: error => { logCaughtError(error, "telephone session"); phone.hangUp(); },
@@ -877,7 +881,17 @@ const ordinaryVisit = visitNightSaves ? visitLifecycle({
     }
   },
 }) : null;
-page.onNightEnd = () => { if (!phone.visiting && page.night && !page.night.spec.borrowed && !endedNights.has(page.night.game)) { endedNights.add(page.night.game); browserSaveSlots().summary(page.night.game.tuning.map?.island ?? "home", true, bootSlot); } void autosave?.clear(); };
+page.onNightEnd = () => {
+  if (phone.active && !phone.visiting) phone.hangUp(); // Capture the host result before its own bed/sail replaces this night.
+  if (!phone.visiting && page.night && !page.night.spec.borrowed && !endedNights.has(page.night.game)) {
+    if (hostedUnlocks) {
+      const collection = loadOwned(page.look() as Record<string, unknown> | null);
+      hostedUnlocks.apply(browserSaveSlots(), { spells: page.night.game.spells, owned: () => collection }); hostedUnlocks = null; owned = null;
+    }
+    endedNights.add(page.night.game); browserSaveSlots().summary(page.night.game.tuning.map?.island ?? "home", true, bootSlot);
+  }
+  void autosave?.clear();
+};
 if (autosave) {
   setInterval(() => { void autosave.save(performance.now()); }, 5000);
   addEventListener("pagehide", () => { void autosave.save(performance.now(), true); });
