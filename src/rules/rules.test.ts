@@ -42,6 +42,7 @@ import { smallWorldTuning } from "../test/worlds";
 // checks the game's own tuning.
 const TUNING: Tuning = { ...GAME_TUNING, setPieceChance: 0.25, grounds: { ...GAME_TUNING.grounds, kinds: ["playground", "tennis", "baseball", "football", "basketball"] }, decor: { ...GAME_TUNING.decor, mix: { ruins: 1, rocks: 1, freak: 1 } }, paths: { ...GAME_TUNING.paths, pieces: true }, scenes: { ...GAME_TUNING.scenes, featured: undefined } };
 const withTuning = (over: Partial<Tuning>): Tuning => ({ ...TUNING, ...over, camera: { ...TUNING.camera, ...(over.camera ?? {}) } });
+const LOCAL_TUNING = smallWorldTuning(TUNING, "Local controls, home speaker boot and relative treehouse clearances do not require distant areas.");
 const MODERN_POOL = [...RELICS.filter(r => r.family === "modern" && (r as { scatter?: boolean }).scatter !== false), ...(COUNTRY as { id: string; family: string }[]).filter(d => d.family === "farm" || d.family === "street")].map(d => d.id); // the scattered modern finds, in the view's order (the bits of highway left out: Ed, round 13)
 const MODERN = MODERN_POOL.length;
 
@@ -234,11 +235,11 @@ describe("the map", () => {
     expect(Math.hypot(map.start.x - th.x - seatOffset(TUNING).x, map.start.z - th.z - seatOffset(TUNING).z)).toBeLessThan(1e-9); // (at her decks: on the balcony or the deck, rules/treehouse.ts)
   });
   it("starts the witch seated on the terrace; she stays put till the first move or rise", () => {
-    const g = newGame(5, TUNING);
+    const g = newGame(5, LOCAL_TUNING);
     expect(g.witch.seated).toBe(true);
-    const still = stepWitch(g.witch, NO_INTENT, 1, TUNING, map.bounds);
+    const still = stepWitch(g.witch, NO_INTENT, 1, g.tuning, g.map.bounds);
     expect(still.seated).toBe(true);
-    const off = stepWitch(g.witch, { ...NO_INTENT, moveX: 1 }, 0.1, TUNING, map.bounds);
+    const off = stepWitch(g.witch, { ...NO_INTENT, moveX: 1 }, 0.1, g.tuning, g.map.bounds);
     expect(off.seated).toBeFalsy();
     expect(off.x).toBeGreaterThan(g.witch.x);
   });
@@ -785,7 +786,7 @@ describe("the game clock and a whole step", () => {
   });
 
   it("flies the witch and the camera follows", () => {
-    const g = newGame(5, TUNING);
+    const g = newGame(5, LOCAL_TUNING);
     g.clock.paused = false;
     const x0 = g.witch.x;
     for (let i = 0; i < 120; i++) stepGame(g, { moveX: 1, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 60);
@@ -976,7 +977,7 @@ describe("inviting and leashing", () => {
   });
 
   it("goes through the game: the debug invite and the sigil button in its controls", () => {
-    const g = newGame(123, TUNING);
+    const g = newGame(123, LOCAL_TUNING);
     g.clock.paused = false; g.witch.perch = false; // (down on the ground, off the treehouse deck)
     stepGame(g, { ...NO_INTENT, zoom: 0, inviteNearest: true }, 1 / 60);
     expect(g.leash.stack.length).toBe(1);
@@ -1335,13 +1336,13 @@ describe("the dancefloor's speakers (Ed, v160)", () => {
   });
   it("keep the treehouse outside their ring and the floor's clearing, over seeds", () => {
     for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
-      const m = generateMap(seed, TUNING), d = Math.hypot(m.treehouse.x - m.dancefloor.x, m.treehouse.z - m.dancefloor.z);
+      const m = generateMap(seed, LOCAL_TUNING), d = Math.hypot(m.treehouse.x - m.dancefloor.x, m.treehouse.z - m.dancefloor.z);
       expect(d - TUNING.treehouse.clear).toBeGreaterThan(speakerRadius(TUNING) + S.footprint); // its footprint clear of the ring
       expect(d).toBeGreaterThan(floorClearing(TUNING));
       for (const p of m.dancefloor.speakers) expect(Math.hypot(m.treehouse.x - p.x, m.treehouse.z - p.z)).toBeGreaterThan(TUNING.treehouse.clear + S.footprint);
     }
     // More of them, further out: still outside.
-    const T2 = withTuning({ dancefloor: { ...D, speakers: { ...S, count: 20, radiusFactor: 3 } } }), m = generateMap(1, T2);
+    const T2 = smallWorldTuning(withTuning({ dancefloor: { ...D, speakers: { ...S, count: 20, radiusFactor: 3 } } }), "Expanded home speaker-ring clearance is local geometry."), m = generateMap(1, T2);
     expect(Math.hypot(m.treehouse.x - m.dancefloor.x, m.treehouse.z - m.dancefloor.z) - T2.treehouse.clear).toBeGreaterThan(speakerRadius(T2) + S.footprint);
   }, 30000); // (nine maps)
   it("are the dancefloor's only sound: no soundsystem stands in their ring or the floor's clearing, over seeds (Ed, v183)", () => {
@@ -1364,7 +1365,7 @@ describe("the dancefloor's speakers (Ed, v160)", () => {
     expect(nextSpeakerState("playing")).toBe("damaged");
     expect(nextSpeakerState("damaged")).toBe("destroyed");
     expect(nextSpeakerState("destroyed")).toBe("playing");
-    const g = newGame(5, TUNING);
+    const g = newGame(5, LOCAL_TUNING);
     expect(g.speakers.every(s => s === "playing")).toBe(true); // (works with the clock paused too)
     stepGame(g, { ...NO_INTENT, zoom: 0, cycleSpeakers: true }, 1 / 60);
     expect(g.speakers.every(s => s === "damaged")).toBe(true);
@@ -1373,7 +1374,7 @@ describe("the dancefloor's speakers (Ed, v160)", () => {
 
 describe("the home speakers start as runestones (Ed, 2026-10-06)", () => {
   it("turn into speakers one by one as the boot reaches them, each over boot.transform, all of them by its end", () => {
-    const g = newGame(3, TUNING), n = g.speakerBoot.length, T = TUNING.boot.transform;
+    const g = newGame(3, LOCAL_TUNING), n = g.speakerBoot.length, T = TUNING.boot.transform;
     g.clock.paused = false;
     expect(n).toBe(12);
     for (let i = 0; i < 30; i++) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60);
@@ -1391,7 +1392,7 @@ describe("the home speakers start as runestones (Ed, 2026-10-06)", () => {
     expect(g.speakerBoot.every((_, k) => speakerBoot(g, k) === 1)).toBe(true);
   });
   it("can be booted by the pulse: bootSpeaker turns one now, once", () => {
-    const g = newGame(3, TUNING);
+    const g = newGame(3, LOCAL_TUNING);
     g.clock.time = 5;
     bootSpeaker(g, 7);
     expect(g.speakerBoot[7]).toBe(5);
