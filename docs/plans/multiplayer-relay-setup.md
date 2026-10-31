@@ -12,6 +12,7 @@ Preparation only for PR #1538, 2026-10-31. No Render account/service/plan change
 | Build command | `npm ci` (uses `server/package-lock.json`) |
 | Start command | `npm start` (`node relay.mjs`) |
 | Bind address | Environment `HOST=0.0.0.0` |
+| Browser origins | `WITCH_ALLOWED_ORIGINS=https://edsaperia.github.io`; exact origin, no path or wildcard. Missing/other origins refused. |
 | Port | Keep Render's supplied `PORT`; relay reads it. Do not hard-code local8787 publicly. |
 | Build identity | Set `WITCH_SHA` to the exact reviewed service-source commit; root JSON health must report it. A later startup adapter can derive this from platform metadata, but no unimplemented env name is assumed here. |
 | Health check path | `/` returns relay JSON with `service`, `protocol`, `build`; expect protocol1 and approved SHA. A healthy process does not prove two-client gameplay. |
@@ -30,7 +31,7 @@ These field meanings, port binding and automatic deploy behavior follow Render's
 - Rooms/invitation tokens are memory-only. Process restart/redeploy loses them; no host migration or persistence is promised. Render may interrupt sockets and distributes connections across instances, so independent connections must not rely on multi-instance affinity. Keep one instance and exercise clean dropped-line/redial behavior. [WebSocket lifecycle/scaling](https://render.com/docs/websocket).
 - Existing game input lease is250ms, activated silence5s, host-during-join20s, advancing-load stall90s and absolute join cap600s. These are separate clocks; a socket heartbeat never extends held input. A service cold-start happens before a room connection and is not covered merely by extending renderer loading limits.
 
-## Public-entry gaps found in current source
+## Initial public-entry audit (superseded by the implementation below)
 
 | Source observation | Required bounded follow-up before public hosting |
 |---|---|
@@ -43,6 +44,12 @@ These field meanings, port binding and automatic deploy behavior follow Render's
 | Cold connect/error has no normal-game telephone UX yet | Explicit connecting/cancel/refusal/disconnect/redial states in the session/phone adapter. No forever-spinner or false “friend joined” before authoritative activation. |
 
 No new server environment variables for quotas/origins are documented as usable until implemented and tested. These are source-audit findings, not a claim of an exploited vulnerability or an expanded hosting authorization.
+
+## Implemented protection checkpoint (2026-10-31)
+
+Ed explicitly requested finishing these protections in this chat. `server/guards.mjs` and `relay.mjs` now implement exact-origin upgrade admission, global admission/room/socket caps, per-socket data/control-message and byte budgets, a10second unassigned handshake deadline, object/text/role boundaries, outgoing serialized-byte accounting and bounded idempotent shutdown. Public CLI refuses missing allowed origins or a non-full source SHA. `WITCH_ALLOWED_ORIGINS` above is now an implemented setting; quotas remain fixed defaults, not invented environment variables. See server/README.md for precise budgets and current timing.
+
+Origin is not authentication: other GitHub Pages paths share the allowed origin and non-browser clients can forge it. Invitation tokens remain required. Fixed global limits do not substitute for upstream DDoS protection. Tests exercise refusal and cleanup without keeping listeners alive. Synthetic near8MiB snapshot delivery and deterministic144Hz budget tests do not measure real largest-world snapshots/gameplay bandwidth. Actual Render restart/cold wake, two-machine checks and normal-game telephone integration remain pending; this server-only milestone does not claim them. No account/service/deployment was triggered by implementation.
 
 ## Prepared acceptance route (canonical allocation still required)
 
