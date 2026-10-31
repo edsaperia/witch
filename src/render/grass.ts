@@ -88,6 +88,7 @@ ${atlasGlsl("uTufts", "uTuftN")}
 uniform vec2 uTuftSize; // the atlas, in pixels
 uniform vec3 uRight, uUp, uFacing;
 uniform vec4 uFade; // centre x, z, radius, how much shows (0 in the treetops)
+uniform float uPotionSky;
 varying vec4 vRect;
 varying vec2 vLocal;
 varying vec3 vWorld;
@@ -100,8 +101,8 @@ ${BAYER_GLSL}void main() {
   vec4 m = albedoAt(vUv);
   if (m.a < 0.5) discard;
   // Fading out towards the edge of the cover, and as she rises, in an ordered dither.
-  float k = (1.0 - smoothstep(uFade.z * 0.7, uFade.z, length(vWorld.xz - uFade.xy))) * uFade.w;
-  if (k < 0.999 && bayer4(gl_FragCoord.xy) > k) discard;
+  float k = (1.0 - smoothstep(uFade.z * 0.7, uFade.z, length(vWorld.xz - uFade.xy))) * uFade.w * (1.0 - uPotionSky);
+  if (k <= 0.0 || k < 0.999 && bayer4(gl_FragCoord.xy) > k) discard;
   vec4 n = normalAt(vUv);
   vec3 N = normalize(uRight * ((n.r * 255.0 - 128.0) / 127.0) - uUp * ((n.g * 255.0 - 128.0) / 127.0) + uFacing * n.b);
   gl_FragColor = vec4(haze(glowPool(min(vec3(1.0), m.rgb * nightLightShaded(N, vWorld, vMoonK) * 1.25), vWorld), vWorld), 1.0);
@@ -162,6 +163,7 @@ export class GrassView {
     this.mat = new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG,
       uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uFacing: SPRITE_UNIFORMS.uFacing, uRes: SPRITE_UNIFORMS.uRes, uWind: SPRITE_UNIFORMS.uWind,
+        uPotionSky: SPRITE_UNIFORMS.uPotionSky,
         ...atlasUniforms(this.atlas, "uTufts", "uTuftN"), uTuftSize: { value: new THREE.Vector2(this.atlasW, this.atlasH) }, uPart: { value: Array.from({ length: 4 }, () => new THREE.Vector4()) }, uClear: { value: Array.from({ length: 8 }, () => new THREE.Vector4()) },
         uGrass: { value: new THREE.Vector4(metresPerPixel, t.groundCover.sway, t.groundCover.part, 0) }, uFade: { value: new THREE.Vector4() },
         uCanopy: ground?.uCanopy ?? { value: new THREE.Vector4() }, uClearing: ground?.uClearing ?? { value: new THREE.Vector2(1, 1) } },

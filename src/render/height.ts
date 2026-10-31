@@ -50,7 +50,7 @@ float groundH(vec2 p) {
 }
 vec3 onGround(vec3 p) { return vec3(p.x, p.y + groundH(p.xz), p.z); }
 vec3 bendW(vec3 w) {
-  if (uBend.x <= 0.0) return w;
+  if (uBend.x == 0.0) return w;
   float d = max(0.0, dot(w.xz - uBend.yz, uBendFwd));
   return vec3(w.x, w.y - uBend.x * d * d, w.z);
 }
@@ -135,7 +135,7 @@ export function groundHeight(x: number, z: number): number { return current ? cu
 /** A world point bent as the shaders bend it (in place). */
 export function bendPoint<V extends { x: number; y: number; z: number }>(v: V): V {
   const B = HEIGHT_UNIFORMS.uBend.value, F = HEIGHT_UNIFORMS.uBendFwd.value;
-  if (B.x <= 0) return v;
+  if (B.x === 0) return v;
   const d = Math.max(0, (v.x - B.y) * F.x + (v.z - B.z) * F.y);
   v.y -= B.x * d * d;
   return v;

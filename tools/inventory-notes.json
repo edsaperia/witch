@@ -7,6 +7,10 @@
   "tools/bench/house-profile-summary.mjs": "Summarises a saved house CPU profile.",
   "tools/bench/house-route.cjs": "Defines the shared deterministic house benchmark route.",
   "tools/bench/worker-compute-entry.ts": "Runs map-preparation worker computations for the benchmark harness.",
+  "tools/mushrooms/build-preview.mjs": "Builds the standalone mushroom explorer page and optional inline preview.",
+  "tools/mushrooms/check.mjs": "Checks generated mushroom ranges, colours, spots and sprite proportions.",
+  "tools/mushrooms/explorer.js": "Runs the browser mushroom explorer and its drawing controls.",
+  "tools/mushrooms/sheet.mjs": "Captures the mushroom explorer grid as a preview sheet.",
   "tools/robustness/poll.mjs": "Polls robustness pull-request coordination and records receipts.",
   "tools/robustness/rules-layer.mjs": "Reports rules-layer dependency boundaries."
 }

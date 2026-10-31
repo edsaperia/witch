@@ -66,6 +66,10 @@ The sleeping legends' dream bubbles: the built game at 1280×720 on a seed; the 
 npm run build && node tools/smoke/dreams.cjs [out dir] [seed]
 ```
 
+## `effects-scene.cjs`
+
+Executed in the page: require a complete forest and a nonblank drawn canvas, not elapsed wall time.
+
 ## `flask-stack.cjs`
 
 The flask in her sigil stack: the built game at 1280×720 on a seed; three creatures leashed to her and the first relic carried, on the ground at home; a crop of her stack before, after one cycle and after another.

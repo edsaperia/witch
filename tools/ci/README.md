@@ -24,6 +24,7 @@ Inventory real world-constructor calls and explicit small-fixture reasons; comme
 
 ## Also here
 
+- `effects-scene.test.ts`
 - `PLAN.md`
 - `run-unit.test.ts`
 - `test-scope.test.ts`

@@ -45,6 +45,7 @@ Scripts for building, checking and measuring the game, run from the repository r
 - [`map/`](map/README.md): 5 scripts — leycurve.mjs, leydepart.mjs, leyroute.mjs, scenery.mjs, shape.mjs
 - [`mist/`](mist/README.md): 2 scripts — dive.cjs, frames.cjs
 - [`momentum/`](momentum/README.md): 1 script — strip.mjs
+- [`mushrooms/`](mushrooms/README.md): 9 scripts — brewing-check.mjs, build-preview.mjs, check.mjs, explorer.js, glow-check.mjs, ingame-check.cjs, lab-check.cjs, recipe-book.mjs, sheet.mjs
 - [`music-lab/`](music-lab/README.md): 28 scripts — ab.mjs, ab.ts, analyse.cjs, analyse.ts, boot.mjs, boot.ts, build.mjs, check.cjs, circles.mjs, circles.ts, cost.cjs, cost.ts, flight.cjs, form.mjs, form.ts, fxcost.cjs, fxcost.ts, ingredients.ts, lab.ts, latency.cjs, set.mjs, set.ts, silence.cjs, stems.cjs, stems.ts, tune.cjs, tune.ts, voices.mjs
 - [`music-studio/`](music-studio/README.md): 5 scripts — build.mjs, check.cjs, knobs.ts, main.ts, midi.ts
 - [`occlusion/`](occlusion/README.md): 1 script — envelope-shots.cjs
@@ -54,10 +55,9 @@ Scripts for building, checking and measuring the game, run from the repository r
 - [`props/`](props/README.md): 1 script — ingame.cjs
 - [`qa/`](qa/README.md): 4 scripts — core.cjs, journey.cjs, leash-lake.cjs, win-strip.cjs
 - [`rainbow/`](rainbow/README.md): 1 script — shots.cjs
-- [`rare-screens/`](rare-screens/README.md): 2 scripts — poll.mjs, value-estimate.cjs
 - [`relics/`](relics/README.md): 1 script — map.mjs
 - [`rig/`](rig/README.md): 4 scripts — demo.cjs, legends.cjs, perf.cjs, strip.mjs
-- [`robustness/`](robustness/README.md): 7 scripts — bundle-size.mjs, catch-audit.mjs, coordinator.mjs, measure-log.mjs, measure-recorder.mjs, poll.mjs, rules-layer.mjs
+- [`robustness/`](robustness/README.md): 5 scripts — bundle-size.mjs, catch-audit.mjs, measure-log.mjs, measure-recorder.mjs, rules-layer.mjs
 - [`sail/`](sail/README.md): 3 scripts — bed-shots.cjs, leak.cjs, swap.cjs
 - [`samples/`](samples/README.md): 3 scripts — build.mjs, check.mjs, credits.mjs
 - [`settings/`](settings/README.md): 1 script — shots.cjs
@@ -66,7 +66,7 @@ Scripts for building, checking and measuring the game, run from the repository r
 - [`shot/`](shot/README.md): 8 scripts — contrast.cjs, crown-gap.cjs, crown-look.cjs, crown-whole.cjs, motes.cjs, pixels.cjs, shot.cjs, wisps.cjs
 - [`shots/`](shots/README.md): 1 script — push.mjs
 - [`sigils/`](sigils/README.md): 2 scripts — legendary-sheet.mjs, sheet.mjs
-- [`smoke/`](smoke/README.md): 41 scripts — alarm.cjs, bedroom.cjs, bounce-off.cjs, canopy-hole.cjs, cheer-shots.cjs, creator-menus.cjs, creator.cjs, decide.cjs, dream-way.cjs, dreams.cjs, flask-stack.cjs, hud.cjs, knockdown-bpm.cjs, large-world.cjs, legend-attack.cjs, legend-panel.cjs, legendary-sigil.cjs, legends-flasks.cjs, looks.cjs, magic-dodge.cjs, magic-letters.cjs, magic-sigils.cjs, music-lab-pause.cjs, orbit-combat.cjs, packs.cjs, party-join.cjs, party-life.cjs, partyspell.cjs, pause-on-top.cjs, places.cjs, quick.cjs, room-walk.cjs, smoke.cjs, spell-scroll.cjs, start-screen.cjs, swoop.cjs, trail-cooldown.cjs, trail.cjs, treetop-sigils.cjs, wild-left.cjs, witch-pool.cjs
+- [`smoke/`](smoke/README.md): 42 scripts — alarm.cjs, bedroom.cjs, bounce-off.cjs, canopy-hole.cjs, cheer-shots.cjs, creator-menus.cjs, creator.cjs, decide.cjs, dream-way.cjs, dreams.cjs, effects-scene.cjs, flask-stack.cjs, hud.cjs, knockdown-bpm.cjs, large-world.cjs, legend-attack.cjs, legend-panel.cjs, legendary-sigil.cjs, legends-flasks.cjs, looks.cjs, magic-dodge.cjs, magic-letters.cjs, magic-sigils.cjs, music-lab-pause.cjs, orbit-combat.cjs, packs.cjs, party-join.cjs, party-life.cjs, partyspell.cjs, pause-on-top.cjs, places.cjs, quick.cjs, room-walk.cjs, smoke.cjs, spell-scroll.cjs, start-screen.cjs, swoop.cjs, trail-cooldown.cjs, trail.cjs, treetop-sigils.cjs, wild-left.cjs, witch-pool.cjs
 - [`soundsystem/`](soundsystem/README.md): 3 scripts — build-preview.mjs, ingame.cjs, sheet.mjs
 - [`stars/`](stars/README.md): 1 script — shots.cjs
 - [`stations/`](stations/README.md): 1 script — check.cjs

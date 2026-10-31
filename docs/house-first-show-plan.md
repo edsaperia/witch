@@ -1,5 +1,7 @@
 # House first-show cost
 
+COMPLETED by PR #1507, included in live v6478 (2026-10-31). The stopped rare-screen proposal and decision numbers are archived in [archive/rare-screens/README.md](archive/rare-screens/README.md); its unused loading seam was removed in #1520. The assignment and measurements below are historical, not a renewed implementation instruction.
+
 Assignment: COORDINATOR6534772261 and6534776616 on PR1507,2026-10-30. This replaces rare-screen splitting. Keep its baseline, value estimate and standalone unused seam as an unshipped record; do not begin rare-screen milestone3 or either Creator-question option. Same own branch `codex/rare-screens`, isolated `work/rare-screens`, PR1507. PLAN first, before house behavior changes.
 
 ## Evidence and attribution
