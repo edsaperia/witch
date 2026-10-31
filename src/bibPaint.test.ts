@@ -12,9 +12,11 @@ import type {Style} from "./render/style";
 const definition={kind:"bib",mat:"BELLY",extent:{along:[-.8,.95],width:1,depth:1.5}};
 describe("localized shared throat/chest bib paint",()=>{
   it("pins projected-fit marten pixels and normal bytes with the field absent",()=>{
-    const hash=createHash("sha256");for(const facing of ["towards","away"]){const sp=critter("marten",1,0,defaultStyle(),facing);hash.update(JSON.stringify([sp.w,sp.h]));for(const bytes of [sp.m,sp.n])hash.update(Buffer.from(bytes.buffer,bytes.byteOffset,bytes.byteLength));}
-    // Combined age-size/approved roster baseline (6520542543/6520690688).
-    expect(hash.digest("hex")).toBe("b28424c23895d230aa16e85711725ba968fcc185c9e1389eef7e9ecbdbcff734");
+    // Ed's adopted sizes change the raster; OFF reproduces the old pin exactly.
+    for(const [flag,expected]of [[0,"b28424c23895d230aa16e85711725ba968fcc185c9e1389eef7e9ecbdbcff734"],[1,"045f2e0bafcc87cccbf54718b66b114c8e6223749e6b9b7cba9c8c026f8a270a"]] as const){
+    const hash=createHash("sha256");for(const facing of ["towards","away"]){const sp=critter("marten",1,0,{...defaultStyle(),creatureSizeCandidate:flag},facing);hash.update(JSON.stringify([sp.w,sp.h]));for(const bytes of [sp.m,sp.n])hash.update(Buffer.from(bytes.buffer,bytes.byteOffset,bytes.byteLength));}
+    expect(hash.digest("hex")).toBe(expected);
+    }
   });
   it("bounds the shared paint to the underside of the neck and local chest",()=>{
     expect(regionMarking([.4,.5,0],definition)).toBe(M.BELLY);

@@ -8,12 +8,16 @@ import type {Style} from "./render/style";
 const current={...defaultStyle(),creatureModels:"flyingsquirrel:current,meerkat:current"};
 function selected(id:string,edit:(g:any)=>void){const g=structuredClone(GENOME_BY_ID[id]);edit(g);return {...current,creatureModels:`${id}:roster`,creatureVariants:{[id]:{roster:g}}} as unknown as Style;}
 function digest(id:string,level:number,idle=false,style:object=current){const h=createHash("sha256");for(const facing of ["towards","away"]){const sp=Reflect.apply(critter,null,[id,level,0,style,facing,idle?{idle:true}:null]);h.update(JSON.stringify([sp.w,sp.h]));for(const bytes of [sp.m,sp.n])h.update(Buffer.from(bytes.buffer,bytes.byteOffset,bytes.byteLength));}return h.digest("hex");}
-it("pins projected-fit material and normal bytes with all optional controls absent",()=>{
-  // Combined occupied age sizing and twenty approved defaults (6520542543/6520690688), pending art review.
-  expect(digest("mole",2)).toBe("e736ab332a694c2806c81e63ac93fe1dbbd09caaea97bbd6ab843f34fc92cf1b");
-  expect(digest("flyingsquirrel",2,false,defaultStyle())).toBe("40863f99965a083b7e94a91f469ed3ff6bc6ace7e118e50c93355b6e7f7c255d");
-  expect(digest("meerkat",1,false,defaultStyle())).toBe("04ec335cbf2a55baecaa3a6da025ed676e2ebb72dcf6b363e091009024999c85");
-  expect(digest("meerkat",1,true,defaultStyle())).toBe("f8394dc25ae4015583d9ec0e98d461d8bb3417521cdca7301d49eb0a0607dd1d");
+// Ed's adopted sizes change native dimensions. OFF reproduces every historical
+// pin exactly; keep both grids, with separate cases so one failure hides none.
+it.each([
+  ["mole",2,false,"e736ab332a694c2806c81e63ac93fe1dbbd09caaea97bbd6ab843f34fc92cf1b","49e32fd54e5b16aa7ccf40ff7e75cf446c613164351a2c76ee6112aa62fd7b32"],
+  ["flyingsquirrel",2,false,"40863f99965a083b7e94a91f469ed3ff6bc6ace7e118e50c93355b6e7f7c255d","3ef3108642a0279b783a13ce00b01f71c519d9fb8f1f616c907b099d5214d9f0"],
+  ["meerkat",1,false,"04ec335cbf2a55baecaa3a6da025ed676e2ebb72dcf6b363e091009024999c85","f76f8fdab121e1bdf6ed9a650ee4bb340b64b4f7eaf64a278f84ddb7a9548836"],
+  ["meerkat",1,true,"f8394dc25ae4015583d9ec0e98d461d8bb3417521cdca7301d49eb0a0607dd1d","3ed3970ee54b4045395f5cfefef56255b044fb91a59363d4baccb47e669d8e0c"],
+] as const)("pins %s age %s idle %s with optional controls absent on both size grids",(id,level,idle,oldSize,adoptedSize)=>{
+  const base=id==="mole"?current:defaultStyle();
+  for(const [flag,expected]of [[0,oldSize],[1,adoptedSize]] as const)expect(digest(id,level,idle,{...base,creatureSizeCandidate:flag})).toBe(expected);
 });
 it("changes each mole control independently while explicit unit values preserve Current",()=>{
   const keys=["bodyDepth","bodyLength","snoutProjection","forepawSpread","forepawSize"];
