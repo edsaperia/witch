@@ -10,7 +10,7 @@ import { ITEMS } from "../rules/wardrobe";
 import { PART_IDS } from "../rules/broomParts";
 import { MUSHROOM_COLOURS } from "../rules/mushrooms";
 import type { Game, Witch } from "../rules/game";
-import { HAT_FLOOR } from "../rules/houseRooms";
+import { addFloorHat, HAT_FLOOR, HOUSE_ROOMS } from "../rules/houseRooms";
 import { ownsHat } from "../rules/spells";
 import { hatsFrom } from "./hatSave";
 
@@ -45,5 +45,6 @@ export function syncHatUnlock(W: Witch, on: boolean, params = new URLSearchParam
   if (!floor) return; // The normal lazy layout will use the refreshed availability.
   for (let i = 0; i < floor.length; i++) if (floor[i] && !ownsHat(W.spells, floor[i])) floor[i] = "";
   const out = new Set([W.spells.hat, ...W.hat.left.map(h => h.spell), ...floor.filter(Boolean)]);
+  if (HOUSE_ROOMS.layout?.hatPoints.length) { if (W.house?.hatOverflow) W.house.hatOverflow = W.house.hatOverflow.filter(id => ownsHat(W.spells, id)); HAT_FLOOR.forEach(id => { if (!out.has(id) && ownsHat(W.spells, id)) addFloorHat(W, id); }); return; }
   HAT_FLOOR.forEach((id, i) => { if (!floor[i] && !out.has(id) && ownsHat(W.spells, id)) { floor[i] = id; out.add(id); } });
 }

@@ -9,8 +9,8 @@ import { decorSprite } from "../../art/houseDecor.js";
 import { messSprite } from "../../art/houseMess.js";
 import { SIZE } from "../../art/furniture.js";
 import { shade } from "../../art/lighting.js";
-import { HOUSE_ROOMS, fromPlan, type HouseObject } from "../rules/houseRooms";
-import { decorPlan, RUG_DIM, MESS_DIM } from "./houseDecor";
+import { HOUSE_ROOMS, fromPlan, type HouseConfig, type HouseObject } from "../rules/houseRooms";
+import { placedDecorPlan as decorPlan, RUG_DIM, MESS_DIM } from "./houseDecor";
 import type { Style } from "./style";
 
 type AnyCanvas = HTMLCanvasElement | OffscreenCanvas;
@@ -38,6 +38,10 @@ export function standing(o: HouseObject): { yaw: number; foot: { w: number; d: n
   // (in a round room, the wall it backs on is an arc: its back that far from the middle; art/furniture.js bends the long pieces round it)
   return { yaw: Math.atan2(-f[0], f[1]), foot, curve: r?.r ? L + foot.d / 2 : 0 };
 }
+/** Explicit opt-in placement; keep standing's baseline function inert and unchanged for boot/cache initialization. */
+export function placedStanding(o: HouseObject): { yaw: number; foot: { w: number; d: number; h: number }; curve: number } {
+  return o.placement ? { yaw: o.placement.rotation * Math.PI / 180, foot: o.placement.foot, curve: o.placement.curve } : standing(o);
+}
 
 /** The room's own light for its furniture (the creator's room's: a dim cool night, the warm things in it). */
 const roomLight = (st: Style): Style => ({ ...st, ambient: .85, ambientHue: .09, moon: .4, shafts: 0, dither: 0 } as Style);
@@ -60,10 +64,10 @@ const pixelsOf = (c: AnyCanvas) => ctx2d(c).getImageData(0, 0, c.width, c.height
 
 /** One object's picture (by its id), baked and lit, at the house's pixel (`ppm`, art pixels a metre) and view (`pitch`), in `state`
  *  (art/furniture.js FURNITURE_STATES); null for an id the house hasn't. */
-export function furniturePiece(id: string, st: Style, ppm: number, pitch: number, mk: MakeCanvas, state?: string): PiecePixels | null {
-  const o = HOUSE_ROOMS.objects.find(q => q.id === id);
+export function furniturePiece(id: string, st: Style, ppm: number, pitch: number, mk: MakeCanvas, state?: string, H = HOUSE_ROOMS): PiecePixels | null {
+  const o = H.objects.find(q => q.id === id);
   if (!o) return null;
-  const { yaw, foot, curve } = standing(o);
+  const { yaw, foot, curve } = placedStanding(o);
   const d = furnitureSprite(o.id, foot, st, { ppm, pitch, yaw, state, curve }) as Drawn, lit = litCanvas(d, o.room, st, mk, 1, o.id);
   return { px: pixelsOf(lit), w: lit.width, h: lit.height, ox: d.origin.x, oy: d.origin.y, marks: d.marks ?? {} };
 }
@@ -71,9 +75,9 @@ export function furniturePiece(id: string, st: Style, ppm: number, pitch: number
 /** A room's dressing (by its id) as one picture: each piece drawn (art/houseDecor.js, at the house's pixel and view), baked in the
  *  room's colours and lit by its own lights, then laid on one canvas at its place (the rug first, then far to near); its origin the
  *  room's middle on the floor. Null for a room with none. */
-export function roomDecorPiece(roomId: string, st: Style, ppm: number, pitch: number, mk: MakeCanvas): PiecePixels | null {
-  const room = HOUSE_ROOMS.rooms.find(r => r.id === roomId);
-  const items = room ? decorPlan(room) : [];
+export function roomDecorPiece(roomId: string, st: Style, ppm: number, pitch: number, mk: MakeCanvas, H = HOUSE_ROOMS): PiecePixels | null {
+  const room = H.rooms.find(r => r.id === roomId);
+  const items = room ? decorPlan(room, H) : [];
   if (!room || !items.length) return null;
   const ky = Math.sin(pitch) * ppm, drawn = items.map(it => {
     const d = (it.kind === "mess" ? messSprite(it.of!, it.foot!, st, { ppm, pitch, yaw: it.yaw }) : decorSprite(it.kind, it.k, st, { ppm, pitch, yaw: it.yaw, ...(it.r ? { r: it.r / SIZE } : {}) })) as Drawn, c = litCanvas(d, room.id, st, mk, it.kind === "rug" ? RUG_DIM : it.kind === "mess" ? MESS_DIM : 1);
@@ -88,8 +92,8 @@ export function roomDecorPiece(roomId: string, st: Style, ppm: number, pitch: nu
 }
 
 /** A piece by its key in render/houseRooms.ts: "decor:<room>" a room's dressing, else "<object id>|<state>". */
-export function housePiece(key: string, st: Style, ppm: number, pitch: number, mk: MakeCanvas): PiecePixels | null {
-  if (key.startsWith("decor:")) return roomDecorPiece(key.slice(6), st, ppm, pitch, mk);
+export function housePiece(key: string, st: Style, ppm: number, pitch: number, mk: MakeCanvas, H: HouseConfig = HOUSE_ROOMS): PiecePixels | null {
+  if (key.startsWith("decor:")) return roomDecorPiece(key.slice(6), st, ppm, pitch, mk, H);
   const [id, state] = key.split("|");
-  return furniturePiece(id, st, ppm, pitch, mk, state || undefined);
+  return furniturePiece(id, st, ppm, pitch, mk, state || undefined, H);
 }

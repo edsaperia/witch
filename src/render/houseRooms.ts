@@ -14,6 +14,7 @@ import { gpuKind } from "./gpuLedger";
 import type { View } from "./view";
 import { deckOf, type Deck } from "../rules/treehouse";
 import { fromPlan, toPlan, HOUSE_ROOMS, hatsOnFloor, hatSlots, hatToTake, objectAt, type HouseObject } from "../rules/houseRooms";
+import { houseArtLayout, objectOffset } from "../rules/housePlacement";
 import { groundHeight } from "./height";
 import { alongRay } from "./view/home";
 import type { FloorPixels } from "./houseArt";
@@ -28,7 +29,7 @@ import { broomWhere, stationOf } from "../rules/stations";
 import * as Art from "../../art/generator.js";
 import { witchLookOf } from "./artBuild";
 import { pileOut } from "../rules/clothesPile";
-import { DECOR_ROOMS } from "./houseDecor";
+import { DECOR_ROOMS, placedDecorPlan } from "./houseDecor";
 import { Spotlight } from "./spotlight";
 import { LoanSparkle } from "./loanSparkle";
 import { UseGlow } from "./useGlow";
@@ -68,7 +69,7 @@ function buildQuads(): Quad[] {
 /** The objects: a box each (its two near sides and its top: the plan's x0 and z1 faces); the hats' floor a rug. */
 function objects(q: Quad[]): void {
   for (const o of HOUSE_ROOMS.objects) {
-    if (FURNITURE.has(o.id) || DRAWN_ELSEWHERE.has(o.id)) continue; // (drawn as art: render/houseFurniture.ts, or by another's)
+    if (FURNITURE.has(o.id) || DRAWN_ELSEWHERE.has(o.id) || o.id.startsWith("mushroom-basket:")) continue; // (drawn as art: render/houseFurniture.ts, or by another's)
     const c = KIND[o.use.kind], x0 = o.x - o.w / 2, x1 = o.x + o.w / 2, z0 = o.z - o.d / 2, z1 = o.z + o.d / 2, top: [number, number, number] = [c[0] * 1.15, c[1] * 1.15, c[2] * 1.15];
     if (o.use.kind === "hats") { q.push(quad([[x0, z0, 0.01], [x1, z0, 0.01], [x1, z1, 0.01], [x0, z1, 0.01]], [0.36, 0.16, 0.26], 2, o.id)); continue; }
     const box = [quad([[x0, z0, 0], [x0, z1, 0], [x0, z1, o.h], [x0, z0, o.h]], c, 2, o.id), quad([[x0, z1, 0], [x1, z1, 0], [x1, z1, o.h], [x0, z1, o.h]], [c[0] * 0.72, c[1] * 0.72, c[2] * 0.72], 2, o.id), quad([[x0, z0, o.h], [x1, z0, o.h], [x1, z1, o.h], [x0, z1, o.h]], top, 2, o.id)];
@@ -406,8 +407,9 @@ export class HouseRoomsView {
       const o = flat(0, 0, 0); this.plan = { o, ex: flat(1, 0, 0).sub(o), ey: flat(0, 0, 1).sub(o), ez: flat(0, 1, 0).sub(o) }; }
     // (the hats' floor isn't a thing to use: the hat she's by is, hatToTake; Ed, 2026-10-29: "just an area where normal hat objects
     // are placed")
-    const at0 = objectAt(D, w.x, w.z), hatBy = at0?.use.kind === "hats" ? hatToTake(W, D, w.x, w.z, g.tuning.leash.runeRadius) : null;
-    const at = at0?.use.kind === "hats" && !hatBy ? null : at0;
+    const at0 = objectAt(D, w.x, w.z), hatBy = at0?.use.kind === "hats" || HOUSE_ROOMS.layout ? hatToTake(W, D, w.x, w.z, g.tuning.leash.runeRadius) : null;
+    const hatArea = HOUSE_ROOMS.objects.find(o => o.use.kind === "hats");
+    const at = hatBy && HOUSE_ROOMS.layout && hatArea ? { ...hatArea, ...toPlan(D, hatBy.x, hatBy.z) } : at0?.use.kind === "hats" && !hatBy ? null : at0;
     const lit = at && at.id !== v.houseOpen ? (hatBy ? (hatBy.slot !== undefined ? `hat:${hatBy.slot}` : "") : at.id) : undefined; // (lit, the one she can use; out while it's open)
     for (const P of this.parts) {
       let k = 0;
@@ -429,14 +431,15 @@ export class HouseRoomsView {
     const here = toPlanAt0(w.x - D.x, w.z - D.z), pitch = Math.asin(Math.min(.95, Math.max(.2, ky * v.mpp))), ppm = 1 / v.mpp;
     const wanted: { key: string; x: number; z: number }[] = [];
     for (const o of HOUSE_ROOMS.objects) if (FURNITURE.has(o.id)) wanted.push({ key: pieceKey(o), x: o.x, z: o.z });
-    for (const r of DECOR_ROOMS) wanted.push({ key: `decor:${r.id}`, x: (r.x0 + r.x1) / 2, z: (r.z0 + r.z1) / 2 });
+    const decorRooms = HOUSE_ROOMS.layout ? HOUSE_ROOMS.rooms.filter(r => placedDecorPlan(r).length) : DECOR_ROOMS;
+    for (const r of decorRooms) wanted.push({ key: `decor:${r.id}`, x: (r.x0 + r.x1) / 2, z: (r.z0 + r.z1) / 2 });
     // (and every other state a piece can be in, after the rest: rules/kit.ts's desk and lathe, swapped at once when she takes from them)
     const spare = HOUSE_ROOMS.objects.filter(o => FURNITURE.has(o.id)).flatMap(o => furnitureStates(o.id).map(st => ({ key: `${o.id}|${st}`, x: o.x, z: o.z })).filter(q => !wanted.some(w => w.key === q.key)));
     const near = (a: { x: number; z: number }) => Math.hypot(a.x - here.x, a.z - here.z);
     wanted.push(...spare);
     for (const q of wanted.filter(q => !this.asked.has(q.key)).sort((a, b) => (spare.includes(a) ? 1e6 : 0) + near(a) - (spare.includes(b) ? 1e6 : 0) - near(b))) {
       this.asked.add(q.key);
-      const p = v.assets.oneOff({ kind: "housePiece", id: `${q.key}@${ppm.toFixed(4)}:${pitch.toFixed(4)}`, style: v.assets.style, ppm, pitch })
+      const p = v.assets.oneOff({ kind: "housePiece", id: `${q.key}@${ppm.toFixed(4)}:${pitch.toFixed(4)}`, style: v.assets.style, ppm, pitch, ...(HOUSE_ROOMS.layout ? { layout: houseArtLayout(HOUSE_ROOMS) } : {}) })
         .then(r => { this.came.push({ key: q.key, art: r.housePiece ? pieceArt(r.housePiece) : null }); }, () => { this.toBakeHere.push(q.key); });
       v.assets.track(`housePiece:${q.key}`, p);
     }
@@ -598,8 +601,9 @@ export class HouseRoomsView {
       this.wakeR.replaceChildren(keycapCanvas(useGlyph(pad ? "pad" : "keys"), px), word);
     }
     const gap = 1.5; // (metres out from the bed's sides)
-    place(this.wakeL, bedObj && { ...bedObj, x: bedObj.x - bedObj.w / 2 - gap }, 0.2);
-    place(this.wakeR, snooze && bedObj ? { ...bedObj, x: bedObj.x + bedObj.w / 2 + gap } : null, 0.2);
+    const side = (sign: number) => { if (!bedObj) return null; const d = objectOffset(bedObj, sign * (bedObj.w / 2 + gap), 0); return { ...bedObj, x: bedObj.x + d.x, z: bedObj.z + d.z }; };
+    place(this.wakeL, side(-1), 0.2);
+    place(this.wakeR, snooze ? side(1) : null, 0.2);
     if (snooze && bedObj) this.wakeR.style.display = "flex";
   }
 }

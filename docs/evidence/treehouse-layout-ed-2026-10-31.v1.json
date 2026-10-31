@@ -1,0 +1,358 @@
+{
+  "version": 1,
+  "floorplan": "oak-3d1ef3f8",
+  "objects": [
+    {
+      "id": "teaTable",
+      "x": -21.69,
+      "z": -17.43,
+      "rotation": 0,
+      "useAnchor": {
+        "x": -19.23,
+        "z": -17.43
+      }
+    },
+    {
+      "id": "cardTable",
+      "x": 50.1,
+      "z": 19.31,
+      "rotation": 0,
+      "useAnchor": {
+        "x": 47.22,
+        "z": 19.31
+      }
+    },
+    {
+      "id": "bags",
+      "x": -18.95,
+      "z": -33.96,
+      "rotation": 15,
+      "useAnchor": {
+        "x": -19.31234666314353,
+        "z": -32.60770384319531
+      }
+    },
+    {
+      "id": "invitations",
+      "x": 3.05,
+      "z": -12.7,
+      "rotation": -30,
+      "useAnchor": {
+        "x": 3.999999999999999,
+        "z": -11.054551732809568
+      }
+    },
+    {
+      "id": "telephone",
+      "x": 6.1,
+      "z": -50.72,
+      "rotation": 0,
+      "useAnchor": {
+        "x": 6.1,
+        "z": -49.32
+      }
+    },
+    {
+      "id": "wardrobe",
+      "x": -22.62,
+      "z": -64.49,
+      "rotation": 0,
+      "useAnchor": {
+        "x": -21.02,
+        "z": -64.49
+      }
+    },
+    {
+      "id": "dressingTable",
+      "x": -16.29,
+      "z": -69.66,
+      "rotation": 30,
+      "useAnchor": {
+        "x": -16.939999999999998,
+        "z": -68.53416697508023
+      }
+    },
+    {
+      "id": "shoeRack",
+      "x": -3.08,
+      "z": -54.39,
+      "rotation": -90,
+      "useAnchor": {
+        "x": -4.405000000000003,
+        "z": -54.39
+      }
+    },
+    {
+      "id": "clothesPile",
+      "x": -6.25,
+      "z": -64.89,
+      "rotation": 0,
+      "useAnchor": {
+        "x": -6.25,
+        "z": -63.39
+      }
+    },
+    {
+      "id": "telescope",
+      "x": 0.68,
+      "z": -76.18,
+      "rotation": 0,
+      "useAnchor": {
+        "x": 0.68,
+        "z": -74.4
+      }
+    },
+    {
+      "id": "bed",
+      "x": -6.16,
+      "z": -75.35,
+      "rotation": -60,
+      "useAnchor": {
+        "x": -8.844678751731754,
+        "z": -76.89999999999999
+      }
+    },
+    {
+      "id": "pegboard",
+      "x": -28.08,
+      "z": 17.18,
+      "rotation": -30,
+      "useAnchor": {
+        "x": -27.38,
+        "z": 18.392435565298214
+      }
+    },
+    {
+      "id": "broomBay",
+      "x": -11.77,
+      "z": 34.43,
+      "rotation": -30,
+      "useAnchor": {
+        "x": -12.819999999999999,
+        "z": 32.61134665205268
+      }
+    },
+    {
+      "id": "lathe",
+      "x": -19.5,
+      "z": 11.54,
+      "rotation": 90,
+      "useAnchor": {
+        "x": -21.08,
+        "z": 11.54
+      }
+    },
+    {
+      "id": "cauldron",
+      "x": -72.58,
+      "z": 38.7,
+      "rotation": 0,
+      "useAnchor": {
+        "x": -70.12,
+        "z": 38.7
+      }
+    },
+    {
+      "id": "mirror",
+      "x": 33.93,
+      "z": -15.75,
+      "rotation": -75,
+      "useAnchor": {
+        "x": 34.847629534974615,
+        "z": -15.504121907152605
+      }
+    },
+    {
+      "id": "hats",
+      "x": 29.45,
+      "z": -9.54,
+      "rotation": 0,
+      "useAnchor": {
+        "x": 27.15,
+        "z": -9.54
+      }
+    },
+    {
+      "id": "cloakPegs",
+      "x": 26.63,
+      "z": -16.19,
+      "rotation": 15,
+      "useAnchor": {
+        "x": 25.229407551880847,
+        "z": -16.565287615398656
+      }
+    },
+    {
+      "id": "drumKit",
+      "x": -53.88,
+      "z": 7.51,
+      "rotation": 60,
+      "useAnchor": {
+        "x": -55.28,
+        "z": 5.085128869403574
+      }
+    },
+    {
+      "id": "synthRack",
+      "x": -46.48,
+      "z": 6.9,
+      "rotation": -45,
+      "useAnchor": {
+        "x": -45.277918471982865,
+        "z": 8.10208152801713
+      }
+    },
+    {
+      "id": "microphone",
+      "x": -50.45,
+      "z": 17.2,
+      "rotation": 0,
+      "useAnchor": {
+        "x": -50.45,
+        "z": 15.899999999999999
+      }
+    },
+    {
+      "id": "mapTable",
+      "x": -45.97,
+      "z": -38.87,
+      "rotation": 0,
+      "useAnchor": {
+        "x": -43.519999999999996,
+        "z": -38.87
+      }
+    },
+    {
+      "id": "book",
+      "x": -67.05,
+      "z": -13.68,
+      "rotation": -15,
+      "useAnchor": {
+        "x": -66.65659505144417,
+        "z": -12.211792744040617
+      }
+    },
+    {
+      "id": "specimens",
+      "x": -72.01,
+      "z": -14.77,
+      "rotation": 90,
+      "useAnchor": {
+        "x": -72.01,
+        "z": -16.27
+      }
+    },
+    {
+      "id": "bedroom2Bed",
+      "x": 29.99,
+      "z": -60.98,
+      "rotation": 15,
+      "useAnchor": {
+        "x": 29.187660960182185,
+        "z": -57.985629938503884
+      }
+    },
+    {
+      "id": "bedroom2Wardrobe",
+      "x": 24.7,
+      "z": -61.64,
+      "rotation": 90,
+      "useAnchor": {
+        "x": 24.7,
+        "z": -62.84
+      }
+    },
+    {
+      "id": "bedroom2Chest",
+      "x": 34.46,
+      "z": -60.88,
+      "rotation": 0,
+      "useAnchor": {
+        "x": 34.46,
+        "z": -59.580000000000005
+      }
+    },
+    {
+      "id": "bedroom2Crates",
+      "x": 26.02,
+      "z": -54.05,
+      "rotation": 0,
+      "useAnchor": {
+        "x": 26.02,
+        "z": -55.349999999999994
+      }
+    },
+    {
+      "id": "bedroom2Door",
+      "x": 21.8,
+      "z": -55.46,
+      "rotation": 0,
+      "useAnchor": {
+        "x": 20.6,
+        "z": -55.46
+      }
+    },
+    {
+      "id": "bedroom3Bed",
+      "x": 48.6,
+      "z": -30.6,
+      "rotation": 0,
+      "useAnchor": {
+        "x": 48.6,
+        "z": -27.5
+      }
+    },
+    {
+      "id": "bedroom3Wardrobe",
+      "x": 43.57,
+      "z": -33.81,
+      "rotation": 60,
+      "useAnchor": {
+        "x": 42.97,
+        "z": -34.84923048454133
+      }
+    },
+    {
+      "id": "bedroom3Chest",
+      "x": 51.42,
+      "z": -24.6,
+      "rotation": 135,
+      "useAnchor": {
+        "x": 50.50076118445749,
+        "z": -25.519238815542515
+      }
+    },
+    {
+      "id": "bedroom3Crates",
+      "x": 43.68,
+      "z": -24.39,
+      "rotation": 105,
+      "useAnchor": {
+        "x": 44.93570357417579,
+        "z": -24.053535241366724
+      }
+    },
+    {
+      "id": "bedroom3Door",
+      "x": 39.89,
+      "z": -32.07,
+      "rotation": 0,
+      "useAnchor": {
+        "x": 38.69,
+        "z": -32.07
+      }
+    },
+    {
+      "id": "terrace:decks",
+      "x": 8.16,
+      "z": 8.13,
+      "rotation": 45,
+      "useAnchor": {
+        "x": 9.291370849898476,
+        "z": 6.998629150101525
+      }
+    }
+  ],
+  "coordinates": "house-plan-metres",
+  "rotationMode": "degrees-relative-to-published-facing"
+}

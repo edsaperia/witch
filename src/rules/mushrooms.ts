@@ -8,6 +8,8 @@ import { isInside } from './mapShape';
 import { onLake } from './lakes';
 import { HOUSE_ROOMS, fromPlan, roomAt } from './houseRooms';
 import { deckOf } from './treehouse';
+import { kitchenPlacement } from './kitchenPlacement';
+import { edLayoutRequested } from './housePlacement';
 
 export const MUSHROOM_COLOURS = ['blue', 'purple', 'pink', 'red', 'orange', 'yellow', 'green', 'turquoise', 'white'] as const;
 export type MushroomColour = typeof MUSHROOM_COLOURS[number];
@@ -71,14 +73,14 @@ export function placeMushrooms(map: ForestMap, forest: Forest): MushroomPatch[] 
 export function newMushrooms(map: ForestMap, forest: Forest): MushroomState {
   return { patches: placeMushrooms(map, forest), baskets: emptyBaskets(), carried: {}, flights: [], puffs: [], plops: [], ingredients: [], smoke: null, affected: {}, trips: {}, nextUnload: {}, serial: 0 };
 }
-export function kitchenPlan() {
+export function kitchenPlan(optIn = edLayoutRequested()) {
   const room = HOUSE_ROOMS.rooms.find(r => r.id === 'kitchen')!;
   const cauldron = { x: room.x, z: room.z - 1.5 };
   const baskets = MUSHROOM_COLOURS.map((type, i) => {
     const a = Math.PI - i * Math.PI / (MUSHROOM_COLOURS.length - 1), radius = room.r * .78;
     return { type, x: room.x + Math.cos(a) * radius, z: room.z + Math.sin(a) * radius };
   });
-  return { room, cauldron, baskets };
+  return kitchenPlacement({ room, cauldron, baskets }, optIn);
 }
 export function kitchenLayout(g: Pick<Game, 'map' | 'tuning'>) {
   const plan = kitchenPlan(), at = deckOf(g.map, g.tuning) ?? g.map.treehouse;
