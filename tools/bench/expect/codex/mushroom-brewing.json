@@ -1,0 +1,6 @@
+{
+  "reason": "Mushrooms and brewing: rules unchanged; one visual-only sparkle shift accepted by the coordinator (#1523, 6542041266)",
+  "frames": {
+    "wave-fight": "1,062 px of plus-shaped sparkle/firefly pixels shift in the top-right foliage (x767-943, y5-85); invisible to the eye, rules identical; cause not yet attributed, follow-up in docs/backlog"
+  }
+}

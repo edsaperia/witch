@@ -5,6 +5,7 @@
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
+const { effectsScene } = require("./effects-scene.cjs");
 let playwright;
 try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 
@@ -344,12 +345,20 @@ async function main() {
       await page.keyboard.press("Enter");
       await offHouse(page);
       await hold(page, "ArrowRight", 1.5);
-      await sleep(300);
-      await shot(page, `30-ground-${name}.png`);
+      const effectsShot = async (mode, file) => {
+        await settleArt(page, { forest: true, trees: true, ground: true });
+        const drawn = await page.waitForFunction(effectsScene, mode, { timeout: 240000, polling: "raf" });
+        const evidence = await drawn.jsonValue(); await drawn.dispose();
+        check(!!evidence, `${name} ${mode}: complete forest and nonblank canvas (${JSON.stringify(evidence)})`);
+        // Keep this proven frame still for the screenshot, then release the normal loop even on a capture failure.
+        await page.evaluate(() => { window.witch.manual = true; });
+        try { await page.screenshot({ path: path.join(out, file), timeout: 300000 }); results.push(`shot previews/${file}`); }
+        finally { await page.evaluate(() => { window.witch.manual = false; }); }
+      };
+      await effectsShot("ground", `30-ground-${name}.png`);
       await page.keyboard.press("Space");
       await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 240000 });
-      await sleep(600);
-      await shot(page, `31-treetop-${name}.png`);
+      await effectsShot("treetop", `31-treetop-${name}.png`);
     }, q);
   }
   // The party spreading: one area partifying (shots through its transition, from the treetops),
