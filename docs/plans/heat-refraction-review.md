@@ -187,3 +187,10 @@ existing eligible actor. The actual image overlap is still a review requirement.
 No new cloud/Claude runner is assumed. Canonical1476#6547931247 now requires own
 headless Chromium, explicit laptop slot with FREE evidence, Ed idle>=5min/no game
 tab, <=270s and SLOT DONE. Request after pushing exact fix; do not start early.
+
+The required fox cases now place the actual friendly/unleashed fox .5m ahead of
+the fire at lateral offsets -.5/0/.5m. Held off-nocreatures.png removes both
+ordinary creature batches and live-rig batches, with visibility restored. Shared
+scenario analysis restricts the thresholded actual-creature mask to plume
+interior; a zero/noisy mask is invalid, not an occlusion pass. This gives a
+measurable creature guard case instead of another optional empty actor selection.

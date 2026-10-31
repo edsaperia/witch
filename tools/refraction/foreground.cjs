@@ -119,12 +119,12 @@ async function captureForeground(page, expectedSha, output, options = {}) {
     }
     if (!stages.some(s => s.foreground && s.overlapsPlume)) throw Error('Crossing lost the required foreground overlap');
     const creatures = [];
-    if (before.creatureId !== null) for (const [i, lateral] of [-2, 0, 2].entries()) {
+    if (before.creatureId !== null) for (const [i, lateral] of [-0.5, 0, 0.5].entries()) {
       const metadata = await page.evaluate(async ({ fire, distance, lateral, time }) => {
         const w = window.witch, v = w.view, c = window.__refractionForeground.creature;
         const result = w.shot(`at:${fire.x + 8},${fire.z + distance}`);
         if (!result.ok) throw Error(result.say);
-        c.x = fire.x + lateral; c.z = fire.z + distance; c.cell = w.game.map.cellSafe(c.x, c.z).cell;
+        c.x = fire.x + lateral; c.z = fire.z + Math.min(0.5, distance); c.cell = w.game.map.cellSafe(c.x, c.z).cell;
         v.post.refractionEnabled = true; v.render(time); await v.assets.whenIdle();
         for (let j = 0; j < 4; j++) v.render(time);
         return { id: c.id, species: c.species, level: c.level, x: c.x, z: c.z, camera: v.camera.position.toArray(), limitation: 'Real existing creature; body overlap and actual rig/sprite depth require image inspection, not inferred from the witch envelope.' };
@@ -133,6 +133,15 @@ async function captureForeground(page, expectedSha, output, options = {}) {
       try {
         await page.screenshot({ timeout: 120000 });
         const pair = await capturePair(page, expectedSha, directory, 'fire');
+        await page.evaluate(time => {
+          const v = window.witch.view, state = window.__refractionCaptureHold;
+          const batches = [...v.creatureBatches.values(), ...(v.rig?.batches instanceof Map ? v.rig.batches.values() : [])];
+          state.maskVisibility = batches.flatMap(b => b.meshes).map(mesh => [mesh, mesh.visible]);
+          for (const [mesh] of state.maskVisibility) mesh.visible = false;
+          v.post.refractionEnabled = false; v.render(time);
+        }, before.time);
+        try { await page.screenshot({ path: path.join(directory, 'off-nocreatures.png'), timeout: 120000 }); }
+        finally { await page.evaluate(() => { for (const [mesh, visible] of window.__refractionCaptureHold.maskVisibility) mesh.visible = visible; }); }
         const record = { lateral, ...metadata, hold, pair }; creatures.push(record);
         await fs.writeFile(path.join(directory, 'foreground.json'), JSON.stringify(record, null, 2));
       } finally { await page.evaluate(restoreCaptureHold); }
