@@ -278,7 +278,7 @@ if (params.get("playtest") === "download") setTimeout(() => N().playtest.downloa
 
 // The debug knobs: the fight's scale, speed and momentum, the treetop speed (app/knobs.ts): their keys, and their live setters
 // for the pause page's sliders and the decisions panel (by the link's param); their start is the night's.
-const knobLive = setupKnobs(N, mutate);
+const knobLive = setupKnobs(N, mutate, () => !phone.active);
 
 // Auto-talk (Ed's playtest, 2026-10-04: a new player wanted to turn it off): T, or a click
 // on its slot, turns it on or off (remembered on this browser); off, she talks while Shift is held.
@@ -362,7 +362,7 @@ sound.leyLink = () => view.ley.currentLink(); // (the pulse's fizz heard where t
 // The freeze (Esc, gamepad Start, the ❚❚ button): a true still for screenshots, . steps (platform/freeze.ts).
 const freeze = page.freeze = new Freeze(N().game, N().seed, BUILD);
 freeze.mutate = mutate;
-freeze.advance = (game, controls, dt) => recordedStep(game, controls, dt, BUILD, captureRecording);
+freeze.advance = (game, controls, dt) => { if (!phone.active) recordedStep(game, controls, dt, BUILD, captureRecording); };
 freeze.started = () => (startEl.style.display === "none" || creator.open) && !studio.at; // (in the bedroom too: Ed, 2026-10-14, "Can we pause from the bedroom?")
 freeze.ownsEsc = () => !bot && !document.querySelector("#settings-page.open, #potion-lab.open"); // (the Settings page's Esc is its own: it closes, the pause page stays) // (the bot game's Esc is its way back to the start screen: ui/botGame.ts)
 const callArrival = guestArrival({ room: "bedroom2", equipment: game => {
@@ -666,6 +666,7 @@ creator.progress = () => { const a = view.assets; return { done: a.done, total: 
 // (its room's ambience plays while it's open: overnight, 2026-10-06)
 creator.onGesture = () => sound.wake();
 creator.onStart = g => {
+  if (phone.active) return; // An open creator must not bypass session approval or start a bot/shared party.
   const who = playerPick?.value ?? "human"; // (the dev "Player:" pick: a bot plays the run instead of her)
   if (who !== "human" && BOT_KINDS.includes(who as BotKind)) { botGame(who as BotKind); return; }
   if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); showLook(); wearHat(g); }
@@ -678,6 +679,7 @@ creator.spellSound = (cue, v) => sound.sfx?.spell(cue, v);
 const botParam = params.get("bot") as BotKind | null;
 let bot: Bot | null = null, botTag: BotTag | null = null, botKind: BotKind | null = null;
 function botGame(kind: BotKind): void {
+  if (phone.active) return;
   if (botKind) return;
   botKind = kind;
   const look = pleasingWitch(N().seed);
