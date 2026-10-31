@@ -15,12 +15,14 @@ afterEach(() => vi.useRealTimers());
 
 it("telephone signaling grants no gameplay role before a server-confirmed answer", () => {
   vi.useFakeTimers(); const socket = new Socket(), onError = vi.fn();
-  const c = connectRelay({ endpoint: "wss://witch-relay.onrender.com", room: "1234567", telephone: true, socket: () => socket, onMessage: vi.fn(), onClose: vi.fn(), onError });
-  socket.open(); expect(socket.sent[0]).toEqual({ protocol: 1, type: "telephone", number: "1234567" });
+  const publicKey = { algorithm: "Ed25519" as const, spki: "MCowBQYDK2VwAyEADV7zdnqg1CPihvUiq-gktcY8RGA6lz4lu0wePSxaWWA" };
+  const c = connectRelay({ endpoint: "wss://witch-relay.onrender.com", room: "", telephone: true, telephonePublicKey: publicKey, socket: () => socket, onMessage: vi.fn(), onClose: vi.fn(), onError });
+  socket.open(); expect(socket.sent[0]).toEqual({ protocol: 1, type: "telephone", publicKey });
   expect(c.sendInput({})).toBe(false); expect(c.sendState({})).toBe(false);
   c.dial("7654321"); expect(socket.sent.at(-1)).toEqual({ protocol: 1, type: "dial", number: "7654321" });
   socket.emit("message", JSON.stringify({ protocol: 1, type: "call-connected", role: "guest", player: 0 }));
   expect(onError).toHaveBeenCalledOnce(); expect(c.sendInput({})).toBe(false);
+  c.identityVerified(); expect(c.sendState({})).toBe(false);
   socket.emit("message", JSON.stringify({ protocol: 1, type: "call-connected", role: "guest", player: 1 }));
   expect(c.sendInput({})).toBe(true); expect(c.sendState({})).toBe(false);
   c.available(false); expect(socket.sent.at(-1)).toMatchObject({ type: "available", payload: false }); c.close();

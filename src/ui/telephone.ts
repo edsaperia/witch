@@ -6,16 +6,17 @@ import { textEntry } from "../platform/inputTarget";
 import { MenuFocus } from "./menuFocus";
 import { telephoneNumber } from "../app/telephoneBook";
 
-export type TelephoneStatus = "connecting" | "available" | "dialling" | "ringing" | "joining" | "connected" | "unavailable" | "busy" | "ended" | "error";
+export type TelephoneStatus = "connecting" | "available" | "dialling" | "ringing" | "confirming" | "joining" | "connected" | "unavailable" | "busy" | "ended" | "error";
 export interface TelephoneState { own: string; status: TelephoneStatus; peer?: string; recent: readonly string[]; saved: boolean; detail?: string }
 export interface TelephoneActions {
   dial(number: string): void; answer(): void; decline(): void; hangUp(): void; close(): void;
   retry?(): void;
+  confirmIdentity?(): void;
   digit?(digit: string): void;
   /** The normal game's witch renderer supplies faces; never load a caller-provided image URL. */
   face?(number: string): Node | null;
 }
-const words: Record<TelephoneStatus, string> = { connecting: "Connecting the telephone…", available: "The line is ready.", dialling: "Calling…", ringing: "The telephone is ringing.", joining: "Joining your friend's night…", connected: "The line is connected.", unavailable: "That number isn't at the telephone.", busy: "That line is engaged.", ended: "The line has gone quiet.", error: "The call couldn't connect." };
+const words: Record<TelephoneStatus, string> = { connecting: "Connecting the telephone…", available: "The line is ready.", dialling: "Calling…", ringing: "The telephone is ringing.", confirming: "This is a new number. Connect and remember this friend?", joining: "Joining your friend's night…", connected: "The line is connected.", unavailable: "That number isn't at the telephone.", busy: "That line is engaged.", ended: "The line has gone quiet.", error: "The call couldn't connect." };
 
 /** Ed, 2026-10-31: slides FROM THE LEFT like the other stations; never a second game entry page. */
 export class TelephonePanel {
@@ -31,6 +32,7 @@ export class TelephonePanel {
   private decline: HTMLButtonElement;
   private hangup: HTMLButtonElement;
   private retry: HTMLButtonElement;
+  private confirm: HTMLButtonElement;
   private openNow = false;
   private state: TelephoneState | null = null;
   private layer: InputLayer = {
@@ -48,6 +50,7 @@ export class TelephonePanel {
     this.answer = button("Answer", () => actions.answer()); this.decline = button("Not now", () => actions.decline());
     this.hangup = button("Hang up", () => actions.hangUp());
     this.retry = button("Reconnect", () => actions.retry?.());
+    this.confirm = button("Connect to this new number", () => actions.confirmIdentity?.());
     const dial = h("div", { class: "rotary-dial", attrs: { "aria-label": "Rotary dial" } });
     [..."1234567890"].forEach((digit, i) => {
       const angle = (-130 + i * 28) * Math.PI / 180;
@@ -56,7 +59,7 @@ export class TelephonePanel {
     this.digits.addEventListener("input", () => { this.digits.value = this.digits.value.replace(/\D/g, "").slice(0, 7); this.paintCall(); });
     this.root.append(h("h2", { text: "Telephone" }), this.own, this.status, this.digits, dial,
       h("div", {}, button("Erase", () => { this.digits.value = this.digits.value.slice(0, -1); this.paintCall(); }), this.call),
-      this.answer, this.decline, this.hangup, this.retry, h("h3", { text: "Address book" }), this.book, button("Step away", () => actions.close()));
+      this.answer, this.decline, this.confirm, this.hangup, this.retry, h("h3", { text: "Address book" }), this.book, button("Step away", () => actions.close()));
     document.body.append(this.root); this.slide = new SlideIn(this.root, "left", "flex");
   }
   get open() { return this.openNow; }
@@ -68,10 +71,11 @@ export class TelephonePanel {
   }
   render(state: TelephoneState): void {
     this.state = state;
-    this.own.textContent = `Your number\n${state.own}${state.saved ? "" : "\nThis browser couldn't remember it."}`;
+    this.own.textContent = `Your number\n${state.own || "Connecting…"}${state.saved ? "" : "\nThis browser couldn't remember it."}`;
     this.status.textContent = `${words[state.status]}${state.peer ? ` ${state.peer}` : ""}${state.detail ? ` ${state.detail}` : ""}`;
     this.answer.hidden = this.decline.hidden = state.status !== "ringing";
-    this.hangup.hidden = !["dialling", "joining", "connected"].includes(state.status);
+    this.hangup.hidden = !["dialling", "confirming", "joining", "connected"].includes(state.status);
+    this.confirm.hidden = state.status !== "confirming";
     this.retry.hidden = !["error", "ended"].includes(state.status);
     this.book.replaceChildren(...state.recent.map(number => {
       const b = button(number, () => { this.digits.value = number; this.paintCall(); });

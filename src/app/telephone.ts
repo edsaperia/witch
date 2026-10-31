@@ -1,91 +1,111 @@
 import { telephoneBook, telephoneNumber, type TelephoneStorage } from "./telephoneBook";
 import { TelephonePanel, type TelephoneActions, type TelephoneState } from "../ui/telephone";
 import { connectRelay, type RelaySocket } from "../platform/online/relayClient";
-
+import { browserTelephoneIdentityStore, loadTelephoneIdentity, numberForKey, type TelephoneChallenge, type TelephoneIdentity, type TelephonePublicKey } from "../platform/online/telephoneIdentity";
+import { telephoneTrust } from "../platform/online/telephoneTrust";
 export type TelephoneConnection = ReturnType<typeof connectRelay>;
 interface Menu { show(on: boolean): void; render(state: TelephoneState): void; redial(number: string): void }
 export interface TelephoneOptions {
   storage: TelephoneStorage | null;
-  random(): number;
-  /** These hooks are implemented by the ordinary game's session owner, never a second entry page. */
+  loadIdentity?(): Promise<TelephoneIdentity>;
   connected(role: "host" | "guest", connection: TelephoneConnection, peer: string, signal: AbortSignal): Promise<void>;
   message(message: Record<string, unknown>): void;
   departed(): void;
-  endpoint?: string;
-  socket?: (url: string) => RelaySocket;
-  menu?: (actions: TelephoneActions) => Menu;
-  digit?: (digit: string) => void;
-  face?: (number: string) => Node | null;
+  endpoint?: string; socket?: (url: string) => RelaySocket; menu?: (actions: TelephoneActions) => Menu;
+  digit?: (digit: string) => void; face?: (number: string) => Node | null;
 }
-
-/** Page-owned telephone lifetime. Listing ends on stepping away; a connected game's relay stays alive. */
+/** Page-owned telephone; only mutually verified/accepted calls reach the ordinary-game session hook. */
 export function telephone(options: TelephoneOptions) {
-  const book = telephoneBook(options.storage, options.random);
-  let connection: TelephoneConnection | null = null, role: "host" | "guest" | null = null, generation = 0, open = false;
-  let joinAbort: AbortController | null = null;
+  const book = telephoneBook(options.storage);
+  let connection: TelephoneConnection | null = null, role: "host" | "guest" | null = null, generation = 0, attempt = 0, open = false;
+  let joinAbort: AbortController | null = null, trust: ReturnType<typeof telephoneTrust> | null = null;
+  let intent: "host" | "guest" | null = null;
+  let identity: Promise<TelephoneIdentity> | null = null, identityQueue = Promise.resolve();
   let state: TelephoneState = { own: book.number, recent: book.recent, saved: book.saved, status: "ended" };
   const paint = (patch: Partial<TelephoneState>) => { state = { ...state, ...patch, recent: book.recent, saved: book.saved }; menu.render(state); };
   const hangUp = () => {
-    generation++; joinAbort?.abort(); joinAbort = null; connection?.close(); connection = null;
-    const wasConnected = role !== null; role = null;
-    paint({ status: "ended" }); if (wasConnected) options.departed();
+    generation++; attempt++; intent = null; trust?.cancel(); joinAbort?.abort(); joinAbort = null; connection?.close(); connection = null;
+    const joined = role !== null; role = null; paint({ status: "ended" }); if (joined) options.departed();
   };
+  const fail = (error: unknown) => { hangUp(); paint({ status: "error", detail: error instanceof Error ? error.message : "The call couldn't connect." }); };
+  const agree = () => { if (!trust || !connection) return; trust.agree(); connection.identityVerified(); paint({ status: "joining", detail: undefined }); };
   const actions: TelephoneActions = {
-    dial(number) { if (!telephoneNumber(number) || number === book.number || !connection || role || !["available", "busy", "unavailable", "ended"].includes(state.status)) return; if (connection.dial(number)) paint({ status: "dialling", peer: number, detail: undefined }); },
-    answer() { if (state.status === "ringing") connection?.answer(); },
-    decline() { connection?.decline(); },
-    hangUp,
-    close() { api.show(false); },
-    retry() { if (!role) { api.show(false); api.show(true); } },
+    dial(number) { if (!telephoneNumber(number) || number === book.number || !connection || role || !["available", "busy", "unavailable"].includes(state.status)) return; if (connection.dial(number)) { intent = "host"; paint({ status: "dialling", peer: number, detail: undefined }); } },
+    answer() { if (state.status === "ringing" && connection) { intent = "guest"; connection.answer(); } }, decline() { connection?.decline(); }, hangUp,
+    close() { void api.show(false); }, retry() { if (!role) void api.show(false).then(() => api.show(true)); },
+    confirmIdentity() { if (state.status === "confirming") { try { agree(); } catch (error) { fail(error); } } },
     digit: options.digit, face: options.face,
   };
   const menu = options.menu?.(actions) ?? new TelephonePanel(actions);
   const api = {
-    number: book.number,
-    get state(): Readonly<TelephoneState> { return state; },
-    show(on: boolean) {
+    get number() { return book.number; }, get state(): Readonly<TelephoneState> { return state; },
+    /** Await current identity checks in page adapters/tests; never includes private material in public state. */
+    settled: () => identityQueue,
+    async show(on: boolean): Promise<void> {
       if (open === on) return; open = on; menu.show(on);
       if (!on) {
         connection?.available(false);
-        if (!role) { generation++; connection?.close(); connection = null; paint({ status: "ended" }); }
+        if (!role) { generation++; trust?.cancel(); connection?.close(); connection = null; paint({ status: "ended" }); }
         return;
       }
       if (connection) { connection.available(true); return; }
       const current = ++generation; paint({ status: "connecting", detail: undefined });
-      connection = connectRelay({ endpoint: options.endpoint ?? "wss://witch-relay.onrender.com", room: book.number, telephone: true, socket: options.socket,
-        onError(error) { if (current !== generation) return; paint({ status: "error", detail: error.message }); },
-        onClose() {
-          if (current !== generation) return;
-          joinAbort?.abort(); joinAbort = null; connection = null; const joined = role !== null; role = null; paint({ status: "ended" }); if (joined) options.departed();
-        },
-        onMessage(message) {
-          if (current !== generation) return;
-          if (message.type === "telephone-ready") paint({ status: "available" });
-          else if (message.type === "incoming-call" && telephoneNumber(message.number)) paint({ status: "ringing", peer: message.number });
-          else if (message.type === "call-ringing") paint({ status: "dialling" });
-          else if (message.type === "call-unavailable") paint({ status: "unavailable" });
-          else if (message.type === "call-busy") paint({ status: "busy" });
-          else if (["call-cancelled", "call-declined", "call-timeout"].includes(String(message.type))) paint({ status: "available" });
-          else if (message.type === "call-connected" && (message.role === "host" || message.role === "guest") && telephoneNumber(message.number) && connection) {
-            if (role) return; // Duplicate confirmation cannot install the host's night twice.
-            role = message.role; book.remember(message.number); paint({ status: "joining", peer: message.number });
-            joinAbort = new AbortController();
-            void options.connected(role, connection, message.number, joinAbort.signal).then(() => {
-              if (current === generation && role) paint({ status: "connected" });
-            }, error => {
-              if (current !== generation) return;
-              const joined = role !== null; role = null; generation++; joinAbort?.abort(); joinAbort = null; connection?.close(); connection = null;
-              paint({ status: "error", detail: error instanceof Error ? error.message : "The night couldn't be joined." }); if (joined) options.departed();
-            });
-          } else options.message(message);
-        },
-      });
+      try {
+        identity ??= (options.loadIdentity ?? (() => loadTelephoneIdentity(browserTelephoneIdentityStore())))();
+        const own = await identity, number = await numberForKey(own.publicKey);
+        if (current !== generation || !open) return;
+        book.assigned(number); paint({ own: number }); trust = telephoneTrust(own, book.pinned);
+        connection = connectRelay({ endpoint: options.endpoint ?? "wss://witch-relay.onrender.com", room: number, telephone: true, telephonePublicKey: own.publicKey, socket: options.socket,
+          onError(error) { if (current === generation) fail(error); },
+          onClose() {
+            if (current !== generation) return;
+            generation++; attempt++; intent = null;
+            trust?.cancel(); joinAbort?.abort(); connection = null; const joined = role !== null; role = null; paint({ status: "ended" }); if (joined) options.departed();
+          },
+          onMessage(message) {
+            if (current !== generation) return;
+            if (message.type === "call-challenge" || message.type === "identity-proof") {
+              if (message.type === "call-challenge") attempt++;
+              const callAttempt = attempt;
+              identityQueue = identityQueue.then(async () => {
+                if (current !== generation || callAttempt !== attempt || !trust || !connection) return;
+                if (message.type === "call-challenge") {
+                  if (message.role !== "host" && message.role !== "guest") throw new Error("Invalid telephone role");
+                  const challenge = message.challenge as TelephoneChallenge;
+                  if (message.role !== intent || (message.role === "host" ? challenge?.answerer : challenge?.caller) !== state.peer) throw new Error("This isn't the call you chose.");
+                  const proof = await trust.challenge(challenge, message.role, message.publicKey as TelephonePublicKey);
+                  if (current === generation && callAttempt === attempt) connection.identityProof(proof);
+                } else {
+                  const result = await trust.proof(String(message.signature));
+                  if (current !== generation || callAttempt !== attempt) return;
+                  if (result === "known") agree(); else paint({ status: "confirming", detail: undefined });
+                }
+              }).catch(error => { if (current === generation && callAttempt === attempt) fail(error); });
+              return;
+            }
+            if (message.type === "telephone-ready") { if (message.number !== number) fail(new Error("The telephone address couldn't be verified.")); else paint({ status: "available" }); }
+            else if (message.type === "call-throttled") { intent = null; paint({ status: "available", detail: "Please wait a moment before calling again." }); }
+            else if (message.type === "incoming-call" && telephoneNumber(message.number) && !role && !intent) paint({ status: "ringing", peer: message.number });
+            else if (message.type === "call-ringing") paint({ status: "dialling" });
+            else if (message.type === "call-unavailable") { intent = null; paint({ status: "unavailable" }); }
+            else if (message.type === "call-busy") { intent = null; paint({ status: "busy" }); }
+            else if (["call-cancelled", "call-declined", "call-timeout"].includes(String(message.type))) { attempt++; intent = null; trust?.cancel(); paint({ status: "available" }); }
+            else if (message.type === "call-connected" && (message.role === "host" || message.role === "guest") && telephoneNumber(message.number) && connection) {
+              if (role) return;
+              try {
+                const key = trust!.connected(message.role, message.number);
+                book.remember(message.number, key); role = message.role; paint({ status: "joining", peer: message.number }); joinAbort = new AbortController();
+                void options.connected(role, connection, message.number, joinAbort.signal).then(() => {
+                  if (current === generation && role) paint({ status: "connected" });
+                }, error => { if (current === generation) fail(error); });
+              } catch (error) { fail(error); }
+            } else options.message(message);
+          },
+        });
+      } catch (error) { if (current === generation) { identity = null; fail(error); } }
     },
-    /** Use after return-home preparation: retain the caller's number, never the host snapshot. */
-    redial() { if (state.peer) menu.redial(state.peer); },
-    hangUp,
+    redial() { if (state.peer) menu.redial(state.peer); }, hangUp,
     dispose() { open = false; menu.show(false); hangUp(); },
   };
-  menu.render(state);
-  return api;
+  menu.render(state); return api;
 }
