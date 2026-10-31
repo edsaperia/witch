@@ -3,11 +3,12 @@ import type { PageHost } from "../main";
 import { wakeInBedroom } from "../rules/opening";
 import { startWake } from "../rules/wakeUp";
 import { areaUnderWitch } from "../rules/game";
-import { sceneMode } from "./compareKey";
+import { compareKey, rendererOf, sceneMode } from "./compareKey";
 
 import { type BotKind } from "../rules/botKinds";
 
 import { pleasingWitch } from "../ui/looks";
+
 import { addFloorHat } from "../rules/houseRooms";
 import { FIND_KINDS, fillTrunk, spawnFind, spawnSpot, type FindKindId } from "../rules/finds";
 import { foundAll } from "./finds";
@@ -73,6 +74,14 @@ export function spawnHereNow(pageHost: PageHost, kind: FindKindId | null, item: 
   Object.assign(g.trunk, { x: at.x, z: at.z, cell: [c[0], c[1]] });
   return `tonight's ${g.trunk.kind} ${g.trunk.item} moved next to her`;
 }
+
+export function decidePanel(pageHost: PageHost, open: boolean): void {
+  if (pageHost.decide || pageHost.decideLoading) return;
+  pageHost.decideLoading = true;
+  void import("../ui/decide").then(({ DecidePanel }) => { pageHost.decide = new DecidePanel({ mutate: pageHost.mutate, get tuning() { return pageHost.N().game.tuning; }, get seed() { return pageHost.N().game.seed; }, version: pageHost.BUILD, live: pageHost.knobLive }, open); });
+}
+
+export function keyNow(pageHost: PageHost, spot?: string): ReturnType<typeof compareKey> { return compareKey({ build: pageHost.BUILD, game: pageHost.N().game, canvas: pageHost.canvas, window: { width: innerWidth, height: innerHeight }, renderer: rendererOf(pageHost.view.renderer.getContext()), changed: pageHost.repro.changed(), params: pageHost.N().params, spot, dpr: devicePixelRatio, nav: navigator as Navigator & { deviceMemory?: number } }); }
 
 export function installDebug1(pageHost: PageHost): void {
 observePlaytestErrors(error => pageHost.breadcrumbs.add(pageHost.N().game, "error", error));

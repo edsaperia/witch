@@ -9,18 +9,36 @@ import { BOT_KINDS, type BotKind } from "../rules/botKinds";
 import { saveLoadout } from "./loadout";
 import { setParts } from "../rules/spells";
 import { changeLoadout } from "../rules/hatSpells";
+import { HOUSE_ROOMS } from "../rules/houseRooms";
 import { fitBroom } from "./broomSave";
-import { unlockAll } from "./debugUnlock";
-import { hatWithoutLoan, lookWithoutLoan, partsWithoutLoan } from "./loan";
+import { loadOwned } from "./owned";
+import { partsToChoose, unlockAll } from "./debugUnlock";
+import { type FindsCtx } from "./finds";
+import { hatWithoutLoan, lookWithoutLoan, partsWithoutLoan, withLoan } from "./loan";
 import { BagPreview } from "../ui/bagPreview";
 import { BAGS } from "../rules/bags";
+import { type WorkshopCtx } from "../ui/stationPanel";
 import { chooseRecord } from "./recordSave";
 import { integratedGpu } from "./telescope";
+import { nightOver } from "./chartSave";
 
 export function shutStation(pageHost: PageHost, why: string): void {
   pageHost.stationShuts.push({ why, at: Math.round(performance.now()), frozen: pageHost.freeze.frozen, station: pageHost.stations.station }); if (pageHost.stationShuts.length > 8) pageHost.stationShuts.shift();
   pageHost.stations.close();
 }
+
+export function findsCtx(pageHost: PageHost): FindsCtx { return ({ spells: pageHost.N().game.spells, owned: () => (pageHost.owned ??= withLoan("wearable", loadOwned((pageHost.page.look() ?? pageHost.creator.genome()) as Record<string, unknown>), pageHost.loan)) }); }
+
+export function workshopNow(pageHost: PageHost): WorkshopCtx { const { game, tuning } = pageHost.N(), t = game.trunk; return { found: partsToChoose(pageHost.partsNow()), fitted: game.witches[0].spells.parts, tonight: t && t.kind === "part" && !t.found ? t.item : null, tuning }; }
+
+export function useHouse(pageHost: PageHost, obj: string): void { return pageHost.mutate("house: use", () => {
+  const { game, tuning, flags: { chartRecorded, overRecorded } } = pageHost.N();
+  if (obj === "slept") { if (!chartRecorded && !overRecorded) nightOver(tuning.map?.island ?? "", { won: false }, undefined, tuning.map?.world ?? 0); setTimeout(() => pageHost.newNight("bed"), 0); return; } // (the sea chart: played, as the afterparty records it; then a new seed: app/newForest.ts; after this frame, in place)
+  const o = HOUSE_ROOMS.objects.find(q => q.id === obj);
+  if (!o || pageHost.creator.open || game.witches[0].ko) return;
+  if (o.use.kind === "zoo") pageHost.zoo.open(); // (a station's E and an instrument's: their panels, below in the frame and app/studio.ts)
+  else if (o.use.kind === "telescope" && tuning.telescope && !pageHost.telescope.on) { pageHost.scopeAt = o.id; pageHost.telescope.open(game, tuning.telescope); }
+}); }
 
 export function installStations1(pageHost: PageHost): void {
 pageHost.creator.loadout = { hat: pageHost.N().game.spells.hat };

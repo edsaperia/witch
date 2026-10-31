@@ -1,5 +1,6 @@
 // A4 mechanical extraction from src/main.ts; body identity is checked by tools/refactor/a4-split.mjs.
 import type { PageHost } from "../main";
+import { slotStorage } from "./saveSlots";
 import { wavesOver } from "../rules/win";
 import { closeChart, openChart, finishChartFlight, type Sailed } from "../ui/chartOverlay";
 import { openingWay, sailLandsInBed } from "./opening";
@@ -10,6 +11,7 @@ import { carryTiming, clearCarried, mark } from "./timing";
 import { type Tuning } from "../rules/tuning";
 import { diveReach, diveTrack, handoffShot, newFlightClock, stepFlightClock, type Shot } from "../rules/arrive";
 import { nextFrame, runSliced } from "../render/slices";
+import { awaitingSpell } from "../rules/leypulse";
 import { loadGenome } from "../ui/creator";
 import { unlockAll } from "./debugUnlock";
 import { dreamsAfter } from "./loan";
@@ -270,3 +272,33 @@ export function leaveBot(pageHost: PageHost): void {
   pageHost.lookNow = JSON.stringify(look);
   pageHost.showLook();
 }
+
+export function chartWorld(pageHost: PageHost): number { return (pageHost.params.has("world") ? pageHost.N().tuning.map?.world ?? 0 : loadSave().world); }
+
+export function soundNote(pageHost: PageHost): void {
+  if (document.getElementById("sound-note")) return;
+  const el = document.createElement("div");
+  el.id = "sound-note"; el.textContent = "🔊 press any key for sound";
+  el.style.cssText = "position:fixed;left:50%;bottom:72px;transform:translateX(-50%);z-index:30;font:13px ui-monospace,monospace;color:#e8e2f4;background:rgba(10,9,22,.7);border:1px solid #3a2f5c;border-radius:6px;padding:6px 12px;pointer-events:none";
+  document.body.append(el);
+  const go = () => { pageHost.gestured = true; pageHost.sound.wake(); el.remove(); removeEventListener("keydown", go); removeEventListener("pointerdown", go); };
+  addEventListener("keydown", go); addEventListener("pointerdown", go);
+}
+
+export function armSkip(pageHost: PageHost): void {
+  if (pageHost.skipArmed) return;
+  pageHost.skipArmed = true;
+  for (const ev of ["keydown", "pointerdown"]) addEventListener(ev, () => { pageHost.gestured = true; const a = pageHost.N().arrival; if (a && !a.done) a.skip(); }, { capture: true });
+}
+
+export function queueCast(pageHost: PageHost): void { const n = pageHost.N(); if (awaitingSpell(n.game.party) && !n.game.wake) n.flags.castWanted = true; }
+
+export function armBack(pageHost: PageHost): void { if (pageHost.backArmed) return; pageHost.backArmed = true; addEventListener("popstate", () => pageHost.backGuard.popped()); }
+
+export function wokenBefore(pageHost: PageHost): boolean { try { return slotStorage.getItem(pageHost.WOKEN_KEY) === "1"; } catch { return false; } }
+
+export function woke(pageHost: PageHost): void { try { slotStorage.setItem(pageHost.WOKEN_KEY, "1"); } catch { /* storage blocked: her first morning again next time */ } }
+
+export function mirrored(pageHost: PageHost): boolean { try { return slotStorage.getItem(pageHost.MIRROR_KEY) === "1"; } catch { return false; } }
+
+export function sawMirror(pageHost: PageHost): void { try { slotStorage.setItem(pageHost.MIRROR_KEY, "1"); } catch { /* storage blocked: marked again next time */ } }

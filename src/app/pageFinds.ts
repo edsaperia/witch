@@ -6,9 +6,9 @@ import { saveGenome } from "../ui/creator";
 import { saveLoadout } from "./loadout";
 import { shelfOf, stationsShowing } from "../rules/wardrobe";
 import { findKind, type FindKindId } from "../rules/finds";
-import { fitBroom } from "./broomSave";
+import { fitBroom, loadBroom } from "./broomSave";
 import { keepFound } from "./finds";
-import { homeOf, lend, loanName, settle, type Loan } from "./loan";
+import { homeOf, lend, loanName, settle, withLoan, type Loan } from "./loan";
 import { DreamView, dreamArt } from "../render/dream";
 import { loadSave, unvisited } from "./chartSave";
 import { guidanceOf, seeGuide } from "../rules/guidance";
@@ -65,3 +65,5 @@ export function stepGuide(pageHost: PageHost, now: number): void {
   const G = guidanceOf(game, 0, pageHost.guide, pageHost.chartFound.unvisited);
   pageHost.guidePin.update(G, !!G && !pageHost.creator.open && !chartOpen() && !pageHost.sailing); // (wherever she is, at its target too: Ed, 2026-10-28)
 }
+
+export function partsNow(pageHost: PageHost): Set<string> { return withLoan("part", new Set(loadBroom().found), pageHost.loan); }

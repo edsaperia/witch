@@ -11,55 +11,55 @@ import { AREA_TYPES } from "../../rules/map";
 import { nextFrame, runSliced, type Steps } from "../slices";
 import { releaseDisposals } from "../retire";
 
-export function readyPrograms(view: View, internals: ViewInternals, _shared: ViewShared): ReadyProgram[] {
-    const programs = (view.renderer.info.programs ?? []) as unknown as ReadyProgram[];
-    for (const p of programs) if (!internals.monitoredPrograms.has(p)) {
-      internals.monitoredPrograms.add(p); monitorProgramLink(view.renderer.getContext(), p, message => console.error(message));
+export function readyPrograms(a4ViewHost: View, a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared): ReadyProgram[] {
+    const programs = (a4ViewHost.renderer.info.programs ?? []) as unknown as ReadyProgram[];
+    for (const p of programs) if (!a4PrivateHost.monitoredPrograms.has(p)) {
+      a4PrivateHost.monitoredPrograms.add(p); monitorProgramLink(a4ViewHost.renderer.getContext(), p, message => console.error(message));
     }
     return programs;
   }
 
-export function landingWakeReady(view: View, _internals: ViewInternals, _shared: ViewShared): boolean {
-    const A = view.assets;
-    return A.fullWitchReady && A.home.treehouse && view.treehouseBatch.atlas === A.treehouse.atlas && view.landingHouseShare === 1 &&
-      [...view.witchBatch.meshes, ...view.treehouseBatch.meshes].every(o => ([] as THREE.Material[]).concat((o as THREE.Mesh).material ?? []).every(m => materialProgramsReady(view.renderer.properties.get(m)))) &&
-      !!view.houseRooms?.landingReady(view.renderer);
+export function landingWakeReady(a4ViewHost: View, _a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared): boolean {
+    const A = a4ViewHost.assets;
+    return A.fullWitchReady && A.home.treehouse && a4ViewHost.treehouseBatch.atlas === A.treehouse.atlas && a4ViewHost.landingHouseShare === 1 &&
+      [...a4ViewHost.witchBatch.meshes, ...a4ViewHost.treehouseBatch.meshes].every(o => ([] as THREE.Material[]).concat((o as THREE.Mesh).material ?? []).every(m => materialProgramsReady(a4ViewHost.renderer.properties.get(m)))) &&
+      !!a4ViewHost.houseRooms?.landingReady(a4ViewHost.renderer);
   }
 
-export function beginLandingShaders(view: View, internals: ViewInternals, _shared: ViewShared, chart: boolean): void { internals.shaderEpoch++; internals.shaderLandingDeadline = Infinity; internals.shaderChartLanding = chart; view.shaderLandingLimited = false; view.landingSleeping = false; internals.landingFades.reset(); view.landingHouseShare = 1; }
+export function beginLandingShaders(a4ViewHost: View, a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared, chart: boolean): void { a4PrivateHost.shaderEpoch++; a4PrivateHost.shaderLandingDeadline = Infinity; a4PrivateHost.shaderChartLanding = chart; a4ViewHost.shaderLandingLimited = false; a4ViewHost.landingSleeping = false; a4PrivateHost.landingFades.reset(); a4ViewHost.landingHouseShare = 1; }
 
-export function armLimitedLanding(view: View, internals: ViewInternals, _shared: ViewShared): void {
-    if (view.shaderLandingLimited) return;
-    view.shaderLandingLimited = true; internals.landingFades.arm(view.assets.home);
+export function armLimitedLanding(a4ViewHost: View, a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared): void {
+    if (a4ViewHost.shaderLandingLimited) return;
+    a4ViewHost.shaderLandingLimited = true; a4PrivateHost.landingFades.arm(a4ViewHost.assets.home);
     performance.mark('landing:limited');
   }
 
-export function limitedLandingReady(view: View, internals: ViewInternals, _shared: ViewShared, now: NonNullable<Parameters<View["limitedLandingReady"]>[0]>): boolean {
-    const expired = now >= internals.shaderLandingDeadline;
-    if (expired && !view.homeDone) internals.armLimitedLanding();
-    if (!view.shaderLandingLimited) return false;
-    if (view.shaderLandingLimited && view.assets.fullWitchReady) internals.swapHomeArt();
-    const programs = view.witchBatch.meshes.every(o => ([] as THREE.Material[]).concat((o as THREE.Mesh).material ?? []).every(m => materialProgramsReady(view.renderer.properties.get(m))));
-    return lateLandingReady(view.shaderLandingLimited, view.assets.fullWitchReady, programs);
+export function limitedLandingReady(a4ViewHost: View, a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared, now: NonNullable<Parameters<View["limitedLandingReady"]>[0]>): boolean {
+    const expired = now >= a4PrivateHost.shaderLandingDeadline;
+    if (expired && !a4ViewHost.homeDone) a4PrivateHost.armLimitedLanding();
+    if (!a4ViewHost.shaderLandingLimited) return false;
+    if (a4ViewHost.shaderLandingLimited && a4ViewHost.assets.fullWitchReady) a4PrivateHost.swapHomeArt();
+    const programs = a4ViewHost.witchBatch.meshes.every(o => ([] as THREE.Material[]).concat((o as THREE.Mesh).material ?? []).every(m => materialProgramsReady(a4ViewHost.renderer.properties.get(m))));
+    return lateLandingReady(a4ViewHost.shaderLandingLimited, a4ViewHost.assets.fullWitchReady, programs);
   }
 
-export async function waitForLandingWitch(view: View, _internals: ViewInternals, _shared: ViewShared): Promise<void> {
-    if (view.limitedLandingReady()) return;
+export async function waitForLandingWitch(a4ViewHost: View, _a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared): Promise<void> {
+    if (a4ViewHost.limitedLandingReady()) return;
     performance.mark('landing:witch-wait');
-    while (!view.limitedLandingReady()) { view.assets.work(4); await nextFrame(); }
+    while (!a4ViewHost.limitedLandingReady()) { a4ViewHost.assets.work(4); await nextFrame(); }
     performance.mark('landing:witch-ready');
   }
 
-export function startLandingShaderGrace(_view: View, internals: ViewInternals, _shared: ViewShared, at: NonNullable<Parameters<View["startLandingShaderGrace"]>[0]>): void {
-    if (internals.shaderLandingDeadline !== Infinity) return;
-    internals.shaderLandingDeadline = at + 15000;
-    performance.mark('chart:landing-due', { detail: { at, deadline: internals.shaderLandingDeadline } });
+export function startLandingShaderGrace(_a4ViewHost: View, a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared, at: NonNullable<Parameters<View["startLandingShaderGrace"]>[0]>): void {
+    if (a4PrivateHost.shaderLandingDeadline !== Infinity) return;
+    a4PrivateHost.shaderLandingDeadline = at + 15000;
+    performance.mark('chart:landing-due', { detail: { at, deadline: a4PrivateHost.shaderLandingDeadline } });
   }
 
-export async function compileAll(view: View, internals: ViewInternals, _shared: ViewShared, allowPartial: NonNullable<Parameters<View["compileAll"]>[0]>): Promise<void> {
-    const epoch = ++internals.shaderEpoch;
-    if (allowPartial && !internals.shaderChartLanding) view.startLandingShaderGrace();
-    internals.setReadiness("compile", 0, 1);
+export async function compileAll(a4ViewHost: View, a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared, allowPartial: NonNullable<Parameters<View["compileAll"]>[0]>): Promise<void> {
+    const epoch = ++a4PrivateHost.shaderEpoch;
+    if (allowPartial && !a4PrivateHost.shaderChartLanding) a4ViewHost.startLandingShaderGrace();
+    a4PrivateHost.setReadiness("compile", 0, 1);
     // Every shader the scene holds compiled now, in the Bedroom, not on the first frame each is drawn (overnight phase 2: ten
     // programs compiled mid-run before, a hitch each: on the first steps, the first rise and the first waves; after, one).
     // In the background where the browser can (KHR_parallel_shader_compile); nothing it draws changes.
@@ -69,20 +69,20 @@ export async function compileAll(view: View, internals: ViewInternals, _shared: 
     // shown for the call (its programs are made at once, as it's called) and hidden again before anything is drawn; then
     // play waits for them a few seconds at most, so on a GPU that compiles in parallel they're done in the Bedroom.
     const hidden: THREE.Object3D[] = [];
-    const fx = view.post.fxScene; // (the smooth effects layer's own scene, and the post passes' quad: neither in the scene)
+    const fx = a4ViewHost.post.fxScene; // (the smooth effects layer's own scene, and the post passes' quad: neither in the scene)
     const telemetry = (globalThis as unknown as { __travelProbe?: { record(e: unknown): void } }).__travelProbe;
-    const originalUses = telemetry ? captureProgramUses([{ label: 'scene', root: view.scene }, ...(fx ? [{ label: 'effects', root: fx }] : [])]) : null;
-    for (const sc of fx ? [view.scene, fx] : [view.scene]) sc.traverse(o => { if (!o.visible) { hidden.push(o); o.visible = true; } });
+    const originalUses = telemetry ? captureProgramUses([{ label: 'scene', root: a4ViewHost.scene }, ...(fx ? [{ label: 'effects', root: fx }] : [])]) : null;
+    for (const sc of fx ? [a4ViewHost.scene, fx] : [a4ViewHost.scene]) sc.traverse(o => { if (!o.visible) { hidden.push(o); o.visible = true; } });
     // (and the occlusion pyramid's passes, which aren't in the scene: render/hiz.ts, built by the treehouse, where she starts)
-    if (!internals.hizOff && !internals.hiz) internals.hiz = new Hiz(view.renderer);
-    const allPrograms = () => internals.readyPrograms();
+    if (!a4PrivateHost.hizOff && !a4PrivateHost.hiz) a4PrivateHost.hiz = new Hiz(a4ViewHost.renderer);
+    const allPrograms = () => a4PrivateHost.readyPrograms();
     const before = new Set(allPrograms().map(p => p.id)), groups: Record<string, number[]> = {};
     const launch = (group: string, fn: () => unknown) => {
       const prior = new Set(allPrograms().map(p => p.id)), result = fn();
       groups[group] = allPrograms().filter(p => !prior.has(p.id)).map(p => p.id);
       return result;
     };
-    const compiled = Promise.all([launch('scene', () => view.renderer.compileAsync(view.scene, view.camera)), fx && launch('effects', () => view.renderer.compileAsync(fx, view.camera)), launch('post', () => view.post.compile()), internals.hiz?.ok && launch('hiz', () => internals.hiz!.compile(view.renderer))]).catch(() => { /* readiness is still checked per program below */ });
+    const compiled = Promise.all([launch('scene', () => a4ViewHost.renderer.compileAsync(a4ViewHost.scene, a4ViewHost.camera)), fx && launch('effects', () => a4ViewHost.renderer.compileAsync(fx, a4ViewHost.camera)), launch('post', () => a4ViewHost.post.compile()), a4PrivateHost.hiz?.ok && launch('hiz', () => a4PrivateHost.hiz!.compile(a4ViewHost.renderer))]).catch(() => { /* readiness is still checked per program below */ });
     // Diagnostic only: delay newly introduced sail programs, never the boot-warmed fallback/platform/witch programs.
     const delay = allowPartial ? Math.max(0, Number((globalThis as unknown as { __witchShaderReadinessDelay?: number }).__witchShaderReadinessDelay) || 0) : 0;
     if (delay) {
@@ -93,8 +93,8 @@ export async function compileAll(view: View, internals: ViewInternals, _shared: 
     }
     for (const o of hidden) o.visible = false;
     performance.mark("witch:prep-compile0");
-    const parallel = view.renderer.extensions.has('KHR_parallel_shader_compile');
-    const usages = originalUses ? mapProgramUses(originalUses, material => (view.renderer.properties.get(material) as { currentProgram?: { id: number } }).currentProgram?.id) : undefined;
+    const parallel = a4ViewHost.renderer.extensions.has('KHR_parallel_shader_compile');
+    const usages = originalUses ? mapProgramUses(originalUses, material => (a4ViewHost.renderer.properties.get(material) as { currentProgram?: { id: number } }).currentProgram?.id) : undefined;
     const record = (phase: string, pending: ReadyProgram[] = [], elapsed = 0) => {
       const detail = { kind: 'shader-programs', phase, at: performance.now(), parallel, elapsed, groups,
         programs: allPrograms().map(p => ({ id: p.id, name: p.name, type: p.type, ready: p.isReady(), added: !before.has(p.id), ...(usages?.[p.id] ? { sourceUses: usages[p.id] } : {}) })), pending: pending.map(p => p.id) };
@@ -104,57 +104,57 @@ export async function compileAll(view: View, internals: ViewInternals, _shared: 
     };
     record('start');
     // Ed6520617385: a sail may land after its15s grace; unfinished programs must never force a uniform read or draw.
-    const complete = await waitForPrograms(allPrograms, compiled, (ready, total) => internals.setReadiness('compile', ready, total), (pending, elapsed) => {
+    const complete = await waitForPrograms(allPrograms, compiled, (ready, total) => a4PrivateHost.setReadiness('compile', ready, total), (pending, elapsed) => {
       console.warn('view: shaders still pending; keeping the chart up', record('pending', pending, elapsed));
-    }, undefined, undefined, () => allowPartial ? internals.shaderLandingDeadline : Infinity);
+    }, undefined, undefined, () => allowPartial ? a4PrivateHost.shaderLandingDeadline : Infinity);
     if (!complete) {
-      internals.armLimitedLanding();
-      record('landing-limit', allPrograms().filter(p => !p.isReady()), performance.now() - internals.shaderLandingDeadline + 15000);
+      a4PrivateHost.armLimitedLanding();
+      record('landing-limit', allPrograms().filter(p => !p.isReady()), performance.now() - a4PrivateHost.shaderLandingDeadline + 15000);
       void (async () => {
-        await waitForPrograms(allPrograms, compiled, () => {}, () => {}, undefined, undefined, () => epoch === internals.shaderEpoch ? Infinity : -Infinity);
-        if (epoch !== internals.shaderEpoch) return;
-        const programs = [...(view.renderer.info.programs ?? [])];
+        await waitForPrograms(allPrograms, compiled, () => {}, () => {}, undefined, undefined, () => epoch === a4PrivateHost.shaderEpoch ? Infinity : -Infinity);
+        if (epoch !== a4PrivateHost.shaderEpoch) return;
+        const programs = [...(a4ViewHost.renderer.info.programs ?? [])];
         await runSliced((function* (view: View) {
           for (const p of programs) {
             if (epoch !== view.shaderEpoch) return;
             if ((p as unknown as ReadyProgram).isReady()) p.getUniforms();
             yield;
           }
-        })(view), 'background-programs');
-        if (epoch !== internals.shaderEpoch) return;
-        record('background-ready'); view.shaderDrawStatus.active = false; releaseDisposals();
+        })(a4ViewHost), 'background-programs');
+        if (epoch !== a4PrivateHost.shaderEpoch) return;
+        record('background-ready'); a4ViewHost.shaderDrawStatus.active = false; releaseDisposals();
       })().catch(error => console.error('background shader readiness failed; retaining safe fallback', error));
-      internals.setReadiness('ready', 1, 1);
+      a4PrivateHost.setReadiness('ready', 1, 1);
       return; // no unfinished uniform reads, warm draws, uploads or GPU fence on the landing path
     }
-    view.shaderDrawStatus.active = false;
+    a4ViewHost.shaderDrawStatus.active = false;
     record('ready');
     performance.mark("witch:prep-compiled");
     releaseDisposals(); // (the last night's materials, kept till now: render/retire.ts)
     // three reads a program's link and compile logs on its first draw (onFirstUse), a call that waits on the GPU: 0.1 to 2 s
     // in play the first time she rises, lands or comes near something new. Read them now, at load, for every program.
-    const programs = [...(view.renderer.info.programs ?? [])], v = view; // (a program's log read a step at a time: render/slices.ts)
+    const programs = [...(a4ViewHost.renderer.info.programs ?? [])], v = a4PrivateHost; // (a program's log read a step at a time: render/slices.ts)
     await runSliced((function* () { let i = 0; for (const p of programs) { v.setReadiness("programs", i++, programs.length); if (!(p as unknown as ReadyProgram).isReady()) throw new Error('shader became unfinished before uniform preparation'); p.getUniforms(); yield; } })(), "programs");
     performance.mark("witch:prep-programs");
     // And every texture the scene's materials hold uploaded now, a texture a step (three uploads each on its first draw: on Ed's
     // laptop, 2026-10-21, most of the 2 s first frame after a sail; the cloud's first frame's 5 to 7 s), so the first frame
     // finds them on the GPU. The hidden too, as above.
     const textures = new Set<THREE.Texture>();
-    view.scene.traverse(o => { for (const m of ([] as THREE.Material[]).concat((o as THREE.Mesh).material ?? [])) for (const u of Object.values((m as THREE.ShaderMaterial).uniforms ?? {})) for (const t of ([] as unknown[]).concat(u?.value)) if ((t as THREE.Texture)?.isTexture && !(t as THREE.Texture).isRenderTargetTexture) textures.add(t as THREE.Texture); });
-    const R = view.renderer;
+    a4ViewHost.scene.traverse(o => { for (const m of ([] as THREE.Material[]).concat((o as THREE.Mesh).material ?? [])) for (const u of Object.values((m as THREE.ShaderMaterial).uniforms ?? {})) for (const t of ([] as unknown[]).concat(u?.value)) if ((t as THREE.Texture)?.isTexture && !(t as THREE.Texture).isRenderTargetTexture) textures.add(t as THREE.Texture); });
+    const R = a4ViewHost.renderer;
     await runSliced((function* () { let i = 0; for (const t of textures) { v.setReadiness("textures", i++, textures.size); if ((t as THREE.Texture & { image?: unknown }).image) R.initTexture(t); yield; } })(), "textures");
     performance.mark("witch:prep-textures");
-    internals.setReadiness("draws", 0, 1);
-    await internals.warmDraws();
+    a4PrivateHost.setReadiness("draws", 0, 1);
+    await a4PrivateHost.warmDraws();
     performance.mark("witch:prep-draws");
-    internals.setReadiness("gpu", 0, 1);
-    await internals.gpuCaughtUp();
+    a4PrivateHost.setReadiness("gpu", 0, 1);
+    await a4PrivateHost.gpuCaughtUp();
     performance.mark("witch:prep-gpu");
-    internals.setReadiness("ready", 1, 1);
+    a4PrivateHost.setReadiness("ready", 1, 1);
   }
 
-export async function gpuCaughtUp(view: View, _internals: ViewInternals, _shared: ViewShared): Promise<void> {
-    const gl = view.renderer.getContext();
+export async function gpuCaughtUp(a4ViewHost: View, _a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared): Promise<void> {
+    const gl = a4ViewHost.renderer.getContext();
     if (!(typeof WebGL2RenderingContext !== "undefined" && gl instanceof WebGL2RenderingContext)) return;
     const fence = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
     if (!fence) return;
@@ -164,11 +164,11 @@ export async function gpuCaughtUp(view: View, _internals: ViewInternals, _shared
     gl.deleteSync(fence);
   }
 
-export async function warmDraws(view: View, _internals: ViewInternals, _shared: ViewShared): Promise<void> {
-    const w = view.width, h = view.height, k = Math.max(w, h) / 16, ww = Math.max(1, Math.round(w / k)), hh = Math.max(1, Math.round(h / k)), v = view;
-    view.post.resize(ww, hh, ww, hh);
+export async function warmDraws(a4ViewHost: View, a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared): Promise<void> {
+    const w = a4ViewHost.width, h = a4ViewHost.height, k = Math.max(w, h) / 16, ww = Math.max(1, Math.round(w / k)), hh = Math.max(1, Math.round(h / k)), v = a4ViewHost;
+    a4ViewHost.post.resize(ww, hh, ww, hh);
     await runSliced((function* () {
-      v.castMap.render(v.renderer, v.scene, v.game.witch.x, v.game.witch.z, v.castOn);
+      a4PrivateHost.castMap.render(v.renderer, v.scene, v.game.witch.x, v.game.witch.z, a4PrivateHost.castOn);
       yield;
       // The scene's things one at a time, one for each program and way of drawing it (a pipeline the driver makes on its first
       // draw), everything else hidden, the hidden among them too (as compileAll compiles them); then as they were.
@@ -183,16 +183,16 @@ export async function warmDraws(view: View, _internals: ViewInternals, _shared: 
         }
       });
       const show = (on: THREE.Object3D | null) => { for (const o of was.keys()) o.visible = !(o as THREE.Mesh).isMesh && !(o as THREE.Points).isPoints && !(o as THREE.Line).isLine && !(o as THREE.Sprite).isSprite; if (on) on.visible = true; };
-      for (const [i, o] of one.entries()) { v.setReadiness("draws", i, one.length); show(o); R.setRenderTarget(v.post.sceneTarget); R.render(v.scene, v.camera); yield; }
+      for (const [i, o] of one.entries()) { a4PrivateHost.setReadiness("draws", i, one.length); show(o); R.setRenderTarget(v.post.sceneTarget); R.render(v.scene, v.camera); yield; }
       for (const [o, vis] of was) o.visible = vis;
       yield* v.post.renderSteps(v.scene, v.camera, false);
     })(), "draws");
-    view.post.resize(view.width, view.height, view.width, view.height); // (its size now: the window may have changed meanwhile)
-    view.renderer.setRenderTarget(null);
+    a4ViewHost.post.resize(a4ViewHost.width, a4ViewHost.height, a4ViewHost.width, a4ViewHost.height); // (its size now: the window may have changed meanwhile)
+    a4ViewHost.renderer.setRenderTarget(null);
   }
 
-export function* warmSteps(view: View, _internals: ViewInternals, _shared: ViewShared): Steps {
-    const g = view.game, w = g.witch, far = g.tuning.haze.far + 64;
+export function* warmSteps(a4ViewHost: View, _a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared): Steps {
+    const g = a4ViewHost.game, w = g.witch, far = g.tuning.haze.far + 64;
     yield "forest";
     while (g.forest.prefetch(w.x, w.z, far, 4) > 0) yield;
     for (const [, a] of g.party.areas) { const s = g.map.siteOf(a.cell[0], a.cell[1]); while (g.forest.prefetch(s.x, s.z, g.map.areaSize * 1.3, 4) > 0) yield; }
@@ -200,8 +200,8 @@ export function* warmSteps(view: View, _internals: ViewInternals, _shared: ViewS
     for (const c of g.map.legendClearings) { carvingMask(AREA_TYPES[g.map.typeOf(c.cell[0], c.cell[1])].creature); yield; }
   }
 
-export function setReadiness(view: View, _internals: ViewInternals, _shared: ViewShared, stage: View["readiness"]["stage"], done: number, total: number): void {
-    const order = ["compile", "programs", "textures", "draws", "gpu", "ready"], i = order.indexOf(stage), r = view.readiness;
+export function setReadiness(a4ViewHost: View, _a4PrivateHost: ViewInternals, _a4SharedHost: ViewShared, stage: View["readiness"]["stage"], done: number, total: number): void {
+    const order = ["compile", "programs", "textures", "draws", "gpu", "ready"], i = order.indexOf(stage), r = a4ViewHost.readiness;
     r.stage = stage; r.done = done; r.total = Math.max(1, total);
     r.share = stage === "ready" ? 1 : Math.min(0.999, (i + Math.min(1, done / r.total)) / (order.length - 1));
   }

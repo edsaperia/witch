@@ -106,14 +106,23 @@ and refuses to overwrite any generated file that differs from its manifest.
 Default evaluation and async boundaries remain in one place. Import-only symbol
 binding uses no libraries or module graph and runs no game typecheck.
 
-First implementation checkpoint: 132 named bodies/statements across 16 source
-files, with two derived link-switch location files. Replay measured 1,529.8 ms;
-identity check 113.7 ms. These are script timings, NOT total fence costs.
-Every source/body hash is in `a4-dry-run-manifest.json`. All 132 bodies reverse
+Latest implementation checkpoint: 149 named bodies/statements across 16 source
+files, with two derived link-switch location files. Replay measured 2,086.3 ms;
+identity check 240.9 ms. These are script timings, NOT total fence costs.
+Every source/body hash is in `a4-dry-run-manifest.json`. All 149 bodies reverse
 exactly. Config freshness gate passed after updating moved switch locations.
+View's public signatures/defaults/field initializers also match syntactically
+(the async boundary moves into its implementation, retaining the Promise type).
+Isolated esbuild transforms validate all generated files without a graph/build.
+
+CI on first source checkpoint `2fb88b022` failed: generated `view` parameter
+collided with the existing `const view = this` alias in `buildHome`. The script
+now uses collision-checked host names and classifies lexical this-aliases. Private-
+only aliases receive the private live bridge; public aliases keep their View.
+This repaired rehearsal passes isolated transforms; CI on its new head is needed.
 
 This is still WIP: full source/type/unit/bench validation is pending. The page
-composition retains boot state declarations and several arrow-function initializers;
+composition retains boot state declarations and some initializers;
 further thinning and callback adapter review remain before proof readiness.
 Private View fields remain private, exposed to extracted bodies through an explicit
 private getter/setter bridge; the bridge's type uses indexed member types and no

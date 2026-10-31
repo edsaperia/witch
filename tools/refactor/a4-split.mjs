@@ -4,6 +4,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import ts from 'typescript';
+import { transformSync } from 'esbuild';
 
 const argv = process.argv.slice(2);
 const apply = argv.includes('--apply'), check = argv.includes('--check'), replay = argv.includes('--replay');
@@ -12,6 +13,18 @@ const manifestPath = 'docs/plans/a4-dry-run-manifest.json';
 const hash = s => crypto.createHash('sha256').update(s).digest('hex');
 const read = f => fs.readFileSync(f, 'utf8').replaceAll('\r\n', '\n');
 const started = performance.now();
+
+function viewApi(source) {
+  const a = ts.createSourceFile('view.ts', source, ts.ScriptTarget.Latest, true);
+  const cls = a.statements.find(n => ts.isClassDeclaration(n) && n.name?.text === 'View');
+  if (!cls) throw new Error('View API missing');
+  const members = cls.members.filter(n => !n.modifiers?.some(m => m.kind === ts.SyntaxKind.PrivateKeyword || m.kind === ts.SyntaxKind.ProtectedKeyword));
+  return members.map(n => {
+    const signature = source.slice(n.getStart(a), n.body?.getStart(a) ?? n.end).trim();
+    // async remains in the moved implementation, with the same Promise signature.
+    return ts.isMethodDeclaration(n) ? signature.replace(/\basync\s+/, '') : signature;
+  });
+}
 
 if (check) {
   const manifest = JSON.parse(read(manifestPath));
@@ -35,6 +48,9 @@ if (check) {
     }
     if (hash(reversed) !== cut.originalSha256) throw new Error(`Non-mechanical body change: ${cut.name}`);
   }
+  const beforeApi = JSON.stringify(viewApi(sourceTexts.get('src/render/view.ts')));
+  const afterApi = JSON.stringify(viewApi(read('src/render/view.ts')));
+  if (beforeApi !== afterApi || hash(beforeApi) !== manifest.viewApiSha256) throw new Error('View public signature/initializer changed');
   console.log(`PASS: ${manifest.cuts.length} moved bodies reverse exactly; ${Object.keys(manifest.outputs).length} generated files match; ${(performance.now() - started).toFixed(1)} ms`);
   process.exit(0);
 }
@@ -65,6 +81,10 @@ const importedSymbols = ast => {
 // type inference, library graph, tests, bundler, worker or browser is run here.
 function parsed(file) {
   const source = previous ? execFileSync('git', ['show', `${previous.sourceCommit}:${file}`], { encoding: 'utf8', maxBuffer: 8 << 20 }) : read(file);
+  if (!previous) {
+    const committed = execFileSync('git', ['show', `${manifest.sourceCommit}:${file}`], { encoding: 'utf8', maxBuffer: 8 << 20 });
+    if (source !== committed) throw new Error(`Source differs from the pinned commit: ${file}`);
+  }
   const ast = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true);
   if (ast.parseDiagnostics.length) throw new Error(`Parse failure: ${file}`);
   const opts = { noLib: true, noResolve: true, target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext };
@@ -260,6 +280,34 @@ function splitMain() {
       edits.push({ start: n.getStart(ctx.ast), end: n.end, after: wrapper });
     }
   }
+  const arrowCuts = {
+    pagePause: { openMusicLab: 'void' },
+    pageStations: { findsCtx: 'FindsCtx', workshopNow: 'WorkshopCtx', useHouse: 'void' },
+    pageFinds: { partsNow: 'Set<string>' },
+    pageNight: { chartWorld: 'number', soundNote: 'void', armSkip: 'void', queueCast: 'void', armBack: 'void', wokenBefore: 'boolean', woke: 'void', mirrored: 'boolean', sawMirror: 'void' },
+    pageDebug: { decidePanel: 'void', keyNow: 'ReturnType<typeof compareKey>' },
+  };
+  for (const [group, names] of Object.entries(arrowCuts)) for (const [name, returnType] of Object.entries(names)) {
+    const declarations = ctx.ast.statements.filter(ts.isVariableStatement).flatMap(n => [...n.declarationList.declarations]);
+    const matches = declarations.filter(n => n.name.getText(ctx.ast) === name && n.initializer && ts.isArrowFunction(n.initializer));
+    if (matches.length !== 1) throw new Error(`Missing or duplicate main arrow: ${name}`);
+    const arrow = matches[0].initializer;
+    const changed = rewrite(ctx, arrow.body, q => relocatedLiteral(ctx, q, `src/app/${group}.ts`) ?? resolve(q));
+    const params = arrow.parameters.map(p => p.getText(ctx.ast));
+    const block = ts.isBlock(arrow.body);
+    const chunks = chunksByGroup.get(group) ?? []; chunksByGroup.set(group, chunks);
+    chunks.push({ name, prefix: `export function ${name}(pageHost: PageHost${params.length ? ', ' + params.join(', ') : ''}): ${returnType} ${block ? '' : '{ return '}`, changed, suffix: block ? '' : '; }' });
+    edits.push({ start: arrow.getStart(ctx.ast), end: arrow.end,
+      after: `(${params.join(', ')}): ${returnType} => a4_${name}(pageHost${params.length ? ', ' + arrow.parameters.map(p => p.name.getText(ctx.ast)).join(', ') : ''})` });
+  }
+  // Keep the notice's construction at exactly the same point, with its code in
+  // the notice concern. Its explicit result type avoids a context/type cycle.
+  const notice = ctx.ast.statements.filter(ts.isVariableStatement).flatMap(n => [...n.declarationList.declarations]).find(n => n.name.getText(ctx.ast) === 'newBuild');
+  if (!notice?.initializer) throw new Error('Missing new-build notice construction');
+  const noticeChanged = rewrite(ctx, notice.initializer, resolve);
+  const noticeChunks = chunksByGroup.get('pageBuildNotice') ?? []; chunksByGroup.set('pageBuildNotice', noticeChunks);
+  noticeChunks.push({ name: 'createBuildNotice', prefix: 'export function createBuildNotice(pageHost: PageHost): NewBuildNotice { return ', changed: noticeChanged, suffix: '; }' });
+  edits.push({ start: notice.getStart(ctx.ast), end: notice.end, after: 'newBuild: NewBuildNotice = a4_createBuildNotice(pageHost)' });
   // Extract callback installers at their original statement positions. A setup call
   // replaces only the original side effect, never its ordering or its declarations.
   let debugTail = false;
@@ -295,23 +343,44 @@ function splitMain() {
 function splitView() {
   const ctx = parsed('src/render/view.ts'), edits = [], imports = [], usedPrivate = new Set(), usedShared = new Set();
   const cls = ctx.ast.statements.find(n => ts.isClassDeclaration(n) && n.name?.text === 'View');
+  const aliases = new Map();
+  const findAliases = n => {
+    if (ts.isIdentifier(n) && ['a4ViewHost', 'a4PrivateHost', 'a4SharedHost'].includes(n.text)) throw new Error(`Generated host name collides: ${n.text}`);
+    if (ts.isVariableDeclaration(n) && ts.isIdentifier(n.name) && n.initializer?.kind === ts.SyntaxKind.ThisKeyword) aliases.set(ctx.checker.getSymbolAtLocation(n.name), { declaration: n, privateOnly: true });
+    ts.forEachChild(n, findAliases);
+  };
+  findAliases(cls);
   const privateMembers = new Map(cls.members.filter(n => n.modifiers?.some(m => m.kind === ts.SyntaxKind.PrivateKeyword)).map(n => [n.name.getText(ctx.ast), n]));
+  const classifyAliases = n => {
+    if (ts.isIdentifier(n)) {
+      const alias = aliases.get(ctx.checker.getSymbolAtLocation(n));
+      if (alias && n !== alias.declaration.name && !(ts.isPropertyAccessExpression(n.parent) && n.parent.expression === n && privateMembers.has(n.parent.name.text))) alias.privateOnly = false;
+    }
+    ts.forEachChild(n, classifyAliases);
+  };
+  classifyAliases(cls);
   const runtime = new Map([...ctx.top].filter(([symbol, name]) => name !== 'View' && symbol.flags & ts.SymbolFlags.Value));
   const resolve = n => {
-    if (ts.isPropertyAccessExpression(n) && n.expression.kind === ts.SyntaxKind.ThisKeyword) {
+    if (ts.isPropertyAccessExpression(n) && (n.expression.kind === ts.SyntaxKind.ThisKeyword ||
+        (ts.isIdentifier(n.expression) && aliases.has(ctx.checker.getSymbolAtLocation(n.expression))))) {
       const name = n.name.text;
-      if (privateMembers.has(name)) { usedPrivate.add(name); return `internals.${name}`; }
-      return `view.${name}`;
+      const alias = ts.isIdentifier(n.expression) ? aliases.get(ctx.checker.getSymbolAtLocation(n.expression)) : null;
+      if (alias?.privateOnly) { usedPrivate.add(name); return n.getText(ctx.ast); }
+      if (privateMembers.has(name)) { usedPrivate.add(name); return `a4PrivateHost.${name}`; }
+      return alias ? n.getText(ctx.ast) : `a4ViewHost.${name}`;
     }
-    if (n.kind === ts.SyntaxKind.ThisKeyword) return 'view';
+    if (n.kind === ts.SyntaxKind.ThisKeyword) {
+      if (ts.isVariableDeclaration(n.parent) && aliases.get(ctx.checker.getSymbolAtLocation(n.parent.name))?.privateOnly) return 'a4PrivateHost';
+      return 'a4ViewHost';
+    }
     if (ts.isShorthandPropertyAssignment(n)) {
       const name = runtime.get(ctx.checker.getShorthandAssignmentValueSymbol(n));
-      if (name) { usedShared.add(name); return `${n.name.text}: shared.${name}`; }
+      if (name) { usedShared.add(name); return `${n.name.text}: a4SharedHost.${name}`; }
     }
     if (ts.isIdentifier(n)) {
       const name = runtime.get(ctx.checker.getSymbolAtLocation(n));
       if (!name || (ts.isPropertyAccessExpression(n.parent) && n.parent.name === n)) return;
-      usedShared.add(name); return `shared.${name}`;
+      usedShared.add(name); return `a4SharedHost.${name}`;
     }
   };
   for (const [group, names] of Object.entries(viewGroups)) {
@@ -322,7 +391,7 @@ function splitView() {
       const n = matches[0], changed = rewrite(ctx, n.body, q => relocatedLiteral(ctx, q, `src/render/view/${group}.ts`) ?? resolve(q));
       const params = n.parameters.map((p, i) => `${p.name.getText(ctx.ast)}${p.questionToken ? '?' : ''}: ${p.type ? p.type.getText(ctx.ast) : `${p.initializer ? 'NonNullable<' : ''}Parameters<View[${JSON.stringify(name)}]>[${i}]${p.initializer ? '>' : ''}`}`);
       const isAsync = n.modifiers?.some(m => m.kind === ts.SyntaxKind.AsyncKeyword);
-      const hosts = [['view', 'View'], ['internals', 'ViewInternals'], ['shared', 'ViewShared']].map(([id, type]) => `${new RegExp(`\\b${id}\\b`).test(changed.text) ? id : '_' + id}: ${type}`).join(', ');
+      const hosts = [['a4ViewHost', 'View'], ['a4PrivateHost', 'ViewInternals'], ['a4SharedHost', 'ViewShared']].map(([id, type]) => `${new RegExp(`\\b${id}\\b`).test(changed.text) ? id : '_' + id}: ${type}`).join(', ');
       const prefix = `export ${isAsync ? 'async ' : ''}function${n.asteriskToken ? '*' : ''} ${name}(${hosts}${params.length ? ', ' + params.join(', ') : ''}): ${n.type.getText(ctx.ast)} `;
       chunks.push({ name, prefix, changed, suffix: '' });
       const args = n.parameters.map(p => p.name.getText(ctx.ast));
@@ -330,7 +399,7 @@ function splitView() {
       const wrapper = `${signature}{ ${n.asteriskToken ? 'yield*' : 'return'} a4_${name}(this, this.a4Internals, a4Shared${args.length ? ', ' + args.join(', ') : ''}); }`;
       edits.push({ start: n.getStart(ctx.ast), end: n.end, after: wrapper });
     }
-    saveModule(ctx, `src/render/view/${group}.ts`, 'import type { View, ViewInternals, ViewShared } from "../view";', chunks);
+    saveModule(ctx, `src/render/view/${group}.ts`, 'import type { View, ViewInternals, ViewShared, ForestLight, ViewStats } from "../view";', chunks);
     imports.push(`import { ${names.map(n => `${n} as a4_${n}`).join(', ')} } from "./view/${group}";`);
   }
   const internalFields = [...usedPrivate].sort().map(name => {
@@ -349,11 +418,17 @@ function splitView() {
 splitMain();
 splitView();
 for (const f of ['src/main.ts', 'src/render/view.ts']) outputs.set(f, pruneUnusedImports(f, outputs.get(f)));
+const beforeView = execFileSync('git', ['show', `${manifest.sourceCommit}:src/render/view.ts`], { encoding: 'utf8', maxBuffer: 8 << 20 });
+const originalApi = JSON.stringify(viewApi(beforeView));
+if (originalApi !== JSON.stringify(viewApi(outputs.get('src/render/view.ts')))) throw new Error('Refusing a changed View public API');
+manifest.viewApiSha256 = hash(originalApi);
 // Validate generated TypeScript syntax before writing anything.
 for (const [file, text] of outputs) {
   if (file !== 'src/main.ts' && file !== 'src/render/view.ts' && fs.existsSync(file) && !previous?.outputs[file]) throw new Error(`Destination exists: ${file}`);
   const a = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
   if (a.parseDiagnostics.length) throw new Error(`Generated syntax invalid: ${file}: ${a.parseDiagnostics.map(d => ts.flattenDiagnosticMessageText(d.messageText, '\n')).join('; ')}`);
+  // Isolated in-memory syntax/lowering only: no bundling, graph, typecheck or game.
+  transformSync(text, { loader: 'ts', sourcefile: file, target: 'es2022', logLevel: 'silent' });
   manifest.outputs[file] = hash(text);
 }
 for (const [file, text] of outputs) { fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, text); }

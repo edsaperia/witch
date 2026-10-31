@@ -28,10 +28,10 @@ import { areaUnderWitch, type Game } from "./rules/game";
 import { TUNING, type Tuning } from "./rules/tuning";
 import { type Shot } from "./rules/arrive";
 
-import { compareKey, rendererOf } from "./app/compareKey";
+import { compareKey } from "./app/compareKey";
 import { debugText, machineLines, precisionLines, reproLine, reproQuery, reproState, tuningDiff } from "./app/repro";
 import { currentValue, DECISION_LIST, valuesText } from "./ui/decisions";
-import { awaitingSpell } from "./rules/leypulse";
+
 import { parseSeed } from "./rules/map";
 import { Input } from "./platform/input";
 import { View } from "./render/view";
@@ -50,18 +50,18 @@ import type { DecidePanel } from "./ui/decide";
 
 
 
-import { HOUSE_ROOMS, installEdLayout } from "./rules/houseRooms";
+import { installEdLayout } from "./rules/houseRooms";
 import { setEdLayoutActive } from "./rules/housePlacement";
 
 
 import { FIND_KINDS, type FindKindId } from "./rules/finds";
-import { loadBroom, migrateBroom } from "./app/broomSave";
+import { migrateBroom } from "./app/broomSave";
 
-import { loadOwned } from "./app/owned";
-import { partsToChoose } from "./app/debugUnlock";
+
+
 
 import { type FindsCtx } from "./app/finds";
-import { lend, loanName, withLoan, type Loan } from "./app/loan";
+import { lend, loanName, type Loan } from "./app/loan";
 import { DreamView } from "./render/dream";
 import { LoanIcon } from "./render/loanIcon";
 import { FindsPanel } from "./ui/findsPanel";
@@ -74,7 +74,7 @@ import { DjBooth } from "./ui/djBooth";
 import { ZooOverlay, domZooHost, zooUrl } from "./app/zooOverlay";
 
 import { TelescopeView } from "./app/telescope";
-import { loadSave, nightOver, worldSeed } from "./app/chartSave";
+import { loadSave, worldSeed } from "./app/chartSave";
 import { readZooCoasts } from "./app/zooCoasts";
 
 import { loadGuide } from "./app/guideSave";
@@ -117,27 +117,30 @@ import { pageMutation, pageFocus } from "./app/recordingHooks";
 import { nightSaveNotice } from "./ui/resumeNight";
 import { restoreSettingsBase } from "./app/playerSettings";
 
-import { openPotionLab as a4_openPotionLab, pauseControls as a4_pauseControls, updatePauseMenus as a4_updatePauseMenus, installPause1 as a4_installPause1, installPause2 as a4_installPause2, installPause3 as a4_installPause3, installPause4 as a4_installPause4, installPause5 as a4_installPause5, installPause6 as a4_installPause6, installPause7 as a4_installPause7, installPause8 as a4_installPause8, installPause9 as a4_installPause9 } from "./app/pagePause";
-import { shutStation as a4_shutStation, installStations1 as a4_installStations1, installStations2 as a4_installStations2, installStations3 as a4_installStations3, installStations4 as a4_installStations4, installStations5 as a4_installStations5, installStations6 as a4_installStations6, installStations7 as a4_installStations7, installStations8 as a4_installStations8, installStations9 as a4_installStations9, installStations10 as a4_installStations10, installStations11 as a4_installStations11, installStations12 as a4_installStations12, installStations13 as a4_installStations13, installStations14 as a4_installStations14, installStations15 as a4_installStations15, installStations16 as a4_installStations16 } from "./app/pageStations";
-import { revealArt as a4_revealArt, bedFirst as a4_bedFirst, bedFirstNow as a4_bedFirstNow, arrived as a4_arrived, arrivedNow as a4_arrivedNow, wakeArrival as a4_wakeArrival, wakeArrivalNow as a4_wakeArrivalNow, start as a4_start, startDirect as a4_startDirect, dressCreator as a4_dressCreator, chartOverNight as a4_chartOverNight, chartWorldArg as a4_chartWorldArg, sailFromChart as a4_sailFromChart, recordSail as a4_recordSail, departFromChart as a4_departFromChart, wakeFirst as a4_wakeFirst, wakeFirstNow as a4_wakeFirstNow, sailInPlace as a4_sailInPlace, makeSailNight as a4_makeSailNight, warmAt as a4_warmAt, newNight as a4_newNight, nightInPlace as a4_nightInPlace, leaveBot as a4_leaveBot } from "./app/pageNight";
-import { lendFind as a4_lendFind, settleLoan as a4_settleLoan, settleLoanNow as a4_settleLoanNow, startDream as a4_startDream, herHead as a4_herHead, stepGuide as a4_stepGuide } from "./app/pageFinds";
-import { botGame as a4_botGame, saveComment as a4_saveComment, restoreComment as a4_restoreComment, spawnHere as a4_spawnHere, spawnHereNow as a4_spawnHereNow, installDebug1 as a4_installDebug1, installDebug2 as a4_installDebug2, installDebug3 as a4_installDebug3, installDebug4 as a4_installDebug4, installDebug5 as a4_installDebug5, installDebug6 as a4_installDebug6, installDebug7 as a4_installDebug7, installDebug8 as a4_installDebug8, installDebug9 as a4_installDebug9, installDebug10 as a4_installDebug10, installDebug11 as a4_installDebug11, installDebug12 as a4_installDebug12, installDebug13 as a4_installDebug13, installDebug14 as a4_installDebug14, installDebug15 as a4_installDebug15, installDebug16 as a4_installDebug16, installDebug17 as a4_installDebug17, installDebug18 as a4_installDebug18, installDebug19 as a4_installDebug19, installDebug20 as a4_installDebug20, installDebug21 as a4_installDebug21, installDebug22 as a4_installDebug22, installDebug23 as a4_installDebug23, installDebug24 as a4_installDebug24, installDebug25 as a4_installDebug25, installDebug26 as a4_installDebug26, installDebug27 as a4_installDebug27, installDebug28 as a4_installDebug28, installDebug29 as a4_installDebug29 } from "./app/pageDebug";
+import { openPotionLab as a4_openPotionLab, pauseControls as a4_pauseControls, updatePauseMenus as a4_updatePauseMenus, openMusicLab as a4_openMusicLab, installPause1 as a4_installPause1, installPause2 as a4_installPause2, installPause3 as a4_installPause3, installPause4 as a4_installPause4, installPause5 as a4_installPause5, installPause6 as a4_installPause6, installPause7 as a4_installPause7, installPause8 as a4_installPause8, installPause9 as a4_installPause9 } from "./app/pagePause";
+import { shutStation as a4_shutStation, findsCtx as a4_findsCtx, workshopNow as a4_workshopNow, useHouse as a4_useHouse, installStations1 as a4_installStations1, installStations2 as a4_installStations2, installStations3 as a4_installStations3, installStations4 as a4_installStations4, installStations5 as a4_installStations5, installStations6 as a4_installStations6, installStations7 as a4_installStations7, installStations8 as a4_installStations8, installStations9 as a4_installStations9, installStations10 as a4_installStations10, installStations11 as a4_installStations11, installStations12 as a4_installStations12, installStations13 as a4_installStations13, installStations14 as a4_installStations14, installStations15 as a4_installStations15, installStations16 as a4_installStations16 } from "./app/pageStations";
+import { revealArt as a4_revealArt, bedFirst as a4_bedFirst, bedFirstNow as a4_bedFirstNow, arrived as a4_arrived, arrivedNow as a4_arrivedNow, wakeArrival as a4_wakeArrival, wakeArrivalNow as a4_wakeArrivalNow, start as a4_start, startDirect as a4_startDirect, dressCreator as a4_dressCreator, chartOverNight as a4_chartOverNight, chartWorldArg as a4_chartWorldArg, sailFromChart as a4_sailFromChart, recordSail as a4_recordSail, departFromChart as a4_departFromChart, wakeFirst as a4_wakeFirst, wakeFirstNow as a4_wakeFirstNow, sailInPlace as a4_sailInPlace, makeSailNight as a4_makeSailNight, warmAt as a4_warmAt, newNight as a4_newNight, nightInPlace as a4_nightInPlace, leaveBot as a4_leaveBot, chartWorld as a4_chartWorld, soundNote as a4_soundNote, armSkip as a4_armSkip, queueCast as a4_queueCast, armBack as a4_armBack, wokenBefore as a4_wokenBefore, woke as a4_woke, mirrored as a4_mirrored, sawMirror as a4_sawMirror } from "./app/pageNight";
+import { lendFind as a4_lendFind, settleLoan as a4_settleLoan, settleLoanNow as a4_settleLoanNow, startDream as a4_startDream, herHead as a4_herHead, stepGuide as a4_stepGuide, partsNow as a4_partsNow } from "./app/pageFinds";
+import { botGame as a4_botGame, saveComment as a4_saveComment, restoreComment as a4_restoreComment, spawnHere as a4_spawnHere, spawnHereNow as a4_spawnHereNow, decidePanel as a4_decidePanel, keyNow as a4_keyNow, installDebug1 as a4_installDebug1, installDebug2 as a4_installDebug2, installDebug3 as a4_installDebug3, installDebug4 as a4_installDebug4, installDebug5 as a4_installDebug5, installDebug6 as a4_installDebug6, installDebug7 as a4_installDebug7, installDebug8 as a4_installDebug8, installDebug9 as a4_installDebug9, installDebug10 as a4_installDebug10, installDebug11 as a4_installDebug11, installDebug12 as a4_installDebug12, installDebug13 as a4_installDebug13, installDebug14 as a4_installDebug14, installDebug15 as a4_installDebug15, installDebug16 as a4_installDebug16, installDebug17 as a4_installDebug17, installDebug18 as a4_installDebug18, installDebug19 as a4_installDebug19, installDebug20 as a4_installDebug20, installDebug21 as a4_installDebug21, installDebug22 as a4_installDebug22, installDebug23 as a4_installDebug23, installDebug24 as a4_installDebug24, installDebug25 as a4_installDebug25, installDebug26 as a4_installDebug26, installDebug27 as a4_installDebug27, installDebug28 as a4_installDebug28, installDebug29 as a4_installDebug29 } from "./app/pageDebug";
 import { drawFrame as a4_drawFrame, frame as a4_frame, frameBody as a4_frameBody, overlayHead as a4_overlayHead } from "./app/pageFrame";
-import { installBuildNotice1 as a4_installBuildNotice1 } from "./app/pageBuildNotice";
+import { createBuildNotice as a4_createBuildNotice, installBuildNotice1 as a4_installBuildNotice1 } from "./app/pageBuildNotice";
 
 const pageHost = {
   get ATTACK_DEBUG(): typeof ATTACK_DEBUG { return ATTACK_DEBUG; },
   get BUILD(): typeof BUILD { return BUILD; },
   get HUD_IDS(): typeof HUD_IDS { return HUD_IDS; },
+  get MIRROR_KEY(): typeof MIRROR_KEY { return MIRROR_KEY; },
   get N(): typeof N { return N; },
   get SLOW_AUDIO(): typeof SLOW_AUDIO { return SLOW_AUDIO; },
   get TIMING(): typeof TIMING { return TIMING; },
+  get WOKEN_KEY(): typeof WOKEN_KEY { return WOKEN_KEY; },
   get aimHud(): typeof aimHud { return aimHud; },
   get armBack(): typeof armBack { return armBack; },
   get armSkip(): typeof armSkip { return armSkip; },
   get arrived(): typeof arrived { return arrived; },
   get arrivedNow(): typeof arrivedNow { return arrivedNow; },
   get autoTalk(): typeof autoTalk { return autoTalk; }, set autoTalk(value: typeof autoTalk) { autoTalk = value; },
+  get backArmed(): typeof backArmed { return backArmed; }, set backArmed(value: typeof backArmed) { backArmed = value; },
   get backGuard(): typeof backGuard { return backGuard; },
   get bedFirst(): typeof bedFirst { return bedFirst; },
   get bedFirstNow(): typeof bedFirstNow { return bedFirstNow; },
@@ -159,6 +162,8 @@ const pageHost = {
   get chartWorldArg(): typeof chartWorldArg { return chartWorldArg; },
   get commentBook(): typeof commentBook { return commentBook; },
   get creator(): typeof creator { return creator; },
+  get decide(): typeof decide { return decide; }, set decide(value: typeof decide) { decide = value; },
+  get decideLoading(): typeof decideLoading { return decideLoading; }, set decideLoading(value: typeof decideLoading) { decideLoading = value; },
   get departFromChart(): typeof departFromChart { return departFromChart; },
   get departing(): typeof departing { return departing; }, set departing(value: typeof departing) { departing = value; },
   get devFinds(): typeof devFinds { return devFinds; },
@@ -210,6 +215,7 @@ const pageHost = {
   get micWanted(): typeof micWanted { return micWanted; },
   get mirrored(): typeof mirrored { return mirrored; },
   get mistGateOff(): typeof mistGateOff { return mistGateOff; },
+  get musicLabLoading(): typeof musicLabLoading { return musicLabLoading; }, set musicLabLoading(value: typeof musicLabLoading) { musicLabLoading = value; },
   get musicLabPanel(): typeof musicLabPanel { return musicLabPanel; }, set musicLabPanel(value: typeof musicLabPanel) { musicLabPanel = value; },
   get mutate(): typeof mutate { return mutate; },
   get nearestStall(): typeof nearestStall { return nearestStall; },
@@ -256,6 +262,7 @@ const pageHost = {
   get showLook(): typeof showLook { return showLook; },
   get shutButton(): typeof shutButton { return shutButton; },
   get shutStation(): typeof shutStation { return shutStation; },
+  get skipArmed(): typeof skipArmed { return skipArmed; }, set skipArmed(value: typeof skipArmed) { skipArmed = value; },
   get slowAudioLogged(): typeof slowAudioLogged { return slowAudioLogged; }, set slowAudioLogged(value: typeof slowAudioLogged) { slowAudioLogged = value; },
   get sound(): typeof sound { return sound; },
   get soundNote(): typeof soundNote { return soundNote; },
@@ -424,7 +431,7 @@ let dreamNext: { loan: Loan; won: boolean } | null = null;
  *  exactly as after a night in bed, and the alarm ends it"), or null: the flight lands in her bedroom, the dream as it lands. */
 let dreamAfterDive: { loan: Loan; won: boolean } | null = null;
 /** The broom parts she has tonight: those she's found, and a part on loan. */
-const partsNow = (): Set<string> => withLoan("part", new Set(loadBroom().found), loan);
+const partsNow = (): Set<string> => a4_partsNow(pageHost);
 const view = page.view = await View.create(canvas, N().game, gameStyle(style, bootTuning), savedLook); // (built a frame's budget at a time: the bedroom's frames go on meanwhile, render/slices.ts)
 view.setIntroFocus = pageFocus;
 // The loading screen (src/loading.js, src/ui/loadingScreen.js), up since the first paint: given the view for its count of the art
@@ -477,7 +484,7 @@ startEl.style.display = "none";
 // Wanted until it's cast (Ed's v3668, stuck at the decks: a press dropped on a frame too short for a step, or a start that found the
 // game frozen, left her held with no spell): pressed on every frame the clock runs, till the rules have it.
 // (the night's flags.castWanted)
-const queueCast = () => { const n = N(); if (awaitingSpell(n.game.party) && !n.game.wake) n.flags.castWanted = true; }; // (a night woken in her bedroom: E at her decks casts it, rules/wakeUp.ts)
+const queueCast = (): void => a4_queueCast(pageHost); // (a night woken in her bedroom: E at her decks casts it, rules/wakeUp.ts)
 window.addEventListener("keydown", e => { if (e.code === "Enter" && N().game.clock.time > 0.3 && !creator.open && !chartOpen()) queueCast(); }); // (Enter on the chart sails)
 // (the clock, its pops and the debug overlay: the night's HUD, app/hud.ts)
 
@@ -499,7 +506,7 @@ const showProgress = setInterval(() => {
 // The sea chart made ahead (app/chartWarm.ts; Ed, 2026-10-12: "can we do it earlier, before we need to show it?"): once the
 // forest has grown and the tab is in view, a worker makes and keeps the chart's islands, so the map table opens on them at once.
 // Not under automation (the smoke and bench runs time the game's own frames), unless ?warmChart=1.
-const chartWorld = () => (params.has("world") ? N().tuning.map?.world ?? 0 : loadSave().world);
+const chartWorld = (): number => a4_chartWorld(pageHost);
 const warmOn = params.get("warmChart") === "1" || (params.get("warmChart") !== "0" && !navigator.webdriver);
 const warmWhenSettled = warmOn ? setInterval(() => {
   if (!N().flags.ready || view.assets.pending || document.hidden || chartOpen()) return;
@@ -549,22 +556,10 @@ if (bootArrival) {
   document.body.classList.add("arriving");
 }
 let gestured = false;
-const soundNote = () => {
-  if (document.getElementById("sound-note")) return;
-  const el = document.createElement("div");
-  el.id = "sound-note"; el.textContent = "🔊 press any key for sound";
-  el.style.cssText = "position:fixed;left:50%;bottom:72px;transform:translateX(-50%);z-index:30;font:13px ui-monospace,monospace;color:#e8e2f4;background:rgba(10,9,22,.7);border:1px solid #3a2f5c;border-radius:6px;padding:6px 12px;pointer-events:none";
-  document.body.append(el);
-  const go = () => { gestured = true; sound.wake(); el.remove(); removeEventListener("keydown", go); removeEventListener("pointerdown", go); };
-  addEventListener("keydown", go); addEventListener("pointerdown", go);
-};
+const soundNote = (): void => a4_soundNote(pageHost);
 /** Any key or tap skips an arrival's flight (once a page: the boot's arrival, or the first sail in place). */
 let skipArmed = false;
-const armSkip = () => {
-  if (skipArmed) return;
-  skipArmed = true;
-  for (const ev of ["keydown", "pointerdown"]) addEventListener(ev, () => { gestured = true; const a = N().arrival; if (a && !a.done) a.skip(); }, { capture: true });
-};
+const armSkip = (): void => a4_armSkip(pageHost);
 if (bootArrival) armSkip();
 /** The swap point (the transition review, 2026-10-19; Ed: "revisits can draw instantly then redraw during the bedroom sequence"):
  *  the island's trees were drawn at once from what's kept (its own seed, render/artCache.ts islandArtSeed); here, the last moment
@@ -621,7 +616,7 @@ shutButton.addEventListener("pointerdown", e => { e.preventDefault(); input.touc
 document.body.append(shutButton);
 let owned: Set<string> | null = null, stillAt = 0;
 /** What the finds' keepers work on (app/finds.ts): tonight's spells and what she owns to wear, kept. */
-const findsCtx = (): FindsCtx => ({ spells: N().game.spells, owned: () => (owned ??= withLoan("wearable", loadOwned((page.look() ?? creator.genome()) as Record<string, unknown>), loan)) });
+const findsCtx = (): FindsCtx => a4_findsCtx(pageHost);
 a4_installStations5(pageHost);
 a4_installStations6(pageHost); // (menu.back, E by default: platform/bindings.ts; the pad's, circle, comes through padControls)
 // Her DJ booth at the decks (Ed, 2026-10-29; ui/djBooth.ts): E there opens it (the wake-up's "booth" event); "Get this party started"
@@ -635,7 +630,7 @@ a4_installStations10(pageHost); // (Ed, 2026-10-26: she twirls while her new loo
 // and its set's spell with it: rules/spells.ts setParts), and is kept on this browser for the nights after (app/broomSave.ts).
 a4_installStations11(pageHost); // (kept without a part on loan: app/loan.ts)
 /** What the Workshop's stations show (ui/stationPanel.ts): the parts found, her broom, tonight's part to find, her tuning. */
-const workshopNow = (): WorkshopCtx => { const { game, tuning } = N(), t = game.trunk; return { found: partsToChoose(partsNow()), fitted: game.witches[0].spells.parts, tonight: t && t.kind === "part" && !t.found ? t.item : null, tuning }; };
+const workshopNow = (): WorkshopCtx => a4_workshopNow(pageHost);
 /** Tonight's find taken (the "found" event): on loan till she sleeps (app/loan.ts), hers to wear or use at once, never written. */
 function lendFind(kind: FindKindId, id: string): void { return a4_lendFind(pageHost, kind, id); }
 /** Her guidance (rules/guidance.ts): what's kept of it on this browser (app/guideSave.ts), her pin, and the islands found (the
@@ -675,14 +670,7 @@ let keysTaken = "";
 const telescope = new TelescopeView(document.body, bootTuning.telescope?.vignette ?? 0.6);
 let scopeAt: string | null = null; // (the telescope it's open at)
 a4_installStations12(pageHost);
-const useHouse = (obj: string): void => mutate("house: use", () => {
-  const { game, tuning, flags: { chartRecorded, overRecorded } } = N();
-  if (obj === "slept") { if (!chartRecorded && !overRecorded) nightOver(tuning.map?.island ?? "", { won: false }, undefined, tuning.map?.world ?? 0); setTimeout(() => newNight("bed"), 0); return; } // (the sea chart: played, as the afterparty records it; then a new seed: app/newForest.ts; after this frame, in place)
-  const o = HOUSE_ROOMS.objects.find(q => q.id === obj);
-  if (!o || creator.open || game.witches[0].ko) return;
-  if (o.use.kind === "zoo") zoo.open(); // (a station's E and an instrument's: their panels, below in the frame and app/studio.ts)
-  else if (o.use.kind === "telescope" && tuning.telescope && !telescope.on) { scopeAt = o.id; telescope.open(game, tuning.telescope); }
-});
+const useHouse = (obj: string): void => a4_useHouse(pageHost, obj);
 a4_installStations13(pageHost); // (a new night in place: not till it's made)
 // (its room's ambience plays while it's open: overnight, 2026-10-06)
 a4_installStations14(pageHost);
@@ -722,21 +710,12 @@ let pauseSliders: import("./ui/decide").PauseSliders | null = null, pauseLoading
 // The Music Lab panel (Ed, 2026-10-15, from Kilo's mock; ui/musicLabPanel.ts, app/musicLab.ts): the pause page's 🎛 button opens
 // it down the right edge; Esc resumes with it up, so changes are heard in play; ✕ closes it. Its code loads on the first open.
 let musicLabPanel: import("./ui/musicLabPanel").MusicLabPanel | null = null, musicLabLoading = false;
-const openMusicLab = () => {
-  if (musicLabPanel) { musicLabPanel.show(true); return; }
-  if (musicLabLoading) return;
-  musicLabLoading = true;
-  void Promise.all([import("./ui/musicLabPanel"), import("./app/musicLab")]).then(([{ MusicLabPanel }, { MusicLab }]) => {
-    const lab = sound.lab ?? (sound.lab = new MusicLab(N().musicStyle));
-    musicLabPanel = new MusicLabPanel({ lab, sound, game: () => N().game, nextWave: () => { input.touch.nextWave = true; }, noNight: () => !N().game.speakerBoot.some(t => t !== null) });
-    musicLabPanel.show(true);
-  }, () => { musicLabLoading = false; window.alert("The Music Lab's code couldn't load (a newer build may be up: reload the page)."); });
-};
+const openMusicLab = (): void => a4_openMusicLab(pageHost);
 a4_installPause6(pageHost);
 a4_installPause7(pageHost);
 // "A newer version is out" (Ed, 2026-10-14; app/newBuild.ts): read version.json on load, on pausing and every few minutes; shown in the
 // bedroom and on the pause page, and when a menu's code has been replaced under it.
-const newBuild = new NewBuildNotice(BUILD, document.getElementById("new-build"));
+const newBuild: NewBuildNotice = a4_createBuildNotice(pageHost);
 let menuGone = false;
 /** Controls and Options on the pause page (the opening, Ed's decision 3: "Controls are taught in the bedroom and kept in
  *  the pause menu"; Ed, 2026-10-23, the chart's corner gone with the chart-first start): where the creator's tabs were never set up,
@@ -758,11 +737,7 @@ else if (!resumeGame && params.get("creator") !== "0" && !botKind) dressCreator(
 // only then (overnight phase 2: out of the game's bundle); its knobs' choices in the link are put on as the game starts
 // (ui/decisions.ts, app/linkParams.ts).
 let decide: DecidePanel | null = null, decideLoading = false;
-const decidePanel = (open: boolean) => {
-  if (decide || decideLoading) return;
-  decideLoading = true;
-  void import("./ui/decide").then(({ DecidePanel }) => { decide = new DecidePanel({ mutate, get tuning() { return N().game.tuning; }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive }, open); });
-};
+const decidePanel = (open: boolean): void => a4_decidePanel(pageHost, open);
 if (params.has("decide")) decidePanel(true);
 window.addEventListener("keydown", e => { if (e.code !== "F2") return; e.preventDefault(); if (decide) decide.toggle(); else decidePanel(true); });
 a4_installBuildNotice1(pageHost);
@@ -891,7 +866,7 @@ const reportHost = () => {
 a4_installDebug9(pageHost);
 // The comparability key (app/compareKey.ts; Ed, 2026-10-26: "only compare like with like"): with the playtest log's run and its
 // samples' scenes, and for the browser tools (window.witch.compareKey(spot): tools/bench/comparable.cjs pageKey).
-const keyNow = (spot?: string) => compareKey({ build: BUILD, game: N().game, canvas, window: { width: innerWidth, height: innerHeight }, renderer: rendererOf(view.renderer.getContext()), changed: repro.changed(), params: N().params, spot, dpr: devicePixelRatio, nav: navigator as Navigator & { deviceMemory?: number } });
+const keyNow = (spot?: string): ReturnType<typeof compareKey> => a4_keyNow(pageHost, spot);
 a4_installDebug10(pageHost);
 a4_installDebug11(pageHost);
 // The measured output (Ed, round 16: "Is there a way for the game to know if anything is being sent to the speakers or not?";
@@ -961,13 +936,13 @@ function departFromChart(to: Sailed, at: FlightEnd["cam"] | null): Promise<void>
  *  "First night" banner (`firstEver`, read as the page's first wake-up starts). The wake-up itself is one for every morning since Ed,
  *  2026-10-26, replacing his decision 4's shorter one on later loads. */
 const WOKEN_KEY = "witch.woken";
-const wokenBefore = (): boolean => { try { return slotStorage.getItem(WOKEN_KEY) === "1"; } catch { return false; } };
-const woke = (): void => { try { slotStorage.setItem(WOKEN_KEY, "1"); } catch { /* storage blocked: her first morning again next time */ } };
+const wokenBefore = (): boolean => a4_wokenBefore(pageHost);
+const woke = (): void => a4_woke(pageHost);
 let firstEver = false;
 /** Whether she's come to the dressing table before, ever (its first visit marked once: rules/wakeUp.ts `mirror`). */
 const MIRROR_KEY = "witch.mirrored";
-const mirrored = (): boolean => { try { return slotStorage.getItem(MIRROR_KEY) === "1"; } catch { return false; } };
-const sawMirror = (): void => { try { slotStorage.setItem(MIRROR_KEY, "1"); } catch { /* storage blocked: marked again next time */ } };
+const mirrored = (): boolean => a4_mirrored(pageHost);
+const sawMirror = (): void => a4_sawMirror(pageHost);
 /** The opening's wake-up on a plain first load (app/opening.ts opensInBedroom): home's night made (its start's art drawn, the rest
  *  drawing on behind her while she dresses and walks down: rules/wakeUp.ts), she wakes in her bedroom in the treehouse
  *  (rules/opening.ts), the one wake-up, as every morning. Without the house's rooms, the old start. */
@@ -977,7 +952,7 @@ function wakeFirstNow(): void { return a4_wakeFirstNow(pageHost); }
  *  Back alone); while the next island is made it only keeps the guard. */
 const backGuard = new BackGuard(history, () => { if (!sailing && !freeze.frozen) freeze.toggle(); });
 let backArmed = false;
-const armBack = () => { if (backArmed) return; backArmed = true; addEventListener("popstate", () => backGuard.popped()); };
+const armBack = (): void => a4_armBack(pageHost);
 /** The sail in place (docs/plans/sail-without-reload.md B): the old night's music fading to the sea and the wind, the old night
  *  ended (its game marked disposed under ?debug=sail), the chart's last frame up while the next is made, the night's link pushed
  *  (and Back's guard), the next night made as the boot makes one (app/night.ts startNight: the view taking it, the sliders

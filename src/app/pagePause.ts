@@ -42,6 +42,17 @@ export function updatePauseMenus(pageHost: PageHost, now: number): void {
   if (pageHost.pauseFocus.update(pauseRoots, pageHost.freeze.pad(), now / 1000, () => { if (corner) closeCornerPanel(); else pageHost.freeze.toggle(); }, corner ? undefined : opened)) pageHost.input.device = 'pad';
 }
 
+export function openMusicLab(pageHost: PageHost): void {
+  if (pageHost.musicLabPanel) { pageHost.musicLabPanel.show(true); return; }
+  if (pageHost.musicLabLoading) return;
+  pageHost.musicLabLoading = true;
+  void Promise.all([import("../ui/musicLabPanel"), import("./musicLab")]).then(([{ MusicLabPanel }, { MusicLab }]) => {
+    const lab = pageHost.sound.lab ?? (pageHost.sound.lab = new MusicLab(pageHost.N().musicStyle));
+    pageHost.musicLabPanel = new MusicLabPanel({ lab, sound: pageHost.sound, game: () => pageHost.N().game, nextWave: () => { pageHost.input.touch.nextWave = true; }, noNight: () => !pageHost.N().game.speakerBoot.some(t => t !== null) });
+    pageHost.musicLabPanel.show(true);
+  }, () => { pageHost.musicLabLoading = false; window.alert("The Music Lab's code couldn't load (a newer build may be up: reload the page)."); });
+}
+
 export function installPause1(pageHost: PageHost): void {
 pageHost.freeze.mutate = pageHost.mutate;
 }
