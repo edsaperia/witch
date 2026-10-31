@@ -1,0 +1,50 @@
+{
+ "fire on-vs-off (form box)": {
+  "box": [
+   430,
+   200,
+   482,
+   285
+  ],
+  "inBoxPx": 4558,
+  "inBoxDiff": 693,
+  "inBoxMax": 25,
+  "outsideBoxDiff": 26301
+ },
+ "fire return-vs-off (form box)": {
+  "box": [
+   430,
+   200,
+   482,
+   285
+  ],
+  "inBoxPx": 4558,
+  "inBoxDiff": 696,
+  "inBoxMax": 1,
+  "outsideBoxDiff": 26871
+ },
+ "combined on-vs-off (form box)": {
+  "box": [
+   425,
+   200,
+   477,
+   285
+  ],
+  "inBoxPx": 4558,
+  "inBoxDiff": 2521,
+  "inBoxMax": 56,
+  "outsideBoxDiff": 78070
+ },
+ "combined return-vs-off (form box)": {
+  "box": [
+   425,
+   200,
+   477,
+   285
+  ],
+  "inBoxPx": 4558,
+  "inBoxDiff": 3493,
+  "inBoxMax": 81,
+  "outsideBoxDiff": 124532
+ }
+}
