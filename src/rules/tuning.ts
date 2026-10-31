@@ -1,5 +1,6 @@
 // The tuning file, config/tuning.json, typed. Ed edits the JSON; nothing here holds a number.
 import raw from "../../config/tuning.json";
+import type { SchemaTuning } from "./tuning.generated";
 import type { ByRoute } from "./growth";
 import type { SwarmTuning } from "./swarm";
 
@@ -534,7 +535,9 @@ export interface Tuning {
   creatureSpeeds: { fast: string[]; fastMult: number; legend: number };
 }
 
-export const TUNING: Tuning = raw as Tuning;
+// schema.mjs --check validates the values; typegen.mjs derives this boundary from that schema.
+// Assignment to the public type also checks compatibility with its named types and optional experiment knobs.
+export const TUNING: Tuning = raw as SchemaTuning;
 
 /** The tuning file with some values replaced, for tests and experiments. */
 export function withTuning(over: Partial<Tuning>): Tuning {
