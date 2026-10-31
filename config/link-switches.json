@@ -1070,6 +1070,19 @@
    ]
   },
   {
+   "name": "veilread",
+   "values": [
+    "three",
+    "off"
+   ],
+   "does": "Compare smoke-veil readback: three uses the previous asynchronous polling route; off skips the smoke veil over invite indicators. The default checks once per frame without flushing.",
+   "group": "debug",
+   "since": "2026-10-31",
+   "readIn": [
+    "src/render/view.ts"
+   ]
+  },
+  {
    "name": "opening",
    "values": [
     "old",
