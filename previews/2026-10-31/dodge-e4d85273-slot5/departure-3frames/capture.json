@@ -1,0 +1,35 @@
+{
+  "expectedSha": "e4d85273e69dd24a6bd4682aa59162d3075f4d72",
+  "served": {
+    "version": "v6695 · e4d8527",
+    "built": "2026-10-31T20:01:08.800Z"
+  },
+  "proof": "Served label includes seven SHA characters; verify full CI artifact SHA separately.",
+  "hold": {
+    "time": 1.3000000000000003,
+    "personal": 1.3000000000000003,
+    "mode": "prepared scene through existing Post"
+  },
+  "noise": {
+    "count": 0,
+    "max": 0,
+    "considered": 518400,
+    "bounds": null,
+    "ignored": []
+  },
+  "full": {
+    "count": 6255,
+    "max": 55,
+    "considered": 518400,
+    "bounds": {
+      "left": 484,
+      "top": 201,
+      "right": 594,
+      "bottom": 314
+    },
+    "ignored": []
+  },
+  "masked": null,
+  "screenshotTimeout": 120000,
+  "limitation": "Stable pixels only; scenario must establish meaningful effect/actor overlap. No GPU/memory or acceptance claim."
+}
