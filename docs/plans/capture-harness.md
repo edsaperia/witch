@@ -8,18 +8,20 @@ in parallel.” Owner: chat 01a18d4a-9d53-72b2-a6ed-ce68c4e64e56, branch
 
 ## Current checkpoint and finite gate
 
-PLAN/preparation only until the canonical #1543 rerun on exact 580fcb83 completes
-and its resource-drift findings land. That run is session
+The finite implementation gate OPENED with canonical6547931572: the #1543 rerun
+on exact580fcb83 completed and its resource-drift findings landed. That run was session
 `session_018uvzSLocq4FtBSmPmAvHfK`, results expected at
 `previews/refraction-1543-review/foreground-580fcb8/`. Root centralwatch delivers
 the actual result; this builder creates no idle monitor. Completion of that
 named rerun opens implementation; no additional undefined permission is required.
-Neither #1543@580fcb83 nor #1545@17a8111e may be pushed while its review runs.
+Both old review holds subsequently opened for assigned repairs: #1543 is now
+e75c8f8b and #1545 is8b1f1d7e. This task keeps its own branch/commits independent.
 
-No browser, build, bench or other heavy local run is allocated here: #1540 holds
-the laptop slot, then #1513, then #1542 (canonical 6547277143). Canonical owns
-cloud pixel/GPU/full checks and releases. Preparation and isolated source reads
-do not consume a heavy local slot.
+No browser, build, bench or other heavy local run is allocated here. Latest
+canonical1476#6547931247 stops Claude builders/cloud runners and requires each
+Codex builder's own headless capture in a canonical laptop slot: prior FREE,
+Ed idle>=5min/no game tab, bounded<=270s, SLOT DONE. Ask after the repair is pushed.
+No unallocated local/cloud assumption; small nearby unit checks only so far.
 
 ## Problem and accepted scope
 
@@ -92,3 +94,25 @@ tools/shots/*. Keep other owners' additive View/Post changes intact.
 
 Report exact branch/SHA, changes, checks and limitations on this task's PR and
 root #1476. Keep default-off review flags untouched. No merge/release authority.
+
+## Implemented checkpoint
+
+renderEasing.ts and the owned camera/View lines use her interpolated elapsed
+clock. A new night initializes a one-60Hz-frame first step; repeated/rewound
+timestamps advance zero. .35/.06/.08 coefficients are preserved at1/60s; the
+canopy terminal snap is after the step, at most one60Hz frame earlier near1m.
+uGlowR is derived from projection (not another accumulator); scenery budget
+already uses real dt. Loading mist keeps its intended loading-overlay wall clock,
+holdable through pinned clocks/prepared-scene capture. Other owners' rig/lighting
+policies are untouched; the four iPos resources are not silently rewritten.
+
+Shared still/pixels/headless/run modules and small dodge/refraction scenarios are
+implemented. They do not move/rewrite the still-owned1543/1542 drivers. True
+OFF-return equality, masks/diffs and cleanup are tested with tiny fixtures/fake
+pages; no actual browser launched.17 focused tests pass. Bench declaration and
+usage are in docs/notes/testing.md. Hardware/pixel/feel/cost acceptance, full
+typecheck/CI and allocated real captures remain pending. Workspace/global usual
+Playwright and ms-playwright caches were absent. Prepared SDK-only playwright1.64.1
+in ignored work/capture-runtime with install scripts disabled, no browser download
+or launch. Installed Chrome/Edge binaries exist; canonical can name an existing
+Chromium-family executable in the slot evidence. No Ed browser/profile is reused.

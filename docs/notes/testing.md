@@ -1,5 +1,78 @@
 # Testing tools
 
+**Shared still capture harness** (#1556, canonical #1555, 2026-10-31):
+`tools/shots/still.mjs` loads a caller-owned allocated page, verifies its served
+version, seeds random and catches the manual hook before the game steps. Wall
+clocks stay live until ready, then monotonic/epoch clocks are pinned separately
+and advance only with explicit steps. Loading mist remains a wall-time loading
+overlay in production; captures hold it through pinned time and prepared-scene
+redraw. Scenery budget already uses elapsed wall time; uGlowR follows camera
+geometry. No production budget/potion/animation freeze was added.
+
+```js
+export async function run({ page, loadStill, url, expectedSha, output }) {
+  const capture = await loadStill(page, { url, expectedSha });
+  try {
+    await capture.step(60);
+    await capture.compare({
+      output,
+      read: () => window.witch.view.post.refractionEnabled,
+      write: on => { window.witch.view.post.refractionEnabled = on; },
+      validate: () => {
+        if (!window.witch.view.post.refraction.count) throw Error('No live form');
+      },
+      actors: w => [w.view.witchBatch.meshes, w.view.bareBatch?.meshes ?? []],
+    });
+  } finally { await capture.release(); }
+}
+```
+
+The harness prepares ON once, then holds View updates and redraws existing Post
+at the same game/personal clock. It warms a screenshot and gives each screenshot
+120 seconds. Decoded OFF-return must equal OFF exactly: any changed pixel fails
+and writes its diff first. Teardown restores render descriptors (including runner
+wrappers), actors, toggle, manual mode, clocks and random. Nested holds/clock
+advancement fail. Actor masks hide actual prepared groups/meshes while updates
+are held, so SpriteBatch.set cannot undo hiding. Positive threshold/envelope are
+recorded; empty masks fail. Effect/actor overlap and acceptance need real review.
+
+`pixels.mjs` validates CRC/filters for non-interlaced 8-bit RGB/RGBA screenshots,
+counts differing pixels (including alpha), max delta and inclusive bounds, and
+writes amplified PNG/side-by-side. Dimensions/unsupported PNGs fail. Explicit
+cross-build exclusions are recorded; OFF-return accepts none. Served version.json
+has seven SHA characters, not a full-SHA endpoint: also verify the CI artifact.
+
+`run.mjs`/`headless.mjs` require a real canonical grant and exact SHA, prior FREE
+comment, input idle>=5min and no-game-tab checks <=60s old, expiry and <=270s
+duration. Evidence is not self-issued permission. They own one fresh headless
+Chromium BrowserServer, reserve teardown time and enforce an owned-process kill
+deadline. slot-receipt.json records PID/closure/failure; operator FREE verification
+and SLOT DONE are still required. No Ed browser/profile, automatic browser install
+or cloud-runner assumption. A canonical-approved Chromium-family executable can
+be named by chromiumExecutable in the evidence (fresh owned headless process and
+profile, never Ed's existing window). The caller supplies a Playwright runtime:
+
+```text
+node tools/shots/run.mjs SCENARIO URL FULL_SHA OUTPUT ACTUAL_SLOT_JSON PLAYWRIGHT_MODULE [SCENARIO_OPTIONS_JSON]
+```
+
+The dodge scenario uses captureVisible, not the invalid mesh.hide+View.update
+OFF method. If true default visibility is still zero, same-prepared-frame
+diagnostics isolate motes/ribbons, tone levels and draw order, then restore them;
+no alpha change is assumed. prepareFrame:false refuses a stale/unprepared clock.
+The refraction scenario wraps its still-owned driver by explicit path/SHA and
+measures witch and real-creature masks inside the plume. Migrate #1543/#1542 drivers only AFTER their
+PRs merge. Publication remains tools/shots/push.mjs.
+
+Bench declaration: camera/canopy frames intentionally change at non-60Hz and
+repeated timestamps. .35/.06 and .08 coefficients match a 1/60s step; tests cover
+60/144Hz and equal-total-time partitions. Both use her interpolated clock and
+reset the timestamp with the night. Canopy's last-metre snap is after the step,
+up to one 60Hz frame earlier at that boundary, to preserve partition behavior.
+No extra pass/texture/draw calls and no measured cost/visual acceptance claim.
+Allocated bench/captures remain pending. Nearby checks are renderEasing and
+tools/shots pixels/still/headless tests; fake Chromium/timers launch no browser.
+
 Current execution ownership (2026-10-31): builders run typecheck and nearby tests with one worker, plus the art check when art is touched, subject to the coordinator's browser allocation. The coordinator owns combined full-suite/smoke/browser acceptance. The historical “builders before a FINAL” full-smoke instruction below is superseded by CLAUDE.md's Builders and the coordinator section.
 
 CI now builds one `game-dist` artifact per tested revision. Main deploy has priority before checks; PR preview publication runs beside checks after build. Unit selection is `tools/ci/run-unit.mjs`, with conservative full fallback; smoke, largest-world proof and benchmark head reuse the build. Version labels use CI run number with no offset; always verify the served SHA for browser checks. See `.github/workflows/ci.yml` for the exact gates.

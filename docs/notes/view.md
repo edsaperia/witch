@@ -1,5 +1,15 @@
 # The view
 
+**Elapsed-time view easing** (#1556, 2026-10-31): camera hill clearance and canopy
+reach use her interpolated elapsed time instead of one fixed step per render.
+The .35/.06 camera and .08 canopy gains match a60Hz step; repeat/pause frames
+advance neither, and their timestamp resets per night. The canopy's final-metre
+snap is after the step, at most one60Hz frame earlier near that boundary, preserving
+equal-total-time behavior. Loading mist remains a wall-time loading overlay;
+the shared tools/shots still harness holds its clock and prepared scene for tests.
+No extra pass/texture or art/potion change. Bench/visual acceptance remains pending;
+see testing.md for the declared frame changes and allocated capture rules.
+
 Hue Spin (recipe 108, PR1541) rotates scene RGB around the neutral axis in the existing composite shader, after bloom/grade and before knockout/blackout overlays. Its uniform defaults to zero strength, so inactive trips execute the original path. `rules/potionCycle.ts` supplies a wake-relative game-clock phase shared with audio. The lab exposes cycle seconds, initial angle, colour strength and audio sweep depth. Rotation fades by blending toward the unmodified scene during the final two minutes; saved art and tuning are untouched. HTML overlays keep their normal colours.
 **Night and Heat Vision** (Ed, 2026-10-31): recipe #26 uses the existing tone controls and composite pass to reveal shadows in black and phosphor green. Recipe #52 gives creatures a semantic heat value from their existing danger state, carried through both baked sprites and live rig parts. Their original paint and normal maps vary the green/yellow/orange/red temperature bands; other sprites, ground and sky turn cold blue. This is false-colour perception, not a heat simulation. Heat adds one float per sprite instance beside leaf jitter and no extra render pass; its ground variant is compiled only while active. Both follow the usual game-clock trip envelope and restore ordinary rendering on replacement or expiry. Sound behaviour is in `sound.md`. Visual quality and shader execution await in-game feedback; focused tests establish data handling and unchanged default ground source, not appearance.
 The Forest Counts (recipe73, PR1544) samples the existing beat clock into held scenery time. Wind receives that time through uWind.w; mist has a private drift-time override so shared lighting and creature clocks keep moving normally. Scenery advances four times as fast by default, once per beat, without changing wind amplitude or gameplay. The standard trip envelope blends back to ordinary time over the last two minutes; expiry/Stop restores the exact original clock and disables the mist override. Existing wind/mist visibility switches remain respected.

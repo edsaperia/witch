@@ -307,11 +307,13 @@ says what each note covers.
 
 ## [Testing tools](testing.md)
 
+- Shared still capture harness
 - A quick proof shot
 - Publishing previews
 
 ## [The view](view.md)
 
+- Elapsed-time view easing
 - Night and Heat Vision
 - Potion perception
 - Layered magic

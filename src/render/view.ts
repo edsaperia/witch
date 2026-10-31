@@ -12,6 +12,7 @@ import type { Creature } from "../rules/creatures";
 import { partyGearOf } from "./artBuild";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
+import { renderDelta, easeCanopyReach } from "./renderEasing";
 import { monitorProgramLink, waitForPrograms, type ReadyProgram } from "./programReadiness";
 import { installShaderDrawGate, materialProgramsReady, type ShaderDrawStatus } from "./shaderDrawGate";
 import { LandingArtFade, lateLandingReady } from './landingReadiness';
@@ -203,6 +204,9 @@ function nightState(t: Tuning) {
     numbersAt: 0,
     /** How far the camera is lifted to see her over a hill in between (metres, eased). */
     camLift: 0,
+    /** Camera/canopy relaxation on her interpolated clock, reset with this night. */
+    renderEaseAt: NaN,
+    renderEaseDt: 0,
     /** The charcoal huts' smouldering mounds near her (looked up when she has moved far), for the smoke. */
     mounds: [] as number[],
     moundsAt: { x: Infinity, z: Infinity },
@@ -1650,6 +1654,7 @@ export class View {
     // Her clock (rules/slowTime.ts): she and everything of hers (her frames, blinks, trail, 💌s, sigils, the action bar) at full
     // speed, while the world (time) may run slow in a sleeping legend's circle; eased between steps as the world's is.
     const ht = Math.max(0, g.herTime - Math.max(0, g.clock.time - time) / Math.max(1e-3, g.timeScale));
+    this.renderEaseDt = renderDelta(this.renderEaseAt, ht); this.renderEaseAt = ht;
     this.magic.begin(ht, g.witch.x, g.witch.z, g);
     this.magic.batches.mpp.value = this.mpp;
     this.magic.batches.canopy = g.witch.lift > 0.5;
@@ -1667,7 +1672,7 @@ export class View {
     const TL = this.telescope && t.telescope, haze = LIGHT_UNIFORMS.uHazeRange.value;
     if (TL) { this.hazeBeforeTelescope ??= haze.clone(); haze.set(TL.hazeNear, TL.hazeFar); } else if (this.hazeBeforeTelescope) { haze.copy(this.hazeBeforeTelescope); this.hazeBeforeTelescope = null; }
     const canopyTo = TL ? TL.reach : g.witch.mode !== "ground" ? Math.min(t.haze.far, t.scenery.canopyReach ?? 0) : 0;
-    this.canopyNow += (canopyTo - this.canopyNow) * (Math.abs(canopyTo - this.canopyNow) < 1 ? 1 : 0.08);
+    this.canopyNow = easeCanopyReach(this.canopyNow, canopyTo, this.renderEaseDt);
     LIGHT_UNIFORMS.uCanopyReach.value = this.canopyNow;
     const up = placeCamera(this, time, pose);
 
