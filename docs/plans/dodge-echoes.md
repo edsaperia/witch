@@ -46,3 +46,40 @@ for this first comparison. Review readability, occlusion and GPU/resource cost;
 tests do not establish visual acceptance. Canonical normal merges must preserve
 #1543's separate cast hook. Existing cauldron #95 Long Echoes is the corresponding
 future candidate; this adds no gameplay decoys or copied attacks.
+
+## Review repair (canonical6547612367)
+
+The cloud review's ON/OFF method hid mesh.visible then called View.render;
+SpriteBatch.set made the nonempty echo meshes visible again. The real material
+regression test reproduces that confound. Its 0-pixel result and alpha sweep
+therefore do not establish default-strength invisibility or a Post/mote cause.
+Do not raise alpha or rewrite another owner's Post on that evidence. Default
+birth alpha remains .24 and ordinary depth test/write policy remains intact.
+Witch is opaque and echoes transparent, so renderOrder9.9 versus10 alone also
+does not determine which is drawn first across three.js's separate queues.
+
+Use `view.dodgeEchoes.captureVisible = false/true` for actual OFF/ON. This only
+controls meshes, immediately and after subsequent updates, preserving live
+history/alpha/lifetimes. It works with full View renders and prepared-scene Post
+redraws. Do not use enabled=false for an OFF-return pair (that clears history),
+and do not hide a mesh before a full View update that sets it visible again.
+Recheck true OFF/ON/OFF-return at the same held frame, with ordinary motes/Post,
+then isolate the existing motes/ribbon or levels as diagnostics only if the true
+pair still establishes a visibility failure. No readable-default or occlusion
+pass is claimed until that corrected pixel comparison runs in an allocated slot.
+
+Arrival birth now uses the first observed visible reappearance, with a full .32s
+life from that frame. Departure recording at each new blink uses the authoritative
+dash.fromX/fromZ anchor, preserving the last actually sampled body frame/flip/lean
+and its ground-relative height. It does not invent intermediate motion/frames.
+Pre-blink history is cleared after emission, so a subsequent blink while hidden
+cannot reuse old departure positions. The default .2s chain equals the actual
+.2s disappearance; the real startDash/applyDash regression demonstrates the next
+charged blink can begin at that boundary before any visible arrival was drawn.
+No separate Hare spell is required for this reachability; current spells catalogue
+has no Hare Dash spell entry, while old charge comments retain that name.
+
+Canonical1476#6547931247 supersedes the earlier cloud ownership: builders perform
+new captures themselves, headless Chromium only, with canonical laptop slot,
+FREE evidence, input idle >=5min/no Ed game tab, <=270s and SLOT DONE. Request the
+slot after the exact repair head is pushed; no unallocated local/cloud runner.

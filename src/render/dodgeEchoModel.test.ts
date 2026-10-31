@@ -21,6 +21,16 @@ it("does not duplicate a held dash through paused frames and fades/expires on it
   expect(p.tick(0.2, null)[0].alpha).toBeLessThan(first[0].alpha);
   expect(p.tick(0.1 + ECHO_SECONDS, null)).toHaveLength(0);
 });
+it("starts a full arrival lifetime when she actually reappears after the real 0.2s gap", () => {
+  const m = new DodgeEchoHistory<number>(x => x), world = {}, art = {}, pose = (x: number) => ({ x, y: 0, z: 0, pose: x });
+  m.update(world, art, 0, { at: -Infinity, until: -Infinity }, pose(0), true);
+  const dash = { at: 0.1, until: 0.3 };
+  m.update(world, art, 0.11, dash, null, true);
+  const arrival = m.update(world, art, 0.31, dash, pose(15), true).find(e => e.x === 15)!;
+  expect(arrival.born).toBe(0.31); expect(arrival.alpha).toBe(0.24);
+  expect(m.update(world, art, 0.5, dash, pose(15), true).some(e => e.x === 15)).toBe(true);
+  expect(m.update(world, art, 0.64, dash, pose(15), true)).toHaveLength(0);
+});
 it("bounds repeated dodges and never restarts an expired event seen by a late frame", () => {
   const p = fixture(); p.tick(0, 0);
   let peak = 0;
