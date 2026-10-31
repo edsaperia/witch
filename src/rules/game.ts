@@ -1,6 +1,6 @@
 // The whole game state, and one step of it. No drawing here: the Three.js layer reads this.
 import { creaturesAshore, lakeKnobs, onLake, roundLakes } from "./lakes";
-import { guestDeck } from "../platform/online/guestDeck";
+import { guestDeck } from "./guestDeck";
 import { newMushrooms, potionPhase, stepMushrooms, type MushroomState } from "./mushrooms";
 import { runawaySpot, runOff } from "./runaway";
 import { stepWildWatch, type WildEntry } from "./wildWatch";
