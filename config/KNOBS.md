@@ -2219,7 +2219,9 @@ Which areas have a legend, and how far a happy one reaches.
   1. Ed, 2026-10-26: "legends are spawned in additional areas that have legend circles where runestones usually are" (all legends in them)
   on, each of the night's legends gets an area of its own grown out of the island beside one of its kind's areas (its pair), taking its kind and look, with no runestone, soundsystem or route stop, its circle at its heart; the island grows by them; the pair counts as one area for a legend's rage and for creatures attacking and defending (rules/map.ts areaOf); false: legends in their own kind's areas as before.
   Code: `rules/map.ts`
-- **`legends.questLater`**: a legend dreams only of a kind living in an area later on the route than its own, within questCap areas; failing that, the kind of the nearest later area; with no later area, any kind (the early easy quest keeps its own pick); false: any kind as before.
+- **`legends.questCap`**: The maximum distance in areas to a dream kind; default 0 means no distance cap, so any kind on the map can be dreamed of however far.
+  1. Ed, 2026-10-31: "no quest cap" (questCap is 0; questLater is unchanged.)
+- **`legends.questLater`**: a legend dreams only of a kind living in an area later on the route than its own, within questCap areas when a positive cap is set (default 0: no cap); failing that, the kind of the nearest later area; with no later area, any kind (the early easy quest keeps its own pick); false: any kind as before.
   1. Ed's core design, 2026-10-07: relayed by the coordinator: quests point to later areas, deeper in and wilder now the forest is grown before the waves
 - **`legends.bombard`**: ("Legend bombards, but prioritises you"): an angry legend with no witch in its reach throws the first lob or beam of its volley at the nearest standing soundsystem within range metres, damage a hit (of combat.soundsystemHealth); a charging legend lobs at it rather than charge.
 - **`legends.stomp`**: A legend turning angry destroys its own area's soundsystem at once.

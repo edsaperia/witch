@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { Creature } from "../creatures";
 import { TUNING } from "../tuning";
-import { FIGHT } from "../movement";
+import { FIGHT, profileOf } from "../movement";
+import { speciesAttack } from "../attacks/species";
+import { LEGENDS } from "../legends";
 import { newCombat } from "../combat";
 import { COMBAT, type CombatWorld } from "./data";
 import { Grid, targetable } from "./targeting";
@@ -19,6 +21,22 @@ function scene(enemies: Creature[], witchX = 1000) {
 }
 
 describe("friendly legends: defend, engage, walk (Ed, 31 Oct)", () => {
+  it.each(["rhino", "unicorn"])("%s legends use the long charge, with ordinary attacks unchanged (Ed item14)", species => {
+    expect(LEGENDS.charge.species).toEqual(["boar", "elk", "stag", "ram", "ibex", "hedgehog", "woodlouse", "rhino", "unicorn"]);
+    const { legend, w, s, step } = scene([creature(1, 60, { enraged: true })]);
+    legend.species = species; w.t.attacks!.species = true;
+    step();
+    expect(legend.run?.phase).toBe("windup");
+    expect(legend.run?.target).toEqual({ kind: "creature", id: 1 });
+    expect(legend.aims).toBeUndefined(); expect(legend.fight?.spellCasts).toBeUndefined();
+    expect(s.events.some(e => e.kind === "windup" && e.big)).toBe(true);
+    w.time += LEGENDS.charge.windup + 0.01;
+    step();
+    expect(legend.run?.phase).toBe("run"); expect(legend.x).toBeGreaterThan(0);
+    expect(s.events.some(e => e.kind === "charged" && e.big)).toBe(true);
+    for (const level of [1, 2]) expect(speciesAttack(species, level)?.body?.kind).toBe(species === "rhino" ? "runner" : "beam");
+    expect(profileOf(species)?.move?.kind).toBe("charge");
+  });
   it("home guards use their own 85 m reach, never route, and leave calm creatures and their own kind alone", () => {
     const { legend, w, step } = scene([creature(1, 85, { enraged: true }), creature(2, 1), creature(3, 2, { species: "toad", enraged: true })], 80);
     legend.homeGuard = true;
@@ -30,9 +48,9 @@ describe("friendly legends: defend, engage, walk (Ed, 31 Oct)", () => {
     step(); expect(legend.fight?.target).toBeNull(); expect([legend.x, legend.z]).toEqual([0, 0]);
   });
 
-  it("a charging home guard targets only where it can charge inside home and cannot cross its boundary", () => {
+  it.each(["boar", "rhino", "unicorn"])("a charging %s home guard targets only where it can charge inside home and cannot cross its boundary", species => {
     const { legend, w, step } = scene([creature(1, 10, { enraged: true })]);
-    Object.assign(legend, { species: "boar", homeGuard: true });
+    Object.assign(legend, { species, homeGuard: true });
     w.home = { x: 0, z: 0, r: 5, inside: (x, z) => Math.hypot(x, z) <= 5 };
     step(); expect(legend.fight?.target).toBeNull();
     Object.assign(legend, { x: 4, run: { phase: "run", at: 0, angle: 0, speed: 100, turn: 1, target: null, tx: 100, tz: 0, ran: 0, hit: [], fromX: 0, fromZ: 0 } });

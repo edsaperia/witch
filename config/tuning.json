@@ -1428,7 +1428,7 @@
     "earlyQuest": true,
     "areas": true,
     "friendRange": 85,
-    "questCap": 6,
+    "questCap": 0,
     "questLater": true,
     "bombard": {
       "on": true,
