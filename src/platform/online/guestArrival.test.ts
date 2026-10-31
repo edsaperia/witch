@@ -5,7 +5,23 @@ import { bareBroom } from "../../rules/broomParts";
 import { setParts } from "../../rules/spells";
 import { guestArrival, type GuestRoomHooks } from "./guestArrival";
 import { HOUSE_ROOMS } from "../../rules/houseRooms";
+import { bedFor, wakeOf } from "../../rules/wakeUp";
+import { objectWorld } from "../../rules/houseRooms";
 const geometry = HOUSE_ROOMS.objects[0]; // Injected geometry; no copied wake implementation.
+
+it("binds the released guest wake exports to the assigned real bedroom without changing the host", () => {
+  const tuning = structuredClone(TUNING); tuning.map!.island = "home"; tuning.map!.islandAreas = 4;
+  const game = newGame(123, tuning), host = game.witches[0], body = structuredClone(host.body);
+  const guest = newWitchPlayer(1, 0, 0, tuning), equipment = structuredClone(guest.spells);
+  const arrival = guestArrival({ room: "bedroom2", equipment: () => guest });
+  arrival.attach(game);
+  const bed = bedFor("bedroom2")!;
+  expect(guest.body).toMatchObject(objectWorld(bed, game.map.treehouse, bed.w * .15, 0));
+  expect(wakeOf(game, guest)).toMatchObject({ player: 1, room: "bedroom2", beat: "alarm" });
+  expect(host.body).toEqual(body); expect(guest.spells).toEqual(equipment);
+  expect(HOUSE_ROOMS.rooms.find(r => r.id === "bedroom2")!.locked).toBe(true);
+  arrival.detach(game); expect(game.witches).toEqual([host]);
+});
 
 it("requires the assigned room hooks, supplies separate equipment and leaves host identity/time intact", () => {
   // Four-area fixture: arrival ownership does not depend on distant map size; injected hooks supply all guest geometry.

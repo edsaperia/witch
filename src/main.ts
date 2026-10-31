@@ -107,7 +107,7 @@ import { forgetArrival, type Arrival } from "./app/arrival";
 import { shotParams } from "./app/shot";
 import type { FlightEnd } from "./render/chart/seaChart";
 import { restoreGame } from "./rules/nightSnapshot";
-import { browserNightStore, captureNight, nightHasStarted, NightAutosave, savedNight, savesEnabled, type SavedNight, type NightStore } from "./app/nightSave";
+import { borrowedNightSaves, browserNightStore, captureNight, nightHasStarted, NightAutosave, savedNight, savesEnabled, type SavedNight, type NightStore } from "./app/nightSave";
 import { Breadcrumbs, browserCommentStore, captureComment, CommentBook, parseCommentFile } from "./app/playtestComments";
 import { LOG_EXPANDED_BYTES } from "./platform/logCodec";
 import { observePlaytestErrors, logCaughtError } from "./platform/playtestLog";
@@ -802,9 +802,10 @@ async function restoreComment(file: File): Promise<void> {
   const url = new URL(location.href); url.search = "?restore=comment&resume=1"; location.href = url.toString();
 }
 let nightWriteReported = false;
-const autosave = nightStore ? new NightAutosave(nightStore, () => {
+const visitNightSaves = nightStore ? borrowedNightSaves(nightStore) : null;
+const autosave = visitNightSaves ? new NightAutosave(visitNightSaves.store, () => {
   const n = page.night;
-  if (!n || endedNights.has(n.game) || !n.flags.ready || sailing || bot || dream && !dream.over || n.arrival && !n.flags.landed || !savesEnabled(n.params, navigator.webdriver)) return null;
+  if (!n || n.spec.borrowed || endedNights.has(n.game) || !n.flags.ready || sailing || bot || dream && !dream.over || n.arrival && !n.flags.landed || !savesEnabled(n.params, navigator.webdriver)) return null;
   // The opening, before play starts, must not replace an existing night merely because the page loaded.
   if (!nightHasStarted(n.game, startedNights.has(n.game))) return null;
   browserSaveSlots().summary(n.game.tuning.map?.island ?? "home", false, bootSlot);
