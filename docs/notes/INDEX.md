@@ -310,6 +310,7 @@ says what each note covers.
 
 ## [The view](view.md)
 
+- Heat/refraction preview
 - Potion perception
 - Layered magic
 - Magic mock (stage 0 only)
