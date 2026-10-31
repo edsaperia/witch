@@ -93,7 +93,7 @@ Agreed one by one with Ed (2026-10-09). Not yet assigned to recipes, apart from 
 31. **The Whole Route** (Ed): the entire route is shown. (Also the Route-seer hat's power, built in #942; a trip may want something else.)
 32. **Dreamseer** (Ed): the area a legend's dream points to is easier to see.
 33. **Paper Theatre:** everything becomes flat, wobbling cardboard cutouts.
-34. **Woodcut:** black-and-white engraving, crosshatched shadows.
+34. **Woodcut:** black-and-white engraving, crosshatched shadows. Discussion2026-10-31: reuse existing edge detection and colour thresholds, with a small new hatching formula; remains a suggestion, not built.
 35. **Kaleidoscope:** the screen mirrored into six slices round her.
 36. **Breathing:** ground, trees and rocks swell and shrink with the bpm.
 37. **Daybreak:** the sun rises; a bright, ordinary green forest.
@@ -233,6 +233,18 @@ The mushrooms' new complementary-colour subtraction (`render/mushroomGlow.ts`) i
 The treehouse and its occupants remain visible while the forest disappears into black; the world returns outward from a doorway or from her feet. The existing house-loading reveal already does this with `Post.behind`, `behindAt` and `HOUSE_LAYER`. A test that skipped drawing the reveal's frames exposed the intermediate state. This could be a variant of Alone, driven by her distance from home or the trip envelope. It needs no new rendering pass; a deliberate version must include her ground-level sprite in the retained layer so she does not disappear when leaving the branch. Suggestion only, with no recipe assignment.
 
 ## Catalogue follow-up
+
+### Painting-style suggestions (discussion with Ed, 2026-10-31; not approved builds)
+
+Ed asked about potions making the world resemble Cubism, Mondrian, Impressionism or Expressionism instead of pixel art, without requiring close stylistic accuracy. No recipes assigned or effects implemented by this discussion.
+
+- **Mondrian:** scenery becomes an uneven rectangular composition in red, blue, yellow, white and black, with black dividers. Reuse the existing scene texture and composite pass; add a grid sampler and limited palette. A relatively cheap first approximation, not a reconstruction of objects.
+- **Expressionist:** unnatural contrasting colours, exaggerated outlines and warped perspective grow stronger near danger. Cross existing creature danger signals with grading, edge detection and distortion. A variant combining existing trips; needs a small local signal-to-screen mapping if distortion follows individual animals.
+- **Impressionist:** overlapping brush-shaped dabs replace square pixels, colours borrowed from nearby scene samples with existing blur/bloom. Needs a new brush reconstruction shader; world anchoring or depth-aware stability would be extra work. Camera movement must not turn the paint into distracting crawling noise.
+- **Cubist:** angular facets each sample a shifted/rotated part of the same scene, breaking silhouettes into overlapping views. A small facet/UV shader, related to Kaleidoscope. Truly showing different sides of animals would require additional renders and is not the cheap version.
+- **Woodcut:** extend catalogue34 above rather than duplicate its recipe.
+
+Current pixelation has two layers: low-resolution generated sprite artwork with nearest texture filtering, and a low-resolution scene canvas enlarged by the browser with nearest-neighbour sampling (`View.resize`, default pixelSize3, snapped to whole device pixels). A smooth painting effect needs a finer output reconstruction pass, not merely changing the palette. Keeping the scene small while reconstructing its output could be cheaper than rendering the entire world at display resolution; cost and visual quality remain unmeasured.
 
 - The earlier questions about six mushroom names, 56 recipe assignments and replacing Underwater with CRT are superseded by the nine colours and 165 fixed combinations in the developer recipe book (Ed, 2026-10-31). Unassigned entries remain available for future suggestions.
 - Bag capacity is unlimited and knockout loses no mushrooms (Ed, 2026-10-30); carried stock and baskets persist across nights and voyages (Ed, 2026-10-31).
