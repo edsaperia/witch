@@ -3,7 +3,7 @@ import * as THREE from "three";
 import type { Atlas } from "./atlas";
 import { DodgeEchoView, type DodgePose } from "./dodgeEcho";
 import { newDash, startDash, applyDash } from "../rules/dash";
-import { newWitch } from "../rules/witch";
+import { newWitch, type WitchState } from "../rules/witch";
 import { TUNING } from "../rules/tuning";
 
 function fixture() {
@@ -63,7 +63,7 @@ it("reproduces the invalid mesh-hide OFF capture and provides a history-preservi
 });
 it("records each real blink source when the default charge chain starts before any arrival was drawn", () => {
   const p = fixture(), dash = newDash(), bounds = { minX: -100, maxX: 100, minZ: -100, maxZ: 100 };
-  let witch = { ...newWitch(0, 0), seated: false, mode: "ground" as const };
+  let witch: WitchState = { ...newWitch(0, 0), seated: false, mode: "ground" };
   dash.charges = TUNING.dash.charges!;
   p.echoes.update(p.world, p.atlas, 0, dash, p.pose(0), p.up, true);
   expect(startDash(dash, witch, 1, 0, 0.1, TUNING, bounds, () => true, TUNING.dash.charges, TUNING.dash.chain)).toBe(true);
