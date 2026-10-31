@@ -31,7 +31,7 @@ All potions last ten minutes of game time, start at full strength on waking, and
 | 23 | blue + pink + turquoise | Drum Solo | Coming soon | The music is just a drum solo. |
 | 24 | blue + pink + white | Watched | Coming soon | Every legend on the map stands and stares at her. |
 | 25 | blue + red + red | Giant Trees | Coming soon | The trees are three times taller. |
-| 26 | blue + red + orange | Night Vision | Coming soon | The dark forest becomes clear and luminous. |
+| 26 | blue + red + orange | Night Vision | Implemented | The forest turns black and phosphor green. A rising electronic whine gives way to creature sounds alone. |
 | 27 | blue + red + yellow | Flask Finder | Coming soon | Flasks are easier to find. |
 | 28 | blue + red + green | Left Hook | Coming soon | Unlimited dodges, but they always veer left. |
 | 29 | blue + red + turquoise | Stiltwalkers | Implemented | Familiar animal bodies stand high on impossibly long legs, tapering from normal hips to tiny feet. |
@@ -57,7 +57,7 @@ All potions last ten minutes of game time, start at full strength on waking, and
 | 49 | purple + purple + orange | Hiccups | Coming soon | A tiny involuntary blink every few seconds. |
 | 50 | purple + purple + yellow | Stopmotion | Coming soon | The world at 6 fps; she runs smoothly. |
 | 51 | purple + purple + green | Fireflies | Coming soon | Everything moving leaves glowing dots hanging in the air. |
-| 52 | purple + purple + turquoise | Heat Vision | Coming soon | Thermal; creatures glow by danger, trees cold blue. |
+| 52 | purple + purple + turquoise | Heat Vision | Implemented | Cold blue scenery surrounds warm animals, glowing hotter with danger. Music falls silent; creature sounds drop an octave beneath slow, muffled mask breathing. |
 | 53 | purple + purple + white | Fisheye | Coming soon | Extreme wide angle; she sees further, everything bends. |
 | 54 | purple + pink + pink | Synaesthesia | Coming soon | Colours pulse with the music, one colour per instrument, floods on the kick. |
 | 55 | purple + pink + red | Mirror Floor | Coming soon | The ground becomes a glossy mirror of everything above it. |

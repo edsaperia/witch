@@ -40,6 +40,8 @@ export function withFace(meta: RigMeta, face: RigFace | undefined): RigMeta {
 }
 export interface RigLook { /** extra height (a dance, a hop, sinking) in metres */ y: number; /** a party animal tapping its feet on the beat while it stands: -1..1, a front foot (far or near) lifted */ tap?: number; scale: number; glow: number; fresh: boolean; /** its ordinary frame's height in art pixels */ h: number; /** its expression (render/looks.ts expression(c), #89): the head piece with that face */ face?: RigFace; /** a party animal's gear (render/artBuild.ts partyGearOf): its rig page wears it */ gear?: RigGear; /** an attack's feel (render/attackFeel.ts): squash and stretch about its feet, its wind-up's crouch, mid-lunge */ sx?: number; sy?: number; crouch?: number; lunging?: boolean; /** a sleeping legend (render/legendSleep.ts): lying asleep, its head down, a nightmare's fits, each 0..1 */ sleep?: number; droop?: number; twitch?: number; /** its character (render/character.ts): its posture, and its idle quirk and how far through it (-1: none) */ posture?: { hx: number; hy: number; by: number }; quirk?: string; quirkK?: number; /** standing, it turns to look at this (rules/wildWatch.ts: a wild area watching her come down) */ lookAt?: { x: number; z: number }; /** drawn this far (m) from its place (the conga's lean onto the one ahead, render/conga.ts) */ dx?: number; dz?: number }
 
+export interface RigLook { heat?: number }
+
 export class RigView {
   private bodies = new Map<number, RigBody>();
   private seen = new Set<number>();
@@ -137,6 +139,7 @@ export class RigView {
       s.x = ox + it.x - R.x * dx - U.x * dy + F.x * b; s.y = look.y + it.y - R.y * dx - U.y * dy + F.y * b; s.z = oz + it.z - R.z * dx - U.z * dy + F.z * b;
       if (sx !== 1 || sy !== 1) { s.x = ox + (s.x - ox) * sx; s.z = oz + (s.z - oz) * sx; s.y = look.y + (s.y - look.y) * sy; } // squashed or stretched about its feet
       s.frame = f; s.flip = it.flip; s.fresh = look.fresh; s.glow = look.glow; s.scale = look.scale * pieceScale; s.sx = sx; s.sy = sy;
+      s.heat = look.heat;
     }
     this.used.set(key, ns[0]); this.used.set(dkey, ns[1]);
     this.stats.instances += this.out.n;

@@ -333,8 +333,8 @@
     ],
     "effect": "night-vision",
     "name": "Night Vision",
-    "description": "The dark forest becomes clear and luminous.",
-    "comingSoon": true,
+    "description": "The forest turns black and phosphor green. A rising electronic whine gives way to creature sounds alone.",
+    "comingSoon": false,
     "id": 26
   },
   {
@@ -671,8 +671,8 @@
     ],
     "effect": "heat-vision",
     "name": "Heat Vision",
-    "description": "Thermal; creatures glow by danger, trees cold blue.",
-    "comingSoon": true,
+    "description": "Cold blue scenery surrounds warm animals, glowing hotter with danger. Music falls silent; creature sounds drop an octave beneath slow, muffled mask breathing.",
+    "comingSoon": false,
     "id": 52
   },
   {
