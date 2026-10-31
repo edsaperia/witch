@@ -75,3 +75,14 @@ ok   over the treetops, no wave number shows for a stone past the bent horizon (
 smoke test passed
 ```
 
+### Batch s-party: party
+
+- exit code: 0
+- wall time: 731s (12:31 UTC end)
+
+```
+ok   the first wave partifies home's neighbours (1 areas)
+ok   after four waves 5 areas are partified
+smoke test passed
+```
+
