@@ -15,6 +15,7 @@ import * as THREE from "three";
 import { LIGHT_UNIFORMS } from "./lighting";
 import { SPRITE_UNIFORMS } from "./sprites";
 import type { MoonState } from "../rules/moon";
+import { THERMAL_GLSL, THERMAL_UNIFORMS } from './thermalVision';
 
 export interface SkyTuning { on: boolean; stars: number; moon: number }
 
@@ -24,6 +25,7 @@ void main() { vNdc = position.xy; gl_Position = vec4(position.xy, 0.99999, 1.0);
 `;
 
 const FRAG = /* glsl */ `
+${THERMAL_GLSL}
 uniform vec2 uRes;
 uniform vec3 uHazeColour, uMoon, uMoonDir;
 uniform float uTime;
@@ -141,6 +143,7 @@ void main() {
       col = mix(col * 0.4 + face * 0.07, face, lit); // the dark side: the sky dimmed behind it, a little earthshine
     }
   }
+  if (uThermalStrength > 0.0) col = mix(col, thermalCold(col), uThermalStrength);
   gl_FragColor = vec4(col, 1.0);
 }
 `;
@@ -164,6 +167,7 @@ export class Sky {
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3)); // one triangle over the screen
     this.u = {
+      ...THERMAL_UNIFORMS,
       uRes: SPRITE_UNIFORMS.uRes, uHazeColour: LIGHT_UNIFORMS.uHazeColour, uMoon: LIGHT_UNIFORMS.uMoon, uMoonDir: LIGHT_UNIFORMS.uMoonDir, uTime: LIGHT_UNIFORMS.uTime,
       uSky: { value: new THREE.Vector4(T.stars, T.moon, disc, 0) },
       uCam: { value: new THREE.Vector4() },
