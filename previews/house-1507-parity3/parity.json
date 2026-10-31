@@ -1,0 +1,361 @@
+{
+  "pngs": [
+    {
+      "file": "furniture/bedroom.png",
+      "identical": true,
+      "size": "1600x900",
+      "diff": 0,
+      "max": 0,
+      "bbox": null
+    },
+    {
+      "file": "furniture/bestiary.png",
+      "identical": true,
+      "size": "1600x900",
+      "diff": 0,
+      "max": 0,
+      "bbox": null
+    },
+    {
+      "file": "furniture/boudoir.png",
+      "identical": true,
+      "size": "1600x900",
+      "diff": 0,
+      "max": 0,
+      "bbox": null
+    },
+    {
+      "file": "furniture/cloakroom.png",
+      "identical": true,
+      "size": "1600x900",
+      "diff": 0,
+      "max": 0,
+      "bbox": null
+    },
+    {
+      "file": "furniture/dining.png",
+      "identical": true,
+      "size": "1600x900",
+      "diff": 0,
+      "max": 0,
+      "bbox": null
+    },
+    {
+      "file": "furniture/kitchen.png",
+      "identical": true,
+      "size": "1600x900",
+      "diff": 0,
+      "max": 0,
+      "bbox": null
+    },
+    {
+      "file": "furniture/parlour.png",
+      "identical": true,
+      "size": "1600x900",
+      "diff": 0,
+      "max": 0,
+      "bbox": null
+    },
+    {
+      "file": "furniture/solarium.png",
+      "identical": true,
+      "size": "1600x900",
+      "diff": 0,
+      "max": 0,
+      "bbox": null
+    },
+    {
+      "file": "furniture/studio.png",
+      "identical": true,
+      "size": "1600x900",
+      "diff": 0,
+      "max": 0,
+      "bbox": null
+    },
+    {
+      "file": "furniture/terrace.png",
+      "identical": true,
+      "size": "1600x900",
+      "diff": 0,
+      "max": 0,
+      "bbox": null
+    },
+    {
+      "file": "furniture/turret.png",
+      "identical": true,
+      "size": "1600x900",
+      "diff": 0,
+      "max": 0,
+      "bbox": null
+    },
+    {
+      "file": "furniture/workshop.png",
+      "identical": true,
+      "size": "1600x900",
+      "diff": 0,
+      "max": 0,
+      "bbox": null
+    },
+    {
+      "file": "oak/bedroom.png",
+      "identical": true,
+      "size": "1600x900",
+      "diff": 0,
+      "max": 0,
+      "bbox": null
+    },
+    {
+      "file": "oak/bedroom2-door.png",
+      "identical": true,
+      "size": "1600x900",
+      "diff": 0,
+      "max": 0,
+      "bbox": null
+    },
+    {
+      "file": "oak/bestiary.png",
+      "identical": true,
+      "size": "1600x900",
+      "diff": 0,
+      "max": 0,
+      "bbox": null
+    },
+    {
+      "file": "oak/boudoir.png",
+      "identical": true,
+      "size": "1600x900",
+      "diff": 0,
+      "max": 0,
+      "bbox": null
+    },
+    {
+      "file": "oak/cloakroom.png",
+      "identical": true,
+      "size": "1600x900",
+      "diff": 0,
+      "max": 0,
+      "bbox": null
+    },
+    {
+      "file": "oak/dining.png",
+      "identical": true,
+      "size": "1600x900",
+      "diff": 0,
+      "max": 0,
+      "bbox": null
+    },
+    {
+      "file": "oak/kitchen.png",
+      "identical": true,
+      "size": "1600x900",
+      "diff": 0,
+      "max": 0,
+      "bbox": null
+    },
+    {
+      "file": "oak/parlour.png",
+      "identical": true,
+      "size": "1600x900",
+      "diff": 0,
+      "max": 0,
+      "bbox": null
+    },
+    {
+      "file": "oak/solarium.png",
+      "identical": true,
+      "size": "1600x900",
+      "diff": 0,
+      "max": 0,
+      "bbox": null
+    },
+    {
+      "file": "oak/studio.png",
+      "identical": true,
+      "size": "1600x900",
+      "diff": 0,
+      "max": 0,
+      "bbox": null
+    },
+    {
+      "file": "oak/terrace-up.png",
+      "identical": true,
+      "size": "1600x900",
+      "diff": 0,
+      "max": 0,
+      "bbox": null
+    },
+    {
+      "file": "oak/terrace.png",
+      "identical": true,
+      "size": "1600x900",
+      "diff": 0,
+      "max": 0,
+      "bbox": null
+    },
+    {
+      "file": "oak/turret.png",
+      "identical": true,
+      "size": "1600x900",
+      "diff": 0,
+      "max": 0,
+      "bbox": null
+    },
+    {
+      "file": "oak/workshop.png",
+      "identical": true,
+      "size": "1600x900",
+      "diff": 0,
+      "max": 0,
+      "bbox": null
+    }
+  ],
+  "json": [
+    {
+      "file": "furniture/bedroom.state.json",
+      "identical": true,
+      "diffs": []
+    },
+    {
+      "file": "furniture/bestiary.state.json",
+      "identical": true,
+      "diffs": []
+    },
+    {
+      "file": "furniture/boudoir.state.json",
+      "identical": true,
+      "diffs": []
+    },
+    {
+      "file": "furniture/cloakroom.state.json",
+      "identical": true,
+      "diffs": []
+    },
+    {
+      "file": "furniture/dining.state.json",
+      "identical": true,
+      "diffs": []
+    },
+    {
+      "file": "furniture/kitchen.state.json",
+      "identical": true,
+      "diffs": []
+    },
+    {
+      "file": "furniture/parlour.state.json",
+      "identical": true,
+      "diffs": []
+    },
+    {
+      "file": "furniture/solarium.state.json",
+      "identical": true,
+      "diffs": []
+    },
+    {
+      "file": "furniture/studio.state.json",
+      "identical": true,
+      "diffs": []
+    },
+    {
+      "file": "furniture/terrace.state.json",
+      "identical": true,
+      "diffs": []
+    },
+    {
+      "file": "furniture/turret.state.json",
+      "identical": true,
+      "diffs": []
+    },
+    {
+      "file": "furniture/workshop.state.json",
+      "identical": true,
+      "diffs": []
+    },
+    {
+      "file": "oak/bedroom.state.json",
+      "identical": true,
+      "diffs": []
+    },
+    {
+      "file": "oak/bedroom2-door.state.json",
+      "identical": true,
+      "diffs": []
+    },
+    {
+      "file": "oak/bestiary.state.json",
+      "identical": true,
+      "diffs": []
+    },
+    {
+      "file": "oak/boudoir.state.json",
+      "identical": true,
+      "diffs": []
+    },
+    {
+      "file": "oak/cloakroom.state.json",
+      "identical": true,
+      "diffs": []
+    },
+    {
+      "file": "oak/dining.state.json",
+      "identical": true,
+      "diffs": []
+    },
+    {
+      "file": "oak/kitchen.state.json",
+      "identical": true,
+      "diffs": []
+    },
+    {
+      "file": "oak/outside.state.json",
+      "identical": false,
+      "diffs": [
+        {
+          "field": "drawCalls",
+          "a": 89,
+          "b": 88
+        }
+      ]
+    },
+    {
+      "file": "oak/parlour.state.json",
+      "identical": true,
+      "diffs": []
+    },
+    {
+      "file": "oak/solarium.state.json",
+      "identical": true,
+      "diffs": []
+    },
+    {
+      "file": "oak/studio.state.json",
+      "identical": true,
+      "diffs": []
+    },
+    {
+      "file": "oak/terrace-up.state.json",
+      "identical": true,
+      "diffs": []
+    },
+    {
+      "file": "oak/terrace.state.json",
+      "identical": true,
+      "diffs": []
+    },
+    {
+      "file": "oak/turret.state.json",
+      "identical": true,
+      "diffs": []
+    },
+    {
+      "file": "oak/workshop.state.json",
+      "identical": true,
+      "diffs": []
+    }
+  ],
+  "oneSided": [
+    {
+      "file": "oak/outside.png",
+      "only": "A"
+    }
+  ]
+}
