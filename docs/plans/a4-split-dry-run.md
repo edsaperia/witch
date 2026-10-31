@@ -170,6 +170,26 @@ storage warning was printed; it was not hidden or treated as a browser result.
 
 ## Allocated proof checklist (not executed)
 
+Slot 7 attempt was released INCOMPLETE on #1476 comment 6549603960; full result
+is #1562 comment 6549602025. First preflight lacked five-minute idle. After a
+finite wait, typecheck ran on b6c1047c4 with no diagnostics printed but an unknown
+exit code. Driver repair 5e2b646f5 added native exit capture; a second typecheck
+also printed no diagnostics, then supervisor finalization threw a null-valued
+method error. Neither invocation counts as PASS. Full tests and benchmark were
+not run, nor was a browser launched. Cleanup was independently verified before
+SLOT DONE. A new canonical allocation is required; the former slot is released.
+
+The repaired supervisor now uses native process creation identity and exit state,
+standard SHA-256 computation, separate primary/cleanup errors, and always writes
+its final record even if cleanup cannot be established. Four lightweight tooling
+tests pass, including the full redirected supervisor with a dummy exit-7 command
+and a real two-second watchdog stopping a harmless sleeping child, both with
+synthetic guard data and verified own cleanup. These fixtures are not game proof.
+The local browser preload explicitly selects D3D11 instead of the stock bench's
+SwiftShader flags and rejects actual software/unverified/non-Intel renderers.
+Both baseline and head must use that same preload; no software result may be
+called a hardware pass. Actual renderer and separate stop reasons are recorded.
+
 Conditional slot 7 is recorded in #1476 comments 6549116028 / 6549149150;
 it starts only after #1543's actual SLOT DONE on #1476. Driver updates
 6549320960 and 6549377462 are incorporated in prepared tooling, not a run:

@@ -2,6 +2,46 @@
 const fs = require('node:fs'), vm = require('node:vm'), cp = require('node:child_process');
 const assert = require('node:assert/strict'), test = require('node:test');
 
+test('complete redirected supervisor finalizes known-exit and watchdog fixtures with cleanup', () => {
+  const path = require('node:path');
+  const source = fs.readFileSync('tools/refactor/a4-proof-step.ps1', 'utf8');
+  const makeFixture = command => source
+    .replace(/function Read-A4Guard \{[\s\S]*?\n\}/, "function Read-A4Guard { return @{at='synthetic';lastInputTick=1;idleMs=600000;externalBrowserCount=0;ownedProcessCount=1} }")
+    .replace("'typecheck' = 'npm run typecheck'", `'typecheck' = '${command}'`)
+    .replace('$taskCpu = [double]((& node -e $taskCpuJs).Trim())', '$taskCpu = 0')
+    .replace('Start-Sleep -Seconds 265', 'Start-Sleep -Seconds 2')
+    .replace('schema=1; step=', 'schema=1; synthetic=$true; step=');
+  for (const sample of [{ command: 'exit /b 7', status: 'failed', code: 7 },
+    { command: 'powershell.exe -NoProfile -NonInteractive -Command Start-Sleep -Seconds 5', status: 'stopped', watchdog: true }]) {
+  const fixtureSource = makeFixture(sample.command);
+  assert.notEqual(fixtureSource, source);
+  const base = path.resolve('previews/a4-proof/fixtures'); fs.mkdirSync(base, { recursive: true });
+  const evidence = fs.mkdtempSync(path.join(base, 'supervisor-'));
+  const fixture = path.resolve('tools/refactor/.a4-supervisor-fixture.ps1');
+  fs.writeFileSync(fixture, fixtureSource);
+  try {
+    const sha = cp.execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+    const result = cp.spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', fixture,
+      '-Step', 'typecheck', '-GrantComment', '0000000000', '-PreviousDoneComment', '0000000000', '-ExpectedSha', sha, '-EvidenceDir', evidence],
+    { encoding: 'utf8', windowsHide: true, timeout: 12000 });
+    assert.equal(result.status, 1, result.stderr || result.error?.message);
+    const records = fs.readdirSync(evidence).filter(f => f.endsWith('.json'));
+    assert.equal(records.length, 1, result.stdout + result.stderr);
+    const record = JSON.parse(fs.readFileSync(path.join(evidence, records[0]), 'utf8').replace(/^\uFEFF/, ''));
+    assert.equal(record.synthetic, true);
+    if (sample.code !== undefined) assert.equal(record.exitCode, sample.code, JSON.stringify(record));
+    if (sample.watchdog) assert.equal(record.watchdogStop, true, JSON.stringify(record));
+    assert.equal(record.status, sample.status, JSON.stringify(record));
+    assert.equal(record.processTreeClean, true, JSON.stringify(record));
+  } finally {
+    fs.unlinkSync(fixture);
+    const resolved = fs.realpathSync(evidence);
+    assert.ok(resolved.startsWith(base + path.sep));
+    fs.rmSync(resolved, { recursive: true });
+  }
+  }
+});
+
 test('supervisor captures a real known nonzero child exit without interpreting null as a result', () => {
   const source = fs.readFileSync('tools/refactor/a4-proof-step.ps1', 'utf8');
   const native = source.match(/Add-Type -TypeDefinition @'([\s\S]+?)'@/)[1];
@@ -49,7 +89,9 @@ test('preload is inert on import, uses fresh headless launch and neutralizes fav
   assert.equal(launched, 0);
   const owned = await pw.chromium.launch({ args: ['unchanged-renderer-option'] });
   assert.equal(options.headless, true); assert.equal(options.executablePath, 'fixture-chrome');
-  assert.deepEqual([...options.args], ['unchanged-renderer-option']);
+  assert.ok(options.args.includes('unchanged-renderer-option'));
+  assert.ok(options.args.includes('--use-angle=d3d11'));
+  assert.ok(!options.args.some(arg => arg.includes('swiftshader')));
   await owned.newContext({});
   let status;
   await routeCallback({ fulfill: async response => { status = response.status; } });
@@ -57,6 +99,9 @@ test('preload is inert on import, uses fresh headless launch and neutralizes fav
   events.page({ evaluate: async () => {}, on: (event, callback) => { pageEvents[event] = callback; } });
   pageEvents.console({ type: () => 'error', text: () => 'unrelated console noise' });
   pageEvents.response({ status: () => 404, url: () => 'http://127.0.0.1/favicon.ico', request: () => ({ resourceType: () => 'image' }) });
+  const softwarePage = { evaluate: async () => ({ renderer: 'ANGLE (Google SwiftShader)', vendor: 'Google' }), on: () => {} };
+  events.page(softwarePage);
+  await assert.rejects(softwarePage.evaluate(() => 42), /A4_RENDERER/);
   await owned.close();
   assert.equal(serverClosed, true);
   assert.equal(log.filter(row => row.kind === 'console-noise').length, 1);

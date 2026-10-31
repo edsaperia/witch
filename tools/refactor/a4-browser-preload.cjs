@@ -7,7 +7,9 @@ const record = value => fs.appendFileSync(process.env.A4_BROWSER_LOG, JSON.strin
 const launchServer = pw.chromium.launchServer.bind(pw.chromium);
 pw.chromium.launch = async options => {
   // launchServer creates a new temporary profile; no persistent context or Ed profile.
-  const server = await launchServer({ ...options, headless: true, executablePath: process.env.A4_CHROME });
+  const args = (options?.args ?? []).filter(arg => !arg.startsWith('--use-angle=') && !arg.startsWith('--use-gl=') && arg !== '--enable-unsafe-swiftshader');
+  args.push('--use-gl=angle', '--use-angle=d3d11');
+  const server = await launchServer({ ...options, args, headless: true, executablePath: process.env.A4_CHROME });
   const profileArg = server.process().spawnargs?.find(arg => arg.startsWith('--user-data-dir='));
   record({ kind: 'own-browser', pid: server.process().pid, profile: profileArg?.slice('--user-data-dir='.length) ?? null });
   const browser = await pw.chromium.connect(server.wsEndpoint());
@@ -18,8 +20,25 @@ pw.chromium.launch = async options => {
     await context.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }));
     context.on('page', page => {
       const evaluate = page.evaluate.bind(page);
+      let rendererVerified = false;
       page.evaluate = async (fn, arg) => {
+        if (!rendererVerified) {
+          const gpu = await evaluate(() => {
+            const gl = window.witch?.view?.renderer?.getContext(); if (!gl) return null;
+            const info = gl.getExtension('WEBGL_debug_renderer_info');
+            return { renderer: String(gl.getParameter(info ? info.UNMASKED_RENDERER_WEBGL : gl.RENDERER)), vendor: String(gl.getParameter(info ? info.UNMASKED_VENDOR_WEBGL : gl.VENDOR)) };
+          });
+          if (gpu) {
+            record({ kind: 'actual-renderer', ...gpu });
+            if (!/intel/i.test(gpu.renderer) || !/d3d11|direct3d11/i.test(gpu.renderer) || /swiftshader|llvmpipe|software|basic render/i.test(gpu.renderer)) {
+              record({ kind: 'stop', reason: 'renderer_not_intel_d3d11' });
+              throw Error('A4_RENDERER: Intel D3D11 not proven; software is not a hardware pass');
+            }
+            rendererVerified = true;
+          }
+        }
         const measuring = arg?.timed === true && Number.isInteger(arg.n) && typeof arg.DT === 'number';
+        if (measuring && !rendererVerified) { record({ kind: 'stop', reason: 'renderer_unverified' }); throw Error('A4_RENDERER: unavailable before measurement'); }
         if (!measuring) return evaluate(fn, arg);
         const before = os.cpus();
         const result = await evaluate(fn, arg);

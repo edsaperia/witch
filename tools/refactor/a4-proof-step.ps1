@@ -53,8 +53,25 @@ public static class A4ProofInput {
   public static uint Idle(uint last) { return unchecked((uint)Environment.TickCount - last); }
   [DllImport("kernel32.dll", SetLastError=true)] public static extern bool GetExitCodeProcess(IntPtr handle, out uint code);
   public static int ExitCode(IntPtr handle) { uint code; if (!GetExitCodeProcess(handle, out code) || code == 259) throw new Exception("Child exit code unavailable"); return unchecked((int)code); }
+  [DllImport("kernel32.dll", SetLastError=true)] public static extern bool GetProcessTimes(IntPtr handle, out long created, out long exited, out long kernel, out long user);
+  public static long Created(IntPtr handle) { long c,e,k,u; if (!GetProcessTimes(handle,out c,out e,out k,out u)) throw new Exception("Process creation identity unavailable"); return c; }
+  public static bool Running(IntPtr handle) { uint code; if (!GetExitCodeProcess(handle,out code)) throw new Exception("Process state unavailable"); return code == 259; }
 }
 '@
+$taskOwnedCreated = [System.Collections.Generic.Dictionary[int,long]]::new()
+function Get-A4LiveProcess {
+  param([int]$TaskProcessId)
+  $taskProcess = Get-Process -Id $TaskProcessId -ErrorAction SilentlyContinue
+  if ($null -eq $taskProcess) { return $null }
+  try {
+    $taskHandle = $taskProcess.Handle
+    if (-not [A4ProofInput]::Running($taskHandle)) { return $null }
+    return @{ process=$taskProcess; created=[A4ProofInput]::Created($taskHandle) }
+  } catch {
+    if ($taskProcess.HasExited) { return $null }
+    throw
+  }
+}
 function Get-A4ExternalBrowsers {
   param([object[]]$TaskProcesses,[System.Collections.Generic.HashSet[int]]$TaskOwned)
   do {
@@ -71,17 +88,29 @@ function Read-A4Guard {
   $taskProcesses = @(Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId,Name)
   if ($taskProcesses.Count -eq 0) { throw 'Process inventory unavailable.' }
   $taskExternal = @(Get-A4ExternalBrowsers -TaskProcesses $taskProcesses -TaskOwned $taskOwned)
+  foreach ($taskOwnId in @($taskOwned)) {
+    if (-not $taskOwnedCreated.ContainsKey($taskOwnId)) {
+      $taskLive = Get-A4LiveProcess -TaskProcessId $taskOwnId
+      if ($null -ne $taskLive) { $taskOwnedCreated[$taskOwnId]=$taskLive.created }
+    }
+  }
   # Store only the guard outcome. Do not publish process inventories or window data.
   return @{at=[DateTime]::UtcNow.ToString('o');lastInputTick=$taskLastTick;idleMs=$taskIdle;externalBrowserCount=$taskExternal.Count;ownedProcessCount=$taskOwned.Count}
 }
 function Stop-A4Owned {
   # The root PID is the only kill target; /T includes this step's descendants.
-  if ($null -ne $taskChild -and -not $taskChild.HasExited) { & taskkill.exe /PID $taskChild.Id /T /F 2>&1 | Out-Null }
+  if ($null -ne $taskChild -and [A4ProofInput]::Running($taskChildHandle)) {
+    # An already exiting child may disappear between the native state read and
+    # taskkill. Verify remaining owned identities below; not-found is not a leak.
+    $taskOldPreference=$ErrorActionPreference; $ErrorActionPreference='Continue'
+    & taskkill.exe /PID $taskChild.Id /T /F 2>&1 | Out-Null
+    $ErrorActionPreference=$taskOldPreference
+  }
   # Also clean descendants observed before a parent exited, never other processes.
   foreach ($taskOwnedPid in @($taskOwned)) {
     if ($taskOwnedPid -eq $PID) { continue }
-    $taskProc = Get-Process -Id $taskOwnedPid -ErrorAction SilentlyContinue
-    if ($null -ne $taskProc -and $taskProc.StartTime.ToUniversalTime() -ge $taskStarted) { Stop-Process -Id $taskOwnedPid -Force -ErrorAction SilentlyContinue }
+    $taskLive = Get-A4LiveProcess -TaskProcessId $taskOwnedPid
+    if ($null -ne $taskLive -and $taskOwnedCreated.ContainsKey($taskOwnedPid) -and $taskLive.created -eq $taskOwnedCreated[$taskOwnedPid]) { Stop-Process -InputObject $taskLive.process -Force -ErrorAction SilentlyContinue }
   }
 }
 $taskStarted = [DateTime]::UtcNow
@@ -95,7 +124,7 @@ try {
   $taskCpuJs = "const os=require('node:os'),a=os.cpus();setTimeout(()=>{let i=0,t=0;os.cpus().forEach((c,n)=>{i+=c.times.idle-a[n].times.idle;for(const k in c.times)t+=c.times[k]-a[n].times[k]});console.log(t>0?100*(1-i/t):-1)},1000)"
   $taskCpu = [double]((& node -e $taskCpuJs).Trim())
   $taskReport.preflightCpuPercent = $taskCpu
-  if ($taskCpu -lt 0 -or $taskCpu -ge 70) { $taskReport.cpuStop=$true; throw 'cpu_prelaunch' }
+  if ([double]::IsNaN($taskCpu) -or [double]::IsInfinity($taskCpu) -or $taskCpu -lt 0 -or $taskCpu -ge 70) { $taskReport.cpuStop=$true; throw 'cpu_prelaunch' }
   if ($Step -eq 'bench-quick') {
     $taskVersion = Get-Content -Raw -LiteralPath (Join-Path $taskRoot 'dist/version.json') | ConvertFrom-Json
     if ($taskVersion.version -notlike "*$($ExpectedSha.Substring(0,7))*") { throw 'bench_dist_source_identity_mismatch' }
@@ -112,19 +141,27 @@ try {
   $taskLaunch = [System.Diagnostics.Stopwatch]::StartNew()
   $env:WITCH_SHA = $ExpectedSha
   $taskChild = Start-Process -FilePath $env:ComSpec -ArgumentList @('/d','/s','/c',$taskCommands[$Step]) -WorkingDirectory $taskRoot -WindowStyle Hidden -PassThru -RedirectStandardOutput "$taskPrefix.stdout.txt" -RedirectStandardError "$taskPrefix.stderr.txt"
-  $taskChildHandle = $taskChild.Handle
-  $taskReport.childPid = $taskChild.Id
-  $taskReport.supervisorSha256 = (Get-FileHash -LiteralPath $PSCommandPath -Algorithm SHA256).Hash.ToLowerInvariant()
   [void]$taskOwned.Add($taskChild.Id)
+  $taskChildHandle = $taskChild.Handle
+  $taskOwnedCreated[$taskChild.Id] = [A4ProofInput]::Created($taskChildHandle)
+  $taskReport.childPid = $taskChild.Id
+  $taskHashAlgorithm = [Security.Cryptography.SHA256]::Create()
+  try { $taskReport.supervisorSha256 = ([BitConverter]::ToString($taskHashAlgorithm.ComputeHash([IO.File]::ReadAllBytes($PSCommandPath)))).Replace('-','').ToLowerInvariant() } finally { $taskHashAlgorithm.Dispose() }
   # Independent of this loop/CIM: terminate only this exact child's tree at 265 s,
   # leaving a safety margin under the canonical 270 s hard ceiling. A start-time
   # check prevents an exited child's recycled PID from becoming a kill target.
-  $taskChildTicks = $taskChild.StartTime.ToUniversalTime().Ticks
+  $taskChildTicks = [A4ProofInput]::Created($taskChildHandle)
   $taskMarker = ("$taskPrefix.watchdog").Replace("'", "''")
-  $taskWatchCode = "Start-Sleep -Seconds 265; `$taskTarget = Get-Process -Id $($taskChild.Id) -ErrorAction SilentlyContinue; if (`$null -ne `$taskTarget -and `$taskTarget.StartTime.ToUniversalTime().Ticks -eq $taskChildTicks) { [IO.File]::WriteAllText('$taskMarker','watchdog_265s'); & taskkill.exe /PID $($taskChild.Id) /T /F | Out-Null }"
+  $taskWatchCode = @"
+Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public static class A4Watch { [DllImport("kernel32.dll")] public static extern bool GetProcessTimes(IntPtr h,out long c,out long e,out long k,out long u); public static long Created(IntPtr h){long c,e,k,u;if(!GetProcessTimes(h,out c,out e,out k,out u))throw new Exception("identity unavailable");return c;} }'
+Start-Sleep -Seconds 265
+`$taskTarget = Get-Process -Id $($taskChild.Id) -ErrorAction SilentlyContinue
+if (`$null -ne `$taskTarget) { try { if ([A4Watch]::Created(`$taskTarget.Handle) -eq $taskChildTicks) { [IO.File]::WriteAllText('$taskMarker','watchdog_265s'); & taskkill.exe /PID $($taskChild.Id) /T /F | Out-Null } } catch {} }
+"@
   $taskEncoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($taskWatchCode))
   $taskWatchdog = Start-Process -FilePath 'powershell.exe' -ArgumentList @('-NoProfile','-NonInteractive','-EncodedCommand',$taskEncoded) -WindowStyle Hidden -PassThru
   [void]$taskOwned.Add($taskWatchdog.Id)
+  $taskOwnedCreated[$taskWatchdog.Id] = [A4ProofInput]::Created($taskWatchdog.Handle)
   $taskReport.status = 'running'
   while (-not $taskChild.HasExited) {
     if ($taskLaunch.ElapsedMilliseconds -ge 270000) { $taskReport.watchdogStop=$true; throw 'watchdog_270s' }
@@ -147,7 +184,9 @@ try {
 } catch {
   $taskReport.status = 'stopped'
   $taskReport.stopReason = $_.Exception.Message
+  $taskReport.stopDetails = $_.ScriptStackTrace
 } finally {
+  try {
   Stop-A4Owned
   $taskReport.temporaryProfilesClean = $true
   if (Test-Path -LiteralPath "$taskPrefix.browser.jsonl") {
@@ -161,13 +200,23 @@ try {
       if (Test-Path -LiteralPath $taskResolvedProfile) { $taskReport.temporaryProfilesClean=$false }
     }
   }
+  $taskRemaining = @($taskOwned | Where-Object { $_ -ne $PID } | ForEach-Object {
+    $taskLive=Get-A4LiveProcess -TaskProcessId $_
+    if ($null -ne $taskLive -and (-not $taskOwnedCreated.ContainsKey($_) -or $taskLive.created -eq $taskOwnedCreated[$_])) { $_ }
+  })
+  $taskReport.processTreeClean = ($taskRemaining.Count -eq 0)
+  if (-not $taskReport.processTreeClean -or -not $taskReport.temporaryProfilesClean) { $taskReport.status='stopped'; if (-not $taskReport.stopReason) { $taskReport.stopReason='cleanup_unverified' } }
+  } catch {
+    $taskReport.processTreeClean = $false
+    $taskReport.status = 'stopped'
+    $taskReport.cleanupError = $_.Exception.Message
+    if (-not $taskReport.stopReason) { $taskReport.stopReason = 'cleanup_error' }
+  }
   $env:WITCH_SHA = $taskOriginalWitchSha
   $env:NODE_PATH = $taskOriginalNodePath
   $env:NODE_OPTIONS = $taskOriginalNodeOptions
   $env:A4_CHROME = $taskOriginalChrome
   $env:A4_BROWSER_LOG = $taskOriginalBrowserLog
-  $taskRemaining = @($taskOwned | Where-Object { $_ -ne $PID } | ForEach-Object { Get-Process -Id $_ -ErrorAction SilentlyContinue } | Where-Object { $_.StartTime.ToUniversalTime() -ge $taskStarted })
-  $taskReport.processTreeClean = ($taskRemaining.Count -eq 0)
   $taskReport.finished = [DateTime]::UtcNow.ToString('o')
   $taskReport.ownedPids = @($taskOwned | Sort-Object)
   $taskReport | ConvertTo-Json -Depth 6 | Out-File -LiteralPath "$taskPrefix.json" -Encoding utf8
