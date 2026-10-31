@@ -443,10 +443,17 @@ async function main() {
     await page.keyboard.press("Enter");
     const drawn = () => page.evaluate(() => { const L = window.witch.view.ley, c = L.chain, k = L.current, at = i => c[i]?.cell.join(","); return { visible: L.meshes[0].visible, links: c.length - 1, areas: window.witch.game.map.cells.length, current: k, tris: (L.meshes[0].geometry.index?.count ?? 0) / 3, here: at(k), next: at(k + 1), after: at(k + 2), stones: c.map(s => s.cell.join(",")), cues: window.witch.view.nextStones.length, after2: "afterNextStones" in window.witch.view, waking: window.witch.game.party.next.length }; });
     await page.waitForFunction(() => window.witch.view.ley.chain.length > 1, null, { timeout: 300000, polling: 200 });
+    const before = await drawn();
+    check(!before.visible && before.current === 0 && before.links === before.areas - 1 && before.tris > 20 * before.links,
+      `before the party, the ley line is not visible but its chain is built (${before.links} sections for ${before.areas} areas, ${before.tris} triangles)`);
+    // Enter after play begins casts the party spell; KeyN below still advances the same real waves.
+    await page.evaluate(() => { const g = window.witch.game; g.witch = { ...g.witch, seated: false }; });
+    await page.waitForFunction(() => window.witch.game.clock.time > 0.3, null, { timeout: 120000, polling: 200 });
+    await page.keyboard.press("Enter");
+    await page.waitForFunction(() => window.witch.game.party.spellAt !== null && window.witch.view.ley.meshes[0].visible, null, { timeout: 120000, polling: 200 });
     const a = await drawn();
     check(a.visible && a.current === 0 && a.links === a.areas - 1 && a.tris > 20 * a.links, `the ley line is drawn from home through every area (${a.links} sections for ${a.areas} areas), the last reached at ${a.current} (${a.tris} triangles)`);
     check(a.cues <= Math.max(1, a.waking) && !a.after2, `only the next stone has a HUD indicator (${a.cues} for the ${a.waking} waking next${a.after2 ? "; an after-next one is still there" : ""})`);
-    await page.evaluate(() => { const g = window.witch.game; g.witch = { ...g.witch, seated: false }; });
     await sleep(2500);
     await shot(page, "62-ley-ground.png");
     for (let i = 0; i < 2; i++) { await page.keyboard.press("KeyN"); await sleep(600); }
