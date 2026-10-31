@@ -17,7 +17,8 @@ import type { Controls, Game, Witch } from "./game";
 import { castPartySpell } from "./party";
 import { recordTempo } from "./beat";
 import { deckOf } from "./treehouse";
-import { HOUSE_ROOMS, objectAt, objectWorld } from "./houseRooms";
+import { floorHats, hatSlots, HOUSE_ROOMS, objectAt, objectWorld, reserveHatPoints } from "./houseRooms";
+import { placementFacing } from "./housePlacement";
 import { bedside } from "./opening";
 import { pileOut, PILE_SLOTS, type PileSlot } from "./clothesPile";
 
@@ -72,7 +73,8 @@ export interface WakeStart { dreaming?: boolean; mirrored?: boolean; yesterday?:
 export function startWake(g: Game, ht: number, { dreaming = false, mirrored = false, yesterday = false }: WakeStart = {}, W: Witch = g.witches[0]): boolean {
   const at = inBed(g);
   if (!at || !HOUSE_ROOMS.rooms.some(q => q.id === bedRoom())) return false;
-  W.body = { ...W.body, x: at.x, z: at.z, vx: 0, vz: 0, seated: false, perch: true, mode: "ground", lift: 0, facing: 1, away: false, heading: "side" };
+  const bed = HOUSE_ROOMS.objects.find(o => o.use.kind === "bed"), placement = bed?.placement;
+  W.body = { ...W.body, x: at.x, z: at.z, vx: 0, vz: 0, seated: false, perch: true, mode: "ground", lift: 0, ...placementFacing(placement ? placement.rotation - placement.baseRotation : 0) };
   const wake: WakeState = { beat: dreaming ? "dream" : "alarm", at: ht, snoozes: 0, open: false, mirror: mirrored, events: [], pile: [...PILE_SLOTS], ...(yesterday ? { yesterday } : {}) };
   if (W === g.witches[0]) g.wake = wake; else W.wake = wake;
   if (!yesterday) hatOnFloor(g, ht, W);
@@ -85,8 +87,10 @@ export function startWake(g: Game, ht: number, { dreaming = false, mirrored = fa
 function hatOnFloor(g: Game, ht: number, W: Witch): void {
   const o = HOUSE_ROOMS.objects.find(q => q.use.kind === "hats");
   if (!o || !W.hat.has) return;
-  const p = objectWorld(o, g.map.treehouse);
+  const slots = HOUSE_ROOMS.layout ? hatSlots(g.map.treehouse) : [], hats = slots.length ? floorHats(W) : [];
+  const free = hats.findIndex(id => !id), p = free >= 0 ? slots[free] : objectWorld(o, g.map.treehouse);
   W.hat.down = { x: p.x, z: p.z, at: ht }; delete W.hat.hold;
+  reserveHatPoints(W, g.map.treehouse);
 }
 
 /** The dream's over (the page's: it played to its end, or a key was pressed while the next island was still being made): her
@@ -160,7 +164,7 @@ export function startParty(g: Game, bpm: number, W: Witch = g.witches[0]): boole
   const wake = wakeOf(g, W);
   if (!wake?.open || g.party.spellAt !== null || !atDecks(g, W)) return false;
   const d = deckOf(g.map, g.tuning)!;
-  W.body = { ...W.body, x: d.seat.x, z: d.seat.z, vx: 0, vz: 0, seated: true, facing: 1, away: false, heading: "side" };
+  W.body = { ...W.body, x: d.seat.x, z: d.seat.z, vx: 0, vz: 0, seated: true, ...placementFacing(HOUSE_ROOMS.terrace.decks.rotation ?? 0) };
   recordTempo(g.beat, g.tuning, bpm, g.clock.time);
   castPartySpell(g.party, g.map, g.clock.time);
   wake.events.push("decks");

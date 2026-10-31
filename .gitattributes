@@ -1,0 +1,2 @@
+# Preserve Ed's supplied v1 layout evidence byte-for-byte, including its original line endings.
+docs/evidence/treehouse-layout-ed-2026-10-31.v1.json -text whitespace=cr-at-eol

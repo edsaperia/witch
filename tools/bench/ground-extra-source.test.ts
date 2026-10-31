@@ -42,14 +42,16 @@ it('retains exact active fragment tokens when all extras are present, plain/beac
 });
 
 it('all256 extra combinations keep balanced scope; the empty set removes the costly feature bodies', () => {
-  for (let mask = 0; mask < 256; mask++) for (const potion of [false, true]) {
+  for (let mask = 0; mask < 256; mask++) for (const potion of [false, true]) for (const thermal of [false, true]) {
     const selected = GROUND_EXTRAS.filter((_, i) => mask & (1 << i)), defines = groundDefines('full-lakes', true, selected);
     if (potion) defines.POTION_SKY = '';
+    if (thermal) defines.THERMAL_VISION = '';
     const text = active(current, defines);
     let depth = 0, low = 0; for (const c of text) { if (c === '{') depth++; if (c === '}') depth--; low = Math.min(low, depth); } expect(low).toBe(0); expect(depth).toBe(0);
     expect(text.match(/voidmain\(\)/g)).toHaveLength(1);
     expect(text.includes('uniformfloatuPotionSky;')).toBe(potion);
-    expect(text.includes('voidfloorMain()')).toBe(potion);
+    expect(text.includes('voidfloorMain()')).toBe(potion || thermal);
+    expect(text.includes('thermalCold(gl_FragColor.rgb)')).toBe(thermal);
   }
   const empty = active(current, groundDefines('full-lakes', false, []));
   expect(empty).not.toContain('uKoi[i]'); expect(empty).not.toContain('uLegendRings[i]'); expect(empty).not.toContain('texture2D(uDiscoBase');

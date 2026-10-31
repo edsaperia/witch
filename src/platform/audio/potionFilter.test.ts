@@ -3,7 +3,8 @@ import type { Game } from '../../rules/game';
 import { POTION_RECIPES } from '../../rules/potionRecipes';
 import { resetPotionSettings, setPotionSetting } from '../../rules/potionSettings';
 import { PotionFilter, potionFilterState } from './potionFilter';
-const game=(id:number,time=0)=>({clock:{time},witches:[{id:0}],mushrooms:{trips:{0:{key:POTION_RECIPES.find(r=>r.id===id)!.key,at:0,until:600}}}} as unknown as Game);
+import { newBeatClock } from '../../rules/beat';
+const game=(id:number,time=0)=>({clock:{time},beat:newBeatClock(120),witches:[{id:0}],mushrooms:{trips:{0:{key:POTION_RECIPES.find(r=>r.id===id)!.key,at:0,until:600}}}} as unknown as Game);
 afterEach(()=>resetPotionSettings());
 it('covers every recipe with the fallback except the two explicitly bespoke vision effects',()=>{
   for(const r of POTION_RECIPES) expect(potionFilterState(game(r.id)).amount).toBe(['night-vision','heat-vision'].includes(r.effect)?0:1);
