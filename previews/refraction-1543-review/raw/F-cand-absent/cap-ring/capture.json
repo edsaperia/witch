@@ -1,0 +1,57 @@
+{
+  "expectedSha": "b21a00ac528779dbf838c13bb3ec12fa88b927a0",
+  "served": {
+    "version": "dev · b21a00a",
+    "built": "2026-10-31T15:55:55.092Z"
+  },
+  "kind": "ring",
+  "manual": true,
+  "time": 0.7166666666666672,
+  "enabled": false,
+  "key": {
+    "build": "dev · b21a00a",
+    "seed": 123,
+    "world": 0,
+    "island": "home",
+    "scene": "wave 0 · house",
+    "spot": "play",
+    "viewport": "960x540",
+    "pixelScale": "3 @1 (canvas 320x180)",
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "machine": "Chrome 153 Linux · 4 cores · 16 GB",
+    "knobs": {
+      "spells.hats": "",
+      "spells.bag": "satchel",
+      "?creator": "0"
+    }
+  },
+  "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "forms": {
+    "count": 1,
+    "shapes": [
+      [
+        0.5038502544184638,
+        0.502170697399463,
+        0.47180344548289543,
+        0.8748672392793858
+      ]
+    ],
+    "states": [
+      [
+        0.9647023072809786,
+        1,
+        0.30769230769230865,
+        2
+      ]
+    ],
+    "clock": 0.7166666666666672,
+    "potion": {
+      "wobble": 0,
+      "canopy": 0,
+      "time": 0.7166666666666672
+    }
+  },
+  "offPngByteIdentity": true,
+  "onPngDiffers": true,
+  "limitation": "Capture only: no GPU timing, allocation/memory measurement or automatic foreground acceptance. PNG byte comparisons are not pixel-diff counts. Caller verifies full CI source SHA and scene comparability."
+}

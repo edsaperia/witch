@@ -1,0 +1,9 @@
+[F-cand-absent 16:13:52] load s 73.077
+[F-cand-absent 16:16:13] start {"t":0.49999999999999994,"spellAt":null,"x":3172.43871836629,"z":2793.326777190793,"enabled":false,"count":0,"states":[],"shapes":[],"wobble":0,"canopy":0,"version":null,"stableBytes":true,"wallS":7.198}
+[F-cand-absent 16:16:22] ring {"t":0.7166666666666672,"spellAt":0.5166666666666666,"x":3172.43871836629,"z":2793.326777190793,"enabled":false,"count":0,"states":[],"shapes":[],"wobble":0,"canopy":0,"version":null,"stableBytes":true,"wallS":6.623}
+[F-cand-absent 16:16:26] capture cap-ring ok
+[F-cand-absent 16:16:42] fire {"t":1.7166666666666655,"spellAt":0.5166666666666666,"x":3474.6628333919816,"z":2295.47937001044,"enabled":false,"count":0,"states":[],"shapes":[],"wobble":0,"canopy":0,"version":null,"stableBytes":false,"wallS":4.245}
+[F-cand-absent 16:16:44] capture cap-fire ok
+[F-cand-absent 16:16:47] combined {"t":2.2166666666666637,"spellAt":0.5166666666666666,"x":3475.350718014156,"z":2295.6356750969185,"enabled":false,"count":0,"states":[],"shapes":[],"wobble":1,"canopy":1,"version":null,"stableBytes":false,"wallS":2.812}
+[F-cand-absent 16:16:48] capture cap-combined ok
+[F-cand-absent 16:16:48] errors 0 

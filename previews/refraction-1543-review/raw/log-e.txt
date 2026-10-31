@@ -1,0 +1,6 @@
+[cand-ref0-rerun 16:10:08] load s 49.191
+[cand-ref0-rerun 16:11:35] start {"t":0.49999999999999994,"spellAt":null,"x":3172.43871836629,"z":2793.326777190793,"enabled":false,"count":0,"states":[],"shapes":[],"wobble":0,"canopy":0,"version":null,"stableBytes":true,"wallS":3.438}
+[cand-ref0-rerun 16:11:41] ring {"t":0.7166666666666672,"spellAt":0.5166666666666666,"x":3172.43871836629,"z":2793.326777190793,"enabled":false,"count":0,"states":[],"shapes":[],"wobble":0,"canopy":0,"version":null,"stableBytes":false,"wallS":5.107}
+[cand-ref0-rerun 16:11:53] fire {"t":1.7166666666666655,"spellAt":0.5166666666666666,"x":3474.6628333919816,"z":2295.47937001044,"enabled":false,"count":0,"states":[],"shapes":[],"wobble":0,"canopy":0,"version":null,"stableBytes":false,"wallS":3.08}
+[cand-ref0-rerun 16:11:58] combined {"t":2.2166666666666637,"spellAt":0.5166666666666666,"x":3475.350718014156,"z":2295.6356750969185,"enabled":false,"count":0,"states":[],"shapes":[],"wobble":1,"canopy":1,"version":null,"stableBytes":false,"wallS":4.395}
+[cand-ref0-rerun 16:11:58] errors 0 

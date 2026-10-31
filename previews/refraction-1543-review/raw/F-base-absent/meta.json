@@ -1,0 +1,68 @@
+{
+ "label": "F-base-absent",
+ "url": "http://127.0.0.1:8702/?creator=0&seed=123&spell=wait",
+ "loadS": 62.421,
+ "scenes": {
+  "start": {
+   "t": 0.49999999999999994,
+   "spellAt": null,
+   "x": 3172.43871836629,
+   "z": 2793.326777190793,
+   "states": null,
+   "shapes": null,
+   "wobble": 0,
+   "canopy": 0,
+   "version": null,
+   "stableBytes": true,
+   "wallS": 7.545
+  },
+  "ring": {
+   "t": 0.7166666666666672,
+   "spellAt": 0.5166666666666666,
+   "x": 3172.43871836629,
+   "z": 2793.326777190793,
+   "states": null,
+   "shapes": null,
+   "wobble": 0,
+   "canopy": 0,
+   "version": null,
+   "stableBytes": true,
+   "wallS": 7.865
+  },
+  "fire": {
+   "t": 1.7166666666666655,
+   "spellAt": 0.5166666666666666,
+   "x": 3474.6628333919816,
+   "z": 2295.47937001044,
+   "states": null,
+   "shapes": null,
+   "wobble": 0,
+   "canopy": 0,
+   "version": null,
+   "stableBytes": false,
+   "wallS": 3.859
+  },
+  "combined": {
+   "t": 2.2166666666666637,
+   "spellAt": 0.5166666666666666,
+   "x": 3475.350718014156,
+   "z": 2295.6356750969185,
+   "states": null,
+   "shapes": null,
+   "wobble": 1,
+   "canopy": 1,
+   "version": null,
+   "stableBytes": false,
+   "wallS": 4.706
+  }
+ },
+ "castFrames": {
+  "t": 0.7166666666666672,
+  "drawn": 3
+ },
+ "fire": {
+  "x": 3472.798738082701,
+  "z": 2292.1735112566575
+ },
+ "errors": []
+}

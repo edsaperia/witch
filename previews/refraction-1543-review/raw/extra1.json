@@ -1,0 +1,61 @@
+{
+ "ref1-start_vs_absent": {
+  "w": 960,
+  "h": 540,
+  "differing": 325688,
+  "pct": 62.8256,
+  "maxChannel": 234,
+  "meanAbs": 14.41727,
+  "bounds": [
+   0,
+   0,
+   871,
+   538
+  ],
+  "blackPctA": 6.04,
+  "blackPctB": 5.86
+ },
+ "ref1-start_vs_base": {
+  "w": 960,
+  "h": 540,
+  "differing": 326039,
+  "pct": 62.8933,
+  "maxChannel": 234,
+  "meanAbs": 14.45542,
+  "bounds": [
+   0,
+   0,
+   949,
+   538
+  ],
+  "blackPctA": 6.04,
+  "blackPctB": 5.86
+ },
+ "ref1-start_vs_ref0": {
+  "w": 960,
+  "h": 540,
+  "differing": 0,
+  "pct": 0,
+  "maxChannel": 0,
+  "meanAbs": 0,
+  "bounds": null,
+  "blackPctA": 6.04,
+  "blackPctB": 6.04
+ },
+ "capring-off_vs_ref1-ring": {
+  "w": 960,
+  "h": 540,
+  "differing": 35157,
+  "pct": 6.7818,
+  "maxChannel": 171,
+  "meanAbs": 0.79097,
+  "bounds": [
+   323,
+   2,
+   958,
+   438
+  ],
+  "blackPctA": 6.45,
+  "blackPctB": 6.45
+ }
+}

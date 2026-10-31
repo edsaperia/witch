@@ -1,0 +1,6 @@
+[base-absent 16:04:58] load s 102.182
+[base-absent 16:08:03] start {"t":0.49999999999999994,"spellAt":null,"x":3172.43871836629,"z":2793.326777190793,"states":null,"shapes":null,"wobble":0,"canopy":0,"version":null,"stableBytes":false,"wallS":8.461}
+[base-absent 16:08:16] ring {"t":0.7166666666666672,"spellAt":0.5166666666666666,"x":3172.43871836629,"z":2793.326777190793,"states":null,"shapes":null,"wobble":0,"canopy":0,"version":null,"stableBytes":false,"wallS":11.588}
+[base-absent 16:08:34] fire {"t":1.7166666666666655,"spellAt":0.5166666666666666,"x":3474.6628333919816,"z":2295.47937001044,"states":null,"shapes":null,"wobble":0,"canopy":0,"version":null,"stableBytes":false,"wallS":2.647}
+[base-absent 16:08:37] combined {"t":2.2166666666666637,"spellAt":0.5166666666666666,"x":3475.350718014156,"z":2295.6356750969185,"states":null,"shapes":null,"wobble":1,"canopy":1,"version":null,"stableBytes":false,"wallS":2.722}
+[base-absent 16:08:37] errors 0 

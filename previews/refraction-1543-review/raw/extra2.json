@@ -1,0 +1,131 @@
+{
+ "start:ref0rerun_vs_ref0": {
+  "w": 960,
+  "h": 540,
+  "differing": 325688,
+  "pct": 62.8256,
+  "maxChannel": 234,
+  "meanAbs": 14.41727,
+  "bounds": [
+   0,
+   0,
+   871,
+   538
+  ],
+  "blackPctA": 5.86,
+  "blackPctB": 6.04
+ },
+ "start:ref0rerun_vs_absent": {
+  "w": 960,
+  "h": 540,
+  "differing": 0,
+  "pct": 0,
+  "maxChannel": 0,
+  "meanAbs": 0,
+  "bounds": null,
+  "blackPctA": 5.86,
+  "blackPctB": 5.86
+ },
+ "start:baseRef1_vs_candRef0": {
+  "w": 960,
+  "h": 540,
+  "differing": 326039,
+  "pct": 62.8933,
+  "maxChannel": 234,
+  "meanAbs": 14.45542,
+  "bounds": [
+   0,
+   0,
+   949,
+   538
+  ],
+  "blackPctA": 5.86,
+  "blackPctB": 6.04
+ },
+ "start:baseRef1_vs_baseAbsent": {
+  "w": 960,
+  "h": 540,
+  "differing": 0,
+  "pct": 0,
+  "maxChannel": 0,
+  "meanAbs": 0,
+  "bounds": null,
+  "blackPctA": 5.86,
+  "blackPctB": 5.86
+ },
+ "ring:baseRef1_vs_candRef0": {
+  "w": 960,
+  "h": 540,
+  "differing": 338697,
+  "pct": 65.3351,
+  "maxChannel": 233,
+  "meanAbs": 8.40051,
+  "bounds": [
+   0,
+   2,
+   958,
+   539
+  ],
+  "blackPctA": 6.36,
+  "blackPctB": 6.41
+ },
+ "ring:ref0rerun_vs_ref0": {
+  "w": 960,
+  "h": 540,
+  "differing": 343062,
+  "pct": 66.1771,
+  "maxChannel": 233,
+  "meanAbs": 8.64075,
+  "bounds": [
+   0,
+   2,
+   958,
+   539
+  ],
+  "blackPctA": 6.36,
+  "blackPctB": 6.41
+ },
+ "fire:baseRef1_vs_candRef0": {
+  "w": 960,
+  "h": 540,
+  "differing": 410,
+  "pct": 0.0791,
+  "maxChannel": 165,
+  "meanAbs": 0.02961,
+  "bounds": [
+   900,
+   518,
+   949,
+   528
+  ],
+  "blackPctA": 6.8,
+  "blackPctB": 6.81
+ },
+ "combined:baseRef1_vs_candRef0": {
+  "w": 960,
+  "h": 540,
+  "differing": 407,
+  "pct": 0.0785,
+  "maxChannel": 168,
+  "meanAbs": 0.0346,
+  "bounds": [
+   900,
+   518,
+   949,
+   528
+  ],
+  "blackPctA": 14.61,
+  "blackPctB": 14.61
+ },
+ "fire:ref0rerun_vs_absent": {
+  "w": 960,
+  "h": 540,
+  "differing": 0,
+  "pct": 0,
+  "maxChannel": 0,
+  "meanAbs": 0,
+  "bounds": null,
+  "blackPctA": 6.81,
+  "blackPctB": 6.81
+ }
+}
