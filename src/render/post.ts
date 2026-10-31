@@ -9,7 +9,7 @@ import * as THREE from "three";
 import { gradeInto, moodOf } from "./mood";
 import { runSync, type Steps } from "./slices";
 import { hsv2rgb } from "../../art/generator.js";
-import { potionBloom, potionLevels, miniatureTilt } from "./potionEffects";
+import { potionBloom, potionLevels, miniatureTilt, hueRotation } from "./potionEffects";
 import { potionSettings } from "../rules/potionSettings";
 
 /** The camera layer the house's own meshes are on as well as the scene's (its rooms, the Ent's art, her): drawn alone behind the
@@ -59,6 +59,7 @@ const POOL_SPARE = 0.8;
 const COMPOSITE = /* glsl */ `
 uniform vec4 uPotionStyle; // saturation boost, edges, edge threshold, edge upper threshold
 uniform float uPotionBackground, uPotionTime;
+uniform vec4 uPotionHue; // cyclic RGB rotation coefficients, blend strength
 uniform vec4 uPotionWobble; // amplitude in art pixels, speed, wave size, edge reach
 uniform sampler2D uScene, uBloom, uFx; uniform vec2 uLow; uniform float uBloomStrength, uBlack, uGamma, uFxOn, uKoDim, uBroken, uPotionFade; uniform vec4 uGrade, uPool, uIris, uIris2; uniform vec3 uGradeTint; varying vec2 vUv;
 float edgeLuma(vec2 p) { return dot(texture2D(uScene, p).rgb, vec3(0.3, 0.55, 0.15)); }
@@ -114,6 +115,10 @@ void main() {
     float edge = potionEdge(p);
     vec3 tint = 0.25 + 0.75 * (0.5 + 0.5 * cos(vec3(0.0, 2.1, 4.2) + (vUv.x + vUv.y) * 7.0));
     c = mix(c, c * uPotionBackground + tint * edge, uPotionStyle.y);
+  }
+  if (uPotionHue.w > 0.0) {
+    vec3 spun = vec3(dot(c, uPotionHue.xyz), dot(c, uPotionHue.zxy), dot(c, uPotionHue.yzx));
+    c = mix(c, max(vec3(0.0), spun), uPotionHue.w);
   }
   // Knocked down with her hat on (Ed, 2026-10-07): the rest of the screen dims, her spot and her hat floating down left lit
   // (round her light's pool, uPool, and well above it, where the hat starts).
@@ -205,6 +210,7 @@ export class Post {
     this.mats.composite.uniforms.uPotionFade = { value: 0 };
     this.mats.composite.uniforms.uPotionStyle = { value: new THREE.Vector4() };
     this.mats.composite.uniforms.uPotionBackground = { value: .035 };
+    this.mats.composite.uniforms.uPotionHue = { value: new THREE.Vector4(1, 0, 0, 0) };
     this.mats.composite.uniforms.uPotionTime = { value: 0 };
     this.mats.composite.uniforms.uPotionWobble = { value: new THREE.Vector4() };
     this.quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.mats.composite);
@@ -218,6 +224,8 @@ export class Post {
   potionCanopy = 0;
   potionVertigo = 0;
   potionMiniature = 0;
+  potionHue = 0;
+  potionHuePhase = 0;
   potionEdges = 0;
   potionWobble = 0;
   potionTime = 0;
@@ -359,6 +367,8 @@ export class Post {
       u.uPotionStyle.value.set(levels.saturation - 1, this.potionEdges * edges.strength, edges.edgeLow, edges.edgeHigh);
       u.uPotionBackground.value = edges.background;
       u.uPotionTime.value = this.potionTime;
+      const hue = hueRotation(this.potionHuePhase);
+      u.uPotionHue.value.set(...hue, this.potionHue * potionSettings('hue-spin').strength);
       u.uPotionWobble.value.set(wobble.strength * this.potionWobble, wobble.speed, wobble.waveSize, wobble.reach);
       u.uFx.value = this.fx.texture; u.uFxOn.value = fxOn ? 1 : 0; u.uBroken.value = t.suspects.showBroken ? 1 : 0;
       this.setGrade(u);

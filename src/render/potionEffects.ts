@@ -16,6 +16,12 @@ export function miniatureTilt(base: PostTuning['tiltShift'], amount: number): Po
 
 export const tripIndicatorStrength = (g: Game): number => effectEnvelope(g.mushrooms?.trips[g.witches[0]?.id ?? 0], g.clock.time);
 
+/** Rotation about the neutral RGB axis: greys stay grey; 120 degrees permutes channels. */
+export function hueRotation(phase: number): [number, number, number] {
+  const c = Math.cos(phase), s = Math.sin(phase) / Math.sqrt(3), k = (1 - c) / 3;
+  return [c + k, k - s, k + s];
+}
+
 export function potionStrength(g: Game, effect: string): number {
   const trip = g.mushrooms?.trips[g.witches[0]?.id ?? 0];
   const recipe = trip && potionRecipe(trip.key);

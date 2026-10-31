@@ -1,5 +1,7 @@
 # Sound effects
 
+Hue Spin (recipe 108, PR1541) reuses the shared trip filter from PR1536. Its cutoff and flutter follow the same wake-relative cycle as the screen colours; default cutoff sweeps two octaves above/below the shared centre frequency. `soundDepth` changes the range, and the existing sound mix controls the dry/wet envelope. No additional nodes or sound sources. Pause holds the phase, replacement selects the new treatment, expiry/Stop restores dry sound. Night/Heat Vision remain excluded from the fallback.
+
 Potion audio (Ed, 2026-10-31): every potion alters existing sounds throughout its trip. `platform/audio/potionFilter.ts` supplies a shared dry/filtered bus for music (including legend layers) and SFX, preserving their volume controls. The fallback gently moves a low-pass cutoff and attenuates volume; Miniature removes bass for small-speaker sound. The game clock drives motion and the existing final-two-minute envelope restores the dry path; browser pause suspends the audio context. No new sources or timers. Night Vision and Heat Vision bypass this fallback because PR1531 supplies their bespoke creature-only/pitched treatment; combining must preserve both routes. Offline audio checks/audition remain pending coordinator allocation in PR1536.
 
 **Cauldron plop** (2026-10-31): a short descending bubble tone and filtered splash in `platform/audio/chimes.ts`, played once when each brewing flight lands (`sfxCues.ts` reads the flight's serial). `node tools/sfx/check.mjs potion-plop` renders and checks it offline.

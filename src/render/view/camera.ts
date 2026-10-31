@@ -15,6 +15,7 @@ import { SPRITE_UNIFORMS } from "../sprites";
 import { updateFrustum } from "./culling";
 import { potionBend, potionStrength, potionCamera, vertigoAmount, tripIndicatorStrength } from "../potionEffects";
 import { potionSettings } from "../../rules/potionSettings";
+import { hueSpinPhase } from "../../rules/potionCycle";
 
 /** At a station (camera.station.whole; Ed, 2026-10-29: "the witch right half of the screen, and she should be nicely centred and
  *  visible top of hat to bottom of shoes"): the camera's distance made so she, feet to the top of her hat as drawn (last frame's,
@@ -40,6 +41,8 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
   pose = { ...pose, angle: tripCamera.angle, distance: tripCamera.distance };
   v.post.potionVertigo = vertigo;
   v.post.potionMiniature = potionStrength(g, 'miniature');
+  v.post.potionHue = potionStrength(g, 'hue-spin');
+  v.post.potionHuePhase = v.post.potionHue > 0 ? hueSpinPhase(g) : 0;
   v.post.potionCanopy = potionStrength(g, 'thick-canopy');
   v.post.potionEdges = potionStrength(g, 'aurora-outlines');
   v.post.potionWobble = tripIndicatorStrength(g);

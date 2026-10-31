@@ -1400,7 +1400,7 @@
     "effect": "hue-spin",
     "name": "Hue Spin",
     "description": "Every colour slowly turns into another.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 108
   },
   {

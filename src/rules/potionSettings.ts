@@ -2,6 +2,7 @@
 export interface PotionParameter { key: string; label: string; min: number; max: number; step: number; default: number }
 const p = (key: string, label: string, value: number, min: number, max: number, step = .05): PotionParameter => ({ key, label, default: value, min, max, step });
 export const POTION_PARAMETERS: Record<string, readonly PotionParameter[]> = {
+  'hue-spin': [p('period', 'Colour cycle (game seconds)', 20, 2, 120, 1), p('offset', 'Starting colour rotation (degrees)', 120, 0, 360, 1), p('strength', 'Colour rotation strength', 1, 0, 1), p('soundDepth', 'Sound sweep (octaves)', 2, 0, 4, .1)],
   'trip-audio': [p('mix', 'Trip sound treatment', 1, 0, 1), p('cutoff', 'Sound brightness (Hz)', 2600, 200, 12000, 100), p('motion', 'Sound brightness motion (octaves)', .6, 0, 2, .05), p('speed', 'Sound motion speed (Hz)', .18, .02, 2, .02), p('flutter', 'Sound flutter', .18, 0, .7, .01)],
   'miniature': [p('blur', 'Toy-world blur', 7, 0, 16, .1), p('band', 'Sharp strip width', .12, .02, 1, .01), p('centre', 'Focus position from top', .55, 0, 1, .01)],
   'trip-indicator': [p('strength', 'Edge wobble (art pixels)', 1.5, 0, 30, .1), p('speed', 'Wobble speed', 1.2, 0, 12, .1), p('waveSize', 'Wave size (screen fraction)', .3, .02, 2, .01), p('reach', 'Reach from screen edges', .2, 0, 1, .01)],
