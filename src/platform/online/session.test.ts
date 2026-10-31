@@ -4,6 +4,7 @@ import { TUNING } from "../../rules/tuning";
 import { snapshotGame } from "../../rules/nightSnapshot";
 import { attachGuest, detachGuest } from "./membership";
 import { onlineSession, type SessionConnection, type SessionOptions } from "./session";
+import { BAGS } from "../../rules/bags";
 
 const cleanups: (() => void)[] = [];
 afterEach(() => { for (const stop of cleanups.splice(0)) stop(); });
@@ -89,4 +90,42 @@ it("rejects an incompatible build before preparing a guest View or sending contr
   const { joined } = await f.start(); await expect(joined).rejects.toThrow("ended");
   expect(f.guestOptions.prepareGuest).not.toHaveBeenCalled(); expect(f.guestOptions.failed).toHaveBeenCalledTimes(1);
   expect(f.guestMessages).toHaveLength(0); expect(f.guest.role).toBeNull();
+});
+
+it("coalesces page mutations before the next frame and preserves the guest game identity", async () => {
+  const f = fixture(), { joined } = await f.start(); await f.sync(); await joined;
+  const guestGame = f.guest.game!, before = f.hostMessages.length;
+  f.hostGame.witches[1].body.x += 3; f.host.changed(); f.host.changed(); f.guest.changed();
+  expect(f.hostMessages).toHaveLength(before);
+  f.host.step(input(), .02);
+  const updates = f.hostMessages.slice(before);
+  expect(updates.map(m => (m.payload as { kind: string }).kind)).toEqual(["checkpoint", "frame"]);
+  for (const message of updates) f.guest.message(message);
+  expect(f.guest.game).toBe(guestGame); expect(snapshotGame(guestGame)).toEqual(snapshotGame(f.hostGame));
+  const next = f.hostMessages.length; f.host.step(input(), .02);
+  expect(f.hostMessages.slice(next).map(m => (m.payload as { kind: string }).kind)).toEqual(["frame"]);
+  f.guest.message(updates[0]); expect(f.guestOptions.failed).toHaveBeenCalledTimes(1); // stale checkpoint cannot roll back a tick
+});
+
+it("keeps a visitor's station request inert until host approval and applies it to player1 only", async () => {
+  const f = fixture(), { joined } = await f.start(); await f.sync(); await joined;
+  const choice = { kind: "bag" as const, id: BAGS[0].id }, before = snapshotGame(f.guest.game!), hostBag = f.hostGame.witches[0].spells.bag;
+  expect(f.guest.choose(choice)).toBe(true); expect(snapshotGame(f.guest.game!)).toEqual(before);
+  const unapproved = f.guestMessages.at(-1)!; f.host.message(unapproved);
+  let index = f.hostMessages.length; f.host.step(input(), .02);
+  expect(f.hostMessages.slice(index).some(m => (m.payload as { kind: string }).kind === "station")).toBe(false);
+  for (const message of f.hostMessages.slice(index)) f.guest.message(message);
+  f.hostOptions.authorizeStation = vi.fn((_game, player) => player === 1);
+  f.hostOptions.stationApplied = vi.fn(); f.guestOptions.stationApplied = vi.fn();
+  f.guest.choose(choice); const request = f.guestMessages.at(-1)!;
+  f.host.message({ ...request, player: 0 }); // payload cannot pick a different player through the server-bound identity
+  f.host.message(request); f.host.message(request); // duplicate request is not queued twice
+  index = f.hostMessages.length; f.host.step(input(), .02);
+  const updates = f.hostMessages.slice(index);
+  expect(updates.map(m => (m.payload as { kind: string }).kind)).toEqual(["station", "frame"]);
+  for (const message of updates) f.guest.message(message);
+  expect(f.hostOptions.authorizeStation).toHaveBeenCalledTimes(1);
+  expect(f.hostOptions.stationApplied).toHaveBeenCalledTimes(1); expect(f.guestOptions.stationApplied).toHaveBeenCalledTimes(1);
+  expect(f.hostGame.witches[1].spells.bag).toBe(choice.id); expect(f.hostGame.witches[0].spells.bag).toBe(hostBag);
+  expect(snapshotGame(f.guest.game!)).toEqual(snapshotGame(f.hostGame));
 });
