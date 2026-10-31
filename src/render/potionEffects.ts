@@ -24,6 +24,12 @@ export const potionCamera = (angle: number, distance: number, fov: number, amoun
   const p = potionSettings('vertigo');
   return { angle: angle + (p.angle - angle) * amount * p.angleMix, distance: distance * (1 + (p.distance - 1) * amount), fov: fov + (p.fov - fov) * amount };
 };
+/** Lower the existing camera toward its focus, without changing saved camera or flight settings. */
+export const wormsEyeCamera = (angle: number, distance: number, amount: number) => {
+  if (amount <= 0) return { angle, distance };
+  const p = potionSettings('worm-s-eye');
+  return { angle: angle + (p.angle - angle) * amount, distance: distance * (1 + (p.distance - 1) * amount) };
+};
 export const potionLevels = (black: number, gamma: number, amount: number) => {
   const p = potionSettings('thick-canopy');
   return { black: black + (p.blackFloor - black) * amount, gamma: gamma * (1 + (p.gamma - 1) * amount), saturation: 1 + (p.saturation - 1) * amount };

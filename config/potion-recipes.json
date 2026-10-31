@@ -581,7 +581,7 @@
     "effect": "worm-s-eye",
     "name": "Worm's Eye",
     "description": "The camera drops very low, almost level with the ground.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 45
   },
   {
