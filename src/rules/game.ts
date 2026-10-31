@@ -1,5 +1,6 @@
 // The whole game state, and one step of it. No drawing here: the Three.js layer reads this.
 import { creaturesAshore, lakeKnobs, onLake, roundLakes } from "./lakes";
+import { newMushrooms, potionPhase, stepMushrooms, type MushroomState } from "./mushrooms";
 import { runawaySpot, runOff } from "./runaway";
 import { stepWildWatch, type WildEntry } from "./wildWatch";
 import { stepHunts } from "./hunt";
@@ -163,6 +164,8 @@ export interface Game {
   camera: CameraState;
   party: PartyState;
   berries: BerryState;
+  /** Gathered mushrooms, the kitchen's baskets and active potions. */
+  mushrooms: MushroomState;
   /** Real time not yet simulated (under one STEP), and its share of a step, for drawing between
    *  the last two steps (see interpolated). */
   acc: number;
@@ -323,7 +326,7 @@ export function newGame(seed: number, tuning: Tuning, players = 1, ready?: MapPr
     get witch() { return this.witches[0].body; }, set witch(w: WitchState) { this.witches[0].body = w; },
     get leash() { return this.witches[0].leash; }, set leash(l: LeashState) { this.witches[0].leash = l; },
     get spells() { return this.witches[0].spells; }, set spells(s: SpellState) { this.witches[0].spells = s; },
-    camera: newCamera(tuning, body.x, witchHeight(body, tuning), body.z), party: newParty(map), berries: newBerries(map, tuning),
+    camera: newCamera(tuning, body.x, witchHeight(body, tuning), body.z), party: newParty(map), berries: newBerries(map, tuning), mushrooms: newMushrooms(map, forest),
     speakers: map.dancefloor.speakers.map(() => "playing" as SpeakerState),
     speakerBoot: map.dancefloor.speakers.map(() => null),
     beat: newBeatClock(tuning.beat.bpm, waveTempo(tuning, 0)), knockdowns: [] as { at: number; back: number }[], musicSet: set,
@@ -433,7 +436,7 @@ export function hitWitch(g: Game, id: number, worldAt: number, t: Tuning = g.tun
   // (her health, blinks, knocks and hat run on her clock, rules/slowTime.ts: the world's moment `worldAt` on hers, by how far it is from now)
   const w = g.witches[id];
   const at = (w ? witchTime(g, w) : g.herTime) + (worldAt - g.clock.time);
-  if (!w || w.ko || dashing(w.dash, at) || worldAsleep(g) || won(g)) return; // (the afterparty, the world before the party, or the night won: nothing hurts her)
+  if (!w || w.ko || potionPhase(g, w) || dashing(w.dash, at) || worldAsleep(g) || won(g)) return; // (the afterparty, the world before the party, or the night won: nothing hurts her)
   if (at < w.health.hurtAt + t.witchHealth.grace) return; // (just hit: a moment's grace, so a pack can't take all her hits at once)
   // The Helmet (rules/spells.ts; Ed, 2026-10-11: "The helmet gives you an extra hit and it's knocked off when hit"): worn, it
   // takes the blow, knocked off to lie beside her (her hat down: picked up and put back on as ever, rules/hat.ts).
@@ -553,12 +556,15 @@ function fixedStep(g: Game, controls: readonly Controls[]): void {
   g.clock.time += dt;
   g.herTime += hdt;
   for (const W of g.witches) if (W.time !== undefined) W.time += hdt;
+  // Explicit legacy cauldron preview owns its own inventory/inputs while enabled.
+  if (!g.cauldron) stepMushrooms(g);
   const wave = g.party.wave;
   const legends = (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id));
   const t = g.tuning;
   const motions = g.witches.map((W, i) => {
     const ht = witchTime(g, W);
     let c = controls[i];
+    if (potionPhase(g, W)) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
     if (g.witches.length > 1 && W.house?.slept) {
       // Finished the existing bed hold: asleep until this shared night ends. No new wake gesture.
       W.body = { ...W.body, vx: 0, vz: 0 };
@@ -626,14 +632,14 @@ function fixedStep(g: Game, controls: readonly Controls[]): void {
     // A blink (Decoy, Beaver: it leaves a waiting 💌 where she was).
     // (A press is held for dash.buffer seconds until it can go: pressed a moment early still blinks.)
     if (c.dash) W.dash.bufferUntil = ht + tw.dash.buffer;
-    if (ht <= (W.dash.bufferUntil ?? -Infinity) && !W.ko && !stunned(W.knock, ht)
+    if (ht <= (W.dash.bufferUntil ?? -Infinity) && !potionPhase(g, W) && !W.ko && !stunned(W.knock, ht)
       && startDash(W.dash, was, c.moveX, c.moveZ, ht, tw, g.map.bounds, (x, z) => blinkClear(g, x, z, W.body), charges, tw.dash.chain, c.aimX ?? 0, c.aimZ ?? 0, shared ? coolReady(W.cool, tw.dash.cooldown, room) : undefined)) {
       W.dash.bufferUntil = undefined;
       if (shared) coolSpend(W.cool, tw.dash.cooldown, room); // (the dodge's share of the one cooldown)
       if (W.spells.broom === "battering") batter(g, W.dash.fromX, W.dash.fromZ, W.dash.toX, W.dash.toZ, t); // (Battering: what's in her path is stunned)
     }
     const deck = deckOf(g.map, t), fallsOff = deck?.house && !hasBroom(W) ? { ...deck, house: { ...deck.house, fall: { ...deck.house.fall, on: true } } } : deck; // (no broom: off the Terrace she falls, rules/kit.ts)
-    W.body = applyDash(W.dash, stepWitch(was, c, hdt, boost === 1 ? tw : { ...tw, groundSpeed: tw.groundSpeed * boost, treetopSpeed: tw.treetopSpeed * boost }, g.map.bounds, loadOf(W.leash.stack, g.creatures, was, t, pullOf(W.spells), !!W.leash.scatter), fallsOff)); // (her sigils' pull: rules/leashWeight.ts; the treehouse deck: rules/treehouse.ts)
+    if (!potionPhase(g, W)) W.body = applyDash(W.dash, stepWitch(was, c, hdt, boost === 1 ? tw : { ...tw, groundSpeed: tw.groundSpeed * boost, treetopSpeed: tw.treetopSpeed * boost }, g.map.bounds, loadOf(W.leash.stack, g.creatures, was, t, pullOf(W.spells), !!W.leash.scatter), fallsOff)); // (her sigils' pull: rules/leashWeight.ts; the treehouse deck: rules/treehouse.ts)
     // (the zoo: flying or walking on out against its edge, over the waterfall, takes her out of it, Ed 2026-10-26: "If you fly off the
     // edge of the map in the zoo you exit as well"): pushing on outward where the edge's soft hold has her (its last map.push metres,
     // as the beach's stargazing reckons it: rules/witch.ts), for ZOO_EDGE_PUSH seconds, on foot or flying
@@ -645,16 +651,16 @@ function fixedStep(g: Game, controls: readonly Controls[]): void {
       if (pushed >= ZOO_EDGE_PUSH) g.zooExit ??= ht;
     }
     if (waking) keepInBedroom(g, W); // (the bedroom's door shut till she's up: rules/wakeUp.ts)
-    if (W.knock) W.body = stepWitchKnock(W.knock, W.body, hdt, t, g.map.bounds, (x, z) => blinkClear(g, x, z, W.body));
+    if (W.knock && !potionPhase(g, W)) W.body = stepWitchKnock(W.knock, W.body, hdt, t, g.map.bounds, (x, z) => blinkClear(g, x, z, W.body));
     if (was.mode !== "ground" && W.body.mode === "ground") { W.landedAt = ht; if (shared) coolSpend(W.cool, tw.riseCooldown ?? 0, room); } // (landed: the rise cooldown starts; shared, the landing's share of the one cooldown)
     if (shared && was.mode === "ground" && !was.seated && W.body.mode === "rising") coolSpend(W.cool, tw.cooldown?.rise ?? 0, room); // (taken off: its share; not her first step off the decks)
     if (shared) { const wait = coolWait(W.cool, tw.dash.cooldown, room); if (wait > 0) W.dash.readyAt = ht + wait; } // (the dash's readyAt kept true to the counter, for the reticle and the buffer)
     // On the treehouse deck or off it (rules/treehouse.ts): landed on it, or risen off it.
     const onDeck = (b: WitchState) => !!b.perch && b.mode === "ground", perchTurn = !was.seated && onDeck(was) !== onDeck(W.body) ? (onDeck(W.body) ? 1 : -1) : 0;
     // A party legend on her leash (the Easter egg): not a step past legends.partyReach of it, blinking, flying or thrown (rules/partyLegend.ts).
-    if (t.legends.partyEgg) { const P = pinWitch(W.body, W.leash.stack, g.creatures, t.legends.partyReach, g.clock.time, W.pinned ?? null); W.body = P.body; W.pinned = P.pinned; }
+    if (t.legends.partyEgg && !potionPhase(g, W)) { const P = pinWitch(W.body, W.leash.stack, g.creatures, t.legends.partyReach, g.clock.time, W.pinned ?? null); W.body = P.body; W.pinned = P.pinned; }
     // A sleeping legend's sigil she carries (rules/stoneStacks.ts): not a step past its tether, blinking, flying or thrown.
-    if (W.leash.tether) { const P = tetherWitch(W.body, W.leash.tether, g.creatures, g.clock.time, W.pinned ?? null); W.body = P.body; if (P.pinned) W.pinned = P.pinned; }
+    if (W.leash.tether && !potionPhase(g, W)) { const P = tetherWitch(W.body, W.leash.tether, g.creatures, g.clock.time, W.pinned ?? null); W.body = P.body; if (P.pinned) W.pinned = P.pinned; }
     return { W, c, ht, was, deck, perchTurn, firing, LV: null as ReturnType<typeof leashView> | null };
   });
   if (g.cauldron) {
@@ -910,7 +916,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
       lettered: id => g.witches.some(W => W.invites.events.some(e => e.kind === "hit" && e.id === id && time - e.at < 0.25)),
       confuse: (id, until, drift, move) => { const W = g.witches[id]; if (W) W.confused = { until, drift, ...(move ? { move: true } : {}) }; },
       pull: (id, x, z, metres) => { // (thrown toward the puller: a blow from behind her, exactly so far and never past it; a blink dodges it, as a blow)
-        const W = g.witches[id], at = W ? witchTime(g, W) : g.herTime; if (!W || W.ko || dashing(W.dash, at) || g.partyOver) return;
+        const W = g.witches[id], at = W ? witchTime(g, W) : g.herTime; if (!W || W.ko || potionPhase(g, W) || dashing(W.dash, at) || g.partyOver) return;
         const dx = W.body.x - x, dz = W.body.z - z, d = Math.hypot(dx, dz); if (d < 2) return;
         knockWitch((W.knock ??= newKnock()), W.body, { x: W.body.x + dx / d, z: W.body.z + dz / d, knockback: 0, rams: false, metres: Math.min(metres, d - 1.5) }, at, t);
       },
@@ -921,9 +927,9 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
       down: !!W.ko, dashing: dashing(W.dash, witchTime(g, W)), damageEnabled: !worldAsleep(g) && !won(g), stunUntil: W.knock?.stunUntil ?? 0,
       slowUntil: W.slowUntil ?? 0, slowMult: W.slowMult ?? 1, x: W.body.x, z: W.body.z, kx: W.knock?.kx ?? 0, kz: W.knock?.kz ?? 0 } : null; },
     // (an attack in the grammar's effects on her, without a hit: a blink dodges them, as a blow; rules/attacks/combatWorld.ts)
-    throwWitch: (id, x, z, metres) => { const W = g.witches[id], at = W ? witchTime(g, W) : g.herTime; if (!W || W.ko || dashing(W.dash, at) || g.partyOver) return; knockWitch((W.knock ??= newKnock()), W.body, { x, z, knockback: 0, rams: false, metres }, at, t); },
-    stunWitch: (id, until) => { const W = g.witches[id]; if (!W || W.ko || dashing(W.dash, witchTime(g, W)) || g.partyOver) return; const k = (W.knock ??= newKnock()); k.stunUntil = Math.max(k.stunUntil, witchTime(g, W) + (until - g.clock.time)); },
-    nudgeWitch: (id, dx, dz) => { const W = g.witches[id]; if (!W || W.ko || dashing(W.dash, witchTime(g, W)) || g.partyOver || W.body.mode !== "ground") return; W.body = { ...W.body, x: W.body.x + dx, z: W.body.z + dz }; },
+    throwWitch: (id, x, z, metres) => { const W = g.witches[id], at = W ? witchTime(g, W) : g.herTime; if (!W || W.ko || potionPhase(g, W) || dashing(W.dash, at) || g.partyOver) return; knockWitch((W.knock ??= newKnock()), W.body, { x, z, knockback: 0, rams: false, metres }, at, t); },
+    stunWitch: (id, until) => { const W = g.witches[id]; if (!W || W.ko || potionPhase(g, W) || dashing(W.dash, witchTime(g, W)) || g.partyOver) return; const k = (W.knock ??= newKnock()); k.stunUntil = Math.max(k.stunUntil, witchTime(g, W) + (until - g.clock.time)); },
+    nudgeWitch: (id, dx, dz) => { const W = g.witches[id]; if (!W || W.ko || potionPhase(g, W) || dashing(W.dash, witchTime(g, W)) || g.partyOver || W.body.mode !== "ground") return; W.body = { ...W.body, x: W.body.x + dx, z: W.body.z + dz }; },
     loseParty: id => {
       for (const w of g.witches) { w.leash.stack = w.leash.stack.filter(i => i !== id); w.leash.placed = w.leash.placed.filter(p => p.id !== id); }
       g.creatures[id].leashed = false;
@@ -1015,7 +1021,7 @@ function stepWitchParty(g: Game, controls: readonly Controls[], dt: number): voi
   for (let i = 0; i < t.partyWitches.debugExtra; i++) areas.push({ key: `debug-${i}`, x: d.x + Math.cos(i * 2.4) * 100, z: d.z + Math.sin(i * 2.4) * 100, at: 0 });
   const players = g.witches.map((W, i) => {
     const w = W.body, c = controls[i], moving = Math.hypot(c.moveX, c.moveZ) > 0.05 || Math.hypot(w.vx, w.vz) > 0.3 || !!(c.toggleMode || c.sigil || c.place || c.cycle || c.cycleBack || c.spell) || g.leashEvents.some(e => e.kind === "grounded"); // (a take-off pulled back down is input too: its press was taken off c above)
-    return { x: w.x, z: w.z, onFoot: w.mode === "ground" && !w.seated && !w.perch, moving, treetop: w.mode === "treetop" };
+    return { x: w.x, z: w.z, onFoot: w.mode === "ground" && !w.seated && !w.perch && !potionPhase(g, W), moving, treetop: w.mode === "treetop" };
   });
   // Round the floor they keep clear of trees, rocks, the speakers and the treehouse and its clearing (Ed, 2026-10-06).
   const th = g.map.treehouse, clear = (x: number, z: number) => blinkClear(g, x, z) && Math.hypot(x - th.x, z - th.z) > t.treehouse.clear;
@@ -1192,8 +1198,9 @@ export function coastOf(g: Game): CoastView | null {
   if (!BC || !b) return null;
   // (metres from where the edge's soft hold starts, where she lies down at the water's edge: rules/witch.ts `held`)
   const off = b.land.distAt(w.x, w.z) - (g.tuning.map?.push ?? 0) * 0.6;
-  const gazing = w.mode === "ground" && (!!w.stargazing || !!g.beach?.some(s => s.players[0]?.pose === "stargaze"));
   const near = Math.max(0, Math.min(1, 1 - off / Math.max(1, BC.approach)));
+  // A potion leaves her lying inland too; only the coast uses the low sea-and-sky camera.
+  const gazing = near > 0 && w.mode === "ground" && (!!w.stargazing || !!g.beach?.some(s => s.players[0]?.pose === "stargaze"));
   // (her bearing round the coast only by the sea, where the stargazing camera reads it: the way out to the water from her
   // (0 north, clockwise); inland the camera's state is as ever)
   const n = b.land.inward(w.x, w.z), ox = -n.x, oz = -n.z;

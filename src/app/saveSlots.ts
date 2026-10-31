@@ -7,7 +7,7 @@ export interface SaveSlot { id: string; name: string; created: number; updated: 
 export interface SavesHost { list(): SaveSlot[]; active(): string; choose(id: string | null): Promise<string | null> }
 interface SlotIndex { version: 1; active: string; slots: SaveSlot[] }
 export const SLOT_INDEX = "witch.saves.v1";
-export const SLOT_KEYS = ["witch.genome", "witch.owned", "witch.broom", "witch.loadout", "witch.hats", "witch.records", "witch.chart", "witch.guide", "witch.arrive", "witch.player", "witch.settings", "witch.shake", "witch.bindings", "witch.autotalk", "witch.woken", "witch.mirrored", "witch.creator.box", "witch.pauseOpen", "witch.debug.unlockAll"] as const;
+export const SLOT_KEYS = ["witch.genome", "witch.owned", "witch.broom", "witch.loadout", "witch.hats", "witch.records", "witch.chart", "witch.guide", "witch.arrive", "witch.player", "witch.settings", "witch.shake", "witch.bindings", "witch.autotalk", "witch.woken", "witch.mirrored", "witch.creator.box", "witch.pauseOpen", "witch.debug.unlockAll", "witch.mushrooms"] as const;
 const scoped = new Set<string>(SLOT_KEYS);
 export const slotKey = (id: string, key: string): string => `witch.save.${id}.${key}`;
 const validId = (v: unknown): v is string => typeof v === "string" && /^s[1-9][0-9]*$/.test(v);
