@@ -6,17 +6,26 @@ import { groundHeight } from "../../render/height";
 import { alongRay } from "../../render/view/home";
 import { witchHeight } from "../../rules/witch";
 import { SPRITE_UNIFORMS } from "../../render/sprites";
+import type { WitchLookLease } from "../../render/witchLookLease";
+
+const mounted = new WeakMap<View, () => void>();
 
 /** First prototype: uses the existing witch atlas, with no new generated art. */
-export function otherWitches(view: View, source: Game, player: number) {
+export function otherWitches(view: View, source: Game, player: number, looks?: ReadonlyMap<number, WitchLookLease>) {
+  mounted.get(view)?.();
   const batch = view.makeWitchBatch();
+  let released = false;
   const draw = (time: number, onTreehouse: (x: number, y: number) => { x: number; y: number; z: number }) => {
-    if (batch.atlas !== view.assets.witch) batch.setAtlas(view.assets.witch);
+    const remote = source.witches.find(w => w.id !== player), look = remote ? looks?.get(remote.id) : undefined;
+    if (looks && !look) { batch.set([]); return; } // Ordinary callers must supply approved art, never clone the local witch.
+    const atlas = look?.atlas ?? view.assets.witch;
+    if (batch.atlas !== atlas) batch.setAtlas(atlas);
     const deck = deckOf(source.map, source.tuning), tree = view.assets.treehouse;
     batch.set(source.witches.filter(w => w.id !== player).map(W => {
       const b = W.body, ht = W.time ?? source.herTime, foot = !!b.perch && b.mode === "ground", side = b.away ? "away" : "towards";
-      const frames = foot ? view.assets.witchFoot.idle[side] : null;
-      const index = frames ? frames[Math.floor(ht * view.assets.witchFoot.idle.fps) % frames.length] : (b.away ? 3 : 0) + Math.floor(ht * 4) % 3;
+      const pose = foot ? look?.idle.idle ?? view.assets.witchFoot.idle : look?.flight.hover;
+      const frames = pose?.[side];
+      const index = frames ? frames[Math.floor(ht * pose!.fps) % frames.length] : (b.away ? 3 : 0) + Math.floor(ht * 4) % 3;
       let x = b.x, z = b.z, y = witchHeight(b, source.tuning), scale = 1;
       if (b.perch && deck && tree.ent) {
         const dz = b.z - deck.z, ky = (tree.seat.y - tree.ent.deck.y) / Math.max(0.1, deck.seat.z - deck.z);
@@ -37,9 +46,10 @@ export function otherWitches(view: View, source: Game, player: number) {
   };
   // Online-only adapter: decorate this instance's player-batch update, after its camera is placed.
   // The ordinary View module and its output bytes remain unchanged.
-  const setPlayer = view.witchBatch.set.bind(view.witchBatch);
-  view.witchBatch.set = items => {
+  const originalSet = view.witchBatch.set, setPlayer = originalSet.bind(view.witchBatch);
+  const update: typeof view.witchBatch.set = items => {
     setPlayer(items);
+    if (released) return;
     const T = view.assets.treehouse, f = T.atlas.frames[0], d = deckOf(source.map, source.tuning);
     const right = SPRITE_UNIFORMS.uRight.value, up = SPRITE_UNIFORMS.uUp.value;
     const ox = T.ent ? (T.ent.deck.x - f.w / 2) * view.mpp : 0;
@@ -50,4 +60,13 @@ export function otherWitches(view: View, source: Game, player: number) {
       return { x: at.x + right.x * dx + up.x * dy, y: at.y + right.y * dx + up.y * dy, z: at.z + right.z * dx + up.z * dy };
     });
   };
+  view.witchBatch.set = update;
+  const release = () => {
+    if (released) return; released = true;
+    if (view.witchBatch.set === update) view.witchBatch.set = originalSet;
+    view.scene.remove(...batch.meshes); batch.release(); // Atlas lease belongs to caller; never dispose shared/local textures here.
+    if (mounted.get(view) === release) mounted.delete(view);
+  };
+  mounted.set(view, release);
+  return release;
 }

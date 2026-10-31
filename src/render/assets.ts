@@ -17,6 +17,7 @@ import { rigGearKey, type RigGear, type RigMeta } from "./rig/rigBuild";
 import { partyGearOf } from "./creatureArt";
 import { partySheetKey, partySheetFrame } from "./partySheet";
 import { trunkCut } from "./trunkCut";
+import { witchLookLeases, type WitchLookLease } from "./witchLookLease";
 
 export interface TypeArt {
   atlas: Atlas; layout: TypeLayout;
@@ -578,9 +579,12 @@ export class AssetLibrary {
     return this.party;
   }
   /** Her frames' job: drawn by an art worker (render/homeArt.ts), kept in the browser's store by her genome. */
-  private witchJob(genome: unknown, bare: boolean, quick = false): ArtJob {
+  private witchJob(genome: unknown, bare: boolean, quick = false): Extract<ArtJob, { kind: "witch" }> {
     return { kind: "witch", id: `${hashText(JSON.stringify(genome ?? null))}${bare ? "-bare" : ""}${quick ? "-quick" : ""}`, style: this.style, genome, bare, quick };
   }
+  /** Remote-only art lease: existing one-off generator/worker path, separate bounded texture ownership. */
+  private readonly remoteWitchLooks = witchLookLeases((genome, hash) => this.oneOff({ ...this.witchJob(genome, false), id: `remote-${hash}` }));
+  leaseWitchLook(genome: unknown, signal?: AbortSignal): Promise<WitchLookLease> { return this.remoteWitchLooks.lease(genome, signal); }
   /** Where each of her poses' frames are (kept objects: the view holds them). */
   private applyWitchTables(W: WitchArt): void {
     for (const k of Object.keys(this.witchFoot)) delete this.witchFoot[k];
@@ -601,7 +605,7 @@ export class AssetLibrary {
     // step, each ahead of the next, and the one she'd landed on came last; Ed's playtest of v4821, "I don't see changes on the
     // witch immediately")
     const mine = JSON.stringify(genome ?? null);
-    const stale = (q?: ArtJob) => q?.kind === "witch" && JSON.stringify(q.genome ?? null) !== mine;
+    const stale = (q?: ArtJob) => q?.kind === "witch" && !this.once.has(this.key(q)) && JSON.stringify(q.genome ?? null) !== mine;
     const forget = (q: ArtJob) => { cancelWorkerTrace(q, 'witch-look-superseded'); const k = this.key(q); this.inFlight.delete(k); this.promoted.delete(k); this.urgentKeys.delete(k); };
     this.queue = this.queue.filter(q => !stale(q) || (forget(q), false));
     // and one already drawing, if it's a whole set (seconds of a worker's time; tens in the cloud): its worker let go for another
