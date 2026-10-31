@@ -107,6 +107,7 @@ export class PotionLab {
       this.close(); this.resume();
     }));
     this.detail.append(h('h3', { text: 'Wobbly edges · every potion' }), this.controls('trip-indicator'),
+      h('h3', { text: 'Trip sound · fallback treatment' }), this.controls('trip-audio'),
       h('div', { class: 'actions' }, button('Copy all settings', () => { void this.copy(); }), button('Stop current potion', () => {
         const g = this.game(), witch = g.witches[0];
         if (!witch) return;

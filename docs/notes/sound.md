@@ -1,5 +1,7 @@
 # Sound effects
 
+Potion audio (Ed, 2026-10-31): every potion alters existing sounds throughout its trip. `platform/audio/potionFilter.ts` supplies a shared dry/filtered bus for music (including legend layers) and SFX, preserving their volume controls. The fallback gently moves a low-pass cutoff and attenuates volume; Miniature removes bass for small-speaker sound. The game clock drives motion and the existing final-two-minute envelope restores the dry path; browser pause suspends the audio context. No new sources or timers. Night Vision and Heat Vision bypass this fallback because PR1531 supplies their bespoke creature-only/pitched treatment; combining must preserve both routes. Offline audio checks/audition remain pending coordinator allocation in PR1536.
+
 **Cauldron plop** (2026-10-31): a short descending bubble tone and filtered splash in `platform/audio/chimes.ts`, played once when each brewing flight lands (`sfxCues.ts` reads the flight's serial). `node tools/sfx/check.mjs potion-plop` renders and checks it offline.
 
 Part of Witch's notes (CLAUDE.md is the index): the synthesised sound effects, babble and whale song, the mix. Moved here from CLAUDE.md as it stood (housekeeping, Ed 2026-10-23: a note an area, so pull requests add to their own area's file, not one shared file); every rule kept. Add to this file, not CLAUDE.md, when you change this area.

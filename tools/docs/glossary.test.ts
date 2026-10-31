@@ -10,11 +10,12 @@ describe("the glossary's index", () => {
   it("reads a note's entries: the bold names opening its lines, each once, in order", () => {
     const text = "# Area\n\nIntro, **not this** one.\n\n**Lead**: a paragraph.\n- **First** (Ed): x\n  - **nested**: no\n- **Second**: y\n**First**: again\n";
     expect(titleOf(text)).toBe("Area");
+    expect(titleOf(text.replace(/\n/g, "\r\n"))).toBe("Area");
     expect(entriesOf(text)).toEqual(["Lead", "First", "Second"]);
   });
 
   it("is up to date with the notes (node tools/docs/glossary.mjs --write)", () => {
-    expect(fs.readFileSync(INDEX, "utf8")).toBe(indexText());
+    expect(fs.readFileSync(INDEX, "utf8").replace(/\r\n/g, "\n")).toBe(indexText());
   });
 
   it("names each entry in one note only", () => {
