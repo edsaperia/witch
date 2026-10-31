@@ -1,0 +1,2 @@
+PASS {"expected":"2d14f5d3a35d8f729a40de44635847846e50e37d","pixels":[{"id":"plan","painted":41019,"width":1176,"height":416},{"id":"camera","painted":98015,"width":1176,"height":416}],"moved":{"id":"wardrobe","x":-17.95,"z":-64.88,"rotation":45,"physicalRoom":"bedroom","lightingRoom":"bedroom","useAnchor":{"x":-18.03388934013522,"z":-63.28220070765703}}}
+exit=0
