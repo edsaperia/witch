@@ -13,7 +13,7 @@ import { loanFind, nightFind } from "../../rules/finds";
 import { groundHeight, HEIGHT_UNIFORMS } from "../height";
 import { SPRITE_UNIFORMS } from "../sprites";
 import { updateFrustum } from "./culling";
-import { potionBend, potionStrength, potionCamera, vertigoAmount, tripIndicatorStrength } from "../potionEffects";
+import { potionBend, potionStrength, potionCamera, vertigoAmount, tripIndicatorStrength, wormsEyeCamera } from "../potionEffects";
 import { potionSettings } from "../../rules/potionSettings";
 import { hueSpinPhase } from "../../rules/potionCycle";
 
@@ -39,6 +39,8 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
   const vertigo = v.fly || v.telescope ? 0 : vertigoAmount(potionStrength(g, 'vertigo'), g.witch.lift);
   const tripCamera = potionCamera(pose.angle, pose.distance, t.camera.fov, vertigo);
   pose = { ...pose, angle: tripCamera.angle, distance: tripCamera.distance };
+  const low = v.fly || v.telescope ? 0 : potionStrength(g, 'worm-s-eye');
+  if (low > 0) pose = { ...pose, ...wormsEyeCamera(pose.angle, pose.distance, low) };
   v.post.potionVertigo = vertigo;
   v.post.potionMiniature = potionStrength(g, 'miniature');
   v.post.potionHue = potionStrength(g, 'hue-spin');

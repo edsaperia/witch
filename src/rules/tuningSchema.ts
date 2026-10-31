@@ -5,6 +5,7 @@ import type { Schema } from "./schema";
 
 export const TUNING_OVER: Record<string, Partial<Schema>> = {
   "map.shape": { enum: ["circle", "square", "zoo"] },
+  "light.mood": { enum: ["spooky", "plain"] },
   "suspects.seeSolid": { enum: ["off", "all", "circle", "rest"] },
   "music.latency": { enum: ["interactive", "balanced", "playback"] },
   "berries.cost.by": { enum: ["power", "value"] },
