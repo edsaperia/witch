@@ -25,6 +25,7 @@ import { NATIVE_GLSL, nativeFxUniforms } from "./fx/native";
 import { LAKE_LOOKS_GLSL, lakeLookTexture, lakeLooksOf, hasForcedLakeLook } from "./lakeLooks";
 import { groundExtras, groundFamily, groundDefines } from "./groundFamily";
 import { CoastReadiness } from './coastReadiness';
+import { THERMAL_UNIFORMS, THERMAL_GLSL } from './thermalVision';
 import { materialProgramsReady } from './shaderDrawGate';
 import { HEIGHT_GLSL, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import type { TilePixels } from "./artBuild";
@@ -153,6 +154,11 @@ float lakeSigil(vec2 p) {
 #endif
 #ifdef POTION_SKY
 uniform float uPotionSky;
+#endif
+#ifdef THERMAL_VISION
+${THERMAL_GLSL}
+#endif
+#if defined(POTION_SKY) || defined(THERMAL_VISION)
 void floorMain() {
 #else
 void main() {
@@ -682,12 +688,19 @@ void main() {
   if (plazaLine + plazaHalo > 0.0) lit = mix(lit, vec3(0.36, 0.62, 0.52), plazaLine * 0.55) + vec3(0.04, 0.16, 0.11) * plazaHalo * (1.0 - plazaLine) * 0.4; // (the plaza's sigil, its own light)
   gl_FragColor = vec4(haze(lit, vWorld), 1.0); // (her pool in her light's colour)
 }
-#ifdef POTION_SKY
+#if defined(POTION_SKY) || defined(THERMAL_VISION)
 // Blend only colour: the bent floor continues writing depth beyond its horizon.
 void main() {
+#ifdef POTION_SKY
   if (uPotionSky >= 1.0) { gl_FragColor = vec4(0.0); return; }
+#endif
   floorMain();
+#ifdef POTION_SKY
   gl_FragColor.a *= 1.0 - uPotionSky;
+#endif
+#ifdef THERMAL_VISION
+  gl_FragColor.rgb = mix(gl_FragColor.rgb, thermalCold(gl_FragColor.rgb), uThermalStrength);
+#endif
 }
 #endif
 `;
@@ -750,7 +763,7 @@ export class Ground {
       vertexShader: VERT, fragmentShader: FRAG, defines: defines(false),
       uniforms: {
         ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, ...FX_UNIFORMS, ...nativeFxUniforms("lake"),
-        uPotionSky: { value: 0 },
+        uPotionSky: { value: 0 }, ...THERMAL_UNIFORMS,
         uAreas: { value: this.near.texture }, uAreasFar: { value: this.far.texture },
         uExtent: { value: this.near.extent }, uExtentFar: { value: this.far.extent },
         uAreaWin: { value: this.near.box }, uAreaWinFar: { value: this.far.box },
@@ -852,6 +865,15 @@ void main() {
     if (this.coastSurface) this.coastSurface.renderOrder = this.mesh.renderOrder + 0.00001;
   }
 
+  /** The ordinary fragment's active tokens stay untouched until Heat Vision is active. */
+  thermalVision(amount: number): void {
+    for (const mat of [this.plain, this.beach]) {
+      if (!mat || (amount > 0) === ('THERMAL_VISION' in mat.defines)) continue;
+      if (amount > 0) mat.defines.THERMAL_VISION = ''; else delete mat.defines.THERMAL_VISION;
+      mat.needsUpdate = true;
+    }
+  }
+
   /** This frame's dancefloor tiles: per tile r, g, b and intensity (0 to 3), row by row (rules/dancefloor.ts). */
   setFloorTiles(rgbi: Uint8Array): void {
     const d = this.discoTiles.image.data as Uint8Array;
@@ -909,7 +931,7 @@ void main() {
     this.coastReadiness.request(!!b, performance.now());
     if (!b) { this.mesh.material = this.plain; if (this.coastSurface) this.coastSurface.visible = false; v.set(0, 0, 0, 0); return; }
     if (!this.beach) {
-      this.beach = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: BEACH_FRAG, defines: { ...this.beachDefines, ...('POTION_SKY' in this.plain.defines ? { POTION_SKY: '' } : {}) }, uniforms: { ...u, uCoastAppear: { value: 0 } } });
+      this.beach = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: BEACH_FRAG, defines: { ...this.beachDefines, ...('POTION_SKY' in this.plain.defines ? { POTION_SKY: '' } : {}), ...('THERMAL_VISION' in this.plain.defines ? { THERMAL_VISION: '' } : {}) }, uniforms: { ...u, uCoastAppear: { value: 0 } } });
       // A coast first appearing mid-trip inherits the floor's blend before its first draw.
       this.beach.blending = this.plain.blending; this.beach.blendSrc = this.plain.blendSrc; this.beach.blendDst = this.plain.blendDst;
       this.coastSurface = new THREE.Mesh(this.mesh.geometry, this.beach);
