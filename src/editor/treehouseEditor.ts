@@ -1,6 +1,6 @@
 import { HOUSE_ROOMS } from "../rules/houseRooms";
 import { field } from "../../config/house/shape.js";
-import { attachedPoint, defaultLayout, exportLayout, floorplanKey, hitItem, LayoutHistory, layoutItems, normalAngle, parseLayout, physicalRoom } from "./houseLayout";
+import { attachedPoint, defaultLayout, exportLayout, floorplanKey, hitItem, isHatZone, itemKind, LayoutHistory, layoutItems, normalAngle, parseLayout, physicalRoom } from "./houseLayout";
 import { HousePreview, type Frame, type Mapping } from "./housePreview";
 import "./treehouseEditor.css";
 
@@ -10,13 +10,13 @@ const bounds = { x0: Math.min(...HOUSE_ROOMS.rooms.map(r => r.x0)) - 3, x1: Math
 const fullFrame = (): Frame => ({ x: (bounds.x0 + bounds.x1) / 2, z: (bounds.z0 + bounds.z1) / 2, width: bounds.x1 - bounds.x0, height: bounds.z1 - bounds.z0 });
 let frame = fullFrame(), map: Mapping;
 document.body.innerHTML = `<header><div><span class="eyebrow">WITCH · AUTHORING</span><h1>Treehouse layout</h1></div><p>Arrange the furniture. Copy the layout when it feels right.<br><small>The published house stays unchanged. Rooms and walls are fixed.</small></p></header>
-<main><aside><label>Room <select id="room"><option value="">All rooms</option></select></label><label>Furniture / station / clutter <select id="object" size="9" aria-label="Objects, stations and room clutter"></select></label>
+<main><aside><label>Room <select id="room"><option value="">All rooms</option></select></label><label>Furniture / station / clutter / zone <select id="object" size="9" aria-label="Objects, stations, room clutter and spawn zones"></select></label>
 <section><h2 id="name"></h2><p id="kind"></p><div class="numbers"><label>X · metres<input id="x" type="number" step="0.1"></label><label>Z · metres<input id="z" type="number" step="0.1"></label><label>Rotation · degrees<input id="rotation" type="number" step="1"></label></div>
 <div class="buttons"><button id="left">↶ 15°</button><button id="right">↷ 15°</button><button id="restore">Reset object</button></div><p id="anchor"></p><p id="warning" role="status"></p></section>
 <div class="buttons"><button id="undo">Undo</button><button id="redo">Redo</button><button id="reset">Reset all</button></div>
 <section><h2>Layout settings</h2><div class="buttons"><button id="copy">Copy settings</button><button id="apply">Apply pasted settings</button></div><label class="export-label" for="settings">Copy from here if clipboard access is unavailable, or paste a saved layout.</label><textarea id="settings" spellcheck="false" aria-label="Layout JSON"></textarea><p id="status" role="status" aria-live="polite"></p></section></aside>
 <div class="views"><nav><button id="fit">Fit house</button><button id="focus">Focus selected</button><button id="minus" aria-label="Zoom out">−</button><button id="plus" aria-label="Zoom in">+</button><span>Drag to move · Shift snaps to 0.5 m · right-drag to pan · wheel to zoom</span></nav>
-<section class="view"><div class="caption"><h2>Top-down plan</h2><span>Blue = approach point · orange = model front · rooms and walls stay fixed</span></div><canvas id="plan" aria-label="Top-down house layout. Select an object from the list for exact keyboard editing."></canvas></section>
+<section class="view"><div class="caption"><h2>Top-down plan</h2><span>Blue = approach · purple = hat spawn · orange = model front · rooms and walls stay fixed</span></div><canvas id="plan" aria-label="Top-down house layout. Select an object from the list for exact keyboard editing."></canvas></section>
 <section class="view"><div class="caption"><h2>Camera view · 24°</h2><span>Game floor, walls and furniture art · grey labelled blocks for decks / clothes pile</span></div><canvas id="camera" aria-label="Camera preview of the same layout"></canvas></section></div></main>`;
 const get = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
 const room = get<HTMLSelectElement>("room"), object = get<HTMLSelectElement>("object"), plan = get<HTMLCanvasElement>("plan"), camera = get<HTMLCanvasElement>("camera"), settings = get<HTMLTextAreaElement>("settings");
@@ -34,9 +34,9 @@ const pose = () => history.value.objects.find(p => p.id === selected)!;
 function inspector(): void {
   const o = items.find(o => o.id === selected)!, p = pose(), a = attachedPoint(o, p);
   const destination = physicalRoom(p);
-  get("name").textContent = o.label; get("kind").textContent = `${HOUSE_ROOMS.rooms.find(r => r.id === destination)?.label ?? "Branch / outside rooms"} · ${o.decor ? "Room clutter" : o.use.kind === "creator" ? "Dressing station" : "Furniture"}`;
+  get("name").textContent = o.label; get("kind").textContent = `${HOUSE_ROOMS.rooms.find(r => r.id === destination)?.label ?? "Branch / outside rooms"} · ${itemKind(o)}`;
   for (const k of ["x", "z", "rotation"] as const) get<HTMLInputElement>(k).value = String(+p[k].toFixed(4));
-  get("anchor").textContent = o.decor ? "Room clutter has no station interaction. Its identity stays the same when moved to another room." : `Use position: X ${a.x.toFixed(2)}, Z ${a.z.toFixed(2)} m. Rotation is clockwise; 0° faces south. Room names do not change its function.`;
+  get("anchor").textContent = isHatZone(o) ? "Hat spawn zone, not a station. Dots show future hat positions; each actual hat is picked up separately. Moving this zone changes the exported spawn positions, not hats already lying in play." : o.decor ? "Room clutter has no station interaction. Its identity stays the same when moved to another room." : `Use position: X ${a.x.toFixed(2)}, Z ${a.z.toFixed(2)} m. Rotation is clockwise; 0° faces south. Room names do not change its function.`;
   get("warning").textContent = field(HOUSE_ROOMS.shape, p.x, p.z, true) > 0 ? "Outside the walkable floor. You can keep arranging it or move it back inside." : "";
 }
 function draw(): void {

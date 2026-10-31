@@ -1,23 +1,24 @@
 import { HOUSE_ROOMS, type HouseConfig } from "../rules/houseRooms";
 import { field } from "../../config/house/shape.js";
-import { attachedPoint, corners, physicalRoom, rotate, type Layout, type LayoutItem, type Placement } from "./houseLayout";
+import { attachedPoint, corners, isHatZone, physicalRoom, rotate, zoneSlots, type Layout, type LayoutItem, type Placement } from "./houseLayout";
 
 /** Advisory geometry audit, not a substitute for play/browser checks. No published data is mutated. */
 export function auditLayout(layout: Layout, items: LayoutItem[], H: HouseConfig = HOUSE_ROOMS) {
   const byId = new Map(items.map(o => [o.id, o])), poses = new Map(layout.objects.map(p => [p.id, p]));
   const solid = layout.objects.filter(p => !byId.get(p.id)!.decor);
-  const interactive = (o: LayoutItem) => !!o.synthetic || !["scenery", "say"].includes(o.use.kind);
+  const interactive = (o: LayoutItem) => !isHatZone(o) && (!!o.synthetic || !["scenery", "say"].includes(o.use.kind));
   const distance = (x: number, z: number) => field(H.shape, x, z, true);
   const inside = (o: LayoutItem, p: Placement, x: number, z: number, pad = 0) => {
     const d = rotate(x - p.x, z - p.z, -p.rotation);
     return Math.abs(d.x) < o.facing.foot.w / 2 + pad && Math.abs(d.z) < o.facing.foot.d / 2 + pad;
   };
   const rows = solid.map(p => {
-    const o = byId.get(p.id)!, anchor = attachedPoint(o, p), room = physicalRoom(p, H), locked = !!H.rooms.find(r => r.id === room)?.locked;
+    const o = byId.get(p.id)!, anchor = isHatZone(o) ? null : attachedPoint(o, p), room = physicalRoom(p, H), locked = !!H.rooms.find(r => r.id === room)?.locked;
     const footprintOutside = Math.max(...corners(o, p).map(c => distance(c.x, c.z)));
-    const blockers = solid.filter(q => q.id !== p.id && inside(byId.get(q.id)!, q, anchor.x, anchor.z, .2)).map(q => q.id);
+    const blockers = anchor ? solid.filter(q => q.id !== p.id && !isHatZone(byId.get(q.id)!) && inside(byId.get(q.id)!, q, anchor.x, anchor.z, .2)).map(q => q.id) : [];
     return { id: p.id, function: o.use.kind, sourceRoom: o.room, physicalRoom: room, crossesRooms: o.room !== room, locked, interactive: interactive(o),
-      anchor, centerOutside: +distance(p.x, p.z).toFixed(3), footprintOutside: +footprintOutside.toFixed(3), anchorOutside: +distance(anchor.x, anchor.z).toFixed(3), approachOverlaps: blockers };
+      ...(isHatZone(o) ? { kind: "hat-spawn-zone", spawnSlots: zoneSlots(o, p, H) } : {}),
+      anchor, centerOutside: +distance(p.x, p.z).toFixed(3), footprintOutside: +footprintOutside.toFixed(3), anchorOutside: anchor ? +distance(anchor.x, anchor.z).toFixed(3) : null, approachOverlaps: blockers };
   });
   const overlaps: [string, string][] = [];
   // Convex rectangle SAT; visual overlap is not automatically a rules collision (walking currently ignores furniture).
@@ -34,7 +35,7 @@ export function auditLayout(layout: Layout, items: LayoutItem[], H: HouseConfig 
     }
     return { corridor: c.id, footprintCrossings: [...crossed] };
   }).filter(c => c.footprintCrossings.length);
-  const floorReachable = reachableAnchors(H, rows.map(r => r.anchor), poses.get("terrace:decks") ? attachedPoint(byId.get("terrace:decks")!, poses.get("terrace:decks")!) : H.terrace.seat);
+  const floorReachable = reachableAnchors(H, rows.map(r => r.anchor ?? poses.get(r.id)!), poses.get("terrace:decks") ? attachedPoint(byId.get("terrace:decks")!, poses.get("terrace:decks")!) : H.terrace.seat);
   return { version: 1, floorplan: layout.floorplan, objectCount: solid.length, clutterCount: items.filter(o => o.decor).length,
     migration: layout.migration ?? null, objects: rows.map((r, i) => ({ ...r, floorReachable: floorReachable[i] })), overlaps, corridors,
     limitations: ["Floor reachability is a 0.75m sampled walkable-shape check, not navigation/play acceptance.", "Furniture overlap/path crossings are advisory; runtime walking currently has no furniture collision solver.", "Current kitchen baskets/smoke are room-anchored, not moved by a cauldron object transform.", "Bed wake pose/UI and DJ desk/seat orientation need runtime integration before enabling rotated adoption.", "Room labels are display text; stable object use kinds keep station functions, physical membership controls destination lighting."] };

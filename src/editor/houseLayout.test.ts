@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { HOUSE_ROOMS } from "../rules/houseRooms";
+import { HOUSE_ROOMS, hatSlots, toPlan } from "../rules/houseRooms";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { Model, render } from "../../art/model3d.js";
@@ -8,10 +8,27 @@ import { FURNITURE_IDS } from "../../art/furniture.js";
 import legacy from "../../config/house/layouts/editor-v1-baseline.json";
 import supplied from "../../docs/evidence/treehouse-layout-ed-2026-10-31.v1.json";
 import proposal from "../../docs/evidence/treehouse-layout-ed-2026-10-31.v2-proposal.json";
-import { artKey, attachedPoint, cameraYaw, corners, defaultLayout, exportLayout, floorplanKey, hitItem, LayoutHistory, layoutItems, normalAngle, parseLayout, physicalRoom, rotate } from "./houseLayout";
+import { artKey, attachedPoint, cameraYaw, corners, defaultLayout, exportLayout, floorplanKey, hitItem, isHatZone, itemKind, LayoutHistory, layoutItems, normalAngle, parseLayout, physicalRoom, rotate, zoneSlots } from "./houseLayout";
 
 const items = layoutItems(), key = floorplanKey(HOUSE_ROOMS, items), defaults = () => defaultLayout(items, key);
 describe("treehouse authoring layouts", () => {
+  it("edits the hats marker as a spawn zone, exporting future slots with no fake station use point", () => {
+    const zone = items.find(o => o.id === "hats")!, base = defaults().objects.find(p => p.id === zone.id)!;
+    expect(isHatZone(zone)).toBe(true); expect(itemKind(zone)).toBe("Hat spawn zone");
+    const slots = zoneSlots(zone, base), runtime = hatSlots({ x: 0, z: 0 }).map(p => toPlan({ x: 0, z: 0 }, p.x, p.z, HOUSE_ROOMS.turn ?? 0));
+    slots.forEach((p, i) => { expect(p.x).toBeCloseTo(runtime[i].x, 10); expect(p.z).toBeCloseTo(runtime[i].z, 10); expect(p.slot).toBe(i); });
+    const moved = { ...base, x: base.x + 10, z: base.z - 4, rotation: base.rotation + 90 };
+    zoneSlots(zone, moved).forEach((p, i) => {
+      expect(p.x).toBeCloseTo(moved.x - (slots[i].z - base.z), 10);
+      expect(p.z).toBeCloseTo(moved.z + (slots[i].x - base.x), 10);
+    });
+    const converted = parseLayout(supplied, items, key), edited = converted.objects.find(p => p.id === zone.id)!;
+    expect([edited.x, edited.z]).toEqual([supplied.objects.find(p => p.id === zone.id)!.x, supplied.objects.find(p => p.id === zone.id)!.z]);
+    const exported = exportLayout(converted, items) as { objects: { id: string; useAnchor?: unknown; kind?: string; spawnSlots?: unknown[] }[] };
+    const out = exported.objects.find(p => p.id === zone.id)!;
+    expect(out.kind).toBe("hat-spawn-zone"); expect(out).not.toHaveProperty("useAnchor"); expect(out.spawnSlots).toHaveLength(runtime.length);
+    expect(parseLayout(exported, items, key)).toEqual(converted);
+  });
   it("exports and reapplies every current object/station without changing the published house", () => {
     const original = JSON.stringify(HOUSE_ROOMS), layout = defaults();
     expect(new Set(items.map(o => o.id)).size).toBe(items.length);

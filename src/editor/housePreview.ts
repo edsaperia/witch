@@ -8,7 +8,7 @@ import { SIZE } from "../../art/furniture.js";
 import { RUG_DIM, MESS_DIM } from "../render/houseDecor";
 import { litCanvas, type Drawn } from "../render/housePieces";
 import { loadStyle } from "../render/style";
-import { artKey, attachedPoint, cameraYaw, corners, lightingRoom, rotate, type Layout, type LayoutItem, type Placement } from "./houseLayout";
+import { artKey, attachedPoint, cameraYaw, corners, isHatZone, lightingRoom, rotate, zoneSlots, type Layout, type LayoutItem, type Placement } from "./houseLayout";
 
 const PITCH = 24 * Math.PI / 180, SIN = Math.sin(PITCH), COS = Math.cos(PITCH), PPM = 6;
 export const makeCanvas = (w: number, h: number): HTMLCanvasElement => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
@@ -63,7 +63,7 @@ export class HousePreview {
       for (const r of HOUSE_ROOMS.rooms) { const p = m.project(r.x, r.z); ctx.fillText(r.label, p.x, p.y - r.r * m.scale + 12); }
     }
     const byId = new Map(items.map(o => [o.id, o]));
-    const floor = (id: string) => ["rug", "mess"].includes(byId.get(id)?.decor?.kind ?? "");
+    const floor = (id: string) => isHatZone(byId.get(id)!) || ["rug", "mess"].includes(byId.get(id)?.decor?.kind ?? "");
     for (const p of [...layout.objects].sort((a, b) => Number(floor(b.id)) - Number(floor(a.id)) || a.z - b.z)) {
       const o = byId.get(p.id)!, active = o.id === selected, pos = m.project(p.x, p.z);
       if (camera) {
@@ -74,8 +74,12 @@ export class HousePreview {
       if (!camera || active) {
         const points = corners(o, p).map(c => m.project(c.x, c.z)); ctx.beginPath(); points.forEach((c, i) => i ? ctx.lineTo(c.x, c.y) : ctx.moveTo(c.x, c.y)); ctx.closePath();
         ctx.fillStyle = active ? "#ffc77855" : "#9ac6c522"; if (!camera) ctx.fill(); ctx.strokeStyle = active ? "#ffd079" : "#c3d2ce"; ctx.lineWidth = active ? 2 : 1; ctx.stroke();
-        const a = attachedPoint(o, p), anchor = m.project(a.x, a.z); ctx.beginPath(); ctx.moveTo(pos.x, pos.y); ctx.lineTo(anchor.x, anchor.y); ctx.strokeStyle = "#89e0da"; ctx.stroke();
-        ctx.beginPath(); ctx.arc(anchor.x, anchor.y, 4, 0, Math.PI * 2); ctx.fillStyle = "#89e0da"; ctx.fill();
+        if (isHatZone(o)) {
+          for (const slot of zoneSlots(o, p)) { const dot = m.project(slot.x, slot.z); ctx.beginPath(); ctx.arc(dot.x, dot.y, 2.5, 0, Math.PI * 2); ctx.fillStyle = "#dbb2ef"; ctx.fill(); }
+        } else {
+          const a = attachedPoint(o, p), anchor = m.project(a.x, a.z); ctx.beginPath(); ctx.moveTo(pos.x, pos.y); ctx.lineTo(anchor.x, anchor.y); ctx.strokeStyle = "#89e0da"; ctx.stroke();
+          ctx.beginPath(); ctx.arc(anchor.x, anchor.y, 4, 0, Math.PI * 2); ctx.fillStyle = "#89e0da"; ctx.fill();
+        }
         if (active) {
           const f = rotate(0, o.facing.foot.d / 2 + 1, p.rotation), front = m.project(p.x + f.x, p.z + f.z);
           ctx.beginPath(); ctx.moveTo(pos.x, pos.y); ctx.lineTo(front.x, front.y); ctx.strokeStyle = "#ffb67d"; ctx.lineWidth = 3; ctx.stroke();

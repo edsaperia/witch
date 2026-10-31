@@ -1,4 +1,4 @@
-import { HOUSE_ROOMS, objectFront, toPlan, type HouseConfig, type HouseObject } from "../rules/houseRooms";
+import { HOUSE_ROOMS, hatSlots, objectFront, toPlan, type HouseConfig, type HouseObject } from "../rules/houseRooms";
 import { roomAt as shapeRoomAt } from "../../config/house/shape.js";
 import { decorPlan, type DecorItem } from "../render/houseDecor";
 import { standing } from "../render/housePieces";
@@ -12,6 +12,8 @@ export interface LayoutItem extends HouseObject {
   facing: { yaw: number; foot: { w: number; d: number; h: number }; curve: number };
   decor?: DecorItem;
 }
+export const isHatZone = (o: LayoutItem): boolean => o.use.kind === "hats";
+export const itemKind = (o: LayoutItem): string => isHatZone(o) ? "Hat spawn zone" : o.decor ? "Room clutter" : o.use.kind === "creator" ? "Dressing station" : "Furniture";
 export const normalAngle = (angle: number): number => ((angle % 360) + 540) % 360 - 180;
 export function rotate(x: number, z: number, angle: number): { x: number; z: number } {
   const a = angle * Math.PI / 180;
@@ -19,7 +21,7 @@ export function rotate(x: number, z: number, angle: number): { x: number; z: num
 }
 /** Authoring data only. Never writes HOUSE_ROOMS or the player's saves. */
 export function layoutItems(H = HOUSE_ROOMS): LayoutItem[] {
-  const items: LayoutItem[] = H.objects.map(o => ({ ...structuredClone(o), facing: standing(o), anchor: toPlan({ x: 0, z: 0 }, ...point(objectFront(o, { x: 0, z: 0 }, .5, H)), H.turn ?? 0) }));
+  const items: LayoutItem[] = H.objects.map(o => ({ ...structuredClone(o), ...(o.use.kind === "hats" ? { label: "Hat spawn zone" } : {}), facing: standing(o), anchor: toPlan({ x: 0, z: 0 }, ...point(objectFront(o, { x: 0, z: 0 }, .5, H)), H.turn ?? 0) }));
   const t = H.rooms.find(r => r.id === "terrace");
   if (t) items.push({ ...H.terrace.decks, id: "terrace:decks", label: "DJ decks + seat", room: t.id, x: t.x + H.terrace.decks.x, z: t.z + H.terrace.decks.z,
     h: 1.5, use: { kind: "say", line: "DJ decks" }, synthetic: true, facing: { yaw: 0, foot: { ...H.terrace.decks, h: 1.5 }, curve: 0 },
@@ -96,7 +98,15 @@ export function migrateCameraV1(raw: unknown, items: LayoutItem[], floorplan: st
 }
 export function exportLayout(layout: Layout, items: LayoutItem[]): object {
   return { ...layout, coordinates: "house-plan-metres", rotationMode: "absolute-clockwise-degrees-south-zero",
-    objects: layout.objects.map(p => ({ ...p, physicalRoom: physicalRoom(p), lightingRoom: lightingRoom(p), useAnchor: attachedPoint(items.find(o => o.id === p.id)!, p) })) };
+    objects: layout.objects.map(p => {
+      const item = items.find(o => o.id === p.id)!;
+      return { ...p, physicalRoom: physicalRoom(p), lightingRoom: lightingRoom(p), ...(isHatZone(item) ? { kind: "hat-spawn-zone", spawnSlots: zoneSlots(item, p) } : { useAnchor: attachedPoint(item, p) }) };
+    }) };
+}
+/** Future spawn positions, not hats or interaction points. Keep runtime's slot identities/order. */
+export function zoneSlots(item: LayoutItem, pose: Placement, H = HOUSE_ROOMS): { slot: number; x: number; z: number }[] {
+  if (!isHatZone(item)) return [];
+  return hatSlots({ x: 0, z: 0 }, H).map((p, slot) => ({ slot, ...attachedPoint(item, pose, toPlan({ x: 0, z: 0 }, p.x, p.z, H.turn ?? 0)) }));
 }
 /** All attachments (including a station's standing point / decks' seat) use one rigid transform. */
 export function attachedPoint(item: LayoutItem, pose: Placement, p = item.anchor): { x: number; z: number } {
@@ -107,7 +117,7 @@ export function corners(item: LayoutItem, p: Placement): { x: number; z: number 
   return [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([x, z]) => { const d = rotate(x * item.facing.foot.w / 2, z * item.facing.foot.d / 2, p.rotation); return { x: p.x + d.x, z: p.z + d.z }; });
 }
 export function hitItem(items: LayoutItem[], layout: Layout, x: number, z: number): string | null {
-  const floor = (id: string) => ["rug", "mess"].includes(items.find(o => o.id === id)?.decor?.kind ?? "");
+  const floor = (id: string) => isHatZone(items.find(o => o.id === id)!) || ["rug", "mess"].includes(items.find(o => o.id === id)?.decor?.kind ?? "");
   // Match drawing order: floor spills/rugs must not steal a station's drag target.
   for (const p of [...layout.objects].sort((a, b) => Number(floor(b.id)) - Number(floor(a.id)) || a.z - b.z).reverse()) {
     const o = items.find(o => o.id === p.id)!, d = rotate(x - p.x, z - p.z, -p.rotation);

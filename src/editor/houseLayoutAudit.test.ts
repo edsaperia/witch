@@ -10,7 +10,9 @@ describe("layout adoption audit", () => {
     const before = JSON.stringify(HOUSE_ROOMS), layout = parseLayout(supplied, items, key), audit = auditLayout(layout, items);
     expect(audit.objectCount).toBe(35); expect(audit.clutterCount).toBe(73);
     expect(audit.overlaps).toEqual([]);
-    expect(audit.objects.filter(o => o.interactive && (o.anchorOutside > -.3 || !o.floorReachable || o.approachOverlaps.length))).toEqual([]);
+    expect(audit.objects.filter(o => o.interactive && ((o.anchorOutside ?? 0) > -.3 || !o.floorReachable || o.approachOverlaps.length))).toEqual([]);
+    const hats = audit.objects.find(o => o.id === "hats")!;
+    expect(hats.interactive).toBe(false); expect(hats.anchor).toBeNull(); expect(hats.spawnSlots?.length).toBeGreaterThan(0);
     expect(audit.objects.find(o => o.id === "drumKit")?.physicalRoom).toBe("workshop");
     expect(audit.migration?.held.map(p => p.id)).toEqual(["cauldron"]);
     expect(JSON.stringify(HOUSE_ROOMS)).toBe(before);
