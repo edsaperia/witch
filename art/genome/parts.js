@@ -11,6 +11,7 @@ import { withForm, withGear, withTexture, shoe3d } from "../creatures3d.js";
 import { textureSprite } from "./texture.js";
 import { EXPRESSIONS, JAW_FACES } from "./expressions.js";
 import { speciesFor, buildCreature, textureSeed } from "../creatures.js";
+import { stiltSkeleton } from "./stilt.js";
 
 export const RIG_HEADINGS = [-Math.PI / 2, -Math.PI / 4, 0, Math.PI / 4, Math.PI / 2];
 export const RIG_TEMPLATES = { quadruped: "quad", serpent: "snake" }; // the templates the pilot rigs (and their builder)
@@ -40,9 +41,12 @@ function rigCapture(id, level, st, face = null, gear = null) {
   withTexture({ S, level, st }, () => withGear(g, () => withForm(form, () => buildCreature(S, level, 0, st, "towards"))));
   const s = got.scale ?? render(got.m, { height: got.height, measure: true, projected: true }).s, f = got.m.atScale;
   if (f) { got.m.atScale = null; f(s); }
+  if (gear?.stilt && !S.q && S.plan !== "snake") stiltSkeleton(got.m, S.plan);
   if (gear?.woken) for (const q of got.m.parts) if (q.mat === M.EYE || q.mat === M.IRIS || q.mat === M.PUPIL) q.mat = M.WOKEN; // enraged: angry glowing eyes (as critter's woken look)
   return { m: got.m, s };
 }
+/** The optional trip's authored joints, without the expensive sprite rasterisation. */
+export function stiltRigCapture(id, level, st) { return rigCapture(id, level, st, null, { stilt: true }); }
 // A party animal's shoe (creatures3d.js shoe3d, fitted to its hoof or paw) as a piece at each heading, pivoted on the
 // foot's centre, so the rig puts it on each foot in place of the foot's disc and it steps and lifts with the leg.
 function rigShoe(leg, style, s, st) {
@@ -99,9 +103,12 @@ function rigDisc(r, mat, s, paint, rod = false) {
 // head { nb, H }, tail (its base) for the four-legged; spine [[x, y, z, r]...] and head for a serpent.
 // gear (optional): a party animal's (art/creatures.js partyGear: collar, hat, glasses, shoes), baked on (shoes as pieces.shoe).
 export function rigParts(id, level, st, gear = null) {
-  const S = speciesFor(id, st, level), tpl = S.q ? "quadruped" : S.plan === "snake" ? "serpent" : null;
-  if (!tpl) return null;
+  const S = speciesFor(id, st, level);
+  let tpl = S.q ? "quadruped" : S.plan === "snake" ? "serpent" : null;
+  if (!tpl && !gear?.stilt) return null;
   const { m, s } = rigCapture(id, level, st, null, gear), R = m.rig, discs = {};
+  if (!tpl && R?.legs?.length) tpl = "quadruped"; // the same joint solver also accepts two, six, eight or fourteen legs
+  if (!tpl) return null;
   const radii = list => [...new Set(list.map(r => Math.max(1, Math.round(r * s))))].sort((a, b) => a - b);
   const discSet = (mat, rs, paint, rod = tpl === "quadruped") => { discs[mat] = discs[mat] || {}; for (const r of rs) if (!discs[mat][r]) discs[mat][r] = rigDisc(r, mat, s, paint, rod); };
   if (tpl === "quadruped") {

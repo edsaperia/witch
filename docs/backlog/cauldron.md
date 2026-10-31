@@ -70,6 +70,7 @@ Agreed one by one with Ed (2026-10-09). Not yet assigned to recipes, apart from 
 9. **Big Moon** (Ed): the moon is big. Really big.
 10. **Ravine** (Ed): the bend inverted: the world curves up around her, as if at the bottom of a ravine.
 11. **Chunky** (Ed): much bigger pixels.
+    Implemented as recipe #11 (blue + purple + pink): reuses the scene's low-resolution render targets and nearest-neighbour display. Default four times the normal pixel size; Potion lab exposes 1–12×. The final two minutes step back toward the original grid in whole display pixels; menus remain readable. No change to saved pixel settings or telescope resolution preferences.
 12. **Superhot** (Ed): time only moves forward when she's moving (the wave countdown still creeps while she stands still).
 13. **Orbit** (Ed): the treetops three times higher; the camera close to her; looking down on the forest as if from space.
 14. **Mirror Forest** (Ed): every creature looks like her.
@@ -87,7 +88,7 @@ Agreed one by one with Ed (2026-10-09). Not yet assigned to recipes, apart from 
 26. **Night Vision** (Ed).
 27. **Flask Finder** (Ed): flasks are easier to find.
 28. **Left Hook** (Ed): unlimited dodges, but they always veer left.
-29. **Tall Tales** (Ed): every animal looks very tall.
+29. **Stiltwalkers, replacing Tall Tales** (Ed, 2026-10-31): retain normal animal bodies on impossibly long legs, tapering from normal hip thickness to tiny feet, following the Dalí reference. Ed explicitly requested extending other legged animals too. This replaces the whole-body stretch; recipe29 and existing recipe58 now share Stiltwalkers without renumbering either combination. See58 for implementation details.
 30. **Thick Canopy** (Ed): the canopy see-through effect is off, so the ground can't be seen.
 31. **The Whole Route** (Ed): the entire route is shown. (Also the Route-seer hat's power, built in #942; a trip may want something else.)
 32. **Dreamseer** (Ed): the area a legend's dream points to is easier to see.
@@ -104,6 +105,7 @@ Agreed one by one with Ed (2026-10-09). Not yet assigned to recipes, apart from 
 43. **Chipmunks:** every sound at double pitch.
 44. **Loop the Loop** (Ed): rising does a loop-the-loop instead.
 45. **Worm's Eye** (Ed): the camera drops very low, almost level with the ground.
+    Implemented as recipe #45 (blue + white + white), reusing camera angle and distance. Default 3° and 0.4× distance; both exposed in Potion lab. Telescope and voyage cameras retain control. The normal view returns through the final two-minute fade or immediately on Stop/replacement; saved camera tuning is unchanged.
 46. **Cartoon:** thick outlines, flat colours, a pictorial pow burst on hits.
 47. **Underwater:** water wobble, muffled bubbly sound, floaty movement. **Only if executed really well** (Ed): bubbles rising from animals breathing, and so on.
 48. **Moonwalk:** she always faces backwards; 💌s still fly forward.
@@ -136,7 +138,7 @@ Cheap, from how the game draws (low-res target scaled up, bloom, tilt-shift, ben
 
 - **Hall of Mirrors:** don't clear the screen; everything smears into endless trails.
 - **Glow Up:** bloom threshold 0; everything blazes.
-- **Miniature:** tilt-shift at full: a toy world.
+- **Miniature:** tilt-shift at full: a toy world. PR1536 implements recipe 102 with shared scene/overlay focus settings and thin small-speaker audio, adjustable in the Potion Lab; audio render and visual judgement pending.
 - **Little Planet:** the bend cranked up.
 - **Wireframe:** one material flag.
 - **Mix-up:** creatures drawn from the wrong part of the sprite sheet.
@@ -169,13 +171,13 @@ Captured 2026-10-30. Numbers continue the original list for reference, **not rec
 ### Existing machinery and crossed signals
 
 57. **Masterplan** (Ed-requested): see how packs intend to move and attack: targets, destination slots, roles, formations and attack geometry. `rules/combat/packs.ts` computes directives; `rules/combat.ts` currently keeps the complete directive map local. Publish a read-only snapshot for drawing instead of recomputing decisions. Existing line/ribbon renderers are foundations, not a complete overlay. Show current intentions first; abandoned plans and long histories would require new recording. Related: Foresight, Whole Route.
-58. **Stiltwalkers** (Ed's Dalí reference): familiar animal bodies stand impossibly high on very thin, long legs. A specific Tall Tales variant using the creature rig and leg drawing. Preserve the body silhouette; feet still meet the ground. Review joint reach, stroke sampling and clipping rather than assuming a whole-sprite stretch gives the result. Scratch elephant, fox and badger mockups were explored during the conversation; not shipped artwork.
+58. **Stiltwalkers** (Ed's Dalí reference; supersedes Tall Tales, 2026-10-31): familiar animal bodies stand impossibly high on very long legs tapering from normal hips to tiny feet. Preserve body silhouettes and ground foot targets; extend existing rigs to the other legged body types. Recipe29 and58 are aliases. Potion Lab controls leg length (default6×,1–12×) and foot thickness (default.08×,.02–.5×). Existing game-clock envelope restores normal anatomy over the final two minutes. Check joint reach, continuous limb sampling, pooled piece scales and taller culling bounds. Scratch elephant, fox and badger mockups were explored earlier; not shipped artwork. Current build uses the game's own anatomy rather than those mockups.
 59. **Contour Dream:** vivid contour bands run across ground, animals and scenery. Shared world-height/position shading; a new small colour formula. A renderer mock was explored, not a production implementation. Related: Woodcut.
 60. **Bottomless:** the ground becomes a starfield, with creatures apparently standing over an abyss. Ground-material substitution rather than moving their gameplay positions. A renderer mock was explored. Related: Skylight.
 61. **Aurora Outlines:** luminous coloured edges replace most solid surfaces. Scene/depth edge filtering and bloom; an extra filter, not a free material toggle. A renderer mock was explored. Related: Cartoon.
 62. **Folded Space:** repeated mirrored sectors fold the forest around her. Screen-coordinate remapping; a renderer mock of the existing Kaleidoscope idea. Keep as a variant unless its experience is distinct enough for another recipe.
 63. **Sliced World:** horizontal world-height bands disappear, revealing stacked slices through animals and scenery. Shared clipping formula; check depth/shadow passes. Related: Cutaway.
-64. **The Audience:** amplify existing watching-tree lean and lag until the forest visibly follows her passage. `render/view/frameUniforms.ts` and `render/sprites.ts`. Related: Watched, Walking Wood.
+64. **The Audience:** amplify existing watching-tree lean and lag until the forest visibly follows her passage. Implemented in PR #1535 using `render/view/frameUniforms.ts` and the existing `render/sprites.ts` shader: 35 m watching radius, 4 m lean, 2 s lag, all adjustable in the Potion Lab, fading with the standard trip envelope. No new art or drawing pass; visual judgement awaits Ed's trip report. Related: Watched, Walking Wood.
 65. **Concertina:** shared scene deformation squeezes and stretches distance sideways. Extend the height/bend drawing path; keep CPU anchors consistent. Not an existing bend-axis slider. Related: Ravine, Little Planet.
 66. **Far Sight:** nearby scenery dissolves into haze while distant scenery is unnaturally crisp. Reverse/remap existing haze distance controls; check saturation and clamping. Related: Inverse Perspective.
 67. **The World Is Late:** her light, canopy opening and tree attention follow her past position, catching up when she stops. `rules/momentum.ts` retains about 1.5 seconds of witch positions; `render/view/frameUniforms.ts` has movable centres. Use available history, not an invented long recording.

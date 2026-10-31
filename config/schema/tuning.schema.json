@@ -11915,7 +11915,11 @@
       "type": "object",
       "properties": {
         "mood": {
-          "type": "string"
+          "type": "string",
+          "enum": [
+            "spooky",
+            "plain"
+          ]
         },
         "spooky": {
           "type": "object",

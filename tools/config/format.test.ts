@@ -5,7 +5,7 @@ import { formatted } from './format.mjs';
 
 it('preserves every tuning value and key order, with byte-stable output', () => {
   const before = readFileSync('config/tuning.json', 'utf8');
-  const after = formatted(before);
+  const after = formatted(JSON.stringify(JSON.parse(before)));
   expect(JSON.parse(after)).toStrictEqual(JSON.parse(before));
   expect(formatted(after)).toBe(after);
   expect(after, 'fix: node tools/config/format.mjs --write').toBe(before.replace(/\r\n/g, '\n'));

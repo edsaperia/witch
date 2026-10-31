@@ -143,6 +143,7 @@ import { newReveal, setReveal } from "./view/reveal";
 import { drawWitch, houseShiftOf } from "./view/witch";
 import { MushroomView } from './mushrooms';
 import { PotionObserversView } from './potionObservers';
+import { chunkyPixelSize, potionStrength } from './potionEffects';
 import { drawPointers } from "./view/hud";
 import { workAhead } from "./view/ahead";
 import { winLit, winPulse, winPulseOut } from "../rules/win";
@@ -964,11 +965,18 @@ export class View {
    *  pixels (Ed, 2026-10-29: "the pixels are just hard to read"; at a DPR of 1.25 a pixel size of 3 was 3.75 device pixels, its
    *  pixels drawn 3 and 4 wide by turns: 3.2 css, 4 device pixels, now). Set by resize. */
   cssPixel = 1;
+  private pixelViewport = { w: 0, h: 0 };
+  private scenePixelSize(): number {
+    const t = this.game.tuning, dpr = typeof devicePixelRatio === 'number' && devicePixelRatio > 0 ? devicePixelRatio : 1;
+    const p0 = t.pixelSize * this.pixelScale;
+    const base = t.pixels?.snap !== false && this.pixelScale === 1 ? Math.max(1, Math.round(p0 * dpr)) / dpr : p0;
+    return chunkyPixelSize(base, dpr, potionStrength(this.game, 'chunky'));
+  }
   /** Fit the canvas to the window: the scene at low resolution, shown scaled up by the pixel size. */
   resize(cssW: number, cssH: number): void {
-    const t = this.game.tuning, dpr = typeof devicePixelRatio === "number" && devicePixelRatio > 0 ? devicePixelRatio : 1;
+    this.pixelViewport = { w: cssW, h: cssH };
     // (to the nearest whole number of device pixels, Ed's pick: 4 at 1.25, 5 at 1.5; not through the telescope, finer by design)
-    const p0 = t.pixelSize * this.pixelScale, p = t.pixels?.snap !== false && this.pixelScale === 1 ? Math.max(1, Math.round(p0 * dpr)) / dpr : p0;
+    const p = this.scenePixelSize();
     this.cssPixel = p;
     this.width = Math.max(1, Math.ceil(cssW / p));
     this.height = Math.max(1, Math.ceil(cssH / p));
@@ -1628,6 +1636,8 @@ export class View {
   private floorItems: { species: string; glint: number; look: FloorLook }[] = Array.from({ length: 6 }, () => ({ species: "", glint: 0, look: FALLBACK_LOOK }));
 
   render(time: number, draw = true): void {
+    // Allocate only when a whole display-pixel step changes, including Try/Stop and expiry.
+    if (this.pixelViewport.w > 0 && this.scenePixelSize() !== this.cssPixel) this.resize(this.pixelViewport.w, this.pixelViewport.h);
     // Late art may introduce programs after compileAll's background pass has ended.
     for (const p of this.readyPrograms()) p.isReady();
     this.assets.playing = this.game.party.spellAt !== null; // (the night playing: the art ahead of need shares the workers, render/assets.ts dispatch)

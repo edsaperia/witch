@@ -32,8 +32,8 @@ type Part = { sp: unknown; px: number; py: number } | null;
 type Parts = { template: "quadruped" | "serpent"; s: number; pieces: Record<string, Part[] | null>; faces?: Record<string, Part[] | null>; discs: Record<number, Record<number, Part>>; joints: { legs?: RigLeg[]; head?: { nb: V3; H: V3 } | V3; tail?: V3; top?: number; len?: number; spine?: [number, number, number, number][] } };
 
 /** A party animal's gear on its rig (artBuild.ts partyGearOf): its collar's colour (null: none), hat and glasses. */
-export interface RigGear { collar?: number[] | null; hat?: number | null; glasses?: string | null; /** little party shoes (art/creatures.js SHOE_STYLES) */ shoes?: string | null; /** enraged: red eyes, a darker coat */ woken?: boolean }
-export const rigGearKey = (g: RigGear): string => g.woken ? "woken" : `${g.collar ? g.collar.join(".") : "-"}|${g.hat ?? "-"}|${g.glasses ?? "-"}|${g.shoes ?? "-"}`;
+export interface RigGear { collar?: number[] | null; hat?: number | null; glasses?: string | null; /** little party shoes (art/creatures.js SHOE_STYLES) */ shoes?: string | null; /** enraged: red eyes, a darker coat */ woken?: boolean; /** Optional all-legged-body extraction for Stiltwalkers; separate from ordinary rig caches. */ stilt?: boolean }
+export const rigGearKey = (g: RigGear): string => (g.woken ? "woken" : `${g.collar ? g.collar.join(".") : "-"}|${g.hat ?? "-"}|${g.glasses ?? "-"}|${g.shoes ?? "-"}`) + (g.stilt ? "|stilt" : "");
 
 export function rigSprites(st: Style, species: string, level: number, mk: MakeCanvas, gear: RigGear | null = null): { px: AtlasPixels; meta: RigMeta } | null {
   const P = (rigParts as (id: string, level: number, st: Style, gear: RigGear | null) => unknown)(species, level, st, gear) as Parts | null;

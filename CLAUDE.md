@@ -73,6 +73,8 @@ Its entries are in the notes below, by area, and listed in [`docs/notes/INDEX.md
 
 ## Capturing possible mushroom trips
 
+Ed, 2026-10-31: every potion must have an audio effect, even a simple one. It must alter existing sounds throughout the trip; a recurring added sound alone is insufficient. Design and implement sound alongside visuals, use the trip's game-clock envelope and final two-minute fade, and preserve any bespoke sound requirements. The shared trip filter is a fallback, not a replacement for agreed Night Vision/Heat Vision audio.
+
 Ed, 2026-10-30: whenever development reveals an interesting possible effect (an unusual test/debug state, a visual bug, a new drawing system, an extreme parameter or a useful signal crossing), add it as a **suggestion** to `docs/backlog/cauldron.md`. Do this in the same piece of work; do not wait for a dedicated mushroom task. Check for an existing equivalent first and extend it rather than duplicate it. Record what she experiences, the existing signal/drawing hook, any genuinely new machinery needed, and whether it is a variant of another trip. Keep suggestions distinct from Ed-approved effects and implemented features. The catalogue is expandable; 56 is not a cap. Capturing an idea does not authorise implementing it or changing recipe assignments.
 
 ## Notes
