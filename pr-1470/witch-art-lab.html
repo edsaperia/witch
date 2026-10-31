@@ -10076,7 +10076,27 @@ function sizeTargetPixels(id,level,witchHeight) {
 
 
 
-function sizePixelRange(id,level,witch){
+// ---- inlined from art/genome/size-candidate.js ----
+
+// Ed, 2026-10-31: readable small adults, distinct babies/youths, larger
+// useful adults and less oversized legends. Ed adopted these in game at
+// 13:26 UTC; =0 retains the old comparison. Native body pixels at a 43px witch.
+const SIZE_CANDIDATE = "body-range-2026-10-31";
+function candidateSizePixels(id, level, witchHeight = 43) {
+  const rank = SIZE_CLASS_BY_ID[id];
+  if (rank == null) throw new Error(`No creature size class: ${id}`);
+  if (!Number.isInteger(level) || level < 0 || level > 3) throw new Error("Creature age must be 0..3");
+  if (!Number.isFinite(witchHeight) || witchHeight <= 0) throw new Error("Witch height must be positive");
+  // Piecewise interpolation keeps wolf's medium anchor while letting the
+  // largest adults grow without making the small animals unreadable again.
+  const adult = rank <= 7 ? 65 + 55 * rank / 7 : 120 + 80 * (rank - 7) / 4;
+  const body = level === 0 ? adult * .45 : level === 1 ? adult * .7 : level === 2 ? adult : 200 + 80 * rank / 11;
+  return Math.round(body * witchHeight / 43);
+}
+
+
+function sizePixelRange(id,level,witch,candidate=false){
+ if(candidate){const target=candidateSizePixels(id,level,witch);return [target-1,target+1];}
  const target=sizeTargetPixels(id,level,witch);
  if(level===3)return [target,target+1]; // protects 1.75x even when the adult reaches its upper bound
  const band=[[.75,1.2],[1.1,1.5],[1.8,3]][level],rank=SIZE_CLASS_BY_ID[id];
@@ -10099,7 +10119,7 @@ function standingWitchHeight(st) {
 // an initial scale; the raster fit below targets occupied pixels, including
 // decorative extras, rather than blank padding. Pins cannot exceed the band.
 function creatureSizeOptions(model, options, S, level, st) {
-  const target=sizeTargetPixels(S.id,level,standingWitchHeight(st));
+  const target=(st.creatureSizeCandidate===1?candidateSizePixels:sizeTargetPixels)(S.id,level,standingWitchHeight(st));
   const unit=render(model,{...options,scale:1,measure:true,projected:true});
   // measure's integer dimensions would lose subpixel support, so use its span.
   const span=unit.projectedHeight;
@@ -10118,11 +10138,11 @@ function fitOccupiedCreature(model,options,S,level,st,decorate) {
   const draw=(model,opts)=>{stats[opts.occupiedOnly?"probes":"rasters"]++;return render(model,opts);};
   const key=JSON.stringify([S,level,st,model.parts,model.flats,options.facing]);
   const cached=fittedScales.get(key);
-  if(cached!=null)return {options:{...options,...cached},stats};
+  if(cached!=null)return {options:{...options,...cached},stats:{...stats,bodyHeight:cached.bodyHeight}};
   const atScale=model.atScale,parts=model.parts.slice(),flats=model.flats.slice(),partState=parts.map(p=>({...p})),part=model.part;
   const reset=()=>{model.parts=parts.slice();model.flats=flats.slice();model.part=part;for(let i=0;i<parts.length;i++)Object.assign(parts[i],partState[i]);model.atScale=atScale;};
   if(!(S.id==='snowleopard'&&S.sizes.motes?.[level])){
-    const range=sizePixelRange(S.id,level,standingWitchHeight(st));let scale=options.scale,lo=null,hi=null,best=null;
+    const range=sizePixelRange(S.id,level,standingWitchHeight(st),st.creatureSizeCandidate===1);let scale=options.scale,lo=null,hi=null,best=null;
     const probePixels=(W,H)=>{
       const r=rng(S.plan==='owl'?31:S.id.length*(S.q?7919:131)),points=[];
       for(let i=0;i<(S.sizes.motes?.[level]??0);i++){
@@ -10149,7 +10169,7 @@ function fitOccupiedCreature(model,options,S,level,st,decorate) {
     reset();const sp=draw(model,{...options,scale:best.scale,samplePhaseY:best.samplePhaseY}).sp;decorate(sp);
     return {options:{...options,scale:best.scale,samplePhaseY:best.samplePhaseY},sprite:sp,stats};
   }
-  const range=sizePixelRange(S.id,level,standingWitchHeight(st)),observations=[];
+  const range=sizePixelRange(S.id,level,standingWitchHeight(st),st.creatureSizeCandidate===1),observations=[];
   let scale=options.scale,best=null,samplePhaseY=0;
   for(let attempt=0;attempt<3;attempt++){
     reset();
@@ -10167,7 +10187,7 @@ function fitOccupiedCreature(model,options,S,level,st,decorate) {
     }
   }
   if(fittedScales.size>=128)fittedScales.delete(fittedScales.keys().next().value);
-  fittedScales.set(key,{scale:best.scale,samplePhaseY:best.samplePhaseY});
+  fittedScales.set(key,{scale:best.scale,samplePhaseY:best.samplePhaseY,bodyHeight:best.height});
   reset();if(atScale){model.atScale=null;atScale(best.scale);}
   return {options:{...options,scale:best.scale,samplePhaseY:best.samplePhaseY},sprite:best.sp,stats};
 }
@@ -10480,16 +10500,23 @@ let VIEW = null;
 function withView(view, f) { const was = VIEW; VIEW = view; try { return f(); } finally { VIEW = was; } }
 const viewKey = () => VIEW ? `view${VIEW.yaw ?? ""},${VIEW.pitch ?? ""}` : "";
 const drawForm = (m, o, S, level, st) => {
+  // Candidate measures existing anatomical volumes only. Keep every decorative
+  // part for the final drawing at the measured scale; never alter the anatomy.
+  const candidate = st.creatureSizeCandidate === 1;
+  const complete = candidate ? {parts:m.parts,flats:m.flats} : null;
   const dressed = m.sizeBody ? { parts: m.parts, flats: m.flats, atScale: m.atScale, part: m.part, values: m.parts.map(p => ({...p})) } : null;
   if (dressed) { m.parts = m.sizeBody.parts.slice(); m.flats = m.sizeBody.flats.slice(); }
+  if (candidate) { m.parts=m.parts.filter(p=>!p.extra);m.flats=m.flats.filter(p=>!p.extra); }
   o = creatureSizeOptions(m, o, S, level, st);
-  const decorate = sp => { const n = S.sizes.motes?.[level]; if (n) glowMotes(sp, S.plan === "owl" ? 31 : S.id.length * (S.q ? 7919 : 131), n, S.q && S.id === "snowleopard"); };
+  const decorate = sp => { const n = S.sizes.motes?.[level]; if (!candidate && n) glowMotes(sp, S.plan === "owl" ? 31 : S.id.length * (S.q ? 7919 : 131), n, S.q && S.id === "snowleopard"); };
   const fitted = fitOccupiedCreature(m, o, S, level, st, decorate);
+  if (candidate) { fitted.stats.bodyTarget=o.sizeTarget;fitted.stats.bodyHeight=fitted.sprite ? occupiedHeightForCandidate(fitted.sprite) : fitted.stats.bodyHeight; }
   if (dressed) {
     for (let i=0;i<dressed.parts.length;i++) Object.assign(dressed.parts[i],dressed.values[i]);
     m.parts=dressed.parts; m.flats=dressed.flats; m.atScale=dressed.atScale; m.part=dressed.part;
     fitted.sprite=null; // gear keeps the calibrated body scale, then draws on top
   }
+  if (complete) {m.parts=complete.parts;m.flats=complete.flats;fitted.sprite=null;}
   o = VIEW ? { ...fitted.options, ...VIEW } : fitted.options;
   if (FORM) {
     // Pose transforms move the already-built face and its anchors together.
@@ -10498,7 +10525,9 @@ const drawForm = (m, o, S, level, st) => {
     return FORM(m, o, S, level);
   }
   if (fitted.sprite && !VIEW) { fitted.sprite.sizeFit = fitted.stats; return fitted.sprite; }
-  const sp = render(m, o).sp; decorate(sp); sp.sizeFit = { ...fitted.stats, rasters: fitted.stats.rasters + 1 }; return sp;
+  const sp = render(m, o).sp; decorate(sp);
+  if(candidate){const n=S.sizes.motes?.[level];if(n)glowMotes(sp,S.plan === "owl" ? 31 : S.id.length * (S.q ? 7919 : 131),n,S.q&&S.id==='snowleopard');}
+  sp.sizeFit = { ...fitted.stats, rasters: fitted.stats.rasters + 1 }; return sp;
 };
 function withGear(gear, f) { const was = GEAR; GEAR = gear; try { return f(); } finally { GEAR = was; } }
 // A little party shoe (Ed, 2026-10-05: "yes, little party shoes"): on a foot { c, r, group, fit } in a style
@@ -12648,7 +12677,7 @@ const levelHeight = (level, st) => height3d(level, st);
 // facing: "towards" (head turned to the viewer) or "away" (we see the rump and back of the head).
 // Shapes don't depend on colours, so a creature is drawn once per shape-changing knob setting
 // (a lab session changes lighting and colour knobs far more often than these).
-const SHAPE_KNOBS = ["size", "growth", "pixel", "head", "eye", "legs", "long", "fur", "texture", "creatureScale"], cache = new Map();
+const SHAPE_KNOBS = ["size", "growth", "pixel", "head", "eye", "legs", "long", "fur", "texture", "creatureScale", "creatureSizeCandidate"], cache = new Map();
 // gear (optional): party gear, the woken look and the expression, { collar, hat, glasses, shoes, woken, face }:
 //   collar: a colour [r, g, b] (the creature's sigil neon) or true; hat: a colourway 0..2;
 //   glasses: "bar" | "star" | "heart"; shoes: "sneakers" | "glitter" | "platform"; woken: true;
@@ -22167,7 +22196,7 @@ const KNOBS = [
   { k: "phonesHue", g: "Witch", label: "Headphones hue", min: 0, max: 1, step: 0.01, v: 0.92, hue: true },
 ];
 const GROUPS = ["Night light", "Shading", "Colour", "Trees", "Tree mix", "Undergrowth", "Map", "Creatures", "Witch"];
-function defaultStyle() { const s = {}; KNOBS.forEach(k => s[k.k] = k.v); return s; }
+function defaultStyle() { const s = {creatureSizeCandidate:1}; KNOBS.forEach(k => s[k.k] = k.v); return s; } // Ed adopted revised sizes, 2026-10-31; link =0 compares old sizes
 function mutate(style, strength, groups, seed) {
   const r = rng(seed), s = { ...style };
   for (const k of KNOBS) {
