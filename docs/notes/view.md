@@ -1,5 +1,18 @@
 # The view
 
+**Heat/refraction preview** (Ed/root, 2026-10-31; #1543): opt-in `?refraction=1`,
+off by default pending visual/GPU acceptance. One nearest visible campfire plume
+and one party-cast pressure wave use namespaced uniforms in the existing Post
+composite, with the scene's existing depth texture. Whole art-pixel offsets are
+bounded/clamped; emitter support depth protects foreground at destination and
+borrowed source. Existing potion wobble runs first; only the scene sample moves,
+while bloom, smooth FX, potion outlines/grade and tilt-shift keep their old paths.
+World-clock lifetimes freeze/slow with play; the cast's actual rendered pose and
+original timestamp are captured once, and island swaps clear it. `FX_QUALITY.distortion`
+and reduced flashing disable it. No extra pass/target or gameplay change. See
+`docs/plans/heat-refraction-review.md` for the required unperformed cloud
+foreground/edge/combined-potion and crowded GPU/memory comparisons.
+
 **Potion perception** (Ed, 2026-10-31): `render/potionEffects.ts` derives the local witch's effect strength from the game clock, at full strength on waking and fading over the final 120 of 600 seconds. `rules/potionSettings.ts` holds live development parameters, defaults, ranges and detached copy snapshots. The eight implemented recipes use signed terrain bend, canopy visibility and colour grading, bloom, moon size/glow, camera perspective and tilt blur, screen-space edge detection, and a transparent ground colour pass that retains depth occlusion. Small foliage has its own disappearance flag. Shared edge wobble applies even to recipes marked Coming soon; its amplitude fades with the trip and it leaves the picture's centre undistorted by default. Parameters are read without mutating saved game tuning, and ordinary rendering returns when the trip ends or is replaced. Recipe IDs and assignments live in `config/potion-recipes.json`; regenerate the Markdown book with `node tools/mushrooms/recipe-book.mjs`.
 
 M5 forest follow-up (coordinator6521676231, Victor6521663230): the first cloud review accepted shadow's palette but found bloom/wood/party/shadow forest beams weak and fire's E–W beam short. The beam alone now uses a broader core (cross-axis1.25), a pale family-ramp interior and a thin near-black family edge inside the existing quad; longitudinal0.82 leaves margin for grain/distortion without shrinking endpoints. Fire/frost/storm radial turbulence is excluded from beams, so fire cannot eat its beam ends; motion in texture/particles and family hues remain. No CPU update logic, geometry, instances, draws or light requests added. Increased visible fragment coverage requires the final-SHA ≤1.5ms hardware GPU check; CPU data cannot establish it.

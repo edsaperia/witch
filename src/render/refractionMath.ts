@@ -23,6 +23,41 @@ export function pressureMask(distance: number, age: number): number {
   return band * band * (1 - phase);
 }
 
+/** The scene is linearly filtered, depth nearest-filtered. A fractional potion coordinate needs all four scene-texel depths. */
+export function refractionDepth(p: readonly [number, number], low: readonly [number, number], depthAt: (p: readonly [number, number]) => number): number {
+  const x = p[0] * low[0] - 0.5, y = p[1] * low[1] - 0.5;
+  if (Math.abs(x - Math.round(x)) < 1e-4 && Math.abs(y - Math.round(y)) < 1e-4) return depthAt(p);
+  const uv = (cell: number, n: number) => Math.max(0.5 / n, Math.min(1 - 0.5 / n, (cell + 0.5) / n));
+  const bx = Math.floor(x), by = Math.floor(y);
+  return Math.min(...[0, 1].flatMap(dy => [0, 1].map(dx => depthAt([uv(bx + dx, low[0]), uv(by + dy, low[1])]))));
+}
+
+/** CPU reference for capture diagnostics/tests, using the same projected uniforms as the composite.
+ * The supplied coordinate is AFTER potion wobble; OFF returns it exactly without reading depth. */
+export function refractionCoordinate(p: readonly [number, number], low: readonly [number, number], shapes: readonly (readonly number[])[], states: readonly (readonly number[])[], count: number, depthAt: (p: readonly [number, number]) => number): readonly [number, number] {
+  if (count === 0) return p;
+  let depth = -1, dx = 0, dy = 0, guard = 0;
+  for (let i = 0; i < Math.min(count, REFRACTION_LIMIT); i++) {
+    const s = shapes[i], t = states[i];
+    const x = (p[0] - s[0]) / Math.max(s[2], 1e-6), y = (p[1] - s[1]) / Math.max(s[3], 1e-6), r = Math.hypot(x, y);
+    const mask = t[1] < 0.5 ? plumeMask(x, y) : pressureMask(r, t[2] * PRESSURE_SECONDS);
+    if (mask <= 0) continue;
+    if (depth < 0) depth = refractionDepth(p, low, depthAt);
+    if (!refractable(depth, t[0])) continue;
+    guard = Math.max(guard, t[0]);
+    const vx = t[1] < 0.5 ? Math.sin(y * 11 - t[2] * 3) : r > 1e-5 ? x / r : 0;
+    const vy = t[1] < 0.5 ? 0.25 * Math.sin(x * 9 + y * 6 - t[2] * 2) : r > 1e-5 ? y / r : 0;
+    dx += vx * mask * t[3]; dy += vy * mask * t[3];
+  }
+  const capped = (v: number) => Math.floor(Math.max(-REFRACTION_MAX_PIXELS, Math.min(REFRACTION_MAX_PIXELS, v)) + 0.5);
+  dx = capped(dx); dy = capped(dy);
+  if (dx === 0 && dy === 0) return p;
+  const pixel = refractedPixel(Math.floor(p[0] * low[0]), Math.floor(p[1] * low[1]), dx, dy, low[0], low[1]);
+  const at: [number, number] = [(pixel[0] + 0.5) / low[0], (pixel[1] + 0.5) / low[1]];
+  if (Math.abs(at[0] - p[0]) * low[0] > REFRACTION_MAX_PIXELS + 0.0001 || Math.abs(at[1] - p[1]) * low[1] > REFRACTION_MAX_PIXELS + 0.0001) return p;
+  return refractionDepth(at, low, depthAt) < guard ? p : at;
+}
+
 /** Consume each event object once per island, even when its queue is held through several paused frames. */
 export class RefractionEvents {
   private seen = new WeakSet<object>();

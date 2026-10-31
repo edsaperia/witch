@@ -26,3 +26,15 @@ crowded-scene acceptance. No local browser slot or daemon. Prepare exact-SHA
 comparison instructions for one fire, one pressure wave, foreground overlap,
 screen edges, camera motion, pause/slowtime/island/quality transitions. Default
 activation and review scene selection follow canonical's integration ruling.
+
+Root reservation 6544780920 (2026-10-31) opened the narrow Post/View integration.
+Implemented as additive namespaced uniforms and one scene-sampling hook, separate
+View update/reset hooks and one cast-pose capture call in the existing drawWitch
+party-cast branch. Potion coordinate computation, colour/edge/tilt/audio and old
+bloom/smooth-FX coordinates remain unchanged. Source-only OFF audit restores the
+exact legacy composite hash `215f5c758c04dbf39687a7b8f7e57a9df650b7ceb75f155a615dc9cade99a6a9`
+after removing only the new injection/identity hook; this is not a pixel test.
+Foreground guards include the source support depth and all four colour texels
+participating in fractional potion sampling. Default-OFF preview is registered;
+review cases and the coordinator-owned capture helper are in
+`docs/plans/heat-refraction-review.md`. No browser/GLSL/GPU acceptance is claimed.

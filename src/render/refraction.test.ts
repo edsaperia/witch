@@ -1,6 +1,7 @@
 import { expect, it } from "vitest";
 import * as THREE from "three";
 import { Refraction } from "./refraction";
+import { refractable } from "./refractionMath";
 
 const place = (p: THREE.Vector3) => p;
 function fixture() {
@@ -44,4 +45,12 @@ it("chooses one nearest visible fire rather than allowing an offscreen fire to h
   const p = fixture();
   p.fx.update(p.world, 1, true, [{ x: 0, z: -10, scale: 1 }, { x: 0, z: 1, scale: 1 }], null, p.camera, place, { x: 0, z: 1 });
   expect(p.fx.count).toBe(1); expect(p.fx.shapes[0].x).toBeCloseTo(0.5);
+});
+it("protects foreground surfaces against the fire's base depth, not merely its nearer raised plume", () => {
+  const p = fixture();
+  p.camera.position.set(0, 10, 10); p.camera.lookAt(0, 0, -10); p.camera.updateMatrixWorld(); p.update(1.1);
+  const base = new THREE.Vector3(0, 0, -10).project(p.camera).z * 0.5 + 0.5;
+  const top = new THREE.Vector3(0, 4.5, -10).project(p.camera).z * 0.5 + 0.5;
+  expect(p.fx.states[0].x).toBeGreaterThanOrEqual(base);
+  expect(refractable((base + top) / 2, p.fx.states[0].x)).toBe(false);
 });

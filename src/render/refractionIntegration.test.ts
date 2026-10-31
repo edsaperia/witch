@@ -1,0 +1,43 @@
+import { afterEach, expect, it } from "vitest";
+import * as THREE from "three";
+import { Post, type PostTuning } from "./post";
+import { Refraction } from "./refraction";
+import { updateRefraction, resetRefraction, captureRefractionCast } from "./view/refraction";
+import { FX_QUALITY } from "./fx/system";
+import { comfort } from "./comfort";
+import type { View } from "./view";
+
+afterEach(() => { FX_QUALITY.distortion = true; comfort.reduceFlashing = false; });
+it("binds existing depth plus bounded form uniforms in the real Post composite without adding passes", () => {
+  const renderer = { setRenderTarget() {}, render() {} };
+  const tuning = { bloom: { on: false, strength: 0, threshold: 0.5 }, tone: { black: 0, gamma: 1, ambient: 1 }, suspects: { effectsLayer: false, showBroken: false }, tiltShift: { on: false, strength: 0, band: 0.5, centre: 0.5, treetop: { strength: 0, band: 0.5 } } } satisfies PostTuning;
+  const post = new Post(renderer as unknown as THREE.WebGLRenderer, tuning);
+  const composite = (post as unknown as { mats: Record<string, THREE.ShaderMaterial> }).mats.composite;
+  post.refraction.count = 2; post.refractionEnabled = false;
+  expect([...post.renderSteps(new THREE.Scene(), new THREE.PerspectiveCamera())]).toHaveLength(1);
+  expect(composite.uniforms.uRefractionCount.value).toBe(0);
+  post.refractionEnabled = true;
+  expect([...post.renderSteps(new THREE.Scene(), new THREE.PerspectiveCamera())]).toHaveLength(1);
+  expect(composite.uniforms.uRefractionCount.value).toBe(2);
+  expect(composite.uniforms.uRefractionDepth.value).toBe(post.scene.depthTexture);
+  expect(composite.uniforms.uRefractionShape.value).toBe(post.refraction.shapes);
+  // The scene call alone changes its coordinate; bloom/FX and the existing potion p remain unchanged.
+  expect(composite.fragmentShader).toContain("texture2D(uScene, refractScene(p))");
+  expect(composite.fragmentShader).toContain("texture2D(uBloom, uPotionWobble.x > 0.0 ? p : vUv)");
+  expect(composite.fragmentShader).toContain("texture2D(uFx, vUv)");
+});
+it("the real View hook respects URL activation, quality, comfort and island reset", () => {
+  const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100); camera.updateMatrixWorld();
+  const refraction = new Refraction();
+  const v = { game: { tuning: { bare: false }, witch: { x: 0, z: -10 }, party: { spellAt: null } }, post: { refraction, refractionEnabled: false }, worldFires: [{ x: 0, z: -10, scale: 1 }], camera, witchBodyY: 1 } as unknown as View;
+  updateRefraction(v, 1); expect(refraction.count).toBe(0);
+  v.post.refractionEnabled = true; updateRefraction(v, 1); expect(refraction.count).toBe(1);
+  FX_QUALITY.distortion = false; updateRefraction(v, 1); expect(refraction.count).toBe(0);
+  FX_QUALITY.distortion = true; comfort.reduceFlashing = true; updateRefraction(v, 1); expect(refraction.count).toBe(0);
+  comfort.reduceFlashing = false; updateRefraction(v, 1); expect(refraction.count).toBe(1);
+  v.game.party.spellAt = 1; captureRefractionCast(v, 1, 0, 0, -10); updateRefraction(v, 1.1); expect(refraction.count).toBe(2);
+  const source = refraction.shapes[1].clone(); v.game.witch.x = 3;
+  updateRefraction(v, 1.1); expect(refraction.shapes[1].equals(source)).toBe(true);
+  v.game.party.spellAt = null; updateRefraction(v, 0.5); expect(refraction.count).toBe(1);
+  resetRefraction(v); expect(refraction.count).toBe(0);
+});

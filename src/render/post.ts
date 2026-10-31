@@ -11,6 +11,8 @@ import { runSync, type Steps } from "./slices";
 import { hsv2rgb } from "../../art/generator.js";
 import { potionBloom, potionLevels } from "./potionEffects";
 import { potionSettings } from "../rules/potionSettings";
+import { Refraction } from "./refraction";
+import { REFRACTION_GLSL } from "./refractionShader";
 
 /** The camera layer the house's own meshes are on as well as the scene's (its rooms, the Ent's art, her): drawn alone behind the
  *  enclosed rooms (Post.behind). */
@@ -61,6 +63,7 @@ uniform vec4 uPotionStyle; // saturation boost, edges, edge threshold, edge uppe
 uniform float uPotionBackground, uPotionTime;
 uniform vec4 uPotionWobble; // amplitude in art pixels, speed, wave size, edge reach
 uniform sampler2D uScene, uBloom, uFx; uniform vec2 uLow; uniform float uBloomStrength, uBlack, uGamma, uFxOn, uKoDim, uBroken, uPotionFade; uniform vec4 uGrade, uPool, uIris, uIris2; uniform vec3 uGradeTint; varying vec2 vUv;
+${REFRACTION_GLSL}
 float edgeLuma(vec2 p) { return dot(texture2D(uScene, p).rgb, vec3(0.3, 0.55, 0.15)); }
 float potionEdge(vec2 p) {
   vec2 d = 1.0 / uLow;
@@ -91,7 +94,7 @@ void main() {
     vec2 wave = sin(vec2(vUv.y, vUv.x) * (6.2831853 / uPotionWobble.z) + uPotionTime * uPotionWobble.y + vec2(0.0, 1.7));
     p = clamp(p + wave * edge * uPotionWobble.x / uLow, 0.5 / uLow, 1.0 - 0.5 / uLow);
   }
-  vec3 c = texture2D(uScene, p).rgb;
+  vec3 c = texture2D(uScene, refractScene(p)).rgb;
   // (the circle hunt: a scene pixel that's not a number, infinite or negative shows red, magenta or yellow)
   if (uBroken > 0.5) { bool nan = !(c.r == c.r) || !(c.g == c.g) || !(c.b == c.b) || any(isnan(c)); if (nan) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; } if (any(isinf(c)) || max(c.r, max(c.g, c.b)) > 60000.0) { gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0); return; } if (min(c.r, min(c.g, c.b)) < 0.0) { gl_FragColor = vec4(1.0, 1.0, 0.0, 1.0); return; } }
   if (uFxOn > 0.5) { vec4 f = texture2D(uFx, vUv); c = c * (1.0 - f.a) + f.rgb; }
@@ -163,6 +166,9 @@ function target(w: number, h: number, filter: THREE.MagnificationTextureFilter, 
 }
 
 export class Post {
+  /** First visual-response slice: opt-in until canonical's comparison/GPU review. No extra render targets. */
+  readonly refraction = new Refraction();
+  refractionEnabled = new URLSearchParams(globalThis.location?.search ?? "").get("refraction") === "1";
   /** The scene is drawn into this, at low resolution. */
   readonly scene: THREE.WebGLRenderTarget;
   private bright = target(1, 1, THREE.LinearFilter);
@@ -207,6 +213,10 @@ export class Post {
     this.mats.composite.uniforms.uPotionBackground = { value: .035 };
     this.mats.composite.uniforms.uPotionTime = { value: 0 };
     this.mats.composite.uniforms.uPotionWobble = { value: new THREE.Vector4() };
+    this.mats.composite.uniforms.uRefractionDepth = { value: this.scene.depthTexture };
+    this.mats.composite.uniforms.uRefractionCount = { value: 0 };
+    this.mats.composite.uniforms.uRefractionShape = { value: this.refraction.shapes };
+    this.mats.composite.uniforms.uRefractionState = { value: this.refraction.states };
     this.quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.mats.composite);
     this.quad.frustumCulled = false;
   }
@@ -350,6 +360,7 @@ export class Post {
     }
     const tilt = (t.tiltShift.on && t.tiltShift.strength > 0 || this.potionVertigo > 0) && this.tilt > 0;
     this.pass("composite", tilt ? this.a : out, u => {
+      u.uRefractionCount.value = this.refractionEnabled ? this.refraction.count : 0;
       u.uScene.value = this.scene.texture; u.uBloom.value = this.bright.texture; u.uLow.value.copy(this.low); u.uBloomStrength.value = bloomOn ? bloom.strength : 0;
       const levels = potionLevels(t.tone.black, t.tone.gamma, this.potionCanopy);
       u.uBlack.value = levels.black; u.uGamma.value = levels.gamma;

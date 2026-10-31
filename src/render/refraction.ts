@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { PRESSURE_SECONDS, REFRACTION_LIMIT } from "./refractionMath";
 
 export interface RefractionFire { x: number; z: number; scale: number }
-export interface RefractionCast { at: number; x: number; y: number; z: number }
+export interface RefractionCast { at: number; x: number; y: number; z: number; baseY?: number }
 type Ring = RefractionCast;
 
 /** One fire plus a bounded pressure pool. All positions stay world-anchored, never accumulated screen feedback. */
@@ -32,21 +32,23 @@ export class Refraction {
         this.rings.push({ ...cast });
       }
     }
-    this.rings = this.rings.filter(r => time >= r.at && time - r.at < PRESSURE_SECONDS);
+    let live = 0;
+    for (const r of this.rings) if (time >= r.at && time - r.at < PRESSURE_SECONDS) this.rings[live++] = r;
+    this.rings.length = live;
     if (!enabled) return;
     let distance = 80 * 80;
     for (const f of fires) {
       const d = (f.x - near.x) ** 2 + (f.z - near.z) ** 2;
       if (f.scale > 0.1 && d < distance) {
         const previous = this.count; this.count = 0;
-        this.project(f.x, 2.3, f.z, 1.1, 2.2, 0, time % 120, Math.min(1, f.scale) * 1.5, camera, place);
+        this.project(f.x, 2.3, f.z, 1.1, 2.2, 0, time % 120, Math.min(1, f.scale) * 1.5, 0, camera, place);
         if (this.count) distance = d; else this.count = previous;
       }
     }
-    for (const r of this.rings) this.project(r.x, r.y, r.z, 8, 8, 1, (time - r.at) / PRESSURE_SECONDS, 2, camera, place);
+    for (const r of this.rings) this.project(r.x, r.y, r.z, 8, 8, 1, (time - r.at) / PRESSURE_SECONDS, 2, r.baseY ?? 0, camera, place);
   }
 
-  private project(x: number, y: number, z: number, rx: number, ry: number, kind: number, phase: number, strength: number, camera: THREE.PerspectiveCamera | THREE.OrthographicCamera, place: (p: THREE.Vector3) => THREE.Vector3): void {
+  private project(x: number, y: number, z: number, rx: number, ry: number, kind: number, phase: number, strength: number, baseY: number, camera: THREE.PerspectiveCamera | THREE.OrthographicCamera, place: (p: THREE.Vector3) => THREE.Vector3): void {
     if (this.count >= REFRACTION_LIMIT) return;
     const p = place(this.point.set(x, y, z));
     // Behind-camera centres must not reappear reflected onto the screen.
@@ -62,7 +64,9 @@ export class Refraction {
     place(this.edge.set(x, y + ry, z)).project(camera);
     if (this.edge.z < -1 || this.edge.z > 1) return;
     const height = Math.abs(this.edge.y * 0.5 + 0.5 - cy);
-    const depth = Math.min(p.z, this.edge.z) * 0.5 + 0.5;
+    // Protect the emitter's support plane, not the nearer plume tip: rising heat behind a character cannot warp her body.
+    place(this.edge.set(x, baseY, z)).project(camera);
+    const depth = Math.max(p.z, this.edge.z) * 0.5 + 0.5;
     if (!(width > 0 && height > 0) || cx + width < 0 || cx - width > 1 || cy + height < 0 || cy - height > 1) return;
     this.shapes[this.count].set(cx, cy, width, height);
     this.states[this.count++].set(depth, kind, phase, strength);
