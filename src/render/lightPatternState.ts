@@ -24,6 +24,11 @@ export function sourcePattern(kind: LightPatternKind, worldTime: number, calm: b
     patternContrast(kind === 'flicker' ? .5 : .75, true, calm), worldTime * (kind === 'flicker' ? .45 : .7)];
 }
 
+/** Tag one existing home light only; never change its incident-light data. */
+export function setGentleLanternPattern(light: { pattern?: PackedPattern } | undefined, time: number, look: PatternLook, calm: boolean): void {
+  if (light) light.pattern = look !== 'off' && !calm ? sourcePattern('flicker', time, false) : undefined;
+}
+
 /** Clears every slot each frame, and also when another writer replaces that slot. */
 export class PatternSlots {
   readonly data: Float32Array;

@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
 import { newBeatClock, timeAt } from '../rules/beat';
-import { IDENTITY_PATTERN, PatternSlots, patternOptions, sourcePattern, speakerPattern } from './lightPatternState';
+import { IDENTITY_PATTERN, PatternSlots, patternOptions, sourcePattern, speakerPattern, setGentleLanternPattern, type PackedPattern } from './lightPatternState';
 it('has one explicit off switch and three repeatable soundsystem looks', () => {
   const clock = newBeatClock(120);
   expect(patternOptions('?patternlight=off')).toBe('off');
@@ -29,4 +29,17 @@ it('gentle sources use world time and comfort keeps exact identity', () => {
   expect(sourcePattern('rings', 12, false)[2]).toBe(.75);
   expect(sourcePattern('flicker', 12, true)).toBe(IDENTITY_PATTERN);
   expect(sourcePattern('rings', 12, false)).toEqual(sourcePattern('rings', 12, false));
+});
+it('tags only the existing lantern entry when preview is on and comfort is off', () => {
+  const original = { x: 2, y: 3, z: 4, reach: 50, strength: 2, rgb: [1, .8, .4] };
+  const lantern: typeof original & { pattern?: PackedPattern } = { ...original };
+  const other: typeof lantern = { ...original }, lights = [lantern, other];
+  setGentleLanternPattern(lights[0], 20, 'auto', false);
+  expect(lantern.pattern).toEqual(sourcePattern('flicker', 20, false));
+  expect({ ...lantern, pattern: undefined }).toEqual({ ...original, pattern: undefined });
+  expect(other).toEqual(original); expect(lights).toHaveLength(2);
+  setGentleLanternPattern(lantern, 20, 'off', false); expect(lantern.pattern).toBeUndefined();
+  setGentleLanternPattern(lantern, 20, 'bands', false); expect(lantern.pattern?.[0]).toBe(4);
+  setGentleLanternPattern(lantern, 20, 'bands', true); expect(lantern.pattern).toBeUndefined();
+  setGentleLanternPattern(undefined, 20, 'auto', false);
 });

@@ -146,6 +146,8 @@ import { PotionObserversView } from './potionObservers';
 import { chunkyPixelSize, potionStrength } from './potionEffects';
 import { drawPointers } from "./view/hud";
 import { workAhead } from "./view/ahead";
+import { setGentleLanternPattern, PATTERN_LOOK } from "./lightPatternState";
+import { comfort } from "./comfort";
 import { winLit, winPulse, winPulseOut } from "../rules/win";
 import { relicsOut } from "../rules/partyOver";
 
@@ -1771,6 +1773,7 @@ export class View {
       : T.lights.filter(l => l.kind === "lantern" || l.kind === "window").slice(0, 2).map(l => ({
         ...onTreehouse(l.x, l.y), reach: t.treehouse.lightReach, rgb: new THREE.Vector3(l.rgb[0] / 255, l.rgb[1] / 255, l.rgb[2] / 255), strength: t.treehouse.lightStrength * (0.92 + 0.08 * Math.sin(time * 3 + l.x)),
       }));
+    setGentleLanternPattern(thLights[0], time, PATTERN_LOOK, comfort.reduceFlashing);
     const markerLights = drawMarkers(this, time);
     const speakerLights = drawSpeakers(this, time, pose.angle);
     this.spellFx.update(g, ht, witchHeight(w, t) + 0.6 + this.rideOff);
