@@ -4,13 +4,14 @@ import { connectRelay, type RelaySocket } from "../platform/online/relayClient";
 import { browserTelephoneIdentityStore, loadTelephoneIdentity, numberForKey, type TelephoneChallenge, type TelephoneIdentity, type TelephonePublicKey } from "../platform/online/telephoneIdentity";
 import { telephoneTrust } from "../platform/online/telephoneTrust";
 export type TelephoneConnection = ReturnType<typeof connectRelay>;
-interface Menu { show(on: boolean): void; render(state: TelephoneState): void; redial(number: string): void }
+interface Menu { show(on: boolean): void; render(state: TelephoneState): void; redial(number: string): void; pollPad?(pad: Gamepad | null, now: number): void }
 export interface TelephoneOptions {
   storage: TelephoneStorage | null;
   loadIdentity?(): Promise<TelephoneIdentity>;
   connected(role: "host" | "guest", connection: TelephoneConnection, peer: string, signal: AbortSignal): Promise<void>;
   message(message: Record<string, unknown>): void;
   departed(): void;
+  pause(): void;
   endpoint?: string; socket?: (url: string) => RelaySocket; menu?: (actions: TelephoneActions) => Menu;
   digit?: (digit: string) => void; face?: (number: string) => Node | null;
 }
@@ -34,7 +35,7 @@ export function telephone(options: TelephoneOptions) {
     answer() { if (state.status === "ringing" && connection) { intent = "guest"; connection.answer(); } }, decline() { connection?.decline(); }, hangUp,
     close() { void api.show(false); }, retry() { if (!role) void api.show(false).then(() => api.show(true)); },
     confirmIdentity() { if (state.status === "confirming") { try { agree(); } catch (error) { fail(error); } } },
-    digit: options.digit, face: options.face,
+    digit: options.digit, face: options.face, pause: options.pause,
   };
   const menu = options.menu?.(actions) ?? new TelephonePanel(actions);
   const api = {
@@ -105,6 +106,7 @@ export function telephone(options: TelephoneOptions) {
       } catch (error) { if (current === generation) { identity = null; fail(error); } }
     },
     redial() { if (state.peer) menu.redial(state.peer); }, hangUp,
+    pollPad(pad: Gamepad | null, now: number) { menu.pollPad?.(pad, now); },
     dispose() { open = false; menu.show(false); hangUp(); },
   };
   menu.render(state); return api;

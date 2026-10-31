@@ -9,7 +9,7 @@ import { telephoneNumber } from "../app/telephoneBook";
 export type TelephoneStatus = "connecting" | "available" | "dialling" | "ringing" | "confirming" | "joining" | "connected" | "unavailable" | "busy" | "ended" | "error";
 export interface TelephoneState { own: string; status: TelephoneStatus; peer?: string; recent: readonly string[]; saved: boolean; detail?: string }
 export interface TelephoneActions {
-  dial(number: string): void; answer(): void; decline(): void; hangUp(): void; close(): void;
+  dial(number: string): void; answer(): void; decline(): void; hangUp(): void; close(): void; pause(): void;
   retry?(): void;
   confirmIdentity?(): void;
   digit?(digit: string): void;
@@ -39,6 +39,7 @@ export class TelephonePanel {
     id: "telephone",
     acceptsKey: e => this.root.contains(e.target as Node | null),
     key: e => {
+      if (e.type === "keydown" && bindings.keys("global.pause").includes(e.code)) { e.preventDefault(); if (!e.repeat) this.actions.pause(); return true; }
       if (e.type !== "keydown" || textEntry(e.target) || !bindings.keys("menu.back").includes(e.code)) return false;
       e.preventDefault(); if (!e.repeat) this.actions.close(); return true;
     },
