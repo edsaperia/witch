@@ -8,7 +8,9 @@
 //    are the tallest.
 import { execFileSync } from "node:child_process";
 import { cpus } from "node:os";
+import { readFileSync } from "node:fs";
 import { openBrowser, ROOT } from "./headless.mjs";
+import { combinedDistinctness } from "./genome/distinctness.js";
 
 let failed = 0;
 const ok = (cond, what) => { console.log(`${cond ? "ok  " : "FAIL"} ${what}`); if (!cond) failed++; };
@@ -22,6 +24,11 @@ const argv = process.argv.slice(2), opt = name => { const i = argv.indexOf("--" 
 if (flag("sprite-only") && (flag("aux-only") || !flag("no-lab"))) throw new Error("--sprite-only requires --no-lab and excludes --aux-only");
 const PAGES = Math.max(1, Number(opt("pages") || process.env.PAGES) || Math.max(1, cpus().length - 1));
 const ONLY = opt("only")?.split(",").map(s => s.trim()).filter(Boolean) ?? null, TASKS = opt("tasks")?.split(",").map(s => s.trim()).filter(Boolean) ?? null;
+// A candidate file carries only the existing serialized selection context;
+// Current and candidate share every rendering knob in the paired check.
+const selection = opt("candidate") ? JSON.parse(readFileSync(opt("candidate"), "utf8")) : null;
+const CANDIDATE = selection ? { creatureModels: selection.creatureModels, creatureVariants: selection.creatureVariants } : null;
+if (CANDIDATE && (TASKS?.length !== 1 || TASKS[0] !== "species-sprites")) throw new Error("--candidate requires --tasks species-sprites");
 const T0 = performance.now(), laps = [];
 let lapAt = T0;
 const lap = name => { const now = performance.now(); laps.push([name, now - lapAt]); lapAt = now; };
@@ -48,7 +55,7 @@ async function runSpriteChecks(b, fn) {
   const { names } = await b.page.evaluate(fn, { names: [], only: ONLY }); // (registers the tasks, runs none)
   if (flag("list")) { console.log(names.join("\n")); process.exit(0); }
   const queue = (TASKS ?? names).filter(n => { const known = names.includes(n); if (!known) ok(false, `no sprite check named ${n}`); return known; });
-  const done = await dealOut(b, queue, (page, name) => page.evaluate(fn, { names: [name], only: ONLY }));
+  const done = await dealOut(b, queue, (page, name) => page.evaluate(fn, { names: [name], only: ONLY, candidate: CANDIDATE }));
   const results = {}, timings = [], pages = await pool(b, queue.length);
   done.forEach((d, i) => { results[queue[i]] = d.result.res; for (const [n, ms, count] of d.result.timings) timings.push([n, ms, count, d.page]); });
   const order = TASKS ?? names, report = order.flatMap(n => results[n] ?? []);
@@ -83,25 +90,46 @@ await b.page.goto(b.base + "/art/headless-blank.html");
 // The sprite checks run in the browser as named tasks, dealt out over PAGES pages at once (each a renderer process of its own,
 // so the cloud's cores all draw; node tools: art/check.mjs --pages N, --tasks a,b, --only fox,fen, --list, --times): every task
 // draws from G alone, so any page can take any task, and the report is put back in the tasks' order, so the output reads the same.
-const SPRITE_CHECKS = async ({ names, only }) => {
-  const G = await import("/art/generator.js"), st = G.defaultStyle(), res = [], tasks = [], task = (name, fn) => tasks.push({ name, fn });
+const SPRITE_CHECKS = async ({ names, only, candidate }) => {
+  const G = await import("/art/generator.js"), currentStyle = G.defaultStyle(), st = { ...currentStyle, ...candidate }, res = [], tasks = [], task = (name, fn) => tasks.push({ name, fn });
   // --only: a builder's own species and areas (their ids), every check that walks the species or the areas kept to them
   const SPECIES = only ? G.SPECIES.filter(S => only.includes(S.id)) : G.SPECIES, AREAS = only ? G.AREAS.filter(A => only.includes(A.id) || only.includes(A.creature)) : G.AREAS;
   // (standing: something on its bottom row; or, a witch's sprite with her shadow lifted out of it (art/witch.js liftShadow: the box kept,
   // the game stands her by her `ground` anchor and lays her shadow there), that anchor in the sprite's lower part, its bottom row her ground's)
   const stats = sp => { let n = 0, bottom = 0; for (let i = 0; i < sp.m.length; i++) if (sp.m[i]) n++; for (let x = 0; x < sp.w; x++) if (sp.m[(sp.h - 1) * sp.w + x]) bottom++; const g = sp.anchors?.ground; if (!bottom && g && g[1] >= sp.h * 0.5 && g[1] <= sp.h + 1 && g[0] >= 0 && g[0] <= sp.w) bottom = 1; return { n, bottom, w: sp.w, h: sp.h }; };
   const pixels = f => { let n = 0; for (let i = 0; i < f.atCore.length; i++) if (f.atCore[i] <= 1) n++; return n; };
-  task("species-sprites", async () => { for (const S of SPECIES) {
+  task("species-sprites", async () => {
+    const { standingWitchHeight, occupiedHeight, sizePixelRange } = await import("/art/creature-size.js"), { SIZE_CLASS_BY_ID, sizeTargetPixels } = await import("/art/genome/size-ranks.js");
+    const witch = standingWitchHeight(st), rankedHeights = new Map();
+    const revised=st.creatureSizeCandidate===1,{candidateSizePixels}=await import("/art/genome/size-candidate.js");
+    for (const S of SPECIES) {
+    const { connectivityRegression } = await import("/art/genome/connectivity.js");
+    const connectedStats = (level, frame, facing, what) => {
+      const sp = G.critter(S.id, level, frame, st, facing), current = G.critter(S.id, level, frame, currentStyle, facing), comparison = connectivityRegression(current, sp);
+      res.push({ what: `${what}: Current attachment counts (report only)`, good: true, info: `${comparison.current.components.length} components; ${comparison.current.detachedPixels} detached pixels` });
+      if (candidate) res.push({ what: `${what}: candidate attachment regression`, good: comparison.good, info: `${comparison.candidate.components.length} components; ${comparison.candidate.detachedPixels} detached pixels; allowance +${comparison.pixelTolerance}px, no extra components` });
+      return stats(sp);
+    };
     const hs = [];
-    for (const level of [0, 1, 2, 3]) for (const frame of [0, 1]) { const s = stats(G.critter(S.id, level, frame, st)); hs[level] = s.h; res.push({ what: `${S.id} level ${level} frame ${frame}`, good: s.n > 20 && s.bottom > 0, info: `${s.w}x${s.h}` }); }
-    { const a = stats(G.critter(S.id, 2, 0, st, "away")); res.push({ what: `${S.id} adult turned away`, good: a.n > 20 && a.bottom > 0, info: `${a.w}x${a.h}` }); }
-    // clear steps (Ed, 2026-10-04: "the size difference should be obvious"), by body height (no antlers or wings): young at least 1.3 times the baby,
-    // the adult at least 1.55 times the young, the legend at least 2.1 times the adult, so they can't drift back together
-    { const bh = [0, 1, 2, 3].map(l => G.critter(S.id, l, 0, st).bodyH), r = [bh[1] / bh[0], bh[2] / bh[1], bh[3] / bh[2]];
-      res.push({ what: `${S.id}: baby < young < adult < legend, in clear steps (young 1.3+ times the baby, adult 1.55+ times the young, legend 2.1+ times the adult)`, good: hs[3] > hs[2] && hs[2] > hs[1] && hs[1] > hs[0] && r[0] >= 1.3 && r[1] >= 1.55 && r[2] >= 2.1, info: bh.join(" < ") + " (" + r.map(x => x.toFixed(2)).join(", ") + ")" }); }
-    // (the elephant, the biggest creature in the game, has its own allowance: 2.6 to 3.6 times the witch, over the elk's)
-    if (["wolf", "boar", "stag", "bear", "elk", "lynx", "elephant", "stegosaurus"].includes(S.id)) { const w = G.witchSprite(st).bodyH, k = G.critter(S.id, 2, 0, st).bodyH / w, c = st.creatureScale || 1, lo = (S.id === "elephant" ? 2.6 : 1.45) * c, hi = (S.id === "elephant" ? 3.6 : ["elk", "stag", "stegosaurus"].includes(S.id) ? 2.5 : 2.1) * c; res.push({ what: `${S.id}: an adult clearly bigger than the witch (${lo.toFixed(2)} to ${hi.toFixed(2)} times, body without antlers; the elk and stag stand taller; 1.45 to 2.1 before creatureScale ${c})`, good: k >= lo && k <= hi, info: k.toFixed(2) }); }
-  } });
+    for (const level of [0, 1, 2, 3]) for (const frame of [0, 1]) { const s = connectedStats(level, frame, "towards", `${S.id} level ${level} frame ${frame}`); hs[level] = s.h; res.push({ what: `${S.id} level ${level} frame ${frame}`, good: s.n > 20 && s.bottom > 0, info: `${s.w}x${s.h}` }); }
+    { const a = connectedStats(2, 0, "away", `${S.id} adult turned away`); res.push({ what: `${S.id} adult turned away`, good: a.n > 20 && a.bottom > 0, info: `${a.w}x${a.h}` }); }
+    // 6520501406/6520542543 explicitly supersede the old BODY-height ratios:
+    // enforce rank-positioned age bands and full occupied decorative presence.
+    const full = [0,1,2,3].map(level => {const sp=G.critter(S.id,level,0,st);return revised?sp.sizeFit?.bodyHeight:occupiedHeight(sp);}), target = [0,1,2,3].map(level => (revised?candidateSizePixels:sizeTargetPixels)(S.id,level,witch));
+    rankedHeights.set(S.id,full);
+    // 6523246311: ±1px only inside bounds that retain bands and hard ordering.
+    res.push({what:`${S.id}: rank-positioned ${revised?'body':'occupied'} age targets against standing witch ${witch}px (at most ±1px)`,good:full.every((h,l)=>{const [lo,hi]=sizePixelRange(S.id,l,witch,revised);return Number.isFinite(h)&&h>=lo&&h<=hi;}),info:`target ${target.join("/")}; measured ${full.join("/")}`});
+    res.push({what:`${S.id}: strict age growth${revised?' (Ed 2026-10-31 body targets)':' and legend at least 1.75x adult'}`,good:full[0]<full[1]&&full[1]<full[2]&&full[2]<full[3]&&(revised||full[3]>=full[2]*1.75),info:full.join(" < ")});
+  }
+    const bad=[],clearPairs=[["tiger","cat"],["wolf","fox"],["fox","stoat"],["elephant","rhino"]];
+    for(const a of SPECIES)for(const b of SPECIES)if(SIZE_CLASS_BY_ID[a.id]>=SIZE_CLASS_BY_ID[b.id]+2||clearPairs.some(([big,small])=>big===a.id&&small===b.id))for(const level of [0,1,2])if(rankedHeights.get(a.id)[level]<=rankedHeights.get(b.id)[level])bad.push(`${a.id} <= ${b.id} at ${level}`);
+    res.push({what:"within-age hard clear-order pairs and every mass-class gap of two or more",good:!bad.length,info:bad.join(", ")||"all ordered"});
+    for(const level of [0,1,2,3]){
+      const groups=new Map();for(const S of SPECIES){const h=rankedHeights.get(S.id)[level],ids=groups.get(h)||[];ids.push(S.id);groups.set(h,ids);}
+      const ties=[...groups].filter(([,ids])=>ids.length>1).map(([h,ids])=>`${h}px:${ids.join("/")}`);
+      res.push({what:`age ${level}: native-pixel ties (allowed for nearby ranks)`,good:true,info:ties.join("; ")||"none"});
+    }
+  });
   task("genomes-masks", async () => { // creature genomes (#79 stage 1): every species a record on a known template, its parts allowed by its sockets, none clashing,
     // its hash its own; the builders' species are the records' (speciesOf)
     // (--only: the selected species' records, each hash its own among all of them; the count of records against species only on a full run)
@@ -164,11 +192,15 @@ const SPRITE_CHECKS = async ({ names, only }) => {
     }
     res.push({ what: "surface texture: every species at every level in its own surface (fur, feathers, scales, plates, shell, bristles), no poorer than untextured, a baby's softest, the same size within 1%, every material coloured", good: !bad.length, info: [...new Set(bad)].slice(0, 8).join(", ") || "ok" });
   });
-  task("silhouettes", async () => { // silhouettes (#79 stage 3): at game size (each young and adult shrunk to 24 px), no two species' shapes alike: they differ by 0.15 or more
-    // (1 - their overlap over their union, whichever way each faces)
+  task("silhouettes", async () => { // Ed, 2026-10-30: real likeness first; warn only if shape, palette, size AND pattern are close. Never fail look-alikes.
+    const { appearanceSignature, combinedDistinctness } = await import("/art/genome/distinctness.js");
     for (const level of [1, 2]) {
-      const sh = Object.fromEntries(SPECIES.map(S => [S.id, G.silhouette(G.critter(S.id, level, 0, st))])), pairs = G.silhouettePairs(sh), close = pairs.filter(p => p.d < .15);
-      res.push({ what: `silhouettes: no two species alike at ${G.SILHOUETTE_SIZE} px (${["", "young", "adult"][level]}s, every pair 0.15 apart or more)`, good: !close.length, info: (close.length ? close : pairs.slice(0, 3)).map(p => `${p.a}/${p.b} ${p.d.toFixed(2)}`).join(", ") });
+      const signatures = SPECIES.map(S => ({ id: S.id, value: appearanceSignature(G.critter(S.id, level, 0, st), G.speciesColours(S.id, st)) })), close = [];
+      for (let i = 0; i < signatures.length; i++) for (let j = i + 1; j < signatures.length; j++) {
+        const a = signatures[i], b = signatures[j], d = combinedDistinctness(a.value, b.value);
+        if (d.warn) close.push(`${a.id}/${b.id} (shape ${d.silhouette.toFixed(2)}, palette ${d.palette.toFixed(2)}, size ${d.size.toFixed(2)}, pattern ${d.pattern.toFixed(2)})`);
+      }
+      res.push({ what: `combined distinctness: silhouette, palette, size and pattern (${["", "young", "adult"][level]}s; review warning only)`, good: true, warn: close.join(", "), info: close.length ? `${close.length} close pairs; real-animal likeness takes priority` : "no pair close on all four measures" });
     }
   });
   task("growth", async () => { // growth, not scale (docs/ART-GUIDE.md 0b, the menagerie review): each level's shape against the level before it, both scaled into
@@ -1202,13 +1234,14 @@ lap("area-flora");
 // (alpha only 0, 254 for what glows, or 255); on the pixel grid (whole-pixel sizes and anchors); within its palette (at most
 // LINT_TONES colours a material: the bold style's three tones, its outline and a glint, so a gradient or a stray colour
 // fails); and a silhouette contact sheet (art/out/silhouettes.png, every species' adult squared to its box), warning of
-// look-alikes: overlap at least LINT_LOOKALIKE and about the same proportions.
+// look-alikes only when shape, palette, actual size and markings are all close.
 {
-  const LINT_TONES = 5, LINT_LOOKALIKE = .8, SIL = 24, t0 = performance.now();
+  const LINT_TONES = 5, SIL = 24, t0 = performance.now();
   await b.page.goto(b.base + "/art/headless-blank.html");
   // One unit a species (its 12 bakes), one an area (its assets), one the silhouettes, dealt out over the pages; put back in order.
   const LINT = async ({ LINT_TONES, SIL, species, areas, withSil }) => {
     const G = await import("/art/generator.js"), { AREAS: ALL_AREAS } = await import("/art/areas.js"), style = await (await fetch("/config/style.json")).json();
+    const { appearanceSignature } = await import("/art/genome/distinctness.js");
     const SPECIES = G.SPECIES.filter(S => species.includes(S.id)), AREAS = ALL_AREAS.filter(A => areas.includes(A.id));
     const st = { ...G.defaultStyle(), ...style, artStyle: "bold" }, aa = [], grid = [], pal = [];
     let n = 0;
@@ -1234,7 +1267,8 @@ lap("area-flora");
       for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
       const bw = x1 - x0 + 1, bh = y1 - y0 + 1, m = new Uint8Array(SIL * SIL);
       for (let j = 0; j < SIL; j++) for (let i = 0; i < SIL; i++) m[j * SIL + i] = sp.m[(y0 + Math.floor((j + .5) * bh / SIL)) * sp.w + x0 + Math.floor((i + .5) * bw / SIL)] ? 1 : 0;
-      return { id: S.id, m: Array.from(m), aspect: bw / bh };
+      const signature = appearanceSignature(sp, G.speciesColours(S.id, st));
+      return { id: S.id, m: Array.from(m), appearance: { ...signature, shape: Array.from(signature.shape) } };
     });
     return { n, aa, grid, pal, sil };
   };
@@ -1249,9 +1283,8 @@ lap("area-flora");
   ok(!r.pal.length, `art lint, palette: no sprite has more than ${LINT_TONES} colours a material (+2)${r.pal.length ? " — " + r.pal.slice(0, 6).join("; ") : ""}`);
   const alike = [];
   for (let a = 0; a < r.sil.length; a++) for (let c = a + 1; c < r.sil.length; c++) {
-    const A = r.sil[a], B = r.sil[c]; let i = 0, u = 0;
-    for (let k = 0; k < A.m.length; k++) { i += A.m[k] & B.m[k]; u += A.m[k] | B.m[k]; }
-    if (i / u >= LINT_LOOKALIKE && Math.min(A.aspect, B.aspect) / Math.max(A.aspect, B.aspect) >= .85) alike.push(`${A.id} ~ ${B.id} (${(i / u).toFixed(2)})`);
+    const A = r.sil[a], B = r.sil[c], d = combinedDistinctness(A.appearance, B.appearance);
+    if (d.warn) alike.push(`${A.id} ~ ${B.id} (shape ${d.silhouette.toFixed(2)}, palette ${d.palette.toFixed(2)}, size ${d.size.toFixed(2)}, pattern ${d.pattern.toFixed(2)})`);
   }
   // The contact sheet, the look-alikes framed in red.
   const { mkdirSync, writeFileSync } = await import("node:fs"), cols = 8, cell = SIL * 3 + 8, sheet = await b.page.evaluate(({ sil, alike, cols, cell, SIL }) => {
@@ -1268,7 +1301,7 @@ lap("area-flora");
   }, { sil: r.sil, alike, cols, cell, SIL });
   mkdirSync(new URL("./out/", import.meta.url), { recursive: true });
   writeFileSync(new URL("./out/silhouettes.png", import.meta.url), Buffer.from(sheet, "base64"));
-  console.log(`${alike.length ? "WARN" : "ok  "} art lint, silhouettes: ${r.sil.length} adults on art/out/silhouettes.png${alike.length ? "; look alike: " + alike.join(", ") : ", none alike"}`);
+  console.log(`${alike.length ? "WARN" : "ok  "} art lint, combined distinctness: ${r.sil.length} adults on art/out/silhouettes.png${alike.length ? "; close on shape, palette, size and pattern: " + alike.join(", ") : ", no pair close on all four measures"}`);
 }
 lap("art-lint");
 await b.close();
