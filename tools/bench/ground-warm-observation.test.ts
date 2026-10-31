@@ -9,19 +9,22 @@ it('records the exact arrival material only after an actual draw, not a shader-g
   const handle={},fallbackHandle={},material={uuid:'plain',defines:{GROUND_SPECIALIZED:''}},mesh={uuid:'ground',material},program={id:81,cacheKey:'exact',usedTimes:2,program:handle};
   let skip=true,bound=handle;
   const renderer={info:{programs:[program],render:{calls:0}},getContext:()=>({CURRENT_PROGRAM:1,getParameter:()=>bound}),properties:{get:()=>({currentProgram:program,programs:new Map([['exact',program]])})},renderBufferDirect(..._args:unknown[]){if(!skip)this.info.render.calls++;}};
-  const host={witch:{view:{renderer,ground:{mesh,programMaterial:material}},game:{seed:7,map:{island:{kind:'hedgehog'}}}},__groundWarmArrival:null as any};
+  const fallback={uuid:'surface-fallback',defines:{GROUND_SPECIALIZED:''}};
+  const host={witch:{view:{renderer,ground:{mesh,programMaterial:material,loadingFallback:fallback}},game:{seed:7,map:{island:{kind:'hedgehog'}}}},__groundWarmArrival:null as any};
   vi.stubGlobal('window',host);observeArrivalGround(target);
   renderer.renderBufferDirect(null,null,null,material,mesh,null);
   expect(host.__groundWarmArrival.firstDraw).toBeNull();
   skip=false;renderer.renderBufferDirect(null,null,null,{uuid:'other'},{uuid:'unrelated'},null);
   expect(host.__groundWarmArrival.firstDraw).toBeNull();
+  mesh.material=fallback;renderer.renderBufferDirect(null,null,null,fallback,mesh,null);
+  expect(host.__groundWarmArrival.firstDraw).toBeNull();mesh.material=material;
   renderer.renderBufferDirect(null,null,null,{uuid:'outer-fallback'},mesh,null);
   expect(host.__groundWarmArrival.firstDraw).toBeNull();
   bound=fallbackHandle;renderer.renderBufferDirect(null,null,null,material,mesh,null);
-  expect(host.__groundWarmArrival.firstDraw).toBeNull();expect(host.__groundWarmArrival.fallbackDraws).toBe(2);
+  expect(host.__groundWarmArrival.firstDraw).toBeNull();expect(host.__groundWarmArrival.fallbackDraws).toBe(3);
   bound=handle;
   renderer.renderBufferDirect(null,null,null,material,mesh,null);
-  expect(host.__groundWarmArrival.firstDraw).toMatchObject({material:'plain',normalMaterial:'plain',program:81,key:'exact',boundProgramConfirmed:true,beforeCalls:3,afterCalls:4});
+  expect(host.__groundWarmArrival.firstDraw).toMatchObject({material:'plain',normalMaterial:'plain',program:81,key:'exact',boundProgramConfirmed:true,beforeCalls:4,afterCalls:5});
   expect(groundReuseObservation(target,host.__groundWarmArrival).status).toBe('PASS');
 });
 it('identifies the actual beach material on a ground child instead of assuming plain',()=>{

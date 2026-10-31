@@ -697,7 +697,7 @@ const BEACH_FRAG = FRAG.replaceAll('void main() {', 'uniform float uCoastAppear;
 
 /** Both real ground and precompile use this factory; no substitute shader or custom cache key. */
 export const groundProgramMaterial = (defines: Record<string, string>, uniforms: Record<string, THREE.IUniform>) =>
-  new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, defines, uniforms });
+  new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: 'GROUND_BEACH' in defines ? BEACH_FRAG : FRAG, defines, uniforms: 'GROUND_BEACH' in defines ? {uCoastAppear:{value:0},...uniforms} : uniforms });
 
 export class Ground {
   get programMaterial(): THREE.ShaderMaterial { return this.plain; }
@@ -906,7 +906,7 @@ void main() {
     this.coastReadiness.request(!!b, performance.now());
     if (!b) { this.mesh.material = this.plain; if (this.coastSurface) this.coastSurface.visible = false; v.set(0, 0, 0, 0); return; }
     if (!this.beach) {
-      this.beach = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: BEACH_FRAG, defines: { ...this.beachDefines, ...('POTION_SKY' in this.plain.defines ? { POTION_SKY: '' } : {}) }, uniforms: { ...u, uCoastAppear: { value: 0 } } });
+      this.beach = groundProgramMaterial({ ...this.beachDefines, ...('POTION_SKY' in this.plain.defines ? { POTION_SKY: '' } : {}) },{ ...u, uCoastAppear: { value: 0 } });
       // A coast first appearing mid-trip inherits the floor's blend before its first draw.
       this.beach.blending = this.plain.blending; this.beach.blendSrc = this.plain.blendSrc; this.beach.blendDst = this.plain.blendDst;
       this.coastSurface = new THREE.Mesh(this.mesh.geometry, this.beach);

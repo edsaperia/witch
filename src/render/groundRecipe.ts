@@ -3,6 +3,11 @@ import { speakerRadius } from '../rules/speakers';
 import { koiPonds, lakeKnobs } from '../rules/lakes';
 import { groundDefines, groundExtras, groundFamily } from './groundFamily';
 import { hasForcedLakeLook, lakeLooksOf } from './lakeLooks';
+import {beachOf} from '../rules/mapShape';
+
+/** The arrival flies in from the sea. Use the same coast descriptor BeachView demands. */
+export const groundCoast = (map:ForestMap) => beachOf(map.bounds,map.tuning);
+export const groundArrivalProgramDefines = (map:ForestMap,params=new URLSearchParams()) => groundProgramDefines(map,params,!!groundCoast(map));
 
 /** The same plain-water selection used by the actual ground uniforms. No texture allocation. */
 export function groundKoi(map: ForestMap, share: number) {

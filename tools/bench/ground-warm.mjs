@@ -8,6 +8,7 @@ import {createRequire} from 'node:module';
 import {preflight} from './ground-warm-preflight.mjs';
 import {closeWarmChart,waitWarmFunction} from './ground-warm-controls.mjs';
 import {observeArrivalGround,groundReuseObservation} from './ground-warm-observation.mjs';
+import {groundShaderKey} from './ground-warm-key.mjs';
 const abort=message=>{console.error(`FAIL ground-warm: ${message}`);process.exit(1);};
 const require=createRequire(import.meta.url), root=path.resolve(process.argv[2]||'dist'), out=path.resolve(process.argv[3]||'ground-warm-probe');
 const cloud=process.platform!=='win32', scale=Number(process.env.TIMEOUT_SCALE||(cloud?'5':'1'));
@@ -89,6 +90,10 @@ try{
   await wait(()=>!!window.__groundWarmArrival?.firstDraw,{timeout:waitMs(150000)});
   report.arrivalObservation=await arrivalState();
   const draw=report.arrivalObservation.firstDraw;
+  report.expectedShaderKey=fixture.targets.find(t=>t.id===target.id)?.shaderKey;
+  report.actualShaderKey=groundShaderKey(draw);
+  report.shaderRecipeMatch=report.actualShaderKey===report.expectedShaderKey;
+  if(!report.shaderRecipeMatch)throw Error('Destination warm shader recipe differs from the actually drawn arrival material');
   report.live={island:draw.island,seed:draw.seed,keys:[draw.key],programs:[draw.program],material:draw.material,registry:draw.registry};
   await snapshot('arrival-first-draw');
   if(!materialOnly){report.reuse=groundReuseObservation(target,report.arrivalObservation);if(report.reuse.status!=='PASS')throw Error(report.reuse.reason);}

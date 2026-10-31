@@ -26,14 +26,14 @@ export function observeArrivalGround(target) {
     // Shader gates can suppress a renderBufferDirect call. Count the renderer's real submission only.
     if(arrival&&!state.firstDraw&&renderer.info.render.calls>beforeCalls){
       // A draw gate outside this observer may already have substituted its fallback.
-      if(!assigned){state.fallbackDraws++;return result;}
+      if(!assigned||material===ground.loadingFallback){state.fallbackDraws++;return result;}
       const props=renderer.properties.get(material),program=props.currentProgram,gl=renderer.getContext();
       // The existing draw gate can draw a different fallback material. Verify the program
       // actually bound by that draw; CURRENT_PROGRAM is state, not a compile/uniform/log query.
       if(!program?.program||gl.getParameter(gl.CURRENT_PROGRAM)!==program.program){state.fallbackDraws++;return result;}
       state.drawCalls++;
       if(!state.firstDraw){
-        state.firstDraw={at:performance.now(),frame:renderer.info.render.frame,readiness:{...w.view.readiness},island:game.map.island.kind,seed:game.seed,mesh:object.uuid,material:material.uuid,normalMaterial:ground.programMaterial.uuid,plain:material===ground.programMaterial,groundChild:object!==ground.mesh,defines:{...material.defines},customProgramCacheKey:material.customProgramCacheKey?.(),key:program.cacheKey,program:program.id,boundProgramConfirmed:true,materialKeys:[...(props.programs?.keys()??[])],beforeRegistry,registry:registry(),beforeCalls,afterCalls:renderer.info.render.calls};
+        state.firstDraw={at:performance.now(),frame:renderer.info.render.frame,readiness:{...w.view.readiness},island:game.map.island.kind,seed:game.seed,mesh:object.uuid,material:material.uuid,normalMaterial:ground.programMaterial.uuid,plain:material===ground.programMaterial,groundChild:object!==ground.mesh,defines:{...material.defines},vertexShader:material.vertexShader,fragmentShader:material.fragmentShader,customProgramCacheKey:material.customProgramCacheKey?.(),key:program.cacheKey,program:program.id,boundProgramConfirmed:true,materialKeys:[...(props.programs?.keys()??[])],beforeRegistry,registry:registry(),beforeCalls,afterCalls:renderer.info.render.calls};
       }
     }
     return result;

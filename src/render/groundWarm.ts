@@ -16,9 +16,11 @@ export function warmGroundPrograms(view: View, eligible: () => boolean, world: (
     const seed = offerTravelSeed(world(), id); note('prepare', {id,seed,world:world()});
     return startGroundPrep(id, world(), seed);
   }, (defines: Record<string, string>) => {
-    if (!allowed() || !('GROUND_SPECIALIZED' in defines) || 'GROUND_BEACH' in defines || !Object.keys(defines).every(k => k.startsWith('GROUND_') && defines[k] === '')) return null;
+    if (!allowed() || !('GROUND_SPECIALIZED' in defines) || !Object.keys(defines).every(k => k.startsWith('GROUND_') && defines[k] === '')) return null;
     const material = groundProgramMaterial(defines, view.ground.programMaterial.uniforms), source = view.ground.programMaterial;
     for (const key of ['vertexShader','fragmentShader','precision','side','shadowSide','transparent','alphaTest','alphaHash','toneMapped','fog','lights','glslVersion','vertexColors'] as const) {
+      // This shared factory also builds the real coast material, whose fragment is intentionally different.
+      if(key==='fragmentShader'&&'GROUND_BEACH' in defines)continue;
       if (material[key] !== source[key]) { material.dispose(); note('skip', {reason:key}); return null; }
     }
     if (material.customProgramCacheKey() !== source.customProgramCacheKey()) { material.dispose(); return null; }

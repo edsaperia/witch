@@ -10,7 +10,7 @@ import { PATH_KINDS, areaPathKinds } from "../../art/generator.js";
 import { DataUtils } from "three";
 import { Forest } from "../rules/forest";
 import { HeightSamples, arrivalHills, rememberHeightPrep } from "../rules/heightSamples";
-import { groundProgramDefines } from '../render/groundRecipe';
+import { groundArrivalProgramDefines } from '../render/groundRecipe';
 
 self.onmessage = async (e: MessageEvent<PrepAsk>) => {
   const { key, seed, tuning, send, noKeep } = e.data, t0 = performance.now();
@@ -19,7 +19,7 @@ self.onmessage = async (e: MessageEvent<PrepAsk>) => {
   try {
     const arch = traceSync(trace, 'compute:archipelago', () => worldOf(tuning.map?.world ?? 0)), map = traceSync(trace, 'compute:map', () => generateMap(seed, tuning));
     if (e.data.groundOnly) {
-      const ground = groundProgramDefines(map);
+      const ground = groundArrivalProgramDefines(map);
       trace?.finish('done'); self.postMessage({ok:true, ground}); return;
     }
     traceSync(trace, 'compute:route', () => routeOf(map)); // (the ley line's route, worked out with the map: the page's party asks for it first thing)

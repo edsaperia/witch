@@ -6,6 +6,7 @@
 import * as THREE from "three";
 import { coastOf, type Game } from "../rules/game";
 import { beachOf, type Beach } from "../rules/mapShape";
+import {groundCoast} from './groundRecipe';
 import type { AssetLibrary } from "./assets";
 import type { Ground } from "./ground";
 import { PartyWitchView } from "./partyWitches";
@@ -92,7 +93,7 @@ export class BeachView {
    *  camera's aim on a sail's dive in from the sea (View.fly; Ed, 2026-10-24, "it comes from further away across the sea"): the
    *  sand and sea on while it's within `fly.reach` metres of the sand, wherever she is. */
   update(g: Game, time: number, visible: (x: number, z: number, w: number, h: number) => boolean, camera: THREE.Camera, width: number, height: number, fly?: { x: number; z: number; reach: number }): boolean {
-    if (this.at?.map !== g.map) { this.leave(); this.at = { map: g.map, beach: beachOf(g.map.bounds, g.tuning) }; this.decor = null; }
+    if (this.at?.map !== g.map) { this.leave(); this.at = { map: g.map, beach: groundCoast(g.map) }; this.decor = null; }
     const b = this.at.beach, w = g.witch;
     if (!b) return false;
     const seen = !!fly && b.intoSand(fly.x, fly.z) >= -fly.reach;
