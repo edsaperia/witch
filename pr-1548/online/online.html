@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Witch · two-player prototype</title>
+  <style>
+    html,body { margin:0; height:100%; overflow:hidden; background:#0b0a16; color:#e8e2f4; font:14px/1.4 monospace; }
+    canvas { position:fixed; inset:0; image-rendering:pixelated; }
+    #online-panel { position:fixed; z-index:50; top:10px; left:10px; max-width:520px; padding:12px; background:#0e0b1ce8; border-radius:6px; }
+    button,a { font:inherit; color:#e8b46a; } button { background:#21182e; border:1px solid #6b557e; padding:6px; margin:4px; cursor:pointer; }
+    #invite { display:block; overflow-wrap:anywhere; } #status { white-space:pre-line; }
+  </style>
+  <script type="module" crossorigin src="./assets/online-BEevCGmY.js"></script>
+</head>
+<body>
+  <canvas id="game"></canvas>
+  <section id="online-panel"><strong>Two-player prototype</strong><p id="status">Connecting…</p><a id="invite" hidden>Open the invitation on a second browser</a><button id="pause">Pause</button><button id="party">Start party at the decks</button><button id="leave">Leave</button><p>WASD moves · E wakes / uses · Space rises · Esc pauses</p></section>
+</body>
+</html>
