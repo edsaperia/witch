@@ -62,7 +62,7 @@ function standInView(g: Game, log: string[]): View {
     appearing: new Map([[decor, 0]]),
     markerCache: { wave: 3, n: 9, list: [] }, plan: { key: "old", waves: new Map() }, prepared: true,
     assets: { reseat: (o: { seed: number; typeSeed: number }) => log.push(`assets.reseat(${o.seed},${o.typeSeed})`), prefetchType: () => {} },
-    partyView: { gen: recorder("soundsystemGen", log) }, houseRooms: null,
+    partyView: { gen: recorder("soundsystemGen", log) }, houseRooms: null, potionObservers: recorder("potionObservers", log),
   });
   for (const k of ["beachView", "grass", "strings", "leashView", "lasers", "borders", "inviteView", "partyObjects", "rig", "holograms", "glades", "wisps", "clouds", "lightRings", "fireworks", "swoopTrails", "spellFx", "trail", "combatLight", "occlusion"])
     v[k] = recorder(k, log);
@@ -104,6 +104,7 @@ describe("View.setGame (another night in the same view)", () => {
     expect(v.typeBatches.size).toBe(0);
     expect([...v.trunkShadowBatches.keys()]).toEqual(["decor"]);
     expect(log).toContain("soundsystemGen.reset");
+    expect(log).toContain("potionObservers.dispose");
     // its own records afresh, and the game re-pointed everywhere
     expect(v.game).toBe(b);
     expect(v.markerCache.wave).toBe(-1);

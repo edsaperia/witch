@@ -227,13 +227,16 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // her shadow lies at that point, under her feet whatever the pose.
   const wg = watlas.grounds?.[wf], wflip = spinFlip ?? (w.seated ? false : w.facing < 0), U = SPRITE_UNIFORMS.uUp.value, R = SPRITE_UNIFORMS.uRight.value;
   const wsink = wg ? (wframe.h - wg.y) * v.mpp : 0, wside = wg ? (wg.x - wframe.w / 2) * v.mpp * (wflip ? -1 : 1) : 0;
+  // Preserve ordinary art request order; only the inland lying pose needs the beach result first.
+  const potionLying = potionRest || w.stargazing;
+  if (!potionLying) v.partyWitchView.update(g, time, (x, z, ww, hh) => inView(v, x, z, ww, hh, 4));
   v.swoopTrails.update(g.partyWitches.list, time);
   for(const p of g.partyWitches.list)if(p.state==="floor"&&p.activity==="swoop"&&p.y>0.05)v.magic.native("partySwoop",p.x,p.y,p.z,Math.min(1,p.y/3),960000+p.id);
   setOverlayTilt(t.tiltShift, w.lift, v.canvas.clientHeight || window.innerHeight, v.height, v.houseTilt(g)); // (the DOM overlays blurred as the world: render/overlayTilt.ts)
   v.partyWitchView.bubbles(g, time, v.camera, v.canvas.clientWidth || window.innerWidth, v.canvas.clientHeight || window.innerHeight);
   const onBeach = v.beachView.update(g, time, (x, z, ww, hh) => inView(v, x, z, ww, hh, 4), v.camera, v.canvas.clientWidth || window.innerWidth, v.canvas.clientHeight || window.innerHeight, v.fly ? { x: v.fly.tx, z: v.fly.tz, reach: g.tuning.haze.far } : undefined); // (a sail's dive in over the sea: the sea drawn)
   // Keep the lying pose after recovery unlocks movement; the beach owns its own copy when she is on the sand.
-  v.partyWitchView.update(g, time, (x, z, ww, hh) => inView(v, x, z, ww, hh, 4), !onBeach && (potionRest || w.stargazing) ? { list: g.partyWitches.list, her: { activity: "rest", pose: "stargaze", facing: w.facing } } : undefined);
+  if (potionLying) v.partyWitchView.update(g, time, (x, z, ww, hh) => inView(v, x, z, ww, hh, 4), !onBeach ? { list: g.partyWitches.list, her: { activity: "rest", pose: "stargaze", facing: w.facing } } : undefined);
   v.stateMarks.update(g, time, v.leashView.tops, 70, v.camera.position);
   // (where she's drawn less the rules' place, in the house: her 💌s leave her hand as drawn, render/invites.ts letterAt)
   { const O = v.herOffset; O.on = !!(T.ent && deck && w.perch); O.x = wx - w.x; O.z = wz - w.z; O.y = wyy + groundHeight(wx, wz); }

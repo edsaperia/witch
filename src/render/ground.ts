@@ -62,7 +62,7 @@ void main() {
 }
 `;
 
-const FLOOR_FRAG = /* glsl */ `
+const FRAG = /* glsl */ `
 ${AREA_GLSL}
 uniform float uPixel; // metres per art pixel
 uniform vec3 uTypeFloor[${TYPE_SLOTS}];      // each type's floor colour (hsv), until its tile is drawn
@@ -151,7 +151,12 @@ float lakeSigil(vec2 p) {
   return 0.0;
 }
 #endif
+#ifdef POTION_SKY
+uniform float uPotionSky;
+void floorMain() {
+#else
 void main() {
+#endif
   vec2 px = floor(vWorld.xz / uPixel);           // the art pixel this fragment is in
   vec2 p = (px + 0.5) * uPixel;                   // its centre, in metres
   // Wobble the lookup a little so area borders read as ragged, not as the texture's grid.
@@ -677,12 +682,18 @@ void main() {
   if (plazaLine + plazaHalo > 0.0) lit = mix(lit, vec3(0.36, 0.62, 0.52), plazaLine * 0.55) + vec3(0.04, 0.16, 0.11) * plazaHalo * (1.0 - plazaLine) * 0.4; // (the plaza's sigil, its own light)
   gl_FragColor = vec4(haze(lit, vWorld), 1.0); // (her pool in her light's colour)
 }
+#ifdef POTION_SKY
+// Blend only colour: the bent floor continues writing depth beyond its horizon.
+void main() {
+  if (uPotionSky >= 1.0) { gl_FragColor = vec4(0.0); return; }
+  floorMain();
+  gl_FragColor.a *= 1.0 - uPotionSky;
+}
+#endif
 `;
 
-// Blend only colour: the bent floor continues writing depth, hiding things beyond its horizon.
-const FRAG = 'uniform float uPotionSky;\n' + FLOOR_FRAG.replace('void main()', 'void floorMain()') + '\nvoid main() { if (uPotionSky >= 1.0) { gl_FragColor = vec4(0.0); return; } floorMain(); gl_FragColor.a *= 1.0 - uPotionSky; }';
 /** At full share this is the exact ground shader; the added dither only runs during coast handover. */
-const BEACH_FRAG = FRAG.replace('void main() {', 'uniform float uCoastAppear;\nvoid main() {\n  if (uCoastAppear < 0.999 && bayer4(gl_FragCoord.xy) >= uCoastAppear) discard;');
+const BEACH_FRAG = FRAG.replaceAll('void main() {', 'uniform float uCoastAppear;\nvoid main() {\n  if (uCoastAppear < 0.999 && bayer4(gl_FragCoord.xy) >= uCoastAppear) discard;');
 
 export class Ground {
   readonly mesh: THREE.Mesh;
@@ -829,6 +840,11 @@ void main() {
     this.plain.uniforms.uPotionSky.value = amount;
     for (const mat of [this.plain, this.beach]) {
       if (!mat) continue; // The coast material is now created lazily on first approach.
+      const enabled = amount > 0;
+      if (enabled !== ('POTION_SKY' in mat.defines)) {
+        if (enabled) mat.defines.POTION_SKY = ''; else delete mat.defines.POTION_SKY;
+        mat.needsUpdate = true;
+      }
       mat.blending = amount > 0 ? THREE.CustomBlending : THREE.NormalBlending;
       mat.blendSrc = THREE.SrcAlphaFactor; mat.blendDst = THREE.OneMinusSrcAlphaFactor;
     }
@@ -893,7 +909,7 @@ void main() {
     this.coastReadiness.request(!!b, performance.now());
     if (!b) { this.mesh.material = this.plain; if (this.coastSurface) this.coastSurface.visible = false; v.set(0, 0, 0, 0); return; }
     if (!this.beach) {
-      this.beach = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: BEACH_FRAG, defines: this.beachDefines, uniforms: { ...u, uCoastAppear: { value: 0 } } });
+      this.beach = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: BEACH_FRAG, defines: { ...this.beachDefines, ...('POTION_SKY' in this.plain.defines ? { POTION_SKY: '' } : {}) }, uniforms: { ...u, uCoastAppear: { value: 0 } } });
       // A coast first appearing mid-trip inherits the floor's blend before its first draw.
       this.beach.blending = this.plain.blending; this.beach.blendSrc = this.plain.blendSrc; this.beach.blendDst = this.plain.blendDst;
       this.coastSurface = new THREE.Mesh(this.mesh.geometry, this.beach);
