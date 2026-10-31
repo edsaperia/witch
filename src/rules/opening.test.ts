@@ -2,7 +2,9 @@
 // house's floor, the camera settled indoors on her; and from there she walks on as anywhere in the house.
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
-import { newGame, stepGame, STEP, poseOf, type Controls } from "./game";
+import { newGame as fullGame, stepGame, STEP, poseOf, type Controls } from "./game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Bedroom placement, indoor camera and walls use one treehouse, independent of distant areas.");
 import { deckOf, onFloor, onTreehouse } from "./treehouse";
 import { HOUSE_ROOMS, toPlan } from "./houseRooms";
 import { bedside, wakeInBedroom } from "./opening";

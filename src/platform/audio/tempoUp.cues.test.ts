@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { newGame } from "../../rules/game";
+import { newGame as fullGame } from "../../rules/game";
+import { smallWorld } from "../../test/worlds";
+const newGame = smallWorld(fullGame, "Beat-aligned cheering and respawn cue ordering are independent of world size.");
 import { beatAt, knockdownTempo, timeAt } from "../../rules/beat";
 import { TUNING } from "../../rules/tuning";
 import type { Sfx } from "./sfx";

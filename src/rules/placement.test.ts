@@ -4,6 +4,7 @@ import { Forest } from "./forest";
 import { soundsystemFor } from "./party";
 import { TUNING } from "./tuning";
 
+// Keep the radius-world seed matrix: full-map scenery footprints, multiple set pieces and all decor/ground families are the spatial coverage.
 // Gameplay first, then scenery (Ed, 2026-10-03: set pieces were landing on soundsystems).
 describe("scenery placement", () => {
   // (set pieces are off on the small islands, Ed 2026-10-11: their placement is still checked, with them on as they were; the

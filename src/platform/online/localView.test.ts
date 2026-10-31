@@ -4,6 +4,7 @@ import { TUNING } from "../../rules/tuning";
 import { localView } from "./localView";
 
 it("presents the assigned guest without swapping authoritative host aliases or camera", () => {
+  // Four-area home fixture: enough for two players and a camera target; this tests aliases, not world coverage.
   const tuning = structuredClone(TUNING); tuning.map!.island = "home"; tuning.map!.islandAreas = 4;
   const source = newGame(123, tuning, 2), camera = { ...source.camera }, host = source.witch;
   source.witches[1].time = 42;

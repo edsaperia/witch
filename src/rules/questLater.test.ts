@@ -7,6 +7,7 @@ import { cellKey, routeOf } from "./party";
 import { earlyQuest } from "./quest";
 import { TUNING, withTuning } from "./tuning";
 
+// Keep the full seeded radius routes: later-kind depth and the old-pick comparison depend on their area/species distribution.
 const SEEDS = [1, 2, 3, 7, 42, 123, 777, 2024, 31337, 871136];
 
 describe("quests point to later areas (legends.questLater)", () => {

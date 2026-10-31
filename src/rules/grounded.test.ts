@@ -7,7 +7,9 @@ import { describe, expect, it } from "vitest";
 import { TUNING, withTuning, type Tuning } from "./tuning";
 import { creatureWeight, groundedBy } from "./leashWeight";
 import { strengthOf } from "./combat";
-import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { newGame as fullGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Grounding checks a few creatures placed beside one witch on local open ground, independent of area count.");
 import type { Creature } from "./creatures";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };

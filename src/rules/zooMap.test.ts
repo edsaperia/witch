@@ -10,6 +10,7 @@ import { insideIsland, reachAt, zooLayout } from "./zooMap";
 import { lakeDepth } from "./lakes";
 import { ZOO_CONFIG } from "./zoo";
 
+// Keep the complete chart-shaped zoo: all 64 islands, street clearance, per-kind population and found/unfound lake geometry are the assertions.
 const zoo = (found: string[]): Tuning => ({ ...TUNING, map: { ...TUNING.map!, shape: "zoo", island: "", islandAreas: 0, found } });
 const A = TUNING.areaSize * TUNING.areaScale;
 const games = new Map<string, Game>();

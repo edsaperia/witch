@@ -1,6 +1,28 @@
 import { expect, it } from 'vitest';
 import { LOOK_IDS } from '../rules/lakeLooks';
-import { groundDefines, groundFamily } from './groundFamily';
+import { GROUND_EXTRAS, groundDefines, groundExtras, groundFamily } from './groundFamily';
+
+const empty = { zoo: false, dancefloor: false, pavement: false, legends: false, legendFloor: false, koi: false, bare: false };
+it('keeps each fixed ground extra independent and diagnostics conservative', () => {
+  expect(groundExtras(empty)).toEqual([]);
+  expect(groundExtras({ ...empty, dancefloor: true, pavement: true, legends: true, legendFloor: true })).toEqual(['DANCEFLOOR', 'PAVEMENT', 'LEGENDS', 'LEGEND_FLOOR']);
+  expect(groundExtras({ ...empty, legendFloor: true })).toEqual([]);
+  expect(groundExtras({ ...empty, koi: true, bare: true })).toEqual(['KOI', 'BARE']);
+  expect(groundExtras({ ...empty, zoo: true })).toEqual(GROUND_EXTRAS);
+  expect(groundExtras(empty, true)).toEqual(GROUND_EXTRAS);
+});
+
+it('assigns stable distinct defines for every extra mask without changing lake/beach selection', () => {
+  const keys = new Set<string>();
+  for (let mask = 0; mask < 1 << GROUND_EXTRAS.length; mask++) {
+    const selected = GROUND_EXTRAS.filter((_, i) => mask & (1 << i));
+    const plain = groundDefines('lakes:water,ice', false, selected), beach = groundDefines('lakes:water,ice', true, selected);
+    expect(plain.GROUND_SPECIALIZED).toBe(''); expect(plain.GROUND_LAKE_WATER).toBe(''); expect(plain.GROUND_LAKE_ICE).toBe('');
+    expect(beach).toEqual({ ...plain, GROUND_BEACH: '' });
+    keys.add(JSON.stringify(plain));
+  }
+  expect(keys.size).toBe(256);
+});
 
 it('selects each lake kind independently with stable combination ordering', () => {
   expect(groundFamily(false, null)).toBe('no-lakes');

@@ -2,7 +2,9 @@
 // from berries"): each path sets healedAt through heal or healBy (rules/creatures.ts).
 import { describe, expect, it } from "vitest";
 import { heal, healBy, HEAL_TRICKLE_GAP, LEGEND, type Creature } from "./creatures";
-import { newGame, type Game } from "./game";
+import { newGame as fullGame, type Game } from "./game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Heal markers are checked on a few explicitly hurt creatures, independent of distant area diversity.");
 import { TUNING } from "./tuning";
 import { feed } from "./berries";
 import { befriend } from "./creatureStates";

@@ -1,0 +1,62 @@
+{
+  "baselineSha": "5e51a00c470d84deec3b8f2ca05d04e45ef771b7",
+  "candidateSha": "71fcf5fa07fd9aa8c627abe9230ea137e8efd96d",
+  "completeComparison": false,
+  "candidateRan": false,
+  "error": "Error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "cpu": {
+    "start": {
+      "at": "2026-10-30T19:50:39.332Z",
+      "percent": 95.68674972545158,
+      "logicalCpus": 20
+    },
+    "end": {
+      "at": "2026-10-30T19:53:29.379Z",
+      "percent": 71.73881499395405,
+      "logicalCpus": 20
+    },
+    "exitCode": 1
+  },
+  "contaminated": true,
+  "baseline": {
+    "version": {
+      "version": "dev · 5e51a00",
+      "built": "2026-10-30T17:42:31.561Z"
+    },
+    "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "bootWallMs": 141709.5,
+    "elapsedWallMs": 143320,
+    "beachExistsAtBoot": true,
+    "coast": {
+      "at": 141858.90000009537,
+      "point": {
+        "x": 3944.6744699698647,
+        "z": 2747.014202599505,
+        "nx": 1,
+        "nz": 0
+      }
+    },
+    "worstCoastFrameMs": 774.8999999999942,
+    "coastMethods": {
+      "getUniforms": {
+        "count": 1600,
+        "longestMs": 0.10000014305114746
+      },
+      "getAttributes": {
+        "count": 1600,
+        "longestMs": 0.20000004768371582
+      }
+    },
+    "unsafeReads": [],
+    "groundSubmissions": 19,
+    "errors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ]
+  },
+  "limitations": [
+    "Only baseline completed before an unlocated HTTP404 error aborted the tool.",
+    "No candidate fallback duration, no before/after or travel speedup claim.",
+    "CPU load high at start and end; timings contaminated.",
+    "Slot released in PR1498 comment6532204085; no retry allocated."
+  ]
+}

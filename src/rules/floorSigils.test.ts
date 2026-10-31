@@ -3,8 +3,10 @@ import { floorPatterns, islandKinds, islandOf, islandSigilOf, pickPattern } from
 import { floorInputs, newGame } from "./game";
 import { AREA_TYPES } from "./map";
 import { TUNING, withTuning } from "./tuning";
+import { largestWorldTuning, smallWorldTuning } from "../test/worlds";
 
 const creatureOf = (t: number) => AREA_TYPES[t].creature;
+// Keep named-island and roster-free fixtures distinct: the tests compare authored roster semantics with the radius-map fallback.
 
 describe("the dancefloor's sigils: only this island's kinds, and the World Tree (Ed, 2026-10-11)", () => {
   it("never picks an off-island kind's shape, whatever has the party, and does pick the World Tree", () => {
@@ -20,7 +22,8 @@ describe("the dancefloor's sigils: only this island's kinds, and the World Tree 
     expect([...seen].filter(s => s !== "worldTree" && !kinds.has(s))).toEqual([]);
   });
   it("takes a game's kinds from its island's roster, not from home's own cell, and the floor keeps to them", () => {
-    const g = newGame(123, withTuning({ map: { ...TUNING.map!, island: "home", islandAreas: 10 } })), kinds = islandKinds(g.map, creatureOf);
+    // Largest shipped home world: sigil filtering must cover the complete authored area roster.
+    const g = newGame(123, largestWorldTuning(TUNING)), kinds = islandKinds(g.map, creatureOf);
     expect(g.map.island).not.toBeNull();
     expect([...kinds].sort()).toEqual([...new Set(g.map.island!.roster.map(r => r.kind))].sort());
     for (const [x, y] of g.map.cells) if (g.map.playable(x, y) && (x !== g.map.centreCell[0] || y !== g.map.centreCell[1])) expect(kinds.has(creatureOf(g.map.typeOf(x, y)))).toBe(true);
@@ -29,7 +32,7 @@ describe("the dancefloor's sigils: only this island's kinds, and the World Tree 
     for (let played = 0; played < 400; played++) { const p = lib[pickPattern(-1, played, 4, every, g.seed, kinds)]; if (p.kind === "area") expect(kinds.has(p.creature!)).toBe(true); }
   });
   it("on a map with no roster, takes the kinds of its playable areas, home's own cell left out", () => {
-    const g = newGame(7, TUNING), kinds = islandKinds(g.map, creatureOf), want = new Set<string>();
+    const g = newGame(7, smallWorldTuning(TUNING, "Roster-free fallback derives types from the cells present; nine cells suffice to distinguish home and wild.")), kinds = islandKinds(g.map, creatureOf), want = new Set<string>();
     expect(g.map.island).toBeNull();
     for (const [x, y] of g.map.cells) if (g.map.playable(x, y) && (x !== g.map.centreCell[0] || y !== g.map.centreCell[1])) want.add(creatureOf(g.map.typeOf(x, y)));
     expect([...kinds].sort()).toEqual([...want].sort());
@@ -43,7 +46,7 @@ describe("the dancefloor's sigils: only this island's kinds, and the World Tree 
     const home = newGame(5, withTuning({ map: { ...TUNING.map!, island: "home", islandAreas: 10 } }));
     expect(home.map.island?.kind).toBe("home");
     expect(floorInputs(home).island!.sigil).toBe("worldTree");
-    const none = newGame(5, TUNING); // (no roster)
+    const none = newGame(5, smallWorldTuning(TUNING, "The no-roster identity branch needs no distant areas."));
     expect(none.map.island).toBeNull();
     expect(floorInputs(none).island!.sigil).toBe("worldTree");
   });

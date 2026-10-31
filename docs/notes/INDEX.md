@@ -283,6 +283,14 @@ says what each note covers.
 - Aim reticle
 - Action bar
 
+## [Save slots](save-slots.md)
+
+- Save slot storage
+- Single-save migration
+- Slot switching
+- Compatible nights
+- Save format guards
+
 ## [Sound effects](sound.md)
 
 - Sound effects

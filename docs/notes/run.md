@@ -1,5 +1,24 @@
 # The run
 
+Pause input stack (#1495, Ed's approved architecture review, 2026-10-30):
+`platform/inputStack.ts` owns the page's registered overlay order. Pause is the
+first migrated panel; chart, Studio, zoo, DJ booth, creator, telescope and Settings
+remain separate later migrations, with no view/main split here. `Freeze` registers
+pause on opening and removes it on resume, routes both key phases through the top
+owner, and hides gamepad reads from lower owners. Native pause controls retain
+browser defaults without propagating keys below pause; Settings keeps its legacy
+window handler until its migration. The existing Studio first-Esc rule, Settings
+Esc rule, pause/single-step recorder hooks and comment text-entry guard remain.
+Pause/resume releases cached game input; keys held across the ownership transition
+cannot repeat into the exposed panel until released. Browser focus loss clears
+physical-key quarantine. Gamepad opening snapshots remain authoritative even if
+pause closes and reopens with the same DOM between menu frames; a fresh Back is
+recognised without requiring an intervening frame, while opening-held buttons
+remain suppressed. Focused tests reproduce the formerly lost second Back and
+compare exact recorded/replayed rules state across held-key pause/resume and
+single-step. Browser/default-control and pause-on-top checks belong to the
+coordinator's release check; unit tests do not prove a browser flake eliminated.
+
 **What's new in Settings** (#1493, startup4): Settings' fifth tab dynamically imports its controller only when selected, then fetches a small manifest and one batch of up to three versions. Load more appends the next batch; failures keep already-loaded notes and offer Try again. Selecting other Settings tabs makes no notes request. Build-time assets use the same grouping as the legacy tools/tests, with content-hashed batch filenames and full archive/fragments retained; the initial game module imports no changelog data. Production and dev both serve the batches under the preview path's news/ directory. Requests enforce32 KiB manifest/512 KiB batch limits and validate same-directory filenames/data before rendering escaped text. Normal keyboard/pad tab and Back navigation remain; up/down moves among changes/actions, left/right or Page Up/Down scrolls longer notes, and the wheel scrolls the body. Reset is absent on this informational tab. Actual layout, device navigation and network behavior remain coordinator browser checks.
 
 **Direct play after loading** (#1493, 2026-10-30): resumed nights, creator=0 links and bot games use the existing start action once ready, with no visible start card. A bot's asynchronous module must finish before its night starts. Bedroom wake-up and chart arrival retain their own gates; the old creator still waits for its spell-scroll action. Automatic starts keep the existing sound-only first-gesture prompt; that key/tap is not needed to begin play. Controls/Options can still borrow their hidden nodes, but main no longer imports the start-screen formatter, eager changelog or upcoming data. Started-night state is tracked separately from the hidden card, so hiding it during loading cannot itself authorize a saved-night checkpoint. This supersedes the earlier old-card waiting description below. The quick-smoke assertion now requires creator=0 to start without a key; the coordinator must run it in a browser. Nearby route/save/input tests do not establish audio, visual loading or browser interaction success. What's new returns in the following lazy Settings milestone.

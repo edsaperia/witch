@@ -6,13 +6,14 @@ import { makeCreature, stepCreature } from "./creatures";
 import { glideOf } from "./movement";
 import { rng } from "./random";
 import { TUNING } from "./tuning";
+import { smallWorldTuning } from "../test/worlds";
 
 describe("a glider's roam", () => {
   it("glides to its far spots (held still through its pause, then sailing there), and only gliders do", () => {
     const G = glideOf("flyingsquirrel")!;
     expect(G.min).toBeGreaterThan(0);
     expect(glideOf("squirrel")).toBeUndefined();
-    const map = generateMap(7, TUNING), cell = map.cells[0];
+    const map = generateMap(7, smallWorldTuning(TUNING, "One creature glides within one cell; distant areas cannot affect its movement.")), cell = map.cells[0];
     const c = makeCreature(map, cell as [number, number], 1, 1, rng(3));
     c.species = "flyingsquirrel";
     let glides = 0, landed = 0, time = 0, wasAir = false;

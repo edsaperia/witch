@@ -2,7 +2,9 @@
 // the night is won. Its saves are this browser's (a localStorage of our own for each test), as app/finds.test.ts's.
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { TUNING } from "../rules/tuning";
-import { newGame, stepGame, type Controls, type Game } from "../rules/game";
+import { newGame as fullGame, stepGame, type Controls, type Game } from "../rules/game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Find loans and saved ownership use one placed trunk and witch, independent of island size.");
 import { FINDABLE, fillTrunk, loanFind, type FindKindId } from "../rules/finds";
 import { itemById, wear, wears } from "../rules/wardrobe";
 import { bareBroom, type Fitted } from "../rules/broomParts";

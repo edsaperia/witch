@@ -5,6 +5,7 @@
 // pause), and so do the prompts that show one (ui/keyHint.ts glyphOf), so a remap shows everywhere. The settings menu's API is
 // `bindings`: list, get, set, reset, resetAll, conflicts, onChange (docs/notes/run.md **Controls**).
 import table from "../../config/bindings.json";
+import { slotStorage } from "../app/saveSlots";
 
 /** Where an action works: in play, in a menu (a station's panel, the sea chart, the telescope, the Studio), or both. Two actions in
  *  one context can't share an input; a game action and a menu action can (cross is both use and choose). */
@@ -149,6 +150,6 @@ export function keysName(id: ActionId, B: Bindings = bindings): string {
   return names.length ? names.join(" or ") : "none";
 }
 
-const store = (() => { try { return typeof localStorage !== "undefined" ? localStorage : null; } catch { return null; } })();
+const store = slotStorage;
 /** The game's bindings: the defaults, the player's over them. */
 export const bindings = new Bindings(store);

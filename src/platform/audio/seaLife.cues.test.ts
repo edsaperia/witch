@@ -10,6 +10,7 @@ import { facing } from "../../test/coast";
 import type { Sfx } from "./sfx";
 
 const heard = (at: "east" | "west" | "inland", secs: number) => {
+  // Keep the coast-sized fixture: east/west beach geometry and a point 600 m inland are part of the sound-range test.
   const g = newGame(123, TUNING), B = beachOf(g.map.bounds, g.tuning)!, p = facing(B.land, at === "west" ? Math.PI : 0), d = at === "inland" ? 600 : 5;
   g.witch = { ...g.witch, x: p.x - p.nx * d, z: p.z - p.nz * d, seated: false, mode: "ground", lift: 0, stargazing: true };
   const n = { splash: 0, groan: 0, pour: 0 };

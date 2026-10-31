@@ -2,9 +2,13 @@
 // fading in as she walks in and out as she walks out, and its words follow the legend's state.
 import { describe, expect, it } from "vitest";
 import { newGame } from "./game";
-import { TUNING } from "./tuning";
+import { TUNING as gameTuning } from "./tuning";
+import { largestWorldTuning } from "../test/worlds";
 import { circleLines, circleShown, circleReach, legendCircleNear, sigilWords } from "./legendCircle";
 import { legendCircleAt } from "./musicPlan";
+
+// Largest shipped world: compare indexed circle lookup against every legend's actual clearing across the full available roster.
+const TUNING = largestWorldTuning(gameTuning);
 
 describe("the legend circle's explainer", () => {
   const setup = () => { const g = newGame(123, TUNING), L = g.creatures.find(c => c.boss && !c.gone && c.legendState === "asleep")!; return { g, L }; };

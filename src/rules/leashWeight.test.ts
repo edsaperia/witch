@@ -6,7 +6,9 @@ import { COMBAT } from "./combat";
 import { TUNING } from "./tuning";
 import { creatureWeight, freeOf, leashStrain, loadOf, NO_LOAD, type LeashLoad } from "./leashWeight";
 import { newWitch, stepWitch, type WitchState } from "./witch";
-import { leashLoad, newGame } from "./game";
+import { leashLoad, newGame as fullGame } from "./game";
+import { smallWorld } from "../test/worlds";
+const newGame = smallWorld(fullGame, "Leash-load integration uses two young creatures placed beside her; other weight tests use synthetic bodies.");
 import type { Creature } from "./creatures";
 
 /** Every species at strength 1 for these tests (Ed, 2026-10-08, gave the species strengths by class; these test other

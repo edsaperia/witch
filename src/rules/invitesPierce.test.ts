@@ -4,11 +4,13 @@
 import { describe, expect, it } from "vitest";
 import { newInvites, stepInvites, type Affection } from "./invites";
 import { TUNING, withTuning } from "./tuning";
-import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { newGame as fullGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { smallWorld } from "../test/worlds";
 import type { Creature } from "./creatures";
 import { stun } from "./orbit";
 import { stateOf } from "./creatureStates";
 
+const newGame = smallWorld(fullGame, "Piercing letters use relocated specimens on an explicit 6–14 m line; world extent is independent of the hit/fade assertions.");
 const her = { x: 0, z: 0, facing: 1 };
 const critter = (id: number, x: number) => ({ id, species: "wolf", level: 1, x, z: 0, leashed: false, gone: false }) as Creature;
 function counting(): Affection & { hits: number[] } {

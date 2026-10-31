@@ -3,6 +3,7 @@
 // the treetops over the Terrace (`outside.png`); LABELS=1 names the rooms on their floors; SHOTS=a,b takes only those. Fails on a page error.
 //   node tools/house/oak-shots.cjs [out dir] [seed]
 const http = require("http"), fs = require("fs"), path = require("path");
+const session = require("./shot-session.cjs");
 const playwright = require("/opt/node22/lib/node_modules/playwright");
 const [outDir = "previews/oak", seed = "123"] = process.argv.slice(2);
 const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist"));
@@ -17,14 +18,13 @@ const mid = r => [(r.x0 + r.x1) / 2, (r.z0 + r.z1) / 2];
   const errors = [];
   try {
     const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
+    await session.install(page);
     page.on("pageerror", e => errors.push(e.message));
-    await page.goto(`http://127.0.0.1:${server.address().port}/?seed=${seed}&creator=0&wave=off${process.env.LABELS ? "&rooms=labels" : ""}`);
-    await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000, polling: 1000 });
-    await page.keyboard.press("Enter");
-    await page.waitForFunction(() => window.witch.game.clock.time > 3, null, { timeout: 600000, polling: 500 });
+    await page.goto(`http://127.0.0.1:${server.address().port}/?seed=${seed}&creator=0&wave=off&opening=old&loadmist=0${process.env.LABELS ? "&rooms=labels" : ""}`);
+    console.log("start", JSON.stringify(await session.start(page)));
     const stand = (x, z) => page.evaluate(([x, z]) => { const g = window.witch.game, T = g.map.treehouse; g.witch = { ...g.witch, x: T.x + x, z: T.z + z, vx: 0, vz: 0, mode: "ground", lift: 0, perch: true, seated: false }; }, [x, z]);
-    const step = (o, n) => page.evaluate(([o, n]) => { const w = window.witch; w.manual = true; for (let i = 0; i < n; i++) w.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...o }, 1 / 60); }, [o, n]);
-    const shot = async name => { await page.screenshot({ path: path.join(outDir, `${name}.png`), timeout: 300000 }); console.log("shot", name); };
+    const step = async (o, n) => console.log("frames", JSON.stringify(await session.step(page, o, n)));
+    const shot = async name => { const state = await session.prepareShot(page); fs.writeFileSync(path.join(outDir, `${name}.state.json`), JSON.stringify(state, null, 2)); console.log("capture", name, JSON.stringify(state)); await session.capture(page, { path: path.join(outDir, `${name}.png`), timeout: 300000 }); console.log("shot", name); };
     const at = id => { const r = H.rooms.find(q => q.id === id); return [r.x, r.z]; }, want = n => !process.env.SHOTS || process.env.SHOTS.split(",").includes(n);
     if (want("terrace")) { await step({}, 120); await shot("terrace"); }
     if (want("terrace-up")) { const T = H.terrace; await stand(T.seat.x - 2, T.seat.z - 2); await step({}, 120); await shot("terrace-up"); }
