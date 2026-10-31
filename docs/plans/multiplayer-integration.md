@@ -10,6 +10,8 @@ Latest rulings in `docs/backlog/platform.md` supersede its older notes: browser 
 
 Guest arrival/departure follows the telephone design, with no new map indicators. Shared host hats/brooms/bags and exclusive broom parts must not be duplicated. Guest equipment, face/clothes and personal browser settings need separate presentation/ownership adapters. Room placement remains Ed's camera-authoritative layout, supplied by the house owner.
 
+Ed ruling in this owner chat, 2026-10-31 (recorded on PR #1538, comment6544237613): returning from a friend's game starts a **fresh solo night**, not the interrupted saved night. Successful permanent unlocks remain kept/shared. Clear/replace only the participating slot's interrupted-night checkpoint at the reviewed session transition, never its permanent collection or another slot, and never write the host's multiplayer snapshot as the guest's solo night. Exact crash/reload/failed-call transition boundaries still need explicit lifecycle tests.
+
 ## Current source audit
 
 | Area | What exists at the base | Integration gap / acceptance obligation |
