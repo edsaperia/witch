@@ -1,0 +1,574 @@
+{
+  "baselineSha": "5e51a00c470d84deec3b8f2ca05d04e45ef771b7",
+  "candidateSha": "71fcf5fa07fd9aa8c627abe9230ea137e8efd96d",
+  "error": "Error: Candidate beach material existed before coast demand",
+  "httpFailures": [],
+  "cpu": {
+    "start": {
+      "at": "2026-10-30T20:34:11.932Z",
+      "percent": 10.12392661982826,
+      "logicalCpus": 20
+    },
+    "end": {
+      "at": "2026-10-30T20:35:18.929Z",
+      "percent": 25.812496917689998,
+      "logicalCpus": 20
+    },
+    "exitCode": 1
+  },
+  "complete": false,
+  "capturesCoveredByStartScreen": true,
+  "slotReleasedComment": 6532937435,
+  "rows": [
+    {
+      "name": "baseline",
+      "version": {
+        "version": "dev · 5e51a00",
+        "built": "2026-10-30T17:42:31.561Z"
+      },
+      "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "bootWallMs": 34625.799999952316,
+      "beachExistsAtReady": true,
+      "coastAt": 34674.299999952316,
+      "elapsedWallMs": 35322,
+      "readiness": null,
+      "methods": {
+        "getUniforms": {
+          "count": 1516,
+          "longestMs": 0.19999980926513672
+        },
+        "getAttributes": {
+          "count": 1516,
+          "longestMs": 0.10000014305114746
+        }
+      },
+      "unsafeReads": [],
+      "worstCoastFrameMs": 299.90000000000146,
+      "groundSubmissions": [
+        {
+          "at": 34969.200000047684,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": null
+        },
+        {
+          "at": 34994.299999952316,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": null
+        },
+        {
+          "at": 35016.299999952316,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": null
+        },
+        {
+          "at": 35037.90000009537,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": null
+        },
+        {
+          "at": 35057.60000014305,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": null
+        },
+        {
+          "at": 35077.799999952316,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": null
+        },
+        {
+          "at": 35104.700000047684,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": null
+        },
+        {
+          "at": 35122.90000009537,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": null
+        },
+        {
+          "at": 35146.200000047684,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": null
+        },
+        {
+          "at": 35165.5,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": null
+        },
+        {
+          "at": 35183.299999952316,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": null
+        },
+        {
+          "at": 35203.90000009537,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": null
+        },
+        {
+          "at": 35220.5,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": null
+        },
+        {
+          "at": 35246.10000014305,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": null
+        },
+        {
+          "at": 35265.5,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": null
+        },
+        {
+          "at": 35279.90000009537,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": null
+        },
+        {
+          "at": 35294.299999952316,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": null
+        },
+        {
+          "at": 35309.200000047684,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": null
+        }
+      ],
+      "marks": [],
+      "errors": []
+    },
+    {
+      "name": "candidate",
+      "version": {
+        "version": "dev · 71fcf5f",
+        "built": "2026-10-30T17:43:21.574Z"
+      },
+      "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A720) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "bootWallMs": 26207.60000014305,
+      "beachExistsAtReady": true,
+      "coastAt": 26228.5,
+      "elapsedWallMs": 28232,
+      "readiness": {
+        "requested": true,
+        "linked": true,
+        "share": 1,
+        "fallbackMs": 21021.299999952316,
+        "launched": true,
+        "last": 28205.10000014305,
+        "fadeMs": 1013.7000000476837,
+        "fallbackShown": true
+      },
+      "methods": {
+        "getUniforms": {
+          "count": 5087,
+          "longestMs": 0.20000004768371582
+        },
+        "getAttributes": {
+          "count": 5088,
+          "longestMs": 0.10000014305114746
+        }
+      },
+      "unsafeReads": [],
+      "worstCoastFrameMs": 833.2999999999993,
+      "groundSubmissions": [
+        {
+          "at": 26481.900000095367,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.125
+        },
+        {
+          "at": 26508.5,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.1598750001192093
+        },
+        {
+          "at": 27331.900000095367,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.2223750001192093
+        },
+        {
+          "at": 27422.5,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.2848750001192093
+        },
+        {
+          "at": 27447.5,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.31162499994039533
+        },
+        {
+          "at": 27465.400000095367,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.3323750001192093
+        },
+        {
+          "at": 27484.400000095367,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.3563749998807907
+        },
+        {
+          "at": 27507.900000095367,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.38650000005960466
+        },
+        {
+          "at": 27522.200000047684,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.40362500011920927
+        },
+        {
+          "at": 27540.900000095367,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.4261250001192093
+        },
+        {
+          "at": 27556.5,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.44462500005960465
+        },
+        {
+          "at": 27573,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.46537499994039533
+        },
+        {
+          "at": 27588.700000047684,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.4841249999403954
+        },
+        {
+          "at": 27604.10000014305,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.5051249998807907
+        },
+        {
+          "at": 27620.60000014305,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.5246250000596047
+        },
+        {
+          "at": 27637.200000047684,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.5477500000596046
+        },
+        {
+          "at": 27652.60000014305,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.5638749998807907
+        },
+        {
+          "at": 27666.800000190735,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.5830000001192093
+        },
+        {
+          "at": 27679.300000190735,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.6001249998807907
+        },
+        {
+          "at": 27693.900000095367,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.6178749999403954
+        },
+        {
+          "at": 27706.5,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.6332499998807907
+        },
+        {
+          "at": 27720.900000095367,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.6492500001192093
+        },
+        {
+          "at": 27734.700000047684,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.6683750000596046
+        },
+        {
+          "at": 27747.700000047684,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.6853749999403953
+        },
+        {
+          "at": 27765,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.7058750000596047
+        },
+        {
+          "at": 27783.400000095367,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.7286250001192093
+        },
+        {
+          "at": 27795.700000047684,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.745
+        },
+        {
+          "at": 27808.900000095367,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.761875
+        },
+        {
+          "at": 27822.300000190735,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.7773750001192092
+        },
+        {
+          "at": 27842.10000014305,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.8042500001192093
+        },
+        {
+          "at": 27856.200000047684,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.8196250000596046
+        },
+        {
+          "at": 27873.60000014305,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.8432499998807907
+        },
+        {
+          "at": 27885.800000190735,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.8583750000596047
+        },
+        {
+          "at": 27898.900000095367,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.8742500001192093
+        },
+        {
+          "at": 27912.10000014305,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.8917500001192092
+        },
+        {
+          "at": 27923.700000047684,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.905625
+        },
+        {
+          "at": 27936.60000014305,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.9223750001192093
+        },
+        {
+          "at": 27947.700000047684,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.936875
+        },
+        {
+          "at": 27960.10000014305,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.9522499999403954
+        },
+        {
+          "at": 27973.800000190735,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.968125
+        },
+        {
+          "at": 27985.200000047684,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.9846250000596046
+        },
+        {
+          "at": 27994.200000047684,
+          "material": "Loading ground and lake surfaces",
+          "beach": false,
+          "share": 0.9965000000596046
+        },
+        {
+          "at": 28004.400000095367,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": 1
+        },
+        {
+          "at": 28015,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": 1
+        },
+        {
+          "at": 28027.60000014305,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": 1
+        },
+        {
+          "at": 28038,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": 1
+        },
+        {
+          "at": 28047.900000095367,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": 1
+        },
+        {
+          "at": 28058.60000014305,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": 1
+        },
+        {
+          "at": 28088.300000190735,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": 1
+        },
+        {
+          "at": 28100,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": 1
+        },
+        {
+          "at": 28110.300000190735,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": 1
+        },
+        {
+          "at": 28120.400000095367,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": 1
+        },
+        {
+          "at": 28130.200000047684,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": 1
+        },
+        {
+          "at": 28141,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": 1
+        },
+        {
+          "at": 28152.200000047684,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": 1
+        },
+        {
+          "at": 28161.300000190735,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": 1
+        },
+        {
+          "at": 28172,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": 1
+        },
+        {
+          "at": 28183.700000047684,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": 1
+        },
+        {
+          "at": 28196.300000190735,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": 1
+        },
+        {
+          "at": 28211.200000047684,
+          "material": "ShaderMaterial",
+          "beach": true,
+          "share": 1
+        }
+      ],
+      "marks": [
+        {
+          "name": "ground:coast-full",
+          "at": 1769.6000001430511,
+          "detail": {
+            "fallbackMs": 21021.299999952316
+          }
+        }
+      ],
+      "errors": []
+    }
+  ],
+  "limitations": [
+    "Failure retained: no retroactive pass.",
+    "Start screen was never dismissed; screenshots do not prove visible handover or continuity.",
+    "Accumulated fallbackMs includes pre-teleport boot demand, not measured visible exposure.",
+    "BeachView can legitimately request coast for intro flight; boot material absence assertion does not distinguish that.",
+    "No new allocation or rerun inferred."
+  ]
+}
