@@ -52,10 +52,10 @@ npm run build && node tools/shot/pixels.cjs [out dir]   (SEED=542195, LINK= more
 
 ## `playtest-render.cjs`
 
-Capture the five chain poses and three near/far night mushroom colours on an allocated cloud renderer.
+Capture the five chain poses and three near/far night mushroom colours on an allocated headless renderer slot.
 
 ```
-node tools/shot/playtest-render.cjs <served-url> <expected-sha> <output-dir>
+node tools/shot/playtest-render.cjs <served-url> <expected-sha> <output-dir> [chains|stumps|mushrooms]
 ```
 
 ## `shot.cjs`
@@ -67,6 +67,14 @@ npm run build && node tools/shot/shot.cjs <scene> [out.png] [more of the link]
 node tools/shot/shot.cjs object:dressingTable previews/shot/dressing.png
 node tools/shot/shot.cjs find:hat:sentry previews/shot/sentry.png own=none
 node tools/shot/shot.cjs creature:fox@1 previews/shot/fox.png zoom=0
+```
+
+## `stump-diagnostic.cjs`
+
+Record the seed-123 wild stump's art, shader gate, instance counts and visible pixels in the allocated capture session.
+
+```
+node tools/shot/playtest-render.cjs <served-url> <expected-sha> <output-dir> stumps
 ```
 
 ## `wisps.cjs`

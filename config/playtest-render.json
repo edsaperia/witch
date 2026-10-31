@@ -1,6 +1,7 @@
 {
   "chainTransitionSeconds": 0.5,
   "chainGroundHeight": 0.15,
+  "stumpIconMinPixels": 16,
   "chainLiftStagger": 0.25,
   "mushroomSpotGain": 4.8,
   "mushroomHaloStrength": 0.8,
