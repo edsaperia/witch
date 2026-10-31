@@ -1655,6 +1655,7 @@ describe("spawn markers", () => {
 });
 
 describe("the simulation (Stage 4)", () => {
+  const simulationTuning = smallWorldTuning(TUNING, "Fixed-step timing, buffered presses, player setup and seed determinism do not require distant areas.");
   // A digest of the game's state: every witch, creature, the party and the clock.
   const digest = (g: ReturnType<typeof newGame>) => {
     const parts: number[] = [g.clock.time, g.party.wave, g.party.areas.size];
@@ -1665,7 +1666,7 @@ describe("the simulation (Stage 4)", () => {
     return (h >>> 0).toString(16);
   };
   const play = (frames: number[]) => {
-    const g = newGame(321, TUNING);
+    const g = newGame(321, simulationTuning);
     g.clock.paused = false;
     frames.forEach((dt, i) => stepGame(g, { moveX: Math.sin(i / 40), moveZ: Math.cos(i / 55), toggleMode: i === 200, zoom: 0, spell: i === 90 }, dt));
     return g;
@@ -1677,7 +1678,7 @@ describe("the simulation (Stage 4)", () => {
   }, 60000);
 
   it("steps in fixed steps: a frame's length only decides how many", () => {
-    const g = newGame(321, TUNING);
+    const g = newGame(321, simulationTuning);
     g.clock.paused = false;
     stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 120);
     expect(g.clock.time).toBe(0); // half a step: nothing yet, eased between
@@ -1689,7 +1690,7 @@ describe("the simulation (Stage 4)", () => {
   });
 
   it("keeps a press made in a frame too short for a step for the next step", () => {
-    const g = newGame(321, TUNING);
+    const g = newGame(321, simulationTuning);
     g.clock.paused = false;
     g.witch = { ...g.witch, seated: false, perch: false };
     g.witches[0].cool.left = 0; // (the shared cooldown empty: the bare broom's take-off needs all its room, Ed 2026-10-23)
@@ -1700,7 +1701,7 @@ describe("the simulation (Stage 4)", () => {
   });
 
   it("applies a press once, however many steps a slow frame runs", () => {
-    const g = newGame(321, TUNING);
+    const g = newGame(321, simulationTuning);
     g.clock.paused = false;
     g.witch = { ...g.witch, seated: false, perch: false };
     g.witches[0].cool.left = 0; // (the shared cooldown empty: the bare broom's take-off needs all its room, Ed 2026-10-23)
@@ -1709,7 +1710,7 @@ describe("the simulation (Stage 4)", () => {
   });
 
   it("has a witch per player, the first the camera's", () => {
-    const g = newGame(321, TUNING, 3);
+    const g = newGame(321, simulationTuning, 3);
     expect(g.witches.length).toBe(3);
     expect(g.witch).toBe(g.witches[0].body);
     expect(g.leash).toBe(g.witches[0].leash);
