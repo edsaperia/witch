@@ -121,6 +121,16 @@ now uses collision-checked host names and classifies lexical this-aliases. Priva
 only aliases receive the private live bridge; public aliases keep their View.
 This repaired rehearsal passes isolated transforms; CI on its new head is needed.
 
+CI on `677d0eace` subsequently passed build, smoke, largest-world art and the
+no-declaration bench, but its full unit run failed 1/3,025 tests: the existing
+`viewSetGame.test.ts` uses `Object.create(View.prototype)` to avoid WebGL, bypassing
+the new eager private bridge field. The bridge is now a private lazy accessor
+cached in a module WeakMap, so prototype stand-ins retain their original support
+without changing constructor defaults or the test. Focused command
+`npx vitest run src/render/viewSetGame.test.ts src/app/pageComposition.test.ts --maxWorkers=1`
+passes 6 tests in 35.86 s (4.53 s test execution); no game typecheck/full local
+suite/benchmark was run. This is repair evidence, not fresh full-suite proof.
+
 This is still WIP: full source/type/unit/bench validation is pending. The page
 composition retains boot state declarations and some initializers;
 further thinning and callback adapter review remain before proof readiness.

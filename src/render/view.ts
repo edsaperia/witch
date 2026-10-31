@@ -380,8 +380,12 @@ import { build as a4_build, prepare as a4_prepare, treeExtent as a4_treeExtent, 
 import { scenePixelSize as a4_scenePixelSize, resize as a4_resize, screenOf as a4_screenOf, aimAt as a4_aimAt } from "./view/viewport";
 
 export class View {
-  /** A4 module bridge; private fields keep their existing visibility and initialization. */
-  private readonly a4Internals: ViewInternals = (() => { const owner = this; return {
+  /** A4 module bridge; also supports headless prototype stand-ins without constructor execution. */
+  private get a4Internals(): ViewInternals {
+    let bridge = a4PrivateBridges.get(this);
+    if (!bridge) {
+      const owner = this;
+      bridge = {
       get aimRay(): View["aimRay"] { return owner.aimRay; },
       set aimRay(value: View["aimRay"]) { owner.aimRay = value; },
       get armLimitedLanding(): View["armLimitedLanding"] { return owner.armLimitedLanding.bind(owner); },
@@ -501,7 +505,11 @@ export class View {
       get warmSteps(): View["warmSteps"] { return owner.warmSteps.bind(owner); },
       get wisps(): View["wisps"] { return owner.wisps; },
       set wisps(value: View["wisps"]) { owner.wisps = value; },
-    }; })();
+      };
+      a4PrivateBridges.set(this, bridge);
+    }
+    return bridge;
+  }
 
   /** Diagnostic boundary for the renderer's opening camera anchor; no change when no recorder is attached. */
   setIntroFocus: (game: Game, focus: Game["introFocus"]) => void = (game, focus) => { game.introFocus = focus; };
@@ -1201,6 +1209,7 @@ export type ViewInternals = {
   warmSteps: View["warmSteps"];
   wisps: View["wisps"];
 };
+const a4PrivateBridges = new WeakMap<View, ViewInternals>();
 const a4Shared = {
   get DECK_LANTERN_RGB(): typeof DECK_LANTERN_RGB { return DECK_LANTERN_RGB; },
   get DROPPED(): typeof DROPPED { return DROPPED; },

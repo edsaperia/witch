@@ -15222,10 +15222,10 @@
     "src/render/view/readiness.ts": "fb5510d05bfedc0de1c463356e9f8832159c59630890c644796e025c3148578a",
     "src/render/view/lifecycle.ts": "ee5c85103bfcb39786e79f8159ef194407cb4966e00b5c3731ce63d5fcd03468",
     "src/render/view/viewport.ts": "be563d10fc011a6f19e18108cf435e1f09eb42041caff600fb576f0d98cd1bf0",
-    "src/render/view.ts": "16e311209acf81175e803829af8660c80d011f874af3ee7c2db3e9b23757ec11",
+    "src/render/view.ts": "70e42f43f5983eab8821533993af0bafabb6ba9df8363fa3c161b9bd141ebdae",
     "config/link-switches.json": "149e8f6dc33b07860f3e7ab555367e7237d8bda5320eede5a3781240240f49c3",
     "docs/LINK-SWITCHES.md": "a47155bc1f9e76d6768cb2a2f8a98306bd540cd65a6bb8091ca4de1e9d542460"
   },
   "viewApiSha256": "f585e3820e424914506e8060e8a66fa10815310bdebaf306f3d4de051dfa7354",
-  "applyMs": 2086.3
+  "applyMs": 2648
 }

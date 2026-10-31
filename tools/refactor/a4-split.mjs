@@ -407,9 +407,9 @@ function splitView() {
     const writable = ts.isPropertyDeclaration(n) && !n.modifiers?.some(m => m.kind === ts.SyntaxKind.ReadonlyKeyword);
     return `      get ${name}(): View[${JSON.stringify(name)}] { return ${getter}; },${writable ? `\n      set ${name}(value: View[${JSON.stringify(name)}]) { owner.${name} = value; },` : ''}`;
   }).join('\n');
-  edits.push({ start: cls.members.pos, end: cls.members.pos, after: `\n  /** A4 module bridge; private fields keep their existing visibility and initialization. */\n  private readonly a4Internals: ViewInternals = (() => { const owner = this; return {\n${internalFields}\n    }; })();\n` });
+  edits.push({ start: cls.members.pos, end: cls.members.pos, after: `\n  /** A4 module bridge; also supports headless prototype stand-ins without constructor execution. */\n  private get a4Internals(): ViewInternals {\n    let bridge = a4PrivateBridges.get(this);\n    if (!bridge) {\n      const owner = this;\n      bridge = {\n${internalFields}\n      };\n      a4PrivateBridges.set(this, bridge);\n    }\n    return bridge;\n  }\n` });
   const shared = [...usedShared].sort().map(name => `  get ${name}(): typeof ${name} { return ${name}; },${name === 'DROPPED' ? '\n  set DROPPED(value: number) { DROPPED = value; },' : ''}`).join('\n');
-  const types = `\nexport type ViewInternals = {\n${[...usedPrivate].sort().map(n => `  ${n}: View[${JSON.stringify(n)}];`).join('\n')}\n};\nconst a4Shared = {\n${shared}\n};\nexport type ViewShared = typeof a4Shared;\n`;
+  const types = `\nexport type ViewInternals = {\n${[...usedPrivate].sort().map(n => `  ${n}: View[${JSON.stringify(n)}];`).join('\n')}\n};\nconst a4PrivateBridges = new WeakMap<View, ViewInternals>();\nconst a4Shared = {\n${shared}\n};\nexport type ViewShared = typeof a4Shared;\n`;
   edits.push({ start: ctx.source.length, end: ctx.source.length, after: types });
   edits.push({ start: cls.getStart(ctx.ast), end: cls.getStart(ctx.ast), after: imports.join('\n') + '\n\n' });
   outputs.set(ctx.file, editText(ctx.source, edits));
