@@ -3,6 +3,10 @@ import { artCacheKey } from "./artCache";
 import type { ArtJob } from "./artBuild";
 
 describe("per-kind art cache keys", () => {
+  it("isolates the opt-in body size candidate even with the same supplied style hash", () => {
+    const j={kind:"creature",id:"wolf",style:{}} as ArtJob;
+    expect(artCacheKey({...j,style:{creatureSizeCandidate:1}} as ArtJob,"same",{creature:"animals"})).not.toBe(artCacheKey(j,"same",{creature:"animals"}));
+  });
   const job = { kind: "type", id: 0, seed: 42, K: 1, biome: "home", style: {} } as ArtJob;
   it("uses only that kind's fingerprint and preserves existing runtime salts", () => {
     const hashes = { type: "trees", creature: "animals" };

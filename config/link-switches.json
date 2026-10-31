@@ -462,6 +462,31 @@
    ]
   },
   {
+   "name": "creatureSizeCandidate",
+   "values": [
+    "0",
+    "1"
+   ],
+   "does": "Revised creature sizes are on by default; 0 compares the previous sizes.",
+   "group": "compare",
+   "since": "2026-10-31",
+   "readIn": [
+    "src/app/viewParams.ts"
+   ]
+  },
+  {
+   "name": "creatureModels",
+   "values": [
+    "<species>:<variant>,..."
+   ],
+   "does": "Selects available experimental creature records per species; omitted, current or unavailable variants keep the current art.",
+   "group": "compare",
+   "since": "2026-10-30",
+   "readIn": [
+    "src/app/viewParams.ts"
+   ]
+  },
+  {
    "name": "cullpass",
    "values": [
     "0"
