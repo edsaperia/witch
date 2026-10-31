@@ -5,6 +5,14 @@ import { potionSettings } from '../rules/potionSettings';
 
 export const tripIndicatorStrength = (g: Game): number => effectEnvelope(g.mushrooms?.trips[g.witches[0]?.id ?? 0], g.clock.time);
 
+/** Grow the existing scene pixels in whole display-pixel steps; expiry restores its exact baseline. */
+export function chunkyPixelSize(base: number, dpr: number, amount: number): number {
+  if (amount <= 0) return base;
+  const scale = 1 + (potionSettings('chunky').multiplier - 1) * amount;
+  if (scale === 1) return base;
+  return Math.max(base, Math.round(base * scale * dpr) / dpr);
+}
+
 export function potionStrength(g: Game, effect: string): number {
   const trip = g.mushrooms?.trips[g.witches[0]?.id ?? 0];
   const recipe = trip && potionRecipe(trip.key);

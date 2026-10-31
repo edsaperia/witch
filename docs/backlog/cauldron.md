@@ -70,6 +70,7 @@ Agreed one by one with Ed (2026-10-09). Not yet assigned to recipes, apart from 
 9. **Big Moon** (Ed): the moon is big. Really big.
 10. **Ravine** (Ed): the bend inverted: the world curves up around her, as if at the bottom of a ravine.
 11. **Chunky** (Ed): much bigger pixels.
+    Implemented as recipe #11 (blue + purple + pink): reuses the scene's low-resolution render targets and nearest-neighbour display. Default four times the normal pixel size; Potion lab exposes 1–12×. The final two minutes step back toward the original grid in whole display pixels; menus remain readable. No change to saved pixel settings or telescope resolution preferences.
 12. **Superhot** (Ed): time only moves forward when she's moving (the wave countdown still creeps while she stands still).
 13. **Orbit** (Ed): the treetops three times higher; the camera close to her; looking down on the forest as if from space.
 14. **Mirror Forest** (Ed): every creature looks like her.

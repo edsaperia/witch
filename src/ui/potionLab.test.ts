@@ -20,6 +20,6 @@ describe('potion lab', () => {
     expect(snapshot.recipe.id).toBe(recipe.id);
     expect(snapshot.seed).toBe(61);
     expect(snapshot.settings.effects['trip-indicator']).toBeDefined();
-    expect(Object.keys(snapshot.settings.effects)).toHaveLength(9);
+    expect(Object.keys(snapshot.settings.effects)).toHaveLength(10);
   });
 });

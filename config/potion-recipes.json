@@ -139,7 +139,7 @@
     "effect": "chunky",
     "name": "Chunky",
     "description": "Much bigger pixels.",
-    "comingSoon": true,
+    "comingSoon": false,
     "id": 11
   },
   {

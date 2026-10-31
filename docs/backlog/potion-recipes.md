@@ -16,7 +16,7 @@ All potions last ten minutes of game time, start at full strength on waking, and
 | 8 | blue + blue + turquoise | Brass Band | Coming soon | Every instrument in the music becomes a trumpet. |
 | 9 | blue + blue + white | Big Moon | Implemented | An enormous moon fills the sky, with a strong luminous halo. |
 | 10 | blue + purple + purple | Ravine | Implemented | The bend inverted: the world curves up around her, as if at the bottom of a ravine. |
-| 11 | blue + purple + pink | Chunky | Coming soon | Much bigger pixels. |
+| 11 | blue + purple + pink | Chunky | Implemented | Much bigger pixels. |
 | 12 | blue + purple + red | Superhot | Coming soon | Time only moves forward when she's moving (the wave countdown still creeps while she stands still). |
 | 13 | blue + purple + orange | Orbit | Coming soon | The treetops three times higher; the camera close to her; looking down on the forest as if from space. |
 | 14 | blue + purple + yellow | Mirror Forest | Coming soon | Every creature looks like her. |
