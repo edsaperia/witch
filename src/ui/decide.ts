@@ -16,6 +16,9 @@ export interface DecideHost { mutate?: (label: string, action: () => void) => vo
 export interface DecideHost { downloadReadableLog?: () => void }
 export * from "./decisions";
 export interface DecideHost { potionLab?: () => void }
+/** "Load latest version" (playtest 31 Oct item 11; Ed, 2026-10-31: "Can we put the 'load to latest version' button in the pause menu"):
+ *  the newer build's label while one is out (app/newBuild.ts), and the reload. */
+export interface DecideHost { newBuild?: { latest(): string | null; load(): void } }
 
 /** What the panel needs from the game. */
 export interface DecideHost { /** the Settings page (ui/settingsMenu.ts: Ed, 2026-10-28, its button at the very top for now) */ settings?: () => void; tuning: object; seed: number; version: string; /** URL switches the game can take while running (no reload), by param. */ live: Record<string, (v: string) => void>; /** The Report for a visual bug (ui/visualReport.ts), if the game offers it. */ report?: () => Promise<string>; /** Opens the Music Lab panel (ui/musicLabPanel.ts; Ed, 2026-10-15), if the game offers it. */ musicLab?: () => void; /** Opens the audio capacity test (tools/audio-test; Ed, 2026-10-26: "link to the page from the pause menu"), if the game offers it. */ audioTest?: () => void; /** Opens the Fight Arena in a new tab (app/fightArena.ts; Ed, 2026-10-27), if the game offers it. */ fightArena?: () => void; /** Saves the playtest log as JSON (platform/playtestLog.ts; Ed, 2026-10-29: "The \"download log\" L should also be a button on the pause menu rather than a key"), if the game offers it. */ downloadLog?: () => void; /** The debug switch "Unlock everything" (app/debugUnlock.ts; Ed, 2026-10-29): every outfit, bag, broom part, hat and island to choose, whatever she's found. */ unlockAll?: { get(): boolean; set(on: boolean): void }; /** The default look's dev tool (app/defaultLook.ts; Ed, 2026-10-29: "an easy way to select character creation defaults"): the defaults file's text from how she's dressed now, a new tab as a brand-new witch, and whether to show them (debug or Unlock everything on). */ defaults?: { text(): string; tryIt(): void; shown(): boolean }; /** Opens the finds' dev control (ui/findsPanel.ts; Ed, 2026-10-23), shown only while `findsShown` (dev tools on). */ finds?: () => void; findsShown?: () => boolean; /** The quality ladder (app/ladder.ts): its state in lines, its choices (auto, off, a rung to pin) and the one chosen. */ quality?: { lines(): string[]; options(): { value: string; label: string }[]; current(): string; choose(v: string): void } }
@@ -151,8 +154,8 @@ function applyDecisionNow(host: DecideHost, d: Decision, v: string | number | bo
 // and the freeze's own stamp at its foot, so nothing else covers the game.
 const PAUSE_CSS = `
 #pause-sliders .quality { margin: 6px 0 4px; padding: 5px 7px; border: 1px solid rgba(232,226,244,.2); border-radius: 5px; }
-#pause-sliders .quality .qrow { display: flex; gap: 6px; align-items: center; }
-#pause-sliders .quality select { font: inherit; flex: 1; background: rgba(255,255,255,.07); color: inherit; border: 1px solid rgba(232,226,244,.25); border-radius: 4px; }
+#pause-sliders .quality .qrow { display: flex; gap: 6px; align-items: center; min-width: 0; }
+#pause-sliders .quality select { font: inherit; flex: 1; min-width: 0; max-width: 100%; text-overflow: ellipsis; background: rgba(255,255,255,.07); color: inherit; border: 1px solid rgba(232,226,244,.25); border-radius: 4px; }
 #pause-sliders .quality pre { margin: 4px 0 0; white-space: pre-wrap; color: var(--dim, #9a93b4); font: inherit; }
 #pause-sliders { position: fixed; top: 0; left: 0; bottom: 0; width: 280px; z-index: 31; display: flex; flex-direction: column; background: none; font: 12px/1.35 ui-monospace, Menlo, Consolas, monospace; color: #f2ecfb; text-shadow: 0 0 2px #000, 0 0 3px #000, 1px 1px 0 #000; transform: translateX(-105%); transition: transform .22s ease-out; pointer-events: none; }
 #pause-sliders.open { transform: translateX(0); }
@@ -190,12 +193,26 @@ const PAUSE_CSS = `
 #pause-sliders .stamp { margin: 0; padding: 6px 10px 6px 16px; color: #d6cfe6; white-space: pre; font-size: 11px; }
 `;
 
+/** The pause panel's "⟳ Load latest version (vNNNN)" (playtest 31 Oct item 11), in the copyall style: hidden while this page is the
+ *  latest build, labelled with the newer build's number while one is out, and a click loads it. `paint` is cheap and idempotent. */
+export function newBuildButton(NB: NonNullable<DecideHost["newBuild"]>): { el: HTMLButtonElement; paint(): void } {
+  const el = button("", () => NB.load(), { class: "copyall", title: "A newer build of the game is out: reload the page to play it (tonight is saved first, as on any refresh)" });
+  const paint = () => {
+    const latest = NB.latest();
+    el.style.display = latest ? "" : "none";
+    if (latest) el.textContent = `⟳ Load latest version (${latest.split(" ")[0]})`;
+  };
+  paint();
+  return { el, paint };
+}
+
 /** The pause page's test sliders: down the left edge while the game is frozen (Esc). */
 export class PauseSliders {
   readonly el = document.createElement("div");
   private values = new Map<string, string | number | boolean>();
   private readonly status = h("div", { class: "status" });
   private findsBtn: HTMLButtonElement | null = null;
+  private latestBtn: HTMLButtonElement | null = null;
   private defaultBtns: HTMLButtonElement[] = [];
   private readonly stamp = h("pre", { class: "stamp" });
   private readonly paints: (() => void)[] = [];
@@ -208,6 +225,10 @@ export class PauseSliders {
     for (const d of list) this.values.set(d.id, currentValue(d, host.tuning, params));
     const copy = button("Copy values", () => this.copy(), { class: "copyall", title: "Copy every slider's name, key, value and built default, to paste to the coordinator" });
     const settingsBtn = host.settings ? [button("⚙ Show settings page", () => host.settings!(), { class: "copyall", title: "The player's Settings page: controls, sound, display, accessibility" })] : [];
+    const NB = host.newBuild;
+    const latest = NB ? newBuildButton(NB) : null;
+    if (latest) { this.latestBtn = latest.el; this.paintLatest = latest.paint; }
+    const latestBtn = this.latestBtn ? [this.latestBtn] : [];
     const U = host.unlockAll, unlockBtn = U ? button("", () => { U.set(!U.get()); paintUnlock(); this.paintDefaults(); }, { class: "copyall", title: "Debug: every outfit, bag, broom part, hat and island to choose, whatever she's found. Nothing is saved as found; off, the normal rules come back (what she wears now stays for this session)" }) : null;
     const paintUnlock = () => { if (!U || !unlockBtn) return; const on = U.get(); unlockBtn.textContent = on ? "🔓 Unlock everything: on" : "🔒 Unlock everything: off"; unlockBtn.setAttribute("aria-pressed", String(on)); unlockBtn.classList.toggle("on", on); };
     paintUnlock();
@@ -221,7 +242,7 @@ export class PauseSliders {
       void Promise.resolve().then(() => host.downloadLog!()).then(() => { this.status.textContent = "playtest log saved"; }, error => { this.status.textContent = error instanceof Error ? error.message : "The playtest log could not be saved."; });
     }, { class: "copyall", title: "Save the playtest log (this browser's last few runs) as JSON, for the builders" })] : [];
     if (host.downloadReadableLog) logBtn.push(button("⬇ Download readable log", () => host.downloadReadableLog!(), { class: "copyall", title: "Save a text copy to read; use Download log for a builder's restore bundle" }));
-    const top = h("div", { class: "top", html: `<div class="title">❚❚ Paused · test sliders</div><p class="hint">Esc resumes · . steps (Shift+. ten) · changes show now; double-click a slider for its built value</p>` }, ...settingsBtn, copy, ...logBtn, ...(unlockBtn ? [unlockBtn] : []), ...this.defaultBtns, ...(host.report ? [button("Report", () => { this.status.textContent = "drawing the frame with each neutral pair…"; void host.report!().then(t => { this.status.textContent = t; }, e => { this.status.textContent = `report failed: ${e}`; }); }, { class: "copyall", title: "For a visual bug: draw this frame with each neutral pair of settings and save a picture and a JSON (where they differ, the GPU, her place, the repro link)" })] : []), ...(host.musicLab ? [button("🎛 Music Lab", () => host.musicLab!(), { class: "copyall", title: "The night's own music with the lab's sliders, down the right edge: the singer, the levels, a jump to any wave or section; Esc resumes with it up" })] : []), ...(host.audioTest ? [button("🔊 Audio test", () => host.audioTest!(), { class: "copyall", title: "About two minutes in a new tab: the game's music under a rising sound load, with and without AudioWorklets, then Copy results for the builders" })] : []), ...(host.fightArena ? [button("⚔ Fight arena", () => host.fightArena!(), { class: "copyall", title: "In a new tab: her alone against a random wild pack (a seed you can share), with slow motion and today's attacks" })] : []), ...(host.finds ? [this.findsBtn = button("🧪 Finds", () => host.finds!(), { class: "copyall", title: "Dev: give yourself finds, or spawn one near her (the debug overlay's tools are on)" })] : []), this.status);
+    const top = h("div", { class: "top", html: `<div class="title">❚❚ Paused · test sliders</div><p class="hint">Esc resumes · . steps (Shift+. ten) · changes show now; double-click a slider for its built value</p>` }, ...settingsBtn, ...latestBtn, copy, ...logBtn, ...(unlockBtn ? [unlockBtn] : []), ...this.defaultBtns, ...(host.report ? [button("Report", () => { this.status.textContent = "drawing the frame with each neutral pair…"; void host.report!().then(t => { this.status.textContent = t; }, e => { this.status.textContent = `report failed: ${e}`; }); }, { class: "copyall", title: "For a visual bug: draw this frame with each neutral pair of settings and save a picture and a JSON (where they differ, the GPU, her place, the repro link)" })] : []), ...(host.musicLab ? [button("🎛 Music Lab", () => host.musicLab!(), { class: "copyall", title: "The night's own music with the lab's sliders, down the right edge: the singer, the levels, a jump to any wave or section; Esc resumes with it up" })] : []), ...(host.audioTest ? [button("🔊 Audio test", () => host.audioTest!(), { class: "copyall", title: "About two minutes in a new tab: the game's music under a rising sound load, with and without AudioWorklets, then Copy results for the builders" })] : []), ...(host.fightArena ? [button("⚔ Fight arena", () => host.fightArena!(), { class: "copyall", title: "In a new tab: her alone against a random wild pack (a seed you can share), with slow motion and today's attacks" })] : []), ...(host.finds ? [this.findsBtn = button("🧪 Finds", () => host.finds!(), { class: "copyall", title: "Dev: give yourself finds, or spawn one near her (the debug overlay's tools are on)" })] : []), this.status);
     if (host.potionLab) top.append(button('Potion lab', () => host.potionLab!(), { class: 'copyall' }));
     const body = h("div", { class: "list" });
     if (host.saveComment && host.restoreComment) body.append(commentControls(host.saveComment, host.restoreComment));
@@ -258,6 +279,7 @@ export class PauseSliders {
     this.status.textContent = "";
     if (this.findsBtn) this.findsBtn.style.display = this.host.findsShown?.() ? "" : "none";
     this.paintDefaults();
+    this.paintNewBuild();
     // (afresh as it opens: a key may have moved a knob since, the fight's [ ] ; ' , . keys among them)
     const params = new URLSearchParams(location.search);
     for (const d of this.list) this.values.set(d.id, currentValue(d, this.host.tuning, params));
@@ -284,6 +306,9 @@ export class PauseSliders {
   /** Every value as plain text (Copy values). */
   text(): string { return valuesText(this.values, this.host.version, this.host.seed); }
 
+  /** "⟳ Load latest version (vNNNN)", shown only while a newer build is out. Cheap; main.ts calls it again once a check finishes. */
+  paintNewBuild(): void { this.paintLatest?.(); }
+  private paintLatest: (() => void) | null = null;
   /** The default look's buttons, only with the debug overlay or Unlock everything on. */
   private paintDefaults(): void { const on = !!this.host.defaults?.shown(); for (const b of this.defaultBtns) b.style.display = on ? "" : "none"; }
 
