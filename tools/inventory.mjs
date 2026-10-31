@@ -9,13 +9,15 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 
 const ROOT = "tools", check = process.argv.includes("--check"), MARK = "<!-- written by tools/inventory.mjs; edit the scripts' header comments, then run it again -->";
-const SCRIPT = /^(?!.*\.test\.ts$).*\.(mjs|cjs|js|ts)$/; // (test files are tests, not tools)
+const join = (...parts) => parts.join("/");
+const SCRIPT = /^(?!.*\.test\.[cm]?[jt]s$).*\.(mjs|cjs|js|ts)$/; // (test files are tests, not tools)
+const legacy = JSON.parse(fs.readFileSync("tools/inventory-notes.json", "utf8"));
 let stale = 0;
 const ignored = f => spawnSync("git", ["check-ignore", "-q", f]).status === 0;
 const header = file => {
-  const lines = fs.readFileSync(file, "utf8").split("\n"), out = [];
+  const lines = fs.readFileSync(file, "utf8").replace(/\r\n/g, "\n").split("\n"), out = [];
   for (const l of lines) { if (/^#!/.test(l) || /^\s*$/.test(l) && !out.length) continue; const m = l.match(/^\s*(?:\/\/|\*|\/\*\*?)\s?(.*)$/); if (!m) break; if (m[1].trim() !== "*/") out.push(m[1]); }
-  const text = out.filter(l => !/^\s*(node|npm|DIST=|[A-Z_]+=)/.test(l.trim())).join(" ").replace(/\s+/g, " ").trim();
+  const text = out.filter(l => !/^\s*(node|npm|DIST=|[A-Z_]+=)/.test(l.trim())).join(" ").replace(/\s+/g, " ").trim() || legacy[file.replaceAll("\\", "/")] || "";
   const usage = out.map(l => l.trim()).filter(l => /^(node|npm|DIST=|[A-Z_]+=\S* (node|npm))/.test(l));
   // (the first sentence, its asides in brackets left out; at most about 260 characters)
   let flat = "", depth = 0;
@@ -27,7 +29,7 @@ const header = file => {
 };
 const dirs = fs.readdirSync(ROOT, { withFileTypes: true }).filter(e => e.isDirectory()).map(e => e.name).sort(), index = [];
 for (const d of dirs) {
-  const dir = path.join(ROOT, d), files = fs.readdirSync(dir).filter(f => SCRIPT.test(f) && fs.statSync(path.join(dir, f)).isFile()).sort();
+  const dir = join(ROOT, d), files = fs.readdirSync(dir).filter(f => SCRIPT.test(f) && fs.statSync(path.join(dir, f)).isFile()).sort();
   const others = fs.readdirSync(dir).filter(f => !SCRIPT.test(f) && f !== "README.md" && !ignored(path.join(dir, f))); // (not what a build leaves, a lab's dist/: git ignores it, so the READMEs read the same built or not)
   if (!files.length && !others.length) continue; // (an emptied directory: nothing to list)
   const own = fs.existsSync(path.join(dir, "README.md")) && !fs.readFileSync(path.join(dir, "README.md"), "utf8").includes(MARK);
@@ -38,5 +40,5 @@ for (const d of dirs) {
   write(path.join(dir, "README.md"), md);
 }
 write(path.join(ROOT, "README.md"), ["# tools", "", MARK, "", "Scripts for building, checking and measuring the game, run from the repository root. Each directory has a README listing its scripts (from their own header comments, with how to run them).", "", ...index, ""].join("\n"));
-function write(f, s) { const was = fs.existsSync(f) ? fs.readFileSync(f, "utf8") : null; if (was === s) return; if (check) { console.error(`out of date: ${f}`); stale++; return; } fs.writeFileSync(f, s); console.log(`wrote ${f}`); }
+function write(f, s) { const was = fs.existsSync(f) ? fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n") : null; if (was === s) return; if (check) { console.error(`out of date: ${f}; fix: node tools/inventory.mjs`); stale++; return; } fs.writeFileSync(f, s); console.log(`wrote ${f}`); }
 if (check && stale) process.exit(1);

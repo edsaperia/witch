@@ -67,6 +67,6 @@ describe("the knobs' words (config/knobs)", () => {
   it("keeps config/KNOBS.md and the schema's descriptions up to date (node tools/config/schema.mjs --docs)", () => {
     const schema = schemaJson as Schema;
     expect(JSON.stringify(schema), FIX).toBe(JSON.stringify(describeSchema(schema, sections)));
-    expect(readFileSync("config/KNOBS.md", "utf8"), FIX).toBe(knobsReference(tuning, schema, index, sections));
+    expect(readFileSync("config/KNOBS.md", "utf8").replace(/\r\n/g, "\n"), FIX).toBe(knobsReference(tuning, schema, index, sections));
   });
 });

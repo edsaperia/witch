@@ -6,20 +6,25 @@
 
 Resolve related tests first.
 
+## `sleep-cell-repro.mjs`
+
+Diagnose logical ownership at spawn and both sleep stages; retain raw physical legend-cell differences as evidence.
+
+```
+node tools/ci/sleep-cell-repro.mjs [largest|four-area|radius|all] (exit 1 means a real ownership mismatch; no browser).
+```
+
 ## `test-scope.mjs`
 
 Conservative unit-test selection.
 
-## `sleep-cell-repro.mjs`
-
-Largest shipped world: diagnose the sleep-cell failure across the full roster without editing production rules. Exit 1 records a broken invariant, not a test pass.
-
 ## `world-audit.mjs`
 
-Inventory real world-constructor calls and explicit small-fixture reasons; comments are not calls. This lists direct imported constructors in source tests, not indirect helpers or browser smokes; its counts are a work list, not completion proof.
+Inventory real world-constructor calls and explicit small-fixture reasons; comments are not calls.
 
 ## Also here
 
+- `effects-scene.test.ts`
 - `PLAN.md`
 - `run-unit.test.ts`
 - `test-scope.test.ts`
