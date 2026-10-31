@@ -150,6 +150,7 @@ Each brings back how something was before a change, to compare against what repl
 
 | switch | does | since | read in |
 |---|---|---|---|
+| `patternlight=off` / `patternlight=auto` / `patternlight=spokes` / `patternlight=stripes` / `patternlight=bands` | Compare patterned light with the original lighting, or hold one soundsystem projection look for review. | 2026-10-31 | render/lightPatternState.ts |
 | `area=off` | Scenery isn't averaged where it shrinks (a performance suspect, to compare). | 2026-10-14 | app/linkParams.ts |
 | `attacks=old` | Every species fights with its old attacks from config/combat.json, not its own in the attack grammar. *Decision: Each species' own attack is the default (Ed, 2026-10-27, #1326).* | 2026-10-27 | app/linkParams.ts |
 | `snap=0` | The picture's pixels as the pixel size has them, not snapped to whole device pixels (pixels.snap), to compare. | 2026-10-29 | app/linkParams.ts |
