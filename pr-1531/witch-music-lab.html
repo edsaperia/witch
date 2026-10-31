@@ -5893,11 +5893,11 @@ registerProcessor("witch-fof", WitchFof);
     return !S?.on || rate >= 1 ? 1 : Math.max(S.floor, Math.pow(Math.max(1e-3, rate), S.pitch));
   }
   var Music = class {
-    constructor(ctx2, volume, style2, seed2, src = "", drawAhead = false) {
+    constructor(ctx2, volume, style2, seed2, src = "", drawAhead = false, destination = ctx2.destination) {
       this.ctx = ctx2;
       this.volume = volume;
       this.potionGate = ctx2.createGain();
-      this.potionGate.connect(ctx2.destination);
+      this.potionGate.connect(destination);
       this.master = ctx2.createGain();
       this.master.gain.value = 0;
       this.wobble = ctx2.createGain();
